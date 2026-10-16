@@ -296,6 +296,32 @@ class Separation(Proved):
         self.assertCaught(*[fault[0] for fault in board_prove.FAULTS if fault[1].startswith("separation:")])
 
 
+class Parts(Proved):
+    def test_every_parts_failure_fails_and_is_named(self):
+        # SOL-HW-PARTS-CHECK.C4: Each parts fault is shown to fail the check on a seeded copy of the throwaway design
+        faults = [fault for fault in board_prove.FAULTS if fault[1].startswith("parts:")]
+        names = {fault[0] for fault in faults}
+        for required in ("a part whose value differs from the specification record", "a part with no LCSC field",
+                         "a part whose number is absent from the extract", "a part the extract shows out of stock",
+                         "an extract past its age limit", "an extract dated later than the day of the check",
+                         "an extract entry whose stock is not a whole number",
+                         "two extract entries carrying one catalogue number", "two symbols carrying one reference",
+                         "a placed position the specification record omits"):
+            self.assertIn(required, names)
+        self.assertEqual({fault[2] for fault in faults}, {"parts_record", "parts_part", "parts_catalogue"})
+        self.assertCaught(*names)
+
+    def test_the_unmodified_throwaway_design_passes_the_parts_check(self):
+        # SOL-HW-PARTS-CHECK.C4: Each parts fault is shown to fail the check on a seeded copy of the throwaway design
+        found = outcomes()
+        self.assertIn("a part whose value differs from the specification record", found)
+        with tempfile.TemporaryDirectory(prefix="board-test-") as scratch:
+            seed = board_prove.prepare(scratch)
+            status, lines = board_prove.check(seed, KICAD_CLI)[:2]
+        self.assertEqual(status, 0, lines)
+        self.assertEqual([line for line in lines if line.startswith("VIOLATION") and "| parts_" in line], [])
+
+
 class TheProjectFilesNetClassesAreResolvedByKiCad(unittest.TestCase):
     """SOL-HW-BOARD-RULE-CHECK-GATE.C3: The separation basis is a written rule the layout check enforces at no less than the signed figure, and a mains-carrying design without it fails.
 

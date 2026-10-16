@@ -89,6 +89,11 @@
 	)
 	(property "MAINS" "present")
 	(property "NOT_FOR_MANUFACTURE" "true")
+	(property "WORK_ANGLE_TOLERANCE_DEG" "0.1")
+	(property "WORK_DETOUR_RATIO" "1.3")
+	(property "WORK_NECK_MM" "1")
+	(property "WORK_PAD_ANGLE_DEG" "90")
+	(property "WORK_PAD_ENTRY_RATIO" "2")
 	(footprint "proof:Controller_1x02"
 		(layer "F.Cu")
 		(uuid "2eee21e6-cfc4-4e2c-b4a2-c34be67eebf6")
@@ -136,6 +141,18 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C9000005"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "98ffc3fb-e213-47b9-bf7c-ee9be1719b07")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -222,6 +239,18 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C9000001"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "2f1e6add-5e0a-48b2-a65c-2a01caa19797")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -444,6 +473,30 @@
 				)
 			)
 		)
+		(property "LCSC" "C9000004"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "ff9672f3-8db4-4285-aeb6-8365ff50d19e")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Rating" "0.25W"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "c43ee746-e36f-46bd-8c8b-680344e26a34")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property "KiLib_Generator" "resistor/THT"
 			(at 0 0 0)
 			(layer "F.SilkS")
@@ -615,6 +668,30 @@
 				)
 			)
 		)
+		(property "LCSC" "C9000002"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "cb200901-13ed-4679-9147-b26627ec320a")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Rating" "0.25W"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "50ddddad-8e79-4333-8ced-3a94706a1d9f")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property "KiLib_Generator" "resistor/THT"
 			(at 0 0 0)
 			(layer "F.SilkS")
@@ -783,6 +860,18 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C9000003"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "fc429100-cf89-4218-aedf-9cc4ea86d4d9")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -996,30 +1085,6 @@
 		(uuid "755bbd3a-86f3-4891-9e20-7d12812d7a37")
 	)
 	(segment
-		(start 10 10)
-		(end 15 10)
-		(width 0.5)
-		(layer "F.Cu")
-		(net "/MAINS_L")
-		(uuid "78c518d9-4df4-4cad-bbde-232e0f714bbc")
-	)
-	(segment
-		(start 22.62 12.54)
-		(end 25.16 10)
-		(width 0.5)
-		(layer "F.Cu")
-		(net "/MAINS_N")
-		(uuid "724ff0bf-4118-4dff-bcad-4b7d93f35269")
-	)
-	(segment
-		(start 10 12.54)
-		(end 22.62 12.54)
-		(width 0.5)
-		(layer "F.Cu")
-		(net "/MAINS_N")
-		(uuid "7afe5665-693c-432c-bbdc-3fc56117cbf3")
-	)
-	(segment
 		(start 40 10)
 		(end 45 10)
 		(width 0.25)
@@ -1042,6 +1107,30 @@
 		(layer "F.Cu")
 		(net "/LV_B")
 		(uuid "aa4c81d8-c8c6-44a6-817e-d93e5ec423ec")
+	)
+	(segment
+		(start 10 10)
+		(end 15 10)
+		(width 0.5)
+		(layer "F.Cu")
+		(net "/MAINS_L")
+		(uuid "78c518d9-4df4-4cad-bbde-232e0f714bbc")
+	)
+	(segment
+		(start 22.62 12.54)
+		(end 25.16 10)
+		(width 0.5)
+		(layer "F.Cu")
+		(net "/MAINS_N")
+		(uuid "724ff0bf-4118-4dff-bcad-4b7d93f35269")
+	)
+	(segment
+		(start 10 12.54)
+		(end 22.62 12.54)
+		(width 0.5)
+		(layer "F.Cu")
+		(net "/MAINS_N")
+		(uuid "7afe5665-693c-432c-bbdc-3fc56117cbf3")
 	)
 	(embedded_fonts no)
 )

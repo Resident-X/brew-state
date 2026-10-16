@@ -960,6 +960,322 @@ def connectivity(design: Design, record: str, channels: List[Channel], nets: Dic
     return found
 
 
+# --- The parts specification record and the catalogue extract -------------------
+
+PARTS_RECORD_NAME = "parts-specification.yaml"
+CATALOGUE_NAME = "catalogue-extract.yaml"
+
+#: The keys a position of the specification record holds; reference and lcsc are required.
+POSITION_KEYS = ("reference", "value", "package", "rating", "lcsc")
+#: The keys an entry of the catalogue extract holds, every one required.
+ENTRY_KEYS = ("lcsc", "library_class", "stock", "unit_price")
+#: The keys the catalogue extract states of itself that the check requires.
+EXTRACT_KEYS = ("read_on", "max_age_days", "entries")
+
+ABSENT = "(absent)"
+
+
+def iso_date(value) -> Optional[datetime.date]:
+    """A calendar date written as YYYY-MM-DD, or None for anything else."""
+    if isinstance(value, datetime.datetime):
+        return None
+    if isinstance(value, datetime.date):
+        return value
+    if isinstance(value, str):
+        try:
+            return datetime.date.fromisoformat(value.strip())
+        except ValueError:
+            return None
+    return None
+
+
+def load_yaml_record(yaml, root: str, repository: Repository, design: Design, name: str, rule: str, what: str
+                     ) -> Tuple[Optional[dict], Optional[str], List[Violation]]:
+    """The mapping in the nearest file `name` at or above the design, with its path, or why it cannot be used."""
+    record = find_record(root, design.directory, repository.tracked, name)
+
+    def fail(location: str, message: str) -> Tuple[None, Optional[str], List[Violation]]:
+        return None, record, [Violation(design.project, rule, location, message)]
+
+    if record is None:
+        return fail(os.path.join(design.directory, name),
+                    f"there is no {name} in the design's folder or any folder above it, so there is no {what} "
+                    "to hold the design's parts to; the design's parts must be specified and checked before it is ordered")
+    if record not in repository.tracked:
+        return fail(record, f"the {what} {repository.untracked(record) or 'is not tracked in the repository'}; "
+                            "the check holds a design only to a file the repository holds, so commit it")
+    try:
+        with open(os.path.join(root, record), encoding="utf-8") as handle:
+            data = strict_yaml(yaml, handle.read())
+    except RecordForm as error:
+        return fail(record, f"the {what} cannot be parsed as the check reads it: {error}")
+    except Exception as error:  # a YAML error, or a file that cannot be read
+        return fail(record, f"the {what} cannot be parsed ({' '.join(str(error).split())})")
+    if not isinstance(data, dict):
+        return fail(record, f"the {what} cannot be parsed: it is not a mapping of keys")
+    return data, record, []
+
+
+def synthetic_problem(design: Design, rule: str, record: str, data: dict, what: str, not_for_manufacture: bool
+                      ) -> List[Violation]:
+    synthetic = data.get("synthetic")
+    if "synthetic" in data and not isinstance(synthetic, bool):
+        return [Violation(design.project, rule, f"{record} synthetic",
+                          f"synthetic is {synthetic!r}, where it is true on a {what} made only to prove the check "
+                          "and false or absent otherwise; write true or false")]
+    if synthetic is True and not not_for_manufacture:
+        return [Violation(design.project, rule, f"{record} synthetic",
+                          f"the {what} is marked synthetic, made only to prove the check, and the design is not "
+                          "marked not for manufacture (NOT_FOR_MANUFACTURE=true), so a proof record cannot let it pass")]
+    return []
+
+
+def read_specification(yaml, root: str, repository: Repository, design: Design, not_for_manufacture: bool
+                       ) -> Tuple[Optional[Dict[str, Dict[str, str]]], List[Violation]]:
+    """The specification record's positions by reference, each its stated keys, or what stops it being usable."""
+    what = "parts specification record"
+    data, record, problems = load_yaml_record(yaml, root, repository, design, PARTS_RECORD_NAME, "parts_record", what)
+    if data is None:
+        return None, problems
+
+    def bad(location: str, message: str) -> None:
+        problems.append(Violation(design.project, "parts_record", f"{record} {location}".strip(), message))
+
+    problems += synthetic_problem(design, "parts_record", record, data, what, not_for_manufacture)
+    positions = data.get("positions")
+    stated: Dict[str, Dict[str, str]] = {}
+    if not isinstance(positions, list):
+        bad("positions", f"the {what} lacks positions, the list holding one entry for each position the design places")
+    elif not positions:
+        bad("positions", f"the {what} lists no positions, so it would hold any design to nothing; list every "
+                         "position the design places")
+    else:
+        for index, entry in enumerate(positions):
+            where = f"positions[{index}]"
+            if not isinstance(entry, dict):
+                bad(where, f"{where} is not a mapping of the keys {', '.join(POSITION_KEYS)}")
+                continue
+            for key in sorted(set(map(str, entry)) - set(POSITION_KEYS)):
+                bad(f"{where}.{key}", f"{where} holds the key '{key}', which is not one a position has: its keys are "
+                                      f"{', '.join(POSITION_KEYS)}; correct the key's spelling, or remove it")
+            for key in POSITION_KEYS:
+                if key in entry and (not isinstance(entry[key], str) or not entry[key].strip()):
+                    bad(f"{where}.{key}", f"{where}.{key} is {entry[key]!r}, where it is a non-empty string; quote a "
+                                          "value that YAML would read as a number")
+            for key in ("reference", "lcsc"):
+                if key not in entry:
+                    bad(f"{where}.{key}", f"{where} lacks {key}, which every position states")
+            reference = entry.get("reference")
+            if isinstance(reference, str) and reference.strip():
+                if reference in stated:
+                    bad(f"{where}.reference", f"the position {reference} is listed more than once")
+                stated[reference] = {key: entry[key] for key in POSITION_KEYS[1:]
+                                     if isinstance(entry.get(key), str) and entry[key].strip()}
+    return (None if problems else stated), problems
+
+
+def read_extract(yaml, root: str, repository: Repository, design: Design, today: datetime.date,
+                 not_for_manufacture: bool) -> Tuple[Optional[Dict[str, object]], List[Violation]]:
+    """The catalogue extract's entries by catalogue number, or what stops it being usable.
+
+    An extract that states itself too old or dated later than today is still read, and the violation says so.
+    """
+    what = "catalogue extract"
+    data, record, problems = load_yaml_record(yaml, root, repository, design, CATALOGUE_NAME, "parts_record", what)
+    if data is None:
+        return None, problems
+    usable = True
+
+    def bad(location: str, message: str, rule: str = "parts_record") -> None:
+        nonlocal usable
+        if rule == "parts_record":
+            usable = False
+        problems.append(Violation(design.project, rule, f"{record} {location}", message))
+
+    unsynthetic = synthetic_problem(design, "parts_record", record, data, what, not_for_manufacture)
+    if unsynthetic:
+        usable = False
+        problems += unsynthetic
+    for key in EXTRACT_KEYS:
+        if key not in data:
+            bad(key, f"the {what} lacks {key}")
+    read_on = None
+    if "read_on" in data:
+        read_on = iso_date(data["read_on"])
+        if read_on is None:
+            bad("read_on", f"read_on {data['read_on']!s} is not a valid calendar date written as YYYY-MM-DD")
+        elif read_on > today:
+            bad("read_on", f"the extract is dated {read_on.isoformat()}, later than today ({today.isoformat()}), "
+                           "so its date cannot be trusted", "parts_catalogue")
+    limit = data.get("max_age_days")
+    if "max_age_days" in data and (isinstance(limit, bool) or not isinstance(limit, int) or limit <= 0):
+        bad("max_age_days", f"max_age_days is {limit!r}, where it is a whole number of days above zero")
+    elif read_on is not None and isinstance(limit, int) and read_on <= today and (today - read_on).days > limit:
+        bad("read_on", f"the extract was read on {read_on.isoformat()}, {(today - read_on).days} days before today "
+                       f"({today.isoformat()}), past the {limit} days it allows itself; read the catalogue again and "
+                       "date the extract", "parts_catalogue")
+    entries = data.get("entries")
+    found: Dict[str, object] = {}
+    if "entries" in data:
+        if not isinstance(entries, list):
+            bad("entries", f"entries is not a list of catalogue entries")
+        elif not entries:
+            bad("entries", f"the {what} lists no entries, so it would show no part in stock")
+        else:
+            for index, entry in enumerate(entries):
+                where = f"entries[{index}]"
+                if not isinstance(entry, dict):
+                    bad(where, f"{where} is not a mapping of the keys {', '.join(ENTRY_KEYS)}")
+                    continue
+                for key in sorted(set(map(str, entry)) - set(ENTRY_KEYS)):
+                    bad(f"{where}.{key}", f"{where} holds the key '{key}', which is not one an entry has: its keys "
+                                          f"are {', '.join(ENTRY_KEYS)}")
+                for key in ENTRY_KEYS:
+                    if key not in entry:
+                        bad(f"{where}.{key}", f"{where} lacks {key}")
+                number = entry.get("lcsc")
+                if "lcsc" in entry and (not isinstance(number, str) or not number.strip()):
+                    bad(f"{where}.lcsc", f"{where}.lcsc is {number!r}, where it is a non-empty string")
+                    number = None
+                klass = entry.get("library_class")
+                if "library_class" in entry and (not isinstance(klass, str) or not klass.strip()):
+                    bad(f"{where}.library_class", f"{where}.library_class is {klass!r}, where it is a non-empty string")
+                price = entry.get("unit_price")
+                if "unit_price" in entry and (isinstance(price, bool) or not isinstance(price, (int, float))
+                                              or not math.isfinite(price) or price < 0):
+                    bad(f"{where}.unit_price", f"{where}.unit_price is {price!r}, where it is a number of at least zero")
+                stock = entry.get("stock")
+                if "stock" in entry and (isinstance(stock, bool) or not isinstance(stock, int) or stock < 0):
+                    bad(f"{where}.stock", f"{where}.stock is {stock!r}, which is not a whole number of zero or more, so the "
+                                          "extract is malformed; write the stock as a whole number, and 0 for a part out of stock",
+                        "parts_catalogue")
+                    stock = None
+                if isinstance(number, str):
+                    key = number.strip()
+                    if key in found:
+                        bad(f"{where}.lcsc", f"{where}.lcsc is {key}, which another entry also carries, so the extract "
+                                             "is malformed; keep one entry for each catalogue number", "parts_catalogue")
+                    found[key] = stock if "stock" in entry else None
+    return (found if usable else None), problems
+
+
+def placed_positions(root: str, design: Design, repository: Repository
+                     ) -> Tuple[Dict[str, Dict[str, Optional[str]]], List[str], List[Tuple[str, str, str, str]]]:
+    """The positions the design places, by reference, each its Value, footprint library item name, LCSC and Rating,
+    the references that more than one symbol carries, and the disagreements between units of one reference.
+
+    Where a further unit of a reference carries a Value, footprint library item, LCSC or Rating that differs from the
+    first unit's, the disagreement is listed as (reference, property, first unit's value, this unit's value), each
+    property once for a reference; KiCad shares these across the units, so a difference is a hand edit.
+
+    A position is a schematic symbol on the board, in the design's schematic or any sheet it reaches, counted once
+    however many units it has; a symbol is a power symbol by its library symbol's power flag, never by how its
+    reference is written, and a power symbol is no position. Two symbols carry one reference when they are the same
+    unit of one library symbol or are different library symbols. Properties are None where the symbol has none. A
+    sheet that cannot be read is skipped, since the design fails for it already.
+    """
+    placed: Dict[str, Dict[str, Optional[str]]] = {}
+    seen: Dict[str, Tuple[str, set]] = {}
+    repeated: List[str] = []
+    disagreements: List[Tuple[str, str, str, str]] = []
+    try:
+        files = sorted(sheet_files(root, design.schematic, repository.tracked))
+    except (OSError, sexpr.SexprError):
+        return placed, repeated, disagreements
+    for path in files:
+        if not os.path.isfile(os.path.join(root, path)):
+            continue
+        try:
+            with open(os.path.join(root, path), encoding="utf-8") as handle:
+                tree = sexpr.parse_one(handle.read())
+        except (OSError, sexpr.SexprError):
+            continue
+        library = sexpr.child(tree, "lib_symbols") or []
+        power = {str(item[1]) for item in sexpr.children(library, "symbol") if len(item) > 1 and sexpr.child(item, "power")}
+        for symbol in sexpr.children(tree, "symbol"):
+            if sexpr.child(symbol, "lib_id") is None:
+                continue
+            identity = str((sexpr.child(symbol, "lib_name") or sexpr.child(symbol, "lib_id"))[1])
+            on_board = sexpr.child(symbol, "on_board")
+            if identity in power or (on_board is not None and len(on_board) > 1 and on_board[1] == "no"):
+                continue
+            fields = {str(prop[1]): str(prop[2]) for prop in sexpr.children(symbol, "property") if len(prop) > 2}
+            references = []
+            for project in sexpr.children(sexpr.child(symbol, "instances") or [], "project"):
+                if len(project) > 1 and project[1] == design.name:
+                    references += [str(ref[1]) for where in sexpr.children(project, "path")
+                                   for ref in sexpr.children(where, "reference") if len(ref) > 1]
+            if not references and fields.get("Reference"):
+                references = [fields["Reference"]]
+            unit_item = sexpr.child(symbol, "unit")
+            unit = str(unit_item[1]) if unit_item is not None and len(unit_item) > 1 else "1"
+            footprint = fields.get("Footprint", "")
+            stated = {"value": fields.get("Value", ""),
+                      "package": footprint.split(":", 1)[-1] if footprint else "",
+                      "lcsc": fields.get("LCSC"), "rating": fields.get("Rating")}
+            for reference in references:
+                if reference in placed:
+                    kind, units = seen[reference]
+                    if (kind != identity or unit in units) and reference not in repeated:
+                        repeated.append(reference)
+                    elif kind == identity:
+                        for key, name in (("value", "Value"), ("package", "Footprint"), ("lcsc", "LCSC"),
+                                          ("rating", "Rating")):
+                            if stated[key] != placed[reference][key] and not any(
+                                    item[:2] == (reference, name) for item in disagreements):
+                                disagreements.append((reference, name,
+                                                      placed[reference][key] if placed[reference][key] is not None else ABSENT,
+                                                      stated[key] if stated[key] is not None else ABSENT))
+                    units.add(unit)
+                    continue
+                seen[reference] = (identity, {unit})
+                placed[reference] = stated
+    return placed, repeated, disagreements
+
+
+def check_parts(yaml, root: str, design: Design, repository: Repository, today: datetime.date,
+                not_for_manufacture: bool) -> List[Violation]:
+    """The design's placed parts held to its specification record and to the catalogue extract. Reads files only."""
+    stated, found = read_specification(yaml, root, repository, design, not_for_manufacture)
+    catalogue, listed = read_extract(yaml, root, repository, design, today, not_for_manufacture)
+    found += listed
+    placed, repeated, disagreements = placed_positions(root, design, repository)
+    for reference, name, first, other in sorted(disagreements):
+        found.append(Violation(design.project, "parts_part", f"{reference} {name}",
+                               f"the units of the position {reference} disagree on {name}: one unit has '{first}' and "
+                               f"another has '{other}'; KiCad shares {name} across the units, so make them agree"))
+    for reference in sorted(repeated):
+        found.append(Violation(design.project, "parts_part", reference,
+                               f"more than one symbol carries the reference {reference}, so the position cannot be "
+                               "held to the record; give each symbol its own reference"))
+    for reference in sorted(placed):
+        part = placed[reference]
+        if stated is not None:
+            record = stated.get(reference)
+            if record is None:
+                found.append(Violation(design.project, "parts_part", reference,
+                                       f"the design places the position {reference} and the parts specification record "
+                                       "does not list it; list it in the record, or remove the part"))
+            else:
+                for key in ("value", "package", "rating", "lcsc"):
+                    if key in record and record[key] != part[key]:
+                        found.append(Violation(
+                            design.project, "parts_part", f"{reference} {key}",
+                            f"the position {reference} {key} differs: the record states '{record[key]}' and the design "
+                            f"has '{part[key] if part[key] is not None else ABSENT}'"))
+        number = part["lcsc"]
+        if catalogue is not None and number is not None and number.strip():
+            if number.strip() not in catalogue:
+                found.append(Violation(design.project, "parts_catalogue", f"{reference} lcsc",
+                                       f"the position {reference} has the catalogue number {number}, which the "
+                                       "catalogue extract does not list"))
+            elif catalogue[number.strip()] == 0:
+                found.append(Violation(design.project, "parts_catalogue", f"{reference} lcsc",
+                                       f"the position {reference} has the catalogue number {number}, which the "
+                                       "catalogue extract shows with no stock"))
+    return found
+
+
 # --- The design's own rules ----------------------------------------------------
 
 
@@ -2469,6 +2785,8 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
     channels, pin_problems = read_pin_record(yaml, root, design, pin_record, not_for_manufacture)
     found += pin_problems
 
+    found += check_parts(yaml, root, design, repository, today, not_for_manufacture)
+
     if any(v.rule == "design_unreadable" for v in found):
         return found
 
@@ -2668,8 +2986,8 @@ def design_reads(top: str, files: List[str], git: str = "git") -> List[str]:
 
     For each design that is its own folder, written with a trailing slash so a
     file deleted from it is still one the design read, every file its folder,
-    its sheets and its libraries hold, and the separation basis record it is held
-    to, whether or not that record is committed. A design in the top folder reads
+    its sheets and its libraries hold, and the separation basis, pin allocation, parts specification and
+    catalogue extract records it is held to, whether or not a record is committed. A design in the top folder reads
     the whole repository, written as WHOLE_REPOSITORY.
     """
     repository = Repository(top, files, git)
@@ -2678,7 +2996,7 @@ def design_reads(top: str, files: List[str], git: str = "git") -> List[str]:
     for design in designs:
         reads.add(design.directory + "/" if design.directory else WHOLE_REPOSITORY)
         reads.update(design_files(design, repository)[0])
-        for name in (RECORD_NAME, PIN_RECORD_NAME):
+        for name in (RECORD_NAME, PIN_RECORD_NAME, PARTS_RECORD_NAME, CATALOGUE_NAME):
             record = find_record(top, design.directory, repository.tracked, name)
             if record:
                 reads.add(record)

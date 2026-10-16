@@ -240,6 +240,42 @@ def untrack(suffix: str):
     return seed_it
 
 
+def drop_field(reference: str, field: str):
+    """The symbol field `field` taken off the symbol at `reference`, in the schematic."""
+    def edit(tree: list) -> None:
+        for symbol in sexpr.children(tree, "symbol"):
+            fields = sexpr.children(symbol, "property")
+            if any(len(prop) > 2 and prop[1] == "Reference" and prop[2] == reference for prop in fields):
+                symbol[:] = [item for item in symbol
+                             if not (sexpr.head(item) == "property" and len(item) > 1 and item[1] == field)]
+                return
+        raise AssertionError(f"the proof schematic has no symbol {reference}")
+    return lambda seed: seed.schematic(edit)
+
+
+def repeat_symbol(reference: str):
+    """A second symbol carrying the reference `reference`, a copy of the first with a fresh identifier."""
+    def edit(tree: list) -> None:
+        for index, symbol in enumerate(tree):
+            if sexpr.head(symbol) == "symbol" and any(
+                    len(prop) > 2 and prop[1] == "Reference" and prop[2] == reference
+                    for prop in sexpr.children(symbol, "property")):
+                twin = copy.deepcopy(symbol)
+                sexpr.child(twin, "uuid")[1] = sexpr.Quoted("0b0e5c1a-0000-4000-8000-0000000000e5")
+                tree.insert(index + 1, twin)
+                return
+        raise AssertionError(f"the proof schematic has no symbol {reference}")
+    return lambda seed: seed.schematic(edit)
+
+
+def parts(old: str, new: str):
+    return lambda seed: seed.replace("parts-specification.yaml", old, new)
+
+
+def extract(old: str, new: str):
+    return lambda seed: seed.replace("catalogue-extract.yaml", old, new)
+
+
 def uncommitted_record(seed: Seed) -> None:
     seed.after.append(lambda seed: seed.replace("separation-basis.yaml", "accepted_by: david", "accepted_by: someone-else"))
 
@@ -806,6 +842,46 @@ FAULTS: List[Tuple[str, str, str, str, Callable[[Seed], None]]] = [
     ("a pin allocation entry lacking its controller pin", "pin allocation: a record missing a required key fails", "pin_allocation", "the entry lacks controller_pin", pin_record("    controller_pin: PA0\n", "")),
     ("a pin allocation entry naming a connector without its pin", "pin allocation: a record missing a required key fails", "pin_allocation", "gives only one of connector and connector_pin", pin_record("    connector_pin: 1\n", "")),
     ("a synthetic pin allocation record applied to a design not marked not for manufacture", "pin allocation: a synthetic record cannot pass an orderable board", "pin_allocation", "marked synthetic", variables(lambda v: v.pop("NOT_FOR_MANUFACTURE"))),
+    # Parts
+    ("a part whose value differs from the specification record", "parts: a stated property that differs fails", "parts_part", "R1 value differs: the record states '100k' and the design has '1M'",
+     lambda seed: seed.replace(".kicad_sch", '(property "Value" "100k"', '(property "Value" "1M"')),
+    ("a part whose package differs from the specification record", "parts: a stated property that differs fails", "parts_part", "J2 package differs",
+     parts('    package: "PinHeader_1x02_P2.54mm_Vertical"\n    lcsc: "C9000003"', '    package: "PinHeader_1x03_P2.54mm_Vertical"\n    lcsc: "C9000003"')),
+    ("a part whose rating differs from the specification record", "parts: a stated property that differs fails", "parts_part", "R2 rating differs: the record states '1W' and the design has '0.25W'",
+     parts('    rating: "0.25W"\n    lcsc: "C9000004"', '    rating: "1W"\n    lcsc: "C9000004"')),
+    ("a part whose LCSC number differs from the specification record", "parts: a catalogue number that differs fails", "parts_part", "J1 lcsc differs: the record states 'C9000099' and the design has 'C9000001'",
+     parts('lcsc: "C9000001"', 'lcsc: "C9000099"')),
+    ("a part with no LCSC field", "parts: a part with no catalogue number fails", "parts_part", "R1 lcsc differs: the record states 'C9000002' and the design has '(absent)'", drop_field("R1", "LCSC")),
+    ("a part with no Rating field where the record states one", "parts: a part with no stated rating fails a record that states one", "parts_part", "R1 rating differs: the record states '0.25W' and the design has '(absent)'",
+     drop_field("R1", "Rating")),
+    ("a placed position the specification record omits", "parts: a position the record does not list fails", "parts_part", "the design places the position J2 and the parts specification record does not list it",
+     parts('  - reference: J2\n    value: "LV_IN"\n    package: "PinHeader_1x02_P2.54mm_Vertical"\n    lcsc: "C9000003"\n', "")),
+    ("a part whose number is absent from the extract", "parts: a part the extract does not list fails", "parts_catalogue", "R2 lcsc | the position R2 has the catalogue number C9000004, which the catalogue extract does not list",
+     extract("  - lcsc: C9000004\n    library_class: basic\n    stock: 1003\n    unit_price: 0.01\n", "")),
+    ("a part the extract shows out of stock", "parts: a part with no stock fails", "parts_catalogue", "the position J1 has the catalogue number C9000001, which the catalogue extract shows with no stock",
+     extract("    stock: 1000", "    stock: 0")),
+    ("an extract past its age limit", "parts: a stale extract fails", "parts_catalogue", "past the 36500 days it allows itself",
+     extract("read_on: 2026-10-14", "read_on: 1900-01-01")),
+    ("an extract dated later than the day of the check", "parts: a future-dated extract fails", "parts_catalogue", "later than today",
+     extract("read_on: 2026-10-14", "read_on: 2999-01-01")),
+    ("an extract entry whose stock is not a whole number", "parts: a malformed stock fails", "parts_catalogue", "which is not a whole number of zero or more",
+     extract("    stock: 1001", "    stock: -4")),
+    ("two symbols carrying one reference", "parts: a reference carried twice fails", "parts_part", "more than one symbol carries the reference R2", repeat_symbol("R2")),
+    ("two extract entries carrying one catalogue number", "parts: a catalogue number listed twice fails", "parts_catalogue", "C9000002, which another entry also carries",
+     extract("synthetic: true", "  - lcsc: C9000002\n    library_class: basic\n    stock: 5\n    unit_price: 0.01\nsynthetic: true")),
+    ("a design with no specification record", "parts: no record to be held to fails", "parts_record", "there is no parts-specification.yaml", remove("parts-specification.yaml")),
+    ("a design with no catalogue extract", "parts: no extract to be held to fails", "parts_record", "there is no catalogue-extract.yaml", remove("catalogue-extract.yaml")),
+    ("a specification record that cannot be parsed", "parts: an unparseable record fails", "parts_record", "cannot be parsed", parts("positions:\n", "positions: [unclosed\n")),
+    ("a specification record lacking a catalogue number", "parts: a record missing a required key fails", "parts_record", "positions[0] lacks lcsc", parts('    lcsc: "C9000001"\n', "")),
+    ("a specification record listing nothing", "parts: an empty record fails", "parts_record", "lists no positions",
+     lambda seed: seed.write("parts-specification.yaml", "positions: []\nsynthetic: true\n")),
+    ("a catalogue extract lacking its age limit", "parts: an extract missing a required key fails", "parts_record", "lacks max_age_days", extract("max_age_days: 36500\n", "")),
+    ("a catalogue extract listing nothing", "parts: an empty extract fails", "parts_record", "lists no entries",
+     lambda seed: seed.write("catalogue-extract.yaml", "read_on: 2026-10-14\nmax_age_days: 36500\nentries: []\nsynthetic: true\n")),
+    ("a synthetic specification record applied to a design not marked not for manufacture", "parts: a synthetic record cannot pass an orderable board", "parts_record", "the parts specification record is marked synthetic",
+     variables(lambda v: v.pop("NOT_FOR_MANUFACTURE"))),
+    ("a synthetic catalogue extract applied to a design not marked not for manufacture", "parts: a synthetic extract cannot pass an orderable board", "parts_record", "the catalogue extract is marked synthetic",
+     variables(lambda v: v.pop("NOT_FOR_MANUFACTURE"))),
 ]
 
 

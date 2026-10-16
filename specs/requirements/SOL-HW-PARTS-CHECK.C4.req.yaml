@@ -2,11 +2,11 @@ id: SOL-HW-PARTS-CHECK.C4
 type: criterion
 title: Each parts fault is shown to fail the check on a seeded copy of the throwaway design
 status: active
-version: 1
+version: 3
 measurement_type: binary
 verification: test
 text: |
-  The on-demand seeded-fault proof introduces, into a copy of the throwaway design outside the repository, a part with a wrong value, a part with no LCSC field, a part whose number is absent from the extract, a part the extract shows out of stock, a stale extract and a placed position the record omits, and requires the check to fail on each and to name it. The unmodified throwaway design passes. Out of scope: faults in connectivity or the firmware.
+  The on-demand seeded-fault proof introduces, into a copy of the throwaway design outside the repository, a part with a wrong value, a part with no LCSC field, a part whose number is absent from the extract, a part the extract shows out of stock, a stale extract, an extract dated later than the day of the check, an entry with a stock that is not a whole number, two entries carrying one catalogue number, two symbols carrying one reference and a placed position the record omits, and requires the check to fail on each and to name it. The unmodified throwaway design passes, with its power symbols and any multi-unit symbol reported as no position. Out of scope: faults in connectivity or the firmware.
 links:
   - target: SOL-HW-PARTS-CHECK
     type: criterion-of

@@ -3,13 +3,15 @@ type: deliverable
 category: solution
 title: A board's parts are checked against its specification record and the dated catalogue extract, each fault proven on a throwaway design
 status: active
-version: 1
+version: 4
 text: |
   The board check gains a parts check that holds each design to its parts specification record and to the manufacturer's catalogue extract, in the forms the design-records decision sets. For every position the design places, it requires the position to appear in the specification record, the part's stated value, package and rating to equal what the record states for it, and the part's LCSC symbol field to equal the record's. It then requires that catalogue number to appear in the catalogue extract with stock, and the extract to be no older than its own stated maximum age. It fails a placed position the record omits, and each failure names the position, the property or number that differed, the record's value and the design's value. A design with no specification record or no catalogue extract to be held to, an unparseable one, one missing a required key and one that lists nothing each fail; a synthetic record or extract satisfies only a design marked not for manufacture. The check never fetches the catalogue.
 
   Placement, settled before build. The check is more named rules in the existing board check in hardware/tools/, reported with the rest, so the one task-runner command, the round's board tier and the nightly run it with no new gate. The specification record and the catalogue extract join what the round reads for a design. The throwaway design in hardware/proof/ gains a synthetic specification record and a synthetic catalogue extract that its committed state satisfies, and the seeded-fault proof, on demand like the other proofs, introduces each fault into a copy of it outside the repository. The check reads files only.
 
   Applying the check to a real board needs that board's specification record and a current extract, which its design task authors; this solution builds and proves the check and does not wait for either.
+
+  Names settled before build, fixed in the hardware notes. The specification record is parts-specification.yaml, a list of positions each with reference, value, package, rating and lcsc keys, where an unstated property is not compared. The catalogue extract is catalogue-extract.yaml, with a read_on date, max_age_days and a list of entries each with lcsc, library_class, stock and unit_price; a stock that is not a whole number of zero or more, or a catalogue number carried by two entries, is a malformed extract, and a part using an entry that shows zero stock fails, and a read_on later than today fails as the separation basis record's date does. The placed positions are the schematic symbols that are on the board, excluding power symbols, counting a multi-unit symbol once and reaching hierarchical sheets. The rules are reported as parts_record, parts_part and parts_catalogue in the existing violation form, and the record finder and strict loader the separation record uses are generalised to take the file name, leaving the separation checks unchanged; the connectivity check and this one are independent, whichever is built second reuses the generalised finder and neither waits on the other. The round's file-name list and the design-reads listing gain both file names, so the task that lists what a design reads names them wherever they sit.
 links:
   - target: DEL-HW-DESIGN-VERIFICATION.C2
     type: derives-from
@@ -27,3 +29,7 @@ links:
     type: justified-by
   - target: SOL-HW-BOARD-RULE-CHECK-GATE
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: 0f3d028c5a8cbf1e221ee7829faee5439e23654536dd42a2d38a096e32c2d6cc
+  gating_profile: ""
