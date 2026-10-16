@@ -21,3 +21,7 @@ links:
     type: justified-by
   - target: SOL-FW-PIN-ASSIGNMENT-MATCHES-RECORD
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: dbb4284f7ab4e899d0d08b99efaec237457e47cdc028bbe8d17099eb293bb084
+  gating_profile: ""
