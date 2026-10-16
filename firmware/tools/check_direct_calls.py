@@ -41,20 +41,28 @@ import build_environments  # noqa: E402
 
 # `bl <symbol>` on arm64, `callq <addr> <symbol>` on x86-64. A branch to a bare
 # address is control flow inside the function, not a call to another function.
-DIRECT_CALL = re.compile(
-    r"^\s*(?:bl|call|callq)\s+(?:0x[0-9a-f]+\s+)?"
-    r"(?:<(?P<angled>[A-Za-z_][A-Za-z0-9_.$]*)>|(?P<plain>_[A-Za-z0-9_.$]+))\s*$"
+# The address is `0x`-prefixed in llvm-objdump and bare hexadecimal in GNU
+# objdump, which also marks a symbol reached through the procedure-linkage table
+# with an `@plt` suffix and may put a hardware-protection prefix (`bnd`) before
+# the mnemonic.
+PREFIXES = r"(?:(?:bnd|notrack|cs|ds|data16)\s+)*"
+ADDRESS = r"(?:(?:0x)?[0-9a-f]+\s+)?"
+TARGET = (
+    r"(?:<(?P<angled>[A-Za-z_][A-Za-z0-9_.$]*)(?:@[A-Za-z0-9_.]+)?>"
+    r"|(?P<plain>_[A-Za-z0-9_.$]+))\s*$"
 )
+
+DIRECT_CALL = re.compile(rf"^\s*{PREFIXES}(?:bl|call|callq)\s+{ADDRESS}{TARGET}")
 
 # `blr x8` / `br x8` on arm64 and their pointer-authenticated forms `blraa`,
-# `blraaz`, `braa`; `callq *%rax` / `jmpq *(%rax)` on x86-64.
-INDIRECT_CALL = re.compile(r"^\s*(?:blra[abz]*|bra[abz]*|blr|br|call|callq|jmp|jmpq)\s+[*xw]")
+# `blraaz`, `braa`; `callq *%rax` / `jmpq *(%rax)` on x86-64, where GNU objdump
+# may put `notrack` or `bnd` before the mnemonic.
+INDIRECT_CALL = re.compile(
+    rf"^\s*{PREFIXES}(?:blra[abz]*|bra[abz]*|blr|br|call|callq|jmp|jmpq)\s+[*xw]"
+)
 
 # A tail call: the last operation reached by jumping straight to another symbol.
-DIRECT_TAIL_CALL = re.compile(
-    r"^\s*(?:b|jmp|jmpq)\s+(?:0x[0-9a-f]+\s+)?"
-    r"(?:<(?P<angled>[A-Za-z_][A-Za-z0-9_.$]*)>|(?P<plain>_[A-Za-z0-9_.$]+))\s*$"
-)
+DIRECT_TAIL_CALL = re.compile(rf"^\s*{PREFIXES}(?:b|jmp|jmpq)\s+{ADDRESS}{TARGET}")
 
 SYMBOL_LABEL = re.compile(r"^(_[A-Za-z0-9_.$]+):\s*$")
 
