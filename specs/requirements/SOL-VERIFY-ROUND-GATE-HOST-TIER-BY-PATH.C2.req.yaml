@@ -1,0 +1,12 @@
+id: SOL-VERIFY-ROUND-GATE-HOST-TIER-BY-PATH.C2
+type: criterion
+title: The round gate runs both tiers when it cannot tell what changed
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  When the merge-base with main cannot be resolved, or the list of changed paths cannot be read, the round gate runs the host tier and the emulation tier rather than skipping either, and says why. Tests drive the path selection with a change only to a document no host test opens, a document a host test opens, a requirement-graph-only change, a board-design-only change, a firmware source change, a parameter-file change, an emulation-suite change, a change to a documentation record the emulation suite checks against, a change to the task-runner declaration, a change to an automation workflow declaration, a new firmware file not yet committed, a deleted firmware file, a file renamed out of the firmware tree, an empty change and an unresolvable base, and each fails if either tier's selection is wrong. Out of scope: choosing which individual tests run within a tier.
+links:
+  - target: SOL-VERIFY-ROUND-GATE-HOST-TIER-BY-PATH
+    type: criterion-of

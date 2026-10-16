@@ -28,6 +28,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, TOOLS)
 
 import build_environments  # noqa: E402
+import round_gate  # noqa: E402
 from test_round_gate import declared_gates, task_commands  # noqa: E402
 import workflow_declarations  # noqa: E402
 
@@ -35,7 +36,8 @@ GATES = ["fw:build", "fw:check", "fw:test", "fw:run", "fw:emulate", "fw:sweep"]
 
 #: What the Taskfile's declaration of the complete verification lists, in order.
 DECLARED = [
-    "fw:build", "fw:check", "fw:test", "fw:run", "fw:emulate", "hw:verify", "hw:test:round", "fw:sweep",
+    "fw:build", "fw:check", "fw:test", "fw:run", "fw:host-closure", "fw:emulate", "hw:verify",
+    "hw:test:round", "fw:sweep",
 ]
 
 
@@ -396,6 +398,21 @@ class TheNightlyRunsTheSameDeclaration(unittest.TestCase):
         self.assertEqual(["fw:sweep"], re.findall(r"--leave-out (\S+)", " ".join(script)))
         self.assertNotIn("hw:", " ".join(script))
 
+    def test_the_nightly_leaves_out_nothing_that_checks_the_hosts_declared_reads(self):
+        # SOL-VERIFY-ROUND-GATE-HOST-TIER-BY-PATH.C4: The complete verification runs the host tier in a tree holding only the paths the round declares it reads
+        # The declaration holds the closure check, the nightly runs the declaration leaving
+        # out the sweep alone, and the workflow files the closure's tree carries are the
+        # ones the host tier's own tests read, so the check and the workflow agree.
+        self.assertIn("fw:host-closure", declared_gates(read("Taskfile.yml")))
+        (script,) = [
+            [line for line in script if line.strip()]
+            for script in workflow_declarations.scripts(self.nightly)
+            if any("fw:verify" in line for line in script)
+        ]
+        self.assertEqual(["fw:sweep"], re.findall(r"--leave-out (\S+)", " ".join(script)))
+        self.assertNotIn("host-closure", " ".join(script))
+        self.assertIn(".github/workflows/", round_gate.HOST_READS)
+
     def test_the_hosted_runner_installs_the_board_tools_before_it_runs_the_verification(self):
         # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C2: The nightly full verification runs the board check against main
         job = self.job_text("gates")
@@ -672,7 +689,8 @@ class TheVerificationNeedsOnlyTheStandardLibrary(unittest.TestCase):
     def test_the_driver_and_its_tests_import_only_the_standard_library(self):
         # SOL-VERIFY-NIGHTLY-FULL-ON-MAIN.C1: The daily verification runs every gate to completion and reports every failure
         local = (
-            "__future__", "build_environments", "task_gate", "test_round_gate", "workflow_declarations"
+            "__future__", "build_environments", "round_gate", "task_gate", "test_round_gate",
+            "workflow_declarations",
         )
         for path in (
             os.path.join(TOOLS, "verify_gate.py"), os.path.join(TOOLS, "task_gate.py"),

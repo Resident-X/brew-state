@@ -1,0 +1,19 @@
+id: SOL-TOOL-TESTS-RUN-SIDE-BY-SIDE
+type: deliverable
+category: solution
+title: The firmware tooling's tests run side by side, and a run that finds nothing to run fails
+status: active
+version: 1
+text: |
+  The firmware tooling's tests, which check the build-time checks, the mutation sweep and the round gate themselves, are the largest single part of the host tier's test time, and they had run one test module after another. They share nothing but the source tree they read, and most of each module's time is spent waiting on child processes, so the task that runs them runs each module in a process of its own, several at once, and finishes in about the time its slowest module takes.
+
+  A run that finds nothing to run must not pass: a directory with no test module, a module that runs no test, and a module whose result cannot be read each fail the run, because a gate that finds nothing reports success without having established anything.
+rationale: |
+  Measured on the development machine, the firmware tooling's tests were about 200 seconds of a host tier of about 700, run serially, and run side by side the same tests take about the time of the slowest module. The speed-up changes how the tests are scheduled and not what any of them asserts, so every criterion they verify stays verified; the empty-run failure is added because a runner that discovers its own modules is exactly the kind of check that can silently find none.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: DEC-VERIFICATION-ROUND-TARGETED-NIGHTLY-FULL
+    type: justified-by
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: targets

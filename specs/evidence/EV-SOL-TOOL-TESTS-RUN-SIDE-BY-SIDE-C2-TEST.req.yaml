@@ -1,0 +1,16 @@
+id: EV-SOL-TOOL-TESTS-RUN-SIDE-BY-SIDE-C2-TEST
+type: evidence
+title: test evidence for SOL-TOOL-TESTS-RUN-SIDE-BY-SIDE.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-16T00:59:39Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_run_tool_tests.py::test_a_failing_module_fails_the_run_names_it_and_prints_its_output,firmware/tools/tests/test_run_tool_tests.py::test_a_directory_with_no_test_module_fails,firmware/tools/tests/test_run_tool_tests.py::test_a_missing_directory_fails,firmware/tools/tests/test_run_tool_tests.py::test_a_module_that_cannot_be_imported_fails_the_run_and_shows_why,firmware/tools/tests/test_run_tool_tests.py::test_a_module_that_runs_no_test_fails_the_run,firmware/tools/tests/test_run_tool_tests.py::test_fewer_than_one_worker_is_refused,firmware/tools/tests/test_run_tool_tests.py::test_a_module_that_cannot_be_started_fails_and_says_so
+  artifact_version: c0a839b346f1dd75fbfb8ebbc1a2c48fb2eda86f
+links:
+  - target: SOL-TOOL-TESTS-RUN-SIDE-BY-SIDE.C2
+    type: satisfies

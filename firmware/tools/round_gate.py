@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
-"""The build round's gate: the host tier every time, emulation and the board tier when
-they can matter, and the mutants on the plant lines the branch changes.
+"""The build round's gate: each tier only for a change that can move it, and the mutants
+on the plant lines the branch changes.
 
 A build round runs one gate, and it is the only verification a change gets
 before it merges. The complete verification takes far longer than most changes
 deserve, and most of that time is spent asking questions a given change cannot
-have moved. So the round runs the part that can never be skipped in full -- every
-build, every build-time check, every host test and every host executable under
-the sanitizers, the only tier that catches memory and undefined-behaviour
-defects -- and runs the emulation tier only when the branch touches something
-the emulation reads.
+have moved. So the round runs the host tier -- every build, every build-time
+check, every host test and every host executable under the sanitizers, the only
+tier that catches memory and undefined-behaviour defects -- in full, but only
+when the branch touches something the host tier reads, and runs the emulation
+tier only when the branch touches something the emulation reads. A branch that
+changes only documents, the requirement graph or a board design runs neither.
 
 The board tier runs the pre-order board check and the tests of the board tooling
 without the tests that run the seeded-fault proof, which stays on demand. It
@@ -41,7 +42,10 @@ What the round runs is named by the task runner, which hands the tasks to this
 script, so the commands behind each tier exist in one place and the round and
 the complete verification cannot drift apart. What decides whether emulation
 runs is declared here, once: EMULATION_READS. So is what decides whether the
-board tier runs on a path alone: BOARD_READS, the kinds of KiCad file and the
+host tier runs: HOST_READS, the firmware tree, the task definition file, the
+workflow declarations and the few other files its tests open, which the complete
+verification holds to being the whole of what the tier reads by running the tier
+in a tree holding only those paths. So is what decides whether the board tier runs on a path alone: BOARD_READS, the kinds of KiCad file and the
 files a board design is listed as reading, which the board tooling lists
 through a task of its own.
 
@@ -55,7 +59,8 @@ branching from a freshly fetched main rather than checked for here. The base is 
 branch cannot shadow. When the base cannot be resolved, or the changed paths or
 the changed lines cannot be read, or the lines of a changed C source or header
 cannot, the gate cannot tell what changed, and it runs the emulation tier rather
-than guessing that nothing did.
+than guessing that nothing did. The host tier is judged on the changed paths alone
+and, when those cannot be told, it runs as well.
 
 The changed lines come from the same measurement: a changed line is a line on
 the new side of a zero-context diff from that merge-base to the working tree,
@@ -66,8 +71,9 @@ a deletion moves or removes them. The diff options and environment that shape
 a hunk are pinned; a content filter a repository declares in its gitattributes
 is the repository's own and is applied, and this repository declares none for
 the sweep's sources. When those
-lines cannot be told, the host and emulation tiers still run as they do for any
-change the gate cannot measure, and the sweep step then fails the round, saying
+lines cannot be told, the emulation tier still runs as it does for any change the
+gate cannot measure, the host tier is judged by the paths, which are still known,
+and the sweep step then fails the round, saying
 why and what to do: it cannot clear the change as touching no plant line, and
 the round never runs the full sweep in place of the restricted one. A path whose
 own lines alone cannot be read is handed to the sweep as such, and fails the
@@ -141,6 +147,35 @@ EMULATION_READS = (
 )
 
 
+#: Every path the host tier reads, from the repository root. An entry ending in
+#: "/" covers everything beneath it. The firmware tree is taken whole: the
+#: sources, headers and parameter descriptions the host builds and runs, the
+#: build configuration, the tooling and the tests of that tooling the tier
+#: discovers and runs. The Taskfile is what names and runs every host task, and
+#: the workflow declarations are read by the firmware tooling's own tests, which
+#: check that the nightly runs the complete verification and that the hosted jobs
+#: agree with the Taskfile, so a change to either can fail the tier. The few
+#: other files are each one the tooling's tests open, named singly so that a
+#: board design change does not pay for the host tier: the project instructions
+#: and the hardware notes, whose text the tests check against the gate's
+#: behaviour; the board check and the rasteriser's code and the board tooling
+#: test they read the minimum tool versions and class names from; and
+#: .gitattributes, which a test asks git about for the sweep's sources. The
+#: complete verification holds this to being the whole of what the tier reads,
+#: by running the tier in a git repository of the tracked files under these paths
+#: and nothing else.
+HOST_READS = (
+    "firmware/",
+    "Taskfile.yml",
+    ".github/workflows/",
+    "CLAUDE.md",
+    ".gitattributes",
+    "hardware/README.md",
+    "hardware/tools/board_check.py",
+    "hardware/tools/board_views.py",
+    "hardware/tools/tests/test_board_check_kicad.py",
+)
+
 #: Every path the board tier reads that is not a KiCad file wherever it sits: the
 #: hardware tree, which holds the designs and the tooling that checks them, the
 #: round gate's own code, and the task runner's definition file, taken whole as
@@ -172,7 +207,7 @@ WHOLE_REPOSITORY = "./"
 
 
 def reads(path: str, triggers: tuple[str, ...] = EMULATION_READS) -> bool:
-    """Whether the emulation tier reads the path, a repository-relative one."""
+    """Whether a tier reads the path, a repository-relative one: the emulation tier unless told which."""
     return any(
         path.startswith(entry) if entry.endswith("/") else path == entry
         for entry in triggers
@@ -515,6 +550,53 @@ def scope(change: Change, base_ref: str = BASE_REF) -> Scope:
     )
 
 
+@dataclass
+class HostScope:
+    """Whether the host tier runs, and the statement of why."""
+
+    run: bool
+    reason: str
+    judged: list[str] = field(default_factory=list)
+
+    @property
+    def would(self) -> str:
+        """What the tier would have done had the round reached it, as a verb phrase."""
+        return "run" if self.run else "been skipped"
+
+
+def host_scope(change: Change, base_ref: str = BASE_REF) -> HostScope:
+    """Whether the host tier runs for the change, and why.
+
+    The tier is judged on the changed paths alone, as the board tier is, so
+    changed lines that cannot be told do not make it run; changed paths that
+    cannot be told do, rather than the tier being skipped on a guess.
+    """
+    at = f"HEAD {change.head}" if change.head else "HEAD"
+    if change.paths is None:
+        return HostScope(
+            True,
+            f"could not tell what changed at {at}: {change.problem}. "
+            "Running the host tier rather than skipping it.",
+        )
+    against = (
+        f"measured from merge-base {change.base} with {base_ref} "
+        f"to {at} and the working tree"
+    )
+    read = [path for path in change.paths if reads(path, HOST_READS)]
+    if read:
+        return HostScope(
+            True, f"the branch changes {len(read)} path(s) the host tier reads, {against}:", read
+        )
+    if not change.paths:
+        return HostScope(False, f"the branch changes nothing, {against}.")
+    return HostScope(
+        False,
+        f"none of the {len(change.paths)} changed path(s) is one the host tier reads, "
+        f"{against}. Changed paths judged:",
+        list(change.paths),
+    )
+
+
 def board_scope(
     change: Change,
     listing: Callable[[], tuple[list[str] | None, str]],
@@ -618,16 +700,21 @@ def list_reads(task: str, name: str, repo: str) -> tuple[list[str] | None, str]:
     return [line.strip() for line in output.splitlines() if line.strip()], ""
 
 
-def _tiers(host: list[str], emulation: list[str], ran_emulation: bool,
+def _tiers(host: list[str], ran_host: bool, emulation: list[str], ran_emulation: bool,
            board: list[str], ran_board: bool) -> str:
     """The clause saying which tiers ran and passed, and the tasks each ran."""
-    parts = [("host", host)]
+    parts = []
+    if ran_host:
+        parts.append(("host", host))
     if ran_emulation:
         parts.append(("emulation", emulation))
     if ran_board:
         parts.append(("board", board))
+    if not parts:
+        return "no tier ran, the host, emulation and board tiers each having been skipped"
     if len(parts) == 1:
-        return f"the host tier ran and passed ({', '.join(host)})"
+        kind, tasks = parts[0]
+        return f"the {kind} tier ran and passed ({', '.join(tasks)})"
     named = [f"the {kind} tier ({', '.join(tasks)})" for kind, tasks in parts]
     if len(named) == 2:
         return f"{named[0]} and {named[1]} both ran and passed"
@@ -822,12 +909,21 @@ def gate(
     """Run the round, print what it did and why, and return its exit status."""
     change = changed(repo)
     chosen = scope(change)
+    chosen_host = host_scope(change)
     chosen_board = board_scope(change, lambda: list_reads(task, board_reads, repo))
     _say(
-        "round gate: the host tier always runs; the emulation tier runs only for a change it "
-        "reads; the board tier runs only for a change to a board design, anything one reads, the "
-        "board check or the round gate itself; then the mutation sweep runs over the mutants on "
-        "the plant lines the branch changes, and never over the full population."
+        "round gate: the host tier runs only for a change to something it reads, the firmware "
+        "tree, the task definition file, the workflow declarations or the few other files its "
+        "tests open; the emulation tier runs "
+        "only for a change it reads; the board tier runs only for a change to a board design, "
+        "anything one reads, the board check or the round gate itself; then the mutation sweep "
+        "runs over the mutants on the plant lines the branch changes, and never over the full "
+        "population. Each of them runs anyway when the round cannot tell what changed."
+    )
+    _statement(
+        "round gate: host tier WILL RUN, because" if chosen_host.run
+        else "round gate: host tier WILL BE SKIPPED, because",
+        chosen_host,
     )
     _statement(
         "round gate: emulation tier WILL RUN, because" if chosen.run_emulation
@@ -843,17 +939,17 @@ def gate(
     if change.lines_unknown_because:
         _say(
             "round gate: the round cannot tell which plant lines the branch changes "
-            f"({change.lines_unknown_because}). The host and emulation tiers still run, and the "
+            f"({change.lines_unknown_because}). The emulation tier still runs, and the "
             "sweep step will then FAIL the round."
         )
     elif unread_sources(change):
         _say(
-            "round gate: the lines of a changed source could not be read. The host and emulation "
-            "tiers still run, and the sweep then FAILS the round if that source is in its "
+            "round gate: the lines of a changed source could not be read. The emulation "
+            "tier still runs, and the sweep then FAILS the round if that source is in its "
             "population."
         )
 
-    for name in host:
+    for name in host if chosen_host.run else []:
         status = _run(task, name, "host", repo)
         if status != 0:
             _say()
@@ -880,7 +976,10 @@ def gate(
                 _say(
                     f"ROUND GATE FAILED: the emulation tier failed at {name} (exit status {status})."
                 )
-                _say(f"The host tier ran and passed ({', '.join(host)}).")
+                if chosen_host.run:
+                    _say(f"The host tier ran and passed ({', '.join(host)}).")
+                else:
+                    _statement("The host tier was correctly SKIPPED, because", chosen_host)
                 _statement(
                     "The board tier was NOT REACHED, so it neither passed nor failed. Had the "
                     f"emulation tier passed, it would have {chosen_board.would}, because",
@@ -890,7 +989,7 @@ def gate(
                 return 1
 
     if chosen_board.untracked:
-        before = _tiers(host, emulation, chosen.run_emulation, board, False)
+        before = _tiers(host, chosen_host.run, emulation, chosen.run_emulation, board, False)
         _say()
         _say(
             f"ROUND GATE FAILED: the board tier did not run the board check, because the working "
@@ -903,6 +1002,10 @@ def gate(
         for path in chosen_board.untracked:
             _say(f"    {path}")
         _say(before[0].upper() + before[1:] + ".")
+        if not chosen_host.run:
+            _statement("The host tier was correctly SKIPPED, because", chosen_host)
+        if not chosen.run_emulation:
+            _statement("The emulation tier was correctly SKIPPED, because", chosen)
         _say(NOT_REACHED)
         return 1
 
@@ -912,7 +1015,7 @@ def gate(
                 task, name, repo, LABEL, "board tier", MISSING_TOOL
             )
             if status != 0:
-                before = _tiers(host, emulation, chosen.run_emulation, board, False)
+                before = _tiers(host, chosen_host.run, emulation, chosen.run_emulation, board, False)
                 _say()
                 if missing:
                     _say(
@@ -931,6 +1034,8 @@ def gate(
                         "above names each violation or failing test."
                     )
                 _say(before[0].upper() + before[1:] + ".")
+                if not chosen_host.run:
+                    _statement("The host tier was correctly SKIPPED, because", chosen_host)
                 if not chosen.run_emulation:
                     _statement("The emulation tier was correctly SKIPPED, because", chosen)
                 _statement("The board tier ran because", chosen_board)
@@ -940,12 +1045,16 @@ def gate(
     outcome = sweep_step(task, sweep, repo, change)
 
     _say()
-    tiers = _tiers(host, emulation, chosen.run_emulation, board, chosen_board.run)
+    tiers = _tiers(host, chosen_host.run, emulation, chosen.run_emulation, board, chosen_board.run)
     if outcome.failed:
         _say(f"ROUND GATE FAILED: {outcome.verdict}.")
         _say(tiers[0].upper() + tiers[1:] + ".")
     else:
         _say(f"ROUND GATE PASSED: {tiers}, and {outcome.verdict}.")
+    if chosen_host.run:
+        _statement("The host tier ran because", chosen_host)
+    else:
+        _statement("The host tier was correctly SKIPPED, because", chosen_host)
     if chosen.run_emulation:
         _statement("The emulation tier ran because", chosen)
     else:

@@ -1,0 +1,25 @@
+id: SOL-VERIFY-ROUND-GATE-HOST-TIER-BY-PATH
+type: deliverable
+category: solution
+title: A build round's gate runs each tier only for the changes it exercises
+status: active
+version: 1
+text: |
+  The task runner's build-round gate runs each tier only for a change that can move it. The emulation tier runs when the branch changes something the emulation reads, as it did before. The host tier, which had run in full on every round, now runs when the branch changes something it reads: the firmware tree, the task runner's declaration, the automation workflow declarations the firmware tooling's tests check, and the few other files those tests open. A round that changes only requirement-graph nodes, a board design, or documents no host test opens runs neither. Both selections are measured from the branch's merge-base with main, include uncommitted changes and new files, fail closed to running when the change cannot be told, and say in plain statements what ran and what was skipped and why.
+
+  The set of paths the host tier reads is declared once, beside the gate. The complete verification holds that declaration to being the whole of what the tier reads by running the tier in a tree that holds only those paths, so a test that starts reading anything else fails at night rather than slipping past the round's selection.
+
+  This solution replaces the earlier round-gate solution, whose criteria required the host tier to run on every invocation. That solution's emulation selection, its rule for a change that cannot be told, and its documentation criterion carry forward here unchanged in substance.
+rationale: |
+  Removing the mutation sweep from the round left the host tier as the floor of every round, about ten minutes of processor time, and a round that changed nothing the firmware reads still paid it. The tier is the only one that catches memory and undefined-behaviour defects, so it cannot be thinned inside a round that touches firmware; it can be skipped by a round that cannot have moved it. The skip is safe only while the declared reads are the whole of what the tier reads, which is why a criterion asserts that and the nightly checks it, rather than leaving it as an assumption in prose.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: DEC-VERIFICATION-ROUND-TARGETED-NIGHTLY-FULL
+    type: justified-by
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C3
+    type: targets
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C1
+    type: targets
+  - target: SOL-VERIFY-ROUND-GATE-TARGETED
+    type: supersedes

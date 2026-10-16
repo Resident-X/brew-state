@@ -1,12 +1,14 @@
 # The complete verification, run against main every night on hosted runners.
 #
-# A build round's gate is targeted: it runs the host tier in full but the
-# emulation tier only when a branch touches what the emulation reads, the board
-# tier only when a branch touches a board design, what one reads or the board
-# tooling, and the mutation sweep only over the plant lines a branch changes.
-# This is where everything the round can skip runs anyway -- the emulation tier
-# and the board tier unconditionally and the sweep over its whole population --
-# so its run history is the record of what main last verified.
+# A build round's gate is targeted: it runs the host tier only when a branch
+# touches what the host tier reads, the emulation tier only when a branch
+# touches what the emulation reads, the board tier only when a branch touches a
+# board design, what one reads or the board tooling, and the mutation sweep only
+# over the plant lines a branch changes. This is where everything the round can
+# skip runs anyway -- the emulation tier and the board tier unconditionally, the
+# host tier again in a closed tree holding only the files the round declares it
+# reads (fw:host-closure), and the sweep over its whole population -- so its run
+# history is the record of what main last verified.
 #
 # The gates are not listed here. `task fw:verify` is the single declaration of
 # the complete verification, and this runs that declaration with the sweep left

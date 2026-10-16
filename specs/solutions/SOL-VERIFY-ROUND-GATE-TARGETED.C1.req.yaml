@@ -1,7 +1,7 @@
 id: SOL-VERIFY-ROUND-GATE-TARGETED.C1
 type: criterion
 title: The round gate runs the host tier in full and the emulation tier only for changes it exercises
-status: active
+status: deprecated
 version: 2
 measurement_type: binary
 verification: test

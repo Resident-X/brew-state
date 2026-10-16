@@ -1,0 +1,12 @@
+id: SOL-TOOL-TESTS-RUN-SIDE-BY-SIDE.C2
+type: criterion
+title: The tooling test run fails when it finds nothing to run or any module does not pass
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The run fails, with a statement of the cause, when the test directory is absent or holds no test module, when a module runs no test, when a module's test count cannot be read from its output, and when any module fails or cannot be started. It prints the output of every module that did not pass after the per-module lines, and it passes only when at least one module was found, every module passed and at least one test ran. Tests over synthetic test directories drive a passing module, a failing module, an empty directory, a missing directory, a module that fails to import, a module with no tests, a worker count of one and an invalid worker count, and each fails if the verdict is wrong. Out of scope: the content of any module's own tests, and the count of tests the tooling carries.
+links:
+  - target: SOL-TOOL-TESTS-RUN-SIDE-BY-SIDE
+    type: criterion-of

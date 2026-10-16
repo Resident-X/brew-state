@@ -1,0 +1,12 @@
+id: SOL-VERIFY-ROUND-GATE-HOST-TIER-BY-PATH.C4
+type: criterion
+title: The complete verification runs the host tier in a tree holding only the paths the round declares it reads
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The complete verification builds a tree from the tracked files under exactly the paths the round gate declares the host tier reads, runs the host tier's builds, build-time checks and tests in it, and fails when any of them fails. A declared set that selects no tracked file fails the run rather than passing it. A test over a synthetic tree shows the run failing when a host test is made to read a file outside the declared paths, and passing when every file it reads lies inside them. The round does not run this check; the nightly does, through the complete verification's declaration. Out of scope: how long the run takes, and the emulation and board tiers.
+links:
+  - target: SOL-VERIFY-ROUND-GATE-HOST-TIER-BY-PATH
+    type: criterion-of

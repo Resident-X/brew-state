@@ -1,7 +1,7 @@
 id: SOL-VERIFY-ROUND-GATE-TARGETED.C2
 type: criterion
 title: The round gate runs everything when it cannot tell what changed
-status: active
+status: deprecated
 version: 2
 measurement_type: binary
 verification: test
