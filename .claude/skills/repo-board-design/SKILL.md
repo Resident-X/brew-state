@@ -8,5 +8,5 @@ description: Entry point for designing or reviewing a controller board in KiCad 
 The single source of every instruction is [`docs/board-design-method.md`](../../../docs/board-design-method.md). Read it before doing anything else, and follow it in the order it gives. This skill adds nothing to it.
 
 - Load Konnect's bundled skills as they ship, without editing them: `konnect`, `kicad-schematic`, `kicad-pcb`, `kicad-library`, `kicad-review` and `kicad-manufacture`.
-- Do all board work in the main session. Tools Konnect loads mid-session are not visible to subagents.
+- Do all board work in the main session, as the method's [board editor section](../../../docs/board-design-method.md#the-board-editor-driven-by-an-agent) requires.
 - Where a bundled Konnect skill conflicts with the method, the method governs.
