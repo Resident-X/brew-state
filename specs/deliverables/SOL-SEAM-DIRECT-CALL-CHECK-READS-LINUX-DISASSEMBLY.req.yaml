@@ -16,3 +16,7 @@ links:
     type: targets
   - target: OBL-OPEN-SOURCE-MAINTAINABILITY-001.C1
     type: targets
+brief_confirmation:
+  confirmer: claude-sonnet-5-5
+  fingerprint: 26d31206935da15ea9d593580504bfebc1aabc46b14f84133a498eb28aeb3aa8
+  gating_profile: ""
