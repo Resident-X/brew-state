@@ -17,6 +17,7 @@ These are needed in addition to the tools the pre-order check needs (KiCad 10, P
 | A Java runtime, which Freerouting runs on | Eclipse Temurin OpenJDK 26.0.1 | https://adoptium.net/ or any other Java distribution. Freerouting 2.5.0 is built for Java 25, so it needs Java 25 or newer. |
 | resvg, the SVG rasteriser that turns the [layout review views](#layout-review-views) into images | resvg 0.48.1 and resvg 0.47.0; the command refuses one older than 0.47 | A prebuilt program from https://github.com/linebender/resvg/releases: the v0.47.0 release carries one for each of Windows (`resvg-win64.zip`), macOS and Linux (x86_64), and later releases carry them for macOS and Linux only. Or `brew install resvg` with Homebrew, on macOS or Linux. Or `cargo install resvg` with a Rust toolchain from https://rustup.rs/, on any operating system. Set `RESVG=/path/to/resvg` when it is not on the search path. |
 | A monospaced font for the captions of the layout review views: DejaVu Sans Mono, or Menlo, Consolas, Liberation Mono or Courier New, the captions being drawn in the first of these that resvg finds among the system's fonts | Menlo, as macOS carries it | macOS carries Menlo and Windows carries Consolas. Elsewhere, install DejaVu Sans Mono from https://dejavu-fonts.github.io/ or your system's package of it (for example `fonts-dejavu`). Without one the command stops with `CANNOT RUN`. |
+| Konnect, the MCP server through which the agent drives KiCad's editors. It needs an agent client that speaks MCP (the Model Context Protocol), such as Claude Code, to launch it and call its tools; a session without one cannot carry out the steps that name Konnect. It ships skills of its own (`konnect`, `kicad-schematic`, `kicad-pcb`, `kicad-library`, `kicad-review`, `kicad-manufacture`), which are used as they ship. | Konnect 0.13.0, with KiCad 10.0.7 | Install it through KiCad's Plugin and Content Manager, or from https://github.com/mixelpixx/Konnect/releases (the v0.13.0 release). Its licence is AGPL-3.0. Then register it with your MCP client as that client describes. |
 | ngspice, the circuit simulator, as a program of its own. KiCad embeds ngspice only as a library, behind its simulator window, so the command-line program the steps below run is installed separately. | ngspice 47, on a netlist exported by KiCad 10.0.7's `kicad-cli` | https://ngspice.sourceforge.io/download.html. On macOS, `brew install ngspice` with Homebrew (https://brew.sh/), which is how the version opposite was installed. On Linux, the distribution's `ngspice` package. On Windows, the release archive from the download page, whose console program is `ngspice_con.exe`. |
 
 KiCad's bundled Python is the one that can `import pcbnew`. Its usual location:
@@ -31,7 +32,7 @@ To check it, run `<KiCad's Python> -c "import pcbnew; print(pcbnew.Version())"`.
 
 The commands below are written for a POSIX shell, the terminal on macOS or Linux, and were exercised on macOS. On Windows, run them in PowerShell. The `task` commands are typed as written. In the others, write `$env:KICAD_PYTHON` and `$env:FREEROUTING_JAR` where a command says `"$KICAD_PYTHON"` and `"$FREEROUTING_JAR"`, and start a command that begins with KiCad's Python with `& `, for example `& $env:KICAD_PYTHON -c "import pcbnew; print(pcbnew.Version())"`. Set them with `$env:KICAD_PYTHON = "C:\Program Files\KiCad\10.0\bin\python.exe"`. The Windows forms have not been exercised.
 
-KiCad's bundled Python is used here only for the router's export and import. In KiCad 10.0.7 its `pcbnew` module was found unreliable for anything else: some objects it returns come back unwrapped, without their methods, so a net's class could not be asked for its clearance. Nothing else in this method reads or changes the board through it.
+KiCad's bundled Python is used here for the router's export and import, and for the edits Konnect cannot make ([What Konnect cannot do, and the workaround](#what-konnect-cannot-do-and-the-workaround)). In KiCad 10.0.7 its `pcbnew` module was found unreliable for reading the board back: some objects it returns come back unwrapped, without their methods, so a net's class could not be asked for its clearance. Nothing else in this method reads the board through it.
 
 ### The board editor, driven by an agent
 
@@ -59,6 +60,23 @@ While an editor holds a board open, KiCad keeps a lock file beside it, `~<board>
 Delete the project's lock file too, even though the board tooling looks only at the board's: a board editor reopening the board over a stale lock file with its own user and host name was measured to open it without asking and take over the board's lock file, but to leave the stale project lock file in place after it quit.
 
 Where a judgement is visual, the agent looks at a rendered view of the board, never at the editor window: Konnect's export toolset and `kicad-cli pcb export svg` both render the board's layers, `task hw:views` renders every view the layout review judges a board on ([Layout review views](#layout-review-views)), and `task hw:placement` renders a placed board's parts with their unrouted connections and measures them ([Placement](#placement)). What to look for is the [layout review](#layout-review) step's.
+
+#### Konnect's skills, and where they conflict with this method
+
+Load Konnect's bundled skills as they ship and do not edit them. Where one of them conflicts with this method, this method governs. The case that matters most is routing: Konnect's own routing export refuses the rounded pads that standard surface-mount footprints use, so whatever a bundled skill says about autorouting, routing here goes through KiCad's exporter, Freerouting from its command line and KiCad's importer ([Routing](#routing-critical-nets-by-hand-and-locked-then-the-rest), steps 6 and 7), and the result is judged by KiCad's own rule checks, never by the router's report.
+
+#### What Konnect cannot do, and the workaround
+
+In Konnect 0.13.0, with KiCad 10.0.7, these were found to be beyond its tools:
+
+- deleting a via;
+- creating or editing a rule area (a zone carrying a keepout);
+- moving a footprint's text fields, such as its reference or value;
+- swapping a placed footprint for another while keeping its link to its schematic symbol.
+
+Each is done with KiCad's scripting, on the board closed in every editor (the closing steps above), run with `KICAD_PYTHON`: load the board with `pcbnew.LoadBoard`, make the change, refill the zones, and save. To show the save is stable, refill and save a second time and compare the two files byte for byte, with `cmp` or on Windows `fc /b`; they must be identical. KiCad leaves a `.history/` folder and a `<board>.kicad_prl` file beside the board: delete both before committing. This is the one use of `pcbnew` besides the router's export and import; the reason for keeping it narrow is given above, so use it to make those edits only, and read the result back with KiCad's own checks.
+
+Two further limits of Konnect bear on the steps. Net classes written to the project file are not seen by a board that is open until it is reopened, so confirm them by reading them back ([Rules before routing](#rules-before-routing), step 3). Konnect's placement score reports full marks when it cannot match decoupling capacitors to their integrated circuit, so a full score with any unmatched capacitor is unresolved, never a pass.
 
 ## Proving value-critical circuits before layout
 
