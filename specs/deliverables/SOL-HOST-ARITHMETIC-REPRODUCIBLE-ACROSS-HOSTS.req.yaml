@@ -21,3 +21,7 @@ links:
     type: targets
   - target: OBL-VERIFICATION-DISCIPLINE-001.C2
     type: targets
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: 97f00a5a83d1f3b0ccdfec27ee486ef9b90a9b0ad05cb285446e371999d83930
+  gating_profile: ""
