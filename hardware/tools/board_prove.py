@@ -494,7 +494,6 @@ def track_at(tree: list, a: Tuple[float, float], b: Tuple[float, float]) -> list
 #: /LV_B's 45-degree run into R2's pad 2.
 LV_A_ENDS = ((40.0, 10.0), (45.0, 10.0))
 LV_B_RUN = ((40.0, 12.54), (52.62, 12.54))
-LV_B_RUN = ((40.0, 12.54), (52.62, 12.54))
 LV_B_BEND = ((52.62, 12.54), (55.16, 10.0))
 
 
