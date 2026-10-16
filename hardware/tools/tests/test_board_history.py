@@ -1018,6 +1018,39 @@ class PlanAndCopperFails(Base):
                 self.record(one, two, board(PLACES[1]))
                 self.assertFails(words, check="plan before placement")
 
+    def test_a_repeated_region_name_stops_the_plan_check_rather_than_comparing_a_plan_with_its_own_copy(self):
+        # SOL-BOARD-FLOORPLAN-REGION-NAMES-DISTINCT.C1: Change the floorplan reader so it stops, naming the region, when two rows of the floorplan carry the same region name, so the history command's plan compare never judges a plan against an identical copy of itself as changed and never hides a change to one row behind another. Tests in throwaway repositories show a plan with a repeated region name stops rather than fails as changed, in the history command and in the placement command, and that a plan with distinct names is read as before.
+        twice = PLAN.replace("\n\n## Plan", "\n| digital | none | nothing | none |\n\n## Plan")
+        hidden = PLAN.replace("\n\n## Plan", "\n| low voltage | (0, 0)–(60, 40) | a second row | R1 |\n\n## Plan")
+        cases = {
+            "an identical plan before and after": (twice, twice),
+            "the repeat only in the plan judged": (PLAN, twice),
+            "the repeat only in the plan before placement": (twice, PLAN),
+            "a changed second row behind the first": (PLAN, hidden),
+        }
+        for name, (then, now) in cases.items():
+            with self.subTest(case=name):
+                self.repo = Repo(self)
+                self.repo.replan(then)
+                self.repo.planned()
+                one, two = self.candidates_two(board(PLACES[1]), board(PLACES[2]))
+                self.repo.replan(now)
+                self.record(one, two, board(PLACES[1]))
+                failed = self.assertFails("repeats the name of an earlier region row", check="plan before placement")
+                text = "\n".join(failed)
+                self.assertNotIn("set of region names", text)
+                self.assertNotIn("has the bounds", text)
+                self.assertNotIn("agrees with", text)
+
+    def test_region_names_differing_only_in_case_or_spacing_are_distinct_regions_and_pass(self):
+        # SOL-BOARD-FLOORPLAN-REGION-NAMES-DISTINCT.C1: Change the floorplan reader so it stops, naming the region, when two rows of the floorplan carry the same region name, so the history command's plan compare never judges a plan against an identical copy of itself as changed and never hides a change to one row behind another. Tests in throwaway repositories show a plan with a repeated region name stops rather than fails as changed, in the history command and in the placement command, and that a plan with distinct names is read as before.
+        variants = PLAN.replace("\n\n## Plan", "\n| Digital | none | nothing | none |\n| digital 2 | none | nothing | none |"
+                                "\n\n## Plan")
+        self.repo.replan(variants)
+        self.repo.placed()
+        lines, _ = self.assertPasses()
+        self.assertIn("CHECK | plan before placement | PASS |", "\n".join(lines))
+
     def test_a_part_appended_to_a_region_before_its_footprint_first_appears_passes(self):
         # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: the only allowed difference being references appended to a region's parts, each listed in the plan of every parent of the commit where its footprint first appears, each such parent coming after the commit before the first placement
         self.repo.planned()
