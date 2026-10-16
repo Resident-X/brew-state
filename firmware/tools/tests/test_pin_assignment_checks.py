@@ -286,6 +286,12 @@ class UnusableRecord(PinAssignmentCase):
         self.pair.write(self.pair.record, "channels: [unclosed\n  - : :\n")
         self.failing("cannot be parsed")
 
+    def test_a_record_with_bytes_that_are_not_text_cannot_be_inspected(self):
+        # SOL-FW-PIN-ASSIGNMENT-MATCHES-RECORD.C2: A record that cannot be parsed fails.
+        with open(self.pair.record, "wb") as handle:
+            handle.write(b"\xff\xfe\x00bad")
+        self.uninspectable("pin allocation record", "cannot be read")
+
     def test_a_record_repeating_a_key_fails(self):
         # SOL-FW-PIN-ASSIGNMENT-MATCHES-RECORD.C2: A record that repeats a key fails.
         self.pair.write(

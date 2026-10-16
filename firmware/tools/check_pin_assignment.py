@@ -53,7 +53,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from check_actuation_declaration import VOCABULARY_HEADER, vocabulary  # noqa: E402
-from check_support_status import Uninspectable  # noqa: E402
+from check_support_status import Uninspectable, read_input  # noqa: E402
 from vendor_symbols import strip_comments_and_strings  # noqa: E402
 
 #: The array the firmware lists each output channel's pin in.
@@ -120,9 +120,13 @@ def strict_yaml(yaml, text: str):
     return yaml.load(text, Loader=Loader)
 
 
-def read_record(path: str) -> tuple[dict[str, list[str]], list[str]]:
+def read_record(
+    path: str, key: str = RECORD_CHANNEL
+) -> tuple[dict[str, list[str]], list[str]]:
     """The record's pins by channel, and what stops the record being usable.
 
+    `key` is the entry key that names a channel for the check reading the
+    record; an entry without it belongs to another check and takes no part.
     Each channel maps to every pin the record gives it, in order, so a channel
     named twice is visible rather than collapsed into the last entry.
     """
@@ -131,8 +135,7 @@ def read_record(path: str) -> tuple[dict[str, list[str]], list[str]]:
         raise Uninspectable(f"no pin allocation record at {path}")
 
     problems: list[str] = []
-    with open(path, "r", encoding="utf-8") as handle:
-        text = handle.read()
+    text = read_input(path, "pin allocation record")
     try:
         document = strict_yaml(yaml, text)
     except RecordForm as refused:
@@ -150,12 +153,12 @@ def read_record(path: str) -> tuple[dict[str, list[str]], list[str]]:
         if not isinstance(entry, dict):
             problems.append(f"{where}: it is not a mapping of keys")
             continue
-        if RECORD_CHANNEL not in entry:
+        if key not in entry:
             # Held by the board check, which compares the rest of the record.
             continue
-        channel = entry[RECORD_CHANNEL]
+        channel = entry[key]
         if not isinstance(channel, str) or not channel.strip():
-            problems.append(f"{where}: its '{RECORD_CHANNEL}' is empty or not a name")
+            problems.append(f"{where}: its '{key}' is empty or not a name")
             continue
         pin = entry.get(RECORD_PIN)
         if pin is None:
@@ -171,7 +174,7 @@ def read_record(path: str) -> tuple[dict[str, list[str]], list[str]]:
 
     if not pins and not problems:
         problems.append(
-            f"record {path}: no entry carries '{RECORD_CHANNEL}', so it names no channel to "
+            f"record {path}: no entry carries '{key}', so it names no channel to "
             "compare and would pass any firmware"
         )
     return pins, problems
@@ -204,8 +207,7 @@ def read_firmware(path: str, channels: list[str]) -> tuple[dict[str, str], list[
     if not os.path.isfile(path):
         raise Uninspectable(f"no firmware source at {path}")
 
-    with open(path, "r", encoding="utf-8") as handle:
-        cleaned = strip_comments_and_strings(handle.read())
+    cleaned = strip_comments_and_strings(read_input(path, "firmware source"))
 
     declarations = list(_TABLE_DECLARATION.finditer(cleaned))
     if not declarations:

@@ -544,6 +544,7 @@ task runner. Six of them also run automatically inside every `pio run`.
 | `check_machine_claim.py` | A structure declares nothing about whether its equations describe a machine, declares it more than once, or declares something outside the vocabulary. Also fails a vocabulary that has grown a distinction beyond that one, and a tree in which no structure describes a machine at all, since the mutation sweep would then draw its mutants from an empty population. Runs inside every build, over every structure in the tree rather than the one the build selected. |
 | `check_support_status.py` | A structure declares no support status, declares one outside the vocabulary, claims hardware verification without citing it, or is documented with a status its own header does not claim. Also fails a vocabulary that has grown a distinction beyond whether hardware has verified the structure. Runs inside every build, over every structure in the tree rather than the one the build selected. |
 | `check_pin_assignment.py` | The firmware's channel-to-pin assignment differs from a pin allocation record: a channel the firmware assigns that no record entry names, a record entry naming a channel the firmware does not assign, a channel on a different pin than the record names, a channel named twice, or two channels on one pin; a record that cannot be parsed, repeats a key, names no channel, or has an entry naming a channel without a usable `controller_pin`; or firmware in which no pin table is found. Not run by `fw:check` yet, since no machine's record exists to give it; its tests run in `fw:test`. |
+| `check_sensor_assignment.py` | The firmware's sensor-channel-to-pin assignment differs from a pin allocation record, through the controller's converter-input map: a channel the firmware assigns that no record entry names, a record entry naming a channel the firmware does not assign or states as wired to no input, a channel whose converter input resolves to a different pin than the record names, a converter input the map does not list, a channel or converter input named twice, or two channels on one pin; a map or record that cannot be parsed, repeats a key or lists nothing to compare; or firmware in which no converter-channel table is found. Not run by `fw:check` yet, since no machine's record or map exists to give it; its tests run in `fw:test`. |
 
 `check_pin_assignment.py` compares the firmware with whichever pin allocation
 record it is given, so a board and the code that drives it cannot disagree about
@@ -560,11 +561,29 @@ the `HAL_GPIO_Init` call that consumes it, and writes each pin as the port
 letter then number, as in `PC6`. It matches each channel to the record entry
 whose `firmware_channel` names it, and takes no part in the rest of the record,
 which the board check holds. Each failure names the channel and both pins where
-both exist. It covers the output channels; comparing sensor channels is
-separate work. It needs PyYAML (`pip install pyyaml`, or the `python3-yaml`
-package), as the mutation sweep does: without it the check exits 2 and says it
+both exist. It covers the output channels; `check_sensor_assignment.py` covers the sensor
+channels. It needs PyYAML (`pip install pyyaml`, or the `python3-yaml` package), as the mutation sweep does: without it the check exits 2 and says it
 could not inspect, which is not a pass, and its tests require PyYAML rather than
 skip. Its tests use synthetic firmware, vocabulary and records only.
+
+`check_sensor_assignment.py` is the sensor half of that comparison:
+
+```
+python3 tools/check_sensor_assignment.py --firmware <source> --include-dir <dir> --record <pin-allocation.yaml> --map <controller-input-map.yaml>
+```
+
+A sensor channel is held on a converter input, which names a controller pin
+only through a map specific to the controller. It reads the firmware's
+converter-channel table, the positional array of converter inputs in the order
+of the sensor channel enumeration, resolves each input through the map's
+`inputs` list (`converter_input` as the firmware names it, `controller_pin`
+written as the record writes a pin), and compares the result with the record
+entries that carry a `firmware_sensor` key, leaving every other entry to the
+checks that own it. A channel the firmware states as wired to no input is not an
+assignment, so a record entry naming a pin for it fails. It uses the output pin
+check's strict reader, exit statuses (0 matches, 1 mismatch, 2 could not
+inspect) and PyYAML requirement, and its tests use synthetic firmware, maps and
+records only.
 
 The plant model's invariants are additionally exercised across the range each
 coefficient declares admissible, rather than at the one nominal value. The
