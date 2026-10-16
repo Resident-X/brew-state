@@ -2,11 +2,11 @@ id: SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C5
 type: criterion
 title: Every build that compiles the plant computes with the same pinned arithmetic
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |
-  Contraction of a multiply and an add is pinned off in the build of the host and test environments, the mutation build, the emulation plant library and the target firmware, and the single-precision exponential, exponential-minus-one and sine the plant calls are one project-owned implementation in the plant's shared sources, compiled into each of those builds in place of the host's maths library, with its accuracy bound against a double-precision reference stated beside it and checked by a test. Out of scope: square root and absolute value, which are exact on every host, and the timing of the implementation on the target.
+  Contraction of a multiply and an add is pinned off in the build of the host and test environments, the mutation build, the emulation plant library and the target firmware, and the single-precision exponential, exponential-minus-one and sine the plant calls are one project-owned implementation in the plant's shared sources, compiled into each of those builds in place of the host's maths library, with its accuracy bound against a double-precision reference stated beside it and checked by a test. Every mutant the mutation sweep draws from that implementation is killed by a test or carries a judgement in the triage record, so the full sweep run nightly reports no unreviewed survivor. Out of scope: square root and absolute value, which are exact on every host, and the timing of the implementation on the target.
 links:
   - target: SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS
     type: criterion-of
