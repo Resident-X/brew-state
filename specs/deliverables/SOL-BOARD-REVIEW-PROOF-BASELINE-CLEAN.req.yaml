@@ -3,13 +3,15 @@ type: deliverable
 category: solution
 title: The layout review's proof design meets every catalogue item its own review found it failing, and the catalogue carries what that review owes
 status: active
-version: 1
+version: 2
 text: |
   Why this exists. The layout review's proof design is the clean baseline the seeded layout-review proof and the workmanship proof place their seeds against, and the seeded proof's rule is that a finding showing a real defect in the clean design is fixed in the design and the proof repeated. The design's first recorded layout review, made while its workmanship was tidied, found it failing items that have nothing to do with workmanship and that it already failed when the seeded proof first committed it: the microcontroller placed far from the regulator that feeds it (finding 1.1, FLOOR-3), one via carrying the shunt's full load-current return where several are needed (1.2, POWER-3), parts within the keep-clear distance of the crystal (1.5, CLOCK-3), the connector's filter capacitor away from its connector (1.7, EMI-3), mains copper reaching under the isolating part toward its low-voltage pads (2.4, MAINS-3, a safety item), four-wire test pads reaching the shunt only through the planes (1.49), paste printed over an exposed pad's thermal vias (1.50), no mounting holes (1.51), and pads joined to ground with no thermal relief (2.8). The workmanship work fixed only what its own tidying introduced, and left these open in the design's review record. The same review also names amendments it owes the catalogue and the method, and rule candidates it marks as not yet judged.
 
   What it does. Closes each of those findings by a change to the design, recorded as a new round of the design's review record, so the baseline is clean and the seeded proof again shows the review finds what is seeded and nothing that was already there; and carries the review's owed amendments into the catalogue and the method, judging each rule candidate by the review step's own test of whether a finding can be a rule.
 
   Out of scope: any real board, and the workmanship items, which their own solution carries.
+
+  How it is settled. A finding is judged a rule exactly when the pre-order check can enforce it, in one of the method's four rule forms, preferring KiCad's own checks; the verdict is recorded in the review record's Rule and Added-as columns, and a candidate judged not a rule is recorded as no with the reason, becoming a judgement item or one of the board's own plan items as the method's review step directs. The mains finding (2.4) closes only by a change to the board, and its figure comes from the design's separation basis record, never a hard number in the rule. The fixes land as a new final round of the design's review record in the form the record-history check enforces; the figures a new rule uses are carried by role in the catalogue and as numbers in the design's rules, and a rule's seeded fault is made on a throwaway design outside the repository by the same seeded-fault tooling the check's other rules use. Every committed design that the check runs on passes each new rule. Catalogue and method text name no machine. Where the fix lands: the proof design and its layout plan, rules and review record, the method document's catalogue items and review steps, the check's rule tooling and its seeded-fault catalogue, and the seeded layout-review proof's seed anchors, re-anchored where a fix moves what a seed was placed against. The exact geometry of each fix, the new items' numbers and the KiCad syntax of each new rule are found by implementation.
 links:
   - target: DEL-MAINTENANCE.C1
     type: derives-from
@@ -21,3 +23,7 @@ links:
     type: justified-by
   - target: SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: 057373fcc6685f8ce8fb8347d16200b07aca63369c5fa86a99fb8469aab4ea0c
+  gating_profile: ""

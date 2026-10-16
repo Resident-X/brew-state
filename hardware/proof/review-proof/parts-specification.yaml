@@ -117,4 +117,26 @@ positions:
     value: "AMS1117-3.3"
     package: "SOT-223-3_TabPin2"
     lcsc: "C9000026"
+  - reference: C7
+    value: "1uF"
+    package: "C_0805_2012Metric"
+    rating: "50V"
+    lcsc: "C9000027"
+  - reference: C8
+    value: "1uF"
+    package: "C_0805_2012Metric"
+    rating: "50V"
+    lcsc: "C9000028"
+  - reference: H1
+    value: "MountingHole"
+    package: "MountingHole_3.2mm_M3"
+    lcsc: "C9000029"
+  - reference: H2
+    value: "MountingHole"
+    package: "MountingHole_3.2mm_M3"
+    lcsc: "C9000030"
+  - reference: H3
+    value: "MountingHole"
+    package: "MountingHole_3.2mm_M3"
+    lcsc: "C9000031"
 synthetic: true

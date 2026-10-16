@@ -143,6 +143,8 @@ class Pad:
         self.reference = reference
         self.number = number
         self.net = net
+        #: The corner radius of a rounded rectangle, as a share of its shorter side.
+        self.rounding = rounding
         #: The centre of the pad's copper on the board, which a drill offset moves off its hole.
         self.centre = centre
         #: Its size along its own x and y, before it is turned.
@@ -202,6 +204,40 @@ class Pad:
         if abs(width - height) <= 1e-6:
             return None
         return turned((1.0, 0.0) if width > height else (0.0, 1.0), self.angle)
+
+    def box(self) -> Tuple[float, float, float, float]:
+        """The board's axes-aligned box about the pad's full size, turned as the pad is: (left, top, right, bottom)."""
+        width, height = self.size
+        cos, sin = abs(math.cos(math.radians(self.angle))), abs(math.sin(math.radians(self.angle)))
+        half_x, half_y = (width * cos + height * sin) / 2, (width * sin + height * cos) / 2
+        return self.centre[0] - half_x, self.centre[1] - half_y, self.centre[0] + half_x, self.centre[1] + half_y
+
+    def outline(self, steps: int = 16) -> List[Point]:
+        """The pad's copper as a convex polygon on the board, each rounded corner in `steps` pieces.
+
+        A pad whose copper is not sized here is its full size's rectangle, the
+        most it can be taken to cover without guessing at its shape.
+        """
+        half_x, half_y, radius = (self.size[0] / 2, self.size[1] / 2, 0.0) if self.unsized else self.core
+        ring = []
+        for quadrant, (sign_x, sign_y) in enumerate(((1, 1), (-1, 1), (-1, -1), (1, -1))):
+            if radius <= 0:
+                ring.append((sign_x * half_x, sign_y * half_y))
+                continue
+            for step in range(steps + 1):
+                angle = math.radians(90 * (quadrant + step / steps))
+                ring.append((sign_x * half_x + radius * math.cos(angle), sign_y * half_y + radius * math.sin(angle)))
+        turned_ring = [turned(point, self.angle) for point in ring]
+        return [(self.centre[0] + x, self.centre[1] + y) for x, y in turned_ring]
+
+    def resized(self, size: Tuple[float, float], shape: Optional[str] = None) -> "Pad":
+        """The same pad, in the same place, at another size, and in another shape where one is given.
+
+        A pad given a shape is sized by it, so one whose copper is not sized
+        here becomes the rectangle of its full size.
+        """
+        return Pad(self.reference, self.number, self.net, self.centre, size, self.angle, shape or self.shape, self.layers,
+                   self.rounding, "" if shape else self.unsized)
 
 
 def footprint_pads(footprint: list, table: Dict[str, str]) -> List[Pad]:
@@ -357,3 +393,108 @@ def joins(pad: Pad, line: Sequence[Point], width: float) -> bool:
     if len(line) == 1:
         return end_reaches(pad, line[0], width)
     return any(line_reaches(pad, a, b, width) for a, b in zip(line, line[1:]))
+
+
+# --- Copper as polygons --------------------------------------------------------------
+
+
+Polygon = List[Point]
+
+
+def polygon_area(polygon: Sequence[Point]) -> float:
+    """The area a closed polygon encloses, whichever way round it is drawn."""
+    return abs(sum(a[0] * b[1] - b[0] * a[1] for a, b in zip(polygon, list(polygon[1:]) + list(polygon[:1])))) / 2
+
+
+def clip_to_box(polygon: Sequence[Point], box: Tuple[float, float, float, float]) -> Polygon:
+    """The part of a polygon inside an axes-aligned box (left, top, right, bottom), by clipping against one side at a time."""
+    left, top, right, bottom = box
+    sides = (
+        (lambda p: p[0] - left, lambda a, b: (left, a[1] + (b[1] - a[1]) * (left - a[0]) / (b[0] - a[0]))),
+        (lambda p: right - p[0], lambda a, b: (right, a[1] + (b[1] - a[1]) * (right - a[0]) / (b[0] - a[0]))),
+        (lambda p: p[1] - top, lambda a, b: (a[0] + (b[0] - a[0]) * (top - a[1]) / (b[1] - a[1]), top)),
+        (lambda p: bottom - p[1], lambda a, b: (a[0] + (b[0] - a[0]) * (bottom - a[1]) / (b[1] - a[1]), bottom)),
+    )
+    ring = list(polygon)
+    for inside, cross in sides:
+        kept: Polygon = []
+        for a, b in zip(ring, ring[1:] + ring[:1]):
+            if inside(a) >= 0:
+                kept.append(a)
+            if (inside(a) >= 0) != (inside(b) >= 0):
+                kept.append(cross(a, b))
+        ring = kept
+        if not ring:
+            break
+    return ring
+
+
+def overlap_area(polygon: Sequence[Point], window: Sequence[Point]) -> float:
+    """How much of a polygon's area lies inside a convex window, by clipping against one side of the window at a time."""
+    turn = 1 if sum(a[0] * b[1] - b[0] * a[1] for a, b in zip(window, list(window[1:]) + list(window[:1]))) >= 0 else -1
+    ring = list(polygon)
+    for a, b in zip(window, list(window[1:]) + list(window[:1])):
+        if not ring:
+            break
+        kept: Polygon = []
+        for p, q in zip(ring, ring[1:] + ring[:1]):
+            side_p, side_q = turn * orientation(a, b, p), turn * orientation(a, b, q)
+            if side_p >= 0:
+                kept.append(p)
+            if (side_p >= 0) != (side_q >= 0):
+                t = side_p / (side_p - side_q)
+                kept.append((p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t))
+        ring = kept
+    return polygon_area(ring) if len(ring) > 2 else 0.0
+
+
+def clipped_area(polygon: Sequence[Point], box: Tuple[float, float, float, float]) -> float:
+    """How much of a polygon's area lies inside an axes-aligned box (left, top, right, bottom)."""
+    ring = clip_to_box(polygon, box)
+    return polygon_area(ring) if len(ring) > 2 else 0.0
+
+
+def within(point: Point, polygon: Sequence[Point]) -> bool:
+    """Whether a point lies inside a polygon by the even-odd rule, so inside a hole is outside."""
+    inside = False
+    for a, b in zip(polygon, list(polygon[1:]) + list(polygon[:1])):
+        if (a[1] > point[1]) != (b[1] > point[1]) and point[0] < a[0] + (b[0] - a[0]) * (point[1] - a[1]) / (b[1] - a[1]):
+            inside = not inside
+    return inside
+
+
+def disc(centre: Point, radius: float, steps: int = 64) -> Polygon:
+    """A circle as a polygon of `steps` corners, one on each axis, so it never reaches past the circle."""
+    return [(centre[0] + radius * math.cos(2 * math.pi * i / steps), centre[1] + radius * math.sin(2 * math.pi * i / steps))
+            for i in range(steps)]
+
+
+def swept(line: Sequence[Point], width: float, steps: int = 32) -> List[Polygon]:
+    """The copper of a track along a centre line of straight pieces, `width` wide, as convex polygons that do not overlap:
+    a rectangle for each piece and a half circle beyond each end of the line."""
+    radius = width / 2
+    pieces = [(a, b) for a, b in zip(line, line[1:]) if math.dist(a, b) > 0]
+    if not pieces:
+        return [disc(line[0], radius, 2 * steps)]
+    found = []
+    for a, b in pieces:
+        length = math.dist(a, b)
+        nx, ny = -(b[1] - a[1]) / length * radius, (b[0] - a[0]) / length * radius
+        found.append([(a[0] + nx, a[1] + ny), (b[0] + nx, b[1] + ny), (b[0] - nx, b[1] - ny), (a[0] - nx, a[1] - ny)])
+    for end, other in ((pieces[0][0], pieces[0][1]), (pieces[-1][1], pieces[-1][0])):
+        heading = math.atan2(end[1] - other[1], end[0] - other[0])
+        found.append([(end[0] + radius * math.cos(heading + math.pi * (i / steps - 0.5)),
+                       end[1] + radius * math.sin(heading + math.pi * (i / steps - 0.5))) for i in range(steps + 1)])
+    return found
+
+
+def orientation(a: Point, b: Point, c: Point) -> float:
+    return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
+
+
+def segment_distance(a: Point, b: Point, c: Point, d: Point) -> float:
+    """How far the straight line from a to b passes from the straight line from c to d, 0 where they cross."""
+    if orientation(a, b, c) * orientation(a, b, d) < 0 and orientation(c, d, a) * orientation(c, d, b) < 0:
+        return 0.0
+    return min(distance_to_segment(c, a, b), distance_to_segment(d, a, b),
+               distance_to_segment(a, c, d), distance_to_segment(b, c, d))

@@ -20,3 +20,21 @@
 	(constraint track_angle (min 135)))
 (rule "Jogs"
 	(constraint track_segment_length (min 1mm)))
+(rule "Crystal keep-clear"
+	(condition "A.Reference == 'Y1' && B.Reference != 'U4' && B.Reference != 'C4' && B.Reference != 'C5' && B.Reference != 'C6' && B.Reference != 'U2' && B.Reference != 'C1' && B.Reference != 'C2'")
+	(constraint courtyard_clearance (min 25mm)))
+(rule "Ground pad reliefs"
+	(condition "A.Type == 'Pad' && A.hasNetclass('Ground') && !(A.Reference == 'U4' && A.Pad_Number == '21')")
+	(constraint zone_connection thermal_reliefs))
+(rule "Mains region parts"
+	(condition "A.Type == 'Footprint' && A.intersectsArea('mains') && A.Reference != 'J1' && A.Reference != 'U1' && A.Reference != 'H1' && A.Reference != 'H2'")
+	(constraint disallow footprint))
+(rule "Low voltage region parts"
+	(condition "A.Type == 'Footprint' && A.intersectsArea('low voltage') && A.Reference != 'J2' && A.Reference != 'D1' && A.Reference != 'C7' && A.Reference != 'C1' && A.Reference != 'U2' && A.Reference != 'C2' && A.Reference != 'TP2' && A.Reference != 'TP1' && A.Reference != 'J4' && A.Reference != 'C8' && A.Reference != 'TP3' && A.Reference != 'U1' && A.Reference != 'R4'")
+	(constraint disallow footprint))
+(rule "Analog sensing region parts"
+	(condition "A.Type == 'Footprint' && A.intersectsArea('analog sensing') && A.Reference != 'R1' && A.Reference != 'U3' && A.Reference != 'R2' && A.Reference != 'R3' && A.Reference != 'FB1' && A.Reference != 'C3' && A.Reference != 'TP4' && A.Reference != 'TP5' && A.Reference != 'TP6' && A.Reference != 'H3'")
+	(constraint disallow footprint))
+(rule "Digital region parts"
+	(condition "A.Type == 'Footprint' && A.intersectsArea('digital') && A.Reference != 'U4' && A.Reference != 'C4' && A.Reference != 'Y1' && A.Reference != 'C5' && A.Reference != 'C6'")
+	(constraint disallow footprint))

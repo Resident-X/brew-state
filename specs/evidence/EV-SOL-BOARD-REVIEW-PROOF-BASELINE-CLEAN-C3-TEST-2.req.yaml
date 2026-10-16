@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN-C3-TEST-2
+type: evidence
+title: test evidence for SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-16T11:24:18.805351Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check.py::test_a_track_between_the_pads_fails_naming_the_part_the_layer_the_net_the_strip_and_the_area,test_a_via_drilled_through_the_opening_fails_naming_the_via_the_pad_and_how_far_in_the_opening_reaches,test_a_track_stopping_short_of_the_fill_by_less_than_the_minimum_fails_naming_the_gap,test_a_gap_exactly_the_minimum_passes_and_a_hair_under_it_fails
+  artifact_version: 2d2a9e45009d4a2c1e7905b581fdecaf37917d22
+attested_by: crun-7903dbf12b59b736
+links:
+  - target: SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3
+    type: satisfies
