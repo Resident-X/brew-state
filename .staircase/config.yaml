@@ -64,12 +64,12 @@ executor_assignments:
   - tier: small-fast
     provider: anthropic
     model: claude-haiku-5-5
-    invocation: claude -p --model claude-haiku-5-5 --effort low --output-format json --allowedTools "{tools}" < {prompt_file}
+    invocation: claude -p --model claude-haiku-5-5 --effort medium --output-format json --allowedTools "{tools}" < {prompt_file}
   - tier: mid-tier
     provider: anthropic
     model: claude-sonnet-5-5
-    invocation: claude -p --model claude-sonnet-5-5 --effort high --output-format json --allowedTools "{tools}" < {prompt_file}
+    invocation: claude -p --model claude-sonnet-5-5 --effort medium --output-format json --allowedTools "{tools}" < {prompt_file}
   - tier: reasoning-tier
     provider: anthropic
     model: claude-opus-5-5
-    invocation: claude -p --model claude-opus-5-5 --effort high --output-format json --allowedTools "{tools}" < {prompt_file}
+    invocation: claude -p --model claude-opus-5-5 --effort medium --output-format json --allowedTools "{tools}" < {prompt_file}
