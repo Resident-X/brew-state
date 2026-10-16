@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-GATES-PASS-ON-HOSTED-RUNNER-C1-TEST
+type: evidence
+title: test evidence for SOL-BOARD-GATES-PASS-ON-HOSTED-RUNNER.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-16T08:57:16.702338Z"
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_verify_gate.py::TheNightlyRunsTheSameDeclaration.test_the_standard_libraries_are_named_at_the_kicad_pin_and_asserted_present_without_recommended_packages
+  artifact_version: 8372a4ddd3d5428755e200a0626e37b256d409ac
+attested_by: crun-301b30926d2e3595
+links:
+  - target: SOL-BOARD-GATES-PASS-ON-HOSTED-RUNNER.C1
+    type: satisfies

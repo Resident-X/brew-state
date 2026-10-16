@@ -112,14 +112,24 @@ jobs:
       # its 10.0 releases, at the version the board files need or newer: the
       # archive's signing key is fetched and its fingerprint compared with the
       # one the archive publishes before it is trusted, and the package is
-      # named at an exact version. The rasteriser is the release the project
-      # publishes, checked against the digest that release lists for the archive
-      # and again after download. The font and the YAML reader are the
-      # distribution's own packages at the versions its release carries. A tool
-      # that fails to install fails this step, so it is reported as provisioning
-      # rather than as a board gate failing. Which of these installs completes
+      # named at an exact version. The package installs without its
+      # recommended packages, which would also bring the manuals, the demonstration
+      # projects and the three-dimensional model library, some 3 GB the checks never
+      # open; the standard symbol and footprint libraries, which the board check
+      # reads through the library tables KiCad installs with itself, are named
+      # beside it at the same version instead. The three-dimensional models are
+      # left out on purpose: a model KiCad cannot find is a state the views report
+      # for any board, and no check depends on one being present. After installing,
+      # the step asserts each package is at its pin and the two library-table
+      # templates are present, so a runner without the libraries fails here as
+      # provisioning, not as one board violation per part. The rasteriser is the
+      # release the project publishes, checked against the digest that release
+      # lists for the archive and again after download. The font and the YAML
+      # reader are the distribution's own packages at the versions its release
+      # carries. A tool that fails to install fails this step, so it is reported
+      # as provisioning rather than as a board gate failing. Which of these installs completes
       # on a hosted runner is what the first nightly run demonstrates.
-      - name: Install KiCad, a monospaced font and the YAML reader
+      - name: Install KiCad with its standard libraries, a monospaced font and the YAML reader
         env:
           KICAD_PPA: "kicad/kicad-10.0-releases"
           # The fingerprint the archive's owner publishes for its signing key.
@@ -143,7 +153,21 @@ jobs:
             | sudo tee /etc/apt/sources.list.d/kicad-ppa.list > /dev/null
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            "kicad=${KICAD_VERSION}" "fonts-dejavu-core=${FONT_VERSION}" "python3-yaml=${YAML_VERSION}"
+            "kicad=${KICAD_VERSION}" "kicad-symbols=${KICAD_VERSION}" "kicad-footprints=${KICAD_VERSION}" \
+            "fonts-dejavu-core=${FONT_VERSION}" "python3-yaml=${YAML_VERSION}"
+          for package in kicad kicad-symbols kicad-footprints; do
+            installed="$(dpkg-query -W -f='${Version}' "${package}")"
+            if [ "${installed}" != "${KICAD_VERSION}" ]; then
+              echo "${package} is installed at ${installed:-nothing}, not ${KICAD_VERSION}" >&2
+              exit 1
+            fi
+          done
+          for table in sym-lib-table fp-lib-table; do
+            if [ ! -s "/usr/share/kicad/template/${table}" ]; then
+              echo "KiCad's standard library table template ${table} is not installed, so the board check would find no standard library" >&2
+              exit 1
+            fi
+          done
           kicad-cli version
 
       - name: Install the rasteriser

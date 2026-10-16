@@ -30,7 +30,12 @@ layer holds falls outside it. A font KiCad substitutes is named in every
 caption, and a part the three-dimensional views draw without its model is named
 in theirs; both, and a layer the board does not carry, are named in the index
 and in the command's report too. A three-dimensional view is zoomed out until no
-part reaches its frame.
+part reaches its frame. KiCad builds differ in the status the three-dimensional
+export ends with when a model is missing; one that exits non-zero after writing a
+readable file is accepted, and the index and the report carry a `3D EXPORT` line
+stating the status and what KiCad said, while one that writes no file, an empty
+file or one that cannot be read fails the command, as does a non-zero status from
+any other KiCad command.
 
 The resolution is the board's own: three pixels across the smaller of its
 minimum track width and minimum clearance, read from its design rules. Every
@@ -289,16 +294,39 @@ def english(home: str) -> None:
                         f"command could not read which fonts and models KiCad leaves out ({TOOL_HELP}).") from error
 
 
-def kicad(command: List[str], cwd: str, what: str) -> str:
-    """Run a KiCad command in the command's own configuration, failing by name when it fails; what KiCad said."""
+def kicad(command: List[str], cwd: str, what: str, glb: Optional[str] = None,
+          tolerated: Optional[List[dict]] = None) -> str:
+    """Run a KiCad command in the command's own configuration, failing by name when it fails; what KiCad said.
+
+    A non-zero status fails the command, with one exception. KiCad builds differ in the status the
+    three-dimensional export ends with when a model is missing, some exiting non-zero after writing the file all
+    the same, so when `glb` names the file that export was asked to write, its status is decided from the file: one
+    that is there, not empty and readable as a binary glTF file is the export asked for, and KiCad's status and
+    what it said are appended to `tolerated`; no file, an empty one or an unreadable one fails the command as any
+    other non-zero status does, naming both the status and the file's state.
+    """
+    if glb is not None and os.path.exists(glb):
+        os.remove(glb)
     try:
         result = subprocess.run(command, cwd=cwd, capture_output=True, text=True, timeout=board_check.KICAD_TIMEOUT_S,
                                 env=board_check.KICAD_ENVIRONMENT)
     except subprocess.TimeoutExpired as error:
         raise Unreadable(f"KiCad did not {what} within {board_check.KICAD_TIMEOUT_S} s") from error
     if result.returncode != 0:
-        raise Unreadable(f"KiCad could not {what} (exit {result.returncode}: "
-                         f"{' '.join((result.stdout + ' ' + result.stderr).split())[:300]})")
+        cause = f"exit {result.returncode}: {' '.join((result.stdout + ' ' + result.stderr).split())[:300]}"
+        if glb is None:
+            raise Unreadable(f"KiCad could not {what} ({cause})")
+        if not os.path.exists(glb):
+            raise Unreadable(f"KiCad could not {what} ({cause}) and wrote no export")
+        if os.path.getsize(glb) == 0:
+            raise Unreadable(f"KiCad could not {what} ({cause}) and wrote an empty export")
+        try:
+            glb_names(glb)
+        except Unreadable as error:
+            raise Unreadable(f"KiCad could not {what} ({cause}) and wrote an export that cannot be read: {error}") from error
+        if tolerated is not None:
+            tolerated.append({"exit_status": result.returncode,
+                              "said": clean(" ".join((result.stdout + " " + result.stderr).split())[:300])})
     return result.stdout + "\n" + result.stderr
 
 
@@ -1557,8 +1585,9 @@ def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli:
                           crop_fields(circuit), around=circuit["bounds"])
 
         glb = os.path.join(work, "models.glb")
+        export_status: List[dict] = []
         said = kicad([kicad_cli, "pcb", "export", "glb", "--no-dnp", "--no-board-body", "-o", glb, copy], work,
-                     f"load the three-dimensional models of {board}")
+                     f"load the three-dimensional models of {board}", glb=glb, tolerated=export_status)
         unseen = left_out_in_3d(refilled, said, glb_names(glb), written)
         aspect = (outline[2] - outline[0]) / max(outline[3] - outline[1], 1e-6)
         zooms = {}
@@ -1592,6 +1621,7 @@ def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli:
             "critical_classes": {name: sorted(membership[name], key=natural) for name in classes},
             **index_fields(scale, figures, fonts, absent, areas),
             "not_in_3d": unseen,
+            **({"three_dimensional_export": export_status[0]} if export_status else {}),
         }
         write_outputs(ready, outputs, header, renderer.images, facts)
         os.makedirs(out, exist_ok=True)
@@ -1602,6 +1632,8 @@ def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli:
     for part in unseen:
         print(f"MODEL | {part['reference']} | {part['detail']}; the three-dimensional views' captions and the index "
               "name it", file=stream)
+    if export_status:
+        print(export_line(export_status[0]), file=stream)
     report_resolution(scale, figures, stream)
     print(f"RESULT | WRITTEN | {len(renderer.images)} images, their index and the per-net fact table | {clean(out)}",
           file=stream)
@@ -1711,11 +1743,19 @@ def report_resolution(scale: float, figures: Sequence[float], stream) -> None:
           f"{mm_text(figures[0])} mm and the minimum clearance {mm_text(figures[1])} mm", file=stream)
 
 
+def export_line(export: dict) -> str:
+    """The line stating that KiCad's three-dimensional export ended with a non-zero status after writing a readable
+    file, which the views use, and what KiCad said."""
+    return (f"3D EXPORT | exit {export['exit_status']} | KiCad ended the export of the models with a non-zero status "
+            f"but wrote a readable file, which the three-dimensional views use; KiCad said: {export['said'] or 'nothing'}")
+
+
 def write_outputs(folder: str, files: Dict[str, str], header: dict, images: List[dict], facts: List[dict]) -> None:
     """The index and the fact table, each as text and JSON, into `folder` under the names `files` gives them."""
     write_index(folder, files, header, images, True,
                 after_limit=[f"CLASS | {name} | {', '.join(nets)}" for name, nets in header["critical_classes"].items()],
-                before_images=[f"NOT IN 3D | {part['reference']} | {part['detail']}" for part in header["not_in_3d"]])
+                before_images=[f"NOT IN 3D | {part['reference']} | {part['detail']}" for part in header["not_in_3d"]]
+                + ([export_line(header["three_dimensional_export"])] if "three_dimensional_export" in header else []))
     with open(os.path.join(folder, files["facts_text"]), "w", encoding="utf-8") as handle:
         handle.write("".join(fact_line(fact) + "\n" for fact in facts))
     with open(os.path.join(folder, files["facts_json"]), "w", encoding="utf-8") as handle:

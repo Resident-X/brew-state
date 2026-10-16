@@ -418,7 +418,7 @@ class TheNightlyRunsTheSameDeclaration(unittest.TestCase):
         job = self.job_text("gates")
         names = re.findall(r"(?m)^      - name: (.*)$", job)
         verify = next(i for i, name in enumerate(names) if name.startswith("Run the complete verification"))
-        for step in ("Install KiCad, a monospaced font and the YAML reader", "Install the rasteriser"):
+        for step in ("Install KiCad with its standard libraries, a monospaced font and the YAML reader", "Install the rasteriser"):
             self.assertIn(step, names)
             self.assertLess(names.index(step), verify, f"{step} comes after the verification runs")
         installing = self.board_tools_step()
@@ -443,6 +443,45 @@ class TheNightlyRunsTheSameDeclaration(unittest.TestCase):
         self.assertIn("signed-by=", installing)
         self.assertRegex(installing, r'apt-get install -y --no-install-recommends\s+"kicad=\$\{KICAD_VERSION\}"')
         self.assertLess(installing.index("KICAD_PPA_KEY}\" ]"), installing.index("apt-get install"))
+
+    def test_the_standard_libraries_are_named_at_the_kicad_pin_and_asserted_present_without_recommended_packages(self):
+        # SOL-BOARD-GATES-PASS-ON-HOSTED-RUNNER.C1: The board design check, run by the nightly verification on a hosted Ubuntu runner with the KiCad that workflow installs, passes every design the repository tracks, including the review proof design, which today reports library-configuration violations there for the standard symbol and footprint libraries. The workflow installs whatever the check needs from a free, named source at a pinned version, so no library comes from state present only on the author's machine.
+        installing = re.sub(r"\\\n\s*", " ", self.board_tools_step())
+        (install,) = re.findall(r"apt-get install ([^\n]*)", installing)
+        # Recommended packages stay out, so the libraries are named rather than left to arrive with kicad.
+        self.assertIn("--no-install-recommends", install.split())
+        packages = [word for word in install.split() if word.startswith('"')]
+        self.assertIn('"kicad=${KICAD_VERSION}"', packages)
+        self.assertIn('"kicad-symbols=${KICAD_VERSION}"', packages)
+        self.assertIn('"kicad-footprints=${KICAD_VERSION}"', packages)
+        for package in packages:
+            with self.subTest(package=package):
+                self.assertRegex(package, r'^"[a-z0-9][a-z0-9.+-]*=\$\{[A-Z_]+_VERSION\}"$', "a package installed without a pin")
+        # The three-dimensional model library and the metapackage that recommends it are not what the checks read.
+        for name in ("kicad-packages3d", "kicad-libraries"):
+            self.assertNotIn(name, install)
+        # The pins are the archive's own packages at the version the archive publishes for this release.
+        self.assertRegex(self.pinned("KICAD_VERSION"), r"^\d+\.\d+\.\d+~ubuntu24\.04\.\d+$")
+
+    def test_a_runner_missing_the_standard_libraries_fails_provisioning_naming_what_is_missing(self):
+        # SOL-BOARD-GATES-PASS-ON-HOSTED-RUNNER.C1: The board design check, run by the nightly verification on a hosted Ubuntu runner with the KiCad that workflow installs, passes every design the repository tracks, including the review proof design, which today reports library-configuration violations there for the standard symbol and footprint libraries. The workflow installs whatever the check needs from a free, named source at a pinned version, so no library comes from state present only on the author's machine.
+        installing = re.sub(r"\\\n\s*", " ", self.board_tools_step())
+        after = installing[installing.index("apt-get install"):]
+        # Each package is read back at its pin, and the failure names the package and the version found.
+        self.assertIn("dpkg-query -W -f='${Version}'", after)
+        self.assertIn('[ "${installed}" != "${KICAD_VERSION}" ]', after)
+        self.assertIn("for package in kicad kicad-symbols kicad-footprints; do", after)
+        # Both library-table templates the board check reads are required to exist and be non-empty.
+        self.assertIn("for table in sym-lib-table fp-lib-table; do", after)
+        self.assertIn('[ ! -s "/usr/share/kicad/template/${table}" ]', after)
+        self.assertGreaterEqual(after.count("exit 1"), 2)
+        self.assertGreaterEqual(after.count(">&2"), 2)
+        # Both assertions run before KiCad is first used, so a missing library is provisioning, not a board gate.
+        self.assertLess(after.index('[ ! -s "/usr/share/kicad/template/${table}" ]'), after.index("kicad-cli version"))
+        self.assertLess(after.index('[ "${installed}" != "${KICAD_VERSION}" ]'), after.index("kicad-cli version"))
+        # The board check's own isolation still names only the libraries KiCad installs with itself.
+        isolation = read("hardware/tools/board_check.py")
+        self.assertIn("_TEMPLATE_DIR}}/{kind}-lib-table", isolation)
 
     def test_the_rasteriser_is_the_release_at_or_above_the_minimum_checked_against_its_digest(self):
         # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C2: The nightly full verification runs the board check against main

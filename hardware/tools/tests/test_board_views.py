@@ -28,6 +28,7 @@ import math
 import os
 import shutil
 import stat
+import struct
 import subprocess
 import sys
 import tempfile
@@ -67,11 +68,12 @@ def tearDownModule():
 
 # --- The proof board -------------------------------------------------------------------
 
-#: A model the design keeps in its own folder: a red box 2 by 2 by 2 in VRML's units of 2.54 mm, which a model's
-#: scale stretches upward.
-MODEL = """#VRML V2.0 utf8
-Shape { appearance Appearance { material Material { diffuseColor 0.9 0.05 0.05 } } geometry Box { size 2 2 2 } }
-"""
+#: A model the design keeps in its own folder: a red box 5.08 mm on each side, in the STEP file beside this one, which a
+#: model's scale stretches upward. It is STEP rather than VRML because KiCad's packages for Linux write nothing for a
+#: VRML model to the three-dimensional export, the one the views draw from, where the author's build draws it.
+MODEL_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "box.step")
+with open(MODEL_FILE, encoding="utf-8") as _handle:
+    MODEL = _handle.read()
 MODEL_COLOUR = (230, 13, 13)
 
 #: The font one silkscreen text asks for, which no machine has, so KiCad substitutes another.
@@ -93,16 +95,16 @@ NO_SUCH_FONT = "Board Views Proof Face"
 ITEMS = [
     footprint("U1", 20, 20, [pad(1, -2, -1, "+3V3", "power_in"), pad(2, -2, 1, "GND", "power_in"),
                              pad(3, 2, -1, "SIG_A", "input"), pad(4, 2, 1, "SIG_B", "output")],
-              [model("${KIPRJMOD}/models/box.wrl")]),
+              [model("${KIPRJMOD}/models/box.step")]),
     footprint("C1", 4, 20, [pad(1, 0, -1, "+3V3", "passive"), pad(2, 0, 1, "GND", "passive")]),
     footprint("C2", 56, 20, [pad(1, 0, -1, "+3V3", "passive"), pad(2, 0, 1, "GND", "passive")],
               [model("${KIPRJMOD}/models/missing.step")]),
     footprint("R1", 30, 12, [pad(1, 0, -1, "SIG_A", "passive"), pad(2, 0, 1, "+3V3", "passive")],
-              [model("${KIPRJMOD}/models/box.wrl", hidden=True)]),
+              [model("${KIPRJMOD}/models/box.step", hidden=True)]),
     footprint("U2", 45, 8, [pad(1, -1, 0, "SIG_A", "input"), pad(2, 1, 0, "SIG_B", "output")],
-              [model("models/box.wrl", height=12)]),
+              [model("models/box.step", height=12)]),
     footprint("D1", 8, 8, [pad(1, -1, 0, "SIG_A", "passive"), pad(2, 1, 0, "SIG_B", "passive")],
-              [model("${KIPRJMOD}/models/box.wrl")], "(attr smd dnp)"),
+              [model("${KIPRJMOD}/models/box.step")], "(attr smd dnp)"),
     footprint("U3", 48, 20, [pad(1, -2, -1, "+3V3", "power_in"), pad(2, -2, 1, "GND", "power_in"),
                              pad(3, 2, -1, "SIG_A", "input")]),
     footprint("U4", 38, 12, [pad(1, -2, -1, "+3V3", "power_in"), pad(2, -2, 1, "GND", "power_in"),
@@ -155,7 +157,7 @@ class Design(board_fixtures.Design):
     def __init__(self, board_text=None, project_text=None):
         super().__init__(layout() if board_text is None else board_text,
                          project() if project_text is None else project_text, prefix="board-views-test-")
-        self.write(os.path.join("models", "box.wrl"), MODEL)
+        self.write(os.path.join("models", "box.step"), MODEL)
 
     def args(self, classes=("Power", "Ground"), out=None):
         found = ["--board", self.board, "--project", self.project, "--out", out or self.out]
@@ -803,7 +805,7 @@ class Pieces(unittest.TestCase):
 
     def test_the_copy_keeps_the_designs_names_and_finds_its_models_as_the_design_does_in_place(self):
         """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
-        paths = ["${KIPRJMOD}/models/box.wrl", "$(KIPRJMOD)/models/box.wrl", "models/box.wrl", "models/nowhere.step",
+        paths = ["${KIPRJMOD}/models/box.step", "$(KIPRJMOD)/models/box.step", "models/box.step", "models/nowhere.step",
                  "${KICAD10_3DMODEL_DIR}/Resistor_SMD.3dshapes/R_0603_1608Metric.step", "/elsewhere/part.step",
                  "kicad-embed://part.step"]
         parts = [footprint(f"P{index}", 5 + 5 * index, 30, [], [model(path)]) for index, path in enumerate(paths)]
@@ -818,7 +820,7 @@ class Pieces(unittest.TestCase):
             copied = board_views.locked_copper.read_layout(staged)
         found = [board_views.unquoted(board_views.sexpr.child(node, "model")[1])
                  for node in copied[1:] if board_views.sexpr.head(node) == "footprint"]
-        box = os.path.join(os.path.abspath(design.folder), "models", "box.wrl")
+        box = os.path.join(os.path.abspath(design.folder), "models", "box.step")
         self.assertEqual(found, [box, box, box] + paths[3:])
         self.assertEqual(set(written), {box})
         self.assertIn(written[box], paths[:3])
@@ -1536,6 +1538,181 @@ class Tools(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("CANNOT RUN | resvg was not found or could not be run at '/nonexistent/resvg'", result.stderr)
         self.assertFalse(os.path.exists(design.out))
+
+
+def glb_bytes(names=("U1", "C2")) -> bytes:
+    """A binary glTF file holding one node per name, as KiCad writes its three-dimensional export."""
+    body = json.dumps({"asset": {"version": "2.0"}, "nodes": [{"name": name} for name in names]}).encode()
+    body += b" " * (-len(body) % 4)
+    return b"glTF" + struct.pack("<II", 2, 20 + len(body)) + struct.pack("<I4s", len(body), b"JSON") + body
+
+
+#: What a stand-in for KiCad's command-line tool says when it ends the export with a non-zero status.
+STAND_IN_CAUSE = "Could not add 3D model for C2. No such file models/missing.step"
+
+#: The shell lines that find the file a command is asked to write, after -o, as $out.
+FIND_OUTPUT = 'out=""; prev=""\nfor arg in "$@"; do [ "$prev" = "-o" ] && out="$arg"; prev="$arg"; done\n'
+
+
+class ExportStatus(unittest.TestCase):
+    """SOL-BOARD-GATES-PASS-ON-HOSTED-RUNNER.C2: The board tooling's tests that the nightly runs, namely the view renderer's tests, the seeded review folder's tests and the check task's whole-repository test, pass on a hosted Ubuntu runner with the KiCad and fonts that workflow installs. The runner's KiCad is a different build from the author's, and where its command-line tool reports a non-zero status while still writing the artefact asked for, the tooling decides from what it actually wrote and reports the cause, rather than failing every render on the status alone, and a non-zero status with no artefact or an unreadable one is still reported as unreadable with its cause."""
+
+    def setUp(self):
+        self.folder = tempfile.TemporaryDirectory(prefix="board-views-status-")
+        self.addCleanup(self.folder.cleanup)
+        self.glb = os.path.join(self.folder.name, "models.glb")
+        self.count = 0
+
+    def export(self, writes: str, status: int, glb=True, tolerated=None) -> str:
+        """The wrapper's account of a stand-in tool that runs `writes`, says STAND_IN_CAUSE and exits with `status`."""
+        self.count += 1
+        script = FIND_OUTPUT + f"{writes}\necho '{STAND_IN_CAUSE}' >&2\nexit {status}"
+        command = [tool(self.folder.name, f"kicad-cli-{self.count}", script), "pcb", "export", "glb", "-o", self.glb,
+                   "board.kicad_pcb"]
+        return board_views.kicad(command, self.folder.name, "load the models of the board",
+                                 glb=self.glb if glb else None, tolerated=tolerated)
+
+    def writing(self, data: bytes) -> str:
+        """The shell line that writes `data` to the file the tool was asked for."""
+        path = os.path.join(self.folder.name, f"artefact-{self.count}.bin")
+        with open(path, "wb") as handle:
+            handle.write(data)
+        return f"cp '{path}' \"$out\""
+
+    def test_a_non_zero_status_with_a_readable_export_is_used_and_the_cause_kept(self):
+        # SOL-BOARD-GATES-PASS-ON-HOSTED-RUNNER.C2: where its command-line tool reports a non-zero status while still writing the artefact asked for, the tooling decides from what it actually wrote and reports the cause, rather than failing every render on the status alone
+        tolerated = []
+        said = self.export(self.writing(glb_bytes()), 3, tolerated=tolerated)
+        self.assertIn(STAND_IN_CAUSE, said)
+        self.assertEqual(board_views.glb_names(self.glb), {"U1", "C2"})
+        self.assertEqual(tolerated, [{"exit_status": 3, "said": STAND_IN_CAUSE}])
+
+    def test_a_non_zero_status_with_no_export_is_unreadable_naming_the_status_and_the_cause(self):
+        # SOL-BOARD-GATES-PASS-ON-HOSTED-RUNNER.C2: a non-zero status with no artefact or an unreadable one is still reported as unreadable with its cause
+        tolerated = []
+        with self.assertRaises(board_views.Unreadable) as raised:
+            self.export(":", 3, tolerated=tolerated)
+        self.assertIn(f"KiCad could not load the models of the board (exit 3: {STAND_IN_CAUSE}) and wrote no export",
+                      str(raised.exception))
+        self.assertEqual(tolerated, [])
+
+    def test_a_non_zero_status_with_an_empty_export_is_unreadable_naming_the_status_and_the_cause(self):
+        # SOL-BOARD-GATES-PASS-ON-HOSTED-RUNNER.C2: a non-zero status with no artefact or an unreadable one is still reported as unreadable with its cause
+        with self.assertRaises(board_views.Unreadable) as raised:
+            self.export(': > "$out"', 1)
+        self.assertIn(f"(exit 1: {STAND_IN_CAUSE}) and wrote an empty export", str(raised.exception))
+
+    def test_a_non_zero_status_with_a_corrupt_export_is_unreadable_naming_the_status_the_cause_and_the_fault(self):
+        # SOL-BOARD-GATES-PASS-ON-HOSTED-RUNNER.C2: a non-zero status with no artefact or an unreadable one is still reported as unreadable with its cause
+        not_json = b"glTF" + struct.pack("<II", 2, 28) + struct.pack("<I4s", 4, b"JSON") + b"{{{{"
+        for what, data in (("text", b"this is not a model"), ("a cut-off file", glb_bytes()[:30]),
+                           ("a JSON chunk that is not JSON", not_json)):
+            with self.subTest(what=what), self.assertRaises(board_views.Unreadable) as raised:
+                self.export(self.writing(data), 2)
+            message = str(raised.exception)
+            self.assertIn(f"(exit 2: {STAND_IN_CAUSE}) and wrote an export that cannot be read: ", message)
+            self.assertIn("KiCad's three-dimensional export", message)
+
+    def test_a_zero_status_is_not_reported_as_tolerated(self):
+        # SOL-BOARD-GATES-PASS-ON-HOSTED-RUNNER.C2: where its command-line tool reports a non-zero status while still writing the artefact asked for, the tooling decides from what it actually wrote and reports the cause; an export that ended with status zero has no status to report
+        tolerated = []
+        said = self.export(self.writing(glb_bytes()), 0, tolerated=tolerated)
+        self.assertIn(STAND_IN_CAUSE, said)
+        self.assertEqual(tolerated, [])
+
+    def test_a_leftover_export_from_an_earlier_run_does_not_stand_for_this_one(self):
+        # SOL-BOARD-GATES-PASS-ON-HOSTED-RUNNER.C2: a non-zero status with no artefact or an unreadable one is still reported as unreadable with its cause
+        with open(self.glb, "wb") as handle:
+            handle.write(glb_bytes())
+        with self.assertRaises(board_views.Unreadable) as raised:
+            self.export(":", 1)
+        self.assertIn("and wrote no export", str(raised.exception))
+
+    def test_every_other_command_stays_strict_on_status_whatever_it_wrote(self):
+        # SOL-BOARD-GATES-PASS-ON-HOSTED-RUNNER.C2: only the three-dimensional export is decided from what it wrote; a non-zero status from any other command is still reported as unreadable with its cause
+        tolerated = []
+        with self.assertRaises(board_views.Unreadable) as raised:
+            self.export(self.writing(glb_bytes()), 3, glb=False, tolerated=tolerated)
+        self.assertEqual(str(raised.exception), f"KiCad could not load the models of the board (exit 3: {STAND_IN_CAUSE})")
+        self.assertEqual(tolerated, [])
+
+    def test_a_timeout_is_not_tolerated_even_when_an_export_was_written(self):
+        # SOL-BOARD-GATES-PASS-ON-HOSTED-RUNNER.C2: a non-zero status with no artefact or an unreadable one is still reported as unreadable with its cause; a command that did not finish has no status to decide from
+        was, board_check.KICAD_TIMEOUT_S = board_check.KICAD_TIMEOUT_S, 1
+        try:
+            with self.assertRaises(board_views.Unreadable) as raised:
+                self.export(self.writing(glb_bytes()) + "\nsleep 5", 0)
+        finally:
+            board_check.KICAD_TIMEOUT_S = was
+        self.assertEqual(str(raised.exception), "KiCad did not load the models of the board within 1 s")
+
+
+class ExportStatusThroughTheCommand(unittest.TestCase):
+    """SOL-BOARD-GATES-PASS-ON-HOSTED-RUNNER.C2: The board tooling's tests that the nightly runs, namely the view renderer's tests, the seeded review folder's tests and the check task's whole-repository test, pass on a hosted Ubuntu runner with the KiCad and fonts that workflow installs. The runner's KiCad is a different build from the author's, and where its command-line tool reports a non-zero status while still writing the artefact asked for, the tooling decides from what it actually wrote and reports the cause, rather than failing every render on the status alone, and a non-zero status with no artefact or an unreadable one is still reported as unreadable with its cause. Tests drive that decision with a stand-in for the command-line tool that writes the artefact with a non-zero status and one that writes nothing, in text and in JSON output."""
+
+    def command(self, how: str) -> str:
+        """A stand-in for KiCad's command-line tool that passes every command to the real one except the
+        three-dimensional export, which it ends as `how` says: "real" writes the real export, "none" writes
+        nothing, "empty" an empty file, "corrupt" text, each saying STAND_IN_CAUSE and exiting 1; "zero" writes the
+        real export and exits 0 saying nothing, whatever status the real tool gave it."""
+        real = shutil.which(KICAD_CLI) or KICAD_CLI
+        writes = {"real": f"'{real}' \"$@\" >/dev/null 2>&1", "none": ":", "empty": ': > "$out"',
+                  "corrupt": 'echo "not a model" > "$out"', "zero": f"'{real}' \"$@\" >/dev/null 2>&1"}[how]
+        ending = "exit 0" if how == "zero" else f"echo '{STAND_IN_CAUSE}' >&2; exit 1"
+        folder = tempfile.mkdtemp(prefix="board-views-stand-in-")
+        self.addCleanup(shutil.rmtree, folder, True)
+        script = (FIND_OUTPUT + 'case " $* " in\n'
+                  f" *' pcb export glb '*) {writes}; {ending} ;;\n"
+                  f" *) exec '{real}' \"$@\" ;;\nesac")
+        return tool(folder, "kicad-cli", script)
+
+    def run_views(self, how: str):
+        design = Design()
+        status, lines, errors = design.run(kicad_cli=self.command(how))
+        return design, status, lines, errors
+
+    def test_a_non_zero_export_that_wrote_a_readable_file_still_renders_and_states_the_cause_in_text_and_json(self):
+        # SOL-BOARD-GATES-PASS-ON-HOSTED-RUNNER.C2: Tests drive that decision with a stand-in for the command-line tool that writes the artefact with a non-zero status ... in text and in JSON output
+        design, status, lines, errors = self.run_views("real")
+        self.assertEqual(status, 0, lines + [errors])
+        line = ("3D EXPORT | exit 1 | KiCad ended the export of the models with a non-zero status but wrote a readable "
+                f"file, which the three-dimensional views use; KiCad said: {STAND_IN_CAUSE}")
+        self.assertIn(line, lines)
+        with open(os.path.join(design.out, "index.txt"), encoding="utf-8") as handle:
+            self.assertIn(line, handle.read().splitlines())
+        with open(os.path.join(design.out, "index.json"), encoding="utf-8") as handle:
+            index = json.load(handle)
+        self.assertEqual(index["three_dimensional_export"], {"exit_status": 1, "said": STAND_IN_CAUSE})
+        # The parts the export drew are still judged from it, so the status did not cost the views their content.
+        unseen = {part["reference"]: part["reason"] for part in index["not_in_3d"]}
+        self.assertEqual(unseen["C2"], "model not found")
+        self.assertEqual(sum(image["file"].startswith("3d-") for image in index["images"]), 3)
+
+    def test_a_non_zero_export_that_wrote_nothing_or_nothing_readable_is_unreadable_with_its_cause_and_writes_no_views(self):
+        # SOL-BOARD-GATES-PASS-ON-HOSTED-RUNNER.C2: a non-zero status with no artefact or an unreadable one is still reported as unreadable with its cause. Tests drive that decision with ... one that writes nothing, in text and in JSON output
+        for how, fault in (("none", "wrote no export"), ("empty", "wrote an empty export"),
+                           ("corrupt", "wrote an export that cannot be read")):
+            with self.subTest(how=how):
+                design, status, lines, errors = self.run_views(how)
+                self.assertEqual(status, 1, lines + [errors])
+                self.assertEqual(len(lines), 2, lines)
+                self.assertTrue(lines[0].startswith("UNREADABLE | KiCad could not load the three-dimensional models of "), lines)
+                self.assertIn(f"(exit 1: {STAND_IN_CAUSE}) and {fault}", lines[0])
+                self.assertEqual(lines[1], "RESULT | FAIL | the input cannot be read, so no views were written")
+                self.assertFalse(os.path.exists(os.path.join(design.out, "index.json")))
+                self.assertFalse(os.path.exists(os.path.join(design.out, "index.txt")))
+
+    def test_a_zero_status_export_adds_no_export_line_or_field_to_the_report_or_the_index(self):
+        # SOL-BOARD-GATES-PASS-ON-HOSTED-RUNNER.C2: where its command-line tool reports a non-zero status while still writing the artefact asked for, the tooling decides from what it actually wrote and reports the cause; an export that ended with status zero has no status to report
+        design, status, lines, errors = self.run_views("zero")
+        self.assertEqual(status, 0, lines + [errors])
+        self.assertFalse([line for line in lines if "3D EXPORT" in line], lines)
+        with open(os.path.join(design.out, "index.txt"), encoding="utf-8") as handle:
+            self.assertNotIn("3D EXPORT", handle.read())
+        with open(os.path.join(design.out, "index.json"), encoding="utf-8") as handle:
+            index = json.load(handle)
+        self.assertNotIn("three_dimensional_export", index)
+        self.assertEqual({part["reference"]: part["reason"] for part in index["not_in_3d"]}["C2"], "model not found")
 
 
 class Documentation(unittest.TestCase):
