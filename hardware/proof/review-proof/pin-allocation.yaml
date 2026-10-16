@@ -1,0 +1,19 @@
+# A synthetic pin allocation, made only so the layout review proof design is
+# held to a record the pre-order check accepts. Its channels are not a real
+# board's and must never be used for one: being marked synthetic, the check
+# accepts it only for a design marked not for manufacture. Each channel stays on
+# the board, so each states no connector.
+synthetic: true
+channels:
+  - channel: led_drive
+    net: LED_DRV
+    controller_pin: PB0
+  - channel: amp_out
+    net: AMP_OUT
+    controller_pin: PB2
+  - channel: xtal1
+    net: XTAL1
+    controller_pin: PB3
+  - channel: xtal2
+    net: XTAL2
+    controller_pin: PB4

@@ -1,0 +1,16 @@
+id: EV-SOL-HW-CONNECTIVITY-CHECK-C1-TEST-2
+type: evidence
+title: test evidence for SOL-HW-CONNECTIVITY-CHECK.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-16T03:23:11.140591Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check.py::test_a_net_on_the_wrong_pin_of_its_connector_fails_naming_both_pins
+  artifact_version: 3d2babcc5fc514a52508d793d05e4a151b1a97d1
+attested_by: crun-dc09b66dbd50aa3c
+links:
+  - target: SOL-HW-CONNECTIVITY-CHECK.C1
+    type: satisfies

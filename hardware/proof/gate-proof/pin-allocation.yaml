@@ -1,0 +1,16 @@
+# A synthetic pin allocation, made only to prove the pre-order check's
+# connectivity rules against the throwaway design beside it. Its channels are
+# not a real board's and must never be used for one: being marked synthetic, the
+# check accepts it only for a design marked not for manufacture.
+synthetic: true
+channels:
+  - channel: lv_a
+    net: LV_A
+    controller_pin: PA0
+    connector: J2
+    connector_pin: 1
+  - channel: lv_b
+    net: LV_B
+    controller_pin: PA1
+    connector: J2
+    connector_pin: 2

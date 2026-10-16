@@ -3,13 +3,15 @@ type: deliverable
 category: solution
 title: A board's connectivity is checked against its pin allocation record, each fault proven on a throwaway design
 status: active
-version: 1
+version: 2
 text: |
   The board check gains a connectivity check that holds each design to its pin allocation record, in the form the design-records decision sets. For every channel the record lists, it reads the schematic netlist the check already exports and requires the channel's net to reach the controller pin and the connector pin the record names. It fails a listed channel the design lacks and any net on a connector pin or controller pin the record does not list, and each failure names the channel, the net, the pin the record names and the pin the net reached, so a builder can act on it without reading the check. A design with no pin allocation record to be held to, an unparseable record, a record missing a required key and a record that lists no channel each fail; a synthetic record satisfies only a design marked not for manufacture.
 
   Placement, settled before build. The check is more named rules in the existing board check in hardware/tools/, reported with the rest, so the one task-runner command, the round's board tier and the nightly run it with no new gate. The pin allocation record joins what the round reads for a design, so a change to a record re-runs the board tier. The throwaway design in hardware/proof/ gains a synthetic pin allocation record that its committed state satisfies. The seeded-fault proof, on demand like the other proofs, introduces each fault into a copy of that design outside the repository. The check reads files only; it reads no firmware, no manufacturer data and no open editor session.
 
   Applying the check to a real board needs that board's own record, which its design task authors; this solution builds and proves the check and does not wait for either.
+
+  Locus, settled by the readiness pass. The existing record lookup in the board check is generalised from the separation basis record to a named record, so the pin allocation record is found by the same rule; the record is read with the strict YAML reader the check already has and joins the files a design reads. The netlist reading keeps the pin function name, so the controller pin the record names can be compared with the pin a net reached. The synthetic-record rule reuses the not-for-manufacture marker the separation basis check reads. The round gate's list of board file names gains the record's file name. The throwaway design that holds only connectors and resistors gains a controller-style part with named pins, keeping its electrical rule and parity checks clean, and both throwaway designs gain a synthetic record.
 links:
   - target: DEL-HW-DESIGN-VERIFICATION.C1
     type: derives-from
@@ -25,3 +27,7 @@ links:
     type: justified-by
   - target: SOL-HW-BOARD-RULE-CHECK-GATE
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: 7171ab5478cdabea53dfae52410d6f2a0cb497e1bafd7489c3efa5da45f1e52e
+  gating_profile: ""

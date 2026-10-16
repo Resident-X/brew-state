@@ -161,6 +161,52 @@ def record(old: str, new: str):
     return lambda seed: seed.replace("separation-basis.yaml", old, new)
 
 
+def pin_record(old: str, new: str):
+    return lambda seed: seed.replace("pin-allocation.yaml", old, new)
+
+
+def swap_labels(first: Tuple[str, str], second: Tuple[str, str]):
+    """Exchange the net names of two labels, each given as (its text, its position), so each net lands where the other was."""
+    def seed_it(seed: Seed) -> None:
+        def edit(tree: list) -> None:
+            found = []
+            for item in sexpr.children(tree, "label"):
+                at = sexpr.child(item, "at")
+                for wanted in (first, second):
+                    if item[1] == wanted[0] and " ".join(at[1:3]) == wanted[1]:
+                        found.append(item)
+            if len(found) != 2:
+                raise AssertionError("the proof schematic no longer has the two labels to exchange")
+            found[0][1], found[1][1] = found[1][1], found[0][1]
+        seed.schematic(edit)
+    return seed_it
+
+
+def drop_net_labels(name: str):
+    def seed_it(seed: Seed) -> None:
+        def edit(tree: list) -> None:
+            labels = [item for item in sexpr.children(tree, "label") if item[1] == name]
+            if not labels:
+                raise AssertionError(f"the proof schematic has no label {name}")
+            for item in labels:
+                tree.remove(item)
+        seed.schematic(edit)
+    return seed_it
+
+
+def rename_reference(old: str, new: str):
+    return lambda seed: seed.schematic(lambda tree: rename_in(tree, old, new))
+
+
+def rename_in(node, old: str, new: str) -> None:
+    if isinstance(node, list):
+        for index, item in enumerate(node):
+            if item == old and index > 0 and node[index - 1] in ("reference", "Reference"):
+                node[index] = new
+            else:
+                rename_in(item, old, new)
+
+
 def variables(edit: Callable[[dict], None]):
     return lambda seed: seed.project(lambda data: edit(data["text_variables"]))
 
@@ -674,7 +720,7 @@ FAULTS: List[Tuple[str, str, str, str, Callable[[Seed], None]]] = [
     ("a pad whose copper the check cannot size", "workmanship: a pad a track of its net meets is sized from the board file or named",
      "workmanship_pad_copper", "cannot be measured at pad 1 of R2: its shape is custom", custom_pad),
     ("a route narrowed partway along", "workmanship: a track narrower than its class is measured against its figure", "workmanship_width", "0.15 mm wide, narrower than its net class's 0.25 mm",
-     reroute("/LV_A", (LV_A_ENDS,), [(40, 10), (42.5, 10), (45, 10)], (0.25, 0.15))),
+     reroute("/LV_B", (LV_B_RUN,), [(40, 12.54), (46, 12.54), (52.62, 12.54)], (0.25, 0.15))),
     ("a rules file without the corner rule", "workmanship: the rules file holds every workmanship rule", "workmanship_rule", "WORK-4 (corner) has no rule", drop_rule("Corners")),
     ("a jog rule narrowed to some tracks", "workmanship: the rules file's workmanship rules hold on every track", "workmanship_rule", "WORK-5 (jog) is not in force on every track",
      mains_rule('(rule "Jogs"', '(rule "Jogs"\n\t(condition "A.hasNetclass(\'Mains\')")')),
@@ -746,6 +792,20 @@ FAULTS: List[Tuple[str, str, str, str, Callable[[Seed], None]]] = [
     ("a basis record with an invalid acceptance date", "separation: the basis record is signed", "separation_basis", "not a valid calendar date", record("accepted_on: 2026-10-12", "accepted_on: '12/10/2026'")),
     ("a basis record accepted on a future date", "separation: the basis record is signed", "separation_basis", "later than today", record("accepted_on: 2026-10-12", "accepted_on: 2999-01-01")),
     ("a synthetic basis record applied to a design not marked not for manufacture", "separation: a synthetic record cannot pass an orderable board", "separation_basis", "marked synthetic", variables(lambda v: v.pop("NOT_FOR_MANUFACTURE"))),
+    # Connectivity
+    ("a channel's net moved to the other controller pin", "connectivity: a net must reach the controller pin its channel names", "connectivity", "net /LV_A reaches controller pin PA1, where the record names controller pin PA0", swap_labels(("LV_A", "96.52 76.2"), ("LV_B", "96.52 78.74"))),
+    ("a channel's net moved to the other pin of its connector", "connectivity: a net must reach the connector pin its channel names", "connectivity", "net /LV_A reaches connector pin J2 pin 2, where the record names connector pin J2 pin 1", swap_labels(("LV_A", "45.72 76.2"), ("LV_B", "45.72 78.74"))),
+    ("a channel on the wrong connector", "connectivity: a net must reach the connector its channel names", "connectivity", "net /LV_A reaches connector pin J3 pin 1, where the record names connector pin J2 pin 1", rename_reference("J2", "J3")),
+    ("a listed channel removed from the design", "connectivity: a channel the record lists must be in the design", "connectivity", "the record lists net LV_B, which the design does not have", drop_net_labels("LV_B")),
+    ("a channel on pins the record omits", "connectivity: a net on a pin the record omits fails", "connectivity", "which the record does not list", pin_record("  - channel: lv_b\n    net: LV_B\n    controller_pin: PA1\n    connector: J2\n    connector_pin: 2\n", "")),
+    ("a pin allocation record that does not exist", "pin allocation: a design with no record fails", "pin_allocation", "there is no pin-allocation.yaml", remove("pin-allocation.yaml")),
+    ("a pin allocation record that cannot be parsed", "pin allocation: the record is readable", "pin_allocation", "cannot be parsed", pin_record("channels:\n", "channels: [unclosed\n")),
+    ("a pin allocation record giving a key twice", "pin allocation: the record is read only in its one form", "pin_allocation", "gives the key 'net' more than once", pin_record("    net: LV_A\n", "    net: LV_A\n    net: LV_B\n")),
+    ("a pin allocation record lacking the channels", "pin allocation: a record without channels fails", "pin_allocation", "the record lacks channels", pin_record("channels:\n", "chanels:\n")),
+    ("a pin allocation record listing no channel", "pin allocation: an empty record cannot pass a design", "pin_allocation", "lists no channel", lambda seed: seed.write("pin-allocation.yaml", "synthetic: true\nchannels: []\n")),
+    ("a pin allocation entry lacking its controller pin", "pin allocation: a record missing a required key fails", "pin_allocation", "the entry lacks controller_pin", pin_record("    controller_pin: PA0\n", "")),
+    ("a pin allocation entry naming a connector without its pin", "pin allocation: a record missing a required key fails", "pin_allocation", "gives only one of connector and connector_pin", pin_record("    connector_pin: 1\n", "")),
+    ("a synthetic pin allocation record applied to a design not marked not for manufacture", "pin allocation: a synthetic record cannot pass an orderable board", "pin_allocation", "marked synthetic", variables(lambda v: v.pop("NOT_FOR_MANUFACTURE"))),
 ]
 
 

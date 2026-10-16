@@ -89,6 +89,92 @@
 	)
 	(property "MAINS" "present")
 	(property "NOT_FOR_MANUFACTURE" "true")
+	(footprint "proof:Controller_1x02"
+		(layer "F.Cu")
+		(uuid "2eee21e6-cfc4-4e2c-b4a2-c34be67eebf6")
+		(at 43 10)
+		(descr "Controller-style part with two port pins, for the proof design")
+		(tags "proof controller")
+		(property "Reference" "U1"
+			(at 0 -2.38 0)
+			(layer "F.Fab")
+			(uuid "ea658bc4-e023-4c46-a4ba-5aeafa91b786")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Value" "CTRL"
+			(at 0 4.92 0)
+			(layer "F.Fab")
+			(uuid "16ee0ca4-3461-4250-b0d3-155666dc9289")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "2e6b8eeb-6d28-4087-8f61-b5346e3d1069")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "150119ae-80a3-44a2-8f1f-d94207ecf3e5")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(path "/7d46ebea-57ca-472d-b06e-04cfcd652a32")
+		(sheetname "/")
+		(sheetfile "gate-proof.kicad_sch")
+		(attr through_hole)
+		(duplicate_pad_numbers_are_jumpers no)
+		(fp_rect
+			(start -0.9 -0.9)
+			(end 0.9 3.44)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(fill no)
+			(layer "F.CrtYd")
+			(uuid "7a85dd7a-e133-4a49-8c5d-c977f3768e29")
+		)
+		(pad "1" thru_hole rect
+			(at 0 0)
+			(size 1.7 1.7)
+			(drill 1)
+			(layers "*.Cu" "*.Mask")
+			(remove_unused_layers no)
+			(net "/LV_A")
+			(uuid "1730b043-bff8-440f-b02f-7840f9c3b949")
+		)
+		(pad "2" thru_hole circle
+			(at 0 2.54)
+			(size 1.7 1.7)
+			(drill 1)
+			(layers "*.Cu" "*.Mask")
+			(remove_unused_layers no)
+			(net "/LV_B")
+			(uuid "66442d6d-ce8d-4780-af94-cfc2f4ec46d5")
+		)
+		(embedded_fonts no)
+	)
 	(footprint "proof:PinHeader_1x02_P2.54mm_Vertical"
 		(layer "F.Cu")
 		(uuid "426cc2db-ceaa-4f0a-9fc2-898134285bdb")
