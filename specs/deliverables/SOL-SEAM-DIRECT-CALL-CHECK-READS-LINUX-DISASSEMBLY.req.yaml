@@ -3,9 +3,14 @@ type: deliverable
 category: solution
 title: The seam direct-call check recognises direct calls in the disassembly each supported host prints
 status: active
-version: 1
+version: 3
 text: |
   The nightly full verification of main fails its check task on the hosted Linux runner: the seam direct-call check reports, for every host build environment, that each hardware-interface operation the control objects reference is reached by no direct call in the linked executable (the same check runs for the plant-model interface). It passes on macOS arm64 with Apple clang, where the project is developed. The check reads the disassembly of the linked executable, and the probable cause, from the check's patterns and the failure's shape, is that the Linux disassembler prints a call as a bare hexadecimal address before the symbol, and in a position-independent executable may suffix the symbol with a procedure-linkage marker, forms the patterns do not accept, so no call line matches and every operation reads as unreached; the build confirms the cause against a real Linux disassembly before changing the patterns. The behaviour restored is that a direct call through either interface is recognised as one on every supported host, while an indirect call and an unreached operation keep failing. The fix widens the check's recognition of those forms and adds tests that feed it each host's disassembly text, since none does today.
+
+
+  Placement: the existing check is extended, with no new tool and no new seam. The patterns are in firmware/tools/check_direct_calls.py (the call and tail-jump patterns accept an address only with a 0x prefix and a symbol only without an at-sign), and the tests are in firmware/tools/tests/test_checks.py beside the existing macOS single-line pattern tests. Rejected: a second tool, which would duplicate the discovery and symbol logic; requiring the LLVM disassembler on Linux, which adds undocumented local state; and a binary parser, which is heavier than the defect. The check is a script that reports by exit status and by the lines it prints, with no output-format option, so its criterion asserts those and no JSON mode is added. The tests carry each host's disassembly text as literals, covering the hardware-prefixed forms the Linux disassembler may print before an indirect call or jump. Whether the procedure-linkage form occurs in this repository's own executables is left to the build, since handling it is required either way.
+
+  Placement addendum: the hosted runner's first run of the widened check refused a switch's jump-table dispatch in a plant-seam consumer as an indirect call, because the new prefix handling made the no-track jump match. A jump table is the one indirect jump that is not a call: GCC marks it no-track, since only a jump with targets inside its own function can skip the landing-pad check. The check therefore skips a no-track jump and still refuses a no-track call and an unmarked indirect jump. Where a host builds without that protection, a jump table prints unmarked and is refused; this project's supported Linux host is the hosted runner's GCC at its default, which marks it.
 links:
   - target: DEL-MAINTENANCE.C1
     type: derives-from
@@ -13,3 +18,7 @@ links:
     type: targets
   - target: OBL-OPEN-SOURCE-MAINTAINABILITY-001.C1
     type: targets
+brief_confirmation:
+  confirmer: claude-sonnet-5-5
+  fingerprint: ff74617467c4f83952f4c1863456a26b0977bfc8e40b8d28029b712657cfc18f
+  gating_profile: ""

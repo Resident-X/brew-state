@@ -18,6 +18,9 @@ import sys
 import tempfile
 import textwrap
 import unittest
+from contextlib import redirect_stderr, redirect_stdout
+from io import StringIO
+from unittest import mock
 
 TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, TOOLS)
@@ -25,6 +28,7 @@ sys.path.insert(0, TOOLS)
 import check_control_identical  # noqa: E402
 import check_direct_calls  # noqa: E402
 import check_encapsulation  # noqa: E402
+import build_environments  # noqa: E402
 import check_sanitizers  # noqa: E402
 import vendor_symbols  # noqa: E402
 
@@ -359,6 +363,141 @@ class DirectCallCheck(unittest.TestCase):
     def test_a_branch_to_an_address_is_not_taken_for_a_call(self):
         self.assertIsNone(check_direct_calls.DIRECT_CALL.match("b\t0x1000010ec"))
         self.assertIsNone(check_direct_calls.INDIRECT_CALL.match("b.ne\t0x100001100"))
+
+    # Each host's disassembly of one control function, as the check reads it.
+    # `control_fn` calls the seam operation `hw_x` through the form under test.
+    # The macOS text is otool's; the Linux text is GNU objdump's with raw bytes
+    # suppressed, which is how the check invokes it.
+    HOSTS = {
+        "macos": {
+            "defined": {"_control_fn"},
+            "undefined": {"_hw_x"},
+            "label": "_control_fn:",
+            "direct_call": "0000000100003f00\tbl\t_hw_x",
+            "tail_jump": "0000000100003f00\tb\t_hw_x",
+            "suffixed": None,
+            "register": "0000000100003f00\tblr\tx8",
+            "memory": "0000000100003f00\tblraa\tx8, x9",
+            "prefixed": None,
+            "other": "0000000100003f00\tadd\tx0, x0, #1",
+        },
+        "linux": {
+            "defined": {"control_fn"},
+            "undefined": {"hw_x"},
+            "label": "0000000000001139 <control_fn>:",
+            "direct_call": "    1139:\tcall   1030 <hw_x>",
+            "tail_jump": "    1139:\tjmp    1150 <hw_x>",
+            "suffixed": "    1139:\tcall   1030 <hw_x@plt>",
+            "register": "    1139:\tcall   *%rax",
+            "memory": "    1139:\tcall   *0x2ee2(%rip)        # 4020 <fp>",
+            "prefixed": "    1139:\tnotrack call *%rax",
+            "other": "    1139:\tadd    $0x1,%eax",
+        },
+    }
+
+    def run_main(self, host: str, *instructions: str) -> tuple[int, str, str]:
+        """Run the check end to end over canned disassembly, as the exit status and its lines."""
+        spec = self.HOSTS[host]
+        text = "\n".join([spec["label"], *instructions, ""])
+        with tempfile.TemporaryDirectory() as project:
+            write(project, "platformio.ini", "[env:host]\nplatform = native\nbuild_src_filter = +<app/native/>\n")
+            environment = build_environments.artefact_environments(build_environments.load(project))[0]
+            executable = environment.artefact(project)
+            objects = environment.objects_under(project, "src/control")
+            write(project, os.path.relpath(executable, project), "")
+            os.makedirs(objects)
+            header = write(project, "hw.h", "int hw_x(void);\n")
+            canned = subprocess.CompletedProcess([], 0, stdout=text, stderr="")
+            out, err = StringIO(), StringIO()
+            with mock.patch.object(check_direct_calls, "_disassembler_output", return_value=canned), \
+                    mock.patch.object(check_direct_calls, "collect_objects", return_value=["fixture.o"]), \
+                    mock.patch.object(
+                        check_direct_calls, "symbols_of", return_value=(spec["defined"], spec["undefined"])
+                    ), \
+                    redirect_stdout(out), redirect_stderr(err):
+                code = check_direct_calls.main(
+                    ["--project", project, "--header", header, "--objects-in", "src/control"]
+                )
+        return code, out.getvalue(), err.getvalue()
+
+    def test_each_hosts_direct_call_forms_pass(self):
+        # SOL-SEAM-DIRECT-CALL-CHECK-READS-LINUX-DISASSEMBLY.C1: The seam direct-call check recognises the call forms each supported host's disassembler prints and still fails what it exists to refuse
+        for host, spec in self.HOSTS.items():
+            for form in ("direct_call", "tail_jump", "suffixed"):
+                if spec[form] is None:
+                    continue
+                with self.subTest(host=host, form=form):
+                    code, out, err = self.run_main(host, spec[form])
+                    self.assertEqual((0, ""), (code, err))
+                    self.assertIn("every operation the callers of", out)
+                    self.assertIn("is a direct call", out)
+
+    def test_each_hosts_indirect_call_forms_fail_naming_the_call(self):
+        # SOL-SEAM-DIRECT-CALL-CHECK-READS-LINUX-DISASSEMBLY.C1: The seam direct-call check recognises the call forms each supported host's disassembler prints and still fails what it exists to refuse
+        for host, spec in self.HOSTS.items():
+            for form in ("register", "memory", "prefixed"):
+                if spec[form] is None:
+                    continue
+                with self.subTest(host=host, form=form):
+                    # A direct call is present, so only the indirect one can fail the check.
+                    code, out, err = self.run_main(host, spec["direct_call"], spec[form])
+                    self.assertEqual(1, code)
+                    self.assertEqual("", out)
+                    instruction = spec[form].split(":\t", 1)[-1].split("\t", 1)[-1].strip()
+                    self.assertIn(f"{next(iter(spec['defined']))}: indirect call on a control-path call site: ", err)
+                    self.assertIn(instruction, err)
+
+    def test_an_operation_reached_by_no_call_fails_on_each_host(self):
+        # SOL-SEAM-DIRECT-CALL-CHECK-READS-LINUX-DISASSEMBLY.C1: The seam direct-call check recognises the call forms each supported host's disassembler prints and still fails what it exists to refuse
+        for host, spec in self.HOSTS.items():
+            with self.subTest(host=host):
+                code, out, err = self.run_main(host, spec["other"])
+                self.assertEqual(1, code)
+                self.assertEqual("", out)
+                operation = next(iter(spec["undefined"]))
+                self.assertIn(
+                    f"{operation}: referenced by the control objects but reached by no direct call", err
+                )
+
+    def test_a_branch_prefixed_direct_call_is_still_recognised(self):
+        # SOL-SEAM-DIRECT-CALL-CHECK-READS-LINUX-DISASSEMBLY.C1: The seam direct-call check recognises the call forms each supported host's disassembler prints and still fails what it exists to refuse
+        code, _out, err = self.run_main("linux", "    1139:\tbnd call 1030 <hw_x@plt>")
+        self.assertEqual((0, ""), (code, err))
+        code, _out, err = self.run_main("linux", "    1139:\tbnd jmp 1150 <hw_x>")
+        self.assertEqual((0, ""), (code, err))
+
+    def test_a_jump_table_dispatch_is_not_an_indirect_call(self):
+        # SOL-SEAM-DIRECT-CALL-CHECK-READS-LINUX-DISASSEMBLY.C1: The seam direct-call check recognises the call forms each supported host's disassembler prints and still fails what it exists to refuse
+        for dispatch in (
+            "    1139:\tnotrack jmp *%rax",
+            "    1139:\tbnd notrack jmp *%rax",
+            "    1139:\tnotrack jmp *0x2008(,%rax,8)",
+        ):
+            with self.subTest(dispatch=dispatch):
+                code, _out, err = self.run_main("linux", dispatch, "    1139:\tcall   1030 <hw_x@plt>")
+                self.assertEqual((0, ""), (code, err))
+
+    def test_an_unmarked_indirect_jump_is_still_refused(self):
+        # SOL-SEAM-DIRECT-CALL-CHECK-READS-LINUX-DISASSEMBLY.C1: The seam direct-call check recognises the call forms each supported host's disassembler prints and still fails what it exists to refuse
+        code, out, err = self.run_main("linux", "    1139:\tcall   1030 <hw_x@plt>", "    1139:\tjmp    *%rax")
+        self.assertEqual((1, ""), (code, out))
+        self.assertIn("indirect call on a control-path call site: jmp    *%rax", err)
+
+    def test_a_jump_within_a_function_is_not_taken_for_a_call(self):
+        # SOL-SEAM-DIRECT-CALL-CHECK-READS-LINUX-DISASSEMBLY.C1: The seam direct-call check recognises the call forms each supported host's disassembler prints and still fails what it exists to refuse
+        for instruction in ("jmp    1150 <control_fn+0x17>", "jmp    1150", "jne    1150 <control_fn+0x17>"):
+            with self.subTest(instruction=instruction):
+                self.assertIsNone(check_direct_calls.DIRECT_TAIL_CALL.match(instruction))
+                self.assertIsNone(check_direct_calls.INDIRECT_CALL.match(instruction))
+        code, _out, err = self.run_main("linux", "    1139:\tjmp    1150 <control_fn+0x17>")
+        self.assertEqual(1, code)
+        self.assertIn("reached by no direct call", err)
+
+    def test_a_suffixed_symbol_is_the_symbol_without_its_suffix(self):
+        # SOL-SEAM-DIRECT-CALL-CHECK-READS-LINUX-DISASSEMBLY.C1: The seam direct-call check recognises the call forms each supported host's disassembler prints and still fails what it exists to refuse
+        match = check_direct_calls.DIRECT_CALL.match("call   1030 <hw_monotonic_millis@plt>")
+        self.assertIsNotNone(match)
+        self.assertEqual("hw_monotonic_millis", match.group("angled"))
 
     def test_a_host_with_no_disassembler_is_an_error_not_a_pass(self):
         real_run = subprocess.run

@@ -1,0 +1,22 @@
+id: EV-SOL-SEAM-DIRECT-CALL-CHECK-READS-LINUX-DISASSEMBLY-C2-DEMONSTRATION
+type: evidence
+title: Seam direct-call check passes on the hosted Ubuntu runner (SOL-SEAM-DIRECT-CALL-CHECK-READS-LINUX-DISASSEMBLY.C2)
+status: active
+version: 1
+result: pass
+method: demonstration
+observed_at: "2026-10-16T09:33:05Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: https://github.com/Resident-X/brew-state/actions/runs/38879792643
+  artifact_version: e42f72ea198a1196dc292a40c15d15e7068bc040
+text: |
+  A probe workflow on a throwaway branch (since deleted) ran on ubuntu-24.04 at the commit one step after 1603f35, which differs from it only by the probe workflow files. It installed the task runner and PlatformIO as the nightly workflow does, built every host environment with `task fw:build`, and ran the two seam direct-call lines of the check task. Both printed their success line over all six host executables (native, native_fixture, native_boiler, native_flow_fixture, native_outlet_only_fixture, native_correction_read_only_fixture): "every operation the callers of include/hw_interface.h use is a direct call" and "every operation the callers of include/plant_model.h use is a direct call". The run concluded success: https://github.com/Resident-X/brew-state/actions/runs/38879792643
+
+  Before the jump-table fix, the nightly workflow dispatched on this branch (run 38874878465) passed the hardware-interface line and failed the plant-model line on a no-track jump-table dispatch in record_the_brew_side; that is the failure the fix removes.
+
+  The criterion names the nightly workflow's check task on a hosted Ubuntu runner and counts a manual dispatch on the branch. This evidence is a purpose-built probe running the same two lines of that task on the same runner image, not a dispatch of the nightly itself, and the first nightly after merge is the full confirmation.
+links:
+  - target: SOL-SEAM-DIRECT-CALL-CHECK-READS-LINUX-DISASSEMBLY.C2
+    type: satisfies
