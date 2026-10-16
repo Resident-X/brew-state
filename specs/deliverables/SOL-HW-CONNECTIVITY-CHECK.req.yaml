@@ -27,3 +27,7 @@ links:
     type: justified-by
   - target: SOL-HW-BOARD-RULE-CHECK-GATE
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: 7171ab5478cdabea53dfae52410d6f2a0cb497e1bafd7489c3efa5da45f1e52e
+  gating_profile: ""
