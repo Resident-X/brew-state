@@ -1,0 +1,12 @@
+id: SOL-VERIFY-ROUND-GATE-HOST-TIER-BY-PATH.C3
+type: criterion
+title: The project's instructions and the firmware documentation name the round gate as the build round's verification
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The project's instructions and the firmware documentation describe the two cadences, round and nightly, and what each runs, including that the round runs the host tier only for a change to something it reads. A build round's gate worker finds the round gate as the tier the project declares for a build round. The project's instructions state that the round gate is the only verification a change gets before it merges, with no separate pull-request gate. The mutation sweep's task description and the documentation's account of the gate do not say the sweep runs in every gate, and no description of the host tier says it runs in every round. Out of scope: the nightly's own workflow, the reader for its result, and the operator skills installed from upstream.
+links:
+  - target: SOL-VERIFY-ROUND-GATE-HOST-TIER-BY-PATH
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-TOOL-TESTS-RUN-SIDE-BY-SIDE.C1
+type: criterion
+title: The task running the firmware tooling's tests runs each test module in a process of its own, side by side
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The task-runner command that runs the firmware tooling's tests discovers the test modules in the tooling's test directory, runs each in a process of its own, several at once with the number of simultaneous modules defaulting to the processor count up to a cap and settable by the caller, and states each module's result and test count as it finishes and the totals at the end. A module's crash, import failure or global state cannot reach another module, and a test shows two modules that each pass alone also pass together. Out of scope: selecting individual tests within a module, and what any test asserts.
+links:
+  - target: SOL-TOOL-TESTS-RUN-SIDE-BY-SIDE
+    type: criterion-of
