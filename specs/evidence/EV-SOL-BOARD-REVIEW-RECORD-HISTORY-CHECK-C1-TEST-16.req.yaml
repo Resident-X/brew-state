@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-REVIEW-RECORD-HISTORY-CHECK-C1-TEST-16
+type: evidence
+title: test evidence for SOL-BOARD-REVIEW-RECORD-HISTORY-CHECK.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-16T03:20:55.998729Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_review_history.py::Headings.test_a_fenced_level_two_line_inside_a_round_passes_when_the_round_is_otherwise_whole
+  artifact_version: c16094980479bcb73a0282b5293c87756ce19cb0
+attested_by: crun-ff370f8599b8e335
+links:
+  - target: SOL-BOARD-REVIEW-RECORD-HISTORY-CHECK.C1
+    type: satisfies

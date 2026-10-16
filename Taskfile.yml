@@ -520,8 +520,15 @@ tasks:
     cmds:
       - python3 "{{.ROOT_DIR}}/{{.HW_DIR}}/tools/board_history.py" {{.CLI_ARGS}}
 
+  hw:review-history:
+    desc: Judge a board's layout review record, the layout-review.md in its folder, against the repository's history, reading every version of the record reachable from HEAD — every round heading exactly `## Round <n>`, none given twice, no code fence left open, and each round only the parts the command reads (a `### Verdicts` table, an optional `### Findings` table or its no-finding line, an optional `### Plan and free pass` of prose, and no other heading or unreadable table), in the record or any earlier version of it, every round recorded in any version still there, each round's opening lines, verdict table and findings (their number, Raised by, Severity and What and where; Closed by is never compared) as they stood in the round's end-of-round commit, the first commit whose record holds its heading, the end-of-round commit an ancestor of, and not, every commit after the round's Board judged commit that changes the board's design files (the files KiCad reads for it, never the board's own markdown and YAML records, the review record among them), and no design file changed since the closing round's commit. Fails on any of these, naming the board, the round and what differs; refuses a shallow clone, a folder not tracking exactly one KiCad project, and a record or design file that is untracked, absent or differs from HEAD. Pass the board's folder after --, for example task hw:review-history -- --folder hardware/<machine>/<board>, and --json for the verdicts as JSON. Exits 0 on a pass, 1 on a fail, 2 when refused. Needs git and Python 3.9 or newer only
+    # Run from where it is called, so the folder is read as the caller wrote it.
+    dir: "{{.USER_WORKING_DIR}}"
+    cmds:
+      - python3 "{{.ROOT_DIR}}/{{.HW_DIR}}/tools/board_review_history.py" {{.CLI_ARGS}}
+
   hw:test:
-    desc: Run the tests covering the board tooling (the pre-order check, the locked-copper check, the layout review views, the placement view, the placement and critical routing history check and the layout review proof's seeding command), against the real kicad-cli and resvg, the seeded-fault proof's own tests included — on demand; the build round's gate and the nightly complete verification run hw:test:round instead. Needs the same tools as hw:verify, resvg 0.47 or newer (set RESVG=/path/to/resvg when resvg is not on PATH), and Task
+    desc: Run the tests covering the board tooling (the pre-order check, the locked-copper check, the layout review views, the placement view, the placement and critical routing history check, the layout review record history check and the layout review proof's seeding command), against the real kicad-cli and resvg, the seeded-fault proof's own tests included — on demand; the build round's gate and the nightly complete verification run hw:test:round instead. Needs the same tools as hw:verify, resvg 0.47 or newer (set RESVG=/path/to/resvg when resvg is not on PATH), and Task
     dir: "{{.ROOT_DIR}}"
     env:
       KICAD_CLI: "{{.KICAD_CLI}}"
