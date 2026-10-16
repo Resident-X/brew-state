@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-REVIEW-RECORD-HISTORY-CHECK-C1-TEST-8
+type: evidence
+title: test evidence for SOL-BOARD-REVIEW-RECORD-HISTORY-CHECK.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-16T03:20:54.754989Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_review_history.py::Headings.test_a_round_heading_in_another_form_fails_the_round_headings
+  artifact_version: c16094980479bcb73a0282b5293c87756ce19cb0
+attested_by: crun-ff370f8599b8e335
+links:
+  - target: SOL-BOARD-REVIEW-RECORD-HISTORY-CHECK.C1
+    type: satisfies
