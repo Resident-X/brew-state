@@ -61,6 +61,13 @@ INDIRECT_CALL = re.compile(
     rf"^\s*{PREFIXES}(?:blra[abz]*|bra[abz]*|blr|br|call|callq|jmp|jmpq)\s+[*xw]"
 )
 
+# A switch compiled to a jump table dispatches with an indirect jump whose
+# targets are labels inside the same function. GCC marks exactly that jump
+# `notrack`, because a call or tail jump through a pointer must land on a
+# landing-pad instruction and so cannot be unchecked. A `notrack` call is not a
+# jump-table dispatch and stays an indirect call.
+JUMP_TABLE_DISPATCH = re.compile(r"^\s*(?:bnd\s+)?notrack\s+(?:jmp|jmpq)\s+\*")
+
 # A tail call: the last operation reached by jumping straight to another symbol.
 DIRECT_TAIL_CALL = re.compile(rf"^\s*{PREFIXES}(?:b|jmp|jmpq)\s+{ADDRESS}{TARGET}")
 
@@ -204,6 +211,8 @@ def check(executable: str, header: str, object_roots: list[str]) -> list[str]:
         inspected += 1
 
         for instruction in body:
+            if JUMP_TABLE_DISPATCH.match(instruction):
+                continue
             if INDIRECT_CALL.match(instruction):
                 problems.append(
                     f"{symbol}: indirect call on a control-path call site: "

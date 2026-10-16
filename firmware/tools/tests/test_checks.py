@@ -390,7 +390,7 @@ class DirectCallCheck(unittest.TestCase):
             "suffixed": "    1139:\tcall   1030 <hw_x@plt>",
             "register": "    1139:\tcall   *%rax",
             "memory": "    1139:\tcall   *0x2ee2(%rip)        # 4020 <fp>",
-            "prefixed": "    1139:\tnotrack jmp *%rax",
+            "prefixed": "    1139:\tnotrack call *%rax",
             "other": "    1139:\tadd    $0x1,%eax",
         },
     }
@@ -465,6 +465,23 @@ class DirectCallCheck(unittest.TestCase):
         self.assertEqual((0, ""), (code, err))
         code, _out, err = self.run_main("linux", "    1139:\tbnd jmp 1150 <hw_x>")
         self.assertEqual((0, ""), (code, err))
+
+    def test_a_jump_table_dispatch_is_not_an_indirect_call(self):
+        # SOL-SEAM-DIRECT-CALL-CHECK-READS-LINUX-DISASSEMBLY.C1: The seam direct-call check recognises the call forms each supported host's disassembler prints and still fails what it exists to refuse
+        for dispatch in (
+            "    1139:\tnotrack jmp *%rax",
+            "    1139:\tbnd notrack jmp *%rax",
+            "    1139:\tnotrack jmp *0x2008(,%rax,8)",
+        ):
+            with self.subTest(dispatch=dispatch):
+                code, _out, err = self.run_main("linux", dispatch, "    1139:\tcall   1030 <hw_x@plt>")
+                self.assertEqual((0, ""), (code, err))
+
+    def test_an_unmarked_indirect_jump_is_still_refused(self):
+        # SOL-SEAM-DIRECT-CALL-CHECK-READS-LINUX-DISASSEMBLY.C1: The seam direct-call check recognises the call forms each supported host's disassembler prints and still fails what it exists to refuse
+        code, out, err = self.run_main("linux", "    1139:\tcall   1030 <hw_x@plt>", "    1139:\tjmp    *%rax")
+        self.assertEqual((1, ""), (code, out))
+        self.assertIn("indirect call on a control-path call site: jmp    *%rax", err)
 
     def test_a_jump_within_a_function_is_not_taken_for_a_call(self):
         # SOL-SEAM-DIRECT-CALL-CHECK-READS-LINUX-DISASSEMBLY.C1: The seam direct-call check recognises the call forms each supported host's disassembler prints and still fails what it exists to refuse
