@@ -1,0 +1,16 @@
+id: EV-SOL-HW-PARTS-CHECK-C2-TEST
+type: evidence
+title: test evidence for SOL-HW-PARTS-CHECK.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-16T03:54:20.665696Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_parts.py::PartsAgainstTheExtract.test_a_part_with_no_stock_fails
+  artifact_version: 349e016b236a396b3d0546e3f4c731a689eb3ab6
+attested_by: crun-680120347af84695
+links:
+  - target: SOL-HW-PARTS-CHECK.C2
+    type: satisfies
