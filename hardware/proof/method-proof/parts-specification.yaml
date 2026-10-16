@@ -49,6 +49,16 @@ positions:
     package: "C_0805_2012Metric"
     rating: "10V"
     lcsc: "C9100009"
+  - reference: C4
+    value: "100nF"
+    package: "C_0603_1608Metric"
+    rating: "16V"
+    lcsc: "C9100015"
+  - reference: C5
+    value: "100nF"
+    package: "C_0603_1608Metric"
+    rating: "16V"
+    lcsc: "C9100015"
   - reference: R1
     value: "1.2k"
     package: "R_0603_1608Metric"

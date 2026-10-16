@@ -50,4 +50,5 @@ These are the conditions the figure's range implies that no datasheet read state
 - **No sensing front end, no zero-crossing detector**: the schematic carries neither.
 - **No conductor relies on a protective device**: the schematic carries no fuse and the constraints record declares none and no fault current, so no conductor row exists. The isolating links JP1 and JP2 are rated for the 0.5 A continuous current by Samtec's SNT shunt datasheet, *Specifications*, 4.3 A per pin; that is checked in `bring-up-provision.md`.
 - **U1's dissipation**: it depends on no component value on the board, and the Microchip datasheet gives the SOT-23 junction-to-ambient thermal resistance, 212 °C/W, as a typical value only, so no junction temperature can be sourced for it.
+- **C4 and C5**, 100 nF output filter capacitors at J2's pins 2 and 1: no datasheet read states a requirement of their value, and neither is on a circuit that works or fails by it.
 - **The PA1 header J3** carries a signal out of the board and holds no value that decides whether it works.

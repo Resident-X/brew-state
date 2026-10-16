@@ -1,21 +1,23 @@
 .title KiCad schematic
-J3 __J3
-D1 __D1
-TP4 __TP4
-R1 +5V /LED_A 1.2k
-J2 __J2
-J1 __J1
-TP1 __TP1
-C1 +5V GND 47u
-JP1 __JP1
-TP2 __TP2
-C2 /+3V3_REG GND 150u
-U1 __U1
 U2 __U2
-JP2 __JP2
-H1 __H1
-H2 __H2
-H3 __H3
 C3 +3V3 GND 10u
 TP3 __TP3
+H2 __H2
+H1 __H1
+H3 __H3
+J1 __J1
+TP1 __TP1
+TP2 __TP2
+C2 /+3V3_REG GND 150u
+JP1 __JP1
+U1 __U1
+C1 +5V GND 47u
+JP2 __JP2
+J2 __J2
+J3 __J3
+TP4 __TP4
+R1 +5V /LED_A 1.2k
+C5 +5V GND 100n
+C4 +3V3 GND 100n
+D1 __D1
 .end
