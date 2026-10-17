@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The pre-order check accepts and reads every key the record decisions define and still fails one they do not
 status: active
-version: 1
+version: 2
 text: |
   The pre-order check accepts and reads every key that the separation basis decision and the design-records decision define beyond what it reads today, and still fails a key those decisions do not define. Today it holds the separation basis to a fixed set of record keys and refuses any other, so a design that declares the overvoltage category, the altitude, the per-barrier insulation types or the table rows it used cannot pass the check; the derating policy, pin-limit and catalogue-lifecycle records the decisions define have the same standing.
 
@@ -14,7 +14,7 @@ text: |
   - the pin-limit record, with its power domains and its parts, each part holding its source and its pins;
   - each catalogue extract entry's lifecycle mapping: status, source and the date read.
 
-  Reading a key means checking its form where the decisions state one: a figure that must be positive is refused when it is not, a list entry that must name a barrier the record lists is refused when it does not, a date that must be an ISO date is refused when it is not, and a record marked synthetic satisfies only a design marked not for manufacture, as the decisions already say for the keys held today. Acting on the values these keys carry is not part of this solution: the rules that compare a design against them belong to the other criteria of the task it serves.
+  Reading a key means checking its form where the decisions state one: a figure that must be positive is refused when it is not, a list entry that must name a barrier the record lists is refused when it does not, a date that must be an ISO date is refused when it is not, and a record marked synthetic satisfies only a design marked not for manufacture, as the decisions already say for the keys held today. The derating policy and pin-limit records are read when a design's folders hold them and are not required by this solution; a key inside any record that the two decisions do not name is refused. Acting on the values these keys carry is not part of this solution: the rules that compare a design against them belong to the other criteria of the task it serves.
 
   A proof design committed in its own folder under the hardware proof folder, with its own synthetic records carrying every key above, passes the check. It is the design of this solution alone; the schematic review's proof design is a separate folder with its own records, built after this solution so that it can carry these keys. A copy of it with one of those keys misspelt, run through the check in the same way the check's existing seeded faults are, fails and names the key.
 rationale: |

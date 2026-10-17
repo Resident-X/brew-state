@@ -2,7 +2,7 @@ id: DEC-BOARD-SEPARATION-BASIS-RECORD
 type: decision
 title: Board separation is held to a signed basis record in the machine's hardware folder, and every board declares its mains nets
 status: active
-version: 2
+version: 3
 text: |
   Board artefacts live in a hardware tree at the repository root, apart from docs. A folder named for the machine, hardware/<machine>/, holds that machine's board designs, one KiCad project per board in its own folder, and the separation basis record they are held to. Tooling that holds for any machine, such as the pre-order check, lives in hardware/tools/, and designs committed only to prove that tooling live in hardware/proof/. A board design is a KiCad project file together with the schematic and layout beside it; the check finds every one tracked anywhere in the repository, so the layout of the tree is a convention for readers and not a boundary the check depends on.
 
@@ -16,11 +16,11 @@ text: |
   - accepted_on: the calendar date they accepted it, written as an ISO 8601 date;
   - synthetic: true on a record made only to prove the check; absent or false otherwise.
 
-  The record also states the inputs its figures are read at, so a reader, and a check, can tell whether the signed figures follow from them. These keys are added beside the ones above and change none of them:
-  - overvoltage_category: the overvoltage category the figures are read for;
-  - altitude_m: the highest altitude in metres the figures hold to;
-  - barrier_types: a list with one entry per barrier named under barriers, each holding barrier, the name used there; insulation, basic or reinforced; earth_bonded, whether the low-voltage side of that barrier is bonded to protective earth; touchable, the low-voltage parts a person can touch beyond it; and formed_by, the part or spacing that forms it;
-  - table_rows: the rows of the cited standard's or derivation's tables actually used for this design's inputs, and only those, each holding its citation (document, edition, table and row or clause), the input values it is read at, and the figure it gives. A record never reproduces a whole table: the standards are copyrighted, the repository is public domain, and only the rows a design's own inputs select are needed to show where its figures come from.
+  The record also states the inputs its figures are read at, so a reader, and a check, can tell whether the signed figures follow from them. These keys are added beside the ones above and change none of them, and each is optional on a record. The check refuses any key inside them that this text does not name:
+  - overvoltage_category: the overvoltage category the figures are read for, an integer from 1 to 4;
+  - altitude_m: the highest altitude in metres the figures hold to, a positive number;
+  - barrier_types: a list with one entry per barrier named under barriers, each holding barrier, the name used there; insulation, basic or reinforced; earth_bonded, whether the low-voltage side of that barrier is bonded to protective earth; touchable, the low-voltage parts a person can touch beyond it; and formed_by, the part or spacing that forms it. Insulation is basic or reinforced, earth_bonded is true or false, touchable is a list of the parts, empty where none, and each barrier named under barriers has exactly one entry;
+  - table_rows: the rows of the cited standard's or derivation's tables actually used for this design's inputs, and only those, each entry holding citation, a mapping of document, edition and locator (the table and row, or the clause); inputs, a mapping of the input values it is read at, drawn from working_voltage_v, insulation, overvoltage_category, pollution_degree, material_group and altitude_m; and figure, a mapping of clearance_mm and creepage_mm, each a positive number in millimetres, at least one present. A record never reproduces a whole table: the standards are copyrighted, the repository is public domain, and only the rows a design's own inputs select are needed to show where its figures come from.
 
   accepted_by holds the identity under which that person records acts in this project's graph, the actor identity the project configuration and every authoring event already use, so the acceptance and the graph's audit trail name the same person. A record is signed when accepted_by is a non-empty value other than a placeholder (unsigned, tbd, todo, none or placeholder, in any letter case, or anything in angle brackets) and accepted_on is a valid date no later than the day the check runs; the commit that adds or changes it is its audit trail, and no cryptographic signature is involved. A record that cannot be parsed, or lacks either figure, or states one that is not a positive number, fails like a missing one, so no figure is ever read as zero. A record marked synthetic satisfies only a design marked not for manufacture, so a proof record can never let an orderable board pass.
 
