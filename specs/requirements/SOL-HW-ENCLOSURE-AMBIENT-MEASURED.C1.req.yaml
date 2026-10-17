@@ -3,7 +3,7 @@ type: criterion
 title: The enclosure's air temperature at sustained full heat is measured with the enclosure closed and recorded with how it was established
 status: active
 version: 1
-measurement_type: threshold
+measurement_type: binary
 verification: test
 text: |
   Log the air temperature at the positions the boards will occupy, with the leads routed out and the enclosure closed, through a run at sustained full heat until the readings settle, and record positions, logger, accuracy, duration, duty, settled readings and the room temperature in the machine's design-constraints record. Out of scope: grading any part against the figure, which the boards' design does.

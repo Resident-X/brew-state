@@ -1,0 +1,12 @@
+id: REQ-PRODUCTION-GRADE-VERIFICATION-001.C6
+type: criterion
+title: The assembled machine withstands static discharge at the governing standard's level wherever a person can reach
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The discharge is applied at the governing standard's level to each connector, control and surface a person can reach, and the controller and the protective chain are undamaged afterwards.
+links:
+  - target: REQ-PRODUCTION-GRADE-VERIFICATION-001
+    type: criterion-of

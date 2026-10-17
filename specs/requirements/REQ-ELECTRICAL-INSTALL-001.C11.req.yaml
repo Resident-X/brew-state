@@ -1,12 +1,12 @@
 id: REQ-ELECTRICAL-INSTALL-001.C11
 type: criterion
-title: A static discharge from a person into anything they can reach leaves the controller and the protective chain undamaged
+title: Every connector or surface a person can reach is protected against static discharge at the declared level
 status: active
 version: 1
 measurement_type: binary
 verification: inspection
 text: |
-  The operator's controls, and any port or conductive surface a person can reach with the machine assembled, are where a static discharge enters. Each such entry point is protected, so a discharge can at most interrupt the controller, which the protective chain already tolerates, and never damages the controller or any element of the chain.
+  The operator's controls, and every port or conductive surface a person can reach with the machine assembled, are where a static discharge enters. Each is protected, and the protection is rated for the discharge level the governing standard sets for a household appliance, taken from that standard or from a cited, freely available derivation of it, so a discharge can at most interrupt the controller, which the protective chain already tolerates. Whether the protection holds under an applied discharge is a measurement for a production-grade build.
 links:
   - target: REQ-ELECTRICAL-INSTALL-001
     type: criterion-of

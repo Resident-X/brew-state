@@ -19,5 +19,3 @@ links:
     type: targets
   - target: OBL-VERIFICATION-DISCIPLINE-001.C9
     type: targets
-  - target: DEC-BOARD-MANUFACTURER-JLCPCB
-    type: justified-by

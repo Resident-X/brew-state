@@ -46,3 +46,5 @@ links:
     type: targets
   - target: REQ-STARTUP-STATE-001.C2
     type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C13
+    type: targets

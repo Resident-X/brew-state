@@ -38,3 +38,5 @@ links:
     type: depends-on
   - target: DEL-COMPONENT-SPECIFICATION
     type: depends-on
+  - target: OBL-ELECTROMAGNETIC-COMPATIBILITY-001.C2
+    type: targets

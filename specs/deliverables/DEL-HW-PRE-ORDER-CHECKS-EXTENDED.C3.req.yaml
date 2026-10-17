@@ -7,7 +7,7 @@ measurement_type: binary
 verification: test
 closes_by: cascade
 text: |
-  Sensing and noisy nets are declared by net class, and the clearance between the two classes is a rule the layout check enforces at no less than the figure the board's rules state with its source.
+  Sensing and noisy nets are declared by net class, and the clearance between the two classes is a rule the layout check enforces at no less than the figure the board's rules state. A board that declares no figure, or a figure without its source, fails, so a board cannot pass by declaring a token clearance with nothing behind it.
 links:
   - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED
     type: criterion-of

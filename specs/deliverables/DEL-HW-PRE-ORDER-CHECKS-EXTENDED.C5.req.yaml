@@ -7,7 +7,7 @@ measurement_type: binary
 verification: test
 closes_by: cascade
 text: |
-  Each part's pin limits are held in a record with their datasheet source, and each pin is compared with the highest rail its net connects to, including pins on parts that may be unpowered while the net is driven.
+  Each part's pin limits and the board's power domains come from the pin-limit record, with their datasheet source, and each pin is compared with the highest voltage its net can reach, including a pin whose own domain is unpowered while another domain drives its net.
 links:
   - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED
     type: criterion-of

@@ -1,0 +1,12 @@
+id: REQ-PRODUCTION-GRADE-VERIFICATION-001.C9
+type: criterion
+title: Earth continuity holds at the governing standard's test current
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  The test current and duration are the governing standard's for the appliance's class, from each touchable conductive part to the earth contact of the supply inlet, where the prototype measures at what a bench supply can deliver.
+links:
+  - target: REQ-PRODUCTION-GRADE-VERIFICATION-001
+    type: criterion-of

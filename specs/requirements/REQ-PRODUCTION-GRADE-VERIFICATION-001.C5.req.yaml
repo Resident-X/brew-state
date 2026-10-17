@@ -1,0 +1,12 @@
+id: REQ-PRODUCTION-GRADE-VERIFICATION-001.C5
+type: criterion
+title: The assembled machine withstands the surge of its declared overvoltage category
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The surge is the one the governing standard assigns to the declared overvoltage category, applied at the supply inlet; the separation still holds and the protective chain still removes heater power afterwards.
+links:
+  - target: REQ-PRODUCTION-GRADE-VERIFICATION-001
+    type: criterion-of

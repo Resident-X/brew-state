@@ -7,7 +7,7 @@ measurement_type: binary
 verification: test
 closes_by: cascade
 text: |
-  The rating comes from the parts specification record's rating field, the derating factor from the board's declared derating policy, and the voltage from the highest rail the part's nets connect to.
+  The rating comes from the parts specification record's rating field and the derating share from the board's declared derating policy. The working voltage is the highest the part sees in service: for a part on a mains-referenced net, the peak of the supply at the top of the declared span; for any other part, the highest rail its nets connect to.
 links:
   - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED
     type: criterion-of

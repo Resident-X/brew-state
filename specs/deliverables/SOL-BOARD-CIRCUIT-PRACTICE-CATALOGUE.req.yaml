@@ -24,6 +24,8 @@ text: |
   - mains-side transient protection rated for the surge level of the declared overvoltage category, from its makers' ratings;
   - protection against static discharge at every connector or control a person can reach;
   - touch current, estimated from the filter and supply parts' leakage to protective earth, against the limit for the appliance's protection class;
+  - the element that removes heater power on loss of proof of life taking nothing from the controller's clock, reset or supply, so its independence is shown in the schematic rather than first found at bring-up;
+  - emissions limited at their sources: filtering at the supply inlet and at each switched mains load, and the edge rates of switching parts bounded, each against the governing standard's limits for household appliances, together with the layout catalogue's emissions area;
   - every part within the board's declared derating policy at its worst-case operating point, the policy stating its voltage, power and temperature factors with their source.
 
   The review step runs after the schematic is drawn and before any part is placed. It records a verdict on every item for every net and part the item's condition selects, with each finding recorded and closed by a change to the schematic or a recorded reason that the item is met or does not apply. A finding bearing on safety is closed as the layout review closes one, by a change or a named person's recorded acceptance.
@@ -54,3 +56,7 @@ links:
     type: targets
   - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
     type: justified-by
+  - target: OBL-ELECTROMAGNETIC-COMPATIBILITY-001.C1
+    type: targets
+  - target: REQ-SAFETY-CHAIN-001.C7
+    type: targets

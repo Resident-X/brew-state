@@ -3,7 +3,7 @@ type: decision
 category: tactical
 title: Board design records are YAML files in the machine's hardware folder that the connectivity and parts checks compare a design against
 status: active
-version: 4
+version: 5
 text: |
   The three records a board design is checked against are YAML files in the machine's hardware folder, hardware/<machine>/, found the way the separation basis record is found: a design is held to the record in the nearest folder at or above its own, and a proof design carries its own records marked synthetic: true. A record marked synthetic satisfies only a design marked not for manufacture. A record that cannot be parsed, or lacks a required key, fails like a missing one, and a design with no record to be held to fails rather than passes.
 
@@ -12,6 +12,12 @@ text: |
   The parts specification record, parts-specification.yaml, holds a list under the key positions. Each entry names a position by its reference designator and states what the part there must satisfy as keys: value, package and rating, each optional, and the LCSC number of the part chosen. The design carries each part's manufacturer catalogue number in a symbol field named LCSC, its rating in a symbol field named Rating, its value in the symbol's Value field, and its package as the footprint's library item name. The parts check fails a placed part whose stated value, package or rating differs from the record, a part whose LCSC field is absent or differs, and a position the design places that the record does not list.
 
   The catalogue extract, catalogue-extract.yaml, is a committed reading of the manufacturer's public catalogue. It states the date it was read, its source, a max_age_days beyond which the check refuses it, and a list under entries of LCSC number, library class, stock and unit price. The parts check never fetches the catalogue: it fails a part whose LCSC number is absent from the extract, a part the extract shows out of stock, and an extract older than its own max_age_days.
+
+  Two further records, found and marked synthetic the same way, hold what the derating and pin-limit checks compare a design against.
+
+  The derating policy record, derating-policy.yaml, states the policy a board's parts are held to: its source, and a list under the key classes, each entry naming a part class and the share of its voltage, power and temperature rating a part of that class may use, under the keys voltage, power and temperature, each with its own source. A part class the policy names is covered by it, and every position whose part falls in a covered class must carry a rating in the parts specification record and in the design's Rating field, written as a figure with its unit; the derating check fails such a position without one. The parts check is unchanged and still treats rating as optional where no derating applies.
+
+  The pin-limit record, pin-limits.yaml, holds the limits of each part's pins and the power domains of the board. Under the key domains it lists each power domain by name with the rail that supplies it and that rail's highest voltage in service. Under the key parts it lists each part by its catalogue number with source, the maker's document, revision, section and the date read, and a list of pins, each with the pin's name or number, the domain that powers it, its absolute maximum and minimum voltage, and whether it tolerates being driven while its domain is unpowered. The pin-limit check fails a pin whose net can reach a voltage beyond its limits, counting a net driven from another domain while the pin's own is unpowered, and a part on the board that the record omits.
 
   The firmware's channel-to-pin assignment is compared with the pin allocation record by a separate check in the firmware verification tier, so the board tool never reads firmware source and the firmware tier never reads a board.
 
@@ -23,7 +29,7 @@ rationale: |
 
   Reversibility: moderate. Key names are read by the checks and written by whoever produces each record, so renaming one is a sweep across both, caught by the check failing on the old form rather than passing silently. Moving a record between folders costs nothing because designs are found by the nearest-folder rule.
 
-  Consequences: the checks and their seeded-fault proofs are built against synthetic records now. The partition and each board's design task author the real pin allocation and parts specification in these forms, and each board's design task keeps the catalogue extract in this form current for the parts it uses. A board's order is blocked by a failure of either check exactly as it is by a failed rule check.
+  Consequences: the checks and their seeded-fault proofs are built against synthetic records now. The partition and each board's design task author the real pin allocation and parts specification in these forms, and each board's design task keeps the catalogue extract in this form current for the parts it uses. A board's order is blocked by a failure of either check exactly as it is by a failed rule check. The derating policy and pin-limit records are added for the further pre-order checks a design review asked for; they are new files and new keys, the rating field becomes required only where a derating policy covers a position, and nothing the connectivity or parts checks already read changes, so both stay as delivered.
 options_considered:
   - option: Three YAML records in the machine's hardware folder, with the catalogue as a committed dated extract and the firmware compared in its own tier
     reason_rejected: ""
@@ -42,4 +48,8 @@ links:
   - target: DEL-HW-DESIGN-VERIFICATION.C2
     type: addresses
   - target: DEL-CONTROLLER-HARDWARE.C3
+    type: addresses
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C4
+    type: addresses
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C5
     type: addresses

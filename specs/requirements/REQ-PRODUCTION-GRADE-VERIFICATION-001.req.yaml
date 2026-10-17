@@ -6,7 +6,7 @@ status: active
 priority: could
 version: 1
 text: |
-  The prototype is verified with what a builder without a laboratory has, and where a quantity cannot be measured that way it rests on analysis or inspection with the worst case assumed. A build offered to others as finished, rather than as a prototype, measures those quantities instead of assuming them: the assembled appliance's dielectric strength, its conducted emissions, its touch current and the humidity inside its enclosure while it runs.
+  The prototype is verified with what a builder without a laboratory has, and where a quantity cannot be measured that way it rests on analysis or inspection with the worst case assumed. A build offered to others as finished, rather than as a prototype, measures those quantities instead of assuming them: the assembled appliance's dielectric strength, its withstand of surge and static discharge, its conducted and radiated emissions, its flicker and harmonic currents, its touch current, its earth continuity at the standard's test current, and the humidity inside its enclosure while it runs.
 
   This is outside the first prototype's path. No part of the prototype waits on it, and nothing here weakens what the prototype must show by its own means.
 rationale: |
@@ -23,4 +23,12 @@ links:
   - target: REQ-ELECTRICAL-INSTALL-001.C14
     type: derives-from
   - target: OBL-ELECTROMAGNETIC-COMPATIBILITY-001.C1
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C10
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C11
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C6
+    type: derives-from
+  - target: OBL-ELECTROMAGNETIC-COMPATIBILITY-001.C2
     type: derives-from

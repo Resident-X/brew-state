@@ -1,12 +1,12 @@
 id: OBL-ELECTROMAGNETIC-COMPATIBILITY-001.C1
 type: criterion
-title: Disturbance the controller emits is limited at its sources by design
+title: Disturbance the machine emits stays within the limits for household appliances
 status: active
 version: 1
 measurement_type: binary
 verification: inspection
 text: |
-  Filtering at the supply inlet, and the layout practice that bounds switching loops, edge rates and the paths noise currents take, are each shown present in the design. Measured emission levels are out of scope here, since measuring them needs instruments a builder without a laboratory does not have.
+  Conducted and radiated disturbance from the machine stays within the limits the governing standard sets for household appliances. On the prototype this is established by inspecting the design against practice that limits emission at its sources, since measuring it needs instruments a builder without a laboratory does not have.
 links:
   - target: OBL-ELECTROMAGNETIC-COMPATIBILITY-001
     type: criterion-of

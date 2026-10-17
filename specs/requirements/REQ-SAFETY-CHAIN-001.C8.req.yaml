@@ -6,7 +6,7 @@ version: 1
 measurement_type: binary
 verification: analysis
 text: |
-  Each part of the chain is taken in turn as failed in each way its kind can fail, open, short or stuck, and the outcome is shown to be either heater power removed, or the fault detected before a second fault can combine with it and the machine then held from heating until a person attends. A fault that leaves the chain looking healthy while it no longer protects is the case this exists to exclude.
+  Each part of the chain is taken in turn as failed in each way its kind can fail, open, short or stuck, and the outcome is shown to be either heater power removed, or the fault detected before a second fault can combine with it and the machine then held from heating until a person attends. Detection is by the chain's own means, such as a test the chain imposes before heater power can be made available, and never by the controller or its firmware noticing, since the chain owes nothing to either. A fault that leaves the chain looking healthy while it no longer protects is the case this exists to exclude.
 links:
   - target: REQ-SAFETY-CHAIN-001
     type: criterion-of

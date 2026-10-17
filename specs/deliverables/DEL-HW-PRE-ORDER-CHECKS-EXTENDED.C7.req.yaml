@@ -7,7 +7,7 @@ measurement_type: binary
 verification: test
 closes_by: cascade
 text: |
-  The ratio is stated per signal kind in the board's rules with its source, so a harness cannot carry fast or sensitive signals without returns beside them.
+  The ratio is stated per signal kind in the board's rules with its source, so a harness cannot carry fast or sensitive signals without returns beside them. A board that states no ratio, or a ratio without its source, fails rather than passing on an empty rule.
 links:
   - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED
     type: criterion-of
