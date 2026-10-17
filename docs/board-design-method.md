@@ -385,7 +385,7 @@ Below the floorplan, keep a plan table with one row for every item of the [Layou
 
 - **Item** is the item's identifier, for example `GROUND-1`.
 - **Applies** is `yes` or `no`, read from the item's *Applies when* against the schematic. An item whose condition the schematic meets is `yes`; it cannot be marked `no`.
-- For an item that applies, the last column says how the layout will meet it, naming the regions of the floorplan, the parts by reference designator and the nets by name that it binds, closely enough that a failure the layout review finds against the item can be traced either to this row, as a plan the layout did not follow or a plan that was not enough, or to the item itself. A `yes` row meets each clause of the item's *Passes* for every part it binds, not for the first part alone: where the item states how a part is joined or placed, such as where a supply enters a capacitor's pad or that two capacitors sit side by side, the row states it for each part it names, because step 3 checks only that the parts a row names exist. For example, for `DECOUPLE-1`: `C12 and C13 at U4 pins 7 and 20, each within its own crop, C13 (100 nF) nearest pin 20, supply entering through each capacitor's pad; no via between capacitor and pin`. For a rule-kind item, it names the rules it puts in the board's rules table, with the board's own class names and the record each figure will be read from.
+- For an item that applies, the last column says how the layout will meet it, naming the regions of the floorplan, the parts by reference designator and the nets by name that it binds, closely enough that a failure the layout review finds against the item can be traced either to this row, as a plan the layout did not follow or a plan that was not enough, or to the item itself. A `yes` row meets each clause of the item's *Passes* for every part it binds, not for the first part alone: where the item states how a part is joined or placed, such as where a supply enters a capacitor's pad or that two capacitors sit side by side, the row states it for each part it names, because step 3 checks only that the parts a row names exist. For example, for `DECOUPLE-1`: `C12 and C13 at U4 pins 7 and 20, each within its own crop, C13 (100 nF) nearest pin 20, supply entering through each capacitor's pad; no via between capacitor and pin`. For a rule-kind item, it names the rules it puts in the board's rules table, with the board's own class names and the record each figure will be read from. A row that names a supply path names every branch that leaves the path for another part, and the layer and the place each branch leaves it at, so that a branch such as the feed to a status LED's resistor is planned against the items that bear on the path it taps, `DECOUPLE-1` and `DECOUPLE-6` among them. Where a path or branch has to cross another net's pour or track, the row names the layer it crosses on and the vias it takes there, rather than stating that it stays on the layer it starts on.
 - For an item that does not apply, the last column gives the reason against the item's condition, stating what the schematic lacks, for example `no crystal or ceramic resonator in the schematic` for `CLOCK-1`.
 
 Below the plan table, keep a table of the board's own items: practice this board must meet that no catalogue item states, such as a keep-out a part's datasheet asks for around it. Write each in the catalogue's item form ([How an item is read](#how-an-item-is-read)), one row per item, with how the layout will meet it:
@@ -400,6 +400,8 @@ Below the plan table, keep a table of the board's own items: practice this board
 A board with no items of its own writes `none` in the Item column of the table's one row. The catalogue and these items together are the checklist the [layout review](#layout-review) judges the board against, and the table as committed before placement is that checklist's baseline. After that commit the table is only added to: no baseline row is removed, and none of its fields from Applies when to Source is changed. An item a review of the board adds later is appended below the others, its Source naming that review; it is judged from the review's next round on and is not part of the baseline. An item that is withdrawn keeps its row, marked withdrawn, as a catalogue item does.
 
 Amended after hardware/proof/review-proof/layout-review.md, round 1, finding 1.3.
+Amended after hardware/proof/method-proof/layout-review.md, round 1, finding 1.2.
+Amended after hardware/proof/method-proof/layout-review.md, round 1, finding 1.5.
 
 ### 3. Commit the floorplan and plan before placement
 
@@ -411,6 +413,7 @@ Commit `layout-plan.md` before the first commit that places a footprint on the b
 - the plan table has exactly one row for every item of the catalogue as it stood in that commit, and names no other;
 - each row marked `no` gives a reason against the item's *Applies when* that the schematic bears out, so no item whose condition the schematic meets is marked `no`;
 - each row marked `yes` says how the layout meets the item, names at least one region, part or net it binds, and each region, part and net it names is one the floorplan or the netlist holds;
+- each `yes` row whose clause binds every pad or part of a kind, such as a via at each ground pad of an integrated circuit or two vias beside each decoupling capacitor, names every pad or part of that kind the netlist holds, since a promise made for each and kept for some is the shortfall a review finds;
 - the board's own items table is there, either with its one `none` row or with a row for each item, each identifier `BOARD-<n>` used once, every column filled as step 2 says, each *Applies when* one the schematic meets, and each How the layout meets it naming at least one region, part or net, each one the floorplan or the netlist holds.
 
 Until the first commit that places a footprint, a plan row may be amended in a commit of its own. The floorplan changes only by appending a part, as below.
@@ -418,6 +421,8 @@ Until the first commit that places a footprint, a plan row may be amended in a c
 A plan that is missing, incomplete or uncommitted in that checkout, or that fails a cross-check above, fails this step, however complete it is now. A part added to the schematic after placement is planned for, by amending the floorplan, which appends the part to its region's Parts and changes no bound, no other part and no other region, and every row whose item it bears on, and that change is committed before the part is placed. The history command that step 6 of [Placement](#placement) runs holds the floorplan the placement section is judged against to the floorplan in the commit before the first commit whose board holds a footprint, comparing the set of region names, each region's bounds and each region's parts; no other text in the table is compared, and allows no other difference than such an appended part, committed before its footprint first appears on the board and kept in the plan until then. Between the first footprint on the board and the first track, pour, arc or via committed, the floorplan can only gain appended parts, so a floorplan error found during placement, a bound that is wrong, a part in the wrong region or a region missing, has no in-place fix: the work restarts from a fresh branch, with the floorplan corrected and committed before any footprint is placed. A part added after the choice and before the first track, pour, arc or via is committed means recording a new candidate that includes it and recording the placement section again. After the first track, pour, arc or via is committed the recorded section is frozen, and the floorplan is held to the commit before the first placement only as it stood in the commit before that first copper, so a part appended to it after that copper is not compared: it is only planned, by amending the floorplan as above, and placed, and the recorded section is left as it is. A part appended before that first copper and placed after it is compared still: the plan in the commit before the one that places it must list it.
 
 A plan item the finished layout does not meet is a finding at the [layout review](#layout-review).
+
+Amended after hardware/proof/method-proof/layout-review.md, round 1, finding 1.4.
 
 Out of scope for this section: the layout review itself, which [Layout review](#layout-review) describes, and producing the views it judges a board on, which [Layout review views](#layout-review-views) describes.
 
@@ -1014,6 +1019,16 @@ The areas, in order: [floorplan and partitioning](#floorplan-and-partitioning-fl
 - **Kind:** rule. **Severity:** function.
 - **Source:** `hardware/proof/review-proof/layout-review.md`, round 2, finding 2.1, which records a connector whose body crossed out of its region, and for the practice Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.3 *Board Zoning*, https://www.ti.com/lit/pdf/szza009, read 2026-10-14.
 
+#### FLOOR-5. Each connector stands where the connector table puts it
+
+- **Applies when:** the schematic carries a connector, terminal or header.
+- **Asks:** Does the pin 1 of every connector lie within 2.54 mm of the position the floorplan's connector table gives it, on the edge the table names?
+- **Passes:** Each connector's pin 1 is on the edge its row names and within 2.54 mm of its row's position. A connector that stands further off is a departure from the plan that the review records as a finding, and is closed by the placement item that moved it, named by its identifier, or by an amendment of the row made before the first footprint is placed.
+- **Fails, as the views show it:** on `assembly-top` or `assembly-bottom`, read against the board coordinates in the caption, a connector's pin 1 more than 2.54 mm from its table position.
+- **Judged on:** `assembly-top`, `assembly-bottom`, `placement`.
+- **Kind:** judgement. **Severity:** cosmetic.
+- **Source:** `hardware/proof/method-proof/layout-review.md`, round 1, finding 1.7.
+
 ### Power paths and heat (POWER)
 
 #### POWER-1. Every class carrying supply or load current has a minimum track width for its current
@@ -1092,11 +1107,11 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 
 - **Applies when:** always.
 - **Asks:** Does every signal track have unbroken ground copper under it along its whole length, so its return current can flow directly beneath it?
-- **Passes:** Under every track, on the adjacent layer, the ground plane is solid. Nothing cuts the plane under a track: no track buried in the ground layer, no slot, and no row of via or hole clearances merging into a slot; where a row of through-hole pins crosses the plane, copper runs between the pins.
+- **Passes:** Under every track, on the adjacent layer, the ground plane is solid. Nothing cuts the plane under a track: no track buried in the ground layer, no slot, and no row of via or hole clearances merging into a slot; where a row of through-hole pins crosses the plane, copper runs between the pins. A pin's thermal-relief gap and its clearance ring are openings in the plane like any other: copper runs between one pin's ring and the next pin's, not only between their pads, so no two pins' rings merge into one opening.
 - **Fails, as the views show it:** on a plane's `layer-<copper layer>` read against `net-<net>` for a signal, a track crossing a cut, a slot or a merged row of clearances in the plane beneath it, or a track routed on the ground layer itself dividing the plane in two.
 - **Judged on:** every `layer-<copper layer>` holding ground, `net-<net>` for each critical signal net.
 - **Kind:** judgement. **Severity:** function.
-- **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.1.4 *Signal Return Grounds* and § 2.1.7 *Power Plane Do's and Don'ts for Four-Layer Boards* (Figure 5), https://www.ti.com/lit/pdf/szza009, read 2026-10-14; and Texas Instruments, *Digital Isolator Design Guide*, SLLA284G, revised September 2023, § 4.5 *Reference Planes* and § 4.6 *Routing*, item 4, https://www.ti.com/lit/pdf/slla284, read 2026-10-14.
+- **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.1.4 *Signal Return Grounds* and § 2.1.7 *Power Plane Do's and Don'ts for Four-Layer Boards* (Figure 5), https://www.ti.com/lit/pdf/szza009, read 2026-10-14; and Texas Instruments, *Digital Isolator Design Guide*, SLLA284G, revised September 2023, § 4.5 *Reference Planes* and § 4.6 *Routing*, item 4, https://www.ti.com/lit/pdf/slla284, read 2026-10-14; amended after `hardware/proof/method-proof/layout-review.md`, round 1, finding 1.1, which records the thermal-relief ring of one connector pin merging with the clearance ring of the next on both inner planes while the plan row said no ring merges.
 
 #### GROUND-3. One ground plane is partitioned, not split
 
@@ -1110,13 +1125,31 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 
 #### GROUND-4. A part's analog and digital ground pins join the same plane at the part
 
-- **Applies when:** the schematic carries a part with separate analog and digital ground pins, such as a converter.
-- **Asks:** Are that part's analog and digital ground pins joined, at the part, to the same low-impedance ground plane by the shortest connections?
-- **Passes:** Each ground pin goes straight to the plane under the part by the shortest connection, the analog and digital ground pins to the same plane.
+- **Applies when:** the schematic carries an integrated circuit with a ground pin, a part with separate analog and digital ground pins, such as a converter, among them.
+- **Asks:** Are that part's ground pins, the analog and digital ones where it has both, joined, at the part, to the same low-impedance ground plane by the shortest connections?
+- **Passes:** Each ground pin goes straight to the plane under the part by the shortest connection, a via of its own beside the pad or ground copper under the part rather than a neck of pour or a track, the analog and digital ground pins to the same plane.
 - **Fails, as the views show it:** on `crop-<reference>`, the digital ground pin routed away by a track to a distant ground, or the two ground pins joined to different copper areas.
 - **Judged on:** `crop-<reference>`, `net-<net>` for the ground nets.
 - **Kind:** judgement. **Severity:** function.
-- **Source:** Texas Instruments, *Grounding in mixed-signal systems demystified, Part 1*, Analog Applications Journal 1Q 2013, SLYT499, the section on interpreting AGND and DGND pins ("the AGND and DGND pins should be joined together externally to the same low-impedance ground plane with minimum lead lengths"), https://www.ti.com/lit/pdf/slyt499, read 2026-10-14.
+- **Source:** Texas Instruments, *Grounding in mixed-signal systems demystified, Part 1*, Analog Applications Journal 1Q 2013, SLYT499, the section on interpreting AGND and DGND pins ("the AGND and DGND pins should be joined together externally to the same low-impedance ground plane with minimum lead lengths"), https://www.ti.com/lit/pdf/slyt499, read 2026-10-14; amended after `hardware/proof/method-proof/layout-review.md`, round 1, finding 1.4, which records a regulator's only ground pin reaching the planes through a 2 mm neck of pour with the nearest ground via 3.9 mm away, where the plan row promised each ground pad its own vias.
+
+#### GROUND-5. No two plated holes stand so close that their rings merge in a plane
+
+- **Applies when:** always.
+- **Asks:** Are every two plated holes of the board far enough apart that, on a layer holding a ground plane or pour, their clearance rings and thermal-relief rings leave copper between them?
+- **Passes:** The board's rules file holds this custom rule, with `<figure>` the least distance between the edges of two plated holes at which their rings leave plane copper between them, and KiCad's layout rule check reports no `hole_to_hole` violation of it:
+
+  ```
+  (rule "Plated hole spacing"
+  	(condition "A.Type == 'Pad' && A.Pad_Type == 'Through-hole' && B.Type == 'Pad' && B.Pad_Type == 'Through-hole'")
+  	(constraint hole_to_hole (min <figure>mm)))
+  ```
+
+  `<figure>` is, for the board's widest plated pad, twice the pad's annulus width (half its diameter less half its drill), plus the thermal-relief gap of the board's ground zones, plus the largest clearance a net class of the board states, plus the zone's minimum thickness, each read from the board's own zones and rules and written in the rule's row. KiCad does not report a gap between two rings that leaves no copper to measure, so the figure is made large enough that none can form.
+- **Fails, as the views show it:** on a plane's `layer-<copper layer>`, the rings of two pins merged into one keyhole opening with no copper between them; KiCad reports a `hole_to_hole` violation; or, in `design-rules.md`, no row for the rule.
+- **Judged on:** the pre-order check's report, `design-rules.md`, every `layer-<copper layer>` holding a ground plane or pour.
+- **Kind:** rule. **Severity:** function.
+- **Source:** `hardware/proof/method-proof/layout-review.md`, round 1, finding 1.1; for the practice, `GROUND-2`.
 
 ### Decoupling and switching loops (DECOUPLE)
 
@@ -1134,11 +1167,11 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 
 - **Applies when:** the schematic carries an integrated circuit with a decoupling capacitor on a supply pin.
 - **Asks:** Is the loop from the supply pin through the capacitor and back to the part's ground pin as small in area and length as it can be, with the capacitor's ground side going straight into the ground plane?
-- **Passes:** The capacitor's ground pad joins the plane at once, through two vias where it changes layer, or through ground copper extended from under the part rather than a track. The supply and ground sides run over or beside each other, so the loop encloses little area seen from above.
+- **Passes:** The capacitor's ground pad joins the plane at once, through two vias of its own beside the pad where it changes layer, or through ground copper extended from under the part rather than a track. A pad joined to a pour only through thermal reliefs, with at most one via near it, is neither: it needs its two vias. The supply and ground sides run over or beside each other, so the loop encloses little area seen from above.
 - **Fails, as the views show it:** on `crop-<reference>`, the capacitor's ground pad reaching ground by a long track, or the loop through capacitor and part enclosing a wide area.
 - **Judged on:** `crop-<reference>`, `net-<net>` for the ground net.
 - **Kind:** judgement. **Severity:** function.
-- **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.2.4 *Bypassing and Ferrite Beads* ("Make the bypassing loops as small as possible in area and length"), https://www.ti.com/lit/pdf/szza009, read 2026-10-14; and Texas Instruments, *Digital Isolator Design Guide*, SLLA284G, revised September 2023, § 4.6 *Routing*, item 10 (the capacitor's ground side "through two vias to the ground plane"), https://www.ti.com/lit/pdf/slla284, read 2026-10-14.
+- **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.2.4 *Bypassing and Ferrite Beads* ("Make the bypassing loops as small as possible in area and length"), https://www.ti.com/lit/pdf/szza009, read 2026-10-14; and Texas Instruments, *Digital Isolator Design Guide*, SLLA284G, revised September 2023, § 4.6 *Routing*, item 10 (the capacitor's ground side "through two vias to the ground plane"), https://www.ti.com/lit/pdf/slla284, read 2026-10-14; amended after `hardware/proof/method-proof/layout-review.md`, round 1, finding 1.3, which records capacitors' ground pads joined to a pour through reliefs with one via each, where the plan row promised two vias beside each.
 
 #### DECOUPLE-3. A switching converter's power parts form tight loops that curl the same way
 
@@ -1169,6 +1202,16 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 - **Judged on:** `assembly-top`, `assembly-bottom`, `layer-<copper layer>`, `placement`.
 - **Kind:** judgement. **Severity:** function.
 - **Source:** Vishay Semiconductors, *VO3526 Power Phototriac Design Considerations*, Application Note 33, document 81937, Rev. 1.1, 19 October 2011, section *Snubber Circuit* and Figure 5 ("Locate the snubber circuit as close to the VO3526 as possible"), https://www.vishay.com/docs/81937/appnote.pdf, read 2026-10-14.
+
+#### DECOUPLE-6. No via of a decoupling capacitor's supply net lies between the capacitor and the pin it decouples
+
+- **Applies when:** the schematic carries an integrated circuit with a decoupling capacitor on a supply pin.
+- **Asks:** Is there no via of the capacitor's supply net inside the box that the capacitor's supply pad and the supply pin it decouples span between them?
+- **Passes:** The pre-order check reports no `decoupling_via` violation. The check takes each integrated circuit's supply nets from the pads typed as power input or power output that the board file holds, a decoupling part as `DECOUPLE-1` describes it (a two-pad part across two of a circuit's supply nets, belonging to the nearest circuit), and, for each, the box that bounds the capacitor's pad on the supply net that is not a ground-class net and the nearest pad of the circuit on that net. A via on that net whose centre lies in the box, or whose copper reaches into it, is a violation. Its figure is none, no via, so it is no project text variable; the check's report states it in a `FIGURE` line for the item.
+- **Fails, as the views show it:** the pre-order check reports a `decoupling_via` violation; or, on `crop-<reference>`, a via of the supply net between the capacitor's pad and the pin, such as the tap that takes a branch of the supply to another part.
+- **Judged on:** the pre-order check's report, `design-rules.md`.
+- **Kind:** rule. **Severity:** function.
+- **Source:** `hardware/proof/method-proof/layout-review.md`, round 1, finding 1.2; for the practice, `DECOUPLE-1`.
 
 ### Sensing front ends (SENSE)
 
@@ -1477,6 +1520,36 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 - **Judged on:** the pre-order check's report.
 - **Kind:** rule. **Severity:** quality.
 - **Source:** `hardware/proof/review-proof/layout-review.md`, round 4, finding 4.2 and round 5, finding 5.1, which record a pour stopping 0.077 mm and 0.125 mm short of copper of its own net, below the 0.15 mm minimum clearance; for the minimum, `MFG-1`. No free published document states the item.
+
+#### MFG-7. Every part's reference designator is on a silkscreen layer
+
+- **Applies when:** always.
+- **Asks:** Does every footprint carry its reference designator on the silkscreen layer of its own side, visible, so a built board names each part and test point?
+- **Passes:** The pre-order check reports no `reference_off_silkscreen` violation: every footprint's reference text is on `F.SilkS` for a part on the front and `B.SilkS` for a part on the back, and is not hidden. A footprint excluded from the bill of materials, such as a mounting hole, may hide its reference on its silkscreen layer. Its figure is none, so it is no project text variable; the check's report states it in a `FIGURE` line for the item. Overlap between designators is not measured and is judged on the views.
+- **Fails, as the views show it:** the pre-order check reports a `reference_off_silkscreen` violation; or `layer-F.SilkS` and `layer-B.SilkS` show no designators beside their parts.
+- **Judged on:** the pre-order check's report, `design-rules.md`.
+- **Kind:** rule. **Severity:** quality.
+- **Source:** `hardware/proof/method-proof/layout-review.md`, round 1, finding 1.8.
+
+#### MFG-8. Silkscreen text reads left to right or bottom to top
+
+- **Applies when:** always.
+- **Asks:** Does every reference designator and other legend text read from the left, or from the bottom, as the board is turned to read it from its own side?
+- **Passes:** Each text on `F.SilkS` has an angle of 0 or 90 degrees as the front shows it, and each text on `B.SilkS` reads, with the board turned side to side to show its back, from the left or from the bottom: no text reads upside down or from the top down.
+- **Fails, as the views show it:** on `layer-F.SilkS`, a designator upside down or reading top to bottom; on `3d-bottom`, a back-side name upside down.
+- **Judged on:** `layer-F.SilkS`, `layer-B.SilkS`, `3d-top`, `3d-bottom`.
+- **Kind:** judgement. **Severity:** cosmetic.
+- **Source:** `hardware/proof/method-proof/layout-review.md`, round 2, finding 2.4.
+
+#### MFG-9. Each designator stands outside every part's body, beside its own part
+
+- **Applies when:** always.
+- **Asks:** Does every reference designator on the silkscreen stand clear of the bodies of the parts, its own included, and nearer its own part than any other, so that a person reading the built board can tell which part it names?
+- **Passes:** On `layer-F.SilkS` and `layer-B.SilkS`, read against `assembly-top` and `assembly-bottom`, no designator lies inside a part's courtyard, none is covered by a part standing over it, and each is nearer its own part's courtyard than any other part's.
+- **Fails, as the views show it:** a designator inside its part's housing, so that the part stands over its name on `3d-top`; or a designator midway between two parts, so that it names either.
+- **Judged on:** `layer-F.SilkS`, `layer-B.SilkS`, `assembly-top`, `assembly-bottom`, `3d-top`, `3d-bottom`.
+- **Kind:** judgement. **Severity:** cosmetic.
+- **Source:** `hardware/proof/method-proof/layout-review.md`, round 3, findings 3.1 and 3.2.
 
 ### Emissions (EMI)
 

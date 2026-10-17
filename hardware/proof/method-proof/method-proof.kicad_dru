@@ -1,0 +1,27 @@
+(version 1)
+# NOT FOR MANUFACTURE. Every rule here has its row, figure and source in design-rules.md beside this file.
+(rule "Power track width"
+	(condition "A.hasNetclass('Power')")
+	(constraint track_width (min 0.2mm)))
+(rule "Supply track width"
+	(condition "A.hasNetclass('Supply')")
+	(constraint track_width (min 0.2mm)))
+(rule "Ground track width"
+	(condition "A.hasNetclass('Ground')")
+	(constraint track_width (min 0.2mm)))
+(rule "Corners"
+	(constraint track_angle (min 135)))
+(rule "Jogs"
+	(constraint track_segment_length (min 1mm)))
+(rule "Ground pad reliefs"
+	(condition "A.Type == 'Pad' && A.hasNetclass('Ground')")
+	(constraint zone_connection thermal_reliefs))
+(rule "Plated hole spacing"
+	(condition "A.Type == 'Pad' && A.Pad_Type == 'Through-hole' && B.Type == 'Pad' && B.Pad_Type == 'Through-hole'")
+	(constraint hole_to_hole (min 1.35mm)))
+(rule "Low voltage region parts"
+	(condition "A.Type == 'Footprint' && A.intersectsArea('low voltage') && A.Reference != 'J1' && A.Reference != 'JP1' && A.Reference != 'TP1' && A.Reference != 'U1' && A.Reference != 'C1' && A.Reference != 'C2' && A.Reference != 'JP2' && A.Reference != 'TP2' && A.Reference != 'J2' && A.Reference != 'C5' && A.Reference != 'C4' && A.Reference != 'H1'")
+	(constraint disallow footprint))
+(rule "Digital region parts"
+	(condition "A.Type == 'Footprint' && A.intersectsArea('digital') && A.Reference != 'U2' && A.Reference != 'C3' && A.Reference != 'TP3' && A.Reference != 'R1' && A.Reference != 'D1' && A.Reference != 'TP4' && A.Reference != 'J3' && A.Reference != 'H2' && A.Reference != 'H3'")
+	(constraint disallow footprint))

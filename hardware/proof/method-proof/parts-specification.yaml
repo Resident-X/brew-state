@@ -1,0 +1,98 @@
+# NOT FOR MANUFACTURE. A synthetic parts specification, made only to prove the
+# parts check against the throwaway design beside it. Its catalogue numbers are
+# not real parts and must never be used for a board that is ordered: being marked
+# synthetic, the check accepts it only for a design marked not for manufacture.
+synthetic: true
+positions:
+  - reference: J1
+    value: "5V_IN"
+    package: "JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical"
+    rating: "3A"
+    lcsc: "C9100001"
+  - reference: J2
+    value: "OUT"
+    package: "JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical"
+    rating: "3A"
+    lcsc: "C9100002"
+  - reference: J3
+    value: "PA1"
+    package: "PinHeader_1x01_P2.54mm_Vertical"
+    lcsc: "C9100003"
+  - reference: JP1
+    value: "LINK_5V"
+    package: "PinHeader_1x02_P2.54mm_Vertical"
+    lcsc: "C9100004"
+  - reference: JP2
+    value: "LINK_3V3"
+    package: "PinHeader_1x02_P2.54mm_Vertical"
+    lcsc: "C9100005"
+  - reference: U1
+    value: "MCP1700T-3302E/TT"
+    package: "SOT-23"
+    lcsc: "C9100006"
+  - reference: U2
+    value: "MSPS003F4SPW20R"
+    package: "TSSOP-20_4.4x6.5mm_P0.65mm"
+    lcsc: "C9100007"
+  - reference: C1
+    value: "47uF"
+    package: "CP_EIA-3528-21_Kemet-B"
+    rating: "10V"
+    lcsc: "C9100008"
+  - reference: C2
+    value: "150uF"
+    package: "CP_EIA-3528-21_Kemet-B"
+    rating: "6.3V"
+    lcsc: "C9100014"
+  - reference: C3
+    value: "10uF"
+    package: "C_0805_2012Metric"
+    rating: "10V"
+    lcsc: "C9100009"
+  - reference: C4
+    value: "100nF"
+    package: "C_0603_1608Metric"
+    rating: "16V"
+    lcsc: "C9100015"
+  - reference: C5
+    value: "100nF"
+    package: "C_0603_1608Metric"
+    rating: "16V"
+    lcsc: "C9100015"
+  - reference: R1
+    value: "1.2k"
+    package: "R_0603_1608Metric"
+    rating: "0.1W"
+    lcsc: "C9100010"
+  - reference: D1
+    value: "VLMG1300-GS08"
+    package: "LED_0603_1608Metric"
+    lcsc: "C9100011"
+  - reference: TP1
+    value: "+5V_IN"
+    package: "TestPoint_Pad_D1.0mm"
+    lcsc: "C9100012"
+  - reference: TP2
+    value: "+3V3_REG"
+    package: "TestPoint_Pad_D1.0mm"
+    lcsc: "C9100012"
+  - reference: TP3
+    value: "+3V3"
+    package: "TestPoint_Pad_D1.0mm"
+    lcsc: "C9100012"
+  - reference: TP4
+    value: "LED_K"
+    package: "TestPoint_Pad_D1.0mm"
+    lcsc: "C9100012"
+  - reference: H1
+    value: "MountingHole"
+    package: "MountingHole_2.2mm_M2"
+    lcsc: "C9100013"
+  - reference: H2
+    value: "MountingHole"
+    package: "MountingHole_2.2mm_M2"
+    lcsc: "C9100013"
+  - reference: H3
+    value: "MountingHole"
+    package: "MountingHole_2.2mm_M2"
+    lcsc: "C9100013"

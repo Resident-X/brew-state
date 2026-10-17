@@ -1,0 +1,10 @@
+ROW1 | R1 1200 ohm; R1 min 1163.1 max 1237.5 ohm; I max 4.514 mA at 5.25 V with VF and VOL at 0 V; I min 1.455 mA at 4.75 V with VF 2.5 V, VOL 0.45 V | MET
+ROW1 | largest VF the 1 mA minimum tolerates 3.063 V, against the data sheet's 2.5 V at 25 C; I max 4.514 mA <= VOL current limit 8 mA and <= LED IF max 30 mA | MET
+ROW1 | R1 dissipation 25.2 mW at I max, against 100 mW rated | MET
+ROW2 | C2 150 uF min 120 uF vs 1.0 uF; ESR bound from DF 0.884 ohm vs 2.0 ohm; C1 47 uF min 37.6 uF vs 1.0 uF | MET
+ROW2 | C1 rated 10.0 V >= 5.25 V; C2 rated 6.3 V >= 3.480 V | MET
+ROW3 | C3 10 uF nominal vs 10 uF at least; tolerance +-10 % vs +-20 % or better; rated 10 V >= 3.480 V | MET
+ROW4 | VDD min 3.120 V max 3.480 V (line effect 0.95 %); controller range 1.62-3.6 V; VOL condition VDD >= 2.7 V | MET
+ROW4 | U1 input 4.75-5.25 V within 2.3-6.0 V and VIN min >= VR + 3 % + 350 mV = 3.749 V; rail current 100 mA <= 250 mA | MET
+ROW5 | PA0 highest voltage 5.25 V (LED off, node pulled to +5V through R1 and D1) vs 5.5 V absolute maximum | MET
+RESULT | ALL MET

@@ -3250,6 +3250,116 @@ def project_form(design: Design, project: dict) -> List[Violation]:
     return found
 
 
+# --- Decoupling and silkscreen -------------------------------------------------------
+#
+# Two more rules KiCad does not measure, each read from the layout file. Neither
+# needs a project text variable of its own, so neither adds a figure to the
+# designs: DECOUPLE-6 and MFG-7 are held to an inherent zero: no via in the
+# decoupling path, no reference off the silkscreen.
+
+
+#: A net class named ground or gnd in any case is a ground class (see ground_reliefs).
+GROUND_CLASS = re.compile(r"(?i)ground|gnd")
+
+
+def ground_nets(members: Dict[str, Set[str]]) -> Set[str]:
+    """Every net in a ground net class."""
+    return set().union(set(), *(inside for name, inside in members.items() if GROUND_CLASS.search(name)))
+
+
+def decoupling_vias(design: Design, tree: list, ground: Set[str]) -> List[Violation]:
+    """Every via standing between a decoupling part's supply pad and the pin of its circuit it decouples.
+
+    The circuits and their decoupling parts are those of the review views
+    (board_views.circuits): a circuit is a footprint whose reference begins
+    with U, its supply nets those of its pads typed power input or power
+    output, and a decoupling part a two-pad part across two of them, kept with
+    the nearest such circuit. A part's supply pad is its pad not on a net of a
+    ground net class (both pads when neither is, or both are), and the pin it
+    decouples is the circuit's pad on the same net nearest that pad. The space
+    between them is the box about the two pads' copper; a via on the pad's
+    net whose centre lies in the box, or whose copper reaches into it, is a
+    violation (a via of another net standing in the box is not in the
+    capacitor's path). A board whose pads carry no pin types has no
+    decoupling parts.
+    """
+    import board_views
+    table = board_geometry.net_table(tree)
+    vias = board_vias(tree, copper_layers(tree))
+    if not vias:
+        return []
+    footprints: Dict[str, list] = {}
+    for footprint in sexpr.children(tree, "footprint"):
+        footprints.setdefault(board_geometry.reference(footprint), footprint)
+    found = []
+    for circuit in board_views.circuits(tree):
+        chip = board_geometry.footprint_pads(footprints[circuit["reference"]], table)
+        for name in circuit["parts"]:
+            held = board_geometry.footprint_pads(footprints[name], table)
+            low = [pad for pad in held if pad.net in ground]
+            for pad in held if len(low) != 1 else [pad for pad in held if pad.net not in ground]:
+                pins = [pin for pin in chip if pin.net == pad.net]
+                if not pins:
+                    continue
+                pin = min(pins, key=lambda one: math.dist(one.centre, pad.centre))
+                boxes = (pad.box(), pin.box())
+                left, top = min(box[0] for box in boxes), min(box[1] for box in boxes)
+                right, bottom = max(box[2] for box in boxes), max(box[3] for box in boxes)
+                for via in vias:
+                    if via.net != pad.net:
+                        continue
+                    reach = math.hypot(max(left - via.centre[0], 0.0, via.centre[0] - right),
+                                       max(top - via.centre[1], 0.0, via.centre[1] - bottom))
+                    if reach > via.size / 2:
+                        continue
+                    where = "in" if reach == 0 else f"{reach:.2f} mm off, its copper reaching into,"
+                    found.append(Violation(
+                        design.project, "decoupling_via",
+                        f"net {via.net or '(no net)'}: {via.place()}, between {pad.name()} and {pin.name()}",
+                        f"DECOUPLE-6 no via sits between a decoupling capacitor's supply pad and the pin it decouples: "
+                        f"{via.place()} of {('net ' + via.net) if via.net else 'no net'} lies {where} the box from "
+                        f"({coordinate(left)}, {coordinate(top)}) to ({coordinate(right)}, {coordinate(bottom)}) mm about "
+                        f"{pad.name()} of {pad.net} and {pin.name()}, the pin of {circuit['reference']} that {name} "
+                        "decouples; the capacitor's current would pass through the via, so move the via out of the way "
+                        "and join the capacitor's pad to the pin on the surface layer"))
+    return found
+
+
+def references_off_silkscreen(design: Design, tree: list) -> List[Violation]:
+    """Every footprint whose Reference text is hidden or on a layer other than the silkscreen of its side of the board.
+
+    A hidden reference on the right silkscreen is allowed on a footprint that
+    is excluded from the bill of materials, as a mounting hole is.
+    """
+    found = []
+    for footprint in sexpr.children(tree, "footprint"):
+        side = sexpr.child(footprint, "layer")
+        wanted = "B.SilkS" if side is not None and len(side) > 1 and str(side[1]) == "B.Cu" else "F.SilkS"
+        node = next((item for item in sexpr.children(footprint, "property") if len(item) > 2 and str(item[1]) == "Reference"), None)
+        if node is None:
+            node = next((item for item in sexpr.children(footprint, "fp_text") if len(item) > 2 and str(item[1]) == "reference"), None)
+        if node is None:
+            continue
+        layer = sexpr.child(node, "layer")
+        on = str(layer[1]) if layer is not None and len(layer) > 1 else "no layer"
+        marks = sexpr.children(node, "hide") + sexpr.children(sexpr.child(node, "effects") or [], "hide")
+        hidden = any(item == "hide" for item in node) or any(len(mark) > 1 and str(mark[1]) == "yes" for mark in marks)
+        # A footprint that is not a part of the bill of materials (a mounting hole, a fiducial) may hide its reference.
+        attributes = sexpr.child(footprint, "attr") or []
+        if hidden and on == wanted and "exclude_from_bom" in attributes:
+            continue
+        if on == wanted and not hidden:
+            continue
+        name = board_geometry.reference(footprint) or "?"
+        at = board_geometry.placement(footprint, f"the footprint {name}")
+        found.append(Violation(
+            design.project, "reference_off_silkscreen", f"{name} at ({coordinate(at[0])}, {coordinate(at[1])}) mm",
+            f"MFG-7 every part's reference designator is on a silkscreen layer: the reference of {name} is "
+            + (f"on {on}, not {wanted}" if on != wanted else f"on {wanted}") + (", and hidden" if hidden and on != wanted else ", but hidden" if hidden else "")
+            + f"; put it on {wanted}, the silkscreen of the side {name} is on, and show it"))
+    return found
+
+
 # --- One design ----------------------------------------------------------------
 
 
@@ -3298,6 +3408,11 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
     if pour_minimum is not None and read is not None:
         read.append(("MFG-6 pour gap", "Board Setup min_clearance", f"{pour_minimum:g} mm, the narrowest gap a pour may "
                      "leave between its fill and copper of its own net that it stops short of"))
+
+    if read is not None:
+        read.append(("DECOUPLE-6 via in the decoupling path", "none, inherent zero", "0 vias between a decoupling capacitor's "
+                     "supply pad and the pin it decouples"))
+        read.append(("MFG-7 reference on silkscreen", "none, inherent zero", "0 references off a silkscreen layer or hidden"))
 
     found += exclusions(design, project)
     rules, hidden = read_rules(root, design, repository)
@@ -3511,6 +3626,12 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
     found += net_ties(design, tree, on_layout)
     found += crystal_keep_clear(design, rules, tree)
     found += ground_reliefs(design, rules, tree, members)
+    try:
+        found += decoupling_vias(design, tree, ground_nets(members))
+        found += references_off_silkscreen(design, tree)
+    except board_geometry.Unreadable as unread:
+        found.append(Violation(design.project, "design_unreadable", design.layout,
+                               f"the layout cannot be read for its decoupling and references ({unread})"))
     if signed is not None:
         found += overrides(design, tree, signed[0], on_layout)
     try:
