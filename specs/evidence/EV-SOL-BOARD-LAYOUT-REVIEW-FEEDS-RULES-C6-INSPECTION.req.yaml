@@ -1,0 +1,38 @@
+id: EV-SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES-C6-INSPECTION
+type: evidence
+title: inspection evidence for SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C6
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-17T20:43:50Z"
+artifact:
+  kind: external
+  reference: |-
+    inspection: docs/board-design-method.md (Layout review lines 795-927, Planning the layout steps 2 and 3 lines 383-432, Layout review views from line 929), hardware/README.md, Taskfile.yml and hardware/tools/board_review_history.py at ea8ded8355d288b914b16f0d9d933c2293ccc761, checked clause by clause against the criterion.
+
+    Checklist is the catalogue plus board items: line 799 "The checklist is every item of the catalogue together with the board's own items in `layout-plan.md` ... Its baseline is that file as committed before placement". Board items in the catalogue's item form, in a table of their own below the plan table: line 395 "Below the plan table, keep a table of the board's own items ... Write each in the catalogue's item form"; covered by the pre-placement check as catalogue items are: line 421 "the board's own items table is there ... each How the layout meets it naming at least one region, part or net". A failure would be board items held outside layout-plan.md or in another form.
+
+    Baseline committed before placement, checkable from history; later items appended and not counted: line 412 "Commit `layout-plan.md` before the first commit that places a footprint on the board. It is judged as it stood in the commit before placement"; line 404 "After that commit the table is only added to: no baseline row is removed, and none of its fields from Applies when to Source is changed. An item a review of the board adds later is appended below the others, its Source naming that review; ... is not part of the baseline."; review cross-check line 902 "The baseline came first. Every row of the board's own items table in the commit before placement is in each round's commit ..." and line 923 "a baseline checklist committed after the layout began fails this step." A failure would be a baseline row removed or loosened after placement, or the plan committed after the first footprint.
+
+    Judged on the rendered views showing every layer and critical net: line 807 and the Layout review views section (line 929 on, commands task hw:views and task hw:placement); hardware/README.md "The layout review views" (line 88) and Taskfile.yml hw:views description (line 506) "an image of each copper, mask, paste, silkscreen and edge layer ... each critical net"; line 899 "Every view was rendered ... the index holds a `layer-` view of every copper, mask, paste, silkscreen and edge layer the board carries and a `net-` view of every net the critical classes hold".
+
+    Verdict on every item, four values, citing view and place, not applicable justified: line 818 "give every item one verdict in the round's verdict table", line 824 "Verdict is one of `pass`, `fail`, `not applicable` or `cannot judge`", line 825 Rests on cites "each view the verdict rests on ... and the place on the board, in the board coordinates the view's caption states, or `whole board`", line 826 "for `not applicable`, the reason against the item's *Applies when* ... which the schematic must bear out: an item whose condition the schematic meets applies, and cannot be judged not applicable." Line 900 cross-check "Each `not applicable` gives a reason the schematic bears out." A failure would be an item with no row, a verdict outside the four, or a not-applicable on an item the schematic meets.
+
+    Rule-kind items rest on two things: line 830 "A rule-kind item's verdict rests on two things, and Rests on cites both: the pre-order check's report, the board's `DESIGN` line with no `VIOLATION` line under it ... and the board's rules table, `design-rules.md`, by the row of every rule the item gives, each rule present there with a figure the item's own figure and source bear out ... a figure looser than the item requires passes the check, and only the rules table, read against the item, shows it. Either one falling short is a `fail`." Line 900 repeats it as a cross-check. A failure would be a pass resting on the report alone.
+
+    Cannot-judge resolved: line 832 "A `cannot judge` verdict is resolved within the round, before the review can close: render the views again, or render the view the item needs ... and judge the item again on it."; line 897 "no `cannot judge` is left without a verdict after it"; line 891 closes only if "none is left `cannot judge`".
+
+    Free pass: line 840 "Then make a **free pass**: look over every view for anything else wrong ... and record each thing seen as a finding."
+
+    One record, numbered rounds, kind, verdicts, findings and closures, first review identifiable: line 803 "Keep the review in one file named `layout-review.md` in the board's own folder, beside its KiCad project. It holds every round of the review, the first and every repeat, each under its own heading, `## Round <n>`, numbered from 1, with its verdicts, its findings and their closures ... So round 1 stays the board's first review."; line 812 Round kind full or narrow; line 897 full round has one row per catalogue item and board item, narrow round one per item its Items judged lists with a reason (line 812). Enforced by hardware/tools/board_review_history.py (docstring lines 11-46: round structure, rounds kept, each round as first recorded, round kind, round completeness), run as task hw:review-history (Taskfile.yml lines 526-531; hardware/README.md line 172 on).
+
+    Fail conditions: line 923 "A review whose closing round is narrow, with an item left without a verdict in a full round, a `cannot judge` verdict unresolved, a view not rendered, or a baseline checklist committed after the layout began fails this step". Matches the criterion's list exactly.
+
+    Unresolved scores are not passes: line 834 "A score or figure a tool reports while some of its inputs were not resolved, such as a placement score that could not match decoupling capacitors to their device, is unresolved, never a pass. No verdict rests on it: an item that would rest on it is `cannot judge`". Also line 830 for DECOUPLE-6 counts.
+
+    Stated for a cold reader: line 801 reviewer inputs; line 925 describes the blind proof (task hw:review-seed, Taskfile.yml line 472, hardware/README.md line 345) with a session holding no prior context; the method's text cites record locations by path and round (line 803 example `<board folder>/layout-review.md, round 1, finding 1.3`), with no graph identifiers in the Layout review section. Out of scope clauses (pre-order check, catalogue content, producing views, particular findings): line 927.
+  artifact_version: ea8ded8355d288b914b16f0d9d933c2293ccc761
+links:
+  - target: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C6
+    type: satisfies

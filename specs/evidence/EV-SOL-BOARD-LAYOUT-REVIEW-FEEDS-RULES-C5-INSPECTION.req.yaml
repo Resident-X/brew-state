@@ -1,0 +1,32 @@
+id: EV-SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES-C5-INSPECTION
+type: evidence
+title: inspection evidence for SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C5
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-17T20:43:50Z"
+artifact:
+  kind: external
+  reference: |-
+    inspection: docs/board-design-method.md (Layout review, lines 795-927), hardware/README.md, Taskfile.yml and hardware/tools/board_review_history.py at ea8ded8355d288b914b16f0d9d933c2293ccc761, checked clause by clause against the criterion.
+
+    Reviewer independence: line 801 "It works from these alone: the board's design files, the checklist, the layout review views rendered from the board, the placement view among them, the pre-order check's report, and the board's committed `layout-plan.md`" and "It never works from the designer's reasoning, session or notes." Line 879: "The designer never writes what the reviewer owns". A failure would be a reviewer input list naming the designer's notes, or the designer writing verdicts.
+
+    Plan comparison is a finding: line 838 "A plan item the layout does not meet is a finding, even where the item it serves passes." The checklist is judged item by item in step 2 (line 818).
+
+    Findings stay open until closed by an allowed means: line 872 "A finding stays open until one of these closes it", line 874 a change to the board naming the commit, line 875 "a recorded reason showing that the item is in fact met, written `met:`; that it does not apply to this board, written `does not apply:`; or that it is overridden by a requirement the board serves or an item of the catalogue or of the board's own that the board must also meet, written `overridden by:`", line 877 "Never a judgement that the finding is unimportant." Cross-check line 921 "Every closure is one the method allows." A failure would be a closure by "minor" or "won't fix".
+
+    Safety severity: line 850 defines safety (separation between mains and anything a person or a low-voltage circuit can reach, fusing, protective earthing, insulation); line 885 "A finding of safety severity closes only by a change to the board, or by a named person's acceptance of one of those reasons, and never by the agent that designed or reviewed the board", recorded in the review record beside the board "in the same form as the signature on the board's separation basis record: after the reason, Closed by gives `accepted_by:` with the person's name and `accepted_on:` with the date ... `YYYY-MM-DD`, and the record is committed with them", name "never an agent session's, and never a placeholder such as `unsigned`, `tbd`...", date no later than the commit, "That commit is the acceptance's audit trail". The form is stated in the method's own words (accepted_by, accepted_on, date format, placeholders) with no project identifiers; line 919 makes a safety finding recorded below its severity fail. A failure would be a safety finding closed by a reason with no accepted_by/accepted_on or by an agent.
+
+    Re-render and pre-order check after any change, in full: line 889 "After any change to the board, begin a new round at step 1: render the views again and pass the pre-order check again, in full whatever the round's kind." and line 812 "The views are rendered again and the pre-order check is run again in full in either kind." Step 1 (line 807) names task hw:verify; Taskfile.yml hw:views/hw:placement render the views. A failure would be a narrow round that reuses earlier views or report.
+
+    Narrow round limited, only a full round closes: line 889 "The next round after a fix may be narrow, judging only the items the changed regions and nets touch ... A narrow round never closes the review."; line 891 "The review closes on a full round that judges the board's design files as they stand, in which the pre-order check passes the board, every item has a verdict and none is left `cannot judge`, ... and every finding of every round is closed. A finding closed in that round by a change needs a further round."; line 898 "The closing round is full." Enforced mechanically by hardware/tools/board_review_history.py: round kind check (module docstring lines 38-46; code lines 391-393) fails a narrow closing round, "round completeness" (lines 395-407) fails a closing full round lacking a verdict for any item round 1 or an earlier full round holds, "closing round" (line 377) fails design files changed since the closing round's commit; exposed as task hw:review-history (Taskfile.yml lines 526-531, hardware/README.md section from line 172). A failure would be a record whose last round is narrow, or a full round missing items, or a board edited after the closing round; the tool exits 1 with RESULT | FAIL.
+
+    Engineer review recommended, not required: line 893 "Before the first order of any board that carries mains, a review by an experienced electrical engineer is recommended, besides this one. It is not required." Out-of-scope clause: line 927 names the pre-order check and who the engineer is as out of scope.
+
+    Limitation noted, not a failure: that no finding is open at close (line 891) and that each full round has a row for every catalogue item (line 897) are method cross-checks done by the reviewer; the history tool enforces round completeness only against round 1's items, not against the catalogue.
+  artifact_version: ea8ded8355d288b914b16f0d9d933c2293ccc761
+links:
+  - target: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C5
+    type: satisfies
