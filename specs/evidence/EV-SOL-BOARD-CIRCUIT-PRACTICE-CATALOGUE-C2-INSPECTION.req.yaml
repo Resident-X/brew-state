@@ -1,0 +1,33 @@
+id: EV-SOL-BOARD-CIRCUIT-PRACTICE-CATALOGUE-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-BOARD-CIRCUIT-PRACTICE-CATALOGUE.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-17T22:19:16.59758Z"
+artifact:
+  kind: inline
+attested_by: crun-86bfbbeaf2ff4a56
+text: |
+  Verified commit: cce8fdd4f2d49e03f076d3f1d5c5b2b8eaace591 (the build branch head at submission)
+
+  # Inspection of the schematic review step against SOL-BOARD-CIRCUIT-PRACTICE-CATALOGUE.C2
+
+  Artefact: docs/board-design-method.md, section "Schematic review" (between "Designing for bring-up and a second spin" and "Planning the layout"), the method's opening order paragraph, and hardware/README.md.
+
+  ## Clause by clause
+
+  1. "Add the schematic review step to the method between drawing the schematic and placing parts": the section opens with the review running once the schematic is drawn and before any footprint is placed, and is numbered ahead of "Planning the layout". The opening order paragraph reads first four sections before any footprint, matching.
+  2. "recording a verdict on every applicable item for every net and part": the step's record is schematic-review.md in the board's folder, a verdict table with columns Item, Net or part, Verdict, Rests on, Why, one row per item and net-or-part pair the item selects. PINV-1 selects every net and DERATE-2 every part, so no net or part goes unjudged. An item that applies cannot be marked not applicable, and a net or part no row names fails the round.
+  3. "closing each finding by a change or a recorded reason": the findings table (Finding, Raised by, Severity, What and where, Closed by) closes a finding by a committed change to the schematic or a recorded met, does-not-apply or overridden-by reason, and states that a finding is never closed by judging it unimportant.
+  4. "with safety findings closed only by a change or a named person's recorded acceptance": the step sets a safety finding's severity whatever raised it, and closes it only by a change or by accepted_by and accepted_on naming a person, refusing agent names and placeholders and a date later than the commit.
+  5. The guards the clauses state: a rating that cannot be sourced counts as absent and fails; an applying item cannot be marked not applicable; a safety finding cannot be closed by reason. Each is written as a refusal in the step, and the step's closing judgement re-checks the round against the exported netlist, so a row omitted, a reason substituted or a severity lowered is refused on the path the step exposes.
+  6. "Out of scope: reviewing any real board": no board's review record was written.
+
+  ## Result
+
+  All clauses met. The round gate (task check:round, board tier) passed at the verified commit.
+links:
+  - target: SOL-BOARD-CIRCUIT-PRACTICE-CATALOGUE.C2
+    type: satisfies

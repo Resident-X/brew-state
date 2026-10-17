@@ -1,0 +1,34 @@
+id: EV-SOL-BOARD-CIRCUIT-PRACTICE-CATALOGUE-C1-INSPECTION
+type: evidence
+title: inspection evidence for SOL-BOARD-CIRCUIT-PRACTICE-CATALOGUE.C1
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-17T22:19:16.535712Z"
+artifact:
+  kind: inline
+attested_by: crun-86bfbbeaf2ff4a56
+text: |
+  Verified commit: cce8fdd4f2d49e03f076d3f1d5c5b2b8eaace591 (the build branch head at submission)
+
+  # Inspection of the circuit practice catalogue against SOL-BOARD-CIRCUIT-PRACTICE-CATALOGUE.C1
+
+  Artefact: docs/board-design-method.md, section "Circuit practice catalogue" (after "Layout practice catalogue"), and hardware/tools/board_history.py with its test.
+
+  ## Clause by clause
+
+  1. "Write the catalogue into the board design method with the item form ... this solution's text sets out": the section sits in the method, beside the layout catalogue. A script over the section found 23 items in 17 areas (BARRIER, BUSL, CABLE, CAPD, DERATE, EMSRC, ESD, FAULT, INDEP, PARTS, PINV, POLAR, RCFL, STRAP, SUPPLY, SURGE, TOUCH), each with Applies when, Asks, Passes, Fails (as the schematic shows it), Kind, Severity and Source, and none missing a field. No area code is one the layout catalogue uses. The two layout-view fields are dropped, as the solution text settles.
+  2. "the baseline items": each of the solution's 17 baseline bullets maps to an item: pin voltages PINV-1/2; external parts PARTS-1; DC-bias capacitance CAPD-1; bus pull-ups BUSL-1; boot, strap and debug STRAP-1/2; RC filters RCFL-1; inrush and undervoltage lockout SUPPLY-1/2; polarity POLAR-1; cable pinning CABLE-1; single-fault analysis FAULT-1; barrier rating BARRIER-1; surge SURGE-1; static discharge ESD-1; touch current TOUCH-1; heater-removal independence INDEP-1; emissions at their sources EMSRC-1/2/3; derating DERATE-1/2.
+  3. "each item cites its published source": the same script found every item's Source carries a URL and "read 2026-10-18"; each states title, publisher and section. The sources were opened and the quoted claims checked against the documents by the implementer, and a cold reviewer re-opened a sample of eight (SLVA689A, UM10204, EC608, SDAA393, SPMA053, PD-ED-1201, the Bespokecable article, the DigiKey thread) and confirmed the claims. Two are known-weak and stated as such in the item: CABLE-1 rests on a forum reply and a cable maker's article (the item's gloss was corrected to what the reply says), and EMSRC-2's AN437 is a scan whose section titles could not be machine-read.
+  4. "stated fully enough to apply without reading its source": each item's Passes states the pass pattern, with the arithmetic where it has one (BUSL-1, RCFL-1, SUPPLY-1, ESD-1, TOUCH-1).
+  5. "each figure that a purchased standard sets required from the governing standard named in the separation basis or a cited, freely available derivation of it": BARRIER-1, SURGE-1, ESD-1, TOUCH-1, EMSRC-1/2/3 and DERATE-1 each require the figure from that standard, stating it is never taken from memory. The one number an item states, 0.8473 in BUSL-1, is the bus rise-time constant of the freely available I2C specification UM10204, not a purchased standard's figure.
+  6. "Out of scope: ... any figure specific to one machine": grep over the method for the machine's folder and model names, the thermoblock, controller family, supply voltage and fault-current vocabulary found no match.
+  7. The change to the board history check, required by the criterion: catalogue() reads the layout section alone; test_a_circuit_item_in_the_method_leaves_the_layout_checklist_unchanged inserts circuit items before and after the layout section and shows the checklist unchanged, and fails against the previous whole-method read. The other readers of the heading pattern (test_board_placement.py, test_review_seed.py) are scoped to the layout section; a grep over hardware/tools found no other.
+
+  ## Result
+
+  All clauses met. The round gate (task check:round, board tier) passed at the verified commit.
+links:
+  - target: SOL-BOARD-CIRCUIT-PRACTICE-CATALOGUE.C1
+    type: satisfies
