@@ -1,0 +1,81 @@
+id: EV-SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE-C1-DEMONSTRATION
+type: evidence
+title: demonstration evidence for SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C1
+status: active
+version: 1
+result: pass
+method: demonstration
+observed_at: "2026-10-17T07:36:56.836361Z"
+artifact:
+  kind: inline
+attested_by: crun-bb777b50332911e6
+text: |
+  Verified commit: 2982010c35c8ca094441781da9255d408ed0e68 (the build branch head at submission; the demonstration design is unchanged since the merge 5356b57)
+
+  # C1 demonstration record: a fresh agent session follows the board design method
+
+  Criterion SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C1 (verification: demonstration). Sources: `.stage0/demo-report1.md`, `demo-report3.md`, `demo-report3c.md`, the fix reports `fix2` to `fix7`, `final-opus-result.md`, `final-fable-full-094d02.md`, and `git log origin/main..HEAD`.
+
+  ## 1. Runs and configuration
+
+  All sessions: Sonnet 5.5, medium effort, headless, in a clean worktree with `CLAUDE.md` removed and auto-memory disabled. The session was given only a brief and the `repo-board-design` skill; the method is `docs/board-design-method.md`.
+
+  | Run | Start | Outcome |
+  |---|---|---|
+  | 1 | method at the time | Stopped at routing step 8 after about 41 minutes with two `hw:verify` violations. Reported 13 places the method left it guessing. Fixes committed as 5ffc417. |
+  | 2 (second launch) | n/a | Invalid: it ran in the first run's worktree. Discarded. |
+  | 3 | 5ffc417 | Got past run 1's two violations and reached the layout review, then needed three operator interventions (section 2). The review closed at round 6. |
+  | 3, resumed | same session | Continued after the stall recovery. Its report listed 10 further guessed places. |
+
+  Final state of the design (`hardware/proof/method-proof/`, marked `NOT_FOR_MANUFACTURE=true`, never ordered):
+  - `task hw:verify`: PASS on all 3 designs.
+  - `task hw:history -- --board method-proof.kicad_pcb --routed`: PASS (31 checks).
+  - `task hw:review-history -- --folder .`: PASS (17 checks), closing round 7.
+  - Floorplan and plan committed before placement (c2b5abb, before the first placement candidate dde774a).
+  - Layout review: rounds 1 to 7, each by a fresh reviewer that did not design the board. Round 1: 61 items judged, 8 findings. Round 2: 4. Round 3: 3.1 and 3.2. Round 4: 4.1. Round 5: 5.1. Round 6: 67 items judged, no new finding, every earlier finding closed (97a648f). Round 7 (321170f): see section 4. Per-round closures are in `demo-report3c.md`.
+  - The design merged by merge commit d3db7cf.
+
+  ## 2. Interventions during the demonstration
+
+  The orchestrating agent session (a Claude Code session driving the build) made these, and the human operator decided the second and approved the signatory in the third.
+
+  1. **Stall recovery (orchestrating session).** The session had backgrounded a reviewer subagent, which was interrupted. The orchestrating session stopped the idle process and resumed the same session with an instruction to run reviews in the foreground.
+  2. **Authorisation to extend the pre-order check.** The session stopped to ask whether it may add new measured rules after the layout review found qualities the check did not measure. The human operator authorised it, when asked whether to finish the review in full. The session then added `decoupling_via` (DECOUPLE-6) and `reference_off_silkscreen` (MFG-7), each with a seeded fault (68c350c), and a custom rule for GROUND-5.
+  3. **Separation basis record (orchestrating session).** The orchestrating session added the design's synthetic separation basis record (007526a), with the human operator's approval to sign it in their name, because the repository's own listing test expected one for every design and the session had not written it.
+
+  Each intervention supplied something the method did not say, so each counts against "no knowledge held only by its author". Each was turned into method or tooling text (section 3): the stall into the main-session and foreground-review rule, the authorisation into the review step's rule on new measured rules, the record into the intro's list of records the check reads.
+
+  ## 3. Gaps reported and where each was fixed
+
+  Each reported place was classified by the orchestrating session's homework and fix agents and fixed in the method, the tooling or the brief. Reports are grouped below; the numbered lists are in the cited reports.
+
+  | Source | Count | Gap, grouped | Fixed in |
+  |---|---|---|---|
+  | Run 1 | 13 | Constraints figures, datasheet source, manufacturer-limits file, records the check reads but the method did not name (pin allocation, parts specification, catalogue extract), link-pin class, plan rows changing after commit, footprint and project-file edits Konnect cannot make, opening the board, views folder rules, checkpoint on mixed items | Method text, 5ffc417 (controller premise and records the check reads), with 61d9c42 and 3e39276 (main-session rule, Konnect row and gaps) |
+  | Run 3 | 8 | Router grid and pour merging, router copper failing the check, pad pin types the views need, return vias at POWER-3, tool environment (`KICAD_CLI`, stale lock files, views folder), review ambiguities (connector position, ring merging, MFG-1, shortfall wording) | Method text, 3de6c2f and the fix2 edits (Tools, Routing steps 2, 6, 8, Proving step 4, review step 5) |
+  | Run 3 resumed | 10 | New rule vs. proof designs that already break it; figure needed on every board; `no` rule answers; reasons across rounds; partial fixes; GROUND-5 widest-pad reading; courtyard tolerance; crop captions; POWER-3 reading; lost round record | Method text and tooling: 160979c, cc30020, a0fd167; fix3 to fix7 edits |
+  | Layout review round 1 to 5 findings | 6 rules | Plated-hole ring merging, decoupling via, reference designators, connector position, designator placement | Catalogue items GROUND-5, DECOUPLE-6, FLOOR-5, MFG-7, MFG-8, MFG-9 in the method (commits a84c09a, c83c864, 9361897, ceab990, 7e7814b, a0bfbbc, c7b164e, eca392c) and the pre-order check, `board_prove.py` faults and tests (68c350c) |
+  | Cold reviews of the fixes | several | A footprint with no reference text passed MFG-7; a zero decoupling count hid untyped pads; GROUND-5 figure covered only mixed pairs; inherent-zero rows had no stated form; client tool row | cc30020 (refuse a footprint with no reference text; show decoupling paths measured), a0fd167 (`decoupling_pintype` refusal on an orderable board), and the corrected GROUND-5 formula and rows in the method |
+
+  Taken out of the method again: a narrow re-review after a fix, carrying cosmetic findings, and a judgement item for closed proof designs. They contradict satisfied, baselined criteria (SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C2, .C3). They are now carried by the new solution SOL-BOARD-REVIEW-LOOP-PROPORTIONATE (section 6).
+
+  ## 4. Results of the final checks
+
+  - Cold reviews of the fixes: Sonnet 5.5, then Opus 5.5 (thorough) and Fable 5.1 (narrow), then re-checks. Their issues and suggestions were each fixed or answered; summaries are in the fix and final reports.
+  - `test_board_check`: 316 tests OK.
+  - The four method documentation test classes (`test_board_history`, `test_board_review_history`, `test_board_views`, `test_board_placement`): OK at the last run recorded in the fix reports.
+  - KiCad-backed seeded-fault tests: `test_board_check_kicad` classes `TheDecouplingAndSilkscreenRules` and `TheCleanDesignStatesTheFiguresOfTheDecouplingAndSilkscreenRules` OK when run (about 580 s).
+  - `task hw:prove`: 170 of 170 faults caught at commit cc30020, and 171 of 171 caught at the final commit a0fd167 (which adds the `decoupling_pintype` fault), about 14.5 minutes.
+
+  ## 5. What was not verified
+
+  - **No rerun of the fixed text.** None of the final fixed method text has been followed by a new fresh session. The demonstration shows a fresh session following the method as it stood at 5ffc417 (and then guided by the three interventions above) to a passing design. The fixes made since are checked by cold review and tests, not by a further fresh-session run.
+  - **GROUND-5 figure (resolved).** A later review found the figure recorded in the design's rules (1.35 mm) below the corrected formula's. The design's session re-derived it to 1.45 mm (the widest annulus is J2's, 0.375 mm, so 0.75 + 2 x 0.25 + 0.20 mm) in 6f03a83, `hw:verify` still passed, and a seventh full review round (321170f, 67 items judged, no new finding, every earlier finding closed) closed the review again, as the method requires after a design file changes.
+  - The full gate (`task check:round`) has not been run by this record's author.
+
+  ## 6. Follow-up
+
+  SOL-BOARD-REVIEW-LOOP-PROPORTIONATE (unbuilt) carries the narrow re-review, the carried cosmetic findings and the closed-proof judgement item taken out of the method. It exists in the graph, added in this branch.
+links:
+  - target: SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C1
+    type: satisfies

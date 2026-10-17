@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE-C4-INSPECTION
+type: evidence
+title: inspection evidence for SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C4
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-17T07:36:57.252535Z"
+artifact:
+  kind: external
+  reference: 'inspection of docs/board-design-method.md, Layout review step 5 (Rule paragraph) and the step 8 cross-check ''Every finding was judged as a rule, and added'', clause by clause: the one case is a measurable finding whose only available figure has no source outside the check, with the reason naming the missing source; the case does not apply to safety severity; a safety finding that a measurement could state is always added as a rule, its figure from the separation basis record or the standard it cites; a rule''s figure needs a source, so a figure with none cannot be a rule; step 8 fails a `no` that gives neither a form that cannot state the finding nor the missing source'
+  artifact_version: 29820109c35c8ca094441781da9255d408ed0e68
+attested_by: crun-bb777b50332911e6
+links:
+  - target: SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C4
+    type: satisfies

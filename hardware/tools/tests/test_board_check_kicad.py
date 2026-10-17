@@ -689,6 +689,47 @@ class TheBarrierPasteAndPourRules(Proved):
                 self.assertRegex(line.split(" | ")[3], r"\(\d+(\.\d+)?, \d+(\.\d+)?\) mm")
 
 
+class TheDecouplingAndSilkscreenRules(Proved):
+    # SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C3: Each rule the method proof design's review adds fails on a fault seeded for it and passes the clean design
+    """A via between a decoupling capacitor and the pin it decouples, and a
+    reference designator off the silkscreen each fail on a fault seeded for it
+    in a throwaway copy of the gate's proof design.
+    """
+
+    FAULTS = {"a via between a decoupling capacitor's supply pad and the pin it decouples": "decoupling_via",
+              "an integrated circuit with netted pads and no pad typed as a power pin on a design not marked not for manufacture": "decoupling_pintype",
+              "a reference designator on the fabrication layer": "reference_off_silkscreen",
+              "a part with no reference text": "reference_off_silkscreen"}
+
+    def test_each_rule_fails_on_its_seeded_fault_and_names_where(self):
+        # SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C3: Each rule the method proof design's review adds fails on a fault seeded for it and passes the clean design
+        self.assertCaught(*self.FAULTS)
+        found = outcomes()
+        for name, rule in self.FAULTS.items():
+            with self.subTest(fault=name):
+                fields = found[name][1].split(" | ")
+                self.assertEqual(fields[2], rule)
+                self.assertRegex(fields[3], r"\(\d+(\.\d+)?, \d+(\.\d+)?\) mm")
+        self.assertEqual({fault[2] for fault in board_prove.FAULTS if fault[0] in self.FAULTS}, set(self.FAULTS.values()))
+
+
+class TheCleanDesignStatesTheFiguresOfTheDecouplingAndSilkscreenRules(Copy):
+    # SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C3: Each rule the method proof design's review adds fails on a fault seeded for it and passes the clean design
+    """The report states the two inherent zeros, and how much of the layout the decoupling rule measured."""
+
+    def test_the_inherent_zeros_are_stated_and_the_clean_design_passes_the_two_rules(self):
+        # SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C3: Each rule the method proof design's review adds fails on a fault seeded for it and passes the clean design
+        status, lines = self.check()
+        self.assertEqual(status, 0, lines)
+        design = "hardware/proof/gate-proof/gate-proof.kicad_pro"
+        self.assertIn(f"FIGURE | {design} | DECOUPLE-6 via in the decoupling path | none, inherent zero | 0 vias between a "
+                      "decoupling capacitor's supply pad and the pin it decouples", lines)
+        self.assertIn(f"FIGURE | {design} | MFG-7 reference on silkscreen | none, inherent zero | 0 references off a silkscreen "
+                      "layer or hidden", lines)
+        self.assertIn(f"FIGURE | {design} | DECOUPLE-6 decoupling paths measured | the layout's pad pin types | 0 paths of 0 "
+                      "circuits with a supply pin", lines)
+
+
 class ThePoursAreMeasuredOnTheBoardKiCadFilled(Copy):
     # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
     """The pour rules measure the fills the layout check has just refilled and
@@ -712,7 +753,7 @@ class ThePoursAreMeasuredOnTheBoardKiCadFilled(Copy):
                                                                    ["xy", "30", f"{fill_top:g}"]]])
         self.seed.layout(edit)
 
-    def test_the_clean_design_passes_all_three_rules(self):
+    def test_the_clean_design_passes_both_rules(self):
         # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
         status, lines = self.check()
         self.assertEqual(status, 0, lines)

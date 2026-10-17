@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE-C3-TEST
+type: evidence
+title: test evidence for SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-17T07:36:57.047454Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check.py::test_a_reference_on_another_layer_or_the_other_side_fails_naming_the_part_and_the_layer, test_a_footprint_with_no_reference_text_fails_naming_it_even_when_left_out_of_the_bill_of_materials, test_a_via_of_the_supply_net_in_the_box_between_the_pad_and_the_pin_fails_naming_both, test_a_via_whose_copper_reaches_into_the_box_fails_and_one_clear_of_it_does_not, test_an_orderable_board_whose_circuit_has_netted_pads_and_none_typed_fails_naming_the_part, test_an_orderable_board_whose_circuit_is_typed_passes, test_a_design_marked_not_for_manufacture_is_not_refused, test_the_coverage_counts_circuits_with_a_supply_pin_and_the_paths_between_their_decoupling_pads_and_pins
+  artifact_version: 29820109c35c8ca094441781da9255d408ed0e68
+attested_by: crun-bb777b50332911e6
+links:
+  - target: SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C3
+    type: satisfies

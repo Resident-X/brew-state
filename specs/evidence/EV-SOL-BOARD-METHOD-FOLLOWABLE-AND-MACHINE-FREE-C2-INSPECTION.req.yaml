@@ -1,0 +1,112 @@
+id: EV-SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-17T07:36:56.941907Z"
+artifact:
+  kind: inline
+attested_by: crun-bb777b50332911e6
+text: |
+  Verified commit: 29820109c35c8ca094441781da9255d408ed0e68 (the build branch head at submission)
+
+  # Machine-freeness inspection of docs/board-design-method.md (and hardware/README.md)
+
+  Criterion: no step, rule, checklist item or example carries a figure, part choice or board shape specific to this machine. Reading applied (per the solution text): a cited published source or a part named only as the origin of a catalogue item is an input to the item, not a machine part choice; only a value taken from `docs/sunbeam-em7000/` or the machine's own constraints fails.
+
+  Machine vocabulary taken from `docs/sunbeam-em7000/` (`controller-board-design-constraints.md`, `controller-io.md`, `reference-machine.md`): the folder and model names, a 230 V / 216-253 V / 358 V / 50 Hz supply, 10 A and 20 A ratings, 6 kA fault current, AS/NZS 3000, the coffee and steam thermoblock elements, pumps, solenoid valves, gauges, an STM32H743 controller, JLCPCB as manufacturer, 2 oz copper.
+
+  ## Greps run (all from the repository root, on `docs/board-design-method.md`)
+
+  1. `grep -n -i -E 'sunbeam|em7000|reference-machine|controller-io|pcb-plan|controller-design'` : no match.
+  2. `grep -n -i -E 'coffee|espresso|steam|thermoblock|boiler|group head|portafilter'` : no match. (`brew` matched only in `brew install` for resvg and ngspice, the Homebrew command.)
+  3. `grep -n -i -E 'pump|solenoid|valve|element|gauge|stepper|buzzer|sounder|pushbutton'` : no match. `heater` matched once, line 544 ("the low side of a heater"), a generic illustration of a mains-referenced net.
+  4. `grep -n -i -E 'STM32|H743|F103|ESP32|MCU|microcontroller'` : no match.
+  5. `grep -n -i -E 'JLC|LCSC|Mouser|DigiKey'` : no match. `manufacturer's` matches are the role "the board manufacturer's stated limits".
+  6. `grep -n -E '\b(230|240|120|253|216|358|50 ?Hz|60 ?Hz)\b'` : no match.
+  7. `grep -n -E '\b(10|16|20) ?A\b'` and `grep -n 'kA'` and `grep -n -E 'AS/NZS|IEC 60335|IEC 62368'` : no match.
+  8. `grep -n -i -E 'NTC|thermistor|thermocouple|PT100|RTD|zero-cross'` : only the generic "zero-crossing detector" row (line 74) in the list of value-critical circuit kinds; no figure.
+  9. `grep -n -o -E '[0-9]+(\.[0-9]+)? ?(V|mm|A|W|Hz|°C|µm|mil|oz|mA|ms|µs)\b'` : every hit read in context (table below).
+  10. `grep -n -i -E 'JLC|sunbeam|em7000|coffee|STM32' hardware/README.md` : no match. README figures are the check's own tolerances and examples (`VIOLATION | hardware/m/board/...` is synthetic).
+  11. `grep -rl -i -E 'VO3526|phototriac' docs/sunbeam-em7000 specs` : only an evidence node; the machine's records do not name that part.
+
+  ## Clause-by-clause readings
+
+  | Where | Value / part | Reading |
+  |---|---|---|
+  | Intro, lines 3-5 | machine figures named only by role (constraints record, separation basis record, manufacturer's limits) | generic by construction |
+  | Tools table | KiCad 10.0.7, Freerouting 2.5.0, Temurin 26, resvg, ngspice 47, Konnect 0.13.0 | tool versions exercised, generic |
+  | Value-critical circuits (step 1) | sensing front end, zero-crossing detector, drive stage, protected conductor | generic kinds of circuit, no figure |
+  | Withstand arithmetic | K = 226, beta = 234.5 C, sigma_c, rho20, theta_i 90 / theta_f 250 check | published constants of copper (IEC 60949 Table 1) and a worked arithmetic check; generic |
+  | `.temp 85`, `.temp 125` examples | illustrative simulator temperatures, stated as examples; the real figure comes from the constraints record | generic example |
+  | Simulation `10 us` step for `5 ms`, `100 nF` in `DECOUPLE-1` example | example syntax / example value | generic example |
+  | Rail names `+5V, +5V_LOAD`, `+3V3_REG`, `+12V` (lines 248, 299) | naming examples for how a power symbol names a net | generic example, no machine rail budget or voltage requirement |
+  | Floorplan regions mains / low voltage / analog sensing / digital, each allowed to be `none` | the four kinds of region the placement tool defines | generic taxonomy; a board without one records `none` |
+  | Examples `Q3, Q4, R20` etc. | example reference designators | generic example |
+  | Placement, rules, routing, review steps | `1.3` detour ratio with its derivation, `0.381 mm per A`, `1 via per 200 mA`, `0.33 mm` via, `2.5 mm` test point spacing, `25 mm` crystal keep-clear | published practice figures each with its source, or a derivation shown; generic |
+  | Catalogue sources TI SNVA021C, SLMA002H, SZZA009, SPRAAR7J, SLVA680A, SCAA082A; KiCad manual | published documents | cited sources, generic |
+  | `POWER-5`, `DECOUPLE-5` cite Vishay VO3526 application note 33 | a phototriac part named as the origin of a catalogue item | generic: item applies to any leaded switching part; machine records do not name the part (grep 11). Not a machine part choice |
+  | Catalogue "Passes/Fails" examples citing `hardware/proof/review-proof` (`AMP_OUT`, `FB1`, `U4`, 0.63-0.88 mm jogs, 2 oz, 1.0 A) | findings from the synthetic review proof design, whose `constraints.md` states "no machine has these figures" | generic example |
+  | `MAINS` section and `Mains` class | a rule of the pre-order check; figures come from the separation basis record | generic; no figure in the method |
+  | Konnect section added in this change | version 0.13.0, the four gaps, AGPL-3.0 licence | tool facts, generic |
+
+  ## Fixes made
+
+  None needed: no machine-specific figure, part or board shape was found in the method, so no text was changed for this criterion. (The only change to the method in this slice is the Konnect row and section, which carry no machine value.)
+
+  ## Not covered
+
+  The criterion's own out-of-scope items (the constraints record, any board produced by following the method) were not inspected. The check is by grep plus a full read of the numeric and part-name hits; the method's prose between those hits was read at heading level for board shapes (greps for two/four-layer, named boards, outlines), which found only the generic two-layer/four-layer wording of cited sources.
+
+  # Machine-freeness of the method edits made after the first demonstration run
+
+  Criterion and reading: as above (SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C2): no figure, part choice or board shape specific to the machine; a throwaway board's synthetic records described generically.
+
+  Edits read clause by clause: the intro (controller premise, the four records, synthetic records), the Konnect gaps (footprint fields, attributes, 3D model, `in_bom`; project-file JSON read-modify-write), Proving step 2 (where a datasheet comes from), Bring-up step 1 (class of an isolating link's pins), Planning step 3 (plan rows amendable before the first placement commit), Rules step 1 (`BARRIER_COPPER_MM2` required on every board; every ERC and DRC check at error or warning), Routing step 4 (views folder outside every folder holding a project file), Routing step 6 (rule areas stripped from the exported copy; reading a DSN). Each reads as a statement about the check or a tool, with no machine figure. The one figure written, `0` for `BARRIER_COPPER_MM2`, is the check's own accepted value, not a machine's. No demo-board part, net, reference designator or dimension was written into the method.
+
+  Grep (from the repository root, on `docs/board-design-method.md`): `grep -n -i -E 'sunbeam|em7000|reference-machine|controller-io|pcb-plan|controller-design|coffee|espresso|thermoblock|STM32|H743|JLC|LCSC|\b230\b'`. Result: no match.
+
+  Pinned tests: the method's headings and anchors are unchanged. `hardware/tools/tests/test_board_history.py` pins the sentence every description of the plan comparison must carry; the first wording of the planning edit described the comparison and failed `test_every_site_describing_the_plan_compare_carries_the_one_sentence_and_none_a_falsehood`, so the edit was reworded to describe no comparison, and `tests.test_board_history.Documentation`, `tests.test_board_views.Documentation`, `tests.test_board_placement.Documentation` and `tests.test_board_review_history.Documentation` pass.
+
+  # Machine-freeness of the method edits made after the second demonstration run (method-proof, review rounds 1 to 6)
+
+  Criterion and reading: as above (SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C2): no figure, part choice or board shape specific to the machine; a throwaway board's synthetic records described generically.
+
+  Edits read clause by clause: Tools (`KICAD_CLI` on the search path), Konnect gaps (pad pin type and function set from the netlist), the intro (three records every design is held to, the separation basis record for a design that declares mains), Proving step 4 (what `<work folder>` is), Routing step 2 (one pour per net per layer, over pad centres; observed router behaviour), step 6 (router rounding of pad centres, observed on one board), step 8 (recovery when the check fails on router copper), Layout review (reviewer's published document; step 5 new measured rules against the proof designs and a figure on every design; step 6 and the step 8 bullet on a layout that departed from a sound plan row; step 7 a closing reason re-tested), Layout review views (crop captions name by nets, not schematic role), catalogue `CONN-2` (distance is a board figure from the machine's constraints record, none written), `CONN-3` (perpendicular connector), `GROUND-5` (non-round pad read across the pitch), `MFG-9` (stroke on a courtyard line), `POWER-3` (count per path). Each reads as a statement about a tool, a record or a reading rule. The figures written are the method's or a tool's own: none is a machine's. `CONN-2` states no distance. Router sentences are worded as observed on one board and not reproduced.
+
+  Grep (from the repository root, on `docs/board-design-method.md`): `grep -n -i -E 'sunbeam|em7000|reference-machine|controller-io|pcb-plan|controller-design|coffee|espresso|thermoblock|STM32|H743|JLC|LCSC|\b230\b'`. Result: no match.
+
+  Pinned tests: no heading or anchor changed. `BOARD_TESTS_WITHOUT_PROOF=1`, with `KICAD_CLI` set: `test_board_history`, `test_board_views`, `test_board_placement` and `test_board_review_history` Documentation classes pass. Not clean and not caused by these edits: `test_board_check.TheDesignsReadingsAreListedWithoutKiCad.test_every_file_the_check_reads_of_the_designs_in_this_repository_is_listed` fails for `hardware/proof/method-proof` (no `separation-basis.yaml` at or above it; the check requires one only when MAINS is present).
+
+  # Machine-freeness of the review-rule edits (separation basis on proof designs, `no` Rule cases, `carried:` closure, narrow re-review)
+
+  Criterion and reading: as above (SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C2): no figure, part choice or board shape specific to the machine.
+
+  Edits read clause by clause: the intro (a throwaway design under `hardware/proof/` carries a synthetic separation basis record even with no mains, naming `test_every_file_the_check_reads_of_the_designs_in_this_repository_is_listed`); Layout review step 5 (two cases where Rule is `no` for a measurable finding: no source for the figure outside the check, a closed proof design already breaking the quality; custom rules unaffected); step 7 (`carried:` closure for cosmetic findings only); step 1 (narrow round fields); steps 2, 3 and 8 (narrow re-review, closing only on a full round, cosmetic findings not holding the review open); the step 8 cross-checks. FLOOR-5's 2.54 mm is unchanged and no figure was added. Each edit names roles, tools, tasks and records of the repository; none names a machine part, figure or board shape.
+
+  Grep (from the repository root) for the machine terms listed above on `docs/board-design-method.md`: no match.
+
+  Pinned tests: no heading or anchor changed (step 8's heading text changed to "After any change, review again, and close on a full round"; checked no test or link names the old heading). `BOARD_TESTS_WITHOUT_PROOF=1`, with `KICAD_CLI` set: the Documentation classes of `test_board_history`, `test_board_views`, `test_board_placement` and `test_board_review_history` pass. `test_board_history` first failed because the new step 8 sentence used "compares the layout with the plan"; reworded to "reads the layout against the plan".
+
+  Tooling read (not changed): `board_review_history.py` never reads the Closed by column (`COMPARED` is Raised by, Severity, What and where), nor whether a verdict table covers the checklist, so it neither rejects `carried:` nor a narrow round; the method's cross-checks (step 8) are judged by the reader.
+
+  # Machine-freeness of the cold-review-3 edits (FLOOR-5 Passes, `carried:` repeat `fail`, narrow-round cross-check, safety-severity measured rules, `—` in Planning shortfall, views folder wording)
+
+  Criterion and reading: as above (SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C2): no figure, part choice or board shape specific to the machine.
+
+  Edits read clause by clause: `FLOOR-5` Passes (ends after the 2.54 mm position tolerance, which is unchanged; closure left to step 7); Layout review step 2 Why and step 8 closing definition (a `fail` of an item with a `carried:` finding cites that finding); step 8 narrow-round cross-check (each Fix commit changes a design file); step 5 and the step 8 cross-check (the two `no` cases are for function, quality and cosmetic severity; a measurable safety finding is always a measured rule with a seeded fault); step 6 and the step 8 cross-check (the reviewer judges a `—` in Planning shortfall against the row's text); Routing step 4 and Proving step 4 (views folder: `hw:views` and `hw:placement` refuse inside the board's folder or inside any folder holding a KiCad project file, and a folder already holding files; the record command refuses the same folders, checked against `board_views.working_refusals`, `locked_copper.design_folder` and `locked_copper.record`). Each reads as a statement about a tool or a reading rule; no machine figure, part or shape was written.
+
+  Grep (from the repository root, on `docs/board-design-method.md`) for the machine terms listed above: no match.
+
+  # Machine-freeness of the final-review edits (narrow re-review, `carried:` and step 5's second case removed; GROUND-5 figure; inherent-zero rows; DECOUPLE-6 guard; agent client row; FLOOR-5 severity)
+
+  Criterion and reading: as above (SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C2): no figure, part choice or board shape specific to the machine.
+
+  Edits read clause by clause: the removals return Layout review steps 1, 2, 3, 5, 7 and 8 and their cross-checks to whole-checklist rounds closing only with every finding closed, and add no content. `GROUND-5` Passes states the figure from twice the larger of the relief gap and the largest clearance, with the derivation in generic terms (annulus width, relief gap, clearance, zone minimum thickness) and no board figure. The inherent-zero row form (Rules step 1) and the `DECOUPLE-6` and `MFG-7` Judged on name rules and report lines only. The `DECOUPLE-6` text states the reference-prefix convention and pad pin types, which `hardware/tools/board_views.py` `circuits` and `hardware/README.md` give for any board. The Tools agent client row names a client and the cost of its model, no machine data. `FLOOR-5` severity is a catalogue field.
+
+  Grep (from the repository root, on `docs/board-design-method.md`) for the machine terms listed above: no match.
+links:
+  - target: SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C2
+    type: satisfies

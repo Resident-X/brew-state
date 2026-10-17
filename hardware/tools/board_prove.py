@@ -742,6 +742,40 @@ def custom_pad(seed: Seed) -> None:
     seed.layout(edit)
 
 
+def via_in_decoupling_path(seed: Seed) -> None:
+    """U1's two pads typed as power inputs, a capacitor C9 across them 6 mm below U1, and a /LV_A via between C9's /LV_A pad
+    and U1's /LV_A pin."""
+    Q = sexpr.Quoted
+    thru = ("thru_hole", ["*.Cu", "*.Mask"])
+    part = small_part("C9", 43, 16, "0b0e5c1a-0000-4000-8000-000000000d00", ("1", *thru, "/LV_A", 0, 0, 1.2),
+                      ("2", *thru, "/LV_B", 2, 0, 1.2))
+    hole = ["via", ["at", "43", "13"], ["size", "0.6"], ["drill", "0.3"], ["layers", Q("F.Cu"), Q("B.Cu")],
+            ["net", Q("/LV_A")], ["uuid", Q("0b0e5c1a-0000-4000-8000-000000000d01")]]
+
+    def edit(tree: list) -> None:
+        for number in ("1", "2"):
+            pad(tree, "U1", number).append(["pintype", Q("power_in")])
+        tree.insert(len(tree) - 1, part)
+        tree.insert(len(tree) - 1, hole)
+    seed.layout(edit)
+
+
+def reference_removed(seed: Seed) -> None:
+    """R1's reference text taken out of the footprint."""
+    def edit(tree: list) -> None:
+        part = footprint(tree, "R1")
+        part.remove(next(item for item in sexpr.children(part, "property") if item[1] == "Reference"))
+    seed.layout(edit)
+
+
+def reference_on_fab(seed: Seed) -> None:
+    """R1's reference text moved to the fabrication layer."""
+    def edit(tree: list) -> None:
+        text = next(item for item in sexpr.children(footprint(tree, "R1"), "property") if item[1] == "Reference")
+        sexpr.child(text, "layer")[1] = sexpr.Quoted("F.Fab")
+    seed.layout(edit)
+
+
 def drop_rule(name: str):
     def seed_it(seed: Seed) -> None:
         text = seed.read(".kicad_dru")
@@ -995,6 +1029,14 @@ FAULTS: List[Tuple[str, str, str, str, Callable[[Seed], None]]] = [
      "the rules file holds no rule giving them thermal reliefs", ground_class),
     ("a relief rule exempting a pad that is not an exposed pad", "manufacture: the relief rule exempts only an exposed pad", "ground_relief",
      "exempts R2 pad 2 from the reliefs of net class Ground, but it is not an exposed pad", reliefs_exempting_a_plain_pad),
+    ("an integrated circuit with netted pads and no pad typed as a power pin on a design not marked not for manufacture", "layout: an orderable board's integrated circuit has its supply pads typed", "decoupling_pintype",
+     "has netted pads and none typed power input or power output", variables(lambda v: v.pop("NOT_FOR_MANUFACTURE"))),
+    ("a via between a decoupling capacitor's supply pad and the pin it decouples", "layout: no via sits in a decoupling capacitor's path", "decoupling_via",
+     "via at (43, 13) mm of net /LV_A lies in the box from (42.15, 9.15) to (43.85, 16.6) mm about pad 1 of C9 of /LV_A and pad 1 of U1", via_in_decoupling_path),
+    ("a reference designator on the fabrication layer", "manufacture: every part's reference is on a silkscreen layer", "reference_off_silkscreen",
+     "the reference of R1 is on F.Fab, not F.SilkS", reference_on_fab),
+    ("a part with no reference text", "manufacture: every part carries a reference on a silkscreen layer", "reference_off_silkscreen",
+     "has no reference text", reference_removed),
 ]
 
 

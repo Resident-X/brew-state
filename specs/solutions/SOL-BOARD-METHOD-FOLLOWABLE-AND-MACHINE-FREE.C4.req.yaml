@@ -1,0 +1,12 @@
+id: SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C4
+type: criterion
+title: A finding that a measurement could state is written no only when its figure has no source, and never for safety severity
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Step 5 of the method's layout review states the one case in which a finding that a measurement could state is written `no`: the only figure available for the measurement has no source outside the check itself, and the reason names the missing source, for findings of function, quality and cosmetic severity. A finding of safety severity that a measurement could state is always added as a rule, its figure taken from the separation basis record or the standard that record cites. A rule's figure needs a source like any other rule, so a figure with none cannot be enforced as a rule. Out of scope: any other reason to write `no`, and the forms a rule takes.
+links:
+  - target: SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C3
+type: criterion
+title: Each rule the method proof design's review adds fails on a fault seeded for it and passes the clean design
+status: active
+version: 2
+measurement_type: binary
+verification: test
+text: |
+  Where the layout review of the method proof design judges a finding a rule that the pre-order check's measured form can enforce, put the rule in force with its figure, where it has one, named by its role and its row written as the rules step directs, and write it into the catalogue item it enforces. A rule that reads a part's data refuses a design that could be ordered when that data is missing, and its report line shows how much it measured. Every design committed to the repository passes with each rule in force, and a test shows each rule fails on a fault seeded for it in a throwaway copy of a proof design and passes the clean one. Out of scope: findings the review step judges cannot be a rule, a circuit some of whose supply pads are typed and others not (the review's count of measured paths against the schematic covers it), the pre-order check's other rules, and any board that is ordered.
+links:
+  - target: SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE
+    type: criterion-of

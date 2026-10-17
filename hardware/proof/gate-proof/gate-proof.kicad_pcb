@@ -102,7 +102,7 @@
 		(tags "proof controller")
 		(property "Reference" "U1"
 			(at 0 -2.38 0)
-			(layer "F.Fab")
+			(layer "F.SilkS")
 			(uuid "ea658bc4-e023-4c46-a4ba-5aeafa91b786")
 			(effects
 				(font

@@ -1,0 +1,25 @@
+id: SOL-BOARD-REVIEW-LOOP-PROPORTIONATE
+type: deliverable
+category: solution
+title: 'The layout review loop is proportionate: a fix is re-reviewed narrowly, cosmetic findings are carried, and only a full round closes it'
+status: active
+version: 2
+text: |
+  Why this exists. A fresh session followed the board design method to a throwaway design, and its layout review took six full rounds of about twenty minutes each, the last three finding one silkscreen designator nit apiece. The method as it stands judges the whole checklist again after any change, closes a review only on a pass with no finding open, and writes a finding `no` for rule expressibility only when the pre-order check cannot enforce it or its figure has no source (SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C4). A first draft of changes to those rules was written into the method and then taken out, because it contradicted criteria that are baselined and satisfied: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C3 (the whole checklist is judged again after any change, and the review closes only with no finding open) and .C2 (a finding is expressible exactly when the pre-order check can enforce it), and for the cosmetic carrying, REQ-BOARD-LAYOUT-PRACTICE-001.C1 (a board judged failing is not ordered).
+
+  What it does. Makes the review loop proportionate without weakening what closes it: a narrow re-review after a fix, a recorded carrying of findings of cosmetic severity, and a judgement-kind item for a quality that only a measured rule could state and a closed proof design already breaks. Each change supersedes the wording of the criterion it contradicts, in the same change, so no two statements of the rule stand together.
+
+  Settled before the build. The operator decided that a finding of cosmetic severity does not hold a review open, so REQ-BOARD-LAYOUT-PRACTICE-001.C1 is amended in this change to leave cosmetic items out of "not ordered"; carrying a finding is a change to a requirement and not to the method alone. The full-board round that closes a review is kept in every case. A finding of safety severity is not touched by any of these changes.
+
+  Out of scope: the review's views, the catalogue's items, and the pre-order check's other rules.
+links:
+  - target: DEL-HW-DESIGN-METHOD.C3
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+  - target: SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE
+    type: depends-on
+  - target: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES
+    type: depends-on

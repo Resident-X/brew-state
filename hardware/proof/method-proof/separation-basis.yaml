@@ -1,0 +1,17 @@
+# A synthetic separation basis, made only to prove the pre-order check against
+# the throwaway design beside it. Its figures are not read from any standard and
+# must never be used for a board that is ordered: being marked synthetic, the
+# check accepts it only for a design marked not for manufacture.
+standard: none -- synthetic figures chosen to exercise the check, not derived from a standard
+supply: 230 V 50 Hz
+working_voltage: 250 V rms
+pollution_degree: 2
+material_group: IIIb
+environment: indoor, dry, as assumed for a domestic appliance
+barriers: []
+mains_to_low_voltage:
+  clearance_mm: 3.0
+  creepage_mm: 4.0
+accepted_by: david
+accepted_on: 2026-10-17
+synthetic: true
