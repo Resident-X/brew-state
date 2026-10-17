@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-REVIEW-LOOP-PROPORTIONATE-C5-TEST-20
+type: evidence
+title: test evidence for SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-17T12:42:07.698944Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad.py::TheCleanDesignStatesTheFiguresOfTheDecouplingAndSilkscreenRules.test_the_inherent_zeros_are_stated_and_the_clean_design_passes_the_two_rules
+  artifact_version: 3eefc1e3bf6e723696b2c4a7c7ff29fc1008a070
+attested_by: crun-a77fa9fb1cda192c
+links:
+  - target: SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5
+    type: satisfies

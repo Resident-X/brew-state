@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-REVIEW-LOOP-PROPORTIONATE-C1-TEST-17
+type: evidence
+title: test evidence for SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-17T12:42:05.289673Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_review_history.py::RoundKind.test_seeded_a_kind_added_afterwards_to_a_recorded_round_is_caught_as_a_change
+  artifact_version: 3eefc1e3bf6e723696b2c4a7c7ff29fc1008a070
+attested_by: crun-a77fa9fb1cda192c
+links:
+  - target: SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C1
+    type: satisfies
