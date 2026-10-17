@@ -385,7 +385,7 @@ Below the floorplan, keep a plan table with one row for every item of the [Layou
 
 - **Item** is the item's identifier, for example `GROUND-1`.
 - **Applies** is `yes` or `no`, read from the item's *Applies when* against the schematic. An item whose condition the schematic meets is `yes`; it cannot be marked `no`.
-- For an item that applies, the last column says how the layout will meet it, naming the regions of the floorplan, the parts by reference designator and the nets by name that it binds, closely enough that a failure the layout review finds against the item can be traced either to this row, as a plan the layout did not follow or a plan that was not enough, or to the item itself. A `yes` row meets each clause of the item's *Passes* for every part it binds, not for the first part alone: where the item states how a part is joined or placed, such as where a supply enters a capacitor's pad or that two capacitors sit side by side, the row states it for each part it names, because step 3 checks only that the parts a row names exist. For example, for `DECOUPLE-1`: `C12 and C13 at U4 pins 7 and 20, each within its own crop, C13 (100 nF) nearest pin 20, supply entering through each capacitor's pad; no via between capacitor and pin`. For a rule-kind item, it names the rules it puts in the board's rules table, with the board's own class names and the record each figure will be read from.
+- For an item that applies, the last column says how the layout will meet it, naming the regions of the floorplan, the parts by reference designator and the nets by name that it binds, closely enough that a failure the layout review finds against the item can be traced either to this row, as a plan the layout did not follow or a plan that was not enough, or to the item itself. A `yes` row meets each clause of the item's *Passes* for every part it binds, not for the first part alone: where the item states how a part is joined or placed, such as where a supply enters a capacitor's pad or that two capacitors sit side by side, the row states it for each part it names, because step 3 checks only that the parts a row names exist. For example, for `DECOUPLE-1`: `C12 and C13 at U4 pins 7 and 20, each within its own crop, C13 (100 nF) nearest pin 20, supply entering through each capacitor's pad; no via between capacitor and pin`. For a rule-kind item, it names the rules it puts in the board's rules table, with the board's own class names and the record each figure will be read from. A row that names a supply path names every branch that leaves the path for another part, and the layer and the place each branch leaves it at, so that a branch such as the feed to a status LED's resistor is planned against the items that bear on the path it taps, `DECOUPLE-1` and `DECOUPLE-6` among them.
 - For an item that does not apply, the last column gives the reason against the item's condition, stating what the schematic lacks, for example `no crystal or ceramic resonator in the schematic` for `CLOCK-1`.
 
 Below the plan table, keep a table of the board's own items: practice this board must meet that no catalogue item states, such as a keep-out a part's datasheet asks for around it. Write each in the catalogue's item form ([How an item is read](#how-an-item-is-read)), one row per item, with how the layout will meet it:
@@ -400,6 +400,7 @@ Below the plan table, keep a table of the board's own items: practice this board
 A board with no items of its own writes `none` in the Item column of the table's one row. The catalogue and these items together are the checklist the [layout review](#layout-review) judges the board against, and the table as committed before placement is that checklist's baseline. After that commit the table is only added to: no baseline row is removed, and none of its fields from Applies when to Source is changed. An item a review of the board adds later is appended below the others, its Source naming that review; it is judged from the review's next round on and is not part of the baseline. An item that is withdrawn keeps its row, marked withdrawn, as a catalogue item does.
 
 Amended after hardware/proof/review-proof/layout-review.md, round 1, finding 1.3.
+Amended after hardware/proof/method-proof/layout-review.md, round 1, finding 1.2.
 
 ### 3. Commit the floorplan and plan before placement
 
@@ -1187,6 +1188,16 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 - **Judged on:** `assembly-top`, `assembly-bottom`, `layer-<copper layer>`, `placement`.
 - **Kind:** judgement. **Severity:** function.
 - **Source:** Vishay Semiconductors, *VO3526 Power Phototriac Design Considerations*, Application Note 33, document 81937, Rev. 1.1, 19 October 2011, section *Snubber Circuit* and Figure 5 ("Locate the snubber circuit as close to the VO3526 as possible"), https://www.vishay.com/docs/81937/appnote.pdf, read 2026-10-14.
+
+#### DECOUPLE-6. No via of a decoupling capacitor's supply net lies between the capacitor and the pin it decouples
+
+- **Applies when:** the schematic carries an integrated circuit with a decoupling capacitor on a supply pin.
+- **Asks:** Is there no via of the capacitor's supply net inside the box that the capacitor's supply pad and the supply pin it decouples span between them?
+- **Passes:** The pre-order check reports no `decoupling_via` violation. The check takes each integrated circuit's supply nets from the pads typed as power input or power output that the board file holds, a decoupling part as `DECOUPLE-1` describes it (a two-pad part across two of a circuit's supply nets, belonging to the nearest circuit), and, for each, the box that bounds the capacitor's pad on the supply net that is not a ground-class net and the nearest pad of the circuit on that net. A via on that net whose centre lies in the box, or whose copper reaches into it, is a violation. Its figure is none, no via, so it is no project text variable; the check's report states it in a `FIGURE` line for the item.
+- **Fails, as the views show it:** the pre-order check reports a `decoupling_via` violation; or, on `crop-<reference>`, a via of the supply net between the capacitor's pad and the pin, such as the tap that takes a branch of the supply to another part.
+- **Judged on:** the pre-order check's report, `design-rules.md`.
+- **Kind:** rule. **Severity:** function.
+- **Source:** `hardware/proof/method-proof/layout-review.md`, round 1, finding 1.2; for the practice, `DECOUPLE-1`.
 
 ### Sensing front ends (SENSE)
 
