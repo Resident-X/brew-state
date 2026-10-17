@@ -1521,6 +1521,16 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 - **Kind:** rule. **Severity:** quality.
 - **Source:** `hardware/proof/review-proof/layout-review.md`, round 4, finding 4.2 and round 5, finding 5.1, which record a pour stopping 0.077 mm and 0.125 mm short of copper of its own net, below the 0.15 mm minimum clearance; for the minimum, `MFG-1`. No free published document states the item.
 
+#### MFG-7. Every part's reference designator is on a silkscreen layer
+
+- **Applies when:** always.
+- **Asks:** Does every footprint carry its reference designator on the silkscreen layer of its own side, visible, so a built board names each part and test point?
+- **Passes:** The pre-order check reports no `reference_off_silkscreen` violation: every footprint's reference text is on `F.SilkS` for a part on the front and `B.SilkS` for a part on the back, and is not hidden. A footprint excluded from the bill of materials, such as a mounting hole, may hide its reference on its silkscreen layer. Its figure is none, so it is no project text variable; the check's report states it in a `FIGURE` line for the item. Overlap between designators is not measured and is judged on the views.
+- **Fails, as the views show it:** the pre-order check reports a `reference_off_silkscreen` violation; or `layer-F.SilkS` and `layer-B.SilkS` show no designators beside their parts.
+- **Judged on:** the pre-order check's report, `design-rules.md`.
+- **Kind:** rule. **Severity:** quality.
+- **Source:** `hardware/proof/method-proof/layout-review.md`, round 1, finding 1.8.
+
 ### Emissions (EMI)
 
 #### EMI-1. Power and its ground run over each other
