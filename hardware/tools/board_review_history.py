@@ -35,6 +35,17 @@ HEAD and judges:
   board's design files.
 - The closing round, the highest-numbered round at HEAD, which must be judged
   on design files unchanged since its end-of-round commit.
+- The round kind. A round states its kind in its opening lines as a line `**Round kind**: full` or
+  `**Round kind**: narrow`, a narrow round being one a fresh reviewer limited to the items a fix touches and a full round
+  one that judges every item. The closing round must state one: a closing round with no such line, or with any value but
+  `full` or `narrow`, is refused, and a closing round that is narrow fails, since only a full round closes a review.
+  The kind is exactly the bullet `- **Round kind**: <value>` outside a code fence; any other form, such as one with
+  no `- `, with `*` markers, with no colon or inside a code fence, states no kind, and two such lines are refused.
+  A closing round that is full must also give a verdict for every item that round 1 (full by the method) and every
+  earlier full round judge, or the round completeness check fails, naming the items missing; a narrow round is held
+  to no item. Earlier rounds need state no kind, and are compared as first recorded like any other. The command reads a round's
+  Verdicts table as a table and does not demand a verdict for every item of the checklist, so a narrow round's table
+  holds only the items it judges.
 
 The board's design files are the files KiCad reads for it: everything tracked
 in the board's folder, the sheets its schematic reaches and the libraries its
@@ -96,6 +107,9 @@ VERDICT_COLUMNS = ["Item", "Kind", "Severity", "Verdict", "Rests on", "Why"]
 #: The columns of a finding that are compared: the Closed by column, and the rest, are not.
 COMPARED = ["Raised by", "Severity", "What and where"]
 NUMBER = "Finding"
+#: The field that gives a round's kind, in its opening lines, and the two kinds it may give.
+KIND = re.compile(r"- \*\*Round kind\*\*: (.*\S)")
+KINDS = ("full", "narrow")
 #: The one line a Findings part holds, in place of its table, when the round raises no finding.
 NO_FINDINGS = "This round raises no finding."
 
@@ -193,6 +207,9 @@ class Round:
                                        f"'### Plan and free pass'")
             parts[name].append((index, line, fenced))
         self.opening = [line.strip() for _, line, _ in parts[""] if line.strip()]
+        #: The value of each line, outside a code fence, that is exactly the bullet `- **Round kind**: <value>`.
+        self.kinds = [mark.group(1) for _, line, fenced in parts[""] if not fenced
+                      for mark in [KIND.fullmatch(line.strip())] if mark]
         if "Verdicts" not in parts:
             self.faults.append("it has no '### Verdicts' part")
         self.verdicts = self.read(parts.get("Verdicts"), "its Verdicts table")
@@ -360,6 +377,34 @@ def judge_record(history: History, folder: str, record: str, design: set, report
     report.add("closing round", [f"{name}: the board's design files changed after closing round {closing}'s commit "
                                  f"{short(end)}: {', '.join(files)}"] if files else [],
                f"no design file has changed since closing round {closing}'s commit {short(end)}")
+    rounds = parsed[blobs[head]][3]
+    kinds = rounds[closing].kinds
+    stated = kinds[0] if len(kinds) == 1 else ""
+    if len(kinds) > 1:
+        raise CannotRun(f"{name}: closing round {closing} of the record at HEAD states its round kind "
+                        f"{len(kinds)} times, where its opening lines must hold one line")
+    if stated not in KINDS:
+        raise CannotRun(f"{name}: closing round {closing} of the record at HEAD " + (
+            f"gives its round kind as '{stated}'" if stated else "states no round kind") +
+            ", where its opening lines must hold the bullet '- **Round kind**: full' or "
+            "'- **Round kind**: narrow'")
+    report.add("round kind", [f"{name}: closing round {closing} is narrow, and a narrow round never closes the review; "
+                              f"only a full round, which judges every item, does"] if stated == "narrow" else [],
+               f"closing round {closing} is a full round")
+    required: Dict[str, int] = {}
+    for number in sorted(rounds):
+        if number < closing and (number == 1 or rounds[number].kinds == ["full"]):
+            for row in rounds[number].verdicts[1]:
+                required.setdefault(row[0], number)
+    held = {row[0] for row in rounds[closing].verdicts[1]}
+    missing = [f"{item} (round {number})" for item, number in required.items() if item not in held]
+    faults = []
+    if stated == "full" and missing:
+        faults = [f"{name}: closing round {closing} is full but gives no verdict for {len(missing)} item(s) that "
+                  f"round 1 or an earlier full round judges, first {', '.join(missing[:5])}"]
+    report.add("round completeness", faults,
+               f"closing round {closing} gives a verdict for every item round 1 and each earlier full round judge"
+               if stated == "full" else f"closing round {closing} is narrow, so is held to no item")
 
 
 # --- Running it ------------------------------------------------------------------------------

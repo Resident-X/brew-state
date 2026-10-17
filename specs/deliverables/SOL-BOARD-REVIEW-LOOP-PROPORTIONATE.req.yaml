@@ -1,17 +1,17 @@
 id: SOL-BOARD-REVIEW-LOOP-PROPORTIONATE
 type: deliverable
 category: solution
-title: 'The layout review loop is proportionate: a fix is re-reviewed narrowly, cosmetic findings are carried, and only a full round closes it'
+title: 'The layout review loop is proportionate: a fix is re-reviewed narrowly, only a full round closes it, the designer fixes the class, and a recurring nit becomes a measured rule'
 status: active
-version: 2
+version: 3
 text: |
-  Why this exists. A fresh session followed the board design method to a throwaway design, and its layout review took six full rounds of about twenty minutes each, the last three finding one silkscreen designator nit apiece. The method as it stands judges the whole checklist again after any change, closes a review only on a pass with no finding open, and writes a finding `no` for rule expressibility only when the pre-order check cannot enforce it or its figure has no source (SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C4). A first draft of changes to those rules was written into the method and then taken out, because it contradicted criteria that are baselined and satisfied: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C3 (the whole checklist is judged again after any change, and the review closes only with no finding open) and .C2 (a finding is expressible exactly when the pre-order check can enforce it), and for the cosmetic carrying, REQ-BOARD-LAYOUT-PRACTICE-001.C1 (a board judged failing is not ordered).
+  Why this exists. A fresh session followed the board design method to a throwaway design, and its layout review took seven rounds of about twenty minutes each, rounds 3 to 5 each finding one silkscreen designator nit in a different place. The method as it stands judges the whole checklist again after any change (SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C3), and the designer fixed the one instance a reviewer named, so the next fresh reviewer found a neighbour. The designator nit has no figure to source: a designator inside a courtyard or off its part is an inherent zero, like DECOUPLE-6 and MFG-7, so a measured rule can state it and SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C4's no-source case does not apply.
 
-  What it does. Makes the review loop proportionate without weakening what closes it: a narrow re-review after a fix, a recorded carrying of findings of cosmetic severity, and a judgement-kind item for a quality that only a measured rule could state and a closed proof design already breaks. Each change supersedes the wording of the criterion it contradicts, in the same change, so no two statements of the rule stand together.
+  What it does. Makes the loop proportionate without weakening what closes it. After a fix a fresh reviewer may judge only the items the change touches, while only a full round closes the review, and the review record's check refuses a closing round that is not full. The designer, before the next round, sweeps for every instance of a finding's class and fixes them together. A recurring cosmetic nit that a measurement can state becomes a measured rule, so a reviewer never sees it.
 
-  Settled before the build. The operator decided that a finding of cosmetic severity does not hold a review open, so REQ-BOARD-LAYOUT-PRACTICE-001.C1 is amended in this change to leave cosmetic items out of "not ordered"; carrying a finding is a change to a requirement and not to the method alone. The full-board round that closes a review is kept in every case. A finding of safety severity is not touched by any of these changes.
+  Settled before the build. A board judged failing is not ordered and a review closes only with no finding open, both unchanged. Carrying cosmetic findings was considered and deferred, because it would amend REQ-BOARD-LAYOUT-PRACTICE-001.C1 and contradicts SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C3; it is taken up only if cosmetic nits still recur after the class sweep and the measured rule. A quality only a measured rule could state which a closed proof design already breaks is answered by amending that proof and running one more round, not by a new item kind. The narrow round supersedes only the wording of SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C3 and .C1 that requires the whole checklist and a full set of verdicts in every round, through successor criteria SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C5 and .C6 in the same change. A finding of safety severity is not touched. The designer must not write what the reviewer owns.
 
-  Out of scope: the review's views, the catalogue's items, and the pre-order check's other rules.
+  Out of scope: the review's views, the catalogue's other items, the pre-order check's other rules, and carrying cosmetic findings.
 links:
   - target: DEL-HW-DESIGN-METHOD.C3
     type: derives-from
@@ -21,5 +21,9 @@ links:
     type: justified-by
   - target: SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE
     type: depends-on
-  - target: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES
+  - target: SOL-BOARD-REVIEW-RECORD-HISTORY-CHECK
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: 760de29aaefb1bea3945285953360f373ba71334f9d853cf9e62016b56a16284
+  gating_profile: ""

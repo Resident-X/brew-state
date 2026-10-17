@@ -1,7 +1,7 @@
 id: SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C3
 type: criterion
 title: A quality only a measured rule can state, which a closed proof design already breaks, becomes a judgement-kind item
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: inspection

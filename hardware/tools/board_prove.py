@@ -776,6 +776,15 @@ def reference_on_fab(seed: Seed) -> None:
     seed.layout(edit)
 
 
+def reference_in_courtyard(seed: Seed) -> None:
+    """R1's reference text moved to the middle of R1, inside its own courtyard."""
+    def edit(tree: list) -> None:
+        text = next(item for item in sexpr.children(footprint(tree, "R1"), "property") if item[1] == "Reference")
+        at = sexpr.child(text, "at")
+        at[1:3] = ["0", "0"]
+    seed.layout(edit)
+
+
 def drop_rule(name: str):
     def seed_it(seed: Seed) -> None:
         text = seed.read(".kicad_dru")
@@ -1037,6 +1046,8 @@ FAULTS: List[Tuple[str, str, str, str, Callable[[Seed], None]]] = [
      "the reference of R1 is on F.Fab, not F.SilkS", reference_on_fab),
     ("a part with no reference text", "manufacture: every part carries a reference on a silkscreen layer", "reference_off_silkscreen",
      "has no reference text", reference_removed),
+    ("a reference designator inside a part's courtyard", "manufacture: every designator stands outside every courtyard, beside its own part", "designator_astray",
+     "the text of R1 stands inside the courtyard of R1", reference_in_courtyard),
 ]
 
 

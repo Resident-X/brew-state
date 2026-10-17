@@ -101,7 +101,7 @@
 		(descr "Controller-style part with two port pins, for the proof design")
 		(tags "proof controller")
 		(property "Reference" "U1"
-			(at 0 -2.38 0)
+			(at 2.5 5.3 0)
 			(layer "F.SilkS")
 			(uuid "ea658bc4-e023-4c46-a4ba-5aeafa91b786")
 			(effects

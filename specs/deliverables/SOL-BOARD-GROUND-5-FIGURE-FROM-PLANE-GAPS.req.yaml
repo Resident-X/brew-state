@@ -1,0 +1,21 @@
+id: SOL-BOARD-GROUND-5-FIGURE-FROM-PLANE-GAPS
+type: deliverable
+category: solution
+title: The GROUND-5 plated-hole spacing figure is derived from the gaps opened in the ground plane, not from a mains pour
+status: active
+version: 1
+text: |
+  Why this exists. The practice catalogue's item GROUND-5 gives the figure for its custom plated-hole spacing rule as twice the widest annulus, plus twice the larger of the ground zones' thermal-relief gap and the largest clearance any net class or zone of the board states, plus the zone's minimum thickness. On a board that carries mains copper pours with a 3 mm clearance, the largest-clearance term is the mains zone's, so the figure for the review-proof design comes to 7.8 mm (1.30 + 2 x 3 + 0.5), a spacing no connector at a 2.5 mm pitch can meet. Rings merge only between pins whose own gaps are opened in a ground plane: a ground pin's thermal-relief gap, or the clearance of the ground plane's own zone around another pin. A mains pour is not a ground plane, so its clearance does not enter. The review-proof layout review closed finding 9.4 (rounds 9 to 11) as "does not apply" because the rule as figured cannot be met, and its actual ring-merge analysis found one merging pair, connector J2 pads 1 and 2, needing 0.95 mm against 0.80 mm available. An item that cannot be met on a board it applies to is closed by waiver and no longer finds the defect it was written for. The item was added by SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS from the method-proof layout review, round 1, finding 1.1.
+
+  What it does. Restates the item's figure in docs/board-design-method.md so it is derived from the gaps the pins open in the plane the rings merge in: the ground zones' clearance and thermal-relief gap, and the clearance a net class states for a pin's net where that governs the gap in the plane, and not from a pour that is not a ground plane. The item's existing reading of a pad that is not round stays.
+
+  Out of scope: moving copper on any proof design, and every other catalogue item.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C5
+    type: targets
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+  - target: SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS
+    type: depends-on

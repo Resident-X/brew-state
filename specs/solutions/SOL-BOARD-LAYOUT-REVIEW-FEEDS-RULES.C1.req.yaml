@@ -1,7 +1,7 @@
 id: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C1
 type: criterion
 title: Each layout is reviewed against a pre-written checklist with a recorded verdict on every item
-status: active
+status: deprecated
 version: 3
 measurement_type: binary
 verification: inspection
@@ -10,3 +10,5 @@ text: |
 links:
   - target: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES
     type: criterion-of
+attributes:
+  deprecation_reason: 'superseded by C6: a narrow round holds verdicts for the items it judges'

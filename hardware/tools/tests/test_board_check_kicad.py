@@ -699,9 +699,11 @@ class TheDecouplingAndSilkscreenRules(Proved):
     FAULTS = {"a via between a decoupling capacitor's supply pad and the pin it decouples": "decoupling_via",
               "an integrated circuit with netted pads and no pad typed as a power pin on a design not marked not for manufacture": "decoupling_pintype",
               "a reference designator on the fabrication layer": "reference_off_silkscreen",
-              "a part with no reference text": "reference_off_silkscreen"}
+              "a part with no reference text": "reference_off_silkscreen",
+              "a reference designator inside a part's courtyard": "designator_astray"}
 
     def test_each_rule_fails_on_its_seeded_fault_and_names_where(self):
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: Each of the three designs under hardware/proof passes the rule before it lands, and a seeded fault shows it fails.
         # SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C3: Each rule the method proof design's review adds fails on a fault seeded for it and passes the clean design
         self.assertCaught(*self.FAULTS)
         found = outcomes()
@@ -718,6 +720,7 @@ class TheCleanDesignStatesTheFiguresOfTheDecouplingAndSilkscreenRules(Copy):
     """The report states the two inherent zeros, and how much of the layout the decoupling rule measured."""
 
     def test_the_inherent_zeros_are_stated_and_the_clean_design_passes_the_two_rules(self):
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: Each of the three designs under hardware/proof passes the rule before it lands, and a seeded fault shows it fails.
         # SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C3: Each rule the method proof design's review adds fails on a fault seeded for it and passes the clean design
         status, lines = self.check()
         self.assertEqual(status, 0, lines)
@@ -726,6 +729,8 @@ class TheCleanDesignStatesTheFiguresOfTheDecouplingAndSilkscreenRules(Copy):
                       "decoupling capacitor's supply pad and the pin it decouples", lines)
         self.assertIn(f"FIGURE | {design} | MFG-7 reference on silkscreen | none, inherent zero | 0 references off a silkscreen "
                       "layer or hidden", lines)
+        self.assertIn(f"FIGURE | {design} | MFG-9 designator beside its part | none, inherent zero | 0 designators inside a "
+                      "part's courtyard or nearer another part than their own", lines)
         self.assertIn(f"FIGURE | {design} | DECOUPLE-6 decoupling paths measured | the layout's pad pin types | 0 paths of 0 "
                       "circuits with a supply pin", lines)
 

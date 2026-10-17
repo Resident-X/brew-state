@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-REVIEW-LOOP-PROPORTIONATE-C5-TEST-17
+type: evidence
+title: test evidence for SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-17T12:42:07.380036Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check.py::EveryDesignatorStandsOutsideEveryCourtyardBesideItsOwnPart.test_an_older_footprints_reference_text_is_read_too
+  artifact_version: 3eefc1e3bf6e723696b2c4a7c7ff29fc1008a070
+attested_by: crun-a77fa9fb1cda192c
+links:
+  - target: SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5
+    type: satisfies

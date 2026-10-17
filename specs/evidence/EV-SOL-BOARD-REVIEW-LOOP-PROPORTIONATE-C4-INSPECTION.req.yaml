@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-REVIEW-LOOP-PROPORTIONATE-C4-INSPECTION
+type: evidence
+title: inspection evidence for SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C4
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-17T12:42:08.003249Z"
+artifact:
+  kind: external
+  reference: 'inspection: docs/board-design-method.md step 7 states the designer sweeps the board for every instance of the finding''s class, fixes them together and names the sweep in the fixing commit, and that the designer does not write the verdicts, the Rule answer or the Added as entry; commits 8a8e9c1 and 2102a19 name their sweeps in their messages'
+  artifact_version: 3eefc1e3bf6e723696b2c4a7c7ff29fc1008a070
+attested_by: crun-a77fa9fb1cda192c
+links:
+  - target: SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C4
+    type: satisfies

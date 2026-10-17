@@ -1,0 +1,12 @@
+id: SOL-BOARD-GROUND-5-FIGURE-FROM-PLANE-GAPS.C2
+type: criterion
+title: The corrected GROUND-5 figure is worked for the review-proof design and the proof designs still pass
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  State in the GROUND-5 item a worked figure for the review-proof design, giving its widest annulus, the gaps taken and the zone's minimum thickness with the arithmetic, and show that the pre-order check still passes on the three proof designs under hardware/proof with the corrected figure in their rules files where the item requires one. The check's run on each of the three designs is the evidence. Out of scope: moving copper on any proof design, and the other catalogue items.
+links:
+  - target: SOL-BOARD-GROUND-5-FIGURE-FROM-PLANE-GAPS
+    type: criterion-of
