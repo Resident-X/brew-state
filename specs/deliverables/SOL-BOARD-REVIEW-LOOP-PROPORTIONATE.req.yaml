@@ -21,8 +21,6 @@ links:
     type: justified-by
   - target: SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE
     type: depends-on
-  - target: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES
-    type: depends-on
 brief_confirmation:
   confirmer: claude-sonnet-5-5 independent brief reviewer
   fingerprint: 7c8ff4d3894cd8d32d524ca92a9a24c3c8cce32b5bef7b507f78c8d6e9f7fa00
