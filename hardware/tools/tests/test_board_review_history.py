@@ -173,7 +173,7 @@ class Passes(Base):
         self.assertEqual(document["board"], "b")
         self.assertEqual([c["check"] for c in document["checks"]],
                          ["rounds kept", "round structure"] + [f"round {n} {what}" for n in (1, 2, 3)
-                                            for what in ("as first recorded", "order")] + ["closing round", "round kind"])
+                                            for what in ("as first recorded", "order")] + ["closing round", "round kind", "round completeness"])
         self.assertIn("CHECK | closing round | PASS |", "\n".join(lines))
 
     def test_a_finding_closed_after_its_round_was_recorded_passes(self):
@@ -680,8 +680,6 @@ class Headings(Base):
 
 
 class RoundKind(Base):
-    KIND = "SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C1: "
-
     def two_rounds(self, first, second):
         """Round 1 with kind `first` then round 2 with kind `second`, each recorded after the design it judges."""
         for number, kind in ((1, first), (2, second)):
@@ -791,6 +789,79 @@ class RoundKind(Base):
         self.repo.commit("b: seed a missing kind")
         self.assertRefusedKind("states no round kind")
 
+    def test_two_round_kind_lines_in_the_closing_round_are_refused_in_both_forms(self):
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C1: Each round states its kind, full or narrow, in its opening lines; the review record's check refuses a closing round that states no kind
+        judged = self.repo.redesign()
+        self.repo.record_round(1, judged[:12])
+        self.repo.record({1: self.repo.rounds[1].replace("- **Round kind**: full\n",
+                                                          "- **Round kind**: full\n- **Round kind**: narrow\n")})
+        self.repo.commit("b: two kinds")
+        self.assertRefusedKind("closing round 1", "2 times")
+
+    def test_a_kind_in_any_looser_form_is_no_kind(self):
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C1: Each round states its kind, full or narrow, in its opening lines; the review record's check refuses a closing round that states no kind
+        judged = self.repo.redesign()
+        self.repo.record_round(1, judged[:12])
+        good = self.repo.rounds[1]
+        forms = ["**Round kind**: full", "* **Round kind**: full", "- *Round kind*: full", "- **Round kind** full",
+                 "- Round kind: full", "```\n- **Round kind**: full\n```"]
+        for form in forms:
+            with self.subTest(form=form):
+                self.repo.record({1: good.replace("- **Round kind**: full", form)})
+                self.repo.commit("b: a looser form")
+                self.assertRefusedKind("states no round kind")
+
+    def test_a_closing_round_labelled_full_with_fewer_verdicts_than_round_one_fails_in_both_forms(self):
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C1: A narrow round never closes the review: it closes only on a full round, which judges every item, that leaves no finding open.
+        judged = self.repo.redesign()
+        self.repo.record_round(1, judged[:12])
+        judged = self.repo.redesign()
+        self.repo.record_round(2, judged[:12], findings=[],
+                               verdicts=["| WORK-1 | judgement | quality | pass | whole board | Only one. |"])
+        document = self.assertFails("closing round 2 is full but gives no verdict", "GROUND-1 (round 1)",
+                                    check="round completeness")
+        self.assertEqual([c["check"] for c in document["checks"] if c["verdict"] == "FAIL"], ["round completeness"])
+
+    def test_items_of_an_earlier_full_round_are_required_but_not_those_of_a_narrow_round(self):
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C1: A narrow round never closes the review: it closes only on a full round, which judges every item
+        extra = "| EXTRA-1 | rule | function | pass | whole board | Added. |"
+        judged = self.repo.redesign()
+        self.repo.record_round(1, judged[:12])
+        judged = self.repo.redesign()
+        self.repo.record_round(2, judged[:12], findings=[], kind="narrow", verdicts=[extra])
+        judged = self.repo.redesign()
+        self.repo.record_round(3, judged[:12], findings=[])
+        self.assertPasses()
+        judged = self.repo.redesign()
+        self.repo.record_round(4, judged[:12], findings=[], verdicts=[extra, "| WORK-1 | judgement | quality | pass | w | x |",
+                                                                      "| GROUND-1 | rule | function | pass | w | x |"])
+        self.assertPasses()
+        judged = self.repo.redesign()
+        self.repo.record_round(5, judged[:12], findings=[])
+        self.assertFails("EXTRA-1 (round 4)", check="round completeness")
+
+    def test_a_narrow_closing_round_is_held_to_no_item_by_completeness(self):
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C1: A narrow round never closes the review
+        self.two_rounds("full", "narrow")
+        document = self.assertFails(check="round kind")
+        self.assertEqual([c["verdict"] for c in document["checks"] if c["check"] == "round completeness"], ["PASS"])
+
+    def test_a_single_round_record_is_not_held_to_completeness(self):
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C1: A narrow round never closes the review: it closes only on a full round, which judges every item
+        judged = self.repo.redesign()
+        self.repo.record_round(1, judged[:12], verdicts=["| ONLY-1 | rule | function | pass | w | x |"], findings=[])
+        _, document = self.assertPasses()
+        self.assertIn(["round completeness", "PASS"], [[c["check"], c["verdict"]] for c in document["checks"]])
+
+    def test_seeded_a_narrow_round_relabelled_full_is_caught_by_completeness(self):
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C1: a seeded fault in the check's tests shows each
+        self.two_rounds("full", "narrow")
+        self.repo.rounds[2] = round_text(2, self.repo.rounds[2].split("commit ")[1].split(".")[0], findings=[], kind="full",
+                                         verdicts=["| WORK-1 | judgement | quality | pass | the changed net | Touched. |"])
+        self.repo.record()
+        self.repo.commit("b: relabel the narrow round full")
+        self.assertFails("closing round 2 is full but gives no verdict", "GROUND-1", check="round completeness")
+
 
 class Proof(unittest.TestCase):
     def test_the_proof_board_record_in_this_repository_passes(self):
@@ -894,7 +965,7 @@ class Output(Base):
         self.assertEqual(from_text, from_json)
         self.assertIn(["round 2 as first recorded", "PASS"], [row[:2] for row in from_json])
         self.assertEqual(lines[-1], f"RESULT | {document['result']} | {document['detail']}")
-        self.assertEqual(document["detail"], "1 of 8 checks failed")
+        self.assertEqual(document["detail"], "1 of 9 checks failed")
         self.assertEqual(len(lines), len(from_text) + 1, "every line but the result is a check")
         self.assertEqual(document["refusals"], [])
 

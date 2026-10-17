@@ -3256,8 +3256,8 @@ def project_form(design: Design, project: dict) -> List[Violation]:
 
 # --- Decoupling and silkscreen -------------------------------------------------------
 #
-# Two more rules KiCad does not measure, each read from the layout file. Neither
-# needs a project text variable of its own, so neither adds a figure to the
+# Three more rules KiCad does not measure, each read from the layout file. None
+# needs a project text variable of its own, so none adds a figure to the
 # designs: DECOUPLE-6, MFG-7 and MFG-9 are held to an inherent zero: no via in the
 # decoupling path, no reference off the silkscreen, no designator inside a courtyard
 # or nearer another part than its own.
@@ -3430,10 +3430,11 @@ def text_box(footprint: list, node: list, name: str) -> Optional[Tuple[list, str
     The box is estimated from the text, not drawn from the font: its length is
     the character count times TEXT_ADVANCE times the font's width size, and
     its height the font's height size, both widened by the stroke thickness.
-    It is turned to the text's angle, which the file writes as the board's
-    (a quarter turn exchanges its sides), and placed about the text's anchor
-    by its justification (centred on the anchor when none is written; a
-    mirrored text exchanges left and right). The anchor is moved to the board
+    It is turned to the text's angle, which the file writes as the board's,
+    and placed about the text's anchor by its justification (centred on the
+    anchor when none is written; a mirrored text exchanges left and right),
+    the justification measured along the text's own directions. The box
+    returned is the axes-aligned box about that turned rectangle. The anchor is moved to the board
     as the footprint is, so a footprint turned on the board carries its text
     with it. None when the text has no position.
     """
@@ -3450,26 +3451,48 @@ def text_box(footprint: list, node: list, name: str) -> Optional[Tuple[list, str
     length = len(str(footprint_text(node))) * TEXT_ADVANCE * width_size + line
     height = height_size + line
     angle = board_geometry.number(at, 3, f"the text of {name}") if len(at) > 3 else 0.0
-    if round(angle) % 180 == 90:
-        length, height = height, length
     words = {str(word) for item in sexpr.children(effects, "justify") for word in item[1:]}
-    mirrored = "mirror" in words
-    before, after = ("right", "left") if mirrored else ("left", "right")
-    along = (length / 2 if before in words else -length / 2 if after in words else 0.0)
-    across = (height / 2 if "top" in words else -height / 2 if "bottom" in words else 0.0)
-    if round(angle) % 180 == 90:
-        along, across = across, along
+    before, after = ("right", "left") if "mirror" in words else ("left", "right")
+    along = length / 2 if before in words else -length / 2 if after in words else 0.0
+    across = height / 2 if "top" in words else -height / 2 if "bottom" in words else 0.0
+    # The text's own directions on the board: along its line, and down its page. Positive angles turn it counter-clockwise
+    # as the board is seen, which is the way the board's y axis (pointing down) makes (cos, -sin).
+    cos, sin = math.cos(math.radians(angle)), math.sin(math.radians(angle))
+    run, down = (cos, -sin), (sin, cos)
     place = board_geometry.placement(footprint, f"the footprint {name}")
     anchor = board_geometry.placed(board_geometry.xy(at, f"the text of {name}"), place)
-    centre = (anchor[0] + along, anchor[1] + across)
+    centre = (anchor[0] + along * run[0] + across * down[0], anchor[1] + along * run[1] + across * down[1])
+    reach_x = (abs(run[0]) * length + abs(down[0]) * height) / 2
+    reach_y = (abs(run[1]) * length + abs(down[1]) * height) / 2
     layer = sexpr.child(node, "layer")
-    return ([(centre[0] - length / 2, centre[1] - height / 2), (centre[0] + length / 2, centre[1] - height / 2),
-             (centre[0] + length / 2, centre[1] + height / 2), (centre[0] - length / 2, centre[1] + height / 2)],
+    return ([(centre[0] - reach_x, centre[1] - reach_y), (centre[0] + reach_x, centre[1] - reach_y),
+             (centre[0] + reach_x, centre[1] + reach_y), (centre[0] - reach_x, centre[1] + reach_y)],
             str(layer[1]) if layer is not None and len(layer) > 1 else "")
 
 
 def footprint_text(node: list) -> str:
     return str(node[2]) if len(node) > 2 else ""
+
+
+def arc_points(item: list, what: str) -> List[Tuple[float, float]]:
+    """Points along an arc drawn by its start, mid and end points, from its start through its mid to its end.
+
+    The arc is the circle through the three points, sampled every 5 degrees,
+    so a box about the points reaches as far as the arc does. A straight
+    arc (three points in a line) has none beyond its own.
+    """
+    a, m, e = (board_geometry.xy(sexpr.child(item, key), what) for key in ("start", "mid", "end"))
+    d = 2 * (a[0] * (m[1] - e[1]) + m[0] * (e[1] - a[1]) + e[0] * (a[1] - m[1]))
+    if abs(d) < 1e-9:
+        return []
+    ux = ((a[0] ** 2 + a[1] ** 2) * (m[1] - e[1]) + (m[0] ** 2 + m[1] ** 2) * (e[1] - a[1]) + (e[0] ** 2 + e[1] ** 2) * (a[1] - m[1])) / d
+    uy = ((a[0] ** 2 + a[1] ** 2) * (e[0] - m[0]) + (m[0] ** 2 + m[1] ** 2) * (a[0] - e[0]) + (e[0] ** 2 + e[1] ** 2) * (m[0] - a[0])) / d
+    radius = math.dist((ux, uy), a)
+    start, mid, end = (math.atan2(p[1] - uy, p[0] - ux) for p in (a, m, e))
+    sweep_mid, sweep_end = (mid - start) % (2 * math.pi), (end - start) % (2 * math.pi)
+    sweep = sweep_end if sweep_mid <= sweep_end else sweep_end - 2 * math.pi
+    steps = max(2, int(abs(sweep) / math.radians(5)) + 1)
+    return [(ux + radius * math.cos(start + sweep * i / steps), uy + radius * math.sin(start + sweep * i / steps)) for i in range(steps + 1)]
 
 
 def courtyard(footprint: list, side: str, name: str) -> Optional[List[Tuple[float, float]]]:
@@ -3497,6 +3520,8 @@ def courtyard(footprint: list, side: str, name: str) -> Optional[List[Tuple[floa
             centre, edge = board_geometry.xy(circle, f"the courtyard of {name}"), board_geometry.xy(sexpr.child(item, "end"), f"the courtyard of {name}")
             reach = math.dist(centre, edge)
             points += [(centre[0] + dx * reach, centre[1] + dy * reach) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))]
+        if str(item[0]) == "fp_arc":
+            points += arc_points(item, f"the courtyard of {name}")
         for group in sexpr.children(item, "pts"):
             points += [board_geometry.xy(point, f"the courtyard of {name}") for point in sexpr.children(group, "xy")]
     if not points:
@@ -3527,7 +3552,9 @@ def designators_astray(design: Design, tree: list) -> List[Violation]:
     its box reaches into it by more than TEXT_REACH on every side of the
     overlap; it is nearer another part when the gap from its box to another
     part's courtyard is less than the gap to its own part's courtyard, which
-    is 0 when the text is inside its own.
+    is 0 when the text is inside its own, by more than TEXT_NEARER. A part
+    that draws no courtyard of its own is held to the first test only: a
+    missing courtyard is another defect, and there is no gap to compare with.
     """
     footprints = []
     for footprint in sexpr.children(tree, "footprint"):
@@ -3573,14 +3600,13 @@ def designators_astray(design: Design, tree: list) -> List[Violation]:
                 f"stands inside the courtyard of {', '.join(inside)}; move it clear of every courtyard, beside {name}"))
             continue
         own = gaps.get(name)
-        nearer = sorted((gap, other) for other, gap in gaps.items() if other != name and (own is None or gap < own - TEXT_NEARER))
+        nearer = sorted((gap, other) for other, gap in gaps.items() if other != name and own is not None and gap < own - TEXT_NEARER)
         if nearer:
             found.append(Violation(
                 design.project, "designator_astray", where,
                 f"MFG-9 each designator stands outside every part's courtyard, beside its own part: the text of {name} "
                 f"is {coordinate(nearer[0][0])} mm from the courtyard of {nearer[0][1]}, "
-                + (f"nearer than the {coordinate(own)} mm from its own" if own is not None else f"and {name} draws no courtyard of its own")
-                + f"; move it beside {name}"))
+                f"nearer than the {coordinate(own)} mm from its own; move it beside {name}"))
     return found
 
 

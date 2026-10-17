@@ -2776,84 +2776,127 @@ class EveryDesignatorStandsOutsideEveryCourtyardBesideItsOwnPart(unittest.TestCa
         return board_check.designators_astray(DESIGN, tree_of(*items))
 
     def test_designators_beside_their_own_parts_pass(self):
-        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: it fails a designator inside a part's courtyard or nearer another part than its own
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: The pre-order check enforces that rule, converting the catalogue's judgement-kind designator item MFG-9 in place so one statement of it stands: it fails a designator inside a part's courtyard or nearer another part than its own.
         self.assertEqual(self.found(lettered("R1", (10, 10), (-2, -1, 2, 1), (0, -2.2)), lettered("R2", (30, 10), (-2, -1, 2, 1), (0, 2.2))), [])
 
     def test_a_designator_inside_a_courtyard_fails_naming_the_part_whose_courtyard_it_is_in_and_where(self):
-        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: it fails a designator inside a part's courtyard or nearer another part than its own
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: The pre-order check enforces that rule, converting the catalogue's judgement-kind designator item MFG-9 in place so one statement of it stands: it fails a designator inside a part's courtyard or nearer another part than its own.
         found = self.found(lettered("R1", (10, 10), (-2, -1, 2, 1)), lettered("R2", (30, 10), (-2, -1, 2, 1), (0, -2.2)))
         self.assertEqual([(v.rule, v.location) for v in found], [("designator_astray", "R1 at (10, 10) mm")])
         self.assertIn("MFG-9 each designator stands outside every part's courtyard, beside its own part: the text of R1 stands inside the courtyard of R1", found[0].message)
 
     def test_a_designator_inside_another_parts_courtyard_names_that_part(self):
-        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: it fails a designator inside a part's courtyard or nearer another part than its own
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: The pre-order check enforces that rule, converting the catalogue's judgement-kind designator item MFG-9 in place so one statement of it stands: it fails a designator inside a part's courtyard or nearer another part than its own.
         found = self.found(lettered("R1", (10, 10), (-2, -1, 2, 1), (8, 0)), lettered("R2", (20, 10), (-2, -1, 2, 1), (0, -2.2)))
         self.assertEqual([v.location for v in found], ["R1 at (18, 10) mm"])
         self.assertIn("stands inside the courtyard of R2", found[0].message)
 
     def test_a_designator_nearer_another_part_than_its_own_fails(self):
-        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: it fails a designator inside a part's courtyard or nearer another part than its own
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: The pre-order check enforces that rule, converting the catalogue's judgement-kind designator item MFG-9 in place so one statement of it stands: it fails a designator inside a part's courtyard or nearer another part than its own.
         found = self.found(lettered("R1", (10, 10), (-2, -1, 2, 1), (3.5, 0)), lettered("R2", (16.5, 10), (-2, -1, 2, 1), (0, -2.2)))
         self.assertEqual([(v.rule, v.location) for v in found], [("designator_astray", "R1 at (13.5, 10) mm")])
         self.assertIn("is 0.325 mm from the courtyard of R2, nearer than the 0.825 mm from its own; move it beside R1", found[0].message)
 
     def test_a_designator_clear_of_every_part_with_no_nearer_neighbour_passes(self):
-        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: it fails a designator inside a part's courtyard or nearer another part than its own
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: The pre-order check enforces that rule, converting the catalogue's judgement-kind designator item MFG-9 in place so one statement of it stands: it fails a designator inside a part's courtyard or nearer another part than its own.
         self.assertEqual(self.found(lettered("R1", (10, 10), (-2, -1, 2, 1), (0, -5)), lettered("R2", (60, 10), (-2, -1, 2, 1), (0, -2.2))), [])
 
     def test_a_stroke_touching_the_courtyard_line_is_not_inside(self):
-        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: it fails a designator inside a part's courtyard or nearer another part than its own
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: The pre-order check enforces that rule, converting the catalogue's judgement-kind designator item MFG-9 in place so one statement of it stands: it fails a designator inside a part's courtyard or nearer another part than its own.
         edge = board_check.TEXT_ADVANCE * 2 + 0.15
         self.assertEqual(self.found(lettered("R1", (10, 10), (-2, -1, 2, 1), (2 + edge / 2 - 0.02, 0))), [])
         self.assertEqual(len(self.found(lettered("R1", (10, 10), (-2, -1, 2, 1), (2 + edge / 2 - 0.2, 0)))), 1)
 
     def test_a_longer_name_reaches_further_into_a_courtyard(self):
-        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: use a text box estimated from the character count, not the anchor alone
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: The pre-order check enforces that rule, converting the catalogue's judgement-kind designator item MFG-9 in place so one statement of it stands: it fails a designator inside a part's courtyard or nearer another part than its own.
         place = (2 + 1.0, 0)
         self.assertEqual(self.found(lettered("R1", (10, 10), (-2, -1, 2, 1), place)), [])
         self.assertEqual(len(self.found(lettered("RV1234", (10, 10), (-2, -1, 2, 1), place))), 1)
 
     def test_a_text_turned_a_quarter_stands_on_its_end(self):
-        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: it fails a designator inside a part's courtyard or nearer another part than its own
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: The pre-order check enforces that rule, converting the catalogue's judgement-kind designator item MFG-9 in place so one statement of it stands: it fails a designator inside a part's courtyard or nearer another part than its own.
         part = lettered("R1", (10, 10), (-2, -1, 2, 1), (0, -1.6))
         self.assertEqual(self.found(part), [])
         turned = part.replace("(at 0 -1.6 0)", "(at 0 -1.6 90)")
         self.assertEqual(len(self.found(turned)), 1)
 
     def test_a_footprint_turned_on_the_board_carries_its_text_with_it(self):
-        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: it fails a designator inside a part's courtyard or nearer another part than its own
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: The pre-order check enforces that rule, converting the catalogue's judgement-kind designator item MFG-9 in place so one statement of it stands: it fails a designator inside a part's courtyard or nearer another part than its own.
         part = lettered("R1", (10, 10), (-2, -1, 2, 1), (0, -2.2)).replace("(at 10 10)", "(at 10 10 90)")
         self.assertEqual(self.found(part), [])
         inside = lettered("R1", (10, 10), (-2, -1, 2, 1), (0, 0.5)).replace("(at 10 10)", "(at 10 10 90)")
         self.assertEqual([v.location for v in self.found(inside)], ["R1 at (10.5, 10) mm"])
 
     def test_a_back_side_part_is_held_to_back_courtyards_only(self):
-        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: it fails a designator inside a part's courtyard or nearer another part than its own
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: The pre-order check enforces that rule, converting the catalogue's judgement-kind designator item MFG-9 in place so one statement of it stands: it fails a designator inside a part's courtyard or nearer another part than its own.
         front = lettered("R1", (10, 10), (-2, -1, 2, 1), (0, -2.2))
         under = lettered("R2", (10, 10), (-2, -1, 2, 1), (0, 4), "B.SilkS", "B.Cu")
         self.assertEqual(self.found(front, under), [])
         self.assertEqual([v.location for v in self.found(front, lettered("R2", (10, 10), (-2, -1, 2, 1), (0, 0), "B.SilkS", "B.Cu"))], ["R2 at (10, 10) mm"])
 
     def test_a_hidden_designator_or_one_off_the_silkscreen_is_left_to_the_silkscreen_rule(self):
-        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: it fails a designator inside a part's courtyard or nearer another part than its own
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: The pre-order check enforces that rule, converting the catalogue's judgement-kind designator item MFG-9 in place so one statement of it stands: it fails a designator inside a part's courtyard or nearer another part than its own.
         self.assertEqual(self.found(lettered("R1", (10, 10), (-2, -1, 2, 1), extra="(hide yes)")), [])
         self.assertEqual(self.found(lettered("R1", (10, 10), (-2, -1, 2, 1), layer="F.Fab")), [])
 
-    def test_a_part_with_no_courtyard_is_not_held_against_and_a_board_with_none_passes(self):
-        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: it fails a designator inside a part's courtyard or nearer another part than its own
-        bare = '(footprint "lib:p" (layer "F.Cu") (at 10 10) (property "Reference" "R1" (at 0 0 0) (layer "F.SilkS")))'
-        self.assertEqual(self.found(bare), [])
+    def test_a_part_with_no_courtyard_is_held_to_the_inside_test_only_and_a_board_with_none_passes(self):
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: The pre-order check enforces that rule, converting the catalogue's judgement-kind designator item MFG-9 in place so one statement of it stands: it fails a designator inside a part's courtyard or nearer another part than its own.
+        bare = '(footprint "lib:p" (layer "F.Cu") (at 10 10) (property "Reference" "H1" (at {} 0 0) (layer "F.SilkS")))'
+        far = lettered("R2", (57, 10), (-2, -1, 2, 1), (0, -2.2))
+        self.assertEqual(self.found(bare.format(0)), [])
+        self.assertEqual(self.found(bare.format(0), far), [])
         self.assertEqual(self.found(), [])
+        inside = self.found(bare.format(47), far)
+        self.assertEqual([v.location for v in inside], ["H1 at (57, 10) mm"])
+        self.assertIn("the text of H1 stands inside the courtyard of R2", inside[0].message)
+
+    def test_justified_text_is_placed_along_its_own_direction_at_every_quarter_turn(self):
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: The pre-order check enforces that rule, converting the catalogue's judgement-kind designator item MFG-9 in place so one statement of it stands: it fails a designator inside a part's courtyard or nearer another part than its own.
+        yard = (-2, -1, 2, 1)
+        # (angle, anchor, justification, whether the text stands in the courtyard)
+        cases = [(0, (2.3, 0), "left", False), (0, (2.3, 0), "right", True), (180, (2.3, 0), "left", True), (180, (2.3, 0), "right", False),
+                 (90, (0, -1.3), "left", False), (90, (0, -1.3), "right", True), (270, (0, -1.3), "left", True), (270, (0, -1.3), "right", False),
+                 (0, (3.2, 0), "", False), (0, (2.5, 0), "", True), (90, (0, -2.0), "", False), (90, (0, -1.5), "", True),
+                 (0, (2.3, 0), "left mirror", True), (0, (2.3, 0), "right mirror", False), (180, (2.3, 0), "left mirror", False)]
+        for angle, anchor, justify, inside in cases:
+            with self.subTest(angle=angle, anchor=anchor, justify=justify):
+                part = lettered("R1", (10, 10), yard, anchor, extra=f"(justify {justify})" if justify else "").replace(
+                    f"(at {anchor[0]} {anchor[1]} 0)", f"(at {anchor[0]} {anchor[1]} {angle})")
+                self.assertEqual(len(self.found(part)), 1 if inside else 0)
+
+    def test_a_vertical_or_top_justified_text_hangs_from_its_anchor_on_the_right_side(self):
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: The pre-order check enforces that rule, converting the catalogue's judgement-kind designator item MFG-9 in place so one statement of it stands: it fails a designator inside a part's courtyard or nearer another part than its own.
+        for angle, anchor, justify, inside in ((0, (0, -1.3), "top", True), (0, (0, -1.3), "bottom", False), (180, (0, -1.3), "top", False),
+                                               (180, (0, -1.3), "bottom", True), (90, (2.3, 0), "top", False), (90, (2.3, 0), "bottom", True)):
+            with self.subTest(angle=angle, justify=justify):
+                part = lettered("R1", (10, 10), (-2, -1, 2, 1), anchor, extra=f"(justify {justify})").replace(
+                    f"(at {anchor[0]} {anchor[1]} 0)", f"(at {anchor[0]} {anchor[1]} {angle})")
+                self.assertEqual(len(self.found(part)), 1 if inside else 0)
+
+    def test_a_text_at_an_angle_that_is_not_a_quarter_turn_is_boxed_turned(self):
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: The pre-order check enforces that rule, converting the catalogue's judgement-kind designator item MFG-9 in place so one statement of it stands: it fails a designator inside a part's courtyard or nearer another part than its own.
+        for angle, inside in ((0, False), (45, True)):
+            with self.subTest(angle=angle):
+                part = lettered("R1", (10, 10), (-2, -1, 2, 1), (2.8, 0)).replace("(at 2.8 0 0)", f"(at 2.8 0 {angle})")
+                part = part.replace("(at 2.8 0 0)", "(at 2.8 0 0)")
+                self.assertEqual(len(self.found(part)), 1 if inside else 0)
+
+    def test_an_arc_courtyard_reaches_as_far_as_the_arc_does(self):
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: The pre-order check enforces that rule, converting the catalogue's judgement-kind designator item MFG-9 in place so one statement of it stands: it fails a designator inside a part's courtyard or nearer another part than its own.
+        arc = ('(footprint "lib:a" (layer "F.Cu") (at 10 10) (property "Reference" "A1" (at 4.4 0 0) (layer "F.SilkS")) '
+               '(fp_arc (start 2 -3.464) (mid 3.759 1.368) (end 2 3.464) (layer "F.CrtYd")))')
+        self.assertEqual([v.location for v in self.found(arc)], ["A1 at (14.4, 10) mm"])
+        self.assertEqual(self.found(arc.replace("(at 4.4 0 0)", "(at 5.2 0 0)")), [])
 
     def test_a_circular_courtyard_is_its_full_circle(self):
-        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: it fails a designator inside a part's courtyard or nearer another part than its own
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: The pre-order check enforces that rule, converting the catalogue's judgement-kind designator item MFG-9 in place so one statement of it stands: it fails a designator inside a part's courtyard or nearer another part than its own.
         round_part = ('(footprint "lib:h" (layer "F.Cu") (at 10 10) (property "Reference" "H1" (at 0 -3 0) (layer "F.SilkS")) '
                       '(fp_circle (center 0 0) (end 2 0) (layer "F.CrtYd")))')
         self.assertEqual(self.found(round_part), [])
         self.assertEqual(len(self.found(round_part.replace("(at 0 -3 0)", "(at 0 -1 0)"))), 1)
 
     def test_a_reference_with_a_position_unreadable_is_reported_unreadable(self):
-        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: it fails a designator inside a part's courtyard or nearer another part than its own
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: The pre-order check enforces that rule, converting the catalogue's judgement-kind designator item MFG-9 in place so one statement of it stands: it fails a designator inside a part's courtyard or nearer another part than its own.
         with self.assertRaises(board_geometry.Unreadable):
             self.found('(footprint "lib:p" (layer "F.Cu") (at 10 x) (property "Reference" "R1" (at 0 0 0) (layer "F.SilkS")))')
 

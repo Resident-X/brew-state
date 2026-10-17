@@ -703,6 +703,7 @@ class TheDecouplingAndSilkscreenRules(Proved):
               "a reference designator inside a part's courtyard": "designator_astray"}
 
     def test_each_rule_fails_on_its_seeded_fault_and_names_where(self):
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: Each of the three designs under hardware/proof passes the rule before it lands, and a seeded fault shows it fails.
         # SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C3: Each rule the method proof design's review adds fails on a fault seeded for it and passes the clean design
         self.assertCaught(*self.FAULTS)
         found = outcomes()
@@ -719,6 +720,7 @@ class TheCleanDesignStatesTheFiguresOfTheDecouplingAndSilkscreenRules(Copy):
     """The report states the two inherent zeros, and how much of the layout the decoupling rule measured."""
 
     def test_the_inherent_zeros_are_stated_and_the_clean_design_passes_the_two_rules(self):
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: Each of the three designs under hardware/proof passes the rule before it lands, and a seeded fault shows it fails.
         # SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C3: Each rule the method proof design's review adds fails on a fault seeded for it and passes the clean design
         status, lines = self.check()
         self.assertEqual(status, 0, lines)

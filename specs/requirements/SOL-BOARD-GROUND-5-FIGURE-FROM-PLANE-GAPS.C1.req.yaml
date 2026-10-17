@@ -1,0 +1,12 @@
+id: SOL-BOARD-GROUND-5-FIGURE-FROM-PLANE-GAPS.C1
+type: criterion
+title: The GROUND-5 figure is derived from the gaps the pins open in the ground plane
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Change the method's practice catalogue item GROUND-5 so the figure of its plated-hole spacing rule is derived from the gaps the plated pins open in the plane the rings merge in, namely the ground zones' clearance and thermal-relief gap and the clearance a net class states for a pin's net where that governs the gap in the plane, so a board carrying mains pours with a larger clearance does not inflate it. The item keeps its derivation from the annulus widths, the gaps and the zone's minimum thickness, and keeps its reading of a pad that is not round by its width along the line to the nearest other plated hole. An inspection of the item against each clause shows the figure no longer takes the largest clearance of any zone or class of the board, and the retained clauses are unchanged. Out of scope: any other catalogue item.
+links:
+  - target: SOL-BOARD-GROUND-5-FIGURE-FROM-PLANE-GAPS
+    type: criterion-of
