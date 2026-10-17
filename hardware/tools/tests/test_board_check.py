@@ -2699,6 +2699,102 @@ json.dump(report, open(out, "w"))
                        "fill and copper of its own net that it stops short of"), read)
 
 
+def reference_part(reference: str, layer: str = "F.SilkS", side: str = "F.Cu", extra: str = "", attributes: str = "") -> str:
+    return (f'(footprint "lib:part" (layer "{side}") (at 5 5) (property "Reference" "{reference}" (at 0 0 0) (layer "{layer}") {extra}) '
+            f'{attributes})')
+
+
+class EveryReferenceIsOnTheSilkscreenOfItsSide(unittest.TestCase):
+    # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+    """MFG-7: a footprint's Reference text is shown, on F.SilkS for a part on the
+    front and B.SilkS for one on the back; the figure is an inherent zero."""
+
+    def found(self, *items):
+        return board_check.references_off_silkscreen(DESIGN, tree_of(*items))
+
+    def test_a_reference_on_the_silkscreen_of_its_side_passes(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        self.assertEqual(self.found(reference_part("R1"), reference_part("R2", "B.SilkS", "B.Cu"), reference_part("R3", extra="(hide no)")), [])
+
+    def test_a_reference_on_another_layer_or_the_other_side_fails_naming_the_part_and_the_layer(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        for layer, side, text in (("F.Fab", "F.Cu", "on F.Fab, not F.SilkS"), ("B.Fab", "B.Cu", "on B.Fab, not B.SilkS"),
+                                  ("F.SilkS", "B.Cu", "on F.SilkS, not B.SilkS"), ("B.SilkS", "F.Cu", "on B.SilkS, not F.SilkS")):
+            with self.subTest(layer=layer, side=side):
+                found = self.found(reference_part("U1", layer, side))
+                self.assertEqual([(v.rule, v.location) for v in found], [("reference_off_silkscreen", "U1 at (5, 5) mm")])
+                self.assertIn(f"MFG-7 every part's reference designator is on a silkscreen layer: the reference of U1 is {text}", found[0].message)
+
+    def test_a_hidden_reference_fails_except_on_a_footprint_left_out_of_the_bill_of_materials(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        found = self.found(reference_part("U1", extra="(hide yes)"))
+        self.assertIn("the reference of U1 is on F.SilkS, but hidden", found[0].message)
+        self.assertEqual(len(self.found(reference_part("U1", extra="(effects (hide yes))"))), 1)
+        self.assertIn("on F.Fab, not F.SilkS, and hidden", self.found(reference_part("U1", "F.Fab", extra="(hide yes)"))[0].message)
+        mounting = "(attr exclude_from_pos_files exclude_from_bom)"
+        self.assertEqual(self.found(reference_part("H1", extra="(hide yes)", attributes=mounting)), [])
+        self.assertEqual(len(self.found(reference_part("H1", "F.Fab", extra="(hide yes)", attributes=mounting))), 1)
+
+    def test_an_older_footprints_reference_text_is_read_too(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        old = '(footprint "lib:p" (layer "F.Cu") (at 1 2) (fp_text reference "R9" (at 0 0) (layer "F.Fab")))'
+        self.assertEqual([v.location for v in self.found(old)], ["R9 at (1, 2) mm"])
+
+
+def circuit(*extra: str) -> list:
+    """U1 with its +5V pin at (10, 10) and ground pin at (10, 12), typed as power inputs, and C1 across them 4 mm east."""
+    def pad(number, net, x, y, kind="power_in"):
+        return f'(pad "{number}" smd rect (at {x} {y}) (size 1 1) (layers "F.Cu" "F.Mask") (net "{net}") (pintype "{kind}"))'
+
+    def footprint(reference, at, *pads):
+        return f'(footprint "lib:p" (layer "F.Cu") (at {at}) (property "Reference" "{reference}" (at 0 0 0)) {" ".join(pads)})'
+
+    return tree_of(footprint("U1", "0 0", pad(1, "+5V", 10, 10), pad(2, "GND", 10, 12)),
+                   footprint("C1", "0 0", pad(1, "+5V", 14, 10, "passive"), pad(2, "GND", 14, 12, "passive")), *extra)
+
+
+class NoViaSitsBetweenADecouplingCapacitorAndThePinItDecouples(unittest.TestCase):
+    # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+    """DECOUPLE-6: circuits and decoupling parts are the review views' own; the
+    box about a capacitor's supply pad and the circuit pin on its net holds no
+    via of that net."""
+
+    def found(self, *vias, ground=frozenset({"GND"})):
+        return board_check.decoupling_vias(DESIGN, circuit(*vias), set(ground))
+
+    def test_a_via_of_the_supply_net_in_the_box_between_the_pad_and_the_pin_fails_naming_both(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        found = self.found(hole("+5V", (12, 10)))
+        self.assertEqual([(v.rule, v.location) for v in found],
+                         [("decoupling_via", "net +5V: via at (12, 10) mm, between pad 1 of C1 and pad 1 of U1")])
+        self.assertIn("lies in the box from (9.5, 9.5) to (14.5, 10.5) mm about pad 1 of C1 of +5V and pad 1 of U1, the pin of U1 that C1 decouples",
+                      found[0].message)
+
+    def test_a_via_whose_copper_reaches_into_the_box_fails_and_one_clear_of_it_does_not(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        self.assertEqual(len(self.found(hole("+5V", (12, 10.8), size=0.8))), 1)
+        self.assertIn("0.30 mm off, its copper reaching into,", self.found(hole("+5V", (12, 10.8), size=0.8))[0].message)
+        self.assertEqual(self.found(hole("+5V", (12, 11.0), size=0.8)), [])
+        self.assertEqual(self.found(hole("+5V", (16, 10))), [], "beyond the capacitor's pad")
+
+    def test_a_via_of_another_net_is_not_in_the_capacitors_path(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        self.assertEqual(self.found(hole("/OTHER", (12, 10))), [])
+        self.assertEqual(self.found(hole("GND", (12, 10))), [], "the ground pad is not the supply pad")
+
+    def test_the_ground_pad_is_checked_too_when_the_ground_class_does_not_tell_it_apart(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        self.assertEqual(len(self.found(hole("GND", (12, 12)), ground=frozenset())), 1)
+        self.assertEqual(self.found(hole("GND", (12, 12))), [])
+        self.assertEqual(len(self.found(hole("GND", (12, 12)), ground=frozenset({"GND", "+5V"}))), 1)
+
+    def test_a_board_whose_pads_carry_no_pin_types_has_no_decoupling_parts(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        tree = sexpr.parse_one(sexpr.dump(circuit(hole("+5V", (12, 10)))).replace("(pintype", "(pinfunction"))
+        self.assertEqual(board_check.decoupling_vias(DESIGN, tree, {"GND"}), [])
+        self.assertEqual(self.found(), [])
+
+
 def named_part(library_name: str, reference: str, *pads) -> str:
     """A footprint of the library name `library_name` and reference `reference`, holding pads given as (number, net, width, height)."""
     body = "".join(f'(pad "{n}" smd rect (at {2 * index} 0) (size {w} {h}) (layers "F.Cu" "F.Mask") (net "{net}"))'
