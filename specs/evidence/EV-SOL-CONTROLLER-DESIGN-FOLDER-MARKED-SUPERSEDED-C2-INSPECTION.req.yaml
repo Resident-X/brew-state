@@ -1,0 +1,16 @@
+id: EV-SOL-CONTROLLER-DESIGN-FOLDER-MARKED-SUPERSEDED-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-CONTROLLER-DESIGN-FOLDER-MARKED-SUPERSEDED.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-17T22:44:53.98661Z"
+artifact:
+  kind: external
+  reference: 'engine-command: git diff origin/main...HEAD -- docs/ (inspected: every proof-of-life-interlock-deferred statement is marked in place with DEC-PROOF-OF-LIFE-INTERLOCK-IN-FIRST-HARDWARE (2026-10-18): open-items.md deferred item; control-system-bom.csv master relay and watchdog rows; part-numbers.csv master relay and watchdog rows; module-interconnect.csv interlock row; system-design.md open line; controller-io.md thermostat/interlock paragraph; component-specification.md at lines 68 (fail-state paragraph), 176 (coffee element switching table row), 215 (cost-discipline paragraph) and 230 (open-question item 10). system-design.md heater line also marked with DEC-MAINS-PHASED-ACTUATION-BELOW-SEAM (2026-10-18) for the cadence statement it overtakes. Statements already marked, reopened by the partition, or resting on bench supervision alone are left untouched)'
+  artifact_version: 04518648833c335fd2b4c11467e63c204321e66e
+attested_by: crun-58b869fcbf9257b9
+links:
+  - target: SOL-CONTROLLER-DESIGN-FOLDER-MARKED-SUPERSEDED.C2
+    type: satisfies

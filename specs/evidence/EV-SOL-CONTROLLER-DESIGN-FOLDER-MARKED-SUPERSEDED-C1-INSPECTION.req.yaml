@@ -1,0 +1,16 @@
+id: EV-SOL-CONTROLLER-DESIGN-FOLDER-MARKED-SUPERSEDED-C1-INSPECTION
+type: evidence
+title: inspection evidence for SOL-CONTROLLER-DESIGN-FOLDER-MARKED-SUPERSEDED.C1
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-17T22:44:53.926066Z"
+artifact:
+  kind: external
+  reference: 'engine-command: git diff origin/main...HEAD -- docs/sunbeam-em7000/controller-design/README.md (inspected against each clause: opens with a superseded-history note stating the folder is the earlier bought-module design kept as history and input; names the graph''s decisions and the board designs under the hardware tree (hardware/README.md) as governing; states the folder loses where it disagrees with either; the claim to win on the replacement design is replaced; no other document moved, deleted or rewritten beyond markers)'
+  artifact_version: 04518648833c335fd2b4c11467e63c204321e66e
+attested_by: crun-58b869fcbf9257b9
+links:
+  - target: SOL-CONTROLLER-DESIGN-FOLDER-MARKED-SUPERSEDED.C1
+    type: satisfies
