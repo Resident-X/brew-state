@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE-C3-TEST-2
+type: evidence
+title: test evidence for SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-17T07:36:57.148269Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad.py::test_each_rule_fails_on_its_seeded_fault_and_names_where, test_the_inherent_zeros_are_stated_and_the_clean_design_passes_the_two_rules
+  artifact_version: 29820109c35c8ca094441781da9255d408ed0e68
+attested_by: crun-bb777b50332911e6
+links:
+  - target: SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C3
+    type: satisfies
