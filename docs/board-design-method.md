@@ -1092,11 +1092,11 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 
 - **Applies when:** always.
 - **Asks:** Does every signal track have unbroken ground copper under it along its whole length, so its return current can flow directly beneath it?
-- **Passes:** Under every track, on the adjacent layer, the ground plane is solid. Nothing cuts the plane under a track: no track buried in the ground layer, no slot, and no row of via or hole clearances merging into a slot; where a row of through-hole pins crosses the plane, copper runs between the pins.
+- **Passes:** Under every track, on the adjacent layer, the ground plane is solid. Nothing cuts the plane under a track: no track buried in the ground layer, no slot, and no row of via or hole clearances merging into a slot; where a row of through-hole pins crosses the plane, copper runs between the pins. A pin's thermal-relief gap and its clearance ring are openings in the plane like any other: copper runs between one pin's ring and the next pin's, not only between their pads, so no two pins' rings merge into one opening.
 - **Fails, as the views show it:** on a plane's `layer-<copper layer>` read against `net-<net>` for a signal, a track crossing a cut, a slot or a merged row of clearances in the plane beneath it, or a track routed on the ground layer itself dividing the plane in two.
 - **Judged on:** every `layer-<copper layer>` holding ground, `net-<net>` for each critical signal net.
 - **Kind:** judgement. **Severity:** function.
-- **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.1.4 *Signal Return Grounds* and § 2.1.7 *Power Plane Do's and Don'ts for Four-Layer Boards* (Figure 5), https://www.ti.com/lit/pdf/szza009, read 2026-10-14; and Texas Instruments, *Digital Isolator Design Guide*, SLLA284G, revised September 2023, § 4.5 *Reference Planes* and § 4.6 *Routing*, item 4, https://www.ti.com/lit/pdf/slla284, read 2026-10-14.
+- **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.1.4 *Signal Return Grounds* and § 2.1.7 *Power Plane Do's and Don'ts for Four-Layer Boards* (Figure 5), https://www.ti.com/lit/pdf/szza009, read 2026-10-14; and Texas Instruments, *Digital Isolator Design Guide*, SLLA284G, revised September 2023, § 4.5 *Reference Planes* and § 4.6 *Routing*, item 4, https://www.ti.com/lit/pdf/slla284, read 2026-10-14; amended after `hardware/proof/method-proof/layout-review.md`, round 1, finding 1.1, which records the thermal-relief ring of one connector pin merging with the clearance ring of the next on both inner planes while the plan row said no ring merges.
 
 #### GROUND-3. One ground plane is partitioned, not split
 
@@ -1117,6 +1117,24 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 - **Judged on:** `crop-<reference>`, `net-<net>` for the ground nets.
 - **Kind:** judgement. **Severity:** function.
 - **Source:** Texas Instruments, *Grounding in mixed-signal systems demystified, Part 1*, Analog Applications Journal 1Q 2013, SLYT499, the section on interpreting AGND and DGND pins ("the AGND and DGND pins should be joined together externally to the same low-impedance ground plane with minimum lead lengths"), https://www.ti.com/lit/pdf/slyt499, read 2026-10-14.
+
+#### GROUND-5. No two plated holes stand so close that their rings merge in a plane
+
+- **Applies when:** always.
+- **Asks:** Are every two plated holes of the board far enough apart that, on a layer holding a ground plane or pour, their clearance rings and thermal-relief rings leave copper between them?
+- **Passes:** The board's rules file holds this custom rule, with `<figure>` the least distance between the edges of two plated holes at which their rings leave plane copper between them, and KiCad's layout rule check reports no `hole_to_hole` violation of it:
+
+  ```
+  (rule "Plated hole spacing"
+  	(condition "A.Type == 'Pad' && A.Pad_Type == 'Through-hole' && B.Type == 'Pad' && B.Pad_Type == 'Through-hole'")
+  	(constraint hole_to_hole (min <figure>mm)))
+  ```
+
+  `<figure>` is, for the board's widest plated pad, twice the pad's annulus width (half its diameter less half its drill), plus the thermal-relief gap of the board's ground zones, plus the largest clearance a net class of the board states, plus the zone's minimum thickness, each read from the board's own zones and rules and written in the rule's row. KiCad does not report a gap between two rings that leaves no copper to measure, so the figure is made large enough that none can form.
+- **Fails, as the views show it:** on a plane's `layer-<copper layer>`, the rings of two pins merged into one keyhole opening with no copper between them; KiCad reports a `hole_to_hole` violation; or, in `design-rules.md`, no row for the rule.
+- **Judged on:** the pre-order check's report, `design-rules.md`, every `layer-<copper layer>` holding a ground plane or pour.
+- **Kind:** rule. **Severity:** function.
+- **Source:** `hardware/proof/method-proof/layout-review.md`, round 1, finding 1.1; for the practice, `GROUND-2`.
 
 ### Decoupling and switching loops (DECOUPLE)
 
