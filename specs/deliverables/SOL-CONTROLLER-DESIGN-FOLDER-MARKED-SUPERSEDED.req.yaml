@@ -23,3 +23,7 @@ links:
     type: justified-by
   - target: DEC-PROOF-OF-LIFE-INTERLOCK-IN-FIRST-HARDWARE
     type: justified-by
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: 52a0a9aa1c3611b96fa88c11801ec23161e440c7b55a4346f0897be2f0403bd7
+  gating_profile: ""
