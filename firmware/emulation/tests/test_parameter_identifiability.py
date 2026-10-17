@@ -85,11 +85,12 @@ CROSS_CHECKED_COEFFICIENTS = ("brew.thermal_mass_j_per_k", "water.heat_capacity_
 REPLACEMENT_COEFFICIENT = "brew.heater_power_w"
 REPLACEMENT_VALUE = "1200.0"
 
-# How far a regenerated figure may sit from the committed one before the
-# committed record is out of date rather than merely rounded differently. The
-# dominance suite's own reasoning applies unchanged: the analysis is
-# deterministic on one host and need not be across hosts, because the plant
-# model's arithmetic reaches the platform's own maths library.
+# How far apart two figures may be and still count as the same figure. The
+# dominance suite's own reasoning applies unchanged: the byte-for-byte comparison
+# of the committed record is what refuses a stale one, and this tolerance is used
+# where a test compares one figure with another -- a committed row with the row
+# now produced, or the shipped machine's with a replacement's -- and names the
+# figure that differs, beside the exact comparison.
 FIGURE_TOLERANCE = 0.01
 
 
@@ -1684,6 +1685,26 @@ class TheRecordStatesTheSupplyItWasRunAgainst(unittest.TestCase):
         self.assertIn(statement, _committed_record(),
                       "%s does not state the supply span the description it was run against "
                       "declares. Re-run its tool" % ident.REPORT_PATH)
+
+
+class TheCommittedRecordIsWhatTheToolWrites(unittest.TestCase):
+    """The staleness comparison is exact. The plant's arithmetic is the project's own and
+    no build fuses a multiply with an add, so the tool writes the same bytes on every
+    supported host, and a record that differs from them in any digit is stale."""
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C2: The committed analysis records regenerate to the same figures on every supported host
+    def test_the_committed_record_is_byte_for_byte_what_the_tool_presently_writes(self):
+        committed = _committed_record()
+        produced = _produced_record()
+        if committed != produced:
+            was, now = committed.splitlines(), produced.splitlines()
+            at = next((i for i, pair in enumerate(zip(was, now)) if pair[0] != pair[1]),
+                      min(len(was), len(now)))
+            self.fail("the committed record is not the record this method now writes; the "
+                      "first line that differs is %d:\ncommitted: %s\nwritten:   %s\nRe-run "
+                      "firmware/emulation/tools/run_parameter_identifiability.py"
+                      % (at + 1, was[at] if at < len(was) else "(ends)",
+                         now[at] if at < len(now) else "(ends)"))
 
 
 if __name__ == "__main__":

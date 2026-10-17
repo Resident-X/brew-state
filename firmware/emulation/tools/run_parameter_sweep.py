@@ -279,6 +279,24 @@ class SweepError(RuntimeError):
     """The sweep could not be run, or could not be run over everything it covers."""
 
 
+def float32_neighbour(value, above):
+    """The single-precision number next to `value`, above it or below it.
+
+    One unit in the last place of the number a coefficient is loaded into, which
+    is the smallest difference between two machines the model's arithmetic can
+    tell apart. Worked out on the bit pattern, so it is the same number on every
+    host and needs no maths library to say what the next float is.
+    """
+    import struct
+
+    if value == 0.0:
+        raise SweepError("zero has no neighbour of the same sign to move a coefficient to")
+    bits = struct.unpack("<I", struct.pack("<f", value))[0]
+    away_from_zero = above == (value > 0.0)
+    bits = bits + 1 if away_from_zero else bits - 1
+    return struct.unpack("<f", struct.pack("<I", bits))[0]
+
+
 # --- Reading what the description says it may be wrong about ---------------
 
 
@@ -702,6 +720,97 @@ def delivery_moved(reference, perturbed):
     on at all does not.
     """
     return any(was != now for was, now in zip(reference, perturbed))
+
+
+#: What a reported tick's own fields are called when a difference between two runs is
+#: named for a reader. Anything not here is named by its field.
+DISCRETE_WORDS = {
+    "result": "the control result",
+    "pump_permille": "the pump level",
+    "heater_permille": "the heater duty",
+    "feed_permille": "the steam feed",
+    "demand_milli_ml_per_s": "the flow demand",
+    "plant_steps": "the plant step count",
+    "drawing": "the drawing flag",
+    "converter_milli": "the converter's reading",
+}
+
+#: The reported field that numbers a tick rather than describing it.
+TICK_INDEX_FIELD = "interval"
+
+
+def _whole_number_fields(tick):
+    """The fields of one reported control tick that are whole numbers, flattened.
+
+    A list of whole numbers (the converter's readings) is taken one element at a
+    time, so a difference is named at the element it is in.
+    """
+    found = {}
+    for name, value in tick.items():
+        if name == TICK_INDEX_FIELD:
+            continue
+        if isinstance(value, (bool, int)):
+            found[name] = value
+        elif isinstance(value, list) and value and all(
+                isinstance(each, int) and not isinstance(each, bool) for each in value):
+            found.update({"%s[%d]" % (name, at): each for at, each in enumerate(value)})
+    return found
+
+
+def first_whole_number_difference(reference, perturbed, rounding_unit):
+    """The first control tick at which a whole-number quantity differs between two
+    runs of the loop, and how far apart the sensed quantities had been until then.
+
+    A command, a step count or a converter reading is a whole number, so a
+    difference between two runs can only appear in one of them at a tick, and the
+    continuous state beneath them can part by any amount without any of them
+    showing it. This names the tick where the first one does, and the most the
+    sensed quantities (and the delivered temperature where the structure keeps
+    one) had departed over every tick before it. `rounding_unit` is what one
+    count of the converter is worth in those quantities' own unit; the departure
+    is reported against it, with `below_one_unit` saying whether it was under it.
+
+    None where no whole-number quantity differs at any tick of the shorter run.
+    """
+    for at, (was, now) in enumerate(zip(reference, perturbed)):
+        before, after = _whole_number_fields(was), _whole_number_fields(now)
+        for name in sorted(set(before) | set(after)):
+            if before.get(name) == after.get(name):
+                continue
+            departure = 0.0
+            for earlier_was, earlier_now in zip(reference[:at], perturbed[:at]):
+                pairs = list(zip(earlier_was["quantities"], earlier_now["quantities"]))
+                if earlier_was.get("outlet_c") is not None and earlier_now.get("outlet_c") is not None:
+                    pairs.append((earlier_was["outlet_c"], earlier_now["outlet_c"]))
+                departure = max([departure] + [abs(left - right) for left, right in pairs])
+            return {
+                "tick": at,
+                "name": name,
+                "was": before.get(name),
+                "now": after.get(name),
+                "departure_before": departure,
+                "rounding_unit": rounding_unit,
+                "below_one_unit": departure < rounding_unit,
+            }
+    return None
+
+
+def describe_whole_number_difference(difference):
+    """One sentence saying where two runs first parted, in the record's own words."""
+    field, bracket, element = difference["name"].partition("[")
+    what = DISCRETE_WORDS.get(field, field)
+    if bracket:
+        what += " of %s" % closed_loop.QUANTITY_KEYS[int(element.rstrip("]"))]
+    if difference["tick"] == 0:
+        before = "there was no tick before it for the sensed quantities to have departed over"
+    else:
+        before = ("over the %d ticks before it the sensed quantities never departed by more than "
+                  "%.3g, which is %s the %.3g one count of the converter is worth"
+                  % (difference["tick"], difference["departure_before"],
+                     "below" if difference["below_one_unit"] else "NOT below",
+                     difference["rounding_unit"]))
+    return ("The first whole-number quantity to differ was %s at control tick %d (%s against %s); %s."
+            % (what, difference["tick"], difference["was"], difference["now"], before))
 
 
 def reached_quantities(reference, perturbed):

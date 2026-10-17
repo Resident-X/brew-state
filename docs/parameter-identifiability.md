@@ -146,7 +146,7 @@ The largest the coefficient's own declared error moved each channel, in that cha
 | `steam.feed_flow_ml_per_s` | 0 | 1.83 | 0 | 0.15 | 0 |
 | `pump.pressure_bar` | 0 | 0 | 0 | 0 | 0 |
 | `brew.pressure_time_constant_s` | 0 | 0 | 0 | 0 | 0 |
-| `water.latent_heat_j_per_ml` | 0 | 0.158 | 0 | 0.00569 | 0 |
+| `water.latent_heat_j_per_ml` | 0 | 0.158 | 0 | 0.00568 | 0 |
 
 ### On the brew draw, drifted
 
@@ -194,7 +194,7 @@ The largest the coefficient's own declared error moved each channel, in that cha
 | `steam.feed_flow_ml_per_s` | 0 | 1.83 | 0 | 0.15 | 0 |
 | `pump.pressure_bar` | 0 | 0 | 0 | 0 | 0 |
 | `brew.pressure_time_constant_s` | 0 | 0 | 0 | 0 | 0 |
-| `water.latent_heat_j_per_ml` | 0 | 0.158 | 0 | 0.00569 | 0 |
+| `water.latent_heat_j_per_ml` | 0 | 0.158 | 0 | 0.00568 | 0 |
 
 ## What this machine could tell apart
 
@@ -210,7 +210,7 @@ The two figures after those are the same remainder taken as a fraction of the si
 |---|---|---|---|---|---|---|---|
 | `brew.outlet_held_volume_ml` | 35.8 | brew `brew-c` | 0.892 | 0.878 | 0.0221 | 3.23 | not shown identifiable: reproduced by a combination of the others |
 | `brew.outlet_conduction_time_constant_s` | 13.1 | brew `brew-c` | 0.297 | 0.309 | 0.02 | 0.425 | not shown identifiable: reproduced by a combination of the others |
-| `water.heat_capacity_j_per_ml_k` | 7.6 | brew `brew-c` | 0.707 | 0.714 | 0.0396 | 0.51 | not shown identifiable: reproduced by a combination of the others |
+| `water.heat_capacity_j_per_ml_k` | 7.6 | brew `brew-c` | 0.707 | 0.714 | 0.0396 | 0.511 | not shown identifiable: reproduced by a combination of the others |
 | `brew.thermal_mass_j_per_k` | 359 | brew `brew-c` | 55.3 | 55.2 | 0.0846 | 124 | identifiable |
 | `brew.heater_power_w` | 239 | brew `brew-c` | 8.57 | 8.6 | 0.0208 | 26.5 | identifiable |
 | `pump.flow_ml_per_s` | 194 | brew `brew-c` | 25.8 | 25.8 | 0.14 | 43.3 | identifiable |
@@ -226,7 +226,7 @@ The rest are **not shown identifiable**, and each is named here rather than left
 
 - `brew.outlet_held_volume_ml` — it does reach the channels, by up to 35.8 of what the brew draw's `brew-c` could resolve, but the part of its signature that no combination of the other in-scope coefficients reproduces comes to 0.892 of that resolution — 0.0221 of the signature's own size. What the machine sees when this coefficient is wrong is what it would see if a combination of the others were wrong instead, so an observation cannot say which. That combination totals 3.23 of the others' own declared errors, which is more than the description admits those coefficients may be out by — so the confounding is arithmetic that the description's own error budget already rules out, and this verdict is conservative.
 - `brew.outlet_conduction_time_constant_s` — it does reach the channels, by up to 13.1 of what the brew draw's `brew-c` could resolve, but the part of its signature that no combination of the other in-scope coefficients reproduces comes to 0.297 of that resolution — 0.02 of the signature's own size. What the machine sees when this coefficient is wrong is what it would see if a combination of the others were wrong instead, so an observation cannot say which. That combination totals 0.425 of the others' own declared errors, so it is a machine the description already admits to being possible.
-- `water.heat_capacity_j_per_ml_k` — it does reach the channels, by up to 7.6 of what the brew draw's `brew-c` could resolve, but the part of its signature that no combination of the other in-scope coefficients reproduces comes to 0.707 of that resolution — 0.0396 of the signature's own size. What the machine sees when this coefficient is wrong is what it would see if a combination of the others were wrong instead, so an observation cannot say which. That combination totals 0.51 of the others' own declared errors, so it is a machine the description already admits to being possible.
+- `water.heat_capacity_j_per_ml_k` — it does reach the channels, by up to 7.6 of what the brew draw's `brew-c` could resolve, but the part of its signature that no combination of the other in-scope coefficients reproduces comes to 0.707 of that resolution — 0.0396 of the signature's own size. What the machine sees when this coefficient is wrong is what it would see if a combination of the others were wrong instead, so an observation cannot say which. That combination totals 0.511 of the others' own declared errors, so it is a machine the description already admits to being possible.
 
 No verdict above turns on a channel this board has no instrument behind. `brew-mlps` does carry a part of a signature nothing else reproduces — 25.8 of what it could resolve for `pump.flow_ml_per_s` and 2.01 of what it could resolve for `ambient_temperature_c` — but every coefficient it separates is already separated by a channel that is fitted, so on this model, when it is built differently, adding that instrument would confirm a finding rather than produce one. That is a negative answer to the question this analysis exists to inform, and it is worth as much as a positive one: it is the case for *not* spending on that channel yet, and it is a statement about this estimated model that a measured one could overturn.
 
@@ -241,14 +241,14 @@ This is the reading a machine in service is under, and it is the one to design a
 | Coefficient | Largest reach | On | Unique against the in-scope set | Unique against every coefficient | Unique as a fraction of itself | Others used | Verdict |
 |---|---|---|---|---|---|---|---|
 | `brew.outlet_held_volume_ml` | 20.6 | brew `brew-c` | 0.127 | 0.129 | 0.00548 | 2.79 | not shown identifiable: reproduced by a combination of the others |
-| `brew.outlet_conduction_time_constant_s` | 7.83 | brew `brew-c` | 0.0459 | 0.0466 | 0.00545 | 0.427 | not shown identifiable: reproduced by a combination of the others |
+| `brew.outlet_conduction_time_constant_s` | 7.83 | brew `brew-c` | 0.0459 | 0.0465 | 0.00544 | 0.427 | not shown identifiable: reproduced by a combination of the others |
 | `water.heat_capacity_j_per_ml_k` | 7.61 | brew `brew-c` | 0.704 | 0.676 | 0.0506 | 10.2 | not shown identifiable: reproduced by a combination of the others |
 | `brew.thermal_mass_j_per_k` | 359 | brew `brew-c` | 27.8 | 27.7 | 0.0693 | 252 | identifiable |
 | `brew.heater_power_w` | 239 | brew `brew-c` | 10.4 | 10.3 | 0.0276 | 144 | identifiable |
-| `pump.flow_ml_per_s` | 153 | brew `brew-c` | 25.8 | 25.8 | 0.157 | 96.6 | identifiable |
+| `pump.flow_ml_per_s` | 153 | brew `brew-c` | 25.8 | 25.8 | 0.157 | 95.7 | identifiable |
 | `ambient_temperature_c` | 102 | brew `steam-c` | 102 | 102 | 0.942 | 666 | identifiable |
-| `water.feed_temperature_c` | 71.1 | brew `brew-c` | 4.42 | 4.45 | 0.0303 | 65.2 | identifiable |
-| `brew.loss_w_per_k` | 32.9 | brew `brew-c` | 6.94 | 6.95 | 0.128 | 78.2 | identifiable |
+| `water.feed_temperature_c` | 71.1 | brew `brew-c` | 4.42 | 4.45 | 0.0303 | 65.3 | identifiable |
+| `brew.loss_w_per_k` | 32.9 | brew `brew-c` | 6.91 | 6.92 | 0.128 | 78.8 | identifiable |
 
 Neither reading bounds the other, and the two determinations establish that rather than it being assumed. Of the 9 coefficients both readings put a verdict to, the part no combination of the others reproduces falls for 5 (`brew.outlet_held_volume_ml`, `brew.outlet_conduction_time_constant_s`, `water.heat_capacity_j_per_ml_k`, `brew.thermal_mass_j_per_k` and `brew.loss_w_per_k`), rises for 2 (`brew.heater_power_w` and `water.feed_temperature_c`) and stands where it was for 2 (`pump.flow_ml_per_s` and `ambient_temperature_c`). And the largest the signature reached on any channel falls for 3 (`brew.outlet_held_volume_ml`, `brew.outlet_conduction_time_constant_s` and `pump.flow_ml_per_s`), rises for 5 (`water.heat_capacity_j_per_ml_k`, `brew.thermal_mass_j_per_k`, `brew.heater_power_w`, `water.feed_temperature_c` and `brew.loss_w_per_k`) and stands where it was for 1 (`ambient_temperature_c`).
 
@@ -260,7 +260,7 @@ Of the 9 coefficients the reconstruction rests on, 6 are shown identifiable from
 
 The rest are **not shown identifiable**, and they are the same ones the other reading could not show either. They are stated once under **What drift hides** below rather than a second time here, since a verdict that did not change between the two readings is one finding and not two. Each one's figures under this reading are in the table above.
 
-No verdict above turns on a channel this board has no instrument behind. `brew-mlps` does carry a part of a signature nothing else reproduces — 1.19 of what it could resolve for `brew.thermal_mass_j_per_k` and 25.8 of what it could resolve for `pump.flow_ml_per_s` — but every coefficient it separates is already separated by a channel that is fitted, so on this model, when it has drifted, adding that instrument would confirm a finding rather than produce one. That is a negative answer to the question this analysis exists to inform, and it is worth as much as a positive one: it is the case for *not* spending on that channel yet, and it is a statement about this estimated model that a measured one could overturn.
+No verdict above turns on a channel this board has no instrument behind. `brew-mlps` does carry a part of a signature nothing else reproduces — 1.18 of what it could resolve for `brew.thermal_mass_j_per_k` and 25.8 of what it could resolve for `pump.flow_ml_per_s` — but every coefficient it separates is already separated by a channel that is fitted, so on this model, when it has drifted, adding that instrument would confirm a finding rather than produce one. That is a negative answer to the question this analysis exists to inform, and it is worth as much as a positive one: it is the case for *not* spending on that channel yet, and it is a statement about this estimated model that a measured one could overturn.
 
 A figure there for a coefficient the tables above show moving that channel by nothing at all is not a contradiction, and it is the one number here most easily misread. What is being reported is the remainder, not the reach: the combination of the other coefficients that comes nearest to reproducing this one's signature does move that channel, so the disagreement between the coefficient and its nearest imitation shows up there even though the coefficient itself never touched it. A channel a coefficient leaves alone can separate it from something that does not.
 

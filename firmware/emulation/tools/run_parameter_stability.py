@@ -1080,12 +1080,14 @@ def _corner_record(coefficient, corner, values, runs, reference, windows, tails,
         "values": values,
         "description": description,
         "sides": {},
+        "trajectories": {},
         "refused": dict(refused or {}),
     }
     for side in (sweep.BREW_SIDE, sweep.STEAM_SIDE):
         run = runs.get(side)
         if run is None:
             continue
+        record["trajectories"][side] = run["trajectory"]
         if side == sweep.STEAM_SIDE:
             record["steam_block_peak_c"] = steam_block_peak_c(run)
             _under_the_ceiling(record["steam_block_peak_c"], ceiling,
@@ -1156,6 +1158,67 @@ def joint_corner(covered, executable, description, limits, declaration, ready_c,
     joint["joint"] = True
     joint["verdict"] = _verdict_of(joint)
     return joint
+
+
+def _one_unit_sensitivity(corners, executable, description, limits, declaration, ready_c,
+                          scale, courses, reference, windows, tails, bands, floors, workspace,
+                          rounding_unit):
+    """How far moving one coefficient by one unit in the last place moves what a
+    corner reports.
+
+    Every single-coefficient corner is run twice more, with its coefficient
+    moved to the single-precision number next above it and next below it and
+    nothing else changed, and the figures that come back are held against the
+    corner's own. The figures are the worst of a series of readings of a loop
+    whose commands are integers, so a difference that small can part two runs by
+    one step of a command and move a figure by far more than the difference was:
+    that is why this is measured and not assumed away, and what it measures is the
+    most a figure moves, in its own unit, and whether any verdict moved with it.
+
+    For the run that moved a figure furthest on each side, the first control tick
+    at which a whole-number quantity parted from the corner's own run is named,
+    with how far the sensed quantities had departed before it against one count
+    of the converter (`rounding_unit`): that is the step that turned a difference
+    of one unit into the movement reported.
+
+    The joint corner writes two coefficients and has no one neighbour to move to,
+    so it is left out and the record says so.
+    """
+    moved = {side: {"compared": 0, "largest": 0.0, "where": None, "before": None, "after": None,
+                    "flip": None, "verdict_changes": []}
+             for side in (sweep.BREW_SIDE, sweep.STEAM_SIDE)}
+    for record in corners:
+        if record["joint"]:
+            continue
+        (name, value), = record["values"].items()
+        for direction in ("above", "below"):
+            neighbour = sweep.float32_neighbour(value, direction == "above")
+            written = cross_tier.description_with(
+                name, VALUE_FORMAT % neighbour,
+                os.path.join(workspace, "one-unit-%s-%s-%s.params"
+                             % (name, record["corner"], direction)),
+                source=description)
+            runs, _ = _draw_each_side(executable, written, limits, declaration, ready_c, scale,
+                                      courses, "%s-%s-%s" % (name, record["corner"], direction))
+            for side, run in runs.items():
+                if side not in record["sides"]:
+                    continue
+                was = record["sides"][side]
+                now = settle_of(reference[side]["delivered"], run["delivered"], windows[side],
+                                bands[side], floors[side])
+                account = moved[side]
+                account["compared"] += 1
+                for key in ("early", "late"):
+                    apart = abs(now[key] - was[key])
+                    if apart > account["largest"]:
+                        account.update(largest=apart, before=was[key], after=now[key],
+                                       where=(name, record["corner"], key, direction),
+                                       flip=sweep.first_whole_number_difference(
+                                           record["trajectories"][side], run["trajectory"],
+                                           rounding_unit))
+                if now["verdict"] != was["verdict"]:
+                    account["verdict_changes"].append((name, record["corner"], direction))
+    return moved
 
 
 def run(description=None, limits=None, declaration=sweep.STEAM_CONTROL_DECLARATION,
@@ -1246,8 +1309,13 @@ def run(description=None, limits=None, declaration=sweep.STEAM_CONTROL_DECLARATI
     if joint is not None:
         corners.append(joint)
 
+    sensitivity = _one_unit_sensitivity(corners, executable, description, limits, declaration,
+                                        ready_c, scale, courses, reference, windows, tails,
+                                        bands, floors, workspace, seam_reading)
+
     found, missing = one_sided_account(covered)
     return {
+        "sensitivity": sensitivity,
         "description": description,
         "limits": limits,
         "declaration": declaration,
@@ -1328,6 +1396,7 @@ CORNERS_HEADING = "## Which corners were run"
 VERDICT_HEADING = "## What each corner's response did"
 JOINT_HEADING = "## The one dependence the description states"
 UNSETTLED_HEADING = "## What did not settle"
+SENSITIVITY_HEADING = "## How far one unit in the last place moves these figures"
 
 
 def _relative(path):
@@ -1430,6 +1499,14 @@ def _floor_text(findings, side):
                   if floor >= findings["reading"]
                   else "%g of that side's own band" % GROWTH_FLOOR_BAND_FRACTION)
     return "%s %s, which is %s" % (FIGURE_FORMAT % floor, unit, bounded_by)
+
+
+def _flip_sentence(account):
+    """Where the run that moved a figure furthest first parted from its corner's own."""
+    if account["flip"] is None:
+        return ("No whole-number quantity differed at any control tick of that run, so the "
+                "movement is in the continuous state alone.")
+    return sweep.describe_whole_number_difference(account["flip"])
 
 
 def report_text(findings):
@@ -1890,6 +1967,74 @@ def report_text(findings):
               "model that is meant to replace it is what would make it a statement about a "
               "machine.")
         write("")
+
+    write(SENSITIVITY_HEADING)
+    write("")
+    write("Every single-coefficient corner above was run twice more, with its coefficient "
+          "moved to the single-precision number next above it and next below it and nothing "
+          "else changed. That is the smallest difference the arithmetic can tell apart, and it "
+          "is asked here because the early and late figures are the worst of a series of "
+          "readings of a loop whose commands are whole numbers. Two machines a hair apart "
+          "command the same duties for long stretches and then part by one permille, so the "
+          "last digits of a figure belong to where that step fell and not to the machine. The "
+          "joint corner writes two coefficients and has no one neighbour to move to, so it is "
+          "not among them.")
+    write("")
+    leading = max(
+        (side for side in (sweep.BREW_SIDE, sweep.STEAM_SIDE)
+         if findings["sensitivity"][side]["where"] is not None),
+        key=lambda side: findings["sensitivity"][side]["largest"] / findings["floors"][side],
+        default=None)
+    if leading is not None:
+        write("Measured against the growth floor, which flatters least because a band is far "
+              "wider than a floor, the largest move is the %s side's: %s of its floor. It is "
+              "listed first below, and the share of the band is given after it for scale only."
+              % (leading, "%.2g%%" % (100.0 * findings["sensitivity"][leading]["largest"]
+                                      / findings["floors"][leading])))
+        write("")
+    for side in sorted((sweep.BREW_SIDE, sweep.STEAM_SIDE), key=lambda side: side != leading):
+        account = findings["sensitivity"][side]
+        _, unit = sweep.JUDGED[side]
+        if account["where"] is None:
+            write("- **%s side**: %d comparisons, and no figure moved at all."
+                  % (side, account["compared"]))
+            continue
+        name, corner, key, direction = account["where"]
+        write("- **%s side**: %d comparisons. The most any figure moved was %s %s, the %s "
+              "figure of the %s corner of `%s` going from %s to %s with its coefficient moved "
+              "one unit %s. That is %s of the %s %s growth floor and %s of the %s %s band."
+              % (side, account["compared"], FIGURE_FORMAT % account["largest"], unit, key,
+                 corner, name, "%.6g" % account["before"],
+                 "%.6g" % account["after"], direction,
+                 "%.2g%%" % (100.0 * account["largest"] / findings["floors"][side]),
+                 FIGURE_FORMAT % findings["floors"][side], unit,
+                 "%.2g%%" % (100.0 * account["largest"] / findings["bands"][side]),
+                 FIGURE_FORMAT % findings["bands"][side], unit))
+        write("  " + _flip_sentence(account))
+    write("")
+    changed = [(side, change) for side in (sweep.BREW_SIDE, sweep.STEAM_SIDE)
+               for change in findings["sensitivity"][side]["verdict_changes"]]
+    if changed:
+        write("**%d verdict%s changed with one unit in the last place**, and each is named: %s. "
+              "A verdict that turns on a difference that small is not one this record can "
+              "stand behind."
+              % (len(changed), "" if len(changed) == 1 else "s",
+                 "; ".join("%s side, `%s` %s corner, moved %s" % (side, name, corner, direction)
+                           for side, (name, corner, direction) in changed)))
+    else:
+        write("**No verdict changed with one unit in the last place.** The arithmetic behind "
+              "these figures is pinned to be the same on every supported host, and the "
+              "record-staleness check fails if regenerating this record changes a byte; it runs "
+              "on macOS arm64 in the build round and on Linux x86-64 in the nightly verification "
+              "of main. The figures move by the amounts above when a "
+              "coefficient moves by one unit. What is measured is a coefficient moved to its "
+              "neighbouring single-precision number, which is not the same as moving a library "
+              "result inside a step of the loop; the arithmetic is now identical across hosts, so "
+              "the latter no longer arises. What is claimed is that this is as far as one unit "
+              "moved any of them at these corners, that it is a small part of what each figure is judged against, and that no "
+              "verdict turned on it. It is measured at one unit and at these corners and is not "
+              "a proof for every perturbation.")
+    write("")
 
     write("## What this does not settle")
     write("")

@@ -165,6 +165,10 @@ CONTROL_TESTS = [PIO, "test", "-e", "native_test", "-f", "test_control"]
 ANALYSIS = [
     sys.executable, "tools/check_sanitizers.py", "--project", ".",
 ]
+PLANT_ARITHMETIC = [
+    sys.executable, "tools/check_plant_arithmetic.py", "--project", ".",
+]
+PLANT_FLAGS = PLANT_ARITHMETIC + ["--flags-only"]
 MACHINE_SETTINGS = [
     sys.executable, "tools/check_machine_build_settings.py", "--project", ".",
     "--plant-root", "src/plant",
@@ -216,6 +220,8 @@ LABELS = {
     tuple(CONTROL_DECLARATION): "the control declaration check",
     tuple(CONTROL_TESTS): "the control law's tests",
     tuple(ANALYSIS): "the host tier's analysis check",
+    tuple(PLANT_ARITHMETIC): "the check on the plant's compiled arithmetic",
+    tuple(PLANT_FLAGS): "the check on the flags the plant is compiled with",
     tuple(MACHINE_SETTINGS): "the check that a machine build keeps its warning settings",
     tuple(MACHINE_STRUCTURE): "the check that a machine build carries a machine's equations",
     tuple(EMBEDDED_DESCRIPTION): "the check that a machine carries the verified description",
@@ -224,7 +230,9 @@ LABELS = {
 }
 
 #: Commands that inspect the linked artefact rather than the sources.
-NEEDS_ARTEFACT = {tuple(ANALYSIS), tuple(EMBEDDED_DESCRIPTION), tuple(CARRIES_MODEL)}
+NEEDS_ARTEFACT = {
+    tuple(ANALYSIS), tuple(EMBEDDED_DESCRIPTION), tuple(CARRIES_MODEL), tuple(PLANT_ARITHMETIC),
+}
 
 MUTATIONS = (
     {
@@ -232,8 +240,8 @@ MUTATIONS = (
         "why": "the settled fraction is computed as one minus the exponential, which throws "
                "away its leading digits for a short step",
         "file": "src/plant/thermoblock/plant_structure.c",
-        "find": "    return -expm1f(-x);",
-        "replace": "    return 1.0f - expf(-x);",
+        "find": "    return -plant_expm1f(-x);",
+        "replace": "    return 1.0f - plant_expf(-x);",
         "command": PLANT_TESTS,
     },
     {
@@ -252,8 +260,8 @@ MUTATIONS = (
                "travelled rather than by that fraction per time constant elapsed, which is the "
                "same confusion between the two expressions the single-mass step avoids",
         "file": "src/plant/thermoblock/plant_structure.c",
-        "find": "        carried = expf(-slow) * relaxation_factor(separation + separation);",
-        "replace": "        carried = expf(-slow) * settled_fraction(separation + separation);",
+        "find": "        carried = plant_expf(-slow) * relaxation_factor(separation + separation);",
+        "replace": "        carried = plant_expf(-slow) * settled_fraction(separation + separation);",
         "command": PLANT_TESTS,
     },
     {
@@ -535,6 +543,21 @@ MUTATIONS = (
         "find": "    post:tools/pio_retain_plant_model.py\n",
         "replace": "",
         "command": CARRIES_MODEL,
+        "remake": True,
+    },
+    {
+        "name": "the-contraction-pin-is-dropped-from-every-build",
+        "why": "the flag that keeps the compiler from fusing a multiply with the add after it "
+               "is taken out of the settings every build that compiles the plant shares, so "
+               "the plant is compiled to whatever the host's compiler does by default -- fused "
+               "on Apple's Clang for arm64 and not on GCC for x86-64, which moves the last bit "
+               "of every figure the plant produces on one host and not the other. The objects "
+               "are made again with the flag gone, and the flags-only check has to stop on the "
+               "compile commands' own finding rather than on a missing object",
+        "file": "platformio.ini",
+        "find": "base_flags = -std=c11 -ffp-contract=off -Wall -Wextra",
+        "replace": "base_flags = -std=c11 -Wall -Wextra",
+        "command": PLANT_FLAGS,
         "remake": True,
     },
     {

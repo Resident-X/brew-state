@@ -38,11 +38,11 @@ import run_parameter_sweep as sweep  # noqa: E402
 FIGURES_RECORD = os.path.join(REPOSITORY_DIR, "docs", "sunbeam-em7000",
                               "controller-board-design-constraints.md")
 
-#: How far a regenerated figure may sit from the committed one before the
-#: committed record is out of date rather than merely rounded differently. The
-#: analysis is deterministic on one host and need not be across hosts, because
-#: the plant model's arithmetic reaches the platform's own maths library; a
-#: tenth of a kelvin is the last digit the record is written to.
+#: How far apart a committed peak and the one now produced may be and still be
+#: the same figure. The byte-for-byte comparison of the committed record is what
+#: refuses a stale one; the row-by-row comparisons that use this run beside it
+#: and name the peak that differs. A tenth of a kelvin is the last digit the
+#: record is written to.
 FIGURE_TOLERANCE_C = 0.15
 
 FINDINGS = None
@@ -1172,6 +1172,26 @@ class TheGeneratedRecordSaysWhatItsPeaksAre(unittest.TestCase):
     # generator's template for any findings, so a regeneration cannot drop it.
     def test_the_generated_text_carries_the_banner(self):
         self.assertIn(casting.BANNER, casting.report_text(_findings()))
+
+
+class TheCommittedRecordIsWhatTheToolWrites(unittest.TestCase):
+    """The staleness comparison is exact. The plant's arithmetic is the project's own and
+    no build fuses a multiply with an add, so the tool writes the same bytes on every
+    supported host, and a record that differs from them in any digit is stale."""
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C2: The committed analysis records regenerate to the same figures on every supported host
+    def test_the_committed_record_is_byte_for_byte_what_the_tool_presently_writes(self):
+        committed = _committed_record()
+        produced = casting.report_text(_findings())
+        if committed != produced:
+            was, now = committed.splitlines(), produced.splitlines()
+            at = next((i for i, pair in enumerate(zip(was, now)) if pair[0] != pair[1]),
+                      min(len(was), len(now)))
+            self.fail("the committed record is not the record this method now writes; the "
+                      "first line that differs is %d:\ncommitted: %s\nwritten:   %s\nRe-run "
+                      "firmware/emulation/tools/run_casting_peak.py"
+                      % (at + 1, was[at] if at < len(was) else "(ends)",
+                         now[at] if at < len(now) else "(ends)"))
 
 
 if __name__ == "__main__":

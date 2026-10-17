@@ -1,0 +1,16 @@
+id: EV-SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS-C5-TEST-13
+type: evidence
+title: test evidence for SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C5
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-16T23:13:26.731306Z"
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_arithmetic_pin.py::test_the_shared_maths_is_compiled_into_every_build_that_compiles_the_plant
+  artifact_version: 1ad5255de0cf21719c63c111543a076d99d7cf35
+attested_by: crun-9402d815d11fac9f
+links:
+  - target: SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C5
+    type: satisfies

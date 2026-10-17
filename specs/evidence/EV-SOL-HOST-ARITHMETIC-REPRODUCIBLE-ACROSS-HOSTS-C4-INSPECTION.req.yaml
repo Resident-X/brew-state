@@ -1,0 +1,16 @@
+id: EV-SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS-C4-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C4
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-16T23:13:25.775105Z"
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_trajectory_is_what_it_was_before_the_vocabulary_was_unified
+  artifact_version: 1ad5255de0cf21719c63c111543a076d99d7cf35
+attested_by: crun-9402d815d11fac9f
+links:
+  - target: SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C4
+    type: satisfies

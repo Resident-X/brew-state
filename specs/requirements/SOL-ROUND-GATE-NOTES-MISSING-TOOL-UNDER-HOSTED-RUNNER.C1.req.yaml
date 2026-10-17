@@ -1,0 +1,12 @@
+id: SOL-ROUND-GATE-NOTES-MISSING-TOOL-UNDER-HOSTED-RUNNER.C1
+type: criterion
+title: The gate notes a task's missing-tool marker line under the hosted runner's task-runner output
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The round gate's run of a task notes the line the task writes to standard error that begins with the missing-tool marker, with GITHUB_ACTIONS set as on the hosted runner and with it unset, so a board tool absent on the hosted runner is reported as absent in both the round and the night. The test of this runs the real task runner on a throwaway task under both settings and fails if either does not note the line. Out of scope: other tests in the round gate's suite and what the gate does with a noted marker.
+links:
+  - target: SOL-ROUND-GATE-NOTES-MISSING-TOOL-UNDER-HOSTED-RUNNER
+    type: criterion-of

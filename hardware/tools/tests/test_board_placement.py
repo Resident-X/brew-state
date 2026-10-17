@@ -430,6 +430,30 @@ class Stops(unittest.TestCase):
                 self.assertStopped(Placed(plan_text=plan(low=listed)), ["region row 'low voltage'", listed.split(",")[0],
                                                                        "without ranges"])
 
+    def test_a_repeated_region_name_stops_the_command_naming_the_region_and_distinct_names_read_as_before(self):
+        # SOL-BOARD-FLOORPLAN-REGION-NAMES-DISTINCT.C1: Change the floorplan reader so it stops, naming the region, when two rows of the floorplan carry the same region name, so the history command's plan compare never judges a plan against an identical copy of itself as changed and never hides a change to one row behind another. Tests in throwaway repositories show a plan with a repeated region name stops rather than fails as changed, in the history command and in the placement command, and that a plan with distinct names is read as before.
+        digital = "| digital | (30, 0)–(60, 20) | the controller and its capacitor | U3, C2 |"
+        cases = (
+            ("an identical row", digital + "\n" + digital, "digital"),
+            ("a row with other bounds and no parts", digital + "\n| digital | none | nothing | none |", "digital"),
+            ("the first region repeated by a later row", digital + "\n| mains | none | nothing | none |", "mains"),
+            ("a name differing only by edge whitespace", digital + "\n|   digital   | none | nothing | none |", "digital"),
+        )
+        for case, rows, repeated in cases:
+            with self.subTest(case=case):
+                lines = self.assertStopped(Placed(plan_text=plan(**{digital: rows})),
+                                           ["layout-plan.md", f"region row '{repeated}'", "repeats the name"])
+                self.assertIn("each region name must appear on one row only", lines[0])
+
+        def names(text):
+            design = Placed(plan_text=text)
+            return [region["name"] for region in board_placement.floorplan(os.path.join(design.folder, "layout-plan.md"))]
+
+        variants = digital + "\n| Digital | none | nothing | none |\n| digital  x | none | nothing | none |"
+        self.assertEqual(names(plan(**{digital: variants})),
+                         ["mains", "low voltage", "analog sensing", "digital", "Digital", "digital  x"])
+        self.assertEqual(names(plan()), ["mains", "low voltage", "analog sensing", "digital"])
+
     def test_a_floorplan_table_without_its_separator_row_stops_the_command_rather_than_losing_a_region(self):
         # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: A region row that cannot be read stops the command with a message naming it, so a table whose first region row would be taken for its separator row stops rather than losing that region.
         for separator in ("", "|---|---|---|\n", "| a | b | c | d |\n"):

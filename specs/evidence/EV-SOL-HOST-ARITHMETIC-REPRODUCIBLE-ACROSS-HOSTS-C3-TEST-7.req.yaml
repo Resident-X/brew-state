@@ -1,0 +1,16 @@
+id: EV-SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS-C3-TEST-7
+type: evidence
+title: test evidence for SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-16T23:13:29.718702Z"
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_parameter_sweep.py::test_a_step_at_the_first_tick_has_no_drift_before_it_and_says_so
+  artifact_version: 1ad5255de0cf21719c63c111543a076d99d7cf35
+attested_by: crun-9402d815d11fac9f
+links:
+  - target: SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C3
+    type: satisfies

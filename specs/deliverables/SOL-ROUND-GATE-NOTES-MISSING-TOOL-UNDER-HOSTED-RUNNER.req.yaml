@@ -1,0 +1,19 @@
+id: SOL-ROUND-GATE-NOTES-MISSING-TOOL-UNDER-HOSTED-RUNNER
+type: deliverable
+category: solution
+title: The round gate notes a missing board tool under the hosted runner's task output
+status: active
+version: 1
+text: |
+  The round gate's tests of its own task-running seam include one that runs the real task runner on a throwaway task and requires the line the task writes to standard error with the missing-tool marker to be noted by the gate. That test passes on the author's machine and fails when GITHUB_ACTIONS is set, which it always is on the hosted runner: the real task runner then writes its output differently, so the marker line is not found. It was not seen on the nightly because the host tier stopped at the golden-trajectory failure before the tool tests ran; the first hosted run that got past it (a throwaway probe of the cross-host arithmetic fix, run 38981305869) showed it, and it reproduces on the author's machine with GITHUB_ACTIONS=true.
+
+  The failure is not only in the test. The gate's noting of the missing-tool marker is how a round or a night reports that a board tool is absent, so if the hosted task runner moves the marker line, the gate under-reports exactly on the hosted runner where it matters. The correction is to make the gate note the marker under the task runner's hosted-runner output (or to have the gate run the task so that the output is the same under both), and to make the test run under both settings so that a change in either fails it. Out of scope: any other test in the round gate's suite, and what the gate does with a noted marker.
+rationale: |
+  Found while proving the cross-host arithmetic fix on a hosted runner (https://github.com/Resident-X/brew-state/actions/runs/38981305869): the host tier's tool tests had never run on a hosted runner past the golden-trajectory failure, so a test that depends on the environment it runs in had only ever been run where it was written. It restores the behaviour SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1 delivered (the gate reports a missing board tool) on the runner where the night runs, and is a defect in sealed work, so it belongs in the maintenance lane rather than in the arithmetic fix.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C2
+    type: targets
+  - target: OBL-OPEN-SOURCE-MAINTAINABILITY-001.C1
+    type: targets
