@@ -1,0 +1,13 @@
+id: DEL-MAINS-PHASED-ACTUATION-IN-TARGET-FIRMWARE.C9
+type: criterion
+title: Each heater channel's positive and negative half-cycles are held in balance over a stated window
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  Over any window of the length the task declares with its source, the number of energised positive and negative half-cycles on each heater channel differs by no more than the bound declared with it, at every commanded level, so the switching draws no lasting direct component from the supply. Shown in both the text and the JSON form of the result.
+links:
+  - target: DEL-MAINS-PHASED-ACTUATION-IN-TARGET-FIRMWARE
+    type: criterion-of

@@ -7,7 +7,7 @@ measurement_type: binary
 verification: inspection
 closes_by: cascade
 text: |
-  Each such task delivers, for its board, the epic's proof before order, separation and held-off criteria, its schematic review and its layout review, with the design method applied to that board rather than only written. Each covers ordering and receiving its board, checks the manufacturer's production files against its assembly preview before payment, records the quoted order cost against the running total of the declared spend before ordering, and is a prerequisite of bring-up, so none of the epic's criteria can close on the gate or the method alone without a board having been designed, proven and made.
+  Each such task delivers, for its board, the epic's proof before order, separation and held-off criteria, its schematic review and its layout review, with the design method applied to that board rather than only written. Each covers ordering and receiving its board, checks the manufacturer's production files against its assembly preview before payment, records the quoted order cost against the running total of the declared spend before ordering, depends on the further pre-order checks, so no board's records need a key the pre-order check does not yet accept, and is a prerequisite of bring-up, so none of the epic's criteria can close on the gate or the method alone without a board having been designed, proven and made.
 
   Each such task also records, with its source, every figure the controller boards' constraints record holds pending against the design of its board, such as a rail's budget, a branch fuse's rating, or the time a protective device takes to clear and the energy it lets through at the declared fault current, ending those marks.
 

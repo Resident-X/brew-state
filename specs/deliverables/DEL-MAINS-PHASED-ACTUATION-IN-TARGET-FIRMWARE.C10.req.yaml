@@ -1,0 +1,13 @@
+id: DEL-MAINS-PHASED-ACTUATION-IN-TARGET-FIRMWARE.C10
+type: criterion
+title: The commanded switching is analysed against the flicker and harmonic current limits for household appliances
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  The switching patterns the actuation layer produces across the range of commanded levels, at the top of the declared supply span, are analysed against the flicker and harmonic current limits OBL-ELECTROMAGNETIC-COMPATIBILITY-001.C2 requires, with the governing standard's figures taken from that standard or a cited, freely available derivation of it.
+links:
+  - target: DEL-MAINS-PHASED-ACTUATION-IN-TARGET-FIRMWARE
+    type: criterion-of

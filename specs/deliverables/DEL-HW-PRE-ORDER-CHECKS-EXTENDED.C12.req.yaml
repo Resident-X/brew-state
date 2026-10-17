@@ -1,0 +1,13 @@
+id: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C12
+type: criterion
+title: The pre-order check accepts and reads every key the record decisions now define
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  Every key the separation basis and design-record decisions now define, the separation inputs and per-barrier insulation types, the table rows used, the derating policy and pin-limit records, and each catalogue entry's lifecycle field, is accepted and read by the pre-order check, while a key those decisions do not define still fails it. A seeded run shows a proof design whose records carry every new key passing, and a copy with one of those keys misspelt failing and naming the key.
+links:
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED
+    type: criterion-of
