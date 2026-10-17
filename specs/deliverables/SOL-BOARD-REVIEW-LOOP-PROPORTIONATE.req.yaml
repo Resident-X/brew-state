@@ -24,6 +24,6 @@ links:
   - target: SOL-BOARD-REVIEW-RECORD-HISTORY-CHECK
     type: depends-on
 brief_confirmation:
-  confirmer: claude-sonnet-5-5 independent brief reviewer
-  fingerprint: 49a7875a9503636c5acb6b8155b86b0c7320904a942041a50bc6b16192446a4c
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: 760de29aaefb1bea3945285953360f373ba71334f9d853cf9e62016b56a16284
   gating_profile: ""
