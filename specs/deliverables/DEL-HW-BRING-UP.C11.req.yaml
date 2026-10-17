@@ -1,0 +1,13 @@
+id: DEL-HW-BRING-UP.C11
+type: criterion
+title: The hottest parts' temperatures at sustained full load are measured in the closed machine
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  Thermocouples on the switching devices, the supplies and any part the derating analysis puts near its limit, with their leads routed out of the closed enclosure, record each part's temperature at sustained full heat until it settles, and each settled reading, corrected to the top of the declared ambient span, is within that part's derated limit.
+links:
+  - target: DEL-HW-BRING-UP
+    type: criterion-of

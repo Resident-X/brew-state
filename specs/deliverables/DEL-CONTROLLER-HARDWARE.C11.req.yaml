@@ -1,0 +1,13 @@
+id: DEL-CONTROLLER-HARDWARE.C11
+type: criterion
+title: Each schematic is reviewed against a written circuit checklist covering every net and part before its layout begins
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The checklist is drawn from the method's circuit practice catalogue and written before the schematic it reviews, every net and part receives a verdict, and a finding is closed by a change to the schematic or by a recorded reason showing the item is met or does not apply, never by judging it unimportant. The review is shown to find defects deliberately placed for it before a real board relies on it.
+links:
+  - target: DEL-CONTROLLER-HARDWARE
+    type: criterion-of

@@ -1,0 +1,13 @@
+id: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C10
+type: criterion
+title: Each of these rules is shown to fail on a fault seeded for it in a proof design
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+closes_by: cascade
+text: |
+  The fault is placed in a copy outside the tracked tree, the committed proof design stays passing, and the record of each seeded run names the fault and the rule that caught it.
+links:
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED
+    type: criterion-of

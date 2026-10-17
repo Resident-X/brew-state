@@ -2,12 +2,14 @@ id: DEL-HW-PARTITION-AND-FEASIBILITY.C3
 type: criterion
 title: The separation basis is declared and signed for before layout
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 closes_by: cascade
 text: |
   The basis states the distances and barriers, the environment assumed, and who accepted it.
+
+  Each barrier states its insulation type, basic or reinforced, with the facts that decide it: whether the low-voltage side is bonded to protective earth, and which low-voltage parts a person can touch, such as a service port, the operator's controls or the enclosure. Each names the part or spacing that forms it. The basis states the overvoltage category and the altitude its figures are read for. A condition of the machine's environment that cannot be measured is taken at its worst: the pollution degree is taken as 3, the degree for conductive pollution or expected condensation, unless the boards are protected against moisture.
 
   The distances come from a named published standard, or from a cited, freely available derivation of its tables where the standard itself is not freely available, read with the working voltage, pollution degree and material group stated, and are expressed against the declared supply so an adopter on a different supply recomputes them rather than inherits them.
 links:

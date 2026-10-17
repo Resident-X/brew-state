@@ -1,0 +1,13 @@
+id: DEL-HW-DESIGN-METHOD.C10
+type: criterion
+title: A board's production files are checked before it is paid for
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Each part's position, rotation and polarity in the assembly files are compared with the assembler's own preview of the assembled board, and the fabrication files are rendered and looked at layer by layer, since these are where a board most often goes wrong in manufacture while its design is right.
+links:
+  - target: DEL-HW-DESIGN-METHOD
+    type: criterion-of

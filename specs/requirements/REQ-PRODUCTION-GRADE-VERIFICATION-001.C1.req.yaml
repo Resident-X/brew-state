@@ -1,0 +1,12 @@
+id: REQ-PRODUCTION-GRADE-VERIFICATION-001.C1
+type: criterion
+title: The assembled appliance withstands the dielectric strength test its protection class requires
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The test voltage and duration are the governing standard's for the appliance's class, taken from that standard or a cited, freely available derivation of it, applied between the mains conductors and every touchable conductive part of the finished machine.
+links:
+  - target: REQ-PRODUCTION-GRADE-VERIFICATION-001
+    type: criterion-of

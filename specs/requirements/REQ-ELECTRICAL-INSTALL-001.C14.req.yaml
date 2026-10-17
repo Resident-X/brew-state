@@ -1,0 +1,12 @@
+id: REQ-ELECTRICAL-INSTALL-001.C14
+type: criterion
+title: Every part in the enclosure is graded for the temperature and moisture the enclosure reaches in service
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  The air around the controller is heated by the machine it sits in, and that air, not the room, is what every part works in. Its temperature is established on the machine running at sustained full heat with the enclosure closed. Its humidity, which a builder without a laboratory cannot measure inside a running machine, is taken at its worst, condensing, unless the boards are protected against moisture. A part graded for the room rather than the enclosure is working outside the conditions its rating describes.
+links:
+  - target: REQ-ELECTRICAL-INSTALL-001
+    type: criterion-of

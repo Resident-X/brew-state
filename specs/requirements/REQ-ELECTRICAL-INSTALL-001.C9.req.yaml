@@ -1,0 +1,12 @@
+id: REQ-ELECTRICAL-INSTALL-001.C9
+type: criterion
+title: Every part forming a barrier between mains and low voltage is rated for the insulation that barrier is declared to provide
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  This holds for parts the build buys and parts on boards it designs alike. Each part's isolation rating is read from its maker's current document and recorded with that source, and it is at or above what the barrier's declared insulation type, basic or reinforced, requires at the declared working voltage and overvoltage category. A rating that cannot be sourced counts as absent rather than as adequate.
+links:
+  - target: REQ-ELECTRICAL-INSTALL-001
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: REQ-SAFETY-CHAIN-001.C7
+type: criterion
+title: Heater power is removed whatever state the controller's clock, reset or supply is in
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A controller whose clock has stopped, which is held in reset, or whose supply has sagged below its operating range presents to the chain as a controller that has stopped, and heater power is removed in each case. Whatever removes it takes nothing from the controller, its timing source or its supply that those failures would also take away, so the failure that stops the controller cannot also stop the removal.
+links:
+  - target: REQ-SAFETY-CHAIN-001
+    type: criterion-of

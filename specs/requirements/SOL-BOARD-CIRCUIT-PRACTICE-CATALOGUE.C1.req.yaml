@@ -1,0 +1,12 @@
+id: SOL-BOARD-CIRCUIT-PRACTICE-CATALOGUE.C1
+type: criterion
+title: The method carries a circuit practice catalogue whose every item cites its published source
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Write the catalogue into the board design method with the item form and the baseline items this solution's text sets out, each item stated fully enough to apply without reading its source, and each figure that a purchased standard sets required from the governing standard named in the separation basis or a cited, freely available derivation of it. Out of scope: layout items, which the layout practice catalogue holds, and any figure specific to one machine.
+links:
+  - target: SOL-BOARD-CIRCUIT-PRACTICE-CATALOGUE
+    type: criterion-of

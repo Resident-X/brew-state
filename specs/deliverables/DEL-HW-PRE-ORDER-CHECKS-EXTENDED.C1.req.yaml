@@ -1,0 +1,13 @@
+id: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C1
+type: criterion
+title: A design whose board minimums are looser than the dated manufacturer record fails the check
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  Track width and spacing, drill and annular ring, and every other minimum the board's rules set is compared with the figure the manufacturer record states for the board's chosen process, and a record older than its stated age limit fails as the catalogue extract does.
+links:
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED
+    type: criterion-of

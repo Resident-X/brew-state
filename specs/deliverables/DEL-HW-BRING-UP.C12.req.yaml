@@ -1,0 +1,13 @@
+id: DEL-HW-BRING-UP.C12
+type: criterion
+title: A loss and return of mains to the whole machine leaves every load off and the machine in its safe state
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  Mains is removed at the supply inlet and restored, once while heating and once during a delivery. Every load is off for the dropout and on restoration, and the machine comes back up in its safe state without resuming what it was doing.
+links:
+  - target: DEL-HW-BRING-UP
+    type: criterion-of

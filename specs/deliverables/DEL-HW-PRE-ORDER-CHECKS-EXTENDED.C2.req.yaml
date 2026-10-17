@@ -1,0 +1,13 @@
+id: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C2
+type: criterion
+title: A signed separation figure below the floor its own signed inputs give fails the check
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The floor is read from the table the separation basis cites, at the basis's working voltage, insulation type, overvoltage category, pollution degree, material group and altitude, so a signed figure that its own inputs do not support is caught rather than trusted because it was signed.
+links:
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED
+    type: criterion-of

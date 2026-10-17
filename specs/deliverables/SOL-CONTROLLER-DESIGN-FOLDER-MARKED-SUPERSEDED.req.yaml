@@ -1,0 +1,23 @@
+id: SOL-CONTROLLER-DESIGN-FOLDER-MARKED-SUPERSEDED
+type: deliverable
+category: solution
+title: The earlier bought-module design folder is marked as superseded history, and its statements overtaken by decisions are marked
+status: active
+version: 1
+text: |
+  The controller-design folder in the machine's record holds the earlier design, in which the controller was assembled from bought modules: a controller module, dimmers, a relay module, a supply carrier and energy meters. That direction has been overtaken. The controller is now custom boards designed in this project, replacing almost all of those modules, and how the circuitry divides between them is decided by the partition task on evidence. The folder's own entry document still calls itself the current, consolidated record of the hardware design and states that it wins on the replacement design, so a reader, or an agent designing a board, takes it for the board.
+
+  It also contradicts an active decision. Its open-items list and its bill of materials still carry the proof-of-life interlock as deferred, while DEC-PROOF-OF-LIFE-INTERLOCK-IN-FIRST-HARDWARE builds it into the first controller hardware.
+
+  The documents stay where they are, unrewritten: graph nodes cite them by path, and they remain the history of the design and an input to the partition. What changes is that the record says what they are and which part of it governs. The folder's entry document states that it holds the superseded bought-module design, kept as history and input; that the graph's decisions and the board designs under the hardware tree govern the boards; and that where the folder disagrees with either, the folder loses. Each statement the folder makes that an active decision has overtaken is marked in place with the decision that overtook it, the interlock rows first.
+rationale: |
+  The machine's record says which of its documents governs when they disagree, and here it says the wrong thing: the folder of a superseded design claims to win on the very thing that superseded it. Correcting the precedence statement and marking the overtaken statements restores that property without rewriting history the graph cites.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-MACHINE-RECORD-001.C3
+    type: targets
+  - target: DEC-MACHINE-RECORD-FOLDER-PER-MACHINE
+    type: justified-by
+  - target: DEC-PROOF-OF-LIFE-INTERLOCK-IN-FIRST-HARDWARE
+    type: justified-by

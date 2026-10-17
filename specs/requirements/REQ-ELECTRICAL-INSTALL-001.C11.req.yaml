@@ -1,0 +1,12 @@
+id: REQ-ELECTRICAL-INSTALL-001.C11
+type: criterion
+title: A static discharge from a person into anything they can reach leaves the controller and the protective chain undamaged
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The operator's controls, and any port or conductive surface a person can reach with the machine assembled, are where a static discharge enters. Each such entry point is protected, so a discharge can at most interrupt the controller, which the protective chain already tolerates, and never damages the controller or any element of the chain.
+links:
+  - target: REQ-ELECTRICAL-INSTALL-001
+    type: criterion-of

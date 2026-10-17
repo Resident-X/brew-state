@@ -2,12 +2,14 @@ id: DEL-HW-BRING-UP.C6
 type: criterion
 title: Protective continuity of touchable parts is measured on the finished installation
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 closes_by: cascade
 text: |
   Continuity that held in the original build does not survive being rebuilt by hand, so it is measured rather than assumed.
+
+  The resistance from each touchable conductive part to the earth contact of the supply inlet is measured by four-wire measurement, at a stated test current a bench supply can deliver, and compared with the declared figure.
 links:
   - target: DEL-HW-BRING-UP
     type: criterion-of

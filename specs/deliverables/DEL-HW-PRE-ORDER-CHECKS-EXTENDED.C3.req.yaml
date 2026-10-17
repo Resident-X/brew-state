@@ -1,0 +1,13 @@
+id: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C3
+type: criterion
+title: A sensing net closer to a switching or drive net than the declared sensing clearance fails the check
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  Sensing and noisy nets are declared by net class, and the clearance between the two classes is a rule the layout check enforces at no less than the figure the board's rules state with its source.
+links:
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-CONTROLLER-DESIGN-FOLDER-MARKED-SUPERSEDED.C1
+type: criterion
+title: The folder's entry document states it holds the superseded bought-module design and names what governs the boards
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Amend the entry document so it states that the folder is the earlier bought-module design kept as history and input, that the graph's decisions and the board designs under the hardware tree govern the boards, and that the folder loses where it disagrees with either, replacing its claim to win on the replacement design. Out of scope: moving, deleting or rewriting the other documents, which graph nodes cite by path.
+links:
+  - target: SOL-CONTROLLER-DESIGN-FOLDER-MARKED-SUPERSEDED
+    type: criterion-of

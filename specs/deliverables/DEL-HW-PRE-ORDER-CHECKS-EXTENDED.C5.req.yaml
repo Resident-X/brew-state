@@ -1,0 +1,13 @@
+id: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C5
+type: criterion
+title: A pin whose net can exceed the pin's absolute maximum fails the check
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  Each part's pin limits are held in a record with their datasheet source, and each pin is compared with the highest rail its net connects to, including pins on parts that may be unpowered while the net is driven.
+links:
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED
+    type: criterion-of

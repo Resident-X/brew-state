@@ -1,0 +1,12 @@
+id: REQ-PRODUCTION-GRADE-VERIFICATION-001.C3
+type: criterion
+title: Touch current measured on the assembled machine is within the limit for its protection class
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  The measurement is made at the top of the declared supply span with the protective earth open, the condition the analysis of touch current assumes.
+links:
+  - target: REQ-PRODUCTION-GRADE-VERIFICATION-001
+    type: criterion-of

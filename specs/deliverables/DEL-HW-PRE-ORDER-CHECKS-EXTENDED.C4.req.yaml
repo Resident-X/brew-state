@@ -1,0 +1,13 @@
+id: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C4
+type: criterion
+title: A part whose net can exceed its derated voltage rating fails the check
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The rating comes from the parts specification record's rating field, the derating factor from the board's declared derating policy, and the voltage from the highest rail the part's nets connect to.
+links:
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED
+    type: criterion-of

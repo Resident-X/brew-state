@@ -1,0 +1,13 @@
+id: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C7
+type: criterion
+title: A connector carrying fewer ground returns than the declared ratio for its signals fails the check
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The ratio is stated per signal kind in the board's rules with its source, so a harness cannot carry fast or sensitive signals without returns beside them.
+links:
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED
+    type: criterion-of

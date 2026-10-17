@@ -1,0 +1,12 @@
+id: OBL-ELECTROMAGNETIC-COMPATIBILITY-001.C2
+type: criterion
+title: Load switching stays within the flicker and harmonic current limits for household appliances
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Heaters switched in whole supply cycles change the current drawn from the supply in steps, and a load controlled within each cycle draws current that is not sinusoidal. The switching the control actually commands is analysed against the flicker and harmonic current limits of the governing standard, at the top of the declared supply span.
+links:
+  - target: OBL-ELECTROMAGNETIC-COMPATIBILITY-001
+    type: criterion-of

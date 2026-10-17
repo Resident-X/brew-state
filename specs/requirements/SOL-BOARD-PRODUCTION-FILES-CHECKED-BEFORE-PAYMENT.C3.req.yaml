@@ -1,0 +1,12 @@
+id: SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C3
+type: criterion
+title: Following the ordering step on seeded production files finds a rotated part and a reversed polarised part
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  Seed a copy of the pre-order check's proof design's assembly files with one rotated part and one reversed polarised part, follow the ordering step, and record that both are found. Out of scope: placing an order.
+links:
+  - target: SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT
+    type: criterion-of

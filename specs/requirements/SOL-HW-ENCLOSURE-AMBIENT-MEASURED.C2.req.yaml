@@ -1,0 +1,12 @@
+id: SOL-HW-ENCLOSURE-AMBIENT-MEASURED.C2
+type: criterion
+title: The figure the parts are graded to is the measured rise above the room added to the top of the declared ambient span
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Derive the grading figure from the settled readings and the room temperature at the time, add it to the top of the ambient span the declared configuration states, and record the arithmetic. Out of scope: the replacement boards' own dissipation, which the derating analysis adds and bring-up measures.
+links:
+  - target: SOL-HW-ENCLOSURE-AMBIENT-MEASURED
+    type: criterion-of
