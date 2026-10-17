@@ -1531,6 +1531,16 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 - **Kind:** rule. **Severity:** quality.
 - **Source:** `hardware/proof/method-proof/layout-review.md`, round 1, finding 1.8.
 
+#### MFG-8. Silkscreen text reads left to right or bottom to top
+
+- **Applies when:** always.
+- **Asks:** Does every reference designator and other legend text read from the left, or from the bottom, as the board is turned to read it from its own side?
+- **Passes:** Each text on `F.SilkS` has an angle of 0 or 90 degrees as the front shows it, and each text on `B.SilkS` reads, with the board turned side to side to show its back, from the left or from the bottom: no text reads upside down or from the top down.
+- **Fails, as the views show it:** on `layer-F.SilkS`, a designator upside down or reading top to bottom; on `3d-bottom`, a back-side name upside down.
+- **Judged on:** `layer-F.SilkS`, `layer-B.SilkS`, `3d-top`, `3d-bottom`.
+- **Kind:** judgement. **Severity:** cosmetic.
+- **Source:** `hardware/proof/method-proof/layout-review.md`, round 2, finding 2.4.
+
 ### Emissions (EMI)
 
 #### EMI-1. Power and its ground run over each other
