@@ -697,7 +697,8 @@ class TheDecouplingAndSilkscreenRules(Proved):
     """
 
     FAULTS = {"a via between a decoupling capacitor's supply pad and the pin it decouples": "decoupling_via",
-              "a reference designator on the fabrication layer": "reference_off_silkscreen"}
+              "a reference designator on the fabrication layer": "reference_off_silkscreen",
+              "a part with no reference text": "reference_off_silkscreen"}
 
     def test_each_rule_fails_on_its_seeded_fault_and_names_where(self):
         # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
@@ -713,7 +714,7 @@ class TheDecouplingAndSilkscreenRules(Proved):
 
 class TheCleanDesignStatesTheFiguresOfTheDecouplingAndSilkscreenRules(Copy):
     # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
-    """The report states the two inherent zeros."""
+    """The report states the two inherent zeros, and how much of the layout the decoupling rule measured."""
 
     def test_the_inherent_zeros_are_stated_and_the_clean_design_passes_the_two_rules(self):
         # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
@@ -724,6 +725,8 @@ class TheCleanDesignStatesTheFiguresOfTheDecouplingAndSilkscreenRules(Copy):
                       "decoupling capacitor's supply pad and the pin it decouples", lines)
         self.assertIn(f"FIGURE | {design} | MFG-7 reference on silkscreen | none, inherent zero | 0 references off a silkscreen "
                       "layer or hidden", lines)
+        self.assertIn(f"FIGURE | {design} | DECOUPLE-6 decoupling paths measured | the layout's pad pin types | 0 paths of 0 "
+                      "circuits with a supply pin", lines)
 
 
 class ThePoursAreMeasuredOnTheBoardKiCadFilled(Copy):

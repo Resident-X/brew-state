@@ -760,6 +760,14 @@ def via_in_decoupling_path(seed: Seed) -> None:
     seed.layout(edit)
 
 
+def reference_removed(seed: Seed) -> None:
+    """R1's reference text taken out of the footprint."""
+    def edit(tree: list) -> None:
+        part = footprint(tree, "R1")
+        part.remove(next(item for item in sexpr.children(part, "property") if item[1] == "Reference"))
+    seed.layout(edit)
+
+
 def reference_on_fab(seed: Seed) -> None:
     """R1's reference text moved to the fabrication layer."""
     def edit(tree: list) -> None:
@@ -1025,6 +1033,8 @@ FAULTS: List[Tuple[str, str, str, str, Callable[[Seed], None]]] = [
      "via at (43, 13) mm of net /LV_A lies in the box from (42.15, 9.15) to (43.85, 16.6) mm about pad 1 of C9 of /LV_A and pad 1 of U1", via_in_decoupling_path),
     ("a reference designator on the fabrication layer", "manufacture: every part's reference is on a silkscreen layer", "reference_off_silkscreen",
      "the reference of R1 is on F.Fab, not F.SilkS", reference_on_fab),
+    ("a part with no reference text", "manufacture: every part carries a reference on a silkscreen layer", "reference_off_silkscreen",
+     "has no reference text", reference_removed),
 ]
 
 
