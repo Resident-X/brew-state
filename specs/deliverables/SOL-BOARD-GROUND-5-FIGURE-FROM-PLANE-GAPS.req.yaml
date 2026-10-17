@@ -28,3 +28,7 @@ links:
     type: justified-by
   - target: SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 brief reviewer
+  fingerprint: 5efc12216c5257d57283b9c0538796bc7eba4813c407977d5cbf5882ab12fa54
+  gating_profile: ""
