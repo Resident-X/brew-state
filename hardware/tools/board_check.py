@@ -3258,8 +3258,9 @@ def project_form(design: Design, project: dict) -> List[Violation]:
 #
 # Two more rules KiCad does not measure, each read from the layout file. Neither
 # needs a project text variable of its own, so neither adds a figure to the
-# designs: DECOUPLE-6 and MFG-7 are held to an inherent zero: no via in the
-# decoupling path, no reference off the silkscreen.
+# designs: DECOUPLE-6, MFG-7 and MFG-9 are held to an inherent zero: no via in the
+# decoupling path, no reference off the silkscreen, no designator inside a courtyard
+# or nearer another part than its own.
 
 
 def ground_nets(members: Dict[str, Set[str]]) -> Set[str]:
@@ -3411,6 +3412,178 @@ def references_off_silkscreen(design: Design, tree: list) -> List[Violation]:
     return found
 
 
+#: How far one character of a reference designator's text advances, as a share of the font's width size. KiCad draws
+#: designators in its stroke font, whose capitals and digits advance about 0.6 of the size; that is the figure the
+#: text box is built on, so a long name's extent grows with its character count.
+TEXT_ADVANCE = 0.6
+#: How much nearer another part's courtyard than its own a designator's text must stand to count as nearer the other
+#: part, in mm. The box is an estimate, so a gap that differs by less than this is a tie and is not judged.
+TEXT_NEARER = 0.1
+#: How far a text box may reach into a courtyard before the designator counts as inside it, in mm. A stroke that
+#: touches the courtyard line, or stands over it by no more than the rounding of the box's estimate, is not inside.
+TEXT_REACH = 0.05
+
+
+def text_box(footprint: list, node: list, name: str) -> Optional[Tuple[list, str]]:
+    """The box a reference designator's text covers on the board, as four corners, and the layer it is on.
+
+    The box is estimated from the text, not drawn from the font: its length is
+    the character count times TEXT_ADVANCE times the font's width size, and
+    its height the font's height size, both widened by the stroke thickness.
+    It is turned to the text's angle, which the file writes as the board's
+    (a quarter turn exchanges its sides), and placed about the text's anchor
+    by its justification (centred on the anchor when none is written; a
+    mirrored text exchanges left and right). The anchor is moved to the board
+    as the footprint is, so a footprint turned on the board carries its text
+    with it. None when the text has no position.
+    """
+    at = sexpr.child(node, "at")
+    if at is None or len(at) < 3:
+        return None
+    effects = sexpr.child(node, "effects") or []
+    font = sexpr.child(effects, "font") or []
+    size = sexpr.child(font, "size")
+    thickness = sexpr.child(font, "thickness")
+    width_size = board_geometry.number(size, 1, f"the text of {name}") if size is not None and len(size) > 2 else 1.0
+    height_size = board_geometry.number(size, 2, f"the text of {name}") if size is not None and len(size) > 2 else 1.0
+    line = board_geometry.number(thickness, 1, f"the text of {name}") if thickness is not None and len(thickness) > 1 else 0.15
+    length = len(str(footprint_text(node))) * TEXT_ADVANCE * width_size + line
+    height = height_size + line
+    angle = board_geometry.number(at, 3, f"the text of {name}") if len(at) > 3 else 0.0
+    if round(angle) % 180 == 90:
+        length, height = height, length
+    words = {str(word) for item in sexpr.children(effects, "justify") for word in item[1:]}
+    mirrored = "mirror" in words
+    before, after = ("right", "left") if mirrored else ("left", "right")
+    along = (length / 2 if before in words else -length / 2 if after in words else 0.0)
+    across = (height / 2 if "top" in words else -height / 2 if "bottom" in words else 0.0)
+    if round(angle) % 180 == 90:
+        along, across = across, along
+    place = board_geometry.placement(footprint, f"the footprint {name}")
+    anchor = board_geometry.placed(board_geometry.xy(at, f"the text of {name}"), place)
+    centre = (anchor[0] + along, anchor[1] + across)
+    layer = sexpr.child(node, "layer")
+    return ([(centre[0] - length / 2, centre[1] - height / 2), (centre[0] + length / 2, centre[1] - height / 2),
+             (centre[0] + length / 2, centre[1] + height / 2), (centre[0] - length / 2, centre[1] + height / 2)],
+            str(layer[1]) if layer is not None and len(layer) > 1 else "")
+
+
+def footprint_text(node: list) -> str:
+    return str(node[2]) if len(node) > 2 else ""
+
+
+def courtyard(footprint: list, side: str, name: str) -> Optional[List[Tuple[float, float]]]:
+    """A part's courtyard on one side of the board, as the box about its courtyard drawing, placed as the part is.
+
+    The box is the part's drawing on `side`'s courtyard layer, taken as the
+    four corners of the smallest box about it in the footprint's own axes
+    and carried to the board with the footprint. None when the part draws no
+    courtyard on that layer.
+    """
+    layer = f"{side}.CrtYd"
+    points: List[Tuple[float, float]] = []
+    for item in footprint:
+        if not isinstance(item, list) or not item or str(item[0]) not in ("fp_line", "fp_rect", "fp_poly", "fp_circle", "fp_arc"):
+            continue
+        on = sexpr.child(item, "layer")
+        if on is None or len(on) < 2 or str(on[1]) != layer:
+            continue
+        for key in ("start", "end", "center", "mid"):
+            node = sexpr.child(item, key)
+            if node is not None:
+                points.append(board_geometry.xy(node, f"the courtyard of {name}"))
+        circle = sexpr.child(item, "center") if str(item[0]) == "fp_circle" else None
+        if circle is not None and sexpr.child(item, "end") is not None:
+            centre, edge = board_geometry.xy(circle, f"the courtyard of {name}"), board_geometry.xy(sexpr.child(item, "end"), f"the courtyard of {name}")
+            reach = math.dist(centre, edge)
+            points += [(centre[0] + dx * reach, centre[1] + dy * reach) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))]
+        for group in sexpr.children(item, "pts"):
+            points += [board_geometry.xy(point, f"the courtyard of {name}") for point in sexpr.children(group, "xy")]
+    if not points:
+        return None
+    place = board_geometry.placement(footprint, f"the footprint {name}")
+    left, right = min(p[0] for p in points), max(p[0] for p in points)
+    top, bottom = min(p[1] for p in points), max(p[1] for p in points)
+    return [board_geometry.placed(corner, place) for corner in ((left, top), (right, top), (right, bottom), (left, bottom))]
+
+
+def polygon_gap(one: List[Tuple[float, float]], other: List[Tuple[float, float]]) -> float:
+    """How far apart two convex polygons stand, 0 when they touch or overlap."""
+    if board_geometry.overlap_area(one, other) > 0 or any(board_geometry.within(p, other) for p in one) \
+            or any(board_geometry.within(p, one) for p in other):
+        return 0.0
+    return min(board_geometry.segment_distance(a, b, c, d)
+               for a, b in zip(one, one[1:] + one[:1]) for c, d in zip(other, other[1:] + other[:1]))
+
+
+def designators_astray(design: Design, tree: list) -> List[Violation]:
+    """Every reference designator whose text stands inside a part's courtyard, or nearer another part than its own.
+
+    The text is the box text_box estimates, for a reference shown on the
+    silkscreen of its footprint's side of the board; a hidden reference, or
+    one on another layer, is left to the silkscreen rule. The parts it is held
+    against are those with a courtyard drawn on the courtyard layer of the
+    same side, the part's own included. The text is inside a courtyard when
+    its box reaches into it by more than TEXT_REACH on every side of the
+    overlap; it is nearer another part when the gap from its box to another
+    part's courtyard is less than the gap to its own part's courtyard, which
+    is 0 when the text is inside its own.
+    """
+    footprints = []
+    for footprint in sexpr.children(tree, "footprint"):
+        name = board_geometry.reference(footprint)
+        if name:
+            footprints.append((name, footprint))
+    found = []
+    for name, footprint in footprints:
+        node = next((item for item in sexpr.children(footprint, "property") if len(item) > 2 and str(item[1]) == "Reference"), None)
+        if node is None:
+            node = next((item for item in sexpr.children(footprint, "fp_text") if len(item) > 2 and str(item[1]) == "reference"), None)
+        if node is None:
+            continue
+        effects = sexpr.child(node, "effects") or []
+        marks = sexpr.children(node, "hide") + sexpr.children(effects, "hide")
+        if "hide" in node or "hide" in effects or any(len(mark) > 1 and str(mark[1]) == "yes" for mark in marks):
+            continue
+        text = text_box(footprint, node, name)
+        if text is None or text[1] not in ("F.SilkS", "B.SilkS"):
+            continue
+        box, layer = text
+        side = layer[0]
+        shrunk_x = (min(p[0] for p in box) + TEXT_REACH, max(p[0] for p in box) - TEXT_REACH)
+        shrunk_y = (min(p[1] for p in box) + TEXT_REACH, max(p[1] for p in box) - TEXT_REACH)
+        core = [(shrunk_x[0], shrunk_y[0]), (shrunk_x[1], shrunk_y[0]), (shrunk_x[1], shrunk_y[1]), (shrunk_x[0], shrunk_y[1])]
+        if shrunk_x[0] >= shrunk_x[1] or shrunk_y[0] >= shrunk_y[1]:
+            core = box
+        centre = (sum(p[0] for p in box) / 4, sum(p[1] for p in box) / 4)
+        where = f"{name} at ({coordinate(centre[0])}, {coordinate(centre[1])}) mm"
+        gaps = {}
+        inside = []
+        for other, held in footprints:
+            yard = courtyard(held, side, other)
+            if yard is None:
+                continue
+            gaps[other] = polygon_gap(box, yard)
+            if board_geometry.overlap_area(core, yard) > 0 or any(board_geometry.within(p, yard) for p in core):
+                inside.append(other)
+        if inside:
+            found.append(Violation(
+                design.project, "designator_astray", where,
+                f"MFG-9 each designator stands outside every part's courtyard, beside its own part: the text of {name} "
+                f"stands inside the courtyard of {', '.join(inside)}; move it clear of every courtyard, beside {name}"))
+            continue
+        own = gaps.get(name)
+        nearer = sorted((gap, other) for other, gap in gaps.items() if other != name and (own is None or gap < own - TEXT_NEARER))
+        if nearer:
+            found.append(Violation(
+                design.project, "designator_astray", where,
+                f"MFG-9 each designator stands outside every part's courtyard, beside its own part: the text of {name} "
+                f"is {coordinate(nearer[0][0])} mm from the courtyard of {nearer[0][1]}, "
+                + (f"nearer than the {coordinate(own)} mm from its own" if own is not None else f"and {name} draws no courtyard of its own")
+                + f"; move it beside {name}"))
+    return found
+
+
 # --- One design ----------------------------------------------------------------
 
 
@@ -3464,6 +3637,8 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
         read.append(("DECOUPLE-6 via in the decoupling path", "none, inherent zero", "0 vias between a decoupling capacitor's "
                      "supply pad and the pin it decouples"))
         read.append(("MFG-7 reference on silkscreen", "none, inherent zero", "0 references off a silkscreen layer or hidden"))
+        read.append(("MFG-9 designator beside its part", "none, inherent zero", "0 designators inside a part's courtyard or "
+                     "nearer another part than their own"))
 
     found += exclusions(design, project)
     rules, hidden = read_rules(root, design, repository)
@@ -3685,6 +3860,7 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
             read.append(("DECOUPLE-6 decoupling paths measured", "the layout's pad pin types",
                          f"{len(paths)} paths of {circuits} circuits with a supply pin"))
         found += references_off_silkscreen(design, tree)
+        found += designators_astray(design, tree)
     except board_geometry.Unreadable as unread:
         found.append(Violation(design.project, "design_unreadable", design.layout,
                                f"the layout cannot be read for its decoupling and references ({unread})"))

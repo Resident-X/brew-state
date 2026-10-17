@@ -35,6 +35,13 @@ HEAD and judges:
   board's design files.
 - The closing round, the highest-numbered round at HEAD, which must be judged
   on design files unchanged since its end-of-round commit.
+- The round kind. A round states its kind in its opening lines as a line `**Round kind**: full` or
+  `**Round kind**: narrow`, a narrow round being one a fresh reviewer limited to the items a fix touches and a full round
+  one that judges every item. The closing round must state one: a closing round with no such line, or with any value but
+  `full` or `narrow`, is refused, and a closing round that is narrow fails, since only a full round closes a review.
+  Earlier rounds need state no kind, and are compared as first recorded like any other. The command reads a round's
+  Verdicts table as a table and does not demand a verdict for every item of the checklist, so a narrow round's table
+  holds only the items it judges.
 
 The board's design files are the files KiCad reads for it: everything tracked
 in the board's folder, the sheets its schematic reaches and the libraries its
@@ -96,6 +103,9 @@ VERDICT_COLUMNS = ["Item", "Kind", "Severity", "Verdict", "Rests on", "Why"]
 #: The columns of a finding that are compared: the Closed by column, and the rest, are not.
 COMPARED = ["Raised by", "Severity", "What and where"]
 NUMBER = "Finding"
+#: The field that gives a round's kind, in its opening lines, and the two kinds it may give.
+KIND = "Round kind"
+KINDS = ("full", "narrow")
 #: The one line a Findings part holds, in place of its table, when the round raises no finding.
 NO_FINDINGS = "This round raises no finding."
 
@@ -360,6 +370,14 @@ def judge_record(history: History, folder: str, record: str, design: set, report
     report.add("closing round", [f"{name}: the board's design files changed after closing round {closing}'s commit "
                                  f"{short(end)}: {', '.join(files)}"] if files else [],
                f"no design file has changed since closing round {closing}'s commit {short(end)}")
+    stated = fields(parsed[blobs[head]][3][closing].opening, [KIND]).get(KIND, (0, ""))[1]
+    if stated not in KINDS:
+        raise CannotRun(f"{name}: closing round {closing} of the record at HEAD " + (
+            f"gives its round kind as '{stated}'" if stated else "states no round kind") +
+            f", where its opening lines must hold '**{KIND}**: full' or '**{KIND}**: narrow'")
+    report.add("round kind", [f"{name}: closing round {closing} is narrow, and a narrow round never closes the review; "
+                              f"only a full round, which judges every item, does"] if stated == "narrow" else [],
+               f"closing round {closing} is a full round")
 
 
 # --- Running it ------------------------------------------------------------------------------

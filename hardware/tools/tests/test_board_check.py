@@ -2758,6 +2758,106 @@ class EveryReferenceIsOnTheSilkscreenOfItsSide(unittest.TestCase):
         self.assertEqual([v.location for v in self.found(old)], ["R9 at (1, 2) mm"])
 
 
+def lettered(reference: str, at, yard, text_at=(0, 0), layer: str = "F.SilkS", side: str = "F.Cu", extra: str = "") -> str:
+    """A part at `at` with a courtyard box (left, top, right, bottom) of its own axes on the courtyard of its side, and its reference at `text_at`."""
+    left, top, right, bottom = yard
+    crt = "B.CrtYd" if side == "B.Cu" else "F.CrtYd"
+    return (f'(footprint "lib:part" (layer "{side}") (at {at[0]} {at[1]}) '
+            f'(property "Reference" "{reference}" (at {text_at[0]} {text_at[1]} 0) (layer "{layer}") (effects (font (size 1 1) (thickness 0.15)) {extra})) '
+            f'(fp_rect (start {left} {top}) (end {right} {bottom}) (layer "{crt}")))')
+
+
+class EveryDesignatorStandsOutsideEveryCourtyardBesideItsOwnPart(unittest.TestCase):
+    # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: A recurring cosmetic nit that a measurement can state is a measured rule the pre-order check enforces
+    """MFG-9: a designator's estimated text box is outside every courtyard and no
+    nearer another part's courtyard than its own; the figure is an inherent zero."""
+
+    def found(self, *items):
+        return board_check.designators_astray(DESIGN, tree_of(*items))
+
+    def test_designators_beside_their_own_parts_pass(self):
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: it fails a designator inside a part's courtyard or nearer another part than its own
+        self.assertEqual(self.found(lettered("R1", (10, 10), (-2, -1, 2, 1), (0, -2.2)), lettered("R2", (30, 10), (-2, -1, 2, 1), (0, 2.2))), [])
+
+    def test_a_designator_inside_a_courtyard_fails_naming_the_part_whose_courtyard_it_is_in_and_where(self):
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: it fails a designator inside a part's courtyard or nearer another part than its own
+        found = self.found(lettered("R1", (10, 10), (-2, -1, 2, 1)), lettered("R2", (30, 10), (-2, -1, 2, 1), (0, -2.2)))
+        self.assertEqual([(v.rule, v.location) for v in found], [("designator_astray", "R1 at (10, 10) mm")])
+        self.assertIn("MFG-9 each designator stands outside every part's courtyard, beside its own part: the text of R1 stands inside the courtyard of R1", found[0].message)
+
+    def test_a_designator_inside_another_parts_courtyard_names_that_part(self):
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: it fails a designator inside a part's courtyard or nearer another part than its own
+        found = self.found(lettered("R1", (10, 10), (-2, -1, 2, 1), (8, 0)), lettered("R2", (20, 10), (-2, -1, 2, 1), (0, -2.2)))
+        self.assertEqual([v.location for v in found], ["R1 at (18, 10) mm"])
+        self.assertIn("stands inside the courtyard of R2", found[0].message)
+
+    def test_a_designator_nearer_another_part_than_its_own_fails(self):
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: it fails a designator inside a part's courtyard or nearer another part than its own
+        found = self.found(lettered("R1", (10, 10), (-2, -1, 2, 1), (3.5, 0)), lettered("R2", (16.5, 10), (-2, -1, 2, 1), (0, -2.2)))
+        self.assertEqual([(v.rule, v.location) for v in found], [("designator_astray", "R1 at (13.5, 10) mm")])
+        self.assertIn("is 0.325 mm from the courtyard of R2, nearer than the 0.825 mm from its own; move it beside R1", found[0].message)
+
+    def test_a_designator_clear_of_every_part_with_no_nearer_neighbour_passes(self):
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: it fails a designator inside a part's courtyard or nearer another part than its own
+        self.assertEqual(self.found(lettered("R1", (10, 10), (-2, -1, 2, 1), (0, -5)), lettered("R2", (60, 10), (-2, -1, 2, 1), (0, -2.2))), [])
+
+    def test_a_stroke_touching_the_courtyard_line_is_not_inside(self):
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: it fails a designator inside a part's courtyard or nearer another part than its own
+        edge = board_check.TEXT_ADVANCE * 2 + 0.15
+        self.assertEqual(self.found(lettered("R1", (10, 10), (-2, -1, 2, 1), (2 + edge / 2 - 0.02, 0))), [])
+        self.assertEqual(len(self.found(lettered("R1", (10, 10), (-2, -1, 2, 1), (2 + edge / 2 - 0.2, 0)))), 1)
+
+    def test_a_longer_name_reaches_further_into_a_courtyard(self):
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: use a text box estimated from the character count, not the anchor alone
+        place = (2 + 1.0, 0)
+        self.assertEqual(self.found(lettered("R1", (10, 10), (-2, -1, 2, 1), place)), [])
+        self.assertEqual(len(self.found(lettered("RV1234", (10, 10), (-2, -1, 2, 1), place))), 1)
+
+    def test_a_text_turned_a_quarter_stands_on_its_end(self):
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: it fails a designator inside a part's courtyard or nearer another part than its own
+        part = lettered("R1", (10, 10), (-2, -1, 2, 1), (0, -1.6))
+        self.assertEqual(self.found(part), [])
+        turned = part.replace("(at 0 -1.6 0)", "(at 0 -1.6 90)")
+        self.assertEqual(len(self.found(turned)), 1)
+
+    def test_a_footprint_turned_on_the_board_carries_its_text_with_it(self):
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: it fails a designator inside a part's courtyard or nearer another part than its own
+        part = lettered("R1", (10, 10), (-2, -1, 2, 1), (0, -2.2)).replace("(at 10 10)", "(at 10 10 90)")
+        self.assertEqual(self.found(part), [])
+        inside = lettered("R1", (10, 10), (-2, -1, 2, 1), (0, 0.5)).replace("(at 10 10)", "(at 10 10 90)")
+        self.assertEqual([v.location for v in self.found(inside)], ["R1 at (10.5, 10) mm"])
+
+    def test_a_back_side_part_is_held_to_back_courtyards_only(self):
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: it fails a designator inside a part's courtyard or nearer another part than its own
+        front = lettered("R1", (10, 10), (-2, -1, 2, 1), (0, -2.2))
+        under = lettered("R2", (10, 10), (-2, -1, 2, 1), (0, 4), "B.SilkS", "B.Cu")
+        self.assertEqual(self.found(front, under), [])
+        self.assertEqual([v.location for v in self.found(front, lettered("R2", (10, 10), (-2, -1, 2, 1), (0, 0), "B.SilkS", "B.Cu"))], ["R2 at (10, 10) mm"])
+
+    def test_a_hidden_designator_or_one_off_the_silkscreen_is_left_to_the_silkscreen_rule(self):
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: it fails a designator inside a part's courtyard or nearer another part than its own
+        self.assertEqual(self.found(lettered("R1", (10, 10), (-2, -1, 2, 1), extra="(hide yes)")), [])
+        self.assertEqual(self.found(lettered("R1", (10, 10), (-2, -1, 2, 1), layer="F.Fab")), [])
+
+    def test_a_part_with_no_courtyard_is_not_held_against_and_a_board_with_none_passes(self):
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: it fails a designator inside a part's courtyard or nearer another part than its own
+        bare = '(footprint "lib:p" (layer "F.Cu") (at 10 10) (property "Reference" "R1" (at 0 0 0) (layer "F.SilkS")))'
+        self.assertEqual(self.found(bare), [])
+        self.assertEqual(self.found(), [])
+
+    def test_a_circular_courtyard_is_its_full_circle(self):
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: it fails a designator inside a part's courtyard or nearer another part than its own
+        round_part = ('(footprint "lib:h" (layer "F.Cu") (at 10 10) (property "Reference" "H1" (at 0 -3 0) (layer "F.SilkS")) '
+                      '(fp_circle (center 0 0) (end 2 0) (layer "F.CrtYd")))')
+        self.assertEqual(self.found(round_part), [])
+        self.assertEqual(len(self.found(round_part.replace("(at 0 -3 0)", "(at 0 -1 0)"))), 1)
+
+    def test_a_reference_with_a_position_unreadable_is_reported_unreadable(self):
+        # SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5: it fails a designator inside a part's courtyard or nearer another part than its own
+        with self.assertRaises(board_geometry.Unreadable):
+            self.found('(footprint "lib:p" (layer "F.Cu") (at 10 x) (property "Reference" "R1" (at 0 0 0) (layer "F.SilkS")))')
+
+
 def circuit(*extra: str) -> list:
     """U1 with its +5V pin at (10, 10) and ground pin at (10, 12), typed as power inputs, and C1 across them 4 mm east."""
     def pad(number, net, x, y, kind="power_in"):
