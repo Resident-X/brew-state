@@ -50,7 +50,7 @@ links:
     type: derives-from
 brief_confirmation:
   confirmer: claude-sonnet-5-5
-  fingerprint: b7ddde0b388267b64f080181edabc998b4304b0d6e17844c4014c839f3477655
+  fingerprint: 904d2fc3db3a87fa8ed10ee0154928a165f66083680796df5e7c13af55b92746
   gating_profile: ""
 design_question_answers:
   - answered_by: SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C1
