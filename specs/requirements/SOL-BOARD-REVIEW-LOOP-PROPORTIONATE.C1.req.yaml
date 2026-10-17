@@ -2,11 +2,11 @@ id: SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C1
 type: criterion
 title: After a fix a fresh reviewer may judge only the items the change touches, and only a full round closes the review
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
-text: |-
-  After a fix to the board the method lets a fresh reviewer judge only the catalogue items that the changed regions and nets touch, naming the regions from the fix commits and listing each item judged with the reason, while the automated checks run in full. A narrow round never closes the review: it closes only on a full round, which judges every item, that raises no new finding of safety, function or quality severity. The review record states each round's kind, and the review record's check refuses a closing round that is narrow. The wording of SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C3 that requires the whole checklist after any change is superseded by this in the same change. Out of scope: the review's other steps and safety closure.
+text: |
+  After a fix to the board the method lets a fresh reviewer judge only the catalogue items that the changed regions and nets touch, naming the regions from the fix commits and listing each item judged with the reason, while the automated checks and views run in full. A narrow round never closes the review: it closes only on a full round, which judges every item, that leaves no finding open. Each round states its kind, full or narrow, in its opening lines; the review record's check refuses a closing round that states no kind and fails a closing round that is narrow, and a seeded fault in the check's tests shows each. The wording of SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C3 that requires the whole checklist after any change is superseded by SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C5 in the same change. Out of scope: the review's other steps and safety closure.
 links:
   - target: SOL-BOARD-REVIEW-LOOP-PROPORTIONATE
     type: criterion-of

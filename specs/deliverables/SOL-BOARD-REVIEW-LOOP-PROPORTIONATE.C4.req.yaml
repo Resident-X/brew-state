@@ -1,0 +1,12 @@
+id: SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C4
+type: criterion
+title: The designer fixes the class of a finding, not the instance, before the next round
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Step 7 of the method's layout review states that before the next round the designer sweeps the board for every instance of the finding's class and fixes them together, naming the sweep in the commit that fixes it. The designer does not write what the reviewer owns: the verdicts, the Rule answer and the Added as entry. Out of scope: the content of any particular finding and the catalogue's items.
+links:
+  - target: SOL-BOARD-REVIEW-LOOP-PROPORTIONATE
+    type: criterion-of

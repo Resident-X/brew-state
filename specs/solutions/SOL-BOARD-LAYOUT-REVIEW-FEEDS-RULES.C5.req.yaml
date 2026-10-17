@@ -1,0 +1,14 @@
+id: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C5
+type: criterion
+title: A review closes only on a full round with no finding open, the automated checks and views repeated in full after any change
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Write into the method how a review proceeds and closes. The reviewer works from the board files, the checklist, the rendered views, the automated pre-order check's report and the board's committed floorplan and plan alone, never from the designer's reasoning or session, and besides judging every checklist item compares the layout with the plan, a plan item the layout does not meet being a finding. Every finding stays open until it is closed by a change to the board or by a recorded reason showing the item is in fact met, does not apply to this board, or is overridden by a named requirement or catalogue item the board must also meet, never by judging it unimportant; a finding of safety severity, covering separation between mains and anything a person or a low-voltage circuit can reach, fusing, protective earthing or insulation, closes only by a change to the board or by a named person's acceptance of such a reason, recorded beside the board in the same form as the acceptance of the board's separation basis, the person's name and the date of acceptance committed with the record, that form stated in the method's own words rather than by reference to any one project's identifiers, never by the designing or reviewing agent. After any change to the board the views are rendered again and the automated pre-order check is passed again, in full; a fresh reviewer may then judge only the checklist items the change touches in a narrow round, and only a full round, in which every item is judged, that leaves no finding open closes the review. The method recommends, without requiring, a review by an experienced electrical engineer before the first order of any board that carries mains. Out of scope: who that engineer is, and the automated pre-order check itself.
+links:
+  - target: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES
+    type: criterion-of
+  - target: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C3
+    type: supersedes

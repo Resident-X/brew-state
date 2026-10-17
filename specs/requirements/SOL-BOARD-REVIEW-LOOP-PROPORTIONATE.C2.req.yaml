@@ -1,7 +1,7 @@
 id: SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C2
 type: criterion
 title: A finding of cosmetic severity may be carried and does not hold the review open
-status: active
+status: deprecated
 version: 2
 measurement_type: binary
 verification: inspection

@@ -1,7 +1,7 @@
 id: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C3
 type: criterion
 title: A review closes only on a full repeated pass with no finding open
-status: active
+status: deprecated
 version: 2
 measurement_type: binary
 verification: inspection
@@ -10,3 +10,5 @@ text: |
 links:
   - target: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES
     type: criterion-of
+attributes:
+  deprecation_reason: 'superseded by C5: narrow re-review after a fix; closure unchanged'

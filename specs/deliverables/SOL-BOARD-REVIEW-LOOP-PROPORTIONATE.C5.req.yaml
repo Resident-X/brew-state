@@ -1,0 +1,12 @@
+id: SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C5
+type: criterion
+title: A recurring cosmetic nit that a measurement can state is a measured rule the pre-order check enforces
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Step 5 of the method's layout review states that a cosmetic finding which recurs and which a measurement from the board's files can state is added as a rule-kind item the pre-order check enforces, and that a designator inside a part's courtyard or off its own part has an inherent zero figure, so the no-source case does not apply. The pre-order check enforces that rule, converting the catalogue's judgement-kind designator item MFG-9 in place so one statement of it stands: it fails a designator inside a part's courtyard or nearer another part than its own. Each of the three designs under hardware/proof passes the rule before it lands, and a seeded fault shows it fails. Out of scope: the catalogue's other items and the rules for other layers.
+links:
+  - target: SOL-BOARD-REVIEW-LOOP-PROPORTIONATE
+    type: criterion-of
