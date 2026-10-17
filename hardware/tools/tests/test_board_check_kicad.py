@@ -690,18 +690,19 @@ class TheBarrierPasteAndPourRules(Proved):
 
 
 class TheDecouplingAndSilkscreenRules(Proved):
-    # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+    # SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C3: Each rule the method proof design's review adds fails on a fault seeded for it and passes the clean design
     """A via between a decoupling capacitor and the pin it decouples, and a
     reference designator off the silkscreen each fail on a fault seeded for it
     in a throwaway copy of the gate's proof design.
     """
 
     FAULTS = {"a via between a decoupling capacitor's supply pad and the pin it decouples": "decoupling_via",
+              "an integrated circuit with netted pads and no pad typed as a power pin on a design not marked not for manufacture": "decoupling_pintype",
               "a reference designator on the fabrication layer": "reference_off_silkscreen",
               "a part with no reference text": "reference_off_silkscreen"}
 
     def test_each_rule_fails_on_its_seeded_fault_and_names_where(self):
-        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        # SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C3: Each rule the method proof design's review adds fails on a fault seeded for it and passes the clean design
         self.assertCaught(*self.FAULTS)
         found = outcomes()
         for name, rule in self.FAULTS.items():
@@ -713,11 +714,11 @@ class TheDecouplingAndSilkscreenRules(Proved):
 
 
 class TheCleanDesignStatesTheFiguresOfTheDecouplingAndSilkscreenRules(Copy):
-    # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+    # SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C3: Each rule the method proof design's review adds fails on a fault seeded for it and passes the clean design
     """The report states the two inherent zeros, and how much of the layout the decoupling rule measured."""
 
     def test_the_inherent_zeros_are_stated_and_the_clean_design_passes_the_two_rules(self):
-        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        # SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C3: Each rule the method proof design's review adds fails on a fault seeded for it and passes the clean design
         status, lines = self.check()
         self.assertEqual(status, 0, lines)
         design = "hardware/proof/gate-proof/gate-proof.kicad_pro"

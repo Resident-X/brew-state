@@ -4,13 +4,13 @@ category: solution
 title: The board design method is followable by a fresh designer or agent and carries nothing specific to this machine
 status: active
 priority: must
-version: 4
+version: 5
 text: |
   The method as a whole is written to be followed without its author, entered by agents through a project operator skill, named with the repository's repo- prefix so it is tracked and survives the skills sync, that wraps Konnect's bundled KiCad skills unedited, holds no figure, part choice or board shape of this machine, and is demonstrated by a fresh agent session following it to a throwaway design, never ordered, that passes the pre-order gate.
 
-  Settled before the build. The demonstration runs only after the three maintenance solutions this one depends on have merged, since each changes the method text it follows. The fresh session has no auto-memory and only the method and the operator skill, which is a thin entry point: every instruction lives in the method, and the method governs where a bundled Konnect skill conflicts with it, as routing goes through KiCad's exporter, Freerouting and KiCad's importer. The throwaway design lives under hardware/proof/, carries a synthetic separation basis with NOT_FOR_MANUFACTURE set, is judged by the existing board rule-check task, and merges by merge commit so the history check can read it. The Tools table gains a Konnect row stating that it needs an agent client that speaks MCP. The Konnect gaps found so far (deleting vias, editing rule areas, moving footprint text fields, swapping a placed footprint, done with KiCad scripting) belong in the method. Machine-freeness is an inspection of the existing text clause by clause, not a rewrite.
+  Settled before the build. The demonstration runs only after the three maintenance solutions this one depends on have merged, since each changes the method text it follows. The fresh session has no auto-memory and only the method and the operator skill, which is a thin entry point: every instruction lives in the method, and the method governs where a bundled Konnect skill conflicts with it, as routing goes through KiCad's exporter, Freerouting and KiCad's importer. The throwaway design lives under hardware/proof/, carries a synthetic separation basis with NOT_FOR_MANUFACTURE set, is judged by the existing board rule-check task, and the rules its own layout review requires are added to that task, each proved by a seeded fault, and merges by merge commit so the history check can read it. The Tools table gains a Konnect row stating that it needs an agent client that speaks MCP. The Konnect gaps found so far (deleting vias, editing rule areas, moving footprint text fields, swapping a placed footprint, done with KiCad scripting) belong in the method. Machine-freeness is an inspection of the existing text clause by clause, not a rewrite.
 
-  Placement. The work reuses what is built: the method and its tools table are edited in place, the pre-order gate, history check and proof-folder layout are used as they stand, and a new gate, a copy of an existing proof design and any edit to Konnect's bundled skills are rejected (a copy proves nothing about followability; an edit is forbidden by the toolchain decision). Machine-freeness reads a cited published source, such as a manufacturer application note named as the origin of a catalogue item, as an input to the item and not as a part choice of this machine; the inspection records, for each cited part, whether it is generic to the practice or the machine's own, and only the latter fails.
+  Placement. The work reuses what is built: the method and its tools table are edited in place, the pre-order gate, history check and proof-folder layout are used as they stand, apart from the rules the design's own review requires, and a new gate, a copy of an existing proof design and any edit to Konnect's bundled skills are rejected (a copy proves nothing about followability; an edit is forbidden by the toolchain decision). Machine-freeness reads a cited published source, such as a manufacturer application note named as the origin of a catalogue item, as an input to the item and not as a part choice of this machine; the inspection records, for each cited part, whether it is generic to the practice or the machine's own, and only the latter fails.
 links:
   - target: DEL-HW-DESIGN-METHOD.C5
     type: derives-from
@@ -46,6 +46,8 @@ links:
     type: depends-on
   - target: SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN
     type: depends-on
+  - target: DEL-HW-DESIGN-METHOD.C4
+    type: derives-from
 brief_confirmation:
   confirmer: claude-sonnet-5-5
   fingerprint: b7ddde0b388267b64f080181edabc998b4304b0d6e17844c4014c839f3477655

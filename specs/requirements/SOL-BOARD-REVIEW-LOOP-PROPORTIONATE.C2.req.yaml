@@ -1,0 +1,12 @@
+id: SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C2
+type: criterion
+title: A finding of cosmetic severity may be carried and does not hold the review open
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  A finding of cosmetic severity, the catalogue's severity for a failure that affects only appearance or legibility, may be closed in the review record as carried with its item named, and a review closes with such findings carried while every finding of safety, function and quality severity is closed. The next board's designer sees the carried findings. The wording of SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C3 that closes a review only with no finding open, and the wording of REQ-BOARD-LAYOUT-PRACTICE-001.C1 that a board judged failing is not ordered, are amended in the same change to leave cosmetic items out. Out of scope: any finding of safety, function or quality severity.
+links:
+  - target: SOL-BOARD-REVIEW-LOOP-PROPORTIONATE
+    type: criterion-of

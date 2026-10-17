@@ -3309,6 +3309,39 @@ def decoupling_vias(design: Design, tree: list, ground: Set[str]) -> List[Violat
     return found
 
 
+def untyped_circuits(design: Design, tree: list, not_for_manufacture: bool) -> List[Violation]:
+    """Every integrated circuit of an orderable board that has netted pads and none typed as a power pin.
+
+    A circuit is a footprint whose reference begins with U, as
+    board_views.circuits has it. Without a pad typed power input or power
+    output it has no supply nets, so the decoupling rule finds no decoupling
+    part for it and measures nothing, and the board would pass on that. A
+    design marked not for manufacture is not refused, since the gate's proof
+    design is such a board; its coverage line shows the paths measured. A
+    circuit none of whose pads is on a net is not refused: it has no supply pad
+    to decouple.
+    """
+    if not_for_manufacture:
+        return []
+    import board_views
+    table = board_geometry.net_table(tree)
+    found = []
+    for footprint in sexpr.children(tree, "footprint"):
+        name = board_geometry.reference(footprint)
+        if not name.startswith("U"):
+            continue
+        held = board_views.pads(footprint, table)
+        if any(net for net, _ in held) and not any(kind in ("power_in", "power_out") for _, kind in held):
+            at = board_geometry.placement(footprint, f"the footprint {name}")
+            found.append(Violation(
+                design.project, "decoupling_pintype", f"{name} at ({coordinate(at[0])}, {coordinate(at[1])}) mm",
+                f"DECOUPLE-6 the decoupling rule measures every integrated circuit's decoupling: {name} has netted "
+                "pads and none typed power input or power output (pintype in the layout file), so the rule finds no "
+                f"supply nets for it and measures nothing; type {name}'s supply pads from its symbol's pin types, "
+                "or mark the design not for manufacture (NOT_FOR_MANUFACTURE=true) if it is a proof board"))
+    return found
+
+
 def decoupling_paths(tree: list, ground: Set[str]) -> Tuple[int, list]:
     """The number of circuits with a supply pin, and each decoupling path as (circuit, part, supply pad, pin).
 
@@ -3646,6 +3679,7 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
     found += ground_reliefs(design, rules, tree, members)
     try:
         found += decoupling_vias(design, tree, ground_nets(members))
+        found += untyped_circuits(design, tree, not_for_manufacture)
         if read is not None:
             circuits, paths = decoupling_paths(tree, ground_nets(members))
             read.append(("DECOUPLE-6 decoupling paths measured", "the layout's pad pin types",

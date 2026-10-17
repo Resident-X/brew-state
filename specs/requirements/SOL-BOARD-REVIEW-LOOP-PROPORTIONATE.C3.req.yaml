@@ -1,0 +1,12 @@
+id: SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C3
+type: criterion
+title: A quality only a measured rule can state, which a closed proof design already breaks, becomes a judgement-kind item
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  When a review finding names a quality that only a measured rule could state and a proof design already closed in the repository breaks that quality, the method adds it to the catalogue as a judgement-kind item judged on the views, and records the reason in the finding's Rule answer, so that no closed proof design has to change. The wording of SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C2 that a finding is expressible exactly when the pre-order check can enforce it is amended in the same change to name this case. Out of scope: findings of safety severity, which always become rules.
+links:
+  - target: SOL-BOARD-REVIEW-LOOP-PROPORTIONATE
+    type: criterion-of
