@@ -1,0 +1,12 @@
+id: REQ-ELECTRICAL-INSTALL-001.C13
+type: criterion
+title: Every part works within its derated rating at its worst-case operating point
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  A part run at its full rating in a hot box for years fails sooner than its rating suggests. A declared derating policy states, with its source, the share of each part's voltage, power and temperature rating it may use, and every part is shown to stay within that share at the worst case the design meets: the top of the declared supply span, the hottest enclosure condition and the heaviest load.
+links:
+  - target: REQ-ELECTRICAL-INSTALL-001
+    type: criterion-of

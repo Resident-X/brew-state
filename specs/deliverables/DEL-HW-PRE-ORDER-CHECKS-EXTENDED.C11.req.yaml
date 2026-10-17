@@ -1,0 +1,13 @@
+id: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C11
+type: criterion
+title: Every tracked design passes the new rules, which run in the build round for board changes and nightly on main
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Every board design the repository tracks, the proof designs included, carries the records these rules read, synthetic where the design is not for manufacture, and passes them; the rules run in the build round of every change to a board design or to any of those records, and in the nightly full verification of main, with the derating policy and pin-limit records among what the round reads for a design.
+links:
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED
+    type: criterion-of

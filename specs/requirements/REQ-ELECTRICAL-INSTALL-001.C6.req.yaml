@@ -2,13 +2,15 @@ id: REQ-ELECTRICAL-INSTALL-001.C6
 type: criterion
 title: Touchable conductive parts remain connected to the machine's protective arrangement
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |
   The retrofit moves mains wiring into a new enclosure and disturbs whatever arrangement the original manufacturer relied on. Continuity that survived the original build does not survive being rebuilt by hand.
 
   This covers parts the retrofit introduces and parts it inherits, and it is established by measurement on the finished machine rather than by having intended it.
+
+  Connected means a resistance from each touchable conductive part to the earth contact of the machine's supply inlet no higher than a declared figure, taken from the governing wiring authority or standard or from a cited, freely available derivation of it, and measured at a stated test current. A joint that passes a continuity check at a trickle of current can still be too resistive to carry a fault until its protection acts.
 links:
   - target: REQ-ELECTRICAL-INSTALL-001
     type: criterion-of

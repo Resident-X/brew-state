@@ -1,0 +1,12 @@
+id: REQ-PRODUCTION-GRADE-VERIFICATION-001.C8
+type: criterion
+title: Flicker and harmonic currents measured on the assembled machine are within the governing standard's limits
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  The measurement is made at the top of the declared supply span with the switching the control commands in service, and replaces the analysis of that switching with a measurement.
+links:
+  - target: REQ-PRODUCTION-GRADE-VERIFICATION-001
+    type: criterion-of

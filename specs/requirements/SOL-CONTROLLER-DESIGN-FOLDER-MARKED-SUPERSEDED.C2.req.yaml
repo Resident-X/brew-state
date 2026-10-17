@@ -1,0 +1,12 @@
+id: SOL-CONTROLLER-DESIGN-FOLDER-MARKED-SUPERSEDED.C2
+type: criterion
+title: Each statement in the folder that an active decision has overtaken is marked with the decision that overtook it
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Mark in place, naming the overtaking decision, every statement in the folder that an active decision contradicts, including the open item and the bill-of-materials rows that carry the proof-of-life interlock as deferred. Out of scope: correcting design content that no decision has yet overtaken, which stays as history and input to the partition.
+links:
+  - target: SOL-CONTROLLER-DESIGN-FOLDER-MARKED-SUPERSEDED
+    type: criterion-of

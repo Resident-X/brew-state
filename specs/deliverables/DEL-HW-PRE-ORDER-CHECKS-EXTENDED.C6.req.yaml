@@ -1,0 +1,13 @@
+id: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C6
+type: criterion
+title: A design missing its fiducials or a polarised part's polarity or first-pin mark fails the check
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The marks an assembler and an inspector rely on are present on the side each assembled part sits, so an orientation error can be seen at arrival inspection.
+links:
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED
+    type: criterion-of

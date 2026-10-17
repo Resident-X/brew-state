@@ -50,3 +50,7 @@ links:
     type: targets
   - target: SOL-HW-GATE-IN-ROUND-AND-NIGHTLY
     type: depends-on
+  - target: REQ-ELECTRICAL-INSTALL-001.C9
+    type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C10
+    type: targets

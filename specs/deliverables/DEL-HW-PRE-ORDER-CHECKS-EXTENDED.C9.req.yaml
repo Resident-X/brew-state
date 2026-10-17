@@ -1,0 +1,13 @@
+id: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C9
+type: criterion
+title: A mounting hole that breaches the separation from mains fails the check
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  A hole, its plating and the fixing through it are held to the signed separation from every mains net, and a plated hole is joined to no net that would carry low voltage across that distance.
+links:
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED
+    type: criterion-of

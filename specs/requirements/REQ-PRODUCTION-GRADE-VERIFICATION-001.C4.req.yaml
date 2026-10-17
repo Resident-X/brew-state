@@ -1,0 +1,12 @@
+id: REQ-PRODUCTION-GRADE-VERIFICATION-001.C4
+type: criterion
+title: Humidity inside the enclosure is measured during sustained running and every part is graded for it
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  The measured humidity replaces the condensing condition the prototype assumes, and a part graded only for that assumption is checked against what was measured.
+links:
+  - target: REQ-PRODUCTION-GRADE-VERIFICATION-001
+    type: criterion-of

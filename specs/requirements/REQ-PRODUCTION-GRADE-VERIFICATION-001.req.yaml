@@ -1,0 +1,34 @@
+id: REQ-PRODUCTION-GRADE-VERIFICATION-001
+type: requirement
+category: constraint
+title: A build offered as finished measures what the prototype establishes by analysis
+status: active
+priority: could
+version: 1
+text: |
+  The prototype is verified with what a builder without a laboratory has, and where a quantity cannot be measured that way it rests on analysis or inspection with the worst case assumed. A build offered to others as finished, rather than as a prototype, measures those quantities instead of assuming them: the assembled appliance's dielectric strength, its withstand of surge and static discharge, its conducted and radiated emissions, its flicker and harmonic currents, its touch current, its earth continuity at the standard's test current, and the humidity inside its enclosure while it runs.
+
+  This is outside the first prototype's path. No part of the prototype waits on it, and nothing here weakens what the prototype must show by its own means.
+rationale: |
+  The verification the prototype can do at home stops short of four quantities that need instruments it does not have: a dielectric strength tester, a conducted emissions receiver with its line impedance network, a touch current meter, and a humidity logger that survives the inside of a running machine. For each the prototype substitutes analysis from datasheets or inspection, with the worst case assumed, which is honest for a machine its builder uses and watches, and short of what a machine handed to someone else should carry.
+
+  Recorded now, at could, so the gap is visible rather than forgotten, and kept off the prototype's path so that it cannot hold the first build hostage to equipment the owner has said is for a later, production-grade version.
+links:
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C6
+    type: derives-from
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C7
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C12
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C14
+    type: derives-from
+  - target: OBL-ELECTROMAGNETIC-COMPATIBILITY-001.C1
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C10
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C11
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C6
+    type: derives-from
+  - target: OBL-ELECTROMAGNETIC-COMPATIBILITY-001.C2
+    type: derives-from

@@ -3,7 +3,7 @@ type: decision
 category: strategic
 title: Actuation is mains-phased below the hardware seam while the control period stays crystal-derived
 status: active
-version: 2
+version: 3
 text: |
   The control law runs on a period the controller itself keeps, and commands each actuation channel a
   level as it does today. Below the hardware seam a separate layer converts that level into a decision,
@@ -59,7 +59,7 @@ rationale: |
   reading quantised in whole strokes, so the window that reading is averaged over becomes a figure to
   establish rather than assume, and the first channel whose effective rate is not the control step. Phase
   modulation of the pump is not adopted and not forbidden: the measured window either holds the band a
-  delivery is judged by or it does not, and that measurement is what would reopen it.
+  delivery is judged by or it does not, and that measurement is what would reopen it. Switching heaters by the half-cycle also shapes what the machine draws from the supply: each decision steps the current by a whole element's draw, which is a source of flicker, and a pattern that energises more half-cycles of one polarity than the other draws a direct component and even harmonics. The decision pattern is therefore analysed against the flicker and harmonic current limits for household appliances, and holding the two polarities in balance is a property the layer must have, not a refinement it may add.
 options_considered:
   - option: Keep the control period crystal-derived and convert commanded levels to per-half-cycle energise-or-idle decisions in a mains-phased layer below the hardware seam
     reason_rejected: ""
@@ -84,4 +84,6 @@ links:
   - target: REQ-TIMING-FAULT-RESPONSE-001.C6
     type: addresses
   - target: REQ-MACHINE-CONFIGURATION-001.C9
+    type: addresses
+  - target: OBL-ELECTROMAGNETIC-COMPATIBILITY-001.C2
     type: addresses

@@ -1,0 +1,15 @@
+id: OBL-ELECTROMAGNETIC-COMPATIBILITY-001
+type: requirement
+category: obligation
+title: The machine's disturbance of its supply and surroundings stays within household appliance limits
+status: active
+priority: must
+version: 1
+text: |
+  A machine that switches kilowatts of heating on a domestic supply disturbs that supply, and the fast edges of its controller and its switched loads radiate into the room around it. The limits it must stay within are set outside the project, by the electromagnetic compatibility rules that apply to household appliances where the machine is used, and they bind a home build as they bind a bought machine.
+
+  Which standard governs is declared for the jurisdiction rather than assumed, and a figure taken from it comes from that standard or from a cited, freely available derivation of its tables, never from memory.
+rationale: |
+  Recorded as an obligation with external authority, beside the electrical safety obligation rather than under it, because its consequence lands somewhere else: on other equipment on the same supply and in the same room, and on the supply itself, not on a person touching the machine. Folding it into the safety obligation would draw the distinction on the wrong axis, and a design review that found the gap found it because nothing asked.
+
+  Stated as limits met by design and by analysis because the builder has no instrument that measures emissions. Measured compliance is work for a build offered to others as finished, and is recorded at a lower priority so that it is visible without standing in the prototype's path.

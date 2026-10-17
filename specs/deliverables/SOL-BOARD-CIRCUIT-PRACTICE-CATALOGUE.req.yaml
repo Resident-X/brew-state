@@ -1,0 +1,62 @@
+id: SOL-BOARD-CIRCUIT-PRACTICE-CATALOGUE
+type: deliverable
+category: solution
+title: The method carries a sourced circuit practice catalogue, and every schematic is reviewed against it before layout, proven blind on seeded defects
+status: active
+version: 1
+text: |
+  The method gains a circuit practice catalogue and a schematic review step that applies it, the counterpart of the layout practice catalogue and the layout review already in the board design method. The layout catalogue judges how a board is drawn and leaves whether its circuit is right outside its scope; the value-critical circuits are proven by simulation or calculation, and nothing else in a schematic is judged at all. This closes that gap: every net and every part of a schematic receives a verdict before layout begins.
+
+  The catalogue is written in the form the layout catalogue uses: each item carries a stable identifier, the condition under which it applies stated in terms of what the schematic carries, the question it asks, the pattern that passes, its severity, and its published source by title, publisher, section, address and the date read. A source is a document any reader can obtain without charge, such as a part maker's datasheet, application note or design guide. A figure that a purchased standard sets is never stated from memory: the item requires it from the governing standard named in the board's separation basis or from a cited, freely available derivation of that standard's tables. The catalogue holds no figure, part or board shape of any one machine.
+
+  Its baseline items cover at least:
+  - each pin's voltage in every operating state against its absolute maximum and its input tolerance, including a pin driven while its own part is unpowered;
+  - the external parts each integrated circuit's datasheet requires, with their values and ratings;
+  - capacitance remaining after DC-bias derating on ceramic capacitors that set a filter, a regulator's stability or a hold-up time;
+  - a pull-up on every open-drain and two-wire bus line, sized for the bus speed and capacitance;
+  - every boot and strap pin held to a defined level, and a debug connector reaching the controller;
+  - each RC filter's time constant set against the converter's sample rate and the settling its sampling needs;
+  - inrush at power-up and undervoltage lockout on every supply;
+  - every polarised part's orientation marked on the schematic;
+  - each cable's pinning, straight-through or mirrored, checked against the retained harness it mates with;
+  - each protective chain taken through a single-fault analysis, every component fault leaving the protected output safe or the fault detected;
+  - each part forming a mains-to-low-voltage barrier carrying a sourced isolation rating at or above its declared insulation type;
+  - mains-side transient protection rated for the surge level of the declared overvoltage category, from its makers' ratings;
+  - protection against static discharge at every connector or control a person can reach;
+  - touch current, estimated from the filter and supply parts' leakage to protective earth, against the limit for the appliance's protection class;
+  - the element that removes heater power on loss of proof of life taking nothing from the controller's clock, reset or supply, so its independence is shown in the schematic rather than first found at bring-up;
+  - emissions limited at their sources: filtering at the supply inlet and at each switched mains load, and the edge rates of switching parts bounded, each against the governing standard's limits for household appliances, together with the layout catalogue's emissions area;
+  - every part within the board's declared derating policy at its worst-case operating point, the policy stating its voltage, power and temperature factors with their source.
+
+  The review step runs after the schematic is drawn and before any part is placed. It records a verdict on every item for every net and part the item's condition selects, with each finding recorded and closed by a change to the schematic or a recorded reason that the item is met or does not apply. A finding bearing on safety is closed as the layout review closes one, by a change or a named person's recorded acceptance.
+
+  The catalogue is proven blind, as the layout review is: a clean proof schematic is committed, a session that has never read the catalogue is given the proof schematic and asked to plant realistic schematic defects of its own choosing in a copy outside the tracked tree, recording each apart from the copy, and a fresh session with no record of the seeds reviews the copy by the review step. A seed the review misses is closed by amending the catalogue from a published source, or the review step, and the blind review repeated in a new session.
+rationale: |
+  A design review of the controller hardware found that nothing judges a schematic as a whole. The layout catalogue is explicit that circuit values are outside it, and the pre-layout proof covers only the circuits whose values decide whether they work, so a pin driven beyond its rating, a missing pull-up, a floating strap pin or a cable mirrored against its harness reaches the layout unexamined, and the layout review cannot see any of them.
+
+  Seeds written by someone who has read the catalogue test only whether the review applies the catalogue; seeds written by someone who has not test whether the catalogue covers the defects a designer actually makes, which is the question a blind proof exists to answer.
+links:
+  - target: DEL-HW-DESIGN-METHOD.C11
+    type: derives-from
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3
+    type: targets
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: targets
+  - target: REQ-SAFETY-CHAIN-001.C8
+    type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C9
+    type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C10
+    type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C11
+    type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C12
+    type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C13
+    type: targets
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+  - target: OBL-ELECTROMAGNETIC-COMPATIBILITY-001.C1
+    type: targets
+  - target: REQ-SAFETY-CHAIN-001.C7
+    type: targets

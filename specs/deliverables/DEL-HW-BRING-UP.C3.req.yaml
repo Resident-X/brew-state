@@ -2,12 +2,14 @@ id: DEL-HW-BRING-UP.C3
 type: criterion
 title: Loss of the controller's proof of life is shown to remove heater power
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 closes_by: cascade
 text: |
   The interval from loss to removal is measured against the bound the safety chain requires.
+
+  Loss is produced in each way the controller can lose it without its firmware's help: halted by its debugger, held in reset, and with its supply lowered below its operating range from an adjustable bench supply. Each case is run with a dummy load standing in for the heater, so the removal is shown not to depend on the controller's clock, reset or supply.
 links:
   - target: DEL-HW-BRING-UP
     type: criterion-of

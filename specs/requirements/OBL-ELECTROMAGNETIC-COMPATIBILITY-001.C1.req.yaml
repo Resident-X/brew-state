@@ -1,0 +1,12 @@
+id: OBL-ELECTROMAGNETIC-COMPATIBILITY-001.C1
+type: criterion
+title: Disturbance the machine emits stays within the limits for household appliances
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Conducted and radiated disturbance from the machine stays within the limits the governing standard sets for household appliances. On the prototype this is established by inspecting the design against practice that limits emission at its sources, since measuring it needs instruments a builder without a laboratory does not have.
+links:
+  - target: OBL-ELECTROMAGNETIC-COMPATIBILITY-001
+    type: criterion-of

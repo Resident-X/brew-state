@@ -1,0 +1,12 @@
+id: REQ-ELECTRICAL-INSTALL-001.C12
+type: criterion
+title: Current through a person touching the machine stays within the limit set for the appliance's protection class
+status: active
+version: 1
+measurement_type: threshold
+verification: analysis
+text: |
+  Supply filtering and isolating supplies pass current to protective earth by design, and with the earth connection lost that current flows through whoever touches the machine. The limit is the one the governing standard sets for the appliance's protection class, taken from that standard or from a cited, freely available derivation of it. The current is established from the makers' figures for every part that contributes, at the top of the declared supply span, since measuring it needs an instrument a builder without a laboratory does not have.
+links:
+  - target: REQ-ELECTRICAL-INSTALL-001
+    type: criterion-of

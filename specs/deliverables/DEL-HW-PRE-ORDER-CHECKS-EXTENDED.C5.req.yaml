@@ -1,0 +1,13 @@
+id: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C5
+type: criterion
+title: A pin whose net can exceed the pin's absolute maximum fails the check
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  Each part's pin limits and the board's power domains come from the pin-limit record, with their datasheet source, and each pin is compared with the highest voltage its net can reach, including a pin whose own domain is unpowered while another domain drives its net.
+links:
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED
+    type: criterion-of

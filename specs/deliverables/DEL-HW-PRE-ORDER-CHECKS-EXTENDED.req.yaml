@@ -1,0 +1,48 @@
+id: DEL-HW-PRE-ORDER-CHECKS-EXTENDED
+type: deliverable
+category: task
+title: The pre-order check also fails the defects in a design that its files can decide but no rule yet tests
+status: active
+level: task
+version: 1
+text: |
+  The automated pre-order check that every board design must pass gains further rules, each guarding against a defect that today reaches a reviewer's judgement, or no one's, when a file comparison could find it exactly. A board whose minimums undercut what the manufacturer can make, a separation figure signed lower than its own inputs allow, a sensing net run beside a switching net, a part stressed past its derated voltage, a pin whose net can exceed its absolute maximum, a missing fiducial or polarity mark, a connector starved of ground returns, a part its maker has stopped making, and a mounting hole that breaches the mains separation are each failed by the check before the board is ordered.
+
+  Each rule reads only the board's files and the records the board is already held to, extended where a rule needs a field they do not yet carry: the dated manufacturer record, the signed separation basis, the parts specification record, the catalogue extract, and a per-part record of pin limits. Each is run the same way every time by the one task-runner command, in the build round for board changes and nightly, and each is shown to fail on a fault seeded for it in a proof design before its silence is trusted.
+rationale: |
+  A design review of the controller hardware found these defects checked by judgement or not at all, while each can be decided from the files. The design-verification task that owns the pre-order check is delivered and frozen, so extending the check is new work beside it rather than an edit to it, and it serves the same epic criteria: no board ordered until its design is proven, and separation meeting the signed basis.
+
+  Each criterion traces to the requirement criterion whose outcome its rule protects: board minimums to REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1; the separation floor to OBL-ELECTRICAL-THERMAL-SAFETY-001.C6; sensing clearance and connector ground returns to REQ-ELECTRICAL-INSTALL-001.C8; voltage derating to REQ-ELECTRICAL-INSTALL-001.C13; pin limits to REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3; fiducials and polarity and first-pin marks to REQ-BOARD-LAYOUT-PRACTICE-001.C1, whose scope includes what manufacture and assembly need; part lifecycle to REQ-PUBLISHED-BUILD-PATH-001.C5; mounting-hole isolation to OBL-ELECTRICAL-THERMAL-SAFETY-001.C7; and the seeded proof of every rule to OBL-VERIFICATION-DISCIPLINE-001.C9.
+links:
+  - target: DEL-CONTROLLER-HARDWARE.C3
+    type: derives-from
+  - target: DEL-CONTROLLER-HARDWARE.C4
+    type: derives-from
+  - target: SOL-HW-BOARD-RULE-CHECK-GATE
+    type: depends-on
+  - target: SOL-HW-PARTS-CHECK
+    type: depends-on
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+  - target: DEC-BOARD-SEPARATION-BASIS-RECORD
+    type: justified-by
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3
+    type: targets
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C6
+    type: targets
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C7
+    type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C8
+    type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C13
+    type: targets
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: REQ-PUBLISHED-BUILD-PATH-001.C5
+    type: targets
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: targets
+  - target: DEC-BOARD-DESIGN-RECORDS-AS-YAML
+    type: justified-by

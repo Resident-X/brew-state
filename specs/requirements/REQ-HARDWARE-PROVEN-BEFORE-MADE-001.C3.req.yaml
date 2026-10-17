@@ -1,0 +1,12 @@
+id: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3
+type: criterion
+title: Every part and net of a design is judged against written circuit practice before the design is ordered
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The judgement covers every net and every part, not only the circuits whose values decide whether they work, since a pin driven beyond its maker's limits or a part missing the companions its maker requires fails a board as surely as a mis-sized filter. Each item of the practice cites the published source it comes from, and a failing item is resolved by a change to the design or a recorded finding that it is met or does not apply, never by judging the failure unimportant.
+links:
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001
+    type: criterion-of

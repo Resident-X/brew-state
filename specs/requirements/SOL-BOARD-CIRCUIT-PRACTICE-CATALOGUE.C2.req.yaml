@@ -1,0 +1,12 @@
+id: SOL-BOARD-CIRCUIT-PRACTICE-CATALOGUE.C2
+type: criterion
+title: The method's schematic review gives every net and part a verdict before layout
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Add the schematic review step to the method between drawing the schematic and placing parts, recording a verdict on every applicable item for every net and part and closing each finding by a change or a recorded reason, with safety findings closed only by a change or a named person's recorded acceptance. Out of scope: reviewing any real board, which each board's design task does when it applies the method.
+links:
+  - target: SOL-BOARD-CIRCUIT-PRACTICE-CATALOGUE
+    type: criterion-of

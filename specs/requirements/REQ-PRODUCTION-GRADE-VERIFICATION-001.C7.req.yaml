@@ -1,0 +1,12 @@
+id: REQ-PRODUCTION-GRADE-VERIFICATION-001.C7
+type: criterion
+title: Radiated emissions measured on the assembled machine are within the governing standard's limits
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  The measurement is made with the machine running its heaviest switching, and replaces the design-time inference with a measurement; the limitation of emissions by design still stands.
+links:
+  - target: REQ-PRODUCTION-GRADE-VERIFICATION-001
+    type: criterion-of

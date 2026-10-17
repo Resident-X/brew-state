@@ -1,0 +1,12 @@
+id: REQ-ELECTRICAL-INSTALL-001.C10
+type: criterion
+title: Mains transients up to the declared overvoltage category leave the separation intact and the protective chain working
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  A supply surge is an operating condition of anything plugged into a building's wiring, not a fault the build may assume away. The protection that meets it is rated for the surge the governing standard assigns to the overvoltage category the separation basis declares, taken from that standard or from a cited, freely available derivation of it, and judged from its makers' ratings, since a builder without a laboratory has no means of applying a surge.
+links:
+  - target: REQ-ELECTRICAL-INSTALL-001
+    type: criterion-of

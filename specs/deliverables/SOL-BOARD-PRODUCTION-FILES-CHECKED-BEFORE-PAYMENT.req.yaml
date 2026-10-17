@@ -1,0 +1,21 @@
+id: SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT
+type: deliverable
+category: solution
+title: The method's ordering step checks a board's production files against the assembler's preview and on rendered layers before payment
+status: active
+version: 1
+text: |
+  The method gains an ordering step that checks the production files before a board is paid for. Every board's design task orders its board and is required to check its production files against the assembler's preview before payment; this solution writes how that check is done, so it is the same each time and a rebuilder can follow it.
+
+  The step compares, for every placed part, the position, the rotation and the polarity or first-pin orientation in the assembly files with the assembler's own rendered preview of the assembled board, and the mapping of each position to its catalogue part with the parts specification record. It then renders the fabrication files, every copper, mask, legend and drill layer and the board outline, and has each looked at for missing, shifted or mirrored content. Each finding is corrected in the design and the files regenerated before payment.
+
+  The step is proven on the pre-order check's proof design: a copy's assembly files carry a part rotated and a polarised part reversed, and following the step finds both.
+rationale: |
+  An assembled board most often goes wrong in its production files while its design is right: a footprint's rotation that differs from the assembler's convention, a diode or capacitor placed reversed, a layer exported mirrored. None of this is visible to the checks on the design, and all of it is visible in the assembler's preview and the rendered files before payment. The requirement was carried on the design-verification task and retired from it to each board's design task, where ordering happens, but nothing said how the check is made.
+links:
+  - target: DEL-HW-DESIGN-METHOD.C10
+    type: derives-from
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: targets

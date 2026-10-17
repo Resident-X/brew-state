@@ -1,0 +1,13 @@
+id: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C8
+type: criterion
+title: A part the catalogue extract shows at end of life fails the check
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The catalogue extract carries each part's lifecycle status with where and when it was read, from the part maker's published status or the manufacturer's catalogue. A part shown at end of life, or not recommended for new designs, fails. Where no source publishes a status for a part, the entry says so and names the sources looked at, and the part is not failed for that.
+links:
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED
+    type: criterion-of

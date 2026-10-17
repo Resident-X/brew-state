@@ -1,0 +1,12 @@
+id: REQ-PUBLISHED-BUILD-PATH-001.C5
+type: criterion
+title: Every part the published designs call for can be obtained by a reader who is not the author
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  A board whose parts their makers have stopped making is a board nobody can have made, however complete its files are. Each part's availability is read with the date it was read, and a part its maker has declared at end of life when a design is ordered is replaced before the order.
+links:
+  - target: REQ-PUBLISHED-BUILD-PATH-001
+    type: criterion-of

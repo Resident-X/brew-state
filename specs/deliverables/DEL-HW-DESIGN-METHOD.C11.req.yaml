@@ -1,0 +1,13 @@
+id: DEL-HW-DESIGN-METHOD.C11
+type: criterion
+title: Each schematic is reviewed against a written circuit checklist giving every net and part a verdict before layout
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The checklist is drawn from the method's circuit practice catalogue, each item citing its published source, and written before the schematic it reviews. Every net and every part receives a verdict, not only the circuits whose values decide whether they work, and a finding is closed by a change to the schematic or a recorded reason showing the item is met or does not apply, never by judging it unimportant. The review is shown to find defects placed for it by someone who has not read the catalogue.
+links:
+  - target: DEL-HW-DESIGN-METHOD
+    type: criterion-of
