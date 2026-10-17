@@ -49,8 +49,8 @@ links:
   - target: DEL-HW-DESIGN-METHOD.C4
     type: derives-from
 brief_confirmation:
-  confirmer: claude-sonnet-5-5
-  fingerprint: 904d2fc3db3a87fa8ed10ee0154928a165f66083680796df5e7c13af55b92746
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: db32f16544c950209a120707a4d6aa22c85d414372e39dfe0a46a118ad547d7b
   gating_profile: ""
 design_question_answers:
   - answered_by: SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C1
