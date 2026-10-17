@@ -1,9 +1,9 @@
 id: SOL-BOARD-CIRCUIT-PRACTICE-CATALOGUE
 type: deliverable
 category: solution
-title: The method carries a sourced circuit practice catalogue, and every schematic is reviewed against it before layout, proven blind on seeded defects
+title: The method carries a sourced circuit practice catalogue, and every schematic is reviewed against it before layout
 status: active
-version: 1
+version: 2
 text: |
   The method gains a circuit practice catalogue and a schematic review step that applies it, the counterpart of the layout practice catalogue and the layout review already in the board design method. The layout catalogue judges how a board is drawn and leaves whether its circuit is right outside its scope; the value-critical circuits are proven by simulation or calculation, and nothing else in a schematic is judged at all. This closes that gap: every net and every part of a schematic receives a verdict before layout begins.
 
@@ -30,17 +30,19 @@ text: |
 
   The review step runs after the schematic is drawn and before any part is placed. It records a verdict on every item for every net and part the item's condition selects, with each finding recorded and closed by a change to the schematic or a recorded reason that the item is met or does not apply. A finding bearing on safety is closed as the layout review closes one, by a change or a named person's recorded acceptance.
 
-  The catalogue is proven blind, as the layout review is: a clean proof schematic is committed, a session that has never read the catalogue is given the proof schematic and asked to plant realistic schematic defects of its own choosing in a copy outside the tracked tree, recording each apart from the copy, and a fresh session with no record of the seeds reviews the copy by the review step. A seed the review misses is closed by amending the catalogue from a published source, or the review step, and the blind review repeated in a new session.
+  Settled before build:
+
+  - The catalogue is a reference section of the board design method, beside the layout practice catalogue, and the schematic review is a numbered section of the method that runs after the schematic is drawn and before layout planning begins. The method's opening paragraph on the order of its sections and on what the pre-order check does not read is updated to match.
+  - An item has the layout catalogue's fields except the two that belong to views: it states how a failure shows on the schematic where the layout item states how it shows on the views, and it names no view to judge on. An item is a rule-kind item where a check reads the board's files to decide it and a judgement item otherwise. Item identifiers use area codes that no layout item uses, are never renumbered and never reused, and carry a severity on the layout catalogue's scale.
+  - The layout checklist the board history check builds is taken from the layout catalogue section alone, so circuit items never become layout verdicts the critical-routing table must judge; a test shows a circuit item in the method leaves that checklist unchanged.
+  - A board's schematic review record is a file in the board's folder beside its circuit proof and layout review, with one row per item, net or part, verdict, what the verdict rests on and why, and a findings table closed as the layout review's is.
+  - A source that cannot be opened is not a source: no item is written from one, and a rating a reviewer cannot source at review counts as absent and fails the item.
 rationale: |
   A design review of the controller hardware found that nothing judges a schematic as a whole. The layout catalogue is explicit that circuit values are outside it, and the pre-layout proof covers only the circuits whose values decide whether they work, so a pin driven beyond its rating, a missing pull-up, a floating strap pin or a cable mirrored against its harness reaches the layout unexamined, and the layout review cannot see any of them.
-
-  Seeds written by someone who has read the catalogue test only whether the review applies the catalogue; seeds written by someone who has not test whether the catalogue covers the defects a designer actually makes, which is the question a blind proof exists to answer.
 links:
   - target: DEL-HW-DESIGN-METHOD.C11
     type: derives-from
   - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3
-    type: targets
-  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
     type: targets
   - target: REQ-SAFETY-CHAIN-001.C8
     type: targets

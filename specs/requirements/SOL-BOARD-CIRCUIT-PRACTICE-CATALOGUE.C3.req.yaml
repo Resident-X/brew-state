@@ -1,7 +1,7 @@
 id: SOL-BOARD-CIRCUIT-PRACTICE-CATALOGUE.C3
 type: criterion
 title: Following the schematic review blind on a seeded proof schematic reports every seeded defect
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: demonstration

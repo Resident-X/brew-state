@@ -1,0 +1,32 @@
+id: SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS
+type: deliverable
+category: solution
+title: The pre-order check accepts and reads every key the record decisions define and still fails one they do not
+status: active
+version: 1
+text: |
+  The pre-order check accepts and reads every key that the separation basis decision and the design-records decision define beyond what it reads today, and still fails a key those decisions do not define. Today it holds the separation basis to a fixed set of record keys and refuses any other, so a design that declares the overvoltage category, the altitude, the per-barrier insulation types or the table rows it used cannot pass the check; the derating policy, pin-limit and catalogue-lifecycle records the decisions define have the same standing.
+
+  The keys, as the two decisions set them out:
+  - the separation basis record's inputs: the overvoltage category, the highest altitude, and the list of per-barrier entries, each naming the barrier, its insulation type, whether the low-voltage side is bonded to protective earth, the parts a person can touch beyond it, and the part or spacing that forms it;
+  - the table rows the record used, each holding its citation, the input values it is read at, and the figure it gives;
+  - the derating policy record, with its source and its classes, each class holding its voltage, power and temperature shares and the source of each;
+  - the pin-limit record, with its power domains and its parts, each part holding its source and its pins;
+  - each catalogue extract entry's lifecycle mapping: status, source and the date read.
+
+  Reading a key means checking its form where the decisions state one: a figure that must be positive is refused when it is not, a list entry that must name a barrier the record lists is refused when it does not, a date that must be an ISO date is refused when it is not, and a record marked synthetic satisfies only a design marked not for manufacture, as the decisions already say for the keys held today. Acting on the values these keys carry is not part of this solution: the rules that compare a design against them belong to the other criteria of the task it serves.
+
+  A proof design committed with its own synthetic records, carrying every key above, passes the check. A copy of it with one of those keys misspelt, run through the check in the same way the check's existing seeded faults are, fails and names the key.
+rationale: |
+  The separation basis decision and the design-records decision define keys that the check's fixed key sets still refuse, so a design cannot carry the inputs its own figures are read at, and a proof design that exercises the circuit review's insulation and surge items cannot be committed. Accepting and reading them as one change, rather than a key at a time inside each rule that needs one, keeps the set of keys the check knows in one place and keeps the refusal of an undefined key intact. The check's own seeded-fault mechanics are reused so the misspelt-key proof is the same kind of proof the check's other rules carry.
+links:
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C12
+    type: derives-from
+  - target: DEC-BOARD-SEPARATION-BASIS-RECORD
+    type: justified-by
+  - target: DEC-BOARD-DESIGN-RECORDS-AS-YAML
+    type: justified-by
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: targets
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
