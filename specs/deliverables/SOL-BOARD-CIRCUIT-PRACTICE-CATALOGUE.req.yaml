@@ -62,3 +62,7 @@ links:
     type: targets
   - target: REQ-SAFETY-CHAIN-001.C7
     type: targets
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: 4e78684fe1817d048237cafa841629beca68a7070b78b5b5cfc833e5b0440b2b
+  gating_profile: ""
