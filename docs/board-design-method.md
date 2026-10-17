@@ -1541,6 +1541,16 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 - **Kind:** judgement. **Severity:** cosmetic.
 - **Source:** `hardware/proof/method-proof/layout-review.md`, round 2, finding 2.4.
 
+#### MFG-9. Each designator stands outside every part's body, beside its own part
+
+- **Applies when:** always.
+- **Asks:** Does every reference designator on the silkscreen stand clear of the bodies of the parts, its own included, and nearer its own part than any other, so that a person reading the built board can tell which part it names?
+- **Passes:** On `layer-F.SilkS` and `layer-B.SilkS`, read against `assembly-top` and `assembly-bottom`, no designator lies inside a part's courtyard, none is covered by a part standing over it, and each is nearer its own part's courtyard than any other part's.
+- **Fails, as the views show it:** a designator inside its part's housing, so that the part stands over its name on `3d-top`; or a designator midway between two parts, so that it names either.
+- **Judged on:** `layer-F.SilkS`, `layer-B.SilkS`, `assembly-top`, `assembly-bottom`, `3d-top`, `3d-bottom`.
+- **Kind:** judgement. **Severity:** cosmetic.
+- **Source:** `hardware/proof/method-proof/layout-review.md`, round 3, findings 3.1 and 3.2.
+
 ### Emissions (EMI)
 
 #### EMI-1. Power and its ground run over each other
