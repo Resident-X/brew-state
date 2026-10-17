@@ -1,0 +1,31 @@
+# A synthetic pin-limit record, made only to prove that the pre-order check reads
+# every key a pin-limit record defines, against the throwaway design beside it. Its
+# limits are not read from any datasheet and must never be used for a board that is
+# ordered: being marked synthetic, the check accepts it only for a design marked
+# not for manufacture.
+domains:
+  - name: logic
+    rail: LV_A
+    highest_voltage_v: 3.3
+  - name: sense
+    rail: LV_B
+    highest_voltage_v: 5
+parts:
+  - lcsc: C9000005
+    source:
+      document: none -- synthetic limits
+      revision: A
+      section: absolute maximum ratings
+      read_on: 2026-10-14
+    pins:
+      - pin: PA0
+        domain: logic
+        absolute_max_v: 3.6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      - pin: 2
+        domain: sense
+        absolute_max_v: 5.5
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: true
+synthetic: true

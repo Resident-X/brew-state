@@ -1,0 +1,4 @@
+(fp_lib_table
+	(version 7)
+	(lib (name "proof")(type "KiCad")(uri "${KIPRJMOD}/proof.pretty")(options "")(descr "Footprints for the record keys proof design"))
+)

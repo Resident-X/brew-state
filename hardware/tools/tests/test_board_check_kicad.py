@@ -322,6 +322,28 @@ class Parts(Proved):
         self.assertEqual([line for line in lines if line.startswith("VIOLATION") and "| parts_" in line], [])
 
 
+class RecordKeys(Proved):
+    def test_a_misspelt_key_in_each_kind_of_record_fails_and_is_named(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        faults = [fault for fault in board_prove.FAULTS if fault[1].startswith("record keys:")]
+        self.assertEqual({fault[2] for fault in faults},
+                         {"separation_basis", "derating_record", "pin_limits_record", "parts_record"})
+        self.assertEqual({board_prove.target_of(fault) for fault in faults}, {board_prove.KEYS_TARGET})
+        self.assertCaught(*[fault[0] for fault in faults])
+
+
+class TheRecordKeysProofDesignPasses(unittest.TestCase):
+    def test_the_record_keys_proof_design_with_every_key_passes_the_check(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        with tempfile.TemporaryDirectory(prefix="board-test-") as scratch:
+            seed = board_prove.prepare(scratch, *board_prove.KEYS_TARGET)
+            for name in ("separation-basis.yaml", "derating-policy.yaml", "pin-limits.yaml", "catalogue-extract.yaml"):
+                self.assertIn(name, seed.files)
+            status, lines = board_prove.check(seed, KICAD_CLI)[:2]
+        self.assertEqual(status, 0, lines)
+        self.assertEqual([line for line in lines if line.startswith("VIOLATION")], [])
+
+
 class TheProjectFilesNetClassesAreResolvedByKiCad(unittest.TestCase):
     """SOL-HW-BOARD-RULE-CHECK-GATE.C3: The separation basis is a written rule the layout check enforces at no less than the signed figure, and a mains-carrying design without it fails.
 

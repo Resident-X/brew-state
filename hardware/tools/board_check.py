@@ -601,8 +601,17 @@ def positive_number(value) -> bool:
 
 #: The keys a separation basis record holds, and the two each mains_to_low_voltage-style pair holds.
 RECORD_KEYS = {"standard", "supply", "working_voltage", "pollution_degree", "material_group", "environment",
-               "barriers", "mains_to_low_voltage", "accepted_by", "accepted_on", "synthetic"}
+               "barriers", "mains_to_low_voltage", "accepted_by", "accepted_on", "synthetic",
+               "overvoltage_category", "altitude_m", "barrier_types", "table_rows"}
 PAIR_KEYS = {"clearance_mm", "creepage_mm"}
+#: The keys inside the inputs a record states, each of which is optional on a record; the rest of the forms the
+#: separation basis decision fixes for them are read in read_inputs.
+INSULATIONS = ("basic", "reinforced")
+BARRIER_KEYS = ("barrier", "insulation", "earth_bonded", "touchable", "formed_by")
+CITATION_KEYS = ("document", "edition", "locator")
+ROW_KEYS = ("citation", "inputs", "figure")
+ROW_INPUT_KEYS = ("working_voltage_v", "insulation", "overvoltage_category", "pollution_degree", "material_group",
+                  "altitude_m")
 
 
 class RecordForm(Exception):
@@ -634,6 +643,163 @@ def strict_yaml(yaml, text: str):
 
     Loader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, mapping)
     return yaml.load(text, Loader=Loader)
+
+
+class Reading:
+    """The violations found in one record, each at a path inside it, and the forms a record's values are read in."""
+
+    def __init__(self, design: Design, rule: str, record: str, what: str):
+        self.design = design
+        self.rule = rule
+        self.record = record
+        self.what = what
+        self.found: List[Violation] = []
+
+    def bad(self, path: str, message: str) -> None:
+        self.found.append(Violation(self.design.project, self.rule, f"{self.record} {path}".strip(), message))
+
+    def mapping(self, path: str, value, keys: Sequence[str], required: Sequence[str] = (), whose: str = "") -> bool:
+        """Whether `value` is a mapping; if so, every key in it that `keys` does not hold and every `required` one it lacks is reported."""
+        label = path or "the record"
+        if not isinstance(value, dict):
+            self.bad(path, f"{label} is not a mapping of the keys {', '.join(keys)}")
+            return False
+        for key in sorted(set(map(str, value)) - set(keys)):
+            self.bad(f"{path}.{key}" if path else key,
+                     f"{label} holds the key '{key}', which is not one {whose or 'a ' + self.what} has: its keys are "
+                     f"{', '.join(sorted(keys))}; correct the key's spelling, or remove it")
+        for key in required:
+            if key not in value:
+                self.bad(f"{path}.{key}" if path else key, f"{label} lacks {key}, which every {whose or self.what} states")
+        return True
+
+    def listed(self, path: str, value, what: str, empty: bool = False) -> bool:
+        if not isinstance(value, list):
+            self.bad(path, f"{path} is not a list of {what}")
+            return False
+        if not value and not empty:
+            self.bad(path, f"{path} lists no {what}, so it would hold a design to nothing")
+            return False
+        return True
+
+    def text(self, path: str, value) -> bool:
+        if not isinstance(value, str) or not value.strip():
+            self.bad(path, f"{path} is {value!r}, where it is a non-empty string; quote a value that YAML would read as a number")
+            return False
+        return True
+
+    def positive(self, path: str, value, unit: str = "") -> bool:
+        if not positive_number(value):
+            self.bad(path, f"{path} is {value!r}, which is not a positive number{unit}")
+            return False
+        return True
+
+    def number(self, path: str, value) -> bool:
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+            self.bad(path, f"{path} is {value!r}, which is not a number")
+            return False
+        return True
+
+    def whole(self, path: str, value, low: int, high: int) -> bool:
+        if isinstance(value, bool) or not isinstance(value, int) or not low <= value <= high:
+            self.bad(path, f"{path} is {value!r}, where it is a whole number from {low} to {high}")
+            return False
+        return True
+
+    def boolean(self, path: str, value) -> bool:
+        if not isinstance(value, bool):
+            self.bad(path, f"{path} is {value!r}, where it is true or false")
+            return False
+        return True
+
+    def date(self, path: str, value) -> bool:
+        if iso_date(value) is None:
+            self.bad(path, f"{path} {value!s} is not a valid calendar date written as YYYY-MM-DD")
+            return False
+        return True
+
+    def one_of(self, path: str, value, choices: Sequence[str]) -> bool:
+        if value not in choices or not isinstance(value, str):
+            self.bad(path, f"{path} is {value!r}, where it is {' or '.join(choices)}")
+            return False
+        return True
+
+
+def read_inputs(design: Design, record: str, data: dict) -> List[Violation]:
+    """The form of the inputs a separation basis record states its figures at, each key optional on the record."""
+    reading = Reading(design, "separation_basis", record, "separation basis record")
+    if "overvoltage_category" in data:
+        reading.whole("overvoltage_category", data["overvoltage_category"], 1, 4)
+    if "altitude_m" in data:
+        reading.positive("altitude_m", data["altitude_m"], " of metres")
+
+    if "barrier_types" in data:
+        named = data.get("barriers", [])
+        names: Optional[Set[str]] = None
+        if not isinstance(named, list) or not all(isinstance(item, str) and item.strip() for item in named):
+            reading.bad("barriers", "barriers is not a list of the barriers' names, so barrier_types cannot name an "
+                                    "entry for each; write each barrier as a name")
+        else:
+            names = set(named)
+        if reading.listed("barrier_types", data["barrier_types"], "barrier entries", empty=True):
+            entries = {}
+            for index, entry in enumerate(data["barrier_types"]):
+                where = f"barrier_types[{index}]"
+                if not reading.mapping(where, entry, BARRIER_KEYS, BARRIER_KEYS, "a barrier entry"):
+                    continue
+                if "insulation" in entry:
+                    reading.one_of(f"{where}.insulation", entry["insulation"], INSULATIONS)
+                if "earth_bonded" in entry:
+                    reading.boolean(f"{where}.earth_bonded", entry["earth_bonded"])
+                if "formed_by" in entry:
+                    reading.text(f"{where}.formed_by", entry["formed_by"])
+                if "touchable" in entry and reading.listed(f"{where}.touchable", entry["touchable"], "parts", empty=True):
+                    for position, part in enumerate(entry["touchable"]):
+                        reading.text(f"{where}.touchable[{position}]", part)
+                name = entry.get("barrier")
+                if "barrier" in entry and reading.text(f"{where}.barrier", name):
+                    if names is not None and name not in names:
+                        reading.bad(f"{where}.barrier", f"{where}.barrier is '{name}', which barriers does not list; "
+                                                        "name a barrier the record relies on, or list it under barriers")
+                    elif name in entries:
+                        reading.bad(f"{where}.barrier", f"{where}.barrier is '{name}', which the entry at "
+                                                        f"barrier_types[{entries[name]}] already describes; each barrier has one entry")
+                    else:
+                        entries[name] = index
+            for name in sorted((names or set()) - set(entries)):
+                reading.bad("barrier_types", f"barriers lists '{name}' and barrier_types holds no entry for it; "
+                                             "each barrier relied on has exactly one entry")
+
+    if "table_rows" in data and reading.listed("table_rows", data["table_rows"], "table rows", empty=True):
+        for index, row in enumerate(data["table_rows"]):
+            where = f"table_rows[{index}]"
+            if not reading.mapping(where, row, ROW_KEYS, ROW_KEYS, "a table row"):
+                continue
+            if "citation" in row and reading.mapping(f"{where}.citation", row["citation"], CITATION_KEYS, CITATION_KEYS, "a citation"):
+                for key in CITATION_KEYS:
+                    if key in row["citation"]:
+                        reading.text(f"{where}.citation.{key}", row["citation"][key])
+            inputs = row.get("inputs")
+            if "inputs" in row and reading.mapping(f"{where}.inputs", inputs, ROW_INPUT_KEYS, (), "a table row's inputs"):
+                if not inputs:
+                    reading.bad(f"{where}.inputs", f"{where}.inputs is empty, so it states no input the row is read at")
+                form = {"working_voltage_v": lambda path, value: reading.positive(path, value, " of volts"),
+                        "insulation": lambda path, value: reading.one_of(path, value, INSULATIONS),
+                        "overvoltage_category": lambda path, value: reading.whole(path, value, 1, 4),
+                        "pollution_degree": lambda path, value: reading.whole(path, value, 1, 4),
+                        "material_group": reading.text,
+                        "altitude_m": lambda path, value: reading.positive(path, value, " of metres")}
+                for key in ROW_INPUT_KEYS:
+                    if key in inputs:
+                        form[key](f"{where}.inputs.{key}", inputs[key])
+            figure = row.get("figure")
+            if "figure" in row and reading.mapping(f"{where}.figure", figure, tuple(sorted(PAIR_KEYS)), (), "a table row's figure"):
+                if not figure:
+                    reading.bad(f"{where}.figure", f"{where}.figure is empty, where it holds clearance_mm, creepage_mm or both")
+                for key in sorted(PAIR_KEYS):
+                    if key in figure:
+                        reading.positive(f"{where}.figure.{key}", figure[key], " of millimetres")
+    return reading.found
 
 
 def read_record(yaml, root: str, design: Design, record: Optional[str], not_for_manufacture: bool,
@@ -689,6 +855,7 @@ def read_record(yaml, root: str, design: Design, record: Optional[str], not_for_
         problems.append(Violation(design.project, "separation_basis", f"{record} mains_to_low_voltage.{key}",
                                   f"mains_to_low_voltage holds '{key}', where it holds only clearance_mm and "
                                   "creepage_mm, the figures compared; correct the key's spelling, or remove it"))
+    problems += read_inputs(design, record, data)
     for key in ("clearance_mm", "creepage_mm"):
         if key not in pair:
             problems.append(Violation(design.project, "separation_basis", f"{record} mains_to_low_voltage.{key}",
@@ -969,6 +1136,22 @@ CATALOGUE_NAME = "catalogue-extract.yaml"
 POSITION_KEYS = ("reference", "value", "package", "rating", "lcsc")
 #: The keys an entry of the catalogue extract holds, every one required.
 ENTRY_KEYS = ("lcsc", "library_class", "stock", "unit_price")
+#: The keys an entry may hold beside them: a lifecycle mapping, which holds all three of LIFECYCLE_KEYS when present.
+OPTIONAL_ENTRY_KEYS = ("lifecycle",)
+LIFECYCLE_KEYS = ("status", "source", "read_on")
+
+DERATING_NAME = "derating-policy.yaml"
+PIN_LIMITS_NAME = "pin-limits.yaml"
+#: The keys of the derating policy record, of each class in it, and of the share each class states for a quantity.
+DERATING_KEYS = ("source", "classes", "synthetic")
+CLASS_KEYS = ("class", "voltage", "power", "temperature")
+SHARE_KEYS = ("share", "source")
+#: The keys of the pin-limit record, of each power domain, part, part source and pin in it.
+PIN_LIMITS_KEYS = ("domains", "parts", "synthetic")
+DOMAIN_KEYS = ("name", "rail", "highest_voltage_v")
+LIMIT_PART_KEYS = ("lcsc", "source", "pins")
+LIMIT_SOURCE_KEYS = ("document", "revision", "section", "read_on")
+LIMIT_PIN_KEYS = ("pin", "domain", "absolute_max_v", "absolute_min_v", "tolerates_driven_unpowered")
 #: The keys the catalogue extract states of itself that the check requires.
 EXTRACT_KEYS = ("read_on", "max_age_days", "entries")
 
@@ -1127,9 +1310,21 @@ def read_extract(yaml, root: str, repository: Repository, design: Design, today:
                 if not isinstance(entry, dict):
                     bad(where, f"{where} is not a mapping of the keys {', '.join(ENTRY_KEYS)}")
                     continue
-                for key in sorted(set(map(str, entry)) - set(ENTRY_KEYS)):
+                for key in sorted(set(map(str, entry)) - set(ENTRY_KEYS) - set(OPTIONAL_ENTRY_KEYS)):
                     bad(f"{where}.{key}", f"{where} holds the key '{key}', which is not one an entry has: its keys "
-                                          f"are {', '.join(ENTRY_KEYS)}")
+                                          f"are {', '.join(ENTRY_KEYS + OPTIONAL_ENTRY_KEYS)}")
+                if "lifecycle" in entry:
+                    reading = Reading(design, "parts_record", record, what)
+                    life = f"{where}.lifecycle"
+                    if reading.mapping(life, entry["lifecycle"], LIFECYCLE_KEYS, LIFECYCLE_KEYS, "a lifecycle"):
+                        for key in ("status", "source"):
+                            if key in entry["lifecycle"]:
+                                reading.text(f"{life}.{key}", entry["lifecycle"][key])
+                        if "read_on" in entry["lifecycle"]:
+                            reading.date(f"{life}.read_on", entry["lifecycle"]["read_on"])
+                    if reading.found:
+                        usable = False
+                        problems += reading.found
                 for key in ENTRY_KEYS:
                     if key not in entry:
                         bad(f"{where}.{key}", f"{where} lacks {key}")
@@ -1157,6 +1352,112 @@ def read_extract(yaml, root: str, repository: Repository, design: Design, today:
                                              "is malformed; keep one entry for each catalogue number", "parts_catalogue")
                     found[key] = stock if "stock" in entry else None
     return (found if usable else None), problems
+
+
+def read_optional(yaml, root: str, repository: Repository, design: Design, name: str, rule: str, what: str,
+                  keys: Sequence[str], not_for_manufacture: bool) -> Tuple[Optional[dict], Optional[Reading]]:
+    """The record `name` the design's folders hold, read in its top-level form; nothing at all where they hold none.
+
+    The record is a mapping with `keys` and no others, its violations in the Reading returned. A design whose
+    folders hold no such record is not failed for it.
+    """
+    if find_record(root, design.directory, repository.tracked, name) is None:
+        return None, None
+    data, record, problems = load_yaml_record(yaml, root, repository, design, name, rule, what)
+    reading = Reading(design, rule, record or name, what)
+    reading.found += problems
+    if data is None:
+        return None, reading
+    reading.found += synthetic_problem(design, rule, record, data, what, not_for_manufacture)
+    reading.mapping("", data, keys, [key for key in keys if key != "synthetic"])
+    return data, reading
+
+
+def read_derating(yaml, root: str, repository: Repository, design: Design, not_for_manufacture: bool) -> List[Violation]:
+    """The derating policy record's form where the design's folders hold one."""
+    data, reading = read_optional(yaml, root, repository, design, DERATING_NAME, "derating_record",
+                                  "derating policy record", DERATING_KEYS, not_for_manufacture)
+    if data is None:
+        return reading.found if reading else []
+    if "source" in data:
+        reading.text("source", data["source"])
+    if "classes" in data and reading.listed("classes", data["classes"], "part classes"):
+        for index, entry in enumerate(data["classes"]):
+            where = f"classes[{index}]"
+            if not reading.mapping(where, entry, CLASS_KEYS, CLASS_KEYS, "a part class"):
+                continue
+            if "class" in entry:
+                reading.text(f"{where}.class", entry["class"])
+            for quantity in CLASS_KEYS[1:]:
+                if quantity not in entry:
+                    continue
+                share = entry[quantity]
+                at = f"{where}.{quantity}"
+                if not reading.mapping(at, share, SHARE_KEYS, SHARE_KEYS, "a share"):
+                    continue
+                if "share" in share:
+                    value = share["share"]
+                    if isinstance(value, bool) or not isinstance(value, (int, float)) or not 0 < value <= 1:
+                        reading.bad(f"{at}.share", f"{at}.share is {value!r}, where it is a number above zero and at most "
+                                                   "one, the fraction of the rating a part may use")
+                if "source" in share:
+                    reading.text(f"{at}.source", share["source"])
+    return reading.found
+
+
+def read_pin_limits(yaml, root: str, repository: Repository, design: Design, not_for_manufacture: bool) -> List[Violation]:
+    """The pin-limit record's form where the design's folders hold one."""
+    data, reading = read_optional(yaml, root, repository, design, PIN_LIMITS_NAME, "pin_limits_record",
+                                  "pin-limit record", PIN_LIMITS_KEYS, not_for_manufacture)
+    if data is None:
+        return reading.found if reading else []
+    domains = set()
+    if "domains" in data and reading.listed("domains", data["domains"], "power domains"):
+        for index, entry in enumerate(data["domains"]):
+            where = f"domains[{index}]"
+            if not reading.mapping(where, entry, DOMAIN_KEYS, DOMAIN_KEYS, "a power domain"):
+                continue
+            if "name" in entry and reading.text(f"{where}.name", entry["name"]):
+                domains.add(entry["name"])
+            if "rail" in entry:
+                reading.text(f"{where}.rail", entry["rail"])
+            if "highest_voltage_v" in entry:
+                reading.number(f"{where}.highest_voltage_v", entry["highest_voltage_v"])
+    if "parts" in data and reading.listed("parts", data["parts"], "parts"):
+        for index, entry in enumerate(data["parts"]):
+            where = f"parts[{index}]"
+            if not reading.mapping(where, entry, LIMIT_PART_KEYS, LIMIT_PART_KEYS, "a part"):
+                continue
+            if "lcsc" in entry:
+                reading.text(f"{where}.lcsc", entry["lcsc"])
+            source = entry.get("source")
+            if "source" in entry and reading.mapping(f"{where}.source", source, LIMIT_SOURCE_KEYS, LIMIT_SOURCE_KEYS,
+                                                     "a part's source"):
+                for key in ("document", "revision", "section"):
+                    if key in source:
+                        reading.text(f"{where}.source.{key}", source[key])
+                if "read_on" in source:
+                    reading.date(f"{where}.source.read_on", source["read_on"])
+            if "pins" in entry and reading.listed(f"{where}.pins", entry["pins"], "pins"):
+                for position, pin in enumerate(entry["pins"]):
+                    at = f"{where}.pins[{position}]"
+                    if not reading.mapping(at, pin, LIMIT_PIN_KEYS, LIMIT_PIN_KEYS, "a pin"):
+                        continue
+                    if "pin" in pin and (isinstance(pin["pin"], bool) or not isinstance(pin["pin"], (str, int))
+                                         or (isinstance(pin["pin"], str) and not pin["pin"].strip())):
+                        reading.bad(f"{at}.pin", f"{at}.pin is {pin['pin']!r}, where it is the pin's name or number")
+                    if "domain" in pin and reading.text(f"{at}.domain", pin["domain"]) and pin["domain"] not in domains:
+                        reading.bad(f"{at}.domain", f"{at}.domain is '{pin['domain']}', which domains does not list; "
+                                                    "name a power domain the record lists, or list it")
+                    high, low = pin.get("absolute_max_v"), pin.get("absolute_min_v")
+                    ok_high = "absolute_max_v" not in pin or reading.number(f"{at}.absolute_max_v", high)
+                    ok_low = "absolute_min_v" not in pin or reading.number(f"{at}.absolute_min_v", low)
+                    if ok_high and ok_low and "absolute_max_v" in pin and "absolute_min_v" in pin and low > high:
+                        reading.bad(f"{at}.absolute_min_v", f"{at}.absolute_min_v is {low!r}, above absolute_max_v {high!r}; "
+                                                            "a pin's lowest allowed voltage cannot exceed its highest")
+                    if "tolerates_driven_unpowered" in pin:
+                        reading.boolean(f"{at}.tolerates_driven_unpowered", pin["tolerates_driven_unpowered"])
+    return reading.found
 
 
 def placed_positions(root: str, design: Design, repository: Repository
@@ -3688,6 +3989,8 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
     found += pin_problems
 
     found += check_parts(yaml, root, design, repository, today, not_for_manufacture)
+    found += read_derating(yaml, root, repository, design, not_for_manufacture)
+    found += read_pin_limits(yaml, root, repository, design, not_for_manufacture)
 
     if any(v.rule == "design_unreadable" for v in found):
         return found
@@ -3930,8 +4233,8 @@ def design_reads(top: str, files: List[str], git: str = "git") -> List[str]:
 
     For each design that is its own folder, written with a trailing slash so a
     file deleted from it is still one the design read, every file its folder,
-    its sheets and its libraries hold, and the separation basis, pin allocation, parts specification and
-    catalogue extract records it is held to, whether or not a record is committed. A design in the top folder reads
+    its sheets and its libraries hold, and the separation basis, pin allocation, parts specification,
+    catalogue extract, derating policy and pin-limit records it is held to, whether or not a record is committed. A design in the top folder reads
     the whole repository, written as WHOLE_REPOSITORY.
     """
     repository = Repository(top, files, git)
@@ -3940,7 +4243,7 @@ def design_reads(top: str, files: List[str], git: str = "git") -> List[str]:
     for design in designs:
         reads.add(design.directory + "/" if design.directory else WHOLE_REPOSITORY)
         reads.update(design_files(design, repository)[0])
-        for name in (RECORD_NAME, PIN_RECORD_NAME, PARTS_RECORD_NAME, CATALOGUE_NAME):
+        for name in (RECORD_NAME, PIN_RECORD_NAME, PARTS_RECORD_NAME, CATALOGUE_NAME, DERATING_NAME, PIN_LIMITS_NAME):
             record = find_record(top, design.directory, repository.tracked, name)
             if record:
                 reads.add(record)

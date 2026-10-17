@@ -2,13 +2,14 @@
 """Break the throwaway proof design on purpose, once per failure condition, and require the check to notice.
 
 Every failure condition the pre-order check enforces gets a fault seeded for it
-here. Each fault is introduced into a fresh copy of hardware/proof/gate-proof in
-a temporary directory outside the repository, made into a git work tree of its
+here. Each fault is introduced into a fresh copy of hardware/proof/gate-proof, or,
+for the faults about the keys of the records, of hardware/proof/record-keys-proof,
+in a temporary directory outside the repository, made into a git work tree of its
 own and committed, so the check finds designs exactly as it does in the
 repository, and the shipped check is run on it. A fault counts as caught only when the check exits
 non-zero *and* reports a violation of the rule the fault was seeded for, with
 the text that names it; a check that failed for some other reason has not shown
-it can see this one. The clean copy must pass, or a fault being caught would
+it can see this one. The clean copy of each design must pass, or a fault being caught would
 show nothing.
 
 The committed tree is never touched, unlike the firmware mutation tool, which
@@ -48,6 +49,11 @@ import sexpr  # noqa: E402
 REPO = os.path.dirname(os.path.dirname(TOOLS))
 DESIGN = "hardware/proof/gate-proof"
 NAME = "gate-proof"
+#: The proof design of the record keys, a folder of its own with records of its own, which the faults about those
+#: keys are seeded into. A fault names its design by a sixth element; one that names none is seeded into DESIGN.
+KEYS_DESIGN = "hardware/proof/record-keys-proof"
+KEYS_NAME = "record-keys-proof"
+KEYS_TARGET = (KEYS_DESIGN, KEYS_NAME)
 
 
 class Seed:
@@ -274,6 +280,14 @@ def parts(old: str, new: str):
 
 def extract(old: str, new: str):
     return lambda seed: seed.replace("catalogue-extract.yaml", old, new)
+
+
+def derating(old: str, new: str):
+    return lambda seed: seed.replace("derating-policy.yaml", old, new)
+
+
+def pin_limits(old: str, new: str):
+    return lambda seed: seed.replace("pin-limits.yaml", old, new)
 
 
 def uncommitted_record(seed: Seed) -> None:
@@ -797,8 +811,9 @@ def drop_rule(name: str):
 SIGNED = f"rule '{board_check.SIGNED_RULE}' clearance"
 CONDITION = board_check.MAINS_CONDITION
 
-#: (fault, the check it proves, the rule the check must report, text that line must carry, the edit)
-FAULTS: List[Tuple[str, str, str, str, Callable[[Seed], None]]] = [
+#: (fault, the check it proves, the rule the check must report, text that line must carry, the edit), and, for a
+#: fault seeded into a design other than DESIGN, that design's folder and name as a sixth element.
+FAULTS: List[tuple] = [
     # Discovery
     ("an empty tree", "discovery: finding nothing fails", "design_discovery", "no board design was found", empty_tree),
     ("a layout that cannot be opened", "discovery: an unreadable design fails by name", "design_unreadable", "layout cannot be checked", truncate(".kicad_pcb")),
@@ -1048,7 +1063,23 @@ FAULTS: List[Tuple[str, str, str, str, Callable[[Seed], None]]] = [
      "has no reference text", reference_removed),
     ("a reference designator inside a part's courtyard", "manufacture: every designator stands outside every courtyard, beside its own part", "designator_astray",
      "the text of R1 stands inside the courtyard of R1", reference_in_courtyard),
+    # The keys of the records
+    ("a separation basis key misspelt", "record keys: a key the separation basis decision does not define is refused by name", "separation_basis",
+     "holds the key 'overvoltage_categry'", record("overvoltage_category: 2", "overvoltage_categry: 2"), KEYS_TARGET),
+    ("a barrier entry key misspelt", "record keys: a key inside a separation basis entry that the decision does not define is refused by name", "separation_basis",
+     "barrier_types[0] holds the key 'formd_by'", record("    formed_by: the slot", "    formd_by: the slot"), KEYS_TARGET),
+    ("a derating policy key misspelt", "record keys: a key the design records decision does not define is refused by name in the derating policy", "derating_record",
+     "holds the key 'shre'", derating("share: 0.8", "shre: 0.8"), KEYS_TARGET),
+    ("a pin-limit key misspelt", "record keys: a key the design records decision does not define is refused by name in the pin limits", "pin_limits_record",
+     "holds the key 'absolute_mx_v'", pin_limits("absolute_max_v: 3.6", "absolute_mx_v: 3.6"), KEYS_TARGET),
+    ("a catalogue lifecycle key misspelt", "record keys: a key the design records decision does not define is refused by name in a catalogue entry's lifecycle", "parts_record",
+     "holds the key 'stauts'", extract("status: active", "stauts: active"), KEYS_TARGET),
 ]
+
+
+def target_of(fault) -> Tuple[str, str]:
+    """The design a fault is seeded into, as its folder from the repository's root and its name."""
+    return fault[5] if len(fault) > 5 else (DESIGN, NAME)
 
 
 def committed(path: str) -> Optional[Dict[str, bytes]]:
@@ -1104,9 +1135,9 @@ def check(seed: Seed, kicad_cli: str) -> Tuple[int, List[str], str]:
 
 
 def prove(fault, kicad_cli: str) -> Tuple[bool, str]:
-    name, _, rule, text, edit = fault
+    name, _, rule, text, edit = fault[:5]
     with tempfile.TemporaryDirectory(prefix="board-prove-") as scratch:
-        seed = prepare(scratch)
+        seed = prepare(scratch, *target_of(fault))
         edit(seed)
         status, lines, stderr = check(seed, kicad_cli)
     if status == 2:
@@ -1132,18 +1163,20 @@ def main(argv: Optional[List[str]] = None) -> int:
         print(f"CANNOT RUN | {board_check.clean(str(error))}", file=sys.stderr)
         return 2
 
-    with tempfile.TemporaryDirectory(prefix="board-prove-") as scratch:
-        seed = prepare(scratch)
-        status, lines, stderr = check(seed, args.kicad_cli)
-    clean_ok = status == 0
-    print(f"{'CLEAN' if clean_ok else 'DIRTY'} | the throwaway design as committed | must pass | "
-          + (" / ".join(lines[1:]) if lines else stderr))
-
     faults = [fault for fault in FAULTS if not args.only or any(word in fault[0] for word in args.only)]
+    clean_ok = True
+    for design, name in dict.fromkeys([(DESIGN, NAME)] + [target_of(fault) for fault in faults]):
+        with tempfile.TemporaryDirectory(prefix="board-prove-") as scratch:
+            seed = prepare(scratch, design, name)
+            status, lines, stderr = check(seed, args.kicad_cli)
+        clean_ok = clean_ok and status == 0
+        print(f"{'CLEAN' if status == 0 else 'DIRTY'} | {'the throwaway design' if design == DESIGN else design} as committed | must pass | "
+              + (" / ".join(lines[1:]) if lines else stderr))
+
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.jobs) as pool:
         outcomes = list(pool.map(lambda fault: prove(fault, args.kicad_cli), faults))
     missed = 0
-    for (name, proves, _, _, _), (caught, evidence) in zip(faults, outcomes):
+    for (name, proves, *_), (caught, evidence) in zip(faults, outcomes):
         missed += 0 if caught else 1
         print(f"{'CAUGHT' if caught else 'MISSED'} | {name} | {proves} | {evidence}")
     print(f"RESULT | {'PASS' if clean_ok and not missed else 'FAIL'} | {len(faults) - missed} of {len(faults)} faults caught"

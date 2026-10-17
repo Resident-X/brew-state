@@ -1,0 +1,50 @@
+# A synthetic catalogue extract, made only to prove the parts check and the lifecycle
+# key against the throwaway design beside it. Its entries are not read from any catalogue and must
+# never be used for a board that is ordered: being marked synthetic, the check
+# accepts it only for a design marked not for manufacture. Its age limit is far
+# beyond any real one so the committed proof never goes stale.
+source: none -- synthetic entries chosen to exercise the check, not read from a catalogue
+read_on: 2026-10-14
+max_age_days: 36500
+entries:
+  - lcsc: C9000001
+    library_class: basic
+    stock: 1000
+    unit_price: 0.01
+    lifecycle:
+      status: active
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-14
+  - lcsc: C9000002
+    library_class: basic
+    stock: 1001
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-14
+  - lcsc: C9000003
+    library_class: basic
+    stock: 1002
+    unit_price: 0.01
+    lifecycle:
+      status: active
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-14
+  - lcsc: C9000004
+    library_class: basic
+    stock: 1003
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-14
+  - lcsc: C9000005
+    library_class: basic
+    stock: 1004
+    unit_price: 0.01
+    lifecycle:
+      status: active
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-14
+synthetic: true

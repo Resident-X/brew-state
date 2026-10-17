@@ -494,6 +494,219 @@ class TheRecordIsReadInItsOneForm(RecordTree):
                     self.assertFails(SIGNED_RECORD + marking + "\n", "synthetic", "write true or false", not_for_manufacture)
 
 
+#: A separation basis record carrying every key the separation basis decision defines.
+KEYED_RECORD = SIGNED_RECORD + """\
+overvoltage_category: 2
+altitude_m: 2000
+barriers:
+  - inlet
+  - split
+barrier_types:
+  - barrier: inlet
+    insulation: reinforced
+    earth_bonded: false
+    touchable:
+      - connector J2
+    formed_by: the slot under J1
+  - barrier: split
+    insulation: basic
+    earth_bonded: true
+    touchable: []
+    formed_by: the spacing between two tracks
+table_rows:
+  - citation:
+      document: synthetic table
+      edition: none
+      locator: row 1
+    inputs:
+      working_voltage_v: 250
+      insulation: reinforced
+      overvoltage_category: 2
+      pollution_degree: 2
+      material_group: IIIb
+      altitude_m: 2000
+    figure:
+      clearance_mm: 3.0
+      creepage_mm: 4.0
+  - citation:
+      document: synthetic table
+      edition: none
+      locator: row 2
+    inputs:
+      working_voltage_v: 250
+    figure:
+      creepage_mm: 4.0
+"""
+
+
+class TheInputsOfTheFiguresAreRead(RecordTree):
+    """The keys the separation basis decision adds beside the existing ones: each optional on a record, each read
+    in the form the decision fixes, and any other key inside them refused by name."""
+
+    def changed(self, old: str, new: str) -> str:
+        self.assertIn(old, KEYED_RECORD)
+        return KEYED_RECORD.replace(old, new, 1)
+
+    def test_a_record_carrying_every_key_is_accepted_and_gives_its_figures(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        self.assertEqual(self.record(KEYED_RECORD), ((3.0, 4.0), []))
+
+    def test_a_record_without_the_new_keys_is_accepted_as_before(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        self.assertEqual(self.record(SIGNED_RECORD), ((3.0, 4.0), []))
+
+    def test_each_new_key_is_optional_on_its_own(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        for extra in ("overvoltage_category: 4\n", "altitude_m: 0.5\n", "barrier_types: []\n",
+                      "table_rows: []\n", "barriers: [a]\nbarrier_types:\n  - {barrier: a, insulation: basic, "
+                      "earth_bonded: false, touchable: [], formed_by: x}\n"):
+            with self.subTest(extra=extra):
+                self.assertEqual(self.record(SIGNED_RECORD + extra), ((3.0, 4.0), []))
+
+    def test_an_overvoltage_category_outside_one_to_four_or_not_a_whole_number_fails(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        for bad in ("0", "5", "2.5", "'2'", "true", "null", "[2]"):
+            with self.subTest(overvoltage_category=bad):
+                self.assertFails(self.changed("overvoltage_category: 2\n", f"overvoltage_category: {bad}\n"),
+                                 "separation-basis.yaml overvoltage_category", "whole number from 1 to 4")
+        for good in (1, 2, 3, 4):
+            self.assertEqual(self.record(self.changed("overvoltage_category: 2\n", f"overvoltage_category: {good}\n"))[0], (3.0, 4.0))
+
+    def test_an_altitude_that_is_not_a_positive_number_fails(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        for bad in ("0", "-100", "'2000'", "true", ".nan", ".inf", "null"):
+            with self.subTest(altitude_m=bad):
+                self.assertFails(self.changed("altitude_m: 2000\n", f"altitude_m: {bad}\n"),
+                                 "separation-basis.yaml altitude_m", "not a positive number")
+
+    def test_a_barrier_entry_is_read_in_the_form_the_decision_fixes(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        for bad in ("double", "Basic", "'true'", "null", "[basic]"):
+            with self.subTest(insulation=bad):
+                self.assertFails(self.changed("insulation: reinforced", f"insulation: {bad}"),
+                                 "barrier_types[0].insulation", "basic or reinforced")
+        for bad in ("'true'", "1", "null", "'no'"):
+            with self.subTest(earth_bonded=bad):
+                self.assertFails(self.changed("earth_bonded: false", f"earth_bonded: {bad}"),
+                                 "barrier_types[0].earth_bonded", "true or false")
+        for bad in ("connector J2", "{a: b}", "null"):
+            with self.subTest(touchable=bad):
+                self.assertFails(self.changed("touchable:\n      - connector J2", f"touchable: {bad}"),
+                                 "barrier_types[0].touchable", "not a list of parts")
+        self.assertFails(self.changed("      - connector J2", "      - ''"), "barrier_types[0].touchable[0]", "non-empty string")
+        self.assertFails(self.changed("formed_by: the slot under J1", "formed_by: ''"), "barrier_types[0].formed_by", "non-empty string")
+        self.assertFails(self.changed("    formed_by: the slot under J1\n", ""), "barrier_types[0].formed_by", "lacks formed_by")
+        self.assertFails(self.changed("    insulation: reinforced\n", ""), "barrier_types[0].insulation", "lacks insulation")
+        self.assertFails(self.changed("barrier_types:\n  - barrier", "barrier_types:\n  - nonsense\n  - barrier"),
+                         "barrier_types[0]", "not a mapping")
+        self.assertFails(self.changed("barrier_types:", "barrier_types: {}\nunused:"), "barrier_types", "not a list")
+
+    def test_each_barrier_has_exactly_one_entry_naming_a_barrier_the_record_lists(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        self.assertFails(self.changed("barrier: split", "barrier: elsewhere"), "barrier_types[1].barrier",
+                         "'elsewhere', which barriers does not list")
+        self.assertFails(self.changed("barrier: split", "barrier: elsewhere"), "barrier_types",
+                         "lists 'split' and barrier_types holds no entry for it")
+        self.assertFails(self.changed("barrier: split", "barrier: inlet"), "barrier_types[1].barrier",
+                         "already describes")
+        self.assertFails(self.changed("  - split\n", "  - split\n  - third\n"), "barrier_types",
+                         "lists 'third' and barrier_types holds no entry for it")
+        self.assertFails(self.changed("barriers:\n  - inlet\n  - split\n", "barriers: []\n"), "barrier_types[0].barrier",
+                         "which barriers does not list")
+        self.assertFails(self.changed("barriers:\n  - inlet\n  - split\n", "barriers: not-a-list\n"), "barriers",
+                         "not a list of the barriers' names")
+        self.assertFails(self.changed("barrier: inlet", "barrier: ''"), "barrier_types[0].barrier", "non-empty string")
+
+    def test_a_table_row_is_read_in_the_form_the_decision_fixes(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        for bad in ("0", "-250", "'250'", "true"):
+            with self.subTest(working_voltage_v=bad):
+                self.assertFails(self.changed("working_voltage_v: 250\n      insulation", f"working_voltage_v: {bad}\n      insulation"),
+                                 "table_rows[0].inputs.working_voltage_v", "not a positive number")
+        self.assertFails(self.changed("      insulation: reinforced\n      overvoltage", "      insulation: triple\n      overvoltage"),
+                         "table_rows[0].inputs.insulation", "basic or reinforced")
+        self.assertFails(self.changed("      overvoltage_category: 2\n      pollution", "      overvoltage_category: 7\n      pollution"),
+                         "table_rows[0].inputs.overvoltage_category", "whole number from 1 to 4")
+        self.assertFails(self.changed("      pollution_degree: 2\n      material", "      pollution_degree: 0\n      material"),
+                         "table_rows[0].inputs.pollution_degree", "whole number from 1 to 4")
+        self.assertFails(self.changed("material_group: IIIb", "material_group: ''"), "table_rows[0].inputs.material_group", "non-empty string")
+        self.assertFails(self.changed("altitude_m: 2000\n    figure", "altitude_m: -1\n    figure"),
+                         "table_rows[0].inputs.altitude_m", "not a positive number")
+        self.assertFails(self.changed("      clearance_mm: 3.0\n      creepage_mm: 4.0\n  - citation", "      clearance_mm: 0\n      creepage_mm: 4.0\n  - citation"),
+                         "table_rows[0].figure.clearance_mm", "not a positive number")
+        self.assertFails(self.changed("      creepage_mm: 4.0\n  - citation", "      creepage_mm: -4\n  - citation"),
+                         "table_rows[0].figure.creepage_mm", "not a positive number")
+        self.assertFails(self.changed("      locator: row 1\n", ""), "table_rows[0].citation.locator", "lacks locator")
+        self.assertFails(self.changed("document: synthetic table\n      edition: none\n      locator: row 1",
+                                      "document: ''\n      edition: none\n      locator: row 1"),
+                         "table_rows[0].citation.document", "non-empty string")
+        self.assertFails(self.changed("    figure:\n      creepage_mm: 4.0\n", ""), "table_rows[1].figure", "lacks figure")
+        self.assertFails(self.changed("    inputs:\n      working_voltage_v: 250\n    figure:\n      creepage",
+                                      "    figure:\n      creepage"), "table_rows[1].inputs", "lacks inputs")
+        self.assertFails(self.changed("table_rows:", "table_rows: 3\nunused:"), "table_rows", "not a list")
+        self.assertFails(self.changed("table_rows:\n  - citation", "table_rows:\n  - 7\n  - citation"), "table_rows[0]", "not a mapping")
+
+    def test_an_empty_inputs_mapping_and_an_empty_figure_mapping_fail(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        self.assertFails(self.changed("    inputs:\n      working_voltage_v: 250\n    figure:\n      creepage_mm: 4.0\n",
+                                      "    inputs: {}\n    figure:\n      creepage_mm: 4.0\n"), "table_rows[1].inputs", "is empty")
+        self.assertFails(self.changed("    figure:\n      creepage_mm: 4.0\n", "    figure: {}\n").replace(
+            "    figure:\n      clearance_mm: 3.0\n      creepage_mm: 4.0\n  - citation", "    figure: {}\n  - citation"),
+            "table_rows[0].figure", "is empty")
+        self.assertFails(self.changed("    figure:\n      creepage_mm: 4.0\n", "    figure: {}\n"), "table_rows[1].figure", "is empty")
+
+    def test_a_key_the_decision_does_not_name_is_refused_by_name_at_every_depth(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        misspelt = [
+            ("overvoltage_category:", "overvoltage_categry:", "separation-basis.yaml overvoltage_categry"),
+            ("altitude_m:", "altitude:", "separation-basis.yaml altitude"),
+            ("barrier_types:", "barrier_type:", "separation-basis.yaml barrier_type"),
+            ("table_rows:", "table_row:", "separation-basis.yaml table_row"),
+            ("    formed_by: the slot", "    formd_by: the slot", "barrier_types[0].formd_by"),
+            ("    touchable:\n      - connector J2", "    touchables:\n      - connector J2", "barrier_types[0].touchables"),
+            ("      document: synthetic table\n      edition: none\n      locator: row 1",
+             "      document: synthetic table\n      edition: none\n      locater: row 1", "table_rows[0].citation.locater"),
+            ("  - citation:\n      document: synthetic table\n      edition: none\n      locator: row 1",
+             "  - citations:\n      document: synthetic table\n      edition: none\n      locator: row 1", "table_rows[0].citations"),
+            ("      working_voltage_v: 250\n      insulation", "      working_volts: 250\n      insulation", "table_rows[0].inputs.working_volts"),
+            ("      clearance_mm: 3.0\n      creepage_mm: 4.0\n  - citation", "      clearence_mm: 3.0\n      creepage_mm: 4.0\n  - citation",
+             "table_rows[0].figure.clearence_mm"),
+            ("    figure:\n      creepage_mm: 4.0\n", "    figure:\n      creepage_mm: 4.0\n      creepage_mm_rms: 1\n", "table_rows[1].figure.creepage_mm_rms"),
+        ]
+        for old, new, where in misspelt:
+            with self.subTest(where=where):
+                figures, problems = self.record(self.changed(old, new))
+                self.assertIsNone(figures)
+                key = where.rsplit(".", 1)[-1] if "." in where.split(" ")[-1] else where.split(" ")[-1]
+                named = [v for v in problems if v.location == f"hardware/m/{where if ' ' in where else 'separation-basis.yaml ' + where}"
+                         and f"holds the key '{key}'" in v.message]
+                self.assertTrue(named, [(v.location, v.message) for v in problems])
+
+    def test_an_unknown_key_is_reported_in_the_one_violation_line_form(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        figures, problems = self.record(self.changed("    formed_by: the slot", "    formd_by: the slot"))
+        self.assertIsNone(figures)
+        lines = [v.line() for v in problems if "formd_by" in v.location]
+        self.assertEqual(len(lines), 1)
+        self.assertTrue(lines[0].startswith("VIOLATION | hardware/m/board/board.kicad_pro | separation_basis | "
+                                            "hardware/m/separation-basis.yaml barrier_types[0].formd_by | "
+                                            "barrier_types[0] holds the key 'formd_by', which is not one a barrier entry has"), lines[0])
+        self.assertIn("its keys are barrier, earth_bonded, formed_by, insulation, touchable", lines[0])
+
+    def test_the_top_level_refusal_lists_the_new_keys_among_those_a_record_has(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        figures, problems = self.record(SIGNED_RECORD + "overvoltage_categry: 2\n")
+        self.assertIsNone(figures)
+        self.assertIn("altitude_m, barrier_types, barriers", problems[0].message.replace("accepted_by, ", "").replace("accepted_on, ", ""))
+        self.assertIn("overvoltage_category", problems[0].message)
+        self.assertIn("table_rows", problems[0].message)
+
+    def test_a_synthetic_record_with_the_new_keys_still_passes_only_a_design_not_for_manufacture(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        self.assertFails(KEYED_RECORD + "synthetic: true\n", "synthetic", "marked synthetic")
+        self.assertEqual(self.record(KEYED_RECORD + "synthetic: true\n", not_for_manufacture=True)[0], (3.0, 4.0))
+
+
 class TheRecordIsTheCommittedOne(Tree):
     """SOL-HW-BOARD-RULE-CHECK-GATE.C3: The separation basis is a written rule the layout check enforces at no less than the signed figure, and a mains-carrying design without it fails.
 
@@ -3697,6 +3910,260 @@ class ThePinAllocationRecordIsAmongWhatADesignReads(Tree):
         self.write("hardware/m/board/pin-allocation.yaml", PIN_RECORD)
         reads = board_check.design_reads(self.root, board_check.tracked_files("git", self.root))
         self.assertIn("hardware/m/board/pin-allocation.yaml", reads)
+
+
+DERATING_RECORD = """\
+source: a synthetic policy
+classes:
+  - class: resistor
+    voltage:
+      share: 0.8
+      source: synthetic
+    power:
+      share: 0.5
+      source: synthetic
+    temperature:
+      share: 1
+      source: synthetic
+  - class: connector
+    voltage:
+      share: 0.7
+      source: synthetic
+    power:
+      share: 0.6
+      source: synthetic
+    temperature:
+      share: 0.9
+      source: synthetic
+"""
+
+PIN_LIMITS_RECORD = """\
+domains:
+  - name: logic
+    rail: V_LOGIC
+    highest_voltage_v: 3.3
+  - name: sense
+    rail: V_SENSE
+    highest_voltage_v: 5
+parts:
+  - lcsc: C100
+    source:
+      document: synthetic datasheet
+      revision: A
+      section: absolute maximum ratings
+      read_on: 2026-10-01
+    pins:
+      - pin: PA0
+        domain: logic
+        absolute_max_v: 3.6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      - pin: 7
+        domain: sense
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: true
+"""
+
+
+class PolicyRecordTree(Tree):
+    """The derating policy and pin-limit records beside a design two folders down, read as the check reads them."""
+
+    design = board_check.Design("hardware/m/board/board.kicad_pro")
+    name = ""
+    reader = None
+
+    def read(self, text: str, not_for_manufacture: bool = False):
+        self.write(f"hardware/m/{self.name}", text)
+        return type(self).reader(board_check.require_yaml(), self.root, self.everything(), self.design, not_for_manufacture)
+
+    def assertFails(self, text: str, location_end: str, words: str, not_for_manufacture: bool = False):
+        problems = self.read(text, not_for_manufacture)
+        self.assertTrue(any(v.rule == self.rule and v.location.endswith(location_end) and words in v.message
+                            for v in problems), [(v.location, v.message) for v in problems])
+
+
+class TheDeratingPolicyRecordIsRead(PolicyRecordTree):
+    name = "derating-policy.yaml"
+    rule = "derating_record"
+    reader = staticmethod(board_check.read_derating)
+
+    def changed(self, old: str, new: str) -> str:
+        self.assertIn(old, DERATING_RECORD)
+        return DERATING_RECORD.replace(old, new, 1)
+
+    def test_a_complete_synthetic_record_is_accepted_for_a_design_not_for_manufacture(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        self.assertEqual(self.read(DERATING_RECORD + "synthetic: true\n", not_for_manufacture=True), [])
+
+    def test_a_design_whose_folders_hold_no_derating_record_is_not_failed(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        self.write("hardware/m/board/board.kicad_pro", "{}")
+        self.assertEqual(board_check.read_derating(board_check.require_yaml(), self.root, self.everything(), self.design, False), [])
+
+    def test_a_synthetic_record_passes_only_a_design_not_for_manufacture(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        self.assertFails(DERATING_RECORD + "synthetic: true\n", "derating-policy.yaml synthetic", "marked synthetic")
+        self.assertEqual(self.read(DERATING_RECORD), [])
+        self.assertFails(DERATING_RECORD + "synthetic: 'true'\n", "derating-policy.yaml synthetic", "write true or false", True)
+
+    def test_a_share_must_be_above_zero_and_at_most_one(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        for bad in ("0", "-0.5", "1.01", "2", "'0.8'", "true", "null"):
+            with self.subTest(share=bad):
+                self.assertFails(self.changed("share: 0.8", f"share: {bad}"), "classes[0].voltage.share", "above zero and at most one")
+        for good in ("1", "0.01", "1.0"):
+            self.assertEqual(self.read(self.changed("share: 0.8", f"share: {good}")), [])
+
+    def test_a_missing_or_unusable_part_of_the_record_fails_by_name(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        self.assertFails(DERATING_RECORD.replace("source: a synthetic policy\n", ""), "derating-policy.yaml source", "lacks source")
+        self.assertFails(self.changed("source: a synthetic policy", "source: ''"), "derating-policy.yaml source", "non-empty string")
+        self.assertFails("source: x\n", "derating-policy.yaml classes", "lacks classes")
+        self.assertFails("source: x\nclasses: []\n", "classes", "lists no part classes")
+        self.assertFails("source: x\nclasses: resistor\n", "classes", "not a list")
+        self.assertFails(self.changed("  - class: resistor\n", "  - class: ''\n"), "classes[0].class", "non-empty string")
+        self.assertFails(self.changed("    power:\n      share: 0.5\n      source: synthetic\n", ""), "classes[0].power", "lacks power")
+        self.assertFails(self.changed("      share: 0.8\n      source: synthetic", "      source: synthetic"), "classes[0].voltage.share", "lacks share")
+        self.assertFails(self.changed("      share: 0.8\n      source: synthetic", "      share: 0.8"), "classes[0].voltage.source", "lacks source")
+        self.assertFails(self.changed("share: 0.8\n      source: synthetic", "share: 0.8\n      source: ''"), "classes[0].voltage.source", "non-empty string")
+        self.assertFails(self.changed("    voltage:\n      share: 0.8\n      source: synthetic\n", "    voltage: 0.8\n"),
+                         "classes[0].voltage", "not a mapping")
+        self.assertFails("- not a mapping\n", "derating-policy.yaml", "not a mapping")
+        self.assertFails("classes: [unclosed\n", "derating-policy.yaml", "cannot be parsed")
+
+    def test_a_key_the_decision_does_not_name_is_refused_by_name_at_every_depth(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        for old, new, where, key in (
+                ("source: a synthetic policy", "sources: a synthetic policy", "derating-policy.yaml sources", "sources"),
+                ("classes:", "classess:", "derating-policy.yaml classess", "classess"),
+                ("  - class: resistor", "  - klass: resistor", "classes[0].klass", "klass"),
+                ("    power:\n      share", "    powers:\n      share", "classes[0].powers", "powers"),
+                ("      share: 0.8", "      shre: 0.8", "classes[0].voltage.shre", "shre"),
+                ("      share: 0.5\n      source: synthetic", "      share: 0.5\n      source: synthetic\n      note: x",
+                 "classes[0].power.note", "note")):
+            with self.subTest(where=where):
+                problems = self.read(self.changed(old, new))
+                self.assertTrue([v for v in problems if v.location.endswith(where) and f"holds the key '{key}'" in v.message],
+                                [(v.location, v.message) for v in problems])
+                self.assertEqual({v.rule for v in problems}, {"derating_record"})
+
+    def test_a_key_given_twice_or_a_record_the_repository_does_not_track_fails(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        self.assertFails(DERATING_RECORD + "source: again\n", "derating-policy.yaml", "more than once")
+        self.write("hardware/m/derating-policy.yaml", DERATING_RECORD)
+        problems = board_check.read_derating(board_check.require_yaml(), self.root, board_check.Repository(self.root, []), self.design, False)
+        self.assertEqual([v.rule for v in problems], ["derating_record"])
+        self.assertIn("not tracked", problems[0].message)
+
+
+class ThePinLimitRecordIsRead(PolicyRecordTree):
+    name = "pin-limits.yaml"
+    rule = "pin_limits_record"
+    reader = staticmethod(board_check.read_pin_limits)
+
+    def changed(self, old: str, new: str) -> str:
+        self.assertIn(old, PIN_LIMITS_RECORD)
+        return PIN_LIMITS_RECORD.replace(old, new, 1)
+
+    def test_a_complete_synthetic_record_is_accepted_for_a_design_not_for_manufacture(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        self.assertEqual(self.read(PIN_LIMITS_RECORD + "synthetic: true\n", not_for_manufacture=True), [])
+
+    def test_a_design_whose_folders_hold_no_pin_limit_record_is_not_failed(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        self.assertEqual(board_check.read_pin_limits(board_check.require_yaml(), self.root, self.everything(), self.design, False), [])
+
+    def test_a_synthetic_record_passes_only_a_design_not_for_manufacture(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        self.assertFails(PIN_LIMITS_RECORD + "synthetic: true\n", "pin-limits.yaml synthetic", "marked synthetic")
+        self.assertEqual(self.read(PIN_LIMITS_RECORD), [])
+
+    def test_a_lowest_voltage_above_the_highest_fails(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        self.assertFails(self.changed("absolute_min_v: -0.3", "absolute_min_v: 4"), "parts[0].pins[0].absolute_min_v", "above absolute_max_v")
+        self.assertEqual(self.read(self.changed("absolute_min_v: -0.3", "absolute_min_v: 3.6")), [])
+        for bad in ("'3'", "true", ".nan", "null"):
+            with self.subTest(absolute_max_v=bad):
+                self.assertFails(self.changed("absolute_max_v: 3.6", f"absolute_max_v: {bad}"), "parts[0].pins[0].absolute_max_v", "not a number")
+
+    def test_a_pin_must_name_a_domain_the_record_lists(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        self.assertFails(self.changed("domain: logic", "domain: analogue"), "parts[0].pins[0].domain", "which domains does not list")
+        self.assertFails(self.changed("domain: logic", "domain: ''"), "parts[0].pins[0].domain", "non-empty string")
+
+    def test_a_pin_is_a_name_or_a_number_and_the_tolerance_is_true_or_false(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        for bad in ("true", "''", "[1]", "1.5", "null"):
+            with self.subTest(pin=bad):
+                self.assertFails(self.changed("pin: PA0", f"pin: {bad}"), "parts[0].pins[0].pin", "name or number")
+        for bad in ("'false'", "1", "null"):
+            with self.subTest(tolerates=bad):
+                self.assertFails(self.changed("tolerates_driven_unpowered: false", f"tolerates_driven_unpowered: {bad}"),
+                                 "parts[0].pins[0].tolerates_driven_unpowered", "true or false")
+
+    def test_a_date_that_is_not_an_iso_date_fails(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        for bad in ("'12/10/2026'", "'2026-02-30'", "2026-10-01T09:00:00", "yesterday", "null"):
+            with self.subTest(read_on=bad):
+                self.assertFails(self.changed("read_on: 2026-10-01", f"read_on: {bad}"), "parts[0].source.read_on", "not a valid calendar date")
+
+    def test_a_missing_or_unusable_part_of_the_record_fails_by_name(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        self.assertFails("parts: []\n", "pin-limits.yaml domains", "lacks domains")
+        self.assertFails("domains: []\nparts: []\n", "domains", "lists no power domains")
+        self.assertFails(PIN_LIMITS_RECORD.split("parts:")[0], "pin-limits.yaml parts", "lacks parts")
+        self.assertFails(self.changed("    rail: V_LOGIC\n", ""), "domains[0].rail", "lacks rail")
+        self.assertFails(self.changed("highest_voltage_v: 3.3", "highest_voltage_v: high"), "domains[0].highest_voltage_v", "not a number")
+        self.assertFails(self.changed("      section: absolute maximum ratings\n", ""), "parts[0].source.section", "lacks section")
+        self.assertFails(self.changed("  - lcsc: C100", "  - lcsc: ''"), "parts[0].lcsc", "non-empty string")
+        self.assertFails(self.changed("        absolute_min_v: -0.3\n", ""), "parts[0].pins[0].absolute_min_v", "lacks absolute_min_v")
+        self.assertFails(self.changed("    pins:", "    pins: []\n    unused:"), "parts[0].pins", "lists no pins")
+        self.assertFails(self.changed("    source:\n      document: synthetic datasheet\n      revision: A\n      section: absolute maximum ratings\n      read_on: 2026-10-01\n", "    source: datasheet\n"),
+                         "parts[0].source", "not a mapping")
+        self.assertFails("- not a mapping\n", "pin-limits.yaml", "not a mapping")
+
+    def test_a_key_the_decision_does_not_name_is_refused_by_name_at_every_depth(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        for old, new, where, key in (
+                ("domains:", "domain:", "pin-limits.yaml domain", "domain"),
+                ("parts:", "part:", "pin-limits.yaml part", "part"),
+                ("    rail: V_LOGIC", "    rails: V_LOGIC", "domains[0].rails", "rails"),
+                ("  - lcsc: C100", "  - lcsc: C100\n    note: x", "parts[0].note", "note"),
+                ("      revision: A", "      revison: A", "parts[0].source.revison", "revison"),
+                ("        absolute_max_v: 3.6", "        absolute_mx_v: 3.6", "parts[0].pins[0].absolute_mx_v", "absolute_mx_v"),
+                ("        tolerates_driven_unpowered: true", "        tolerates_driven_unpowered: true\n        extra: 1",
+                 "parts[0].pins[1].extra", "extra")):
+            with self.subTest(where=where):
+                problems = self.read(self.changed(old, new))
+                self.assertTrue([v for v in problems if v.location.endswith(where) and f"holds the key '{key}'" in v.message],
+                                [(v.location, v.message) for v in problems])
+                self.assertEqual({v.rule for v in problems}, {"pin_limits_record"})
+
+
+class TheDeratingAndPinLimitRecordsAreAmongWhatADesignReads(Tree):
+    def test_both_records_a_design_is_held_to_are_listed_wherever_they_sit(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        self.write("hardware/m/board/board.kicad_pro", "{}")
+        self.write("hardware/m/board/board.kicad_sch", "(kicad_sch)")
+        self.write("hardware/m/board/board.kicad_pcb", "(kicad_pcb)")
+        self.write("hardware/m/derating-policy.yaml", DERATING_RECORD)
+        self.git("init", "-q")
+        self.git("add", "-A")
+        self.write("hardware/m/board/pin-limits.yaml", PIN_LIMITS_RECORD)
+        reads = board_check.design_reads(self.root, board_check.tracked_files("git", self.root))
+        self.assertIn("hardware/m/derating-policy.yaml", reads)
+        self.assertIn("hardware/m/board/pin-limits.yaml", reads)
+
+    def test_a_design_holding_neither_record_lists_neither(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        self.write("hardware/m/board/board.kicad_pro", "{}")
+        self.write("hardware/m/board/board.kicad_sch", "(kicad_sch)")
+        self.write("hardware/m/board/board.kicad_pcb", "(kicad_pcb)")
+        self.git("init", "-q")
+        self.git("add", "-A")
+        reads = board_check.design_reads(self.root, board_check.tracked_files("git", self.root))
+        self.assertEqual([entry for entry in reads if entry.endswith((".yaml"))], [])
 
 
 class AMissingToolIsNamedByEveryModuleOfBoardTests(Tree):

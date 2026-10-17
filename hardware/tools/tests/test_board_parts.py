@@ -488,6 +488,89 @@ class UsableRecords(Design):
         self.assertEqual(self.rules(), ["parts_catalogue", "parts_record"])
 
 
+LIFE = """\
+    lifecycle:
+      status: active
+      source: the maker's published status
+      read_on: 2026-10-01
+"""
+
+
+class CatalogueLifecycle(Design):
+    def with_lifecycle(self, lifecycle: str = LIFE, after: str = "    unit_price: 0.002\n") -> None:
+        self.assertIn(after, EXTRACT)
+        self.write("hw/machine/catalogue-extract.yaml", EXTRACT.replace(after, after + lifecycle, 1) + "synthetic: true\n")
+
+    def lifecycle_lines(self):
+        return [line for line in self.lines() if "lifecycle" in line]
+
+    def test_an_entry_carrying_a_complete_lifecycle_mapping_passes(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        self.with_lifecycle()
+        self.assertEqual(self.lines(), [])
+
+    def test_the_lifecycle_mapping_is_optional_on_an_entry(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        self.assertEqual(self.lines(), [])
+        self.with_lifecycle(after="    unit_price: 1.5\n")
+        self.assertEqual(self.lines(), [])
+
+    def test_a_status_may_state_that_no_source_publishes_one(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        self.with_lifecycle(LIFE.replace("active", "no source publishes one"))
+        self.assertEqual(self.lines(), [])
+
+    def test_a_lifecycle_mapping_missing_any_of_its_three_keys_fails_naming_it(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        for key in ("status", "source", "read_on"):
+            with self.subTest(missing=key):
+                kept = "".join(line + "\n" for line in LIFE.splitlines() if not line.strip().startswith(key + ":"))
+                self.with_lifecycle(kept)
+                self.assertEqual(self.rules(), ["parts_record"])
+                self.assertIn(f"hw/machine/catalogue-extract.yaml entries[0].lifecycle.{key} | entries[0].lifecycle lacks {key}",
+                              self.only())
+
+    def test_a_misspelt_lifecycle_key_fails_naming_it(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        for key, wrong in (("status", "stauts"), ("source", "sorce"), ("read_on", "read_in")):
+            with self.subTest(key=key):
+                self.with_lifecycle(LIFE.replace(f"{key}:", f"{wrong}:"))
+                found = "\n".join(self.lines())
+                self.assertIn(f"entries[0].lifecycle holds the key '{wrong}', which is not one a lifecycle has", found)
+
+    def test_a_key_beside_the_lifecycle_mapping_that_an_entry_does_not_have_still_fails(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        self.with_lifecycle("    lifecycl:\n      status: active\n")
+        self.assertIn("entries[0] holds the key 'lifecycl', which is not one an entry has: its keys are lcsc, library_class, stock, unit_price, lifecycle", self.only())
+
+    def test_a_lifecycle_that_is_not_a_mapping_or_holds_blank_text_fails(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        self.with_lifecycle("    lifecycle: active\n")
+        self.assertIn("entries[0].lifecycle is not a mapping of the keys status, source, read_on", self.only())
+        self.with_lifecycle(LIFE.replace("active", "''"))
+        self.assertIn("entries[0].lifecycle.status is '', where it is a non-empty string", self.only())
+        self.with_lifecycle(LIFE.replace("the maker's published status", "''"))
+        self.assertIn("entries[0].lifecycle.source is '', where it is a non-empty string", self.only())
+
+    def test_a_date_read_that_is_not_an_iso_date_fails(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        for bad in ("'01/10/2026'", "'2026-02-30'", "2026-10-01T09:00:00", "soon", "20261001", "null"):
+            with self.subTest(read_on=bad):
+                self.with_lifecycle(LIFE.replace("read_on: 2026-10-01", f"read_on: {bad}"))
+                self.assertIn("entries[0].lifecycle.read_on", self.only())
+                self.assertIn("is not a valid calendar date written as YYYY-MM-DD", self.only())
+
+    def test_a_malformed_lifecycle_makes_the_extract_unusable_so_no_part_is_judged_against_it(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        self.with_lifecycle(LIFE.replace("active", "''"))
+        self.assertEqual(self.rules(), ["parts_record"])
+
+    def test_a_lifecycle_on_a_later_entry_is_named_by_its_position(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        self.with_lifecycle(LIFE.replace("read_on: 2026-10-01", "read_on: never"), after="    unit_price: 1.5\n")
+        self.assertIn("entries[1].lifecycle.read_on", self.only())
+
+
 class WhatTheRoundReads(Design):
     def test_a_designs_reads_include_its_specification_record_and_extract_wherever_they_sit(self):
         # SOL-HW-PARTS-CHECK.C5: Every board design the repository tracks, both throwaway designs included, carries a synthetic specification record and a synthetic catalogue extract and passes the parts check, and the round gate runs its board tier on a change to any specification record or catalogue extract
@@ -507,6 +590,16 @@ class WhatTheRoundReads(Design):
         for design in designs:
             with self.subTest(design=design.project):
                 self.assertEqual(board_check.check_parts(self.yaml, REPO, design, repository, datetime.date.today(), True), [])
+
+    def test_every_tracked_design_passes_the_derating_and_pin_limit_readers(self):
+        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        files = board_check.tracked_files("git", REPO)
+        repository = board_check.Repository(REPO, files)
+        designs, _, _ = board_check.discover(REPO, files)
+        for design in designs:
+            with self.subTest(design=design.project):
+                self.assertEqual(board_check.read_derating(self.yaml, REPO, repository, design, True), [])
+                self.assertEqual(board_check.read_pin_limits(self.yaml, REPO, repository, design, True), [])
 
 
 if __name__ == "__main__":
