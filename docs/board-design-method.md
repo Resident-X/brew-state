@@ -412,6 +412,7 @@ Commit `layout-plan.md` before the first commit that places a footprint on the b
 - the plan table has exactly one row for every item of the catalogue as it stood in that commit, and names no other;
 - each row marked `no` gives a reason against the item's *Applies when* that the schematic bears out, so no item whose condition the schematic meets is marked `no`;
 - each row marked `yes` says how the layout meets the item, names at least one region, part or net it binds, and each region, part and net it names is one the floorplan or the netlist holds;
+- each `yes` row whose clause binds every pad or part of a kind, such as a via at each ground pad of an integrated circuit or two vias beside each decoupling capacitor, names every pad or part of that kind the netlist holds, since a promise made for each and kept for some is the shortfall a review finds;
 - the board's own items table is there, either with its one `none` row or with a row for each item, each identifier `BOARD-<n>` used once, every column filled as step 2 says, each *Applies when* one the schematic meets, and each How the layout meets it naming at least one region, part or net, each one the floorplan or the netlist holds.
 
 Until the first commit that places a footprint, a plan row may be amended in a commit of its own. The floorplan changes only by appending a part, as below.
@@ -419,6 +420,8 @@ Until the first commit that places a footprint, a plan row may be amended in a c
 A plan that is missing, incomplete or uncommitted in that checkout, or that fails a cross-check above, fails this step, however complete it is now. A part added to the schematic after placement is planned for, by amending the floorplan, which appends the part to its region's Parts and changes no bound, no other part and no other region, and every row whose item it bears on, and that change is committed before the part is placed. The history command that step 6 of [Placement](#placement) runs holds the floorplan the placement section is judged against to the floorplan in the commit before the first commit whose board holds a footprint, comparing the set of region names, each region's bounds and each region's parts; no other text in the table is compared, and allows no other difference than such an appended part, committed before its footprint first appears on the board and kept in the plan until then. Between the first footprint on the board and the first track, pour, arc or via committed, the floorplan can only gain appended parts, so a floorplan error found during placement, a bound that is wrong, a part in the wrong region or a region missing, has no in-place fix: the work restarts from a fresh branch, with the floorplan corrected and committed before any footprint is placed. A part added after the choice and before the first track, pour, arc or via is committed means recording a new candidate that includes it and recording the placement section again. After the first track, pour, arc or via is committed the recorded section is frozen, and the floorplan is held to the commit before the first placement only as it stood in the commit before that first copper, so a part appended to it after that copper is not compared: it is only planned, by amending the floorplan as above, and placed, and the recorded section is left as it is. A part appended before that first copper and placed after it is compared still: the plan in the commit before the one that places it must list it.
 
 A plan item the finished layout does not meet is a finding at the [layout review](#layout-review).
+
+Amended after hardware/proof/method-proof/layout-review.md, round 1, finding 1.4.
 
 Out of scope for this section: the layout review itself, which [Layout review](#layout-review) describes, and producing the views it judges a board on, which [Layout review views](#layout-review-views) describes.
 
@@ -1111,13 +1114,13 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 
 #### GROUND-4. A part's analog and digital ground pins join the same plane at the part
 
-- **Applies when:** the schematic carries a part with separate analog and digital ground pins, such as a converter.
-- **Asks:** Are that part's analog and digital ground pins joined, at the part, to the same low-impedance ground plane by the shortest connections?
-- **Passes:** Each ground pin goes straight to the plane under the part by the shortest connection, the analog and digital ground pins to the same plane.
+- **Applies when:** the schematic carries an integrated circuit with a ground pin, a part with separate analog and digital ground pins, such as a converter, among them.
+- **Asks:** Are that part's ground pins, the analog and digital ones where it has both, joined, at the part, to the same low-impedance ground plane by the shortest connections?
+- **Passes:** Each ground pin goes straight to the plane under the part by the shortest connection, a via of its own beside the pad or ground copper under the part rather than a neck of pour or a track, the analog and digital ground pins to the same plane.
 - **Fails, as the views show it:** on `crop-<reference>`, the digital ground pin routed away by a track to a distant ground, or the two ground pins joined to different copper areas.
 - **Judged on:** `crop-<reference>`, `net-<net>` for the ground nets.
 - **Kind:** judgement. **Severity:** function.
-- **Source:** Texas Instruments, *Grounding in mixed-signal systems demystified, Part 1*, Analog Applications Journal 1Q 2013, SLYT499, the section on interpreting AGND and DGND pins ("the AGND and DGND pins should be joined together externally to the same low-impedance ground plane with minimum lead lengths"), https://www.ti.com/lit/pdf/slyt499, read 2026-10-14.
+- **Source:** Texas Instruments, *Grounding in mixed-signal systems demystified, Part 1*, Analog Applications Journal 1Q 2013, SLYT499, the section on interpreting AGND and DGND pins ("the AGND and DGND pins should be joined together externally to the same low-impedance ground plane with minimum lead lengths"), https://www.ti.com/lit/pdf/slyt499, read 2026-10-14; amended after `hardware/proof/method-proof/layout-review.md`, round 1, finding 1.4, which records a regulator's only ground pin reaching the planes through a 2 mm neck of pour with the nearest ground via 3.9 mm away, where the plan row promised each ground pad its own vias.
 
 #### GROUND-5. No two plated holes stand so close that their rings merge in a plane
 
