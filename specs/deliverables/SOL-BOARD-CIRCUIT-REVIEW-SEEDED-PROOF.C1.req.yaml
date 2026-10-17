@@ -1,0 +1,12 @@
+id: SOL-BOARD-CIRCUIT-REVIEW-SEEDED-PROOF.C1
+type: criterion
+title: Following the schematic review blind on a seeded proof schematic reports every seeded defect
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  Commit a clean proof schematic marked not for manufacture that passes the pre-order check, declares mains, carries the separation inputs and per-barrier insulation types the catalogue's barrier and surge items read, and holds at least one part or net for every catalogue item a condition selects, have a session that has not read the catalogue seed defects of its own choosing into a copy outside the tracked tree, and have a fresh session with no record of the seeds review the copy by the method's schematic review step; record which seeds were found by which finding against which item. Out of scope: layout defects, which the layout review's own proof covers.
+links:
+  - target: SOL-BOARD-CIRCUIT-REVIEW-SEEDED-PROOF
+    type: criterion-of

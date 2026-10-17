@@ -605,8 +605,9 @@ class Method(unittest.TestCase):
 
     def test_the_catalogue_names_the_placement_view_on_exactly_the_items_judged_at_placement(self):
         # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The catalogue marks the items judged at placement by naming the placement view in their Judged on line.
-        items = re.findall(r"^#### ([A-Z]+-\d+)\. .*?^- \*\*Judged on:\*\* (.*?)$", self.method, re.M | re.S)
-        self.assertEqual(len(items), len(re.findall(r"^#### [A-Z]+-\d+\. ", self.method, re.M)))
+        layout = section(self.method, "Layout practice catalogue")
+        items = re.findall(r"^#### ([A-Z]+-\d+)\. .*?^- \*\*Judged on:\*\* (.*?)$", layout, re.M | re.S)
+        self.assertEqual(len(items), len(re.findall(r"^#### [A-Z]+-\d+\. ", layout, re.M)))
         self.assertEqual({item for item, line in items if "`placement`" in line}, PLACEMENT_ITEMS)
         test_1 = dict(items)["TEST-1"]
         self.assertIn("`placement`, for its spacing from part bodies", test_1)

@@ -118,6 +118,9 @@ CANDIDATE = re.compile(r"### Candidate (\d+)")
 PASS = re.compile(r"### Pass (\d+)")
 COMMIT = re.compile(r"\b[0-9a-f]{7,40}\b")
 CATALOGUE_ITEM = re.compile(r"^#### ([A-Z]+-\d+)\. ", re.M)
+#: The method's layout practice catalogue, from its heading to the next second-level heading. The circuit practice
+#: catalogue beside it uses the same item form, and its items are the schematic review's, never the layout checklist's.
+LAYOUT_CATALOGUE = re.compile(r"^## Layout practice catalogue[ \t]*\n(.*?)(?=^## |\Z)", re.M | re.S)
 JUDGED_ON = re.compile(r"^- \*\*Judged on:\*\* (.*)$", re.M)
 #: An item a pass lists as bearing on no critical net, with its reason: - `ITEM`: why.
 LISTED = re.compile(r"^[-*]\s+`?([A-Z]+-\d+)`?:\s*\S")
@@ -297,9 +300,11 @@ def table(lines: List[str], header: List[str]) -> Tuple[Optional[int], List[List
 
 
 def catalogue(text: Optional[str]) -> Dict[str, str]:
-    """Each catalogue item of the method, by identifier, with its Judged on line."""
-    if text is None:
+    """Each layout catalogue item of the method, by identifier, with its Judged on line."""
+    section = LAYOUT_CATALOGUE.search(text) if text is not None else None
+    if section is None:
         return {}
+    text = section.group(1)
     marks = list(CATALOGUE_ITEM.finditer(text))
     found = {}
     for index, mark in enumerate(marks):
