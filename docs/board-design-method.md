@@ -1153,11 +1153,11 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 
 - **Applies when:** the schematic carries an integrated circuit with a decoupling capacitor on a supply pin.
 - **Asks:** Is the loop from the supply pin through the capacitor and back to the part's ground pin as small in area and length as it can be, with the capacitor's ground side going straight into the ground plane?
-- **Passes:** The capacitor's ground pad joins the plane at once, through two vias where it changes layer, or through ground copper extended from under the part rather than a track. The supply and ground sides run over or beside each other, so the loop encloses little area seen from above.
+- **Passes:** The capacitor's ground pad joins the plane at once, through two vias of its own beside the pad where it changes layer, or through ground copper extended from under the part rather than a track. A pad joined to a pour only through thermal reliefs, with at most one via near it, is neither: it needs its two vias. The supply and ground sides run over or beside each other, so the loop encloses little area seen from above.
 - **Fails, as the views show it:** on `crop-<reference>`, the capacitor's ground pad reaching ground by a long track, or the loop through capacitor and part enclosing a wide area.
 - **Judged on:** `crop-<reference>`, `net-<net>` for the ground net.
 - **Kind:** judgement. **Severity:** function.
-- **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.2.4 *Bypassing and Ferrite Beads* ("Make the bypassing loops as small as possible in area and length"), https://www.ti.com/lit/pdf/szza009, read 2026-10-14; and Texas Instruments, *Digital Isolator Design Guide*, SLLA284G, revised September 2023, § 4.6 *Routing*, item 10 (the capacitor's ground side "through two vias to the ground plane"), https://www.ti.com/lit/pdf/slla284, read 2026-10-14.
+- **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.2.4 *Bypassing and Ferrite Beads* ("Make the bypassing loops as small as possible in area and length"), https://www.ti.com/lit/pdf/szza009, read 2026-10-14; and Texas Instruments, *Digital Isolator Design Guide*, SLLA284G, revised September 2023, § 4.6 *Routing*, item 10 (the capacitor's ground side "through two vias to the ground plane"), https://www.ti.com/lit/pdf/slla284, read 2026-10-14; amended after `hardware/proof/method-proof/layout-review.md`, round 1, finding 1.3, which records capacitors' ground pads joined to a pour through reliefs with one via each, where the plan row promised two vias beside each.
 
 #### DECOUPLE-3. A switching converter's power parts form tight loops that curl the same way
 
