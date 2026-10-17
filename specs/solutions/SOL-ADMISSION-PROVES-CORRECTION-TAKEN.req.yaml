@@ -27,3 +27,7 @@ links:
     type: targets
   - target: SOL-ADMISSION-PROVES-CORRECTION-WRITABLE
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5
+  fingerprint: 9c2d02475dfe424e043c555974f954b35f8e51d23ea5306c94d0aeaba8756fd7
+  gating_profile: ""
