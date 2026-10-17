@@ -4,7 +4,7 @@ category: solution
 title: The board design method is followable by a fresh designer or agent and carries nothing specific to this machine
 status: active
 priority: must
-version: 5
+version: 6
 text: |
   The method as a whole is written to be followed without its author, entered by agents through a project operator skill, named with the repository's repo- prefix so it is tracked and survives the skills sync, that wraps Konnect's bundled KiCad skills unedited, holds no figure, part choice or board shape of this machine, and is demonstrated by a fresh agent session following it to a throwaway design, never ordered, that passes the pre-order gate.
 
