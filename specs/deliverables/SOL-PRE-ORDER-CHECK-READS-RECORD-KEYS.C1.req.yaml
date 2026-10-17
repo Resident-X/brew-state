@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1
+type: criterion
+title: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Extend the check's record forms to accept and read every key listed in this solution's text and keep refusing any key the two decisions do not define, then add a synthetic proof design whose records carry every one of those keys and a seeded fault that misspells one of them. The proof design passes the check as committed, and the misspelt copy fails naming the key. Out of scope: the rules that compare a design against the values these keys carry, which the other criteria of the task own.
+links:
+  - target: SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS
+    type: criterion-of

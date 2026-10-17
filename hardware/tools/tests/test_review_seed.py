@@ -53,8 +53,10 @@ def run(argv):
 
 
 def catalogue_items():
+    """The layout catalogue's item identifiers: the section the layout review judges, not the circuit catalogue."""
     with open(METHOD, encoding="utf-8") as handle:
-        return re.findall(r"^#### ([A-Z]+-\d+)\. ", handle.read(), re.M)
+        section = re.search(r"^## Layout practice catalogue[ \t]*\n(.*?)(?=^## |\Z)", handle.read(), re.M | re.S)
+    return re.findall(r"^#### ([A-Z]+-\d+)\. ", section.group(1) if section else "", re.M)
 
 
 def contents(folder):

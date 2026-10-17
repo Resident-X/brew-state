@@ -304,6 +304,26 @@ class Passes(Base):
                       f"{router[:12]}", text, "the router's commit, not the unlocked hand route, is the router's")
         self.assertNotIn("router not yet run", lines[-1])
 
+    def test_a_circuit_item_in_the_method_leaves_the_layout_checklist_unchanged(self):
+        # SOL-BOARD-CIRCUIT-PRACTICE-CATALOGUE.C1: Change the board history check so the layout checklist it builds is taken from the layout practice catalogue section alone, with a test showing a circuit item in the method leaves that checklist unchanged.
+        circuit = (
+            "## Circuit practice catalogue\n\n"
+            "#### PINV-1. Every pin stays within its rating\n\n- **Judged on:** `placement`.\n\n"
+            "#### BUSP-1. Every bus line has a pull-up\n\n- **Judged on:** the schematic.\n"
+        )
+        before = board_history.catalogue(METHOD)
+        for method in (METHOD + "\n" + circuit, METHOD.replace("## Layout practice catalogue", circuit + "\n## Layout practice catalogue")):
+            self.assertEqual(board_history.catalogue(method), before)
+            self.assertNotIn("PINV-1", board_history.catalogue(method))
+        self.assertEqual(sorted(before), ["FLOOR-1", "GROUND-1", "WORK-1"])
+        # A section ending at the next second-level heading, with a circuit item after it, still ends there.
+        self.repo.write("docs/board-design-method.md", METHOD + "\n" + circuit)
+        self.repo.placed()
+        self.repo.through_router(self.repo.routed())
+        self.assertPasses("--routed")
+        self.assertEqual(board_history.catalogue(None), {})
+        self.assertEqual(board_history.catalogue("# Board design method\n\n#### PINV-1. A circuit item\n"), {})
+
     def test_a_compliant_history_after_the_router_passes_with_routed(self):
         # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: a pass on a history that keeps the order
         self.repo.placed()

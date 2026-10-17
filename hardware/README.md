@@ -49,7 +49,7 @@ Every tool is free. The check stops with an error naming any tool that is missin
 - `task hw:review-history` judges one board's layout review record, `layout-review.md`, against the repository's history (below). It needs git and Python only.
 - `task hw:rules-confirm`, `task hw:copper-lock`, `task hw:copper-record` and `task hw:copper-compare` run the locked-copper check (below) on one board, before routing and around the routing round trip. They need the same tools as `hw:verify`, and read the paths given after `--` from the folder they are run in.
 
-How a board is designed so that it passes the check and works once built, from proving its value-critical circuits, providing for its bring-up and planning its layout against the method's layout practice catalogue before placement, to its rules, its routing and the review of its finished layout, is in [`docs/board-design-method.md`](../docs/board-design-method.md).
+How a board is designed so that it passes the check and works once built, from proving its value-critical circuits, providing for its bring-up, reviewing its schematic against the method's circuit practice catalogue and planning its layout against the method's layout practice catalogue before placement, to its rules, its routing and the review of its finished layout, is in [`docs/board-design-method.md`](../docs/board-design-method.md).
 
 ## When the board check runs
 
