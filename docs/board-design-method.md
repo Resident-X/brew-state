@@ -1019,6 +1019,16 @@ The areas, in order: [floorplan and partitioning](#floorplan-and-partitioning-fl
 - **Kind:** rule. **Severity:** function.
 - **Source:** `hardware/proof/review-proof/layout-review.md`, round 2, finding 2.1, which records a connector whose body crossed out of its region, and for the practice Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.3 *Board Zoning*, https://www.ti.com/lit/pdf/szza009, read 2026-10-14.
 
+#### FLOOR-5. Each connector stands where the connector table puts it
+
+- **Applies when:** the schematic carries a connector, terminal or header.
+- **Asks:** Does the pin 1 of every connector lie within 2.54 mm of the position the floorplan's connector table gives it, on the edge the table names?
+- **Passes:** Each connector's pin 1 is on the edge its row names and within 2.54 mm of its row's position. A connector that stands further off is a departure from the plan that the review records as a finding, and is closed by the placement item that moved it, named by its identifier, or by an amendment of the row made before the first footprint is placed.
+- **Fails, as the views show it:** on `assembly-top` or `assembly-bottom`, read against the board coordinates in the caption, a connector's pin 1 more than 2.54 mm from its table position.
+- **Judged on:** `assembly-top`, `assembly-bottom`, `placement`.
+- **Kind:** judgement. **Severity:** cosmetic.
+- **Source:** `hardware/proof/method-proof/layout-review.md`, round 1, finding 1.7.
+
 ### Power paths and heat (POWER)
 
 #### POWER-1. Every class carrying supply or load current has a minimum track width for its current
