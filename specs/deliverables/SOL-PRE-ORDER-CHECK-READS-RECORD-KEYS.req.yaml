@@ -30,3 +30,7 @@ links:
     type: targets
   - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
     type: justified-by
+brief_confirmation:
+  confirmer: claude-sonnet-5-5
+  fingerprint: a5e021406d150a1b2224b624fb27315b54ef74aba2a260ccc4779927a36f4c0b
+  gating_profile: ""
