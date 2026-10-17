@@ -227,6 +227,6 @@ For the next reader, the items this refresh could not resolve from its inputs, a
 7. Gauge step-clock timing requirement versus plain-GPIO assignment.
 8. Relay module input polarity; as-found valve coil VA; whether the valves are retained or replaced.
 9. Pressure-sensor accuracy against the requirement; XDB401 3.3 V variant output rate and thread.
-10. Whether `DEC-PREHARDWARE-TARGET-FAMILY` and the zero-cross enumeration have been amended, and whether the interlock now has covering work.
+10. **Overtaken by `DEC-PROOF-OF-LIFE-INTERLOCK-IN-FIRST-HARDWARE` (2026-10-18): the interlock is built into the first controller hardware, not deferred.** Whether `DEC-PREHARDWARE-TARGET-FAMILY` and the zero-cross enumeration have been amended, and whether the interlock now has covering work.
 11. Currency: BOM in AUD, declared spend in USD.
 12. IRM-10-5 internal fuse.
