@@ -322,6 +322,48 @@ class Parts(Proved):
         self.assertEqual([line for line in lines if line.startswith("VIOLATION") and "| parts_" in line], [])
 
 
+class Names(Proved):
+    def test_a_tool_named_net_and_each_unnamed_sheet_fail_by_name_beside_a_pin_nothing_joins(self):
+        # SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS.C2: Each refusal is shown to fail on a fault seeded for it in a copy of the throwaway design
+        faults = [fault for fault in board_prove.FAULTS if fault[1].startswith("names:")]
+        self.assertEqual({fault[2] for fault in faults}, {"tool_named_net", "unnamed_sheet"})
+        self.assertGreaterEqual(len([fault for fault in faults if fault[2] == "unnamed_sheet"]), 3)
+        net = next(fault for fault in faults if fault[2] == "tool_named_net")
+        self.assertEqual(net[6], "unconnected-(")
+        self.assertCaught(*[fault[0] for fault in faults])
+
+
+
+class NamesRunDirectly(unittest.TestCase):
+    def test_the_seeded_net_run_carries_a_pin_nothing_joins_and_names_none_of_them_in_a_failure(self):
+        # SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS.C2: Each refusal is shown to fail on a fault seeded for it in a copy of the throwaway design
+        fault = next(fault for fault in board_prove.FAULTS if fault[2] == "tool_named_net")
+        with tempfile.TemporaryDirectory(prefix="board-test-") as scratch:
+            seed = board_prove.prepare(scratch)
+            fault[4](seed)
+            status, lines = board_prove.check(seed, KICAD_CLI)[:2]
+        self.assertEqual(status, 1, lines)
+        self.assertTrue(any("| tool_named_net |" in line for line in lines), lines)
+        self.assertTrue(any("Pin not connected" in line for line in lines), "the run seeds no pin nothing joins")
+        self.assertEqual([line for line in lines if line.startswith("VIOLATION") and "unconnected-(" in line], [])
+
+    def test_the_proof_fails_a_fault_whose_run_names_what_the_check_must_leave_alone(self):
+        # SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS.C2: Each refusal is shown to fail on a fault seeded for it in a copy of the throwaway design
+        fault = next(fault for fault in board_prove.FAULTS if fault[2] == "tool_named_net")
+        spared = (*fault[:6], "Net-(R1-Pad1)")
+        caught, evidence = board_prove.prove(spared, KICAD_CLI)
+        self.assertFalse(caught)
+        self.assertIn("must leave alone", evidence)
+
+    def test_the_unmodified_throwaway_design_passes_the_name_refusals(self):
+        # SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS.C3: Every tracked design passes the refusals, which run in the build round for board changes and nightly on main
+        with tempfile.TemporaryDirectory(prefix="board-test-") as scratch:
+            seed = board_prove.prepare(scratch)
+            status, lines = board_prove.check(seed, KICAD_CLI)[:2]
+        self.assertEqual(status, 0, lines)
+        self.assertEqual([line for line in lines if "| tool_named_net |" in line or "| unnamed_sheet |" in line], [])
+
+
 class RecordKeys(Proved):
     def test_a_misspelt_key_in_each_kind_of_record_fails_and_is_named(self):
         # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy

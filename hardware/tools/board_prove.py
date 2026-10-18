@@ -504,6 +504,46 @@ def twice_named_sheet(seed: Seed) -> None:
     seed.schematic(lambda tree: tree.insert(len(tree) - 1, sheet))
 
 
+def subsheet(seed: Seed, name: str, uuid: str, edit: Optional[Callable[[list], None]] = None) -> None:
+    """A copy of the schematic placed below it as a sheet called `name`, with `edit` made to the copy."""
+    shutil.copy(seed.path(".kicad_sch"), seed.path("sub.kicad_sch"))
+    Q = sexpr.Quoted
+    sheet = ["sheet", ["at", "200", "100"], ["size", "20", "10"], ["uuid", Q(uuid)],
+             ["property", Q("Sheetname"), Q(name), ["at", "200", "99", "0"]],
+             ["property", Q("Sheetfile"), Q("sub.kicad_sch"), ["at", "200", "111", "0"]]]
+    seed.schematic(lambda tree: tree.insert(len(tree) - 1, sheet))
+    if edit is not None:
+        # KiCad lists a symbol under the sheet its instance names, so the copy's parts are moved down to the sheet
+        # for the nets they join to be read there.
+        root_path = "/" + sexpr.child(sexpr.parse_one(seed.read(".kicad_sch")), "uuid")[1]
+        text = seed.read("sub.kicad_sch").replace(f'(path "{root_path}"', f'(path "{root_path}/{uuid}"')
+        tree = sexpr.parse_one(text)
+        edit(tree)
+        seed.write("sub.kicad_sch", sexpr.dump(tree) + "\n")
+
+
+def sheet_named(name: str):
+    return lambda seed: subsheet(seed, name, "0b0e5c1a-0000-4000-8000-0000000000e5")
+
+
+def generated_net_on_subsheet(seed: Seed) -> None:
+    """A sub-sheet with no labels, R1 pin 1 wired to R2 pin 1 and nothing else: that net is KiCad's to name, and
+    R1 pin 2, flagged no-connect, and every other pin are nothing's, which KiCad names `unconnected-` and carries no net."""
+    Q = sexpr.Quoted
+
+    def wire(uuid: str, start: Tuple[str, str], end: Tuple[str, str]) -> list:
+        return ["wire", ["pts", ["xy", *start], ["xy", *end]], ["stroke", ["width", "0"], ["type", "default"]], ["uuid", Q(uuid)]]
+
+    def edit(tree: list) -> None:
+        for item in sexpr.children(tree, "label"):
+            tree.remove(item)
+        for number, (start, end) in enumerate([(("63.5", "48.26"), ("70", "48.26")), (("70", "48.26"), ("70", "73.66")),
+                                               (("70", "73.66"), ("63.5", "73.66"))]):
+            tree.insert(len(tree) - 1, wire(f"0b0e5c1a-0000-4000-8000-0000000000f{number + 3}", start, end))
+        tree.insert(len(tree) - 1, ["no_connect", ["at", "63.5", "55.88"], ["uuid", Q("0b0e5c1a-0000-4000-8000-0000000000f2")]])
+    subsheet(seed, "sub", "0b0e5c1a-0000-4000-8000-0000000000e6", edit)
+
+
 def net_tie(group: str, extra_pad: bool):
     """R1, whose pads carry /MAINS_L and /MAINS_N, made a net tie over `group`; with a third pad on /LV_A if asked."""
     def seed_it(seed: Seed) -> None:
@@ -812,7 +852,8 @@ SIGNED = f"rule '{board_check.SIGNED_RULE}' clearance"
 CONDITION = board_check.MAINS_CONDITION
 
 #: (fault, the check it proves, the rule the check must report, text that line must carry, the edit), and, for a
-#: fault seeded into a design other than DESIGN, that design's folder and name as a sixth element.
+#: fault seeded into a design other than DESIGN, that design's folder and name as a sixth element and, as a seventh,
+#: text no violation line of the run may carry, for a fault seeded beside something the check must leave alone.
 FAULTS: List[tuple] = [
     # Discovery
     ("an empty tree", "discovery: finding nothing fails", "design_discovery", "no board design was found", empty_tree),
@@ -976,6 +1017,11 @@ FAULTS: List[tuple] = [
     ("a basis record with an invalid acceptance date", "separation: the basis record is signed", "separation_basis", "not a valid calendar date", record("accepted_on: 2026-10-12", "accepted_on: '12/10/2026'")),
     ("a basis record accepted on a future date", "separation: the basis record is signed", "separation_basis", "later than today", record("accepted_on: 2026-10-12", "accepted_on: 2999-01-01")),
     ("a synthetic basis record applied to a design not marked not for manufacture", "separation: a synthetic record cannot pass an orderable board", "separation_basis", "marked synthetic", variables(lambda v: v.pop("NOT_FOR_MANUFACTURE"))),
+    # Names
+    ("a net KiCad named on a sub-sheet, beside pins nothing joins", "names: a net the tool generated fails, and a pin nothing joins is exempt", "tool_named_net", "Net-(", generated_net_on_subsheet, (DESIGN, NAME), "unconnected-("),
+    ("a sheet with a blank name", "names: a sheet with no name of its own fails", "unnamed_sheet", "its name is blank", sheet_named("")),
+    ("a sheet with the tool's default name", "names: a sheet with no name of its own fails", "unnamed_sheet", "is 'Untitled Sheet'", sheet_named("Untitled Sheet")),
+    ("a second sheet with the tool's default name, numbered", "names: a sheet with no name of its own fails", "unnamed_sheet", "is 'Untitled Sheet 1'", sheet_named("Untitled Sheet 1")),
     # Connectivity
     ("a channel's net moved to the other controller pin", "connectivity: a net must reach the controller pin its channel names", "connectivity", "net /LV_A reaches controller pin PA1, where the record names controller pin PA0", swap_labels(("LV_A", "96.52 76.2"), ("LV_B", "96.52 78.74"))),
     ("a channel's net moved to the other pin of its connector", "connectivity: a net must reach the connector pin its channel names", "connectivity", "net /LV_A reaches connector pin J2 pin 2, where the record names connector pin J2 pin 1", swap_labels(("LV_A", "45.72 76.2"), ("LV_B", "45.72 78.74"))),
@@ -1142,6 +1188,10 @@ def prove(fault, kicad_cli: str) -> Tuple[bool, str]:
         status, lines, stderr = check(seed, kicad_cli)
     if status == 2:
         return False, f"the check could not run: {stderr}"
+    spared = fault[6] if len(fault) > 6 else None
+    for line in lines:
+        if spared is not None and line.startswith("VIOLATION") and spared in line:
+            return False, f"a violation names what the check must leave alone ({spared!r}): {line}"
     for line in lines:
         fields = [field.strip() for field in line.split("|")]
         if fields[0] == "VIOLATION" and len(fields) == 5 and fields[2] == rule and text in line:
