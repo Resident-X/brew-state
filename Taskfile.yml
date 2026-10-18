@@ -30,10 +30,15 @@ vars:
   # resvg, which turns the review views into images, may be installed off the
   # search path too; point at it with RESVG=... (hardware/README.md says where to get it).
   RESVG: '{{.RESVG | default "resvg"}}'
-  # The Python of the virtual environment gerbonara 1.6.3 is installed in, which
-  # draws the exported fabrication layers; point at it with GERBONARA_PYTHON=...
-  # (hardware/README.md says how to install it).
-  GERBONARA_PYTHON: '{{.GERBONARA_PYTHON | default "python3"}}'
+  # The virtual environment gerbonara 1.6.3 is installed in, which draws the
+  # exported fabrication layers: `task hw:gerbonara` creates it here, and
+  # GERBONARA_VENV=... puts it elsewhere (hardware/README.md says more).
+  GERBONARA_VENV:
+    sh: 'echo "${GERBONARA_VENV:-${XDG_CACHE_HOME:-$HOME/.cache}/brew-state/gerbonara}"'
+  # The Python that draws them: GERBONARA_PYTHON=... when set, else the Python of
+  # that environment once it exists, else the bare python3.
+  GERBONARA_PYTHON:
+    sh: 'if [ -n "${GERBONARA_PYTHON:-}" ]; then echo "$GERBONARA_PYTHON"; elif [ -x "{{.GERBONARA_VENV}}/bin/python" ]; then echo "{{.GERBONARA_VENV}}/bin/python"; else echo python3; fi'
 
 tasks:
   sc:install:
@@ -548,6 +553,14 @@ tasks:
     dir: "{{.USER_WORKING_DIR}}"
     cmds:
       - python3 "{{.ROOT_DIR}}/{{.HW_DIR}}/tools/board_review_history.py" {{.CLI_ARGS}}
+
+  hw:gerbonara:
+    desc: Create the virtual environment gerbonara 1.6.3 is installed in, at GERBONARA_VENV (by default a folder in your user cache, outside the repository), and read the version back, so the tasks and tests that draw exported fabrication layers find it without GERBONARA_PYTHON being set. Safe to run again. Needs Python 3.9 or newer with venv and pip, and network access to the Python package index the first time
+    dir: "{{.ROOT_DIR}}"
+    cmds:
+      - python3 -m venv "{{.GERBONARA_VENV}}"
+      - '"{{.GERBONARA_VENV}}/bin/python" -m pip install --quiet gerbonara==1.6.3'
+      - '"{{.GERBONARA_VENV}}/bin/python" -c "import gerbonara; assert gerbonara.__version__ == \"1.6.3\", gerbonara.__version__; print(\"gerbonara\", gerbonara.__version__, \"in {{.GERBONARA_VENV}}\")"'
 
   hw:test:
     desc: Run the tests covering the board tooling (the pre-order check, the locked-copper check, the layout review views, the placement view, the placement and critical routing history check, the layout review record history check, the layout review proof's seeding command, the schematic sheet drawing command, and the production-files conversion, rendering and seeding command), against the real kicad-cli, resvg and gerbonara, the seeded-fault proof's own tests included — on demand; the build round's gate and the nightly complete verification run hw:test:round instead. Needs the same tools as hw:verify, resvg 0.47 or newer (set RESVG=/path/to/resvg when resvg is not on PATH), gerbonara 1.6.3 in a virtual environment of its own (set GERBONARA_PYTHON=/path/to/that/python when python3 is not it), and Task
