@@ -2,11 +2,11 @@ id: SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2
 type: criterion
 title: A mounting hole that breaches the separation from mains fails
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
-text: |-
-  A mounting hole is a footprint whose pads are all holes and every non-plated hole; a fixing's extent is the larger of its pad and its courtyard. After the signed Mains rule the check appends rules holding the hole clearance and courtyard distance to the Mains class at no less than the larger of the signed clearance and the signed creepage on every layer, and fails a hole, its plating or fixing inside that distance of a Mains net, and a plated hole on a non-Mains net inside that distance. The signed figure governs whether or not the fixing is bonded to protective earth. A design with no mounting hole is not failed for that. Out of scope: the mechanical strength of the fixing and any fixing outside the board file.
+text: |
+  A mounting hole is a footprint whose pads are all drilled holes, plated or not, and every non-plated hole; a fixing's extent is the larger of its pad and its courtyard. After the signed Mains rule the check appends rules holding the hole clearance to the Mains class at no less than the larger of the signed clearance and the signed creepage on every layer, and measures from the layout file the distance from each mounting-hole footprint's pad copper and courtyard to every pad, track, via and pour fill of a Mains net on every layer, held to the same distance. The check fails a hole, its plating or fixing inside that distance of a Mains net, and a plated hole on a non-Mains net inside that distance. The signed figure governs whether or not the fixing is bonded to protective earth. A design with no mounting hole is not failed for that. Out of scope: the mechanical strength of the fixing and any fixing outside the board file.
 links:
   - target: SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES
     type: criterion-of
