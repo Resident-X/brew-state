@@ -19,6 +19,16 @@ links:
     type: justified-by
   - target: DEC-BOARD-DESIGN-RECORDS-AS-YAML
     type: justified-by
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C10
+    type: derives-from
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C11
+    type: derives-from
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: targets
+  - target: SOL-HW-BOARD-RULE-CHECK-GATE
+    type: depends-on
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C12
+    type: derives-from
 design_question_answers:
   - answered_by: SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C2
     class: whole-set

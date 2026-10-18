@@ -1,12 +1,12 @@
 id: SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C4
 type: criterion
-title: Each rule is shown to fail on a seeded fault and every tracked design passes
+title: Each rule is shown to fail on a fault seeded for it in a copy of the throwaway proof design
 status: active
 version: 1
 measurement_type: binary
 verification: test
 text: |-
-  Each rule in this leaf is shown to fail on a fault seeded for it in a copy of the throwaway proof design, by a test that names the seeded defect, and a rule that finds nothing to inspect fails rather than passes. Every tracked design, with the synthetic records beside each proof design extended so it passes, passes every rule in this leaf, and the rules run in the build round for a board change and in the nightly verification. Does not cover rules owned by other leaves of this task, or any real board's records.
+  The on-demand seeded-fault proof introduces into a copy of a throwaway design, outside the tracked tree, a side with surface-mount parts and fewer than three fiducials, a polarised part with no silkscreen mark nearer pad one, and a mark on the wrong side of the part, and requires the check to fail each, the record of each seeded run naming the fault and the rule that caught it; the committed proof design stays passing. A missing record or declaration the rule needs fails; a design with no surface-mount part, polarised part or hole-only footprint is not failed for that; an explicit none is accepted. The proof is the existing on-demand seeded-fault proof, extended, and runs in neither gate. Out of scope: the existing seeded-fault proofs and the rules owned by other leaves of this task.
 links:
   - target: SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS
     type: criterion-of

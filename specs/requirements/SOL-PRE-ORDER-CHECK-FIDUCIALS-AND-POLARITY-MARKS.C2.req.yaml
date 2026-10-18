@@ -1,12 +1,12 @@
 id: SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C2
 type: criterion
-title: The rules extend the existing pre-order check and its record reader
+title: The rules extend the existing pre-order check, whose record reader is unchanged
 status: active
 version: 1
 measurement_type: binary
 verification: test
 text: |-
-  The fiducial and polarity-mark rule are added to the existing pre-order check as further rules reading through the record reader already built to accept the new records and keys, run by the same one task-runner command, with each rule reading only the design's files and the records the design is held to. A key the decisions do not define still fails. Out of scope: a second tool, a parallel reader, any read of firmware source, and applying the rules to a real board's own records, which is that board's design task.
+  The fiducial rule and the polarity-mark rule are added to the existing pre-order check as further rules, run by the same one task-runner command, each reading only the design's files. They add no record and no key, so the check's record reader is unchanged and still fails a key the decisions do not define. Out of scope: a second tool, a parallel reader, any read of firmware source, and applying the rules to a real board's own records, which is that board's design task.
 links:
   - target: SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS
     type: criterion-of

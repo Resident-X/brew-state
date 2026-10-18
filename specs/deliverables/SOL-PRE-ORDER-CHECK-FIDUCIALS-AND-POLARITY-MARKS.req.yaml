@@ -15,6 +15,12 @@ links:
     type: targets
   - target: DEC-BOARD-PRE-ORDER-RULE-READINGS
     type: justified-by
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C10
+    type: derives-from
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C11
+    type: derives-from
+  - target: SOL-HW-BOARD-RULE-CHECK-GATE
+    type: depends-on
 design_question_answers:
   - answered_by: SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C1
     class: whole-set
