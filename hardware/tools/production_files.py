@@ -11,9 +11,10 @@ Two things it cannot do are done here:
 `placement` writes the assembler's placement file from the position export:
 the columns the manufacturer's record gives for it, Designator, Mid X, Mid Y,
 Layer and Rotation, in millimetres and degrees counter-clockwise. The export's
-coordinates are already in the frame of the Gerber files it was exported with,
-the frame the assembler lays the placement on, so they are kept as they are; only
-the columns, the side's name and the rotation's range change.
+coordinates agree with the Gerber files it was exported with, so they are kept as
+they are; only the columns, the side's name and the rotation's range change. How
+the assembler reads the file is what its own preview shows, and the method's
+ordering step checks that.
 
 `render` draws every Gerber layer and the drill file from the exported files
 themselves, each into a PNG of its own in one common frame, so a layer that is

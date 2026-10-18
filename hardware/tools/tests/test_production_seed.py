@@ -76,6 +76,17 @@ def read_csv(path):
         return list(csv.reader(handle))
 
 
+#: Phrases that say which defects the seeding command places. They belong in no file a follower reads, and none of them is in the step's own checks.
+SEED_KINDS = ("a part rotated", "polarised part reversed", "first pin turned and a part moved",
+              "number replaced", "replaced by another",
+              "is missing content", "missing content, shifted and mirrored", "polarised surface-mount diode")
+
+
+def seed_kinds_in(text):
+    squeezed = re.sub(r"\s+", " ", text)
+    return [phrase for phrase in SEED_KINDS if phrase in squeezed]
+
+
 def ordering_section():
     with open(METHOD, encoding="utf-8") as handle:
         found = re.search(r"^## Ordering[ \t]*\n(.*?)(?=^## |\Z)", handle.read(), re.M | re.S)
@@ -165,8 +176,11 @@ class TheSeededProductionFolder(unittest.TestCase):
         self.assertEqual(set(seeded), set(clean))
         self.assertEqual({key for key in clean if seeded[key] != clean[key]}, {"R2"})
         self.assertEqual(seeded["R2"][:3], clean["R2"][:3])
-        self.assertEqual(seeded["R2"][3], clean["R3"][3], "R2 carries R3's catalogue number")
+        self.assertEqual(seeded["R2"][3], production_seed.OTHER_NUMBER)
         self.assertNotEqual(seeded["R2"][3], clean["R2"][3])
+        self.assertEqual(len(seeded), len(clean), "the seeded row is still a row of its own")
+        self.assertEqual(sum(row[3] == seeded["R2"][3] for row in seeded.values()), 1, "no other position carries the number")
+        self.assertNotIn(production_seed.OTHER_NUMBER, [row[3] for row in clean.values()])
 
     def test_the_exported_layers_differ_from_the_designs_in_the_seeded_layers_only(self):
         # SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C2: The method's ordering step has every rendered fabrication layer looked at before ordering
@@ -211,6 +225,7 @@ class TheSeededProductionFolder(unittest.TestCase):
                 continue
             with open(os.path.join(self.out, path), encoding="utf-8", errors="replace") as handle:
                 text = handle.read()
+            self.assertEqual(seed_kinds_in(text), [], f"{path} lists the seeded defects")
             if path in ("docs/board-design-method.md", "hardware/README.md"):
                 continue  # the documents are the ones the repository commits, which name the command that makes this folder
             for word in tell:
@@ -255,6 +270,32 @@ class TheSeededProductionFolder(unittest.TestCase):
             self.assertRegex(handle.read(), r"(?m)^## Ordering$")
 
 
+class TheDocumentsAFollowerReads(unittest.TestCase):
+    """SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C3: Following the ordering step blind on seeded production files finds every seeded defect."""
+
+    def test_the_method_and_the_readme_say_the_files_are_seeded_without_saying_with_what(self):
+        # SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C3: Following the ordering step blind on seeded production files finds every seeded defect
+        for path in (METHOD, README):
+            with open(path, encoding="utf-8") as handle:
+                text = handle.read()
+            self.assertEqual(seed_kinds_in(text), [], f"{os.path.basename(path)} lists the seeded defects")
+        self.assertIn("seeds them with known defects", ordering_section())
+        self.assertIn("seeds known defects into the placement file", open(README, encoding="utf-8").read())
+
+    def test_the_prompt_says_nothing_of_the_seeded_defects(self):
+        # SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C3: Following the ordering step blind on seeded production files finds every seeded defect
+        self.assertEqual(seed_kinds_in(production_seed.PROMPT), [])
+
+    def test_the_check_for_seeded_kinds_catches_the_lists_it_was_written_against(self):
+        # SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C3: Following the ordering step blind on seeded production files finds every seeded defect
+        listed = ("the seeded placement file, with a part rotated, a polarised part reversed, an integrated circuit's first pin\nturned "
+                  "and a part moved; in the parts list, a position's catalogue number replaced by another's; a layer is missing content")
+        self.assertEqual(seed_kinds_in(listed), ["a part rotated", "polarised part reversed", "first pin turned and a part moved",
+                                                  "number replaced", "replaced by another", "is missing content"])
+        self.assertEqual(seed_kinds_in("A part reversed or with its first pin turned differs; so that a part moved across a bound fails"), [])
+        self.assertEqual(seed_kinds_in("seeds them with known defects"), [])
+
+
 class TheSeeds(unittest.TestCase):
     """SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C3: Following the ordering step blind on seeded production files finds every seeded defect."""
 
@@ -285,8 +326,12 @@ class TheSeeds(unittest.TestCase):
         production_seed.moved("B", 4, -1.5)(rows)
         self.assertEqual(rows["B"], ["B", "5", "0.5", "Top", "0"])
         parts = {"R2": {"Designator": "R2", "LCSC": "C1"}, "R3": {"Designator": "R3", "LCSC": "C2"}}
-        production_seed.number_of("R2", "R3")(parts)
-        self.assertEqual((parts["R2"]["LCSC"], parts["R3"]["LCSC"]), ("C2", "C2"))
+        production_seed.number_replaced("R2", "C9")(parts)
+        self.assertEqual((parts["R2"]["LCSC"], parts["R3"]["LCSC"]), ("C9", "C2"))
+        with self.assertRaises(production_seed.Refused) as shared:
+            production_seed.number_replaced("R2", "C2")(parts)
+        self.assertIn("R3", str(shared.exception), "a number another position carries would share a row in a real export")
+        self.assertEqual(parts["R2"]["LCSC"], "C9", "a refused edit changes nothing")
 
     def test_the_layer_seeds_edit_only_what_they_name(self):
         # SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C3: Following the ordering step blind on seeded production files finds every seeded defect
@@ -368,6 +413,22 @@ class TheMethodAndTheReadme(unittest.TestCase):
                              sorted(["gtl", "gbl", "g1", "g2", "gts", "gbs", "gto", "gbo", "gm1", "drl"]))
         finally:
             shutil.rmtree(scratch, ignore_errors=True)
+
+    def test_the_step_has_the_approver_count_the_records_rows_against_the_placement_files(self):
+        # SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C1: The method's ordering step compares every placed part's position, rotation and polarity with the assembler's preview before payment
+        squeezed = re.sub(r"\s+", " ", ordering_section())
+        self.assertIn("Count the record's part rows against the placement file's rows: a record with fewer rows than the file has parts "
+                      "is not complete and blocks the order", squeezed)
+
+    def test_the_step_claims_only_that_the_converted_coordinates_agree_with_the_gerber_files(self):
+        # SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C1: The method's ordering step compares every placed part's position, rotation and polarity with the assembler's preview before payment
+        squeezed = re.sub(r"\s+", " ", ordering_section())
+        self.assertIn("keeps the export's two coordinates, which agree with the Gerber files exported with them", squeezed)
+        self.assertIn("how the assembler reads the file is what its own preview shows in step 3 and step 4 checks", squeezed)
+        self.assertIn("does not test the assembler's own reading of the placement file's coordinates, rotation or bottom-side parts", squeezed)
+        self.assertNotIn("the Gerber files it is laid on", squeezed)
+        with open(os.path.join(REPO, "hardware", "tools", "production_files.py"), encoding="utf-8") as handle:
+            self.assertNotIn("the assembler lays", re.sub(r"\s+", " ", handle.read()))
 
     def test_the_step_names_the_proof_design_the_command_and_the_stand_in(self):
         # SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C3: Following the ordering step blind on seeded production files finds every seeded defect
@@ -548,7 +609,7 @@ class TheSeedsThatDoNotLand(unittest.TestCase):
     def test_a_parts_list_seed_that_leaves_its_row_as_it_was_is_refused_and_nothing_is_written(self):
         # SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C3: Following the ordering step blind on seeded production files finds every seeded defect
         self.refused(production_seed.Fault("X2", "parts list: catalogue part", "R2", "R2 given its own number", "parts",
-                                           production_seed.number_of("R2", "R2"), designator="R2"), "R2's row is unchanged")
+                                           production_seed.number_replaced("R2", "C9000015"), designator="R2"), "R2's row is unchanged")
 
     def test_a_layer_seed_that_changes_no_exported_file_it_names_is_refused_and_nothing_is_written(self):
         # SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C3: Following the ordering step blind on seeded production files finds every seeded defect

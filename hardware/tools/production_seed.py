@@ -11,7 +11,8 @@ hardware/proof/review-proof, with the commands the step names, and seeds them:
 - the placement file, converted from KiCad's position export as the step converts
   it, gets a part rotated, a polarised part reversed, an integrated circuit's
   first pin turned and a part moved;
-- the parts list gets a position's catalogue number replaced by another part's;
+- the parts list gets a position's catalogue number replaced by one no position carries, so that the
+  row is still its own, as the export of an edited schematic would write it;
 - the fabrication layers are exported from an edited copy of the board, in which
   a layer is missing content, shifted and mirrored.
 
@@ -166,10 +167,13 @@ def moved(designator: str, dx: float, dy: float) -> Callable[[Dict[str, List[str
     return edit
 
 
-def number_of(designator: str, other: str) -> Callable[[Dict[str, Dict[str, str]]], None]:
-    """`designator`'s catalogue number replaced by `other`'s."""
+def number_replaced(designator: str, number: str) -> Callable[[Dict[str, Dict[str, str]]], None]:
+    """`designator`'s catalogue number replaced by `number`, which no other position carries, so that the parts list's row stays the position's own."""
     def edit(rows: Dict[str, Dict[str, str]]) -> None:
-        rows[designator]["LCSC"] = rows[other]["LCSC"]
+        carrying = sorted(key for key, row in rows.items() if row["LCSC"] == number and key != designator)
+        if carrying:
+            raise Refused(f"the number {number} is carried by {', '.join(carrying)}, so a real export would list it on one row with {designator}")
+        rows[designator]["LCSC"] = number
     return edit
 
 
@@ -213,6 +217,9 @@ def legend_mirrored(tree: list) -> None:
             flag(node)
 
 
+#: A catalogue number in the form the design uses that none of its positions carries.
+OTHER_NUMBER = "C9000099"
+
 SEEDS: List[Fault] = [
     Fault("S1", "placement file: rotation", "U3", "U3, the small-outline amplifier, turned 90 degrees in the placement file "
           "from the 0 its footprint is placed at on the board", "placement", turned("U3", 90), designator="U3"),
@@ -223,8 +230,9 @@ SEEDS: List[Fault] = [
           designator="U4"),
     Fault("S4", "placement file: position", "R4", "R4, a resistor, moved 4 mm along X in the placement file from where "
           "the board places it", "placement", moved("R4", 4, 0), designator="R4"),
-    Fault("S5", "parts list: catalogue part", "R2", "R2's catalogue number in the parts list replaced by R3's, a different "
-          "part, the parts specification record mapping R2 to its own", "parts", number_of("R2", "R3"), designator="R2"),
+    Fault("S5", "parts list: catalogue part", "R2", "R2's catalogue number in the parts list replaced by a number no position "
+          f"of the design carries, {OTHER_NUMBER}, the parts specification record mapping R2 to its own", "parts",
+          number_replaced("R2", OTHER_NUMBER), designator="R2"),
     Fault("S6", "fabrication layer: missing content", "F.Mask, B.Mask", "the solder mask on both sides without its openings "
           "over the mains terminal block J1's through-hole pads, so the mask covers them", "layer",
           mask_openings_missing("J1"), ("F_Mask.gts", "B_Mask.gbs")),
