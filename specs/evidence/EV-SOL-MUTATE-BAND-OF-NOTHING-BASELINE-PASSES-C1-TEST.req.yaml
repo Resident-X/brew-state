@@ -1,0 +1,16 @@
+id: EV-SOL-MUTATE-BAND-OF-NOTHING-BASELINE-PASSES-C1-TEST
+type: evidence
+title: test evidence for SOL-MUTATE-BAND-OF-NOTHING-BASELINE-PASSES.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-18T01:00:27.582466Z"
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_control_declaration_checks.py::test_the_seeded_defect_check_carries_the_build_time_arguments
+  artifact_version: 219d42d737354338f97918579f655febb651b020
+attested_by: crun-90bc828deadf6667
+links:
+  - target: SOL-MUTATE-BAND-OF-NOTHING-BASELINE-PASSES.C1
+    type: satisfies
