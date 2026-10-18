@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C2
+type: criterion
+title: A pin whose net can exceed its absolute maximum or minimum fails
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The pin-limit record holds domains (rail and highest_voltage_v) and per part by LCSC number its datasheet source (document, revision, section, read_on) and pins with domain, absolute_max_v, absolute_min_v and tolerates_driven_unpowered. The highest voltage a net can reach is the largest of its rail's highest_voltage_v, the domain voltage of every listed pin on it, and that of any net joined to it, directly or in a chain, through a ferrite bead, inductor, fuse or zero-ohm link. A resistor or capacitor never carries one net's voltage onto another, so a divider or a decoupling capacitor never lifts a net, and a net reached only through those and carrying no listed pin takes no limit from this rule. A connector pin driven from outside the board is declared in the connector's entry. The rule fails a pin whose net can exceed absolute_max_v or fall below absolute_min_v, a pin whose net is driven from another domain while its own is unpowered where tolerates_driven_unpowered is false, and every semiconductor or integrated-circuit part the record omits; a passive or mechanical part needs no entry. A key in these records the decisions do not name fails. Out of scope: current and power limits and the choice of real datasheet figures.
+links:
+  - target: SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C6
+type: criterion
+title: Every tracked design passes the rules, which run in the build round for board changes and nightly on main
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Every design git tracks passes the board-minimums rule and the lifecycle rule, carrying the records they read, synthetic where the design is not for manufacture. A change to a design's board files or to any record these rules read re-runs the board tier of the build round, and the nightly run of main runs the rules whatever changed, through the board gate the pre-order check already uses. The board-reads listing's description names every record a design is held to, including the derating policy and pin-limit records it omits today and the manufacturer limits record this leaf adds. Out of scope: a new gate, a new tool, the full seeded-fault proof, which stays on demand, and any real board's records.
+links:
+  - target: SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE
+    type: criterion-of

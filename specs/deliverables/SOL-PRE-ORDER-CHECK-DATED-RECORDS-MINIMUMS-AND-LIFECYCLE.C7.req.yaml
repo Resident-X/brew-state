@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C7
+type: criterion
+title: The hardware notes carry an entry for each rule
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The hardware notes' table of the pre-order check's rules carries one entry for each of the board-minimums rule and the lifecycle rule, naming what fails it, what exempts a design, and the name its failure is reported under. Out of scope: the design method's convention and the rules owned by other leaves of this task.
+links:
+  - target: SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE
+    type: criterion-of

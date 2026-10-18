@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C1
+type: criterion
+title: A design missing fiducials or a polarised part's polarity or first-pin mark fails
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  A fiducial is a pad carrying KiCad's fiducial pad property, and the rule requires at least three on each side that carries surface-mount parts. A polarised part is one whose schematic pins are named for anode and cathode or plus and minus, and every part with three or more pads on distinct nets, so a footprint whose pads are all one net or all holes is excluded; its mark is present when a silkscreen item on the part's own side lies nearer pad one than any other pad. The rule fails a side short of fiducials and a polarised part without its mark on its own side, and a design with no surface-mount part is not failed for fiducials. The fiducial requirement is added to the layout practice catalogue as an enforced item with a published source, moved from reviewer judgement. Out of scope: fiducial size and keep-out and the legibility of the silkscreen.
+links:
+  - target: SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS
+    type: criterion-of

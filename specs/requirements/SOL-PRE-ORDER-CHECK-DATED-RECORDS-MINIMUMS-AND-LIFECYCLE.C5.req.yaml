@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C5
+type: criterion
+title: Each rule is shown to fail on a fault seeded for it in a copy of the throwaway proof design
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The on-demand seeded-fault proof introduces into a copy of a throwaway design, outside the tracked tree, a track-width minimum looser than its process's limit, a design whose process the record does not list, a record older than its max_age_days, a part whose lifecycle status is end of life and a part whose catalogue entry lacks its lifecycle mapping, and requires the check to fail each, the record of each seeded run naming the fault and the rule that caught it; the committed proof design stays passing. A missing record or declaration the rule needs fails; a design with no part for the lifecycle rule to inspect is not failed for that; an explicit none is accepted. The proof is the existing on-demand seeded-fault proof, extended, and runs in neither gate. Out of scope: the existing seeded-fault proofs and the rules owned by other leaves of this task. Choosing real figures for a real board.
+links:
+  - target: SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE
+    type: criterion-of

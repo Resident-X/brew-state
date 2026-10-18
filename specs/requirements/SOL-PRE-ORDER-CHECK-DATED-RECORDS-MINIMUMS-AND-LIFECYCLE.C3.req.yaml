@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C3
+type: criterion
+title: The rules extend the existing pre-order check and its record reader
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The board-minimums rule and the lifecycle rule are added to the existing pre-order check as further rules, run by the same one task-runner command, each reading only the design's files and the records the design is held to. This leaf extends the check's record reader to accept the manufacturer limits record and the required lifecycle mapping on every catalogue entry, and the reader still fails a key the decisions do not define. Out of scope: a second tool, a parallel reader, any read of firmware source, and applying the rules to a real board's own records, which is that board's design task.
+links:
+  - target: SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE
+    type: criterion-of

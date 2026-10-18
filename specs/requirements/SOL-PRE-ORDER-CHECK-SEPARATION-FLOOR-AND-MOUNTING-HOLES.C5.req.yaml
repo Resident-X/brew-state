@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C5
+type: criterion
+title: Each rule is shown to fail on a fault seeded for it in a copy of the throwaway proof design
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The on-demand seeded-fault proof introduces into a copy of a throwaway design, outside the tracked tree, a signed clearance below its floor, a signed creepage below its floor, a mains-present design with no applicable row, a mounting hole inside the larger of the signed clearance and creepage of a Mains net, and a plated hole on a non-Mains net inside that distance, and requires the check to fail each, the record of each seeded run naming the fault and the rule that caught it; the committed proof design stays passing. A missing record or declaration the rule needs fails; a design with no mounting hole is not failed for that; an explicit none is accepted. The proof is the existing on-demand seeded-fault proof, extended, and runs in neither gate. Out of scope: the existing seeded-fault proofs and the rules owned by other leaves of this task.
+links:
+  - target: SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES
+    type: criterion-of

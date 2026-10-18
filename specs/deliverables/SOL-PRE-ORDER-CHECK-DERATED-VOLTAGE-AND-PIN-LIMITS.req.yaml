@@ -1,0 +1,57 @@
+id: SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS
+type: deliverable
+category: solution
+title: The pre-order check fails a part over its derated voltage and a pin whose net can exceed its absolute maximum
+status: active
+version: 1
+text: |-
+  Adds the derating policy and pin-limit records and the derated-voltage and pin-limit rules, sharing one worked-out net voltage, each shown to fail on a seeded fault.
+links:
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C4
+    type: derives-from
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C5
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C13
+    type: targets
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3
+    type: targets
+  - target: DEC-BOARD-PRE-ORDER-RULE-READINGS
+    type: justified-by
+  - target: DEC-BOARD-DESIGN-RECORDS-AS-YAML
+    type: justified-by
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C10
+    type: derives-from
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C11
+    type: derives-from
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: targets
+  - target: SOL-HW-BOARD-RULE-CHECK-GATE
+    type: depends-on
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C12
+    type: derives-from
+design_question_answers:
+  - answered_by: SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C2
+    class: whole-set
+  - answered_by: SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C3
+    class: existing-capability
+  - answered_by: SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C4
+    class: consumer-intent
+interfaces:
+  - task hw:verify and the board tier of task check:round
+  - hardware/tools pre-order check record reader
+  - hardware/proof synthetic records and seeded-fault tests
+  - parts-specification.yaml class and rating keys
+locus:
+  - marking: existing
+    ref: hardware/tools/ (the pre-order board check and its tests)
+  - marking: existing
+    ref: hardware/proof/ (throwaway proof design and its synthetic records)
+  - marking: created
+    ref: derating-policy.yaml and pin-limits.yaml records beside each proof design
+  - marking: existing
+    ref: class and rating keys of the proof designs' parts specification records
+  - marking: existing
+    ref: hardware/README.md (hardware notes)
+plan_provenance:
+  approved_plan_id: PLAN-DEL-HW-PRE-ORDER-CHECKS-EXTENDED-RULES-1
+  target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED

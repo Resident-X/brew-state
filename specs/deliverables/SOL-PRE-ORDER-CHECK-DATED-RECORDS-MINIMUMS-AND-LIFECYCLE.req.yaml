@@ -1,0 +1,56 @@
+id: SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE
+type: deliverable
+category: solution
+title: The pre-order check fails board minimums looser than the dated manufacturer record and a part at end of life
+status: active
+version: 1
+text: |-
+  Adds the manufacturer limits rule and the catalogue lifecycle rule to the pre-order check, each shown to fail on a seeded fault.
+links:
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C1
+    type: derives-from
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C8
+    type: derives-from
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets
+  - target: REQ-PUBLISHED-BUILD-PATH-001.C5
+    type: targets
+  - target: DEC-BOARD-PRE-ORDER-RULE-READINGS
+    type: justified-by
+  - target: DEC-BOARD-DESIGN-RECORDS-AS-YAML
+    type: justified-by
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C10
+    type: derives-from
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C11
+    type: derives-from
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: targets
+  - target: SOL-HW-BOARD-RULE-CHECK-GATE
+    type: depends-on
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C12
+    type: derives-from
+design_question_answers:
+  - answered_by: SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C2
+    class: whole-set
+  - answered_by: SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C3
+    class: existing-capability
+  - answered_by: SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C4
+    class: consumer-intent
+interfaces:
+  - task hw:verify and the board tier of task check:round
+  - hardware/tools pre-order check record reader
+  - hardware/proof synthetic records and seeded-fault tests
+locus:
+  - marking: existing
+    ref: hardware/tools/ (the pre-order board check and its tests)
+  - marking: existing
+    ref: hardware/proof/ (throwaway proof design and its synthetic records)
+  - marking: created
+    ref: manufacturer-limits.yaml records beside each proof design
+  - marking: existing
+    ref: lifecycle mappings in the catalogue extracts beside each proof design
+  - marking: existing
+    ref: hardware/README.md (hardware notes)
+plan_provenance:
+  approved_plan_id: PLAN-DEL-HW-PRE-ORDER-CHECKS-EXTENDED-RULES-1
+  target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED

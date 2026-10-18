@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C5
+type: criterion
+title: Every tracked design passes the rules, which run in the build round for board changes and nightly on main
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Every design git tracks passes the fiducial rule and the polarity-mark rule, carrying the records they read, synthetic where the design is not for manufacture. A change to a design's board files or to any record these rules read re-runs the board tier of the build round, and the nightly run of main runs the rules whatever changed, through the board gate the pre-order check already uses. Out of scope: a new gate, a new tool, the full seeded-fault proof, which stays on demand, and any real board's records.
+links:
+  - target: SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS
+    type: criterion-of
