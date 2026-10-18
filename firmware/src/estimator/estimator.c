@@ -16,6 +16,8 @@
 
 #include <math.h>
 #include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 
 /*
  * How much of a channel's disagreement is taken out of the state that channel
@@ -315,6 +317,41 @@ static bool correct_against(estimator_t *estimator, hw_sensor_channel_t channel,
     return true;
 }
 
+/*
+ * A value's representation, for comparing two of them as the stored patterns
+ * they are. Equality on the float would call a held not-a-number different
+ * from itself and a held negative zero the same as a positive one, and the
+ * admission probe has to be able to tell a state it restored from one it did
+ * not in exactly those cases.
+ */
+static uint32_t float_bits(float value)
+{
+    uint32_t bits = 0u;
+    memcpy(&bits, &value, sizeof(bits));
+    return bits;
+}
+
+float estimator_admission_probe_value(float held)
+{
+    /*
+     * Flipping the sign bit differs from the held value in representation for
+     * zero, for the largest finite values, for the infinities and for any
+     * not-a-number alike, and leaves a not-a-number a not-a-number, so a
+     * structure is never handed a value of a kind it was not holding.
+     */
+    const uint32_t bits = float_bits(held) ^ 0x80000000u;
+    float probe = 0.0f;
+    memcpy(&probe, &bits, sizeof(probe));
+    return probe;
+}
+
+/* Whether the state reads back, bit for bit, as the value expected of it. */
+static bool state_reads_bit_exact(const plant_model_t *model, plant_state_t state, float expected)
+{
+    float read = 0.0f;
+    return plant_model_state(model, state, &read) && float_bits(read) == float_bits(expected);
+}
+
 bool estimator_init(estimator_t *estimator, const plant_parameters_t *parameters,
                     const estimator_limits_t *limits)
 {
@@ -403,12 +440,8 @@ bool estimator_init(estimator_t *estimator, const plant_parameters_t *parameters
             /*
              * Read for two reasons here, unlike `reachable` above, which is
              * discarded: whether the structure keeps this state at all, and
-             * what it currently holds, so the write below can be the value
-             * that was just read. Writing back what was read is what makes
-             * this probe cost the structure nothing -- the store lands the
-             * value already there, so a structure admitted through it is left
-             * exactly as `plant_model_init` left it, and one refused by it
-             * was never going to be admitted anyway.
+             * what it currently holds, which is what the probe below has to
+             * put back.
              */
             float correction_target_held = 0.0f;
             if (!plant_model_state(&estimator->model, corrected, &correction_target_held)) {
@@ -418,21 +451,41 @@ bool estimator_init(estimator_t *estimator, const plant_parameters_t *parameters
             /*
              * Answering a read of this state is not the whole of what the
              * correction needs from it. `correct_against` reads the state,
-             * subtracts its share of the disagreement, and writes the result
-             * back through `plant_model_set_state` -- and that write can
-             * refuse on exactly the terms the read can. A structure that
-             * answers the read and refuses the write is admitted by the probe
-             * above and then has every correction against it dropped by the
-             * write's own refusal, one call further down the same per-step
-             * path, arriving at the identical externally observable failure:
-             * the reading arrives, the correction is computed, nothing takes
-             * it, and the reconstruction runs on prediction alone until the
-             * unobserved span exceeds what this structure's limits declare
-             * tolerable. So the write is proved here too, on the same terms
-             * the read is, rather than left to convention among the
-             * structures written so far.
+             * subtracts its share of the disagreement and writes the result
+             * back through `plant_model_set_state` -- and that can fail on
+             * exactly the terms the read can, in two ways. The write can
+             * refuse, or it can report success and leave the state reading
+             * something other than what it was given. A structure that
+             * answers the read and does either is admitted by the probe above
+             * and then has every correction against it dropped, one call
+             * further down the same per-step path, arriving at the identical
+             * externally observable failure: the reading arrives, the
+             * correction is computed, nothing takes it, and the reconstruction
+             * runs on prediction alone until the unobserved span exceeds what
+             * this structure's limits declare tolerable. So both are proved
+             * here, rather than left to convention among the structures
+             * written so far.
+             *
+             * The value written is one that differs from the held one bit for
+             * bit, so a write that discards its argument cannot read back as
+             * the value it was given. Writing the held value itself would
+             * prove nothing, and writing a fixed constant would let a state
+             * already holding that constant pass.
+             *
+             * Proving it displaces the state, so the held value is written
+             * back and has to read back as itself. A structure that fails
+             * either step is refused here with the instance not ready, which
+             * is the only way a model the probe displaced can be left behind,
+             * and no consumer sees it.
              */
-            if (!plant_model_set_state(&estimator->model, corrected, correction_target_held)) {
+            const float probe = estimator_admission_probe_value(correction_target_held);
+            if (!plant_model_set_state(&estimator->model, corrected, probe) ||
+                !state_reads_bit_exact(&estimator->model, corrected, probe)) {
+                return false;
+            }
+
+            if (!plant_model_set_state(&estimator->model, corrected, correction_target_held) ||
+                !state_reads_bit_exact(&estimator->model, corrected, correction_target_held)) {
                 return false;
             }
         }

@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-GROUND-5-FIGURE-FROM-PLANE-GAPS-C2-DEMONSTRATION
+type: evidence
+title: demonstration evidence for SOL-BOARD-GROUND-5-FIGURE-FROM-PLANE-GAPS.C2
+status: active
+version: 1
+result: pass
+method: demonstration
+observed_at: "2026-10-18T00:57:18.47183Z"
+artifact:
+  kind: external
+  reference: 'python3 hardware/tools/board_check.py --root . --kicad-cli $KICAD_CLI (task hw:verify): RESULT | PASS | all 3 designs passed, gate-proof, method-proof and review-proof each DESIGN | PASS; worked review-proof figure 2x0.35 + 2x0.25 + 0.25 = 1.45 mm and method-proof 2x0.375 + 2x0.25 + 0.2 = 1.45 mm (its rules file''s figure, unchanged; its design-rules.md row now derives it in the item''s terms) stated in GROUND-5 and checked against the board files'
+  artifact_version: 2215e58565ee823908a8c1a0742c1d76da9911a2
+attested_by: crun-742dc73e8815f6ad
+links:
+  - target: SOL-BOARD-GROUND-5-FIGURE-FROM-PLANE-GAPS.C2
+    type: satisfies

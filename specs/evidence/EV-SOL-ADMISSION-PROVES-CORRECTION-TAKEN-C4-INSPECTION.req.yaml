@@ -1,0 +1,21 @@
+id: EV-SOL-ADMISSION-PROVES-CORRECTION-TAKEN-C4-INSPECTION
+type: evidence
+title: inspection evidence for SOL-ADMISSION-PROVES-CORRECTION-TAKEN.C4
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-18T01:26:44.841972Z"
+artifact:
+  kind: external
+  reference: firmware/include/plant_model.h::plant_model_set_state
+  artifact_version: 3ef89e801c045cef078d2ff9986d2e3969032bfc
+attested_by: crun-87486c1132f49028
+text: |
+  Verified commit 3ef89e801c045cef078d2ff9986d2e3969032bfc. Inspection of the declaration of plant_model_set_state in firmware/include/plant_model.h (doc comment, the paragraph after the refusals paragraph) against each clause of the criterion:
+
+  1. "states that a write reporting success leaves the state reading the value written": the paragraph begins "A write that returns true leaves the state reading the value written, bit for bit". Present, and it names the success case.
+  2. "does not contradict the existing statement that a refused write changes nothing": the preceding paragraph still reads "Returns false and changes nothing when the instance is null ... or when it is enumerated but this structure does not keep it". The new paragraph speaks only of a write that returns true, so the two cover disjoint outcomes of the same call. It also names what a success that kept something else amounts to (a discard, a clamp, a rounding), and states that recomputing a state on a later step is the structure's own answer and not a refusal, which matches the scope note of the first criterion.
+links:
+  - target: SOL-ADMISSION-PROVES-CORRECTION-TAKEN.C4
+    type: satisfies

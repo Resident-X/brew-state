@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-GROUND-5-FIGURE-FROM-PLANE-GAPS-C1-INSPECTION
+type: evidence
+title: inspection evidence for SOL-BOARD-GROUND-5-FIGURE-FROM-PLANE-GAPS.C1
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-18T00:57:18.356202Z"
+artifact:
+  kind: external
+  reference: 'inspection of docs/board-design-method.md item GROUND-5 against each clause of the criterion: figure taken over plated pins in a ground plane only (annulus and gaps); ground pin gap is the ground zones'' thermal-relief gap; other pin gap is the greatest of ground zone clearance, net class clearance and rules-file clearance in the plane; no clearance from a zone, class or rule not governing a pin in the plane; no-plated-pin-in-a-plane case stated as no figure and no rule, and carried through the item''s Passes line (design-rules.md states the item as none with that reason) and Fails line (no row stating the figure or stating none with its reason); derivation from annulus widths, gaps and minimum thickness kept; condition on every pair of plated pads kept; non-round pad reading kept word for word; the method-proof row Plated hole spacing in hardware/proof/method-proof/design-rules.md restated in the item''s terms and checked against the board file (ten plated pads, all in the four GND plane outlines; widest annulus J2 0.375 mm; ground pins J1 pad 2 and J2 pad 3 open the 0.25 mm relief gap, the others 0.2 mm; minimum thickness 0.2 mm; 0.75 + 0.50 + 0.20 = 1.45 mm); the catalogue-reading tests in hardware/tools/tests (test_board_placement, test_board_history, test_board_review_history, test_review_seed) pass over the edited document'
+  artifact_version: 2215e58565ee823908a8c1a0742c1d76da9911a2
+attested_by: crun-742dc73e8815f6ad
+links:
+  - target: SOL-BOARD-GROUND-5-FIGURE-FROM-PLANE-GAPS.C1
+    type: satisfies
