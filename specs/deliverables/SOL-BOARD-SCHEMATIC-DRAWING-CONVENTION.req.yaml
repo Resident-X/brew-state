@@ -34,3 +34,7 @@ links:
     type: depends-on
   - target: SOL-HW-BOARD-RULE-CHECK-GATE
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: 554719b38ec4023d42fa1872aa18ca7e0a35190b484442acef768fe0b892bcc9
+  gating_profile: ""
