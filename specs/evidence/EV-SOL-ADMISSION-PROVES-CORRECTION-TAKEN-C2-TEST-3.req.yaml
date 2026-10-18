@@ -1,0 +1,16 @@
+id: EV-SOL-ADMISSION-PROVES-CORRECTION-TAKEN-C2-TEST-3
+type: evidence
+title: test evidence for SOL-ADMISSION-PROVES-CORRECTION-TAKEN.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-18T01:26:44.390865Z"
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_every_state_this_structure_keeps_reads_back_what_is_written_and_what_is_restored
+  artifact_version: 3ef89e801c045cef078d2ff9986d2e3969032bfc
+attested_by: crun-87486c1132f49028
+links:
+  - target: SOL-ADMISSION-PROVES-CORRECTION-TAKEN.C2
+    type: satisfies

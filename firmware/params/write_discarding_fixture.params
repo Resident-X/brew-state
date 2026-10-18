@@ -1,0 +1,23 @@
+# The write_discarding_fixture structure's five coefficients.
+#
+# This structure describes no machine and none of the numbers below means
+# anything. They exist so an artefact built against this structure can be run
+# at all, which is what lets the exclusivity check compare a seventh real
+# artefact against the others: the first gives admission's probes a value to
+# read back, the second is what lets the one actuation channel this structure
+# answers actually move something over the host exercise's plant-only steps,
+# and the last three select which write behaviour the structure carries. None
+# kept, no refused later writes and a finite seed is the shape the structure
+# exists for: a write that reports success and keeps nothing.
+#
+# The statement below is that same fact in the form the check reads, and it is
+# what exempts this description from accounting for its values. A number that
+# means nothing has no origin to record.
+
+@describes-no-machine
+
+outlet.value_c = 21.5
+heater.gain = 2.5
+writes.kept = 0
+writes.later_refused = 0
+seed.undefined = 0
