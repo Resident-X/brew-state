@@ -849,10 +849,11 @@ def drop_rule(name: str):
 
 
 def seeded_hole(reference: str, x: float, y: float, uuid: str, plated_net: Optional[str] = None, courtyard: float = 0,
-                pad: float = 3.2, surface_pad: bool = False) -> list:
+                pad: float = 3.2, surface_pad: bool = False, excluded: bool = False) -> list:
     """A 3.2 mm hole footprint `reference` at (x, y): a non-plated hole whose pad is `pad` mm across, or a plated pad on
     `plated_net` when one is named, with a square courtyard `courtyard` mm to a side when that is given and a surface-mount
-    pad beside the hole, which makes the footprint a part and not a mounting hole, when `surface_pad` is."""
+    pad beside the hole, which makes the footprint a part and not a mounting hole, when `surface_pad` is, and KiCad's
+    exclude_from_bom attribute when `excluded` is."""
     Q = sexpr.Quoted
     layers = ["layers", Q("*.Cu"), Q("*.Mask")]
     if plated_net is None:
@@ -869,6 +870,8 @@ def seeded_hole(reference: str, x: float, y: float, uuid: str, plated_net: Optio
         half = f"{courtyard / 2:g}"
         body.append(["fp_rect", ["start", f"-{half}", f"-{half}"], ["end", half, half], ["stroke", ["width", "0.05"], ["type", "solid"]],
                      ["fill", "none"], ["layer", Q("F.CrtYd")], ["uuid", Q(f"{uuid[:-2]}02")]])
+    if excluded:
+        body.append(["attr", "exclude_from_pos_files", "exclude_from_bom"])
     return ["footprint", Q("proof:Seeded_Hole"), ["layer", Q("F.Cu")], ["uuid", Q(uuid)], ["at", f"{x:g}", f"{y:g}"],
             ["property", Q("Reference"), Q(reference), ["at", "0", "-3", "0"], ["layer", Q("F.SilkS")]], *body]
 

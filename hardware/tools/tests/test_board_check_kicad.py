@@ -1213,10 +1213,10 @@ class FloorAndHolesRunDirectly(Copy):
         status, lines = self.check()
         self.assertEqual([v for v in self.holes(lines) if v[2] == "mounting_hole"], [], lines)
 
-    def test_a_footprint_of_one_plated_pad_is_a_fixing_whose_courtyard_is_measured(self):
+    def test_a_footprint_of_one_plated_pad_left_out_of_the_bom_is_a_fixing_whose_courtyard_is_measured(self):
         # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: a footprint whose pads are all drilled holes, plated or not, is a mounting hole
         self.seed.layout(lambda tree: (tree.insert(len(tree) - 1, board_prove.seeded_hole(
-            "H9", board_prove.FIXING_X, 10, board_prove.FIXING_UUID, plated_net="/LV_A", courtyard=10)),
+            "H9", board_prove.FIXING_X, 10, board_prove.FIXING_UUID, plated_net="/LV_A", courtyard=10, excluded=True)),
             tree.insert(len(tree) - 1, board_prove.segment("/MAINS_N", 27, 4, 27, 16, "0b0e5c1a-0000-4000-8000-000000000c10"))))
         status, lines = self.check()
         found = [v for v in self.holes(lines) if v[2] == "mounting_hole"]

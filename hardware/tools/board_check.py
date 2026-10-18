@@ -1098,15 +1098,20 @@ def drilled(pad: list) -> bool:
 
 
 def hole_footprints(tree: list) -> List[str]:
-    """The references of the footprints whose pads are all drilled holes, plated or not: at least one pad, each drilled.
+    """The references of the footprints that are fixings: at least one pad, each a drilled hole, and either every pad non-plated or the part left out of the bill of materials.
 
-    A footprint with any pad that is not drilled, a surface-mount pad, is a
-    part and not a mounting hole.
+    A footprint with a pad that is not drilled, a surface-mount pad, is a part;
+    so is one of plated drilled pads that is in the bill of materials, a
+    connector or a resistor. A plated-pad fixing is one KiCad's footprint
+    attribute exclude_from_bom marks, as its stock mounting-hole footprints
+    carry. A non-plated hole in any other footprint is held by the hole rules.
     """
     found = []
     for reference, footprint in board_footprints(tree).items():
         pads = sexpr.children(footprint, "pad")
-        if pads and all(drilled(pad) for pad in pads):
+        if not pads or not all(drilled(pad) for pad in pads):
+            continue
+        if all(str(pad[2]) == "np_thru_hole" for pad in pads) or "exclude_from_bom" in (sexpr.child(footprint, "attr") or []):
             found.append(reference)
     return sorted(found)
 

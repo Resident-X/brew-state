@@ -999,26 +999,32 @@ class AMountingHoleIsFoundAndHeldToTheLargerSignedFigure(unittest.TestCase):
     def setUp(self):
         self.tree = sexpr.parse_one(HOLE_LAYOUT)
 
-    def test_a_mounting_hole_is_a_footprint_whose_pads_are_all_drilled_plated_or_not(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: A mounting hole is a footprint whose pads are all drilled holes, plated or not
-        self.assertEqual(board_check.hole_footprints(self.tree), ["H'3", "H1", "H2", "R1"])
+    def test_a_mounting_hole_is_a_footprint_of_drilled_pads_all_non_plated_or_left_out_of_the_bom(self):
+        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: A mounting hole is a footprint whose pads are all drilled holes and which is all non-plated or left out of the bill of materials
+        self.assertEqual(board_check.hole_footprints(self.tree), ["H'3", "H1"])
 
-    def test_a_footprint_of_plated_drilled_pads_only_is_a_hole_and_one_with_a_surface_mount_pad_or_none_is_not(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: a footprint whose pads are all drilled holes, plated or not
-        def holes(*pads):
+    def test_plated_drilled_pads_make_a_hole_only_when_the_footprint_is_left_out_of_the_bom(self):
+        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: a footprint whose pads are all drilled holes which is all non-plated or carries exclude_from_bom
+        def holes(*pads, attr=""):
             body = "".join(f"(pad {text})" for text in pads)
             return board_check.hole_footprints(sexpr.parse_one(
-                f'(kicad_pcb (version 1) (footprint "a:F" (layer "F.Cu") (at 0 0) (property "Reference" "X1" (at 0 0 0)) {body}))'))
+                f'(kicad_pcb (version 1) (footprint "a:F" (layer "F.Cu") (at 0 0) (property "Reference" "X1" (at 0 0 0)) {attr} {body}))'))
         plated = '"1" thru_hole circle (at 0 0) (size 4 4) (drill 3.2) (layers "*.Cu")'
+        second = '"2" thru_hole circle (at 3 0) (size 4 4) (drill 3.2) (layers "*.Cu")'
         unplated = '"" np_thru_hole circle (at 0 0) (size 3.2 3.2) (drill 3.2) (layers "*.Cu")'
         surface = '"2" smd rect (at 0 5) (size 1 1) (layers "F.Cu")'
-        self.assertEqual(holes(plated), ["X1"])
-        self.assertEqual(holes(plated, unplated), ["X1"])
-        self.assertEqual(holes(unplated, surface), [])
-        self.assertEqual(holes(plated, surface), [])
-        self.assertEqual(holes(surface), [])
-        self.assertEqual(holes(), [])
-        self.assertEqual(holes('"1" thru_hole circle (at 0 0) (size 4 4) (layers "*.Cu")'), [])
+        left_out = "(attr exclude_from_pos_files exclude_from_bom)"
+        self.assertEqual(holes(plated, attr=left_out), ["X1"])
+        self.assertEqual(holes(plated, second, attr="(attr through_hole)"), [], "a two-pin connector in the bom")
+        self.assertEqual(holes(plated), [])
+        self.assertEqual(holes(unplated), ["X1"])
+        self.assertEqual(holes(unplated, attr="(attr through_hole)"), ["X1"])
+        self.assertEqual(holes(plated, unplated, attr=left_out), ["X1"])
+        self.assertEqual(holes(plated, unplated), [])
+        self.assertEqual(holes(unplated, surface, attr=left_out), [])
+        self.assertEqual(holes(surface, attr=left_out), [])
+        self.assertEqual(holes(attr=left_out), [])
+        self.assertEqual(holes('"1" thru_hole circle (at 0 0) (size 4 4) (layers "*.Cu")', attr=left_out), [])
 
     def test_the_rules_hold_the_larger_of_the_two_signed_figures_to_the_hole_edge_and_the_pad(self):
         # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: rules holding the hole clearance to the Mains class at no less than the larger of the signed clearance and the signed creepage
@@ -1078,7 +1084,7 @@ def fixing_layout(*items: str, courtyard: bool = True, hole: str = "") -> list:
     yard = '(fp_rect (start -2 -2) (end 2 2) (layer "F.CrtYd"))' if courtyard else ""
     return sexpr.parse_one(
         '(kicad_pcb (version 20241229) (layers (0 "F.Cu" signal) (2 "B.Cu" signal)) (net 0 "") (net 1 "/MAINS_L") (net 2 "/MAINS_N") (net 3 "/LV_A")'
-        f' (footprint "a:Hole" (layer "F.Cu") (at 0 0) (property "Reference" "H1" (at 0 0 0)) {yard}'
+        f' (footprint "a:Hole" (layer "F.Cu") (at 0 0) (property "Reference" "H1" (at 0 0 0)) (attr exclude_from_pos_files exclude_from_bom) {yard}'
         f' (pad "" np_thru_hole circle (at 0 0) (size 3.2 3.2) (drill 3.2) (layers "*.Cu")){hole})'
         + "".join(items) + ")")
 
