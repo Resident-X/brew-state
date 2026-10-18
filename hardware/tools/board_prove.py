@@ -848,8 +848,9 @@ def drop_rule(name: str):
     return seed_it
 
 
-def seeded_hole(reference: str, x: float, y: float, uuid: str, plated_net: Optional[str] = None) -> list:
-    """A 3.2 mm hole footprint `reference` at (x, y): a non-plated hole, or a plated pad on `plated_net` when one is named."""
+def seeded_hole(reference: str, x: float, y: float, uuid: str, plated_net: Optional[str] = None, courtyard: float = 0) -> list:
+    """A 3.2 mm hole footprint `reference` at (x, y): a non-plated hole, or a plated pad on `plated_net` when one is named,
+    with a square courtyard `courtyard` mm to a side when that is given."""
     Q = sexpr.Quoted
     layers = ["layers", Q("*.Cu"), Q("*.Mask")]
     if plated_net is None:
@@ -858,8 +859,13 @@ def seeded_hole(reference: str, x: float, y: float, uuid: str, plated_net: Optio
     else:
         hole = ["pad", Q("1"), "thru_hole", "circle", ["at", "0", "0"], ["size", "4", "4"], ["drill", "3.2"], layers,
                 ["net", Q(plated_net)], ["uuid", Q(f"{uuid[:-2]}01")]]
+    body = [hole]
+    if courtyard:
+        half = f"{courtyard / 2:g}"
+        body.append(["fp_rect", ["start", f"-{half}", f"-{half}"], ["end", half, half], ["stroke", ["width", "0.05"], ["type", "solid"]],
+                     ["fill", "none"], ["layer", Q("F.CrtYd")], ["uuid", Q(f"{uuid[:-2]}02")]])
     return ["footprint", Q("proof:Seeded_Hole"), ["layer", Q("F.Cu")], ["uuid", Q(uuid)], ["at", f"{x:g}", f"{y:g}"],
-            ["property", Q("Reference"), Q(reference), ["at", "0", "-3", "0"], ["layer", Q("F.SilkS")]], hole]
+            ["property", Q("Reference"), Q(reference), ["at", "0", "-3", "0"], ["layer", Q("F.SilkS")]], *body]
 
 
 #: R1 pad 2, on /MAINS_N, is a 1.6 mm round pad at (25.16, 10), its edge at 25.96. A non-plated 3.2 mm hole whose edge is
@@ -867,6 +873,16 @@ def seeded_hole(reference: str, x: float, y: float, uuid: str, plated_net: Optio
 #: its hole, 0.4 mm inside the pad, is nearer than the 4 mm that is the larger of the signed clearance and creepage).
 HOLE_X = 25.96 + 2.5 + 1.6
 PLATED_X = 25.96 + 3.5 + 2.0
+
+
+#: A hole whose own edge is 7.4 mm from R1's pad, so only its 10 mm courtyard, whose edge stands 3.79 mm from R1's
+#: courtyard at 26.21, is inside the signed distance.
+FIXING_X = 35
+
+
+def fixing_near_mains(seed: Seed) -> None:
+    seed.layout(lambda tree: tree.insert(len(tree) - 1, seeded_hole(
+        "H9", FIXING_X, 10, "0b0e5c1a-0000-4000-8000-000000000c00", courtyard=10)))
 
 
 def hole_near_mains(plated_net: Optional[str] = None):
@@ -1064,6 +1080,8 @@ FAULTS: List[tuple] = [
      "a non-plated hole or its pad stands", hole_near_mains()),
     ("a plated hole on a non-Mains net inside the signed distance of a Mains net", "mounting holes: a plated hole on a non-Mains net inside that distance fails", "mounting_hole",
      "a plated hole on a net outside Mains stands", hole_near_mains("/LV_A")),
+    ("a fixing's courtyard inside the signed distance of a Mains part's courtyard", "mounting holes: a fixing's extent inside that distance fails", "mounting_hole",
+     "a fixing's courtyard stands", fixing_near_mains),
     # Connectivity
     ("a channel's net moved to the other controller pin", "connectivity: a net must reach the controller pin its channel names", "connectivity", "net /LV_A reaches controller pin PA1, where the record names controller pin PA0", swap_labels(("LV_A", "96.52 76.2"), ("LV_B", "96.52 78.74"))),
     ("a channel's net moved to the other pin of its connector", "connectivity: a net must reach the connector pin its channel names", "connectivity", "net /LV_A reaches connector pin J2 pin 2, where the record names connector pin J2 pin 1", swap_labels(("LV_A", "45.72 76.2"), ("LV_B", "45.72 78.74"))),
