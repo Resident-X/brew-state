@@ -1,0 +1,47 @@
+id: SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES
+type: deliverable
+category: solution
+title: The pre-order check fails a signed separation below its own floor and a mounting hole that breaches mains separation
+status: active
+version: 1
+text: |-
+  Adds the separation-floor rule and the mounting-hole rule, the latter by appending rules after the signed Mains rule, each shown to fail on a seeded fault.
+links:
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C2
+    type: derives-from
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C9
+    type: derives-from
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C6
+    type: targets
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C7
+    type: targets
+  - target: DEC-BOARD-PRE-ORDER-RULE-READINGS
+    type: justified-by
+  - target: DEC-BOARD-SEPARATION-BASIS-RECORD
+    type: justified-by
+  - target: DEC-BOARD-DESIGN-RECORDS-AS-YAML
+    type: justified-by
+design_question_answers:
+  - answered_by: SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C3
+    class: whole-set
+  - answered_by: SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C3
+    class: existing-capability
+  - answered_by: SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C4
+    class: consumer-intent
+interfaces:
+  - task hw:verify and the board tier of task check:round
+  - hardware/tools pre-order check record reader
+  - hardware/proof synthetic records and seeded-fault tests
+  - the appended last-rule mechanism of the signed Mains separation check
+locus:
+  - marking: existing
+    ref: hardware/tools/ (the pre-order board check and its tests)
+  - marking: existing
+    ref: hardware/proof/ (throwaway proof design and its synthetic records)
+  - marking: existing
+    ref: table_rows keys in the synthetic separation basis records beside each proof design
+  - marking: existing
+    ref: hardware/README.md (hardware notes)
+plan_provenance:
+  approved_plan_id: PLAN-DEL-HW-PRE-ORDER-CHECKS-EXTENDED-RULES-1
+  target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED

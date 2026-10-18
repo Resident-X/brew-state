@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C2
+type: criterion
+title: A part whose catalogue lifecycle is end of life, obsolete or not recommended for new designs fails
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The catalogue extract's lifecycle mapping (status, source, read_on) is required on the entry of every part the design places; an absent mapping, a status outside active, not recommended for new designs, end of life, obsolete or no-source-publishes-one, a mapping missing any of the three fields, or a read_on older than the extract's max_age_days fails. A part whose status is end of life, obsolete or not recommended for new designs fails; a part whose status states that no source publishes one and names the sources looked at is not failed for that. Out of scope: fetching the catalogue, which the check never does, and choosing replacement parts.
+links:
+  - target: SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE
+    type: criterion-of

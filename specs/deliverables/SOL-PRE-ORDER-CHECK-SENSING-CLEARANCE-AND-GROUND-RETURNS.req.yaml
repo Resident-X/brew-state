@@ -1,0 +1,47 @@
+id: SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS
+type: deliverable
+category: solution
+title: The pre-order check fails a sensing net too close to a noisy net and a connector short of ground returns
+status: active
+version: 1
+text: |-
+  Adds the board rules record and the sensing-clearance and ground-return rules to the pre-order check, each shown to fail on a seeded fault.
+links:
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C3
+    type: derives-from
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C7
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C8
+    type: targets
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: targets
+  - target: DEC-BOARD-PRE-ORDER-RULE-READINGS
+    type: justified-by
+  - target: DEC-BOARD-DESIGN-RECORDS-AS-YAML
+    type: justified-by
+design_question_answers:
+  - answered_by: SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS.C3
+    class: whole-set
+  - answered_by: SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS.C3
+    class: existing-capability
+  - answered_by: SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS.C4
+    class: consumer-intent
+interfaces:
+  - task hw:verify and the board tier of task check:round
+  - hardware/tools pre-order check record reader
+  - hardware/proof synthetic records and seeded-fault tests
+  - the appended last-rule mechanism of the signed Mains separation check
+locus:
+  - marking: existing
+    ref: hardware/tools/ (the pre-order board check and its tests)
+  - marking: existing
+    ref: hardware/proof/ (throwaway proof design and its synthetic records)
+  - marking: created
+    ref: board-rules.yaml records beside each proof design
+  - marking: existing
+    ref: layout practice catalogue sensing item in docs/board-design-method.md
+  - marking: existing
+    ref: hardware/README.md (hardware notes)
+plan_provenance:
+  approved_plan_id: PLAN-DEL-HW-PRE-ORDER-CHECKS-EXTENDED-RULES-1
+  target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED

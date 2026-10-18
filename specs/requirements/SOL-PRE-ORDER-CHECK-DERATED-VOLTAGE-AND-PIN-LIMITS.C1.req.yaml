@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C1
+type: criterion
+title: A part whose net can exceed its derated voltage rating fails
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Each position of the parts specification record that a derating class covers carries class, naming a class of the derating policy exactly, and a rating written as a figure with unit V, VDC or VAC in both that record and the design's Rating field; a covered position without one, or naming a class the policy lacks, fails. An AC figure is taken at its peak. The working voltage of a part is the highest voltage of the nets it connects, worked out as for pin limits, and for a part on a mains-referenced net is the peak of the basis working voltage, which the check takes as the top of the declared supply span; a mains domain in the pin-limit record is required when mains is declared present and is at least that peak. The rule fails a part whose working voltage exceeds the policy's voltage share times its rating. Out of scope: the power and temperature shares of the policy and the choice of derating figures.
+links:
+  - target: SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS
+    type: criterion-of

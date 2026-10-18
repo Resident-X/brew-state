@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS.C4
+type: criterion
+title: Every failure names the rule, the design and the offending item
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  A failure of any rule in this leaf is reported with the rule's name, the design, and the offending item (net, pin, part reference, record key or figure) in terms a builder can act on, in the same report as the existing checks and in both the text and JSON report forms. Out of scope: the wording of passing output and the report of rules outside this leaf.
+links:
+  - target: SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS
+    type: criterion-of

@@ -1,0 +1,40 @@
+id: SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS
+type: deliverable
+category: solution
+title: The pre-order check fails missing fiducials and missing polarity or first-pin marks
+status: active
+version: 1
+text: |-
+  Adds the fiducial and polarity-mark rule to the pre-order check, shown to fail on seeded faults, and moves the fiducial item to enforced in the catalogue.
+links:
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C6
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: targets
+  - target: DEC-BOARD-PRE-ORDER-RULE-READINGS
+    type: justified-by
+design_question_answers:
+  - answered_by: SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C1
+    class: whole-set
+  - answered_by: SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C2
+    class: existing-capability
+  - answered_by: SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C3
+    class: consumer-intent
+interfaces:
+  - task hw:verify and the board tier of task check:round
+  - hardware/tools pre-order check record reader
+  - hardware/proof synthetic records and seeded-fault tests
+locus:
+  - marking: existing
+    ref: hardware/tools/ (the pre-order board check and its tests)
+  - marking: existing
+    ref: hardware/proof/ (throwaway proof design and its synthetic records)
+  - marking: existing
+    ref: layout practice catalogue fiducial item in docs/board-design-method.md
+  - marking: existing
+    ref: hardware/README.md (hardware notes)
+plan_provenance:
+  approved_plan_id: PLAN-DEL-HW-PRE-ORDER-CHECKS-EXTENDED-RULES-1
+  target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED
