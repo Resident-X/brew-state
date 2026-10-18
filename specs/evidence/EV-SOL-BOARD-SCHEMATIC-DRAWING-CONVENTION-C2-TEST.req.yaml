@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-SCHEMATIC-DRAWING-CONVENTION-C2-TEST
+type: evidence
+title: test evidence for SOL-BOARD-SCHEMATIC-DRAWING-CONVENTION.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-18T10:57:47.508171Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_history.py::test_the_drawing_item_in_the_methods_circuit_catalogue_leaves_the_layout_checklist_unchanged, test_the_review_names_a_sheet_in_the_net_or_part_column_and_in_every_text_on_the_rows_a_record_may_name, test_a_circuit_item_in_the_method_leaves_the_layout_checklist_unchanged
+  artifact_version: 0e7778bd657e01da3d53db62f311d3e01cd44897
+attested_by: crun-48e3ca3ee50094ff
+links:
+  - target: SOL-BOARD-SCHEMATIC-DRAWING-CONVENTION.C2
+    type: satisfies

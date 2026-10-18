@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-SCHEMATIC-DRAWING-CONVENTION-C1-INSPECTION
+type: evidence
+title: inspection evidence for SOL-BOARD-SCHEMATIC-DRAWING-CONVENTION.C1
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-18T10:57:47.445254Z"
+artifact:
+  kind: external
+  reference: 'inspection of docs/board-design-method.md section ''Schematic drawing convention'' against each clause: the section exists beside the two catalogues and the opening paragraph names it (last four sections); items 1-8 are one function to a sheet, sheet named for function, net named by designer, wires within/labels between, one signal-flow direction, rails joined by name, connector pins and what each carries, text clear of text and symbols; every item carries title, publisher, section, address and ''read 2026-10-18'' from free documents (KiCad 10.0 Schematic Editor manual, Flux, Schemalyzer, Zuken, Wikipedia); each cited section heading and each quoted sentence was re-fetched on 2026-10-18 and matches the page (Flux sections Grouping Circuits, Labeling Conventions, Signal Flow Direction, Clean Schematic Checklist; Zuken Rule 2 and Rule 4 and step 5 Label Everything Clearly; the KiCad sheet-name sentence verbatim under Adding hierarchical subsheets to a design); item 8 cites no Flux overlap rule because the article states none; item 7 states which part of it the sources do not support; no machine-specific content.'
+  artifact_version: 0e7778bd657e01da3d53db62f311d3e01cd44897
+attested_by: crun-48e3ca3ee50094ff
+links:
+  - target: SOL-BOARD-SCHEMATIC-DRAWING-CONVENTION.C1
+    type: satisfies

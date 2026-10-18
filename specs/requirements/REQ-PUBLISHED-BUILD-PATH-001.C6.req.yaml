@@ -2,13 +2,13 @@ id: REQ-PUBLISHED-BUILD-PATH-001.C6
 type: criterion
 title: Every board's schematic can be read by someone who did not draw it
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |
-  Every design git tracks passes the two refusals. A change to a design's schematic or sheets re-runs the board tier of the build round, and the nightly run of main runs the refusals whatever changed, through the board gate the pre-order check already uses. No new gate and no new tool is introduced.
+  Every board design the repository publishes has a schematic that a reader who did not draw it can follow without asking its author. Each sheet holds one function and is named for it, every net carries a name its designer chose and not one the design tool generated, and a reader holding only the repository and the design tool it names can obtain a drawing of every sheet.
 
-  Out of scope: a new gate, a new tool, and the full seeded-fault proof, which stays on demand.
+  Out of scope: how a sheet is arranged beyond what a written convention and a review against it can judge, and any drawing committed beside the schematic.
 links:
   - target: REQ-PUBLISHED-BUILD-PATH-001
     type: criterion-of

@@ -3,6 +3,8 @@ type: deliverable
 category: task
 title: Board designs are produced by a written method whose judgement steps are explicit and reviewed
 status: active
+seal_state: sealed
+seal_outcome: complete
 level: task
 version: 4
 text: |
