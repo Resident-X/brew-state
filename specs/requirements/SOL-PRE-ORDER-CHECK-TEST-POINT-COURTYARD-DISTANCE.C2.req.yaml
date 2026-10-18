@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-TEST-POINT-COURTYARD-DISTANCE.C2
+type: criterion
+title: The rule is shown to fail on a fault seeded for it and the catalogue carries it as a rule-kind item
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Show the rule fail on a test point seeded inside a part's courtyard and closer than the distance, in a throwaway design built outside the repository, and pass the clean design. Add the rule to the layout review's catalogue as a rule-kind item beside the test-point items it enforces, in the item form and against the catalogue's source rule, and make the test-point judgement item defer to it. Out of scope: rules owned by other findings.
+links:
+  - target: SOL-PRE-ORDER-CHECK-TEST-POINT-COURTYARD-DISTANCE
+    type: criterion-of
