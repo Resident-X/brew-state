@@ -4238,6 +4238,62 @@ static void test_writing_back_what_was_read_leaves_every_state_as_it_was(void)
     TEST_ASSERT_EQUAL_MEMORY(unwritten, advanced, sizeof(unwritten));
 }
 
+/// SOL-ADMISSION-PROVES-CORRECTION-TAKEN.C2: Every structure the estimator
+/// already admits keeps being admitted, and is left as its initialisation set
+/// it.
+///
+/// Admission proves the correction-target state carries a value written to it
+/// by writing one that differs from the held value, reading it back, and
+/// writing the held value back. Asked here of the structure describing the reference machine directly, for every
+/// state it keeps: each takes a differing write, reads back exactly what was
+/// written, and reads back exactly what it held once that is restored. Driven off rest first, so the held values are non-trivial.
+static void test_every_state_this_structure_keeps_reads_back_what_is_written_and_what_is_restored(void)
+{
+    const plant_actuation_t working = {
+        {ACTUATION_FULL_SCALE, ACTUATION_FULL_SCALE, ACTUATION_FULL_SCALE / 2u}};
+    plant_model_t model;
+
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+    for (int step = 0; step < SHORT_STEPS; step++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &working, 0.0f, STEP_MS));
+    }
+
+    unsigned probed = 0u;
+    for (int state = 0; state < PLANT_STATE_COUNT; state++) {
+        float held = 0.0f;
+        float read = 0.0f;
+        char message[112];
+
+        if (!plant_model_state(&model, (plant_state_t)state, &held)) {
+            continue;
+        }
+
+        uint32_t held_bits = 0u;
+        uint32_t differing_bits = 0u;
+        float differing = 0.0f;
+        memcpy(&held_bits, &held, sizeof(held_bits));
+        differing_bits = held_bits ^ 0x80000000u;
+        memcpy(&differing, &differing_bits, sizeof(differing));
+
+        (void)snprintf(message, sizeof(message), "state %d refused a write it answers a read for",
+                       state);
+        TEST_ASSERT_TRUE_MESSAGE(plant_model_set_state(&model, (plant_state_t)state, differing),
+                                 message);
+        TEST_ASSERT_TRUE(plant_model_state(&model, (plant_state_t)state, &read));
+        (void)snprintf(message, sizeof(message),
+                       "state %d did not read back as the value written to it", state);
+        TEST_ASSERT_EQUAL_MEMORY_MESSAGE(&differing, &read, sizeof(read), message);
+
+        TEST_ASSERT_TRUE(plant_model_set_state(&model, (plant_state_t)state, held));
+        TEST_ASSERT_TRUE(plant_model_state(&model, (plant_state_t)state, &read));
+        (void)snprintf(message, sizeof(message),
+                       "state %d did not read back as the value it held once restored", state);
+        TEST_ASSERT_EQUAL_MEMORY_MESSAGE(&held, &read, sizeof(read), message);
+        probed++;
+    }
+    TEST_ASSERT_TRUE_MESSAGE(probed > 0u, "no state was probed, so nothing was shown");
+}
+
 /// SOL-PLANT-FLOW-REPORTED.C1: The plant seam names the rate water is drawn as
 /// a reported quantity.
 ///
@@ -7623,6 +7679,7 @@ int main(void)
     RUN_TEST(test_writing_one_state_leaves_the_others_where_they_were);
     RUN_TEST(test_a_state_written_to_an_instance_that_cannot_take_it_is_refused);
     RUN_TEST(test_writing_back_what_was_read_leaves_every_state_as_it_was);
+    RUN_TEST(test_every_state_this_structure_keeps_reads_back_what_is_written_and_what_is_restored);
     RUN_TEST(test_the_seam_names_the_drawn_rate_as_a_quantity);
     RUN_TEST(test_the_reference_structure_answers_the_drawn_rate);
     RUN_TEST(test_the_drawn_rate_follows_the_commanded_pump_level);

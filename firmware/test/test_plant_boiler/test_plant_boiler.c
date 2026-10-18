@@ -16,6 +16,7 @@
  * suites carry theirs.
  */
 #include <math.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -1085,6 +1086,66 @@ static void test_a_state_read_from_an_uninitialised_instance_is_refused_here_too
         TEST_ASSERT_FALSE(plant_model_state(&uninitialised, (plant_state_t)state, &value));
         TEST_ASSERT_EQUAL_FLOAT(SENTINEL, value);
     }
+}
+
+/// SOL-ADMISSION-PROVES-CORRECTION-TAKEN.C2: Every structure the estimator
+/// already admits keeps being admitted, and is left as its initialisation set
+/// it.
+///
+/// Admission proves the correction-target state carries a value written to it
+/// by writing one that differs from the held value, reading it back, and
+/// writing the held value back. Asked here of the single-vessel architecture directly, for every
+/// state it keeps: each takes a differing write, reads back exactly what was
+/// written, and reads back exactly what it held once that is restored. Two of its names are one vessel, so a differing write under either must read back under the other and a restore under one must leave the other as it was.
+static void test_the_vessel_reads_back_what_is_written_and_what_is_restored(void)
+{
+    plant_parameters_t parameters;
+    plant_parameter_error_t fault;
+    plant_model_t model;
+    plant_actuation_t heating = {{0u}};
+
+    heating.level_permille[HEATING_CHANNEL] = ACTUATION_FULL_SCALE;
+    TEST_ASSERT_TRUE(
+        plant_parameters_load(DESCRIPTION, sizeof(DESCRIPTION) - 1u, &parameters, &fault));
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+    for (int step = 0; step < SETTLE_STEPS; step++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &heating, 0.0f, STEP_MS));
+    }
+
+    unsigned probed = 0u;
+    for (int state = 0; state < PLANT_STATE_COUNT; state++) {
+        float held = 0.0f;
+        float read = 0.0f;
+        char message[112];
+
+        if (!plant_model_state(&model, (plant_state_t)state, &held)) {
+            continue;
+        }
+
+        uint32_t held_bits = 0u;
+        uint32_t differing_bits = 0u;
+        float differing = 0.0f;
+        memcpy(&held_bits, &held, sizeof(held_bits));
+        differing_bits = held_bits ^ 0x80000000u;
+        memcpy(&differing, &differing_bits, sizeof(differing));
+
+        (void)snprintf(message, sizeof(message), "state %d refused a write it answers a read for",
+                       state);
+        TEST_ASSERT_TRUE_MESSAGE(plant_model_set_state(&model, (plant_state_t)state, differing),
+                                 message);
+        TEST_ASSERT_TRUE(plant_model_state(&model, (plant_state_t)state, &read));
+        (void)snprintf(message, sizeof(message),
+                       "state %d did not read back as the value written to it", state);
+        TEST_ASSERT_EQUAL_MEMORY_MESSAGE(&differing, &read, sizeof(read), message);
+
+        TEST_ASSERT_TRUE(plant_model_set_state(&model, (plant_state_t)state, held));
+        TEST_ASSERT_TRUE(plant_model_state(&model, (plant_state_t)state, &read));
+        (void)snprintf(message, sizeof(message),
+                       "state %d did not read back as the value it held once restored", state);
+        TEST_ASSERT_EQUAL_MEMORY_MESSAGE(&held, &read, sizeof(read), message);
+        probed++;
+    }
+    TEST_ASSERT_TRUE_MESSAGE(probed > 0u, "no state was probed, so nothing was shown");
 }
 
 /// SOL-UNMEASURED-STATE-RECONSTRUCTION.C13: Every plant structure answers a
@@ -2337,6 +2398,7 @@ int main(void)
     RUN_TEST(test_this_structure_answers_the_writes_it_answers_the_reads_for);
     RUN_TEST(test_writing_either_temperature_moves_the_one_vessel);
     RUN_TEST(test_writing_back_what_was_read_leaves_the_vessel_where_it_was);
+    RUN_TEST(test_the_vessel_reads_back_what_is_written_and_what_is_restored);
     RUN_TEST(test_a_draw_cools_the_vessel_faster_than_no_draw);
     RUN_TEST(test_the_vessel_settles_where_the_drawn_energy_balance_puts_it);
     RUN_TEST(test_the_drawn_loss_is_taken_between_the_vessel_and_the_feed);

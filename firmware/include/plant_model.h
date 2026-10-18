@@ -364,6 +364,13 @@ bool plant_model_state(const plant_model_t *model, plant_state_t state, float *v
  * state has nowhere to put the value, and quietly dropping it would leave a
  * caller believing a correction it made was taken.
  *
+ * A write that returns true leaves the state reading the value written, bit for
+ * bit: a structure that took the call and kept something else -- discarded the
+ * value, clamped it, rounded it -- has reported a correction taken that it did
+ * not take, which is the same loss as refusing it, announced as success.
+ * Whether the structure recomputes the state from another on its next step is
+ * its own answer and not a refusal here.
+ *
  * What is written is not checked for plausibility. The seam has no view on
  * which values a machine could be in, and a structure that rejected the ones it
  * disagreed with would be deciding for the consumer whether its reconstruction
