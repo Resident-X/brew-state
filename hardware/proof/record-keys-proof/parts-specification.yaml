@@ -1,0 +1,28 @@
+# A synthetic parts specification, made only to prove the parts check against the
+# throwaway design beside it. Its catalogue numbers are not real parts and must never
+# be used for a board that is ordered: being marked synthetic, the check accepts it
+# only for a design marked not for manufacture.
+positions:
+  - reference: J1
+    value: "MAINS_IN"
+    package: "PinHeader_1x02_P2.54mm_Vertical"
+    lcsc: "C9000001"
+  - reference: R1
+    value: "100k"
+    package: "R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal"
+    rating: "0.25W"
+    lcsc: "C9000002"
+  - reference: J2
+    value: "LV_IN"
+    package: "PinHeader_1x02_P2.54mm_Vertical"
+    lcsc: "C9000003"
+  - reference: R2
+    value: "10k"
+    package: "R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal"
+    rating: "0.25W"
+    lcsc: "C9000004"
+  - reference: U1
+    value: "CTRL"
+    package: "Controller_1x02"
+    lcsc: "C9000005"
+synthetic: true

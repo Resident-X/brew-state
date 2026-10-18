@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS-C1-TEST-6
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-18T00:54:06.052491Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad.py::TheRecordKeysProofDesignPasses.test_the_record_keys_proof_design_with_every_key_passes_the_check
+  artifact_version: b6b1e06fa1840b1cf65376ce88e1d3ad20df6a89
+attested_by: crun-bf98b59db9a0c23a
+links:
+  - target: SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1
+    type: satisfies
