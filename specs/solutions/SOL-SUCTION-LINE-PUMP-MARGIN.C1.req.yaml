@@ -1,7 +1,7 @@
 id: SOL-SUCTION-LINE-PUMP-MARGIN.C1
 type: criterion
 title: The pump's bench performance with the meter installed is measured across repeated cold starts
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: demonstration

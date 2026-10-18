@@ -2,7 +2,7 @@ id: SOL-SUCTION-LINE-METER-COST-DIFFERENTIAL
 type: deliverable
 category: solution
 title: The suction-line meter's cost to the pump is measured against a without-meter baseline, once independent pump control exists
-status: active
+status: deprecated
 version: 1
 text: |
   SOL-SUCTION-LINE-PUMP-MARGIN establishes only the with-meter behaviour of the coffee pump's suction
@@ -30,3 +30,5 @@ links:
     type: targets
   - target: SOL-SUCTION-LINE-PUMP-MARGIN
     type: depends-on
+attributes:
+  deprecation_reason: The owner accepts the fitted meter's cost to the pump unmeasured (DEC-FLOW-SENSED-UPSTREAM-OF-PUMP), so a with/without-meter differential has no decision left to inform.
