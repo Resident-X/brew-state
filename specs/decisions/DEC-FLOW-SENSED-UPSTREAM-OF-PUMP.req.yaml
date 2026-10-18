@@ -2,7 +2,7 @@ id: DEC-FLOW-SENSED-UPSTREAM-OF-PUMP
 type: decision
 title: Flow is read on the low-pressure side, from the meter the machine already carries
 status: active
-version: 3
+version: 4
 decided_by: david
 rationale: |
   Context: A flow segment of a delivery profile commands flow, a pressure segment commands pressure, and several requirements rest on flow being observed
@@ -29,9 +29,10 @@ rationale: |
   any, but a leak there admits air rather than losing water, and air on the suction side of a
   vibratory pump is the loss-of-prime condition the machine is trying to detect. The meter sits below
   the tank's water level, so the suction line stays flooded rather than needing to self-prime by
-  lift, which bears on that risk without settling it -- what the meter's restriction costs the pump
-  under real operation still has to be established rather than assumed, notwithstanding the owner's
-  account that it has not caused a noticeable problem in factory operation. Sensing downstream of the
+  lift, which bears on that risk. What the meter's restriction costs the pump is accepted rather than
+  measured: the machine shipped with the meter fitted in this position, it is a common digital flow
+  meter on a common vibratory pump's suction line, and the owner judges the risk negligible. Were it
+  ever wrong, the remedy is the fitting change the Reversibility paragraph already covers. Sensing downstream of the
   pump measures closest to what the cup receives, but a meter that survives brew pressure with useful
   resolution is a different class of component at several times the cost, and it adds a pressurised
   joint to plumbing this project deliberately leaves as built. Inferring flow from pump drive and

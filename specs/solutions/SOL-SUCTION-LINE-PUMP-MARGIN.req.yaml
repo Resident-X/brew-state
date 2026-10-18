@@ -2,7 +2,7 @@ id: SOL-SUCTION-LINE-PUMP-MARGIN
 type: deliverable
 category: solution
 title: The coffee pump's priming and delivery, bench-measured with the suction-line meter fitted as found
-status: active
+status: deprecated
 version: 1
 text: |
   The suction-line restriction the fitted flow meter adds to the coffee pump's inlet is not assumed
@@ -25,3 +25,5 @@ links:
     type: targets
   - target: DEC-FLOW-SENSED-UPSTREAM-OF-PUMP
     type: justified-by
+attributes:
+  deprecation_reason: The owner accepts the fitted meter's cost to the pump unmeasured (DEC-FLOW-SENSED-UPSTREAM-OF-PUMP); the as-found bench measurement could only compare the unit with its own factory history and cannot separate pump margin from the OEM controller's drive behaviour. Its parent criterion DEL-BENCH-FLOW-INSTRUMENTATION.C6 asked for that measurement and is retired with it.

@@ -1,7 +1,7 @@
 id: SOL-SUCTION-LINE-PUMP-MARGIN.C2
 type: criterion
 title: The bench measurements are judged against the machine's own factory-use history and recorded as adequate or a margin risk
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: analysis
