@@ -1181,7 +1181,7 @@ class MountingHoleProof(Proved):
         # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C5: a mounting hole inside the larger of the signed clearance and creepage of a Mains net, and a plated hole on a non-Mains net inside that distance, and requires the check to fail each
         faults = [fault for fault in board_prove.FAULTS if fault[1].startswith("mounting holes:")]
         self.assertEqual({fault[2] for fault in faults}, {"mounting_hole"})
-        self.assertEqual(len(faults), 3)
+        self.assertEqual(len(faults), 5)
         self.assertCaught(*[fault[0] for fault in faults])
 
 
@@ -1189,10 +1189,72 @@ class FloorAndHolesRunDirectly(Copy):
     def holes(self, lines):
         return [v for v in self.violations(lines) if v[2] in ("mounting_hole", "separation_floor")]
 
-    def test_the_unmodified_throwaway_design_passes_both_rules_and_is_not_failed_for_having_no_hole(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: A design with no mounting hole is not failed for that
-        self.assertEqual(sexpr.children(sexpr.parse_one(self.seed.read(".kicad_pcb")), "footprint")
-                         and board_check.hole_footprints(sexpr.parse_one(self.seed.read(".kicad_pcb"))), [])
+    def test_mains_copper_inside_a_fixings_courtyard_distance_fails_by_track_and_by_pour_and_names_the_gap(self):
+        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: measures from the layout file the distance from each mounting-hole footprint's courtyard to every track and pour fill of a Mains net on every layer
+        for seed, kind, gap in ((board_prove.fixing_near_mains_track, "track of /MAINS_N on F.Cu", "2.875 mm"),
+                                (board_prove.fixing_near_mains_pour, "zone fill of /MAINS_N on B.Cu", "2.000 mm")):
+            with self.subTest(kind=kind):
+                self.setUp()
+                seed(self.seed)
+                status, lines = self.check()
+                self.assertEqual(status, 1)
+                found = [v for v in self.holes(lines) if v[2] == "mounting_hole"]
+                self.assertEqual(len(found), 1, lines)
+                self.assertIn("H9 courtyard", found[0][3])
+                self.assertIn(kind, found[0][3])
+                self.assertIn(f"stands {gap}", found[0][4])
+                self.assertIn("inside the 4 mm", found[0][4])
+
+    def test_the_same_fixing_with_the_mains_copper_beyond_the_distance_passes(self):
+        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: A clean design passes
+        self.seed.layout(lambda tree: (tree.insert(len(tree) - 1, board_prove.seeded_hole(
+            "H9", board_prove.FIXING_X, 10, board_prove.FIXING_UUID, courtyard=10)),
+            tree.insert(len(tree) - 1, board_prove.segment("/MAINS_N", 25.5, 4, 25.5, 16, "0b0e5c1a-0000-4000-8000-000000000c10"))))
+        status, lines = self.check()
+        self.assertEqual([v for v in self.holes(lines) if v[2] == "mounting_hole"], [], lines)
+
+    def test_a_footprint_of_one_plated_pad_is_a_fixing_whose_courtyard_is_measured(self):
+        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: a footprint whose pads are all drilled holes, plated or not, is a mounting hole
+        self.seed.layout(lambda tree: (tree.insert(len(tree) - 1, board_prove.seeded_hole(
+            "H9", board_prove.FIXING_X, 10, board_prove.FIXING_UUID, plated_net="/LV_A", courtyard=10)),
+            tree.insert(len(tree) - 1, board_prove.segment("/MAINS_N", 27, 4, 27, 16, "0b0e5c1a-0000-4000-8000-000000000c10"))))
+        status, lines = self.check()
+        found = [v for v in self.holes(lines) if v[2] == "mounting_hole"]
+        self.assertTrue(any("H9 courtyard" in v[3] for v in found), lines)
+
+    def test_a_pad_larger_than_its_hole_is_held_at_its_edge_in_a_hole_footprint_and_in_a_part(self):
+        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: the check fails a hole, its plating or fixing inside that distance of a Mains net
+        for surface_pad, who in ((False, "the pad copper of a hole footprint"), (True, "KiCad's physical clearance of a part")):
+            with self.subTest(who):
+                self.setUp()
+                self.seed.layout(lambda tree: tree.insert(len(tree) - 1, board_prove.seeded_hole(
+                    "H9", board_prove.OVERSIZE_X, 10, board_prove.FIXING_UUID, pad=6, surface_pad=surface_pad)))
+                status, lines = self.check()
+                self.assertEqual(status, 1)
+                self.assertTrue([v for v in self.holes(lines) if v[2] == "mounting_hole"], lines)
+
+    def test_the_hole_that_is_clear_with_its_pad_clear_too_passes(self):
+        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: A clean design passes
+        self.seed.layout(lambda tree: tree.insert(len(tree) - 1, board_prove.seeded_hole(
+            "H9", board_prove.OVERSIZE_X + 2.8, 10, board_prove.FIXING_UUID, pad=6, surface_pad=True)))
+        status, lines = self.check()
+        self.assertEqual([v for v in self.holes(lines) if v[2] == "mounting_hole"], [], lines)
+
+    def test_without_its_physical_clearance_constraint_the_part_with_an_oversize_pad_would_pass(self):
+        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: the pad of a hole inside the distance is held by the rule's physical clearance
+        board_prove.hole_with_oversize_pad(self.seed)
+        board_prove.git(self.seed, "add", "-A")
+        board_prove.git(self.seed, "commit", "-q", "--allow-empty", "-m", "seeded copy")
+        real = board_check.hole_rules
+        out = io.StringIO()
+        with mock.patch.object(board_check, "hole_rules", lambda distance: real(distance).replace(
+                f"\n\t(constraint physical_clearance (min {distance:g}mm))", "")):
+            board_check.run(self.seed.root, KICAD_CLI, out=out)
+        lines = out.getvalue().splitlines()
+        self.assertEqual([v for v in self.holes(lines) if v[2] == "mounting_hole"], [], lines)
+
+    def test_the_unmodified_throwaway_design_passes_both_rules(self):
+        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: A clean design passes
         status, lines = self.check()
         self.assertEqual(status, 0, lines)
         self.assertEqual(self.holes(lines), [])
@@ -1211,9 +1273,13 @@ class FloorAndHolesRunDirectly(Copy):
         found = self.holes(lines)
         self.assertEqual({v[2] for v in found}, {"mounting_hole"}, lines)
         self.assertEqual(len({frozenset(v[3].split("; ")) for v in found}), len(found), lines)
-        self.assertIn("NPTH pad of H9", found[0][3])
-        self.assertIn("stands 3.5", found[0][4])
-        self.assertIn("4 mm", found[0][4])
+        kicad = [v for v in found if "NPTH pad of H9" in v[3]]
+        self.assertEqual(len(kicad), 1, lines)
+        self.assertIn("stands 3.5", kicad[0][4])
+        self.assertIn("4 mm", kicad[0][4])
+        measured = [v for v in found if "H9 pad" in v[3]]
+        self.assertEqual(len(measured), 1, lines)
+        self.assertIn("stands 3.500 mm", measured[0][4])
 
     def test_the_failure_is_in_the_same_report_as_the_existing_checks_with_the_rule_design_and_item(self):
         # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C4: in the same report as the existing checks
@@ -1258,7 +1324,7 @@ class FloorAndHolesRunDirectly(Copy):
         status, lines = self.check()
         found = [v for v in self.holes(lines) if v[2] == "mounting_hole"]
         self.assertTrue(found, "a 4.2 mm gap is inside the signed clearance of 4.5 mm, the larger of 4.5 and 4")
-        self.assertIn("inside the 4.5 mm that is the larger of the signed clearance 4.5 mm and creepage 4 mm", found[0][4])
+        self.assertTrue(all("inside the 4.5 mm that is the larger of the signed clearance" in v[4] for v in found), found)
 
     def test_a_basis_lacking_the_floor_inputs_fails_the_run_by_key_and_still_runs_every_other_check(self):
         # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C3: each reading only the design's files and the records the design is held to

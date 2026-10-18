@@ -498,3 +498,16 @@ def segment_distance(a: Point, b: Point, c: Point, d: Point) -> float:
         return 0.0
     return min(distance_to_segment(c, a, b), distance_to_segment(d, a, b),
                distance_to_segment(a, c, d), distance_to_segment(b, c, d))
+
+
+def polygon_distance(one: Sequence[Point], other: Sequence[Point]) -> float:
+    """How far apart two simple polygons stand, convex or not, 0 where they touch, cross or one lies inside the other.
+
+    A corner of either inside the other (by the even-odd rule, so inside a
+    hole is outside) is contact; otherwise the polygons are apart by the least
+    distance between a side of one and a side of the other.
+    """
+    if any(within(point, other) for point in one) or any(within(point, one) for point in other):
+        return 0.0
+    return min(segment_distance(a, b, c, d)
+               for a, b in zip(one, list(one[1:]) + list(one[:1])) for c, d in zip(other, list(other[1:]) + list(other[:1])))

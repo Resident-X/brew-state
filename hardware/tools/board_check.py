@@ -1085,101 +1085,189 @@ def separation_floor(design: Design, record: str, signed: Signed) -> List[Violat
     return found
 
 
-#: The three rules written after the signed rule to hold a mounting hole, a plated hole and a fixing to the signed distance.
+#: The two rules written after the signed rule to hold a non-plated hole and a plated hole to the signed distance.
 HOLE_RULE = f"{RESERVED}: mounting hole"
 PLATED_RULE = f"{RESERVED}: plated hole"
-FIXING_RULE = f"{RESERVED}: fixing courtyard"
+#: The pad types of a drilled pad, plated and not.
+DRILLED = ("thru_hole", "np_thru_hole")
+
+
+def drilled(pad: list) -> bool:
+    """Whether a pad is a drilled hole, plated or not."""
+    return len(pad) > 2 and str(pad[2]) in DRILLED and sexpr.child(pad, "drill") is not None
 
 
 def hole_footprints(tree: list) -> List[str]:
-    """The references of the footprints whose pads are all holes: at least one pad, each a drilled pad of KiCad's non-plated type.
+    """The references of the footprints whose pads are all drilled holes, plated or not: at least one pad, each drilled.
 
-    A plated pad is a pin of its part, a hole only in being drilled, so a
-    footprint with any plated pad is a part and not a mounting hole; a plated
-    hole is held by its own rule.
+    A footprint with any pad that is not drilled, a surface-mount pad, is a
+    part and not a mounting hole.
     """
     found = []
     for reference, footprint in board_footprints(tree).items():
         pads = sexpr.children(footprint, "pad")
-        if pads and all(len(pad) > 2 and str(pad[2]) == "np_thru_hole" and sexpr.child(pad, "drill") is not None
-                        for pad in pads):
+        if pads and all(drilled(pad) for pad in pads):
             found.append(reference)
     return sorted(found)
 
 
-def mains_footprints(tree: list, mains: Set[str], excluding: Set[str]) -> List[str]:
-    """The references of the footprints with a pad on a Mains net, bar those in `excluding`."""
-    return sorted({pad.reference for pad in board_geometry.pads(tree) if pad.net in mains and pad.reference} - excluding)
-
-
-def hole_rules(distance: float, holes: Sequence[str], mains: Sequence[str]) -> str:
+def hole_rules(distance: float) -> str:
     """The rules, in KiCad's own form, holding every hole to `distance` mm of a Mains-class item on every layer.
 
-    A non-plated hole is held by its hole and the pad it is drilled through
-    (the fixing's pad extent); a plated hole on a net outside Mains is held by
-    its hole; the courtyard of each mounting hole footprint is held to the
-    courtyard of each footprint with a pad on a Mains net, which KiCad cannot
-    resolve by net class, so the footprints are named.
+    A non-plated hole is held by its hole and the pad it is drilled through;
+    a plated hole on a net outside Mains is held by its hole. A fixing's own
+    pad copper and courtyard are measured from the layout file by fixing_gaps.
     """
-    text = (f'(rule "{HOLE_RULE}"\n\t(condition "A.Pad_Type == \'NPTH, mechanical\' && B.hasNetclass(\'Mains\')")\n'
+    return (f'(rule "{HOLE_RULE}"\n\t(condition "A.Pad_Type == \'NPTH, mechanical\' && B.hasNetclass(\'Mains\')")\n'
             f'\t(constraint hole_clearance (min {distance:g}mm))\n\t(constraint physical_clearance (min {distance:g}mm)))\n'
             f'(rule "{PLATED_RULE}"\n\t(condition "A.Pad_Type == \'Through-hole\' && !A.hasNetclass(\'Mains\') && '
             f'B.hasNetclass(\'Mains\')")\n\t(constraint hole_clearance (min {distance:g}mm)))\n')
-    for hole in holes:
-        others = [name for name in mains if name != hole]
-        if others:
-            named = " || ".join(f"B.Reference == '{name}'" for name in others)
-            text += (f'(rule "{FIXING_RULE} {hole}"\n\t(condition "A.Reference == \'{hole}\' && ({named})")\n'
-                     f'\t(constraint courtyard_clearance (min {distance:g}mm)))\n')
-    return text
+
+
+def hole_probes(nonce: str, tree: list) -> Tuple[str, List[str]]:
+    """The assertion rules that show KiCad matches the pad-type conditions the hole rules use, and the names they must fire as.
+
+    One probe for a non-plated pad and one for a plated one, each limited to
+    the first footprint of the layout (in reference order) that has such a
+    pad, so a probe reports once and cannot crowd the report. A kind the
+    layout has no pad of, or only on references that cannot be written into
+    a condition, is given no probe.
+    """
+    text, expected = "", []
+    for kind, pad_type, condition in (("non-plated", "np_thru_hole", "NPTH, mechanical"), ("plated", "thru_hole", "Through-hole")):
+        names = sorted(name for name, footprint in board_footprints(tree).items()
+                       if not UNWRITABLE & set(name)
+                       and any(len(pad) > 2 and str(pad[2]) == pad_type for pad in sexpr.children(footprint, "pad")))
+        if names:
+            rule = f"{RESERVED} {nonce}: {kind} hole item"
+            text += (f'(rule "{rule}"\n\t(condition "A.Pad_Type == \'{condition}\' && A.Reference == \'{names[0]}\'")\n'
+                     '\t(constraint assertion "false"))\n')
+            expected.append(rule)
+    return text, expected
+
+
+def fixing_extents(tree: list, holes: Sequence[str], mains: Set[str]) -> Dict[str, List[Tuple[str, List[Tuple[float, float]]]]]:
+    """Each mounting-hole footprint's extent: a polygon for each of its pads' copper and one for its courtyard.
+
+    A pad on a Mains net is left out, being the fixing's own Mains copper. The
+    courtyard is the one on the side the footprint is placed on, and a
+    footprint that draws none is measured by its pads alone.
+    """
+    table = board_geometry.net_table(tree)
+    found = {}
+    for footprint in sexpr.children(tree, "footprint"):
+        name = board_geometry.reference(footprint)
+        if name not in holes:
+            continue
+        extents = [(f"pad {pad.number or '(unnumbered)'}", pad.outline())
+                   for pad in board_geometry.footprint_pads(footprint, table) if pad.net not in mains]
+        layer = sexpr.child(footprint, "layer")
+        yard = courtyard(footprint, "B" if layer is not None and len(layer) > 1 and str(layer[1]).startswith("B.") else "F", name)
+        if yard is not None:
+            extents.append(("courtyard", yard))
+        found[name] = extents
+    return found
+
+
+def fixing_gaps(design: Design, tree: list, fills, holes: Sequence[str], mains: Set[str], distance: float) -> List[Violation]:
+    """Every mounting hole whose pad copper or courtyard stands inside `distance` mm of a pad, track, via or pour fill of a Mains net.
+
+    The Mains copper is measured on every copper layer, a fixing being a hole
+    through the board. The copper of the net a fixing's own pads are on is its
+    own and is not measured against it; every other Mains copper is, including
+    another fixing's Mains pad. A gap of exactly `distance` meets it. One
+    failure is reported for each fixing extent, net and kind of copper, at the
+    nearest gap found.
+    """
+    if not holes:
+        return []
+    stack = copper_layers(tree)
+    every = board_geometry.pads(tree)
+    held = set(holes)
+    pieces = [(None, piece) for piece in copper_pieces(tree, stack, [pad for pad in every if pad.reference not in held], fills)
+              if piece.net in mains]
+    pieces += [(pad.reference, Piece("pad", pad.net, [layer for layer in stack if pad.on(layer)], [pad.outline()]))
+               for pad in every if pad.reference in held and pad.net in mains]
+    extents = fixing_extents(tree, holes, mains)
+    own_nets = {name: {pad.net for pad in every if pad.reference == name and pad.net in mains} for name in holes}
+    found = []
+    for name in holes:
+        nearest: Dict[Tuple[str, str, str], Tuple[float, Piece]] = {}
+        for label, polygon in extents.get(name, []):
+            xs, ys = [p[0] for p in polygon], [p[1] for p in polygon]
+            for owner, piece in pieces:
+                if owner == name or piece.net in own_nets[name]:
+                    continue
+                left, top, right, bottom = piece.bounds
+                if left > max(xs) + distance or right < min(xs) - distance or top > max(ys) + distance or bottom < min(ys) - distance:
+                    continue
+                gap = min(board_geometry.polygon_distance(polygon, other) for other in piece.polygons)
+                key = (label, piece.net, piece.kind)
+                if gap < distance - ROUNDING and (key not in nearest or gap < nearest[key][0]):
+                    nearest[key] = (gap, piece)
+        for (label, net, kind), (gap, piece) in sorted(nearest.items()):
+            found.append(Violation(
+                design.project, "mounting_hole", f"{design.layout} {name} {label}; {kind} of {net} on {', '.join(piece.layers)}",
+                f"the {label} of the mounting hole {name} stands {gap:.3f} mm from a {kind} of Mains-class net {net} on "
+                f"{', '.join(piece.layers)}, inside the {distance:g} mm that is the larger of the signed clearance and "
+                "creepage, whether or not the fixing is bonded to protective earth; move the hole or the Mains copper apart, "
+                "or revise the signed basis"))
+    return found
 
 
 DISTANCE_REPORTED = re.compile(r"actual ([0-9.]+) mm")
 
 
 def mounting_holes(kicad_cli: str, design: Design, copy: str, layout: str, rules_copy: str, existing: str,
-                   signed: Signed, nonce: str, net: Optional[str], tree: list, mains: Set[str]) -> List[Violation]:
+                   signed: Signed, nonce: str, net: Optional[str], tree: list, mains: Set[str], fills=()) -> List[Violation]:
     """Every hole, plated hole or fixing the layout puts inside the larger of the signed figures of a Mains item.
 
     The distance is the larger of the signed clearance and creepage, on every
-    layer, however the fixing is bonded. A second KiCad run on the copy, after
-    the signed rule and the Mains class are known, holds the rules hole_rules
-    writes after them; only its own rules' findings are read. A design with no
-    hole is held to nothing for that: its rules fire on nothing.
+    layer, however the fixing is bonded. A fixing's pad copper and courtyard
+    are measured from the layout file against the Mains copper, `fills` being
+    the layout's fills as KiCad has refilled them. A second KiCad run on the
+    copy, after the signed rule and the Mains class are known, holds the rules
+    hole_rules writes after them, with a probe for each kind of pad the layout
+    has, which must fire for the rules' pad-type conditions to be known to
+    match; only the rules' own findings are read. A design with no hole is held
+    to nothing for that: its rules fire on nothing.
     """
     distance = max(signed[0], signed[1])
-    holes = hole_footprints(tree)
-    named = mains_footprints(tree, mains, set(holes))
-    unwritable = [name for name in holes + named if UNWRITABLE & set(name)]
-    if unwritable:
-        return [Violation(design.project, "mounting_hole", f"{design.layout} {name}",
-                          f"the reference {name} holds a quote or a backslash, which cannot be written into a rule's "
-                          "condition, so the fixing's distance to Mains cannot be checked; rename the part")
-                for name in unwritable]
+    try:
+        measured = fixing_gaps(design, tree, fills, hole_footprints(tree), mains, distance)
+    except board_geometry.Unreadable as unread:
+        return [Violation(design.project, "design_unreadable", design.layout,
+                          f"the layout's copper cannot be read for the distance of its mounting holes from Mains ({unread})")]
+    probes, expected = hole_probes(nonce, tree)
     with open(rules_copy, "w", encoding="utf-8") as handle:
-        handle.write(existing + appended_rules(signed, nonce, net) + hole_rules(distance, holes, named))
+        handle.write(existing + appended_rules(signed, nonce, net) + hole_rules(distance) + probes)
     report, why = run_report([kicad_cli, "pcb", "drc", "--format", "json", "--severity-all", "--units", "mm", layout], copy)
     if report is None:
-        return [Violation(design.project, "mounting_hole", design.layout,
-                          f"the holes' distance to Mains cannot be checked: {why}")]
+        return measured + [Violation(design.project, "mounting_hole", design.layout,
+                                     f"the holes' distance to Mains cannot be checked: {why}")]
     if not fired(report, marker_rule(nonce)) and not cut_short(report):
-        return [Violation(design.project, "mounting_hole", design.layout,
-                          "KiCad did not load the rules that hold the holes to the signed distance from Mains, so no hole was checked")]
+        return measured + [Violation(design.project, "mounting_hole", design.layout,
+                                     "KiCad did not load the rules that hold the holes to the signed distance from Mains, so no hole was checked")]
     if cut_short(report):
-        return [Violation(design.project, "mounting_hole", design.layout,
-                          f"KiCad's report was cut short at {REPORT_LIMIT} assertion failures, so a hole inside the "
-                          "distance may have been dropped from it; correct the design's own assertion failures first")]
-    found = []
+        return measured + [Violation(design.project, "mounting_hole", design.layout,
+                                     f"KiCad's report was cut short at {REPORT_LIMIT} assertion failures, so a hole inside the "
+                                     "distance may have been dropped from it; correct the design's own assertion failures first")]
+    unmatched = [rule for rule in expected if not fired(report, rule)]
+    if unmatched:
+        return measured + [Violation(design.project, "mounting_hole", design.layout,
+                                     "KiCad loaded the rules that hold the holes to the signed distance from Mains but "
+                                     "matched no pad of a kind the layout has by its pad type, so a hole inside the "
+                                     "distance would pass unseen; run the check with KiCad 10.0 or newer")]
+    found = list(measured)
     seen = set()
-    ours = tuple(f"(rule '{name}" for name in (HOLE_RULE, PLATED_RULE, FIXING_RULE))
+    ours = tuple(f"(rule '{name}" for name in (HOLE_RULE, PLATED_RULE))
     for entry in report.get("violations") or []:
         description = entry.get("description", "")
         if not any(mark in description for mark in ours):
             continue
         items = entry.get("items") or []
         gap = DISTANCE_REPORTED.search(description)
-        kind = ("a plated hole on a net outside Mains" if PLATED_RULE in description else
-                "a fixing's courtyard" if FIXING_RULE in description else "a non-plated hole or its pad")
+        kind = "a plated hole on a net outside Mains" if PLATED_RULE in description else "a non-plated hole or its pad"
         location = "; ".join(item_text(item) for item in items) or design.layout
         pair = (kind, frozenset(item_text(item) for item in items))
         if pair in seen:
@@ -4449,7 +4537,7 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
         on_layout = members["Mains"]
         if signed is not None and on_layout:
             found += mounting_holes(kicad_cli, design, copy, layout, rules_copy, existing, signed, nonce,
-                                    marker_net(items), tree, on_layout)
+                                    marker_net(items), tree, on_layout, fills)
         if "WORK_NECK_MM" in figures and copper.copper:
             for name in unwidthed:
                 found.append(Violation(design.project, "project_file", f"{design.project} net_settings.classes '{name}'",

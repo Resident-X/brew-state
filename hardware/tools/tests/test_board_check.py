@@ -999,52 +999,218 @@ class AMountingHoleIsFoundAndHeldToTheLargerSignedFigure(unittest.TestCase):
     def setUp(self):
         self.tree = sexpr.parse_one(HOLE_LAYOUT)
 
-    def test_a_mounting_hole_is_a_footprint_whose_pads_are_all_non_plated_holes(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: A mounting hole is a footprint whose pads are all holes and every non-plated hole
-        self.assertEqual(board_check.hole_footprints(self.tree), ["H'3", "H1"])
+    def test_a_mounting_hole_is_a_footprint_whose_pads_are_all_drilled_plated_or_not(self):
+        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: A mounting hole is a footprint whose pads are all drilled holes, plated or not
+        self.assertEqual(board_check.hole_footprints(self.tree), ["H'3", "H1", "H2", "R1"])
 
-    def test_the_footprints_the_courtyard_is_held_to_are_those_with_a_pad_on_a_mains_net_bar_the_holes(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: courtyard distance to the Mains class
-        self.assertEqual(board_check.mains_footprints(self.tree, {"/MAINS_L"}, {"H1"}), ["R1"])
-        self.assertEqual(board_check.mains_footprints(self.tree, {"/LV_A"}, {"H1"}), ["H2", "R1"])
-        self.assertEqual(board_check.mains_footprints(self.tree, set(), set()), [])
+    def test_a_footprint_of_plated_drilled_pads_only_is_a_hole_and_one_with_a_surface_mount_pad_or_none_is_not(self):
+        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: a footprint whose pads are all drilled holes, plated or not
+        def holes(*pads):
+            body = "".join(f"(pad {text})" for text in pads)
+            return board_check.hole_footprints(sexpr.parse_one(
+                f'(kicad_pcb (version 1) (footprint "a:F" (layer "F.Cu") (at 0 0) (property "Reference" "X1" (at 0 0 0)) {body}))'))
+        plated = '"1" thru_hole circle (at 0 0) (size 4 4) (drill 3.2) (layers "*.Cu")'
+        unplated = '"" np_thru_hole circle (at 0 0) (size 3.2 3.2) (drill 3.2) (layers "*.Cu")'
+        surface = '"2" smd rect (at 0 5) (size 1 1) (layers "F.Cu")'
+        self.assertEqual(holes(plated), ["X1"])
+        self.assertEqual(holes(plated, unplated), ["X1"])
+        self.assertEqual(holes(unplated, surface), [])
+        self.assertEqual(holes(plated, surface), [])
+        self.assertEqual(holes(surface), [])
+        self.assertEqual(holes(), [])
+        self.assertEqual(holes('"1" thru_hole circle (at 0 0) (size 4 4) (layers "*.Cu")'), [])
 
-    def test_the_rules_hold_the_larger_of_the_two_signed_figures_and_name_each_hole_and_part(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: rules holding the hole clearance and courtyard distance to the Mains class at no less than the larger of the signed clearance and the signed creepage
-        text = board_check.hole_rules(4.0, ["H1"], ["R1", "H1"])
-        self.assertEqual(text.count("(min 4mm)"), 4)
-        self.assertIn("hole_clearance", text)
-        self.assertIn("physical_clearance", text)
-        self.assertIn("A.Reference == 'H1' && (B.Reference == 'R1')", text)
-        self.assertNotIn("B.Reference == 'H1'", text)
+    def test_the_rules_hold_the_larger_of_the_two_signed_figures_to_the_hole_edge_and_the_pad(self):
+        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: rules holding the hole clearance to the Mains class at no less than the larger of the signed clearance and the signed creepage
+        text = board_check.hole_rules(4.0)
+        self.assertEqual(text.count("(min 4mm)"), 3)
+        self.assertIn("(constraint hole_clearance (min 4mm))\n\t(constraint physical_clearance (min 4mm))", text)
         self.assertIn("A.Pad_Type == 'NPTH, mechanical' && B.hasNetclass('Mains')", text)
         self.assertIn("!A.hasNetclass('Mains') && B.hasNetclass('Mains')", text)
-        self.assertNotIn("(min 3mm)", board_check.hole_rules(4.0, ["H1"], ["R1"]))
-
-    def test_a_design_with_no_hole_and_no_mains_part_is_given_no_courtyard_rule(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: A design with no mounting hole is not failed for that
-        self.assertNotIn("courtyard_clearance", board_check.hole_rules(4.0, [], ["R1"]))
-        self.assertNotIn("courtyard_clearance", board_check.hole_rules(4.0, ["H1"], []))
-        self.assertEqual(board_check.hole_footprints(sexpr.parse_one('(kicad_pcb (version 1) (net 0 ""))')), [])
+        self.assertNotIn("courtyard_clearance", text)
+        self.assertNotIn("(min 3mm)", text)
 
     def test_the_hole_rules_come_after_the_signed_rule_so_that_the_signed_rule_is_not_the_last_word_on_a_hole(self):
         # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: After the signed Mains rule the check appends rules
-        appended = board_check.appended_rules((3.0, 4.0), "nonce") + board_check.hole_rules(4.0, ["H1"], ["R1"])
+        appended = board_check.appended_rules((3.0, 4.0), "nonce") + board_check.hole_rules(4.0)
         self.assertLess(appended.index(board_check.SIGNED_RULE), appended.index(board_check.HOLE_RULE))
         self.assertLess(appended.index(board_check.SIGNED_RULE), appended.index(board_check.PLATED_RULE))
-        self.assertLess(appended.index(board_check.SIGNED_RULE), appended.index(board_check.FIXING_RULE))
         self.assertIn(board_check.RESERVED, board_check.HOLE_RULE)
 
-    def test_a_reference_that_cannot_be_written_into_a_rule_fails_naming_the_part_without_running_kicad(self):
+    def test_a_probe_is_written_for_each_kind_of_pad_the_layout_has_and_for_no_other(self):
+        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: the rules' pad-type conditions are shown to match before a clean result is believed
+        text, expected = board_check.hole_probes("n1", self.tree)
+        self.assertEqual(expected, ["pre-order check n1: non-plated hole item", "pre-order check n1: plated hole item"])
+        self.assertIn("A.Pad_Type == 'NPTH, mechanical' && A.Reference == 'H1'", text)
+        self.assertIn("A.Pad_Type == 'Through-hole' && A.Reference == 'H2'", text)
+        self.assertEqual(text.count('(constraint assertion "false")'), 2)
+        none = sexpr.parse_one('(kicad_pcb (version 1) (net 0 ""))')
+        self.assertEqual(board_check.hole_probes("n1", none), ("", []))
+
+    def test_a_rule_kicad_parses_but_never_matches_fails_the_design_instead_of_passing_it(self):
+        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: a hole inside the distance is never passed unseen
+        design = board_check.Design("hardware/m/board/board.kicad_pro")
+        marker = {"type": "assertion_failure", "description": f"Rule: (rule '{board_check.marker_rule('n1')}')", "items": []}
+        probe = lambda rule: {"type": "assertion_failure", "description": f"Rule: (rule '{rule}')", "items": []}
+        _, expected = board_check.hole_probes("n1", self.tree)
+        for reports, wanted in (([marker, probe(expected[0]), probe(expected[1])], False),
+                                ([marker, probe(expected[1])], True), ([marker, probe(expected[0])], True), ([marker], True)):
+            with self.subTest(fired=len(reports) - 1), tempfile.TemporaryDirectory() as scratch, \
+                    mock.patch.object(board_check, "run_report", return_value=({"violations": reports}, "")):
+                found = board_check.mounting_holes("kicad", design, scratch, "board.kicad_pcb",
+                                                   os.path.join(scratch, "board.kicad_dru"), "(version 1)\n",
+                                                   board_check.Signed(3.0, 4.0, {}), "n1", None, self.tree, {"/MAINS_L"})
+            gaps = [v for v in found if "matched no pad" in v.message]
+            self.assertEqual(bool(gaps), wanted, found)
+
+    def test_a_reference_holding_a_quote_is_measured_like_any_other_since_no_rule_names_it(self):
         # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C4: reported with the rule's name, the design, and the offending item (part reference)
         design = board_check.Design("hardware/m/board/board.kicad_pro")
-        with tempfile.TemporaryDirectory() as scratch:
-            found = board_check.mounting_holes("kicad-cli-that-is-not-there", design, scratch, "board.kicad_pcb",
-                                               os.path.join(scratch, "board.kicad_dru"), "(version 1)\n",
-                                               board_check.Signed(3.0, 4.0, {}), "nonce", None, self.tree, {"/MAINS_L"})
+        tree = sexpr.parse_one(HOLE_LAYOUT.replace(
+            ' (footprint "a:Q"', ' (segment (start 44 -20) (end 44 20) (width 0.25) (layer "F.Cu") (net "/MAINS_L"))\n (footprint "a:Q"'))
+        found = board_check.fixing_gaps(design, tree, [], board_check.hole_footprints(tree), {"/MAINS_L"}, 4.0)
+        self.assertEqual({v.rule for v in found}, {"mounting_hole"})
+        self.assertTrue(any("H'3" in v.location for v in found), found)
+
+
+def fixing_layout(*items: str, courtyard: bool = True, hole: str = "") -> list:
+    """A layout with a 3.2 mm mounting hole H1 at the origin, a 4 mm square courtyard on it unless `courtyard` is false, and `items`."""
+    yard = '(fp_rect (start -2 -2) (end 2 2) (layer "F.CrtYd"))' if courtyard else ""
+    return sexpr.parse_one(
+        '(kicad_pcb (version 20241229) (layers (0 "F.Cu" signal) (2 "B.Cu" signal)) (net 0 "") (net 1 "/MAINS_L") (net 2 "/MAINS_N") (net 3 "/LV_A")'
+        f' (footprint "a:Hole" (layer "F.Cu") (at 0 0) (property "Reference" "H1" (at 0 0 0)) {yard}'
+        f' (pad "" np_thru_hole circle (at 0 0) (size 3.2 3.2) (drill 3.2) (layers "*.Cu")){hole})'
+        + "".join(items) + ")")
+
+
+def track(x1, y1, x2, y2, net="/MAINS_L", layer="F.Cu", width=0.25):
+    return f'(segment (start {x1} {y1}) (end {x2} {y2}) (width {width}) (layer "{layer}") (net "{net}"))'
+
+
+class AFixingIsMeasuredFromTheLayoutAgainstEveryPieceOfMainsCopper(unittest.TestCase):
+    """SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: A mounting hole that breaches the separation from mains fails.
+
+    The hole H1 has a pad 1.6 mm out from its centre and a courtyard 2 mm out;
+    Mains copper is placed by its gap to the courtyard, which is 0.4 mm
+    nearer the pad's circle than the pad itself, so the courtyard alone
+    decides these unless a test says otherwise.
+    """
+
+    design = board_check.Design("hardware/m/board/board.kicad_pro")
+
+    def gaps(self, tree, distance=4.0, mains=("/MAINS_L", "/MAINS_N")):
+        return board_check.fixing_gaps(self.design, tree, board_check.zone_fills(tree), board_check.hole_footprints(tree), set(mains), distance)
+
+    def test_a_track_whose_edge_is_exactly_the_distance_from_the_courtyard_passes_and_0_01_mm_nearer_fails(self):
+        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: measures the distance from each mounting-hole footprint's courtyard to every track of a Mains net, held to the same distance
+        self.assertEqual(self.gaps(fixing_layout(track(6.125, -9, 6.125, 9))), [])
+        found = self.gaps(fixing_layout(track(6.115, -9, 6.115, 9)))
         self.assertEqual([(v.rule, v.design) for v in found], [("mounting_hole", "hardware/m/board/board.kicad_pro")])
-        self.assertIn("H'3", found[0].location)
-        self.assertIn("rename the part", found[0].message)
+        self.assertIn("H1", found[0].location)
+        self.assertIn("courtyard", found[0].location)
+        self.assertIn("track of /MAINS_L on F.Cu", found[0].location)
+        self.assertIn("3.990 mm", found[0].message)
+        self.assertIn("4 mm", found[0].message)
+
+    def test_a_round_capped_track_end_is_measured_from_its_cap_not_its_centre_line(self):
+        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: every track of a Mains net
+        self.assertEqual(self.gaps(fixing_layout(track(6.2, 0, 9, 0, width=0.4))), [])
+        self.assertEqual(len(self.gaps(fixing_layout(track(6.1, 0, 9, 0, width=0.4)))), 1, "4.1 mm to the centre line, 3.9 mm to the cap")
+
+    def test_a_track_under_the_courtyard_and_the_pad_fails_both(self):
+        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: the distance from each mounting-hole footprint's pad copper and courtyard
+        found = self.gaps(fixing_layout(track(0, -9, 0, 9)))
+        self.assertEqual(sorted(v.location.split(" H1 ")[1].split(";")[0] for v in found), ["courtyard", "pad (unnumbered)"])
+        self.assertEqual(len(found), 2)
+        self.assertTrue(all("0.000 mm" in v.message for v in found), found)
+
+    def test_a_pad_whose_copper_alone_is_inside_the_distance_fails_when_there_is_no_courtyard(self):
+        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: If a footprint has no courtyard, the pad copper alone is measured
+        edge = 1.6 + 4.0 + 0.125
+        self.assertEqual(self.gaps(fixing_layout(track(edge, -9, edge, 9), courtyard=False)), [])
+        found = self.gaps(fixing_layout(track(edge - 0.01, -9, edge - 0.01, 9), courtyard=False))
+        self.assertEqual(len(found), 1)
+        self.assertIn(" H1 pad (unnumbered);", found[0].location)
+
+    def test_copper_on_either_layer_counts_and_copper_of_a_net_outside_mains_does_not(self):
+        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: every pad, track, via and pour fill of a Mains net on every layer
+        near = track(5.0, -9, 5.0, 9, layer="B.Cu")
+        found = self.gaps(fixing_layout(near))
+        self.assertEqual(len(found), 2, "the courtyard and the pad")
+        self.assertTrue(all("B.Cu" in v.location for v in found))
+        self.assertEqual(self.gaps(fixing_layout(track(5.0, -9, 5.0, 9, net="/LV_A"))), [])
+        self.assertEqual(len(self.gaps(fixing_layout(track(5.0, -9, 5.0, 9, net="/MAINS_N")))), 2)
+
+    def test_a_via_is_measured_by_its_pad_circle(self):
+        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: every via of a Mains net
+        def via(x):
+            return f'(via (at {x} 0) (size 0.8) (drill 0.4) (layers "F.Cu" "B.Cu") (net "/MAINS_L"))'
+        self.assertEqual(self.gaps(fixing_layout(via(6.4))), [])
+        found = self.gaps(fixing_layout(via(6.39)))
+        self.assertEqual(len(found), 1)
+        self.assertIn("via of /MAINS_L on F.Cu, B.Cu", found[0].location)
+
+    def test_a_pour_fill_is_measured_by_its_outline_and_not_by_the_box_about_it(self):
+        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: every pour fill of a Mains net
+        def pour(x, hole=""):
+            return ('(zone (net "/MAINS_L") (net_name "/MAINS_L") (layer "B.Cu") (filled_polygon (layer "B.Cu") (pts '
+                    f'(xy {x} -9) (xy {x + 5} -9) (xy {x + 5} 9) (xy {x} 9){hole})))')
+        self.assertEqual(self.gaps(fixing_layout(pour(6.0))), [])
+        found = self.gaps(fixing_layout(pour(5.99)))
+        self.assertEqual(len(found), 1)
+        self.assertIn("zone fill of /MAINS_L on B.Cu", found[0].location)
+        # An L-shaped fill whose box reaches the courtyard but whose copper stands 5 mm off it passes.
+        notch = ('(zone (net "/MAINS_L") (net_name "/MAINS_L") (layer "B.Cu") (filled_polygon (layer "B.Cu") (pts '
+                 '(xy 7 -9) (xy 12 -9) (xy 12 9) (xy -9 9) (xy -9 8) (xy 7 8))))')
+        self.assertEqual(self.gaps(fixing_layout(notch)), [])
+
+    def test_a_mains_pad_of_another_part_is_measured_and_the_fixings_own_mains_pad_and_net_are_not(self):
+        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: out of this rule's scope for its own pad copper but its courtyard still must clear other Mains copper
+        part = ('(footprint "a:R" (layer "F.Cu") (at 5 0) (property "Reference" "R1" (at 0 0 0)) '
+                '(pad "1" thru_hole circle (at 0 0) (size 1.6 1.6) (drill 0.8) (layers "*.Cu") (net "/MAINS_L")))')
+        found = self.gaps(fixing_layout(part))
+        self.assertEqual(len(found), 2, "its courtyard and its pad")
+        self.assertTrue(all("pad of /MAINS_L" in v.location for v in found))
+        own = ' (pad "1" thru_hole circle (at 1 0) (size 1.6 1.6) (drill 0.8) (layers "*.Cu") (net "/MAINS_L"))'
+        self.assertEqual(self.gaps(fixing_layout(track(1, 0, 1, 3), hole=own)), [])
+        self.assertEqual(len(self.gaps(fixing_layout(track(1, 0, 1, 3, net="/MAINS_N"), hole=own))), 2)
+
+    def test_a_layout_with_no_hole_has_nothing_to_measure_and_a_zero_distance_nothing_to_fail(self):
+        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: A design with no mounting hole is not failed for that
+        none = sexpr.parse_one('(kicad_pcb (version 1) (net 0 "") (net 1 "/MAINS_L"))')
+        self.assertEqual(board_check.fixing_gaps(self.design, none, [], [], {"/MAINS_L"}, 4.0), [])
+
+
+class TheRulesTableNamesTheNewRulesAndWhatExemptsADesign(unittest.TestCase):
+    """SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C7: The hardware notes describe the floor and the mounting-hole rules."""
+
+    def rows(self):
+        with open(os.path.join(REPO, "hardware", "README.md"), encoding="utf-8") as handle:
+            text = handle.read()
+        table = text[text.index("| Rule | Meaning |"):]
+        table = table[:table.index("\n\n")]
+        return {line.split("|")[1].strip().strip("`"): line.split("|")[2] for line in table.splitlines()[2:]}
+
+    def test_every_rule_name_the_two_rules_report_under_has_a_row_saying_what_fails_it_and_what_exempts_a_design(self):
+        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C7: the hardware notes describe both rules, naming what fails each, what exempts a design, and the name the failure is reported under
+        rows = self.rows()
+        with open(os.path.join(TOOLS, "board_check.py"), encoding="utf-8") as handle:
+            code = handle.read()
+        reported = set(re.findall(r'Violation\((?:design\.project|project), "(separation_floor|mounting_hole)"', code))
+        self.assertEqual(reported, {"separation_floor", "mounting_hole"})
+        for name in reported:
+            self.assertIn(name, rows)
+        self.assertRegex(rows["separation_floor"], r"(?i)below|no applicable")
+        self.assertIn("mains", rows["separation_floor"].lower())
+        self.assertRegex(rows["separation_floor"], r"(?i)exempt")
+        for words in ("courtyard", "pad", "Mains", "exempt"):
+            self.assertIn(words, rows["mounting_hole"])
+
+    def test_the_rules_table_row_of_every_other_rule_is_still_there(self):
+        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C7: the notes' existing rows are unharmed
+        rows = self.rows()
+        for name in ("separation_rule", "separation_basis", "derating_record", "pin_limits_record"):
+            self.assertIn(name, rows)
 
 
 # --- The design's own rules --------------------------------------------------
