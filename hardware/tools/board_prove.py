@@ -862,15 +862,17 @@ def seeded_hole(reference: str, x: float, y: float, uuid: str, plated_net: Optio
             ["property", Q("Reference"), Q(reference), ["at", "0", "-3", "0"], ["layer", Q("F.SilkS")]], hole]
 
 
-#: R1 pad 2, on /MAINS_N, is a 1.6 mm round pad at (25.16, 10). A 3.2 mm hole whose edge is 2.5 mm from its edge is
-#: inside the 4 mm that is the larger of the signed clearance (3 mm) and creepage (4 mm).
-HOLE_X = 25.16 + 0.8 + 2.5 + 1.6
+#: R1 pad 2, on /MAINS_N, is a 1.6 mm round pad at (25.16, 10), its edge at 25.96. A non-plated 3.2 mm hole whose edge is
+#: 2.5 mm from it, and a plated hole whose 4 mm pad stands 3.5 mm from it (clear of the signed 3 mm clearance, so only
+#: its hole, 0.4 mm inside the pad, is nearer than the 4 mm that is the larger of the signed clearance and creepage).
+HOLE_X = 25.96 + 2.5 + 1.6
+PLATED_X = 25.96 + 3.5 + 2.0
 
 
 def hole_near_mains(plated_net: Optional[str] = None):
     def seed_it(seed: Seed) -> None:
         seed.layout(lambda tree: tree.insert(len(tree) - 1, seeded_hole(
-            "H9", HOLE_X, 10, "0b0e5c1a-0000-4000-8000-000000000c00", plated_net)))
+            "H9", HOLE_X if plated_net is None else PLATED_X, 10, "0b0e5c1a-0000-4000-8000-000000000c00", plated_net)))
     return seed_it
 
 
