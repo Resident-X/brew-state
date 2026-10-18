@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The pre-order check refuses a tool-named net and an unnamed sheet, each shown to fail on a seeded fault
 status: active
-version: 1
+version: 2
 text: |
   The pre-order check gains two refusals that a comparison of the schematic's files can decide: a net whose name the design tool generated and not the designer, and a hierarchical sheet that carries no name of its own. Each is failed by name before a board can be ordered, so that a reader who follows a net by its name or a sheet by its function is never left with a name that says nothing.
 
@@ -11,6 +11,8 @@ text: |
 
   - A tool-generated net name is the form KiCad gives a net a designer left unnamed, read as the check already reads net names. A pin nothing is connected to is named `unconnected-…` by KiCad and carries no net, as the hardware notes already say, so it is not a net a designer left unnamed and is exempt. The check keeps the form it already tells apart in code and adds the generated-net form beside it.
   - A sheet's name is read from the sheet symbol as the check already reads it for the sheets it walks. A sheet whose name is blank, or is the tool's default for a sheet nobody named, fails. The root sheet has no sheet symbol and is exempt.
+  - The refusals are reported under the names `tool_named_net` and `unnamed_sheet`, in the style of the check's other rules, and a sheet violation is its own rule so that it does not stop the rest of the check as a design-discovery failure does. A sub-sheet's generated net may carry its sheet path in the netlist; the refusal matches the generated form wherever it sits in the name, and the seeded run pins the form the netlist emits. The tool's default sheet name may be followed by a number when a second sheet is left unnamed; the refusal covers both.
+  - The refusals extend the existing seeded-fault proof the check already has, as the record-keys refusal did, and add no new command. The same seeded run that carries the generated net also carries a pin nothing is connected to and requires that no failure names it.
   - The refusals add no record and no key. They run in the board tier of the build round and nightly, through the gate the pre-order check already uses, and the hardware notes' table of rules carries an entry for each.
   - No design git tracks has a sub-sheet, so each seeded fault builds its own sub-sheet in the copy it proves on.
   - Whether a sheet's arrangement is readable is not decided here: the schematic review judges it against the convention, since an estimate of text against text alone would pass text overlapping a symbol body or a wire, which the check does not model, and so give false assurance.
