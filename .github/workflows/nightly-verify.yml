@@ -186,6 +186,29 @@ jobs:
           sudo install -m 0755 /tmp/resvg /usr/local/bin/resvg
           resvg --version
 
+      # The library that draws the exported fabrication layers for the board
+      # tooling's production-files tests, at the exact version the method's
+      # ordering step names, in a virtual environment of its own so nothing else
+      # on the runner's Python changes. Only gerbonara is named at a version; the
+      # packages it depends on are the ones the index resolves, which this step
+      # does not pin. The step reads the version back, so a runner that installs
+      # another fails here as provisioning, and hands the environment's Python to
+      # the verification as GERBONARA_PYTHON, which the board tasks read.
+      - name: Install the Gerber renderer
+        env:
+          # renovate: datasource=pypi depName=gerbonara
+          GERBONARA_VERSION: "1.6.3"
+        run: |
+          set -euo pipefail
+          python3 -m venv "${RUNNER_TEMP}/gerbonara"
+          "${RUNNER_TEMP}/gerbonara/bin/python" -m pip install "gerbonara==${GERBONARA_VERSION}"
+          installed="$("${RUNNER_TEMP}/gerbonara/bin/python" -c 'import gerbonara; print(gerbonara.__version__)')"
+          if [ "${installed}" != "${GERBONARA_VERSION}" ]; then
+            echo "gerbonara is installed at ${installed:-nothing}, not ${GERBONARA_VERSION}" >&2
+            exit 1
+          fi
+          echo "GERBONARA_PYTHON=${RUNNER_TEMP}/gerbonara/bin/python" >> "${GITHUB_ENV}"
+
       - name: Run the complete verification, the sweep left out for its own jobs
         run: |
           set -euo pipefail

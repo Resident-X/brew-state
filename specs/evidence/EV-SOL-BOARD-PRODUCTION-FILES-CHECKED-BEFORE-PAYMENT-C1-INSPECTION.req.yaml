@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT-C1-INSPECTION
+type: evidence
+title: inspection evidence for SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C1
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-18T07:47:48.846659Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_production_seed.py::test_the_ordering_step_compares_every_part_and_has_every_layer_looked_at_with_a_verdict_each
+  artifact_version: f782e0f3526a38638bbb97c8946d80158381e793
+attested_by: crun-722d97b53d0bf6ab
+links:
+  - target: SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C1
+    type: satisfies
