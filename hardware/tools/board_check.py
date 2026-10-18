@@ -1181,9 +1181,10 @@ def mounting_holes(kicad_cli: str, design: Design, copy: str, layout: str, rules
         kind = ("a plated hole on a net outside Mains" if PLATED_RULE in description else
                 "a fixing's courtyard" if FIXING_RULE in description else "a non-plated hole or its pad")
         location = "; ".join(item_text(item) for item in items) or design.layout
-        if (location, kind) in seen:
+        pair = (kind, frozenset(item_text(item) for item in items))
+        if pair in seen:
             continue
-        seen.add((location, kind))
+        seen.add(pair)
         found.append(Violation(design.project, "mounting_hole", location,
                                f"{kind} stands {gap.group(1) + ' mm' if gap else 'too close'} from a Mains-class item, inside "
                                f"the {distance:g} mm that is the larger of the signed clearance {signed[0]:g} mm and "
