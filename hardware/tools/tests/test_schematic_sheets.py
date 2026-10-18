@@ -174,6 +174,33 @@ class Draws(unittest.TestCase):
         self.assertEqual(lines[-1].split(" | ")[:2], ["RESULT", "FAIL"], lines)
 
 
+class Hierarchy(unittest.TestCase):
+    def test_a_three_level_hierarchy_with_a_sheet_file_placed_twice_is_written_one_image_per_sheet_instance(self):
+        # SOL-BOARD-SCHEMATIC-DRAWING-CONVENTION.C3: A command of the project's task runner writes one image file per sheet of every board design git tracks
+        repo = Repository()
+        repo.write("d/d.kicad_pro", board_fixtures.project())
+        repo.write("d/d.kicad_pcb", board_fixtures.layout([]))
+        repo.write("d/d.kicad_sch", schematic(1, [("Left", "unit.kicad_sch"), ("Right", "unit.kicad_sch"), ("Misc", "misc.kicad_sch")]))
+        repo.write("d/unit.kicad_sch", schematic(2, [("Deep", "deep.kicad_sch")]))
+        repo.write("d/misc.kicad_sch", schematic(3))
+        repo.write("d/deep.kicad_sch", schematic(4))
+        repo.commit()
+        status, lines = repo.run()
+        self.assertEqual(status, 0, "\n".join(lines))
+        self.assertEqual(repo.written(), ["d/d-Left-Deep.svg", "d/d-Left.svg", "d/d-Misc.svg", "d/d-Right-Deep.svg",
+                                          "d/d-Right.svg", "d/d.svg"])
+        self.assertTrue(any(line.startswith("DESIGN | ") and "| PASS | 6 sheets" in line for line in lines), lines)
+
+    def test_the_expected_sheets_are_read_from_the_tracked_schematics_one_for_each_place_a_sheet_file_is_placed(self):
+        # SOL-BOARD-SCHEMATIC-DRAWING-CONVENTION.C3: A command of the project's task runner writes one image file per sheet of every board design git tracks
+        repo = Repository()
+        repo.design("d", "d", [("Left", "unit.kicad_sch"), ("Right", "unit.kicad_sch")])
+        repo.commit()
+        replica = repo.root
+        expected = board_check.sheet_instances(replica, "d/d.kicad_sch", set(board_check.tracked_files("git", replica)))
+        self.assertEqual(expected, [(), ("Left",), ("Right",)])
+
+
 class FailsWhatItCannotRead(unittest.TestCase):
     def test_a_schematic_kicad_cannot_read_fails_its_design_by_name_and_another_design_is_still_drawn(self):
         # SOL-BOARD-SCHEMATIC-DRAWING-CONVENTION.C3: fails a design it cannot read by name
@@ -196,6 +223,48 @@ class FailsWhatItCannotRead(unittest.TestCase):
         status, lines = repo.run()
         self.assertEqual(status, 1, "\n".join(lines))
         self.assertTrue(any("boards/panel/panel.kicad_pro" in line and "| FAIL |" in line for line in lines), lines)
+
+    def partial_kicad(self, repo: Repository) -> str:
+        """The real design tool wrapped so that drawing a schematic exits 0 having kept only the root sheet's image."""
+        path = os.path.join(repo.base, "partial-kicad-cli")
+        with open(path, "w", encoding="utf-8") as handle:
+            handle.write(f'#!/bin/sh\n"{KICAD_CLI}" "$@"\nstatus=$?\n'
+                         'if [ "$1" = "sch" ]; then\n'
+                         '  stem=$(basename "$6" .kicad_sch)\n'
+                         '  for f in "$5"/*.svg; do [ "$f" = "$5/$stem.svg" ] || rm -f "$f"; done\n'
+                         '  exit 0\nfi\nexit $status\n')
+        os.chmod(path, os.stat(path).st_mode | stat.S_IXUSR)
+        return path
+
+    def test_a_tool_that_exits_zero_having_drawn_fewer_images_than_the_design_has_sheets_fails_the_design_naming_the_sheets(self):
+        # SOL-BOARD-SCHEMATIC-DRAWING-CONVENTION.C3: fails a design it cannot read by name
+        repo = Repository()
+        repo.design("boards/controller", "controller", [("Power input", "power.kicad_sch"), ("Sense", "sense.kicad_sch")])
+        repo.design("boards/panel", "panel", identifier=2)
+        repo.commit()
+        status, lines = repo.run(self.partial_kicad(repo))
+        self.assertEqual(status, 1, "\n".join(lines))
+        failed = [line for line in lines if line.startswith("DESIGN | ") and "| FAIL |" in line]
+        self.assertEqual(len(failed), 1, lines)
+        self.assertIn("boards/controller/controller.kicad_pro", failed[0])
+        self.assertIn("/Power input", failed[0])
+        self.assertIn("/Sense", failed[0])
+        self.assertNotIn("(root)", failed[0])
+        self.assertEqual(repo.written(), ["boards/panel/panel.svg"])
+        self.assertEqual(lines[-1].split(" | ")[:2], ["RESULT", "FAIL"], lines)
+
+    def test_a_sheet_file_a_tracked_schematic_names_that_the_repository_does_not_hold_fails_its_design_by_name(self):
+        # SOL-BOARD-SCHEMATIC-DRAWING-CONVENTION.C3: fails a design it cannot read by name
+        repo = two_designs()
+        repo.git("rm", "-q", "-f", "boards/controller/power.kicad_sch")
+        repo.git("commit", "-q", "-m", "remove a sheet")
+        status, lines = repo.run()
+        self.assertEqual(status, 1, "\n".join(lines))
+        failed = [line for line in lines if line.startswith("DESIGN | ") and "| FAIL |" in line]
+        self.assertEqual(len(failed), 1, lines)
+        self.assertIn("boards/controller/controller.kicad_pro", failed[0])
+        self.assertIn("power.kicad_sch", failed[0])
+        self.assertEqual(repo.written(), ["boards/panel/panel.svg"])
 
     def test_a_project_with_no_tracked_schematic_fails_by_name(self):
         # SOL-BOARD-SCHEMATIC-DRAWING-CONVENTION.C3: fails a design it cannot read by name

@@ -356,6 +356,36 @@ def sheet_files(root: str, schematic: str, tracked: Set[str], seen: Optional[Set
     return seen
 
 
+def sheet_instances(root: str, schematic: str, tracked: Set[str], trail: Tuple[str, ...] = (),
+                    ancestry: Tuple[str, ...] = ()) -> List[Tuple[str, ...]]:
+    """Every sheet instance a root schematic draws, as the chain of sheet names from the root down.
+
+    The root is the empty chain. A sheet file placed twice is two instances,
+    one under each name it is placed under, and a sheet below a sheet is
+    reached through the sheet above it. A sheet read as `sheet_files` reads
+    it; one it would not follow (untracked, or naming no one file) is not
+    counted, since `discover` reports it. A schematic that places itself
+    again below itself is followed once. Raises SexprError or OSError when a
+    tracked sheet cannot be read.
+    """
+    found: List[Tuple[str, ...]] = [trail]
+    if schematic in ancestry:
+        return found
+    with open(os.path.join(root, schematic), encoding="utf-8") as handle:
+        tree = sexpr.parse_one(handle.read())
+    for sheet in sexpr.children(tree, "sheet"):
+        props = sexpr.children(sheet, "property")
+        named = [prop for prop in props if len(prop) > 1 and prop[1] == "Sheetfile"]
+        if len(named) != 1 or len(named[0]) < 3 or isinstance(named[0][2], list):
+            continue
+        target = os.path.normpath(os.path.join(os.path.dirname(schematic), named[0][2])).replace(os.sep, "/")
+        if target not in tracked:
+            continue
+        title = next((str(prop[2]) for prop in props if len(prop) > 2 and prop[1] == "Sheetname"), "")
+        found.extend(sheet_instances(root, target, tracked, trail + (title,), ancestry + (schematic,)))
+    return found
+
+
 def discover(root: str, files: List[str]) -> Tuple[List[Design], List[Violation], Dict[str, List[Violation]]]:
     """The designs among the tracked files, the files belonging to none, and what is wrong with each design's set."""
     tracked = set(files)

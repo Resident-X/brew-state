@@ -63,6 +63,31 @@ def refusals(top: str, designs: Sequence[board_check.Design], out: str) -> List[
     return found
 
 
+def missing_sheets(replica: str, design: board_check.Design, repository: board_check.Repository,
+                   written: Sequence[str]) -> List[str]:
+    """The sheets of `design`'s schematic hierarchy that `written` holds no image for, named by their path of sheet names.
+
+    KiCad names an image for the design and, below the root, the names of the
+    sheets leading to it, so a sheet file placed twice has an image for each
+    place. The expected sheets are read from the tracked schematics, never
+    from what KiCad reports, so a tool that exits 0 having drawn only some of
+    them is caught. KiCad turns a path separator in a name into an underscore,
+    which is allowed for; a name it changes in some other way would be listed
+    as absent only when the count of images also falls short.
+    """
+    expected = board_check.sheet_instances(replica, design.schematic, repository.tracked)
+    stem = os.path.splitext(os.path.basename(design.schematic))[0]
+
+    def image(chain: Sequence[str]) -> str:
+        return "-".join([stem, *chain]).replace("/", "_").replace("\\", "_") + ".svg"
+
+    if len(written) >= len(expected):
+        return []
+    drawn = set(written)
+    absent = [("/" + "/".join(chain)) if chain else "(root)" for chain in expected if image(chain) not in drawn]
+    return absent or ["a sheet whose image would share its file name with another sheet's"]
+
+
 def render_design(top: str, repository: board_check.Repository, design: board_check.Design, out: str,
                   kicad_cli: str, environment: dict) -> List[str]:
     """Write one SVG for each sheet of `design` into `out`; the files written, or raise ValueError saying why not."""
@@ -91,6 +116,11 @@ def render_design(top: str, repository: board_check.Repository, design: board_ch
         if result.returncode != 0 or not written:
             said = " ".join((result.stdout + " " + result.stderr).split())
             raise ValueError(f"KiCad could not draw its schematic (exit {result.returncode}: {said[:300]})")
+        absent = missing_sheets(replica, design, repository, written)
+        if absent:
+            raise ValueError(f"KiCad wrote {len(written)} image file{'s' if len(written) != 1 else ''} where the schematic "
+                             f"has {len(written) + len(absent)} sheet{'s' if len(written) + len(absent) != 1 else ''}; "
+                             "no image was written for " + ", ".join(absent))
         os.makedirs(out, exist_ok=True)
         for name in written:
             shutil.copy2(os.path.join(drawn, name), os.path.join(out, name))
