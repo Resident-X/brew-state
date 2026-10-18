@@ -1484,6 +1484,37 @@ class Documentation(unittest.TestCase):
         with open(os.path.join(REPO, *path), encoding="utf-8") as handle:
             return handle.read()
 
+    def test_the_drawing_item_in_the_methods_circuit_catalogue_leaves_the_layout_checklist_unchanged(self):
+        # SOL-BOARD-SCHEMATIC-DRAWING-CONVENTION.C2: The layout checklist the board history check builds is unchanged by the item, shown by the existing test of that isolation passing with the item in the method.
+        method = self.read("docs", "board-design-method.md")
+        start = method.index("### Drawing (DRAW)")
+        end = method.index("\nOut of scope for this section: applying the catalogue to a board", start)
+        without = method[:start] + method[end:]
+        self.assertNotIn("#### DRAW-1.", without)
+        checklist = board_history.catalogue(method)
+        self.assertTrue(checklist, "the method's layout catalogue holds items")
+        self.assertEqual(checklist, board_history.catalogue(without))
+        self.assertFalse([name for name in checklist if name.startswith("DRAW")])
+        circuit = method[method.index("## Circuit practice catalogue"):]
+        item = circuit[circuit.index("#### DRAW-1."):]
+        item = item[:item.index("\n\n", item.index("- **Source:**"))]
+        for field in ("**Applies when:** always", "**Asks:**", "**Passes:**", "**Fails, as the schematic shows it:**",
+                      "**Kind:** judgement. **Severity:** cosmetic.", "**Source:**", "read 2026-10-18"):
+            with self.subTest(field=field):
+                self.assertIn(field, item)
+
+    def test_the_review_names_a_sheet_in_the_net_or_part_column_and_in_every_text_on_the_rows_a_record_may_name(self):
+        # SOL-BOARD-SCHEMATIC-DRAWING-CONVENTION.C2: The review's verdict table names the sheet in its Net or part column for the item, and the method's text on that column and on the names a record may carry is amended to allow it.
+        method = self.read("docs", "board-design-method.md")
+        review = method[method.index("## Schematic review"):method.index("## Planning the layout")]
+        for words in ("**Net or part** is one net name, one reference designator or one sheet name",
+                      "`DRAW-1` selects every sheet", "every net and every part of the netlist exported from the schematic in that commit, and every sheet of that schematic, has a row",
+                      "a sheet the schematic holds, that no row of the next step names fails the round",
+                      "every net, part and sheet it selects"):
+            with self.subTest(words=words):
+                self.assertIn(words, review)
+        self.assertNotIn("is one net name or one reference designator, or", review)
+
     def test_the_guide_and_the_task_describe_the_command(self):
         # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: It writes its verdicts as text and as JSON and exits differently for a pass, a failure and a refusal; the hardware tools' guide describes it as it describes the other hardware commands.
         readme = self.read("hardware", "README.md")
