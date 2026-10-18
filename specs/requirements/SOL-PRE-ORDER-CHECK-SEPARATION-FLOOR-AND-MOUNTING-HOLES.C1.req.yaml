@@ -2,11 +2,11 @@ id: SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C1
 type: criterion
 title: A signed separation figure below the floor its own inputs give fails
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |-
-  A signed mains_to_low_voltage figure is compared with the floor its own table_rows give. A row applies when its working_voltage_v and altitude_m are at or above the basis values, its overvoltage_category, pollution_degree and material_group equal the basis values, and its insulation equals the strongest insulation among barrier_types; an input a row omits does not constrain whether it applies. The basis keys overvoltage_category, altitude_m and barrier_types, optional on a record, are required when the design declares mains present, and working_voltage_v is the leading number of the basis working_voltage, in volts rms. The floor is the largest clearance_mm and the largest creepage_mm over the applicable rows. The rule fails a signed clearance or creepage below its floor, a design that declares mains present with no applicable row for either figure, and a mains-present design whose basis lacks a required key. Out of scope: reproducing any standard's whole table, and the choice of the basis inputs, which the signed record holds.
+  A signed mains_to_low_voltage figure is compared with the floor its own table_rows give. A row applies when its working_voltage_v and altitude_m are at or above the basis values, its overvoltage_category, pollution_degree and material_group equal the basis values, and its insulation equals the strongest insulation among barrier_types; an input a row omits does not constrain whether it applies, and a row that states an insulation does not apply when barrier_types is an explicit none. The basis keys overvoltage_category, altitude_m and barrier_types, optional on a record, are required when the design declares mains present, and working_voltage_v is the leading number of the basis working_voltage, in volts rms. The floor is the largest clearance_mm and the largest creepage_mm over the applicable rows. The rule fails a signed clearance or creepage below its floor, a design that declares mains present with no applicable row for either figure, and a mains-present design whose basis lacks a required key. Out of scope: reproducing any standard's whole table, and the choice of the basis inputs, which the signed record holds.
 links:
   - target: SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES
     type: criterion-of
