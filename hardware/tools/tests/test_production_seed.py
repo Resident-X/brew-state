@@ -129,7 +129,8 @@ class TheSeededProductionFolder(unittest.TestCase):
         others = [path for path in files if not path.startswith(("views/", "placement/", "production/"))]
         self.assertEqual(others, ["docs/board-design-method.md", "docs/board-manufacturer-jlcpcb.md",
                                   "hardware/README.md", "hardware/proof/review-proof/parts-specification.yaml"])
-        production = sorted(path for path in files if path.startswith("production/") and not path.startswith(("production/layers/", "production/gerbers/")))
+        production = sorted(path for path in files if path.startswith("production/") and not path.startswith(
+            ("production/layers/", "production/gerbers/", "production/footprints/")))
         self.assertEqual(production, ["production/parts-list.csv", "production/placement.csv"])
         self.assertEqual(sorted(os.listdir(os.path.join(self.out, "production", "layers"))),
                          sorted(["index.txt", "index.json"] + [f"layer-{name}.png" for name in (
@@ -216,6 +217,23 @@ class TheSeededProductionFolder(unittest.TestCase):
             self.assertTrue(all(isinstance(seed[key], str) and seed[key] for key in seed), seed)
         self.assertFalse(review_seed.inside(self.seeds, self.out))
 
+    def test_the_folder_holds_the_drawing_of_every_placed_parts_footprint_at_rotation_0_with_the_rule_for_reading_a_rotation_against_it(self):
+        # SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C3: Following the ordering step blind on seeded production files finds every seeded defect
+        folder = os.path.join(self.out, "production", "footprints")
+        with open(os.path.join(folder, "index.json"), encoding="utf-8") as handle:
+            index = json.load(handle)
+        drawn = {designator: image["file"] for image in index["images"] for designator in image["used_by"]}
+        placed = [row[0] for row in read_csv(os.path.join(self.out, "production", "placement.csv"))[1:]]
+        self.assertEqual(len(placed), 28)
+        for designator in placed:
+            self.assertIn(designator, drawn, f"the folder holds no drawing of {designator}'s footprint")
+            self.assertTrue(os.path.isfile(os.path.join(folder, drawn[designator])), designator)
+        self.assertEqual(sorted(os.listdir(folder)), sorted(["index.txt", "index.json"] + sorted(set(drawn.values()))))
+        with open(os.path.join(folder, "index.txt"), encoding="utf-8") as handle:
+            text = handle.read()
+        self.assertIn(f"RULE | {production_files.ROTATION_RULE}", text)
+        self.assertEqual(index["board"], f"{production_seed.NAME}.kicad_pcb", "the index names the board by file name only")
+
     def test_nothing_in_the_folder_names_the_seeds_or_the_repository(self):
         # SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C3: Following the ordering step blind on seeded production files finds every seeded defect
         tell = [REPO, os.path.realpath(REPO), self.seeds, "seeds.json", "production_seed", "production-seed"]
@@ -262,7 +280,7 @@ class TheSeededProductionFolder(unittest.TestCase):
             self.assertNotIn(seed.target + " ", prompt.replace("\n", " "), f"the prompt names {seed.target}")
         self.assertNotIn("seed", prompt.lower())
         for path in ("production/placement.csv", "production/parts-list.csv", "hardware/proof/review-proof/parts-specification.yaml",
-                     "production/gerbers/", "production/layers/", "placement/", "views/", "docs/board-manufacturer-jlcpcb.md",
+                     "production/gerbers/", "production/layers/", "production/footprints/", "placement/", "views/", "docs/board-manufacturer-jlcpcb.md",
                      "docs/board-design-method.md", "views/index.txt"):
             self.assertIn(path, prompt)
             self.assertTrue(os.path.exists(os.path.join(self.out, path)), f"the prompt names {path}, which the folder lacks")
@@ -397,6 +415,16 @@ class TheMethodAndTheReadme(unittest.TestCase):
         self.assertEqual(layers, f"{production_seed.COPPER},F.Mask,B.Mask,F.SilkS,B.SilkS,Edge.Cuts")
         self.assertIn('--layers "<each copper layer>,F.Mask,B.Mask,F.SilkS,B.SilkS,Edge.Cuts"', section)
         self.assertIn("kicad-cli pcb export drill --output <work>/gerbers/ <board>.kicad_pcb", section)
+
+    def test_the_step_and_the_prompt_name_the_footprint_drawings_as_an_input_of_the_rotation_and_first_pin_judgement(self):
+        # SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C1: The method's ordering step compares every placed part's position, rotation and polarity with the assembler's preview before payment
+        section = re.sub(r"\s+", " ", ordering_section())
+        self.assertIn("hardware/tools/production_files.py footprints --board <board>.kicad_pcb --out <work>/footprints", section)
+        self.assertIn("the drawing of every footprint the board carries at rotation 0 with the index that gives the rule for reading "
+                      "a rotation against it (`production/footprints/`)", section)
+        status, lines = run(["--print-prompt"])
+        self.assertEqual(status, 0)
+        self.assertIn("production/footprints/", " ".join(lines))
 
     def test_the_commands_the_method_names_export_the_files_the_follower_is_given(self):
         # SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C1: The method's ordering step compares every placed part's position, rotation and polarity with the assembler's preview before payment

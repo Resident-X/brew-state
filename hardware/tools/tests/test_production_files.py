@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The ordering step's two commands, the placement conversion and the layer rendering, against KiCad and gerbonara themselves.
+"""The ordering step's three commands, the placement conversion, the layer rendering and the footprint drawings, against KiCad and gerbonara themselves.
 
 The commands are run as shipped on the production files KiCad exports from a
 copy of hardware/proof/review-proof, with the real kicad-cli named by KICAD_CLI,
@@ -34,6 +34,7 @@ import board_fixtures  # noqa: E402
 import board_prove  # noqa: E402
 import production_files  # noqa: E402
 import production_seed  # noqa: E402
+import sexpr  # noqa: E402
 
 REPO = os.path.dirname(os.path.dirname(TOOLS))
 KICAD_CLI = os.environ.get("KICAD_CLI") or "kicad-cli"
@@ -75,6 +76,13 @@ def rendered(args, gerbers, out):
     """The render command as it is run for real, under the Python that holds gerbonara."""
     result = subprocess.run([GERBONARA_PYTHON, os.path.join(TOOLS, "production_files.py"), "render", "--gerbers", gerbers,
                              "--out", out, "--resvg", RESVG] + args, capture_output=True, text=True)
+    return result.returncode, (result.stdout + result.stderr).splitlines()
+
+
+def footprint_drawings(args, board, out):
+    """The footprints command as it is run for real."""
+    result = subprocess.run([sys.executable, os.path.join(TOOLS, "production_files.py"), "footprints", "--board", board,
+                             "--out", out, "--kicad-cli", KICAD_CLI, "--resvg", RESVG] + args, capture_output=True, text=True)
     return result.returncode, (result.stdout + result.stderr).splitlines()
 
 
@@ -302,6 +310,158 @@ class TheLayerImages(unittest.TestCase):
         # SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C2: The method's ordering step has every rendered fabrication layer looked at before ordering
         self.assertIn('"$GERBONARA_PYTHON" hardware/tools/production_files.py render --gerbers <work>/gerbers --out <work>/layers '
                       '--resvg "$RESVG"', ordering_section())
+
+
+class TheFootprintDrawings(unittest.TestCase):
+    """SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C1: The method's ordering step compares every placed part's position, rotation and polarity with the assembler's preview before payment."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.work = tempfile.mkdtemp(prefix="production-files-footprints-")
+        cls.out = os.path.join(cls.work, "footprints")
+        cls.board = _STATE["seed"].path(".kicad_pcb")
+        cls.status, cls.lines = footprint_drawings([], cls.board, cls.out)
+        cls.found = production_files.board_footprints(cls.board)
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.work, ignore_errors=True)
+
+    def index(self):
+        with open(os.path.join(self.out, "index.json"), encoding="utf-8") as handle:
+            return json.load(handle)
+
+    def test_every_placed_part_has_the_drawing_of_its_footprint_and_the_index_names_the_part(self):
+        # SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C1: The method's ordering step compares every placed part's position, rotation and polarity with the assembler's preview before payment
+        self.assertEqual(self.status, 0, "\n".join(self.lines))
+        self.assertEqual(self.lines[-1], f"RESULT | WRITTEN | {len(self.found)} images and their index | {self.out}")
+        index = self.index()
+        drawn = {designator: image for image in index["images"] for designator in image["used_by"]}
+        placed = [row[0] for row in _STATE["placement"]]
+        self.assertEqual(len(placed), 28)
+        for designator in placed:
+            self.assertIn(designator, drawn, f"{designator} has no footprint drawing")
+            self.assertTrue(os.path.isfile(os.path.join(self.out, drawn[designator]["file"])), designator)
+        self.assertEqual(sorted(os.listdir(self.out)), sorted(["index.txt", "index.json"] + [image["file"] for image in index["images"]]))
+        self.assertEqual(len(index["images"]), len(self.found), "one drawing for each distinct footprint")
+        self.assertEqual(sorted(image["footprint"] for image in index["images"]), sorted(self.found))
+        with open(os.path.join(self.out, "index.txt"), encoding="utf-8") as handle:
+            text = handle.read()
+        for image in index["images"]:
+            self.assertIn(f"IMAGE | {image['file']} | footprint {image['footprint']} | {image['px_per_mm']} px/mm | carried by "
+                          f"{', '.join(image['used_by'])}", text)
+            width, height = png_size(os.path.join(self.out, image["file"]))
+            self.assertLessEqual(max(width, height), 1568)
+            self.assertLessEqual(-(-width // 28) * -(-height // 28), 1568, "more visual patches than a reading model takes without downsampling")
+
+    def test_a_footprint_placed_turned_is_drawn_as_its_library_file_draws_it(self):
+        # SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C1: The method's ordering step compares every placed part's position, rotation and polarity with the assembler's preview before payment
+        name = "review-proof:QFN-20-1EP_4x4mm_P0.5mm_EP2.6x2.6mm"
+        held = self.found[name]["held"]
+        self.assertEqual(sexpr.child(held, "at")[3], "180", "the proof design places this footprint turned, which is what the drawing must undo")
+        library = os.path.join(REPO, production_seed.DESIGN, "review-proof.pretty", name.split(":")[1] + ".kicad_mod")
+        with open(library, encoding="utf-8") as handle:
+            tree = sexpr.parse_one(handle.read())
+
+        def pads(footprint):
+            return sorted((str(pad[1]), round(float(sexpr.child(pad, "at")[1]), 4), round(float(sexpr.child(pad, "at")[2]), 4),
+                           round(float(sexpr.child(pad, "at")[3]) if len(sexpr.child(pad, "at")) > 3 else 0.0, 4) % 360)
+                          for pad in sexpr.children(footprint, "pad"))
+
+        self.assertEqual(pads(self.found[name]["tree"]), pads(tree))
+        marks = lambda footprint: sorted(sexpr.dump(item) for item in sexpr.children(footprint, "fp_line") if "SilkS" in sexpr.dump(item))
+        self.assertEqual(marks(self.found[name]["tree"]), marks(tree), "the legend, which carries the first-pin mark, is the library's")
+
+    def test_a_footprint_on_the_bottom_side_is_flipped_back_to_the_top_at_rotation_0(self):
+        # SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C1: The method's ordering step compares every placed part's position, rotation and polarity with the assembler's preview before payment
+        held = sexpr.parse_one(
+            '(footprint "lib:Q" (layer "B.Cu") (at 10 10 30) (property "Reference" "Q1" (at 0 0 30) (layer "B.SilkS"))'
+            ' (pad "1" smd roundrect (at -1 -0.5 30) (size 1 0.6) (layers "B.Cu" "B.Mask" "B.Paste") (roundrect_rratio 0.25) (chamfer top_left))'
+            ' (pad "2" smd rect (at 1 -0.5 120) (size 1 0.6) (layers "B.Cu" "B.Mask"))'
+            ' (fp_line (start -2 -1) (end 2 -1) (stroke (width 0.1) (type solid)) (layer "B.SilkS")))')
+        top = production_files.library_footprint(held, "20260206")
+        self.assertEqual(sexpr.dump(sexpr.child(top, "layer")), '(layer "F.Cu")')
+        one, two = sexpr.children(top, "pad")
+        self.assertEqual(sexpr.child(one, "at")[1:], ["-1", "0.5", "0"], "Y changes sign and the footprint's turn is taken out")
+        self.assertEqual(sexpr.child(two, "at")[1:], ["1", "0.5", "-90"], "a flipped footprint's angles run the other way")
+        self.assertEqual(sexpr.child(one, "layers")[1:], ["F.Cu", "F.Mask", "F.Paste"])
+        self.assertEqual(sexpr.child(one, "chamfer")[1:], ["bottom_left"])
+        line = sexpr.child(top, "fp_line")
+        self.assertEqual((sexpr.child(line, "start")[1:], sexpr.child(line, "end")[1:], sexpr.child(line, "layer")[1]),
+                         (["-2", "1"], ["2", "1"], "F.SilkS"))
+        self.assertIsNone(sexpr.child(top, "property"), "the board's own reference is not part of a library footprint")
+
+    def test_a_footprint_placed_only_on_the_bottom_side_is_drawn_too(self):
+        # SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C1: The method's ordering step compares every placed part's position, rotation and polarity with the assembler's preview before payment
+        name = "TestPoint:TestPoint_Pad_D1.0mm"
+        self.assertFalse(self.found[name]["top"], "the proof design places this footprint on the bottom side only")
+        self.assertIn(name, {image["footprint"] for image in self.index()["images"]})
+
+    def test_the_index_gives_the_rule_that_reads_a_placement_files_rotation_against_a_drawing(self):
+        # SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C1: The method's ordering step compares every placed part's position, rotation and polarity with the assembler's preview before payment
+        with open(os.path.join(self.out, "index.txt"), encoding="utf-8") as handle:
+            text = handle.read()
+        index = self.index()
+        for rule in (production_files.ROTATION_RULE, production_files.BOTTOM_RULE):
+            self.assertIn(f"RULE | {rule}", text)
+        self.assertEqual((index["rotation_rule"], index["bottom_rule"]), (production_files.ROTATION_RULE, production_files.BOTTOM_RULE))
+        for words in ("rotation 0", "counter-clockwise", "at 90 what stands at the top of the drawing is at the left",
+                      "at 180 it is at the bottom", "at 270 it is at the right"):
+            self.assertIn(words, production_files.ROTATION_RULE)
+        for image in index["images"]:
+            self.assertGreater(image["px_per_mm"], 0)
+
+    def test_the_method_names_the_command_and_the_drawings_as_the_input_of_the_rotation_and_first_pin_judgement(self):
+        # SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C1: The method's ordering step compares every placed part's position, rotation and polarity with the assembler's preview before payment
+        section = re.sub(r"\s+", " ", ordering_section())
+        self.assertIn('python3 hardware/tools/production_files.py footprints --board <board>.kicad_pcb --out <work>/footprints '
+                      '--kicad-cli "$KICAD_CLI" --resvg "$RESVG"', section)
+        for words in ("at 90 what stands at the top of the drawing is at the left", "at 180 it is at the bottom",
+                      "at 270 it is at the right", "counter-clockwise", "blocks the order",
+                      "the footprint's drawing at rotation 0 from step 2"):
+            self.assertIn(words, section)
+
+    def test_a_board_that_is_not_a_layout_or_a_folder_that_holds_files_is_refused_and_nothing_is_written(self):
+        # SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C1: The method's ordering step compares every placed part's position, rotation and polarity with the assembler's preview before payment
+        out = os.path.join(self.work, "refused")
+        status, lines = footprint_drawings([], os.path.join(self.work, "none.kicad_pcb"), out)
+        self.assertEqual(status, 1, lines)
+        self.assertTrue(any(line.startswith("REFUSED | ") and "is not a file" in line for line in lines), lines)
+        self.assertEqual(lines[-1], "RESULT | REFUSED | nothing was written")
+        self.assertFalse(os.path.exists(out))
+        for text, because in (("(kicad_sch (version 1))", "is not a KiCad layout"), ("(kicad_pcb (version 1)", "cannot be read"),
+                              ("(kicad_pcb (version 20260206))", "carries no footprint"),
+                              ("(kicad_pcb (generator x) (footprint \"a:b\" (property \"Reference\" \"A1\")))", "states no file version"),
+                              ("(kicad_pcb (version 1) (footprint \"a:b\" (layer \"F.Cu\")))", "has no reference")):
+            board = os.path.join(self.work, "other.kicad_pcb")
+            with open(board, "w", encoding="utf-8") as handle:
+                handle.write(text)
+            status, lines = footprint_drawings([], board, out)
+            self.assertEqual(status, 1, (text, lines))
+            self.assertTrue(any(line.startswith("REFUSED | ") and because in line for line in lines), (text, lines))
+            self.assertFalse(os.path.exists(out))
+        status, lines = footprint_drawings([], self.board, self.out)
+        self.assertEqual(status, 1, lines)
+        self.assertTrue(any("already holds files" in line for line in lines), lines)
+        with open(out, "w", encoding="utf-8") as handle:
+            handle.write("a file")
+        status, lines = footprint_drawings([], self.board, out)
+        self.assertEqual(status, 1, lines)
+        self.assertTrue(any("is a file" in line for line in lines), lines)
+        os.remove(out)
+
+    def test_two_footprints_that_would_be_drawn_into_one_file_are_refused(self):
+        # SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C1: The method's ordering step compares every placed part's position, rotation and polarity with the assembler's preview before payment
+        board = os.path.join(self.work, "clash.kicad_pcb")
+        with open(board, "w", encoding="utf-8") as handle:
+            handle.write('(kicad_pcb (version 20260206)'
+                         ' (footprint "a:b,c" (layer "F.Cu") (at 0 0) (property "Reference" "A1" (at 0 0)))'
+                         ' (footprint "a:b_c" (layer "F.Cu") (at 0 0) (property "Reference" "A2" (at 0 0))))')
+        out = os.path.join(self.work, "clash")
+        status, lines = footprint_drawings([], board, out)
+        self.assertEqual(status, 1, lines)
+        self.assertTrue(any("would be drawn into one file" in line for line in lines), lines)
+        self.assertFalse(os.path.exists(out))
 
 
 class TheRenderRefusals(unittest.TestCase):

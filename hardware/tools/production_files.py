@@ -3,10 +3,11 @@
 
 KiCad's command-line tool exports the position file, the parts list, the Gerber
 layers and the drill file, and the method's ordering step names those commands.
-Two things it cannot do are done here:
+Three things it cannot do are done here:
 
     production_files.py placement --positions <KiCad position export, CSV> --out <placement file, CSV>
     production_files.py render --gerbers <folder of exported Gerber and drill files> --out <new or empty folder> [--resvg ...]
+    production_files.py footprints --board <layout, .kicad_pcb> --out <new or empty folder> [--kicad-cli ...] [--resvg ...]
 
 `placement` writes the assembler's placement file from the position export:
 the columns the manufacturer's record gives for it, Designator, Mid X, Mid Y,
@@ -23,14 +24,24 @@ own views. KiCad's command-line tool reads no Gerber file, so the drawing is
 gerbonara's, at the exact version it names, turned into an SVG and rasterised
 with resvg. The folder also holds an index of every image, as text and as JSON.
 
+`footprints` draws every distinct footprint the board carries at rotation 0, the
+way its library draws it, with its pad numbers and its first-pin and polarity
+marking, so the placement file's rotation of a part can be read against the
+marking it turns. The drawing is made from the footprint the board holds: a
+footprint placed turned or on the bottom side is turned or flipped back first.
+KiCad's command-line tool draws it into an SVG, rasterised with resvg, and the
+folder also holds an index of every image, as text and as JSON, that gives the
+rule for reading a rotation against a drawing.
+
 Each step is reported on one line, a RESULT line comes last, and the exit status
 is 0 when the output is written, 1 when the command is refused, and 2 when it
-cannot run, for example because gerbonara or resvg is missing.
+cannot run, for example because gerbonara, KiCad's command-line tool or resvg is missing.
 """
 
 from __future__ import annotations
 
 import argparse
+import copy
 import csv
 import json
 import os
@@ -47,6 +58,7 @@ sys.path.insert(0, TOOLS)
 
 import board_check  # noqa: E402
 import board_views  # noqa: E402
+import sexpr  # noqa: E402
 
 #: The one gerbonara version the drawings are made with.
 GERBONARA = "1.6.3"
@@ -310,6 +322,239 @@ def write_index(out: str, header: dict, images: List[dict], notes: List[str]) ->
         handle.write("\n")
 
 
+# --- Drawing the footprints -------------------------------------------------------------------
+
+#: The layers a footprint's drawing shows: copper with its pad numbers, the legend that carries the first-pin and polarity marks, the fabrication layer's outline and the courtyard.
+FOOTPRINT_LAYERS = "F.Cu,F.SilkS,F.Fab,F.CrtYd"
+#: Pixels along the longer edge of a footprint's drawing, caption band included.
+FOOTPRINT_LONG_EDGE_PX = 800
+#: Space round a footprint's drawing, as a fraction of its longer edge, so that its outermost lines are not cut off.
+FOOTPRINT_MARGIN = 0.1
+#: Nodes holding a point in the footprint's own frame, whose Y changes sign when the footprint is turned back from the bottom side.
+POINTS = ("xy", "start", "end", "mid", "center", "pos", "offset", "c1", "c2", "c3", "c4")
+#: What a drawing's footprint keeps of the board's copy: not the board's own identity (its uuid, nets, properties and texts) or its models.
+DROPPED = ("property", "fp_text", "fp_text_box", "model", "path", "sheetname",
+           "sheetfile", "locked", "teardrops", "embedded_files", "at", "layer")
+#: What a footprint's items carry that only the board's copy of it has, at any depth.
+IDENTITY = ("uuid", "net", "tstamp", "pinfunction", "pintype")
+ROTATION_RULE = ("Each drawing is the footprint at rotation 0, as seen from above, X to the right and Y down on the page. A part "
+                 "on the Top side at Rotation R in the placement file is the drawing turned R degrees counter-clockwise on the "
+                 "page, about the origin of the footprint: at 90 what stands at the top of the drawing is at the left, at 180 "
+                 "it is at the bottom, at 270 it is at the right. The placement file's rotation is the counter-clockwise turn "
+                 "from the footprint as the library draws it.")
+BOTTOM_RULE = ("A part on the Bottom side is the drawing flipped over to the back of the board; the manufacturer's record gives "
+               "no frame for a bottom-side part, so where its marking lies is what the assembler's preview shows.")
+
+
+def flipped_layer(name: str) -> str:
+    return "B." + name[2:] if name.startswith("F.") else "F." + name[2:] if name.startswith("B.") else name
+
+
+def decimals(value: float) -> str:
+    text = f"{value:.6f}".rstrip("0").rstrip(".")
+    return "0" if text in ("-0", "") else text
+
+
+def angle_between(value: float) -> str:
+    return decimals((value + 180) % 360 - 180 if (value + 180) % 360 != 0 else 180)
+
+
+def unturned(node: list, rotation: float, bottom: bool) -> None:
+    """`node`, a part of a footprint held as the board places it, turned back in place to the footprint as its library draws it.
+
+    A footprint's items are held in its own frame, which a bottom-side footprint has flipped about its X axis, and a
+    pad's angle holds the footprint's own turn. So a flipped footprint's Y is changed in sign, its layers, its mirrored
+    texts and its chamfered corners are exchanged, and its angles are negated; every angle has the footprint's turn taken out.
+    """
+    if not isinstance(node, list):
+        return
+    keyword = sexpr.head(node)
+    if keyword == "at" and len(node) >= 3:
+        if bottom:
+            node[2] = decimals(-float(node[2]))
+        if len(node) >= 4:
+            turn = float(node[3]) - rotation
+            node[3] = angle_between(-turn if bottom else turn)
+    elif bottom and keyword in POINTS and len(node) >= 3:
+        node[2] = decimals(-float(node[2]))
+    elif bottom and keyword in ("layer", "layers"):
+        node[1:] = [sexpr.Quoted(flipped_layer(item)) if isinstance(item, sexpr.Quoted) else item for item in node[1:]]
+    elif bottom and keyword == "chamfer":
+        node[1:] = [item.replace("top_", "bottom_") if item.startswith("top_") else item.replace("bottom_", "top_", 1)
+                    if item.startswith("bottom_") else item for item in node[1:]]
+    elif bottom and keyword == "justify":
+        node[1:] = [item for item in node[1:] if item != "mirror"]
+    for item in node[1:]:
+        unturned(item, rotation, bottom)
+
+
+def stripped(node: list) -> None:
+    """`node` without the board's own identity, its uuids and nets, at every depth."""
+    if isinstance(node, list):
+        node[:] = [item for item in node if sexpr.head(item) not in IDENTITY]
+        for item in node:
+            stripped(item)
+
+
+def library_footprint(held: list, version: str) -> list:
+    """The footprint `held`, as a board holds it placed, as a library file draws it: at rotation 0 on the top side."""
+    layer = sexpr.child(held, "layer")
+    bottom = layer is not None and str(layer[1]).startswith("B.")
+    at = sexpr.child(held, "at")
+    rotation = float(at[3]) if at is not None and len(at) >= 4 else 0.0
+    kept = copy.deepcopy([item for item in held[2:] if sexpr.head(item) not in DROPPED + IDENTITY])
+    for item in kept:
+        stripped(item)
+        unturned(item, rotation, bottom)
+    name = str(held[1]).split(":", 1)[-1]
+    return ["footprint", sexpr.Quoted(name), ["version", version],
+                    ["layer", sexpr.Quoted("F.Cu")]] + kept
+
+
+def board_footprints(board: str) -> Dict[str, dict]:
+    """Each distinct footprint the board carries, by lib id: its drawing's tree and the designators placed with it, in the board's order."""
+    try:
+        with open(board, encoding="utf-8") as handle:
+            tree = sexpr.parse_one(handle.read())
+    except (OSError, UnicodeDecodeError, sexpr.SexprError) as error:
+        raise Refused(f"the board {board} cannot be read ({error})") from None
+    if sexpr.head(tree) != "kicad_pcb":
+        raise Refused(f"{board} is not a KiCad layout")
+    version = sexpr.child(tree, "version")
+    if version is None or len(version) < 2:
+        raise Refused(f"{board} states no file version")
+    found: Dict[str, dict] = {}
+    for held in sexpr.children(tree, "footprint"):
+        if len(held) < 2 or not isinstance(held[1], str) or not held[1]:
+            raise Refused("a footprint of the board has no name")
+        reference = next((str(item[2]) for item in sexpr.children(held, "property") if len(item) > 2 and item[1] == "Reference"), "")
+        if not reference:
+            raise Refused(f"a footprint of the board, {held[1]}, has no reference")
+        layer = sexpr.child(held, "layer")
+        top = layer is not None and str(layer[1]).startswith("F.")
+        entry = found.get(str(held[1]))
+        if entry is None:
+            found[str(held[1])] = {"held": held, "top": top, "used": [reference]}
+        else:
+            entry["used"].append(reference)
+            if top and not entry["top"]:
+                entry["held"], entry["top"] = held, True
+    for entry in found.values():
+        entry["tree"] = library_footprint(entry["held"], str(version[1]))
+    return found
+
+
+def drawing_name(lib_id: str) -> str:
+    return "footprint-" + re.sub(r"[^A-Za-z0-9._-]", "_", lib_id) + ".png"
+
+
+def captioned(svg: str, text: str) -> Tuple[str, float, float]:
+    """The footprint's SVG with a caption band added above the drawing, and the new width and height in millimetres."""
+    box = re.search(r'viewBox="([-\d.e+]+) ([-\d.e+]+) ([-\d.e+]+) ([-\d.e+]+)"', svg)
+    x, y, width, height = (float(box.group(n)) for n in range(1, 5))
+    edge = max(width, height) * FOOTPRINT_MARGIN
+    x, y, width, height = x - edge, y - edge, width + 2 * edge, height + 2 * edge
+    size = min(width / (len(text) * 0.62), max(width, height) / 14)
+    band = size * 2.2
+    svg = svg.replace(box.group(0), f'viewBox="{x:g} {y - band:g} {width:g} {height + band:g}"', 1)
+    svg = re.sub(r'width="[-\d.]+mm" height="[-\d.]+mm"', f'width="{width:g}mm" height="{height + band:g}mm"', svg, count=1)
+    label = (f'<text x="{x + size * 0.3:g}" y="{y - band + size * 1.5:g}" font-size="{size:g}" font-family="monospace" '
+             f'fill="#c00000">{board_views.escape(text)}</text>')
+    return svg[:svg.rindex("</svg>")] + label + "\n</svg>\n", width, height + band
+
+
+def footprints(board: str, out: str, kicad_cli: str, resvg: str, stream=None) -> int:
+    stream = stream or sys.stdout
+    problems = []
+    if not os.path.isfile(board):
+        problems.append(f"{board} is not a file")
+    if os.path.isfile(out):
+        problems.append(f"{out} is a file")
+    elif os.path.isdir(out) and os.listdir(out):
+        problems.append(f"{out} already holds files; give a new or empty folder")
+    if problems:
+        for why in problems:
+            print(f"REFUSED | {board_check.clean(why)}", file=stream)
+        print("RESULT | REFUSED | nothing was written", file=stream)
+        return 1
+    try:
+        board_check.require_kicad(kicad_cli)
+        board_views.require_resvg(resvg)
+    except board_check.CannotRun as error:
+        print(f"CANNOT RUN | {board_check.clean(str(error))}", file=sys.stderr)
+        return 2
+    try:
+        found = board_footprints(board)
+        names = {}
+        for lib_id in found:
+            if drawing_name(lib_id) in names:
+                raise Refused(f"the footprints {names[drawing_name(lib_id)]} and {lib_id} would be drawn into one file")
+            names[drawing_name(lib_id)] = lib_id
+    except Refused as error:
+        print(f"REFUSED | {board_check.clean(str(error))}", file=stream)
+        print("RESULT | REFUSED | nothing was written", file=stream)
+        return 1
+    if not found:
+        print(f"REFUSED | {board_check.clean(board)} carries no footprint", file=stream)
+        print("RESULT | REFUSED | nothing was written", file=stream)
+        return 1
+    images = []
+    with tempfile.TemporaryDirectory(prefix="production-footprints-") as scratch:
+        library = os.path.join(scratch, "library.pretty")
+        drawn = os.path.join(scratch, "drawn")
+        os.makedirs(library)
+        os.makedirs(drawn)
+        for entry in found.values():
+            name = str(entry["tree"][1])
+            with open(os.path.join(library, f"{name}.kicad_mod"), "w", encoding="utf-8") as handle:
+                handle.write(sexpr.dump(entry["tree"]) + "\n")
+        result = subprocess.run([kicad_cli, "fp", "export", "svg", "--layers", FOOTPRINT_LAYERS, "--sketch-pads-on-fab-layers",
+                                 "--output", drawn, library], capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"CANNOT RUN | kicad-cli could not draw the footprints ({board_check.clean((result.stdout + result.stderr).strip())})",
+                  file=sys.stderr)
+            return 2
+        os.makedirs(out, exist_ok=True)
+        for lib_id, entry in found.items():
+            svg_path = os.path.join(drawn, f"{entry['tree'][1]}.svg")
+            if not os.path.isfile(svg_path):
+                shutil.rmtree(out, ignore_errors=True)
+                print(f"CANNOT RUN | kicad-cli drew no image of the footprint {lib_id}", file=sys.stderr)
+                return 2
+            with open(svg_path, encoding="utf-8") as handle:
+                svg, width, height = captioned(handle.read(), f"{lib_id}  rotation 0")
+            with open(svg_path, "w", encoding="utf-8") as handle:
+                handle.write(svg)
+            scale = FOOTPRINT_LONG_EDGE_PX / max(width, height)
+            file = drawing_name(lib_id)
+            result = subprocess.run([resvg, "--background", "white", "-w", str(int(round(width * scale))), svg_path,
+                                     os.path.join(out, file)], capture_output=True, text=True)
+            if result.returncode != 0:
+                shutil.rmtree(out, ignore_errors=True)
+                print(f"CANNOT RUN | resvg could not draw {lib_id} ({board_check.clean((result.stdout + result.stderr).strip())})",
+                      file=sys.stderr)
+                return 2
+            images.append({"file": file, "footprint": lib_id, "used_by": entry["used"], "px_per_mm": round(scale, 2)})
+    write_footprint_index(out, os.path.basename(board), images)
+    print(f"FOOTPRINTS | {len(images)} footprints | {sum(len(image['used_by']) for image in images)} parts", file=stream)
+    print(f"RESULT | WRITTEN | {len(images)} images and their index | {out}", file=stream)
+    return 0
+
+
+def write_footprint_index(out: str, board: str, images: List[dict]) -> None:
+    lines = [f"BOARD | {board}", f"RULE | {ROTATION_RULE}", f"RULE | {BOTTOM_RULE}",
+             "NOTE | each drawing shows the footprint's copper with its pad numbers, its legend, its fabrication outline and its "
+             "courtyard; a first pin is the pad numbered 1, and its mark is the legend's or the fabrication outline's, "
+             "beside it"]
+    lines += [f"IMAGE | {image['file']} | footprint {image['footprint']} | {image['px_per_mm']} px/mm | carried by "
+              f"{', '.join(image['used_by'])}" for image in images]
+    with open(os.path.join(out, "index.txt"), "w", encoding="utf-8") as handle:
+        handle.write("\n".join(lines) + "\n")
+    with open(os.path.join(out, "index.json"), "w", encoding="utf-8") as handle:
+        json.dump({"board": board, "rotation_rule": ROTATION_RULE, "bottom_rule": BOTTOM_RULE, "images": images}, handle, indent=2)
+        handle.write("\n")
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     commands = parser.add_subparsers(dest="command", required=True)
@@ -320,7 +565,14 @@ def main(argv: Optional[List[str]] = None) -> int:
     draw.add_argument("--gerbers", required=True, help="the folder the Gerber and drill files were exported into")
     draw.add_argument("--out", required=True, help="the folder to write the images and their index into, new or empty")
     draw.add_argument("--resvg", default="resvg", help="the resvg rasteriser (default: resvg on the search path)")
+    drawing = commands.add_parser("footprints", help="draw every footprint the board carries at rotation 0")
+    drawing.add_argument("--board", required=True, help="the board layout, .kicad_pcb")
+    drawing.add_argument("--out", required=True, help="the folder to write the images and their index into, new or empty")
+    drawing.add_argument("--kicad-cli", default="kicad-cli", help="KiCad's command-line tool (default: kicad-cli on the search path)")
+    drawing.add_argument("--resvg", default="resvg", help="the resvg rasteriser (default: resvg on the search path)")
     args = parser.parse_args(argv)
+    if args.command == "footprints":
+        return footprints(os.path.abspath(args.board), os.path.abspath(args.out), args.kicad_cli, args.resvg)
     if args.command == "placement":
         return placement(os.path.abspath(args.positions), os.path.abspath(args.out))
     return render(os.path.abspath(args.gerbers), os.path.abspath(args.out), args.resvg)

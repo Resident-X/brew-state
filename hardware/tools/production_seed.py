@@ -21,7 +21,8 @@ refused, as is a copy the exports cannot be made from.
 
 It writes a production-files folder holding only what the step gives a follower:
 the seeded placement file, parts list, Gerber and drill files, the image of every
-fabrication layer and of the drill file drawn from those files, the unseeded
+fabrication layer and of the drill file drawn from those files, the drawing of
+every footprint the board carries at rotation 0, the unseeded
 design's own rendered views and placement view, which stand in for the assembler's
 preview (the preview needs an account and an upload, which a read-only session
 cannot make), the design's parts specification record, the method as written, the
@@ -78,6 +79,7 @@ RECORD = "parts-specification.yaml"
 PRODUCTION = "production"
 GERBERS = "gerbers"
 LAYERS = "layers"
+FOOTPRINTS = "footprints"
 PLACEMENT_FILE = "placement.csv"
 PARTS_FILE = "parts-list.csv"
 VIEWS = review_seed.VIEWS
@@ -106,6 +108,8 @@ hardware/proof/review-proof/parts-specification.yaml;
 - the exported Gerber and drill files are in production/gerbers/, and the image of every fabrication layer and of \
 the drill file, drawn from those files by the step's render command, is in production/layers/, whose index.txt lists \
 every image and the frame all of them share;
+- every footprint the board carries, drawn at rotation 0 with its pad numbers and its first-pin and polarity marking, is in \
+production/footprints/, whose index.txt lists every drawing and gives the rule for reading a placement file's rotation against it;
 - you cannot upload files to the assembler, so its preview is replaced by the board's own rendered placement and \
 three-dimensional views, which show every part at its intended position, rotation and polarity: placement/ and the \
 assembly and three-dimensional images in views/. The design's other rendered views, one for each of its layers, are in \
@@ -444,6 +448,10 @@ def assemble(clean: board_prove.Seed, out: str, placement: Dict[str, List[str]],
     said = (drawn.stdout + drawn.stderr).strip()
     if drawn.returncode != 0:
         return False, said
+    drawn_footprints = io.StringIO()
+    if production_files.footprints(clean.path(".kicad_pcb"), os.path.join(production, FOOTPRINTS), kicad_cli, resvg,
+                                   drawn_footprints) != 0:
+        return False, (said + "\n" + drawn_footprints.getvalue()).strip()
     rendered, views = render_views(clean, out, kicad_cli, resvg)
     stamp = time.time()
     for directory, _, names in os.walk(out, topdown=False):
