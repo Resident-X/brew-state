@@ -2,11 +2,11 @@ id: SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C3
 type: criterion
 title: Following the ordering step blind on seeded production files finds every seeded defect
 status: active
-version: 2
+version: 3
 measurement_type: binary
 verification: demonstration
 text: |
-  Have a session that does not then check the files seed the production files of a proof design with defects of its own choosing, at least one rotated part and one reversed polarised part among them, recording the seeds apart from the copy; the proof design is a committed throwaway design holding a polarised surface-mount part, as the pre-order check's own proof design holds none. A fresh session with no record of the seeds follows the ordering step, and the findings are compared with the seed list. Out of scope: placing an order.
+  Have a session that does not then check the files seed the production files of a proof design with defects of its own choosing, at least one rotated part and one reversed polarised part among them, recording the seeds apart from the copy; the proof design is the layout review's committed throwaway proof design, which holds a polarised surface-mount part and pin-one-marked packages that the pre-order check's own proof design lacks. A fresh session with no record of the seeds follows the ordering step, and the findings are compared with the seed list. Out of scope: placing an order.
 links:
   - target: SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT
     type: criterion-of
