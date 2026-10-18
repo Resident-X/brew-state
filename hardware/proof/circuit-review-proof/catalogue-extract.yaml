@@ -1,0 +1,294 @@
+# NOT FOR MANUFACTURE. A synthetic catalogue extract, made only to prove the schematic review against the throwaway design beside it. Its entries are not read from any catalogue and must never be used for a board that is ordered. Its age limit is far beyond any real one so the committed proof never goes stale.
+synthetic: true
+source: none -- synthetic entries chosen to exercise the check, not read from a catalogue
+read_on: 2026-10-18
+max_age_days: 36500
+entries:
+  - lcsc: C9200001
+    library_class: basic
+    stock: 1000
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200002
+    library_class: basic
+    stock: 1001
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200003
+    library_class: basic
+    stock: 1002
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200004
+    library_class: basic
+    stock: 1003
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200005
+    library_class: basic
+    stock: 1004
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200006
+    library_class: basic
+    stock: 1005
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200007
+    library_class: basic
+    stock: 1006
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200008
+    library_class: basic
+    stock: 1007
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200009
+    library_class: basic
+    stock: 1008
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200010
+    library_class: basic
+    stock: 1009
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200011
+    library_class: basic
+    stock: 1010
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200012
+    library_class: basic
+    stock: 1011
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200013
+    library_class: basic
+    stock: 1012
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200014
+    library_class: basic
+    stock: 1013
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200015
+    library_class: basic
+    stock: 1014
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200016
+    library_class: basic
+    stock: 1015
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200017
+    library_class: basic
+    stock: 1016
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200018
+    library_class: basic
+    stock: 1017
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200019
+    library_class: basic
+    stock: 1018
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200020
+    library_class: basic
+    stock: 1019
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200021
+    library_class: basic
+    stock: 1020
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200023
+    library_class: basic
+    stock: 1021
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200024
+    library_class: basic
+    stock: 1022
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200025
+    library_class: basic
+    stock: 1023
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200026
+    library_class: basic
+    stock: 1024
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200027
+    library_class: basic
+    stock: 1025
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200028
+    library_class: basic
+    stock: 1026
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200029
+    library_class: basic
+    stock: 1027
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200030
+    library_class: basic
+    stock: 1028
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200031
+    library_class: basic
+    stock: 1029
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200032
+    library_class: basic
+    stock: 1030
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200033
+    library_class: basic
+    stock: 1031
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200034
+    library_class: basic
+    stock: 1032
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200035
+    library_class: basic
+    stock: 1033
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200036
+    library_class: basic
+    stock: 1034
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18
+  - lcsc: C9200037
+    library_class: basic
+    stock: 1035
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18

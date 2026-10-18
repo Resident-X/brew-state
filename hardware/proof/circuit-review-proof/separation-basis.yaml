@@ -1,0 +1,52 @@
+# NOT FOR MANUFACTURE. A synthetic separation basis, made only to prove the schematic
+# review against the throwaway design beside it. Its figures, inputs and table rows are
+# not read from any standard and must never be used for a board that is ordered: being
+# marked synthetic, the check accepts it only for a design marked not for manufacture.
+standard: none -- synthetic figures chosen to exercise the review, not derived from a standard
+supply: 230 V 50 Hz, 207 V to 250 V
+working_voltage: 250 V rms
+pollution_degree: 2
+material_group: IIIb
+environment: indoor, dry, as assumed for a domestic appliance
+overvoltage_category: 2
+altitude_m: 2000
+barriers:
+  - heater-drive-barrier
+barrier_types:
+  - barrier: heater-drive-barrier
+    insulation: reinforced
+    earth_bonded: false
+    touchable:
+      - J3 sensor connector
+      - J4 debug header
+      - J5 sense input connector
+      - J6 supply input connector
+    formed_by: U2 optocoupler between the heater drive's low-voltage side and the triac gate, and the 7.62 mm row spacing of its package
+mains_to_low_voltage:
+  clearance_mm: 3.0
+  creepage_mm: 4.0
+table_rows:
+  - citation:
+      document: synthetic clearance table
+      edition: none
+      locator: row 1
+    inputs:
+      working_voltage_v: 250
+      insulation: reinforced
+      overvoltage_category: 2
+      altitude_m: 2000
+    figure:
+      clearance_mm: 3.0
+  - citation:
+      document: synthetic creepage table
+      edition: none
+      locator: row 2
+    inputs:
+      working_voltage_v: 250
+      pollution_degree: 2
+      material_group: IIIb
+    figure:
+      creepage_mm: 4.0
+accepted_by: david
+accepted_on: 2026-10-18
+synthetic: true
