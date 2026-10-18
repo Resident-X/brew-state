@@ -1,0 +1,81 @@
+id: EV-SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT-C3-DEMONSTRATION
+type: evidence
+title: demonstration evidence for SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C3
+status: active
+version: 1
+result: pass
+method: demonstration
+observed_at: "2026-10-18T07:47:48.97084Z"
+artifact:
+  kind: inline
+attested_by: crun-722d97b53d0bf6ab
+text: |
+  Verified at commit f782e0f3526a38638bbb97c8946d80158381e793.
+
+  # Demonstration record: following the ordering step blind on seeded production files
+
+  Evidence artifact for SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C3. Written 2026-10-18. Repeats the demonstration on the final committed content, after the folder gained the drawing of each footprint at rotation 0; this record replaces the earlier ones.
+
+  ## Verdict
+
+  A fresh read-only session following the ordering step on the production-files folder reported every one of the 8 seeded defects by a parts-table row or a layer verdict that is not `matches`, each located as `differs`. No finding shows a real defect in the clean proof design. No code, step or folder was changed in response.
+
+  ## What was verified
+
+  - Verified commit: `f782e0f3526a38638bbb97c8946d80158381e793` (`git rev-parse HEAD`), branch `req/SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT/production-files-checked`, no tracked changes. The folder was generated from this commit.
+  - Tools: kicad-cli 10.0.7; gerbonara 1.6.3 (virtual environment, Python 3.14.6); resvg 0.48.1; Claude Code 2.1.302.
+  - Follower: model `claude-sonnet-5-5`, effort medium, session `644254c7-8bda-4dbe-91cd-97ae398dee47`, 93 turns (Read 87, Glob 3, Grep 2), started with cwd the production-files folder and `--tools "Read,Grep,Glob"`. The session's init event lists the built-in tools Glob, Grep and Read only (plus the host's MCP connector tools, none called); no Bash was present or used. Exit 0, `stop_reason` end_turn, no permission denials.
+
+  ## Commands
+
+  ```
+  python3 hardware/tools/production_seed.py --print-prompt > prompt.txt
+  KICAD_CLI=<kicad-cli> task hw:production-seed GERBONARA_PYTHON=<gerbonara venv>/bin/python -- --seeds <scratch>/seedlist/seeds.json --out <scratch>/production
+  cd <scratch>/production && claude -p --model claude-sonnet-5-5 --effort medium --output-format json --tools "Read,Grep,Glob" < prompt.txt
+  ```
+
+  The folder and the seed list are in a new directory outside the repository and outside any design folder (a first attempt under `/private/tmp` was refused before writing anything, because stray `.kicad_pro` files there make it a design folder). All 8 seeds reported `landed`. The folder held the footprint drawings at rotation 0 (`production/footprints/`) and its method and readme no longer list the seed kinds.
+
+  ## Stand-in for the assembler's preview
+
+  The assembler's preview needs an account and an upload, which a read-only session cannot hold. The folder stands in for it with the design's own rendered placement view and its assembly and three-dimensional views of the unseeded design. The stand-in tests whether the step finds a difference between the files and the design; it does not test the assembler's own reading of the placement file's coordinates, rotation or bottom-side parts, which only its preview shows. The follower said the same in its record.
+
+  ## Y-sign and frame
+
+  The method words it so: the position export's Y runs up, as the Gerber files' does, the reverse in sign of the editor's Y, so a point read off the design's own views (captions in editor coordinates) has the opposite sign of Y in the export; the conversion keeps the export's two coordinates, which agree with the Gerber files exported with them. The follower applied it: it stated its coordinates are in the Gerber frame (Y up, editor y written as −y) and wrote the layer findings in that frame (H1 at (7.5, −7.5) against (3.5, −3.5)). No part was judged by a wrong-sign position. No finding arises from the frame.
+
+  ## Per-seed result
+
+  | Seed | Area | Part or layer | Found | By what |
+  |---|---|---|---|---|
+  | S1 | placement rotation | U3 | found | Row U3 `differs` (90 against 0); finding 4 |
+  | S2 | placement polarity | D1 | found | Row D1 `differs` (file 180 puts the cathode right, design has it left); finding 3 |
+  | S3 | placement first-pin orientation | U4 | found | Row U4 `differs` (file 270, design 180, pin 1 at the bottom right in the design); finding 5. Located, not `cannot judge`: the footprint at rotation 0 let the follower read the rule |
+  | S4 | placement position | R4 | found | Row R4 `differs` (file X 4 mm too far right, (38.5, −21.46) against about (34.5, −21.4)); finding 2 |
+  | S5 | parts list catalogue number | R2 | found | Row R2 `differs` (C9000099 where the record gives C9000015); finding 1 |
+  | S6 | missing content | F.Mask, B.Mask | found | Verdicts F.Mask and B.Mask `differs` (no J1 pad openings at (6, −19) and (6, −24)); finding 6 |
+  | S7 | shifted content | drill, F.Mask, B.Mask | found | Verdicts drill, F.Mask, B.Mask `differs` (H1 at (7.5, −7.5), not (3.5, −3.5)); finding 7 |
+  | S8 | mirrored content | F.SilkS | found | Verdict F.SilkS `differs` (every designator reads backward); finding 8 |
+
+  ## Findings matching no seed
+
+  - **B.Mask verdict**: the same two differences as F.Mask, the effect of S6 and S7 on both sides. Not another defect.
+  - **Summary count in the follower's result line**: it says "8 of the 28 part rows" do not match; the table shows 5 (D1, R2, R4, U3, U4). The 8 is the seed count carried over, not a count of rows. A false statement in a summary line, with the table and findings correct. Recorded.
+  - **Mounting holes H1 to H3 in the parts specification record but in neither the placement file nor the parts list**: unfitted holes, as the follower said. False positive, recorded.
+  - **Symmetric parts (C1, C7, FB1, R2, R3) at 180 judged on the pad axis alone**: the follower said 0 and 180 cannot be told apart in the views for parts without polarity. A limit it stated, not a defect.
+  - **Tools unverified, no commit available**: the follower could not run tools and took the versions from the method. A limit of the folder, not of the design.
+
+  No finding shows a real defect in the clean proof design.
+
+  ## Sessions
+
+  - Counted: `644254c7-8bda-4dbe-91cd-97ae398dee47`, the only follow on this folder; no mechanical failure, a complete record returned.
+  - Superseded, not counted: the earlier counted follow `fc39d9aa-18c5-4fd0-9406-6f8b94ab6ce7` (commit `559b36c`), which reported U4 only as `cannot judge`. The folder was changed after it because the follower lacked the drawing of the footprint at rotation 0, so a rotation in the placement file could not be read against it. This follow runs on the changed folder.
+  - Not counted: none. The seeding command's first invocation was refused before writing anything (seed list inside a directory that held stray design files); no session was started on it.
+
+  ## The follower's production-files check record
+
+  Saved verbatim beside this record as `.stage0/SOL-production-files-follower-record.md`; it lists 28 part rows and 10 layer rows (the nine layers and the drill file) and 8 findings. Its result: not ready to pay for.
+links:
+  - target: SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C3
+    type: satisfies
