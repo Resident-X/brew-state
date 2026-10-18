@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS.C2
+type: criterion
+title: Each refusal is shown to fail on a fault seeded for it in a copy of the throwaway design
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The on-demand seeded-fault proof introduces into a copy of a throwaway design, outside the repository, a net the tool named, a sheet with a blank name and a sheet with the tool's default name, each on a sub-sheet built into the copy, and requires the check to fail each by name. A pin nothing is connected to must not fail. The proof is an on-demand command beside the existing proof and runs in neither gate. Out of scope: the existing seeded-fault proofs and the check's other rules.
+links:
+  - target: SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS
+    type: criterion-of

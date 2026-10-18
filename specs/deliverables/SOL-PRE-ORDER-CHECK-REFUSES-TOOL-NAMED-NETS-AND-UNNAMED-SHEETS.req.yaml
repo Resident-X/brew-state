@@ -1,0 +1,41 @@
+id: SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS
+type: deliverable
+category: solution
+title: The pre-order check refuses a tool-named net and an unnamed sheet, each shown to fail on a seeded fault
+status: active
+version: 1
+text: |
+  The pre-order check gains two refusals that a comparison of the schematic's files can decide: a net whose name the design tool generated and not the designer, and a hierarchical sheet that carries no name of its own. Each is failed by name before a board can be ordered, so that a reader who follows a net by its name or a sheet by its function is never left with a name that says nothing.
+
+  Settled before build:
+
+  - A tool-generated net name is the form KiCad gives a net a designer left unnamed, read as the check already reads net names. A pin nothing is connected to is named `unconnected-…` by KiCad and carries no net, as the hardware notes already say, so it is not a net a designer left unnamed and is exempt. The check keeps the form it already tells apart in code and adds the generated-net form beside it.
+  - A sheet's name is read from the sheet symbol as the check already reads it for the sheets it walks. A sheet whose name is blank, or is the tool's default for a sheet nobody named, fails. The root sheet has no sheet symbol and is exempt.
+  - The refusals add no record and no key. They run in the board tier of the build round and nightly, through the gate the pre-order check already uses, and the hardware notes' table of rules carries an entry for each.
+  - No design git tracks has a sub-sheet, so each seeded fault builds its own sub-sheet in the copy it proves on.
+  - Whether a sheet's arrangement is readable is not decided here: the schematic review judges it against the convention, since an estimate of text against text alone would pass text overlapping a symbol body or a wire, which the check does not model, and so give false assurance.
+rationale: |
+  The pre-order check is where what a file comparison can decide is decided, and DEL-HW-PRE-ORDER-CHECKS-EXTENDED is the task built for rules that guard a defect no rule yet tests, with a seeded proof and a gate placement already stated for them. The design method's task is for how a board is designed, so the convention and the render sit there and these refusals sit here, each under the node whose axis it is.
+
+  A name that says nothing, a net the tool called Net-(R3-Pad1) or a sheet called Untitled Sheet, is what makes a correct schematic unreadable to someone who cannot ask the author, and it is decidable from the files, so it is refused rather than left to a reviewer to notice.
+
+  This solution waits on the schematic review's proof design because that design is a tracked schematic these refusals must pass: built after it lands, the refusals meet the real set of designs, and any tool-named net in it is corrected as part of this work and not found afterwards.
+links:
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C13
+    type: derives-from
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C10
+    type: derives-from
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C11
+    type: derives-from
+  - target: REQ-PUBLISHED-BUILD-PATH-001.C6
+    type: targets
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: targets
+  - target: DEC-SCHEMATIC-DRAWN-TO-CONVENTION-AND-RENDERED-ON-DEMAND
+    type: justified-by
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+  - target: SOL-HW-BOARD-RULE-CHECK-GATE
+    type: depends-on
+  - target: SOL-BOARD-CIRCUIT-REVIEW-SEEDED-PROOF
+    type: depends-on

@@ -1,0 +1,36 @@
+id: SOL-BOARD-SCHEMATIC-DRAWING-CONVENTION
+type: deliverable
+category: solution
+title: The method carries a schematic drawing convention and every sheet of a board can be rendered for a reader
+status: active
+version: 1
+text: |
+  The board design method gains a schematic drawing convention and a way to see every sheet of a board drawn. A reader who cannot ask the author can then open a board's schematic and follow it. The convention is a reference section of the method, beside the layout and circuit practice catalogues, and the schematic review judges every sheet against it, so a board is drawn to it before the review begins and not redrawn afterwards.
+
+  Settled before build:
+
+  - The convention's items are: one function to a sheet; each sheet named for its function; every net named by its designer, never by the tool; wires within a function's circuit and labels between circuits; a signal flow in one consistent direction, inputs and supply entering at one side and outputs leaving at the other; supply rails joined across sheets by name; each connector labelled with its harness pin and channel; text clear of other text and of symbols. Each item carries its published source, by title, publisher, section and address, and the date read. A source is a document any reader can obtain without charge. The convention holds nothing specific to this machine.
+  - The circuit practice catalogue gains one judgement item whose condition every sheet meets. The review's verdict table names a sheet in its Net or part column for that item, since the column names one net or one reference designator today and an item selected by sheets needs a row for each. The method's text on that column and on the rows a record may name is amended with the item. The layout checklist the board history check builds is taken from the layout catalogue alone and is unchanged by the item, which the existing test of that isolation continues to show.
+  - One task-runner command renders every sheet of every tracked design to a file for each sheet, from the tracked files alone, as the pre-order check reads a design, into a new or empty folder outside every design's folder, as the layout review views command does. The renders are not committed, so a render cannot drift from the schematic it shows. The method and the hardware notes say that a reader who wants the drawing needs the design tool the repository already names.
+  - The two refusals the check makes on a tool-named net and an unnamed sheet are built by the solution that extends the pre-order check, beside the pre-order check's other rules, not here.
+rationale: |
+  The committed schematics are correct for checking and laid out for nothing else, and no criterion required the published designs to be readable, so the persona who rebuilds this and cannot ask a question was owed a promise the graph did not make. The decision DEC-SCHEMATIC-DRAWN-TO-CONVENTION-AND-RENDERED-ON-DEMAND records what was chosen and what was rejected: a generator, a committed render, a mechanical overlap check and a later redraw.
+
+  The schematic review reads the schematic file and its netlist, not a picture, so the arrangement inside a sheet does not change what the review or any check sees. What the convention buys the review is a block to judge at a time and names that mean something; what it buys the rebuilder, who traces a signal on a printout at a bench, is the picture. The schematic review's reviewer is by definition someone who did not draw the schematic, so the review is where C6 of the published build path is judged board by board.
+
+  Built now, before the first real board is drawn, because the sheet structure is named by records that a board's design task writes: fixing it afterwards edits the pin allocation record's net paths and re-runs the schematic review's verdicts. The checks are proven on the throwaway designs, as every check is, so they exist before any real board relies on them.
+links:
+  - target: DEL-HW-DESIGN-METHOD.C12
+    type: derives-from
+  - target: REQ-PUBLISHED-BUILD-PATH-001.C6
+    type: targets
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: targets
+  - target: DEC-SCHEMATIC-DRAWN-TO-CONVENTION-AND-RENDERED-ON-DEMAND
+    type: justified-by
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+  - target: SOL-BOARD-CIRCUIT-PRACTICE-CATALOGUE
+    type: depends-on
+  - target: SOL-HW-BOARD-RULE-CHECK-GATE
+    type: depends-on

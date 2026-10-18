@@ -1,0 +1,14 @@
+id: SOL-BOARD-SCHEMATIC-DRAWING-CONVENTION.C4
+type: criterion
+title: A net named by the tool and a sheet with no name of its own fail the pre-order check by name
+status: deprecated
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The pre-order check fails a design whose schematic carries a net whose name the design tool generated and not the designer, naming the net, and fails a design with a hierarchical sheet whose name is blank or the tool's default, naming the sheet. A root sheet is exempt from the sheet-name rule. The check does not test arrangement or overlapping text, and a design with neither fault passes.
+
+  Out of scope: arrangement inside a sheet and overlapping text, which the review judges, and the rendering command.
+links:
+  - target: SOL-BOARD-SCHEMATIC-DRAWING-CONVENTION
+    type: criterion-of

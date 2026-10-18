@@ -1,0 +1,13 @@
+id: DEL-CONTROLLER-HARDWARE.C12
+type: criterion
+title: Each schematic is drawn to a written convention that a reader who did not draw it can follow
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The method carries a written drawing convention, each item citing a source any reader can obtain without charge, each board's schematic is drawn to it before its review begins, and the checks refuse what a file comparison can decide of it. A reader with the repository can have every sheet of every board rendered.
+links:
+  - target: DEL-CONTROLLER-HARDWARE
+    type: criterion-of

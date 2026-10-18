@@ -1,0 +1,14 @@
+id: SOL-BOARD-SCHEMATIC-DRAWING-CONVENTION.C3
+type: criterion
+title: One task-runner command renders every sheet of every tracked design from the tracked files
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A command of the project's task runner writes one image file per sheet of every board design git tracks, from a copy of the tracked files as the pre-order check reads a design, into a new or empty folder outside every design's folder. It writes nothing into the repository's tracked paths. It stops with a line naming the tool when the design tool is missing or too old, fails a design it cannot read by name, and an empty set of designs fails rather than succeeds. The method and the hardware notes state that a reader who wants the drawings needs the design tool the repository names.
+
+  Out of scope: the pre-order check, the arrangement of a sheet, and any committed copy of the renders.
+links:
+  - target: SOL-BOARD-SCHEMATIC-DRAWING-CONVENTION
+    type: criterion-of

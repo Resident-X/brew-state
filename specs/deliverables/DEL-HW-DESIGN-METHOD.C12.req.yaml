@@ -1,0 +1,13 @@
+id: DEL-HW-DESIGN-METHOD.C12
+type: criterion
+title: Each schematic is drawn to a written convention that a reader who did not draw it can follow
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The method carries a written drawing convention, each item citing a source any reader can obtain without charge, and the schematic review judges every sheet of a board against it before layout begins. A reader with the repository can have every sheet of every board rendered.
+links:
+  - target: DEL-HW-DESIGN-METHOD
+    type: criterion-of

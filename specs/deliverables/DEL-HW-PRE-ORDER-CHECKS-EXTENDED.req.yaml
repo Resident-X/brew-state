@@ -4,7 +4,7 @@ category: task
 title: The pre-order check also fails the defects in a design that its files can decide but no rule yet tests
 status: active
 level: task
-version: 1
+version: 2
 text: |
   The automated pre-order check that every board design must pass gains further rules, each guarding against a defect that today reaches a reviewer's judgement, or no one's, when a file comparison could find it exactly. A board whose minimums undercut what the manufacturer can make, a separation figure signed lower than its own inputs allow, a sensing net run beside a switching net, a part stressed past its derated voltage, a pin whose net can exceed its absolute maximum, a missing fiducial or polarity mark, a connector starved of ground returns, a part its maker has stopped making, and a mounting hole that breaches the mains separation are each failed by the check before the board is ordered.
 
@@ -46,3 +46,7 @@ links:
     type: targets
   - target: DEC-BOARD-DESIGN-RECORDS-AS-YAML
     type: justified-by
+  - target: REQ-PUBLISHED-BUILD-PATH-001.C6
+    type: targets
+  - target: DEL-CONTROLLER-HARDWARE.C12
+    type: derives-from

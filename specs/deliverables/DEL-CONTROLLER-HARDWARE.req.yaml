@@ -4,7 +4,7 @@ category: epic
 title: The replacement controller boards are built from designs proven before they are ordered
 status: active
 level: epic
-version: 3
+version: 4
 text: |
   The machine's control electronics are replaced by boards designed for this project and made to order by a manufacturer that also assembles them, rather than hand-wired around a bought controller module. The work runs in a fixed order. First the constraints the boards must meet are fixed with their sources: what this graph requires, what the machine as found imposes — the enclosure the controller lives in, the harnesses that stay and the connectors they end in — and what the manufacturer can make, stock and charge. Then the boards are shown to be feasible against those constraints, including how the circuitry divides between them, before any detailed design. Each design is proven against the design record before it is ordered, the mains-to-low-voltage separation rests on a basis a person has signed for, the boards are brought up on the bench before mains is connected, and sensing accuracy is measured with the loads switching. The result is reproducible by someone else from the repository.
 
@@ -13,6 +13,8 @@ text: |
   Each board's schematic is reviewed, every net and every part of it, against a written checklist drawn from published circuit practice before layout begins, because the checks a board passes cannot see whether a pin is driven beyond its limits or a part lacks the companions its maker requires.
 
   Each board is laid out to published layout practice, planned in before any part is placed, and each layout is reviewed against a written checklist drawn from that practice, on rendered views of every layer and every critical net, before it is ordered, because the checks a board passes cannot see whether it is laid out well.
+
+  Each board's schematic is drawn to a written convention before its review begins, so that someone who did not draw it can open it, find each function's circuit on a sheet named for it and follow a net between sheets by its name, because a schematic that is correct but cannot be followed is not part of a build path someone else can take.
 rationale: |
   No node owned the controller hardware: the graph specified channels and selected parts, but nothing required that the boards carrying them be designed, checked, built or brought up in any particular way, so each of those was decided in conversation and recorded nowhere durable.
 
@@ -131,4 +133,6 @@ links:
   - target: REQ-STARTUP-STATE-001.C2
     type: targets
   - target: REQ-MACHINE-CONFIGURATION-001.C7
+    type: targets
+  - target: REQ-PUBLISHED-BUILD-PATH-001.C6
     type: targets
