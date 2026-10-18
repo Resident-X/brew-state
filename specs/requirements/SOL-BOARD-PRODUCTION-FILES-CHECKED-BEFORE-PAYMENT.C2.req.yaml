@@ -2,11 +2,11 @@ id: SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C2
 type: criterion
 title: The method's ordering step has every rendered fabrication layer looked at before ordering
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |
-  Add to the ordering step the rendering of every copper, mask, legend and drill layer and the outline from the fabrication files themselves, and a look at each for missing, shifted or mirrored content. Out of scope: the layout review's views, which are rendered from the design rather than from the files sent to the manufacturer.
+  Add to the ordering step the rendering of every copper, mask, legend and drill layer and the outline from the fabrication files themselves, and a look at each for missing, shifted or mirrored content, with a verdict per layer in the production-files check record, a layer not judged as matching blocking the order. Out of scope: the layout review's views, which are rendered from the design rather than from the files sent to the manufacturer.
 links:
   - target: SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT
     type: criterion-of

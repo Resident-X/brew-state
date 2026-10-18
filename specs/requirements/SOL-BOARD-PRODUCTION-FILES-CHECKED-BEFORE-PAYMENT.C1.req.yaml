@@ -2,11 +2,11 @@ id: SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C1
 type: criterion
 title: The method's ordering step compares every placed part's position, rotation and polarity with the assembler's preview before payment
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |
-  Write the ordering step into the board design method: for every placed part, compare position, rotation and polarity or first-pin orientation in the assembly files with the assembler's rendered preview, and each position's catalogue part with the parts specification record, correcting any difference in the design before payment. Out of scope: checking the design itself, which the pre-order check does.
+  Write the ordering step into the board design method: for every placed part, compare position, rotation and polarity or first-pin orientation in the assembly files with the assembler's rendered preview, and each position's catalogue part with the parts specification record, correcting any difference in the design before payment. The step has a production-files check record committed with the board that carries a verdict per part, and a part not judged as matching blocks the order. Out of scope: checking the design itself, which the pre-order check does.
 links:
   - target: SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT
     type: criterion-of
