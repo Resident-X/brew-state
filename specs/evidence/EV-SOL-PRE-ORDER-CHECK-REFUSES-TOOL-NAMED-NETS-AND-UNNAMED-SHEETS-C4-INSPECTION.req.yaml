@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS-C4-INSPECTION
+type: evidence
+title: inspection evidence for SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS.C4
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-18T12:57:23.911038Z"
+artifact:
+  kind: external
+  reference: 'hardware/README.md: ''What a design must satisfy'' bullets and ''The report'' table rows for tool_named_net and unnamed_sheet'
+  artifact_version: fd952d02ffa7738f997c4852a6b15550dc36b9fb
+attested_by: crun-2e86e1371c0bfb50
+links:
+  - target: SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS.C4
+    type: satisfies

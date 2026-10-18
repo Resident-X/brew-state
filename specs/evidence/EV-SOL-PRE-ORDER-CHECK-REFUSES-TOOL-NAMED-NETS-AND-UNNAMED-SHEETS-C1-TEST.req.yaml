@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS-C1-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-18T12:57:23.599313Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check.py::test_a_blank_missing_or_whitespace_name_fails_naming_the_schematic_drawing_it,test_the_tools_default_name_fails_with_or_without_a_number_and_a_name_that_only_starts_like_it_does_not,test_a_sheet_below_another_is_found_and_the_schematic_drawing_it_is_named,test_a_design_with_only_a_root_sheet_or_only_named_sheets_passes
+  artifact_version: fd952d02ffa7738f997c4852a6b15550dc36b9fb
+attested_by: crun-2e86e1371c0bfb50
+links:
+  - target: SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS.C1
+    type: satisfies
