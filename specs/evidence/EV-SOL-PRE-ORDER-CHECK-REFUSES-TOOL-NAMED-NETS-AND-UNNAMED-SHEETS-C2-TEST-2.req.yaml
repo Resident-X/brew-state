@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS-C2-TEST-2
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-18T12:57:23.78692Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad.py::test_the_seeded_net_run_carries_a_pin_nothing_joins_and_names_none_of_them_in_a_failure,test_the_proof_fails_a_fault_whose_run_names_what_the_check_must_leave_alone
+  artifact_version: fd952d02ffa7738f997c4852a6b15550dc36b9fb
+attested_by: crun-2e86e1371c0bfb50
+links:
+  - target: SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS.C2
+    type: satisfies

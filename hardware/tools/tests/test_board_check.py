@@ -4166,6 +4166,109 @@ class TheDeratingAndPinLimitRecordsAreAmongWhatADesignReads(Tree):
         self.assertEqual([entry for entry in reads if entry.endswith((".yaml"))], [])
 
 
+class NamedSchematic(Tree):
+    """Designs drawn on synthetic sheets, each sheet given the name a test wants, or none."""
+
+    design = board_check.Design("hw/n/n.kicad_pro")
+
+    def sheet(self, name, path: str = "sub.kicad_sch") -> str:
+        property_ = "" if name is None else f'\t\t(property "Sheetname" "{name}")\n'
+        return f'\t(sheet\n\t\t(at 0 0)\n{property_}\t\t(property "Sheetfile" "{path}")\n\t)\n'
+
+    def found(self, root_sheets: str, below: str = ""):
+        self.write("hw/n/n.kicad_pro")
+        self.write("hw/n/n.kicad_pcb")
+        self.write("hw/n/n.kicad_sch", f"(kicad_sch\n\t(version 20250114)\n{root_sheets})\n")
+        self.write("hw/n/sub.kicad_sch", f"(kicad_sch\n\t(version 20250114)\n{below})\n")
+        self.write("hw/n/deep.kicad_sch", "(kicad_sch (version 20250114))")
+        return board_check.unnamed_sheets(self.design, self.everything())
+
+
+class ASheetWithNoNameOfItsOwnFailsByName(NamedSchematic):
+    """SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS.C1: A net named by the tool and a sheet with no name of its own fail the check by name."""
+
+    def test_a_blank_missing_or_whitespace_name_fails_naming_the_schematic_drawing_it(self):
+        # SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS.C1: A net named by the tool and a sheet with no name of its own fail the check by name
+        for name in ("", "   ", None):
+            with self.subTest(name=name):
+                found = self.found(self.sheet(name))
+                self.assertEqual([(v.rule, v.location) for v in found], [("unnamed_sheet", "hw/n/n.kicad_sch")])
+                self.assertIn("its name is blank", found[0].message)
+                self.assertIn("Sheetname", found[0].message)
+
+    def test_the_tools_default_name_fails_with_or_without_a_number_and_a_name_that_only_starts_like_it_does_not(self):
+        # SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS.C1: A net named by the tool and a sheet with no name of its own fail the check by name
+        for name in ("Untitled Sheet", "Untitled Sheet 2", "Untitled Sheet 17"):
+            with self.subTest(name=name):
+                found = self.found(self.sheet(name))
+                self.assertEqual([v.rule for v in found], ["unnamed_sheet"])
+                self.assertIn(f"'{name}'", found[0].message)
+        for name in ("Untitled Sheets", "Untitled Sheet A", "My Untitled Sheet", "untitled sheet", "Power"):
+            with self.subTest(name=name):
+                self.assertEqual(self.found(self.sheet(name)), [])
+
+    def test_a_sheet_below_another_is_found_and_the_schematic_drawing_it_is_named(self):
+        # SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS.C1: A net named by the tool and a sheet with no name of its own fail the check by name
+        found = self.found(self.sheet("power"), self.sheet("Untitled Sheet", "deep.kicad_sch"))
+        self.assertEqual([(v.rule, v.location) for v in found], [("unnamed_sheet", "hw/n/sub.kicad_sch")])
+
+    def test_each_unnamed_sheet_is_reported_and_a_named_one_beside_it_is_not(self):
+        # SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS.C1: A net named by the tool and a sheet with no name of its own fail the check by name
+        found = self.found(self.sheet("") + self.sheet("power") + self.sheet("Untitled Sheet"))
+        self.assertEqual(len(found), 2)
+
+    def test_a_design_with_only_a_root_sheet_or_only_named_sheets_passes(self):
+        # SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS.C1: A net named by the tool and a sheet with no name of its own fail the check by name
+        self.assertEqual(self.found(""), [])
+        self.assertEqual(self.found(self.sheet("power")), [])
+
+    def test_a_sheet_that_cannot_be_read_is_discoverys_to_report_and_not_this_rules(self):
+        # SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS.C1: A net named by the tool and a sheet with no name of its own fail the check by name
+        self.found(self.sheet("power"))
+        self.write("hw/n/n.kicad_sch", "(kicad_sch (sheet")
+        self.assertEqual(board_check.unnamed_sheets(self.design, self.everything()), [])
+
+    def test_a_sheet_placing_itself_below_itself_is_followed_once(self):
+        # SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS.C1: A net named by the tool and a sheet with no name of its own fail the check by name
+        found = self.found(self.sheet("power"), self.sheet("", "n.kicad_sch"))
+        self.assertEqual([v.location for v in found], ["hw/n/sub.kicad_sch"])
+
+
+class ANetTheToolNamedFailsByName(unittest.TestCase):
+    """SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS.C1: A net named by the tool and a sheet with no name of its own fail the check by name."""
+
+    design = board_check.Design("hw/n/n.kicad_pro")
+
+    def found(self, *names: str):
+        return board_check.tool_named_nets(self.design, {name: ([], ["R1 pin 1", "R2 pin 1"]) for name in names})
+
+    def test_a_generated_net_fails_naming_the_net_and_the_pins_it_joins(self):
+        # SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS.C1: A net named by the tool and a sheet with no name of its own fail the check by name
+        found = self.found("/HEATER", "Net-(R3-Pad1)")
+        self.assertEqual([(v.rule, v.location) for v in found], [("tool_named_net", "hw/n/n.kicad_sch")])
+        self.assertIn("the net Net-(R3-Pad1) ", found[0].message)
+        self.assertIn("R1 pin 1", found[0].message)
+
+    def test_a_generated_net_fails_wherever_it_sits_in_a_sheet_path(self):
+        # SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS.C1: A net named by the tool and a sheet with no name of its own fail the check by name
+        found = self.found("/power/Net-(C1-Pad2)", "/a/b/Net-(U1-PA0)")
+        self.assertEqual(len(found), 2)
+
+    def test_a_pin_nothing_joins_is_exempt_at_the_top_and_in_a_sheet(self):
+        # SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS.C1: A net named by the tool and a sheet with no name of its own fail the check by name
+        self.assertEqual(self.found("unconnected-(R1-Pad1)", "/power/unconnected-(U1-PA5-Pad10)"), [])
+
+    def test_a_name_a_designer_chose_passes_even_when_it_resembles_the_generated_form(self):
+        # SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS.C1: A net named by the tool and a sheet with no name of its own fail the check by name
+        self.assertEqual(self.found("/NET_A", "/Net", "/Net-1", "/Netting-(x)", "/LV_Net-(a", "/power/HEATER"), [])
+        self.assertEqual(self.found(), [])
+
+    def test_the_failure_prints_as_one_report_line_under_its_rule(self):
+        # SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS.C1: A net named by the tool and a sheet with no name of its own fail the check by name
+        line = self.found("Net-(R3-Pad1)")[0].line()
+        self.assertTrue(line.startswith("VIOLATION | hw/n/n.kicad_pro | tool_named_net | hw/n/n.kicad_sch | "), line)
+
+
 class AMissingToolIsNamedByEveryModuleOfBoardTests(Tree):
     """A module of board tests that cannot find KiCad or the rasteriser stops with a line naming it, as every board command does."""
 

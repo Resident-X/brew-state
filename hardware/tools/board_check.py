@@ -386,6 +386,55 @@ def sheet_instances(root: str, schematic: str, tracked: Set[str], trail: Tuple[s
     return found
 
 
+#: What KiCad names a sheet nobody named, optionally numbered when a second is left unnamed.
+DEFAULT_SHEET_NAME = re.compile(r"Untitled Sheet( [0-9]+)?")
+
+
+def sheet_names(root: str, schematic: str, tracked: Set[str], ancestry: Tuple[str, ...] = ()
+                ) -> List[Tuple[str, str]]:
+    """Every sheet symbol a schematic and the sheets below it draw, as (the schematic drawing it, its Sheetname).
+
+    Sheets are followed as `sheet_instances` follows them, so the root, which
+    has no sheet symbol, is not among them; a sheet with no Sheetname property
+    reads as a blank one. Raises SexprError or OSError when a tracked sheet
+    cannot be read.
+    """
+    if schematic in ancestry:
+        return []
+    with open(os.path.join(root, schematic), encoding="utf-8") as handle:
+        tree = sexpr.parse_one(handle.read())
+    found: List[Tuple[str, str]] = []
+    for sheet in sexpr.children(tree, "sheet"):
+        props = sexpr.children(sheet, "property")
+        found.append((schematic, next((str(prop[2]) for prop in props if len(prop) > 2 and prop[1] == "Sheetname"), "")))
+        named = [prop for prop in props if len(prop) > 1 and prop[1] == "Sheetfile"]
+        if len(named) != 1 or len(named[0]) < 3 or isinstance(named[0][2], list):
+            continue
+        target = os.path.normpath(os.path.join(os.path.dirname(schematic), named[0][2])).replace(os.sep, "/")
+        if target in tracked:
+            found.extend(sheet_names(root, target, tracked, ancestry + (schematic,)))
+    return found
+
+
+def unnamed_sheets(design: Design, repository: Repository) -> List[Violation]:
+    """A hierarchical sheet whose name is blank or the tool's default fails; a sheet that cannot be read is `discover`'s to report."""
+    try:
+        sheets = sheet_names(repository.root, design.schematic, repository.tracked)
+    except (OSError, sexpr.SexprError):
+        return []
+    found = []
+    for parent, name in sheets:
+        if name.strip() and not DEFAULT_SHEET_NAME.fullmatch(name.strip()):
+            continue
+        shown = f"{name!r}, KiCad's default for a sheet nobody named" if name.strip() else "blank"
+        found.append(Violation(
+            design.project, "unnamed_sheet", parent,
+            f"a sheet drawn in {parent} carries no name of its own: its name is {shown}, so a reader "
+            "following the schematic by what each sheet does is told nothing; rename the sheet for its function "
+            "in its Sheetname property"))
+    return found
+
+
 def discover(root: str, files: List[str]) -> Tuple[List[Design], List[Violation], Dict[str, List[Violation]]]:
     """The designs among the tracked files, the files belonging to none, and what is wrong with each design's set."""
     tracked = set(files)
@@ -959,6 +1008,9 @@ PORT_PIN = re.compile(r"P[A-Z][0-9]+")
 
 #: What KiCad names a net no pin joins to anything, which carries no connection.
 UNCONNECTED_NET = "unconnected-("
+
+#: How KiCad begins the name of a net the designer left unnamed, wherever in a sheet path it sits.
+GENERATED_NET = re.compile(r"(^|/)Net-\(")
 
 
 def read_pin_record(yaml, root: str, design: Design, record: Optional[str], not_for_manufacture: bool
@@ -3298,6 +3350,19 @@ def schematic_nets(netlist: list) -> Dict[str, Tuple[List[str], List[str]]]:
     return nets
 
 
+def tool_named_nets(design: Design, nets: Dict[str, Tuple[List[str], List[str]]]) -> List[Violation]:
+    """Every net KiCad named itself because the designer left it unnamed; a pin nothing joins is not a net and is exempt."""
+    found = []
+    for name in sorted(nets):
+        if not GENERATED_NET.search(name) or name.rsplit("/", 1)[-1].startswith(UNCONNECTED_NET):
+            continue
+        found.append(Violation(
+            design.project, "tool_named_net", design.schematic,
+            f"the net {name} carries a name KiCad generated, so a reader following the schematic by its nets "
+            f"is told nothing; name it with a net label that says what it carries ({', '.join(nets[name][1][:3]) or 'no pins'})"))
+    return found
+
+
 def schematic_mains(nets: Dict[str, Tuple[List[str], List[str]]]) -> Set[str]:
     """The nets KiCad's own netlist of the schematic puts in the Mains class, wherever the schematic says so."""
     return {name for name, (classes, _) in nets.items() if "Mains" in classes}
@@ -4021,6 +4086,7 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
     found += check_parts(yaml, root, design, repository, today, not_for_manufacture)
     found += read_derating(yaml, root, repository, design, not_for_manufacture)
     found += read_pin_limits(yaml, root, repository, design, not_for_manufacture)
+    found += unnamed_sheets(design, repository)
 
     if any(v.rule == "design_unreadable" for v in found):
         return found
@@ -4089,6 +4155,8 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
                     found += connectivity(design, pin_record, channels, schematic_pin_nodes(parsed))
             except sexpr.SexprError as error:
                 why = f"KiCad's netlist could not be read ({error})"
+            if netlist is not None:
+                found += tool_named_nets(design, netlist)
             if netlist is None:
                 found.append(Violation(design.project, "design_unreadable", design.schematic,
                                        f"the schematic's net classes cannot be read from KiCad's netlist: {why}"))
