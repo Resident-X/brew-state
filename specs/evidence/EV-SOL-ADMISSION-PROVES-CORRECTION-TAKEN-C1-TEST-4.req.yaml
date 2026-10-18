@@ -1,0 +1,16 @@
+id: EV-SOL-ADMISSION-PROVES-CORRECTION-TAKEN-C1-TEST-4
+type: evidence
+title: test evidence for SOL-ADMISSION-PROVES-CORRECTION-TAKEN.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-18T01:26:44.143226Z"
+artifact:
+  kind: external
+  reference: firmware/test/test_estimator_write_discarding_fixture/test_estimator_write_discarding_fixture.c::test_a_held_not_a_number_does_not_let_a_discarded_write_pass
+  artifact_version: 3ef89e801c045cef078d2ff9986d2e3969032bfc
+attested_by: crun-87486c1132f49028
+links:
+  - target: SOL-ADMISSION-PROVES-CORRECTION-TAKEN.C1
+    type: satisfies
