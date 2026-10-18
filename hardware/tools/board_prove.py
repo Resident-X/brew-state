@@ -848,6 +848,32 @@ def drop_rule(name: str):
     return seed_it
 
 
+def seeded_hole(reference: str, x: float, y: float, uuid: str, plated_net: Optional[str] = None) -> list:
+    """A 3.2 mm hole footprint `reference` at (x, y): a non-plated hole, or a plated pad on `plated_net` when one is named."""
+    Q = sexpr.Quoted
+    layers = ["layers", Q("*.Cu"), Q("*.Mask")]
+    if plated_net is None:
+        hole = ["pad", Q(""), "np_thru_hole", "circle", ["at", "0", "0"], ["size", "3.2", "3.2"], ["drill", "3.2"], layers,
+                ["uuid", Q(f"{uuid[:-2]}01")]]
+    else:
+        hole = ["pad", Q("1"), "thru_hole", "circle", ["at", "0", "0"], ["size", "4", "4"], ["drill", "3.2"], layers,
+                ["net", Q(plated_net)], ["uuid", Q(f"{uuid[:-2]}01")]]
+    return ["footprint", Q("proof:Seeded_Hole"), ["layer", Q("F.Cu")], ["uuid", Q(uuid)], ["at", f"{x:g}", f"{y:g}"],
+            ["property", Q("Reference"), Q(reference), ["at", "0", "-3", "0"], ["layer", Q("F.SilkS")]], hole]
+
+
+#: R1 pad 2, on /MAINS_N, is a 1.6 mm round pad at (25.16, 10). A 3.2 mm hole whose edge is 2.5 mm from its edge is
+#: inside the 4 mm that is the larger of the signed clearance (3 mm) and creepage (4 mm).
+HOLE_X = 25.16 + 0.8 + 2.5 + 1.6
+
+
+def hole_near_mains(plated_net: Optional[str] = None):
+    def seed_it(seed: Seed) -> None:
+        seed.layout(lambda tree: tree.insert(len(tree) - 1, seeded_hole(
+            "H9", HOLE_X, 10, "0b0e5c1a-0000-4000-8000-000000000c00", plated_net)))
+    return seed_it
+
+
 SIGNED = f"rule '{board_check.SIGNED_RULE}' clearance"
 CONDITION = board_check.MAINS_CONDITION
 
@@ -1022,6 +1048,20 @@ FAULTS: List[tuple] = [
     ("a sheet with a blank name", "names: a sheet with no name of its own fails", "unnamed_sheet", "its name is blank", sheet_named("")),
     ("a sheet with the tool's default name", "names: a sheet with no name of its own fails", "unnamed_sheet", "is 'Untitled Sheet'", sheet_named("Untitled Sheet")),
     ("a second sheet with the tool's default name, numbered", "names: a sheet with no name of its own fails", "unnamed_sheet", "is 'Untitled Sheet 1'", sheet_named("Untitled Sheet 1")),
+    # Separation floor
+    ("a signed clearance below the floor the table rows give", "separation floor: a signed clearance below its floor fails", "separation_floor",
+     "the signed clearance_mm is 3 mm, below the 3.5 mm floor", record("      clearance_mm: 3.0", "      clearance_mm: 3.5")),
+    ("a signed creepage below the floor the table rows give", "separation floor: a signed creepage below its floor fails", "separation_floor",
+     "the signed creepage_mm is 4 mm, below the 4.5 mm floor", record("      creepage_mm: 4.0", "      creepage_mm: 4.5")),
+    ("a mains-present basis with no applicable table row", "separation floor: no applicable row for a figure fails", "separation_floor",
+     "no table row of the record gives a clearance_mm that applies", record("working_voltage: 250 V rms", "working_voltage: 300 V rms")),
+    ("a mains-present basis lacking a required key", "separation floor: a basis lacking a required key fails by key", "separation_floor",
+     "the record lacks altitude_m", record("altitude_m: 2000\nbarriers", "barriers")),
+    # Mounting holes
+    ("a mounting hole inside the signed distance of a Mains net", "mounting holes: a hole inside the larger of the signed clearance and creepage of Mains fails", "mounting_hole",
+     "a non-plated hole or its pad stands", hole_near_mains()),
+    ("a plated hole on a non-Mains net inside the signed distance of a Mains net", "mounting holes: a plated hole on a non-Mains net inside that distance fails", "mounting_hole",
+     "a plated hole on a net outside Mains stands", hole_near_mains("/LV_A")),
     # Connectivity
     ("a channel's net moved to the other controller pin", "connectivity: a net must reach the controller pin its channel names", "connectivity", "net /LV_A reaches controller pin PA1, where the record names controller pin PA0", swap_labels(("LV_A", "96.52 76.2"), ("LV_B", "96.52 78.74"))),
     ("a channel's net moved to the other pin of its connector", "connectivity: a net must reach the connector pin its channel names", "connectivity", "net /LV_A reaches connector pin J2 pin 2, where the record names connector pin J2 pin 1", swap_labels(("LV_A", "45.72 76.2"), ("LV_B", "45.72 78.74"))),
