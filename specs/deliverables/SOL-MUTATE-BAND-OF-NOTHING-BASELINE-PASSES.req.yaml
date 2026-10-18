@@ -3,15 +3,21 @@ type: deliverable
 category: solution
 title: The seeded band-of-nothing defect runs its check as the build does, so its baseline passes
 status: active
-version: 1
+version: 2
 text: |
   One of the hand-written seeded defects in firmware/tools/mutate.py, the one that declares a band of nothing in the tolerance declaration, can no longer show that anything catches it. Before mutating, mutate.py runs the defect's own check against the unmutated tree and requires it to pass. That check is the control declaration check, and the command the defect carries for it lists fewer source headers than the build-time check in Taskfile.yml passes: the steam control and pump trim declaration headers are missing. Without them the check finds two figures the control declaration accounts for and cannot find defined anywhere, and fails on the clean tree. mutate.py then reports that the command fails before anything was mutated and stops, so a full run of the seeded defects fails on this one entry and the defect it names goes unexercised.
 
   The two headers were added to the build-time check after this defect's command was written, and the command was not brought along. Nothing ties a seeded defect's command to the check it stands for, so the same drift can happen again to any entry whose check gains an argument.
 
   Found while re-running the seeded defects for the element-power span work, against a tree whose change does not touch the tolerance declaration or the control declaration check.
+
+  Placement. The fix is in the seeded defect's command constant in firmware/tools/mutate.py (CONTROL_DECLARATION): it gains the two source-header arguments the build-time check in Taskfile.yml passes, so both carry the same argument set. No new seam is added: deriving every seeded defect command from Taskfile.yml at run time is rejected as beyond the criterion, and so is relaxing the baseline pre-check, which exists to stop a defect whose check fails before mutation. Verification is a host-tier test in the existing control-declaration test module that reads the build-time check's arguments from Taskfile.yml and requires the seeded defect's command to carry the same set of values for each argument, so dropping either header fails it; the full run of the seeded defects is then shown reporting this defect caught. Drift found in any other seeded defect's command is a separate maintenance item, not part of this change.
 links:
   - target: DEL-MAINTENANCE.C1
     type: derives-from
   - target: OBL-VERIFICATION-DISCIPLINE-001.C2
     type: targets
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: 2ba0a01631ffce07d783579783aa03ca0ef682583ce59f65d285c03d8520d427
+  gating_profile: ""

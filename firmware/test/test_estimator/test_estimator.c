@@ -15,7 +15,9 @@
  */
 #include <unity.h>
 
+#include <float.h>
 #include <math.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -224,14 +226,94 @@ static void test_a_state_outside_the_enumerated_set_is_refused(void)
 /// already admits keeps being admitted, unchanged. The same structure answers
 /// a write of the correction-target state as well as a read of it, so the
 /// probe that now writes back what it read does not newly refuse it either.
+///
+/// SOL-ADMISSION-PROVES-CORRECTION-TAKEN.C2: Every structure the estimator
+/// already admits keeps being admitted, and is left as its initialisation set
+/// it. The same structure stores what a write gives it, so the probe that now
+/// writes a differing value and reads it back is passed, and the held value it
+/// restores leaves every state the structure keeps exactly where
+/// plant_model_init put it.
 static void test_a_structure_that_keeps_the_state_is_accepted(void)
 {
     estimator_t estimator;
+    plant_model_t initialised;
     float reconstructed = 0.0f;
 
     TEST_ASSERT_TRUE(estimator_init(&estimator, &parameters, &limits));
     TEST_ASSERT_TRUE(
         estimator_state(&estimator, ESTIMATOR_STATE_BREW_TEMPERATURE_C, &reconstructed));
+
+    /*
+     * Compared as stored patterns rather than as numbers, state by state, for
+     * every state the structure keeps: a probe that restored a value equal to
+     * the held one but not identical to it, or that restored the state it
+     * probed and moved a neighbour, would leave the model somewhere
+     * initialisation never put it.
+     */
+    TEST_ASSERT_TRUE(plant_model_init(&initialised, &parameters));
+    unsigned compared = 0u;
+    for (unsigned state = 0u; state < (unsigned)PLANT_STATE_COUNT; state++) {
+        float admitted = 0.0f;
+        float expected = 0.0f;
+        char message[96];
+
+        if (!plant_model_state(&initialised, (plant_state_t)state, &expected)) {
+            continue;
+        }
+        (void)snprintf(message, sizeof(message),
+                       "state %u was not answered after admission that answered it before", state);
+        TEST_ASSERT_TRUE_MESSAGE(
+            plant_model_state(&estimator.model, (plant_state_t)state, &admitted), message);
+        (void)snprintf(message, sizeof(message),
+                       "state %u was displaced by admission from where initialisation put it",
+                       state);
+        TEST_ASSERT_EQUAL_MEMORY_MESSAGE(&expected, &admitted, sizeof(expected), message);
+        compared++;
+    }
+    TEST_ASSERT_TRUE_MESSAGE(compared > 0u, "no state was compared, so nothing was shown");
+}
+
+/// SOL-ADMISSION-PROVES-CORRECTION-TAKEN.C1: A structure is refused admission
+/// if the correction-target state does not carry the value written to it.
+///
+/// The half of that criterion that does not depend on a structure: the value
+/// admission writes differs from the held one bit for bit, for every value a
+/// state can hold. No structure can be seeded with several of these -- a
+/// description's values are finite and in range -- so the derivation is asked
+/// directly. A value equal to the held one, or a fixed constant, would let a
+/// state that discards what it is given read back as what it was given.
+static void test_the_value_admission_writes_differs_from_the_held_one_bit_for_bit(void)
+{
+    uint32_t signalling_nan_bits = 0x7fa00001u;
+    uint32_t negative_nan_bits = 0xffc00000u;
+    uint32_t denormal_bits = 0x00000001u;
+    float signalling_nan = 0.0f;
+    float negative_nan = 0.0f;
+    float denormal = 0.0f;
+    memcpy(&signalling_nan, &signalling_nan_bits, sizeof(signalling_nan));
+    memcpy(&negative_nan, &negative_nan_bits, sizeof(negative_nan));
+    memcpy(&denormal, &denormal_bits, sizeof(denormal));
+
+    const float held_values[] = {
+        0.0f,     -0.0f,          1.0f,         21.5f,     -21.5f,       FLT_MAX,       -FLT_MAX,
+        FLT_MIN,  denormal,       INFINITY,     -INFINITY, NAN,          signalling_nan, negative_nan,
+    };
+
+    for (size_t at = 0u; at < sizeof(held_values) / sizeof(held_values[0]); at++) {
+        const float held = held_values[at];
+        const float probe = estimator_admission_probe_value(held);
+        char message[80];
+
+        (void)snprintf(message, sizeof(message), "the value written for held value %zu matches it",
+                       at);
+        TEST_ASSERT_NOT_EQUAL_MESSAGE(0, memcmp(&held, &probe, sizeof(held)), message);
+    }
+
+    /* A held not-a-number stays one: a structure is never handed a value of a
+     * kind it was not holding. */
+    TEST_ASSERT_TRUE(isnan(estimator_admission_probe_value(NAN)));
+    TEST_ASSERT_FALSE(isnan(estimator_admission_probe_value(0.0f)));
+    TEST_ASSERT_TRUE(isinf(estimator_admission_probe_value(INFINITY)));
 }
 
 /// SOL-UNMEASURED-STATE-RECONSTRUCTION.C12: The estimator refuses a structure
@@ -1554,6 +1636,7 @@ int main(void)
     RUN_TEST(test_a_state_read_before_initialisation_is_refused);
     RUN_TEST(test_a_state_outside_the_enumerated_set_is_refused);
     RUN_TEST(test_a_structure_that_keeps_the_state_is_accepted);
+    RUN_TEST(test_the_value_admission_writes_differs_from_the_held_one_bit_for_bit);
     RUN_TEST(test_an_instance_with_no_record_is_refused_and_answers_nothing);
     RUN_TEST(test_the_reconstruction_converges_on_the_models_own_truth);
     RUN_TEST(test_the_residual_follows_the_imposed_discrepancy);

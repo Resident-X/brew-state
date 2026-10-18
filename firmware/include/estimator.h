@@ -114,6 +114,17 @@ typedef struct {
 } estimator_t;
 
 /*
+ * The value admission writes to a state to prove a write to it is taken: one
+ * that differs from `held` bit for bit, for every value `held` can be --
+ * zero, the largest finite values, the infinities and not-a-number included.
+ *
+ * Exposed so the property that makes the probe meaningful can be asserted
+ * across values no structure can be seeded with. A write of `held` itself, or
+ * of any fixed value, would let a state that discards what it is given pass.
+ */
+float estimator_admission_probe_value(float held);
+
+/*
  * Bring an instance to its initial state under a parameter record.
  *
  * The limits record travels alongside the parameter record because the two are
