@@ -200,6 +200,17 @@ class Hierarchy(unittest.TestCase):
         expected = board_check.sheet_instances(replica, "d/d.kicad_sch", set(board_check.tracked_files("git", replica)))
         self.assertEqual(expected, [(), ("Left",), ("Right",)])
 
+    def test_the_expected_sheets_include_every_level_of_nesting_and_end_at_a_schematic_that_contains_itself(self):
+        # SOL-BOARD-SCHEMATIC-DRAWING-CONVENTION.C3: A command of the project's task runner writes one image file per sheet of every board design git tracks
+        repo = Repository()
+        repo.write("d/d.kicad_sch", schematic(1, [("Left", "unit.kicad_sch"), ("Right", "unit.kicad_sch"), ("Misc", "misc.kicad_sch")]))
+        repo.write("d/unit.kicad_sch", schematic(2, [("Deep", "deep.kicad_sch")]))
+        repo.write("d/misc.kicad_sch", schematic(3, [("Again", "misc.kicad_sch")]))
+        repo.write("d/deep.kicad_sch", schematic(4))
+        repo.commit()
+        expected = board_check.sheet_instances(repo.root, "d/d.kicad_sch", set(board_check.tracked_files("git", repo.root)))
+        self.assertEqual(expected, [(), ("Left",), ("Left", "Deep"), ("Right",), ("Right", "Deep"), ("Misc",), ("Misc", "Again")])
+
 
 class FailsWhatItCannotRead(unittest.TestCase):
     def test_a_schematic_kicad_cannot_read_fails_its_design_by_name_and_another_design_is_still_drawn(self):
