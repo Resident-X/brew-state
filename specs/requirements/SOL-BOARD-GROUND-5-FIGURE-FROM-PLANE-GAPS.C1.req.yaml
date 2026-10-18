@@ -2,11 +2,11 @@ id: SOL-BOARD-GROUND-5-FIGURE-FROM-PLANE-GAPS.C1
 type: criterion
 title: The GROUND-5 figure is derived from the gaps the pins open in the ground plane
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |
-  Change the method's practice catalogue item GROUND-5 so the figure of its plated-hole spacing rule is derived from the gaps the plated pins open in the plane the rings merge in, namely the ground zones' clearance and thermal-relief gap and the clearance a net class states for a pin's net where that governs the gap in the plane, so a board carrying mains pours with a larger clearance does not inflate it. The item keeps its derivation from the annulus widths, the gaps and the zone's minimum thickness, and keeps its reading of a pad that is not round by its width along the line to the nearest other plated hole. An inspection of the item against each clause shows the figure no longer takes the largest clearance of any zone or class of the board, and the retained clauses are unchanged. Out of scope: any other catalogue item.
+  Change the method's practice catalogue item GROUND-5 so the figure of its plated-hole spacing rule is derived from the plated pins that open a gap in a ground plane, namely a pin whose pad lies within the outline of a ground zone, with the annulus term taken from those pins alone, the gap of a ground pin being its ground zones' thermal-relief gap, and the gap of any other pin being the greatest of the ground zone's clearance, the clearance of its net class and the clearance of any rule of the rules file that applies to it in the plane, so a board carrying mains pours, or mains connectors outside the ground planes, does not inflate it. A board with no plated pin in a ground plane has no figure and needs no rule. The item keeps its derivation from the annulus widths, the gaps and the zone's minimum thickness, keeps its rule condition on every pair of plated pads, and keeps its reading of a pad that is not round by its width along the line to the nearest other plated hole. An inspection of the item against each clause shows that the figure takes no clearance from a zone, class or rule that does not govern a pin in the plane, that the annulus term takes no pin outside the ground planes, that the case of no plated pin in a plane is stated, and that the retained clauses are unchanged. Out of scope: any other catalogue item.
 links:
   - target: SOL-BOARD-GROUND-5-FIGURE-FROM-PLANE-GAPS
     type: criterion-of
