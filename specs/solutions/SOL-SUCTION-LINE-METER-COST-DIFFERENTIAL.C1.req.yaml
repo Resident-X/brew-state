@@ -1,7 +1,7 @@
 id: SOL-SUCTION-LINE-METER-COST-DIFFERENTIAL.C1
 type: criterion
 title: The meter's cost to the pump is measured as a with/without-meter differential in delivered mass and prime time
-status: active
+status: deprecated
 version: 1
 measurement_type: threshold
 verification: test

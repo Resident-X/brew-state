@@ -1,7 +1,7 @@
 id: DEL-BENCH-FLOW-INSTRUMENTATION.C6
 type: criterion
 title: The fitted suction-line meter leaves the pump enough margin to prime and deliver
-status: active
+status: deprecated
 version: 2
 measurement_type: threshold
 verification: test

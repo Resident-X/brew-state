@@ -4,7 +4,7 @@ category: task
 title: The flow the machine already senses is read, positioned and resolved
 status: active
 level: task
-version: 2
+version: 3
 text: |
   The flow the machine already senses becomes flow the machine can use. A meter is fitted in the water
   path and wired to the OEM controller this project replaces, so the reading exists but is not
@@ -19,11 +19,9 @@ text: |
   separate, still-open question, and if the fitted meter cannot resolve finely enough, a different or
   additional meter is still what C2 requires regardless of position. What is not yet established is
   whether the confirmed position actually makes a coffee delivery distinguishable from a steam draw
-  once read for real, and what the existing suction-line restriction costs the vibratory pump in
-  priming and cavitation margin under real operation -- the owner's account is that it has not caused
-  a noticeable problem in factory use, but that is not yet bench-verified evidence. The meter sits
-  below the tank's water level, so the suction line stays flooded rather than needing to self-prime by
-  lift, which bears on that cavitation risk without settling it.
+  once read for real. What the meter's restriction costs the vibratory pump in priming margin is not
+  measured here: the owner accepts it, as DEC-FLOW-SENSED-UPSTREAM-OF-PUMP records, because the machine
+  shipped with the meter fitted in that position.
 
   What the reading resolves is set by the smallest difference between drinks an operator would
   notice, which is a property of the deliveries the machine is judged by rather than of what the part
