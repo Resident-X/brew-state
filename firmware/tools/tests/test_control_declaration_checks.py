@@ -18,6 +18,7 @@ took somebody to notice.
 from __future__ import annotations
 
 import os
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -25,6 +26,8 @@ import unittest
 
 TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, TOOLS)
+
+import mutate  # noqa: E402
 
 #: The vocabulary the gate loads its admissible origin kinds out of. Only the
 #: parts the loader reads are reproduced, because a copy of the whole header
@@ -715,6 +718,48 @@ class ControlDeclarationGate(unittest.TestCase):
         """SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C1: two edges in the right order, each inside its own admissible range, are accepted."""
         result = self.run_gate()
         self.assertEqual(0, result.returncode, result.stderr)
+
+
+def argument_values(command):
+    """Each option's values in a command line, as a set per option."""
+    found = {}
+    option = None
+    for token in command:
+        if token.startswith("--"):
+            option = token
+            found.setdefault(option, set())
+        elif option is not None:
+            found[option].add(token)
+    return found
+
+
+class SeededDefectCarriesTheBuildCheck(unittest.TestCase):
+    """The seeded defect's check is the build-time check, argument for argument."""
+
+    def build_time_command(self):
+        taskfile = os.path.join(os.path.dirname(os.path.dirname(TOOLS)), "Taskfile.yml")
+        with open(taskfile, "r", encoding="utf-8") as handle:
+            lines = [
+                line.strip()[2:] for line in handle
+                if line.strip().startswith("- python3 tools/check_control_declaration.py")
+            ]
+        self.assertEqual(1, len(lines), "expected exactly one build-time control declaration check")
+        return shlex.split(lines[0])[2:]
+
+    # SOL-MUTATE-BAND-OF-NOTHING-BASELINE-PASSES.C1: The seeded defect that declares a band of nothing in the tolerance declaration runs its check with the same arguments the build-time control declaration check is run with, so the check passes on the unmutated tree and fails once the defect is applied.
+    def test_the_seeded_defect_check_carries_the_build_time_arguments(self):
+        built = argument_values(self.build_time_command())
+        seeded = argument_values(mutate.CONTROL_DECLARATION[2:])
+        self.assertIn("--source-header", built)
+        self.assertEqual(built, seeded)
+
+    # SOL-MUTATE-BAND-OF-NOTHING-BASELINE-PASSES.C1: The seeded defect that declares a band of nothing in the tolerance declaration runs its check with the same arguments the build-time control declaration check is run with, so the check passes on the unmutated tree and fails once the defect is applied.
+    def test_the_comparison_notices_a_dropped_header(self):
+        built = argument_values(self.build_time_command())
+        command = list(mutate.CONTROL_DECLARATION[2:])
+        index = command.index("include/pump_trim_declaration.h")
+        del command[index - 1:index + 1]
+        self.assertNotEqual(built, argument_values(command))
 
 
 if __name__ == "__main__":
