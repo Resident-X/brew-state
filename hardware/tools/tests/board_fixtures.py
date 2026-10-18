@@ -45,6 +45,22 @@ def require_tools(kicad_cli: str, resvg: str = "") -> None:
         raise
 
 
+def require_gerbonara(python: str) -> None:
+    """Stop a module of tests that draws exported layers if `python` does not import gerbonara at the exact version.
+
+    The module stops as `require_tools` stops it, with the account of what is
+    missing and how to install it, and a `CANNOT RUN | ...` line naming gerbonara.
+    """
+    import board_check
+    import production_seed
+
+    try:
+        production_seed.check_gerbonara(python)
+    except board_check.CannotRun as error:
+        print(f"CANNOT RUN | {board_check.clean(str(error))}", file=sys.stderr, flush=True)
+        raise
+
+
 def cleanup():
     """Remove every throwaway design's folder."""
     while _SCRATCH:

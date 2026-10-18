@@ -30,6 +30,10 @@ vars:
   # resvg, which turns the review views into images, may be installed off the
   # search path too; point at it with RESVG=... (hardware/README.md says where to get it).
   RESVG: '{{.RESVG | default "resvg"}}'
+  # The Python of the virtual environment gerbonara 1.6.3 is installed in, which
+  # draws the exported fabrication layers; point at it with GERBONARA_PYTHON=...
+  # (hardware/README.md says how to install it).
+  GERBONARA_PYTHON: '{{.GERBONARA_PYTHON | default "python3"}}'
 
 tasks:
   sc:install:
@@ -477,6 +481,13 @@ tasks:
     cmds:
       - python3 "{{.ROOT_DIR}}/{{.HW_DIR}}/tools/review_seed.py" --kicad-cli "{{.KICAD_CLI}}" --resvg "{{.RESVG}}" {{.CLI_ARGS}}
 
+  hw:production-seed:
+    desc: Seed known defects into the production files of the layout review proof design (hardware/proof/review-proof), exported from its last commit with the commands the method's ordering step names, and write a production-files folder outside the repository holding only what the ordering step gives a follower (the seeded placement file, as the step converts it, with a part rotated, a polarised part reversed, an integrated circuit's first pin turned and a part moved, and the parts list with a catalogue number replaced; the Gerber and drill files exported from an edited copy of the board in which a layer is missing content, shifted and mirrored; the image of every layer and of the drill file drawn from those files by gerbonara 1.6.3 and resvg; the unseeded design's rendered views and placement view, which stand in for the assembler's preview; the design's parts specification record, the method, the hardware readme and the manufacturer's record), with the seed list written apart — on demand, not part of the gate. Refuses a seed that does not land, and a seed list inside the folder or inside a design's folder. Pass the seed list path and the new or empty folder after --, for example task hw:production-seed -- --seeds /tmp/seeds.json --out /tmp/production; task hw:production-seed -- --print-prompt prints the fixed prompt a blind follow is started with. Needs the same tools as hw:views, and gerbonara 1.6.3 in a virtual environment of its own (set GERBONARA_PYTHON=/path/to/that/python when python3 is not it)
+    # Run from where it is called, so the paths given are read as the caller wrote them.
+    dir: "{{.USER_WORKING_DIR}}"
+    cmds:
+      - python3 "{{.ROOT_DIR}}/{{.HW_DIR}}/tools/production_seed.py" --kicad-cli "{{.KICAD_CLI}}" --resvg "{{.RESVG}}" --gerbonara-python "{{.GERBONARA_PYTHON}}" {{.CLI_ARGS}}
+
   hw:rules-confirm:
     desc: Confirm, by asking KiCad, that it loads a board's custom rules file (an appended marker rule fires only if it does) and list the nets it places in each named class, failing on an undefined or empty class or a board with no MAINS declaration. Pass the layout, its own project file and each class after --, for example task hw:rules-confirm -- --board b.kicad_pcb --project b.kicad_pro --class Power --class Ground. Needs the same tools as hw:verify
     # Run from where it is called, so the paths given are read as the caller wrote them.
@@ -532,20 +543,22 @@ tasks:
       - python3 "{{.ROOT_DIR}}/{{.HW_DIR}}/tools/board_review_history.py" {{.CLI_ARGS}}
 
   hw:test:
-    desc: Run the tests covering the board tooling (the pre-order check, the locked-copper check, the layout review views, the placement view, the placement and critical routing history check, the layout review record history check and the layout review proof's seeding command), against the real kicad-cli and resvg, the seeded-fault proof's own tests included — on demand; the build round's gate and the nightly complete verification run hw:test:round instead. Needs the same tools as hw:verify, resvg 0.47 or newer (set RESVG=/path/to/resvg when resvg is not on PATH), and Task
+    desc: Run the tests covering the board tooling (the pre-order check, the locked-copper check, the layout review views, the placement view, the placement and critical routing history check, the layout review record history check, the layout review proof's seeding command, and the production-files conversion, rendering and seeding command), against the real kicad-cli, resvg and gerbonara, the seeded-fault proof's own tests included — on demand; the build round's gate and the nightly complete verification run hw:test:round instead. Needs the same tools as hw:verify, resvg 0.47 or newer (set RESVG=/path/to/resvg when resvg is not on PATH), gerbonara 1.6.3 in a virtual environment of its own (set GERBONARA_PYTHON=/path/to/that/python when python3 is not it), and Task
     dir: "{{.ROOT_DIR}}"
     env:
       KICAD_CLI: "{{.KICAD_CLI}}"
       RESVG: "{{.RESVG}}"
+      GERBONARA_PYTHON: "{{.GERBONARA_PYTHON}}"
     cmds:
       - python3 -m unittest discover -s {{.HW_DIR}}/tools/tests {{.CLI_ARGS}}
 
   hw:test:round:
-    desc: Run the tests covering the board tooling as hw:test does, without the tests that need the seeded-fault proof, which stays on demand (hw:test runs the whole suite) — the part the build round's gate runs for a change that can matter to a board and the nightly complete verification runs every night. Against the real kicad-cli and resvg, so it needs the tools hw:test does, KiCad 10.0 or newer, resvg 0.47 or newer and a monospaced font for the layout review views' captions, which the tests need as well as the views, and a missing one stops the run with a CANNOT RUN line naming it
+    desc: Run the tests covering the board tooling as hw:test does, without the tests that need the seeded-fault proof, which stays on demand (hw:test runs the whole suite) — the part the build round's gate runs for a change that can matter to a board and the nightly complete verification runs every night. Against the real kicad-cli and resvg, so it needs the tools hw:test does, KiCad 10.0 or newer, resvg 0.47 or newer, a monospaced font for the layout review views' captions, which the tests need as well as the views, and gerbonara 1.6.3 in a virtual environment of its own (set GERBONARA_PYTHON=/path/to/that/python when python3 is not it) for the production-files tests, and a missing one stops the run with a CANNOT RUN line naming it
     dir: "{{.ROOT_DIR}}"
     env:
       KICAD_CLI: "{{.KICAD_CLI}}"
       RESVG: "{{.RESVG}}"
+      GERBONARA_PYTHON: "{{.GERBONARA_PYTHON}}"
       BOARD_TESTS_WITHOUT_PROOF: "1"
     cmds:
       - python3 -m unittest discover -s {{.HW_DIR}}/tools/tests {{.CLI_ARGS}}
