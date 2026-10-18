@@ -1,0 +1,172 @@
+# NOT FOR MANUFACTURE. A synthetic pin-limit record for the throwaway design beside it.
+# The limits were read from the datasheets named in each entry on the date given. Being
+# marked synthetic, the check accepts it only for a design marked not for manufacture.
+domains:
+  - name: logic
+    rail: +3V3
+    highest_voltage_v: 3.48
+  - name: supply5
+    rail: +5V
+    highest_voltage_v: 5.25
+  - name: mains
+    rail: MAINS_L
+    highest_voltage_v: 353.6
+parts:
+  - lcsc: C9200032
+    source:
+      document: "MSPM0C1104, MSPM0C1103 data sheet SLASF90E"
+      revision: "E"
+      section: "7.1 Absolute Maximum Ratings; 9.1.1 Typical Application for the statement that the 5-V open-drain IO PA0 and PA1 are fail-safe"
+      read_on: 2026-10-18
+    pins:
+      - pin: "VDD"
+        domain: logic
+        absolute_max_v: 4.1
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      - pin: "PA0"
+        domain: logic
+        absolute_max_v: 5.5
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: true
+      - pin: "PA1"
+        domain: logic
+        absolute_max_v: 5.5
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: true
+      - pin: "PA2"
+        domain: logic
+        absolute_max_v: 4.1
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      - pin: "PA17"
+        domain: logic
+        absolute_max_v: 4.1
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      - pin: "PA19"
+        domain: logic
+        absolute_max_v: 4.1
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      - pin: "PA20"
+        domain: logic
+        absolute_max_v: 4.1
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      - pin: "PA24"
+        domain: logic
+        absolute_max_v: 4.1
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      - pin: "PA27"
+        domain: logic
+        absolute_max_v: 4.1
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      - pin: "NRST"
+        domain: logic
+        absolute_max_v: 4.1
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+  - lcsc: C9200020
+    source:
+      document: "TPS3820, TPS3823, TPS3824, TPS3825, TPS3828 data sheet SLVS165O"
+      revision: "O"
+      section: "6.1 Absolute Maximum Ratings"
+      read_on: 2026-10-18
+    pins:
+      - pin: "5"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      - pin: "4"
+        domain: logic
+        absolute_max_v: 3.78
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      - pin: "3"
+        domain: logic
+        absolute_max_v: 3.78
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      - pin: "1"
+        domain: logic
+        absolute_max_v: 3.78
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+  - lcsc: C9200030
+    source:
+      document: "MCP1700 data sheet DS20001826E"
+      revision: "E"
+      section: "Absolute Maximum Ratings"
+      read_on: 2026-10-18
+    pins:
+      - pin: "3"
+        domain: supply5
+        absolute_max_v: 6.5
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      - pin: "2"
+        domain: logic
+        absolute_max_v: 6.5
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+  - lcsc: C9200035
+    source:
+      document: "TPD4E1U06 data sheet SLVSBQ9D"
+      revision: "D"
+      section: "6.4 Recommended Operating Conditions (VIO 0 V to 5.5 V; the data sheet states no pin absolute maximum)"
+      read_on: 2026-10-18
+    pins:
+      - pin: "1"
+        domain: logic
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: true
+      - pin: "6"
+        domain: logic
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: true
+  - lcsc: C9200014
+    source:
+      document: "BSS138 data sheet DS30144"
+      revision: "25-2"
+      section: "Maximum Ratings (absolute maximum)"
+      read_on: 2026-10-18
+    pins:
+      - pin: "1"
+        domain: logic
+        absolute_max_v: 20
+        absolute_min_v: -20
+        tolerates_driven_unpowered: true
+      - pin: "3"
+        domain: supply5
+        absolute_max_v: 50
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: true
+  - lcsc: C9200012
+    source:
+      document: "MOC301XM, MOC302XM data sheet"
+      revision: "1.5"
+      section: "Absolute Maximum Ratings"
+      read_on: 2026-10-18
+    pins:
+      - pin: "1"
+        domain: supply5
+        absolute_max_v: 3
+        absolute_min_v: -3
+        tolerates_driven_unpowered: true
+      - pin: "4"
+        domain: mains
+        absolute_max_v: 400
+        absolute_min_v: -400
+        tolerates_driven_unpowered: true
+      - pin: "6"
+        domain: mains
+        absolute_max_v: 400
+        absolute_min_v: -400
+        tolerates_driven_unpowered: true
+synthetic: true

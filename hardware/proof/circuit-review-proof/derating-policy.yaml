@@ -1,0 +1,78 @@
+# NOT FOR MANUFACTURE. A synthetic derating policy, made only to prove the schematic
+# review against the throwaway design beside it. Its shares are this proof design's
+# own reliability requirement, chosen so the review has a policy to judge parts
+# against; no published table is reproduced. Being marked synthetic, the check accepts
+# it only for a design marked not for manufacture.
+source: this proof design's own reliability requirement, a stated policy and not a published table
+classes:
+  - class: resistor
+    voltage:
+      share: 0.8
+      source: proof design's stated policy
+    power:
+      share: 0.5
+      source: proof design's stated policy
+    temperature:
+      share: 0.8
+      source: proof design's stated policy
+  - class: capacitor
+    voltage:
+      share: 0.6
+      source: proof design's stated policy
+    power:
+      share: 1
+      source: proof design's stated policy
+    temperature:
+      share: 0.8
+      source: proof design's stated policy
+  - class: semiconductor
+    voltage:
+      share: 0.8
+      source: proof design's stated policy
+    power:
+      share: 0.5
+      source: proof design's stated policy
+    temperature:
+      share: 0.8
+      source: proof design's stated policy
+  - class: integrated circuit
+    voltage:
+      share: 0.9
+      source: proof design's stated policy
+    power:
+      share: 0.7
+      source: proof design's stated policy
+    temperature:
+      share: 0.8
+      source: proof design's stated policy
+  - class: connector
+    voltage:
+      share: 0.7
+      source: proof design's stated policy
+    power:
+      share: 0.7
+      source: proof design's stated policy
+    temperature:
+      share: 0.8
+      source: proof design's stated policy
+  - class: fuse and protective part
+    voltage:
+      share: 0.9
+      source: proof design's stated policy
+    power:
+      share: 0.7
+      source: proof design's stated policy
+    temperature:
+      share: 0.8
+      source: proof design's stated policy
+  - class: mains-rated part (X and Y capacitors, mains fuse, varistor, mains terminals and links)
+    voltage:
+      share: 1
+      source: proof design's stated policy -- the rated alternating voltage of a part sold for the mains is its safety rating at the supply the part is sold for, and already carries its own margin, so the full rating is allowed against the declared mains span of the constraints record (the surge is judged apart, under the surge declaration)
+    power:
+      share: 0.7
+      source: proof design's stated policy
+    temperature:
+      share: 0.8
+      source: proof design's stated policy
+synthetic: true

@@ -1,0 +1,30 @@
+# NOT FOR MANUFACTURE. A synthetic pin allocation, made only to prove the schematic
+# review against the throwaway design beside it. Its channels are not a real board's
+# and must never be used for one: being marked synthetic, the check accepts it only
+# for a design marked not for manufacture.
+synthetic: true
+channels:
+  - channel: heater_command
+    net: HEAT_CMD
+    controller_pin: PA2
+  - channel: watchdog_kick
+    net: WDI
+    controller_pin: PA17
+  - channel: status_led
+    net: LED_DRV
+    controller_pin: PA24
+  - channel: sense_input
+    net: SENSE_ADC
+    controller_pin: PA27
+  - channel: bus_data
+    net: SDA
+    controller_pin: PA0
+  - channel: bus_clock
+    net: SCL
+    controller_pin: PA1
+  - channel: debug_data
+    net: SWDIO
+    controller_pin: PA19
+  - channel: debug_clock
+    net: SWCLK
+    controller_pin: PA20
