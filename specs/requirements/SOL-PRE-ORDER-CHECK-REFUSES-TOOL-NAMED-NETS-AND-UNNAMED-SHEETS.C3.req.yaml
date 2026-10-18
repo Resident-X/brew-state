@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS.C3
+type: criterion
+title: Every tracked design passes the refusals, which run in the build round for board changes and nightly on main
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Every design git tracks passes the two refusals. A change to a design's schematic or sheets re-runs the board tier of the build round, and the nightly run of main runs the refusals whatever changed, through the board gate the pre-order check already uses. Out of scope: a new gate, a new tool, and the full seeded-fault proof, which stays on demand.
+links:
+  - target: SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS
+    type: criterion-of

@@ -1,0 +1,14 @@
+id: SOL-BOARD-SCHEMATIC-DRAWING-CONVENTION.C2
+type: criterion
+title: The schematic review gives every sheet a verdict against the drawing convention without changing the layout checklist
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The circuit practice catalogue gains one judgement item, selected by every sheet of a schematic, asking whether the sheet meets the drawing convention. The item is written in the catalogue's form with a stable identifier and a severity. The review's verdict table names the sheet in its Net or part column for the item, and the method's text on that column and on the names a record may carry is amended to allow it. The layout checklist the board history check builds is unchanged by the item, shown by the existing test of that isolation passing with the item in the method.
+
+  Out of scope: the other items of the catalogue, the layout catalogue and the pre-order check.
+links:
+  - target: SOL-BOARD-SCHEMATIC-DRAWING-CONVENTION
+    type: criterion-of

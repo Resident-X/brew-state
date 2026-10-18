@@ -1,0 +1,14 @@
+id: SOL-BOARD-SCHEMATIC-DRAWING-CONVENTION.C6
+type: criterion
+title: Every tracked design passes the new refusals, which run in the build round for board changes and nightly on main
+status: deprecated
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Every design git tracks passes the two refusals. A change to a design's schematic or sheets re-runs the board tier of the build round, and the nightly run of main runs the refusals whatever changed, through the board gate the pre-order check already uses. No new gate and no new tool is introduced.
+
+  Out of scope: a new gate, a new tool, and the full seeded-fault proof, which stays on demand.
+links:
+  - target: SOL-BOARD-SCHEMATIC-DRAWING-CONVENTION
+    type: criterion-of

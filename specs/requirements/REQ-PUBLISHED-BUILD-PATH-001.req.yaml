@@ -4,7 +4,7 @@ category: functional
 title: The published material carries a followed path from checkout to a working machine
 status: active
 priority: should
-version: 1
+version: 2
 text: |
   Someone who found this published cannot ask a question. Whatever stands between a clean checkout and a machine that makes coffee has to be written down, because the alternative is not a slower reader but a stopped one.
 
@@ -16,7 +16,7 @@ rationale: |
 
   Requires the sequence to have been followed by someone else. Documentation is verified by use, and an author cannot test their own material for the knowledge they did not know they were assuming. This is the criterion that costs something, and it is the only one that actually establishes the promise.
 
-  Silent on the form the material takes and on how many steps it has. What matters is that the path exists, is followed rather than asserted, and ends somewhere a reader can tell they have arrived.
+  Silent on how many steps the path has and on the form of its prose; it speaks to the form of one thing, a board's schematic, because a design that is electrically right but cannot be followed is a stopped reader as surely as a missing step. What matters is that the path exists, is followed rather than asserted, and ends somewhere a reader can tell they have arrived.
 links:
   - target: OBL-OPEN-SOURCE-MAINTAINABILITY-001.C2
     type: derives-from

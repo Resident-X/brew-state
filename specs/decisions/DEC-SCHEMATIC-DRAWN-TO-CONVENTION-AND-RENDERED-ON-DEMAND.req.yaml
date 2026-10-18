@@ -1,0 +1,32 @@
+id: DEC-SCHEMATIC-DRAWN-TO-CONVENTION-AND-RENDERED-ON-DEMAND
+type: decision
+category: tactical
+title: A board's published schematic is the committed file, drawn to a convention and rendered on demand
+status: active
+version: 1
+decided_by: david
+text: |
+  A board's published schematic is the committed schematic file itself, drawn to a written convention before the schematic review begins: one function to a sheet, each sheet named for its function, every net named by its designer, wires within a function's circuit and labels between circuits. A task-runner command renders every sheet from the tracked files for a reader to open; the render is regenerated on demand and is not committed. The pre-order check refuses what a file comparison can decide, a net the tool named itself and a sheet with no name of its own. How a sheet is arranged beyond that is judged in the schematic review against the convention, not by a tool.
+rationale: |
+  Context: the committed schematics are electrically correct but laid out for checking: parts scattered, nets joined by labels alone, text overlapping. The persona who rebuilds this cannot ask a question, and the requirement that the published designs be readable had no criterion. No real board is drawn yet, so the convention costs almost nothing now and a retrofit later would edit the pin allocation record's net paths and the schematic review's verdict rows.
+
+  Trade-offs: a generator that lays a schematic out from the netlist was rejected. A search found no tool that arranges an existing KiCad schematic for readability, so the project would build the layout engine, and a separately generated drawing would need a netlist comparison to stay matched to the file it draws. A committed render beside each schematic was rejected because it can drift from the file it shows; a render made from the tracked files on demand cannot, at the price that a reader who wants the drawing needs the free design tool the repository already names. A mechanical check for overlapping text was rejected, not because text extent cannot be estimated, which the layout check already does for designators from character count and text size, but because an estimate of text against text alone would pass a drawing whose text overlaps a symbol body or a wire, because the check models neither, and building that model is a layout engine's work, so a clean report would read as a legible drawing when it was not. An analysis that only the agent's design tool offers was rejected because a reader without it could not repeat it. The two refusals a file comparison can decide exactly, a tool-named net and an unnamed sheet, are the pre-order check's, and the arrangement is judged in the schematic review. Redrawing each board after the first one is tested was rejected because the structure the convention fixes is the structure the records name.
+
+  Reversibility: cheap before the first board is drawn; after it, changing the sheet structure means editing the records that name its nets and re-running the schematic review.
+
+  Consequences: the convention is carried by the board design method and the schematic review, run by a reviewer who did not draw the schematic, judges it per sheet, so the arrangement inside a sheet rests on a reviewer's judgement, as the method's other judgement steps do. A net the tool named itself and an unnamed sheet are failed by the pre-order check, each shown to fail on a fault seeded for it. The reader sees the drawing only by rendering it, and the method says so.
+options_considered:
+  - option: Draw each schematic to a written convention and render the committed file on demand
+    reason_rejected: ""
+  - option: Generate the schematic layout from the design records or netlist
+    reason_rejected: No tool arranges an existing KiCad schematic for readability, so the project would build the layout engine and keep a separate drawing matched to the file it draws
+  - option: Commit a rendered drawing beside each schematic
+    reason_rejected: It can drift from the file it shows, which a render made on demand from the tracked files cannot
+  - option: Check overlapping text mechanically in the pre-order check
+    reason_rejected: A text-against-text estimate would pass text overlapping a symbol body or a wire, which the check does not model, so a clean report would read as a legible drawing; an analysis only the agent's tool offers cannot be repeated by a reader
+  - option: Redraw each board after the first one is tested
+    reason_rejected: The structure a convention fixes is named by the pin allocation record and the review's verdict rows, so a later change edits both
+chosen: Draw each schematic to a written convention and render the committed file on demand
+links:
+  - target: REQ-PUBLISHED-BUILD-PATH-001.C6
+    type: addresses

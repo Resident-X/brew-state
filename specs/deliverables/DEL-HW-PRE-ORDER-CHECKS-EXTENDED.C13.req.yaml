@@ -1,0 +1,13 @@
+id: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C13
+type: criterion
+title: A design with a tool-named net or an unnamed sheet fails the check
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  A design with a net the design tool named itself, or a hierarchical sheet carrying no name of its own, fails the check before it can be ordered, so that a reader following a net by its name, or a sheet by its function, is never left with a name that says nothing.
+links:
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED
+    type: criterion-of

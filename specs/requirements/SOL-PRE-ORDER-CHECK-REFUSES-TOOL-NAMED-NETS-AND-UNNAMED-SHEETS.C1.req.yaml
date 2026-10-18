@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS.C1
+type: criterion
+title: A net named by the tool and a sheet with no name of its own fail the check by name
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The pre-order check fails a design whose schematic carries a net whose name the design tool generated for a net the designer left unnamed, naming the net, and fails a design with a hierarchical sheet whose name is blank or the tool's default, naming the sheet. A pin nothing is connected to is exempt, and so is the root sheet. A design with neither fault passes. Out of scope: arrangement and overlapping text, which the schematic review judges, and the check's other rules.
+links:
+  - target: SOL-PRE-ORDER-CHECK-REFUSES-TOOL-NAMED-NETS-AND-UNNAMED-SHEETS
+    type: criterion-of

@@ -1,0 +1,14 @@
+id: SOL-BOARD-SCHEMATIC-DRAWING-CONVENTION.C5
+type: criterion
+title: Each new refusal is shown to fail on a fault seeded for it in a copy of the throwaway design
+status: deprecated
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The on-demand seeded-fault proof introduces into a copy of a throwaway design, outside the repository, a tool-named net and a sheet with a blank name, and requires the check to fail each by name. The proof is an on-demand command beside the existing proof and runs in neither gate.
+
+  Out of scope: the pre-order check's other rules and the existing seeded-fault proofs.
+links:
+  - target: SOL-BOARD-SCHEMATIC-DRAWING-CONVENTION
+    type: criterion-of

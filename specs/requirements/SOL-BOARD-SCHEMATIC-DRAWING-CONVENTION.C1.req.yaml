@@ -1,0 +1,14 @@
+id: SOL-BOARD-SCHEMATIC-DRAWING-CONVENTION.C1
+type: criterion
+title: The method carries a schematic drawing convention whose every item cites its published source
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The board design method gains a reference section holding the schematic drawing convention: one function to a sheet, each sheet named for its function, every net named by its designer, wires within a function's circuit and labels between circuits, one consistent signal-flow direction, supply rails joined across sheets by name, each connector labelled with its harness pin and channel, and text clear of other text and of symbols. Each item carries its source by title, publisher, section, address and the date read, from documents any reader can obtain without charge. The section holds nothing specific to this machine, and the method's opening paragraph on the order of its sections names it.
+
+  Out of scope: the review step itself, the pre-order check and any rendering of sheets.
+links:
+  - target: SOL-BOARD-SCHEMATIC-DRAWING-CONVENTION
+    type: criterion-of
