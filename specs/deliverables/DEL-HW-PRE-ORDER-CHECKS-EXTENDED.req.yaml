@@ -50,3 +50,5 @@ links:
     type: targets
   - target: DEL-CONTROLLER-HARDWARE.C12
     type: derives-from
+  - target: DEC-BOARD-PRE-ORDER-RULE-READINGS
+    type: justified-by

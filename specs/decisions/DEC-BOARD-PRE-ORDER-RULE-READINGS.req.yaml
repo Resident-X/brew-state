@@ -1,0 +1,61 @@
+id: DEC-BOARD-PRE-ORDER-RULE-READINGS
+type: decision
+category: tactical
+title: Each further pre-order rule compares a named record figure and fails a design that omits what it needs
+status: active
+version: 1
+text: |
+  Each further pre-order rule reads only the design's files and the records it is held to, and fails a design that omits what the rule needs, so a rule that finds nothing to inspect fails rather than passes. The records are those defined by the board design records decision and its amendment; this decision fixes what each rule compares.
+
+  Board minimums. A manufacturer limits record, manufacturer-limits.yaml, found by the nearest-folder rule and marked synthetic in a proof design, states the date it was read, its source, a max_age_days beyond which the check refuses it, and under processes the manufacturer's limits per process. A process is keyed by copper layer count and finished outer copper weight, and holds each limit under the name of the board-setup or rule key it bounds (minimum track width, clearance, drill, annular ring, hole-to-hole and the like), each with the citation of the published entry it was read from. The design's process is derived from its own layer stack and not declared. The rule fails a board whose board-setup minimums, each net class's clearance and track width, or any minimum a custom rule sets, is looser than the limit of its process, a board whose process the record does not list, and a record older than its own max_age_days. A test holds each recorded figure to the published entry it cites so the record cannot drift from its source.
+
+  Separation floor. A signed mains_to_low_voltage figure is compared with the floor its own table_rows give. A row applies when its working_voltage_v and altitude_m are at or above the basis values, its overvoltage_category, pollution_degree and material_group equal the basis values, and its insulation equals the strongest insulation among barrier_types. The floor is the largest clearance_mm and the largest creepage_mm over the applicable rows. The rule fails a signed figure below its floor and a design that declares mains present with no applicable row for either figure.
+
+  Sensing and ground returns. A board rules record, board-rules.yaml, found the same way, holds two mappings. sensing holds classes, the net classes carrying precision sensing; noisy_classes, the net classes that switch or drive loads; clearance_mm; and source. ground_returns holds ground_classes, the net classes that are returns, and per signal net class a minimum ratio of signal pins to ground-return pins and the ratio's source. Each mapping may state none explicitly, as the mains declaration does; silence fails. The sensing rule is enforced as the separation rule is: the check appends, as the last rule on a temporary copy, one rule per sensing and noisy class pair at the declared clearance, and fails where a sensing item sits closer. The ground-return rule counts, per connector, signal pins and pins on a ground class, and fails a connector below the declared ratio for its signal class. A connector is a part whose reference designator begins with J.
+
+  Derated voltage. Each position of the parts specification record that a derating class covers carries class, naming a class of the derating policy exactly; a position naming a class the policy lacks fails. The voltage rating is the figure written with unit V, VDC or VAC; an AC figure is taken at its peak, the figure times the square root of two. The working voltage of a part is the highest voltage of the nets it connects, worked out as for pin limits below. The rule fails a part whose working voltage exceeds the policy's voltage share times its rating. A mains domain in the pin-limit record is required when the design declares mains present and is at least the peak of the basis working voltage.
+
+  Pin limits. The omission rule applies to parts whose class is a semiconductor or integrated circuit; passives and mechanical parts need no pin-limit entry. The highest voltage a net can reach is the largest of: its rail's highest_voltage_v where it is a rail; the domain voltage of every listed pin on it; and that of any net joined to it through a two-terminal passive. A connector pin driven from outside the board is declared in the connector's entry in the pin-limit record. The rule fails a pin whose net can exceed its absolute_max_v or fall below its absolute_min_v, and a pin whose net is driven from another domain while its own is unpowered where tolerates_driven_unpowered is false.
+
+  Fiducials and marks. A fiducial is a pad carrying KiCad's fiducial pad property. The rule requires at least three fiducials on each side that carries surface-mount parts. A polarised part is one whose schematic pins are named for anode and cathode or plus and minus, and every part with three or more pads. A mark is present when a silkscreen item on the part's own side lies nearer pad one than any other pad. The fiducial requirement is added to the layout practice catalogue as an enforced item with a published source.
+
+  Lifecycle. The extract's lifecycle mapping is required on the entry of every part the design places. Its status is one of active, not recommended for new designs, end of life, obsolete, or no source publishes one, and its read_on is held to the extract's max_age_days. The rule fails a part whose status is end of life, obsolete or not recommended for new designs.
+
+  Mounting holes. A mounting hole is a footprint whose pads are all holes, and every non-plated hole. A fixing's extent is the larger of its pad and its courtyard. The check appends, after the signed Mains rule, rules holding the hole clearance and courtyard distance to the Mains class at no less than the signed clearance on every layer, and fails a plated hole on a non-Mains net inside the signed distance. The signed figure governs whether or not the fixing is bonded to protective earth.
+rationale: |
+  Context: eight rules extend the pre-order check, and each needs a form for the figure it compares, a class it applies to, or a reading of a phrase the criteria leave open. The delivered decisions fix the separation and pin-limit record shapes but leave open where the manufacturer's limits, the sensing clearance, the ground-return ratio, a part's derating class and the fixing's extent are declared. Settled once here, ahead of the rules, so each rule's solution builds to one reading and the records every board's design task authors have one form.
+
+  Trade-offs: a machine-readable manufacturer record beside the prose entry lets the minimums be compared, and holding each figure to its cited entry keeps the two from drifting; comparing against the prose, as the reviewer does now, passes what a reader misses. Deriving the process from the layer stack removes a declaration that could disagree with the board. Declaring sensing and noisy classes in a record, with an explicit none, follows the mains declaration, so silence never reads as compliance; inferring classes from net names was rejected because an unrecognised name would read as safe. Enforcing sensing clearance by an appended last rule reuses the separation mechanism and its guarantee that nothing the design writes overrides it. Requiring a class on a covered position, not inferring it from the part, keeps the derating check from guessing. Narrowing the pin-limit omission rule to semiconductors and integrated circuits reconciles the earlier text with the proof designs, whose records list only such parts, and loses nothing because a passive has no absolute maximum a net can breach beyond its rating, which the derating rule covers. Requiring lifecycle on every placed part makes the end-of-life rule decide every part and not only those the extract happens to annotate.
+
+  Reversibility: moderate. Key names and the closed lifecycle vocabulary are read by the rules and written by every board's records, so renaming one is a sweep across both, caught by the check failing on the old form. The figures a record holds are the board design task's to choose and cite; nothing here fixes one.
+
+  Consequences: the board design records decision is amended for the new records, the class key, the required lifecycle and the narrowed omission rule. The first solution under the task extends the reader to accept the new records and keys and still fail an undefined one; each rule then builds on it with a seeded-fault proof, and every tracked proof design gains synthetic records so it passes. The fiducial and sensing items move from reviewer judgement to enforced in the layout practice catalogue.
+options_considered:
+  - option: Declare each rule's inputs in records beside the design and fail on omission
+    reason_rejected: ""
+  - option: Compare against the prose manufacturer entry and reviewer judgement
+    reason_rejected: passes what a reader misses and cannot be run the same way every time
+  - option: Infer sensing, noisy and part classes from net and part names
+    reason_rejected: an unrecognised name would read as safe
+  - option: Keep the pin-limit record required for every part
+    reason_rejected: contradicts the proof designs and adds nothing the derating rule does not already check
+chosen: Declare each rule's inputs in records beside the design and fail on omission
+links:
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C1
+    type: addresses
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C2
+    type: addresses
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C3
+    type: addresses
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C6
+    type: addresses
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C7
+    type: addresses
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C8
+    type: addresses
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C9
+    type: addresses
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C4
+    type: addresses
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C5
+    type: addresses
