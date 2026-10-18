@@ -30,9 +30,11 @@ rationale: |
   vibratory pump is the loss-of-prime condition the machine is trying to detect. The meter sits below
   the tank's water level, so the suction line stays flooded rather than needing to self-prime by
   lift, which bears on that risk. What the meter's restriction costs the pump is accepted rather than
-  measured: the machine shipped with the meter fitted in this position, it is a common digital flow
-  meter on a common vibratory pump's suction line, and the owner judges the risk negligible. Were it
-  ever wrong, the remedy is the fitting change the Reversibility paragraph already covers. Sensing downstream of the
+  measured. The owner accepts the risk on the grounds that the machine shipped with the meter fitted
+  in this position and that the meter and the pump are common, widely used parts. The acceptance is a
+  judgement, not an established fact: a priming or delivery failure seen in later bench or operation
+  work reopens this decision, and the remedy is the fitting change the Reversibility paragraph
+  already covers. Sensing downstream of the
   pump measures closest to what the cup receives, but a meter that survives brew pressure with useful
   resolution is a different class of component at several times the cost, and it adds a pressurised
   joint to plumbing this project deliberately leaves as built. Inferring flow from pump drive and
