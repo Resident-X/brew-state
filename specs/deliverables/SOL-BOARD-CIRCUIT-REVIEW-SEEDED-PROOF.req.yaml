@@ -31,3 +31,7 @@ links:
     type: depends-on
   - target: SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: 247073b597b074de35c3a2941b45d88a665e6c9eaf75ed4e746782c71a099510
+  gating_profile: ""
