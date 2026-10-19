@@ -2,7 +2,7 @@ id: SOL-PLANT-STEAM-FLASH-GENERATOR.C5
 type: criterion
 title: The new coefficients are declared with origin and error, and the new arithmetic survives the mutation sweep
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |

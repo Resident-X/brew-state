@@ -2,7 +2,7 @@ id: SOL-PLANT-STEAM-FLASH-GENERATOR.C4
 type: criterion
 title: The affine relation and the pressure-deficit state are retired from the thermoblock's steam side, and every structure stays admissible
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |

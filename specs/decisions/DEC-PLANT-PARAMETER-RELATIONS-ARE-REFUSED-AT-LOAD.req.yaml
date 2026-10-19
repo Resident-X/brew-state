@@ -1,0 +1,31 @@
+id: DEC-PLANT-PARAMETER-RELATIONS-ARE-REFUSED-AT-LOAD
+type: decision
+category: tactical
+title: A relation between two declared plant parameters is refused at load as its own named fault
+status: active
+version: 1
+rationale: |
+  Context: the plant description loader refuses a single declared value outside its admissible range and substitutes no default, and the steam control declaration loader refuses a floor at or above its ceiling as its own fault. The thermoblock's steam side adds relations between declared values that no range check can see: the initial inventory against the capacity, the casting ceiling against the saturation temperature, and the draw-start feed against the feed ceiling. Each value of such a pair can sit inside its own range while the pair describes nothing physical. Before this decision the initial inventory was silently clamped to the capacity, and a ceiling below the saturation temperature loaded and reported zero trapped pressure.
+
+  Trade-offs: refusing at load puts the fault at the description, which names the parameter at fault and keeps the model free of states a description cannot reach. Clamping hides an authoring error, and a test then enshrines the clamp. A per-value range check alone cannot see the fault. Leaving it to the model's step lets the fault surface as a wrong pressure far from its cause, and a host run can then state a bound it did not compute. The step keeps its own clamp of the inventory to zero and the capacity, because that bound is the inventory's invariant and not a guard on the description.
+
+  Reversibility: the relations are a table beside each structure's parameter specifications and a list in the declaration loader; adding or dropping a relation is a local change to the table and its tests.
+
+  Consequences: the plant loader reports an inconsistent pair as its own named fault, naming the first parameter, distinct from an out-of-range value. A structure with no such relation answers an empty table. Parameter-corner and range-sweep tests draw their corners from the consistent region. A host run states a bound only when it computed one.
+options_considered:
+  - option: Refuse an inconsistent pair at load as its own named fault, naming the first parameter
+    reason_rejected: ""
+  - option: Clamp one value to the other
+    reason_rejected: hides a description error, and a test then enshrines the clamp
+  - option: Check only each value's range
+    reason_rejected: a pair of in-range values can still describe nothing physical
+  - option: Leave the pair to the model's step
+    reason_rejected: the fault surfaces as a wrong pressure far from its cause and a report can state a bound it did not compute
+chosen: Refuse an inconsistent pair at load as its own named fault, naming the first parameter
+links:
+  - target: SOL-PLANT-STEAM-FLASH-GENERATOR.C2
+    type: addresses
+  - target: SOL-PLANT-STEAM-FLASH-GENERATOR.C3
+    type: addresses
+  - target: SOL-PLANT-STEAM-FLASH-GENERATOR.C10
+    type: addresses
