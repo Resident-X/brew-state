@@ -475,8 +475,9 @@ survivors:
 # thermoblock structure, the loader's name lookup and the single-boiler
 # structure. Those the tests could separate were killed rather than recorded: the
 # inversion's starting guess, the edge at which the open-draw pressure reaches the
-# limit, the loader's position past the last coefficient, and the guard on the
-# logarithm's argument. What is recorded below is what no input can tell apart.
+# limit, the loader's position past the last coefficient, the guard on the
+# logarithm's argument, and the logarithm's count of refinement steps. What is
+# recorded below is what no input can tell apart.
 
   cxx_gt_to_ge:src/plant/thermoblock/plant_structure.c:234:21:
     verdict: equivalent
@@ -519,26 +520,6 @@ survivors:
       which the count then cancels. Every power of two from one down to the
       smallest denormal was run through both and gives the same bits: the
       refinement lands on the constant the count takes off again.
-
-  cxx_lt_to_le:src/plant/thermoblock/plant_structure.c:268:29:
-    verdict: equivalent
-    reason: >-
-      The logarithm's refinement count, `step < 3` widened to `<= 3`, which takes
-      a fourth Newton step. The three the code takes already leave the result
-      within the rounding the function states: run over every float in the range
-      the reduced argument takes, from one up to but not including two, the worst
-      error against the logarithm in double precision is 1.1e-7 with three steps
-      and 1.1e-7 with four. A fourth step is therefore a different rounding of
-      the same figure and not a better one: it moves the logarithm by at most
-      1.8e-7, about one unit in the last place of the largest value it takes there,
-      and at the pressures the model works at that is a few microkelvin on a
-      saturation temperature of a hundred and some, the spacing of whose floats is
-      larger. No assertion tighter than the stated accuracy separates the two, and
-      one pinning the bits would pin a rounding that depends on whether the host
-      contracts a multiply and an add, which is not behaviour the model states.
-      test_the_outlet_superheat_holds_the_inversion_to_its_accuracy_across_the_octaves
-      holds the figure to a tenth of a millikelvin of the closed form, which both
-      meet.
 
   cxx_gt_to_ge:src/plant/thermoblock/plant_structure.c:771:27:
     verdict: equivalent

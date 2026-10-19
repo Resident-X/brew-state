@@ -8936,6 +8936,36 @@ static void test_the_outlet_superheat_holds_the_inversion_to_its_accuracy_across
     TEST_ASSERT_TRUE(live > 40);
 }
 
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C6: ... the modelled outlet steam temperature
+/// minus saturation at the measured steam pressure, through the same saturation
+/// relation the trapped case uses.
+///
+/// The logarithm the inversion takes stops after three Newton steps, and a fourth
+/// would not be a better figure but a different rounding of the same one, so the
+/// model's answer is the bits the three give. Seven draws across the working range
+/// are recorded to the last bit; the draws at index 1 and 10 are the ones among
+/// the sweep of the accuracy test on which a fourth step lands a unit in the last
+/// place away. The recorded bits are the same on every host: the build does not
+/// fuse a multiply with an add, and the exponential the steps use is the
+/// project's own.
+static void test_the_outlet_superheat_is_the_figure_three_refinements_of_the_logarithm_give(void)
+{
+    static const int INDEX[] = {0, 1, 5, 10, 20, 40, 58};
+    static const float EXPECTED[] = {0x1.8d9b78p+5f, 0x1.8ce09p+5f, 0x1.8968ep+5f, 0x1.83dcep+5f,
+                                     0x1.74ec98p+5f, 0x1.49dd7p+5f, 0x1.182e98p+5f};
+
+    for (size_t k = 0u; k < sizeof(INDEX) / sizeof(INDEX[0]); k++) {
+        const float demand = 0.02f + 0.005f * (float)INDEX[k];
+        plant_model_t model;
+
+        TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+        TEST_ASSERT_TRUE(plant_model_set_state(&model, PLANT_STATE_STEAM_TEMPERATURE_C, 150.0f));
+        TEST_ASSERT_TRUE(plant_model_step(&model, &FEEDING, demand, 10u));
+        const float superheat = outlet_superheat(&model);
+        TEST_ASSERT_TRUE_MESSAGE(superheat == EXPECTED[k], "the superheat is not the recorded bits");
+    }
+}
+
 /// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: ... a description ... whose saturation
 /// relation cannot be inverted across the pressures the model can reach, the
 /// open-wand pressure at the largest steam the pump can make included, is refused
@@ -9257,6 +9287,7 @@ int main(void)
     RUN_TEST(test_the_least_outlet_superheat_takes_the_cool_end_of_the_declared_error);
     RUN_TEST(test_a_position_answers_the_name_that_answers_to_it);
     RUN_TEST(test_the_outlet_superheat_holds_the_inversion_to_its_accuracy_across_the_octaves);
+    RUN_TEST(test_the_outlet_superheat_is_the_figure_three_refinements_of_the_logarithm_give);
     RUN_TEST(test_a_restriction_that_lands_the_open_draw_pressure_on_the_limit_is_refused);
     RUN_TEST(test_a_draw_whose_absolute_pressure_is_nothing_steps_to_no_superheat);
     RUN_TEST(test_a_budget_longer_than_the_structure_is_read_only_as_far_as_the_structure);
