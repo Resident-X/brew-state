@@ -1,0 +1,16 @@
+id: EV-SOL-HW-MACHINE-AS-FOUND-FIT-RECORD-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-MACHINE-AS-FOUND-FIT-RECORD.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-19T23:17:15.66929Z"
+artifact:
+  kind: external
+  reference: 'inspection of docs/sunbeam-em7000/connector-pinouts.md (§ Grades in this file and the shared vocabulary; § Front panel; § Gauge and water-indicator board; § The other retained harnesses; § Mains terminals) against each clause of C2: every harness in the set has connector (pitch, ways, pin size, family graded inferred or unidentified), first pin defined by position and signal, what each contact carries, entry point; mains loads'' terminations and devices; agreement with controller-io.md channel names; pending marks name SOL-HW-RETAINED-DEVICE-REMAINING-CHARACTERISTICS-RECORDED; crosswalk of Traced/Read/Observed/Inferred to shared grades without regrading existing rows; restating documents corrected'
+  artifact_version: db18d747d35341f8d5b7ae77025f9ed9fd2cfe98
+attested_by: crun-7066c7fba9492ed4
+links:
+  - target: SOL-HW-MACHINE-AS-FOUND-FIT-RECORD.C2
+    type: satisfies
