@@ -1613,10 +1613,10 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 #### TEST-1. Every test point can be reached by a probe
 
 - **Applies when:** the schematic carries a test point, which every board does ([Designing for bring-up and a second spin](#designing-for-bring-up-and-a-second-spin)).
-- **Asks:** Is every test point a pad a probe can land on and stay on: a dedicated pad, a through-hole lead or a small via, never a surface-mount part's land, of a usable size, spaced from its neighbours and from part bodies?
-- **Passes:** Each test point is a dedicated pad, a through-hole lead or a via with a hole of 0.36 mm or less, never a surface-mount land. Its pad is 1.0 mm across, or 0.9 mm at least. Test points are at least 2.5 mm apart centre to centre, at least 1.0 mm from any part's body edge to edge, and at least 2.0 mm from a part taller than 2.6 mm.
-- **Fails, as the views show it:** on `assembly-top` or `assembly-bottom`, a test point crowded against a part, under a part's outline, or closer than 2.5 mm to another; on `layer-F.Cu` or `layer-B.Cu`, a test point that is a surface-mount part's land or a pad smaller than 0.9 mm.
-- **Judged on:** `assembly-top`, `assembly-bottom`, `layer-F.Cu`, `layer-B.Cu`, `3d-angled`, `placement`, for its spacing from part bodies.
+- **Asks:** Is every test point a pad a probe can land on and stay on: a dedicated pad, a through-hole lead or a small via, never a surface-mount part's land, of a usable size, spaced from its neighbours and from tall parts?
+- **Passes:** Each test point is a dedicated pad, a through-hole lead or a via with a hole of 0.36 mm or less, never a surface-mount land. Its pad is 1.0 mm across, or 0.9 mm at least. Test points are at least 2.5 mm apart centre to centre and at least 2.0 mm from a part taller than 2.6 mm. Their spacing from part outlines is `TEST-5`'s.
+- **Fails, as the views show it:** on `assembly-top` or `assembly-bottom`, a test point closer than 2.5 mm to another or crowded against a tall part; on `layer-F.Cu` or `layer-B.Cu`, a test point that is a surface-mount part's land or a pad smaller than 0.9 mm.
+- **Judged on:** `assembly-top`, `assembly-bottom`, `layer-F.Cu`, `layer-B.Cu`, `3d-angled`, `placement`, for its spacing from tall parts.
 - **Kind:** judgement. **Severity:** function.
 - **Source:** Jack Olson, *Circuit Board Design for In-Circuit Testers*, Altium Resources, updated 27 December 2020, section *Testability Checklist at the PCB Layout Level*, https://resources.altium.com/p/circuit-board-design-circuit-testability, read 2026-10-14.
 
@@ -1649,6 +1649,16 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 - **Judged on:** `assembly-top`, `assembly-bottom`, `net-<net>` for the part's nets, every `layer-<copper layer>`.
 - **Kind:** judgement. **Severity:** quality.
 - **Source:** Jack Olson, *Circuit Board Design for In-Circuit Testers*, Altium Resources, updated 27 December 2020, section *Testability Checklist at the PCB Layout Level* ("Provide two pads on nets tied to critical low impedance devices (four-wire Kelvin testing)"), https://resources.altium.com/p/circuit-board-design-circuit-testability, read 2026-10-14, for the two pads; and `hardware/proof/review-proof/layout-review.md`, round 1, finding 1.49, which records a shunt's test pads reaching it only through the planes and a shared via. No free published document states how the voltage pad joins the part.
+
+#### TEST-5. A test pad stands clear of every part's courtyard
+
+- **Applies when:** the schematic carries a test point.
+- **Asks:** Does every test point's pad stand far enough from the courtyard of every part, on either side of the board, that a probe can land on it with no part's outline in the way?
+- **Passes:** The board's project text variable `TEST_COURTYARD_MM` is set to 1, with its row in the board's rules table, and the pre-order check reports no `test_point_courtyard` violation. A test point is a part whose reference designator begins `TP`. The check measures from the copper of its pad to the courtyard of every other footprint, on the front and on the back, taking a part's courtyard as the box about its drawing on that side's courtyard layer; the test point's own footprint is left out, and a part that draws no courtyard on a side is skipped for it. A board with no test point passes, and a board that omits the variable fails.
+- **Fails, as the views show it:** the pre-order check reports a `test_point_courtyard` violation, naming the test point, the part, and the measured and required distances; or, in `design-rules.md`, no row for `TEST_COURTYARD_MM`, or a figure below 1.
+- **Judged on:** the pre-order check's report, `design-rules.md`.
+- **Kind:** rule. **Severity:** function.
+- **Source:** Jack Olson, *Circuit Board Design for In-Circuit Testers*, Altium Resources, updated 27 December 2020, section *Testability Checklist at the PCB Layout Level*, https://resources.altium.com/p/circuit-board-design-circuit-testability, read 2026-10-14, for the 1.0 mm clearance of a test pad from part outlines; and `hardware/proof/review-proof/layout-review.md`, round 14, finding 14.3, which records test pads crowded by part courtyards, made a measured rule after the same finding recurred by eye.
 
 ### Manufacture and assembly (MFG)
 

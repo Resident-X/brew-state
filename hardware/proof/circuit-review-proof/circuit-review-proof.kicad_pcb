@@ -87,6 +87,7 @@
 	(property "MAINS" "present")
 	(property "NOT_FOR_MANUFACTURE" "true")
 	(property "PASTE_OVER_VIA_MM2" "0")
+	(property "TEST_COURTYARD_MM" "1")
 	(property "WORK_ANGLE_TOLERANCE_DEG" "0.1")
 	(property "WORK_DETOUR_RATIO" "1.3")
 	(property "WORK_NECK_MM" "1")

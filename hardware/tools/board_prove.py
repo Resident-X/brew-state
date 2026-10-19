@@ -839,6 +839,17 @@ def reference_in_courtyard(seed: Seed) -> None:
     seed.layout(edit)
 
 
+def test_point_in_courtyard(seed: Seed) -> None:
+    """A 1 mm test point TP9 placed at (20, 10) mm, on R1's body between its pads, inside R1's courtyard."""
+    Q = sexpr.Quoted
+    uuid = "0b0e5c1a-0000-4000-8000-000000000d00"
+    point = ["footprint", Q("proof:Seeded_Test_Point"), ["layer", Q("F.Cu")], ["uuid", Q(uuid)], ["at", "20", "10"],
+             ["property", Q("Reference"), Q("TP9"), ["at", "0", "-1.5", "0"], ["layer", Q("F.SilkS")]],
+             ["pad", Q("1"), "smd", "circle", ["at", "0", "0"], ["size", "1", "1"], ["layers", Q("F.Cu"), Q("F.Mask")],
+              ["uuid", Q(f"{uuid[:-2]}01")]]]
+    seed.layout(lambda tree: tree.insert(len(tree) - 1, point))
+
+
 def drop_rule(name: str):
     def seed_it(seed: Seed) -> None:
         text = seed.read(".kicad_dru")
@@ -1202,6 +1213,8 @@ FAULTS: List[tuple] = [
      "has no reference text", reference_removed),
     ("a reference designator inside a part's courtyard", "manufacture: every designator stands outside every courtyard, beside its own part", "designator_astray",
      "the text of R1 stands inside the courtyard of R1", reference_in_courtyard),
+    ("a test point seeded inside a part's courtyard", "test access: a test pad nearer than its figure to a part's courtyard fails", "test_point_courtyard",
+     "the pad of test point TP9 is 0 mm from the F.CrtYd courtyard of R1, where TEST_COURTYARD_MM requires 1 mm", test_point_in_courtyard),
     # The keys of the records
     ("a separation basis key misspelt", "record keys: a key the separation basis decision does not define is refused by name", "separation_basis",
      "holds the key 'overvoltage_categry'", record("overvoltage_category: 2", "overvoltage_categry: 2"), KEYS_TARGET),

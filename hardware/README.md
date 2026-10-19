@@ -229,6 +229,7 @@ For each design the check runs KiCad's own electrical rule check on the schemati
   | `WORK_PAD_ENTRY_RATIO` | `WORK-10` | Each track meeting, at one end and not the other, a pad more than this many times as long as it is wide, or whose copper runs over such a pad with neither end meeting it: its direction there, against the pad's long axis (`workmanship_pad_entry`) |
   | `BARRIER_COPPER_MM2` | `MAINS-5` | Each part with pads on a `Mains`-class net and on another net: the strip between the two groups of pads, where their boxes lie apart along one axis, and the area of every track, via, pad and filled pour of the board that lies in it, on each copper layer, against this many mm² at most (`mains_barrier`). The check measures the pours as KiCad has just refilled them |
   | `PASTE_OVER_VIA_MM2` | `MFG-4` | Each via's hole and each paste opening, a pad's shape grown by its paste margin and ratio, the pad's own, its footprint's or the board's: the area of the hole under the opening, on either side of the board, against this many mm² at most (`paste_via`) |
+  | `TEST_COURTYARD_MM` | `TEST-5` | Each test point, a part whose reference designator begins `TP`: the distance from the copper of its pad to the courtyard of every other footprint, on the front and on the back, taken as the box about the part's drawing on that side's courtyard layer, against this many mm at least; a part with no courtyard on a side is skipped for it (`test_point_courtyard`) |
 
   A variable that is missing, or not a plain decimal number within its range, fails as `workmanship_figure`, naming it. The report states, under each design's verdict line, the figure it read for each measured rule.
 
@@ -356,6 +357,7 @@ Each figure line has five fields separated by ` | `: `FIGURE`, the design, the i
 | `decoupling_pintype` | A design not marked not for manufacture has an integrated circuit (a footprint whose reference begins with `U`) with netted pads and none typed `power_in` or `power_out`, so the decoupling rule measures nothing for it (`DECOUPLE-6`) |
 | `reference_off_silkscreen` | A footprint's reference designator is not on the silkscreen layer of its side of the board, is hidden, or is missing (`MFG-7`) |
 | `designator_astray` | A designator's text lies inside a part's courtyard, its own included, or stands nearer another part's courtyard than its own part's (`MFG-9`) |
+| `test_point_courtyard` | A test point's pad stands nearer than its figure to the courtyard of another part, on either side of the board (`TEST-5`) |
 | `tool_named_net` | A net's name is one KiCad generated for a net nobody labelled, beginning `Net-(` at any depth of a sheet path; a pin nothing is connected to, named `unconnected-(…)`, is exempt |
 | `unnamed_sheet` | A hierarchical sheet's `Sheetname` is blank or missing, or is `Untitled Sheet`, optionally followed by a number; the root sheet is exempt |
 

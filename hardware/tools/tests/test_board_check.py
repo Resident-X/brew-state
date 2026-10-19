@@ -51,7 +51,8 @@ accepted_on: 2026-10-01
 
 #: The figure of every measured workmanship rule, as a design sets them in its project text variables.
 FIGURES = {"WORK_DETOUR_RATIO": "1.5", "WORK_NECK_MM": "1", "WORK_ANGLE_TOLERANCE_DEG": "0.1",
-           "WORK_PAD_ENTRY_RATIO": "2", "WORK_PAD_ANGLE_DEG": "90", "BARRIER_COPPER_MM2": "0", "PASTE_OVER_VIA_MM2": "0"}
+           "WORK_PAD_ENTRY_RATIO": "2", "WORK_PAD_ANGLE_DEG": "90", "BARRIER_COPPER_MM2": "0", "PASTE_OVER_VIA_MM2": "0",
+           "TEST_COURTYARD_MM": "1"}
 
 #: Those figures as the check reads them.
 FIGURES_READ = {name: float(value) for name, value in FIGURES.items()}
@@ -2194,7 +2195,7 @@ class TheWorkmanshipFiguresAreTheDesignsOwn(unittest.TestCase):
         self.assertEqual(found, [])
         self.assertEqual(figures, {"WORK_DETOUR_RATIO": 1.5, "WORK_NECK_MM": 1.0,
                                    "WORK_ANGLE_TOLERANCE_DEG": 0.1, "WORK_PAD_ENTRY_RATIO": 2.0, "WORK_PAD_ANGLE_DEG": 90.0,
-                                   "BARRIER_COPPER_MM2": 0.0, "PASTE_OVER_VIA_MM2": 0.0})
+                                   "BARRIER_COPPER_MM2": 0.0, "PASTE_OVER_VIA_MM2": 0.0, "TEST_COURTYARD_MM": 1.0})
 
     def test_each_missing_figure_fails_naming_its_item_and_variable(self):
         figures, found = board_check.workmanship_figures(DESIGN, {})
@@ -2207,7 +2208,8 @@ class TheWorkmanshipFiguresAreTheDesignsOwn(unittest.TestCase):
         for name, value in (("WORK_NECK_MM", "1mm"), ("WORK_NECK_MM", "-1"), ("WORK_NECK_MM", ""), ("WORK_DETOUR_RATIO", "0.9"),
                             ("WORK_DETOUR_RATIO", "1e1"), ("WORK_ANGLE_TOLERANCE_DEG", "22.5"), ("WORK_PAD_ENTRY_RATIO", "two"),
                             ("BARRIER_COPPER_MM2", "0.5mm2"), ("BARRIER_COPPER_MM2", "-0.1"), ("BARRIER_COPPER_MM2", ""),
-                            ("PASTE_OVER_VIA_MM2", "none"), ("PASTE_OVER_VIA_MM2", "-1"), ("PASTE_OVER_VIA_MM2", "1e-3")):
+                            ("PASTE_OVER_VIA_MM2", "none"), ("PASTE_OVER_VIA_MM2", "-1"), ("PASTE_OVER_VIA_MM2", "1e-3"),
+                            ("TEST_COURTYARD_MM", "1.0mm"), ("TEST_COURTYARD_MM", "-1"), ("TEST_COURTYARD_MM", "")):
             with self.subTest(name=name, value=value):
                 figures, found = board_check.workmanship_figures(DESIGN, {**FIGURES, name: value})
                 self.assertNotIn(name, figures)
@@ -4887,6 +4889,136 @@ class TheRoundRunsTheToolingTestsWithoutTheSeededFaultProof(unittest.TestCase):
         for text in (round_task, full_task):
             self.assertIn('KICAD_CLI: "{{.KICAD_CLI}}"', text)
             self.assertIn('RESVG: "{{.RESVG}}"', text)
+
+
+def pointed(reference: str, at, size=(1, 1), shape: str = "circle", yard=None, side: str = "F.Cu", turn: float = 0) -> str:
+    """A part `reference` at `at` with one surface pad of `size`, and a courtyard box (left, top, right, bottom) of its own axes where given."""
+    crt = "B.CrtYd" if side == "B.Cu" else "F.CrtYd"
+    box = f'(fp_rect (start {yard[0]} {yard[1]}) (end {yard[2]} {yard[3]}) (layer "{crt}"))' if yard else ""
+    return (f'(footprint "lib:p" (layer "{side}") (at {at[0]} {at[1]}) '
+            f'(property "Reference" "{reference}" (at 0 0 0) (layer "F.SilkS")) '
+            f'(pad "1" smd {shape} (at 0 0 {turn}) (size {size[0]} {size[1]}) (layers "{side}")) {box})')
+
+
+class EveryTestPadStandsClearOfEveryPartsCourtyard(unittest.TestCase):
+    """TEST-5: the copper of a pad of a part named TP stands at least the figure from the courtyard of every other part, on either side."""
+
+    BODY = (-2, -1, 2, 1)
+
+    def found(self, *items, distance: float = 1.0):
+        return board_check.crowded_test_points(DESIGN, tree_of(*items), distance)
+
+    def test_a_pad_exactly_the_distance_from_a_courtyard_passes_and_one_short_of_it_fails(self):
+        # SOL-PRE-ORDER-CHECK-TEST-POINT-COURTYARD-DISTANCE.C1: Add to the pre-order check a measured rule that fails a test point whose pad stands closer than the layout review's test-point item states to the courtyard of any part on either side of the board.
+        part = pointed("R1", (10, 10), yard=self.BODY)
+        self.assertEqual(self.found(part, pointed("TP1", (13.5, 10))), [])
+        found = self.found(part, pointed("TP1", (13.4, 10)))
+        self.assertEqual([(v.rule, v.location) for v in found], [("test_point_courtyard", "pad 1 of TP1 at (13.4, 10) mm")])
+
+    def test_the_report_names_the_item_the_test_point_the_part_the_measured_and_required_distances_and_the_move(self):
+        # SOL-PRE-ORDER-CHECK-TEST-POINT-COURTYARD-DISTANCE.C1: The check reports the rule, the design, the test point and the part with the measured and required distances, and names the move that clears it.
+        found = self.found(pointed("R1", (10, 10), yard=self.BODY), pointed("TP1", (13.4, 10)), distance=1.25)
+        self.assertEqual(found[0].design, "a/a.kicad_pro")
+        self.assertEqual(found[0].message,
+                         "TEST-5 a test pad stands at least TEST_COURTYARD_MM from the courtyard of any part: the pad of test point TP1 "
+                         "is 0.9 mm from the F.CrtYd courtyard of R1, where TEST_COURTYARD_MM requires 1.25 mm; "
+                         "move TP1 or R1 until the gap is 1.25 mm or more")
+
+    def test_a_pad_inside_a_courtyard_is_zero_from_it(self):
+        # SOL-PRE-ORDER-CHECK-TEST-POINT-COURTYARD-DISTANCE.C1: A test pad closer to a part's courtyard than the item's distance fails the pre-order check
+        found = self.found(pointed("R1", (10, 10), yard=self.BODY), pointed("TP1", (10, 10)))
+        self.assertEqual(len(found), 1)
+        self.assertIn("is 0 mm from the F.CrtYd courtyard of R1", found[0].message)
+
+    def test_a_courtyard_on_the_other_side_of_the_board_counts(self):
+        # SOL-PRE-ORDER-CHECK-TEST-POINT-COURTYARD-DISTANCE.C1: A test point is held to the courtyard of any part on either side of the board.
+        under = pointed("U1", (10, 10), yard=self.BODY, side="B.Cu")
+        found = self.found(under, pointed("TP1", (13.2, 10)))
+        self.assertEqual(len(found), 1)
+        self.assertIn("is 0.7 mm from the B.CrtYd courtyard of U1", found[0].message)
+        self.assertEqual(len(self.found(under, pointed("TP1", (13.2, 10), side="B.Cu"))), 1)
+
+    def test_the_test_points_own_courtyard_is_not_a_part_it_stands_near(self):
+        # SOL-PRE-ORDER-CHECK-TEST-POINT-COURTYARD-DISTANCE.C1: The test point's own footprint excluded.
+        self.assertEqual(self.found(pointed("TP1", (10, 10), yard=(-0.65, -0.65, 0.65, 0.65))), [])
+
+    def test_a_part_with_no_courtyard_is_skipped(self):
+        # SOL-PRE-ORDER-CHECK-TEST-POINT-COURTYARD-DISTANCE.C1: A part with no courtyard is skipped.
+        self.assertEqual(self.found(pointed("R1", (10, 10)), pointed("TP1", (10.2, 10))), [])
+
+    def test_a_design_with_no_test_point_passes_and_only_a_reference_beginning_tp_is_one(self):
+        # SOL-PRE-ORDER-CHECK-TEST-POINT-COURTYARD-DISTANCE.C1: A design with no test point passes.
+        part = pointed("R1", (10, 10), yard=self.BODY)
+        self.assertEqual(self.found(part), [])
+        self.assertEqual(self.found(), [])
+        self.assertEqual(self.found(part, pointed("R2", (10.5, 10)), pointed("XTP1", (10.5, 10))), [])
+        self.assertEqual(len(self.found(part, pointed("TPA", (10.5, 10)))), 1)
+
+    def test_another_test_points_courtyard_is_a_part_too_and_the_nearest_part_is_named(self):
+        # SOL-PRE-ORDER-CHECK-TEST-POINT-COURTYARD-DISTANCE.C1: Any part is every other footprint drawing a courtyard.
+        near = pointed("TP2", (13.5, 10), yard=(-0.65, -0.65, 0.65, 0.65))
+        far = pointed("R1", (4, 10), yard=self.BODY)
+        found = self.found(far, near, pointed("TP1", (12, 10)))
+        self.assertEqual([v.location for v in found], ["pad 1 of TP1 at (12, 10) mm"])
+        self.assertIn("test point TP1 is 0.35 mm from the F.CrtYd courtyard of TP2", found[0].message)
+
+    def test_the_pad_is_measured_by_its_copper_and_not_its_centre_or_its_unturned_size(self):
+        # SOL-PRE-ORDER-CHECK-TEST-POINT-COURTYARD-DISTANCE.C1: A test pad closer to a part's courtyard than the item's distance fails.
+        part = pointed("R1", (10, 10), yard=self.BODY)
+        self.assertEqual(self.found(part, pointed("TP1", (14.5, 10), size=(3, 1), shape="rect")), [])
+        self.assertEqual(len(self.found(part, pointed("TP1", (14.4, 10), size=(3, 1), shape="rect"))), 1)
+        self.assertEqual(self.found(part, pointed("TP1", (13.5, 10), size=(3, 1), shape="rect", turn=90)), [])
+        self.assertEqual(len(self.found(part, pointed("TP1", (13.4, 10), size=(3, 1), shape="rect", turn=90))), 1)
+
+    def test_every_pad_of_a_test_point_and_every_test_point_is_held(self):
+        # SOL-PRE-ORDER-CHECK-TEST-POINT-COURTYARD-DISTANCE.C1: A test pad closer to a part's courtyard than the item's distance fails.
+        part = pointed("R1", (10, 10), yard=self.BODY)
+        found = self.found(part, pointed("TP1", (10, 7.8)), pointed("TP2", (10, 12.2)), pointed("TP3", (10, 20)))
+        self.assertEqual([v.location for v in found], ["pad 1 of TP1 at (10, 7.8) mm", "pad 1 of TP2 at (10, 12.2) mm"])
+
+    def test_a_design_that_omits_the_figure_fails_by_name_and_the_figure_is_read_into_the_rule(self):
+        # SOL-PRE-ORDER-CHECK-TEST-POINT-COURTYARD-DISTANCE.C1: The distance is a figure named by its role, set in each board's rules with the item's published source; a design that omits the figure fails.
+        figures, found = board_check.workmanship_figures(DESIGN, {k: v for k, v in FIGURES.items() if k != "TEST_COURTYARD_MM"})
+        self.assertNotIn("TEST_COURTYARD_MM", figures)
+        self.assertEqual([(v.rule, v.location) for v in found], [("workmanship_figure", "a/a.kicad_pro text_variables.TEST_COURTYARD_MM")])
+        self.assertIn("TEST-5 (test point to courtyard) has no figure: the project text variable TEST_COURTYARD_MM is not set", found[0].message)
+        self.assertEqual(board_check.workmanship_figures(DESIGN, FIGURES)[0]["TEST_COURTYARD_MM"], 1.0)
+
+
+class TheCatalogueCarriesTheTestPadCourtyardRule(unittest.TestCase):
+    """TEST-5 is a rule-kind item beside the test-point items it enforces, and TEST-1 defers its spacing from part outlines to it."""
+
+    def setUp(self):
+        with open(os.path.join(REPO, "docs", "board-design-method.md"), encoding="utf-8") as handle:
+            text = handle.read()
+        catalogue = text[text.index("## Layout practice catalogue"):]
+        self.items = {name: body for name, body in re.findall(r"^#### ([A-Z]+-\d+)\. (.*?)(?=^#### |^### |^## |\Z)", catalogue, re.M | re.S)}
+        with open(os.path.join(REPO, "hardware", "README.md"), encoding="utf-8") as handle:
+            self.readme = handle.read()
+
+    def test_the_item_is_a_rule_kind_item_in_the_item_form_with_a_published_source(self):
+        # SOL-PRE-ORDER-CHECK-TEST-POINT-COURTYARD-DISTANCE.C2: Add the rule to the layout review's catalogue as item TEST-5, a rule-kind item beside the test-point items it enforces, in the item form and against the catalogue's source rule.
+        item = self.items["TEST-5"]
+        for field in ("Applies when", "Asks", "Passes", "Fails, as the views show it", "Judged on", "Kind", "Source"):
+            self.assertIn(f"**{field}:**", item)
+        self.assertIn("**Kind:** rule.", item)
+        self.assertRegex(item, r"\*\*Source:\*\* .*https://")
+        self.assertIn("`TEST_COURTYARD_MM`", item)
+        self.assertIn("`test_point_courtyard`", item)
+        names = list(self.items)
+        self.assertEqual(names[names.index("TEST-4") + 1], "TEST-5")
+
+    def test_test_1_defers_spacing_from_part_outlines_to_the_rule(self):
+        # SOL-PRE-ORDER-CHECK-TEST-POINT-COURTYARD-DISTANCE.C2: Amend TEST-1 so that spacing from part outlines defers to TEST-5.
+        first = self.items["TEST-1"]
+        self.assertIn("`TEST-5`'s", first)
+        self.assertNotIn("from any part's body edge to edge", first)
+        self.assertNotIn("spaced from its neighbours and from part bodies", first)
+
+    def test_the_readme_names_the_figure_and_the_rule(self):
+        # SOL-PRE-ORDER-CHECK-TEST-POINT-COURTYARD-DISTANCE.C1: The distance is a figure named by its role, set in each board's rules with the item's published source.
+        self.assertIn("| `TEST_COURTYARD_MM` | `TEST-5` |", self.readme)
+        self.assertIn("| `test_point_courtyard` |", self.readme)
 
 
 if __name__ == "__main__":

@@ -610,7 +610,7 @@ class Method(unittest.TestCase):
         self.assertEqual(len(items), len(re.findall(r"^#### [A-Z]+-\d+\. ", layout, re.M)))
         self.assertEqual({item for item, line in items if "`placement`" in line}, PLACEMENT_ITEMS)
         test_1 = dict(items)["TEST-1"]
-        self.assertIn("`placement`, for its spacing from part bodies", test_1)
+        self.assertIn("`placement`, for its spacing from tall parts", test_1)
         read = section(self.method, "How an item is read", "### ")
         self.assertIn("the placement view, `placement`", read)
         self.assertIn("is judged at [placement](#placement) too", read)
