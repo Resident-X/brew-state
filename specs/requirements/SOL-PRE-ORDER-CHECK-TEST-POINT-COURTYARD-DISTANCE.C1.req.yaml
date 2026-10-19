@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-TEST-POINT-COURTYARD-DISTANCE.C1
+type: criterion
+title: A test pad closer to a part's courtyard than the item's distance fails the pre-order check
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Add to the pre-order check a measured rule that fails a test point whose pad stands closer than the layout review's test-point item states to the courtyard of any part on either side of the board. The distance is a figure named by its role, set in each board's rules with the item's published source, and the check reports the rule, the design, the test point and the part with the measured and required distances in the check's report. Every design the repository tracks passes it. Out of scope: any other test-point item and any real board.
+links:
+  - target: SOL-PRE-ORDER-CHECK-TEST-POINT-COURTYARD-DISTANCE
+    type: criterion-of

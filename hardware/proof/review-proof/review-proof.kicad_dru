@@ -20,6 +20,9 @@
 	(constraint track_angle (min 135)))
 (rule "Jogs"
 	(constraint track_segment_length (min 1mm)))
+(rule "Plated hole spacing"
+	(condition "A.Type == 'Pad' && A.Pad_Type == 'Through-hole' && B.Type == 'Pad' && B.Pad_Type == 'Through-hole'")
+	(constraint hole_to_hole (min 1.45mm)))
 (rule "Crystal keep-clear"
 	(condition "A.Reference == 'Y1' && B.Reference != 'U4' && B.Reference != 'C4' && B.Reference != 'C5' && B.Reference != 'C6' && B.Reference != 'U2' && B.Reference != 'C1' && B.Reference != 'C2'")
 	(constraint courtyard_clearance (min 25mm)))

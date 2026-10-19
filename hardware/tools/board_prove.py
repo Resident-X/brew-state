@@ -126,10 +126,10 @@ def pad(tree: list, reference: str, number: str) -> list:
     raise AssertionError(f"the proof layout has no pad {number} on {reference}")
 
 
-def segment(net: str, x1: float, y1: float, x2: float, y2: float, uuid: str) -> list:
+def segment(net: str, x1: float, y1: float, x2: float, y2: float, uuid: str, layer: str = "F.Cu") -> list:
     Q = sexpr.Quoted
     return ["segment", ["start", f"{x1:g}", f"{y1:g}"], ["end", f"{x2:g}", f"{y2:g}"], ["width", "0.25"],
-            ["layer", Q("F.Cu")], ["net", Q(net)], ["uuid", Q(uuid)]]
+            ["layer", Q(layer)], ["net", Q(net)], ["uuid", Q(uuid)]]
 
 
 #: R1 pad 2, on /MAINS_N, is a 1.6 mm round pad at (25.16, 10). This low-voltage
@@ -848,6 +848,79 @@ def drop_rule(name: str):
     return seed_it
 
 
+def seeded_hole(reference: str, x: float, y: float, uuid: str, plated_net: Optional[str] = None, courtyard: float = 0,
+                pad: float = 3.2, surface_pad: bool = False, excluded: bool = False) -> list:
+    """A 3.2 mm hole footprint `reference` at (x, y): a non-plated hole whose pad is `pad` mm across, or a plated pad on
+    `plated_net` when one is named, with a square courtyard `courtyard` mm to a side when that is given and a surface-mount
+    pad beside the hole, which makes the footprint a part and not a mounting hole, when `surface_pad` is, and KiCad's
+    exclude_from_bom attribute when `excluded` is."""
+    Q = sexpr.Quoted
+    layers = ["layers", Q("*.Cu"), Q("*.Mask")]
+    if plated_net is None:
+        hole = ["pad", Q(""), "np_thru_hole", "circle", ["at", "0", "0"], ["size", f"{pad:g}", f"{pad:g}"], ["drill", "3.2"], layers,
+                ["uuid", Q(f"{uuid[:-2]}01")]]
+    else:
+        hole = ["pad", Q("1"), "thru_hole", "circle", ["at", "0", "0"], ["size", "4", "4"], ["drill", "3.2"], layers,
+                ["net", Q(plated_net)], ["uuid", Q(f"{uuid[:-2]}01")]]
+    body = [hole]
+    if surface_pad:
+        body.append(["pad", Q("2"), "smd", "rect", ["at", "0", "6"], ["size", "1", "1"],
+                     ["layers", Q("F.Cu"), Q("F.Mask")], ["uuid", Q(f"{uuid[:-2]}03")]])
+    if courtyard:
+        half = f"{courtyard / 2:g}"
+        body.append(["fp_rect", ["start", f"-{half}", f"-{half}"], ["end", half, half], ["stroke", ["width", "0.05"], ["type", "solid"]],
+                     ["fill", "none"], ["layer", Q("F.CrtYd")], ["uuid", Q(f"{uuid[:-2]}02")]])
+    if excluded:
+        body.append(["attr", "exclude_from_pos_files", "exclude_from_bom"])
+    return ["footprint", Q("proof:Seeded_Hole"), ["layer", Q("F.Cu")], ["uuid", Q(uuid)], ["at", f"{x:g}", f"{y:g}"],
+            ["property", Q("Reference"), Q(reference), ["at", "0", "-3", "0"], ["layer", Q("F.SilkS")]], *body]
+
+
+#: R1 pad 2, on /MAINS_N, is a 1.6 mm round pad at (25.16, 10), its edge at 25.96. A non-plated 3.2 mm hole whose edge is
+#: 2.5 mm from it, and a plated hole whose 4 mm pad stands 3.5 mm from it (clear of the signed 3 mm clearance, so only
+#: its hole, 0.4 mm inside the pad, is nearer than the 4 mm that is the larger of the signed clearance and creepage).
+HOLE_X = 25.96 + 2.5 + 1.6
+PLATED_X = 25.96 + 3.5 + 2.0
+
+#: A hole 7.4 mm from R1's pad, so only its 10 mm courtyard, whose left edge stands at x = 30, is inside the signed distance
+#: of Mains copper that is not a pad: a track 2.9 mm off that edge, or a pour's fill 2 mm off it.
+FIXING_X = 35
+FIXING_UUID = "0b0e5c1a-0000-4000-8000-000000000c00"
+
+
+def fixing_near_mains_track(seed: Seed) -> None:
+    seed.layout(lambda tree: (tree.insert(len(tree) - 1, seeded_hole("H9", FIXING_X, 10, FIXING_UUID, courtyard=10)),
+                              tree.insert(len(tree) - 1, segment("/MAINS_N", 27, 4, 27, 16, "0b0e5c1a-0000-4000-8000-000000000c10"))))
+
+
+def fixing_near_mains_pour(seed: Seed) -> None:
+    """The same fixing with, in place of the track, a /MAINS_N pour on the back copper whose fill ends 2 mm off its courtyard."""
+    Q = sexpr.Quoted
+    zone = ["zone", ["net", Q("/MAINS_N")], ["layer", Q("B.Cu")], ["uuid", Q("0b0e5c1a-0000-4000-8000-000000000c20")],
+            ["hatch", "edge", "0.5"], ["connect_pads", ["clearance", "0.2"]], ["min_thickness", "0.25"],
+            ["fill", ["thermal_gap", "0.5"], ["thermal_bridge_width", "0.5"]],
+            ["polygon", ["pts", ["xy", "24", "4"], ["xy", "28", "4"], ["xy", "28", "16"], ["xy", "24", "16"]]]]
+    seed.layout(lambda tree: (tree.insert(len(tree) - 1, seeded_hole("H9", FIXING_X, 10, FIXING_UUID, courtyard=10)),
+                              tree.insert(len(tree) - 1, zone)))
+
+
+#: A hole whose own edge is 4.2 mm from R1's pad, clear of the 4 mm, drilled through a 6 mm pad whose edge is 2.8 mm from it.
+OVERSIZE_X = 25.96 + 4.2 + 1.6
+
+
+def hole_with_oversize_pad(seed: Seed) -> None:
+    """A part with a 6 mm non-plated pad round a 3.2 mm hole, and a surface-mount pad, so it is held by KiCad's rule alone."""
+    seed.layout(lambda tree: tree.insert(len(tree) - 1, seeded_hole(
+        "H9", OVERSIZE_X, 10, FIXING_UUID, pad=6, surface_pad=True)))
+
+
+def hole_near_mains(plated_net: Optional[str] = None):
+    def seed_it(seed: Seed) -> None:
+        seed.layout(lambda tree: tree.insert(len(tree) - 1, seeded_hole(
+            "H9", HOLE_X if plated_net is None else PLATED_X, 10, FIXING_UUID, plated_net)))
+    return seed_it
+
+
 SIGNED = f"rule '{board_check.SIGNED_RULE}' clearance"
 CONDITION = board_check.MAINS_CONDITION
 
@@ -1022,6 +1095,26 @@ FAULTS: List[tuple] = [
     ("a sheet with a blank name", "names: a sheet with no name of its own fails", "unnamed_sheet", "its name is blank", sheet_named("")),
     ("a sheet with the tool's default name", "names: a sheet with no name of its own fails", "unnamed_sheet", "is 'Untitled Sheet'", sheet_named("Untitled Sheet")),
     ("a second sheet with the tool's default name, numbered", "names: a sheet with no name of its own fails", "unnamed_sheet", "is 'Untitled Sheet 1'", sheet_named("Untitled Sheet 1")),
+    # Separation floor
+    ("a signed clearance below the floor the table rows give", "separation floor: a signed clearance below its floor fails", "separation_floor",
+     "the signed clearance_mm is 3 mm, below the 3.5 mm floor", record("      clearance_mm: 3.0", "      clearance_mm: 3.5")),
+    ("a signed creepage below the floor the table rows give", "separation floor: a signed creepage below its floor fails", "separation_floor",
+     "the signed creepage_mm is 4 mm, below the 4.5 mm floor", record("      creepage_mm: 4.0", "      creepage_mm: 4.5")),
+    ("a mains-present basis with no applicable table row", "separation floor: no applicable row for a figure fails", "separation_floor",
+     "no table row of the record gives a clearance_mm that applies", record("working_voltage: 250 V rms", "working_voltage: 300 V rms")),
+    ("a mains-present basis lacking a required key", "separation floor: a basis lacking a required key fails by key", "separation_floor",
+     "the record lacks altitude_m", record("altitude_m: 2000\nbarriers", "barriers")),
+    # Mounting holes
+    ("a mounting hole inside the signed distance of a Mains net", "mounting holes: a hole inside the larger of the signed clearance and creepage of Mains fails", "mounting_hole",
+     "a non-plated hole or its pad stands", hole_near_mains()),
+    ("a plated hole on a non-Mains net inside the signed distance of a Mains net", "mounting holes: a plated hole on a non-Mains net inside that distance fails", "mounting_hole",
+     "a plated hole on a net outside Mains stands", hole_near_mains("/LV_A")),
+    ("a Mains track inside the signed distance of a fixing's courtyard", "mounting holes: a fixing's extent inside that distance of Mains copper fails", "mounting_hole",
+     "of the mounting hole H9 stands", fixing_near_mains_track),
+    ("a Mains pour inside the signed distance of a fixing's courtyard", "mounting holes: a fixing's extent inside that distance of Mains copper fails", "mounting_hole",
+     "of Mains-class net /MAINS_N on B.Cu", fixing_near_mains_pour),
+    ("a part's oversize non-plated pad inside the signed distance of a Mains net with its hole clear", "mounting holes: a non-plated pad larger than its hole is held at its pad edge", "mounting_hole",
+     "a non-plated hole or its pad stands", hole_with_oversize_pad),
     # Connectivity
     ("a channel's net moved to the other controller pin", "connectivity: a net must reach the controller pin its channel names", "connectivity", "net /LV_A reaches controller pin PA1, where the record names controller pin PA0", swap_labels(("LV_A", "96.52 76.2"), ("LV_B", "96.52 78.74"))),
     ("a channel's net moved to the other pin of its connector", "connectivity: a net must reach the connector pin its channel names", "connectivity", "net /LV_A reaches connector pin J2 pin 2, where the record names connector pin J2 pin 1", swap_labels(("LV_A", "45.72 76.2"), ("LV_B", "45.72 78.74"))),

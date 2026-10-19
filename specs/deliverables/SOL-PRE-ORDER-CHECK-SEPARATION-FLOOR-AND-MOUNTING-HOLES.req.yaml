@@ -3,9 +3,11 @@ type: deliverable
 category: solution
 title: The pre-order check fails a signed separation below its own floor and a mounting hole that breaches mains separation
 status: active
-version: 1
-text: |-
+version: 2
+text: |
   Adds the separation-floor rule and the mounting-hole rule, the latter by appending rules after the signed Mains rule, each shown to fail on a seeded fault.
+
+  Settled before the build. The floor rule is reported under the name separation_floor and the hole rules under mounting_hole. The floor rule runs in the check's mains-present path, where the signed Mains rule is read; the hole rules are appended after the signed Mains rule, so the signed rule stays last among the rules the check inserts ahead of it for other leaves. The rule reads working_voltage_v as the leading number of the basis working_voltage, which for a mains-present basis is the value at the top of the declared supply span. A hole's edge distance is measured by KiCad's own rule engine; a fixing's pad copper and courtyard distance to Mains-class pads, tracks, vias and fills is measured by the check from the layout file, because KiCad measures a courtyard only against another courtyard.
 links:
   - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C2
     type: derives-from
@@ -31,6 +33,10 @@ links:
     type: depends-on
   - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C12
     type: derives-from
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: a4ac5d86edb8eb51dd5e01f837eaa774900baa0d2b3dfb44006146466aa7959d
+  gating_profile: ""
 design_question_answers:
   - answered_by: SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C3
     class: whole-set

@@ -10,3 +10,4 @@ This is the constraints record of `review-proof`, a throwaway design made only t
 | Layer count | 4 | Copper layers F.Cu, In1.Cu, In2.Cu and B.Cu |
 | Copper weight | 2 oz | Every copper layer, finished |
 | Board manufacturer | JLCPCB | Whose stated limits the board-wide minimums are read from, at 4 layers and 2 oz |
+| Leadless package clearance | 10 mm | The least distance, courtyard to courtyard, a leadless package keeps from a connector, a mounting hole and a board edge. A figure chosen for this synthetic design, which has no machine behind it |
