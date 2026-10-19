@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-TEST-POINT-COURTYARD-DISTANCE-C1-TEST-3
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-TEST-POINT-COURTYARD-DISTANCE.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-19T11:02:10.322753Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check.py::test_a_courtyard_figure_below_the_published_one_millimetre_fails_and_one_at_or_above_it_passes, test_a_part_turned_a_quarter_turn_is_held_to_its_turned_courtyard
+  artifact_version: e4de5406b35e66cd75cb7900ab1cce38fdae63d2
+attested_by: crun-82bd0773e986be84
+links:
+  - target: SOL-PRE-ORDER-CHECK-TEST-POINT-COURTYARD-DISTANCE.C1
+    type: satisfies

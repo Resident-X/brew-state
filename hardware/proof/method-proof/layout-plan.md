@@ -63,10 +63,11 @@ The layer-by-layer plan of the nets: `+5V_IN`, `+5V`, `/+3V3_REG` and `+3V3` are
 | CONN-2 | no | No leadless package in the schematic: U1 is a SOT-23 and U2 a TSSOP-20, both leaded. |
 | CONN-3 | yes | J1 and J2, the cable connectors, at the left edge, J3 at the right edge, each facing off the board, their cables leaving away from U2: J1 and J2 about 25 mm from U2, J3 the PA1 header beside it. |
 | CONN-4 | yes | H1 at the left edge between J2 and the board's corner, near (103.5, 126), H2 at the right edge near (137, 102.5) and H3 at the right edge near (137, 127.5): three holes in a triangle that holds the board without rocking, the left edge carrying J1 and J2 and the right edge carrying J3, each with copper cleared from it by the copper-to-hole minimum, none within a part's courtyard and none beside a leadless package, the board having none. |
-| TEST-1 | yes | TP1 to TP4 each a dedicated 1.0 mm pad on B.Cu, at least 2.5 mm apart centre to centre, at least 1.0 mm from any part's body, and at least 2.0 mm from any part taller than 2.6 mm; none a surface-mount part's land. |
+| TEST-1 | yes | TP1 to TP4 each a dedicated 1.0 mm pad on B.Cu, at least 2.5 mm apart centre to centre and at least 2.0 mm from any part taller than 2.6 mm; none a surface-mount part's land. |
 | TEST-2 | yes | All four test points on B.Cu, and every part taller than 6.4 mm, J1, J2, J3, JP1 and JP2, on F.Cu. |
 | TEST-3 | no | No resistor used to measure current in the schematic: R1 sets an LED's current and nothing reads its voltage. |
 | TEST-4 | no | No resistor used to measure current in the schematic. |
+| TEST-5 | yes | `TEST_COURTYARD_MM` 1 in `design-rules.md`; every test pad, TP1 to TP4, stands at least 1.0 mm from the courtyard of every part on either side, TP3 at (120.4, 110.4) the closest, from U2's. |
 | MFG-1 | yes | The board-wide minimums of Board Setup set to JLCPCB's stated limits for four layers at 1 oz, each with its row in `design-rules.md`, naming this item and the capability page and its date. |
 | MFG-2 | no | No part in the schematic has an exposed pad on its underside. |
 | MFG-3 | no | No part in the schematic has an exposed pad on its underside. |

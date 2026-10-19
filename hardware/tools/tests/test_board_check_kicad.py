@@ -779,6 +779,44 @@ class TheDecouplingAndSilkscreenRules(Proved):
         self.assertEqual({fault[2] for fault in board_prove.FAULTS if fault[0] in self.FAULTS}, set(self.FAULTS.values()))
 
 
+class TheTestPadCourtyardRule(Proved):
+    """A test point seeded inside a part's courtyard fails the rule in a throwaway copy of the gate's proof design."""
+
+    FAULT = "a test point seeded inside a part's courtyard"
+
+    def test_the_rule_fails_on_its_seeded_fault_and_names_the_test_point_the_part_and_the_distances(self):
+        # SOL-PRE-ORDER-CHECK-TEST-POINT-COURTYARD-DISTANCE.C2: Show the rule fail on a test point seeded inside a part's courtyard and closer than the distance, in a throwaway design built outside the repository, and pass the clean design.
+        self.assertCaught(self.FAULT)
+        fields = outcomes()[self.FAULT][1].split(" | ")
+        self.assertEqual(fields[2], "test_point_courtyard")
+        self.assertEqual(fields[3], "pad 1 of TP9 at (20, 10) mm")
+        for words in ("TEST-5", "test point TP9", "0 mm from the F.CrtYd courtyard of R1", "requires 1 mm", "move TP9 or R1"):
+            self.assertIn(words, fields[4])
+        self.assertEqual([fault[2] for fault in board_prove.FAULTS if fault[0] == self.FAULT], ["test_point_courtyard"])
+
+
+class TheTrackedDesignsPassTheTestPadCourtyardRule(unittest.TestCase):
+    """Every design the repository tracks passes the rule, and states its figure."""
+
+    DESIGNS = ("circuit-review-proof", "gate-proof", "method-proof", "record-keys-proof", "review-proof")
+
+    def test_every_tracked_design_passes_and_reports_the_figure(self):
+        # SOL-PRE-ORDER-CHECK-TEST-POINT-COURTYARD-DISTANCE.C1: Every design the repository tracks passes it.
+        tracked = set(subprocess.run(["git", "ls-files", "*.kicad_pro"], cwd=board_prove.REPO, capture_output=True,
+                                     text=True, check=True).stdout.split())
+        self.assertEqual(tracked, {f"hardware/proof/{name}/{name}.kicad_pro" for name in self.DESIGNS})
+        for name in self.DESIGNS:
+            with self.subTest(design=name), tempfile.TemporaryDirectory(prefix="board-test-") as scratch:
+                seed = board_prove.prepare(scratch, f"hardware/proof/{name}", name)
+                status, lines, stderr = board_prove.check(seed, KICAD_CLI)
+                self.assertNotEqual(status, 2, stderr)
+                self.assertFalse([line for line in lines if "test_point_courtyard" in line or "TEST_COURTYARD_MM" in line
+                                  and line.startswith("VIOLATION")], lines)
+                figure = [line for line in lines if line.startswith("FIGURE") and "TEST-5 test point to courtyard" in line]
+                self.assertEqual(len(figure), 1, lines)
+                self.assertIn("| TEST_COURTYARD_MM | 1 mm at least from a test point's pad to the courtyard of any other part", figure[0])
+
+
 class TheCleanDesignStatesTheFiguresOfTheDecouplingAndSilkscreenRules(Copy):
     # SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C3: Each rule the method proof design's review adds fails on a fault seeded for it and passes the clean design
     """The report states the two inherent zeros, and how much of the layout the decoupling rule measured."""
