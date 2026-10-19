@@ -77,7 +77,7 @@ Each node must be read with `show` before linking, and existing coverage checked
 - Whether the OEM valves are kept or the BOM's valve rows are replacements; the owner's statement on the three-way valve (a planned replacement, nothing bought) is recorded in `../controller-board-design-constraints.md` § Purchases ahead of verification, and the question stands for the other valve; the BOM is in AUD against a declared 250 USD figure, so no total is given.
 - Whether the graph has changed since the old text on `DEC-PREHARDWARE-TARGET-FAMILY`, the zero-cross enumeration row and `SOL-CHANNEL-ENUMERATION-CORRECTED.C4`.
 
-- Harness connector types are unidentified; panel and gauge parts are not specified.
+- Harness connector families are not identified (pitch, ways and first pin of every retained connector are recorded in `../connector-pinouts.md`); panel and gauge parts are not specified.
 - The rail-gate and buzzer stage parts are in the BOM; the relay module's snubber count is 2.
 - All prices are estimates; no catalogue numbers have been checked against stock.
 - The old `controller-selection-working/` folder has been removed (git history, commit `07913f4`). The four stale slice files in `docs/sunbeam-em7000/` (`controller-io.md`, `component-specification.md`, `controller-io-bom.csv`, `control-board-electrical-requirements.csv`) are superseded in content by this folder but are cited by path from graph nodes, so they stay until the graph is dealt with (section D).

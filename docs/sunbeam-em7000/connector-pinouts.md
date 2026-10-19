@@ -456,6 +456,8 @@ Every harness below reaches the main board in the low-voltage bundle that enters
 | 3 | Red | Steam knob microswitch (`S8`, `STM`), one terminal | measured |
 | 4 | Black | Steam knob microswitch (`S8`, `STM`), the other terminal | measured |
 
+**Channel.** Both switches serve the row "Control-knob microswitches (`S7` hot water, `S8` steam)" in `controller-io.md`, one signal per knob: pins 1 and 2 the hot-water switch (`S7`), pins 3 and 4 the steam switch (`S8`).
+
 Each switch is read through two conductors, so a switch's polarity is not an interface property: a contact has no polarity. Which lead of a switch is the grounded one was not recorded.
 
 ### Flow meter
@@ -468,6 +470,8 @@ Header `CZ1` on the main board: unmarked, white, **three ways, pitch 2.54 mm, 0.
 | 2 | Yellow | Ground | measured |
 | 3 | Black | Signal, to `PC4`, pin 18 of the 28-pin `HT66F50` | measured |
 
+**Channel.** The signal on pin 3 is the row "Flow meter (water path, suction line ahead of coffee pump)" in `controller-io.md`; pins 1 and 2 are its supply and ground, which that row does not count as channels.
+
 **2 kΩ was read between pin 1 and pin 3** on the main board, which matches the sheet's `R51` pull-up from the signal to `VCC5` (measured, same item). That resistor is on the board being replaced: it is part of the conditioning the new board chooses and not a property of the meter.
 
 ### Temperature sensors
@@ -479,6 +483,8 @@ Three headers on the main board take the three two-wire leads. Each is unmarked 
 | Coffee thermoblock temperature sensor | 1, 2 | black, black | the two terminals of the coffee thermistor |
 | Steam thermoblock temperature sensor | 1, 2 | as the coffee sensor (item `B13.map`) | the two terminals of the steam-block thermistor |
 | Steam wand temperature sensor (conduction disc, wand exterior) | 1, 2 | as the coffee sensor (item `B14.map`) | the two terminals of the wand thermistor |
+
+**Channels.** The three headers serve, in the table's order, the rows "Coffee thermoblock temperature sensor", "Steam thermoblock temperature sensor" and "Steam wand temperature sensor (conduction disc, wand exterior)" in `controller-io.md`; each sensor is one channel across its two pins.
 
 *(Grade: inspected, for the lead colours and the terminal order: the leads are two-terminal NTC thermistors and either terminal order works, as the owner notes. The parts list names the coffee lead red and the wand lead white; the owner read black at the connector's contacts, and the two are not reconciled here; nothing depends on it.)*
 
@@ -495,7 +501,7 @@ All mains wiring meets the original board at nine 6.3 mm male tabs on its left e
 | # | Silkscreen | Wire colour | What the lead goes to | Tab-centre Y: board-edge frame (datum frame) | Grade |
 |---|---|---|---|---|---|
 | 1 | `LINE1` | red | Out to the machine's loads: it daisy-chains to the pumps, the valves and the thermoblocks as the fixed wire. It reads 0 Ω to `LINE` on the board | 12.0 mm (14.5 mm) | inspected (the routing); measured (the 0 Ω); the datum-frame figure inferred (adds the inferred 2.5 mm offset) |
-| 2 | `LINE` | brown | The mains active, in from "mains in" (the owner's words, item `C2.T1.feed`); no device between mains in and `LINE` is named | 20.6 mm (23.1 mm) | measured, by continuity to mains in; the datum-frame figure inferred (adds the inferred 2.5 mm offset) |
+| 2 | `LINE` | brown | The mains active, in from "mains in" (the owner's words, item `C2.T1.feed`); no device between mains in and `LINE` is named, and the device upstream of mains in is unread | 20.6 mm (23.1 mm) | measured, by continuity to mains in; the datum-frame figure inferred (adds the inferred 2.5 mm offset) |
 | 3 | `NEUTRAL` | blue | The mains neutral | 29.4 mm (31.9 mm) | inspected; the datum-frame figure inferred (adds the inferred 2.5 mm offset) |
 | 4 | `STMHEATER` | black | The **steam thermoblock element**, through the steam thermostat wired in series | 51.6 mm (54.1 mm) | inspected; the datum-frame figure inferred (adds the inferred 2.5 mm offset) |
 | 5 | `COFHEATER` | red | The **coffee thermoblock element**, through the coffee thermostat wired in series | 65.1 mm (67.6 mm) | inspected; the datum-frame figure inferred (adds the inferred 2.5 mm offset) |
@@ -510,7 +516,7 @@ All mains wiring meets the original board at nine 6.3 mm male tabs on its left e
 
 ### The source of each live feed
 
-**The original board takes one live feed, not two.** The two terminals named `LINE` and `LINE1` read 0 Ω between them on the board (inspection item `C2.T1.feed`, measured, machine unplugged): they are one node. `LINE` is wired to "mains in", the owner's words for the point where the machine's supply enters, found by continuity, and the owner names no device between mains in and `LINE`; `LINE1` is the same node leaving the board for the loads, the wire the owner describes as the fixed one that daisy-chains round to them. The owner's reading is that it is a pass-through so that unplugging the board leaves nothing live that is still connected elsewhere. So the board's two "live" terminals are an inlet and its onward outlet, not two supplies: the second live feed the working documents asked about is the first one leaving the board, not a second source.
+**The original board takes one live feed, not two.** The two terminals named `LINE` and `LINE1` read 0 Ω between them on the board (inspection item `C2.T1.feed`, measured, machine unplugged): they are one node. `LINE` is wired to "mains in", the owner's words for the point where the machine's supply enters, found by continuity, and the owner names no device between mains in and `LINE`, and the device upstream of it is unread (the record carries only the owner's words "mains in"); `LINE1` is the same node leaving the board for the loads, the wire the owner describes as the fixed one that daisy-chains round to them. The owner's reading is that it is a pass-through so that unplugging the board leaves nothing live that is still connected elsewhere. So the board's two "live" terminals are an inlet and its onward outlet, not two supplies: the second live feed the working documents asked about is the first one leaving the board, not a second source.
 
 **What was seen of fuses, and that no thermostat is shared.** The owner saw **no fuse along the visible loom at the board end except `F1`**, the board's own 5 A fuse marked `F5A 250V` (`reference-machine.md` § Heating and load, *Mains fuse*), and no thermostat shared between loads (item `C3.feeds`, inspected; the owner's words are "no fuses that I can see except F1"). A thermal fuse (location, rating and how many are fitted all pending, settled by `SOL-HW-RETAINED-DEVICE-REMAINING-CHARACTERISTICS-RECORDED`) is excluded from that statement: it is fitted (`reference-machine.md` § Protection) and the owner's statement does not cover it, and the far ends of the pumps' and elements' leads were not recorded (pending, settled by `SOL-HW-RETAINED-DEVICE-REMAINING-CHARACTERISTICS-RECORDED`), so a fuse beyond the visible loom is neither seen nor excluded. **Neither pump branch was seen to carry a fuse of its own** along the visible loom (items `C5.cof`, `C5.stm`, both none, inspected, with the same limits): the working design's earlier reading that the pumps already carried branch fuses is not supported by what was seen. The three thermostats are in series with their own loads' leads, not shared: the steam element's, the coffee element's and the coffee pump's (items `C2.T1.label`, `C6`, inspected). **That the steam pump carries none is inferred, not seen:** the owner's label for the first terminal says "coffee pump via series thermostat on pump" (item `C2.T1.label`) and names the coffee pump alone as the one in series with the pump thermostat (item `C6`, "Coffee pump - in series with coffee pump white wire"), and the parts list itemises a single pump thermostat; the far ends of the pumps' leads were not recorded, so a thermostat at the steam pump's far end is not excluded by anything read.
 
@@ -546,9 +552,9 @@ Both coils together: at most 129 mA rms steady and 203 mA rms inrush, if both ar
 | Nameplate power | 48 W | 22 W | inspected, `D3.w`, `D4.w` |
 | Resistance read, one probe polarity | open | open | measured, `D3.rf`, `D4.rf` |
 | Resistance read, probes swapped | 15.17 MΩ | 19.13 MΩ | measured, `D3.rr`, `D4.rr` |
-| **Running current at the top of the span (253 V)** | at most **0.38 A rms** | at most **0.17 A rms** | inferred, below |
+| **Running current at the top of the span (253 V)** | at most **0.38 A rms** | at most **0.174 A rms** | inferred, below |
 
-**The coil's resistance cannot be read**: both polarities read open or in the megohms, which is what a series diode does to a meter whose test voltage is below the junction's threshold, so a diode in series with the coil hides it (inferred from the two readings). The bound is therefore worked from the nameplate power: **current = nameplate power ÷ (253 V × a power-factor floor of 0.5)**. Coffee: 48 ÷ (253 × 0.5) = **0.380 A**. Steam: 22 ÷ (253 × 0.5) = **0.174 A**. The power-factor floor, 0.5, is a **project assumption, to replace** with a measured figure when one exists; the nameplate powers are inspected figures. The nameplate states its power at its rated voltage, 230 V (coffee) and 220–240 V (steam), and the bound takes it at 253 V as the criterion for it directs; a coil whose power rose with the square of its supply would instead draw 0.46 A (coffee, from 230 V) and 0.19 A (steam, taking the 240 V end of its 220–240 V), which a design margin accounts for and this record does not. The working design's earlier figure of 0.1–0.22 A for both pumps is superseded.
+**The coil's resistance cannot be read**: both polarities read open or in the megohms, which is what a series diode does to a meter whose test voltage is below the junction's threshold, so a diode in series with the coil hides it (inferred from the two readings). The bound is therefore worked from the nameplate power: **current = nameplate power ÷ (253 V × a power-factor floor of 0.5)**. Coffee: 48 ÷ (253 × 0.5) = **0.3794 A, taken as 0.38 A**. Steam: 22 ÷ (253 × 0.5) = **0.174 A**. The power-factor floor, 0.5, is a **project assumption, to replace** with a measured figure when one exists; the nameplate powers are inspected figures. The nameplate states its power at its rated voltage, 230 V (coffee) and 220–240 V (steam), and the bound takes it at 253 V as the criterion for it directs; a coil whose power rose with the square of its supply would instead draw 0.46 A (coffee, from 230 V) and 0.19 A (steam, taking the 240 V end of its 220–240 V), which a design margin accounts for and this record does not. The working design's earlier figure of 0.1–0.22 A for both pumps is superseded.
 
 ### Heating elements: resistance
 
@@ -580,7 +586,7 @@ The three are consistent with 100 kΩ nominal at 25 °C, which the panel sheet's
 
 ### Flow meter
 
-**Supply: 5 V** (`VCC5`, pin 1) from the board, read by continuity and sheet 3-3 (measured, inspected as above); the meter's own permitted supply range is not marked. **Output: a digital pulse train on pin 3**, held up on the original board by 2 kΩ to 5 V; whether it is open-drain or push-pull is **pending**, settled by `SOL-HW-RETAINED-DEVICE-REMAINING-CHARACTERISTICS-RECORDED`. The constraint on a replacing input is that it reads that pulse train, pulled up if the output is open-drain, which is what a pull-up of that kind implies.
+**Supply: 5 V** (`VCC5`, pin 1) from the board, read by continuity and sheet 3-3 (measured, inspected as above); the meter's own permitted supply range was not read. **Output: a digital pulse train on pin 3**, held up on the original board by 2 kΩ to 5 V; whether it is open-drain or push-pull is **pending**, settled by `SOL-HW-RETAINED-DEVICE-REMAINING-CHARACTERISTICS-RECORDED`. The constraint on a replacing input is that it reads that pulse train, pulled up if the output is open-drain, which is what a pull-up of that kind implies.
 
 ### Buzzer
 
