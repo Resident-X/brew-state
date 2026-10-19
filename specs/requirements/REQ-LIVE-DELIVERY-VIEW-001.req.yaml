@@ -4,7 +4,7 @@ category: interface
 title: A delivery is observable while it runs, not only once it has ended
 status: active
 priority: should
-version: 1
+version: 2
 text: |
   While a shot is running there is information the operator can only use then. Pressure rising faster than it should, or flow that runs away partway through, tells them something about the puck that the finished cup no longer distinguishes from a dozen other causes.
 
@@ -17,4 +17,6 @@ rationale: |
   Distinct from external monitoring, which is about systems other than the machine observing it without affecting it. This is the operator, at the machine, during the drink.
 links:
   - target: JRN-DIAL-IN-RECIPE-001.C6
+    type: derives-from
+  - target: JRN-DESIGN-PROFILE-001.C4
     type: derives-from

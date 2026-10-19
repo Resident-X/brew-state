@@ -1,0 +1,13 @@
+id: DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR.C11
+type: criterion
+title: A profile is checked without a delivery, on the display and through the connected interface
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |-
+  A profile the machine cannot deliver is refused where it is entered, with the segment and the reason named, on each of the two surfaces.
+links:
+  - target: DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR
+    type: criterion-of

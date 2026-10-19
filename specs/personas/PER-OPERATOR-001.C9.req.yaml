@@ -1,0 +1,12 @@
+id: PER-OPERATOR-001.C9
+type: criterion
+title: The usual drinks are one press away
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  A household member who is not interested in the machine's workings still wants the drink the household has settled on, and wants it without choosing anything. The usual drinks are one press away, each doing what the household decided it should, and a press that cannot be honoured is refused before any water moves rather than producing something nobody chose.
+links:
+  - target: PER-OPERATOR-001
+    type: criterion-of

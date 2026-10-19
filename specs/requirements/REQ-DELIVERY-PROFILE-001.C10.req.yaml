@@ -1,0 +1,12 @@
+id: REQ-DELIVERY-PROFILE-001.C10
+type: criterion
+title: What a delivery achieved is reported against each segment of its profile
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  A single account for the whole delivery hides which segment did what, and an operator changing one segment needs to see that segment.
+links:
+  - target: REQ-DELIVERY-PROFILE-001
+    type: criterion-of

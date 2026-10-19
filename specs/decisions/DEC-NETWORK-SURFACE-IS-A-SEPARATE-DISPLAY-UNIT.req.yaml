@@ -1,0 +1,33 @@
+id: DEC-NETWORK-SURFACE-IS-A-SEPARATE-DISPLAY-UNIT
+type: decision
+title: The network-facing surface is a separate display unit that reaches the controller only through a defined serial protocol
+status: active
+version: 1
+decided_by: david
+text: |-
+  The display, the connected interface, sign-in, view and edit rights and the profile library belong to a separate display unit. The controller is reachable only through a defined serial protocol.
+rationale: |
+  Context: The operator will reach the machine through a display and a connected interface, both of which need a network stack, sign-in, rights and storage for a library of profiles. The machine's controller holds the heaters and the pump and runs the control law. Every safety argument in the graph assumes the controller's behaviour does not depend on anything outside it (REQ-MACHINE-INTERFACE-001.C4), and a network-facing surface is the part most exposed to hostile input and most likely to hang or be rebooted.
+
+  Trade-offs: Putting the network stack on the controller needs no second unit, and puts the largest and least trustworthy body of code on the unit that must stay correct, sharing its processor, memory and update path with the control law. A machine with no network surface at all is simplest and gives up editing, sharing and remote viewing. A separate display unit that owns the display, the connected interface, sign-in, rights and the library, and reaches the controller only through a defined serial protocol, costs a second unit and a protocol to specify, and leaves the controller with nothing network-shaped on it: the only way in is the set of requests the protocol defines, each of which the controller checks. A pass-through that exposes the controller's own surface to the network was rejected because it makes the network the controller's interface.
+
+  Reversibility: The unit can be replaced or omitted without changing the controller, because the controller already works with no consumer present. Moving the network stack onto the controller later would reverse the segregation and is a harder step than the one taken here.
+
+  Consequences: The controller offers state and accepts requests only through the defined protocol, checks every profile it receives, and runs a delivery from its own memory without taking instructions from the display unit during it. The display unit holds sign-in, the view and edit rights and the profile library, and its absence or failure changes nothing about delivery. A display and its hardware channel are not in the enumerated channels of the controller design, so the display unit's task records that gap (DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR.C1). A delivery is started only by a control on the machine's own panel; the display unit and the connected interface choose what that control runs and never start a delivery (REQ-NO-REMOTE-ACTUATION-001.C4). The scheme for sign-in is not decided here.
+options_considered:
+  - option: A separate display unit owns the network surface and reaches the controller only through a defined serial protocol
+    reason_rejected: ""
+  - option: The network stack runs on the controller
+    reason_rejected: puts the largest and least trustworthy code on the unit that must stay correct, sharing its processor, memory and update path
+  - option: No network surface
+    reason_rejected: simplest, but gives up editing, sharing and remote viewing
+  - option: A pass-through exposing the controller's own surface to the network
+    reason_rejected: makes the network the controller's interface and removes the checking point
+chosen: A separate display unit owns the network surface and reaches the controller only through a defined serial protocol
+links:
+  - target: REQ-MACHINE-INTERFACE-001.C3
+    type: addresses
+  - target: REQ-MACHINE-INTERFACE-001.C4
+    type: addresses
+  - target: REQ-NO-REMOTE-ACTUATION-001.C3
+    type: addresses

@@ -1,0 +1,29 @@
+id: DEC-UPKEEP-ROUTINES-THAT-MOVE-WATER-ARE-PROFILES
+type: decision
+title: Upkeep routines that move water are expressed as profiles, and descaling is a later procedure built from them
+status: active
+version: 1
+decided_by: david
+text: |-
+  Back-flush and flush are profiles. Descaling is not one profile and is a procedure that sequences profiles with operator steps.
+rationale: |
+  Context: Upkeep routines that move water, such as a back-flush against a blocked outlet and a flush of the group, are sequences of segments with a target, a limit and an end. The graph requires a routine to drive a defined sequence (REQ-MAINTENANCE-CYCLES-001.C1) and says nothing about how the sequence is expressed.
+
+  Trade-offs: A separate routine engine would give routines their own vocabulary, and would be a second place where pressure limits, refusal and departure are enforced and a second thing to verify. Fixed sequences compiled into the firmware cannot be adjusted for a household's water or its machine. Expressing these routines as profiles reuses the one mechanism that already carries segment limits, refusal before the delivery and departure reporting, and lets an operator adjust them as they would any profile. A routine that is more than a delivery, such as descaling, which involves other paths, long soaks and the operator's own steps, is not one profile; it is a procedure that sequences profiles and prompts, and is left to be built from them.
+
+  Reversibility: Reversible per routine, since a routine expressed as a profile can later be wrapped by a procedure without changing the profile.
+
+  Consequences: Back-flush and flush are profiles, and a segment may state no water temperature, in which case the brew temperature loop holds nothing for it. A routine run as a profile is held to the same pressure limits and refusal as a drink and is not judged against the drink-quality bands. Descaling is not decided here.
+options_considered:
+  - option: Water-moving upkeep routines are profiles, and descaling is a later procedure built from profiles and operator steps
+    reason_rejected: ""
+  - option: A separate routine engine
+    reason_rejected: a second place to enforce pressure limits, refusal and departure, and a second thing to verify
+  - option: Fixed sequences compiled into the firmware
+    reason_rejected: cannot be adjusted for a household's water or machine
+chosen: Water-moving upkeep routines are profiles, and descaling is a later procedure built from profiles and operator steps
+links:
+  - target: REQ-MAINTENANCE-CYCLES-001.C1
+    type: addresses
+  - target: REQ-DELIVERY-PROFILE-001.C6
+    type: addresses

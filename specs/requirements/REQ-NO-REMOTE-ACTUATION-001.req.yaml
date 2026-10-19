@@ -4,11 +4,11 @@ category: constraint
 title: The machine delivers only for a person present at it
 status: active
 priority: must
-version: 1
+version: 2
 text: |
   The machine delivers only for a person at it. Anything reaching the machine from elsewhere may observe it and may ask it to become ready, and may not cause it to deliver.
 
-  This holds for interfaces that exist today and for any added later, which is the point of stating it as a constraint rather than as a property of the one interface currently contemplated. Configuration and firmware maintenance are a separate path with their own local gate.
+  This holds for interfaces that exist today and for any added later, which is the point of stating it as a constraint rather than as a property of the one interface currently contemplated. Configuration and firmware maintenance are a separate path with their own local gate. A display or a connected interface is one such interface: it chooses what the machine's own panel control will run and never starts a delivery.
 links:
   - target: DEC-NO-REMOTE-ACTUATION
     type: justified-by

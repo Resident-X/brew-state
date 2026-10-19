@@ -1,0 +1,12 @@
+id: REQ-NETWORK-ACCESS-001.C1
+type: criterion
+title: A party that has not signed in is offered no state and no command over a network
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  A machine that answers an unknown party, even only to read, has told that party it is there, when the household is home and what it drinks.
+links:
+  - target: REQ-NETWORK-ACCESS-001
+    type: criterion-of

@@ -147,5 +147,19 @@ class TheMeasuredRulesOnTheProofDesign(ReviewProofCopy):
         self.assertIn("(63.3, 14)", found[0][3] + found[0][4])
 
 
+class TheTestPadCourtyardRuleOnTheProofDesign(ReviewProofCopy):
+    def test_a_test_point_moved_into_a_courtyard_fails_and_the_clean_design_passes(self):
+        # SOL-PRE-ORDER-CHECK-TEST-POINT-COURTYARD-DISTANCE.C2: Show the rule fail on a test point seeded inside a part's courtyard and closer than the distance, in a throwaway design built outside the repository, and pass the clean design.
+        status, violations = self.check()
+        self.assertEqual([v for v in violations if v[2] == "test_point_courtyard"], [], violations)
+        self.seed.layout(lambda tree: review_seed.move(tree, "TP2", 41, 19))
+        status, violations = self.check()
+        self.assertEqual(status, 1, violations)
+        found = [v for v in violations if v[2] == "test_point_courtyard"]
+        self.assertEqual(len(found), 1, violations)
+        self.assertIn("test point TP2", found[0][4])
+        self.assertIn("requires 1 mm", found[0][4])
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,12 @@
+id: SOL-PROFILE-SEGMENT-STRUCTURE-AND-EXIT-CONDITIONS.C3
+type: criterion
+title: The segment list extends the existing profile surface without a parallel one
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The segment list is carried by the existing delivery profile surface and seams the control unit already uses, not a second profile type: a one-segment profile of constant flow ending on elapsed time commands the same course and ends at the same step as the profile surface built before segments, and a multi-point course of that surface (up to its eight points) is expressed as a sequence of segments each a linear ramp to the next point and commands the same course at the same steps, shown by the existing control tests passing unchanged. Does not cover changing the pump trim, the departure report, the plant model's flow term or the brew loop feedforward, which are excluded from this leaf.
+links:
+  - target: SOL-PROFILE-SEGMENT-STRUCTURE-AND-EXIT-CONDITIONS
+    type: criterion-of

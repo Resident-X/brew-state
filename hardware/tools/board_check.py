@@ -2324,6 +2324,8 @@ MEASURED = (
     ("MAINS-5", "barrier copper", "BARRIER_COPPER_MM2", "mm² of copper at most between the pad rows of a part that "
      "bridges the barrier", 0.0, None),
     ("MFG-4", "paste over a via", "PASTE_OVER_VIA_MM2", "mm² at most of a via's hole under a paste opening", 0.0, None),
+    ("TEST-5", "test point to courtyard", "TEST_COURTYARD_MM", "mm at least from a test point's pad to the courtyard of "
+     "any other part, on either side of the board", 1.0, None),
 )
 
 #: Each custom rule a design's rules file must hold, by the catalogue item it
@@ -4309,6 +4311,48 @@ def designators_astray(design: Design, tree: list) -> List[Violation]:
     return found
 
 
+def crowded_test_points(design: Design, tree: list, distance: float) -> List[Violation]:
+    """Every test point whose pad stands nearer than `distance` to the courtyard of another part, on either side of the board.
+
+    A test point is a part whose reference designator begins TP. The parts
+    it is held against are every other footprint with a courtyard drawn on
+    either side's courtyard layer; a part that draws none is skipped, as is
+    the test point's own footprint. The pad is its copper's outline, and the
+    courtyard the box courtyard() gives; a courtyard that is no box is
+    over-covered, which can only fail a clean board too early.
+    """
+    table = board_geometry.net_table(tree)
+    footprints = []
+    for footprint in sexpr.children(tree, "footprint"):
+        name = board_geometry.reference(footprint)
+        if name:
+            footprints.append((name, footprint))
+    yards = []
+    for other, held in footprints:
+        for side in ("F", "B"):
+            yard = courtyard(held, side, other)
+            if yard is not None:
+                yards.append((other, side, yard))
+    found = []
+    for name, footprint in footprints:
+        if not name.startswith("TP"):
+            continue
+        for pad in board_geometry.footprint_pads(footprint, table):
+            outline = pad.outline()
+            nearest = [(polygon_gap(outline, yard), other, side) for other, side, yard in yards if other != name]
+            if not nearest:
+                continue
+            gap, other, side = min(nearest)
+            if gap < distance:
+                found.append(Violation(
+                    design.project, "test_point_courtyard", f"{pad.name()} at ({coordinate(pad.centre[0])}, {coordinate(pad.centre[1])}) mm",
+                    f"TEST-5 a test pad stands at least TEST_COURTYARD_MM from the courtyard of any part: the pad of test "
+                    f"point {name} is {coordinate(gap)} mm from the {side}.CrtYd courtyard of {other}, where "
+                    f"TEST_COURTYARD_MM requires {coordinate(distance)} mm; move {name} or {other} until the gap is "
+                    f"{coordinate(distance)} mm or more"))
+    return found
+
+
 # --- One design ----------------------------------------------------------------
 
 
@@ -4596,6 +4640,8 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
                          f"{len(paths)} paths of {circuits} circuits with a supply pin"))
         found += references_off_silkscreen(design, tree)
         found += designators_astray(design, tree)
+        if "TEST_COURTYARD_MM" in figures:
+            found += crowded_test_points(design, tree, figures["TEST_COURTYARD_MM"])
     except board_geometry.Unreadable as unread:
         found.append(Violation(design.project, "design_unreadable", design.layout,
                                f"the layout cannot be read for its decoupling and references ({unread})"))

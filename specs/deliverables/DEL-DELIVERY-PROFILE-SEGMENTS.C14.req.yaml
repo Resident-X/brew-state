@@ -1,0 +1,13 @@
+id: DEL-DELIVERY-PROFILE-SEGMENTS.C14
+type: criterion
+title: A change to a recipe does not reach a delivery already in progress
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |-
+  A recipe changed or replaced while a delivery runs leaves that delivery following the profile it started with, and applies from the next delivery.
+links:
+  - target: DEL-DELIVERY-PROFILE-SEGMENTS
+    type: criterion-of

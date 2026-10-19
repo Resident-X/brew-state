@@ -1,0 +1,12 @@
+id: SOL-PROFILE-SEGMENT-STRUCTURE-AND-EXIT-CONDITIONS.C2
+type: criterion
+title: Every segment ends on its own exit condition in a measured quantity, evaluated while it runs
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Every segment's exit condition is exactly one of elapsed time, delivered volume, delivered weight where weight is measured, or a pressure or flow threshold, and is evaluated on the control cadence while that segment runs; the segment ends when its own condition is met, the next segment begins, and the delivery ends when the last segment ends. A segment whose exit condition names a quantity the machine does not measure is refused before the delivery begins, naming the segment and the quantity in text and JSON. The quantities this build measures are elapsed time, delivered volume, pressure and flow, read at the sensor seam the control unit already uses; weight is read at that seam when a reading is supplied there, and tests supply every reading through it. A weight exit on a machine that supplies no weight reading at all is refused before the delivery begins, naming the segment and the quantity. If a weight reading is lost while its segment runs, the segment ends on the delivered volume equal in number to its weight target and is marked as having ended on that fallback, which the report of departure built in a later leaf carries. Tests cover each exit kind, the loss of a weight reading part way through a segment, a two-segment profile advancing, and the unmeasured-quantity refusal. Out of scope: how the measured quantity is obtained for a pressure-commanded segment, correcting the pump toward either variable, and the preset and file forms of a profile.
+links:
+  - target: SOL-PROFILE-SEGMENT-STRUCTURE-AND-EXIT-CONDITIONS
+    type: criterion-of

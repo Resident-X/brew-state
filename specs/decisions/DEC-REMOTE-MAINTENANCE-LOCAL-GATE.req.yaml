@@ -2,7 +2,7 @@ id: DEC-REMOTE-MAINTENANCE-LOCAL-GATE
 type: decision
 title: Remote configuration and update are permitted behind a local act, with firmware gated physically
 status: active
-version: 1
+version: 2
 decided_by: david
 rationale: |
   Context: The no-remote-actuation decision withholds the ability to make the machine do something. It says nothing about changing what the machine would do next time, and read literally it risked forbidding that too. Configuration and firmware maintenance release no energy at the moment of the request, which puts them in a different risk class from actuation. The practical alternative is disassembling the machine to adjust a parameter, and a build that must be opened to be tuned will be tuned rarely and reassembled carelessly — and careless reassembly is what breaks the mains-to-low-voltage separation the install requirement exists to protect.
@@ -14,6 +14,8 @@ rationale: |
   Reversibility: Straightforward in both directions. Tightening later means adding a physical gate to the configuration path, which is additive. Loosening means removing the physical firmware gate, which is a decision to supersede rather than a rebuild. The externally accessible connection point is the least reversible part, since it is a hole in the enclosure.
 
   Consequences: Downstream interface work carries a maintenance path distinct from both the operator interface and the read-only monitoring surface, with its own gate. The physical firmware control is deliberately not the external connection point: that port sits on the outside of the machine where anyone can reach it, so it carries no physical authority. The enclosure gains a penetration, which the install requirement's ingress and isolation criteria continue to govern rather than being relaxed for it.
+
+  Update: a profile is recipe data and lies outside this gate (DEC-PROFILE-IS-RECIPE-DATA). The gate governs configuration and firmware, which change limits the firmware enforces.
 options_considered:
   - option: Local act for configuration, additional physical control for firmware
     reason_rejected: ""

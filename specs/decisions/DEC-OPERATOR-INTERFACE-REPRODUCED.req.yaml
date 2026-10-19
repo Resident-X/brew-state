@@ -1,8 +1,8 @@
 id: DEC-OPERATOR-INTERFACE-REPRODUCED
 type: decision
-title: The operator interface the machine already presents is reproduced rather than redesigned, as the wiring record defines it
+title: The operator panel's keys, indicators and announcements are reproduced as the wiring record defines them, and what the keys select is defined by presets
 status: active
-version: 1
+version: 2
 text: |
   The machine already presents an operator interface, and the operator already knows it. Five keys.
   Indicators whose brightness ramps while the machine heats. Two gauges that sweep to full scale and
@@ -22,6 +22,8 @@ text: |
   That distinction is the point. The gauges may be replaced, the indicators may be driven differently,
   the sounder may be a different part. What may not happen is that a behaviour the operator relies on
   disappears because nothing wrote it down and nothing required it.
+
+  The keys, their indicators and the announcements are reproduced as the wiring record defines them. What ONE and TWO select is no longer what the machine did before: each starts the complete recipe held on it and a second press stops it (DEF-PRESET). What MAN and PRG select is not decided here: MAN may run the profile currently chosen on a display, be a third preset, or be a draw the operator opens and closes by hand. A display and a connected interface are further consumers of the machine's one surface and do not replace the panel (DEC-NETWORK-SURFACE-IS-A-SEPARATE-DISPLAY-UNIT).
 rationale: |
   Context: Tracing the machine's harnesses surfaced several behaviours the operator interface performs
   that no document had recorded and no criterion requires: indicator brightness modulated by gating a
@@ -58,6 +60,8 @@ rationale: |
   replacement that drives them differently while producing the same visible and audible result
   satisfies this. And the enumeration's retention states stay a separate question: this decision governs
   behaviour, while which physical devices are kept is settled by the device-retention boundary.
+
+  Update: the decision is narrowed from the whole interface to the panel's keys, indicators and announcements, because what the keys select is now defined by presets (DEF-PRESET). The reasoning above about behaviours the operator relies on and nothing records still holds for everything else the panel does.
 options_considered:
   - option: Reproduce the existing operator interface, defined by reference to the wiring record
     reason_rejected: ""
@@ -70,4 +74,6 @@ links:
   - target: JRN-OPERATE-INTERFACE-001.C1
     type: addresses
   - target: JRN-OPERATE-INTERFACE-001.C3
+    type: addresses
+  - target: REQ-RECIPE-CUSTODY-001.C8
     type: addresses

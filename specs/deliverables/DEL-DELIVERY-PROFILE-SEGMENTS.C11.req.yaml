@@ -1,0 +1,13 @@
+id: DEL-DELIVERY-PROFILE-SEGMENTS.C11
+type: criterion
+title: A delivery's account states, for each segment, what was commanded and what was achieved
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |-
+  The account is available during the delivery and when it ends, in both the text and the JSON form, and a segment the machine could not follow is named with the amount it departed by.
+links:
+  - target: DEL-DELIVERY-PROFILE-SEGMENTS
+    type: criterion-of

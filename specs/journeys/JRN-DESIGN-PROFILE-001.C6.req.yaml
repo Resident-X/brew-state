@@ -1,0 +1,12 @@
+id: JRN-DESIGN-PROFILE-001.C6
+type: criterion
+title: A profile can be passed on from one machine to another
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |-
+  A profile that can only live on the machine that made it cannot be shared, backed up or carried to a replacement.
+links:
+  - target: JRN-DESIGN-PROFILE-001
+    type: criterion-of

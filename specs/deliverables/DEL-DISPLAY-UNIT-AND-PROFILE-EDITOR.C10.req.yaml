@@ -1,0 +1,13 @@
+id: DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR.C10
+type: criterion
+title: The protocol between the display unit and the controller is specified and enumerates its requests
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |-
+  The requests are to check a profile, to place a profile on a preset, and to read state and history. A request the protocol does not define is not acted on.
+links:
+  - target: DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR
+    type: criterion-of

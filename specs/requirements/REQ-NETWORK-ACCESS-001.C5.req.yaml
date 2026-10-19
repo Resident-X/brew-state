@@ -1,0 +1,12 @@
+id: REQ-NETWORK-ACCESS-001.C5
+type: criterion
+title: Nothing reaching the machine from a network can alter how the machine protects itself
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |-
+  The protective chain and the limits the machine enforces are not data an operator edits, so whoever is signed in, a request cannot loosen them.
+links:
+  - target: REQ-NETWORK-ACCESS-001
+    type: criterion-of

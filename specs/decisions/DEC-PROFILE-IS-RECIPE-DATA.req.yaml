@@ -1,0 +1,33 @@
+id: DEC-PROFILE-IS-RECIPE-DATA
+type: decision
+title: A profile is recipe data, changed by a signed-in operator and applied to the next delivery, not configuration behind a local act
+status: active
+version: 1
+decided_by: david
+text: |-
+  A profile is recipe data. It is changed by a signed-in operator, checked by the machine on receipt, and applied to the next delivery.
+rationale: |
+  Context: The machine already separates changing what it will do next time from making it do something now. Reconfiguration is accepted only after a deliberate local act, because a configuration change can alter limits the firmware enforces. A profile is stated as outcomes at the group and every profile is checked by the machine before it is kept, so a profile cannot loosen a limit; the question is only which class it belongs to. If it were configuration, saving a profile would need someone at the machine each time, which defeats editing from a display or a connected device.
+
+  Trade-offs: Treating a profile as configuration gives the strongest gate and costs the whole point of editing away from the machine: every save would wait for a hand at the panel, and operators would stop experimenting. Allowing editing only at the panel keeps the gate and makes segment-level editing impractical on a few keys. Treating a profile as recipe data, with the signed-in operator as the gate and the machine as the judge of what it can deliver, keeps the machine's limits where they were and lets the recipe change as a recipe does. What this gives up is a human at the machine at the moment of each change, which the safety argument never relied on for a profile, since nothing a profile says can start a delivery from elsewhere (REQ-NO-REMOTE-ACTUATION-001).
+
+  Reversibility: Reversible by reclassifying profiles as configuration, which would add the local act to every save without changing what a profile is.
+
+  Consequences: Saving a profile needs a signed-in operator and no local act. The machine checks every profile on receipt and refuses one it cannot deliver. An edit applies to the next delivery and never to one in progress. Anything that changes a limit the firmware enforces stays configuration and keeps its local act.
+options_considered:
+  - option: 'Profiles are recipe data: changed by a signed-in operator, checked on receipt, applied to the next delivery'
+    reason_rejected: ""
+  - option: Profiles are configuration, changed only after a deliberate local act
+    reason_rejected: every save would wait for a hand at the machine, which defeats editing from a display or connected device and stops operators experimenting
+  - option: Profiles can be edited only at the machine's own panel
+    reason_rejected: segment-level editing on a few keys is impractical, and it gives up sharing
+chosen: 'Profiles are recipe data: changed by a signed-in operator, checked on receipt, applied to the next delivery'
+links:
+  - target: REQ-MAINTENANCE-ACCESS-001.C1
+    type: addresses
+  - target: REQ-RECIPE-CUSTODY-001.C9
+    type: addresses
+  - target: REQ-RECIPE-CUSTODY-001.C10
+    type: addresses
+  - target: REQ-DELIVERY-PROFILE-001.C8
+    type: addresses

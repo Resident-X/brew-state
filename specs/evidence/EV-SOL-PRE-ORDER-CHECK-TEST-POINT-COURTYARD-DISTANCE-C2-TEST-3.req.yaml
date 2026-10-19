@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-TEST-POINT-COURTYARD-DISTANCE-C2-TEST-3
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-TEST-POINT-COURTYARD-DISTANCE.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-19T11:02:10.255723Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check.py::test_the_item_is_a_rule_kind_item_in_the_item_form_with_a_published_source, test_test_1_defers_spacing_from_part_outlines_to_the_rule
+  artifact_version: e4de5406b35e66cd75cb7900ab1cce38fdae63d2
+attested_by: crun-82bd0773e986be84
+links:
+  - target: SOL-PRE-ORDER-CHECK-TEST-POINT-COURTYARD-DISTANCE.C2
+    type: satisfies

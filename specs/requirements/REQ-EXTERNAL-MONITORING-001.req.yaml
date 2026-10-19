@@ -4,7 +4,7 @@ category: interface
 title: External systems can observe the machine and its history without affecting it
 status: active
 priority: should
-version: 2
+version: 3
 text: |
   Home automation and similar systems are natural consumers of a machine that already publishes its state, and monitoring is nearly free once the interface surface exists. What they want is trends: how consistent recent drinks were, how long the machine sits at temperature, how the prediction error is moving.
 
@@ -23,4 +23,6 @@ links:
   - target: REQ-MACHINE-INTERFACE-001.C1
     type: derives-from
   - target: REQ-MACHINE-INTERFACE-001.C4
+    type: derives-from
+  - target: JRN-DESIGN-PROFILE-001.C8
     type: derives-from

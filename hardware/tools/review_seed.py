@@ -339,12 +339,12 @@ def load_capacitor_away(seed: board_prove.Seed) -> None:
 
 
 def suppressor_away(seed: board_prove.Seed) -> None:
-    """The supply input's suppressor D1 moved 19 mm from its connector, onto the +5V trunk at y 28 mm."""
+    """The supply input's suppressor D1 moved 16 mm from its connector, onto the +5V trunk at y 25 mm, its ground reaching the via at y 28 mm."""
     def edit(tree: list) -> None:
         drop(tree, ((39.1, 9.2), (40.3, 9.2)))
         drop_via(tree, (40.3, 9.2))
-        move(tree, "D1", 38.05, 28)
-        path(tree, GND, "F.Cu", 0.5, [(39.1, 28), (40.3, 28)])
+        move(tree, "D1", 38.05, 25)
+        path(tree, GND, "F.Cu", 0.5, [(39.1, 25), (40.3, 26.2), (40.3, 28)])
         append(tree, new_via(GND, (40.3, 28)))
     seed.layout(edit)
 
@@ -495,8 +495,8 @@ SEEDS: List[Tuple[str, str, str, Tuple[float, float], str, Callable[[board_prove
     ("S7", "CLOCK-1", "F.Cu", (74.675, 19),
      "a load capacitor away from its oscillator pin and its partner: C5 moved from beside C6 at U4 to beyond the crystal, "
      "11 mm from C6", load_capacitor_away),
-    ("S8", "CONN-1", "F.Cu", (38.05, 28),
-     "a suppressor away from its connector: D1 moved 24 mm from J2, onto the +5V trunk at y 28 mm", suppressor_away),
+    ("S8", "CONN-1", "F.Cu", (38.05, 25),
+     "a suppressor away from its connector: D1 moved 21 mm from J2, onto the +5V trunk at y 25 mm", suppressor_away),
     ("S9", "TEST-2", "F.Cu", (62.962, 56.4),
      "test points on both sides: TP5 moved to the top side", test_point_on_top),
     ("S10", "MFG-1", "design-rules.md, Board Setup", (0, 0),

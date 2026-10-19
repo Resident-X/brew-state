@@ -4,7 +4,7 @@ category: task
 title: The coffee plant model carries sensor and element lag, heat-exchanger effectiveness, delivered flow and the pump-to-puck hydraulics
 status: active
 level: task
-version: 1
+version: 2
 text: |
   The coffee plant model carries what separates the temperature a sensor reads from the temperature of the water the coffee receives: the lag of the sensor, the lag of the element, and the effectiveness with which the casting heats the water passing through it. The outlet is not the casting at any flow.
 
@@ -17,6 +17,8 @@ rationale: |
   What this replaces, read in this session. The reported rate that follows the pump's commanded level, with the puck, the pump's flow-versus-pressure characteristic and the pressure cap stated as omissions (SOL-PLANT-FLOW-REPORTED criterion C3). The statement that the plant description gains no resistance term (SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW criterion C4): it scoped the trim only, but a puck resistance term is exactly what this task adds, so the slicing session must reconcile the two. The outlet relation that relaxes toward the casting with no effectiveness and no sensor or element lag (SOL-PLANT-FLOW-ENERGY-BALANCE), and the omission note that the outlet lag mixes the held water (SOL-PLANT-OUTLET-MIXING-OMISSION-STATED), which remain true statements of what the description leaves out until this task closes them. Criteria on sealed solutions cannot be superseded one by one, so the criteria below state the replaced behaviour in full.
 
   Owner-pending: the allowed ripple at the puck is a requirement-style figure the owner has not set. The criteria require that it is declared and that every simulated drive form is checked against it, and they invent no number. The bench measurement of the flow-averaging window (SOL-PUMP-CYCLE-MODULATION-FLOW-WINDOW) is blocked behind bench instrumentation and informs, but does not gate, the simulation.
+
+  Ordering with the profile segments task. This task does not depend on that task as a whole, because a pressure segment's simulation needs the puck this task adds. It needs the flow-based leaves of that task, which carry the flow term and the reported flow, and those leaves are named and wired when the task is sliced; the leaves that simulate a pressure segment depend on this task. Until they are named, nothing in the graph makes this task wait for them, and the slicing record on DEL-DELIVERY-PROFILE-SEGMENTS is where that is kept.
 links:
   - target: DEL-BREW-STATE-DELIVERY.C1
     type: derives-from
@@ -32,8 +34,6 @@ links:
     type: targets
   - target: REQ-PREENERGISATION-VERIFICATION-001.C1
     type: targets
-  - target: DEL-DELIVERY-PROFILE-SEGMENTS
-    type: depends-on
   - target: DEL-SIM-FLOW-TERM
     type: depends-on
   - target: DEL-SIM-UNCERTAINTY-BUDGET

@@ -1,0 +1,12 @@
+id: REQ-DELIVERY-PROFILE-001.C9
+type: criterion
+title: Whether a profile can be delivered is established without a delivery taking place
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Finding out by delivering costs a dose of coffee each time, and the cost is borne by the operator who is experimenting.
+links:
+  - target: REQ-DELIVERY-PROFILE-001
+    type: criterion-of

@@ -1,10 +1,10 @@
 id: DEC-DEPARTURE-OBSERVED-NOT-MODELLED
 type: decision
-title: Departure from commanded flow is observed by measuring flow rather than reproduced by modelling what resists it
+title: Departure from the commanded course is observed by measuring rather than reproduced by modelling what resists it
 status: active
-version: 1
+version: 2
 rationale: |
-  Context: A delivery is commanded as a course of flow, and the machine is required to report departure
+  Context: A delivery is commanded as a course of segments, each commanding pressure or flow (it was flow alone when this decision was made), and the machine is required to report departure
   from that course rather than absorb it. In the model the delivered rate is the commanded rate: what
   the pump is told to move is what the path passes, and the description records the puck, the pump's
   flow-versus-pressure characteristic and the mechanical cap as omissions that remain stated. Something
@@ -24,6 +24,8 @@ rationale: |
   produce is the pump saturating -- the same single case a bare pressure clamp gives, at a lower
   ceiling.
 
+  Update: The options above are stated for flow, the only commanded variable when this was decided. They apply to a segment's primary variable: the machine measures the quantity the segment commands and compares it with the command. Modelling the puck stays rejected as the way departure is reported. It is accepted as a plant-model term for pressure segments, whose delivered flow is what the puck produces, and that term is added by DEL-BREW-PLANT-FIDELITY.
+
   Reversibility: Reversible in the sense that a later description may add resistance downstream without
   its consumers changing, and the comparison built here would keep working against it. What this
   forecloses cheaply is the reverse: a departure story resting on a modelled puck would have to be
@@ -31,10 +33,7 @@ rationale: |
 
   Consequences: Flow becomes a sensed quantity the control unit reads through the hardware seam rather
   than a number it only ever commands, which is what closing a loop on rate requires and what an
-  endpoint stated in delivered volume waits on. The puck stays a stated omission permanently rather
-  than provisionally, and the plant description's account of what it leaves out stands as written. The
-  model does not grow: no resistance term, no characteristic, no coefficient anyone would have to
-  defend. Departure is exercised in simulation by injecting a reading that differs from the command,
+  endpoint stated in delivered volume waits on. Where a segment commands flow, the puck stays a stated omission and the plant description's account of what it leaves out stands as written; the model does not grow there. Where a segment commands pressure, the flow that results is what the puck produces, so the plant description needs a puck resistance, which the task that builds the brew hydraulics adds (DEL-BREW-PLANT-FIDELITY); that coefficient is then one the model must defend, which this decision's argument about an unvalidatable puck does not remove and does not forbid. Either way, departure reporting stays an observation: the machine compares what it measured with what the segment commanded, and does not predict the shortfall. Departure is exercised in simulation by injecting a reading that differs from the command,
   which is the arrangement the truth plant already uses for temperature.
 options_considered:
   - option: Measure the flow that actually moved and compare it against the command
