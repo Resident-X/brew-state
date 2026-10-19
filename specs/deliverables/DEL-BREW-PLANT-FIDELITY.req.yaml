@@ -32,8 +32,6 @@ links:
     type: targets
   - target: REQ-PREENERGISATION-VERIFICATION-001.C1
     type: targets
-  - target: DEL-DELIVERY-PROFILE-SEGMENTS
-    type: depends-on
   - target: DEL-SIM-FLOW-TERM
     type: depends-on
   - target: DEL-SIM-UNCERTAINTY-BUDGET

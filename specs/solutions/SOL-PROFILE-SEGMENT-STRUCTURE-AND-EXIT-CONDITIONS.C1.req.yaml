@@ -1,0 +1,12 @@
+id: SOL-PROFILE-SEGMENT-STRUCTURE-AND-EXIT-CONDITIONS.C1
+type: criterion
+title: Every segment declares all of its fields and an incomplete profile is refused naming the segment and field
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Every segment of a profile declares its primary variable (pressure or flow), the limit held on the other, the shape of the transition into it, the condition on which it ends, and the water temperature it holds or an explicit statement that it holds none. A profile in which any segment commands both variables, commands neither, or omits any of these fields is refused before the delivery begins, and the refusal names the segment and the missing or conflicting field identically in the text report and the JSON report. Tests cover an empty profile, a first, a middle and a last segment each failing, and both report formats. Out of scope: judging whether the machine can deliver the profile, the profile's text file form, and what any field does to the pump, the report of departure or the plant model.
+links:
+  - target: SOL-PROFILE-SEGMENT-STRUCTURE-AND-EXIT-CONDITIONS
+    type: criterion-of

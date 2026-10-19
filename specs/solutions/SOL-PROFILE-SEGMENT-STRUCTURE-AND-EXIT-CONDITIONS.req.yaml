@@ -1,0 +1,39 @@
+id: SOL-PROFILE-SEGMENT-STRUCTURE-AND-EXIT-CONDITIONS
+type: deliverable
+category: solution
+title: A profile is an ordered list of segments, each fully declared and ending on its own measured exit condition
+status: active
+version: 1
+text: |-
+  Extends the existing delivery profile surface from one course of flow to an ordered list of segments, each declaring its primary variable, limit, transition, exit condition and water temperature, with an incomplete profile or unmeasured exit quantity refused before the delivery begins.
+links:
+  - target: DEL-DELIVERY-PROFILE-SEGMENTS.C1
+    type: derives-from
+  - target: DEL-DELIVERY-PROFILE-SEGMENTS.C2
+    type: derives-from
+  - target: REQ-DELIVERY-PROFILE-001.C6
+    type: targets
+  - target: DEC-PROFILE-SEGMENTS-COMMAND-PRESSURE-OR-FLOW
+    type: justified-by
+  - target: DEF-PROFILE
+    type: uses-term
+design_question_answers:
+  - answered_by: SOL-PROFILE-SEGMENT-STRUCTURE-AND-EXIT-CONDITIONS.C1
+    class: whole-set
+  - answered_by: SOL-PROFILE-SEGMENT-STRUCTURE-AND-EXIT-CONDITIONS.C1
+    class: served-statement
+  - answered_by: SOL-PROFILE-SEGMENT-STRUCTURE-AND-EXIT-CONDITIONS.C3
+    class: existing-capability
+  - answered_by: SOL-PROFILE-SEGMENT-STRUCTURE-AND-EXIT-CONDITIONS.C1
+    class: consumer-intent
+interfaces:
+  - firmware/src/control/control.h
+  - firmware/test/test_control/test_control.c
+locus:
+  - marking: existing
+    ref: firmware/src/control/delivery_profile.c
+  - marking: existing
+    ref: firmware/include/delivery_profile.h
+plan_provenance:
+  approved_plan_id: PLAN-DEL-DELIVERY-PROFILE-SEGMENTS-STRUCTURE-FIRST
+  target: DEL-DELIVERY-PROFILE-SEGMENTS
