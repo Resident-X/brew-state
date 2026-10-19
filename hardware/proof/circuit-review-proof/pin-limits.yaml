@@ -8,9 +8,24 @@ domains:
   - name: supply5
     rail: +5V
     highest_voltage_v: 5.25
+  - name: ground
+    rail: GND
+    highest_voltage_v: 0
   - name: mains
     rail: MAINS_L
-    highest_voltage_v: 353.6
+    highest_voltage_v: 353.5533906
+  - name: mains_neutral
+    rail: MAINS_N
+    highest_voltage_v: 353.5533906
+  - name: mains_earth
+    rail: MAINS_PE
+    highest_voltage_v: 353.5533906
+  - name: mains_inlet
+    rail: MAINS_L_IN
+    highest_voltage_v: 353.5533906
+  - name: mains_snubber
+    rail: MAINS_SNUB
+    highest_voltage_v: 353.5533906
 parts:
   - lcsc: C9200032
     source:
@@ -156,8 +171,8 @@ parts:
     pins:
       - pin: "1"
         domain: supply5
-        absolute_max_v: 3
-        absolute_min_v: -3
+        absolute_max_v: 6
+        absolute_min_v: -6
         tolerates_driven_unpowered: true
       - pin: "4"
         domain: mains
@@ -168,5 +183,68 @@ parts:
         domain: mains
         absolute_max_v: 400
         absolute_min_v: -400
+        tolerates_driven_unpowered: true
+  - lcsc: C9200009
+    source:
+      document: "none -- synthetic limits"
+      revision: "A"
+      section: "absolute maximum ratings"
+      read_on: 2026-10-18
+    pins:
+      - pin: "1"
+        domain: mains
+        absolute_max_v: 800
+        absolute_min_v: -800
+        tolerates_driven_unpowered: true
+      - pin: "2"
+        domain: mains
+        absolute_max_v: 800
+        absolute_min_v: -800
+        tolerates_driven_unpowered: true
+      - pin: "3"
+        domain: mains
+        absolute_max_v: 800
+        absolute_min_v: -800
+        tolerates_driven_unpowered: true
+  - lcsc: C9200034
+    source:
+      document: "none -- synthetic limits"
+      revision: "A"
+      section: "absolute maximum ratings"
+      read_on: 2026-10-18
+    pins:
+      - pin: "2"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -6
+        tolerates_driven_unpowered: true
+      - pin: "1"
+        domain: ground
+        absolute_max_v: 6
+        absolute_min_v: -6
+        tolerates_driven_unpowered: true
+  - lcsc: C9200024
+    source:
+      document: "none -- synthetic limits"
+      revision: "A"
+      section: "absolute maximum ratings"
+      read_on: 2026-10-18
+    pins:
+      - pin: "1"
+        domain: supply5
+        absolute_max_v: 250
+        absolute_min_v: -250
+        tolerates_driven_unpowered: true
+  - lcsc: C9200023
+    source:
+      document: "none -- synthetic limits"
+      revision: "A"
+      section: "absolute maximum ratings"
+      read_on: 2026-10-18
+    pins:
+      - pin: "1"
+        domain: supply5
+        absolute_max_v: 250
+        absolute_min_v: -250
         tolerates_driven_unpowered: true
 synthetic: true

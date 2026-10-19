@@ -259,6 +259,21 @@ def drop_field(reference: str, field: str):
     return lambda seed: seed.schematic(edit)
 
 
+def set_field(reference: str, field: str, value: str):
+    """The symbol field `field` of the symbol at `reference` given the text `value`, in the schematic."""
+    def edit(tree: list) -> None:
+        for symbol in sexpr.children(tree, "symbol"):
+            for prop in sexpr.children(symbol, "property"):
+                if len(prop) > 2 and prop[1] == "Reference" and prop[2] == reference:
+                    for target in sexpr.children(symbol, "property"):
+                        if len(target) > 2 and target[1] == field:
+                            target[2] = sexpr.Quoted(value)
+                            return
+                    raise AssertionError(f"the proof symbol {reference} has no field {field}")
+        raise AssertionError(f"the proof schematic has no symbol {reference}")
+    return lambda seed: seed.schematic(edit)
+
+
 def repeat_symbol(reference: str):
     """A second symbol carrying the reference `reference`, a copy of the first with a fresh identifier."""
     def edit(tree: list) -> None:
@@ -288,6 +303,13 @@ def derating(old: str, new: str):
 
 def pin_limits(old: str, new: str):
     return lambda seed: seed.replace("pin-limits.yaml", old, new)
+
+
+def resistor_over_its_rating(seed: Seed) -> None:
+    """R1, across the mains pair, made a resistor of class resistor rated 100 V in the record and the schematic."""
+    parts('    rating: "0.25W"\n    lcsc: "C9000002"\n    class: none',
+          '    rating: "100V"\n    lcsc: "C9000002"\n    class: resistor')(seed)
+    set_field("R1", "Rating", "100V")(seed)
 
 
 def uncommitted_record(seed: Seed) -> None:
@@ -1360,6 +1382,23 @@ FAULTS: List[tuple] = [
      "holds the key 'absolute_mx_v'", pin_limits("absolute_max_v: 3.6", "absolute_mx_v: 3.6"), KEYS_TARGET),
     ("a catalogue lifecycle key misspelt", "record keys: a key the design records decision does not define is refused by name in a catalogue entry's lifecycle", "parts_record",
      "holds the key 'stauts'", extract("status: active", "stauts: active"), KEYS_TARGET),
+    # The derated-voltage and pin-limit rules
+    ("a resistor across the mains pair rated below the policy's share of the mains peak", "derated voltage: a part whose working voltage exceeds the policy's voltage share of its rating fails", "derated_voltage",
+     "the position R1 sees a working voltage of 353.553 V", resistor_over_its_rating, KEYS_TARGET),
+    ("a position with no class", "derated voltage: every position of the parts specification record carries a class", "derated_voltage",
+     "the position J1 has no class", parts('    lcsc: "C9000001"\n    class: none', '    lcsc: "C9000001"'), KEYS_TARGET),
+    ("a position naming a class the policy lacks", "derated voltage: a position's class is one the derating policy lists, or none", "derated_voltage",
+     "the position J1 names the class 'ghost', which the derating policy does not list", parts('    lcsc: "C9000001"\n    class: none', '    lcsc: "C9000001"\n    class: ghost'), KEYS_TARGET),
+    ("a pin whose net can exceed its absolute maximum", "pin limits: a pin whose net can reach more than its absolute_max_v fails", "pin_limit",
+     "U1 pin 1 is on net /LV_A, which can reach 3.3 V, above the pin's absolute_max_v 3", pin_limits("absolute_max_v: 3.6", "absolute_max_v: 3.0"), KEYS_TARGET),
+    ("a pin whose net can fall below its absolute minimum", "pin limits: a pin whose net can fall below its absolute_min_v fails", "pin_limit",
+     "U1 pin 1 is on net /LV_A, which can fall to 0 V, below the pin's absolute_min_v 0.5", pin_limits("absolute_min_v: -0.3", "absolute_min_v: 0.5"), KEYS_TARGET),
+    ("a pin driven from another domain that does not tolerate it", "pin limits: a pin on a net driven from another domain while its own is unpowered fails where it does not tolerate it", "pin_limit",
+     "U1 pin 2 of domain logic is on net /LV_B, driven from the domain sense", pin_limits(
+         "      - pin: 2\n        domain: sense\n        absolute_max_v: 5.5\n        absolute_min_v: -0.3\n        tolerates_driven_unpowered: true",
+         "      - pin: 2\n        domain: logic\n        absolute_max_v: 5.5\n        absolute_min_v: -0.3\n        tolerates_driven_unpowered: false"), KEYS_TARGET),
+    ("an integrated circuit the pin-limit record omits", "pin limits: every integrated circuit and semiconductor has an entry in the pin-limit record", "pin_limit",
+     "the pin-limit record omits the integrated circuit U1", pin_limits("- lcsc: C9000005", "- lcsc: C9000099"), KEYS_TARGET),
 ]
 
 

@@ -7,22 +7,27 @@ positions:
     value: "MAINS_IN"
     package: "PinHeader_1x02_P2.54mm_Vertical"
     lcsc: "C9000001"
+    class: none
   - reference: R1
     value: "100k"
     package: "R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal"
     rating: "0.25W"
     lcsc: "C9000002"
+    class: none
   - reference: J2
     value: "LV_IN"
     package: "PinHeader_1x02_P2.54mm_Vertical"
     lcsc: "C9000003"
+    class: none
   - reference: R2
     value: "10k"
     package: "R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal"
     rating: "0.25W"
     lcsc: "C9000004"
+    class: none
   - reference: U1
     value: "CTRL"
     package: "Controller_1x02"
     lcsc: "C9000005"
+    class: none
 synthetic: true
