@@ -1,0 +1,12 @@
+id: SOL-SIM-STEAM-FEED-HOLDS-PRESSURE-HEATER-HOLDS-DRYNESS.C6
+type: criterion
+title: After a draw ends the casting returns to the ready state unattended by the same heater control
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  When the wand is shut after a draw the steam control law returns the casting to the declared ready temperature through the heater control it holds while idle, with no separate recovery mechanism and no operator act. A test in host simulation closing the loop through the truth plant ends a draw of each of several durations and shows the casting reaches the ready band and stays there, and a mutation that disables the idle control fails the test. Out of scope: the casting margin during recovery, which DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE owns, and the bound on the wait, which DEL-READINESS-PREDICTED-IN-BAND owns.
+links:
+  - target: SOL-SIM-STEAM-FEED-HOLDS-PRESSURE-HEATER-HOLDS-DRYNESS
+    type: criterion-of

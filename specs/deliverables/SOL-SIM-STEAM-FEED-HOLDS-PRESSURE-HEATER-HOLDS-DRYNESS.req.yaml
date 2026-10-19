@@ -7,7 +7,7 @@ version: 1
 text: |
   Re-allocate the steam control law so the feed pump holds pressure and quantity and heater power holds a declared superheat setpoint at the plant's modelled outlet, computed from the measured pressure; every dryness claim names that superheat and pressure and carries the carry-over caveat in text and JSON; the declaration's ready and band figures are re-derived from the new relations.
 
-  Retires, at close-out, the clauses of SOL-SIM-STEAM-BAND-SUSTAINED that state the heater-driven pressure law: C1 (temperature while idle, pressure while a draw is active), C7 (recovery as the same ready-holding control continuing) and C8 (heater leads and feed lags on demand starting). Its other criteria still stand, so the successor carries each surviving criterion forward when that solution is superseded, and the readiness pass at build time settles which survive after reading each in full.
+  Retires, at close-out, by deprecating each of these criteria on SOL-SIM-STEAM-BAND-SUSTAINED (its other criteria stand and stay): C1 (controlled variable by phase), C5 (band held under the retired sag coefficient), C6 (fixed sustainable feed rate regardless of demand), C7 (recovery as the same temperature control continuing), C8 (heater leads and feed lags), C11 (feed never above a fixed sustainable rate) and C12 (feed rises to a fixed rate over an interval). Their substance is restated in C2, C5, C6 and C7 of this solution.
 links:
   - target: DEL-STEAM-PATH-FLASH-GENERATOR.C3
     type: derives-from

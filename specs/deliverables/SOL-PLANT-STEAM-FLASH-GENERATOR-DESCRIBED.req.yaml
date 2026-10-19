@@ -4,8 +4,10 @@ category: solution
 title: The plant description states the flash-generator relations and their limits, and the analysis records are regenerated against them
 status: active
 version: 1
-text: |-
+text: |
   Rewrite the thermoblock description's relations, declared error and omissions for the orifice law, held liquid inventory, saturation relation, casting ceiling and modelled outlet superheat, stating what the ceiling bounds and that containment is not claimed; regenerate the margin, dominance, stability and identifiability records against the final steam model.
+
+  Retires, at close-out, by deprecating SOL-PLANT-STEAM-DRAW-DESCRIBED.C1 (the pressure state's divergence-and-reversion behaviour in the description) and .C3 (the omissions list line for line), restated by C1 and C2 of this solution; its C2 stands.
 links:
   - target: DEL-STEAM-PATH-FLASH-GENERATOR.C6
     type: derives-from
