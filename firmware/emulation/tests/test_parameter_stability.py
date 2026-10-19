@@ -832,68 +832,72 @@ class ACornerThatFailsToSettleIsNamedAsAnInstabilityFinding(unittest.TestCase):
     # this architecture, and a record of what the declared error implies that
     # stopped there would report nothing at all about the corners that did run.
     #
-    # Put to the whole method rather than to the verdict-combining function on
-    # its own, and with a refusal the structure really makes rather than a raised
-    # exception standing in for one: a description declaring an ambient it may be
-    # two and a half times wrong about implies an upper corner above anything the
-    # structure admits as a room, and the machine's own loader refuses it. Every
+    # Put to the whole method, on the refusals the shipped description really
+    # produces: a corner machine is built by taking one coefficient to the end of
+    # its declared error, and that machine, handed to the loops as the believed
+    # description, has the same declared error taken from it again -- so a
+    # coefficient that sits close to a bound another declared parameter keeps it
+    # inside reaches a description the control path will not come up against. Every
     # part of the path has to hold -- the draw refused, the refusal recorded
-    # against that side, the corner's verdict taken from it, and the record
-    # naming it -- and none of it is exercised by a synthetic verdict at all.
+    # against that side with the reason it gave, the corner's verdict taken from
+    # it, and the record naming it -- and none of it is exercised by a synthetic
+    # verdict at all.
     def test_a_corner_the_structure_refuses_is_recorded_and_reported_rather_than_stopping_the_run(
             self):
+        refused = [record for record in FINDINGS["corners"] if record["refused"]]
+        self.assertTrue(
+            refused, "no corner of the shipped description was refused as a machine, so this "
+                     "run is not about the refusal path")
+        for record in refused:
+            with self.subTest(coefficient=record["coefficient"], corner=record["corner"]):
+                self.assertEqual(
+                    sorted(record["refused"]), sorted([sweep.BREW_SIDE, sweep.STEAM_SIDE]),
+                    "a side of a machine the control path refuses came back with a run, so what "
+                    "was judged is not the description that was written")
+                self.assertEqual(record["sides"], {})
+                self.assertEqual(record["verdict"], stability.CORNER_REFUSED)
+                for side, why in record["refused"].items():
+                    self.assertIn("was refused: ", why, "the %s side records no refusal" % side)
+                    self.assertIn("parameter ", why, "the %s side's refusal names no parameter, "
+                                                      "so the record cannot say what the declared "
+                                                      "error reached" % side)
+
+                # The corner beside it, at the other end of the same declared error,
+                # is still a machine and still ran: a run that refused everything
+                # would pass every assertion above.
+                other = "high" if record["corner"] == "low" else "low"
+                beside = [found for found in FINDINGS["corners"]
+                          if found["coefficient"] == record["coefficient"]
+                          and found["corner"] == other]
+                self.assertTrue(beside and any(not found["refused"] for found in beside),
+                                "the other end of %s was refused as well" % record["coefficient"])
+
+                # And it is reported, in both places a reader would look for it.
+                named = stability.unsettled(FINDINGS)
+                self.assertEqual(
+                    sorted(side for entry, side, _ in named if entry is record),
+                    sorted([sweep.BREW_SIDE, sweep.STEAM_SIDE]))
+                written = stability.report_text(FINDINGS)
+                self.assertIn(stability.CORNER_REFUSED, written)
+                for side in (sweep.BREW_SIDE, sweep.STEAM_SIDE):
+                    self.assertIn("`%s`, %s corner, %s side" % (
+                        record["coefficient"], record["corner"], side), written)
+
+    # SOL-PLANT-STEAM-FLASH-GENERATOR.C2: The steam law's initialisation, and the brew law's for the corners the relations make unbuildable, likewise refuse a believed description or error budget from which the model cannot be built at every declared corner
+    def test_a_declared_error_that_leaves_the_reference_machine_itself_refused_stops_the_run(self):
         widened = 2.5
         refusable = "ambient_temperature_c"
         nominal, declared = [(nominal, fraction) for name, nominal, fraction in _covered()
                              if name == refusable][0]
         self.assertLess(declared, 1.0)
-        self.assertNotIn(refusable, stability.ONE_SIDED,
-                         "%s is declared one-sided, so its upper corner is not run and this test "
-                         "has nothing to refuse" % refusable)
 
         workspace = os.path.join(FINDINGS["workspace"], "refused")
         description = _with_declared_errors(
             {refusable: widened}, os.path.join(workspace, "refusable.params"))
-        findings = stability.run(description=description, limits=FINDINGS["limits"],
-                                 executable=FINDINGS["executable"], workspace=workspace)
-
-        refused = [record for record in findings["corners"] if record["refused"]]
-        self.assertEqual(
-            [(record["coefficient"], record["corner"]) for record in refused],
-            [(refusable, "high")],
-            "the corner the structure refuses is not the one this description's widened error "
-            "puts outside what the machine admits, so this run is not about the refusal path")
-        record = refused[0]
-        self.assertAlmostEqual(record["values"][refusable], nominal * (1.0 + widened), places=6)
-        self.assertEqual(
-            sorted(record["refused"]), sorted([sweep.BREW_SIDE, sweep.STEAM_SIDE]),
-            "a side of a machine the structure refuses came back with a run, so what was judged "
-            "is not the description that was written")
-        self.assertEqual(record["sides"], {})
-        self.assertEqual(record["verdict"], stability.CORNER_REFUSED)
-        for side, why in record["refused"].items():
-            with self.subTest(side=side):
-                self.assertTrue(why, "the %s side records no reason for the refusal, so the "
-                                     "record cannot say what the declared error reached" % side)
-
-        # The corner beside it, at the other end of the same widened error, is
-        # still a machine and still ran: a run that refused everything would pass
-        # every assertion above.
-        low = [other for other in findings["corners"]
-               if other["coefficient"] == refusable and other["corner"] == "low"][0]
-        self.assertEqual(low["refused"], {})
-        self.assertEqual(sorted(low["sides"]), sorted([sweep.BREW_SIDE, sweep.STEAM_SIDE]))
-
-        # And it is reported, in both places a reader would look for it.
-        named = stability.unsettled(findings)
-        self.assertEqual(
-            sorted(side for entry, side, _ in named if entry is record),
-            sorted([sweep.BREW_SIDE, sweep.STEAM_SIDE]))
-        written = stability.report_text(findings)
-        self.assertIn(stability.CORNER_REFUSED, written)
-        for side in (sweep.BREW_SIDE, sweep.STEAM_SIDE):
-            with self.subTest(side=side):
-                self.assertIn("`%s`, high corner, %s side" % (refusable, side), written)
+        with self.assertRaises(cross_tier.CrossTierError) as stopped:
+            stability.run(description=description, limits=FINDINGS["limits"],
+                          executable=FINDINGS["executable"], workspace=workspace)
+        self.assertIn("parameter %s is refused" % refusable, str(stopped.exception))
 
     # SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR.C2: distinct from the
     # existing deviation measure, and not folded into it. Three things are asked,
@@ -1347,7 +1351,7 @@ class TheOneDependenceTheDescriptionStatesIsRunAsAJointCorner(unittest.TestCase)
                 self.assertIn("`%s`, %s corner, %s side"
                               % (stability.JOINT_COEFFICIENT, stability.JOINT_CORNER, side),
                               section)
-        self.assertIn("The structure would not admit it as a machine", section)
+        self.assertIn("The machine was refused rather than run", section)
 
     # SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR.C4: the one dependence
     # the description's own construction implies -- and what that dependence
@@ -1645,10 +1649,20 @@ class OneUnitInTheLastPlaceIsMeasuredAgainstEveryFigure(unittest.TestCase):
         for side in (sweep.BREW_SIDE, sweep.STEAM_SIDE):
             account = FINDINGS["sensitivity"][side]
             with self.subTest(side=side):
-                self.assertIsNotNone(account["flip"])
+                if account["flip"] is None:
+                    # A side whose largest mover moved no whole-number quantity at
+                    # any control tick says so, in the record, in so many words;
+                    # silence there would read as a side nobody traced.
+                    self.assertIn("No whole-number quantity differed at any control tick",
+                                  section)
+                    continue
                 self.assertIn(sweep.describe_whole_number_difference(account["flip"]), section)
                 self.assertTrue(account["flip"]["below_one_unit"])
                 self.assertEqual(FINDINGS["reading"], account["flip"]["rounding_unit"])
+        self.assertTrue(
+            any(FINDINGS["sensitivity"][side]["flip"] is not None
+                for side in (sweep.BREW_SIDE, sweep.STEAM_SIDE)),
+            "neither side's largest mover was traced to a tick, so the trace is not exercised")
 
     # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C3: No committed record figure turns on a sub-rounding difference in the arithmetic
     def test_the_record_names_the_tick_it_is_given_and_says_so_when_none_differed(self):

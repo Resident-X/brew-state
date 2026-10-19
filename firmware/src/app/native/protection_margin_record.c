@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "control.h"
+#include "host_report.h"
 #include "hw_sim.h"
 #include "plant_model.h"
 #include "steam_control.h"
@@ -314,8 +315,16 @@ static int record_the_brew_side(const plant_parameters_t *parameters,
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, STANDING_READING_MILLI_C);
 
     if (!control_init(&state, parameters, budget, limits, tolerance, pump_trim)) {
-        (void)fprintf(stderr, "protection margin record: the control path could not be brought "
-                              "up\n");
+        plant_parameter_error_t refusal;
+
+        if (!control_description_established(parameters, budget, tolerance, &refusal) &&
+            refusal.fault != PLANT_PARAMETER_OK) {
+            host_report_refusal(stderr, "protection margin record",
+                                "the control path could not be brought up", &refusal);
+        } else {
+            (void)fprintf(stderr, "protection margin record: the control path could not be "
+                                  "brought up\n");
+        }
         return 1;
     }
     if (!highest_target_taken(&state, &target_c, &refused_at)) {
@@ -411,6 +420,14 @@ static int record_the_steam_side(const plant_parameters_t *parameters,
 
     hw_sim_reset();
     if (!steam_control_init(&loop, limits, declaration, parameters, budget)) {
+        plant_parameter_error_t refusal;
+
+        if (!steam_control_description_established(declaration, parameters, budget, &refusal) &&
+            refusal.fault != PLANT_PARAMETER_OK) {
+            host_report_refusal(stderr, "protection margin record",
+                                "the steam control path could not be brought up", &refusal);
+            return 1;
+        }
         (void)fprintf(stderr,
                       "protection margin record: the steam loop refuses the ready target its own "
                       "declaration names, so there is no margin behind a target it holds\n");

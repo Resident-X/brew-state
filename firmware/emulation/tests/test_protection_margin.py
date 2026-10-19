@@ -13,9 +13,11 @@ the figures are what a verdict can be argued with from.
 """
 
 import os
+import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 EMULATION_DIR = os.path.abspath(os.path.join(HERE, ".."))
@@ -459,19 +461,20 @@ class TheMappingAndTheCornerVerdictsAreCommitted(unittest.TestCase):
     # that dropped the first would read as one where every corner was checked.
     def test_the_committed_record_accounts_for_every_corner_the_enumeration_covers(self):
         for side, verdicts, corners in (
-                ("coffee", FINDINGS["verdicts"], FINDINGS["shipped"]["corners"]),
-                ("steam", FINDINGS["steam_verdicts"], FINDINGS["shipped"]["steam_corners"])):
+                (margin.COFFEE_SIDE, FINDINGS["verdicts"], FINDINGS["shipped"]["corners"]),
+                (margin.STEAM_SIDE, FINDINGS["steam_verdicts"],
+                 FINDINGS["shipped"]["steam_corners"])):
             delivered = set(verdict["corner"]["which"] for verdict in verdicts)
-            undelivered = set(corner["which"] for corner, _ in FINDINGS["refused"]
-                              if corner in corners)
+            undelivered = set(corner["which"] for refused_side, corner, _ in FINDINGS["refused"]
+                              if refused_side == side)
             with self.subTest(side=side):
                 self.assertEqual(
                     delivered | undelivered, set(corner["which"] for corner in corners),
                     "a corner of the enumeration is neither delivered against nor accounted for")
                 self.assertEqual(set(), delivered & undelivered)
         record = _committed_record()
-        for corner, why in FINDINGS["refused"]:
-            with self.subTest(corner=corner["which"]):
+        for side, corner, why in FINDINGS["refused"]:
+            with self.subTest(side=side, corner=corner["which"]):
                 self.assertIn(why, record)
 
 
@@ -668,6 +671,89 @@ class OneUnitInTheLastPlaceIsMeasuredAgainstEveryFigure(unittest.TestCase):
             margin.SENSITIVITY_HEADING, 1)[1].split("\n## ", 1)[0]
 
         self.assertEqual(2, section.count("4 comparisons, and no figure moved at all"))
+
+
+def _done(returncode, stdout="", stderr=""):
+    return subprocess.CompletedProcess([], returncode, stdout, stderr)
+
+
+class AControlPathRefusalIsToldApartFromAReadingThatDidNotFinish(unittest.TestCase):
+    """SOL-PLANT-STEAM-FLASH-GENERATOR.C2: a host run states the refusal of a
+    description the control path cannot establish, naming the parameter, and the
+    reading tool reads that statement as a refusal and nothing else as one.
+    """
+
+    NAMED = ("protection margin record: the control path could not be brought up: parameter "
+             "steam.initial_inventory_ml is refused (fault 8)\n")
+
+    def _read(self, completed):
+        with mock.patch.object(margin.base.subprocess, "run", return_value=completed):
+            return margin.margin_record("unused", "described.params", "limits", "declaration")
+
+    # SOL-PLANT-STEAM-FLASH-GENERATOR.C2: The steam law's initialisation, and the brew law's for the corners the relations make unbuildable, likewise refuse a believed description or error budget from which the model cannot be built at every declared corner
+    def test_a_named_refusal_on_either_loop_is_read_as_a_refusal_with_its_reason(self):
+        for line in (self.NAMED, self.NAMED.replace("the control path", "the steam control path")):
+            with self.subTest(line=line):
+                with self.assertRaises(margin.ControlPathRefused) as caught:
+                    self._read(_done(1, stderr=line))
+                self.assertIn("parameter steam.initial_inventory_ml is refused (fault 8)",
+                              caught.exception.reason)
+                self.assertIsInstance(caught.exception, margin.MarginError)
+
+    # SOL-PLANT-STEAM-FLASH-GENERATOR.C2: The steam law's initialisation, and the brew law's for the corners the relations make unbuildable, likewise refuse a believed description or error budget from which the model cannot be built at every declared corner
+    def test_a_refusal_naming_no_parameter_is_read_as_a_refusal_stating_that(self):
+        line = ("protection margin record: the control path could not be brought up: the declared "
+                "corners cannot all be run together, and no single parameter is at fault "
+                "(fault 8)\n")
+        with self.assertRaises(margin.ControlPathRefused) as caught:
+            self._read(_done(1, stderr=line))
+        self.assertIn("no single parameter is at fault", caught.exception.reason)
+
+    # SOL-PLANT-STEAM-FLASH-GENERATOR.C2: The steam law's initialisation, and the brew law's for the corners the relations make unbuildable, likewise refuse a believed description or error budget from which the model cannot be built at every declared corner
+    def test_a_failure_that_gives_no_refusal_is_not_read_as_one(self):
+        cases = {
+            "a crash": _done(-11, stderr="Segmentation fault\n"),
+            "the unnamed bring-up failure": _done(
+                1, stderr="protection margin record: the control path could not be brought up\n"),
+            "nothing said": _done(1),
+            "a refusal line from a run that exited cleanly": _done(0, stderr=self.NAMED),
+        }
+        for what, completed in cases.items():
+            with self.subTest(what=what):
+                with self.assertRaises(margin.MarginError) as caught:
+                    self._read(completed)
+                self.assertNotIsInstance(caught.exception, margin.ControlPathRefused)
+
+    # SOL-PLANT-STEAM-FLASH-GENERATOR.C2: The steam law's initialisation, and the brew law's for the corners the relations make unbuildable, likewise refuse a believed description or error budget from which the model cannot be built at every declared corner
+    def test_the_host_record_mode_names_the_parameter_it_refuses_a_low_capacity_description_on(self):
+        executable = sweep.build_host()
+        with open(os.path.join(os.path.dirname(sweep.STEAM_CONTROL_DECLARATION), "thermoblock.params"), encoding="utf-8") as handle:
+            source = handle.read()
+        stated = "steam.liquid_capacity_ml = 6.0"
+        self.assertIn(stated, source)
+        with tempfile.TemporaryDirectory() as directory:
+            written = os.path.join(directory, "low-capacity.params")
+            with open(written, "w", encoding="utf-8") as handle:
+                handle.write(source.replace(stated, "steam.liquid_capacity_ml = 2.4"))
+            with self.assertRaises(margin.ControlPathRefused) as caught:
+                margin.margin_record(executable, written, os.path.join(
+                    os.path.dirname(sweep.STEAM_CONTROL_DECLARATION), "thermoblock.limits"), sweep.STEAM_CONTROL_DECLARATION)
+        self.assertRegex(caught.exception.reason, r"parameter steam\.[a-z_]+ is refused \(fault \d+\)")
+
+    # SOL-PLANT-STEAM-FLASH-GENERATOR.C3: a host run that builds a model names the parameter it refused
+    def test_a_draw_record_leads_with_the_refusal_the_run_stated_and_with_nothing_for_a_crash(self):
+        stated = ("steam draw: the steam control path could not be brought up: parameter "
+                  "steam.initial_inventory_ml is refused (fault 8)\n")
+        refused = cross_tier.not_finished("the steam draw", _done(1, "out\n", stated))
+        self.assertEqual("the steam draw was refused: " + stated.strip(), refused.splitlines()[0])
+        crashed = cross_tier.not_finished("the steam draw", _done(-11, "", "Segmentation fault\n"))
+        self.assertEqual("the steam draw did not finish. Its output follows:",
+                         crashed.splitlines()[0])
+        unnamed = cross_tier.not_finished("the host draw", _done(
+            1, "", "cross-tier draw: the control path could not be brought up: the declared "
+            "corners cannot all be run together, and no single parameter is at fault (fault 8)\n"))
+        self.assertIn("was refused: cross-tier draw: the control path could not be brought up: "
+                      "the declared corners cannot all be run together", unnamed.splitlines()[0])
 
 
 if __name__ == "__main__":

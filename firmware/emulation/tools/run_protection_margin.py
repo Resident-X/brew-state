@@ -62,6 +62,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -156,12 +157,42 @@ VERDICT_HEADING = "## What each corner's delivery did"
 STEAM_MAPPING_HEADING = "## What each declared error contributes to the steam side's margin"
 STEAM_VERDICT_HEADING = "## What each corner's steam draw did"
 REFUSED_HEADING = "## What could not be delivered against"
+
+#: The two loops a corner is delivered against, as the refused corners name
+#: them: both enumerations number their corners from one, so a corner number
+#: alone does not say which loop it could not be delivered against.
+COFFEE_SIDE = "coffee"
+STEAM_SIDE = "steam"
 SENSITIVITY_HEADING = "## How far one unit in the last place moves these figures"
 
 
 class MarginError(RuntimeError):
     """The mapping could not be read, or could not be swept over everything it
     covers."""
+
+
+class ControlPathRefused(MarginError):
+    """The control path declined to come up against a description, and said why.
+
+    Distinct from a reading that did not finish: a refusal is the control path
+    failing closed on a believed description it cannot establish a margin for,
+    and it names its reason, where a crash or a missing executable names
+    nothing. A caller that can carry on without the machine that description
+    builds catches this; every other MarginError still stops it.
+    """
+
+    def __init__(self, description, reason):
+        super().__init__("the control path refuses %s: %s" % (description, reason))
+        self.description = description
+        self.reason = reason
+
+
+#: The line the host record mode writes when a law refuses the description it
+#: was handed, as host_report_refusal states it: the run, what could not be
+#: done, then the parameter refused or the statement that none is at fault.
+REFUSAL_LINE = re.compile(
+    r"^protection margin record: the (?:steam )?control path could not be brought up: (.+)$",
+    re.MULTILINE)
 
 
 # --- Reading the mapping back out of the loop ------------------------------
@@ -256,6 +287,9 @@ def margin_record(executable, description, limits, declaration=sweep.STEAM_CONTR
 
     findings = parse_record(completed.stdout)
     if not findings["completed"] or findings["margin"] is None:
+        refusal = REFUSAL_LINE.search(completed.stderr)
+        if refusal and completed.returncode != 0:
+            raise ControlPathRefused(description, refusal.group(1).strip())
         raise MarginError(
             "the margin reading did not finish against %s. Its output follows:\n%s\n%s"
             % (description, completed.stdout[-4000:], completed.stderr[-4000:]))
@@ -680,8 +714,9 @@ def run(description=None, limits=None, tolerance=sweep.TOLERANCE_DECLARATION,
     refused = []
     for corner in shipped["corners"]:
         if not corner["ran"]:
-            refused.append((corner, "the structure admits no machine at this corner, or the "
-                                    "description declares no error to take it to"))
+            refused.append((COFFEE_SIDE, corner, "the structure admits no machine at this "
+                                                 "corner, or the description declares no error "
+                                                 "to take it to"))
             continue
         try:
             written = corner_description(corner, nominal, description, workspace)
@@ -689,7 +724,7 @@ def run(description=None, limits=None, tolerance=sweep.TOLERANCE_DECLARATION,
                                     "margin-corner-%d" % corner["which"],
                                     control_description=description, target_c=target_c)
         except (MarginError, sweep.SweepError, cross_tier.CrossTierError) as refusal:
-            refused.append((corner, str(refusal).splitlines()[0]))
+            refused.append((COFFEE_SIDE, corner, str(refusal).splitlines()[0]))
             continue
         departure = worst_departure(drawn["delivered"], target_c, window)
         claimed = not the_end_the_description_does_not_claim(corner)
@@ -714,8 +749,9 @@ def run(description=None, limits=None, tolerance=sweep.TOLERANCE_DECLARATION,
     steam_window = None
     for corner in shipped["steam_corners"]:
         if not corner["ran"]:
-            refused.append((corner, "the structure admits no machine at this corner, or the "
-                                    "description declares no error to take it to"))
+            refused.append((STEAM_SIDE, corner, "the structure admits no machine at this "
+                                                "corner, or the description declares no error "
+                                                "to take it to"))
             continue
         try:
             written = corner_description(corner, nominal, description,
@@ -725,7 +761,7 @@ def run(description=None, limits=None, tolerance=sweep.TOLERANCE_DECLARATION,
             held, worst, steam_window = steam_verdict(drawn, steam_course, steam_floor,
                                                       steam_ceiling)
         except (MarginError, sweep.SweepError, cross_tier.CrossTierError) as refusal:
-            refused.append((corner, str(refusal).splitlines()[0]))
+            refused.append((STEAM_SIDE, corner, str(refusal).splitlines()[0]))
             continue
         steam_verdicts.append({
             "corner": corner,
@@ -1058,11 +1094,11 @@ def report_text(findings):
     if not findings["refused"]:
         write("Nothing. Every corner the enumeration covers produced a machine and a delivery.")
     else:
-        write("| Corner | Coefficient | End | Why |")
-        write("|---|---|---|---|")
-        for corner, why in findings["refused"]:
-            write("| %d | %s | %s | %s |" % (corner["which"], _coefficient_cell(corner),
-                                             corner["end"], why))
+        write("| Loop | Corner | Coefficient | End | Why |")
+        write("|---|---|---|---|---|")
+        for side, corner, why in findings["refused"]:
+            write("| %s | %d | %s | %s | %s |" % (side, corner["which"], _coefficient_cell(corner),
+                                                 corner["end"], why))
     write("")
 
     write(SENSITIVITY_HEADING)

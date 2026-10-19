@@ -123,10 +123,10 @@ This is deliberately not the reasoning `docs/parameter-identifiability.md` gives
 | `steam.restriction_bar_s2_per_ml2` | high | steam.restriction_bar_s2_per_ml2 = 42.5 | 0 | 0 | settled within the band | 0.0455 | 0.0455 | settled within the band |
 | `steam.outlet_drop_k_s_per_ml` | low | steam.outlet_drop_k_s_per_ml = 3 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
 | `steam.outlet_drop_k_s_per_ml` | high | steam.outlet_drop_k_s_per_ml = 27 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
-| `steam.liquid_capacity_ml` | low | steam.liquid_capacity_ml = 2.4 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
+| `steam.liquid_capacity_ml` | low | steam.liquid_capacity_ml = 2.4 | — | — | not run: refused as a machine | — | — | not run: refused as a machine |
 | `steam.liquid_capacity_ml` | high | steam.liquid_capacity_ml = 9.6 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
 | `steam.initial_inventory_ml` | low | steam.initial_inventory_ml = 0.8 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
-| `steam.initial_inventory_ml` | high | steam.initial_inventory_ml = 3.2 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
+| `steam.initial_inventory_ml` | high | steam.initial_inventory_ml = 3.2 | — | — | not run: refused as a machine | — | — | not run: refused as a machine |
 | `steam.feed_flow_ml_per_s` | low | steam.feed_flow_ml_per_s = 0.9 | 0 | 0 | settled within the band | 0.734 | 0.734 | settled within the band |
 | `brew.heater_power_w + steam.heater_power_w (joint mains droop)` | low together | brew.heater_power_w = 793.16, steam.heater_power_w = 889.54 | 0.132 | 0.0488 | settled within the band | 0 | 0 | settled within the band |
 
@@ -149,7 +149,12 @@ Whether that stated dependence is the real one is a characterisation question an
 
 ## What did not settle
 
-**Every corner settled inside the band on both sides.** That is a positive finding rather than an absence of one: at each end of every declared error this description carries, and at the one joint corner its own construction implies, the closed loop's response came to rest and came to rest inside the margin the design holds that delivery to. It is a statement about this estimated model, and the measured model that is meant to replace it is what would make it a statement about a machine.
+4 corner-and-sides did not settle within the band, and each is named here rather than left to be found in the table above. A corner that fails to settle is a finding of its own and not a larger deviation figure — the deviation record beside this one cannot report it, because a magnitude is the same number whichever of the two happened.
+
+- `steam.liquid_capacity_ml`, low corner, brew side — the host draw was refused: cross-tier draw: the control path could not be brought up: parameter steam.initial_inventory_ml is refused (fault 8). The machine was refused rather than run, so there is no response here to have settled or not.
+- `steam.liquid_capacity_ml`, low corner, steam side — the steam draw was refused: steam draw: the steam control path could not be brought up: parameter steam.initial_inventory_ml is refused (fault 8). The machine was refused rather than run, so there is no response here to have settled or not.
+- `steam.initial_inventory_ml`, high corner, brew side — the host draw was refused: cross-tier draw: the control path could not be brought up: parameter steam.initial_inventory_ml is refused (fault 8). The machine was refused rather than run, so there is no response here to have settled or not.
+- `steam.initial_inventory_ml`, high corner, steam side — the steam draw was refused: steam draw: the steam control path could not be brought up: parameter steam.initial_inventory_ml is refused (fault 8). The machine was refused rather than run, so there is no response here to have settled or not.
 
 ## How far one unit in the last place moves these figures
 
@@ -157,9 +162,9 @@ Every single-coefficient corner above was run twice more, with its coefficient m
 
 Measured against the growth floor, which flatters least because a band is far wider than a floor, the largest move is the brew side's: 2.3% of its floor. It is listed first below, and the share of the band is given after it for scale only.
 
-- **brew side**: 94 comparisons. The most any figure moved was 0.00114 C, the early figure of the low corner of `water.heat_capacity_j_per_ml_k` going from 0.0047378 to 0.003601 with its coefficient moved one unit above. That is 2.3% of the 0.0488 C growth floor and 0.11% of the 1 C band.
+- **brew side**: 90 comparisons. The most any figure moved was 0.00114 C, the early figure of the low corner of `water.heat_capacity_j_per_ml_k` going from 0.0047378 to 0.003601 with its coefficient moved one unit above. That is 2.3% of the 0.0488 C growth floor and 0.11% of the 1 C band.
   The first whole-number quantity to differ was the converter's reading of brew-c at control tick 7306 (94114 against 94065); over the 7306 ticks before it the sensed quantities never departed by more than 7.7e-06, which is below the 0.0488 one count of the converter is worth.
-- **steam side**: 94 comparisons. The most any figure moved was 1.2e-07 bar, the early figure of the low corner of `steam.restriction_bar_s2_per_ml2` going from 0.0191926 to 0.0191925 with its coefficient moved one unit above. That is 0.00031% of the 0.0388 bar growth floor and 1.5e-05% of the 0.775 bar band.
+- **steam side**: 90 comparisons. The most any figure moved was 1.2e-07 bar, the early figure of the low corner of `steam.restriction_bar_s2_per_ml2` going from 0.0191926 to 0.0191925 with its coefficient moved one unit above. That is 0.00031% of the 0.0388 bar growth floor and 1.5e-05% of the 0.775 bar band.
   No whole-number quantity differed at any control tick of that run, so the movement is in the continuous state alone.
 
 **No verdict changed with one unit in the last place.** The arithmetic behind these figures is pinned to be the same on every supported host, and the record-staleness check fails if regenerating this record changes a byte; it runs on macOS arm64 in the build round and on Linux x86-64 in the nightly verification of main. The figures move by the amounts above when a coefficient moves by one unit. What is measured is a coefficient moved to its neighbouring single-precision number, which is not the same as moving a library result inside a step of the loop; the arithmetic is now identical across hosts, so the latter no longer arises. What is claimed is that this is as far as one unit moved any of them at these corners, that it is a small part of what each figure is judged against, and that no verdict turned on it. It is measured at one unit and at these corners and is not a proof for every perturbation.

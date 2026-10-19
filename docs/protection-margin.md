@@ -271,17 +271,18 @@ The verdict is the pressure the draw came to rest at, taken over intervals 4333 
 | 41 | steam.restriction_bar_s2_per_ml2 | high | 1.7 | 995 | within-band |
 | 42 | steam.outlet_drop_k_s_per_ml | low | 0.2 | 1010 | within-band |
 | 43 | steam.outlet_drop_k_s_per_ml | high | 1.8 | 1010 | within-band |
-| 44 | steam.liquid_capacity_ml | low | 0.4 | 1010 | within-band |
 | 45 | steam.liquid_capacity_ml | high | 1.6 | 1010 | within-band |
 | 46 | steam.initial_inventory_ml | low | 0.4 | 1010 | within-band |
-| 47 | steam.initial_inventory_ml | high | 1.6 | 1010 | within-band |
 | 48 | steam.feed_flow_ml_per_s | low | 0.3 | 306 | within-band |
 | 49 | steam.feed_flow_ml_per_s | high | 1.7 | 474 | not-claimed |
 | 50 | brew.heater_power_w + steam.heater_power_w (joint mains droop) | low | 0.79 | 1010 | within-band |
 
 ## What could not be delivered against
 
-Nothing. Every corner the enumeration covers produced a machine and a delivery.
+| Loop | Corner | Coefficient | End | Why |
+|---|---|---|---|---|
+| steam | 44 | steam.liquid_capacity_ml | low | the steam draw was refused: steam draw: the steam control path could not be brought up: parameter steam.initial_inventory_ml is refused (fault 8) |
+| steam | 47 | steam.initial_inventory_ml | high | the steam draw was refused: steam draw: the steam control path could not be brought up: parameter steam.initial_inventory_ml is refused (fault 8) |
 
 ## How far one unit in the last place moves these figures
 
@@ -289,7 +290,7 @@ Every single-coefficient corner above was delivered against twice more, with its
 
 - **Coffee side**: 100 comparisons. The most any worst departure moved was 0.00275 C, corner 20 going from 0.0528796 to 0.0556256 with its coefficient moved one unit above. That is 0.27% of the 1 C band.
   The first whole-number quantity to differ was the converter's reading of brew-c at control tick 10153 (103492 against 103443); over the 10153 ticks before it the sensed quantities never departed by more than 8e-06, which is below the 0.0488 one count of the converter is worth.
-- **Steam side**: 100 comparisons, and no figure moved at all.
+- **Steam side**: 96 comparisons, and no figure moved at all.
 
 **No verdict changed with one unit in the last place.** The arithmetic behind these figures is pinned to be the same on every supported host, and the record-staleness check fails if regenerating this record changes a byte; it runs on macOS arm64 in the build round and on Linux x86-64 in the nightly verification of main. The figures move by the amounts above when a coefficient moves by one unit. What is measured is a coefficient moved to its neighbouring single-precision number, which is not the same as moving a library result inside a step of the loop; the arithmetic is now identical across hosts, so the latter no longer arises. What is claimed is that this is as far as one unit moved any of them at these corners, that it is a small part of the band each is judged against, and that no verdict turned on it. It is measured at one unit and at these corners and is not a proof for every perturbation.
 

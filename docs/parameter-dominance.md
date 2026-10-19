@@ -105,6 +105,13 @@ These coefficients have no dominance figure, and they are listed here instead of
 
 ## What this sweep does not cover
 
+These corners were refused as machines rather than run, and the coefficient was judged on the other one:
+
+- `steam.initial_inventory_ml`, high corner, brew side: the host draw was refused: cross-tier draw: the control path could not be brought up: parameter steam.initial_inventory_ml is refused (fault 8)
+- `steam.initial_inventory_ml`, high corner, steam side: the steam draw was refused: steam draw: the steam control path could not be brought up: parameter steam.initial_inventory_ml is refused (fault 8)
+- `steam.liquid_capacity_ml`, low corner, brew side: the host draw was refused: cross-tier draw: the control path could not be brought up: parameter steam.initial_inventory_ml is refused (fault 8)
+- `steam.liquid_capacity_ml`, low corner, steam side: the steam draw was refused: steam draw: the steam control path could not be brought up: parameter steam.initial_inventory_ml is refused (fault 8)
+
 Whether the order above is quantitatively right for a real machine is not established here and cannot be: every figure in the model it was taken against is an estimate, so the ranking is meant to be redone against a measured model rather than argued about against this one.
 
 Identifiability — whether a coefficient a reconstructed state depends on can be told apart from the channels this machine observes at all — is a separate question and is not answered here. It is answered from the same perturbed re-runs by `firmware/emulation/tools/run_parameter_identifiability.py`, which reads each run's effect on the observed channels where this one reads its effect on the delivery, and records what it found in `docs/parameter-identifiability.md`. A coefficient can stand at the head of the ranking above and still be one no observation of this machine can tell from another, which is why the two records are kept apart and why neither figure should be read off the other's table.

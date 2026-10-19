@@ -92,6 +92,7 @@ def parse_findings(output):
         "flow_refusals": None,
         "plant_step_count": None,
         "plant_last_step_ok": None,
+        "call_steps": {},
         "completed": False,
     }
     for line in output.splitlines():
@@ -162,6 +163,9 @@ def parse_findings(output):
             findings["plant_step_count"] = int(parts[1])
         elif kind == "plant-last-step-ok":
             findings["plant_last_step_ok"] = int(parts[1]) != 0
+        elif kind == "call-steps":
+            findings["call_steps"] = {
+                name: int(count) for name, count in (pair.split("=") for pair in parts[1].split(","))}
         elif kind == "done":
             findings["completed"] = True
     return findings

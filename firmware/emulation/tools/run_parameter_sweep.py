@@ -662,9 +662,7 @@ def steam_draw(executable, description, limits, declaration, initial_c, course, 
     findings["stdout"] = completed.stdout
     findings["stderr"] = completed.stderr
     if not findings["completed"]:
-        raise SweepError(
-            "the steam draw did not finish. Its output follows:\n%s\n%s"
-            % (completed.stdout[-8000:], completed.stderr[-4000:]))
+        raise SweepError(cross_tier.not_finished("the steam draw", completed))
 
     steam_bar = closed_loop.QUANTITY_KEYS.index("steam-bar")
     findings["delivered"] = [reported["quantities"][steam_bar]
