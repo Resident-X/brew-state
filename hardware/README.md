@@ -307,7 +307,7 @@ KiCad 10.0.7's command-line layout check reports at most 199 failures of one kin
 
 ## The report
 
-The report has one verdict line per design, one line under it for each measured rule's figure (the workmanship rules', the barrier's, the paste's, the pour gap's and the three inherent zeros of `DECOUPLE-6`, `MFG-7` and `MFG-9`, and the count of decoupling paths `DECOUPLE-6` measured), one line per violation, and a result line last:
+The report has one verdict line per design, one line under it for each measured rule's figure (the workmanship rules', the barrier's, the paste's, the pour gap's, the test point to courtyard distance's and the three inherent zeros of `DECOUPLE-6`, `MFG-7` and `MFG-9`, and the count of decoupling paths `DECOUPLE-6` measured), one line per violation, and a result line last:
 
 ```
 DESIGN | hardware/proof/gate-proof/gate-proof.kicad_pro | PASS
