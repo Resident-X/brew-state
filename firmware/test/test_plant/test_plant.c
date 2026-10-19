@@ -8902,6 +8902,173 @@ static void test_a_position_answers_the_name_that_answers_to_it(void)
     TEST_ASSERT_FALSE(plant_parameter_name(0u, NULL));
 }
 
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C6: ... the modelled outlet steam temperature
+/// minus saturation at the measured steam pressure, through the same saturation
+/// relation the trapped case uses.
+///
+/// The logarithm the inversion takes is built from the model's own exponential, and
+/// how close it lands depends on the pressure it is asked at: the starting guess is
+/// furthest from the answer towards the top of each octave. The draw is swept
+/// through every octave the working range covers at a step of a few hundredths of a
+/// millilitre a second, so the pressures cover the mantissas the way a count of
+/// them would not, and the figure is held to a tenth of a millikelvin of the closed
+/// form worked in double precision -- a tolerance a starting guess that is wrong by
+/// two parts in ten thousand cannot meet.
+static void test_the_outlet_superheat_holds_the_inversion_to_its_accuracy_across_the_octaves(void)
+{
+    int live = 0;
+
+    for (int i = 0; i <= 58; i++) {
+        const float demand = 0.02f + 0.005f * (float)i;
+        plant_model_t model;
+        float casting_c = 0.0f;
+
+        TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+        TEST_ASSERT_TRUE(plant_model_set_state(&model, PLANT_STATE_STEAM_TEMPERATURE_C, 150.0f));
+        TEST_ASSERT_TRUE(plant_model_step(&model, &FEEDING, demand, 10u));
+        TEST_ASSERT_TRUE(plant_model_state(&model, PLANT_STATE_STEAM_TEMPERATURE_C, &casting_c));
+
+        const double expected = expected_superheat_k((double)casting_c, (double)demand);
+        TEST_ASSERT_FLOAT_WITHIN(1.0e-4f, (float)expected, outlet_superheat(&model));
+        live += expected > 1.0 ? 1 : 0;
+    }
+    /* The sweep is made of dry steam, not of cases the clamp at nothing would pass. */
+    TEST_ASSERT_TRUE(live > 40);
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: ... a description ... whose saturation
+/// relation cannot be inverted across the pressures the model can reach, the
+/// open-wand pressure at the largest steam the pump can make included, is refused
+/// wherever a model is built from the description.
+///
+/// The edge is the pressure that reaches ten to the Antoine constant exactly, where
+/// the divisor of the inversion is nothing and so is not under it. The restriction
+/// is walked a unit in the last place at a time across the figure that lands the
+/// highest pressure on the limit, at a feed of one so the drop is the coefficient
+/// itself and the sums are the ones the model forms, and a record is held to be
+/// admissible exactly while its pressure is below the limit: the record that lands
+/// on it is refused, and the walk is required to have found one.
+static void test_a_restriction_that_lands_the_open_draw_pressure_on_the_limit_is_refused(void)
+{
+    const float ln10 = 2.30258509f;
+    const plant_parameters_t base = nominal_record();
+    const plant_parameters_t low = edited(&base, "steam.saturation_antoine_a", 2.5f);
+    const plant_parameters_t narrow = edited(&low, "steam.feed_flow_ml_per_s", 1.0f);
+    const float a = coefficient_named(&narrow, "steam.saturation_antoine_a");
+    const float b = coefficient_named(&narrow, "steam.saturation_antoine_b_k");
+    const float c = coefficient_named(&narrow, "steam.saturation_antoine_c_c");
+    const float at_c = coefficient_named(&narrow, "steam.saturation_temperature_c");
+    const float limit = plant_expf(a * ln10);
+    const float saturation = plant_expf((a - b / (c + at_c)) * ln10);
+    float restriction = limit - saturation;
+    int landed = 0;
+    int below = 0;
+    int beyond = 0;
+
+    for (int i = 0; i < 24; i++) {
+        restriction = nextafterf(restriction, 0.0f);
+    }
+    for (int i = 0; i < 49; i++) {
+        const volatile float highest = restriction + saturation;
+        const plant_parameters_t record = edited(&narrow, "steam.restriction_bar_s2_per_ml2", restriction);
+        plant_model_t model;
+
+        if (highest < limit) {
+            TEST_ASSERT_TRUE(plant_parameters_admissible(&record, NULL));
+            TEST_ASSERT_TRUE(plant_model_init(&model, &record));
+            below++;
+        } else {
+            TEST_ASSERT_FALSE(plant_parameters_admissible(&record, NULL));
+            TEST_ASSERT_FALSE(plant_model_init(&model, &record));
+            beyond++;
+            landed += highest == limit ? 1 : 0;
+        }
+        restriction = nextafterf(restriction, INFINITY);
+    }
+    TEST_ASSERT_TRUE_MESSAGE(landed > 0, "the walk never landed the pressure on the limit");
+    TEST_ASSERT_TRUE(below > 0 && beyond > 0);
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: ... a saturation relation ... through the
+/// same relation the trapped case uses.
+///
+/// A saturation figure at the saturation temperature that is below the smallest
+/// float -- the constants are each within their ranges, and the pair is the far end
+/// of two of them -- leaves the absolute pressure of a draw through no restriction
+/// at nothing. The inversion is then asked for the logarithm of nothing, which it
+/// answers as nothing rather than as the loop a halving of zero would be, and the
+/// outlet of a block that cannot reach that temperature reports no superheat.
+static void test_a_draw_whose_absolute_pressure_is_nothing_steps_to_no_superheat(void)
+{
+    const plant_parameters_t base = nominal_record();
+    plant_parameters_t record = edited(&base, "steam.saturation_antoine_a", 2.0f);
+    plant_model_t model;
+
+    record = edited(&record, "steam.saturation_antoine_b_k", 10000.0f);
+    record = edited(&record, "steam.saturation_antoine_c_c", 10.0f);
+    record = edited(&record, "steam.saturation_temperature_c", 1.0f);
+    record = edited(&record, "steam.restriction_bar_s2_per_ml2", 0.0f);
+    TEST_ASSERT_TRUE(plant_parameters_admissible(&record, NULL));
+    TEST_ASSERT_TRUE(plant_model_init(&model, &record));
+    TEST_ASSERT_TRUE(plant_model_set_state(&model, PLANT_STATE_STEAM_TEMPERATURE_C, 120.0f));
+    for (int step = 0; step < 5; step++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &FEEDING, 0.2f, STEP_MS));
+    }
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, steam_pressure(&model));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, outlet_superheat(&model));
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C2: ... likewise refuse a believed description
+/// or error budget ... that leaves undeclared a coefficient the law's superheat
+/// estimate reads.
+///
+/// A budget claiming more entries than the structure has coefficients is a record
+/// no loader writes, and the estimate reads only the entries the structure has: the
+/// figure it gives is the one the same declarations give with the count the
+/// structure holds, whatever the entries past the end say.
+static void test_a_budget_longer_than_the_structure_is_read_only_as_far_as_the_structure(void)
+{
+    plant_parameter_budget_t exact;
+    plant_parameter_budget_t longer;
+    float held = -1.0f;
+    float beyond = -1.0f;
+    size_t at = 0u;
+
+    memset(&exact, 0, sizeof(exact));
+    TEST_ASSERT_TRUE(plant_parameter_position("steam.outlet_drop_k_s_per_ml", &at));
+    exact.count = COEFFICIENT_COUNT;
+    exact.declared[at] = true;
+    exact.assumed_error[at] = 0.5f;
+    longer = exact;
+    longer.count = PLANT_PARAMETER_LIMIT;
+    for (size_t past = COEFFICIENT_COUNT; past < PLANT_PARAMETER_LIMIT; past++) {
+        longer.declared[past] = true;
+        longer.assumed_error[past] = 9.0f;
+    }
+
+    TEST_ASSERT_TRUE(plant_model_least_outlet_superheat(&parameters, &exact, 120.0f, 0.04f, 20u, &held));
+    TEST_ASSERT_TRUE(
+        plant_model_least_outlet_superheat(&parameters, &longer, 120.0f, 0.04f, 20u, &beyond));
+    TEST_ASSERT_EQUAL_FLOAT(held, beyond);
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: ... is refused wherever a model is built
+/// from the description, at load, naming the parameter, and at model construction.
+///
+/// The positions the structure names end where its coefficients do: the one past the
+/// last is not a name, and the count of positions that answer is the count of
+/// coefficients the description carries, not one more.
+static void test_the_position_past_the_last_coefficient_is_not_named(void)
+{
+    const char *name = NULL;
+
+    TEST_ASSERT_TRUE(plant_parameter_name(COEFFICIENT_COUNT - 1u, &name));
+    TEST_ASSERT_EQUAL_STRING(NOMINAL[COEFFICIENT_COUNT - 1u].name, name);
+    name = NULL;
+    TEST_ASSERT_FALSE(plant_parameter_name(COEFFICIENT_COUNT, &name));
+    TEST_ASSERT_NULL(name);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -9089,5 +9256,10 @@ int main(void)
     RUN_TEST(test_the_superheat_falls_with_the_restriction_and_the_outlet_drop);
     RUN_TEST(test_the_least_outlet_superheat_takes_the_cool_end_of_the_declared_error);
     RUN_TEST(test_a_position_answers_the_name_that_answers_to_it);
+    RUN_TEST(test_the_outlet_superheat_holds_the_inversion_to_its_accuracy_across_the_octaves);
+    RUN_TEST(test_a_restriction_that_lands_the_open_draw_pressure_on_the_limit_is_refused);
+    RUN_TEST(test_a_draw_whose_absolute_pressure_is_nothing_steps_to_no_superheat);
+    RUN_TEST(test_a_budget_longer_than_the_structure_is_read_only_as_far_as_the_structure);
+    RUN_TEST(test_the_position_past_the_last_coefficient_is_not_named);
     return UNITY_END();
 }

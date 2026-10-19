@@ -470,3 +470,108 @@ survivors:
       back afterwards is taken from x, which for a zero is not negative.
       test_the_functions_hold_at_the_edges_of_their_domains asserts that both
       zeros return plus zero, so a change that gave either one a sign is seen.
+
+# The steam-flash-generator branch's survivors on the lines it added to the
+# thermoblock structure, the loader's name lookup and the single-boiler
+# structure. Those the tests could separate were killed rather than recorded: the
+# inversion's starting guess, the edge at which the open-draw pressure reaches the
+# limit, the loader's position past the last coefficient, and the guard on the
+# logarithm's argument. What is recorded below is what no input can tell apart.
+
+  cxx_gt_to_ge:src/plant/thermoblock/plant_structure.c:234:21:
+    verdict: equivalent
+    reason: >-
+      The trapped pressure's lower guard, `!(casting_c > saturation_temperature)`
+      widened to `!(casting_c >= ...)`, so a casting exactly at the saturation
+      temperature no longer returns nothing at once and goes on to the
+      subtraction. There the casting is bounded by the ceiling, which the relation
+      refused at load keeps above the saturation temperature, so the bound is the
+      casting itself, and the figure is the absolute pressure at the saturation
+      temperature less the absolute pressure at the same argument, through the
+      same function. The two are the same float, the difference is a zero, and
+      `fmaxf(0, 0)` is the zero the guard returned. Were the saturation figure
+      not finite the difference would be not-a-number, which `fmaxf` also answers
+      as the zero.
+
+  cxx_ge_to_gt:src/plant/thermoblock/plant_structure.c:258:14:
+    verdict: equivalent
+    reason: >-
+      The logarithm's halving loop, `while (x >= 2.0f)` narrowed to `>`. The two
+      differ only where the argument is reduced to exactly two, which happens
+      only for an argument that is a power of two. There the original halves once
+      more, to one, adds one to the count and starts the refinement from a
+      remainder of nothing, and the mutant keeps two and refines to the logarithm
+      of two. Every power of two the argument can be, from two to two to the 127th,
+      was run through both and gives the same bits: the refinement lands on the
+      constant the original adds, and the sum with the count is the same
+      rounding either way. The remainder the refinement is asked about is the
+      same for every other argument, which is why only the powers of two were
+      run.
+
+  cxx_lt_to_le:src/plant/thermoblock/plant_structure.c:262:14:
+    verdict: equivalent
+    reason: >-
+      The logarithm's doubling loop, `while (x < 1.0f)` widened to `<=`. The two
+      differ only where the argument is reduced to exactly one, which happens only
+      for an argument that is a power of two at or below one. The original starts
+      the refinement from one, whose answer is exactly nothing, and the mutant
+      doubles to two, takes one off the count and refines to the logarithm of two,
+      which the count then cancels. Every power of two from one down to the
+      smallest denormal was run through both and gives the same bits: the
+      refinement lands on the constant the count takes off again.
+
+  cxx_lt_to_le:src/plant/thermoblock/plant_structure.c:268:29:
+    verdict: equivalent
+    reason: >-
+      The logarithm's refinement count, `step < 3` widened to `<= 3`, which takes
+      a fourth Newton step. The three the code takes already leave the result
+      within the rounding the function states: run over every float in the range
+      the reduced argument takes, from one up to but not including two, the worst
+      error against the logarithm in double precision is 1.1e-7 with three steps
+      and 1.1e-7 with four. A fourth step is therefore a different rounding of
+      the same figure and not a better one: it moves the logarithm by at most
+      1.8e-7, about one unit in the last place of the largest value it takes there,
+      and at the pressures the model works at that is a few microkelvin on a
+      saturation temperature of a hundred and some, the spacing of whose floats is
+      larger. No assertion tighter than the stated accuracy separates the two, and
+      one pinning the bits would pin a rounding that depends on whether the host
+      contracts a multiply and an add, which is not behaviour the model states.
+      test_the_outlet_superheat_holds_the_inversion_to_its_accuracy_across_the_octaves
+      holds the figure to a tenth of a millikelvin of the closed form, which both
+      meet.
+
+  cxx_gt_to_ge:src/plant/thermoblock/plant_structure.c:771:27:
+    verdict: equivalent
+    reason: >-
+      The superheat's gate on a draw, `demanded_ml_per_s > 0.0f` widened to `>=`,
+      so a demand of exactly nothing evaluates the superheat instead of reporting
+      zero. The demand is what `drawn_steam_ml_per_s` returned, which is never
+      below nothing, and the steam made is the lesser of it and the commanded feed,
+      which is itself never below nothing, so at a demand of nothing the steam made
+      is nothing. The superheat's own first line then returns nothing for a made
+      rate that is not above nothing, which is the zero the original reports.
+
+  cxx_lt_to_le:src/plant/thermoblock/plant_structure.c:1024:29:
+    verdict: analysis
+    reason: >-
+      The bound of the loop over the table in the least-superheat estimate,
+      `at < sizeof(SPECS)/sizeof(SPECS[0])` widened to `<=`. It differs only for a
+      budget claiming more entries than the table has, where the mutant reads one
+      element past the end of the table for its offset and compares it with the
+      outlet coefficient's. That read is outside the array, so no assertion can
+      see it, and the sanitized build aborts on it. The sweep runs with that
+      analysis switched off. The line is reached: 
+      test_a_budget_longer_than_the_structure_is_read_only_as_far_as_the_structure
+      gives the loop a count of the whole limit, past the table, with declarations
+      and a large error on every entry beyond it.
+
+  cxx_ne_to_eq:src/plant/boiler/plant_structure.c:106:15:
+    verdict: equivalent
+    reason: >-
+      The guard on the out-parameter of a structure that declares no relation,
+      `count != NULL` inverted to `==`. The one caller, the loader's relation
+      walk, passes the address of a counter it has just set to zero, so the
+      mutant leaves that counter at the zero the original writes and returns the
+      same null table, and the loop it feeds does not run in either. The null
+      argument the guard is for is not passed by that caller, and no other
+      calls the function.
