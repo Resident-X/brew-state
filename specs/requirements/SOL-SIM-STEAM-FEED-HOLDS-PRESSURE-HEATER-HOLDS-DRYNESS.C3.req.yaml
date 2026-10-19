@@ -1,0 +1,12 @@
+id: SOL-SIM-STEAM-FEED-HOLDS-PRESSURE-HEATER-HOLDS-DRYNESS.C3
+type: criterion
+title: The ready and band figures are re-derived from the flash-generator relations
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Every figure in the steam control declaration that was derived through the affine saturation slope (the ready pressure, the ready temperature, the band edges and any interval reasoned from them) is re-derived from the orifice law, the saturation relation and the casting ceiling, each line carrying its new origin and estimated status, and none still cites the retired slope. A check over the declaration refuses a figure whose origin names the retired relation or carries no origin. The build also regenerates every committed analysis record that pins the changed parameter or declaration inputs in the same change, and passes the changed-lines mutation sweep over the plant lines it alters. Out of scope: changing the readiness policy itself, and the predictive readiness of DEL-READINESS-PREDICTED-IN-BAND.
+links:
+  - target: SOL-SIM-STEAM-FEED-HOLDS-PRESSURE-HEATER-HOLDS-DRYNESS
+    type: criterion-of

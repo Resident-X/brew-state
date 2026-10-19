@@ -1,0 +1,12 @@
+id: SOL-PLANT-STEAM-FLASH-GENERATOR-DESCRIBED.C3
+type: criterion
+title: Every committed analysis record names the steam model as it now stands
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The protection margin, parameter dominance, parameter stability and parameter identifiability records are regenerated with their own tools in the same change against the final flash-generator description and declarations; every sha256 each record prints matches the file it names, the emulation staleness test passes, and the results are reported against the new relations rather than the retired affine slope. Out of scope: hand-edited figures in any record, and interpreting the identifiability of the modelled superheat, which DEL-SENSOR-NECESSITY-PROVEN owns.
+links:
+  - target: SOL-PLANT-STEAM-FLASH-GENERATOR-DESCRIBED
+    type: criterion-of
