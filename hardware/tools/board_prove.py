@@ -850,6 +850,114 @@ def test_point_in_courtyard(seed: Seed) -> None:
     seed.layout(lambda tree: tree.insert(len(tree) - 1, point))
 
 
+def surface_mounted_r2(tree: list, bare: bool = True) -> list:
+    """R2 turned into a surface-mount part on the front: its pads smd on the front copper, its attribute smd and, when
+    `bare`, nothing drawn on its silkscreen but its reference text. Returns R2's footprint."""
+    Q = sexpr.Quoted
+    part = footprint(tree, "R2")
+    for node in sexpr.children(part, "attr"):
+        part.remove(node)
+    part.insert(2, ["attr", "smd"])
+    for node in sexpr.children(part, "pad"):
+        node[2] = "smd"
+        for drill in sexpr.children(node, "drill"):
+            node.remove(drill)
+        sexpr.child(node, "layers")[1:] = [Q("F.Cu"), Q("F.Mask")]
+    if bare:
+        for node in list(part):
+            if isinstance(node, list) and node and str(node[0]).startswith("fp_") and str(node[0]) != "fp_text":
+                layer = sexpr.child(node, "layer")
+                if layer is not None and str(layer[1]) == "F.SilkS":
+                    part.remove(node)
+    return part
+
+
+def polarised_symbol_r2(seed: Seed) -> None:
+    """R2's schematic symbol made a polarised capacitor's, a copy of the resistor symbol named C_Polarized: the only thing
+    that makes R2 polarised."""
+    Q = sexpr.Quoted
+
+    def edit(tree: list) -> None:
+        library = sexpr.child(tree, "lib_symbols")
+        source = next(item for item in sexpr.children(library, "symbol") if item[1] == "proof:R")
+        copied = copy.deepcopy(source)
+        copied[1] = Q("proof:C_Polarized")
+        for unit in sexpr.children(copied, "symbol"):
+            unit[1] = Q("C_Polarized" + str(unit[1])[1:])
+        library.append(copied)
+        for symbol in sexpr.children(tree, "symbol"):
+            if any(len(p) > 2 and p[1] == "Reference" and p[2] == "R2" for p in sexpr.children(symbol, "property")):
+                sexpr.child(symbol, "lib_id")[1] = Q("proof:C_Polarized")
+                return
+        raise AssertionError("the proof schematic has no symbol R2")
+    seed.schematic(edit)
+
+
+def fiducials_short(seed: Seed) -> None:
+    """R2 a surface-mount part on the front, and two fiducials on the front, one short of the three the side needs."""
+    Q = sexpr.Quoted
+
+    def edit(tree: list) -> None:
+        surface_mounted_r2(tree)
+        for index in range(2):
+            uuid = f"0b0e5c1a-0000-4000-8000-0000000{index}0e00"
+            tree.insert(len(tree) - 1, ["footprint", Q("proof:Fiducial"), ["layer", Q("F.Cu")], ["uuid", Q(uuid)],
+                                        ["at", f"{5 + 5 * index}", "30"], ["attr", "smd", "exclude_from_bom"],
+                                        ["property", Q("Reference"), Q(f"FID{index + 1}"), ["at", "0", "-1.5", "0"], ["layer", Q("F.SilkS")]],
+                                        ["pad", Q(""), "smd", "circle", ["at", "0", "0"], ["size", "1", "1"],
+                                         ["property", "pad_prop_fiducial_glob"], ["layers", Q("F.Cu"), Q("F.Mask")],
+                                         ["uuid", Q(f"{uuid[:-2]}01")]]])
+    seed.layout(edit)
+
+
+def three_nets_unmarked(seed: Seed) -> None:
+    """R2 a surface-mount part on the front with a third pad on a third net and no mark of its first pin."""
+    Q = sexpr.Quoted
+
+    def edit(tree: list) -> None:
+        part = surface_mounted_r2(tree)
+        third = ["pad", Q("3"), "smd", "circle", ["at", "5.08", "3"], ["size", "1.6", "1.6"], ["layers", Q("F.Cu"), Q("F.Mask")],
+                 ["net", Q("/MAINS_L")], ["uuid", Q("0b0e5c1a-0000-4000-8000-000000000e03")]]
+        part.insert(len(part) - 1, third)
+    seed.layout(edit)
+
+
+def capacitor_unmarked(seed: Seed) -> None:
+    """R2 a surface-mount part of two pads and no mark, polarised only by its schematic symbol, a polarised capacitor's."""
+    seed.layout(surface_mounted_r2)
+    polarised_symbol_r2(seed)
+
+
+def mark_on_back(seed: Seed) -> None:
+    """The polarised R2 of two pads with a bar beside pad 1 drawn on B.SilkS, where a front part's mark does not belong, and
+    only a line midway between its pads on F.SilkS."""
+    Q = sexpr.Quoted
+
+    def edit(tree: list) -> None:
+        part = surface_mounted_r2(tree)
+        part.insert(len(part) - 1, ["fp_line", ["start", "-1.5", "-1.5"], ["end", "-1.5", "1.5"], ["stroke", ["width", "0.12"], ["type", "solid"]],
+                                    ["layer", Q("B.SilkS")], ["uuid", Q("0b0e5c1a-0000-4000-8000-000000000e04")]])
+        part.insert(len(part) - 1, ["fp_line", ["start", "5.08", "-1.5"], ["end", "5.08", "1.5"], ["stroke", ["width", "0.12"], ["type", "solid"]],
+                                    ["layer", Q("F.SilkS")], ["uuid", Q("0b0e5c1a-0000-4000-8000-000000000e06")]])
+    seed.layout(edit)
+    polarised_symbol_r2(seed)
+
+
+def symmetric_outline(seed: Seed) -> None:
+    """The polarised R2 of two pads outlined by four lines, whose end beside pad 1 stands nearer it than pad 2 but whose drawing is
+    the same turned half way about the pads."""
+    Q = sexpr.Quoted
+
+    def edit(tree: list) -> None:
+        part = surface_mounted_r2(tree)
+        for index, (x1, y1, x2, y2) in enumerate(((-1.5, -1.5, 11.66, -1.5), (-1.5, 1.5, 11.66, 1.5), (-1.5, -1.5, -1.5, 1.5), (11.66, -1.5, 11.66, 1.5))):
+            part.insert(len(part) - 1, ["fp_line", ["start", f"{x1:g}", f"{y1:g}"], ["end", f"{x2:g}", f"{y2:g}"],
+                                        ["stroke", ["width", "0.12"], ["type", "solid"]], ["layer", Q("F.SilkS")],
+                                        ["uuid", Q(f"0b0e5c1a-0000-4000-8000-0000000{index}0e05")]])
+    seed.layout(edit)
+    polarised_symbol_r2(seed)
+
+
 def drop_rule(name: str):
     def seed_it(seed: Seed) -> None:
         text = seed.read(".kicad_dru")
@@ -1215,6 +1323,16 @@ FAULTS: List[tuple] = [
      "the text of R1 stands inside the courtyard of R1", reference_in_courtyard),
     ("a test point seeded inside a part's courtyard", "test access: a test pad nearer than its figure to a part's courtyard fails", "test_point_courtyard",
      "the pad of test point TP9 is 0 mm from the F.CrtYd courtyard of R1, where TEST_COURTYARD_MM requires 1 mm", test_point_in_courtyard),
+    ("a side with surface-mount parts and two fiducials", "assembly: each side with assembled surface-mount parts carries three fiducials", "side_fiducials",
+     "the front side has 1 surface-mount parts and 2 fiducials", fiducials_short),
+    ("a polarised part with no mark at its first pin", "assembly: a polarised part marks its first pin on the silkscreen", "polarity_mark",
+     "R2 is not marked at pad 1, it draws nothing on F.SilkS", three_nets_unmarked),
+    ("a polarised capacitor named only by its symbol with no mark", "assembly: a part a polarised capacitor's symbol names is marked at its first pin", "polarity_mark",
+     "R2 is not marked at pad 1, it draws nothing on F.SilkS", capacitor_unmarked),
+    ("a polarity mark on the wrong side of the part", "assembly: the mark is on the silkscreen of the part's own side", "polarity_mark",
+     "R2 is not marked at pad 1, it has no graphic on F.SilkS nearer pad 1", mark_on_back),
+    ("a symmetric outline on a symmetric pad pattern", "assembly: a drawing the pads' symmetry leaves unchanged marks nothing", "polarity_mark",
+     "the silkscreen of R2 looks the same when its pads are turned or reflected onto themselves so that pad 1 moves", symmetric_outline),
     # The keys of the records
     ("a separation basis key misspelt", "record keys: a key the separation basis decision does not define is refused by name", "separation_basis",
      "holds the key 'overvoltage_categry'", record("overvoltage_category: 2", "overvoltage_categry: 2"), KEYS_TARGET),

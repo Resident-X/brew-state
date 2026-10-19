@@ -817,6 +817,55 @@ class TheTrackedDesignsPassTheTestPadCourtyardRule(unittest.TestCase):
                 self.assertIn("| TEST_COURTYARD_MM | 1 mm at least from a test point's pad to the courtyard of any other part", figure[0])
 
 
+class TheFiducialAndPolarityMarkRules(Proved):
+    """Each seeded in a throwaway copy of the gate's proof design, the faults fail the rule that names them."""
+
+    FAULTS = {
+        "a side with surface-mount parts and two fiducials": ("side_fiducials", "the front side (F.Cu)",
+                                                             ("MFG-10", "the front side has 1 surface-mount parts and 2 fiducials", "add 1 or more")),
+        "a polarised part with no mark at its first pin": ("polarity_mark", "R2 pad 1 at (45, 10) mm",
+                                                          ("R2 is not marked at pad 1", "draws nothing on F.SilkS")),
+        "a polarised capacitor named only by its symbol with no mark": ("polarity_mark", "R2 pad 1 at (45, 10) mm",
+                                                                        ("R2 is not marked at pad 1", "draws nothing on F.SilkS")),
+        "a polarity mark on the wrong side of the part": ("polarity_mark", "R2 pad 1 at (45, 10) mm",
+                                                         ("R2 is not marked at pad 1", "no graphic on F.SilkS nearer pad 1")),
+        "a symmetric outline on a symmetric pad pattern": ("polarity_mark", "R2 pad 1 at (45, 10) mm",
+                                                          ("the silkscreen of R2 looks the same", "so that pad 1 moves")),
+    }
+
+    def test_each_rule_fails_on_its_seeded_fault_and_names_the_rule_the_design_and_the_item(self):
+        # SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C4: The on-demand seeded-fault proof introduces into a copy of a throwaway design, outside the tracked tree, a side with surface-mount parts and fewer than three fiducials, a polarised part with no silkscreen mark nearer pad one, a polarised capacitor named only by its symbol with no mark, a mark on the wrong side of the part, and a part on a pad pattern with a symmetry whose silkscreen outline is unchanged by it, and requires the check to fail each
+        # SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C3: A failure of any rule in this leaf is reported with the rule's name, the design, and the offending item
+        self.assertCaught(*self.FAULTS)
+        for fault, (rule, item, words) in self.FAULTS.items():
+            with self.subTest(fault=fault):
+                fields = outcomes()[fault][1].split(" | ")
+                self.assertEqual(fields[1], "hardware/proof/gate-proof/gate-proof.kicad_pro")
+                self.assertEqual((fields[2], fields[3]), (rule, item))
+                for word in words:
+                    self.assertIn(word, fields[4])
+                self.assertEqual([entry[2] for entry in board_prove.FAULTS if entry[0] == fault], [rule])
+
+
+class TheTrackedDesignsPassTheFiducialAndPolarityMarkRules(unittest.TestCase):
+    """Every design the repository tracks passes the two rules, and the report states the fiducial rule's count."""
+
+    DESIGNS = TheTrackedDesignsPassTheTestPadCourtyardRule.DESIGNS
+
+    def test_every_tracked_design_passes_and_reports_the_count(self):
+        # SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C5: Every design git tracks passes the fiducial rule and the polarity-mark rule
+        for name in self.DESIGNS:
+            with self.subTest(design=name), tempfile.TemporaryDirectory(prefix="board-test-") as scratch:
+                seed = board_prove.prepare(scratch, f"hardware/proof/{name}", name)
+                status, lines, stderr = board_prove.check(seed, KICAD_CLI)
+                self.assertNotEqual(status, 2, stderr)
+                self.assertEqual([line for line in lines if line.startswith("VIOLATION") and (
+                    "| side_fiducials |" in line or "| polarity_mark |" in line)], [])
+                figure = [line for line in lines if line.startswith("FIGURE") and "MFG-10 fiducials on a side" in line]
+                self.assertEqual(len(figure), 1, lines)
+                self.assertIn("3 fiducials at least on each side that carries assembled surface-mount parts", figure[0])
+
+
 class TheCleanDesignStatesTheFiguresOfTheDecouplingAndSilkscreenRules(Copy):
     # SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C3: Each rule the method proof design's review adds fails on a fault seeded for it and passes the clean design
     """The report states the two inherent zeros, and how much of the layout the decoupling rule measured."""

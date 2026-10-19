@@ -4353,6 +4353,251 @@ def crowded_test_points(design: Design, tree: list, distance: float) -> List[Vio
     return found
 
 
+#: How many fiducials each side of the board that carries assembled surface-mount parts needs.
+FIDUCIALS_PER_SIDE = 3
+#: How much nearer pad one a silkscreen graphic must stand than any other pad to count as marking it, and how far a
+#: silkscreen drawing may differ from its image under a symmetry of the pads and still count as unchanged, in mm.
+MARK_MARGIN = 0.05
+#: How far apart two pads' centres and extents may be, in mm, and still be one pad's image under a symmetry.
+PAD_MATCH = 0.01
+#: The silkscreen graphics that can mark a pin; text, the designator included, is not one.
+MARK_ITEMS = ("fp_line", "fp_rect", "fp_circle", "fp_arc", "fp_poly")
+#: Pin names that say a part has a direction: the pair a diode or an electrolytic capacitor is named for.
+POLAR_PAIRS = (({"a", "anode"}, {"k", "cathode"}), ({"+", "plus", "pos"}, {"-", "−", "minus", "neg"}))
+#: How a footprint's side is written on its own layer.
+SILKSCREEN = {"F.Cu": "F.SilkS", "B.Cu": "B.SilkS"}
+
+
+def fiducial_pads(footprint: list) -> int:
+    """How many of a footprint's pads carry KiCad's global fiducial pad property."""
+    return sum(1 for pad in sexpr.children(footprint, "pad")
+               if any(len(prop) > 1 and str(prop[1]) == "pad_prop_fiducial_glob" for prop in sexpr.children(pad, "property")))
+
+
+def missing_fiducials(design: Design, tree: list) -> List[Violation]:
+    """Every side of the board that carries surface-mount parts and holds fewer than FIDUCIALS_PER_SIDE fiducials.
+
+    A fiducial is a pad with the global fiducial pad property, counted on the
+    side its footprint sits on. A side carries surface-mount parts when it
+    holds a footprint with the surface-mount attribute that is not a fiducial
+    and is not left out of the position file, which the assembler places from;
+    a test point left out of it does not make a side count.
+    """
+    counts = {"F.Cu": 0, "B.Cu": 0}
+    parts = {"F.Cu": 0, "B.Cu": 0}
+    for footprint in sexpr.children(tree, "footprint"):
+        layer = sexpr.child(footprint, "layer")
+        side = str(layer[1]) if layer is not None and len(layer) > 1 else "F.Cu"
+        if side not in counts:
+            continue
+        found = fiducial_pads(footprint)
+        counts[side] += found
+        attributes = sexpr.child(footprint, "attr") or []
+        if not found and "smd" in attributes and "exclude_from_pos_files" not in attributes:
+            parts[side] += 1
+    violations = []
+    for side, name in (("F.Cu", "front"), ("B.Cu", "back")):
+        if parts[side] and counts[side] < FIDUCIALS_PER_SIDE:
+            violations.append(Violation(
+                design.project, "side_fiducials", f"the {name} side ({side})",
+                f"MFG-10 each side with assembled surface-mount parts carries at least {FIDUCIALS_PER_SIDE} fiducials: the {name} side "
+                f"has {parts[side]} surface-mount parts and {counts[side]} fiducials; add {FIDUCIALS_PER_SIDE - counts[side]} "
+                f"or more footprints on {side} with a pad carrying the global fiducial property, so the machine can find the board"))
+    return violations
+
+
+def schematic_parts(netlist: list) -> Dict[str, Tuple[str, List[str]]]:
+    """Each part of KiCad's netlist by reference: the library item name of its symbol, and the name of each pin it has."""
+    symbols: Dict[str, str] = {}
+    for group in walk(netlist, "components"):
+        for comp in sexpr.children(group, "comp"):
+            ref, source = sexpr.child(comp, "ref"), sexpr.child(comp, "libsource")
+            part = sexpr.child(source, "part") if source is not None else None
+            if ref is not None and len(ref) > 1:
+                symbols[str(ref[1])] = str(part[1]) if part is not None and len(part) > 1 else ""
+    names: Dict[str, List[str]] = {ref: [] for ref in symbols}
+    for pins in schematic_pin_nodes(netlist).values():
+        for pin in pins:
+            names.setdefault(pin.ref, []).extend(name.lower() for name in pin.names())
+    return {ref: (symbols.get(ref, ""), names[ref]) for ref in names}
+
+
+def is_polarised(footprint: list, pads: List["board_geometry.Pad"], symbol: str, pin_names: List[str]) -> bool:
+    """Whether a part has a direction: pins named for anode and cathode or plus and minus, a polarised capacitor's
+    symbol, or three pads on distinct nets. A footprint of pads on one net, or of holes alone, is left out."""
+    if len({pad.net for pad in pads}) < 2:
+        return False
+    if all(drilled(node) for node in sexpr.children(footprint, "pad")):
+        return False
+    if symbol.startswith("C_Polarized"):
+        return True
+    if any(first & set(pin_names) and second & set(pin_names) for first, second in POLAR_PAIRS):
+        return True
+    return len({pad.net for pad in pads if pad.net}) >= 3
+
+
+def silkscreen_segments(footprint: list, layer: str, name: str) -> List[List[Tuple[float, float]]]:
+    """The footprint's own graphics on `layer`, as polylines on the board; text is not among them."""
+    place = board_geometry.placement(footprint, f"the footprint {name}")
+    what = f"the silkscreen of {name}"
+    lines = []
+    for item in footprint:
+        if not isinstance(item, list) or not item or str(item[0]) not in MARK_ITEMS:
+            continue
+        on = sexpr.child(item, "layer")
+        if on is None or len(on) < 2 or str(on[1]) != layer:
+            continue
+        kind = str(item[0])
+        if kind == "fp_line":
+            line = [board_geometry.xy(sexpr.child(item, "start"), what), board_geometry.xy(sexpr.child(item, "end"), what)]
+        elif kind == "fp_rect":
+            (x1, y1), (x2, y2) = (board_geometry.xy(sexpr.child(item, key), what) for key in ("start", "end"))
+            line = [(x1, y1), (x2, y1), (x2, y2), (x1, y2), (x1, y1)]
+        elif kind == "fp_circle":
+            centre, edge = (board_geometry.xy(sexpr.child(item, key), what) for key in ("center", "end"))
+            radius = math.dist(centre, edge)
+            line = [(centre[0] + radius * math.cos(2 * math.pi * i / 64), centre[1] + radius * math.sin(2 * math.pi * i / 64))
+                    for i in range(65)]
+        elif kind == "fp_arc":
+            line = arc_points(item, what)
+        else:
+            line = [board_geometry.xy(point, what) for group in sexpr.children(item, "pts") for point in sexpr.children(group, "xy")]
+            if line:
+                line.append(line[0])
+        if len(line) > 1:
+            lines.append([board_geometry.placed(point, place) for point in line])
+    return lines
+
+
+def polyline_gap(line: List[Tuple[float, float]], outline: List[Tuple[float, float]]) -> float:
+    """How far a polyline stands from a pad's convex outline, 0 where it touches or enters it."""
+    if any(board_geometry.within(point, outline) for point in line):
+        return 0.0
+    return min(board_geometry.segment_distance(a, b, c, d)
+               for a, b in zip(line, line[1:]) for c, d in zip(outline, outline[1:] + outline[:1]))
+
+
+def along(lines: List[List[Tuple[float, float]]], step: float = 0.1) -> List[Tuple[float, float]]:
+    """Points along the polylines no further than `step` mm apart, their ends included."""
+    points = []
+    for line in lines:
+        for a, b in zip(line, line[1:]):
+            pieces = max(1, int(math.dist(a, b) / step) + 1)
+            points += [(a[0] + (b[0] - a[0]) * i / pieces, a[1] + (b[1] - a[1]) * i / pieces) for i in range(pieces)]
+        points.append(line[-1])
+    return points
+
+
+def drawn_the_same(one: List[List[Tuple[float, float]]], other: List[List[Tuple[float, float]]]) -> bool:
+    """Whether two drawings lie within MARK_MARGIN of each other, every point of each near some stroke of the other."""
+    def covered(points, lines):
+        return all(min(board_geometry.distance_to_segment(point, a, b) for line in lines for a, b in zip(line, line[1:]))
+                   <= MARK_MARGIN for point in points)
+    if not one or not other:
+        return not one and not other
+    return covered(along(one), other) and covered(along(other), one)
+
+
+def pad_symmetries(pads: List["board_geometry.Pad"], first: "board_geometry.Pad") -> list:
+    """The turns and reflections about the pads' centre that map the pads onto themselves in position, size and shape
+    while moving `first`, each as a function of a board point. Only those fixing the centre can map a set onto itself,
+    so each is found by sending the pad furthest from it to each pad as far from it, by rotation and by reflection."""
+    cx = sum(pad.centre[0] for pad in pads) / len(pads)
+    cy = sum(pad.centre[1] for pad in pads) / len(pads)
+    anchor = max(pads, key=lambda pad: math.dist(pad.centre, (cx, cy)))
+    reach = math.dist(anchor.centre, (cx, cy))
+    if reach < PAD_MATCH:
+        return []
+    start = math.atan2(anchor.centre[1] - cy, anchor.centre[0] - cx)
+
+    def make(kind: str, angle: float):
+        cos, sin = math.cos(angle), math.sin(angle)
+        if kind == "turn":
+            return lambda p: (cx + (p[0] - cx) * cos - (p[1] - cy) * sin, cy + (p[0] - cx) * sin + (p[1] - cy) * cos)
+        return lambda p: (cx + (p[0] - cx) * cos + (p[1] - cy) * sin, cy + (p[0] - cx) * sin - (p[1] - cy) * cos)
+
+    found = []
+    for target in pads:
+        if abs(math.dist(target.centre, (cx, cy)) - reach) > PAD_MATCH:
+            continue
+        end = math.atan2(target.centre[1] - cy, target.centre[0] - cx)
+        for kind, angle in (("turn", end - start), ("mirror", end + start)):
+            image = make(kind, angle)
+            if all(any(math.dist(image(pad.centre), other.centre) <= PAD_MATCH and pad.shape == other.shape
+                       and all(abs(a - b) <= PAD_MATCH for a, b in zip(image_box(image, pad), other.box()))
+                       for other in pads) for pad in pads) \
+                    and math.dist(image(first.centre), first.centre) > PAD_MATCH:
+                found.append(image)
+    return found
+
+
+def image_box(image, pad: "board_geometry.Pad") -> Tuple[float, float, float, float]:
+    """The box about a pad's outline once `image` has carried it: (left, top, right, bottom)."""
+    corners = [image(point) for point in pad.outline()]
+    return (min(p[0] for p in corners), min(p[1] for p in corners), max(p[0] for p in corners), max(p[1] for p in corners))
+
+
+def unmarked_pins(design: Design, tree: list, parts: Dict[str, Tuple[str, List[str]]]) -> List[Violation]:
+    """Every polarised part whose first pin is not marked on the silkscreen of its own side.
+
+    The first pin is the pad numbered 1. It is marked when a graphic of the
+    footprint on its side's silkscreen stands nearer its copper than every other
+    pad's by more than MARK_MARGIN, and the footprint's silkscreen is not
+    unchanged by any symmetry of its pads that moves that pad. A polarised
+    part with no pad numbered 1 has no first pin to mark.
+    """
+    table = board_geometry.net_table(tree)
+    found = []
+    for footprint in sexpr.children(tree, "footprint"):
+        name = board_geometry.reference(footprint)
+        if not name:
+            continue
+        pads = board_geometry.footprint_pads(footprint, table)
+        symbol, pin_names = parts.get(name, ("", []))
+        if not is_polarised(footprint, pads, symbol, pin_names):
+            continue
+        layer = sexpr.child(footprint, "layer")
+        side = str(layer[1]) if layer is not None and len(layer) > 1 else "F.Cu"
+        silk = SILKSCREEN.get(side, "F.SilkS")
+        firsts = [pad for pad in pads if pad.number == "1"]
+        if not firsts:
+            at = board_geometry.placement(footprint, f"the footprint {name}")
+            found.append(Violation(
+                design.project, "polarity_mark", f"{name} at ({coordinate(at[0])}, {coordinate(at[1])}) mm",
+                f"a polarised part marks its first pin on the silkscreen: {name} has no pad numbered 1, so it has no first pin "
+                "to mark; number its first pad 1 and mark it"))
+            continue
+        first = firsts[0]
+        others = [pad for pad in pads if pad.number != "1"]
+        lines = silkscreen_segments(footprint, silk, name)
+        marked = False
+        for line in lines:
+            toward = min(polyline_gap(line, one.outline()) for one in firsts)
+            away = min((polyline_gap(line, other.outline()) for other in others), default=math.inf)
+            if toward < away - MARK_MARGIN:
+                marked = True
+                break
+        where = f"{name} pad 1 at ({coordinate(first.centre[0])}, {coordinate(first.centre[1])}) mm"
+        if not marked:
+            why = (f"it has no graphic on {silk} nearer pad 1 than every other pad by more than {coordinate(MARK_MARGIN)} mm"
+                   if lines else f"it draws nothing on {silk}")
+            found.append(Violation(
+                design.project, "polarity_mark", where,
+                f"a polarised part marks its first pin on the silkscreen of its own side: {name} is not marked at pad 1, {why}; "
+                f"draw a line, arc, circle or polygon on {silk} of {name}'s footprint that stands nearest pad 1 (text is no mark)"))
+            continue
+        for image in pad_symmetries(pads, first):
+            moved = [[image(point) for point in line] for line in lines]
+            if drawn_the_same(lines, moved):
+                found.append(Violation(
+                    design.project, "polarity_mark", where,
+                    f"a polarised part marks its first pin on the silkscreen of its own side: the silkscreen of {name} looks the same "
+                    "when its pads are turned or reflected onto themselves so that pad 1 moves, so it marks nothing; "
+                    f"draw the mark of pad 1 on {silk} so that it breaks that symmetry"))
+                break
+    return found
+
+
 # --- One design ----------------------------------------------------------------
 
 
@@ -4408,6 +4653,8 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
         read.append(("MFG-7 reference on silkscreen", "none, inherent zero", "0 references off a silkscreen layer or hidden"))
         read.append(("MFG-9 designator beside its part", "none, inherent zero", "0 designators inside a part's courtyard or "
                      "nearer another part than their own"))
+        read.append(("MFG-10 fiducials on a side", "none, the item's own count", f"{FIDUCIALS_PER_SIDE} fiducials at least on each side "
+                     "that carries assembled surface-mount parts"))
 
     found += exclusions(design, project)
     rules, hidden = read_rules(root, design, repository)
@@ -4487,6 +4734,7 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
 
         erc, why = run_report([kicad_cli, "sch", "erc", "--format", "json", "--severity-all", "--units", "mm", schematic], copy)
         netlist: Optional[Dict[str, Tuple[List[str], List[str]]]] = None
+        parts: Dict[str, Tuple[str, List[str]]] = {}
         if erc is None:
             found.append(Violation(design.project, "design_unreadable", design.schematic,
                                    f"the schematic cannot be checked: {why}"))
@@ -4500,6 +4748,7 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
             try:
                 parsed = sexpr.parse_one(text) if text is not None else None
                 netlist = schematic_nets(parsed) if parsed is not None else None
+                parts = schematic_parts(parsed) if parsed is not None else {}
                 if parsed is not None and channels is not None:
                     found += connectivity(design, pin_record, channels, schematic_pin_nodes(parsed))
             except sexpr.SexprError as error:
@@ -4640,6 +4889,8 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
                          f"{len(paths)} paths of {circuits} circuits with a supply pin"))
         found += references_off_silkscreen(design, tree)
         found += designators_astray(design, tree)
+        found += missing_fiducials(design, tree)
+        found += unmarked_pins(design, tree, parts)
         if "TEST_COURTYARD_MM" in figures:
             found += crowded_test_points(design, tree, figures["TEST_COURTYARD_MM"])
     except board_geometry.Unreadable as unread:
