@@ -21,8 +21,8 @@ def tree_of(*items: str) -> list:
     return sexpr.parse_one("(kicad_pcb (version 20260206) " + " ".join(items) + ")")
 
 
-def pad(number, x, y, net, size=(0.6, 0.6), kind="smd", extra=""):
-    layers = '"F.Cu" "F.Mask"' if kind == "smd" else '"*.Cu"'
+def pad(number, x, y, net, size=(0.6, 0.6), kind="smd", extra="", side="F"):
+    layers = f'"{side}.Cu" "{side}.Mask"' if kind == "smd" else '"*.Cu"'
     drill = "" if kind == "smd" else "(drill 0.8)"
     return (f'(pad "{number}" {kind} rect (at {x} {y}) (size {size[0]} {size[1]}) {drill} (layers {layers}) '
             f'{extra} (net "{net}"))')
@@ -95,6 +95,16 @@ class EachSideWithAssembledPartsCarriesThreeFiducials(unittest.TestCase):
     def test_a_fiducial_footprint_is_not_itself_a_part_that_makes_a_side_count(self):
         # SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C1: a side carrying them when it holds a footprint with the surface-mount attribute that is neither a fiducial nor excluded from the position file
         self.assertEqual(self.found(*three_fiducials("B.Cu")), [])
+
+    def test_the_surface_mount_attribute_decides_not_the_pads_and_a_fiducial_left_out_of_the_position_file_still_counts(self):
+        # SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C1: a side carrying them when it holds a footprint with the surface-mount attribute that is neither a fiducial nor excluded from the position file
+        # The side follows the attribute: a footprint of surface-mount pads that does not carry it makes no side count.
+        unflagged = part("R1", [pad(1, -1, 0, "A"), pad(2, 1, 0, "B")], attr="through_hole")
+        self.assertEqual(self.found(unflagged), [])
+        self.assertEqual(len(self.found(resistor("R1"))), 1)
+        left_out = [part(f"FID{i}", [pad("", 0, 0, "", (1, 1), extra="(property pad_prop_fiducial_glob)")],
+                         attr="smd exclude_from_pos_files exclude_from_bom", at=(2 + 10 * i, 2)) for i in range(3)]
+        self.assertEqual(self.found(resistor("R1"), *left_out), [])
 
 
 def diode(reference="D1", silk="", pads=None, side="F.Cu", angle=0):
@@ -178,6 +188,52 @@ class AMarkedFirstPin(unittest.TestCase):
         self.assertEqual(self.found(diode(silk=self.OUTLINE + " " + self.BAR, angle=90)), [])
         self.assertEqual(len(self.found(diode(silk=self.OUTLINE, angle=90))), 1)
 
+    def test_a_bottom_side_part_is_judged_with_its_mirrored_coordinates_as_kicad_saves_them(self):
+        # SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C1: on the silkscreen layer of the part's own side
+        # KiCad saves a footprint flipped to the back with its pads and graphics already mirrored: pad 1, left of the part on the
+        # front, lies at +1.5 and its bar on B.SilkS at +2.2, the whole part at its place on the board.
+        pads = [pad(1, 1.5, 0, "K", side="B"), pad(2, -1.5, 0, "A", side="B")]
+        bar = lines("B.SilkS", (2.2, -1, 2.2, 1))
+        wrong_end = lines("B.SilkS", (-2.2, -1, -2.2, 1))
+        outline = lines("B.SilkS", (-2.8, -1, 2.8, -1), (-2.8, 1, 2.8, 1))
+        self.assertEqual(self.found(diode(silk=outline + " " + bar, pads=pads, side="B.Cu")), [])
+        self.assertEqual(len(self.found(diode(silk=outline + " " + wrong_end, pads=pads, side="B.Cu"))), 1)
+        self.assertEqual(len(self.found(diode(silk=outline, pads=pads, side="B.Cu"))), 1)
+        self.assertEqual(len(self.found(diode(silk=lines("F.SilkS", (2.2, -1, 2.2, 1)), pads=pads, side="B.Cu"))), 1)
+
+    def test_a_symmetric_outline_is_found_however_the_part_is_turned(self):
+        # SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C1: those graphics taken together are not unchanged, to within 0.05 mm, by any reflection or rotation that maps the footprint's pads onto themselves while moving pad one
+        symmetric = lines("F.SilkS", (-2.8, -1, 2.8, -1), (-2.8, 1, 2.8, 1), (-2.8, -1, -2.8, 1), (2.8, -1, 2.8, 1))
+        for angle in (90, 180, 270):
+            with self.subTest(angle=angle):
+                self.assertEqual(len(self.found(diode(silk=symmetric, angle=angle))), 1)
+                self.assertEqual(self.found(diode(silk=symmetric + " " + self.BAR, angle=angle)), [])
+
+    def test_a_mark_stands_nearer_pad_one_only_by_more_than_the_margin(self):
+        # SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C1: nearer to the copper of pad one than to the copper of every other pad by more than 0.05 mm
+        # A line across the part at x from its centre is 2x nearer one pad than the other, so 0.05 mm is x = 0.025; the boundary itself is left to float rounding.
+        for x, expected in ((-0.0249, 1), (-0.0251, 0), (0.0251, 1)):
+            with self.subTest(x=x):
+                self.assertEqual(len(self.found(diode(silk=lines("F.SilkS", (x, -3, x, 3))))), expected)
+
+    def test_a_drawing_differing_from_its_image_by_more_than_the_margin_is_no_longer_symmetric(self):
+        # SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C1: not unchanged, to within 0.05 mm, by any reflection or rotation
+        # The right end of the outline stands `by` beyond where a half turn would put the left end.
+        for by, expected in ((0.0, 1), (0.04, 1), (0.2, 0)):
+            with self.subTest(by=by):
+                outline = lines("F.SilkS", (-2.8, -1, 2.8 + by, -1), (-2.8, 1, 2.8 + by, 1), (-2.8, -1, -2.8, 1), (2.8 + by, -1, 2.8 + by, 1))
+                self.assertEqual(len(self.found(diode(silk=outline))), expected)
+
+    def test_two_pads_numbered_one_are_one_first_pin_for_the_nearer_test_and_the_symmetry_test_alike(self):
+        # SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C1: the first pin is the pad numbered 1
+        # Pad 1 is two pads, one end of the part; a bar beside the end is a mark though a reflection swaps the two pads.
+        pads = [pad(1, -1.5, 0, "K"), pad(1, -1.5, 2, "K"), pad(2, 1.5, 1, "A")]
+        bar = lines("F.SilkS", (-2.2, -1, -2.2, 3))
+        self.assertEqual(self.found(diode(silk=bar, pads=pads)), [])
+        found = self.found(diode(silk=lines("F.SilkS", (-2.2, 1, -2.2, 3)), pads=pads))
+        self.assertEqual(found, [])
+        self.assertEqual(len(self.found(diode(silk=lines("F.SilkS", (2.2, -1, 2.2, 3)), pads=pads))), 1)
+
 
 class WhichPartsArePolarised(unittest.TestCase):
     def found(self, *items, parts):
@@ -205,11 +261,26 @@ class WhichPartsArePolarised(unittest.TestCase):
         shared = [pad(1, -1, 0, "A"), pad(2, 1, 0, "B"), pad(3, 0, 1, "B")]
         self.assertEqual(self.found(part("U1", shared), parts={}), [])
 
-    def test_a_footprint_of_one_net_or_of_holes_alone_is_excluded_even_by_symbol(self):
-        # SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C1: A footprint whose pads are all one net or all holes is excluded
+    def test_a_footprint_of_one_net_or_of_non_plated_holes_alone_is_excluded_even_by_symbol(self):
+        # SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C1: A footprint whose pads are all one net or all non-plated holes is excluded
         one_net = part("C1", [pad(1, -1, 0, "A"), pad(2, 1, 0, "A")])
-        holes = part("C2", [pad(1, -1, 0, "A", kind="thru_hole"), pad(2, 1, 0, "B", kind="thru_hole")], attr="through_hole")
-        self.assertEqual(self.found(one_net, holes, parts={"C1": ("C_Polarized", []), "C2": ("C_Polarized", [])}), [])
+        one_net_holes = part("C3", [pad(1, -1, 0, "A", kind="thru_hole"), pad(2, 1, 0, "A", kind="thru_hole")], attr="through_hole")
+        mounting = part("H1", [pad(1, -1, 0, "A", kind="np_thru_hole"), pad(2, 1, 0, "B", kind="np_thru_hole")], attr="through_hole")
+        symbols = {name: ("C_Polarized", []) for name in ("C1", "C2", "C3", "H1")}
+        self.assertEqual(self.found(one_net, one_net_holes, mounting, parts=symbols), [])
+
+    def test_a_plated_through_hole_polarised_part_is_judged_by_the_mark_rule(self):
+        # SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C1: a footprint with any plated pad, through-hole or surface-mount, is a candidate and is polarised if it meets any of the three
+        holes = [pad(1, -1, 0, "A", kind="thru_hole"), pad(2, 1, 0, "B", kind="thru_hole")]
+        radial = part("C2", holes, attr="through_hole")
+        found = self.found(radial, parts={"C2": ("C_Polarized", [])})
+        self.assertEqual([(v.rule, v.location) for v in found], [("polarity_mark", "C2 pad 1 at (9, 10) mm")])
+        marked = part("C2", holes, lines("F.SilkS", (-1.8, -1, -1.8, 1)), attr="through_hole")
+        self.assertEqual(self.found(marked, parts={"C2": ("C_Polarized", [])}), [])
+        led = part("D2", holes, attr="through_hole")
+        self.assertEqual(len(self.found(led, parts={"D2": ("LED", ["a", "k"])})), 1)
+        mixed = part("C2", [pad(1, -1, 0, "A", kind="thru_hole"), pad(2, 1, 0, "B", kind="np_thru_hole")], attr="through_hole")
+        self.assertEqual(len(self.found(mixed, parts={"C2": ("C_Polarized", [])})), 1)
 
     def test_a_part_the_schematic_does_not_name_is_polarised_only_by_its_pads(self):
         # SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C1: it has three or more pads on distinct nets

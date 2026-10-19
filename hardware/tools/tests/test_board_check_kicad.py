@@ -827,6 +827,8 @@ class TheFiducialAndPolarityMarkRules(Proved):
                                                           ("R2 is not marked at pad 1", "draws nothing on F.SilkS")),
         "a polarised capacitor named only by its symbol with no mark": ("polarity_mark", "R2 pad 1 at (45, 10) mm",
                                                                         ("R2 is not marked at pad 1", "draws nothing on F.SilkS")),
+        "a plated through-hole polarised part with no mark": ("polarity_mark", "R2 pad 1 at (45, 10) mm",
+                                                              ("R2 is not marked at pad 1", "draws nothing on F.SilkS")),
         "a polarity mark on the wrong side of the part": ("polarity_mark", "R2 pad 1 at (45, 10) mm",
                                                          ("R2 is not marked at pad 1", "no graphic on F.SilkS nearer pad 1")),
         "a symmetric outline on a symmetric pad pattern": ("polarity_mark", "R2 pad 1 at (45, 10) mm",
@@ -845,6 +847,17 @@ class TheFiducialAndPolarityMarkRules(Proved):
                 for word in words:
                     self.assertIn(word, fields[4])
                 self.assertEqual([entry[2] for entry in board_prove.FAULTS if entry[0] == fault], [rule])
+
+
+class AnUnparseableSchematicFailsTheDesignWhichSwitchesOffPolarisationBySymbol(Copy):
+    def test_a_schematic_kicad_cannot_read_fails_the_design_naming_the_schematic(self):
+        # SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C2: The fiducial rule and the polarity-mark rule are added to the existing pre-order check as further rules, each reading only the design's files
+        # Without the netlist the polarity rule knows no symbol or pin name, so the design must fail rather than pass on pads alone.
+        self.seed.write(".kicad_sch", "(kicad_sch (version")
+        status, lines = self.check()
+        self.assertEqual(status, 1, lines)
+        schematic = f"hardware/proof/gate-proof/{board_prove.NAME}.kicad_sch"
+        self.assertTrue([v for v in self.violations(lines) if v[2] == "design_unreadable" and v[3] == schematic], lines)
 
 
 class TheTrackedDesignsPassTheFiducialAndPolarityMarkRules(unittest.TestCase):

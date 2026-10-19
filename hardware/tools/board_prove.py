@@ -872,6 +872,20 @@ def surface_mounted_r2(tree: list, bare: bool = True) -> list:
     return part
 
 
+def through_hole_unmarked(seed: Seed) -> None:
+    """R2 left a plated through-hole part, its drills and plating as the design has them, with nothing drawn on its front
+    silkscreen and its schematic symbol a polarised capacitor's: the only thing that makes R2 polarised."""
+    def edit(tree: list) -> None:
+        part = footprint(tree, "R2")
+        for node in list(part):
+            if isinstance(node, list) and node and str(node[0]).startswith("fp_") and str(node[0]) != "fp_text":
+                layer = sexpr.child(node, "layer")
+                if layer is not None and str(layer[1]) == "F.SilkS":
+                    part.remove(node)
+    seed.layout(edit)
+    polarised_symbol_r2(seed)
+
+
 def polarised_symbol_r2(seed: Seed) -> None:
     """R2's schematic symbol made a polarised capacitor's, a copy of the resistor symbol named C_Polarized: the only thing
     that makes R2 polarised."""
@@ -1329,6 +1343,8 @@ FAULTS: List[tuple] = [
      "R2 is not marked at pad 1, it draws nothing on F.SilkS", three_nets_unmarked),
     ("a polarised capacitor named only by its symbol with no mark", "assembly: a part a polarised capacitor's symbol names is marked at its first pin", "polarity_mark",
      "R2 is not marked at pad 1, it draws nothing on F.SilkS", capacitor_unmarked),
+    ("a plated through-hole polarised part with no mark", "assembly: a plated through-hole part is judged by the mark rule as a surface-mount part is", "polarity_mark",
+     "R2 is not marked at pad 1, it draws nothing on F.SilkS", through_hole_unmarked),
     ("a polarity mark on the wrong side of the part", "assembly: the mark is on the silkscreen of the part's own side", "polarity_mark",
      "R2 is not marked at pad 1, it has no graphic on F.SilkS nearer pad 1", mark_on_back),
     ("a symmetric outline on a symmetric pad pattern", "assembly: a drawing the pads' symmetry leaves unchanged marks nothing", "polarity_mark",

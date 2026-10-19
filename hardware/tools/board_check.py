@@ -4424,10 +4424,12 @@ def schematic_parts(netlist: list) -> Dict[str, Tuple[str, List[str]]]:
 
 def is_polarised(footprint: list, pads: List["board_geometry.Pad"], symbol: str, pin_names: List[str]) -> bool:
     """Whether a part has a direction: pins named for anode and cathode or plus and minus, a polarised capacitor's
-    symbol, or three pads on distinct nets. A footprint of pads on one net, or of holes alone, is left out."""
+    symbol, or three pads on distinct nets. A footprint of pads on one net, or of non-plated holes alone, is left out;
+    a plated pad, through-hole or surface-mount, makes it a candidate."""
     if len({pad.net for pad in pads}) < 2:
         return False
-    if all(drilled(node) for node in sexpr.children(footprint, "pad")):
+    nodes = sexpr.children(footprint, "pad")
+    if nodes and all(len(node) > 2 and str(node[2]) == "np_thru_hole" for node in nodes):
         return False
     if symbol.startswith("C_Polarized"):
         return True
@@ -4498,9 +4500,9 @@ def drawn_the_same(one: List[List[Tuple[float, float]]], other: List[List[Tuple[
     return covered(along(one), other) and covered(along(other), one)
 
 
-def pad_symmetries(pads: List["board_geometry.Pad"], first: "board_geometry.Pad") -> list:
+def pad_symmetries(pads: List["board_geometry.Pad"], firsts: List["board_geometry.Pad"]) -> list:
     """The turns and reflections about the pads' centre that map the pads onto themselves in position, size and shape
-    while moving `first`, each as a function of a board point. Only those fixing the centre can map a set onto itself,
+    while moving the pads `firsts` off themselves, each as a function of a board point. Only those fixing the centre can map a set onto itself,
     so each is found by sending the pad furthest from it to each pad as far from it, by rotation and by reflection."""
     cx = sum(pad.centre[0] for pad in pads) / len(pads)
     cy = sum(pad.centre[1] for pad in pads) / len(pads)
@@ -4526,7 +4528,7 @@ def pad_symmetries(pads: List["board_geometry.Pad"], first: "board_geometry.Pad"
             if all(any(math.dist(image(pad.centre), other.centre) <= PAD_MATCH and pad.shape == other.shape
                        and all(abs(a - b) <= PAD_MATCH for a, b in zip(image_box(image, pad), other.box()))
                        for other in pads) for pad in pads) \
-                    and math.dist(image(first.centre), first.centre) > PAD_MATCH:
+                    and not all(any(math.dist(image(one.centre), other.centre) <= PAD_MATCH for other in firsts) for one in firsts):
                 found.append(image)
     return found
 
@@ -4586,7 +4588,7 @@ def unmarked_pins(design: Design, tree: list, parts: Dict[str, Tuple[str, List[s
                 f"a polarised part marks its first pin on the silkscreen of its own side: {name} is not marked at pad 1, {why}; "
                 f"draw a line, arc, circle or polygon on {silk} of {name}'s footprint that stands nearest pad 1 (text is no mark)"))
             continue
-        for image in pad_symmetries(pads, first):
+        for image in pad_symmetries(pads, firsts):
             moved = [[image(point) for point in line] for line in lines]
             if drawn_the_same(lines, moved):
                 found.append(Violation(
