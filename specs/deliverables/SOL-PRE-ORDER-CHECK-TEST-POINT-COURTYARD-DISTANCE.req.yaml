@@ -7,11 +7,11 @@ version: 1
 text: |
   The layout review's item TEST-1 asks that every test point stand at least 1.0 mm from the courtyard of any part, on either side of the board, and gives the figure from its own published source. The layout review's proof design failed it on three test points in round 14, and finding 14.3 of that review judged the check a measured rule: the distance from a test pad to each part's courtyard is a figure the pre-order check can read from the layout file, as it already reads courtyards for the mounting-hole and crystal keep-clear checks. Today a reviewer's judgement is the only thing that catches a test point under a part's outline. This leaf puts the measure in force as a rule of the pre-order check, set in each board's rules with its source, and adds it to the catalogue as a rule-kind item, as the review step requires of a finding that can be a rule.
 links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
   - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
     type: targets
   - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
     type: justified-by
   - target: SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES
     type: depends-on
-  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C14
-    type: derives-from
