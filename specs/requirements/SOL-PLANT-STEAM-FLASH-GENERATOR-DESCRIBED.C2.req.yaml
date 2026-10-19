@@ -6,7 +6,7 @@ version: 1
 measurement_type: binary
 verification: inspection
 text: |-
-  The description's omissions state that the casting ceiling bounds the trapped-liquid case by saturation as a control limit and does not bound pressure without power, sensing or command; that containment of trapped pressure is not claimed by the model and is owned by the machine's hardware layer; that no sensor confirms the modelled outlet superheat and droplet carry-over is not excluded; that no pressure time constant is modelled; and that the restriction is taken as turbulent with one coefficient. Omissions the earlier steam-draw work stated and these relations do not close remain stated. Checked by inspection against each clause. Not in scope: choosing the hardware containment layer.
+  The description's omissions state that the casting ceiling bounds the trapped-liquid case by saturation as a control limit and does not bound pressure without power, sensing or command; that containment of trapped pressure is not claimed by the model and is owned by the machine's hardware layer; that no sensor confirms the modelled outlet superheat and droplet carry-over is not excluded; that no pressure time constant is modelled; and that the restriction is taken as turbulent with one coefficient. Omissions the earlier steam-draw work stated and these relations do not close remain stated, the boiler structure's among them. Checked by inspection against each clause. Not in scope: choosing the hardware containment layer.
 links:
   - target: SOL-PLANT-STEAM-FLASH-GENERATOR-DESCRIBED
     type: criterion-of
