@@ -6,47 +6,58 @@
  * draw, and carries the machine back to ready afterwards without anybody
  * asking it to.
  *
- * What it drives to changes with what is happening. While no draw is under
- * way the controlled variable is the block's own measured temperature, held
- * at a declared ready target: with the wand shut, the path's pressure is a
- * direct function of that temperature, so holding one holds the other, and
- * the temperature channel is the one whose reading does not depend on an
- * instrument nobody has fitted yet. The instant the wand's microswitch
- * reports a draw, the controlled variable becomes measured pressure, because
- * a draw is precisely what parts the two -- and pressure is what the milk in
- * the jug is sensitive to.
+ * The steam block is a flash generator: it holds a little liquid and no vapour
+ * reservoir, and with the wand open the pressure in the path is set by how fast
+ * steam is being made through the tube, valve and tip rather than by how hot
+ * the casting is. So the two actuators split the two things a draw is judged
+ * by. The feed pump holds pressure, because the steam made is what is fed. The
+ * heater holds dryness -- a declared superheat of the steam at the block's
+ * modelled outlet -- because whether the water fed is turned wholly to steam,
+ * and how far past saturation it leaves, is the balance of heater power against
+ * what that water costs to heat and boil. No loop takes pressure error into the
+ * heater: a casting driven to raise pressure would be driving the one variable
+ * the heater no longer sets.
+ *
+ * While no draw is under way the controlled variable is the block's own
+ * measured temperature, held at a declared ready target: with the wand shut and
+ * liquid held, the path's pressure is saturation of that temperature, so holding
+ * one holds the other. The instant the wand's microswitch reports a draw, the
+ * controlled variable becomes measured pressure, held by the feed.
+ *
+ * The heater's superheat is not measured -- no outlet or tip sensor is fitted --
+ * so the law forms its own estimate of it from the casting temperature, the
+ * measured pressure and the feed it commands, through the relations the plant
+ * description it was brought up against declares: the saturation relation and
+ * the casting-to-outlet relation, the latter taken at the end of its declared
+ * error that leaves the least superheat. It reads nothing from any model
+ * instance; the description is the law's own view of the machine.
  *
  * The steam wand is a manual, purely mechanical valve. Nothing in this
  * machine's actuation list places a solenoid in that path to block it, so
  * preventing a draw before the steam side can sustain one cannot mean
  * intercepting the valve: it has to mean nothing else feeds a draw that starts
- * too early. Withholding the feed pump below a declared ready pressure is that
- * policy, and it stands in front of everything else here -- feed commanded by
- * the band-holding law below still reaches the machine as nothing while the
- * path sits below that threshold.
+ * too early. The verdict is taken once, from the pressure the shut block holds
+ * at the moment the wand opens, and held until it shuts: a draw opened at or
+ * above the declared ready pressure is fed from its first step, and one opened
+ * below it is starved for the whole draw. It cannot be judged on the
+ * instantaneous pressure once the wand is open, because that pressure is made by
+ * the feed: a draw fed nothing reads nothing, and a gate asking it would starve
+ * every draw.
  *
- * On a draw beginning, the heater leads and the feed lags. Duty goes to the
- * actuator's ceiling immediately and feed is held at nothing for a declared
- * margin-building interval, because steam made before the block has thermal
- * margin to give is the wet, degrading start this loop exists to avoid. Once
- * feed engages it rises to a declared sustainable rate over a declared
- * interval rather than stepping to it, and once settled it is never commanded
- * past that rate however hard the wand is opened -- which is what makes
- * quantity yield before quality here. Nothing else was available to make yield
- * that way: the microswitch reports that the wand is turned and nothing about
- * how much is being asked for, so no law here could follow demand if it wanted
- * to.
+ * A fed draw starts at a declared draw-start feed, whose steam puts the pressure
+ * at the band through the orifice law from the first step. Above that level the
+ * feed may rise no faster than a declared limit, and it is never commanded past
+ * a declared ceiling however the pressure stands -- which is what makes quantity
+ * yield before quality. There is no reading of how much steam is being asked
+ * for, so when the ceiling binds the loop gives up pressure rather than feed.
  *
  * On a draw ending, feed is cut on that same step and the ready-holding
- * behaviour resumes from wherever the draw left the machine. Recovery is not a
- * mechanism of its own: once the draw stops costing the block anything, there
- * is nothing recovery needs to do that holding ready does not already do, and
- * a second control path for it would be two mechanisms maintained for one
- * behaviour.
+ * behaviour resumes from wherever the draw left the machine, with the intent it
+ * held before the draw. Recovery is not a mechanism of its own.
  *
- * Every figure this law rests on -- the ready target, the band, both
- * intervals, the sustainable rate and every gain -- is carried in as a
- * declaration rather than compiled in. See steam_control_declaration.h.
+ * Every figure this law rests on -- the ready target, the band, the feed
+ * levels and rise limit, the superheat setpoint and every gain -- is carried in
+ * as a declaration rather than compiled in. See steam_control_declaration.h.
  *
  * Every translation unit under src/control reaches hardware only through
  * hw_interface.h, includes no vendor header, and is compiled byte-identically
@@ -82,23 +93,11 @@ typedef enum {
 } steam_control_step_result_t;
 
 /*
- * Which quantity the loop is presently driving to.
+ * Which quantity the loop is presently driving to: the block's temperature while
+ * idle, and the path's pressure, through the feed, while a draw is open.
  *
  * Projected rather than left implicit because the switch between the two is a
- * property of the law worth being able to observe on the step it happens, and
- * because it is not visible in the duty on that step: the margin-building
- * interval pins the element at its ceiling whichever variable is in force, so
- * a caller watching only what was driven cannot tell a loop that switched from
- * one that did not until that interval has elapsed.
- *
- * That the duty is the same across the switch is a consequence of the pinning
- * and not of the two variables agreeing. They do not agree here: the ready
- * target is a temperature whose rested pressure is the readiness threshold,
- * and the draw-time target is the middle of a band declared deliberately above
- * that threshold -- so at the instant a draw begins the temperature error is
- * nothing while the pressure error is the whole distance from ready up into
- * the band. Climbing that distance before any steam is made out of the block
- * is exactly what the margin-building interval is for.
+ * property of the law worth being able to observe on the step it happens.
  */
 typedef enum {
     STEAM_CONTROL_VARIABLE_TEMPERATURE = 0,
@@ -128,11 +127,34 @@ typedef struct {
 
     /* Whether a draw was under way at the end of the previous step. */
     bool drawing;
-    /* How long the present draw has been under way, in milliseconds. */
-    uint32_t draw_elapsed_millis;
+    /*
+     * The gate's verdict for the present draw: whether the shut block's trusted
+     * pressure was at or above the ready threshold on the step the wand opened.
+     * Taken once per draw and held until the wand shuts.
+     */
+    bool feeding;
 
-    /* Accumulated intent, in permille of heater scale. */
+    /*
+     * Accumulated intent of each loop, kept apart so that one loop's intent is
+     * never spent by another: the ready-holding heater loop's, in permille of
+     * heater scale, which is frozen while a draw is fed and resumes afterwards;
+     * the superheat loop's, in the same unit, which a new draw starts from
+     * nothing; and the pressure loop's, in permille of feed scale, likewise.
+     */
     float integral_permille;
+    float superheat_integral_permille;
+    float feed_integral_permille;
+
+    /*
+     * The feed level the pressure loop last issued, before it was rounded to the
+     * actuator's resolution: the rise limit is applied to this, so a limit
+     * smaller than one permille a step still rises rather than rounding away.
+     */
+    float feed_level_permille;
+
+    /* The law's own estimate of the outlet superheat on its last fed step. */
+    bool superheat_estimated;
+    float superheat_estimate_k;
 
     bool pressure_trusted;
     int32_t trusted_pressure_milli_bar;
@@ -256,5 +278,17 @@ bool steam_control_variable(const steam_control_state_t *state, steam_control_va
  * for, on the same terms as above.
  */
 bool steam_control_drawing(const steam_control_state_t *state, bool *drawing);
+
+/*
+ * The law's own estimate of the superheat at the block's modelled outlet, in
+ * kelvin, on its last step: the figure the heater held to the declared setpoint.
+ * It is a modelled figure that no sensor confirms, and it is the least the
+ * description's declared error on the casting-to-outlet relation admits.
+ *
+ * False, writing nothing, for a null argument, for a state this loop cannot
+ * vouch for, and on any step that fed no draw -- no steam was made, so there is
+ * no outlet steam to have a superheat.
+ */
+bool steam_control_outlet_superheat(const steam_control_state_t *state, float *superheat_k);
 
 #endif /* STEAM_CONTROL_H */

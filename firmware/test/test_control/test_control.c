@@ -51,7 +51,7 @@ static const float BREW_TARGET_C = (float)BREW_TARGET_MILLI_C / 1000.0f;
  * coefficients admissible within -- which is the loader deciding whether a
  * perturbation is a machine at all.
  */
-static char description_text[16384];
+static char description_text[32768];
 static size_t description_length;
 
 static void load_the_reference_description(void)
@@ -79,7 +79,7 @@ static void load_the_reference_description(void)
  */
 static void load_the_reference_limits(void)
 {
-    static char text[16384];
+    static char text[32768];
 
     FILE *const handle = fopen(REFERENCE_LIMITS_PATH, "rb");
     TEST_ASSERT_NOT_NULL_MESSAGE(handle, "could not open the reference limits declaration");
@@ -101,7 +101,7 @@ static void load_the_reference_limits(void)
  */
 static void load_the_reference_tolerance(void)
 {
-    static char text[16384];
+    static char text[32768];
 
     FILE *const handle = fopen(REFERENCE_TOLERANCE_PATH, "rb");
     TEST_ASSERT_NOT_NULL_MESSAGE(handle, "could not open the reference tolerance declaration");
@@ -124,7 +124,7 @@ static void load_the_reference_tolerance(void)
  */
 static void load_the_reference_pump_trim(void)
 {
-    static char text[16384];
+    static char text[32768];
 
     FILE *const handle = fopen(REFERENCE_PUMP_TRIM_PATH, "rb");
     TEST_ASSERT_NOT_NULL_MESSAGE(handle, "could not open the reference pump trim declaration");
@@ -8197,7 +8197,7 @@ static void test_the_margin_is_the_worst_single_corner_and_not_a_sum_or_a_root_s
 /// weighed at all.
 static void test_a_coefficient_with_no_path_to_the_gap_contributes_nothing(void)
 {
-    static const char *const NO_PATH[] = {"steam.pressure_fall_bar_per_ml",
+    static const char *const NO_PATH[] = {"steam.restriction_bar_s2_per_ml2",
                                           "water.latent_heat_j_per_ml"};
 
     for (size_t which = 0u; which < sizeof(NO_PATH) / sizeof(NO_PATH[0]); which++) {

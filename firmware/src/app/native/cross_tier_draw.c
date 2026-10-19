@@ -46,6 +46,7 @@
 #include <stdio.h>
 
 #include "control.h"
+#include "casting_ceiling_report.h"
 #include "hw_sim.h"
 #include "plant_model.h"
 
@@ -339,6 +340,17 @@ int cross_tier_draw_run(const plant_parameters_t *machine_parameters,
 
     if (!plant_model_init(&machine, machine_parameters)) {
         (void)fprintf(stderr, "cross-tier draw: the machine could not be initialised\n");
+        return 1;
+    }
+
+    /*
+     * The bound the steam side holds trapped pressure to, stated before anything
+     * is driven so a reader of the run has it with the run. A structure with no
+     * steam ceiling states none; one that has one and cannot state it ends the
+     * run, because a run that dropped its own bound is not one to read.
+     */
+    if (casting_ceiling_report(stdout, machine_parameters) == CASTING_CEILING_REFUSED) {
+        (void)fprintf(stderr, "cross-tier draw: the casting ceiling could not be stated\n");
         return 1;
     }
 

@@ -93,6 +93,21 @@ typedef enum {
      * what a wand passed, and no structure claims the two agree.
      */
     PLANT_QUANTITY_STEAM_DRAW_ML_PER_S,
+    /*
+     * How far above saturation the steam leaving the machine is, in kelvin: the
+     * temperature of the steam at the structure's modelled outlet less
+     * saturation at the steam pressure the structure reports. It is what a claim
+     * that the steam is dry rests on, and it is a modelled figure that no sensor
+     * on the machine confirms. It is nothing while no steam is made, and nothing
+     * while the outlet sits at or below saturation, which is wet steam.
+     *
+     * It is the one quantity a structure may answer as not observed rather than
+     * as a value: a structure with no flash-generator steam side -- a boiler, and
+     * a structure with no steam side at all -- has no modelled outlet for steam to
+     * be superheated at, and refuses it rather than answering a nothing that would
+     * read as wet steam.
+     */
+    PLANT_QUANTITY_STEAM_OUTLET_SUPERHEAT_K,
     PLANT_QUANTITY_COUNT
 } plant_quantity_t;
 
@@ -138,6 +153,13 @@ typedef enum {
     PLANT_STATE_STEAM_TEMPERATURE_C,
     PLANT_STATE_BREW_PRESSURE_BAR,
     PLANT_STATE_STEAM_PRESSURE_BAR,
+    /*
+     * The liquid water the steam side holds, in millilitres. It is what separates
+     * a shut steam path whose pressure is saturation of its casting from a dry
+     * one, and it is bounded by a declared capacity. A structure with no steam
+     * side that holds liquid keeps no such state and refuses this one.
+     */
+    PLANT_STATE_STEAM_LIQUID_INVENTORY_ML,
     PLANT_STATE_COUNT
 } plant_state_t;
 

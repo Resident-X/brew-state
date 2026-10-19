@@ -31,11 +31,11 @@ requirement criterion that figure serves. There are four admissible sources and 
   accuracy class a block-mounted domestic sensor ordinarily carries — and each already the figure
   its own loop's commanded margin is widened by.
 - **The states and bands the steam path is held at**,
-  `firmware/params/steam_control.declaration`. `draw-pressure-floor-bar` (1000 milli-bar,
-  `@estimated`) and `draw-pressure-ceiling-bar` (1400 milli-bar, `@estimated`) are the two edges of
-  the pressure band a draw is held inside; `ready-pressure-bar` (900 milli-bar, `@estimated`) is the
-  threshold the feed pump is withheld below, and `ready-temperature-c` (125000 milli-c,
-  `@estimated`) the block temperature the loop holds while nothing is drawn. **OPEN DECISION: steam heater with the knob shut:** the firmware figure `ready-temperature-c` (125 C) is a block temperature the loop holds while nothing is drawn, which is the OEM behaviour (`decisions.md` F10, as superseded by the owner statement of 2026-10-15: the OEM holds the block hot with the knob shut), and the trapped-pressure case (an S8 interlock on the steam heater, a hot-side relief valve, or both) is open in `open-items.md`; heating against a closed knob is not chosen or ruled out here.
+  `firmware/params/steam_control.declaration`. `draw-pressure-floor-bar` (250 milli-bar,
+  `@estimated`) and `draw-pressure-ceiling-bar` (1800 milli-bar, `@estimated`) are the two edges of
+  the pressure band a draw is held inside; `ready-pressure-bar` (1500 milli-bar, `@estimated`) is the
+  threshold a draw is judged against when the wand opens, and `ready-temperature-c` (130000 milli-c,
+  `@estimated`) the block temperature the loop holds while nothing is drawn. **OPEN DECISION: steam heater with the knob shut:** the firmware figure `ready-temperature-c` (130 C) is a block temperature the loop holds while nothing is drawn, which is the OEM behaviour (`decisions.md` F10, as superseded by the owner statement of 2026-10-15: the OEM holds the block hot with the knob shut), and the trapped-pressure case (an S8 interlock on the steam heater, a hot-side relief valve, or both) is open in `open-items.md`; heating against a closed knob is not chosen or ruled out here.
 - **The control loop's step interval**, `CONTROL_STEP_INTERVAL_MS` in
   `firmware/src/control/control.h` (10 ms, i.e. 100 Hz), accounted for as `step-interval-ms`
   `@estimated` in `firmware/params/cadence.declaration`. Every update rate below is stated as that

@@ -14,9 +14,9 @@ Nothing in `docs/parameter-dominance.md` is changed or restated by this record. 
 
 | What | File | sha256 |
 |---|---|---|
-| The machine's coefficients | `firmware/params/thermoblock.params` | `05492d4ba05da02591dd5c8437ed131ce452a41521c09bb51ab80673fa1fd814` |
+| The machine's coefficients | `firmware/params/thermoblock.params` | `a05cf3fa70a704725f37d36ce7575874f03921cb89da29773cda0c5ca9a7e062` |
 | What a reading off it may be | `firmware/params/thermoblock.limits` | `d71d41f4ea5ef907696cfec6059e4b2b00a76fdb2f937d40781ec91910ce26a1` |
-| The steam side's design figures | `firmware/params/steam_control.declaration` | `4ee5f3b38c7404536ebdc5d8e42e7710c214f53a223521cf60be0ad54c8a2dda` |
+| The steam side's design figures | `firmware/params/steam_control.declaration` | `bd1ebe1cf2a6307fbdb13e98fb06f296c9df1cdbddcb8d801408cbe46864a17a` |
 | The bands a delivery is held to | `firmware/params/tolerance.declaration` | `c5bb5a51a4a9ad71496ac8405dee688736a6635e0f2df06433168055aefdec17` |
 
 The supply this was run against is the declared 216–253 V span about the 230 V nominal, as the description's accounts state it. How each element rating's declared error was derived from that supply is set out in the description's account beside the rating; this record does not check that derivation.
@@ -36,7 +36,7 @@ The sweep's own courses are a shot and a wand-open, and they are the right lengt
 | Side | Judged on | Declared half-width | Whole course | Extension | Verdict taken over |
 |---|---|---|---|---|---|
 | brew | the temperature of the water reaching the group | 1 C | 82500 intervals (825 s) | 75000 intervals (750 s) | intervals 44400–81899 (375 s) |
-| steam | the pressure of the steam being drawn | 0.2 bar | 11500 intervals (115 s) | 6000 intervals (60 s) | intervals 8000–10999 (30 s) |
+| steam | the pressure of the steam being drawn | 0.775 bar | 11500 intervals (115 s) | 6000 intervals (60 s) | intervals 8000–10999 (30 s) |
 
 Each extension is a stated multiple of the settling allowance that side's own course already stands on, rather than a figure chosen here: the coffee course's 50 s flush is where that loop settles from cold at the declared coefficients, and the steam course's 30 s settle is what the steam law's own suite gives a block to reach its ready state. The coffee side takes 15 of them and the steam side 2, and the two differ for a reason about the machine rather than a preference.
 
@@ -44,16 +44,16 @@ On the coffee side the loop shows a slow standing mode under a sustained draw: t
 
 The steam side cannot be extended the same way, and the bound is not a matter of what it would cost to run. While a wand is held open the loop answers a standing pressure deficit with block temperature, so the block climbs for as long as the draw lasts. Past the **200 C** the steam grammar records the machine's own protection as taking over at, this description says nothing that can be believed — its saturation slope is a local one at the boiling point and gives about a quarter of the true pressure up there, and the protective devices that would actually have opened are not modelled at all. Every steam run's peak block temperature is checked against that bound, and a run that crossed it stops this analysis rather than being reported: it would be this horizon reaching past what the description answers for, which is a fault in the horizon and not a finding about a coefficient.
 
-The hottest any steam run's block actually got over this horizon, across the unperturbed machine and every corner, was **177.4 C** — 22.6 C under that bound. That margin is reported for the same reason the one below is: a peak creeping towards the ceiling is a horizon a slightly different model would push past, and that is worth seeing before a run stops.
+The hottest any steam run's block actually got over this horizon, across the unperturbed machine and every corner, was **137.3 C** — 62.7 C under that bound. That margin is reported for the same reason the one below is: a peak creeping towards the ceiling is a horizon a slightly different model would push past, and that is worth seeing before a run stops.
 
 **How long is long enough is reported rather than asserted.** The horizon is long enough exactly when every settling corner is inside the band well before the verdict window opens, which is at the halfway point of the extension. The latest any settling corner still stood outside its band was:
 
 - brew: 0.264 of the extension, set by `pump.flow_ml_per_s` at its low corner — against a window that opens at 0.5.
 - steam: 0 of the extension, because no corner ever left the band — against a window that opens at 0.5.
 
-The unperturbed machine is established to have settled too, and not assumed: over the window every verdict is taken in, the coffee side sat no more than 0.0406 C from the 93.0 C it was commanded and the steam side no more than 0.0065 bar from the 1.200 bar middle of the 1.000..1.400 bar span it is held inside. A separation taken against a reference still travelling would be a comparison of two transients.
+The unperturbed machine is established to have settled too, and not assumed: over the window every verdict is taken in, the coffee side sat no more than 0.0406 C from the 93.0 C it was commanded and the steam side no more than 0.0154 bar from the 1.025 bar middle of the 0.250..1.800 bar span it is held inside. A separation taken against a reference still travelling would be a comparison of two transients.
 
-Being somewhere inside the band is not enough of the reference and is not what is asked of it. Every verdict below is a separation from this run, and the band it is compared against is a distance from what the design promises — so the two are the same statement only where the reference is close to what the design promises. A reference on one edge of its band with a corner on the other would show a separation of one band while both were marginal. So the reference is required to sit within **0.2** of the band from the target on the coffee side and from the middle of the span on the steam side, and this analysis stops rather than issuing verdicts against a reference further off than that. The figures above are 0.0406 and 0.0325 of the band respectively.
+Being somewhere inside the band is not enough of the reference and is not what is asked of it. Every verdict below is a separation from this run, and the band it is compared against is a distance from what the design promises — so the two are the same statement only where the reference is close to what the design promises. A reference on one edge of its band with a corner on the other would show a separation of one band while both were marginal. So the reference is required to sit within **0.2** of the band from the target on the coffee side and from the middle of the span on the steam side, and this analysis stops rather than issuing verdicts against a reference further off than that. The figures above are 0.0406 and 0.0199 of the band respectively.
 
 ## Which corners were run
 
@@ -73,16 +73,16 @@ The **early** and **late** columns are the worst separation in each half of the 
 
 There are three verdicts a corner can leave with, and they are named here so a reader can see what this table could have said as well as what it does. **settled within the band** is a response that came to rest inside the margin the design holds that delivery to. **did not settle: came to rest outside the band** is one the loop brought to rest somewhere else — it has authority and is using it at a delivery the design does not accept, which asks for a wider band or a smaller draw. **did not settle: still growing at the horizon** is one that had not come back at all, which is the finding this record exists to make and the one no deviation figure can report. A corner the structure would not admit as a machine is **not run: refused as a machine**, which is a finding about the description's declared error rather than about a loop.
 
-The late half has to stand a stated amount above the early half before the difference counts as growth, and that amount is each side's own: **0.0488 C, which is one count of the machine's converter** on the coffee side and **0.01 bar, which is 0.05 of that side's own band** on the steam side. A floor is needed and not for the reason a reader arriving from `docs/parameter-identifiability.md` would expect: what sits below it is not the model's arithmetic rounding but the integer quantisation of the commands the loop issues. Two runs of the same machine a hair apart command the same duties for long stretches and then part by one permille, which puts a slow beat on the separation between them — and a beat crosses a window boundary in whichever direction it happened to be going. Without the floor those crossings read as divergences, which is an instability finding manufactured out of a rounding. One converter count is the coarsest distinction anything on this board draws and stands well above that beat.
+The late half has to stand a stated amount above the early half before the difference counts as growth, and that amount is each side's own: **0.0488 C, which is one count of the machine's converter** on the coffee side and **0.0388 bar, which is 0.05 of that side's own band** on the steam side. A floor is needed and not for the reason a reader arriving from `docs/parameter-identifiability.md` would expect: what sits below it is not the model's arithmetic rounding but the integer quantisation of the commands the loop issues. Two runs of the same machine a hair apart command the same duties for long stretches and then part by one permille, which puts a slow beat on the separation between them — and a beat crosses a window boundary in whichever direction it happened to be going. Without the floor those crossings read as divergences, which is an instability finding manufactured out of a rounding. One converter count is the coarsest distinction anything on this board draws and stands well above that beat.
 
-The two figures differ because neither the seam nor the band alone can fix a floor. The seam declares one converter full scale for every channel alike, so one count is worth **0.0488** in whatever unit it is read beside — which is 0.0488 of the coffee side's band and 0.244 of the steam side's. A floor worth a quarter of the band it is being judged against is not separating a rounding from a divergence; it is admitting a response that eats a quarter of the margin per half-window and calling it settled. So each side takes whichever is smaller of that count and **0.05** of its own band. The coffee side is bounded by the seam's count and the steam side by its band, and which of the two decided is named beside each figure above.
+The two figures differ because neither the seam nor the band alone can fix a floor. The seam declares one converter full scale for every channel alike, so one count is worth **0.0488** in whatever unit it is read beside — which is 0.0488 of the coffee side's band and 0.063 of the steam side's. A floor worth a quarter of the band it is being judged against is not separating a rounding from a divergence; it is admitting a response that eats a quarter of the margin per half-window and calling it settled. So each side takes whichever is smaller of that count and **0.05** of its own band. The coffee side is bounded by the seam's count and the steam side by its band, and which of the two decided is named beside each figure above.
 
 This is deliberately not the reasoning `docs/parameter-identifiability.md` gives for its own floor, and the difference is which way an error falls. There a generous floor errs towards *not shown identifiable*, which declines to claim something. Here a generous floor errs towards *settled*, which is a claim, and the unsafe one — it says a response came back when it may not have. A floor that can only be too small is what this record wants; a floor that may be too large is what that one can afford.
 
 | Coefficient | Corner | Written as | Brew early | Brew late | Brew verdict | Steam early | Steam late | Steam verdict |
 |---|---|---|---|---|---|---|---|---|
-| `ambient_temperature_c` | low | ambient_temperature_c = 15 | 6.87e-05 | 3.81e-05 | settled within the band | 0.000322 | 0.001 | settled within the band |
-| `ambient_temperature_c` | high | ambient_temperature_c = 25 | 8.39e-05 | 3.81e-05 | settled within the band | 0.001 | 0.000808 | settled within the band |
+| `ambient_temperature_c` | low | ambient_temperature_c = 15 | 6.87e-05 | 3.81e-05 | settled within the band | 0 | 0 | settled within the band |
+| `ambient_temperature_c` | high | ambient_temperature_c = 25 | 8.39e-05 | 3.81e-05 | settled within the band | 0 | 0 | settled within the band |
 | `brew.thermal_mass_j_per_k` | low | brew.thermal_mass_j_per_k = 192 | 0.000679 | 0.000588 | settled within the band | 0 | 0 | settled within the band |
 | `brew.thermal_mass_j_per_k` | high | brew.thermal_mass_j_per_k = 448 | 0.0195 | 0.000206 | settled within the band | 0 | 0 | settled within the band |
 | `brew.heater_power_w` | low | brew.heater_power_w = 793.16 | 0.132 | 0.0488 | settled within the band | 0 | 0 | settled within the band |
@@ -93,30 +93,42 @@ This is deliberately not the reasoning `docs/parameter-identifiability.md` gives
 | `brew.outlet_held_volume_ml` | high | brew.outlet_held_volume_ml = 6.4 | 0.000229 | 0.000221 | settled within the band | 0 | 0 | settled within the band |
 | `brew.outlet_conduction_time_constant_s` | low | brew.outlet_conduction_time_constant_s = 4 | 9.92e-05 | 7.63e-05 | settled within the band | 0 | 0 | settled within the band |
 | `brew.outlet_conduction_time_constant_s` | high | brew.outlet_conduction_time_constant_s = 36 | 5.34e-05 | 4.58e-05 | settled within the band | 0 | 0 | settled within the band |
-| `steam.thermal_mass_j_per_k` | low | steam.thermal_mass_j_per_k = 216 | 0 | 0 | settled within the band | 0.003 | 0.00201 | settled within the band |
-| `steam.thermal_mass_j_per_k` | high | steam.thermal_mass_j_per_k = 504 | 0 | 0 | settled within the band | 0.003 | 0.00268 | settled within the band |
-| `steam.heater_power_w` | low | steam.heater_power_w = 889.54 | 0 | 0 | settled within the band | 0.028 | 0.0222 | settled within the band |
-| `steam.heater_power_w` | high | steam.heater_power_w = 1362.46 | 0 | 0 | settled within the band | 0.0171 | 0.0134 | settled within the band |
-| `steam.loss_w_per_k` | low | steam.loss_w_per_k = 0.6 | 0 | 0 | settled within the band | 0.0119 | 0.01 | settled within the band |
-| `steam.loss_w_per_k` | high | steam.loss_w_per_k = 2.4 | 0 | 0 | settled within the band | 0.0125 | 0.011 | settled within the band |
+| `steam.thermal_mass_j_per_k` | low | steam.thermal_mass_j_per_k = 216 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
+| `steam.thermal_mass_j_per_k` | high | steam.thermal_mass_j_per_k = 504 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
+| `steam.heater_power_w` | low | steam.heater_power_w = 889.54 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
+| `steam.heater_power_w` | high | steam.heater_power_w = 1362.46 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
+| `steam.loss_w_per_k` | low | steam.loss_w_per_k = 0.6 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
+| `steam.loss_w_per_k` | high | steam.loss_w_per_k = 2.4 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
 | `pump.pressure_bar` | low | pump.pressure_bar = 9 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
 | `pump.flow_ml_per_s` | low | pump.flow_ml_per_s = 2.8 | 0.142 | 0.000137 | settled within the band | 0 | 0 | settled within the band |
 | `brew.pressure_time_constant_s` | low | brew.pressure_time_constant_s = 0.4 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
 | `brew.pressure_time_constant_s` | high | brew.pressure_time_constant_s = 1.2 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
-| `water.feed_temperature_c` | low | water.feed_temperature_c = 10 | 0.0491 | 0.0237 | settled within the band | 0.001 | 0.001 | settled within the band |
-| `water.feed_temperature_c` | high | water.feed_temperature_c = 30 | 0.0606 | 0.000244 | settled within the band | 0.0017 | 0.001 | settled within the band |
-| `water.heat_capacity_j_per_ml_k` | low | water.heat_capacity_j_per_ml_k = 4.0255 | 0.00474 | 8.39e-05 | settled within the band | 0.000883 | 4.05e-06 | settled within the band |
-| `water.heat_capacity_j_per_ml_k` | high | water.heat_capacity_j_per_ml_k = 4.2745 | 0.000221 | 7.63e-05 | settled within the band | 4.06e-06 | 2.1e-05 | settled within the band |
-| `water.latent_heat_j_per_ml` | low | water.latent_heat_j_per_ml = 2052 | 0 | 0 | settled within the band | 0.00353 | 0.00262 | settled within the band |
-| `water.latent_heat_j_per_ml` | high | water.latent_heat_j_per_ml = 2268 | 0 | 0 | settled within the band | 0.003 | 0.00296 | settled within the band |
-| `steam.saturation_temperature_c` | low | steam.saturation_temperature_c = 98 | 0 | 0 | settled within the band | 0.001 | 0.001 | settled within the band |
-| `steam.saturation_temperature_c` | high | steam.saturation_temperature_c = 102 | 0 | 0 | settled within the band | 0.00142 | 0.001 | settled within the band |
-| `steam.pressure_bar_per_k` | low | steam.pressure_bar_per_k = 0.0252 | 0 | 0 | settled within the band | 0.011 | 0.00969 | settled within the band |
-| `steam.pressure_bar_per_k` | high | steam.pressure_bar_per_k = 0.0468 | 0 | 0 | settled within the band | 0.00188 | 0.001 | settled within the band |
-| `steam.feed_flow_ml_per_s` | low | steam.feed_flow_ml_per_s = 0.9 | 0 | 0 | settled within the band | 0.0633 | 0.0498 | settled within the band |
-| `steam.pressure_fall_bar_per_ml` | low | steam.pressure_fall_bar_per_ml = 0.015 | 0 | 0 | settled within the band | 0.013 | 0.011 | settled within the band |
-| `steam.pressure_fall_bar_per_ml` | high | steam.pressure_fall_bar_per_ml = 0.085 | 0 | 0 | settled within the band | 0.013 | 0.0114 | settled within the band |
-| `brew.heater_power_w + steam.heater_power_w (joint mains droop)` | low together | brew.heater_power_w = 793.16, steam.heater_power_w = 889.54 | 0.132 | 0.0488 | settled within the band | 0.028 | 0.0222 | settled within the band |
+| `water.feed_temperature_c` | low | water.feed_temperature_c = 10 | 0.0491 | 0.0237 | settled within the band | 0 | 0 | settled within the band |
+| `water.feed_temperature_c` | high | water.feed_temperature_c = 30 | 0.0606 | 0.000244 | settled within the band | 0 | 0 | settled within the band |
+| `water.heat_capacity_j_per_ml_k` | low | water.heat_capacity_j_per_ml_k = 4.0255 | 0.00474 | 8.39e-05 | settled within the band | 0 | 0 | settled within the band |
+| `water.heat_capacity_j_per_ml_k` | high | water.heat_capacity_j_per_ml_k = 4.2745 | 0.000221 | 7.63e-05 | settled within the band | 0 | 0 | settled within the band |
+| `water.latent_heat_j_per_ml` | low | water.latent_heat_j_per_ml = 2052 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
+| `water.latent_heat_j_per_ml` | high | water.latent_heat_j_per_ml = 2268 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
+| `steam.saturation_temperature_c` | low | steam.saturation_temperature_c = 98 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
+| `steam.saturation_temperature_c` | high | steam.saturation_temperature_c = 102 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
+| `steam.saturation_antoine_a` | low | steam.saturation_antoine_a = 5.25982491 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
+| `steam.saturation_antoine_a` | high | steam.saturation_antoine_a = 5.27035509 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
+| `steam.saturation_antoine_b_k` | low | steam.saturation_antoine_b_k = 1809.12906 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
+| `steam.saturation_antoine_b_k` | high | steam.saturation_antoine_b_k = 1812.75094 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
+| `steam.saturation_antoine_c_c` | low | steam.saturation_antoine_c_c = 244.240515 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
+| `steam.saturation_antoine_c_c` | high | steam.saturation_antoine_c_c = 244.729485 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
+| `steam.casting_ceiling_c` | low | steam.casting_ceiling_c = 145.5 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
+| `steam.casting_ceiling_c` | high | steam.casting_ceiling_c = 154.5 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
+| `steam.restriction_bar_s2_per_ml2` | low | steam.restriction_bar_s2_per_ml2 = 7.5 | 0 | 0 | settled within the band | 0.0192 | 0.0192 | settled within the band |
+| `steam.restriction_bar_s2_per_ml2` | high | steam.restriction_bar_s2_per_ml2 = 42.5 | 0 | 0 | settled within the band | 0.0455 | 0.0455 | settled within the band |
+| `steam.outlet_drop_k_s_per_ml` | low | steam.outlet_drop_k_s_per_ml = 3 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
+| `steam.outlet_drop_k_s_per_ml` | high | steam.outlet_drop_k_s_per_ml = 27 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
+| `steam.liquid_capacity_ml` | low | steam.liquid_capacity_ml = 2.4 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
+| `steam.liquid_capacity_ml` | high | steam.liquid_capacity_ml = 9.6 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
+| `steam.initial_inventory_ml` | low | steam.initial_inventory_ml = 0.8 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
+| `steam.initial_inventory_ml` | high | steam.initial_inventory_ml = 3.2 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
+| `steam.feed_flow_ml_per_s` | low | steam.feed_flow_ml_per_s = 0.9 | 0 | 0 | settled within the band | 0.734 | 0.734 | settled within the band |
+| `brew.heater_power_w + steam.heater_power_w (joint mains droop)` | low together | brew.heater_power_w = 793.16, steam.heater_power_w = 889.54 | 0.132 | 0.0488 | settled within the band | 0 | 0 | settled within the band |
 
 A separation of nothing is a corner that moved that side's delivery nowhere at all, which settles trivially and is not evidence that a loop recovered from anything. The corners that never moved the side they were judged on are the ones whose figures are zero, and `docs/parameter-dominance.md` is where what a coefficient does reach is recorded.
 
@@ -129,7 +141,7 @@ So one further corner is run with both low together, at an **equal fractional sa
 | What | Written as | Side | Early | Late | Verdict |
 |---|---|---|---|---|---|
 | `brew.heater_power_w + steam.heater_power_w (joint mains droop)` | brew.heater_power_w = 793.16, steam.heater_power_w = 889.54 | brew | 0.132 | 0.0488 | settled within the band |
-| `brew.heater_power_w + steam.heater_power_w (joint mains droop)` | brew.heater_power_w = 793.16, steam.heater_power_w = 889.54 | steam | 0.028 | 0.0222 | settled within the band |
+| `brew.heater_power_w + steam.heater_power_w (joint mains droop)` | brew.heater_power_w = 793.16, steam.heater_power_w = 889.54 | steam | 0 | 0 | settled within the band |
 
 Where the two can be compared, this description makes the joint corner the independent one over again: the brew side's separation is the one `brew.heater_power_w` produces on its own at the same sag and the steam side's separation is the one `steam.heater_power_w` produces on its own at the same sag. That is not a fault in the run and it is a finding about the description rather than about the machine — these relations carry no coupling between the two sides at all, which the description names among the things it leaves out, so nothing the steam element does can reach the coffee delivery or the other way about. What the corner establishes here is that this analysis does not assume an independence the description never claimed; what it would find on a description carrying a shared supply budget is a different figure, and that is the description to re-run it against.
 
@@ -145,10 +157,10 @@ Every single-coefficient corner above was run twice more, with its coefficient m
 
 Measured against the growth floor, which flatters least because a band is far wider than a floor, the largest move is the brew side's: 2.3% of its floor. It is listed first below, and the share of the band is given after it for scale only.
 
-- **brew side**: 70 comparisons. The most any figure moved was 0.00114 C, the early figure of the low corner of `water.heat_capacity_j_per_ml_k` going from 0.0047378 to 0.003601 with its coefficient moved one unit above. That is 2.3% of the 0.0488 C growth floor and 0.11% of the 1 C band.
+- **brew side**: 94 comparisons. The most any figure moved was 0.00114 C, the early figure of the low corner of `water.heat_capacity_j_per_ml_k` going from 0.0047378 to 0.003601 with its coefficient moved one unit above. That is 2.3% of the 0.0488 C growth floor and 0.11% of the 1 C band.
   The first whole-number quantity to differ was the converter's reading of brew-c at control tick 7306 (94114 against 94065); over the 7306 ticks before it the sensed quantities never departed by more than 7.7e-06, which is below the 0.0488 one count of the converter is worth.
-- **steam side**: 70 comparisons. The most any figure moved was 1.19e-06 bar, the late figure of the high corner of `steam.loss_w_per_k` going from 0.010972 to 0.0109708 with its coefficient moved one unit below. That is 0.012% of the 0.01 bar growth floor and 0.0006% of the 0.2 bar band.
-  The first whole-number quantity to differ was the heater duty at control tick 6027 (794 against 791); over the 6027 ticks before it the sensed quantities never departed by more than 1.6e-05, which is below the 0.0488 one count of the converter is worth.
+- **steam side**: 94 comparisons. The most any figure moved was 1.2e-07 bar, the early figure of the low corner of `steam.restriction_bar_s2_per_ml2` going from 0.0191926 to 0.0191925 with its coefficient moved one unit above. That is 0.00031% of the 0.0388 bar growth floor and 1.5e-05% of the 0.775 bar band.
+  No whole-number quantity differed at any control tick of that run, so the movement is in the continuous state alone.
 
 **No verdict changed with one unit in the last place.** The arithmetic behind these figures is pinned to be the same on every supported host, and the record-staleness check fails if regenerating this record changes a byte; it runs on macOS arm64 in the build round and on Linux x86-64 in the nightly verification of main. The figures move by the amounts above when a coefficient moves by one unit. What is measured is a coefficient moved to its neighbouring single-precision number, which is not the same as moving a library result inside a step of the loop; the arithmetic is now identical across hosts, so the latter no longer arises. What is claimed is that this is as far as one unit moved any of them at these corners, that it is a small part of what each figure is judged against, and that no verdict turned on it. It is measured at one unit and at these corners and is not a proof for every perturbation.
 

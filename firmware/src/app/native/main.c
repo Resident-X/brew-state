@@ -742,6 +742,15 @@ static void exercise_plant(const plant_parameters_t *parameters)
 
     for (int quantity = 0; quantity < PLANT_QUANTITY_COUNT; quantity++) {
         float value = 0.0f;
+        /*
+         * The outlet superheat is the one quantity a structure may answer as not
+         * observed (see plant_types.h), and is said so rather than read.
+         */
+        if (!plant_model_quantity(&model, (plant_quantity_t)quantity, &value) &&
+            quantity == (int)PLANT_QUANTITY_STEAM_OUTLET_SUPERHEAT_K) {
+            (void)printf("plant quantity %d not observed\n", quantity);
+            continue;
+        }
         expect(plant_model_quantity(&model, (plant_quantity_t)quantity, &value),
                "a quantity the model exposes could not be read");
         /* The cast is explicit because a variadic argument is promoted

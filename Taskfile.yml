@@ -268,6 +268,10 @@ tasks:
       # under src/control now that the evaluator it declares is control logic
       # reached by control_step on every step, and delivery_tolerance.h's
       # stays under src/delivery beside the loader it declares.
+      # The steam declaration's figures are re-derived from the flash-generator
+      # relations: each carries an origin, and none names a relation the steam
+      # side has retired.
+      - python3 tools/check_steam_declaration_origins.py --include-dir include --declaration params/steam_control.declaration
       - python3 tools/check_control_declaration.py --include-dir include --source-dir src/control --source-dir src/delivery --source-header include/delivery_tolerance.h --source-header include/delivery_profile.h --source-header include/steam_control_declaration.h --source-header include/pump_trim_declaration.h --declaration params/control.declaration --tolerance params/tolerance.declaration --tree-dir src --tree-dir include
       # The vocabulary both seams draw the machine's actuation channels from,
       # and every structure's statement of which of them it answers.

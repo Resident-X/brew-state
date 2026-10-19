@@ -16,10 +16,10 @@ Nothing here is a measurement. The casting is the model's, graded **inferred**, 
 
 | What | File | sha256 |
 |---|---|---|
-| The machine's coefficients | `firmware/params/thermoblock.params` | `05492d4ba05da02591dd5c8437ed131ce452a41521c09bb51ab80673fa1fd814` |
+| The machine's coefficients | `firmware/params/thermoblock.params` | `a05cf3fa70a704725f37d36ce7575874f03921cb89da29773cda0c5ca9a7e062` |
 | What a reading off it may be | `firmware/params/thermoblock.limits` | `d71d41f4ea5ef907696cfec6059e4b2b00a76fdb2f937d40781ec91910ce26a1` |
 | The bands a delivery is held to | `firmware/params/tolerance.declaration` | `c5bb5a51a4a9ad71496ac8405dee688736a6635e0f2df06433168055aefdec17` |
-| The steam side's design figures | `firmware/params/steam_control.declaration` | `4ee5f3b38c7404536ebdc5d8e42e7710c214f53a223521cf60be0ad54c8a2dda` |
+| The steam side's design figures | `firmware/params/steam_control.declaration` | `bd1ebe1cf2a6307fbdb13e98fb06f296c9df1cdbddcb8d801408cbe46864a17a` |
 
 The supply this was run against is the declared 216–253 V span about the 230 V nominal, as the description's accounts state it. How each element rating's declared error was derived from that supply is set out in the description's account beside the rating; this record does not check that derivation.
 
@@ -31,7 +31,7 @@ Targets, each the highest the control path admits and read rather than chosen:
 |---|---|---|
 | coffee | 100.0 | the highest target the protection-margin reading narrows the loop's admission to (bound: over-saturation) |
 | hot water | 96.0 | the number just under the 96.0 C drinking-temperature ceiling `firmware/params/tolerance.declaration` declares, which the control path refuses a drinking-point target at or above |
-| steam | 186.1 | the highest ready temperature the steam loop comes up at, as the protection-margin reading reports it (the declared ready temperature is 125.0 C); at a corner whose own machine admits less, that lower one, because the steam draw builds the loop from the description of the machine it is run against |
+| steam | 186.1 | the highest ready temperature the steam loop comes up at, as the protection-margin reading reports it (the declared ready temperature is 130.0 C); at a corner whose own machine admits less, that lower one, because the steam draw builds the loop from the description of the machine it is run against |
 
 Each coffee-thermoblock course warms the machine from cold and holds it with no draw (40000 control intervals of 10 ms, lengthened if the casting has not come to rest), then for each of two pump levels, 300 permille of full pump scale (the level the sweep draws a shot at) and 1000 permille (full pump scale), runs a delivery of 6000 intervals, a recovery of 40000, a delivery followed on the next interval by a second of 6000, and a recovery of 40000. Each steam course does the same with the wand opened at 1.0 millilitres a second for 2000 intervals and recoveries of 40000. A recovery that has not passed its maximum and settled back to within 0.25 C of the holding value for 1000 intervals by its end is lengthened and run again, up to 4 times its length, and refused beyond that.
 
@@ -42,10 +42,10 @@ The figure for each thermoblock is the hottest casting temperature any run repor
 | Thermoblock | Peak casting temperature (C) | Declared sensing error (C) | Peak plus sensing error (C) | Phase | Corner | Served | Coefficient | End |
 |---|---|---|---|---|---|---|---|---|
 | Coffee thermoblock | 156.8 | 2.0 | 158.8 | warm-up | 2 | coffee | brew.thermal_mass_j_per_k | low |
-| Steam thermoblock | 192.2 | 2.0 | 194.2 | delivery | 15 | steam | steam.heater_power_w | high |
+| Steam thermoblock | 190.1 | 2.0 | 192.1 | warm-up | 16 | steam | steam.loss_w_per_k | low |
 
 The coffee thermoblock's peak is reached in its warm-up phase, at interval 3310 of a course of 236000, at corner 2 (brew.thermal_mass_j_per_k, low end), commanded at 100.0 C.
-The steam thermoblock's peak is reached in its delivery phase, at interval 80199 of a course of 246000, at corner 15 (steam.heater_power_w, high end), commanded at 186.0 C.
+The steam thermoblock's peak is reached in its warm-up phase, at interval 9303 of a course of 126000, at corner 16 (steam.loss_w_per_k, low end), commanded at 186.1 C.
 
 ## The hottest each phase reached
 
@@ -59,12 +59,12 @@ For each phase, the hottest casting any run reached in it, and the run that reac
 | Coffee thermoblock | recovery | 144.3 | 2 | coffee |
 | Coffee thermoblock | back-to-back delivery | 107.5 | 20 | coffee |
 | Coffee thermoblock | recovery after back-to-back delivery | 144.4 | 2 | coffee |
-| Steam thermoblock | warm-up | 189.9 | 16 | steam |
-| Steam thermoblock | hold | 186.3 | 14 | steam |
-| Steam thermoblock | delivery | 192.2 | 15 | steam |
-| Steam thermoblock | recovery | 186.1 | 32 | steam |
-| Steam thermoblock | back-to-back delivery | 171.6 | 36 | steam |
-| Steam thermoblock | recovery after back-to-back delivery | 186.2 | 32 | steam |
+| Steam thermoblock | warm-up | 190.1 | 16 | steam |
+| Steam thermoblock | hold | 186.4 | 16 | steam |
+| Steam thermoblock | delivery | 186.2 | 16 | steam |
+| Steam thermoblock | recovery | 188.7 | 13 | steam |
+| Steam thermoblock | back-to-back delivery | 159.2 | 48 | steam |
+| Steam thermoblock | recovery after back-to-back delivery | 188.7 | 13 | steam |
 
 ## What each corner reached
 
@@ -138,60 +138,96 @@ Every corner run, with the hottest casting it reached in any phase. A corner at 
 | Coffee | hot water | 96.0 | 30 | steam.saturation_temperature_c | low | 0.98 | claimed | 96.1 | 131.5 | warm-up |
 | Coffee | coffee | 100.0 | 31 | steam.saturation_temperature_c | high | 1.02 | claimed | 100.1 | 135.9 | warm-up |
 | Coffee | hot water | 96.0 | 31 | steam.saturation_temperature_c | high | 1.02 | claimed | 96.1 | 131.5 | warm-up |
-| Coffee | coffee | 100.0 | 32 | steam.pressure_bar_per_k | low | 0.7 | claimed | 100.1 | 135.9 | warm-up |
-| Coffee | hot water | 96.0 | 32 | steam.pressure_bar_per_k | low | 0.7 | claimed | 96.1 | 131.5 | warm-up |
-| Coffee | coffee | 100.0 | 33 | steam.pressure_bar_per_k | high | 1.3 | claimed | 100.1 | 135.9 | warm-up |
-| Coffee | hot water | 96.0 | 33 | steam.pressure_bar_per_k | high | 1.3 | claimed | 96.1 | 131.5 | warm-up |
-| Coffee | coffee | 100.0 | 34 | steam.pressure_fall_bar_per_ml | low | 0.3 | claimed | 100.1 | 135.9 | warm-up |
-| Coffee | hot water | 96.0 | 34 | steam.pressure_fall_bar_per_ml | low | 0.3 | claimed | 96.1 | 131.5 | warm-up |
-| Coffee | coffee | 100.0 | 35 | steam.pressure_fall_bar_per_ml | high | 1.7 | claimed | 100.1 | 135.9 | warm-up |
-| Coffee | hot water | 96.0 | 35 | steam.pressure_fall_bar_per_ml | high | 1.7 | claimed | 96.1 | 131.5 | warm-up |
-| Coffee | coffee | 100.0 | 36 | steam.feed_flow_ml_per_s | low | 0.3 | claimed | 100.1 | 135.9 | warm-up |
-| Coffee | hot water | 96.0 | 36 | steam.feed_flow_ml_per_s | low | 0.3 | claimed | 96.1 | 131.5 | warm-up |
-| Coffee | coffee | 100.0 | 37 | steam.feed_flow_ml_per_s | high | 1.7 | not-claimed | 100.1 | 135.9 | warm-up |
-| Coffee | hot water | 96.0 | 37 | steam.feed_flow_ml_per_s | high | 1.7 | not-claimed | 96.1 | 131.5 | warm-up |
-| Coffee | coffee | 100.0 | 38 | brew.heater_power_w + steam.heater_power_w (joint mains droop) | low | 0.79 | claimed | 100.1 | 126.8 | warm-up |
-| Coffee | hot water | 96.0 | 38 | brew.heater_power_w + steam.heater_power_w (joint mains droop) | low | 0.79 | claimed | 96.1 | 122.6 | warm-up |
-| Steam | steam | 186.1 | nominal | — | — | — | claimed | 186.1 | 190.9 | delivery |
-| Steam | steam | 185.9 | 0 | ambient_temperature_c | low | 0.75 | claimed | 185.9 | 190.7 | delivery |
-| Steam | steam | 186.1 | 1 | ambient_temperature_c | high | 1.25 | claimed | 186.1 | 191.0 | delivery |
-| Steam | steam | 186.1 | 2 | brew.thermal_mass_j_per_k | low | 0.6 | claimed | 186.1 | 190.9 | delivery |
-| Steam | steam | 186.1 | 3 | brew.thermal_mass_j_per_k | high | 1.4 | claimed | 186.1 | 190.9 | delivery |
-| Steam | steam | 186.1 | 4 | brew.heater_power_w | low | 0.79 | claimed | 186.1 | 190.9 | delivery |
-| Steam | steam | 186.1 | 5 | brew.heater_power_w | high | 1.21 | claimed | 186.1 | 190.9 | delivery |
-| Steam | steam | 186.1 | 6 | brew.loss_w_per_k | low | 0.4 | claimed | 186.1 | 190.9 | delivery |
-| Steam | steam | 186.1 | 7 | brew.loss_w_per_k | high | 1.6 | claimed | 186.1 | 190.9 | delivery |
-| Steam | steam | 186.1 | 8 | brew.outlet_held_volume_ml | low | 0.4 | claimed | 186.1 | 190.9 | delivery |
-| Steam | steam | 186.1 | 9 | brew.outlet_held_volume_ml | high | 1.6 | claimed | 186.1 | 190.9 | delivery |
-| Steam | steam | 186.1 | 10 | brew.outlet_conduction_time_constant_s | low | 0.2 | claimed | 186.1 | 190.9 | delivery |
-| Steam | steam | 186.1 | 11 | brew.outlet_conduction_time_constant_s | high | 1.8 | claimed | 186.1 | 190.9 | delivery |
-| Steam | steam | 181.9 | 12 | steam.thermal_mass_j_per_k | low | 0.6 | claimed | 181.9 | 190.1 | delivery |
-| Steam | steam | 186.1 | 13 | steam.thermal_mass_j_per_k | high | 1.4 | claimed | 186.1 | 189.6 | delivery |
-| Steam | steam | 186.1 | 14 | steam.heater_power_w | low | 0.79 | claimed | 186.1 | 189.6 | delivery |
-| Steam | steam | 186.0 | 15 | steam.heater_power_w | high | 1.21 | claimed | 186.0 | 192.2 | delivery |
-| Steam | steam | 186.1 | 16 | steam.loss_w_per_k | low | 0.4 | claimed | 186.1 | 191.8 | delivery |
-| Steam | steam | 182.5 | 17 | steam.loss_w_per_k | high | 1.6 | claimed | 182.5 | 186.5 | delivery |
-| Steam | steam | 186.1 | 18 | pump.pressure_bar | low | 0.6 | claimed | 186.1 | 190.9 | delivery |
-| Steam | steam | 186.1 | 19 | pump.pressure_bar | high | 1.4 | not-claimed | 186.1 | 190.9 | delivery |
-| Steam | steam | 186.1 | 20 | pump.flow_ml_per_s | low | 0.4 | claimed | 186.1 | 190.9 | delivery |
-| Steam | steam | 186.1 | 21 | pump.flow_ml_per_s | high | 1.6 | not-claimed | 186.1 | 190.9 | delivery |
-| Steam | steam | 186.1 | 22 | brew.pressure_time_constant_s | low | 0.5 | claimed | 186.1 | 190.9 | delivery |
-| Steam | steam | 186.1 | 23 | brew.pressure_time_constant_s | high | 1.5 | claimed | 186.1 | 190.9 | delivery |
-| Steam | steam | 186.1 | 24 | water.feed_temperature_c | low | 0.5 | claimed | 186.1 | 190.9 | delivery |
-| Steam | steam | 186.1 | 25 | water.feed_temperature_c | high | 1.5 | claimed | 186.1 | 190.9 | delivery |
-| Steam | steam | 186.1 | 26 | water.heat_capacity_j_per_ml_k | low | 0.97 | claimed | 186.1 | 190.9 | delivery |
-| Steam | steam | 186.1 | 27 | water.heat_capacity_j_per_ml_k | high | 1.03 | claimed | 186.1 | 190.9 | delivery |
-| Steam | steam | 186.1 | 28 | water.latent_heat_j_per_ml | low | 0.95 | claimed | 186.1 | 190.9 | delivery |
-| Steam | steam | 186.1 | 29 | water.latent_heat_j_per_ml | high | 1.05 | claimed | 186.1 | 190.9 | delivery |
-| Steam | steam | 186.1 | 30 | steam.saturation_temperature_c | low | 0.98 | claimed | 186.1 | 190.9 | delivery |
-| Steam | steam | 186.1 | 31 | steam.saturation_temperature_c | high | 1.02 | claimed | 186.1 | 190.9 | delivery |
-| Steam | steam | 186.1 | 32 | steam.pressure_bar_per_k | low | 0.7 | claimed | 186.1 | 190.9 | delivery |
-| Steam | steam | 186.1 | 33 | steam.pressure_bar_per_k | high | 1.3 | claimed | 186.1 | 190.9 | delivery |
-| Steam | steam | 186.1 | 34 | steam.pressure_fall_bar_per_ml | low | 0.3 | claimed | 186.1 | 190.9 | delivery |
-| Steam | steam | 186.1 | 35 | steam.pressure_fall_bar_per_ml | high | 1.7 | claimed | 186.1 | 190.9 | delivery |
-| Steam | steam | 186.1 | 36 | steam.feed_flow_ml_per_s | low | 0.3 | claimed | 186.1 | 190.9 | delivery |
-| Steam | steam | 186.1 | 37 | steam.feed_flow_ml_per_s | high | 1.7 | not-claimed | 186.1 | 190.9 | delivery |
-| Steam | steam | 186.1 | 38 | brew.heater_power_w + steam.heater_power_w (joint mains droop) | low | 0.79 | claimed | 186.1 | 189.6 | delivery |
+| Coffee | coffee | 100.0 | 32 | steam.saturation_antoine_a | low | 0.999 | claimed | 100.1 | 135.9 | warm-up |
+| Coffee | hot water | 96.0 | 32 | steam.saturation_antoine_a | low | 0.999 | claimed | 96.1 | 131.5 | warm-up |
+| Coffee | coffee | 100.0 | 33 | steam.saturation_antoine_a | high | 1 | claimed | 100.1 | 135.9 | warm-up |
+| Coffee | hot water | 96.0 | 33 | steam.saturation_antoine_a | high | 1 | claimed | 96.1 | 131.5 | warm-up |
+| Coffee | coffee | 100.0 | 34 | steam.saturation_antoine_b_k | low | 0.999 | claimed | 100.1 | 135.9 | warm-up |
+| Coffee | hot water | 96.0 | 34 | steam.saturation_antoine_b_k | low | 0.999 | claimed | 96.1 | 131.5 | warm-up |
+| Coffee | coffee | 100.0 | 35 | steam.saturation_antoine_b_k | high | 1 | claimed | 100.1 | 135.9 | warm-up |
+| Coffee | hot water | 96.0 | 35 | steam.saturation_antoine_b_k | high | 1 | claimed | 96.1 | 131.5 | warm-up |
+| Coffee | coffee | 100.0 | 36 | steam.saturation_antoine_c_c | low | 0.999 | claimed | 100.1 | 135.9 | warm-up |
+| Coffee | hot water | 96.0 | 36 | steam.saturation_antoine_c_c | low | 0.999 | claimed | 96.1 | 131.5 | warm-up |
+| Coffee | coffee | 100.0 | 37 | steam.saturation_antoine_c_c | high | 1 | claimed | 100.1 | 135.9 | warm-up |
+| Coffee | hot water | 96.0 | 37 | steam.saturation_antoine_c_c | high | 1 | claimed | 96.1 | 131.5 | warm-up |
+| Coffee | coffee | 100.0 | 38 | steam.casting_ceiling_c | low | 0.97 | claimed | 100.1 | 135.9 | warm-up |
+| Coffee | hot water | 96.0 | 38 | steam.casting_ceiling_c | low | 0.97 | claimed | 96.1 | 131.5 | warm-up |
+| Coffee | coffee | 100.0 | 39 | steam.casting_ceiling_c | high | 1.03 | claimed | 100.1 | 135.9 | warm-up |
+| Coffee | hot water | 96.0 | 39 | steam.casting_ceiling_c | high | 1.03 | claimed | 96.1 | 131.5 | warm-up |
+| Coffee | coffee | 100.0 | 40 | steam.restriction_bar_s2_per_ml2 | low | 0.3 | claimed | 100.1 | 135.9 | warm-up |
+| Coffee | hot water | 96.0 | 40 | steam.restriction_bar_s2_per_ml2 | low | 0.3 | claimed | 96.1 | 131.5 | warm-up |
+| Coffee | coffee | 100.0 | 41 | steam.restriction_bar_s2_per_ml2 | high | 1.7 | claimed | 100.1 | 135.9 | warm-up |
+| Coffee | hot water | 96.0 | 41 | steam.restriction_bar_s2_per_ml2 | high | 1.7 | claimed | 96.1 | 131.5 | warm-up |
+| Coffee | coffee | 100.0 | 42 | steam.outlet_drop_k_s_per_ml | low | 0.2 | claimed | 100.1 | 135.9 | warm-up |
+| Coffee | hot water | 96.0 | 42 | steam.outlet_drop_k_s_per_ml | low | 0.2 | claimed | 96.1 | 131.5 | warm-up |
+| Coffee | coffee | 100.0 | 43 | steam.outlet_drop_k_s_per_ml | high | 1.8 | claimed | 100.1 | 135.9 | warm-up |
+| Coffee | hot water | 96.0 | 43 | steam.outlet_drop_k_s_per_ml | high | 1.8 | claimed | 96.1 | 131.5 | warm-up |
+| Coffee | coffee | 100.0 | 44 | steam.liquid_capacity_ml | low | 0.4 | claimed | 100.1 | 135.9 | warm-up |
+| Coffee | hot water | 96.0 | 44 | steam.liquid_capacity_ml | low | 0.4 | claimed | 96.1 | 131.5 | warm-up |
+| Coffee | coffee | 100.0 | 45 | steam.liquid_capacity_ml | high | 1.6 | claimed | 100.1 | 135.9 | warm-up |
+| Coffee | hot water | 96.0 | 45 | steam.liquid_capacity_ml | high | 1.6 | claimed | 96.1 | 131.5 | warm-up |
+| Coffee | coffee | 100.0 | 46 | steam.initial_inventory_ml | low | 0.4 | claimed | 100.1 | 135.9 | warm-up |
+| Coffee | hot water | 96.0 | 46 | steam.initial_inventory_ml | low | 0.4 | claimed | 96.1 | 131.5 | warm-up |
+| Coffee | coffee | 100.0 | 47 | steam.initial_inventory_ml | high | 1.6 | claimed | 100.1 | 135.9 | warm-up |
+| Coffee | hot water | 96.0 | 47 | steam.initial_inventory_ml | high | 1.6 | claimed | 96.1 | 131.5 | warm-up |
+| Coffee | coffee | 100.0 | 48 | steam.feed_flow_ml_per_s | low | 0.3 | claimed | 100.1 | 135.9 | warm-up |
+| Coffee | hot water | 96.0 | 48 | steam.feed_flow_ml_per_s | low | 0.3 | claimed | 96.1 | 131.5 | warm-up |
+| Coffee | coffee | 100.0 | 49 | steam.feed_flow_ml_per_s | high | 1.7 | not-claimed | 100.1 | 135.9 | warm-up |
+| Coffee | hot water | 96.0 | 49 | steam.feed_flow_ml_per_s | high | 1.7 | not-claimed | 96.1 | 131.5 | warm-up |
+| Coffee | coffee | 100.0 | 50 | brew.heater_power_w + steam.heater_power_w (joint mains droop) | low | 0.79 | claimed | 100.1 | 126.8 | warm-up |
+| Coffee | hot water | 96.0 | 50 | brew.heater_power_w + steam.heater_power_w (joint mains droop) | low | 0.79 | claimed | 96.1 | 122.6 | warm-up |
+| Steam | steam | 186.1 | nominal | — | — | — | claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 185.9 | 0 | ambient_temperature_c | low | 0.75 | claimed | 185.9 | 187.9 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 1 | ambient_temperature_c | high | 1.25 | claimed | 186.1 | 188.1 | recovery |
+| Steam | steam | 186.1 | 2 | brew.thermal_mass_j_per_k | low | 0.6 | claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 3 | brew.thermal_mass_j_per_k | high | 1.4 | claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 4 | brew.heater_power_w | low | 0.79 | claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 5 | brew.heater_power_w | high | 1.21 | claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 6 | brew.loss_w_per_k | low | 0.4 | claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 7 | brew.loss_w_per_k | high | 1.6 | claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 8 | brew.outlet_held_volume_ml | low | 0.4 | claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 9 | brew.outlet_held_volume_ml | high | 1.6 | claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 10 | brew.outlet_conduction_time_constant_s | low | 0.2 | claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 11 | brew.outlet_conduction_time_constant_s | high | 1.8 | claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 181.9 | 12 | steam.thermal_mass_j_per_k | low | 0.6 | claimed | 181.9 | 183.3 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 13 | steam.thermal_mass_j_per_k | high | 1.4 | claimed | 186.2 | 188.7 | recovery |
+| Steam | steam | 186.1 | 14 | steam.heater_power_w | low | 0.79 | claimed | 186.1 | 188.3 | recovery after back-to-back delivery |
+| Steam | steam | 186.0 | 15 | steam.heater_power_w | high | 1.21 | claimed | 186.1 | 187.9 | recovery |
+| Steam | steam | 186.1 | 16 | steam.loss_w_per_k | low | 0.4 | claimed | 186.2 | 190.1 | warm-up |
+| Steam | steam | 182.5 | 17 | steam.loss_w_per_k | high | 1.6 | claimed | 182.4 | 184.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 18 | pump.pressure_bar | low | 0.6 | claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 19 | pump.pressure_bar | high | 1.4 | not-claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 20 | pump.flow_ml_per_s | low | 0.4 | claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 21 | pump.flow_ml_per_s | high | 1.6 | not-claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 22 | brew.pressure_time_constant_s | low | 0.5 | claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 23 | brew.pressure_time_constant_s | high | 1.5 | claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 24 | water.feed_temperature_c | low | 0.5 | claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 25 | water.feed_temperature_c | high | 1.5 | claimed | 186.1 | 188.1 | recovery |
+| Steam | steam | 186.1 | 26 | water.heat_capacity_j_per_ml_k | low | 0.97 | claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 27 | water.heat_capacity_j_per_ml_k | high | 1.03 | claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 28 | water.latent_heat_j_per_ml | low | 0.95 | claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 29 | water.latent_heat_j_per_ml | high | 1.05 | claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 30 | steam.saturation_temperature_c | low | 0.98 | claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 31 | steam.saturation_temperature_c | high | 1.02 | claimed | 186.1 | 188.1 | recovery |
+| Steam | steam | 186.1 | 32 | steam.saturation_antoine_a | low | 0.999 | claimed | 186.1 | 188.1 | recovery |
+| Steam | steam | 186.1 | 33 | steam.saturation_antoine_a | high | 1 | claimed | 186.1 | 188.1 | recovery |
+| Steam | steam | 186.1 | 34 | steam.saturation_antoine_b_k | low | 0.999 | claimed | 186.1 | 188.1 | recovery |
+| Steam | steam | 186.1 | 35 | steam.saturation_antoine_b_k | high | 1 | claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 36 | steam.saturation_antoine_c_c | low | 0.999 | claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 37 | steam.saturation_antoine_c_c | high | 1 | claimed | 186.1 | 188.1 | recovery |
+| Steam | steam | 186.1 | 38 | steam.casting_ceiling_c | low | 0.97 | claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 39 | steam.casting_ceiling_c | high | 1.03 | claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 40 | steam.restriction_bar_s2_per_ml2 | low | 0.3 | claimed | 186.1 | 188.1 | recovery |
+| Steam | steam | 186.1 | 41 | steam.restriction_bar_s2_per_ml2 | high | 1.7 | claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 42 | steam.outlet_drop_k_s_per_ml | low | 0.2 | claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 43 | steam.outlet_drop_k_s_per_ml | high | 1.8 | claimed | 186.1 | 188.1 | recovery |
+| Steam | steam | 186.1 | 44 | steam.liquid_capacity_ml | low | 0.4 | claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 45 | steam.liquid_capacity_ml | high | 1.6 | claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 46 | steam.initial_inventory_ml | low | 0.4 | claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 47 | steam.initial_inventory_ml | high | 1.6 | claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 48 | steam.feed_flow_ml_per_s | low | 0.3 | claimed | 186.1 | 188.1 | recovery |
+| Steam | steam | 186.1 | 49 | steam.feed_flow_ml_per_s | high | 1.7 | not-claimed | 186.1 | 188.1 | recovery after back-to-back delivery |
+| Steam | steam | 186.1 | 50 | brew.heater_power_w + steam.heater_power_w (joint mains droop) | low | 0.79 | claimed | 186.1 | 188.3 | recovery after back-to-back delivery |
 
 ## How the steam peak depends on how long the wand is held open
 
@@ -199,10 +235,10 @@ The steam courses above hold the wand open for 20 seconds, about what a jug of m
 
 | Wand held open (s) | Peak casting temperature (C) |
 |---|---|
-| 20 | 191.0 |
-| 60 | 191.0 |
-| 120 | 191.0 |
-| 300 | 216.1 |
+| 20 | 186.1 |
+| 60 | 186.1 |
+| 120 | 186.1 |
+| 300 | 186.1 |
 
 ## What this does not settle
 

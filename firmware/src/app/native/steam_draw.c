@@ -34,6 +34,8 @@
 #include <math.h>
 #include <stdio.h>
 
+#include "casting_ceiling_report.h"
+#include "dryness_report.h"
 #include "hw_sim.h"
 #include "plant_model.h"
 #include "steam_control.h"
@@ -282,6 +284,17 @@ int steam_draw_run(const plant_parameters_t *parameters,
         (void)fprintf(stderr, "steam draw: the machine could not be initialised\n");
         return 1;
     }
+
+    /*
+     * The bound the steam side holds trapped pressure to, stated before anything
+     * is driven so a reader of the run has it with the run. A structure with no
+     * steam ceiling states none; one that has one and cannot state it ends the
+     * run, because a run that dropped its own bound is not one to read.
+     */
+    if (casting_ceiling_report(stdout, parameters) == CASTING_CEILING_REFUSED) {
+        (void)fprintf(stderr, "steam draw: the casting ceiling could not be stated\n");
+        return 1;
+    }
     if (!bring_the_machine_to_where_the_draw_begins(&machine, draw)) {
         return 1;
     }
@@ -313,6 +326,14 @@ int steam_draw_run(const plant_parameters_t *parameters,
     }
 
     unsigned long taken = 1uL;
+
+    /*
+     * The least superheat the machine's modelled outlet reported on any step
+     * that made steam, and the pressure that step reported beside it: what the
+     * run's dryness statement rests on. A draw is as dry as its wettest step.
+     */
+    dryness_finding_t dryness = {false, 0.0f, 0.0f};
+    bool superheat_observed = true;
 
     for (uint32_t interval = 0u; interval < draw->interval_count; interval++) {
         const uint32_t elapsed = draw->interval_millis[interval];
@@ -385,6 +406,20 @@ int steam_draw_run(const plant_parameters_t *parameters,
          * therefore something the run itself has to say, not something a reader
          * can work out from the course.
          */
+        float superheat_k = 0.0f;
+        float pressure_bar = 0.0f;
+        const bool made_steam =
+            demand_milli > 0u && driven.level_permille[ACTUATION_CHANNEL_STEAM_PUMP] > 0u;
+        if (!plant_model_quantity(&machine, PLANT_QUANTITY_STEAM_OUTLET_SUPERHEAT_K,
+                                  &superheat_k) ||
+            !plant_model_quantity(&machine, PLANT_QUANTITY_STEAM_PRESSURE_BAR, &pressure_bar)) {
+            superheat_observed = false;
+        } else if (made_steam && (!dryness.steam_made || superheat_k < dryness.superheat_k)) {
+            dryness.steam_made = true;
+            dryness.superheat_k = superheat_k;
+            dryness.pressure_bar = pressure_bar;
+        }
+
         bool drawing = false;
         (void)steam_control_drawing(&loop, &drawing);
         report("steam-trajectory", (int)interval, (int)result, drawing ? 1u : 0u,
@@ -392,6 +427,16 @@ int steam_draw_run(const plant_parameters_t *parameters,
                (unsigned)hw_sim_output(ACTUATION_CHANNEL_STEAM_HEATER),
                (unsigned)hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP), taken, values,
                drawn_ml_per_s);
+    }
+
+    /*
+     * Whether the steam was dry, stated once for the run. A structure that does
+     * not observe an outlet superheat states nothing about dryness rather than a
+     * claim it has no figure for; one that does and cannot state it ends the run.
+     */
+    if (superheat_observed && !dryness_report(stdout, &dryness)) {
+        (void)fprintf(stderr, "steam draw: the dryness of the steam could not be stated\n");
+        return 1;
     }
 
     (void)printf("HOST steam-plant-step-count %lu\n", taken);

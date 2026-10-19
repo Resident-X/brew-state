@@ -160,6 +160,19 @@ bool plant_parameter_scale(plant_parameters_t *parameters, size_t at, float fact
 bool plant_parameter_position(const char *name, size_t *at);
 
 /*
+ * The value one coefficient holds in a record, by its position in that ordering.
+ *
+ * The reading counterpart of plant_parameter_scale, through the same offset the
+ * structure's own table declares, so a consumer that reports what a description
+ * declared -- a bound a host run states about itself -- reads it without naming a
+ * field of any structure's record.
+ *
+ * Returns false, writing nothing, for a null argument and for a position at or
+ * past the structure's own coefficient count.
+ */
+bool plant_parameter_value(const plant_parameters_t *parameters, size_t at, float *value);
+
+/*
  * Whether the coefficient at that position is one the supply the machine is fed
  * from drives.
  *
@@ -312,11 +325,38 @@ bool plant_step_admissible(const plant_actuation_t *actuation, uint32_t interval
  * null, when the instance was never initialised, or when the quantity is not
  * one of the enumerated ones. Every structure answers every quantity -- they are
  * the machine's rather than any structure's -- so there is no refusal here for a
- * quantity a structure does not have. plant_model_state below has one, because
- * states are the other way round.
+ * quantity a structure does not have, with the one exception plant_types.h names:
+ * the superheat at a modelled outlet, which a structure with no flash-generator
+ * steam side answers as not observed by returning false. plant_model_state below
+ * refuses more widely, because states are the other way round.
  */
 bool plant_model_quantity(const plant_model_t *model, plant_quantity_t quantity,
                           float *value);
+
+/*
+ * The least superheat of steam at the structure's modelled outlet that its own
+ * relation admits for a casting temperature, a steam pressure and a steam feed
+ * level, evaluated on a description and its declared error rather than on a model
+ * instance.
+ *
+ * It is the same relation the structure's own outlet superheat quantity is read
+ * from, offered for readings a caller holds rather than for states a model keeps,
+ * so that a consumer which has measured the casting and the pressure and
+ * commanded the feed can form its own figure for what the model would report --
+ * without stepping a model, and without naming any coefficient of the structure.
+ * The steam made is taken to be the feed; the casting-to-outlet relation's own
+ * coefficient is taken at the end of its declared error that leaves the least
+ * superheat, so a figure held at or above some value is held there for every
+ * machine the description admits on that coefficient.
+ *
+ * Returns false, writing nothing, for a null argument, for a reading that is not
+ * a finite number, and for every structure that has no flash-generator steam
+ * side and so no modelled outlet.
+ */
+bool plant_model_least_outlet_superheat(const plant_parameters_t *parameters,
+                                        const plant_parameter_budget_t *budget, float casting_c,
+                                        float pressure_bar, uint16_t feed_permille,
+                                        float *superheat_k);
 
 /*
  * Read one state the structure this build compiles integrates, in the unit that

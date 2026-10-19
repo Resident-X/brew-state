@@ -35,7 +35,7 @@ static estimator_limits_t limits;
 
 static void load_the_reference_description(void)
 {
-    static char text[16384];
+    static char text[32768];
 
     FILE *const handle = fopen(REFERENCE_DESCRIPTION_PATH, "rb");
     TEST_ASSERT_NOT_NULL_MESSAGE(handle, "could not open the reference description");
@@ -56,7 +56,7 @@ static void load_the_reference_description(void)
  */
 static void load_the_reference_limits(void)
 {
-    static char text[16384];
+    static char text[32768];
 
     FILE *const handle = fopen(REFERENCE_LIMITS_PATH, "rb");
     TEST_ASSERT_NOT_NULL_MESSAGE(handle, "could not open the reference limits declaration");

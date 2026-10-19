@@ -168,6 +168,13 @@ static bool state_observed_by(plant_quantity_t quantity, plant_state_t *state)
      */
     case PLANT_QUANTITY_STEAM_DRAW_ML_PER_S:
         return false;
+    /*
+     * The superheat at the modelled outlet is refused because nothing measures
+     * it: no outlet or tip temperature sensor is fitted, and the figure is the
+     * model's own. There is no reading for a correction to be made against.
+     */
+    case PLANT_QUANTITY_STEAM_OUTLET_SUPERHEAT_K:
+        return false;
     /* Not a quantity, and so observed by nothing. */
     case PLANT_QUANTITY_COUNT:
         return false;

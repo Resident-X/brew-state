@@ -640,6 +640,23 @@ bool plant_parameter_position(const char *name, size_t *at)
     return true;
 }
 
+bool plant_parameter_value(const plant_parameters_t *parameters, size_t at, float *value)
+{
+    if (parameters == NULL || value == NULL) {
+        return false;
+    }
+
+    size_t spec_count = 0u;
+    const plant_parameter_spec_t *specs = plant_structure_parameter_specs(&spec_count);
+    if (specs == NULL || spec_count == 0u || spec_count > PLANT_PARAMETER_LIMIT ||
+        at >= spec_count) {
+        return false;
+    }
+
+    *value = *(const float *)(const void *)((const char *)parameters + specs[at].offset);
+    return true;
+}
+
 bool plant_parameter_supply_driven(size_t at, bool *driven)
 {
     if (driven == NULL) {

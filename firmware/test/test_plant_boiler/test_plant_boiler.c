@@ -124,6 +124,11 @@ static const char DESCRIPTION_FORMAT[] = "ambient_temperature_c = 20.0\n"
 static void read_all(const plant_model_t *model, float out[PLANT_QUANTITY_COUNT])
 {
     for (int quantity = 0; quantity < PLANT_QUANTITY_COUNT; quantity++) {
+        if (quantity == (int)PLANT_QUANTITY_STEAM_OUTLET_SUPERHEAT_K) {
+            /* Not observed here, which its own test holds; read as nothing. */
+            out[quantity] = 0.0f;
+            continue;
+        }
         TEST_ASSERT_TRUE(plant_model_quantity(model, (plant_quantity_t)quantity, &out[quantity]));
     }
 }
@@ -1047,6 +1052,9 @@ static void test_every_state_this_structure_keeps_carries_what_it_names(void)
         TEST_ASSERT_TRUE(plant_model_step(&model, &applied, 0.0f, STEP_MS));
     }
     for (int quantity = 0; quantity < PLANT_QUANTITY_COUNT; quantity++) {
+        if (quantity == (int)PLANT_QUANTITY_STEAM_OUTLET_SUPERHEAT_K) {
+            continue;
+        }
         TEST_ASSERT_TRUE(
             plant_model_quantity(&model, (plant_quantity_t)quantity, &quantities[quantity]));
     }
@@ -2362,6 +2370,38 @@ static void test_the_single_vessel_structure_refuses_both_delivery_point_masses(
     TEST_ASSERT_EQUAL_UINT8(0xFFu, mass);
 }
 
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C6: The plant reports superheat at its
+/// modelled outlet above saturation at the measured pressure.
+///
+/// A structure with no flash-generator steam side answers the outlet superheat as
+/// not observed rather than as a value -- through the quantity read and through
+/// the relation offered for readings a caller holds -- before and after a step
+/// with steam asked of it. A zero here would read as wet steam, which is a claim
+/// a boiler has no outlet relation to make.
+static void test_the_outlet_superheat_is_answered_as_not_observed(void)
+{
+    plant_model_t model;
+    plant_parameter_budget_t nothing_declared;
+    plant_actuation_t applied = {{0u}};
+    float value = -1.0f;
+
+    memset(&nothing_declared, 0, sizeof(nothing_declared));
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+    TEST_ASSERT_FALSE(plant_model_quantity(&model, PLANT_QUANTITY_STEAM_OUTLET_SUPERHEAT_K, &value));
+    TEST_ASSERT_TRUE(plant_model_step(&model, &applied, 0.5f, 100u));
+    TEST_ASSERT_FALSE(plant_model_quantity(&model, PLANT_QUANTITY_STEAM_OUTLET_SUPERHEAT_K, &value));
+    TEST_ASSERT_FALSE(plant_model_least_outlet_superheat(&parameters, &nothing_declared, 150.0f,
+                                                        1.0f, 500u, &value));
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(-1.0f, value, "a refusal wrote a value anyway");
+
+    /* Every other quantity is still answered: the refusal is this one's alone. */
+    for (int quantity = 0; quantity < PLANT_QUANTITY_COUNT; quantity++) {
+        if (quantity != (int)PLANT_QUANTITY_STEAM_OUTLET_SUPERHEAT_K) {
+            TEST_ASSERT_TRUE(plant_model_quantity(&model, (plant_quantity_t)quantity, &value));
+        }
+    }
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -2416,5 +2456,6 @@ int main(void)
     RUN_TEST(test_the_estimator_refuses_this_architecture);
     RUN_TEST(test_the_single_vessel_structure_declares_no_delivery_point);
     RUN_TEST(test_the_single_vessel_structure_refuses_both_delivery_point_masses);
+    RUN_TEST(test_the_outlet_superheat_is_answered_as_not_observed);
     return UNITY_END();
 }

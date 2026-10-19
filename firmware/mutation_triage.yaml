@@ -56,16 +56,6 @@
 # moved: the reasoning is unchanged because the arithmetic is unchanged, and an
 # entry whose code had actually moved would have had to be judged again.
 
-# The thermoblock's steam-pressure judgement was re-made at a new line when the
-# coffee side gained a second temperature. The comparison it is about did not
-# move relative to anything around it -- it was pushed down two lines by the
-# parameter table above it gaining an entry for the outlet time constant, and the
-# helper that slice added sits below it and moved it not at all. The expression
-# at its new line is character for character the one the judgement was written
-# about, so the reasoning stands unaltered. The
-# arithmetic that slice added produced mutants of its own, and the suite killed
-# every one of them; none of it is recorded here, which is what that means.
-
 # Both steam-pressure judgements were re-made at new lines when the water drawn
 # through a block started taking energy out of it. Neither expression moved
 # relative to anything it depends on: the thermoblock's was pushed down by its
@@ -343,16 +333,6 @@ survivors:
       native_test and test_plant_boiler under native_boiler_test, both
       sanitized, aborts each with SIGABRT in exactly those tests, where the
       unsanitized sweep records the mutant as surviving.
-
-  cxx_gt_to_ge:src/plant/thermoblock/plant_structure.c:150:31:
-    verdict: equivalent
-    reason: >-
-      Steam pressure, `above_saturation_k > 0.0f` widened to `>=`. The two
-      differ only at exactly zero, where the mutant evaluates
-      `pressure_bar_per_k * 0.0f` and the original returns the literal `0.0f`.
-      Those are the same value: the coefficient is finite and admissible, so the
-      product is a zero, and a zero of either sign compares equal to the literal
-      and behaves identically in everything downstream.
 
   cxx_eq_to_ne:src/plant/boiler/plant_structure.c:83:14:
     verdict: equivalent

@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "dryness_report.h"
 #include "estimator_limits.h"
 #include "hw_interface.h"
 #include "hw_sim.h"
@@ -83,15 +84,26 @@
  */
 #define BELOW_READY_C 110.0f
 
-/* The coefficient the plant description names as the loosest figure it carries. */
-#define SAG_COEFFICIENT "steam.pressure_fall_bar_per_ml"
+/*
+ * How long a test of the feed-withhold gate holds a draw it starves, in
+ * milliseconds: long enough that the feed's own rise from its start level to its
+ * ceiling would have run several times over, so a withheld feed is the gate's
+ * doing and not the sequencing's.
+ */
+#define WITHHELD_SPAN_MS 20000u
+
+/*
+ * The coefficient the orifice law turns the steam made into pressure through,
+ * which the plant description names among the loosest figures it carries.
+ */
+#define RESTRICTION_COEFFICIENT "steam.restriction_bar_s2_per_ml2"
 
 static plant_parameters_t parameters;
 static plant_parameter_budget_t budget;
 static estimator_limits_t limits;
 static steam_control_declaration_t declaration;
 
-static char description_text[16384];
+static char description_text[32768];
 static size_t description_length;
 
 /* --- Loading what the machine and the design actually declare -------------- */
@@ -164,20 +176,25 @@ static const char *text_for(const steam_control_declaration_t *d)
         "ready-temperature-c = %d milli-c @estimated a figure this test chose\n"
         "draw-pressure-floor-bar = %d milli-bar @estimated a figure this test chose\n"
         "draw-pressure-ceiling-bar = %d milli-bar @estimated a figure this test chose\n"
-        "margin-building-interval-ms = %d milli-s @estimated a figure this test chose\n"
-        "feed-rise-interval-ms = %d milli-s @estimated a figure this test chose\n"
-        "sustainable-feed-rate = %d permille @estimated a figure this test chose\n"
+        "draw-start-feed = %d permille @estimated a figure this test chose\n"
+        "feed-ceiling = %d permille @estimated a figure this test chose\n"
+        "feed-rise-limit = %d permille-per-s @estimated a figure this test chose\n"
+        "superheat-setpoint = %d milli-k @estimated a figure this test chose\n"
         "ready-temperature-gain = %d milli-permille-per-k @estimated a figure this test chose\n"
         "ready-temperature-integral-gain = %d milli-permille-per-k-s @estimated a figure this test chose\n"
-        "draw-pressure-gain = %d milli-permille-per-bar @estimated a figure this test chose\n"
-        "draw-pressure-integral-gain = %d milli-permille-per-bar-s @estimated a figure this test chose\n"
+        "superheat-gain = %d milli-permille-per-k @estimated a figure this test chose\n"
+        "superheat-integral-gain = %d milli-permille-per-k-s @estimated a figure this test chose\n"
+        "feed-pressure-gain = %d milli-permille-per-bar @estimated a figure this test chose\n"
+        "feed-pressure-integral-gain = %d milli-permille-per-bar-s @estimated a figure this test chose\n"
         "feed-load-gain = %d milli-permille-per-permille @estimated a figure this test chose\n"
         "standing-load = %d permille @estimated a figure this test chose\n",
         d->ready_pressure_milli_bar, d->ready_temperature_milli_c,
         d->draw_pressure_floor_milli_bar, d->draw_pressure_ceiling_milli_bar,
-        d->margin_interval_millis, d->feed_rise_millis, d->sustainable_feed_permille,
-        d->ready_gain_milli_permille_per_k, d->ready_integral_gain_milli_permille_per_k_s,
-        d->draw_gain_milli_permille_per_bar, d->draw_integral_gain_milli_permille_per_bar_s,
+        d->draw_start_feed_permille, d->feed_ceiling_permille, d->feed_rise_limit_permille_per_s,
+        d->superheat_setpoint_milli_k, d->ready_gain_milli_permille_per_k,
+        d->ready_integral_gain_milli_permille_per_k_s, d->superheat_gain_milli_permille_per_k,
+        d->superheat_integral_gain_milli_permille_per_k_s, d->feed_gain_milli_permille_per_bar,
+        d->feed_integral_gain_milli_permille_per_bar_s,
         d->feed_load_gain_milli_permille_per_permille, d->standing_load_permille);
 
     TEST_ASSERT_TRUE_MESSAGE(written > 0 && (size_t)written < sizeof(text),
@@ -406,6 +423,12 @@ typedef struct {
     int32_t pressure_milli_bar;
     uint16_t heater_permille;
     uint16_t feed_permille;
+    /* The truth plant's superheat at its modelled outlet, after the step. */
+    float superheat_k;
+    /* The law's own estimate of it on the step, and whether it formed one. */
+    bool estimated;
+    float estimate_k;
+    float steam_c;
 } sample_t;
 
 #define DRAW_SAMPLE_MAX 12000
@@ -429,6 +452,10 @@ static void draw_for(unsigned seconds, float demand)
         samples[sample_count].pressure_milli_bar = truth_pressure_milli_bar();
         samples[sample_count].heater_permille = hw_sim_output(ACTUATION_CHANNEL_STEAM_HEATER);
         samples[sample_count].feed_permille = hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP);
+        samples[sample_count].superheat_k = truth_quantity(PLANT_QUANTITY_STEAM_OUTLET_SUPERHEAT_K);
+        samples[sample_count].estimated =
+            steam_control_outlet_superheat(&loop, &samples[sample_count].estimate_k);
+        samples[sample_count].steam_c = truth_quantity(PLANT_QUANTITY_STEAM_TEMPERATURE_C);
         sample_count++;
     }
 
@@ -610,17 +637,38 @@ static uint16_t step_with(steam_control_state_t *state, bool knob, int32_t press
     return hw_sim_output(ACTUATION_CHANNEL_STEAM_HEATER);
 }
 
-/// SOL-SIM-STEAM-BAND-SUSTAINED.C1: The controlled variable is temperature
-/// while idle and pressure while a draw is active.
+/*
+ * Open a draw the gate feeds -- the wand turned with the shut block at the
+ * declared ready pressure and target -- and then run it for `steps` more steps
+ * at the readings given, so a test can stand a fed draw up without a plant.
+ */
+static void open_a_fed_draw(steam_control_state_t *state, int32_t pressure_milli_bar,
+                            int32_t temperature_milli_c, unsigned steps)
+{
+    (void)step_with(state, true, declaration.ready_pressure_milli_bar,
+                    declaration.ready_temperature_milli_c);
+    TEST_ASSERT_TRUE_MESSAGE(hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP) > 0u,
+                             "a draw opened at the ready pressure was not fed");
+    for (unsigned step = 0u; step < steps; step++) {
+        (void)step_with(state, true, pressure_milli_bar, temperature_milli_c);
+    }
+}
+
+/* The middle of the declared band, which the pressure loop holds. */
+static int32_t band_middle(const steam_control_declaration_t *figures)
+{
+    return (figures->draw_pressure_floor_milli_bar + figures->draw_pressure_ceiling_milli_bar) / 2;
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C7: The feed holds pressure and heater power
+/// holds a declared superheat setpoint, and no pressure loop drives the heater.
 ///
-/// The switch is asserted on the same step the wand's report changes, in both
-/// directions, and against the law's own account of which variable it is
-/// driving to rather than against a duty -- because during the margin-building
-/// interval the duty is the ceiling whichever variable is in force, which C1's
-/// own text says is the same command either way with feed still at nothing.
-/// A caller that switched on the step after would spend the first interval of
-/// a draw -- the one the operator can least afford it in -- answering the
-/// question the wand has already stopped asking.
+/// The controlled variable is temperature while idle and pressure while a draw
+/// is open. The switch is asserted on the same step the wand's report changes,
+/// in both directions, against the law's own account of which variable it is
+/// driving to. A caller that switched on the step after would spend the first
+/// step of a draw -- the one the operator can least afford it in -- answering
+/// the question the wand has already stopped asking.
 static void test_the_controlled_variable_switches_on_the_step_the_draw_begins(void)
 {
     steam_control_state_t state;
@@ -647,77 +695,93 @@ static void test_the_controlled_variable_switches_on_the_step_the_draw_begins(vo
                               "the loop was still driving to pressure on the step the draw ended");
 }
 
-/// SOL-SIM-STEAM-BAND-SUSTAINED.C1: The controlled variable is temperature
-/// while idle and pressure while a draw is active.
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C7: The feed holds pressure and heater power
+/// holds a declared superheat setpoint, and no pressure loop drives the heater.
 ///
-/// The behavioural half of the same criterion, which the projection above
-/// cannot establish on its own: a projection could be right while the duty was
-/// computed from the other channel entirely. Each phase is given a step where
-/// one reading moves and the other is held exactly where it was, and the duty
-/// is required to answer the one the phase is supposed to be driving to and
-/// not the other. The draw phase is sampled past the margin-building interval,
-/// where the duty is the tracking law's rather than the ceiling.
-static void test_duty_answers_temperature_while_idle_and_pressure_while_drawing(void)
+/// Three instances share one history -- a draw opened at ready and run at the
+/// middle of the band -- with the feedforward declared at nothing so the heater
+/// answers its error alone. At the probe step one is handed the pressure moved
+/// alone, and a second the same moved pressure with the casting moved by
+/// exactly what keeps the law's own superheat estimate where the unmoved
+/// instance's is. If the heater answers superheat and nothing else, the second's
+/// duty is the unmoved instance's, though its pressure error is a fifth of a bar
+/// different; a pressure term anywhere in the heater command would part them.
+/// The first is the control that the probe is sensitive at all: the same
+/// pressure move with the casting held changes the estimate and so the duty.
+///
+/// The feed, on the other hand, answers pressure and not the casting: the moved
+/// pressure moves it, and the moved casting beside it leaves it where the
+/// pressure alone put it.
+static void test_the_heater_answers_superheat_and_never_pressure_error(void)
 {
-    steam_control_state_t state;
+    steam_control_declaration_t altered = declaration;
+    altered.feed_load_gain_milli_permille_per_permille = 0;
+    const steam_control_declaration_t figures = re_declared(&altered);
+    const int32_t middle = band_middle(&figures);
+    const int32_t moved = middle + 200;
+    const int32_t casting = figures.ready_temperature_milli_c;
 
-    /* Idle: pressure held, temperature moved. */
-    TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration, &parameters, &budget));
-    const uint16_t idle_at_target = step_with(&state, false, declaration.ready_pressure_milli_bar,
-                                              declaration.ready_temperature_milli_c);
-    const uint16_t idle_cooler = step_with(&state, false, declaration.ready_pressure_milli_bar,
-                                           declaration.ready_temperature_milli_c - 5000);
-    TEST_ASSERT_TRUE_MESSAGE(idle_cooler > idle_at_target,
-                             "a colder block did not raise duty while idle, so the idle phase is "
-                             "not driving to temperature");
+    steam_control_state_t unmoved;
+    steam_control_state_t pressure_only;
+    steam_control_state_t both_moved;
 
-    TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration, &parameters, &budget));
-    const uint16_t idle_again = step_with(&state, false, declaration.ready_pressure_milli_bar,
-                                          declaration.ready_temperature_milli_c);
-    const uint16_t idle_pressure_moved =
-        step_with(&state, false, declaration.ready_pressure_milli_bar + 400,
-                  declaration.ready_temperature_milli_c);
-    TEST_ASSERT_EQUAL_UINT16_MESSAGE(idle_again, idle_pressure_moved,
-                                     "moving the pressure reading moved the duty while idle, so "
-                                     "the idle phase is driving to pressure");
+    hw_sim_reset();
+    TEST_ASSERT_TRUE(steam_control_init(&unmoved, &limits, &figures, &parameters, &budget));
+    open_a_fed_draw(&unmoved, middle, casting, 300u);
+    hw_sim_reset();
+    TEST_ASSERT_TRUE(steam_control_init(&pressure_only, &limits, &figures, &parameters, &budget));
+    open_a_fed_draw(&pressure_only, middle, casting, 300u);
+    hw_sim_reset();
+    TEST_ASSERT_TRUE(steam_control_init(&both_moved, &limits, &figures, &parameters, &budget));
+    open_a_fed_draw(&both_moved, middle, casting, 300u);
+
+    float unmoved_estimate = 0.0f;
+    const uint16_t unmoved_duty = step_with(&unmoved, true, middle, casting);
+    const uint16_t unmoved_feed = hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP);
+    TEST_ASSERT_TRUE(steam_control_outlet_superheat(&unmoved, &unmoved_estimate));
+
+    float pressure_only_estimate = 0.0f;
+    const uint16_t pressure_only_duty = step_with(&pressure_only, true, moved, casting);
+    const uint16_t moved_feed = hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP);
+    TEST_ASSERT_TRUE(steam_control_outlet_superheat(&pressure_only, &pressure_only_estimate));
+    TEST_ASSERT_TRUE_MESSAGE(moved_feed < unmoved_feed,
+                             "a higher pressure did not take the feed down, so the feed is not "
+                             "holding pressure");
+    TEST_ASSERT_TRUE_MESSAGE(pressure_only_duty != unmoved_duty,
+                             "moving the pressure moved neither the estimate nor the duty, so the "
+                             "probe below is not sensitive to anything");
 
     /*
-     * Drawing, sampled past the margin-building interval so the duty is the
-     * tracking law's own rather than the ceiling, and past the feed's own rise
-     * so that the level being fed forward is identical at both probes. A pair
-     * of probes taken while feed was still climbing would differ by the
-     * feedforward's answer to that climb whichever variable was in force, and
-     * would say nothing about which one.
+     * The casting that gives the moved instance the unmoved one's estimate, at
+     * the feed the moved pressure commands, found by narrowing on the relation
+     * the law itself reads.
      */
-    const int32_t in_band = (declaration.draw_pressure_floor_milli_bar +
-                             declaration.draw_pressure_ceiling_milli_bar) /
-                            2;
-    const uint32_t settled_at =
-        (uint32_t)declaration.margin_interval_millis + (uint32_t)declaration.feed_rise_millis;
-
-    TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration, &parameters, &budget));
-    for (uint32_t elapsed = 0u; elapsed <= settled_at; elapsed += STEP_INTERVAL_MS) {
-        (void)step_with(&state, true, in_band, declaration.ready_temperature_milli_c);
+    float low_c = (float)casting / 1000.0f;
+    float high_c = low_c + 40.0f;
+    for (int narrowing = 0; narrowing < 60; narrowing++) {
+        const float middle_c = 0.5f * (low_c + high_c);
+        float estimate = 0.0f;
+        TEST_ASSERT_TRUE(plant_model_least_outlet_superheat(&parameters, &budget, middle_c,
+                                                            (float)moved / 1000.0f, moved_feed,
+                                                            &estimate));
+        if (estimate < unmoved_estimate) {
+            low_c = middle_c;
+        } else {
+            high_c = middle_c;
+        }
     }
-    const uint16_t drawing_at_target =
-        step_with(&state, true, in_band, declaration.ready_temperature_milli_c);
-    const uint16_t drawing_sagged =
-        step_with(&state, true, in_band - 200, declaration.ready_temperature_milli_c);
-    TEST_ASSERT_TRUE_MESSAGE(drawing_sagged > drawing_at_target,
-                             "a sagging path did not raise duty during a draw, so the draw phase "
-                             "is not driving to pressure");
+    const int32_t compensating = (int32_t)lroundf(high_c * 1000.0f);
 
-    TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration, &parameters, &budget));
-    for (uint32_t elapsed = 0u; elapsed <= settled_at; elapsed += STEP_INTERVAL_MS) {
-        (void)step_with(&state, true, in_band, declaration.ready_temperature_milli_c);
-    }
-    const uint16_t drawing_again =
-        step_with(&state, true, in_band, declaration.ready_temperature_milli_c);
-    const uint16_t drawing_temperature_moved =
-        step_with(&state, true, in_band, declaration.ready_temperature_milli_c - 20000);
-    TEST_ASSERT_EQUAL_UINT16_MESSAGE(drawing_again, drawing_temperature_moved,
-                                     "moving the temperature reading moved the duty during a "
-                                     "draw, so the draw phase is driving to temperature");
+    float both_moved_estimate = 0.0f;
+    const uint16_t both_moved_duty = step_with(&both_moved, true, moved, compensating);
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE(moved_feed, hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP),
+                                     "moving the casting moved the feed, so the feed answers "
+                                     "something besides pressure");
+    TEST_ASSERT_TRUE(steam_control_outlet_superheat(&both_moved, &both_moved_estimate));
+    TEST_ASSERT_FLOAT_WITHIN(0.01f, unmoved_estimate, both_moved_estimate);
+    TEST_ASSERT_UINT16_WITHIN_MESSAGE(1u, unmoved_duty, both_moved_duty,
+                                      "a fifth of a bar of pressure error moved the heater with the "
+                                      "superheat estimate held, so a pressure loop drives it");
 }
 
 /// SOL-SIM-STEAM-BAND-SUSTAINED.C2: A steam pressure reading outside
@@ -755,13 +819,8 @@ static void test_an_implausible_pressure_reading_mid_draw_is_rejected_rather_tha
         hw_sim_reset();
         TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration, &parameters, &budget));
 
-        /* A settled draw: past the margin interval and past the feed's rise. */
-        const uint32_t settled_at = (uint32_t)declaration.margin_interval_millis +
-                                    (uint32_t)declaration.feed_rise_millis;
-        for (uint32_t elapsed = 0u; elapsed <= settled_at + STEP_INTERVAL_MS;
-             elapsed += STEP_INTERVAL_MS) {
-            (void)step_with(&state, true, in_band, declaration.ready_temperature_milli_c);
-        }
+        /* A settled draw, opened at ready and held at the middle of the band. */
+        open_a_fed_draw(&state, in_band, declaration.ready_temperature_milli_c, 500u);
 
         const uint16_t duty_before = hw_sim_output(ACTUATION_CHANNEL_STEAM_HEATER);
         const uint16_t feed_before = hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP);
@@ -855,11 +914,12 @@ static void test_the_declared_band_decides_which_draws_the_suite_accepts(void)
 ///
 /// One declared gain is moved and the suite's own pass-fail boundary moves
 /// with it, with no control law rebuilt between the two arms. The gain chosen
-/// is the feedforward, because what it answers is the load the loop was told
-/// about: at the shipped figure it asks the element for what the commanded
-/// feed will cost and the draw stays in band, and at a figure five times too
-/// large it asks for far more than the load, drives the block past what the
-/// band admits, and the same run fails.
+/// is the pressure loop's proportional gain, because the orifice law gives the
+/// pressure no lag to hide behind: at the shipped figure a step of the loop
+/// answers a little over half an error and the draw stays in band, and at a
+/// thousand times that the first hundredth of a bar past the middle of the band
+/// takes the feed to nothing at once -- the fall is not rise-limited -- which
+/// drops the pressure through the floor, and the same run fails.
 ///
 /// Everything else is held identical -- the same machine, the same draw, the
 /// same duration, the same band -- so the only thing that could have moved the
@@ -872,19 +932,18 @@ static void test_a_declared_gain_moves_the_pass_fail_boundary(void)
     hold_ready_for(SETTLE_SECONDS);
     draw_for(30u, 1.0f);
     TEST_ASSERT_TRUE_MESSAGE(in_band_from_first_delivery(&declaration, &worst),
-                             "the shipped feedforward gain did not hold the band");
+                             "the shipped pressure gain did not hold the band");
 
     steam_control_declaration_t altered = declaration;
-    altered.feed_load_gain_milli_permille_per_permille =
-        declaration.feed_load_gain_milli_permille_per_permille * 5;
+    altered.feed_gain_milli_permille_per_bar = declaration.feed_gain_milli_permille_per_bar * 1000;
     const steam_control_declaration_t overstated = re_declared(&altered);
 
     bring_the_loop_up(&parameters, &overstated, ready_target_c(&overstated));
     hold_ready_for(SETTLE_SECONDS);
     draw_for(30u, 1.0f);
     TEST_ASSERT_FALSE_MESSAGE(in_band_from_first_delivery(&overstated, &worst),
-                              "a feedforward gain five times the load it answers still held the "
-                              "band, so the gain is not being read");
+                              "a pressure gain a thousand times the shipped one still held the band, so "
+                              "the gain is not being read");
 }
 
 /// SOL-SIM-STEAM-BAND-SUSTAINED.C3: The ready temperature target and the
@@ -919,15 +978,21 @@ static void test_the_declaration_grammar_refuses_what_it_must(void)
          STEAM_CONTROL_DECLARATION_DUPLICATE},
         {"ready-pressure-bar = 20000 milli-bar @estimated an account\n",
          STEAM_CONTROL_DECLARATION_OUT_OF_RANGE},
-        {"margin-building-interval-ms = 600000 milli-s @estimated an account\n",
+        {"feed-rise-limit = 100001 permille-per-s @estimated an account\n",
          STEAM_CONTROL_DECLARATION_OUT_OF_RANGE},
-        {"sustainable-feed-rate = 0 permille @estimated an account\n",
+        {"draw-start-feed = 0 permille @estimated an account\n",
+         STEAM_CONTROL_DECLARATION_OUT_OF_RANGE},
+        {"feed-ceiling = 1001 permille @estimated an account\n",
+         STEAM_CONTROL_DECLARATION_OUT_OF_RANGE},
+        {"superheat-setpoint = -1 milli-k @estimated an account\n",
          STEAM_CONTROL_DECLARATION_OUT_OF_RANGE},
         {"ready-temperature-gain = 0 milli-permille-per-k @estimated an account\n",
          STEAM_CONTROL_DECLARATION_OUT_OF_RANGE},
         {"ready-pressure-bar = 900 milli-c @estimated an account\n",
          STEAM_CONTROL_DECLARATION_UNIT_MISMATCH},
-        {"draw-pressure-gain = 3000000 milli-permille-per-k @estimated an account\n",
+        {"feed-pressure-gain = 20000 milli-permille-per-k @estimated an account\n",
+         STEAM_CONTROL_DECLARATION_UNIT_MISMATCH},
+        {"superheat-setpoint = 5000 milli-c @estimated an account\n",
          STEAM_CONTROL_DECLARATION_UNIT_MISMATCH},
         {"ready-pressure-bar = 900 milli-bar\n", STEAM_CONTROL_DECLARATION_ORIGIN},
         {"ready-pressure-bar = 900 milli-bar @invented an account\n",
@@ -965,13 +1030,16 @@ static void test_the_declaration_grammar_refuses_what_it_must(void)
         STEAM_CONTROL_DECLARATION_READY_TEMPERATURE_WORD,
         STEAM_CONTROL_DECLARATION_DRAW_FLOOR_WORD,
         STEAM_CONTROL_DECLARATION_DRAW_CEILING_WORD,
-        STEAM_CONTROL_DECLARATION_MARGIN_INTERVAL_WORD,
-        STEAM_CONTROL_DECLARATION_FEED_RISE_WORD,
-        STEAM_CONTROL_DECLARATION_SUSTAINABLE_FEED_WORD,
+        STEAM_CONTROL_DECLARATION_DRAW_START_FEED_WORD,
+        STEAM_CONTROL_DECLARATION_FEED_CEILING_WORD,
+        STEAM_CONTROL_DECLARATION_FEED_RISE_LIMIT_WORD,
+        STEAM_CONTROL_DECLARATION_SUPERHEAT_SETPOINT_WORD,
         STEAM_CONTROL_DECLARATION_READY_GAIN_WORD,
         STEAM_CONTROL_DECLARATION_READY_INTEGRAL_GAIN_WORD,
-        STEAM_CONTROL_DECLARATION_DRAW_GAIN_WORD,
-        STEAM_CONTROL_DECLARATION_DRAW_INTEGRAL_GAIN_WORD,
+        STEAM_CONTROL_DECLARATION_SUPERHEAT_GAIN_WORD,
+        STEAM_CONTROL_DECLARATION_SUPERHEAT_INTEGRAL_GAIN_WORD,
+        STEAM_CONTROL_DECLARATION_FEED_GAIN_WORD,
+        STEAM_CONTROL_DECLARATION_FEED_INTEGRAL_GAIN_WORD,
         STEAM_CONTROL_DECLARATION_FEED_LOAD_GAIN_WORD,
         STEAM_CONTROL_DECLARATION_STANDING_LOAD_WORD,
     };
@@ -1002,43 +1070,47 @@ static void test_the_declaration_grammar_refuses_what_it_must(void)
 
 /* --- Holding the band, and coming back afterwards -------------------------- */
 
-/// SOL-SIM-STEAM-BAND-SUSTAINED.C5: Measured pressure stays within the
-/// declared band for the whole of a draw, within the declared model-error
-/// tolerance.
-///
-/// SOL-SIM-STEAM-BAND-SUSTAINED.C9: The host harness closes the loop through a
-/// truth plant the control law does not share.
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C7: The feed holds pressure and heater power
+/// holds a declared superheat setpoint, and no pressure loop drives the heater.
 ///
 /// Four durations from a brief pull to an extended one, each against three
-/// machines: the description's own figure for how far a draw drags the steam
-/// path down, and that figure at both ends of the error the description itself
-/// declares on it. That coefficient is the loosest figure thermoblock.params
-/// carries -- a first-principles guess against a path nobody has instrumented
-/// -- so a run at one assumed-exact value would be testing the guess rather
-/// than the loop, which is what this criterion's own text refuses.
+/// machines: the description's own restriction coefficient and that figure at
+/// both ends of the error the description declares on it. That coefficient is
+/// what the orifice law turns the steam made into pressure through, and it is
+/// among the loosest figures thermoblock.params carries, so a run at one
+/// assumed-exact value would be testing the guess rather than the loop. On
+/// every one the pressure is in the declared band from the first steam actually
+/// delivered to the end of the draw.
 ///
-/// The nominal figure is read back out of the model rather than typed here,
-/// and the perturbed descriptions go back through the same loader, so a
-/// machine this run is closed against is one the structure admits.
-static void test_pressure_holds_the_band_for_draws_of_every_duration_across_the_declared_error(void)
+/// On the description's own machine the superheat at the modelled outlet is at
+/// or above the declared setpoint on every step that made steam, and the law's
+/// own estimate of it, which it reads nothing from the truth plant to form, is
+/// the least the declared error admits: never above the plant's figure, and
+/// within that error of it.
+static void test_pressure_and_superheat_hold_for_draws_of_every_duration(void)
 {
     static const unsigned DURATIONS[] = {3u, 10u, 30u, 60u};
     float assumed_error = 0.0f;
 
     TEST_ASSERT_TRUE_MESSAGE(
-        plant_parameter_budget_for(&budget, SAG_COEFFICIENT, &assumed_error),
+        plant_parameter_budget_for(&budget, RESTRICTION_COEFFICIENT, &assumed_error),
         "the description declares no error on the coefficient this criterion is tested across");
     TEST_ASSERT_TRUE_MESSAGE(assumed_error > 0.0f,
                              "the description declares that coefficient exact, which is not what "
                              "its own account says");
 
     const float FACTORS[] = {1.0f - assumed_error, 1.0f, 1.0f + assumed_error};
+    const float setpoint_k = (float)declaration.superheat_setpoint_milli_k / 1000.0f;
+    float outlet_error = 0.0f;
+    TEST_ASSERT_TRUE(
+        plant_parameter_budget_for(&budget, "steam.outlet_drop_k_s_per_ml", &outlet_error));
 
     for (size_t corner = 0u; corner < sizeof(FACTORS) / sizeof(FACTORS[0]); corner++) {
-        const plant_parameters_t machine = machine_with_scaled(SAG_COEFFICIENT, FACTORS[corner]);
+        const plant_parameters_t machine =
+            machine_with_scaled(RESTRICTION_COEFFICIENT, FACTORS[corner]);
 
         for (size_t which = 0u; which < sizeof(DURATIONS) / sizeof(DURATIONS[0]); which++) {
-            char message[128];
+            char message[160];
             int32_t worst = 0;
 
             bring_the_loop_up(&machine, &declaration, ready_target_c(&declaration));
@@ -1047,305 +1119,288 @@ static void test_pressure_holds_the_band_for_draws_of_every_duration_across_the_
 
             const bool held = in_band_from_first_delivery(&declaration, &worst);
             (void)snprintf(message, sizeof(message),
-                           "a %u second draw at %.2f times the declared sag left the band at %d "
-                           "milli-bar",
+                           "a %u second draw at %.2f times the declared restriction left the "
+                           "band at %d milli-bar",
                            DURATIONS[which], (double)FACTORS[corner], worst);
             TEST_ASSERT_TRUE_MESSAGE(held, message);
+
+            if (FACTORS[corner] != 1.0f) {
+                continue;
+            }
+            for (size_t at = 0u; at < sample_count; at++) {
+                if (samples[at].feed_permille == 0u) {
+                    continue;
+                }
+                (void)snprintf(message, sizeof(message),
+                               "a %u second draw left the outlet at %.3f K of superheat at %u ms, "
+                               "below the %.3f K setpoint",
+                               DURATIONS[which], (double)samples[at].superheat_k,
+                               (unsigned)samples[at].at_millis, (double)setpoint_k);
+                TEST_ASSERT_TRUE_MESSAGE(samples[at].superheat_k >= setpoint_k, message);
+                TEST_ASSERT_TRUE_MESSAGE(samples[at].estimated,
+                                         "a fed step formed no estimate of the superheat");
+                /*
+                 * The estimate is read against the pressure the law was handed,
+                 * which is the step before's, and the plant's after the step; so
+                 * it is judged from the second fed step on, once the feed is
+                 * steady enough that the two pressures agree to within the
+                 * actuator's resolution.
+                 */
+                if (at > 0u && samples[at - 1u].feed_permille == samples[at].feed_permille) {
+                    const float made_ml_per_s = nominal_of("steam.feed_flow_ml_per_s") *
+                                                (float)samples[at].feed_permille / 1000.0f;
+                    const float admitted_k =
+                        outlet_error * nominal_of("steam.outlet_drop_k_s_per_ml") * made_ml_per_s;
+
+                    TEST_ASSERT_TRUE_MESSAGE(samples[at].estimate_k <= samples[at].superheat_k + 0.01f,
+                                             "the law's estimate claimed more superheat than the "
+                                             "plant's outlet carries");
+                    TEST_ASSERT_FLOAT_WITHIN_MESSAGE(0.05f, samples[at].superheat_k - admitted_k,
+                                                     samples[at].estimate_k,
+                                                     "the law's estimate is not the plant's "
+                                                     "outlet superheat taken at the cool end of "
+                                                     "the declared outlet error");
+                }
+            }
         }
     }
 }
 
-/// SOL-SIM-STEAM-BAND-SUSTAINED.C6: Once engaged, feed is commanded at a
-/// declared sustainable rate, not a rate requiring an unobservable demand
-/// reading.
-///
-/// Several different demands are put behind the same open wand and the
-/// commanded feed, sampled only after the rise has completed, is required to
-/// be the declared rate in every one of them. The demands are all above that
-/// rate deliberately: what the criterion is about is that no law here varies
-/// feed with how much is being asked for, because the microswitch reports that
-/// the wand is turned and nothing else, so there is nothing to vary it with.
-static void test_settled_feed_is_the_declared_rate_whatever_demand_is(void)
+/*
+ * Whether every step of the recorded draw kept the feed at or under `ceiling`
+ * and, above the draw-start level, rising no faster than `rise` permille a
+ * second; the first offending step's position, or the sample count when none.
+ *
+ * A level is the rise-limited figure rounded to the actuator's resolution, so a
+ * step may show one permille more than the limit alone admits.
+ */
+static size_t first_feed_out_of_bounds(const steam_control_declaration_t *figures)
 {
-    static const float DEMANDS[] = {0.25f, 1.0f, 5.0f};
+    const float per_step = (float)figures->feed_rise_limit_permille_per_s *
+                           ((float)STEP_INTERVAL_MS / 1000.0f);
+
+    for (size_t at = 0u; at < sample_count; at++) {
+        const uint16_t level = samples[at].feed_permille;
+        if (level > (uint16_t)figures->feed_ceiling_permille) {
+            return at;
+        }
+        if (at == 0u || level <= (uint16_t)figures->draw_start_feed_permille) {
+            continue;
+        }
+        const uint16_t previous = samples[at - 1u].feed_permille;
+        const float from = (float)(previous > (uint16_t)figures->draw_start_feed_permille
+                                       ? previous
+                                       : (uint16_t)figures->draw_start_feed_permille);
+        if ((float)level > from + per_step + 1.0f) {
+            return at;
+        }
+    }
+    return sample_count;
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C10: Feed is bounded by a declared ceiling
+/// and a declared rise limit, both re-derived from the orifice law, and quantity
+/// yields before quality.
+///
+/// Demand is raised across several values behind the same open wand: one well
+/// under what the start level feeds, which leaves the path short of pressure for
+/// the whole draw and drives the loop to its ceiling; one near it; one well above
+/// it; and one far above anything the block could boil. On every one the feed is
+/// never above the declared ceiling and never rises faster than the declared
+/// limit above the start level, and the draw that leaves the loop wanting more
+/// reaches the ceiling and stays there rather than stopping short of it.
+static void test_feed_never_exceeds_its_ceiling_or_rises_faster_than_its_limit(void)
+{
+    static const float DEMANDS[] = {0.05f, 0.2f, 1.0f, 5.0f};
 
     for (size_t at = 0u; at < sizeof(DEMANDS) / sizeof(DEMANDS[0]); at++) {
-        char message[96];
+        char message[160];
 
         bring_the_loop_up(&parameters, &declaration, ready_target_c(&declaration));
         hold_ready_for(SETTLE_SECONDS);
         draw_for(20u, DEMANDS[at]);
 
-        const uint32_t settled_at = (uint32_t)declaration.margin_interval_millis +
-                                    (uint32_t)declaration.feed_rise_millis;
-        size_t settled = 0u;
-        for (size_t step = 0u; step < sample_count; step++) {
-            if (samples[step].at_millis >= settled_at) {
-                settled++;
-                (void)snprintf(message, sizeof(message),
-                               "settled feed followed a demand of %.2f ml/s", (double)DEMANDS[at]);
-                TEST_ASSERT_EQUAL_UINT16_MESSAGE((uint16_t)declaration.sustainable_feed_permille,
-                                                 samples[step].feed_permille, message);
+        TEST_ASSERT_EQUAL_UINT16_MESSAGE((uint16_t)declaration.draw_start_feed_permille,
+                                         samples[0].feed_permille,
+                                         "a draw opened at ready was not fed at the start level on "
+                                         "its first step");
+        const size_t offending = first_feed_out_of_bounds(&declaration);
+        (void)snprintf(message, sizeof(message),
+                       "at a demand of %.2f ml/s the feed reached %u permille at %u ms, outside "
+                       "its ceiling or its rise limit",
+                       (double)DEMANDS[at],
+                       offending < sample_count ? samples[offending].feed_permille : 0u,
+                       offending < sample_count ? (unsigned)samples[offending].at_millis : 0u);
+        TEST_ASSERT_TRUE_MESSAGE(offending == sample_count, message);
+    }
+
+    /* The starved-of-pressure draw is the one that drives the loop to its limit. */
+    bring_the_loop_up(&parameters, &declaration, ready_target_c(&declaration));
+    hold_ready_for(SETTLE_SECONDS);
+    draw_for(20u, DEMANDS[0]);
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE((uint16_t)declaration.feed_ceiling_permille,
+                                     samples[sample_count - 1u].feed_permille,
+                                     "a draw that never reached the band did not take the feed to "
+                                     "its ceiling");
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C10: Feed is bounded by a declared ceiling
+/// and a declared rise limit, both re-derived from the orifice law, and quantity
+/// yields before quality.
+///
+/// The ceiling, the rise limit and the start level are read as data. The same
+/// pressure-starved draw is run under the shipped declaration and under one
+/// whose ceiling is lower, whose rise limit is slower and whose start level is
+/// different, with nothing rebuilt: each run's first feed is its own declared
+/// start level, it settles at its own declared ceiling, and the slower limit
+/// takes longer to get there.
+static void test_the_feed_ceiling_rise_limit_and_start_level_are_read_as_data(void)
+{
+    steam_control_declaration_t altered = declaration;
+    altered.feed_ceiling_permille = declaration.feed_ceiling_permille - 30;
+    altered.feed_rise_limit_permille_per_s = declaration.feed_rise_limit_permille_per_s / 2;
+    altered.draw_start_feed_permille = declaration.draw_start_feed_permille - 10;
+    const steam_control_declaration_t figures[2] = {declaration, re_declared(&altered)};
+    uint32_t reached_at[2] = {0u, 0u};
+
+    for (size_t run = 0u; run < 2u; run++) {
+        bring_the_loop_up(&parameters, &figures[run], ready_target_c(&figures[run]));
+        hold_ready_for(SETTLE_SECONDS);
+        draw_for(30u, 0.05f);
+
+        TEST_ASSERT_EQUAL_UINT16((uint16_t)figures[run].draw_start_feed_permille,
+                                 samples[0].feed_permille);
+        TEST_ASSERT_EQUAL_UINT16((uint16_t)figures[run].feed_ceiling_permille,
+                                 samples[sample_count - 1u].feed_permille);
+        TEST_ASSERT_EQUAL_size_t(sample_count, first_feed_out_of_bounds(&figures[run]));
+
+        reached_at[run] = samples[sample_count - 1u].at_millis;
+        for (size_t at = 0u; at < sample_count; at++) {
+            if (samples[at].feed_permille == (uint16_t)figures[run].feed_ceiling_permille) {
+                reached_at[run] = samples[at].at_millis;
+                break;
             }
         }
-        TEST_ASSERT_TRUE_MESSAGE(settled > 0u, "the draw never reached its settled rate");
+    }
+
+    TEST_ASSERT_TRUE_MESSAGE(reached_at[1] > reached_at[0],
+                             "half the rise limit reached its ceiling no later, so the limit is not "
+                             "being read");
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C10: Feed is bounded by a declared ceiling
+/// and a declared rise limit, both re-derived from the orifice law, and quantity
+/// yields before quality.
+///
+/// A machine whose restriction is far more open than the description admits
+/// needs more feed than the ceiling allows to hold the middle of the band, so
+/// the ceiling binds. The loop gives up pressure before it gives up quantity:
+/// the feed is held at the ceiling, so the steam made does not fall back, while
+/// the pressure settles below the middle of the band it was asked to hold. And
+/// quantity is what yielded, not quality: the steam is still made dry, with the
+/// outlet above saturation on every step.
+static void test_when_the_ceiling_binds_pressure_yields_before_quantity_or_quality(void)
+{
+    const plant_parameters_t machine = machine_with_scaled(RESTRICTION_COEFFICIENT, 0.15f);
+
+    bring_the_loop_up(&machine, &declaration, ready_target_c(&declaration));
+    hold_ready_for(SETTLE_SECONDS);
+    draw_for(30u, 5.0f);
+
+    const size_t settled_from = sample_count / 2u;
+    for (size_t at = settled_from; at < sample_count; at++) {
+        TEST_ASSERT_EQUAL_UINT16_MESSAGE((uint16_t)declaration.feed_ceiling_permille,
+                                         samples[at].feed_permille,
+                                         "the feed fell back from the ceiling, so quantity was "
+                                         "given up while pressure was still short");
+        TEST_ASSERT_TRUE_MESSAGE(samples[at].pressure_milli_bar < band_middle(&declaration),
+                                 "the ceiling did not bind, so this run says nothing about what "
+                                 "the loop gives up when it does");
+        TEST_ASSERT_TRUE_MESSAGE(samples[at].superheat_k > 0.0f,
+                                 "the steam made at the ceiling left the outlet wet, so quality "
+                                 "was given up");
     }
 }
 
-/// SOL-SIM-STEAM-BAND-SUSTAINED.C11: Delivered character stays in band because
-/// feed is never raised to chase demand beyond the declared sustainable rate.
-///
-/// A demand far beyond anything the block could sustain is put behind the
-/// wand, and two things are required of the run: pressure stays inside the
-/// declared band throughout, and the rate actually delivered does not climb to
-/// meet the larger demand.
-///
-/// That second half is asserted by comparing two runs whose demands differ by
-/// a factor of twenty and requiring their pressure traces to be identical step
-/// for step. The plant charges its pressure relation against the steam it
-/// actually made, which is the lower of what was asked for and what feed
-/// replaced -- so a delivered rate that had climbed with the demand would have
-/// dragged the path down further and the two traces would part. That they do
-/// not is the seam-level statement that nothing downstream of the cap ever saw
-/// the larger demand, which reading the commanded level alone could not
-/// establish.
-static void test_feed_is_never_raised_to_chase_demand_beyond_the_sustainable_rate(void)
+
+
+/*
+ * Bring the loop up against `machine` with the shut block's casting where its
+ * trusted pressure reads `pressure_milli_bar`, found by narrowing on the plant
+ * itself, so a draw can be opened at exactly a chosen pressure.
+ */
+static void bring_the_loop_up_holding(const plant_parameters_t *machine, int32_t pressure_milli_bar)
 {
-    static const float DEMANDS[] = {0.25f, 5.0f};
-    static int32_t trace[2][DRAW_SAMPLE_MAX];
-    size_t recorded = 0u;
+    float low_c = 100.0f;
+    float high_c = 150.0f;
+
+    for (int narrowing = 0; narrowing < 40; narrowing++) {
+        const float middle_c = 0.5f * (low_c + high_c);
+        bring_the_loop_up(machine, &declaration, middle_c);
+        if (truth_pressure_milli_bar() < pressure_milli_bar) {
+            low_c = middle_c;
+        } else {
+            high_c = middle_c;
+        }
+    }
+    bring_the_loop_up(machine, &declaration, high_c);
+    if (truth_pressure_milli_bar() != pressure_milli_bar) {
+        bring_the_loop_up(machine, &declaration, low_c);
+    }
+    TEST_ASSERT_EQUAL_INT32_MESSAGE(pressure_milli_bar, truth_pressure_milli_bar(),
+                                    "the shut block could not be put at the pressure asked for");
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C12: A wand opened at the ready pressure is
+/// not starved by the feed-withhold gate under the orifice law.
+///
+/// The truth plant's shut block is put exactly at the declared ready pressure
+/// and the wand is opened on the very next step. The draw is fed from its first
+/// step at the declared draw-start level, and holds the band from the first
+/// steam actually delivered to the end -- rather than collapsing to nothing
+/// because, under the orifice law, the pressure the draw itself makes sits
+/// below the ready threshold on every one of its steps.
+///
+/// The same is then asked one milli-bar below the threshold, and that draw is
+/// starved for the whole of it: no feed on any step, so no steam and no
+/// pressure, however long the wand is held and however hot the block becomes.
+static void test_a_wand_opened_at_ready_is_fed_and_one_just_below_is_starved(void)
+{
     int32_t worst = 0;
 
-    for (size_t run = 0u; run < sizeof(DEMANDS) / sizeof(DEMANDS[0]); run++) {
-        bring_the_loop_up(&parameters, &declaration, ready_target_c(&declaration));
-        hold_ready_for(SETTLE_SECONDS);
-        draw_for(30u, DEMANDS[run]);
-
-        TEST_ASSERT_TRUE_MESSAGE(in_band_from_first_delivery(&declaration, &worst),
-                                 "a draw beyond what the block can sustain left the band, so "
-                                 "quality was given up rather than quantity");
-
-        const uint32_t settled_at = (uint32_t)declaration.margin_interval_millis +
-                                    (uint32_t)declaration.feed_rise_millis;
-        for (size_t step = 0u; step < sample_count; step++) {
-            if (samples[step].at_millis >= settled_at) {
-                TEST_ASSERT_TRUE_MESSAGE(
-                    samples[step].feed_permille <=
-                        (uint16_t)declaration.sustainable_feed_permille,
-                    "settled feed was commanded past the declared sustainable rate");
-            }
-            trace[run][step] = samples[step].pressure_milli_bar;
-        }
-        recorded = sample_count;
-    }
-
-    for (size_t step = 0u; step < recorded; step++) {
-        TEST_ASSERT_EQUAL_INT32_MESSAGE(trace[0][step], trace[1][step],
-                                        "a demand twenty times larger moved the path, so the rate "
-                                        "actually delivered climbed to meet it");
-    }
-
-    /*
-     * A third arm, below the cap rather than above it, which is what keeps
-     * the two identical traces above from being explicable by a plant that
-     * ignores demand altogether. Both arms above sit above the declared
-     * sustainable rate, so the rate delivered is the cap in each and the
-     * traces would also match on a model that never read the demand at all.
-     * A demand under the cap is the case where the demand is what binds, and
-     * the path is required to differ -- less steam made, so less pressure
-     * given up.
-     */
-    const float under_the_cap = 0.02f;
-    bring_the_loop_up(&parameters, &declaration, ready_target_c(&declaration));
-    hold_ready_for(SETTLE_SECONDS);
-    draw_for(30u, under_the_cap);
-
-    bool differed = false;
-    for (size_t step = 0u; step < recorded && step < sample_count; step++) {
-        differed = differed || samples[step].pressure_milli_bar != trace[0][step];
-    }
-    TEST_ASSERT_TRUE_MESSAGE(differed,
-                             "a demand below the declared sustainable rate produced the same path "
-                             "as one far above it, so nothing downstream reads the demand and the "
-                             "identical traces above establish nothing about the cap");
-}
-
-/// SOL-SIM-STEAM-BAND-SUSTAINED.C8: Heater leads and feed lags by a declared
-/// interval on demand starting, so delivered steam starts in character.
-///
-/// Two arms differing in one declared figure. The feed's own rise duration is
-/// held fixed at its shipped, nonzero value in both, so that neither arm can
-/// be explained by the rise instead of by the interval under test -- which is
-/// what the criterion's own text requires and is the whole reason the two
-/// intervals have separate tests.
-///
-/// The block starts both arms held correctly at the declared ready target,
-/// which is where the criterion bites: ready means a draw will not be starved,
-/// and it sits below the band the delivered steam has to be inside. With the
-/// margin-building interval present the element alone carries the block into
-/// the band before any steam is made, and the first steam delivered is in
-/// character. With it zeroed, feed begins replacing water immediately and the
-/// first steam is made out of a block that had not yet earned the margin --
-/// out of band, which is exactly the wet start the sequencing exists to
-/// prevent.
-///
-/// The heater being at its ceiling from the first step of the draw is asserted
-/// alongside, because "the heater leads" is a claim about the heater and not
-/// only about the feed: an arm that merely delayed the feed without driving
-/// the element would take longer to reach the band and would pass a test that
-/// looked at the feed alone.
-static void test_the_heater_leads_and_the_feed_lags_by_the_declared_interval(void)
-{
-    bring_the_loop_up(&parameters, &declaration, ready_target_c(&declaration));
-    hold_ready_for(SETTLE_SECONDS);
+    bring_the_loop_up_holding(&parameters, declaration.ready_pressure_milli_bar);
     draw_for(20u, 1.0f);
 
-    TEST_ASSERT_EQUAL_UINT16_MESSAGE((uint16_t)ACTUATION_FULL_SCALE, samples[0].heater_permille,
-                                     "the element was not at its ceiling on the first step of the "
-                                     "draw, so the heater does not lead");
-    TEST_ASSERT_EQUAL_UINT16_MESSAGE(0u, samples[0].feed_permille,
-                                     "feed engaged on the first step of the draw, so it does not "
-                                     "lag");
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE((uint16_t)declaration.draw_start_feed_permille,
+                                     samples[0].feed_permille,
+                                     "a wand opened at the ready pressure was not fed at the "
+                                     "draw-start level on its first step");
+    TEST_ASSERT_TRUE_MESSAGE(in_band_from_first_delivery(&declaration, &worst),
+                             "a draw opened at the ready pressure did not hold the band from "
+                             "its first steam");
+    bool below_threshold_while_fed = false;
+    for (size_t at = 0u; at < sample_count; at++) {
+        TEST_ASSERT_TRUE_MESSAGE(samples[at].feed_permille > 0u,
+                                 "a draw opened at the ready pressure was starved part way through");
+        below_threshold_while_fed =
+            below_threshold_while_fed ||
+            samples[at].pressure_milli_bar < declaration.ready_pressure_milli_bar;
+    }
+    TEST_ASSERT_TRUE_MESSAGE(below_threshold_while_fed,
+                             "the draw's own pressure never sat below the ready threshold, so "
+                             "this run says nothing about a gate judging it instantaneously");
 
-    /*
-     * That the element leads is asserted a second time, against a draw
-     * beginning with the path already in the middle of its band. The
-     * assertion just above cannot tell leading apart from ordinary tracking:
-     * a draw beginning from a correctly held ready state starts most of a
-     * band-width below the draw target, and the proportional term alone
-     * saturates the element there without any sequencing doing it -- so that
-     * assertion would go on passing with the sequencing removed. With the
-     * error at nothing the tracking law commands little more than the
-     * declared standing load, and a ceiling can only have come from the
-     * heater being made to lead.
-     */
-    steam_control_state_t leading_only;
-    const int32_t at_draw_target = (declaration.draw_pressure_floor_milli_bar +
-                                    declaration.draw_pressure_ceiling_milli_bar) /
-                                   2;
-
-    hw_sim_reset();
-    TEST_ASSERT_TRUE(steam_control_init(&leading_only, &limits, &declaration, &parameters, &budget));
-    TEST_ASSERT_EQUAL_UINT16_MESSAGE(
-        (uint16_t)ACTUATION_FULL_SCALE,
-        step_with(&leading_only, true, at_draw_target, declaration.ready_temperature_milli_c),
-        "the element was not driven to its ceiling on a draw beginning already in band, so what "
-        "saturates it on an ordinary draw is the tracking error rather than the heater leading");
-
-    const sample_t *const with_margin = first_delivery();
-    TEST_ASSERT_NOT_NULL_MESSAGE(with_margin, "the draw never fed anything");
-    TEST_ASSERT_TRUE_MESSAGE(
-        with_margin->at_millis >= (uint32_t)declaration.margin_interval_millis,
-        "feed engaged before the declared margin-building interval had elapsed");
-    TEST_ASSERT_TRUE_MESSAGE(
-        with_margin->pressure_milli_bar >= declaration.draw_pressure_floor_milli_bar &&
-            with_margin->pressure_milli_bar <= declaration.draw_pressure_ceiling_milli_bar,
-        "the first steam delivered with the margin-building interval present was out of band");
-
-    steam_control_declaration_t altered = declaration;
-    altered.margin_interval_millis = 0;
-    const steam_control_declaration_t no_margin = re_declared(&altered);
-    TEST_ASSERT_EQUAL_INT32_MESSAGE(declaration.feed_rise_millis, no_margin.feed_rise_millis,
-                                    "the arms differ in more than the interval under test");
-    TEST_ASSERT_TRUE_MESSAGE(no_margin.feed_rise_millis > 0,
-                             "the feed's own rise is not held nonzero in both arms");
-
-    bring_the_loop_up(&parameters, &no_margin, ready_target_c(&no_margin));
-    hold_ready_for(SETTLE_SECONDS);
+    bring_the_loop_up_holding(&parameters, declaration.ready_pressure_milli_bar - 1);
     draw_for(20u, 1.0f);
-
-    const sample_t *const without_margin = first_delivery();
-    TEST_ASSERT_NOT_NULL_MESSAGE(without_margin, "the draw never fed anything");
-    TEST_ASSERT_TRUE_MESSAGE(
-        without_margin->pressure_milli_bar < declaration.draw_pressure_floor_milli_bar,
-        "the first steam delivered with the margin-building interval zeroed was still in band, so "
-        "the interval is not what carries the block into it");
+    for (size_t at = 0u; at < sample_count; at++) {
+        TEST_ASSERT_EQUAL_UINT16_MESSAGE(0u, samples[at].feed_permille,
+                                         "a wand opened a milli-bar below the ready pressure was "
+                                         "fed");
+        TEST_ASSERT_EQUAL_INT32(0, samples[at].pressure_milli_bar);
+    }
 }
 
-/// SOL-SIM-STEAM-BAND-SUSTAINED.C12: Once engaged, feed rises to its
-/// sustainable rate over a declared interval rather than stepping.
-///
-/// Two arms differing in one declared figure, with the margin-building
-/// interval held fixed at its shipped, nonzero value in both -- so that
-/// neither arm can be explained by the delay before feed starts rather than by
-/// the shape of what feed does once it has. This is the mirror of the
-/// margin-building interval's own test, and the pair is deliberate: each holds
-/// the other's interval nonzero so that neither is exercised as if it alone
-/// explained a good start.
-///
-/// What separates the arms is the first control step past engagement. With the
-/// rise zeroed, feed is at the full declared rate on that very step. With the
-/// rise present it is not, and it goes on climbing afterwards without ever
-/// passing the declared rate.
-static void test_engaged_feed_rises_over_the_declared_interval_rather_than_stepping(void)
-{
-    steam_control_declaration_t altered = declaration;
-    altered.feed_rise_millis = 0;
-    const steam_control_declaration_t no_rise = re_declared(&altered);
 
-    TEST_ASSERT_EQUAL_INT32_MESSAGE(declaration.margin_interval_millis,
-                                    no_rise.margin_interval_millis,
-                                    "the arms differ in more than the interval under test");
-    TEST_ASSERT_TRUE_MESSAGE(no_rise.margin_interval_millis > 0,
-                             "the margin-building interval is not held nonzero in both arms");
-
-    /* The step feed is first allowed to engage on, which both arms share. */
-    const uint32_t engaged_at = (uint32_t)declaration.margin_interval_millis;
-
-    bring_the_loop_up(&parameters, &no_rise, ready_target_c(&no_rise));
-    hold_ready_for(SETTLE_SECONDS);
-    draw_for(10u, 1.0f);
-
-    size_t at = 0u;
-    while (at < sample_count && samples[at].at_millis < engaged_at) {
-        at++;
-    }
-    TEST_ASSERT_TRUE_MESSAGE(at < sample_count, "the draw ended before feed could engage");
-    TEST_ASSERT_EQUAL_UINT16_MESSAGE((uint16_t)no_rise.sustainable_feed_permille,
-                                     samples[at].feed_permille,
-                                     "a rise declared as nothing did not reach the full rate on "
-                                     "the first step past engagement");
-
-    bring_the_loop_up(&parameters, &declaration, ready_target_c(&declaration));
-    hold_ready_for(SETTLE_SECONDS);
-    draw_for(10u, 1.0f);
-
-    at = 0u;
-    while (at < sample_count && samples[at].at_millis < engaged_at) {
-        at++;
-    }
-    TEST_ASSERT_TRUE_MESSAGE(at < sample_count, "the draw ended before feed could engage");
-    TEST_ASSERT_TRUE_MESSAGE(samples[at].feed_permille <
-                                 (uint16_t)declaration.sustainable_feed_permille,
-                             "the declared rise reached the full rate on the first step past "
-                             "engagement, so feed is stepping rather than rising");
-
-    /*
-     * And it is a rise rather than a delay followed by a step: the level is
-     * required to be strictly increasing somewhere inside the declared
-     * interval and to have arrived by the end of it, without ever exceeding
-     * the declared rate.
-     */
-    bool climbed = false;
-    uint16_t previous = samples[at].feed_permille;
-    while (at < sample_count &&
-           samples[at].at_millis < engaged_at + (uint32_t)declaration.feed_rise_millis) {
-        TEST_ASSERT_TRUE_MESSAGE(samples[at].feed_permille >= previous,
-                                 "the rise went backwards");
-        TEST_ASSERT_TRUE_MESSAGE(samples[at].feed_permille <=
-                                     (uint16_t)declaration.sustainable_feed_permille,
-                                 "the rise overshot the declared rate");
-        climbed = climbed || samples[at].feed_permille > previous;
-        previous = samples[at].feed_permille;
-        at++;
-    }
-    TEST_ASSERT_TRUE_MESSAGE(climbed, "feed never climbed during the declared rise interval");
-    TEST_ASSERT_TRUE_MESSAGE(at < sample_count, "the draw ended before the rise completed");
-    TEST_ASSERT_EQUAL_UINT16_MESSAGE((uint16_t)declaration.sustainable_feed_permille,
-                                     samples[at].feed_permille,
-                                     "feed had not reached the declared rate by the end of the "
-                                     "declared rise interval");
-}
 
 /*
  * Run the loop with the wand shut until the block is within the suite's
@@ -1368,92 +1423,89 @@ static uint32_t millis_to_reach_ready(const steam_control_declaration_t *figures
     return bound;
 }
 
-/// SOL-SIM-STEAM-BAND-SUSTAINED.C7: Recovery after a draw is the same
-/// ready-holding control continuing, not a separate mechanism.
-///
-/// One instance of the law, brought up once, is asked to do three things in
-/// sequence with nothing reinitialised and no second entry point called
-/// between them: reach the ready target from a cold machine, hold a draw, and
-/// then reach the ready target again from wherever that draw left the block.
-/// That the second arrival happens at all is the criterion; that it happens
-/// through the same steps as the first is what makes it the ready-holding
-/// behaviour continuing rather than a recovery mechanism of its own. Feed is
-/// asserted to be cut on the step the wand shuts rather than trailing off.
-///
-/// A finding this test records rather than assumes: on this plant model, with
-/// feed capped at the declared sustainable rate, a draw leaves the block
-/// *above* its ready target rather than below it. Holding the band while the
-/// path's deficit accumulates is done by raising the block's temperature, and
-/// the readiness policy cuts feed the moment the path falls below the ready
-/// threshold, so a draw cannot run the block down. The criterion's own text
-/// anticipates a draw that drags the temperature down, so the third arm below
-/// puts the block there directly -- a disturbance to the machine and to
-/// nothing else -- and requires the same law to carry it back up. Both
-/// directions are covered because which one a real machine shows is a bench
-/// question this model cannot settle.
-static void test_recovery_is_the_ready_holding_law_continuing(void)
+/*
+ * How long the block stays within the suite's tolerance of the ready target
+ * from now, in seconds, up to `seconds`: the loop runs with the wand shut and
+ * the first step outside the tolerance ends the count.
+ */
+static unsigned seconds_held_at_ready(const steam_control_declaration_t *figures, unsigned seconds)
 {
-    /*
-     * A genuinely cold machine: the block is stood up at the ambient the
-     * description declares the machine sits in, read out of that description
-     * rather than assumed, and well below the ready target. Reading the
-     * starting temperature off the truth plant instead would take whatever the
-     * previous test in this file happened to leave behind -- which is warm, and
-     * would make this arm a cool-down that passes without the loop heating
-     * anything.
-     */
+    wand_open = false;
+    demand_ml_per_s = 0.0f;
+    for (unsigned step = 0u; step < seconds * STEPS_PER_SECOND; step++) {
+        (void)closed_loop_step();
+        if (fabsf(truth_quantity(PLANT_QUANTITY_STEAM_TEMPERATURE_C) - ready_target_c(figures)) >
+            READY_TOLERANCE_C) {
+            return step / STEPS_PER_SECOND;
+        }
+    }
+    return seconds;
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C11: After a draw ends the casting returns to
+/// the ready state unattended by the same heater control.
+///
+/// One instance of the law, brought up once, is asked to reach the ready target
+/// from a cold machine, and then, for each of several draw durations in turn,
+/// to hold a draw, have the wand shut on it, and carry the casting back into the
+/// ready band and keep it there for a minute -- with nothing reinitialised, no
+/// second entry point called and nothing done by an operator but shutting the
+/// wand. That the arrival happens through the same steps that brought the block
+/// up from cold is what makes it the idle control continuing rather than a
+/// recovery mechanism of its own. Feed is cut on the step the wand shuts.
+///
+/// A law whose idle control were disabled would leave the block to cool past the
+/// ready band after any draw: it would never arrive, or would not stay.
+static void test_the_casting_returns_to_ready_after_draws_of_every_duration(void)
+{
+    static const unsigned DURATIONS[] = {3u, 10u, 30u, 60u};
     const float ambient_c = nominal_of("ambient_temperature_c");
+
     TEST_ASSERT_TRUE_MESSAGE(ambient_c < ready_target_c(&declaration) - 50.0f,
                              "the declared ambient is not a cold start for this target");
-
     bring_the_loop_up(&parameters, &declaration, ambient_c);
 
     const uint32_t from_cold = millis_to_reach_ready(&declaration);
-    TEST_ASSERT_TRUE_MESSAGE(from_cold < RECOVERY_BOUND_SECONDS * 1000u,
-                             "the loop never reached the ready target from a cold start");
-    TEST_ASSERT_TRUE_MESSAGE(from_cold > 0u,
-                             "the block was already at its target, so nothing was heated");
+    TEST_ASSERT_TRUE_MESSAGE(from_cold > 0u && from_cold < RECOVERY_BOUND_SECONDS * 1000u,
+                             "the loop never brought a cold block to the ready target");
 
-    hold_ready_for(SETTLE_SECONDS);
-    draw_for(60u, 1.0f);
+    for (size_t which = 0u; which < sizeof(DURATIONS) / sizeof(DURATIONS[0]); which++) {
+        char message[128];
+
+        hold_ready_for(SETTLE_SECONDS);
+        draw_for(DURATIONS[which], 1.0f);
+        TEST_ASSERT_NOT_NULL_MESSAGE(first_delivery(), "the draw was never fed");
+
+        (void)closed_loop_step();
+        TEST_ASSERT_EQUAL_UINT16_MESSAGE(0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP),
+                                         "feed was still commanded on the step the wand shut");
+
+        const uint32_t back = millis_to_reach_ready(&declaration);
+        (void)snprintf(message, sizeof(message),
+                       "the casting did not return to the ready band after a %u second draw",
+                       DURATIONS[which]);
+        TEST_ASSERT_TRUE_MESSAGE(back < RECOVERY_BOUND_SECONDS * 1000u, message);
+
+        (void)snprintf(message, sizeof(message),
+                       "the casting did not stay in the ready band after a %u second draw",
+                       DURATIONS[which]);
+        TEST_ASSERT_EQUAL_UINT_MESSAGE(60u, seconds_held_at_ready(&declaration, 60u), message);
+    }
 
     /*
-     * The first step on which the wand reports shut, which is the step the
-     * criterion says feed is cut on. It is run here rather than folded into
-     * the draw above, because what the draw records is the draw.
-     */
-    (void)closed_loop_step();
-    TEST_ASSERT_EQUAL_UINT16_MESSAGE(
-        0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP),
-        "feed was still commanded on the step the wand shut");
-    const float after_draw = truth_quantity(PLANT_QUANTITY_STEAM_TEMPERATURE_C);
-    TEST_ASSERT_TRUE_MESSAGE(fabsf(after_draw - ready_target_c(&declaration)) > READY_TOLERANCE_C,
-                             "the draw left the block already at its target, so there is nothing "
-                             "for a recovery to do");
-
-    /* The same instance, continuing, carries it back. */
-    const uint32_t after = millis_to_reach_ready(&declaration);
-    TEST_ASSERT_TRUE_MESSAGE(after < RECOVERY_BOUND_SECONDS * 1000u,
-                             "the loop did not carry the block back to ready after a draw");
-
-    /*
-     * And from the other direction, reached by disturbing the machine alone.
-     * The law is not reinitialised and no operator does anything: the wand
-     * stays shut and the same steps go on running.
+     * And from below, reached by disturbing the machine alone: the wand stays
+     * shut and the same steps go on running.
      */
     TEST_ASSERT_TRUE(plant_model_set_state(&truth, PLANT_STATE_STEAM_TEMPERATURE_C, BELOW_READY_C));
-    TEST_ASSERT_TRUE_MESSAGE(BELOW_READY_C < ready_target_c(&declaration) - READY_TOLERANCE_C,
-                             "the disturbance did not put the block below its target");
-
-    const uint32_t from_below = millis_to_reach_ready(&declaration);
-    TEST_ASSERT_TRUE_MESSAGE(from_below < RECOVERY_BOUND_SECONDS * 1000u,
+    TEST_ASSERT_TRUE(BELOW_READY_C < ready_target_c(&declaration) - READY_TOLERANCE_C);
+    TEST_ASSERT_TRUE_MESSAGE(millis_to_reach_ready(&declaration) < RECOVERY_BOUND_SECONDS * 1000u,
                              "the loop did not carry a block left below its target back up");
 }
 
-/// SOL-SIM-STEAM-BAND-SUSTAINED.C7: Recovery after a draw is the same
-/// ready-holding control continuing, not a separate mechanism.
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C11: After a draw ends the casting returns to
+/// the ready state unattended by the same heater control.
 ///
-/// The recovery time asserted above is claimed across the error the
+/// The recovery asserted above is claimed across the error the
 /// description declares on the two coefficients that decide it -- the steam
 /// block's thermal mass and its loss to the room -- rather than at the nominal
 /// figures alone, because a bound established at nominal is a bound
@@ -1610,6 +1662,201 @@ static void test_intent_is_surrendered_at_the_limit_and_not_afterwards(void)
                              "conditional");
 }
 
+/*
+ * Hold a fed draw against the feed ceiling for `steps` steps -- a demand far
+ * under what the start level feeds, so the path never reaches the band and the
+ * pressure loop asks for more on every step -- then open the draw wide and
+ * report the trace of pressure that follows, from the step it is opened.
+ */
+static void pressure_after_holding_the_feed_at_its_ceiling(unsigned steps, int32_t *trace,
+                                                           size_t length, float *held_integral)
+{
+    bring_the_loop_up(&parameters, &declaration, ready_target_c(&declaration));
+    hold_ready_for(SETTLE_SECONDS);
+
+    wand_open = true;
+    demand_ml_per_s = 0.05f;
+    for (unsigned step = 0u; step < steps; step++) {
+        (void)closed_loop_step();
+    }
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE((uint16_t)declaration.feed_ceiling_permille,
+                                     hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP),
+                                     "the feed was not held at its ceiling at all");
+    *held_integral = loop.feed_integral_permille;
+
+    demand_ml_per_s = 5.0f;
+    for (size_t at = 0u; at < length; at++) {
+        (void)closed_loop_step();
+        trace[at] = truth_pressure_milli_bar();
+    }
+    wand_open = false;
+    demand_ml_per_s = 0.0f;
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C7: The feed holds pressure and heater power
+/// holds a declared superheat setpoint, and no pressure loop drives the heater.
+///
+/// The pressure loop withholds integration while its actuator is pushed past its
+/// limit. Held against the ceiling for one length of time and then for twice
+/// that, and then released into a draw it can hold, the pressure that follows
+/// the release is the same step for step: conditional integration accumulated
+/// nothing while the feed could rise no further, so the longer interval leaves
+/// no more behind it than the shorter. The integral is also read directly: what
+/// it held when the feed reached the ceiling is what it holds after.
+static void test_the_pressure_loop_accumulates_nothing_while_held_at_its_ceiling(void)
+{
+    static int32_t shorter[1000];
+    static int32_t longer[1000];
+    float held_short = 0.0f;
+    float held_long = 0.0f;
+
+    pressure_after_holding_the_feed_at_its_ceiling(1500u, shorter, 1000u, &held_short);
+    pressure_after_holding_the_feed_at_its_ceiling(3000u, longer, 1000u, &held_long);
+
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(held_short, held_long,
+                                    "twice as long against the ceiling left more intent behind");
+    for (size_t at = 0u; at < 1000u; at++) {
+        TEST_ASSERT_EQUAL_INT32_MESSAGE(shorter[at], longer[at],
+                                        "twice as long against the ceiling changed what followed "
+                                        "the release, so intent accumulated at the limit");
+    }
+
+    /* And once released it integrates again rather than staying switched off. */
+    bool resumed = false;
+    for (size_t at = 1u; at < 1000u; at++) {
+        resumed = resumed || longer[at] != longer[at - 1u];
+    }
+    TEST_ASSERT_TRUE_MESSAGE(resumed, "the pressure never moved after the release");
+}
+
+/*
+ * Hold a fed draw's casting thirty kelvin under the ready target for `steps`
+ * steps, writing it back on every one so the outlet cannot reach its setpoint
+ * and the heater is pushed against its ceiling, then let it go and report the
+ * highest superheat the outlet reaches in the next minute, in kelvin over the
+ * setpoint.
+ */
+static float superheat_overshoot_after_holding_the_heater_full(unsigned steps, float *held)
+{
+    const float held_c = ready_target_c(&declaration) - 30.0f;
+    float highest = -1000.0f;
+
+    bring_the_loop_up(&parameters, &declaration, ready_target_c(&declaration));
+    hold_ready_for(SETTLE_SECONDS);
+
+    /*
+     * A draw the wand passes little of, so the pressure loop takes the feed to
+     * its ceiling and the load fed forward with it puts the element at its own,
+     * with the casting held cold so the superheat it asks for never arrives.
+     * The first ten seconds bring the feed up and are not the interval under test.
+     */
+    wand_open = true;
+    demand_ml_per_s = 0.05f;
+    for (unsigned step = 0u; step < 10u * STEPS_PER_SECOND; step++) {
+        TEST_ASSERT_TRUE(plant_model_set_state(&truth, PLANT_STATE_STEAM_TEMPERATURE_C, held_c));
+        (void)closed_loop_step();
+    }
+    for (unsigned step = 0u; step < steps; step++) {
+        TEST_ASSERT_TRUE(plant_model_set_state(&truth, PLANT_STATE_STEAM_TEMPERATURE_C, held_c));
+        (void)closed_loop_step();
+        TEST_ASSERT_EQUAL_UINT16_MESSAGE((uint16_t)ACTUATION_FULL_SCALE,
+                                         hw_sim_output(ACTUATION_CHANNEL_STEAM_HEATER),
+                                         "the heater was not held against its ceiling");
+    }
+    *held = loop.superheat_integral_permille;
+
+    for (unsigned step = 0u; step < 60u * STEPS_PER_SECOND; step++) {
+        (void)closed_loop_step();
+        const float superheat = truth_quantity(PLANT_QUANTITY_STEAM_OUTLET_SUPERHEAT_K);
+        if (superheat > highest) {
+            highest = superheat;
+        }
+    }
+    wand_open = false;
+    demand_ml_per_s = 0.0f;
+    return highest - (float)declaration.superheat_setpoint_milli_k / 1000.0f;
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C7: The feed holds pressure and heater power
+/// holds a declared superheat setpoint, and no pressure loop drives the heater.
+///
+/// The superheat loop withholds integration while the heater is pushed past its
+/// ceiling, on the terms the pressure loop's test above holds that loop to: a
+/// casting held cold for one length of time and for twice that leaves the same
+/// integral and the same overshoot once released.
+static void test_the_superheat_loop_accumulates_nothing_while_the_heater_is_full(void)
+{
+    float held_short = 0.0f;
+    float held_long = 0.0f;
+
+    const float shorter = superheat_overshoot_after_holding_the_heater_full(1000u, &held_short);
+    const float longer = superheat_overshoot_after_holding_the_heater_full(2000u, &held_long);
+
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(held_short, held_long,
+                                    "twice as long against the ceiling left more intent behind");
+    TEST_ASSERT_FLOAT_WITHIN_MESSAGE(0.05f, shorter, longer,
+                                     "twice as long against the ceiling left a different "
+                                     "overshoot, so intent accumulated at the limit");
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C9: Every claim that steam is dry names its
+/// superheat and measured pressure and states carry-over is not excluded.
+///
+/// A closed-loop draw is run and the dryness statement is made from what the
+/// truth plant reports at its outlet, as the host run does: the least superheat
+/// over the steps steam was made on, with the pressure that step carried. The
+/// loop holds the declared setpoint, so the claim is dry, its figures are those
+/// the draw produced, and both forms carry the caveat. A draw the gate starved
+/// made no steam, and the statement then claims nothing.
+static void test_a_closed_loop_draw_is_stated_dry_with_its_figures_and_the_caveat(void)
+{
+    char out[4096];
+    dryness_finding_t finding = {false, 0.0f, 0.0f};
+
+    bring_the_loop_up(&parameters, &declaration, ready_target_c(&declaration));
+    hold_ready_for(SETTLE_SECONDS);
+    draw_for(20u, 1.0f);
+    for (size_t at = 0u; at < sample_count; at++) {
+        if (samples[at].feed_permille == 0u) {
+            continue;
+        }
+        if (!finding.steam_made || samples[at].superheat_k < finding.superheat_k) {
+            finding.steam_made = true;
+            finding.superheat_k = samples[at].superheat_k;
+            finding.pressure_bar = (float)samples[at].pressure_milli_bar / 1000.0f;
+        }
+    }
+    TEST_ASSERT_TRUE(finding.steam_made);
+    TEST_ASSERT_TRUE(finding.superheat_k >= (float)declaration.superheat_setpoint_milli_k / 1000.0f);
+
+    FILE *stream = tmpfile();
+    TEST_ASSERT_NOT_NULL(stream);
+    TEST_ASSERT_TRUE(dryness_report(stream, &finding));
+    rewind(stream);
+    out[fread(out, 1u, sizeof(out) - 1u, stream)] = '\0';
+    (void)fclose(stream);
+
+    TEST_ASSERT_NOT_NULL(strstr(out, "HOST steam-dryness dry=true"));
+    TEST_ASSERT_NOT_NULL(strstr(out, "HOST-JSON {\"what\":\"steam-dryness\",\"dry\":true"));
+    char figure[64];
+    (void)snprintf(figure, sizeof(figure), "superheat_k=%.9g", (double)finding.superheat_k);
+    TEST_ASSERT_NOT_NULL(strstr(out, figure));
+    (void)snprintf(figure, sizeof(figure), "\"pressure_bar_gauge\":%.9g", (double)finding.pressure_bar);
+    TEST_ASSERT_NOT_NULL(strstr(out, figure));
+    const char *first = strstr(out, "droplet carry-over is not excluded");
+    TEST_ASSERT_NOT_NULL(first);
+    TEST_ASSERT_NOT_NULL_MESSAGE(strstr(first + 1, "droplet carry-over is not excluded"),
+                                 "the caveat appeared in one form only");
+
+    /* A starved draw makes no steam, and claims none dry. */
+    bring_the_loop_up_holding(&parameters, declaration.ready_pressure_milli_bar - 1);
+    draw_for(5u, 1.0f);
+    for (size_t at = 0u; at < sample_count; at++) {
+        TEST_ASSERT_EQUAL_UINT16(0u, samples[at].feed_permille);
+        TEST_ASSERT_EQUAL_FLOAT(0.0f, samples[at].superheat_k);
+    }
+}
+
 /* --- The truth plant is not the law's own view of the machine -------------- */
 
 /// SOL-SIM-STEAM-BAND-SUSTAINED.C9: The host harness closes the loop through a
@@ -1648,9 +1895,9 @@ static void test_a_disturbance_to_the_truth_plant_alone_reaches_the_law(void)
 /// is the law's own view of the machine, both runs would track identically and
 /// every band assertion in this file would pass for free.
 ///
-/// The machine's steam path is made to sag further per millilitre drawn than
-/// the declaration was sized against -- past the error the description itself
-/// declares, so this is a machine outside what anything here claims to hold --
+/// The machine's steam path is made four times as tight as the declaration was
+/// sized against -- past the error the description itself declares on its
+/// restriction, so this is a machine outside what anything here claims to hold --
 /// and the furthest the path departs from the middle of the band is required
 /// to be worse for it.
 static void test_a_machine_unlike_the_declarations_own_holds_the_band_less_well(void)
@@ -1663,7 +1910,8 @@ static void test_a_machine_unlike_the_declarations_own_holds_the_band_less_well(
                            2;
 
     for (size_t run = 0u; run < sizeof(FACTORS) / sizeof(FACTORS[0]); run++) {
-        const plant_parameters_t machine = machine_with_scaled(SAG_COEFFICIENT, FACTORS[run]);
+        const plant_parameters_t machine =
+            machine_with_scaled(RESTRICTION_COEFFICIENT, FACTORS[run]);
 
         bring_the_loop_up(&machine, &declaration, ready_target_c(&declaration));
         hold_ready_for(SETTLE_SECONDS);
@@ -1682,9 +1930,55 @@ static void test_a_machine_unlike_the_declarations_own_holds_the_band_less_well(
     }
 
     TEST_ASSERT_TRUE_MESSAGE(furthest[1] > furthest[0],
-                             "a machine sagging four times as hard held the band no worse than "
+                             "a restriction four times as tight held the band no worse than "
                              "one the declaration was sized against, so the loop is closed on "
                              "something other than the machine");
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C7: The feed holds pressure and heater power
+/// holds a declared superheat setpoint, and no pressure loop drives the heater.
+///
+/// The truth machine's element is made a fifth weaker and then a fifth stronger
+/// than the description the law holds, and nothing else about it changes. The
+/// superheat at the outlet moves with it -- the heater is what sets dryness --
+/// while the pressure and the feed are the same on every step of the three
+/// draws: the feed is the only thing that moves the pressure, and nothing the
+/// heater does reaches the feed.
+static void test_perturbing_heater_power_moves_superheat_and_leaves_pressure_to_the_feed(void)
+{
+    static const float FACTORS[] = {0.8f, 1.0f, 1.2f};
+    static int32_t pressure[3][DRAW_SAMPLE_MAX];
+    static uint16_t feed[3][DRAW_SAMPLE_MAX];
+    float superheat_mean[3] = {0.0f, 0.0f, 0.0f};
+    size_t recorded = 0u;
+
+    for (size_t run = 0u; run < 3u; run++) {
+        const plant_parameters_t machine =
+            machine_with_scaled("steam.heater_power_w", FACTORS[run]);
+
+        bring_the_loop_up(&machine, &declaration, ready_target_c(&declaration));
+        draw_for(20u, 1.0f);
+        for (size_t at = 0u; at < sample_count; at++) {
+            pressure[run][at] = samples[at].pressure_milli_bar;
+            feed[run][at] = samples[at].feed_permille;
+            superheat_mean[run] += samples[at].superheat_k / (float)sample_count;
+        }
+        recorded = sample_count;
+    }
+
+    for (size_t at = 0u; at < recorded; at++) {
+        for (size_t run = 1u; run < 3u; run++) {
+            TEST_ASSERT_EQUAL_UINT16_MESSAGE(feed[0][at], feed[run][at],
+                                             "the element's power moved the feed");
+            TEST_ASSERT_EQUAL_INT32_MESSAGE(pressure[0][at], pressure[run][at],
+                                            "the element's power moved the pressure, so the feed "
+                                            "is not its sole actuator");
+        }
+    }
+    TEST_ASSERT_TRUE_MESSAGE(superheat_mean[0] < superheat_mean[1] &&
+                                 superheat_mean[1] < superheat_mean[2],
+                             "a weaker element did not leave the outlet less superheated, nor a "
+                             "stronger one more, so the heater is not what sets dryness");
 }
 
 /* --- The readiness policy the band-holding law carries in front of it ------ */
@@ -1700,9 +1994,8 @@ static void test_a_machine_unlike_the_declarations_own_holds_the_band_less_well(
 /// through the seam, and a nonzero steam demand handed to the plant on every
 /// step. The law reads the truth's own pressure back through the simulated
 /// hardware implementation and is required to withhold feed on every step
-/// regardless, for long enough that the margin-building interval and the
-/// feed's rise have both elapsed several times over: a run shorter than that
-/// would be showing the sequencing rather than the threshold.
+/// regardless, for long enough that the feed's rise from its start level to its
+/// ceiling would have run several times over.
 ///
 /// The heater is deliberately left undriven in the plant here, so the block
 /// does not climb out of the condition the test is about. The law still
@@ -1717,10 +2010,7 @@ static void test_feed_withheld_while_pressure_stays_below_threshold_with_the_wan
     TEST_ASSERT_TRUE(steam_control_init(&gate, &limits, &declaration, &parameters, &budget));
 
     const plant_actuation_t idle = {{0u}};
-    const uint32_t span = (uint32_t)declaration.margin_interval_millis +
-                          (uint32_t)declaration.feed_rise_millis;
-
-    for (uint32_t elapsed = 0u; elapsed < span * 3u; elapsed += STEP_INTERVAL_MS) {
+    for (uint32_t elapsed = 0u; elapsed < WITHHELD_SPAN_MS; elapsed += STEP_INTERVAL_MS) {
         TEST_ASSERT_TRUE(plant_model_step(&below, &idle, 3.0f, STEP_INTERVAL_MS));
 
         float pressure_bar = 0.0f;
@@ -1749,9 +2039,8 @@ static void test_feed_withheld_while_pressure_stays_below_threshold_with_the_wan
 /// SOL-SIM-STEAM-READINESS-GATE.C1: Steam feed is withheld while measured
 /// pressure sits below the declared ready threshold.
 ///
-/// The boundary itself: with a draw long since under way and everything else
-/// that would gate feed already elapsed, a reading one milli-bar below the
-/// declared threshold still withholds it. This is the case an off-by-one in
+/// The boundary itself: a draw opened on a reading one milli-bar below the
+/// declared threshold is withheld, and stays withheld however long it runs. This is the case an off-by-one in
 /// the comparison would first show up on, which a test set comfortably below
 /// the threshold would never catch.
 static void test_feed_withheld_one_milli_bar_below_threshold(void)
@@ -1761,9 +2050,7 @@ static void test_feed_withheld_one_milli_bar_below_threshold(void)
     hw_sim_reset();
     TEST_ASSERT_TRUE(steam_control_init(&gate, &limits, &declaration, &parameters, &budget));
 
-    const uint32_t span = (uint32_t)declaration.margin_interval_millis +
-                          (uint32_t)declaration.feed_rise_millis;
-    for (uint32_t elapsed = 0u; elapsed <= span * 2u; elapsed += STEP_INTERVAL_MS) {
+    for (uint32_t elapsed = 0u; elapsed <= WITHHELD_SPAN_MS; elapsed += STEP_INTERVAL_MS) {
         (void)step_with(&gate, true, declaration.ready_pressure_milli_bar - 1,
                         declaration.ready_temperature_milli_c);
     }
@@ -1774,42 +2061,46 @@ static void test_feed_withheld_one_milli_bar_below_threshold(void)
 /// SOL-SIM-STEAM-READINESS-GATE.C2: Steam feed is enabled once measured
 /// pressure reaches the declared ready threshold.
 ///
-/// One instance stepped across the boundary with a draw already under way and
-/// its sequencing long since elapsed, so that the threshold is the only thing
-/// left deciding: withheld a milli-bar below it, available on the very step
-/// the reading reaches it exactly, and still available comfortably above. The
-/// middle assertion is the criterion in its own words -- feed becomes
-/// available on the same step the threshold is crossed -- and the two either
-/// side are the regression protection a boundary checked in isolation would
-/// not give.
+/// The threshold is judged when the wand opens, so "the same step it is
+/// crossed" is asked as the gate now asks it: three instances share a history
+/// of a shut block held a milli-bar below the threshold, and each opens the wand
+/// on the step the shut block's reading is, respectively, still a milli-bar
+/// below it, exactly at it, and comfortably above it. The first is withheld; the
+/// second is fed on that very step, which is the criterion in its own words; and
+/// the third is fed too. The two either side are the regression protection a
+/// boundary checked in isolation would not give.
 ///
-/// What duty the band-holding law then commands is out of that criterion's
-/// scope and is asserted by this suite's own sustainable-rate tests instead;
+/// What feed the pressure loop then commands is out of that criterion's scope;
 /// what is required here is only that feed goes from nothing to something.
 static void test_feed_enabled_the_same_step_pressure_reaches_threshold(void)
 {
-    steam_control_state_t gate;
+    static const struct {
+        int32_t offset_milli_bar;
+        bool fed;
+        const char *what;
+    } CASES[] = {
+        {-1, false, "feed was available a milli-bar below the threshold"},
+        {0, true, "feed was not available on the step the threshold was reached"},
+        {500, true, "feed was withheld above the threshold"},
+    };
 
-    hw_sim_reset();
-    TEST_ASSERT_TRUE(steam_control_init(&gate, &limits, &declaration, &parameters, &budget));
+    for (size_t at = 0u; at < sizeof(CASES) / sizeof(CASES[0]); at++) {
+        steam_control_state_t gate;
 
-    const uint32_t span = (uint32_t)declaration.margin_interval_millis +
-                          (uint32_t)declaration.feed_rise_millis;
-    for (uint32_t elapsed = 0u; elapsed <= span * 2u; elapsed += STEP_INTERVAL_MS) {
-        (void)step_with(&gate, true, declaration.ready_pressure_milli_bar - 1,
+        hw_sim_reset();
+        TEST_ASSERT_TRUE(steam_control_init(&gate, &limits, &declaration, &parameters, &budget));
+        for (unsigned step = 0u; step < 200u; step++) {
+            (void)step_with(&gate, false, declaration.ready_pressure_milli_bar - 1,
+                            declaration.ready_temperature_milli_c);
+        }
+        TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP));
+
+        (void)step_with(&gate, true,
+                        declaration.ready_pressure_milli_bar + CASES[at].offset_milli_bar,
                         declaration.ready_temperature_milli_c);
+        TEST_ASSERT_EQUAL_MESSAGE(CASES[at].fed, hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP) > 0u,
+                                  CASES[at].what);
     }
-    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP));
-
-    (void)step_with(&gate, true, declaration.ready_pressure_milli_bar,
-                    declaration.ready_temperature_milli_c);
-    TEST_ASSERT_TRUE_MESSAGE(hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP) > 0u,
-                             "feed was not available on the step the threshold was reached");
-
-    (void)step_with(&gate, true, declaration.ready_pressure_milli_bar + 500,
-                    declaration.ready_temperature_milli_c);
-    TEST_ASSERT_TRUE_MESSAGE(hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP) > 0u,
-                             "feed was withheld above the threshold");
 }
 
 /// SOL-SIM-STEAM-READINESS-GATE.C2: Steam feed is enabled once measured
@@ -1835,115 +2126,7 @@ static void test_feed_enabled_against_the_plant_models_own_truth(void)
                              "feed was never enabled against a machine above the threshold");
 }
 
-/// SOL-SIM-STEAM-READINESS-GATE.C3: Withholding feed holds the pressure
-/// deficit rather than letting an open wand widen it.
-///
-/// The truth plant is first driven with feed actually enabled and the wand
-/// open, so the deficit genuinely grows and measured pressure genuinely sags
-/// below the saturation relation -- a test starting from a rested, zero
-/// deficit state would prove nothing, since a deficit that cannot grow either
-/// way looks the same as one being held. Feed is then withheld while the wand
-/// stays open, driven only through the law under test rather than set
-/// directly, and pressure is asserted not to fall any further.
-///
-/// The plant's steam heater is deliberately left undriven throughout, though
-/// the law commands it: what this criterion is about is the deficit, which is
-/// measured against the saturation relation, and driving the element would
-/// move that relation underneath the measurement. What the law does with the
-/// element is asserted elsewhere in this file.
-static void test_withheld_feed_holds_an_existing_deficit_against_an_open_wand(void)
-{
-    plant_model_t primed;
-    steam_control_state_t gate;
 
-    hw_sim_reset();
-    TEST_ASSERT_TRUE(plant_model_init(&primed, &parameters));
-    TEST_ASSERT_TRUE(steam_control_init(&gate, &limits, &declaration, &parameters, &budget));
-    TEST_ASSERT_TRUE(plant_model_set_state(&primed, PLANT_STATE_STEAM_TEMPERATURE_C, 115.0f));
-
-    /*
-     * Primed by driving the truth plant's feed directly rather than through
-     * the law: this phase's whole purpose is to reach a state where the
-     * deficit is already nonzero, which the law itself -- withholding feed
-     * below the threshold -- would never produce. The temperature is chosen so
-     * that the rested pressure it carries, and what a real draw sags it to,
-     * both stay below the declared threshold.
-     */
-    plant_actuation_t feeding = {{0u}};
-    feeding.level_permille[ACTUATION_CHANNEL_STEAM_PUMP] = (uint16_t)ACTUATION_FULL_SCALE;
-    for (int step = 0; step < 5; step++) {
-        TEST_ASSERT_TRUE(plant_model_step(&primed, &feeding, 3.0f, STEP_INTERVAL_MS));
-    }
-
-    float primed_bar = 0.0f;
-    TEST_ASSERT_TRUE(plant_model_quantity(&primed, PLANT_QUANTITY_STEAM_PRESSURE_BAR, &primed_bar));
-    TEST_ASSERT_TRUE_MESSAGE(
-        (int32_t)lroundf(primed_bar * 1000.0f) < declaration.ready_pressure_milli_bar,
-        "priming left the truth plant at or above the ready threshold, which this test did not "
-        "intend");
-
-    /*
-     * Confirms the priming actually produced a nonzero deficit -- primed_bar
-     * below the pressure a rested block at this temperature would carry --
-     * which is the state this criterion's own text requires the test to start
-     * from. Read through the same seam quantity the law is fed through,
-     * against a second instance rested at the same starting temperature.
-     */
-    plant_model_t rested;
-    TEST_ASSERT_TRUE(plant_model_init(&rested, &parameters));
-    TEST_ASSERT_TRUE(plant_model_set_state(&rested, PLANT_STATE_STEAM_TEMPERATURE_C, 115.0f));
-    const plant_actuation_t idle = {{0u}};
-    TEST_ASSERT_TRUE(plant_model_step(&rested, &idle, 0.0f, STEP_INTERVAL_MS));
-    float rested_saturation_bar = 0.0f;
-    TEST_ASSERT_TRUE(
-        plant_model_quantity(&rested, PLANT_QUANTITY_STEAM_PRESSURE_BAR, &rested_saturation_bar));
-    TEST_ASSERT_TRUE_MESSAGE(primed_bar < rested_saturation_bar - 0.01f,
-                             "priming did not produce a nonzero deficit to hold");
-
-    /*
-     * Feed is now driven only through the law under test, reading the truth
-     * plant's own pressure back at each step, with the wand still reported
-     * turned throughout. A tolerance rather than exact equality because the
-     * block goes on losing a little to ambient with the element undriven; it
-     * is an order of magnitude below the drift a still-growing deficit would
-     * show over the same steps at this priming rate, and it is a comparison
-     * against the step before rather than against the start, so a long run
-     * does not accumulate into it.
-     *
-     * The run is deliberately longer than the margin-building interval and
-     * the feed's rise put together. A shorter one would hold feed at nothing
-     * whether the readiness threshold existed or not -- the sequencing alone
-     * withholds it for the first few seconds of any draw -- and would go on
-     * passing with the withhold deleted, which is the one thing this test is
-     * about.
-     */
-    const uint32_t withheld_steps =
-        ((uint32_t)declaration.margin_interval_millis +
-         (uint32_t)declaration.feed_rise_millis) / STEP_INTERVAL_MS + 5u;
-
-    for (uint32_t step = 0u; step < withheld_steps; step++) {
-        hw_sim_set_sensor(HW_SENSOR_STEAM_PRESSURE, HW_READING_VALID,
-                          (int32_t)lroundf(primed_bar * 1000.0f));
-        hw_sim_set_sensor(HW_SENSOR_STEAM_TEMPERATURE, HW_READING_VALID, 115000);
-        hw_sim_set_sensor(HW_SENSOR_STEAM_KNOB, HW_READING_VALID, HW_READING_DISCRETE_SET);
-
-        TEST_ASSERT_EQUAL(STEAM_CONTROL_STEP_ACTUATED, steam_control_step(&gate));
-        TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP));
-
-        plant_actuation_t withheld = {{0u}};
-        withheld.level_permille[ACTUATION_CHANNEL_STEAM_PUMP] =
-            hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP);
-        TEST_ASSERT_TRUE(plant_model_step(&primed, &withheld, 3.0f, STEP_INTERVAL_MS));
-
-        float held_bar = 0.0f;
-        TEST_ASSERT_TRUE(plant_model_quantity(&primed, PLANT_QUANTITY_STEAM_PRESSURE_BAR,
-                                              &held_bar));
-        TEST_ASSERT_FLOAT_WITHIN(0.002f, primed_bar, held_bar);
-        primed_bar = held_bar;
-
-        hw_sim_advance_millis(STEP_INTERVAL_MS);
-    }
-}
 
 /// SOL-SIM-STEAM-READINESS-GATE.C4: The ready threshold is declared data with
 /// a recorded origin, read by the control law rather than compiled into it.
@@ -1972,9 +2155,7 @@ static void test_declared_threshold_moves_the_feed_boundary(void)
     TEST_ASSERT_TRUE(steam_control_init(&gate_low, &limits, &low, &parameters, &budget));
     TEST_ASSERT_TRUE(steam_control_init(&gate_high, &limits, &high, &parameters, &budget));
 
-    const uint32_t span =
-        (uint32_t)declaration.margin_interval_millis + (uint32_t)declaration.feed_rise_millis;
-    for (uint32_t elapsed = 0u; elapsed <= span * 2u; elapsed += STEP_INTERVAL_MS) {
+    for (uint32_t elapsed = 0u; elapsed <= WITHHELD_SPAN_MS; elapsed += STEP_INTERVAL_MS) {
         hw_sim_set_sensor(HW_SENSOR_STEAM_PRESSURE, HW_READING_VALID, 1000);
         hw_sim_set_sensor(HW_SENSOR_STEAM_TEMPERATURE, HW_READING_VALID,
                           declaration.ready_temperature_milli_c);
@@ -1985,7 +2166,7 @@ static void test_declared_threshold_moves_the_feed_boundary(void)
         const uint16_t withheld = hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP);
         hw_sim_advance_millis(STEP_INTERVAL_MS);
 
-        if (elapsed == span * 2u) {
+        if (elapsed == WITHHELD_SPAN_MS) {
             TEST_ASSERT_TRUE_MESSAGE(fed > 0u,
                                      "the instance whose declared threshold sits below the "
                                      "reading withheld feed");
@@ -2064,8 +2245,24 @@ static void test_feed_withheld_when_no_pressure_reading_has_ever_been_trusted(vo
 
         TEST_ASSERT_EQUAL(STEAM_CONTROL_STEP_SENSOR_INVALID, steam_control_step(&gate));
         TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP));
-        TEST_ASSERT_EQUAL_UINT16_MESSAGE(0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_HEATER),
-                                         "the element was driven with no reading to drive from");
+        const uint16_t starved_duty = hw_sim_output(ACTUATION_CHANNEL_STEAM_HEATER);
+
+        /*
+         * A starved draw makes no steam, so its heater holds the ready target
+         * from the temperature it does have, exactly as an idle step with the
+         * same readings does -- and never from the pressure it has no figure for.
+         */
+        steam_control_state_t idle;
+        hw_sim_reset();
+        TEST_ASSERT_TRUE(steam_control_init(&idle, &limits, &declaration, &parameters, &budget));
+        hw_sim_set_sensor(HW_SENSOR_STEAM_PRESSURE, CASES[at].status, value);
+        hw_sim_set_sensor(HW_SENSOR_STEAM_TEMPERATURE, HW_READING_VALID,
+                          declaration.ready_temperature_milli_c);
+        hw_sim_set_sensor(HW_SENSOR_STEAM_KNOB, HW_READING_VALID, HW_READING_DISCRETE_CLEAR);
+        (void)steam_control_step(&idle);
+        TEST_ASSERT_EQUAL_UINT16_MESSAGE(hw_sim_output(ACTUATION_CHANNEL_STEAM_HEATER), starved_duty,
+                                         "the element of a starved draw was not driven as the "
+                                         "idle control drives it");
     }
 }
 
@@ -2164,6 +2361,25 @@ static void test_the_accessors_refuse_nowhere_to_answer(void)
     TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration, &parameters, &budget));
     TEST_ASSERT_FALSE(steam_control_variable(&state, NULL));
     TEST_ASSERT_FALSE(steam_control_drawing(&state, NULL));
+
+    /*
+     * The superheat estimate answers only on a step that fed a draw: idle, and
+     * on a draw the gate starved, no steam was made to have a superheat.
+     */
+    float superheat_k = 0.0f;
+    TEST_ASSERT_FALSE(steam_control_outlet_superheat(NULL, &superheat_k));
+    (void)step_with(&state, false, declaration.ready_pressure_milli_bar,
+                    declaration.ready_temperature_milli_c);
+    TEST_ASSERT_FALSE(steam_control_outlet_superheat(&state, &superheat_k));
+    (void)step_with(&state, true, declaration.ready_pressure_milli_bar - 1,
+                    declaration.ready_temperature_milli_c);
+    TEST_ASSERT_FALSE(steam_control_outlet_superheat(&state, &superheat_k));
+    (void)step_with(&state, false, declaration.ready_pressure_milli_bar,
+                    declaration.ready_temperature_milli_c);
+    (void)step_with(&state, true, declaration.ready_pressure_milli_bar,
+                    declaration.ready_temperature_milli_c);
+    TEST_ASSERT_TRUE(steam_control_outlet_superheat(&state, &superheat_k));
+    TEST_ASSERT_FALSE(steam_control_outlet_superheat(&state, NULL));
 }
 
 /// Regression protection for steam_control_step's own error path: a refused
@@ -2191,12 +2407,10 @@ static void test_output_refused_is_reported_rather_than_folded_into_actuated(voi
 /// command is refused does not leave the feed pump running.
 ///
 /// This is the case the ordering of the two drive calls cannot answer, because
-/// the pump was already running before the step began. Mid-draw the feed is at
-/// the declared sustainable rate, and a refused heater command leaves the
-/// element at a level nothing established -- so water goes on being pushed
-/// into a block whose element may be at nothing, which is precisely the wet
-/// start the margin-building sequencing exists to prevent, arriving by the one
-/// path that bypasses that sequencing. control_step brings the brew side down
+/// the pump was already running before the step began. Mid-draw the feed is
+/// running, and a refused heater command leaves the element at a level nothing
+/// established -- so water goes on being pushed into a block whose element may
+/// be at nothing, which is precisely the wet steam the heater exists to prevent. control_step brings the brew side down
 /// in the same situation and for the same reason.
 ///
 /// Only the heater channel is refused, not both: under a blanket refusal the
@@ -2208,19 +2422,14 @@ static void test_a_refused_heater_command_does_not_leave_the_feed_running(void)
     const int32_t in_band = (declaration.draw_pressure_floor_milli_bar +
                              declaration.draw_pressure_ceiling_milli_bar) /
                             2;
-    const uint32_t settled_at =
-        (uint32_t)declaration.margin_interval_millis + (uint32_t)declaration.feed_rise_millis;
 
     hw_sim_reset();
     TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration, &parameters, &budget));
 
-    for (uint32_t elapsed = 0u; elapsed <= settled_at; elapsed += STEP_INTERVAL_MS) {
-        (void)step_with(&state, true, in_band, declaration.ready_temperature_milli_c);
-    }
-    TEST_ASSERT_EQUAL_UINT16_MESSAGE((uint16_t)declaration.sustainable_feed_permille,
-                                     hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP),
-                                     "the draw was not feeding, so a refused heater command has "
-                                     "nothing to have left running");
+    open_a_fed_draw(&state, in_band, declaration.ready_temperature_milli_c, 300u);
+    TEST_ASSERT_TRUE_MESSAGE(hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP) > 0u,
+                             "the draw was not feeding, so a refused heater command has nothing "
+                             "to have left running");
 
     hw_sim_set_output_channel_refused(ACTUATION_CHANNEL_STEAM_HEATER, true);
     hw_sim_set_sensor(HW_SENSOR_STEAM_PRESSURE, HW_READING_VALID, in_band);
@@ -2257,42 +2466,49 @@ static void test_init_reports_a_refused_off_command_but_leaves_the_loop_usable(v
     TEST_ASSERT_EQUAL(STEAM_CONTROL_STEP_ACTUATED, steam_control_step(&state));
 }
 
-/// Regression protection for the draw clock: a draw closed and reopened earns
-/// its margin-building interval again rather than resuming where the last one
-/// left off. A law that carried the clock across would start feeding a block
-/// immediately on the second draw of a pair, which is the wet start the
-/// sequencing exists to prevent and which no test of a single draw would
-/// notice.
-static void test_a_reopened_draw_earns_its_margin_again(void)
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C12: A wand opened at the ready pressure is
+/// not starved by the feed-withhold gate under the orifice law.
+///
+/// The gate's verdict is held for one draw and no longer. A draw opened at ready
+/// and fed keeps being fed while its own pressure sits well below the threshold;
+/// once the wand shuts the feed is cut on that step; and a draw reopened below
+/// the threshold is judged afresh and starved, rather than inheriting the verdict
+/// the last one earned. The reverse holds too: a starved draw shut and reopened
+/// at ready is fed. A law that carried the verdict across would feed a block it
+/// never judged, or starve one that had become ready.
+static void test_a_reopened_draw_is_judged_afresh(void)
 {
     steam_control_state_t state;
+    const int32_t below = declaration.ready_pressure_milli_bar - 1;
 
     hw_sim_reset();
     TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration, &parameters, &budget));
 
-    const int32_t in_band = (declaration.draw_pressure_floor_milli_bar +
-                             declaration.draw_pressure_ceiling_milli_bar) /
-                            2;
-    const uint32_t span = (uint32_t)declaration.margin_interval_millis +
-                          (uint32_t)declaration.feed_rise_millis;
-
-    for (uint32_t elapsed = 0u; elapsed <= span * 2u; elapsed += STEP_INTERVAL_MS) {
-        (void)step_with(&state, true, in_band, declaration.ready_temperature_milli_c);
-    }
+    open_a_fed_draw(&state, declaration.draw_pressure_floor_milli_bar,
+                    declaration.ready_temperature_milli_c, 300u);
     TEST_ASSERT_TRUE_MESSAGE(hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP) > 0u,
-                             "the first draw never fed anything");
+                             "a draw opened at ready stopped being fed when its own pressure sat "
+                             "below the threshold");
 
-    (void)step_with(&state, false, in_band, declaration.ready_temperature_milli_c);
+    (void)step_with(&state, false, below, declaration.ready_temperature_milli_c);
     TEST_ASSERT_EQUAL_UINT16_MESSAGE(0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP),
                                      "feed was not cut on the step the wand shut");
 
-    (void)step_with(&state, true, in_band, declaration.ready_temperature_milli_c);
-    TEST_ASSERT_EQUAL_UINT16_MESSAGE(0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP),
-                                     "the second draw fed immediately, so the margin-building "
-                                     "interval is carried across draws rather than earned again");
-    TEST_ASSERT_EQUAL_UINT16_MESSAGE((uint16_t)ACTUATION_FULL_SCALE,
-                                     hw_sim_output(ACTUATION_CHANNEL_STEAM_HEATER),
-                                     "the element did not lead on the second draw");
+    for (unsigned step = 0u; step < 300u; step++) {
+        (void)step_with(&state, true, below, declaration.ready_temperature_milli_c);
+        TEST_ASSERT_EQUAL_UINT16_MESSAGE(0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP),
+                                         "a draw reopened below the threshold was fed on the "
+                                         "verdict the last draw earned");
+    }
+
+    (void)step_with(&state, false, declaration.ready_pressure_milli_bar,
+                    declaration.ready_temperature_milli_c);
+    (void)step_with(&state, true, declaration.ready_pressure_milli_bar,
+                    declaration.ready_temperature_milli_c);
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE((uint16_t)declaration.draw_start_feed_permille,
+                                     hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP),
+                                     "a draw reopened at ready after a starved one was not fed at "
+                                     "the start level");
 }
 
 /* --- The margin the ready target keeps from the steam block's trip point --- */
@@ -2739,32 +2955,30 @@ int main(void)
     RUN_TEST(test_the_steam_knob_reaches_the_seam_as_a_discrete_reading);
     RUN_TEST(test_only_a_trustworthy_set_knob_reading_is_taken_for_a_draw);
     RUN_TEST(test_the_controlled_variable_switches_on_the_step_the_draw_begins);
-    RUN_TEST(test_duty_answers_temperature_while_idle_and_pressure_while_drawing);
+    RUN_TEST(test_the_heater_answers_superheat_and_never_pressure_error);
     RUN_TEST(test_an_implausible_pressure_reading_mid_draw_is_rejected_rather_than_acted_on);
     RUN_TEST(test_the_declared_ready_target_is_where_the_loop_settles);
     RUN_TEST(test_the_declared_band_decides_which_draws_the_suite_accepts);
     RUN_TEST(test_a_declared_gain_moves_the_pass_fail_boundary);
     RUN_TEST(test_the_declaration_grammar_refuses_what_it_must);
-    RUN_TEST(test_pressure_holds_the_band_for_draws_of_every_duration_across_the_declared_error);
-    RUN_TEST(test_settled_feed_is_the_declared_rate_whatever_demand_is);
-    RUN_TEST(test_feed_is_never_raised_to_chase_demand_beyond_the_sustainable_rate);
-    RUN_TEST(test_the_heater_leads_and_the_feed_lags_by_the_declared_interval);
-    RUN_TEST(test_engaged_feed_rises_over_the_declared_interval_rather_than_stepping);
-    RUN_TEST(test_recovery_is_the_ready_holding_law_continuing);
+    RUN_TEST(test_pressure_and_superheat_hold_for_draws_of_every_duration);
+    RUN_TEST(test_feed_never_exceeds_its_ceiling_or_rises_faster_than_its_limit);
+    RUN_TEST(test_the_feed_ceiling_rise_limit_and_start_level_are_read_as_data);
+    RUN_TEST(test_when_the_ceiling_binds_pressure_yields_before_quantity_or_quality);
+    RUN_TEST(test_a_wand_opened_at_ready_is_fed_and_one_just_below_is_starved);
+    RUN_TEST(test_the_casting_returns_to_ready_after_draws_of_every_duration);
     RUN_TEST(test_recovery_holds_its_bound_across_the_declared_model_error);
-    RUN_TEST(test_a_draw_lands_within_its_band_at_every_declared_error_corner);
-    RUN_TEST(test_the_sweep_draws_at_the_declared_ready_target_and_not_at_the_margins_edge);
-    RUN_TEST(test_the_steam_margin_reader_carries_the_declared_sensing_error);
-    RUN_TEST(test_a_ready_target_inside_the_widened_margin_is_refused);
     RUN_TEST(test_a_longer_saturated_interval_does_not_deepen_the_overshoot);
     RUN_TEST(test_intent_is_surrendered_at_the_limit_and_not_afterwards);
+    RUN_TEST(test_the_pressure_loop_accumulates_nothing_while_held_at_its_ceiling);
+    RUN_TEST(test_the_superheat_loop_accumulates_nothing_while_the_heater_is_full);
     RUN_TEST(test_a_disturbance_to_the_truth_plant_alone_reaches_the_law);
     RUN_TEST(test_a_machine_unlike_the_declarations_own_holds_the_band_less_well);
+    RUN_TEST(test_perturbing_heater_power_moves_superheat_and_leaves_pressure_to_the_feed);
     RUN_TEST(test_feed_withheld_while_pressure_stays_below_threshold_with_the_wand_open);
     RUN_TEST(test_feed_withheld_one_milli_bar_below_threshold);
     RUN_TEST(test_feed_enabled_the_same_step_pressure_reaches_threshold);
     RUN_TEST(test_feed_enabled_against_the_plant_models_own_truth);
-    RUN_TEST(test_withheld_feed_holds_an_existing_deficit_against_an_open_wand);
     RUN_TEST(test_declared_threshold_moves_the_feed_boundary);
     RUN_TEST(test_the_law_runs_against_the_simulated_implementation_with_no_target_dependency);
     RUN_TEST(test_feed_withheld_when_no_pressure_reading_has_ever_been_trusted);
@@ -2774,6 +2988,11 @@ int main(void)
     RUN_TEST(test_output_refused_is_reported_rather_than_folded_into_actuated);
     RUN_TEST(test_a_refused_heater_command_does_not_leave_the_feed_running);
     RUN_TEST(test_init_reports_a_refused_off_command_but_leaves_the_loop_usable);
-    RUN_TEST(test_a_reopened_draw_earns_its_margin_again);
+    RUN_TEST(test_a_reopened_draw_is_judged_afresh);
+    RUN_TEST(test_a_draw_lands_within_its_band_at_every_declared_error_corner);
+    RUN_TEST(test_the_sweep_draws_at_the_declared_ready_target_and_not_at_the_margins_edge);
+    RUN_TEST(test_the_steam_margin_reader_carries_the_declared_sensing_error);
+    RUN_TEST(test_a_ready_target_inside_the_widened_margin_is_refused);
+    RUN_TEST(test_a_closed_loop_draw_is_stated_dry_with_its_figures_and_the_caveat);
     return UNITY_END();
 }
