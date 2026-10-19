@@ -1,0 +1,13 @@
+id: DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR.C3
+type: criterion
+title: Access to the connected interface is established and reset only by an act at the machine
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |-
+  Enrolling a party and resetting its access are accepted only after a deliberate act at the machine, and a household does this without a technician and without opening the machine.
+links:
+  - target: DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: JRN-DESIGN-PROFILE-001.C7
+type: criterion
+title: Editing a profile does not change a delivery already in progress
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |-
+  A drink under way was started against the profile as it stood, and a change that reached it would make that drink match neither the old profile nor the new.
+links:
+  - target: JRN-DESIGN-PROFILE-001
+    type: criterion-of

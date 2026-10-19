@@ -1,0 +1,12 @@
+id: REQ-LIVE-DELIVERY-VIEW-001.C6
+type: criterion
+title: What the machine reports about a delivery without commanding it is observable while the delivery runs
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Volume delivered, weight where it is measured, elapsed time and the resistance the puck presents are not things an operator sets, but they are what tells them whether a segment did its job.
+links:
+  - target: REQ-LIVE-DELIVERY-VIEW-001
+    type: criterion-of

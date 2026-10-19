@@ -1,0 +1,13 @@
+id: DEL-DELIVERY-PROFILE-SEGMENTS.C19
+type: criterion
+title: The controller accepts no request to start a delivery other than from its own panel controls
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |-
+  A request on the serial protocol, from the display unit or from anything on a network behind it, cannot start a delivery. It can choose which recipe a panel control runs.
+links:
+  - target: DEL-DELIVERY-PROFILE-SEGMENTS
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: REQ-RECIPE-CUSTODY-001.C10
+type: criterion
+title: Editing a recipe does not change a delivery already in progress
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  A drink under way was started against the recipe as it stood, and a change reaching it would make that drink match neither the old recipe nor the new, with nothing to say so.
+links:
+  - target: REQ-RECIPE-CUSTODY-001
+    type: criterion-of

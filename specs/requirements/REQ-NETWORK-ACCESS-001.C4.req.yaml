@@ -1,0 +1,12 @@
+id: REQ-NETWORK-ACCESS-001.C4
+type: criterion
+title: Attempts to reach the machine over a network cannot degrade its operation
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  A party who cannot sign in must not be able to cost the household its next drink by flooding the machine with requests.
+links:
+  - target: REQ-NETWORK-ACCESS-001
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: JRN-DESIGN-PROFILE-001.C4
+type: criterion
+title: What the machine delivered is reported against each segment of the profile
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |-
+  Judging a change needs to know which segment did what, and a single figure for the whole drink hides the segment the operator changed.
+links:
+  - target: JRN-DESIGN-PROFILE-001
+    type: criterion-of

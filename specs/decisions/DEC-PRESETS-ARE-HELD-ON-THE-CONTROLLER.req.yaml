@@ -1,0 +1,29 @@
+id: DEC-PRESETS-ARE-HELD-ON-THE-CONTROLLER
+type: decision
+title: Only the presets are held on the controller, as complete recipes, and the library lives with the display unit
+status: active
+version: 1
+decided_by: david
+text: |-
+  The controller holds one complete recipe per preset control. The profile library, names, history and sharing live with the display unit.
+rationale: |
+  Context: A preset must work when nothing else is connected (REQ-RECIPE-CUSTODY-001.C8), and the controller's storage is small and fixed by the number of preset controls. Sharing and backing up profiles creates a library that grows without bound.
+
+  Trade-offs: Holding the whole library on the controller bounds it by controller storage and puts file handling there. Holding everything on the display unit makes every preset press depend on that unit starting. Holding only the presets on the controller, as copies of complete recipes, bounds its storage by the preset controls and keeps a press independent of every other unit, while the library, names, history and sharing live with the display unit.
+
+  Reversibility: Reversible without touching the profile format: a larger store on the controller would only raise the number of presets.
+
+  Consequences: Each preset control holds a complete recipe, including its profile and its end condition. The controller checks a profile when it is placed on a preset and runs it from its own memory. Losing the display unit loses the library and editing, not the presets.
+options_considered:
+  - option: Only presets are held on the controller as complete recipes, and the library lives with the display unit
+    reason_rejected: ""
+  - option: The whole library is held on the controller
+    reason_rejected: bounded by controller storage and puts file handling and growth on the unit that must stay simple
+  - option: Everything is held on the display unit
+    reason_rejected: every preset press would depend on that unit being present and started
+chosen: Only presets are held on the controller as complete recipes, and the library lives with the display unit
+links:
+  - target: REQ-RECIPE-CUSTODY-001.C8
+    type: addresses
+  - target: REQ-RECIPE-CUSTODY-001.C9
+    type: addresses

@@ -1,0 +1,12 @@
+id: REQ-RECIPE-CUSTODY-001.C11
+type: criterion
+title: A preset starts its delivery on one press and stops it on a second
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The operator's hands are on the cup and the portafilter, and an action that needs more than one press fails them, as does one that cannot be undone the same way.
+links:
+  - target: REQ-RECIPE-CUSTODY-001
+    type: criterion-of

@@ -1,0 +1,13 @@
+id: DEL-DELIVERY-PROFILE-SEGMENTS.C17
+type: criterion
+title: A profile entering the controller in its text form is checked before it is kept
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |-
+  A form that is malformed, names a field the controller does not know, or asks for something it cannot deliver is refused and nothing it contained is kept.
+links:
+  - target: DEL-DELIVERY-PROFILE-SEGMENTS
+    type: criterion-of

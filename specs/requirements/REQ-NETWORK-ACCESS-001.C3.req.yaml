@@ -1,0 +1,12 @@
+id: REQ-NETWORK-ACCESS-001.C3
+type: criterion
+title: Establishing or resetting access requires a deliberate act at the machine
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  A machine that can be enrolled over the network from nothing has no gate, and only an act at the machine is out of reach of a stranger on the network.
+links:
+  - target: REQ-NETWORK-ACCESS-001
+    type: criterion-of

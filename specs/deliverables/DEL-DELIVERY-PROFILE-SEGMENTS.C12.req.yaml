@@ -1,0 +1,13 @@
+id: DEL-DELIVERY-PROFILE-SEGMENTS.C12
+type: criterion
+title: A preset holds a complete recipe on the controller and works with nothing else connected
+status: active
+version: 2
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |-
+  With no other unit present or powered, each preset control starts the recipe it holds. A recipe placed on a preset is checked when it is placed, and one the machine cannot deliver is refused.
+links:
+  - target: DEL-DELIVERY-PROFILE-SEGMENTS
+    type: criterion-of

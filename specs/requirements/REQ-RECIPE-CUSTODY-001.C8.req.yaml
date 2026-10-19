@@ -1,0 +1,12 @@
+id: REQ-RECIPE-CUSTODY-001.C8
+type: criterion
+title: A preset is held on the machine and works with nothing else connected
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  A household that presses a control for the usual drink does not know what else is plugged in, and a preset that needed another device would fail on the morning that device did not start.
+links:
+  - target: REQ-RECIPE-CUSTODY-001
+    type: criterion-of

@@ -1,0 +1,13 @@
+id: DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR.C5
+type: criterion
+title: A profile exported from the library and imported into another unit is the profile exported
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |-
+  The profile read back from the importing unit is the profile written by the exporting one, in both the text and the JSON form.
+links:
+  - target: DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR
+    type: criterion-of

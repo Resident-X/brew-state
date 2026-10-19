@@ -1,0 +1,13 @@
+id: DEL-DELIVERY-PROFILE-SEGMENTS.C10
+type: criterion
+title: Whether a profile can be delivered is established without a delivery taking place, and the verdict names the segment and the reason
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |-
+  A check request answers deliverable or refused with no water moved and no heater commanded for it, in both the text and the JSON form, and the verdict the check gives is the one the start of a delivery would have given.
+links:
+  - target: DEL-DELIVERY-PROFILE-SEGMENTS
+    type: criterion-of

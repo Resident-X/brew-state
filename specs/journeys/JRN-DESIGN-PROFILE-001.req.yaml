@@ -1,0 +1,49 @@
+id: JRN-DESIGN-PROFILE-001
+type: requirement
+category: journey
+title: Operator designs and refines how a drink is delivered
+status: active
+priority: should
+version: 1
+text: |
+  The journey in which an operator decides how a drink is delivered, and arrives at a way of delivering it they want to keep. It is the deliberate counterpart of dialling in: dial-in changes the grind, the dose or a target the recipe carries, while this changes the course the delivery takes, from its first seconds to its end.
+
+  ## Main success scenario
+
+  1. The operator starts from a profile they already have, or from one the machine offers for the drink.
+  2. The operator adds, removes or changes segments. For each segment they state what they want of water pressure or flow, what limit applies to the other, what water temperature they want, and what ends the segment.
+  3. The machine checks the profile as it is entered and says whether it can deliver it, and if not, which segment it cannot and why.
+  4. The operator makes the drink and follows how it runs against the profile.
+  5. The machine reports, segment by segment, what it delivered against what the profile asked for.
+  6. The operator tastes the drink, changes one segment or one target, and makes the drink again.
+  7. The operator keeps the settled profile under a name, and puts it on a preset if they want it one press away.
+  8. The operator passes the profile to another operator as a file, or brings one in from another operator.
+
+  ## Extensions
+
+  1a. The operator receives a profile made for another machine. The machine checks it against what this machine can deliver before keeping it, and refuses what it cannot, naming the segment and the reason.
+
+  2a. The operator asks for something the machine can never deliver. The machine refuses it where it was entered, rather than keeping it and failing during a drink.
+
+  2b. A drink is being delivered while the operator edits. The edit does not change the delivery in progress.
+
+  2c. Someone who is not an operator of the machine tries to reach its profiles over a network. The machine offers them nothing: not to read, and not to change.
+
+  5a. The machine could not follow a segment. The machine says which segment departed and by how much, rather than ending the drink as though it had followed the profile.
+
+  7a. The operator abandons the session without keeping anything. The profile they started from is unchanged.
+
+  8a. A profile asks for an end the machine cannot measure. The machine refuses it before any water moves, naming what it cannot measure.
+rationale: |
+  Authored as its own journey because the existing ones either assume the way a drink is delivered is already settled or change only a target within it. The only operator step that touches the course of a delivery is the single "change a target" step of dial-in, and no journey covers building a course from segments, checking it, keeping it, and passing it on.
+
+  The profile is stated in the outcomes the operator wants at the group, not in anything specific to one machine. That is what lets it be passed on, and it is why the machine, not the operator, carries the knowledge of what it can deliver and refuses what it cannot.
+
+  Optional by design. The journey serves the operator who chooses to shape a delivery; the household member who presses a preset is served by the persona's default stance and never enters it. Nothing in ordinary serving may depend on this journey.
+
+  Deliberately silent on what the interface physically is, in the same way the interface journey is.
+links:
+  - target: PER-OPERATOR-001.C10
+    type: derives-from
+  - target: PER-OPERATOR-001.C9
+    type: derives-from
