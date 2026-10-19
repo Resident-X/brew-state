@@ -44,8 +44,8 @@ links:
   - target: DEC-MARGIN-COMBINES-DECLARED-ERROR-BY-WORST-CASE
     type: justified-by
 brief_confirmation:
-  confirmer: claude-sonnet-5-5
-  fingerprint: 78192e7d2bbfc8d8dd32c314dbbb6ccb3afb3a7c77591dee73383d61823173e9
+  confirmer: claude-sonnet-5-5 (blind brief reviewer)
+  fingerprint: b39792953e29bf9f3ed5cb8787c908378fc0a4215d4a1607ef3a9c641ea749f3
   gating_profile: ""
 design_question_answers:
   - answered_by: SOL-PLANT-STEAM-FLASH-GENERATOR.C2
