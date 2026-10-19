@@ -1,0 +1,12 @@
+id: REQ-DELIVERY-PROFILE-001.C7
+type: criterion
+title: What a delivery aims for in water temperature can differ from one segment to the next
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Water that suits the opening of an extraction rarely suits its close. A machine that can hold only one temperature throughout cannot express what an operator who shapes the temperature over the shot is after.
+links:
+  - target: REQ-DELIVERY-PROFILE-001
+    type: criterion-of

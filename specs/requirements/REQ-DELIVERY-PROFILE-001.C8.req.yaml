@@ -1,0 +1,12 @@
+id: REQ-DELIVERY-PROFILE-001.C8
+type: criterion
+title: A profile states what it asks for as outcomes at the group and not as anything specific to one machine
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  A profile that names a drive level or a heater power means something different on every machine, so it cannot be passed on and must be rewritten at each replacement. One stated as the pressure, flow, temperature and quantity wanted means the same everywhere and leaves the machine to say whether it can deliver it.
+links:
+  - target: REQ-DELIVERY-PROFILE-001
+    type: criterion-of

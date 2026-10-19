@@ -1,0 +1,12 @@
+id: JRN-DESIGN-PROFILE-001.C3
+type: criterion
+title: A profile can be checked without making a drink
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |-
+  Finding that a profile cannot be delivered by trying it costs a dose of coffee each time, which discourages the experimenting the journey exists for.
+links:
+  - target: JRN-DESIGN-PROFILE-001
+    type: criterion-of

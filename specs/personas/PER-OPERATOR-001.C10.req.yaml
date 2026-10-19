@@ -1,0 +1,12 @@
+id: PER-OPERATOR-001.C10
+type: criterion
+title: An operator who wants to shape how a drink is delivered can, and no one else is required to
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  An operator who wants to decide how a drink is delivered, segment by segment, can do so, can keep what they arrive at, and can pass it on to another operator or another machine. Nobody else is asked to: the usual drinks, and everything in ordinary serving, work for a household that never uses this.
+links:
+  - target: PER-OPERATOR-001
+    type: criterion-of

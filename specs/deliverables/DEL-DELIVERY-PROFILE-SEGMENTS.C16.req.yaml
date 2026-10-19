@@ -1,0 +1,13 @@
+id: DEL-DELIVERY-PROFILE-SEGMENTS.C16
+type: criterion
+title: A preset starts on one press of its control on the machine and a second press during the delivery stops it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |-
+  Pressing the control starts the recipe it holds. A second press while that delivery runs stops it, and the stop is recorded as the end that occurred.
+links:
+  - target: DEL-DELIVERY-PROFILE-SEGMENTS
+    type: criterion-of

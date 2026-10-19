@@ -1,0 +1,26 @@
+id: REQ-NETWORK-ACCESS-001
+type: requirement
+category: interface
+title: Nothing the machine offers over a network is available without signing in
+status: active
+priority: should
+version: 1
+text: |
+  Anything the machine offers over a network, whether to read or to change, is offered only to a party that has signed in. A household network carries guests' phones and cheap connected devices, and a machine that answers any of them tells strangers when the household is home and what it drinks, and lets them spoil the next drink.
+
+  Viewing and changing are separate rights. A dashboard or a home-automation system that only watches needs no ability to change a profile, and a leaked watching credential should not be able to.
+rationale: |
+  Authored as one requirement for every network consumer, rather than once for editing and again for monitoring, because the rule is the same for each and a second statement could drift from the first. Observation by an external system is bound by it as much as editing is.
+
+  Stated as outcomes. How a party signs in, what a credential is and where it is kept are decisions, deferred to the work that builds the connected interface and recorded there. The requirement does not pre-empt them.
+
+  Requires establishing and resetting access to need a deliberate act at the machine. A machine that can be enrolled over the network from nothing, or that ships with a known credential, has no gate at all, and an act at the machine is the only thing a stranger on the network cannot perform.
+
+  Requires failed and abusive attempts not to reach delivery. A signed-out party must not be able to cost the household its next drink by flooding the machine with requests.
+
+  Requires that nothing reaching the machine from a network can change how it protects itself. The protective chain and the limits the machine enforces are not editable data, whoever is signed in.
+links:
+  - target: JRN-DESIGN-PROFILE-001.C8
+    type: derives-from
+  - target: DEC-NETWORK-SURFACE-IS-A-SEPARATE-DISPLAY-UNIT
+    type: justified-by

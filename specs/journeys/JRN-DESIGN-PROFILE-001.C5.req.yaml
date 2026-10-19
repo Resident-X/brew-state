@@ -1,0 +1,12 @@
+id: JRN-DESIGN-PROFILE-001.C5
+type: criterion
+title: A settled profile can be kept under a name and placed on a one-press preset
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |-
+  A profile arrived at deliberately is the operator's to keep, and it earns its place when the household can ask for it by pressing one control.
+links:
+  - target: JRN-DESIGN-PROFILE-001
+    type: criterion-of

@@ -1,0 +1,13 @@
+id: DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR.C2
+type: criterion
+title: The controller is reached from the display unit only through the defined protocol, and a delivery runs identically with the unit absent
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |-
+  A delivery run with the unit absent, unpowered and present but unresponsive follows the same course, and no request the protocol does not define is acted on.
+links:
+  - target: DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR
+    type: criterion-of

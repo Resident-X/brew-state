@@ -1,0 +1,12 @@
+id: JRN-DESIGN-PROFILE-001.C8
+type: criterion
+title: Only the operators of the machine can see or change its profiles over a network
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |-
+  Profiles show what a household drinks and when, and a profile that anyone on the network can change is a drink anyone can spoil.
+links:
+  - target: JRN-DESIGN-PROFILE-001
+    type: criterion-of

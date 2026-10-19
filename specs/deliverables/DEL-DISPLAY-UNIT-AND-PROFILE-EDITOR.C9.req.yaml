@@ -1,0 +1,13 @@
+id: DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR.C9
+type: criterion
+title: The display unit and the connected interface offer no control that starts a delivery
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |-
+  The display and the connected interface let the operator choose what the panel's control will run, and none of their controls starts a delivery.
+links:
+  - target: DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR
+    type: criterion-of

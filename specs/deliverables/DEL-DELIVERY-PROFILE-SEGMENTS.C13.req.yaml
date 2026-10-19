@@ -1,0 +1,13 @@
+id: DEL-DELIVERY-PROFILE-SEGMENTS.C13
+type: criterion
+title: A profile has a defined text form that reads back as the profile written
+status: active
+version: 2
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |-
+  A profile written out in that form and read back is the profile that was written, in both the text and the JSON form.
+links:
+  - target: DEL-DELIVERY-PROFILE-SEGMENTS
+    type: criterion-of

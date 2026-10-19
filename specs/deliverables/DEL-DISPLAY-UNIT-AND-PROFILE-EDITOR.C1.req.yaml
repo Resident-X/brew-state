@@ -1,0 +1,13 @@
+id: DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR.C1
+type: criterion
+title: The display unit's hardware channel is recorded in the controller design's enumerated channels
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |-
+  The channel appears in the enumeration with its direction, signal kind, count and origin like every other channel, and the controller hardware that serves it is listed.
+links:
+  - target: DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR
+    type: criterion-of

@@ -1,0 +1,13 @@
+id: DEL-BREW-STATE-DELIVERY.C6
+type: criterion
+title: The operator reaches the machine's profiles and state through a display and a signed-in connected interface
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+closes_by: cascade
+text: |
+  An operator can view and shape the machine's profiles on a display on the machine and through a signed-in connected interface, with the machine reachable by that interface only through its defined protocol and offering nothing over a network to a party that has not signed in.
+links:
+  - target: DEL-BREW-STATE-DELIVERY
+    type: criterion-of

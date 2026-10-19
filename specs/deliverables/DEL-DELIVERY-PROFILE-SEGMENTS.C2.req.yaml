@@ -2,12 +2,12 @@ id: DEL-DELIVERY-PROFILE-SEGMENTS.C2
 type: criterion
 title: A segment ends on its own stated exit condition, in a quantity the machine measures as the delivery proceeds
 status: active
-version: 1
+version: 3
 measurement_type: binary
 verification: test
 closes_by: cascade
 text: |
-  The exit condition is one of elapsed time, delivered volume, or a pressure or flow threshold, and is evaluated while the segment runs. A segment whose exit condition names a quantity the machine does not measure is refused before the delivery begins.
+  The exit condition is one of elapsed time, delivered volume, delivered weight where weight is measured, or a pressure or flow threshold, and is evaluated while the segment runs. A segment whose exit condition names a quantity the machine does not measure is refused before the delivery begins. The machine tracks delivered volume throughout a delivery. If a weight reading is lost while a segment runs, the segment ends on the delivered volume equal in number to its weight target, a millilitre of water being taken as a gram and the loss is reported as a departure, because finishing nearly right and saying so serves the operator better than abandoning a dose of coffee that is already brewing.
 links:
   - target: DEL-DELIVERY-PROFILE-SEGMENTS
     type: criterion-of

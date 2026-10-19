@@ -1,0 +1,13 @@
+id: DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR.C7
+type: criterion
+title: A kept profile can be placed on a preset from either surface
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |-
+  A profile placed on a preset from the display and one placed from the connected interface are checked by the controller in the same way, and one it cannot deliver is refused.
+links:
+  - target: DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR
+    type: criterion-of

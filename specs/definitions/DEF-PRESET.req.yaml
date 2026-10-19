@@ -1,0 +1,9 @@
+id: DEF-PRESET
+type: definition
+title: preset
+status: active
+version: 1
+text: |
+  A preset is a recipe that the machine holds so that a single press of a control on the machine starts it. Pressing the control again while the delivery runs stops it.
+
+  A preset holds a complete recipe, including its profile and the condition on which that profile ends. What each preset contains is the operator's choice; the machine does not interpret it as a size or a drink type.

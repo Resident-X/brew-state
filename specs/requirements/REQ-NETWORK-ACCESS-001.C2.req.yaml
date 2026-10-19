@@ -1,0 +1,12 @@
+id: REQ-NETWORK-ACCESS-001.C2
+type: criterion
+title: The right to view and the right to change are held separately
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  A watching system needs no ability to change anything, and a credential given to one should not be able to do the work of the other.
+links:
+  - target: REQ-NETWORK-ACCESS-001
+    type: criterion-of

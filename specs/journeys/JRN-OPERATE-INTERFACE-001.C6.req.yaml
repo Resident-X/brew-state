@@ -1,0 +1,12 @@
+id: JRN-OPERATE-INTERFACE-001.C6
+type: criterion
+title: A preset is started by one press and stopped by pressing it again
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |-
+  An operator with a cup in one hand and a portafilter in the other has one free finger. An action that needs a menu fails them, and one that cannot be undone the same way leaves them reaching for the power switch.
+links:
+  - target: JRN-OPERATE-INTERFACE-001
+    type: criterion-of
