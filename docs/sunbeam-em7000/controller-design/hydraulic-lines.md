@@ -7,7 +7,7 @@ Provenance tags: **[PL]** service manual parts list, position not stated; **[SCH
 ## Brew line (group head)
 
 1. Water tank, 3 L. [PL] Retained.
-2. Tank level sensor, magnet/reed, schematic `S6` / `WAT`, read as a controller input (PE9). [SCH][OWN] The reed element is soldered through the back of the original main board, so it is lifted from it or replaced like for like (`../reference-machine.md` § Controller enclosure as found). Replaced side.
+2. Tank level sensor, magnet/reed, schematic `S6` / `WAT`, read as a controller input (PE9). [SCH][OWN] The reed element is mounted with its body on the back face of the original main board, its leads soldered on the component face, so it is lifted from it or replaced like for like (`../reference-machine.md` § Controller enclosure as found). Replaced side.
 3. Flow meter on the suction line, about 5-7 cm ahead of the coffee pump, below the tank's water level. [OWN] Three-pin `CZ1`, signal held to VCC5 by 2 kOhm, output type probably open-collector or Hall [SCH][INF]; make, pulses per litre unknown. Retained; controller input PA8. No flow meter on the steam path.
 4. Coffee pump, Ulka EP5, 15 bar, 48 W, outlet G1/8 [WEB]; it serves brew and hot water. [PL][OWN] Contains an internal check valve. [OWN] Driven by a Standard dimmer. Retained.
 5. Noise damper assembly on the coffee pump (the parts list's name for the damper). [PL][OWN] The brew pump has a damper. Retained.
@@ -28,7 +28,7 @@ Items 1-10 as for the brew line, then the hot water outlet arm. [PL][OWN] The 3-
 ## Steam line
 
 1. Water tank, as above. **How the steam pump draws from the tank, and whether it shares the flow-meter suction line, is UNESTABLISHED.**
-2. Steam pump, JYPC-4, 22 W, 230 V. [PL] The fitted variant and its pressure rating are not confirmed (a generic listing says 7 bar, another snippet 5.5 bar, a 110 V listing 1.5 bar [WEB]). Contains an internal check valve. [OWN] Driven by a Standard dimmer. The OEM pulses it in software (menu-adjustable timing). [WEB] Retained.
+2. Steam pump, JYPC-4, 22 W, 220–240 V (nameplate, inspected 2026-10-19; `../connector-pinouts.md` § Pumps: running current). [PL] The fitted variant and its pressure rating are not confirmed (a generic listing says 7 bar, another snippet 5.5 bar, a 110 V listing 1.5 bar [WEB]). Contains an internal check valve. [OWN] Driven by a Standard dimmer. The OEM pulses it in software (menu-adjustable timing). [WEB] Retained.
 3. **Steam OPV**, directly on the pump outlet, downstream of the pump's own check valve, opening at about 4-5 bar, discharging to the drip tray. [OWN] Read the setting off the part. Retained. If no check valve lies between it and the block it also caps the block pressure; to be inspected.
 4. No pulsation damper (decision D16). [OWN]
 5. Steam thermoblock, element about 1 kW (schematic 1000 W; 47.0 Ohm measured, about 1.1 kW at 230 V), soleplate thermistor `EM70020`, thermostat 200 C, thermal fuse 240 C [PL][WEB]. A check valve in the block inlet is UNESTABLISHED. The OEM holds the block hot (ready) from power-on with the knob shut; the block holds no standing water, which enters only when the knob is open (owner statement 2026-10-15, superseding the 2026-10-11 statement that the heater is off when no steam is drawn). [OWN] Retained.

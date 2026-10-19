@@ -1,8 +1,8 @@
 id: SOL-HW-RETAINED-DEVICE-REMAINING-CHARACTERISTICS-RECORDED.C1
 type: criterion
-title: Each retained-device characteristic the first recording left pending is recorded with its source, or remains pending with the reason
+title: Each fact the first recording left pending is recorded with its source, or remains pending with the reason
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |
