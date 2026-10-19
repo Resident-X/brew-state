@@ -2209,7 +2209,8 @@ class TheWorkmanshipFiguresAreTheDesignsOwn(unittest.TestCase):
                             ("WORK_DETOUR_RATIO", "1e1"), ("WORK_ANGLE_TOLERANCE_DEG", "22.5"), ("WORK_PAD_ENTRY_RATIO", "two"),
                             ("BARRIER_COPPER_MM2", "0.5mm2"), ("BARRIER_COPPER_MM2", "-0.1"), ("BARRIER_COPPER_MM2", ""),
                             ("PASTE_OVER_VIA_MM2", "none"), ("PASTE_OVER_VIA_MM2", "-1"), ("PASTE_OVER_VIA_MM2", "1e-3"),
-                            ("TEST_COURTYARD_MM", "1.0mm"), ("TEST_COURTYARD_MM", "-1"), ("TEST_COURTYARD_MM", "")):
+                            ("TEST_COURTYARD_MM", "1.0mm"), ("TEST_COURTYARD_MM", "-1"), ("TEST_COURTYARD_MM", ""),
+                            ("TEST_COURTYARD_MM", "0"), ("TEST_COURTYARD_MM", "0.5"), ("TEST_COURTYARD_MM", "0.99")):
             with self.subTest(name=name, value=value):
                 figures, found = board_check.workmanship_figures(DESIGN, {**FIGURES, name: value})
                 self.assertNotIn(name, figures)
@@ -4891,11 +4892,12 @@ class TheRoundRunsTheToolingTestsWithoutTheSeededFaultProof(unittest.TestCase):
             self.assertIn('RESVG: "{{.RESVG}}"', text)
 
 
-def pointed(reference: str, at, size=(1, 1), shape: str = "circle", yard=None, side: str = "F.Cu", turn: float = 0) -> str:
+def pointed(reference: str, at, size=(1, 1), shape: str = "circle", yard=None, side: str = "F.Cu", turn: float = 0,
+            rotate: float = 0) -> str:
     """A part `reference` at `at` with one surface pad of `size`, and a courtyard box (left, top, right, bottom) of its own axes where given."""
     crt = "B.CrtYd" if side == "B.Cu" else "F.CrtYd"
     box = f'(fp_rect (start {yard[0]} {yard[1]}) (end {yard[2]} {yard[3]}) (layer "{crt}"))' if yard else ""
-    return (f'(footprint "lib:p" (layer "{side}") (at {at[0]} {at[1]}) '
+    return (f'(footprint "lib:p" (layer "{side}") (at {at[0]} {at[1]} {rotate}) '
             f'(property "Reference" "{reference}" (at 0 0 0) (layer "F.SilkS")) '
             f'(pad "1" smd {shape} (at 0 0 {turn}) (size {size[0]} {size[1]}) (layers "{side}")) {box})')
 
@@ -4961,6 +4963,30 @@ class EveryTestPadStandsClearOfEveryPartsCourtyard(unittest.TestCase):
         found = self.found(far, near, pointed("TP1", (12, 10)))
         self.assertEqual([v.location for v in found], ["pad 1 of TP1 at (12, 10) mm"])
         self.assertIn("test point TP1 is 0.35 mm from the F.CrtYd courtyard of TP2", found[0].message)
+
+    def test_a_courtyard_figure_below_the_published_one_millimetre_fails_and_one_at_or_above_it_passes(self):
+        # SOL-PRE-ORDER-CHECK-TEST-POINT-COURTYARD-DISTANCE.C1: Add to the pre-order check a measured rule that fails a test point whose pad stands closer than the layout review's test-point item states to the courtyard of any part on either side of the board.
+        for value in ("0", "0.5"):
+            with self.subTest(value=value):
+                figures, found = board_check.workmanship_figures(DESIGN, {**FIGURES, "TEST_COURTYARD_MM": value})
+                self.assertNotIn("TEST_COURTYARD_MM", figures)
+                self.assertEqual([v.rule for v in found], ["workmanship_figure"])
+                self.assertIn(f"TEST_COURTYARD_MM is '{value}'", found[0].message)
+                self.assertIn("no less than 1", found[0].message)
+        for value in ("1", "1.5"):
+            with self.subTest(value=value):
+                figures, found = board_check.workmanship_figures(DESIGN, {**FIGURES, "TEST_COURTYARD_MM": value})
+                self.assertEqual(found, [])
+                self.assertEqual(figures["TEST_COURTYARD_MM"], float(value))
+
+    def test_a_part_turned_a_quarter_turn_is_held_to_its_turned_courtyard(self):
+        # SOL-PRE-ORDER-CHECK-TEST-POINT-COURTYARD-DISTANCE.C1: Add to the pre-order check a measured rule that fails a test point whose pad stands closer than the layout review's test-point item states to the courtyard of any part on either side of the board.
+        turned = pointed("R1", (10, 10), yard=self.BODY, rotate=90)
+        self.assertEqual(self.found(turned, pointed("TP1", (13.4, 10))), [])
+        self.assertEqual(self.found(turned, pointed("TP1", (10, 13.5))), [])
+        found = self.found(turned, pointed("TP1", (10, 13.4)))
+        self.assertEqual([v.location for v in found], ["pad 1 of TP1 at (10, 13.4) mm"])
+        self.assertIn("is 0.9 mm from the F.CrtYd courtyard of R1", found[0].message)
 
     def test_the_pad_is_measured_by_its_copper_and_not_its_centre_or_its_unturned_size(self):
         # SOL-PRE-ORDER-CHECK-TEST-POINT-COURTYARD-DISTANCE.C1: A test pad closer to a part's courtyard than the item's distance fails.

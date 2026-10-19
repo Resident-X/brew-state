@@ -2325,7 +2325,7 @@ MEASURED = (
      "bridges the barrier", 0.0, None),
     ("MFG-4", "paste over a via", "PASTE_OVER_VIA_MM2", "mm² at most of a via's hole under a paste opening", 0.0, None),
     ("TEST-5", "test point to courtyard", "TEST_COURTYARD_MM", "mm at least from a test point's pad to the courtyard of "
-     "any other part, on either side of the board", 0.0, None),
+     "any other part, on either side of the board", 1.0, None),
 )
 
 #: Each custom rule a design's rules file must hold, by the catalogue item it
