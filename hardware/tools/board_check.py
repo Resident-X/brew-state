@@ -750,6 +750,14 @@ class Reading:
     def bad(self, path: str, message: str) -> None:
         self.found.append(Violation(self.design.project, self.rule, f"{self.record} {path}".strip(), message))
 
+    def distinct(self, path: str, keys: Sequence[str], what: str) -> None:
+        """Reports each key that `keys` holds more than once, since a reader that indexes by it would let the later entry replace the earlier."""
+        seen: Set[str] = set()
+        for key in keys:
+            if key in seen:
+                self.bad(path, f"{path} lists {what} '{key}' more than once, so one entry would replace another; list it once")
+            seen.add(key)
+
     def mapping(self, path: str, value, keys: Sequence[str], required: Sequence[str] = (), whose: str = "") -> bool:
         """Whether `value` is a mapping; if so, every key in it that `keys` does not hold and every `required` one it lacks is reported."""
         label = path or "the record"
@@ -1795,6 +1803,8 @@ def load_derating(yaml, root: str, repository: Repository, design: Design, not_f
                                                    "one, the fraction of the rating a part may use")
                 if "source" in share:
                     reading.text(f"{at}.source", share["source"])
+        reading.distinct("classes", [str(c["class"]).strip() for c in data["classes"]
+                                     if isinstance(c, dict) and isinstance(c.get("class"), str)], "the class")
     return (None if reading.found else data), reading.found
 
 
@@ -1823,6 +1833,8 @@ def load_pin_limits(yaml, root: str, repository: Repository, design: Design, not
                 reading.text(f"{where}.rail", entry["rail"])
             if "highest_voltage_v" in entry:
                 reading.number(f"{where}.highest_voltage_v", entry["highest_voltage_v"])
+        reading.distinct("domains", [d["name"] for d in data["domains"]
+                                     if isinstance(d, dict) and isinstance(d.get("name"), str)], "the domain")
     if "parts" in data and reading.listed("parts", data["parts"], "parts"):
         for index, entry in enumerate(data["parts"]):
             where = f"parts[{index}]"
@@ -1857,6 +1869,8 @@ def load_pin_limits(yaml, root: str, repository: Repository, design: Design, not
                                                             "a pin's lowest allowed voltage cannot exceed its highest")
                     if "tolerates_driven_unpowered" in pin:
                         reading.boolean(f"{at}.tolerates_driven_unpowered", pin["tolerates_driven_unpowered"])
+        reading.distinct("parts", [p["lcsc"].strip() for p in data["parts"]
+                                   if isinstance(p, dict) and isinstance(p.get("lcsc"), str)], "the catalogue number")
     return (None if reading.found else data), reading.found
 
 
@@ -1981,8 +1995,8 @@ def check_parts(yaml, root: str, design: Design, repository: Repository, today: 
 
 #: The slack, relative to the figure compared, that floating-point arithmetic on a peak may need.
 VOLTAGE_SLACK = 1e-9
-#: A figure written with unit V, VDC or VAC, as a rating states it.
-RATING_FIGURE = re.compile(r"(?<![A-Za-z0-9.])([0-9]+(?:\.[0-9]+)?)\s*(VAC|VDC|V)(?![A-Za-z])")
+#: A figure written with unit V, VDC or VAC in any letter case, as a rating states it.
+RATING_FIGURE = re.compile(r"(?<![A-Za-z0-9.])([0-9]+(?:\.[0-9]+)?)\s*(VAC|VDC|V)(?![A-Za-z])", re.IGNORECASE)
 #: A resistor value that is zero.
 ZERO_OHMS = re.compile(r"0+(?:\.0+)?\s*(?:R|Ω|ohms?)?", re.IGNORECASE)
 INTEGRATED_CIRCUIT = "integrated circuit"
@@ -1997,12 +2011,12 @@ LEADING_LETTERS = re.compile(r"[A-Za-z]*")
 def part_kind(reference: str, value: Optional[str]) -> str:
     """A part's kind, read from the leading letters of its reference designator and, for a resistor, its value.
 
-    The leading letters are matched whole: U is an integrated circuit, D, Q or
+    The leading letters are matched whole and without regard to case: U is an integrated circuit, D, Q or
     LED a semiconductor, FB, L or F, or R with the value zero, a part that
     joins nets, and any other designator a passive or mechanical part. The
     part's class plays no part in it.
     """
-    letters = LEADING_LETTERS.match(reference).group(0)
+    letters = LEADING_LETTERS.match(reference).group(0).upper()
     if letters == "U":
         return INTEGRATED_CIRCUIT
     if letters in ("D", "Q", "LED"):
@@ -2017,7 +2031,7 @@ def rating_peak(text: Optional[str]) -> Optional[float]:
     found = RATING_FIGURE.search(text) if isinstance(text, str) else None
     if found is None or float(found.group(1)) <= 0:
         return None
-    return float(found.group(1)) * (math.sqrt(2) if found.group(2) == "VAC" else 1)
+    return float(found.group(1)) * (math.sqrt(2) if found.group(2).upper() == "VAC" else 1)
 
 
 def net_key(name: str) -> str:

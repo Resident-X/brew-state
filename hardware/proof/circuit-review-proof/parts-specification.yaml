@@ -316,6 +316,7 @@ positions:
   - reference: U4
     value: "MSPS003F4SPW20R"
     package: "TSSOP-20_4.4x6.5mm_P0.65mm"
+    # 4.1V is the part's datasheet absolute maximum supply voltage.
     rating: "4.1V"
     lcsc: "C9200032"
     class: "integrated circuit"
