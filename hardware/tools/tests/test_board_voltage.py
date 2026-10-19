@@ -17,7 +17,10 @@ import os
 import re
 import sys
 import tempfile
+import datetime
+import json
 import unittest
+from unittest import mock
 
 TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, TOOLS)
@@ -144,7 +147,11 @@ class PartKindIsReadFromTheDesignator(unittest.TestCase):
                  ("R1", "0"): board_check.JOINS_NETS, ("R1", "0R"): board_check.JOINS_NETS, ("R1", " 0.0 "): board_check.JOINS_NETS,
                  ("R1", "0 ohm"): board_check.JOINS_NETS, ("R1", "10k"): board_check.PASSIVE, ("R1", "0.05"): board_check.PASSIVE,
                  ("R1", "100"): board_check.PASSIVE, ("R1", None): board_check.PASSIVE, ("C1", "0"): board_check.PASSIVE,
-                 ("J1", None): board_check.PASSIVE, ("TP1", None): board_check.PASSIVE, ("RV1", "0"): board_check.JOINS_NETS}
+                 ("J1", None): board_check.PASSIVE, ("TP1", None): board_check.PASSIVE,
+                 ("LED1", None): board_check.SEMICONDUCTOR, ("FID1", None): board_check.PASSIVE, ("FL1", None): board_check.PASSIVE,
+                 ("LCD1", None): board_check.PASSIVE, ("LS1", None): board_check.PASSIVE, ("DS1", None): board_check.PASSIVE,
+                 ("R0", "10k"): board_check.PASSIVE, ("R0", "0"): board_check.JOINS_NETS, ("Q10", None): board_check.SEMICONDUCTOR,
+                 ("F1", "T1A"): board_check.JOINS_NETS, ("1", None): board_check.PASSIVE, ("RV1", "0"): board_check.PASSIVE}
         for (ref, value), kind in kinds.items():
             with self.subTest(ref=ref, value=value):
                 self.assertEqual(board_check.part_kind(ref, value), kind)
@@ -231,7 +238,7 @@ class TheDeratedVoltageRule(World):
         self.assertEqual(found[0].location, f"{self.design.schematic} C1 /MID")
         self.assertIn("declare it as the rail of a power domain", found[0].message)
         # a part of class none on the same net is not failed for it
-        self.build([("C1", "x", "C100", "16V", "none")] + parts[1:], nets, limits=(), mains="none", mains_nets=())
+        self.build([("C1", "x", "C100", None, "none")] + parts[1:], nets, limits=(), mains="none", mains_nets=())
         self.assertEqual(self.found("derated_voltage"), [])
         # declaring the net as a rail clears it
         self.build(parts, nets, domains=DOMAINS + [domain("mid", "MID", 2.5)], limits=(), mains="none", mains_nets=())
@@ -263,8 +270,37 @@ class TheDeratedVoltageRule(World):
         found = self.found("derated_voltage")
         self.assertEqual([v.location for v in found], [f"{self.design.schematic} C1"])
         self.assertIn("has no class", found[0].message)
-        self.build([("C1", "x", "C100", "16V", "none"), IC], cap_on_rails(), limits=[IC_LIMITS])
+        self.build([("C1", "x", "C100", None, "none"), IC], cap_on_rails(), limits=[IC_LIMITS])
         self.assertEqual(self.found("derated_voltage"), [])
+
+    def test_a_rated_part_cannot_name_none_whether_the_record_or_the_design_states_the_rating(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C1: none is for a part no class covers whose rating, in the record and in the design's Rating field, states no figure in V, VDC or VAC; a part with such a figure that names none fails.
+        for rating in ("16V", "250VAC", "50VDC", "3A 250V"):
+            with self.subTest(rating=rating):
+                self.build([("C1", "x", "C100", rating, "none"), IC], cap_on_rails(), limits=[IC_LIMITS])
+                found = self.found("derated_voltage")
+                self.assertEqual([v.location for v in found], [f"{self.design.schematic} C1 rating"] * 2)
+                self.assertIn("names the class none", found[0].message)
+                self.assertIn("the parts specification record", found[0].message)
+                self.assertIn("the design's Rating field", found[1].message)
+                self.assertIn(repr(rating), found[0].message)
+                self.assertEqual(found[0].design, self.design.project)
+                self.assertTrue(found[0].line().startswith(f"VIOLATION | {self.design.project} | derated_voltage | "))
+        # the rating in the design's Rating field alone is enough, with the record silent
+        self.build([("C1", "x", "C100", "16V", "none"), IC], cap_on_rails(), limits=[IC_LIMITS])
+        self.record("parts-specification.yaml", {"positions": [{"reference": "C1", "value": "x", "lcsc": "C100", "class": "none"},
+                                                               {"reference": "U1", "value": "CHIP", "lcsc": "C200", "class": "none"}],
+                                                 "synthetic": True})
+        found = self.found("derated_voltage")
+        self.assertEqual(len(found), 1)
+        self.assertIn("the design's Rating field", found[0].message)
+
+    def test_an_unrated_part_or_one_rated_in_other_units_may_name_none(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C1: none is accepted for a part whose rating states no figure in V, VDC or VAC.
+        for rating in (None, "3A", "0.25W", "500mA", "275Vrms"):
+            with self.subTest(rating=rating):
+                self.build([("C1", "x", "C100", rating, "none"), IC], cap_on_rails(), limits=[IC_LIMITS])
+                self.assertEqual(self.found("derated_voltage"), [])
 
     def test_a_position_naming_a_class_the_policy_lacks_fails_and_a_near_miss_of_the_name_fails(self):
         # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C1: A position naming a class the derating policy lacks fails.
@@ -281,7 +317,7 @@ class TheDeratedVoltageRule(World):
         found = self.found("derated_voltage")
         self.assertEqual(len(found), 1)
         self.assertIn("the design has no derating policy", found[0].message)
-        self.build([("C1", "x", "C100", "16V", "none"), IC], cap_on_rails(), limits=[IC_LIMITS], policy=None)
+        self.build([("C1", "x", "C100", None, "none"), IC], cap_on_rails(), limits=[IC_LIMITS], policy=None)
         self.assertEqual(self.found("derated_voltage"), [])
 
     def test_a_covered_part_without_a_voltage_rating_in_either_place_fails(self):
@@ -305,29 +341,29 @@ class TheDeratedVoltageRule(World):
 
     def test_mains_present_needs_a_pin_limit_record_with_a_mains_domain_at_least_the_basis_peak(self):
         # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C1: A mains domain in the pin-limit record is required when mains is declared present and is at least that peak.
-        self.build([("C1", "x", "C100", "16V", "none")], cap_on_rails(), limits=[IC_LIMITS])
+        self.build([("C1", "x", "C100", None, "none")], cap_on_rails(), limits=[IC_LIMITS])
         self.assertEqual(self.found("derated_voltage"), [])
         low = [d for d in DOMAINS if not d["name"].startswith("mains")] + [domain("mains_line", "MAINS_L", 353.5)]
-        self.build([("C1", "x", "C100", "16V", "none")], cap_on_rails(), domains=low, limits=[IC_LIMITS])
+        self.build([("C1", "x", "C100", None, "none")], cap_on_rails(), domains=low, limits=[IC_LIMITS])
         found = self.found("derated_voltage")
         self.assertEqual(len(found), 1)
         self.assertIn("the mains domain mains_line", found[0].message)
         self.assertIn("353.553", found[0].message)
         none = [d for d in DOMAINS if not d["name"].startswith("mains")]
-        self.build([("C1", "x", "C100", "16V", "none")], cap_on_rails(), domains=none, limits=[IC_LIMITS])
+        self.build([("C1", "x", "C100", None, "none")], cap_on_rails(), domains=none, limits=[IC_LIMITS])
         found = self.found("derated_voltage")
         self.assertEqual(len(found), 1)
         self.assertIn("no domain of the pin-limit record has a rail on a net of the Mains class", found[0].message)
-        self.build([("C1", "x", "C100", "16V", "none")], cap_on_rails(), limits=None)
+        self.build([("C1", "x", "C100", None, "none")], cap_on_rails(), limits=None)
         found = self.found("derated_voltage")
         self.assertEqual(len(found), 1)
         self.assertIn("holds no pin-limit record", found[0].message)
 
     def test_a_domain_whose_rail_is_not_in_the_mains_class_is_no_mains_domain(self):
         # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C2: The mains domain is the power domain whose rail is on a net of the Mains net class.
-        self.build([("C1", "x", "C100", "16V", "none")], cap_on_rails(), limits=[IC_LIMITS], mains_nets=("/MAINS_L",))
+        self.build([("C1", "x", "C100", None, "none")], cap_on_rails(), limits=[IC_LIMITS], mains_nets=("/MAINS_L",))
         self.assertEqual(self.found("derated_voltage"), [])
-        self.build([("C1", "x", "C100", "16V", "none")], cap_on_rails(), limits=[IC_LIMITS], mains_nets=("/OTHER",),
+        self.build([("C1", "x", "C100", None, "none")], cap_on_rails(), limits=[IC_LIMITS], mains_nets=("/OTHER",),
                    domains=[d for d in DOMAINS if not d["name"].startswith("mains")] + [domain("mains_line", "MAINS_L", 400)])
         found = self.found("derated_voltage")
         self.assertEqual(len(found), 1)
@@ -335,13 +371,13 @@ class TheDeratedVoltageRule(World):
 
     def test_a_design_declaring_no_mains_needs_no_mains_domain(self):
         # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C5: A missing record or declaration the rule needs fails; a design with no covered part is not failed for that.
-        self.build([("C1", "x", "C100", "16V", "none")], cap_on_rails(), limits=None, mains="none", mains_nets=())
+        self.build([("C1", "x", "C100", None, "none")], cap_on_rails(), limits=None, mains="none", mains_nets=())
         self.assertEqual(self.lines(), [])
 
     def test_an_unsigned_basis_leaves_the_peak_comparison_to_the_separation_rules(self):
         # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C1: A mains domain in the pin-limit record is required when mains is declared present.
         low = [d for d in DOMAINS if not d["name"].startswith("mains")] + [domain("mains_line", "MAINS_L", 1)]
-        self.build([("C1", "x", "C100", "16V", "none")], cap_on_rails(), domains=low, limits=[IC_LIMITS])
+        self.build([("C1", "x", "C100", None, "none")], cap_on_rails(), domains=low, limits=[IC_LIMITS])
         self.assertEqual(self.found("derated_voltage", signed=False), [])
 
     def test_a_rule_does_not_judge_a_record_whose_form_has_already_failed(self):
@@ -411,7 +447,8 @@ class ThePinLimitRule(World):
 
     def test_a_net_reached_only_through_resistors_with_no_listed_pin_takes_no_limit_from_the_rule(self):
         # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C2: A net reached only through resistors or capacitors and carrying no listed pin takes no limit from this rule.
-        nets = {"/+5V": pins(("R1", "1", "")), "/MID": pins(("R1", "2", ""), ("U1", "5", "NC_5"))}
+        nets = {"/+5V": pins(("R1", "1", "")), "/MID": pins(("R1", "2", ""), ("U1", "5", "NC_5")),
+                "/AUX": pins(("U1", "1", "A"))}
         self.build([IC, ("R1", "1k", "C300", None, "none")], nets, limits=[limit_part("C200", ("1", "five", 6, 0, False))],
                    mains="none", mains_nets=())
         self.assertEqual(self.lines(), [])
@@ -443,15 +480,34 @@ class ThePinLimitRule(World):
         self.assertEqual([v.location for v in found], [f"{self.design.schematic} U1 pin 1"])
         self.assertIn("5.25 V", found[0].message)
 
-    def test_a_pin_is_found_by_its_number_or_its_name_and_a_listed_pin_that_is_not_on_the_part_is_ignored(self):
+    def test_a_pin_is_found_by_its_number_or_its_name(self):
         # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C2: The pin-limit record holds per part by LCSC number its pins.
         nets = {"/+5V": pins(("U1", "7", "VDD/PA3_7"))}
         for pin in ("7", "VDD", "PA3"):
             with self.subTest(pin=pin):
                 self.build([IC], nets, limits=[limit_part("C200", (pin, "five", 5, 0, False))], mains="none", mains_nets=())
                 self.assertEqual(len(self.found("pin_limit")), 1)
-        self.build([IC], nets, limits=[limit_part("C200", ("9", "five", 5, 0, False))], mains="none", mains_nets=())
+
+    def test_a_listed_pin_the_part_does_not_have_fails_naming_the_part_the_pin_and_the_catalogue_number(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C2: A listed pin the placed part's symbol does not have fails.
+        nets = {"/+5V": pins(("U1", "7", "VDD/PA3_7"))}
+        self.build([IC], nets, limits=[limit_part("C200", ("9", "five", 6, 0, False))], mains="none", mains_nets=())
+        found = self.found("pin_limit")
+        self.assertEqual([v.location for v in found], [f"{self.design.schematic} U1"])
+        for words in ("pin 9", "C200", "U1", "does not have"):
+            self.assertIn(words, found[0].message)
+        self.assertEqual(found[0].design, self.design.project)
+
+    def test_one_bad_pin_among_good_ones_fails_and_a_real_unconnected_pin_passes(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C2: A listed pin the placed part's symbol does not have fails; a pin the part has but nothing connects is a pin it has.
+        nets = {"/+5V": pins(("U1", "1", "VDD_1")), "unconnected-(U1-NC-Pad3)": pins(("U1", "3", "NC_3"))}
+        good = [("1", "five", 6, 0, False), ("3", "five", 6, 0, False)]
+        self.build([IC], nets, limits=[limit_part("C200", *good)], mains="none", mains_nets=())
         self.assertEqual(self.found("pin_limit"), [])
+        self.build([IC], nets, limits=[limit_part("C200", *good, ("4", "five", 6, 0, False))], mains="none", mains_nets=())
+        found = self.found("pin_limit")
+        self.assertEqual(len(found), 1)
+        self.assertIn("pin 4", found[0].message)
 
     def test_every_integrated_circuit_and_semiconductor_the_record_omits_fails_and_a_passive_does_not(self):
         # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C2: The rule fails every semiconductor or integrated-circuit part the record omits; a passive or mechanical part needs no entry.
@@ -621,6 +677,36 @@ class EveryTrackedDesignCarriesTheRecordsTheRulesRead(World):
                 chips = {ref: info["lcsc"] for ref, info in placed.items()
                          if board_check.part_kind(ref, info["value"]) in (board_check.INTEGRATED_CIRCUIT, board_check.SEMICONDUCTOR)}
                 self.assertEqual({ref for ref, lcsc in chips.items() if lcsc not in held}, set())
+
+
+class TheRulesAreCalledFromTheDesignCheck(World):
+    """check_design run on a synthetic design with KiCad's reports stood in for, so no KiCad is needed."""
+
+    NETLIST = """(export (version "E")
+  (components (comp (ref "U1") (libsource (lib "Device") (part "X"))) (comp (ref "C1") (libsource (lib "Device") (part "X"))))
+  (nets
+    (net (code 1) (name "/+5V") (node (ref "U1") (pin "1") (pinfunction "VDD_1")) (node (ref "C1") (pin "1")))
+    (net (code 2) (name "/GND") (node (ref "C1") (pin "2")))))
+"""
+
+    def test_a_violation_of_either_rule_reaches_the_design_checks_report(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C3: The rules extend the existing pre-order check and its record reader.
+        self.write(self.design.project, json.dumps({"text_variables": {"MAINS": "none", "NOT_FOR_MANUFACTURE": "true"}}))
+        self.write(self.design.layout, "(kicad_pcb (version 20250114))\n")
+        self.build([IC, ("C1", "x", "C100", "6V", "capacitor")], {"/+5V": pins(("U1", "1", "VDD_1"), ("C1", "1", "")), "/GND": pins(("C1", "2", ""))},
+                   limits=[limit_part("C200", ("1", "five", 3, 0, False))], mains="none", mains_nets=())
+        files = [os.path.relpath(os.path.join(d, n), self.root).replace(os.sep, "/") for d, _, names in os.walk(self.root) for n in names]
+        repository = board_check.Repository(self.root, files)
+
+        def kicad_report(command, cwd):
+            return ({"sheets": []}, "") if "erc" in command else (None, "stood in")
+
+        with mock.patch.object(board_check, "run_report", kicad_report), \
+                mock.patch.object(board_check, "run_kicad", lambda command, cwd, output="report.json": (self.NETLIST, "")):
+            found = board_check.check_design(self.design, repository, "kicad-cli", self.yaml, datetime.date(2026, 10, 20), [])
+        rules = {(v.rule, v.location) for v in found if v.rule in ("pin_limit", "derated_voltage")}
+        self.assertIn(("pin_limit", f"{self.design.schematic} U1 pin 1"), rules)
+        self.assertIn(("derated_voltage", f"{self.design.schematic} C1"), rules)
 
 
 if __name__ == "__main__":

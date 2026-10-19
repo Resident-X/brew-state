@@ -1991,18 +1991,23 @@ JOINS_NETS = "joins nets"
 PASSIVE = "passive or mechanical part"
 
 
-def part_kind(reference: str, value: Optional[str]) -> str:
-    """A part's kind, read from its reference designator and, for a resistor, its value.
+LEADING_LETTERS = re.compile(r"[A-Za-z]*")
 
-    U is an integrated circuit, D or Q a semiconductor, FB, L or F, or R with
-    the value zero, a part that joins nets, and any other designator a passive
-    or mechanical part. The part's class plays no part in it.
+
+def part_kind(reference: str, value: Optional[str]) -> str:
+    """A part's kind, read from the leading letters of its reference designator and, for a resistor, its value.
+
+    The leading letters are matched whole: U is an integrated circuit, D, Q or
+    LED a semiconductor, FB, L or F, or R with the value zero, a part that
+    joins nets, and any other designator a passive or mechanical part. The
+    part's class plays no part in it.
     """
-    if reference.startswith("U"):
+    letters = LEADING_LETTERS.match(reference).group(0)
+    if letters == "U":
         return INTEGRATED_CIRCUIT
-    if reference.startswith(("D", "Q")):
+    if letters in ("D", "Q", "LED"):
         return SEMICONDUCTOR
-    if reference.startswith(("FB", "L", "F")) or (reference.startswith("R") and ZERO_OHMS.fullmatch((value or "").strip())):
+    if letters in ("FB", "L", "F") or (letters == "R" and ZERO_OHMS.fullmatch((value or "").strip())):
         return JOINS_NETS
     return PASSIVE
 
@@ -2142,16 +2147,21 @@ def voltage_rules(design: Design, yaml, root: str, repository: Repository, not_f
 
     listed: Dict[str, Set[str]] = {}
     listings: Dict[str, List[Tuple[str, PinNode, dict]]] = {}
+    lacking: List[Tuple[str, str]] = []
     for ref in sorted(placed):
         entry = entries.get(number(ref))
         if entry is None:
             continue
         for pin in entry["pins"]:
             wanted = str(pin["pin"])
+            matched = False
             for net, node in by_part.get(ref, []):
                 if node.pin == wanted or wanted in node.names():
+                    matched = True
                     listed.setdefault(net, set()).add(pin["domain"])
                     listings.setdefault(ref, []).append((net, node, pin))
+            if not matched:
+                lacking.append((ref, wanted))
     joiners = {ref for ref in by_part if kind(ref) == JOINS_NETS}
     volts = NetVoltages(nets, domains, mains_nets, joiners, listed)
 
@@ -2171,6 +2181,13 @@ def voltage_rules(design: Design, yaml, root: str, repository: Repository, not_f
                                                "name a class of the derating policy, or none for a part no class covers")
                 continue
             if named == "none":
+                stated_ratings = [(source, text) for source, text in (
+                    ("the parts specification record", record.get("rating")),
+                    ("the design's Rating field", (placed.get(ref) or {}).get("rating"))) if rating_peak(text) is not None]
+                for source, text in stated_ratings:
+                    fail("derated_voltage", f"{where} rating",
+                         f"the position {ref} names the class none and {source} gives {text!r}, a figure in V, VDC or VAC; "
+                         "none is for a part with no such rating, so name the class of the derating policy that covers it")
                 continue
             if classes is None:
                 continue
@@ -2243,6 +2260,10 @@ def voltage_rules(design: Design, yaml, root: str, repository: Repository, not_f
         elif number(ref) not in entries:
             fail("pin_limit", where, f"the pin-limit record omits the {kind(ref)} {ref}, catalogue number {number(ref)}; "
                                      "add its entry")
+    for ref, wanted in lacking:
+        fail("pin_limit", f"{schematic} {ref}",
+             f"the pin-limit record lists pin {wanted} of catalogue number {number(ref)}, which the part {ref} does not have; "
+             "name a pin the part's symbol has, by its number or its name")
     for ref in sorted(listings):
         for net, node, pin in listings[ref]:
             where = f"{schematic} {node.describe()}"

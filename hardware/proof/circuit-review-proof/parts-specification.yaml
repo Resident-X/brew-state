@@ -94,24 +94,21 @@ positions:
   - reference: J1
     value: "MKDSN_1.5/3-5.08"
     package: "TerminalBlock_Phoenix_MKDS-1,5-3-5.08_1x03_P5.08mm_Horizontal"
-    rating: "320V 8A"
+    rating: "320VAC 8A"
     lcsc: "C9200001"
-    # none: its Rating field gives 320V with no AC marking, which the rule reads as a direct-voltage figure below the mains peak, and the schematic is not edited for this record
-    class: none
+    class: "mains-rated part (X and Y capacitors, mains fuse, varistor, mains terminals and links)"
   - reference: JP1
     value: "LINK_L"
     package: "SolderWire-1sqmm_1x02_P7.8mm_D1.4mm_OD3.9mm"
-    rating: "300V 6A"
+    rating: "300VAC 6A"
     lcsc: "C9200005"
-    # none: its Rating field gives 300V with no AC marking, which the rule reads as a direct-voltage figure below the mains peak, and the schematic is not edited for this record
-    class: none
+    class: "mains-rated part (X and Y capacitors, mains fuse, varistor, mains terminals and links)"
   - reference: J2
     value: "HEATER"
     package: "TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal"
-    rating: "320V 8A"
+    rating: "320VAC 8A"
     lcsc: "C9200002"
-    # none: its Rating field gives 320V with no AC marking, which the rule reads as a direct-voltage figure below the mains peak, and the schematic is not edited for this record
-    class: none
+    class: "mains-rated part (X and Y capacitors, mains fuse, varistor, mains terminals and links)"
   - reference: JP2
     value: "LINK_5V"
     package: "PinHeader_1x02_P2.54mm_Vertical"
@@ -175,10 +172,9 @@ positions:
   - reference: RV1
     value: "VDRS14T275BSE"
     package: "RV_Disc_D15.5mm_W5.4mm_P7.5mm"
-    rating: "275Vrms"
+    rating: "275VAC"
     lcsc: "C9200006"
-    # none: its Rating field gives 275Vrms, a unit the rule does not read
-    class: none
+    class: "mains-rated part (X and Y capacitors, mains fuse, varistor, mains terminals and links)"
   - reference: R2
     value: "1.1k"
     package: "R_1206_3216Metric"
@@ -320,10 +316,9 @@ positions:
   - reference: U4
     value: "MSPS003F4SPW20R"
     package: "TSSOP-20_4.4x6.5mm_P0.65mm"
-    rating: "3.8V"
+    rating: "4.1V"
     lcsc: "C9200032"
-    # none: its 3.8V rating times the integrated-circuit share is below the 3.48 V top of its supply span, which the schematic is not edited to remove
-    class: none
+    class: "integrated circuit"
   - reference: U5
     value: "TPS3823-33DBVR"
     package: "SOT-23-5"
