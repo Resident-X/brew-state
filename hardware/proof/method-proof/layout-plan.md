@@ -67,7 +67,7 @@ The layer-by-layer plan of the nets: `+5V_IN`, `+5V`, `/+3V3_REG` and `+3V3` are
 | TEST-2 | yes | All four test points on B.Cu, and every part taller than 6.4 mm, J1, J2, J3, JP1 and JP2, on F.Cu. |
 | TEST-3 | no | No resistor used to measure current in the schematic: R1 sets an LED's current and nothing reads its voltage. |
 | TEST-4 | no | No resistor used to measure current in the schematic. |
-| TEST-5 | yes | `TEST_COURTYARD_MM` 1 in `design-rules.md`; every test pad, TP1 to TP4, stands at least 1.0 mm from the courtyard of every part on either side, TP3 at (120.4, 110.4) 1.05 mm from U2's. |
+| TEST-5 | yes | `TEST_COURTYARD_MM` 1 in `design-rules.md`; every test pad, TP1 to TP4, stands at least 1.0 mm from the courtyard of every part on either side, TP3 at (120.4, 110.4) the closest, from U2's. |
 | MFG-1 | yes | The board-wide minimums of Board Setup set to JLCPCB's stated limits for four layers at 1 oz, each with its row in `design-rules.md`, naming this item and the capability page and its date. |
 | MFG-2 | no | No part in the schematic has an exposed pad on its underside. |
 | MFG-3 | no | No part in the schematic has an exposed pad on its underside. |
