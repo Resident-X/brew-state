@@ -42,8 +42,8 @@ links:
   - target: DEC-PLANT-PARAMETER-RELATIONS-ARE-REFUSED-AT-LOAD
     type: justified-by
 brief_confirmation:
-  confirmer: claude-sonnet-5-5 blind brief reviewer
-  fingerprint: a26d3c2544f31cd7997e675de5c48e8666062597b378878b146a7e5a20a67b94
+  confirmer: claude-sonnet-5-5
+  fingerprint: 78192e7d2bbfc8d8dd32c314dbbb6ccb3afb3a7c77591dee73383d61823173e9
   gating_profile: ""
 design_question_answers:
   - answered_by: SOL-PLANT-STEAM-FLASH-GENERATOR.C2
