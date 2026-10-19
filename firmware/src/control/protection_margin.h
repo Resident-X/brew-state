@@ -161,8 +161,11 @@ typedef struct {
  * and how much the declared sensing error added on top, on the same terms the
  * rest of the account already separates the un-widened gap from what the
  * enumeration widened it by. The rest is the account: how many corners the
- * enumeration covers, how many of them were runnable, how many actually cost
- * the gap anything, and which one was worst. A margin figure with no account
+ * enumeration covers, how many of them were runnable, how many of those the
+ * description declares an error against could not be run -- a machine the
+ * structure refuses, or a probe it cannot answer, which leaves the margin sized
+ * without them -- how many actually cost the gap anything, and which one was
+ * worst. A margin figure with no account
  * behind it is a number nobody can challenge, which is the state a
  * load-bearing figure is in just before everybody treats it as settled.
  */
@@ -173,6 +176,7 @@ typedef struct {
     float margin_c;
     size_t corners;
     size_t corners_run;
+    size_t declared_not_run;
     size_t contributing;
     size_t worst_at;
     bool worst_is_joint;

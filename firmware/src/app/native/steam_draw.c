@@ -281,7 +281,21 @@ int steam_draw_run(const plant_parameters_t *parameters,
     }
 
     if (!plant_model_init(&machine, parameters)) {
-        (void)fprintf(stderr, "steam draw: the machine could not be initialised\n");
+        /*
+         * A description edited past the loader is refused where the run builds
+         * its model, and the builder is told which parameter and why, as the
+         * loader would have told them, rather than that something failed.
+         */
+        plant_parameter_error_t refusal;
+
+        if (!plant_parameters_admissible(parameters, &refusal)) {
+            (void)fprintf(stderr,
+                          "steam draw: the machine could not be initialised: parameter %s is refused "
+                          "(fault %d)\n",
+                          refusal.parameter, (int)refusal.fault);
+        } else {
+            (void)fprintf(stderr, "steam draw: the machine could not be initialised\n");
+        }
         return 1;
     }
 

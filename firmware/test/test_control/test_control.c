@@ -8502,6 +8502,8 @@ static void test_a_probe_the_structure_cannot_answer_runs_no_corner(void)
     TEST_ASSERT_EQUAL_FLOAT(probe.unwidened_c, margin.margin_c);
     TEST_ASSERT_EQUAL_UINT(0u, margin.corners_run);
     TEST_ASSERT_EQUAL_UINT(0u, margin.contributing);
+    TEST_ASSERT_TRUE_MESSAGE(margin.declared_not_run > 0u,
+                             "corners that carry a declared error and ran nothing were not counted");
 }
 
 /// SOL-PLANT-STEAM-FLASH-GENERATOR.C2: An initial inventory above the capacity
@@ -8548,6 +8550,43 @@ static void test_a_corner_whose_machine_cannot_be_built_is_reported_as_not_run(v
     TEST_ASSERT_TRUE(protection_margin_widened(&believed, &declared, &probe, 0.0f, &margin));
     TEST_ASSERT_EQUAL_UINT(1u, margin.corners_run);
     TEST_ASSERT_TRUE(margin.corners > margin.corners_run);
+    TEST_ASSERT_EQUAL_UINT_MESSAGE(1u, margin.declared_not_run,
+                                   "the declared corner no model can be built from was not counted");
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: A description whose casting ceiling is not
+/// above the declared saturation temperature is refused wherever a model is
+/// built from the description, at load and at model construction, naming the
+/// parameter.
+///
+/// The coffee side's initialisation builds its estimator's model from the same
+/// kind of believed record, so one edited past the loader is refused there with
+/// the law faulted and both outputs off, and a step taken on it drives nothing.
+static void test_a_believed_record_no_model_can_be_built_from_is_refused_by_the_brew_law(void)
+{
+    plant_parameters_t edited = parameters;
+    size_t at = 0u;
+
+    TEST_ASSERT_TRUE(plant_parameter_position("steam.casting_ceiling_c", &at));
+    TEST_ASSERT_TRUE(plant_parameter_scale(&edited, at, 0.5f));
+    TEST_ASSERT_FALSE(plant_parameters_admissible(&edited, NULL));
+
+    hw_sim_reset();
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
+    TEST_ASSERT_FALSE_MESSAGE(
+        control_init(&state, &edited, &budget, &limits, &tolerance, &pump_trim),
+        "a believed record no model can be built from was taken on");
+    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
+    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_PUMP));
+    (void)control_command_temperature(&state, 90.0f);
+    TEST_ASSERT_EQUAL_MESSAGE(CONTROL_STEP_FAULT_LATCHED, control_step(&state),
+                              "a law refused at initialisation was stepped");
+    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
+    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_PUMP));
+
+    hw_sim_reset();
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance, &pump_trim));
 }
 
 /// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR.C1: the declared sensing
@@ -9526,6 +9565,7 @@ int main(void)
     RUN_TEST(test_the_corner_count_and_the_corners_agree_about_where_the_enumeration_ends);
     RUN_TEST(test_a_probe_the_structure_cannot_answer_runs_no_corner);
     RUN_TEST(test_a_corner_whose_machine_cannot_be_built_is_reported_as_not_run);
+    RUN_TEST(test_a_believed_record_no_model_can_be_built_from_is_refused_by_the_brew_law);
     RUN_TEST(test_the_declared_sensing_error_adds_to_the_model_error_margin_exactly);
     RUN_TEST(test_a_sensing_error_that_is_not_a_positive_number_contributes_nothing);
     RUN_TEST(test_the_public_margin_reader_carries_the_declared_sensing_error);

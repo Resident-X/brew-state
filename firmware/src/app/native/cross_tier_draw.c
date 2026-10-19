@@ -339,7 +339,21 @@ int cross_tier_draw_run(const plant_parameters_t *machine_parameters,
     float drawn_ml_per_s = 0.0f;
 
     if (!plant_model_init(&machine, machine_parameters)) {
-        (void)fprintf(stderr, "cross-tier draw: the machine could not be initialised\n");
+        /*
+         * A description edited past the loader is refused where the run builds
+         * its model, and the builder is told which parameter and why, as the
+         * loader would have told them, rather than that something failed.
+         */
+        plant_parameter_error_t refusal;
+
+        if (!plant_parameters_admissible(machine_parameters, &refusal)) {
+            (void)fprintf(stderr,
+                          "cross-tier draw: the machine could not be initialised: parameter %s is refused "
+                          "(fault %d)\n",
+                          refusal.parameter, (int)refusal.fault);
+        } else {
+            (void)fprintf(stderr, "cross-tier draw: the machine could not be initialised\n");
+        }
         return 1;
     }
 

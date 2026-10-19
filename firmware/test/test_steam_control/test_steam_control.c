@@ -2841,6 +2841,135 @@ static void test_init_is_refused_without_a_description_or_a_budget(void)
     TEST_ASSERT_FALSE(steam_control_protection_margin_corner(&state, margin.corners, &corner));
 }
 
+/*
+ * A believed record the loader would refuse: the ceiling of the casting scaled
+ * to half of what the description says, which puts it below the saturation
+ * temperature. Reached by scaling a loaded record, which is range-only, so what
+ * the law is handed is a record built or edited past the loader.
+ */
+static plant_parameters_t believed_with_the_ceiling_below_saturation(void)
+{
+    plant_parameters_t edited = parameters;
+    size_t at = 0u;
+
+    TEST_ASSERT_TRUE(plant_parameter_position("steam.casting_ceiling_c", &at));
+    TEST_ASSERT_TRUE(plant_parameter_scale(&edited, at, 0.5f));
+    TEST_ASSERT_FALSE_MESSAGE(plant_parameters_admissible(&edited, NULL),
+                              "the edited record is one the plant accepts");
+    return edited;
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: A description whose casting ceiling is not
+/// above the declared saturation temperature is refused wherever a model is
+/// built from the description, at load and at model construction, naming the
+/// parameter.
+///
+/// The law builds models from the description it is handed to size the margin,
+/// and a record no model can be built from establishes no margin. Handed one, it
+/// is refused at initialisation with both commands off and the law
+/// unconfigured, at the ready target the declaration names and at a target the
+/// reference record itself refuses: neither an easier nor a harder target
+/// admits a believed plant nothing can be built from.
+static void test_a_believed_record_no_model_can_be_built_from_is_refused_by_the_law(void)
+{
+    const plant_parameters_t edited = believed_with_the_ceiling_below_saturation();
+    steam_control_declaration_t hotter = declaration;
+    steam_control_state_t refused;
+    steam_control_state_t working;
+    protection_margin_t margin;
+
+    TEST_ASSERT_TRUE_MESSAGE(heating_state_on(&working), "no command was on to be left off");
+    TEST_ASSERT_FALSE(steam_control_init(&refused, &limits, &declaration, &edited, &budget));
+    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_HEATER));
+    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP));
+    TEST_ASSERT_EQUAL(STEAM_CONTROL_STEP_SENSOR_INVALID, steam_control_step(&refused));
+    TEST_ASSERT_FALSE(steam_control_protection_margin(&refused, &margin));
+
+    hotter.ready_temperature_milli_c = 193000;
+    hw_sim_reset();
+    TEST_ASSERT_FALSE_MESSAGE(steam_control_init(&refused, &limits, &hotter, &parameters, &budget),
+                              "the reference record admitted a ready target inside the margin");
+    TEST_ASSERT_FALSE_MESSAGE(steam_control_init(&refused, &limits, &hotter, &edited, &budget),
+                              "an inadmissible record admitted a target the reference refuses");
+
+    hw_sim_reset();
+    TEST_ASSERT_TRUE(steam_control_init(&refused, &limits, &declaration, &parameters, &budget));
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C2: A description declaring an initial
+/// inventory above the capacity is refused wherever a model is built from the
+/// description, at load and at model construction, naming the parameter, and is
+/// not clamped.
+///
+/// A record edited past the loader to put the initial inventory over the capacity
+/// is refused by the law as the ceiling one is, so the refusal is not a property
+/// of one relation. And a record with every coefficient driven to a non-number or
+/// an infinity, one at a time, is refused too.
+static void test_every_edit_past_the_loader_that_leaves_no_model_is_refused_by_the_law(void)
+{
+    const float hostile[] = {NAN, INFINITY, -INFINITY, 1.0e30f, -1.0e30f};
+    steam_control_state_t refused;
+    size_t at = 0u;
+
+    for (size_t which = 0u; which < sizeof(hostile) / sizeof(hostile[0]); which++) {
+        for (at = 0u; at < budget.count; at++) {
+            plant_parameters_t edited = parameters;
+
+            if (!plant_parameter_scale(&edited, at, hostile[which]) ||
+                plant_parameters_admissible(&edited, NULL)) {
+                continue;
+            }
+            hw_sim_reset();
+            TEST_ASSERT_FALSE_MESSAGE(
+                steam_control_init(&refused, &limits, &declaration, &edited, &budget),
+                "a record no model can be built from was taken on");
+            TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_HEATER));
+        }
+    }
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: A description whose casting ceiling is not
+/// above the declared saturation temperature is refused wherever a model is
+/// built from the description, at load and at model construction, naming the
+/// parameter.
+///
+/// A margin sized with a declared-error corner left out is a margin sized for a
+/// machine the description does not claim, and the law holding the block against
+/// a trip point nothing else enforces refuses it. The saturation temperature
+/// declared sixty percent out has one end that is a machine and one that is not;
+/// the reference record with that declaration is brought up by no ready target,
+/// where with the error declared as it is shipped it is brought up by the
+/// declared one. And a budget that enumerates nothing establishes no margin and
+/// is refused, not admitted.
+static void test_a_margin_with_a_declared_corner_left_out_or_none_at_all_refuses_the_target(void)
+{
+    plant_parameter_budget_t wide = budget;
+    plant_parameter_budget_t none = budget;
+    steam_control_state_t state;
+    protection_margin_t margin;
+    size_t at = 0u;
+
+    TEST_ASSERT_TRUE(plant_parameter_position("steam.saturation_temperature_c", &at));
+    wide.declared[at] = true;
+    wide.assumed_error[at] = 0.6f;
+
+    hw_sim_reset();
+    TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration, &parameters, &budget));
+    TEST_ASSERT_TRUE(steam_control_protection_margin(&state, &margin));
+    TEST_ASSERT_EQUAL_UINT(0u, margin.declared_not_run);
+
+    hw_sim_reset();
+    TEST_ASSERT_FALSE_MESSAGE(steam_control_init(&state, &limits, &declaration, &parameters, &wide),
+                              "a margin sized without one of its declared corners was admitted");
+    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_HEATER));
+    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP));
+
+    none.count = 0u;
+    hw_sim_reset();
+    TEST_ASSERT_FALSE_MESSAGE(steam_control_init(&state, &limits, &declaration, &parameters, &none),
+                              "a budget that enumerates nothing was admitted");
+}
+
 /// Regression protection for the accessors' null out-parameters, which a
 /// caller cannot be told anything through and which must not be written.
 static void test_the_accessors_refuse_nowhere_to_answer(void)
@@ -3412,10 +3541,26 @@ static void test_a_ready_target_inside_the_widened_margin_is_refused(void)
      * the loop refusing a target the margin no longer leaves room for, and
      * which coefficient earned the margin is C1's own sweep on the coffee side
      * rather than this one's.
+     *
+     * A coefficient is widened only while the widened budget still lets the
+     * loop come up at the shipped target. An error wide enough to carry a
+     * coefficient to a machine no model can be built from leaves a corner out of
+     * the margin, which the loop refuses outright and for a different reason
+     * than the one this case is about.
      */
+    steam_control_state_t widening;
+    const steam_control_declaration_t shipped = declaration;
+
     for (size_t at = 0u; at < widened.count; at++) {
-        if (widened.declared[at]) {
-            widened.assumed_error[at] = 0.95f;
+        if (!widened.declared[at]) {
+            continue;
+        }
+        const float was = widened.assumed_error[at];
+
+        widened.assumed_error[at] = 0.95f;
+        hw_sim_reset();
+        if (!steam_control_init(&widening, &limits, &shipped, &loose, &widened)) {
+            widened.assumed_error[at] = was;
         }
     }
 
@@ -3455,6 +3600,9 @@ int main(void)
     RUN_TEST(test_a_hand_built_declaration_with_the_start_above_the_ceiling_is_refused_by_the_law);
     RUN_TEST(test_a_hand_built_declaration_with_the_floor_at_or_above_the_ceiling_is_refused_by_the_law);
     RUN_TEST(test_a_hand_built_declaration_with_a_figure_out_of_range_is_refused_by_the_law);
+    RUN_TEST(test_a_believed_record_no_model_can_be_built_from_is_refused_by_the_law);
+    RUN_TEST(test_every_edit_past_the_loader_that_leaves_no_model_is_refused_by_the_law);
+    RUN_TEST(test_a_margin_with_a_declared_corner_left_out_or_none_at_all_refuses_the_target);
     RUN_TEST(test_pressure_and_superheat_hold_for_draws_of_every_duration);
     RUN_TEST(test_superheat_holds_the_setpoint_across_the_error_ends_of_every_coefficient_that_decides_it);
     RUN_TEST(test_superheat_stays_above_zero_at_every_joint_corner_of_the_deciding_coefficients);

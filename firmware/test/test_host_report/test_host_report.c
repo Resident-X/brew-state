@@ -245,6 +245,18 @@ static const parsed_field_t *field_named(const parsed_line_t *line, const char *
     return NULL;
 }
 
+/*
+ * What the ceiling is the ceiling of, and that nothing holds the casting to it,
+ * stated in whichever form is handed in.
+ */
+static void assert_the_ceiling_names_what_it_bounds(const parsed_line_t *form)
+{
+    TEST_ASSERT_EQUAL_STRING("the steam block's casting temperature",
+                             field_named(form, "applies_to")->value);
+    TEST_ASSERT_EQUAL_STRING("nothing in the machine holds the casting to it",
+                             field_named(form, "enforcement")->value);
+}
+
 /// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: The two forms are written by one report
 /// seam from one field list, shared with the dryness report of C9, and a test
 /// parses the JSON line and compares it field by field with the text line.
@@ -500,6 +512,8 @@ static void test_the_casting_ceiling_is_reported_in_both_forms_with_what_it_is(v
 
     TEST_ASSERT_EQUAL_STRING("saturation at the declared ceiling", field_named(&json, "basis")->value);
     TEST_ASSERT_EQUAL_STRING("a control limit and not containment", field_named(&text, "nature")->value);
+    assert_the_ceiling_names_what_it_bounds(&text);
+    assert_the_ceiling_names_what_it_bounds(&json);
 }
 
 /// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: Each host run reports the bound in both
@@ -857,6 +871,8 @@ static void test_the_steam_draw_run_states_the_bound_in_both_forms_before_drivin
     TEST_ASSERT_TRUE(number_of(&json, "ceiling_pressure_bar_gauge") > 0.0);
     TEST_ASSERT_EQUAL_STRING("saturation at the declared ceiling", field_named(&text, "basis")->value);
     TEST_ASSERT_EQUAL_STRING("a control limit and not containment", field_named(&json, "nature")->value);
+    assert_the_ceiling_names_what_it_bounds(&text);
+    assert_the_ceiling_names_what_it_bounds(&json);
 
     const char *bound = strstr(run_output, "HOST steam-casting-ceiling ");
     const char *first_step = strstr(run_output, "HOST steam-trajectory-baseline");
@@ -960,6 +976,22 @@ static void test_the_run_states_the_least_superheat_with_the_pressure_of_that_st
     TEST_ASSERT_TRUE_MESSAGE(reported, "the pressure named is not one the run reported on a fed, drawn step");
 }
 
+/*
+ * The refusal the run printed names the parameter the plant itself names for the
+ * record, and the fault, rather than only that the machine failed to come up.
+ */
+static void assert_the_refusal_names_the_parameter(const plant_parameters_t *refused)
+{
+    plant_parameter_error_t fault;
+    char expected[160];
+
+    TEST_ASSERT_FALSE(plant_parameters_admissible(refused, &fault));
+    TEST_ASSERT_TRUE(fault.parameter[0] != '\0');
+    (void)snprintf(expected, sizeof(expected), "parameter %s is refused (fault %d)", fault.parameter,
+                   (int)fault.fault);
+    TEST_ASSERT_NOT_NULL_MESSAGE(strstr(run_error, expected), run_error);
+}
+
 /// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: A host run that cannot compute the bound
 /// from the declared ceiling states none and reports the refusal.
 ///
@@ -976,6 +1008,7 @@ static void test_a_steam_draw_run_whose_bound_cannot_be_stated_reports_the_refus
     TEST_ASSERT_TRUE(steam_draw_of(&parameters, 10u, 1000u) != 0);
     TEST_ASSERT_EQUAL_STRING("", run_output);
     TEST_ASSERT_NOT_NULL(strstr(run_error, "the machine could not be initialised"));
+    assert_the_refusal_names_the_parameter(&parameters);
 }
 
 /*
@@ -1020,6 +1053,8 @@ static void test_the_cross_tier_draw_run_states_the_bound_in_both_forms(void)
     TEST_ASSERT_TRUE(number_of(&json, "ceiling_pressure_bar_gauge") > 0.0);
     TEST_ASSERT_EQUAL_STRING("saturation at the declared ceiling", field_named(&json, "basis")->value);
     TEST_ASSERT_EQUAL_STRING("a control limit and not containment", field_named(&text, "nature")->value);
+    assert_the_ceiling_names_what_it_bounds(&text);
+    assert_the_ceiling_names_what_it_bounds(&json);
 }
 
 /// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: A host run that cannot compute the bound
@@ -1038,6 +1073,7 @@ static void test_a_cross_tier_draw_run_whose_bound_cannot_be_stated_reports_the_
     TEST_ASSERT_TRUE(cross_tier_draw_of(&parameters) != 0);
     TEST_ASSERT_EQUAL_STRING("", run_output);
     TEST_ASSERT_NOT_NULL(strstr(run_error, "the machine could not be initialised"));
+    assert_the_refusal_names_the_parameter(&parameters);
 }
 
 static void assert_nothing_written_dryness(const dryness_finding_t *finding)
@@ -1094,6 +1130,7 @@ static void test_a_dry_steam_claim_names_its_superheat_and_pressure_and_carries_
         TEST_ASSERT_EQUAL_STRING(CARRY_OVER_CAVEAT, field_named(form, "carry_over")->value);
         TEST_ASSERT_EQUAL_STRING("modelled at the outlet and confirmed by no sensor",
                                  field_named(form, "superheat_source")->value);
+        TEST_ASSERT_EQUAL_STRING("the least over the draw", field_named(form, "superheat_over")->value);
         TEST_ASSERT_EQUAL_STRING("superheat above saturation at the measured steam pressure",
                                  field_named(form, "basis")->value);
         TEST_ASSERT_NOT_NULL(strstr(field_named(form, "claim")->value, "dry"));

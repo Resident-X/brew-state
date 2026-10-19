@@ -15,6 +15,8 @@
 
 #define BASIS_TEXT "saturation at the declared ceiling"
 #define NATURE_TEXT "a control limit and not containment"
+#define APPLIES_TO_TEXT "the steam block's casting temperature"
+#define ENFORCEMENT_TEXT "nothing in the machine holds the casting to it"
 
 casting_ceiling_outcome_t casting_ceiling_report(FILE *out, const plant_parameters_t *parameters)
 {
@@ -60,6 +62,8 @@ casting_ceiling_outcome_t casting_ceiling_report(FILE *out, const plant_paramete
         host_report_number("ceiling_pressure_bar_gauge", (double)bound_bar),
         host_report_text("basis", BASIS_TEXT),
         host_report_text("nature", NATURE_TEXT),
+        host_report_text("applies_to", APPLIES_TO_TEXT),
+        host_report_text("enforcement", ENFORCEMENT_TEXT),
     };
     return host_report_emit(out, "steam-casting-ceiling", fields,
                             sizeof(fields) / sizeof(fields[0]))

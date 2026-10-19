@@ -397,13 +397,14 @@ static bool steam_widened_margin(const steam_control_declaration_t *declaration,
  * Whether a declared ready target leaves the widened margin between itself and
  * the steam block's trip point.
  *
- * A margin that could not be established admits the target, on the same terms
- * the coffee side's own refusal admits what it cannot refuse on evidence: a
- * description that will not support a corner enumeration has said nothing about
- * how wrong it may be, and a refusal invented from that would be this file
- * declaring an uncertainty the description did not. A target sitting exactly at
- * the edge keeps exactly the margin asked for and is admitted, on the same
- * convention the coffee side reads its own edge by.
+ * A margin that could not be established refuses the target, and so does one
+ * sized with a declared-error corner left out: this loop holds the block at the
+ * target against a trip point nothing else in the machine enforces, so an
+ * uncertainty the enumeration could not cover is taken as one that could carry
+ * the block into it. A believed description the plant refuses to build a model
+ * from establishes no margin at all, which is the case this refusal is for. A
+ * target sitting exactly at the edge keeps exactly the margin asked for and is
+ * admitted.
  */
 static bool ready_target_clears_the_protection_margin(const steam_control_declaration_t *declaration,
                                                       const plant_parameters_t *parameters,
@@ -411,8 +412,9 @@ static bool ready_target_clears_the_protection_margin(const steam_control_declar
 {
     protection_margin_t margin;
 
-    if (!steam_widened_margin(declaration, parameters, budget, &margin)) {
-        return true;
+    if (!steam_widened_margin(declaration, parameters, budget, &margin) ||
+        margin.declared_not_run > 0u) {
+        return false;
     }
 
     const float target_c = (float)declaration->ready_temperature_milli_c / 1000.0f;
@@ -538,6 +540,17 @@ bool steam_control_init(steam_control_state_t *state, const estimator_limits_t *
      * stays unconfigured.
      */
     if (!steam_control_declaration_admissible(declaration, NULL)) {
+        return false;
+    }
+
+    /*
+     * The believed description is held to what the loader holds one to, for the
+     * reason the declaration is: a record edited or built past the loader is
+     * refused where it is run. The margin below is read off models built from
+     * it, and a record no model can be built from would otherwise be read as a
+     * margin of the sensing error alone.
+     */
+    if (!plant_parameters_admissible(parameters, NULL)) {
         return false;
     }
 

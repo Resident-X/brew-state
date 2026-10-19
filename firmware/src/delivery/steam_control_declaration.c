@@ -8,10 +8,12 @@
  * errno, which is a different symbol on a host and on the target. The
  * control logic is required to be byte-identical across the two, and it is
  * the check that compares them which would have to be weakened to admit a
- * translation unit that cannot be. Nothing is lost by the separation,
- * because the control path never calls this: a record is loaded by whatever
+ * translation unit that cannot be. Nothing is lost by the separation: the
+ * control path never calls the reader, because a record is loaded by whatever
  * brings the steam control law up and hands it in, exactly as the parameter
- * description and the limits declaration are for the brew side. It sits
+ * description and the limits declaration are for the brew side; it calls only
+ * the validity function the reader ends in, which reaches no number conversion,
+ * so a declaration built by hand is held to what a loaded one is. It sits
  * beside delivery_tolerance.c rather than in a directory of its own because
  * the two answer to the same build-time need -- a runtime-loaded declaration
  * outside the control law's byte-identical boundary -- and that need, not

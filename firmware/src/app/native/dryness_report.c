@@ -5,6 +5,7 @@
 #include "host_report.h"
 
 #define BASIS_TEXT "superheat above saturation at the measured steam pressure"
+#define OVER_TEXT "the least over the draw"
 #define SOURCE_TEXT "modelled at the outlet and confirmed by no sensor"
 #define CARRY_OVER_TEXT "droplet carry-over is not excluded without a calorimetric test"
 
@@ -28,6 +29,7 @@ bool dryness_report(FILE *out, const dryness_finding_t *finding)
         host_report_number("superheat_k", (double)finding->superheat_k),
         host_report_number("pressure_bar_gauge", (double)finding->pressure_bar),
         host_report_text("basis", BASIS_TEXT),
+        host_report_text("superheat_over", OVER_TEXT),
         host_report_text("superheat_source", SOURCE_TEXT),
         host_report_text("carry_over", CARRY_OVER_TEXT),
     };

@@ -6847,22 +6847,38 @@ static void test_a_restriction_whose_open_draw_pressure_cannot_be_inverted_is_re
     const double limit_bar = pow(10.0, a);
     const double feed_squared = 100.0 * 100.0;
 
-    /* Each side of the limit, by a tenth of a percent either way. */
+    /*
+     * Each side of the limit by a quarter of a bar. The saturation figure the
+     * drop is read over is about a bar, so an edge a tenth of a percent either
+     * way of ten to the constant would sit on the same side of the limit with
+     * that figure dropped or subtracted; a quarter of a bar does not.
+     */
+    const double edge_bar = 0.25;
     plant_parameters_t record =
         edited(&wide, "steam.restriction_bar_s2_per_ml2",
-               (float)((0.999 * limit_bar - saturation_bar) / feed_squared));
-    assert_the_model_accepts(&record, "a restriction a tenth of a percent inside the limit");
+               (float)((limit_bar - saturation_bar - edge_bar) / feed_squared));
+    assert_the_model_accepts(&record, "a restriction a quarter of a bar inside the limit");
 
     record = edited(&wide, "steam.restriction_bar_s2_per_ml2",
-                    (float)((1.001 * limit_bar - saturation_bar) / feed_squared));
-    assert_the_model_refuses(&record, "a restriction a tenth of a percent beyond the limit");
+                    (float)((limit_bar - saturation_bar + edge_bar) / feed_squared));
+    assert_the_model_refuses(&record, "a restriction a quarter of a bar beyond the limit");
 
-    /* The same pair reached from the constant instead of the restriction. */
-    const double drop_bar = 4.0 * feed_squared;
-    record = edited(&wide, "steam.saturation_antoine_a", (float)log10(drop_bar * 1.001));
-    assert_the_model_accepts(&record, "a constant a tenth of a percent above what the drop needs");
-    record = edited(&wide, "steam.saturation_antoine_a", (float)log10(drop_bar * 0.999));
-    assert_the_model_refuses(&record, "a constant a tenth of a percent below what the drop needs");
+    /*
+     * The same pair reached from the constant instead of the restriction. The
+     * saturation figure moves with the constant, so the limit is solved for:
+     * the highest pressure is the drop plus ten to the constant over ten to the
+     * saturation exponent, and it stays under ten to the constant when that is
+     * above the drop over one less that factor.
+     */
+    const double drop_bar = 100.0;
+    const double exponent = b / (c + saturation_c);
+    const double needed_bar = drop_bar / (1.0 - pow(10.0, -exponent));
+    const plant_parameters_t steady =
+        edited(&wide, "steam.restriction_bar_s2_per_ml2", (float)(drop_bar / feed_squared));
+    record = edited(&steady, "steam.saturation_antoine_a", (float)log10(needed_bar + edge_bar));
+    assert_the_model_accepts(&record, "a constant a quarter of a bar above what the drop needs");
+    record = edited(&steady, "steam.saturation_antoine_a", (float)log10(needed_bar - edge_bar));
+    assert_the_model_refuses(&record, "a constant a quarter of a bar below what the drop needs");
     record = edited(&wide, "steam.saturation_antoine_a", 2.0f);
     assert_the_model_refuses(&record, "a constant of two");
 
@@ -6876,13 +6892,13 @@ static void test_a_restriction_whose_open_draw_pressure_cannot_be_inverted_is_re
     values[I_STEAM_FEED_FLOW] = 100.0;
     memset(&loaded, 0x5a, sizeof(loaded));
     memcpy(&untouched, &loaded, sizeof(loaded));
-    values[I_STEAM_RESTRICTION] = (1.001 * limit_bar - saturation_bar) / feed_squared;
+    values[I_STEAM_RESTRICTION] = (limit_bar - saturation_bar + edge_bar) / feed_squared;
     TEST_ASSERT_FALSE(load_of(values, &loaded, &fault));
     TEST_ASSERT_EQUAL(PLANT_PARAMETER_INCONSISTENT, fault.fault);
     TEST_ASSERT_EQUAL_STRING("steam.restriction_bar_s2_per_ml2", fault.parameter);
     TEST_ASSERT_EQUAL_UINT32(0u, fault.line);
     TEST_ASSERT_EQUAL_INT(0, memcmp(&loaded, &untouched, sizeof(loaded)));
-    values[I_STEAM_RESTRICTION] = (0.999 * limit_bar - saturation_bar) / feed_squared;
+    values[I_STEAM_RESTRICTION] = (limit_bar - saturation_bar - edge_bar) / feed_squared;
     TEST_ASSERT_TRUE(load_of(values, &loaded, &fault));
 }
 

@@ -341,6 +341,7 @@ bool protection_margin_widened(const plant_parameters_t *believed,
     margin->margin_c = margin->unwidened_c + margin->sensing_error_c;
     margin->corners = corners;
     margin->corners_run = 0u;
+    margin->declared_not_run = 0u;
     margin->contributing = 0u;
     margin->worst_at = corners;
     margin->worst_is_joint = false;
@@ -352,6 +353,9 @@ bool protection_margin_widened(const plant_parameters_t *believed,
             return false;
         }
         if (!corner.ran) {
+            if (corner.moves > 0u) {
+                margin->declared_not_run++;
+            }
             continue;
         }
         margin->corners_run++;
