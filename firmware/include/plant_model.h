@@ -45,8 +45,11 @@
  *
  * Returns false and leaves no usable record when a line cannot be parsed, when
  * a name is not one this structure has, when a name is given twice, when a
- * value lies outside the range the structure declares for it, or when a
- * coefficient the structure requires is absent. No value is assumed for a
+ * value lies outside the range the structure declares for it, when a
+ * coefficient the structure requires is absent, or when two values each inside
+ * their own range do not stand in a relation the structure declares between
+ * them (PLANT_PARAMETER_INCONSISTENT, naming the first of the pair; nothing is
+ * clamped or substituted). No value is assumed for a
  * coefficient that is missing or rejected. `error` reports which coefficient
  * was at fault and why; it may not be null.
  *

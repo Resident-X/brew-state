@@ -137,6 +137,32 @@ const plant_parameter_spec_t *plant_structure_parameter_specs(size_t *count)
     return SPECS;
 }
 
+static bool inventory_fits_the_capacity(const void *parameters)
+{
+    const plant_parameters_t *p = parameters;
+    return p->steam_initial_inventory_ml <= p->steam_liquid_capacity_ml;
+}
+
+/* A ceiling at or below the saturation temperature leaves no span the pressure relation is valid over. */
+static bool ceiling_is_above_saturation(const void *parameters)
+{
+    const plant_parameters_t *p = parameters;
+    return p->steam_casting_ceiling_c > p->steam_saturation_temperature_c;
+}
+
+static const plant_parameter_relation_t RELATIONS[] = {
+    {"steam.initial_inventory_ml", inventory_fits_the_capacity},
+    {"steam.casting_ceiling_c", ceiling_is_above_saturation},
+};
+
+const plant_parameter_relation_t *plant_structure_parameter_relations(size_t *count)
+{
+    if (count != NULL) {
+        *count = sizeof(RELATIONS) / sizeof(RELATIONS[0]);
+    }
+    return RELATIONS;
+}
+
 /*
  * The two element ratings, which are not independent of one another. Both
  * elements are fed from the one mains supply, and an element's power goes as
@@ -758,12 +784,10 @@ bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters
     model->brew_flow_ml_per_s = 0.0f;
     model->steam_draw_ml_per_s = 0.0f;
     model->steam_outlet_superheat_k = 0.0f;
-    /* The block starts holding the declared liquid, bounded by its capacity, and
-     * the wand shut, so the pressure is the one its own equations give for that
-     * state. */
-    model->steam_liquid_inventory_ml =
-        fminf(fmaxf(parameters->steam_initial_inventory_ml, 0.0f),
-              parameters->steam_liquid_capacity_ml);
+    /* The block starts holding the declared liquid, which the loader has held to
+     * the capacity, and the wand shut, so the pressure is the one its own
+     * equations give for that state. */
+    model->steam_liquid_inventory_ml = parameters->steam_initial_inventory_ml;
     model->steam_pressure_bar = shut_pressure_bar(model);
     model->initialised = true;
     return true;

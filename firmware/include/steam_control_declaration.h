@@ -199,7 +199,14 @@ typedef enum {
      * and a caller told one of them was out of range would go looking at the
      * wrong line.
      */
-    STEAM_CONTROL_DECLARATION_BAND_INVERTED
+    STEAM_CONTROL_DECLARATION_BAND_INVERTED,
+    /*
+     * The level a draw starts its feed at sits above the ceiling the feed is
+     * held under. Each figure is admissible alone, and the pair describes a
+     * start the loop could never honour, so it is refused as its own fault
+     * rather than reduced to the ceiling; the figure reported is the start.
+     */
+    STEAM_CONTROL_DECLARATION_FEED_START_ABOVE_CEILING
 } steam_control_declaration_fault_t;
 
 /*

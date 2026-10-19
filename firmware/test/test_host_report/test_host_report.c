@@ -13,17 +13,26 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <unistd.h>
+
 #include <unity.h>
 
 #include "casting_ceiling_report.h"
+#include "cross_tier_draw.h"
+#include "delivery_tolerance.h"
 #include "dryness_report.h"
+#include "estimator_limits.h"
 #include "host_report.h"
 #include "plant_model.h"
+#include "pump_trim_declaration.h"
+#include "steam_control_declaration.h"
+#include "steam_draw.h"
 
 void setUp(void) {}
 void tearDown(void) {}
 
 #define FIELD_MAX 16
+#define CARRY_OVER_CAVEAT "droplet carry-over is not excluded without a calorimetric test"
 #define TEXT_MAX 4096
 
 typedef struct {
@@ -407,6 +416,7 @@ static void test_a_list_that_cannot_be_stated_in_both_forms_writes_nothing(void)
 
 /* The reference description's record. */
 static char description_text[65536];
+static size_t description_length;
 
 static plant_parameters_t reference_parameters(void)
 {
@@ -417,6 +427,7 @@ static plant_parameters_t reference_parameters(void)
     const size_t used = fread(description_text, 1u, sizeof(description_text) - 1u, handle);
     (void)fclose(handle);
     TEST_ASSERT_TRUE(used > 0u && used < sizeof(description_text) - 1u);
+    description_length = used;
     memset(&fault, 0, sizeof(fault));
     char message[160];
     (void)snprintf(message, sizeof(message), "the reference description was refused at %s (line %u)",
@@ -545,6 +556,416 @@ static void test_a_block_declared_to_start_dry_still_states_the_bound(void)
     TEST_ASSERT_TRUE(strtod(field_named(&json, "ceiling_pressure_bar_gauge")->value, NULL) > 0.0);
 }
 
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: Each host run reports the bound in both
+/// text and JSON form, stating the ceiling's value, that it is saturation at the
+/// declared ceiling, and that it is a control limit and not containment.
+///
+/// A block declared dry and given no feed is the case a probe that depended on the
+/// liquid the description starts the block with would state as nothing: the bound
+/// is the model's own at the ceiling and does not move with either.
+static void test_a_dry_block_with_no_feed_states_the_same_bound_as_a_fed_one(void)
+{
+    char output[TEXT_MAX];
+    const plant_parameters_t reference = reference_parameters();
+    plant_parameters_t starved = reference;
+    size_t at = 0u;
+    TEST_ASSERT_TRUE(plant_parameter_position("steam.initial_inventory_ml", &at));
+    TEST_ASSERT_TRUE(plant_parameter_scale(&starved, at, 0.0f));
+    TEST_ASSERT_TRUE(plant_parameter_position("steam.feed_flow_ml_per_s", &at));
+    TEST_ASSERT_TRUE(plant_parameter_scale(&starved, at, 0.0f));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, coefficient(&starved, "steam.initial_inventory_ml"));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, coefficient(&starved, "steam.feed_flow_ml_per_s"));
+
+    float bounds[2];
+    const plant_parameters_t *const machines[2] = {&reference, &starved};
+    for (size_t i = 0u; i < 2u; i++) {
+        FILE *stream = tmpfile();
+        TEST_ASSERT_NOT_NULL(stream);
+        TEST_ASSERT_EQUAL_INT(CASTING_CEILING_REPORTED, casting_ceiling_report(stream, machines[i]));
+        drain(stream, output, sizeof(output));
+        (void)fclose(stream);
+
+        parsed_line_t text;
+        parsed_line_t json;
+        read_both(output, &text, &json);
+        TEST_ASSERT_TRUE(same_finding(&text, &json));
+        bounds[i] = (float)strtod(field_named(&json, "ceiling_pressure_bar_gauge")->value, NULL);
+        TEST_ASSERT_TRUE(bounds[i] > 0.0f);
+    }
+    TEST_ASSERT_EQUAL_FLOAT(bounds[0], bounds[1]);
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: A host run that cannot compute the bound
+/// from the declared ceiling states none and reports the refusal.
+///
+/// A record edited past the loader to a ceiling at or below saturation has no
+/// span the relation is valid over, so the bound it would read is nothing. The
+/// report returns its refusal and writes no line at all, rather than stating a
+/// pressure of zero beside a basis that says it is saturation at the ceiling.
+static void test_a_bound_that_is_not_above_nothing_is_not_stated(void)
+{
+    char output[TEXT_MAX];
+    plant_parameters_t parameters = reference_parameters();
+    size_t at = 0u;
+    TEST_ASSERT_TRUE(plant_parameter_position("steam.casting_ceiling_c", &at));
+    TEST_ASSERT_TRUE(plant_parameter_scale(&parameters, at, 0.5f));
+    TEST_ASSERT_TRUE(coefficient(&parameters, "steam.casting_ceiling_c") <
+                     coefficient(&parameters, "steam.saturation_temperature_c"));
+
+    FILE *stream = tmpfile();
+    TEST_ASSERT_NOT_NULL(stream);
+    TEST_ASSERT_EQUAL_INT(CASTING_CEILING_REFUSED, casting_ceiling_report(stream, &parameters));
+    drain(stream, output, sizeof(output));
+    (void)fclose(stream);
+    TEST_ASSERT_EQUAL_STRING("", output);
+}
+
+/* --- The host runs themselves ----------------------------------------------- */
+
+#define RUN_OUTPUT_MAX 262144u
+#define RUN_ERROR_MAX 2048u
+#define COURSE_MAX 400u
+
+static char run_output[RUN_OUTPUT_MAX];
+static char run_error[RUN_ERROR_MAX];
+
+typedef struct {
+    FILE *sink;
+    int saved;
+    int fd;
+} capture_t;
+
+/*
+ * What a run writes to a descriptor, collected. The runs print through stdio
+ * onto the process's own descriptors, so the descriptor is pointed at a file for
+ * the run's length and put back before anything asserts: an assertion that
+ * fails prints through the same descriptor.
+ */
+static capture_t capture_begin(int fd)
+{
+    capture_t capture = {tmpfile(), -1, fd};
+    TEST_ASSERT_NOT_NULL(capture.sink);
+    (void)fflush(stdout);
+    (void)fflush(stderr);
+    capture.saved = dup(fd);
+    TEST_ASSERT_TRUE(capture.saved >= 0);
+    TEST_ASSERT_TRUE(dup2(fileno(capture.sink), fd) >= 0);
+    return capture;
+}
+
+static void capture_end(capture_t *capture, char *out, size_t capacity)
+{
+    (void)fflush(stdout);
+    (void)fflush(stderr);
+    TEST_ASSERT_TRUE(dup2(capture->saved, capture->fd) >= 0);
+    (void)close(capture->saved);
+    drain(capture->sink, out, capacity);
+    (void)fclose(capture->sink);
+}
+
+static estimator_limits_t run_limits;
+static plant_parameter_budget_t run_budget;
+static steam_control_declaration_t run_declaration;
+static delivery_tolerance_t run_tolerance;
+static pump_trim_declaration_t run_pump_trim;
+
+static size_t read_file_text(const char *path, char *into, size_t capacity)
+{
+    FILE *handle = fopen(path, "rb");
+    TEST_ASSERT_NOT_NULL(handle);
+    const size_t used = fread(into, 1u, capacity - 1u, handle);
+    (void)fclose(handle);
+    TEST_ASSERT_TRUE(used > 0u && used < capacity - 1u);
+    into[used] = '\0';
+    return used;
+}
+
+/* What the runs are handed beside the machine, read from the files they ship with. */
+static void load_what_the_runs_are_handed(void)
+{
+    static char text[32768];
+    plant_parameter_error_t description_fault;
+    estimator_limits_error_t limits_fault;
+    steam_control_declaration_error_t declaration_fault;
+    delivery_tolerance_error_t tolerance_fault;
+    pump_trim_declaration_error_t trim_fault;
+
+    plant_parameters_t unused = reference_parameters();
+    (void)unused;
+    TEST_ASSERT_TRUE(plant_parameter_budget_load(description_text, description_length, &run_budget,
+                                                 &description_fault));
+    size_t used = read_file_text(REFERENCE_LIMITS_PATH, text, sizeof(text));
+    TEST_ASSERT_TRUE(estimator_limits_load(text, used, &run_limits, &limits_fault));
+    used = read_file_text(REFERENCE_STEAM_CONTROL_DECLARATION_PATH, text, sizeof(text));
+    TEST_ASSERT_TRUE(steam_control_declaration_load(text, used, &run_declaration, &declaration_fault));
+    used = read_file_text(REFERENCE_TOLERANCE_PATH, text, sizeof(text));
+    TEST_ASSERT_TRUE(delivery_tolerance_load(text, used, &run_tolerance, &tolerance_fault));
+    used = read_file_text(REFERENCE_PUMP_TRIM_PATH, text, sizeof(text));
+    TEST_ASSERT_TRUE(pump_trim_declaration_load(text, used, &run_pump_trim, &trim_fault));
+}
+
+/*
+ * The steam draw the command line's --steam-draw takes, run through the same
+ * entry point: the wand opened for `intervals` ten-millisecond intervals at one
+ * millilitre a second (or never opened, for a zero rate), from the declared ready
+ * temperature. Its stdout and stderr are what the run wrote.
+ */
+static int steam_draw_of(const plant_parameters_t *parameters, uint32_t intervals,
+                         uint32_t demand_milli)
+{
+    static uint32_t cadence[COURSE_MAX];
+    static uint32_t demand[COURSE_MAX];
+    TEST_ASSERT_TRUE(intervals > 0u && intervals <= COURSE_MAX);
+    for (uint32_t i = 0u; i < intervals; i++) {
+        cadence[i] = 10u;
+        demand[i] = demand_milli;
+    }
+    const steam_draw_t draw = {(float)run_declaration.ready_temperature_milli_c / 1000.0f, cadence,
+                               demand, intervals};
+
+    capture_t out = capture_begin(STDOUT_FILENO);
+    capture_t err = capture_begin(STDERR_FILENO);
+    const int outcome = steam_draw_run(parameters, &run_budget, &run_limits, &run_declaration, &draw);
+    capture_end(&err, run_error, sizeof(run_error));
+    capture_end(&out, run_output, sizeof(run_output));
+    return outcome;
+}
+
+/* The finding named `what`, in both forms, from a run's output; asserts both are present. */
+static void read_finding(const char *output, const char *what, parsed_line_t *text,
+                         parsed_line_t *json)
+{
+    char prefix[96];
+    char line[TEXT_MAX];
+    const char *cursor = output;
+    (void)snprintf(prefix, sizeof(prefix), "HOST %s ", what);
+    TEST_ASSERT_TRUE_MESSAGE(line_with_prefix(output, prefix, line, sizeof(line)),
+                             "the run wrote no text line for the finding");
+    TEST_ASSERT_TRUE(parse_text_line(line, text));
+
+    (void)snprintf(prefix, sizeof(prefix), "HOST-JSON {\"what\":\"%s\"", what);
+    bool found = false;
+    while (*cursor != '\0' && !found) {
+        found = line_with_prefix(cursor, "HOST-JSON ", line, sizeof(line)) &&
+                strncmp(line, prefix, strlen(prefix)) == 0;
+        if (!found) {
+            const char *next = strstr(cursor, "HOST-JSON ");
+            if (next == NULL) {
+                break;
+            }
+            cursor = next + 1;
+        }
+    }
+    TEST_ASSERT_TRUE_MESSAGE(found, "the run wrote no JSON line for the finding");
+    TEST_ASSERT_TRUE(parse_json_line(line, json));
+    TEST_ASSERT_TRUE(same_finding(text, json));
+}
+
+static double number_of(const parsed_line_t *line, const char *key)
+{
+    const parsed_field_t *field = field_named(line, key);
+    TEST_ASSERT_NOT_NULL(field);
+    return strtod(field->value, NULL);
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: Each host run reports the bound in both
+/// text and JSON form, stating the ceiling's value, that it is saturation at the
+/// declared ceiling, and that it is a control limit and not containment.
+///
+/// The run is the steam draw the command line's --steam-draw takes. The bound is
+/// stated before the machine is driven, and states the declared ceiling.
+static void test_the_steam_draw_run_states_the_bound_in_both_forms_before_driving_the_machine(void)
+{
+    const plant_parameters_t parameters = reference_parameters();
+    load_what_the_runs_are_handed();
+
+    TEST_ASSERT_EQUAL_INT(0, steam_draw_of(&parameters, 30u, 1000u));
+
+    parsed_line_t text;
+    parsed_line_t json;
+    read_finding(run_output, "steam-casting-ceiling", &text, &json);
+    TEST_ASSERT_EQUAL_FLOAT(coefficient(&parameters, "steam.casting_ceiling_c"),
+                            (float)number_of(&json, "ceiling_c"));
+    TEST_ASSERT_TRUE(number_of(&json, "ceiling_pressure_bar_gauge") > 0.0);
+    TEST_ASSERT_EQUAL_STRING("saturation at the declared ceiling", field_named(&text, "basis")->value);
+    TEST_ASSERT_EQUAL_STRING("a control limit and not containment", field_named(&json, "nature")->value);
+
+    const char *bound = strstr(run_output, "HOST steam-casting-ceiling ");
+    const char *first_step = strstr(run_output, "HOST steam-trajectory-baseline");
+    TEST_ASSERT_NOT_NULL(bound);
+    TEST_ASSERT_NOT_NULL(first_step);
+    TEST_ASSERT_TRUE_MESSAGE(bound < first_step, "the bound was stated after the machine was driven");
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C9: Every surface that states steam is dry
+/// (the host run's report ...) bases the claim on superheat above saturation at
+/// the measured pressure alone, names the superheat and pressure it rests on, ...
+/// The claim and the caveat appear in both the text and the JSON form of each run.
+static void test_the_steam_draw_run_states_dryness_in_both_forms_with_the_caveat(void)
+{
+    const plant_parameters_t parameters = reference_parameters();
+    load_what_the_runs_are_handed();
+
+    TEST_ASSERT_EQUAL_INT(0, steam_draw_of(&parameters, 60u, 1000u));
+
+    parsed_line_t text;
+    parsed_line_t json;
+    read_finding(run_output, "steam-dryness", &text, &json);
+    const double superheat_k = number_of(&json, "superheat_k");
+    TEST_ASSERT_TRUE(superheat_k >= 0.0);
+    TEST_ASSERT_EQUAL_STRING(superheat_k > 0.0 ? "true" : "false", field_named(&json, "dry")->value);
+    TEST_ASSERT_NULL(strstr(field_named(&json, "claim")->value, "no steam was made"));
+    TEST_ASSERT_TRUE(number_of(&json, "pressure_bar_gauge") > 0.0);
+    TEST_ASSERT_EQUAL_STRING(CARRY_OVER_CAVEAT, field_named(&text, "carry_over")->value);
+    TEST_ASSERT_EQUAL_STRING(CARRY_OVER_CAVEAT, field_named(&json, "carry_over")->value);
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C9: ... where no steam was made nothing is
+/// claimed, and the caveat remains, in both forms of the run's own report.
+static void test_a_steam_draw_run_that_never_opens_the_wand_claims_no_dryness(void)
+{
+    const plant_parameters_t parameters = reference_parameters();
+    load_what_the_runs_are_handed();
+
+    TEST_ASSERT_EQUAL_INT(0, steam_draw_of(&parameters, 30u, 0u));
+
+    parsed_line_t text;
+    parsed_line_t json;
+    read_finding(run_output, "steam-dryness", &text, &json);
+    const parsed_line_t *const forms[2] = {&text, &json};
+    for (size_t i = 0u; i < 2u; i++) {
+        TEST_ASSERT_EQUAL_STRING("false", field_named(forms[i], "dry")->value);
+        TEST_ASSERT_NOT_NULL(strstr(field_named(forms[i], "claim")->value, "no steam was made"));
+        TEST_ASSERT_EQUAL_STRING(CARRY_OVER_CAVEAT, field_named(forms[i], "carry_over")->value);
+    }
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C9: ... names the superheat and pressure it
+/// rests on.
+///
+/// The figure is the least the run saw over the steps steam was made on, with the
+/// pressure of that step. Read off the run itself: the same draw is run for longer
+/// and longer, and the run's own figure can never rise as steps are added and
+/// falls as the block is drawn down; the pressure it names is one the run reported
+/// on a step it fed and drew steam on.
+static void test_the_run_states_the_least_superheat_with_the_pressure_of_that_step(void)
+{
+    const plant_parameters_t parameters = reference_parameters();
+    load_what_the_runs_are_handed();
+
+    double previous_k = 1.0e30;
+    double first_k = 0.0;
+    for (uint32_t intervals = 5u; intervals <= 300u; intervals += 5u) {
+        TEST_ASSERT_EQUAL_INT(0, steam_draw_of(&parameters, intervals, 1000u));
+        parsed_line_t text;
+        parsed_line_t json;
+        read_finding(run_output, "steam-dryness", &text, &json);
+        const double superheat_k = number_of(&json, "superheat_k");
+        TEST_ASSERT_TRUE_MESSAGE(superheat_k <= previous_k,
+                                 "a longer draw reported a greater least superheat");
+        if (previous_k > 1.0e29) {
+            first_k = superheat_k;
+        }
+        previous_k = superheat_k;
+    }
+    TEST_ASSERT_TRUE_MESSAGE(previous_k < first_k,
+                             "drawing the block down never lowered the superheat the run reports");
+
+    /* The pressure named is one the run reported on a step steam was fed and drawn on. */
+    parsed_line_t text;
+    parsed_line_t json;
+    read_finding(run_output, "steam-dryness", &text, &json);
+    const double named_bar = number_of(&json, "pressure_bar_gauge");
+    bool reported = false;
+    const char *cursor = run_output;
+    char line[TEXT_MAX];
+    while ((cursor = strstr(cursor, "HOST steam-trajectory interval=")) != NULL) {
+        TEST_ASSERT_TRUE(line_with_prefix(cursor, "HOST steam-trajectory ", line, sizeof(line)));
+        parsed_line_t step;
+        TEST_ASSERT_TRUE(parse_text_line(line, &step));
+        if (number_of(&step, "demand") > 0.0 && number_of(&step, "feed") > 0.0 &&
+            fabs(number_of(&step, "steam-bar") - named_bar) <= 1.0e-4 * fabs(named_bar) + 1.0e-6) {
+            reported = true;
+        }
+        cursor += 1;
+    }
+    TEST_ASSERT_TRUE_MESSAGE(reported, "the pressure named is not one the run reported on a fed, drawn step");
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: A host run that cannot compute the bound
+/// from the declared ceiling states none and reports the refusal.
+static void test_a_steam_draw_run_whose_bound_cannot_be_stated_reports_the_refusal(void)
+{
+    plant_parameters_t parameters = reference_parameters();
+    load_what_the_runs_are_handed();
+    size_t at = 0u;
+    TEST_ASSERT_TRUE(plant_parameter_position("steam.casting_ceiling_c", &at));
+    TEST_ASSERT_TRUE(plant_parameter_scale(&parameters, at, 0.5f));
+
+    TEST_ASSERT_TRUE(steam_draw_of(&parameters, 10u, 1000u) != 0);
+    TEST_ASSERT_NULL(strstr(run_output, "steam-casting-ceiling"));
+    TEST_ASSERT_NOT_NULL(strstr(run_error, "the casting ceiling could not be stated"));
+}
+
+/*
+ * The cross-tier brew draw the command line's --draw takes, run through the same
+ * entry point: the pump held shut for a handful of intervals, which asks nothing
+ * of the steam side and so isolates what the run states about it.
+ */
+static int cross_tier_draw_of(const plant_parameters_t *machine)
+{
+    static uint32_t cadence[8];
+    static uint16_t pump[8];
+    for (size_t i = 0u; i < 8u; i++) {
+        cadence[i] = 10u;
+        pump[i] = 0u;
+    }
+    const cross_tier_draw_t draw = {93.0f, cadence, pump, 8u, 4095u, 150000u};
+
+    capture_t out = capture_begin(STDOUT_FILENO);
+    capture_t err = capture_begin(STDERR_FILENO);
+    const int outcome = cross_tier_draw_run(machine, machine, &run_budget, &run_limits,
+                                            &run_tolerance, &run_pump_trim, &draw);
+    capture_end(&err, run_error, sizeof(run_error));
+    capture_end(&out, run_output, sizeof(run_output));
+    return outcome;
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: Each host run reports the bound in both
+/// text and JSON form, stating the ceiling's value, that it is saturation at the
+/// declared ceiling, and that it is a control limit and not containment.
+static void test_the_cross_tier_draw_run_states_the_bound_in_both_forms(void)
+{
+    const plant_parameters_t parameters = reference_parameters();
+    load_what_the_runs_are_handed();
+
+    TEST_ASSERT_EQUAL_INT(0, cross_tier_draw_of(&parameters));
+
+    parsed_line_t text;
+    parsed_line_t json;
+    read_finding(run_output, "steam-casting-ceiling", &text, &json);
+    TEST_ASSERT_EQUAL_FLOAT(coefficient(&parameters, "steam.casting_ceiling_c"),
+                            (float)number_of(&text, "ceiling_c"));
+    TEST_ASSERT_TRUE(number_of(&json, "ceiling_pressure_bar_gauge") > 0.0);
+    TEST_ASSERT_EQUAL_STRING("saturation at the declared ceiling", field_named(&json, "basis")->value);
+    TEST_ASSERT_EQUAL_STRING("a control limit and not containment", field_named(&text, "nature")->value);
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: A host run that cannot compute the bound
+/// from the declared ceiling states none and reports the refusal.
+static void test_a_cross_tier_draw_run_whose_bound_cannot_be_stated_reports_the_refusal(void)
+{
+    plant_parameters_t parameters = reference_parameters();
+    load_what_the_runs_are_handed();
+    size_t at = 0u;
+    TEST_ASSERT_TRUE(plant_parameter_position("steam.casting_ceiling_c", &at));
+    TEST_ASSERT_TRUE(plant_parameter_scale(&parameters, at, 0.5f));
+
+    TEST_ASSERT_TRUE(cross_tier_draw_of(&parameters) != 0);
+    TEST_ASSERT_NULL(strstr(run_output, "steam-casting-ceiling"));
+    TEST_ASSERT_NOT_NULL(strstr(run_error, "the casting ceiling could not be stated"));
+}
+
 static void assert_nothing_written_dryness(const dryness_finding_t *finding)
 {
     char output[TEXT_MAX];
@@ -557,7 +978,6 @@ static void assert_nothing_written_dryness(const dryness_finding_t *finding)
     TEST_ASSERT_EQUAL_STRING("", output);
 }
 
-#define CARRY_OVER_CAVEAT "droplet carry-over is not excluded without a calorimetric test"
 
 /* Write a dryness statement and read both forms of it back. */
 static void state_dryness(const dryness_finding_t *finding, parsed_line_t *text,
@@ -683,6 +1103,15 @@ int main(void)
     RUN_TEST(test_the_casting_ceiling_is_reported_in_both_forms_with_what_it_is);
     RUN_TEST(test_the_reported_bound_follows_the_declared_ceiling_and_not_a_constant);
     RUN_TEST(test_a_block_declared_to_start_dry_still_states_the_bound);
+    RUN_TEST(test_a_dry_block_with_no_feed_states_the_same_bound_as_a_fed_one);
+    RUN_TEST(test_a_bound_that_is_not_above_nothing_is_not_stated);
+    RUN_TEST(test_the_steam_draw_run_states_the_bound_in_both_forms_before_driving_the_machine);
+    RUN_TEST(test_the_steam_draw_run_states_dryness_in_both_forms_with_the_caveat);
+    RUN_TEST(test_a_steam_draw_run_that_never_opens_the_wand_claims_no_dryness);
+    RUN_TEST(test_the_run_states_the_least_superheat_with_the_pressure_of_that_step);
+    RUN_TEST(test_a_steam_draw_run_whose_bound_cannot_be_stated_reports_the_refusal);
+    RUN_TEST(test_the_cross_tier_draw_run_states_the_bound_in_both_forms);
+    RUN_TEST(test_a_cross_tier_draw_run_whose_bound_cannot_be_stated_reports_the_refusal);
     RUN_TEST(test_a_dry_steam_claim_names_its_superheat_and_pressure_and_carries_the_caveat);
     RUN_TEST(test_no_dryness_is_claimed_at_zero_superheat_or_with_no_steam);
     RUN_TEST(test_the_dryness_statement_reads_without_the_source);

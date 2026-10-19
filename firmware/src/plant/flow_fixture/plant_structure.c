@@ -28,6 +28,15 @@ const plant_parameter_spec_t *plant_structure_parameter_specs(size_t *count)
     return SPECS;
 }
 
+/* This structure declares no relation between its coefficients. */
+const plant_parameter_relation_t *plant_structure_parameter_relations(size_t *count)
+{
+    if (count != NULL) {
+        *count = 0u;
+    }
+    return NULL;
+}
+
 /*
  * This structure describes no machine, so no supply drives any of it, on the
  * same terms the fixture beside it states: its coefficients are figures a

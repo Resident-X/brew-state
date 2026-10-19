@@ -113,6 +113,17 @@
 # accessor's own copy of the spec-table guard is judged on its own terms rather
 # than by pointing at the walk's.
 
+# The judgements in plant_parameters.c and the boiler's structure file were moved
+# to new lines when the loader gained the relations a structure declares between
+# its coefficients and the accessor that reads one figure back by position: the
+# loader's relation walk sits above the entries from `plant_parameter_budget_for`
+# down, the value accessor above `plant_parameter_supply_driven`, and the boiler's
+# own empty relation table above its steam-pressure relation. Each moved line is
+# character for character the one the judgement was written about, so the
+# reasoning stands unaltered. The value accessor's own copy of the table-size
+# guard is judged on its own terms below; its position guard is killed by the
+# test that asks for the position one past the last.
+
 # The thermoblock's and the boiler's steam-pressure judgements were re-made at
 # new lines again when the commanded margin arrived: `plant_parameter_scale`,
 # `plant_parameter_position` and `plant_parameter_supply_driven` were added to
@@ -245,7 +256,7 @@ survivors:
       the sanitizer script back to the environment's extra_scripts and run the
       sweep, and this line should report Killed.
 
-  cxx_gt_to_ge:src/plant/common/plant_parameters.c:556:57:
+  cxx_gt_to_ge:src/plant/common/plant_parameters.c:571:57:
     verdict: equivalent
     reason: >-
       The same spec-table size guard again, in the accessor that answers what
@@ -257,7 +268,7 @@ survivors:
       every structure in the tree declares a single-figure number of parameters,
       so both forms accept every table any build of this program can present.
 
-  cxx_gt_to_ge:src/plant/common/plant_parameters.c:592:57:
+  cxx_gt_to_ge:src/plant/common/plant_parameters.c:607:57:
     verdict: equivalent
     reason: >-
       The same spec-table size guard a third time, in `plant_parameter_scale`:
@@ -268,7 +279,7 @@ survivors:
       every structure in the tree declares a single-figure number of parameters,
       so both forms accept every table any build of this program can present.
 
-  cxx_gt_to_ge:src/plant/common/plant_parameters.c:630:57:
+  cxx_gt_to_ge:src/plant/common/plant_parameters.c:645:57:
     verdict: equivalent
     reason: >-
       The same spec-table size guard again, in `plant_parameter_position`:
@@ -278,7 +289,7 @@ survivors:
       single-figure number of parameters, so both forms accept every table any
       build of this program can present.
 
-  cxx_gt_to_ge:src/plant/common/plant_parameters.c:651:57:
+  cxx_gt_to_ge:src/plant/common/plant_parameters.c:683:57:
     verdict: equivalent
     reason: >-
       The same spec-table size guard again, in `plant_parameter_supply_driven`:
@@ -288,7 +299,18 @@ survivors:
       single-figure number of parameters, so both forms accept every table any
       build of this program can present.
 
-  cxx_ge_to_gt:src/plant/common/plant_parameters.c:593:12:
+  cxx_gt_to_ge:src/plant/common/plant_parameters.c:666:57:
+    verdict: equivalent
+    reason: >-
+      The same spec-table size guard once more, in `plant_parameter_value`:
+      `spec_count > PLANT_PARAMETER_LIMIT` widened to `>=`. The judgement is the
+      entries above's, made again for the same reason they were: the guards are
+      separately editable, so a change to one would not move another. The table
+      is compiled in, chosen by which structure the environment names, and every
+      structure in the tree declares a single-figure number of parameters, so
+      both forms accept every table any build of this program can present.
+
+  cxx_ge_to_gt:src/plant/common/plant_parameters.c:608:12:
     verdict: analysis
     reason: >-
       Position guard in `plant_parameter_scale`, `at >= spec_count` narrowed to
@@ -310,7 +332,7 @@ survivors:
       the unsanitized sweep records the mutant as surviving. Repeat that if this
       reasoning is ever in doubt.
 
-  cxx_lt_to_le:src/plant/common/plant_parameters.c:660:35:
+  cxx_lt_to_le:src/plant/common/plant_parameters.c:692:35:
     verdict: analysis
     reason: >-
       Loop bound in `plant_parameter_supply_driven`, `which < named_count`
@@ -345,7 +367,7 @@ survivors:
       admissible argument, null or not, distinguishes the two forms while this
       structure serves no delivery point.
 
-  cxx_gt_to_ge:src/plant/boiler/plant_structure.c:135:31:
+  cxx_gt_to_ge:src/plant/boiler/plant_structure.c:144:31:
     verdict: equivalent
     reason: >-
       Steam pressure in the single-boiler structure, `above_saturation_k > 0.0f`

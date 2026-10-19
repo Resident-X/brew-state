@@ -507,6 +507,21 @@ static bool read_description(const char *text, size_t length, plant_parameters_t
         }
     }
 
+    /*
+     * Each value is admissible alone; the pairs are asked once the record is
+     * whole, after every range, so a description with a value out of range
+     * reports that and not a relation made of it.
+     */
+    size_t relation_count = 0u;
+    const plant_parameter_relation_t *relations = plant_structure_parameter_relations(&relation_count);
+    for (size_t which = 0u; which < relation_count && relations != NULL; which++) {
+        if (!relations[which].holds(&staging)) {
+            report(error, PLANT_PARAMETER_INCONSISTENT, 0u, relations[which].parameter,
+                   strlen(relations[which].parameter));
+            return false;
+        }
+    }
+
     if (budget != NULL) {
         *budget = assumed;
     }

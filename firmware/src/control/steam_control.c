@@ -235,7 +235,7 @@ static uint16_t feed_command(steam_control_state_t *state, float error, float in
     const float ceiling_permille = (float)state->declaration.feed_ceiling_permille;
 
     if (opening) {
-        state->feed_level_permille = lesser(start_permille, ceiling_permille);
+        state->feed_level_permille = start_permille;
         return as_drive_level(state->feed_level_permille);
     }
 

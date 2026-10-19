@@ -1068,6 +1068,37 @@ static void test_the_declaration_grammar_refuses_what_it_must(void)
     }
 }
 
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C10: A declaration whose draw-start level
+/// exceeds its feed ceiling is refused as its own fault, not reduced to the
+/// ceiling.
+///
+/// Each figure is inside its own range, so what is wrong is the pair. A start at
+/// the ceiling is accepted and a start one permille above it is refused naming
+/// the start, and the law opened on the accepted declaration starts the feed at
+/// exactly the start level, which is the ceiling here.
+static void test_a_draw_start_above_the_feed_ceiling_is_refused_as_its_own_fault(void)
+{
+    steam_control_declaration_t figures = declaration;
+    steam_control_declaration_t built;
+    steam_control_declaration_error_t fault;
+
+    figures.draw_start_feed_permille = figures.feed_ceiling_permille;
+    TEST_ASSERT_TRUE_MESSAGE(declaration_from(text_for(&figures), &built, &fault),
+                             "a start at its ceiling was refused");
+    TEST_ASSERT_EQUAL_INT32(figures.feed_ceiling_permille, built.draw_start_feed_permille);
+
+    figures.draw_start_feed_permille = figures.feed_ceiling_permille + 1;
+    TEST_ASSERT_FALSE_MESSAGE(declaration_from(text_for(&figures), &built, &fault),
+                              "a start above its ceiling was accepted");
+    TEST_ASSERT_EQUAL(STEAM_CONTROL_DECLARATION_FEED_START_ABOVE_CEILING, fault.fault);
+    TEST_ASSERT_EQUAL_STRING(STEAM_CONTROL_DECLARATION_DRAW_START_FEED_WORD, fault.name);
+
+    /* A start inside its range and a ceiling inside its range, however far apart. */
+    figures.draw_start_feed_permille = figures.feed_ceiling_permille + 400;
+    TEST_ASSERT_FALSE(declaration_from(text_for(&figures), &built, &fault));
+    TEST_ASSERT_EQUAL(STEAM_CONTROL_DECLARATION_FEED_START_ABOVE_CEILING, fault.fault);
+}
+
 /* --- Holding the band, and coming back afterwards -------------------------- */
 
 /// SOL-PLANT-STEAM-FLASH-GENERATOR.C7: The feed holds pressure and heater power
@@ -1164,6 +1195,72 @@ static void test_pressure_and_superheat_hold_for_draws_of_every_duration(void)
             }
         }
     }
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C7: Superheat stays at or above its setpoint
+/// for the whole draw -- of any duration within the declared model-error
+/// tolerance.
+///
+/// The coefficients that decide the superheat are the element's power, the
+/// block's thermal mass and loss, the drop from casting to outlet, and the
+/// restriction the pressure is made through. Each is taken to both ends of the
+/// error the description declares for it, by the same corner mechanism the
+/// restriction sweep above uses -- a factor on the described coefficient, the
+/// others where the description puts them -- and each machine is drawn on for a
+/// brief, a long and an extended duration. On every step that fed the block, the
+/// plant's superheat at the modelled outlet is at or above the declared setpoint.
+static void test_superheat_holds_the_setpoint_across_the_error_ends_of_every_coefficient_that_decides_it(void)
+{
+    static const char *const DECIDING[] = {"steam.heater_power_w", "steam.thermal_mass_j_per_k",
+                                           "steam.loss_w_per_k", "steam.outlet_drop_k_s_per_ml",
+                                           RESTRICTION_COEFFICIENT};
+    static const unsigned DURATIONS[] = {3u, 30u, 60u};
+    const float setpoint_k = (float)declaration.superheat_setpoint_milli_k / 1000.0f;
+    static char report[2048];
+    size_t shortfalls = 0u;
+
+    report[0] = '\0';
+    for (size_t k = 0u; k < sizeof(DECIDING) / sizeof(DECIDING[0]); k++) {
+        float assumed = 0.0f;
+
+        TEST_ASSERT_TRUE_MESSAGE(plant_parameter_budget_for(&budget, DECIDING[k], &assumed),
+                                 DECIDING[k]);
+        TEST_ASSERT_TRUE_MESSAGE(assumed > 0.0f, DECIDING[k]);
+
+        for (size_t end = 0u; end < 2u; end++) {
+            const float factor = end == 0u ? 1.0f - assumed : 1.0f + assumed;
+            const plant_parameters_t machine = machine_with_scaled(DECIDING[k], factor);
+
+            for (size_t which = 0u; which < sizeof(DURATIONS) / sizeof(DURATIONS[0]); which++) {
+                float least_k = INFINITY;
+                unsigned least_at_ms = 0u;
+
+                bring_the_loop_up(&machine, &declaration, ready_target_c(&declaration));
+                hold_ready_for(SETTLE_SECONDS);
+                draw_for(DURATIONS[which], 1.0f);
+
+                for (size_t at = 0u; at < sample_count; at++) {
+                    if (samples[at].feed_permille != 0u && samples[at].superheat_k < least_k) {
+                        least_k = samples[at].superheat_k;
+                        least_at_ms = (unsigned)samples[at].at_millis;
+                    }
+                }
+                if (least_k < setpoint_k) {
+                    /* Every machine that leaves the setpoint is listed, not only the first. */
+                    shortfalls += (size_t)snprintf(
+                        &report[shortfalls], sizeof(report) - shortfalls,
+                        "%s at %.3f times its description: %.3f K at %u ms in a %u second draw; ",
+                        DECIDING[k], (double)factor, (double)least_k, least_at_ms, DURATIONS[which]);
+                    if (shortfalls >= sizeof(report)) {
+                        shortfalls = sizeof(report) - 1u;
+                    }
+                }
+            }
+        }
+    }
+    TEST_ASSERT_EQUAL_STRING_MESSAGE("", report,
+                                     "the outlet superheat fell below the declared setpoint on the "
+                                     "machines listed");
 }
 
 /*
@@ -2072,6 +2169,13 @@ static void test_feed_withheld_one_milli_bar_below_threshold(void)
 ///
 /// What feed the pressure loop then commands is out of that criterion's scope;
 /// what is required here is only that feed goes from nothing to something.
+///
+/// The question is asked at the wand opening, on the retired reading that a draw
+/// already under way crossed the threshold mid-draw. A draw opened below the
+/// threshold stays starved when pressure rises later in the draw, because the
+/// verdict is held per draw until the wand shuts; the mid-draw crossing the
+/// criterion's wording also admits is no longer a behaviour of the law and has no
+/// test beside this one.
 static void test_feed_enabled_the_same_step_pressure_reaches_threshold(void)
 {
     static const struct {
@@ -2961,7 +3065,9 @@ int main(void)
     RUN_TEST(test_the_declared_band_decides_which_draws_the_suite_accepts);
     RUN_TEST(test_a_declared_gain_moves_the_pass_fail_boundary);
     RUN_TEST(test_the_declaration_grammar_refuses_what_it_must);
+    RUN_TEST(test_a_draw_start_above_the_feed_ceiling_is_refused_as_its_own_fault);
     RUN_TEST(test_pressure_and_superheat_hold_for_draws_of_every_duration);
+    RUN_TEST(test_superheat_holds_the_setpoint_across_the_error_ends_of_every_coefficient_that_decides_it);
     RUN_TEST(test_feed_never_exceeds_its_ceiling_or_rises_faster_than_its_limit);
     RUN_TEST(test_the_feed_ceiling_rise_limit_and_start_level_are_read_as_data);
     RUN_TEST(test_when_the_ceiling_binds_pressure_yields_before_quantity_or_quality);

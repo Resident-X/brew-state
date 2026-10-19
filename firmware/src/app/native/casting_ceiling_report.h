@@ -23,7 +23,10 @@ typedef enum {
     CASTING_CEILING_REPORTED,
     /* The structure declares no casting ceiling, as a boiler's steam side does not. Nothing written. */
     CASTING_CEILING_NOT_DECLARED,
-    /* The structure declares one and the run could not state it. Nothing written. */
+    /*
+     * The structure declares one and the run could not state it, including a
+     * bound that is not finite and above zero. No bound line is written.
+     */
     CASTING_CEILING_REFUSED
 } casting_ceiling_outcome_t;
 

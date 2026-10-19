@@ -271,6 +271,17 @@ typedef struct {
     size_t offset;
 } plant_parameter_spec_t;
 
+/*
+ * A relation the values of a description must stand in together, beyond each
+ * lying in its own range. `parameter` is the one named when the relation fails,
+ * and `holds` answers for the structure's own parameter record, which is what
+ * `parameters` points at.
+ */
+typedef struct {
+    const char *parameter;
+    bool (*holds)(const void *parameters);
+} plant_parameter_relation_t;
+
 /* Why a parameter description was refused. */
 typedef enum {
     /* Nothing was wrong; the record is populated. */
@@ -314,7 +325,18 @@ typedef enum {
      * is settled where the description lives rather than by the loader -- the
      * same division the origin annotation already draws.
      */
-    PLANT_PARAMETER_ASSUMED_ERROR
+    PLANT_PARAMETER_ASSUMED_ERROR,
+    /*
+     * Every value is inside its own range and two of them together are not a
+     * machine -- a pair the structure declares must stand in a relation and do
+     * not. The parameter reported is the first of the pair.
+     *
+     * Separate from OUT_OF_RANGE because what is wrong is the pair and not
+     * either value: each is admissible alone, and a caller told one was out of
+     * range would go looking for a value that is fine. A relation is refused
+     * rather than repaired, so no value is substituted and no model results.
+     */
+    PLANT_PARAMETER_INCONSISTENT
 } plant_parameter_fault_t;
 
 /*

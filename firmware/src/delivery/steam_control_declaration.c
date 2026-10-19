@@ -611,6 +611,13 @@ bool steam_control_declaration_load(const char *text, size_t length,
         return false;
     }
 
+    if (staging.draw_start_feed_permille > staging.feed_ceiling_permille) {
+        report(error, STEAM_CONTROL_DECLARATION_FEED_START_ABOVE_CEILING, 0u,
+               STEAM_CONTROL_DECLARATION_DRAW_START_FEED_WORD,
+               strlen(STEAM_CONTROL_DECLARATION_DRAW_START_FEED_WORD));
+        return false;
+    }
+
     *declaration = staging;
     error->fault = STEAM_CONTROL_DECLARATION_OK;
     return true;

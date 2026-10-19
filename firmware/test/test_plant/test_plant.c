@@ -99,6 +99,30 @@ static const coefficient_t NOMINAL[] = {
 
 #define COEFFICIENT_COUNT (sizeof(NOMINAL) / sizeof(NOMINAL[0]))
 
+/* Indices into the coefficient table, for the closed-form comparison below. */
+#define I_AMBIENT 0u
+#define I_BREW_MASS 1u
+#define I_BREW_POWER 2u
+#define I_BREW_LOSS 3u
+#define I_BREW_HELD_VOLUME 4u
+#define I_BREW_CONDUCTION_TAU 5u
+#define I_STEAM_MASS 6u
+#define I_STEAM_LOSS 8u
+#define I_PUMP_FLOW 10u
+#define I_WATER_FEED 12u
+#define I_WATER_HEAT_CAPACITY 13u
+#define I_WATER_LATENT_HEAT 14u
+#define I_STEAM_SATURATION 15u
+#define I_STEAM_ANTOINE_A 16u
+#define I_STEAM_ANTOINE_B 17u
+#define I_STEAM_ANTOINE_C 18u
+#define I_STEAM_CEILING 19u
+#define I_STEAM_RESTRICTION 20u
+#define I_STEAM_OUTLET_DROP 21u
+#define I_STEAM_CAPACITY 22u
+#define I_STEAM_INITIAL_INVENTORY 23u
+#define I_STEAM_FEED_FLOW 24u
+
 /* Passed as the scaled index when no coefficient is to be perturbed. */
 #define SCALE_NOTHING COEFFICIENT_COUNT
 
@@ -1058,34 +1082,95 @@ static double rng_unit(void)
     return (double)(rng_next() >> 8) / (double)(1u << 24);
 }
 
-/* A description with every coefficient admissible except the one under test. */
+/* A description of exactly these coefficient values, in table order. */
+static size_t describe_values(const double *values, char *out, size_t capacity)
+{
+    size_t used = 0u;
+
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        const int written =
+            snprintf(out + used, capacity - used, "%s = %.17g\n", NOMINAL[i].name, values[i]);
+        TEST_ASSERT_TRUE(written > 0);
+        used += (size_t)written;
+        TEST_ASSERT_TRUE(used < capacity);
+    }
+    return used;
+}
+
+/* No coefficient is held where the region is made consistent. */
+#define NONE_PINNED COEFFICIENT_COUNT
+
+/*
+ * Values moved into the region the structure's relations between coefficients
+ * leave admissible: an initial inventory no greater than the capacity, and a
+ * casting ceiling above the saturation temperature. Each coefficient is bounded
+ * alone, and a generator drawing from those bounds alone draws descriptions the
+ * loader refuses as inconsistent, so every generator comes through here.
+ *
+ * `pinned` is the coefficient a test is holding where it put it -- an edge of
+ * its range -- and the other of its pair is moved instead. Nothing is moved that
+ * is already consistent.
+ */
+static void into_the_consistent_region(double *values, size_t pinned)
+{
+    if (values[I_STEAM_INITIAL_INVENTORY] > values[I_STEAM_CAPACITY]) {
+        if (pinned == I_STEAM_INITIAL_INVENTORY) {
+            values[I_STEAM_CAPACITY] = values[I_STEAM_INITIAL_INVENTORY];
+        } else {
+            values[I_STEAM_INITIAL_INVENTORY] = values[I_STEAM_CAPACITY];
+        }
+    }
+
+    if (!(values[I_STEAM_CEILING] > values[I_STEAM_SATURATION])) {
+        if (pinned == I_STEAM_CEILING) {
+            values[I_STEAM_SATURATION] = values[I_STEAM_CEILING] * 0.5;
+        } else if (pinned == I_STEAM_SATURATION) {
+            values[I_STEAM_CEILING] = values[I_STEAM_SATURATION] * (1.0 + 1.0e-6) + 1.0e-6;
+        } else {
+            const double lesser = fmin(values[I_STEAM_CEILING], values[I_STEAM_SATURATION]);
+            const double greater = fmax(values[I_STEAM_CEILING], values[I_STEAM_SATURATION]);
+            values[I_STEAM_SATURATION] = lesser;
+            values[I_STEAM_CEILING] = greater;
+            if (!(greater > lesser)) {
+                /* Equal: the one with room is moved, the ceiling up or else the saturation down. */
+                if (lesser < 0.5) {
+                    values[I_STEAM_CEILING] = greater + 0.5;
+                } else {
+                    values[I_STEAM_SATURATION] = lesser - 0.5;
+                }
+            }
+        }
+    }
+}
+
+/*
+ * A description with every coefficient at its own nominal except the one under
+ * test, and whether the loader reads that one as inside its range.
+ *
+ * Asked of the value alone: a refusal of the pair it belongs to is not a refusal
+ * of the value, so a value the relations alone leave unreachable -- a ceiling at
+ * the bottom of its range, with no saturation temperature below it -- is still
+ * inside its range. The relations are tested as relations, where they are.
+ */
 static bool accepts(size_t index, double value)
 {
     char text[DESCRIPTION_MAX];
     plant_parameters_t loaded;
     plant_parameter_error_t fault;
-    size_t used = 0u;
+    double values[COEFFICIENT_COUNT];
 
+    /* Each coefficient's own nominal value, for the reason describe_with
+     * above gives: no single placeholder is inside every declared range,
+     * and one that happened to be would be an accident this machinery
+     * should not rest on. */
     for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
-        int written;
-        if (i == index) {
-            written = snprintf(text + used, sizeof(text) - used, "%s = %.17g\n", NOMINAL[i].name,
-                               value);
-        } else {
-            /* Each coefficient's own nominal value, for the reason describe_with
-             * above gives: no single placeholder is inside every declared range,
-             * and one that happened to be would be an accident this machinery
-             * should not rest on. */
-            written = snprintf(text + used, sizeof(text) - used, "%s = %.17g\n", NOMINAL[i].name,
-                               NOMINAL[i].value);
-        }
-        TEST_ASSERT_TRUE(written > 0);
-        used += (size_t)written;
-        TEST_ASSERT_TRUE(used < sizeof(text));
+        values[i] = (i == index) ? value : NOMINAL[i].value;
     }
+    const size_t used = describe_values(values, text, sizeof(text));
 
     memset(&fault, 0, sizeof(fault));
-    return plant_parameters_load(text, used, &loaded, &fault);
+    return plant_parameters_load(text, used, &loaded, &fault) ||
+           fault.fault == PLANT_PARAMETER_INCONSISTENT;
 }
 
 /*
@@ -1138,17 +1223,13 @@ static void discover_bounds(size_t index, double *low, double *high)
 /* A description drawing every coefficient uniformly from its declared range. */
 static size_t describe_sampled(const double *low, const double *high, char *out, size_t capacity)
 {
-    size_t used = 0u;
+    double values[COEFFICIENT_COUNT];
 
     for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
-        const double value = low[i] + rng_unit() * (high[i] - low[i]);
-        const int written =
-            snprintf(out + used, capacity - used, "%s = %.17g\n", NOMINAL[i].name, value);
-        TEST_ASSERT_TRUE(written > 0);
-        used += (size_t)written;
-        TEST_ASSERT_TRUE(used < capacity);
+        values[i] = low[i] + rng_unit() * (high[i] - low[i]);
     }
-    return used;
+    into_the_consistent_region(values, NONE_PINNED);
+    return describe_values(values, out, capacity);
 }
 
 /*
@@ -1161,17 +1242,13 @@ static size_t describe_sampled(const double *low, const double *high, char *out,
 static size_t describe_corner(const double *low, const double *high, bool take_high, char *out,
                               size_t capacity)
 {
-    size_t used = 0u;
+    double values[COEFFICIENT_COUNT];
 
     for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
-        const double value = take_high ? high[i] : low[i];
-        const int written =
-            snprintf(out + used, capacity - used, "%s = %.17g\n", NOMINAL[i].name, value);
-        TEST_ASSERT_TRUE(written > 0);
-        used += (size_t)written;
-        TEST_ASSERT_TRUE(used < capacity);
+        values[i] = take_high ? high[i] : low[i];
     }
-    return used;
+    into_the_consistent_region(values, NONE_PINNED);
+    return describe_values(values, out, capacity);
 }
 
 /*
@@ -1186,49 +1263,51 @@ static size_t describe_corner(const double *low, const double *high, bool take_h
 static size_t describe_mixed_corner(const double *low, const double *high, char *out,
                                     size_t capacity)
 {
-    size_t used = 0u;
+    double values[COEFFICIENT_COUNT];
 
     for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
-        const double value = (rng_next() & 1u) != 0u ? high[i] : low[i];
-        const int written =
-            snprintf(out + used, capacity - used, "%s = %.17g\n", NOMINAL[i].name, value);
-        TEST_ASSERT_TRUE(written > 0);
-        used += (size_t)written;
-        TEST_ASSERT_TRUE(used < capacity);
+        values[i] = (rng_next() & 1u) != 0u ? high[i] : low[i];
     }
-    return used;
+    into_the_consistent_region(values, NONE_PINNED);
+    return describe_values(values, out, capacity);
 }
 
 /* One coefficient at a bound, the rest nominal -- so a single extreme is not
  * masked by the others also being extreme. */
 static size_t describe_at_bound(const double *bounds, size_t index, char *out, size_t capacity)
 {
-    size_t used = 0u;
+    double values[COEFFICIENT_COUNT];
 
     for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
-        const double value = (i == index) ? bounds[i] : NOMINAL[i].value;
-        const int written =
-            snprintf(out + used, capacity - used, "%s = %.17g\n", NOMINAL[i].name, value);
-        TEST_ASSERT_TRUE(written > 0);
-        used += (size_t)written;
-        TEST_ASSERT_TRUE(used < capacity);
+        values[i] = (i == index) ? bounds[i] : NOMINAL[i].value;
     }
-    return used;
+    into_the_consistent_region(values, index);
+    return describe_values(values, out, capacity);
 }
 
-/* A description of exactly these coefficient values, in table order. */
-static size_t describe_values(const double *values, char *out, size_t capacity)
+/*
+ * Whether the description a bound-alone corner names is one the loader can
+ * hold, asserting that when it is not, it is only because the bound cannot be
+ * reached by a consistent description: the pair it belongs to is refused, or the
+ * partner it would need lies past its own range. A ceiling at the bottom of its
+ * range has no saturation temperature below it, and a saturation temperature at
+ * the top has no ceiling above it. Anything else refused is a failure.
+ */
+static bool bound_is_reachable(const char *text, size_t used, size_t index,
+                               plant_parameters_t *loaded)
 {
-    size_t used = 0u;
+    plant_parameter_error_t fault;
 
-    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
-        const int written =
-            snprintf(out + used, capacity - used, "%s = %.17g\n", NOMINAL[i].name, values[i]);
-        TEST_ASSERT_TRUE(written > 0);
-        used += (size_t)written;
-        TEST_ASSERT_TRUE(used < capacity);
+    memset(&fault, 0, sizeof(fault));
+    if (plant_parameters_load(text, used, loaded, &fault)) {
+        return true;
     }
-    return used;
+    const bool partner_out_of_reach =
+        fault.fault == PLANT_PARAMETER_INCONSISTENT ||
+        (fault.fault == PLANT_PARAMETER_OUT_OF_RANGE &&
+         strcmp(fault.parameter, NOMINAL[index].name) != 0);
+    TEST_ASSERT_TRUE_MESSAGE(partner_out_of_reach, NOMINAL[index].name);
+    return false;
 }
 
 static void all_bounds(double *low, double *high)
@@ -1380,6 +1459,9 @@ static void test_the_corners_of_the_declared_range_stay_finite(void)
             const size_t index = (size_t)(corner - 2) / 2u;
             used = describe_at_bound(((corner - 2) % 2 == 0) ? low : high, index, text,
                                      sizeof(text));
+            if (!bound_is_reachable(text, used, index, &loaded)) {
+                continue;
+            }
         } else {
             used = describe_mixed_corner(low, high, text, sizeof(text));
         }
@@ -1400,30 +1482,6 @@ static void test_the_corners_of_the_declared_range_stay_finite(void)
         }
     }
 }
-
-/* Indices into the coefficient table, for the closed-form comparison below. */
-#define I_AMBIENT 0u
-#define I_BREW_MASS 1u
-#define I_BREW_POWER 2u
-#define I_BREW_LOSS 3u
-#define I_BREW_HELD_VOLUME 4u
-#define I_BREW_CONDUCTION_TAU 5u
-#define I_STEAM_MASS 6u
-#define I_STEAM_LOSS 8u
-#define I_PUMP_FLOW 10u
-#define I_WATER_FEED 12u
-#define I_WATER_HEAT_CAPACITY 13u
-#define I_WATER_LATENT_HEAT 14u
-#define I_STEAM_SATURATION 15u
-#define I_STEAM_ANTOINE_A 16u
-#define I_STEAM_ANTOINE_B 17u
-#define I_STEAM_ANTOINE_C 18u
-#define I_STEAM_CEILING 19u
-#define I_STEAM_RESTRICTION 20u
-#define I_STEAM_OUTLET_DROP 21u
-#define I_STEAM_CAPACITY 22u
-#define I_STEAM_INITIAL_INVENTORY 23u
-#define I_STEAM_FEED_FLOW 24u
 
 /* Long enough that a per-step error becomes visible in the distance travelled. */
 #define ACCUMULATION_STEPS 200
@@ -1478,6 +1536,7 @@ static void test_a_step_matches_the_closed_form_across_the_declared_range(void)
         for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
             values[i] = low[i] + rng_unit() * (high[i] - low[i]);
         }
+        into_the_consistent_region(values, NONE_PINNED);
         const size_t used = describe_values(values, text, sizeof(text));
 
         for (size_t k = 0u; k < sizeof(intervals_ms) / sizeof(intervals_ms[0]); k++) {
@@ -2579,6 +2638,33 @@ static void test_scaling_refuses_a_position_this_structure_does_not_have(void)
     TEST_ASSERT_EQUAL_MEMORY(&parameters, &scaled, sizeof(scaled));
 }
 
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: A host run that cannot compute the bound
+/// from the declared ceiling states none and reports the refusal.
+///
+/// The ceiling is read back off the record by its position, and the read refuses
+/// what it cannot answer rather than reading past the record: no record, nowhere
+/// to put the figure, and a position at or past the structure's last. The figure
+/// is left as the caller had it, so a refusal is never mistaken for a value, and
+/// every position the structure has answers the described figure.
+static void test_a_value_is_read_back_by_position_and_refused_where_there_is_none(void)
+{
+    float value = -7.0f;
+
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        value = -7.0f;
+        TEST_ASSERT_TRUE_MESSAGE(plant_parameter_value(&parameters, i, &value), NOMINAL[i].name);
+        TEST_ASSERT_EQUAL_FLOAT_MESSAGE((float)NOMINAL[i].value, value, NOMINAL[i].name);
+    }
+
+    value = -7.0f;
+    TEST_ASSERT_FALSE(plant_parameter_value(&parameters, COEFFICIENT_COUNT, &value));
+    TEST_ASSERT_FALSE(plant_parameter_value(&parameters, COEFFICIENT_COUNT + 1u, &value));
+    TEST_ASSERT_FALSE(plant_parameter_value(&parameters, (size_t)-1, &value));
+    TEST_ASSERT_FALSE(plant_parameter_value(NULL, 0u, &value));
+    TEST_ASSERT_FALSE(plant_parameter_value(&parameters, 0u, NULL));
+    TEST_ASSERT_EQUAL_FLOAT(-7.0f, value);
+}
+
 /// SOL-SWEEP-JUDGEMENTS-REMADE.C1: a coefficient already sitting exactly at
 /// the edge of its declared range is a corner in its own right, and scaling it
 /// by a factor of one -- which changes nothing -- is accepted rather than
@@ -2610,9 +2696,12 @@ static void test_a_scale_landing_exactly_on_the_declared_bound_is_accepted(void)
             size_t at = 0u;
             const size_t used = describe_at_bound(edges[edge], index, text, sizeof(text));
 
-            memset(&fault, 0, sizeof(fault));
-            TEST_ASSERT_TRUE_MESSAGE(plant_parameters_load(text, used, &loaded, &fault),
-                                     NOMINAL[index].name);
+            /* An edge no consistent description sits on is not one a record can
+             * be loaded at to be scaled from. */
+            if (!bound_is_reachable(text, used, index, &loaded)) {
+                continue;
+            }
+            (void)fault;
             TEST_ASSERT_TRUE_MESSAGE(plant_parameter_position(NOMINAL[index].name, &at),
                                      NOMINAL[index].name);
             TEST_ASSERT_TRUE_MESSAGE(plant_parameter_scale(&loaded, at, 1.0f),
@@ -6425,8 +6514,8 @@ static void test_the_inventory_moves_by_the_feed_less_the_steam_made(void)
 }
 
 /// SOL-PLANT-STEAM-FLASH-GENERATOR.C2: The initial inventory is a declared
-/// parameter between zero and the capacity -- an initial figure above the capacity
-/// is held at the capacity, and one inside it is taken whole.
+/// parameter between zero and the capacity -- one inside it, or at it, is taken
+/// whole.
 static void test_the_initial_inventory_is_declared_and_bounded_by_the_capacity(void)
 {
     double values[COEFFICIENT_COUNT];
@@ -6436,13 +6525,119 @@ static void test_the_initial_inventory_is_declared_and_bounded_by_the_capacity(v
     model_from(&model, values);
     TEST_ASSERT_EQUAL_FLOAT(1.5f, steam_inventory(&model));
 
-    values[I_STEAM_INITIAL_INVENTORY] = 40.0;
+    values[I_STEAM_INITIAL_INVENTORY] = values[I_STEAM_CAPACITY];
     model_from(&model, values);
     TEST_ASSERT_EQUAL_FLOAT((float)values[I_STEAM_CAPACITY], steam_inventory(&model));
 
     values[I_STEAM_INITIAL_INVENTORY] = 0.0;
     model_from(&model, values);
     TEST_ASSERT_EQUAL_FLOAT(0.0f, steam_inventory(&model));
+}
+
+/* Load a description of exactly these values; the record is left as it was on a refusal. */
+static bool load_of(const double *values, plant_parameters_t *into, plant_parameter_error_t *fault)
+{
+    char text[DESCRIPTION_MAX];
+    const size_t used = describe_values(values, text, sizeof(text));
+
+    memset(fault, 0, sizeof(*fault));
+    return plant_parameters_load(text, used, into, fault);
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C2: A description declaring an initial
+/// inventory above the capacity is refused at load, naming the parameter, and is
+/// not clamped.
+///
+/// Both figures are inside their own ranges, so what is wrong is the pair: it is
+/// its own fault, reported at no line, naming the initial inventory. The capacity
+/// itself is accepted at the equality, and the refusal leaves the caller's record
+/// as it was and substitutes nothing.
+static void test_an_initial_inventory_above_the_capacity_is_refused_at_load(void)
+{
+    double values[COEFFICIENT_COUNT];
+    plant_parameters_t loaded;
+    plant_parameters_t untouched;
+    plant_parameter_error_t fault;
+
+    nominal_values(values);
+    memset(&loaded, 0x5a, sizeof(loaded));
+    memcpy(&untouched, &loaded, sizeof(loaded));
+
+    values[I_STEAM_INITIAL_INVENTORY] = values[I_STEAM_CAPACITY];
+    TEST_ASSERT_TRUE_MESSAGE(load_of(values, &loaded, &fault),
+                             "an inventory equal to the capacity was refused");
+
+    const double above[] = {values[I_STEAM_CAPACITY] + 0.001, values[I_STEAM_CAPACITY] * 1.5, 40.0};
+    for (size_t i = 0u; i < sizeof(above) / sizeof(above[0]); i++) {
+        values[I_STEAM_INITIAL_INVENTORY] = above[i];
+        memcpy(&loaded, &untouched, sizeof(loaded));
+        TEST_ASSERT_FALSE(load_of(values, &loaded, &fault));
+        TEST_ASSERT_EQUAL(PLANT_PARAMETER_INCONSISTENT, fault.fault);
+        TEST_ASSERT_EQUAL_STRING("steam.initial_inventory_ml", fault.parameter);
+        TEST_ASSERT_EQUAL_UINT32(0u, fault.line);
+        TEST_ASSERT_EQUAL_INT(0, memcmp(&loaded, &untouched, sizeof(loaded)));
+    }
+
+    /* A value outside its own range is that fault, not a relation made of it. */
+    values[I_STEAM_INITIAL_INVENTORY] = 1000.0;
+    TEST_ASSERT_FALSE(load_of(values, &loaded, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_OUT_OF_RANGE, fault.fault);
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: A description whose casting ceiling is not
+/// above the declared saturation temperature ... is refused at load, naming the
+/// parameter.
+///
+/// Strictly above: a ceiling at saturation leaves no span the relation is valid
+/// over, and the trapped pressure would read nothing at every casting.
+static void test_a_casting_ceiling_not_above_saturation_is_refused_at_load(void)
+{
+    double values[COEFFICIENT_COUNT];
+    plant_parameters_t loaded;
+    plant_parameters_t untouched;
+    plant_parameter_error_t fault;
+
+    nominal_values(values);
+    memset(&loaded, 0x5a, sizeof(loaded));
+    memcpy(&untouched, &loaded, sizeof(loaded));
+
+    values[I_STEAM_CEILING] = values[I_STEAM_SATURATION] + 0.25;
+    TEST_ASSERT_TRUE_MESSAGE(load_of(values, &loaded, &fault),
+                             "a ceiling just above saturation was refused");
+
+    const double not_above[] = {values[I_STEAM_SATURATION], values[I_STEAM_SATURATION] - 0.25,
+                                values[I_STEAM_SATURATION] - 10.0};
+    for (size_t i = 0u; i < sizeof(not_above) / sizeof(not_above[0]); i++) {
+        values[I_STEAM_CEILING] = not_above[i];
+        memcpy(&loaded, &untouched, sizeof(loaded));
+        TEST_ASSERT_FALSE(load_of(values, &loaded, &fault));
+        TEST_ASSERT_EQUAL(PLANT_PARAMETER_INCONSISTENT, fault.fault);
+        TEST_ASSERT_EQUAL_STRING("steam.casting_ceiling_c", fault.parameter);
+        TEST_ASSERT_EQUAL_UINT32(0u, fault.line);
+        TEST_ASSERT_EQUAL_INT(0, memcmp(&loaded, &untouched, sizeof(loaded)));
+    }
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C2: A description declaring an initial
+/// inventory above the capacity is refused at load, naming the parameter, and is
+/// not clamped.
+///
+/// Where more than one relation fails the same one is named every time, the
+/// first the structure declares, so a refusal reads the same on every load.
+static void test_a_description_breaking_two_relations_is_refused_on_the_same_one_each_time(void)
+{
+    double values[COEFFICIENT_COUNT];
+    plant_parameters_t loaded;
+    plant_parameter_error_t fault;
+
+    nominal_values(values);
+    values[I_STEAM_INITIAL_INVENTORY] = values[I_STEAM_CAPACITY] + 1.0;
+    values[I_STEAM_CEILING] = values[I_STEAM_SATURATION] - 1.0;
+    for (size_t again = 0u; again < 3u; again++) {
+        TEST_ASSERT_FALSE(load_of(values, &loaded, &fault));
+        TEST_ASSERT_EQUAL(PLANT_PARAMETER_INCONSISTENT, fault.fault);
+        TEST_ASSERT_EQUAL_STRING("steam.initial_inventory_ml", fault.parameter);
+    }
 }
 
 
@@ -7072,6 +7267,58 @@ static void test_the_steam_draws_coefficients_declare_an_origin_and_an_error(voi
     }
 }
 
+/*
+ * How far the trapped gauge pressure at `casting_c` can be from its nominal answer
+ * when each coefficient the relation reads is out by the error the description
+ * declares for it, taken at every combination of the ends of those errors. The
+ * relation is evaluated here in double precision from its published form,
+ * log10(p) = a - b / (c + T), so the bound is the description's own and not
+ * a figure read off the model under test.
+ */
+#define RELATION_COEFFICIENTS 5u
+
+static double trapped_gauge_bar(const double *c, double casting_c)
+{
+    /* c: a, b, c, saturation temperature, ceiling, in that order. */
+    if (!(casting_c > c[3])) {
+        return 0.0;
+    }
+    const double bounded_c = fmin(casting_c, c[4]);
+    const double at_bound = pow(10.0, c[0] - c[1] / (c[2] + bounded_c));
+    const double at_saturation = pow(10.0, c[0] - c[1] / (c[2] + c[3]));
+    return fmax(at_bound - at_saturation, 0.0);
+}
+
+static double declared_error_envelope_bar(const plant_parameter_budget_t *budget,
+                                          const double *nominal, double casting_c)
+{
+    static const size_t INDEX[RELATION_COEFFICIENTS] = {I_STEAM_ANTOINE_A, I_STEAM_ANTOINE_B,
+                                                        I_STEAM_ANTOINE_C, I_STEAM_SATURATION,
+                                                        I_STEAM_CEILING};
+    double centre[RELATION_COEFFICIENTS];
+    double fraction[RELATION_COEFFICIENTS];
+
+    for (size_t k = 0u; k < RELATION_COEFFICIENTS; k++) {
+        float assumed = 0.0f;
+        TEST_ASSERT_TRUE_MESSAGE(plant_parameter_budget_for(budget, NOMINAL[INDEX[k]].name, &assumed),
+                                 NOMINAL[INDEX[k]].name);
+        centre[k] = nominal[INDEX[k]];
+        fraction[k] = (double)assumed;
+    }
+
+    const double at_nominal = trapped_gauge_bar(centre, casting_c);
+    double widest = 0.0;
+    for (unsigned corner = 0u; corner < (1u << RELATION_COEFFICIENTS); corner++) {
+        double moved[RELATION_COEFFICIENTS];
+        for (size_t k = 0u; k < RELATION_COEFFICIENTS; k++) {
+            const double sign = ((corner >> k) & 1u) != 0u ? 1.0 : -1.0;
+            moved[k] = centre[k] * (1.0 + sign * fraction[k]);
+        }
+        widest = fmax(widest, fabs(trapped_gauge_bar(moved, casting_c) - at_nominal));
+    }
+    return widest;
+}
+
 /// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: The saturation relation used for the trapped
 /// case is a declared property of water, valid from the declared saturation
 /// temperature up to the casting ceiling; at the ceiling it agrees with
@@ -7082,6 +7329,12 @@ static void test_the_steam_draws_coefficients_declare_an_origin_and_an_error(voi
 /// ceiling and below it, so a relation fitted to the wrong curve, a wrong constant
 /// or a wrong sign fails here, and the old affine slope -- a quarter of the
 /// truth by 200 C and a third out by 150 -- cannot pass.
+///
+/// The agreement asked for is the description's own: the model may differ from
+/// the table by no more than the declared errors of the coefficients the relation
+/// reads can move the answer, so the line moves with the declared error and with
+/// the constants, and a declared error that swallowed the quantity fails the
+/// test that it is not vacuous.
 static void test_the_shipped_saturation_relation_agrees_with_the_steam_table(void)
 {
     static const struct {
@@ -7094,26 +7347,41 @@ static void test_the_shipped_saturation_relation_agrees_with_the_steam_table(voi
     char text[REFERENCE_MAX];
     plant_parameter_error_t fault;
     plant_parameters_t shipped;
+    plant_parameter_budget_t budget;
+    double nominal[COEFFICIENT_COUNT];
     const plant_actuation_t idle = {{0u, 0u, 0u, 0u}};
 
     const size_t used = read_named_file(REFERENCE_DESCRIPTION_PATH, text, sizeof(text));
     memset(&fault, 0, sizeof(fault));
     TEST_ASSERT_TRUE(plant_parameters_load(text, used, &shipped, &fault));
+    TEST_ASSERT_TRUE(plant_parameter_budget_load(text, used, &budget, &fault));
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        float value = 0.0f;
+        size_t at = 0u;
+        TEST_ASSERT_TRUE(plant_parameter_position(NOMINAL[i].name, &at));
+        TEST_ASSERT_TRUE(plant_parameter_value(&shipped, at, &value));
+        nominal[i] = (double)value;
+    }
 
     for (size_t i = 0u; i < sizeof(TABLE) / sizeof(TABLE[0]); i++) {
         plant_model_t model;
-        char message[160];
+        char message[200];
+        const double allowed_bar =
+            declared_error_envelope_bar(&budget, nominal, (double)TABLE[i].casting_c);
 
         TEST_ASSERT_TRUE(plant_model_init(&model, &shipped));
         TEST_ASSERT_TRUE(
             plant_model_set_state(&model, PLANT_STATE_STEAM_TEMPERATURE_C, TABLE[i].casting_c));
         TEST_ASSERT_TRUE(plant_model_step(&model, &idle, 0.0f, STEP_MS));
 
-        (void)snprintf(message, sizeof(message), "at %.0f C the block reads %.5g bar, table %.5g",
+        (void)snprintf(message, sizeof(message),
+                       "at %.0f C the block reads %.5g bar, table %.5g, the declared error allows %.3g",
                        (double)TABLE[i].casting_c, (double)steam_pressure(&model),
-                       (double)TABLE[i].gauge_bar);
-        TEST_ASSERT_TRUE_MESSAGE(fabsf(steam_pressure(&model) - TABLE[i].gauge_bar) <=
-                                     0.03f * TABLE[i].gauge_bar,
+                       (double)TABLE[i].gauge_bar, allowed_bar);
+        TEST_ASSERT_TRUE_MESSAGE(allowed_bar > 0.0, message);
+        TEST_ASSERT_TRUE_MESSAGE(allowed_bar < (double)TABLE[i].gauge_bar, message);
+        TEST_ASSERT_TRUE_MESSAGE(fabs((double)steam_pressure(&model) - (double)TABLE[i].gauge_bar) <=
+                                     allowed_bar,
                                  message);
     }
 }
@@ -8232,6 +8500,7 @@ int main(void)
     RUN_TEST(test_a_scale_inside_the_declared_range_writes_that_coefficient_alone);
     RUN_TEST(test_a_scale_landing_exactly_on_the_declared_bound_is_accepted);
     RUN_TEST(test_scaling_refuses_a_position_this_structure_does_not_have);
+    RUN_TEST(test_a_value_is_read_back_by_position_and_refused_where_there_is_none);
     RUN_TEST(test_the_position_of_every_coefficient_is_answered_by_name);
     RUN_TEST(test_whether_a_position_is_supply_driven_is_answered_for_every_one);
     RUN_TEST(test_a_budget_never_loaded_answers_nothing);
@@ -8293,6 +8562,9 @@ int main(void)
     RUN_TEST(test_a_shut_block_fed_to_its_capacity_clamps_there_and_keeps_it);
     RUN_TEST(test_the_inventory_moves_by_the_feed_less_the_steam_made);
     RUN_TEST(test_the_initial_inventory_is_declared_and_bounded_by_the_capacity);
+    RUN_TEST(test_an_initial_inventory_above_the_capacity_is_refused_at_load);
+    RUN_TEST(test_a_casting_ceiling_not_above_saturation_is_refused_at_load);
+    RUN_TEST(test_a_description_breaking_two_relations_is_refused_on_the_same_one_each_time);
     RUN_TEST(test_the_cost_of_a_draw_follows_the_temperature_the_feed_arrives_at);
     RUN_TEST(test_a_feed_arriving_past_boiling_costs_a_draw_nothing_extra);
     RUN_TEST(test_a_draw_beyond_the_commanded_feed_is_honoured_at_the_feed);
