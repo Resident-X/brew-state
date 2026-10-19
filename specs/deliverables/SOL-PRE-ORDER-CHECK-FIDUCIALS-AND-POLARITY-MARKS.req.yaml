@@ -23,7 +23,7 @@ links:
     type: depends-on
 brief_confirmation:
   confirmer: claude-sonnet-5-5 independent brief reviewer
-  fingerprint: 2aaa1a8d0e4a4f4b3c4051083ffaccd4ee90d9f55f15f85df9a0bb181ce2fd9f
+  fingerprint: 17b4289166e10da73e81fea5f38208fd9da47dc211b6a32267ba6f8d9cddc0e1
   gating_profile: ""
 design_question_answers:
   - answered_by: SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C1
