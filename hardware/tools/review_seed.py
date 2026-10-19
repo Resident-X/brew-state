@@ -250,15 +250,24 @@ def drop_via(tree: list, *at: Tuple[float, float]) -> None:
 #: connector's ground pin to every ground via of the seeded copy.
 GROUND_TRACES = [
     [(39.5, 3.5), (39.5, 6), (51, 6), (60.4, 6), (62.5, 6), (66.1, 6), (80, 6), (80, 19)],
-    [(39.5, 6), (39.5, 11.7), (38.9, 11.7)],
-    [(39.5, 6), (33.85, 6), (33.85, 11.5), (33.85, 16.3), (33.85, 28), (33.85, 38.1), (33.85, 58.9), (46.35, 58.9)],
+    [(39.5, 6), (39.5, 10.65), (40.3, 10.65)],
+    [(39.5, 6), (33.85, 6), (33.85, 11.5), (33.85, 15.4), (33.85, 28), (33.85, 38.1), (33.85, 58.9), (46.35, 58.9)],
+    [(33.85, 15.4), (34.5, 15.4), (35.7, 15.4)],
     [(33.85, 28), (40.3, 28)],
-    [(51, 6), (51, 10.6)],
+    [(51, 6), (51, 11.35), (50.3, 11.35)],
+    [(51, 11.35), (51.9, 11.5)],
     [(60.4, 6), (60.4, 21.55), (59.8, 21.55)],
-    [(62.5, 6), (62.5, 14.9), (62.5, 44.6), (72.55, 44.6)],
+    [(62.5, 6), (62.5, 14.9), (62.5, 44), (62.5, 44.6)],
+    [(62.5, 44), (67.812, 44)],
+    [(62.5, 44.6), (70.45, 44.6), (70.45, 44.2)],
+    [(70.45, 44.6), (71.7, 44.6), (71.7, 45.25)],
     [(66.1, 6), (66.1, 10.1)],
     [(62.5, 44.6), (62.5, 54), (62.962, 54), (62.962, 58.8)],
 ]
+
+#: The ground vias the committed design holds beside the ones that touch a pad, stitching its planes and pours, which
+#: the seeded copy has no use for once the planes and pours are gone and which would be left unconnected on one layer.
+STITCHING_VIAS = [(38.9, 11.7), (33.85, 16.3), (51, 10.6), (72.55, 44.6), (63.5, 44), (59.8, 17.55)]
 
 
 def thin_ground(seed: board_prove.Seed) -> None:
@@ -266,6 +275,7 @@ def thin_ground(seed: board_prove.Seed) -> None:
     def edit(tree: list) -> None:
         for zone in zones(tree, GND):
             tree.remove(zone)
+        drop_via(tree, *STITCHING_VIAS)
         for points in GROUND_TRACES:
             path(tree, GND, "In1.Cu", 0.5, points)
     seed.layout(edit)
@@ -274,8 +284,7 @@ def thin_ground(seed: board_prove.Seed) -> None:
 def long_way_decoupling(seed: board_prove.Seed) -> None:
     """The controller's decoupling capacitor C4 moved 4 mm south, on a spur the supply reaches only after U4's supply pin."""
     def edit(tree: list) -> None:
-        drop(tree, ((58.55, 17.55), (59.8, 17.55)))
-        drop_via(tree, (59.8, 17.55))
+        drop_via(tree, (57.85, 17.1), (57.8, 17.95))
         move(tree, "C4", 58.55, 20.775)
         path(tree, "/+3V3", "F.Cu", 0.3, [(58.55, 16), (58.55, 20)])
         path(tree, GND, "F.Cu", 0.5, [(58.55, 21.55), (59.8, 21.55)])
