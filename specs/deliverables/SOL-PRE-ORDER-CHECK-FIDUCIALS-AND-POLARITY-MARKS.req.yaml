@@ -3,9 +3,9 @@ type: deliverable
 category: solution
 title: The pre-order check fails missing fiducials and missing polarity or first-pin marks
 status: active
-version: 1
+version: 2
 text: |-
-  Adds the fiducial and polarity-mark rule to the pre-order check, shown to fail on seeded faults, and moves the fiducial item to enforced in the catalogue.
+  Adds the fiducial rule and the polarity-mark rule to the pre-order check, shown to fail on seeded faults, and adds the fiducial item to the layout practice catalogue as an enforced rule-kind item.
 links:
   - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C6
     type: derives-from
@@ -21,6 +21,10 @@ links:
     type: derives-from
   - target: SOL-HW-BOARD-RULE-CHECK-GATE
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: 17b4289166e10da73e81fea5f38208fd9da47dc211b6a32267ba6f8d9cddc0e1
+  gating_profile: ""
 design_question_answers:
   - answered_by: SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C1
     class: whole-set
@@ -37,7 +41,7 @@ locus:
     ref: hardware/tools/ (the pre-order board check and its tests)
   - marking: existing
     ref: hardware/proof/ (throwaway proof design and its synthetic records)
-  - marking: existing
+  - marking: created
     ref: layout practice catalogue fiducial item in docs/board-design-method.md
   - marking: existing
     ref: hardware/README.md (hardware notes)

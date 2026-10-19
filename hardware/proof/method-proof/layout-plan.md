@@ -11,9 +11,9 @@ The layer-by-layer plan of the nets: `+5V_IN`, `+5V`, `/+3V3_REG` and `+3V3` are
 | Region | Bounds | What it holds | Parts |
 |---|---|---|---|
 | mains | none: the board carries no mains | nothing | none |
-| low voltage | (100, 100)–(119, 130) | J1, the 5 V supply input, with its link JP1 and test point TP1; U1, the 3.3 V regulator, with its capacitors C1 and C2, its link JP2 and test point TP2; J2, the output header, with its filter capacitors C5 and C4; a mounting hole at the left edge | J1, JP1, TP1, U1, C1, C2, JP2, TP2, J2, C5, C4, H1 |
+| low voltage | (100, 100)–(119, 130) | J1, the 5 V supply input, with its link JP1 and test point TP1; U1, the 3.3 V regulator, with its capacitors C1 and C2, its link JP2 and test point TP2; J2, the output header, with its filter capacitors C5 and C4; a mounting hole at the left edge; a fiducial near the bottom edge | J1, JP1, TP1, U1, C1, C2, JP2, TP2, J2, C5, C4, H1, FID1 |
 | analog sensing | none: the schematic carries no sensing front end | nothing | none |
-| digital | (119, 100)–(140, 130) | U2, the controller, with its supply capacitor C3 and the rail's test point TP3; D1, the status LED, with its resistor R1 and test point TP4, which U2's PA0 drives; J3, the PA1 header; two mounting holes at the right edge | U2, C3, TP3, R1, D1, TP4, J3, H2, H3 |
+| digital | (119, 100)–(140, 130) | U2, the controller, with its supply capacitor C3 and the rail's test point TP3; D1, the status LED, with its resistor R1 and test point TP4, which U2's PA0 drives; J3, the PA1 header; two mounting holes at the right edge; two fiducials, one at the top edge and one below the controller | U2, C3, TP3, R1, D1, TP4, J3, H2, H3, FID2, FID3 |
 
 | Connector | Edge | Position |
 |---|---|---|
@@ -74,6 +74,7 @@ The layer-by-layer plan of the nets: `+5V_IN`, `+5V`, `/+3V3_REG` and `+3V3` are
 | MFG-4 | yes | `PASTE_OVER_VIA_MM2` set to 0 in `design-rules.md`; no via is placed under a paste opening, the vias at the capacitors' ground pads standing beside the pads. |
 | MFG-5 | yes | The `Ground pad reliefs` rule of `design-rules.md` on class `Ground`, with no exempt pad, the board having no exposed pad. |
 | MFG-6 | yes | The pre-order check's `MFG-6` figure, the board's minimum clearance, with every pour stopping at least that far from copper of its own net that it does not touch. |
+| MFG-10 | yes | The pre-order check's `side_fiducials` rule, which reads no project text variable; the front side, the only side with assembled surface-mount parts (TP1 to TP4 on the back are left out of the position file), carries three fiducials, FID1 at (112, 125), FID2 at (126, 104) and FID3 at (127, 120), each a 1 mm bare-copper pad with a 2 mm mask opening, at least 4 mm from the board edge and clear of every courtyard, pad and track, standing in an L across the board. |
 | EMI-1 | yes | Each supply track on F.Cu runs over the In1.Cu `GND` plane, and each `GND` return reaches the planes beside the part it serves, so supply and ground enclose little area. |
 | EMI-2 | yes | U2 is the board's only controller. No net of this board switches faster than 50 kHz: PA0 holds an LED steady and PA1 is an input, so there is no noisy net, and no track runs along the board edge. |
 | EMI-3 | yes | C5, from `+5V` to ground, and C4, from `+3V3` to ground, are the filter capacitors of the lines that leave the board at J2 pins 1 and 2: each sits at its connector pin, within 3 mm of it, with its supply pad on the pin's track and its ground side joined to the F.Cu `GND` pour and through two vias to the planes by a connection no longer than three times its width. C1 and C3 are the regulator's and the controller's supply capacitors, placed by DECOUPLE-1 at U1 and U2. |

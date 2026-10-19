@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS-C2-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-19T15:04:23.005926Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_marks.py::TheRulesReadAKiCadNetlist.test_a_symbol_name_and_pin_names_are_read_per_reference
+  artifact_version: 189172c2384e3b0bf4bc4da0475f8fd2eef0cdc7
+attested_by: crun-22dd39287ef60ddc
+links:
+  - target: SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C2
+    type: satisfies

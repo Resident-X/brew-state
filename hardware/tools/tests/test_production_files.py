@@ -122,12 +122,12 @@ class ThePlacementConversion(unittest.TestCase):
         rows = read_rows(self.out)
         self.assertEqual(rows[0], ["Designator", "Mid X", "Mid Y", "Layer", "Rotation"])
         self.assertEqual([row[0] for row in rows[1:]], [row[0] for row in exported])
-        self.assertEqual(len(rows) - 1, 28, "the proof design places 28 parts")
+        self.assertEqual(len(rows) - 1, 31, "the proof design places 31 parts")
         for row in rows[1:]:
             self.assertIn(row[3], ("Top", "Bottom"))
             self.assertTrue(0 <= float(row[4]) < 360, row)
         self.assertEqual({row[3] for row in rows[1:]}, {"Top", "Bottom"})
-        self.assertIn("PARTS | 28 parts | 6 on the bottom side", lines)
+        self.assertIn("PARTS | 31 parts | 6 on the bottom side", lines)
 
     def test_the_converted_coordinates_are_in_the_frame_of_the_exported_gerber_files(self):
         # SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C1: The method's ordering step compares every placed part's position, rotation and polarity with the assembler's preview before payment
@@ -338,7 +338,7 @@ class TheFootprintDrawings(unittest.TestCase):
         index = self.index()
         drawn = {designator: image for image in index["images"] for designator in image["used_by"]}
         placed = [row[0] for row in _STATE["placement"]]
-        self.assertEqual(len(placed), 28)
+        self.assertEqual(len(placed), 31)
         for designator in placed:
             self.assertIn(designator, drawn, f"{designator} has no footprint drawing")
             self.assertTrue(os.path.isfile(os.path.join(self.out, drawn[designator]["file"])), designator)

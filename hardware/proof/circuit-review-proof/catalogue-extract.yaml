@@ -292,3 +292,11 @@ entries:
       status: no source publishes one
       source: none -- synthetic lifecycle reading
       read_on: 2026-10-18
+  - lcsc: C9200038
+    library_class: basic
+    stock: 1036
+    unit_price: 0.01
+    lifecycle:
+      status: no source publishes one
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-18

@@ -33,10 +33,10 @@
 	(condition "A.Type == 'Footprint' && A.intersectsArea('mains') && A.Reference != 'J1' && A.Reference != 'U1' && A.Reference != 'H1' && A.Reference != 'H2'")
 	(constraint disallow footprint))
 (rule "Low voltage region parts"
-	(condition "A.Type == 'Footprint' && A.intersectsArea('low voltage') && A.Reference != 'J2' && A.Reference != 'D1' && A.Reference != 'C7' && A.Reference != 'C1' && A.Reference != 'U2' && A.Reference != 'C2' && A.Reference != 'TP2' && A.Reference != 'TP1' && A.Reference != 'J4' && A.Reference != 'C8' && A.Reference != 'TP3' && A.Reference != 'U1' && A.Reference != 'R4'")
+	(condition "A.Type == 'Footprint' && A.intersectsArea('low voltage') && A.Reference != 'J2' && A.Reference != 'D1' && A.Reference != 'C7' && A.Reference != 'C1' && A.Reference != 'U2' && A.Reference != 'C2' && A.Reference != 'TP2' && A.Reference != 'TP1' && A.Reference != 'J4' && A.Reference != 'C8' && A.Reference != 'TP3' && A.Reference != 'U1' && A.Reference != 'R4' && A.Reference != 'FID1' && A.Reference != 'FID3'")
 	(constraint disallow footprint))
 (rule "Analog sensing region parts"
-	(condition "A.Type == 'Footprint' && A.intersectsArea('analog sensing') && A.Reference != 'R1' && A.Reference != 'U3' && A.Reference != 'R2' && A.Reference != 'R3' && A.Reference != 'FB1' && A.Reference != 'C3' && A.Reference != 'TP4' && A.Reference != 'TP5' && A.Reference != 'TP6' && A.Reference != 'H3'")
+	(condition "A.Type == 'Footprint' && A.intersectsArea('analog sensing') && A.Reference != 'R1' && A.Reference != 'U3' && A.Reference != 'R2' && A.Reference != 'R3' && A.Reference != 'FB1' && A.Reference != 'C3' && A.Reference != 'TP4' && A.Reference != 'TP5' && A.Reference != 'TP6' && A.Reference != 'H3' && A.Reference != 'FID2'")
 	(constraint disallow footprint))
 (rule "Digital region parts"
 	(condition "A.Type == 'Footprint' && A.intersectsArea('digital') && A.Reference != 'U4' && A.Reference != 'C4' && A.Reference != 'Y1' && A.Reference != 'C5' && A.Reference != 'C6'")
