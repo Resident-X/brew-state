@@ -1,0 +1,23 @@
+id: SOL-HW-RETAINED-DEVICE-REMAINING-CHARACTERISTICS-RECORDED
+type: deliverable
+category: solution
+title: The retained-device characteristics the first as-found recording left pending are recorded with their sources
+status: active
+version: 1
+text: |
+  Records, in the machine's record, the characteristics of the retained devices that the first as-found recording could not establish from the machine as found, each with its source and evidence grade, so the pending mark it leaves ends with a value rather than an estimate.
+
+  The first recording takes every characteristic that a device's marking, a datasheet or a reading on the unplugged machine gives. What it leaves, it marks pending against this work: the buzzer's type and drive, the forward voltage and series resistance of each panel indicator and of the low-water indicator, the contact type and rating of each panel key and of the microswitches on the hot water and steam knobs, the rating of the position reed element, the flow meter's output type, the temperature sensing elements' curve constant, and the contact ratings of the protective-chain devices whose wiring reaches the board. Each is read from a legible marking or the device's datasheet, or measured on the unplugged machine with the meter the builder has; none is measured energised.
+
+  Each value is entered in the record in the entry the pending mark stood in, with its unit, its evidence grade from the board design constraints record and a source a reader holding only the published repository can follow, and the mark is removed in the same change. A characteristic that no marking, datasheet or unplugged reading gives is recorded as a bound with its derivation shown, or stays pending with the reason.
+links:
+  - target: DEL-HW-DESIGN-CONSTRAINTS.C1
+    type: derives-from
+  - target: REQ-RETROFIT-FIT-001.C2
+    type: targets
+  - target: REQ-MACHINE-RECORD-001.C2
+    type: targets
+  - target: DEC-MACHINE-RECORD-FOLDER-PER-MACHINE
+    type: justified-by
+  - target: SOL-HW-MACHINE-AS-FOUND-FIT-RECORD
+    type: depends-on

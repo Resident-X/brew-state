@@ -1,0 +1,12 @@
+id: SOL-HW-RETAINED-DEVICE-REMAINING-CHARACTERISTICS-RECORDED.C1
+type: criterion
+title: Each retained-device characteristic the first recording left pending is recorded with its source, or remains pending with the reason
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  For each characteristic the machine's record marks pending against this solution, the record entry states the value with its unit, its evidence grade, and a source a reader holding only the published repository can follow, and the pending mark is removed from that entry and from every document derived from it. A characteristic that no marking, datasheet or unplugged reading gives is stated as a bound with its derivation shown, or stays marked pending with the reason no reading gives it. No quantity is measured with the machine energised. Out of scope: designing the circuits that meet these characteristics, and the margin a design applies to them.
+links:
+  - target: SOL-HW-RETAINED-DEVICE-REMAINING-CHARACTERISTICS-RECORDED
+    type: criterion-of
