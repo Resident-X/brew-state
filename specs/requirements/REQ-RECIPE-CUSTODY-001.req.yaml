@@ -4,7 +4,7 @@ category: functional
 title: The machine holds the operator's recipes and the attempts they are compared against
 status: active
 priority: must
-version: 2
+version: 3
 text: |
   Dial-in produces recipes, and until now nothing in the graph held them. Deliveries are recorded, and a previously delivered drink can be selected again, but a recipe is not a record: it is the thing the operator arrived at deliberately and intends to keep, and it has to survive the history it came out of.
 
@@ -23,4 +23,12 @@ links:
   - target: JRN-DIAL-IN-RECIPE-001.C4
     type: derives-from
   - target: JRN-DIAL-IN-RECIPE-001.C5
+    type: derives-from
+  - target: JRN-OPERATE-INTERFACE-001.C6
+    type: derives-from
+  - target: JRN-DESIGN-PROFILE-001.C5
+    type: derives-from
+  - target: JRN-DESIGN-PROFILE-001.C6
+    type: derives-from
+  - target: JRN-DESIGN-PROFILE-001.C7
     type: derives-from

@@ -1,0 +1,13 @@
+id: DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR.C6
+type: criterion
+title: The machine's state and history are viewable by a signed-in watcher that holds no right to change anything
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |-
+  A credential with only the right to view reads state and history and cannot create, edit or remove a profile or a preset, and a request from the network to start a delivery is not accepted.
+links:
+  - target: DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR
+    type: criterion-of

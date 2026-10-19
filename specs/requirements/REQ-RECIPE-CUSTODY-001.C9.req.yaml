@@ -1,0 +1,12 @@
+id: REQ-RECIPE-CUSTODY-001.C9
+type: criterion
+title: A profile can leave the machine as a file and enter it from one, and an entering profile is checked before it is kept
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  A profile that lives only on the machine that made it cannot be shared, backed up or carried to a replacement, and one accepted unchecked can fail partway through a drink on a machine that could not have delivered it.
+links:
+  - target: REQ-RECIPE-CUSTODY-001
+    type: criterion-of

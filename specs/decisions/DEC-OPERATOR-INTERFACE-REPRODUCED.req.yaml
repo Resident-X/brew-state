@@ -2,7 +2,7 @@ id: DEC-OPERATOR-INTERFACE-REPRODUCED
 type: decision
 title: The operator interface the machine already presents is reproduced rather than redesigned, as the wiring record defines it
 status: active
-version: 1
+version: 2
 text: |
   The machine already presents an operator interface, and the operator already knows it. Five keys.
   Indicators whose brightness ramps while the machine heats. Two gauges that sweep to full scale and
@@ -22,6 +22,8 @@ text: |
   That distinction is the point. The gauges may be replaced, the indicators may be driven differently,
   the sounder may be a different part. What may not happen is that a behaviour the operator relies on
   disappears because nothing wrote it down and nothing required it.
+
+  What the keys select is no longer what the machine did before. ONE and TWO each start the complete recipe held on them and a second press stops it (DEF-PRESET), so reproducing the interface means reproducing the keys, their indicators and the announcements, not the meaning of ONE and TWO as shot sizes. What MAN and PRG select is left open: MAN may be a third preset or a draw the operator opens and closes by hand, and PRG puts the machine in a mode for setting defaults. A display and a connected interface are further consumers of the machine's one surface and do not replace the panel (DEC-NETWORK-SURFACE-IS-A-SEPARATE-DISPLAY-UNIT).
 rationale: |
   Context: Tracing the machine's harnesses surfaced several behaviours the operator interface performs
   that no document had recorded and no criterion requires: indicator brightness modulated by gating a
@@ -70,4 +72,6 @@ links:
   - target: JRN-OPERATE-INTERFACE-001.C1
     type: addresses
   - target: JRN-OPERATE-INTERFACE-001.C3
+    type: addresses
+  - target: REQ-RECIPE-CUSTODY-001.C8
     type: addresses

@@ -1,0 +1,13 @@
+id: DEL-DELIVERY-PROFILE-SEGMENTS.C9
+type: criterion
+title: A profile states every segment's aims as outcomes at the group and carries nothing specific to one machine
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |-
+  A profile written on one machine is accepted by another that can deliver it and refused, naming the segment and the reason, by one that cannot. No field of a profile is a drive level, a heater power or a calibration figure, and the report states both in the text and the JSON form.
+links:
+  - target: DEL-DELIVERY-PROFILE-SEGMENTS
+    type: criterion-of

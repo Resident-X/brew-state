@@ -1,0 +1,12 @@
+id: JRN-DESIGN-PROFILE-001.C1
+type: criterion
+title: A profile is built from segments, each stating what is wanted of water temperature, pressure or flow, and what ends it
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |-
+  An operator shapes a delivery by deciding what each part of it should do, so the unit they work in is a segment with its own aims and its own end, and a delivery with no segments stated has nothing to shape.
+links:
+  - target: JRN-DESIGN-PROFILE-001
+    type: criterion-of

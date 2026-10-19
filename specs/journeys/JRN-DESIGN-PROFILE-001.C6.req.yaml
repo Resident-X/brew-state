@@ -1,0 +1,12 @@
+id: JRN-DESIGN-PROFILE-001.C6
+type: criterion
+title: A profile can leave the machine as a file and enter another machine as a file, and is checked on entry
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |-
+  A profile that can only live on the machine that made it cannot be shared, backed up or carried to a replacement, and one accepted unchecked can fail partway through a drink on a machine that could not have delivered it.
+links:
+  - target: JRN-DESIGN-PROFILE-001
+    type: criterion-of

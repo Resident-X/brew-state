@@ -1,0 +1,49 @@
+id: DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR
+type: deliverable
+category: task
+title: An operator builds, checks, keeps and shares profiles on a display and through a signed-in connected interface, served by a unit that reaches the controller only through its defined protocol
+status: active
+priority: should
+level: task
+version: 1
+text: |
+  A separate display unit gives the operator a display on the machine and a signed-in connected interface, through which profiles are built, checked, kept, shared and placed on the presets, and through which the machine's state is watched. The unit owns the display, the connected interface, sign-in, the right to view and the right to change, and the library of profiles. It reaches the controller only through the controller's defined serial protocol, and the controller works identically with the unit absent.
+
+  The sign-in scheme, how access is established and reset at the machine, and the display unit's hardware channel are decided in this task. The controller design's enumerated channels do not include a display, so the controller hardware work carries that gap until this task records it.
+rationale: |
+  Placed as a task directly under the roadmap's final criterion, which this task exists to give an owner. The profile work that precedes it fixes what a profile is, how it is checked and how the controller keeps presets; this task is the surface through which an operator reaches all of that beyond the panel's keys.
+
+  Deliberately sliced later. It is future-state work, and its criteria are stated now so that the requirements it serves (REQ-NETWORK-ACCESS-001, REQ-EXTERNAL-MONITORING-001.C5, JRN-DESIGN-PROFILE-001) have an owner in the graph rather than a note in a conversation. Three things are left to be decided inside it and are named here so they are not lost: the sign-in scheme and how a household shares access, what the panel keys MAN and PRG select, and the display unit's hardware channel.
+
+  Depends on the profile segments task because the display unit edits, checks and shares profiles in the form that task defines.
+links:
+  - target: DEL-BREW-STATE-DELIVERY.C6
+    type: derives-from
+  - target: DEC-NETWORK-SURFACE-IS-A-SEPARATE-DISPLAY-UNIT
+    type: justified-by
+  - target: DEC-PROFILE-IS-RECIPE-DATA
+    type: justified-by
+  - target: DEL-DELIVERY-PROFILE-SEGMENTS
+    type: depends-on
+  - target: REQ-NETWORK-ACCESS-001.C1
+    type: targets
+  - target: REQ-NETWORK-ACCESS-001.C2
+    type: targets
+  - target: REQ-NETWORK-ACCESS-001.C3
+    type: targets
+  - target: REQ-NETWORK-ACCESS-001.C4
+    type: targets
+  - target: REQ-NETWORK-ACCESS-001.C5
+    type: targets
+  - target: REQ-EXTERNAL-MONITORING-001.C5
+    type: targets
+  - target: JRN-DESIGN-PROFILE-001.C2
+    type: targets
+  - target: JRN-DESIGN-PROFILE-001.C5
+    type: targets
+  - target: JRN-DESIGN-PROFILE-001.C6
+    type: targets
+  - target: JRN-DESIGN-PROFILE-001.C8
+    type: targets
+  - target: REQ-NO-REMOTE-ACTUATION-001.C1
+    type: targets

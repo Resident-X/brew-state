@@ -1,0 +1,13 @@
+id: DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR.C5
+type: criterion
+title: A profile is shared as a file and a profile entering as a file is checked before it is kept
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |-
+  A profile exported from the library and imported into another unit is the profile exported, and a file that is malformed, unknown or undeliverable is refused with nothing kept.
+links:
+  - target: DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR
+    type: criterion-of

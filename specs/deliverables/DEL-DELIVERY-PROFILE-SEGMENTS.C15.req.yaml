@@ -1,0 +1,13 @@
+id: DEL-DELIVERY-PROFILE-SEGMENTS.C15
+type: criterion
+title: A water-moving upkeep routine is a profile held to the same limits and refusal as a drink, and is not judged against drink quality
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |-
+  A back-flush against a blocked outlet and a flush of the group run as profiles, a segment that states no water temperature holds none, and the brew temperature band and the drinking-temperature bands are not applied to them.
+links:
+  - target: DEL-DELIVERY-PROFILE-SEGMENTS
+    type: criterion-of

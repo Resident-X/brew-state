@@ -1,0 +1,12 @@
+id: JRN-DESIGN-PROFILE-001.C2
+type: criterion
+title: A profile the machine cannot deliver is refused where it is entered, naming the segment and the reason
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |-
+  An operator who is told only that a profile failed cannot tell which segment to change, and one told nothing until a drink is under way has spent the coffee finding out.
+links:
+  - target: JRN-DESIGN-PROFILE-001
+    type: criterion-of

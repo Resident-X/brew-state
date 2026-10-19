@@ -1,0 +1,12 @@
+id: REQ-EXTERNAL-MONITORING-001.C5
+type: criterion
+title: An external system observes the machine only after it has been admitted
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Observation is the capability most likely to be wanted by systems the household did not choose, and reading is not harmless on a machine that tells a stranger when nobody is home.
+links:
+  - target: REQ-EXTERNAL-MONITORING-001
+    type: criterion-of

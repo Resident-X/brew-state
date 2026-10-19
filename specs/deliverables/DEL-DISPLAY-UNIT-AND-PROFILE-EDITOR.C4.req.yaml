@@ -1,0 +1,13 @@
+id: DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR.C4
+type: criterion
+title: An operator builds, checks, keeps and places on a preset a profile on the display and through the connected interface
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |-
+  A profile is built segment by segment, checked without a delivery, kept under a name, and placed on a preset, on each of the two surfaces, and a profile the machine cannot deliver is refused where it is entered with the segment and the reason named.
+links:
+  - target: DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR
+    type: criterion-of

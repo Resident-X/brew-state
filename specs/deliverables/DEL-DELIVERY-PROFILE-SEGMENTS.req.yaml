@@ -4,11 +4,15 @@ category: task
 title: A brew delivery is commanded as segments that each command pressure or flow, and everything that treated the command as flow alone follows
 status: active
 level: task
-version: 1
+version: 2
 text: |
   A brew delivery is commanded as an ordered list of segments. Each segment commands one of pressure or flow and holds the other as a limit, and states the shape of the transition into it, the condition on which it ends and the water temperature the brew loop holds through it. The choice of primary variable belongs to the segment, not to the machine, so a profile can fill and wet a puck on flow and hold the extraction on pressure.
 
   Everything that treated the command as flow alone follows the segment's primary variable instead: the trim that corrects the pump toward the command, the report of departure from the commanded course, the plant model's flow term and the confirmation that commanded pumping moved water. Quantities the machine only reports, namely the volume delivered, the puck resistance derived from pressure and flow together, and the supply voltage, are neither commanded nor limited by a segment.
+
+  The reason a delivery is commanded as segments is that operators shape how a drink is delivered (JRN-DESIGN-PROFILE-001). A household member presses a preset and gets the usual drink; an operator who wants to shape it states each segment's aims and keeps what they arrive at. A segment's aims are stated as outcomes at the group, never as anything specific to one machine: a pressure or a flow, a limit on the other, and a water temperature. A segment ends on elapsed time, delivered volume, delivered weight where weight is measured, or a pressure or flow threshold. Because a profile states nothing specific to one machine, it can be passed on as a file, and the machine decides whether it can deliver it (DEC-PROFILE-IS-RECIPE-DATA).
+
+  The presets ONE and TWO, and possibly MAN, each hold a complete recipe on the controller, start on one press and stop on a second, and work with nothing else connected; the library of profiles lives with the display unit (DEC-PRESETS-ARE-HELD-ON-THE-CONTROLLER). Upkeep routines that move water, a back-flush and a flush, are profiles of the same kind (DEC-UPKEEP-ROUTINES-THAT-MOVE-WATER-ARE-PROFILES).
 rationale: |
   The owner decided that the choice of pressure or flow belongs to each segment, and the decision recording it supersedes the earlier decision that a profile commands flow and caps pressure mechanically. Work built under the earlier decision is sealed or finished, so nothing in the graph owned bringing it up to the new command surface; this task owns it.
 
@@ -22,6 +26,8 @@ rationale: |
 
 
   Also read in this session and left unchanged. SOL-BREW-RECOVERS-AFTER-DRAW describes a draw as a commanded course of flow through the pump channel, and SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C3 states duty under a drinking target as following the same relation to commanded flow as a brew target. Neither depends on flow being the only commandable variable: a segment that commands flow remains a valid case under the new command surface, so both stand as delivered and are not in the replaced list. DEL-BENCH-FLOW-INSTRUMENTATION and SOL-FLOW-SENSED-CHANNEL concern the flow the machine senses and not the flow it commands, and are unaffected.
+
+  Ordering with the plant-fidelity task. A pressure segment's delivered flow is what the puck produces, and the puck resistance is added by DEL-BREW-PLANT-FIDELITY, which cannot be built before the flow-based work here. So that the two tasks do not wait on each other, the dependency is stated between leaves when this task is sliced: the plant-fidelity task depends on the flow-based leaves, and the leaves that simulate a pressure segment depend on the plant-fidelity task. The earlier task-level dependency of DEL-BREW-PLANT-FIDELITY on this task is removed for that reason.
 links:
   - target: DEL-BREW-STATE-DELIVERY.C1
     type: derives-from
@@ -47,5 +53,47 @@ links:
     type: depends-on
   - target: DEL-SIM-FLOW-TERM
     type: depends-on
+  - target: REQ-DELIVERY-PROFILE-001.C6
+    type: targets
+  - target: REQ-DELIVERY-PROFILE-001.C7
+    type: targets
+  - target: REQ-DELIVERY-PROFILE-001.C8
+    type: targets
+  - target: REQ-DELIVERY-PROFILE-001.C9
+    type: targets
+  - target: REQ-DELIVERY-PROFILE-001.C10
+    type: targets
+  - target: REQ-RECIPE-CUSTODY-001.C8
+    type: targets
+  - target: REQ-RECIPE-CUSTODY-001.C9
+    type: targets
+  - target: REQ-RECIPE-CUSTODY-001.C10
+    type: targets
+  - target: REQ-LIVE-DELIVERY-VIEW-001.C6
+    type: targets
+  - target: REQ-MACHINE-INTERFACE-001.C8
+    type: targets
+  - target: REQ-MAINTENANCE-CYCLES-001.C1
+    type: targets
+  - target: JRN-OPERATE-INTERFACE-001.C6
+    type: targets
+  - target: JRN-DESIGN-PROFILE-001.C1
+    type: targets
+  - target: JRN-DESIGN-PROFILE-001.C3
+    type: targets
+  - target: JRN-DESIGN-PROFILE-001.C4
+    type: targets
+  - target: JRN-DESIGN-PROFILE-001.C5
+    type: targets
+  - target: JRN-DESIGN-PROFILE-001.C6
+    type: targets
+  - target: JRN-DESIGN-PROFILE-001.C7
+    type: targets
+  - target: DEC-PROFILE-IS-RECIPE-DATA
+    type: justified-by
+  - target: DEC-PRESETS-ARE-HELD-ON-THE-CONTROLLER
+    type: justified-by
+  - target: DEC-UPKEEP-ROUTINES-THAT-MOVE-WATER-ARE-PROFILES
+    type: justified-by
   - target: DEL-SIM-FLOW-SENSED
     type: depends-on

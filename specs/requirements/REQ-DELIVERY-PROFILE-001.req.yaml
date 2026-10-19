@@ -4,7 +4,7 @@ category: functional
 title: A delivery follows a commanded course of targets from start to end
 status: active
 priority: must
-version: 1
+version: 2
 text: |
   A delivery is commanded as a course rather than as one value held until something stops it. What the machine aims for early in a delivery and what it aims for late are different problems, and that difference is the lever an operator reaches for when chasing a result.
 
@@ -26,3 +26,11 @@ links:
     type: derives-from
   - target: DEC-SIMULATION-FIDELITY-ASSUMED-UNTIL-MEASURED
     type: justified-by
+  - target: JRN-DESIGN-PROFILE-001.C1
+    type: derives-from
+  - target: JRN-DESIGN-PROFILE-001.C3
+    type: derives-from
+  - target: JRN-DESIGN-PROFILE-001.C4
+    type: derives-from
+  - target: JRN-DESIGN-PROFILE-001.C6
+    type: derives-from

@@ -4,23 +4,28 @@ category: persona-goal
 title: Operator serves consistent drinks on demand, including for guests
 status: active
 priority: must
-version: 2
+version: 3
 text: |
-  The person who makes and serves the coffee. They interact with the machine only through its physical controls, and never touch firmware, calibration routines, or a connected PC. The internals are opaque to them by choice, and the retrofit succeeds only to the extent that it lets them stay that way.
+  The person who makes and serves the coffee. By default they interact with the machine only through its physical controls, and never touch firmware, calibration routines, or a connected PC. The internals are opaque to them by choice, and the retrofit succeeds only to the extent that it lets them stay that way.
 
   They judge the machine on two things: what ends up in the cup, and how the serving session felt. A drink that tastes different from the last one is a fault regardless of what any telemetry says about it. A session in which they were left waiting, or in which the fourth drink was worse than the first, is also a fault, even when every individual drink would have been acceptable on its own.
 
-  There is one bounded exception to that stance. A coffee they have not made before has no recipe yet, and arriving at one means changing the grind or the dose and judging what changed in the cup. For as long as that lasts they want everything the machine can tell them about the drink it has just made, because they are trying to attribute a difference. Once the recipe is settled they stop looking, and the machine is an appliance again.
+  There are two bounded exceptions to that stance. The first: a coffee they have not made before has no recipe yet, and arriving at one means changing the grind or the dose and judging what changed in the cup. For as long as that lasts they want everything the machine can tell them about the drink it has just made, because they are trying to attribute a difference. Once the recipe is settled they stop looking, and the machine is an appliance again.
+
+  The second is that some operators want to decide how a drink is delivered over its course, which segments it has, what each aims for and when each ends, and to keep and pass on what they arrive at. For them the machine offers a richer way in, a display on the machine and a connected device they sign in to. It is entirely optional: the household member who presses a button for the usual drink never meets it, and nothing in ordinary serving depends on it.
 
   Crucially they are often not the only person drinking. Hosting means producing the drink the guest actually wants rather than the one the machine finds easy, and producing several of them close enough together that the first is still hot when the last is poured. A machine that makes one excellent drink for its owner and then needs several minutes to recover has not solved their problem.
 
   This is the same human as the Builder persona wearing a different hat. What differs is the stance: here they are the user of a finished appliance, with no privileged knowledge of it and no appetite for acquiring any.
-rationale: |
+rationale: |-
   Split from the Builder persona even though both are the same human, because the two stances generate genuinely different requirement subtrees and collapsing them muddies every chain beneath. Plant identification, verification tooling and on-device recalibration exist to serve the person who builds and maintains the machine; nothing about them traces sensibly to a goal about drinking coffee. Keeping the stances separate lets each subtree derive from a goal it actually serves.
 
   Hosting is treated as a first-class goal rather than an incidental extra. It is what introduces sequence and concurrency into the problem, and those are the two dimensions that make the control design hard. A machine judged only on a single rested shot would not need predictive control, power arbitration, or feedforward from flow at all.
 
   The throughput criterion is deliberately expressed as a social bound rather than a number. The acceptable wait is a property of the serving situation and not of the hardware, and fixing a figure here would import an implementation-side tunable into a stakeholder goal that has no business carrying one.
+
+
+  The shaping exception is a stance and not a second persona, because what the operator who shapes a delivery is after is the same thing the rest of the persona is after, what ends up in the cup, and the requirements beneath it derive from that goal. It differs from the Builder in what it needs to know: the Builder needs the machine's internals, while the operator who shapes a delivery needs to state the outcome they want and see whether the machine can deliver it.
 links:
   - target: OBL-ELECTRICAL-THERMAL-SAFETY-001
     type: conflicts-with

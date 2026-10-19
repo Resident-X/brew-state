@@ -1,0 +1,12 @@
+id: REQ-DELIVERY-PROFILE-001.C6
+type: criterion
+title: A profile is a sequence of segments, each with its own aims and its own end
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  What suits the start of a delivery rarely suits its end, and a profile without segments cannot say where one set of aims gives way to the next or what brings that about.
+links:
+  - target: REQ-DELIVERY-PROFILE-001
+    type: criterion-of
