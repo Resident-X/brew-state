@@ -10,4 +10,5 @@
   (lib (name "Triac_Thyristor") (type "KiCad") (uri "${KICAD10_SYMBOL_DIR}/Triac_Thyristor.kicad_sym") (options "") (descr ""))
   (lib (name "Transistor_FET") (type "KiCad") (uri "${KICAD10_SYMBOL_DIR}/Transistor_FET.kicad_sym") (options "") (descr ""))
   (lib (name "Regulator_Linear") (type "KiCad") (uri "${KICAD10_SYMBOL_DIR}/Regulator_Linear.kicad_sym") (options "") (descr ""))
-  (lib (name "Power_Supervisor") (type "KiCad") (uri "${KICAD10_SYMBOL_DIR}/Power_Supervisor.kicad_sym") (options "") (descr "")))
+  (lib (name "Power_Supervisor") (type "KiCad") (uri "${KICAD10_SYMBOL_DIR}/Power_Supervisor.kicad_sym") (options "") (descr ""))
+  (lib (name "Mechanical") (type "KiCad") (uri "${KICAD10_SYMBOL_DIR}/Mechanical.kicad_sym") (options "") (descr "")))

@@ -131,4 +131,16 @@ entries:
     library_class: basic
     stock: 1030
     unit_price: 0.01
+  - lcsc: C9000032
+    library_class: basic
+    stock: 1031
+    unit_price: 0.01
+  - lcsc: C9000033
+    library_class: basic
+    stock: 1032
+    unit_price: 0.01
+  - lcsc: C9000034
+    library_class: basic
+    stock: 1033
+    unit_price: 0.01
 synthetic: true

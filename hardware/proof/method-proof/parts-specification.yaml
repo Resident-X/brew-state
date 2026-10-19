@@ -96,3 +96,15 @@ positions:
     value: "MountingHole"
     package: "MountingHole_2.2mm_M2"
     lcsc: "C9100013"
+  - reference: FID1
+    value: "Fiducial"
+    package: "Fiducial_1mm_Mask2mm"
+    lcsc: "C9100016"
+  - reference: FID2
+    value: "Fiducial"
+    package: "Fiducial_1mm_Mask2mm"
+    lcsc: "C9100016"
+  - reference: FID3
+    value: "Fiducial"
+    package: "Fiducial_1mm_Mask2mm"
+    lcsc: "C9100016"

@@ -271,3 +271,27 @@ positions:
     package: "SOT-23-5"
     rating: "6V"
     lcsc: "C9200020"
+  - reference: FID1
+    value: "Fiducial"
+    package: "Fiducial_1mm_Mask2mm"
+    lcsc: "C9200038"
+  - reference: FID2
+    value: "Fiducial"
+    package: "Fiducial_1mm_Mask2mm"
+    lcsc: "C9200038"
+  - reference: FID3
+    value: "Fiducial"
+    package: "Fiducial_1mm_Mask2mm"
+    lcsc: "C9200038"
+  - reference: FID4
+    value: "Fiducial"
+    package: "Fiducial_1mm_Mask2mm"
+    lcsc: "C9200038"
+  - reference: FID5
+    value: "Fiducial"
+    package: "Fiducial_1mm_Mask2mm"
+    lcsc: "C9200038"
+  - reference: FID6
+    value: "Fiducial"
+    package: "Fiducial_1mm_Mask2mm"
+    lcsc: "C9200038"

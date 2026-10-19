@@ -20,8 +20,8 @@
 	(condition "A.Type == 'Pad' && A.Pad_Type == 'Through-hole' && B.Type == 'Pad' && B.Pad_Type == 'Through-hole'")
 	(constraint hole_to_hole (min 1.45mm)))
 (rule "Low voltage region parts"
-	(condition "A.Type == 'Footprint' && A.intersectsArea('low voltage') && A.Reference != 'J1' && A.Reference != 'JP1' && A.Reference != 'TP1' && A.Reference != 'U1' && A.Reference != 'C1' && A.Reference != 'C2' && A.Reference != 'JP2' && A.Reference != 'TP2' && A.Reference != 'J2' && A.Reference != 'C5' && A.Reference != 'C4' && A.Reference != 'H1'")
+	(condition "A.Type == 'Footprint' && A.intersectsArea('low voltage') && A.Reference != 'J1' && A.Reference != 'JP1' && A.Reference != 'TP1' && A.Reference != 'U1' && A.Reference != 'C1' && A.Reference != 'C2' && A.Reference != 'JP2' && A.Reference != 'TP2' && A.Reference != 'J2' && A.Reference != 'C5' && A.Reference != 'C4' && A.Reference != 'H1' && A.Reference != 'FID1'")
 	(constraint disallow footprint))
 (rule "Digital region parts"
-	(condition "A.Type == 'Footprint' && A.intersectsArea('digital') && A.Reference != 'U2' && A.Reference != 'C3' && A.Reference != 'TP3' && A.Reference != 'R1' && A.Reference != 'D1' && A.Reference != 'TP4' && A.Reference != 'J3' && A.Reference != 'H2' && A.Reference != 'H3'")
+	(condition "A.Type == 'Footprint' && A.intersectsArea('digital') && A.Reference != 'U2' && A.Reference != 'C3' && A.Reference != 'TP3' && A.Reference != 'R1' && A.Reference != 'D1' && A.Reference != 'TP4' && A.Reference != 'J3' && A.Reference != 'H2' && A.Reference != 'H3' && A.Reference != 'FID2' && A.Reference != 'FID3'")
 	(constraint disallow footprint))
