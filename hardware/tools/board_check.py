@@ -1098,20 +1098,26 @@ def drilled(pad: list) -> bool:
 
 
 def hole_footprints(tree: list) -> List[str]:
-    """The references of the footprints that are fixings: at least one pad, each a drilled hole, and either every pad non-plated or the part left out of the bill of materials.
+    """The references of the footprints that are fixings: at least one pad, each a drilled hole, and any of four marks.
 
-    A footprint with a pad that is not drilled, a surface-mount pad, is a part;
-    so is one of plated drilled pads that is in the bill of materials, a
-    connector or a resistor. A plated-pad fixing is one KiCad's footprint
-    attribute exclude_from_bom marks, as its stock mounting-hole footprints
-    carry. A non-plated hole in any other footprint is held by the hole rules.
+    A footprint with a pad that is not drilled, a surface-mount pad, is a part.
+    One of drilled pads is a fixing when every pad is non-plated, or it is left
+    out of the bill of materials (KiCad's footprint attribute exclude_from_bom,
+    which its stock mounting-hole footprints carry), or its library item name
+    begins with MountingHole, or it has exactly one pad. The last two keep a
+    forgotten bill-of-materials flag on a custom plated mounting pad from
+    skipping the extent checks; they also take in a one-pin through-hole part,
+    which is held to the larger distance on purpose. A non-plated hole in any
+    other footprint is held by the hole rules.
     """
     found = []
     for reference, footprint in board_footprints(tree).items():
         pads = sexpr.children(footprint, "pad")
         if not pads or not all(drilled(pad) for pad in pads):
             continue
-        if all(str(pad[2]) == "np_thru_hole" for pad in pads) or "exclude_from_bom" in (sexpr.child(footprint, "attr") or []):
+        name = str(footprint[1]).split(":")[-1] if len(footprint) > 1 else ""
+        if (all(str(pad[2]) == "np_thru_hole" for pad in pads) or "exclude_from_bom" in (sexpr.child(footprint, "attr") or [])
+                or name.startswith("MountingHole") or len(pads) == 1):
             found.append(reference)
     return sorted(found)
 

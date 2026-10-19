@@ -1003,28 +1003,51 @@ class AMountingHoleIsFoundAndHeldToTheLargerSignedFigure(unittest.TestCase):
         # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: A mounting hole is a footprint whose pads are all drilled holes and which is all non-plated or left out of the bill of materials
         self.assertEqual(board_check.hole_footprints(self.tree), ["H'3", "H1"])
 
-    def test_plated_drilled_pads_make_a_hole_only_when_the_footprint_is_left_out_of_the_bom(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: a footprint whose pads are all drilled holes which is all non-plated or carries exclude_from_bom
-        def holes(*pads, attr=""):
+    def test_plated_drilled_pads_make_a_hole_by_any_one_of_four_marks_and_by_no_other(self):
+        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: a footprint whose pads are all drilled holes which is all non-plated, carries exclude_from_bom, has a library item name beginning MountingHole or has exactly one pad
+        def holes(*pads, attr="", name="a:F"):
             body = "".join(f"(pad {text})" for text in pads)
             return board_check.hole_footprints(sexpr.parse_one(
-                f'(kicad_pcb (version 1) (footprint "a:F" (layer "F.Cu") (at 0 0) (property "Reference" "X1" (at 0 0 0)) {attr} {body}))'))
+                f'(kicad_pcb (version 1) (footprint "{name}" (layer "F.Cu") (at 0 0) (property "Reference" "X1" (at 0 0 0)) {attr} {body}))'))
         plated = '"1" thru_hole circle (at 0 0) (size 4 4) (drill 3.2) (layers "*.Cu")'
         second = '"2" thru_hole circle (at 3 0) (size 4 4) (drill 3.2) (layers "*.Cu")'
+        third = '"3" thru_hole circle (at 6 0) (size 4 4) (drill 3.2) (layers "*.Cu")'
         unplated = '"" np_thru_hole circle (at 0 0) (size 3.2 3.2) (drill 3.2) (layers "*.Cu")'
         surface = '"2" smd rect (at 0 5) (size 1 1) (layers "F.Cu")'
         left_out = "(attr exclude_from_pos_files exclude_from_bom)"
-        self.assertEqual(holes(plated, attr=left_out), ["X1"])
-        self.assertEqual(holes(plated, second, attr="(attr through_hole)"), [], "a two-pin connector in the bom")
-        self.assertEqual(holes(plated), [])
-        self.assertEqual(holes(unplated), ["X1"])
-        self.assertEqual(holes(unplated, attr="(attr through_hole)"), ["X1"])
+        header = "Connector_PinHeader:PinHeader_1x02"
+        stock = "MountingHole:MountingHole_3.2mm_M3_Pad"
+        # each mark alone
+        self.assertEqual(holes(unplated, second, name=header), [], "a non-plated pad beside a plated one is no mark")
+        self.assertEqual(holes(unplated, unplated.replace('""', '"1"'), name=header), ["X1"], "every pad non-plated")
+        self.assertEqual(holes(plated, second, attr=left_out, name=header), ["X1"], "left out of the bom")
+        self.assertEqual(holes(plated, second, third, name=stock), ["X1"], "named for a mounting hole")
+        self.assertEqual(holes(plated, name=header), ["X1"], "one pad")
+        # none of them
+        self.assertEqual(holes(plated, second, name=header), [], "a two-pin header with no flag")
+        self.assertEqual(holes(plated, second, attr="(attr through_hole)", name=header), [], "a two-pin connector in the bom")
+        self.assertEqual(holes(plated, second), [])
+        self.assertEqual(holes(plated, second, name="Hole_MountingHole"), [], "the name must begin with MountingHole")
+        self.assertEqual(holes(plated, second, name="mountinghole:x"), [], "the name is case sensitive")
+        # the name with and without a library prefix
+        self.assertEqual(holes(plated, second, name="MountingHole_3.2mm"), ["X1"], "no library prefix")
+        self.assertEqual(holes(plated, second, name="MountingHole"), ["X1"], "no library prefix, bare name")
+        self.assertEqual(holes(plated, second, name="Lib:MountingHoleCustom"), ["X1"], "the item name only needs to begin with the word")
+        self.assertEqual(holes(plated, second, name="MountingHole:PinHeader_1x02"), [], "the library name is not the item name")
+        self.assertEqual(holes(plated, second, name="MountingHole_Lib:PinHeader_1x02"), [], "the library name is not the item name")
+        # mixed and degenerate cases
         self.assertEqual(holes(plated, unplated, attr=left_out), ["X1"])
         self.assertEqual(holes(plated, unplated), [])
+        # a surface-mount pad anywhere means never a hole, whatever the marks
         self.assertEqual(holes(unplated, surface, attr=left_out), [])
         self.assertEqual(holes(surface, attr=left_out), [])
-        self.assertEqual(holes(attr=left_out), [])
+        self.assertEqual(holes(surface, name=stock), [])
+        self.assertEqual(holes(plated, surface, name=stock, attr=left_out), [])
+        self.assertEqual(holes(plated, second, surface, name=stock), [])
+        # no pads, or a pad with no drill, never
+        self.assertEqual(holes(attr=left_out, name=stock), [])
         self.assertEqual(holes('"1" thru_hole circle (at 0 0) (size 4 4) (layers "*.Cu")', attr=left_out), [])
+        self.assertEqual(holes('"1" thru_hole circle (at 0 0) (size 4 4) (layers "*.Cu")', name=stock), [])
 
     def test_the_rules_hold_the_larger_of_the_two_signed_figures_to_the_hole_edge_and_the_pad(self):
         # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: rules holding the hole clearance to the Mains class at no less than the larger of the signed clearance and the signed creepage

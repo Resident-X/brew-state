@@ -1222,6 +1222,15 @@ class FloorAndHolesRunDirectly(Copy):
         found = [v for v in self.holes(lines) if v[2] == "mounting_hole"]
         self.assertTrue(any("H9 courtyard" in v[3] for v in found), lines)
 
+    def test_a_footprint_of_one_plated_pad_with_no_bom_flag_is_a_fixing_whose_courtyard_is_measured(self):
+        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: a footprint whose pads are all drilled holes and which has exactly one pad is a mounting hole, so a forgotten exclude_from_bom does not skip the extent checks
+        self.seed.layout(lambda tree: (tree.insert(len(tree) - 1, board_prove.seeded_hole(
+            "H9", board_prove.FIXING_X, 10, board_prove.FIXING_UUID, plated_net="/LV_A", courtyard=10)),
+            tree.insert(len(tree) - 1, board_prove.segment("/MAINS_N", 27, 4, 27, 16, "0b0e5c1a-0000-4000-8000-000000000c10"))))
+        status, lines = self.check()
+        found = [v for v in self.holes(lines) if v[2] == "mounting_hole"]
+        self.assertTrue(any("H9 courtyard" in v[3] for v in found), lines)
+
     def test_a_pad_larger_than_its_hole_is_held_at_its_edge_in_a_hole_footprint_and_in_a_part(self):
         # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: the check fails a hole, its plating or fixing inside that distance of a Mains net
         for surface_pad, who in ((False, "the pad copper of a hole footprint"), (True, "KiCad's physical clearance of a part")):
