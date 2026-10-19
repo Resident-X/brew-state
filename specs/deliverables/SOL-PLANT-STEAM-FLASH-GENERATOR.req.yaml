@@ -41,6 +41,8 @@ links:
     type: derives-from
   - target: DEC-PLANT-PARAMETER-RELATIONS-ARE-REFUSED-AT-LOAD
     type: justified-by
+  - target: DEC-MARGIN-COMBINES-DECLARED-ERROR-BY-WORST-CASE
+    type: justified-by
 brief_confirmation:
   confirmer: claude-sonnet-5-5
   fingerprint: 78192e7d2bbfc8d8dd32c314dbbb6ccb3afb3a7c77591dee73383d61823173e9
