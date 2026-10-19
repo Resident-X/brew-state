@@ -1,0 +1,12 @@
+id: SOL-SIM-STEAM-FEED-HOLDS-PRESSURE-HEATER-HOLDS-DRYNESS.C5
+type: criterion
+title: Feed is bounded by a declared ceiling and a declared rise limit, both re-derived from the orifice law, and quantity yields before quality
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  The steam control law bounds the feed command it gives the pressure loop by a declared ceiling and limits how fast it rises, both declared data with origins and derived from the orifice law and the band's top, so a draw is never fed beyond what keeps delivered character in band. When the ceiling binds the loop gives up pressure before it gives up quantity. A test in host simulation closing the loop through the truth plant raises demand across several values and shows the feed never exceeds the ceiling, never rises faster than the limit, and the ceiling is read as data, not compiled in. Out of scope: the feed-withhold-below-ready behaviour and predictive readiness.
+links:
+  - target: SOL-SIM-STEAM-FEED-HOLDS-PRESSURE-HEATER-HOLDS-DRYNESS
+    type: criterion-of

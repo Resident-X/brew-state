@@ -1,0 +1,49 @@
+id: SOL-PLANT-STEAM-FLASH-GENERATOR-DESCRIBED
+type: deliverable
+category: solution
+title: The plant description states the flash-generator relations and their limits, and the analysis records are regenerated against them
+status: active
+version: 1
+text: |
+  Rewrite the thermoblock description's relations, declared error and omissions for the orifice law, held liquid inventory, saturation relation, casting ceiling and modelled outlet superheat, stating what the ceiling bounds and that containment is not claimed; regenerate the margin, dominance, stability and identifiability records against the final steam model.
+
+  Retires, at close-out, by deprecating SOL-PLANT-STEAM-DRAW-DESCRIBED.C1 (the pressure state's divergence-and-reversion behaviour in the description) and .C3 (the omissions list line for line), restated by C1 and C2 of this solution; its C2 stands.
+links:
+  - target: DEL-STEAM-PATH-FLASH-GENERATOR.C6
+    type: derives-from
+  - target: DEL-STEAM-PATH-FLASH-GENERATOR.C7
+    type: derives-from
+  - target: REQ-PLANT-DESCRIPTION-001.C1
+    type: targets
+  - target: DEC-STEAM-BLOCK-IS-A-FLASH-GENERATOR
+    type: justified-by
+  - target: DEC-STEAM-PRESSURE-UNDER-DRAW-IS-AN-ORIFICE-LAW
+    type: justified-by
+  - target: DEC-STEAM-DRYNESS-IS-A-MODELLED-OUTLET-SUPERHEAT
+    type: justified-by
+  - target: SOL-PLANT-STEAM-FLASH-GENERATOR
+    type: depends-on
+  - target: SOL-SIM-STEAM-FEED-HOLDS-PRESSURE-HEATER-HOLDS-DRYNESS
+    type: depends-on
+design_question_answers:
+  - answered_by: SOL-PLANT-STEAM-FLASH-GENERATOR-DESCRIBED.C3
+    class: whole-set
+  - answered_by: SOL-PLANT-STEAM-FLASH-GENERATOR-DESCRIBED.C2
+    class: served-statement
+  - answered_by: SOL-PLANT-STEAM-FLASH-GENERATOR-DESCRIBED.C3
+    class: existing-capability
+  - answered_by: SOL-PLANT-STEAM-FLASH-GENERATOR-DESCRIBED.C1
+    class: consumer-intent
+  - answered_by: SOL-PLANT-STEAM-FLASH-GENERATOR-DESCRIBED.C1
+    class: consumer-self-sufficiency
+interfaces:
+  - record generation tools
+  - emulation staleness test for pinned records
+locus:
+  - marking: existing
+    ref: thermoblock plant description narrative (params)
+  - marking: existing
+    ref: analysis records under docs/
+plan_provenance:
+  approved_plan_id: PLAN-DEL-STEAM-PATH-FLASH-GENERATOR-FLASH-1
+  target: DEL-STEAM-PATH-FLASH-GENERATOR

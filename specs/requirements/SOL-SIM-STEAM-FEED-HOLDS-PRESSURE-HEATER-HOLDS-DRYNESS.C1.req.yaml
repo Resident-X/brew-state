@@ -1,0 +1,12 @@
+id: SOL-SIM-STEAM-FEED-HOLDS-PRESSURE-HEATER-HOLDS-DRYNESS.C1
+type: criterion
+title: The plant reports superheat at its modelled outlet above saturation at the measured pressure
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The thermoblock structure reports, as a quantity every structure answers, the superheat of steam at its modelled outlet: the modelled outlet steam temperature minus saturation at the measured steam pressure, through the same saturation relation the trapped case uses. Dryness is the balance of heater power, the sensible heat of the water fed and the latent heat carried out, and superheat appears only once quality passes one; a test showing superheat stays at zero while heater power is below what the feed and latent heat need, and rises above zero once it exceeds it, would fail on a mutation of any term. A structure with no flash-generator steam side, the boiler included, answers the quantity as not observed rather than as a value, and a test builds each selectable structure and reads it. Out of scope: an outlet or tip temperature sensor, which no node plans and which this work does not add.
+links:
+  - target: SOL-SIM-STEAM-FEED-HOLDS-PRESSURE-HEATER-HOLDS-DRYNESS
+    type: criterion-of
