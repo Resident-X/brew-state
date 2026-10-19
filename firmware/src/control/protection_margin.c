@@ -442,6 +442,26 @@ bool protection_margin_established(const plant_parameters_t *believed,
         return false;
     }
 
+    /*
+     * An error that is not a finite figure of nothing or more is no declaration
+     * a corner can be drawn from: the enumeration would read it as an exact
+     * coefficient and leave its corners out, so it is refused here, naming the
+     * entry, rather than quietly narrowing the margin.
+     */
+    for (size_t at = 0u; at < budget->count && at < PLANT_PARAMETER_LIMIT; at++) {
+        const char *name = NULL;
+
+        if (!budget->declared[at] ||
+            (is_a_number(budget->assumed_error[at]) && budget->assumed_error[at] >= 0.0f)) {
+            continue;
+        }
+        refusal->fault = PLANT_PARAMETER_ASSUMED_ERROR;
+        if (plant_parameter_name(at, &name)) {
+            (void)strncpy(refusal->parameter, name, sizeof(refusal->parameter) - 1u);
+        }
+        return false;
+    }
+
     if (estimate_parameter != NULL) {
         float unused_k = 0.0f;
 

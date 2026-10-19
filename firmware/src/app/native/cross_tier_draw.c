@@ -47,6 +47,7 @@
 
 #include "control.h"
 #include "casting_ceiling_report.h"
+#include "host_report.h"
 #include "hw_sim.h"
 #include "plant_model.h"
 
@@ -398,10 +399,7 @@ int cross_tier_draw_run(const plant_parameters_t *machine_parameters,
         if (!control_description_established(control_parameters, control_budget, tolerance,
                                              &refusal) &&
             refusal.fault != PLANT_PARAMETER_OK) {
-            (void)fprintf(stderr,
-                          "cross-tier draw: the control path could not be brought up: "
-                          "parameter %s is refused (fault %d)\n",
-                          refusal.parameter, (int)refusal.fault);
+            host_report_refusal(stderr, "cross-tier draw", "the control path could not be brought up", &refusal);
         } else {
             (void)fprintf(stderr, "cross-tier draw: the control path could not be brought up\n");
         }

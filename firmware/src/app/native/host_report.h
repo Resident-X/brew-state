@@ -27,6 +27,8 @@
 #include <stddef.h>
 #include <stdio.h>
 
+#include "plant_types.h"
+
 typedef enum {
     HOST_REPORT_NUMBER,
     HOST_REPORT_INTEGER,
@@ -58,5 +60,15 @@ host_report_field_t host_report_text(const char *key, const char *value);
  */
 bool host_report_emit(FILE *out, const char *what, const host_report_field_t *fields,
                       size_t count);
+
+/*
+ * Write to `out` the line a host run owes its builder when a law refuses the
+ * description it was handed: `run` and `what` as the prefix, then the parameter
+ * and fault when the refusal names one. A refusal that names none -- declared
+ * corners that each build and cannot all be run together -- is stated as that,
+ * and not as a parameter with an empty name.
+ */
+void host_report_refusal(FILE *out, const char *run, const char *what,
+                         const plant_parameter_error_t *refusal);
 
 #endif /* HOST_REPORT_H */

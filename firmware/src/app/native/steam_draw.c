@@ -36,6 +36,7 @@
 
 #include "casting_ceiling_report.h"
 #include "dryness_report.h"
+#include "host_report.h"
 #include "hw_sim.h"
 #include "plant_model.h"
 #include "steam_control.h"
@@ -339,10 +340,7 @@ int steam_draw_run(const plant_parameters_t *parameters,
 
         if (!steam_control_description_established(declaration, parameters, budget, &refusal) &&
             refusal.fault != PLANT_PARAMETER_OK) {
-            (void)fprintf(stderr,
-                          "steam draw: the steam control path could not be brought up: "
-                          "parameter %s is refused (fault %d)\n",
-                          refusal.parameter, (int)refusal.fault);
+            host_report_refusal(stderr, "steam draw", "the steam control path could not be brought up", &refusal);
         } else {
             (void)fprintf(stderr, "steam draw: the steam control path could not be brought up\n");
         }

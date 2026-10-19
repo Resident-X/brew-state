@@ -1115,6 +1115,48 @@ static void test_a_host_run_whose_law_refuses_the_budget_names_the_parameter(voi
     TEST_ASSERT_EQUAL_INT(0, steam_draw_of(&parameters, 10u, 1000u));
 }
 
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C2: The steam law's initialisation, and the
+/// brew law's for the corners the relations make unbuildable, likewise refuse a
+/// believed description or error budget from which the model cannot be built at
+/// every declared corner, and the host runs state the refusal.
+///
+/// A refusal naming a parameter is stated with it. One that names none -- every
+/// declared corner builds and they cannot all be run together -- is stated as
+/// that, and never as a parameter with an empty name.
+static void test_a_refusal_naming_no_parameter_is_not_stated_as_one(void)
+{
+    char output[TEXT_MAX];
+    plant_parameter_error_t named;
+    plant_parameter_error_t unnamed;
+    FILE *stream = tmpfile();
+
+    TEST_ASSERT_NOT_NULL(stream);
+    memset(&named, 0, sizeof(named));
+    memset(&unnamed, 0, sizeof(unnamed));
+    named.fault = PLANT_PARAMETER_OUT_OF_RANGE;
+    (void)strcpy(named.parameter, "steam.outlet_drop_k_s_per_ml");
+    unnamed.fault = PLANT_PARAMETER_INCONSISTENT;
+
+    host_report_refusal(stream, "steam draw", "the steam control path could not be brought up", &named);
+    drain(stream, output, sizeof(output));
+    TEST_ASSERT_NOT_NULL_MESSAGE(strstr(output, "parameter steam.outlet_drop_k_s_per_ml is refused"), output);
+    (void)fclose(stream);
+
+    stream = tmpfile();
+    TEST_ASSERT_NOT_NULL(stream);
+    host_report_refusal(stream, "cross-tier draw", "the control path could not be brought up", &unnamed);
+    drain(stream, output, sizeof(output));
+    (void)fclose(stream);
+    TEST_ASSERT_NULL_MESSAGE(strstr(output, "parameter  is refused"), output);
+    TEST_ASSERT_NULL_MESSAGE(strstr(output, " is refused"), output);
+    TEST_ASSERT_NOT_NULL_MESSAGE(strstr(output, "cross-tier draw: the control path could not be brought up"), output);
+    TEST_ASSERT_NOT_NULL_MESSAGE(strstr(output, "the declared corners cannot all be run together"), output);
+
+    host_report_refusal(NULL, "x", "y", &unnamed);
+    host_report_refusal(stdout, NULL, "y", &unnamed);
+    host_report_refusal(stdout, "x", "y", NULL);
+}
+
 static void assert_nothing_written_dryness(const dryness_finding_t *finding)
 {
     char output[TEXT_MAX];
@@ -1267,6 +1309,7 @@ int main(void)
     RUN_TEST(test_the_cross_tier_draw_run_states_the_bound_in_both_forms);
     RUN_TEST(test_a_cross_tier_draw_run_whose_bound_cannot_be_stated_reports_the_refusal);
     RUN_TEST(test_a_host_run_whose_law_refuses_the_budget_names_the_parameter);
+    RUN_TEST(test_a_refusal_naming_no_parameter_is_not_stated_as_one);
     RUN_TEST(test_a_dry_steam_claim_names_its_superheat_and_pressure_and_carries_the_caveat);
     RUN_TEST(test_no_dryness_is_claimed_at_zero_superheat_or_with_no_steam);
     RUN_TEST(test_the_dryness_statement_reads_without_the_source);

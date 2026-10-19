@@ -138,3 +138,20 @@ bool host_report_emit(FILE *out, const char *what, const host_report_field_t *fi
     (void)fprintf(out, "}\n");
     return true;
 }
+
+void host_report_refusal(FILE *out, const char *run, const char *what,
+                         const plant_parameter_error_t *refusal)
+{
+    if (out == NULL || run == NULL || what == NULL || refusal == NULL) {
+        return;
+    }
+    if (refusal->parameter[0] == '\0') {
+        (void)fprintf(out,
+                      "%s: %s: the declared corners cannot all be run together, and no single "
+                      "parameter is at fault (fault %d)\n",
+                      run, what, (int)refusal->fault);
+        return;
+    }
+    (void)fprintf(out, "%s: %s: parameter %s is refused (fault %d)\n", run, what,
+                  refusal->parameter, (int)refusal->fault);
+}

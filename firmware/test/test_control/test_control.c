@@ -8633,6 +8633,56 @@ static void test_a_believed_record_no_model_can_be_built_from_is_refused_by_the_
     TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance, &pump_trim));
 }
 
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C2: The brew law's initialisation likewise
+/// refuses a believed description or error budget from which the model cannot be
+/// built at every declared corner, so that the protection margin is established
+/// over all of them.
+///
+/// A budget built by hand can declare an error that is not a figure: not a
+/// number, infinite, or below nothing. Read as an exact coefficient it would
+/// leave that coefficient's corners out of the margin, so each is refused with
+/// both outputs off, as its own fault naming the entry. Declared exactly nothing
+/// it is a claim and is taken on, and so is the shipped budget.
+static void test_a_declared_error_that_is_not_a_figure_of_nothing_or_more_is_refused_by_the_brew_law(void)
+{
+    const float hostile[] = {NAN, INFINITY, -INFINITY, -0.01f};
+    plant_parameter_error_t refusal;
+    plant_parameter_budget_t exact = budget;
+    size_t at = 0u;
+    const char *name = NULL;
+
+    TEST_ASSERT_TRUE(plant_parameter_position("brew.loss_w_per_k", &at));
+    TEST_ASSERT_TRUE(plant_parameter_name(at, &name));
+
+    for (size_t which = 0u; which < sizeof(hostile) / sizeof(hostile[0]); which++) {
+        plant_parameter_budget_t hand_built = budget;
+
+        hand_built.declared[at] = true;
+        hand_built.assumed_error[at] = hostile[which];
+        hw_sim_reset();
+        hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
+        TEST_ASSERT_FALSE_MESSAGE(
+            control_init(&state, &parameters, &hand_built, &limits, &tolerance, &pump_trim),
+            "the law was brought up on a declared error that is not a figure");
+        TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
+        TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_PUMP));
+        TEST_ASSERT_EQUAL(CONTROL_STEP_FAULT_LATCHED, control_step(&state));
+        TEST_ASSERT_FALSE(control_description_established(&parameters, &hand_built, &tolerance, &refusal));
+        TEST_ASSERT_EQUAL(PLANT_PARAMETER_ASSUMED_ERROR, refusal.fault);
+        TEST_ASSERT_EQUAL_STRING(name, refusal.parameter);
+    }
+
+    exact.assumed_error[at] = 0.0f;
+    hw_sim_reset();
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
+    TEST_ASSERT_TRUE_MESSAGE(control_init(&state, &parameters, &exact, &limits, &tolerance, &pump_trim),
+                             "a coefficient declared exact was refused");
+    hw_sim_reset();
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
+    TEST_ASSERT_TRUE_MESSAGE(control_init(&state, &parameters, &budget, &limits, &tolerance, &pump_trim),
+                             "the shipped budget was refused");
+}
+
 /// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR.C1: the declared sensing
 /// error is added on top of the model-error margin rather than weighed against
 /// it, per DEC-SENSING-ERROR-ADDS-TO-COMMANDED-MARGIN -- so the combined margin
@@ -9621,6 +9671,7 @@ int main(void)
     RUN_TEST(test_a_probe_the_structure_cannot_answer_runs_no_corner);
     RUN_TEST(test_a_corner_whose_machine_cannot_be_built_is_reported_as_not_run);
     RUN_TEST(test_a_believed_record_no_model_can_be_built_from_is_refused_by_the_brew_law);
+    RUN_TEST(test_a_declared_error_that_is_not_a_figure_of_nothing_or_more_is_refused_by_the_brew_law);
     RUN_TEST(test_the_declared_sensing_error_adds_to_the_model_error_margin_exactly);
     RUN_TEST(test_a_sensing_error_that_is_not_a_positive_number_contributes_nothing);
     RUN_TEST(test_the_public_margin_reader_carries_the_declared_sensing_error);

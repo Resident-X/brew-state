@@ -3079,6 +3079,55 @@ static void test_the_refusal_of_a_corner_no_machine_can_be_built_for_names_the_p
     TEST_ASSERT_FALSE(steam_control_description_established(NULL, &parameters, &budget, &refusal));
 }
 
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C2: The steam law's initialisation likewise
+/// refuses a believed description or error budget from which the model cannot be
+/// built at every declared corner, so that the protection margin is established
+/// over all of them.
+///
+/// A budget built by hand can declare an error that is not a figure: not a
+/// number, infinite, or below nothing. Read as an exact coefficient it would
+/// leave that coefficient's corners out of the margin and the estimate on its
+/// nominal figure, so each is refused with the outputs off, as its own fault
+/// naming the entry. Declared exactly nothing it is a claim and is taken on, and
+/// so is the shipped budget.
+static void test_a_declared_error_that_is_not_a_figure_of_nothing_or_more_is_refused(void)
+{
+    const float hostile[] = {NAN, INFINITY, -INFINITY, -0.01f};
+    steam_control_state_t state;
+    plant_parameter_error_t refusal;
+    plant_parameter_budget_t exact = budget;
+    size_t at = 0u;
+    const char *name = NULL;
+
+    TEST_ASSERT_TRUE(plant_parameter_position("steam.outlet_drop_k_s_per_ml", &at));
+    TEST_ASSERT_TRUE(plant_parameter_name(at, &name));
+
+    for (size_t which = 0u; which < sizeof(hostile) / sizeof(hostile[0]); which++) {
+        plant_parameter_budget_t hand_built = budget;
+
+        hand_built.declared[at] = true;
+        hand_built.assumed_error[at] = hostile[which];
+        hw_sim_reset();
+        TEST_ASSERT_FALSE_MESSAGE(
+            steam_control_init(&state, &limits, &declaration, &parameters, &hand_built),
+            "the law was brought up on a declared error that is not a figure");
+        TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_HEATER));
+        TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP));
+        TEST_ASSERT_FALSE(
+            steam_control_description_established(&declaration, &parameters, &hand_built, &refusal));
+        TEST_ASSERT_EQUAL(PLANT_PARAMETER_ASSUMED_ERROR, refusal.fault);
+        TEST_ASSERT_EQUAL_STRING(name, refusal.parameter);
+    }
+
+    exact.assumed_error[at] = 0.0f;
+    hw_sim_reset();
+    TEST_ASSERT_TRUE_MESSAGE(steam_control_init(&state, &limits, &declaration, &parameters, &exact),
+                             "a coefficient declared exact was refused");
+    hw_sim_reset();
+    TEST_ASSERT_TRUE_MESSAGE(steam_control_init(&state, &limits, &declaration, &parameters, &budget),
+                             "the shipped budget was refused");
+}
+
 /// SOL-PLANT-STEAM-FLASH-GENERATOR.C12: The gate judges the trusted pressure of
 /// the shut block at the moment the wand opens and holds that verdict until the
 /// wand shuts: a wand opened at or above the declared ready pressure is fed from
@@ -3756,6 +3805,7 @@ int main(void)
     RUN_TEST(test_every_edit_past_the_loader_that_leaves_no_model_is_refused_by_the_law);
     RUN_TEST(test_a_margin_with_a_declared_corner_left_out_or_none_at_all_refuses_the_target);
     RUN_TEST(test_a_budget_leaving_the_casting_to_outlet_error_undeclared_is_refused);
+    RUN_TEST(test_a_declared_error_that_is_not_a_figure_of_nothing_or_more_is_refused);
     RUN_TEST(test_the_opening_step_is_gated_on_the_last_trusted_pressure_when_the_reading_is_invalid);
     RUN_TEST(test_the_refusal_of_a_corner_no_machine_can_be_built_for_names_the_parameter);
     RUN_TEST(test_pressure_and_superheat_hold_for_draws_of_every_duration);
