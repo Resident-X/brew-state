@@ -24,8 +24,8 @@ links:
   - target: DEC-MACHINE-RECORD-FOLDER-PER-MACHINE
     type: justified-by
 brief_confirmation:
-  confirmer: claude-opus-5-5 (independent brief reviewer)
-  fingerprint: dcba555fe64d7dcad2b4caca2a1c6eb5f2afe0a1b3732310da763b036bf946ce
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: 56226375da9f4e7a6df4066f47eade092883ea8b8d999547a9861060bec0b740
   gating_profile: ""
 design_question_answers:
   - answered_by: SOL-HW-MACHINE-AS-FOUND-FIT-RECORD.C3
