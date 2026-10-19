@@ -1,0 +1,59 @@
+id: SOL-SIM-STEAM-FEED-HOLDS-PRESSURE-HEATER-HOLDS-DRYNESS
+type: deliverable
+category: solution
+title: The steam loop holds pressure with the feed and dryness with the heater, against a modelled outlet superheat
+status: active
+version: 1
+text: |
+  Re-allocate the steam control law so the feed pump holds pressure and quantity and heater power holds a declared superheat setpoint at the plant's modelled outlet, computed from the measured pressure; every dryness claim names that superheat and pressure and carries the carry-over caveat in text and JSON; the declaration's ready and band figures are re-derived from the new relations.
+
+  Retires, at close-out, the clauses of SOL-SIM-STEAM-BAND-SUSTAINED that state the heater-driven pressure law: C1 (temperature while idle, pressure while a draw is active), C7 (recovery as the same ready-holding control continuing) and C8 (heater leads and feed lags on demand starting). Its other criteria still stand, so the successor carries each surviving criterion forward when that solution is superseded, and the readiness pass at build time settles which survive after reading each in full.
+links:
+  - target: DEL-STEAM-PATH-FLASH-GENERATOR.C3
+    type: derives-from
+  - target: DEL-STEAM-PATH-FLASH-GENERATOR.C4
+    type: derives-from
+  - target: REQ-STEAM-DELIVERY-001.C1
+    type: targets
+  - target: REQ-MEASUREMENT-001.C8
+    type: targets
+  - target: DEC-STEAM-BLOCK-IS-A-FLASH-GENERATOR
+    type: justified-by
+  - target: DEC-STEAM-DRYNESS-IS-A-MODELLED-OUTLET-SUPERHEAT
+    type: justified-by
+  - target: DEC-STEAM-PRESSURE-UNDER-DRAW-IS-AN-ORIFICE-LAW
+    type: justified-by
+  - target: DEC-STEAM-PRESSURE-SENSOR-ADDED
+    type: justified-by
+  - target: DEC-SIM-VERIFICATION-TOOLCHAIN
+    type: justified-by
+  - target: SOL-PLANT-STEAM-FLASH-GENERATOR
+    type: depends-on
+design_question_answers:
+  - answered_by: SOL-SIM-STEAM-FEED-HOLDS-PRESSURE-HEATER-HOLDS-DRYNESS.C4
+    class: new-condition
+  - answered_by: SOL-SIM-STEAM-FEED-HOLDS-PRESSURE-HEATER-HOLDS-DRYNESS.C4
+    class: whole-set
+  - answered_by: SOL-SIM-STEAM-FEED-HOLDS-PRESSURE-HEATER-HOLDS-DRYNESS.C4
+    class: served-statement
+  - answered_by: SOL-SIM-STEAM-FEED-HOLDS-PRESSURE-HEATER-HOLDS-DRYNESS.C2
+    class: existing-capability
+  - answered_by: SOL-SIM-STEAM-FEED-HOLDS-PRESSURE-HEATER-HOLDS-DRYNESS.C4
+    class: consumer-intent
+interfaces:
+  - plant seam's reported quantities
+  - steam control declaration loader
+  - host steam-draw run
+  - steam readiness gate
+locus:
+  - marking: existing
+    ref: steam control law
+  - marking: existing
+    ref: steam control declaration
+  - marking: existing
+    ref: thermoblock plant structure, modelled outlet superheat
+  - marking: created
+    ref: host run's per-run dryness report in text and JSON
+plan_provenance:
+  approved_plan_id: PLAN-DEL-STEAM-PATH-FLASH-GENERATOR-FLASH-1
+  target: DEL-STEAM-PATH-FLASH-GENERATOR

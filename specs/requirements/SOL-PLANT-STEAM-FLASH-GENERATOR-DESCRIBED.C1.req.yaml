@@ -1,0 +1,12 @@
+id: SOL-PLANT-STEAM-FLASH-GENERATOR-DESCRIBED.C1
+type: criterion
+title: The description states the flash-generator relations and the quantities they connect
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The thermoblock plant description states, in words a reader without the source can check against the machine: the orifice law of steam made through the tube, valve and tip; the held liquid inventory and what raises and lowers it; the saturation relation and its validity to the casting ceiling; the casting ceiling and its origin; and the modelled outlet superheat and the heater-power, sensible-heat and latent-heat balance it comes from. Every relation names the coefficients it uses and each carries its declared error. The description no longer states the affine pressure relation or the pressure-deficit state for this structure. Checked by inspection of the delivered description against each clause. Out of scope: the boiler structure's description.
+links:
+  - target: SOL-PLANT-STEAM-FLASH-GENERATOR-DESCRIBED
+    type: criterion-of

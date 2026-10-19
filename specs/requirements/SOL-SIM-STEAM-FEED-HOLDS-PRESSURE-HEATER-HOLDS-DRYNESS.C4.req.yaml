@@ -1,0 +1,12 @@
+id: SOL-SIM-STEAM-FEED-HOLDS-PRESSURE-HEATER-HOLDS-DRYNESS.C4
+type: criterion
+title: Every claim that steam is dry names its superheat and measured pressure and states carry-over is not excluded
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Every surface that states steam is dry (the host run's report and any status the control law reports) bases the claim on superheat above saturation at the measured pressure alone, names the superheat and pressure it rests on, says the superheat is modelled at the outlet and confirmed by no sensor, and states that droplet carry-over is not excluded without a calorimetric test. The claim and the caveat appear in both the text and the JSON form of each run, and a test fails when either form omits the caveat or claims dryness at zero superheat. A reader needs no knowledge of the source or the graph to read it. Not part of this slice: a calorimetric test or any carry-over measurement.
+links:
+  - target: SOL-SIM-STEAM-FEED-HOLDS-PRESSURE-HEATER-HOLDS-DRYNESS
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-PLANT-STEAM-FLASH-GENERATOR.C3
+type: criterion
+title: Trapped pressure is saturation of the casting temperature by a declared relation valid to a declared casting ceiling, and never exceeds saturation at that ceiling
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |-
+  The saturation relation used for the trapped case is a declared property of water, valid from the declared saturation temperature up to the casting ceiling, and replaces the affine slope that understates pressure above about 130 C; at the ceiling it agrees with steam-table saturation within its declared error. The casting ceiling is a declared figure carrying its origin, chosen from the saturation table. A test drives a trapped block's casting at and beyond the ceiling and shows reported pressure never exceeds saturation at the ceiling. Each host run reports the bound in both text and JSON form, stating it as a control limit and not as containment. Out of scope: containment of trapped pressure without power, sensing or command, and the casting margin held in every phase of a draw, which DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE owns.
+links:
+  - target: SOL-PLANT-STEAM-FLASH-GENERATOR
+    type: criterion-of

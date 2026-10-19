@@ -1,0 +1,54 @@
+id: SOL-PLANT-STEAM-FLASH-GENERATOR
+type: deliverable
+category: solution
+title: The thermoblock's steam side sets pressure by an orifice law of the feed while the wand is open, and by saturation only while the shut block holds liquid
+status: active
+version: 1
+text: |
+  Rewrite the thermoblock structure's steam side as a flash generator: an orifice law of the steam made through the tube, valve and tip sets pressure with the wand open; a held liquid inventory decides when the shut block is at saturation of the casting temperature, bounded by a declared casting ceiling reported per run in text and JSON; the affine relation and the pressure-deficit state and coefficient are retired from this structure.
+
+  Retires, at close-out, the clauses of sealed solutions that state the replaced behaviour: SOL-PLANT-STEAM-DRAW-ENERGY.C3 (pressure as a state integrated from the affine relation), .C4 (reversion to the affine relation when demand returns to zero) and .C7 (the pressure-divergence-rate coefficient); the deficit-rate clamp in SOL-PLANT-STEAM-FEED-PUMP-WIRED.C1; and the deficit semantics of SOL-SIM-STEAM-READINESS-GATE.C3. Their other criteria still stand, so the successor carries each surviving criterion forward when the owning solution is superseded, and the readiness pass at build time settles which survive after reading each in full.
+links:
+  - target: DEL-STEAM-PATH-FLASH-GENERATOR.C1
+    type: derives-from
+  - target: DEL-STEAM-PATH-FLASH-GENERATOR.C2
+    type: derives-from
+  - target: DEL-STEAM-PATH-FLASH-GENERATOR.C5
+    type: derives-from
+  - target: REQ-PREENERGISATION-VERIFICATION-001.C1
+    type: targets
+  - target: DEC-STEAM-BLOCK-IS-A-FLASH-GENERATOR
+    type: justified-by
+  - target: DEC-STEAM-PRESSURE-UNDER-DRAW-IS-AN-ORIFICE-LAW
+    type: justified-by
+  - target: DEC-SIM-VERIFICATION-TOOLCHAIN
+    type: justified-by
+  - target: DEC-STEAM-PRESSURE-SENSOR-ADDED
+    type: justified-by
+design_question_answers:
+  - answered_by: SOL-PLANT-STEAM-FLASH-GENERATOR.C2
+    class: new-condition
+  - answered_by: SOL-PLANT-STEAM-FLASH-GENERATOR.C4
+    class: whole-set
+  - answered_by: SOL-PLANT-STEAM-FLASH-GENERATOR.C3
+    class: served-statement
+  - answered_by: SOL-PLANT-STEAM-FLASH-GENERATOR.C4
+    class: existing-capability
+  - answered_by: SOL-PLANT-STEAM-FLASH-GENERATOR.C3
+    class: consumer-intent
+interfaces:
+  - plant step seam and its steam-demand channel
+  - plant parameter loader
+  - estimator's steam pressure reading
+  - boiler plant structure
+  - pinned analysis records under docs/
+locus:
+  - marking: existing
+    ref: thermoblock plant structure, steam side
+  - marking: existing
+    ref: thermoblock plant description (params)
+  - marking: created
+    ref: host run's per-run casting-ceiling report in text and JSON
+plan_provenance:
+  approved_plan_id: PLAN-DEL-STEAM-PATH-FLASH-GENERATOR-FLASH-1
+  target: DEL-STEAM-PATH-FLASH-GENERATOR
