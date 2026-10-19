@@ -42,7 +42,7 @@ Items 1-10 as for the brew line, then the hot water outlet arm. [PL][OWN] The 3-
 - Whether either thermoblock has an inlet check valve, and the order pump, check valve, OPV tee, block inlet on the steam line.
 - Where each OPV discharge tube ends; hot water or steam may reach the tray from the steam OPV if it caps the block.
 - The hot-water outlet device. (The pump thermostat is in series with the coffee pump's lead, inspected 2026-10-19.)
-- The 3-way and 2-way valves' coil voltage and power, port threads, and whether the OEM 2-way is normally open as inferred.
+- The 3-way and 2-way valves' port threads (the coils' voltage and power are recorded in `../connector-pinouts.md`), and whether the OEM 2-way is normally open as inferred.
 - Thread sizes at the block outlets and inlets, the pump outlets and the steam line, and the OEM tube sizes.
 - The flow meter's K-factor and the tank level switch's trip point.
 - The solenoid valves' pressure rating (a sibling JLT listing says 1.0 MPa, unverified), which limits how high the brew OPV can be set against a 15 bar pump.

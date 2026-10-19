@@ -9,7 +9,7 @@ These settle most of the hydraulic unknowns and should be done before any plumbi
 1. Follow the drain tube from the drip tray: confirm the 3-way (block to group, hot water when energised) and the 2-way (second block outlet to the drain) roles, and whether the OEM 2-way is normally open (decision D6, fact F2).
 2. Trace the steam pump outlet: pump, check valve, OPV tee, block inlet. Note where the steam OPV's discharge tube ends and read its setting off the part (fact F6, F7).
 3. Open both block inlet fittings and look for a check valve (fact F9).
-4. Measure threads and tube sizes: block outlets and inlets, pump outlets, the steam line, and the OEM PTFE or silicone tube OD and ID. Read the 3-way and 2-way coil voltage and power off the valves, and their port threads.
+4. Measure threads and tube sizes: block outlets and inlets, pump outlets, the steam line, and the OEM PTFE or silicone tube OD and ID. The 3-way and 2-way coils' voltage and power are recorded in `../connector-pinouts.md` (230 V AC, 9-13.5 VA marked); read the valves' port threads.
 5. Lift an NTC clamp bracket to confirm how the NTC is mounted (an inference from photos so far).
 6. Panel and gauge: with a meter on the OEM main-board connector, a pressed key should read about 1 kOhm plus 47 Ohm to ground (fact F14); measure the anode-rail voltage and the indicator element currents; identify the buzzer type (resistance, then a bench supply through a series resistor to find polarity, voltage and current); pin 1 on both harness connectors is now defined (`../connector-pinouts.md`).
 7. Flow meter: output type (open-collector, Hall, push-pull) and level into the controller.
@@ -23,7 +23,7 @@ These settle most of the hydraulic unknowns and should be done before any plumbi
 - BL0942 module isolation measurement, then BOM rows for the meters (decision D17).
 - XDB401 I2C variant: output rate, address (EEPROM-programmable, to confirm), thread.
 - Supplier rating of the PTFE tube at 160 to 200 C, or use the stainless capillary or 4 mm metal tube.
-- DS12110 checks: 5 V tolerance for PB4, PB5, PA8, PD7, PD10, PD14, PD15, PA0 and PE4 to PE8; alternate functions for PA1, PA4 and PA6 (ADC channels), PA10 (TIM1_CH3) and PB5 (TIM3_CH2); H743 pin sink current against the key-line indicator current (about 16 mA on a two-element line, estimated).
+- DS12110 checks: 5 V tolerance for PB4, PB5, PA8, PD7, PD10, PD14, PD15, PA0 and PE4 to PE8; alternate functions for PA1, PA4 and PA6 (ADC channels), PA10 (TIM1_CH3) and PB5 (TIM3_CH2); H743 pin sink current against the key-line indicator current (the indicator current is pending with the forward voltage, SOL-HW-RETAINED-DEVICE-REMAINING-CHARACTERISTICS-RECORDED).
 - Relay module input polarity from its schematic (on an active-low module a 3.3 V high may not turn the optocoupler off); confirm the 4-channel module and the cavity fit.
 - 5 V tolerance in DS12110 also for PD7, PD10, PD14, PD15 (relay inputs), PA0 (water indicator cathode) and PE4 to PE8 (key lines pulled toward the 5 V rail through LEDs).
 - The solenoid valves' pressure rating (a sibling JLT listing says 1.0 MPa, unverified) against the brew OPV setting.
