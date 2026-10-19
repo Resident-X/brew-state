@@ -42,7 +42,7 @@ interfaces:
   - task hw:verify and the board tier of task check:round
   - hardware/tools pre-order check record reader
   - hardware/proof synthetic records and seeded-fault tests
-  - parts-specification.yaml class and rating keys
+  - parts-specification.yaml rating key
 locus:
   - marking: existing
     ref: hardware/tools/ (the pre-order board check and its tests)
@@ -51,7 +51,9 @@ locus:
   - marking: created
     ref: derating-policy.yaml and pin-limits.yaml records beside each proof design
   - marking: existing
-    ref: class and rating keys of the proof designs' parts specification records
+    ref: rating key of the proof designs' parts specification records
+  - marking: created
+    ref: class key on every position of the proof designs' parts specification records
   - marking: existing
     ref: hardware/README.md (hardware notes)
 plan_provenance:
