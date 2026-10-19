@@ -224,7 +224,7 @@ class TheSeededProductionFolder(unittest.TestCase):
             index = json.load(handle)
         drawn = {designator: image["file"] for image in index["images"] for designator in image["used_by"]}
         placed = [row[0] for row in read_csv(os.path.join(self.out, "production", "placement.csv"))[1:]]
-        self.assertEqual(len(placed), 28)
+        self.assertEqual(len(placed), 31)
         for designator in placed:
             self.assertIn(designator, drawn, f"the folder holds no drawing of {designator}'s footprint")
             self.assertTrue(os.path.isfile(os.path.join(folder, drawn[designator])), designator)
@@ -433,7 +433,7 @@ class TheMethodAndTheReadme(unittest.TestCase):
             seed = board_prove.prepare(scratch, production_seed.DESIGN, production_seed.NAME)
             rows, parts = production_seed.export_parts(seed, KICAD_CLI, os.path.join(scratch, "parts"))
             production_seed.export_fabrication(seed, KICAD_CLI, os.path.join(scratch, "files"))
-            self.assertEqual(len(rows), 28)
+            self.assertEqual(len(rows), 31)
             self.assertEqual(len(parts), 28)
             self.assertEqual(list(parts[0]), ["Designator", "Comment", "Footprint", "LCSC"])
             names = sorted(os.listdir(os.path.join(scratch, "files")))
