@@ -64,6 +64,20 @@ bool plant_parameters_load(const char *text, size_t length,
                            plant_parameter_error_t *error);
 
 /*
+ * Whether a record is one a model may be built from: every value inside the
+ * range its structure declares for it (a not-a-number is outside every range),
+ * and every relation the structure declares between values holding.
+ *
+ * It is the check plant_parameters_load runs on the record it has assembled and
+ * plant_model_init runs on the record it is handed, so a record produced by
+ * editing or scaling another is refused where it would be run. Returns false
+ * for a null record. `error` may be null; when it is given it names the first
+ * fault -- a value out of range before a relation between values.
+ */
+bool plant_parameters_admissible(const plant_parameters_t *parameters,
+                                 plant_parameter_error_t *error);
+
+/*
  * Read the error the design assumes for each value, from the same description.
  *
  * The same text, read on the same terms and refused on the same terms: a
@@ -205,7 +219,8 @@ bool plant_parameter_supply_driven(size_t at, bool *driven);
  *
  * The instance keeps its own copy of the record, so the caller's may go out of
  * scope afterwards. Returns false and leaves the instance unusable when either
- * argument is null.
+ * argument is null, or when the record is not one plant_parameters_admissible
+ * accepts -- a value outside its range or a relation between values failing.
  */
 bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters);
 
@@ -418,6 +433,14 @@ bool plant_model_state(const plant_model_t *model, plant_state_t state, float *v
  * which values a machine could be in, and a structure that rejected the ones it
  * disagreed with would be deciding for the consumer whether its reconstruction
  * is any good, which is the consumer's question.
+ *
+ * The one exception is a state whose limit the structure itself declares as a
+ * parameter, and which it would otherwise have to carry outside that limit until
+ * its next step. The thermoblock's held liquid is one: a value that is not
+ * finite, below nothing or above the declared capacity is refused with the
+ * state unchanged, and is not clamped. The temperatures and pressures stay
+ * free, because a caller may stand a casting anywhere -- the ceiling probe
+ * stands it above its own ceiling on purpose.
  */
 bool plant_model_set_state(plant_model_t *model, plant_state_t state, float value);
 

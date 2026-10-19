@@ -447,6 +447,59 @@ static int32_t *field_of(steam_control_declaration_t *staging, const figure_spec
     return (int32_t *)(void *)((char *)staging + spec->offset);
 }
 
+/*
+ * Whether a declaration is one the law may be configured from: every figure in
+ * the range this build admits for it, the floor under the ceiling, and the
+ * draw-start feed no higher than the feed ceiling.
+ *
+ * The loader asks it of the record it has read and the law asks it of the one it
+ * is handed, so a record built by hand is held to what a file is.
+ *
+ * The pairs are reported as their own faults rather than as either figure being
+ * out of range: what is wrong with a floor at or above its own ceiling is the
+ * pair, and a caller sent to one of the two lines would find a figure that is
+ * perfectly reasonable on its own. A band admitting nothing is a criterion no
+ * draw could ever meet rather than an unusually tight one.
+ */
+bool steam_control_declaration_admissible(const steam_control_declaration_t *declaration,
+                                          steam_control_declaration_error_t *error)
+{
+    if (declaration == NULL) {
+        return false;
+    }
+
+    for (size_t at = 0u; at < FIGURE_COUNT; at++) {
+        const int32_t figure =
+            *(const int32_t *)(const void *)((const char *)declaration + FIGURES[at].offset);
+        if (figure < FIGURES[at].low || figure > FIGURES[at].high) {
+            if (error != NULL) {
+                report(error, STEAM_CONTROL_DECLARATION_OUT_OF_RANGE, 0u, FIGURES[at].word,
+                       strlen(FIGURES[at].word));
+            }
+            return false;
+        }
+    }
+
+    if (declaration->draw_pressure_floor_milli_bar >= declaration->draw_pressure_ceiling_milli_bar) {
+        if (error != NULL) {
+            report(error, STEAM_CONTROL_DECLARATION_BAND_INVERTED, 0u,
+                   STEAM_CONTROL_DECLARATION_DRAW_FLOOR_WORD,
+                   strlen(STEAM_CONTROL_DECLARATION_DRAW_FLOOR_WORD));
+        }
+        return false;
+    }
+
+    if (declaration->draw_start_feed_permille > declaration->feed_ceiling_permille) {
+        if (error != NULL) {
+            report(error, STEAM_CONTROL_DECLARATION_FEED_START_ABOVE_CEILING, 0u,
+                   STEAM_CONTROL_DECLARATION_DRAW_START_FEED_WORD,
+                   strlen(STEAM_CONTROL_DECLARATION_DRAW_START_FEED_WORD));
+        }
+        return false;
+    }
+    return true;
+}
+
 bool steam_control_declaration_load(const char *text, size_t length,
                                     steam_control_declaration_t *declaration,
                                     steam_control_declaration_error_t *error)
@@ -597,24 +650,11 @@ bool steam_control_declaration_load(const char *text, size_t length,
     }
 
     /*
-     * Asked once every edge is individually admissible, and reported as its
-     * own fault rather than as either edge being out of range: what is wrong
-     * with a floor at or above its own ceiling is the pair, and a caller sent
-     * to one of the two lines would find a figure that is perfectly
-     * reasonable on its own. A band admitting nothing is a criterion no draw
-     * could ever meet rather than an unusually tight one.
+     * The record as a whole is asked once every figure has been read, so a line
+     * out of range is reported with its line number and a pair that cannot
+     * stand is reported as the pair.
      */
-    if (staging.draw_pressure_floor_milli_bar >= staging.draw_pressure_ceiling_milli_bar) {
-        report(error, STEAM_CONTROL_DECLARATION_BAND_INVERTED, 0u,
-               STEAM_CONTROL_DECLARATION_DRAW_FLOOR_WORD,
-               strlen(STEAM_CONTROL_DECLARATION_DRAW_FLOOR_WORD));
-        return false;
-    }
-
-    if (staging.draw_start_feed_permille > staging.feed_ceiling_permille) {
-        report(error, STEAM_CONTROL_DECLARATION_FEED_START_ABOVE_CEILING, 0u,
-               STEAM_CONTROL_DECLARATION_DRAW_START_FEED_WORD,
-               strlen(STEAM_CONTROL_DECLARATION_DRAW_START_FEED_WORD));
+    if (!steam_control_declaration_admissible(&staging, error)) {
         return false;
     }
 

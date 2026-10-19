@@ -248,4 +248,19 @@ bool steam_control_declaration_load(const char *text, size_t length,
                                     steam_control_declaration_t *declaration,
                                     steam_control_declaration_error_t *error);
 
+/*
+ * Whether a declaration is one the law may be configured from: every figure
+ * inside the range this build admits for it, the band's floor below its
+ * ceiling, and the draw-start feed no higher than the feed ceiling. The loader
+ * asks it of the record it has read, and steam_control_init asks it of the one
+ * it is handed.
+ *
+ * Returns false for a null declaration. `error` may be null; when given it
+ * names the first fault (STEAM_CONTROL_DECLARATION_OUT_OF_RANGE,
+ * _BAND_INVERTED or _FEED_START_ABOVE_CEILING) and the figure it concerns, with
+ * no line.
+ */
+bool steam_control_declaration_admissible(const steam_control_declaration_t *declaration,
+                                          steam_control_declaration_error_t *error);
+
 #endif /* STEAM_CONTROL_DECLARATION_H */

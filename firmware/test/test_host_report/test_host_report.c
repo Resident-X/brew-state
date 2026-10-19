@@ -598,10 +598,10 @@ static void test_a_dry_block_with_no_feed_states_the_same_bound_as_a_fed_one(voi
 /// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: A host run that cannot compute the bound
 /// from the declared ceiling states none and reports the refusal.
 ///
-/// A record edited past the loader to a ceiling at or below saturation has no
-/// span the relation is valid over, so the bound it would read is nothing. The
-/// report returns its refusal and writes no line at all, rather than stating a
-/// pressure of zero beside a basis that says it is saturation at the ceiling.
+/// A record edited past the loader to a ceiling below saturation is refused by
+/// the model's own initialisation, so no bound is read from it. The report
+/// returns its refusal and writes no line at all, rather than stating a pressure
+/// of zero beside a basis that says it is saturation at the ceiling.
 static void test_a_bound_that_is_not_above_nothing_is_not_stated(void)
 {
     char output[TEXT_MAX];
@@ -611,6 +611,74 @@ static void test_a_bound_that_is_not_above_nothing_is_not_stated(void)
     TEST_ASSERT_TRUE(plant_parameter_scale(&parameters, at, 0.5f));
     TEST_ASSERT_TRUE(coefficient(&parameters, "steam.casting_ceiling_c") <
                      coefficient(&parameters, "steam.saturation_temperature_c"));
+
+    plant_model_t refused;
+    TEST_ASSERT_FALSE(plant_model_init(&refused, &parameters));
+    TEST_ASSERT_FALSE(plant_parameters_admissible(&parameters, NULL));
+
+    FILE *stream = tmpfile();
+    TEST_ASSERT_NOT_NULL(stream);
+    TEST_ASSERT_EQUAL_INT(CASTING_CEILING_REFUSED, casting_ceiling_report(stream, &parameters));
+    drain(stream, output, sizeof(output));
+    (void)fclose(stream);
+    TEST_ASSERT_EQUAL_STRING("", output);
+}
+
+/*
+ * The reference description with the line for `name` replaced by `name = value`,
+ * written into `text` and read back as any description is. Both the line and
+ * its annotations go: the replacement states a value and nothing else.
+ */
+static size_t with_line_replaced(char *text, size_t capacity, size_t length, const char *name,
+                                 const char *value)
+{
+    static char copy[sizeof(description_text) + 256u];
+    TEST_ASSERT_TRUE(length < sizeof(copy));
+    memcpy(copy, text, length);
+    copy[length] = '\0';
+
+    const char *line = strstr(copy, name);
+    TEST_ASSERT_NOT_NULL(line);
+    const char *line_end = strchr(line, '\n');
+    TEST_ASSERT_NOT_NULL(line_end);
+    const size_t head = (size_t)(line - copy);
+    const size_t tail = length - (size_t)(line_end + 1 - copy);
+
+    memcpy(text, copy, head);
+    const int written = snprintf(text + head, capacity - head, "%s = %s\n", name, value);
+    TEST_ASSERT_TRUE(written > 0 && (size_t)written + head + tail < capacity);
+    memcpy(text + head + (size_t)written, line_end + 1, tail);
+    return head + (size_t)written + tail;
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: A host run that cannot compute the bound
+/// from the declared ceiling states none and reports the refusal.
+///
+/// A ceiling a millionth of a degree above a saturation temperature of nothing is
+/// a consistent record the model accepts, and the span it leaves is below what
+/// the relation's arithmetic can tell apart, so the pressure at the ceiling is
+/// the pressure at saturation and the bound is nothing. The report's own guard
+/// refuses it and writes no line, so that guard stays reachable now that the
+/// model refuses every inconsistent record before the report sees it.
+static void test_a_consistent_ceiling_too_close_to_saturation_to_carry_a_bound_is_not_stated(void)
+{
+    char output[TEXT_MAX];
+    static char edited[sizeof(description_text) + 256u];
+    (void)reference_parameters();
+    memcpy(edited, description_text, description_length);
+    size_t length = with_line_replaced(edited, sizeof(edited), description_length,
+                                       "steam.saturation_temperature_c", "0");
+    length = with_line_replaced(edited, sizeof(edited), length, "steam.casting_ceiling_c", "0.000001");
+
+    plant_parameters_t parameters;
+    plant_parameter_error_t fault;
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_TRUE(plant_parameters_load(edited, length, &parameters, &fault));
+    TEST_ASSERT_TRUE(coefficient(&parameters, "steam.casting_ceiling_c") >
+                     coefficient(&parameters, "steam.saturation_temperature_c"));
+
+    plant_model_t accepted;
+    TEST_ASSERT_TRUE(plant_model_init(&accepted, &parameters));
 
     FILE *stream = tmpfile();
     TEST_ASSERT_NOT_NULL(stream);
@@ -894,6 +962,9 @@ static void test_the_run_states_the_least_superheat_with_the_pressure_of_that_st
 
 /// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: A host run that cannot compute the bound
 /// from the declared ceiling states none and reports the refusal.
+///
+/// A record edited past the loader is refused where the run builds its model,
+/// before anything is printed.
 static void test_a_steam_draw_run_whose_bound_cannot_be_stated_reports_the_refusal(void)
 {
     plant_parameters_t parameters = reference_parameters();
@@ -903,8 +974,8 @@ static void test_a_steam_draw_run_whose_bound_cannot_be_stated_reports_the_refus
     TEST_ASSERT_TRUE(plant_parameter_scale(&parameters, at, 0.5f));
 
     TEST_ASSERT_TRUE(steam_draw_of(&parameters, 10u, 1000u) != 0);
-    TEST_ASSERT_NULL(strstr(run_output, "steam-casting-ceiling"));
-    TEST_ASSERT_NOT_NULL(strstr(run_error, "the casting ceiling could not be stated"));
+    TEST_ASSERT_EQUAL_STRING("", run_output);
+    TEST_ASSERT_NOT_NULL(strstr(run_error, "the machine could not be initialised"));
 }
 
 /*
@@ -953,6 +1024,9 @@ static void test_the_cross_tier_draw_run_states_the_bound_in_both_forms(void)
 
 /// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: A host run that cannot compute the bound
 /// from the declared ceiling states none and reports the refusal.
+///
+/// A record edited past the loader is refused where the run builds its model,
+/// before anything is printed.
 static void test_a_cross_tier_draw_run_whose_bound_cannot_be_stated_reports_the_refusal(void)
 {
     plant_parameters_t parameters = reference_parameters();
@@ -962,8 +1036,8 @@ static void test_a_cross_tier_draw_run_whose_bound_cannot_be_stated_reports_the_
     TEST_ASSERT_TRUE(plant_parameter_scale(&parameters, at, 0.5f));
 
     TEST_ASSERT_TRUE(cross_tier_draw_of(&parameters) != 0);
-    TEST_ASSERT_NULL(strstr(run_output, "steam-casting-ceiling"));
-    TEST_ASSERT_NOT_NULL(strstr(run_error, "the casting ceiling could not be stated"));
+    TEST_ASSERT_EQUAL_STRING("", run_output);
+    TEST_ASSERT_NOT_NULL(strstr(run_error, "the machine could not be initialised"));
 }
 
 static void assert_nothing_written_dryness(const dryness_finding_t *finding)
@@ -1105,6 +1179,7 @@ int main(void)
     RUN_TEST(test_a_block_declared_to_start_dry_still_states_the_bound);
     RUN_TEST(test_a_dry_block_with_no_feed_states_the_same_bound_as_a_fed_one);
     RUN_TEST(test_a_bound_that_is_not_above_nothing_is_not_stated);
+    RUN_TEST(test_a_consistent_ceiling_too_close_to_saturation_to_carry_a_bound_is_not_stated);
     RUN_TEST(test_the_steam_draw_run_states_the_bound_in_both_forms_before_driving_the_machine);
     RUN_TEST(test_the_steam_draw_run_states_dryness_in_both_forms_with_the_caveat);
     RUN_TEST(test_a_steam_draw_run_that_never_opens_the_wand_claims_no_dryness);

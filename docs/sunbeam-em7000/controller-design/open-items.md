@@ -39,7 +39,7 @@ These settle most of the hydraulic unknowns and should be done before any plumbi
 - Steam pump drive (D4).
 - **Mains chain rating margin.** Resolved by `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`: filter FN9222-15-06 (15 A at 50 C), trunk at least 1.5 mm2 (WB1568), T10A unchanged, one shared TR5 fuse on the valve branches. Remaining to confirm: the 15 A filter's coupler rating (IEC C14 is 10 A), its termination type, the TR5 series.
 - **Heater switching cadence:** whole-cycle (20 ms) bursts or half-cycle; the files disagree.
-- **Steam heater with the knob shut:** the firmware's 125 C ready temperature heats against a closed knob, against F10 and the open trapped-pressure case.
+- **Steam heater with the knob shut:** the firmware's 137 C ready temperature heats against a closed knob, against F10 and the open trapped-pressure case.
 - **SSR mounting:** the metal side wall is proposed, not decided, and conflicts thermally with the IRM-10-5's derating.
 - **A vent state per mode table** (idle, flush, shot, hot water, steam, fault).
 - Whether to fit the optional test tee on the vent branch.

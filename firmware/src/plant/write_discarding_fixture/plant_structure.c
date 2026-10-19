@@ -79,6 +79,11 @@ bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters
     if (model == NULL || parameters == NULL) {
         return false;
     }
+    /* A record this structure's own ranges and relations refuse is not run. */
+    if (!plant_parameters_admissible(parameters, NULL)) {
+        model->initialised = false;
+        return false;
+    }
     memset(model, 0, sizeof(*model));
     model->coefficients = *parameters;
     /*

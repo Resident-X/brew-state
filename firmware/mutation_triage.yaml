@@ -183,7 +183,7 @@ survivors:
       zero bytes copies nothing. The other half of the condition still refuses a
       null source, so nothing is dereferenced that was not before.
 
-  cxx_gt_to_ge:src/plant/common/plant_parameters.c:286:20:
+  cxx_gt_to_ge:src/plant/common/plant_parameters.c:342:20:
     verdict: equivalent
     reason: >-
       Spec-table size guard in the description walk, `spec_count >
@@ -199,7 +199,7 @@ survivors:
       rather than assumed here, so a structure growing towards the limit fails
       that test instead of quietly invalidating this judgement.
 
-  cxx_lt_to_le:src/plant/common/plant_parameters.c:318:28:
+  cxx_lt_to_le:src/plant/common/plant_parameters.c:374:28:
     verdict: equivalent
     reason: >-
       `cursor = (line_end < limit) ? line_end + 1 : limit` widened to `<=`, so
@@ -256,7 +256,7 @@ survivors:
       the sanitizer script back to the environment's extra_scripts and run the
       sweep, and this line should report Killed.
 
-  cxx_gt_to_ge:src/plant/common/plant_parameters.c:571:57:
+  cxx_gt_to_ge:src/plant/common/plant_parameters.c:621:57:
     verdict: equivalent
     reason: >-
       The same spec-table size guard again, in the accessor that answers what
@@ -268,7 +268,7 @@ survivors:
       every structure in the tree declares a single-figure number of parameters,
       so both forms accept every table any build of this program can present.
 
-  cxx_gt_to_ge:src/plant/common/plant_parameters.c:607:57:
+  cxx_gt_to_ge:src/plant/common/plant_parameters.c:657:57:
     verdict: equivalent
     reason: >-
       The same spec-table size guard a third time, in `plant_parameter_scale`:
@@ -279,7 +279,7 @@ survivors:
       every structure in the tree declares a single-figure number of parameters,
       so both forms accept every table any build of this program can present.
 
-  cxx_gt_to_ge:src/plant/common/plant_parameters.c:645:57:
+  cxx_gt_to_ge:src/plant/common/plant_parameters.c:695:57:
     verdict: equivalent
     reason: >-
       The same spec-table size guard again, in `plant_parameter_position`:
@@ -289,7 +289,7 @@ survivors:
       single-figure number of parameters, so both forms accept every table any
       build of this program can present.
 
-  cxx_gt_to_ge:src/plant/common/plant_parameters.c:683:57:
+  cxx_gt_to_ge:src/plant/common/plant_parameters.c:733:57:
     verdict: equivalent
     reason: >-
       The same spec-table size guard again, in `plant_parameter_supply_driven`:
@@ -299,7 +299,7 @@ survivors:
       single-figure number of parameters, so both forms accept every table any
       build of this program can present.
 
-  cxx_gt_to_ge:src/plant/common/plant_parameters.c:666:57:
+  cxx_gt_to_ge:src/plant/common/plant_parameters.c:716:57:
     verdict: equivalent
     reason: >-
       The same spec-table size guard once more, in `plant_parameter_value`:
@@ -310,7 +310,7 @@ survivors:
       structure in the tree declares a single-figure number of parameters, so
       both forms accept every table any build of this program can present.
 
-  cxx_ge_to_gt:src/plant/common/plant_parameters.c:608:12:
+  cxx_ge_to_gt:src/plant/common/plant_parameters.c:658:12:
     verdict: analysis
     reason: >-
       Position guard in `plant_parameter_scale`, `at >= spec_count` narrowed to
@@ -332,7 +332,7 @@ survivors:
       the unsanitized sweep records the mutant as surviving. Repeat that if this
       reasoning is ever in doubt.
 
-  cxx_lt_to_le:src/plant/common/plant_parameters.c:692:35:
+  cxx_lt_to_le:src/plant/common/plant_parameters.c:742:35:
     verdict: analysis
     reason: >-
       Loop bound in `plant_parameter_supply_driven`, `which < named_count`

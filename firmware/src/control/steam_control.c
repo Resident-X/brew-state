@@ -532,6 +532,16 @@ bool steam_control_init(steam_control_state_t *state, const estimator_limits_t *
     }
 
     /*
+     * A declaration built by hand is held to what one read from a file is: a
+     * figure out of range, a band with no inside, or a draw that starts above
+     * its own ceiling is refused here, after the outputs are off, and the law
+     * stays unconfigured.
+     */
+    if (!steam_control_declaration_admissible(declaration, NULL)) {
+        return false;
+    }
+
+    /*
      * And a declaration asking this loop to hold the block where the declared
      * model error could carry it into its own protection is refused here, at
      * the one point the target is taken on, rather than left to be discovered

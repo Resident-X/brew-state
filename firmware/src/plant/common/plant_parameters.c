@@ -264,6 +264,62 @@ static size_t index_of(const plant_parameter_spec_t *specs, size_t spec_count, c
 }
 
 /*
+ * Whether a record is one a model may be built from: every value inside the
+ * range its structure declares for it, and then every relation the structure
+ * declares between values. The loader asks it of the record it has assembled
+ * and the model's initialisation asks it of the record it is handed, so a
+ * record that arrives by any other route -- an edit, a scaling -- is refused
+ * where it would be run and not only where a description would have been read.
+ *
+ * Each value is read through the offset the structure's own table declares, and
+ * stated as "is it inside the range" so that a not-a-number, which compares
+ * false to both bounds, is refused. `error` may be null; when it is not, it
+ * names the first fault in the order a description reports them -- a value out
+ * of range before a relation made of values.
+ */
+bool plant_parameters_admissible(const plant_parameters_t *parameters,
+                                 plant_parameter_error_t *error)
+{
+    if (parameters == NULL) {
+        return false;
+    }
+
+    size_t spec_count = 0u;
+    const plant_parameter_spec_t *specs = plant_structure_parameter_specs(&spec_count);
+    if (specs == NULL) {
+        return false;
+    }
+
+    for (size_t at = 0u; at < spec_count; at++) {
+        const float value =
+            *(const float *)(const void *)((const char *)parameters + specs[at].offset);
+        if (!(value >= specs[at].minimum && value <= specs[at].maximum)) {
+            if (error != NULL) {
+                report(error, PLANT_PARAMETER_OUT_OF_RANGE, 0u, specs[at].name,
+                       strlen(specs[at].name));
+                error->value = value;
+                error->minimum = specs[at].minimum;
+                error->maximum = specs[at].maximum;
+            }
+            return false;
+        }
+    }
+
+    size_t relation_count = 0u;
+    const plant_parameter_relation_t *relations = plant_structure_parameter_relations(&relation_count);
+    for (size_t which = 0u; which < relation_count && relations != NULL; which++) {
+        if (!relations[which].holds(parameters)) {
+            if (error != NULL) {
+                report(error, PLANT_PARAMETER_INCONSISTENT, 0u, relations[which].parameter,
+                       strlen(relations[which].parameter));
+            }
+            return false;
+        }
+    }
+    return true;
+}
+
+/*
  * The one walk over a description, which both of the seam's loaders are.
  *
  * `parameters` is required and `budget` is not, because the record of what the
@@ -508,18 +564,12 @@ static bool read_description(const char *text, size_t length, plant_parameters_t
     }
 
     /*
-     * Each value is admissible alone; the pairs are asked once the record is
-     * whole, after every range, so a description with a value out of range
-     * reports that and not a relation made of it.
+     * Each value was admitted alone as its line was read; the record as a whole
+     * is asked once it is whole, after every range, so a description with a
+     * value out of range reports that and not a relation made of it.
      */
-    size_t relation_count = 0u;
-    const plant_parameter_relation_t *relations = plant_structure_parameter_relations(&relation_count);
-    for (size_t which = 0u; which < relation_count && relations != NULL; which++) {
-        if (!relations[which].holds(&staging)) {
-            report(error, PLANT_PARAMETER_INCONSISTENT, 0u, relations[which].parameter,
-                   strlen(relations[which].parameter));
-            return false;
-        }
+    if (!plant_parameters_admissible(&staging, error)) {
+        return false;
     }
 
     if (budget != NULL) {

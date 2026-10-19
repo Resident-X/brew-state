@@ -1140,6 +1140,147 @@ static void test_a_draw_start_above_the_feed_ceiling_is_refused_as_its_own_fault
     TEST_ASSERT_EQUAL(STEAM_CONTROL_DECLARATION_FEED_START_ABOVE_CEILING, fault.fault);
 }
 
+/*
+ * A law brought up on a working declaration and run until the element is
+ * driven, so that the commands a refused initialisation must leave off are
+ * seen to have been on. Returns whether the element was on.
+ */
+static bool heating_state_on(steam_control_state_t *state)
+{
+    hw_sim_reset();
+    if (!steam_control_init(state, &limits, &declaration, &parameters, &budget)) {
+        return false;
+    }
+    for (unsigned step = 0u; step < 20u; step++) {
+        (void)step_with(state, false, 0, 20000);
+    }
+    return hw_sim_output(ACTUATION_CHANNEL_STEAM_HEATER) > 0u;
+}
+
+/*
+ * Handed to steam_control_init, the declaration is refused with every command
+ * left off and the law unconfigured: the element that was driven is not, and a
+ * step answers an invalid sensor rather than running a law no one admitted.
+ */
+static void assert_init_refuses(const steam_control_declaration_t *figures, const char *what)
+{
+    steam_control_state_t working;
+    steam_control_state_t refused;
+
+    TEST_ASSERT_TRUE_MESSAGE(heating_state_on(&working), "no command was on to be left off");
+    TEST_ASSERT_FALSE_MESSAGE(steam_control_init(&refused, &limits, figures, &parameters, &budget),
+                              what);
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE(0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_HEATER), what);
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE(0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP), what);
+    TEST_ASSERT_EQUAL_MESSAGE(STEAM_CONTROL_STEP_SENSOR_INVALID, steam_control_step(&refused), what);
+    TEST_ASSERT_FALSE_MESSAGE(steam_control_declaration_admissible(figures, NULL), what);
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C10: A declaration whose draw-start level
+/// exceeds its feed ceiling is refused as its own fault, at load and again when
+/// the law is initialised, which refuses it and commands nothing, and is not
+/// reduced to the ceiling.
+///
+/// A declaration built by hand and never read from a file is held to what a file
+/// is. A start above the ceiling, by one permille and by a long way, is refused
+/// by the law's own initialisation; a start at the ceiling is accepted and the
+/// law opened on it starts the feed at exactly that level.
+static void test_a_hand_built_declaration_with_the_start_above_the_ceiling_is_refused_by_the_law(void)
+{
+    steam_control_declaration_t figures = declaration;
+    steam_control_state_t state;
+    steam_control_declaration_error_t fault;
+
+    figures.draw_start_feed_permille = figures.feed_ceiling_permille;
+    hw_sim_reset();
+    TEST_ASSERT_TRUE_MESSAGE(steam_control_init(&state, &limits, &figures, &parameters, &budget),
+                             "a start at its ceiling was refused");
+    TEST_ASSERT_TRUE(steam_control_declaration_admissible(&figures, NULL));
+
+    const int32_t above[] = {figures.feed_ceiling_permille + 1, figures.feed_ceiling_permille + 400,
+                             ACTUATION_FULL_SCALE};
+    for (size_t at = 0u; at < sizeof(above) / sizeof(above[0]); at++) {
+        if (above[at] <= declaration.feed_ceiling_permille) {
+            continue;
+        }
+        figures.draw_start_feed_permille = above[at];
+        assert_init_refuses(&figures, "a start above its ceiling");
+        memset(&fault, 0, sizeof(fault));
+        TEST_ASSERT_FALSE(steam_control_declaration_admissible(&figures, &fault));
+        TEST_ASSERT_EQUAL(STEAM_CONTROL_DECLARATION_FEED_START_ABOVE_CEILING, fault.fault);
+        TEST_ASSERT_EQUAL_STRING(STEAM_CONTROL_DECLARATION_DRAW_START_FEED_WORD, fault.name);
+        TEST_ASSERT_EQUAL_UINT32(0u, fault.line);
+    }
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C10: A declaration whose draw-start level
+/// exceeds its feed ceiling is refused as its own fault, at load and again when
+/// the law is initialised, which refuses it and commands nothing, and is not
+/// reduced to the ceiling.
+///
+/// The band's floor at or above its ceiling describes a band no pressure is ever
+/// inside, so it is refused by the law's initialisation as it is by the loader:
+/// at equality, one milli-bar above and by a long way, each naming the floor.
+static void test_a_hand_built_declaration_with_the_floor_at_or_above_the_ceiling_is_refused_by_the_law(void)
+{
+    steam_control_declaration_t figures = declaration;
+    steam_control_declaration_error_t fault;
+
+    const int32_t floors[] = {declaration.draw_pressure_ceiling_milli_bar,
+                              declaration.draw_pressure_ceiling_milli_bar + 1,
+                              declaration.draw_pressure_ceiling_milli_bar + 500};
+    for (size_t at = 0u; at < sizeof(floors) / sizeof(floors[0]); at++) {
+        figures.draw_pressure_floor_milli_bar = floors[at];
+        assert_init_refuses(&figures, "a floor at or above its ceiling");
+        memset(&fault, 0, sizeof(fault));
+        TEST_ASSERT_FALSE(steam_control_declaration_admissible(&figures, &fault));
+        TEST_ASSERT_EQUAL(STEAM_CONTROL_DECLARATION_BAND_INVERTED, fault.fault);
+        TEST_ASSERT_EQUAL_STRING(STEAM_CONTROL_DECLARATION_DRAW_FLOOR_WORD, fault.name);
+    }
+
+    /* One milli-bar under the ceiling is a band, and is accepted. */
+    figures.draw_pressure_floor_milli_bar = declaration.draw_pressure_ceiling_milli_bar - 1;
+    TEST_ASSERT_TRUE(steam_control_declaration_admissible(&figures, NULL));
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C10: A declaration whose draw-start level
+/// exceeds its feed ceiling is refused as its own fault, at load and again when
+/// the law is initialised, which refuses it and commands nothing, and is not
+/// reduced to the ceiling.
+///
+/// A figure outside the range this build admits for it is as little a
+/// declaration as a pair that cannot stand, and is refused by the law's
+/// initialisation wherever the record came from: every figure in turn, written
+/// as the largest and the smallest number the record holds and as below zero.
+/// The refusal names the figure, and a null declaration is refused.
+static void test_a_hand_built_declaration_with_a_figure_out_of_range_is_refused_by_the_law(void)
+{
+    const size_t figure_count = sizeof(declaration) / sizeof(int32_t);
+    const int32_t hostile[] = {INT32_MAX, INT32_MIN, -1};
+    steam_control_declaration_error_t fault;
+
+    TEST_ASSERT_EQUAL_UINT(0u, sizeof(declaration) % sizeof(int32_t));
+    for (size_t at = 0u; at < figure_count; at++) {
+        for (size_t v = 0u; v < sizeof(hostile) / sizeof(hostile[0]); v++) {
+            steam_control_declaration_t figures = declaration;
+            char message[64];
+
+            ((int32_t *)(void *)&figures)[at] = hostile[v];
+            (void)snprintf(message, sizeof(message), "figure %u written as %ld", (unsigned)at,
+                           (long)hostile[v]);
+            assert_init_refuses(&figures, message);
+            memset(&fault, 0, sizeof(fault));
+            TEST_ASSERT_FALSE_MESSAGE(steam_control_declaration_admissible(&figures, &fault),
+                                      message);
+            TEST_ASSERT_EQUAL_MESSAGE(STEAM_CONTROL_DECLARATION_OUT_OF_RANGE, fault.fault, message);
+            TEST_ASSERT_TRUE_MESSAGE(fault.name[0] != '\0', message);
+        }
+    }
+
+    TEST_ASSERT_FALSE(steam_control_declaration_admissible(NULL, NULL));
+    TEST_ASSERT_TRUE(steam_control_declaration_admissible(&declaration, NULL));
+}
+
 /* --- Holding the band, and coming back afterwards -------------------------- */
 
 /// SOL-PLANT-STEAM-FLASH-GENERATOR.C7: The feed holds pressure and heater power
@@ -2361,12 +2502,12 @@ static void test_feed_withheld_one_milli_bar_below_threshold(void)
 /// What feed the pressure loop then commands is out of that criterion's scope;
 /// what is required here is only that feed goes from nothing to something.
 ///
-/// The question is asked at the wand opening, on the retired reading that a draw
-/// already under way crossed the threshold mid-draw. A draw opened below the
-/// threshold stays starved when pressure rises later in the draw, because the
-/// verdict is held per draw until the wand shuts; the mid-draw crossing the
-/// criterion's wording also admits is no longer a behaviour of the law and has no
-/// test beside this one.
+/// The threshold is judged at the wand opening. A draw opened below it cannot
+/// cross it later: with the wand open the plant's pressure is the orifice drop
+/// across the steam made, and the steam made is the lesser of the demand and
+/// the feed, which is nothing while the gate withholds feed. The only crossing
+/// is on a shut block, and the next opening judges it; the test beside this one
+/// holds a draw open below the threshold and asserts exactly that.
 static void test_feed_enabled_the_same_step_pressure_reaches_threshold(void)
 {
     static const struct {
@@ -2396,6 +2537,60 @@ static void test_feed_enabled_the_same_step_pressure_reaches_threshold(void)
         TEST_ASSERT_EQUAL_MESSAGE(CASES[at].fed, hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP) > 0u,
                                   CASES[at].what);
     }
+}
+
+/// SOL-SIM-STEAM-READINESS-GATE.C2: Steam feed is enabled once measured
+/// pressure reaches the declared ready threshold.
+///
+/// The threshold is judged when the wand opens, and a draw opened below it
+/// cannot cross it later. The loop is closed through the truth plant under
+/// everything the law itself commands, heater included, with the wand opened on
+/// a block well under the threshold: the element heats the block for the whole
+/// draw, yet with the wand open the pressure is the drop across the steam made,
+/// and none is made while feed is withheld, so the pressure stays at nothing and
+/// the feed at nothing on every step. That the crossing was on offer is asserted
+/// rather than assumed: the same block shut afterwards reads at or above the
+/// threshold, and the next opening is fed.
+static void test_a_draw_opened_below_ready_cannot_cross_it_while_the_wand_stays_open(void)
+{
+    const float start_c = ready_target_c(&declaration) - 30.0f;
+
+    bring_the_loop_up(&parameters, &declaration, start_c);
+    TEST_ASSERT_TRUE_MESSAGE(truth_pressure_milli_bar() < declaration.ready_pressure_milli_bar,
+                             "the block started at or above the ready threshold");
+
+    draw_for(WITHHELD_SPAN_MS / 1000u, 1.0f);
+
+    float hottest_c = start_c;
+    uint16_t most_heater = 0u;
+    for (size_t at = 0u; at < sample_count; at++) {
+        char message[96];
+
+        (void)snprintf(message, sizeof(message), "at %u ms of a draw opened below ready",
+                       (unsigned)samples[at].at_millis);
+        TEST_ASSERT_EQUAL_INT32_MESSAGE(0, samples[at].pressure_milli_bar, message);
+        TEST_ASSERT_EQUAL_UINT16_MESSAGE(0u, samples[at].feed_permille, message);
+        TEST_ASSERT_EQUAL_FLOAT_MESSAGE(0.0f, samples[at].superheat_k, message);
+        hottest_c = fmaxf(hottest_c, samples[at].steam_c);
+        most_heater = (samples[at].heater_permille > most_heater) ? samples[at].heater_permille
+                                                                  : most_heater;
+    }
+    TEST_ASSERT_TRUE_MESSAGE(most_heater > 0u, "the law never drove the element, so nothing was heating");
+    TEST_ASSERT_TRUE_MESSAGE(hottest_c > start_c + 10.0f,
+                             "the block did not heat through the draw, so no crossing was on offer");
+
+    /* The same block with the wand shut now reads at or above the threshold. */
+    hold_ready_for(1u);
+    TEST_ASSERT_TRUE_MESSAGE(truth_pressure_milli_bar() >= declaration.ready_pressure_milli_bar,
+                             "the block the draw heated is still under the threshold shut");
+
+    /* And the next opening judges it and feeds. */
+    draw_for(2u, 1.0f);
+    bool fed = false;
+    for (size_t at = 0u; at < sample_count; at++) {
+        fed = fed || samples[at].feed_permille > 0u;
+    }
+    TEST_ASSERT_TRUE_MESSAGE(fed, "the opening that found the block ready was not fed");
 }
 
 /// SOL-SIM-STEAM-READINESS-GATE.C2: Steam feed is enabled once measured
@@ -3257,6 +3452,9 @@ int main(void)
     RUN_TEST(test_a_declared_gain_moves_the_pass_fail_boundary);
     RUN_TEST(test_the_declaration_grammar_refuses_what_it_must);
     RUN_TEST(test_a_draw_start_above_the_feed_ceiling_is_refused_as_its_own_fault);
+    RUN_TEST(test_a_hand_built_declaration_with_the_start_above_the_ceiling_is_refused_by_the_law);
+    RUN_TEST(test_a_hand_built_declaration_with_the_floor_at_or_above_the_ceiling_is_refused_by_the_law);
+    RUN_TEST(test_a_hand_built_declaration_with_a_figure_out_of_range_is_refused_by_the_law);
     RUN_TEST(test_pressure_and_superheat_hold_for_draws_of_every_duration);
     RUN_TEST(test_superheat_holds_the_setpoint_across_the_error_ends_of_every_coefficient_that_decides_it);
     RUN_TEST(test_superheat_stays_above_zero_at_every_joint_corner_of_the_deciding_coefficients);
@@ -3278,6 +3476,7 @@ int main(void)
     RUN_TEST(test_feed_withheld_while_pressure_stays_below_threshold_with_the_wand_open);
     RUN_TEST(test_feed_withheld_one_milli_bar_below_threshold);
     RUN_TEST(test_feed_enabled_the_same_step_pressure_reaches_threshold);
+    RUN_TEST(test_a_draw_opened_below_ready_cannot_cross_it_while_the_wand_stays_open);
     RUN_TEST(test_feed_enabled_against_the_plant_models_own_truth);
     RUN_TEST(test_declared_threshold_moves_the_feed_boundary);
     RUN_TEST(test_the_law_runs_against_the_simulated_implementation_with_no_target_dependency);

@@ -255,7 +255,8 @@ bool protection_margin_corner_machine(const plant_parameters_t *believed,
  * The corner is built by writing the description's own coefficients at their
  * corner values through the plant seam and standing a model up from the result,
  * so a corner the structure will not admit as a machine is refused by the same
- * range check a description is, and comes back as a corner that did not run.
+ * ranges and relations a description is, wherever the model is built, and comes
+ * back as a corner that did not run: `ran` false with `moves` above zero.
  *
  * Returns false, writing nothing, for a null argument, for a corner index at or
  * past the count above, or for a budget whose coefficient count does not match

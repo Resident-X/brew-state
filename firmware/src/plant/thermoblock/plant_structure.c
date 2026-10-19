@@ -137,32 +137,6 @@ const plant_parameter_spec_t *plant_structure_parameter_specs(size_t *count)
     return SPECS;
 }
 
-static bool inventory_fits_the_capacity(const void *parameters)
-{
-    const plant_parameters_t *p = parameters;
-    return p->steam_initial_inventory_ml <= p->steam_liquid_capacity_ml;
-}
-
-/* A ceiling at or below the saturation temperature leaves no span the pressure relation is valid over. */
-static bool ceiling_is_above_saturation(const void *parameters)
-{
-    const plant_parameters_t *p = parameters;
-    return p->steam_casting_ceiling_c > p->steam_saturation_temperature_c;
-}
-
-static const plant_parameter_relation_t RELATIONS[] = {
-    {"steam.initial_inventory_ml", inventory_fits_the_capacity},
-    {"steam.casting_ceiling_c", ceiling_is_above_saturation},
-};
-
-const plant_parameter_relation_t *plant_structure_parameter_relations(size_t *count)
-{
-    if (count != NULL) {
-        *count = sizeof(RELATIONS) / sizeof(RELATIONS[0]);
-    }
-    return RELATIONS;
-}
-
 /*
  * The two element ratings, which are not independent of one another. Both
  * elements are fed from the one mains supply, and an element's power goes as
@@ -195,6 +169,49 @@ static float saturation_absolute_bar(const plant_parameters_t *parameters, float
                             parameters->steam_saturation_antoine_b_k /
                                 (parameters->steam_saturation_antoine_c_c + temperature_c);
     return plant_expf(log10_bar * NATURAL_LOG_OF_TEN);
+}
+
+static bool inventory_fits_the_capacity(const void *parameters)
+{
+    const plant_parameters_t *p = parameters;
+    return p->steam_initial_inventory_ml <= p->steam_liquid_capacity_ml;
+}
+
+/* A ceiling at or below the saturation temperature leaves no span the pressure relation is valid over. */
+static bool ceiling_is_above_saturation(const void *parameters)
+{
+    const plant_parameters_t *p = parameters;
+    return p->steam_casting_ceiling_c > p->steam_saturation_temperature_c;
+}
+
+/*
+ * The saturation inversion divides by a less log10 of the absolute pressure, so
+ * the highest pressure the block can carry -- the restriction's drop at the full
+ * feed rate, over the saturation figure the gauge is read from -- must stay under
+ * 10^a, where the divisor reaches zero.
+ */
+static bool open_draw_pressure_is_invertible(const void *parameters)
+{
+    const plant_parameters_t *p = parameters;
+    const float feed = p->steam_feed_flow_ml_per_s;
+    const float highest_bar =
+        p->steam_restriction_bar_s2_per_ml2 * feed * feed +
+        saturation_absolute_bar(p, p->steam_saturation_temperature_c);
+    return highest_bar < plant_expf(p->steam_saturation_antoine_a * NATURAL_LOG_OF_TEN);
+}
+
+static const plant_parameter_relation_t RELATIONS[] = {
+    {"steam.initial_inventory_ml", inventory_fits_the_capacity},
+    {"steam.casting_ceiling_c", ceiling_is_above_saturation},
+    {"steam.restriction_bar_s2_per_ml2", open_draw_pressure_is_invertible},
+};
+
+const plant_parameter_relation_t *plant_structure_parameter_relations(size_t *count)
+{
+    if (count != NULL) {
+        *count = sizeof(RELATIONS) / sizeof(RELATIONS[0]);
+    }
+    return RELATIONS;
 }
 
 /*
@@ -762,6 +779,11 @@ bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters
     if (model == NULL || parameters == NULL) {
         return false;
     }
+    /* A record this structure's own ranges and relations refuse is not run. */
+    if (!plant_parameters_admissible(parameters, NULL)) {
+        model->initialised = false;
+        return false;
+    }
 
     memset(model, 0, sizeof(*model));
     model->coefficients = *parameters;
@@ -784,7 +806,7 @@ bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters
     model->brew_flow_ml_per_s = 0.0f;
     model->steam_draw_ml_per_s = 0.0f;
     model->steam_outlet_superheat_k = 0.0f;
-    /* The block starts holding the declared liquid, which the loader has held to
+    /* The block starts holding the declared liquid, which the admissibility check has held to
      * the capacity, and the wand shut, so the pressure is the one its own
      * equations give for that state. */
     model->steam_liquid_inventory_ml = parameters->steam_initial_inventory_ml;
@@ -940,6 +962,17 @@ bool plant_model_state(const plant_model_t *model, plant_state_t state, float *v
 bool plant_model_set_state(plant_model_t *model, plant_state_t state, float value)
 {
     if (model == NULL || !model->initialised) {
+        return false;
+    }
+
+    /*
+     * The held liquid is the one state with a physical limit the model itself
+     * states, so a value outside it is refused rather than held until the first
+     * step clamps it. The temperatures stay free: the ceiling probe sets one
+     * above the ceiling on purpose.
+     */
+    if (state == PLANT_STATE_STEAM_LIQUID_INVENTORY_ML &&
+        !(value >= 0.0f && value <= model->coefficients.steam_liquid_capacity_ml)) {
         return false;
     }
 

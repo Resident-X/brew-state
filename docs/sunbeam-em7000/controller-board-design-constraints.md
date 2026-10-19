@@ -99,12 +99,12 @@ The interval within which loss of the controller's proof of life must remove hea
 
 That starting temperature cannot yet be taken from a control that holds the casting, so the interval is pending.
 
-**Finding: no interval can be derived from the casting as the control stands.** The generated peak record, `docs/casting-peak.md`, which `python3 firmware/emulation/tools/run_casting_peak.py` regenerates, shows that under the control as shipped the coffee casting reaches 156.8 °C, plus 2.0 °C of declared sensing error, 158.8 °C, against the 107 °C coffee-thermostat trip, and the steam casting 192.2 °C, plus 2.0 °C, 194.2 °C, in a 20-second wand draw (a longer draw can climb higher: the record's draw-length table holds 191.0 °C at 20, 60 and 120 seconds and reaches 216.1 °C at 300). A time to a trip point that starts from a casting already past it is not a figure, and the steam peak understates a longer draw, so no proof-of-life interval can be derived from them. The work that bounds the casting is `DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE`. Nothing in this finding is a board figure. The peaks as the record gives them, graded inferred from the plant model (the casting has not been measured):
+**Finding: no interval can be derived from the casting as the control stands.** The generated peak record, `docs/casting-peak.md`, which `python3 firmware/emulation/tools/run_casting_peak.py` regenerates, shows that under the control as shipped the coffee casting reaches 156.8 °C, plus 2.0 °C of declared sensing error, 158.8 °C, against the 107 °C coffee-thermostat trip, and the steam casting 194.3 °C, plus 2.0 °C, 196.3 °C, in a 20-second wand draw, against the 195 °C steam trip (the record's draw-length table holds 186.1 °C at 20, 60, 120 and 300 seconds at the declared coefficients, so a longer draw does not climb higher there). A time to a trip point that starts from a casting already past it is not a figure, so no proof-of-life interval can be derived from them. The work that bounds the casting is `DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE`. Nothing in this finding is a board figure. The peaks as the record gives them, graded inferred from the plant model (the casting has not been measured):
 
 | Thermoblock | Peak casting temperature under control (°C) | Declared sensing error (°C) | Peak plus sensing error (°C) | Where it comes from |
 |---|---|---|---|---|
 | Coffee thermoblock | 156.8 | 2.0 | 158.8 | Warm-up with no draw, served at 100.0 °C, at corner 2 of the enumeration (`brew.thermal_mass_j_per_k` at its low end) |
-| Steam thermoblock | 192.2 | 2.0 | 194.2 | A 20-second steam draw, with the ready temperature at 186.0 °C, at corner 15 of the enumeration (`steam.heater_power_w` at its high end) |
+| Steam thermoblock | 194.3 | 2.0 | 196.3 | A 20-second steam draw, with the ready temperature at 186.1 °C, at corner 48 of the enumeration (`steam.feed_flow_ml_per_s` at its low end) |
 
 | Figure | Value | Grade | Derivation | From |
 |---|---|---|---|---|
@@ -124,12 +124,12 @@ Each of these, and what the arithmetic leaves out, errs toward a shorter time: e
 
 | Commanded temperature | Coffee thermoblock | Steam thermoblock | Grade | Source |
 |---|---|---|---|---|
-| Highest temperature commanded | 100 °C | 130 °C | inferred | Coffee: a brew target is refused at or above the saturation temperature `CONTROL_SATURATION_C`, accounted for in `firmware/params/control.declaration` and valued at `firmware/src/control/control.c:71`, so 100 °C bounds every admitted target from above. Steam: the loop commands one temperature, `ready-temperature-c`, 130 °C, declared `@estimated` in `firmware/params/steam_control.declaration`, which it holds while nothing is drawn. During a draw it commands no temperature: the feed pump holds pressure inside a band and the heater holds a declared superheat at the modelled outlet, so the ready temperature is the highest figure commanded. |
+| Highest temperature commanded | 100 °C | 137 °C | inferred | Coffee: a brew target is refused at or above the saturation temperature `CONTROL_SATURATION_C`, accounted for in `firmware/params/control.declaration` and valued at `firmware/src/control/control.c:71`, so 100 °C bounds every admitted target from above. Steam: the loop commands one temperature, `ready-temperature-c`, 137 °C, declared `@estimated` in `firmware/params/steam_control.declaration`, which it holds while nothing is drawn. During a draw it commands no temperature: the feed pump holds pressure inside a band and the heater holds a declared superheat at the modelled outlet, so the ready temperature is the highest figure commanded. |
 
 The times from the commanded temperature:
 
 - Coffee: 192 J/K × (107 − 100) K = 1344 J; 1344 J / 1215 W = 1.1 s.
-- Steam: 216 J/K × (195 − 130) K = 216 × 65 = 14 040 J; 14 040 J / 1362 W = 10.3 s.
+- Steam: 216 J/K × (195 − 137) K = 216 × 58 = 12 528 J; 12 528 J / 1362 W = 9.2 s.
 
 Why these do not bound the interval from below, as the interlock needs: in both loops the casting runs hotter than the commanded figure, by an amount no declared figure fixes. The coffee loop drives the temperature of the water leaving the block, not the block itself, and the two are not a fixed offset apart (`firmware/src/control/control.h`). During a draw the steam loop commands no temperature: the feed holds pressure and the heater holds a superheat at the modelled outlet, so the casting stands above saturation of the measured pressure by that superheat and by the drop from casting to outlet (`steam.outlet_drop_k_s_per_ml`, `@estimated`, in `firmware/params/thermoblock.params`), neither of which fixes where the casting sits. A casting that starts hotter starts nearer its trip point and reaches it sooner, so each time above is longer than that heater's real time, by an amount not yet known: an upper limit, not the interval. The coffee side shows how much that matters: it has 7 K between its commanded ceiling and its trip point, and each kelvin the casting stands above 100 °C takes 192 J/K / 1215 W = 0.16 s from its 1.1 s. Which heater sets the interval is likewise left to the derivation, because the two castings' excesses over their commanded figures are not the same.
 
@@ -162,7 +162,7 @@ The accuracy each sensing channel must hold is stated per channel in `controller
 |---|---|---|---|
 | Coffee thermoblock temperature | ±2 °C | inferred (`@estimated` at its source) | `REQ-MEASUREMENT-001.C1`, `.C4`, `REQ-ELECTRICAL-INSTALL-001.C8` |
 | Steam thermoblock temperature | ±2 °C | inferred (`@estimated` at its source) | `REQ-MEASUREMENT-001.C1` and `.C4`, on the steam loop's own margin; `REQ-ELECTRICAL-INSTALL-001.C8` |
-| Steam-path pressure | ±0.2 bar | inferred (`@estimated` at its source) | `REQ-MEASUREMENT-001.C8`, `REQ-ELECTRICAL-INSTALL-001.C8` |
+| Steam-path pressure | ±0.775 bar | inferred (`@estimated` at its source) | `REQ-MEASUREMENT-001.C8`, `REQ-ELECTRICAL-INSTALL-001.C8` |
 | Steam wand temperature, flow meter | No accuracy is claimed for either channel anywhere in the graph, so none is imposed on the boards. The column records why no figure reaches them | — | `REQ-MEASUREMENT-001.C6` (flow resolution, stated in the same file's *Resolution* column) |
 | Contact closures: tank level, knob microswitches, panel keys | Not applicable — two states, no continuous value | — | — |
 | Mains zero-cross | Not bounded — the offset between a true crossing and a detected edge has no declared figure, and `DEC-MAINS-PHASED-ACTUATION-BELOW-SEAM` declines to invent one | — | `REQ-MACHINE-CONFIGURATION-001.C4` |

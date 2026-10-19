@@ -8504,6 +8504,52 @@ static void test_a_probe_the_structure_cannot_answer_runs_no_corner(void)
     TEST_ASSERT_EQUAL_UINT(0u, margin.contributing);
 }
 
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C2: An initial inventory above the capacity
+/// is refused wherever a model is built from the description, and is not
+/// clamped.
+///
+/// A corner the description's declared error carries past a relation between two
+/// coefficients is a machine the model refuses to build. The margin reports it as
+/// a corner that did not run -- `ran` false with its coefficient moved -- rather
+/// than skipping it without trace, so the count of corners run falls short of the
+/// count enumerated and the shortfall is the finding. The saturation temperature
+/// is declared sixty percent out: its low end is a machine and its high end puts
+/// saturation above the casting ceiling, which no model is built from.
+static void test_a_corner_whose_machine_cannot_be_built_is_reported_as_not_run(void)
+{
+    const char *const names[] = {"steam.saturation_temperature_c"};
+    const float errors[] = {0.6f};
+    const char *declaring = description_declaring(names, errors, 1u);
+    const plant_parameters_t believed = parameters_from(declaring);
+    const plant_parameter_budget_t declared = budget_from(declaring);
+    const protection_margin_probe_t probe = the_shipped_probe();
+    protection_margin_corner_t low_end;
+    protection_margin_corner_t high_end;
+    protection_margin_t margin;
+    size_t at = 0u;
+
+    TEST_ASSERT_TRUE(plant_parameter_position("steam.saturation_temperature_c", &at));
+
+    /* Downwards is the even corner of a coefficient and upwards the odd one. */
+    TEST_ASSERT_TRUE(protection_margin_corner(&believed, &declared, &probe, 2u * at, &low_end));
+    TEST_ASSERT_TRUE(protection_margin_corner(&believed, &declared, &probe, (2u * at) + 1u,
+                                              &high_end));
+    TEST_ASSERT_EQUAL_UINT(1u, low_end.moves);
+    TEST_ASSERT_TRUE_MESSAGE(low_end.ran, "the end of the error that is a machine did not run");
+    TEST_ASSERT_EQUAL_UINT(1u, high_end.moves);
+    TEST_ASSERT_FALSE_MESSAGE(high_end.ran,
+                              "a corner no model can be built from was run, or skipped without trace");
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, high_end.contribution_c);
+
+    plant_parameters_t machine;
+    TEST_ASSERT_TRUE(protection_margin_corner_machine(&believed, &declared, &high_end, &machine));
+    TEST_ASSERT_FALSE(plant_parameters_admissible(&machine, NULL));
+
+    TEST_ASSERT_TRUE(protection_margin_widened(&believed, &declared, &probe, 0.0f, &margin));
+    TEST_ASSERT_EQUAL_UINT(1u, margin.corners_run);
+    TEST_ASSERT_TRUE(margin.corners > margin.corners_run);
+}
+
 /// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR.C1: the declared sensing
 /// error is added on top of the model-error margin rather than weighed against
 /// it, per DEC-SENSING-ERROR-ADDS-TO-COMMANDED-MARGIN -- so the combined margin
@@ -9479,6 +9525,7 @@ int main(void)
     RUN_TEST(test_a_budget_that_does_not_belong_to_this_structure_supports_no_enumeration);
     RUN_TEST(test_the_corner_count_and_the_corners_agree_about_where_the_enumeration_ends);
     RUN_TEST(test_a_probe_the_structure_cannot_answer_runs_no_corner);
+    RUN_TEST(test_a_corner_whose_machine_cannot_be_built_is_reported_as_not_run);
     RUN_TEST(test_the_declared_sensing_error_adds_to_the_model_error_margin_exactly);
     RUN_TEST(test_a_sensing_error_that_is_not_a_positive_number_contributes_nothing);
     RUN_TEST(test_the_public_margin_reader_carries_the_declared_sensing_error);
