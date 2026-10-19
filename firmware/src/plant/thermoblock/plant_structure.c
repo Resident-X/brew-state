@@ -1020,11 +1020,16 @@ bool plant_model_least_outlet_superheat(const plant_parameters_t *parameters,
     }
 
     float drop_error = 0.0f;
+    bool drop_declared = false;
     for (size_t at = 0u; at < sizeof(SPECS) / sizeof(SPECS[0]) && at < budget->count; at++) {
         if (SPECS[at].offset == offsetof(plant_parameters_t, steam_outlet_drop_k_s_per_ml) &&
             budget->declared[at]) {
+            drop_declared = true;
             drop_error = fmaxf(budget->assumed_error[at], 0.0f);
         }
+    }
+    if (!drop_declared) {
+        return false;
     }
 
     const float made_ml_per_s =

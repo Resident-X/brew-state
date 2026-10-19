@@ -373,6 +373,19 @@ static bool command_everything_off(steam_control_state_t *state)
  * is added on top of that per DEC-SENSING-ERROR-ADDS-TO-COMMANDED-MARGIN, on
  * the same terms the coffee side's own sensing error is.
  */
+static void steam_margin_probe(const steam_control_declaration_t *declaration,
+                               protection_margin_probe_t *probe)
+{
+    probe->protects = PLANT_QUANTITY_STEAM_TEMPERATURE_C;
+    probe->heater = ACTUATION_CHANNEL_STEAM_HEATER;
+    probe->held_at_target[0] = PLANT_STATE_STEAM_TEMPERATURE_C;
+    probe->held_at_target[1] = PLANT_STATE_STEAM_TEMPERATURE_C;
+    probe->held_count = 1u;
+    probe->target_c = (float)declaration->ready_temperature_milli_c / 1000.0f;
+    probe->holding_permille = as_drive_level((float)declaration->standing_load_permille);
+    probe->unwidened_c = 0.0f;
+}
+
 static bool steam_widened_margin(const steam_control_declaration_t *declaration,
                                  const plant_parameters_t *parameters,
                                  const plant_parameter_budget_t *budget,
@@ -380,45 +393,61 @@ static bool steam_widened_margin(const steam_control_declaration_t *declaration,
 {
     protection_margin_probe_t probe;
 
-    probe.protects = PLANT_QUANTITY_STEAM_TEMPERATURE_C;
-    probe.heater = ACTUATION_CHANNEL_STEAM_HEATER;
-    probe.held_at_target[0] = PLANT_STATE_STEAM_TEMPERATURE_C;
-    probe.held_at_target[1] = PLANT_STATE_STEAM_TEMPERATURE_C;
-    probe.held_count = 1u;
-    probe.target_c = (float)declaration->ready_temperature_milli_c / 1000.0f;
-    probe.holding_permille = as_drive_level((float)declaration->standing_load_permille);
-    probe.unwidened_c = 0.0f;
-
+    steam_margin_probe(declaration, &probe);
     return protection_margin_widened(parameters, budget, &probe, STEAM_CONTROL_SENSING_ERROR_C,
                                      margin);
 }
 
 /*
- * Whether a declared ready target leaves the widened margin between itself and
- * the steam block's trip point.
+ * The coefficient whose declared error this loop's superheat estimate reads,
+ * which the budget must declare for the estimate to carry the allowance it
+ * claims.
+ */
+#define STEAM_ESTIMATE_PARAMETER "steam.outlet_drop_k_s_per_ml"
+
+bool steam_control_description_established(const steam_control_declaration_t *declaration,
+                                           const plant_parameters_t *parameters,
+                                           const plant_parameter_budget_t *budget,
+                                           plant_parameter_error_t *refusal)
+{
+    protection_margin_probe_t probe;
+    protection_margin_t margin;
+
+    if (declaration == NULL) {
+        return false;
+    }
+    steam_margin_probe(declaration, &probe);
+    return protection_margin_established(parameters, budget, &probe, STEAM_CONTROL_SENSING_ERROR_C,
+                                         STEAM_ESTIMATE_PARAMETER, refusal, &margin);
+}
+
+/*
+ * Whether the description and budget this loop is given establish a margin, and
+ * a declared ready target leaves it between itself and the steam block's trip
+ * point.
  *
- * A margin that could not be established refuses the target, and so does one
- * sized with a declared-error corner left out: this loop holds the block at the
- * target against a trip point nothing else in the machine enforces, so an
- * uncertainty the enumeration could not cover is taken as one that could carry
- * the block into it. A believed description the plant refuses to build a model
- * from establishes no margin at all, which is the case this refusal is for. A
- * target sitting exactly at the edge keeps exactly the margin asked for and is
- * admitted.
+ * The margin is established under the one precondition every law holds its
+ * inputs to (protection_margin_established): a believed description the plant
+ * refuses to build a model from, a budget leaving undeclared the coefficient
+ * this loop's superheat estimate reads, and a declared-error corner no machine
+ * can be built for each refuse the loop rather than being read as a smaller
+ * margin. A target sitting exactly at the edge keeps exactly the margin asked
+ * for and is admitted.
  */
 static bool ready_target_clears_the_protection_margin(const steam_control_declaration_t *declaration,
                                                       const plant_parameters_t *parameters,
                                                       const plant_parameter_budget_t *budget)
 {
+    protection_margin_probe_t probe;
     protection_margin_t margin;
 
-    if (!steam_widened_margin(declaration, parameters, budget, &margin) ||
-        margin.declared_not_run > 0u) {
+    steam_margin_probe(declaration, &probe);
+    if (!protection_margin_established(parameters, budget, &probe, STEAM_CONTROL_SENSING_ERROR_C,
+                                       STEAM_ESTIMATE_PARAMETER, NULL, &margin)) {
         return false;
     }
 
-    const float target_c = (float)declaration->ready_temperature_milli_c / 1000.0f;
-    return target_c <= (STEAM_CONTROL_PROTECTION_TRIP_C - margin.margin_c);
+    return probe.target_c <= (STEAM_CONTROL_PROTECTION_TRIP_C - margin.margin_c);
 }
 
 bool steam_control_protection_margin(const steam_control_state_t *state,
@@ -544,19 +573,10 @@ bool steam_control_init(steam_control_state_t *state, const estimator_limits_t *
     }
 
     /*
-     * The believed description is held to what the loader holds one to, for the
-     * reason the declaration is: a record edited or built past the loader is
-     * refused where it is run. The margin below is read off models built from
-     * it, and a record no model can be built from would otherwise be read as a
-     * margin of the sensing error alone.
-     */
-    if (!plant_parameters_admissible(parameters, NULL)) {
-        return false;
-    }
-
-    /*
-     * And a declaration asking this loop to hold the block where the declared
-     * model error could carry it into its own protection is refused here, at
+     * The believed description and error budget are held to the precondition
+     * every law holds them to, and a declaration asking this loop to hold the
+     * block where the declared model error could carry it into its own
+     * protection is refused here, at
      * the one point the target is taken on, rather than left to be discovered
      * by the device opening. It is refused after the outputs are off for the
      * reason every other refusal here is.

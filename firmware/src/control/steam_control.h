@@ -213,6 +213,20 @@ bool steam_control_init(steam_control_state_t *state, const estimator_limits_t *
                         const plant_parameter_budget_t *budget);
 
 /*
+ * Whether the description and error budget are ones this loop's initialisation
+ * takes on: the believed description is one the plant admits, the budget
+ * declares an error against the coefficient the loop's superheat estimate
+ * reads, and the protection margin is established over every declared corner.
+ * Initialisation refuses what this refuses; a caller that has been refused asks
+ * it which parameter to tell its builder about. `refusal`, when not null, is
+ * written and on a refusal names the parameter and the fault.
+ */
+bool steam_control_description_established(const steam_control_declaration_t *declaration,
+                                           const plant_parameters_t *parameters,
+                                           const plant_parameter_budget_t *budget,
+                                           plant_parameter_error_t *refusal);
+
+/*
  * The margin this instance requires between the ready target it was brought up
  * with and the steam side's protection trip point, and the enumeration that
  * margin came out of.

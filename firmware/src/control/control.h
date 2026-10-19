@@ -652,9 +652,15 @@ typedef struct {
  * untrustworthy reading -- but is read by control_command_delivery as "no
  * delivery can be commanded", rather than divided by later.
  *
+ * The description and budget are held to the one precondition every law holds
+ * them to: a margin established over every corner they declare, so a believed
+ * record no model can be built from, and a declared error carrying a corner no
+ * machine can be built for, are refused here and not read as a smaller margin.
+ *
  * Returns false when the interface refuses an off command, when no usable
- * record is given -- including no budget record -- or when the estimator
- * refuses the structure this build compiled. Those leave the fault latched as
+ * record is given -- including no budget record -- when the estimator refuses
+ * the structure this build compiled, or when the description and budget
+ * establish no margin over every declared corner. Those leave the fault latched as
  * an untrustworthy reading does: a control law that cannot obtain the
  * temperature it acts on must not drive the heater, and it must not start
  * driving it later either.
@@ -663,6 +669,18 @@ bool control_init(control_state_t *state, const plant_parameters_t *parameters,
                   const plant_parameter_budget_t *budget, const estimator_limits_t *limits,
                   const delivery_tolerance_t *tolerance,
                   const pump_trim_declaration_t *pump_trim);
+
+/*
+ * Whether the description and error budget are ones control_init takes on: the
+ * believed description is one the plant admits and the margin is established
+ * over every declared corner. A caller that has been refused asks this which
+ * parameter to tell its builder about; `refusal`, when not null, is written and
+ * on a refusal names the parameter and the fault.
+ */
+bool control_description_established(const plant_parameters_t *parameters,
+                                     const plant_parameter_budget_t *budget,
+                                     const delivery_tolerance_t *tolerance,
+                                     plant_parameter_error_t *refusal);
 
 /*
  * The margin this instance requires between a commanded target and the

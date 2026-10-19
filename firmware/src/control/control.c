@@ -1285,22 +1285,28 @@ static void refuse_if_the_pair_is_beyond_the_machine(const control_state_t *stat
  * what this channel's own sensor may be wrong by is present regardless of which
  * model-error corner is real, not an alternative hypothesis about the plant.
  */
+static void fill_margin_probe(const delivery_tolerance_t *tolerance, float target_c,
+                              protection_margin_probe_t *probe)
+{
+    const float rise_k =
+        (target_c > CONTROL_COLD_REFERENCE_C) ? (target_c - CONTROL_COLD_REFERENCE_C) : 0.0f;
+
+    probe->protects = PLANT_QUANTITY_BREW_TEMPERATURE_C;
+    probe->heater = ACTUATION_CHANNEL_BREW_HEATER;
+    probe->held_at_target[0] = PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C;
+    probe->held_at_target[1] = PLANT_STATE_BREW_OUTLET_TEMPERATURE_C;
+    probe->held_count = 2u;
+    probe->target_c = target_c;
+    probe->holding_permille = as_drive_level(rise_k * CONTROL_STANDING_PERMILLE_PER_K);
+    probe->unwidened_c = (float)tolerance->brew_temperature_band_milli_c / 1000.0f;
+}
+
 static bool widened_margin(const control_state_t *state, float target_c,
                            protection_margin_t *margin)
 {
     protection_margin_probe_t probe;
-    const float rise_k =
-        (target_c > CONTROL_COLD_REFERENCE_C) ? (target_c - CONTROL_COLD_REFERENCE_C) : 0.0f;
 
-    probe.protects = PLANT_QUANTITY_BREW_TEMPERATURE_C;
-    probe.heater = ACTUATION_CHANNEL_BREW_HEATER;
-    probe.held_at_target[0] = PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C;
-    probe.held_at_target[1] = PLANT_STATE_BREW_OUTLET_TEMPERATURE_C;
-    probe.held_count = 2u;
-    probe.target_c = target_c;
-    probe.holding_permille = as_drive_level(rise_k * CONTROL_STANDING_PERMILLE_PER_K);
-    probe.unwidened_c = (float)state->tolerance.brew_temperature_band_milli_c / 1000.0f;
-
+    fill_margin_probe(&state->tolerance, target_c, &probe);
     return protection_margin_widened(&state->parameters, &state->budget, &probe,
                                      CONTROL_SENSING_ERROR_C, margin);
 }
@@ -1311,12 +1317,10 @@ static bool widened_margin(const control_state_t *state, float target_c,
  * record already carrying a crossed bound is never reached with this, on the
  * same terms the two refusals above are not.
  *
- * A margin that could not be established refuses nothing, on the same terms the
- * authority probe admits what it cannot refuse on evidence: a description that
- * will not support a corner enumeration -- a structure describing no machine,
- * a budget record that was never loaded -- has said nothing about how wrong it
- * may be, and inventing a refusal from it would be this file declaring an
- * uncertainty the description did not.
+ * Initialisation has already refused a description and budget that establish no
+ * margin over every declared corner, so a margin that cannot be written here is
+ * only that of an instance that never came up, and refuses nothing: such an
+ * instance admits no target for other reasons.
  *
  * A target sitting exactly at the edge keeps exactly the margin the description
  * asks for and is admitted, which is the same convention the drinking floor
@@ -1411,6 +1415,22 @@ static control_admission_t admit_target(const control_state_t *state, float cels
         refuse_if_the_pair_is_beyond_the_machine(state, &state->held_delivery, celsius, &admission);
     }
     return admission;
+}
+
+bool control_description_established(const plant_parameters_t *parameters,
+                                     const plant_parameter_budget_t *budget,
+                                     const delivery_tolerance_t *tolerance,
+                                     plant_parameter_error_t *refusal)
+{
+    protection_margin_probe_t probe;
+    protection_margin_t margin;
+
+    if (tolerance == NULL) {
+        return false;
+    }
+    fill_margin_probe(tolerance, CONTROL_PROTECTION_TRIP_C, &probe);
+    return protection_margin_established(parameters, budget, &probe, CONTROL_SENSING_ERROR_C, NULL,
+                                         refusal, &margin);
 }
 
 bool control_init(control_state_t *state, const plant_parameters_t *parameters,
@@ -1586,6 +1606,19 @@ bool control_init(control_state_t *state, const plant_parameters_t *parameters,
      * is going anywhere with, and probing it anyway would be answering a
      * question about a structure this instance is about to report unusable.
      */
+    /*
+     * The description and budget are held to the one precondition every law
+     * holds them to before this instance takes a target: a margin established
+     * from them over every corner they declare. The margin is a property of a
+     * commanded target, so it is probed here at the trip point, the hottest
+     * a target can be asked for, which is the target whose duty runs the corners
+     * hardest.
+     */
+    if (!control_description_established(parameters, budget, tolerance, NULL)) {
+        state->faulted = true;
+        return false;
+    }
+
     state->full_scale_flow_ml_per_s = probe_full_scale_flow_ml_per_s(parameters);
 
     return off;

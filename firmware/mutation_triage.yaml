@@ -289,7 +289,7 @@ survivors:
       single-figure number of parameters, so both forms accept every table any
       build of this program can present.
 
-  cxx_gt_to_ge:src/plant/common/plant_parameters.c:733:57:
+  cxx_gt_to_ge:src/plant/common/plant_parameters.c:749:57:
     verdict: equivalent
     reason: >-
       The same spec-table size guard again, in `plant_parameter_supply_driven`:
@@ -299,7 +299,7 @@ survivors:
       single-figure number of parameters, so both forms accept every table any
       build of this program can present.
 
-  cxx_gt_to_ge:src/plant/common/plant_parameters.c:716:57:
+  cxx_gt_to_ge:src/plant/common/plant_parameters.c:732:57:
     verdict: equivalent
     reason: >-
       The same spec-table size guard once more, in `plant_parameter_value`:
@@ -332,7 +332,7 @@ survivors:
       the unsanitized sweep records the mutant as surviving. Repeat that if this
       reasoning is ever in doubt.
 
-  cxx_lt_to_le:src/plant/common/plant_parameters.c:742:35:
+  cxx_lt_to_le:src/plant/common/plant_parameters.c:758:35:
     verdict: analysis
     reason: >-
       Loop bound in `plant_parameter_supply_driven`, `which < named_count`

@@ -900,6 +900,8 @@ static void test_the_steam_draw_run_states_dryness_in_both_forms_with_the_caveat
     TEST_ASSERT_EQUAL_STRING(superheat_k > 0.0 ? "true" : "false", field_named(&json, "dry")->value);
     TEST_ASSERT_NULL(strstr(field_named(&json, "claim")->value, "no steam was made"));
     TEST_ASSERT_TRUE(number_of(&json, "pressure_bar_gauge") > 0.0);
+    TEST_ASSERT_NOT_NULL(strstr(field_named(&json, "pressure_source")->value, "plant model"));
+    TEST_ASSERT_NOT_NULL(strstr(field_named(&text, "pressure_source")->value, "plant model"));
     TEST_ASSERT_EQUAL_STRING(CARRY_OVER_CAVEAT, field_named(&text, "carry_over")->value);
     TEST_ASSERT_EQUAL_STRING(CARRY_OVER_CAVEAT, field_named(&json, "carry_over")->value);
 }
@@ -1076,6 +1078,43 @@ static void test_a_cross_tier_draw_run_whose_bound_cannot_be_stated_reports_the_
     assert_the_refusal_names_the_parameter(&parameters);
 }
 
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C2: The steam law's initialisation, and the
+/// brew law's for the corners the relations make unbuildable, refuse a believed
+/// description or error budget from which the model cannot be built at every
+/// declared corner, or that leaves undeclared a coefficient the law's superheat
+/// estimate reads; the host runs name the parameter.
+///
+/// Each host run that brings a law up reports the parameter the law refused it
+/// on, as it does for a description the model refuses: the steam draw for the
+/// coefficient its estimate reads, left undeclared, and the brew draw for a
+/// declared error whose corner no machine can be built for.
+static void test_a_host_run_whose_law_refuses_the_budget_names_the_parameter(void)
+{
+    const plant_parameters_t parameters = reference_parameters();
+    size_t at = 0u;
+
+    load_what_the_runs_are_handed();
+    TEST_ASSERT_TRUE(plant_parameter_position("steam.outlet_drop_k_s_per_ml", &at));
+    run_budget.declared[at] = false;
+    TEST_ASSERT_TRUE(steam_draw_of(&parameters, 10u, 1000u) != 0);
+    TEST_ASSERT_NOT_NULL_MESSAGE(strstr(run_error, "the steam control path could not be brought up"),
+                                 run_error);
+    TEST_ASSERT_NOT_NULL_MESSAGE(strstr(run_error, "parameter steam.outlet_drop_k_s_per_ml is refused"),
+                                 run_error);
+
+    load_what_the_runs_are_handed();
+    TEST_ASSERT_TRUE(plant_parameter_position("steam.saturation_temperature_c", &at));
+    run_budget.declared[at] = true;
+    run_budget.assumed_error[at] = 0.6f;
+    TEST_ASSERT_TRUE(cross_tier_draw_of(&parameters) != 0);
+    TEST_ASSERT_NOT_NULL_MESSAGE(strstr(run_error, "the control path could not be brought up"), run_error);
+    TEST_ASSERT_NOT_NULL_MESSAGE(strstr(run_error, "parameter steam."), run_error);
+    TEST_ASSERT_NOT_NULL_MESSAGE(strstr(run_error, "is refused (fault"), run_error);
+
+    load_what_the_runs_are_handed();
+    TEST_ASSERT_EQUAL_INT(0, steam_draw_of(&parameters, 10u, 1000u));
+}
+
 static void assert_nothing_written_dryness(const dryness_finding_t *finding)
 {
     char output[TEXT_MAX];
@@ -1131,6 +1170,9 @@ static void test_a_dry_steam_claim_names_its_superheat_and_pressure_and_carries_
         TEST_ASSERT_EQUAL_STRING("modelled at the outlet and confirmed by no sensor",
                                  field_named(form, "superheat_source")->value);
         TEST_ASSERT_EQUAL_STRING("the least over the draw", field_named(form, "superheat_over")->value);
+        TEST_ASSERT_EQUAL_STRING(
+            "the plant model's steam pressure on that step, which the simulated sensor is set to read in whole millibar",
+            field_named(form, "pressure_source")->value);
         TEST_ASSERT_EQUAL_STRING("superheat above saturation at the measured steam pressure",
                                  field_named(form, "basis")->value);
         TEST_ASSERT_NOT_NULL(strstr(field_named(form, "claim")->value, "dry"));
@@ -1224,6 +1266,7 @@ int main(void)
     RUN_TEST(test_a_steam_draw_run_whose_bound_cannot_be_stated_reports_the_refusal);
     RUN_TEST(test_the_cross_tier_draw_run_states_the_bound_in_both_forms);
     RUN_TEST(test_a_cross_tier_draw_run_whose_bound_cannot_be_stated_reports_the_refusal);
+    RUN_TEST(test_a_host_run_whose_law_refuses_the_budget_names_the_parameter);
     RUN_TEST(test_a_dry_steam_claim_names_its_superheat_and_pressure_and_carries_the_caveat);
     RUN_TEST(test_no_dryness_is_claimed_at_zero_superheat_or_with_no_steam);
     RUN_TEST(test_the_dryness_statement_reads_without_the_source);

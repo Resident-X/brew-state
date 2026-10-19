@@ -393,7 +393,18 @@ int cross_tier_draw_run(const plant_parameters_t *machine_parameters,
            delivered_or_not(&machine, outlet_kept, &outlet_c), drawn_ml_per_s);
 
     if (!control_init(&state, control_parameters, control_budget, limits, tolerance, pump_trim)) {
-        (void)fprintf(stderr, "cross-tier draw: the control path could not be brought up\n");
+        plant_parameter_error_t refusal;
+
+        if (!control_description_established(control_parameters, control_budget, tolerance,
+                                             &refusal) &&
+            refusal.fault != PLANT_PARAMETER_OK) {
+            (void)fprintf(stderr,
+                          "cross-tier draw: the control path could not be brought up: "
+                          "parameter %s is refused (fault %d)\n",
+                          refusal.parameter, (int)refusal.fault);
+        } else {
+            (void)fprintf(stderr, "cross-tier draw: the control path could not be brought up\n");
+        }
         return 1;
     }
     if (!control_command_temperature(&state, draw->target_c)) {

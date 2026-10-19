@@ -1,6 +1,7 @@
 #include "protection_margin.h"
 
 #include <stddef.h>
+#include <string.h>
 
 #include "plant_model.h"
 
@@ -380,5 +381,86 @@ bool protection_margin_widened(const plant_parameters_t *believed,
     }
 
     margin->margin_c = margin->unwidened_c + margin->worst_corner_c + margin->sensing_error_c;
+    return true;
+}
+
+/*
+ * Name, in `refusal`, the parameter the first declared corner that did not run
+ * was refused on. A corner the structure refuses as a machine is named by the
+ * check that refused it; one it could build and a probe could not answer has no
+ * parameter to blame, and is stated as an inconsistency with no name.
+ */
+static void name_the_corner_not_run(const plant_parameters_t *believed,
+                                    const plant_parameter_budget_t *budget,
+                                    const protection_margin_probe_t *probe,
+                                    plant_parameter_error_t *refusal)
+{
+    const size_t corners = protection_margin_corner_count(budget);
+
+    for (size_t which = 0u; which < corners; which++) {
+        protection_margin_corner_t corner;
+        plant_parameters_t machine;
+        const char *name = NULL;
+
+        if (!protection_margin_corner(believed, budget, probe, which, &corner) || corner.ran ||
+            corner.moves == 0u) {
+            continue;
+        }
+        memset(refusal, 0, sizeof(*refusal));
+        if (protection_margin_corner_machine(believed, budget, &corner, &machine)) {
+            /* A machine the plant refuses names what it refused; one it builds had no probe answer. */
+            if (!plant_parameters_admissible(&machine, refusal)) {
+                return;
+            }
+        } else if (!corner.joint && plant_parameter_name(corner.at, &name)) {
+            refusal->fault = PLANT_PARAMETER_OUT_OF_RANGE;
+            (void)strncpy(refusal->parameter, name, sizeof(refusal->parameter) - 1u);
+            return;
+        }
+        refusal->fault = PLANT_PARAMETER_INCONSISTENT;
+        return;
+    }
+}
+
+bool protection_margin_established(const plant_parameters_t *believed,
+                                   const plant_parameter_budget_t *budget,
+                                   const protection_margin_probe_t *probe,
+                                   float sensing_error_c, const char *estimate_parameter,
+                                   plant_parameter_error_t *refusal, protection_margin_t *margin)
+{
+    plant_parameter_error_t discarded;
+
+    if (refusal == NULL) {
+        refusal = &discarded;
+    }
+    memset(refusal, 0, sizeof(*refusal));
+
+    if (believed == NULL || budget == NULL || probe == NULL || margin == NULL) {
+        return false;
+    }
+    if (!plant_parameters_admissible(believed, refusal)) {
+        return false;
+    }
+
+    if (estimate_parameter != NULL) {
+        float unused_k = 0.0f;
+
+        if (!plant_model_least_outlet_superheat(believed, budget, probe->target_c, 0.0f,
+                                                (uint16_t)1000u, &unused_k)) {
+            refusal->fault = PLANT_PARAMETER_MISSING;
+            (void)strncpy(refusal->parameter, estimate_parameter,
+                          sizeof(refusal->parameter) - 1u);
+            return false;
+        }
+    }
+
+    if (!protection_margin_widened(believed, budget, probe, sensing_error_c, margin)) {
+        refusal->fault = PLANT_PARAMETER_MISSING;
+        return false;
+    }
+    if (margin->declared_not_run > 0u) {
+        name_the_corner_not_run(believed, budget, probe, refusal);
+        return false;
+    }
     return true;
 }

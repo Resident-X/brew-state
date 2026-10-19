@@ -22,7 +22,11 @@ typedef struct {
     bool steam_made;
     /* The least modelled outlet superheat over the steps steam was made on, in kelvin. */
     float superheat_k;
-    /* The measured steam pressure on that step, in bar gauge. */
+    /*
+     * The steam pressure on that step, in bar gauge: the plant model's own
+     * quantity, which a host run's simulated sensor is set from, and not a
+     * reading taken through a sensor. The report says so in `pressure_source`.
+     */
     float pressure_bar;
 } dryness_finding_t;
 

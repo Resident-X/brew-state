@@ -705,6 +705,22 @@ bool plant_parameter_position(const char *name, size_t *at)
     return true;
 }
 
+bool plant_parameter_name(size_t at, const char **name)
+{
+    if (name == NULL) {
+        return false;
+    }
+
+    size_t spec_count = 0u;
+    const plant_parameter_spec_t *specs = plant_structure_parameter_specs(&spec_count);
+    if (specs == NULL || at >= spec_count) {
+        return false;
+    }
+
+    *name = specs[at].name;
+    return true;
+}
+
 bool plant_parameter_value(const plant_parameters_t *parameters, size_t at, float *value)
 {
     if (parameters == NULL || value == NULL) {

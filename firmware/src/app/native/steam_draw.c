@@ -335,7 +335,17 @@ int steam_draw_run(const plant_parameters_t *parameters,
     (void)printf("HOST steam-settling-steps 1\n");
 
     if (!steam_control_init(&loop, limits, declaration, parameters, budget)) {
-        (void)fprintf(stderr, "steam draw: the steam control path could not be brought up\n");
+        plant_parameter_error_t refusal;
+
+        if (!steam_control_description_established(declaration, parameters, budget, &refusal) &&
+            refusal.fault != PLANT_PARAMETER_OK) {
+            (void)fprintf(stderr,
+                          "steam draw: the steam control path could not be brought up: "
+                          "parameter %s is refused (fault %d)\n",
+                          refusal.parameter, (int)refusal.fault);
+        } else {
+            (void)fprintf(stderr, "steam draw: the steam control path could not be brought up\n");
+        }
         return 1;
     }
 

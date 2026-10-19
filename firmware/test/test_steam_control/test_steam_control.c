@@ -2970,6 +2970,158 @@ static void test_a_margin_with_a_declared_corner_left_out_or_none_at_all_refuses
                               "a budget that enumerates nothing was admitted");
 }
 
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C2: The steam law's initialisation likewise
+/// refuses a believed description or error budget that leaves undeclared a
+/// coefficient the law's superheat estimate reads.
+///
+/// The estimate takes the casting-to-outlet coefficient at the cool end of its
+/// declared error, so a budget declaring none would have the law hold the
+/// superheat setpoint on an estimate with no allowance in it. That budget is
+/// refused with both commands off and the law unconfigured, however the
+/// coefficient came to be undeclared: left out, past the end of a short budget,
+/// or never declared on a budget that declares everything else. Declared exact,
+/// at an error of nothing, is a claim and is taken on. Every other entry of the
+/// budget is shown to be one the estimate does not read, so that this one is
+/// the whole of what is owed.
+static void test_a_budget_leaving_the_casting_to_outlet_error_undeclared_is_refused(void)
+{
+    static const char *const READ = "steam.outlet_drop_k_s_per_ml";
+    plant_parameter_budget_t undeclared = budget;
+    plant_parameter_budget_t short_budget = budget;
+    plant_parameter_budget_t exact = budget;
+    steam_control_state_t state;
+    plant_parameter_error_t refusal;
+    size_t at = 0u;
+
+    TEST_ASSERT_TRUE(plant_parameter_position(READ, &at));
+    undeclared.declared[at] = false;
+    short_budget.count = at;
+    exact.assumed_error[at] = 0.0f;
+
+    plant_parameter_budget_t *const refused[] = {&undeclared, &short_budget};
+    for (size_t i = 0u; i < sizeof(refused) / sizeof(refused[0]); i++) {
+        hw_sim_reset();
+        TEST_ASSERT_FALSE_MESSAGE(
+            steam_control_init(&state, &limits, &declaration, &parameters, refused[i]),
+            "the law was brought up on a budget declaring no error on the coefficient its estimate reads");
+        TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_HEATER));
+        TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP));
+        TEST_ASSERT_EQUAL(STEAM_CONTROL_STEP_SENSOR_INVALID, steam_control_step(&state));
+
+        TEST_ASSERT_FALSE(
+            steam_control_description_established(&declaration, &parameters, refused[i], &refusal));
+        TEST_ASSERT_EQUAL_STRING(READ, refusal.parameter);
+        TEST_ASSERT_EQUAL(PLANT_PARAMETER_MISSING, refusal.fault);
+    }
+
+    hw_sim_reset();
+    TEST_ASSERT_TRUE_MESSAGE(steam_control_init(&state, &limits, &declaration, &parameters, &exact),
+                             "a coefficient declared exact was refused as undeclared");
+    TEST_ASSERT_TRUE(steam_control_description_established(&declaration, &parameters, &budget, &refusal));
+    TEST_ASSERT_EQUAL_STRING("", refusal.parameter);
+
+    /*
+     * No other entry is read: with any one of the rest left undeclared the
+     * estimate is the figure the full budget gives, so the refusal above is
+     * owed for this coefficient and for no other.
+     */
+    float full_k = -1.0f;
+    TEST_ASSERT_TRUE(plant_model_least_outlet_superheat(&parameters, &budget, 140.0f, 1.0f, 60u, &full_k));
+    for (size_t other = 0u; other < budget.count; other++) {
+        plant_parameter_budget_t without = budget;
+        float without_k = -2.0f;
+
+        if (other == at) {
+            continue;
+        }
+        without.declared[other] = false;
+        TEST_ASSERT_TRUE(
+            plant_model_least_outlet_superheat(&parameters, &without, 140.0f, 1.0f, 60u, &without_k));
+        TEST_ASSERT_EQUAL_FLOAT(full_k, without_k);
+    }
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C2: The steam law's initialisation refuses a
+/// believed description or error budget from which the model cannot be built at
+/// every declared corner, the loader and the host runs naming the parameter.
+///
+/// The refusal names the parameter the corner no machine can be built for was
+/// refused on, as the plant's own check names it for that machine.
+static void test_the_refusal_of_a_corner_no_machine_can_be_built_for_names_the_parameter(void)
+{
+    plant_parameter_budget_t wide = budget;
+    plant_parameter_error_t refusal;
+    plant_parameter_error_t expected;
+    protection_margin_corner_t corner;
+    plant_parameters_t machine;
+    size_t at = 0u;
+
+    TEST_ASSERT_TRUE(plant_parameter_position("steam.saturation_temperature_c", &at));
+    wide.declared[at] = true;
+    wide.assumed_error[at] = 0.6f;
+
+    TEST_ASSERT_FALSE(steam_control_description_established(&declaration, &parameters, &wide, &refusal));
+    TEST_ASSERT_TRUE(protection_margin_corner_descriptor(&wide, (2u * at) + 1u, &corner));
+    TEST_ASSERT_TRUE(protection_margin_corner_machine(&parameters, &wide, &corner, &machine));
+    TEST_ASSERT_FALSE(plant_parameters_admissible(&machine, &expected));
+    TEST_ASSERT_TRUE(refusal.parameter[0] != '\0');
+    TEST_ASSERT_EQUAL_STRING(expected.parameter, refusal.parameter);
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_INCONSISTENT, refusal.fault);
+
+    /* A believed record the plant refuses is named by the check that refuses it. */
+    plant_parameters_t edited = parameters;
+    TEST_ASSERT_TRUE(plant_parameter_position("steam.casting_ceiling_c", &at));
+    TEST_ASSERT_TRUE(plant_parameter_scale(&edited, at, 0.5f));
+    TEST_ASSERT_FALSE(steam_control_description_established(&declaration, &edited, &budget, &refusal));
+    TEST_ASSERT_FALSE(plant_parameters_admissible(&edited, &expected));
+    TEST_ASSERT_EQUAL_STRING(expected.parameter, refusal.parameter);
+
+    TEST_ASSERT_FALSE(steam_control_description_established(NULL, &parameters, &budget, &refusal));
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C12: The gate judges the trusted pressure of
+/// the shut block at the moment the wand opens and holds that verdict until the
+/// wand shuts: a wand opened at or above the declared ready pressure is fed from
+/// its first step, and a wand opened below it is starved for the whole draw.
+///
+/// The gate is taken on the opening step from the last pressure the shut block
+/// was trusted at, so a reading that is invalid on that very step -- failed, not
+/// absent -- does not change the verdict: the trusted value stands, as it does for
+/// every channel here, and the draw is fed if that value was at the ready pressure
+/// and starved if it was a milli-bar below. This is the loop's existing
+/// convention for a reading it cannot believe, which leaves the remembered value
+/// where it was, and not something this test chooses.
+static void test_the_opening_step_is_gated_on_the_last_trusted_pressure_when_the_reading_is_invalid(void)
+{
+    const int32_t trusted_levels[] = {declaration.ready_pressure_milli_bar,
+                                      declaration.ready_pressure_milli_bar - 1};
+
+    for (size_t i = 0u; i < sizeof(trusted_levels) / sizeof(trusted_levels[0]); i++) {
+        steam_control_state_t state;
+
+        hw_sim_reset();
+        TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration, &parameters, &budget));
+        (void)step_with(&state, false, trusted_levels[i], declaration.ready_temperature_milli_c);
+
+        hw_sim_set_sensor(HW_SENSOR_STEAM_PRESSURE, HW_READING_FAILED, 0);
+        hw_sim_set_sensor(HW_SENSOR_STEAM_TEMPERATURE, HW_READING_VALID,
+                          declaration.ready_temperature_milli_c);
+        hw_sim_set_sensor(HW_SENSOR_STEAM_KNOB, HW_READING_VALID, HW_READING_DISCRETE_SET);
+        (void)steam_control_step(&state);
+
+        if (i == 0u) {
+            TEST_ASSERT_TRUE_MESSAGE(hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP) > 0u,
+                                     "a draw opened on an invalid reading was starved though the "
+                                     "last trusted pressure was at the ready pressure");
+        } else {
+            TEST_ASSERT_EQUAL_UINT16_MESSAGE(
+                0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP),
+                "a draw opened on an invalid reading was fed though the last trusted pressure "
+                "was below the ready pressure");
+        }
+    }
+}
+
 /// Regression protection for the accessors' null out-parameters, which a
 /// caller cannot be told anything through and which must not be written.
 static void test_the_accessors_refuse_nowhere_to_answer(void)
@@ -3603,6 +3755,9 @@ int main(void)
     RUN_TEST(test_a_believed_record_no_model_can_be_built_from_is_refused_by_the_law);
     RUN_TEST(test_every_edit_past_the_loader_that_leaves_no_model_is_refused_by_the_law);
     RUN_TEST(test_a_margin_with_a_declared_corner_left_out_or_none_at_all_refuses_the_target);
+    RUN_TEST(test_a_budget_leaving_the_casting_to_outlet_error_undeclared_is_refused);
+    RUN_TEST(test_the_opening_step_is_gated_on_the_last_trusted_pressure_when_the_reading_is_invalid);
+    RUN_TEST(test_the_refusal_of_a_corner_no_machine_can_be_built_for_names_the_parameter);
     RUN_TEST(test_pressure_and_superheat_hold_for_draws_of_every_duration);
     RUN_TEST(test_superheat_holds_the_setpoint_across_the_error_ends_of_every_coefficient_that_decides_it);
     RUN_TEST(test_superheat_stays_above_zero_at_every_joint_corner_of_the_deciding_coefficients);

@@ -177,6 +177,18 @@ bool plant_parameter_scale(plant_parameters_t *parameters, size_t at, float fact
 bool plant_parameter_position(const char *name, size_t *at);
 
 /*
+ * The name of the coefficient at a position in that ordering, the inverse of
+ * plant_parameter_position, for the caller that holds a position and owes its
+ * builder a name -- a corner of the declared error that no machine can be built
+ * for, found by position, is repaired by the figure it moves.
+ *
+ * Returns false, writing nothing, for a null argument or a position past the end
+ * of the structure's table. The text is the structure's own and lives as long as
+ * the build does.
+ */
+bool plant_parameter_name(size_t at, const char **name);
+
+/*
  * The value one coefficient holds in a record, by its position in that ordering.
  *
  * The reading counterpart of plant_parameter_scale, through the same offset the
@@ -368,8 +380,10 @@ bool plant_model_quantity(const plant_model_t *model, plant_quantity_t quantity,
  * machine the description admits on that coefficient.
  *
  * Returns false, writing nothing, for a null argument, for a reading that is not
- * a finite number, and for every structure that has no flash-generator steam
- * side and so no modelled outlet.
+ * a finite number, for a budget that does not declare an error against the
+ * casting-to-outlet coefficient -- a figure taken at the cool end of an error
+ * nobody declared is not a least figure -- and for every structure that has no
+ * flash-generator steam side and so no modelled outlet.
  */
 bool plant_model_least_outlet_superheat(const plant_parameters_t *parameters,
                                         const plant_parameter_budget_t *budget, float casting_c,

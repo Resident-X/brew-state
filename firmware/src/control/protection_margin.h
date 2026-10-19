@@ -309,4 +309,36 @@ bool protection_margin_widened(const plant_parameters_t *believed,
                                float sensing_error_c,
                                protection_margin_t *margin);
 
+/*
+ * The one precondition a law's initialisation holds the description and error
+ * budget it is given to, before it takes on a target: the margin is established
+ * from them, over every corner they declare.
+ *
+ * Three things are refused, each by returning false. The believed description
+ * is not one the plant admits (plant_parameters_admissible), so no model can be
+ * built from it and a margin read off models would be the sensing error alone.
+ * The law reads a coefficient's declared error for its superheat estimate --
+ * `estimate_parameter` names it, null for a law whose estimate reads none -- and
+ * the budget declares none, so the estimate would be taken without the allowance
+ * it claims. And a corner of the declared error is one no machine can be built
+ * for, or no probe can answer, so the margin would be sized without a machine
+ * the description says is possible. A budget that supports no corner
+ * enumeration at all is refused on the same terms: it establishes nothing.
+ *
+ * `refusal` may be null; when it is not, it is written whatever the outcome,
+ * and on a refusal names the parameter the refusal was found on -- the one the
+ * plant refused, the one the estimate reads, or the one whose declared-error
+ * corner no machine could be built for -- so a caller can tell its builder which
+ * figure to repair. A corner a probe could not answer on a machine that was
+ * built has no parameter to blame and comes back with no name.
+ *
+ * Written once, here beside the enumeration that counts the corners it could
+ * not run, so that every law is held to the same figure and none restates it.
+ */
+bool protection_margin_established(const plant_parameters_t *believed,
+                                   const plant_parameter_budget_t *budget,
+                                   const protection_margin_probe_t *probe,
+                                   float sensing_error_c, const char *estimate_parameter,
+                                   plant_parameter_error_t *refusal, protection_margin_t *margin);
+
 #endif /* PROTECTION_MARGIN_H */

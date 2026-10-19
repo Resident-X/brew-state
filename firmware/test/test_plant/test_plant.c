@@ -7613,6 +7613,13 @@ static void test_the_steam_draws_coefficients_carry_enforced_admissible_ranges(v
 /// coefficient with a declared origin and error.
 /// SOL-PLANT-STEAM-DRAW-ENERGY.C7: The pressure-divergence-rate coefficient is a
 /// described coefficient with a declared origin and error.
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C5: The restriction coefficient, the saturation
+/// relation's figures, the casting ceiling, the liquid capacity and the initial
+/// inventory are each declared in the thermoblock description with an origin and
+/// an assumed error admissible to the uncertainty budget.
+///
+/// Every coefficient the flash generator adds to the description is in the list,
+/// the casting-to-outlet drop the steam law's estimate reads among them.
 ///
 /// Both halves, against the description the build hands this suite. The error is
 /// kept by the loader, so it is read back through the seam. The origin is not
@@ -7633,6 +7640,7 @@ static void test_the_steam_draws_coefficients_declare_an_origin_and_an_error(voi
         "steam.restriction_bar_s2_per_ml2",
         "steam.liquid_capacity_ml",
         "steam.initial_inventory_ml",
+        "steam.outlet_drop_k_s_per_ml",
     };
     /* The words plant_origin.h declares, spelled out here because a suite that
      * read them from that header would name a vocabulary the seam already
@@ -8823,13 +8831,75 @@ static void test_the_least_outlet_superheat_takes_the_cool_end_of_the_declared_e
                                                        &least));
     TEST_ASSERT_EQUAL_FLOAT(0.0f, least);
 
+    /*
+     * A figure taken at the cool end of an error nobody declared is not a least
+     * figure: the coefficient undeclared, declared only past the end of a budget
+     * that stops short of it, or a budget declaring everything else, is refused
+     * and writes nothing.
+     */
     least = -1.0f;
+    plant_parameter_budget_t undeclared = budget;
+    undeclared.declared[at] = false;
+    TEST_ASSERT_FALSE(plant_model_least_outlet_superheat(&parameters, &undeclared, 120.0f, 0.04f, 20u,
+                                                        &least));
+    plant_parameter_budget_t short_of_it = budget;
+    short_of_it.count = at;
+    TEST_ASSERT_FALSE(plant_model_least_outlet_superheat(&parameters, &short_of_it, 120.0f, 0.04f,
+                                                        20u, &least));
+    plant_parameter_budget_t others_only;
+    memset(&others_only, 0, sizeof(others_only));
+    others_only.count = at + 1u;
+    for (size_t other = 0u; other < at; other++) {
+        others_only.declared[other] = true;
+        others_only.assumed_error[other] = 0.1f;
+    }
+    TEST_ASSERT_FALSE(plant_model_least_outlet_superheat(&parameters, &others_only, 120.0f, 0.04f,
+                                                        20u, &least));
+    TEST_ASSERT_EQUAL_FLOAT(-1.0f, least);
+
     TEST_ASSERT_FALSE(plant_model_least_outlet_superheat(NULL, &budget, 120.0f, 0.04f, 20u, &least));
     TEST_ASSERT_FALSE(plant_model_least_outlet_superheat(&parameters, NULL, 120.0f, 0.04f, 20u, &least));
     TEST_ASSERT_FALSE(plant_model_least_outlet_superheat(&parameters, &budget, 120.0f, 0.04f, 20u, NULL));
     TEST_ASSERT_FALSE(plant_model_least_outlet_superheat(&parameters, &budget, NAN, 0.04f, 20u, &least));
     TEST_ASSERT_FALSE(plant_model_least_outlet_superheat(&parameters, &budget, 120.0f, INFINITY, 20u, &least));
     TEST_ASSERT_EQUAL_FLOAT(-1.0f, least);
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: ... is refused wherever a model is built
+/// from the description, at load, naming the parameter, and at model construction.
+///
+/// A refusal found by position is told to the builder by name: the position a
+/// coefficient occupies and the name it answers to are the inverse of one
+/// another for every coefficient the structure has, and a position past the end,
+/// or no place to write, is refused without writing.
+static void test_a_position_answers_the_name_that_answers_to_it(void)
+{
+    const char *name = NULL;
+    size_t at = 0u;
+    size_t seen = 0u;
+
+    for (size_t i = 0u; i < sizeof(NOMINAL) / sizeof(NOMINAL[0]); i++) {
+        TEST_ASSERT_TRUE(plant_parameter_position(NOMINAL[i].name, &at));
+        TEST_ASSERT_TRUE(plant_parameter_name(at, &name));
+        TEST_ASSERT_EQUAL_STRING(NOMINAL[i].name, name);
+        seen++;
+    }
+    TEST_ASSERT_TRUE(seen > 0u);
+
+    /* The last position answers and the one after it does not: the edge, not only far past it. */
+    size_t count = 0u;
+    while (plant_parameter_name(count, &name)) {
+        count++;
+        TEST_ASSERT_TRUE_MESSAGE(count < 1000u, "the positions never ended");
+    }
+    TEST_ASSERT_TRUE(count >= seen);
+    TEST_ASSERT_TRUE(plant_parameter_name(count - 1u, &name));
+
+    name = NULL;
+    TEST_ASSERT_FALSE(plant_parameter_name(count, &name));
+    TEST_ASSERT_FALSE(plant_parameter_name(count + 1000u, &name));
+    TEST_ASSERT_NULL(name);
+    TEST_ASSERT_FALSE(plant_parameter_name(0u, NULL));
 }
 
 int main(void)
@@ -9018,5 +9088,6 @@ int main(void)
     RUN_TEST(test_superheat_stays_at_zero_below_the_power_the_feed_needs_and_rises_above_it);
     RUN_TEST(test_the_superheat_falls_with_the_restriction_and_the_outlet_drop);
     RUN_TEST(test_the_least_outlet_superheat_takes_the_cool_end_of_the_declared_error);
+    RUN_TEST(test_a_position_answers_the_name_that_answers_to_it);
     return UNITY_END();
 }
