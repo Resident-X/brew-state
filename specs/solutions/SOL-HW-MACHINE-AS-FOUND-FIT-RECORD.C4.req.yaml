@@ -2,7 +2,7 @@ id: SOL-HW-MACHINE-AS-FOUND-FIT-RECORD.C4
 type: criterion
 title: Each characteristic a retained device imposes on whatever drives or reads it is recorded
 status: active
-version: 3
+version: 4
 measurement_type: binary
 verification: inspection
 text: |
@@ -10,13 +10,12 @@ text: |
   - each solenoid valve: its coil voltage, its steady current and its inrush current, the inrush bounded above by the top-of-span voltage over the coil's resistance measured cold;
   - each pump: its running current at the top of the declared supply span;
   - each heating element: its resistance;
-  - each key and microswitch, including the tank-level sensor where it is a switch: its contact type and rating;
+  - each key and microswitch: its contact type and rating;
   - each temperature sensing element: its resistance at a stated reference temperature and its curve constant;
   - the flow meter: its supply and output type;
   - the buzzer: its type and drive;
   - the gauge driver: its input thresholds, from the datasheet of the part the machine's service documents name, with the revision of the fitted part noted where its marking can be read and stated as unread where it cannot be, the constraint then being the datasheet figure, which the replacing design meets with margin, so no value is held pending for it;
   - each panel indicator element and the low-water indicator: its forward voltage and the current the original drive gives it;
-  - each mains-presence sense channel: its output type, the current its output can sink, and its current transfer figure;
   - each protective-chain device whose wiring reaches the board: its contact rating and what its contact carries;
   - the series resistances inherited on the front assemblies.
   A retained device of a class this list does not name records the quantity the circuit driving or reading it must be designed against, stated in the same way.
