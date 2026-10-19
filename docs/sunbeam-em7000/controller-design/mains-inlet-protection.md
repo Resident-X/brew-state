@@ -52,12 +52,12 @@ Downstream branch protection that the T10A does not provide: a 1-2 A slow-blow f
 
 ## Decided: inlet chain rating margin
 
-`DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE` (Chosen): the chain is rated above its fuse and the valve branches are fused.
+`DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE` (Chosen): the chain is rated above its fuse and the valve and pump branches are fused.
 
 - Filter: Schaffner **FN9222-15-06**, 15 A at 50 °C, same family, in place of the 10 A part. Whether its appliance coupler stays IEC C14 (10 A) is **UNVERIFIED**; check the datasheet, since a 10 A coupler would still cap the inlet.
 - Trunk downstream of the T10A: at least 1.5 mm², rated well above 10 A (Jaycar WB1568, 2 mm², 20 A), in place of the 1.0 mm² WB1565.
 - T10A slow-blow inlet fuse unchanged. It now protects conductors rated above it, not equal to it.
-- Valve branches (0.75 mm² flex): one shared subminiature TR5 slow-blow fuse (250 Vac) on their common switched-active feed, sized to coil inrush; the coil current is not established and is held pending in `controller-board-design-constraints.md`, so T500mA is an example only. Series (Littelfuse 372 or Schurter MSF 250) to confirm. Pumps keep their 1-2 A branch fuses.
+- Valve branches (0.75 mm² flex): one shared subminiature TR5 slow-blow fuse (250 Vac) on their common switched-active feed, sized to coil inrush; the coil current is recorded in `connector-pinouts.md` (at most 64.6 mA rms steady and 101.4 mA rms inrush per coil at 253 V), and the fuse's rating is the board design's to record, so T500mA is an example only. Series (Littelfuse 372 or Schurter MSF 250) to confirm. The pumps were found by inspection to carry no branch fuse as found, so each pump branch gains a 1-2 A slow-blow fuse of its own, sized to that pump's running current (at most 0.38 A coffee and 0.17 A steam at 253 V) and its start surge.
 - Upstream breaker is declared as up to 20 A (project assumption).
 
 Facts that still matter: the filter derates above 50 °C and the enclosure ambient is unmeasured (earlier estimate for the 5 V supply's surroundings 45-60 °C); the machine's own worst case is about 10.5 A, at 253 V, the declared span's top (`reference-machine.md` § Heating and load); a slow-blow fuse carries more than its rating for a long time before it opens (the T10A curve was not read here). The true rating of 0.75 mm² flex is still unchecked against the applicable standard (one reviewer believes 7.5 A in AU, unverified); the valve fuse is sized to the coils, not the flex.
@@ -99,7 +99,7 @@ The IRM has four 1.0 mm pins that are not on a 2.54 mm grid (38.5 mm between the
 - **Output capacitors** 47-100 µF 16 V low-ESR (or polymer) across +V/-V close to the pins, with a 100 nF ceramic: the datasheet measures its 200 mVp-p ripple limit with 0.1 µF + 47 µF across the output, so this pair makes the rated figure hold. Not required for the module to run.
 - **Terminals.** 5.08 mm PCB screw terminal blocks rated 300 V or more for mains in; read the rating on the datasheet of the part bought.
 - **Cover and coating.** Insulating cover over the mains terminals (touch protection). Acrylic conformal coat is recommended because the box is not sealed, but **it does not replace creepage**: the gaps and the pin separation must stand on their own. Kapton tape is for masking only, not as a mains barrier.
-- A community PCB for the IRM family exists (theslowdiyer.wordpress.com, Gerbers, licence not stated, no creepage figures, pin match to the IRM-10 not verified); mounted rotated 90 degrees it would stand the module on its 25.4 mm edge, so check against the 28 mm cavity before relying on it.
+- A community PCB for the IRM family exists (theslowdiyer.wordpress.com, Gerbers, licence not stated, no creepage figures, pin match to the IRM-10 not verified); mounted rotated 90 degrees it would stand the module on its 25.4 mm edge, so check its height plus the board against the usable height above the board (23.4 mm within about 2 mm of a wall, and at least 28 mm where the original tallest part stood: `reference-machine.md § Controller enclosure as found`) before relying on it.
 
 ### Rejected: the open-frame AliExpress 5 V module
 
@@ -145,7 +145,7 @@ The reasoning is the same one already applied to the future solenoid valves in `
 - **IRM-10-5 internal fuse**: not established (the spec sheets read do not mention one); confirm in the user manual.
 - **Enclosure ambient** for the IRM-10-5 derating: unmeasured.
 - **MOV is a consumable with no in-circuit test.** Worth a build note to renew it after any nearby lightning event or supply disturbance, since a degraded disc gives no indication.
-- **SSR mounting: proposed, not decided.** The BOM's user note proposes trying the SSRs mounted direct to the metal side wall to avoid heatsinks. Thermal conflict: each SSR dissipates about 5-6.5 W, and the IRM-10-5 derates from 100 % at 50 °C ambient (about 75 % at 60 °C), so heat from the SSRs raises the ambient the 5 V module is judged against. If it is tried, the 5 V module belongs on the *opposite* side of the enclosure. No source says the wall is earthed; do not rely on it as a bonded or earthed surface until that is established by inspection.
+- **SSR mounting: proposed, not decided.** The BOM's user note proposes trying the SSRs mounted direct to the side wall to avoid heatsinks. Thermal conflict: each SSR dissipates about 5-6.5 W, and the IRM-10-5 derates from 100 % at 50 °C ambient (about 75 % at 60 °C), so heat from the SSRs raises the ambient the 5 V module is judged against. If it is tried, the 5 V module belongs on the *opposite* side of the enclosure. The wall is plastic and unearthed as found (reference-machine.md § Controller enclosure as found); do not rely on it as a bonded or earthed surface until that is established by inspection.
 
 ## Graph gap
 

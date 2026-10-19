@@ -11,7 +11,7 @@ These settle most of the hydraulic unknowns and should be done before any plumbi
 3. Open both block inlet fittings and look for a check valve (fact F9).
 4. Measure threads and tube sizes: block outlets and inlets, pump outlets, the steam line, and the OEM PTFE or silicone tube OD and ID. Read the 3-way and 2-way coil voltage and power off the valves, and their port threads.
 5. Lift an NTC clamp bracket to confirm how the NTC is mounted (an inference from photos so far).
-6. Panel and gauge: with a meter on the OEM main-board connector, a pressed key should read about 1 kOhm plus 47 Ohm to ground (fact F14); measure the anode-rail voltage and the indicator element currents; identify the buzzer type (resistance, then a bench supply through a series resistor to find polarity, voltage and current); find pin 1 on both harness connectors.
+6. Panel and gauge: with a meter on the OEM main-board connector, a pressed key should read about 1 kOhm plus 47 Ohm to ground (fact F14); measure the anode-rail voltage and the indicator element currents; identify the buzzer type (resistance, then a bench supply through a series resistor to find polarity, voltage and current); pin 1 on both harness connectors is now defined (`../connector-pinouts.md`).
 7. Flow meter: output type (open-collector, Hall, push-pull) and level into the controller.
 8. Observe whether the OEM preheats the steam block with the knob shut. Settled by owner statement, 2026-10-15: it does (fact F10, as superseded); confirm on the machine.
 9. Observe how much the idle block drains between shots (fact F3).
@@ -40,7 +40,7 @@ These settle most of the hydraulic unknowns and should be done before any plumbi
 - **Mains chain rating margin.** Resolved by `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`: filter FN9222-15-06 (15 A at 50 C), trunk at least 1.5 mm2 (WB1568), T10A unchanged, one shared TR5 fuse on the valve branches. Remaining to confirm: the 15 A filter's coupler rating (IEC C14 is 10 A), its termination type, the TR5 series.
 - **Heater switching cadence:** whole-cycle (20 ms) bursts or half-cycle; the files disagree.
 - **Steam heater with the knob shut:** the firmware's 125 C ready temperature heats against a closed knob, against F10 and the open trapped-pressure case.
-- **SSR mounting:** the metal side wall is proposed, not decided, and conflicts thermally with the IRM-10-5's derating.
+- **SSR mounting:** the side wall is proposed, not decided, and conflicts thermally with the IRM-10-5's derating.
 - **A vent state per mode table** (idle, flush, shot, hot water, steam, fault).
 - Whether to fit the optional test tee on the vent branch.
 
@@ -66,7 +66,7 @@ Each node must be read with `show` before linking, and existing coverage checked
 
 ## E. Housekeeping and unresolved items from the refresh
 
-- The mainboard's own height (an estimate; 25 mm of cavity makes it worth measuring) and the dimmer module's height (footprint 50 x 16 mm).
+- The mainboard's own height (an estimate; the cavity is 34.5 mm deep, with 23.4 mm usable above the original board within about 2 mm of a wall and at least 28 mm where its tallest part stood: `../reference-machine.md` § Controller enclosure as found, which supersedes the 25 mm note) and the dimmer module's height (footprint 50 x 16 mm).
 - The 10 A chain margin is resolved by `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE` (15 A filter, trunk above the fuse); the 15 A filter's coupler rating is unverified and its termination type is not recorded.
 - Whether the IRM-10-5 has an internal fuse (the old text and the BOM disagreed).
 - Nothing specifies ferrules for the screw terminals, the FN9222's termination type, the earth conductor and chassis stud, or the temperature ratings of PVC wire and flex near the hot blocks.

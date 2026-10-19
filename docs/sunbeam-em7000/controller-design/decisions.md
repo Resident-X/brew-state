@@ -49,7 +49,7 @@ Mirrors `open-items.md` section C.
 - **Mains chain rating margin.** Resolved by `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`: filter FN9222-15-06 (15 A at 50 C; coupler rating unverified), trunk at least 1.5 mm2 (WB1568), T10A unchanged, one shared TR5 fuse on the valve branches; upstream breaker declared up to 20 A.
 - **Heater switching cadence.** Whole-cycle (20 ms) bursts or half-cycle; the files disagree.
 - **Steam heater with the knob shut.** The firmware's 125 C ready temperature heats against a closed knob, as the OEM does (F10, as superseded 2026-10-15), and that is the open trapped-pressure case; options are an S8 interlock, a hot-side relief valve, or both.
-- **SSR mounting.** Direct to the metal side wall is proposed, not decided, and conflicts thermally with the IRM-10-5's derating.
+- **SSR mounting.** Direct to the side wall is proposed, not decided, and conflicts thermally with the IRM-10-5's derating.
 - PCB go or no-go (D21); whether the BL0942 current reading replaces the mains-presence confirm (D20); whether to copy the OEM `Q7` and `Q8` stages (D18); the steam pump drive (D4); whether to fit the optional vent-branch test tee.
 
 ## Facts about the machine (not yet confirmed on the machine unless stated)

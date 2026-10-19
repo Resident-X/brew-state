@@ -7,7 +7,7 @@ Provenance tags: **[PL]** service manual parts list, position not stated; **[SCH
 ## Brew line (group head)
 
 1. Water tank, 3 L. [PL] Retained.
-2. Tank level sensor, magnet/reed, schematic `S6` / `WAT`, read as a controller input (PE9). [SCH][OWN] Wiring route not bench-verified. Retained.
+2. Tank level sensor, magnet/reed, schematic `S6` / `WAT`, read as a controller input (PE9). [SCH][OWN] The reed element is soldered through the back of the original main board, so it is lifted from it or replaced like for like (`../reference-machine.md` § Controller enclosure as found). Replaced side.
 3. Flow meter on the suction line, about 5-7 cm ahead of the coffee pump, below the tank's water level. [OWN] Three-pin `CZ1`, signal held to VCC5 by 2 kOhm, output type probably open-collector or Hall [SCH][INF]; make, pulses per litre unknown. Retained; controller input PA8. No flow meter on the steam path.
 4. Coffee pump, Ulka EP5, 15 bar, 48 W, outlet G1/8 [WEB]; it serves brew and hot water. [PL][OWN] Contains an internal check valve. [OWN] Driven by a Standard dimmer. Retained.
 5. Noise damper assembly on the coffee pump (the parts list's name for the damper). [PL][OWN] The brew pump has a damper. Retained.
@@ -41,7 +41,7 @@ Items 1-10 as for the brew line, then the hot water outlet arm. [PL][OWN] The 3-
 - The steam pump's suction route (item 1 of the steam line).
 - Whether either thermoblock has an inlet check valve, and the order pump, check valve, OPV tee, block inlet on the steam line.
 - Where each OPV discharge tube ends; hot water or steam may reach the tray from the steam OPV if it caps the block.
-- The hot-water outlet device and the pump thermostat's location.
+- The hot-water outlet device. (The pump thermostat is in series with the coffee pump's lead, inspected 2026-10-19.)
 - The 3-way and 2-way valves' coil voltage and power, port threads, and whether the OEM 2-way is normally open as inferred.
 - Thread sizes at the block outlets and inlets, the pump outlets and the steam line, and the OEM tube sizes.
 - The flow meter's K-factor and the tank level switch's trip point.
