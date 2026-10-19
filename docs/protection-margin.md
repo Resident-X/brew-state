@@ -17,7 +17,7 @@ Nothing here is a measurement. The trip point is a figure read off a parts list,
 | The machine's coefficients | `firmware/params/thermoblock.params` | `a05cf3fa70a704725f37d36ce7575874f03921cb89da29773cda0c5ca9a7e062` |
 | What a reading off it may be | `firmware/params/thermoblock.limits` | `d71d41f4ea5ef907696cfec6059e4b2b00a76fdb2f937d40781ec91910ce26a1` |
 | The bands a delivery is held to | `firmware/params/tolerance.declaration` | `c5bb5a51a4a9ad71496ac8405dee688736a6635e0f2df06433168055aefdec17` |
-| The steam side's design figures | `firmware/params/steam_control.declaration` | `bd1ebe1cf2a6307fbdb13e98fb06f296c9df1cdbddcb8d801408cbe46864a17a` |
+| The steam side's design figures | `firmware/params/steam_control.declaration` | `5734f7095f6b438c4587b7e03f68168602cc18bd90ad5510e1fe92d77e4cf3b9` |
 
 The supply this was run against is the declared 216–253 V span about the 230 V nominal, as the description's accounts state it. How each element rating's declared error was derived from that supply is set out in the description's account beside the rating; this record does not check that derivation.
 
@@ -161,7 +161,7 @@ Both ends of every coefficient are run, including the ends `params/thermoblock.m
 
 The steam side sizes a margin of its own, against a trip point of its own, out of the same declared error. Its un-widened gap is nothing: that loop's ready phase holds a temperature against no declared temperature band at all — the band it is held to is a pressure one — so every kelvin of its margin is earned by declared model error rather than inherited.
 
-Its target is not commanded but declared: `firmware/params/steam_control.declaration` names the ready temperature the loop is brought up holding, and the loop refuses to come up at all where that target does not leave the widened margin between itself and the trip point. The declared target is 130 C and the highest the loop would come up at is 186 C, so the margin has 56.1 C of room here and is not what stops this loop's target either.
+Its target is not commanded but declared: `firmware/params/steam_control.declaration` names the ready temperature the loop is brought up holding, and the loop refuses to come up at all where that target does not leave the widened margin between itself and the trip point. The declared target is 137 C and the highest the loop would come up at is 186 C, so the margin has 49.1 C of room here and is not what stops this loop's target either.
 
 | Corner | Kind | Coefficient | End | Declared error | Written at | Ran | Contribution (C) |
 |---|---|---|---|---|---|---|---|
@@ -177,11 +177,11 @@ Its target is not commanded but declared: `firmware/params/steam_control.declara
 | 9 | independent | brew.outlet_held_volume_ml | high | 0.6 | 1.6 | ran | 0 |
 | 10 | independent | brew.outlet_conduction_time_constant_s | low | 0.8 | 0.2 | ran | 0 |
 | 11 | independent | brew.outlet_conduction_time_constant_s | high | 0.8 | 1.8 | ran | 0 |
-| 12 | independent | steam.thermal_mass_j_per_k | low | 0.4 | 0.6 | ran | 0.596 |
+| 12 | independent | steam.thermal_mass_j_per_k | low | 0.4 | 0.6 | ran | 0.00447 |
 | 13 | independent | steam.thermal_mass_j_per_k | high | 0.4 | 1.4 | ran | 0 |
 | 14 | independent | steam.heater_power_w | low | 0.21 | 0.79 | ran | 0 |
-| 15 | independent | steam.heater_power_w | high | 0.21 | 1.21 | ran | 1.78 |
-| 16 | independent | steam.loss_w_per_k | low | 0.6 | 0.4 | ran | 4.63 |
+| 15 | independent | steam.heater_power_w | high | 0.21 | 1.21 | ran | 1.68 |
+| 16 | independent | steam.loss_w_per_k | low | 0.6 | 0.4 | ran | 4.9 |
 | 17 | independent | steam.loss_w_per_k | high | 0.6 | 1.6 | ran | 0 |
 | 18 | independent | pump.pressure_bar | low | 0.4 | 0.6 | ran | 0 |
 | 19 | independent | pump.pressure_bar | high | 0.4 | 1.4 | ran | 0 |
@@ -217,7 +217,7 @@ Its target is not commanded but declared: `firmware/params/steam_control.declara
 | 49 | independent | steam.feed_flow_ml_per_s | high | 0.7 | 1.7 | ran | 0 |
 | 50 | joint | brew.heater_power_w + steam.heater_power_w (joint mains droop) | low | 0.21 | 0.79 | ran | 0 |
 
-The steam margin is 6.63 C: the un-widened gap of 0 C plus the worst single corner's 4.63 C (corner 16) plus the declared sensing error of 2 C. 51 of 51 corners ran and 4 cost the gap anything.
+The steam margin is 6.9 C: the un-widened gap of 0 C plus the worst single corner's 4.9 C (corner 16) plus the declared sensing error of 2 C. 51 of 51 corners ran and 4 cost the gap anything.
 
 ## What each corner's steam draw did
 

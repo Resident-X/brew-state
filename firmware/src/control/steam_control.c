@@ -229,7 +229,7 @@ static bool a_draw_is_under_way(const steam_control_state_t *state)
  * nothing with the error asking for less.
  */
 static uint16_t feed_command(steam_control_state_t *state, float error, float interval_s,
-                             bool opening)
+                             bool opening, bool heat_spent)
 {
     const float start_permille = (float)state->declaration.draw_start_feed_permille;
     const float ceiling_permille = (float)state->declaration.feed_ceiling_permille;
@@ -245,7 +245,17 @@ static uint16_t feed_command(steam_control_state_t *state, float error, float in
     const float rise_bound =
         greater(state->feed_level_permille, start_permille) +
         (float)state->declaration.feed_rise_limit_permille_per_s * interval_s;
-    const float bound = lesser(rise_bound, ceiling_permille);
+    /*
+     * An element already at full that is losing the superheat cannot be helped
+     * by more water: the feed is let down at the declared rise limit until the
+     * heater can hold it again, so quantity yields before quality does.
+     */
+    const float bound =
+        heat_spent ? lesser(lesser(rise_bound, ceiling_permille),
+                            state->feed_level_permille -
+                                (float)state->declaration.feed_rise_limit_permille_per_s *
+                                    interval_s)
+                   : lesser(rise_bound, ceiling_permille);
 
     const float asked = start_permille + (gain * error) + state->feed_integral_permille;
     const bool pushing_past_bound = (asked >= bound) && (error > 0.0f);
@@ -601,7 +611,11 @@ steam_control_step_result_t steam_control_step(steam_control_state_t *state)
                                           state->declaration.draw_pressure_ceiling_milli_bar) *
                                   0.5f) /
                                  1000.0f;
-        feed = feed_command(state, target_bar - measured_bar, interval_s, opening);
+        const bool heat_spent =
+            state->heater_permille >= (uint16_t)ACTUATION_FULL_SCALE && state->superheat_estimated &&
+            state->superheat_estimate_k <
+                ((float)state->declaration.superheat_setpoint_milli_k / 1000.0f);
+        feed = feed_command(state, target_bar - measured_bar, interval_s, opening, heat_spent);
     }
 
     /*
@@ -623,7 +637,15 @@ steam_control_step_result_t steam_control_step(steam_control_state_t *state)
                                                measured_bar, feed, &estimate_k)) {
             state->superheat_estimated = true;
             state->superheat_estimate_k = estimate_k;
-            error = ((float)state->declaration.superheat_setpoint_milli_k / 1000.0f) - estimate_k;
+            /*
+             * The superheat setpoint is a floor, not a target to bring the
+             * casting down to: while the estimate stands above it the casting
+             * is held at the ready target, so the heat stored in it is spent
+             * on the draw rather than given up at its start.
+             */
+            error = greater(
+                ((float)state->declaration.superheat_setpoint_milli_k / 1000.0f) - estimate_k,
+                ((float)state->declaration.ready_temperature_milli_c / 1000.0f) - measured_c);
             drivable = true;
         }
     } else {

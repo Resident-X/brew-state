@@ -16,7 +16,7 @@ Nothing in `docs/parameter-dominance.md` is changed or restated by this record. 
 |---|---|---|
 | The machine's coefficients | `firmware/params/thermoblock.params` | `a05cf3fa70a704725f37d36ce7575874f03921cb89da29773cda0c5ca9a7e062` |
 | What a reading off it may be | `firmware/params/thermoblock.limits` | `d71d41f4ea5ef907696cfec6059e4b2b00a76fdb2f937d40781ec91910ce26a1` |
-| The steam side's design figures | `firmware/params/steam_control.declaration` | `bd1ebe1cf2a6307fbdb13e98fb06f296c9df1cdbddcb8d801408cbe46864a17a` |
+| The steam side's design figures | `firmware/params/steam_control.declaration` | `5734f7095f6b438c4587b7e03f68168602cc18bd90ad5510e1fe92d77e4cf3b9` |
 | The bands a delivery is held to | `firmware/params/tolerance.declaration` | `c5bb5a51a4a9ad71496ac8405dee688736a6635e0f2df06433168055aefdec17` |
 
 The supply this was run against is the declared 216–253 V span about the 230 V nominal, as the description's accounts state it. How each element rating's declared error was derived from that supply is set out in the description's account beside the rating; this record does not check that derivation.
@@ -44,7 +44,7 @@ On the coffee side the loop shows a slow standing mode under a sustained draw: t
 
 The steam side cannot be extended the same way, and the bound is not a matter of what it would cost to run. While a wand is held open the loop answers a standing pressure deficit with block temperature, so the block climbs for as long as the draw lasts. Past the **200 C** the steam grammar records the machine's own protection as taking over at, this description says nothing that can be believed — its saturation slope is a local one at the boiling point and gives about a quarter of the true pressure up there, and the protective devices that would actually have opened are not modelled at all. Every steam run's peak block temperature is checked against that bound, and a run that crossed it stops this analysis rather than being reported: it would be this horizon reaching past what the description answers for, which is a fault in the horizon and not a finding about a coefficient.
 
-The hottest any steam run's block actually got over this horizon, across the unperturbed machine and every corner, was **137.3 C** — 62.7 C under that bound. That margin is reported for the same reason the one below is: a peak creeping towards the ceiling is a horizon a slightly different model would push past, and that is worth seeing before a run stops.
+The hottest any steam run's block actually got over this horizon, across the unperturbed machine and every corner, was **146.3 C** — 53.7 C under that bound. That margin is reported for the same reason the one below is: a peak creeping towards the ceiling is a horizon a slightly different model would push past, and that is worth seeing before a run stops.
 
 **How long is long enough is reported rather than asserted.** The horizon is long enough exactly when every settling corner is inside the band well before the verdict window opens, which is at the halfway point of the extension. The latest any settling corner still stood outside its band was:
 

@@ -76,6 +76,9 @@
  */
 #define READY_TOLERANCE_C 1.0f
 
+/* The settle the joint corners are given: the weakest of them is slow to reach ready. */
+#define JOINT_SETTLE_SECONDS 300u
+
 /*
  * A steam temperature comfortably below the declared ready target, used where
  * a test needs the block left cooler than the loop wants it. Chosen without
@@ -229,13 +232,13 @@ static steam_control_declaration_t re_declared(const steam_control_declaration_t
  * is still a machine. Written on the same terms test_control.c's own
  * description_with is, and for the same reasons.
  */
-static const char *description_with(const char *name, const char *value)
+static const char *description_with_all(const char *const *names, const char *const *values,
+                                        size_t count)
 {
     static char rewritten[sizeof(description_text)];
-    const size_t name_length = strlen(name);
     size_t written = 0u;
     size_t at = 0u;
-    bool replaced = false;
+    size_t replaced = 0u;
 
     while (at < description_length) {
         size_t end = at;
@@ -249,21 +252,28 @@ static const char *description_with(const char *name, const char *value)
             cursor++;
         }
 
-        bool names_it = (size_t)(end - cursor) > name_length &&
-                        memcmp(&description_text[cursor], name, name_length) == 0;
-        if (names_it) {
-            size_t after = cursor + name_length;
-            while (after < end &&
-                   (description_text[after] == ' ' || description_text[after] == '\t')) {
-                after++;
+        size_t named = count;
+        for (size_t which = 0u; which < count && named == count; which++) {
+            const size_t name_length = strlen(names[which]);
+            bool names_it = (size_t)(end - cursor) > name_length &&
+                            memcmp(&description_text[cursor], names[which], name_length) == 0;
+            if (names_it) {
+                size_t after = cursor + name_length;
+                while (after < end &&
+                       (description_text[after] == ' ' || description_text[after] == '\t')) {
+                    after++;
+                }
+                names_it = after < end && description_text[after] == '=';
             }
-            names_it = after < end && description_text[after] == '=';
+            if (names_it) {
+                named = which;
+            }
         }
 
-        if (names_it) {
+        if (named < count) {
             written += (size_t)snprintf(&rewritten[written], sizeof(rewritten) - written,
-                                        "%s = %s\n", name, value);
-            replaced = true;
+                                        "%s = %s\n", names[named], values[named]);
+            replaced++;
         } else {
             written += (size_t)snprintf(&rewritten[written], sizeof(rewritten) - written, "%.*s\n",
                                         (int)(end - at), &description_text[at]);
@@ -272,8 +282,14 @@ static const char *description_with(const char *name, const char *value)
         at = (end < description_length) ? end + 1u : description_length;
     }
 
-    TEST_ASSERT_TRUE_MESSAGE(replaced, "the coefficient to be perturbed is not in the description");
+    TEST_ASSERT_EQUAL_UINT_MESSAGE(count, replaced,
+                                   "a coefficient to be perturbed is not in the description");
     return rewritten;
+}
+
+static const char *description_with(const char *name, const char *value)
+{
+    return description_with_all(&name, &value, 1u);
 }
 
 static plant_parameters_t parameters_from(const char *text)
@@ -312,6 +328,25 @@ static plant_parameters_t machine_with_scaled(const char *coefficient, float fac
 
     (void)snprintf(value, sizeof(value), "%.6f", (double)(nominal_of(coefficient) * factor));
     return parameters_from(description_with(coefficient, value));
+}
+
+/*
+ * The reference description with every coefficient named scaled at once, each by
+ * its own factor.
+ */
+static plant_parameters_t machine_with_all_scaled(const char *const *coefficients,
+                                                  const float *factors, size_t count)
+{
+    char text[8][32];
+    const char *values[8];
+
+    TEST_ASSERT_TRUE(count <= 8u);
+    for (size_t at = 0u; at < count; at++) {
+        (void)snprintf(text[at], sizeof(text[at]), "%.6f",
+                       (double)(nominal_of(coefficients[at]) * factors[at]));
+        values[at] = text[at];
+    }
+    return parameters_from(description_with_all(coefficients, values, count));
 }
 
 /* --- The harness the loop is closed through -------------------------------- */
@@ -712,14 +747,20 @@ static void test_the_controlled_variable_switches_on_the_step_the_draw_begins(vo
 /// The feed, on the other hand, answers pressure and not the casting: the moved
 /// pressure moves it, and the moved casting beside it leaves it where the
 /// pressure alone put it.
+///
+/// The ready target is declared low here and the casting held above it, so the
+/// superheat term is the one that binds the heater in the probe: with the
+/// casting at or under ready the setpoint's floor would leave the ready term in
+/// charge and the probe would say nothing about the superheat.
 static void test_the_heater_answers_superheat_and_never_pressure_error(void)
 {
     steam_control_declaration_t altered = declaration;
     altered.feed_load_gain_milli_permille_per_permille = 0;
+    altered.ready_temperature_milli_c = 120000;
     const steam_control_declaration_t figures = re_declared(&altered);
     const int32_t middle = band_middle(&figures);
     const int32_t moved = middle + 200;
-    const int32_t casting = figures.ready_temperature_milli_c;
+    const int32_t casting = 131500;
 
     steam_control_state_t unmoved;
     steam_control_state_t pressure_only;
@@ -820,7 +861,7 @@ static void test_an_implausible_pressure_reading_mid_draw_is_rejected_rather_tha
         TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration, &parameters, &budget));
 
         /* A settled draw, opened at ready and held at the middle of the band. */
-        open_a_fed_draw(&state, in_band, declaration.ready_temperature_milli_c, 500u);
+        open_a_fed_draw(&state, in_band, declaration.ready_temperature_milli_c, 4000u);
 
         const uint16_t duty_before = hw_sim_output(ACTUATION_CHANNEL_STEAM_HEATER);
         const uint16_t feed_before = hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP);
@@ -858,7 +899,7 @@ static void test_an_implausible_pressure_reading_mid_draw_is_rejected_rather_tha
 /// place.
 static void test_the_declared_ready_target_is_where_the_loop_settles(void)
 {
-    static const int32_t TARGETS[] = {120000, 130000};
+    static const int32_t TARGETS[] = {127000, 137000};
     float settled[2] = {0.0f, 0.0f};
 
     for (size_t run = 0u; run < sizeof(TARGETS) / sizeof(TARGETS[0]); run++) {
@@ -1261,6 +1302,156 @@ static void test_superheat_holds_the_setpoint_across_the_error_ends_of_every_coe
     TEST_ASSERT_EQUAL_STRING_MESSAGE("", report,
                                      "the outlet superheat fell below the declared setpoint on the "
                                      "machines listed");
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C7: During a draw the steam control law
+/// drives the feed pump to hold measured pressure inside the declared band and
+/// drives heater power to hold the modelled outlet superheat at a declared
+/// setpoint carrying its origin; superheat stays at or above its setpoint for
+/// the whole draw, with each coefficient that decides superheat taken alone to
+/// each end of its declared error and the joint dependences the description
+/// states taken together as the worst-case margin convention sets out, and
+/// stays above zero at every corner the description's error admits, the joint
+/// ends included.
+///
+/// Every one of the thirty-two combinations of the five deciding coefficients'
+/// ends, drawn on for a brief and a long draw: sixty-four closed-loop runs,
+/// each after a settle long enough for the weakest corner to reach the ready
+/// pressure, which every run is asserted to have been fed after. On every step that fed the block the
+/// plant's superheat at the modelled outlet is above zero, the dryness floor.
+static void test_superheat_stays_above_zero_at_every_joint_corner_of_the_deciding_coefficients(void)
+{
+    static const char *const DECIDING[] = {"steam.heater_power_w", "steam.thermal_mass_j_per_k",
+                                           "steam.loss_w_per_k", "steam.outlet_drop_k_s_per_ml",
+                                           RESTRICTION_COEFFICIENT};
+    enum { COEFFICIENTS = sizeof(DECIDING) / sizeof(DECIDING[0]) };
+    static const unsigned DURATIONS[] = {3u, 30u};
+    float assumed[COEFFICIENTS];
+    static char report[2048];
+    size_t shortfalls = 0u;
+
+    for (size_t k = 0u; k < COEFFICIENTS; k++) {
+        TEST_ASSERT_TRUE_MESSAGE(plant_parameter_budget_for(&budget, DECIDING[k], &assumed[k]),
+                                 DECIDING[k]);
+        TEST_ASSERT_TRUE_MESSAGE(assumed[k] > 0.0f, DECIDING[k]);
+    }
+
+    report[0] = '\0';
+    for (unsigned corner = 0u; corner < (1u << COEFFICIENTS); corner++) {
+        float factors[COEFFICIENTS];
+
+        for (size_t k = 0u; k < COEFFICIENTS; k++) {
+            factors[k] = ((corner >> k) & 1u) != 0u ? 1.0f + assumed[k] : 1.0f - assumed[k];
+        }
+        const plant_parameters_t machine = machine_with_all_scaled(DECIDING, factors, COEFFICIENTS);
+
+        for (size_t which = 0u; which < sizeof(DURATIONS) / sizeof(DURATIONS[0]); which++) {
+            float least_k = INFINITY;
+            unsigned least_at_ms = 0u;
+
+            bring_the_loop_up(&machine, &declaration, ready_target_c(&declaration));
+            hold_ready_for(JOINT_SETTLE_SECONDS);
+            draw_for(DURATIONS[which], 1.0f);
+            TEST_ASSERT_NOT_NULL_MESSAGE(first_delivery(),
+                                         "a corner was starved for the whole draw, so it was "
+                                         "passed without being tested");
+
+            for (size_t at = 0u; at < sample_count; at++) {
+                if (samples[at].feed_permille != 0u && samples[at].superheat_k < least_k) {
+                    least_k = samples[at].superheat_k;
+                    least_at_ms = (unsigned)samples[at].at_millis;
+                }
+            }
+            if (!(least_k > 0.0f)) {
+                shortfalls += (size_t)snprintf(
+                    &report[shortfalls], sizeof(report) - shortfalls,
+                    "corner %u: %.3f K at %u ms in a %u second draw; ", corner, (double)least_k,
+                    least_at_ms, DURATIONS[which]);
+                if (shortfalls >= sizeof(report)) {
+                    shortfalls = sizeof(report) - 1u;
+                }
+            }
+        }
+    }
+    TEST_ASSERT_EQUAL_STRING_MESSAGE("", report,
+                                     "the outlet superheat reached zero at the joint corners "
+                                     "listed");
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C7: During a draw the steam control law
+/// drives the feed pump to hold measured pressure inside the declared band and
+/// drives heater power to hold the modelled outlet superheat at or above a
+/// declared setpoint carrying its origin, the setpoint being a floor: while the
+/// superheat stands above it the heater holds the casting at the declared ready
+/// temperature.
+///
+/// A nominal machine is drawn on for sixty seconds at the middle of what it can
+/// make. The superheat has margin throughout, so the setpoint is not what the
+/// heater answers, and the casting stays within the ready tolerance of the ready
+/// target to the end of the draw. A law that brought the casting down to the
+/// setpoint's own target would let it fall several kelvin below ready.
+static void test_the_casting_is_held_at_ready_while_the_superheat_stands_above_its_floor(void)
+{
+    bring_the_loop_up(&parameters, &declaration, ready_target_c(&declaration));
+    hold_ready_for(SETTLE_SECONDS);
+    draw_for(60u, 1.0f);
+
+    TEST_ASSERT_NOT_NULL_MESSAGE(first_delivery(), "the draw was starved");
+    for (size_t at = 0u; at < sample_count; at++) {
+        TEST_ASSERT_FLOAT_WITHIN_MESSAGE(READY_TOLERANCE_C, ready_target_c(&declaration),
+                                         samples[at].steam_c,
+                                         "the casting left the ready target while the superheat "
+                                         "stood above its floor");
+    }
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C10: Feed is bounded by a declared ceiling
+/// and a declared rise limit, both re-derived from the orifice law, and quantity
+/// yields before quality. When the heater is at full and the law's superheat
+/// estimate is below its setpoint, the feed does not rise and is let down at the
+/// declared rise limit until the heater holds the setpoint again, so quantity
+/// yields before quality.
+///
+/// A machine whose element is weak, whose block loses heat fast and whose
+/// restriction is open asks the ceiling for more steam than the element can
+/// boil. The feed rises on the pressure it wants and the heater goes to full;
+/// from then on the feed is let down, ending below both the ceiling and the
+/// level it peaked at, and the outlet superheat stays above zero on every step
+/// that fed. Without the yield the same machine is driven to zero superheat.
+static void test_the_feed_yields_to_dryness_when_the_element_cannot_boil_what_the_ceiling_admits(void)
+{
+    static const char *const SPENT[] = {"steam.heater_power_w", "steam.loss_w_per_k",
+                                        RESTRICTION_COEFFICIENT};
+    const float factors[] = {0.79f, 1.6f, 0.3f};
+    const plant_parameters_t machine = machine_with_all_scaled(SPENT, factors, 3u);
+
+    bring_the_loop_up(&machine, &declaration, ready_target_c(&declaration));
+    hold_ready_for(JOINT_SETTLE_SECONDS);
+    draw_for(60u, 1.0f);
+    TEST_ASSERT_NOT_NULL_MESSAGE(first_delivery(), "the draw was starved");
+
+    size_t full_at = sample_count;
+    uint16_t peak_feed = 0u;
+    for (size_t at = 0u; at < sample_count; at++) {
+        if (full_at == sample_count && samples[at].heater_permille >= (uint16_t)ACTUATION_FULL_SCALE) {
+            full_at = at;
+        }
+        if (full_at != sample_count && samples[at].feed_permille > peak_feed) {
+            peak_feed = samples[at].feed_permille;
+        }
+        if (samples[at].feed_permille != 0u) {
+            TEST_ASSERT_TRUE_MESSAGE(samples[at].superheat_k > 0.0f,
+                                     "the outlet reached saturation, so quality was given up "
+                                     "before quantity");
+        }
+    }
+    TEST_ASSERT_TRUE_MESSAGE(full_at != sample_count, "the heater never went to full, so the "
+                                                      "machine does not test the yield");
+    const uint16_t last_feed = samples[sample_count - 1u].feed_permille;
+    TEST_ASSERT_TRUE_MESSAGE(last_feed < (uint16_t)declaration.feed_ceiling_permille,
+                             "the feed stayed at the ceiling with the heater spent");
+    TEST_ASSERT_TRUE_MESSAGE(last_feed + 10u < peak_feed,
+                             "the feed was not let down once the heater was full");
 }
 
 /*
@@ -3068,6 +3259,9 @@ int main(void)
     RUN_TEST(test_a_draw_start_above_the_feed_ceiling_is_refused_as_its_own_fault);
     RUN_TEST(test_pressure_and_superheat_hold_for_draws_of_every_duration);
     RUN_TEST(test_superheat_holds_the_setpoint_across_the_error_ends_of_every_coefficient_that_decides_it);
+    RUN_TEST(test_superheat_stays_above_zero_at_every_joint_corner_of_the_deciding_coefficients);
+    RUN_TEST(test_the_casting_is_held_at_ready_while_the_superheat_stands_above_its_floor);
+    RUN_TEST(test_the_feed_yields_to_dryness_when_the_element_cannot_boil_what_the_ceiling_admits);
     RUN_TEST(test_feed_never_exceeds_its_ceiling_or_rises_faster_than_its_limit);
     RUN_TEST(test_the_feed_ceiling_rise_limit_and_start_level_are_read_as_data);
     RUN_TEST(test_when_the_ceiling_binds_pressure_yields_before_quantity_or_quality);

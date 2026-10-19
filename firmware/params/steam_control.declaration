@@ -30,24 +30,27 @@
 # The block temperature the loop holds while nothing is being drawn.
 #
 # It is the casting from which a draw opened at ready makes its first steam
-# above the superheat setpoint below. At the draw-start feed the orifice law at
-# the declared restriction puts the path at about 0.84 bar, where the saturation
-# relation gives about 118.0 C; the casting-to-outlet relation at the end of its
-# declared error takes about 4.9 K off the casting at that feed; and the
-# setpoint asks five more. That is 127.9 C, taken up to 130 C so the heater has
-# two kelvin in hand while the feed settles.
-ready-temperature-c = 130000 milli-c @estimated Derived from the saturation relation, the orifice law at steam.restriction_bar_s2_per_ml2 and the casting-to-outlet relation in thermoblock.params, as the casting from which a draw opened at ready leaves its first steam, made at the draw-start feed, above the superheat setpoint with two kelvin in hand. Nothing has been measured, and the restriction and outlet coefficients it is read through are the description's own estimates.
+# above the superheat setpoint below, at the ends of the declared error the
+# band and the start feed are derived at rather than at the declared figures.
+# At the draw-start feed (0.183 mL/s) the orifice law at the highest
+# restriction the declared error admits, 42.5 bar per (mL/s)^2, puts the path
+# at 1.42 bar gauge, where the saturation relation (taken over the atmosphere
+# it defines at 100 C, 1.019 bar) gives 126.8 C; the casting-to-outlet relation
+# at the cool end of its declared error, 15 x 1.8 = 27 K per mL/s, takes 4.9 K
+# off the casting at that feed; and the setpoint asks five more. That is
+# 136.7 C, taken up to the next whole kelvin, 137 C.
+ready-temperature-c = 137000 milli-c @estimated Derived so that the law's own estimate, which takes the outlet drop at the cool end of its declared error, clears the superheat setpoint on the first fed step at the highest restriction the declared error admits: saturation 126.8 C at 1.42 bar gauge (draw-start feed 0.183 mL/s on 42.5 bar per (mL/s)^2), plus 27 K per mL/s × 0.183 = 4.9 K, plus 5 K, 136.7 C, taken up to 137 C. Nothing has been measured, and the restriction and outlet coefficients it is read through are the description's own estimates.
 
 # The pressure the shut block has to hold when the wand opens for the draw to be
 # fed.
 #
 # It is saturation of the casting, through the declared saturation relation,
 # at the ready target less the two kelvin the steam channel's own sensor may be
-# wrong by: saturation at 128 C is about 1.51 bar gauge, written down to the
+# wrong by: saturation at 135 C is about 2.09 bar gauge, written down to the
 # tenth of a bar below it. A block held at the ready target clears it, and one
 # that has not reached the ready target by more than the sensor's error does
 # not.
-ready-pressure-bar = 1500 milli-bar @estimated Derived from ready-temperature-c through the saturation relation in thermoblock.params, as saturation at the ready target less the steam channel's two kelvin of sensing error, about 1.51 bar gauge, rounded down to the tenth of a bar. Not established against a real pressure transducer, and the threshold's purpose is readiness, not delivered character.
+ready-pressure-bar = 2000 milli-bar @estimated Derived from ready-temperature-c through the saturation relation in thermoblock.params, as saturation at the ready target less the steam channel's two kelvin of sensing error, about 2.09 bar gauge, rounded down to the tenth of a bar. Not established against a real pressure transducer, and the threshold's purpose is readiness, not delivered character.
 
 # The two edges of the pressure band a draw is held inside.
 #
@@ -90,8 +93,13 @@ draw-start-feed = 61 permille @estimated Derived from the orifice law at the low
 # under what the steam element can boil dry at its declared rating once the
 # standing loss is paid, about 0.38 mL/s, so a draw at the ceiling still leaves
 # dry steam rather than spending the element on quantity: when it binds, the
-# loop gives up pressure before quantity, and quantity before quality.
-feed-ceiling = 123 permille @estimated Derived from the orifice law at the low end of the declared error on steam.restriction_bar_s2_per_ml2 and the middle of the band, as the steam rate that holds the middle on that restriction, 0.37 mL/s, in permille of steam.feed_flow_ml_per_s; checked against steam.heater_power_w and the latent and sensible heat of water as just under what the element boils dry at the ready target. Neither the pump's rate nor the element's rating at temperature has been measured.
+# loop gives up pressure before quantity, and quantity before quality. It
+# cannot also be taken from the low end of the element's error: the pump at the
+# low end of its rate needs at least 111 permille to put the band floor on the
+# declared restriction, while the element at its low end sustains about 96.
+# Where the element cannot boil what the ceiling admits, the law lets the feed
+# down instead.
+feed-ceiling = 123 permille @estimated Derived from the orifice law at the low end of the declared error on steam.restriction_bar_s2_per_ml2 and the middle of the band, as the steam rate that holds the middle on that restriction, 0.37 mL/s, in permille of steam.feed_flow_ml_per_s; checked against steam.heater_power_w and the latent and sensible heat of water as just under what the element at its described rating boils dry at the ready target, 0.38 mL/s. It cannot also be taken from the low end of the element's error. The pump at the low end of its rate needs at least 111 permille to put the band floor on the declared restriction (0.9 mL/s × 0.123 → 0.31 bar), while the element at its low end sustains about 96. Where the element cannot boil what the ceiling admits, the law lets the feed down instead. Neither the pump's rate nor the element's rating at temperature has been measured.
 
 # How fast the feed may rise above the draw-start level.
 #
@@ -102,7 +110,8 @@ feed-ceiling = 123 permille @estimated Derived from the orifice law at the low e
 # delivers at the low end of its declared rate still reaches the band floor in
 # the first third of a thirty-second draw -- while at the declared restriction
 # it raises the pressure no faster than about three tenths of a bar a second.
-feed-rise-limit = 10 permille-per-s @estimated Derived from the orifice law and the band as the rate that carries the feed from draw-start-feed to feed-ceiling in about six seconds, which brings the band floor within reach inside the first third of a thirty-second draw at the low end of the declared error on steam.feed_flow_ml_per_s. It is not established that a faster rise would spoil a draw on a real machine.
+# It is also the rate the feed is let down at when the heater is spent.
+feed-rise-limit = 10 permille-per-s @estimated Derived from the orifice law and the band as the rate that carries the feed from draw-start-feed to feed-ceiling in about six seconds, which brings the band floor within reach inside the first third of a thirty-second draw at the low end of the declared error on steam.feed_flow_ml_per_s. It is also the rate the feed is let down at when the heater is spent. It is not established that a faster rise would spoil a draw on a real machine.
 
 # The gains the pressure loop holds the middle of the band with. The error is in
 # bar and the answer is in permille of the feed pump.
@@ -116,8 +125,10 @@ feed-pressure-integral-gain = 40000 milli-permille-per-bar-s @estimated Estimate
 # Steam above saturation at the outlet has had all its water turned; steam at
 # saturation may not have. A few kelvin above it is a margin against the
 # estimate's own error, which the law already takes at the cool end of the
-# casting-to-outlet relation's declared error.
-superheat-setpoint = 5000 milli-k @estimated Estimated as a few kelvin above saturation at the measured pressure, the least superheat the design calls dry steam at the modelled outlet; it rests on the saturation relation and the casting-to-outlet relation in thermoblock.params. No outlet temperature has been measured, and droplet carry-over is not excluded by any superheat without a calorimetric test.
+# casting-to-outlet relation's declared error. It is a floor: the heater holds
+# the casting at the ready target while the estimate stands above it, and the
+# feed yields when the heater at full cannot hold it.
+superheat-setpoint = 5000 milli-k @estimated Estimated as a few kelvin above saturation at the measured pressure, the least superheat the design calls dry steam at the modelled outlet; it rests on the saturation relation and the casting-to-outlet relation in thermoblock.params, a floor: the heater holds the casting at the ready target while the estimate stands above it, and the feed yields when the heater at full cannot hold it. No outlet temperature has been measured, and droplet carry-over is not excluded by any superheat without a calorimetric test.
 
 # The gains the heater holds that superheat with. The error is in kelvin and the
 # answer is in permille of the steam element.
@@ -137,7 +148,7 @@ ready-temperature-integral-gain = 350 milli-permille-per-k-s @estimated Estimate
 # discover: the feed pump's level is what the loop itself just commanded, and
 # the energy the water it pushes in will take to reach saturation and turn is
 # known at that moment rather than after the outlet has gone wet.
-feed-load-gain = 7500 milli-permille-per-permille @estimated Estimated from thermoblock.params as the declared feed pump's full-scale rate times the energy a millilitre takes to reach the declared saturation temperature from the declared feed temperature and then turn, divided by the declared element rating and by full pump scale: three millilitres a second at about 2492 J/ml against a kilowatt is seven and a half permille of element per permille of pump. Every figure in it is one the description supplies and none has been measured. What it still assumes is the feed pump's rate-versus-level relation, which the description states as a single full-scale figure and which no measurement has established as linear.
+feed-load-gain = 6640 milli-permille-per-permille @estimated 3 mL/s × (2160 + 4.15 × 80 = 2492 J/mL) / 1126 W = 6.64 permille of element per permille of pump. Every figure in it is one the description supplies and none has been measured. What it still assumes is the feed pump's rate-versus-level relation, which the description states as a single full-scale figure and which no measurement has established as linear.
 
 # The duty fed forward for what the block gives up to the room, whatever else
 # is happening.
@@ -152,4 +163,4 @@ feed-load-gain = 7500 milli-permille-per-permille @estimated Estimated from ther
 # than a coefficient plus the ambient temperature it would have to be measured
 # from -- and the ambient a block loses to is not a channel the hardware seam
 # reports, so a per-kelvin term here would have to assume one.
-standing-load = 165 permille @estimated Estimated from thermoblock.params as the declared steam-block loss per kelvin times the rise of the ready target above the declared ambient, divided by a kilowatt of element: 1.5 W/K over a hundred and ten kelvin is a hundred and sixty-five permille. Neither the loss figure nor the ambient has been measured; both are the description's own estimates, and the loss is among the wider fractions that file carries.
+standing-load = 156 permille @estimated 1.5 W/K × 117 K = 175.5 W against the element's described 1126 W, 155.9, rounded to 156 permille. Neither the loss figure nor the ambient has been measured; both are the description's own estimates, and the loss is among the wider fractions that file carries.

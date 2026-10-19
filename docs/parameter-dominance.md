@@ -14,7 +14,7 @@ Nothing here is a measurement. It is analysis against an estimated model whose o
 |---|---|---|
 | The machine's coefficients | `firmware/params/thermoblock.params` | `a05cf3fa70a704725f37d36ce7575874f03921cb89da29773cda0c5ca9a7e062` |
 | What a reading off it may be | `firmware/params/thermoblock.limits` | `d71d41f4ea5ef907696cfec6059e4b2b00a76fdb2f937d40781ec91910ce26a1` |
-| The steam side's design figures | `firmware/params/steam_control.declaration` | `bd1ebe1cf2a6307fbdb13e98fb06f296c9df1cdbddcb8d801408cbe46864a17a` |
+| The steam side's design figures | `firmware/params/steam_control.declaration` | `5734f7095f6b438c4587b7e03f68168602cc18bd90ad5510e1fe92d77e4cf3b9` |
 | The bands a delivery is held to | `firmware/params/tolerance.declaration` | `c5bb5a51a4a9ad71496ac8405dee688736a6635e0f2df06433168055aefdec17` |
 
 The supply this was run against is the declared 216–253 V span about the 230 V nominal, as the description's accounts state it. How each element rating's declared error was derived from that supply is set out in the description's account beside the rating; this record does not check that derivation.
@@ -26,7 +26,7 @@ A replacement model is swept by naming it: `--description`, `--limits`, `--steam
 | Side | Judged on | Declared half-width | Scenario | Judged over |
 |---|---|---|---|---|
 | brew | the temperature of the water reaching the group | 1 C | a 50 s flush onto the group, then a shot: pre-infusion, ramp, hold, taper, rest, all at 93 C commanded | intervals 5000–7198 |
-| steam | the pressure of the steam being drawn | 0.775 bar | 30 s held at the declared 130 C ready state, then the wand open for 20 s at 1.00 mL/s, then shut | intervals 3000–4999 |
+| steam | the pressure of the steam being drawn | 0.775 bar | 30 s held at the declared 137 C ready state, then the wand open for 20 s at 1.00 mL/s, then shut | intervals 3000–4999 |
 
 ## The ranking
 
@@ -49,21 +49,20 @@ The two margins are made comparable by convention rather than being the same kin
 | 11 | `brew.outlet_conduction_time_constant_s` | 0.8 | 0.199 | brew | 0.199 C | 0.248 |
 | 12 | `steam.heater_power_w` | 0.21 | 0 | brew | 0 C | 0 |
 | 13 | `steam.loss_w_per_k` | 0.6 | 0 | brew | 0 C | 0 |
-| 14 | `steam.outlet_drop_k_s_per_ml` | 0.8 | 0 | brew | 0 C | 0 |
-| 15 | `steam.saturation_antoine_a` | 0.001 | 0 | brew | 0 C | 0 |
-| 16 | `steam.saturation_antoine_b_k` | 0.001 | 0 | brew | 0 C | 0 |
-| 17 | `steam.saturation_antoine_c_c` | 0.001 | 0 | brew | 0 C | 0 |
-| 18 | `steam.saturation_temperature_c` | 0.02 | 0 | brew | 0 C | 0 |
-| 19 | `steam.thermal_mass_j_per_k` | 0.4 | 0 | brew | 0 C | 0 |
-| 20 | `water.latent_heat_j_per_ml` | 0.05 | 0 | brew | 0 C | 0 |
+| 14 | `steam.saturation_antoine_a` | 0.001 | 0 | brew | 0 C | 0 |
+| 15 | `steam.saturation_antoine_b_k` | 0.001 | 0 | brew | 0 C | 0 |
+| 16 | `steam.saturation_antoine_c_c` | 0.001 | 0 | brew | 0 C | 0 |
+| 17 | `steam.saturation_temperature_c` | 0.02 | 0 | brew | 0 C | 0 |
+| 18 | `steam.thermal_mass_j_per_k` | 0.4 | 0 | brew | 0 C | 0 |
+| 19 | `water.latent_heat_j_per_ml` | 0.05 | 0 | brew | 0 C | 0 |
 
 ### What the order says
 
-6 of the 20 coefficients ranked move a delivery further than the whole of its own declared band on their declared error alone: `pump.flow_ml_per_s`, `brew.heater_power_w`, `brew.thermal_mass_j_per_k`, `steam.feed_flow_ml_per_s`, `water.feed_temperature_c`, `brew.loss_w_per_k`. Those are the rows scoring above 1, which on this metric is necessarily the head of the list — each of them is a coefficient whose present uncertainty, on its own and with everything else held where the description puts it, already accounts for more than the entire margin the design says it holds that delivery inside. That is a statement about how loosely this machine is presently described rather than about the control laws — every figure in the description is an estimate, and the error against each of them is an estimate of an estimate.
+6 of the 19 coefficients ranked move a delivery further than the whole of its own declared band on their declared error alone: `pump.flow_ml_per_s`, `brew.heater_power_w`, `brew.thermal_mass_j_per_k`, `steam.feed_flow_ml_per_s`, `water.feed_temperature_c`, `brew.loss_w_per_k`. Those are the rows scoring above 1, which on this metric is necessarily the head of the list — each of them is a coefficient whose present uncertainty, on its own and with everything else held where the description puts it, already accounts for more than the entire margin the design says it holds that delivery inside. That is a statement about how loosely this machine is presently described rather than about the control laws — every figure in the description is an estimate, and the error against each of them is an estimate of an estimate.
 
-These reach a delivery the design declares a band for and spent none of that band over the window it is judged in: `steam.heater_power_w`, `steam.loss_w_per_k`, `steam.outlet_drop_k_s_per_ml`, `steam.saturation_antoine_a`, `steam.saturation_antoine_b_k`, `steam.saturation_antoine_c_c`, `steam.saturation_temperature_c`, `steam.thermal_mass_j_per_k`, `water.latent_heat_j_per_ml`. That is a figure the sweep arrived at rather than one it could not take — the relation carries to a quantity the design holds the machine to, and on this scenario it moved it nowhere the delivery is being judged.
+These reach a delivery the design declares a band for and spent none of that band over the window it is judged in: `steam.heater_power_w`, `steam.loss_w_per_k`, `steam.saturation_antoine_a`, `steam.saturation_antoine_b_k`, `steam.saturation_antoine_c_c`, `steam.saturation_temperature_c`, `steam.thermal_mass_j_per_k`, `water.latent_heat_j_per_ml`. That is a figure the sweep arrived at rather than one it could not take — the relation carries to a quantity the design holds the machine to, and on this scenario it moved it nowhere the delivery is being judged.
 
-A further 5 could not be given a figure at all, and are named under "What the sweep could not weigh" below rather than placed at the foot of this table: `brew.pressure_time_constant_s`, `pump.pressure_bar`, `steam.casting_ceiling_c`, `steam.initial_inventory_ml`, `steam.liquid_capacity_ml`. A coefficient the sweep could not weigh and one it weighed and found spending nothing are opposite findings, and a position in a ranked list cannot tell them apart.
+A further 6 could not be given a figure at all, and are named under "What the sweep could not weigh" below rather than placed at the foot of this table: `brew.pressure_time_constant_s`, `pump.pressure_bar`, `steam.casting_ceiling_c`, `steam.initial_inventory_ml`, `steam.liquid_capacity_ml`, `steam.outlet_drop_k_s_per_ml`. A coefficient the sweep could not weigh and one it weighed and found spending nothing are opposite findings, and a position in a ranked list cannot tell them apart.
 
 ## What each side contributed
 
@@ -84,7 +83,6 @@ The same coefficients against each side separately, in the order above. A coeffi
 | `brew.outlet_conduction_time_constant_s` | 0.199 | 0.199 | 0 | 0 |
 | `steam.heater_power_w` | 0 | 0 | 0 | 0 |
 | `steam.loss_w_per_k` | 0 | 0 | 0 | 0 |
-| `steam.outlet_drop_k_s_per_ml` | 0 | 0 | 0 | 0 |
 | `steam.saturation_antoine_a` | 0 | 0 | 0 | 0 |
 | `steam.saturation_antoine_b_k` | 0 | 0 | 0 | 0 |
 | `steam.saturation_antoine_c_c` | 0 | 0 | 0 | 0 |
@@ -103,6 +101,7 @@ These coefficients have no dominance figure, and they are listed here instead of
 | `steam.casting_ceiling_c` | reaches no quantity carrying a declared band | neither end of its declared error moved any quantity either draw reports, so on these two scenarios the relation it sits in does not carry to the machine's delivered state at all |
 | `steam.initial_inventory_ml` | reaches no quantity carrying a declared band | neither end of its declared error moved any quantity either draw reports, so on these two scenarios the relation it sits in does not carry to the machine's delivered state at all |
 | `steam.liquid_capacity_ml` | reaches no quantity carrying a declared band | neither end of its declared error moved any quantity either draw reports, so on these two scenarios the relation it sits in does not carry to the machine's delivered state at all |
+| `steam.outlet_drop_k_s_per_ml` | reaches no quantity carrying a declared band | neither end of its declared error moved any quantity either draw reports, so on these two scenarios the relation it sits in does not carry to the machine's delivered state at all |
 
 ## What this sweep does not cover
 
