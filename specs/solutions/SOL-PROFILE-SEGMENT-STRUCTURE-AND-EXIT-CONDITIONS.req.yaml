@@ -17,6 +17,12 @@ links:
     type: justified-by
   - target: DEF-PROFILE
     type: uses-term
+  - target: REQ-DELIVERY-PROFILE-001.C2
+    type: targets
+  - target: REQ-DELIVERY-PROFILE-001.C5
+    type: targets
+  - target: REQ-DELIVERY-PROFILE-001.C7
+    type: targets
 design_question_answers:
   - answered_by: SOL-PROFILE-SEGMENT-STRUCTURE-AND-EXIT-CONDITIONS.C1
     class: whole-set

@@ -1,0 +1,13 @@
+id: DEL-DELIVERY-PROFILE-SEGMENTS.C18
+type: criterion
+title: A water-moving upkeep routine is not judged against drink quality
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |-
+  The brew temperature band and the drinking-temperature bands are not applied to a routine run as a profile.
+links:
+  - target: DEL-DELIVERY-PROFILE-SEGMENTS
+    type: criterion-of

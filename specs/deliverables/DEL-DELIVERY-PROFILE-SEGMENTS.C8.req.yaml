@@ -2,12 +2,12 @@ id: DEL-DELIVERY-PROFILE-SEGMENTS.C8
 type: criterion
 title: The volume delivered, the puck resistance and the supply voltage are reported during a delivery and are never commanded or limited
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 closes_by: cascade
 text: |
-  The live view carries these three quantities alongside temperature, pressure and flow, in both the text and the JSON form, and no profile field commands or limits any of them.
+  The live view carries these three quantities, the elapsed time and the weight where it is measured, alongside temperature, pressure and flow, in both the text and the JSON form, and no profile field commands or limits any of them.
 links:
   - target: DEL-DELIVERY-PROFILE-SEGMENTS
     type: criterion-of

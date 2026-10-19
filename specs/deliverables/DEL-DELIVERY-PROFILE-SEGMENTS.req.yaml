@@ -101,3 +101,15 @@ links:
     type: justified-by
   - target: DEL-SIM-FLOW-SENSED
     type: depends-on
+  - target: REQ-RECIPE-CUSTODY-001.C11
+    type: targets
+  - target: REQ-RECIPE-CUSTODY-001.C12
+    type: targets
+  - target: REQ-NO-REMOTE-ACTUATION-001.C4
+    type: targets
+  - target: JRN-DESIGN-PROFILE-001.C9
+    type: targets
+  - target: DEF-SEGMENT
+    type: uses-term
+  - target: DEF-PRESET
+    type: uses-term

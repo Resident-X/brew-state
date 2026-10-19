@@ -1,0 +1,12 @@
+id: JRN-DESIGN-PROFILE-001.C9
+type: criterion
+title: A profile arriving from elsewhere is checked before it is kept
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |-
+  A profile made for another machine may ask for something this one can never deliver, and finding that out in the middle of a drink has already spent the coffee.
+links:
+  - target: JRN-DESIGN-PROFILE-001
+    type: criterion-of

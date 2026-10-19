@@ -32,3 +32,5 @@ links:
     type: derives-from
   - target: JRN-DESIGN-PROFILE-001.C7
     type: derives-from
+  - target: JRN-DESIGN-PROFILE-001.C9
+    type: derives-from

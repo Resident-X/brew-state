@@ -1,13 +1,13 @@
 id: DEL-DELIVERY-PROFILE-SEGMENTS.C13
 type: criterion
-title: A profile has a defined text form that reads back as the profile written, and one entering the controller in that form is checked before it is kept
+title: A profile has a defined text form that reads back as the profile written
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 closes_by: cascade
 text: |-
-  A profile written out and read back is the profile that was written, in both the text and the JSON form. A file that is malformed, names a field the controller does not know, or asks for something it cannot deliver is refused, and nothing it contained is kept.
+  A profile written out in that form and read back is the profile that was written, in both the text and the JSON form.
 links:
   - target: DEL-DELIVERY-PROFILE-SEGMENTS
     type: criterion-of

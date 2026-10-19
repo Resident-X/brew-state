@@ -1,0 +1,12 @@
+id: REQ-RECIPE-CUSTODY-001.C12
+type: criterion
+title: A profile arriving at the machine is checked before it is kept
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  One accepted unchecked can fail partway through a drink on a machine that could not have delivered it, and the coffee is already brewing by then.
+links:
+  - target: REQ-RECIPE-CUSTODY-001
+    type: criterion-of

@@ -1,6 +1,6 @@
 id: REQ-EXTERNAL-MONITORING-001.C5
 type: criterion
-title: An external system observes the machine only after it has been admitted
+title: An external system observes the machine only after it has signed in
 status: active
 version: 1
 measurement_type: binary

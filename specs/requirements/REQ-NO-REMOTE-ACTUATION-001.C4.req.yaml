@@ -1,0 +1,12 @@
+id: REQ-NO-REMOTE-ACTUATION-001.C4
+type: criterion
+title: A delivery is started only by a control on the machine's own panel
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  A display or a connected interface may choose what the panel's control will run, and may not start a delivery itself, so that a compromise of either cannot put water into a cup nobody is holding.
+links:
+  - target: REQ-NO-REMOTE-ACTUATION-001
+    type: criterion-of

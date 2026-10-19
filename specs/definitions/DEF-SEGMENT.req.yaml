@@ -1,0 +1,7 @@
+id: DEF-SEGMENT
+type: definition
+title: segment
+status: active
+version: 1
+text: |
+  A segment is one part of a profile, in which a delivery aims for one thing: a pressure or a flow, with a limit on the one it does not aim for, at a stated water temperature or at none. A segment states how the delivery moves into it, a step or a linear ramp over a stated duration, and the condition on which it ends. The next segment begins when a segment ends.

@@ -4,7 +4,7 @@ title: Departure from the commanded course is observed by measuring rather than 
 status: active
 version: 2
 rationale: |
-  Context: A delivery is commanded as a course of flow, and the machine is required to report departure
+  Context: A delivery is commanded as a course of segments, each commanding pressure or flow (it was flow alone when this decision was made), and the machine is required to report departure
   from that course rather than absorb it. In the model the delivered rate is the commanded rate: what
   the pump is told to move is what the path passes, and the description records the puck, the pump's
   flow-versus-pressure characteristic and the mechanical cap as omissions that remain stated. Something
@@ -23,6 +23,8 @@ rationale: |
   duty, so the controller reaches any rate below the intersection and the only departure the model can
   produce is the pump saturating -- the same single case a bare pressure clamp gives, at a lower
   ceiling.
+
+  Update: The options above are stated for flow, the only commanded variable when this was decided. They apply to a segment's primary variable: the machine measures the quantity the segment commands and compares it with the command. Modelling the puck stays rejected as the way departure is reported. It is accepted as a plant-model term for pressure segments, whose delivered flow is what the puck produces, and that term is added by DEL-BREW-PLANT-FIDELITY.
 
   Reversibility: Reversible in the sense that a later description may add resistance downstream without
   its consumers changing, and the comparison built here would keep working against it. What this

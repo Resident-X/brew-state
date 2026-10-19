@@ -1,13 +1,13 @@
 id: DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR.C3
 type: criterion
-title: The sign-in scheme, the view and change rights, and how access is established and reset at the machine are decided and recorded
+title: Access to the connected interface is established and reset only by an act at the machine
 status: active
 version: 1
 measurement_type: binary
-verification: inspection
+verification: test
 closes_by: cascade
 text: |-
-  Each is recorded as a decision with its rejected options, and no state and no command is offered over a network before a party has signed in.
+  A party that has not signed in is offered no state and no command, and a household establishes or resets access without a technician and without opening the machine.
 links:
   - target: DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR
     type: criterion-of

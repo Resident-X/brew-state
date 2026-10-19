@@ -12,13 +12,15 @@ text: |
 
   Commanding a course also changes what the controller knows. Demand that was previously estimated as it arrived becomes demand that was scheduled, and the machine can act on it before its effect appears.
 rationale: |
-  Silent on which physical quantity a profile commands. The candidate quantities are coupled through the coffee itself and only one of them can be commanded independently; which one this machine works with carries cost and hardware consequences and is recorded as a decision rather than fixed here.
+  Silent on which physical quantity a segment commands, which carries cost and hardware consequences and is recorded as a decision (DEC-PROFILE-SEGMENTS-COMMAND-PRESSURE-OR-FLOW). The candidate quantities are coupled through the coffee itself and only one of them can be commanded independently within a segment.
 
   Requires the end condition to belong to the profile rather than to sit somewhere else. A course with no stated end is not a complete command, and it leaves the machine to invent one at the moment it can least justify the choice.
 
   Requires refusal before starting rather than failure part way through, on the principle the brew temperature requirement already applies. A delivery abandoned half way has consumed the coffee and the operator's time; one refused at the outset has consumed neither.
 
   Requires departure to be reported rather than absorbed, because a machine that quietly does its best produces a drink nobody can reproduce and a record that cannot explain itself.
+
+  A profile is a sequence of segments rather than one course, because what an operator reaches for when chasing a result is the difference between the start and the end of a delivery, and the water temperature is part of that difference as much as pressure or flow are. It is stated as outcomes at the group and never as anything specific to one machine, which is what lets it be passed on and leaves the machine to judge whether it can deliver it. Whether a profile can be delivered is established without making a drink, since finding out by delivering costs a dose of coffee each time, and what was achieved is reported against each segment because a single account for the whole delivery hides which segment did what.
 links:
   - target: JRN-PULL-SHOT-001.C5
     type: derives-from
