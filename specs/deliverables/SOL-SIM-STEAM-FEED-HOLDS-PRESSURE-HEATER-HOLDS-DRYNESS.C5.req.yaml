@@ -1,7 +1,7 @@
 id: SOL-SIM-STEAM-FEED-HOLDS-PRESSURE-HEATER-HOLDS-DRYNESS.C5
 type: criterion
 title: Feed is bounded by a declared ceiling and a declared rise limit, both re-derived from the orifice law, and quantity yields before quality
-status: active
+status: deprecated
 version: 1
 measurement_type: threshold
 verification: test

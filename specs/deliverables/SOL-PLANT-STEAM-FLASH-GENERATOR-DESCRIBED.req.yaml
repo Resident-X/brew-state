@@ -23,8 +23,6 @@ links:
     type: justified-by
   - target: SOL-PLANT-STEAM-FLASH-GENERATOR
     type: depends-on
-  - target: SOL-SIM-STEAM-FEED-HOLDS-PRESSURE-HEATER-HOLDS-DRYNESS
-    type: depends-on
 design_question_answers:
   - answered_by: SOL-PLANT-STEAM-FLASH-GENERATOR-DESCRIBED.C3
     class: whole-set

@@ -1,0 +1,12 @@
+id: SOL-PLANT-STEAM-FLASH-GENERATOR.C12
+type: criterion
+title: A wand opened at the ready pressure is not starved by the feed-withhold gate under the orifice law
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The feed-withhold gate and the pressure loop agree on the threshold: a wand opened at the declared ready pressure with feed enabled holds the draw in band from its first step rather than collapsing to zero because the instantaneous pressure under the orifice law sits below the threshold. A test in host simulation opens the wand at the ready pressure, and at just below it, and shows the first case delivers in band while the second is starved by the gate as before. The gate stays a proxy for the predictive readiness decision. Out of scope: replacing the gate with predicted readiness, which DEL-READINESS-PREDICTED-IN-BAND owns. Every standing closed-loop steam test runs the loop against the truth plant at its declared initial inventory, and the sealed readiness-gate criteria that stay true keep their meaning.
+links:
+  - target: SOL-PLANT-STEAM-FLASH-GENERATOR
+    type: criterion-of

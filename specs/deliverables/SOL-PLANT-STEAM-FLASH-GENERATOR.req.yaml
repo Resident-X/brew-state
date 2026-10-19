@@ -1,13 +1,15 @@
 id: SOL-PLANT-STEAM-FLASH-GENERATOR
 type: deliverable
 category: solution
-title: The thermoblock's steam side sets pressure by an orifice law of the feed while the wand is open, and by saturation only while the shut block holds liquid
+title: The thermoblock's steam side is a flash generator in the plant and the control, with feed holding pressure, heater power holding dryness and a casting ceiling bounding trapped vapour
 status: active
-version: 1
+version: 2
 text: |
-  Rewrite the thermoblock structure's steam side as a flash generator: an orifice law of the steam made through the tube, valve and tip sets pressure with the wand open; a held liquid inventory decides when the shut block is at saturation of the casting temperature, bounded by a declared casting ceiling reported per run in text and JSON; the affine relation and the pressure-deficit state and coefficient are retired from this structure.
+  Rewrite the thermoblock structure's steam side as a flash generator and cut the steam control law over to it in the same build: an orifice law of the steam made through the tube, valve and tip sets pressure with the wand open; a held liquid inventory, bounded by a declared capacity, decides when the shut block is at saturation of the casting temperature, bounded by a declared casting ceiling reported per run in text and JSON; the affine relation and the pressure-deficit state and coefficient are retired from this structure. The control law is re-allocated so the feed pump holds pressure and quantity and heater power holds a declared superheat at the plant's modelled outlet, computed from the measured pressure; every dryness claim names that superheat and pressure and carries the carry-over caveat in text and JSON; the declaration's ready and band figures are re-derived from the new relations. The ceiling report and the dryness report are printed by one host-run report seam that writes a text line and a JSON line from the same field list.
 
-  Retires, at close-out, by deprecating each of these criteria on its own sealed solution (their other criteria stand and stay): SOL-PLANT-STEAM-DRAW-ENERGY.C3, .C4, .C5 and .C7, which state the integrated pressure state, reversion to the affine relation, admissibility with the divergence term and the divergence-rate coefficient for the thermoblock (their boiler content is restated in this solution's C4); SOL-PLANT-STEAM-FEED-PUMP-WIRED.C1, whose deficit-widening clause has no subject (the clamp to the lower of demand and commanded feed is restated in C1); and SOL-SIM-STEAM-READINESS-GATE.C3, whose held deficit has no subject (restated in C1 as zero feed giving zero made rate).
+  The plant and the control law land in one build because a block that is fed nothing makes no steam and reads no pressure under the orifice law: the standing readiness gate withholds feed below the ready pressure and the standing loop drives the heater from pressure, so neither passes against the new plant, and the closed-loop steam suite runs the real thermoblock as its truth model.
+
+  Retires, at close-out, by deprecating each of these criteria on its own sealed solution (their other criteria stand and stay): SOL-PLANT-STEAM-DRAW-ENERGY.C3, .C4, .C5 and .C7, which state the integrated pressure state, reversion to the affine relation, admissibility with the divergence term and the divergence-rate coefficient for the thermoblock (their boiler content is restated in this solution's C4); SOL-PLANT-STEAM-FEED-PUMP-WIRED.C1, whose deficit-widening clause has no subject (the clamp to the lower of demand and commanded feed is restated in C1); and SOL-SIM-STEAM-READINESS-GATE.C3, whose held deficit has no subject (restated in C1 as zero feed giving zero made rate). Also by deprecating each of these criteria on SOL-SIM-STEAM-BAND-SUSTAINED (its other criteria stand and stay): C1 (controlled variable by phase), C5 (band held under the retired sag coefficient), C6 (fixed sustainable feed rate regardless of demand), C7 (recovery as the same temperature control continuing), C8 (heater leads and feed lags), C11 (feed never above a fixed sustainable rate) and C12 (feed rises to a fixed rate over an interval). Their substance is restated in C7, C10, C11 and C12 of this solution.
 links:
   - target: DEL-STEAM-PATH-FLASH-GENERATOR.C1
     type: derives-from
@@ -25,6 +27,18 @@ links:
     type: justified-by
   - target: DEC-STEAM-PRESSURE-SENSOR-ADDED
     type: justified-by
+  - target: REQ-STEAM-DELIVERY-001.C1
+    type: targets
+  - target: REQ-MEASUREMENT-001.C8
+    type: targets
+  - target: DEC-STEAM-DRYNESS-IS-A-MODELLED-OUTLET-SUPERHEAT
+    type: justified-by
+  - target: SOL-SIM-STEAM-FEED-HOLDS-PRESSURE-HEATER-HOLDS-DRYNESS
+    type: supersedes
+  - target: DEL-STEAM-PATH-FLASH-GENERATOR.C3
+    type: derives-from
+  - target: DEL-STEAM-PATH-FLASH-GENERATOR.C4
+    type: derives-from
 design_question_answers:
   - answered_by: SOL-PLANT-STEAM-FLASH-GENERATOR.C2
     class: new-condition
@@ -42,13 +56,23 @@ interfaces:
   - estimator's steam pressure reading
   - boiler plant structure
   - pinned analysis records under docs/
+  - plant seam's reported quantities
+  - steam control declaration loader
+  - host steam-draw run
+  - steam readiness gate
 locus:
   - marking: existing
     ref: thermoblock plant structure, steam side
   - marking: existing
     ref: thermoblock plant description (params)
+  - marking: existing
+    ref: steam control law
+  - marking: existing
+    ref: steam control declaration
+  - marking: existing
+    ref: thermoblock plant structure, modelled outlet superheat
   - marking: created
-    ref: host run's per-run casting-ceiling report in text and JSON
+    ref: host-run report seam writing the per-run casting-ceiling and dryness reports in text and JSON
 plan_provenance:
   approved_plan_id: PLAN-DEL-STEAM-PATH-FLASH-GENERATOR-FLASH-1
   target: DEL-STEAM-PATH-FLASH-GENERATOR

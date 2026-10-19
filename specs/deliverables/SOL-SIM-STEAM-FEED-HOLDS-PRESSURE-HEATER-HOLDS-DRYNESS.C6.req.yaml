@@ -1,7 +1,7 @@
 id: SOL-SIM-STEAM-FEED-HOLDS-PRESSURE-HEATER-HOLDS-DRYNESS.C6
 type: criterion
 title: After a draw ends the casting returns to the ready state unattended by the same heater control
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: test
