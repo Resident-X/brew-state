@@ -2,11 +2,11 @@ id: SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C4
 type: criterion
 title: Each rule is shown to fail on a fault seeded for it in a copy of the throwaway proof design
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |-
-  The on-demand seeded-fault proof introduces into a copy of a throwaway design, outside the tracked tree, a side with surface-mount parts and fewer than three fiducials, a polarised part with no silkscreen mark nearer pad one, and a mark on the wrong side of the part, and requires the check to fail each, the record of each seeded run naming the fault and the rule that caught it; the committed proof design stays passing. A missing record or declaration the rule needs fails; a design with no surface-mount part, polarised part or hole-only footprint is not failed for that; an explicit none is accepted. The proof is the existing on-demand seeded-fault proof, extended, and runs in neither gate. Out of scope: the existing seeded-fault proofs and the rules owned by other leaves of this task.
+  The on-demand seeded-fault proof introduces into a copy of a throwaway design, outside the tracked tree, a side with surface-mount parts and fewer than three fiducials, a polarised part with no silkscreen mark nearer pad one, a polarised capacitor named only by its symbol with no mark, and a mark on the wrong side of the part, and requires the check to fail each, the record of each seeded run naming the fault and the rule that caught it; the committed proof design stays passing. A design with no surface-mount part, polarised part or hole-only footprint is not failed for that. The proof is the existing on-demand seeded-fault proof, extended, and runs in neither gate. Out of scope: the existing seeded-fault proofs and the rules owned by other leaves of this task.
 links:
   - target: SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS
     type: criterion-of
