@@ -69,8 +69,8 @@ locus:
     ref: steam control law
   - marking: existing
     ref: steam control declaration
-  - marking: existing
-    ref: thermoblock plant structure, modelled outlet superheat
+  - marking: created
+    ref: modelled outlet superheat quantity of the thermoblock plant structure
   - marking: created
     ref: host-run report seam writing the per-run casting-ceiling and dryness reports in text and JSON
 plan_provenance:
