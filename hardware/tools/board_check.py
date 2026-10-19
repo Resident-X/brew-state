@@ -1835,6 +1835,8 @@ def load_pin_limits(yaml, root: str, repository: Repository, design: Design, not
                 reading.number(f"{where}.highest_voltage_v", entry["highest_voltage_v"])
         reading.distinct("domains", [d["name"] for d in data["domains"]
                                      if isinstance(d, dict) and isinstance(d.get("name"), str)], "the domain")
+        reading.distinct("domains", [net_key(d["rail"].strip()) for d in data["domains"]
+                                     if isinstance(d, dict) and isinstance(d.get("rail"), str)], "the rail")
     if "parts" in data and reading.listed("parts", data["parts"], "parts"):
         for index, entry in enumerate(data["parts"]):
             where = f"parts[{index}]"
@@ -1996,6 +1998,9 @@ def check_parts(yaml, root: str, design: Design, repository: Repository, today: 
 #: The slack, relative to the figure compared, that floating-point arithmetic on a peak may need.
 VOLTAGE_SLACK = 1e-9
 #: A figure written with unit V, VDC or VAC in any letter case, as a rating states it.
+#: A number directly followed by a V unit, with an optional thousands separator or k or m prefix, in any letter case
+#: and whatever follows the unit: a voltage as a rating writes it, whether or not the rule can read it.
+VOLTAGE_SHAPED = re.compile(r"[0-9](?:[0-9,.]*[0-9])?\s*[km]?V", re.IGNORECASE)
 RATING_FIGURE = re.compile(r"(?<![A-Za-z0-9.])([0-9]+(?:\.[0-9]+)?)\s*(VAC|VDC|V)(?![A-Za-z])", re.IGNORECASE)
 #: A resistor value that is zero.
 ZERO_OHMS = re.compile(r"0+(?:\.0+)?\s*(?:R|Ω|ohms?)?", re.IGNORECASE)
@@ -2016,7 +2021,7 @@ def part_kind(reference: str, value: Optional[str]) -> str:
     joins nets, and any other designator a passive or mechanical part. The
     part's class plays no part in it.
     """
-    letters = LEADING_LETTERS.match(reference).group(0).upper()
+    letters = LEADING_LETTERS.match(reference.strip()).group(0).upper()
     if letters == "U":
         return INTEGRATED_CIRCUIT
     if letters in ("D", "Q", "LED"):
@@ -2032,6 +2037,11 @@ def rating_peak(text: Optional[str]) -> Optional[float]:
     if found is None or float(found.group(1)) <= 0:
         return None
     return float(found.group(1)) * (math.sqrt(2) if found.group(2).upper() == "VAC" else 1)
+
+
+def voltage_shaped(text: Optional[str]) -> bool:
+    """Whether a rating states a figure shaped like a voltage, readable by rating_peak or not."""
+    return isinstance(text, str) and VOLTAGE_SHAPED.search(text) is not None
 
 
 def net_key(name: str) -> str:
@@ -2185,7 +2195,7 @@ def voltage_rules(design: Design, yaml, root: str, repository: Repository, not_f
         if policy_path is None:
             classes = {}
         elif policy is not None:
-            classes = {c["class"]: c["voltage"]["share"] for c in policy["classes"]}
+            classes = {c["class"].strip(): c["voltage"]["share"] for c in policy["classes"]}
         for ref in sorted(stated):
             where = f"{schematic} {ref}"
             record = stated[ref]
@@ -2197,10 +2207,10 @@ def voltage_rules(design: Design, yaml, root: str, repository: Repository, not_f
             if named == "none":
                 stated_ratings = [(source, text) for source, text in (
                     ("the parts specification record", record.get("rating")),
-                    ("the design's Rating field", (placed.get(ref) or {}).get("rating"))) if rating_peak(text) is not None]
+                    ("the design's Rating field", (placed.get(ref) or {}).get("rating"))) if voltage_shaped(text)]
                 for source, text in stated_ratings:
                     fail("derated_voltage", f"{where} rating",
-                         f"the position {ref} names the class none and {source} gives {text!r}, a figure in V, VDC or VAC; "
+                         f"the position {ref} names the class none and {source} gives {text!r}, a figure in a voltage unit; "
                          "none is for a part with no such rating, so name the class of the derating policy that covers it")
                 continue
             if classes is None:
@@ -2259,6 +2269,15 @@ def voltage_rules(design: Design, yaml, root: str, repository: Repository, not_f
                     fail("derated_voltage", f"{limits_path} domains {name}",
                          f"the mains domain {name} states highest_voltage_v {domains[name][1]:g}, below {peak:g} V, "
                          "the peak of the separation basis working_voltage; state at least the peak")
+
+    # A domain's rail must be a net of the design.
+    if limits is not None:
+        present = {net_key(name) for name in nets}
+        for name, (rail, _) in domains.items():
+            if net_key(rail) not in present:
+                fail("pin_limit", f"{limits_path} domains {name}",
+                     f"the domain {name} names the rail {rail}, which is no net of the design; name a net of the design, "
+                     "or remove the domain")
 
     # The pin-limit rule.
     for ref in sorted(placed):

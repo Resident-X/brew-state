@@ -99,6 +99,8 @@ class World(unittest.TestCase):
                 entry["class"] = klass
             positions.append(entry)
         self.record("parts-specification.yaml", {"positions": positions, "synthetic": True})
+        if domains is DOMAINS:
+            nets = {**{"/" + d["rail"]: [] for d in DOMAINS}, **nets}
         for name, held in (("derating-policy.yaml", policy), ("pin-limits.yaml", limits)):
             if held is None and os.path.exists(os.path.join(self.root, "hw/machine", name)):
                 self.remove(name)
@@ -297,11 +299,20 @@ class TheDeratedVoltageRule(World):
 
     def test_an_unrated_part_or_one_rated_in_other_units_may_name_none(self):
         # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C1: none is accepted for a part whose rating states no figure in V, VDC or VAC.
-        # the unit is read ignoring letter case, so Vrms stays unreadable in any case
-        for rating in (None, "3A", "0.25W", "500mA", "275Vrms", "275VRMS"):
+        for rating in (None, "3A", "0.25W", "500mA", "1A", "50mA", ""):
             with self.subTest(rating=rating):
                 self.build([("C1", "x", "C100", rating, "none"), IC], cap_on_rails(), limits=[IC_LIMITS])
                 self.assertEqual(self.found("derated_voltage"), [])
+
+    def test_a_class_none_part_cannot_hide_a_voltage_shaped_rating_the_rule_cannot_read(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C1: none is for a part whose rating states no figure in V, VDC or VAC and no number followed by any other voltage unit.
+        for rating in ("275Vrms", "275VRMS", "1,000V", "1kV", "1.5kV", "250VAC", "100mV", "0,5V"):
+            with self.subTest(rating=rating):
+                self.build([("C1", "x", "C100", rating, "none"), IC], cap_on_rails(), limits=[IC_LIMITS])
+                found = self.found("derated_voltage")
+                self.assertEqual(len(found), 2)
+                self.assertIn("names the class none", found[0].message)
+                self.assertTrue(found[0].location.endswith("C1 rating"))
 
     def test_a_position_naming_a_class_the_policy_lacks_fails_and_a_near_miss_of_the_name_fails(self):
         # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C1: A position naming a class the derating policy lacks fails.
@@ -683,7 +694,7 @@ class ADuplicateEntryIsRefusedRatherThanLettingTheLaterReplaceTheEarlier(World):
 
     def test_a_duplicate_domain_or_class_name_fails(self):
         # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C3: The rules read only the records the reader accepts.
-        self.build([IC], {"/+5V": pins(("U1", "1", "A"))}, domains=DOMAINS + [domain("five", "+5V", 50)],
+        self.build([IC], {"/+5V": pins(("U1", "1", "A"))}, domains=DOMAINS + [domain("five", "+12V", 50)],
                    limits=[limit_part("C200", ("1", "five", 3, 0, False))], mains="none", mains_nets=())
         problems = self.read(board_check.read_pin_limits)
         self.assertEqual(len(problems), 1)
@@ -693,6 +704,50 @@ class ADuplicateEntryIsRefusedRatherThanLettingTheLaterReplaceTheEarlier(World):
         problems = self.read(board_check.read_derating)
         self.assertEqual(len(problems), 1)
         self.assertIn("the class 'capacitor'", problems[0].message)
+
+
+    def test_two_domains_naming_one_rail_fail_whatever_the_slash_and_either_order(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C3: The rules read only the records the reader accepts.
+        for second in ("/+5V", "+5V", " +5V"):
+            with self.subTest(second=second):
+                self.build([IC], {"/+5V": pins(("U1", "1", "A"))}, domains=[domain("five", "+5V", 50), domain("logic", second, 3.3)],
+                           limits=[limit_part("C200", ("1", "five", 3, 0, False))], mains="none", mains_nets=())
+                problems = self.read(board_check.read_pin_limits)
+                self.assertEqual(len(problems), 1)
+                self.assertIn("the rail '+5V'", problems[0].message)
+                self.assertIn("more than once", problems[0].message)
+                self.assertIsNone(self.read(board_check.load_pin_limits)[0])
+
+    def test_a_domain_whose_rail_matches_no_net_of_the_design_fails_naming_the_domain_and_rail(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C2: a domain whose rail is no net of the design fails.
+        for rail in ("+5v", "+5V ", "/sub/+5V", "+12V"):
+            with self.subTest(rail=rail):
+                self.build([IC], {"/+5V": pins(("U1", "1", "A"))}, domains=[domain("five", rail, 5.25)],
+                           limits=[limit_part("C200", ("1", "five", 3, 0, False))], mains="none", mains_nets=())
+                found = [v for v in self.found("pin_limit") if "no net of the design" in v.message]
+                self.assertEqual(len(found), 1, self.lines())
+                self.assertIn("domain five", found[0].message)
+                self.assertIn(f"rail {rail}", found[0].message)
+                self.assertTrue(found[0].location.endswith("domains five"))
+        self.build([IC], {"/+5V": pins(("U1", "1", "A"))}, domains=[domain("five", "+5V", 5.25)],
+                   limits=[limit_part("C200", ("1", "five", 6, 0, False))], mains="none", mains_nets=())
+        self.assertEqual(self.found("pin_limit"), [])
+
+
+class AReferenceDesignatorIsReadWithoutItsSurroundingSpace(World):
+    def test_a_padded_designator_is_read_as_its_kind(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C2: A part's kind is read from its reference designator.
+        for ref, kind in ((" U1", board_check.INTEGRATED_CIRCUIT), ("U1 ", board_check.INTEGRATED_CIRCUIT),
+                          ("\tq1", board_check.SEMICONDUCTOR), (" FB1", board_check.JOINS_NETS), (" J1", board_check.PASSIVE)):
+            with self.subTest(ref=ref):
+                self.assertEqual(board_check.part_kind(ref, None), kind)
+
+    def test_a_padded_integrated_circuit_needs_a_pin_limit_entry(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C2: An integrated circuit with no entry in the pin-limit record fails.
+        self.build([(" U1", "CHIP", "C200", None, "none")], {"/+5V": pins((" U1", "1", "A"))},
+                   limits=[limit_part("C999", ("1", "five", 6, 0, False))], mains="none", mains_nets=())
+        found = [v for v in self.found("pin_limit") if "omits" in v.message]
+        self.assertEqual(len(found), 1, self.lines())
 
 
 class TheHardwareNotesCarryAnEntryForEachRule(unittest.TestCase):
