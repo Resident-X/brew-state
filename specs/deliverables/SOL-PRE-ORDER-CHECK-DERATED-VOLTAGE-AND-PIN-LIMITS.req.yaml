@@ -3,9 +3,11 @@ type: deliverable
 category: solution
 title: The pre-order check fails a part over its derated voltage and a pin whose net can exceed its absolute maximum
 status: active
-version: 1
-text: |-
+version: 2
+text: |
   Adds the derating policy and pin-limit records and the derated-voltage and pin-limit rules, sharing one worked-out net voltage, each shown to fail on a seeded fault.
+
+  Placement: extends the pre-order check in hardware/tools. The record readers for the derating policy and the pin limits already exist from the record-keys leaf and are reused; this leaf adds the class key to the parts specification position keys, the rating parser, one net-voltage function shared by both rules (built on the schematic pin-node and mains-net seams, with the separation rule's basis-voltage reading supplying the mains peak), and the two rules called from the design check. The seeded faults extend the existing on-demand proof. Rejected: a second tool or reader, and reading classes from prose. Every proof design that places an integrated circuit gains the synthetic derating-policy and pin-limits records and a class on each parts-specification position.
 links:
   - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C4
     type: derives-from
