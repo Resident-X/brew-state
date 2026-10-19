@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES-C7-INSPECTION
+type: evidence
+title: inspection evidence for SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C7
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-19T01:52:09.289817Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check.py::test_every_rule_name_the_two_rules_report_under_has_a_row_saying_what_fails_it_and_what_exempts_a_design
+  artifact_version: 7499f192ae62b5ea4f6a395f51f385012b61c5ec
+attested_by: crun-8556f44eec4e85c8
+links:
+  - target: SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C7
+    type: satisfies

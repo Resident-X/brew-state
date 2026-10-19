@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES-C3-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-19T01:52:09.026074Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check.py::test_the_reader_returns_the_signed_figures_with_the_inputs_and_rows_it_read
+  artifact_version: 7499f192ae62b5ea4f6a395f51f385012b61c5ec
+attested_by: crun-8556f44eec4e85c8
+links:
+  - target: SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C3
+    type: satisfies

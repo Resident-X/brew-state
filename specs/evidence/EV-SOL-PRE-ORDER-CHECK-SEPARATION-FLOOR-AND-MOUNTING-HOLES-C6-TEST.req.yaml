@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES-C6-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C6
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-19T01:52:09.225186Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad.py::test_no_design_the_repository_tracks_fails_either_rule_and_each_carries_the_inputs_the_floor_reads
+  artifact_version: 7499f192ae62b5ea4f6a395f51f385012b61c5ec
+attested_by: crun-8556f44eec4e85c8
+links:
+  - target: SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C6
+    type: satisfies

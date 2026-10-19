@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES-C1-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-19T01:52:08.890305Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check.py::test_a_signed_clearance_below_its_floor_fails_naming_the_figure_the_floor_and_the_row
+  artifact_version: 7499f192ae62b5ea4f6a395f51f385012b61c5ec
+attested_by: crun-8556f44eec4e85c8
+links:
+  - target: SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C1
+    type: satisfies
