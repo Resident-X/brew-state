@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS-C4-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C4
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-19T15:04:23.134054Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad.py::TheFiducialAndPolarityMarkRules.test_each_rule_fails_on_its_seeded_fault_and_names_the_rule_the_design_and_the_item
+  artifact_version: 189172c2384e3b0bf4bc4da0475f8fd2eef0cdc7
+attested_by: crun-22dd39287ef60ddc
+links:
+  - target: SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C4
+    type: satisfies
