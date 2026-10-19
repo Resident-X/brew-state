@@ -13,5 +13,5 @@ links:
     type: justified-by
   - target: SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES
     type: depends-on
-  - target: DEL-CONTROLLER-HARDWARE.C3
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C14
     type: derives-from
