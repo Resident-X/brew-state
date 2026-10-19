@@ -1,0 +1,13 @@
+id: DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR.C13
+type: criterion
+title: No credential is fixed at manufacture or shared across machines
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |-
+  Every credential that grants access is established at the machine it protects, so that learning one machine's credential teaches nothing about another's.
+links:
+  - target: DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR
+    type: criterion-of

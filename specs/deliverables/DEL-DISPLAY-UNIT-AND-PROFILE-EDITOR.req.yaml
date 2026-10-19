@@ -47,3 +47,11 @@ links:
     type: targets
   - target: REQ-NO-REMOTE-ACTUATION-001.C1
     type: targets
+  - target: REQ-NO-REMOTE-ACTUATION-001.C4
+    type: targets
+  - target: REQ-RECIPE-CUSTODY-001.C9
+    type: targets
+  - target: REQ-RECIPE-CUSTODY-001.C12
+    type: targets
+  - target: JRN-DESIGN-PROFILE-001.C9
+    type: targets

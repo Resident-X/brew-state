@@ -1,6 +1,6 @@
 id: DEL-DELIVERY-PROFILE-SEGMENTS.C8
 type: criterion
-title: The volume delivered, the puck resistance and the supply voltage are reported during a delivery and are never commanded or limited
+title: The volume delivered, the elapsed time, the weight where measured, the puck resistance and the supply voltage are reported during a delivery and are never commanded or limited
 status: active
 version: 2
 measurement_type: binary

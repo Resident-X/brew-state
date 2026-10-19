@@ -1,6 +1,6 @@
 id: DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR.C7
 type: criterion
-title: A kept profile has a name and can be placed on a preset from either surface
+title: A kept profile can be placed on a preset from either surface
 status: active
 version: 1
 measurement_type: binary

@@ -1,13 +1,13 @@
 id: DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR.C4
 type: criterion
-title: A profile is built segment by segment and checked without a delivery, on the display and through the connected interface
+title: A profile is built segment by segment on the display and through the connected interface
 status: active
 version: 1
 measurement_type: binary
 verification: test
 closes_by: cascade
 text: |-
-  A profile the machine cannot deliver is refused where it is entered, with the segment and the reason named, on each of the two surfaces.
+  The same profile can be built on either surface, one segment at a time, with every field of the segment stated.
 links:
   - target: DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR
     type: criterion-of
