@@ -594,7 +594,6 @@ class ThePinCoverageRule(World):
 
     def test_a_pin_on_no_other_pin_and_no_rail_needs_no_entry(self):
         # SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C1: a pin on no other pin and no rail needs no entry.
-        # SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C4: ... a pin on no other pin and no rail is shown not to be failed.
         nets = {"/+5V": pins(("U1", "1", "A")), "unconnected-(U1-NC-Pad3)": pins(("U1", "3", "NC_3")),
                 "/FLOAT": pins(("U1", "4", "D"))}
         self.build([IC], nets, limits=[limit_part("C200", ("1", "five", 6, 0, False))], mains="none", mains_nets=())

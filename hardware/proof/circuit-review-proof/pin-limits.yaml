@@ -217,6 +217,7 @@ parts:
         absolute_max_v: 5.25
         absolute_min_v: -3
         tolerates_driven_unpowered: true
+      # Pin 2 is the LED cathode on net LED_K; it takes the led_anode domain because a listed pin's domain voltage feeds the net's reach, and the cathode ceiling is anode + 3 V = 8.25 V, which the figures below encode.
       - pin: "2"
         domain: led_anode
         absolute_max_v: 8.25

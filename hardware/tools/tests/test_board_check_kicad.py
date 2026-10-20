@@ -416,9 +416,30 @@ class PinCoverageProof(Proved):
         self.assertIn("C9000005", evidence)
 
 
+class PinCoverageSparesUnconnectedPins(Proved):
+    def test_a_pin_on_no_other_pin_and_no_rail_is_not_failed_beside_a_connected_pin_left_out_and_the_proof_notices_if_it_were(self):
+        # SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C4: ... a pin on no other pin and no rail is shown not to be failed.
+        faults = [fault for fault in board_prove.FAULTS if fault[1].startswith("pin coverage:") and "on no other pin" in fault[1]]
+        self.assertEqual(len(faults), 1)
+        fault = faults[0]
+        self.assertEqual(board_prove.target_of(fault), (board_prove.REVIEW_DESIGN, board_prove.REVIEW_NAME))
+        self.assertEqual(fault[6], "U4 pin 5")
+        self.assertCaught(fault[0])
+        caught, evidence = outcomes()[fault[0]]
+        self.assertTrue(caught, evidence)
+        self.assertIn(" | pin_limit | ", evidence)
+        self.assertIn("omits U4 pin 13, which is connected on net /WDI", evidence)
+        self.assertNotIn("U4 pin 5", evidence)
+        # the same run, told to leave alone the connected pin it does fail, is a missed proof: the spared pin is what the proof watches
+        named = (*fault[:6], "U4 pin 13")
+        caught, evidence = board_prove.prove(named, KICAD_CLI)
+        self.assertFalse(caught)
+        self.assertIn("must leave alone", evidence)
+
+
 class PinCoverageSparesListedPins(unittest.TestCase):
     def test_the_proof_fails_a_run_that_names_the_listed_pin_it_must_leave_alone(self):
-        # SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C4: ... the committed proof design stays passing, and the pins it keeps listed are not failed.
+        # SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C4: ... the entry of one connected pin of a listed part that keeps its other pins listed ... requires the check to fail it; the listed pins it keeps are not failed (the pin on no other pin and no rail is shown in PinCoverageSparesUnconnectedPins).
         fault = next(fault for fault in board_prove.FAULTS if fault[1].startswith("pin coverage:"))
         spared = (*fault[:6], "U1 pin 1")
         caught, evidence = board_prove.prove(spared, KICAD_CLI)
