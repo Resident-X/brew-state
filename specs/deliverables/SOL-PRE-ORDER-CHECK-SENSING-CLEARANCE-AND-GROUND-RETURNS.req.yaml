@@ -31,6 +31,10 @@ links:
     type: derives-from
   - target: SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 brief reviewer
+  fingerprint: 05762aef1b078889ca7b1049e317f250d5d75dd2f1cf94bb4741c102fcc49a0b
+  gating_profile: ""
 design_question_answers:
   - answered_by: SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS.C3
     class: whole-set
