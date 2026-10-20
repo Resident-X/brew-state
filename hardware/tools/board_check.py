@@ -2328,6 +2328,310 @@ def voltage_rules(design: Design, yaml, root: str, repository: Repository, not_f
     return found
 
 
+# --- The board rules record, the sensing clearance and the ground returns ---------
+
+BOARD_RULES_NAME = "board-rules.yaml"
+#: The keys of the board rules record, of the sensing mapping, of the ground-return mapping and of each signal class in it.
+BOARD_RULES_KEYS = ("sensing", "ground_returns", "synthetic")
+SENSING_KEYS = ("classes", "noisy_classes", "clearance_mm", "source")
+GROUND_RETURN_KEYS = ("ground_classes", "non_signal_classes", "signal_classes")
+SIGNAL_CLASS_KEYS = ("class", "signal_pins_per_return", "source")
+#: What a mapping of the board rules record states when the design has nothing of its kind.
+NOTHING = "none"
+#: The rule each sensing and noisy class pair is held to is named with this and the two classes.
+SENSING_RULE = f"{RESERVED}: sensing clearance"
+#: The class a net falls in when no other class holds it.
+DEFAULT_CLASS = "Default"
+
+
+def read_board_rules(yaml, root: str, repository: Repository, design: Design, not_for_manufacture: bool) -> List[Violation]:
+    """The board rules record's form, which every design needs."""
+    return load_board_rules(yaml, root, repository, design, not_for_manufacture)[1]
+
+
+def load_board_rules(yaml, root: str, repository: Repository, design: Design, not_for_manufacture: bool
+                     ) -> Tuple[Optional[dict], List[Violation]]:
+    """The board rules record's mapping and the violations of its form; no mapping where the record is missing or not in its form.
+
+    The sensing-clearance and ground-return rules compare a figure the record
+    holds, so a design whose folders hold none fails, and so does one whose
+    record is silent on either mapping. Each mapping may instead be the word
+    none, for a design with no sensing class or no connector signals to hold.
+    """
+    if find_record(root, design.directory, repository.tracked, BOARD_RULES_NAME) is None:
+        return None, [Violation(design.project, "board_rules_record", os.path.join(design.directory, BOARD_RULES_NAME),
+                                f"there is no {BOARD_RULES_NAME} in the design's folder or any folder above it, so the "
+                                "sensing-clearance and ground-return rules have nothing to hold the design to; add the "
+                                f"record, stating each of sensing and ground_returns, or {NOTHING} where the design has none")]
+    data, reading = read_optional(yaml, root, repository, design, BOARD_RULES_NAME, "board_rules_record",
+                                  "board rules record", BOARD_RULES_KEYS, not_for_manufacture)
+    if data is None:
+        return None, reading.found
+    for key, read in (("sensing", read_sensing), ("ground_returns", read_ground_returns)):
+        if key not in data or data[key] == NOTHING:
+            continue
+        if not isinstance(data[key], dict):
+            reading.bad(key, f"{key} is {data[key]!r}, where it is a mapping or the word {NOTHING} for a design with none")
+        else:
+            read(reading, data[key])
+    return (None if reading.found else data), reading.found
+
+
+def class_names(reading: Reading, path: str, names, empty: bool = False) -> List[str]:
+    """The net class names a list holds, each a non-empty string and each once."""
+    if not reading.listed(path, names, "net classes", empty):
+        return []
+    for index, name in enumerate(names):
+        reading.text(f"{path}[{index}]", name)
+    held = [name for name in names if isinstance(name, str) and name.strip()]
+    reading.distinct(path, held, "the class")
+    return held
+
+
+def read_sensing(reading: Reading, sensing: dict) -> None:
+    if not reading.mapping("sensing", sensing, SENSING_KEYS, SENSING_KEYS, "a sensing declaration"):
+        return
+    held = {key: class_names(reading, f"sensing.{key}", sensing[key]) for key in SENSING_KEYS[:2] if key in sensing}
+    if len(held) == 2:
+        for name in sorted(set(held["classes"]) & set(held["noisy_classes"])):
+            reading.bad("sensing", f"sensing lists the class '{name}' as both a sensing and a noisy class, so it would be held "
+                                   "apart from itself; list it in one")
+    if "clearance_mm" in sensing:
+        reading.positive("sensing.clearance_mm", sensing["clearance_mm"], " of millimetres")
+    if "source" in sensing:
+        reading.text("sensing.source", sensing["source"])
+
+
+def read_ground_returns(reading: Reading, returns: dict) -> None:
+    if not reading.mapping("ground_returns", returns, GROUND_RETURN_KEYS, GROUND_RETURN_KEYS, "a ground-return declaration"):
+        return
+    names: List[str] = []
+    for key, empty in (("ground_classes", False), ("non_signal_classes", True)):
+        if key in returns:
+            names += class_names(reading, f"ground_returns.{key}", returns[key], empty)
+    if "signal_classes" in returns and reading.listed("ground_returns.signal_classes", returns["signal_classes"], "signal net classes"):
+        for index, entry in enumerate(returns["signal_classes"]):
+            where = f"ground_returns.signal_classes[{index}]"
+            if not reading.mapping(where, entry, SIGNAL_CLASS_KEYS, SIGNAL_CLASS_KEYS, "a signal class"):
+                continue
+            if "class" in entry and reading.text(f"{where}.class", entry["class"]):
+                names.append(entry["class"])
+            if "signal_pins_per_return" in entry:
+                figure = entry["signal_pins_per_return"]
+                if isinstance(figure, bool) or not isinstance(figure, int) or figure < 1:
+                    reading.bad(f"{where}.signal_pins_per_return",
+                                f"{where}.signal_pins_per_return is {figure!r}, where it is a positive whole number, the most "
+                                "signal pins one ground-return pin may serve")
+            if "source" in entry:
+                reading.text(f"{where}.source", entry["source"])
+    reading.distinct("ground_returns", names, "the class")
+
+
+def sensing_rules(sensing: dict, signed: Optional[Tuple[float, float]]) -> Tuple[str, str, Dict[str, Tuple[str, str, float]]]:
+    """The rules holding each sensing and noisy class pair to the declared clearance, in KiCad's own form.
+
+    Returns the rules that go ahead of the signed rule, those that go after it,
+    and each rule's name with its two classes and figure. A pair without the
+    Mains class goes ahead, at the declared clearance. The signed rule's
+    condition already matches a pair with the Mains class and, being last, would
+    decide its clearance, so that pair's rule goes after it, holds the clearance
+    constraint alone and is set at the larger of the declared and signed
+    clearances: it can only tighten, and the signed creepage stays with the
+    signed rule.
+    """
+    ahead, after, named = "", "", {}
+    for sensed in sensing["classes"]:
+        for noisy in sensing["noisy_classes"]:
+            name = f"{SENSING_RULE}: {sensed} against {noisy}"
+            mains = signed is not None and "Mains" in (sensed, noisy)
+            figure = max(sensing["clearance_mm"], signed[0]) if mains else sensing["clearance_mm"]
+            text = (f'(rule "{name}"\n\t(condition "A.hasNetclass(\'{sensed}\') && B.hasNetclass(\'{noisy}\')")\n'
+                    f'\t(constraint clearance (min {figure:g}mm)))\n')
+            named[name] = (sensed, noisy, figure)
+            if mains:
+                after += text
+            else:
+                ahead += text
+    return ahead, after, named
+
+
+def sensing_classes(design: Design, record: str, sensing: dict, project_classes: Set[str], members: Dict[str, Set[str]]
+                    ) -> List[Violation]:
+    """Every class the sensing declaration names that the rules cannot be enforced against.
+
+    A class the project does not define, or one that holds no net on the layout,
+    would leave its pairs' rules applying to nothing, so a design cannot pass by
+    how a class is spelt; a name KiCad's rule syntax cannot carry is refused too.
+    """
+    found = []
+    for key in ("classes", "noisy_classes"):
+        for name in sensing[key]:
+            where = f"{record} sensing.{key}"
+            if UNWRITABLE & set(name):
+                found.append(Violation(design.project, "sensing_clearance", where,
+                                       f"the class '{name}' holds a quote or backslash, which a rule's condition cannot carry, so "
+                                       "the clearance cannot be enforced against it; rename the class"))
+            elif name not in project_classes:
+                found.append(Violation(design.project, "sensing_clearance", where,
+                                       f"the class '{name}' is no net class of the design's project file, so its rules would "
+                                       "apply to nothing; name a class the project defines"))
+            elif not members.get(name):
+                found.append(Violation(design.project, "sensing_clearance", where,
+                                       f"the class '{name}' holds no net on the layout, so its rules would apply to nothing; "
+                                       "assign the nets to the class, or take it out of the declaration"))
+    return found
+
+
+def sensing_clearance(kicad_cli: str, design: Design, copy: str, layout: str, rules_copy: str, existing: str,
+                      signed: Optional[Signed], nonce: str, net: Optional[str], record: str, sensing: dict,
+                      project_classes: Set[str], members: Dict[str, Set[str]]) -> List[Violation]:
+    """Every sensing item the layout puts closer to a noisy item than the record's declared clearance.
+
+    A second KiCad run on the temporary copy holds the rules sensing_rules
+    writes, ahead of the signed rule and after it as that function says, so a
+    finding is reported under the sensing rule's own name; only those rules'
+    findings are read. The design's own rules stay as it wrote them in the first
+    run, so a pair the design holds more strictly is still held to its own figure
+    there.
+    """
+    problems = sensing_classes(design, record, sensing, project_classes, members)
+    if problems:
+        return problems
+    ahead, after, named = sensing_rules(sensing, signed)
+    with open(rules_copy, "w", encoding="utf-8") as handle:
+        handle.write(existing + ahead + appended_rules(signed, nonce, net) + after)
+    report, why = run_report([kicad_cli, "pcb", "drc", "--format", "json", "--severity-all", "--units", "mm", layout], copy)
+
+    def fail(message: str) -> List[Violation]:
+        return [Violation(design.project, "sensing_clearance", design.layout, message)]
+
+    if report is None:
+        return fail(f"the clearance of the sensing classes from the noisy classes cannot be checked: {why}")
+    if cut_short(report):
+        return fail(f"KiCad's report was cut short at {REPORT_LIMIT} assertion failures, so a sensing item inside the "
+                    "clearance may have been dropped from it; correct the design's own assertion failures first")
+    if not fired(report, marker_rule(nonce)):
+        return fail("KiCad did not load the rules that hold the sensing classes to the declared clearance, so no sensing item was checked")
+    clearances = [entry for entry in report.get("violations") or [] if entry.get("type") == "clearance"]
+    if len(clearances) >= REPORT_LIMIT:
+        return fail(f"KiCad's report holds {len(clearances)} clearance failures, as many as it reports of one kind, so a sensing "
+                    "item inside the declared clearance may have been dropped from it; correct the design's own clearance failures first")
+    found, seen = [], set()
+    for entry in clearances:
+        description = entry.get("description", "")
+        rule = next((name for name in named if f"(rule '{name}'" in description), None)
+        if rule is None:
+            continue
+        sensed, noisy, figure = named[rule]
+        items = entry.get("items") or []
+        pair = (rule, frozenset(item_text(item) for item in items))
+        if pair in seen:
+            continue
+        seen.add(pair)
+        gap = DISTANCE_REPORTED.search(description)
+        involving = (f", the larger of the declared {sensing['clearance_mm']:g} mm and the signed clearance {signed[0]:g} mm "
+                     "since the pair involves Mains") if signed is not None and "Mains" in (sensed, noisy) and figure != sensing["clearance_mm"] else ""
+        found.append(Violation(
+            design.project, "sensing_clearance", "; ".join(item_text(item) for item in items) or design.layout,
+            f"an item of the sensing class {sensed} stands {gap.group(1) + ' mm' if gap else 'too close'} from an item of the noisy "
+            f"class {noisy}, inside the {figure:g} mm that {record} declares{involving}; move the two apart, or revise "
+            "sensing.clearance_mm with its source"))
+    return found
+
+
+def sensing_overrides(design: Design, layout: list, record: str, figure: float, nets: Set[str]) -> List[Violation]:
+    """Local clearance overrides below the declared sensing clearance on a sensing or noisy class net.
+
+    KiCad ranks a pad's or a footprint's local clearance override above every
+    custom rule, so one below the figure on either item of a pair would win over
+    the rules sensing_rules writes. A footprint has no net of its own and is read
+    as on one of `nets` when any of its pads is. A pad on no net is not counted.
+    """
+    found = []
+    why = (f"below the {figure:g} mm that {record} declares for sensing; KiCad ranks a pad or footprint clearance override above "
+           f"every custom rule, so it would let a sensing item pass closer than the declared clearance. Remove it, or raise "
+           f"it to at least {figure:g} mm")
+    for footprint in walk(layout, "footprint"):
+        reference = board_geometry.reference(footprint) or "?"
+        reached = [pad for pad in sexpr.children(footprint, "pad") if net_of(pad) in nets]
+        if not reached:
+            continue
+        for item in footprint:
+            value = numeric_clearance(item)
+            if value is not None and value < figure - 1e-9:
+                found.append(Violation(design.project, "sensing_override", f"footprint {reference} at {at_text(footprint)}",
+                                       f"footprint {reference} has a pad on a sensing or noisy class net and sets a local "
+                                       f"clearance override of {value:g} mm, {why}"))
+        for pad in reached:
+            number = str(pad[1]) if len(pad) > 1 else "?"
+            for node in walk(pad, "clearance"):
+                value = numeric_clearance(node)
+                if value is not None and value < figure - 1e-9:
+                    found.append(Violation(design.project, "sensing_override",
+                                           f"pad {number} [{net_of(pad)}] of {reference} (footprint at {at_text(footprint)})",
+                                           f"pad {number} of {reference} is on the sensing or noisy class net {net_of(pad)} and "
+                                           f"sets a local clearance override of {value:g} mm, {why}"))
+    return found
+
+
+def ground_returns(design: Design, tree: list, record: str, returns: dict, members: Dict[str, Set[str]]) -> List[Violation]:
+    """Every connector short of ground-return pins for its signal pins, and every connector pin on a class the record leaves undeclared.
+
+    A connector is a part whose reference designator begins with J. Its pins are
+    the numbered pads of its footprint that sit on a net, counted once however
+    many pads carry the number; a pad on no net, or on a net nothing else joins
+    (named unconnected-(...)), is no pin. A pin's classes are those of the
+    layout's net classes the net is in, or Default where it is in none. A pin on
+    a ground class is a ground-return pin and one on a signal class a signal
+    pin; a pin on a non-signal class is counted for neither. A connector with
+    signal pins fails when they exceed the smallest signal_pins_per_return of the
+    signal classes it carries times its ground-return pins, compared on whole
+    pins. A pin whose classes the record declares as none of the three, or as more
+    than one of them, fails, since which it counts as cannot be told.
+    """
+    ground = set(returns["ground_classes"])
+    non_signal = set(returns["non_signal_classes"])
+    signal = {entry["class"]: entry["signal_pins_per_return"] for entry in returns["signal_classes"]}
+    connectors: Dict[str, Dict[Tuple[str, str], str]] = {}
+    for index, pad in enumerate(board_geometry.pads(tree)):
+        if not pad.reference.upper().startswith("J") or not pad.net or pad.net.rsplit("/", 1)[-1].startswith(UNCONNECTED_NET):
+            continue
+        connectors.setdefault(pad.reference, {}).setdefault((pad.number or f"(pad {index})", pad.net), pad.net)
+    found = []
+    for reference in sorted(connectors):
+        returning, signalling = [], []
+        for number, net in sorted(connectors[reference]):
+            held = {name for name, inside in members.items() if net in inside} or {DEFAULT_CLASS}
+            kinds = {kind for kind, declared in (("ground", ground), ("non-signal", non_signal), ("signal", signal)) if held & set(declared)}
+            where = f"{design.layout} connector {reference} pin {number} [{net}]"
+            if not kinds:
+                found.append(Violation(design.project, "ground_return", where,
+                                       f"pin {number} of connector {reference} is on net {net}, in the net class {', '.join(sorted(held))}, "
+                                       f"which {record} ground_returns declares as none of ground, signal or non-signal; list "
+                                       "the class under ground_classes, non_signal_classes or signal_classes"))
+            elif len(kinds) > 1:
+                found.append(Violation(design.project, "ground_return", where,
+                                       f"pin {number} of connector {reference} is on net {net}, in the net classes {', '.join(sorted(held))}, "
+                                       f"which {record} ground_returns declares as {' and '.join(sorted(kinds))}, so whether it is "
+                                       "a ground return or a signal cannot be told; put the net in one class"))
+            elif "ground" in kinds:
+                returning.append((number, net))
+            elif "signal" in kinds:
+                signalling.append((number, net, min(signal[name] for name in held & set(signal))))
+        if not signalling:
+            continue
+        most = min(figure for _, _, figure in signalling)
+        if len(signalling) > most * len(returning):
+            needed = -(-len(signalling) // most)
+            found.append(Violation(
+                design.project, "ground_return", f"{design.layout} connector {reference}",
+                f"connector {reference} has {len(signalling)} signal pins ({', '.join(f'{n} [{net}]' for n, net, _ in signalling)}) "
+                f"and {len(returning)} ground-return pins ({', '.join(f'{n} [{net}]' for n, net in returning) or 'none'}); "
+                f"{record} ground_returns lets one return serve {most} signal pins at most, so it needs at least {needed}; "
+                "add ground-return pins to the connector, or revise signal_pins_per_return with its source"))
+    return found
+
+
 # --- The design's own rules ----------------------------------------------------
 
 
@@ -3837,7 +4141,10 @@ def pour_gaps(design: Design, tree: list, fills, minimum: float) -> List[Violati
 
 
 def appended_rules(signed: Optional[Tuple[float, float]], nonce: str, net: Optional[str] = None) -> str:
-    """The rules added after the design's own on the temporary copy, the signed one last.
+    """The rules added after the design's own on the temporary copy, the signed one after the marker.
+
+    Rules the check writes after the signed one can only tighten it: they hold
+    other constraint types, or a clearance no less than the signed figure.
 
     The marker matches the items of `net`, or every item when no net is given,
     so its absence from KiCad's report shows KiCad did not load the rules file
@@ -5050,6 +5357,13 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
     found += check_parts(yaml, root, design, repository, today, not_for_manufacture)
     found += read_derating(yaml, root, repository, design, not_for_manufacture)
     found += read_pin_limits(yaml, root, repository, design, not_for_manufacture)
+    board_rules, rules_problems = load_board_rules(yaml, root, repository, design, not_for_manufacture)
+    rules_record = find_record(root, design.directory, repository.tracked, BOARD_RULES_NAME) or BOARD_RULES_NAME
+    found += rules_problems
+    sensing = board_rules["sensing"] if board_rules is not None and board_rules["sensing"] != NOTHING else None
+    if sensing and read is not None:
+        read.append(("SENSE-6 sensing clearance", f"{BOARD_RULES_NAME} sensing.clearance_mm",
+                     f"{sensing['clearance_mm']:g} mm at least between a sensing item and an item of a noisy class"))
     found += unnamed_sheets(design, repository)
 
     if any(v.rule == "design_unreadable" for v in found):
@@ -5201,7 +5515,15 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
         names = layout_nets(tree)
         project_copy = os.path.join(copy, os.path.basename(design.project))
         widths, unwidthed = class_widths(project)
-        classes = sorted((set(widths) - {"Default"}) | {"Mains"})
+        project_classes = {entry["name"] for entry in setting(project, "net_settings", "classes") or []
+                           if isinstance(entry, dict) and isinstance(entry.get("name"), str)} | {"Mains"}
+        declared = set()
+        if board_rules is not None:
+            declared |= set(sensing["classes"] + sensing["noisy_classes"]) if sensing else set()
+            if board_rules["ground_returns"] != NOTHING:
+                returns = board_rules["ground_returns"]
+                declared |= set(returns["ground_classes"] + returns["non_signal_classes"]) | {e["class"] for e in returns["signal_classes"]}
+        classes = sorted(((set(widths) | (declared & project_classes)) - {"Default"}) | {"Mains"})
         members, why = class_members(kicad_cli, scratch, project_copy, classes, names, nonce,
                                      layout_version(tree), class_blocks(tree))
         if members is None:
@@ -5212,6 +5534,9 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
         if signed is not None and on_layout:
             found += mounting_holes(kicad_cli, design, copy, layout, rules_copy, existing, signed, nonce,
                                     marker_net(items), tree, on_layout, fills)
+        if sensing:
+            found += sensing_clearance(kicad_cli, design, copy, layout, rules_copy, existing, signed, nonce, marker_net(items),
+                                       rules_record, sensing, project_classes, members)
         if "WORK_NECK_MM" in figures and copper.copper:
             for name in unwidthed:
                 found.append(Violation(design.project, "project_file", f"{design.project} net_settings.classes '{name}'",
@@ -5261,6 +5586,8 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
         found += designators_astray(design, tree)
         found += missing_fiducials(design, tree)
         found += unmarked_pins(design, tree, parts)
+        if board_rules is not None and board_rules["ground_returns"] != NOTHING:
+            found += ground_returns(design, tree, rules_record, board_rules["ground_returns"], members)
         if "TEST_COURTYARD_MM" in figures:
             found += crowded_test_points(design, tree, figures["TEST_COURTYARD_MM"])
     except board_geometry.Unreadable as unread:
@@ -5268,6 +5595,9 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
                                f"the layout cannot be read for its decoupling and references ({unread})"))
     if signed is not None:
         found += overrides(design, tree, signed[0], on_layout)
+    if sensing:
+        found += sensing_overrides(design, tree, rules_record, sensing["clearance_mm"],
+                                   set().union(*(members.get(name, set()) for name in sensing["classes"] + sensing["noisy_classes"])))
     try:
         if "BARRIER_COPPER_MM2" in figures:
             found += mains_barrier(design, refilled, fills, on_layout, figures["BARRIER_COPPER_MM2"])
@@ -5307,7 +5637,7 @@ def design_reads(top: str, files: List[str], git: str = "git") -> List[str]:
     For each design that is its own folder, written with a trailing slash so a
     file deleted from it is still one the design read, every file its folder,
     its sheets and its libraries hold, and the separation basis, pin allocation, parts specification,
-    catalogue extract, derating policy and pin-limit records it is held to, whether or not a record is committed. A design in the top folder reads
+    catalogue extract, derating policy, pin-limit and board rules records it is held to, whether or not a record is committed. A design in the top folder reads
     the whole repository, written as WHOLE_REPOSITORY.
     """
     repository = Repository(top, files, git)
@@ -5316,7 +5646,8 @@ def design_reads(top: str, files: List[str], git: str = "git") -> List[str]:
     for design in designs:
         reads.add(design.directory + "/" if design.directory else WHOLE_REPOSITORY)
         reads.update(design_files(design, repository)[0])
-        for name in (RECORD_NAME, PIN_RECORD_NAME, PARTS_RECORD_NAME, CATALOGUE_NAME, DERATING_NAME, PIN_LIMITS_NAME):
+        for name in (RECORD_NAME, PIN_RECORD_NAME, PARTS_RECORD_NAME, CATALOGUE_NAME, DERATING_NAME, PIN_LIMITS_NAME,
+                     BOARD_RULES_NAME):
             record = find_record(top, design.directory, repository.tracked, name)
             if record:
                 reads.add(record)

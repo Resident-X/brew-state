@@ -1,0 +1,10 @@
+# A synthetic board rules record, made only to prove the pre-order check against the
+# throwaway design beside it. The design carries no sensing front end, so it states
+# none for sensing. Its connector J3 is a one-pin header that takes a digital input
+# straight from the controller and returns it through no pin of its own, so the
+# design states none for the ground returns rather than a ratio J3 would break.
+# Being marked synthetic, the check accepts it only for a design marked not for
+# manufacture.
+sensing: none
+ground_returns: none
+synthetic: true

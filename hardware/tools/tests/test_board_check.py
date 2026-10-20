@@ -1487,8 +1487,9 @@ json.dump(report, open(out, "w"))
         self.assertNotEqual(nonces[0], nonces[1], "two runs used the same name for the marker")
         self.assertTrue(all(len(nonce) >= 16 for nonce in nonces))
         for found in runs:
-            # This design holds no pin allocation, parts specification or catalogue extract record; their own rules are tested apart.
-            self.assertEqual([(v.rule, v.message) for v in found if v.rule != "pin_allocation" and not v.rule.startswith("parts_")],
+            # This design holds no pin allocation, parts specification, catalogue extract or board rules record; their own rules are tested apart.
+            self.assertEqual([(v.rule, v.message) for v in found
+                              if v.rule not in ("pin_allocation", "board_rules_record") and not v.rule.startswith("parts_")],
                              [("assertion_failure", "Assertion failure (rule 'pre-order check: rules loaded')")])
 
 
@@ -2132,7 +2133,7 @@ json.dump(report, open(out, "w"))
         # SOL-HW-BOARD-CLASS-READ-ANY-SIZE.C1: A net class's membership is read completely and identically on every run, on a board of any size
         found = self.check(board_check.REPORT_LIMIT - 2)
         self.assertEqual(self.cut(found), [])
-        self.assertEqual({v.rule for v in found if not v.rule.startswith("parts_")}, {"assertion_failure"})
+        self.assertEqual({v.rule for v in found if not v.rule.startswith("parts_") and v.rule != "board_rules_record"}, {"assertion_failure"})
 
     def test_a_marker_crowded_out_of_a_full_report_is_not_taken_for_unloaded_rules(self):
         # SOL-HW-BOARD-CLASS-READ-ANY-SIZE.C1: A net class's membership is read completely and identically on every run, on a board of any size

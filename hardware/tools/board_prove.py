@@ -58,6 +58,11 @@ KEYS_TARGET = (KEYS_DESIGN, KEYS_NAME)
 #: and none listed in the pin-limit record.
 REVIEW_DESIGN = "hardware/proof/circuit-review-proof"
 REVIEW_NAME = "circuit-review-proof"
+#: The layout review proof design, the only one with a sensing net class and a ground net class, which the faults about the
+#: board rules record's sensing and ground returns are seeded into.
+SENSING_DESIGN = "hardware/proof/review-proof"
+SENSING_NAME = "review-proof"
+SENSING_TARGET = (SENSING_DESIGN, SENSING_NAME)
 
 
 class Seed:
@@ -307,6 +312,10 @@ def derating(old: str, new: str):
 
 def pin_limits(old: str, new: str):
     return lambda seed: seed.replace("pin-limits.yaml", old, new)
+
+
+def board_rules(old: str, new: str):
+    return lambda seed: seed.replace("board-rules.yaml", old, new)
 
 
 def resistor_over_its_rating(seed: Seed) -> None:
@@ -1080,6 +1089,59 @@ def hole_near_mains(plated_net: Optional[str] = None):
     return seed_it
 
 
+#: J2 pad 1, on Power-class /+5V, is a 1.7 mm by 2 mm pad at (37, 3.5), the Power copper nearest a free corner of the board. A
+#: Sensing-class /AMP_OUT track 0.3 mm from its edge keeps the Sensing net class's own 0.2 mm clearance and stands inside the
+#: 0.5 mm the board rules record declares.
+SENSED_X = 37 - 0.85 - 0.3 - 0.125
+SENSED_UUID = "0b0e5c1a-0000-4000-8000-000000001001"
+
+
+def sensing_item_near_power(seed: Seed) -> None:
+    seed.layout(lambda tree: tree.insert(len(tree) - 1, segment("/AMP_OUT", SENSED_X, 2.5, SENSED_X, 4.5, SENSED_UUID)))
+
+
+def declared_above_mains(seed: Seed) -> None:
+    """The record declares 40 mm, above the signed 3 mm and above the 34 mm the nearest Sensing copper stands from Mains copper."""
+    seed.replace("board-rules.yaml", "clearance_mm: 0.5", "clearance_mm: 40")
+
+
+def override_on(target: Callable[[list], list]):
+    def seed_it(seed: Seed) -> None:
+        def edit(tree: list) -> None:
+            item = target(tree)
+            item.insert(len(item) - 1, ["clearance", "0.1"])
+        seed.layout(edit)
+    return seed_it
+
+
+CONNECTOR_UUID = "0b0e5c1a-0000-4000-8000-000000001100"
+
+
+def connector(*nets: str, record: Optional[Callable[["Seed"], None]] = None):
+    """A connector J9 with a pin for each net given, in a free corner of the board, and an edit to the record if one is given."""
+    thru = ("thru_hole", ["*.Cu", "*.Mask"])
+
+    def seed_it(seed: Seed) -> None:
+        pads = [(str(index + 1), *thru, net, 2.54 * index, 0, 1.6) for index, net in enumerate(nets)]
+        seed.layout(lambda tree: tree.insert(len(tree) - 1, small_part("J9", 12, 50, CONNECTOR_UUID, *pads)))
+        if record is not None:
+            record(seed)
+    return seed_it
+
+
+#: The record's non-signal classes and its signal classes, as the committed record writes them.
+NON_SIGNAL = "  non_signal_classes:\n    - Mains\n    - Power\n    - Supply\n  signal_classes:\n"
+SOURCE = "source: none -- synthetic figure chosen to exercise the check, not read from a guideline\n"
+
+
+def supply_a_signal(seed: Seed) -> None:
+    """Supply is a signal class held to one signal pin per return, and Sensing to three."""
+    seed.replace("board-rules.yaml", NON_SIGNAL, "  non_signal_classes:\n    - Mains\n    - Power\n  signal_classes:\n"
+                 "    - class: Supply\n      signal_pins_per_return: 1\n      " + SOURCE)
+    seed.replace("board-rules.yaml", "signal_pins_per_return: 1\n      " + SOURCE + "synthetic",
+                 "signal_pins_per_return: 3\n      " + SOURCE + "synthetic")
+
+
 SIGNED = f"rule '{board_check.SIGNED_RULE}' clearance"
 CONDITION = board_check.MAINS_CONDITION
 
@@ -1415,6 +1477,39 @@ FAULTS: List[tuple] = [
      "the pin-limit record entry for the integrated circuit U4, catalogue number C9200032, omits U4 pin 13, which is connected on net /WDI",
      pin_limits('      - pin: "PA17"\n        domain: logic\n        absolute_max_v: 4.1\n        absolute_min_v: -0.3\n        tolerates_driven_unpowered: false\n', ""),
      (REVIEW_DESIGN, REVIEW_NAME), "U4 pin 5"),
+    # The sensing-clearance and ground-return rules
+    ("a sensing item closer to Power copper than the declared clearance", "sensing clearance: a sensing item closer to a noisy item outside Mains than the declared clearance fails", "sensing_clearance",
+     "of the noisy class Power, inside the 0.5 mm that hardware/proof/review-proof/board-rules.yaml declares", sensing_item_near_power, SENSING_TARGET),
+    ("a declared sensing clearance above the signed one that Mains copper stands inside", "sensing clearance: a sensing item closer to a Mains item than the declared clearance fails where the declared clearance is above the signed one", "sensing_clearance",
+     "of the noisy class Mains, inside the 40 mm that hardware/proof/review-proof/board-rules.yaml declares", declared_above_mains, SENSING_TARGET),
+    ("a pad clearance override below the declared sensing clearance", "sensing clearance: a pad on a sensing class net with a local clearance override below the declared clearance fails", "sensing_override",
+     "pad 1 of U3 is on the sensing or noisy class net /AMP_OUT and sets a local clearance override of 0.1 mm", override_on(lambda tree: pad(tree, "U3", "1")), SENSING_TARGET),
+    ("a footprint clearance override below the declared sensing clearance", "sensing clearance: a footprint with a pad on a noisy class net and a local clearance override below the declared clearance fails", "sensing_override",
+     "footprint J4 has a pad on a sensing or noisy class net and sets a local clearance override of 0.1 mm", override_on(lambda tree: footprint(tree, "J4")), SENSING_TARGET),
+    ("a board rules record silent on sensing", "sensing clearance: a board rules record that does not state sensing, even as none, fails", "board_rules_record",
+     "the record lacks sensing, which every board rules record states", board_rules("sensing:\n  classes:\n    - Sensing\n  noisy_classes:\n    - Mains\n    - Power\n  clearance_mm: 0.5\n  " + SOURCE, ""), SENSING_TARGET),
+    ("a board rules record with a misspelt sensing key", "sensing clearance: a key the records decisions do not define is refused by name in the board rules record", "board_rules_record",
+     "holds the key 'clearence_mm'", board_rules("  clearance_mm: 0.5", "  clearence_mm: 0.5"), SENSING_TARGET),
+    ("a sensing declaration without its source", "sensing clearance: a clearance stated without its source fails", "board_rules_record",
+     "sensing lacks source", board_rules("  source: none -- synthetic figure chosen to exercise the check, not read from a guideline\nground_returns:", "ground_returns:"), SENSING_TARGET),
+    ("a design with no board rules record for sensing or ground returns", "board rules: a design whose folders hold no board rules record fails", "board_rules_record",
+     "there is no board-rules.yaml in the design's folder or any folder above it", remove("board-rules.yaml"), SENSING_TARGET),
+    ("a noisy sensing class the project does not define", "sensing clearance: a declared class that is no net class of the project fails", "sensing_clearance",
+     "the class 'Switching' is no net class of the design's project file", board_rules("    - Power\n  clearance_mm", "    - Power\n    - Switching\n  clearance_mm"), SENSING_TARGET),
+    ("a ground-return mapping with a misspelt key", "ground returns: a key the records decisions do not define is refused by name in the ground-return mapping", "board_rules_record",
+     "holds the key 'signal_pins_per_retun'", board_rules("signal_pins_per_return: 2", "signal_pins_per_retun: 2"), SENSING_TARGET),
+    ("a ground-return signal class with a ratio that is not a whole number", "ground returns: a signal_pins_per_return that is not a positive whole number fails", "board_rules_record",
+     "signal_pins_per_return is 1.5, where it is a positive whole number", board_rules("signal_pins_per_return: 2", "signal_pins_per_return: 1.5"), SENSING_TARGET),
+    ("a ground-return connector whose signal pins exceed the declared signal pins per return", "ground returns: a connector whose signal pins exceed the signal class's signal_pins_per_return times its ground-return pins fails", "ground_return",
+     "connector J9 has 2 signal pins (1 [/AMP_OUT], 2 [/AMP_FB]) and 1 ground-return pins (3 [/GND])", connector("/AMP_OUT", "/AMP_FB", "/GND"), SENSING_TARGET),
+    ("a ground-return connector with signal pins and no ground-return pin", "ground returns: a connector with signal pins and no ground-return pin fails", "ground_return",
+     "connector J9 has 1 signal pins (1 [/AMP_OUT]) and 0 ground-return pins (none)", connector("/AMP_OUT", "/+5V"), SENSING_TARGET),
+    ("a ground-return connector pin on a class declared neither ground nor signal", "ground returns: a connector pin on a class declared none of ground, signal or non-signal fails", "ground_return",
+     "pin 2 of connector J9 is on net /+3V3, in the net class Supply, which hardware/proof/review-proof/board-rules.yaml ground_returns declares as none of ground, signal or non-signal",
+     connector("/AMP_OUT", "/+3V3", "/GND", record=board_rules(NON_SIGNAL, "  non_signal_classes:\n    - Mains\n    - Power\n  signal_classes:\n")), SENSING_TARGET),
+    ("a ground-return connector of two signal classes over the smaller signal pins per return", "ground returns: a connector carrying several signal classes is held to the smallest signal_pins_per_return among them", "ground_return",
+     "connector J9 has 2 signal pins (1 [/AMP_OUT], 2 [/+3V3]) and 1 ground-return pins (3 [/GND]); hardware/proof/review-proof/board-rules.yaml ground_returns lets one return serve 1 signal pins at most",
+     connector("/AMP_OUT", "/+3V3", "/GND", record=supply_a_signal), SENSING_TARGET),
 ]
 
 
