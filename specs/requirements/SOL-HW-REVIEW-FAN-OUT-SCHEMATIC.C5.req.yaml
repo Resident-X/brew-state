@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-FAN-OUT-SCHEMATIC.C5
+type: criterion
+title: The schematic review step and the hardware notes say that a round may be judged by unit, and the proof folder's list names the sheet drawings
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The method's schematic review section says that a round may be judged by unit, what the merge checks including the coverage of every net, part and sheet, and that judging it with one reviewer stays valid; its list of what the circuit review's proof folder holds names the sheet drawings; the sentence that a proof is repeated after the step changes names the form that changed; the hardware notes describe the circuit review proof's fanned-out run and the task runner's description says what the command needs. Checked by reading each place against these clauses. Out of scope: the layout and ordering sections.
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-SCHEMATIC
+    type: criterion-of

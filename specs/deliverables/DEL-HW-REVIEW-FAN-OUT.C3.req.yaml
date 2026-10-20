@@ -1,0 +1,13 @@
+id: DEL-HW-REVIEW-FAN-OUT.C3
+type: criterion
+title: A schematic review round is judged by catalogue area and recorded as one round
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The units are the circuit catalogue's areas and one unit for the whole-schematic free pass. The merged record gives every catalogue item a verdict row, covers every net, part and sheet of the schematic in some item's rows, and numbers this round's findings at the merge. A reviewer keeps read-only retrieval of a document at its published address.
+links:
+  - target: DEL-HW-REVIEW-FAN-OUT
+    type: criterion-of

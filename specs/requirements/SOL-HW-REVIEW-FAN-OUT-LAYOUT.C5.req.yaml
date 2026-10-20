@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-FAN-OUT-LAYOUT.C5
+type: criterion
+title: A review folder for a committed board holds what the layout review step gives a reviewer and nothing of the designer's reasoning
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Over a synthetic repository with a committed board, a command writes a review folder outside the repository holding the board's design files as the commit holds them, its plan, rules table and the records those name, the method, the hardware notes, the rendered views and placement view the round's first step names, and the check's report, and holds no session or notes file and no file the commit does not hold; it holds no review record for a first round, and for a later round only the earlier rounds of the record as recorded, because a verdict row may cite a finding an earlier round closed by a reason. It refuses a folder inside the repository, a folder that is not new or empty, a commit that does not hold a board, and views that are missing. The review seeding command's assembly is generalised to take the design and the seeding command's existing tests still pass. Out of scope: rendering the views and running the check.
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-LAYOUT
+    type: criterion-of

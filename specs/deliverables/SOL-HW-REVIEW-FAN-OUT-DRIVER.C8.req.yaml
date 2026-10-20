@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-FAN-OUT-DRIVER.C8
+type: criterion
+title: The command can run named units again and merge the kept results with the new ones
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The command keeps each unit's result in its output folder. Given the names of units to run again, it runs only those, replaces their results, and merges again; it refuses a name that is not a unit of the review, and the record shows which units were run again and when. A unit that failed, or that needs a view the round's starter has since rendered, is therefore run without repeating the others. Out of scope: deciding which units to run again.
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-DRIVER
+    type: criterion-of

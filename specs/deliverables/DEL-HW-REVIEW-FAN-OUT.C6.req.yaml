@@ -1,0 +1,13 @@
+id: DEL-HW-REVIEW-FAN-OUT.C6
+type: criterion
+title: The method names judging a round by unit beside judging it with one reviewer, and no round or criterion already recorded is made false
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The method's layout review, routing, schematic review and ordering steps each say that a round may be judged by unit and what the merge checks, and the sentence on repeating a proof names the form that changed; the hardware notes and the task runner's description say what the command needs. A round judged with one reviewer remains a valid round: the statements checked are SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C5 and .C6, SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C1, the three recorded blind proofs and the review record history check's clauses.
+links:
+  - target: DEL-HW-REVIEW-FAN-OUT
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-FAN-OUT-DRIVER.C7
+type: criterion
+title: The task runner's entry and the hardware notes say what the command is, what it needs and that it is on demand
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The task runner's description of the command and the hardware notes' section on it say that it runs a judged review as a setup session and forked reviewers, that it is on demand and in neither the build round nor the nightly, that it needs the agent command line on the path and logged in, that the command line's name is read from one environment variable, and what the report records. Checked by reading each place against these clauses. Out of scope: the callers' own descriptions.
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-DRIVER
+    type: criterion-of

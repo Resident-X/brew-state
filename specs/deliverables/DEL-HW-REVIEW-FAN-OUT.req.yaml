@@ -1,0 +1,44 @@
+id: DEL-HW-REVIEW-FAN-OUT
+type: deliverable
+category: task
+title: The method's judged reviews are carried out by one reviewer per unit started together from one shared setup, so a round costs the slowest unit's time and a fraction of the tokens
+status: active
+level: task
+version: 1
+text: |
+  Intent. The project aims at a first-pass successful board, reached by combining deterministic checks with non-deterministic, model-judged review and design that apply best electrical engineering practice. The model-judged reviews are therefore a permanent part of how a board is made, and the aim here is that they are faster and cheaper wherever they can be, at the same or better quality. The quality part is a checked outcome and not an assumption: each fanned-out review is run against the single-reviewer form on the same seeded copy and must find every seed the single reviewer finds, with no more time or cost.
+
+  What this is. The method's judged reviews are carried out by one reviewer per unit, started together from one shared setup, with the results merged into the one record the method already keeps. A review is a read-only judgement over files that do not change while it runs, its units (a catalogue area, a group of placed parts, a group of fabrication layers) do not depend on one another, and today one reviewer judges them all in one context, one after another, with every image it has opened still held. Wall-clock time and token use are what slow this project most, and these reviews, and the blind proofs that repeat them on seeded copies, are among the largest consumers of both.
+
+  What exists. The layout review judges sixty-nine items in twelve catalogue areas and took about twenty minutes a round in the run recorded in SOL-BOARD-REVIEW-LOOP-PROPORTIONATE. The schematic review judges twenty-four items in eighteen areas. The ordering step's production-files check gives one row to every placed part and one to every fabrication layer. The critical-routing check (step 4 of the method's routing section) judges the layout checklist items that bear on the critical nets, before the router runs, and records a pass in the board's layout plan, which is a different record from a review round. Each has a blind proof on a seeded copy, run by hand as a fresh read-only session: SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF, SOL-BOARD-CIRCUIT-REVIEW-SEEDED-PROOF and SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C3.
+
+  What was decided and measured is in DEC-REVIEW-FAN-OUT-BY-UNIT-FROM-SHARED-SETUP, whose rationale carries the figures, the options rejected (including the batch interface and Claude Code's workflows), and what is not yet measured; a session building this does not reopen the choice of mechanism. In short: a forked reviewer costs about 40 per cent less per area than a fresh session because the setup is paid once, and the time saved comes from running the units together, so a round costs the slowest unit's time plus the setup. A review with one unit runs in the setup session and costs what a fresh session costs, so every judged review goes through the one command. DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND settles that a round judged by unit is the same round, which is why no recorded round or sealed criterion is made false: the full-round and narrow-round criteria, the closing-round rule, the review record history check and the recorded blind runs all hold, because the method keeps judging a round with one reviewer valid and adds judging it by unit beside it, and each blind proof is re-run for the fanned-out form so that no recorded run stands as evidence of a form it did not test.
+
+  There is no requirement for the economy of the project's own reviews, and none is written here. The cost of verification is carried by operational decisions, such as DEC-VERIFICATION-ROUND-TARGETED-NIGHTLY-FULL for the build round, and this task rests on decisions in the same way.
+
+  Placement. The method task DEL-HW-DESIGN-METHOD and the verification task DEL-HW-DESIGN-VERIFICATION are delivered and sealed, so this is new work beside them, serving the epic criteria for the layout review, the schematic review and the published build path, as DEL-HW-PRE-ORDER-CHECKS-EXTENDED serves the epic criteria beside the sealed verification task. The production-files check is the ordering path a rebuilder follows, which is why it is served through the published-build-path criterion.
+
+  Slicing and order. Five solutions. The driver solution builds the command, its session handling and the generic merge, and measures nothing by itself. The layout review solution builds the first caller and is where the figures behind the decision are checked at the layout review's full unit count; it depends on the driver. The critical-routing solution, the schematic review solution and the production-files solution each depend on the driver, and the critical-routing solution also on the layout solution, whose area finding it reuses; the schematic and production-files solutions are independent of the others and can be built at the same time. Adding another caller, such as placement candidate judging, needs a caller definition and no change to the driver. Steps that write files, that drive the board editor, or whose units depend on an earlier unit are not fanned out.
+rationale: |
+  Wall-clock time and token use are the largest drag on this project's board work, and the judged reviews are where a single reviewer's one long context and one-after-another units cost most. The graph carried the reviews and their blind proofs but nothing about how a review is carried out, so the practice was a hand-launched fresh session per review and per proof. A measurement on the layout review (recorded in the first decision) showed that forking per unit from a shared setup cuts the token cost per area by about 40 per cent and that the time gain comes from running the units together. Making it a command the task runner runs, with a deterministic merge that checks completeness, is what turns the measurement into practice: a fan-out run by hand, or merged by a model, would leave the check that every item has a verdict to the thing being checked. Splitting the work into one solution per caller follows from each caller amending a different method step and needing its own blind proof, whose failure to find a seed must not hold up the others.
+links:
+  - target: DEL-CONTROLLER-HARDWARE.C10
+    type: derives-from
+  - target: DEL-CONTROLLER-HARDWARE.C11
+    type: derives-from
+  - target: DEL-CONTROLLER-HARDWARE.C5
+    type: derives-from
+  - target: DEC-REVIEW-FAN-OUT-BY-UNIT-FROM-SHARED-SETUP
+    type: justified-by
+  - target: DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND
+    type: justified-by
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C3
+    type: targets
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3
+    type: targets
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: targets

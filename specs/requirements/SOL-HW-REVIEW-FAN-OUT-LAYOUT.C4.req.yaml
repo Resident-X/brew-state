@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-FAN-OUT-LAYOUT.C4
+type: criterion
+title: The merged round is read by the review record history command's own reader as a single reviewer's round is
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The merged round has the round heading, the opening fields with the round kind, the Verdicts table, the Plan and free pass section and the Findings table or the line saying no finding was raised, in the order the method gives. A record holding it and a hand-written round are passed through the reader the review record history command uses, and what it reads from the two has the same shape. Out of scope: the history command's own checks of the repository's history.
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-LAYOUT
+    type: criterion-of

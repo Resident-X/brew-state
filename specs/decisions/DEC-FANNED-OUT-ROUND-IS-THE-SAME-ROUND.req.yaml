@@ -1,0 +1,42 @@
+id: DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND
+type: decision
+category: operational
+title: A review round judged by unit is the same round as one judged by a single reviewer, with one verdict for every item and the findings numbered at the merge
+status: active
+version: 1
+decided_by: david
+text: |
+  A review round judged by unit is the same round as one judged by a single reviewer: it gives every checklist item exactly one verdict, it is recorded as one round in the one review record in the form the method already gives, and the round kind, full or narrow, means what it already means. The method describes judging a round by unit as a way to carry out a round and leaves judging it with one reviewer valid, so a person, or an agent session without the driver, can still carry out a round and every round already recorded stands.
+
+  A round judged by unit adds three things to the method's step, all of them done by the merge and none by a reviewer. Every checklist item has exactly one verdict row in the merged table, and a missing or duplicated item fails the merge, naming the item. The findings are numbered at the merge, in the checklist's order, never by the reviewer that raised them, so the round's finding numbers are the same however many reviewers there were; only this round's findings are renumbered, and a verdict row's citation of a finding an earlier round raised is left as written. A finding that two units raise for the same place is reported by the merge for the designer to resolve and is not dropped. The round's own fields, its number, kind, the commit judged, the views and the check's lines, are supplied to the command as inputs by whoever starts the round, since the merge has no model to write them. The comparison of the layout with the plan and the free pass over every view, which belong to no one area, are judged by a unit of their own, and the planning-cause trace for a first-review failure stays with the designer after the merge as it does now.
+
+  A reviewer forked from the setup session is a fresh reviewer for the method's rule that the closing round be judged by a fresh reviewer: the setup session holds only documents and records and no designer's reasoning, and no unit holds another unit's verdicts.
+
+  The method's sentence that a proof is repeated after the step it proves changes is read as naming the form that changed: a fanned-out form is proven on its own, and the single-reviewer form's recorded proof stands for the single-reviewer form, which is unchanged. The method's amendment says so beside the sentence.
+
+  A cannot judge verdict is resolved within the round, as the method says. The merge fails a round or pass that still holds one, naming the item and the view it asks for, and whoever started the round renders that view and runs that unit again; reviewers hold read tools and cannot render.
+rationale: |
+  Context: The first decision fans a judged review out by unit. The method's layout review step says a reviewer goes through the whole checklist in order and records a verdict on each item, and sealed or evidenced criteria say the same in their own words: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C5 and .C6 require a full round to judge every item, SOL-BOARD-REVIEW-LOOP-PROPORTIONATE.C1 lets a fresh reviewer judge only the touched items in a narrow round, and the three blind proofs record single-session runs. Changing the step to require a fan-out would make those statements describe a procedure the method no longer states, and every recorded round would have been judged by a procedure the method no longer describes.
+
+  The sweep of statements that a fan-out could make false, read before this was decided: the full-round and narrow-round criteria are about what is judged and what closes a review, not about how many sessions judge it, and they hold unchanged when each item still has one verdict from a fresh reviewer; the blind proofs' recorded runs were true of the method as written then and are re-run for the fanned-out form by the solutions that build it, so none of them is left standing as evidence of a form it did not test; the review record history check reads rounds, verdict tables and findings tables and does not read how many sessions produced them.
+
+  Trade-offs: Replacing the single-reviewer step with the fan-out was rejected because it makes the criteria above describe a procedure the method no longer states and excludes a person or an agent without the driver from carrying out a round, which the method's reviewer definition ("an agent session, or a person") allows. Recording each unit's result as a narrow round was rejected because a narrow round never closes a review and the units together are one full round; it would also number rounds by unit and break the record's rule that a round holds the checklist's verdicts once. Letting each reviewer number its own findings was rejected because the numbers would depend on the reviewer count and would collide, and findings are cited by number from later rounds.
+
+  Reversibility: Cheap. The amendment adds a way to carry out a round and removes none, and a merged record is indistinguishable from a single reviewer's, so withdrawing the fan-out leaves every record valid.
+
+  Consequences: The method's layout review, schematic review and ordering steps each gain a short description of judging by unit and of the merge's checks. The driver's merge, not a model, enforces one verdict per item, so completeness is a tested property of the command. No existing criterion is amended or superseded by this decision. The statements that call for a session to review a seeded copy blind remain true of a fanned-out review, whose reviewers are such sessions.
+options_considered:
+  - option: A round judged by unit is one full round recorded once, and judging it with one reviewer stays valid
+    reason_rejected: ""
+  - option: The fan-out replaces the single-reviewer step
+    reason_rejected: makes sealed and evidenced criteria describe a procedure the method no longer states, and excludes a person or an agent without the driver, which the method's reviewer definition allows
+  - option: Each unit's result is recorded as a narrow round
+    reason_rejected: a narrow round never closes a review, and the units together are one full round; it would number rounds by unit and break the record's rule that a round holds each verdict once
+  - option: Each reviewer numbers its own findings
+    reason_rejected: the numbers would depend on the reviewer count and collide, and later rounds cite findings by number
+chosen: A round judged by unit is one full round recorded once, and judging it with one reviewer stays valid
+links:
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: addresses
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3
+    type: addresses
