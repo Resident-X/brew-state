@@ -32,3 +32,7 @@ links:
     type: targets
   - target: SOL-HW-REVIEW-FAN-OUT-DRIVER
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5
+  fingerprint: b0e70330f47da21143fc687fce456666e9a577989099b22a6de20cf6b776b081
+  gating_profile: ""
