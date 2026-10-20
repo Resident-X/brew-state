@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C1
+type: criterion
+title: A connected pin of a semiconductor or integrated circuit that its pin-limit entry omits fails
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  For each semiconductor or integrated-circuit part the pin-limit record lists, every connected pin of the placed part carries an entry in the part's record entry, and a connected pin the entry leaves out fails, naming the part and the pin. A pin is connected when its net holds another pin or is the rail of a declared domain; a pin on no other pin and no rail needs no entry, and no entry stands for the pins it leaves unlisted. A part the record omits altogether is reported once by the existing omission failure and not again for each pin. Out of scope: the figures an entry holds, passives and mechanical parts, and the other pin-limit failures.
+links:
+  - target: SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED
+    type: criterion-of

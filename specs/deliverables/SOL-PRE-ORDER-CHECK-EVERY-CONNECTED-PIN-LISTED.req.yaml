@@ -1,0 +1,45 @@
+id: SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED
+type: deliverable
+category: solution
+title: The pre-order check fails a connected pin of a semiconductor or integrated circuit that its pin-limit entry omits
+status: active
+version: 1
+text: |
+  Extends the pin-limit rule so that every connected pin of a semiconductor or integrated circuit has its own entry in the part's pin-limit record, and a connected pin the entry omits fails by part and pin, shown to fail on a seeded fault.
+
+  Placement: extends the pin-limit rule of the derated-voltage and pin-limit leaf in hardware/tools, reusing the schematic pin-node and net map it already reads for the pins of each placed part and the listed-pin loop that already compares a record entry with the placed part. No new record key, tool or reader. Rejected: an entry that stands for the pins it leaves unlisted, and requiring an entry for a pin on no other pin or rail. Every proof design that places a semiconductor or integrated circuit gains an entry for each of its connected pins, with limits taken from the part's cited datasheet source.
+links:
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C15
+    type: derives-from
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C10
+    type: derives-from
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C11
+    type: derives-from
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3
+    type: targets
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: targets
+  - target: DEC-BOARD-PRE-ORDER-RULE-READINGS
+    type: justified-by
+  - target: DEC-BOARD-DESIGN-RECORDS-AS-YAML
+    type: justified-by
+  - target: SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS
+    type: depends-on
+design_question_answers:
+  - answered_by: SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C1
+    class: whole-set
+  - answered_by: SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C2
+    class: existing-capability
+  - answered_by: SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C3
+    class: consumer-intent
+interfaces:
+  - task hw:verify and the board tier of task check:round
+  - hardware/tools pre-order check pin-limit rule and its record reader
+  - hardware/proof synthetic pin-limit records and seeded-fault tests
+locus:
+  - marking: existing
+    ref: hardware/tools/ (the pre-order board check and its tests)
+  - marking: existing
+    ref: hardware/proof/ (throwaway proof designs and their synthetic pin-limit records)
+  - marking: existing
+    ref: hardware/README.md (hardware notes)

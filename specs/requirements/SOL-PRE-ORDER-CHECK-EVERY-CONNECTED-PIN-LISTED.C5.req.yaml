@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C5
+type: criterion
+title: Every tracked design passes the rule, which runs in the build round for board changes and nightly on main
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Every design git tracks passes the coverage rule, its pin-limit record carrying an entry for every connected pin of every semiconductor and integrated circuit it places, each limit taken from the part's cited datasheet source and synthetic where the design is not for manufacture. The rule runs in the build round of every change to a board design or to a record it reads, and in the nightly run of main, through the board gate the pre-order check already uses. Out of scope: a new gate, a new tool, and any real board's records.
+links:
+  - target: SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED
+    type: criterion-of
