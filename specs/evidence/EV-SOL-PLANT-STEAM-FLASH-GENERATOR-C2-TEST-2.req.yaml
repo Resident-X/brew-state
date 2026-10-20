@@ -1,0 +1,16 @@
+id: EV-SOL-PLANT-STEAM-FLASH-GENERATOR-C2-TEST-2
+type: evidence
+title: test evidence for SOL-PLANT-STEAM-FLASH-GENERATOR.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-20T01:40:01.753212Z"
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_a_shut_block_fed_to_its_capacity_clamps_there_and_keeps_it
+  artifact_version: 2f71cdfc40f7c2425d96bbc03da64227b1ac24f1
+attested_by: crun-f4784c0f6eac25a3
+links:
+  - target: SOL-PLANT-STEAM-FLASH-GENERATOR.C2
+    type: satisfies

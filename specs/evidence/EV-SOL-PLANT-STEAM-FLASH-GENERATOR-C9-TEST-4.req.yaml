@@ -1,0 +1,16 @@
+id: EV-SOL-PLANT-STEAM-FLASH-GENERATOR-C9-TEST-4
+type: evidence
+title: test evidence for SOL-PLANT-STEAM-FLASH-GENERATOR.C9
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-20T01:40:08.590954Z"
+artifact:
+  kind: external
+  reference: firmware/test/test_host_report/test_host_report.c::test_the_steam_draw_run_states_dryness_in_both_forms_with_the_caveat
+  artifact_version: 2f71cdfc40f7c2425d96bbc03da64227b1ac24f1
+attested_by: crun-f4784c0f6eac25a3
+links:
+  - target: SOL-PLANT-STEAM-FLASH-GENERATOR.C9
+    type: satisfies

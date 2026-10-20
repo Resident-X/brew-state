@@ -1,0 +1,16 @@
+id: EV-SOL-PLANT-STEAM-FLASH-GENERATOR-C8-TEST-4
+type: evidence
+title: test evidence for SOL-PLANT-STEAM-FLASH-GENERATOR.C8
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-20T01:40:08.141155Z"
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_steam_declaration_origins.py::test_an_account_using_the_old_words_for_the_retired_relations
+  artifact_version: 2f71cdfc40f7c2425d96bbc03da64227b1ac24f1
+attested_by: crun-f4784c0f6eac25a3
+links:
+  - target: SOL-PLANT-STEAM-FLASH-GENERATOR.C8
+    type: satisfies
