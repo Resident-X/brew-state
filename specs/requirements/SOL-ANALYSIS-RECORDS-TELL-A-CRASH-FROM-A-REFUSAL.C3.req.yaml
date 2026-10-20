@@ -1,0 +1,12 @@
+id: SOL-ANALYSIS-RECORDS-TELL-A-CRASH-FROM-A-REFUSAL.C3
+type: criterion
+title: Every corner the committed records name as refused is a named control-path refusal
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The stability, parameter-dominance and protection-margin records, regenerated with the analyses of the first criterion, name as refused only corners whose draw the control path refused by name, each with its reason. Regeneration with those analyses either leaves the committed records byte-identical or stops on a corner that had been recorded as refused and was a crash, in which case the crash is corrected and the records regenerated in the same change. Out of scope: any figure of a corner that ran.
+links:
+  - target: SOL-ANALYSIS-RECORDS-TELL-A-CRASH-FROM-A-REFUSAL
+    type: criterion-of

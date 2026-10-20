@@ -1,0 +1,23 @@
+id: SOL-ANALYSIS-RECORDS-TELL-A-CRASH-FROM-A-REFUSAL
+type: deliverable
+category: solution
+title: The stability, dominance and protection-margin analyses record a refused corner only when the control path refused it by name, not when a draw crashed
+status: active
+version: 1
+text: |
+  The stability, parameter-dominance and protection-margin analyses each draw a machine at a declared-error corner and record a corner they cannot run as refused. The casting-peak analysis already tells the two apart: it records a corner as refused only when the control path itself reports a refusal naming its reason, and stops on a run that fails to finish any other way. The other three catch every failure of a draw (the sweep's and cross-tier errors, and in the protection-margin analysis every margin error) and report it as a refused corner, so a crash in the control path, a missing executable or a run that never finished reads in the record as a description the machine declined to run. A corner reported that way looks examined and is not: the stability record's claim that every corner settles or is named as a finding, the dominance ranking's claim that every parameter was run to its corners, and the protection-margin record's claim that every corner was delivered against, each hold for a corner that was refused and fail for one that crashed.
+
+  This solution makes the three analyses draw the same line the casting-peak analysis draws, from one shared definition of what counts as the control path's own refusal rather than three copies, and checks that no corner the committed records already name as refused is a crash.
+rationale: |
+  It lands in the maintenance lane rather than as new requirements because nothing the graph says was wrong: the robustness and sensitivity criteria already require each declared-error corner to be examined, and the analyses that fell short are sealed work whose behaviour, not specification, is at fault. The defect surfaced when the casting-peak analysis was written to distinguish a named control-path refusal from a crash and the three older analyses were found still folding both into a refused corner. It is one item rather than three because the line to draw is one line, drawn once and read by all three; three separate fixes would let the analyses disagree on what a refusal is.
+
+  The existing sealed criteria are not amended: the sibling stability, margin and dominance solutions say that corners are run and their verdicts committed, which remains true; this item restores that a corner reported as refused was refused.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-ROBUST-CONTROL-001.C1
+    type: targets
+  - target: REQ-ROBUST-CONTROL-001.C3
+    type: targets
+  - target: REQ-PARAMETER-SENSITIVITY-001.C1
+    type: targets

@@ -1,0 +1,12 @@
+id: SOL-ANALYSIS-RECORDS-TELL-A-CRASH-FROM-A-REFUSAL.C1
+type: criterion
+title: A corner whose draw fails to finish without a named control-path refusal stops the analysis instead of being recorded as refused
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  In each of the stability, parameter-dominance and protection-margin analyses, a corner is recorded as refused only when the control path reports a refusal naming its reason; a draw that fails to finish any other way, including a crash and a missing executable, stops the analysis and names the corner and what the run did. The test drives each analysis with a corner whose draw crashes and asserts the stop, and with a corner the control path refuses by name and asserts it is still recorded as refused with its reason. Out of scope: how the control path decides to refuse a description, and the casting-peak analysis, which already draws this line.
+links:
+  - target: SOL-ANALYSIS-RECORDS-TELL-A-CRASH-FROM-A-REFUSAL
+    type: criterion-of

@@ -48,3 +48,5 @@ links:
     type: targets
   - target: REQ-MEASUREMENT-001.C8
     type: targets
+  - target: REQ-MEASUREMENT-001.C11
+    type: targets

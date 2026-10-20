@@ -1,0 +1,12 @@
+id: SOL-ANALYSIS-RECORDS-TELL-A-CRASH-FROM-A-REFUSAL.C2
+type: criterion
+title: The three analyses take the control path's refusal from one shared definition
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The test of whether a failed draw is the control path's own named refusal exists once and is read by the stability, parameter-dominance, protection-margin and casting-peak analyses; none carries its own copy. A change to what the control path prints when it refuses a description reaches all four through that one definition. Out of scope: the wording of the refusal line itself.
+links:
+  - target: SOL-ANALYSIS-RECORDS-TELL-A-CRASH-FROM-A-REFUSAL
+    type: criterion-of
