@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED-C3-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-20T03:50:58.590739Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_voltage.py::ThePinCoverageRule.test_a_connected_pin_the_entry_omits_fails_naming_the_rule_the_design_the_part_the_pin_and_the_catalogue_number
+  artifact_version: 2fffd9ced3eaec7cc807fc5f18c203fc6c0560b2
+attested_by: crun-e77bfc23887dc38f
+links:
+  - target: SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C3
+    type: satisfies

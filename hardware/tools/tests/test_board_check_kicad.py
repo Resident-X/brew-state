@@ -398,6 +398,55 @@ class VoltageRulesProof(Proved):
                 self.assertIn(fault[3], evidence)
 
 
+class PinCoverageProof(Proved):
+    def test_a_pin_left_out_of_a_listed_parts_entry_is_caught_on_a_copy_of_the_throwaway_design_that_spares_its_listed_pins(self):
+        # SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C4: The on-demand seeded-fault proof removes from a copy of a throwaway design, outside the tracked tree, the entry of one connected pin of a listed part that keeps its other pins listed and requires the check to fail it, the record of the seeded run naming the fault and the rule that caught it
+        # OBL-VERIFICATION-DISCIPLINE-001.C9: A check is shown to fail on the defect it exists to catch rather than asserted to be capable of it
+        faults = [fault for fault in board_prove.FAULTS if fault[1].startswith("pin coverage:")]
+        self.assertEqual(len(faults), 1)
+        fault = faults[0]
+        self.assertEqual(fault[2], "pin_limit")
+        self.assertEqual(board_prove.target_of(fault), board_prove.KEYS_TARGET)
+        self.assertEqual(fault[6], "U1 pin 2")
+        self.assertCaught(fault[0])
+        caught, evidence = outcomes()[fault[0]]
+        self.assertTrue(caught, evidence)
+        self.assertIn(" | pin_limit | ", evidence)
+        self.assertIn("omits U1 pin 1, which is connected on net /LV_A", evidence)
+        self.assertIn("C9000005", evidence)
+
+
+class PinCoverageSparesUnconnectedPins(Proved):
+    def test_a_pin_on_no_other_pin_and_no_rail_is_not_failed_beside_a_connected_pin_left_out_and_the_proof_notices_if_it_were(self):
+        # SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C4: ... a pin on no other pin and no rail is shown not to be failed.
+        faults = [fault for fault in board_prove.FAULTS if fault[1].startswith("pin coverage:") and "on no other pin" in fault[1]]
+        self.assertEqual(len(faults), 1)
+        fault = faults[0]
+        self.assertEqual(board_prove.target_of(fault), (board_prove.REVIEW_DESIGN, board_prove.REVIEW_NAME))
+        self.assertEqual(fault[6], "U4 pin 5")
+        self.assertCaught(fault[0])
+        caught, evidence = outcomes()[fault[0]]
+        self.assertTrue(caught, evidence)
+        self.assertIn(" | pin_limit | ", evidence)
+        self.assertIn("omits U4 pin 13, which is connected on net /WDI", evidence)
+        self.assertNotIn("U4 pin 5", evidence)
+        # the same run, told to leave alone the connected pin it does fail, is a missed proof: the spared pin is what the proof watches
+        named = (*fault[:6], "U4 pin 13")
+        caught, evidence = board_prove.prove(named, KICAD_CLI)
+        self.assertFalse(caught)
+        self.assertIn("must leave alone", evidence)
+
+
+class PinCoverageSparesListedPins(unittest.TestCase):
+    def test_the_proof_fails_a_run_that_names_the_listed_pin_it_must_leave_alone(self):
+        # SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C4: ... the entry of one connected pin of a listed part that keeps its other pins listed ... requires the check to fail it; the listed pins it keeps are not failed (the pin on no other pin and no rail is shown in PinCoverageSparesUnconnectedPins).
+        fault = next(fault for fault in board_prove.FAULTS if fault[1].startswith("pin coverage:"))
+        spared = (*fault[:6], "U1 pin 1")
+        caught, evidence = board_prove.prove(spared, KICAD_CLI)
+        self.assertFalse(caught)
+        self.assertIn("must leave alone", evidence)
+
+
 class TheRecordKeysProofDesignPasses(unittest.TestCase):
     def test_the_record_keys_proof_design_with_every_key_passes_the_check(self):
         # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
@@ -1286,6 +1335,7 @@ class EveryTrackedDesignPassesTheConnectivityCheck(unittest.TestCase):
         self.assertTrue(all(line.endswith(" | PASS") for line in designs), designs)
         self.assertFalse([line for line in lines if " | connectivity | " in line or " | pin_allocation | " in line], lines)
         # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C6: Every design git tracks passes the derated-voltage rule and the pin-limit rule, carrying the records they read, synthetic where the design is not for manufacture.
+        # SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C5: Every design git tracks passes the coverage rule, its pin-limit record carrying an entry for every connected pin of every semiconductor and integrated circuit it places, through the board gate the pre-order check already uses.
         self.assertFalse([line for line in lines if " | derated_voltage | " in line or " | pin_limit | " in line], lines)
 
 

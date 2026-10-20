@@ -137,7 +137,7 @@ def cap_on_rails(extra_nets=None):
 
 CAP = ("C1", "100nF", "C100", "16V", "capacitor")
 IC = ("U1", "CHIP", "C200", None, "none")
-IC_LIMITS = limit_part("C200", ("1", "five", 6, -0.3, False))
+IC_LIMITS = limit_part("C200", ("1", "five", 6, -0.3, False), ("2", "ground", 6, -0.3, False))
 
 
 class PartKindIsReadFromTheDesignator(unittest.TestCase):
@@ -459,10 +459,10 @@ class ThePinLimitRule(World):
 
     def test_a_net_reached_only_through_resistors_with_no_listed_pin_takes_no_limit_from_the_rule(self):
         # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C2: A net reached only through resistors or capacitors and carrying no listed pin takes no limit from this rule.
-        nets = {"/+5V": pins(("R1", "1", "")), "/MID": pins(("R1", "2", ""), ("U1", "5", "NC_5")),
+        nets = {"/+5V": pins(("R1", "1", "")), "/MID": pins(("R1", "2", ""), ("R2", "1", "")),
                 "/AUX": pins(("U1", "1", "A"))}
-        self.build([IC, ("R1", "1k", "C300", None, "none")], nets, limits=[limit_part("C200", ("1", "five", 6, 0, False))],
-                   mains="none", mains_nets=())
+        self.build([IC, ("R1", "1k", "C300", None, "none"), ("R2", "1k", "C301", None, "none")], nets,
+                   limits=[limit_part("C200", ("1", "five", 6, 0, False))], mains="none", mains_nets=())
         self.assertEqual(self.lines(), [])
 
     def test_a_pin_driven_from_another_domain_fails_unless_it_tolerates_it(self):
@@ -503,7 +503,7 @@ class ThePinLimitRule(World):
     def test_a_listed_pin_the_part_does_not_have_fails_naming_the_part_the_pin_and_the_catalogue_number(self):
         # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C2: A listed pin the placed part's symbol does not have fails.
         nets = {"/+5V": pins(("U1", "7", "VDD/PA3_7"))}
-        self.build([IC], nets, limits=[limit_part("C200", ("9", "five", 6, 0, False))], mains="none", mains_nets=())
+        self.build([IC], nets, limits=[limit_part("C200", ("7", "five", 6, 0, False), ("9", "five", 6, 0, False))], mains="none", mains_nets=())
         found = self.found("pin_limit")
         self.assertEqual([v.location for v in found], [f"{self.design.schematic} U1"])
         for words in ("pin 9", "C200", "U1", "does not have"):
@@ -556,6 +556,124 @@ class ThePinLimitRule(World):
         self.build([IC], nets, limits=[limit_part("C200", ("1", "five", 3, 0, False), ("2", "five", 3, 0, False))], mains="none", mains_nets=())
         self.assertEqual([v.location for v in self.found("pin_limit")],
                          [f"{self.design.schematic} U1 pin 1", f"{self.design.schematic} U1 pin 2"])
+
+
+class ThePinCoverageRule(World):
+    """Every connected pin of a listed semiconductor or integrated circuit has its own entry."""
+
+    def omissions(self):
+        return [v for v in self.found("pin_limit") if "omits" in v.message and "entry" in v.message]
+
+    def test_a_connected_pin_the_entry_omits_fails_naming_the_rule_the_design_the_part_the_pin_and_the_catalogue_number(self):
+        # SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C1: For each semiconductor or integrated-circuit part the pin-limit record lists, every connected pin of the placed part carries an entry in the part's record entry, and a connected pin the entry leaves out fails, naming the part and the pin.
+        # SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C3: A coverage failure is reported with the rule's name, the design, the part reference, the pin number and the part's catalogue number, in terms a builder can act on, in the same report as the existing checks.
+        nets = {"/+5V": pins(("U1", "1", "VDD_1")), "/GND": pins(("U1", "2", "GND_2"), ("C1", "2", ""))}
+        self.build([IC, ("C1", "1u", "C300", None, "none")], nets, limits=[limit_part("C200", ("1", "five", 6, 0, False))],
+                   mains="none", mains_nets=())
+        lines = self.lines()
+        self.assertEqual(len(lines), 1, lines)
+        self.assertRegex(lines[0], r"^VIOLATION \| hw/machine/board/board.kicad_pro \| pin_limit \| \S+ U1 pin 2 \| ")
+        self.assertEqual(len(lines[0].split(" | ")), 5)
+        for words in ("U1", "pin 2", "C200", "net /GND", "integrated circuit"):
+            self.assertIn(words, lines[0])
+
+    def test_a_connected_pin_is_one_on_a_net_with_another_pin_of_the_same_or_any_other_part_or_on_a_rail(self):
+        # SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C1: A pin is connected when its net holds another pin, of the same part or of any other part, or is the rail of a declared domain.
+        listed = [limit_part("C200", ("1", "five", 6, 0, False))]
+        cases = {
+            "the rail of a declared domain, alone": {"/+5V": pins(("U1", "1", "A")), "/+3V3": pins(("U1", "2", "B"))},
+            "another pin of the same part": {"/+5V": pins(("U1", "1", "A")), "/X": pins(("U1", "2", "B"), ("U1", "3", "C"))},
+            "a pin of another part": {"/+5V": pins(("U1", "1", "A")), "/X": pins(("U1", "2", "B"), ("R1", "1", ""))},
+        }
+        for name, nets in cases.items():
+            with self.subTest(name):
+                self.build([IC, ("R1", "1k", "C300", None, "none")], nets, limits=listed, mains="none", mains_nets=())
+                self.assertEqual({v.location for v in self.omissions()},
+                                 {f"{self.design.schematic} U1 pin {pin}" for pin in ("2", "3") if any(n.pin == pin for p in nets.values() for n in p)})
+                self.assertTrue(self.omissions())
+
+    def test_a_pin_on_no_other_pin_and_no_rail_needs_no_entry(self):
+        # SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C1: a pin on no other pin and no rail needs no entry.
+        nets = {"/+5V": pins(("U1", "1", "A")), "unconnected-(U1-NC-Pad3)": pins(("U1", "3", "NC_3")),
+                "/FLOAT": pins(("U1", "4", "D"))}
+        self.build([IC], nets, limits=[limit_part("C200", ("1", "five", 6, 0, False))], mains="none", mains_nets=())
+        self.assertEqual(self.lines(), [])
+
+    def test_a_pin_is_covered_by_an_entry_that_names_it_by_number_or_name_and_by_no_other_entry(self):
+        # SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C1: A pin is covered only by an entry that names it, by its number or its name, and no entry stands for the pins it leaves unlisted.
+        nets = {"/+5V": pins(("U1", "7", "VDD/PA3_7")), "/GND": pins(("U1", "8", "VSS_8"), ("R1", "1", ""))}
+        parts = [IC, ("R1", "1k", "C300", None, "none")]
+        for first, second in (("7", "8"), ("VDD", "VSS"), ("PA3", "8")):
+            with self.subTest(first=first, second=second):
+                self.build(parts, nets, limits=[limit_part("C200", (first, "five", 6, 0, False), (second, "ground", 6, 0, False))],
+                           mains="none", mains_nets=())
+                self.assertEqual(self.lines(), [])
+        self.build(parts, nets, limits=[limit_part("C200", ("7", "five", 6, 0, False), ("9", "ground", 6, 0, False))],
+                   mains="none", mains_nets=())
+        self.assertEqual([v.location for v in self.omissions()], [f"{self.design.schematic} U1 pin 8"])
+        self.build(parts, nets, limits=[limit_part("C200", ("VDD", "five", 6, 0, False))], mains="none", mains_nets=())
+        self.assertEqual([v.location for v in self.omissions()], [f"{self.design.schematic} U1 pin 8"])
+
+    def test_a_connected_pin_limited_only_by_a_current_still_takes_an_entry(self):
+        # SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C1: A connected pin limited only by current takes an entry too, as the pin-limit decision states.
+        nets = {"/+5V": pins(("D1", "1", "A"), ("R1", "1", "")), "/GND": pins(("D1", "2", "K"), ("R1", "2", ""))}
+        parts = [("D1", "LED", "C210", None, "none"), ("R1", "1k", "C300", None, "none")]
+        self.build(parts, nets, limits=[limit_part("C210", ("2", "ground", 5, -5, True))], mains="none", mains_nets=())
+        self.assertEqual([v.location for v in self.omissions()], [f"{self.design.schematic} D1 pin 1"])
+        self.build(parts, nets, limits=[limit_part("C210", ("1", "five", 5.25, -5, True), ("2", "ground", 5, -5, True))],
+                   mains="none", mains_nets=())
+        self.assertEqual(self.lines(), [])
+
+    def test_a_semiconductor_is_held_to_it_and_a_passive_or_mechanical_part_is_not(self):
+        # SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C1: Out of scope: passives and mechanical parts.
+        nets = {"/+5V": pins(("Q1", "1", "G"), ("R1", "1", ""), ("J1", "1", ""), ("C1", "1", "")), "/GND": pins(("R1", "2", ""), ("C1", "2", ""))}
+        parts = [("Q1", "FET", "C211", None, "none"), ("R1", "1k", "C300", None, "none"), ("J1", "H", "C214", None, "none"),
+                 ("C1", "1u", "C213", None, "none")]
+        self.build(parts, nets, limits=[limit_part("C211", ("2", "five", 6, 0, False)), limit_part("C300", ("2", "ground", 6, 0, False))],
+                   mains="none", mains_nets=())
+        self.assertEqual([v.location for v in self.omissions()], [f"{self.design.schematic} Q1 pin 1"])
+        self.assertIn("semiconductor Q1", self.omissions()[0].message)
+
+    def test_a_part_the_record_omits_altogether_is_reported_once_and_not_for_each_pin(self):
+        # SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C1: A part the record omits altogether is reported once by the existing omission failure and not again for each pin.
+        nets = {"/+5V": pins(("U1", "1", "A"), ("U1", "2", "B"), ("U1", "3", "C"))}
+        self.build([IC], nets, limits=[limit_part("C999", ("1", "five", 6, 0, False))], mains="none", mains_nets=())
+        found = self.found("pin_limit")
+        self.assertEqual([v.location for v in found], [f"{self.design.schematic} U1"])
+        self.assertIn("omits the integrated circuit U1", found[0].message)
+
+    def test_a_record_whose_form_has_already_failed_is_not_judged_for_coverage(self):
+        # SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C2: The coverage check is added to the pin-limit rule of the existing pre-order check, reading only the design's files and the records the design is held to, with no new record key.
+        nets = {"/+5V": pins(("U1", "1", "A"), ("U1", "2", "B"))}
+        self.build([IC], nets, limits=[limit_part("C200", ("1", "five", 6, 0, False))], mains="none", mains_nets=())
+        self.record("pin-limits.yaml", {"domains": DOMAINS, "parts": [limit_part("C200", ("1", "five", 6, 0, False))],
+                                        "synthetic": True, "extra": 1})
+        self.assertEqual(self.found("pin_limit"), [])
+
+    def test_the_coverage_failure_reaches_the_design_checks_report_beside_the_existing_rules(self):
+        # SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C2: The coverage check is added to the pin-limit rule of the existing pre-order check, run by the same one task-runner command.
+        # SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C3: ... in the same report as the existing checks.
+        self.write(self.design.project, json.dumps({"text_variables": {"MAINS": "none", "NOT_FOR_MANUFACTURE": "true"}}))
+        self.write(self.design.layout, "(kicad_pcb (version 20250114))\n")
+        netlist = """(export (version "E")
+  (components (comp (ref "U1") (libsource (lib "Device") (part "X"))) (comp (ref "C1") (libsource (lib "Device") (part "X"))))
+  (nets
+    (net (code 1) (name "/+5V") (node (ref "U1") (pin "1") (pinfunction "VDD_1")) (node (ref "C1") (pin "1")))
+    (net (code 2) (name "/GND") (node (ref "U1") (pin "2") (pinfunction "GND_2")) (node (ref "C1") (pin "2")))))
+"""
+        self.build([IC, ("C1", "x", "C100", "6V", "capacitor")],
+                   {"/+5V": pins(("U1", "1", "VDD_1"), ("C1", "1", "")), "/GND": pins(("U1", "2", "GND_2"), ("C1", "2", ""))},
+                   limits=[limit_part("C200", ("1", "five", 6, 0, False))], mains="none", mains_nets=())
+        files = [os.path.relpath(os.path.join(d, n), self.root).replace(os.sep, "/") for d, _, names in os.walk(self.root) for n in names]
+        repository = board_check.Repository(self.root, files)
+
+        def kicad_report(command, cwd):
+            return ({"sheets": []}, "") if "erc" in command else (None, "stood in")
+
+        with mock.patch.object(board_check, "run_report", kicad_report), \
+                mock.patch.object(board_check, "run_kicad", lambda command, cwd, output="report.json": (netlist, "")):
+            found = board_check.check_design(self.design, repository, "kicad-cli", self.yaml, datetime.date(2026, 10, 20), [])
+        self.assertIn(("pin_limit", f"{self.design.schematic} U1 pin 2"), {(v.rule, v.location) for v in found})
 
 
 class EveryFailureNamesTheRuleTheDesignAndTheItem(World):
@@ -775,6 +893,19 @@ class TheHardwareNotesCarryAnEntryForEachRule(unittest.TestCase):
         self.assertIn("absolute_min_v", rows["pin_limit"])
         self.assertIn("not in the pin-limit record", rows["pin_limit"])
         self.assertIn("tolerates_driven_unpowered", rows["pin_limit"])
+
+    def test_the_pin_limit_entry_and_bullet_state_the_coverage_failure_its_exemption_and_its_name_and_no_longer_exempt_a_current_limited_pin(self):
+        # SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C6: The hardware notes' table of the pre-order check's rules extends the pin-limit rule's entry, and replaces its sentence that exempts a pin whose limit is a current, with what the coverage failure names, which pin it exempts and the name it is reported under.
+        with open(os.path.join(REPO, "hardware", "README.md"), encoding="utf-8") as handle:
+            text = handle.read()
+        row = self.rows()["pin_limit"]
+        for words in ("connected pin", "missing from its entry", "part, the pin number and the catalogue number", "on no other pin and no rail is exempt"):
+            self.assertIn(words, row)
+        bullet = next(line for line in text.splitlines() if line.startswith("- **Pin limits** (`pin_limit`)"))
+        for words in ("connected pin the entry omits fails, naming the part, the pin and the part's catalogue number",
+                      "a pin on no other pin and no rail needs no entry", "takes an entry like any other"):
+            self.assertIn(words, bullet)
+        self.assertNotIn("is not listed", bullet)
 
     def test_the_parts_specification_form_and_the_hw_reads_listing_name_the_new_records_and_key(self):
         # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C6: The board-reads listing's description names the derating policy and pin-limit records.
