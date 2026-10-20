@@ -146,7 +146,7 @@ two boards, and the panel board is retained, but carries no controller to speak 
 | Resource | Count | (struck) | Notes |
 |---|---|---|---|
 | Analogue conversion inputs | 4 | — | Coffee, steam and wand temperature, plus the steam-path pressure transducer that `DEC-STEAM-PRESSURE-SENSOR-ADDED` adds and which is not yet fitted |
-| Timer input capture | 1 | — | Flow meter. Its signal is established digital: a pulse train pulled up to the 5 V rail and landing on a general-purpose port pin. Whether the output is open-drain or push-pull is pending (SOL-HW-RETAINED-DEVICE-REMAINING-CHARACTERISTICS-RECORDED), and the K-factor stays open |
+| Timer input capture | 1 | — | Flow meter. Its signal is established digital: a pulse train pulled up to the 5 V rail and landing on a general-purpose port pin. Whether the output is open-drain or push-pull is pending (not yet read; it is read when the board carrying the device is designed, and does not block the division of the circuitry into boards), and the K-factor stays open |
 | Timer compare outputs | 5 | — | Both pumps, provisioned for a firing instant within the cycle; the panel's anode rail gate, whose modulation is how indicator brightness varies; and the two gauge step clocks, which need an even rate to sweep smoothly rather than stutter |
 | External-interrupt pins | 1 | — | Mains zero-cross, on both edges |
 | Plain digital inputs | 5 | — | Tank level, the two control-knob microswitches, and the two mains-presence sense channels on the heating elements. The panel's keys are not here: they share lines with the indicators and are counted in the row below |
