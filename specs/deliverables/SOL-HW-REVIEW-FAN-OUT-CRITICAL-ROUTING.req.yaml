@@ -3,16 +3,16 @@ type: deliverable
 category: solution
 title: A task fans the critical-routing check out by catalogue area and merges the areas into one pass of the layout plan
 status: active
-version: 1
+version: 2
 text: |
-  Why this exists. Step 4 of the method's routing section judges the layout checklist items that bear on the critical nets, with the board still closed and before the router runs, because a critical net's route costs one net's re-route to change then and a great deal once the router has built around it. It is the cheapest place in the method to protect a first-pass board, it is repeated on every board and after every re-route, and it is one reviewer going through the whole checklist to find which items bear. The reasoning, measurements and options rejected are in DEC-REVIEW-FAN-OUT-BY-UNIT-FROM-SHARED-SETUP, and DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND settles that a review judged by unit is the same review; a session building this does not reopen either. This is the third of five solutions under DEL-HW-REVIEW-FAN-OUT. It adds the critical-routing check as a caller of the driver and reuses the layout caller's finding of areas.
+  Why this exists. Step 4 of the method's routing section judges the layout checklist items that bear on the critical nets, with the board still closed and before the router runs, because a critical net's route costs one net's re-route to change then and a great deal once the router has built around it. It is the cheapest place in the method to protect a first-pass board, it is repeated on every board and after every re-route, and it is one reviewer going through the whole checklist to find which items bear. The reasoning, measurements and options rejected are in DEC-REVIEW-FAN-OUT-BY-UNIT-FROM-SHARED-SETUP, and DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND settles that a review judged by unit is the same review; a session building this does not reopen either. This is the third of six solutions under DEL-HW-REVIEW-FAN-OUT. It adds the critical-routing check as a caller of the driver and reuses the layout caller's finding of areas.
 
   What it records is not a review round. The check records a pass in the board's layout plan, under a section of passes numbered from 1 and only ever appended, each pass holding the commit judged, the views as they were run, a verdict table with a row for every item that bears on the critical nets and, below it, every other item with the reason it bears on none. It has no findings table and no round number, and a different command reads it: the board placement and critical routing history check, not the review record history check.
 
   Settled before the build.
 
   - The units are the layout catalogue's areas, found as the layout caller finds them. Each area's reviewer decides which of its items bear on the critical nets, as the method's step 4 has the reviewer decide, judges those, and lists the rest with the reason.
-  - The merge writes one pass: every catalogue item either has a verdict row or is on the list, once; the pass number, the commit judged and the views are inputs from whoever runs the check, as the layout round's fields are; the pass is appended to the plan's section and never replaces an earlier pass, since the history command refuses that.
+  - The merge writes one pass: every catalogue item either has a verdict row or is on the list, once; the pass number, the commit judged and the views are inputs from whoever runs the check, as the layout round's fields are; the pass is rendered through the rendered record the caller-seam solution adds, in the form the plan's section holds, into the output folder, which is outside the repository; whoever runs the check appends it below the earlier passes and never in place of one, since the history command refuses that.
   - The rule-kind items rest on the rules table alone here, as the method says, because the pre-order check fails a board that is not fully routed and is not run at this step.
   - Re-routes follow the method's own loop, a failing pass and a later pass at the re-routed commit; each pass is one run of the command.
   - The tests need no model and no KiCad, using the driver's stub over synthetic plans.
@@ -39,4 +39,6 @@ links:
   - target: SOL-HW-REVIEW-FAN-OUT-LAYOUT
     type: depends-on
   - target: SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS
+    type: depends-on
+  - target: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM
     type: depends-on
