@@ -1482,6 +1482,10 @@ def report_run(report, run, caller, review, folder, order, named, setup, failure
             report["detail"] = f"nothing was written; the units' results are kept in {folder}"
             return finish(report, out, args.json, err)
         report["rendered"], report["not_this_merge"] = list(files), left_over(folder, earlier, files)
+    else:
+        earlier = rendered_earlier(folder)
+        if earlier:
+            report["rendered"], report["not_this_merge"] = [], left_over(folder, earlier, [])
     report["result"], report["detail"] = "WRITTEN", os.path.join(folder, RECORD)
     write_json(os.path.join(folder, RECORD), report)
     for name, text in files.items():
@@ -1532,9 +1536,20 @@ def is_regular_file(path: str) -> bool:
 
 
 def left_over(folder: str, earlier: Sequence[str], rendered: Sequence[str]) -> List[str]:
-    """The files an earlier merge wrote that are still in the folder and that this merge does not render again."""
-    again = {name_key(name) for name in rendered}
-    return [name for name in earlier if name_key(name) not in again and is_regular_file(os.path.join(folder, name))]
+    """The files an earlier merge wrote that are still in the folder and that this merge does not render again. Names
+    are compared exactly, as the record holds them exactly, except that a file this merge writes over, which a folder
+    that ignores case holds for a name differing in it, is the rendered one's and not left over."""
+    again = set(rendered)
+    return [name for name in earlier if name not in again and is_regular_file(os.path.join(folder, name))
+            and not any(same_file(os.path.join(folder, name), os.path.join(folder, new)) for new in rendered)]
+
+
+def same_file(first: str, second: str) -> bool:
+    """Whether two paths name one file, as a folder that ignores case makes of names differing only in it."""
+    try:
+        return os.path.samefile(first, second)
+    except OSError:
+        return False
 
 
 def rendered_problems(caller, folder: str, files: Dict[str, str], earlier: Sequence[str]) -> List[str]:
@@ -1543,10 +1558,12 @@ def rendered_problems(caller, folder: str, files: Dict[str, str], earlier: Seque
     stop nor the scratch suffix, one longer than RENDERED_NAME_LONGEST characters or one Windows reserves for a device,
     a name the driver uses itself, two names that differ only in case, or one the output
     folder holds that no earlier merge wrote or that an earlier merge wrote and has since become a link or a folder.
-    Names are compared without regard to case, since a folder on some systems holds one file for names that differ in it."""
+    The refusals compare names without regard to case, since a folder on some systems holds one file for names that
+    differ in it; the names an earlier merge wrote are compared exactly, as the record holds them exactly, so a held
+    name that is not one of them under its exact spelling is foreign."""
     who, found = f"caller {caller.REVIEW_CALLER_NAME}", []
     reserved = {name_key(name) for name in RESERVED_NAMES}
-    wrote = {name_key(name) for name in earlier}
+    wrote = set(earlier)
     held: Dict[str, List[str]] = {}
     for entry in os.listdir(folder) if os.path.isdir(folder) else []:
         held.setdefault(name_key(entry), []).append(entry)
@@ -1570,9 +1587,10 @@ def rendered_problems(caller, folder: str, files: Dict[str, str], earlier: Seque
             present = held.get(key, [])
             if not present and os.path.lexists(os.path.join(folder, name)):
                 present = [name]
-            if present and key not in wrote:
-                found.append(f"the {who}'s RENDER names a file {name!r}, which the output folder already holds and no earlier "
-                             "merge wrote; name another file, or move that one away")
+            foreign = [entry for entry in present if entry not in wrote]
+            if foreign:
+                found.append(f"the {who}'s RENDER names a file {name!r}, which the output folder already holds as {foreign[0]!r} "
+                             "and no earlier merge wrote under that name; name another file, or move that one away")
             else:
                 for entry in present:
                     if not is_regular_file(os.path.join(folder, entry)):
