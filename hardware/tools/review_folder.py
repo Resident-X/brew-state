@@ -1,0 +1,449 @@
+#!/usr/bin/env python3
+"""Write the review folder of a committed board, for a judged review to read, and add a view to it.
+
+A judged review reads a folder that holds what the layout review step gives a
+reviewer and nothing of the designer's reasoning. For a board committed in a
+repository this command writes it, outside the repository: the board's design
+files as the commit holds them, with its plan, its rules table and the records
+those name; the method and the hardware notes; the rendered views and the
+placement view; the pre-order check's report; and one round file that holds the
+round's own fields. It holds no session or notes file and no other file the
+commit does not hold. For a round after the first it also holds the earlier
+rounds of the board's review record as the commit holds them, since a verdict
+row may cite a finding an earlier round closed by a reason, and for a first
+round it holds no review record.
+
+    review_folder.py --repo <repository> --commit <commit> --design <board folder from the root>
+                     --out <new folder> --views <views folder> --placement <placement folder>
+                     --check-report <file> --number N --kind full|narrow --view-command <text>...
+                     --check-line <line>... [--item ITEM=reason... --region <text>... --others <text>]
+                     [--documents-repo <repository> [--documents-commit <commit>]]
+                     [--round-fields number,kind,commit,views,check] [--json]
+    review_folder.py --add-view <folder> --view <file> --view-command <text>
+                     --cannot-judge-item <item> --cannot-judge-why <text> [--json]
+
+The round's fields are the set --round-fields names, which is a parameter of the
+command: the layout review's are its number, kind, the commit judged (taken from
+--commit), the commands the views were rendered with and the pre-order check's
+lines, and another review whose round has no kind or check lines names its own
+set. A narrow round, one whose kind is narrow, also gives its listed items, each
+with the reason the changed regions touch it, its changed regions and the line
+saying why every other item is not judged; a full round gives none of them. A
+missing or malformed field refuses the command, naming it.
+
+--add-view puts a view the starter rendered, and the command that rendered it,
+into a folder this command wrote and into the round file's views, and records the
+item whose cannot judge asked for the view, with that Why, so the merge can build
+the row from them once the unit is judged again. It refuses a view that does not
+exist and a folder this command did not write.
+
+Each cause is reported on one line beginning REFUSED, a RESULT line comes last,
+and the exit status is 0 when the folder is written, 1 when the command refuses
+and 2 when git is missing. --json prints the same facts as one JSON document.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+from typing import Any, Dict, List, Optional, Sequence
+
+TOOLS_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, TOOLS_DIR)
+
+import board_check  # noqa: E402
+import board_review_history  # noqa: E402
+import review_seed  # noqa: E402
+
+REPO = review_seed.REPO
+#: The round file, in the review folder's root, and the marker that says this command wrote it.
+ROUND_FILE = "round.json"
+TOOL = "review-folder"
+ADDED_VIEWS = "added-views"
+CHECK_REPORT = review_seed.REPORT
+VIEWS = review_seed.VIEWS
+PLACEMENT = review_seed.PLACEMENT
+#: A board's review record, in the board's own folder.
+RECORD = board_review_history.RECORD
+#: The folders of a review folder that hold no design.
+NOT_DESIGN = (VIEWS, PLACEMENT, ADDED_VIEWS)
+KINDS = ("full", "narrow")
+#: The layout review's round fields, in the order a round file gives them.
+LAYOUT_FIELDS = ("number", "kind", "commit", "views", "check")
+#: Every field a set may name.
+FIELD_NAMES = ("number", "kind", "commit", "views", "check")
+#: The fields a narrow round adds to its set when the set has a kind.
+NARROW_FIELDS = ("items", "regions", "others")
+#: What a line of the pre-order check's report that a round states begins with.
+CHECK_LINE = re.compile(r"(DESIGN|FIGURE|VIOLATION) \|")
+COMMIT = re.compile(r"[0-9a-f]{7,64}")
+PLAIN_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
+
+
+class Refused(Exception):
+    """The command will not go on, for the causes given."""
+
+    def __init__(self, causes: Sequence[str]):
+        super().__init__("; ".join(causes))
+        self.causes = list(causes)
+
+
+class ReviewFolderProblem(Exception):
+    """A review folder a judged review cannot be run on, with what to do about it."""
+
+
+# --- The round's fields -------------------------------------------------------------------------
+
+
+def one_line(value: Any) -> bool:
+    """Whether `value` is non-empty text of one line."""
+    return isinstance(value, str) and bool(value.strip()) and "\n" not in value and "\r" not in value
+
+
+def round_problems(values: Dict[str, Any], fields: Sequence[str] = LAYOUT_FIELDS) -> List[str]:
+    """Why the round's fields are not the set `fields` asks for, each naming the field: one missing or not of its form,
+    a narrow round's listed items, changed regions or why-others line missing, or a full round's present."""
+    found: List[str] = []
+    number, kind = values.get("number"), values.get("kind")
+    if "number" in fields and (isinstance(number, bool) or not isinstance(number, int) or number < 1):
+        found.append(f"the round's number is {number!r}; give a whole number of one or more")
+    if "kind" in fields and kind not in KINDS:
+        found.append(f"the round's kind is {kind!r}; give `full` or `narrow`, in lowercase")
+    if "commit" in fields and not (isinstance(values.get("commit"), str) and COMMIT.fullmatch(values["commit"])):
+        found.append(f"the commit judged is {values.get('commit')!r}; give the commit's hexadecimal id")
+    if "views" in fields:
+        views = values.get("views")
+        if not isinstance(views, list) or not views or not all(one_line(view) and "```" not in view for view in views):
+            found.append(f"the views are {views!r}; give each command a view was rendered with as one line of text, and "
+                         "at least one")
+    if "check" in fields:
+        lines = values.get("check")
+        if not isinstance(lines, list) or not lines or not all(one_line(line) and CHECK_LINE.match(line) and "```" not in line
+                                                               for line in lines):
+            found.append(f"the pre-order check's lines are {lines!r}; give the board's DESIGN line and every FIGURE and "
+                         "VIOLATION line under it, each as one line of the report and at least the DESIGN line")
+        elif sum(line.startswith("DESIGN |") for line in lines) != 1:
+            found.append("the pre-order check's lines hold no DESIGN line, or more than one; give the board's one DESIGN line")
+    if "kind" in fields and kind == "narrow":
+        found += narrow_problems(values)
+    elif "kind" not in fields or kind == "full":
+        given = [name for name in NARROW_FIELDS if values.get(name) not in (None, [], "")]
+        if given:
+            found.append(f"a round that is not narrow gives {', '.join(given)}, which only a narrow round has; leave them out")
+    return found
+
+
+def narrow_problems(values: Dict[str, Any]) -> List[str]:
+    found = []
+    items = values.get("items")
+    if not isinstance(items, list) or not items or not all(
+            isinstance(entry, dict) and one_line(entry.get("item")) and one_line(entry.get("reason")) for entry in items):
+        found.append(f"a narrow round's listed items are {items!r}; give each item with the reason the changed regions or "
+                     "nets touch it, and at least one")
+    elif len({entry["item"] for entry in items}) != len(items):
+        found.append("a narrow round lists an item twice; list each item once")
+    regions = values.get("regions")
+    if not isinstance(regions, list) or not regions or not all(one_line(region) for region in regions):
+        found.append(f"a narrow round's changed regions are {regions!r}; name each floorplan region and net the fix commits "
+                     "change, from those commits, and at least one")
+    if not one_line(values.get("others")):
+        found.append(f"a narrow round's line saying why every other item is not judged is {values.get('others')!r}; give it")
+    return found
+
+
+def read_round(folder: str) -> Dict[str, Any]:
+    """The round file of a review folder this command wrote, its fields checked against the set it names."""
+    path = os.path.join(folder, ROUND_FILE)
+    try:
+        with open(path, encoding="utf-8") as handle:
+            content = json.load(handle)
+    except (OSError, ValueError, RecursionError) as error:
+        raise ReviewFolderProblem(f"the review folder's round file {path} cannot be read ({error}); write the folder with "
+                                  "the folder command, which writes it")
+    fields = content.get("fields") if isinstance(content, dict) else None
+    if (not isinstance(content, dict) or content.get("tool") != TOOL or not isinstance(fields, list)
+            or not all(name in FIELD_NAMES for name in fields)):
+        raise ReviewFolderProblem(f"the round file {path} is not one the folder command wrote; write the folder with it")
+    problems = round_problems(content, fields)
+    if problems:
+        raise ReviewFolderProblem(f"the round file {path} holds fields that are missing or malformed: " + "; ".join(problems))
+    entries = content.get("cannot_judge", [])
+    if not isinstance(entries, list) or not all(isinstance(entry, dict) and all(
+            one_line(entry.get(key)) for key in ("item", "why", "view")) for entry in entries):
+        raise ReviewFolderProblem(f"the round file {path} gives its cannot judge entries as {entries!r}, which are not each "
+                                  "an item, a Why and a view; add them with the folder command's --add-view")
+    return content
+
+
+def design_in(folder: str) -> str:
+    """The folder, from the review folder's root, of the one board design a review folder holds: the folder of its one
+    KiCad project file, outside the views folders."""
+    found = []
+    for directory, names, files in os.walk(folder):
+        if directory == folder:
+            names[:] = [name for name in names if name not in NOT_DESIGN]
+        found += [os.path.relpath(directory, folder) for name in files if name.endswith(".kicad_pro")]
+    if len(found) != 1:
+        raise ReviewFolderProblem(f"the review folder {folder} holds {len(found)} KiCad project files outside its views; it "
+                                  "must hold the one design under review, so write it with the folder command")
+    return found[0]
+
+
+# --- The command --------------------------------------------------------------------------------
+
+
+def git(repo: str, *args: str) -> subprocess.CompletedProcess:
+    return subprocess.run(["git", "-C", repo, *args], capture_output=True, text=True)
+
+
+def refusals(args: argparse.Namespace, out: str, repo: str, documents_repo: str, values: Dict[str, Any],
+             fields: Sequence[str]) -> List[str]:
+    found = []
+    for name, where in (("repository", repo), ("documents repository", documents_repo)):
+        if review_seed.inside(out, where):
+            found.append(f"the review folder {out} is inside the {name} {where}; a reviewer working there could read the "
+                         "design as committed and the earlier rounds' verdicts, so give a folder outside it")
+    if os.path.isfile(out):
+        found.append(f"the review folder {out} is a file; give a new or empty folder")
+    elif os.path.isdir(out) and os.listdir(out):
+        found.append(f"the review folder {out} already holds files; give a new or empty folder")
+    unknown = [name for name in fields if name not in FIELD_NAMES]
+    if unknown:
+        found.append(f"the round fields {', '.join(unknown)} are not fields of a round; the fields are {', '.join(FIELD_NAMES)}")
+    else:
+        found += round_problems(values, fields)
+    for name, path in (("views", args.views), ("placement view", args.placement)):
+        if not os.path.isfile(os.path.join(path, "index.txt")):
+            found.append(f"the {name} folder {path} is missing or holds no index.txt; render it with the command the "
+                         "round's first step names, and give that folder")
+    if not os.path.isfile(args.check_report):
+        found.append(f"the pre-order check's report {args.check_report} does not exist; run the check and give its report")
+    return found
+
+
+def committed_board(repo: str, commit: str, design: str) -> Dict[str, Any]:
+    """The commit's full id and the design's given files, or the causes the commit holds no board."""
+    resolved = git(repo, "rev-parse", "--verify", "--quiet", f"{commit}^{{commit}}")
+    if resolved.returncode != 0:
+        raise Refused([f"the commit {commit} is not in the repository {repo}; give a commit it holds"])
+    sha = resolved.stdout.strip()
+    files = review_seed.design_files(repo, sha, design)
+    projects = [name for name in files if "/" not in name and name.endswith(".kicad_pro")]
+    layouts = [name for name in files if "/" not in name and name.endswith(".kicad_pcb")]
+    if len(projects) != 1 or not layouts:
+        raise Refused([f"the commit {commit} holds no board at {design}: it needs the design folder's one KiCad project and "
+                       f"its layout, and holds {len(projects)} projects and {len(layouts)} layouts there"])
+    return {"sha": sha, "files": files}
+
+
+def earlier_rounds(text: str, number: int) -> Optional[str]:
+    """The record's text up to the first heading of a round numbered `number` or more, as recorded; None when it holds no
+    earlier round."""
+    kept, earlier = [], False
+    for _, line, fenced in board_review_history.record_lines(text)[0]:
+        mark = None if fenced else board_review_history.ROUND.fullmatch(line)
+        if mark:
+            if int(mark.group(1)) >= number:
+                break
+            earlier = True
+        kept.append(line)
+    return "\n".join(kept).rstrip("\n") + "\n" if earlier else None
+
+
+def earlier_numbers(text: str, number: int) -> List[int]:
+    """The numbers of the round headings the record holds before the first one numbered `number` or more, as recorded."""
+    found: List[int] = []
+    for _, line, fenced in board_review_history.record_lines(text)[0]:
+        mark = None if fenced else board_review_history.ROUND.fullmatch(line)
+        if mark:
+            if int(mark.group(1)) >= number:
+                break
+            found.append(int(mark.group(1)))
+    return found
+
+
+def settled(content: Dict[str, Any]) -> str:
+    return json.dumps(content, indent=1, sort_keys=True) + "\n"
+
+
+def write_folder(args: argparse.Namespace, out: str, repo: str, documents_repo: Optional[str], fields: Sequence[str]) -> Dict[str, Any]:
+    """The review folder, or a refusal naming every cause."""
+    values: Dict[str, Any] = {"number": args.number, "kind": args.kind, "views": args.view_command or [],
+                              "check": args.check_line or []}
+    if "kind" in fields and args.kind == "narrow":
+        values["items"] = [pair_of(entry) for entry in args.item or []]
+        values["regions"], values["others"] = args.region or [], args.others
+    else:
+        values["items"], values["regions"], values["others"] = args.item or [], args.region or [], args.others
+    causes: List[str] = []
+    board: Dict[str, Any] = {}
+    try:
+        board = committed_board(repo, args.commit, args.design)
+        values["commit"] = board["sha"]
+    except Refused as error:
+        causes += error.causes
+        values["commit"] = "0" * 7  # a commit that does not exist is the cause; the field itself is not reported twice
+    causes += refusals(args, out, repo, documents_repo or REPO, values, fields)
+    record = None
+    if board and "number" in fields and isinstance(args.number, int) and args.number > 1:
+        held = review_seed.archived(repo, board["sha"], f"{args.design.rstrip('/')}/{RECORD}")
+        text = next(iter(held.values()), b"").decode("utf-8", errors="replace")
+        record = earlier_rounds(text, args.number)
+        if record is None:
+            causes.append(f"round {args.number} cites the earlier rounds of the review record, and the commit's {RECORD} "
+                          "holds none; commit the record with the earlier rounds before the round")
+        else:
+            missing = sorted(set(range(1, args.number)) - set(earlier_numbers(text, args.number)))
+            if missing:
+                causes.append(f"round {args.number} cites the earlier rounds of the review record, which must hold rounds 1 to "
+                              f"{args.number - 1}, and the commit's {RECORD} lacks round "
+                              + ", ".join(str(n) for n in missing) + "; commit the record with every earlier round before the round")
+    try:
+        documents = review_seed.documents(documents_repo, args.documents_commit)
+    except review_seed.Refused as error:
+        causes.append(str(error))
+        documents = None
+    if causes:
+        raise Refused(causes)
+    os.makedirs(out, exist_ok=True)
+    try:
+        written = review_seed.copy_commit(out, repo, board["sha"], args.design, documents_repo, args.documents_commit)
+        if record is not None:
+            with open(os.path.join(out, args.design, RECORD), "w", encoding="utf-8") as handle:
+                handle.write(record)
+        shutil.copytree(args.views, os.path.join(out, VIEWS))
+        shutil.copytree(args.placement, os.path.join(out, PLACEMENT))
+        shutil.copyfile(args.check_report, os.path.join(out, CHECK_REPORT))
+        content = {"tool": TOOL, "fields": list(fields), "cannot_judge": [], **{key: values[key] for key in values
+                   if key in fields or key in NARROW_FIELDS and values[key] not in (None, [], "")}}
+        with open(os.path.join(out, ROUND_FILE), "w", encoding="utf-8") as handle:
+            handle.write(settled(content))
+        review_seed.same_time(out)
+    except BaseException:
+        shutil.rmtree(out, ignore_errors=True)
+        raise
+    return {"result": "WRITTEN", "folder": out, "commit": board["sha"], "design": args.design,
+            "design_files": written, "documents": sorted(documents), "round": {key: content.get(key) for key in fields}}
+
+
+def pair_of(entry: str) -> Dict[str, str]:
+    """A listed item given as ITEM=reason; one that is not of the form gives an entry the field check refuses."""
+    item, _, reason = entry.partition("=")
+    return {"item": item.strip(), "reason": reason.strip()}
+
+
+def add_view(args: argparse.Namespace) -> Dict[str, Any]:
+    """A view added to a folder this command wrote, with the cannot judge it resolves; or a refusal naming every cause."""
+    folder = os.path.abspath(args.add_view)
+    causes: List[str] = []
+    content: Dict[str, Any] = {}
+    try:
+        content = read_round(folder)
+    except ReviewFolderProblem as error:
+        causes.append(f"{folder} is not a review folder the command wrote and can add to: {error}")
+    if content and "views" not in content["fields"]:
+        causes.append("the folder's round fields hold no views, so it has no Views field to add the view to")
+    view = os.path.abspath(args.view) if args.view else None
+    if view is None or not os.path.isfile(view):
+        causes.append(f"the view {args.view} does not exist; render it, then give the file")
+    elif not PLAIN_NAME.fullmatch(os.path.basename(view)):
+        causes.append(f"the view's file name {os.path.basename(view)!r} is not a plain name of letters, digits, dots, dashes "
+                      "and underscores; rename it")
+    elif os.path.lexists(os.path.join(folder, ADDED_VIEWS, os.path.basename(view))):
+        causes.append(f"the folder already holds an added view named {os.path.basename(view)}; give the new view another name")
+    command = args.view_command[0] if args.view_command and len(args.view_command) == 1 else None
+    for what, value in (("the command the view was rendered with (one --view-command)", command),
+                        ("the item whose cannot judge asked for the view (--cannot-judge-item)", args.cannot_judge_item),
+                        ("the cannot judge's Why (--cannot-judge-why)", args.cannot_judge_why)):
+        if not one_line(value):
+            causes.append(f"{what} is missing or not one line of text")
+    if causes:
+        raise Refused(causes)
+    name = os.path.basename(view)
+    os.makedirs(os.path.join(folder, ADDED_VIEWS), exist_ok=True)
+    shutil.copyfile(view, os.path.join(folder, ADDED_VIEWS, name))
+    content["views"] = content["views"] + [f"{command} (added view: {ADDED_VIEWS}/{name})"]
+    content["cannot_judge"] = content.get("cannot_judge", []) + [
+        {"item": args.cannot_judge_item.strip(), "why": args.cannot_judge_why.strip(), "view": f"{ADDED_VIEWS}/{name}"}]
+    scratch = os.path.join(folder, ROUND_FILE + ".part")
+    with open(scratch, "w", encoding="utf-8") as handle:
+        handle.write(settled(content))
+    os.replace(scratch, os.path.join(folder, ROUND_FILE))
+    return {"result": "ADDED", "folder": folder, "view": f"{ADDED_VIEWS}/{name}", "item": args.cannot_judge_item.strip()}
+
+
+def finish(report: Dict[str, Any], as_json: bool, out_stream) -> int:
+    status = {"WRITTEN": 0, "ADDED": 0, "REFUSED": 1, "CANNOT RUN": 2}[report["result"]]
+    if as_json:
+        json.dump(report, out_stream, indent=1)
+        out_stream.write("\n")
+        return status
+    clean = board_check.clean
+    for why in report.get("refusals", []):
+        print(f"REFUSED | {clean(why)}", file=out_stream)
+    if report["result"] == "WRITTEN":
+        round_ = report["round"]
+        print(f"FOLDER | {clean(report['folder'])} | commit {report['commit']} | design {clean(report['design'])}", file=out_stream)
+        print("ROUND | " + " | ".join(f"{key} {clean(str(round_[key]))}" for key in round_), file=out_stream)
+        print(f"RESULT | WRITTEN | {clean(report['folder'])}", file=out_stream)
+    elif report["result"] == "ADDED":
+        print(f"RESULT | ADDED | {clean(report['view'])} | cannot judge of {clean(report['item'])}", file=out_stream)
+    else:
+        print(f"RESULT | {report['result']} | {clean(report['detail'])}", file=out_stream)
+    return status
+
+
+def main(argv: Optional[List[str]] = None, out=sys.stdout) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument("--repo", help="the repository holding the board")
+    parser.add_argument("--commit", help="the commit that holds the board, which is the commit the round judges")
+    parser.add_argument("--design", help="the board's folder, by its path from the repository's root")
+    parser.add_argument("--out", help="the review folder to write, new or empty, outside the repository")
+    parser.add_argument("--views", help="the folder the views command rendered the views into")
+    parser.add_argument("--placement", help="the folder the placement command rendered the placement view into")
+    parser.add_argument("--check-report", help="the pre-order check's report on the board")
+    parser.add_argument("--documents-repo", help="the repository the method and the hardware notes are taken from (default: this one)")
+    parser.add_argument("--documents-commit", help="the commit of --documents-repo they are taken from (default: HEAD)")
+    parser.add_argument("--round-fields", default=",".join(LAYOUT_FIELDS),
+                        help="the round's fields, from number, kind, commit, views and check (default: all five, the layout review's)")
+    parser.add_argument("--number", type=int, help="the round's number")
+    parser.add_argument("--kind", help="the round's kind, full or narrow")
+    parser.add_argument("--view-command", action="append", help="a command a view was rendered with, as run; repeat for each")
+    parser.add_argument("--check-line", action="append", help="a line of the pre-order check's report to state in the round; repeat for each")
+    parser.add_argument("--item", action="append", help="a narrow round's listed item as ITEM=reason; repeat for each")
+    parser.add_argument("--region", action="append", help="a narrow round's changed region or net, named from the fix commits; repeat for each")
+    parser.add_argument("--others", help="a narrow round's line saying why every other item is not judged")
+    parser.add_argument("--add-view", help="a review folder this command wrote, to add a rendered view to")
+    parser.add_argument("--view", help="the rendered view file to add")
+    parser.add_argument("--cannot-judge-item", help="the item whose cannot judge asked for the view")
+    parser.add_argument("--cannot-judge-why", help="that cannot judge's Why")
+    parser.add_argument("--json", action="store_true", help="print the report as one JSON document")
+    args = parser.parse_args(argv)
+    try:
+        if args.add_view:
+            report = add_view(args)
+        else:
+            required = ("repo", "commit", "design", "out", "views", "placement", "check_report")
+            missing = [f"--{name.replace('_', '-')}" for name in required if not getattr(args, name)]
+            if missing:
+                parser.error(f"{', '.join(missing)} {'is' if len(missing) == 1 else 'are'} required")
+            fields = [name.strip() for name in args.round_fields.split(",") if name.strip()]
+            report = write_folder(args, os.path.abspath(args.out), os.path.abspath(args.repo),
+                                  os.path.abspath(args.documents_repo) if args.documents_repo else None, fields)
+    except Refused as error:
+        report = {"result": "REFUSED", "refusals": error.causes, "detail": "nothing was written"}
+    except FileNotFoundError as error:
+        if error.filename == "git":
+            report = {"result": "CANNOT RUN", "refusals": [], "detail": "git is not on the search path; install it"}
+        else:
+            raise
+    return finish(report, args.json, out)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

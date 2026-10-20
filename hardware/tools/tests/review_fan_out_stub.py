@@ -11,7 +11,7 @@ environment variables it was given. It sleeps to show concurrency. A setup
 session reads method.md unless the scenario's `setup.reads` says otherwise,
 `setup.narration` lists content blocks it writes before its reads (each its own
 event, or with the first read in one event when `setup.same_event` is set), and
-`setup.uses` lists tools it uses besides Read. Any session's scenario entry may
+`setup.uses` lists tools it uses besides Read (a name, or an object with `name`, an `input` and `failed`, which gives the use an id and, when true, a failed tool result). Any session's scenario entry may
 also hold `start_omit` and `result_omit` (fields left out of the start report and
 the result report), `start_set` and `result_set` (fields given other values),
 `read_inputs` (the raw input of each Read it makes, in place of `reads`),
@@ -19,7 +19,7 @@ the result report), `start_set` and `result_set` (fields given other values),
 prints as they are, after its start report), `garbled` (bytes that are not UTF-8,
 printed to its output and its error stream) and `no_result` (it prints no result
 report and exits 0) and `raw_unicode` (its assistant and result lines carry non-ASCII
-characters raw, as the real command line's JSON does). The scenario's `auth_stdout`, when given, is what `auth
+characters raw, as the real command line's JSON does). A call with no unit whose prompt lacks the setup session's token plays the scenario's `single` entry, when it has one, as a lone reviewer judging the whole review in one session. The scenario's `auth_stdout`, when given, is what `auth
 status` prints in place of its report, and `auth` its exit status.
 """
 
@@ -56,7 +56,7 @@ def main():
     setup = scenario.get("setup", {})
     base = {"cost": 0.0, "api_ms": 0, "turns": 0}
     if unit is None:
-        outcome = dict(setup)
+        outcome = dict(scenario["single"] if "single" in scenario and "SETUP-READ-COMPLETE" not in prompt else setup)
         session = str(uuid.uuid4())
         text = outcome.get("answer", "SETUP-READ-COMPLETE")
         reads = outcome.get("reads", ["method.md"])
@@ -105,7 +105,14 @@ def main():
     inputs = outcome.get("read_inputs", [{"file_path": path} for path in reads + outcome.get("failed_reads", [])])
     uses = [{"type": "tool_use", "id": f"toolu_{number}", "name": "Read", "input": given} for number, given in enumerate(inputs)]
     failed = [use["id"] for use in uses[len(inputs) - len(outcome.get("failed_reads", [])):]] if outcome.get("failed_reads") else []
-    uses += [{"type": "tool_use", "name": name, "input": {}} for name in outcome.get("uses", [])]
+    for number, spec in enumerate(outcome.get("uses", [])):
+        spec = {"name": spec} if isinstance(spec, str) else spec
+        use = {"type": "tool_use", "name": spec["name"], "input": spec.get("input", {})}
+        if "failed" in spec:
+            use["id"] = f"toolu_use{number}"
+            if spec["failed"]:
+                failed.append(use["id"])
+        uses.append(use)
     narration = outcome.get("narration", [])
     if narration and outcome.get("same_event"):
         print(json.dumps({"type": "assistant", "message": {"content": narration + uses[:1]}}))
