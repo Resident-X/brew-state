@@ -3,9 +3,11 @@ type: deliverable
 category: solution
 title: The pre-order check fails a sensing net too close to a noisy net and a connector short of ground returns
 status: active
-version: 1
+version: 2
 text: |-
   Adds the board rules record and the sensing-clearance and ground-return rules to the pre-order check, each shown to fail on a seeded fault.
+
+  Placement. The record reader follows the optional-record readers beside the derating and pin-limit readers and is called from the design check; the record name joins the reads listing and the task-runner reads description. The sensing rules are written where the check's appended rules are written, or in a second KiCad run on the temporary copy as the mounting-hole rules are, so a finding is reported under the sensing rule's own name; the clearance-override check gains a sensing figure that does not wait for a signed figure, since a design with no Mains may still declare sensing classes. The ground-return rule is plain Python over the connector footprints' pads and the net-class members KiCad reports; it does not reuse the name-matched ground reading other rules use. Seeded faults extend the on-demand proof's fault list. The tracked proof designs declare what they carry: the design with sensing and ground classes declares both mappings, the others state none or declare the mapping they hold, and a connector-prefixed jumper is classed or stated like any connector pin. The layout practice catalogue keeps its judgement item for what a rule cannot decide and gains an enforced item for the declared clearance, and the hardware notes' rule table and signed-rule description are corrected to match.
 links:
   - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C3
     type: derives-from
@@ -29,6 +31,10 @@ links:
     type: derives-from
   - target: SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 brief reviewer
+  fingerprint: 05762aef1b078889ca7b1049e317f250d5d75dd2f1cf94bb4741c102fcc49a0b
+  gating_profile: ""
 design_question_answers:
   - answered_by: SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS.C3
     class: whole-set
