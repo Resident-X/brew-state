@@ -1,0 +1,16 @@
+id: EV-SOL-HW-MACHINE-AS-FOUND-FIT-RECORD-C4-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-MACHINE-AS-FOUND-FIT-RECORD.C4
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-19T23:17:16.051171Z"
+artifact:
+  kind: external
+  reference: 'inspection of connector-pinouts.md § What each retained device imposes on whatever drives or reads it against each class in C4: valve coils (voltage, steady current, inrush bound 253 V over cold resistance), pumps (running current estimated from nameplate power at 253 V under an assumed 0.5 power-factor floor, with 0.46 A and 0.19 A carried as the sizing values), elements, keys and microswitches, temperature elements, flow meter, buzzer, gauge driver (datasheet thresholds, revision stated unread), indicators, protective-chain devices, inherited series resistances; valve and pump current pending marks in controller-board-design-constraints.md ended with value and source; classes still open and marked pending, to be read when the board carrying the device is designed and not blocking the division of the circuitry into boards: buzzer type and drive, indicator forward voltage and series resistances, key and microswitch contact type and rating, reed element rating, flow meter output type, temperature element curve constant and protective-chain contact ratings (the switched conductor of each load is held pending against SOL-HW-RETAINED-DEVICE-REMAINING-CHARACTERISTICS-RECORDED and read before the division); derived tables (component-specification.md, controller-io.md, both csv) show the values or the mark'
+  artifact_version: db18d747d35341f8d5b7ae77025f9ed9fd2cfe98
+attested_by: crun-7066c7fba9492ed4
+links:
+  - target: SOL-HW-MACHINE-AS-FOUND-FIT-RECORD.C4
+    type: satisfies

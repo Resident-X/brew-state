@@ -1,0 +1,25 @@
+id: SOL-HW-RETAINED-DEVICE-REMAINING-CHARACTERISTICS-RECORDED
+type: deliverable
+category: solution
+title: The mains-side and position facts the first as-found recording left pending are recorded with their sources
+status: active
+version: 7
+text: |
+  Records, in the machine's record, the mains-side and position facts the first as-found recording could not read and that the division of the circuitry between boards rests on, each with its source and evidence grade, so the pending mark it leaves ends with a value rather than an estimate.
+
+  The first recording takes every fact that a device's marking, a datasheet or a reading on the unplugged machine gives. What it leaves for this solution is three facts: which conductor of each load the original board's switching device interrupts, established by tracing the loom with the machine unplugged; what the live supply lead goes to upstream of the board, whether a cord, an inlet or a switch; and the position of the mains-bundle entry and of each mains tab to within 1 mm. The first decides whether a replacing board switches line or neutral and where its fuses go, the second what protects the lead the board is fed from, and the third where the connectors are placed. Each is read from the machine unplugged; none is measured energised.
+
+  Each value is entered in the record in the entry the pending mark stood in, with its unit, its evidence grade from the board design constraints record and a source a reader holding only the published repository can follow, and the mark is removed in the same change. A fact that no inspection of the unplugged machine gives is recorded as a bound with its derivation shown, or stays pending with the reason.
+
+  The retained devices' remaining characteristics, among them the buzzer's type and drive, the panel indicators' forward voltage and series resistances, the contact type and rating of each key and microswitch, the reed element's rating, the flow meter's output type, the temperature elements' curve constant and the protective-chain devices' contact ratings, are not held here. They follow the division of the circuitry into boards, and each is recorded by the design task for the board that carries the device, which records every figure the constraints record holds pending against its board.
+links:
+  - target: DEL-HW-DESIGN-CONSTRAINTS.C1
+    type: derives-from
+  - target: REQ-RETROFIT-FIT-001.C2
+    type: targets
+  - target: REQ-MACHINE-RECORD-001.C2
+    type: targets
+  - target: DEC-MACHINE-RECORD-FOLDER-PER-MACHINE
+    type: justified-by
+  - target: SOL-HW-MACHINE-AS-FOUND-FIT-RECORD
+    type: depends-on

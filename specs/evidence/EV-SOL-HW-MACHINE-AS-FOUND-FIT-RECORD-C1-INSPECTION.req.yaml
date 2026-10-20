@@ -1,0 +1,16 @@
+id: EV-SOL-HW-MACHINE-AS-FOUND-FIT-RECORD-C1-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-MACHINE-AS-FOUND-FIT-RECORD.C1
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-19T23:17:15.443579Z"
+artifact:
+  kind: external
+  reference: 'inspection of docs/sunbeam-em7000/reference-machine.md § Controller enclosure as found against each clause of C1: envelope and intrusions (A1-A3), board outline and thickness (A4), four mounting points with position, hole, standoff and fixing (A5), neighbour clearances (A6, A7), wall material and earth stud (A9), tolerances stated per entry (±0.5 mm for the envelope and mounting points; the mains-bundle entry and tab heights carried at ±2 mm and ±1.5 mm as the owner gave them, the ±1 mm reading held pending against SOL-HW-RETAINED-DEVICE-REMAINING-CHARACTERISTICS-RECORDED), 25/28 mm superseded by 34.5 mm depth, grades from the table extended with ''inspected'' in controller-board-design-constraints.md, inferred entries name their premises, eight photographs committed under docs/sunbeam-em7000/photos/ with a stated public-domain release and cited by path, the others cited by item only, restating documents in the folder corrected (controller-design/*, controller-io*.csv, component-specification.md)'
+  artifact_version: db18d747d35341f8d5b7ae77025f9ed9fd2cfe98
+attested_by: crun-7066c7fba9492ed4
+links:
+  - target: SOL-HW-MACHINE-AS-FOUND-FIT-RECORD.C1
+    type: satisfies
