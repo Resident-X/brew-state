@@ -1,0 +1,17 @@
+# A synthetic derating policy, made only to prove the pre-order check against the
+# throwaway design beside it. Its share is not a real policy's and must never be used
+# for a board that is ordered: being marked synthetic, the check accepts it only for a
+# design marked not for manufacture.
+source: none -- synthetic share chosen to exercise the check, not taken from a policy
+classes:
+  - class: capacitor
+    voltage:
+      share: 0.8
+      source: none -- synthetic share
+    power:
+      share: 1
+      source: none -- synthetic share
+    temperature:
+      share: 0.8
+      source: none -- synthetic share
+synthetic: true
