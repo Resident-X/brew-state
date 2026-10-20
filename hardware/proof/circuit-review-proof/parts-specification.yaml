@@ -6,292 +6,353 @@ positions:
     package: "C_Rect_L18.0mm_W7.0mm_P15.00mm_FKS3_FKP3"
     rating: "275VAC"
     lcsc: "C9200007"
+    class: "mains-rated part (X and Y capacitors, mains fuse, varistor, mains terminals and links)"
   - reference: C2
     value: "2.2nF"
     package: "C_Disc_D7.0mm_W2.5mm_P5.00mm"
     rating: "250VAC"
     lcsc: "C9200008"
+    class: "mains-rated part (X and Y capacitors, mains fuse, varistor, mains terminals and links)"
   - reference: C3
     value: "2.2nF"
     package: "C_Disc_D7.0mm_W2.5mm_P5.00mm"
     rating: "250VAC"
     lcsc: "C9200008"
+    class: "mains-rated part (X and Y capacitors, mains fuse, varistor, mains terminals and links)"
   - reference: C4
     value: "100nF"
     package: "C_Rect_L18.0mm_W7.0mm_P15.00mm_FKS3_FKP3"
     rating: "275VAC"
     lcsc: "C9200007"
+    class: "mains-rated part (X and Y capacitors, mains fuse, varistor, mains terminals and links)"
   - reference: C5
     value: "1uF"
     package: "C_0603_1608Metric"
     rating: "16V"
     lcsc: "C9200029"
+    class: capacitor
   - reference: C6
     value: "10uF"
     package: "C_0805_2012Metric"
     rating: "10V"
     lcsc: "C9200031"
+    class: capacitor
   - reference: C7
     value: "47uF"
     package: "CP_EIA-3528-21_Kemet-B"
     rating: "10V"
     lcsc: "C9200028"
+    class: capacitor
   - reference: C8
     value: "10uF"
     package: "C_0805_2012Metric"
     rating: "10V"
     lcsc: "C9200031"
+    class: capacitor
   - reference: C9
     value: "100nF"
     package: "C_0603_1608Metric"
     rating: "16V"
     lcsc: "C9200021"
+    class: capacitor
   - reference: C10
     value: "100nF"
     package: "C_0603_1608Metric"
     rating: "16V"
     lcsc: "C9200021"
+    class: capacitor
   - reference: C12
     value: "22nF"
     package: "C_0603_1608Metric"
     rating: "16V"
     lcsc: "C9200037"
+    class: capacitor
   - reference: C13
     value: "10nF"
     package: "C_0603_1608Metric"
     rating: "16V"
     lcsc: "C9200036"
+    class: capacitor
   - reference: D1
     value: "VLMG1300-GS08"
     package: "LED_0603_1608Metric"
     rating: "30mA"
     lcsc: "C9200034"
+    class: none
   - reference: D2
     value: "TPD4E1U06DBVR"
     package: "SOT-23-6"
     rating: "5.5V"
     lcsc: "C9200035"
+    class: semiconductor
   - reference: F1
     value: "0001.2501"
     package: "Fuseholder_Cylinder-5x20mm_Bulgin_FX0457_Horizontal_Closed"
     rating: "500mA 250VAC"
     lcsc: "C9200003"
+    class: "mains-rated part (X and Y capacitors, mains fuse, varistor, mains terminals and links)"
   - reference: J1
     value: "MKDSN_1.5/3-5.08"
     package: "TerminalBlock_Phoenix_MKDS-1,5-3-5.08_1x03_P5.08mm_Horizontal"
-    rating: "320V 8A"
+    rating: "320VAC 8A"
     lcsc: "C9200001"
+    class: "mains-rated part (X and Y capacitors, mains fuse, varistor, mains terminals and links)"
   - reference: JP1
     value: "LINK_L"
     package: "SolderWire-1sqmm_1x02_P7.8mm_D1.4mm_OD3.9mm"
-    rating: "300V 6A"
+    rating: "300VAC 6A"
     lcsc: "C9200005"
+    class: "mains-rated part (X and Y capacitors, mains fuse, varistor, mains terminals and links)"
   - reference: J2
     value: "HEATER"
     package: "TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal"
-    rating: "320V 8A"
+    rating: "320VAC 8A"
     lcsc: "C9200002"
+    class: "mains-rated part (X and Y capacitors, mains fuse, varistor, mains terminals and links)"
   - reference: JP2
     value: "LINK_5V"
     package: "PinHeader_1x02_P2.54mm_Vertical"
     rating: "3A"
     lcsc: "C9200026"
+    class: none
   - reference: J3
     value: "SENSOR_I2C"
     package: "JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical"
     rating: "3A 250V"
     lcsc: "C9200025"
+    class: connector
   - reference: JP3
     value: "LINK_3V3"
     package: "PinHeader_1x02_P2.54mm_Vertical"
     rating: "3A"
     lcsc: "C9200027"
+    class: none
   - reference: J4
     value: "SWD"
     package: "PinHeader_1x05_P2.54mm_Vertical"
     rating: "3A"
     lcsc: "C9200033"
+    class: none
   - reference: J5
     value: "SENSE_IN"
     package: "JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical"
     rating: "3A 250V"
     lcsc: "C9200024"
+    class: connector
   - reference: J6
     value: "5V_IN"
     package: "JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical"
     rating: "3A 250V"
     lcsc: "C9200023"
+    class: connector
   - reference: Q1
     value: "BTA16-600B"
     package: "TO-220-3_Vertical"
     rating: "600V 16A"
     lcsc: "C9200009"
+    class: semiconductor
   - reference: Q2
     value: "BSS138"
     package: "SOT-23"
     rating: "50V 0.22A"
     lcsc: "C9200014"
+    class: semiconductor
   - reference: Q3
     value: "BSS138"
     package: "SOT-23"
     rating: "50V 0.22A"
     lcsc: "C9200014"
+    class: semiconductor
   - reference: R1
     value: "100"
     package: "R_2512_6332Metric"
     rating: "1W"
     lcsc: "C9200010"
+    class: none
   - reference: RV1
     value: "VDRS14T275BSE"
     package: "RV_Disc_D15.5mm_W5.4mm_P7.5mm"
-    rating: "275Vrms"
+    rating: "275VAC"
     lcsc: "C9200006"
+    class: "mains-rated part (X and Y capacitors, mains fuse, varistor, mains terminals and links)"
   - reference: R2
     value: "1.1k"
     package: "R_1206_3216Metric"
     rating: "0.25W"
     lcsc: "C9200011"
+    class: none
   - reference: R3
     value: "100k"
     package: "R_0603_1608Metric"
     rating: "0.1W"
     lcsc: "C9200015"
+    class: none
   - reference: R5
     value: "330"
     package: "R_1206_3216Metric"
     rating: "0.25W"
     lcsc: "C9200013"
+    class: none
   - reference: R6
     value: "100k"
     package: "R_0603_1608Metric"
     rating: "0.1W"
     lcsc: "C9200015"
+    class: none
   - reference: R7
     value: "1k"
     package: "R_0603_1608Metric"
     rating: "0.1W"
     lcsc: "C9200017"
+    class: none
   - reference: R8
     value: "47k"
     package: "R_0603_1608Metric"
     rating: "0.1W"
     lcsc: "C9200016"
+    class: none
   - reference: R9
     value: "100"
     package: "R_0603_1608Metric"
     rating: "0.1W"
     lcsc: "C9200018"
+    class: none
   - reference: R10
     value: "100"
     package: "R_0603_1608Metric"
     rating: "0.1W"
     lcsc: "C9200018"
+    class: none
   - reference: R11
     value: "4.7k"
     package: "R_0603_1608Metric"
     rating: "0.1W"
     lcsc: "C9200019"
+    class: none
   - reference: R12
     value: "4.7k"
     package: "R_0603_1608Metric"
     rating: "0.1W"
     lcsc: "C9200019"
+    class: none
   - reference: R13
     value: "4.7k"
     package: "R_0603_1608Metric"
     rating: "0.1W"
     lcsc: "C9200019"
+    class: none
   - reference: R14
     value: "1k"
     package: "R_0603_1608Metric"
     rating: "0.1W"
     lcsc: "C9200017"
+    class: none
   - reference: TP1
     value: "L_FUSE"
     package: "TestPoint_Pad_D1.0mm"
     rating: "1A"
     lcsc: "C9200004"
+    class: none
   - reference: TP2
     value: "+5V_IN"
     package: "TestPoint_Pad_D1.0mm"
     rating: "1A"
     lcsc: "C9200004"
+    class: none
   - reference: TP3
     value: "+3V3_REG"
     package: "TestPoint_Pad_D1.0mm"
     rating: "1A"
     lcsc: "C9200004"
+    class: none
   - reference: TP4
     value: "NRST"
     package: "TestPoint_Pad_D1.0mm"
     rating: "1A"
     lcsc: "C9200004"
+    class: none
   - reference: TP5
     value: "SWDIO"
     package: "TestPoint_Pad_D1.0mm"
     rating: "1A"
     lcsc: "C9200004"
+    class: none
   - reference: TP6
     value: "SWCLK"
     package: "TestPoint_Pad_D1.0mm"
     rating: "1A"
     lcsc: "C9200004"
+    class: none
   - reference: TP7
     value: "HEAT_CMD"
     package: "TestPoint_Pad_D1.0mm"
     rating: "1A"
     lcsc: "C9200004"
+    class: none
   - reference: TP8
     value: "SENSE_ADC"
     package: "TestPoint_Pad_D1.0mm"
     rating: "1A"
     lcsc: "C9200004"
+    class: none
   - reference: TP9
     value: "WD_RESET"
     package: "TestPoint_Pad_D1.0mm"
     rating: "1A"
     lcsc: "C9200004"
+    class: none
   - reference: U2
     value: "MOC3023M"
     package: "DIP-6_W7.62mm"
     rating: "400V"
     lcsc: "C9200012"
+    class: "integrated circuit"
   - reference: U3
     value: "MCP1700T-3302E/TT"
     package: "SOT-23"
     rating: "6V"
     lcsc: "C9200030"
+    class: "integrated circuit"
   - reference: U4
     value: "MSPS003F4SPW20R"
     package: "TSSOP-20_4.4x6.5mm_P0.65mm"
-    rating: "3.8V"
+    # 4.1V is the part's datasheet absolute maximum supply voltage.
+    rating: "4.1V"
     lcsc: "C9200032"
+    class: "integrated circuit"
   - reference: U5
     value: "TPS3823-33DBVR"
     package: "SOT-23-5"
     rating: "6V"
     lcsc: "C9200020"
+    class: "integrated circuit"
   - reference: FID1
     value: "Fiducial"
     package: "Fiducial_1mm_Mask2mm"
     lcsc: "C9200038"
+    class: none
   - reference: FID2
     value: "Fiducial"
     package: "Fiducial_1mm_Mask2mm"
     lcsc: "C9200038"
+    class: none
   - reference: FID3
     value: "Fiducial"
     package: "Fiducial_1mm_Mask2mm"
     lcsc: "C9200038"
+    class: none
   - reference: FID4
     value: "Fiducial"
     package: "Fiducial_1mm_Mask2mm"
     lcsc: "C9200038"
+    class: none
   - reference: FID5
     value: "Fiducial"
     package: "Fiducial_1mm_Mask2mm"
     lcsc: "C9200038"
+    class: none
   - reference: FID6
     value: "Fiducial"
     package: "Fiducial_1mm_Mask2mm"
     lcsc: "C9200038"
+    class: none

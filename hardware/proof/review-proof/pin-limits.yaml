@@ -1,0 +1,142 @@
+# A synthetic pin-limit record, made only to prove the pre-order check against the
+# throwaway design beside it. Its limits are not read from any datasheet and must never
+# be used for a board that is ordered: being marked synthetic, the check accepts it
+# only for a design marked not for manufacture.
+domains:
+  - name: supply5
+    rail: +5V
+    highest_voltage_v: 5.25
+  - name: supply3v3
+    rail: +3V3
+    highest_voltage_v: 3.48
+  - name: ground
+    rail: GND
+    highest_voltage_v: 0
+  - name: mains_line
+    rail: MAINS_L
+    highest_voltage_v: 353.5533906
+  - name: mains_switched
+    rail: MAINS_SW
+    highest_voltage_v: 353.5533906
+parts:
+  - lcsc: C9000002
+    source:
+      document: none -- synthetic limits
+      revision: A
+      section: absolute maximum ratings
+      read_on: 2026-10-14
+    pins:
+      - pin: "1"
+        domain: supply3v3
+        absolute_max_v: 6
+        absolute_min_v: -6
+        tolerates_driven_unpowered: true
+      - pin: "2"
+        domain: supply3v3
+        absolute_max_v: 6
+        absolute_min_v: -6
+        tolerates_driven_unpowered: true
+      - pin: "4"
+        domain: mains_switched
+        absolute_max_v: 600
+        absolute_min_v: -600
+        tolerates_driven_unpowered: true
+      - pin: "6"
+        domain: mains_line
+        absolute_max_v: 600
+        absolute_min_v: -600
+        tolerates_driven_unpowered: true
+  - lcsc: C9000026
+    source:
+      document: none -- synthetic limits
+      revision: A
+      section: absolute maximum ratings
+      read_on: 2026-10-14
+    pins:
+      - pin: "3"
+        domain: supply5
+        absolute_max_v: 15
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      - pin: "2"
+        domain: supply3v3
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+  - lcsc: C9000014
+    source:
+      document: none -- synthetic limits
+      revision: A
+      section: absolute maximum ratings
+      read_on: 2026-10-14
+    pins:
+      - pin: "5"
+        domain: supply3v3
+        absolute_max_v: 7
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      - pin: "3"
+        domain: ground
+        absolute_max_v: 7
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      - pin: "4"
+        domain: supply3v3
+        absolute_max_v: 7
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      - pin: "1"
+        domain: supply3v3
+        absolute_max_v: 7
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+  - lcsc: C9000019
+    source:
+      document: none -- synthetic limits
+      revision: A
+      section: absolute maximum ratings
+      read_on: 2026-10-14
+    pins:
+      - pin: "15"
+        domain: supply3v3
+        absolute_max_v: 6
+        absolute_min_v: -0.5
+        tolerates_driven_unpowered: false
+      - pin: "2"
+        domain: supply3v3
+        absolute_max_v: 6
+        absolute_min_v: -0.5
+        tolerates_driven_unpowered: false
+      - pin: "5"
+        domain: supply3v3
+        absolute_max_v: 6
+        absolute_min_v: -0.5
+        tolerates_driven_unpowered: false
+      - pin: "14"
+        domain: supply3v3
+        absolute_max_v: 6
+        absolute_min_v: -0.5
+        tolerates_driven_unpowered: false
+      - pin: "11"
+        domain: supply3v3
+        absolute_max_v: 6
+        absolute_min_v: -0.5
+        tolerates_driven_unpowered: false
+  - lcsc: C9000025
+    source:
+      document: none -- synthetic limits
+      revision: A
+      section: absolute maximum ratings
+      read_on: 2026-10-14
+    pins:
+      - pin: "1"
+        domain: supply5
+        absolute_max_v: 8
+        absolute_min_v: -8
+        tolerates_driven_unpowered: true
+      - pin: "2"
+        domain: ground
+        absolute_max_v: 8
+        absolute_min_v: -8
+        tolerates_driven_unpowered: true
+synthetic: true

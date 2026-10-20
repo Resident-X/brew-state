@@ -2,7 +2,7 @@ id: DEC-DEVICE-RETENTION-BOUNDARY
 type: decision
 title: Operator-interface and load devices are retained while the control electronics are replaced
 status: active
-version: 2
+version: 3
 text: |
   The retrofit replaces the machine's control electronics while leaving in place most of the devices
   those electronics drive and read. Which side of that line each device falls on is what a controller
@@ -19,18 +19,21 @@ text: |
 
   Retained, as elements: the five operator-panel keys, which are ten switches wired in parallel pairs and
   present as five signals; the two control-knob microswitches; the
-  tank water-level sensor; the flow meter; both thermoblock heating elements; both pumps; both
+  flow meter; both thermoblock heating elements; both pumps; both
   solenoid valves, whose coils are mains-voltage; both gauge stepper motors and the driver on the assembly carrying them; the panel indicator
   elements, whose cathodes share the lines that carry the keys; the low-water indicator on that same
-  gauge assembly; the panel buzzer; the two mains-presence sense channels on the elements, whose isolation
-  barrier is on the load-driving side and comes with them; and every device in the protective chain --
+  gauge assembly; the panel buzzer; and every device in the protective chain --
   the three thermostats, the thermal fuse and the over-pressure reliefs.
 
   Replaced: both microcontrollers and the board carrying them; every conditioning and drive network on
   that board; the logic power supply, whose transformer is rated far below what a replacement
   controller, its sensing front ends and the retained relay coils together draw; the zero-cross
   detection front end, which presents one crossing per cycle where the actuation scheme needs both;
-  and the heater switching relays, which cannot be commanded within a supply half-cycle.
+  the heater switching relays, which cannot be commanded within a supply half-cycle; the tank water-level
+  sensor, whose reed element is soldered through the back of the board being replaced, so the new
+  boards provide the level channel and the element is either lifted from the old board or replaced
+  like for like; and the two mains-presence sense channels, whose opto-isolators sit on that same board, so
+  the new boards provide that isolated sensing too.
 
   Added: a pressure channel on the steam path, which a separate decision has already put on the
   machine's bill of materials. A brew-path pressure channel is not added here. It is required by a
@@ -107,6 +110,8 @@ rationale: |
   figure into an established one. That is a cost of retention landing where the boundary put it, not an argument against
   retention -- but it belongs in the record, because a board chosen without it would fail on a channel
   nobody was watching.
+
+  Amendment: the first version of this decision treated the tank water-level sensor and the two mains-presence sense channels as retained devices separate from the board. Inspection of the machine found the level sensor's reed element soldered through the back of the main board and both mains-presence opto-isolators on that board, so those three pass to the replaced side and their channels become the new boards' to provide. Nothing else in the retained set changes, and the channel counts do not change, since each of the three is still a channel the controller reads.
 options_considered:
   - option: Retain the operator-interface and load devices and replace only the control electronics
     reason_rejected: ""

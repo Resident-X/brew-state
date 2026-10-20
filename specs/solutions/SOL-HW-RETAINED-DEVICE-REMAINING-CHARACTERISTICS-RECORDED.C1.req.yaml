@@ -1,0 +1,12 @@
+id: SOL-HW-RETAINED-DEVICE-REMAINING-CHARACTERISTICS-RECORDED.C1
+type: criterion
+title: Each mains-side and position fact the first recording left pending is recorded with its source, or remains pending with the reason
+status: active
+version: 3
+measurement_type: binary
+verification: inspection
+text: |
+  Each mains-side and position fact the first recording left pending is recorded with its source, or remains pending with the reason. For each such fact the machine's record marks pending against this solution, the record entry states the value with its unit, its evidence grade, and a source a reader holding only the published repository can follow, and the pending mark is removed from that entry and from every document derived from it. A fact that no inspection of the unplugged machine gives is stated as a bound with its derivation shown, or stays marked pending with the reason no reading gives it. No quantity is measured with the machine energised. Out of scope: the retained devices' remaining characteristics, which the design task for the board carrying each device records, and designing the circuits that meet them.
+links:
+  - target: SOL-HW-RETAINED-DEVICE-REMAINING-CHARACTERISTICS-RECORDED
+    type: criterion-of

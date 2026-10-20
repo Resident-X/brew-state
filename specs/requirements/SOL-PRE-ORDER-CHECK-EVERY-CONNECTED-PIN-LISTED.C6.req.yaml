@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C6
+type: criterion
+title: The hardware notes carry an entry for the rule
+status: active
+version: 2
+measurement_type: binary
+verification: inspection
+text: |-
+  The hardware notes' table of the pre-order check's rules extends the pin-limit rule's entry, and replaces its sentence that exempts a pin whose limit is a current, with what the coverage failure names, which pin it exempts and the name it is reported under. Out of scope: the design method's convention and the rules owned by other leaves.
+links:
+  - target: SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED
+    type: criterion-of

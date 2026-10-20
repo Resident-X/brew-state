@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C4
+type: criterion
+title: The rule is shown to fail on a fault seeded for it in a copy of the throwaway proof design
+status: active
+version: 2
+measurement_type: binary
+verification: test
+text: |-
+  The on-demand seeded-fault proof removes from a copy of a throwaway design, outside the tracked tree, the entry of one connected pin of a listed part that keeps its other pins listed and requires the check to fail it, the record of the seeded run naming the fault and the rule that caught it; the committed proof design stays passing, and a pin on no other pin and no rail is shown not to be failed. The proof is the existing on-demand seeded-fault proof, extended, and runs in neither gate. Out of scope: the existing seeded faults.
+links:
+  - target: SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED
+    type: criterion-of

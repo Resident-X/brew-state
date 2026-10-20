@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C2
+type: criterion
+title: The rule extends the existing pin-limit rule and its record reader
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The coverage check is added to the pin-limit rule of the existing pre-order check, run by the same one task-runner command, reading only the design's files and the records the design is held to, from the pins the rule already compares, with no new record key. Out of scope: a second tool, a parallel reader, and any read of firmware source.
+links:
+  - target: SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED
+    type: criterion-of

@@ -8,9 +8,29 @@ domains:
   - name: supply5
     rail: +5V
     highest_voltage_v: 5.25
+  # The LED anode net, fed from the 5 V rail through R5, which sets the current. It can sit
+  # no higher than the rail, so the rail's figure is its upper bound.
+  - name: led_anode
+    rail: LED_A
+    highest_voltage_v: 5.25
+  - name: ground
+    rail: GND
+    highest_voltage_v: 0
   - name: mains
     rail: MAINS_L
-    highest_voltage_v: 353.6
+    highest_voltage_v: 353.5533906
+  - name: mains_neutral
+    rail: MAINS_N
+    highest_voltage_v: 353.5533906
+  - name: mains_earth
+    rail: MAINS_PE
+    highest_voltage_v: 353.5533906
+  - name: mains_inlet
+    rail: MAINS_L_IN
+    highest_voltage_v: 353.5533906
+  - name: mains_snubber
+    rail: MAINS_SNUB
+    highest_voltage_v: 353.5533906
 parts:
   - lcsc: C9200032
     source:
@@ -154,11 +174,9 @@ parts:
       section: "Absolute Maximum Ratings"
       read_on: 2026-10-18
     pins:
-      - pin: "1"
-        domain: supply5
-        absolute_max_v: 3
-        absolute_min_v: -3
-        tolerates_driven_unpowered: true
+      # Pin 1, the LED anode, is not listed: the datasheet's limit on it is a forward current,
+      # which a node voltage cannot be judged against, and the 3 V it gives is the LED's
+      # reverse voltage. R5 sets that current, judged in circuit-proof.md.
       - pin: "4"
         domain: mains
         absolute_max_v: 400
@@ -168,5 +186,70 @@ parts:
         domain: mains
         absolute_max_v: 400
         absolute_min_v: -400
+        tolerates_driven_unpowered: true
+  - lcsc: C9200009
+    source:
+      document: "BTA16-600B, 600 V repetitive peak off-state voltage"
+      revision: "A"
+      section: "absolute maximum ratings"
+      read_on: 2026-10-18
+    # Every pin is held to the 600 V repetitive peak off-state voltage, the part's own figure.
+    pins:
+      - pin: "1"
+        domain: mains
+        absolute_max_v: 600
+        absolute_min_v: -600
+        tolerates_driven_unpowered: true
+      - pin: "2"
+        domain: mains
+        absolute_max_v: 600
+        absolute_min_v: -600
+        tolerates_driven_unpowered: true
+      - pin: "3"
+        domain: mains
+        absolute_max_v: 600
+        absolute_min_v: -600
+        tolerates_driven_unpowered: true
+  - lcsc: C9200034
+    source:
+      document: "none -- synthetic limits"
+      revision: "A"
+      section: "absolute maximum ratings"
+      read_on: 2026-10-18
+    # The LED's reverse voltage is its only voltage limit; its forward limit is a current, so not listed.
+    pins:
+      - pin: "2"
+        domain: logic
+        absolute_max_v: 5
+        absolute_min_v: -5
+        tolerates_driven_unpowered: true
+      - pin: "1"
+        domain: ground
+        absolute_max_v: 5
+        absolute_min_v: -5
+        tolerates_driven_unpowered: true
+  - lcsc: C9200024
+    source:
+      document: "none -- synthetic limits"
+      revision: "A"
+      section: "absolute maximum ratings"
+      read_on: 2026-10-18
+    pins:
+      - pin: "1"
+        domain: supply5
+        absolute_max_v: 250
+        absolute_min_v: -250
+        tolerates_driven_unpowered: true
+  - lcsc: C9200023
+    source:
+      document: "none -- synthetic limits"
+      revision: "A"
+      section: "absolute maximum ratings"
+      read_on: 2026-10-18
+    pins:
+      - pin: "1"
+        domain: supply5
+        absolute_max_v: 250
+        absolute_min_v: -250
         tolerates_driven_unpowered: true
 synthetic: true

@@ -6567,7 +6567,7 @@
 				)
 			)
 		)
-		(property "Rating" "320V 8A"
+		(property "Rating" "320VAC 8A"
 			(at 30.48 45.72 0)
 			(hide yes)
 			(effects
@@ -6801,7 +6801,7 @@
 				)
 			)
 		)
-		(property "Rating" "300V 6A"
+		(property "Rating" "300VAC 6A"
 			(at 99.06 40.64 0)
 			(hide yes)
 			(effects
@@ -6879,7 +6879,7 @@
 				)
 			)
 		)
-		(property "Rating" "275Vrms"
+		(property "Rating" "275VAC"
 			(at 121.92 40.64 0)
 			(hide yes)
 			(effects
@@ -7593,7 +7593,7 @@
 				)
 			)
 		)
-		(property "Rating" "320V 8A"
+		(property "Rating" "320VAC 8A"
 			(at 167.64 99.06 0)
 			(hide yes)
 			(effects
@@ -8854,7 +8854,7 @@
 				)
 			)
 		)
-		(property "Rating" "3.8V"
+		(property "Rating" "4.1V"
 			(at 274.32 71.12 0)
 			(hide yes)
 			(effects
