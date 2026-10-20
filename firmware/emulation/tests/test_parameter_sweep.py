@@ -480,9 +480,12 @@ class ParametersAreRankedByWhatTheirOwnUncertaintySpends(unittest.TestCase):
         with open(FINDINGS["declaration"], encoding="utf-8") as handle:
             steam_text = handle.read()
         ceiling = sweep._declared_word(sweep.STEAM_DECLARATION_HEADER, sweep.STEAM_CEILING_MACRO)
+        floor = sweep._declared_figure(FINDINGS["declaration"], sweep._declared_word(
+            sweep.STEAM_DECLARATION_HEADER, sweep.STEAM_FLOOR_MACRO))
         with open(steam_elsewhere, "w", encoding="utf-8") as handle:
-            handle.write(re.sub(r"^\s*%s\s*=\s*\d+" % re.escape(ceiling), "%s = 1800" % ceiling,
-                                steam_text, flags=re.MULTILINE))
+            handle.write(re.sub(r"^\s*%s\s*=\s*\d+" % re.escape(ceiling),
+                                "%s = %d" % (ceiling, floor + 800), steam_text,
+                                flags=re.MULTILINE))
         self.assertAlmostEqual(sweep.steam_band_bar(steam_elsewhere), 0.4, places=9)
         self.assertNotAlmostEqual(sweep.steam_band_bar(steam_elsewhere),
                                   FINDINGS["bands"][sweep.STEAM_SIDE], places=9)
@@ -754,8 +757,7 @@ class TheTwoDrawsReportUnderTheNamesEverythingLooksThemUpBy(unittest.TestCase):
     # sweep needed and which nothing else in the tree exercises. What it
     # establishes is that the draw produces a non-degenerate trajectory: the
     # block is where the declaration says it holds, the wand's report follows
-    # the course, feed engages after the declared margin-building interval
-    # rather than at once, and the machine was advanced once per interval plus
+    # the course, feed engages no earlier than the wand opens, and the machine was advanced once per interval plus
     # the one settling step it reports. A harness that ran and printed nothing
     # usable would be caught here rather than as an inexplicable ranking.
     def test_the_steam_draw_produces_a_plausible_non_degenerate_draw(self):
@@ -783,14 +785,10 @@ class TheTwoDrawsReportUnderTheNamesEverythingLooksThemUpBy(unittest.TestCase):
         first_feed = min(reported["interval"] for reported in steam["trajectory"]
                          if reported["feed_permille"] > 0)
         first_draw = min(at for at, (_, rate) in enumerate(course) if rate > 0)
-        margin_ms = sweep._declared_figure(
-            FINDINGS["declaration"],
-            sweep._declared_word(sweep.STEAM_DECLARATION_HEADER,
-                                 "STEAM_CONTROL_DECLARATION_MARGIN_INTERVAL_WORD"))
         self.assertGreaterEqual(
-            (first_feed - first_draw) * sweep.INTERVAL_MS, margin_ms,
-            "feed engaged before the declared margin-building interval had elapsed, so the draw "
-            "this sweep measures is not the one the design describes")
+            first_feed, first_draw,
+            "feed engaged before the wand opened, so the draw this sweep measures is not the one "
+            "the design describes: the feed pump holds pressure only while steam is drawn")
 
     # The steam draw prints its quantities under the same names the brew draw
     # does, and both under the names the parsers look up. The two tables are

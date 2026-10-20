@@ -1,0 +1,16 @@
+id: EV-SOL-PLANT-STEAM-FLASH-GENERATOR-C12-TEST
+type: evidence
+title: test evidence for SOL-PLANT-STEAM-FLASH-GENERATOR.C12
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-20T01:40:09.839556Z"
+artifact:
+  kind: external
+  reference: firmware/test/test_steam_control/test_steam_control.c::test_a_wand_opened_at_ready_is_fed_and_one_just_below_is_starved
+  artifact_version: 2f71cdfc40f7c2425d96bbc03da64227b1ac24f1
+attested_by: crun-f4784c0f6eac25a3
+links:
+  - target: SOL-PLANT-STEAM-FLASH-GENERATOR.C12
+    type: satisfies

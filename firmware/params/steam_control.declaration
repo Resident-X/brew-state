@@ -3,130 +3,152 @@
 # This is the steam side's companion to tolerance.declaration: not properties
 # of a casting, but the policy choices this design makes about the steam path
 # -- where it holds it, how hard it leans on an error to keep it there, and how
-# it sequences the heater and the feed pump when a draw begins -- read by the
-# control law rather than compiled into it.
+# fast it lets the feed rise once a draw has begun -- read by the control law
+# rather than compiled into it.
 #
 # The figures were chosen against thermoblock.params and against the behaviour
 # asked of the loop, in host simulation. Nothing here has been on a bench, and
 # neither have the coefficients it was chosen against. Every line says so.
 #
 # A note on the shape of the loop, because several figures below only make
-# sense against it. While no draw is under way the loop drives the block's
-# measured temperature to the ready target; the instant the wand's microswitch
-# reports a draw, the variable it drives to becomes measured pressure, because
-# a draw is exactly what parts pressure from the temperature that would
-# otherwise imply it. Feed is held at nothing for the margin-building interval
-# while the heater alone runs at its ceiling, then rises over the feed-rise
-# interval to the sustainable rate and is never commanded past it.
+# sense against it. The steam block is a flash generator. With the wand shut
+# and liquid held, the path's pressure is saturation of the casting, and the
+# loop holds the casting's measured temperature at the ready target. With the
+# wand open, the pressure is the drop across the tube, valve and tip for the
+# steam being made -- the orifice law, steam.restriction_bar_s2_per_ml2 times
+# the square of the rate -- so the feed pump holds pressure, and the heater
+# holds a superheat at the block's modelled outlet. The gate's verdict is taken
+# once, when the wand opens, from the shut block's pressure.
+#
+# Every figure that rests on a relation of the machine names the relation it
+# was derived through: the saturation relation (the three Antoine constants and
+# steam.saturation_temperature_c), the orifice law and the casting-to-outlet
+# relation (steam.outlet_drop_k_s_per_ml), each in thermoblock.params.
 
 # --- Where the design holds the steam path ----------------------------------
 
-# The pressure the steam feed pump is withheld below outright.
-#
-# At the declared slope in thermoblock.params (steam.pressure_bar_per_k,
-# 0.036 bar/K) and the declared saturation temperature (100 C), a steam block
-# run at the temperature that file's own account describes -- "about a bar of
-# gauge pressure at the temperature the steam block is run at" -- sits close
-# to nine tenths of a bar above rest. Nine hundred milli-bar is taken from
-# that same account rather than a fresh judgement, so the two figures cannot
-# disagree about what "ready" means on this machine without both being
-# revisited together. Nothing has been measured; the coefficients this is
-# read against have not been either.
-ready-pressure-bar = 900 milli-bar @estimated Read from thermoblock.params's own account of what gauge pressure a steam block run at its working temperature carries, at the declared saturation temperature and pressure-per-kelvin slope -- not a bench measurement, and not established against a real pressure transducer.
-
 # The block temperature the loop holds while nothing is being drawn.
 #
-# It is the temperature whose rested pressure is the threshold above, read back
-# through the same saturation relation those two figures already agree through:
-# a hundred degrees of saturation plus nine hundred milli-bar at thirty-six
-# milli-bar per kelvin is twenty-five degrees above it. Declaring it as a
-# temperature rather than reusing the pressure figure is what makes the
-# ready-holding phase drive to the block's own measured temperature, which is
-# the quantity that is actually informative while nothing is being drawn --
-# with the wand shut the two are tied, and the temperature channel is the one
-# whose reading does not depend on a transducer nobody has fitted yet.
-ready-temperature-c = 125000 milli-c @estimated Derived from ready-pressure-bar above through thermoblock.params's declared saturation temperature and pressure-per-kelvin slope, so the two cannot come to mean different states of the same machine without both being revisited. Nothing has been measured, and the slope it is read through is the description's own estimate.
+# It is the casting from which a draw opened at ready makes its first steam
+# above the superheat setpoint below, at the ends of the declared error the
+# band and the start feed are derived at rather than at the declared figures.
+# At the draw-start feed (0.183 mL/s) the orifice law at the highest
+# restriction the declared error admits, 42.5 bar per (mL/s)^2, puts the path
+# at 1.42 bar gauge, where the saturation relation (taken over the atmosphere
+# it defines at 100 C, 1.019 bar) gives 126.8 C; the casting-to-outlet relation
+# at the cool end of its declared error, 15 x 1.8 = 27 K per mL/s, takes 4.9 K
+# off the casting at that feed; and the setpoint asks five more. That is
+# 136.7 C, taken up to the next whole kelvin, 137 C.
+ready-temperature-c = 137000 milli-c @estimated Derived so that the law's own estimate, which takes the outlet drop at the cool end of its declared error, clears the superheat setpoint on the first fed step at the highest restriction the declared error admits: saturation 126.8 C at 1.42 bar gauge (draw-start feed 0.183 mL/s on 42.5 bar per (mL/s)^2), plus 27 K per mL/s × 0.183 = 4.9 K, plus 5 K, 136.7 C, taken up to 137 C. Nothing has been measured, and the restriction and outlet coefficients it is read through are the description's own estimates.
+
+# The pressure the shut block has to hold when the wand opens for the draw to be
+# fed.
+#
+# It is saturation of the casting, through the declared saturation relation,
+# at the ready target less the two kelvin the steam channel's own sensor may be
+# wrong by: saturation at 135 C is about 2.09 bar gauge, written down to the
+# tenth of a bar below it. A block held at the ready target clears it, and one
+# that has not reached the ready target by more than the sensor's error does
+# not.
+ready-pressure-bar = 2000 milli-bar @estimated Derived from ready-temperature-c through the saturation relation in thermoblock.params, as saturation at the ready target less the steam channel's two kelvin of sensing error, about 2.09 bar gauge, rounded down to the tenth of a bar. Not established against a real pressure transducer, and the threshold's purpose is readiness, not delivered character.
 
 # The two edges of the pressure band a draw is held inside.
 #
-# The floor sits deliberately above the ready threshold, and the gap between
-# them is the whole reason the margin-building interval exists. Ready means the
-# block has enough behind it that a draw is not starved; in band means the
-# steam actually coming out has the character the drinker's milk needs. A
-# machine sitting exactly at ready has the first and not yet the second, and
-# what closes the distance is a couple of seconds of the element with nothing
-# being drawn out of the block.
+# They are sized to the orifice law, whose least known figure is the
+# restriction coefficient: thermoblock.params declares it may be wrong by seven
+# tenths either way. The draw-start feed below is the feed that puts the band
+# floor on the lowest restriction that error admits, so on the highest it puts
+# 1.7 / 0.3, nearly six times as much -- and the ceiling has to sit at least
+# that far above the floor for the first steam of a draw to be inside the band
+# on every machine the description admits on that figure. A floor of a quarter
+# of a bar and a ceiling of 1.8 bar, a little over seven times it, does that
+# with room.
 #
-# The width between the two is what the loop has to work inside for the whole
-# of a draw, at either end of the error thermoblock.params declares on the
-# coefficient governing how far a draw drags the path down. It is not a
-# statement about what a drinker can taste: no bench has established what band
-# a steamed jug actually needs, and this is a band the design can hold rather
-# than one the drink has asked for.
-draw-pressure-floor-bar = 1000 milli-bar @estimated Chosen a hundred milli-bar above ready-pressure-bar, which is between one and two seconds of the steam element with nothing drawn out of the block at the declared thermal mass and rating -- so a draw beginning from a correctly held ready state reaches it inside the margin-building interval below with room to spare. It is not established that steam below this figure is wet, or that steam above it is not: no bench has produced either reading.
-draw-pressure-ceiling-bar = 1400 milli-bar @estimated Chosen four hundred milli-bar above the floor, wide enough that the loop holds the whole span at either end of the declared error on steam.pressure_fall_bar_per_ml -- the loosest figure thermoblock.params carries -- across draws from a few seconds to a minute, and narrow enough to still refuse a path that has run away with the element left on. Nothing has been measured, and no bench has established what pressure a steamed jug is actually spoiled at.
+# It is not a statement about what a drinker can taste: no bench has
+# established what band a steamed jug actually needs, and this is a band the
+# design can hold rather than one the drink has asked for.
+draw-pressure-floor-bar = 250 milli-bar @estimated Chosen as a quarter of a bar, the least gauge pressure the design treats as a draw carrying steam, and derived against the orifice law at the low end of the declared error on steam.restriction_bar_s2_per_ml2 so that the draw-start feed puts exactly this pressure on the most open restriction the description admits. It is not established that steam below this figure is unusable: no bench has produced the reading.
+draw-pressure-ceiling-bar = 1800 milli-bar @estimated Chosen a little over seven times the floor, derived from the orifice law: the draw-start feed puts 1.7 / 0.3 times the floor on the tightest restriction the declared error on steam.restriction_bar_s2_per_ml2 admits that it puts on the most open, so the first steam of a draw is in band at either end of that error. Nothing has been measured, and no bench has established what pressure a steamed jug is spoiled at.
 
-# --- How the loop sequences a draw ------------------------------------------
+# --- How the feed holds the pressure ----------------------------------------
 
-# How long feed is held back after a draw begins.
+# The feed a draw opened at or above the ready pressure is given on its first
+# step, and above which its rise is limited.
 #
-# Steam made before the block has thermal margin to give is the wet, degrading
-# start this loop exists to avoid, and leading with heat rather than with feed
-# is what prevents it. Two seconds at the declared thermal mass and element
-# rating carries a block sitting at the ready target roughly a hundred and
-# seventy milli-bar upward with nothing being drawn out of it, which clears the
-# floor above with margin.
-margin-building-interval-ms = 2000 milli-s @estimated Estimated from thermoblock.params's declared steam thermal mass, element rating and loss, as rather more than the time the element alone needs to carry a block at the ready target above the band floor with nothing drawn out of it. It is not established that two seconds of margin is what dry steam actually needs on this machine: no bench has measured how a real block behaves at the first moment a wand is opened.
+# Through the orifice law, steam made at m millilitres a second puts the path at
+# k m^2. The start level puts the band floor on the lowest restriction the
+# declared error admits: the square root of 0.25 bar over 0.3 times 25 bar per
+# (mL/s)^2 is 0.183 mL/s, sixty-one permille of the declared 3 mL/s feed pump.
+# On the declared restriction it puts about 0.84 bar, and on the highest about
+# 1.42 bar, both inside the band.
+draw-start-feed = 61 permille @estimated Derived from the orifice law at the low end of the declared error on steam.restriction_bar_s2_per_ml2 and the band floor, as the steam rate that puts the floor on that restriction, 0.183 mL/s, in permille of steam.feed_flow_ml_per_s. The pump's rate-versus-level relation is taken as linear, which no measurement has established.
 
-# How long engaged feed takes to reach its sustainable rate.
+# The feed the pressure loop is never commanded past.
 #
-# A feed pump commanded from nothing to its settled rate in one step asks the
-# block for the whole of a draw's load in the interval it is least able to
-# answer it -- the moment the operator opened the wand, before any error has
-# had time to appear for the loop to answer. Bringing it up over an interval is
-# what lets the heater's own answer arrive alongside the load rather than
-# behind it.
-feed-rise-interval-ms = 1500 milli-s @estimated Estimated as somewhat under the margin-building interval above, so the rise is complete well inside the shortest draw anybody would open the wand for, and long enough at the loop's cadence to be many steps rather than a step or two. It is not established that a step change in feed would actually spoil the first of a draw on a real machine; what is established here is only what it does to this model.
+# It is the feed that puts the middle of the band on the lowest restriction the
+# declared error admits: the square root of 1.025 bar over 7.5 bar per
+# (mL/s)^2 is 0.37 mL/s, a hundred and twenty-three permille. No machine the
+# description admits on that figure needs more to hold the middle of the band,
+# so feed beyond it chases a band the loop could already hold. It sits just
+# under what the steam element can boil dry at its declared rating once the
+# standing loss is paid, about 0.38 mL/s, so a draw at the ceiling still leaves
+# dry steam rather than spending the element on quantity: when it binds, the
+# loop gives up pressure before quantity, and quantity before quality. It
+# cannot also be taken from the low end of the element's error: the pump at the
+# low end of its rate needs at least 111 permille to put the band floor on the
+# declared restriction, while the element at its low end sustains about 96.
+# Where the element cannot boil what the ceiling admits, the law lets the feed
+# down instead.
+feed-ceiling = 123 permille @estimated Derived from the orifice law at the low end of the declared error on steam.restriction_bar_s2_per_ml2 and the middle of the band, as the steam rate that holds the middle on that restriction, 0.37 mL/s, in permille of steam.feed_flow_ml_per_s; checked against steam.heater_power_w and the latent and sensible heat of water as just under what the element at its described rating boils dry at the ready target, 0.38 mL/s. It cannot also be taken from the low end of the element's error. The pump at the low end of its rate needs at least 111 permille to put the band floor on the declared restriction (0.9 mL/s × 0.123 → 0.31 bar), while the element at its low end sustains about 96. Where the element cannot boil what the ceiling admits, the law lets the feed down instead. Neither the pump's rate nor the element's rating at temperature has been measured.
 
-# The level engaged, settled feed is commanded at, and never driven past.
+# How fast the feed may rise above the draw-start level.
 #
-# This is the figure that makes quantity yield before quality. There is no
-# reading of how much steam the operator is asking for -- the microswitch says
-# the wand is turned and nothing else -- so no law here could chase demand even
-# if it wanted to, and this cap is what a draw beyond the block's capacity gets
-# instead: less steam, at the character the band above states, rather than as
-# much as was asked for at whatever character was left.
-#
-# It is deliberately well under the rate the element could boil at its ceiling.
-# A rate at that point balances the block's energy and nothing else: the
-# pressure a draw costs the path goes on accumulating with nothing left to
-# raise the saturation relation against it, so the loop would have no authority
-# left to hold the band with.
-sustainable-feed-rate = 67 permille @estimated Estimated from thermoblock.params as a fifth of a millilitre a second -- sixty-seven permille of the declared 3 ml/s feed pump -- which is roughly three fifths of what the steam element could boil at its ceiling once the declared standing loss is paid. The remaining authority is what holds the band at the far end of the declared error on steam.pressure_fall_bar_per_ml, which is where the loop has least of it. Neither the pump's rate nor the element's rating has been measured, and the sag coefficient this is sized against is the loosest figure the description carries.
+# Raising the feed raises the load on the element and, through the orifice
+# law, the pressure and so the saturation temperature the outlet has to stay
+# above. Ten permille a second takes the feed from the start level to the
+# ceiling in about six seconds -- quick enough that a machine whose pump
+# delivers at the low end of its declared rate still reaches the band floor in
+# the first third of a thirty-second draw -- while at the declared restriction
+# it raises the pressure no faster than about three tenths of a bar a second.
+# It is also the rate the feed is let down at when the heater is spent.
+feed-rise-limit = 10 permille-per-s @estimated Derived from the orifice law and the band as the rate that carries the feed from draw-start-feed to feed-ceiling in about six seconds, which brings the band floor within reach inside the first third of a thirty-second draw at the low end of the declared error on steam.feed_flow_ml_per_s. It is also the rate the feed is let down at when the heater is spent. It is not established that a faster rise would spoil a draw on a real machine.
 
-# --- How hard the loop leans on an error ------------------------------------
+# The gains the pressure loop holds the middle of the band with. The error is in
+# bar and the answer is in permille of the feed pump.
+feed-pressure-gain = 20000 milli-permille-per-bar @estimated Estimated from the orifice law at the declared restriction: near the middle of the band a permille of feed moves the path by about three hundredths of a bar, so twenty permille per bar answers six tenths of an error in one step and a little under the whole of it on the tightest restriction the declared error admits -- the most a loop acting on a relation with no lag can take without oscillating. Nothing here is a measurement.
+feed-pressure-integral-gain = 40000 milli-permille-per-bar-s @estimated Estimated as an integral time of about half a second against the proportional gain above, so the pressure loop removes the error the start level leaves within the first seconds of a draw without the integral becoming the faster term. Nothing here is a measurement.
+
+# --- How the heater holds the steam dry --------------------------------------
+
+# The superheat at the modelled outlet the heater holds during a draw.
+#
+# Steam above saturation at the outlet has had all its water turned; steam at
+# saturation may not have. A few kelvin above it is a margin against the
+# estimate's own error, which the law already takes at the cool end of the
+# casting-to-outlet relation's declared error. It is a floor: the heater holds
+# the casting at the ready target while the estimate stands above it, and the
+# feed yields when the heater at full cannot hold it.
+superheat-setpoint = 5000 milli-k @estimated Estimated as a few kelvin above saturation at the measured pressure, the least superheat the design calls dry steam at the modelled outlet; it rests on the saturation relation and the casting-to-outlet relation in thermoblock.params, a floor: the heater holds the casting at the ready target while the estimate stands above it, and the feed yields when the heater at full cannot hold it. No outlet temperature has been measured, and droplet carry-over is not excluded by any superheat without a calorimetric test.
+
+# The gains the heater holds that superheat with. The error is in kelvin and the
+# answer is in permille of the steam element.
+superheat-gain = 40000 milli-permille-per-k @estimated Estimated as forty watts per kelvin of superheat against the declared element rating and a casting of 360 J/K: firmer than the ready-holding gain because a draw is the disturbance this loop is least able to wait out, and the outlet relation adds no lag between the casting and the estimate. Nothing here is a measurement.
+superheat-integral-gain = 2000 milli-permille-per-k-s @estimated Estimated as an integral time of twenty seconds, slow enough that the superheat approaches its setpoint from above as the feed settles rather than overshooting below it, and fast enough to take out what the feedforward below leaves over a long draw. Nothing here is a measurement.
+
+# --- How the heater holds the ready target ----------------------------------
 
 # The gains the ready-holding phase tracks its temperature target with. The
 # error is in kelvin and the answer is in permille of the steam element.
 ready-temperature-gain = 30000 milli-permille-per-k @estimated Estimated on the same footing the brew loop's own proportional gain is, and at the same figure: thirty permille per kelvin is thirty watts per kelvin against the declared element rating, against a casting of 360 J/K. The steam side is the simpler of the two loops here -- there is no transport lag between the mass and where the reading is taken, because the sensor is on the block -- so the phase this gain has to leave is not eaten by a conduction corner the way the brew side's is. Nothing here is a measurement.
 ready-temperature-integral-gain = 350 milli-permille-per-k-s @estimated Estimated as an integral time well above the reciprocal of the crossover the gain above implies, so that removing the standing error costs little of the phase margin that gain was chosen to keep. It trims what the standing-load feedforward below does not exactly answer -- that figure is a flat duty chosen at the ready target, so it is a little wrong everywhere else in the band, and this is the term that takes the remainder out rather than leaving the loop sitting off its target to earn it. Nothing here is a measurement.
 
-# The gains the draw phase tracks its pressure target with. The error is in bar
-# and the answer is in permille of the steam element. The target itself is not
-# declared: it is the middle of the band above, which is where a loop with
-# equal room either side of it holds.
-draw-pressure-gain = 3000000 milli-permille-per-bar @estimated Estimated by carrying the ready-holding gain above through thermoblock.params's declared pressure-per-kelvin slope, so that the same distance from target commands the same duty whichever variable the loop happens to be driving to: thirty permille per kelvin at thirty-six milli-bar per kelvin is a little over eight hundred permille per bar. It is taken at three thousand rather than there, because a draw is the disturbance this loop is least able to wait out and the pressure phase is the one the band is actually asserted in. Nothing here is a measurement.
-draw-pressure-integral-gain = 50000 milli-permille-per-bar-s @estimated Estimated as an integral time of the same order as the ready-holding phase's, carried through the same slope: it trims what the feedforward's own assumptions leave behind rather than carrying the draw itself, which is the feedforward's job. It is deliberately slow, so that a draw beginning and ending does not leave accumulated intent behind it. Nothing here is a measurement.
-
 # The duty fed forward for each permille of feed commanded.
 #
 # It answers a load the loop has been told about rather than one it has to
 # discover: the feed pump's level is what the loop itself just commanded, and
 # the energy the water it pushes in will take to reach saturation and turn is
-# known at that moment rather than after the pressure has fallen. On a block
-# holding no reservoir the fall arrives faster than any feedback term could
-# answer it.
-feed-load-gain = 7500 milli-permille-per-permille @estimated Estimated from thermoblock.params as the declared feed pump's full-scale rate times the energy a millilitre takes to reach the declared saturation temperature from the declared feed temperature and then turn, divided by the declared element rating and by full pump scale: three millilitres a second at about 2492 J/ml against a kilowatt is seven and a half permille of element per permille of pump. Every figure in it is one the description supplies and none has been measured. What it still assumes is the feed pump's rate-versus-level relation, which the description states as a single full-scale figure and which no measurement has established as linear.
+# known at that moment rather than after the outlet has gone wet.
+feed-load-gain = 6640 milli-permille-per-permille @estimated 3 mL/s × (2160 + 4.15 × 80 = 2492 J/mL) / 1126 W = 6.64 permille of element per permille of pump. Every figure in it is one the description supplies and none has been measured. What it still assumes is the feed pump's rate-versus-level relation, which the description states as a single full-scale figure and which no measurement has established as linear.
 
 # The duty fed forward for what the block gives up to the room, whatever else
 # is happening.
@@ -135,12 +157,10 @@ feed-load-gain = 7500 milli-permille-per-permille @estimated Estimated from ther
 # this parts company with the brew loop's own standing term. That loop's target
 # is something a caller names anywhere in the machine's working range, so a
 # fixed duty there would be exact at one temperature and wrong by a growing
-# amount everywhere else. This loop's target does not move: it holds one
-# declared ready state and one declared band, some tens of kelvin apart, over
-# which the declared standing loss moves by well under a tenth of the element.
-# What that costs is exactness at the top of the band, which the integral gains
-# above trim; what it buys is one figure rather than a coefficient plus the
-# ambient temperature it would have to be measured from -- and the ambient a
-# block loses to is not a channel the hardware seam reports, so a per-kelvin
-# term here would have to assume one.
-standing-load = 158 permille @estimated Estimated from thermoblock.params as the declared steam-block loss per kelvin times the rise of the ready target above the declared ambient, divided by the declared element rating: 1.5 W/K over a hundred and five kelvin against a kilowatt is a hundred and fifty-eight permille. Neither the loss figure nor the ambient has been measured; both are the description's own estimates, and the loss is among the wider fractions that file carries.
+# amount everywhere else. This loop's casting moves a few kelvin either side of
+# one declared ready target, over which the declared standing loss moves by
+# well under a hundredth of the element. What that buys is one figure rather
+# than a coefficient plus the ambient temperature it would have to be measured
+# from -- and the ambient a block loses to is not a channel the hardware seam
+# reports, so a per-kelvin term here would have to assume one.
+standing-load = 156 permille @estimated 1.5 W/K × 117 K = 175.5 W against the element's described 1126 W, 155.9, rounded to 156 permille. Neither the loss figure nor the ambient has been measured; both are the description's own estimates, and the loss is among the wider fractions that file carries.

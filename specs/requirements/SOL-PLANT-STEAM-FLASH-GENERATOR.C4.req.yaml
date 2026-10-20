@@ -2,11 +2,11 @@ id: SOL-PLANT-STEAM-FLASH-GENERATOR.C4
 type: criterion
 title: The affine relation and the pressure-deficit state are retired from the thermoblock's steam side, and every structure stays admissible
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
-text: |-
-  While water is fed the thermoblock structure no longer derives steam pressure from block temperature alone: the affine pressure relation, the integrated pressure-deficit state and the pressure-fall coefficient that fed it are removed from its steam side, and the coefficient is no longer accepted in its description. Every plant structure the build can select stays admissible and advances a model instance with a draw open, the thermoblock's stepped form included; a structure for a different architecture (the boiler) keeps the relation its own steam side physically has, and its tests still pass unchanged: pressure an integrated state under a draw, reversion to its relation when demand returns to zero, its pressure-divergence-rate coefficient declared with origin and error, and admissibility with a draw open. The existing steam-demand channel and step seam are extended in place rather than a parallel steam path built. Does not cover: rewriting the boiler's steam relation, and the description prose of the new relations, which SOL-PLANT-STEAM-FLASH-GENERATOR-DESCRIBED owns.
+text: |
+  While water is fed the thermoblock structure no longer derives steam pressure from block temperature alone: the affine pressure relation, the integrated pressure-deficit state and the pressure-fall coefficient that fed it are removed from its steam side, and the coefficient is no longer accepted in its description. Every plant structure the build can select stays admissible and advances a model instance with a draw open, the thermoblock's stepped form included, and the held inventory stays within zero and its capacity for every admissible parameter set; a structure for a different architecture (the boiler) keeps the relation its own steam side physically has, and its tests still pass unchanged: pressure an integrated state under a draw, reversion to its relation when demand returns to zero, its pressure-divergence-rate coefficient declared with origin and error, and admissibility with a draw open. The existing steam-demand channel and step seam are extended in place rather than a parallel steam path built. Does not cover: rewriting the boiler's steam relation, and the description prose of the new relations, which SOL-PLANT-STEAM-FLASH-GENERATOR-DESCRIBED owns.
 links:
   - target: SOL-PLANT-STEAM-FLASH-GENERATOR
     type: criterion-of

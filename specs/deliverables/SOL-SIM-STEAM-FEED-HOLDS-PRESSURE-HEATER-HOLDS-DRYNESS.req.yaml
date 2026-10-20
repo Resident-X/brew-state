@@ -2,7 +2,7 @@ id: SOL-SIM-STEAM-FEED-HOLDS-PRESSURE-HEATER-HOLDS-DRYNESS
 type: deliverable
 category: solution
 title: The steam loop holds pressure with the feed and dryness with the heater, against a modelled outlet superheat
-status: active
+status: deprecated
 version: 1
 text: |
   Re-allocate the steam control law so the feed pump holds pressure and quantity and heater power holds a declared superheat setpoint at the plant's modelled outlet, computed from the measured pressure; every dryness claim names that superheat and pressure and carries the carry-over caveat in text and JSON; the declaration's ready and band figures are re-derived from the new relations.

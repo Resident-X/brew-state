@@ -1,7 +1,7 @@
 id: SOL-PLANT-STEAM-FEED-PUMP-WIRED.C1
 type: criterion
 title: Thermoblock's steam energy and pressure terms clamp to the commanded feed rate
-status: active
+status: deprecated
 version: 2
 measurement_type: binary
 verification: test
@@ -17,3 +17,5 @@ text: |
 links:
   - target: SOL-PLANT-STEAM-FEED-PUMP-WIRED
     type: criterion-of
+attributes:
+  deprecation_reason: restated by SOL-PLANT-STEAM-FLASH-GENERATOR.C1; the flash-generator steam side retires this behaviour

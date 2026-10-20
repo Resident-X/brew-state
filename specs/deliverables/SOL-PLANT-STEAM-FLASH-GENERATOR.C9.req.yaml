@@ -1,0 +1,12 @@
+id: SOL-PLANT-STEAM-FLASH-GENERATOR.C9
+type: criterion
+title: Every claim that steam is dry names its superheat and measured pressure and states carry-over is not excluded
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Every surface that states steam is dry (the host run's report and any status the control law reports) bases the claim on superheat above saturation at the measured pressure alone, names the superheat and pressure it rests on, says the superheat is modelled at the outlet and confirmed by no sensor, and states that droplet carry-over is not excluded without a calorimetric test. The claim and the caveat appear in both the text and the JSON form of each run, written by the report seam of C3, and a test fails when either form omits the caveat or claims dryness at zero superheat. The reader is the builder at a bench with a PC and no laboratory, checking the control behaviour before mains power is applied: a reader holding only the run's own output, with no knowledge of the source or the graph, can tell what is claimed, on which figures, and what is not claimed. Not part of this slice: a calorimetric test or any carry-over measurement.
+links:
+  - target: SOL-PLANT-STEAM-FLASH-GENERATOR
+    type: criterion-of

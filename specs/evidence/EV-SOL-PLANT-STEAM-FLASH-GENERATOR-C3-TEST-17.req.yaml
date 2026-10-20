@@ -1,0 +1,16 @@
+id: EV-SOL-PLANT-STEAM-FLASH-GENERATOR-C3-TEST-17
+type: evidence
+title: test evidence for SOL-PLANT-STEAM-FLASH-GENERATOR.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-20T01:40:04.876407Z"
+artifact:
+  kind: external
+  reference: firmware/test/test_host_report/test_host_report.c::test_a_steam_draw_run_whose_bound_cannot_be_stated_reports_the_refusal
+  artifact_version: 2f71cdfc40f7c2425d96bbc03da64227b1ac24f1
+attested_by: crun-f4784c0f6eac25a3
+links:
+  - target: SOL-PLANT-STEAM-FLASH-GENERATOR.C3
+    type: satisfies

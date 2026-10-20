@@ -8,10 +8,12 @@
  * errno, which is a different symbol on a host and on the target. The
  * control logic is required to be byte-identical across the two, and it is
  * the check that compares them which would have to be weakened to admit a
- * translation unit that cannot be. Nothing is lost by the separation,
- * because the control path never calls this: a record is loaded by whatever
+ * translation unit that cannot be. Nothing is lost by the separation: the
+ * control path never calls the reader, because a record is loaded by whatever
  * brings the steam control law up and hands it in, exactly as the parameter
- * description and the limits declaration are for the brew side. It sits
+ * description and the limits declaration are for the brew side; it calls only
+ * the validity function the reader ends in, which reaches no number conversion,
+ * so a declaration built by hand is held to what a loaded one is. It sits
  * beside delivery_tolerance.c rather than in a directory of its own because
  * the two answer to the same build-time need -- a runtime-loaded declaration
  * outside the control law's byte-identical boundary -- and that need, not
@@ -82,29 +84,37 @@
 #define STEAM_CONTROL_DECLARATION_TEMPERATURE_HIGH_MILLI_C 200000
 
 /*
- * The span either of the loop's own intervals may be declared inside, in
- * milliseconds. The low end is nothing, deliberately: a design that has
- * decided feed need not be held back, or need not be brought up gradually, is
- * making a choice this grammar has no business refusing, and it is the choice
- * the suite has to be able to declare to show what the interval buys. The
- * high end is a minute, well past any interval that could sit inside a draw
- * somebody is holding a jug under.
+ * The span either feed level -- the level a draw starts at and the ceiling the
+ * pressure loop is never commanded past -- may be declared inside, in permille
+ * of the feed pump's full scale. A level of nothing is not a low feed: as a
+ * start it is a draw that is never fed, which the readiness gate already
+ * expresses, and as a ceiling it leaves the pressure loop with no actuator at
+ * all. The highest is the actuator's own full scale, which is where the level
+ * stops meaning anything rather than a figure this file chooses -- so it is read
+ * from the machine's actuation vocabulary rather than written again here.
  */
-#define STEAM_CONTROL_DECLARATION_INTERVAL_LOW_MILLI_S 0
-#define STEAM_CONTROL_DECLARATION_INTERVAL_HIGH_MILLI_S 60000
+#define STEAM_CONTROL_DECLARATION_FEED_LEVEL_LOW_PERMILLE 1
+#define STEAM_CONTROL_DECLARATION_FEED_LEVEL_HIGH_PERMILLE ACTUATION_FULL_SCALE
 
 /*
- * The lowest level the sustainable feed rate may be declared at, in permille
- * of the feed pump's full scale. A rate of nothing is not a slow feed; it is a
- * machine that withholds feed for the whole of every draw, which the readiness
- * gate already expresses and which would leave the band-holding loop with no
- * actuator at all. The highest is the actuator's own full scale, which is
- * where the level stops meaning anything rather than a figure this file
- * chooses -- so it is read from the machine's actuation vocabulary rather
- * than written again here.
+ * The span the feed's rise limit may be declared inside, in permille of the feed
+ * pump's scale per second. Nothing is admissible: a design that holds a draw's
+ * feed at its start level and lets the pressure loop only take it down has made
+ * a choice rather than omitted a figure. The high end is the whole scale in a
+ * hundredth of a second, a step of the loop, past which the limit limits nothing.
  */
-#define STEAM_CONTROL_DECLARATION_FEED_RATE_LOW_PERMILLE 1
-#define STEAM_CONTROL_DECLARATION_FEED_RATE_HIGH_PERMILLE ACTUATION_FULL_SCALE
+#define STEAM_CONTROL_DECLARATION_FEED_RISE_LOW_PERMILLE_PER_S 0
+#define STEAM_CONTROL_DECLARATION_FEED_RISE_HIGH_PERMILLE_PER_S 100000
+
+/*
+ * The span the superheat setpoint may be declared inside, in thousandths of a
+ * kelvin. Nothing is admissible -- steam held just at saturation is a setpoint,
+ * if a poor one -- and the high end is a hundred kelvin, well past any superheat
+ * a domestic steam block makes and where a digit typed in the wrong place would
+ * land.
+ */
+#define STEAM_CONTROL_DECLARATION_SUPERHEAT_LOW_MILLI_K 0
+#define STEAM_CONTROL_DECLARATION_SUPERHEAT_HIGH_MILLI_K 100000
 
 /*
  * The span the ready-holding phase's proportional gain may be declared inside,
@@ -131,30 +141,45 @@
 #define STEAM_CONTROL_DECLARATION_READY_INTEGRAL_GAIN_HIGH_MILLI 1000000
 
 /*
- * The span the draw phase's proportional gain may be declared inside, in
- * thousandths of a permille of heater scale per bar. It is a hundred times the
- * temperature gain's span rather than the same one, and that is the whole
- * reason the two are separate figures: a bar of steam pressure is worth some
- * tens of kelvin on this path's saturation relation, so a gain expressed
- * against it is numerically far larger for the same aggressiveness, and one
- * shared bound could only ever be the looser of the two -- admitting for the
- * temperature gain exactly the misplaced digit a bound exists to catch. The
- * high end is a hundred thousand permille per bar, at which a hundredth of a
- * bar commands the whole element.
+ * The span the superheat loop's proportional gain may be declared inside, in
+ * thousandths of a permille of heater scale per kelvin of superheat error. It is
+ * drawn against the same unit the ready-holding phase's gain is, and is its own
+ * figure rather than a reading of that one because the two answer different
+ * errors -- one the casting's distance from a target, the other the outlet
+ * steam's distance from its setpoint -- and either may be revised without the
+ * other silently moving with it. The low end is the smallest gain that is not
+ * nothing, and the high end is a thousand permille per kelvin, past which the
+ * loop is a switch.
  */
-#define STEAM_CONTROL_DECLARATION_DRAW_GAIN_LOW_MILLI 1
-#define STEAM_CONTROL_DECLARATION_DRAW_GAIN_HIGH_MILLI 100000000
+#define STEAM_CONTROL_DECLARATION_SUPERHEAT_GAIN_LOW_MILLI 1
+#define STEAM_CONTROL_DECLARATION_SUPERHEAT_GAIN_HIGH_MILLI 1000000
 
 /*
- * The span the draw phase's integral gain may be declared inside, in
- * thousandths of a permille of heater scale per bar per second. It is drawn
- * against the pressure error for the reason the proportional gain above is,
- * and is its own figure rather than a reading of that one because the two
- * bound different claims: one is how hard a standing error is answered and the
- * other is how fast an accumulating one is.
+ * The span the superheat loop's integral gain may be declared inside, in
+ * thousandths of a permille of heater scale per kelvin-second, on the terms the
+ * ready-holding phase's integral bound is drawn on and for the same reasons.
  */
-#define STEAM_CONTROL_DECLARATION_DRAW_INTEGRAL_GAIN_LOW_MILLI 1
-#define STEAM_CONTROL_DECLARATION_DRAW_INTEGRAL_GAIN_HIGH_MILLI 100000000
+#define STEAM_CONTROL_DECLARATION_SUPERHEAT_INTEGRAL_GAIN_LOW_MILLI 1
+#define STEAM_CONTROL_DECLARATION_SUPERHEAT_INTEGRAL_GAIN_HIGH_MILLI 1000000
+
+/*
+ * The span the pressure loop's proportional gain may be declared inside, in
+ * thousandths of a permille of feed scale per bar of pressure error. The low end
+ * is the smallest gain that is not nothing. The high end is a hundred thousand
+ * permille per bar, at which a hundredth of a bar commands the whole pump.
+ */
+#define STEAM_CONTROL_DECLARATION_FEED_GAIN_LOW_MILLI 1
+#define STEAM_CONTROL_DECLARATION_FEED_GAIN_HIGH_MILLI 100000000
+
+/*
+ * The span the pressure loop's integral gain may be declared inside, in
+ * thousandths of a permille of feed scale per bar-second, drawn against the
+ * pressure error for the reason the proportional gain above is and its own
+ * figure because one bounds how hard a standing error is answered and the other
+ * how fast an accumulating one is.
+ */
+#define STEAM_CONTROL_DECLARATION_FEED_INTEGRAL_GAIN_LOW_MILLI 1
+#define STEAM_CONTROL_DECLARATION_FEED_INTEGRAL_GAIN_HIGH_MILLI 100000000
 
 /*
  * The span the feedforward gain may be declared inside, in thousandths of a
@@ -228,18 +253,23 @@ static const figure_spec_t FIGURES[] = {
      STEAM_CONTROL_DECLARATION_PRESSURE_LOW_MILLI_BAR,
      STEAM_CONTROL_DECLARATION_PRESSURE_HIGH_MILLI_BAR,
      offsetof(steam_control_declaration_t, draw_pressure_ceiling_milli_bar)},
-    {STEAM_CONTROL_DECLARATION_MARGIN_INTERVAL_WORD, STEAM_CONTROL_DECLARATION_UNIT_MILLI_S,
-     STEAM_CONTROL_DECLARATION_INTERVAL_LOW_MILLI_S,
-     STEAM_CONTROL_DECLARATION_INTERVAL_HIGH_MILLI_S,
-     offsetof(steam_control_declaration_t, margin_interval_millis)},
-    {STEAM_CONTROL_DECLARATION_FEED_RISE_WORD, STEAM_CONTROL_DECLARATION_UNIT_MILLI_S,
-     STEAM_CONTROL_DECLARATION_INTERVAL_LOW_MILLI_S,
-     STEAM_CONTROL_DECLARATION_INTERVAL_HIGH_MILLI_S,
-     offsetof(steam_control_declaration_t, feed_rise_millis)},
-    {STEAM_CONTROL_DECLARATION_SUSTAINABLE_FEED_WORD, STEAM_CONTROL_DECLARATION_UNIT_PERMILLE,
-     STEAM_CONTROL_DECLARATION_FEED_RATE_LOW_PERMILLE,
-     STEAM_CONTROL_DECLARATION_FEED_RATE_HIGH_PERMILLE,
-     offsetof(steam_control_declaration_t, sustainable_feed_permille)},
+    {STEAM_CONTROL_DECLARATION_DRAW_START_FEED_WORD, STEAM_CONTROL_DECLARATION_UNIT_PERMILLE,
+     STEAM_CONTROL_DECLARATION_FEED_LEVEL_LOW_PERMILLE,
+     STEAM_CONTROL_DECLARATION_FEED_LEVEL_HIGH_PERMILLE,
+     offsetof(steam_control_declaration_t, draw_start_feed_permille)},
+    {STEAM_CONTROL_DECLARATION_FEED_CEILING_WORD, STEAM_CONTROL_DECLARATION_UNIT_PERMILLE,
+     STEAM_CONTROL_DECLARATION_FEED_LEVEL_LOW_PERMILLE,
+     STEAM_CONTROL_DECLARATION_FEED_LEVEL_HIGH_PERMILLE,
+     offsetof(steam_control_declaration_t, feed_ceiling_permille)},
+    {STEAM_CONTROL_DECLARATION_FEED_RISE_LIMIT_WORD,
+     STEAM_CONTROL_DECLARATION_UNIT_PERMILLE_PER_S,
+     STEAM_CONTROL_DECLARATION_FEED_RISE_LOW_PERMILLE_PER_S,
+     STEAM_CONTROL_DECLARATION_FEED_RISE_HIGH_PERMILLE_PER_S,
+     offsetof(steam_control_declaration_t, feed_rise_limit_permille_per_s)},
+    {STEAM_CONTROL_DECLARATION_SUPERHEAT_SETPOINT_WORD, STEAM_CONTROL_DECLARATION_UNIT_MILLI_K,
+     STEAM_CONTROL_DECLARATION_SUPERHEAT_LOW_MILLI_K,
+     STEAM_CONTROL_DECLARATION_SUPERHEAT_HIGH_MILLI_K,
+     offsetof(steam_control_declaration_t, superheat_setpoint_milli_k)},
     {STEAM_CONTROL_DECLARATION_READY_GAIN_WORD,
      STEAM_CONTROL_DECLARATION_UNIT_MILLI_PERMILLE_PER_K,
      STEAM_CONTROL_DECLARATION_READY_GAIN_LOW_MILLI,
@@ -250,16 +280,26 @@ static const figure_spec_t FIGURES[] = {
      STEAM_CONTROL_DECLARATION_READY_INTEGRAL_GAIN_LOW_MILLI,
      STEAM_CONTROL_DECLARATION_READY_INTEGRAL_GAIN_HIGH_MILLI,
      offsetof(steam_control_declaration_t, ready_integral_gain_milli_permille_per_k_s)},
-    {STEAM_CONTROL_DECLARATION_DRAW_GAIN_WORD,
+    {STEAM_CONTROL_DECLARATION_SUPERHEAT_GAIN_WORD,
+     STEAM_CONTROL_DECLARATION_UNIT_MILLI_PERMILLE_PER_K,
+     STEAM_CONTROL_DECLARATION_SUPERHEAT_GAIN_LOW_MILLI,
+     STEAM_CONTROL_DECLARATION_SUPERHEAT_GAIN_HIGH_MILLI,
+     offsetof(steam_control_declaration_t, superheat_gain_milli_permille_per_k)},
+    {STEAM_CONTROL_DECLARATION_SUPERHEAT_INTEGRAL_GAIN_WORD,
+     STEAM_CONTROL_DECLARATION_UNIT_MILLI_PERMILLE_PER_K_S,
+     STEAM_CONTROL_DECLARATION_SUPERHEAT_INTEGRAL_GAIN_LOW_MILLI,
+     STEAM_CONTROL_DECLARATION_SUPERHEAT_INTEGRAL_GAIN_HIGH_MILLI,
+     offsetof(steam_control_declaration_t, superheat_integral_gain_milli_permille_per_k_s)},
+    {STEAM_CONTROL_DECLARATION_FEED_GAIN_WORD,
      STEAM_CONTROL_DECLARATION_UNIT_MILLI_PERMILLE_PER_BAR,
-     STEAM_CONTROL_DECLARATION_DRAW_GAIN_LOW_MILLI,
-     STEAM_CONTROL_DECLARATION_DRAW_GAIN_HIGH_MILLI,
-     offsetof(steam_control_declaration_t, draw_gain_milli_permille_per_bar)},
-    {STEAM_CONTROL_DECLARATION_DRAW_INTEGRAL_GAIN_WORD,
+     STEAM_CONTROL_DECLARATION_FEED_GAIN_LOW_MILLI,
+     STEAM_CONTROL_DECLARATION_FEED_GAIN_HIGH_MILLI,
+     offsetof(steam_control_declaration_t, feed_gain_milli_permille_per_bar)},
+    {STEAM_CONTROL_DECLARATION_FEED_INTEGRAL_GAIN_WORD,
      STEAM_CONTROL_DECLARATION_UNIT_MILLI_PERMILLE_PER_BAR_S,
-     STEAM_CONTROL_DECLARATION_DRAW_INTEGRAL_GAIN_LOW_MILLI,
-     STEAM_CONTROL_DECLARATION_DRAW_INTEGRAL_GAIN_HIGH_MILLI,
-     offsetof(steam_control_declaration_t, draw_integral_gain_milli_permille_per_bar_s)},
+     STEAM_CONTROL_DECLARATION_FEED_INTEGRAL_GAIN_LOW_MILLI,
+     STEAM_CONTROL_DECLARATION_FEED_INTEGRAL_GAIN_HIGH_MILLI,
+     offsetof(steam_control_declaration_t, feed_integral_gain_milli_permille_per_bar_s)},
     {STEAM_CONTROL_DECLARATION_FEED_LOAD_GAIN_WORD,
      STEAM_CONTROL_DECLARATION_UNIT_MILLI_PERMILLE_PER_PERMILLE,
      STEAM_CONTROL_DECLARATION_FEED_LOAD_GAIN_LOW_MILLI,
@@ -407,6 +447,59 @@ static bool parse_figure(const char *begin, const char *end, long *value)
 static int32_t *field_of(steam_control_declaration_t *staging, const figure_spec_t *spec)
 {
     return (int32_t *)(void *)((char *)staging + spec->offset);
+}
+
+/*
+ * Whether a declaration is one the law may be configured from: every figure in
+ * the range this build admits for it, the floor under the ceiling, and the
+ * draw-start feed no higher than the feed ceiling.
+ *
+ * The loader asks it of the record it has read and the law asks it of the one it
+ * is handed, so a record built by hand is held to what a file is.
+ *
+ * The pairs are reported as their own faults rather than as either figure being
+ * out of range: what is wrong with a floor at or above its own ceiling is the
+ * pair, and a caller sent to one of the two lines would find a figure that is
+ * perfectly reasonable on its own. A band admitting nothing is a criterion no
+ * draw could ever meet rather than an unusually tight one.
+ */
+bool steam_control_declaration_admissible(const steam_control_declaration_t *declaration,
+                                          steam_control_declaration_error_t *error)
+{
+    if (declaration == NULL) {
+        return false;
+    }
+
+    for (size_t at = 0u; at < FIGURE_COUNT; at++) {
+        const int32_t figure =
+            *(const int32_t *)(const void *)((const char *)declaration + FIGURES[at].offset);
+        if (figure < FIGURES[at].low || figure > FIGURES[at].high) {
+            if (error != NULL) {
+                report(error, STEAM_CONTROL_DECLARATION_OUT_OF_RANGE, 0u, FIGURES[at].word,
+                       strlen(FIGURES[at].word));
+            }
+            return false;
+        }
+    }
+
+    if (declaration->draw_pressure_floor_milli_bar >= declaration->draw_pressure_ceiling_milli_bar) {
+        if (error != NULL) {
+            report(error, STEAM_CONTROL_DECLARATION_BAND_INVERTED, 0u,
+                   STEAM_CONTROL_DECLARATION_DRAW_FLOOR_WORD,
+                   strlen(STEAM_CONTROL_DECLARATION_DRAW_FLOOR_WORD));
+        }
+        return false;
+    }
+
+    if (declaration->draw_start_feed_permille > declaration->feed_ceiling_permille) {
+        if (error != NULL) {
+            report(error, STEAM_CONTROL_DECLARATION_FEED_START_ABOVE_CEILING, 0u,
+                   STEAM_CONTROL_DECLARATION_DRAW_START_FEED_WORD,
+                   strlen(STEAM_CONTROL_DECLARATION_DRAW_START_FEED_WORD));
+        }
+        return false;
+    }
+    return true;
 }
 
 bool steam_control_declaration_load(const char *text, size_t length,
@@ -559,17 +652,11 @@ bool steam_control_declaration_load(const char *text, size_t length,
     }
 
     /*
-     * Asked once every edge is individually admissible, and reported as its
-     * own fault rather than as either edge being out of range: what is wrong
-     * with a floor at or above its own ceiling is the pair, and a caller sent
-     * to one of the two lines would find a figure that is perfectly
-     * reasonable on its own. A band admitting nothing is a criterion no draw
-     * could ever meet rather than an unusually tight one.
+     * The record as a whole is asked once every figure has been read, so a line
+     * out of range is reported with its line number and a pair that cannot
+     * stand is reported as the pair.
      */
-    if (staging.draw_pressure_floor_milli_bar >= staging.draw_pressure_ceiling_milli_bar) {
-        report(error, STEAM_CONTROL_DECLARATION_BAND_INVERTED, 0u,
-               STEAM_CONTROL_DECLARATION_DRAW_FLOOR_WORD,
-               strlen(STEAM_CONTROL_DECLARATION_DRAW_FLOOR_WORD));
+    if (!steam_control_declaration_admissible(&staging, error)) {
         return false;
     }
 

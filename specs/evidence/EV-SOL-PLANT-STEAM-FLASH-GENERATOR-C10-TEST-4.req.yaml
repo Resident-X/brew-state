@@ -1,0 +1,16 @@
+id: EV-SOL-PLANT-STEAM-FLASH-GENERATOR-C10-TEST-4
+type: evidence
+title: test evidence for SOL-PLANT-STEAM-FLASH-GENERATOR.C10
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-20T01:40:09.213309Z"
+artifact:
+  kind: external
+  reference: firmware/test/test_steam_control/test_steam_control.c::test_a_draw_start_above_the_feed_ceiling_is_refused_as_its_own_fault
+  artifact_version: 2f71cdfc40f7c2425d96bbc03da64227b1ac24f1
+attested_by: crun-f4784c0f6eac25a3
+links:
+  - target: SOL-PLANT-STEAM-FLASH-GENERATOR.C10
+    type: satisfies

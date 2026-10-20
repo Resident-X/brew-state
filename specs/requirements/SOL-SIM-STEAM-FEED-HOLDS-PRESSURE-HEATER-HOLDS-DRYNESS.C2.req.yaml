@@ -1,7 +1,7 @@
 id: SOL-SIM-STEAM-FEED-HOLDS-PRESSURE-HEATER-HOLDS-DRYNESS.C2
 type: criterion
 title: The feed holds pressure and heater power holds a declared superheat setpoint, and no pressure loop drives the heater
-status: active
+status: deprecated
 version: 1
 measurement_type: threshold
 verification: test

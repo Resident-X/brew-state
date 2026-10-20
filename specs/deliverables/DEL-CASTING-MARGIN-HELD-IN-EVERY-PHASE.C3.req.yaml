@@ -2,12 +2,12 @@ id: DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE.C3
 type: criterion
 title: The casting stays below its protection trip point by the declared margin through a steam draw of any length
 status: active
-version: 1
+version: 2
 measurement_type: threshold
 verification: test
 closes_by: cascade
 text: |
-  This includes a draw long enough that the casting keeps rising while the operator is still drawing, and the margin at the end of the longest draw simulated is reported.
+  The casting stays below its protection trip point by the declared margin through a steam draw of any length, at every ready target the control admits: the peak casting reached in a draw, plus the declared sensing error, is at most the trip point less the margin, and a ready target whose draw peak would exceed that is refused at admission, since a margin sized for the ready hold alone does not cover the rise during a draw. This includes a draw long enough that the casting keeps rising while the operator is still drawing, and the margin at the end of the longest draw simulated is reported.
 links:
   - target: DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE
     type: criterion-of

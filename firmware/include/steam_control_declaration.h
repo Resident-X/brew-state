@@ -4,8 +4,8 @@
  * These are statements about the design's own policy rather than about the
  * machine: what a casting's steam block will do when its element is switched
  * on belongs in that structure's own description, and where this design
- * chooses to hold the steam path, how hard it leans on an error, and how long
- * it makes the block earn thermal margin before it starts making steam do not
+ * chooses to hold the steam path, how hard it leans on an error, and how fast
+ * it lets the feed rise once a draw has begun do not
  * change because a different casting was built around it. So they live here,
  * declared once, rather than compiled into the loop that reads them -- on
  * exactly the terms params/tolerance.declaration already keeps a delivery's
@@ -21,7 +21,7 @@
  * which trajectories the suite accepts, with no control law rebuilt.
  *
  * Nothing here names a plant structure or a control law by name. A threshold,
- * a band, an interval and a gain are what the design does about a steam path,
+ * a band, a feed level and a gain are what the design does about a steam path,
  * and they have to outlive both the model the machine was designed against and
  * whatever loop was eventually built to hold it.
  */
@@ -51,24 +51,31 @@
 #define STEAM_CONTROL_DECLARATION_DRAW_CEILING_WORD "draw-pressure-ceiling-bar"
 
 /*
- * How long feed is held back after a draw begins, while the heater alone
- * builds the block the thermal margin the first steam is made out of.
+ * The feed a draw opened at or above the ready pressure is given on its first
+ * step, and above which the feed's rise is limited.
  */
-#define STEAM_CONTROL_DECLARATION_MARGIN_INTERVAL_WORD "margin-building-interval-ms"
+#define STEAM_CONTROL_DECLARATION_DRAW_START_FEED_WORD "draw-start-feed"
 
-/* How long engaged feed takes to reach its sustainable rate rather than step to it. */
-#define STEAM_CONTROL_DECLARATION_FEED_RISE_WORD "feed-rise-interval-ms"
+/* The feed the pressure loop is never commanded past. */
+#define STEAM_CONTROL_DECLARATION_FEED_CEILING_WORD "feed-ceiling"
 
-/* The level engaged, settled feed is commanded at and never driven past. */
-#define STEAM_CONTROL_DECLARATION_SUSTAINABLE_FEED_WORD "sustainable-feed-rate"
+/* How fast the feed may rise above the draw-start level. */
+#define STEAM_CONTROL_DECLARATION_FEED_RISE_LIMIT_WORD "feed-rise-limit"
+
+/* The superheat at the modelled outlet the heater holds during a draw. */
+#define STEAM_CONTROL_DECLARATION_SUPERHEAT_SETPOINT_WORD "superheat-setpoint"
 
 /* The gains the ready-holding phase tracks its temperature target with. */
 #define STEAM_CONTROL_DECLARATION_READY_GAIN_WORD "ready-temperature-gain"
 #define STEAM_CONTROL_DECLARATION_READY_INTEGRAL_GAIN_WORD "ready-temperature-integral-gain"
 
-/* The gains the draw phase tracks its pressure target with. */
-#define STEAM_CONTROL_DECLARATION_DRAW_GAIN_WORD "draw-pressure-gain"
-#define STEAM_CONTROL_DECLARATION_DRAW_INTEGRAL_GAIN_WORD "draw-pressure-integral-gain"
+/* The gains the heater holds the superheat setpoint with during a draw. */
+#define STEAM_CONTROL_DECLARATION_SUPERHEAT_GAIN_WORD "superheat-gain"
+#define STEAM_CONTROL_DECLARATION_SUPERHEAT_INTEGRAL_GAIN_WORD "superheat-integral-gain"
+
+/* The gains the feed pump holds the draw-time pressure with. */
+#define STEAM_CONTROL_DECLARATION_FEED_GAIN_WORD "feed-pressure-gain"
+#define STEAM_CONTROL_DECLARATION_FEED_INTEGRAL_GAIN_WORD "feed-pressure-integral-gain"
 
 /* The duty the heater is fed forward for each permille of feed commanded. */
 #define STEAM_CONTROL_DECLARATION_FEED_LOAD_GAIN_WORD "feed-load-gain"
@@ -79,8 +86,8 @@
 /*
  * The units a figure may be stated in.
  *
- * Every gain is in thousandths of a permille of heater scale per unit of the
- * error or the load it answers, rather than each gain choosing whichever
+ * Every gain is in thousandths of a permille of its actuator's scale per unit
+ * of the error or the load it answers, rather than each gain choosing whichever
  * scaling happens to make its own figure a whole number. One rule across the
  * family is what lets a reader compare two of them without first working out
  * which scaling each was written at, and the price -- a proportional gain
@@ -95,8 +102,9 @@
 typedef enum {
     STEAM_CONTROL_DECLARATION_UNIT_MILLI_BAR = 0,
     STEAM_CONTROL_DECLARATION_UNIT_MILLI_C,
-    STEAM_CONTROL_DECLARATION_UNIT_MILLI_S,
+    STEAM_CONTROL_DECLARATION_UNIT_MILLI_K,
     STEAM_CONTROL_DECLARATION_UNIT_PERMILLE,
+    STEAM_CONTROL_DECLARATION_UNIT_PERMILLE_PER_S,
     STEAM_CONTROL_DECLARATION_UNIT_MILLI_PERMILLE_PER_K,
     STEAM_CONTROL_DECLARATION_UNIT_MILLI_PERMILLE_PER_K_S,
     STEAM_CONTROL_DECLARATION_UNIT_MILLI_PERMILLE_PER_BAR,
@@ -113,7 +121,7 @@ typedef enum {
  */
 #define STEAM_CONTROL_DECLARATION_UNIT_WORDS                                                       \
     {                                                                                              \
-        "milli-bar", "milli-c", "milli-s", "permille", "milli-permille-per-k",                     \
+        "milli-bar", "milli-c", "milli-k", "permille", "permille-per-s", "milli-permille-per-k",   \
             "milli-permille-per-k-s", "milli-permille-per-bar", "milli-permille-per-bar-s",        \
             "milli-permille-per-permille"                                                          \
     }
@@ -128,13 +136,15 @@ typedef enum {
  * thousandths of a degree Celsius -- the units the hardware seam already
  * reports those channels in, so a reading compared against one of these
  * figures is an integer comparison and nothing is converted to decide where
- * the machine stands. The intervals are milliseconds, which is what the seam's
- * own clock counts in, for the same reason.
+ * the machine stands. The superheat setpoint is a temperature difference, in
+ * thousandths of a kelvin. Feed levels are permille of the feed pump's scale,
+ * and the rise limit is permille of it per second.
  *
- * The gains are in thousandths of a permille of heater scale per unit of what
- * they answer: per kelvin of temperature error, per kelvin-second of it, per
- * bar of pressure error, per bar-second of it, and per permille of commanded
- * feed. Every field is signed and the same width, so the loader can carry one
+ * The heater's gains are in thousandths of a permille of heater scale per unit
+ * of what they answer: per kelvin of temperature or superheat error, per
+ * kelvin-second of it, and per permille of commanded feed. The feed's gains are
+ * in thousandths of a permille of feed scale per bar of pressure error and per
+ * bar-second of it. Every field is signed and the same width, so the loader can carry one
  * table of figures rather than a branch per field, and every range it admits
  * is a range on the same type.
  */
@@ -143,13 +153,16 @@ typedef struct {
     int32_t ready_temperature_milli_c;
     int32_t draw_pressure_floor_milli_bar;
     int32_t draw_pressure_ceiling_milli_bar;
-    int32_t margin_interval_millis;
-    int32_t feed_rise_millis;
-    int32_t sustainable_feed_permille;
+    int32_t draw_start_feed_permille;
+    int32_t feed_ceiling_permille;
+    int32_t feed_rise_limit_permille_per_s;
+    int32_t superheat_setpoint_milli_k;
     int32_t ready_gain_milli_permille_per_k;
     int32_t ready_integral_gain_milli_permille_per_k_s;
-    int32_t draw_gain_milli_permille_per_bar;
-    int32_t draw_integral_gain_milli_permille_per_bar_s;
+    int32_t superheat_gain_milli_permille_per_k;
+    int32_t superheat_integral_gain_milli_permille_per_k_s;
+    int32_t feed_gain_milli_permille_per_bar;
+    int32_t feed_integral_gain_milli_permille_per_bar_s;
     int32_t feed_load_gain_milli_permille_per_permille;
     int32_t standing_load_permille;
 } steam_control_declaration_t;
@@ -186,7 +199,14 @@ typedef enum {
      * and a caller told one of them was out of range would go looking at the
      * wrong line.
      */
-    STEAM_CONTROL_DECLARATION_BAND_INVERTED
+    STEAM_CONTROL_DECLARATION_BAND_INVERTED,
+    /*
+     * The level a draw starts its feed at sits above the ceiling the feed is
+     * held under. Each figure is admissible alone, and the pair describes a
+     * start the loop could never honour, so it is refused as its own fault
+     * rather than reduced to the ceiling; the figure reported is the start.
+     */
+    STEAM_CONTROL_DECLARATION_FEED_START_ABOVE_CEILING
 } steam_control_declaration_fault_t;
 
 /*
@@ -212,9 +232,9 @@ typedef struct {
  *
  * Every figure the record carries is required. A declaration that leaves one
  * out is refused rather than defaulted: a gain silently taken as nothing is a
- * loop that does not track, and an interval silently taken as nothing is a
- * loop that starts making steam the instant the wand turns -- both of which
- * read as a machine that came up fine.
+ * loop that does not track, and a feed ceiling silently taken as nothing is a
+ * loop that never feeds a draw -- both of which read as a machine that came up
+ * fine.
  *
  * Returns false, writing the fault into `error`, when the text or the record
  * is null, when a line cannot be read, when a figure is named twice or not at
@@ -227,5 +247,20 @@ typedef struct {
 bool steam_control_declaration_load(const char *text, size_t length,
                                     steam_control_declaration_t *declaration,
                                     steam_control_declaration_error_t *error);
+
+/*
+ * Whether a declaration is one the law may be configured from: every figure
+ * inside the range this build admits for it, the band's floor below its
+ * ceiling, and the draw-start feed no higher than the feed ceiling. The loader
+ * asks it of the record it has read, and steam_control_init asks it of the one
+ * it is handed.
+ *
+ * Returns false for a null declaration. `error` may be null; when given it
+ * names the first fault (STEAM_CONTROL_DECLARATION_OUT_OF_RANGE,
+ * _BAND_INVERTED or _FEED_START_ABOVE_CEILING) and the figure it concerns, with
+ * no line.
+ */
+bool steam_control_declaration_admissible(const steam_control_declaration_t *declaration,
+                                          steam_control_declaration_error_t *error);
 
 #endif /* STEAM_CONTROL_DECLARATION_H */

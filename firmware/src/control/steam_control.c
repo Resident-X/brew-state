@@ -90,6 +90,22 @@ static bool is_a_figure(float value)
     return (value == value) && ((value - value) == 0.0f);
 }
 
+/*
+ * The lesser and the greater of two figures, written out rather than asked of
+ * the standard library for the reason is_a_figure above is: this file is
+ * compiled byte-identically across the host and the target, and a library call
+ * is a different symbol on each.
+ */
+static float lesser(float a, float b)
+{
+    return (b < a) ? b : a;
+}
+
+static float greater(float a, float b)
+{
+    return (b > a) ? b : a;
+}
+
 /* Narrow a command in permille to what the actuator can be given. */
 static uint16_t as_drive_level(float permille)
 {
@@ -187,131 +203,131 @@ static bool a_draw_is_under_way(const steam_control_state_t *state)
 }
 
 /*
- * The level the feed pump is commanded at this step, before the readiness
- * threshold is asked about.
+ * The level the feed pump is commanded at on one step of a fed draw, and the
+ * accumulated intent it leaves behind.
  *
- * Nothing while no draw is under way: a block nothing is being taken out of
- * needs no water pushed into it, and a pump left running against a shut wand
- * is filling a vessel with nowhere for the contents to go.
+ * On the step the wand opens the level is the declared draw-start feed, bounded
+ * by the ceiling, whatever the pressure reads: the reading on that step is the
+ * shut block's, which says nothing about the drop the orifice will carry once
+ * steam is made, and acting on it would cut the very feed a draw opened at ready
+ * needs. From then on the level is the start level plus a proportional and an
+ * integral answer to the pressure's distance from the middle of the declared
+ * band -- the middle rather than either edge, so the loop has equal room either
+ * side of it. The middle is derived here rather than declared beside the edges
+ * because it is not a third choice anybody makes.
  *
- * Nothing, too, for the declared margin-building interval after a draw begins.
- * That is the whole of the heater-leads-feed sequencing: the element is at its
- * ceiling from the first step of the draw (see heater_command) while the feed
- * is held back, so that the first steam actually made comes out of a block
- * that has thermal margin to give rather than out of one that is only just
- * ready.
+ * Above the start level the level may rise no faster than the declared limit,
+ * taken against the unrounded level last issued, and it is never carried past
+ * the ceiling. Below the start level nothing limits how fast it falls or comes
+ * back: the limit exists to keep the load the heater has to answer from growing
+ * faster than it can, and a level under the start is a load the loop began a
+ * draw with.
  *
- * Once engaged, the level rises to the declared sustainable rate over the
- * declared rise interval rather than stepping to it, and is never carried past
- * that rate however long the draw runs or however wide the wand is opened.
- * There is no reading of how much steam is being asked for -- the microswitch
- * reports that the wand is turned and nothing else -- so this cap is not a
- * refusal to follow demand but the only rate any law here could command. It is
- * what makes a draw beyond the block's capacity give up quantity rather than
- * character.
- *
- * A rise interval declared as nothing reaches the full rate on the first step
- * past engagement, which is a design saying it wants no rise rather than an
- * edge this arithmetic stumbles into: the division is guarded because it would
- * otherwise be by zero, and the answer on that branch is the one the
- * declaration asked for.
+ * Integration is made conditional on the actuator, on the terms heater_command
+ * below states for itself: it is withheld while the level is held at the ceiling
+ * or by the rise limit with the error asking for more, and while it is held at
+ * nothing with the error asking for less.
  */
-static uint16_t feed_command(const steam_control_state_t *state)
+static uint16_t feed_command(steam_control_state_t *state, float error, float interval_s,
+                             bool opening, bool heat_spent)
 {
-    if (!state->drawing) {
-        return 0u;
+    const float start_permille = (float)state->declaration.draw_start_feed_permille;
+    const float ceiling_permille = (float)state->declaration.feed_ceiling_permille;
+
+    if (opening) {
+        state->feed_level_permille = start_permille;
+        return as_drive_level(state->feed_level_permille);
     }
 
-    const uint32_t margin_millis = (uint32_t)state->declaration.margin_interval_millis;
-    if (state->draw_elapsed_millis < margin_millis) {
-        return 0u;
+    const float gain = (float)state->declaration.feed_gain_milli_permille_per_bar / 1000.0f;
+    const float integral_gain =
+        (float)state->declaration.feed_integral_gain_milli_permille_per_bar_s / 1000.0f;
+    const float rise_bound =
+        greater(state->feed_level_permille, start_permille) +
+        (float)state->declaration.feed_rise_limit_permille_per_s * interval_s;
+    /*
+     * An element already at full that is losing the superheat cannot be helped
+     * by more water: the feed is let down at the declared rise limit until the
+     * heater can hold it again, so quantity yields before quality does.
+     */
+    const float bound =
+        heat_spent ? lesser(lesser(rise_bound, ceiling_permille),
+                            state->feed_level_permille -
+                                (float)state->declaration.feed_rise_limit_permille_per_s *
+                                    interval_s)
+                   : lesser(rise_bound, ceiling_permille);
+
+    const float asked = start_permille + (gain * error) + state->feed_integral_permille;
+    const bool pushing_past_bound = (asked >= bound) && (error > 0.0f);
+    const bool pushing_past_off = (asked <= 0.0f) && (error < 0.0f);
+
+    if (!pushing_past_bound && !pushing_past_off) {
+        state->feed_integral_permille += integral_gain * error * interval_s;
     }
 
-    const float sustainable_permille = (float)state->declaration.sustainable_feed_permille;
-    const uint32_t rise_millis = (uint32_t)state->declaration.feed_rise_millis;
-    const uint32_t since_engaged = state->draw_elapsed_millis - margin_millis;
-
-    if (rise_millis == 0u || since_engaged >= rise_millis) {
-        return as_drive_level(sustainable_permille);
-    }
-
-    return as_drive_level((sustainable_permille * (float)since_engaged) / (float)rise_millis);
+    const float issued =
+        greater(lesser(start_permille + (gain * error) + state->feed_integral_permille, bound),
+              0.0f);
+    state->feed_level_permille = issued;
+    return as_drive_level(issued);
 }
 
 /*
- * The heater command for one step, and the accumulated intent it leaves
- * behind.
+ * The heater command for one step, and the accumulated intent it leaves behind
+ * in whichever integral the phase in force owns.
  *
  * The feedforward term is added before the loop looks at the error rather than
  * after, for the reason control.c's own heater_command adds its own first: it
  * answers a load the machine has been told about. The feed level is what this
  * same step just decided to command, and the energy the water it pushes in
  * will take to reach saturation and turn is known at that moment rather than
- * discovered once the pressure has fallen. On a block holding no reservoir of
- * vapour at all, that fall arrives faster than any feedback term could answer
- * it.
+ * discovered once the outlet has gone wet.
  *
  * The standing loss is fed forward as well, and as a flat duty rather than as
  * a figure per kelvin of rise -- which is where this parts company with the
- * brew loop, whose own standing term follows the target a caller names. The
- * reason is that this loop's target does not move: it holds one declared ready
- * state and one declared band, some tens of kelvin apart, and over that span
- * the block's standing load barely changes. What is given up is exactness at
- * the top of the band, which the integral trims; what is bought is one figure
- * rather than a coefficient plus the temperature it would have to be measured
- * from, which this file has no honest source for -- the ambient a block loses
- * to is not a channel the seam reports. See standing-load's own account in
- * params/steam_control.declaration.
+ * brew loop, whose own standing term follows the target a caller names. This
+ * loop's casting moves only a few kelvin either side of its ready target, and
+ * over that span the block's standing load barely changes. See standing-load's
+ * own account in params/steam_control.declaration.
  *
- * The error is taken against whichever variable is in force, in that
- * variable's own unit, and each has a gain declared against that unit -- so
- * nothing here converts a pressure into the temperature that would imply it,
- * which is a relation belonging to a plant structure that this file may not
- * read and that a draw makes untrue anyway.
+ * The error is taken against whichever variable the heater holds -- the
+ * casting's temperature while idle, the outlet superheat while a draw is fed --
+ * each in kelvin and each with gains of its own. Pressure is never an error
+ * here: during a draw it is the feed's to hold.
  *
  * Integration is made conditional on the actuator rather than unwound after
  * the fact, on exactly the terms control.c's own loop is and for the same
- * reason: full duty is this machine's ordinary condition rather than an
- * exception -- every draw begins there by construction -- so intent
- * accumulated across the limit would arrive as an overshoot once the demand
- * ended, long after the interval that produced it.
- *
- * The condition is asked of the command this step will actually issue, which
- * during the margin-building interval is the ceiling regardless of what the
- * tracking terms come to. Asking it of the tracking terms instead would let
- * the integral unwind against a duty that was never issued, which is the same
- * error as letting it wind up against one.
+ * reason: intent accumulated across the limit would arrive as an overshoot once
+ * the demand ended, long after the interval that produced it. The condition is
+ * asked of the command this step would issue.
  */
 static float heater_command(steam_control_state_t *state, float error, float interval_s,
-                            uint16_t feed_permille, bool leading)
+                            uint16_t feed_permille, bool superheat)
 {
     const float gain =
-        state->drawing ? (float)state->declaration.draw_gain_milli_permille_per_bar
-                       : (float)state->declaration.ready_gain_milli_permille_per_k;
+        superheat ? (float)state->declaration.superheat_gain_milli_permille_per_k
+                  : (float)state->declaration.ready_gain_milli_permille_per_k;
     const float integral_gain =
-        state->drawing ? (float)state->declaration.draw_integral_gain_milli_permille_per_bar_s
-                       : (float)state->declaration.ready_integral_gain_milli_permille_per_k_s;
+        superheat ? (float)state->declaration.superheat_integral_gain_milli_permille_per_k_s
+                  : (float)state->declaration.ready_integral_gain_milli_permille_per_k_s;
     const float feed_load_gain =
         (float)state->declaration.feed_load_gain_milli_permille_per_permille;
+    float *const integral =
+        superheat ? &state->superheat_integral_permille : &state->integral_permille;
 
     const float proportional = (gain / 1000.0f) * error;
     const float feedforward = (float)state->declaration.standing_load_permille +
                               ((feed_load_gain / 1000.0f) * (float)feed_permille);
 
-    const float before = proportional + state->integral_permille + feedforward;
-    const float issued = leading ? (float)ACTUATION_FULL_SCALE : before;
+    const float issued = proportional + *integral + feedforward;
     const bool pushing_past_full = (issued >= (float)ACTUATION_FULL_SCALE) && (error > 0.0f);
     const bool pushing_past_off = (issued <= 0.0f) && (error < 0.0f);
 
     if (!pushing_past_full && !pushing_past_off) {
-        state->integral_permille +=
-            (integral_gain / 1000.0f) * error * interval_s;
+        *integral += (integral_gain / 1000.0f) * error * interval_s;
     }
 
-    if (leading) {
-        return (float)ACTUATION_FULL_SCALE;
-    }
-    return proportional + state->integral_permille + feedforward;
+    return proportional + *integral + feedforward;
 }
 
 /*
@@ -349,8 +365,7 @@ static bool command_everything_off(steam_control_state_t *state)
  *
  * The un-widened gap is nothing. This loop's ready phase holds a temperature
  * against no declared temperature band at all -- the band it is held to is a
- * pressure one, and converting it would mean reading a saturation slope out of
- * a description by name, which is exactly what this side of the seam may not do
+ * pressure one, held with the wand open by the feed rather than by the casting
  * -- so what the trip point alone implies here is only that the target sit
  * below it. Every kelvin of the model-error half of the margin is therefore
  * earned by declared model error rather than inherited, which is a narrower
@@ -358,6 +373,19 @@ static bool command_everything_off(steam_control_state_t *state)
  * is added on top of that per DEC-SENSING-ERROR-ADDS-TO-COMMANDED-MARGIN, on
  * the same terms the coffee side's own sensing error is.
  */
+static void steam_margin_probe(const steam_control_declaration_t *declaration,
+                               protection_margin_probe_t *probe)
+{
+    probe->protects = PLANT_QUANTITY_STEAM_TEMPERATURE_C;
+    probe->heater = ACTUATION_CHANNEL_STEAM_HEATER;
+    probe->held_at_target[0] = PLANT_STATE_STEAM_TEMPERATURE_C;
+    probe->held_at_target[1] = PLANT_STATE_STEAM_TEMPERATURE_C;
+    probe->held_count = 1u;
+    probe->target_c = (float)declaration->ready_temperature_milli_c / 1000.0f;
+    probe->holding_permille = as_drive_level((float)declaration->standing_load_permille);
+    probe->unwidened_c = 0.0f;
+}
+
 static bool steam_widened_margin(const steam_control_declaration_t *declaration,
                                  const plant_parameters_t *parameters,
                                  const plant_parameter_budget_t *budget,
@@ -365,43 +393,61 @@ static bool steam_widened_margin(const steam_control_declaration_t *declaration,
 {
     protection_margin_probe_t probe;
 
-    probe.protects = PLANT_QUANTITY_STEAM_TEMPERATURE_C;
-    probe.heater = ACTUATION_CHANNEL_STEAM_HEATER;
-    probe.held_at_target[0] = PLANT_STATE_STEAM_TEMPERATURE_C;
-    probe.held_at_target[1] = PLANT_STATE_STEAM_TEMPERATURE_C;
-    probe.held_count = 1u;
-    probe.target_c = (float)declaration->ready_temperature_milli_c / 1000.0f;
-    probe.holding_permille = as_drive_level((float)declaration->standing_load_permille);
-    probe.unwidened_c = 0.0f;
-
+    steam_margin_probe(declaration, &probe);
     return protection_margin_widened(parameters, budget, &probe, STEAM_CONTROL_SENSING_ERROR_C,
                                      margin);
 }
 
 /*
- * Whether a declared ready target leaves the widened margin between itself and
- * the steam block's trip point.
+ * The coefficient whose declared error this loop's superheat estimate reads,
+ * which the budget must declare for the estimate to carry the allowance it
+ * claims.
+ */
+#define STEAM_ESTIMATE_PARAMETER "steam.outlet_drop_k_s_per_ml"
+
+bool steam_control_description_established(const steam_control_declaration_t *declaration,
+                                           const plant_parameters_t *parameters,
+                                           const plant_parameter_budget_t *budget,
+                                           plant_parameter_error_t *refusal)
+{
+    protection_margin_probe_t probe;
+    protection_margin_t margin;
+
+    if (declaration == NULL) {
+        return false;
+    }
+    steam_margin_probe(declaration, &probe);
+    return protection_margin_established(parameters, budget, &probe, STEAM_CONTROL_SENSING_ERROR_C,
+                                         STEAM_ESTIMATE_PARAMETER, refusal, &margin);
+}
+
+/*
+ * Whether the description and budget this loop is given establish a margin, and
+ * a declared ready target leaves it between itself and the steam block's trip
+ * point.
  *
- * A margin that could not be established admits the target, on the same terms
- * the coffee side's own refusal admits what it cannot refuse on evidence: a
- * description that will not support a corner enumeration has said nothing about
- * how wrong it may be, and a refusal invented from that would be this file
- * declaring an uncertainty the description did not. A target sitting exactly at
- * the edge keeps exactly the margin asked for and is admitted, on the same
- * convention the coffee side reads its own edge by.
+ * The margin is established under the one precondition every law holds its
+ * inputs to (protection_margin_established): a believed description the plant
+ * refuses to build a model from, a budget leaving undeclared the coefficient
+ * this loop's superheat estimate reads, and a declared-error corner no machine
+ * can be built for each refuse the loop rather than being read as a smaller
+ * margin. A target sitting exactly at the edge keeps exactly the margin asked
+ * for and is admitted.
  */
 static bool ready_target_clears_the_protection_margin(const steam_control_declaration_t *declaration,
                                                       const plant_parameters_t *parameters,
                                                       const plant_parameter_budget_t *budget)
 {
+    protection_margin_probe_t probe;
     protection_margin_t margin;
 
-    if (!steam_widened_margin(declaration, parameters, budget, &margin)) {
-        return true;
+    steam_margin_probe(declaration, &probe);
+    if (!protection_margin_established(parameters, budget, &probe, STEAM_CONTROL_SENSING_ERROR_C,
+                                       STEAM_ESTIMATE_PARAMETER, NULL, &margin)) {
+        return false;
     }
 
-    const float target_c = (float)declaration->ready_temperature_milli_c / 1000.0f;
-    return target_c <= (STEAM_CONTROL_PROTECTION_TRIP_C - margin.margin_c);
+    return probe.target_c <= (STEAM_CONTROL_PROTECTION_TRIP_C - margin.margin_c);
 }
 
 bool steam_control_protection_margin(const steam_control_state_t *state,
@@ -455,8 +501,13 @@ bool steam_control_init(steam_control_state_t *state, const estimator_limits_t *
     state->started = false;
     state->last_step_millis = hw_monotonic_millis();
     state->drawing = false;
-    state->draw_elapsed_millis = 0u;
+    state->feeding = false;
     state->integral_permille = 0.0f;
+    state->superheat_integral_permille = 0.0f;
+    state->feed_integral_permille = 0.0f;
+    state->feed_level_permille = 0.0f;
+    state->superheat_estimated = false;
+    state->superheat_estimate_k = 0.0f;
     state->pressure_trusted = false;
     state->trusted_pressure_milli_bar = 0;
     state->temperature_trusted = false;
@@ -512,8 +563,20 @@ bool steam_control_init(steam_control_state_t *state, const estimator_limits_t *
     }
 
     /*
-     * And a declaration asking this loop to hold the block where the declared
-     * model error could carry it into its own protection is refused here, at
+     * A declaration built by hand is held to what one read from a file is: a
+     * figure out of range, a band with no inside, or a draw that starts above
+     * its own ceiling is refused here, after the outputs are off, and the law
+     * stays unconfigured.
+     */
+    if (!steam_control_declaration_admissible(declaration, NULL)) {
+        return false;
+    }
+
+    /*
+     * The believed description and error budget are held to the precondition
+     * every law holds them to, and a declaration asking this loop to hold the
+     * block where the declared model error could carry it into its own
+     * protection is refused here, at
      * the one point the target is taken on, rather than left to be discovered
      * by the device opening. It is refused after the outputs are off for the
      * reason every other refusal here is.
@@ -545,23 +608,8 @@ steam_control_step_result_t steam_control_step(steam_control_state_t *state)
     state->started = true;
     state->last_step_millis = now;
 
-    /*
-     * The draw's own clock is advanced before anything reads it, and is put
-     * back to nothing on the step the wand turns rather than on the step after
-     * -- so the margin-building interval is measured from the moment the
-     * operator asked for steam, and a draw closed and reopened is a new draw
-     * that earns its margin again rather than one resuming where the last left
-     * off.
-     */
     const bool drawing = a_draw_is_under_way(state);
-
-    if (!drawing) {
-        state->draw_elapsed_millis = 0u;
-    } else if (!state->drawing) {
-        state->draw_elapsed_millis = 0u;
-    } else {
-        state->draw_elapsed_millis += advance;
-    }
+    const bool opening = drawing && !state->drawing;
     state->drawing = drawing;
 
     bool pressure_fresh = false;
@@ -574,61 +622,77 @@ steam_control_step_result_t steam_control_step(steam_control_state_t *state)
                  HW_SENSOR_STEAM_TEMPERATURE, &temperature_fresh);
 
     /*
-     * Feed is withheld outright while the pressure this loop believes sits
-     * below the declared ready threshold, and while it believes nothing at
-     * all. That is the readiness policy standing in front of the band-holding
-     * law rather than beside it: a draw beginning against a path that has not
-     * reached the threshold is starved and unmistakably weak, which is the
-     * softer failure than steam that starts acceptable and degrades. It is
-     * asked of the same believed figure the tracking law reads, so a single
-     * absurd sample mid-draw does not chop the feed off and back on -- see
-     * `believed`.
+     * The gate's verdict, taken on the step the wand opens from the pressure the
+     * shut block was last trusted at, and held until the wand shuts. A draw
+     * opened against a path below the declared ready threshold, or against one
+     * nothing has ever been trusted on, is starved for the whole of it: starved
+     * and unmistakably weak is the softer failure than steam that starts
+     * acceptable and degrades. A draw reopened is a new draw and is judged again.
+     *
+     * Each new draw also starts the two loops that serve it from no accumulated
+     * intent: what one draw learned about a machine is not evidence about the
+     * next, which may be opened against a different block.
      */
-    const bool ready = have_pressure &&
-                       state->trusted_pressure_milli_bar >=
-                           state->declaration.ready_pressure_milli_bar;
-    const uint16_t feed = ready ? feed_command(state) : 0u;
+    if (opening) {
+        state->feeding = have_pressure && state->trusted_pressure_milli_bar >=
+                                              state->declaration.ready_pressure_milli_bar;
+        state->superheat_integral_permille = 0.0f;
+        state->feed_integral_permille = 0.0f;
+    }
+    if (!drawing) {
+        state->feeding = false;
+        state->feed_level_permille = 0.0f;
+    }
+
+    const float interval_s = (float)advance / 1000.0f;
+    const float measured_bar = (float)state->trusted_pressure_milli_bar / 1000.0f;
+    const float measured_c = (float)state->trusted_temperature_milli_c / 1000.0f;
+
+    uint16_t feed = 0u;
+    if (state->feeding) {
+        const float target_bar = ((float)(state->declaration.draw_pressure_floor_milli_bar +
+                                          state->declaration.draw_pressure_ceiling_milli_bar) *
+                                  0.5f) /
+                                 1000.0f;
+        const bool heat_spent =
+            state->heater_permille >= (uint16_t)ACTUATION_FULL_SCALE && state->superheat_estimated &&
+            state->superheat_estimate_k <
+                ((float)state->declaration.superheat_setpoint_milli_k / 1000.0f);
+        feed = feed_command(state, target_bar - measured_bar, interval_s, opening, heat_spent);
+    }
 
     /*
-     * Which variable governs, and the error against it. The switch happens on
-     * the same step the wand's report changes, and not a step later: the
-     * draw's whole first second is the part of it the operator can least
-     * afford the loop to spend answering the wrong question.
+     * What the heater holds. While a draw is fed it is the outlet superheat the
+     * law estimates for the feed this step commands, held at the declared
+     * setpoint; otherwise -- idle, recovering, or serving a draw it starved, which
+     * makes no steam to have a superheat -- it is the casting's temperature, held
+     * at the ready target.
      */
-    const bool leading =
-        drawing && state->draw_elapsed_millis < (uint32_t)state->declaration.margin_interval_millis;
-
     float error = 0.0f;
     bool drivable = false;
 
-    if (drawing) {
-        /*
-         * The middle of the declared band rather than either edge: a loop
-         * driven at an edge holds against one side of the band and has the
-         * whole of the other to give away before anything notices, which is
-         * the arrangement that spends the band rather than keeping it. The
-         * target is derived here rather than declared beside the edges because
-         * it is not a third choice anybody makes -- it follows from the two,
-         * and a declared middle that disagreed with them would be a third
-         * figure to keep in step with two others.
-         */
-        const float target_milli_bar =
-            (float)(state->declaration.draw_pressure_floor_milli_bar +
-                    state->declaration.draw_pressure_ceiling_milli_bar) *
-            0.5f;
-        const float target_bar = target_milli_bar / 1000.0f;
-        const float measured_bar =
-            (float)state->trusted_pressure_milli_bar / 1000.0f;
+    state->superheat_estimated = false;
+    if (state->feeding) {
+        float estimate_k = 0.0f;
 
-        error = target_bar - measured_bar;
-        drivable = have_pressure;
+        if (have_pressure && have_temperature &&
+            plant_model_least_outlet_superheat(&state->parameters, &state->budget, measured_c,
+                                               measured_bar, feed, &estimate_k)) {
+            state->superheat_estimated = true;
+            state->superheat_estimate_k = estimate_k;
+            /*
+             * The superheat setpoint is a floor, not a target to bring the
+             * casting down to: while the estimate stands above it the casting
+             * is held at the ready target, so the heat stored in it is spent
+             * on the draw rather than given up at its start.
+             */
+            error = greater(
+                ((float)state->declaration.superheat_setpoint_milli_k / 1000.0f) - estimate_k,
+                ((float)state->declaration.ready_temperature_milli_c / 1000.0f) - measured_c);
+            drivable = true;
+        }
     } else {
-        const float target_c =
-            (float)state->declaration.ready_temperature_milli_c / 1000.0f;
-        const float measured_c =
-            (float)state->trusted_temperature_milli_c / 1000.0f;
-
-        error = target_c - measured_c;
+        error = ((float)state->declaration.ready_temperature_milli_c / 1000.0f) - measured_c;
         drivable = have_temperature;
     }
 
@@ -641,8 +705,7 @@ steam_control_step_result_t steam_control_step(steam_control_state_t *state)
      */
     const uint16_t level =
         (drivable && is_a_figure(error))
-            ? as_drive_level(heater_command(state, error, (float)advance / 1000.0f,
-                                            feed, leading))
+            ? as_drive_level(heater_command(state, error, interval_s, feed, state->feeding))
             : 0u;
 
     /*
@@ -676,13 +739,13 @@ steam_control_step_result_t steam_control_step(steam_control_state_t *state)
     state->feed_permille = feed;
 
     /*
-     * A step reports itself ordinary only when it had a fresh reading of every
-     * channel it acted on: the pressure, which the readiness policy reads on
-     * every step whatever is happening, and the variable in force. A stale
-     * figure carried forward is the right thing to act on and still not
-     * something to report as an observation.
+     * A step reports itself ordinary only when it had a fresh reading of both
+     * channels: the pressure, which the gate and the feed read, and the casting's
+     * temperature, which the heater reads whatever it holds. A stale figure
+     * carried forward is the right thing to act on and still not something to
+     * report as an observation.
      */
-    const bool observed = pressure_fresh && (drawing || temperature_fresh);
+    const bool observed = pressure_fresh && temperature_fresh;
     return observed ? STEAM_CONTROL_STEP_ACTUATED : STEAM_CONTROL_STEP_SENSOR_INVALID;
 }
 
@@ -704,5 +767,16 @@ bool steam_control_drawing(const steam_control_state_t *state, bool *drawing)
     }
 
     *drawing = state->drawing;
+    return true;
+}
+
+bool steam_control_outlet_superheat(const steam_control_state_t *state, float *superheat_k)
+{
+    if (state == NULL || superheat_k == NULL || !state->configured ||
+        !state->superheat_estimated) {
+        return false;
+    }
+
+    *superheat_k = state->superheat_estimate_k;
     return true;
 }

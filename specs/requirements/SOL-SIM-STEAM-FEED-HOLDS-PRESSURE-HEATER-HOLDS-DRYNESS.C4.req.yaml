@@ -1,7 +1,7 @@
 id: SOL-SIM-STEAM-FEED-HOLDS-PRESSURE-HEATER-HOLDS-DRYNESS.C4
 type: criterion
 title: Every claim that steam is dry names its superheat and measured pressure and states carry-over is not excluded
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: test

@@ -26,6 +26,7 @@ twice.
 
 import argparse
 import os
+import re
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -157,6 +158,33 @@ TOLERANCE = 1.0e-3
 
 class CrossTierError(RuntimeError):
     """The draw did not get far enough on one side to have anything to compare."""
+
+
+#: The line a host run writes when a law refuses the description it was handed,
+#: as host_report_refusal states it: the parameter refused, or that no single
+#: parameter is at fault.
+REFUSAL_STATEMENT = re.compile(
+    r"^.*: (?:parameter \S+ is refused \(fault \d+\)|the declared corners cannot all be run "
+    r"together.*)$", re.MULTILINE)
+
+
+def refusal_reason(stderr):
+    """The refusal a host run stated, or None where it stated none.
+
+    A run that stops without one crashed or failed some other way.
+    """
+    found = REFUSAL_STATEMENT.search(stderr)
+    return found.group(0).strip() if found else None
+
+
+def not_finished(what, completed):
+    """The message for a host run that wrote no finished record. It leads with
+    the refusal the run stated, when it stated one, so that the first line says
+    why, and carries the run's output after it either way."""
+    reason = refusal_reason(completed.stderr)
+    heading = ("%s was refused: %s\nIts output follows:" % (what, reason) if reason
+               else "%s did not finish. Its output follows:" % what)
+    return "%s\n%s\n%s" % (heading, completed.stdout[-8000:], completed.stderr[-4000:])
 
 
 def converter_scale():
@@ -372,9 +400,7 @@ def host_draw(executable, description, limits, target_c, course, scale, name="dr
     findings["stdout"] = completed.stdout
     findings["stderr"] = completed.stderr
     if not findings["completed"]:
-        raise CrossTierError(
-            "the host draw did not finish. Its output follows:\n%s\n%s"
-            % (completed.stdout[-8000:], completed.stderr[-4000:]))
+        raise CrossTierError(not_finished("the host draw", completed))
     return findings
 
 

@@ -1,7 +1,7 @@
 id: SOL-SIM-STEAM-FEED-HOLDS-PRESSURE-HEATER-HOLDS-DRYNESS.C3
 type: criterion
 title: The ready and band figures are re-derived from the flash-generator relations
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: test

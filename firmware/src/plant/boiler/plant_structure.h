@@ -186,6 +186,14 @@ typedef struct {
 const plant_parameter_spec_t *plant_structure_parameter_specs(size_t *count);
 
 /*
+ * The relations between coefficients a description must satisfy beyond each
+ * lying in its own range, refused at load as PLANT_PARAMETER_INCONSISTENT. `count`
+ * receives the number of entries, which is zero for a structure with none; the
+ * returned table outlives any call.
+ */
+const plant_parameter_relation_t *plant_structure_parameter_relations(size_t *count);
+
+/*
  * The coefficients the supply this machine is fed from drives, by the names the
  * description calls them by. `count` receives the number of entries; the
  * returned table outlives any call.

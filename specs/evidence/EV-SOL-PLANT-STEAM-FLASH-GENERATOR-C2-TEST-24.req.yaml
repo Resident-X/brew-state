@@ -1,0 +1,16 @@
+id: EV-SOL-PLANT-STEAM-FLASH-GENERATOR-C2-TEST-24
+type: evidence
+title: test evidence for SOL-PLANT-STEAM-FLASH-GENERATOR.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-20T01:40:10.648115Z"
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_casting_peak.py::test_a_corner_machine_the_control_path_refuses_is_recorded_with_its_reason_and_the_run_continues
+  artifact_version: 2f71cdfc40f7c2425d96bbc03da64227b1ac24f1
+attested_by: crun-f4784c0f6eac25a3
+links:
+  - target: SOL-PLANT-STEAM-FLASH-GENERATOR.C2
+    type: satisfies

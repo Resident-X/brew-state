@@ -1,0 +1,12 @@
+id: SOL-PLANT-STEAM-FLASH-GENERATOR.C10
+type: criterion
+title: Feed is bounded by a declared ceiling and a declared rise limit, both re-derived from the orifice law, and quantity yields before quality
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  The steam control law bounds the feed command it gives the pressure loop by a declared ceiling and limits how fast it rises above a declared draw-start level, the feed to which a draw opened at or above the ready pressure steps at once and at which the orifice law puts pressure at the band floor; the ceiling, the rise limit and the start level are declared data with origins and derived from the orifice law and the band, so a draw is never fed beyond what keeps delivered character in band. When the ceiling binds the loop gives up pressure before it gives up quantity. A test in host simulation closing the loop through the truth plant raises demand across several values and shows the feed never exceeds the ceiling, never rises faster than the limit above the start level, and the ceiling is read as data, not compiled in. A declaration whose draw-start level exceeds its feed ceiling is refused as its own fault and not reduced to the ceiling, at load and again when the law is initialised, which refuses it and commands nothing. When the heater is at full and the law's superheat estimate is below its setpoint, the feed does not rise and is let down at the declared rise limit until the heater holds the setpoint again, so quantity yields before quality. A test closing the loop through a truth plant whose element cannot boil the feed the ceiling admits shows the feed falling and the superheat staying above zero. Out of scope: the feed-withhold-below-ready behaviour and predictive readiness.
+links:
+  - target: SOL-PLANT-STEAM-FLASH-GENERATOR
+    type: criterion-of

@@ -1,7 +1,7 @@
 id: SOL-SIM-STEAM-BAND-SUSTAINED.C5
 type: criterion
 title: Measured pressure stays within the declared band for the whole of a draw, within the declared model-error tolerance
-status: active
+status: deprecated
 version: 2
 measurement_type: threshold
 verification: test
@@ -10,3 +10,5 @@ text: |
 links:
   - target: SOL-SIM-STEAM-BAND-SUSTAINED
     type: criterion-of
+attributes:
+  deprecation_reason: restated by SOL-PLANT-STEAM-FLASH-GENERATOR.C7; the flash-generator steam side retires this behaviour

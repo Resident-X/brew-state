@@ -330,8 +330,8 @@ MUTATIONS = (
         "name": "coefficient-compiled-in",
         "why": "a coefficient read from the record becomes a literal in the equations",
         "file": "src/plant/thermoblock/plant_structure.c",
-        "find": "parameters->steam_pressure_bar_per_k * above_saturation_k",
-        "replace": "0.035f * above_saturation_k",
+        "find": "p->steam_restriction_bar_s2_per_ml2 * made_ml_per_s * made_ml_per_s",
+        "replace": "25.0f * made_ml_per_s * made_ml_per_s",
         "command": PLANT_TESTS,
     },
     {
@@ -355,8 +355,8 @@ MUTATIONS = (
         "name": "initial-state-not-an-equilibrium",
         "why": "an instance starts at a pressure its own equations would not produce",
         "file": "src/plant/thermoblock/plant_structure.c",
-        "find": "model->steam_pressure_bar = steam_pressure_at(parameters, model->steam_temperature_c);",
-        "replace": "model->steam_pressure_bar = 0.0f;",
+        "find": "model->steam_pressure_bar = shut_pressure_bar(model);\n    model->initialised",
+        "replace": "model->steam_pressure_bar = 1.0f;\n    model->initialised",
         "command": PLANT_TESTS,
     },
     {

@@ -1,7 +1,7 @@
 id: SOL-SIM-STEAM-BAND-SUSTAINED.C1
 type: criterion
 title: The controlled variable is temperature while idle and pressure while a draw is active
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: analysis
@@ -10,3 +10,5 @@ text: |
 links:
   - target: SOL-SIM-STEAM-BAND-SUSTAINED
     type: criterion-of
+attributes:
+  deprecation_reason: restated by SOL-PLANT-STEAM-FLASH-GENERATOR.C7; the flash-generator steam side retires this behaviour

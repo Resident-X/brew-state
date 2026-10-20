@@ -518,14 +518,21 @@ class TheSweepRecordsEveryChannelTheMachineObserves(unittest.TestCase):
             unweighable,
             "this model leaves the dominance ranking able to weigh everything, so the case that "
             "separates the two readings does not arise in this run")
+        committed = _committed_record()
         for name in unweighable:
             with self.subTest(coefficient=name):
                 record = _record(name)
-                self.assertGreater(
-                    max(record["reached"].values()), 0.0,
-                    "%s has no dominance figure and no recorded effect on any channel either, so "
-                    "the channel record adds nothing the delivery record did not already say"
-                    % name)
+                self.assertTrue(record["reached"], "%s has no channel record at all" % name)
+                if max(record["reached"].values()) > 0.0:
+                    continue
+                # A coefficient the ranking could not weigh and the channels did
+                # not move for either is a finding of its own, and the record has
+                # to say so in so many words: a zero row alone reads as a coefficient
+                # nobody looked at.
+                self.assertRegex(
+                    committed,
+                    r"\| `%s` \| no \| neither end of its declared error moved the temperature "
+                    r"the control path reconstructs" % re.escape(name))
 
 
 class AParameterNotToldApartIsNamedRatherThanAssumed(unittest.TestCase):

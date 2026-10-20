@@ -1,7 +1,7 @@
 id: SOL-SIM-STEAM-BAND-SUSTAINED.C11
 type: criterion
 title: Delivered character stays in band because feed is never raised to chase demand beyond the declared sustainable rate
-status: active
+status: deprecated
 version: 1
 measurement_type: threshold
 verification: test
@@ -10,3 +10,5 @@ text: |
 links:
   - target: SOL-SIM-STEAM-BAND-SUSTAINED
     type: criterion-of
+attributes:
+  deprecation_reason: restated by SOL-PLANT-STEAM-FLASH-GENERATOR.C10; the flash-generator steam side retires this behaviour

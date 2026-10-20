@@ -29,6 +29,13 @@ FINDINGS = None
 # constants without executing either -- closed_loop.py references Renode's
 # `bus`/`cpu`/`monitor` at module scope and cannot be imported outside it.
 DRAW_STEPS = register_map.source_constants(runner.EXERCISE)["DRAW_STEPS"]
+STEP_BUDGET = register_map.source_constants(runner.EXERCISE)["STEP_BUDGET"]
+
+# The least headroom the dearest call keeps under the harness's step budget: its
+# measured cost times this must still fit. Four means the cost can grow by about
+# a quarter before this suite fails, so a doubling is noticed here and not as a
+# call the harness reports as never returning.
+STEP_BUDGET_HEADROOM = 4
 
 INCLUDE_DIR = os.path.join(FIRMWARE_DIR, "include")
 HW_STM32_SOURCE = os.path.join(FIRMWARE_DIR, "src", "hw", "stm32", "hw_stm32.c")
@@ -315,6 +322,30 @@ class ClosedLoopRunsAFullSimulatedDraw(unittest.TestCase):
         self.assertEqual(
             FINDINGS["image"]["fnv1a64"], FINDINGS["expected_image_fnv1a64"],
             "flash under emulation does not hold the loadable segments of the artefact")
+
+
+class HarnessStepBudgetKeepsHeadroom(unittest.TestCase):
+    """The per-call instruction budget stays a bound that catches a call which never returns, not a limit the artefact's own work is close to."""
+
+    def test_every_call_the_run_made_is_reported_with_its_cost(self):
+        for name in ("hw_stm32_init", "estimator_limits_load", "delivery_tolerance_load",
+                     "control_init", "control_command_temperature", "control_step"):
+            with self.subTest(call=name):
+                self.assertGreater(FINDINGS["call_steps"].get(name, 0), 0,
+                                   "the run reported no instruction count for %s" % name)
+
+    def test_the_dearest_call_costs_a_fraction_of_the_budget(self):
+        name, cost = max(FINDINGS["call_steps"].items(), key=lambda item: item[1])
+        self.assertLessEqual(
+            cost * STEP_BUDGET_HEADROOM, STEP_BUDGET,
+            "%s took %d instructions; with %dx headroom that needs a budget of %d, and "
+            "STEP_BUDGET is %d" % (name, cost, STEP_BUDGET_HEADROOM,
+                                   cost * STEP_BUDGET_HEADROOM, STEP_BUDGET))
+
+    def test_the_budget_is_still_a_bound_a_runaway_call_meets(self):
+        self.assertLess(STEP_BUDGET, 100 * max(FINDINGS["call_steps"].values()),
+                        "the budget is so far above any call's cost that a call that never "
+                        "returns would take minutes of core time to be reported")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,14 @@
+id: REQ-MEASUREMENT-001.C11
+type: criterion
+title: Steam pressure is known to the control to the accuracy that tells the steam band's floor from no pressure
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  The steam side is judged against a band of pressure with a floor, and a block holding the floor is a block holding steam. A channel whose error is as large as the pressure it is asked to tell from none reports the floor as nothing, and a part that suffices to place a reading in the middle of the band does not suffice at its lower edge. The accuracy needed is therefore set by the smallest pressure the control must tell apart, not by the width of the band.
+
+  The accuracy is a declared figure, taken from the steam declaration's band and thresholds rather than restated here, and it is an absolute error: a consistently offset channel is repeatable and still fails. How the part achieves it is open; what is required is that the reading is known to that accuracy while steam is leaving the block and while it is not.
+links:
+  - target: REQ-MEASUREMENT-001
+    type: criterion-of

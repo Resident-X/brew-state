@@ -46,6 +46,8 @@
 #include <stdio.h>
 
 #include "control.h"
+#include "casting_ceiling_report.h"
+#include "host_report.h"
 #include "hw_sim.h"
 #include "plant_model.h"
 
@@ -338,7 +340,32 @@ int cross_tier_draw_run(const plant_parameters_t *machine_parameters,
     float drawn_ml_per_s = 0.0f;
 
     if (!plant_model_init(&machine, machine_parameters)) {
-        (void)fprintf(stderr, "cross-tier draw: the machine could not be initialised\n");
+        /*
+         * A description edited past the loader is refused where the run builds
+         * its model, and the builder is told which parameter and why, as the
+         * loader would have told them, rather than that something failed.
+         */
+        plant_parameter_error_t refusal;
+
+        if (!plant_parameters_admissible(machine_parameters, &refusal)) {
+            (void)fprintf(stderr,
+                          "cross-tier draw: the machine could not be initialised: parameter %s is refused "
+                          "(fault %d)\n",
+                          refusal.parameter, (int)refusal.fault);
+        } else {
+            (void)fprintf(stderr, "cross-tier draw: the machine could not be initialised\n");
+        }
+        return 1;
+    }
+
+    /*
+     * The bound the steam side holds trapped pressure to, stated before anything
+     * is driven so a reader of the run has it with the run. A structure with no
+     * steam ceiling states none; one that has one and cannot state it ends the
+     * run, because a run that dropped its own bound is not one to read.
+     */
+    if (casting_ceiling_report(stdout, machine_parameters) == CASTING_CEILING_REFUSED) {
+        (void)fprintf(stderr, "cross-tier draw: the casting ceiling could not be stated\n");
         return 1;
     }
 
@@ -367,7 +394,15 @@ int cross_tier_draw_run(const plant_parameters_t *machine_parameters,
            delivered_or_not(&machine, outlet_kept, &outlet_c), drawn_ml_per_s);
 
     if (!control_init(&state, control_parameters, control_budget, limits, tolerance, pump_trim)) {
-        (void)fprintf(stderr, "cross-tier draw: the control path could not be brought up\n");
+        plant_parameter_error_t refusal;
+
+        if (!control_description_established(control_parameters, control_budget, tolerance,
+                                             &refusal) &&
+            refusal.fault != PLANT_PARAMETER_OK) {
+            host_report_refusal(stderr, "cross-tier draw", "the control path could not be brought up", &refusal);
+        } else {
+            (void)fprintf(stderr, "cross-tier draw: the control path could not be brought up\n");
+        }
         return 1;
     }
     if (!control_command_temperature(&state, draw->target_c)) {

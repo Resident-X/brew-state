@@ -22,8 +22,9 @@
  * its place arrives cold; that draw bounded by the rate the steam side's own
  * feed pump is commanded to supply it at, because a block holding no reservoir
  * makes steam no faster than it is given water to make it from; brew pressure
- * driven by the pump; and steam pressure following the steam mass above
- * saturation except while a draw carries it below that relation. Whether
+ * driven by the pump; and steam pressure that is saturation of the casting
+ * temperature while the wand is shut over held liquid, and the drop across the
+ * restriction the steam made goes through while it is open. Whether
  * they describe any real machine cannot be settled until
  * there is one to measure against; what they establish here is that the numbers
  * and the equations are separable and replaceable.
@@ -115,16 +116,52 @@ typedef struct {
     float water_heat_capacity_j_per_ml_k;
     float water_latent_heat_j_per_ml;
 
-    float steam_saturation_temperature_c;
-    float steam_pressure_bar_per_k;
     /*
-     * How far the steam path's pressure is driven below what its temperature
-     * alone would give it, per millilitre drawn out of it. A property of the
-     * path rather than of water: what a draw costs in pressure depends on what
-     * there is to draw from and how freely it vents, which is the machine's
-     * plumbing and not the steam tables.
+     * The temperature the saturation relation below starts from: gauge pressure
+     * is zero at and under it, and the relation is valid from it up to the
+     * casting ceiling.
      */
-    float steam_pressure_fall_bar_per_ml;
+    float steam_saturation_temperature_c;
+    /*
+     * The saturation relation's three figures, Antoine's form
+     * log10(p_bar) = a - b / (c + T). It is a property of water and not of the
+     * machine, fitted to the saturation line, and the steam-side gauge pressure
+     * is its answer less its own answer at the saturation temperature, so the
+     * relation is continuous where it starts.
+     */
+    float steam_saturation_antoine_a;
+    float steam_saturation_antoine_b_k;
+    float steam_saturation_antoine_c_c;
+    /*
+     * The hottest casting the trapped pressure is reported for. A shut block
+     * holding liquid reports saturation at the lower of its casting and this, so
+     * the reported pressure never exceeds saturation at it. It is a control
+     * limit the model applies and not containment of anything.
+     */
+    float steam_casting_ceiling_c;
+    /*
+     * The drop across the tube, valve and tip per square of the steam made
+     * through them, in bar per (millilitre per second) squared: the pressure
+     * with the wand open is this times the square of the rate steam is made at.
+     * A property of the path and not of water.
+     */
+    float steam_restriction_bar_s2_per_ml2;
+    /*
+     * How far below the casting the steam leaves the block, per millilitre a
+     * second of steam made, in kelvin: the casting-to-outlet relation. Steam made
+     * faster has less time against the metal on its way out, so it leaves further
+     * below the casting. The outlet temperature is the casting less this times the
+     * rate, and the superheat reported is that outlet less saturation at the
+     * pressure the step reports.
+     */
+    float steam_outlet_drop_k_s_per_ml;
+    /*
+     * The liquid the block can hold, and the liquid it holds at the start. The
+     * second sits between zero and the first; an instance started with more
+     * than the capacity holds the capacity.
+     */
+    float steam_liquid_capacity_ml;
+    float steam_initial_inventory_ml;
     /*
      * The rate this side's own feed pump pushes replacement water in at, at full
      * duty. It sits with the steam path's figures rather than beside the brew
@@ -156,11 +193,12 @@ typedef struct {
  * differently depending on where the water leaving it sits. That is reachability
  * and not identification -- see the omissions in params/thermoblock.md.
  *
- * Steam pressure follows the steam mass whenever nothing is being drawn, and
- * departs from it while something is. What carries that departure is the
- * deficit beside it rather than the pressure itself: the pressure is the
- * saturation relation's answer less the deficit, so a step taken with no draw
- * reproduces that relation exactly rather than approaching it.
+ * Steam pressure is one of two relations. With the wand shut it is saturation of
+ * the casting temperature while the block holds liquid, and zero while it holds
+ * none. With the wand open it is the drop across the restriction for the steam
+ * being made. Which applies is decided by the held liquid and the draw, so the
+ * pressure is a function of the step's inputs and the inventory and carries no
+ * state of its own.
  */
 typedef struct {
     bool initialised;
@@ -173,21 +211,13 @@ typedef struct {
     float steam_pressure_bar;
 
     /*
-     * How far below the saturation relation a draw has carried the steam path,
-     * in bar. This is the state the divergence is kept in, and it is kept as the
-     * gap rather than as the pressure so that closing the wand restores the
-     * relation exactly: the gap is set to nothing, and what is left is the
-     * relation's own answer with no residue of the draw in it. A pressure
-     * integrated in its own right would have had to find its way back, and
-     * whatever rate it came back at would have been a second claim about the
-     * machine that nothing here is in a position to make.
-     *
-     * It is never larger than the pressure there was to lose, so the pressure it
-     * produces is never negative -- a steam path venting to the room stops at the
-     * room, and a gauge pressure below zero would be the model claiming a vacuum
-     * the wand cannot draw.
+     * The liquid water the block holds, in millilitres. Commanded feed raises it
+     * up to the capacity and the steam made lowers it; with the wand shut nothing
+     * is made and nothing leaks, so it is kept. It is what separates a shut block
+     * whose pressure is saturation of its casting from a dry one that reads
+     * nothing, and it stays within zero and the capacity.
      */
-    float steam_pressure_deficit_bar;
+    float steam_liquid_inventory_ml;
 
     /*
      * The rate water was drawn at over the step just taken. It is held here so
@@ -218,6 +248,17 @@ typedef struct {
      * makes the guarded rate the only one this quantity can honestly carry.
      */
     float steam_draw_ml_per_s;
+
+    /*
+     * The superheat of the steam at the modelled outlet over the step just taken,
+     * in kelvin: the outlet temperature the casting-to-outlet relation gives, less
+     * saturation at the pressure the step reports, and nothing while no steam is
+     * made or the outlet sits at or below saturation. Held for the reasons the
+     * rates above are, and a quantity rather than a state for the same ones: it is
+     * recomputed whole every step from the casting, the pressure and the rate
+     * steam is made at, and nothing integrates it.
+     */
+    float steam_outlet_superheat_k;
 } plant_model_t;
 
 /*
@@ -226,6 +267,14 @@ typedef struct {
  * outlives any call.
  */
 const plant_parameter_spec_t *plant_structure_parameter_specs(size_t *count);
+
+/*
+ * The relations between coefficients a description must satisfy beyond each
+ * lying in its own range, refused at load as PLANT_PARAMETER_INCONSISTENT. `count`
+ * receives the number of entries, which is zero for a structure with none; the
+ * returned table outlives any call.
+ */
+const plant_parameter_relation_t *plant_structure_parameter_relations(size_t *count);
 
 /*
  * The coefficients the supply this machine is fed from drives, by the names the
@@ -272,14 +321,14 @@ void thermoblock_advance_temperatures(plant_model_t *model,
  * steam is being drawn. Brew pressure relaxes towards what the pump commands
  * with the structure's time constant.
  *
- * Steam pressure follows the steam mass above saturation and is zero below it
- * whenever nothing is being drawn. While something is, it is carried below that
- * relation, and never below nothing at all. What holds it there is the demand and
- * what sets how fast it goes further is the steam actually being made, so a feed
- * commanded shut mid-draw stops the departure widening without handing any of it
- * back. The departure is discarded rather than unwound the moment the draw stops,
- * so the relation is exact again on the first step with no demand rather than
- * several steps later.
+ * The held liquid is advanced first: commanded feed raises it, the steam made
+ * lowers it, and it is kept within zero and the capacity. Steam pressure is then
+ * the restriction's drop for the rate steam is made at while a draw is open --
+ * zero when the feed is shut however far the wand is open -- and otherwise
+ * saturation of the casting temperature, bounded at the casting ceiling, while
+ * the block holds liquid, and zero while it holds none. The superheat at the
+ * modelled outlet is taken last, from the casting the step left, the pressure it
+ * reports and the rate steam was made at.
  */
 void thermoblock_advance_pressures(plant_model_t *model,
                                    const plant_actuation_t *actuation,

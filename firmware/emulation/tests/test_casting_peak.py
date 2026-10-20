@@ -146,10 +146,12 @@ class ThePeakIsFoundAcrossEveryPhaseAndEveryCorner(unittest.TestCase):
         for side, enumerated in ((casting.COFFEE, found["shipped"]["corners"]),
                                  (casting.STEAM, found["shipped"]["steam_corners"])):
             ran = {corner["which"] for corner in enumerated if corner["ran"]}
-            self.assertEqual(ran, {run["corner"]["which"] for run in _runs(side)
-                                   if run["corner"] is not None},
-                             "a corner the enumeration covers was not run, or one it does not "
-                             "cover was")
+            refused = {entry["corner"]["which"] for entry in found["refused_steam_machines"]
+                       if side == casting.STEAM}
+            self.assertEqual(ran - refused, {run["corner"]["which"] for run in _runs(side)
+                                             if run["corner"] is not None},
+                             "a corner the enumeration covers was neither run nor listed as "
+                             "refused by the control path, or one it does not cover was run")
             self.assertEqual({corner["which"] for corner in enumerated}, ran,
                              "a corner the enumeration covers produced no machine, and the "
                              "record was written all the same")
@@ -181,6 +183,91 @@ class ThePeakIsFoundAcrossEveryPhaseAndEveryCorner(unittest.TestCase):
         self.assertIn("steam", str(caught.exception))
         self.assertIn("corner 7", str(caught.exception))
         casting.require_ran(casting.STEAM, dict(corner, ran=True))
+
+    def _steam_corner(self, which, end="low"):
+        """A corner of the steam enumeration that produced a machine, over a
+        coefficient the shipped description states."""
+        return {"which": which, "ran": True, "joint": False, "end": end,
+                "writes": ["steam.heater_power_w"], "factor": 0.9 if end == "low" else 1.1}
+
+    # SOL-PLANT-STEAM-FLASH-GENERATOR.C2: The steam law's initialisation, and the brew law's for the corners the relations make unbuildable, likewise refuse a believed description or error budget from which the model cannot be built at every declared corner
+    def test_a_corner_machine_the_control_path_refuses_is_recorded_with_its_reason_and_the_run_continues(self):
+        refused = self._steam_corner(11)
+        kept = self._steam_corner(12, "high")
+        reason = "parameter steam.initial_inventory_ml is refused (fault 8)"
+        base = {"target_c": 99.9, "steam_highest_c": 186.0, "steam_ready_c": 186.0,
+                "margin": {"sensing_error_c": 2.0}, "steam_margin": {"sensing_error_c": 2.0},
+                "corners": [], "steam_corners": [refused, kept]}
+
+        def reading(executable, written, limits, declaration=None):
+            if os.path.basename(written).startswith("corner-%d-" % refused["which"]):
+                raise casting.margin.ControlPathRefused(written, reason)
+            return base
+
+        with tempfile.TemporaryDirectory() as directory:
+            with mock.patch.object(casting.margin, "margin_record", side_effect=reading):
+                found = self._run_stubbed(base, directory)
+            text = "\n".join(casting.refused_corner_lines(found))
+        self.assertEqual([{"corner": refused, "reason": reason}], found["refused_steam_machines"])
+        ran = {run["corner"]["which"] for run in found["runs"]
+               if run["side"] == casting.STEAM and run["corner"] is not None}
+        self.assertEqual({kept["which"]}, ran,
+                         "the corner the control path refuses was run, or the one it accepted "
+                         "was not")
+        self.assertIn("**1 of the 2 steam corners were not run, because the control path "
+                      "refuses the machine they build.**", text)
+        self.assertIn(reason, text)
+        self.assertIn("worst over the other 1 steam corners", text)
+        self.assertNotIn("None of the", text)
+
+    # SOL-PLANT-STEAM-FLASH-GENERATOR.C2: The steam law's initialisation, and the brew law's for the corners the relations make unbuildable, likewise refuse a believed description or error budget from which the model cannot be built at every declared corner
+    def test_a_corner_machine_every_loop_accepts_is_recorded_as_excluding_none(self):
+        corner = self._steam_corner(13)
+        base = {"target_c": 99.9, "steam_highest_c": 186.0, "steam_ready_c": 186.0,
+                "margin": {"sensing_error_c": 2.0}, "steam_margin": {"sensing_error_c": 2.0},
+                "corners": [], "steam_corners": [corner]}
+        with tempfile.TemporaryDirectory() as directory:
+            with mock.patch.object(casting.margin, "margin_record", return_value=base):
+                found = self._run_stubbed(base, directory)
+            text = "\n".join(casting.refused_corner_lines(found))
+        self.assertEqual([], found["refused_steam_machines"])
+        self.assertIn("None of the 1 steam corners was excluded", text)
+        self.assertNotIn("were not run, because the control path refuses", text)
+
+    # SOL-PLANT-STEAM-FLASH-GENERATOR.C2: The steam law's initialisation, and the brew law's for the corners the relations make unbuildable, likewise refuse a believed description or error budget from which the model cannot be built at every declared corner
+    def test_a_corner_reading_that_fails_without_a_refusal_still_stops_the_run(self):
+        corner = self._steam_corner(14)
+        base = {"target_c": 99.9, "steam_highest_c": 186.0, "steam_ready_c": 186.0,
+                "margin": {"sensing_error_c": 2.0}, "steam_margin": {"sensing_error_c": 2.0},
+                "corners": [], "steam_corners": [corner]}
+
+        def reading(executable, written, limits, declaration=None):
+            if os.path.basename(written).startswith("corner-"):
+                raise casting.margin.MarginError("the margin reading did not finish")
+            return base
+
+        with tempfile.TemporaryDirectory() as directory:
+            with mock.patch.object(casting.margin, "margin_record", side_effect=reading):
+                with self.assertRaises(casting.margin.MarginError) as caught:
+                    self._run_stubbed(base, directory)
+        self.assertNotIsInstance(caught.exception, casting.margin.ControlPathRefused)
+
+    def _run_stubbed(self, base, workspace):
+        """run() with every draw stubbed and the margin reading already patched
+        by the caller."""
+        def phased(draw, levels, hold, delivery, recovery, channel):
+            return {"series": [], "phases": [{"phase": casting.WARM_UP, "level": 0, "start": 0,
+                                               "end": 10}], "hold_c": 90.0, "peak_c": 95.0,
+                    "peak_at": 0, "lengthened": 1, "intervals": 10, "printed_peak_c": 95.0}
+
+        def steam(*arguments):
+            series = [100.0] * len(arguments[5])
+            return {"channels": {"steam-c": series},
+                    "stdout": _printed("steam-c", series, "HOST steam-trajectory")}
+
+        with mock.patch.object(casting, "run_phased", side_effect=phased), \
+                mock.patch.object(casting.sweep, "steam_draw", side_effect=steam):
+            return casting.run(executable="unused", workspace=workspace)
 
     def _run_with_stubbed_draws(self, shipped, workspace):
         """run() end to end with the margin reading supplied and every draw
@@ -451,7 +538,12 @@ class ThePeakIsTakenOverEveryReportedCastingTemperature(unittest.TestCase):
             return extract(series)[0] >= max(reported)
 
         def sampled(series):
-            return casting.peak_of(series[::50])
+            # Every fiftieth interval, starting so that the hottest one is not
+            # among them: a lattice fixed at zero would catch a peak that
+            # happens to fall on a multiple of fifty, and the comparison would
+            # then have no extraction that misses to be shown to notice.
+            hottest = series.index(max(series))
+            return casting.peak_of(series[(hottest + 1) % 50::50])
 
         def the_first(series):
             return series[0], 0
@@ -599,23 +691,37 @@ class TheSteamPeakIsReportedAgainstHowLongTheWandIsHeldOpen(unittest.TestCase):
     """
 
     # SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1: the record gives the peak for
-    # the draw every corner was run with and for longer ones, and the claim it
-    # makes in words -- that the casting climbs once a draw is held longer than
-    # the feed can replace -- is one the figures bear out, so the sentence cannot
+    # the draw every corner was run with and for longer ones, a longer draw never
+    # reports a lower peak, and the claim it makes in words about what a longer
+    # draw does is the one its own figures bear out, so the sentence cannot
     # outlive the behaviour.
-    def test_the_steam_peak_climbs_when_the_draw_is_held_longer(self):
+    def test_the_record_says_of_a_longer_draw_what_its_figures_show(self):
         found = _findings()
         lengths = found["steam_lengths"]
         self.assertEqual(list(casting.STEAM_DRAW_SECONDS), [seconds for seconds, _ in lengths])
         peaks = [peak for _, peak in lengths]
         self.assertTrue(all(longer >= shorter for shorter, longer in zip(peaks, peaks[1:])),
                         "a longer draw reports a lower peak than a shorter one: %s" % peaks)
-        self.assertGreater(peaks[-1], peaks[0] + 10.0,
-                           "the steam peak no longer climbs with the draw, so the record's "
-                           "account of a casting that does not settle is out of date: %s" % peaks)
         nominal = next(run for run in _runs(casting.STEAM) if run["corner"] is None)
         draw = next(phase for phase in nominal["phases"] if phase["phase"] == casting.DELIVERY)
         self.assertAlmostEqual(peaks[0], draw["peak_c"], delta=FIGURE_TOLERANCE_C)
+        text = casting.report_text(found)
+        climbs = peaks[-1] > peaks[0] + casting.SETTLED_BAND_C
+        self.assertEqual(climbs, "can climb higher, as the table shows" in text)
+        self.assertEqual(not climbs, "does not climb higher than the longest of the lengths "
+                                     "below" in text)
+
+    # SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1: the sentence is stated from the
+    # figures it describes, for a table that rises and for one that stays flat,
+    # and a flat one is not taken to speak for the corners.
+    def test_the_draw_length_sentence_follows_the_figures_it_describes(self):
+        rising = casting.draw_length_sentence([(20, 186.0), (60, 190.0), (300, 216.0)])
+        flat = casting.draw_length_sentence([(20, 186.0), (60, 186.0), (300, 186.0)])
+        self.assertIn("can climb higher", rising)
+        self.assertNotIn("does not climb higher", rising)
+        self.assertIn("does not climb higher", flat)
+        self.assertIn("no statement about them", flat)
+        self.assertNotIn("can climb higher", flat)
 
     # SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1: and what the record gives is what
     # the method presently produces.
@@ -1127,7 +1233,9 @@ class TheFiguresRecordKeepsTheIntervalPendingWhileTheCastingExceedsItsTrip(unitt
         self.assertIn("DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE", finding)
         self.assertIn("20-second", finding)
         self.assertIn("Nothing in this finding is a board figure", finding)
-        self.assertIn("can climb higher", finding)
+        lengths = [float(peak) for _, peak in casting.length_rows(record)]
+        self.assertIn("does not climb higher" if lengths[-1] <= lengths[0] + casting.SETTLED_BAND_C
+                      else "can climb higher", finding)
         for seconds, peak in casting.length_rows(record):
             if seconds in ("20", "300"):
                 self.assertIn("%s °C" % peak, finding)
@@ -1155,7 +1263,7 @@ class TheGeneratedRecordSaysWhatItsPeaksAre(unittest.TestCase):
         self.assertIn("not a board input", head)
         self.assertIn("draw length", head)
         self.assertIn("DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE", head)
-        self.assertIn("can climb higher", head)
+        self.assertIn("draw-length table below shows how it moves", head)
         self.assertNotIn("climbs higher", head)
 
     # SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1: the section on what the record

@@ -1,0 +1,16 @@
+id: EV-SOL-PLANT-STEAM-FLASH-GENERATOR-C2-TEST-7
+type: evidence
+title: test evidence for SOL-PLANT-STEAM-FLASH-GENERATOR.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-20T01:40:02.239564Z"
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_a_description_breaking_two_relations_is_refused_on_the_same_one_each_time
+  artifact_version: 2f71cdfc40f7c2425d96bbc03da64227b1ac24f1
+attested_by: crun-f4784c0f6eac25a3
+links:
+  - target: SOL-PLANT-STEAM-FLASH-GENERATOR.C2
+    type: satisfies

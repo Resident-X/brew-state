@@ -14,10 +14,10 @@ Nothing here is a measurement. The trip point is a figure read off a parts list,
 
 | What | File | sha256 |
 |---|---|---|
-| The machine's coefficients | `firmware/params/thermoblock.params` | `05492d4ba05da02591dd5c8437ed131ce452a41521c09bb51ab80673fa1fd814` |
+| The machine's coefficients | `firmware/params/thermoblock.params` | `a05cf3fa70a704725f37d36ce7575874f03921cb89da29773cda0c5ca9a7e062` |
 | What a reading off it may be | `firmware/params/thermoblock.limits` | `d71d41f4ea5ef907696cfec6059e4b2b00a76fdb2f937d40781ec91910ce26a1` |
 | The bands a delivery is held to | `firmware/params/tolerance.declaration` | `c5bb5a51a4a9ad71496ac8405dee688736a6635e0f2df06433168055aefdec17` |
-| The steam side's design figures | `firmware/params/steam_control.declaration` | `4ee5f3b38c7404536ebdc5d8e42e7710c214f53a223521cf60be0ad54c8a2dda` |
+| The steam side's design figures | `firmware/params/steam_control.declaration` | `5734f7095f6b438c4587b7e03f68168602cc18bd90ad5510e1fe92d77e4cf3b9` |
 
 The supply this was run against is the declared 216–253 V span about the 230 V nominal, as the description's accounts state it. How each element rating's declared error was derived from that supply is set out in the description's account beside the rating; this record does not check that derivation.
 
@@ -75,15 +75,27 @@ Every corner the enumeration covers, at the target the sweep was commanded at. A
 | 29 | independent | water.latent_heat_j_per_ml | high | 0.05 | 1.05 | ran | 0 |
 | 30 | independent | steam.saturation_temperature_c | low | 0.02 | 0.98 | ran | 0 |
 | 31 | independent | steam.saturation_temperature_c | high | 0.02 | 1.02 | ran | 0 |
-| 32 | independent | steam.pressure_bar_per_k | low | 0.3 | 0.7 | ran | 0 |
-| 33 | independent | steam.pressure_bar_per_k | high | 0.3 | 1.3 | ran | 0 |
-| 34 | independent | steam.pressure_fall_bar_per_ml | low | 0.7 | 0.3 | ran | 0 |
-| 35 | independent | steam.pressure_fall_bar_per_ml | high | 0.7 | 1.7 | ran | 0 |
-| 36 | independent | steam.feed_flow_ml_per_s | low | 0.7 | 0.3 | ran | 0 |
-| 37 | independent | steam.feed_flow_ml_per_s | high | 0.7 | 1.7 | ran | 0 |
-| 38 | joint | brew.heater_power_w + steam.heater_power_w (joint mains droop) | low | 0.21 | 0.79 | ran | 0 |
+| 32 | independent | steam.saturation_antoine_a | low | 0.001 | 0.999 | ran | 0 |
+| 33 | independent | steam.saturation_antoine_a | high | 0.001 | 1 | ran | 0 |
+| 34 | independent | steam.saturation_antoine_b_k | low | 0.001 | 0.999 | ran | 0 |
+| 35 | independent | steam.saturation_antoine_b_k | high | 0.001 | 1 | ran | 0 |
+| 36 | independent | steam.saturation_antoine_c_c | low | 0.001 | 0.999 | ran | 0 |
+| 37 | independent | steam.saturation_antoine_c_c | high | 0.001 | 1 | ran | 0 |
+| 38 | independent | steam.casting_ceiling_c | low | 0.03 | 0.97 | ran | 0 |
+| 39 | independent | steam.casting_ceiling_c | high | 0.03 | 1.03 | ran | 0 |
+| 40 | independent | steam.restriction_bar_s2_per_ml2 | low | 0.7 | 0.3 | ran | 0 |
+| 41 | independent | steam.restriction_bar_s2_per_ml2 | high | 0.7 | 1.7 | ran | 0 |
+| 42 | independent | steam.outlet_drop_k_s_per_ml | low | 0.8 | 0.2 | ran | 0 |
+| 43 | independent | steam.outlet_drop_k_s_per_ml | high | 0.8 | 1.8 | ran | 0 |
+| 44 | independent | steam.liquid_capacity_ml | low | 0.6 | 0.4 | ran | 0 |
+| 45 | independent | steam.liquid_capacity_ml | high | 0.6 | 1.6 | ran | 0 |
+| 46 | independent | steam.initial_inventory_ml | low | 0.6 | 0.4 | ran | 0 |
+| 47 | independent | steam.initial_inventory_ml | high | 0.6 | 1.6 | ran | 0 |
+| 48 | independent | steam.feed_flow_ml_per_s | low | 0.7 | 0.3 | ran | 0 |
+| 49 | independent | steam.feed_flow_ml_per_s | high | 0.7 | 1.7 | ran | 0 |
+| 50 | joint | brew.heater_power_w + steam.heater_power_w (joint mains droop) | low | 0.21 | 0.79 | ran | 0 |
 
-The margin is 6.02 C: the un-widened gap of 1 C plus the worst single corner's 3.02 C (corner 6) plus the declared sensing error of 2 C. 39 of 39 corners ran and 4 cost the gap anything.
+The margin is 6.02 C: the un-widened gap of 1 C plus the worst single corner's 3.02 C (corner 6) plus the declared sensing error of 2 C. 51 of 51 corners ran and 4 cost the gap anything.
 
 ## What each corner's delivery did
 
@@ -125,19 +137,31 @@ Both ends of every coefficient are run, including the ends `params/thermoblock.m
 | 29 | water.latent_heat_j_per_ml | high | 1.05 | 0.0254 | within-band |
 | 30 | steam.saturation_temperature_c | low | 0.98 | 0.0254 | within-band |
 | 31 | steam.saturation_temperature_c | high | 1.02 | 0.0254 | within-band |
-| 32 | steam.pressure_bar_per_k | low | 0.7 | 0.0254 | within-band |
-| 33 | steam.pressure_bar_per_k | high | 1.3 | 0.0254 | within-band |
-| 34 | steam.pressure_fall_bar_per_ml | low | 0.3 | 0.0254 | within-band |
-| 35 | steam.pressure_fall_bar_per_ml | high | 1.7 | 0.0254 | within-band |
-| 36 | steam.feed_flow_ml_per_s | low | 0.3 | 0.0254 | within-band |
-| 37 | steam.feed_flow_ml_per_s | high | 1.7 | 0.0254 | not-claimed |
-| 38 | brew.heater_power_w + steam.heater_power_w (joint mains droop) | low | 0.79 | 0.0234 | within-band |
+| 32 | steam.saturation_antoine_a | low | 0.999 | 0.0254 | within-band |
+| 33 | steam.saturation_antoine_a | high | 1 | 0.0254 | within-band |
+| 34 | steam.saturation_antoine_b_k | low | 0.999 | 0.0254 | within-band |
+| 35 | steam.saturation_antoine_b_k | high | 1 | 0.0254 | within-band |
+| 36 | steam.saturation_antoine_c_c | low | 0.999 | 0.0254 | within-band |
+| 37 | steam.saturation_antoine_c_c | high | 1 | 0.0254 | within-band |
+| 38 | steam.casting_ceiling_c | low | 0.97 | 0.0254 | within-band |
+| 39 | steam.casting_ceiling_c | high | 1.03 | 0.0254 | within-band |
+| 40 | steam.restriction_bar_s2_per_ml2 | low | 0.3 | 0.0254 | within-band |
+| 41 | steam.restriction_bar_s2_per_ml2 | high | 1.7 | 0.0254 | within-band |
+| 42 | steam.outlet_drop_k_s_per_ml | low | 0.2 | 0.0254 | within-band |
+| 43 | steam.outlet_drop_k_s_per_ml | high | 1.8 | 0.0254 | within-band |
+| 44 | steam.liquid_capacity_ml | low | 0.4 | 0.0254 | within-band |
+| 45 | steam.liquid_capacity_ml | high | 1.6 | 0.0254 | within-band |
+| 46 | steam.initial_inventory_ml | low | 0.4 | 0.0254 | within-band |
+| 47 | steam.initial_inventory_ml | high | 1.6 | 0.0254 | within-band |
+| 48 | steam.feed_flow_ml_per_s | low | 0.3 | 0.0254 | within-band |
+| 49 | steam.feed_flow_ml_per_s | high | 1.7 | 0.0254 | not-claimed |
+| 50 | brew.heater_power_w + steam.heater_power_w (joint mains droop) | low | 0.79 | 0.0234 | within-band |
 
 ## What each declared error contributes to the steam side's margin
 
 The steam side sizes a margin of its own, against a trip point of its own, out of the same declared error. Its un-widened gap is nothing: that loop's ready phase holds a temperature against no declared temperature band at all — the band it is held to is a pressure one — so every kelvin of its margin is earned by declared model error rather than inherited.
 
-Its target is not commanded but declared: `firmware/params/steam_control.declaration` names the ready temperature the loop is brought up holding, and the loop refuses to come up at all where that target does not leave the widened margin between itself and the trip point. The declared target is 125 C and the highest the loop would come up at is 186 C, so the margin has 61.1 C of room here and is not what stops this loop's target either.
+Its target is not commanded but declared: `firmware/params/steam_control.declaration` names the ready temperature the loop is brought up holding, and the loop refuses to come up at all where that target does not leave the widened margin between itself and the trip point. The declared target is 137 C and the highest the loop would come up at is 186 C, so the margin has 49.1 C of room here and is not what stops this loop's target either.
 
 | Corner | Kind | Coefficient | End | Declared error | Written at | Ran | Contribution (C) |
 |---|---|---|---|---|---|---|---|
@@ -153,11 +177,11 @@ Its target is not commanded but declared: `firmware/params/steam_control.declara
 | 9 | independent | brew.outlet_held_volume_ml | high | 0.6 | 1.6 | ran | 0 |
 | 10 | independent | brew.outlet_conduction_time_constant_s | low | 0.8 | 0.2 | ran | 0 |
 | 11 | independent | brew.outlet_conduction_time_constant_s | high | 0.8 | 1.8 | ran | 0 |
-| 12 | independent | steam.thermal_mass_j_per_k | low | 0.4 | 0.6 | ran | 0.585 |
+| 12 | independent | steam.thermal_mass_j_per_k | low | 0.4 | 0.6 | ran | 0.00447 |
 | 13 | independent | steam.thermal_mass_j_per_k | high | 0.4 | 1.4 | ran | 0 |
 | 14 | independent | steam.heater_power_w | low | 0.21 | 0.79 | ran | 0 |
-| 15 | independent | steam.heater_power_w | high | 0.21 | 1.21 | ran | 1.7 |
-| 16 | independent | steam.loss_w_per_k | low | 0.6 | 0.4 | ran | 4.42 |
+| 15 | independent | steam.heater_power_w | high | 0.21 | 1.21 | ran | 1.68 |
+| 16 | independent | steam.loss_w_per_k | low | 0.6 | 0.4 | ran | 4.9 |
 | 17 | independent | steam.loss_w_per_k | high | 0.6 | 1.6 | ran | 0 |
 | 18 | independent | pump.pressure_bar | low | 0.4 | 0.6 | ran | 0 |
 | 19 | independent | pump.pressure_bar | high | 0.4 | 1.4 | ran | 0 |
@@ -173,75 +197,100 @@ Its target is not commanded but declared: `firmware/params/steam_control.declara
 | 29 | independent | water.latent_heat_j_per_ml | high | 0.05 | 1.05 | ran | 0 |
 | 30 | independent | steam.saturation_temperature_c | low | 0.02 | 0.98 | ran | 0 |
 | 31 | independent | steam.saturation_temperature_c | high | 0.02 | 1.02 | ran | 0 |
-| 32 | independent | steam.pressure_bar_per_k | low | 0.3 | 0.7 | ran | 0 |
-| 33 | independent | steam.pressure_bar_per_k | high | 0.3 | 1.3 | ran | 0 |
-| 34 | independent | steam.pressure_fall_bar_per_ml | low | 0.7 | 0.3 | ran | 0 |
-| 35 | independent | steam.pressure_fall_bar_per_ml | high | 0.7 | 1.7 | ran | 0 |
-| 36 | independent | steam.feed_flow_ml_per_s | low | 0.7 | 0.3 | ran | 0 |
-| 37 | independent | steam.feed_flow_ml_per_s | high | 0.7 | 1.7 | ran | 0 |
-| 38 | joint | brew.heater_power_w + steam.heater_power_w (joint mains droop) | low | 0.21 | 0.79 | ran | 0 |
+| 32 | independent | steam.saturation_antoine_a | low | 0.001 | 0.999 | ran | 0 |
+| 33 | independent | steam.saturation_antoine_a | high | 0.001 | 1 | ran | 0 |
+| 34 | independent | steam.saturation_antoine_b_k | low | 0.001 | 0.999 | ran | 0 |
+| 35 | independent | steam.saturation_antoine_b_k | high | 0.001 | 1 | ran | 0 |
+| 36 | independent | steam.saturation_antoine_c_c | low | 0.001 | 0.999 | ran | 0 |
+| 37 | independent | steam.saturation_antoine_c_c | high | 0.001 | 1 | ran | 0 |
+| 38 | independent | steam.casting_ceiling_c | low | 0.03 | 0.97 | ran | 0 |
+| 39 | independent | steam.casting_ceiling_c | high | 0.03 | 1.03 | ran | 0 |
+| 40 | independent | steam.restriction_bar_s2_per_ml2 | low | 0.7 | 0.3 | ran | 0 |
+| 41 | independent | steam.restriction_bar_s2_per_ml2 | high | 0.7 | 1.7 | ran | 0 |
+| 42 | independent | steam.outlet_drop_k_s_per_ml | low | 0.8 | 0.2 | ran | 0 |
+| 43 | independent | steam.outlet_drop_k_s_per_ml | high | 0.8 | 1.8 | ran | 0 |
+| 44 | independent | steam.liquid_capacity_ml | low | 0.6 | 0.4 | ran | 0 |
+| 45 | independent | steam.liquid_capacity_ml | high | 0.6 | 1.6 | ran | 0 |
+| 46 | independent | steam.initial_inventory_ml | low | 0.6 | 0.4 | ran | 0 |
+| 47 | independent | steam.initial_inventory_ml | high | 0.6 | 1.6 | ran | 0 |
+| 48 | independent | steam.feed_flow_ml_per_s | low | 0.7 | 0.3 | ran | 0 |
+| 49 | independent | steam.feed_flow_ml_per_s | high | 0.7 | 1.7 | ran | 0 |
+| 50 | joint | brew.heater_power_w + steam.heater_power_w (joint mains droop) | low | 0.21 | 0.79 | ran | 0 |
 
-The steam margin is 6.42 C: the un-widened gap of 0 C plus the worst single corner's 4.42 C (corner 16) plus the declared sensing error of 2 C. 39 of 39 corners ran and 4 cost the gap anything.
+The steam margin is 6.9 C: the un-widened gap of 0 C plus the worst single corner's 4.9 C (corner 16) plus the declared sensing error of 2 C. 51 of 51 corners ran and 4 cost the gap anything.
 
 ## What each corner's steam draw did
 
 Each corner's machine is drawn from over the steam side's own course, with the loop brought up at the ready temperature its declaration names. There is no second description to hold the loop at while the machine moves, and none is needed: that loop is built from its declaration and from no description of a casting at all, so the split the coffee side has to arrange is structural here.
 
-The verdict is the pressure the draw came to rest at, taken over intervals 4400 to 4999, the trailing third of the stretch steam was actually being delivered over, against the floor of 1000 and ceiling of 1400 milli-bar the declaration states.
+The verdict is the pressure the draw came to rest at, taken over intervals 4333 to 4999, the trailing third of the stretch steam was actually being delivered over, against the floor of 250 and ceiling of 1800 milli-bar the declaration states.
 
 | Corner | Coefficient | End | Written at | Worst pressure (milli-bar) | Verdict |
 |---|---|---|---|---|---|
-| 0 | ambient_temperature_c | low | 0.75 | 1192 | within-band |
-| 1 | ambient_temperature_c | high | 1.25 | 1194 | within-band |
-| 2 | brew.thermal_mass_j_per_k | low | 0.6 | 1193 | within-band |
-| 3 | brew.thermal_mass_j_per_k | high | 1.4 | 1193 | within-band |
-| 4 | brew.heater_power_w | low | 0.79 | 1193 | within-band |
-| 5 | brew.heater_power_w | high | 1.21 | 1193 | within-band |
-| 6 | brew.loss_w_per_k | low | 0.4 | 1193 | within-band |
-| 7 | brew.loss_w_per_k | high | 1.6 | 1193 | within-band |
-| 8 | brew.outlet_held_volume_ml | low | 0.4 | 1193 | within-band |
-| 9 | brew.outlet_held_volume_ml | high | 1.6 | 1193 | within-band |
-| 10 | brew.outlet_conduction_time_constant_s | low | 0.2 | 1193 | within-band |
-| 11 | brew.outlet_conduction_time_constant_s | high | 1.8 | 1193 | within-band |
-| 12 | steam.thermal_mass_j_per_k | low | 0.6 | 1199 | within-band |
-| 13 | steam.thermal_mass_j_per_k | high | 1.4 | 1181 | within-band |
-| 14 | steam.heater_power_w | low | 0.79 | 1139 | within-band |
-| 15 | steam.heater_power_w | high | 1.21 | 1224 | within-band |
-| 16 | steam.loss_w_per_k | low | 0.4 | 1212 | within-band |
-| 17 | steam.loss_w_per_k | high | 1.6 | 1172 | within-band |
-| 18 | pump.pressure_bar | low | 0.6 | 1193 | within-band |
-| 19 | pump.pressure_bar | high | 1.4 | 1193 | not-claimed |
-| 20 | pump.flow_ml_per_s | low | 0.4 | 1193 | within-band |
-| 21 | pump.flow_ml_per_s | high | 1.6 | 1193 | not-claimed |
-| 22 | brew.pressure_time_constant_s | low | 0.5 | 1193 | within-band |
-| 23 | brew.pressure_time_constant_s | high | 1.5 | 1193 | within-band |
-| 24 | water.feed_temperature_c | low | 0.5 | 1191 | within-band |
-| 25 | water.feed_temperature_c | high | 1.5 | 1195 | within-band |
-| 26 | water.heat_capacity_j_per_ml_k | low | 0.97 | 1193 | within-band |
-| 27 | water.heat_capacity_j_per_ml_k | high | 1.03 | 1192 | within-band |
-| 28 | water.latent_heat_j_per_ml | low | 0.95 | 1199 | within-band |
-| 29 | water.latent_heat_j_per_ml | high | 1.05 | 1187 | within-band |
-| 30 | steam.saturation_temperature_c | low | 0.98 | 1192 | within-band |
-| 31 | steam.saturation_temperature_c | high | 1.02 | 1194 | within-band |
-| 32 | steam.pressure_bar_per_k | low | 0.7 | 1118 | within-band |
-| 33 | steam.pressure_bar_per_k | high | 1.3 | 1190 | within-band |
-| 34 | steam.pressure_fall_bar_per_ml | low | 0.3 | 1213 | within-band |
-| 35 | steam.pressure_fall_bar_per_ml | high | 1.7 | 1174 | within-band |
-| 36 | steam.feed_flow_ml_per_s | low | 0.3 | 1303 | within-band |
-| 37 | steam.feed_flow_ml_per_s | high | 1.7 | 999 | not-claimed |
-| 38 | brew.heater_power_w + steam.heater_power_w (joint mains droop) | low | 0.79 | 1139 | within-band |
+| 0 | ambient_temperature_c | low | 0.75 | 1010 | within-band |
+| 1 | ambient_temperature_c | high | 1.25 | 1010 | within-band |
+| 2 | brew.thermal_mass_j_per_k | low | 0.6 | 1010 | within-band |
+| 3 | brew.thermal_mass_j_per_k | high | 1.4 | 1010 | within-band |
+| 4 | brew.heater_power_w | low | 0.79 | 1010 | within-band |
+| 5 | brew.heater_power_w | high | 1.21 | 1010 | within-band |
+| 6 | brew.loss_w_per_k | low | 0.4 | 1010 | within-band |
+| 7 | brew.loss_w_per_k | high | 1.6 | 1010 | within-band |
+| 8 | brew.outlet_held_volume_ml | low | 0.4 | 1010 | within-band |
+| 9 | brew.outlet_held_volume_ml | high | 1.6 | 1010 | within-band |
+| 10 | brew.outlet_conduction_time_constant_s | low | 0.2 | 1010 | within-band |
+| 11 | brew.outlet_conduction_time_constant_s | high | 1.8 | 1010 | within-band |
+| 12 | steam.thermal_mass_j_per_k | low | 0.6 | 1010 | within-band |
+| 13 | steam.thermal_mass_j_per_k | high | 1.4 | 1010 | within-band |
+| 14 | steam.heater_power_w | low | 0.79 | 1010 | within-band |
+| 15 | steam.heater_power_w | high | 1.21 | 1010 | within-band |
+| 16 | steam.loss_w_per_k | low | 0.4 | 1010 | within-band |
+| 17 | steam.loss_w_per_k | high | 1.6 | 1010 | within-band |
+| 18 | pump.pressure_bar | low | 0.6 | 1010 | within-band |
+| 19 | pump.pressure_bar | high | 1.4 | 1010 | not-claimed |
+| 20 | pump.flow_ml_per_s | low | 0.4 | 1010 | within-band |
+| 21 | pump.flow_ml_per_s | high | 1.6 | 1010 | not-claimed |
+| 22 | brew.pressure_time_constant_s | low | 0.5 | 1010 | within-band |
+| 23 | brew.pressure_time_constant_s | high | 1.5 | 1010 | within-band |
+| 24 | water.feed_temperature_c | low | 0.5 | 1010 | within-band |
+| 25 | water.feed_temperature_c | high | 1.5 | 1010 | within-band |
+| 26 | water.heat_capacity_j_per_ml_k | low | 0.97 | 1010 | within-band |
+| 27 | water.heat_capacity_j_per_ml_k | high | 1.03 | 1010 | within-band |
+| 28 | water.latent_heat_j_per_ml | low | 0.95 | 1010 | within-band |
+| 29 | water.latent_heat_j_per_ml | high | 1.05 | 1010 | within-band |
+| 30 | steam.saturation_temperature_c | low | 0.98 | 1010 | within-band |
+| 31 | steam.saturation_temperature_c | high | 1.02 | 1010 | within-band |
+| 32 | steam.saturation_antoine_a | low | 0.999 | 1010 | within-band |
+| 33 | steam.saturation_antoine_a | high | 1 | 1010 | within-band |
+| 34 | steam.saturation_antoine_b_k | low | 0.999 | 1010 | within-band |
+| 35 | steam.saturation_antoine_b_k | high | 1 | 1010 | within-band |
+| 36 | steam.saturation_antoine_c_c | low | 0.999 | 1010 | within-band |
+| 37 | steam.saturation_antoine_c_c | high | 1 | 1010 | within-band |
+| 38 | steam.casting_ceiling_c | low | 0.97 | 1010 | within-band |
+| 39 | steam.casting_ceiling_c | high | 1.03 | 1010 | within-band |
+| 40 | steam.restriction_bar_s2_per_ml2 | low | 0.3 | 1005 | within-band |
+| 41 | steam.restriction_bar_s2_per_ml2 | high | 1.7 | 995 | within-band |
+| 42 | steam.outlet_drop_k_s_per_ml | low | 0.2 | 1010 | within-band |
+| 43 | steam.outlet_drop_k_s_per_ml | high | 1.8 | 1010 | within-band |
+| 45 | steam.liquid_capacity_ml | high | 1.6 | 1010 | within-band |
+| 46 | steam.initial_inventory_ml | low | 0.4 | 1010 | within-band |
+| 48 | steam.feed_flow_ml_per_s | low | 0.3 | 306 | within-band |
+| 49 | steam.feed_flow_ml_per_s | high | 1.7 | 474 | not-claimed |
+| 50 | brew.heater_power_w + steam.heater_power_w (joint mains droop) | low | 0.79 | 1010 | within-band |
 
 ## What could not be delivered against
 
-Nothing. Every corner the enumeration covers produced a machine and a delivery.
+| Loop | Corner | Coefficient | End | Why |
+|---|---|---|---|---|
+| steam | 44 | steam.liquid_capacity_ml | low | the steam draw was refused: steam draw: the steam control path could not be brought up: parameter steam.initial_inventory_ml is refused (fault 8) |
+| steam | 47 | steam.initial_inventory_ml | high | the steam draw was refused: steam draw: the steam control path could not be brought up: parameter steam.initial_inventory_ml is refused (fault 8) |
 
 ## How far one unit in the last place moves these figures
 
 Every single-coefficient corner above was delivered against twice more, with its coefficient moved to the single-precision number next above it and next below it and nothing else changed. That is the smallest difference the arithmetic can tell apart, and it is asked here because each figure is the worst of a series of readings of a loop whose commands are whole numbers: two machines a hair apart command the same duties for long stretches and then part by one permille, so the last digits of a figure belong to where that step fell and not to the machine. The joint corner writes more than one coefficient and has no one neighbour to move to, so it is not among them.
 
-- **Coffee side**: 76 comparisons. The most any worst departure moved was 0.00275 C, corner 20 going from 0.0528796 to 0.0556256 with its coefficient moved one unit above. That is 0.27% of the 1 C band.
+- **Coffee side**: 100 comparisons. The most any worst departure moved was 0.00275 C, corner 20 going from 0.0528796 to 0.0556256 with its coefficient moved one unit above. That is 0.27% of the 1 C band.
   The first whole-number quantity to differ was the converter's reading of brew-c at control tick 10153 (103492 against 103443); over the 10153 ticks before it the sensed quantities never departed by more than 8e-06, which is below the 0.0488 one count of the converter is worth.
-- **Steam side**: 76 comparisons, and no figure moved at all.
+- **Steam side**: 96 comparisons, and no figure moved at all.
 
 **No verdict changed with one unit in the last place.** The arithmetic behind these figures is pinned to be the same on every supported host, and the record-staleness check fails if regenerating this record changes a byte; it runs on macOS arm64 in the build round and on Linux x86-64 in the nightly verification of main. The figures move by the amounts above when a coefficient moves by one unit. What is measured is a coefficient moved to its neighbouring single-precision number, which is not the same as moving a library result inside a step of the loop; the arithmetic is now identical across hosts, so the latter no longer arises. What is claimed is that this is as far as one unit moved any of them at these corners, that it is a small part of the band each is judged against, and that no verdict turned on it. It is measured at one unit and at these corners and is not a proof for every perturbation.
 

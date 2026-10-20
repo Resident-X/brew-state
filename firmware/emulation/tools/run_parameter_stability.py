@@ -1934,8 +1934,8 @@ def report_text(findings):
         write("")
         for record, side, settle in did_not:
             if settle["verdict"] == CORNER_REFUSED:
-                write("- `%s`, %s corner, %s side — %s. The structure would not admit it as a "
-                      "machine, so there is no response here to have settled or not."
+                write("- `%s`, %s corner, %s side — %s. The machine was refused rather than "
+                      "run, so there is no response here to have settled or not."
                       % (record["coefficient"], record["corner"], side, settle["why"]))
             elif settle["verdict"] == STILL_DIVERGING:
                 write("- `%s`, %s corner, %s side — **still growing at the horizon.** The worst "

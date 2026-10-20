@@ -56,16 +56,6 @@
 # moved: the reasoning is unchanged because the arithmetic is unchanged, and an
 # entry whose code had actually moved would have had to be judged again.
 
-# The thermoblock's steam-pressure judgement was re-made at a new line when the
-# coffee side gained a second temperature. The comparison it is about did not
-# move relative to anything around it -- it was pushed down two lines by the
-# parameter table above it gaining an entry for the outlet time constant, and the
-# helper that slice added sits below it and moved it not at all. The expression
-# at its new line is character for character the one the judgement was written
-# about, so the reasoning stands unaltered. The
-# arithmetic that slice added produced mutants of its own, and the suite killed
-# every one of them; none of it is recorded here, which is what that means.
-
 # Both steam-pressure judgements were re-made at new lines when the water drawn
 # through a block started taking energy out of it. Neither expression moved
 # relative to anything it depends on: the thermoblock's was pushed down by its
@@ -122,6 +112,17 @@
 # the two entries whose subject genuinely changed shape say so, and the
 # accessor's own copy of the spec-table guard is judged on its own terms rather
 # than by pointing at the walk's.
+
+# The judgements in plant_parameters.c and the boiler's structure file were moved
+# to new lines when the loader gained the relations a structure declares between
+# its coefficients and the accessor that reads one figure back by position: the
+# loader's relation walk sits above the entries from `plant_parameter_budget_for`
+# down, the value accessor above `plant_parameter_supply_driven`, and the boiler's
+# own empty relation table above its steam-pressure relation. Each moved line is
+# character for character the one the judgement was written about, so the
+# reasoning stands unaltered. The value accessor's own copy of the table-size
+# guard is judged on its own terms below; its position guard is killed by the
+# test that asks for the position one past the last.
 
 # The thermoblock's and the boiler's steam-pressure judgements were re-made at
 # new lines again when the commanded margin arrived: `plant_parameter_scale`,
@@ -182,7 +183,7 @@ survivors:
       zero bytes copies nothing. The other half of the condition still refuses a
       null source, so nothing is dereferenced that was not before.
 
-  cxx_gt_to_ge:src/plant/common/plant_parameters.c:286:20:
+  cxx_gt_to_ge:src/plant/common/plant_parameters.c:342:20:
     verdict: equivalent
     reason: >-
       Spec-table size guard in the description walk, `spec_count >
@@ -198,7 +199,7 @@ survivors:
       rather than assumed here, so a structure growing towards the limit fails
       that test instead of quietly invalidating this judgement.
 
-  cxx_lt_to_le:src/plant/common/plant_parameters.c:318:28:
+  cxx_lt_to_le:src/plant/common/plant_parameters.c:374:28:
     verdict: equivalent
     reason: >-
       `cursor = (line_end < limit) ? line_end + 1 : limit` widened to `<=`, so
@@ -255,7 +256,7 @@ survivors:
       the sanitizer script back to the environment's extra_scripts and run the
       sweep, and this line should report Killed.
 
-  cxx_gt_to_ge:src/plant/common/plant_parameters.c:556:57:
+  cxx_gt_to_ge:src/plant/common/plant_parameters.c:621:57:
     verdict: equivalent
     reason: >-
       The same spec-table size guard again, in the accessor that answers what
@@ -267,7 +268,7 @@ survivors:
       every structure in the tree declares a single-figure number of parameters,
       so both forms accept every table any build of this program can present.
 
-  cxx_gt_to_ge:src/plant/common/plant_parameters.c:592:57:
+  cxx_gt_to_ge:src/plant/common/plant_parameters.c:657:57:
     verdict: equivalent
     reason: >-
       The same spec-table size guard a third time, in `plant_parameter_scale`:
@@ -278,7 +279,7 @@ survivors:
       every structure in the tree declares a single-figure number of parameters,
       so both forms accept every table any build of this program can present.
 
-  cxx_gt_to_ge:src/plant/common/plant_parameters.c:630:57:
+  cxx_gt_to_ge:src/plant/common/plant_parameters.c:695:57:
     verdict: equivalent
     reason: >-
       The same spec-table size guard again, in `plant_parameter_position`:
@@ -288,7 +289,7 @@ survivors:
       single-figure number of parameters, so both forms accept every table any
       build of this program can present.
 
-  cxx_gt_to_ge:src/plant/common/plant_parameters.c:651:57:
+  cxx_gt_to_ge:src/plant/common/plant_parameters.c:749:57:
     verdict: equivalent
     reason: >-
       The same spec-table size guard again, in `plant_parameter_supply_driven`:
@@ -298,7 +299,18 @@ survivors:
       single-figure number of parameters, so both forms accept every table any
       build of this program can present.
 
-  cxx_ge_to_gt:src/plant/common/plant_parameters.c:593:12:
+  cxx_gt_to_ge:src/plant/common/plant_parameters.c:732:57:
+    verdict: equivalent
+    reason: >-
+      The same spec-table size guard once more, in `plant_parameter_value`:
+      `spec_count > PLANT_PARAMETER_LIMIT` widened to `>=`. The judgement is the
+      entries above's, made again for the same reason they were: the guards are
+      separately editable, so a change to one would not move another. The table
+      is compiled in, chosen by which structure the environment names, and every
+      structure in the tree declares a single-figure number of parameters, so
+      both forms accept every table any build of this program can present.
+
+  cxx_ge_to_gt:src/plant/common/plant_parameters.c:658:12:
     verdict: analysis
     reason: >-
       Position guard in `plant_parameter_scale`, `at >= spec_count` narrowed to
@@ -320,7 +332,7 @@ survivors:
       the unsanitized sweep records the mutant as surviving. Repeat that if this
       reasoning is ever in doubt.
 
-  cxx_lt_to_le:src/plant/common/plant_parameters.c:660:35:
+  cxx_lt_to_le:src/plant/common/plant_parameters.c:758:35:
     verdict: analysis
     reason: >-
       Loop bound in `plant_parameter_supply_driven`, `which < named_count`
@@ -344,16 +356,6 @@ survivors:
       sanitized, aborts each with SIGABRT in exactly those tests, where the
       unsanitized sweep records the mutant as surviving.
 
-  cxx_gt_to_ge:src/plant/thermoblock/plant_structure.c:150:31:
-    verdict: equivalent
-    reason: >-
-      Steam pressure, `above_saturation_k > 0.0f` widened to `>=`. The two
-      differ only at exactly zero, where the mutant evaluates
-      `pressure_bar_per_k * 0.0f` and the original returns the literal `0.0f`.
-      Those are the same value: the coefficient is finite and admissible, so the
-      product is a zero, and a zero of either sign compares equal to the literal
-      and behaves identically in everything downstream.
-
   cxx_eq_to_ne:src/plant/boiler/plant_structure.c:83:14:
     verdict: equivalent
     reason: >-
@@ -365,7 +367,7 @@ survivors:
       admissible argument, null or not, distinguishes the two forms while this
       structure serves no delivery point.
 
-  cxx_gt_to_ge:src/plant/boiler/plant_structure.c:135:31:
+  cxx_gt_to_ge:src/plant/boiler/plant_structure.c:144:31:
     verdict: equivalent
     reason: >-
       Steam pressure in the single-boiler structure, `above_saturation_k > 0.0f`
@@ -468,3 +470,89 @@ survivors:
       back afterwards is taken from x, which for a zero is not negative.
       test_the_functions_hold_at_the_edges_of_their_domains asserts that both
       zeros return plus zero, so a change that gave either one a sign is seen.
+
+# The steam-flash-generator branch's survivors on the lines it added to the
+# thermoblock structure, the loader's name lookup and the single-boiler
+# structure. Those the tests could separate were killed rather than recorded: the
+# inversion's starting guess, the edge at which the open-draw pressure reaches the
+# limit, the loader's position past the last coefficient, the guard on the
+# logarithm's argument, and the logarithm's count of refinement steps. What is
+# recorded below is what no input can tell apart.
+
+  cxx_gt_to_ge:src/plant/thermoblock/plant_structure.c:234:21:
+    verdict: equivalent
+    reason: >-
+      The trapped pressure's lower guard, `!(casting_c > saturation_temperature)`
+      widened to `!(casting_c >= ...)`, so a casting exactly at the saturation
+      temperature no longer returns nothing at once and goes on to the
+      subtraction. There the casting is bounded by the ceiling, which the relation
+      refused at load keeps above the saturation temperature, so the bound is the
+      casting itself, and the figure is the absolute pressure at the saturation
+      temperature less the absolute pressure at the same argument, through the
+      same function. The two are the same float, the difference is a zero, and
+      `fmaxf(0, 0)` is the zero the guard returned. Were the saturation figure
+      not finite the difference would be not-a-number, which `fmaxf` also answers
+      as the zero.
+
+  cxx_ge_to_gt:src/plant/thermoblock/plant_structure.c:258:14:
+    verdict: equivalent
+    reason: >-
+      The logarithm's halving loop, `while (x >= 2.0f)` narrowed to `>`. The two
+      differ only where the argument is reduced to exactly two, which happens
+      only for an argument that is a power of two. There the original halves once
+      more, to one, adds one to the count and starts the refinement from a
+      remainder of nothing, and the mutant keeps two and refines to the logarithm
+      of two. Every power of two the argument can be, from two to two to the 127th,
+      was run through both and gives the same bits: the refinement lands on the
+      constant the original adds, and the sum with the count is the same
+      rounding either way. The remainder the refinement is asked about is the
+      same for every other argument, which is why only the powers of two were
+      run.
+
+  cxx_lt_to_le:src/plant/thermoblock/plant_structure.c:262:14:
+    verdict: equivalent
+    reason: >-
+      The logarithm's doubling loop, `while (x < 1.0f)` widened to `<=`. The two
+      differ only where the argument is reduced to exactly one, which happens only
+      for an argument that is a power of two at or below one. The original starts
+      the refinement from one, whose answer is exactly nothing, and the mutant
+      doubles to two, takes one off the count and refines to the logarithm of two,
+      which the count then cancels. Every power of two from one down to the
+      smallest denormal was run through both and gives the same bits: the
+      refinement lands on the constant the count takes off again.
+
+  cxx_gt_to_ge:src/plant/thermoblock/plant_structure.c:771:27:
+    verdict: equivalent
+    reason: >-
+      The superheat's gate on a draw, `demanded_ml_per_s > 0.0f` widened to `>=`,
+      so a demand of exactly nothing evaluates the superheat instead of reporting
+      zero. The demand is what `drawn_steam_ml_per_s` returned, which is never
+      below nothing, and the steam made is the lesser of it and the commanded feed,
+      which is itself never below nothing, so at a demand of nothing the steam made
+      is nothing. The superheat's own first line then returns nothing for a made
+      rate that is not above nothing, which is the zero the original reports.
+
+  cxx_lt_to_le:src/plant/thermoblock/plant_structure.c:1024:29:
+    verdict: analysis
+    reason: >-
+      The bound of the loop over the table in the least-superheat estimate,
+      `at < sizeof(SPECS)/sizeof(SPECS[0])` widened to `<=`. It differs only for a
+      budget claiming more entries than the table has, where the mutant reads one
+      element past the end of the table for its offset and compares it with the
+      outlet coefficient's. That read is outside the array, so no assertion can
+      see it, and the sanitized build aborts on it. The sweep runs with that
+      analysis switched off. The line is reached: 
+      test_a_budget_longer_than_the_structure_is_read_only_as_far_as_the_structure
+      gives the loop a count of the whole limit, past the table, with declarations
+      and a large error on every entry beyond it.
+
+  cxx_ne_to_eq:src/plant/boiler/plant_structure.c:106:15:
+    verdict: equivalent
+    reason: >-
+      The guard on the out-parameter of a structure that declares no relation,
+      `count != NULL` inverted to `==`. The one caller, the loader's relation
+      walk, passes the address of a counter it has just set to zero, so the
+      mutant leaves that counter at the zero the original writes and returns the
+      same null table, and the loop it feeds does not run in either. The null
+      argument the guard is for is not passed by that caller, and no other
+      calls the function.

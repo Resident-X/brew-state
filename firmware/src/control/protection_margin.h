@@ -161,8 +161,11 @@ typedef struct {
  * and how much the declared sensing error added on top, on the same terms the
  * rest of the account already separates the un-widened gap from what the
  * enumeration widened it by. The rest is the account: how many corners the
- * enumeration covers, how many of them were runnable, how many actually cost
- * the gap anything, and which one was worst. A margin figure with no account
+ * enumeration covers, how many of them were runnable, how many of those the
+ * description declares an error against could not be run -- a machine the
+ * structure refuses, or a probe it cannot answer, which leaves the margin sized
+ * without them -- how many actually cost the gap anything, and which one was
+ * worst. A margin figure with no account
  * behind it is a number nobody can challenge, which is the state a
  * load-bearing figure is in just before everybody treats it as settled.
  */
@@ -173,6 +176,7 @@ typedef struct {
     float margin_c;
     size_t corners;
     size_t corners_run;
+    size_t declared_not_run;
     size_t contributing;
     size_t worst_at;
     bool worst_is_joint;
@@ -255,7 +259,8 @@ bool protection_margin_corner_machine(const plant_parameters_t *believed,
  * The corner is built by writing the description's own coefficients at their
  * corner values through the plant seam and standing a model up from the result,
  * so a corner the structure will not admit as a machine is refused by the same
- * range check a description is, and comes back as a corner that did not run.
+ * ranges and relations a description is, wherever the model is built, and comes
+ * back as a corner that did not run: `ran` false with `moves` above zero.
  *
  * Returns false, writing nothing, for a null argument, for a corner index at or
  * past the count above, or for a budget whose coefficient count does not match
@@ -303,5 +308,37 @@ bool protection_margin_widened(const plant_parameters_t *believed,
                                const protection_margin_probe_t *probe,
                                float sensing_error_c,
                                protection_margin_t *margin);
+
+/*
+ * The one precondition a law's initialisation holds the description and error
+ * budget it is given to, before it takes on a target: the margin is established
+ * from them, over every corner they declare.
+ *
+ * Three things are refused, each by returning false. The believed description
+ * is not one the plant admits (plant_parameters_admissible), so no model can be
+ * built from it and a margin read off models would be the sensing error alone.
+ * The law reads a coefficient's declared error for its superheat estimate --
+ * `estimate_parameter` names it, null for a law whose estimate reads none -- and
+ * the budget declares none, so the estimate would be taken without the allowance
+ * it claims. And a corner of the declared error is one no machine can be built
+ * for, or no probe can answer, so the margin would be sized without a machine
+ * the description says is possible. A budget that supports no corner
+ * enumeration at all is refused on the same terms: it establishes nothing.
+ *
+ * `refusal` may be null; when it is not, it is written whatever the outcome,
+ * and on a refusal names the parameter the refusal was found on -- the one the
+ * plant refused, the one the estimate reads, or the one whose declared-error
+ * corner no machine could be built for -- so a caller can tell its builder which
+ * figure to repair. A corner a probe could not answer on a machine that was
+ * built has no parameter to blame and comes back with no name.
+ *
+ * Written once, here beside the enumeration that counts the corners it could
+ * not run, so that every law is held to the same figure and none restates it.
+ */
+bool protection_margin_established(const plant_parameters_t *believed,
+                                   const plant_parameter_budget_t *budget,
+                                   const protection_margin_probe_t *probe,
+                                   float sensing_error_c, const char *estimate_parameter,
+                                   plant_parameter_error_t *refusal, protection_margin_t *margin);
 
 #endif /* PROTECTION_MARGIN_H */

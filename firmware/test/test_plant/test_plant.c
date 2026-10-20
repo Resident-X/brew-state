@@ -76,8 +76,14 @@ static const coefficient_t NOMINAL[] = {
      */
     {"water.latent_heat_j_per_ml", 2000.0},
     {"steam.saturation_temperature_c", 100.0},
-    {"steam.pressure_bar_per_k", 0.035},
-    {"steam.pressure_fall_bar_per_ml", 0.02},
+    {"steam.saturation_antoine_a", 5.2},
+    {"steam.saturation_antoine_b_k", 1800.0},
+    {"steam.saturation_antoine_c_c", 240.0},
+    {"steam.casting_ceiling_c", 140.0},
+    {"steam.restriction_bar_s2_per_ml2", 4.0},
+    {"steam.outlet_drop_k_s_per_ml", 12.0},
+    {"steam.liquid_capacity_ml", 5.0},
+    {"steam.initial_inventory_ml", 1.5},
     /*
      * Deliberately not the same number as the brew pump's flow four lines up.
      * They are the two pumps' full-scale rates and a structure that read one
@@ -92,6 +98,30 @@ static const coefficient_t NOMINAL[] = {
 };
 
 #define COEFFICIENT_COUNT (sizeof(NOMINAL) / sizeof(NOMINAL[0]))
+
+/* Indices into the coefficient table, for the closed-form comparison below. */
+#define I_AMBIENT 0u
+#define I_BREW_MASS 1u
+#define I_BREW_POWER 2u
+#define I_BREW_LOSS 3u
+#define I_BREW_HELD_VOLUME 4u
+#define I_BREW_CONDUCTION_TAU 5u
+#define I_STEAM_MASS 6u
+#define I_STEAM_LOSS 8u
+#define I_PUMP_FLOW 10u
+#define I_WATER_FEED 12u
+#define I_WATER_HEAT_CAPACITY 13u
+#define I_WATER_LATENT_HEAT 14u
+#define I_STEAM_SATURATION 15u
+#define I_STEAM_ANTOINE_A 16u
+#define I_STEAM_ANTOINE_B 17u
+#define I_STEAM_ANTOINE_C 18u
+#define I_STEAM_CEILING 19u
+#define I_STEAM_RESTRICTION 20u
+#define I_STEAM_OUTLET_DROP 21u
+#define I_STEAM_CAPACITY 22u
+#define I_STEAM_INITIAL_INVENTORY 23u
+#define I_STEAM_FEED_FLOW 24u
 
 /* Passed as the scaled index when no coefficient is to be perturbed. */
 #define SCALE_NOTHING COEFFICIENT_COUNT
@@ -242,23 +272,33 @@ static void run(plant_model_t *model, const plant_actuation_t *actuation, int st
 }
 
 /*
- * The rate every signature below is taken with the steam wand open at.
+ * The rate every signature below is taken with the steam wand open at, and the
+ * number of steps it is held open for before it is shut.
  *
- * Not zero, and that is the whole reason it is named. Two of this structure's
- * coefficients are read by no relation at all with the wand shut -- what the
- * steam drawn off the block costs it, and what that draw costs the steam path in
- * pressure -- so a signature taken at no demand would report both as
- * coefficients nothing reads, which is a wrong conclusion drawn from a true
- * observation about the run that was made.
+ * Not zero while it is open, and that is the reason it is named. The restriction
+ * coefficient is read by no relation with the wand shut, so a signature taken at
+ * no demand would report it as a coefficient nothing reads, which is a wrong
+ * conclusion drawn from a true observation about the run that was made.
  *
- * The figure is small on purpose. A large draw holds the steam mass below
- * saturation for the whole of the runs these signatures are taken over, and the
- * pressure relation is then sitting on its floor throughout -- so the pressure
- * coefficient would still reach nothing, for a second reason. At this rate the
- * mass passes saturation part-way through the longer runs and both coefficients
- * are in the trajectory.
+ * Shut afterwards, for the mirror reason: the saturation relation, the casting
+ * ceiling and the liquid capacity are read by no relation with the wand open, and
+ * a signature taken with it open throughout would report them unread. The shut
+ * part of a long run carries the casting past the ceiling and the feed fills the
+ * block to its capacity, so both are in the trajectory; a short run is open
+ * throughout.
  */
 #define SIGNATURE_STEAM_DEMAND_ML_PER_S 0.1f
+#define SIGNATURE_OPEN_STEPS 200
+
+/*
+ * And the number of steps it is opened again for at the end of a run long enough
+ * to have heated the steam casting past saturation. The casting-to-outlet
+ * relation is read only while steam is made from a casting hot enough to
+ * superheat it, which the opening draw from a cold start never reaches, so a
+ * signature that never reopened the wand on a hot block would report that
+ * coefficient unread.
+ */
+#define SIGNATURE_REOPEN_STEPS 100
 
 /*
  * A number standing for the whole trajectory rather than its endpoint.
@@ -292,7 +332,11 @@ static double signature(plant_model_t *model, const plant_actuation_t *actuation
         float states[PLANT_STATE_COUNT];
         float quantities[PLANT_QUANTITY_COUNT];
         TEST_ASSERT_TRUE(
-            plant_model_step(model, actuation, SIGNATURE_STEAM_DEMAND_ML_PER_S, STEP_MS));
+            plant_model_step(model, actuation,
+                             (i < SIGNATURE_OPEN_STEPS || i >= steps - SIGNATURE_REOPEN_STEPS)
+                                 ? SIGNATURE_STEAM_DEMAND_ML_PER_S
+                                 : 0.0f,
+                             STEP_MS));
         read_all_states(model, states);
         for (int state = 0; state < PLANT_STATE_COUNT; state++) {
             total += states[state];
@@ -1038,34 +1082,113 @@ static double rng_unit(void)
     return (double)(rng_next() >> 8) / (double)(1u << 24);
 }
 
-/* A description with every coefficient admissible except the one under test. */
+/* A description of exactly these coefficient values, in table order. */
+static size_t describe_values(const double *values, char *out, size_t capacity)
+{
+    size_t used = 0u;
+
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        const int written =
+            snprintf(out + used, capacity - used, "%s = %.17g\n", NOMINAL[i].name, values[i]);
+        TEST_ASSERT_TRUE(written > 0);
+        used += (size_t)written;
+        TEST_ASSERT_TRUE(used < capacity);
+    }
+    return used;
+}
+
+/* No coefficient is held where the region is made consistent. */
+#define NONE_PINNED COEFFICIENT_COUNT
+
+/*
+ * Values moved into the region the structure's relations between coefficients
+ * leave admissible: an initial inventory no greater than the capacity, and a
+ * casting ceiling above the saturation temperature, and a restriction whose drop
+ * at the full feed rate stays under ten to the Antoine constant a, so the
+ * saturation inversion stays defined. Each coefficient is bounded
+ * alone, and a generator drawing from those bounds alone draws descriptions the
+ * loader refuses as inconsistent, so every generator comes through here.
+ *
+ * `pinned` is the coefficient a test is holding where it put it -- an edge of
+ * its range -- and the other of its pair is moved instead. Nothing is moved that
+ * is already consistent.
+ */
+static void into_the_consistent_region(double *values, size_t pinned)
+{
+    const double ten_to_a = pow(10.0, values[I_STEAM_ANTOINE_A]);
+    const double saturation_bar =
+        pow(10.0, values[I_STEAM_ANTOINE_A] - values[I_STEAM_ANTOINE_B] /
+                                                  (values[I_STEAM_ANTOINE_C] +
+                                                   values[I_STEAM_SATURATION]));
+    const double highest_bar = values[I_STEAM_RESTRICTION] * values[I_STEAM_FEED_FLOW] *
+                                   values[I_STEAM_FEED_FLOW] +
+                               saturation_bar;
+    if (highest_bar >= 0.99 * ten_to_a) {
+        if (pinned == I_STEAM_ANTOINE_A) {
+            values[I_STEAM_RESTRICTION] = 0.0;
+        } else {
+            values[I_STEAM_ANTOINE_A] = 10.0;
+        }
+    }
+
+    if (values[I_STEAM_INITIAL_INVENTORY] > values[I_STEAM_CAPACITY]) {
+        if (pinned == I_STEAM_INITIAL_INVENTORY) {
+            values[I_STEAM_CAPACITY] = values[I_STEAM_INITIAL_INVENTORY];
+        } else {
+            values[I_STEAM_INITIAL_INVENTORY] = values[I_STEAM_CAPACITY];
+        }
+    }
+
+    if (!(values[I_STEAM_CEILING] > values[I_STEAM_SATURATION])) {
+        if (pinned == I_STEAM_CEILING) {
+            values[I_STEAM_SATURATION] = values[I_STEAM_CEILING] * 0.5;
+        } else if (pinned == I_STEAM_SATURATION) {
+            values[I_STEAM_CEILING] = values[I_STEAM_SATURATION] * (1.0 + 1.0e-6) + 1.0e-6;
+        } else {
+            const double lesser = fmin(values[I_STEAM_CEILING], values[I_STEAM_SATURATION]);
+            const double greater = fmax(values[I_STEAM_CEILING], values[I_STEAM_SATURATION]);
+            values[I_STEAM_SATURATION] = lesser;
+            values[I_STEAM_CEILING] = greater;
+            if (!(greater > lesser)) {
+                /* Equal: the one with room is moved, the ceiling up or else the saturation down. */
+                if (lesser < 0.5) {
+                    values[I_STEAM_CEILING] = greater + 0.5;
+                } else {
+                    values[I_STEAM_SATURATION] = lesser - 0.5;
+                }
+            }
+        }
+    }
+}
+
+/*
+ * A description with every coefficient at its own nominal except the one under
+ * test, and whether the loader reads that one as inside its range.
+ *
+ * Asked of the value alone: a refusal of the pair it belongs to is not a refusal
+ * of the value, so a value the relations alone leave unreachable -- a ceiling at
+ * the bottom of its range, with no saturation temperature below it -- is still
+ * inside its range. The relations are tested as relations, where they are.
+ */
 static bool accepts(size_t index, double value)
 {
     char text[DESCRIPTION_MAX];
     plant_parameters_t loaded;
     plant_parameter_error_t fault;
-    size_t used = 0u;
+    double values[COEFFICIENT_COUNT];
 
+    /* Each coefficient's own nominal value, for the reason describe_with
+     * above gives: no single placeholder is inside every declared range,
+     * and one that happened to be would be an accident this machinery
+     * should not rest on. */
     for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
-        int written;
-        if (i == index) {
-            written = snprintf(text + used, sizeof(text) - used, "%s = %.17g\n", NOMINAL[i].name,
-                               value);
-        } else {
-            /* Each coefficient's own nominal value, for the reason describe_with
-             * above gives: no single placeholder is inside every declared range,
-             * and one that happened to be would be an accident this machinery
-             * should not rest on. */
-            written = snprintf(text + used, sizeof(text) - used, "%s = %.17g\n", NOMINAL[i].name,
-                               NOMINAL[i].value);
-        }
-        TEST_ASSERT_TRUE(written > 0);
-        used += (size_t)written;
-        TEST_ASSERT_TRUE(used < sizeof(text));
+        values[i] = (i == index) ? value : NOMINAL[i].value;
     }
+    const size_t used = describe_values(values, text, sizeof(text));
 
     memset(&fault, 0, sizeof(fault));
-    return plant_parameters_load(text, used, &loaded, &fault);
+    return plant_parameters_load(text, used, &loaded, &fault) ||
+           fault.fault == PLANT_PARAMETER_INCONSISTENT;
 }
 
 /*
@@ -1118,17 +1241,13 @@ static void discover_bounds(size_t index, double *low, double *high)
 /* A description drawing every coefficient uniformly from its declared range. */
 static size_t describe_sampled(const double *low, const double *high, char *out, size_t capacity)
 {
-    size_t used = 0u;
+    double values[COEFFICIENT_COUNT];
 
     for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
-        const double value = low[i] + rng_unit() * (high[i] - low[i]);
-        const int written =
-            snprintf(out + used, capacity - used, "%s = %.17g\n", NOMINAL[i].name, value);
-        TEST_ASSERT_TRUE(written > 0);
-        used += (size_t)written;
-        TEST_ASSERT_TRUE(used < capacity);
+        values[i] = low[i] + rng_unit() * (high[i] - low[i]);
     }
-    return used;
+    into_the_consistent_region(values, NONE_PINNED);
+    return describe_values(values, out, capacity);
 }
 
 /*
@@ -1141,17 +1260,13 @@ static size_t describe_sampled(const double *low, const double *high, char *out,
 static size_t describe_corner(const double *low, const double *high, bool take_high, char *out,
                               size_t capacity)
 {
-    size_t used = 0u;
+    double values[COEFFICIENT_COUNT];
 
     for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
-        const double value = take_high ? high[i] : low[i];
-        const int written =
-            snprintf(out + used, capacity - used, "%s = %.17g\n", NOMINAL[i].name, value);
-        TEST_ASSERT_TRUE(written > 0);
-        used += (size_t)written;
-        TEST_ASSERT_TRUE(used < capacity);
+        values[i] = take_high ? high[i] : low[i];
     }
-    return used;
+    into_the_consistent_region(values, NONE_PINNED);
+    return describe_values(values, out, capacity);
 }
 
 /*
@@ -1166,49 +1281,51 @@ static size_t describe_corner(const double *low, const double *high, bool take_h
 static size_t describe_mixed_corner(const double *low, const double *high, char *out,
                                     size_t capacity)
 {
-    size_t used = 0u;
+    double values[COEFFICIENT_COUNT];
 
     for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
-        const double value = (rng_next() & 1u) != 0u ? high[i] : low[i];
-        const int written =
-            snprintf(out + used, capacity - used, "%s = %.17g\n", NOMINAL[i].name, value);
-        TEST_ASSERT_TRUE(written > 0);
-        used += (size_t)written;
-        TEST_ASSERT_TRUE(used < capacity);
+        values[i] = (rng_next() & 1u) != 0u ? high[i] : low[i];
     }
-    return used;
+    into_the_consistent_region(values, NONE_PINNED);
+    return describe_values(values, out, capacity);
 }
 
 /* One coefficient at a bound, the rest nominal -- so a single extreme is not
  * masked by the others also being extreme. */
 static size_t describe_at_bound(const double *bounds, size_t index, char *out, size_t capacity)
 {
-    size_t used = 0u;
+    double values[COEFFICIENT_COUNT];
 
     for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
-        const double value = (i == index) ? bounds[i] : NOMINAL[i].value;
-        const int written =
-            snprintf(out + used, capacity - used, "%s = %.17g\n", NOMINAL[i].name, value);
-        TEST_ASSERT_TRUE(written > 0);
-        used += (size_t)written;
-        TEST_ASSERT_TRUE(used < capacity);
+        values[i] = (i == index) ? bounds[i] : NOMINAL[i].value;
     }
-    return used;
+    into_the_consistent_region(values, index);
+    return describe_values(values, out, capacity);
 }
 
-/* A description of exactly these coefficient values, in table order. */
-static size_t describe_values(const double *values, char *out, size_t capacity)
+/*
+ * Whether the description a bound-alone corner names is one the loader can
+ * hold, asserting that when it is not, it is only because the bound cannot be
+ * reached by a consistent description: the pair it belongs to is refused, or the
+ * partner it would need lies past its own range. A ceiling at the bottom of its
+ * range has no saturation temperature below it, and a saturation temperature at
+ * the top has no ceiling above it. Anything else refused is a failure.
+ */
+static bool bound_is_reachable(const char *text, size_t used, size_t index,
+                               plant_parameters_t *loaded)
 {
-    size_t used = 0u;
+    plant_parameter_error_t fault;
 
-    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
-        const int written =
-            snprintf(out + used, capacity - used, "%s = %.17g\n", NOMINAL[i].name, values[i]);
-        TEST_ASSERT_TRUE(written > 0);
-        used += (size_t)written;
-        TEST_ASSERT_TRUE(used < capacity);
+    memset(&fault, 0, sizeof(fault));
+    if (plant_parameters_load(text, used, loaded, &fault)) {
+        return true;
     }
-    return used;
+    const bool partner_out_of_reach =
+        fault.fault == PLANT_PARAMETER_INCONSISTENT ||
+        (fault.fault == PLANT_PARAMETER_OUT_OF_RANGE &&
+         strcmp(fault.parameter, NOMINAL[index].name) != 0);
+    TEST_ASSERT_TRUE_MESSAGE(partner_out_of_reach, NOMINAL[index].name);
+    return false;
 }
 
 static void all_bounds(double *low, double *high)
@@ -1360,6 +1477,9 @@ static void test_the_corners_of_the_declared_range_stay_finite(void)
             const size_t index = (size_t)(corner - 2) / 2u;
             used = describe_at_bound(((corner - 2) % 2 == 0) ? low : high, index, text,
                                      sizeof(text));
+            if (!bound_is_reachable(text, used, index, &loaded)) {
+                continue;
+            }
         } else {
             used = describe_mixed_corner(low, high, text, sizeof(text));
         }
@@ -1380,24 +1500,6 @@ static void test_the_corners_of_the_declared_range_stay_finite(void)
         }
     }
 }
-
-/* Indices into the coefficient table, for the closed-form comparison below. */
-#define I_AMBIENT 0u
-#define I_BREW_MASS 1u
-#define I_BREW_POWER 2u
-#define I_BREW_LOSS 3u
-#define I_BREW_HELD_VOLUME 4u
-#define I_BREW_CONDUCTION_TAU 5u
-#define I_STEAM_MASS 6u
-#define I_STEAM_LOSS 8u
-#define I_PUMP_FLOW 10u
-#define I_WATER_FEED 12u
-#define I_WATER_HEAT_CAPACITY 13u
-#define I_WATER_LATENT_HEAT 14u
-#define I_STEAM_SATURATION 15u
-#define I_STEAM_BAR_PER_K 16u
-#define I_STEAM_PRESSURE_FALL 17u
-#define I_STEAM_FEED_FLOW 18u
 
 /* Long enough that a per-step error becomes visible in the distance travelled. */
 #define ACCUMULATION_STEPS 200
@@ -1452,6 +1554,7 @@ static void test_a_step_matches_the_closed_form_across_the_declared_range(void)
         for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
             values[i] = low[i] + rng_unit() * (high[i] - low[i]);
         }
+        into_the_consistent_region(values, NONE_PINNED);
         const size_t used = describe_values(values, text, sizeof(text));
 
         for (size_t k = 0u; k < sizeof(intervals_ms) / sizeof(intervals_ms[0]); k++) {
@@ -1864,7 +1967,7 @@ static void test_the_trajectory_is_what_it_was_before_the_vocabulary_was_unified
         {0x1.4p+4f, 0x1.4p+4f, 0x0p+0f, 0x0p+0f, 0x0p+0f},
         {0x1.c8692p+4f, 0x1.8a64c2p+4f, 0x0p+0f, 0x0p+0f, 0x0p+0f},
         {0x1.5108f2p+5f, 0x1.0ec6eap+5f, 0x1.1fd73ap+2f, 0x0p+0f, 0x1p+2f},
-        {0x1.50bfb8p+6f, 0x1.693cd6p+7f, 0x1.1ffff8p+2f, 0x1.692c1cp+1f, 0x1p+2f},
+        {0x1.50bfb8p+6f, 0x1.693cd6p+7f, 0x1.1ffff8p+2f, 0x1.0cca12p+1f, 0x1p+2f},
     };
     static const int STEPS[] = {0, 10, 30, 60, 1100};
     static const plant_actuation_t *const UNDER[] = {&AT_REST, &AT_REST, &HEATING, &WORKING,
@@ -1894,8 +1997,14 @@ static void test_the_trajectory_is_what_it_was_before_the_vocabulary_was_unified
                                       "water.heat_capacity_j_per_ml_k = 4.15\n"
                                       "water.latent_heat_j_per_ml = 2000\n"
                                       "steam.saturation_temperature_c = 100\n"
-                                      "steam.pressure_bar_per_k = 0.035\n"
-                                      "steam.pressure_fall_bar_per_ml = 0.02\n"
+                                      "steam.saturation_antoine_a = 5.2\n"
+                                      "steam.saturation_antoine_b_k = 1800\n"
+                                      "steam.saturation_antoine_c_c = 240\n"
+                                      "steam.casting_ceiling_c = 140\n"
+                                      "steam.restriction_bar_s2_per_ml2 = 4\n"
+                                      "steam.outlet_drop_k_s_per_ml = 12\n"
+                                      "steam.liquid_capacity_ml = 5\n"
+                                      "steam.initial_inventory_ml = 1.5\n"
                                       "steam.feed_flow_ml_per_s = 5\n";
     plant_parameters_t recorded;
     plant_parameter_error_t fault;
@@ -2547,6 +2656,33 @@ static void test_scaling_refuses_a_position_this_structure_does_not_have(void)
     TEST_ASSERT_EQUAL_MEMORY(&parameters, &scaled, sizeof(scaled));
 }
 
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: A host run that cannot compute the bound
+/// from the declared ceiling states none and reports the refusal.
+///
+/// The ceiling is read back off the record by its position, and the read refuses
+/// what it cannot answer rather than reading past the record: no record, nowhere
+/// to put the figure, and a position at or past the structure's last. The figure
+/// is left as the caller had it, so a refusal is never mistaken for a value, and
+/// every position the structure has answers the described figure.
+static void test_a_value_is_read_back_by_position_and_refused_where_there_is_none(void)
+{
+    float value = -7.0f;
+
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        value = -7.0f;
+        TEST_ASSERT_TRUE_MESSAGE(plant_parameter_value(&parameters, i, &value), NOMINAL[i].name);
+        TEST_ASSERT_EQUAL_FLOAT_MESSAGE((float)NOMINAL[i].value, value, NOMINAL[i].name);
+    }
+
+    value = -7.0f;
+    TEST_ASSERT_FALSE(plant_parameter_value(&parameters, COEFFICIENT_COUNT, &value));
+    TEST_ASSERT_FALSE(plant_parameter_value(&parameters, COEFFICIENT_COUNT + 1u, &value));
+    TEST_ASSERT_FALSE(plant_parameter_value(&parameters, (size_t)-1, &value));
+    TEST_ASSERT_FALSE(plant_parameter_value(NULL, 0u, &value));
+    TEST_ASSERT_FALSE(plant_parameter_value(&parameters, 0u, NULL));
+    TEST_ASSERT_EQUAL_FLOAT(-7.0f, value);
+}
+
 /// SOL-SWEEP-JUDGEMENTS-REMADE.C1: a coefficient already sitting exactly at
 /// the edge of its declared range is a corner in its own right, and scaling it
 /// by a factor of one -- which changes nothing -- is accepted rather than
@@ -2578,9 +2714,12 @@ static void test_a_scale_landing_exactly_on_the_declared_bound_is_accepted(void)
             size_t at = 0u;
             const size_t used = describe_at_bound(edges[edge], index, text, sizeof(text));
 
-            memset(&fault, 0, sizeof(fault));
-            TEST_ASSERT_TRUE_MESSAGE(plant_parameters_load(text, used, &loaded, &fault),
-                                     NOMINAL[index].name);
+            /* An edge no consistent description sits on is not one a record can
+             * be loaded at to be scaled from. */
+            if (!bound_is_reachable(text, used, index, &loaded)) {
+                continue;
+            }
+            (void)fault;
             TEST_ASSERT_TRUE_MESSAGE(plant_parameter_position(NOMINAL[index].name, &at),
                                      NOMINAL[index].name);
             TEST_ASSERT_TRUE_MESSAGE(plant_parameter_scale(&loaded, at, 1.0f),
@@ -3117,7 +3256,7 @@ static void test_the_robustness_classes_are_one_enumerated_set(void)
 
 /* Room for the description on disk, which carries an account against every
  * value and is therefore far longer than the ones built above. */
-#define REFERENCE_MAX 16384
+#define REFERENCE_MAX 32768
 
 /*
  * And room for the statement beside it, which is prose and an order larger than
@@ -3849,9 +3988,17 @@ static void test_the_coefficient_indices_name_what_they_claim(void)
     TEST_ASSERT_EQUAL_STRING("steam.loss_w_per_k", NOMINAL[I_STEAM_LOSS].name);
     TEST_ASSERT_EQUAL_STRING("water.latent_heat_j_per_ml", NOMINAL[I_WATER_LATENT_HEAT].name);
     TEST_ASSERT_EQUAL_STRING("steam.saturation_temperature_c", NOMINAL[I_STEAM_SATURATION].name);
-    TEST_ASSERT_EQUAL_STRING("steam.pressure_bar_per_k", NOMINAL[I_STEAM_BAR_PER_K].name);
-    TEST_ASSERT_EQUAL_STRING("steam.pressure_fall_bar_per_ml",
-                             NOMINAL[I_STEAM_PRESSURE_FALL].name);
+    TEST_ASSERT_EQUAL_STRING("steam.saturation_antoine_a", NOMINAL[I_STEAM_ANTOINE_A].name);
+    TEST_ASSERT_EQUAL_STRING("steam.saturation_antoine_b_k", NOMINAL[I_STEAM_ANTOINE_B].name);
+    TEST_ASSERT_EQUAL_STRING("steam.saturation_antoine_c_c", NOMINAL[I_STEAM_ANTOINE_C].name);
+    TEST_ASSERT_EQUAL_STRING("steam.casting_ceiling_c", NOMINAL[I_STEAM_CEILING].name);
+    TEST_ASSERT_EQUAL_STRING("steam.restriction_bar_s2_per_ml2",
+                             NOMINAL[I_STEAM_RESTRICTION].name);
+    TEST_ASSERT_EQUAL_STRING("steam.outlet_drop_k_s_per_ml", NOMINAL[I_STEAM_OUTLET_DROP].name);
+    TEST_ASSERT_EQUAL_STRING("steam.liquid_capacity_ml", NOMINAL[I_STEAM_CAPACITY].name);
+    TEST_ASSERT_EQUAL_STRING("steam.initial_inventory_ml",
+                             NOMINAL[I_STEAM_INITIAL_INVENTORY].name);
+    TEST_ASSERT_EQUAL_STRING("steam.feed_flow_ml_per_s", NOMINAL[I_STEAM_FEED_FLOW].name);
 }
 
 /* --- What the description says about the new coefficient ------------------ */
@@ -4003,7 +4150,7 @@ static void test_the_shipped_description_declares_an_assumed_error_for_the_new_c
 static void test_the_statement_and_the_variant_carry_every_coefficient(void)
 {
     char statement[STATEMENT_MAX];
-    char variant[DESCRIPTION_MAX];
+    char variant[REFERENCE_MAX];
     plant_parameters_t loaded;
     plant_parameter_error_t fault;
 
@@ -4036,13 +4183,25 @@ static void test_the_statement_and_the_variant_carry_every_coefficient(void)
 }
 
 
+/* The held-liquid capacity the model was built with, read through the seam by name. */
+static float liquid_capacity_ml(const plant_parameters_t *record)
+{
+    size_t at = 0u;
+    float capacity = 0.0f;
+
+    TEST_ASSERT_TRUE(plant_parameter_position("steam.liquid_capacity_ml", &at));
+    TEST_ASSERT_TRUE(plant_parameter_value(record, at, &capacity));
+    return capacity;
+}
+
 /// SOL-UNMEASURED-STATE-RECONSTRUCTION.C13: Every plant structure answers a
 /// state written through the seam.
 ///
 /// This structure keeps every state the vocabulary names, so every one of them
 /// takes a write and reads back what was written. Correcting a reconstruction
 /// is what the write exists for, and a state that could not be written could
-/// not be corrected.
+/// not be corrected. The held liquid takes a write inside [0, capacity]; the
+/// refusal outside it is asserted beside the model's other state-write guards.
 static void test_every_state_this_structure_keeps_takes_a_write(void)
 {
     plant_model_t model;
@@ -4054,9 +4213,14 @@ static void test_every_state_this_structure_keeps_takes_a_write(void)
         float read_back = 0.0f;
 
         TEST_ASSERT_TRUE(plant_model_state(&model, (plant_state_t)state, &held));
-        TEST_ASSERT_TRUE(plant_model_set_state(&model, (plant_state_t)state, held + 11.5f));
+        float written = held + 11.5f;
+        if (state == PLANT_STATE_STEAM_LIQUID_INVENTORY_ML) {
+            const float capacity = liquid_capacity_ml(&parameters);
+            written = (held < 0.5f * capacity) ? capacity : 0.0f;
+        }
+        TEST_ASSERT_TRUE(plant_model_set_state(&model, (plant_state_t)state, written));
         TEST_ASSERT_TRUE(plant_model_state(&model, (plant_state_t)state, &read_back));
-        TEST_ASSERT_EQUAL_FLOAT(held + 11.5f, read_back);
+        TEST_ASSERT_EQUAL_FLOAT(written, read_back);
     }
 }
 
@@ -4274,6 +4438,11 @@ static void test_every_state_this_structure_keeps_reads_back_what_is_written_and
         memcpy(&held_bits, &held, sizeof(held_bits));
         differing_bits = held_bits ^ 0x80000000u;
         memcpy(&differing, &differing_bits, sizeof(differing));
+        if (state == PLANT_STATE_STEAM_LIQUID_INVENTORY_ML) {
+            /* The held liquid has physical limits the write is refused outside of. */
+            const float capacity = liquid_capacity_ml(&parameters);
+            differing = (held < 0.5f * capacity) ? capacity : 0.0f;
+        }
 
         (void)snprintf(message, sizeof(message), "state %d refused a write it answers a read for",
                        state);
@@ -4313,6 +4482,7 @@ static void test_the_seam_names_the_drawn_rate_as_a_quantity(void)
         PLANT_QUANTITY_BREW_PRESSURE_BAR,
         PLANT_QUANTITY_STEAM_PRESSURE_BAR,
         PLANT_QUANTITY_STEAM_DRAW_ML_PER_S,
+        PLANT_QUANTITY_STEAM_OUTLET_SUPERHEAT_K,
     };
 
     /* Every other quantity is listed, not merely a few. A quantity added to the
@@ -4511,8 +4681,14 @@ static void test_the_drawn_rate_is_reached_end_to_end_through_the_seam(void)
                                       "water.heat_capacity_j_per_ml_k = 4.15\n"
                                       "water.latent_heat_j_per_ml = 2000\n"
                                       "steam.saturation_temperature_c = 100\n"
-                                      "steam.pressure_bar_per_k = 0.035\n"
-                                      "steam.pressure_fall_bar_per_ml = 0.02\n"
+                                      "steam.saturation_antoine_a = 5.2\n"
+                                      "steam.saturation_antoine_b_k = 1800\n"
+                                      "steam.saturation_antoine_c_c = 240\n"
+                                      "steam.casting_ceiling_c = 140\n"
+                                      "steam.restriction_bar_s2_per_ml2 = 4\n"
+                                      "steam.outlet_drop_k_s_per_ml = 12\n"
+                                      "steam.liquid_capacity_ml = 5\n"
+                                      "steam.initial_inventory_ml = 1.5\n"
                                       "steam.feed_flow_ml_per_s = 5\n";
     plant_parameters_t loaded;
     plant_parameter_error_t fault;
@@ -5718,12 +5894,44 @@ static float steam_pressure(const plant_model_t *model)
     return value;
 }
 
-/* What the saturation relation alone gives at a steam temperature, written the
- * way the description states it rather than the way the source spells it. */
+/* An instance commanded nothing but a steam feed, at the level given. */
+static plant_actuation_t feeding_at(uint16_t level_permille)
+{
+    plant_actuation_t actuation = {{0u, 0u, 0u, 0u}};
+    actuation.level_permille[ACTUATION_CHANNEL_STEAM_PUMP] = level_permille;
+    return actuation;
+}
+
+/* The held liquid, read through the seam like everything else. */
+static float steam_inventory(const plant_model_t *model)
+{
+    float value = -1.0f;
+    TEST_ASSERT_TRUE(plant_model_state(model, PLANT_STATE_STEAM_LIQUID_INVENTORY_ML, &value));
+    return value;
+}
+
+/* What the saturation relation gives for a block holding liquid at a casting
+ * temperature, written the way the description states it and in double
+ * precision rather than the way the source spells it. */
+static double saturation_pressure_with(const double *values, double casting_c)
+{
+    const double a = values[I_STEAM_ANTOINE_A];
+    const double b = values[I_STEAM_ANTOINE_B];
+    const double c = values[I_STEAM_ANTOINE_C];
+    const double start = values[I_STEAM_SATURATION];
+
+    if (!(casting_c > start)) {
+        return 0.0;
+    }
+    const double bounded = fmin(casting_c, values[I_STEAM_CEILING]);
+    return fmax(pow(10.0, a - b / (c + bounded)) - pow(10.0, a - b / (c + start)), 0.0);
+}
+
 static float saturation_pressure(float steam_temperature_c)
 {
-    const float above = steam_temperature_c - (float)NOMINAL[I_STEAM_SATURATION].value;
-    return above > 0.0f ? (float)NOMINAL[I_STEAM_BAR_PER_K].value * above : 0.0f;
+    double values[COEFFICIENT_COUNT];
+    nominal_values(values);
+    return (float)saturation_pressure_with(values, (double)steam_temperature_c);
 }
 
 /*
@@ -5947,110 +6155,169 @@ static void test_a_steam_draw_leaves_the_coffee_side_alone(void)
     TEST_ASSERT_TRUE(steam_mass(&drawn) < steam_mass(&undrawn) - 10.0f);
 }
 
-/// SOL-PLANT-STEAM-DRAW-ENERGY.C3: Steam pressure is driven by an integrated
-/// state once a draw is open, rather than derived fresh from temperature every
-/// step.
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C1: In the thermoblock structure, while a draw
+/// is open, steam pressure is the drop across the tube, valve and tip given by one
+/// declared restriction coefficient times the square of the steam mass rate
+/// actually made (the lower of demand and commanded feed).
 ///
-/// The distinction stated as arithmetic. At every step the gap between what the
-/// saturation relation gives for the temperature the block has just reached and
-/// what the model reports for the pressure is read off, and required to be the
-/// whole of what the draw has taken since it opened -- one step's worth after
-/// one step, ten steps' worth after ten. A pressure derived fresh from the
-/// temperature each step, with the draw's cost applied to that fresh answer,
-/// would leave that gap at one step's worth for the whole of the run, which is
-/// exactly the relation this criterion replaces.
-static void test_the_steam_pressure_accumulates_the_draw_rather_than_recomputing_it(void)
+/// Asserted against the relation written out here in double precision, across
+/// feeds that bind and demands that bind, so a wrong exponent, a coefficient read
+/// as another, a made rate taken as the demand alone or the feed alone, or an
+/// offset all land somewhere this refuses. The block is held cold and unheated so
+/// the casting is not what is moving the answer.
+static void test_with_the_wand_open_pressure_is_the_restriction_drop_of_the_made_rate(void)
+{
+    static const uint16_t LEVELS[] = {100u, 250u, 500u, ACTUATION_FULL_SCALE};
+    static const float DEMANDS[] = {0.1f, 0.4f, 1.0f, 3.0f, 20.0f};
+    double values[COEFFICIENT_COUNT];
+
+    nominal_values(values);
+
+    for (size_t l = 0u; l < sizeof(LEVELS) / sizeof(LEVELS[0]); l++) {
+        for (size_t d = 0u; d < sizeof(DEMANDS) / sizeof(DEMANDS[0]); d++) {
+            plant_model_t model;
+            const plant_actuation_t actuation = feeding_at(LEVELS[l]);
+            const double feed =
+                values[I_STEAM_FEED_FLOW] * ((double)LEVELS[l] / (double)ACTUATION_FULL_SCALE);
+            const double made = fmin((double)DEMANDS[d], feed);
+            const double expected = values[I_STEAM_RESTRICTION] * made * made;
+            char message[200];
+
+            model_from(&model, values);
+            TEST_ASSERT_TRUE(plant_model_step(&model, &actuation, DEMANDS[d], STEP_MS));
+
+            (void)snprintf(message, sizeof(message),
+                           "feed %.4g mL/s and demand %.4g mL/s: pressure %.9g bar, expected %.9g",
+                           feed, (double)DEMANDS[d], (double)steam_pressure(&model), expected);
+            TEST_ASSERT_TRUE_MESSAGE(fabs((double)steam_pressure(&model) - expected) <=
+                                         1.0e-5 * expected + 1.0e-9,
+                                     message);
+        }
+    }
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C1: ...as the square of its rate -- a test
+/// stepping feed at fixed casting temperature shows pressure moving as the square
+/// of the made rate -- and the coefficient scales it.
+static void test_doubling_the_made_rate_quadruples_the_pressure_and_the_coefficient_scales_it(void)
 {
     double values[COEFFICIENT_COUNT];
+    plant_model_t slow;
+    plant_model_t fast;
+    plant_model_t stiff;
+
+    nominal_values(values);
+    model_from(&slow, values);
+    model_from(&fast, values);
+    values[I_STEAM_RESTRICTION] *= 3.0;
+    model_from(&stiff, values);
+
+    const plant_actuation_t half = feeding_at(250u);
+    const plant_actuation_t full = feeding_at(500u);
+    TEST_ASSERT_TRUE(plant_model_step(&slow, &half, 50.0f, STEP_MS));
+    TEST_ASSERT_TRUE(plant_model_step(&fast, &full, 50.0f, STEP_MS));
+    TEST_ASSERT_TRUE(plant_model_step(&stiff, &half, 50.0f, STEP_MS));
+
+    TEST_ASSERT_TRUE(steam_pressure(&slow) > 0.1f);
+    TEST_ASSERT_FLOAT_WITHIN(1.0e-4f * steam_pressure(&fast), 4.0f * steam_pressure(&slow),
+                             steam_pressure(&fast));
+    TEST_ASSERT_FLOAT_WITHIN(1.0e-4f * steam_pressure(&stiff), 3.0f * steam_pressure(&slow),
+                             steam_pressure(&stiff));
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C1: With the wand open, steam pressure follows
+/// the steam made through the restriction, not the casting temperature -- a test
+/// holding feed and opening fixed while stepping casting temperature across its
+/// working range shows pressure unchanged beyond floating-point tolerance.
+static void test_the_casting_temperature_does_not_move_the_open_wand_pressure(void)
+{
+    static const float CASTINGS_C[] = {20.0f, 80.0f, 100.0f, 125.0f, 150.0f, 200.0f, 250.0f};
+    double values[COEFFICIENT_COUNT];
     plant_model_t model;
+    const plant_actuation_t actuation = feeding_at(400u);
+    float first = 0.0f;
 
     nominal_values(values);
     model_from(&model, values);
 
-    /* Above saturation before the wand opens, so there is a pressure for the
-     * draw to take from. */
-    for (int step = 0; step < BOIL_STEPS; step++) {
-        TEST_ASSERT_TRUE(plant_model_step(&model, &DRAWING, 0.0f, STEP_MS));
+    for (size_t i = 0u; i < sizeof(CASTINGS_C) / sizeof(CASTINGS_C[0]); i++) {
+        TEST_ASSERT_TRUE(plant_model_set_state(&model, PLANT_STATE_STEAM_TEMPERATURE_C,
+                                               CASTINGS_C[i]));
+        TEST_ASSERT_TRUE(plant_model_step(&model, &actuation, 1.0f, STEP_MS));
+        if (i == 0u) {
+            first = steam_pressure(&model);
+            TEST_ASSERT_TRUE(first > 0.1f);
+        }
+        TEST_ASSERT_FLOAT_WITHIN(1.0e-6f * first, first, steam_pressure(&model));
     }
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C1: A further test opens the draw with feed
+/// commanded to zero from a block that is not at rest and shows the made rate, and
+/// so the pressure, is zero rather than a held departure from saturation. The
+/// relation is algebraic, with no pressure time constant.
+static void test_a_wand_opened_on_a_shut_feed_reads_nothing_at_once(void)
+{
+    double values[COEFFICIENT_COUNT];
+    plant_model_t model;
+    const plant_actuation_t no_feed = feeding_at(0u);
+    const plant_actuation_t some_feed = feeding_at(500u);
+
+    nominal_values(values);
+    model_from(&model, values);
+    TEST_ASSERT_TRUE(plant_model_set_state(&model, PLANT_STATE_STEAM_TEMPERATURE_C, 135.0f));
+
+    /* Shut, holding liquid, hot: there is a pressure to lose. */
+    TEST_ASSERT_TRUE(plant_model_step(&model, &no_feed, 0.0f, STEP_MS));
     TEST_ASSERT_TRUE(steam_pressure(&model) > 0.5f);
 
-    const double seconds = (double)STEP_MS / 1000.0;
-    const double per_step_bar =
-        values[I_STEAM_PRESSURE_FALL] * (double)STEAM_DRAW_ML_PER_S * seconds;
-    TEST_ASSERT_TRUE(per_step_bar > 0.0);
+    /* And a draw with pressure under it, so the next step starts from one. */
+    TEST_ASSERT_TRUE(plant_model_step(&model, &some_feed, 2.0f, STEP_MS));
+    TEST_ASSERT_TRUE(steam_pressure(&model) > 0.5f);
 
-    for (int step = 1; step <= 10; step++) {
-        TEST_ASSERT_TRUE(plant_model_step(&model, &DRAWING, STEAM_DRAW_ML_PER_S, STEP_MS));
-
-        const double relation = (double)saturation_pressure(steam_mass(&model));
-        const double reported = (double)steam_pressure(&model);
-        const double gap = relation - reported;
-        const double expected = per_step_bar * (double)step;
-
-        if (!(fabs(gap - expected) < 1.0e-5)) {
-            char message[240];
-            (void)snprintf(message, sizeof(message),
-                           "after %d steps of draw the path sits %.9g bar below the relation, and "
-                           "the draw has taken %.9g",
-                           step, gap, expected);
-            TEST_FAIL_MESSAGE(message);
-        }
-        /* The floor is not what is being measured here, so the run has to stay
-         * off it. */
-        TEST_ASSERT_TRUE(reported > 0.0);
-    }
+    /* The feed commanded to zero with the wand still open: nothing is made, and
+     * the pressure is nothing on that same step, not a value decaying to it. */
+    TEST_ASSERT_TRUE(plant_model_step(&model, &no_feed, 2.0f, STEP_MS));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, steam_pressure(&model));
+    TEST_ASSERT_TRUE(plant_model_step(&model, &no_feed, 2.0f, STEP_MS));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, steam_pressure(&model));
 }
 
-/// SOL-PLANT-STEAM-DRAW-ENERGY.C4: Steam pressure reverts to the affine relation
-/// the instant demand returns to zero.
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C2: The condition ends when the wand opens and
+/// the orifice law takes over -- an open-then-shut transition.
 ///
-/// Three things, and a model can do the first two and still be carrying the
-/// draw's residue. The pressure has to be below the relation while the wand is
-/// held; it has to be the relation exactly on the very next step with nothing
-/// drawn -- compared byte for byte, because a reversion that merely started
-/// would satisfy any tolerance and is a different claim from this one; and
-/// opening the wand again has to start from nothing rather than from where the
-/// last draw left off, which is what "no leftover offset" means and what a state
-/// that decayed towards the relation instead of being discarded would fail.
-static void test_the_steam_pressure_is_the_relation_again_the_step_the_draw_stops(void)
+/// A block that has been drawn from and is then shut holds the liquid it had, so
+/// its pressure is saturation of its casting on the first step with the wand
+/// shut, and the draw leaves no pressure of its own behind.
+static void test_a_block_opened_then_shut_is_at_saturation_of_its_casting_at_once(void)
 {
     double values[COEFFICIENT_COUNT];
     plant_model_t model;
 
     nominal_values(values);
+    values[I_STEAM_INITIAL_INVENTORY] = 0.0;
     model_from(&model, values);
+    TEST_ASSERT_TRUE(plant_model_set_state(&model, PLANT_STATE_STEAM_TEMPERATURE_C, 130.0f));
 
-    for (int step = 0; step < BOIL_STEPS; step++) {
-        TEST_ASSERT_TRUE(plant_model_step(&model, &DRAWING, 0.0f, STEP_MS));
-    }
     for (int step = 0; step < 10; step++) {
-        TEST_ASSERT_TRUE(plant_model_step(&model, &DRAWING, STEAM_DRAW_ML_PER_S, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&model, &FEEDING, STEAM_DRAW_ML_PER_S, STEP_MS));
     }
-
-    /* Held down while the wand is open, and by a margin rather than by a bit. */
     const float under_draw = steam_pressure(&model);
-    TEST_ASSERT_TRUE(under_draw < saturation_pressure(steam_mass(&model)) - 0.01f);
+    TEST_ASSERT_FLOAT_WITHIN(1.0e-4f, (float)(values[I_STEAM_RESTRICTION] * 4.0),
+                             under_draw);
 
-    /* And the relation itself on the first step with nothing drawn. */
-    TEST_ASSERT_TRUE(plant_model_step(&model, &DRAWING, 0.0f, STEP_MS));
-    const float reverted = steam_pressure(&model);
+    /* Shut, and fed no more: the inventory the draw left is kept. */
+    const plant_actuation_t idle = {{0u, 0u, 0u, 0u}};
+    TEST_ASSERT_TRUE(plant_model_step(&model, &idle, 0.0f, STEP_MS));
+    TEST_ASSERT_TRUE(steam_inventory(&model) > 0.0f);
+
+    const float shut = steam_pressure(&model);
     const float relation = saturation_pressure(steam_mass(&model));
-    TEST_ASSERT_EQUAL_MEMORY(&relation, &reverted, sizeof(float));
-
-    /*
-     * And the next draw starts from the relation rather than from where the last
-     * one stopped. One step at the same rate has to cost exactly one step's
-     * worth; a gap that had been decayed rather than discarded would show here
-     * as a deeper one.
-     */
-    TEST_ASSERT_TRUE(plant_model_step(&model, &DRAWING, STEAM_DRAW_ML_PER_S, STEP_MS));
-    const double seconds = (double)STEP_MS / 1000.0;
-    const double one_step_bar =
-        values[I_STEAM_PRESSURE_FALL] * (double)STEAM_DRAW_ML_PER_S * seconds;
-    const double gap = (double)saturation_pressure(steam_mass(&model)) -
-                       (double)steam_pressure(&model);
-    TEST_ASSERT_TRUE(fabs(gap - one_step_bar) < 1.0e-5);
+    TEST_ASSERT_TRUE(shut > 0.5f);
+    TEST_ASSERT_FLOAT_WITHIN(1.0e-4f * relation, relation, shut);
 }
+
 
 /// SOL-PLANT-STEAM-DRAW-ENERGY.C4: ...the affine relation, which is the one the
 /// structure already had.
@@ -6097,6 +6364,20 @@ static void test_a_closed_draw_leaves_no_trace_a_later_step_can_see(void)
     TEST_ASSERT_TRUE(never_drawn > 0.5f);
 }
 
+/* The capacity a description declares, read back out of its own text. */
+static double loaded_capacity(const char *text)
+{
+    const char *const line = strstr(text, "steam.liquid_capacity_ml");
+    TEST_ASSERT_NOT_NULL(line);
+    const char *const equals = strchr(line, '=');
+    TEST_ASSERT_NOT_NULL(equals);
+    return strtod(equals + 1, NULL);
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C4: Every plant structure the build can select
+/// stays admissible and advances a model instance with a draw open, the
+/// thermoblock's stepped form included, and the held inventory stays within zero
+/// and its capacity for every admissible parameter set.
 /// SOL-PLANT-STEAM-DRAW-ENERGY.C5: The stepped structure stays admissible with a
 /// draw open.
 ///
@@ -6151,6 +6432,15 @@ static void test_the_structure_stays_admissible_with_a_draw_open(void)
                     TEST_FAIL_MESSAGE(message);
                 }
             }
+            const float held = steam_inventory(&model);
+            if (!(held >= 0.0f && held <= (float)loaded_capacity(text))) {
+                char message[240];
+                (void)snprintf(message, sizeof(message),
+                               "case %d step %d: the held liquid left zero and the capacity at "
+                               "%.9g mL; description was:\n%s",
+                               c, step, (double)held, text);
+                TEST_FAIL_MESSAGE(message);
+            }
             if (quantities[PLANT_QUANTITY_STEAM_PRESSURE_BAR] < 0.0f) {
                 char message[240];
                 (void)snprintf(message, sizeof(message),
@@ -6164,64 +6454,611 @@ static void test_the_structure_stays_admissible_with_a_draw_open(void)
     }
 }
 
-/// SOL-PLANT-STEAM-DRAW-ENERGY.C5: ...with a draw open, including one the path
-/// cannot supply.
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C2: A block declared to start with no
+/// inventory and never fed.
 ///
-/// The floor asserted where it is reached rather than only where it is not. A
-/// draw that takes more pressure than the block has to give carries the path to
-/// exactly nothing and leaves it there however long it is held, which is a steam
-/// path venting to the room; a gap that went on accumulating past the pressure
-/// there was to lose would report a negative gauge pressure, and one that
-/// stopped short would leave the path holding pressure through a draw nothing
-/// could supply.
+/// However hot its casting, a shut block holding no liquid reads zero gauge
+/// pressure and not saturation. The first step that feeds it gives it liquid, and
+/// then it reads saturation of its casting.
+static void test_a_block_declared_dry_and_never_fed_reads_nothing_however_hot(void)
+{
+    double values[COEFFICIENT_COUNT];
+    plant_model_t model;
+    const plant_actuation_t idle = {{0u, 0u, 0u, 0u}};
+
+    nominal_values(values);
+    values[I_STEAM_INITIAL_INVENTORY] = 0.0;
+    model_from(&model, values);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, steam_inventory(&model));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, steam_pressure(&model));
+
+    TEST_ASSERT_TRUE(plant_model_set_state(&model, PLANT_STATE_STEAM_TEMPERATURE_C, 140.0f));
+    for (int step = 0; step < 50; step++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &idle, 0.0f, STEP_MS));
+        TEST_ASSERT_EQUAL_FLOAT(0.0f, steam_pressure(&model));
+        TEST_ASSERT_EQUAL_FLOAT(0.0f, steam_inventory(&model));
+    }
+    TEST_ASSERT_TRUE(saturation_pressure(steam_mass(&model)) > 1.0f);
+
+    /* Fed with the wand shut, it holds liquid and reads saturation. */
+    TEST_ASSERT_TRUE(plant_model_step(&model, &FEEDING, 0.0f, STEP_MS));
+    TEST_ASSERT_TRUE(steam_inventory(&model) > 0.0f);
+    const float relation = saturation_pressure(steam_mass(&model));
+    TEST_ASSERT_FLOAT_WITHIN(1.0e-4f * relation, relation, steam_pressure(&model));
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C2: Commanded feed raises it up to the
+/// capacity, and it never goes above the capacity -- a shut block fed to its
+/// capacity (the inventory clamps and the structure stays admissible). With the
+/// wand shut nothing is made and nothing leaks, so a shut block keeps its
+/// inventory.
+static void test_a_shut_block_fed_to_its_capacity_clamps_there_and_keeps_it(void)
+{
+    double values[COEFFICIENT_COUNT];
+    plant_model_t model;
+    const plant_actuation_t idle = {{0u, 0u, 0u, 0u}};
+    nominal_values(values);
+    values[I_STEAM_INITIAL_INVENTORY] = 0.0;
+    model_from(&model, values);
+
+    /* Filling at the feed rate: five millilitres a second for a tenth of a second. */
+    TEST_ASSERT_TRUE(plant_model_step(&model, &FEEDING, 0.0f, STEP_MS));
+    TEST_ASSERT_FLOAT_WITHIN(1.0e-5f, 0.5f, steam_inventory(&model));
+    TEST_ASSERT_TRUE(plant_model_step(&model, &FEEDING, 0.0f, STEP_MS));
+    TEST_ASSERT_FLOAT_WITHIN(1.0e-5f, 1.0f, steam_inventory(&model));
+
+    for (int step = 0; step < 100; step++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &FEEDING, 0.0f, STEP_MS));
+        TEST_ASSERT_TRUE(steam_inventory(&model) <= (float)values[I_STEAM_CAPACITY]);
+    }
+    TEST_ASSERT_EQUAL_FLOAT((float)values[I_STEAM_CAPACITY], steam_inventory(&model));
+
+    /* Nothing leaks: shut and unfed, the inventory is unchanged to the bit. */
+    const float held = steam_inventory(&model);
+    for (int step = 0; step < 200; step++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &idle, 0.0f, STEP_MS));
+    }
+    const float after = steam_inventory(&model);
+    TEST_ASSERT_EQUAL_MEMORY(&held, &after, sizeof(float));
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C2: The steam made through the open wand (the
+/// made rate of C1) lowers it -- against the feed that raises it.
 ///
-/// A description whose path sags far harder per millilitre than the shipped one,
-/// because the floor is otherwise unreachable and the test would be asserting
-/// about a case it never produced: at the nominal coefficients the block goes
-/// cold long before the path empties, and a floor reached by the block falling
-/// below saturation would establish nothing about the gap at all.
-static void test_a_draw_the_path_cannot_supply_stops_at_nothing(void)
+/// The inventory moves by the feed less the steam made, so a draw the feed
+/// supplies whole leaves it where it was, a draw beyond the feed is held at the
+/// feed and leaves it where it was, and a feed above the draw fills it by the
+/// difference.
+static void test_the_inventory_moves_by_the_feed_less_the_steam_made(void)
+{
+    double values[COEFFICIENT_COUNT];
+    plant_model_t model;
+    const plant_actuation_t third = feeding_at(ACTUATION_FULL_SCALE / 5u * 3u);
+    const plant_actuation_t no_feed = feeding_at(0u);
+
+    nominal_values(values);
+    values[I_STEAM_INITIAL_INVENTORY] = 1.0;
+    model_from(&model, values);
+
+    /* Feed 3 mL/s, demand 2: it gains one millilitre a second. */
+    TEST_ASSERT_TRUE(plant_model_step(&model, &third, 2.0f, STEP_MS));
+    TEST_ASSERT_FLOAT_WITHIN(1.0e-5f, 1.1f, steam_inventory(&model));
+
+    /* Demand beyond the feed: all of the feed is made, and it gains nothing. */
+    TEST_ASSERT_TRUE(plant_model_step(&model, &third, 10.0f, STEP_MS));
+    TEST_ASSERT_FLOAT_WITHIN(1.0e-5f, 1.1f, steam_inventory(&model));
+
+    /* No feed: nothing is made, and nothing is lost. */
+    TEST_ASSERT_TRUE(plant_model_step(&model, &no_feed, 10.0f, STEP_MS));
+    TEST_ASSERT_FLOAT_WITHIN(1.0e-5f, 1.1f, steam_inventory(&model));
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C2: The initial inventory is a declared
+/// parameter between zero and the capacity -- one inside it, or at it, is taken
+/// whole.
+static void test_the_initial_inventory_is_declared_and_bounded_by_the_capacity(void)
 {
     double values[COEFFICIENT_COUNT];
     plant_model_t model;
 
     nominal_values(values);
-    /* The top of the declared range, which is far enough that a single step of an
-     * ordinary draw asks for more pressure than the block has to give. */
-    values[I_STEAM_PRESSURE_FALL] = 10.0;
     model_from(&model, values);
+    TEST_ASSERT_EQUAL_FLOAT(1.5f, steam_inventory(&model));
 
-    for (int step = 0; step < BOIL_STEPS; step++) {
-        TEST_ASSERT_TRUE(plant_model_step(&model, &DRAWING, 0.0f, STEP_MS));
-    }
-    TEST_ASSERT_TRUE(steam_pressure(&model) > 0.5f);
+    values[I_STEAM_INITIAL_INVENTORY] = values[I_STEAM_CAPACITY];
+    model_from(&model, values);
+    TEST_ASSERT_EQUAL_FLOAT((float)values[I_STEAM_CAPACITY], steam_inventory(&model));
 
-    for (int step = 0; step < 20; step++) {
-        TEST_ASSERT_TRUE(plant_model_step(&model, &DRAWING, STEAM_DRAW_ML_PER_S, STEP_MS));
-        TEST_ASSERT_EQUAL_FLOAT(0.0f, steam_pressure(&model));
-    }
-
-    /* And the floor is the draw's doing rather than the block having gone cold:
-     * the relation still has pressure in it at the temperature the block is at,
-     * and the path is reporting none of it. */
-    TEST_ASSERT_TRUE(saturation_pressure(steam_mass(&model)) > 0.0f);
-
-    /* Closing the wand hands the whole of that back on the next step, which is
-     * the reversion holding at the floor as well as away from it. */
-    TEST_ASSERT_TRUE(plant_model_step(&model, &DRAWING, 0.0f, STEP_MS));
-    const float reverted = steam_pressure(&model);
-    const float relation = saturation_pressure(steam_mass(&model));
-    TEST_ASSERT_EQUAL_MEMORY(&relation, &reverted, sizeof(float));
-    TEST_ASSERT_TRUE(reverted > 0.0f);
+    values[I_STEAM_INITIAL_INVENTORY] = 0.0;
+    model_from(&model, values);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, steam_inventory(&model));
 }
 
-/* An instance commanded nothing but a steam feed, at the level given. */
-static plant_actuation_t feeding_at(uint16_t level_permille)
+/* Load a description of exactly these values; the record is left as it was on a refusal. */
+static bool load_of(const double *values, plant_parameters_t *into, plant_parameter_error_t *fault)
 {
-    plant_actuation_t actuation = {{0u, 0u, 0u, 0u}};
-    actuation.level_permille[ACTUATION_CHANNEL_STEAM_PUMP] = level_permille;
-    return actuation;
+    char text[DESCRIPTION_MAX];
+    const size_t used = describe_values(values, text, sizeof(text));
+
+    memset(fault, 0, sizeof(*fault));
+    return plant_parameters_load(text, used, into, fault);
 }
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C2: A description declaring an initial
+/// inventory above the capacity is refused at load, naming the parameter, and is
+/// not clamped.
+///
+/// Both figures are inside their own ranges, so what is wrong is the pair: it is
+/// its own fault, reported at no line, naming the initial inventory. The capacity
+/// itself is accepted at the equality, and the refusal leaves the caller's record
+/// as it was and substitutes nothing.
+static void test_an_initial_inventory_above_the_capacity_is_refused_at_load(void)
+{
+    double values[COEFFICIENT_COUNT];
+    plant_parameters_t loaded;
+    plant_parameters_t untouched;
+    plant_parameter_error_t fault;
+
+    nominal_values(values);
+    memset(&loaded, 0x5a, sizeof(loaded));
+    memcpy(&untouched, &loaded, sizeof(loaded));
+
+    values[I_STEAM_INITIAL_INVENTORY] = values[I_STEAM_CAPACITY];
+    TEST_ASSERT_TRUE_MESSAGE(load_of(values, &loaded, &fault),
+                             "an inventory equal to the capacity was refused");
+
+    const double above[] = {values[I_STEAM_CAPACITY] + 0.001, values[I_STEAM_CAPACITY] * 1.5, 40.0};
+    for (size_t i = 0u; i < sizeof(above) / sizeof(above[0]); i++) {
+        values[I_STEAM_INITIAL_INVENTORY] = above[i];
+        memcpy(&loaded, &untouched, sizeof(loaded));
+        TEST_ASSERT_FALSE(load_of(values, &loaded, &fault));
+        TEST_ASSERT_EQUAL(PLANT_PARAMETER_INCONSISTENT, fault.fault);
+        TEST_ASSERT_EQUAL_STRING("steam.initial_inventory_ml", fault.parameter);
+        TEST_ASSERT_EQUAL_UINT32(0u, fault.line);
+        TEST_ASSERT_EQUAL_INT(0, memcmp(&loaded, &untouched, sizeof(loaded)));
+    }
+
+    /* A value outside its own range is that fault, not a relation made of it. */
+    values[I_STEAM_INITIAL_INVENTORY] = 1000.0;
+    TEST_ASSERT_FALSE(load_of(values, &loaded, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_OUT_OF_RANGE, fault.fault);
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: A description whose casting ceiling is not
+/// above the declared saturation temperature ... is refused at load, naming the
+/// parameter.
+///
+/// Strictly above: a ceiling at saturation leaves no span the relation is valid
+/// over, and the trapped pressure would read nothing at every casting.
+static void test_a_casting_ceiling_not_above_saturation_is_refused_at_load(void)
+{
+    double values[COEFFICIENT_COUNT];
+    plant_parameters_t loaded;
+    plant_parameters_t untouched;
+    plant_parameter_error_t fault;
+
+    nominal_values(values);
+    memset(&loaded, 0x5a, sizeof(loaded));
+    memcpy(&untouched, &loaded, sizeof(loaded));
+
+    values[I_STEAM_CEILING] = values[I_STEAM_SATURATION] + 0.25;
+    TEST_ASSERT_TRUE_MESSAGE(load_of(values, &loaded, &fault),
+                             "a ceiling just above saturation was refused");
+
+    const double not_above[] = {values[I_STEAM_SATURATION], values[I_STEAM_SATURATION] - 0.25,
+                                values[I_STEAM_SATURATION] - 10.0};
+    for (size_t i = 0u; i < sizeof(not_above) / sizeof(not_above[0]); i++) {
+        values[I_STEAM_CEILING] = not_above[i];
+        memcpy(&loaded, &untouched, sizeof(loaded));
+        TEST_ASSERT_FALSE(load_of(values, &loaded, &fault));
+        TEST_ASSERT_EQUAL(PLANT_PARAMETER_INCONSISTENT, fault.fault);
+        TEST_ASSERT_EQUAL_STRING("steam.casting_ceiling_c", fault.parameter);
+        TEST_ASSERT_EQUAL_UINT32(0u, fault.line);
+        TEST_ASSERT_EQUAL_INT(0, memcmp(&loaded, &untouched, sizeof(loaded)));
+    }
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C2: A description declaring an initial
+/// inventory above the capacity is refused at load, naming the parameter, and is
+/// not clamped.
+///
+/// Where more than one relation fails the same one is named every time, the
+/// first the structure declares, so a refusal reads the same on every load.
+static void test_a_description_breaking_two_relations_is_refused_on_the_same_one_each_time(void)
+{
+    double values[COEFFICIENT_COUNT];
+    plant_parameters_t loaded;
+    plant_parameter_error_t fault;
+
+    nominal_values(values);
+    values[I_STEAM_INITIAL_INVENTORY] = values[I_STEAM_CAPACITY] + 1.0;
+    values[I_STEAM_CEILING] = values[I_STEAM_SATURATION] - 1.0;
+    for (size_t again = 0u; again < 3u; again++) {
+        TEST_ASSERT_FALSE(load_of(values, &loaded, &fault));
+        TEST_ASSERT_EQUAL(PLANT_PARAMETER_INCONSISTENT, fault.fault);
+        TEST_ASSERT_EQUAL_STRING("steam.initial_inventory_ml", fault.parameter);
+    }
+}
+
+
+/* The nominal description's record, loaded. */
+static plant_parameters_t nominal_record(void)
+{
+    double values[COEFFICIENT_COUNT];
+    plant_parameters_t record;
+    plant_parameter_error_t fault;
+
+    nominal_values(values);
+    TEST_ASSERT_TRUE(load_of(values, &record, &fault));
+    return record;
+}
+
+static size_t position_of(const char *name)
+{
+    size_t at = 0u;
+
+    TEST_ASSERT_TRUE_MESSAGE(plant_parameter_position(name, &at), name);
+    return at;
+}
+
+static float coefficient_named(const plant_parameters_t *record, const char *name)
+{
+    float value = 0.0f;
+
+    TEST_ASSERT_TRUE_MESSAGE(plant_parameter_value(record, position_of(name), &value), name);
+    return value;
+}
+
+/*
+ * A copy of a record with one coefficient written to exactly `value`, by
+ * whatever route the loader's checks are not on: where the field sits is found
+ * by scaling it in a second copy and seeing which word moved, so no test reaches
+ * into the structure's own record. The coefficient must be nonzero in the
+ * record, or scaling it moves nothing.
+ */
+static plant_parameters_t edited(const plant_parameters_t *record, const char *name, float value)
+{
+    plant_parameters_t moved = *record;
+    plant_parameters_t written = *record;
+    const unsigned char *before = (const unsigned char *)record;
+    const unsigned char *after = (const unsigned char *)&moved;
+    size_t found = sizeof(*record);
+
+    TEST_ASSERT_TRUE_MESSAGE(plant_parameter_scale(&moved, position_of(name), 0.9f), name);
+    for (size_t at = 0u; at + sizeof(float) <= sizeof(*record); at += sizeof(float)) {
+        if (memcmp(before + at, after + at, sizeof(float)) != 0) {
+            found = at;
+            break;
+        }
+    }
+    TEST_ASSERT_TRUE_MESSAGE(found < sizeof(*record), name);
+    memcpy((unsigned char *)&written + found, &value, sizeof(value));
+    return written;
+}
+
+/* The record is one no model is built from: init refuses it and leaves the instance unusable. */
+static void assert_the_model_refuses(const plant_parameters_t *record, const char *what)
+{
+    plant_model_t model;
+
+    /* An instance that looks initialised, so a refusal that left it so is seen. */
+    memset(&model, 0xff, sizeof(model));
+    TEST_ASSERT_FALSE_MESSAGE(plant_parameters_admissible(record, NULL), what);
+    TEST_ASSERT_FALSE_MESSAGE(plant_model_init(&model, record), what);
+    TEST_ASSERT_FALSE_MESSAGE(plant_model_step(&model, &FEEDING, STEAM_DRAW_ML_PER_S, STEP_MS), what);
+}
+
+/* The record is one a model is built from, and steps with the wand open to finite quantities. */
+static void assert_the_model_accepts(const plant_parameters_t *record, const char *what)
+{
+    plant_model_t model;
+    float quantities[PLANT_QUANTITY_COUNT];
+
+    TEST_ASSERT_TRUE_MESSAGE(plant_parameters_admissible(record, NULL), what);
+    TEST_ASSERT_TRUE_MESSAGE(plant_model_init(&model, record), what);
+    TEST_ASSERT_TRUE_MESSAGE(plant_model_set_state(&model, PLANT_STATE_STEAM_TEMPERATURE_C, 150.0f),
+                             what);
+    for (int step = 0; step < 5; step++) {
+        TEST_ASSERT_TRUE_MESSAGE(plant_model_step(&model, &FEEDING, STEAM_DRAW_ML_PER_S, STEP_MS),
+                                 what);
+    }
+    read_all(&model, quantities);
+    for (int q = 0; q < PLANT_QUANTITY_COUNT; q++) {
+        TEST_ASSERT_TRUE_MESSAGE(isfinite(quantities[q]), what);
+    }
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C2: A description declaring an initial
+/// inventory above the capacity is refused wherever a model is built from the
+/// description, at load and at model construction, naming the parameter, and is
+/// not clamped.
+///
+/// A record edited past the loader is refused where it would be run: the model's
+/// own initialisation returns false and the instance does not step. The capacity
+/// itself is accepted at the equality, and nothing is clamped to make a record
+/// pass.
+static void test_an_inventory_above_the_capacity_edited_past_the_loader_is_refused_by_the_model(void)
+{
+    const plant_parameters_t base = nominal_record();
+    const float capacity = coefficient_named(&base, "steam.liquid_capacity_ml");
+    plant_parameters_t record = edited(&base, "steam.initial_inventory_ml", capacity);
+
+    assert_the_model_accepts(&record, "an inventory equal to the capacity");
+
+    const float above[] = {nextafterf(capacity, INFINITY), capacity + 0.001f, capacity * 1.5f,
+                           40.0f};
+    for (size_t i = 0u; i < sizeof(above) / sizeof(above[0]); i++) {
+        char message[80];
+
+        (void)snprintf(message, sizeof(message), "an inventory of %.9g over a capacity of %.9g",
+                       (double)above[i], (double)capacity);
+        record = edited(&base, "steam.initial_inventory_ml", above[i]);
+        assert_the_model_refuses(&record, message);
+    }
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: A description whose casting ceiling is not
+/// above the declared saturation temperature is refused wherever a model is built
+/// from the description, at load and at model construction, naming the parameter,
+/// and a bound is stated only for a record the model accepts.
+///
+/// Strictly above: a ceiling at saturation is refused by the model as it is at
+/// load, and so is one below it. A ceiling one representable step above is a
+/// record the model accepts.
+static void test_a_ceiling_not_above_saturation_edited_past_the_loader_is_refused_by_the_model(void)
+{
+    const plant_parameters_t base = nominal_record();
+    const float saturation = coefficient_named(&base, "steam.saturation_temperature_c");
+    plant_parameters_t record = edited(&base, "steam.casting_ceiling_c", nextafterf(saturation, INFINITY));
+
+    assert_the_model_accepts(&record, "a ceiling one step above saturation");
+
+    const float not_above[] = {saturation, nextafterf(saturation, -INFINITY), saturation - 0.25f,
+                               saturation - 10.0f};
+    for (size_t i = 0u; i < sizeof(not_above) / sizeof(not_above[0]); i++) {
+        char message[80];
+
+        (void)snprintf(message, sizeof(message), "a ceiling of %.9g over saturation of %.9g",
+                       (double)not_above[i], (double)saturation);
+        record = edited(&base, "steam.casting_ceiling_c", not_above[i]);
+        assert_the_model_refuses(&record, message);
+    }
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: The saturation relation cannot be inverted
+/// across the span up to the ceiling ... a record with such a pair is refused
+/// wherever a model is built from the description, naming the parameter.
+///
+/// The open-draw pressure is the restriction's drop across the feed at full rate,
+/// read over the saturation figure, and the inversion is defined only below ten
+/// to the Antoine constant a. A record just inside that is accepted and steps to
+/// finite quantities; one just beyond is refused, by the loader and by the model
+/// alike, naming the restriction. Raising the feed, the restriction or lowering
+/// the constant each reach it.
+static void test_a_restriction_whose_open_draw_pressure_cannot_be_inverted_is_refused(void)
+{
+    const plant_parameters_t base = nominal_record();
+    const plant_parameters_t wide = edited(&base, "steam.feed_flow_ml_per_s", 100.0f);
+    const double a = (double)coefficient_named(&wide, "steam.saturation_antoine_a");
+    const double b = (double)coefficient_named(&wide, "steam.saturation_antoine_b_k");
+    const double c = (double)coefficient_named(&wide, "steam.saturation_antoine_c_c");
+    const double saturation_c = (double)coefficient_named(&wide, "steam.saturation_temperature_c");
+    const double saturation_bar = pow(10.0, a - b / (c + saturation_c));
+    const double limit_bar = pow(10.0, a);
+    const double feed_squared = 100.0 * 100.0;
+
+    /*
+     * Each side of the limit by a quarter of a bar. The saturation figure the
+     * drop is read over is about a bar, so an edge a tenth of a percent either
+     * way of ten to the constant would sit on the same side of the limit with
+     * that figure dropped or subtracted; a quarter of a bar does not.
+     */
+    const double edge_bar = 0.25;
+    plant_parameters_t record =
+        edited(&wide, "steam.restriction_bar_s2_per_ml2",
+               (float)((limit_bar - saturation_bar - edge_bar) / feed_squared));
+    assert_the_model_accepts(&record, "a restriction a quarter of a bar inside the limit");
+
+    record = edited(&wide, "steam.restriction_bar_s2_per_ml2",
+                    (float)((limit_bar - saturation_bar + edge_bar) / feed_squared));
+    assert_the_model_refuses(&record, "a restriction a quarter of a bar beyond the limit");
+
+    /*
+     * The same pair reached from the constant instead of the restriction. The
+     * saturation figure moves with the constant, so the limit is solved for:
+     * the highest pressure is the drop plus ten to the constant over ten to the
+     * saturation exponent, and it stays under ten to the constant when that is
+     * above the drop over one less that factor.
+     */
+    const double drop_bar = 100.0;
+    const double exponent = b / (c + saturation_c);
+    const double needed_bar = drop_bar / (1.0 - pow(10.0, -exponent));
+    const plant_parameters_t steady =
+        edited(&wide, "steam.restriction_bar_s2_per_ml2", (float)(drop_bar / feed_squared));
+    record = edited(&steady, "steam.saturation_antoine_a", (float)log10(needed_bar + edge_bar));
+    assert_the_model_accepts(&record, "a constant a quarter of a bar above what the drop needs");
+    record = edited(&steady, "steam.saturation_antoine_a", (float)log10(needed_bar - edge_bar));
+    assert_the_model_refuses(&record, "a constant a quarter of a bar below what the drop needs");
+    record = edited(&wide, "steam.saturation_antoine_a", 2.0f);
+    assert_the_model_refuses(&record, "a constant of two");
+
+    /* And the loader names the restriction, at no line, leaving the caller's record alone. */
+    double values[COEFFICIENT_COUNT];
+    plant_parameters_t loaded;
+    plant_parameters_t untouched;
+    plant_parameter_error_t fault;
+
+    nominal_values(values);
+    values[I_STEAM_FEED_FLOW] = 100.0;
+    memset(&loaded, 0x5a, sizeof(loaded));
+    memcpy(&untouched, &loaded, sizeof(loaded));
+    values[I_STEAM_RESTRICTION] = (limit_bar - saturation_bar + edge_bar) / feed_squared;
+    TEST_ASSERT_FALSE(load_of(values, &loaded, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_INCONSISTENT, fault.fault);
+    TEST_ASSERT_EQUAL_STRING("steam.restriction_bar_s2_per_ml2", fault.parameter);
+    TEST_ASSERT_EQUAL_UINT32(0u, fault.line);
+    TEST_ASSERT_EQUAL_INT(0, memcmp(&loaded, &untouched, sizeof(loaded)));
+    values[I_STEAM_RESTRICTION] = (limit_bar - saturation_bar - edge_bar) / feed_squared;
+    TEST_ASSERT_TRUE(load_of(values, &loaded, &fault));
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C2: A description declaring an initial
+/// inventory above the capacity is refused wherever a model is built from the
+/// description, at load and at model construction, naming the parameter, and is
+/// not clamped.
+///
+/// A record scaled coefficient by coefficient, the way the margin's corners are,
+/// is refused by the model when the result breaks a relation, for each of the
+/// three. The scaling itself stays range-only, because an intermediate record
+/// can break a relation the final one does not: capacity cut and then the
+/// inventory cut with it is a machine, and each step is allowed.
+static void test_a_scaled_record_breaking_a_relation_is_refused_by_the_model(void)
+{
+    plant_parameters_t record = nominal_record();
+
+    /* The inventory over the capacity, both ways of getting there. */
+    TEST_ASSERT_TRUE(plant_parameter_scale(&record, position_of("steam.liquid_capacity_ml"), 0.2f));
+    assert_the_model_refuses(&record, "a capacity cut under the inventory");
+    TEST_ASSERT_TRUE(plant_parameter_scale(&record, position_of("steam.initial_inventory_ml"), 0.5f));
+    assert_the_model_accepts(&record, "the inventory cut after the capacity");
+
+    record = nominal_record();
+    TEST_ASSERT_TRUE(plant_parameter_scale(&record, position_of("steam.liquid_capacity_ml"), 0.4f));
+    TEST_ASSERT_TRUE(plant_parameter_scale(&record, position_of("steam.initial_inventory_ml"), 1.6f));
+    assert_the_model_refuses(&record, "the capacity at 0.4 and the inventory at 1.6");
+
+    /* The ceiling under saturation, from either end. */
+    record = nominal_record();
+    TEST_ASSERT_TRUE(plant_parameter_scale(&record, position_of("steam.casting_ceiling_c"), 0.5f));
+    assert_the_model_refuses(&record, "a ceiling halved");
+    record = nominal_record();
+    TEST_ASSERT_TRUE(plant_parameter_scale(&record, position_of("steam.saturation_temperature_c"), 1.5f));
+    assert_the_model_refuses(&record, "a saturation temperature raised past the ceiling");
+
+    /* The open-draw pressure past what the saturation relation can be inverted at. */
+    record = nominal_record();
+    TEST_ASSERT_TRUE(plant_parameter_scale(&record, position_of("steam.feed_flow_ml_per_s"), 20.0f));
+    assert_the_model_accepts(&record, "a feed twenty times over, which the relation still admits");
+    TEST_ASSERT_TRUE(plant_parameter_scale(&record, position_of("steam.restriction_bar_s2_per_ml2"), 250.0f));
+    assert_the_model_refuses(&record, "the restriction raised until the drop cannot be inverted");
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C2: A description declaring an initial
+/// inventory above the capacity is refused wherever a model is built from the
+/// description, at load and at model construction, naming the parameter, and is
+/// not clamped.
+///
+/// A record whose value is outside its own range, or not a number, is as little
+/// a machine as one whose pair is wrong, and the model refuses it wherever it
+/// came from: a calibration tool that divided by zero emits a not-a-number, and
+/// every comparison against one is false.
+static void test_a_value_outside_its_range_or_not_a_number_is_refused_by_the_model(void)
+{
+    const plant_parameters_t base = nominal_record();
+    const float hostile[] = {NAN, INFINITY, -INFINITY, 1.0e30f, -1.0e30f};
+
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        for (size_t v = 0u; v < sizeof(hostile) / sizeof(hostile[0]); v++) {
+            char message[96];
+            const plant_parameters_t record = edited(&base, NOMINAL[i].name, hostile[v]);
+
+            (void)snprintf(message, sizeof(message), "%s written as %g", NOMINAL[i].name,
+                           (double)hostile[v]);
+            assert_the_model_refuses(&record, message);
+        }
+    }
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C2: A description declaring an initial
+/// inventory above the capacity is refused wherever a model is built from the
+/// description, at load and at model construction, naming the parameter, and is
+/// not clamped.
+///
+/// What the shared check reports: a value out of range before a relation made of
+/// values, the first relation the structure declares when two fail, the value and
+/// bounds with a range fault, a null record as a refusal, and a null error as no
+/// report rather than a fault.
+static void test_the_admissibility_check_names_the_first_fault_it_finds(void)
+{
+    const plant_parameters_t base = nominal_record();
+    plant_parameter_error_t fault;
+
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_TRUE(plant_parameters_admissible(&base, &fault));
+    TEST_ASSERT_FALSE(plant_parameters_admissible(NULL, &fault));
+    TEST_ASSERT_FALSE(plant_parameters_admissible(NULL, NULL));
+
+    plant_parameters_t record = edited(&base, "steam.liquid_capacity_ml", NAN);
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_FALSE(plant_parameters_admissible(&record, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_OUT_OF_RANGE, fault.fault);
+    TEST_ASSERT_EQUAL_STRING("steam.liquid_capacity_ml", fault.parameter);
+    TEST_ASSERT_EQUAL_UINT32(0u, fault.line);
+    TEST_ASSERT_TRUE(isnan(fault.value));
+    TEST_ASSERT_TRUE(fault.maximum > fault.minimum);
+
+    /* Out of range beats the relation made of it: a capacity below its range and an inventory over it. */
+    record = edited(&base, "steam.liquid_capacity_ml", 0.01f);
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_FALSE(plant_parameters_admissible(&record, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_OUT_OF_RANGE, fault.fault);
+    TEST_ASSERT_EQUAL_STRING("steam.liquid_capacity_ml", fault.parameter);
+    TEST_ASSERT_EQUAL_FLOAT(0.01f, fault.value);
+
+    /* Two relations failing name the first the structure declares. */
+    record = edited(&base, "steam.initial_inventory_ml", 6.0f);
+    record = edited(&record, "steam.casting_ceiling_c", 90.0f);
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_FALSE(plant_parameters_admissible(&record, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_INCONSISTENT, fault.fault);
+    TEST_ASSERT_EQUAL_STRING("steam.initial_inventory_ml", fault.parameter);
+    TEST_ASSERT_FALSE(plant_parameters_admissible(&record, NULL));
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C2: It never goes below zero or above the
+/// capacity.
+///
+/// The held liquid is written only inside its limits: a value that is not a
+/// number, an infinity, one below nothing or one above the capacity is refused
+/// and leaves the state where it was, and nothing is clamped to make it fit.
+/// Both limits themselves are written. The temperatures are free, because the
+/// ceiling probe stands the block above its own ceiling on purpose.
+static void test_the_held_liquid_is_written_only_inside_its_limits(void)
+{
+    const plant_parameters_t record = nominal_record();
+    const float capacity = coefficient_named(&record, "steam.liquid_capacity_ml");
+    plant_model_t model;
+    float held = 0.0f;
+    float read = 0.0f;
+
+    TEST_ASSERT_TRUE(plant_model_init(&model, &record));
+    TEST_ASSERT_TRUE(plant_model_state(&model, PLANT_STATE_STEAM_LIQUID_INVENTORY_ML, &held));
+
+    const float refused[] = {NAN, INFINITY, -INFINITY, -0.001f, nextafterf(0.0f, -1.0f),
+                             nextafterf(capacity, INFINITY), capacity + 0.001f, capacity * 2.0f};
+    for (size_t i = 0u; i < sizeof(refused) / sizeof(refused[0]); i++) {
+        char message[64];
+
+        (void)snprintf(message, sizeof(message), "an inventory of %g", (double)refused[i]);
+        TEST_ASSERT_FALSE_MESSAGE(
+            plant_model_set_state(&model, PLANT_STATE_STEAM_LIQUID_INVENTORY_ML, refused[i]), message);
+        TEST_ASSERT_TRUE(plant_model_state(&model, PLANT_STATE_STEAM_LIQUID_INVENTORY_ML, &read));
+        TEST_ASSERT_EQUAL_FLOAT_MESSAGE(held, read, message);
+    }
+
+    const float written[] = {0.0f, capacity, capacity * 0.5f};
+    for (size_t i = 0u; i < sizeof(written) / sizeof(written[0]); i++) {
+        TEST_ASSERT_TRUE(
+            plant_model_set_state(&model, PLANT_STATE_STEAM_LIQUID_INVENTORY_ML, written[i]));
+        TEST_ASSERT_TRUE(plant_model_state(&model, PLANT_STATE_STEAM_LIQUID_INVENTORY_ML, &read));
+        TEST_ASSERT_EQUAL_FLOAT(written[i], read);
+    }
+
+    TEST_ASSERT_TRUE(plant_model_set_state(&model, PLANT_STATE_STEAM_TEMPERATURE_C, 175.0f));
+    TEST_ASSERT_TRUE(plant_model_state(&model, PLANT_STATE_STEAM_TEMPERATURE_C, &read));
+    TEST_ASSERT_EQUAL_FLOAT(175.0f, read);
+}
+
 
 /// SOL-PLANT-STEAM-FEED-SENSIBLE-HEAT.C1: Both structures' steam-side loss term
 /// sums latent and sensible heat against the feed.
@@ -6357,6 +7194,8 @@ static void test_a_draw_beyond_the_commanded_feed_is_honoured_at_the_feed(void)
      * And the bound was doing something: the same demand against a feed that can
      * supply it takes the block and the path a long way further down. Without
      * this the identity above is two runs of a relation that ignores the demand.
+     * The path reads higher against the feed that supplies it, because the steam
+     * made through the restriction is more.
      */
     plant_model_t supplied;
     model_from(&supplied, values);
@@ -6367,7 +7206,7 @@ static void test_a_draw_beyond_the_commanded_feed_is_honoured_at_the_feed(void)
         TEST_ASSERT_TRUE(plant_model_step(&supplied, &DRAWING, beyond_it, STEP_MS));
     }
     TEST_ASSERT_TRUE(steam_mass(&supplied) < bounded_c - 5.0f);
-    TEST_ASSERT_TRUE(steam_pressure(&supplied) < bounded_bar - 0.01f);
+    TEST_ASSERT_TRUE(steam_pressure(&supplied) > bounded_bar + 0.01f);
 }
 
 /// SOL-PLANT-STEAM-FEED-PUMP-WIRED.C2: A fully commanded feed channel leaves
@@ -6412,16 +7251,15 @@ static void test_a_draw_the_feed_can_supply_is_honoured_whole(void)
     TEST_ASSERT_TRUE(steam_mass(&plenty) < steam_mass(&shut) - 10.0f);
 }
 
-/// SOL-PLANT-STEAM-FEED-PUMP-WIRED.C1: ...clamp the effective draw the energy
-/// and pressure terms see -- to nothing, where nothing is being fed.
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C1: Out of a feed commanded shut, nothing is
+/// made, and so the block is charged nothing and the open wand reads nothing.
 ///
-/// The case the bound exists to represent, and the one a reader is likeliest to
-/// doubt: a block holding no reservoir makes no steam out of water it has not
-/// been given, so opening the wand on a feed commanded shut has to leave the
-/// block and the path exactly where leaving the wand shut leaves them. Compared
-/// byte for byte over a long run, because a bound that let a fraction through
-/// would show as a drift rather than as a difference in any one step.
-static void test_a_draw_with_the_feed_shut_costs_the_block_and_the_path_nothing(void)
+/// The case the bound exists to represent: a block makes no steam out of water it
+/// has not been given, so opening the wand on a feed commanded shut leaves the
+/// block exactly where leaving the wand shut leaves it, and the path reads no
+/// pressure through the restriction. Compared byte for byte over a long run, with
+/// the shut run holding saturation of the same casting.
+static void test_a_draw_with_the_feed_shut_costs_the_block_nothing_and_reads_no_pressure(void)
 {
     double values[COEFFICIENT_COUNT];
     plant_model_t asked;
@@ -6448,15 +7286,17 @@ static void test_a_draw_with_the_feed_shut_costs_the_block_and_the_path_nothing(
     read_all(&asked, from_asked);
     read_all(&unasked, from_unasked);
 
-    /* Every quantity but the one that answers for the demand itself, which is
-     * the demand and is meant to differ -- see the test below. */
+    /* Every quantity but the demand itself and the pressure, which is the one
+     * that differs: the shut wand sits at saturation and the open one at nothing. */
     for (int q = 0; q < PLANT_QUANTITY_COUNT; q++) {
-        if (q == (int)PLANT_QUANTITY_STEAM_DRAW_ML_PER_S) {
+        if (q == (int)PLANT_QUANTITY_STEAM_DRAW_ML_PER_S ||
+            q == (int)PLANT_QUANTITY_STEAM_PRESSURE_BAR) {
             continue;
         }
         TEST_ASSERT_EQUAL_MEMORY(&from_unasked[q], &from_asked[q], sizeof(float));
     }
-    TEST_ASSERT_TRUE(from_asked[PLANT_QUANTITY_STEAM_PRESSURE_BAR] > 0.0f);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, from_asked[PLANT_QUANTITY_STEAM_PRESSURE_BAR]);
+    TEST_ASSERT_TRUE(from_unasked[PLANT_QUANTITY_STEAM_PRESSURE_BAR] > 0.0f);
 }
 
 /// SOL-PLANT-STEAM-FEED-PUMP-WIRED.C1: ...the energy and pressure terms, and
@@ -6499,23 +7339,14 @@ static void test_the_reported_draw_is_the_demand_even_where_the_feed_bounds_it(v
     TEST_ASSERT_EQUAL_MEMORY(&unpaid, &charged, sizeof(float));
 }
 
-/// SOL-PLANT-STEAM-FEED-PUMP-WIRED.C1: ...clamp the effective draw the energy
-/// and pressure terms see -- which bounds how fast the path's departure widens
-/// and does not decide whether there is one.
-/// SOL-PLANT-STEAM-DRAW-ENERGY.C4: Steam pressure reverts to the affine relation
-/// the instant demand returns to zero -- demand, and not the feed behind it.
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C1: Pressure follows the steam made, so a feed
+/// shut mid-draw drops it with the made rate and the wand closing returns the
+/// trapped relation.
 ///
-/// The two halves of the deficit relation answer to different things, and the
-/// cheap way to write the bound gets that wrong. Whether the path is tied to its
-/// block's temperature is a fact about the wand being open; how fast it is
-/// carried further down is a fact about how much steam is being made. A bound
-/// applied to both at once makes shutting the feed mid-draw look like shutting
-/// the wand, and the whole accumulated departure is handed back in one step --
-/// so the pressure rises because the pump stopped, and the one handle a steam
-/// loop has over a draw reads as a way of raising steam pressure. Asserted as
-/// three things: the departure stops growing, none of it is returned, and the
-/// wand closing still returns all of it.
-static void test_shutting_the_feed_mid_draw_holds_the_departure_rather_than_returning_it(void)
+/// Three things: the pressure under a draw is the restriction's drop, it is nothing
+/// the step after the feed is shut with the wand still open, and shutting the wand
+/// afterwards gives saturation of the casting the block still holds liquid at.
+static void test_shutting_the_feed_mid_draw_drops_the_pressure_and_the_wand_returns_saturation(void)
 {
     double values[COEFFICIENT_COUNT];
     plant_model_t model;
@@ -6530,39 +7361,22 @@ static void test_shutting_the_feed_mid_draw_holds_the_departure_rather_than_retu
     for (int step = 0; step < BOIL_STEPS; step++) {
         TEST_ASSERT_TRUE(plant_model_step(&model, &fed, 0.0f, STEP_MS));
     }
-    TEST_ASSERT_TRUE(steam_pressure(&model) > 0.5f);
-
-    /* A draw long enough to put a departure worth losing into the path. */
     for (int step = 0; step < 10; step++) {
         TEST_ASSERT_TRUE(plant_model_step(&model, &fed, STEAM_DRAW_ML_PER_S, STEP_MS));
     }
-    const double held_open = (double)saturation_pressure(steam_mass(&model)) -
-                             (double)steam_pressure(&model);
-    TEST_ASSERT_TRUE(held_open > 0.01);
+    TEST_ASSERT_FLOAT_WITHIN(1.0e-4f, (float)(values[I_STEAM_RESTRICTION] * 4.0),
+                             steam_pressure(&model));
 
-    /* The feed shut with the wand still open. The departure has to be exactly
-     * what it was: not widened, because nothing is being made, and not returned,
-     * because the wand is still open. */
     for (int step = 0; step < 10; step++) {
         TEST_ASSERT_TRUE(plant_model_step(&model, &starved, STEAM_DRAW_ML_PER_S, STEP_MS));
-
-        const double still_open = (double)saturation_pressure(steam_mass(&model)) -
-                                  (double)steam_pressure(&model);
-        char message[240];
-        (void)snprintf(message, sizeof(message),
-                       "step %d with the feed shut and the wand open: the path sits %.9g bar "
-                       "below the relation, and it sat %.9g bar below it when the feed closed",
-                       step, still_open, held_open);
-        TEST_ASSERT_TRUE_MESSAGE(fabs(still_open - held_open) < 1.0e-5, message);
+        TEST_ASSERT_EQUAL_FLOAT(0.0f, steam_pressure(&model));
     }
 
-    /* And the wand closing still hands the whole of it back on the next step,
-     * which is the reversion this must not have broken. */
     TEST_ASSERT_TRUE(plant_model_step(&model, &starved, 0.0f, STEP_MS));
     const float reverted = steam_pressure(&model);
     const float relation = saturation_pressure(steam_mass(&model));
-    TEST_ASSERT_EQUAL_MEMORY(&relation, &reverted, sizeof(float));
     TEST_ASSERT_TRUE(reverted > 0.0f);
+    TEST_ASSERT_FLOAT_WITHIN(1.0e-4f * relation, relation, reverted);
 }
 
 /// SOL-PLANT-STEAM-FEED-PUMP-WIRED.C1: ...scale it by a described full-scale
@@ -6742,7 +7556,8 @@ static void test_a_demand_that_is_not_a_draw_is_read_as_no_draw(void)
 /// running backwards.
 static void test_the_steam_draws_coefficients_carry_enforced_admissible_ranges(void)
 {
-    static const size_t BOTH[] = {I_WATER_LATENT_HEAT, I_STEAM_PRESSURE_FALL};
+    static const size_t BOTH[] = {I_WATER_LATENT_HEAT, I_STEAM_RESTRICTION,
+                                I_STEAM_CAPACITY};
 
     double low[COEFFICIENT_COUNT];
     double high[COEFFICIENT_COUNT];
@@ -6760,9 +7575,12 @@ static void test_the_steam_draws_coefficients_carry_enforced_admissible_ranges(v
 
     /* A path that sags not at all is admissible; one that gains pressure under a
      * draw is not. */
-    TEST_ASSERT_TRUE_MESSAGE(low[I_STEAM_PRESSURE_FALL] == 0.0,
-                             "steam.pressure_fall_bar_per_ml does not admit a path that sags not "
-                             "at all, or admits one that gains pressure under a draw");
+    TEST_ASSERT_TRUE_MESSAGE(low[I_STEAM_RESTRICTION] == 0.0,
+                             "steam.restriction_bar_s2_per_ml2 does not admit a path that drops "
+                             "nothing, or admits one that gains pressure under a draw");
+    /* A block that can hold no liquid cannot be a shut block over liquid. */
+    TEST_ASSERT_TRUE_MESSAGE(low[I_STEAM_CAPACITY] > 0.0,
+                             "steam.liquid_capacity_ml admits a capacity of nothing");
 
     for (size_t i = 0u; i < sizeof(BOTH) / sizeof(BOTH[0]); i++) {
         const size_t index = BOTH[i];
@@ -6795,6 +7613,13 @@ static void test_the_steam_draws_coefficients_carry_enforced_admissible_ranges(v
 /// coefficient with a declared origin and error.
 /// SOL-PLANT-STEAM-DRAW-ENERGY.C7: The pressure-divergence-rate coefficient is a
 /// described coefficient with a declared origin and error.
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C5: The restriction coefficient, the saturation
+/// relation's figures, the casting ceiling, the liquid capacity and the initial
+/// inventory are each declared in the thermoblock description with an origin and
+/// an assumed error admissible to the uncertainty budget.
+///
+/// Every coefficient the flash generator adds to the description is in the list,
+/// the casting-to-outlet drop the steam law's estimate reads among them.
 ///
 /// Both halves, against the description the build hands this suite. The error is
 /// kept by the loader, so it is read back through the seam. The origin is not
@@ -6808,7 +7633,14 @@ static void test_the_steam_draws_coefficients_declare_an_origin_and_an_error(voi
 {
     static const char *const REQUIRED[] = {
         "water.latent_heat_j_per_ml",
-        "steam.pressure_fall_bar_per_ml",
+        "steam.saturation_antoine_a",
+        "steam.saturation_antoine_b_k",
+        "steam.saturation_antoine_c_c",
+        "steam.casting_ceiling_c",
+        "steam.restriction_bar_s2_per_ml2",
+        "steam.liquid_capacity_ml",
+        "steam.initial_inventory_ml",
+        "steam.outlet_drop_k_s_per_ml",
     };
     /* The words plant_origin.h declares, spelled out here because a suite that
      * read them from that header would name a vocabulary the seam already
@@ -6862,6 +7694,233 @@ static void test_the_steam_draws_coefficients_declare_an_origin_and_an_error(voi
     }
 }
 
+/*
+ * How far the trapped gauge pressure at `casting_c` can be from its nominal answer
+ * when each coefficient the relation reads is out by the error the description
+ * declares for it, taken at every combination of the ends of those errors. The
+ * relation is evaluated here in double precision from its published form,
+ * log10(p) = a - b / (c + T), so the bound is the description's own and not
+ * a figure read off the model under test.
+ */
+#define RELATION_COEFFICIENTS 5u
+
+static double trapped_gauge_bar(const double *c, double casting_c)
+{
+    /* c: a, b, c, saturation temperature, ceiling, in that order. */
+    if (!(casting_c > c[3])) {
+        return 0.0;
+    }
+    const double bounded_c = fmin(casting_c, c[4]);
+    const double at_bound = pow(10.0, c[0] - c[1] / (c[2] + bounded_c));
+    const double at_saturation = pow(10.0, c[0] - c[1] / (c[2] + c[3]));
+    return fmax(at_bound - at_saturation, 0.0);
+}
+
+static double declared_error_envelope_bar(const plant_parameter_budget_t *budget,
+                                          const double *nominal, double casting_c)
+{
+    static const size_t INDEX[RELATION_COEFFICIENTS] = {I_STEAM_ANTOINE_A, I_STEAM_ANTOINE_B,
+                                                        I_STEAM_ANTOINE_C, I_STEAM_SATURATION,
+                                                        I_STEAM_CEILING};
+    double centre[RELATION_COEFFICIENTS];
+    double fraction[RELATION_COEFFICIENTS];
+
+    for (size_t k = 0u; k < RELATION_COEFFICIENTS; k++) {
+        float assumed = 0.0f;
+        TEST_ASSERT_TRUE_MESSAGE(plant_parameter_budget_for(budget, NOMINAL[INDEX[k]].name, &assumed),
+                                 NOMINAL[INDEX[k]].name);
+        centre[k] = nominal[INDEX[k]];
+        fraction[k] = (double)assumed;
+    }
+
+    const double at_nominal = trapped_gauge_bar(centre, casting_c);
+    double widest = 0.0;
+    for (unsigned corner = 0u; corner < (1u << RELATION_COEFFICIENTS); corner++) {
+        double moved[RELATION_COEFFICIENTS];
+        for (size_t k = 0u; k < RELATION_COEFFICIENTS; k++) {
+            const double sign = ((corner >> k) & 1u) != 0u ? 1.0 : -1.0;
+            moved[k] = centre[k] * (1.0 + sign * fraction[k]);
+        }
+        widest = fmax(widest, fabs(trapped_gauge_bar(moved, casting_c) - at_nominal));
+    }
+    return widest;
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: The saturation relation used for the trapped
+/// case is a declared property of water, valid from the declared saturation
+/// temperature up to the casting ceiling; at the ceiling it agrees with
+/// steam-table saturation within its declared error.
+///
+/// Taken from the shipped description against steam-table gauge pressures
+/// (IAPWS-IF97 absolute saturation less one standard atmosphere), at the
+/// ceiling and below it, so a relation fitted to the wrong curve, a wrong constant
+/// or a wrong sign fails here, and the old affine slope -- a quarter of the
+/// truth by 200 C and a third out by 150 -- cannot pass.
+///
+/// The agreement asked for is the description's own: the model may differ from
+/// the table by no more than the declared errors of the coefficients the relation
+/// reads can move the answer, so the line moves with the declared error and with
+/// the constants, and a declared error that swallowed the quantity fails the
+/// test that it is not vacuous.
+static void test_the_shipped_saturation_relation_agrees_with_the_steam_table(void)
+{
+    static const struct {
+        float casting_c;
+        float gauge_bar;
+    } TABLE[] = {
+        {110.0f, 0.4206f}, {120.0f, 0.9735f}, {130.0f, 1.6881f},
+        {140.0f, 2.6012f}, {150.0f, 3.7440f},
+    };
+    char text[REFERENCE_MAX];
+    plant_parameter_error_t fault;
+    plant_parameters_t shipped;
+    plant_parameter_budget_t budget;
+    double nominal[COEFFICIENT_COUNT];
+    const plant_actuation_t idle = {{0u, 0u, 0u, 0u}};
+
+    const size_t used = read_named_file(REFERENCE_DESCRIPTION_PATH, text, sizeof(text));
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_TRUE(plant_parameters_load(text, used, &shipped, &fault));
+    TEST_ASSERT_TRUE(plant_parameter_budget_load(text, used, &budget, &fault));
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        float value = 0.0f;
+        size_t at = 0u;
+        TEST_ASSERT_TRUE(plant_parameter_position(NOMINAL[i].name, &at));
+        TEST_ASSERT_TRUE(plant_parameter_value(&shipped, at, &value));
+        nominal[i] = (double)value;
+    }
+
+    for (size_t i = 0u; i < sizeof(TABLE) / sizeof(TABLE[0]); i++) {
+        plant_model_t model;
+        char message[200];
+        const double allowed_bar =
+            declared_error_envelope_bar(&budget, nominal, (double)TABLE[i].casting_c);
+
+        TEST_ASSERT_TRUE(plant_model_init(&model, &shipped));
+        TEST_ASSERT_TRUE(
+            plant_model_set_state(&model, PLANT_STATE_STEAM_TEMPERATURE_C, TABLE[i].casting_c));
+        TEST_ASSERT_TRUE(plant_model_step(&model, &idle, 0.0f, STEP_MS));
+
+        (void)snprintf(message, sizeof(message),
+                       "at %.0f C the block reads %.5g bar, table %.5g, the declared error allows %.3g",
+                       (double)TABLE[i].casting_c, (double)steam_pressure(&model),
+                       (double)TABLE[i].gauge_bar, allowed_bar);
+        TEST_ASSERT_TRUE_MESSAGE(allowed_bar > 0.0, message);
+        TEST_ASSERT_TRUE_MESSAGE(allowed_bar < (double)TABLE[i].gauge_bar, message);
+        TEST_ASSERT_TRUE_MESSAGE(fabs((double)steam_pressure(&model) - (double)TABLE[i].gauge_bar) <=
+                                     allowed_bar,
+                                 message);
+    }
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: The relation, as declared, holds from the
+/// declared saturation temperature: nothing below it, continuous from it.
+static void test_the_trapped_pressure_starts_from_nothing_at_the_saturation_temperature(void)
+{
+    double values[COEFFICIENT_COUNT];
+    const plant_actuation_t idle = {{0u, 0u, 0u, 0u}};
+    static const float CASTINGS_C[] = {0.0f, 50.0f, 99.0f, 100.0f, 101.0f, 105.0f};
+
+    nominal_values(values);
+    for (size_t i = 0u; i < sizeof(CASTINGS_C) / sizeof(CASTINGS_C[0]); i++) {
+        plant_model_t model;
+
+        model_from(&model, values);
+        TEST_ASSERT_TRUE(
+            plant_model_set_state(&model, PLANT_STATE_STEAM_TEMPERATURE_C, CASTINGS_C[i]));
+        TEST_ASSERT_TRUE(plant_model_step(&model, &idle, 0.0f, STEP_MS));
+
+        const float expected =
+            (float)saturation_pressure_with(values, (double)steam_mass(&model));
+        TEST_ASSERT_FLOAT_WITHIN(1.0e-5f + 1.0e-4f * expected, expected, steam_pressure(&model));
+        if (CASTINGS_C[i] <= 100.0f) {
+            TEST_ASSERT_EQUAL_FLOAT(0.0f, steam_pressure(&model));
+        } else {
+            TEST_ASSERT_TRUE(steam_pressure(&model) > 0.0f);
+        }
+    }
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: A test drives a trapped block's casting at
+/// and beyond the ceiling and shows reported pressure never exceeds saturation at
+/// the ceiling.
+///
+/// The ceiling is the declared coefficient: two descriptions differing only in it
+/// cap the same casting at different pressures, each at its own saturation.
+static void test_a_trapped_block_never_reports_more_than_saturation_at_the_ceiling(void)
+{
+    static const float OVER_C[] = {0.0f, 0.5f, 10.0f, 60.0f, 160.0f};
+    static const double CEILINGS_C[] = {120.0, 140.0};
+    double values[COEFFICIENT_COUNT];
+    const plant_actuation_t idle = {{0u, 0u, 0u, 0u}};
+
+    for (size_t c = 0u; c < sizeof(CEILINGS_C) / sizeof(CEILINGS_C[0]); c++) {
+        nominal_values(values);
+        values[I_STEAM_CEILING] = CEILINGS_C[c];
+        const double at_ceiling = saturation_pressure_with(values, CEILINGS_C[c]);
+
+        for (size_t i = 0u; i < sizeof(OVER_C) / sizeof(OVER_C[0]); i++) {
+            plant_model_t model;
+            char message[160];
+
+            model_from(&model, values);
+            TEST_ASSERT_TRUE(plant_model_set_state(&model, PLANT_STATE_STEAM_TEMPERATURE_C,
+                                                   (float)CEILINGS_C[c] + OVER_C[i]));
+            TEST_ASSERT_TRUE(plant_model_step(&model, &idle, 0.0f, STEP_MS));
+
+            (void)snprintf(message, sizeof(message),
+                           "ceiling %.0f C, casting %.1f C over it: reads %.7g bar, bound %.7g",
+                           CEILINGS_C[c], (double)OVER_C[i], (double)steam_pressure(&model),
+                           at_ceiling);
+            TEST_ASSERT_TRUE_MESSAGE((double)steam_pressure(&model) <= at_ceiling * 1.00001,
+                                     message);
+            if (OVER_C[i] >= 1.0f) {
+                /* Past the ceiling it sits at the ceiling, not below it. */
+                TEST_ASSERT_TRUE_MESSAGE((double)steam_pressure(&model) >= at_ceiling * 0.99999,
+                                         message);
+            }
+        }
+    }
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C4: The affine relation, the integrated
+/// pressure-deficit state and the pressure-fall coefficient that fed it are
+/// removed from the thermoblock's steam side, and the coefficient is no longer
+/// accepted in its description.
+static void test_the_retired_steam_coefficients_are_no_longer_accepted(void)
+{
+    static const char *const RETIRED[] = {
+        "steam.pressure_fall_bar_per_ml = 0.02\n",
+        "steam.pressure_bar_per_k = 0.035\n",
+    };
+
+    for (size_t i = 0u; i < sizeof(RETIRED) / sizeof(RETIRED[0]); i++) {
+        char text[DESCRIPTION_MAX];
+        plant_parameters_t loaded;
+        plant_parameter_error_t fault;
+        const size_t used = describe(text, sizeof(text), SCALE_NOTHING, 1.0);
+
+        memcpy(text + used, RETIRED[i], strlen(RETIRED[i]));
+        memset(&fault, 0, sizeof(fault));
+        TEST_ASSERT_FALSE(plant_parameters_load(text, used + strlen(RETIRED[i]), &loaded, &fault));
+        TEST_ASSERT_EQUAL(PLANT_PARAMETER_UNKNOWN, fault.fault);
+    }
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C5: The restriction coefficient is marked
+/// estimated, and each new coefficient carries an origin and an error.
+static void test_the_restriction_coefficient_is_declared_estimated(void)
+{
+    char text[REFERENCE_MAX];
+
+    (void)read_named_file(REFERENCE_DESCRIPTION_PATH, text, sizeof(text));
+    const char *const line = strstr(text, "steam.restriction_bar_s2_per_ml2");
+    TEST_ASSERT_NOT_NULL(line);
+    const char *const end = strchr(line, '\n');
+    const char *const marker = strstr(line, "@estimated ");
+    TEST_ASSERT_TRUE(marker != NULL && (end == NULL || marker < end));
+}
+
 /// SOL-PLANT-STEAM-DRAW-REPORTED.C1: The plant seam names the steam-draw rate
 /// as a reported quantity.
 ///
@@ -6882,6 +7941,7 @@ static void test_the_seam_names_the_steam_draw_rate_as_a_quantity(void)
         PLANT_QUANTITY_BREW_PRESSURE_BAR,
         PLANT_QUANTITY_STEAM_PRESSURE_BAR,
         PLANT_QUANTITY_BREW_FLOW_ML_PER_S,
+        PLANT_QUANTITY_STEAM_OUTLET_SUPERHEAT_K,
     };
 
     /* Every other quantity is listed, not merely a few. A quantity added to the
@@ -7035,8 +8095,14 @@ static void test_the_steam_draw_rate_is_reached_end_to_end_through_the_seam(void
                                       "water.heat_capacity_j_per_ml_k = 4.15\n"
                                       "water.latent_heat_j_per_ml = 2000\n"
                                       "steam.saturation_temperature_c = 100\n"
-                                      "steam.pressure_bar_per_k = 0.035\n"
-                                      "steam.pressure_fall_bar_per_ml = 0.02\n"
+                                      "steam.saturation_antoine_a = 5.2\n"
+                                      "steam.saturation_antoine_b_k = 1800\n"
+                                      "steam.saturation_antoine_c_c = 240\n"
+                                      "steam.casting_ceiling_c = 140\n"
+                                      "steam.restriction_bar_s2_per_ml2 = 4\n"
+                                      "steam.outlet_drop_k_s_per_ml = 12\n"
+                                      "steam.liquid_capacity_ml = 5\n"
+                                      "steam.initial_inventory_ml = 1.5\n"
                                       "steam.feed_flow_ml_per_s = 5\n";
     plant_parameters_t loaded;
     plant_parameter_error_t fault;
@@ -7575,6 +8641,464 @@ static void test_a_step_that_carries_the_turn_past_the_sines_domain_is_the_dampe
                              "the water is not the damped pair's answer");
 }
 
+/*
+ * The superheat the description's own relations give for a casting and a made
+ * rate, worked here in double precision from the nominal table rather than read
+ * from the structure: the outlet is the casting less the drop per rate made,
+ * saturation at the pressure the orifice gives is Antoine's relation solved for
+ * the temperature, and the figure is the difference, never below nothing.
+ */
+static double expected_superheat_k(double casting_c, double made_ml_per_s)
+{
+    const double a = NOMINAL[I_STEAM_ANTOINE_A].value;
+    const double b = NOMINAL[I_STEAM_ANTOINE_B].value;
+    const double c = NOMINAL[I_STEAM_ANTOINE_C].value;
+    const double at_start = pow(10.0, a - b / (c + NOMINAL[I_STEAM_SATURATION].value));
+    const double gauge = NOMINAL[I_STEAM_RESTRICTION].value * made_ml_per_s * made_ml_per_s;
+    const double saturation_c = b / (a - log10(gauge + at_start)) - c;
+    const double outlet_c = casting_c - NOMINAL[I_STEAM_OUTLET_DROP].value * made_ml_per_s;
+    return outlet_c > saturation_c ? outlet_c - saturation_c : 0.0;
+}
+
+static float outlet_superheat(const plant_model_t *model)
+{
+    float value = -1.0f;
+    TEST_ASSERT_TRUE(plant_model_quantity(model, PLANT_QUANTITY_STEAM_OUTLET_SUPERHEAT_K, &value));
+    return value;
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C6: The thermoblock structure reports, as a
+/// quantity every structure answers, the superheat of steam at its modelled
+/// outlet: the modelled outlet steam temperature minus saturation at the
+/// measured steam pressure, through the same saturation relation the trapped case
+/// uses.
+///
+/// The casting is put at several temperatures straddling the outlet's saturation
+/// point at several made rates, one step is taken, and the quantity is required to
+/// equal the closed form worked from the description in double precision from the
+/// casting the step left. A mutation of the drop, the made rate, the pressure the
+/// saturation is taken at or the inversion of the relation moves the figure by far
+/// more than the tolerance.
+static void test_the_outlet_superheat_is_the_outlet_less_saturation_at_the_pressure(void)
+{
+    static const float CASTINGS[] = {95.0f, 101.5f, 104.0f, 115.0f, 135.0f};
+    static const float DEMANDS[] = {0.05f, 0.2f, 0.5f, 3.0f};
+    int hot = 0;
+
+    for (size_t i = 0u; i < sizeof(CASTINGS) / sizeof(CASTINGS[0]); i++) {
+        for (size_t j = 0u; j < sizeof(DEMANDS) / sizeof(DEMANDS[0]); j++) {
+            plant_model_t model;
+            float casting_c = 0.0f;
+            const double made = DEMANDS[j] < NOMINAL[I_STEAM_FEED_FLOW].value
+                                    ? (double)DEMANDS[j]
+                                    : NOMINAL[I_STEAM_FEED_FLOW].value;
+
+            TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+            TEST_ASSERT_TRUE(
+                plant_model_set_state(&model, PLANT_STATE_STEAM_TEMPERATURE_C, CASTINGS[i]));
+            TEST_ASSERT_TRUE(plant_model_step(&model, &FEEDING, DEMANDS[j], 10u));
+            TEST_ASSERT_TRUE(plant_model_state(&model, PLANT_STATE_STEAM_TEMPERATURE_C, &casting_c));
+
+            const double expected = expected_superheat_k((double)casting_c, made);
+            TEST_ASSERT_FLOAT_WITHIN(5.0e-3f, (float)expected, outlet_superheat(&model));
+            hot += expected > 0.5 ? 1 : 0;
+        }
+    }
+    /* Some of the cases are dry and some wet, so the clamp at nothing is exercised both ways. */
+    TEST_ASSERT_TRUE(hot > 4 && hot < 19);
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C6: Dryness is the balance of heater power, the
+/// sensible heat of the water fed and the latent heat carried out, and superheat
+/// appears only once quality passes one; a test showing superheat stays at zero
+/// while heater power is below what the feed and latent heat need, and rises above
+/// zero once it exceeds it, would fail on a mutation of any term.
+///
+/// A tenth of a millilitre a second is made at full feed. The water costs its
+/// latent heat and the sensible heat from the feed temperature to saturation,
+/// 234 W, and holding the casting a little above saturation against the loss takes
+/// about 410 W in all. The element at a quarter duty (350 W) is below that and the
+/// outlet never leaves saturation; at half duty (700 W) it is above and the outlet
+/// carries superheat, more of it for more power. With the feed shut the same
+/// element makes no steam, and with the wand shut there is no outlet at all, however
+/// hot the casting.
+static void test_superheat_stays_at_zero_below_the_power_the_feed_needs_and_rises_above_it(void)
+{
+    static const float DUTIES[] = {0.25f, 0.5f, 0.75f};
+    float reached[3];
+
+    for (size_t i = 0u; i < 3u; i++) {
+        plant_model_t model;
+        plant_actuation_t drawing = FEEDING;
+        float superheat_peak = 0.0f;
+
+        drawing.level_permille[ACTUATION_CHANNEL_STEAM_HEATER] =
+            (uint16_t)(DUTIES[i] * (float)ACTUATION_FULL_SCALE);
+        TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+        for (int step = 0; step < SETTLED_STEPS; step++) {
+            /* Feed at the demand: a fortieth of full feed makes a tenth of a millilitre. */
+            drawing.level_permille[ACTUATION_CHANNEL_STEAM_PUMP] = 20u;
+            TEST_ASSERT_TRUE(plant_model_step(&model, &drawing, 0.1f, STEP_MS));
+            superheat_peak = fmaxf(superheat_peak, outlet_superheat(&model));
+        }
+        reached[i] = superheat_peak;
+    }
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(0.0f, reached[0],
+                                    "superheat appeared with the element below what the feed needs");
+    TEST_ASSERT_TRUE_MESSAGE(reached[1] > 1.0f, "superheat did not rise once power exceeded need");
+    TEST_ASSERT_TRUE_MESSAGE(reached[2] > reached[1] + 1.0f,
+                             "more power above the need did not leave more superheat");
+
+    plant_model_t model;
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+    TEST_ASSERT_TRUE(plant_model_set_state(&model, PLANT_STATE_STEAM_TEMPERATURE_C, 200.0f));
+    TEST_ASSERT_TRUE(plant_model_step(&model, &AT_REST, 0.5f, STEP_MS));
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(0.0f, outlet_superheat(&model),
+                                    "steam asked of a shut feed carried superheat");
+    TEST_ASSERT_TRUE(plant_model_step(&model, &FEEDING, 0.0f, STEP_MS));
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(0.0f, outlet_superheat(&model),
+                                    "a shut wand reported superheat of a hot casting");
+    TEST_ASSERT_TRUE(plant_model_step(&model, &FEEDING, 0.5f, STEP_MS));
+    TEST_ASSERT_TRUE(outlet_superheat(&model) > 10.0f);
+    /* A demand that is not a rate is read as no draw, and so reports no superheat. */
+    TEST_ASSERT_TRUE(plant_model_step(&model, &FEEDING, -1.0f, STEP_MS));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, outlet_superheat(&model));
+    TEST_ASSERT_TRUE(plant_model_step(&model, &FEEDING, NAN, STEP_MS));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, outlet_superheat(&model));
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C6: The outlet is compared with saturation at
+/// the measured pressure, so the same casting and the same steam made carry less
+/// superheat through a tighter restriction, which puts more pressure on the path,
+/// and the casting-to-outlet coefficient lowers it in proportion.
+static void test_the_superheat_falls_with_the_restriction_and_the_outlet_drop(void)
+{
+    float superheat[3];
+    static const size_t SCALED[3] = {SCALE_NOTHING, I_STEAM_RESTRICTION, I_STEAM_OUTLET_DROP};
+
+    for (size_t i = 0u; i < 3u; i++) {
+        char text[DESCRIPTION_MAX];
+        plant_parameters_t loaded;
+        plant_parameter_error_t fault;
+        plant_model_t model;
+        const size_t length = describe(text, sizeof(text), SCALED[i], 4.0);
+
+        memset(&fault, 0, sizeof(fault));
+        TEST_ASSERT_TRUE(plant_parameters_load(text, length, &loaded, &fault));
+        TEST_ASSERT_TRUE(plant_model_init(&model, &loaded));
+        TEST_ASSERT_TRUE(plant_model_set_state(&model, PLANT_STATE_STEAM_TEMPERATURE_C, 135.0f));
+        TEST_ASSERT_TRUE(plant_model_step(&model, &FEEDING, 0.2f, 10u));
+        superheat[i] = outlet_superheat(&model);
+    }
+    TEST_ASSERT_TRUE(superheat[0] > 5.0f);
+    TEST_ASSERT_TRUE_MESSAGE(superheat[1] < superheat[0] - 2.0f,
+                             "a tighter restriction did not cost the outlet its superheat");
+    TEST_ASSERT_TRUE_MESSAGE(superheat[2] < superheat[0] - 2.0f,
+                             "a larger casting-to-outlet drop did not cost the outlet its superheat");
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C6: A structure with no flash-generator steam
+/// side answers the quantity as not observed rather than as a value. The relation
+/// offered for readings a caller holds is the thermoblock's own: the least it
+/// admits takes the outlet coefficient at the cool end of its declared error, and
+/// refuses a reading that is not a number.
+static void test_the_least_outlet_superheat_takes_the_cool_end_of_the_declared_error(void)
+{
+    plant_parameter_budget_t budget;
+    plant_parameter_budget_t exact;
+    float least = -1.0f;
+    float nominal = -1.0f;
+    size_t at = 0u;
+
+    memset(&budget, 0, sizeof(budget));
+    memset(&exact, 0, sizeof(exact));
+    TEST_ASSERT_TRUE(plant_parameter_position("steam.outlet_drop_k_s_per_ml", &at));
+    budget.count = exact.count = at + 1u;
+    budget.declared[at] = true;
+    budget.assumed_error[at] = 0.5f;
+    exact.declared[at] = true;
+    exact.assumed_error[at] = 0.0f;
+
+    /* A tenth of a millilitre at full feed of five is twenty permille. */
+    TEST_ASSERT_TRUE(plant_model_least_outlet_superheat(&parameters, &budget, 120.0f, 0.04f, 20u,
+                                                       &least));
+    TEST_ASSERT_TRUE(plant_model_least_outlet_superheat(&parameters, &exact, 120.0f, 0.04f, 20u,
+                                                       &nominal));
+    TEST_ASSERT_FLOAT_WITHIN(5.0e-3f, nominal - 0.5f * 12.0f * 0.1f, least);
+
+    /* No steam is made with the feed shut, so there is no outlet superheat. */
+    TEST_ASSERT_TRUE(plant_model_least_outlet_superheat(&parameters, &budget, 120.0f, 0.04f, 0u,
+                                                       &least));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, least);
+
+    /*
+     * A figure taken at the cool end of an error nobody declared is not a least
+     * figure: the coefficient undeclared, declared only past the end of a budget
+     * that stops short of it, or a budget declaring everything else, is refused
+     * and writes nothing.
+     */
+    least = -1.0f;
+    plant_parameter_budget_t undeclared = budget;
+    undeclared.declared[at] = false;
+    TEST_ASSERT_FALSE(plant_model_least_outlet_superheat(&parameters, &undeclared, 120.0f, 0.04f, 20u,
+                                                        &least));
+    plant_parameter_budget_t short_of_it = budget;
+    short_of_it.count = at;
+    TEST_ASSERT_FALSE(plant_model_least_outlet_superheat(&parameters, &short_of_it, 120.0f, 0.04f,
+                                                        20u, &least));
+    plant_parameter_budget_t others_only;
+    memset(&others_only, 0, sizeof(others_only));
+    others_only.count = at + 1u;
+    for (size_t other = 0u; other < at; other++) {
+        others_only.declared[other] = true;
+        others_only.assumed_error[other] = 0.1f;
+    }
+    TEST_ASSERT_FALSE(plant_model_least_outlet_superheat(&parameters, &others_only, 120.0f, 0.04f,
+                                                        20u, &least));
+    TEST_ASSERT_EQUAL_FLOAT(-1.0f, least);
+
+    TEST_ASSERT_FALSE(plant_model_least_outlet_superheat(NULL, &budget, 120.0f, 0.04f, 20u, &least));
+    TEST_ASSERT_FALSE(plant_model_least_outlet_superheat(&parameters, NULL, 120.0f, 0.04f, 20u, &least));
+    TEST_ASSERT_FALSE(plant_model_least_outlet_superheat(&parameters, &budget, 120.0f, 0.04f, 20u, NULL));
+    TEST_ASSERT_FALSE(plant_model_least_outlet_superheat(&parameters, &budget, NAN, 0.04f, 20u, &least));
+    TEST_ASSERT_FALSE(plant_model_least_outlet_superheat(&parameters, &budget, 120.0f, INFINITY, 20u, &least));
+    TEST_ASSERT_EQUAL_FLOAT(-1.0f, least);
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: ... is refused wherever a model is built
+/// from the description, at load, naming the parameter, and at model construction.
+///
+/// A refusal found by position is told to the builder by name: the position a
+/// coefficient occupies and the name it answers to are the inverse of one
+/// another for every coefficient the structure has, and a position past the end,
+/// or no place to write, is refused without writing.
+static void test_a_position_answers_the_name_that_answers_to_it(void)
+{
+    const char *name = NULL;
+    size_t at = 0u;
+    size_t seen = 0u;
+
+    for (size_t i = 0u; i < sizeof(NOMINAL) / sizeof(NOMINAL[0]); i++) {
+        TEST_ASSERT_TRUE(plant_parameter_position(NOMINAL[i].name, &at));
+        TEST_ASSERT_TRUE(plant_parameter_name(at, &name));
+        TEST_ASSERT_EQUAL_STRING(NOMINAL[i].name, name);
+        seen++;
+    }
+    TEST_ASSERT_TRUE(seen > 0u);
+
+    /* The last position answers and the one after it does not: the edge, not only far past it. */
+    size_t count = 0u;
+    while (plant_parameter_name(count, &name)) {
+        count++;
+        TEST_ASSERT_TRUE_MESSAGE(count < 1000u, "the positions never ended");
+    }
+    TEST_ASSERT_TRUE(count >= seen);
+    TEST_ASSERT_TRUE(plant_parameter_name(count - 1u, &name));
+
+    name = NULL;
+    TEST_ASSERT_FALSE(plant_parameter_name(count, &name));
+    TEST_ASSERT_FALSE(plant_parameter_name(count + 1000u, &name));
+    TEST_ASSERT_NULL(name);
+    TEST_ASSERT_FALSE(plant_parameter_name(0u, NULL));
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C6: ... the modelled outlet steam temperature
+/// minus saturation at the measured steam pressure, through the same saturation
+/// relation the trapped case uses.
+///
+/// The logarithm the inversion takes is built from the model's own exponential, and
+/// how close it lands depends on the pressure it is asked at: the starting guess is
+/// furthest from the answer towards the top of each octave. The draw is swept
+/// through every octave the working range covers at a step of a few hundredths of a
+/// millilitre a second, so the pressures cover the mantissas the way a count of
+/// them would not, and the figure is held to a tenth of a millikelvin of the closed
+/// form worked in double precision -- a tolerance a starting guess that is wrong by
+/// two parts in ten thousand cannot meet.
+static void test_the_outlet_superheat_holds_the_inversion_to_its_accuracy_across_the_octaves(void)
+{
+    int live = 0;
+
+    for (int i = 0; i <= 58; i++) {
+        const float demand = 0.02f + 0.005f * (float)i;
+        plant_model_t model;
+        float casting_c = 0.0f;
+
+        TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+        TEST_ASSERT_TRUE(plant_model_set_state(&model, PLANT_STATE_STEAM_TEMPERATURE_C, 150.0f));
+        TEST_ASSERT_TRUE(plant_model_step(&model, &FEEDING, demand, 10u));
+        TEST_ASSERT_TRUE(plant_model_state(&model, PLANT_STATE_STEAM_TEMPERATURE_C, &casting_c));
+
+        const double expected = expected_superheat_k((double)casting_c, (double)demand);
+        TEST_ASSERT_FLOAT_WITHIN(1.0e-4f, (float)expected, outlet_superheat(&model));
+        live += expected > 1.0 ? 1 : 0;
+    }
+    /* The sweep is made of dry steam, not of cases the clamp at nothing would pass. */
+    TEST_ASSERT_TRUE(live > 40);
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C6: ... the modelled outlet steam temperature
+/// minus saturation at the measured steam pressure, through the same saturation
+/// relation the trapped case uses.
+///
+/// The logarithm the inversion takes stops after three Newton steps, and a fourth
+/// would not be a better figure but a different rounding of the same one, so the
+/// model's answer is the bits the three give. Seven draws across the working range
+/// are recorded to the last bit; the draws at index 1 and 10 are the ones among
+/// the sweep of the accuracy test on which a fourth step lands a unit in the last
+/// place away. The recorded bits are the same on every host: the build does not
+/// fuse a multiply with an add, and the exponential the steps use is the
+/// project's own.
+static void test_the_outlet_superheat_is_the_figure_three_refinements_of_the_logarithm_give(void)
+{
+    static const int INDEX[] = {0, 1, 5, 10, 20, 40, 58};
+    static const float EXPECTED[] = {0x1.8d9b78p+5f, 0x1.8ce09p+5f, 0x1.8968ep+5f, 0x1.83dcep+5f,
+                                     0x1.74ec98p+5f, 0x1.49dd7p+5f, 0x1.182e98p+5f};
+
+    for (size_t k = 0u; k < sizeof(INDEX) / sizeof(INDEX[0]); k++) {
+        const float demand = 0.02f + 0.005f * (float)INDEX[k];
+        plant_model_t model;
+
+        TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+        TEST_ASSERT_TRUE(plant_model_set_state(&model, PLANT_STATE_STEAM_TEMPERATURE_C, 150.0f));
+        TEST_ASSERT_TRUE(plant_model_step(&model, &FEEDING, demand, 10u));
+        const float superheat = outlet_superheat(&model);
+        TEST_ASSERT_TRUE_MESSAGE(superheat == EXPECTED[k], "the superheat is not the recorded bits");
+    }
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: ... a description ... whose saturation
+/// relation cannot be inverted across the pressures the model can reach, the
+/// open-wand pressure at the largest steam the pump can make included, is refused
+/// wherever a model is built from the description.
+///
+/// The edge is the pressure that reaches ten to the Antoine constant exactly, where
+/// the divisor of the inversion is nothing and so is not under it. The restriction
+/// is walked a unit in the last place at a time across the figure that lands the
+/// highest pressure on the limit, at a feed of one so the drop is the coefficient
+/// itself and the sums are the ones the model forms, and a record is held to be
+/// admissible exactly while its pressure is below the limit: the record that lands
+/// on it is refused, and the walk is required to have found one.
+static void test_a_restriction_that_lands_the_open_draw_pressure_on_the_limit_is_refused(void)
+{
+    const float ln10 = 2.30258509f;
+    const plant_parameters_t base = nominal_record();
+    const plant_parameters_t low = edited(&base, "steam.saturation_antoine_a", 2.5f);
+    const plant_parameters_t narrow = edited(&low, "steam.feed_flow_ml_per_s", 1.0f);
+    const float a = coefficient_named(&narrow, "steam.saturation_antoine_a");
+    const float b = coefficient_named(&narrow, "steam.saturation_antoine_b_k");
+    const float c = coefficient_named(&narrow, "steam.saturation_antoine_c_c");
+    const float at_c = coefficient_named(&narrow, "steam.saturation_temperature_c");
+    const float limit = plant_expf(a * ln10);
+    const float saturation = plant_expf((a - b / (c + at_c)) * ln10);
+    float restriction = limit - saturation;
+    int landed = 0;
+    int below = 0;
+    int beyond = 0;
+
+    for (int i = 0; i < 24; i++) {
+        restriction = nextafterf(restriction, 0.0f);
+    }
+    for (int i = 0; i < 49; i++) {
+        const volatile float highest = restriction + saturation;
+        const plant_parameters_t record = edited(&narrow, "steam.restriction_bar_s2_per_ml2", restriction);
+        plant_model_t model;
+
+        if (highest < limit) {
+            TEST_ASSERT_TRUE(plant_parameters_admissible(&record, NULL));
+            TEST_ASSERT_TRUE(plant_model_init(&model, &record));
+            below++;
+        } else {
+            TEST_ASSERT_FALSE(plant_parameters_admissible(&record, NULL));
+            TEST_ASSERT_FALSE(plant_model_init(&model, &record));
+            beyond++;
+            landed += highest == limit ? 1 : 0;
+        }
+        restriction = nextafterf(restriction, INFINITY);
+    }
+    TEST_ASSERT_TRUE_MESSAGE(landed > 0, "the walk never landed the pressure on the limit");
+    TEST_ASSERT_TRUE(below > 0 && beyond > 0);
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: ... a saturation relation ... through the
+/// same relation the trapped case uses.
+///
+/// A saturation figure at the saturation temperature that is below the smallest
+/// float -- the constants are each within their ranges, and the pair is the far end
+/// of two of them -- leaves the absolute pressure of a draw through no restriction
+/// at nothing. The inversion is then asked for the logarithm of nothing, which it
+/// answers as nothing rather than as the loop a halving of zero would be, and the
+/// outlet of a block that cannot reach that temperature reports no superheat.
+static void test_a_draw_whose_absolute_pressure_is_nothing_steps_to_no_superheat(void)
+{
+    const plant_parameters_t base = nominal_record();
+    plant_parameters_t record = edited(&base, "steam.saturation_antoine_a", 2.0f);
+    plant_model_t model;
+
+    record = edited(&record, "steam.saturation_antoine_b_k", 10000.0f);
+    record = edited(&record, "steam.saturation_antoine_c_c", 10.0f);
+    record = edited(&record, "steam.saturation_temperature_c", 1.0f);
+    record = edited(&record, "steam.restriction_bar_s2_per_ml2", 0.0f);
+    TEST_ASSERT_TRUE(plant_parameters_admissible(&record, NULL));
+    TEST_ASSERT_TRUE(plant_model_init(&model, &record));
+    TEST_ASSERT_TRUE(plant_model_set_state(&model, PLANT_STATE_STEAM_TEMPERATURE_C, 120.0f));
+    for (int step = 0; step < 5; step++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &FEEDING, 0.2f, STEP_MS));
+    }
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, steam_pressure(&model));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, outlet_superheat(&model));
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C2: ... likewise refuse a believed description
+/// or error budget ... that leaves undeclared a coefficient the law's superheat
+/// estimate reads.
+///
+/// A budget claiming more entries than the structure has coefficients is a record
+/// no loader writes, and the estimate reads only the entries the structure has: the
+/// figure it gives is the one the same declarations give with the count the
+/// structure holds, whatever the entries past the end say.
+static void test_a_budget_longer_than_the_structure_is_read_only_as_far_as_the_structure(void)
+{
+    plant_parameter_budget_t exact;
+    plant_parameter_budget_t longer;
+    float held = -1.0f;
+    float beyond = -1.0f;
+    size_t at = 0u;
+
+    memset(&exact, 0, sizeof(exact));
+    TEST_ASSERT_TRUE(plant_parameter_position("steam.outlet_drop_k_s_per_ml", &at));
+    exact.count = COEFFICIENT_COUNT;
+    exact.declared[at] = true;
+    exact.assumed_error[at] = 0.5f;
+    longer = exact;
+    longer.count = PLANT_PARAMETER_LIMIT;
+    for (size_t past = COEFFICIENT_COUNT; past < PLANT_PARAMETER_LIMIT; past++) {
+        longer.declared[past] = true;
+        longer.assumed_error[past] = 9.0f;
+    }
+
+    TEST_ASSERT_TRUE(plant_model_least_outlet_superheat(&parameters, &exact, 120.0f, 0.04f, 20u, &held));
+    TEST_ASSERT_TRUE(
+        plant_model_least_outlet_superheat(&parameters, &longer, 120.0f, 0.04f, 20u, &beyond));
+    TEST_ASSERT_EQUAL_FLOAT(held, beyond);
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: ... is refused wherever a model is built
+/// from the description, at load, naming the parameter, and at model construction.
+///
+/// The positions the structure names end where its coefficients do: the one past the
+/// last is not a name, and the count of positions that answer is the count of
+/// coefficients the description carries, not one more.
+static void test_the_position_past_the_last_coefficient_is_not_named(void)
+{
+    const char *name = NULL;
+
+    TEST_ASSERT_TRUE(plant_parameter_name(COEFFICIENT_COUNT - 1u, &name));
+    TEST_ASSERT_EQUAL_STRING(NOMINAL[COEFFICIENT_COUNT - 1u].name, name);
+    name = NULL;
+    TEST_ASSERT_FALSE(plant_parameter_name(COEFFICIENT_COUNT, &name));
+    TEST_ASSERT_NULL(name);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -7662,6 +9186,7 @@ int main(void)
     RUN_TEST(test_a_scale_inside_the_declared_range_writes_that_coefficient_alone);
     RUN_TEST(test_a_scale_landing_exactly_on_the_declared_bound_is_accepted);
     RUN_TEST(test_scaling_refuses_a_position_this_structure_does_not_have);
+    RUN_TEST(test_a_value_is_read_back_by_position_and_refused_where_there_is_none);
     RUN_TEST(test_the_position_of_every_coefficient_is_answered_by_name);
     RUN_TEST(test_whether_a_position_is_supply_driven_is_answered_for_every_one);
     RUN_TEST(test_a_budget_never_loaded_answers_nothing);
@@ -7712,28 +9237,60 @@ int main(void)
     RUN_TEST(test_what_a_draw_costs_the_block_does_not_depend_on_where_it_sits);
     RUN_TEST(test_with_the_wand_shut_the_latent_coefficient_reaches_nothing);
     RUN_TEST(test_a_steam_draw_leaves_the_coffee_side_alone);
-    RUN_TEST(test_the_steam_pressure_accumulates_the_draw_rather_than_recomputing_it);
-    RUN_TEST(test_the_steam_pressure_is_the_relation_again_the_step_the_draw_stops);
+    RUN_TEST(test_with_the_wand_open_pressure_is_the_restriction_drop_of_the_made_rate);
+    RUN_TEST(test_doubling_the_made_rate_quadruples_the_pressure_and_the_coefficient_scales_it);
+    RUN_TEST(test_the_casting_temperature_does_not_move_the_open_wand_pressure);
+    RUN_TEST(test_a_wand_opened_on_a_shut_feed_reads_nothing_at_once);
+    RUN_TEST(test_a_block_opened_then_shut_is_at_saturation_of_its_casting_at_once);
     RUN_TEST(test_a_closed_draw_leaves_no_trace_a_later_step_can_see);
     RUN_TEST(test_the_structure_stays_admissible_with_a_draw_open);
-    RUN_TEST(test_a_draw_the_path_cannot_supply_stops_at_nothing);
+    RUN_TEST(test_a_block_declared_dry_and_never_fed_reads_nothing_however_hot);
+    RUN_TEST(test_a_shut_block_fed_to_its_capacity_clamps_there_and_keeps_it);
+    RUN_TEST(test_the_inventory_moves_by_the_feed_less_the_steam_made);
+    RUN_TEST(test_the_initial_inventory_is_declared_and_bounded_by_the_capacity);
+    RUN_TEST(test_an_initial_inventory_above_the_capacity_is_refused_at_load);
+    RUN_TEST(test_a_casting_ceiling_not_above_saturation_is_refused_at_load);
+    RUN_TEST(test_a_description_breaking_two_relations_is_refused_on_the_same_one_each_time);
+    RUN_TEST(test_an_inventory_above_the_capacity_edited_past_the_loader_is_refused_by_the_model);
+    RUN_TEST(test_a_ceiling_not_above_saturation_edited_past_the_loader_is_refused_by_the_model);
+    RUN_TEST(test_a_restriction_whose_open_draw_pressure_cannot_be_inverted_is_refused);
+    RUN_TEST(test_a_scaled_record_breaking_a_relation_is_refused_by_the_model);
+    RUN_TEST(test_a_value_outside_its_range_or_not_a_number_is_refused_by_the_model);
+    RUN_TEST(test_the_admissibility_check_names_the_first_fault_it_finds);
+    RUN_TEST(test_the_held_liquid_is_written_only_inside_its_limits);
     RUN_TEST(test_the_cost_of_a_draw_follows_the_temperature_the_feed_arrives_at);
     RUN_TEST(test_a_feed_arriving_past_boiling_costs_a_draw_nothing_extra);
     RUN_TEST(test_a_draw_beyond_the_commanded_feed_is_honoured_at_the_feed);
     RUN_TEST(test_a_draw_the_feed_can_supply_is_honoured_whole);
-    RUN_TEST(test_a_draw_with_the_feed_shut_costs_the_block_and_the_path_nothing);
+    RUN_TEST(test_a_draw_with_the_feed_shut_costs_the_block_nothing_and_reads_no_pressure);
     RUN_TEST(test_the_reported_draw_is_the_demand_even_where_the_feed_bounds_it);
-    RUN_TEST(test_shutting_the_feed_mid_draw_holds_the_departure_rather_than_returning_it);
+    RUN_TEST(test_shutting_the_feed_mid_draw_drops_the_pressure_and_the_wand_returns_saturation);
     RUN_TEST(test_the_commanded_feed_is_proportional_to_the_level);
     RUN_TEST(test_the_gaps_the_feed_relations_close_are_no_longer_recorded_as_omissions);
     RUN_TEST(test_a_demand_that_is_not_a_draw_is_read_as_no_draw);
     RUN_TEST(test_the_steam_draws_coefficients_carry_enforced_admissible_ranges);
     RUN_TEST(test_the_steam_draws_coefficients_declare_an_origin_and_an_error);
+    RUN_TEST(test_the_shipped_saturation_relation_agrees_with_the_steam_table);
+    RUN_TEST(test_the_trapped_pressure_starts_from_nothing_at_the_saturation_temperature);
+    RUN_TEST(test_a_trapped_block_never_reports_more_than_saturation_at_the_ceiling);
+    RUN_TEST(test_the_retired_steam_coefficients_are_no_longer_accepted);
+    RUN_TEST(test_the_restriction_coefficient_is_declared_estimated);
     RUN_TEST(test_a_written_state_is_what_the_next_step_advances_from);
     RUN_TEST(test_the_thermoblock_declares_both_the_group_and_the_spout);
     RUN_TEST(test_the_thermoblock_answers_the_same_mass_for_both_points);
     RUN_TEST(test_the_group_and_the_spout_are_reported_as_sharing_a_mass);
     RUN_TEST(test_a_delivery_point_the_thermoblock_does_not_serve_is_refused);
     RUN_TEST(test_the_delivery_queries_refuse_null_output_arguments);
+    RUN_TEST(test_the_outlet_superheat_is_the_outlet_less_saturation_at_the_pressure);
+    RUN_TEST(test_superheat_stays_at_zero_below_the_power_the_feed_needs_and_rises_above_it);
+    RUN_TEST(test_the_superheat_falls_with_the_restriction_and_the_outlet_drop);
+    RUN_TEST(test_the_least_outlet_superheat_takes_the_cool_end_of_the_declared_error);
+    RUN_TEST(test_a_position_answers_the_name_that_answers_to_it);
+    RUN_TEST(test_the_outlet_superheat_holds_the_inversion_to_its_accuracy_across_the_octaves);
+    RUN_TEST(test_the_outlet_superheat_is_the_figure_three_refinements_of_the_logarithm_give);
+    RUN_TEST(test_a_restriction_that_lands_the_open_draw_pressure_on_the_limit_is_refused);
+    RUN_TEST(test_a_draw_whose_absolute_pressure_is_nothing_steps_to_no_superheat);
+    RUN_TEST(test_a_budget_longer_than_the_structure_is_read_only_as_far_as_the_structure);
+    RUN_TEST(test_the_position_past_the_last_coefficient_is_not_named);
     return UNITY_END();
 }

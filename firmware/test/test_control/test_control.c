@@ -51,7 +51,7 @@ static const float BREW_TARGET_C = (float)BREW_TARGET_MILLI_C / 1000.0f;
  * coefficients admissible within -- which is the loader deciding whether a
  * perturbation is a machine at all.
  */
-static char description_text[16384];
+static char description_text[32768];
 static size_t description_length;
 
 static void load_the_reference_description(void)
@@ -79,7 +79,7 @@ static void load_the_reference_description(void)
  */
 static void load_the_reference_limits(void)
 {
-    static char text[16384];
+    static char text[32768];
 
     FILE *const handle = fopen(REFERENCE_LIMITS_PATH, "rb");
     TEST_ASSERT_NOT_NULL_MESSAGE(handle, "could not open the reference limits declaration");
@@ -101,7 +101,7 @@ static void load_the_reference_limits(void)
  */
 static void load_the_reference_tolerance(void)
 {
-    static char text[16384];
+    static char text[32768];
 
     FILE *const handle = fopen(REFERENCE_TOLERANCE_PATH, "rb");
     TEST_ASSERT_NOT_NULL_MESSAGE(handle, "could not open the reference tolerance declaration");
@@ -124,7 +124,7 @@ static void load_the_reference_tolerance(void)
  */
 static void load_the_reference_pump_trim(void)
 {
-    static char text[16384];
+    static char text[32768];
 
     FILE *const handle = fopen(REFERENCE_PUMP_TRIM_PATH, "rb");
     TEST_ASSERT_NOT_NULL_MESSAGE(handle, "could not open the reference pump trim declaration");
@@ -8197,7 +8197,7 @@ static void test_the_margin_is_the_worst_single_corner_and_not_a_sum_or_a_root_s
 /// weighed at all.
 static void test_a_coefficient_with_no_path_to_the_gap_contributes_nothing(void)
 {
-    static const char *const NO_PATH[] = {"steam.pressure_fall_bar_per_ml",
+    static const char *const NO_PATH[] = {"steam.restriction_bar_s2_per_ml2",
                                           "water.latent_heat_j_per_ml"};
 
     for (size_t which = 0u; which < sizeof(NO_PATH) / sizeof(NO_PATH[0]); which++) {
@@ -8311,19 +8311,19 @@ static void test_the_enumeration_carries_the_stated_joint_corner_moving_the_pair
 /// than a figure computed and left unused.
 ///
 /// The same target is commanded twice against two descriptions that differ in
-/// nothing but how far out they say the element may be. Against the shipped
-/// figures it is taken; against a description declaring the element far looser
+/// nothing but how far out they say the loss to the surroundings may be. Against
+/// the shipped figures it is taken; against a description declaring the loss far looser
 /// it is refused, naming the protection margin and reporting the highest
 /// target that description leaves room for. That the two answers differ is the
 /// whole of the claim: a margin computed and discarded would take both.
 static void test_a_target_inside_the_widened_margin_is_refused(void)
 {
-    const char *const names[] = {"brew.heater_power_w"};
-    const float loose[] = {2.5f};
+    const char *const names[] = {"brew.loss_w_per_k"};
+    const float loose[] = {0.99f};
     const char *const description = description_declaring(names, loose, 1u);
     const plant_parameters_t believed = parameters_from(description);
     const plant_parameter_budget_t declared = budget_from(description);
-    const float ambitious_c = 98.0f;
+    const float ambitious_c = 99.5f;
     control_admission_t admission;
 
     hw_sim_reset();
@@ -8338,7 +8338,7 @@ static void test_a_target_inside_the_widened_margin_is_refused(void)
 
     protection_margin_t margin;
     TEST_ASSERT_TRUE(control_protection_margin(&state, ambitious_c, &margin));
-    TEST_ASSERT_TRUE_MESSAGE(margin.margin_c > 9.0f,
+    TEST_ASSERT_TRUE_MESSAGE(margin.margin_c > 107.0f - ambitious_c,
                              "the loosened description did not widen the margin far enough for "
                              "this target to sit inside it, so the case tests nothing");
 
@@ -8502,6 +8502,185 @@ static void test_a_probe_the_structure_cannot_answer_runs_no_corner(void)
     TEST_ASSERT_EQUAL_FLOAT(probe.unwidened_c, margin.margin_c);
     TEST_ASSERT_EQUAL_UINT(0u, margin.corners_run);
     TEST_ASSERT_EQUAL_UINT(0u, margin.contributing);
+    TEST_ASSERT_TRUE_MESSAGE(margin.declared_not_run > 0u,
+                             "corners that carry a declared error and ran nothing were not counted");
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C2: An initial inventory above the capacity
+/// is refused wherever a model is built from the description, and is not
+/// clamped. The steam law's initialisation, and the brew law's for the corners
+/// the relations make unbuildable, likewise refuse a believed description or
+/// error budget from which the model cannot be built at every declared corner, so
+/// that the protection margin is established over all of them.
+///
+/// A corner the description's declared error carries past a relation between two
+/// coefficients is a machine the model refuses to build. The margin reports it as
+/// a corner that did not run -- `ran` false with its coefficient moved -- rather
+/// than skipping it without trace, so the count of corners run falls short of the
+/// count enumerated and the shortfall is the finding. The saturation temperature
+/// is declared sixty percent out: its low end is a machine and its high end puts
+/// saturation above the casting ceiling, which no model is built from.
+static void test_a_corner_whose_machine_cannot_be_built_is_reported_as_not_run(void)
+{
+    const char *const names[] = {"steam.saturation_temperature_c"};
+    const float errors[] = {0.6f};
+    const char *declaring = description_declaring(names, errors, 1u);
+    const plant_parameters_t believed = parameters_from(declaring);
+    const plant_parameter_budget_t declared = budget_from(declaring);
+    const protection_margin_probe_t probe = the_shipped_probe();
+    protection_margin_corner_t low_end;
+    protection_margin_corner_t high_end;
+    protection_margin_t margin;
+    size_t at = 0u;
+
+    TEST_ASSERT_TRUE(plant_parameter_position("steam.saturation_temperature_c", &at));
+
+    /* Downwards is the even corner of a coefficient and upwards the odd one. */
+    TEST_ASSERT_TRUE(protection_margin_corner(&believed, &declared, &probe, 2u * at, &low_end));
+    TEST_ASSERT_TRUE(protection_margin_corner(&believed, &declared, &probe, (2u * at) + 1u,
+                                              &high_end));
+    TEST_ASSERT_EQUAL_UINT(1u, low_end.moves);
+    TEST_ASSERT_TRUE_MESSAGE(low_end.ran, "the end of the error that is a machine did not run");
+    TEST_ASSERT_EQUAL_UINT(1u, high_end.moves);
+    TEST_ASSERT_FALSE_MESSAGE(high_end.ran,
+                              "a corner no model can be built from was run, or skipped without trace");
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, high_end.contribution_c);
+
+    plant_parameters_t machine;
+    TEST_ASSERT_TRUE(protection_margin_corner_machine(&believed, &declared, &high_end, &machine));
+    TEST_ASSERT_FALSE(plant_parameters_admissible(&machine, NULL));
+
+    TEST_ASSERT_TRUE(protection_margin_widened(&believed, &declared, &probe, 0.0f, &margin));
+    TEST_ASSERT_EQUAL_UINT(1u, margin.corners_run);
+    TEST_ASSERT_TRUE(margin.corners > margin.corners_run);
+    TEST_ASSERT_EQUAL_UINT_MESSAGE(1u, margin.declared_not_run,
+                                   "the declared corner no model can be built from was not counted");
+
+    /*
+     * The brew law's initialisation takes that margin as no margin: sized
+     * without the corner it could not run, it would admit targets the whole
+     * enumeration refuses. It is refused with both outputs off and the law
+     * latched, and names the parameter the corner was refused on; the shipped
+     * description, with every declared end of every error, is taken on.
+     */
+    plant_parameter_error_t refusal;
+    plant_parameter_error_t expected;
+
+    hw_sim_reset();
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
+    TEST_ASSERT_FALSE_MESSAGE(
+        control_init(&state, &believed, &declared, &limits, &tolerance, &pump_trim),
+        "a margin sized without a declared corner was taken on");
+    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
+    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_PUMP));
+    TEST_ASSERT_EQUAL(CONTROL_STEP_FAULT_LATCHED, control_step(&state));
+    TEST_ASSERT_FALSE(control_description_established(&believed, &declared, &tolerance, &refusal));
+    TEST_ASSERT_FALSE(plant_parameters_admissible(&machine, &expected));
+    TEST_ASSERT_EQUAL_STRING(expected.parameter, refusal.parameter);
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_INCONSISTENT, refusal.fault);
+
+    plant_parameter_budget_t nothing = declared;
+    nothing.count = 0u;
+    hw_sim_reset();
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
+    TEST_ASSERT_FALSE_MESSAGE(control_init(&state, &believed, &nothing, &limits, &tolerance, &pump_trim),
+                              "a budget that enumerates nothing was taken on");
+
+    TEST_ASSERT_FALSE(control_description_established(&believed, &declared, NULL, &refusal));
+
+    hw_sim_reset();
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
+    TEST_ASSERT_TRUE_MESSAGE(control_init(&state, &parameters, &budget, &limits, &tolerance, &pump_trim),
+                             "the shipped description was refused");
+    TEST_ASSERT_TRUE(control_description_established(&parameters, &budget, &tolerance, &refusal));
+    TEST_ASSERT_EQUAL_STRING("", refusal.parameter);
+    TEST_ASSERT_TRUE(protection_margin_widened(&parameters, &budget, &probe, 0.0f, &margin));
+    TEST_ASSERT_EQUAL_UINT(0u, margin.declared_not_run);
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C3: A description whose casting ceiling is not
+/// above the declared saturation temperature is refused wherever a model is
+/// built from the description, at load and at model construction, naming the
+/// parameter.
+///
+/// The coffee side's initialisation builds its estimator's model from the same
+/// kind of believed record, so one edited past the loader is refused there with
+/// the law faulted and both outputs off, and a step taken on it drives nothing.
+static void test_a_believed_record_no_model_can_be_built_from_is_refused_by_the_brew_law(void)
+{
+    plant_parameters_t edited = parameters;
+    size_t at = 0u;
+
+    TEST_ASSERT_TRUE(plant_parameter_position("steam.casting_ceiling_c", &at));
+    TEST_ASSERT_TRUE(plant_parameter_scale(&edited, at, 0.5f));
+    TEST_ASSERT_FALSE(plant_parameters_admissible(&edited, NULL));
+
+    hw_sim_reset();
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
+    TEST_ASSERT_FALSE_MESSAGE(
+        control_init(&state, &edited, &budget, &limits, &tolerance, &pump_trim),
+        "a believed record no model can be built from was taken on");
+    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
+    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_PUMP));
+    (void)control_command_temperature(&state, 90.0f);
+    TEST_ASSERT_EQUAL_MESSAGE(CONTROL_STEP_FAULT_LATCHED, control_step(&state),
+                              "a law refused at initialisation was stepped");
+    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
+    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_PUMP));
+
+    hw_sim_reset();
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance, &pump_trim));
+}
+
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C2: The brew law's initialisation likewise
+/// refuses a believed description or error budget from which the model cannot be
+/// built at every declared corner, so that the protection margin is established
+/// over all of them.
+///
+/// A budget built by hand can declare an error that is not a figure: not a
+/// number, infinite, or below nothing. Read as an exact coefficient it would
+/// leave that coefficient's corners out of the margin, so each is refused with
+/// both outputs off, as its own fault naming the entry. Declared exactly nothing
+/// it is a claim and is taken on, and so is the shipped budget.
+static void test_a_declared_error_that_is_not_a_figure_of_nothing_or_more_is_refused_by_the_brew_law(void)
+{
+    const float hostile[] = {NAN, INFINITY, -INFINITY, -0.01f};
+    plant_parameter_error_t refusal;
+    plant_parameter_budget_t exact = budget;
+    size_t at = 0u;
+    const char *name = NULL;
+
+    TEST_ASSERT_TRUE(plant_parameter_position("brew.loss_w_per_k", &at));
+    TEST_ASSERT_TRUE(plant_parameter_name(at, &name));
+
+    for (size_t which = 0u; which < sizeof(hostile) / sizeof(hostile[0]); which++) {
+        plant_parameter_budget_t hand_built = budget;
+
+        hand_built.declared[at] = true;
+        hand_built.assumed_error[at] = hostile[which];
+        hw_sim_reset();
+        hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
+        TEST_ASSERT_FALSE_MESSAGE(
+            control_init(&state, &parameters, &hand_built, &limits, &tolerance, &pump_trim),
+            "the law was brought up on a declared error that is not a figure");
+        TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
+        TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_PUMP));
+        TEST_ASSERT_EQUAL(CONTROL_STEP_FAULT_LATCHED, control_step(&state));
+        TEST_ASSERT_FALSE(control_description_established(&parameters, &hand_built, &tolerance, &refusal));
+        TEST_ASSERT_EQUAL(PLANT_PARAMETER_ASSUMED_ERROR, refusal.fault);
+        TEST_ASSERT_EQUAL_STRING(name, refusal.parameter);
+    }
+
+    exact.assumed_error[at] = 0.0f;
+    hw_sim_reset();
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
+    TEST_ASSERT_TRUE_MESSAGE(control_init(&state, &parameters, &exact, &limits, &tolerance, &pump_trim),
+                             "a coefficient declared exact was refused");
+    hw_sim_reset();
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
+    TEST_ASSERT_TRUE_MESSAGE(control_init(&state, &parameters, &budget, &limits, &tolerance, &pump_trim),
+                             "the shipped budget was refused");
 }
 
 /// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR.C1: the declared sensing
@@ -9046,6 +9225,14 @@ static bool a_delivery_would_be_admitted_here(control_admission_t *stopped_by)
 }
 
 /*
+ * The widest error a coefficient can declare and still have both its corners be
+ * machines: a fraction of one takes the coefficient to nothing downwards, and
+ * the law is not brought up on a description declaring a corner no machine can
+ * be built for.
+ */
+#define WIDEST_BUILDABLE_ERROR 0.99f
+
+/*
  * A declared error against one coefficient at which the widened protection
  * margin is what stops a commanded target, saturation does not bind first, and
  * a delivery commanded at the resulting edge is still one the loop takes --
@@ -9064,24 +9251,21 @@ static bool a_delivery_would_be_admitted_here(control_admission_t *stopped_by)
  * The error is widened rather than a target being chosen, because on the
  * machine this description names the margin never overtakes the saturation
  * ceiling at the errors actually declared -- see the case below, which is what
- * makes that a stated finding rather than a silence. The end widened is the one
- * that writes the coefficient high: a declared error is a fraction of a value,
- * so the low end stops being a machine the structure admits once the fraction
- * reaches one, and the high end has no such stop.
+ * makes that a stated finding rather than a silence. The widest error searched
+ * is the widest at which the coefficient's low end is still a machine, because
+ * the law is not brought up on a description declaring a corner no machine can
+ * be built for; a fraction of one takes the coefficient to nothing downwards.
  *
  * The coarse search keeps doubling past the first fraction at which the margin
- * binds if a delivery cannot yet be run there: at fractions where the
- * coefficient's own downward corner is still an admissible machine, that
- * corner also costs the authority check something, and only past the fraction
- * where the low end stops being an admissible machine at all does the
- * authority check stop counting it. The fine narrowing below is then taken
- * against that already-deliverable point rather than against the bare first
- * crossing, so it cannot narrow back into a fraction the loop cannot deliver
- * at.
+ * binds if a delivery cannot yet be run there: the coefficient's own downward
+ * corner costs the authority check something as well, and the delivery is
+ * judged against it. The fine narrowing below is then taken against that
+ * already-deliverable point rather than against the bare first crossing, so it
+ * cannot narrow back into a fraction the loop cannot deliver at.
  *
  * The record itself is widened rather than a description being rewritten, which
  * is the one place this file departs from asking the description everything. A
- * fraction past one is not something any description in this tree states, and
+ * fraction this wide is not something any description in this tree states, and
  * rewriting one to say it would be inventing a machine to test the arithmetic
  * of a bound; what is under test here is which ceiling the loop applies, and
  * the record is the input that decides it.
@@ -9099,9 +9283,12 @@ static plant_parameter_budget_t the_budget_at_which_the_margin_binds(const char 
                              "narrowing widens, so there is nothing here to widen");
     below = budget.assumed_error[at];
 
-    for (float trying = below * 2.0f; trying <= 64.0f; trying *= 2.0f) {
+    for (float trying = below * 2.0f; below < WIDEST_BUILDABLE_ERROR; trying *= 2.0f) {
         control_admission_t stopped_by;
 
+        if (trying > WIDEST_BUILDABLE_ERROR) {
+            trying = WIDEST_BUILDABLE_ERROR;
+        }
         widened.assumed_error[at] = trying;
         hw_sim_reset();
         hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
@@ -9112,6 +9299,9 @@ static plant_parameter_budget_t the_budget_at_which_the_margin_binds(const char 
         }
         if (stopped_by.bound != CONTROL_ADMISSION_TARGET_INSIDE_PROTECTION_MARGIN) {
             below = trying;
+        }
+        if (trying >= WIDEST_BUILDABLE_ERROR) {
+            break;
         }
     }
     TEST_ASSERT_TRUE_MESSAGE(
@@ -9174,7 +9364,7 @@ static plant_parameter_budget_t the_budget_at_which_the_margin_binds(const char 
 static void test_a_delivery_commanded_at_the_widened_margins_own_edge_lands_in_band(void)
 {
     const plant_parameter_budget_t widened =
-        the_budget_at_which_the_margin_binds("brew.heater_power_w");
+        the_budget_at_which_the_margin_binds("brew.loss_w_per_k");
     const delivery_profile_t course = the_sweeps_course();
     const float band_c = (float)tolerance.brew_temperature_band_milli_c / 1000.0f;
     control_admission_t stopped_by;
@@ -9479,6 +9669,9 @@ int main(void)
     RUN_TEST(test_a_budget_that_does_not_belong_to_this_structure_supports_no_enumeration);
     RUN_TEST(test_the_corner_count_and_the_corners_agree_about_where_the_enumeration_ends);
     RUN_TEST(test_a_probe_the_structure_cannot_answer_runs_no_corner);
+    RUN_TEST(test_a_corner_whose_machine_cannot_be_built_is_reported_as_not_run);
+    RUN_TEST(test_a_believed_record_no_model_can_be_built_from_is_refused_by_the_brew_law);
+    RUN_TEST(test_a_declared_error_that_is_not_a_figure_of_nothing_or_more_is_refused_by_the_brew_law);
     RUN_TEST(test_the_declared_sensing_error_adds_to_the_model_error_margin_exactly);
     RUN_TEST(test_a_sensing_error_that_is_not_a_positive_number_contributes_nothing);
     RUN_TEST(test_the_public_margin_reader_carries_the_declared_sensing_error);

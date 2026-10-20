@@ -2,11 +2,11 @@ id: SOL-PLANT-STEAM-FLASH-GENERATOR.C5
 type: criterion
 title: The new coefficients are declared with origin and error, and the new arithmetic survives the mutation sweep
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
-text: |-
-  The restriction coefficient, the saturation relation's figures and the casting ceiling are each declared in the thermoblock description with an origin and an assumed error admissible to the uncertainty budget, the restriction coefficient marked estimated. The changed plant lines pass the changed-lines mutation sweep, judged against the triage record. The analysis records pinned to the changed inputs are regenerated in the same change so no emulation staleness test fails. Out of scope: the description's narrative statement of relations and omissions, and the final regeneration of the records against the completed steam model, which SOL-PLANT-STEAM-FLASH-GENERATOR-DESCRIBED owns.
+text: |
+  The restriction coefficient, the saturation relation's figures, the casting ceiling, the liquid capacity and the initial inventory are each declared in the thermoblock description with an origin and an assumed error admissible to the uncertainty budget, the restriction coefficient marked estimated. The changed plant lines pass the changed-lines mutation sweep, judged against the triage record. The analysis records pinned to the changed inputs are regenerated in the same change so no emulation staleness test fails. Out of scope: the description's narrative statement of relations and omissions, and the final regeneration of the records against the completed steam model, which SOL-PLANT-STEAM-FLASH-GENERATOR-DESCRIBED owns.
 links:
   - target: SOL-PLANT-STEAM-FLASH-GENERATOR
     type: criterion-of

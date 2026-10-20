@@ -1,7 +1,7 @@
 id: SOL-SIM-STEAM-FEED-HOLDS-PRESSURE-HEATER-HOLDS-DRYNESS.C1
 type: criterion
 title: The plant reports superheat at its modelled outlet above saturation at the measured pressure
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: test

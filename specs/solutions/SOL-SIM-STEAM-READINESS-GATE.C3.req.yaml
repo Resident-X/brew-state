@@ -1,7 +1,7 @@
 id: SOL-SIM-STEAM-READINESS-GATE.C3
 type: criterion
 title: Withholding feed holds the pressure deficit rather than letting an open wand widen it
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: test
@@ -10,3 +10,5 @@ text: |
 links:
   - target: SOL-SIM-STEAM-READINESS-GATE
     type: criterion-of
+attributes:
+  deprecation_reason: restated by SOL-PLANT-STEAM-FLASH-GENERATOR.C1; the flash-generator steam side retires this behaviour

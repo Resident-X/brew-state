@@ -75,6 +75,11 @@ static actuation_channel_t answered_channel(void)
 static void read_all(const plant_model_t *model, float out[PLANT_QUANTITY_COUNT])
 {
     for (int quantity = 0; quantity < PLANT_QUANTITY_COUNT; quantity++) {
+        if (quantity == (int)PLANT_QUANTITY_STEAM_OUTLET_SUPERHEAT_K) {
+            /* Not observed here, which its own test holds; read as nothing. */
+            out[quantity] = 0.0f;
+            continue;
+        }
         TEST_ASSERT_TRUE(plant_model_quantity(model, (plant_quantity_t)quantity, &out[quantity]));
     }
 }
@@ -244,7 +249,8 @@ static void test_a_refused_command_is_not_applied_with_the_unanswered_channel_dr
 
     /*
      * The accepted step moved every quantity that can move. Only the two rates
-     * are excluded, and only because this structure reports each of them as a
+     * and the outlet superheat, which this structure does not observe and which
+     * read here as nothing, are excluded, and only because each is a
      * constant zero -- a figure that cannot differ between any two instances and
      * is therefore evidence of nothing either way. They are named one by one
      * rather than skipped as a class, and the excluded ones are still required
@@ -258,7 +264,8 @@ static void test_a_refused_command_is_not_applied_with_the_unanswered_channel_dr
      */
     for (int quantity = 0; quantity < PLANT_QUANTITY_COUNT; quantity++) {
         if (quantity == (int)PLANT_QUANTITY_BREW_FLOW_ML_PER_S ||
-            quantity == (int)PLANT_QUANTITY_STEAM_DRAW_ML_PER_S) {
+            quantity == (int)PLANT_QUANTITY_STEAM_DRAW_ML_PER_S ||
+            quantity == (int)PLANT_QUANTITY_STEAM_OUTLET_SUPERHEAT_K) {
             TEST_ASSERT_EQUAL_FLOAT(untouched_values[quantity], stepped_values[quantity]);
             continue;
         }
@@ -746,6 +753,38 @@ static void test_the_structure_describing_no_machine_answers_no_contention(void)
     TEST_ASSERT_FALSE(share);
 }
 
+/// SOL-PLANT-STEAM-FLASH-GENERATOR.C6: The plant reports superheat at its
+/// modelled outlet above saturation at the measured pressure.
+///
+/// A structure with no flash-generator steam side answers the outlet superheat as
+/// not observed rather than as a value -- through the quantity read and through
+/// the relation offered for readings a caller holds -- before and after a step
+/// with steam asked of it. A zero here would read as wet steam, which is a claim
+/// this fixture has no outlet relation to make.
+static void test_the_outlet_superheat_is_answered_as_not_observed(void)
+{
+    plant_model_t model;
+    plant_parameter_budget_t nothing_declared;
+    plant_actuation_t applied = {{0u}};
+    float value = -1.0f;
+
+    memset(&nothing_declared, 0, sizeof(nothing_declared));
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+    TEST_ASSERT_FALSE(plant_model_quantity(&model, PLANT_QUANTITY_STEAM_OUTLET_SUPERHEAT_K, &value));
+    TEST_ASSERT_TRUE(plant_model_step(&model, &applied, 0.5f, 100u));
+    TEST_ASSERT_FALSE(plant_model_quantity(&model, PLANT_QUANTITY_STEAM_OUTLET_SUPERHEAT_K, &value));
+    TEST_ASSERT_FALSE(plant_model_least_outlet_superheat(&parameters, &nothing_declared, 150.0f,
+                                                        1.0f, 500u, &value));
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(-1.0f, value, "a refusal wrote a value anyway");
+
+    /* Every other quantity is still answered: the refusal is this one's alone. */
+    for (int quantity = 0; quantity < PLANT_QUANTITY_COUNT; quantity++) {
+        if (quantity != (int)PLANT_QUANTITY_STEAM_OUTLET_SUPERHEAT_K) {
+            TEST_ASSERT_TRUE(plant_model_quantity(&model, (plant_quantity_t)quantity, &value));
+        }
+    }
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -769,5 +808,6 @@ int main(void)
     RUN_TEST(test_the_structure_describing_no_machine_declares_both_delivery_points);
     RUN_TEST(test_the_structure_describing_no_machine_answers_distinct_masses);
     RUN_TEST(test_the_structure_describing_no_machine_answers_no_contention);
+    RUN_TEST(test_the_outlet_superheat_is_answered_as_not_observed);
     return UNITY_END();
 }

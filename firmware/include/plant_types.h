@@ -93,6 +93,21 @@ typedef enum {
      * what a wand passed, and no structure claims the two agree.
      */
     PLANT_QUANTITY_STEAM_DRAW_ML_PER_S,
+    /*
+     * How far above saturation the steam leaving the machine is, in kelvin: the
+     * temperature of the steam at the structure's modelled outlet less
+     * saturation at the steam pressure the structure reports. It is what a claim
+     * that the steam is dry rests on, and it is a modelled figure that no sensor
+     * on the machine confirms. It is nothing while no steam is made, and nothing
+     * while the outlet sits at or below saturation, which is wet steam.
+     *
+     * It is the one quantity a structure may answer as not observed rather than
+     * as a value: a structure with no flash-generator steam side -- a boiler, and
+     * a structure with no steam side at all -- has no modelled outlet for steam to
+     * be superheated at, and refuses it rather than answering a nothing that would
+     * read as wet steam.
+     */
+    PLANT_QUANTITY_STEAM_OUTLET_SUPERHEAT_K,
     PLANT_QUANTITY_COUNT
 } plant_quantity_t;
 
@@ -138,6 +153,13 @@ typedef enum {
     PLANT_STATE_STEAM_TEMPERATURE_C,
     PLANT_STATE_BREW_PRESSURE_BAR,
     PLANT_STATE_STEAM_PRESSURE_BAR,
+    /*
+     * The liquid water the steam side holds, in millilitres. It is what separates
+     * a shut steam path whose pressure is saturation of its casting from a dry
+     * one, and it is bounded by a declared capacity. A structure with no steam
+     * side that holds liquid keeps no such state and refuses this one.
+     */
+    PLANT_STATE_STEAM_LIQUID_INVENTORY_ML,
     PLANT_STATE_COUNT
 } plant_state_t;
 
@@ -249,6 +271,17 @@ typedef struct {
     size_t offset;
 } plant_parameter_spec_t;
 
+/*
+ * A relation the values of a description must stand in together, beyond each
+ * lying in its own range. `parameter` is the one named when the relation fails,
+ * and `holds` answers for the structure's own parameter record, which is what
+ * `parameters` points at.
+ */
+typedef struct {
+    const char *parameter;
+    bool (*holds)(const void *parameters);
+} plant_parameter_relation_t;
+
 /* Why a parameter description was refused. */
 typedef enum {
     /* Nothing was wrong; the record is populated. */
@@ -292,7 +325,18 @@ typedef enum {
      * is settled where the description lives rather than by the loader -- the
      * same division the origin annotation already draws.
      */
-    PLANT_PARAMETER_ASSUMED_ERROR
+    PLANT_PARAMETER_ASSUMED_ERROR,
+    /*
+     * Every value is inside its own range and two of them together are not a
+     * machine -- a pair the structure declares must stand in a relation and do
+     * not. The parameter reported is the first of the pair.
+     *
+     * Separate from OUT_OF_RANGE because what is wrong is the pair and not
+     * either value: each is admissible alone, and a caller told one was out of
+     * range would go looking for a value that is fine. A relation is refused
+     * rather than repaired, so no value is substituted and no model results.
+     */
+    PLANT_PARAMETER_INCONSISTENT
 } plant_parameter_fault_t;
 
 /*

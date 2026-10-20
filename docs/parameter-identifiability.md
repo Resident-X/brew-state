@@ -16,9 +16,9 @@ This is not a fit and it is not a purchase order. Nothing here recovers a coeffi
 
 | What | File | sha256 |
 |---|---|---|
-| The machine's coefficients | `firmware/params/thermoblock.params` | `05492d4ba05da02591dd5c8437ed131ce452a41521c09bb51ab80673fa1fd814` |
+| The machine's coefficients | `firmware/params/thermoblock.params` | `a05cf3fa70a704725f37d36ce7575874f03921cb89da29773cda0c5ca9a7e062` |
 | What a reading off it may be | `firmware/params/thermoblock.limits` | `d71d41f4ea5ef907696cfec6059e4b2b00a76fdb2f937d40781ec91910ce26a1` |
-| The steam side's design figures | `firmware/params/steam_control.declaration` | `4ee5f3b38c7404536ebdc5d8e42e7710c214f53a223521cf60be0ad54c8a2dda` |
+| The steam side's design figures | `firmware/params/steam_control.declaration` | `5734f7095f6b438c4587b7e03f68168602cc18bd90ad5510e1fe92d77e4cf3b9` |
 | The bands a delivery is held to | `firmware/params/tolerance.declaration` | `c5bb5a51a4a9ad71496ac8405dee688736a6635e0f2df06433168055aefdec17` |
 
 The supply this was run against is the declared 216–253 V span about the 230 V nominal, as the description's accounts state it. How each element rating's declared error was derived from that supply is set out in the description's account beside the rating; this record does not check that derivation.
@@ -55,9 +55,9 @@ The second is what the model's own arithmetic could express. Every quantity it c
 | brew | `steam-bar` | yes | 0 bar | 5.96e-08 bar | 0.0488 bar | 0.0488 bar |
 | brew | `brew-mlps` | no | 3.36 mL/s | 2.38e-07 mL/s | 0.0488 mL/s | 0.0488 mL/s |
 | steam | `brew-c` | yes | 25 C | 1.91e-06 C | 0.0488 C | 0.0488 C |
-| steam | `steam-c` | yes | 152 C | 1.53e-05 C | 0.0488 C | 0.0488 C |
+| steam | `steam-c` | yes | 146 C | 1.53e-05 C | 0.0488 C | 0.0488 C |
 | steam | `brew-bar` | yes | 0 bar | 5.96e-08 bar | 0.0488 bar | 0.0488 bar |
-| steam | `steam-bar` | yes | 1.47 bar | 1.19e-07 bar | 0.0488 bar | 0.0488 bar |
+| steam | `steam-bar` | yes | 3.2 bar | 2.38e-07 bar | 0.0488 bar | 0.0488 bar |
 | steam | `brew-mlps` | no | 0 mL/s | 5.96e-08 mL/s | 0.0488 mL/s | 0.0488 mL/s |
 
 The drifted reading takes its own peaks off its own runs and arrives at the same floor on every channel, so both determinations below are taken against the figures in this table. That holds because the machine's own reading resolution is the coarser of the two floors everywhere, and it is established here from the two readings rather than assumed of a board with a finer converter.
@@ -83,16 +83,22 @@ A coefficient out of scope is still laid out against every channel in the tables
 | `ambient_temperature_c` | yes | its declared error moves the temperature the control path reconstructs |
 | `water.feed_temperature_c` | yes | its declared error moves the temperature the control path reconstructs |
 | `brew.loss_w_per_k` | yes | its declared error moves the temperature the control path reconstructs |
-| `steam.pressure_bar_per_k` | no | neither end of its declared error moved the temperature the control path reconstructs, so no reconstruction rests on it and nothing here is asked of it |
-| `steam.pressure_fall_bar_per_ml` | no | neither end of its declared error moved the temperature the control path reconstructs, so no reconstruction rests on it and nothing here is asked of it |
-| `steam.loss_w_per_k` | no | neither end of its declared error moved the temperature the control path reconstructs, so no reconstruction rests on it and nothing here is asked of it |
-| `steam.thermal_mass_j_per_k` | no | neither end of its declared error moved the temperature the control path reconstructs, so no reconstruction rests on it and nothing here is asked of it |
-| `steam.heater_power_w` | no | neither end of its declared error moved the temperature the control path reconstructs, so no reconstruction rests on it and nothing here is asked of it |
-| `steam.saturation_temperature_c` | no | neither end of its declared error moved the temperature the control path reconstructs, so no reconstruction rests on it and nothing here is asked of it |
 | `steam.feed_flow_ml_per_s` | no | neither end of its declared error moved the temperature the control path reconstructs, so no reconstruction rests on it and nothing here is asked of it |
+| `steam.loss_w_per_k` | no | neither end of its declared error moved the temperature the control path reconstructs, so no reconstruction rests on it and nothing here is asked of it |
+| `steam.heater_power_w` | no | neither end of its declared error moved the temperature the control path reconstructs, so no reconstruction rests on it and nothing here is asked of it |
 | `pump.pressure_bar` | no | neither end of its declared error moved the temperature the control path reconstructs, so no reconstruction rests on it and nothing here is asked of it |
+| `steam.restriction_bar_s2_per_ml2` | no | neither end of its declared error moved the temperature the control path reconstructs, so no reconstruction rests on it and nothing here is asked of it |
 | `brew.pressure_time_constant_s` | no | neither end of its declared error moved the temperature the control path reconstructs, so no reconstruction rests on it and nothing here is asked of it |
 | `water.latent_heat_j_per_ml` | no | neither end of its declared error moved the temperature the control path reconstructs, so no reconstruction rests on it and nothing here is asked of it |
+| `steam.saturation_temperature_c` | no | neither end of its declared error moved the temperature the control path reconstructs, so no reconstruction rests on it and nothing here is asked of it |
+| `steam.saturation_antoine_a` | no | neither end of its declared error moved the temperature the control path reconstructs, so no reconstruction rests on it and nothing here is asked of it |
+| `steam.saturation_antoine_b_k` | no | neither end of its declared error moved the temperature the control path reconstructs, so no reconstruction rests on it and nothing here is asked of it |
+| `steam.saturation_antoine_c_c` | no | neither end of its declared error moved the temperature the control path reconstructs, so no reconstruction rests on it and nothing here is asked of it |
+| `steam.thermal_mass_j_per_k` | no | neither end of its declared error moved the temperature the control path reconstructs, so no reconstruction rests on it and nothing here is asked of it |
+| `steam.casting_ceiling_c` | no | neither end of its declared error moved the temperature the control path reconstructs, so no reconstruction rests on it and nothing here is asked of it |
+| `steam.initial_inventory_ml` | no | neither end of its declared error moved the temperature the control path reconstructs, so no reconstruction rests on it and nothing here is asked of it |
+| `steam.liquid_capacity_ml` | no | neither end of its declared error moved the temperature the control path reconstructs, so no reconstruction rests on it and nothing here is asked of it |
+| `steam.outlet_drop_k_s_per_ml` | no | neither end of its declared error moved the temperature the control path reconstructs, so no reconstruction rests on it and nothing here is asked of it |
 
 Both readings arrive at this same set from their own runs.
 
@@ -113,16 +119,22 @@ The largest the coefficient's own declared error moved each channel, in that cha
 | `ambient_temperature_c` | 5 | 5 | 0 | 0 | 0 |
 | `water.feed_temperature_c` | 3.47 | 0 | 0 | 0 | 0 |
 | `brew.loss_w_per_k` | 1.6 | 0 | 0 | 0 | 0 |
-| `steam.pressure_bar_per_k` | 0 | 0 | 0 | 0 | 0 |
-| `steam.pressure_fall_bar_per_ml` | 0 | 0 | 0 | 0 | 0 |
-| `steam.loss_w_per_k` | 0 | 0 | 0 | 0 | 0 |
-| `steam.thermal_mass_j_per_k` | 0 | 0 | 0 | 0 | 0 |
-| `steam.heater_power_w` | 0 | 0 | 0 | 0 | 0 |
-| `steam.saturation_temperature_c` | 0 | 0 | 0 | 0 | 0 |
 | `steam.feed_flow_ml_per_s` | 0 | 0 | 0 | 0 | 0 |
+| `steam.loss_w_per_k` | 0 | 0 | 0 | 0 | 0 |
+| `steam.heater_power_w` | 0 | 0 | 0 | 0 | 0 |
 | `pump.pressure_bar` | 0 | 0 | 1.8 | 0 | 0 |
+| `steam.restriction_bar_s2_per_ml2` | 0 | 0 | 0 | 0 | 0 |
 | `brew.pressure_time_constant_s` | 0 | 0 | 0.577 | 0 | 0 |
 | `water.latent_heat_j_per_ml` | 0 | 0 | 0 | 0 | 0 |
+| `steam.saturation_temperature_c` | 0 | 0 | 0 | 0 | 0 |
+| `steam.saturation_antoine_a` | 0 | 0 | 0 | 0 | 0 |
+| `steam.saturation_antoine_b_k` | 0 | 0 | 0 | 0 | 0 |
+| `steam.saturation_antoine_c_c` | 0 | 0 | 0 | 0 | 0 |
+| `steam.thermal_mass_j_per_k` | 0 | 0 | 0 | 0 | 0 |
+| `steam.casting_ceiling_c` | 0 | 0 | 0 | 0 | 0 |
+| `steam.initial_inventory_ml` | 0 | 0 | 0 | 0 | 0 |
+| `steam.liquid_capacity_ml` | 0 | 0 | 0 | 0 | 0 |
+| `steam.outlet_drop_k_s_per_ml` | 0 | 0 | 0 | 0 | 0 |
 
 ### On the steam draw, built differently
 
@@ -130,23 +142,29 @@ The largest the coefficient's own declared error moved each channel, in that cha
 |---|---|---|---|---|---|
 | `brew.outlet_held_volume_ml` | 0 | 0 | 0 | 0 | 0 |
 | `brew.outlet_conduction_time_constant_s` | 0 | 0 | 0 | 0 | 0 |
-| `water.heat_capacity_j_per_ml_k` | 0 | 0.0152 | 0 | 0.000547 | 0 |
+| `water.heat_capacity_j_per_ml_k` | 0 | 0.0292 | 0 | 0.00232 | 0 |
 | `brew.thermal_mass_j_per_k` | 0 | 0 | 0 | 0 | 0 |
 | `brew.heater_power_w` | 0 | 0 | 0 | 0 | 0 |
 | `pump.flow_ml_per_s` | 0 | 0 | 0 | 0 | 0 |
-| `ambient_temperature_c` | 5 | 0.215 | 0 | 0.00773 | 0 |
-| `water.feed_temperature_c` | 0 | 0.0611 | 0 | 0.0022 | 0 |
+| `ambient_temperature_c` | 5 | 0.178 | 0 | 0.0168 | 0 |
+| `water.feed_temperature_c` | 0 | 0.122 | 0 | 0.0104 | 0 |
 | `brew.loss_w_per_k` | 0 | 0 | 0 | 0 | 0 |
-| `steam.pressure_bar_per_k` | 0 | 11.7 | 0 | 0.333 | 0 |
-| `steam.pressure_fall_bar_per_ml` | 0 | 2.86 | 0 | 0.103 | 0 |
-| `steam.loss_w_per_k` | 0 | 2.72 | 0 | 0.0978 | 0 |
-| `steam.thermal_mass_j_per_k` | 0 | 2.54 | 0 | 0.0916 | 0 |
-| `steam.heater_power_w` | 0 | 2.1 | 0 | 0.0756 | 0 |
-| `steam.saturation_temperature_c` | 0 | 2.04 | 0 | 0.072 | 0 |
-| `steam.feed_flow_ml_per_s` | 0 | 1.83 | 0 | 0.15 | 0 |
+| `steam.feed_flow_ml_per_s` | 0 | 5.96 | 0 | 1.17 | 0 |
+| `steam.loss_w_per_k` | 0 | 2.46 | 0 | 0.232 | 0 |
+| `steam.heater_power_w` | 0 | 2.17 | 0 | 0.173 | 0 |
 | `pump.pressure_bar` | 0 | 0 | 0 | 0 | 0 |
+| `steam.restriction_bar_s2_per_ml2` | 0 | 0.00101 | 0 | 0.586 | 0 |
 | `brew.pressure_time_constant_s` | 0 | 0 | 0 | 0 | 0 |
-| `water.latent_heat_j_per_ml` | 0 | 0.158 | 0 | 0.00568 | 0 |
+| `water.latent_heat_j_per_ml` | 0 | 0.317 | 0 | 0.0271 | 0 |
+| `steam.saturation_temperature_c` | 0 | 0.0221 | 0 | 0.0732 | 0 |
+| `steam.saturation_antoine_a` | 0 | 0 | 0 | 0.0276 | 0 |
+| `steam.saturation_antoine_b_k` | 0 | 0 | 0 | 0.0237 | 0 |
+| `steam.saturation_antoine_c_c` | 0 | 0 | 0 | 0.0143 | 0 |
+| `steam.thermal_mass_j_per_k` | 0 | 0.00317 | 0 | 0.000217 | 0 |
+| `steam.casting_ceiling_c` | 0 | 0 | 0 | 0 | 0 |
+| `steam.initial_inventory_ml` | 0 | 0 | 0 | 0 | 0 |
+| `steam.liquid_capacity_ml` | 0 | 0 | 0 | 0 | 0 |
+| `steam.outlet_drop_k_s_per_ml` | 0 | 0 | 0 | 0 | 0 |
 
 ### On the brew draw, drifted
 
@@ -161,16 +179,22 @@ The largest the coefficient's own declared error moved each channel, in that cha
 | `ambient_temperature_c` | 5 | 5 | 0 | 0 | 0 |
 | `water.feed_temperature_c` | 3.47 | 0 | 0 | 0 | 0 |
 | `brew.loss_w_per_k` | 1.6 | 0 | 0 | 0 | 0 |
-| `steam.pressure_bar_per_k` | 0 | 0 | 0 | 0 | 0 |
-| `steam.pressure_fall_bar_per_ml` | 0 | 0 | 0 | 0 | 0 |
-| `steam.loss_w_per_k` | 0 | 0 | 0 | 0 | 0 |
-| `steam.thermal_mass_j_per_k` | 0 | 0 | 0 | 0 | 0 |
-| `steam.heater_power_w` | 0 | 0 | 0 | 0 | 0 |
-| `steam.saturation_temperature_c` | 0 | 0 | 0 | 0 | 0 |
 | `steam.feed_flow_ml_per_s` | 0 | 0 | 0 | 0 | 0 |
+| `steam.loss_w_per_k` | 0 | 0 | 0 | 0 | 0 |
+| `steam.heater_power_w` | 0 | 0 | 0 | 0 | 0 |
 | `pump.pressure_bar` | 0 | 0 | 1.8 | 0 | 0 |
+| `steam.restriction_bar_s2_per_ml2` | 0 | 0 | 0 | 0 | 0 |
 | `brew.pressure_time_constant_s` | 0 | 0 | 0.577 | 0 | 0 |
 | `water.latent_heat_j_per_ml` | 0 | 0 | 0 | 0 | 0 |
+| `steam.saturation_temperature_c` | 0 | 0 | 0 | 0 | 0 |
+| `steam.saturation_antoine_a` | 0 | 0 | 0 | 0 | 0 |
+| `steam.saturation_antoine_b_k` | 0 | 0 | 0 | 0 | 0 |
+| `steam.saturation_antoine_c_c` | 0 | 0 | 0 | 0 | 0 |
+| `steam.thermal_mass_j_per_k` | 0 | 0 | 0 | 0 | 0 |
+| `steam.casting_ceiling_c` | 0 | 0 | 0 | 0 | 0 |
+| `steam.initial_inventory_ml` | 0 | 0 | 0 | 0 | 0 |
+| `steam.liquid_capacity_ml` | 0 | 0 | 0 | 0 | 0 |
+| `steam.outlet_drop_k_s_per_ml` | 0 | 0 | 0 | 0 | 0 |
 
 ### On the steam draw, drifted
 
@@ -178,23 +202,29 @@ The largest the coefficient's own declared error moved each channel, in that cha
 |---|---|---|---|---|---|
 | `brew.outlet_held_volume_ml` | 0 | 0 | 0 | 0 | 0 |
 | `brew.outlet_conduction_time_constant_s` | 0 | 0 | 0 | 0 | 0 |
-| `water.heat_capacity_j_per_ml_k` | 0 | 0.0152 | 0 | 0.000547 | 0 |
+| `water.heat_capacity_j_per_ml_k` | 0 | 0.0292 | 0 | 0.00232 | 0 |
 | `brew.thermal_mass_j_per_k` | 0 | 0 | 0 | 0 | 0 |
 | `brew.heater_power_w` | 0 | 0 | 0 | 0 | 0 |
 | `pump.flow_ml_per_s` | 0 | 0 | 0 | 0 | 0 |
-| `ambient_temperature_c` | 5 | 0.215 | 0 | 0.00773 | 0 |
-| `water.feed_temperature_c` | 0 | 0.0611 | 0 | 0.0022 | 0 |
+| `ambient_temperature_c` | 5 | 0.178 | 0 | 0.0168 | 0 |
+| `water.feed_temperature_c` | 0 | 0.122 | 0 | 0.0104 | 0 |
 | `brew.loss_w_per_k` | 0 | 0 | 0 | 0 | 0 |
-| `steam.pressure_bar_per_k` | 0 | 11.7 | 0 | 0.333 | 0 |
-| `steam.pressure_fall_bar_per_ml` | 0 | 2.86 | 0 | 0.103 | 0 |
-| `steam.loss_w_per_k` | 0 | 2.72 | 0 | 0.0978 | 0 |
-| `steam.thermal_mass_j_per_k` | 0 | 2.54 | 0 | 0.0916 | 0 |
-| `steam.heater_power_w` | 0 | 2.1 | 0 | 0.0756 | 0 |
-| `steam.saturation_temperature_c` | 0 | 2.04 | 0 | 0.072 | 0 |
-| `steam.feed_flow_ml_per_s` | 0 | 1.83 | 0 | 0.15 | 0 |
+| `steam.feed_flow_ml_per_s` | 0 | 5.96 | 0 | 1.17 | 0 |
+| `steam.loss_w_per_k` | 0 | 2.46 | 0 | 0.232 | 0 |
+| `steam.heater_power_w` | 0 | 2.17 | 0 | 0.173 | 0 |
 | `pump.pressure_bar` | 0 | 0 | 0 | 0 | 0 |
+| `steam.restriction_bar_s2_per_ml2` | 0 | 0.00101 | 0 | 0.586 | 0 |
 | `brew.pressure_time_constant_s` | 0 | 0 | 0 | 0 | 0 |
-| `water.latent_heat_j_per_ml` | 0 | 0.158 | 0 | 0.00568 | 0 |
+| `water.latent_heat_j_per_ml` | 0 | 0.317 | 0 | 0.0271 | 0 |
+| `steam.saturation_temperature_c` | 0 | 0.0221 | 0 | 0.0732 | 0 |
+| `steam.saturation_antoine_a` | 0 | 0 | 0 | 0.0276 | 0 |
+| `steam.saturation_antoine_b_k` | 0 | 0 | 0 | 0.0237 | 0 |
+| `steam.saturation_antoine_c_c` | 0 | 0 | 0 | 0.0143 | 0 |
+| `steam.thermal_mass_j_per_k` | 0 | 0.00317 | 0 | 0.000217 | 0 |
+| `steam.casting_ceiling_c` | 0 | 0 | 0 | 0 | 0 |
+| `steam.initial_inventory_ml` | 0 | 0 | 0 | 0 | 0 |
+| `steam.liquid_capacity_ml` | 0 | 0 | 0 | 0 | 0 |
+| `steam.outlet_drop_k_s_per_ml` | 0 | 0 | 0 | 0 | 0 |
 
 ## What this machine could tell apart
 
@@ -208,15 +238,15 @@ The two figures after those are the same remainder taken as a fraction of the si
 
 | Coefficient | Largest reach | On | Unique against the in-scope set | Unique against every coefficient | Unique as a fraction of itself | Others used | Verdict |
 |---|---|---|---|---|---|---|---|
-| `brew.outlet_held_volume_ml` | 35.8 | brew `brew-c` | 0.892 | 0.878 | 0.0221 | 3.23 | not shown identifiable: reproduced by a combination of the others |
-| `brew.outlet_conduction_time_constant_s` | 13.1 | brew `brew-c` | 0.297 | 0.309 | 0.02 | 0.425 | not shown identifiable: reproduced by a combination of the others |
-| `water.heat_capacity_j_per_ml_k` | 7.6 | brew `brew-c` | 0.707 | 0.714 | 0.0396 | 0.511 | not shown identifiable: reproduced by a combination of the others |
-| `brew.thermal_mass_j_per_k` | 359 | brew `brew-c` | 55.3 | 55.2 | 0.0846 | 124 | identifiable |
-| `brew.heater_power_w` | 239 | brew `brew-c` | 8.57 | 8.6 | 0.0208 | 26.5 | identifiable |
-| `pump.flow_ml_per_s` | 194 | brew `brew-c` | 25.8 | 25.8 | 0.14 | 43.3 | identifiable |
-| `ambient_temperature_c` | 102 | brew `steam-c` | 102 | 102 | 0.949 | 43.9 | identifiable |
-| `water.feed_temperature_c` | 71 | brew `brew-c` | 2.22 | 2.18 | 0.0173 | 4.79 | identifiable |
-| `brew.loss_w_per_k` | 32.8 | brew `brew-c` | 7.44 | 7.39 | 0.125 | 13.8 | identifiable |
+| `brew.outlet_held_volume_ml` | 35.8 | brew `brew-c` | 0.924 | 0.878 | 0.0225 | 3.22 | not shown identifiable: reproduced by a combination of the others |
+| `brew.outlet_conduction_time_constant_s` | 13.1 | brew `brew-c` | 0.289 | 0.309 | 0.0207 | 0.392 | not shown identifiable: reproduced by a combination of the others |
+| `water.heat_capacity_j_per_ml_k` | 7.6 | brew `brew-c` | 0.693 | 0.714 | 0.0406 | 0.467 | not shown identifiable: reproduced by a combination of the others |
+| `brew.thermal_mass_j_per_k` | 359 | brew `brew-c` | 55.5 | 55.2 | 0.0848 | 123 | identifiable |
+| `brew.heater_power_w` | 239 | brew `brew-c` | 8.54 | 8.6 | 0.0235 | 27.2 | identifiable |
+| `pump.flow_ml_per_s` | 194 | brew `brew-c` | 25.8 | 25.8 | 0.142 | 59.4 | identifiable |
+| `ambient_temperature_c` | 102 | brew `steam-c` | 102 | 102 | 0.95 | 45.1 | identifiable |
+| `water.feed_temperature_c` | 71 | brew `brew-c` | 2.31 | 2.18 | 0.019 | 4.49 | identifiable |
+| `brew.loss_w_per_k` | 32.8 | brew `brew-c` | 7.59 | 7.39 | 0.126 | 12.7 | identifiable |
 
 ### What the verdicts say
 
@@ -224,11 +254,11 @@ Of the 9 coefficients the reconstruction rests on, 6 are shown identifiable from
 
 The rest are **not shown identifiable**, and each is named here rather than left out of the table or given the benefit of the doubt:
 
-- `brew.outlet_held_volume_ml` — it does reach the channels, by up to 35.8 of what the brew draw's `brew-c` could resolve, but the part of its signature that no combination of the other in-scope coefficients reproduces comes to 0.892 of that resolution — 0.0221 of the signature's own size. What the machine sees when this coefficient is wrong is what it would see if a combination of the others were wrong instead, so an observation cannot say which. That combination totals 3.23 of the others' own declared errors, which is more than the description admits those coefficients may be out by — so the confounding is arithmetic that the description's own error budget already rules out, and this verdict is conservative.
-- `brew.outlet_conduction_time_constant_s` — it does reach the channels, by up to 13.1 of what the brew draw's `brew-c` could resolve, but the part of its signature that no combination of the other in-scope coefficients reproduces comes to 0.297 of that resolution — 0.02 of the signature's own size. What the machine sees when this coefficient is wrong is what it would see if a combination of the others were wrong instead, so an observation cannot say which. That combination totals 0.425 of the others' own declared errors, so it is a machine the description already admits to being possible.
-- `water.heat_capacity_j_per_ml_k` — it does reach the channels, by up to 7.6 of what the brew draw's `brew-c` could resolve, but the part of its signature that no combination of the other in-scope coefficients reproduces comes to 0.707 of that resolution — 0.0396 of the signature's own size. What the machine sees when this coefficient is wrong is what it would see if a combination of the others were wrong instead, so an observation cannot say which. That combination totals 0.511 of the others' own declared errors, so it is a machine the description already admits to being possible.
+- `brew.outlet_held_volume_ml` — it does reach the channels, by up to 35.8 of what the brew draw's `brew-c` could resolve, but the part of its signature that no combination of the other in-scope coefficients reproduces comes to 0.924 of that resolution — 0.0225 of the signature's own size. What the machine sees when this coefficient is wrong is what it would see if a combination of the others were wrong instead, so an observation cannot say which. That combination totals 3.22 of the others' own declared errors, which is more than the description admits those coefficients may be out by — so the confounding is arithmetic that the description's own error budget already rules out, and this verdict is conservative.
+- `brew.outlet_conduction_time_constant_s` — it does reach the channels, by up to 13.1 of what the brew draw's `brew-c` could resolve, but the part of its signature that no combination of the other in-scope coefficients reproduces comes to 0.289 of that resolution — 0.0207 of the signature's own size. What the machine sees when this coefficient is wrong is what it would see if a combination of the others were wrong instead, so an observation cannot say which. That combination totals 0.392 of the others' own declared errors, so it is a machine the description already admits to being possible.
+- `water.heat_capacity_j_per_ml_k` — it does reach the channels, by up to 7.6 of what the brew draw's `brew-c` could resolve, but the part of its signature that no combination of the other in-scope coefficients reproduces comes to 0.693 of that resolution — 0.0406 of the signature's own size. What the machine sees when this coefficient is wrong is what it would see if a combination of the others were wrong instead, so an observation cannot say which. That combination totals 0.467 of the others' own declared errors, so it is a machine the description already admits to being possible.
 
-No verdict above turns on a channel this board has no instrument behind. `brew-mlps` does carry a part of a signature nothing else reproduces — 25.8 of what it could resolve for `pump.flow_ml_per_s` and 2.01 of what it could resolve for `ambient_temperature_c` — but every coefficient it separates is already separated by a channel that is fitted, so on this model, when it is built differently, adding that instrument would confirm a finding rather than produce one. That is a negative answer to the question this analysis exists to inform, and it is worth as much as a positive one: it is the case for *not* spending on that channel yet, and it is a statement about this estimated model that a measured one could overturn.
+No verdict above turns on a channel this board has no instrument behind. `brew-mlps` does carry a part of a signature nothing else reproduces — 25.8 of what it could resolve for `pump.flow_ml_per_s` and 2.54 of what it could resolve for `ambient_temperature_c` — but every coefficient it separates is already separated by a channel that is fitted, so on this model, when it is built differently, adding that instrument would confirm a finding rather than produce one. That is a negative answer to the question this analysis exists to inform, and it is worth as much as a positive one: it is the case for *not* spending on that channel yet, and it is a statement about this estimated model that a measured one could overturn.
 
 A figure there for a coefficient the tables above show moving that channel by nothing at all is not a contradiction, and it is the one number here most easily misread. What is being reported is the remainder, not the reach: the combination of the other coefficients that comes nearest to reproducing this one's signature does move that channel, so the disagreement between the coefficient and its nearest imitation shows up there even though the coefficient itself never touched it. A channel a coefficient leaves alone can separate it from something that does not.
 
@@ -240,17 +270,17 @@ This is the reading a machine in service is under, and it is the one to design a
 
 | Coefficient | Largest reach | On | Unique against the in-scope set | Unique against every coefficient | Unique as a fraction of itself | Others used | Verdict |
 |---|---|---|---|---|---|---|---|
-| `brew.outlet_held_volume_ml` | 20.6 | brew `brew-c` | 0.127 | 0.129 | 0.00548 | 2.79 | not shown identifiable: reproduced by a combination of the others |
-| `brew.outlet_conduction_time_constant_s` | 7.83 | brew `brew-c` | 0.0459 | 0.0465 | 0.00544 | 0.427 | not shown identifiable: reproduced by a combination of the others |
-| `water.heat_capacity_j_per_ml_k` | 7.61 | brew `brew-c` | 0.704 | 0.676 | 0.0506 | 10.2 | not shown identifiable: reproduced by a combination of the others |
-| `brew.thermal_mass_j_per_k` | 359 | brew `brew-c` | 27.8 | 27.7 | 0.0693 | 252 | identifiable |
-| `brew.heater_power_w` | 239 | brew `brew-c` | 10.4 | 10.3 | 0.0276 | 144 | identifiable |
-| `pump.flow_ml_per_s` | 153 | brew `brew-c` | 25.8 | 25.8 | 0.157 | 95.7 | identifiable |
-| `ambient_temperature_c` | 102 | brew `steam-c` | 102 | 102 | 0.942 | 666 | identifiable |
-| `water.feed_temperature_c` | 71.1 | brew `brew-c` | 4.42 | 4.45 | 0.0303 | 65.3 | identifiable |
-| `brew.loss_w_per_k` | 32.9 | brew `brew-c` | 6.91 | 6.92 | 0.128 | 78.8 | identifiable |
+| `brew.outlet_held_volume_ml` | 20.6 | brew `brew-c` | 0.123 | 0.129 | 0.00556 | 2.81 | not shown identifiable: reproduced by a combination of the others |
+| `brew.outlet_conduction_time_constant_s` | 7.83 | brew `brew-c` | 0.0459 | 0.0465 | 0.00551 | 0.428 | not shown identifiable: reproduced by a combination of the others |
+| `water.heat_capacity_j_per_ml_k` | 7.61 | brew `brew-c` | 0.748 | 0.676 | 0.0511 | 10.8 | not shown identifiable: reproduced by a combination of the others |
+| `brew.thermal_mass_j_per_k` | 359 | brew `brew-c` | 28.1 | 27.7 | 0.0719 | 231 | identifiable |
+| `brew.heater_power_w` | 239 | brew `brew-c` | 10.5 | 10.3 | 0.0293 | 148 | identifiable |
+| `pump.flow_ml_per_s` | 153 | brew `brew-c` | 25.8 | 25.8 | 0.159 | 133 | identifiable |
+| `ambient_temperature_c` | 102 | brew `steam-c` | 102 | 102 | 0.943 | 697 | identifiable |
+| `water.feed_temperature_c` | 71.1 | brew `brew-c` | 4.35 | 4.45 | 0.0306 | 64.8 | identifiable |
+| `brew.loss_w_per_k` | 32.9 | brew `brew-c` | 6.93 | 6.92 | 0.128 | 78.5 | identifiable |
 
-Neither reading bounds the other, and the two determinations establish that rather than it being assumed. Of the 9 coefficients both readings put a verdict to, the part no combination of the others reproduces falls for 5 (`brew.outlet_held_volume_ml`, `brew.outlet_conduction_time_constant_s`, `water.heat_capacity_j_per_ml_k`, `brew.thermal_mass_j_per_k` and `brew.loss_w_per_k`), rises for 2 (`brew.heater_power_w` and `water.feed_temperature_c`) and stands where it was for 2 (`pump.flow_ml_per_s` and `ambient_temperature_c`). And the largest the signature reached on any channel falls for 3 (`brew.outlet_held_volume_ml`, `brew.outlet_conduction_time_constant_s` and `pump.flow_ml_per_s`), rises for 5 (`water.heat_capacity_j_per_ml_k`, `brew.thermal_mass_j_per_k`, `brew.heater_power_w`, `water.feed_temperature_c` and `brew.loss_w_per_k`) and stands where it was for 1 (`ambient_temperature_c`).
+Neither reading bounds the other, and the two determinations establish that rather than it being assumed. Of the 9 coefficients both readings put a verdict to, the part no combination of the others reproduces falls for 4 (`brew.outlet_held_volume_ml`, `brew.outlet_conduction_time_constant_s`, `brew.thermal_mass_j_per_k` and `brew.loss_w_per_k`), rises for 3 (`water.heat_capacity_j_per_ml_k`, `brew.heater_power_w` and `water.feed_temperature_c`) and stands where it was for 2 (`pump.flow_ml_per_s` and `ambient_temperature_c`). And the largest the signature reached on any channel falls for 3 (`brew.outlet_held_volume_ml`, `brew.outlet_conduction_time_constant_s` and `pump.flow_ml_per_s`), rises for 5 (`water.heat_capacity_j_per_ml_k`, `brew.thermal_mass_j_per_k`, `brew.heater_power_w`, `water.feed_temperature_c` and `brew.loss_w_per_k`) and stands where it was for 1 (`ambient_temperature_c`).
 
 Holding the control path still withdraws a correction, and a correction withdrawn can leave a coefficient's own error standing on the channels as readily as it can absorb it. Which of the two happens is a fact about the coefficient and is read off the tables rather than argued for here. So the first reading is not an upper bound on the second, neither of them is the conservative one to read alone, and the crossings between the two sets of verdicts are named one at a time under **What drift hides** below rather than inferred from a direction.
 
@@ -260,7 +290,7 @@ Of the 9 coefficients the reconstruction rests on, 6 are shown identifiable from
 
 The rest are **not shown identifiable**, and they are the same ones the other reading could not show either. They are stated once under **What drift hides** below rather than a second time here, since a verdict that did not change between the two readings is one finding and not two. Each one's figures under this reading are in the table above.
 
-No verdict above turns on a channel this board has no instrument behind. `brew-mlps` does carry a part of a signature nothing else reproduces — 1.18 of what it could resolve for `brew.thermal_mass_j_per_k` and 25.8 of what it could resolve for `pump.flow_ml_per_s` — but every coefficient it separates is already separated by a channel that is fitted, so on this model, when it has drifted, adding that instrument would confirm a finding rather than produce one. That is a negative answer to the question this analysis exists to inform, and it is worth as much as a positive one: it is the case for *not* spending on that channel yet, and it is a statement about this estimated model that a measured one could overturn.
+No verdict above turns on a channel this board has no instrument behind. `brew-mlps` does carry a part of a signature nothing else reproduces — 2.1 of what it could resolve for `brew.thermal_mass_j_per_k`, 25.8 of what it could resolve for `pump.flow_ml_per_s` and 1.43 of what it could resolve for `ambient_temperature_c` — but every coefficient it separates is already separated by a channel that is fitted, so on this model, when it has drifted, adding that instrument would confirm a finding rather than produce one. That is a negative answer to the question this analysis exists to inform, and it is worth as much as a positive one: it is the case for *not* spending on that channel yet, and it is a statement about this estimated model that a measured one could overturn.
 
 A figure there for a coefficient the tables above show moving that channel by nothing at all is not a contradiction, and it is the one number here most easily misread. What is being reported is the remainder, not the reach: the combination of the other coefficients that comes nearest to reproducing this one's signature does move that channel, so the disagreement between the coefficient and its nearest imitation shows up there even though the coefficient itself never touched it. A channel a coefficient leaves alone can separate it from something that does not.
 
@@ -276,7 +306,7 @@ The other three ways the two readings can come out are stated here once rather t
 
 **Neither reading shows these identifiable:** `brew.outlet_held_volume_ml`, `brew.outlet_conduction_time_constant_s` and `water.heat_capacity_j_per_ml_k` — 3 of the 9. Drift hides nothing about them that a machine built differently did not hide already, so they are not what the second reading was taken to find; each one's figures under each reading are in the two determination tables above, and the account of why it was not shown is given once, under the reading that could not show it first.
 
-**Shown identifiable only once drifted:** none on this model. Nothing the machine could not be told apart on at commissioning becomes something it could be told apart on in service. That is a finding about this model rather than a rule the method enforces — the figure a verdict is taken on does rise under drift for 2 of the coefficients here, just never far enough to carry a verdict across.
+**Shown identifiable only once drifted:** none on this model. Nothing the machine could not be told apart on at commissioning becomes something it could be told apart on in service. That is a finding about this model rather than a rule the method enforces — the figure a verdict is taken on does rise under drift for 3 of the coefficients here, just never far enough to carry a verdict across.
 
 ## What this does not settle
 

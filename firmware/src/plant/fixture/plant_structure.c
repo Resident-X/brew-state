@@ -26,6 +26,15 @@ const plant_parameter_spec_t *plant_structure_parameter_specs(size_t *count)
     return SPECS;
 }
 
+/* This structure declares no relation between its coefficients. */
+const plant_parameter_relation_t *plant_structure_parameter_relations(size_t *count)
+{
+    if (count != NULL) {
+        *count = 0u;
+    }
+    return NULL;
+}
+
 /*
  * This structure describes no machine, so no supply drives any of it. Its one
  * coefficient is a gain a test chooses, and answering that a supply moved it
@@ -79,6 +88,11 @@ bool plant_structure_delivery_point_mass(plant_delivery_point_t point,
 bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters)
 {
     if (model == NULL || parameters == NULL) {
+        return false;
+    }
+    /* A record this structure's own ranges and relations refuse is not run. */
+    if (!plant_parameters_admissible(parameters, NULL)) {
+        model->initialised = false;
         return false;
     }
     memset(model, 0, sizeof(*model));
@@ -162,6 +176,13 @@ bool plant_model_quantity(const plant_model_t *model, plant_quantity_t quantity,
         *value = 0.0f;
         return true;
     /*
+     * This fixture has no flash-generator steam side and so no modelled outlet
+     * for steam to be superheated at. Not observed, rather than a nothing that
+     * would read as wet steam.
+     */
+    case PLANT_QUANTITY_STEAM_OUTLET_SUPERHEAT_K:
+        return false;
+    /*
      * Not a quantity, so there is nothing to answer with. No default label
      * beside it, and that absence is deliberate: -Wall gives -Wswitch and this
      * is built under -Werror, so a quantity added to the machine's vocabulary
@@ -237,4 +258,22 @@ bool plant_model_set_state(plant_model_t *model, plant_state_t state, float valu
     default:
         return false;
     }
+}
+
+/*
+ * Not observed: this fixture has no flash-generator steam side and so no outlet
+ * relation to evaluate.
+ */
+bool plant_model_least_outlet_superheat(const plant_parameters_t *parameters,
+                                        const plant_parameter_budget_t *budget, float casting_c,
+                                        float pressure_bar, uint16_t feed_permille,
+                                        float *superheat_k)
+{
+    (void)parameters;
+    (void)budget;
+    (void)casting_c;
+    (void)pressure_bar;
+    (void)feed_permille;
+    (void)superheat_k;
+    return false;
 }

@@ -45,8 +45,11 @@
  *
  * Returns false and leaves no usable record when a line cannot be parsed, when
  * a name is not one this structure has, when a name is given twice, when a
- * value lies outside the range the structure declares for it, or when a
- * coefficient the structure requires is absent. No value is assumed for a
+ * value lies outside the range the structure declares for it, when a
+ * coefficient the structure requires is absent, or when two values each inside
+ * their own range do not stand in a relation the structure declares between
+ * them (PLANT_PARAMETER_INCONSISTENT, naming the first of the pair; nothing is
+ * clamped or substituted). No value is assumed for a
  * coefficient that is missing or rejected. `error` reports which coefficient
  * was at fault and why; it may not be null.
  *
@@ -59,6 +62,20 @@
 bool plant_parameters_load(const char *text, size_t length,
                            plant_parameters_t *parameters,
                            plant_parameter_error_t *error);
+
+/*
+ * Whether a record is one a model may be built from: every value inside the
+ * range its structure declares for it (a not-a-number is outside every range),
+ * and every relation the structure declares between values holding.
+ *
+ * It is the check plant_parameters_load runs on the record it has assembled and
+ * plant_model_init runs on the record it is handed, so a record produced by
+ * editing or scaling another is refused where it would be run. Returns false
+ * for a null record. `error` may be null; when it is given it names the first
+ * fault -- a value out of range before a relation between values.
+ */
+bool plant_parameters_admissible(const plant_parameters_t *parameters,
+                                 plant_parameter_error_t *error);
 
 /*
  * Read the error the design assumes for each value, from the same description.
@@ -160,6 +177,31 @@ bool plant_parameter_scale(plant_parameters_t *parameters, size_t at, float fact
 bool plant_parameter_position(const char *name, size_t *at);
 
 /*
+ * The name of the coefficient at a position in that ordering, the inverse of
+ * plant_parameter_position, for the caller that holds a position and owes its
+ * builder a name -- a corner of the declared error that no machine can be built
+ * for, found by position, is repaired by the figure it moves.
+ *
+ * Returns false, writing nothing, for a null argument or a position past the end
+ * of the structure's table. The text is the structure's own and lives as long as
+ * the build does.
+ */
+bool plant_parameter_name(size_t at, const char **name);
+
+/*
+ * The value one coefficient holds in a record, by its position in that ordering.
+ *
+ * The reading counterpart of plant_parameter_scale, through the same offset the
+ * structure's own table declares, so a consumer that reports what a description
+ * declared -- a bound a host run states about itself -- reads it without naming a
+ * field of any structure's record.
+ *
+ * Returns false, writing nothing, for a null argument and for a position at or
+ * past the structure's own coefficient count.
+ */
+bool plant_parameter_value(const plant_parameters_t *parameters, size_t at, float *value);
+
+/*
  * Whether the coefficient at that position is one the supply the machine is fed
  * from drives.
  *
@@ -189,7 +231,8 @@ bool plant_parameter_supply_driven(size_t at, bool *driven);
  *
  * The instance keeps its own copy of the record, so the caller's may go out of
  * scope afterwards. Returns false and leaves the instance unusable when either
- * argument is null.
+ * argument is null, or when the record is not one plant_parameters_admissible
+ * accepts -- a value outside its range or a relation between values failing.
  */
 bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters);
 
@@ -312,11 +355,40 @@ bool plant_step_admissible(const plant_actuation_t *actuation, uint32_t interval
  * null, when the instance was never initialised, or when the quantity is not
  * one of the enumerated ones. Every structure answers every quantity -- they are
  * the machine's rather than any structure's -- so there is no refusal here for a
- * quantity a structure does not have. plant_model_state below has one, because
- * states are the other way round.
+ * quantity a structure does not have, with the one exception plant_types.h names:
+ * the superheat at a modelled outlet, which a structure with no flash-generator
+ * steam side answers as not observed by returning false. plant_model_state below
+ * refuses more widely, because states are the other way round.
  */
 bool plant_model_quantity(const plant_model_t *model, plant_quantity_t quantity,
                           float *value);
+
+/*
+ * The least superheat of steam at the structure's modelled outlet that its own
+ * relation admits for a casting temperature, a steam pressure and a steam feed
+ * level, evaluated on a description and its declared error rather than on a model
+ * instance.
+ *
+ * It is the same relation the structure's own outlet superheat quantity is read
+ * from, offered for readings a caller holds rather than for states a model keeps,
+ * so that a consumer which has measured the casting and the pressure and
+ * commanded the feed can form its own figure for what the model would report --
+ * without stepping a model, and without naming any coefficient of the structure.
+ * The steam made is taken to be the feed; the casting-to-outlet relation's own
+ * coefficient is taken at the end of its declared error that leaves the least
+ * superheat, so a figure held at or above some value is held there for every
+ * machine the description admits on that coefficient.
+ *
+ * Returns false, writing nothing, for a null argument, for a reading that is not
+ * a finite number, for a budget that does not declare an error against the
+ * casting-to-outlet coefficient -- a figure taken at the cool end of an error
+ * nobody declared is not a least figure -- and for every structure that has no
+ * flash-generator steam side and so no modelled outlet.
+ */
+bool plant_model_least_outlet_superheat(const plant_parameters_t *parameters,
+                                        const plant_parameter_budget_t *budget, float casting_c,
+                                        float pressure_bar, uint16_t feed_permille,
+                                        float *superheat_k);
 
 /*
  * Read one state the structure this build compiles integrates, in the unit that
@@ -375,6 +447,14 @@ bool plant_model_state(const plant_model_t *model, plant_state_t state, float *v
  * which values a machine could be in, and a structure that rejected the ones it
  * disagreed with would be deciding for the consumer whether its reconstruction
  * is any good, which is the consumer's question.
+ *
+ * The one exception is a state whose limit the structure itself declares as a
+ * parameter, and which it would otherwise have to carry outside that limit until
+ * its next step. The thermoblock's held liquid is one: a value that is not
+ * finite, below nothing or above the declared capacity is refused with the
+ * state unchanged, and is not clamped. The temperatures and pressures stay
+ * free, because a caller may stand a casting anywhere -- the ceiling probe
+ * stands it above its own ceiling on purpose.
  */
 bool plant_model_set_state(plant_model_t *model, plant_state_t state, float value);
 

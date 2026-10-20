@@ -56,6 +56,13 @@ report. The runs feed the controller the plant's true values, so a sensor
 reading low -- which holds the casting hotter than the control path believes --
 is not otherwise in the peak.
 
+A corner machine the control path itself refuses to come up against (the
+corner's coefficient with the description's declared error stacked on it leaves
+a figure the relations between parameters cannot hold) has no loop to run and no
+peak. It is listed in the record with the reason the control path gave and left
+out of the worst, the record states how many were left out, and a failure to
+finish that gives no such reason still stops the run.
+
 A steam draw has no end of its own: the wand is a hand valve, and the model's
 casting keeps rising under a draw held longer than the feed can replace. The
 figure is therefore for the draw the course opens the wand for, and the record
@@ -558,13 +565,26 @@ def run(description=None, limits=None, tolerance=sweep.TOLERANCE_DECLARATION,
     # target a loop that knew its machine to be at the corner would admit may be
     # higher than the shipped loop would ever command, and running at it would
     # report a peak for a command nobody gives.
+    #
+    # A corner machine the control path itself refuses -- the corner's
+    # coefficient taken with the description's own declared error stacked on it
+    # leaves a figure the relations between parameters cannot hold -- is not a
+    # machine the loop is ever run against, so it has no peak to report. It is
+    # listed with the reason it gave and left out of the worst, and the record
+    # states how many were left out; a failure to finish that gives no such
+    # reason still stops the run.
     steam_machines = [(None, description, nominal, shipped)]
+    refused_steam_machines = []
     for corner in shipped["steam_corners"]:
         require_ran(STEAM, corner)
         written = margin.corner_description(corner, nominal, description,
                                             os.path.join(workspace, STEAM))
-        steam_machines.append((corner, written, corner_nominal(corner, nominal),
-                               margin.margin_record(executable, written, limits, declaration)))
+        try:
+            reading = margin.margin_record(executable, written, limits, declaration)
+        except margin.ControlPathRefused as refusal:
+            refused_steam_machines.append({"corner": corner, "reason": refusal.reason})
+            continue
+        steam_machines.append((corner, written, corner_nominal(corner, nominal), reading))
     for corner, written, values, reading in steam_machines:
         which = 0 if corner is None else corner["which"]
         name = "casting-peak-steam-%d" % which
@@ -581,9 +601,8 @@ def run(description=None, limits=None, tolerance=sweep.TOLERANCE_DECLARATION,
         runs.append(a_run(STEAM, STEAM, corner, ready_c, result, STEAM_LEVELS))
 
     # How the steam peak depends on how long the wand is held open, at the
-    # machine at the declared coefficients. A draw longer than the feed can
-    # replace does not settle in the model, so the figure above is the figure
-    # for the draw it was run with and the record says how it moves with the
+    # machine at the declared coefficients. The figure above is the figure for
+    # the draw it was run with, and the record says how it moves with the
     # length.
     nominal_ready = declaration_with_ready_temperature(
         declaration, int(round(steam_ready_c * 1000.0)),
@@ -623,6 +642,7 @@ def run(description=None, limits=None, tolerance=sweep.TOLERANCE_DECLARATION,
         "drinking_ceiling_c": drinking_ceiling_c(tolerance),
         "steam_ready_c": steam_ready_c,
         "runs": runs,
+        "refused_steam_machines": refused_steam_machines,
         "figures": figures,
         "steam_lengths": steam_lengths,
     }
@@ -686,8 +706,58 @@ BANNER = ("> **Diagnostic, not a board input.** These peaks are those of the con
           "shipped. This record is not an input to any board until the regeneration "
           "criterion of DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE has run and the record has been "
           "regenerated from the corrected control. The steam peak is bounded by the course's draw length: it is "
-          "the peak of a draw of that length, and a longer draw can climb higher, as the "
-          "draw-length table below shows.")
+          "the peak of a draw of that length, and the draw-length table below shows how it "
+          "moves with a longer one.")
+
+
+def draw_length_sentence(lengths):
+    """What the draw-length table shows, stated from its own figures: that a
+    longer draw climbs higher where it does, and that it does not where it does
+    not. Only the machine at the declared coefficients is run at the longer
+    draws, so the sentence says so rather than speaking for the corners."""
+    first = lengths[0][1]
+    highest = max(peak for _, peak in lengths)
+    if highest > first + SETTLED_BAND_C:
+        return ("At the declared coefficients the casting does not settle under a draw held "
+                "longer than the feed can replace, and a longer draw can climb higher, as the "
+                "table shows.")
+    return ("At the declared coefficients a draw held longer does not climb higher than the "
+            "longest of the lengths below (%s C against %s C at %d seconds). The corners are not "
+            "run at the longer draws, so that is no statement about them." % (
+                _temperature(highest), _temperature(first), lengths[0][0]))
+
+
+def refused_corner_lines(findings):
+    """The lines of the record that say which steam corners were left out
+    because the control path refuses the machine they build, and how many, or
+    that none was."""
+    lines = []
+    refused = findings["refused_steam_machines"]
+    steam_total = len(findings["shipped"]["steam_corners"])
+    if refused:
+        lines.append(
+            "**%d of the %d steam corners were not run, because the control path refuses the "
+            "machine they build.** The control path fails closed on a believed description "
+            "from which it cannot establish its protection margin at every declared corner, "
+            "and each of these corners, once the description's own declared error is applied at "
+            "every declared corner on top of it, leaves such a description. No peak is reported for them, so the steam "
+            "figure above is the worst over the other %d steam corners and the machine at the "
+            "declared coefficients, and is not a bound for a machine built at an excluded "
+            "corner:" % (len(refused), steam_total, steam_total - len(refused)))
+        lines.append("")
+        lines.append("| Corner | Coefficient | End | Written at | Reason the control path gave |")
+        lines.append("|---|---|---|---|---|")
+        for entry in refused:
+            corner = entry["corner"]
+            lines.append("| %s | %s | %s | %s | %s |" % (
+                _corner_label(corner), _coefficient(corner), corner["end"],
+                margin.FIGURE_FORMAT % corner["factor"], entry["reason"]))
+    else:
+        lines.append(
+            "None of the %d steam corners was excluded: the control path accepted the machine "
+            "every one of them builds." % steam_total)
+    lines.append("")
+    return lines
 
 
 def report_text(findings):
@@ -716,7 +786,9 @@ def report_text(findings):
           "a draw, and in both the casting runs hotter than the commanded figure by an amount no "
           "declared figure fixes. This record is the hottest the plant model's casting reaches "
           "while the shipped control path is holding the heater, taken over every operating "
-          "phase the controller commands and every corner of the declared error.")
+          "phase the controller commands and every corner of the declared error whose machine "
+          "the control path accepts; the corners it refuses are listed under the corners "
+          "below.")
     write("")
     write("Each heater is run on its own, since the two heated masses are independent, with the "
           "machine built from one corner's coefficients and the control path held at the "
@@ -848,8 +920,11 @@ def report_text(findings):
           "end `params/thermoblock.md` calls one-sided is run too and carries `not-claimed`: "
           "the description stands behind no machine there, and the peak is included all the "
           "same because it can only raise a safety figure. Every corner the enumeration "
-          "covers is run: the tool refuses to write this record when one produces no machine.")
+          "covers is run, except a steam corner whose machine the control path itself refuses "
+          "to come up against, which is listed below with the reason and left out of the worst; "
+          "the tool refuses to write this record when a corner produces no machine at all.")
     write("")
+    lines.extend(refused_corner_lines(findings))
     write("| Thermoblock | Served | Target (C) | Corner | Coefficient | End | Written at | "
           "Claimed | Hold (C) | Peak (C) | Phase |")
     write("|---|---|---|---|---|---|---|---|---|---|---|")
@@ -868,13 +943,12 @@ def report_text(findings):
     write(STEAM_LENGTH_HEADING)
     write("")
     write("The steam courses above hold the wand open for %d seconds, about what a jug of milk "
-          "takes. A draw has no end of its own, and the model's casting does not settle under "
-          "one held longer than the feed can replace, so a longer draw can climb higher. The "
-          "steam figure above is therefore the figure for a draw of that length and for no "
-          "longer one; the table shows where a longer draw does and does not rise. The hottest "
-          "casting temperature over the draw, at the machine's declared coefficients with the "
-          "ready temperature at %s C, by how long the wand is held:" % (
-              STEAM_DRAW_SECONDS[0], _temperature(findings["steam_ready_c"])))
+          "takes. A draw has no end of its own, so the steam figure above is the figure for a "
+          "draw of that length and for no longer one. %s The hottest casting temperature over "
+          "the draw, at the machine's declared coefficients with the ready temperature at %s C, "
+          "by how long the wand is held:" % (
+              STEAM_DRAW_SECONDS[0], draw_length_sentence(findings["steam_lengths"]),
+              _temperature(findings["steam_ready_c"])))
     write("")
     write("| Wand held open (s) | Peak casting temperature (C) |")
     write("|---|---|")

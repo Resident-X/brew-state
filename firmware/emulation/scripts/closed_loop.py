@@ -75,10 +75,18 @@ STATE_SCRATCH = 0x10005000
 # between two of them impossible to introduce by accident.
 BUDGET_SCRATCH = 0x10006000
 
-# One step budget for every call, as exercise.py's is: far above what any of
-# these functions takes, so a call that never returns is reported as such
-# rather than hanging the run.
-STEP_BUDGET = 2000000
+# One step budget for every call, as exercise.py's is of its own: a bound so
+# that a call which never returns is reported as such rather than hanging the
+# run. It is sized from what the dearest call costs, which is control_init, and
+# the cost it pays is the protection-margin precondition (a plant model built
+# and checked at every declared corner), so it is startup work and not a per-step
+# cost. Measured on the target build: control_init 2,037,189 instructions and
+# control_command_temperature 2,001,987 (the same precondition again), against
+# about 16,000 for control_step. Five times the dearest, 5 * 2,037,189 =
+# 10,185,945, rounded down to ten million: a call that loops forever still
+# stops after seconds of core time, and the tests hold the measured cost to a
+# quarter of this figure so growth is noticed well before a call is refused.
+STEP_BUDGET = 10000000
 
 # Thumb `b .` -- branches to itself. Written once into CALL_TRAP so that
 # stepping the core while it sits there, which this script does to let a
@@ -173,6 +181,11 @@ ARGUMENTS_IN_REGISTERS = 4
 STACK_ALIGNMENT = 8
 
 
+# The most instructions any one call of each function has taken, reported at
+# the end so the suite can hold the dearest of them against STEP_BUDGET.
+CALL_STEPS = {}
+
+
 def call(name, args):
     address = bus.GetSymbolAddress(name)
     for index in range(min(len(args), ARGUMENTS_IN_REGISTERS)):
@@ -199,6 +212,7 @@ def call(name, args):
     while cpu.PC.RawValue != CALL_TRAP and taken < STEP_BUDGET:
         cpu.Step(1)
         taken += 1
+    CALL_STEPS[name] = max(CALL_STEPS.get(name, 0), taken)
     if stacked:
         cpu.SP = RegisterValue.Create(entry_sp, 32)
     if cpu.PC.RawValue != CALL_TRAP:
@@ -415,5 +429,7 @@ print("EMU plant-last-step-ok %d" % (1 if bridge.last_step_ok else 0))
 
 final_brew_c = bridge.quantity(plant_bridge.PLANT_QUANTITY_BREW_TEMPERATURE_C)
 print("EMU final-brew-c %f" % final_brew_c)
+
+print("EMU call-steps %s" % ",".join("%s=%d" % (n, c) for n, c in sorted(CALL_STEPS.items())))
 
 print("EMU done")

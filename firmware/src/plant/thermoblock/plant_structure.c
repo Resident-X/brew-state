@@ -17,6 +17,19 @@
 #define MILLIS_PER_SECOND 1000.0f
 #define PERMILLE_FULL_SCALE 1000.0f
 
+/* The conversion from a base-ten exponent to the natural one the exponential takes. */
+#define NATURAL_LOG_OF_TEN 2.30258509f
+
+/* The natural logarithm of two, by which a halving moves a logarithm. */
+#define NATURAL_LOG_OF_TWO 0.693147181f
+
+/*
+ * Newton steps taken on a logarithm whose argument has been brought into [1, 2).
+ * The starting guess is within about two hundredths there, and each step squares
+ * the relative error, so three leave it below what single precision carries.
+ */
+#define LOGARITHM_REFINEMENTS 3
+
 /*
  * The admissible ranges are the ones outside which these equations stop
  * describing a machine of this architecture rather than describing an unusual
@@ -69,10 +82,21 @@ static const plant_parameter_spec_t SPECS[] = {
 
     {"steam.saturation_temperature_c", 0.0f, 300.0f,
      offsetof(plant_parameters_t, steam_saturation_temperature_c)},
-    {"steam.pressure_bar_per_k", 0.0f, 10.0f,
-     offsetof(plant_parameters_t, steam_pressure_bar_per_k)},
-    {"steam.pressure_fall_bar_per_ml", 0.0f, 10.0f,
-     offsetof(plant_parameters_t, steam_pressure_fall_bar_per_ml)},
+    {"steam.saturation_antoine_a", 1.0f, 10.0f,
+     offsetof(plant_parameters_t, steam_saturation_antoine_a)},
+    {"steam.saturation_antoine_b_k", 100.0f, 10000.0f,
+     offsetof(plant_parameters_t, steam_saturation_antoine_b_k)},
+    {"steam.saturation_antoine_c_c", 10.0f, 1000.0f,
+     offsetof(plant_parameters_t, steam_saturation_antoine_c_c)},
+    {"steam.casting_ceiling_c", 0.0f, 300.0f, offsetof(plant_parameters_t, steam_casting_ceiling_c)},
+    {"steam.restriction_bar_s2_per_ml2", 0.0f, 1000.0f,
+     offsetof(plant_parameters_t, steam_restriction_bar_s2_per_ml2)},
+    {"steam.outlet_drop_k_s_per_ml", 0.0f, 1000.0f,
+     offsetof(plant_parameters_t, steam_outlet_drop_k_s_per_ml)},
+    {"steam.liquid_capacity_ml", 0.1f, 100.0f,
+     offsetof(plant_parameters_t, steam_liquid_capacity_ml)},
+    {"steam.initial_inventory_ml", 0.0f, 100.0f,
+     offsetof(plant_parameters_t, steam_initial_inventory_ml)},
     {"steam.feed_flow_ml_per_s", 0.0f, 100.0f,
      offsetof(plant_parameters_t, steam_feed_flow_ml_per_s)},
 };
@@ -136,19 +160,171 @@ const char *const *plant_structure_supply_driven_parameters(size_t *count)
 }
 
 /*
- * Steam pressure at a given steam temperature.
+ * Absolute saturation pressure of water at a temperature, in bar, from the
+ * declared relation.
+ */
+static float saturation_absolute_bar(const plant_parameters_t *parameters, float temperature_c)
+{
+    const float log10_bar = parameters->steam_saturation_antoine_a -
+                            parameters->steam_saturation_antoine_b_k /
+                                (parameters->steam_saturation_antoine_c_c + temperature_c);
+    return plant_expf(log10_bar * NATURAL_LOG_OF_TEN);
+}
+
+static bool inventory_fits_the_capacity(const void *parameters)
+{
+    const plant_parameters_t *p = parameters;
+    return p->steam_initial_inventory_ml <= p->steam_liquid_capacity_ml;
+}
+
+/* A ceiling at or below the saturation temperature leaves no span the pressure relation is valid over. */
+static bool ceiling_is_above_saturation(const void *parameters)
+{
+    const plant_parameters_t *p = parameters;
+    return p->steam_casting_ceiling_c > p->steam_saturation_temperature_c;
+}
+
+/*
+ * The saturation inversion divides by a less log10 of the absolute pressure, so
+ * the highest pressure the block can carry -- the restriction's drop at the full
+ * feed rate, over the saturation figure the gauge is read from -- must stay under
+ * 10^a, where the divisor reaches zero.
+ */
+static bool open_draw_pressure_is_invertible(const void *parameters)
+{
+    const plant_parameters_t *p = parameters;
+    const float feed = p->steam_feed_flow_ml_per_s;
+    const float highest_bar =
+        p->steam_restriction_bar_s2_per_ml2 * feed * feed +
+        saturation_absolute_bar(p, p->steam_saturation_temperature_c);
+    return highest_bar < plant_expf(p->steam_saturation_antoine_a * NATURAL_LOG_OF_TEN);
+}
+
+static const plant_parameter_relation_t RELATIONS[] = {
+    {"steam.initial_inventory_ml", inventory_fits_the_capacity},
+    {"steam.casting_ceiling_c", ceiling_is_above_saturation},
+    {"steam.restriction_bar_s2_per_ml2", open_draw_pressure_is_invertible},
+};
+
+const plant_parameter_relation_t *plant_structure_parameter_relations(size_t *count)
+{
+    if (count != NULL) {
+        *count = sizeof(RELATIONS) / sizeof(RELATIONS[0]);
+    }
+    return RELATIONS;
+}
+
+/*
+ * Gauge pressure of the trapped steam over liquid at a casting temperature.
+ *
+ * The relation is valid from the declared saturation temperature up to the
+ * casting ceiling, and the gauge figure is its answer less its own answer at the
+ * saturation temperature, so it starts from nothing there rather than from a
+ * step. Below that temperature there is no gauge pressure to report. Above the
+ * ceiling the casting is read as the ceiling, so the figure never exceeds
+ * saturation at it.
  *
  * One expression, used both to bring an instance up and to advance it. Writing
  * it twice is what let the two disagree: an instance started with a pressure
  * its own equations would not have produced is not at rest, and a step taken
  * with no actuation then moves it.
  */
-static float steam_pressure_at(const plant_parameters_t *parameters, float steam_temperature_c)
+static float trapped_pressure_bar(const plant_parameters_t *parameters, float casting_c)
 {
-    const float above_saturation_k =
-        steam_temperature_c - parameters->steam_saturation_temperature_c;
-    return above_saturation_k > 0.0f ? parameters->steam_pressure_bar_per_k * above_saturation_k
-                                     : 0.0f;
+    if (!(casting_c > parameters->steam_saturation_temperature_c)) {
+        return 0.0f;
+    }
+
+    const float bounded_c = fminf(casting_c, parameters->steam_casting_ceiling_c);
+    return fmaxf(saturation_absolute_bar(parameters, bounded_c) -
+                     saturation_absolute_bar(parameters, parameters->steam_saturation_temperature_c),
+                 0.0f);
+}
+
+/*
+ * The natural logarithm of a positive number, built from the exponential the
+ * model already carries: the argument is halved or doubled into [1, 2), where a
+ * fixed number of Newton steps on e^y = x converges, and the halvings are added
+ * back. Nothing that is not a positive finite number reaches it here; one that
+ * did is answered as nothing rather than looped on.
+ */
+static float natural_log(float x)
+{
+    if (!(x > 0.0f) || !isfinite(x)) {
+        return 0.0f;
+    }
+
+    float halvings = 0.0f;
+    while (x >= 2.0f) {
+        x *= 0.5f;
+        halvings += 1.0f;
+    }
+    while (x < 1.0f) {
+        x *= 2.0f;
+        halvings -= 1.0f;
+    }
+
+    float y = (x - 1.0f) / sqrtf(x);
+    for (int step = 0; step < LOGARITHM_REFINEMENTS; step++) {
+        y = y - 1.0f + x * plant_expf(-y);
+    }
+    return halvings * NATURAL_LOG_OF_TWO + y;
+}
+
+/*
+ * The temperature at which water saturates at a gauge pressure, by the same
+ * declared relation the trapped case reads forwards, read backwards: the gauge
+ * figure is put back on the relation's own answer at the saturation temperature
+ * to make it absolute, and Antoine's form is solved for the temperature. A gauge
+ * pressure below nothing is read as nothing.
+ */
+static float saturation_temperature_c(const plant_parameters_t *parameters, float gauge_bar)
+{
+    const float absolute_bar =
+        fmaxf(gauge_bar, 0.0f) +
+        saturation_absolute_bar(parameters, parameters->steam_saturation_temperature_c);
+    return parameters->steam_saturation_antoine_b_k /
+               (parameters->steam_saturation_antoine_a -
+                natural_log(absolute_bar) / NATURAL_LOG_OF_TEN) -
+           parameters->steam_saturation_antoine_c_c;
+}
+
+/*
+ * The superheat of steam at the modelled outlet: the casting less the drop the
+ * casting-to-outlet relation gives for the rate steam is made at, less
+ * saturation at the pressure the path carries, and nothing below that.
+ *
+ * Superheat appears only once the steam is dry, and the steam is dry only once
+ * the casting it passes is hotter than the water boils at: a block whose heater
+ * cannot pay for the sensible and latent heat of what it is fed falls towards
+ * and below saturation, and its outlet carries none. Nothing is made, nothing
+ * leaves and there is no outlet to speak of, so no steam has no superheat.
+ *
+ * The energy the superheat itself carries away is not charged to the casting: at
+ * the rates and the few kelvin this block works at it is under a hundredth of
+ * the latent heat charged for the same steam, and params/thermoblock.md carries
+ * the omission.
+ */
+static float outlet_superheat_k(const plant_parameters_t *parameters, float drop_k_s_per_ml,
+                                float casting_c, float pressure_bar, float made_ml_per_s)
+{
+    if (!(made_ml_per_s > 0.0f)) {
+        return 0.0f;
+    }
+
+    const float outlet_c = casting_c - drop_k_s_per_ml * made_ml_per_s;
+    return fmaxf(outlet_c - saturation_temperature_c(parameters, pressure_bar), 0.0f);
+}
+
+/*
+ * The pressure a shut wand leaves: saturation of the casting while the block
+ * holds liquid, and nothing while it holds none.
+ */
+static float shut_pressure_bar(const plant_model_t *model)
+{
+    return model->steam_liquid_inventory_ml > 0.0f
+               ? trapped_pressure_bar(&model->coefficients, model->steam_temperature_c)
+               : 0.0f;
 }
 
 /*
@@ -302,8 +478,9 @@ static float commanded_steam_feed_ml_per_s(const plant_parameters_t *p,
  * The rate steam is actually made at, which is the lower of what is being asked
  * for and what the feed is being commanded to replace.
  *
- * This block holds no reservoir. Every millilitre that leaves as vapour is a
- * millilitre the feed pump has just pushed in, so the feed is not a supply the
+ * This block holds a little liquid but no reservoir a draw could lean on. Every
+ * millilitre that leaves as vapour is a millilitre the feed pump has just pushed
+ * in, so the feed is not a supply the
  * draw happens to lean on but the whole of what there is to draw from -- and a
  * demand beyond it is a demand for steam out of water the machine has not been
  * given. Taking the lower of the two is that fact and nothing more: it is a
@@ -313,11 +490,9 @@ static float commanded_steam_feed_ml_per_s(const plant_parameters_t *p,
  * With the feed commanded shut this is zero however hard the wand is opened,
  * which is the case worth being explicit about, because it is the one that reads
  * oddest and is the one this architecture actually has: opening a wand on a block
- * nothing is feeding vents whatever the path is holding, and the block gives up
- * nothing to make good, because nothing is being made. What the venting does to
- * the path's pressure is the deficit relation's business and is unaffected --
- * that relation reads this rate, so a draw the feed cannot supply costs the path
- * nothing either, and the pressure the block's own temperature puts there stands.
+ * nothing is feeding makes no steam, and so reads no pressure through the
+ * restriction, because the pressure with the wand open is set by this rate and
+ * by nothing else.
  */
 static float honoured_steam_ml_per_s(const plant_parameters_t *p,
                                      const plant_actuation_t *actuation,
@@ -566,69 +741,47 @@ void thermoblock_advance_pressures(plant_model_t *model, const plant_actuation_t
     model->brew_pressure_bar += (commanded_bar - model->brew_pressure_bar) * settled;
 
     /*
-     * What the steam mass alone would put in the steam path, which is where the
-     * pressure sits whenever nothing is being drawn out of it.
-     */
-    const float at_saturation_bar = steam_pressure_at(p, model->steam_temperature_c);
-    /*
-     * Two rates, and the deficit relation needs both because they answer
-     * different halves of it.
-     *
-     * What opens and closes the gap is the wand. A path with the wand shut is
-     * tied to its block's temperature and a path with the wand open is not, and
-     * that is a fact about whether there is a way out of the path -- it does not
-     * become untrue because the pump feeding the block has been turned down.
-     *
-     * What sets how fast the gap widens is the steam actually being made, which
-     * is the bounded rate the energy relation is charged for. The two costs are
-     * two halves of one event: a description whose pressure fell for steam the
-     * block was never charged for making would have the path emptying out of
-     * nothing.
-     *
-     * Reading the reversion off the made rate instead would have shutting the
-     * feed mid-draw hand the whole accumulated gap back in one step -- the
-     * pressure rising because the pump stopped, and the only handle a steam loop
-     * has reading as a pressure-raising actuator. What the feed can do is stop
-     * the gap growing. It cannot undo it.
+     * The liquid held. Feed raises it and the steam made lowers it, and the made
+     * rate is never above the feed, so the inventory never falls below zero by
+     * this arithmetic; the bounds are written all the same because the capacity
+     * is the declared limit and not a consequence of the rates.
      */
     const float demanded_ml_per_s = drawn_steam_ml_per_s(steam_demand_ml_per_s);
     const float made_ml_per_s = honoured_steam_ml_per_s(p, actuation, steam_demand_ml_per_s);
+    const float fed_ml_per_s = commanded_steam_feed_ml_per_s(p, actuation);
+
+    model->steam_liquid_inventory_ml =
+        fminf(fmaxf(model->steam_liquid_inventory_ml + (fed_ml_per_s - made_ml_per_s) * seconds,
+                    0.0f),
+              p->steam_liquid_capacity_ml);
 
     if (demanded_ml_per_s > 0.0f) {
         /*
-         * A draw is open, so the pressure is no longer that relation's to fix. It
-         * carries on down from wherever the last step left it, by what this
-         * step's draw takes out of the path -- a gap that accumulates while the
-         * wand is held rather than a fresh answer each step, which is the whole
-         * difference between a state and a function of the temperature.
-         *
-         * The gap stops at the pressure there was to lose. Below that the path is
-         * at the room's pressure and there is nothing left for a further draw to
-         * take, and a gauge pressure driven past it would be this model claiming
-         * a vacuum the wand cannot pull.
+         * A draw is open: the pressure is the drop across the restriction the
+         * steam being made goes through, and the casting temperature does not
+         * enter. With the feed shut nothing is made, so the drop is nothing.
          */
-        model->steam_pressure_deficit_bar =
-            fminf(model->steam_pressure_deficit_bar +
-                      p->steam_pressure_fall_bar_per_ml * made_ml_per_s * seconds,
-                  at_saturation_bar);
+        model->steam_pressure_bar =
+            p->steam_restriction_bar_s2_per_ml2 * made_ml_per_s * made_ml_per_s;
     } else {
-        /*
-         * Nothing is being drawn, so nothing holds the path below the relation
-         * and the gap is gone rather than closing. What is left is the relation's
-         * own answer, bit for bit, on this step and not several steps later --
-         * this structure claims that the two come apart while a draw is open, and
-         * claims nothing whatever about a recovery, which would be a second
-         * property of the machine that nobody here has established.
-         */
-        model->steam_pressure_deficit_bar = 0.0f;
+        model->steam_pressure_bar = shut_pressure_bar(model);
     }
 
-    model->steam_pressure_bar = at_saturation_bar - model->steam_pressure_deficit_bar;
+    model->steam_outlet_superheat_k =
+        demanded_ml_per_s > 0.0f
+            ? outlet_superheat_k(p, p->steam_outlet_drop_k_s_per_ml, model->steam_temperature_c,
+                                 model->steam_pressure_bar, made_ml_per_s)
+            : 0.0f;
 }
 
 bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters)
 {
     if (model == NULL || parameters == NULL) {
+        return false;
+    }
+    /* A record this structure's own ranges and relations refuse is not run. */
+    if (!plant_parameters_admissible(parameters, NULL)) {
+        model->initialised = false;
         return false;
     }
 
@@ -652,13 +805,12 @@ bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters
     model->brew_pressure_bar = 0.0f;
     model->brew_flow_ml_per_s = 0.0f;
     model->steam_draw_ml_per_s = 0.0f;
-    /* Nothing has been drawn, so the steam path is exactly where the saturation
-     * relation puts it and the gap below it is nothing. Stated rather than left
-     * to the clearing above, because an instance that started with a gap in it
-     * would report a pressure its own equations would not have produced -- the
-     * same defect the initial temperatures are chosen to avoid. */
-    model->steam_pressure_deficit_bar = 0.0f;
-    model->steam_pressure_bar = steam_pressure_at(parameters, model->steam_temperature_c);
+    model->steam_outlet_superheat_k = 0.0f;
+    /* The block starts holding the declared liquid, which the admissibility check has held to
+     * the capacity, and the wand shut, so the pressure is the one its own
+     * equations give for that state. */
+    model->steam_liquid_inventory_ml = parameters->steam_initial_inventory_ml;
+    model->steam_pressure_bar = shut_pressure_bar(model);
     model->initialised = true;
     return true;
 }
@@ -683,17 +835,13 @@ bool plant_model_step_reporting(plant_model_t *model, const plant_actuation_t *a
     const float seconds = (float)interval_millis / MILLIS_PER_SECOND;
 
     /*
-     * Temperatures first, then pressures: steam pressure follows the steam
-     * mass, so within one step it reflects where that mass has just arrived --
-     * including the ground the mass has just lost to the draw the same rate is
-     * about to be read for again.
+     * Temperatures first, then pressures: the trapped pressure follows the casting
+     * temperature, so within one step it reflects where that mass has just
+     * arrived.
      *
-     * The drawn rate is handed to both of them. The steam-side feed channel's
-     * commanded level, which arrived alongside it, is still read by no relation
-     * these equations compute: what a replacing feed does to the steam block is
-     * a later relation's term, not this one's. Accepting it here, ahead of that
-     * term existing, is what lets it be added without every caller of this seam
-     * changing again.
+     * The drawn rate and the actuation are handed to both of them. The steam
+     * feed channel sets the rate steam is made at and so the pressure with the
+     * wand open, and it fills the held liquid.
      */
     thermoblock_advance_temperatures(model, actuation, steam_demand_ml_per_s, seconds);
     thermoblock_advance_pressures(model, actuation, steam_demand_ml_per_s, seconds);
@@ -753,6 +901,9 @@ bool plant_model_quantity(const plant_model_t *model, plant_quantity_t quantity,
     case PLANT_QUANTITY_STEAM_DRAW_ML_PER_S:
         *value = model->steam_draw_ml_per_s;
         return true;
+    case PLANT_QUANTITY_STEAM_OUTLET_SUPERHEAT_K:
+        *value = model->steam_outlet_superheat_k;
+        return true;
     /*
      * Not a quantity, so there is nothing to answer with. No default label
      * beside it, and that absence is deliberate: -Wall gives -Wswitch and this
@@ -799,6 +950,9 @@ bool plant_model_state(const plant_model_t *model, plant_state_t state, float *v
     case PLANT_STATE_STEAM_PRESSURE_BAR:
         *value = model->steam_pressure_bar;
         return true;
+    case PLANT_STATE_STEAM_LIQUID_INVENTORY_ML:
+        *value = model->steam_liquid_inventory_ml;
+        return true;
     case PLANT_STATE_COUNT:
     default:
         return false;
@@ -808,6 +962,17 @@ bool plant_model_state(const plant_model_t *model, plant_state_t state, float *v
 bool plant_model_set_state(plant_model_t *model, plant_state_t state, float value)
 {
     if (model == NULL || !model->initialised) {
+        return false;
+    }
+
+    /*
+     * The held liquid is the one state with a physical limit the model itself
+     * states, so a value outside it is refused rather than held until the first
+     * step clamps it. The temperatures stay free: the ceiling probe sets one
+     * above the ceiling on purpose.
+     */
+    if (state == PLANT_STATE_STEAM_LIQUID_INVENTORY_ML &&
+        !(value >= 0.0f && value <= model->coefficients.steam_liquid_capacity_ml)) {
         return false;
     }
 
@@ -828,8 +993,49 @@ bool plant_model_set_state(plant_model_t *model, plant_state_t state, float valu
     case PLANT_STATE_STEAM_PRESSURE_BAR:
         model->steam_pressure_bar = value;
         return true;
+    case PLANT_STATE_STEAM_LIQUID_INVENTORY_ML:
+        model->steam_liquid_inventory_ml = value;
+        return true;
     case PLANT_STATE_COUNT:
     default:
         return false;
     }
+}
+
+/*
+ * The least superheat the casting-to-outlet relation admits for these readings:
+ * its coefficient is taken at the end of its declared error that leaves the
+ * outlet coolest, which is the one that makes the steam faster to lose its
+ * superheat, and everything else at the description's figure. The steam made is
+ * taken to be the feed, which is what a draw that takes all it is fed makes.
+ */
+bool plant_model_least_outlet_superheat(const plant_parameters_t *parameters,
+                                        const plant_parameter_budget_t *budget, float casting_c,
+                                        float pressure_bar, uint16_t feed_permille,
+                                        float *superheat_k)
+{
+    if (parameters == NULL || budget == NULL || superheat_k == NULL || !isfinite(casting_c) ||
+        !isfinite(pressure_bar)) {
+        return false;
+    }
+
+    float drop_error = 0.0f;
+    bool drop_declared = false;
+    for (size_t at = 0u; at < sizeof(SPECS) / sizeof(SPECS[0]) && at < budget->count; at++) {
+        if (SPECS[at].offset == offsetof(plant_parameters_t, steam_outlet_drop_k_s_per_ml) &&
+            budget->declared[at]) {
+            drop_declared = true;
+            drop_error = fmaxf(budget->assumed_error[at], 0.0f);
+        }
+    }
+    if (!drop_declared) {
+        return false;
+    }
+
+    const float made_ml_per_s =
+        parameters->steam_feed_flow_ml_per_s * ((float)feed_permille / PERMILLE_FULL_SCALE);
+    *superheat_k = outlet_superheat_k(parameters,
+                                      parameters->steam_outlet_drop_k_s_per_ml * (1.0f + drop_error),
+                                      casting_c, pressure_bar, made_ml_per_s);
+    return true;
 }
