@@ -30,3 +30,7 @@ links:
     type: justified-by
   - target: SOL-HW-MACHINE-AS-FOUND-FIT-RECORD
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: 51ada67cc24c58a13ce133ef7174067a7b2c1903211f2270373aa5142ac2a653
+  gating_profile: ""
