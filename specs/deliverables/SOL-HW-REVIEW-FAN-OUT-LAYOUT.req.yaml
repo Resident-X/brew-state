@@ -53,3 +53,7 @@ links:
     type: depends-on
   - target: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: 594ef5ca53dc33d2cd7e1d2bb6c4f1a804a5a8aa52b0edd351ba686d65402ae2
+  gating_profile: ""
