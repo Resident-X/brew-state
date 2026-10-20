@@ -63,6 +63,14 @@ FINDINGS = ('{"table": "Findings", "number": "Finding", "item": "Item", "checkli
             '"key": lambda row: row["What"].split("@")[1] if "@" in row["What"] else None}')
 
 
+#: A caller whose citations carry the round, as the layout and schematic reviews' `<round>.<n>` do; this is round 2.
+ROUNDED = ('{"table": "Findings", "number": "Finding", "item": "Item", "checklist": ["A-1", "B-1", "C-1"], '
+           '"citations": [("Verdicts", "Rests on")], '
+           '"citation": re.compile(r"(?<![\\w.])(?P<round>\\d+)\\.(?P<number>\\d+)\\b"), '
+           '"round": lambda folder: "2", "earlier": lambda folder: {("1", 1), ("1", 2), ("1", 3)}, '
+           '"key": lambda row: None}')
+
+
 def caller_text(findings=FINDINGS, check="[]"):
     return CALLER.replace("{FINDINGS}", findings).replace("{CHECK}", check)
 
@@ -212,7 +220,7 @@ class Judging(Fixture):
         self.assertEqual([(unit["unit"], unit["mode"]) for unit in report["units"]], [("alpha", "setup session")])
 
     def test_a_setup_answer_is_not_checked_a_second_time_on_the_single_units_turn(self):
-        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that reads documents and records and asks for no judgement and no image and for one fixed token as the whole answer; a setup answer other than that token after trimming fails the run, so no forked reviewer inherits a verdict, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file. Out of scope: the content of a caller's prompt for its units.
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that reads documents and records and asks for no judgement and no image and for one fixed token as the whole answer; any text the setup session writes, in its answer or between its tool uses, other than that token after trimming, and any content block of its history that is neither text nor a tool use, fails the run, so no forked reviewer inherits a verdict, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file. Out of scope: the content of a caller's prompt for its units.
         for unit in ("bravo", "charlie"):
             os.remove(os.path.join(self.review, "units", f"{unit}.txt"))
         status, text, _ = self.run_command(as_json=True)
@@ -233,7 +241,7 @@ class StartReports(Fixture):
         return text
 
     def test_a_start_report_that_shows_more_than_was_granted_fails_naming_the_session(self):
-        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that reads documents and records and asks for no judgement and no image and for one fixed token as the whole answer; a setup answer other than that token after trimming fails the run, so no forked reviewer inherits a verdict, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file. Out of scope: the content of a caller's prompt for its units.
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that reads documents and records and asks for no judgement and no image and for one fixed token as the whole answer; any text the setup session writes, in its answer or between its tool uses, other than that token after trimming, and any content block of its history that is neither text nor a tool use, fails the run, so no forked reviewer inherits a verdict, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file. Out of scope: the content of a caller's prompt for its units.
         cases = {"tools": ({"setup_tools": ["Read", "Bash"]}, "tools"),
                  "mcp": ({"mcp_servers": [{"name": "konnect"}]}, "MCP servers"),
                  "skills": ({"skills": ["repo-board-design"]}, "skills"),
@@ -248,7 +256,7 @@ class StartReports(Fixture):
                 self.assertEqual(len(self.calls()), 1, "no unit was started after a setup session that failed its check")
 
     def test_a_fork_whose_start_report_shows_another_model_or_tools_fails_its_unit(self):
-        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that reads documents and records and asks for no judgement and no image and for one fixed token as the whole answer; a setup answer other than that token after trimming fails the run, so no forked reviewer inherits a verdict, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file. Out of scope: the content of a caller's prompt for its units.
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that reads documents and records and asks for no judgement and no image and for one fixed token as the whole answer; any text the setup session writes, in its answer or between its tool uses, other than that token after trimming, and any content block of its history that is neither text nor a tool use, fails the run, so no forked reviewer inherits a verdict, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file. Out of scope: the content of a caller's prompt for its units.
         for scenario, word in (({"fork_model": "model-b"}, "model model-b"), ({"fork_tools": ["Read", "Write"]}, "tools")):
             with self.subTest(word=word):
                 shutil.rmtree(self.out, ignore_errors=True)
@@ -259,7 +267,7 @@ class StartReports(Fixture):
                 self.assertFalse(os.path.exists(os.path.join(self.out, "record.json")))
 
     def test_a_setup_session_that_opened_an_image_or_a_binary_file_fails_naming_the_file(self):
-        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that reads documents and records and asks for no judgement and no image and for one fixed token as the whole answer; a setup answer other than that token after trimming fails the run, so no forked reviewer inherits a verdict, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file. Out of scope: the content of a caller's prompt for its units.
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that reads documents and records and asks for no judgement and no image and for one fixed token as the whole answer; any text the setup session writes, in its answer or between its tool uses, other than that token after trimming, and any content block of its history that is neither text nor a tool use, fails the run, so no forked reviewer inherits a verdict, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file. Out of scope: the content of a caller's prompt for its units.
         with open(os.path.join(self.review, "blob"), "wb") as handle:
             handle.write(b"\x89PNG\0\0data")
         for path in (os.path.join(self.review, "views", "top.png"), os.path.join(self.review, "blob"), "views/side.PDF"):
@@ -272,7 +280,7 @@ class StartReports(Fixture):
         self.assertEqual(status, 0, "text files are read freely: " + text)
 
     def test_a_setup_answer_other_than_the_fixed_token_fails_the_run_and_starts_no_fork(self):
-        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that reads documents and records and asks for no judgement and no image and for one fixed token as the whole answer; a setup answer other than that token after trimming fails the run, so no forked reviewer inherits a verdict, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file. Out of scope: the content of a caller's prompt for its units.
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that reads documents and records and asks for no judgement and no image and for one fixed token as the whole answer; any text the setup session writes, in its answer or between its tool uses, other than that token after trimming, and any content block of its history that is neither text nor a tool use, fails the run, so no forked reviewer inherits a verdict, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file. Out of scope: the content of a caller's prompt for its units.
         self.refused({"setup": {"answer": "I read it. Board 1 looks fine."}}, "the setup session answered", "Board 1 looks fine")
         self.assertEqual(self.forks(), [])
         shutil.rmtree(self.out, ignore_errors=True)
@@ -280,8 +288,56 @@ class StartReports(Fixture):
         status, text, _ = self.run_command()
         self.assertEqual(status, 0, "trimmed, the token is the whole answer: " + text)
 
+    def test_a_setup_session_that_wrote_text_other_than_the_token_in_any_message_fails_and_starts_no_fork(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that reads documents and records and asks for no judgement and no image and for one fixed token as the whole answer; any text the setup session writes, in its answer or between its tool uses, other than that token after trimming, and any content block of its history that is neither text nor a tool use, fails the run, so no forked reviewer inherits a verdict, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file. Out of scope: the content of a caller's prompt for its units.
+        text = lambda words: {"type": "text", "text": words}
+        cases = {"a verdict in a mid-turn message": ([text("Board 1 fails the clearance item.")], False, "Board 1 fails"),
+                 "harmless narration": ([text("I am about to read design.txt.")], False, "about to read"),
+                 "a verdict in the message that holds the first read": ([text("Looks wrong to me.")], True, "Looks wrong"),
+                 "a thinking block": ([{"type": "thinking", "thinking": "the board is bad"}], False, "thinking block"),
+                 "a block of a type nobody knows": ([{"type": "redacted_thinking", "data": "x"}], True, "redacted_thinking block")}
+        for name, (narration, same_event, word) in cases.items():
+            with self.subTest(case=name):
+                shutil.rmtree(self.out, ignore_errors=True)
+                for call in os.listdir(self.log):
+                    os.remove(os.path.join(self.log, call))
+                self.refused({"setup": {"narration": narration, "same_event": same_event}}, "the setup session", word)
+                self.assertEqual(self.forks(), [])
+                self.assertEqual(len(self.calls()), 1, "no unit was started")
+
+    def test_empty_and_token_text_blocks_between_the_setup_session_s_reads_pass(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that reads documents and records and asks for no judgement and no image and for one fixed token as the whole answer; any text the setup session writes, in its answer or between its tool uses, other than that token after trimming, and any content block of its history that is neither text nor a tool use, fails the run, so no forked reviewer inherits a verdict, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file. Out of scope: the content of a caller's prompt for its units.
+        for name, narration in {"an empty text block": [{"type": "text", "text": "  "}],
+                                "the token before the reads": [{"type": "text", "text": "SETUP-READ-COMPLETE"}]}.items():
+            with self.subTest(case=name):
+                shutil.rmtree(self.out, ignore_errors=True)
+                self.scenario({"setup": {"narration": narration, "reads": ["method.md", "units/alpha.txt"]}})
+                status, text, _ = self.run_command()
+                self.assertEqual(status, 0, text)
+
+    def test_a_setup_session_that_read_nothing_or_used_a_tool_outside_its_grant_fails(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that reads documents and records and asks for no judgement and no image and for one fixed token as the whole answer; any text the setup session writes, in its answer or between its tool uses, other than that token after trimming, and any content block of its history that is neither text nor a tool use, fails the run, so no forked reviewer inherits a verdict, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file. Out of scope: the content of a caller's prompt for its units.
+        shutil.rmtree(self.out, ignore_errors=True)
+        self.refused({"setup": {"reads": []}}, "the setup session read nothing")
+        self.assertEqual(self.forks(), [])
+        shutil.rmtree(self.out, ignore_errors=True)
+        self.refused({"setup": {"uses": ["Bash"]}}, "the setup session used Bash, a tool it was not granted")
+        shutil.rmtree(self.out, ignore_errors=True)
+        self.scenario({"setup": {"uses": ["Grep", "Glob"]}})
+        status, text, _ = self.run_command()
+        self.assertEqual(status, 0, "Glob and Grep are in the grant: " + text)
+
+    def test_a_reported_command_or_a_model_alias_the_report_does_not_echo_is_refused(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that reads documents and records and asks for no judgement and no image and for one fixed token as the whole answer; any text the setup session writes, in its answer or between its tool uses, other than that token after trimming, and any content block of its history that is neither text nor a tool use, fails the run, so no forked reviewer inherits a verdict, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file. Out of scope: the content of a caller's prompt for its units.
+        self.refused({"slash_commands": ["compact"]}, "the setup session", "started with commands ['compact']")
+        shutil.rmtree(self.out, ignore_errors=True)
+        self.scenario({"model": "claude-real-1"})
+        status, text, _ = self.run_command("--model", "sonnet")
+        self.assertEqual(status, 1, text)
+        self.assertRegex(text, r"REFUSED \| the setup session started with model claude-real-1, not sonnet")
+
     def test_the_setup_session_is_started_with_read_tools_the_fixed_ask_and_no_loaded_instructions(self):
-        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that reads documents and records and asks for no judgement and no image and for one fixed token as the whole answer; a setup answer other than that token after trimming fails the run, so no forked reviewer inherits a verdict, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file. Out of scope: the content of a caller's prompt for its units.
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that reads documents and records and asks for no judgement and no image and for one fixed token as the whole answer; any text the setup session writes, in its answer or between its tool uses, other than that token after trimming, and any content block of its history that is neither text nor a tool use, fails the run, so no forked reviewer inherits a verdict, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file. Out of scope: the content of a caller's prompt for its units.
         status, text, _ = self.run_command()
         self.assertEqual(status, 0, text)
         for call in self.calls():
@@ -296,8 +352,9 @@ class StartReports(Fixture):
         setup = self.calls()[0]
         self.assertEqual(self.flag(setup, "--tools"), "Read,Glob,Grep")
         self.assertTrue(setup["prompt"].startswith("Read every document in the review folder."))
-        self.assertIn("answer with exactly SETUP-READ-COMPLETE and nothing else", setup["prompt"])
         self.assertIn("Open no image and judge nothing", setup["prompt"])
+        self.assertIn("Write no text before, between or after your reads", setup["prompt"])
+        self.assertIn("your only text is the single token SETUP-READ-COMPLETE after the last read", setup["prompt"])
 
 
 class Failures(Fixture):
@@ -382,6 +439,104 @@ class Failures(Fixture):
         self.assertTrue(os.path.isfile(os.path.join(self.out, "units", "bravo.json")))
 
 
+    def test_a_unit_that_fails_twice_has_the_cost_of_its_attempts_in_its_figures_and_the_run_s_total(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C5: Against a stub that reports a fork's cost, API time and turn count cumulatively including its setup session, as the agent command line does, the record gives each fork its own cost, time and turns, the setup session its own, and the run their sum; token usage is taken as each session reports it, split into tokens read from the cache, written to it, fresh and generated, and a fork that reads no cache is flagged. The record is in the text and the JSON report. Out of scope: judging whether a run was worth its cost.
+        self.scenario({"units": {"alpha": [{"text": "not json", "cost": 0.07, "api_ms": 700, "turns": 2}]}})
+        status, text, _ = self.run_command("--bound", "3", as_json=True)
+        self.assertEqual(status, 1, text)
+        report = json.loads(text)
+        alpha = [unit for unit in report["units"] if unit["unit"] == "alpha"][0]
+        self.assertEqual(alpha["status"], "failed")
+        self.assertEqual(alpha["attempts"], 2)
+        self.assertAlmostEqual(alpha["own"]["cost_usd"], 0.14)
+        self.assertEqual((alpha["own"]["api_ms"], alpha["own"]["turns"]), (1400, 4))
+        self.assertTrue(alpha["session"])
+        self.assertAlmostEqual(report["totals"]["cost_usd"], 0.05 + 0.14 + 0.05 + 0.05)
+
+    def test_a_failed_attempt_s_cost_stays_in_the_totals_when_the_unit_is_later_run_again_and_judged(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C5: Against a stub that reports a fork's cost, API time and turn count cumulatively including its setup session, as the agent command line does, the record gives each fork its own cost, time and turns, the setup session its own, and the run their sum; token usage is taken as each session reports it, split into tokens read from the cache, written to it, fresh and generated, and a fork that reads no cache is flagged. The record is in the text and the JSON report. Out of scope: judging whether a run was worth its cost.
+        self.scenario({"units": {"charlie": [{"text": "not json", "cost": 0.07}]}})
+        status, text, _ = self.run_command()
+        self.assertEqual(status, 1, text)
+        self.scenario({})
+        status, text, _ = self.run_command("--rerun", "charlie", as_json=True)
+        self.assertEqual(status, 0, text)
+        report = json.loads(text)
+        charlie = [unit for unit in report["units"] if unit["unit"] == "charlie"][0]
+        self.assertAlmostEqual(charlie["own"]["cost_usd"], 0.05 + 0.14, msg="the judged sessions and the two failed ones")
+        self.assertAlmostEqual(report["totals"]["cost_usd"], 0.05 + 0.05 + 0.05 + 0.19 + 0.05,
+                               msg="two setup sessions, alpha, bravo and charlie's every session")
+        self.assertFalse(os.path.exists(os.path.join(self.out, "failed", "charlie.json")), "folded into the kept result")
+
+    def test_a_unit_run_again_keeps_the_cost_of_the_result_it_replaced_in_its_figures_and_the_total(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C5: Against a stub that reports a fork's cost, API time and turn count cumulatively including its setup session, as the agent command line does, the record gives each fork its own cost, time and turns, the setup session its own, and the run their sum; token usage is taken as each session reports it, split into tokens read from the cache, written to it, fresh and generated, and a fork that reads no cache is flagged. The record is in the text and the JSON report. Out of scope: judging whether a run was worth its cost.
+        status, text, _ = self.run_command()
+        self.assertEqual(status, 0, text)
+        status, text, _ = self.run_command("--rerun", "bravo", as_json=True)
+        self.assertEqual(status, 0, text)
+        report = json.loads(text)
+        bravo = [unit for unit in report["units"] if unit["unit"] == "bravo"][0]
+        self.assertAlmostEqual(bravo["own"]["cost_usd"], 0.10, msg="the new session and the one replaced")
+        self.assertAlmostEqual(report["totals"]["cost_usd"], 0.05 + 0.05 + 0.05 + 0.05 + 0.10)
+        self.assertEqual(len(self.kept("bravo")["superseded"]), 1)
+
+    def test_a_reviewer_that_loses_its_login_mid_run_is_that_unit_s_failure_and_the_others_are_kept(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C3: A unit whose reviewer exits with an error or returns nothing is run once more; a call refused for a rate limit is retried after a wait that grows, a bounded number of times; a unit that still fails fails the run, naming the unit and what the reviewer returned, and the other units' results are kept in the output. Out of scope: what a caller counts as a malformed result, which the caller defines.
+        self.scenario({"units": {"alpha": [{"login": True}]}})
+        status, text, err = self.run_command("--bound", "1")
+        self.assertEqual(status, 2, text)
+        self.assertIn("is not logged in; log it in, then run again", err)
+        self.assertRegex(text, r"FAILED \| unit alpha failed: .*is not logged in")
+        self.assertRegex(text, r"RESULT \| CANNOT RUN \| 1 of 3 units failed: alpha; the others' results are kept in")
+        for unit in ("bravo", "charlie"):
+            self.assertTrue(os.path.isfile(os.path.join(self.out, "units", f"{unit}.json")))
+        self.assertFalse(os.path.exists(os.path.join(self.out, "record.json")))
+        self.assertFalse(os.path.exists(os.path.join(self.out, review_fan_out.LOCK)), "the lock is released")
+        self.assertEqual(len([call for call in self.forks() if call["unit"] == "alpha"]), 1, "a lost login is not run once more")
+
+    def test_an_exception_in_one_unit_s_worker_is_that_unit_s_failure_and_not_a_traceback(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C3: A unit whose reviewer exits with an error or returns nothing is run once more; a call refused for a rate limit is retried after a wait that grows, a bounded number of times; a unit that still fails fails the run, naming the unit and what the reviewer returned, and the other units' results are kept in the output. Out of scope: what a caller counts as a malformed result, which the caller defines.
+        real = review_fan_out.call_agent
+
+        def vanishing(program, prompt, *rest, **named):
+            if "UNIT=alpha" in prompt:
+                raise FileNotFoundError("the agent binary vanished")
+            return real(program, prompt, *rest, **named)
+        with mock.patch.object(review_fan_out, "call_agent", vanishing):
+            status, text, _ = self.run_command("--bound", "3")
+        self.assertEqual(status, 1, text)
+        self.assertIn("FAILED | unit alpha failed: FileNotFoundError: the agent binary vanished", text)
+        self.assertTrue(os.path.isfile(os.path.join(self.out, "units", "bravo.json")))
+        self.assertFalse(os.path.exists(os.path.join(self.out, review_fan_out.LOCK)))
+
+    def test_a_reviewer_s_words_about_a_rate_limit_or_a_login_are_not_the_command_line_saying_so(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C3: A unit whose reviewer exits with an error or returns nothing is run once more; a call refused for a rate limit is retried after a wait that grows, a bounded number of times; a unit that still fails fails the run, naming the unit and what the reviewer returned, and the other units' results are kept in the output. Out of scope: what a caller counts as a malformed result, which the caller defines.
+        prose = "R429 is overloaded and the user is not logged in"
+        self.scenario({"units": {"alpha": [{"prose": prose}]}})
+        status, text, _ = self.run_command("--bound", "3")
+        self.assertEqual(status, 1, text)
+        self.assertRegex(text, r"FAILED \| unit alpha failed after 2 attempts; the reviewer returned: R429 is overloaded")
+        self.assertEqual(len([call for call in self.forks() if call["unit"] == "alpha"]), 2, "run once more, not retried")
+
+    def test_a_setup_session_refused_for_a_rate_limit_after_the_retries_refuses_the_run_and_starts_no_fork(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C3: A unit whose reviewer exits with an error or returns nothing is run once more; a call refused for a rate limit is retried after a wait that grows, a bounded number of times; a unit that still fails fails the run, naming the unit and what the reviewer returned, and the other units' results are kept in the output. Out of scope: what a caller counts as a malformed result, which the caller defines.
+        self.scenario({"setup": {"rate_limit": True}})
+        status, text, _ = self.run_command()
+        self.assertEqual(status, 1, text)
+        self.assertRegex(text, r"REFUSED \| the setup session still refused for a rate limit after 5 retries")
+        self.assertEqual(len(self.calls()), review_fan_out.RATE_RETRIES + 1)
+        self.assertEqual(self.forks(), [])
+        self.assertIn("RESULT | REFUSED | no unit was started", text)
+
+    def test_a_setup_session_that_loses_its_login_exits_two_and_keeps_nothing(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C4: The exit status is 0 when the merged record is written, 1 when the command refuses or a unit fails, and 2 when the agent command line is missing or not logged in, each with a line beginning REFUSED or CANNOT RUN as the other board commands print; a review folder inside the repository, a folder that does not exist, an output folder inside the review folder or containing it or inside the repository, a caller name with no module or whose module lacks a required attribute, an output folder that already holds a record when no unit is named to run again, an output folder in use by another run, and a bound below one are refused. Each REFUSED and CANNOT RUN line names its cause and what to do about it. The report is available as text and as JSON and the two hold the same facts. Out of scope: the merge's own refusals, which each caller names.
+        self.scenario({"setup": {"login": True}})
+        status, text, err = self.run_command()
+        self.assertEqual(status, 2, text)
+        self.assertIn("is not logged in; log it in, then run again", err)
+        self.assertIn("RESULT | CANNOT RUN | nothing was kept", text)
+
+
 class Interface(Fixture):
     def refusal_lines(self, text):
         return [line for line in text.splitlines() if line.startswith("REFUSED | ")]
@@ -395,6 +550,9 @@ class Interface(Fixture):
         self.write(os.path.join(self.out, "units", "alpha.json"), "{}")
         held = os.path.join(self.root, "held")
         self.write(os.path.join(held, review_fan_out.LOCK), "123")
+        busy = os.path.join(self.root, "busy")
+        self.write(os.path.join(busy, review_fan_out.LOCK), "123")
+        self.write(os.path.join(busy, "units", "x.json"), "{}")
         inner = os.path.join(self.review, "kept-here")
         elsewhere = os.path.join(self.root, "elsewhere")
         cases = [
@@ -407,6 +565,7 @@ class Interface(Fixture):
             ("unloadable", dict(caller="broken", out=elsewhere), (), "cannot be loaded", "fix the module"),
             ("record held", dict(), (), "already holds a record", "--rerun"),
             ("in use", dict(out=held), (), "is in use by another run", "wait for that run"),
+            ("in use with units written", dict(out=busy), (), "is in use by another run", "wait for that run"),
             ("bound below one", dict(out=elsewhere), ("--bound", "0"), "below one", "give one or more"),
             ("bound not a number", dict(out=elsewhere), ("--bound", "many"), "not a whole number", "give one or more"),
             ("bad name", dict(caller="Bad-Name", out=elsewhere), (), "not a lower-case name", "give the <name>"),
@@ -466,22 +625,62 @@ class Interface(Fixture):
         self.assertTrue(os.path.isfile(os.path.join(self.out, "record.json")))
         with open(os.path.join(self.out, "record.json"), encoding="utf-8") as handle:
             self.assertEqual(json.load(handle), report, "the record on disk is the JSON report")
-        lines = text.splitlines()
-        self.assertEqual(lines[-1], f"RESULT | WRITTEN | {report['detail']}")
-        for unit in report["units"]:
-            line = [line for line in lines if line.startswith(f"UNIT | {unit['unit']} |")][0]
-            for fact in (unit["status"], unit["mode"], f"{unit['attempts']} attempts",
-                         f"{unit['own']['api_ms']} ms API", f"{unit['own']['turns']} turns", f"${unit['own']['cost_usd']}",
-                         f"read {unit['own']['tokens']['cache_read']}"):
-                self.assertIn(fact, line)
-            for flag in unit["flags"]:
-                self.assertIn(flag, line)
-        self.assertEqual(len([line for line in lines if line.startswith("SETUP | ")]), len(report["setup_sessions"]))
-        self.assertIn(f"TOTAL | {report['totals']['api_ms']} ms API", text)
-        self.assertEqual(len([line for line in lines if line.startswith("SAME PLACE | ")]), len(report["same_place"]))
+        self.assertEqual(text.splitlines()[-1], f"RESULT | WRITTEN | {report['detail']}")
+        lines = review_fan_out.render_text(report)
+        self.assertEqual(len(lines), len(text.splitlines()), "the command prints these lines for a run of the same shape")
+        clean = review_fan_out.board_check.clean
+
+        def scalars(value):
+            """Every string and number in the JSON, as the text prints it; flags and empty cells carry no token."""
+            if isinstance(value, dict):
+                for inner in value.values():
+                    yield from scalars(inner)
+            elif isinstance(value, (list, tuple)):
+                for inner in value:
+                    yield from scalars(inner)
+            elif value is not None and not isinstance(value, bool) and clean(value):
+                yield clean(value)
+
+        def line_of(prefix):
+            return [line for line in lines if line.startswith(prefix)]
+
+        def holds(line, value, what):
+            for token in scalars(value):
+                self.assertIn(token, line, f"{what}: {token!r} of the JSON is in the text")
+        holds(line_of("RUN | ")[0], [report["caller"], report["review"], report["out"]], "the run")
+        holds(line_of("RESULT | ")[0], [report["result"], report["detail"]], "the result")
+        self.assertEqual(len(line_of("SETUP | ")), len(report["setup_sessions"]))
+        for setup, line in zip(report["setup_sessions"], line_of("SETUP | ")):
+            holds(line, setup, "a setup session")
+        self.assertEqual(len(line_of("UNIT | ")), len(report["units"]))
+        for unit, line in zip(report["units"], line_of("UNIT | ")):
+            holds(line, unit, "a unit")
+            self.assertEqual("run again" in line, unit["run_again"])
+        holds(line_of("TOTAL | ")[0], report["totals"], "the total")
+        self.assertEqual(len(line_of("SAME PLACE | ")), len(report["same_place"]))
+        for place, line in zip(report["same_place"], line_of("SAME PLACE | ")):
+            holds(line, place, "a place")
         self.assertEqual(report["same_place"][0]["findings"], [1, 2])
+        self.assertEqual(len(line_of("TABLE | ")), len(report["tables"]))
+        for (name, table), line in zip(report["tables"].items(), line_of("TABLE | ")):
+            holds(line, [name, table["columns"], len(table["rows"])], "a table")
+        rows = [(name, row) for name, table in report["tables"].items() for row in table["rows"]]
+        self.assertEqual(len(line_of("ROW | ")), len(rows))
+        for (name, row), line in zip(rows, line_of("ROW | ")):
+            holds(line, [name, row], "a table row")
         for line in lines:
-            self.assertRegex(line, r"^(SETUP|UNIT|SAME PLACE|TOTAL|RESULT|RERUN|FAILED|REFUSED) \| ")
+            self.assertRegex(line, r"^(RUN|SETUP|UNIT|SAME PLACE|TABLE|ROW|TOTAL|RESULT|RERUN|FAILED|REFUSED|CANNOT RUN) \| ")
+
+        self.scenario({"units": {"bravo": [{"exit": 1}]}})
+        shutil.rmtree(self.out)
+        status, as_json, _ = self.run_command(as_json=True)
+        self.assertEqual(status, 1)
+        report = json.loads(as_json)
+        shown = review_fan_out.render_text(report)
+        failed = [unit for unit in report["units"] if unit["status"] == "failed"][0]
+        self.assertIn(f"FAILED | {clean(failed['detail'])}", shown)
+        holds([line for line in shown if line.startswith("UNIT | bravo")][0], {k: v for k, v in failed.items() if k != "detail"}, "a failed unit")
+        holds([line for line in shown if line.startswith("RESULT | ")][0], [report["result"], report["detail"]], "the failed result")
 
         shutil.rmtree(self.out)
         os.makedirs(os.path.join(self.out, "units"))
@@ -491,6 +690,31 @@ class Interface(Fixture):
         self.assertEqual((status, status_json), (1, 1))
         self.assertEqual([line[len("REFUSED | "):] for line in self.refusal_lines(text)],
                          [review_fan_out.board_check.clean(why) for why in json.loads(as_json)["refusals"]])
+
+    def test_a_folder_a_run_that_kept_nothing_but_its_setup_session_list_is_one_a_fresh_run_refuses(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C4: The exit status is 0 when the merged record is written, 1 when the command refuses or a unit fails, and 2 when the agent command line is missing or not logged in, each with a line beginning REFUSED or CANNOT RUN as the other board commands print; a review folder inside the repository, a folder that does not exist, an output folder inside the review folder or containing it or inside the repository, a caller name with no module or whose module lacks a required attribute, an output folder that already holds a record when no unit is named to run again, an output folder in use by another run, and a bound below one are refused. Each REFUSED and CANNOT RUN line names its cause and what to do about it. The report is available as text and as JSON and the two hold the same facts. Out of scope: the merge's own refusals, which each caller names.
+        self.scenario({"units": {name: [{"exit": 1}] for name in Fixture.UNITS}})
+        status, text, _ = self.run_command("--bound", "3")
+        self.assertEqual(status, 1, text)
+        self.assertFalse(os.path.exists(os.path.join(self.out, "units", "alpha.json")))
+        self.assertTrue(os.path.isfile(os.path.join(self.out, "setups.json")))
+        for name in os.listdir(self.log):
+            os.remove(os.path.join(self.log, name))
+        self.scenario({})
+        status, text, _ = self.run_command()
+        self.assertEqual(status, 1, text)
+        self.assertIn("already holds a record", text)
+        self.assertEqual(self.calls(), [], "nothing was started")
+        status, text, _ = self.run_command("--rerun", "alpha")
+        self.assertIn("holds no result for bravo, charlie; name each of them with --rerun too", text)
+
+    def test_a_refusal_after_the_lock_leaves_no_lock_and_no_folder_it_created(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C4: The exit status is 0 when the merged record is written, 1 when the command refuses or a unit fails, and 2 when the agent command line is missing or not logged in, each with a line beginning REFUSED or CANNOT RUN as the other board commands print; a review folder inside the repository, a folder that does not exist, an output folder inside the review folder or containing it or inside the repository, a caller name with no module or whose module lacks a required attribute, an output folder that already holds a record when no unit is named to run again, an output folder in use by another run, and a bound below one are refused. Each REFUSED and CANNOT RUN line names its cause and what to do about it. The report is available as text and as JSON and the two hold the same facts. Out of scope: the merge's own refusals, which each caller names.
+        folder = os.path.join(self.root, "fresh")
+        status, text, _ = self.run_command("--rerun", "alpha", out=folder)
+        self.assertEqual(status, 1, text)
+        self.assertIn("holds no earlier result to run alpha again against", text)
+        self.assertFalse(os.path.exists(folder))
 
     def test_a_merge_the_caller_s_check_refuses_exits_one_with_a_refused_line_and_keeps_the_results(self):
         # SOL-HW-REVIEW-FAN-OUT-DRIVER.C4: The exit status is 0 when the merged record is written, 1 when the command refuses or a unit fails, and 2 when the agent command line is missing or not logged in, each with a line beginning REFUSED or CANNOT RUN as the other board commands print; a review folder inside the repository, a folder that does not exist, an output folder inside the review folder or containing it or inside the repository, a caller name with no module or whose module lacks a required attribute, an output folder that already holds a record when no unit is named to run again, an output folder in use by another run, and a bound below one are refused. Each REFUSED and CANNOT RUN line names its cause and what to do about it. The report is available as text and as JSON and the two hold the same facts. Out of scope: the merge's own refusals, which each caller names.
@@ -533,7 +757,7 @@ class Cost(Fixture):
                        "units": {"bravo": [{"cost": 0.2, "api_ms": 2000, "turns": 4, "cache_read": 0, "cache_write": 77}]}})
         status, text, _ = self.run_command()
         self.assertEqual(status, 0, text)
-        self.assertRegex(text, r"SETUP \| \S+ \| initial \| model-a \| 4000 ms API \| [\d.]+ s \| 3 turns \| \$0\.4 \| read 5000")
+        self.assertRegex(text, r"SETUP \| \S+ \| initial \| model-a \| \S+ \| units alpha, bravo, charlie \| 4000 ms API \| [\d.]+ s \| 3 turns \| \$0\.4 \| read 5000")
         self.assertRegex(text, r"UNIT \| bravo \| judged \| fork \| \S+ \| 1 attempts \| 2000 ms API \| [\d.]+ s \| 4 turns \| \$0\.2 "
                                r"\| read 0 wrote 77 fresh 3 generated 100 \| no cache read")
         self.assertRegex(text, r"UNIT \| alpha .* \| no flag")
@@ -552,8 +776,8 @@ class Cost(Fixture):
         self.assertEqual(report["totals"]["cost_usd"], 0.5)
 
 
-class Merge(unittest.TestCase):
-    """The merge, over synthetic unit results and a synthetic caller."""
+class MergeBase(unittest.TestCase):
+    """A synthetic caller loaded from a temporary folder, for the merge's tests."""
 
     @classmethod
     def setUpClass(cls):
@@ -569,6 +793,10 @@ class Merge(unittest.TestCase):
 
     ORDER = ("alpha", "bravo", "charlie")
 
+
+class Merge(MergeBase):
+    """The merge, over synthetic unit results and a synthetic caller."""
+
     def results(self):
         return {
             "alpha": {"Verdicts": verdicts(("A-1", "fail", "F2 and R1-F2"), ("B-1", "fail", "F1")),
@@ -579,7 +807,7 @@ class Merge(unittest.TestCase):
         }
 
     def test_the_merge_renumbers_this_round_s_findings_in_the_checklist_s_order_and_rewrites_their_citations(self):
-        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C6: Over synthetic unit results and a synthetic caller, the merge rejects a table with a column the caller's table does not have and a verdict outside the caller's set, replaces every finding number a reviewer wrote with the number the checklist's order gives and rewrites the citations of them in the verdict rows, leaves a citation of an earlier round's finding as written, reports two findings that the caller's key assigns to the same item or place and keeps both, and gives the same record for every order the units arrive in. For a caller that declares no findings table nothing is renumbered. It reads no model and no file outside the unit results and the review folder. Out of scope: what a caller's tables must cover and whether a verdict is right.
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C6: Over synthetic unit results and a synthetic caller, the merge rejects a table with a column the caller's table does not have and a verdict outside the caller's set, replaces every finding number a reviewer wrote with the number the checklist's order gives and rewrites the citations of them in the verdict rows, leaves a citation of an earlier round's finding as written, tells the two by the round each citation carries against the round the caller names as this one, and refuses a citation of an earlier round's finding that the review folder's earlier rounds do not hold, reports two findings that the caller's key assigns to the same item or place and keeps both, and gives the same record for every order the units arrive in. For a caller that declares no findings table nothing is renumbered. It reads no model and no file outside the unit results and the review folder. Out of scope: what a caller's tables must cover and whether a verdict is right.
         merged = review_fan_out.merge(self.caller(), self.folder, self.ORDER, self.results())
         findings = merged["tables"]["Findings"]["rows"]
         # The checklist runs A-1, B-1, C-1: bravo's two A-1 findings come first, then alpha's B-1, then alpha's C-1.
@@ -592,14 +820,14 @@ class Merge(unittest.TestCase):
         self.assertEqual(merged["tables"]["Verdicts"]["columns"], ["Item", "Verdict", "Rests on"])
 
     def test_the_first_number_of_a_round_is_the_caller_s(self):
-        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C6: Over synthetic unit results and a synthetic caller, the merge rejects a table with a column the caller's table does not have and a verdict outside the caller's set, replaces every finding number a reviewer wrote with the number the checklist's order gives and rewrites the citations of them in the verdict rows, leaves a citation of an earlier round's finding as written, reports two findings that the caller's key assigns to the same item or place and keeps both, and gives the same record for every order the units arrive in. For a caller that declares no findings table nothing is renumbered. It reads no model and no file outside the unit results and the review folder. Out of scope: what a caller's tables must cover and whether a verdict is right.
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C6: Over synthetic unit results and a synthetic caller, the merge rejects a table with a column the caller's table does not have and a verdict outside the caller's set, replaces every finding number a reviewer wrote with the number the checklist's order gives and rewrites the citations of them in the verdict rows, leaves a citation of an earlier round's finding as written, tells the two by the round each citation carries against the round the caller names as this one, and refuses a citation of an earlier round's finding that the review folder's earlier rounds do not hold, reports two findings that the caller's key assigns to the same item or place and keeps both, and gives the same record for every order the units arrive in. For a caller that declares no findings table nothing is renumbered. It reads no model and no file outside the unit results and the review folder. Out of scope: what a caller's tables must cover and whether a verdict is right.
         caller = self.caller(FINDINGS.replace('"checklist"', '"first": lambda folder: 8, "checklist"'))
         merged = review_fan_out.merge(caller, self.folder, self.ORDER, self.results())
         self.assertEqual([row["Finding"] for row in merged["tables"]["Findings"]["rows"]], [8, 9, 10, 11])
         self.assertEqual(merged["tables"]["Verdicts"]["rows"][1]["Rests on"], "F10")
 
     def test_two_findings_the_caller_s_key_puts_at_one_place_are_reported_and_both_kept(self):
-        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C6: Over synthetic unit results and a synthetic caller, the merge rejects a table with a column the caller's table does not have and a verdict outside the caller's set, replaces every finding number a reviewer wrote with the number the checklist's order gives and rewrites the citations of them in the verdict rows, leaves a citation of an earlier round's finding as written, reports two findings that the caller's key assigns to the same item or place and keeps both, and gives the same record for every order the units arrive in. For a caller that declares no findings table nothing is renumbered. It reads no model and no file outside the unit results and the review folder. Out of scope: what a caller's tables must cover and whether a verdict is right.
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C6: Over synthetic unit results and a synthetic caller, the merge rejects a table with a column the caller's table does not have and a verdict outside the caller's set, replaces every finding number a reviewer wrote with the number the checklist's order gives and rewrites the citations of them in the verdict rows, leaves a citation of an earlier round's finding as written, tells the two by the round each citation carries against the round the caller names as this one, and refuses a citation of an earlier round's finding that the review folder's earlier rounds do not hold, reports two findings that the caller's key assigns to the same item or place and keeps both, and gives the same record for every order the units arrive in. For a caller that declares no findings table nothing is renumbered. It reads no model and no file outside the unit results and the review folder. Out of scope: what a caller's tables must cover and whether a verdict is right.
         merged = review_fan_out.merge(self.caller(), self.folder, self.ORDER, self.results())
         self.assertEqual(merged["same_place"], [{"key": "U4", "findings": [1, 3], "units": ["alpha", "bravo"]}])
         self.assertEqual(len(merged["tables"]["Findings"]["rows"]), 4, "neither is dropped")
@@ -608,7 +836,7 @@ class Merge(unittest.TestCase):
         self.assertEqual(review_fan_out.merge(self.caller(), self.folder, self.ORDER, alone)["same_place"], [])
 
     def test_the_merge_gives_one_record_for_every_order_the_units_arrive_in(self):
-        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C6: Over synthetic unit results and a synthetic caller, the merge rejects a table with a column the caller's table does not have and a verdict outside the caller's set, replaces every finding number a reviewer wrote with the number the checklist's order gives and rewrites the citations of them in the verdict rows, leaves a citation of an earlier round's finding as written, reports two findings that the caller's key assigns to the same item or place and keeps both, and gives the same record for every order the units arrive in. For a caller that declares no findings table nothing is renumbered. It reads no model and no file outside the unit results and the review folder. Out of scope: what a caller's tables must cover and whether a verdict is right.
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C6: Over synthetic unit results and a synthetic caller, the merge rejects a table with a column the caller's table does not have and a verdict outside the caller's set, replaces every finding number a reviewer wrote with the number the checklist's order gives and rewrites the citations of them in the verdict rows, leaves a citation of an earlier round's finding as written, tells the two by the round each citation carries against the round the caller names as this one, and refuses a citation of an earlier round's finding that the review folder's earlier rounds do not hold, reports two findings that the caller's key assigns to the same item or place and keeps both, and gives the same record for every order the units arrive in. For a caller that declares no findings table nothing is renumbered. It reads no model and no file outside the unit results and the review folder. Out of scope: what a caller's tables must cover and whether a verdict is right.
         caller, results = self.caller(), self.results()
         reference = review_fan_out.merge(caller, self.folder, self.ORDER, results)
         for arrival in itertools.permutations(results):
@@ -616,7 +844,7 @@ class Merge(unittest.TestCase):
             self.assertEqual(review_fan_out.merge(caller, self.folder, self.ORDER, arrived), reference, arrival)
 
     def test_the_merge_rejects_a_column_a_verdict_a_table_and_a_citation_the_caller_does_not_have(self):
-        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C6: Over synthetic unit results and a synthetic caller, the merge rejects a table with a column the caller's table does not have and a verdict outside the caller's set, replaces every finding number a reviewer wrote with the number the checklist's order gives and rewrites the citations of them in the verdict rows, leaves a citation of an earlier round's finding as written, reports two findings that the caller's key assigns to the same item or place and keeps both, and gives the same record for every order the units arrive in. For a caller that declares no findings table nothing is renumbered. It reads no model and no file outside the unit results and the review folder. Out of scope: what a caller's tables must cover and whether a verdict is right.
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C6: Over synthetic unit results and a synthetic caller, the merge rejects a table with a column the caller's table does not have and a verdict outside the caller's set, replaces every finding number a reviewer wrote with the number the checklist's order gives and rewrites the citations of them in the verdict rows, leaves a citation of an earlier round's finding as written, tells the two by the round each citation carries against the round the caller names as this one, and refuses a citation of an earlier round's finding that the review folder's earlier rounds do not hold, reports two findings that the caller's key assigns to the same item or place and keeps both, and gives the same record for every order the units arrive in. For a caller that declares no findings table nothing is renumbered. It reads no model and no file outside the unit results and the review folder. Out of scope: what a caller's tables must cover and whether a verdict is right.
         caller = self.caller()
 
         def rejected(edit, *words):
@@ -637,20 +865,89 @@ class Merge(unittest.TestCase):
         rejected(lambda r: r["charlie"].update(Verdicts="pass"), "not a list of rows")
 
     def test_a_caller_with_no_findings_table_has_nothing_renumbered(self):
-        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C6: Over synthetic unit results and a synthetic caller, the merge rejects a table with a column the caller's table does not have and a verdict outside the caller's set, replaces every finding number a reviewer wrote with the number the checklist's order gives and rewrites the citations of them in the verdict rows, leaves a citation of an earlier round's finding as written, reports two findings that the caller's key assigns to the same item or place and keeps both, and gives the same record for every order the units arrive in. For a caller that declares no findings table nothing is renumbered. It reads no model and no file outside the unit results and the review folder. Out of scope: what a caller's tables must cover and whether a verdict is right.
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C6: Over synthetic unit results and a synthetic caller, the merge rejects a table with a column the caller's table does not have and a verdict outside the caller's set, replaces every finding number a reviewer wrote with the number the checklist's order gives and rewrites the citations of them in the verdict rows, leaves a citation of an earlier round's finding as written, tells the two by the round each citation carries against the round the caller names as this one, and refuses a citation of an earlier round's finding that the review folder's earlier rounds do not hold, reports two findings that the caller's key assigns to the same item or place and keeps both, and gives the same record for every order the units arrive in. For a caller that declares no findings table nothing is renumbered. It reads no model and no file outside the unit results and the review folder. Out of scope: what a caller's tables must cover and whether a verdict is right.
         merged = review_fan_out.merge(self.caller(findings="None"), self.folder, self.ORDER, self.results())
         self.assertEqual([row["Finding"] for row in merged["tables"]["Findings"]["rows"]], [1, 2, 1, 2])
         self.assertEqual(merged["tables"]["Verdicts"]["rows"][0]["Rests on"], "F2 and R1-F2", "citations left as written")
         self.assertEqual(merged["same_place"], [])
 
     def test_the_merge_reads_no_model_and_hands_the_caller_s_check_only_the_folder_the_order_and_the_tables(self):
-        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C6: Over synthetic unit results and a synthetic caller, the merge rejects a table with a column the caller's table does not have and a verdict outside the caller's set, replaces every finding number a reviewer wrote with the number the checklist's order gives and rewrites the citations of them in the verdict rows, leaves a citation of an earlier round's finding as written, reports two findings that the caller's key assigns to the same item or place and keeps both, and gives the same record for every order the units arrive in. For a caller that declares no findings table nothing is renumbered. It reads no model and no file outside the unit results and the review folder. Out of scope: what a caller's tables must cover and whether a verdict is right.
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C6: Over synthetic unit results and a synthetic caller, the merge rejects a table with a column the caller's table does not have and a verdict outside the caller's set, replaces every finding number a reviewer wrote with the number the checklist's order gives and rewrites the citations of them in the verdict rows, leaves a citation of an earlier round's finding as written, tells the two by the round each citation carries against the round the caller names as this one, and refuses a citation of an earlier round's finding that the review folder's earlier rounds do not hold, reports two findings that the caller's key assigns to the same item or place and keeps both, and gives the same record for every order the units arrive in. For a caller that declares no findings table nothing is renumbered. It reads no model and no file outside the unit results and the review folder. Out of scope: what a caller's tables must cover and whether a verdict is right.
         caller = self.caller(check='[f"saw {len(tables)} tables of {len(units)} units in " + os.path.basename(folder)]')
         with mock.patch("subprocess.run", side_effect=AssertionError("the merge started a program")), \
                 mock.patch("builtins.open", side_effect=AssertionError("the merge opened a file")):
             with self.assertRaises(review_fan_out.Refused) as caught:
                 review_fan_out.merge(caller, self.folder, self.ORDER, self.results())
         self.assertEqual(caught.exception.causes, [f"saw 2 tables of 3 units in {os.path.basename(self.folder)}"])
+
+
+class RoundedMerge(MergeBase):
+    """The merge for a caller whose citations carry the round, over the same units."""
+
+    def results(self):
+        return {
+            "alpha": {"Verdicts": verdicts(("A-1", "fail", "2.1 and 1.3"), ("B-1", "fail", "1.1 stays; 2.2 is raised")),
+                      "Findings": [finding(1, "B-1", "gap at the 3V3 pad"), finding(2, "C-1", "silk over a pad")]},
+            "bravo": {"Verdicts": verdicts(("A-1", "fail", "2.1")),
+                      "Findings": [finding(1, "A-1", "stub on the clock"), finding(2, "A-1", "stub elsewhere")]},
+            "charlie": {"Verdicts": verdicts(("C-1", "pass", "1.2 was put right")), "Findings": []},
+        }
+
+    def merged(self, results=None):
+        return review_fan_out.merge(self.caller(ROUNDED), self.folder, self.ORDER, results or self.results())
+
+    def refused(self, edit, *words):
+        results = self.results()
+        edit(results)
+        with self.assertRaises(review_fan_out.Refused) as caught:
+            self.merged(results)
+        for word in words:
+            self.assertIn(word, " ".join(caught.exception.causes))
+
+    def test_a_cell_citing_this_round_s_finding_and_an_earlier_round_s_renumbers_only_this_round_s(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C6: Over synthetic unit results and a synthetic caller, the merge rejects a table with a column the caller's table does not have and a verdict outside the caller's set, replaces every finding number a reviewer wrote with the number the checklist's order gives and rewrites the citations of them in the verdict rows, leaves a citation of an earlier round's finding as written, tells the two by the round each citation carries against the round the caller names as this one, and refuses a citation of an earlier round's finding that the review folder's earlier rounds do not hold, reports two findings that the caller's key assigns to the same item or place and keeps both, and gives the same record for every order the units arrive in. For a caller that declares no findings table nothing is renumbered. It reads no model and no file outside the unit results and the review folder. Out of scope: what a caller's tables must cover and whether a verdict is right.
+        rows = self.merged()["tables"]["Verdicts"]["rows"]
+        self.assertEqual(rows[0]["Rests on"], "2.3 and 1.3", "alpha's 2.1 is its B-1 finding, now 3; round 1's 1.3 is left")
+        self.assertEqual(rows[2]["Rests on"], "2.1", "bravo's own 1 stays 1")
+
+    def test_an_earlier_round_s_citation_is_left_while_the_unit_owns_a_finding_of_the_same_number(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C6: Over synthetic unit results and a synthetic caller, the merge rejects a table with a column the caller's table does not have and a verdict outside the caller's set, replaces every finding number a reviewer wrote with the number the checklist's order gives and rewrites the citations of them in the verdict rows, leaves a citation of an earlier round's finding as written, tells the two by the round each citation carries against the round the caller names as this one, and refuses a citation of an earlier round's finding that the review folder's earlier rounds do not hold, reports two findings that the caller's key assigns to the same item or place and keeps both, and gives the same record for every order the units arrive in. For a caller that declares no findings table nothing is renumbered. It reads no model and no file outside the unit results and the review folder. Out of scope: what a caller's tables must cover and whether a verdict is right.
+        rows = self.merged()["tables"]["Verdicts"]["rows"]
+        self.assertEqual(rows[1]["Rests on"], "1.1 stays; 2.4 is raised", "round 1's 1.1 is not alpha's finding 1")
+        self.assertEqual(rows[3]["Rests on"], "1.2 was put right")
+
+    def test_a_citation_of_an_earlier_round_the_review_folder_does_not_hold_is_refused_naming_the_cell(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C6: Over synthetic unit results and a synthetic caller, the merge rejects a table with a column the caller's table does not have and a verdict outside the caller's set, replaces every finding number a reviewer wrote with the number the checklist's order gives and rewrites the citations of them in the verdict rows, leaves a citation of an earlier round's finding as written, tells the two by the round each citation carries against the round the caller names as this one, and refuses a citation of an earlier round's finding that the review folder's earlier rounds do not hold, reports two findings that the caller's key assigns to the same item or place and keeps both, and gives the same record for every order the units arrive in. For a caller that declares no findings table nothing is renumbered. It reads no model and no file outside the unit results and the review folder. Out of scope: what a caller's tables must cover and whether a verdict is right.
+        self.refused(lambda r: r["alpha"]["Verdicts"][0].update(**{"Rests on": "see 1.9"}),
+                     "unit alpha", "'Rests on'", "'see 1.9'", "'1.9'", "round 1", "earlier rounds do not hold")
+        self.refused(lambda r: r["charlie"]["Verdicts"][0].update(**{"Rests on": "3.1"}), "'3.1'", "round 3")
+
+    def test_a_citation_of_this_round_s_finding_the_unit_did_not_raise_is_refused(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C6: Over synthetic unit results and a synthetic caller, the merge rejects a table with a column the caller's table does not have and a verdict outside the caller's set, replaces every finding number a reviewer wrote with the number the checklist's order gives and rewrites the citations of them in the verdict rows, leaves a citation of an earlier round's finding as written, tells the two by the round each citation carries against the round the caller names as this one, and refuses a citation of an earlier round's finding that the review folder's earlier rounds do not hold, reports two findings that the caller's key assigns to the same item or place and keeps both, and gives the same record for every order the units arrive in. For a caller that declares no findings table nothing is renumbered. It reads no model and no file outside the unit results and the review folder. Out of scope: what a caller's tables must cover and whether a verdict is right.
+        self.refused(lambda r: r["charlie"]["Verdicts"][0].update(**{"Rests on": "2.7"}), "cites a finding 7 the unit did not raise")
+
+    def test_a_caller_with_a_round_group_gives_one_record_for_every_order_the_units_arrive_in(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C6: Over synthetic unit results and a synthetic caller, the merge rejects a table with a column the caller's table does not have and a verdict outside the caller's set, replaces every finding number a reviewer wrote with the number the checklist's order gives and rewrites the citations of them in the verdict rows, leaves a citation of an earlier round's finding as written, tells the two by the round each citation carries against the round the caller names as this one, and refuses a citation of an earlier round's finding that the review folder's earlier rounds do not hold, reports two findings that the caller's key assigns to the same item or place and keeps both, and gives the same record for every order the units arrive in. For a caller that declares no findings table nothing is renumbered. It reads no model and no file outside the unit results and the review folder. Out of scope: what a caller's tables must cover and whether a verdict is right.
+        caller, results = self.caller(ROUNDED), self.results()
+        reference = review_fan_out.merge(caller, self.folder, self.ORDER, results)
+        for arrival in itertools.permutations(results):
+            arrived = {unit: results[unit] for unit in arrival}
+            self.assertEqual(review_fan_out.merge(caller, self.folder, self.ORDER, arrived), reference, arrival)
+
+    def test_a_caller_with_a_round_group_and_no_round_or_no_earlier_set_is_refused(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C6: Over synthetic unit results and a synthetic caller, the merge rejects a table with a column the caller's table does not have and a verdict outside the caller's set, replaces every finding number a reviewer wrote with the number the checklist's order gives and rewrites the citations of them in the verdict rows, leaves a citation of an earlier round's finding as written, tells the two by the round each citation carries against the round the caller names as this one, and refuses a citation of an earlier round's finding that the review folder's earlier rounds do not hold, reports two findings that the caller's key assigns to the same item or place and keeps both, and gives the same record for every order the units arrive in. For a caller that declares no findings table nothing is renumbered. It reads no model and no file outside the unit results and the review folder. Out of scope: what a caller's tables must cover and whether a verdict is right.
+        for dropped, word in (('"round": lambda folder: "2", ', "FINDINGS['round']"),
+                              (', "earlier": lambda folder: {("1", 1), ("1", 2), ("1", 3)}', "FINDINGS['earlier']")):
+            with self.subTest(dropped=word):
+                self.assertIn(dropped, ROUNDED)
+                with self.assertRaises(review_fan_out.Refused) as caught:
+                    self.caller(ROUNDED.replace(dropped, ""))
+                self.assertIn(word, " ".join(caught.exception.causes))
+
+    def test_a_pattern_with_no_round_group_still_matches_this_round_s_citations_only(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C6: Over synthetic unit results and a synthetic caller, the merge rejects a table with a column the caller's table does not have and a verdict outside the caller's set, replaces every finding number a reviewer wrote with the number the checklist's order gives and rewrites the citations of them in the verdict rows, leaves a citation of an earlier round's finding as written, tells the two by the round each citation carries against the round the caller names as this one, and refuses a citation of an earlier round's finding that the review folder's earlier rounds do not hold, reports two findings that the caller's key assigns to the same item or place and keeps both, and gives the same record for every order the units arrive in. For a caller that declares no findings table nothing is renumbered. It reads no model and no file outside the unit results and the review folder. Out of scope: what a caller's tables must cover and whether a verdict is right.
+        merged = review_fan_out.merge(self.caller(), self.folder, self.ORDER, Merge.results(self))
+        self.assertEqual(merged["tables"]["Verdicts"]["rows"][0]["Rests on"], "F4 and R1-F2")
 
 
 class Rerun(Fixture):
@@ -759,6 +1056,13 @@ class Documentation(unittest.TestCase):
                 self.assertIn(words, text, f"{place} says {words!r}")
         for words in ("REFUSED", "CANNOT RUN", "--rerun", "--json", "outside the repository", "plugins"):
             self.assertIn(words, section)
+        for words in ("version 2.1.304", "slash commands", "`--model` takes a full model id", "the built-in plugins and agents",
+                      "the account email", "the branch, the status and the recent commit subjects", "outside any work tree",
+                      "the hooks and memory exclusions", "any text it writes other than the fixed token",
+                      "neither text nor a tool use", "A pattern with no `round` group matches this round's citations only",
+                      'FINDINGS["round"](review_folder)', 'FINDINGS["earlier"](review_folder)', "leaves any other match as written",
+                      "naming the cell and the citation", "the caller's unit prompt must forbid it"):
+            self.assertIn(words, section, f"the section says {words!r}")
         self.assertIn("task hw:review-fan-out", section)
         for text in (taskfile[taskfile.index("  hw:test:\n"):].splitlines()[1],
                      taskfile[taskfile.index("  hw:test:round:"):].splitlines()[1]):
@@ -774,6 +1078,11 @@ class Documentation(unittest.TestCase):
         doc = self.flat(review_fan_out.__doc__)
         for words in (review_fan_out.AGENT_ENV, "setup session", "forked", "REFUSED", "CANNOT RUN", "--json"):
             self.assertIn(words, doc)
+        for words in ("A pattern with no `round` group matches this round's citations only", 'FINDINGS["round"]',
+                      'FINDINGS["earlier"]', "leaves any other match as written", 'refuses one that "earlier" does not hold',
+                      "the unit prompt must forbid it"):
+            self.assertIn(words, doc)
+        self.assertIn("Write no text before, between or after your reads", review_fan_out.ACK_INSTRUCTION)
 
 
 if __name__ == "__main__":

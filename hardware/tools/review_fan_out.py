@@ -16,6 +16,19 @@ review_caller_<name> beside this command, or in the folder --callers names. It
 exposes SETUP_PROMPT, unit_prompt(unit), units(review_folder), TOOLS, BOUND,
 TABLES, FINDINGS and CHECK. No caller is registered here.
 
+FINDINGS names the findings table and how the merge numbers it, and holds a
+`citation` pattern with a `number` group that finds the cells' citations of a
+finding. A pattern with no `round` group matches this round's citations only: a
+citation of an earlier round's finding must not match it, and the merge
+renumbers every match. A pattern with a `round` group also needs FINDINGS["round"]
+(review folder -> this round's label) and FINDINGS["earlier"] (review folder ->
+the (round, number) pairs the folder's earlier rounds hold). The merge renumbers
+a match whose round is this round's, checked against the unit's own numbers; it
+leaves any other match as written and refuses one that "earlier" does not hold.
+A cell with digits no pattern matches is not a citation. A reviewer that writes
+an earlier round's citation in this round's tagged form cannot be told from a
+this-round one by any merge, so the unit prompt must forbid it.
+
     review_fan_out.py --caller <name> --review <review folder> --out <output folder>
                       [--bound N] [--model M] [--rerun <unit>]... [--json]
 
@@ -64,8 +77,9 @@ DEFAULT_AGENT = "claude"
 #: The one token the setup session answers with, so it has judged nothing for a fork to inherit.
 ACK = "SETUP-READ-COMPLETE"
 #: What the setup prompt always ends with, after the caller's text.
-ACK_INSTRUCTION = ("Open no image and judge nothing. When you have read what is asked, answer with exactly "
-                   f"{ACK} and nothing else.")
+ACK_INSTRUCTION = ("Open no image and judge nothing. Write no text before, between or after your reads: no sentence "
+                   "about what you are about to read, no summary, no remark on content. When you have read what is "
+                   f"asked, your only text is the single token {ACK} after the last read, and nothing else.")
 #: The tools the setup session is granted, and the only tools a reviewer may be granted.
 READ_TOOLS = ("Read", "Glob", "Grep")
 #: What a caller module must expose.
@@ -76,11 +90,13 @@ NON_TEXT_SUFFIXES = (".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".tif", "
 RECORD = "record.json"
 UNITS_FOLDER = "units"
 SETUPS = "setups.json"
+FAILED_FOLDER = "failed"
 LOCK = ".review-fan-out.lock"
 #: How many times a call refused for a rate limit is retried, with the wait doubling each time.
 RATE_RETRIES = 5
+#: Matched against the command line's own stderr only, never a reviewer's words.
 RATE_PATTERN = re.compile(r"rate.?limit|too many requests|\b429\b|overloaded", re.IGNORECASE)
-LOGIN_PATTERN = re.compile(r"not logged in|please run /login|invalid api key|authentication", re.IGNORECASE)
+LOGIN_PATTERN = re.compile(r"not logged in|please run /login|invalid api key", re.IGNORECASE)
 UNIT_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 CALLER_NAME = re.compile(r"^[a-z][a-z0-9_]*$")
 #: The environment variables that keep a session from loading the project's and user's instructions and memory.
@@ -96,7 +112,15 @@ class Refused(Exception):
 
 
 class UnitFailed(Exception):
-    """A unit that could not be judged, with what the reviewer returned."""
+    """A unit that could not be judged, with what the reviewer returned and the sessions that cost something."""
+
+    def __init__(self, message: str, sessions: Sequence[Dict[str, Any]] = ()):
+        super().__init__(message)
+        self.sessions = list(sessions)
+
+
+class LoginLost(UnitFailed):
+    """A unit whose call found the agent command line no longer logged in."""
 
 
 class RateLimited(Exception):
@@ -164,6 +188,12 @@ def load_caller(name: str, folder: str):
                         f"some of {', '.join(READ_TOOLS)} and no others")
     if not isinstance(module.BOUND, int) or isinstance(module.BOUND, bool) or module.BOUND < 1:
         problems.append(f"the caller module {path} states a BOUND of {module.BOUND!r}; state a whole number of one or more")
+    findings = module.FINDINGS
+    if findings and "round" in findings["citation"].groupindex:
+        for name in ("round", "earlier"):
+            if not callable(findings.get(name)):
+                problems.append(f"the caller module {path} has a citation pattern with a round group but no callable "
+                                f"FINDINGS[{name!r}]; add FINDINGS['round'] and FINDINGS['earlier'] or drop the round group")
     if problems:
         raise Refused(problems)
     return module
@@ -193,6 +223,7 @@ class Session:
     def __init__(self):
         self.start: Dict[str, Any] = {}
         self.tool_uses: List[Tuple[str, Dict[str, Any]]] = []
+        self.blocks: List[Tuple[str, str]] = []
         self.result: Optional[Dict[str, Any]] = None
         self.exit_code = 0
         self.stderr = ""
@@ -256,7 +287,12 @@ def parse_stream(text: str) -> Session:
             session.start = event
         elif kind == "assistant":
             for item in (event.get("message") or {}).get("content") or []:
-                if isinstance(item, dict) and item.get("type") == "tool_use":
+                if not isinstance(item, dict):
+                    session.blocks.append(("unknown", ""))
+                    continue
+                kind = str(item.get("type"))
+                session.blocks.append((kind, str(item.get("text") or "") if kind == "text" else ""))
+                if kind == "tool_use":
                     session.tool_uses.append((str(item.get("name")), item.get("input") or {}))
         elif kind == "result":
             session.result = event
@@ -280,10 +316,10 @@ def call_agent(program: str, prompt: str, tools: Sequence[str], cwd: str, resume
     session.exit_code, session.stderr = done.returncode, done.stderr.strip()
     session.wall_s = time.time() - began
     result = session.result or {}
-    said = f"{session.text}\n{session.stderr}"
-    if (result.get("is_error") or done.returncode != 0) and LOGIN_PATTERN.search(said):
+    failed = bool(result.get("is_error")) or done.returncode != 0
+    if failed and (result.get("api_error_status") == 401 or LOGIN_PATTERN.search(session.stderr)):
         raise board_check.CannotRun(f"the agent command line {program} is not logged in; log it in, then run again")
-    if (result.get("is_error") or done.returncode != 0) and (result.get("api_error_status") == 429 or RATE_PATTERN.search(said)):
+    if failed and (result.get("api_error_status") == 429 or RATE_PATTERN.search(session.stderr)):
         raise RateLimited(session.said())
     return session
 
@@ -344,16 +380,27 @@ def non_text(path: str, review: str) -> bool:
 
 
 def setup_problems(session: Session, review: str) -> List[str]:
-    """What the setup session's tool uses and answer show: an image opened, a tool outside its grant, or a judgement."""
+    """What the setup session's history shows: an image opened, a tool outside its grant, nothing read, or text that may be a judgement."""
     found = []
+    reads = 0
     for name, given in session.tool_uses:
         if name not in READ_TOOLS:
             found.append(f"the setup session used {name}, a tool it was not granted")
         elif name == "Read":
+            reads += 1
             path = str(given.get("file_path") or "")
             if non_text(path, review):
                 found.append(f"the setup session opened {path}, a file whose type is not text; it may read documents "
                              "and records only, so the forked reviewers stay as blind as fresh ones")
+    if not reads:
+        found.append("the setup session read nothing; it must read what its prompt asks before a fork can start from it")
+    for kind, text in session.blocks:
+        if kind == "text" and text.strip() not in ("", ACK):
+            found.append(f"the setup session wrote {board_check.clean(text.strip())[:200]!r} between or before its answer; it "
+                         "may write only the token, or a forked reviewer would inherit what it wrote")
+        elif kind not in ("text", "tool_use"):
+            found.append(f"the setup session's history holds a {kind} block, which cannot be shown to hold no verdict; "
+                         "a forked reviewer would inherit it")
     if session.text.strip() != ACK:
         found.append(f"the setup session answered {board_check.clean(session.text.strip())[:200]!r} and not {ACK}; "
                      "it may judge nothing, or a forked reviewer would inherit the verdict")
@@ -406,7 +453,7 @@ def parse_result(text: str) -> Dict[str, Any]:
     return found["tables"]
 
 
-def table_problems(caller, unit: str, tables: Dict[str, Any]) -> List[str]:
+def table_problems(caller, review: str, unit: str, tables: Dict[str, Any]) -> List[str]:
     """Why a unit's tables are not what the caller allows: a table, column or verdict it does not have."""
     declared, found = caller.TABLES, []
     for name, rows in tables.items():
@@ -433,11 +480,16 @@ def table_problems(caller, unit: str, tables: Dict[str, Any]) -> List[str]:
                              f"{list(declared[name]['verdicts'])}")
     findings = caller.FINDINGS
     if findings and not found:
-        found += finding_problems(findings, unit, tables)
+        found += finding_problems(findings, review, unit, tables)
     return found
 
 
-def finding_problems(findings: Dict[str, Any], unit: str, tables: Dict[str, Any]) -> List[str]:
+def this_round(findings: Dict[str, Any], review: str) -> Optional[str]:
+    """This round's label when the caller's citation pattern carries a round, otherwise None."""
+    return str(findings["round"](review)) if "round" in findings["citation"].groupindex else None
+
+
+def finding_problems(findings: Dict[str, Any], review: str, unit: str, tables: Dict[str, Any]) -> List[str]:
     found, numbers = [], []
     for row in tables.get(findings["table"], []):
         number = row[findings["number"]]
@@ -449,11 +501,18 @@ def finding_problems(findings: Dict[str, Any], unit: str, tables: Dict[str, Any]
             numbers.append(number)
         if row[findings["item"]] not in findings["checklist"]:
             found.append(f"unit {unit} raised a finding on {row[findings['item']]!r}, which is no item of the checklist")
+    current = this_round(findings, review)
+    earlier = {(str(round_), int(number)) for round_, number in findings["earlier"](review)} if current is not None else set()
     for table, column in findings["citations"]:
         for row in tables.get(table, []):
             for match in findings["citation"].finditer(str(row[column])):
-                if int(match.group("number")) not in numbers:
-                    found.append(f"unit {unit}'s {table!r} row cites a finding {match.group('number')} the unit did not raise")
+                if current is None or match.group("round") == current:
+                    if int(match.group("number")) not in numbers:
+                        found.append(f"unit {unit}'s {table!r} row cites a finding {match.group('number')} the unit did not raise")
+                elif (match.group("round"), int(match.group("number"))) not in earlier:
+                    found.append(f"unit {unit}'s {table!r} {column!r} cell {str(row[column])!r} cites {match.group(0)!r}, a "
+                                 f"finding of round {match.group('round')} that the review folder's earlier rounds do not "
+                                 f"hold (this round is {current}); cite only findings the earlier rounds raised")
     return found
 
 
@@ -463,13 +522,14 @@ def merge(caller, review: str, order: Sequence[str], results: Dict[str, Dict[str
     It rejects a table, column or verdict the caller does not have, replaces
     every finding number of this round with the one the checklist's order gives
     and rewrites the citations of them in the rows that cite them, leaves any
-    citation the caller's pattern does not match as written, and reports findings
+    citation the caller's pattern does not match, or whose round is an earlier
+    one, as written, and reports findings
     the caller's key puts at one place, keeping each. It reads no model and no
     file outside the unit results and the review folder.
     """
     problems = []
     for unit in order:
-        problems += table_problems(caller, unit, results[unit])
+        problems += table_problems(caller, review, unit, results[unit])
     if problems:
         raise Refused(problems)
     rows = {name: [(unit, dict(row)) for unit in order for row in results[unit].get(name, [])] for name in caller.TABLES}
@@ -477,10 +537,12 @@ def merge(caller, review: str, order: Sequence[str], results: Dict[str, Dict[str
     findings = caller.FINDINGS
     if findings:
         renamed, same_place = renumber(findings, review, order, results, rows)
+        current = this_round(findings, review)
         for table, column in findings["citations"]:
             for unit, row in rows[table]:
-                row[column] = findings["citation"].sub(lambda match, unit=unit: replace_number(match, renamed, unit),
-                                                       str(row[column]))
+                row[column] = findings["citation"].sub(
+                    lambda match, unit=unit: (match.group(0) if current is not None and match.group("round") != current
+                                              else replace_number(match, renamed, unit)), str(row[column]))
     tables = {name: {"columns": list(spec["columns"]), "rows": [row for _, row in rows[name]]}
               for name, spec in caller.TABLES.items()}
     refused = list(caller.CHECK(review, list(order), tables))
@@ -551,15 +613,18 @@ class Run:
     def unit_path(self, unit: str) -> str:
         return os.path.join(self.out, UNITS_FOLDER, f"{unit}.json")
 
-    def attempt(self, prompt: str, tools: Sequence[str], label: str, resume: str, fork: bool,
-                model: str) -> Tuple[Session, Dict[str, Any]]:
-        """One session of a unit, its start report checked; returns the session and the figures it reports."""
-        session = with_rate_retry(lambda: call_agent(self.program, prompt, tools, self.review, resume, fork, model),
-                                  self.wait, self.sleep)
-        problems = start_problems(session, label, tools, model, self.review)
-        if problems:
-            raise UnitFailed("; ".join(problems))
-        return session, figures(session)
+    def failed_path(self, unit: str) -> str:
+        return os.path.join(self.out, FAILED_FOLDER, f"{unit}.json")
+
+    def earlier_sessions(self, unit: str) -> List[Dict[str, Any]]:
+        """The sessions the unit already cost in earlier runs: those behind its kept result and its failed attempts."""
+        found: List[Dict[str, Any]] = []
+        if os.path.isfile(self.unit_path(unit)):
+            kept = read_json(self.unit_path(unit))
+            found += kept.get("superseded", []) + kept["sessions"]
+        if os.path.isfile(self.failed_path(unit)):
+            found += read_json(self.failed_path(unit))
+        return found
 
     def judge(self, unit: str, resume: str, fork: bool, setup: Dict[str, Any], model: str, setup_index: int) -> Dict[str, Any]:
         """One unit, run once more when its reviewer errors, returns nothing or returns tables the caller does not allow."""
@@ -567,39 +632,57 @@ class Run:
         # A fork reports the setup session's figures with its own, and so does a turn resumed without a fork, which
         # also reports the turns before it.
         base = setup["cumulative"]
-        for number in (1, 2):
-            try:
-                session, cumulative = self.attempt(self.caller.unit_prompt(unit), self.caller.TOOLS, label, resume, fork, model)
-            except UnitFailed as error:
-                raise UnitFailed(f"unit {unit} failed: {error}")
-            figure = own(cumulative, base)
-            if not fork:
-                base = cumulative
-            flags = ["no cache read"] if fork and figure["tokens"]["cache_read"] == 0 else []
-            sessions.append({"attempt": number, "session": session.id, "mode": "fork" if fork else "setup session",
-                             "flags": flags, **figure})
-            result = session.result or {}
-            if session.exit_code != 0 or result.get("is_error") or not session.text.strip():
-                last = session.said()
-                continue
-            try:
-                tables = parse_result(session.text)
-                problems = table_problems(self.caller, unit, tables)
+        try:
+            prompt = self.caller.unit_prompt(unit)
+            for number in (1, 2):
+                try:
+                    session = with_rate_retry(lambda: call_agent(self.program, prompt, self.caller.TOOLS, self.review, resume,
+                                                                 fork, model), self.wait, self.sleep)
+                except UnitFailed as error:
+                    raise UnitFailed(f"unit {unit} failed: {error}", sessions)
+                cumulative = figures(session)
+                figure = own(cumulative, base)
+                if not fork:
+                    base = cumulative
+                flags = ["no cache read"] if fork and figure["tokens"]["cache_read"] == 0 else []
+                sessions.append({"attempt": number, "session": session.id, "mode": "fork" if fork else "setup session",
+                                 "flags": flags, **figure})
+                problems = start_problems(session, label, self.caller.TOOLS, model, self.review)
                 if problems:
-                    raise Malformed(problems)
-            except Malformed as error:
-                last = f"{error}: {board_check.clean(session.text)[:300]}"
-                continue
-            kept = {"unit": unit, "tables": tables, "raw": session.text, "sessions": sessions, "ran_at": stamp(),
-                    "setup": setup_index, "attempts": number}
-            write_json(self.unit_path(unit), kept)
-            return kept
-        raise UnitFailed(f"unit {unit} failed after {len(sessions)} attempts; the reviewer returned: {last}")
+                    raise UnitFailed(f"unit {unit} failed: " + "; ".join(problems), sessions)
+                result = session.result or {}
+                if session.exit_code != 0 or result.get("is_error") or not session.text.strip():
+                    last = session.said()
+                    continue
+                try:
+                    tables = parse_result(session.text)
+                    problems = table_problems(self.caller, self.review, unit, tables)
+                    if problems:
+                        raise Malformed(problems)
+                except Malformed as error:
+                    last = f"{error}: {board_check.clean(session.text)[:300]}"
+                    continue
+                kept = {"unit": unit, "tables": tables, "raw": session.text, "sessions": sessions, "ran_at": stamp(),
+                        "setup": setup_index, "attempts": number, "superseded": self.earlier_sessions(unit)}
+                write_json(self.unit_path(unit), kept)
+                if os.path.isfile(self.failed_path(unit)):
+                    os.remove(self.failed_path(unit))
+                return kept
+            raise UnitFailed(f"unit {unit} failed after {len(sessions)} attempts; the reviewer returned: {last}", sessions)
+        except UnitFailed:
+            raise
+        except board_check.CannotRun as error:
+            raise LoginLost(f"unit {unit} failed: {error}", sessions)
+        except Exception as error:  # a defect in one unit's worker is that unit's failure and the others go on
+            raise UnitFailed(f"unit {unit} failed: {type(error).__name__}: {error}", sessions)
 
     def setup_session(self, model: Optional[str]) -> Tuple[Session, Dict[str, Any]]:
         prompt = f"{self.caller.SETUP_PROMPT.rstrip()}\n\n{ACK_INSTRUCTION}"
-        session = with_rate_retry(lambda: call_agent(self.program, prompt, READ_TOOLS, self.review, model=model),
-                                  self.wait, self.sleep)
+        try:
+            session = with_rate_retry(lambda: call_agent(self.program, prompt, READ_TOOLS, self.review, model=model),
+                                      self.wait, self.sleep)
+        except UnitFailed as error:
+            raise Refused([f"the setup session {error}; wait, then run again"])
         result = session.result or {}
         if session.exit_code != 0 or result.get("is_error") or not session.id:
             raise Refused([f"the setup session failed and returned: {session.said()}; check the agent command line runs "
@@ -609,7 +692,10 @@ class Run:
             raise Refused(problems)
         return session, figures(session)
 
-    def run(self, order: Sequence[str], named: Sequence[str]) -> Tuple[Dict[str, Any], Dict[str, Optional[str]]]:
+    def failed_sessions(self, unit: str) -> List[Dict[str, Any]]:
+        return read_json(self.failed_path(unit)) if os.path.isfile(self.failed_path(unit)) else []
+
+    def run(self, order: Sequence[str], named: Sequence[str]) -> Tuple[Dict[str, Any], Dict[str, Optional[UnitFailed]]]:
         """Judge `named` units (all of `order` when none), returning the setup entry and each unit's failure, if any."""
         session, cumulative = self.setup_session(self.model)
         model = str(session.start.get("model"))
@@ -618,7 +704,7 @@ class Run:
         known = read_json(os.path.join(self.out, SETUPS)) if os.path.isfile(os.path.join(self.out, SETUPS)) else []
         setup_index = len(known)
         write_json(os.path.join(self.out, SETUPS), known + [{key: value for key, value in setup.items() if key != "cumulative"}])
-        failures: Dict[str, Optional[str]] = {}
+        failures: Dict[str, Optional[UnitFailed]] = {}
         todo = list(named or order)
         fork = len(order) > 1
 
@@ -627,7 +713,12 @@ class Run:
                 self.judge(unit, session.id, fork, setup, model, setup_index)
                 failures[unit] = None
             except UnitFailed as error:
-                failures[unit] = str(error)
+                failures[unit] = error
+                try:
+                    if error.sessions:
+                        write_json(self.failed_path(unit), self.failed_sessions(unit) + error.sessions)
+                except OSError as lost:
+                    failures[unit] = UnitFailed(f"{error}; its cost could not be kept ({lost})", error.sessions)
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.bound) as pool:
             if fork:
@@ -653,15 +744,18 @@ def figure_line(part: Dict[str, Any]) -> str:
 
 def render_text(report: Dict[str, Any]) -> List[str]:
     clean = board_check.clean
-    lines = [f"REFUSED | {clean(why)}" for why in report["refusals"]]
+    lines = [f"RUN | {clean(report['caller'])} | {clean(report['review'])} | {clean(report['out'])}"]
+    lines += [f"REFUSED | {clean(why)}" for why in report["refusals"]]
     if report["cannot_run"]:
         lines.append(f"CANNOT RUN | {clean(report['cannot_run'])}")
     for setup in report["setup_sessions"]:
-        lines.append(f"SETUP | {setup['id']} | {setup['kind']} | {setup['model']} | {figure_line(setup)}")
+        lines.append(f"SETUP | {setup['id']} | {setup['kind']} | {setup['model']} | {setup['at']} | "
+                     f"units {', '.join(setup['units'])} | {figure_line(setup)}")
     for unit in report["units"]:
         flags = "; ".join(unit["flags"]) or "no flag"
         lines.append(f"UNIT | {unit['unit']} | {unit['status']} | {unit['mode']} | {unit['session']} | "
-                     f"{unit['attempts']} attempts | {figure_line(unit['own'])} | {clean(flags)}"
+                     f"{unit['attempts']} attempts | {figure_line(unit['own'])} | {clean(flags)} | "
+                     f"ran {unit['ran_at'] or 'never kept'} | setup session {unit['setup_session']}"
                      + (" | run again" if unit["run_again"] else ""))
         if unit["status"] == "failed":
             lines.append(f"FAILED | {clean(unit['detail'])}")
@@ -672,6 +766,10 @@ def render_text(report: Dict[str, Any]) -> List[str]:
                      f"units {', '.join(place['units'])}")
     if report["setup_sessions"] or report["units"]:
         lines.append(f"TOTAL | {figure_line(report['totals'])}")
+    for name, table in report["tables"].items():
+        lines.append(f"TABLE | {clean(name)} | columns {clean(', '.join(table['columns']))} | {len(table['rows'])} rows")
+        for row in table["rows"]:
+            lines.append(f"ROW | {clean(name)} | " + " | ".join(f"{clean(column)} {clean(row[column])}" for column in table["columns"]))
     lines.append(f"RESULT | {report['result']} | {clean(report['detail'])}")
     return lines
 
@@ -682,11 +780,13 @@ def new_report(caller_name: str, review: str, out: str) -> Dict[str, Any]:
             "totals": empty_figures(), "tables": {}}
 
 
-def unit_entry(kept: Dict[str, Any], rerun: bool, setups: List[Dict[str, Any]]) -> Dict[str, Any]:
+def unit_entry(kept: Dict[str, Any], rerun: bool, setups: List[Dict[str, Any]], failed: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
+    """A kept unit; its own figures are every session it cost, the earlier runs' and failed attempts' included."""
     final = kept["sessions"][-1]
+    behind = kept["sessions"] + kept.get("superseded", []) + list(failed)
     flags = sorted({flag for session in kept["sessions"] for flag in session["flags"]})
     return {"unit": kept["unit"], "status": "judged", "mode": final["mode"], "session": final["session"],
-            "attempts": kept["attempts"], "own": total(kept["sessions"]), "flags": flags, "run_again": rerun,
+            "attempts": kept["attempts"], "own": total(behind), "flags": flags, "run_again": rerun,
             "detail": "", "ran_at": kept["ran_at"], "setup_session": setups[kept["setup"]]["id"]}
 
 
@@ -745,23 +845,7 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout, err=sys.stderr) -> in
     unknown = [name for name in named if name not in order]
     if unknown:
         return refuse([f"{', '.join(unknown)} is not a unit of the review; the units are {', '.join(order)}"])
-    held = os.path.isfile(os.path.join(folder, RECORD)) or (
-        os.path.isdir(os.path.join(folder, UNITS_FOLDER)) and bool(os.listdir(os.path.join(folder, UNITS_FOLDER))))
-    if held and not named:
-        return refuse([f"the output folder {folder} already holds a record; give a new or empty folder, or name the "
-                       "units to run again with --rerun"])
-    if named and not held:
-        return refuse([f"the output folder {folder} holds no earlier result to run {', '.join(named)} again against; "
-                       "run without --rerun into a new folder first"])
-    if named:
-        lacking = [name for name in order if name not in named and not os.path.isfile(os.path.join(folder, UNITS_FOLDER, f"{name}.json"))]
-        if lacking:
-            return refuse([f"the output folder holds no result for {', '.join(lacking)}; name each of them with --rerun too"])
-    try:
-        program = require_agent()
-    except board_check.CannotRun as error:
-        report["result"], report["cannot_run"], report["detail"] = "CANNOT RUN", str(error), "nothing was run"
-        return finish(report, out, args.json, err)
+    created = not os.path.isdir(folder)
     os.makedirs(folder, exist_ok=True)
     lock = os.path.join(folder, LOCK)
     try:
@@ -771,9 +855,28 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout, err=sys.stderr) -> in
                        "delete the file if no run is in the folder"])
     os.close(handle)
     try:
+        held = any(os.path.isfile(os.path.join(folder, name)) for name in (RECORD, SETUPS)) or (
+            os.path.isdir(os.path.join(folder, UNITS_FOLDER)) and bool(os.listdir(os.path.join(folder, UNITS_FOLDER))))
+        if held and not named:
+            return refuse([f"the output folder {folder} already holds a record; give a new or empty folder, or name the "
+                           "units to run again with --rerun"])
+        if named and not held:
+            return refuse([f"the output folder {folder} holds no earlier result to run {', '.join(named)} again against; "
+                           "run without --rerun into a new folder first"])
+        if named:
+            lacking = [name for name in order if name not in named and not os.path.isfile(os.path.join(folder, UNITS_FOLDER, f"{name}.json"))]
+            if lacking:
+                return refuse([f"the output folder holds no result for {', '.join(lacking)}; name each of them with --rerun too"])
+        try:
+            program = require_agent()
+        except board_check.CannotRun as error:
+            report["result"], report["cannot_run"], report["detail"] = "CANNOT RUN", str(error), "nothing was run"
+            return finish(report, out, args.json, err)
         return execute(report, caller, review, folder, order, named, program, bound or caller.BOUND, args, out, err)
     finally:
         os.remove(lock)
+        if created and not os.listdir(folder):
+            os.rmdir(folder)
 
 
 def execute(report, caller, review, folder, order, named, program, bound, args, out, err) -> int:
@@ -794,13 +897,16 @@ def execute(report, caller, review, folder, order, named, program, bound, args, 
         path = run.unit_path(unit)
         failed = failures.get(unit)
         if failed:
+            behind = run.earlier_sessions(unit)
             report["units"].append({"unit": unit, "status": "failed", "mode": "fork" if len(order) > 1 else "setup session",
-                                    "session": "", "attempts": 0, "own": empty_figures(), "flags": [],
-                                    "run_again": unit in named, "detail": failed, "ran_at": "", "setup_session": setup["id"]})
+                                    "session": failed.sessions[-1]["session"] if failed.sessions else "",
+                                    "attempts": len(failed.sessions), "own": total(behind) if behind else empty_figures(),
+                                    "flags": sorted({flag for session in behind for flag in session["flags"]}),
+                                    "run_again": unit in named, "detail": str(failed), "ran_at": "", "setup_session": setup["id"]})
             continue
         kept = read_json(path)
         results[unit] = kept["tables"]
-        report["units"].append(unit_entry(kept, unit in named, setups))
+        report["units"].append(unit_entry(kept, unit in named, setups, run.failed_sessions(unit)))
     for entry in report["units"]:
         parts.append(entry["own"])
     report["totals"] = total([{key: entry[key] for key in empty_figures()} for entry in setups] + parts)
@@ -809,9 +915,12 @@ def execute(report, caller, review, folder, order, named, program, bound, args, 
         again.append({"at": setup["at"], "units": list(named), "new_setup_session": True, "setup_session": setup["id"]})
         write_json(os.path.join(folder, "reruns.json"), again)
     report["reruns"] = again
-    broken = [unit for unit, why in failures.items() if why]
+    broken = [unit for unit in order if failures.get(unit)]
     if broken:
         report["result"], report["detail"] = "FAILED", f"{len(broken)} of {len(order)} units failed: {', '.join(broken)}; the others' results are kept in {folder}"
+        lost = [failures[unit] for unit in broken if isinstance(failures[unit], LoginLost)]
+        if lost:
+            report["result"], report["cannot_run"] = "CANNOT RUN", str(lost[0]).split(": ", 1)[1]
         return finish(report, out, args.json, err)
     try:
         merged = merge(caller, review, order, results)

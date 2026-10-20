@@ -7,7 +7,11 @@ time and turn count are cumulative from the session it was resumed from. What it
 plays is read from the JSON file named by STUB_SCENARIO, and every call it
 receives is written as a file in the folder named by STUB_LOG, with its
 arguments, working directory, the time it ran between and the names of the
-environment variables it was given. It sleeps to show concurrency.
+environment variables it was given. It sleeps to show concurrency. A setup
+session reads method.md unless the scenario's `setup.reads` says otherwise,
+`setup.narration` lists content blocks it writes before its reads (each its own
+event, or with the first read in one event when `setup.same_event` is set), and
+`setup.uses` lists tools it uses besides Read.
 """
 
 import json
@@ -43,7 +47,7 @@ def main():
         outcome = dict(setup)
         session = str(uuid.uuid4())
         text = outcome.get("answer", "SETUP-READ-COMPLETE")
-        reads = outcome.get("reads", [])
+        reads = outcome.get("reads", ["method.md"])
         model = scenario.get("model", "model-a")
         tools = scenario.get("setup_tools", flag(args, "--tools").split(","))
     else:
@@ -72,14 +76,31 @@ def main():
         json.dump(entry, handle)
     start = {"type": "system", "subtype": "init", "session_id": session, "cwd": scenario.get("cwd", os.getcwd()),
              "tools": tools, "mcp_servers": scenario.get("mcp_servers", []), "model": model,
-             "skills": scenario.get("skills", []), "slash_commands": [],
+             "skills": scenario.get("skills", []), "slash_commands": scenario.get("slash_commands", []),
              "plugins": scenario.get("plugins", [{"name": "p", "path": "builtin"}])}
     print(json.dumps(start))
-    for path in reads:
-        print(json.dumps({"type": "assistant", "message": {"content": [
-            {"type": "tool_use", "name": "Read", "input": {"file_path": path}}]}}))
+    uses = [{"type": "tool_use", "name": "Read", "input": {"file_path": path}} for path in reads]
+    uses += [{"type": "tool_use", "name": name, "input": {}} for name in outcome.get("uses", [])]
+    narration = outcome.get("narration", [])
+    if narration and outcome.get("same_event"):
+        print(json.dumps({"type": "assistant", "message": {"content": narration + uses[:1]}}))
+        uses = uses[1:]
+    else:
+        for block in narration:
+            print(json.dumps({"type": "assistant", "message": {"content": [block]}}))
+    for use in uses:
+        print(json.dumps({"type": "assistant", "message": {"content": [use]}}))
     if outcome.get("rate_limit"):
         print(json.dumps({"type": "result", "is_error": True, "result": "API Error: 429 rate limit exceeded",
+                          "api_error_status": 429, "session_id": session}))
+        return 1
+    if outcome.get("login"):
+        sys.stderr.write("Not logged in · Please run /login")
+        print(json.dumps({"type": "result", "is_error": True, "result": "Please run /login", "api_error_status": 401,
+                          "session_id": session}))
+        return 1
+    if outcome.get("prose"):
+        print(json.dumps({"type": "result", "subtype": "success", "is_error": True, "result": outcome["prose"],
                           "session_id": session}))
         return 1
     if outcome.get("exit"):
