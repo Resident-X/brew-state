@@ -2,11 +2,11 @@ id: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C4
 type: criterion
 title: A caller's rendered record is written into the output folder after the merge and named in the report
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |-
-  A caller may supply a function of the review folder and the merged tables that returns file names with their text. The driver writes each into the output folder after the merge and names them in its report, in text and in JSON with the same content. It refuses a name that carries a path, and a name that the output folder already holds unless an earlier merge into that output folder wrote it, which the driver knows from the file names it recorded for that merge, so a merge after running named units again replaces the files the earlier merge wrote and never a file put there by anyone else. A function that raises fails the run naming the caller and leaves the merged record in table form written. A caller that supplies none writes no file beyond the record in table form. Out of scope: the content of any rendered record.
+  A caller may supply a function of the review folder and the merged tables that returns file names with their text. The driver calls it before writing anything, then writes each file into the output folder after the merge and lists the names it wrote in the record it writes and in its report, in text and in JSON with the same content. It refuses a name that carries a path, a name the driver itself uses in the output folder, and a name that the output folder already holds unless an earlier merge wrote it, which the driver knows from the list of rendered names in the record that merge wrote, so a merge after running named units again replaces the files the earlier merge wrote and never a file put there by anyone else. A function that raises fails the run naming the caller, after the record in table form is written and with the report naming the earlier merge's rendered files as not of this merge. A caller that supplies none writes no file beyond the record in table form. Out of scope: the content of any rendered record.
 links:
   - target: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM
     type: criterion-of

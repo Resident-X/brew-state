@@ -2,11 +2,11 @@ id: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C6
 type: criterion
 title: The command's description and the hardware notes name the four attributes a caller may define
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
-text: |
-  The task-runner description of the command and the hardware notes' account of what a caller defines name the retrieval grant, the review folder in the prompt, the checklist as a function and the rendered record, and the hardware notes say the setup session keeps the read tools alone. Out of scope: the callers' own sections.
+text: |-
+  The task-runner description of the command, the driver's module description and the hardware notes' account of what a caller defines name the retrieval grant, the review folder in the prompt, the checklist as a function and the rendered record, and the hardware notes say the setup session keeps the read tools alone and state the retrieval grant's risk and why it is bounded (reviewers write nothing, the setup session fetches nothing and every verdict is checked structurally at the merge). Out of scope: the callers' own sections.
 links:
   - target: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM
     type: criterion-of
