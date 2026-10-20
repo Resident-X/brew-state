@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-FAN-OUT-DRIVER-C3-TEST-7
+type: evidence
+title: test evidence for SOL-HW-REVIEW-FAN-OUT-DRIVER.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-20T05:13:58.279273Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_fan_out.py::test_a_reviewer_that_loses_its_login_mid_run_is_that_unit_s_failure_and_the_others_are_kept
+  artifact_version: a14497a368abec6cdced7538f6291b10a8fc06ae
+attested_by: crun-25a43eb65db0b7db
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-DRIVER.C3
+    type: satisfies
