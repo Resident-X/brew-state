@@ -1,7 +1,7 @@
 id: SOL-PLANT-STEAM-DRAW-ENERGY.C4
 type: criterion
 title: Steam pressure reverts to the affine relation the instant demand returns to zero
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: test
@@ -15,3 +15,5 @@ text: |
 links:
   - target: SOL-PLANT-STEAM-DRAW-ENERGY
     type: criterion-of
+attributes:
+  deprecation_reason: restated by SOL-PLANT-STEAM-FLASH-GENERATOR.C4; the flash-generator steam side retires this behaviour

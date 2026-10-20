@@ -1,7 +1,7 @@
 id: SOL-SIM-STEAM-BAND-SUSTAINED.C7
 type: criterion
 title: Recovery after a draw is the same ready-holding control continuing, not a separate mechanism
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: test
@@ -10,3 +10,5 @@ text: |
 links:
   - target: SOL-SIM-STEAM-BAND-SUSTAINED
     type: criterion-of
+attributes:
+  deprecation_reason: restated by SOL-PLANT-STEAM-FLASH-GENERATOR.C11; the flash-generator steam side retires this behaviour

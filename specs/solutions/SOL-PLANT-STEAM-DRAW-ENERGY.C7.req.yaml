@@ -1,7 +1,7 @@
 id: SOL-PLANT-STEAM-DRAW-ENERGY.C7
 type: criterion
 title: The pressure-divergence-rate coefficient is a described coefficient with a declared origin and error
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: inspection
@@ -15,3 +15,5 @@ text: |
 links:
   - target: SOL-PLANT-STEAM-DRAW-ENERGY
     type: criterion-of
+attributes:
+  deprecation_reason: restated by SOL-PLANT-STEAM-FLASH-GENERATOR.C4; the flash-generator steam side retires this behaviour

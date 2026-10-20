@@ -1,7 +1,7 @@
 id: SOL-PLANT-STEAM-DRAW-ENERGY.C3
 type: criterion
 title: Steam pressure is driven by an integrated state once a draw is open, rather than derived fresh from temperature every step
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: test
@@ -17,3 +17,5 @@ text: |
 links:
   - target: SOL-PLANT-STEAM-DRAW-ENERGY
     type: criterion-of
+attributes:
+  deprecation_reason: restated by SOL-PLANT-STEAM-FLASH-GENERATOR.C4; the flash-generator steam side retires this behaviour
