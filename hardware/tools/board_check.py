@@ -3731,6 +3731,17 @@ def class_widths(project: dict) -> Tuple[Dict[str, Tuple[float, float]], List[st
     return {name: (rank, width) for name, (rank, width) in widths.items() if width is not None}, unreadable
 
 
+def project_class_names(project: dict) -> Set[str]:
+    """Every net class the project file names, and Mains, whatever its track width reads as.
+
+    The classes a layout's nets are resolved against are these, not the ones
+    with a readable width, so a net in a class whose width cannot be read is
+    still placed in that class and never falls to Default.
+    """
+    return {entry["name"] for entry in setting(project, "net_settings", "classes") or []
+            if isinstance(entry, dict) and isinstance(entry.get("name"), str)} | {"Mains"}
+
+
 def net_widths(nets: Set[str], members: Dict[str, Set[str]], widths: Dict[str, Tuple[float, float]]) -> Dict[str, float]:
     """Each net's class track width, as KiCad resolves it.
 
@@ -5515,15 +5526,8 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
         names = layout_nets(tree)
         project_copy = os.path.join(copy, os.path.basename(design.project))
         widths, unwidthed = class_widths(project)
-        project_classes = {entry["name"] for entry in setting(project, "net_settings", "classes") or []
-                           if isinstance(entry, dict) and isinstance(entry.get("name"), str)} | {"Mains"}
-        declared = set()
-        if board_rules is not None:
-            declared |= set(sensing["classes"] + sensing["noisy_classes"]) if sensing else set()
-            if board_rules["ground_returns"] != NOTHING:
-                returns = board_rules["ground_returns"]
-                declared |= set(returns["ground_classes"] + returns["non_signal_classes"]) | {e["class"] for e in returns["signal_classes"]}
-        classes = sorted(((set(widths) | (declared & project_classes)) - {"Default"}) | {"Mains"})
+        project_classes = project_class_names(project)
+        classes = sorted(project_classes - {DEFAULT_CLASS})
         members, why = class_members(kicad_cli, scratch, project_copy, classes, names, nonce,
                                      layout_version(tree), class_blocks(tree))
         if members is None:

@@ -352,6 +352,29 @@ class TheGroundReturnRule(unittest.TestCase):
         self.assertIn("in the net class Default", found[0].message)
         self.assertEqual(self.found(connector("J1", ("1", "/S0"), ("2", "/GND"))), [])
 
+    def resolved(self, project, assigned):
+        """The members a layout resolves to for the classes the check asks KiCad about, given each net's project class."""
+        asked = board_check.project_class_names(project) - {board_check.DEFAULT_CLASS}
+        return {name: {net for net, held in assigned.items() if held == name} for name in sorted(asked)}
+
+    def test_a_class_whose_track_width_cannot_be_read_is_still_resolved_so_its_pin_is_not_taken_for_default(self):
+        # SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS.C2: A connector pin on a class declared none of ground, signal or non-signal fails
+        for width in ("abc", 0, -0.2, True):
+            project = {"net_settings": {"classes": [{"name": "Default", "track_width": 0.2}, {"name": "Ground", "track_width": 0.3}, {"name": "Foo", "track_width": width}]}}
+            self.assertIn("Foo", board_check.project_class_names(project))
+            self.assertNotIn("Foo", board_check.class_widths(project)[0])
+            found = self.found(connector("J1", ("1", "/F0"), ("2", "/GND")), members=self.resolved(project, {"/F0": "Foo", "/GND": "Ground"}))
+            self.assertEqual([v.rule for v in found], ["ground_return"], width)
+            self.assertIn("in the net class Foo, which", found[0].message)
+
+    def test_an_unreadable_width_class_declared_ground_counts_as_a_return_not_a_default_signal(self):
+        # SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS.C2: the signal pins, being pins on a net of a signal class the mapping declares, and the pins on a ground class
+        project = {"net_settings": {"classes": [{"name": "Default", "track_width": 0.2}, {"name": "Ground", "track_width": "abc"}]}}
+        members = self.resolved(project, {"/S0": "Default", "/S1": "Default", "/GND": "Ground"})
+        self.assertEqual(self.found(connector("J1", ("1", "/S0"), ("2", "/S1"), ("3", "/GND")), members=members), [])
+        found = self.found(connector("J1", ("1", "/S0"), ("2", "/S1"), ("3", "/S2"), ("4", "/GND")), members=dict(members, Ground={"/GND"}))
+        self.assertEqual([v.rule for v in found], ["ground_return"])
+
     def test_a_net_in_a_ground_class_and_a_signal_class_cannot_be_told_and_fails(self):
         # SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS.C2: the signal pins, being pins on a net of a signal class the mapping declares, and the pins on a ground class
         members = dict(MEMBERS, Sensing=MEMBERS["Sensing"] | {"/GND"})
