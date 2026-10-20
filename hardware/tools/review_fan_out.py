@@ -90,6 +90,8 @@ AGENT_ENV = "REVIEW_FAN_OUT_AGENT"
 DEFAULT_AGENT = "claude"
 #: The one token the setup session answers with, so it has judged nothing for a fork to inherit.
 ACK = "SETUP-READ-COMPLETE"
+#: How many times a setup session that fails only for text written between its tool uses is started in all.
+SETUP_ATTEMPTS = 3
 #: What the setup prompt always ends with, after the caller's text.
 ACK_INSTRUCTION = ("Open no image and judge nothing. Write no text before, between or after your reads: no sentence "
                    "about what you are about to read, no summary, no remark on content. When you have read what is "
@@ -550,6 +552,11 @@ def parse_block(session: Session, item: Any) -> None:
             session.malformed.append("printed a text block with no string `text`")
         session.blocks.append((kind, text if isinstance(text, str) else ""))
         return
+    if kind == "thinking":
+        # Its text is kept so that only a thinking block with none can be passed; a missing field cannot be shown empty.
+        thought = item.get("thinking")
+        session.blocks.append((kind, thought if isinstance(thought, str) else "(no text field)"))
+        return
     session.blocks.append((kind, ""))
     if kind != "tool_use":
         return
@@ -700,8 +707,10 @@ def non_text(path: str, review: str) -> bool:
     return False
 
 
-def setup_problems(session: Session, review: str) -> List[str]:
-    """What the setup session's history shows: an image opened, a tool outside its grant, nothing read, or text that may be a judgement."""
+def setup_findings(session: Session, review: str) -> Tuple[List[str], List[str]]:
+    """The setup session's problems in two lists: text written between its tool uses, which a fresh session may not
+    repeat, and every other problem, which a fresh session would repeat."""
+    narrated: List[str] = []
     found = []
     reads = 0
     for name, given, use in session.tool_uses:
@@ -721,15 +730,18 @@ def setup_problems(session: Session, review: str) -> List[str]:
         found.append("the setup session read nothing; it must read what its prompt asks before a fork can start from it")
     for kind, text in session.blocks:
         if kind == "text" and text.strip() not in ("", ACK):
-            found.append(f"the setup session wrote {board_check.clean(text.strip())[:200]!r} between or before its answer; it "
-                         "may write only the token, or a forked reviewer would inherit what it wrote")
-        elif kind not in ("text", "tool_use"):
+            narrated.append(f"the setup session wrote {board_check.clean(text.strip())[:200]!r} between or before its answer; it "
+                            "may write only the token, or a forked reviewer would inherit what it wrote")
+        elif kind == "thinking" and text.strip():
+            found.append("the setup session's history holds a thinking block that carries text, which cannot be shown to hold "
+                         "no verdict; a forked reviewer would inherit it")
+        elif kind not in ("text", "tool_use", "thinking"):
             found.append(f"the setup session's history holds a {kind} block, which cannot be shown to hold no verdict; "
                          "a forked reviewer would inherit it")
     if session.text.strip() != ACK:
         found.append(f"the setup session answered {board_check.clean(session.text.strip())[:200]!r} and not {ACK}; "
                      "it may judge nothing, or a forked reviewer would inherit the verdict")
-    return found
+    return narrated, found
 
 
 # --- What a session cost -----------------------------------------------------------------------
@@ -1155,8 +1167,9 @@ class Run:
             listed = hook("checklist", findings["checklist"], self.review, caller=self.caller)
             self.caller.FINDINGS = {**findings, "checklist": list(listed)}
 
-    def setup_session(self, model: Optional[str]) -> Tuple[Session, Dict[str, Any]]:
-        """The checked setup session and its figures; anything that stops the check is a refusal, never a traceback."""
+    def setup_session(self, model: Optional[str]) -> Tuple[Session, Dict[str, Any], List[Tuple[Session, Dict[str, Any]]]]:
+        """The checked setup session, its figures and the earlier attempts it replaced; anything that stops the check is a
+        refusal, never a traceback."""
         try:
             return self.checked_setup(model)
         except (Refused, board_check.CannotRun):
@@ -1165,22 +1178,32 @@ class Run:
             raise Refused([f"the setup session could not be checked ({type(error).__name__}: {error}); check the agent "
                            "command line's output, then run again"])
 
-    def checked_setup(self, model: Optional[str]) -> Tuple[Session, Dict[str, Any]]:
+    def checked_setup(self, model: Optional[str]) -> Tuple[Session, Dict[str, Any], List[Tuple[Session, Dict[str, Any]]]]:
+        """A setup session that fails only for text written between its tool uses is started again, up to twice."""
         prompt = f"{self.caller.SETUP_PROMPT.rstrip()}\n\n{ACK_INSTRUCTION}"
-        try:
-            session = with_rate_retry(lambda: call_agent(self.program, prompt, READ_TOOLS, self.review, model=model),
-                                      self.wait, self.sleep)
-        except UnitFailed as error:
-            raise Refused([f"the setup session {error}; wait, then run again"])
-        problems = start_problems(session, "the setup session", READ_TOOLS, model, self.review)
-        result = session.result or {}
-        if session.exit_code != 0 or result.get("is_error") is not False:
-            raise Refused(problems + [f"the setup session failed and returned: {session.said()}; check the agent command "
-                                      "line runs from the review folder, then run again"])
-        problems += setup_problems(session, self.review)
-        if problems:
-            raise Refused(problems)
-        return session, figures(session)
+        earlier: List[Tuple[Session, Dict[str, Any]]] = []
+        attempt = 0
+        while True:
+            attempt += 1
+            try:
+                session = with_rate_retry(lambda: call_agent(self.program, prompt, READ_TOOLS, self.review, model=model),
+                                          self.wait, self.sleep)
+            except UnitFailed as error:
+                raise Refused([f"the setup session {error}; wait, then run again"])
+            problems = start_problems(session, "the setup session", READ_TOOLS, model, self.review)
+            result = session.result or {}
+            if session.exit_code != 0 or result.get("is_error") is not False:
+                raise Refused(problems + [f"the setup session failed and returned: {session.said()}; check the agent command "
+                                          "line runs from the review folder, then run again"])
+            narrated, others = setup_findings(session, self.review)
+            if not narrated and not problems and not others:
+                return session, figures(session), earlier
+            if problems or others or attempt == SETUP_ATTEMPTS:
+                spent = [f"attempt {number}: session {past.id}, ${figure['cost_usd']}" for number, (past, figure) in
+                         enumerate(earlier + [(session, figures(session))], 1)]
+                raise Refused(problems + narrated + others + (
+                    [f"the setup session was started {attempt} times; " + "; ".join(spent)] if earlier else []))
+            earlier.append((session, figures(session)))
 
     def failed_sessions(self, unit: str) -> List[Dict[str, Any]]:
         return kept_failed(self.out, unit)
@@ -1188,13 +1211,20 @@ class Run:
     def run(self, order: Sequence[str], named: Sequence[str]) -> Tuple[Dict[str, Any], Dict[str, Optional[UnitFailed]]]:
         """Judge `named` units (all of `order` when none), returning the setup entry and each unit's failure, if any."""
         self.resolve_checklist()
-        session, cumulative = self.setup_session(self.model)
+        session, cumulative, earlier = self.setup_session(self.model)
         model = session.start["model"]
-        setup = {"id": session.id, "at": stamp(), "kind": "rerun" if named else "initial",
-                 "units": list(named or order), "model": model, "cumulative": cumulative, **own(cumulative, None)}
+        kind = "rerun" if named else "initial"
+        units = list(named or order)
+        # Each attempt that was started again is a setup session of its own, with its cost, before the one kept.
+        past = [{"id": gone.id, "at": stamp(), "kind": f"{kind} attempt {number} of {len(earlier) + 1}, started again",
+                 "units": units, "model": gone.start["model"] if isinstance(gone.start, dict) and isinstance(
+                     gone.start.get("model"), str) else model, **own(figure, None)}
+                for number, (gone, figure) in enumerate(earlier, 1)]
+        setup = {"id": session.id, "at": stamp(), "kind": f"{kind} attempt {len(earlier) + 1} of {len(earlier) + 1}" if earlier else kind,
+                 "units": units, "model": model, "cumulative": cumulative, **own(cumulative, None)}
         known = kept_setups(self.out)
-        setup_index = len(known)
-        write_json(os.path.join(self.out, SETUPS), known + [{key: value for key, value in setup.items() if key != "cumulative"}])
+        setup_index = len(known) + len(past)
+        write_json(os.path.join(self.out, SETUPS), known + past + [{key: value for key, value in setup.items() if key != "cumulative"}])
         failures: Dict[str, Optional[UnitFailed]] = {}
         todo = list(named or order)
         fork = len(order) > 1

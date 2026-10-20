@@ -11,7 +11,7 @@ environment variables it was given. It sleeps to show concurrency. A setup
 session reads method.md unless the scenario's `setup.reads` says otherwise,
 `setup.narration` lists content blocks it writes before its reads (each its own
 event, or with the first read in one event when `setup.same_event` is set), and
-`setup.uses` lists tools it uses besides Read (a name, or an object with `name`, an `input` and `failed`, which gives the use an id and, when true, a failed tool result). Any session's scenario entry may
+`setup.attempts`, when given, lists what each successive start of the setup session overrides in `setup` (the last holds for any further start), and `setup.uses` lists tools it uses besides Read (a name, or an object with `name`, an `input` and `failed`, which gives the use an id and, when true, a failed tool result). Any session's scenario entry may
 also hold `start_omit` and `result_omit` (fields left out of the start report and
 the result report), `start_set` and `result_set` (fields given other values),
 `read_inputs` (the raw input of each Read it makes, in place of `reads`),
@@ -57,6 +57,12 @@ def main():
     base = {"cost": 0.0, "api_ms": 0, "turns": 0}
     if unit is None:
         outcome = dict(scenario["single"] if "single" in scenario and "SETUP-READ-COMPLETE" not in prompt else setup)
+        if "attempts" in outcome and "SETUP-READ-COMPLETE" in prompt:
+            counter = os.path.join(log, "attempts-setup")
+            count = len(open(counter, encoding="utf-8").read().split()) if os.path.exists(counter) else 0
+            with open(counter, "a", encoding="utf-8") as handle:
+                handle.write("x\n")
+            outcome = {**outcome, **outcome["attempts"][min(count, len(outcome["attempts"]) - 1)]}
         session = str(uuid.uuid4())
         text = outcome.get("answer", "SETUP-READ-COMPLETE")
         reads = outcome.get("reads", ["method.md"])
