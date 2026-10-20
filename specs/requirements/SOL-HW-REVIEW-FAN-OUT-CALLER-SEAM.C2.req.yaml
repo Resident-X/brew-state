@@ -1,12 +1,12 @@
 id: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C2
 type: criterion
-title: A caller's reviewer prompt is built from the unit and the review folder
+title: A caller's reviewer prompt takes the unit and the review folder
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |-
-  The driver passes the review folder to the caller's prompt function with the unit, for a forked reviewer and for the one unit judged in the setup session. A caller whose prompt function takes the unit alone is refused at load naming the attribute, and a prompt function that raises fails the run naming the caller and the unit. Out of scope: any file the folder holds.
+  The driver passes the review folder to the caller's prompt function as well as the unit, for a forked reviewer and for the one unit judged in the setup session, and requires the function to accept both. A caller whose prompt function does not accept the unit and the review folder is refused at load naming the attribute and the caller, and a prompt function that raises fails the run naming the caller and the unit. Out of scope: any file the folder holds.
 links:
   - target: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM
     type: criterion-of

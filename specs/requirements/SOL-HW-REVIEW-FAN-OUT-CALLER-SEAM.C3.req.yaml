@@ -2,11 +2,11 @@ id: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C3
 type: criterion
 title: A caller's checklist may be a function of the review folder and the merge treats the resolved list as it treats a list
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |-
-  A checklist given as a function is resolved once per merge from the review folder, and a function that raises or returns anything but a list of distinct names fails the run naming the caller. The merge refuses a finding whose item is outside the resolved list and orders findings by it, as it does for a list; which items must have a verdict stays the caller's check. A caller whose checklist is a list behaves as before. Out of scope: what the items of any caller's checklist are.
+  A checklist given as a function is resolved once per run from the review folder, after load and before the setup session starts, so a function that raises costs no session; the per-unit checks and the merge use that same resolved list, and a rerun of named units resolves it again. A function that raises or returns anything but a list of distinct names fails the run naming the caller. The merge refuses a finding whose item is outside the resolved list and orders findings by it, as it does for a list; which items must have a verdict stays the caller's check. A caller whose checklist is a list behaves as before. Out of scope: what the items of any caller's checklist are.
 links:
   - target: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM
     type: criterion-of

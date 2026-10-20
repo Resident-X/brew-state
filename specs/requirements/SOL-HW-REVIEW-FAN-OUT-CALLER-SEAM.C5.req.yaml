@@ -1,12 +1,12 @@
 id: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C5
 type: criterion
-title: A caller written to the driver as it was runs unchanged and the driver's existing tests pass unchanged
+title: A caller defining none of the three optional attributes behaves as before, and the driver's existing tests pass with their prompt functions taking the review folder
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
-text: |
-  A synthetic caller that defines none of the four attributes, and the driver's existing tests, give the results they gave before this change, in text and in JSON. Out of scope: the new attributes' own behaviour, which the criteria above cover.
+text: |-
+  A synthetic caller that defines none of the retrieval grant, the checklist function and the rendered record gives the results it gave before this change, in text and in JSON, and the driver's existing tests pass with the one change that each synthetic caller's prompt function accepts the review folder. Out of scope: the new attributes' own behaviour, which the criteria above cover.
 links:
   - target: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM
     type: criterion-of
