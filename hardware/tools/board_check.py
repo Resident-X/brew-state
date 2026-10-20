@@ -2581,7 +2581,10 @@ def ground_returns(design: Design, tree: list, record: str, returns: dict, membe
     the numbered pads of its footprint that sit on a net, counted once however
     many pads carry the number; a pad on no net, or on a net nothing else joins
     (named unconnected-(...)), is no pin. A pin's classes are those of the
-    layout's net classes the net is in, or Default where it is in none. A pin on
+    layout's net classes the net is in, or Default where it is in none. A pad
+    with no number is no pin on a ground class, so it is never a ground return,
+    while one on a signal class counts as a signal pin of its own, so leaving a
+    pad's number out can never lower the signal count. A pin on
     a ground class is a ground-return pin and one on a signal class a signal
     pin; a pin on a non-signal class is counted for neither. A connector with
     signal pins fails when they exceed the smallest signal_pins_per_return of the
@@ -2592,15 +2595,15 @@ def ground_returns(design: Design, tree: list, record: str, returns: dict, membe
     ground = set(returns["ground_classes"])
     non_signal = set(returns["non_signal_classes"])
     signal = {entry["class"]: entry["signal_pins_per_return"] for entry in returns["signal_classes"]}
-    connectors: Dict[str, Dict[Tuple[str, str], str]] = {}
+    connectors: Dict[str, Dict[Tuple[str, str, bool], str]] = {}
     for index, pad in enumerate(board_geometry.pads(tree)):
         if not pad.reference.upper().startswith("J") or not pad.net or pad.net.rsplit("/", 1)[-1].startswith(UNCONNECTED_NET):
             continue
-        connectors.setdefault(pad.reference, {}).setdefault((pad.number or f"(pad {index})", pad.net), pad.net)
+        connectors.setdefault(pad.reference, {}).setdefault((pad.number or f"(pad {index})", pad.net, bool(pad.number)), pad.net)
     found = []
     for reference in sorted(connectors):
         returning, signalling = [], []
-        for number, net in sorted(connectors[reference]):
+        for number, net, numbered in sorted(connectors[reference]):
             held = {name for name, inside in members.items() if net in inside} or {DEFAULT_CLASS}
             kinds = {kind for kind, declared in (("ground", ground), ("non-signal", non_signal), ("signal", signal)) if held & set(declared)}
             where = f"{design.layout} connector {reference} pin {number} [{net}]"
@@ -2615,7 +2618,8 @@ def ground_returns(design: Design, tree: list, record: str, returns: dict, membe
                                        f"which {record} ground_returns declares as {' and '.join(sorted(kinds))}, so whether it is "
                                        "a ground return or a signal cannot be told; put the net in one class"))
             elif "ground" in kinds:
-                returning.append((number, net))
+                if numbered:
+                    returning.append((number, net))
             elif "signal" in kinds:
                 signalling.append((number, net, min(signal[name] for name in held & set(signal))))
         if not signalling:

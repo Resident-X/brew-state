@@ -418,6 +418,34 @@ class TheGroundReturnRule(unittest.TestCase):
         two_pads = part("J1", [pad("1", "/S0"), pad("1", "/S0", 3), pad("2", "/S1", 6), pad("3", "/GND", 9)])
         self.assertEqual(self.found(two_pads), [], "two signal pins on one return, however many pads carry the first")
 
+    def test_unnumbered_pads_on_ground_are_never_returns_so_a_connector_with_none_numbered_still_fails(self):
+        # SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS.C2: so a connector with signal pins and no ground-return pin fails
+        tabs = part("J9", [pad("1", "/S0"), pad("2", "/S1", 3), pad("3", "/S2", 6), pad("4", "/S3", 9), pad("", "/GND", 12), pad("", "/GND", 15)])
+        found = self.found(tabs)
+        self.assertEqual(len(found), 1)
+        self.assertIn("connector J9 has 4 signal pins", found[0].message)
+        self.assertIn("and 0 ground-return pins (none)", found[0].message)
+
+    def test_an_unnumbered_pad_on_a_signal_net_is_a_signal_pin_each(self):
+        # SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS.C2: the signal pins, being pins on a net of a signal class the mapping declares
+        at_ratio = part("J1", [pad("1", "/S0"), pad("", "/S1", 3), pad("3", "/GND", 6)])
+        self.assertEqual(self.found(at_ratio), [])
+        over = part("J1", [pad("1", "/S0"), pad("", "/S1", 3), pad("", "/S2", 6), pad("4", "/GND", 9)])
+        found = self.found(over)
+        self.assertEqual(len(found), 1)
+        self.assertIn("connector J1 has 3 signal pins", found[0].message)
+        two_blank = part("J1", [pad("1", "/S0"), pad("", "/S0", 3), pad("", "/S0", 6), pad("4", "/GND", 9)])
+        self.assertEqual(len(self.found(two_blank)), 1, "each unnumbered pad is a pin of its own, even on one net")
+
+    def test_unnumbered_pads_on_a_non_signal_class_are_ignored_and_on_an_undeclared_class_still_fail(self):
+        # SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS.C2: A connector pin on a class declared none of ground, signal or non-signal fails
+        ignored = part("J1", [pad("1", "/S0"), pad("2", "/GND", 3), pad("", "/+5V", 6), pad("", "/+5V", 9)])
+        self.assertEqual(self.found(ignored), [])
+        members = dict(MEMBERS, Relay={"/COIL"})
+        found = self.found(part("J1", [pad("1", "/S0"), pad("2", "/GND", 3), pad("", "/COIL", 6)]), members=members)
+        self.assertEqual(len(found), 1)
+        self.assertIn("in the net class Relay", found[0].message)
+
     def test_a_ground_return_failure_names_the_connector_its_pins_the_ratio_and_the_record(self):
         # SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS.C4: reported with the rule's name, the design, and the offending item in terms a builder can act on
         found = self.found(connector("J3", ("1", "/S0"), ("2", "/S1"), ("3", "/S2"), ("4", "/GND")))
