@@ -96,6 +96,12 @@ SETUP_ATTEMPTS = 3
 ACK_INSTRUCTION = ("Open no image and judge nothing. Write no text before, between or after your reads: no sentence "
                    "about what you are about to read, no summary, no remark on content. When you have read what is "
                    f"asked, your only text is the single token {ACK} after the last read, and nothing else.")
+#: The rule the setup session alone is started with as an appended system prompt: a user prompt's wording alone does not
+#: stop the narration between chunked reads, and a forked reviewer or a second turn must not carry it.
+SETUP_RULE = ("You are reading documents so that later sessions can start from what you have read. Write no text of your "
+              "own at any point: not before a tool call, not between tool calls, not after them; the only text you may "
+              f"ever write is the single token {ACK}, as your whole final answer. Judge nothing and open nothing but the "
+              "documents and records you are asked to read.")
 #: The tools the setup session is granted, and the only tools a reviewer may be granted.
 READ_TOOLS = ("Read", "Glob", "Grep")
 #: The one retrieval tool a caller may grant its reviewers beside the read tools: it fetches a published document and writes nothing.
@@ -596,7 +602,7 @@ def parse_result_report(session: Session, result: Dict[str, Any]) -> None:
 
 
 def call_agent(program: str, prompt: str, tools: Sequence[str], cwd: str, resume: Optional[str] = None,
-               fork: bool = False, model: Optional[str] = None) -> Session:
+               fork: bool = False, model: Optional[str] = None, system_rule: Optional[str] = None) -> Session:
     """One call of the agent command line, its stream of events read; a call refused for a rate limit raises RateLimited."""
     command = [program, "-p", prompt, "--output-format", "stream-json", "--verbose", "--tools", ",".join(tools),
                "--allowedTools", ",".join(tools), "--permission-mode", "dontAsk"] + quiet_arguments()
@@ -606,6 +612,8 @@ def call_agent(program: str, prompt: str, tools: Sequence[str], cwd: str, resume
             command += ["--fork-session"]
     if model:
         command += ["--model", model]
+    if system_rule:
+        command += ["--append-system-prompt", system_rule]
     began = time.time()
     try:
         done = subprocess.run(command, cwd=cwd, capture_output=True, text=True, encoding="utf-8", errors="replace",
@@ -1186,7 +1194,8 @@ class Run:
         while True:
             attempt += 1
             try:
-                session = with_rate_retry(lambda: call_agent(self.program, prompt, READ_TOOLS, self.review, model=model),
+                session = with_rate_retry(lambda: call_agent(self.program, prompt, READ_TOOLS, self.review, model=model,
+                                                                 system_rule=SETUP_RULE),
                                           self.wait, self.sleep)
             except UnitFailed as error:
                 raise Refused([f"the setup session {error}; wait, then run again"])

@@ -241,6 +241,65 @@ class StartReports(Fixture):
             self.assertTrue(any(word in line for line in lines), f"{word!r} in {lines}")
         return text
 
+    def rule_of(self, call):
+        args = call["args"]
+        return args[args.index("--append-system-prompt") + 1] if "--append-system-prompt" in args else None
+
+    def test_only_the_setup_session_is_started_with_the_appended_rule(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that reads documents and records and asks for no judgement and no image and for one fixed token as the whole answer; any text the setup session writes, in its answer or between its tool uses, other than that token after trimming, and any content block of its history that is neither text, a tool use nor a thinking block whose text is empty, fails the run, so no forked reviewer inherits a verdict; a thinking block that carries text, and a redacted one, fail it; a setup session that fails only for text written between its tool uses is started again, up to twice, before the run fails, and every attempt's session is reported with its cost, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file. Out of scope: the content of a caller's prompt for its units.
+        status, text, _ = self.run_command()
+        self.assertEqual(status, 0, text)
+        calls = self.calls()
+        setups = [call for call in calls if call["unit"] is None]
+        self.assertEqual(len(setups), 1)
+        self.assertEqual(self.rule_of(setups[0]), review_fan_out.SETUP_RULE)
+        self.assertEqual(len(self.forks()), 3)
+        for call in calls:
+            if call is not setups[0]:
+                self.assertNotIn("--append-system-prompt", call["args"], "a forked reviewer carries no rule")
+
+    def test_a_named_unit_rerun_starts_its_reviewer_without_the_rule_and_its_new_setup_session_with_it(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that reads documents and records and asks for no judgement and no image and for one fixed token as the whole answer; any text the setup session writes, in its answer or between its tool uses, other than that token after trimming, and any content block of its history that is neither text, a tool use nor a thinking block whose text is empty, fails the run, so no forked reviewer inherits a verdict; a thinking block that carries text, and a redacted one, fail it; a setup session that fails only for text written between its tool uses is started again, up to twice, before the run fails, and every attempt's session is reported with its cost, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file. Out of scope: the content of a caller's prompt for its units.
+        status, text, _ = self.run_command()
+        self.assertEqual(status, 0, text)
+        for name in os.listdir(self.log):
+            os.remove(os.path.join(self.log, name))
+        status, text, _ = self.run_command("--rerun", "bravo")
+        self.assertEqual(status, 0, text)
+        calls = self.calls()
+        self.assertEqual([call["unit"] for call in calls], [None, "bravo"])
+        self.assertEqual(self.rule_of(calls[0]), review_fan_out.SETUP_RULE)
+        self.assertNotIn("--append-system-prompt", calls[1]["args"])
+
+    def test_the_single_units_second_turn_carries_no_rule(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that reads documents and records and asks for no judgement and no image and for one fixed token as the whole answer; any text the setup session writes, in its answer or between its tool uses, other than that token after trimming, and any content block of its history that is neither text, a tool use nor a thinking block whose text is empty, fails the run, so no forked reviewer inherits a verdict; a thinking block that carries text, and a redacted one, fail it; a setup session that fails only for text written between its tool uses is started again, up to twice, before the run fails, and every attempt's session is reported with its cost, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file. Out of scope: the content of a caller's prompt for its units.
+        for unit in ("bravo", "charlie"):
+            os.remove(os.path.join(self.review, "units", f"{unit}.txt"))
+        status, text, _ = self.run_command()
+        self.assertEqual(status, 0, text)
+        setup, turn = self.calls()
+        self.assertEqual(self.rule_of(setup), review_fan_out.SETUP_RULE)
+        self.assertEqual(turn["resume"], setup["session"])
+        self.assertNotIn("--append-system-prompt", turn["args"])
+
+    def test_a_restarted_setup_session_carries_the_rule_on_every_attempt(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that reads documents and records and asks for no judgement and no image and for one fixed token as the whole answer; any text the setup session writes, in its answer or between its tool uses, other than that token after trimming, and any content block of its history that is neither text, a tool use nor a thinking block whose text is empty, fails the run, so no forked reviewer inherits a verdict; a thinking block that carries text, and a redacted one, fail it; a setup session that fails only for text written between its tool uses is started again, up to twice, before the run fails, and every attempt's session is reported with its cost, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file. Out of scope: the content of a caller's prompt for its units.
+        self.scenario({"setup": {"narration": [{"type": "text", "text": "Still reading the method (about line 1135)."}],
+                                 "same_event": False}})
+        status, text, _ = self.run_command()
+        self.assertEqual(status, 1, text)
+        calls = self.calls()
+        self.assertEqual(len(calls), review_fan_out.SETUP_ATTEMPTS)
+        self.assertEqual([self.rule_of(call) for call in calls], [review_fan_out.SETUP_RULE] * review_fan_out.SETUP_ATTEMPTS)
+
+    def test_the_rule_is_ascii_one_paragraph_and_names_the_token(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that reads documents and records and asks for no judgement and no image and for one fixed token as the whole answer; any text the setup session writes, in its answer or between its tool uses, other than that token after trimming, and any content block of its history that is neither text, a tool use nor a thinking block whose text is empty, fails the run, so no forked reviewer inherits a verdict; a thinking block that carries text, and a redacted one, fail it; a setup session that fails only for text written between its tool uses is started again, up to twice, before the run fails, and every attempt's session is reported with its cost, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file. Out of scope: the content of a caller's prompt for its units.
+        rule = review_fan_out.SETUP_RULE
+        self.assertTrue(rule.isascii())
+        self.assertNotIn("\n", rule)
+        self.assertIn(review_fan_out.ACK, rule)
+        self.assertIn("Write no text of your own", rule)
+
     def test_a_start_report_that_shows_more_than_was_granted_fails_naming_the_session(self):
         # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that reads documents and records and asks for no judgement and no image and for one fixed token as the whole answer; any text the setup session writes, in its answer or between its tool uses, other than that token after trimming, and any content block of its history that is neither text, a tool use nor a thinking block whose text is empty, fails the run, so no forked reviewer inherits a verdict; a thinking block that carries text, and a redacted one, fail it; a setup session that fails only for text written between its tool uses is started again, up to twice, before the run fails, and every attempt's session is reported with its cost, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file. Out of scope: the content of a caller's prompt for its units.
         cases = {"tools": ({"setup_tools": ["Read", "Bash"]}, "tools"),
