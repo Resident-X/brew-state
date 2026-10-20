@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-FAN-OUT-DRIVER-C3-TEST-6
+type: evidence
+title: test evidence for SOL-HW-REVIEW-FAN-OUT-DRIVER.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-20T05:13:58.099604Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_fan_out.py::test_a_reviewer_still_refused_for_a_rate_limit_after_the_retries_fails_its_unit
+  artifact_version: a14497a368abec6cdced7538f6291b10a8fc06ae
+attested_by: crun-25a43eb65db0b7db
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-DRIVER.C3
+    type: satisfies

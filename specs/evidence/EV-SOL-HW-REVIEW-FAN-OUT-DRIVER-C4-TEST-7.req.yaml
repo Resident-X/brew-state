@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-FAN-OUT-DRIVER-C4-TEST-7
+type: evidence
+title: test evidence for SOL-HW-REVIEW-FAN-OUT-DRIVER.C4
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-20T05:14:00.878345Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_fan_out.py::test_a_refusal_after_the_lock_leaves_no_lock_and_no_folder_it_created
+  artifact_version: a14497a368abec6cdced7538f6291b10a8fc06ae
+attested_by: crun-25a43eb65db0b7db
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-DRIVER.C4
+    type: satisfies

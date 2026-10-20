@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-FAN-OUT-DRIVER-C8-TEST
+type: evidence
+title: test evidence for SOL-HW-REVIEW-FAN-OUT-DRIVER.C8
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-20T05:14:10.499273Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_fan_out.py::test_named_units_are_run_again_in_a_new_setup_session_and_merged_with_the_kept_results
+  artifact_version: a14497a368abec6cdced7538f6291b10a8fc06ae
+attested_by: crun-25a43eb65db0b7db
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-DRIVER.C8
+    type: satisfies
