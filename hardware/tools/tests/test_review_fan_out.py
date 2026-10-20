@@ -246,7 +246,7 @@ class StartReports(Fixture):
                  "mcp": ({"mcp_servers": [{"name": "konnect"}]}, "MCP servers"),
                  "skills": ({"skills": ["repo-board-design"]}, "skills"),
                  "plugins": ({"plugins": [{"name": "outside", "path": "/home/someone/plugin"}]}, "plugins"),
-                 "cwd": ({"cwd": "/somewhere/else"}, "started in /somewhere/else")}
+                 "cwd": ({"cwd": "/somewhere/else"}, "started in '/somewhere/else'")}
         for name, (scenario, word) in cases.items():
             with self.subTest(case=name):
                 shutil.rmtree(self.out, ignore_errors=True)
@@ -679,7 +679,8 @@ class Interface(Fixture):
         status, text, err = self.run_command()
         self.assertEqual(status, 2)
         self.assertIn("CANNOT RUN | the agent command line", err)
-        self.assertIn("is not logged in; log it in, then run again", err)
+        self.assertIn("is not logged in: `auth status` exited 1", err)
+        self.assertIn("log it in, then run again", err)
         self.assertEqual(self.calls(), [], "no session was started")
         self.assertFalse(os.path.exists(self.out), "nothing was created")
 
@@ -1320,13 +1321,513 @@ class Rerun(Fixture):
 
         def unreadable(run, unit):
             if unit == "alpha":
-                raise ValueError("bad json")
+                raise review_fan_out.Refused(["bad json"])
             return real(run, unit)
         with mock.patch.object(review_fan_out.Run, "failed_sessions", unreadable):
             status, text, _ = self.run_command("--bound", "3")
         self.assertEqual(status, 1, text)
         self.assertRegex(text, r"FAILED \| unit alpha failed after 2 attempts; .*its cost could not be kept \(bad json\)")
         self.assertNotIn("Traceback", text)
+
+
+#: A field the hostile value leaves out, rather than a value it gives.
+ABSENT = "<absent>"
+#: The hostile values every field the command reads is driven with: absent, null, the wrong type, an empty string, a
+#: non-finite number, a negative number, a number too large to be a float, and nested garbage.
+HOSTILE = {"absent": ABSENT, "null": None, "wrong type": True, "empty string": "", "not finite": float("inf"),
+           "not a number": float("nan"), "negative": -1, "too large": 10 ** 400, "nested garbage": {"a": [None, {"b": []}]}}
+
+
+def hostile(*names, **instead):
+    """The hostile values named (all when none), with any given `instead` for a field the default does not mistype."""
+    return {**{name: HOSTILE[name] for name in (names or HOSTILE)}, **{name.replace("_", " "): value for name, value in instead.items()}}
+
+
+def tool_line(use_id, path="notes/absent.md"):
+    return json.dumps({"type": "assistant", "message": {"content": [
+        {"type": "tool_use", "id": use_id, "name": "Read", "input": {"file_path": path}}]}})
+
+
+def failed_result_line(use_id, flag=True):
+    return json.dumps({"type": "user", "message": {"content": [
+        {"type": "tool_result", "tool_use_id": use_id, "is_error": flag, "content": "File does not exist."}]}})
+
+
+def assistant_line(*blocks):
+    return json.dumps({"type": "assistant", "message": {"content": list(blocks)}})
+
+
+#: Every input the command reads from outside itself, by class: the field, the hostile values it is driven with and the
+#: words the named outcome must hold. The tests below drive each through `main` against the stub, or, for a site the stub
+#: cannot reach, through the function that reads it.
+INVENTORY = {
+    # The start report (`system` event, subtype `init`) of the setup session and of every fork.
+    "start report": {field: hostile() for field in ("model", "cwd", "session_id", "tools", "mcp_servers", "skills",
+                                                    "slash_commands", "plugins")},
+    # The result report (`result` event) of the setup session and of every fork, each figure and token count.
+    "result report": {"is_error": hostile(wrong_type="false", a_number=0),
+                      **{field: hostile() for field in ("result", "total_cost_usd", "duration_api_ms", "num_turns", "usage")},
+                      **{f"usage.{field}": hostile() for field in ("input_tokens", "output_tokens",
+                                                                    "cache_read_input_tokens", "cache_creation_input_tokens")},
+                      # Not relied on, so absent or null is accepted; typed when present.
+                      "session_id": hostile("wrong type", "not finite", "negative", "nested garbage")},
+    # The stream's framing, its assistant events and blocks, and the tool results of its user events.
+    "stream": {
+        "a line": {"not JSON": ["not json"], "a JSON array": ["[1]"], "a JSON null": ["null"], "a JSON string": ['"x"'],
+                   "deeply nested": ["[" * 100000 + "]" * 100000]},
+        "an event's type": {"absent": ["{}"], "null": ['{"type": null}'], "wrong type": ['{"type": 5}'],
+                            "nested garbage": ['{"type": {"a": []}}']},
+        "a second report": {"start": [json.dumps({"type": "system", "subtype": "init"})],
+                            "result": [json.dumps({"type": "result", "is_error": False, "result": "x"})]},
+        "an assistant event's message.content": {
+            "absent": ['{"type": "assistant"}'], "null": ['{"type": "assistant", "message": null}'],
+            "wrong type": ['{"type": "assistant", "message": {"content": "x"}}'],
+            "nested garbage": ['{"type": "assistant", "message": {"content": {"a": [null]}}}']},
+        "a content block": {"null": [assistant_line(None)], "wrong type": [assistant_line(5)], "no type": [assistant_line({})],
+                            "empty type": [assistant_line({"type": ""})], "nested type": [assistant_line({"type": ["text"]})]},
+        "a text block's text": {name: [assistant_line({"type": "text"} if value is ABSENT else {"type": "text", "text": value})]
+                                for name, value in hostile("absent", "null", "wrong type", "not finite", "nested garbage").items()},
+        "a tool use's name": {name: [assistant_line({"type": "tool_use", "input": {}} if value is ABSENT else
+                                                    {"type": "tool_use", "name": value, "input": {}})]
+                              for name, value in hostile("absent", "null", "wrong type", "empty string", "nested garbage").items()},
+        "a tool use's input": {name: [assistant_line({"type": "tool_use", "name": "Grep"} if value is ABSENT else
+                                                     {"type": "tool_use", "name": "Grep", "input": value})]
+                               for name, value in hostile("absent", "null", "wrong type", "empty string",
+                                                          a_list=[{"a": None}]).items()},
+        "a Read's input.file_path": {name: [tool_line("toolu_x", value)] for name, value in
+                                     {**hostile("null", "wrong type", "empty string", "nested garbage"),
+                                      "a NUL byte": "notes/\u0000x.md"}.items()},
+        # A read that opened nothing is excused only by a tool result naming its id as a string and marked failed with true.
+        "a tool use's id": {name: [tool_line(value), failed_result_line(value)] for name, value in
+                            hostile("null", "wrong type", "empty string", "negative", "nested garbage").items()},
+        "a tool result's is_error": {name: [tool_line("toolu_x"), failed_result_line("toolu_x", value)] for name, value in
+                                     {**hostile("null", "empty string", "negative", "nested garbage"), "the text true": "true"}.items()},
+        "a user event": {"null message": [tool_line("toolu_x"), '{"type": "user", "message": null}'],
+                         "text content": [tool_line("toolu_x"), '{"type": "user", "message": {"content": "x"}}'],
+                         "garbage items": [tool_line("toolu_x"), '{"type": "user", "message": {"content": [null, 5, [], {"type": 5}]}}']},
+        "the output's bytes": {"not UTF-8": "garbled"},
+    },
+    # The exit status and error stream of a session, and a program that cannot be started.
+    "exit": {"an error exit with no result report": {"exit": 255}, "a clean exit with no result report": {"no_result": True},
+             "an error stream that is not UTF-8": {"exit": 1, "garbled": True}},
+    # What `auth status` prints and its exit status.
+    "auth status": {"empty": ("", 0), "not JSON": ("logged in", 0), "an empty object": ("{}", 0), "null": ("null", 0),
+                    "loggedIn null": ('{"loggedIn": null}', 0), "loggedIn the text false": ('{"loggedIn": "false"}', 0),
+                    "loggedIn the text true": ('{"loggedIn": "true"}', 0), "loggedIn one": ('{"loggedIn": 1}', 0),
+                    "an array": ("[true]", 0), "loggedIn false": ('{"loggedIn": false}', 0),
+                    "loggedIn true with an error exit": ('{"loggedIn": true}', 1), "not UTF-8": (None, 0)},
+    # The records the output folder keeps, read back on a run again.
+    "folder records": {
+        record: {"not JSON": "{not json", "empty": "", "null": "null", "wrong type": "5", "empty string": '""',
+                 "nested garbage": '{"a": [null, {"b": []}]}', "a folder": None}
+        for record in ("setups.json", "reruns.json", "units/bravo.json", "units/alpha.json", "failed/bravo.json")},
+    # A field of a kept record, edited in place: (record, how to edit it, the words).
+    "folder record fields": {
+        "a setup session's cost not finite": ("setups.json", lambda r: r[0].update(cost_usd=float("nan")), "cost_usd"),
+        "a setup session's turns negative": ("setups.json", lambda r: r[0].update(turns=-1), "turns"),
+        "a setup session's tokens absent": ("setups.json", lambda r: r[0].pop("tokens"), "tokens"),
+        "a kept session's cost infinite": ("units/bravo.json", lambda r: r["sessions"][0].update(cost_usd=float("inf")), "cost_usd"),
+        "a kept session's tokens garbage": ("units/bravo.json", lambda r: r["sessions"][0].update(tokens={"a": []}), "tokens"),
+        "a kept result's sessions empty": ("units/bravo.json", lambda r: r.update(sessions=[]), "no attempt"),
+        "a kept result naming another unit": ("units/bravo.json", lambda r: r.update(unit="alpha"), "holds unit 'alpha'"),
+        "a kept result citing no kept setup": ("units/bravo.json", lambda r: r.update(setup=7), "cites setup session 7"),
+        "a kept result's setup negative": ("units/bravo.json", lambda r: r.update(setup=-1), "setup"),
+        "a failed attempt's figure too large": ("failed/bravo.json", lambda r: r[0].update(api_ms=10 ** 400), "api_ms"),
+        "a run again's units garbage": ("reruns.json", lambda r: r[0].update(units=[None]), "units"),
+    },
+    # The caller module's attributes, as its source gives them: (what is replaced, by what).
+    "caller attributes": {
+        **{f"SETUP_PROMPT {name}": ('SETUP_PROMPT = "Read every document in the review folder."', f"SETUP_PROMPT = {value}")
+           for name, value in {"null": "None", "a number": "5", "empty": '""', "blank": '"  "', "a list": '["x"]'}.items()},
+        **{f"{attribute} not callable": (f"def {attribute}(", f"{attribute} = 5\ndef _{attribute}(")
+           for attribute in ("unit_prompt", "units", "CHECK")},
+        **{f"TABLES {name}": ("TABLES = {", f"TABLES = {value}\n_TABLES = {{") for name, value in {
+            "null": "None", "empty": "{}", "a list": "[]", "a table that is null": '{"Verdicts": None}',
+            "columns as text": '{"Verdicts": {"columns": "Item"}}', "no columns": '{"Verdicts": {"columns": []}}',
+            "a column twice": '{"Verdicts": {"columns": ["Item", "Item"]}}',
+            "a verdict column it does not have": '{"Verdicts": {"columns": ["Item"], "verdict_column": "V", "verdicts": ["p"]}}',
+            "verdicts null": '{"Verdicts": {"columns": ["Item", "V"], "verdict_column": "V", "verdicts": None}}'}.items()},
+        **{f"FINDINGS {name}": ("FINDINGS = {", f"FINDINGS = {value}\n_FINDINGS = {{") for name, value in {
+            "a number": "5", "an empty mapping": "{}", "a list": "[]"}.items()},
+        "FINDINGS table it does not have": ('"table": "Findings"', '"table": "Nope"'),
+        "FINDINGS number column it does not have": ('"number": "Finding"', '"number": "Nope"'),
+        "FINDINGS checklist as a set": ('"checklist": ["A-1", "B-1", "C-1"]', '"checklist": {"A-1", "B-1"}'),
+        "FINDINGS checklist garbage": ('"checklist": ["A-1", "B-1", "C-1"]', '"checklist": [None, 5]'),
+        "FINDINGS citations garbage": ('"citations": [("Verdicts", "Rests on")]', '"citations": [("Verdicts",)]'),
+        "FINDINGS citation as text": ('"citation": re.compile(r"(?<![\\w-])F(?P<number>\\d+)\\b")', '"citation": "F1"'),
+        "FINDINGS citation with no number group": ('"citation": re.compile(r"(?<![\\w-])F(?P<number>\\d+)\\b")',
+                                                   '"citation": re.compile(r"F\\d+")'),
+        "FINDINGS key not callable": ('"key": lambda row', '"key": 5, "_key": lambda row'),
+        "FINDINGS first not callable": ('"key": lambda row', '"first": 3, "key": lambda row'),
+    },
+    # What each of the caller's hooks returns: (hook, the source of the return).
+    "caller hooks": {
+        **{f"units returns {name}": ("units", value) for name, value in
+           {"text": '"abc"', "null": "None", "a number": "5", "a mapping": '{"alpha": 1}'}.items()},
+        **{f"unit_prompt returns {name}": ("unit_prompt", value) for name, value in
+           {"null": "None", "a number": "5", "empty": '""', "nested garbage": '{"a": []}'}.items()},
+        **{f"CHECK returns {name}": ("CHECK", value) for name, value in
+           {"text": '"refused"', "null": "None", "a list of numbers": "[5]", "a mapping": '{"a": 1}'}.items()},
+        **{f"round returns {name}": ("round", value) for name, value in {"a number": "2", "null": "None", "empty": '""'}.items()},
+        **{f"earlier returns {name}": ("earlier", value) for name, value in
+           {"numbers as text": '{("1", "1")}', "rounds as numbers": "{(1, 1)}", "null": "None", "a zero": '{("1", 0)}',
+            "text": '"1.1"', "a triple": '{("1", 1, 2)}'}.items()},
+        **{f"first returns {name}": ("first", value) for name, value in
+           {"text": '"8"', "zero": "0", "negative": "-1", "true": "True", "a fraction": "1.5", "infinite": 'float("inf")'}.items()},
+        **{f"key returns {name}": ("key", value) for name, value in
+           {"a number": "5", "a list": "[]", "empty": '""'}.items()},
+    },
+    # The tables a reviewer returns as its answer.
+    "reviewer tables": {
+        "not JSON": "not json", "null": "null", "a list": "[]", "deeply nested": "[" * 100000 + "]" * 100000,
+        "tables null": '{"tables": null}', "tables a list": '{"tables": []}', "a table as text": '{"tables": {"Verdicts": "x"}}',
+        "a row null": '{"tables": {"Verdicts": [null]}}',
+        **{f"a cell {name}": json.dumps({"tables": {"Verdicts": [{"Item": "A-1", "Verdict": "pass", "Rests on": value}]}})
+           for name, value in {"null": None, "true": True, "not finite": float("inf"), "not a number": float("nan"),
+                               "nested garbage": {"a": [None]}}.items()},
+        "a cell too large": '{"tables": {"Verdicts": [{"Item": "A-1", "Verdict": "pass", "Rests on": 1' + "0" * 400 + '}]}}',
+        **{f"a verdict {name}": json.dumps({"tables": {"Verdicts": [{"Item": "A-1", "Verdict": value, "Rests on": "x"}]}})
+           for name, value in {"null": None, "a number": 5, "empty": "", "nested garbage": ["pass"]}.items()},
+        **{f"a finding number {name}": json.dumps({"tables": {"Verdicts": verdicts(("A-1", "fail", "F1")),
+                                                               "Findings": [finding(value, "A-1", "x")]}})
+           for name, value in {"negative": -1, "text": "1", "a fraction": 1.5, "true": True, "not finite": float("inf")}.items()},
+        "a finding item nested": json.dumps({"tables": {"Verdicts": verdicts(("A-1", "fail", "F1")),
+                                                         "Findings": [finding(1, {"a": "A-1"}, "x")]}}),
+    },
+    # The command line's own arguments: (the arguments, the words).
+    "arguments": {
+        **{f"--rate-limit-wait {value}": (("--rate-limit-wait", value), "rate limit wait") for value in ("nan", "inf", "-1", "x", "")},
+        **{f"--model {value!r}": (("--model", value), "the model") for value in ("", "  ")},
+        **{f"--bound {value}": (("--bound", value), "the bound") for value in ("0", "-1", "x", "1.5")},
+    },
+}
+
+
+class HostileInputs(Fixture):
+    """Every input of the inventory, driven with hostile values through the command as shipped.
+
+    Each outcome is a named REFUSED, CANNOT RUN or unit FAILED line: never a traceback, never a pass and never a value
+    coerced into shape.
+    """
+
+    def setUp(self):
+        super().setUp()
+        # Each case writes a caller module of its own in one second; a cached compile of an earlier one must not stand in.
+        patcher = mock.patch.object(sys, "dont_write_bytecode", True)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def fresh(self):
+        shutil.rmtree(self.out, ignore_errors=True)
+        for name in os.listdir(self.log):
+            os.remove(os.path.join(self.log, name))
+
+    def outcome(self, *extra, caller="synth", as_json=False):
+        try:
+            return self.run_command(*extra, caller=caller, as_json=as_json)
+        except BaseException as error:  # a traceback out of the command is the failure this class looks for
+            self.fail(f"the command raised {type(error).__name__}: {error}")
+
+    def assert_refused(self, words, *extra, caller="synth", started=None):
+        status, text, err = self.outcome(*extra, caller=caller)
+        self.assertEqual(status, 1, text + err)
+        lines = [line for line in text.splitlines() if line.startswith("REFUSED | ")]
+        self.assertTrue(any(all(word in line for word in words) for line in lines), f"{words} in {lines}")
+        self.assertRegex(text.splitlines()[-1], r"^RESULT \| REFUSED \| ")
+        if started is not None:
+            self.assertEqual(len(self.calls()), started, "the sessions started before the refusal")
+        return text
+
+    def assert_unit_failed(self, unit, words, *extra, caller="synth", status=1):
+        got, text, err = self.outcome(*extra, caller=caller, as_json=True)
+        self.assertEqual(got, status, text + err)
+        report = json.loads(text)
+        failed = [entry for entry in report["units"] if entry["unit"] == unit]
+        self.assertEqual([entry["status"] for entry in failed], ["failed"], text)
+        for word in words:
+            self.assertIn(word, failed[0]["detail"])
+        self.assertIn(report["result"], ("FAILED", "CANNOT RUN"))
+        self.assertFalse(os.path.exists(os.path.join(self.out, "record.json")), "no record is written")
+        for part in [report["totals"]] + [entry["own"] for entry in report["units"]]:
+            for key in ("cost_usd", "api_ms", "turns"):
+                self.assertTrue(review_fan_out.named(part[key], (int, float)), (key, part[key]))
+        return report
+
+    def test_every_field_of_a_start_report_that_is_absent_or_hostile_is_refused_or_fails_its_unit_naming_it(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that reads documents and records and asks for no judgement and no image and for one fixed token as the whole answer; any text the setup session writes, in its answer or between its tool uses, other than that token after trimming, and any content block of its history that is neither text nor a tool use, fails the run, so no forked reviewer inherits a verdict, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file. Out of scope: the content of a caller's prompt for its units.
+        for field, values in INVENTORY["start report"].items():
+            for name, value in values.items():
+                change = {"start_omit": [field]} if value is ABSENT else {"start_set": {field: value}}
+                with self.subTest(field=field, value=name, session="setup"):
+                    self.fresh()
+                    self.scenario({"setup": change})
+                    self.assert_refused(["the setup session", f"`{field}`"], started=1)
+                with self.subTest(field=field, value=name, session="fork"):
+                    self.fresh()
+                    self.scenario({"units": {"alpha": [change]}})
+                    self.assert_unit_failed("alpha", ["the reviewer of unit alpha", f"`{field}`"], "--bound", "3")
+        for name, (change, word) in {"a tool that is not a name": ({"tools": [3, "Read"]}, "not a list of names"),
+                                     "an MCP server that is garbage": ({"mcp_servers": [[None]]}, "MCP servers"),
+                                     "a plugin that is not a mapping": ({"plugins": ["builtin"]}, "plugins"),
+                                     "a plugin with no path": ({"plugins": [{"name": "p", "path": None}]}, "plugins"),
+                                     "a working folder with a NUL byte": ({"cwd": "/review\u0000"}, "started in")}.items():
+            with self.subTest(element=name):
+                self.fresh()
+                self.scenario({"setup": {"start_set": change}})
+                self.assert_refused(["the setup session", word], started=1)
+
+    def test_every_field_of_a_result_report_that_is_absent_or_hostile_is_refused_or_fails_its_unit_naming_it(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C5: Against a stub that reports a fork's cost, API time and turn count cumulatively including its setup session, as the agent command line does, the record gives each fork its own cost, time and turns, the setup session its own, and the run their sum; token usage is taken as each session reports it, split into tokens read from the cache, written to it, fresh and generated, and a fork that reads no cache is flagged. The record is in the text and the JSON report. Out of scope: judging whether a run was worth its cost.
+        full = {"input_tokens": 3, "output_tokens": 100, "cache_read_input_tokens": 5000, "cache_creation_input_tokens": 200}
+        for field, values in INVENTORY["result report"].items():
+            for name, value in values.items():
+                if field.startswith("usage."):
+                    key = field.split(".", 1)[1]
+                    usage = {k: v for k, v in full.items() if k != key or value is not ABSENT}
+                    if value is not ABSENT:
+                        usage[key] = value
+                    change = {"result_set": {"usage": usage}}
+                else:
+                    change = {"result_omit": [field]} if value is ABSENT else {"result_set": {field: value}}
+                label = field.split(".")[-1]
+                setup_word = "answered ''" if (field, name) == ("result", "empty string") else label
+                fork_words = (["failed after 2 attempts"] if (field, name) == ("result", "empty string") else [label])
+                with self.subTest(field=field, value=name, session="setup"):
+                    self.fresh()
+                    self.scenario({"setup": change})
+                    self.assert_refused(["the setup session", setup_word], started=1)
+                with self.subTest(field=field, value=name, session="fork"):
+                    self.fresh()
+                    self.scenario({"units": {"alpha": [change]}})
+                    self.assert_unit_failed("alpha", fork_words, "--bound", "3")
+        for field in ("total_cost_usd", "duration_api_ms", "num_turns"):
+            with self.subTest(below=field):
+                self.fresh()
+                self.scenario({"units": {"alpha": [{"result_set": {field: 0}}]}})
+                report = self.assert_unit_failed("alpha", ["below that of the session it was resumed from"], "--bound", "3")
+                alpha = [entry for entry in report["units"] if entry["unit"] == "alpha"][0]
+                self.assertEqual(alpha["flags"], ["figures below those it includes"])
+                self.assertEqual(alpha["own"]["cost_usd"], 0.0, "its own cost cannot be told, so none is made up")
+
+    def test_every_hostile_line_event_and_block_of_a_session_s_stream_is_refused_or_fails_its_unit_naming_it(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that reads documents and records and asks for no judgement and no image and for one fixed token as the whole answer; any text the setup session writes, in its answer or between its tool uses, other than that token after trimming, and any content block of its history that is neither text nor a tool use, fails the run, so no forked reviewer inherits a verdict, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file. Out of scope: the content of a caller's prompt for its units.
+        words = {"a line": "not a JSON event", "an event's type": "no string `type`",
+                 "a second report": "second", "an assistant event's message.content": "no `message.content` list",
+                 "a content block": "the setup session", "a text block's text": "text block with no string `text`",
+                 "a tool use's name": "tool use with no string `name`", "a tool use's input": "no `input` mapping",
+                 "a Read's input.file_path": "the setup session", "a tool use's id": "notes/absent.md",
+                 "a tool result's is_error": "notes/absent.md", "a user event": "notes/absent.md",
+                 "the output's bytes": "not a JSON event"}
+        for site, values in INVENTORY["stream"].items():
+            for name, lines in values.items():
+                change = {"garbled": True} if lines == "garbled" else {"lines": lines}
+                with self.subTest(site=site, value=name, session="setup"):
+                    self.fresh()
+                    self.scenario({"setup": change})
+                    self.assert_refused(["the setup session", words[site]], started=1)
+        for name, (lines, word) in {"a line that is not JSON": (["not json"], "not a JSON event"),
+                                    "an event with no type": (["{}"], "no string `type`"),
+                                    "a second start report": ([json.dumps({"type": "system", "subtype": "init"})], "second start report"),
+                                    "bytes that are not UTF-8": ("garbled", "not a JSON event")}.items():
+            with self.subTest(fork=name):
+                self.fresh()
+                self.scenario({"units": {"alpha": [{"garbled": True} if lines == "garbled" else {"lines": lines}]}})
+                self.assert_unit_failed("alpha", ["the reviewer of unit alpha", word], "--bound", "3")
+        with self.subTest(control="an event of a type the command does not read"):
+            self.fresh()
+            self.scenario({"setup": {"lines": [json.dumps({"type": "rate_limit_event", "rate_limit_info": {"status": "allowed"}})]}})
+            status, text, _ = self.outcome()
+            self.assertEqual(status, 0, "the real command line prints it, and it carries nothing the command relies on: " + text)
+
+    def test_a_session_that_exits_without_a_report_or_writes_bytes_that_are_not_text_is_named_and_never_a_traceback(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C4: The exit status is 0 when the merged record is written, 1 when the command refuses or a unit fails, and 2 when the agent command line is missing or not logged in, each with a line beginning REFUSED or CANNOT RUN as the other board commands print; a review folder inside the repository, a folder that does not exist, an output folder inside the review folder or containing it or inside the repository, a caller name with no module or whose module lacks a required attribute, an output folder that already holds a record when no unit is named to run again, an output folder in use by another run, and a bound below one are refused. Each REFUSED and CANNOT RUN line names its cause and what to do about it. The report is available as text and as JSON and the two hold the same facts. Out of scope: the merge's own refusals, which each caller names.
+        for name, change in INVENTORY["exit"].items():
+            with self.subTest(case=name, session="setup"):
+                self.fresh()
+                self.scenario({"setup": change})
+                self.assert_refused(["the setup session"], started=1)
+            with self.subTest(case=name, session="fork"):
+                self.fresh()
+                self.scenario({"units": {"alpha": [change]}})
+                self.assert_unit_failed("alpha", ["unit alpha failed"], "--bound", "3")
+        real = review_fan_out.subprocess.run
+
+        def unstartable(command, *rest, **named):
+            if command[1:3] != ["auth", "status"] and "UNIT=alpha" in " ".join(command):
+                raise PermissionError("permission denied")
+            return real(command, *rest, **named)
+        with self.subTest(case="a reviewer program that cannot be started"):
+            self.fresh()
+            self.scenario({})
+            with mock.patch.object(review_fan_out.subprocess, "run", unstartable):
+                report = self.assert_unit_failed("alpha", ["could not be started", "permission denied"], "--bound", "3", status=2)
+            self.assertEqual(report["result"], "CANNOT RUN")
+
+        def unchecked(*_):
+            raise ZeroDivisionError("a check that broke")
+        with self.subTest(case="a setup check that breaks"):
+            self.fresh()
+            with mock.patch.object(review_fan_out, "setup_problems", unchecked):
+                self.assert_refused(["the setup session could not be checked", "ZeroDivisionError"], started=1)
+
+    def test_an_auth_status_that_is_not_an_object_whose_logged_in_is_true_after_a_clean_exit_cannot_run(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C4: The exit status is 0 when the merged record is written, 1 when the command refuses or a unit fails, and 2 when the agent command line is missing or not logged in, each with a line beginning REFUSED or CANNOT RUN as the other board commands print; a review folder inside the repository, a folder that does not exist, an output folder inside the review folder or containing it or inside the repository, a caller name with no module or whose module lacks a required attribute, an output folder that already holds a record when no unit is named to run again, an output folder in use by another run, and a bound below one are refused. Each REFUSED and CANNOT RUN line names its cause and what to do about it. The report is available as text and as JSON and the two hold the same facts. Out of scope: the merge's own refusals, which each caller names.
+        for name, (printed, code) in INVENTORY["auth status"].items():
+            with self.subTest(auth=name):
+                self.fresh()
+                self.scenario({"auth_garbled": True} if printed is None else {"auth_stdout": printed, "auth": code})
+                for as_json in (False, True):
+                    status, text, err = self.outcome(as_json=as_json)
+                    self.assertEqual(status, 2, text + err)
+                    cause = json.loads(text)["cannot_run"] if as_json else err
+                    self.assertIn(f"is not logged in: `auth status` exited {code} and printed", cause)
+                    if printed and printed.strip():
+                        self.assertIn(review_fan_out.board_check.clean(printed)[:40], cause, "what the command line printed")
+                    self.assertIn("log it in, then run again", cause)
+                self.assertEqual(self.calls(), [], "no session was started")
+        with self.subTest(control="logged in"):
+            self.fresh()
+            self.scenario({"auth_stdout": '{"loggedIn": true, "authMethod": "x"}'})
+            self.assertEqual(self.outcome()[0], 0)
+
+    def test_a_kept_record_that_is_unreadable_or_hostile_refuses_a_run_again_naming_its_file(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C8: The command keeps each unit's result in its output folder. Given the names of units to run again, it runs only those, replaces their results, and merges again; it refuses a name that is not a unit of the review and refuses a run that leaves out a unit whose last run again failed, naming that unit, and the record shows which units were run again and when, and that a new setup session was started for them. A unit that failed, or that needs a view the round's starter has since rendered, is therefore run without repeating the others. Out of scope: deciding which units to run again.
+        def prepared():
+            self.fresh()
+            self.scenario({"units": {"bravo": [{"exit": 1}, {}]}})
+            self.assertEqual(self.outcome()[0], 0)
+            self.assertEqual(self.outcome("--rerun", "charlie")[0], 0)
+            review_fan_out.write_json(os.path.join(self.out, "failed", "bravo.json"), self.kept("bravo")["sessions"][:1])
+            for name in os.listdir(self.log):
+                os.remove(os.path.join(self.log, name))
+            self.scenario({})
+        for record, values in INVENTORY["folder records"].items():
+            for name, content in values.items():
+                with self.subTest(record=record, value=name):
+                    prepared()
+                    path = os.path.join(self.out, record)
+                    os.remove(path)
+                    if content is None:
+                        os.makedirs(path)
+                    else:
+                        self.write(path, content)
+                    self.assert_refused([os.path.basename(record), "cannot be read"], "--rerun", "alpha", started=0)
+        for name, (record, edit, word) in INVENTORY["folder record fields"].items():
+            with self.subTest(field=name):
+                prepared()
+                path = os.path.join(self.out, record)
+                content = review_fan_out.read_json(path)
+                edit(content)
+                review_fan_out.write_json(path, content)
+                self.assert_refused([os.path.basename(record), "cannot be read", word], "--rerun", "alpha", started=0)
+        with self.subTest(control="the prepared folder"):
+            prepared()
+            self.assertEqual(self.outcome("--rerun", "alpha")[0], 0)
+
+    def test_a_caller_module_whose_attributes_are_hostile_is_refused_naming_the_attribute(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C4: The exit status is 0 when the merged record is written, 1 when the command refuses or a unit fails, and 2 when the agent command line is missing or not logged in, each with a line beginning REFUSED or CANNOT RUN as the other board commands print; a review folder inside the repository, a folder that does not exist, an output folder inside the review folder or containing it or inside the repository, a caller name with no module or whose module lacks a required attribute, an output folder that already holds a record when no unit is named to run again, an output folder in use by another run, and a bound below one are refused. Each REFUSED and CANNOT RUN line names its cause and what to do about it. The report is available as text and as JSON and the two hold the same facts. Out of scope: the merge's own refusals, which each caller names.
+        for name, (old, new) in INVENTORY["caller attributes"].items():
+            with self.subTest(attribute=name):
+                self.fresh()
+                text = caller_text()
+                self.assertIn(old, text)
+                self.write(os.path.join(self.callers, "review_caller_hostile.py"), text.replace(old, new, 1))
+                attribute = name.split(" ")[0]
+                self.assert_refused(["review_caller_hostile.py", attribute], caller="hostile", started=0)
+                self.assertFalse(os.path.exists(self.out))
+
+    def test_a_caller_hook_that_returns_a_hostile_value_is_refused_or_fails_its_unit_naming_the_hook(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C4: The exit status is 0 when the merged record is written, 1 when the command refuses or a unit fails, and 2 when the agent command line is missing or not logged in, each with a line beginning REFUSED or CANNOT RUN as the other board commands print; a review folder inside the repository, a folder that does not exist, an output folder inside the review folder or containing it or inside the repository, a caller name with no module or whose module lacks a required attribute, an output folder that already holds a record when no unit is named to run again, an output folder in use by another run, and a bound below one are refused. Each REFUSED and CANNOT RUN line names its cause and what to do about it. The report is available as text and as JSON and the two hold the same facts. Out of scope: the merge's own refusals, which each caller names.
+        tables = {"alpha": {"Verdicts": verdicts(("A-1", "fail", "F1")), "Findings": [finding(1, "A-1", "x @U1")]}}
+        rounded = {"alpha": {"Verdicts": verdicts(("A-1", "fail", "2.1")), "Findings": [finding(1, "A-1", "x")]}}
+        for name, (hook, value) in INVENTORY["caller hooks"].items():
+            with self.subTest(hook=name):
+                self.fresh()
+                text = caller_text(ROUNDED if hook in ("round", "earlier") else FINDINGS)
+                if hook == "units":
+                    text = text.replace("def units(folder):\n", f"def units(folder):\n    return {value}\n")
+                elif hook == "unit_prompt":
+                    text = text.replace("def unit_prompt(unit):\n", f"def unit_prompt(unit):\n    if unit == 'alpha':\n        return {value}\n")
+                elif hook == "CHECK":
+                    text = text.replace("def CHECK(folder, units, tables):\n", f"def CHECK(folder, units, tables):\n    return {value}\n")
+                elif hook in ("round", "earlier"):
+                    given = {"round": '"round": lambda folder: "2"',
+                             "earlier": '"earlier": lambda folder: {("1", 1), ("1", 2), ("1", 3)}'}[hook]
+                    self.assertIn(given, text)
+                    text = text.replace(given, f'"{hook}": lambda folder: {value}')
+                else:
+                    text = text.replace('"key": lambda row', f'"{hook}": lambda _: {value}, "_key": lambda row', 1)
+                    if hook == "first":
+                        text = text.replace('"_key": lambda row', '"key": lambda row')
+                self.write(os.path.join(self.callers, "review_caller_hostile.py"), text)
+                self.scenario({"tables": rounded if hook in ("round", "earlier") else tables})
+                if hook in ("unit_prompt", "round", "earlier"):
+                    # Each unit's own tables are checked against this round's citations as it is judged.
+                    self.assert_unit_failed("alpha", [f"the caller's {hook} returned", "fix the caller"], caller="hostile")
+                else:
+                    self.assert_refused([f"the caller's {hook} returned", "fix the caller"], caller="hostile")
+
+    def test_a_reviewer_answer_whose_tables_are_hostile_is_run_once_more_and_then_fails_its_unit_naming_it(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C3: A unit whose reviewer exits with an error or returns nothing is run once more; a call refused for a rate limit is retried after a wait that grows, a bounded number of times; a unit that still fails fails the run, naming the unit and what the reviewer returned, and the other units' results are kept in the output. Out of scope: what a caller counts as a malformed result, which the caller defines.
+        for name, answer in INVENTORY["reviewer tables"].items():
+            with self.subTest(answer=name):
+                self.fresh()
+                self.scenario({"units": {"alpha": [{"text": answer}]}})
+                self.assert_unit_failed("alpha", ["unit alpha failed after 2 attempts"], "--bound", "3")
+                self.assertEqual(len([call for call in self.forks() if call["unit"] == "alpha"]), 2)
+
+    def test_a_command_line_argument_that_is_hostile_is_refused_naming_it(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C4: The exit status is 0 when the merged record is written, 1 when the command refuses or a unit fails, and 2 when the agent command line is missing or not logged in, each with a line beginning REFUSED or CANNOT RUN as the other board commands print; a review folder inside the repository, a folder that does not exist, an output folder inside the review folder or containing it or inside the repository, a caller name with no module or whose module lacks a required attribute, an output folder that already holds a record when no unit is named to run again, an output folder in use by another run, and a bound below one are refused. Each REFUSED and CANNOT RUN line names its cause and what to do about it. The report is available as text and as JSON and the two hold the same facts. Out of scope: the merge's own refusals, which each caller names.
+        for name, (extra, word) in INVENTORY["arguments"].items():
+            with self.subTest(argument=name):
+                self.fresh()
+                self.assert_refused([word], *extra, started=0)
+
+    def test_every_failure_of_a_unit_run_again_leaves_it_unsettled_so_a_run_again_of_another_unit_is_refused(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C8: The command keeps each unit's result in its output folder. Given the names of units to run again, it runs only those, replaces their results, and merges again; it refuses a name that is not a unit of the review and refuses a run that leaves out a unit whose last run again failed, naming that unit, and the record shows which units were run again and when, and that a new setup session was started for them. A unit that failed, or that needs a view the round's starter has since rendered, is therefore run without repeating the others. Out of scope: deciding which units to run again.
+        self.write(os.path.join(self.callers, "review_caller_flaky.py"), caller_text().replace(
+            "def unit_prompt(unit):\n", "def unit_prompt(unit):\n    if os.environ.get('FLAKY_UNIT') == unit:\n        raise KeyError(unit)\n"))
+        real = review_fan_out.call_agent
+
+        def vanishing(program, prompt, *rest, **named):
+            if "UNIT=alpha" in prompt:
+                raise FileNotFoundError("the agent binary vanished")
+            return real(program, prompt, *rest, **named)
+        shapes = {"a rate limit that outlasts the retries": ({"units": {"alpha": [{"rate_limit": True}]}}, {}, None),
+                  "the unit prompt raising": ({}, {"FLAKY_UNIT": "alpha"}, None),
+                  "a lost login on the first call": ({"units": {"alpha": [{"login": True}]}}, {}, None),
+                  "a call that raises before any session": ({}, {}, vanishing),
+                  "an attempt that cost a session": ({"units": {"alpha": [{"exit": 1}]}}, {}, None)}
+        for name, (scenario, environment, call) in shapes.items():
+            with self.subTest(shape=name):
+                self.fresh()
+                self.scenario({})
+                self.assertEqual(self.outcome(caller="flaky")[0], 0)
+                self.scenario(scenario)
+                with mock.patch.dict(os.environ, environment), \
+                        mock.patch.object(review_fan_out, "call_agent", call or real):
+                    status, text, err = self.outcome("--rerun", "alpha", caller="flaky")
+                self.assertIn(status, (1, 2), text + err)
+                self.assertTrue(os.path.exists(os.path.join(self.out, "unsettled", "alpha.json")), name)
+                for name_ in os.listdir(self.log):
+                    os.remove(os.path.join(self.log, name_))
+                self.scenario({})
+                self.assert_refused(["unit alpha's last run again failed", "name alpha with --rerun too"],
+                                    "--rerun", "bravo", caller="flaky", started=0)
+                status, text, _ = self.outcome("--rerun", "alpha", "--rerun", "bravo", caller="flaky")
+                self.assertEqual(status, 0, text)
+                self.assertFalse(os.path.exists(os.path.join(self.out, "unsettled", "alpha.json")), "a kept result settles it")
+        with self.subTest(shape="a mark that is a folder or holds garbage"):
+            for name in os.listdir(self.log):
+                os.remove(os.path.join(self.log, name))
+            for content in (None, "{not json"):
+                path = os.path.join(self.out, "unsettled", "charlie.json")
+                if content is None:
+                    os.makedirs(path)
+                else:
+                    shutil.rmtree(path, ignore_errors=True)
+                    self.write(path, content)
+                self.assert_refused(["unit charlie's last run again failed"], "--rerun", "bravo", caller="flaky", started=0)
 
 
 class Parsing(unittest.TestCase):
@@ -1381,6 +1882,26 @@ class Parsing(unittest.TestCase):
         silent = review_fan_out.parse_stream(self.stream({k: v for k, v in full.items() if k != "is_error"}))
         self.assertTrue(any("no `is_error`" in why for why in silent.malformed))
         self.assertFalse(silent.succeeded)
+
+    def test_the_one_typing_layer_takes_no_figure_that_is_not_finite_or_is_negative_and_no_cell_that_is_not_finite(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C5: Against a stub that reports a fork's cost, API time and turn count cumulatively including its setup session, as the agent command line does, the record gives each fork its own cost, time and turns, the setup session its own, and the run their sum; token usage is taken as each session reports it, split into tokens read from the cache, written to it, fresh and generated, and a fork that reads no cache is flagged. The record is in the text and the JSON report. Out of scope: judging whether a run was worth its cost.
+        for kind in (int, (int, float)):
+            for value in (float("inf"), float("-inf"), float("nan"), -1, -0.5, 10 ** 400, True, False, "1", None, [], {}):
+                with self.subTest(kind=kind, value=value):
+                    self.assertFalse(review_fan_out.named(value, kind))
+            self.assertTrue(review_fan_out.named(0, kind))
+        self.assertTrue(review_fan_out.named(0.0, (int, float)))
+        self.assertFalse(review_fan_out.named(0.5, int))
+        for value in (float("inf"), float("nan"), 10 ** 400, True, None, [], {}):
+            self.assertFalse(review_fan_out.cell(value), value)
+        for value in ("", "text", -3, 2.5):
+            self.assertTrue(review_fan_out.cell(value), value)
+        shape = {"a": int, "b": [review_fan_out.SESSION_SHAPE["tokens"]], "c": review_fan_out.ANY_TEXT}
+        self.assertIsNone(review_fan_out.shape_problem({"a": 1, "b": [], "c": ""}, shape, "r"))
+        for value, word in (({"a": -1, "b": [], "c": ""}, "r.a is -1"), ({"a": 1, "b": [None], "c": ""}, "r.b[0] is not a mapping"),
+                            ({"a": 1, "b": [], "c": None}, "r.c is None, not text"), ({"b": [], "c": ""}, "r has no `a`"),
+                            ([], "r is not a mapping")):
+            self.assertIn(word, review_fan_out.shape_problem(value, shape, "r"))
 
 
 class Documentation(unittest.TestCase):

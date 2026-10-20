@@ -55,6 +55,7 @@ import argparse
 import concurrent.futures
 import importlib.util
 import json
+import math
 import os
 import re
 import shutil
@@ -91,6 +92,9 @@ RECORD = "record.json"
 UNITS_FOLDER = "units"
 SETUPS = "setups.json"
 FAILED_FOLDER = "failed"
+#: A unit named to run again is marked unsettled before its reviewer starts, and the mark is cleared only when its result is kept.
+UNSETTLED_FOLDER = "unsettled"
+RERUNS = "reruns.json"
 LOCK = ".review-fan-out.lock"
 #: How many times a call refused for a rate limit is retried, with the wait doubling each time.
 RATE_RETRIES = 5
@@ -120,7 +124,7 @@ class UnitFailed(Exception):
 
 
 class LoginLost(UnitFailed):
-    """A unit whose call found the agent command line no longer logged in, with the cause the command line gave."""
+    """A unit whose call found the agent command line no longer logged in or no longer startable, with the cause."""
 
     def __init__(self, unit: str, cause: str, sessions: Sequence[Dict[str, Any]] = ()):
         super().__init__(f"unit {unit} failed: {cause}", sessions)
@@ -186,39 +190,115 @@ def load_caller(name: str, folder: str):
     missing = [attribute for attribute in REQUIRED if not hasattr(module, attribute)]
     if missing:
         raise Refused([f"the caller module {path} lacks {', '.join(missing)}; add each to the module"])
-    problems = []
-    if not isinstance(module.TOOLS, (list, tuple)) or not module.TOOLS or any(tool not in READ_TOOLS for tool in module.TOOLS):
-        problems.append(f"the caller module {path} grants tools {module.TOOLS!r}; a reviewer is read-only, so grant "
-                        f"some of {', '.join(READ_TOOLS)} and no others")
-    if not isinstance(module.BOUND, int) or isinstance(module.BOUND, bool) or module.BOUND < 1:
-        problems.append(f"the caller module {path} states a BOUND of {module.BOUND!r}; state a whole number of one or more")
-    findings = module.FINDINGS
-    if findings and "round" in findings["citation"].groupindex:
-        for name in ("round", "earlier"):
-            if not callable(findings.get(name)):
-                problems.append(f"the caller module {path} has a citation pattern with a round group but no callable "
-                                f"FINDINGS[{name!r}]; add FINDINGS['round'] and FINDINGS['earlier'] or drop the round group")
+    problems = caller_problems(module, path)
     if problems:
         raise Refused(problems)
     return module
 
 
+def caller_problems(module, path: str) -> List[str]:
+    """Why the caller module's attributes cannot be relied on, each naming the attribute; the one place they are typed."""
+    found = []
+
+    def bad(what: str, value: Any, want: str) -> None:
+        found.append(f"the caller module {path} gives {what} as {value!r:.200}; {want}")
+    if not named(module.SETUP_PROMPT, str):
+        bad("SETUP_PROMPT", module.SETUP_PROMPT, "give the setup session's prompt as text")
+    for attribute in ("unit_prompt", "units", "CHECK"):
+        if not callable(getattr(module, attribute)):
+            bad(attribute, getattr(module, attribute), "make it a function")
+    if not isinstance(module.TOOLS, (list, tuple)) or not module.TOOLS or any(tool not in READ_TOOLS for tool in module.TOOLS):
+        found.append(f"the caller module {path} grants tools {module.TOOLS!r}; a reviewer is read-only, so grant "
+                     f"some of {', '.join(READ_TOOLS)} and no others")
+    if not isinstance(module.BOUND, int) or isinstance(module.BOUND, bool) or module.BOUND < 1:
+        found.append(f"the caller module {path} states a BOUND of {module.BOUND!r}; state a whole number of one or more")
+    tables = module.TABLES
+    if not isinstance(tables, dict) or not tables or not all(named(name, str) for name in tables):
+        bad("TABLES", tables, "give a mapping of each table's name to its columns")
+        tables = {}
+    for name, spec in tables.items():
+        columns = spec.get("columns") if isinstance(spec, dict) else None
+        if not texts(columns) or not columns or len(set(columns)) != len(columns):
+            bad(f"TABLES[{name!r}]", spec, "give its `columns` as a list of distinct column names")
+        elif spec.get("verdict_column") is not None and (spec["verdict_column"] not in columns or not texts(spec.get("verdicts"))):
+            bad(f"TABLES[{name!r}]", spec, "give a `verdict_column` among its columns and its `verdicts` as a collection of names")
+    findings = module.FINDINGS
+    if findings is None:
+        return found
+    if not isinstance(findings, dict):
+        bad("FINDINGS", findings, "give a mapping, or None for a caller with no findings table")
+        return found
+    table = findings.get("table")
+    columns = list(tables[table]["columns"]) if table in tables and isinstance(tables[table], dict) and texts(
+        tables[table].get("columns")) else None
+    if columns is None:
+        bad("FINDINGS['table']", table, "name one of TABLES")
+    for key in ("number", "item"):
+        if columns is not None and findings.get(key) not in columns:
+            bad(f"FINDINGS[{key!r}]", findings.get(key), f"name a column of the table {table!r}")
+    checklist = findings.get("checklist")
+    if not isinstance(checklist, (list, tuple)) or not texts(checklist) or len(set(checklist)) != len(checklist):
+        bad("FINDINGS['checklist']", checklist, "give the checklist's items in order as a list of distinct names")
+    citations = findings.get("citations")
+    if not isinstance(citations, (list, tuple)) or not all(
+            isinstance(pair, (list, tuple)) and len(pair) == 2 and pair[0] in tables and isinstance(tables[pair[0]], dict)
+            and pair[1] in (tables[pair[0]].get("columns") or ()) for pair in citations):
+        bad("FINDINGS['citations']", citations, "give a list of (table, column) pairs of TABLES")
+    pattern = findings.get("citation")
+    if not isinstance(pattern, re.Pattern) or "number" not in pattern.groupindex:
+        bad("FINDINGS['citation']", pattern, "give a compiled pattern with a `number` group")
+    elif "round" in pattern.groupindex:
+        for name in ("round", "earlier"):
+            if not callable(findings.get(name)):
+                found.append(f"the caller module {path} has a citation pattern with a round group but no callable "
+                             f"FINDINGS[{name!r}]; add FINDINGS['round'] and FINDINGS['earlier'] or drop the round group")
+    if not callable(findings.get("key")):
+        bad("FINDINGS['key']", findings.get("key"), "give a function of a findings row")
+    if "first" in findings and not callable(findings["first"]):
+        bad("FINDINGS['first']", findings["first"], "give a function of the review folder, or leave it out")
+    return found
+
+
+def texts(value: Any) -> bool:
+    """Whether `value` is a collection of non-empty strings."""
+    return isinstance(value, (list, tuple, set, frozenset)) and all(named(item, str) for item in value)
+
+
+#: What each of a caller's hooks must return, and the words that say so.
+RETURNS = {
+    "units": (lambda value: isinstance(value, (list, tuple)), "a list of unit names"),
+    "unit_prompt": (lambda value: named(value, str), "the unit's prompt as text"),
+    "CHECK": (lambda value: isinstance(value, (list, tuple)) and texts(value), "a list of refusals, each text"),
+    "round": (lambda value: named(value, str), "this round's label as text"),
+    "earlier": (lambda value: isinstance(value, (list, tuple, set, frozenset)) and all(
+        isinstance(pair, (list, tuple)) and len(pair) == 2 and named(pair[0], str) and named(pair[1], int) and pair[1] >= 1
+        for pair in value), "a collection of (round label, finding number) pairs"),
+    "first": (lambda value: named(value, int) and value >= 1, "a whole number of one or more"),
+    "key": (lambda value: value is None or named(value, str), "None or a place as text"),
+}
+
+
 def hook(what: str, call, *args):
-    """What a caller's hook `call` returns; an exception from it is a refusal naming the hook, never a traceback."""
+    """What a caller's hook `call` returns; an exception from it, or a return that is not what RETURNS asks, is a
+    refusal naming the hook, never a traceback or a value coerced into shape."""
     try:
-        return call(*args)
+        value = call(*args)
     except Refused:
         raise
     except Exception as error:  # the caller's code is not this command's; its defect is reported, not raised
         raise Refused([f"the caller's {what} raised {type(error).__name__}: {error}; fix the caller"])
+    allowed, words = RETURNS[what]
+    if not allowed(value):
+        raise Refused([f"the caller's {what} returned {value!r:.200}, which is not {words}; fix the caller"])
+    return value
 
 
 def unit_names(caller, review: str) -> List[str]:
     """The review's units in the order the caller lists them, each a name safe to keep a file under."""
-    names = list(hook("units", lambda: list(caller.units(review))))
+    names = list(hook("units", caller.units, review))
     problems = [f"the unit name {name!r} is not a plain name of letters, digits, dots, dashes and underscores; fix the "
                 "caller's units" for name in names if not isinstance(name, str) or not UNIT_NAME.match(name)]
-    if len(set(names)) != len(names):
+    if len(set(map(repr, names))) != len(names):
         problems.append("the caller lists a unit name twice; each unit needs a name of its own")
     if not names:
         problems.append(f"the caller finds no unit in the review folder {review}; check the folder is the one the "
@@ -232,12 +312,19 @@ def unit_names(caller, review: str) -> List[str]:
 
 
 def named(value: Any, kind) -> bool:
-    """Whether `value` is of `kind` (a bool is never a number), and a string is not empty."""
+    """Whether `value` is of `kind`: a bool is never a number, a number is finite and not negative, and a string is not empty."""
     if kind is str:
         return isinstance(value, str) and bool(value.strip())
     if kind is bool:
         return isinstance(value, bool)
-    return isinstance(value, kind) and not isinstance(value, bool)
+    if isinstance(value, bool) or not isinstance(value, kind):
+        return False
+    if isinstance(value, (int, float)):
+        try:
+            return math.isfinite(float(value)) and value >= 0
+        except OverflowError:
+            return False
+    return True
 
 
 def field_problem(source: Any, key: str, kind, what: str, where: str) -> Optional[str]:
@@ -250,7 +337,7 @@ def field_problem(source: Any, key: str, kind, what: str, where: str) -> Optiona
 
 
 KIND_WORDS = {str: "a non-empty string", list: "a list", dict: "a mapping", bool: "true or false",
-              (int, float): "a number", int: "a whole number"}
+              (int, float): "a finite number of zero or more", int: "a whole number of zero or more"}
 #: The figures a result report must give for a session that succeeded, with the kind of each.
 FIGURE_FIELDS = (("total_cost_usd", (int, float)), ("duration_api_ms", (int, float)), ("num_turns", int))
 TOKEN_FIELDS = (("cache_read", "cache_read_input_tokens"), ("cache_write", "cache_creation_input_tokens"),
@@ -318,16 +405,19 @@ def require_agent() -> str:
         raise board_check.CannotRun(f"the agent command line {program} is not on the search path; install it, or name "
                                     f"the program in the environment variable {AGENT_ENV}")
     try:
-        status = subprocess.run([found, "auth", "status"], capture_output=True, text=True, timeout=60)
+        status = subprocess.run([found, "auth", "status"], capture_output=True, text=True, encoding="utf-8",
+                                errors="replace", timeout=60)
     except (OSError, subprocess.SubprocessError) as error:
         raise board_check.CannotRun(f"the agent command line {program} could not report its login ({error}); check it runs")
-    logged_out = status.returncode != 0
     try:
-        logged_out = logged_out or json.loads(status.stdout).get("loggedIn") is False
-    except (ValueError, AttributeError):
-        pass
-    if logged_out:
-        raise board_check.CannotRun(f"the agent command line {program} is not logged in; log it in, then run again")
+        parsed = json.loads(status.stdout)
+    except (ValueError, RecursionError):
+        parsed = None
+    if status.returncode != 0 or not isinstance(parsed, dict) or parsed.get("loggedIn") is not True:
+        printed = board_check.clean(status.stdout.strip())[:200] or "nothing"
+        raise board_check.CannotRun(f"the agent command line {program} is not logged in: `auth status` exited "
+                                    f"{status.returncode} and printed {printed!r}, not an object whose loggedIn is true; "
+                                    "log it in, then run again")
     return found
 
 
@@ -338,16 +428,27 @@ def quiet_arguments() -> List[str]:
 
 
 def parse_stream(text: str) -> Session:
+    """The session as the stream shows it. A line that is not a JSON event, an event with no string `type`, and a
+    second start or result report are malformed; an event of a type the command does not read is passed over."""
     session = Session()
     for line in text.splitlines():
+        if not line.strip():
+            continue
         try:
             event = json.loads(line)
-        except ValueError:
+        except (ValueError, RecursionError):
+            session.malformed.append(f"printed a line that is not a JSON event: {board_check.clean(line)[:120]!r}")
             continue
         if not isinstance(event, dict):
+            session.malformed.append(f"printed a line that is not a JSON event: {board_check.clean(line)[:120]!r}")
             continue
-        kind = event.get("type")
+        if not isinstance(event.get("type"), str):
+            session.malformed.append(f"printed an event with no string `type`: {board_check.clean(line)[:120]!r}")
+            continue
+        kind = event["type"]
         if kind == "system" and event.get("subtype") == "init":
+            if session.start:
+                session.malformed.append("printed a second start report")
             session.start = event
         elif kind == "assistant":
             message = event.get("message")
@@ -359,10 +460,15 @@ def parse_stream(text: str) -> Session:
                 parse_block(session, item)
         elif kind == "user":
             message = event.get("message")
-            for item in (message.get("content") if isinstance(message, dict) else None) or []:
-                if isinstance(item, dict) and item.get("type") == "tool_result" and item.get("is_error") is True:
-                    session.failed_tool_uses.add(item.get("tool_use_id"))
+            content = message.get("content") if isinstance(message, dict) else None
+            # Only a tool result the stream marks failed is kept, to excuse that read; anything else excuses nothing.
+            for item in content if isinstance(content, list) else []:
+                if (isinstance(item, dict) and item.get("type") == "tool_result" and item.get("is_error") is True
+                        and named(item.get("tool_use_id"), str)):
+                    session.failed_tool_uses.add(item["tool_use_id"])
         elif kind == "result":
+            if session.result is not None:
+                session.malformed.append("printed a second result report")
             session.result = event
             parse_result_report(session, event)
     return session
@@ -394,7 +500,7 @@ def parse_block(session: Session, item: Any) -> None:
         return
     if name == "Read" and not named(given.get("file_path"), str):
         session.malformed.append("printed a Read tool use with no string `input.file_path`; it cannot be shown which file was read")
-    session.tool_uses.append((name, given, str(item.get("id") or "")))
+    session.tool_uses.append((name, given, item["id"] if named(item.get("id"), str) else ""))
 
 
 def parse_result_report(session: Session, result: Dict[str, Any]) -> None:
@@ -431,7 +537,12 @@ def call_agent(program: str, prompt: str, tools: Sequence[str], cwd: str, resume
     if model:
         command += ["--model", model]
     began = time.time()
-    done = subprocess.run(command, cwd=cwd, capture_output=True, text=True, env={**os.environ, **QUIET_ENVIRONMENT})
+    try:
+        done = subprocess.run(command, cwd=cwd, capture_output=True, text=True, encoding="utf-8", errors="replace",
+                              env={**os.environ, **QUIET_ENVIRONMENT})
+    except (OSError, subprocess.SubprocessError) as error:
+        raise board_check.CannotRun(f"the agent command line {program} could not be started ({error}); check it is "
+                                    "installed and runs, then run again")
     session = parse_stream(done.stdout)
     session.exit_code, session.stderr = done.returncode, done.stderr.strip()
     session.wall_s = time.time() - began
@@ -494,9 +605,17 @@ def start_problems(session: Session, label: str, tools: Sequence[str], model: Op
                if not (isinstance(plugin, dict) and plugin.get("path") == "builtin")]
     if outside:
         found.append(f"{label} started with plugins {outside}, which it was asked to exclude")
-    if typed["cwd"] is not None and os.path.realpath(typed["cwd"]) != os.path.realpath(review):
-        found.append(f"{label} started in {typed['cwd']}, not the review folder {review}")
+    if typed["cwd"] is not None and not same_path(typed["cwd"], review):
+        found.append(f"{label} started in {typed['cwd']!r}, not the review folder {review}")
     return found
+
+
+def same_path(given: str, folder: str) -> bool:
+    """Whether a path the agent command line printed is `folder`; one that cannot be a path is not."""
+    try:
+        return os.path.realpath(given) == os.path.realpath(folder)
+    except (ValueError, OSError):
+        return False
 
 
 def non_text(path: str, review: str) -> bool:
@@ -507,7 +626,7 @@ def non_text(path: str, review: str) -> bool:
     try:
         with open(full, "rb") as handle:
             head = handle.read(8192)
-    except OSError:
+    except (OSError, ValueError):
         return True
     if b"\0" in head:
         return True
@@ -571,6 +690,12 @@ def own(cumulative: Dict[str, Any], setup: Optional[Dict[str, Any]]) -> Dict[str
             "wall_s": cumulative["wall_s"], "tokens": dict(cumulative["tokens"])}
 
 
+def below(cumulative: Dict[str, Any], setup: Optional[Dict[str, Any]]) -> List[str]:
+    """The cumulative figures that are lower than those of the session they include, so the session's own cannot be told."""
+    taken = setup or {}
+    return [key for key in ("cost_usd", "api_ms", "turns") if cumulative[key] < taken.get(key, 0)]
+
+
 def total(parts: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
     tokens = {key: sum(part["tokens"][key] for part in parts) for key in ("cache_read", "cache_write", "fresh", "generated")}
     return {"cost_usd": round(sum(part["cost_usd"] for part in parts), 6), "api_ms": sum(part["api_ms"] for part in parts),
@@ -588,7 +713,7 @@ def parse_result(text: str) -> Dict[str, Any]:
     body = fenced.group(1) if fenced else body
     try:
         found = json.loads(body)
-    except ValueError:
+    except (ValueError, RecursionError):
         raise Malformed(["the reviewer's answer is not a JSON object"])
     if not isinstance(found, dict) or not isinstance(found.get("tables"), dict):
         raise Malformed(["the reviewer's answer has no `tables` mapping"])
@@ -616,6 +741,10 @@ def table_problems(caller, review: str, unit: str, tables: Dict[str, Any]) -> Li
                              f"its columns are {columns}")
             if absent:
                 found.append(f"unit {unit}'s table {name!r} row {number} lacks the column {absent}")
+            odd = [column for column in columns if column in row and not cell(row[column])]
+            if odd:
+                found.append(f"unit {unit}'s table {name!r} row {number} has " + ", ".join(
+                    f"{column!r} as {row[column]!r:.80}" for column in odd) + ", not text or a finite number")
             verdict = declared[name].get("verdict_column")
             if verdict and verdict in row and (not isinstance(row[verdict], str)
                                                or row[verdict] not in declared[name]["verdicts"]):
@@ -627,9 +756,21 @@ def table_problems(caller, review: str, unit: str, tables: Dict[str, Any]) -> Li
     return found
 
 
+def cell(value: Any) -> bool:
+    """Whether a table cell is text or a finite number, the only cells a record holds."""
+    if isinstance(value, str):
+        return True
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return False
+    try:
+        return math.isfinite(float(value))
+    except OverflowError:
+        return False
+
+
 def this_round(findings: Dict[str, Any], review: str) -> Optional[str]:
     """This round's label when the caller's citation pattern carries a round, otherwise None."""
-    return str(hook("round", findings["round"], review)) if "round" in findings["citation"].groupindex else None
+    return hook("round", findings["round"], review) if "round" in findings["citation"].groupindex else None
 
 
 def finding_problems(findings: Dict[str, Any], review: str, unit: str, tables: Dict[str, Any]) -> List[str]:
@@ -645,8 +786,8 @@ def finding_problems(findings: Dict[str, Any], review: str, unit: str, tables: D
         if row[findings["item"]] not in findings["checklist"]:
             found.append(f"unit {unit} raised a finding on {row[findings['item']]!r}, which is no item of the checklist")
     current = this_round(findings, review)
-    earlier = hook("earlier", lambda: {(str(round_), int(number)) for round_, number in findings["earlier"](review)}
-                   ) if current is not None else set()
+    earlier = {(round_, number) for round_, number in hook("earlier", findings["earlier"], review)
+               } if current is not None else set()
     for table, column in findings["citations"]:
         for row in tables.get(table, []):
             for match in findings["citation"].finditer(str(row[column])):
@@ -689,7 +830,7 @@ def merge(caller, review: str, order: Sequence[str], results: Dict[str, Dict[str
                                               else replace_number(match, renamed, unit)), str(row[column]))
     tables = {name: {"columns": list(spec["columns"]), "rows": [row for _, row in rows[name]]}
               for name, spec in caller.TABLES.items()}
-    refused = hook("CHECK", lambda: list(caller.CHECK(review, list(order), tables)))
+    refused = hook("CHECK", caller.CHECK, review, list(order), tables)
     if refused:
         raise Refused(refused)
     return {"tables": tables, "same_place": same_place}
@@ -711,7 +852,7 @@ def renumber(findings: Dict[str, Any], review: str, order: Sequence[str], result
     for _, _, _, unit, row in raised:
         key = hook("key", findings["key"], row)
         if key is not None:
-            groups.setdefault(str(key), []).append((row[findings["number"]], unit))
+            groups.setdefault(key, []).append((row[findings["number"]], unit))
     same = [{"key": key, "findings": sorted(number for number, _ in members),
              "units": sorted({unit for _, unit in members})}
             for key, members in groups.items() if len(members) > 1]
@@ -725,7 +866,7 @@ def replace_number(match: "re.Match", renamed: Dict[Tuple[str, int], int], unit:
     return whole[:start - match.start()] + str(new) + whole[end - match.start():]
 
 
-# --- The run -----------------------------------------------------------------------------------
+# --- Files ----------------------------------------------------------------------------------------
 
 
 def stamp() -> str:
@@ -746,6 +887,120 @@ def read_json(path: str) -> Any:
         return json.load(handle)
 
 
+# --- The records kept in the output folder -------------------------------------------------------
+
+#: A string that may be empty, as a session's id is when it printed no start report.
+ANY_TEXT = "any text"
+KIND_WORDS[ANY_TEXT] = "text"
+#: The figures every kept session and setup session carries, as `figures` and `own` make them.
+FIGURES_SHAPE = {"cost_usd": (int, float), "api_ms": int, "turns": int, "wall_s": (int, float),
+                 "tokens": {"cache_read": int, "cache_write": int, "fresh": int, "generated": int}}
+SESSION_SHAPE = {**FIGURES_SHAPE, "attempt": int, "session": ANY_TEXT, "mode": str, "flags": [str]}
+SETUP_SHAPE = {**FIGURES_SHAPE, "id": str, "at": str, "kind": str, "units": [str], "model": str}
+RERUN_SHAPE = {"at": str, "units": [str], "new_setup_session": bool, "setup_session": str}
+UNIT_SHAPE = {"unit": str, "tables": dict, "raw": str, "sessions": [SESSION_SHAPE], "superseded": [SESSION_SHAPE],
+              "ran_at": str, "setup": int, "attempts": int}
+
+
+def shape_problem(value: Any, shape: Any, where: str) -> Optional[str]:
+    """Why a kept record is not of `shape`: a mapping of keys to shapes, a one-item list of the shape of each item, or
+    a kind. The one place the records read back from the output folder are typed."""
+    if isinstance(shape, dict):
+        if not isinstance(value, dict):
+            return f"{where} is not a mapping"
+        for key, inner in shape.items():
+            why = f"{where} has no `{key}`" if key not in value else shape_problem(value[key], inner, f"{where}.{key}")
+            if why:
+                return why
+        return None
+    if isinstance(shape, list):
+        if not isinstance(value, list):
+            return f"{where} is not a list"
+        for number, item in enumerate(value):
+            why = shape_problem(item, shape[0], f"{where}[{number}]")
+            if why:
+                return why
+        return None
+    if shape is ANY_TEXT and isinstance(value, str) or shape is not ANY_TEXT and named(value, shape):
+        return None
+    return f"{where} is {value!r:.80}, not {KIND_WORDS[shape]}"
+
+
+def read_record(path: str, shape: Any, what: str, advice: str, extra: Callable[[Any], Optional[str]] = lambda _: None) -> Any:
+    """A record kept in the output folder, typed against `shape` and `extra`; one that cannot be read or is not of its
+    shape is a refusal naming the file and what to do, never a traceback or a default."""
+    try:
+        content = read_json(path)
+    except (OSError, ValueError, RecursionError) as error:
+        why = str(error)
+    else:
+        why = shape_problem(content, shape, os.path.basename(path)) or extra(content)
+        if why is None:
+            return content
+    raise Refused([f"the {what} {path} cannot be read ({why}); {advice}"])
+
+
+RESTORE = "restore it, or run into a new output folder"
+
+
+def kept_setups(folder: str) -> List[Dict[str, Any]]:
+    path = os.path.join(folder, SETUPS)
+    return read_record(path, [SETUP_SHAPE], "list of setup sessions", RESTORE) if os.path.lexists(path) else []
+
+
+def kept_reruns(folder: str) -> List[Dict[str, Any]]:
+    path = os.path.join(folder, RERUNS)
+    return read_record(path, [RERUN_SHAPE], "list of runs again", RESTORE) if os.path.lexists(path) else []
+
+
+def kept_result(folder: str, unit: str, setups: int) -> Dict[str, Any]:
+    """The unit's kept result, which names the unit, holds a session for each attempt and cites a kept setup session."""
+    def extra(kept: Dict[str, Any]) -> Optional[str]:
+        if kept["unit"] != unit:
+            return f"it holds unit {kept['unit']!r}"
+        if not kept["sessions"] or kept["attempts"] < 1:
+            return "it holds no attempt"
+        if kept["setup"] >= setups:
+            return f"it cites setup session {kept['setup']}, and the list of setup sessions holds {setups}"
+        return None
+    return read_record(os.path.join(folder, UNITS_FOLDER, f"{unit}.json"), UNIT_SHAPE, f"kept result of unit {unit}",
+                       f"restore it, or name {unit} with --rerun to judge it again", extra)
+
+
+def kept_failed(folder: str, unit: str) -> List[Dict[str, Any]]:
+    path = os.path.join(folder, FAILED_FOLDER, f"{unit}.json")
+    return read_record(path, [SESSION_SHAPE], f"record of unit {unit}'s failed attempts",
+                       "restore it, or delete it to run the unit again without its cost") if os.path.lexists(path) else []
+
+
+def folder_problems(folder: str, order: Sequence[str]) -> List[str]:
+    """Why a record the output folder keeps for this review cannot be read, each naming its file."""
+    found: List[str] = []
+    setups: List[Dict[str, Any]] = []
+    for read in (lambda: setups.extend(kept_setups(folder)), lambda: kept_reruns(folder)):
+        try:
+            read()
+        except Refused as error:
+            found += error.causes
+    for unit in order:
+        reads = [lambda unit=unit: kept_failed(folder, unit)]
+        if os.path.lexists(os.path.join(folder, UNITS_FOLDER, f"{unit}.json")):
+            reads.append(lambda unit=unit: kept_result(folder, unit, len(setups)))
+        for read in reads:
+            try:
+                read()
+            except Refused as error:
+                found += error.causes
+    return found
+
+
+def holds_any(folder: str) -> bool:
+    return os.path.isdir(folder) and bool(os.listdir(folder))
+
+
+# --- The run -----------------------------------------------------------------------------------
+
+
 class Run:
     """One run of the command: a caller's review, judged unit by unit, into an output folder."""
 
@@ -760,15 +1015,16 @@ class Run:
     def failed_path(self, unit: str) -> str:
         return os.path.join(self.out, FAILED_FOLDER, f"{unit}.json")
 
+    def unsettled_path(self, unit: str) -> str:
+        return os.path.join(self.out, UNSETTLED_FOLDER, f"{unit}.json")
+
     def earlier_sessions(self, unit: str) -> List[Dict[str, Any]]:
         """The sessions the unit already cost in earlier runs: those behind its kept result and its failed attempts."""
         found: List[Dict[str, Any]] = []
-        if os.path.isfile(self.unit_path(unit)):
-            kept = read_json(self.unit_path(unit))
-            found += kept.get("superseded", []) + kept["sessions"]
-        if os.path.isfile(self.failed_path(unit)):
-            found += read_json(self.failed_path(unit))
-        return found
+        if os.path.lexists(self.unit_path(unit)):
+            kept = kept_result(self.out, unit, len(kept_setups(self.out)))
+            found += kept["superseded"] + kept["sessions"]
+        return found + self.failed_sessions(unit)
 
     def judge(self, unit: str, resume: str, fork: bool, setup: Dict[str, Any], model: str, setup_index: int) -> Dict[str, Any]:
         """One unit, run once more when its reviewer errors, returns nothing or returns tables the caller does not allow."""
@@ -777,7 +1033,7 @@ class Run:
         # also reports the turns before it.
         base = setup["cumulative"]
         try:
-            prompt = self.caller.unit_prompt(unit)
+            prompt = hook("unit_prompt", self.caller.unit_prompt, unit)
             for number in (1, 2):
                 try:
                     session = with_rate_retry(lambda: call_agent(self.program, prompt, self.caller.TOOLS, self.review, resume,
@@ -785,15 +1041,18 @@ class Run:
                 except UnitFailed as error:
                     raise UnitFailed(f"unit {unit} failed: {error}", sessions)
                 cumulative = figures(session)
-                # A session that gave no figures cost nothing that can be told, and has no setup session's to take off.
-                figure = own(cumulative, base) if session.reported else cumulative
-                if not fork and session.reported:
+                short = below(cumulative, base) if session.reported else []
+                # A session that gave no figures, or figures below those it includes, cost nothing that can be told.
+                figure = own(cumulative, base) if session.reported and not short else {**empty_figures(), "wall_s": cumulative["wall_s"]}
+                if not fork and session.reported and not short:
                     base = cumulative
-                flags = ["no report"] if not session.reported else (
+                flags = ["no report"] if not session.reported else ["figures below those it includes"] if short else (
                     ["no cache read"] if fork and figure["tokens"]["cache_read"] == 0 else [])
                 sessions.append({"attempt": number, "session": session.id, "mode": "fork" if fork else "setup session",
                                  "flags": flags, **figure})
-                problems = start_problems(session, label, self.caller.TOOLS, model, self.review)
+                problems = start_problems(session, label, self.caller.TOOLS, model, self.review) + (
+                    [f"{label} reported a cumulative {', '.join(short)} below that of the session it was resumed from, so "
+                     "its own cannot be told"] if short else [])
                 if problems:
                     raise UnitFailed(f"unit {unit} failed: " + "; ".join(problems), sessions)
                 result = session.result or {}
@@ -811,35 +1070,49 @@ class Run:
                 kept = {"unit": unit, "tables": tables, "raw": session.text, "sessions": sessions, "ran_at": stamp(),
                         "setup": setup_index, "attempts": number, "superseded": self.earlier_sessions(unit)}
                 write_json(self.unit_path(unit), kept)
-                if os.path.isfile(self.failed_path(unit)):
-                    os.remove(self.failed_path(unit))
+                for settled in (self.failed_path(unit), self.unsettled_path(unit)):
+                    if os.path.lexists(settled):
+                        os.remove(settled)
                 return kept
             raise UnitFailed(f"unit {unit} failed after {len(sessions)} attempts; the reviewer returned: {last}", sessions)
         except UnitFailed:
             raise
+        except Refused as error:
+            raise UnitFailed(f"unit {unit} failed: {'; '.join(error.causes)}", sessions)
         except board_check.CannotRun as error:
             raise LoginLost(unit, str(error), sessions)
         except Exception as error:  # a defect in one unit's worker is that unit's failure and the others go on
             raise UnitFailed(f"unit {unit} failed: {type(error).__name__}: {error}", sessions)
 
     def setup_session(self, model: Optional[str]) -> Tuple[Session, Dict[str, Any]]:
+        """The checked setup session and its figures; anything that stops the check is a refusal, never a traceback."""
+        try:
+            return self.checked_setup(model)
+        except (Refused, board_check.CannotRun):
+            raise
+        except Exception as error:  # the setup session's output is not this command's; what it breaks is reported
+            raise Refused([f"the setup session could not be checked ({type(error).__name__}: {error}); check the agent "
+                           "command line's output, then run again"])
+
+    def checked_setup(self, model: Optional[str]) -> Tuple[Session, Dict[str, Any]]:
         prompt = f"{self.caller.SETUP_PROMPT.rstrip()}\n\n{ACK_INSTRUCTION}"
         try:
             session = with_rate_retry(lambda: call_agent(self.program, prompt, READ_TOOLS, self.review, model=model),
                                       self.wait, self.sleep)
         except UnitFailed as error:
             raise Refused([f"the setup session {error}; wait, then run again"])
+        problems = start_problems(session, "the setup session", READ_TOOLS, model, self.review)
         result = session.result or {}
-        if session.exit_code != 0 or result.get("is_error"):
-            raise Refused([f"the setup session failed and returned: {session.said()}; check the agent command line runs "
-                           "from the review folder, then run again"])
-        problems = start_problems(session, "the setup session", READ_TOOLS, model, self.review) + setup_problems(session, self.review)
+        if session.exit_code != 0 or result.get("is_error") is not False:
+            raise Refused(problems + [f"the setup session failed and returned: {session.said()}; check the agent command "
+                                      "line runs from the review folder, then run again"])
+        problems += setup_problems(session, self.review)
         if problems:
             raise Refused(problems)
         return session, figures(session)
 
     def failed_sessions(self, unit: str) -> List[Dict[str, Any]]:
-        return read_json(self.failed_path(unit)) if os.path.isfile(self.failed_path(unit)) else []
+        return kept_failed(self.out, unit)
 
     def run(self, order: Sequence[str], named: Sequence[str]) -> Tuple[Dict[str, Any], Dict[str, Optional[UnitFailed]]]:
         """Judge `named` units (all of `order` when none), returning the setup entry and each unit's failure, if any."""
@@ -847,12 +1120,16 @@ class Run:
         model = session.start["model"]
         setup = {"id": session.id, "at": stamp(), "kind": "rerun" if named else "initial",
                  "units": list(named or order), "model": model, "cumulative": cumulative, **own(cumulative, None)}
-        known = read_json(os.path.join(self.out, SETUPS)) if os.path.isfile(os.path.join(self.out, SETUPS)) else []
+        known = kept_setups(self.out)
         setup_index = len(known)
         write_json(os.path.join(self.out, SETUPS), known + [{key: value for key, value in setup.items() if key != "cumulative"}])
         failures: Dict[str, Optional[UnitFailed]] = {}
         todo = list(named or order)
         fork = len(order) > 1
+        # Each unit named to run again is unsettled from before its reviewer starts until its result is kept, so
+        # whatever stops it, a later run that leaves it out is refused.
+        for unit in named:
+            write_json(self.unsettled_path(unit), {"unit": unit, "at": setup["at"], "setup_session": setup["id"]})
 
         def one(unit: str) -> None:
             try:
@@ -863,7 +1140,7 @@ class Run:
                 try:
                     if error.sessions:
                         write_json(self.failed_path(unit), self.failed_sessions(unit) + error.sessions)
-                except (OSError, ValueError) as lost:
+                except (OSError, Refused) as lost:
                     failures[unit] = UnitFailed(f"{error}; its cost could not be kept ({lost})", error.sessions)
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.bound) as pool:
@@ -956,7 +1233,7 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout, err=sys.stderr) -> in
     parser.add_argument("--bound", default=None, help="the most reviewers at once (default: the caller's)")
     parser.add_argument("--model", default=None, help="the model every session uses (default: the agent command line's own)")
     parser.add_argument("--rerun", action="append", default=[], help="a unit to run again, with the others' kept results merged; repeat for each")
-    parser.add_argument("--rate-limit-wait", type=float, default=5.0, help="seconds before the first retry of a call refused for a rate limit; it doubles each time")
+    parser.add_argument("--rate-limit-wait", default="5", help="seconds before the first retry of a call refused for a rate limit; it doubles each time")
     parser.add_argument("--json", action="store_true", help="print the report as one JSON document")
     args = parser.parse_args(argv)
     review, folder = os.path.abspath(args.review), os.path.abspath(args.out)
@@ -977,6 +1254,14 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout, err=sys.stderr) -> in
             if bound < 1:
                 causes.append(f"the bound {bound} is below one; give one or more reviewers at once")
     try:
+        wait = float(args.rate_limit_wait)
+    except ValueError:
+        wait = None
+    if wait is None or not named(wait, (int, float)):
+        causes.append(f"the rate limit wait {args.rate_limit_wait!r} is not a finite number of seconds of zero or more; give one")
+    if args.model is not None and not named(args.model, str):
+        causes.append(f"the model {args.model!r} is empty; give a full model id, or leave --model out")
+    try:
         caller = load_caller(args.caller, os.path.abspath(args.callers))
     except Refused as error:
         causes += error.causes
@@ -987,46 +1272,38 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout, err=sys.stderr) -> in
         order = unit_names(caller, review)
     except Refused as error:
         return refuse(error.causes)
-    named = list(dict.fromkeys(args.rerun))
-    unknown = [name for name in named if name not in order]
+    named_units = list(dict.fromkeys(args.rerun))
+    unknown = [name for name in named_units if name not in order]
     if unknown:
         return refuse([f"{', '.join(unknown)} is not a unit of the review; the units are {', '.join(order)}"])
     created = not os.path.isdir(folder)
-    os.makedirs(folder, exist_ok=True)
     lock = os.path.join(folder, LOCK)
     try:
+        os.makedirs(folder, exist_ok=True)
         handle = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
     except FileExistsError:
         return refuse([f"the output folder {folder} is in use by another run (it holds {LOCK}); wait for that run, or "
                        "delete the file if no run is in the folder"])
+    except OSError as error:
+        return refuse([f"the output folder {folder} cannot be written ({error}); give a folder this user can write"])
     os.close(handle)
     try:
-        held = any(os.path.isfile(os.path.join(folder, name)) for name in (RECORD, SETUPS)) or (
-            os.path.isdir(os.path.join(folder, UNITS_FOLDER)) and bool(os.listdir(os.path.join(folder, UNITS_FOLDER))))
-        if held and not named:
+        held = any(os.path.lexists(os.path.join(folder, name)) for name in (RECORD, SETUPS, RERUNS)) or any(
+            holds_any(os.path.join(folder, name)) for name in (UNITS_FOLDER, FAILED_FOLDER, UNSETTLED_FOLDER))
+        if held and not named_units:
             return refuse([f"the output folder {folder} already holds a record; give a new or empty folder, or name the "
                            "units to run again with --rerun"])
-        if named and not held:
-            return refuse([f"the output folder {folder} holds no earlier result to run {', '.join(named)} again against; "
-                           "run without --rerun into a new folder first"])
-        if named:
-            lacking = [name for name in order if name not in named and not os.path.isfile(os.path.join(folder, UNITS_FOLDER, f"{name}.json"))]
+        if named_units and not held:
+            return refuse([f"the output folder {folder} holds no earlier result to run {', '.join(named_units)} again "
+                           "against; run without --rerun into a new folder first"])
+        if named_units:
+            lacking = [name for name in order if name not in named_units
+                       and not os.path.lexists(os.path.join(folder, UNITS_FOLDER, f"{name}.json"))]
             if lacking:
                 return refuse([f"the output folder holds no result for {', '.join(lacking)}; name each of them with --rerun too"])
-            unreadable, unsettled = [], []
-            for name in order:
-                failed = os.path.join(folder, FAILED_FOLDER, f"{name}.json")
-                if not os.path.isfile(failed):
-                    continue
-                try:
-                    if not isinstance(read_json(failed), list):
-                        raise ValueError("it is not a list of sessions")
-                except (OSError, ValueError) as error:
-                    unreadable.append(f"the record of unit {name}'s failed attempts {failed} cannot be read ({error}); "
-                                      "restore it, or delete it to run the unit again without its cost")
-                    continue
-                if name not in named:
-                    unsettled.append(name)
+            unreadable = folder_problems(folder, order)
+            unsettled = [name for name in order if name not in named_units
+                         and os.path.lexists(os.path.join(folder, UNSETTLED_FOLDER, f"{name}.json"))]
             if unreadable or unsettled:
                 return refuse(unreadable + [f"unit {name}'s last run again failed, so its kept result is not settled; name "
                                             f"{name} with --rerun too" for name in unsettled])
@@ -1035,15 +1312,15 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout, err=sys.stderr) -> in
         except board_check.CannotRun as error:
             report["result"], report["cannot_run"], report["detail"] = "CANNOT RUN", str(error), "nothing was run"
             return finish(report, out, args.json, err)
-        return execute(report, caller, review, folder, order, named, program, bound or caller.BOUND, args, out, err)
+        return execute(report, caller, review, folder, order, named_units, program, bound or caller.BOUND, wait, args, out, err)
     finally:
         os.remove(lock)
         if created and not os.listdir(folder):
             os.rmdir(folder)
 
 
-def execute(report, caller, review, folder, order, named, program, bound, args, out, err) -> int:
-    run = Run(caller, review, folder, program, bound, args.model, args.rate_limit_wait)
+def execute(report, caller, review, folder, order, named, program, bound, wait, args, out, err) -> int:
+    run = Run(caller, review, folder, program, bound, args.model, wait)
     try:
         setup, failures = run.run(order, named)
     except board_check.CannotRun as error:
@@ -1054,30 +1331,48 @@ def execute(report, caller, review, folder, order, named, program, bound, args, 
         report["refusals"] += error.causes
         report["detail"] = "no unit was started"
         return finish(report, out, args.json, err)
-    setups = read_json(os.path.join(folder, SETUPS))
-    report["setup_sessions"] = [{key: value for key, value in entry.items() if key != "cumulative"} for entry in setups]
+    except OSError as error:
+        report["refusals"].append(f"the output folder {folder} could not be written ({error}); give a folder this user "
+                                  "can write, then run again")
+        report["detail"] = "no unit was started"
+        return finish(report, out, args.json, err)
+    try:
+        return report_run(report, run, caller, review, folder, order, named, setup, failures, args, out, err)
+    except Refused as error:
+        report["refusals"] += error.causes
+        report["detail"] = f"a kept record could not be read back; the units' results are kept in {folder}"
+        return finish(report, out, args.json, err)
+
+
+def report_run(report, run, caller, review, folder, order, named, setup, failures, args, out, err) -> int:
+    setups = kept_setups(folder)
+    report["setup_sessions"] = list(setups)
     results, parts = {}, []
     for unit in order:
-        path = run.unit_path(unit)
         failed = failures.get(unit)
         if failed:
-            behind = run.earlier_sessions(unit)
+            detail = str(failed)
+            try:
+                behind = run.earlier_sessions(unit)
+            except Refused as error:
+                behind = list(failed.sessions)
+                detail += f"; its earlier cost could not be read ({'; '.join(error.causes)})"
             report["units"].append({"unit": unit, "status": "failed", "mode": "fork" if len(order) > 1 else "setup session",
                                     "session": failed.sessions[-1]["session"] if failed.sessions else "",
                                     "attempts": len(failed.sessions), "own": total(behind) if behind else empty_figures(),
                                     "flags": sorted({flag for session in behind for flag in session["flags"]}),
-                                    "run_again": unit in named, "detail": str(failed), "ran_at": "", "setup_session": setup["id"]})
+                                    "run_again": unit in named, "detail": detail, "ran_at": "", "setup_session": setup["id"]})
             continue
-        kept = read_json(path)
+        kept = kept_result(folder, unit, len(setups))
         results[unit] = kept["tables"]
         report["units"].append(unit_entry(kept, unit in named, setups, run.failed_sessions(unit)))
     for entry in report["units"]:
         parts.append(entry["own"])
     report["totals"] = total([{key: entry[key] for key in empty_figures()} for entry in setups] + parts)
-    again = read_json(os.path.join(folder, "reruns.json")) if os.path.isfile(os.path.join(folder, "reruns.json")) else []
+    again = kept_reruns(folder)
     if named:
         again.append({"at": setup["at"], "units": list(named), "new_setup_session": True, "setup_session": setup["id"]})
-        write_json(os.path.join(folder, "reruns.json"), again)
+        write_json(os.path.join(folder, RERUNS), again)
     report["reruns"] = again
     broken = [unit for unit in order if failures.get(unit)]
     if broken:

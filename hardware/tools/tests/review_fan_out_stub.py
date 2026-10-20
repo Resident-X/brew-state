@@ -14,8 +14,12 @@ event, or with the first read in one event when `setup.same_event` is set), and
 `setup.uses` lists tools it uses besides Read. Any session's scenario entry may
 also hold `start_omit` and `result_omit` (fields left out of the start report and
 the result report), `start_set` and `result_set` (fields given other values),
-`read_inputs` (the raw input of each Read it makes, in place of `reads`) and
-`failed_reads` (paths it reads whose tool result is an error).
+`read_inputs` (the raw input of each Read it makes, in place of `reads`),
+`failed_reads` (paths it reads whose tool result is an error), `lines` (lines it
+prints as they are, after its start report), `garbled` (bytes that are not UTF-8,
+printed to its output and its error stream) and `no_result` (it prints no result
+report and exits 0). The scenario's `auth_stdout`, when given, is what `auth
+status` prints in place of its report, and `auth` its exit status.
 """
 
 import json
@@ -38,7 +42,10 @@ def main():
         scenario = json.load(handle)
     log = os.environ["STUB_LOG"]
     if args[:2] == ["auth", "status"]:
-        print(json.dumps({"loggedIn": scenario.get("auth", 0) == 0}))
+        if scenario.get("auth_garbled"):
+            sys.stdout.buffer.write(b"\xff\xfe{\x80}\n")
+        else:
+            print(scenario["auth_stdout"] if "auth_stdout" in scenario else json.dumps({"loggedIn": scenario.get("auth", 0) == 0}))
         return scenario.get("auth", 0)
     prompt = flag(args, "-p")
     resume, forked = flag(args, "--resume"), "--fork-session" in args
@@ -86,6 +93,14 @@ def main():
     for key in outcome.get("start_omit", []):
         start.pop(key, None)
     print(json.dumps(start))
+    for line in outcome.get("lines", []):
+        print(line)
+    if outcome.get("garbled"):
+        sys.stdout.flush()
+        sys.stdout.buffer.write(b"\xff\xfe garbled \x80\n")
+        sys.stdout.buffer.flush()
+        sys.stderr.buffer.write(b"\xff\xfe garbled \x80\n")
+        sys.stderr.buffer.flush()
     inputs = outcome.get("read_inputs", [{"file_path": path} for path in reads + outcome.get("failed_reads", [])])
     uses = [{"type": "tool_use", "id": f"toolu_{number}", "name": "Read", "input": given} for number, given in enumerate(inputs)]
     failed = [use["id"] for use in uses[len(inputs) - len(outcome.get("failed_reads", [])):]] if outcome.get("failed_reads") else []
@@ -115,6 +130,8 @@ def main():
         print(json.dumps({"type": "result", "subtype": "success", "is_error": True, "result": outcome["prose"],
                           "session_id": session}))
         return 1
+    if outcome.get("no_result"):
+        return 0
     if outcome.get("exit"):
         sys.stderr.write(outcome.get("stderr", "the reviewer crashed"))
         return outcome["exit"]
