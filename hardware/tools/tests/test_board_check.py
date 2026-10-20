@@ -2133,6 +2133,7 @@ json.dump(report, open(out, "w"))
         # SOL-HW-BOARD-CLASS-READ-ANY-SIZE.C1: A net class's membership is read completely and identically on every run, on a board of any size
         found = self.check(board_check.REPORT_LIMIT - 2)
         self.assertEqual(self.cut(found), [])
+        # This design holds no board rules record, which a design now needs; its own rule is tested apart.
         self.assertEqual({v.rule for v in found if not v.rule.startswith("parts_") and v.rule != "board_rules_record"}, {"assertion_failure"})
 
     def test_a_marker_crowded_out_of_a_full_report_is_not_taken_for_unloaded_rules(self):

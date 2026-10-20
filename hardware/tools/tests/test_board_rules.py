@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import copy
 import os
+import re
 import sys
 import tempfile
 import unittest
@@ -446,6 +447,19 @@ class TheGroundReturnRule(unittest.TestCase):
         self.assertEqual(len(found), 1)
         self.assertIn("in the net class Relay", found[0].message)
 
+    def test_a_net_named_unconnected_is_no_pin_only_when_one_pad_carries_it(self):
+        # SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS.C2: the signal pins, being pins on a net of a signal class the mapping declares
+        named = part("J9", [pad("1", "/S0"), pad("2", "/S1", 3), pad("3", "/unconnected-(SIG)", 6), pad("4", "/GND", 9)])
+        elsewhere = part("U1", [pad("1", "/unconnected-(SIG)")], at=(40, 10))
+        found = self.found(named, elsewhere)
+        self.assertEqual(len(found), 1, "the shared net is real, so its pad on the connector is a third signal pin")
+        self.assertIn("connector J9 has 3 signal pins", found[0].message)
+        self.assertEqual(self.found(named), [], "carried by one pad it is no pin")
+        both = part("J9", [pad("1", "/S0"), pad("2", "/unconnected-(SIG)", 3), pad("3", "/unconnected-(SIG)", 6), pad("4", "/GND", 9)])
+        self.assertEqual(len(self.found(both)), 1)
+        lone = part("J1", [pad("1", "/S0"), pad("2", "/S1", 3), pad("3", "/GND", 6), pad("4", "unconnected-(J1-Pin_4)", 9)])
+        self.assertEqual(self.found(lone), [])
+
     def test_a_ground_return_failure_names_the_connector_its_pins_the_ratio_and_the_record(self):
         # SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS.C4: reported with the rule's name, the design, and the offending item in terms a builder can act on
         found = self.found(connector("J3", ("1", "/S0"), ("2", "/S1"), ("3", "/S2"), ("4", "/GND")))
@@ -609,6 +623,13 @@ class TheRulesAreRunOnTheDesignsTheyHold(unittest.TestCase):
         self.assertIn("**Kind:** judgement.", judged)
         self.assertIn("`SENSE-6`", judged)
         self.assertIn("The fifth is a **record figure**", method)
+        # SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS.C7: the notes link the enforced item by the anchor its heading has on GitHub
+        heading = re.search(r"^#### (SENSE-6\. .*)$", method, re.M).group(1)
+        slug = re.sub(r"[^a-z0-9 _-]", "", heading.lower()).replace(" ", "-")
+        with open(os.path.join(REPO, "hardware", "README.md"), encoding="utf-8") as handle:
+            notes = handle.read()
+        targets = set(re.findall(r"board-design-method\.md#(sense-6[^)\s]*)", notes))
+        self.assertEqual(targets, {slug})
         self.assertNotIn("one of the four forms", method)
 
 

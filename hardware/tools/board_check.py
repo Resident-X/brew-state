@@ -2579,8 +2579,9 @@ def ground_returns(design: Design, tree: list, record: str, returns: dict, membe
 
     A connector is a part whose reference designator begins with J. Its pins are
     the numbered pads of its footprint that sit on a net, counted once however
-    many pads carry the number; a pad on no net, or on a net nothing else joins
-    (named unconnected-(...)), is no pin. A pin's classes are those of the
+    many pads carry the number; a pad on no net, or on a net named
+    unconnected-(...) that no other pad on the board carries, is no pin. A net
+    of that name carried by two or more pads is a real net and its pads are pins. A pin's classes are those of the
     layout's net classes the net is in, or Default where it is in none. A pad
     with no number is no pin on a ground class, so it is never a ground return,
     while one on a signal class counts as a signal pin of its own, so leaving a
@@ -2596,8 +2597,13 @@ def ground_returns(design: Design, tree: list, record: str, returns: dict, membe
     non_signal = set(returns["non_signal_classes"])
     signal = {entry["class"]: entry["signal_pins_per_return"] for entry in returns["signal_classes"]}
     connectors: Dict[str, Dict[Tuple[str, str, bool], str]] = {}
-    for index, pad in enumerate(board_geometry.pads(tree)):
-        if not pad.reference.upper().startswith("J") or not pad.net or pad.net.rsplit("/", 1)[-1].startswith(UNCONNECTED_NET):
+    every_pad = list(board_geometry.pads(tree))
+    carriers: Dict[str, int] = {}
+    for pad in every_pad:
+        carriers[pad.net] = carriers.get(pad.net, 0) + 1
+    for index, pad in enumerate(every_pad):
+        lone = pad.net.rsplit("/", 1)[-1].startswith(UNCONNECTED_NET) and carriers[pad.net] == 1 if pad.net else False
+        if not pad.reference.upper().startswith("J") or not pad.net or lone:
             continue
         connectors.setdefault(pad.reference, {}).setdefault((pad.number or f"(pad {index})", pad.net, bool(pad.number)), pad.net)
     found = []
