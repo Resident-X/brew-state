@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The pre-order check fails a connected pin of a semiconductor or integrated circuit that its pin-limit entry omits
 status: active
-version: 1
+version: 2
 text: |
   Extends the pin-limit rule so that every connected pin of a semiconductor or integrated circuit has its own entry in the part's pin-limit record, and a connected pin the entry omits fails by part and pin, shown to fail on a seeded fault.
 
@@ -25,6 +25,10 @@ links:
     type: justified-by
   - target: SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: 6d9eb5aaa924c77d403c769c0d0b029f0703a137c5743149beb7d3001b836279
+  gating_profile: ""
 design_question_answers:
   - answered_by: SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C1
     class: whole-set

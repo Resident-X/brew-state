@@ -2,11 +2,11 @@ id: SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C3
 type: criterion
 title: Every failure names the rule, the design, the part and the pin
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |-
-  A coverage failure is reported with the rule's name, the design, the part reference, the pin number and the part's catalogue number, in the same report as the existing checks. Out of scope: the wording of passing output and the report of other rules.
+  A coverage failure is reported with the rule's name, the design, the part reference, the pin number and the part's catalogue number, in terms a builder can act on, in the same report as the existing checks. Out of scope: the wording of passing output and the report of other rules.
 links:
   - target: SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED
     type: criterion-of
