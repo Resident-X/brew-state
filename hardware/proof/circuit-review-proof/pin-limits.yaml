@@ -89,6 +89,11 @@ parts:
         absolute_max_v: 4.1
         absolute_min_v: -0.3
         tolerates_driven_unpowered: false
+      - pin: "7"
+        domain: ground
+        absolute_max_v: 4.1
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: true
   - lcsc: C9200020
     source:
       document: "TPS3820, TPS3823, TPS3824, TPS3825, TPS3828 data sheet SLVS165O"
@@ -116,6 +121,11 @@ parts:
         absolute_max_v: 3.78
         absolute_min_v: -0.3
         tolerates_driven_unpowered: false
+      - pin: "2"
+        domain: ground
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: true
   - lcsc: C9200030
     source:
       document: "MCP1700 data sheet DS20001826E"
@@ -133,6 +143,11 @@ parts:
         absolute_max_v: 6.5
         absolute_min_v: -0.3
         tolerates_driven_unpowered: false
+      - pin: "1"
+        domain: ground
+        absolute_max_v: 6.5
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: true
   - lcsc: C9200035
     source:
       document: "TPD4E1U06 data sheet SLVSBQ9D"
@@ -147,6 +162,11 @@ parts:
         tolerates_driven_unpowered: true
       - pin: "6"
         domain: logic
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: true
+      - pin: "2"
+        domain: ground
         absolute_max_v: 5.5
         absolute_min_v: 0
         tolerates_driven_unpowered: true
@@ -167,6 +187,11 @@ parts:
         absolute_max_v: 50
         absolute_min_v: -0.3
         tolerates_driven_unpowered: true
+      - pin: "2"
+        domain: logic
+        absolute_max_v: 50
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: true
   - lcsc: C9200012
     source:
       document: "MOC301XM, MOC302XM data sheet"
@@ -174,9 +199,9 @@ parts:
       section: "Absolute Maximum Ratings"
       read_on: 2026-10-18
     pins:
-      # Pin 1, the LED anode, is not listed: the datasheet's limit on it is a forward current,
-      # which a node voltage cannot be judged against, and the 3 V it gives is the LED's
-      # reverse voltage. R5 sets that current, judged in circuit-proof.md.
+      # Pin 1, the LED anode, and pin 2, the cathode, carry the datasheet's 3 V reverse voltage
+      # as the anode's lowest voltage and as the cathode's rise above the anode's highest. The
+      # datasheet's limit on the forward side is a current, which R5 sets and circuit-proof.md judges.
       - pin: "4"
         domain: mains
         absolute_max_v: 400
@@ -186,6 +211,16 @@ parts:
         domain: mains
         absolute_max_v: 400
         absolute_min_v: -400
+        tolerates_driven_unpowered: true
+      - pin: "1"
+        domain: led_anode
+        absolute_max_v: 5.25
+        absolute_min_v: -3
+        tolerates_driven_unpowered: true
+      - pin: "2"
+        domain: led_anode
+        absolute_max_v: 8.25
+        absolute_min_v: 0
         tolerates_driven_unpowered: true
   - lcsc: C9200009
     source:

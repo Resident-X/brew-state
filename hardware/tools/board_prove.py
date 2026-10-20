@@ -1403,6 +1403,10 @@ FAULTS: List[tuple] = [
          "      - pin: 2\n        domain: logic\n        absolute_max_v: 5.5\n        absolute_min_v: -0.3\n        tolerates_driven_unpowered: false"), KEYS_TARGET),
     ("an integrated circuit the pin-limit record omits", "pin limits: every integrated circuit and semiconductor has an entry in the pin-limit record", "pin_limit",
      "the pin-limit record omits the integrated circuit U1", pin_limits("- lcsc: C9000005", "- lcsc: C9000099"), KEYS_TARGET),
+    ("a connected pin of a listed integrated circuit left out of its entry", "pin coverage: a connected pin of a listed semiconductor or integrated circuit that its entry omits fails, naming the part and the pin", "pin_limit",
+     "the pin-limit record entry for the integrated circuit U1, catalogue number C9000005, omits U1 pin 1, which is connected on net /LV_A",
+     pin_limits('      - pin: PA0\n        domain: logic\n        absolute_max_v: 3.6\n        absolute_min_v: -0.3\n        tolerates_driven_unpowered: false\n', ""),
+     KEYS_TARGET, "U1 pin 2"),
 ]
 
 
