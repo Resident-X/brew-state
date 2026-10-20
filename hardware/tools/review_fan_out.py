@@ -13,8 +13,16 @@ What a review is, and so which units it has, which prompt every session starts
 from, which tools a reviewer is granted, which tables a result may hold and
 which checks the merge makes, is a caller's: a Python module named
 review_caller_<name> beside this command, or in the folder --callers names. It
-exposes SETUP_PROMPT, unit_prompt(unit), units(review_folder), TOOLS, BOUND,
-TABLES, FINDINGS and CHECK. No caller is registered here.
+exposes SETUP_PROMPT, unit_prompt(unit, review_folder), units(review_folder),
+TOOLS, BOUND, TABLES, FINDINGS and CHECK, and may define the retrieval grant, the
+checklist as a function and the rendered record. TOOLS is some of the read tools
+and, as the retrieval grant, WebFetch, which fetches a published document and
+writes nothing; the setup session keeps the read tools alone. unit_prompt takes
+the unit and the review folder, so a prompt can name what the starter wrote
+there. FINDINGS["checklist"] is a list, or a function of the review folder
+resolved once per run before the setup session starts. RENDER(review_folder,
+tables) returns file names with their text, which are written into the output
+folder after the merge and named in the report. No caller is registered here.
 
 FINDINGS names the findings table and how the merge numbers it, and holds a
 `citation` pattern with a `number` group that finds the cells' citations of a
@@ -54,6 +62,7 @@ from __future__ import annotations
 import argparse
 import concurrent.futures
 import importlib.util
+import inspect
 import json
 import math
 import os
@@ -83,6 +92,8 @@ ACK_INSTRUCTION = ("Open no image and judge nothing. Write no text before, betwe
                    f"asked, your only text is the single token {ACK} after the last read, and nothing else.")
 #: The tools the setup session is granted, and the only tools a reviewer may be granted.
 READ_TOOLS = ("Read", "Glob", "Grep")
+#: The one retrieval tool a caller may grant its reviewers beside the read tools: it fetches a published document and writes nothing.
+RETRIEVAL_TOOLS = ("WebFetch",)
 #: What a caller module must expose.
 REQUIRED = ("SETUP_PROMPT", "unit_prompt", "units", "TOOLS", "BOUND", "TABLES", "FINDINGS", "CHECK")
 #: Files read as images or other non-text, whether or not they exist yet.
@@ -101,6 +112,8 @@ RATE_RETRIES = 5
 #: Matched against the command line's own stderr only, never a reviewer's words.
 RATE_PATTERN = re.compile(r"rate.?limit|too many requests|\b429\b|overloaded", re.IGNORECASE)
 LOGIN_PATTERN = re.compile(r"not logged in|please run /login|invalid api key", re.IGNORECASE)
+#: The names in the output folder the driver uses itself, which a rendered record may not take.
+RESERVED_NAMES = (RECORD, SETUPS, RERUNS, LOCK, UNITS_FOLDER, FAILED_FOLDER, UNSETTLED_FOLDER)
 UNIT_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 CALLER_NAME = re.compile(r"^[a-z][a-z0-9_]*$")
 #: The environment variables that keep a session from loading the project's and user's instructions and memory.
@@ -187,6 +200,7 @@ def load_caller(name: str, folder: str):
         spec.loader.exec_module(module)
     except Exception as error:  # a caller that does not import is refused with the reason
         raise Refused([f"the caller module {path} cannot be loaded ({type(error).__name__}: {error}); fix the module"])
+    module.REVIEW_CALLER_NAME = name
     missing = [attribute for attribute in REQUIRED if not hasattr(module, attribute)]
     if missing:
         raise Refused([f"the caller module {path} lacks {', '.join(missing)}; add each to the module"])
@@ -211,9 +225,20 @@ def caller_problems(module, path: str) -> List[str]:
     for attribute in ("unit_prompt", "units", "CHECK"):
         if not callable(getattr(module, attribute)):
             bad(attribute, getattr(module, attribute), "make it a function")
-    if not isinstance(module.TOOLS, (list, tuple)) or not module.TOOLS or any(tool not in READ_TOOLS for tool in module.TOOLS):
+    if callable(module.unit_prompt) and not accepts(module.unit_prompt, 2):
+        found.append(f"the caller {module.REVIEW_CALLER_NAME} ({path}) gives a unit_prompt that does not accept the unit "
+                     "and the review folder; make it unit_prompt(unit, review_folder)")
+    if hasattr(module, "RENDER"):
+        if not callable(module.RENDER):
+            bad("RENDER", module.RENDER, "make it a function of the review folder and the merged tables")
+        elif not accepts(module.RENDER, 2):
+            found.append(f"the caller {module.REVIEW_CALLER_NAME} ({path}) gives a RENDER that does not accept the review "
+                         "folder and the merged tables; make it RENDER(review_folder, tables)")
+    if not isinstance(module.TOOLS, (list, tuple)) or not module.TOOLS or any(tool not in READ_TOOLS + RETRIEVAL_TOOLS
+                                                                              for tool in module.TOOLS):
         found.append(f"the caller module {path} grants tools {module.TOOLS!r}; a reviewer is read-only, so grant "
-                     f"some of {', '.join(READ_TOOLS)} and no others")
+                     f"some of {', '.join(READ_TOOLS)} and, to fetch a published document, {', '.join(RETRIEVAL_TOOLS)}, "
+                     "and no others")
     if not isinstance(module.BOUND, int) or isinstance(module.BOUND, bool) or module.BOUND < 1:
         found.append(f"the caller module {path} states a BOUND of {module.BOUND!r}; state a whole number of one or more")
     tables = module.TABLES
@@ -242,8 +267,10 @@ def caller_problems(module, path: str) -> List[str]:
         if columns is not None and findings.get(key) not in columns:
             bad(f"FINDINGS[{key!r}]", findings.get(key), f"name a column of the table {table!r}")
     checklist = findings.get("checklist")
-    if not isinstance(checklist, (list, tuple)) or not texts(checklist) or len(set(checklist)) != len(checklist):
-        bad("FINDINGS['checklist']", checklist, "give the checklist's items in order as a list of distinct names")
+    if not callable(checklist) and (not isinstance(checklist, (list, tuple)) or not texts(checklist)
+                                    or len(set(checklist)) != len(checklist)):
+        bad("FINDINGS['checklist']", checklist, "give the checklist's items in order as a list of distinct names, or a "
+                                              "function of the review folder that returns one")
     citations = findings.get("citations")
     if not isinstance(citations, (list, tuple)) or not all(
             isinstance(pair, (list, tuple)) and len(pair) == 2 and named(pair[0], str) and pair[0] in tables
@@ -265,6 +292,17 @@ def caller_problems(module, path: str) -> List[str]:
     return found
 
 
+def accepts(call, count: int) -> bool:
+    """Whether `call` can be called with `count` positional arguments; a callable whose signature cannot be read is taken to."""
+    try:
+        inspect.signature(call).bind(*([None] * count))
+    except TypeError:
+        return False
+    except ValueError:
+        return True
+    return True
+
+
 def texts(value: Any) -> bool:
     """Whether `value` is a collection of non-empty strings."""
     return isinstance(value, (list, tuple, set, frozenset)) and all(named(item, str) for item in value)
@@ -274,6 +312,11 @@ def texts(value: Any) -> bool:
 RETURNS = {
     "units": (lambda value: isinstance(value, (list, tuple)), "a list of unit names"),
     "unit_prompt": (lambda value: named(value, str), "the unit's prompt as text"),
+    "checklist": (lambda value: isinstance(value, (list, tuple)) and texts(value) and len(set(value)) == len(value),
+                  "a list of distinct item names"),
+    "RENDER": (lambda value: isinstance(value, dict) and all(named(name, str) and isinstance(text, str)
+                                                             for name, text in value.items()),
+               "a mapping of file name to text"),
     "CHECK": (lambda value: isinstance(value, (list, tuple)) and texts(value), "a list of refusals, each text"),
     "round": (lambda value: named(value, str), "this round's label as text"),
     "earlier": (lambda value: isinstance(value, (list, tuple, set, frozenset)) and all(
@@ -284,18 +327,19 @@ RETURNS = {
 }
 
 
-def hook(what: str, call, *args):
+def hook(what: str, call, *args, caller=None):
     """What a caller's hook `call` returns; an exception from it, or a return that is not what RETURNS asks, is a
-    refusal naming the hook, never a traceback or a value coerced into shape."""
+    refusal naming the hook, and the caller when it is given, never a traceback or a value coerced into shape."""
+    fix = f"fix the caller {caller.REVIEW_CALLER_NAME}" if caller is not None else "fix the caller"
     try:
         value = call(*args)
     except Refused:
         raise
     except Exception as error:  # the caller's code is not this command's; its defect is reported, not raised
-        raise Refused([f"the caller's {what} raised {type(error).__name__}: {error}; fix the caller"])
+        raise Refused([f"the caller's {what} raised {type(error).__name__}: {error}; {fix}"])
     allowed, words = RETURNS[what]
     if not allowed(value):
-        raise Refused([f"the caller's {what} returned {value!r:.200}, which is not {words}; fix the caller"])
+        raise Refused([f"the caller's {what} returned {value!r:.200}, which is not {words}; {fix}"])
     return value
 
 
@@ -1039,7 +1083,7 @@ class Run:
         # also reports the turns before it.
         base = setup["cumulative"]
         try:
-            prompt = hook("unit_prompt", self.caller.unit_prompt, unit)
+            prompt = hook("unit_prompt", self.caller.unit_prompt, unit, self.review, caller=self.caller)
             for number in (1, 2):
                 try:
                     session = with_rate_retry(lambda: call_agent(self.program, prompt, self.caller.TOOLS, self.review, resume,
@@ -1090,6 +1134,14 @@ class Run:
         except Exception as error:  # a defect in one unit's worker is that unit's failure and the others go on
             raise UnitFailed(f"unit {unit} failed: {type(error).__name__}: {error}", sessions)
 
+    def resolve_checklist(self) -> None:
+        """A checklist given as a function becomes its list, once, before the setup session starts, so the per-unit
+        checks and the merge read the same list; a list is left as it is."""
+        findings = self.caller.FINDINGS
+        if findings and callable(findings["checklist"]):
+            listed = hook("checklist", findings["checklist"], self.review, caller=self.caller)
+            self.caller.FINDINGS = {**findings, "checklist": list(listed)}
+
     def setup_session(self, model: Optional[str]) -> Tuple[Session, Dict[str, Any]]:
         """The checked setup session and its figures; anything that stops the check is a refusal, never a traceback."""
         try:
@@ -1122,6 +1174,7 @@ class Run:
 
     def run(self, order: Sequence[str], named: Sequence[str]) -> Tuple[Dict[str, Any], Dict[str, Optional[UnitFailed]]]:
         """Judge `named` units (all of `order` when none), returning the setup entry and each unit's failure, if any."""
+        self.resolve_checklist()
         session, cumulative = self.setup_session(self.model)
         model = session.start["model"]
         setup = {"id": session.id, "at": stamp(), "kind": "rerun" if named else "initial",
@@ -1190,6 +1243,10 @@ def render_text(report: Dict[str, Any]) -> List[str]:
             lines.append(f"FAILED | {clean(unit['detail'])}")
     for rerun in report["reruns"]:
         lines.append(f"RERUN | {', '.join(rerun['units'])} | {rerun['at']} | new setup session {rerun['setup_session']}")
+    for name in report.get("rendered", []):
+        lines.append(f"RENDERED | {clean(name)}")
+    for name in report.get("not_this_merge", []):
+        lines.append(f"NOT THIS MERGE | {clean(name)} | written by an earlier merge, not by this one")
     for place in report["same_place"]:
         lines.append(f"SAME PLACE | {clean(place['key'])} | findings {', '.join(str(n) for n in place['findings'])} | "
                      f"units {', '.join(place['units'])}")
@@ -1394,9 +1451,85 @@ def report_run(report, run, caller, review, folder, order, named, setup, failure
         report["detail"] = f"the merge refused the units' results; they are kept in {folder}"
         return finish(report, out, args.json, err)
     report["tables"], report["same_place"] = merged["tables"], merged["same_place"]
+    files = {}
+    if hasattr(caller, "RENDER"):
+        earlier = rendered_earlier(folder)
+        try:
+            files = hook("RENDER", caller.RENDER, review, merged["tables"], caller=caller)
+        except Refused as error:
+            report["refusals"] += error.causes
+            report["rendered"], report["not_this_merge"] = [], left_over(folder, earlier, [])
+            report["result"], report["detail"] = "FAILED", (f"the caller's rendered record was not made; the record in table "
+                                                            f"form is written to {os.path.join(folder, RECORD)}")
+            write_json(os.path.join(folder, RECORD), report)
+            return finish(report, out, args.json, err)
+        refused = rendered_problems(caller, folder, files, earlier)
+        if refused:
+            report["refusals"] += refused
+            report["detail"] = f"nothing was written; the units' results are kept in {folder}"
+            return finish(report, out, args.json, err)
+        report["rendered"], report["not_this_merge"] = list(files), left_over(folder, earlier, files)
     report["result"], report["detail"] = "WRITTEN", os.path.join(folder, RECORD)
     write_json(os.path.join(folder, RECORD), report)
+    for name, text in files.items():
+        with open(os.path.join(folder, name), "w", encoding="utf-8") as handle:
+            handle.write(text)
     return finish(report, out, args.json, err)
+
+
+def rendered_earlier(folder: str) -> List[str]:
+    """The rendered names an earlier merge wrote into the folder, from the record it wrote: those it made and those it
+    named as left over from a merge before it; none when the folder holds no record."""
+    path = os.path.join(folder, RECORD)
+    if not os.path.lexists(path):
+        return []
+    try:
+        record = read_json(path)
+    except (OSError, ValueError, RecursionError) as error:
+        raise Refused([f"the record {path} cannot be read ({error}); {RESTORE}"])
+    names = []
+    for key in ("rendered", "not_this_merge"):
+        listed = record.get(key, []) if isinstance(record, dict) else None
+        if not isinstance(listed, list) or not all(isinstance(name, str) for name in listed):
+            raise Refused([f"the record {path} gives {key} as {listed!r:.80}, not a list of file names; {RESTORE}"])
+        names += listed
+    return list(dict.fromkeys(names))
+
+
+def name_key(name: str) -> str:
+    """A file name as a folder that ignores case and trailing dots and spaces would hold it."""
+    return name.rstrip(". ").casefold()
+
+
+def left_over(folder: str, earlier: Sequence[str], rendered: Sequence[str]) -> List[str]:
+    """The files an earlier merge wrote that are still in the folder and that this merge does not render again."""
+    again = {name_key(name) for name in rendered}
+    return [name for name in earlier if name_key(name) not in again and os.path.lexists(os.path.join(folder, name))]
+
+
+def rendered_problems(caller, folder: str, files: Dict[str, str], earlier: Sequence[str]) -> List[str]:
+    """Why the files a caller's RENDER returned cannot be written: a name with a path in it, a name the driver uses
+    itself, two names that differ only in case or in trailing dots and spaces, or one the output folder holds that no earlier merge wrote. Names are
+    compared without regard to case or trailing dots and spaces, since a folder on some systems holds one file for names that differ in them."""
+    who, found = f"caller {caller.REVIEW_CALLER_NAME}", []
+    reserved = {name_key(name) for name in RESERVED_NAMES}
+    wrote = {name_key(name) for name in earlier}
+    held = {name_key(name) for name in os.listdir(folder)} if os.path.isdir(folder) else set()
+    seen: Dict[str, str] = {}
+    for name in files:
+        key = name_key(name)
+        if name in (".", "..") or any(mark in name for mark in ("/", "\\", "\0")):
+            found.append(f"the {who}'s RENDER names a file {name!r} with a path in it; name a file in the output folder alone")
+        elif key in reserved:
+            found.append(f"the {who}'s RENDER names a file {name!r}, which the command uses in the output folder; "
+                         f"use a name other than {', '.join(RESERVED_NAMES)}")
+        elif key in seen:
+            found.append(f"the {who}'s RENDER names {seen[key]!r} and {name!r}, which differ only in case or trailing dots and spaces; name them apart")
+        elif (key in held or os.path.lexists(os.path.join(folder, name))) and key not in wrote:
+            found.append(f"the {who}'s RENDER names a file {name!r}, which the output folder already holds and no earlier "
+                         "merge wrote; name another file, or move that one away")
+        seen.setdefault(key, name)
+    return found
 
 
 if __name__ == "__main__":

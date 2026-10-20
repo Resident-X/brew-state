@@ -46,7 +46,7 @@ TABLES = {"Verdicts": {"columns": ["Item", "Verdict", "Rests on"], "verdict_colu
 FINDINGS = {FINDINGS}
 
 
-def unit_prompt(unit):
+def unit_prompt(unit, review_folder):
     return f"Judge UNIT={unit} against the checklist."
 
 
@@ -1780,7 +1780,7 @@ class HostileInputs(Fixture):
                 if hook == "units":
                     text = text.replace("def units(folder):\n", f"def units(folder):\n    return {value}\n")
                 elif hook == "unit_prompt":
-                    text = text.replace("def unit_prompt(unit):\n", f"def unit_prompt(unit):\n    if unit == 'alpha':\n        return {value}\n")
+                    text = text.replace("def unit_prompt(unit, review_folder):\n", f"def unit_prompt(unit, review_folder):\n    if unit == 'alpha':\n        return {value}\n")
                 elif hook == "CHECK":
                     text = text.replace("def CHECK(folder, units, tables):\n", f"def CHECK(folder, units, tables):\n    return {value}\n")
                 elif hook in ("round", "earlier"):
@@ -1819,7 +1819,7 @@ class HostileInputs(Fixture):
     def test_every_failure_of_a_unit_run_again_leaves_it_unsettled_so_a_run_again_of_another_unit_is_refused(self):
         # SOL-HW-REVIEW-FAN-OUT-DRIVER.C8: The command keeps each unit's result in its output folder. Given the names of units to run again, it runs only those, replaces their results, and merges again; it refuses a name that is not a unit of the review and refuses a run that leaves out a unit whose last run again failed, naming that unit, and the record shows which units were run again and when, and that a new setup session was started for them. A unit that failed, or that needs a view the round's starter has since rendered, is therefore run without repeating the others. Out of scope: deciding which units to run again.
         self.write(os.path.join(self.callers, "review_caller_flaky.py"), caller_text().replace(
-            "def unit_prompt(unit):\n", "def unit_prompt(unit):\n    if os.environ.get('FLAKY_UNIT') == unit:\n        raise KeyError(unit)\n"))
+            "def unit_prompt(unit, review_folder):\n", "def unit_prompt(unit, review_folder):\n    if os.environ.get('FLAKY_UNIT') == unit:\n        raise KeyError(unit)\n"))
         real = review_fan_out.call_agent
 
         def vanishing(program, prompt, *rest, **named):
@@ -1861,6 +1861,506 @@ class HostileInputs(Fixture):
                     shutil.rmtree(path, ignore_errors=True)
                     self.write(path, content)
                 self.assert_refused(["unit charlie's last run again failed"], "--rerun", "bravo", caller="flaky", started=0)
+
+
+RENDERING = """
+
+def RENDER(folder, tables):
+    mode = os.environ.get("RENDER_MODE", "ok")
+    if mode == "raise":
+        raise KeyError("render")
+    if mode == "string":
+        return "not a mapping"
+    if mode == "other":
+        return {"other.md": "other"}
+    if mode == "named":
+        return {os.environ["RENDER_NAME"]: "x"}
+    if mode == "casepair":
+        return {"Summary.md": "x", "summary.MD": "y"}
+    if mode == "dotpair":
+        return {"Summary.md": "x", "summary.md.": "y"}
+    if mode == "fewer":
+        return {"summary.md": "only"}
+    if mode == "dropped":
+        return {"second.md": "again"}
+    names = {"path": {"sub/x.md": "x"}, "back": {"a\\\\b.md": "x"}, "dots": {"..": "x"}, "record": {"record.json": "x"},
+             "units": {"units": "x"}, "lock": {".review-fan-out.lock": "x"}, "setups": {"setups.json": "x"},
+             "clash": {"notes.md": "mine"}}
+    if mode in names:
+        return names[mode]
+    rows = len(tables["Verdicts"]["rows"])
+    return {"summary.md": f"{folder}|{rows}|{os.environ.get('RENDER_TAG', 'a')}", "second.md": "second"}
+"""
+
+CHECKLISTING = """
+
+def CHECKLIST(folder):
+    with open(os.environ["CHECKLIST_LOG"], "a", encoding="utf-8") as handle:
+        handle.write("x\\n")
+    mode = os.environ.get("CHECKLIST_MODE", "ok")
+    if mode == "raise":
+        raise KeyError("checklist")
+    if mode == "string":
+        return "A-1"
+    if mode == "dupe":
+        return ["A-1", "A-1"]
+    with open(os.path.join(folder, "checklist.txt"), encoding="utf-8") as handle:
+        return handle.read().split()
+"""
+
+FUNCTION_FINDINGS = FINDINGS.replace('"checklist": ["A-1", "B-1", "C-1"]', '"checklist": lambda folder: CHECKLIST(folder)')
+
+
+class CallerSeam(Fixture):
+    """The attributes a caller may define beyond the driver's required ones, over synthetic callers and review folders."""
+
+    def setUp(self):
+        super().setUp()
+        self.checklist_log = os.path.join(self.root, "checklist.log")
+        patcher = mock.patch.dict(os.environ, {"CHECKLIST_LOG": self.checklist_log})
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        # a caller rewritten within a second at the same size must not be loaded from its stale compiled copy
+        bytecode = mock.patch.object(sys, "dont_write_bytecode", True)
+        bytecode.start()
+        self.addCleanup(bytecode.stop)
+
+    def caller_module(self, text, name="synth"):
+        self.write(os.path.join(self.callers, f"review_caller_{name}.py"), text)
+
+    def environment(self, **values):
+        patcher = mock.patch.dict(os.environ, values)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def single(self):
+        os.remove(os.path.join(self.review, "units", "bravo.txt"))
+        os.remove(os.path.join(self.review, "units", "charlie.txt"))
+
+    def checklist_calls(self):
+        if not os.path.exists(self.checklist_log):
+            return 0
+        with open(self.checklist_log, encoding="utf-8") as handle:
+            return len(handle.read().split())
+
+    def refused(self, *words, **options):
+        status, text, _ = self.run_command(as_json=True, **options)
+        self.assertEqual(status, 1, text)
+        causes = json.loads(text)["refusals"]
+        for word in words:
+            self.assertTrue(any(word in cause for cause in causes), f"{word!r} in {causes}")
+        return causes
+
+    # --- C1: the retrieval grant
+
+    def test_a_caller_may_grant_the_read_tools_and_the_one_retrieval_tool_and_the_setup_session_keeps_the_read_tools_alone(self):
+        # SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C1: A caller's tool set may be the read tools, or the read tools and the one retrieval tool the driver names, which fetches a published document at an address and writes nothing, and the driver starts each reviewer with the caller's set. Any tool outside those is refused at load as before. The setup turn that reads the review's documents is started with the read tools alone whatever the caller grants, and the turn that judges a single unit in the setup session is started with the caller's set. The start report of a session that reports a tool outside the set granted to it fails the run, as now. Out of scope: whether a fork can retrieve, and what a retrieved document holds.
+        self.caller_module(caller_text().replace('TOOLS = ("Read", "Glob")', 'TOOLS = ("Read", "Glob", "WebFetch")'))
+        status, text, _ = self.run_command(as_json=True)
+        self.assertEqual(status, 0, text)
+        setup = [call for call in self.calls() if call["unit"] is None]
+        self.assertEqual([self.flag(call, "--tools") for call in setup], ["Read,Glob,Grep"], "the setup turn: the read tools alone")
+        self.assertEqual([self.flag(call, "--allowedTools") for call in setup], ["Read,Glob,Grep"])
+        self.assertEqual(len(self.forks()), 3)
+        for fork in self.forks():
+            self.assertEqual(self.flag(fork, "--tools"), "Read,Glob,WebFetch", "each reviewer starts with the caller's set")
+            self.assertEqual(self.flag(fork, "--allowedTools"), "Read,Glob,WebFetch")
+
+        shutil.rmtree(self.out)
+        for name in os.listdir(self.log):
+            os.remove(os.path.join(self.log, name))
+        self.single()
+        status, text, _ = self.run_command(as_json=True)
+        self.assertEqual(status, 0, text)
+        calls = self.calls()
+        self.assertEqual([self.flag(call, "--tools") for call in calls], ["Read,Glob,Grep", "Read,Glob,WebFetch"],
+                         "the single unit's turn in the setup session is started with the caller's set")
+        self.assertFalse(calls[1]["forked"])
+
+    def test_a_tool_outside_the_read_tools_and_the_retrieval_tool_is_refused_at_load(self):
+        # SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C1: A caller's tool set may be the read tools, or the read tools and the one retrieval tool the driver names, which fetches a published document at an address and writes nothing, and the driver starts each reviewer with the caller's set. Any tool outside those is refused at load as before. The setup turn that reads the review's documents is started with the read tools alone whatever the caller grants, and the turn that judges a single unit in the setup session is started with the caller's set. The start report of a session that reports a tool outside the set granted to it fails the run, as now. Out of scope: whether a fork can retrieve, and what a retrieved document holds.
+        for tools in ('("Read", "WebSearch")', '("WebFetch", "Write")', '("Read", "Bash", "WebFetch")', '("webfetch",)', '()'):
+            self.caller_module(caller_text().replace('TOOLS = ("Read", "Glob")', f"TOOLS = {tools}"))
+            causes = self.refused("a reviewer is read-only", "WebFetch", "no others")
+            self.assertTrue(any(f"grants tools {eval(tools)!r}" in cause for cause in causes), f"{tools}: {causes}")
+            self.assertEqual(self.calls(), [], "refused before any session")
+
+    def test_a_session_reporting_a_tool_outside_its_grant_fails_the_run_and_the_setup_session_may_not_use_the_retrieval_tool(self):
+        # SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C1: A caller's tool set may be the read tools, or the read tools and the one retrieval tool the driver names, which fetches a published document at an address and writes nothing, and the driver starts each reviewer with the caller's set. Any tool outside those is refused at load as before. The setup turn that reads the review's documents is started with the read tools alone whatever the caller grants, and the turn that judges a single unit in the setup session is started with the caller's set. The start report of a session that reports a tool outside the set granted to it fails the run, as now. Out of scope: whether a fork can retrieve, and what a retrieved document holds.
+        self.caller_module(caller_text())  # grants Read and Glob alone
+        self.scenario({"fork_tools": ["Read", "Glob", "WebFetch"]})
+        status, text, _ = self.run_command(as_json=True)
+        self.assertEqual(status, 1, text)
+        failed = [unit for unit in json.loads(text)["units"] if unit["status"] == "failed"]
+        self.assertEqual(len(failed), 3)
+        self.assertIn("not the ['Glob', 'Read'] it was granted", failed[0]["detail"])
+
+        shutil.rmtree(self.out, ignore_errors=True)
+        self.caller_module(caller_text().replace('TOOLS = ("Read", "Glob")', 'TOOLS = ("Read", "Glob", "WebFetch")'))
+        self.scenario({"setup_tools": ["Read", "Glob", "Grep", "WebFetch"]})
+        causes = self.refused("the setup session started with tools")
+        self.assertTrue(any("not the ['Glob', 'Grep', 'Read'] it was granted" in cause for cause in causes), causes)
+
+        shutil.rmtree(self.out, ignore_errors=True)
+        self.scenario({"setup": {"uses": ["WebFetch"]}})
+        self.refused("the setup session used WebFetch, a tool it was not granted")
+
+    # --- C2: the review folder in the prompt
+
+    def test_the_prompt_function_is_given_the_unit_and_the_review_folder_for_a_fork_and_for_the_single_unit(self):
+        # SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C2: The driver passes the review folder to the caller's prompt function as well as the unit, for a forked reviewer and for the one unit judged in the setup session, and requires the function to accept both. A caller whose prompt function does not accept the unit and the review folder is refused at load naming the attribute and the caller, and a prompt function that raises fails the run naming the caller and the unit. Out of scope: any file the folder holds.
+        self.caller_module(caller_text().replace('return f"Judge UNIT={unit} against the checklist."',
+                                                 'return f"Judge UNIT={unit} reading {review_folder}/round.md"'))
+        status, text, _ = self.run_command(as_json=True)
+        self.assertEqual(status, 0, text)
+        self.assertEqual(len(self.forks()), 3)
+        for fork in self.forks():
+            self.assertIn(f"UNIT={fork['unit']} reading {self.review}/round.md", fork["prompt"])
+
+        shutil.rmtree(self.out)
+        for name in os.listdir(self.log):
+            os.remove(os.path.join(self.log, name))
+        self.single()
+        status, text, _ = self.run_command(as_json=True)
+        self.assertEqual(status, 0, text)
+        judged = [call for call in self.calls() if call["unit"] == "alpha"]
+        self.assertEqual(len(judged), 1)
+        self.assertFalse(judged[0]["forked"])
+        self.assertIn(f"reading {self.review}/round.md", judged[0]["prompt"])
+
+    def test_a_prompt_function_that_does_not_accept_the_unit_and_the_review_folder_is_refused_naming_the_attribute_and_the_caller(self):
+        # SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C2: The driver passes the review folder to the caller's prompt function as well as the unit, for a forked reviewer and for the one unit judged in the setup session, and requires the function to accept both. A caller whose prompt function does not accept the unit and the review folder is refused at load naming the attribute and the caller, and a prompt function that raises fails the run naming the caller and the unit. Out of scope: any file the folder holds.
+        for signature in ("unit", "", "unit, review_folder, extra", "*, unit, review_folder"):
+            self.caller_module(caller_text().replace("def unit_prompt(unit, review_folder):", f"def unit_prompt({signature}):"),
+                               name="narrow")
+            causes = self.refused("unit_prompt", "narrow", "the unit and the review folder", caller="narrow")
+            self.assertTrue(all("narrow" in cause for cause in causes), causes)
+            self.assertEqual(self.calls(), [], "refused before any session")
+        # a function that takes them under any names, or with defaults after, is accepted
+        self.caller_module(caller_text().replace("def unit_prompt(unit, review_folder):", "def unit_prompt(unit, folder, extra=None):"),
+                           name="wide")
+        status, text, _ = self.run_command(as_json=True, caller="wide")
+        self.assertEqual(status, 0, text)
+
+    def test_a_prompt_function_that_raises_fails_its_unit_naming_the_caller_and_the_unit(self):
+        # SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C2: The driver passes the review folder to the caller's prompt function as well as the unit, for a forked reviewer and for the one unit judged in the setup session, and requires the function to accept both. A caller whose prompt function does not accept the unit and the review folder is refused at load naming the attribute and the caller, and a prompt function that raises fails the run naming the caller and the unit. Out of scope: any file the folder holds.
+        self.caller_module(caller_text().replace("def unit_prompt(unit, review_folder):\n",
+                                                 "def unit_prompt(unit, review_folder):\n    open(os.path.join(review_folder, 'absent.md'))\n"),
+                           name="raising")
+        status, text, _ = self.run_command(as_json=True, caller="raising")
+        self.assertEqual(status, 1, text)
+        report = json.loads(text)
+        self.assertEqual(sorted(unit["unit"] for unit in report["units"] if unit["status"] == "failed"), list(self.UNITS))
+        for unit in report["units"]:
+            self.assertIn(f"unit {unit['unit']} failed", unit["detail"])
+            self.assertIn("the caller's unit_prompt raised FileNotFoundError", unit["detail"])
+            self.assertIn("fix the caller raising", unit["detail"])
+        status, text, _ = self.run_command("--rerun", "alpha", out=os.path.join(self.root, "out2"), caller="raising")
+        self.assertEqual(status, 1)
+
+    # --- C3: the checklist as a function
+
+    def function_checklist(self, text=None):
+        self.write(os.path.join(self.review, "checklist.txt"), "P-1 A-1 B-1 C-1")
+        self.caller_module((text or caller_text(FUNCTION_FINDINGS)) + CHECKLISTING)
+
+    def test_a_checklist_function_is_resolved_once_per_run_and_the_merge_numbers_findings_by_the_resolved_list(self):
+        # SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C3: A checklist given as a function is resolved once per run from the review folder, after load and before the setup session starts, so a function that raises costs no session; the per-unit checks and the merge use that same resolved list, and a rerun of named units resolves it again. A function that raises or returns anything but a list of distinct names fails the run naming the caller. The merge refuses a finding whose item is outside the resolved list and orders findings by it, as it does for a list; which items must have a verdict stays the caller's check. A caller whose checklist is a list behaves as before. Out of scope: what the items of any caller's checklist are.
+        self.function_checklist()
+        self.scenario({"tables": {
+            "alpha": {"Verdicts": verdicts(("A-1", "fail", "F1")), "Findings": [finding(1, "A-1", "x")]},
+            "bravo": {"Verdicts": verdicts(("P-1", "fail", "F1")), "Findings": [finding(1, "P-1", "plan row")]},
+            "charlie": {"Verdicts": [], "Findings": []}}})
+        status, text, _ = self.run_command(as_json=True)
+        self.assertEqual(status, 0, text)
+        self.assertEqual(self.checklist_calls(), 1, "resolved once for the setup session, three units and the merge")
+        tables = json.loads(text)["tables"]
+        self.assertEqual([(row["Finding"], row["Item"]) for row in tables["Findings"]["rows"]], [(1, "P-1"), (2, "A-1")],
+                         "ordered by the resolved list, which places P-1 before A-1")
+        rests = {row["Item"]: row["Rests on"] for row in tables["Verdicts"]["rows"] if row["Item"] in ("A-1", "P-1")}
+        self.assertEqual(rests, {"A-1": "F2", "P-1": "F1"}, "the citations follow the new numbers")
+
+    def test_the_checklist_function_is_resolved_before_the_setup_session_and_a_failing_one_costs_no_session(self):
+        # SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C3: A checklist given as a function is resolved once per run from the review folder, after load and before the setup session starts, so a function that raises costs no session; the per-unit checks and the merge use that same resolved list, and a rerun of named units resolves it again. A function that raises or returns anything but a list of distinct names fails the run naming the caller. The merge refuses a finding whose item is outside the resolved list and orders findings by it, as it does for a list; which items must have a verdict stays the caller's check. A caller whose checklist is a list behaves as before. Out of scope: what the items of any caller's checklist are.
+        self.function_checklist()
+        for mode, words in (("raise", "raised KeyError"), ("string", "which is not a list of distinct item names"),
+                            ("dupe", "which is not a list of distinct item names")):
+            with mock.patch.dict(os.environ, {"CHECKLIST_MODE": mode}):
+                causes = self.refused("the caller's checklist", words, "fix the caller synth")
+            self.assertEqual(self.calls(), [], f"{mode}: no session was started")
+            self.assertFalse(os.path.exists(os.path.join(self.out, "record.json")))
+        text_status, text, _ = self.run_command()
+        self.assertEqual(text_status, 0, text)
+
+        # a missing file is the function's raise, named the same way
+        os.remove(os.path.join(self.review, "checklist.txt"))
+        shutil.rmtree(self.out)
+        for name in os.listdir(self.log):
+            os.remove(os.path.join(self.log, name))
+        self.refused("the caller's checklist", "FileNotFoundError")
+        self.assertEqual(self.calls(), [])
+
+    def test_a_finding_outside_the_resolved_checklist_is_refused_by_the_unit_check_and_a_rerun_resolves_the_list_again(self):
+        # SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C3: A checklist given as a function is resolved once per run from the review folder, after load and before the setup session starts, so a function that raises costs no session; the per-unit checks and the merge use that same resolved list, and a rerun of named units resolves it again. A function that raises or returns anything but a list of distinct names fails the run naming the caller. The merge refuses a finding whose item is outside the resolved list and orders findings by it, as it does for a list; which items must have a verdict stays the caller's check. A caller whose checklist is a list behaves as before. Out of scope: what the items of any caller's checklist are.
+        self.function_checklist()
+        self.scenario({"tables": {"alpha": {"Verdicts": verdicts(("Z-1", "fail", "F1")), "Findings": [finding(1, "Z-1", "x")]}}})
+        status, text, _ = self.run_command(as_json=True)
+        self.assertEqual(status, 1, text)
+        report = json.loads(text)
+        alpha = [unit for unit in report["units"] if unit["unit"] == "alpha"][0]
+        self.assertEqual(alpha["status"], "failed")
+        self.assertIn("raised a finding on 'Z-1', which is no item of the checklist", alpha["detail"])
+        self.assertEqual(alpha["attempts"], 2, "run once more, against the same list")
+        self.assertEqual(self.checklist_calls(), 1)
+
+        self.write(os.path.join(self.review, "checklist.txt"), "P-1 A-1 B-1 C-1 Z-1")
+        status, text, _ = self.run_command("--rerun", "alpha", as_json=True)
+        self.assertEqual(status, 0, text)
+        self.assertEqual(self.checklist_calls(), 2, "the rerun resolved the list again from the folder")
+        self.assertEqual([row["Item"] for row in json.loads(text)["tables"]["Findings"]["rows"]], ["Z-1"])
+
+    def test_the_merge_refuses_a_finding_outside_a_resolved_checklist_it_is_given(self):
+        # SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C3: A checklist given as a function is resolved once per run from the review folder, after load and before the setup session starts, so a function that raises costs no session; the per-unit checks and the merge use that same resolved list, and a rerun of named units resolves it again. A function that raises or returns anything but a list of distinct names fails the run naming the caller. The merge refuses a finding whose item is outside the resolved list and orders findings by it, as it does for a list; which items must have a verdict stays the caller's check. A caller whose checklist is a list behaves as before. Out of scope: what the items of any caller's checklist are.
+        self.function_checklist()
+        with mock.patch.object(sys, "dont_write_bytecode", True):
+            caller = review_fan_out.load_caller("synth", self.callers)
+        run = review_fan_out.Run(caller, self.review, self.out, "unused", 2, None, 0)
+        run.resolve_checklist()
+        self.assertEqual(caller.FINDINGS["checklist"], ["P-1", "A-1", "B-1", "C-1"])
+        results = {unit: {"Verdicts": [], "Findings": []} for unit in self.UNITS}
+        results["bravo"]["Findings"] = [finding(1, "Q-9", "outside")]
+        with self.assertRaises(review_fan_out.Refused) as caught:
+            review_fan_out.merge(caller, self.review, list(self.UNITS), results)
+        self.assertIn("'Q-9', which is no item of the checklist", caught.exception.causes[0])
+
+    # --- C4: the rendered record
+
+    def rendering_caller(self):
+        self.caller_module(caller_text() + RENDERING)
+
+    def read_out(self, name):
+        with open(os.path.join(self.out, name), encoding="utf-8") as handle:
+            return handle.read()
+
+    def test_a_rendered_record_is_written_after_the_merge_and_named_in_the_record_and_the_report_in_text_and_json(self):
+        # SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C4: A caller may supply a function of the review folder and the merged tables that returns file names with their text. The driver calls it before writing anything, then writes each file into the output folder after the merge and lists the names it wrote in the record it writes and in its report, in text and in JSON with the same content. It refuses a name that carries a path, a name the driver itself uses in the output folder, and a name that the output folder already holds unless an earlier merge wrote it, which the driver knows from the list of rendered names in the record that merge wrote, so a merge after running named units again replaces the files the earlier merge wrote and never a file put there by anyone else. A function that raises fails the run naming the caller, after the record in table form is written and with the report naming the earlier merge's rendered files as not of this merge. A caller that supplies none writes no file beyond the record in table form. Out of scope: the content of any rendered record.
+        self.rendering_caller()
+        status, text, _ = self.run_command(as_json=True)
+        self.assertEqual(status, 0, text)
+        report = json.loads(text)
+        self.assertEqual(report["rendered"], ["summary.md", "second.md"])
+        self.assertEqual(self.read_out("summary.md"), f"{self.review}|3|a", "given the review folder and the merged tables")
+        self.assertEqual(self.read_out("second.md"), "second")
+        with open(os.path.join(self.out, "record.json"), encoding="utf-8") as handle:
+            self.assertEqual(json.load(handle)["rendered"], ["summary.md", "second.md"], "the record lists the names")
+        self.assertEqual(report["tables"]["Verdicts"]["columns"], ["Item", "Verdict", "Rests on"], "the table form is still written")
+
+        shutil.rmtree(self.out)
+        status, text, _ = self.run_command()
+        self.assertEqual(status, 0, text)
+        self.assertIn("RENDERED | summary.md", text.splitlines())
+        self.assertIn("RENDERED | second.md", text.splitlines())
+        self.assertLess(text.index("RENDERED | summary.md"), text.index("RESULT | WRITTEN"))
+
+    def test_a_rendered_name_with_a_path_or_the_drivers_own_name_or_a_file_it_does_not_own_is_refused_and_nothing_is_written(self):
+        # SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C4: A caller may supply a function of the review folder and the merged tables that returns file names with their text. The driver calls it before writing anything, then writes each file into the output folder after the merge and lists the names it wrote in the record it writes and in its report, in text and in JSON with the same content. It refuses a name that carries a path, a name the driver itself uses in the output folder, and a name that the output folder already holds unless an earlier merge wrote it, which the driver knows from the list of rendered names in the record that merge wrote, so a merge after running named units again replaces the files the earlier merge wrote and never a file put there by anyone else. A function that raises fails the run naming the caller, after the record in table form is written and with the report naming the earlier merge's rendered files as not of this merge. A caller that supplies none writes no file beyond the record in table form. Out of scope: the content of any rendered record.
+        self.rendering_caller()
+        for mode, words in (("path", "with a path in it"), ("back", "with a path in it"), ("dots", "with a path in it"),
+                            ("record", "which the command uses"), ("units", "which the command uses"),
+                            ("lock", "which the command uses"), ("setups", "which the command uses")):
+            shutil.rmtree(self.out, ignore_errors=True)
+            with mock.patch.dict(os.environ, {"RENDER_MODE": mode}):
+                causes = self.refused("caller synth", words)
+            self.assertFalse(os.path.exists(os.path.join(self.out, "record.json")), f"{mode}: no record")
+            for name in ("summary.md", "second.md"):
+                self.assertFalse(os.path.exists(os.path.join(self.out, name)), f"{mode}: nothing written")
+        # a file someone else put there is never replaced
+        shutil.rmtree(self.out, ignore_errors=True)
+        self.write(os.path.join(self.out, "notes.md"), "someone else's")
+        with mock.patch.dict(os.environ, {"RENDER_MODE": "clash"}):
+            self.refused("'notes.md'", "no earlier merge wrote")
+        self.assertEqual(self.read_out("notes.md"), "someone else's")
+        self.assertFalse(os.path.exists(os.path.join(self.out, "record.json")))
+        # a return that is not a mapping of names to text fails the run as a function that raises does
+        shutil.rmtree(self.out, ignore_errors=True)
+        with mock.patch.dict(os.environ, {"RENDER_MODE": "string"}):
+            self.refused("the caller's RENDER returned 'not a mapping'", "a mapping of file name to text", "fix the caller synth")
+        self.assertEqual(json.loads(self.read_out("record.json"))["rendered"], [])
+        self.assertFalse(os.path.exists(os.path.join(self.out, "summary.md")))
+
+    def test_a_merge_after_running_named_units_again_replaces_the_files_the_earlier_merge_wrote_and_never_another_file(self):
+        # SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C4: A caller may supply a function of the review folder and the merged tables that returns file names with their text. The driver calls it before writing anything, then writes each file into the output folder after the merge and lists the names it wrote in the record it writes and in its report, in text and in JSON with the same content. It refuses a name that carries a path, a name the driver itself uses in the output folder, and a name that the output folder already holds unless an earlier merge wrote it, which the driver knows from the list of rendered names in the record that merge wrote, so a merge after running named units again replaces the files the earlier merge wrote and never a file put there by anyone else. A function that raises fails the run naming the caller, after the record in table form is written and with the report naming the earlier merge's rendered files as not of this merge. A caller that supplies none writes no file beyond the record in table form. Out of scope: the content of any rendered record.
+        self.rendering_caller()
+        status, text, _ = self.run_command(as_json=True)
+        self.assertEqual(status, 0, text)
+        self.write(os.path.join(self.out, "other.md"), "someone else's")
+        with mock.patch.dict(os.environ, {"RENDER_TAG": "b"}):
+            status, text, _ = self.run_command("--rerun", "alpha", as_json=True)
+        self.assertEqual(status, 0, text)
+        self.assertEqual(self.read_out("summary.md"), f"{self.review}|3|b", "the earlier merge's file is replaced")
+        self.assertEqual(json.loads(text)["rendered"], ["summary.md", "second.md"])
+        with mock.patch.dict(os.environ, {"RENDER_MODE": "other"}):
+            status, text, _ = self.run_command("--rerun", "alpha", as_json=True)
+        self.assertEqual(status, 1, text)
+        self.assertTrue(any("'other.md'" in cause for cause in json.loads(text)["refusals"]))
+        self.assertEqual(self.read_out("other.md"), "someone else's", "a file no merge wrote is never replaced")
+        self.assertEqual(self.read_out("summary.md"), f"{self.review}|3|b", "and nothing else was written by that merge")
+
+    def test_a_rendered_name_that_differs_only_in_case_from_the_drivers_own_name_or_from_another_rendered_name_is_refused(self):
+        # SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C4: A caller may supply a function of the review folder and the merged tables that returns file names with their text. The driver calls it before writing anything, then writes each file into the output folder after the merge and lists the names it wrote in the record it writes and in its report, in text and in JSON with the same content. It refuses a name that carries a path, a name the driver itself uses in the output folder, and a name that the output folder already holds unless an earlier merge wrote it, which the driver knows from the list of rendered names in the record that merge wrote, so a merge after running named units again replaces the files the earlier merge wrote and never a file put there by anyone else. A function that raises fails the run naming the caller, after the record in table form is written and with the report naming the earlier merge's rendered files as not of this merge. A caller that supplies none writes no file beyond the record in table form. Out of scope: the content of any rendered record.
+        self.rendering_caller()
+        for reserved in ("Record.json", "RECORD.JSON", "Units", ".Review-Fan-Out.Lock", "SETUPS.json", "Reruns.JSON",
+                         "Failed", "UNSETTLED"):
+            for as_json in (True, False):
+                shutil.rmtree(self.out, ignore_errors=True)
+                with mock.patch.dict(os.environ, {"RENDER_MODE": "named", "RENDER_NAME": reserved}):
+                    status, text, _ = self.run_command(as_json=as_json)
+                self.assertEqual(status, 1, f"{reserved}: {text}")
+                self.assertIn("which the command uses", text, reserved)
+                self.assertFalse(os.path.exists(os.path.join(self.out, "record.json")), f"{reserved}: no record")
+        shutil.rmtree(self.out, ignore_errors=True)
+        with mock.patch.dict(os.environ, {"RENDER_MODE": "casepair"}):
+            causes = self.refused("differ only in case", "'Summary.md'", "'summary.MD'")
+            shutil.rmtree(self.out, ignore_errors=True)
+            status, text, _ = self.run_command()
+        self.assertEqual(status, 1, text)
+        self.assertTrue(any(line.startswith("REFUSED | ") and "differ only in case" in line for line in text.splitlines()), text)
+        self.assertEqual(len(causes), 1)
+        self.assertFalse(os.path.exists(os.path.join(self.out, "record.json")))
+        # a case variant of a file someone else put there is not the driver's to replace either
+        shutil.rmtree(self.out, ignore_errors=True)
+        self.write(os.path.join(self.out, "Notes.md"), "someone else's")
+        with mock.patch.dict(os.environ, {"RENDER_MODE": "named", "RENDER_NAME": "NOTES.md"}):
+            self.refused("'NOTES.md'", "no earlier merge wrote")
+        self.assertEqual(self.read_out("Notes.md"), "someone else's")
+
+    def test_a_rendered_name_that_differs_from_the_drivers_own_name_or_another_rendered_name_only_in_trailing_dots_or_spaces_is_refused(self):
+        # SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C4: A caller may supply a function of the review folder and the merged tables that returns file names with their text. The driver calls it before writing anything, then writes each file into the output folder after the merge and lists the names it wrote in the record it writes and in its report, in text and in JSON with the same content. It refuses a name that carries a path, a name the driver itself uses in the output folder, and a name that the output folder already holds unless an earlier merge wrote it, which the driver knows from the list of rendered names in the record that merge wrote, so a merge after running named units again replaces the files the earlier merge wrote and never a file put there by anyone else. A function that raises fails the run naming the caller, after the record in table form is written and with the report naming the earlier merge's rendered files as not of this merge. A caller that supplies none writes no file beyond the record in table form. Out of scope: the content of any rendered record.
+        self.rendering_caller()
+        for reserved in ("Record.json.", "record.json ", "UNITS.", ".review-fan-out.lock ", "setups.json. .", "Failed "):
+            for as_json in (True, False):
+                shutil.rmtree(self.out, ignore_errors=True)
+                with mock.patch.dict(os.environ, {"RENDER_MODE": "named", "RENDER_NAME": reserved}):
+                    status, text, _ = self.run_command(as_json=as_json)
+                self.assertEqual(status, 1, f"{reserved!r}: {text}")
+                self.assertIn("which the command uses", text, reserved)
+                self.assertFalse(os.path.exists(os.path.join(self.out, "record.json")), f"{reserved!r}: no record")
+        for as_json in (True, False):
+            shutil.rmtree(self.out, ignore_errors=True)
+            with mock.patch.dict(os.environ, {"RENDER_MODE": "dotpair"}):
+                status, text, _ = self.run_command(as_json=as_json)
+            self.assertEqual(status, 1, text)
+            self.assertIn("differ only in case or trailing dots and spaces", text)
+            self.assertIn("summary.md.", text)
+            self.assertFalse(os.path.exists(os.path.join(self.out, "record.json")))
+
+    def test_a_file_an_earlier_merge_wrote_that_this_merge_does_not_render_again_is_named_as_not_of_this_merge_and_stays_the_drivers(self):
+        # SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C4: A caller may supply a function of the review folder and the merged tables that returns file names with their text. The driver calls it before writing anything, then writes each file into the output folder after the merge and lists the names it wrote in the record it writes and in its report, in text and in JSON with the same content. It refuses a name that carries a path, a name the driver itself uses in the output folder, and a name that the output folder already holds unless an earlier merge wrote it, which the driver knows from the list of rendered names in the record that merge wrote, so a merge after running named units again replaces the files the earlier merge wrote and never a file put there by anyone else. A function that raises fails the run naming the caller, after the record in table form is written and with the report naming the earlier merge's rendered files as not of this merge. A caller that supplies none writes no file beyond the record in table form. Out of scope: the content of any rendered record.
+        self.rendering_caller()
+        status, text, _ = self.run_command(as_json=True)
+        self.assertEqual(status, 0, text)
+        with mock.patch.dict(os.environ, {"RENDER_MODE": "fewer"}):
+            status, text, _ = self.run_command("--rerun", "alpha", as_json=True)
+        self.assertEqual(status, 0, text)
+        report = json.loads(text)
+        self.assertEqual(report["rendered"], ["summary.md"])
+        self.assertEqual(report["not_this_merge"], ["second.md"])
+        self.assertEqual(json.loads(self.read_out("record.json"))["not_this_merge"], ["second.md"], "the record names it too")
+        self.assertEqual(self.read_out("second.md"), "second", "the dropped file stays on disk")
+
+        with mock.patch.dict(os.environ, {"RENDER_MODE": "fewer"}):
+            status, text, _ = self.run_command("--rerun", "alpha")
+        self.assertEqual(status, 0, text)
+        self.assertIn("NOT THIS MERGE | second.md | written by an earlier merge, not by this one", text.splitlines())
+
+        # a later merge naming the dropped file replaces it, as the driver's own
+        with mock.patch.dict(os.environ, {"RENDER_MODE": "dropped"}):
+            status, text, _ = self.run_command("--rerun", "alpha", as_json=True)
+        self.assertEqual(status, 0, text)
+        report = json.loads(text)
+        self.assertEqual(report["rendered"], ["second.md"])
+        self.assertEqual(report["not_this_merge"], ["summary.md"])
+        self.assertEqual(self.read_out("second.md"), "again")
+
+        # a dropped file that has been removed is no longer named
+        os.remove(os.path.join(self.out, "summary.md"))
+        with mock.patch.dict(os.environ, {"RENDER_MODE": "dropped"}):
+            status, text, _ = self.run_command("--rerun", "alpha", as_json=True)
+        self.assertEqual(status, 0, text)
+        self.assertEqual(json.loads(text)["not_this_merge"], [])
+
+    def test_a_rendering_function_that_raises_fails_the_run_after_the_record_is_written_and_names_the_earlier_files(self):
+        # SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C4: A caller may supply a function of the review folder and the merged tables that returns file names with their text. The driver calls it before writing anything, then writes each file into the output folder after the merge and lists the names it wrote in the record it writes and in its report, in text and in JSON with the same content. It refuses a name that carries a path, a name the driver itself uses in the output folder, and a name that the output folder already holds unless an earlier merge wrote it, which the driver knows from the list of rendered names in the record that merge wrote, so a merge after running named units again replaces the files the earlier merge wrote and never a file put there by anyone else. A function that raises fails the run naming the caller, after the record in table form is written and with the report naming the earlier merge's rendered files as not of this merge. A caller that supplies none writes no file beyond the record in table form. Out of scope: the content of any rendered record.
+        self.rendering_caller()
+        status, text, _ = self.run_command(as_json=True)
+        self.assertEqual(status, 0, text)
+        with mock.patch.dict(os.environ, {"RENDER_MODE": "raise", "RENDER_TAG": "c"}):
+            status, text, _ = self.run_command("--rerun", "alpha", as_json=True)
+        self.assertEqual(status, 1, text)
+        report = json.loads(text)
+        self.assertEqual(report["result"], "FAILED")
+        self.assertTrue(any("the caller's RENDER raised KeyError" in cause and "fix the caller synth" in cause
+                            for cause in report["refusals"]), report["refusals"])
+        self.assertEqual(report["not_this_merge"], ["summary.md", "second.md"])
+        self.assertEqual(report["rendered"], [])
+        with open(os.path.join(self.out, "record.json"), encoding="utf-8") as handle:
+            record = json.load(handle)
+        self.assertEqual(record["not_this_merge"], ["summary.md", "second.md"], "the record in table form is written")
+        self.assertEqual(record["tables"]["Verdicts"]["columns"], ["Item", "Verdict", "Rests on"])
+        self.assertEqual(self.read_out("summary.md"), f"{self.review}|3|a", "the earlier merge's file stands, unchanged")
+
+        with mock.patch.dict(os.environ, {"RENDER_MODE": "raise"}):
+            status, text, _ = self.run_command("--rerun", "alpha")
+        self.assertEqual(status, 1)
+        self.assertIn("NOT THIS MERGE | summary.md | written by an earlier merge, not by this one", text.splitlines())
+        self.assertIn("NOT THIS MERGE | second.md | written by an earlier merge, not by this one", text.splitlines())
+        self.assertTrue(any(line.startswith("REFUSED | the caller's RENDER raised KeyError") for line in text.splitlines()))
+        self.assertTrue(any(line.startswith("RESULT | FAILED") for line in text.splitlines()))
+
+        # the files stay the driver's to replace once the function works again
+        with mock.patch.dict(os.environ, {"RENDER_TAG": "d"}):
+            status, text, _ = self.run_command("--rerun", "alpha", as_json=True)
+        self.assertEqual(status, 0, text)
+        self.assertEqual(self.read_out("summary.md"), f"{self.review}|3|d")
+
+    def test_a_record_that_cannot_be_read_back_for_the_rendered_names_is_refused_not_defaulted(self):
+        # SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C4: A caller may supply a function of the review folder and the merged tables that returns file names with their text. The driver calls it before writing anything, then writes each file into the output folder after the merge and lists the names it wrote in the record it writes and in its report, in text and in JSON with the same content. It refuses a name that carries a path, a name the driver itself uses in the output folder, and a name that the output folder already holds unless an earlier merge wrote it, which the driver knows from the list of rendered names in the record that merge wrote, so a merge after running named units again replaces the files the earlier merge wrote and never a file put there by anyone else. A function that raises fails the run naming the caller, after the record in table form is written and with the report naming the earlier merge's rendered files as not of this merge. A caller that supplies none writes no file beyond the record in table form. Out of scope: the content of any rendered record.
+        self.rendering_caller()
+        status, text, _ = self.run_command(as_json=True)
+        self.assertEqual(status, 0, text)
+        for damage in ("not json", '{"rendered": "summary.md"}', '{"rendered": [1]}', '[]'):
+            self.write(os.path.join(self.out, "record.json"), damage)
+            status, text, _ = self.run_command("--rerun", "alpha", as_json=True)
+            self.assertEqual(status, 1, damage)
+            self.assertTrue(any("record.json" in cause for cause in json.loads(text)["refusals"]), damage)
+            self.assertEqual(self.read_out("summary.md"), f"{self.review}|3|a")
+
+    def test_a_rendering_function_that_does_not_accept_the_review_folder_and_the_tables_is_refused_at_load(self):
+        # SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C4: A caller may supply a function of the review folder and the merged tables that returns file names with their text. The driver calls it before writing anything, then writes each file into the output folder after the merge and lists the names it wrote in the record it writes and in its report, in text and in JSON with the same content. It refuses a name that carries a path, a name the driver itself uses in the output folder, and a name that the output folder already holds unless an earlier merge wrote it, which the driver knows from the list of rendered names in the record that merge wrote, so a merge after running named units again replaces the files the earlier merge wrote and never a file put there by anyone else. A function that raises fails the run naming the caller, after the record in table form is written and with the report naming the earlier merge's rendered files as not of this merge. A caller that supplies none writes no file beyond the record in table form. Out of scope: the content of any rendered record.
+        self.caller_module(caller_text() + "\nRENDER = 5\n")
+        self.refused("RENDER", "make it a function")
+        self.caller_module(caller_text() + "\ndef RENDER(folder):\n    return {}\n")
+        self.refused("RENDER", "synth", "RENDER(review_folder, tables)")
+        self.assertEqual(self.calls(), [])
+
+    # --- C5: a caller defining none of the attributes
+
+    def test_a_caller_defining_none_of_the_optional_attributes_writes_and_reports_nothing_more(self):
+        # SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C5: A synthetic caller that defines none of the retrieval grant, the checklist function and the rendered record gives the results it gave before this change, in text and in JSON, and the driver's existing tests pass with the one change that each synthetic caller's prompt function accepts the review folder. Out of scope: the new attributes' own behaviour, which the criteria above cover.
+        status, text, _ = self.run_command(as_json=True)
+        self.assertEqual(status, 0, text)
+        report = json.loads(text)
+        self.assertNotIn("rendered", report)
+        self.assertNotIn("not_this_merge", report)
+        self.assertEqual(set(os.listdir(self.out)) - {"failed", "unsettled"}, {"record.json", "setups.json", "units"})
+        self.assertEqual(sorted(os.listdir(os.path.join(self.out, "units"))), [f"{unit}.json" for unit in self.UNITS])
+        for fork in self.forks():
+            self.assertEqual(self.flag(fork, "--tools"), "Read,Glob")
+        self.assertEqual(self.checklist_calls(), 0)
+        shutil.rmtree(self.out)
+        status, text, _ = self.run_command()
+        self.assertEqual(status, 0, text)
+        self.assertFalse([line for line in text.splitlines() if line.startswith(("RENDERED", "NOT THIS MERGE"))])
 
 
 class Parsing(unittest.TestCase):
@@ -1991,6 +2491,28 @@ class Documentation(unittest.TestCase):
                       "the unit prompt must forbid it"):
             self.assertIn(words, doc)
         self.assertIn("Write no text before, between or after your reads", review_fan_out.ACK_INSTRUCTION)
+
+    def test_the_four_attributes_a_caller_defines_are_named_where_the_command_describes_itself(self):
+        # SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C6: The task-runner description of the command, the driver's module description and the hardware notes' account of what a caller defines name the retrieval grant, the review folder in the prompt, the checklist as a function and the rendered record, and the hardware notes say the setup session keeps the read tools alone and state the retrieval grant's risk and why it is bounded (reviewers write nothing, the setup session fetches nothing and every verdict is checked structurally at the merge). Out of scope: the callers' own sections.
+        taskfile = self.read("Taskfile.yml")
+        task = self.flat(taskfile[taskfile.index("  hw:review-fan-out:"):].splitlines()[1])
+        notes = self.read("hardware", "README.md")
+        section = self.flat(notes[notes.index("## The review fan-out command"):].split("\n## ")[0])
+        doc = self.flat(review_fan_out.__doc__)
+        places = {
+            "the task's description": (task, ("WebFetch", "retrieval grant", "unit and the review folder", "checklist (a list, or a function",
+                                              "rendered record", "setup session keeps the read tools alone")),
+            "the module description": (doc, ("WebFetch", "unit_prompt(unit, review_folder)", "checklist as a function",
+                                             "RENDER(review_folder, tables)", "the setup session keeps the read tools alone")),
+            "the hardware notes": (section, ("WebFetch", "unit_prompt(unit, review_folder)", "`FINDINGS[\"checklist\"]` may be a function",
+                                             "`RENDER(review_folder, tables)`", "The retrieval grant", "read tools alone",
+                                             "a fetched page is text the reviewer did not write", "reviewers write nothing",
+                                             "the setup session fetches nothing",
+                                             "every verdict is checked structurally at the merge")),
+        }
+        for place, (text, clauses) in places.items():
+            for words in clauses:
+                self.assertIn(words, text, f"{place} says {words!r}")
 
 
 if __name__ == "__main__":
