@@ -6,7 +6,7 @@ version: 2
 measurement_type: binary
 verification: test
 text: |
-  The exit status is 0 when the merged record is written, 1 when the command refuses or a unit fails, and 2 when the agent command line is missing or not logged in, each with a line beginning REFUSED or CANNOT RUN as the other board commands print; a review folder inside the repository, a folder that does not exist, an output folder inside the review folder or containing it or inside the repository, a caller name with no module or whose module lacks a required attribute, and a bound below one are refused. The report is available as text and as JSON and the two hold the same facts. Out of scope: the merge's own refusals, which each caller names.
+  The exit status is 0 when the merged record is written, 1 when the command refuses or a unit fails, and 2 when the agent command line is missing or not logged in, each with a line beginning REFUSED or CANNOT RUN as the other board commands print; a review folder inside the repository, a folder that does not exist, an output folder inside the review folder or containing it or inside the repository, a caller name with no module or whose module lacks a required attribute, an output folder that already holds a record when no unit is named to run again, an output folder in use by another run, and a bound below one are refused. Each REFUSED and CANNOT RUN line names its cause and what to do about it. The report is available as text and as JSON and the two hold the same facts. Out of scope: the merge's own refusals, which each caller names.
 links:
   - target: SOL-HW-REVIEW-FAN-OUT-DRIVER
     type: criterion-of
