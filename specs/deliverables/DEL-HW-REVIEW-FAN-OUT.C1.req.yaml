@@ -1,0 +1,13 @@
+id: DEL-HW-REVIEW-FAN-OUT.C1
+type: criterion
+title: A review that names its folder, its units and its reviewer prompt runs each unit as a concurrent read-only reviewer from one setup session and merges the results
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  One setup session reads the review's shared material once and opens no image and judges nothing. A review with two or more units has each unit judged by a reviewer forked from the setup session, holding only read tools and the model the setup session runs at; a review with one unit is judged by the setup session itself. The number of reviewers running at once is bounded, a unit that fails or returns a malformed result is run once more and then fails the run naming that unit, and the merged result does not depend on the order in which the reviewers finish. Each session's own time, tokens and cost are recorded, and the command reports in text and in JSON.
+links:
+  - target: DEL-HW-REVIEW-FAN-OUT
+    type: criterion-of

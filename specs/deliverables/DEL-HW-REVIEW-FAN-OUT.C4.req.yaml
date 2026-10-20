@@ -1,0 +1,13 @@
+id: DEL-HW-REVIEW-FAN-OUT.C4
+type: criterion
+title: The production-files check is judged by group of placed parts and by group of fabrication layers and recorded as one record
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The merged record has a parts row for every row of the placement file and a layers row for every fabrication layer, the drill file and the outline, each with the verdict the ordering step allows, and a row that is not a match blocks the order. The assembler's preview, which needs an account and an upload, stays outside every reviewer.
+links:
+  - target: DEL-HW-REVIEW-FAN-OUT
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-FAN-OUT-DRIVER.C1
+type: criterion
+title: The command judges two or more units in reviewers forked from one setup session, a single unit in the setup session, and no more reviewers at once than the stated number
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Against a stub in place of the agent command line, the setup session is started once and before any unit; with two or more units each unit's reviewer is started by resuming the setup session's id as a fork, the count of forks equals the count of units, and no more than the stated number are running at once however many units there are; with one unit no fork is started and the unit is judged in the setup session. The model and tool set of every fork equal the setup session's and the caller's. The result of each unit is returned with the unit's name, and the order the stub finishes them in does not change the merged output. Out of scope: the checks of a session's report, failure handling and any merge.
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-DRIVER
+    type: criterion-of

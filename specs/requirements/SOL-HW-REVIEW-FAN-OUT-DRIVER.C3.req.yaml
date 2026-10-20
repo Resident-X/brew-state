@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-FAN-OUT-DRIVER.C3
+type: criterion
+title: A unit that fails or returns a malformed result is run once more, a rate-limited call is retried, and a run that still fails names the unit and keeps the other results
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  A unit whose reviewer exits with an error or returns nothing is run once more; a call refused for a rate limit is retried after a wait that grows, a bounded number of times; a unit that still fails fails the run, naming the unit and what the reviewer returned, and the other units' results are kept in the output. Out of scope: what a caller counts as a malformed result, which the caller defines.
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-DRIVER
+    type: criterion-of

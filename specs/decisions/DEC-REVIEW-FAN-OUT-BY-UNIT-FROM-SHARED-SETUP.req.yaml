@@ -1,0 +1,48 @@
+id: DEC-REVIEW-FAN-OUT-BY-UNIT-FROM-SHARED-SETUP
+type: decision
+category: operational
+title: A judged review that divides into independent units is carried out by one setup session and one forked read-only reviewer per unit, merged by a deterministic step
+status: active
+version: 1
+decided_by: david
+text: |
+  A review whose checklist divides into units that are judged independently, and whose units share a large read-only body of material, is carried out by one setup session that reads the shared material once and one reviewer per unit forked from that session, the forks running at the same time with read-only tools and their results merged by a deterministic step. The board design method's judged reviews are the cases this applies to: the layout review and the critical-routing check by catalogue area, the schematic review by catalogue area, and the production-files check by group of placed parts and by group of fabrication layers.
+
+  A fork inherits the setup session's context and nothing else, so a unit's reviewer never holds another unit's verdicts or the images another unit opened. The setup session holds only documents and records, never a verdict, a seed list or a designer's reasoning, so a forked reviewer is as blind as a fresh one. The reviewers run at the model the setup session runs at, which is the mid-tier the blind proofs already require, and with the read tools the proofs already grant, which the driver sets for each fork.
+
+  What does not fan out: steps that write files, steps that drive the board editor through the Konnect toolsets (visible only to the session that loaded them), and steps whose units depend on an earlier unit's result. A review with one unit, such as a narrow round that touches one area, is not forked: the setup session judges the unit itself, which costs what a fresh session costs, so every judged review can be run through the one command and the command decides from the units it finds. A review with two or more units forks them.
+rationale: |
+  Context: The method's judged reviews are the slowest and most expensive part of a board's design loop, and wall-clock time and token use are what slow this project most. A layout review round took about twenty minutes in the run recorded in SOL-BOARD-REVIEW-LOOP-PROPORTIONATE, one reviewer judging the whole catalogue (sixty-nine items in twelve areas) with every rendered image it opened still in its context, and a design change to a proof design forced five such rounds. Each blind proof repeats the same review on a seeded copy. The review is a read-only judgement over files that do not change during the round, and its areas do not depend on one another.
+
+  What was measured. Mechanics, on a small model: a session that had read about 78,000 tokens, forked three times, read 78,565 tokens from the prompt cache in each fork and wrote about 440 new; forks can be started from a different working directory and given their own tool set and model; three forks started together each finished in about twice the time of one alone on a trivial task. The review, on the mid-tier model (Sonnet 5.5, headless, read tools only), on one seeded copy of the layout review's proof design (21 seeds, 123 views), judging one area per session: a fresh session that does the setup and then the area cost $0.648 and took 137 s for the decoupling area (15.3k output tokens) and $0.657 and 108 s for the clock area; the shared setup alone cost $0.358 and took 23 s and left an 87,000-token context to fork from; the area forked from it cost $0.505 and 208 s for decoupling and $0.312 and 125 s for clock. Repeating the clock area, three forks started at once finished in 108, 132 and 131 s for $0.40, $0.40 and $0.46 and wrote 38k to 52k cache tokens each, and three fresh sessions started at once finished in 112, 128 and 131 s for $0.66, $0.67 and $0.70 and wrote 114k to 122k each. Both arms reported the seeded defect of their area (the decoupling capacitor moved from its pin, the clock load capacitor moved from its oscillator) and the missing ground planes. Reviewers wrote the same amount in both arms, and run-to-run variation in time within an arm was about ten per cent, in cost per fork $0.31 to $0.46.
+
+  What follows from it. A fork costs about 40 per cent less per area than a fresh session because the setup is paid once; the saving covers the parent's cost from about a second area on. A fork is not faster than a fresh session for one area, and ran 108 to 208 s against 108 to 137 s, because each of its model calls re-reads the 87,000-token setup context from cache; the time saved comes entirely from the units running together, so a round costs the slowest unit's time plus the setup, not the sum of the units. Estimates, not measurements: twelve areas cost about $5.3 against about $8 for twelve fresh sessions, and a full layout round takes about the slowest unit's time, two to four minutes, plus the setup, against about twenty. Not yet measured: more than three reviewers at once, so whether the account's rate limits bite at twelve, the schematic review and the production-files check as fanned-out reviews, and read-only retrieval of a datasheet from a fork. The layout solution measures the first of these at the layout review's full unit count and records it; the others are measured in the solutions that build them.
+
+  Trade-offs: One reviewer judging the whole checklist is the present practice and costs the most time and the most accumulated context. A fresh session per unit pays the setup for every unit and was measured at about 60 per cent more per area. A model-driven orchestrator using the agent tool's fork inherits the orchestrator's full tool set and model, which the command-line fork lets the driver set per fork (measured), and leaves the merge to a model, which would make a check on completeness depend on what it was asked to check; whether the agent tool's fork can be restricted was not measured and is not needed. Claude Code's dynamic workflows were considered and rejected: their agents' tool and model controls were not checked, they run only inside a session and so cannot be a task the task runner starts on demand or at night, and the command-line driver is measured, easy to adjust and keeps the agent command's name in one place, so it is not tied to one vendor's in-session features. The Message Batches API was rejected: each batch request is one model call with no loop over local files, so a unit's ten to forty tool turns would need a batch round each, results arrive typically within an hour and up to twenty-four, and the shared-prefix cache is best-effort; the reviews need results in minutes. Running the units one after another from a shared setup saves tokens and no time.
+
+  Reversibility: Cheap. The driver is one command and the method names fan-out beside the single-reviewer practice, so dropping it means no longer running the command. A round recorded either way is the same record.
+
+  Consequences: The task runner gains a command that runs a fanned-out review and needs the agent command line on the path and logged in, which its description and the hardware notes state. Each fanned-out review is proven on its seeded copy as the single reviewer was, and its proof records time, tokens and cost per unit so the figures here are checked against the real unit count. The reviewer count per review is bounded by a stated maximum, set from the measured behaviour at the full unit count.
+options_considered:
+  - option: One setup session and one forked read-only reviewer per unit, run together and merged by a deterministic step
+    reason_rejected: ""
+  - option: One reviewer judges the whole checklist in one context
+    reason_rejected: the present practice, about twenty minutes a layout round with every opened image still in context, and the cost repeated by every blind proof
+  - option: A fresh session per unit
+    reason_rejected: pays the shared setup for every unit, measured at about 60 per cent more per area, with the same wall time as a fork
+  - option: A model-driven orchestrator using the agent tool's fork
+    reason_rejected: the fork inherits the orchestrator's full tool set and model, so it cannot make reviewers read-only or hold the proof's tier, and a model merge would leave completeness to the thing being checked; the command-line fork sets both per fork, which was measured, and the agent tool's was not
+  - option: Forks run one after another from a shared setup
+    reason_rejected: saves tokens and no time, since the saving in time comes only from running the units together
+  - option: Claude Code's dynamic workflows
+    reason_rejected: their agents' tool and model controls were not checked, they run only inside a session and so cannot be a task the task runner starts on demand or at night, and the command-line driver is measured, easy to adjust and not tied to one vendor's in-session features
+  - option: The Message Batches API
+    reason_rejected: each batch request is one model call with no loop over local files, so a unit's ten to forty tool turns would need a batch round each; results arrive typically within an hour and up to twenty-four, and the shared-prefix cache is best-effort, where the reviews need results in minutes
+chosen: One setup session and one forked read-only reviewer per unit, run together and merged by a deterministic step
+links:
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C3
+    type: addresses
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3
+    type: addresses
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: addresses

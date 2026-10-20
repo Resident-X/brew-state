@@ -1,0 +1,13 @@
+id: DEL-HW-REVIEW-FAN-OUT.C2
+type: criterion
+title: A layout review round is judged by catalogue area and recorded as one round
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The units are the catalogue's areas, the board's own items, and one unit for the comparison with the plan and the free pass; a narrow round's units are the areas its listed items fall in. The merged record gives every checklist item exactly one verdict, numbers this round's findings in the checklist's order, and has the form the method gives a round, with the round's own fields supplied to the command, so the review record's history check reads it as it reads a single reviewer's.
+links:
+  - target: DEL-HW-REVIEW-FAN-OUT
+    type: criterion-of

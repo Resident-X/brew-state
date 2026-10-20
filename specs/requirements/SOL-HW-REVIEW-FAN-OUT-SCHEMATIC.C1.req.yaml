@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-FAN-OUT-SCHEMATIC.C1
+type: criterion
+title: The schematic caller takes its units from the review folder's circuit catalogue
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  From a synthetic review folder the caller's units are one per area heading of the folder's circuit practice catalogue and one for the whole-schematic free pass; a folder whose method has no circuit catalogue areas is refused naming what is missing. Items that select every net or every part stay in their area's unit. Out of scope: the content of any catalogue item and the driver's mechanics.
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-SCHEMATIC
+    type: criterion-of

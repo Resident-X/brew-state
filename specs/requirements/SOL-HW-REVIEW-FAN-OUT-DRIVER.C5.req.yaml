@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-FAN-OUT-DRIVER.C5
+type: criterion
+title: Each session's own time, tokens and cost are recorded, with the setup session's cumulative figures taken off each fork's
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Against a stub that reports a fork's cost, API time and turn count cumulatively including its setup session, as the agent command line does, the record gives each fork its own cost, time and turns, the setup session its own, and the run their sum; token usage is taken as each session reports it, split into tokens read from the cache, written to it, fresh and generated, and a fork that reads no cache is flagged. The record is in the text and the JSON report. Out of scope: judging whether a run was worth its cost.
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-DRIVER
+    type: criterion-of

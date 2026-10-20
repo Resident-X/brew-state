@@ -1,0 +1,13 @@
+id: DEL-HW-REVIEW-FAN-OUT.C7
+type: criterion
+title: The critical-routing check is judged by catalogue area and recorded as one pass
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The units are the catalogue's areas, each reviewer deciding which of its area's items bear on the critical nets and listing the rest with the reason. The merged pass gives every checklist item either a verdict row or a place on the list, once, and has the form of a pass in the board's layout plan, so the placement and critical routing history command reads it as it reads a single reviewer's.
+links:
+  - target: DEL-HW-REVIEW-FAN-OUT
+    type: criterion-of

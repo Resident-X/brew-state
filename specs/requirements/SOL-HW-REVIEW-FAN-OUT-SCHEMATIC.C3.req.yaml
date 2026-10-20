@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-FAN-OUT-SCHEMATIC.C3
+type: criterion
+title: A schematic reviewer is granted read tools and read-only retrieval of a document at an address, and the start report is checked against it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Against the driver's stub, every reviewer of the schematic caller is started with the read tools and the one retrieval tool and no other, and a run whose session reports a different tool set, any MCP server or another working directory fails naming the unit. Out of scope: whether a datasheet can be retrieved, which the proof run records.
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-SCHEMATIC
+    type: criterion-of

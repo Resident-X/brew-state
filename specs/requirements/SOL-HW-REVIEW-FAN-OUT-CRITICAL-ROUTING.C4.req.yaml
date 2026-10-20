@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING.C4
+type: criterion
+title: A fanned-out critical-routing check of a seeded copy finds every seed the single-reviewer form finds, in no more time and at no more cost
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  Run the single-reviewer form and the fanned-out form on a copy of the method proof design, whose layout plan holds a critical routing section, seeded by a session that has not read the catalogue with defects on critical nets, among them a ground drawn as thin traces, a decoupling capacitor routed the long way round and a sense connection tapped off a load track, the seed list written apart, in sessions with no record of the seeds. The fanned-out form reports every seed the single-reviewer form reports, as a failing verdict against the item that covers it; the verdicts item by item are compared and a difference explained. Record for the setup and each unit and for each run the wall time, the tokens read, written and generated, the cost, the document retrievals and any call refused for a rate limit. The fanned-out run takes no more time and costs no more than the single-reviewer run. A seed not reported is closed where the gap lies and the run repeated in a new session. The evidence names the exact model and the commit. Out of scope: the layout review round's proof.
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING
+    type: criterion-of
