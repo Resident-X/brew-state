@@ -726,6 +726,69 @@ class Interface(Fixture):
         self.assertTrue(os.path.isfile(os.path.join(self.out, "units", "charlie.json")))
         self.assertFalse(os.path.exists(os.path.join(self.out, "record.json")))
 
+    def raising_hook(self, findings=FINDINGS, check="[]", units=False):
+        text = caller_text(findings, check)
+        if units:
+            text = text.replace("    return sorted(name[:-4]", '    raise KeyError("no such unit")\n    return sorted(name[:-4]')
+        self.write(os.path.join(self.callers, "review_caller_broken.py"), text)
+
+    def assert_hook_refused(self, hook, kept=True):
+        for as_json in (False, True):
+            shutil.rmtree(self.out, True)
+            status, text, _ = self.run_command(caller="broken", as_json=as_json)
+            self.assertEqual(status, 1, text)
+            if as_json:
+                report = json.loads(text)
+                self.assertEqual(report["result"], "REFUSED")
+                self.assertTrue(any(f"the caller's {hook} raised KeyError" in cause and "fix the caller" in cause
+                                    for cause in report["refusals"]), report["refusals"])
+            else:
+                self.assertRegex(text, rf"REFUSED \| the caller's {hook} raised KeyError: .*fix the caller")
+            self.assertNotIn("Traceback", text)
+            if kept:
+                self.assertTrue(os.path.isfile(os.path.join(self.out, "units", "charlie.json")))
+                self.assertFalse(os.path.exists(os.path.join(self.out, "record.json")))
+                self.assertFalse(os.path.exists(os.path.join(self.out, review_fan_out.LOCK)))
+            else:
+                self.assertFalse(os.path.exists(self.out))
+
+    def test_a_caller_s_key_that_raises_in_the_merge_exits_one_with_a_refused_line_naming_it_and_keeps_the_results(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C4: The exit status is 0 when the merged record is written, 1 when the command refuses or a unit fails, and 2 when the agent command line is missing or not logged in, each with a line beginning REFUSED or CANNOT RUN as the other board commands print; a review folder inside the repository, a folder that does not exist, an output folder inside the review folder or containing it or inside the repository, a caller name with no module or whose module lacks a required attribute, an output folder that already holds a record when no unit is named to run again, an output folder in use by another run, and a bound below one are refused. Each REFUSED and CANNOT RUN line names its cause and what to do about it. The report is available as text and as JSON and the two hold the same facts. Out of scope: the merge's own refusals, which each caller names.
+        self.scenario({"tables": {"alpha": {"Verdicts": [{"Item": "A-1", "Verdict": "pass", "Rests on": "read"}],
+                                              "Findings": [finding(1, "A-1", "stub")]}}})
+        self.raising_hook(findings=FINDINGS.replace('"key": lambda row: row["What"].split("@")[1] if "@" in row["What"] else None',
+                                                    '"key": lambda row: row["Missing"]'))
+        self.assert_hook_refused("key")
+
+    def test_a_caller_s_check_that_raises_exits_one_with_a_refused_line_naming_it_and_keeps_the_results(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C4: The exit status is 0 when the merged record is written, 1 when the command refuses or a unit fails, and 2 when the agent command line is missing or not logged in, each with a line beginning REFUSED or CANNOT RUN as the other board commands print; a review folder inside the repository, a folder that does not exist, an output folder inside the review folder or containing it or inside the repository, a caller name with no module or whose module lacks a required attribute, an output folder that already holds a record when no unit is named to run again, an output folder in use by another run, and a bound below one are refused. Each REFUSED and CANNOT RUN line names its cause and what to do about it. The report is available as text and as JSON and the two hold the same facts. Out of scope: the merge's own refusals, which each caller names.
+        self.raising_hook(check='{"a": 1}["b"]')
+        self.assert_hook_refused("CHECK")
+
+    def test_a_caller_s_units_that_raises_exits_one_with_a_refused_line_naming_it_and_leaves_no_folder(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C4: The exit status is 0 when the merged record is written, 1 when the command refuses or a unit fails, and 2 when the agent command line is missing or not logged in, each with a line beginning REFUSED or CANNOT RUN as the other board commands print; a review folder inside the repository, a folder that does not exist, an output folder inside the review folder or containing it or inside the repository, a caller name with no module or whose module lacks a required attribute, an output folder that already holds a record when no unit is named to run again, an output folder in use by another run, and a bound below one are refused. Each REFUSED and CANNOT RUN line names its cause and what to do about it. The report is available as text and as JSON and the two hold the same facts. Out of scope: the merge's own refusals, which each caller names.
+        self.raising_hook(units=True)
+        self.assert_hook_refused("units", kept=False)
+
+    def test_a_caller_s_first_hook_that_raises_exits_one_with_a_refused_line_naming_it_and_keeps_the_results(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C4: The exit status is 0 when the merged record is written, 1 when the command refuses or a unit fails, and 2 when the agent command line is missing or not logged in, each with a line beginning REFUSED or CANNOT RUN as the other board commands print; a review folder inside the repository, a folder that does not exist, an output folder inside the review folder or containing it or inside the repository, a caller name with no module or whose module lacks a required attribute, an output folder that already holds a record when no unit is named to run again, an output folder in use by another run, and a bound below one are refused. Each REFUSED and CANNOT RUN line names its cause and what to do about it. The report is available as text and as JSON and the two hold the same facts. Out of scope: the merge's own refusals, which each caller names.
+        self.scenario({"tables": {"alpha": {"Verdicts": [{"Item": "A-1", "Verdict": "pass", "Rests on": "read"}],
+                                              "Findings": [finding(1, "A-1", "stub")]}}})
+        self.raising_hook(findings=FINDINGS.replace('"key"', '"first": lambda folder: {}["x"], "key"'))
+        self.assert_hook_refused("first")
+
+    def test_a_rerun_whose_setup_session_loses_its_login_says_this_run_kept_nothing_and_names_the_earlier_results(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C4: The exit status is 0 when the merged record is written, 1 when the command refuses or a unit fails, and 2 when the agent command line is missing or not logged in, each with a line beginning REFUSED or CANNOT RUN as the other board commands print; a review folder inside the repository, a folder that does not exist, an output folder inside the review folder or containing it or inside the repository, a caller name with no module or whose module lacks a required attribute, an output folder that already holds a record when no unit is named to run again, an output folder in use by another run, and a bound below one are refused. Each REFUSED and CANNOT RUN line names its cause and what to do about it. The report is available as text and as JSON and the two hold the same facts. Out of scope: the merge's own refusals, which each caller names.
+        self.run_command()
+        self.scenario({"setup": {"login": True}})
+        status, text, _ = self.run_command("--rerun", "alpha")
+        self.assertEqual(status, 2, text)
+        self.assertIn(f"RESULT | CANNOT RUN | this run kept nothing; the earlier results stay in {self.out}", text)
+        self.assertNotIn("nothing was kept", text)
+        status, text, _ = self.run_command("--rerun", "alpha", as_json=True)
+        self.assertEqual(json.loads(text)["detail"], f"this run kept nothing; the earlier results stay in {self.out}")
+        self.assertTrue(os.path.isfile(os.path.join(self.out, "units", "alpha.json")))
+
 
 class Cost(Fixture):
     def test_each_session_s_own_figures_are_taken_off_the_cumulative_ones_a_fork_reports(self):
@@ -943,6 +1006,16 @@ class RoundedMerge(MergeBase):
                 with self.assertRaises(review_fan_out.Refused) as caught:
                     self.caller(ROUNDED.replace(dropped, ""))
                 self.assertIn(word, " ".join(caught.exception.causes))
+
+    def test_a_caller_s_round_or_earlier_hook_that_raises_is_refused_naming_the_hook(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C6: Over synthetic unit results and a synthetic caller, the merge rejects a table with a column the caller's table does not have and a verdict outside the caller's set, replaces every finding number a reviewer wrote with the number the checklist's order gives and rewrites the citations of them in the verdict rows, leaves a citation of an earlier round's finding as written, tells the two by the round each citation carries against the round the caller names as this one, and refuses a citation of an earlier round's finding that the review folder's earlier rounds do not hold, reports two findings that the caller's key assigns to the same item or place and keeps both, and gives the same record for every order the units arrive in. For a caller that declares no findings table nothing is renumbered. It reads no model and no file outside the unit results and the review folder. Out of scope: what a caller's tables must cover and whether a verdict is right.
+        for hook in ("round", "earlier"):
+            findings = ROUNDED.replace(f'"{hook}": lambda folder: ' + ('"2"' if hook == "round" else '{("1", 1), ("1", 2), ("1", 3)}'),
+                                       f'"{hook}": lambda folder: {{}}["x"]')
+            with self.assertRaises(review_fan_out.Refused) as caught:
+                review_fan_out.merge(self.caller(findings), self.folder, self.ORDER, self.results())
+            self.assertIn(f"the caller's {hook} raised KeyError", " ".join(caught.exception.causes))
+            self.assertIn("fix the caller", " ".join(caught.exception.causes))
 
     def test_a_pattern_with_no_round_group_still_matches_this_round_s_citations_only(self):
         # SOL-HW-REVIEW-FAN-OUT-DRIVER.C6: Over synthetic unit results and a synthetic caller, the merge rejects a table with a column the caller's table does not have and a verdict outside the caller's set, replaces every finding number a reviewer wrote with the number the checklist's order gives and rewrites the citations of them in the verdict rows, leaves a citation of an earlier round's finding as written, tells the two by the round each citation carries against the round the caller names as this one, and refuses a citation of an earlier round's finding that the review folder's earlier rounds do not hold, reports two findings that the caller's key assigns to the same item or place and keeps both, and gives the same record for every order the units arrive in. For a caller that declares no findings table nothing is renumbered. It reads no model and no file outside the unit results and the review folder. Out of scope: what a caller's tables must cover and whether a verdict is right.

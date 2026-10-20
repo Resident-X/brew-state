@@ -199,9 +199,19 @@ def load_caller(name: str, folder: str):
     return module
 
 
+def hook(what: str, call, *args):
+    """What a caller's hook `call` returns; an exception from it is a refusal naming the hook, never a traceback."""
+    try:
+        return call(*args)
+    except Refused:
+        raise
+    except Exception as error:  # the caller's code is not this command's; its defect is reported, not raised
+        raise Refused([f"the caller's {what} raised {type(error).__name__}: {error}; fix the caller"])
+
+
 def unit_names(caller, review: str) -> List[str]:
     """The review's units in the order the caller lists them, each a name safe to keep a file under."""
-    names = list(caller.units(review))
+    names = list(hook("units", lambda: list(caller.units(review))))
     problems = [f"the unit name {name!r} is not a plain name of letters, digits, dots, dashes and underscores; fix the "
                 "caller's units" for name in names if not isinstance(name, str) or not UNIT_NAME.match(name)]
     if len(set(names)) != len(names):
@@ -486,7 +496,7 @@ def table_problems(caller, review: str, unit: str, tables: Dict[str, Any]) -> Li
 
 def this_round(findings: Dict[str, Any], review: str) -> Optional[str]:
     """This round's label when the caller's citation pattern carries a round, otherwise None."""
-    return str(findings["round"](review)) if "round" in findings["citation"].groupindex else None
+    return str(hook("round", findings["round"], review)) if "round" in findings["citation"].groupindex else None
 
 
 def finding_problems(findings: Dict[str, Any], review: str, unit: str, tables: Dict[str, Any]) -> List[str]:
@@ -502,7 +512,8 @@ def finding_problems(findings: Dict[str, Any], review: str, unit: str, tables: D
         if row[findings["item"]] not in findings["checklist"]:
             found.append(f"unit {unit} raised a finding on {row[findings['item']]!r}, which is no item of the checklist")
     current = this_round(findings, review)
-    earlier = {(str(round_), int(number)) for round_, number in findings["earlier"](review)} if current is not None else set()
+    earlier = hook("earlier", lambda: {(str(round_), int(number)) for round_, number in findings["earlier"](review)}
+                   ) if current is not None else set()
     for table, column in findings["citations"]:
         for row in tables.get(table, []):
             for match in findings["citation"].finditer(str(row[column])):
@@ -545,7 +556,7 @@ def merge(caller, review: str, order: Sequence[str], results: Dict[str, Dict[str
                                               else replace_number(match, renamed, unit)), str(row[column]))
     tables = {name: {"columns": list(spec["columns"]), "rows": [row for _, row in rows[name]]}
               for name, spec in caller.TABLES.items()}
-    refused = list(caller.CHECK(review, list(order), tables))
+    refused = hook("CHECK", lambda: list(caller.CHECK(review, list(order), tables)))
     if refused:
         raise Refused(refused)
     return {"tables": tables, "same_place": same_place}
@@ -554,7 +565,7 @@ def merge(caller, review: str, order: Sequence[str], results: Dict[str, Dict[str
 def renumber(findings: Dict[str, Any], review: str, order: Sequence[str], results: Dict[str, Dict[str, Any]],
              rows: Dict[str, List[Tuple[str, Dict[str, Any]]]]) -> Tuple[Dict[Tuple[str, int], int], List[Dict[str, Any]]]:
     """This round's findings numbered in the checklist's order; each unit's old number against its new, and the findings at one place."""
-    first = findings["first"](review) if callable(findings.get("first")) else 1
+    first = hook("first", findings["first"], review) if callable(findings.get("first")) else 1
     checklist = list(findings["checklist"])
     raised = sorted(((checklist.index(row[findings["item"]]), order.index(unit), row[findings["number"]], unit, row)
                      for unit, row in rows[findings["table"]]), key=lambda entry: entry[:3])
@@ -565,7 +576,7 @@ def renumber(findings: Dict[str, Any], review: str, order: Sequence[str], result
     rows[findings["table"]] = [(unit, row) for _, _, _, unit, row in raised]
     groups: Dict[str, List[Tuple[int, str]]] = {}
     for _, _, _, unit, row in raised:
-        key = findings["key"](row)
+        key = hook("key", findings["key"], row)
         if key is not None:
             groups.setdefault(str(key), []).append((row[findings["number"]], unit))
     same = [{"key": key, "findings": sorted(number for number, _ in members),
@@ -884,7 +895,8 @@ def execute(report, caller, review, folder, order, named, program, bound, args, 
     try:
         setup, failures = run.run(order, named)
     except board_check.CannotRun as error:
-        report["result"], report["cannot_run"], report["detail"] = "CANNOT RUN", str(error), "nothing was kept"
+        report["result"], report["cannot_run"], report["detail"] = "CANNOT RUN", str(error), (
+            f"this run kept nothing; the earlier results stay in {folder}" if named else "nothing was kept")
         return finish(report, out, args.json, err)
     except Refused as error:
         report["refusals"] += error.causes
