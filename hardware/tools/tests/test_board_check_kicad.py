@@ -374,6 +374,30 @@ class RecordKeys(Proved):
         self.assertCaught(*[fault[0] for fault in faults])
 
 
+class VoltageRulesProof(Proved):
+    def test_each_voltage_rule_fault_is_caught_on_a_copy_of_the_throwaway_design_and_the_committed_design_stays_passing(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C5: The on-demand seeded-fault proof introduces into a copy of a throwaway design, outside the tracked tree, a part whose net exceeds the policy's voltage share of its rating, a position without its class, a position naming a class the policy lacks, a pin whose net exceeds absolute_max_v, a pin whose net falls below absolute_min_v, a pin driven from another domain while its own is unpowered, and an integrated circuit the pin-limit record omits, and requires the check to fail each
+        faults = [fault for fault in board_prove.FAULTS if fault[1].startswith(("derated voltage:", "pin limits:"))]
+        self.assertEqual(len(faults), 9)
+        self.assertEqual(sorted(fault[2] for fault in faults), ["derated_voltage"] * 4 + ["pin_limit"] * 5)
+        self.assertEqual({board_prove.target_of(fault) for fault in faults}, {board_prove.KEYS_TARGET})
+        for words in ("working voltage of 353.553 V", "has no class", "names the class 'ghost'", "can reach 3.3 V, above the pin's absolute_max_v 3",
+                      "can fall to 0 V, below the pin's absolute_min_v 0.5", "driven from the domain sense", "omits the integrated circuit U1",
+                      "names the class none and the parts specification record gives '50V 0.25W'",
+                      "which the part U1 does not have"):
+            self.assertTrue(any(words in fault[3] for fault in faults), words)
+        self.assertCaught(*[fault[0] for fault in faults])
+
+    def test_a_seeded_fault_names_the_fault_and_the_rule_in_the_proofs_record_of_the_run(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C5: ... the record of each seeded run naming the fault and the rule that caught it
+        for fault in board_prove.FAULTS:
+            if fault[1].startswith(("derated voltage:", "pin limits:")):
+                caught, evidence = outcomes()[fault[0]]
+                self.assertTrue(caught, evidence)
+                self.assertIn(f" | {fault[2]} | ", evidence)
+                self.assertIn(fault[3], evidence)
+
+
 class TheRecordKeysProofDesignPasses(unittest.TestCase):
     def test_the_record_keys_proof_design_with_every_key_passes_the_check(self):
         # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
@@ -817,6 +841,68 @@ class TheTrackedDesignsPassTheTestPadCourtyardRule(unittest.TestCase):
                 self.assertIn("| TEST_COURTYARD_MM | 1 mm at least from a test point's pad to the courtyard of any other part", figure[0])
 
 
+class TheFiducialAndPolarityMarkRules(Proved):
+    """Each seeded in a throwaway copy of the gate's proof design, the faults fail the rule that names them."""
+
+    FAULTS = {
+        "a side with surface-mount parts and two fiducials": ("side_fiducials", "the front side (F.Cu)",
+                                                             ("MFG-10", "the front side has 1 surface-mount parts and 2 fiducials", "add 1 or more")),
+        "a polarised part with no mark at its first pin": ("polarity_mark", "R2 pad 1 at (45, 10) mm",
+                                                          ("R2 is not marked at pad 1", "draws nothing on F.SilkS")),
+        "a polarised capacitor named only by its symbol with no mark": ("polarity_mark", "R2 pad 1 at (45, 10) mm",
+                                                                        ("R2 is not marked at pad 1", "draws nothing on F.SilkS")),
+        "a plated through-hole polarised part with no mark": ("polarity_mark", "R2 pad 1 at (45, 10) mm",
+                                                              ("R2 is not marked at pad 1", "draws nothing on F.SilkS")),
+        "a polarity mark on the wrong side of the part": ("polarity_mark", "R2 pad 1 at (45, 10) mm",
+                                                         ("R2 is not marked at pad 1", "no graphic on F.SilkS nearer pad 1")),
+        "a symmetric outline on a symmetric pad pattern": ("polarity_mark", "R2 pad 1 at (45, 10) mm",
+                                                          ("the silkscreen of R2 looks the same", "so that pad 1 moves")),
+    }
+
+    def test_each_rule_fails_on_its_seeded_fault_and_names_the_rule_the_design_and_the_item(self):
+        # SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C4: The on-demand seeded-fault proof introduces into a copy of a throwaway design, outside the tracked tree, a side with surface-mount parts and fewer than three fiducials, a polarised part with no silkscreen mark nearer pad one, a polarised capacitor named only by its symbol with no mark, a mark on the wrong side of the part, and a part on a pad pattern with a symmetry whose silkscreen outline is unchanged by it, and requires the check to fail each
+        # SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C3: A failure of any rule in this leaf is reported with the rule's name, the design, and the offending item
+        self.assertCaught(*self.FAULTS)
+        for fault, (rule, item, words) in self.FAULTS.items():
+            with self.subTest(fault=fault):
+                fields = outcomes()[fault][1].split(" | ")
+                self.assertEqual(fields[1], "hardware/proof/gate-proof/gate-proof.kicad_pro")
+                self.assertEqual((fields[2], fields[3]), (rule, item))
+                for word in words:
+                    self.assertIn(word, fields[4])
+                self.assertEqual([entry[2] for entry in board_prove.FAULTS if entry[0] == fault], [rule])
+
+
+class AnUnparseableSchematicFailsTheDesignWhichSwitchesOffPolarisationBySymbol(Copy):
+    def test_a_schematic_kicad_cannot_read_fails_the_design_naming_the_schematic(self):
+        # SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C2: The fiducial rule and the polarity-mark rule are added to the existing pre-order check as further rules, each reading only the design's files
+        # Without the netlist the polarity rule knows no symbol or pin name, so the design must fail rather than pass on pads alone.
+        self.seed.write(".kicad_sch", "(kicad_sch (version")
+        status, lines = self.check()
+        self.assertEqual(status, 1, lines)
+        schematic = f"hardware/proof/gate-proof/{board_prove.NAME}.kicad_sch"
+        self.assertTrue([v for v in self.violations(lines) if v[2] == "design_unreadable" and v[3] == schematic], lines)
+
+
+class TheTrackedDesignsPassTheFiducialAndPolarityMarkRules(unittest.TestCase):
+    """Every design the repository tracks passes the two rules, and the report states the fiducial rule's count."""
+
+    DESIGNS = TheTrackedDesignsPassTheTestPadCourtyardRule.DESIGNS
+
+    def test_every_tracked_design_passes_and_reports_the_count(self):
+        # SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS.C5: Every design git tracks passes the fiducial rule and the polarity-mark rule
+        for name in self.DESIGNS:
+            with self.subTest(design=name), tempfile.TemporaryDirectory(prefix="board-test-") as scratch:
+                seed = board_prove.prepare(scratch, f"hardware/proof/{name}", name)
+                status, lines, stderr = board_prove.check(seed, KICAD_CLI)
+                self.assertNotEqual(status, 2, stderr)
+                self.assertEqual([line for line in lines if line.startswith("VIOLATION") and (
+                    "| side_fiducials |" in line or "| polarity_mark |" in line)], [])
+                figure = [line for line in lines if line.startswith("FIGURE") and "MFG-10 fiducials on a side" in line]
+                self.assertEqual(len(figure), 1, lines)
+                self.assertIn("3 fiducials at least on each side that carries assembled surface-mount parts", figure[0])
+
+
 class TheCleanDesignStatesTheFiguresOfTheDecouplingAndSilkscreenRules(Copy):
     # SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C3: Each rule the method proof design's review adds fails on a fault seeded for it and passes the clean design
     """The report states the two inherent zeros, and how much of the layout the decoupling rule measured."""
@@ -1199,6 +1285,8 @@ class EveryTrackedDesignPassesTheConnectivityCheck(unittest.TestCase):
         self.assertGreaterEqual(len(designs), 2)
         self.assertTrue(all(line.endswith(" | PASS") for line in designs), designs)
         self.assertFalse([line for line in lines if " | connectivity | " in line or " | pin_allocation | " in line], lines)
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C6: Every design git tracks passes the derated-voltage rule and the pin-limit rule, carrying the records they read, synthetic where the design is not for manufacture.
+        self.assertFalse([line for line in lines if " | derated_voltage | " in line or " | pin_limit | " in line], lines)
 
 
 class SeparationFloorProof(Proved):

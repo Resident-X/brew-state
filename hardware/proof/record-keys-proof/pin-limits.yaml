@@ -10,6 +10,12 @@ domains:
   - name: sense
     rail: LV_B
     highest_voltage_v: 5
+  - name: mains_line
+    rail: MAINS_L
+    highest_voltage_v: 353.5533906
+  - name: mains_neutral
+    rail: MAINS_N
+    highest_voltage_v: 353.5533906
 parts:
   - lcsc: C9000005
     source:

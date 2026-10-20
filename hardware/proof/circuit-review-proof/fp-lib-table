@@ -18,4 +18,5 @@
   (lib (name "Package_SO") (type "KiCad") (uri "${KICAD10_FOOTPRINT_DIR}/Package_SO.pretty") (options "") (descr ""))
   (lib (name "Package_SON") (type "KiCad") (uri "${KICAD10_FOOTPRINT_DIR}/Package_SON.pretty") (options "") (descr ""))
   (lib (name "TestPoint") (type "KiCad") (uri "${KICAD10_FOOTPRINT_DIR}/TestPoint.pretty") (options "") (descr ""))
+  (lib (name "Fiducial") (type "KiCad") (uri "${KICAD10_FOOTPRINT_DIR}/Fiducial.pretty") (options "") (descr ""))
   (lib (name "Connector_Wire") (type "KiCad") (uri "${KICAD10_FOOTPRINT_DIR}/Connector_Wire.pretty") (options "") (descr "")))

@@ -1,0 +1,16 @@
+id: EV-SOL-HW-MACHINE-AS-FOUND-FIT-RECORD-C3-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-MACHINE-AS-FOUND-FIT-RECORD.C3
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-19T23:17:15.867465Z"
+artifact:
+  kind: external
+  reference: 'inspection of connector-pinouts.md § Mains terminals and the mains lead arrangement and reference-machine.md § Controller enclosure as found (where each location-dependent part is mounted) against each clause of C3: mains lead arrangement and entry; LINE/LINE1 traced by continuity as one node (not two feeds); no fuse seen along the visible loom at the board end except F1, the far ends of the pump leads not recorded; the upstream device of LINE unread and held pending against SOL-HW-RETAINED-DEVICE-REMAINING-CHARACTERISTICS-RECORDED; tank reed soldered through the back of the board with position relative to mounting point 2 and the float; U4/U6 opto-isolators on the same board; decision version 3 named; constraints rows for the second live feed ended and the remainder naming DEL-HW-PARTITION-AND-FEASIBILITY.C5'
+  artifact_version: db18d747d35341f8d5b7ae77025f9ed9fd2cfe98
+attested_by: crun-7066c7fba9492ed4
+links:
+  - target: SOL-HW-MACHINE-AS-FOUND-FIT-RECORD.C3
+    type: satisfies

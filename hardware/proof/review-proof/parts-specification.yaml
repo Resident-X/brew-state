@@ -7,136 +7,182 @@ positions:
     value: "MAINS"
     package: "TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal"
     lcsc: "C9000001"
+    class: none
   - reference: U1
     value: "VO3526"
     package: "DIP-5-6_W7.62mm"
     lcsc: "C9000002"
+    class: none
   - reference: J2
     value: "5V_IN"
     package: "JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical"
     lcsc: "C9000003"
+    class: none
   - reference: C1
     value: "1uF"
     package: "C_0805_2012Metric"
     rating: "50V"
     lcsc: "C9000004"
+    class: capacitor
   - reference: C2
     value: "1uF"
     package: "C_0805_2012Metric"
     rating: "50V"
     lcsc: "C9000005"
+    class: capacitor
   - reference: J4
     value: "LOAD"
     package: "JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical"
     lcsc: "C9000006"
+    class: none
   - reference: R1
     value: "0.05"
     package: "R_2512_6332Metric"
     rating: "0.25W"
     lcsc: "C9000007"
+    class: none
   - reference: TP1
     value: "+5V"
     package: "TestPoint_Pad_D1.0mm"
     lcsc: "C9000008"
+    class: none
   - reference: TP2
     value: "+3V3"
     package: "TestPoint_Pad_D1.0mm"
     lcsc: "C9000009"
+    class: none
   - reference: TP3
     value: "LOAD_RTN_I"
     package: "TestPoint_Pad_D1.0mm"
     lcsc: "C9000010"
+    class: none
   - reference: TP4
     value: "LOAD_RTN_V"
     package: "TestPoint_Pad_D1.0mm"
     lcsc: "C9000011"
+    class: none
   - reference: TP5
     value: "GND_I"
     package: "TestPoint_Pad_D1.0mm"
     lcsc: "C9000012"
+    class: none
   - reference: TP6
     value: "GND_V"
     package: "TestPoint_Pad_D1.0mm"
     lcsc: "C9000013"
+    class: none
   - reference: U3
     value: "MCP6001-OT"
     package: "SOT-23-5"
     lcsc: "C9000014"
+    class: none
   - reference: R2
     value: "47k"
     package: "R_0603_1608Metric"
     rating: "0.25W"
     lcsc: "C9000015"
+    class: none
   - reference: R3
     value: "1k"
     package: "R_0603_1608Metric"
     rating: "0.25W"
     lcsc: "C9000016"
+    class: none
   - reference: FB1
     value: "600R@100MHz"
     package: "L_0603_1608Metric"
     lcsc: "C9000017"
+    class: none
   - reference: C3
     value: "100nF"
     package: "C_0603_1608Metric"
     rating: "50V"
     lcsc: "C9000018"
+    class: capacitor
   - reference: U4
     value: "ATtiny85-20M"
     package: "QFN-20-1EP_4x4mm_P0.5mm_EP2.6x2.6mm"
     lcsc: "C9000019"
+    class: none
   - reference: C4
     value: "100nF"
     package: "C_0603_1608Metric"
     rating: "50V"
     lcsc: "C9000020"
+    class: capacitor
   - reference: Y1
     value: "8MHz"
     package: "Crystal_SMD_5032-2Pin_5.0x3.2mm"
     lcsc: "C9000021"
+    class: none
   - reference: C5
     value: "22pF"
     package: "C_0603_1608Metric"
     rating: "50V"
     lcsc: "C9000022"
+    class: capacitor
   - reference: C6
     value: "22pF"
     package: "C_0603_1608Metric"
     rating: "50V"
     lcsc: "C9000023"
+    class: capacitor
   - reference: R4
     value: "330"
     package: "R_0603_1608Metric"
     rating: "0.25W"
     lcsc: "C9000024"
+    class: none
   - reference: D1
     value: "PESD5V0S1BA"
     package: "D_SOD-323"
     lcsc: "C9000025"
+    class: none
   - reference: U2
     value: "AMS1117-3.3"
     package: "SOT-223-3_TabPin2"
     lcsc: "C9000026"
+    class: none
   - reference: C7
     value: "1uF"
     package: "C_0805_2012Metric"
     rating: "50V"
     lcsc: "C9000027"
+    class: capacitor
   - reference: C8
     value: "1uF"
     package: "C_0805_2012Metric"
     rating: "50V"
     lcsc: "C9000028"
+    class: capacitor
   - reference: H1
     value: "MountingHole"
     package: "MountingHole_3.2mm_M3"
     lcsc: "C9000029"
+    class: none
   - reference: H2
     value: "MountingHole"
     package: "MountingHole_3.2mm_M3"
     lcsc: "C9000030"
+    class: none
   - reference: H3
     value: "MountingHole"
     package: "MountingHole_3.2mm_M3"
     lcsc: "C9000031"
+    class: none
+  - reference: FID1
+    value: "Fiducial"
+    package: "Fiducial_1mm_Mask2mm"
+    lcsc: "C9000032"
+    class: none
+  - reference: FID2
+    value: "Fiducial"
+    package: "Fiducial_1mm_Mask2mm"
+    lcsc: "C9000033"
+    class: none
+  - reference: FID3
+    value: "Fiducial"
+    package: "Fiducial_1mm_Mask2mm"
+    lcsc: "C9000034"
+    class: none
 synthetic: true

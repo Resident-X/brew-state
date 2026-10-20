@@ -750,6 +750,14 @@ class Reading:
     def bad(self, path: str, message: str) -> None:
         self.found.append(Violation(self.design.project, self.rule, f"{self.record} {path}".strip(), message))
 
+    def distinct(self, path: str, keys: Sequence[str], what: str) -> None:
+        """Reports each key that `keys` holds more than once, since a reader that indexes by it would let the later entry replace the earlier."""
+        seen: Set[str] = set()
+        for key in keys:
+            if key in seen:
+                self.bad(path, f"{path} lists {what} '{key}' more than once, so one entry would replace another; list it once")
+            seen.add(key)
+
     def mapping(self, path: str, value, keys: Sequence[str], required: Sequence[str] = (), whose: str = "") -> bool:
         """Whether `value` is a mapping; if so, every key in it that `keys` does not hold and every `required` one it lacks is reported."""
         label = path or "the record"
@@ -1517,8 +1525,9 @@ def connectivity(design: Design, record: str, channels: List[Channel], nets: Dic
 PARTS_RECORD_NAME = "parts-specification.yaml"
 CATALOGUE_NAME = "catalogue-extract.yaml"
 
-#: The keys a position of the specification record holds; reference and lcsc are required.
-POSITION_KEYS = ("reference", "value", "package", "rating", "lcsc")
+#: The keys a position of the specification record holds; reference and lcsc are required, and class is
+#: required of every position by the derated-voltage rule, which reports a position without it.
+POSITION_KEYS = ("reference", "value", "package", "rating", "lcsc", "class")
 #: The keys an entry of the catalogue extract holds, every one required.
 ENTRY_KEYS = ("lcsc", "library_class", "stock", "unit_price")
 #: The keys an entry may hold beside them: a lifecycle mapping, which holds all three of LIFECYCLE_KEYS when present.
@@ -1760,10 +1769,17 @@ def read_optional(yaml, root: str, repository: Repository, design: Design, name:
 
 def read_derating(yaml, root: str, repository: Repository, design: Design, not_for_manufacture: bool) -> List[Violation]:
     """The derating policy record's form where the design's folders hold one."""
+    return load_derating(yaml, root, repository, design, not_for_manufacture)[1]
+
+
+def load_derating(yaml, root: str, repository: Repository, design: Design, not_for_manufacture: bool
+                  ) -> Tuple[Optional[dict], List[Violation]]:
+    """The derating policy record's mapping and the violations of its form; no mapping where the design's
+    folders hold none or the record is not in its form."""
     data, reading = read_optional(yaml, root, repository, design, DERATING_NAME, "derating_record",
                                   "derating policy record", DERATING_KEYS, not_for_manufacture)
     if data is None:
-        return reading.found if reading else []
+        return None, (reading.found if reading else [])
     if "source" in data:
         reading.text("source", data["source"])
     if "classes" in data and reading.listed("classes", data["classes"], "part classes"):
@@ -1787,15 +1803,24 @@ def read_derating(yaml, root: str, repository: Repository, design: Design, not_f
                                                    "one, the fraction of the rating a part may use")
                 if "source" in share:
                     reading.text(f"{at}.source", share["source"])
-    return reading.found
+        reading.distinct("classes", [str(c["class"]).strip() for c in data["classes"]
+                                     if isinstance(c, dict) and isinstance(c.get("class"), str)], "the class")
+    return (None if reading.found else data), reading.found
 
 
 def read_pin_limits(yaml, root: str, repository: Repository, design: Design, not_for_manufacture: bool) -> List[Violation]:
     """The pin-limit record's form where the design's folders hold one."""
+    return load_pin_limits(yaml, root, repository, design, not_for_manufacture)[1]
+
+
+def load_pin_limits(yaml, root: str, repository: Repository, design: Design, not_for_manufacture: bool
+                    ) -> Tuple[Optional[dict], List[Violation]]:
+    """The pin-limit record's mapping and the violations of its form; no mapping where the design's folders
+    hold none or the record is not in its form."""
     data, reading = read_optional(yaml, root, repository, design, PIN_LIMITS_NAME, "pin_limits_record",
                                   "pin-limit record", PIN_LIMITS_KEYS, not_for_manufacture)
     if data is None:
-        return reading.found if reading else []
+        return None, (reading.found if reading else [])
     domains = set()
     if "domains" in data and reading.listed("domains", data["domains"], "power domains"):
         for index, entry in enumerate(data["domains"]):
@@ -1808,6 +1833,10 @@ def read_pin_limits(yaml, root: str, repository: Repository, design: Design, not
                 reading.text(f"{where}.rail", entry["rail"])
             if "highest_voltage_v" in entry:
                 reading.number(f"{where}.highest_voltage_v", entry["highest_voltage_v"])
+        reading.distinct("domains", [d["name"] for d in data["domains"]
+                                     if isinstance(d, dict) and isinstance(d.get("name"), str)], "the domain")
+        reading.distinct("domains", [net_key(d["rail"].strip()) for d in data["domains"]
+                                     if isinstance(d, dict) and isinstance(d.get("rail"), str)], "the rail")
     if "parts" in data and reading.listed("parts", data["parts"], "parts"):
         for index, entry in enumerate(data["parts"]):
             where = f"parts[{index}]"
@@ -1842,7 +1871,9 @@ def read_pin_limits(yaml, root: str, repository: Repository, design: Design, not
                                                             "a pin's lowest allowed voltage cannot exceed its highest")
                     if "tolerates_driven_unpowered" in pin:
                         reading.boolean(f"{at}.tolerates_driven_unpowered", pin["tolerates_driven_unpowered"])
-    return reading.found
+        reading.distinct("parts", [p["lcsc"].strip() for p in data["parts"]
+                                   if isinstance(p, dict) and isinstance(p.get("lcsc"), str)], "the catalogue number")
+    return (None if reading.found else data), reading.found
 
 
 def placed_positions(root: str, design: Design, repository: Repository
@@ -1959,6 +1990,329 @@ def check_parts(yaml, root: str, design: Design, repository: Repository, today: 
                 found.append(Violation(design.project, "parts_catalogue", f"{reference} lcsc",
                                        f"the position {reference} has the catalogue number {number}, which the "
                                        "catalogue extract shows with no stock"))
+    return found
+
+
+# --- The derated-voltage and pin-limit rules --------------------------------------
+
+#: The slack, relative to the figure compared, that floating-point arithmetic on a peak may need.
+VOLTAGE_SLACK = 1e-9
+#: A figure written with unit V, VDC or VAC in any letter case, as a rating states it.
+#: A number directly followed by a V unit, with an optional thousands separator or k or m prefix, in any letter case
+#: and whatever follows the unit: a voltage as a rating writes it, whether or not the rule can read it.
+VOLTAGE_SHAPED = re.compile(r"[0-9](?:[0-9,.]*[0-9])?\s*[km]?V", re.IGNORECASE)
+RATING_FIGURE = re.compile(r"(?<![A-Za-z0-9.])([0-9]+(?:\.[0-9]+)?)\s*(VAC|VDC|V)(?![A-Za-z])", re.IGNORECASE)
+#: A resistor value that is zero.
+ZERO_OHMS = re.compile(r"0+(?:\.0+)?\s*(?:R|Ω|ohms?)?", re.IGNORECASE)
+INTEGRATED_CIRCUIT = "integrated circuit"
+SEMICONDUCTOR = "semiconductor"
+JOINS_NETS = "joins nets"
+PASSIVE = "passive or mechanical part"
+
+
+LEADING_LETTERS = re.compile(r"[A-Za-z]*")
+
+
+def part_kind(reference: str, value: Optional[str]) -> str:
+    """A part's kind, read from the leading letters of its reference designator and, for a resistor, its value.
+
+    The leading letters are matched whole and without regard to case: U is an integrated circuit, D, Q or
+    LED a semiconductor, FB, L or F, or R with the value zero, a part that
+    joins nets, and any other designator a passive or mechanical part. The
+    part's class plays no part in it.
+    """
+    letters = LEADING_LETTERS.match(reference.strip()).group(0).upper()
+    if letters == "U":
+        return INTEGRATED_CIRCUIT
+    if letters in ("D", "Q", "LED"):
+        return SEMICONDUCTOR
+    if letters in ("FB", "L", "F") or (letters == "R" and ZERO_OHMS.fullmatch((value or "").strip())):
+        return JOINS_NETS
+    return PASSIVE
+
+
+def rating_peak(text: Optional[str]) -> Optional[float]:
+    """The first figure with unit V, VDC or VAC a rating states, in volts, an AC figure at its peak; None where it states none."""
+    found = RATING_FIGURE.search(text) if isinstance(text, str) else None
+    if found is None or float(found.group(1)) <= 0:
+        return None
+    return float(found.group(1)) * (math.sqrt(2) if found.group(2).upper() == "VAC" else 1)
+
+
+def voltage_shaped(text: Optional[str]) -> bool:
+    """Whether a rating states a figure shaped like a voltage, readable by rating_peak or not."""
+    return isinstance(text, str) and VOLTAGE_SHAPED.search(text) is not None
+
+
+def net_key(name: str) -> str:
+    """A net as a record names it: the name without the slash KiCad puts before a net of the top sheet."""
+    return name[1:] if name.startswith("/") else name
+
+
+def exceeds(figure: float, limit: float) -> bool:
+    return figure > limit + VOLTAGE_SLACK * max(1.0, abs(limit))
+
+
+class NetVoltages:
+    """The highest and lowest voltage each net of a design can reach, worked out from the pin-limit record.
+
+    A net takes its voltage from the power domain whose rail it is and from the
+    domain of every listed pin on it, and shares it with every net joined to it,
+    directly or in a chain, through a part that joins nets. A resistor or
+    capacitor joins nothing. The highest is the largest highest_voltage_v of
+    those domains, and the lowest the smallest of 0 V for a domain other than a
+    mains domain and minus its highest_voltage_v for a mains domain, since mains
+    alternates. A net no domain reaches has neither.
+    """
+
+    def __init__(self, nets: Dict[str, List[PinNode]], domains: Dict[str, Tuple[str, float]], mains_nets: Set[str],
+                 joiners: Set[str], listed: Dict[str, Set[str]]):
+        """`domains` maps a domain's name to its rail and highest voltage, `joiners` holds the references of the
+        parts that join nets, and `listed` maps a net to the domains of the listed pins on it."""
+        self.domains = domains
+        self.names = [name for name in nets if not name.rsplit("/", 1)[-1].startswith(UNCONNECTED_NET)]
+        mains_keys = {net_key(name) for name in mains_nets}
+        rails = {net_key(rail): name for name, (rail, _) in domains.items()}
+        self.mains = {name for name, (rail, _) in domains.items() if net_key(rail) in mains_keys}
+        parent = {name: name for name in self.names}
+
+        def find(name: str) -> str:
+            while parent[name] != name:
+                parent[name] = parent[parent[name]]
+                name = parent[name]
+            return name
+
+        touched: Dict[str, List[str]] = {}
+        for name in self.names:
+            for pin in nets[name]:
+                if pin.ref in joiners and name not in touched.setdefault(pin.ref, []):
+                    touched[pin.ref].append(name)
+        for reached in touched.values():
+            for name in reached[1:]:
+                parent[find(name)] = find(reached[0])
+
+        self.known = set(self.names)
+        self._root = {name: find(name) for name in self.names}
+        self.sources: Dict[str, Set[str]] = {}
+        for name in self.names:
+            held = self.sources.setdefault(self._root[name], set())
+            if net_key(name) in rails:
+                held.add(rails[net_key(name)])
+            held |= listed.get(name, set())
+
+    def domains_of(self, net: str) -> Set[str]:
+        return self.sources.get(self._root.get(net, ""), set())
+
+    def highest(self, net: str) -> Optional[float]:
+        held = self.domains_of(net)
+        return max(self.domains[d][1] for d in held) if held else None
+
+    def lowest(self, net: str) -> Optional[float]:
+        held = self.domains_of(net)
+        return min(-self.domains[d][1] if d in self.mains else 0.0 for d in held) if held else None
+
+    def from_mains(self, net: str) -> bool:
+        """Whether the net takes its highest voltage from a mains domain."""
+        top = self.highest(net)
+        return top is not None and any(d in self.mains and not exceeds(top, self.domains[d][1])
+                                       for d in self.domains_of(net))
+
+
+def working_voltage(volts: NetVoltages, nets: List[str]) -> float:
+    """The largest, over every pair of the nets, of the difference between their highest voltages, where a pair both
+    taking theirs from a mains domain counts as that domain's highest_voltage_v, since mains swings between them."""
+    worst = 0.0
+    for index, first in enumerate(nets):
+        for second in nets[index + 1:]:
+            if volts.from_mains(first) and volts.from_mains(second):
+                mains = max(volts.domains[d][1] for d in volts.domains_of(first) & volts.mains)
+                worst = max(worst, mains)
+            else:
+                worst = max(worst, abs(volts.highest(first) - volts.highest(second)))
+    return worst
+
+
+def voltage_rules(design: Design, yaml, root: str, repository: Repository, not_for_manufacture: bool, mains: Optional[str],
+                  signed: Optional[Signed], nets: Dict[str, List[PinNode]], mains_nets: Set[str]) -> List[Violation]:
+    """The derated-voltage rule and the pin-limit rule, which share one reading of each net's voltage.
+
+    Both read the design's files and the records it is held to: the parts
+    specification, the derating policy and the pin-limit record. A form the
+    readers have already failed is not judged again.
+    """
+    found: List[Violation] = []
+    schematic = design.schematic
+    stated, _ = read_specification(yaml, root, repository, design, not_for_manufacture)
+    placed, _, _ = placed_positions(root, design, repository)
+    policy_path = find_record(root, design.directory, repository.tracked, DERATING_NAME)
+    limits_path = find_record(root, design.directory, repository.tracked, PIN_LIMITS_NAME)
+    policy, policy_form = load_derating(yaml, root, repository, design, not_for_manufacture)
+    limits, limits_form = load_pin_limits(yaml, root, repository, design, not_for_manufacture)
+
+    def fail(rule: str, location: str, message: str) -> None:
+        found.append(Violation(design.project, rule, location, message))
+
+    domains: Dict[str, Tuple[str, float]] = {}
+    entries: Dict[str, dict] = {}
+    if limits is not None:
+        domains = {d["name"]: (d["rail"], d["highest_voltage_v"]) for d in limits["domains"]}
+        entries = {str(p["lcsc"]).strip(): p for p in limits["parts"]}
+
+    by_part: Dict[str, List[Tuple[str, PinNode]]] = {}
+    for net, pins in nets.items():
+        for pin in pins:
+            by_part.setdefault(pin.ref, []).append((net, pin))
+
+    def kind(ref: str) -> str:
+        return part_kind(ref, (placed.get(ref) or {}).get("value"))
+
+    def number(ref: str) -> str:
+        return ((placed.get(ref) or {}).get("lcsc") or "").strip()
+
+    listed: Dict[str, Set[str]] = {}
+    listings: Dict[str, List[Tuple[str, PinNode, dict]]] = {}
+    lacking: List[Tuple[str, str]] = []
+    for ref in sorted(placed):
+        entry = entries.get(number(ref))
+        if entry is None:
+            continue
+        for pin in entry["pins"]:
+            wanted = str(pin["pin"])
+            matched = False
+            for net, node in by_part.get(ref, []):
+                if node.pin == wanted or wanted in node.names():
+                    matched = True
+                    listed.setdefault(net, set()).add(pin["domain"])
+                    listings.setdefault(ref, []).append((net, node, pin))
+            if not matched:
+                lacking.append((ref, wanted))
+    joiners = {ref for ref in by_part if kind(ref) == JOINS_NETS}
+    volts = NetVoltages(nets, domains, mains_nets, joiners, listed)
+
+    # The derated-voltage rule.
+    if stated is not None:
+        classes: Optional[Dict[str, float]] = None
+        if policy_path is None:
+            classes = {}
+        elif policy is not None:
+            classes = {c["class"].strip(): c["voltage"]["share"] for c in policy["classes"]}
+        for ref in sorted(stated):
+            where = f"{schematic} {ref}"
+            record = stated[ref]
+            named = record.get("class")
+            if named is None:
+                fail("derated_voltage", where, f"the position {ref} has no class in the parts specification record; "
+                                               "name a class of the derating policy, or none for a part no class covers")
+                continue
+            if named == "none":
+                stated_ratings = [(source, text) for source, text in (
+                    ("the parts specification record", record.get("rating")),
+                    ("the design's Rating field", (placed.get(ref) or {}).get("rating"))) if voltage_shaped(text)]
+                for source, text in stated_ratings:
+                    fail("derated_voltage", f"{where} rating",
+                         f"the position {ref} names the class none and {source} gives {text!r}, a figure in a voltage unit; "
+                         "none is for a part with no such rating, so name the class of the derating policy that covers it")
+                continue
+            if classes is None:
+                continue
+            if named not in classes:
+                fail("derated_voltage", where, f"the position {ref} names the class '{named}', which "
+                     + ("the derating policy does not list" if policy_path else "the design has no derating policy to list")
+                     + "; name a class the policy lists, or none")
+                continue
+            peaks = []
+            for source, text in (("the parts specification record", record.get("rating")),
+                                 ("the design's Rating field", (placed.get(ref) or {}).get("rating"))):
+                peak = rating_peak(text)
+                if peak is None:
+                    fail("derated_voltage", f"{where} rating",
+                         f"the position {ref} is in the class '{named}' and {source} gives "
+                         f"{'no rating' if text is None else repr(text)} with no figure in V, VDC or VAC; "
+                         "write the voltage rating with its unit")
+                else:
+                    peaks.append(peak)
+            if len(peaks) < 2 or limits_form:
+                continue
+            reached = []
+            for net in dict.fromkeys(net for net, _ in by_part.get(ref, [])):
+                if net in volts.known:
+                    reached.append(net)
+            unknown = [net for net in reached if volts.highest(net) is None]
+            for net in unknown:
+                fail("derated_voltage", f"{where} {net}",
+                     f"the net {net} of {ref} has a voltage that cannot be worked out, reached only through resistors or "
+                     "capacitors with no rail or listed pin; declare it as the rail of a power domain in the pin-limit record")
+            if unknown:
+                continue
+            working = working_voltage(volts, reached)
+            limit = classes[named] * peaks[0]
+            if exceeds(working, limit):
+                fail("derated_voltage", where,
+                     f"the position {ref} sees a working voltage of {working:g} V across {', '.join(reached)}, above "
+                     f"{limit:g} V, the class '{named}' voltage share {classes[named]:g} times its rating peak {peaks[0]:g} V")
+
+    # The mains domain.
+    if mains == "present" and not limits_form:
+        peak = basis_voltage(signed.basis.get("working_voltage")) if signed is not None else None
+        peak = peak * math.sqrt(2) if peak is not None else None
+        if limits is None:
+            fail("derated_voltage", os.path.join(design.directory, PIN_LIMITS_NAME),
+                 "the design declares mains present and holds no pin-limit record, so there is no mains domain; "
+                 "add the record with a domain whose rail is a net of the Mains class")
+        elif not volts.mains:
+            fail("derated_voltage", f"{limits_path} domains",
+                 "the design declares mains present and no domain of the pin-limit record has a rail on a net of "
+                 "the Mains class; add the mains domain, with its rail a net of that class")
+        elif peak is not None:
+            for name in sorted(volts.mains):
+                if exceeds(peak, domains[name][1]):
+                    fail("derated_voltage", f"{limits_path} domains {name}",
+                         f"the mains domain {name} states highest_voltage_v {domains[name][1]:g}, below {peak:g} V, "
+                         "the peak of the separation basis working_voltage; state at least the peak")
+
+    # A domain's rail must be a net of the design.
+    if limits is not None:
+        present = {net_key(name) for name in nets}
+        for name, (rail, _) in domains.items():
+            if net_key(rail) not in present:
+                fail("pin_limit", f"{limits_path} domains {name}",
+                     f"the domain {name} names the rail {rail}, which is no net of the design; name a net of the design, "
+                     "or remove the domain")
+
+    # The pin-limit rule.
+    for ref in sorted(placed):
+        if kind(ref) not in (INTEGRATED_CIRCUIT, SEMICONDUCTOR) or limits_form:
+            continue
+        where = f"{schematic} {ref}"
+        if limits is None:
+            fail("pin_limit", where, f"the design places the {kind(ref)} {ref} and holds no pin-limit record to "
+                                     "state its pins' limits; add the record")
+        elif not number(ref):
+            fail("pin_limit", where, f"the {kind(ref)} {ref} has no LCSC number, so the pin-limit record cannot be "
+                                     "read for it; give the part its number")
+        elif number(ref) not in entries:
+            fail("pin_limit", where, f"the pin-limit record omits the {kind(ref)} {ref}, catalogue number {number(ref)}; "
+                                     "add its entry")
+    for ref, wanted in lacking:
+        fail("pin_limit", f"{schematic} {ref}",
+             f"the pin-limit record lists pin {wanted} of catalogue number {number(ref)}, which the part {ref} does not have; "
+             "name a pin the part's symbol has, by its number or its name")
+    for ref in sorted(listings):
+        for net, node, pin in listings[ref]:
+            where = f"{schematic} {node.describe()}"
+            own = pin["domain"]
+            top, bottom = volts.highest(net), volts.lowest(net)
+            if top is not None and exceeds(top, pin["absolute_max_v"]):
+                fail("pin_limit", where, f"{node.describe()} is on net {net}, which can reach {top:g} V, above the pin's "
+                                         f"absolute_max_v {pin['absolute_max_v']:g}")
+            if bottom is not None and exceeds(pin["absolute_min_v"], bottom):
+                fail("pin_limit", where, f"{node.describe()} is on net {net}, which can fall to {bottom:g} V, below the "
+                                         f"pin's absolute_min_v {pin['absolute_min_v']:g}")
+            others = sorted(d for d in volts.domains_of(net) if d != own and domains[d][1] > 0)
+            if others and pin["tolerates_driven_unpowered"] is False:
+                fail("pin_limit", where, f"{node.describe()} of domain {own} is on net {net}, driven from the domain "
+                                         f"{', '.join(others)}, and the record states it does not tolerate being driven "
+                                         "while its own domain is unpowered")
     return found
 
 
@@ -4353,6 +4707,253 @@ def crowded_test_points(design: Design, tree: list, distance: float) -> List[Vio
     return found
 
 
+#: How many fiducials each side of the board that carries assembled surface-mount parts needs.
+FIDUCIALS_PER_SIDE = 3
+#: How much nearer pad one a silkscreen graphic must stand than any other pad to count as marking it, and how far a
+#: silkscreen drawing may differ from its image under a symmetry of the pads and still count as unchanged, in mm.
+MARK_MARGIN = 0.05
+#: How far apart two pads' centres and extents may be, in mm, and still be one pad's image under a symmetry.
+PAD_MATCH = 0.01
+#: The silkscreen graphics that can mark a pin; text, the designator included, is not one.
+MARK_ITEMS = ("fp_line", "fp_rect", "fp_circle", "fp_arc", "fp_poly")
+#: Pin names that say a part has a direction: the pair a diode or an electrolytic capacitor is named for.
+POLAR_PAIRS = (({"a", "anode"}, {"k", "cathode"}), ({"+", "plus", "pos"}, {"-", "−", "minus", "neg"}))
+#: How a footprint's side is written on its own layer.
+SILKSCREEN = {"F.Cu": "F.SilkS", "B.Cu": "B.SilkS"}
+
+
+def fiducial_pads(footprint: list) -> int:
+    """How many of a footprint's pads carry KiCad's global fiducial pad property."""
+    return sum(1 for pad in sexpr.children(footprint, "pad")
+               if any(len(prop) > 1 and str(prop[1]) == "pad_prop_fiducial_glob" for prop in sexpr.children(pad, "property")))
+
+
+def missing_fiducials(design: Design, tree: list) -> List[Violation]:
+    """Every side of the board that carries surface-mount parts and holds fewer than FIDUCIALS_PER_SIDE fiducials.
+
+    A fiducial is a pad with the global fiducial pad property, counted on the
+    side its footprint sits on. A side carries surface-mount parts when it
+    holds a footprint with the surface-mount attribute that is not a fiducial
+    and is not left out of the position file, which the assembler places from;
+    a test point left out of it does not make a side count.
+    """
+    counts = {"F.Cu": 0, "B.Cu": 0}
+    parts = {"F.Cu": 0, "B.Cu": 0}
+    for footprint in sexpr.children(tree, "footprint"):
+        layer = sexpr.child(footprint, "layer")
+        side = str(layer[1]) if layer is not None and len(layer) > 1 else "F.Cu"
+        if side not in counts:
+            continue
+        found = fiducial_pads(footprint)
+        counts[side] += found
+        attributes = sexpr.child(footprint, "attr") or []
+        if not found and "smd" in attributes and "exclude_from_pos_files" not in attributes:
+            parts[side] += 1
+    violations = []
+    for side, name in (("F.Cu", "front"), ("B.Cu", "back")):
+        if parts[side] and counts[side] < FIDUCIALS_PER_SIDE:
+            violations.append(Violation(
+                design.project, "side_fiducials", f"the {name} side ({side})",
+                f"MFG-10 each side with assembled surface-mount parts carries at least {FIDUCIALS_PER_SIDE} fiducials: the {name} side "
+                f"has {parts[side]} surface-mount parts and {counts[side]} fiducials; add {FIDUCIALS_PER_SIDE - counts[side]} "
+                f"or more footprints on {side} with a pad carrying the global fiducial property, so the machine can find the board"))
+    return violations
+
+
+def schematic_parts(netlist: list) -> Dict[str, Tuple[str, List[str]]]:
+    """Each part of KiCad's netlist by reference: the library item name of its symbol, and the name of each pin it has."""
+    symbols: Dict[str, str] = {}
+    for group in walk(netlist, "components"):
+        for comp in sexpr.children(group, "comp"):
+            ref, source = sexpr.child(comp, "ref"), sexpr.child(comp, "libsource")
+            part = sexpr.child(source, "part") if source is not None else None
+            if ref is not None and len(ref) > 1:
+                symbols[str(ref[1])] = str(part[1]) if part is not None and len(part) > 1 else ""
+    names: Dict[str, List[str]] = {ref: [] for ref in symbols}
+    for pins in schematic_pin_nodes(netlist).values():
+        for pin in pins:
+            names.setdefault(pin.ref, []).extend(name.lower() for name in pin.names())
+    return {ref: (symbols.get(ref, ""), names[ref]) for ref in names}
+
+
+def is_polarised(footprint: list, pads: List["board_geometry.Pad"], symbol: str, pin_names: List[str]) -> bool:
+    """Whether a part has a direction: pins named for anode and cathode or plus and minus, a polarised capacitor's
+    symbol, or three pads on distinct nets. A footprint of pads on one net, or of non-plated holes alone, is left out;
+    a plated pad, through-hole or surface-mount, makes it a candidate."""
+    if len({pad.net for pad in pads}) < 2:
+        return False
+    nodes = sexpr.children(footprint, "pad")
+    if nodes and all(len(node) > 2 and str(node[2]) == "np_thru_hole" for node in nodes):
+        return False
+    if symbol.startswith("C_Polarized"):
+        return True
+    if any(first & set(pin_names) and second & set(pin_names) for first, second in POLAR_PAIRS):
+        return True
+    return len({pad.net for pad in pads if pad.net}) >= 3
+
+
+def silkscreen_segments(footprint: list, layer: str, name: str) -> List[List[Tuple[float, float]]]:
+    """The footprint's own graphics on `layer`, as polylines on the board; text is not among them."""
+    place = board_geometry.placement(footprint, f"the footprint {name}")
+    what = f"the silkscreen of {name}"
+    lines = []
+    for item in footprint:
+        if not isinstance(item, list) or not item or str(item[0]) not in MARK_ITEMS:
+            continue
+        on = sexpr.child(item, "layer")
+        if on is None or len(on) < 2 or str(on[1]) != layer:
+            continue
+        kind = str(item[0])
+        if kind == "fp_line":
+            line = [board_geometry.xy(sexpr.child(item, "start"), what), board_geometry.xy(sexpr.child(item, "end"), what)]
+        elif kind == "fp_rect":
+            (x1, y1), (x2, y2) = (board_geometry.xy(sexpr.child(item, key), what) for key in ("start", "end"))
+            line = [(x1, y1), (x2, y1), (x2, y2), (x1, y2), (x1, y1)]
+        elif kind == "fp_circle":
+            centre, edge = (board_geometry.xy(sexpr.child(item, key), what) for key in ("center", "end"))
+            radius = math.dist(centre, edge)
+            line = [(centre[0] + radius * math.cos(2 * math.pi * i / 64), centre[1] + radius * math.sin(2 * math.pi * i / 64))
+                    for i in range(65)]
+        elif kind == "fp_arc":
+            line = arc_points(item, what)
+        else:
+            line = [board_geometry.xy(point, what) for group in sexpr.children(item, "pts") for point in sexpr.children(group, "xy")]
+            if line:
+                line.append(line[0])
+        if len(line) > 1:
+            lines.append([board_geometry.placed(point, place) for point in line])
+    return lines
+
+
+def polyline_gap(line: List[Tuple[float, float]], outline: List[Tuple[float, float]]) -> float:
+    """How far a polyline stands from a pad's convex outline, 0 where it touches or enters it."""
+    if any(board_geometry.within(point, outline) for point in line):
+        return 0.0
+    return min(board_geometry.segment_distance(a, b, c, d)
+               for a, b in zip(line, line[1:]) for c, d in zip(outline, outline[1:] + outline[:1]))
+
+
+def along(lines: List[List[Tuple[float, float]]], step: float = 0.1) -> List[Tuple[float, float]]:
+    """Points along the polylines no further than `step` mm apart, their ends included."""
+    points = []
+    for line in lines:
+        for a, b in zip(line, line[1:]):
+            pieces = max(1, int(math.dist(a, b) / step) + 1)
+            points += [(a[0] + (b[0] - a[0]) * i / pieces, a[1] + (b[1] - a[1]) * i / pieces) for i in range(pieces)]
+        points.append(line[-1])
+    return points
+
+
+def drawn_the_same(one: List[List[Tuple[float, float]]], other: List[List[Tuple[float, float]]]) -> bool:
+    """Whether two drawings lie within MARK_MARGIN of each other, every point of each near some stroke of the other."""
+    def covered(points, lines):
+        return all(min(board_geometry.distance_to_segment(point, a, b) for line in lines for a, b in zip(line, line[1:]))
+                   <= MARK_MARGIN for point in points)
+    if not one or not other:
+        return not one and not other
+    return covered(along(one), other) and covered(along(other), one)
+
+
+def pad_symmetries(pads: List["board_geometry.Pad"], firsts: List["board_geometry.Pad"]) -> list:
+    """The turns and reflections about the pads' centre that map the pads onto themselves in position, size and shape
+    while moving the pads `firsts` off themselves, each as a function of a board point. Only those fixing the centre can map a set onto itself,
+    so each is found by sending the pad furthest from it to each pad as far from it, by rotation and by reflection."""
+    cx = sum(pad.centre[0] for pad in pads) / len(pads)
+    cy = sum(pad.centre[1] for pad in pads) / len(pads)
+    anchor = max(pads, key=lambda pad: math.dist(pad.centre, (cx, cy)))
+    reach = math.dist(anchor.centre, (cx, cy))
+    if reach < PAD_MATCH:
+        return []
+    start = math.atan2(anchor.centre[1] - cy, anchor.centre[0] - cx)
+
+    def make(kind: str, angle: float):
+        cos, sin = math.cos(angle), math.sin(angle)
+        if kind == "turn":
+            return lambda p: (cx + (p[0] - cx) * cos - (p[1] - cy) * sin, cy + (p[0] - cx) * sin + (p[1] - cy) * cos)
+        return lambda p: (cx + (p[0] - cx) * cos + (p[1] - cy) * sin, cy + (p[0] - cx) * sin - (p[1] - cy) * cos)
+
+    found = []
+    for target in pads:
+        if abs(math.dist(target.centre, (cx, cy)) - reach) > PAD_MATCH:
+            continue
+        end = math.atan2(target.centre[1] - cy, target.centre[0] - cx)
+        for kind, angle in (("turn", end - start), ("mirror", end + start)):
+            image = make(kind, angle)
+            if all(any(math.dist(image(pad.centre), other.centre) <= PAD_MATCH and pad.shape == other.shape
+                       and all(abs(a - b) <= PAD_MATCH for a, b in zip(image_box(image, pad), other.box()))
+                       for other in pads) for pad in pads) \
+                    and not all(any(math.dist(image(one.centre), other.centre) <= PAD_MATCH for other in firsts) for one in firsts):
+                found.append(image)
+    return found
+
+
+def image_box(image, pad: "board_geometry.Pad") -> Tuple[float, float, float, float]:
+    """The box about a pad's outline once `image` has carried it: (left, top, right, bottom)."""
+    corners = [image(point) for point in pad.outline()]
+    return (min(p[0] for p in corners), min(p[1] for p in corners), max(p[0] for p in corners), max(p[1] for p in corners))
+
+
+def unmarked_pins(design: Design, tree: list, parts: Dict[str, Tuple[str, List[str]]]) -> List[Violation]:
+    """Every polarised part whose first pin is not marked on the silkscreen of its own side.
+
+    The first pin is the pad numbered 1. It is marked when a graphic of the
+    footprint on its side's silkscreen stands nearer its copper than every other
+    pad's by more than MARK_MARGIN, and the footprint's silkscreen is not
+    unchanged by any symmetry of its pads that moves that pad. A polarised
+    part with no pad numbered 1 has no first pin to mark.
+    """
+    table = board_geometry.net_table(tree)
+    found = []
+    for footprint in sexpr.children(tree, "footprint"):
+        name = board_geometry.reference(footprint)
+        if not name:
+            continue
+        pads = board_geometry.footprint_pads(footprint, table)
+        symbol, pin_names = parts.get(name, ("", []))
+        if not is_polarised(footprint, pads, symbol, pin_names):
+            continue
+        layer = sexpr.child(footprint, "layer")
+        side = str(layer[1]) if layer is not None and len(layer) > 1 else "F.Cu"
+        silk = SILKSCREEN.get(side, "F.SilkS")
+        firsts = [pad for pad in pads if pad.number == "1"]
+        if not firsts:
+            at = board_geometry.placement(footprint, f"the footprint {name}")
+            found.append(Violation(
+                design.project, "polarity_mark", f"{name} at ({coordinate(at[0])}, {coordinate(at[1])}) mm",
+                f"a polarised part marks its first pin on the silkscreen: {name} has no pad numbered 1, so it has no first pin "
+                "to mark; number its first pad 1 and mark it"))
+            continue
+        first = firsts[0]
+        others = [pad for pad in pads if pad.number != "1"]
+        lines = silkscreen_segments(footprint, silk, name)
+        marked = False
+        for line in lines:
+            toward = min(polyline_gap(line, one.outline()) for one in firsts)
+            away = min((polyline_gap(line, other.outline()) for other in others), default=math.inf)
+            if toward < away - MARK_MARGIN:
+                marked = True
+                break
+        where = f"{name} pad 1 at ({coordinate(first.centre[0])}, {coordinate(first.centre[1])}) mm"
+        if not marked:
+            why = (f"it has no graphic on {silk} nearer pad 1 than every other pad by more than {coordinate(MARK_MARGIN)} mm"
+                   if lines else f"it draws nothing on {silk}")
+            found.append(Violation(
+                design.project, "polarity_mark", where,
+                f"a polarised part marks its first pin on the silkscreen of its own side: {name} is not marked at pad 1, {why}; "
+                f"draw a line, arc, circle or polygon on {silk} of {name}'s footprint that stands nearest pad 1 (text is no mark)"))
+            continue
+        for image in pad_symmetries(pads, firsts):
+            moved = [[image(point) for point in line] for line in lines]
+            if drawn_the_same(lines, moved):
+                found.append(Violation(
+                    design.project, "polarity_mark", where,
+                    f"a polarised part marks its first pin on the silkscreen of its own side: the silkscreen of {name} looks the same "
+                    "when its pads are turned or reflected onto themselves so that pad 1 moves, so it marks nothing; "
+                    f"draw the mark of pad 1 on {silk} so that it breaks that symmetry"))
+                break
+    return found
+
+
 # --- One design ----------------------------------------------------------------
 
 
@@ -4408,6 +5009,8 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
         read.append(("MFG-7 reference on silkscreen", "none, inherent zero", "0 references off a silkscreen layer or hidden"))
         read.append(("MFG-9 designator beside its part", "none, inherent zero", "0 designators inside a part's courtyard or "
                      "nearer another part than their own"))
+        read.append(("MFG-10 fiducials on a side", "none, the item's own count", f"{FIDUCIALS_PER_SIDE} fiducials at least on each side "
+                     "that carries assembled surface-mount parts"))
 
     found += exclusions(design, project)
     rules, hidden = read_rules(root, design, repository)
@@ -4487,6 +5090,7 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
 
         erc, why = run_report([kicad_cli, "sch", "erc", "--format", "json", "--severity-all", "--units", "mm", schematic], copy)
         netlist: Optional[Dict[str, Tuple[List[str], List[str]]]] = None
+        parts: Dict[str, Tuple[str, List[str]]] = {}
         if erc is None:
             found.append(Violation(design.project, "design_unreadable", design.schematic,
                                    f"the schematic cannot be checked: {why}"))
@@ -4500,12 +5104,15 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
             try:
                 parsed = sexpr.parse_one(text) if text is not None else None
                 netlist = schematic_nets(parsed) if parsed is not None else None
+                parts = schematic_parts(parsed) if parsed is not None else {}
                 if parsed is not None and channels is not None:
                     found += connectivity(design, pin_record, channels, schematic_pin_nodes(parsed))
             except sexpr.SexprError as error:
                 why = f"KiCad's netlist could not be read ({error})"
             if netlist is not None:
                 found += tool_named_nets(design, netlist)
+                found += voltage_rules(design, yaml, root, repository, not_for_manufacture, mains, signed,
+                                       schematic_pin_nodes(parsed), schematic_mains(netlist))
             if netlist is None:
                 found.append(Violation(design.project, "design_unreadable", design.schematic,
                                        f"the schematic's net classes cannot be read from KiCad's netlist: {why}"))
@@ -4640,6 +5247,8 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
                          f"{len(paths)} paths of {circuits} circuits with a supply pin"))
         found += references_off_silkscreen(design, tree)
         found += designators_astray(design, tree)
+        found += missing_fiducials(design, tree)
+        found += unmarked_pins(design, tree, parts)
         if "TEST_COURTYARD_MM" in figures:
             found += crowded_test_points(design, tree, figures["TEST_COURTYARD_MM"])
     except board_geometry.Unreadable as unread:

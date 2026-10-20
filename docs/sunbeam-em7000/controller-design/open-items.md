@@ -9,9 +9,9 @@ These settle most of the hydraulic unknowns and should be done before any plumbi
 1. Follow the drain tube from the drip tray: confirm the 3-way (block to group, hot water when energised) and the 2-way (second block outlet to the drain) roles, and whether the OEM 2-way is normally open (decision D6, fact F2).
 2. Trace the steam pump outlet: pump, check valve, OPV tee, block inlet. Note where the steam OPV's discharge tube ends and read its setting off the part (fact F6, F7).
 3. Open both block inlet fittings and look for a check valve (fact F9).
-4. Measure threads and tube sizes: block outlets and inlets, pump outlets, the steam line, and the OEM PTFE or silicone tube OD and ID. Read the 3-way and 2-way coil voltage and power off the valves, and their port threads.
+4. Measure threads and tube sizes: block outlets and inlets, pump outlets, the steam line, and the OEM PTFE or silicone tube OD and ID. The 3-way and 2-way coils' voltage and power are recorded in `../connector-pinouts.md` (230 V AC, 9-13.5 VA marked); read the valves' port threads.
 5. Lift an NTC clamp bracket to confirm how the NTC is mounted (an inference from photos so far).
-6. Panel and gauge: with a meter on the OEM main-board connector, a pressed key should read about 1 kOhm plus 47 Ohm to ground (fact F14); measure the anode-rail voltage and the indicator element currents; identify the buzzer type (resistance, then a bench supply through a series resistor to find polarity, voltage and current); find pin 1 on both harness connectors.
+6. Panel and gauge: with a meter on the OEM main-board connector, a pressed key should read about 1 kOhm plus 47 Ohm to ground (fact F14); measure the anode-rail voltage and the indicator element currents; identify the buzzer type (resistance, then a bench supply through a series resistor to find polarity, voltage and current); pin 1 on both harness connectors is now defined (`../connector-pinouts.md`).
 7. Flow meter: output type (open-collector, Hall, push-pull) and level into the controller.
 8. Observe whether the OEM preheats the steam block with the knob shut. Settled by owner statement, 2026-10-15: it does (fact F10, as superseded); confirm on the machine.
 9. Observe how much the idle block drains between shots (fact F3).
@@ -23,7 +23,7 @@ These settle most of the hydraulic unknowns and should be done before any plumbi
 - BL0942 module isolation measurement, then BOM rows for the meters (decision D17).
 - XDB401 I2C variant: output rate, address (EEPROM-programmable, to confirm), thread.
 - Supplier rating of the PTFE tube at 160 to 200 C, or use the stainless capillary or 4 mm metal tube.
-- DS12110 checks: 5 V tolerance for PB4, PB5, PA8, PD7, PD10, PD14, PD15, PA0 and PE4 to PE8; alternate functions for PA1, PA4 and PA6 (ADC channels), PA10 (TIM1_CH3) and PB5 (TIM3_CH2); H743 pin sink current against the key-line indicator current (about 16 mA on a two-element line, estimated).
+- DS12110 checks: 5 V tolerance for PB4, PB5, PA8, PD7, PD10, PD14, PD15, PA0 and PE4 to PE8; alternate functions for PA1, PA4 and PA6 (ADC channels), PA10 (TIM1_CH3) and PB5 (TIM3_CH2); H743 pin sink current against the key-line indicator current (the indicator current is pending with the forward voltage: not yet read; it is read when the board carrying the device is designed, and does not block the division of the circuitry into boards).
 - Relay module input polarity from its schematic (on an active-low module a 3.3 V high may not turn the optocoupler off); confirm the 4-channel module and the cavity fit.
 - 5 V tolerance in DS12110 also for PD7, PD10, PD14, PD15 (relay inputs), PA0 (water indicator cathode) and PE4 to PE8 (key lines pulled toward the 5 V rail through LEDs).
 - The solenoid valves' pressure rating (a sibling JLT listing says 1.0 MPa, unverified) against the brew OPV setting.
@@ -40,7 +40,7 @@ These settle most of the hydraulic unknowns and should be done before any plumbi
 - **Mains chain rating margin.** Resolved by `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`: filter FN9222-15-06 (15 A at 50 C), trunk at least 1.5 mm2 (WB1568), T10A unchanged, one shared TR5 fuse on the valve branches. Remaining to confirm: the 15 A filter's coupler rating (IEC C14 is 10 A), its termination type, the TR5 series.
 - **Heater switching cadence:** whole-cycle (20 ms) bursts or half-cycle; the files disagree.
 - **Steam heater with the knob shut:** the firmware's 137 C ready temperature heats against a closed knob, against F10 and the open trapped-pressure case.
-- **SSR mounting:** the metal side wall is proposed, not decided, and conflicts thermally with the IRM-10-5's derating.
+- **SSR mounting:** the side wall is proposed, not decided, and conflicts thermally with the IRM-10-5's derating.
 - **A vent state per mode table** (idle, flush, shot, hot water, steam, fault).
 - Whether to fit the optional test tee on the vent branch.
 
@@ -66,7 +66,7 @@ Each node must be read with `show` before linking, and existing coverage checked
 
 ## E. Housekeeping and unresolved items from the refresh
 
-- The mainboard's own height (an estimate; 25 mm of cavity makes it worth measuring) and the dimmer module's height (footprint 50 x 16 mm).
+- The mainboard's own height (an estimate; the cavity is 34.5 mm deep, with 23.4 mm usable above the original board within about 2 mm of a wall and 28 mm elsewhere, an owner allowance resting on the AC/DC module's top, a single point: `../reference-machine.md` § Controller enclosure as found, which supersedes the 25 mm note) and the dimmer module's height (footprint 50 x 16 mm).
 - The 10 A chain margin is resolved by `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE` (15 A filter, trunk above the fuse); the 15 A filter's coupler rating is unverified and its termination type is not recorded.
 - Whether the IRM-10-5 has an internal fuse (the old text and the BOM disagreed).
 - Nothing specifies ferrules for the screw terminals, the FN9222's termination type, the earth conductor and chassis stud, or the temperature ratings of PVC wire and flex near the hot blocks.
@@ -77,7 +77,7 @@ Each node must be read with `show` before linking, and existing coverage checked
 - Whether the OEM valves are kept or the BOM's valve rows are replacements; the owner's statement on the three-way valve (a planned replacement, nothing bought) is recorded in `../controller-board-design-constraints.md` § Purchases ahead of verification, and the question stands for the other valve; the BOM is in AUD against a declared 250 USD figure, so no total is given.
 - Whether the graph has changed since the old text on `DEC-PREHARDWARE-TARGET-FAMILY`, the zero-cross enumeration row and `SOL-CHANNEL-ENUMERATION-CORRECTED.C4`.
 
-- Harness connector types are unidentified; panel and gauge parts are not specified.
+- Harness connector families are not identified (pitch, ways and first pin of every retained connector are recorded in `../connector-pinouts.md`); panel and gauge parts are not specified.
 - The rail-gate and buzzer stage parts are in the BOM; the relay module's snubber count is 2.
 - All prices are estimates; no catalogue numbers have been checked against stock.
 - The old `controller-selection-working/` folder has been removed (git history, commit `07913f4`). The four stale slice files in `docs/sunbeam-em7000/` (`controller-io.md`, `component-specification.md`, `controller-io-bom.csv`, `control-board-electrical-requirements.csv`) are superseded in content by this folder but are cited by path from graph nodes, so they stay until the graph is dealt with (section D).

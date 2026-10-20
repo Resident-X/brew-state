@@ -364,25 +364,25 @@ def edge_minimum_below_source(seed: board_prove.Seed) -> None:
 
 
 def bead_at_the_source(seed: board_prove.Seed) -> None:
-    """The amplifier's supply bead FB1 moved 11 mm east of its capacitor, 15 mm from U3's supply pin."""
+    """The amplifier's supply bead FB1 moved 8.5 mm east of its capacitor, 12.5 mm from U3's supply pin."""
     def edit(tree: list) -> None:
         drop(tree, ((74.588, 40.276), (74.588, 43.05)), ((69.138, 43.05), (73.012, 43.05)))
-        move(tree, "FB1", 84.8, 43.05)
-        path(tree, "/+3V3", "F.Cu", 0.3, [(74.588, 40.276), (85.588, 40.276), (85.588, 43.05)])
-        path(tree, "/+3V3A", "F.Cu", 0.3, [(69.138, 43.05), (84.012, 43.05)])
+        move(tree, "FB1", 82.3, 43.05)
+        path(tree, "/+3V3", "F.Cu", 0.3, [(74.588, 40.276), (83.088, 40.276), (83.088, 43.05)])
+        path(tree, "/+3V3A", "F.Cu", 0.3, [(69.138, 43.05), (81.512, 43.05)])
     seed.layout(edit)
 
 
 def parts_apart(seed: board_prove.Seed) -> None:
-    """The LED resistor R4 moved 15 mm south of U1's pin it serves, its connection running down to it."""
+    """The LED resistor R4 moved 14 mm south of U1's pin it serves, its connection running down to it."""
     def edit(tree: list) -> None:
         drop(tree, ((31.81, 21.46), (33.675, 21.46)), ((35.325, 21.46), (35.325, 23)))
         drop_via(tree, (35.325, 23))
         turn(tree, "R4", -90)
-        move(tree, "R4", 33.85, 36)
-        path(tree, "/LED_K", "F.Cu", 0.25, [(31.81, 21.46), (32.85, 21.46), (33.85, 22.46), (33.85, 35.175)])
-        path(tree, GND, "F.Cu", 0.5, [(33.85, 36.825), (33.85, 38.1)])
-        append(tree, new_via(GND, (33.85, 38.1)))
+        move(tree, "R4", 33.85, 35.5)
+        path(tree, "/LED_K", "F.Cu", 0.25, [(31.81, 21.46), (32.85, 21.46), (33.85, 22.46), (33.85, 34.675)])
+        path(tree, GND, "F.Cu", 0.5, [(33.85, 36.325), (33.85, 37.5)])
+        append(tree, new_via(GND, (33.85, 37.5)))
     seed.layout(edit)
 
 
@@ -502,12 +502,12 @@ SEEDS: List[Tuple[str, str, str, Tuple[float, float], str, Callable[[board_prove
     ("S10", "MFG-1", "design-rules.md, Board Setup", (0, 0),
      "a board-wide minimum below its source: copper-to-edge set to 0.2 mm where the row's source recommends more than "
      "0.3 mm", edge_minimum_below_source),
-    ("S11", "EMI-4", "F.Cu", (84.8, 43.05),
-     "a supply ferrite bead at the far end of the supply: FB1 moved from beside U3 to 11 mm east of its capacitor, "
-     "15 mm from U3's supply pin",
+    ("S11", "EMI-4", "F.Cu", (82.3, 43.05),
+     "a supply ferrite bead at the far end of the supply: FB1 moved from beside U3 to 8.5 mm east of its capacitor, "
+     "12.5 mm from U3's supply pin",
      bead_at_the_source),
-    ("S12", "WORK-1", "F.Cu", (33.85, 36),
-     "a part set apart from the part it serves: R4 moved 15 mm south of U1's pin 2, its connection running down to it",
+    ("S12", "WORK-1", "F.Cu", (33.85, 35.5),
+     "a part set apart from the part it serves: R4 moved 14 mm south of U1's pin 2, its connection running down to it",
      parts_apart),
     ("S13", "WORK-3", "F.Cu, B.Cu", (67.65, 15.05),
      "a needless change of layer: XTAL1 dropped to B.Cu and straight back up through two vias on its run to the crystal",

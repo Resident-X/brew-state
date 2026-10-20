@@ -68,3 +68,7 @@ entries:
     library_class: basic
     stock: 1000
     unit_price: 0.01
+  - lcsc: C9100016
+    library_class: basic
+    stock: 1000
+    unit_price: 0.01

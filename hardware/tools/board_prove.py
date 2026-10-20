@@ -259,6 +259,21 @@ def drop_field(reference: str, field: str):
     return lambda seed: seed.schematic(edit)
 
 
+def set_field(reference: str, field: str, value: str):
+    """The symbol field `field` of the symbol at `reference` given the text `value`, in the schematic."""
+    def edit(tree: list) -> None:
+        for symbol in sexpr.children(tree, "symbol"):
+            for prop in sexpr.children(symbol, "property"):
+                if len(prop) > 2 and prop[1] == "Reference" and prop[2] == reference:
+                    for target in sexpr.children(symbol, "property"):
+                        if len(target) > 2 and target[1] == field:
+                            target[2] = sexpr.Quoted(value)
+                            return
+                    raise AssertionError(f"the proof symbol {reference} has no field {field}")
+        raise AssertionError(f"the proof schematic has no symbol {reference}")
+    return lambda seed: seed.schematic(edit)
+
+
 def repeat_symbol(reference: str):
     """A second symbol carrying the reference `reference`, a copy of the first with a fresh identifier."""
     def edit(tree: list) -> None:
@@ -288,6 +303,13 @@ def derating(old: str, new: str):
 
 def pin_limits(old: str, new: str):
     return lambda seed: seed.replace("pin-limits.yaml", old, new)
+
+
+def resistor_over_its_rating(seed: Seed) -> None:
+    """R1, across the mains pair, made a resistor of class resistor rated 100 V in the record and the schematic."""
+    parts('    rating: "0.25W"\n    lcsc: "C9000002"\n    class: none',
+          '    rating: "100V"\n    lcsc: "C9000002"\n    class: resistor')(seed)
+    set_field("R1", "Rating", "100V")(seed)
 
 
 def uncommitted_record(seed: Seed) -> None:
@@ -850,6 +872,128 @@ def test_point_in_courtyard(seed: Seed) -> None:
     seed.layout(lambda tree: tree.insert(len(tree) - 1, point))
 
 
+def surface_mounted_r2(tree: list, bare: bool = True) -> list:
+    """R2 turned into a surface-mount part on the front: its pads smd on the front copper, its attribute smd and, when
+    `bare`, nothing drawn on its silkscreen but its reference text. Returns R2's footprint."""
+    Q = sexpr.Quoted
+    part = footprint(tree, "R2")
+    for node in sexpr.children(part, "attr"):
+        part.remove(node)
+    part.insert(2, ["attr", "smd"])
+    for node in sexpr.children(part, "pad"):
+        node[2] = "smd"
+        for drill in sexpr.children(node, "drill"):
+            node.remove(drill)
+        sexpr.child(node, "layers")[1:] = [Q("F.Cu"), Q("F.Mask")]
+    if bare:
+        for node in list(part):
+            if isinstance(node, list) and node and str(node[0]).startswith("fp_") and str(node[0]) != "fp_text":
+                layer = sexpr.child(node, "layer")
+                if layer is not None and str(layer[1]) == "F.SilkS":
+                    part.remove(node)
+    return part
+
+
+def through_hole_unmarked(seed: Seed) -> None:
+    """R2 left a plated through-hole part, its drills and plating as the design has them, with nothing drawn on its front
+    silkscreen and its schematic symbol a polarised capacitor's: the only thing that makes R2 polarised."""
+    def edit(tree: list) -> None:
+        part = footprint(tree, "R2")
+        for node in list(part):
+            if isinstance(node, list) and node and str(node[0]).startswith("fp_") and str(node[0]) != "fp_text":
+                layer = sexpr.child(node, "layer")
+                if layer is not None and str(layer[1]) == "F.SilkS":
+                    part.remove(node)
+    seed.layout(edit)
+    polarised_symbol_r2(seed)
+
+
+def polarised_symbol_r2(seed: Seed) -> None:
+    """R2's schematic symbol made a polarised capacitor's, a copy of the resistor symbol named C_Polarized: the only thing
+    that makes R2 polarised."""
+    Q = sexpr.Quoted
+
+    def edit(tree: list) -> None:
+        library = sexpr.child(tree, "lib_symbols")
+        source = next(item for item in sexpr.children(library, "symbol") if item[1] == "proof:R")
+        copied = copy.deepcopy(source)
+        copied[1] = Q("proof:C_Polarized")
+        for unit in sexpr.children(copied, "symbol"):
+            unit[1] = Q("C_Polarized" + str(unit[1])[1:])
+        library.append(copied)
+        for symbol in sexpr.children(tree, "symbol"):
+            if any(len(p) > 2 and p[1] == "Reference" and p[2] == "R2" for p in sexpr.children(symbol, "property")):
+                sexpr.child(symbol, "lib_id")[1] = Q("proof:C_Polarized")
+                return
+        raise AssertionError("the proof schematic has no symbol R2")
+    seed.schematic(edit)
+
+
+def fiducials_short(seed: Seed) -> None:
+    """R2 a surface-mount part on the front, and two fiducials on the front, one short of the three the side needs."""
+    Q = sexpr.Quoted
+
+    def edit(tree: list) -> None:
+        surface_mounted_r2(tree)
+        for index in range(2):
+            uuid = f"0b0e5c1a-0000-4000-8000-0000000{index}0e00"
+            tree.insert(len(tree) - 1, ["footprint", Q("proof:Fiducial"), ["layer", Q("F.Cu")], ["uuid", Q(uuid)],
+                                        ["at", f"{5 + 5 * index}", "30"], ["attr", "smd", "exclude_from_bom"],
+                                        ["property", Q("Reference"), Q(f"FID{index + 1}"), ["at", "0", "-1.5", "0"], ["layer", Q("F.SilkS")]],
+                                        ["pad", Q(""), "smd", "circle", ["at", "0", "0"], ["size", "1", "1"],
+                                         ["property", "pad_prop_fiducial_glob"], ["layers", Q("F.Cu"), Q("F.Mask")],
+                                         ["uuid", Q(f"{uuid[:-2]}01")]]])
+    seed.layout(edit)
+
+
+def three_nets_unmarked(seed: Seed) -> None:
+    """R2 a surface-mount part on the front with a third pad on a third net and no mark of its first pin."""
+    Q = sexpr.Quoted
+
+    def edit(tree: list) -> None:
+        part = surface_mounted_r2(tree)
+        third = ["pad", Q("3"), "smd", "circle", ["at", "5.08", "3"], ["size", "1.6", "1.6"], ["layers", Q("F.Cu"), Q("F.Mask")],
+                 ["net", Q("/MAINS_L")], ["uuid", Q("0b0e5c1a-0000-4000-8000-000000000e03")]]
+        part.insert(len(part) - 1, third)
+    seed.layout(edit)
+
+
+def capacitor_unmarked(seed: Seed) -> None:
+    """R2 a surface-mount part of two pads and no mark, polarised only by its schematic symbol, a polarised capacitor's."""
+    seed.layout(surface_mounted_r2)
+    polarised_symbol_r2(seed)
+
+
+def mark_on_back(seed: Seed) -> None:
+    """The polarised R2 of two pads with a bar beside pad 1 drawn on B.SilkS, where a front part's mark does not belong, and
+    only a line midway between its pads on F.SilkS."""
+    Q = sexpr.Quoted
+
+    def edit(tree: list) -> None:
+        part = surface_mounted_r2(tree)
+        part.insert(len(part) - 1, ["fp_line", ["start", "-1.5", "-1.5"], ["end", "-1.5", "1.5"], ["stroke", ["width", "0.12"], ["type", "solid"]],
+                                    ["layer", Q("B.SilkS")], ["uuid", Q("0b0e5c1a-0000-4000-8000-000000000e04")]])
+        part.insert(len(part) - 1, ["fp_line", ["start", "5.08", "-1.5"], ["end", "5.08", "1.5"], ["stroke", ["width", "0.12"], ["type", "solid"]],
+                                    ["layer", Q("F.SilkS")], ["uuid", Q("0b0e5c1a-0000-4000-8000-000000000e06")]])
+    seed.layout(edit)
+    polarised_symbol_r2(seed)
+
+
+def symmetric_outline(seed: Seed) -> None:
+    """The polarised R2 of two pads outlined by four lines, whose end beside pad 1 stands nearer it than pad 2 but whose drawing is
+    the same turned half way about the pads."""
+    Q = sexpr.Quoted
+
+    def edit(tree: list) -> None:
+        part = surface_mounted_r2(tree)
+        for index, (x1, y1, x2, y2) in enumerate(((-1.5, -1.5, 11.66, -1.5), (-1.5, 1.5, 11.66, 1.5), (-1.5, -1.5, -1.5, 1.5), (11.66, -1.5, 11.66, 1.5))):
+            part.insert(len(part) - 1, ["fp_line", ["start", f"{x1:g}", f"{y1:g}"], ["end", f"{x2:g}", f"{y2:g}"],
+                                        ["stroke", ["width", "0.12"], ["type", "solid"]], ["layer", Q("F.SilkS")],
+                                        ["uuid", Q(f"0b0e5c1a-0000-4000-8000-0000000{index}0e05")]])
+    seed.layout(edit)
+    polarised_symbol_r2(seed)
+
+
 def drop_rule(name: str):
     def seed_it(seed: Seed) -> None:
         text = seed.read(".kicad_dru")
@@ -1215,6 +1359,18 @@ FAULTS: List[tuple] = [
      "the text of R1 stands inside the courtyard of R1", reference_in_courtyard),
     ("a test point seeded inside a part's courtyard", "test access: a test pad nearer than its figure to a part's courtyard fails", "test_point_courtyard",
      "the pad of test point TP9 is 0 mm from the F.CrtYd courtyard of R1, where TEST_COURTYARD_MM requires 1 mm", test_point_in_courtyard),
+    ("a side with surface-mount parts and two fiducials", "assembly: each side with assembled surface-mount parts carries three fiducials", "side_fiducials",
+     "the front side has 1 surface-mount parts and 2 fiducials", fiducials_short),
+    ("a polarised part with no mark at its first pin", "assembly: a polarised part marks its first pin on the silkscreen", "polarity_mark",
+     "R2 is not marked at pad 1, it draws nothing on F.SilkS", three_nets_unmarked),
+    ("a polarised capacitor named only by its symbol with no mark", "assembly: a part a polarised capacitor's symbol names is marked at its first pin", "polarity_mark",
+     "R2 is not marked at pad 1, it draws nothing on F.SilkS", capacitor_unmarked),
+    ("a plated through-hole polarised part with no mark", "assembly: a plated through-hole part is judged by the mark rule as a surface-mount part is", "polarity_mark",
+     "R2 is not marked at pad 1, it draws nothing on F.SilkS", through_hole_unmarked),
+    ("a polarity mark on the wrong side of the part", "assembly: the mark is on the silkscreen of the part's own side", "polarity_mark",
+     "R2 is not marked at pad 1, it has no graphic on F.SilkS nearer pad 1", mark_on_back),
+    ("a symmetric outline on a symmetric pad pattern", "assembly: a drawing the pads' symmetry leaves unchanged marks nothing", "polarity_mark",
+     "the silkscreen of R2 looks the same when its pads are turned or reflected onto themselves so that pad 1 moves", symmetric_outline),
     # The keys of the records
     ("a separation basis key misspelt", "record keys: a key the separation basis decision does not define is refused by name", "separation_basis",
      "holds the key 'overvoltage_categry'", record("overvoltage_category: 2", "overvoltage_categry: 2"), KEYS_TARGET),
@@ -1226,6 +1382,27 @@ FAULTS: List[tuple] = [
      "holds the key 'absolute_mx_v'", pin_limits("absolute_max_v: 3.6", "absolute_mx_v: 3.6"), KEYS_TARGET),
     ("a catalogue lifecycle key misspelt", "record keys: a key the design records decision does not define is refused by name in a catalogue entry's lifecycle", "parts_record",
      "holds the key 'stauts'", extract("status: active", "stauts: active"), KEYS_TARGET),
+    # The derated-voltage and pin-limit rules
+    ("a resistor across the mains pair rated below the policy's share of the mains peak", "derated voltage: a part whose working voltage exceeds the policy's voltage share of its rating fails", "derated_voltage",
+     "the position R1 sees a working voltage of 353.553 V", resistor_over_its_rating, KEYS_TARGET),
+    ("a position with no class", "derated voltage: every position of the parts specification record carries a class", "derated_voltage",
+     "the position J1 has no class", parts('    lcsc: "C9000001"\n    class: none', '    lcsc: "C9000001"'), KEYS_TARGET),
+    ("a position naming a class the policy lacks", "derated voltage: a position's class is one the derating policy lists, or none", "derated_voltage",
+     "the position J1 names the class 'ghost', which the derating policy does not list", parts('    lcsc: "C9000001"\n    class: none', '    lcsc: "C9000001"\n    class: ghost'), KEYS_TARGET),
+    ("a rated position naming the class none", "derated voltage: a position whose record or Rating field states a figure in V, VDC or VAC cannot name the class none", "derated_voltage",
+     "the position R1 names the class none and the parts specification record gives '50V 0.25W'", parts('    rating: "0.25W"\n    lcsc: "C9000002"', '    rating: "50V 0.25W"\n    lcsc: "C9000002"'), KEYS_TARGET),
+    ("a listed pin the part does not have", "pin limits: a pin the record lists that the placed part's symbol does not have fails", "pin_limit",
+     "the pin-limit record lists pin 9 of catalogue number C9000005, which the part U1 does not have", pin_limits("      - pin: 2\n        domain: sense", "      - pin: 9\n        domain: sense"), KEYS_TARGET),
+    ("a pin whose net can exceed its absolute maximum", "pin limits: a pin whose net can reach more than its absolute_max_v fails", "pin_limit",
+     "U1 pin 1 is on net /LV_A, which can reach 3.3 V, above the pin's absolute_max_v 3", pin_limits("absolute_max_v: 3.6", "absolute_max_v: 3.0"), KEYS_TARGET),
+    ("a pin whose net can fall below its absolute minimum", "pin limits: a pin whose net can fall below its absolute_min_v fails", "pin_limit",
+     "U1 pin 1 is on net /LV_A, which can fall to 0 V, below the pin's absolute_min_v 0.5", pin_limits("absolute_min_v: -0.3", "absolute_min_v: 0.5"), KEYS_TARGET),
+    ("a pin driven from another domain that does not tolerate it", "pin limits: a pin on a net driven from another domain while its own is unpowered fails where it does not tolerate it", "pin_limit",
+     "U1 pin 2 of domain logic is on net /LV_B, driven from the domain sense", pin_limits(
+         "      - pin: 2\n        domain: sense\n        absolute_max_v: 5.5\n        absolute_min_v: -0.3\n        tolerates_driven_unpowered: true",
+         "      - pin: 2\n        domain: logic\n        absolute_max_v: 5.5\n        absolute_min_v: -0.3\n        tolerates_driven_unpowered: false"), KEYS_TARGET),
+    ("an integrated circuit the pin-limit record omits", "pin limits: every integrated circuit and semiconductor has an entry in the pin-limit record", "pin_limit",
+     "the pin-limit record omits the integrated circuit U1", pin_limits("- lcsc: C9000005", "- lcsc: C9000099"), KEYS_TARGET),
 ]
 
 

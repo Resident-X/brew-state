@@ -17,7 +17,7 @@ A low-voltage-only prototype PCB, hand-soldered through-hole, rather than buildi
 
 ## Why not placed assembly on the first spin
 
-The BOM is through-hole with no assembler part numbers or footprints, the harness connector types are unidentified, and the design will probably change once. Use bare boards and hand-solder; move to surface-mount parts and a placed assembly for repeat builds. Prices and assembler libraries have not been looked up.
+The BOM is through-hole with no assembler part numbers or footprints, the harness connectors' pitch, ways and first pin are recorded in `../connector-pinouts.md` (families inferred or unidentified), and the design will probably change once. Use bare boards and hand-solder; move to surface-mount parts and a placed assembly for repeat builds. Prices and assembler libraries have not been looked up.
 
 ## Footprints: what is known
 
@@ -28,7 +28,7 @@ The BOM is through-hole with no assembler part numbers or footprints, the harnes
 | 2N5401 | TO-92, standard |
 | Resistors, capacitors | Axial or radial through-hole, standard |
 | ULN2003A breakout | Unknown (dimensions and header pitch not measured; AliExpress board) |
-| Harness connectors (panel, gauge, flow meter, thermistors, sensors) | Unknown (types unidentified, pin 1 untraced) |
+| Harness connectors (panel, gauge, flow meter, thermistors, sensors) | Pitch, ways and pin 1 recorded in `../connector-pinouts.md`; families inferred or unidentified |
 | RBdimmer modules | 50 x 16 mm with terminals; off-board |
 | Relay module | 73 x 54 mm (4-channel); off-board |
 | IRM-10-5 | Off-grid pins (38.5 mm between columns, 10.75 mm AC L to AC N, 8 mm between outputs); off-board |
@@ -50,4 +50,4 @@ The seven datasheet and bench checks in `open-items.md` section B that bear on p
 
 ## Order
 
-Measure the H743 header and the ULN2003A breakout, identify the harness connectors, close the pin checks, then author the solution and its gate, then lay out and order a prototype spin. Mains-side work is a separate step with a safety review.
+Measure the H743 header and the ULN2003A breakout, test-fit the harness connectors' families, close the pin checks, then author the solution and its gate, then lay out and order a prototype spin. Mains-side work is a separate step with a safety review.

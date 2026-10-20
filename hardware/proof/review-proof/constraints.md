@@ -11,3 +11,4 @@ This is the constraints record of `review-proof`, a throwaway design made only t
 | Copper weight | 2 oz | Every copper layer, finished |
 | Board manufacturer | JLCPCB | Whose stated limits the board-wide minimums are read from, at 4 layers and 2 oz |
 | Leadless package clearance | 10 mm | The least distance, courtyard to courtyard, a leadless package keeps from a connector, a mounting hole and a board edge. A figure chosen for this synthetic design, which has no machine behind it |
+| Fiducial placement | 3 mm; 1.5 mm | The least distance a fiducial keeps from a board edge, 3 mm, and from any pad, track, via, courtyard or hole, 1.5 mm. Figures chosen for this synthetic design, which has no machine behind it, so the assembler's camera sees the whole mask opening and no part's edge in it |
