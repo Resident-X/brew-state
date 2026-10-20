@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS-C4-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C4
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-20T01:36:05.905781Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_voltage.py::EveryFailureNamesTheRuleTheDesignAndTheItem.test_the_report_line_of_each_rule_carries_its_name_the_design_and_the_item
+  artifact_version: 29e2542f7c57a7fee2fe3c84e5e6e9270daf7bdd
+attested_by: crun-b402ae8161d19e24
+links:
+  - target: SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C4
+    type: satisfies

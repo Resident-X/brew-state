@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS-C6-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C6
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-20T01:36:06.150576Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad.py::EveryTrackedDesignPassesTheConnectivityCheck.test_every_design_the_repository_tracks_is_held_to_a_record_and_passes
+  artifact_version: 29e2542f7c57a7fee2fe3c84e5e6e9270daf7bdd
+attested_by: crun-b402ae8161d19e24
+links:
+  - target: SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C6
+    type: satisfies
