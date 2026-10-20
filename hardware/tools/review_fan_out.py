@@ -190,7 +190,11 @@ def load_caller(name: str, folder: str):
     missing = [attribute for attribute in REQUIRED if not hasattr(module, attribute)]
     if missing:
         raise Refused([f"the caller module {path} lacks {', '.join(missing)}; add each to the module"])
-    problems = caller_problems(module, path)
+    try:
+        problems = caller_problems(module, path)
+    except Exception as error:  # a caller value the typing did not foresee is a refusal naming the module, never a traceback
+        problems = [f"the caller module {path} has an attribute that cannot be checked ({type(error).__name__}: {error}); "
+                    "fix the module"]
     if problems:
         raise Refused(problems)
     return module
@@ -218,9 +222,10 @@ def caller_problems(module, path: str) -> List[str]:
         tables = {}
     for name, spec in tables.items():
         columns = spec.get("columns") if isinstance(spec, dict) else None
-        if not texts(columns) or not columns or len(set(columns)) != len(columns):
+        if not isinstance(columns, (list, tuple)) or not texts(columns) or not columns or len(set(columns)) != len(columns):
             bad(f"TABLES[{name!r}]", spec, "give its `columns` as a list of distinct column names")
-        elif spec.get("verdict_column") is not None and (spec["verdict_column"] not in columns or not texts(spec.get("verdicts"))):
+        elif spec.get("verdict_column") is not None and (not named(spec["verdict_column"], str)
+                                                         or spec["verdict_column"] not in columns or not texts(spec.get("verdicts"))):
             bad(f"TABLES[{name!r}]", spec, "give a `verdict_column` among its columns and its `verdicts` as a collection of names")
     findings = module.FINDINGS
     if findings is None:
@@ -229,8 +234,8 @@ def caller_problems(module, path: str) -> List[str]:
         bad("FINDINGS", findings, "give a mapping, or None for a caller with no findings table")
         return found
     table = findings.get("table")
-    columns = list(tables[table]["columns"]) if table in tables and isinstance(tables[table], dict) and texts(
-        tables[table].get("columns")) else None
+    columns = list(tables[table]["columns"]) if named(table, str) and table in tables and isinstance(
+        tables[table], dict) and isinstance(tables[table].get("columns"), (list, tuple)) else None
     if columns is None:
         bad("FINDINGS['table']", table, "name one of TABLES")
     for key in ("number", "item"):
@@ -241,8 +246,9 @@ def caller_problems(module, path: str) -> List[str]:
         bad("FINDINGS['checklist']", checklist, "give the checklist's items in order as a list of distinct names")
     citations = findings.get("citations")
     if not isinstance(citations, (list, tuple)) or not all(
-            isinstance(pair, (list, tuple)) and len(pair) == 2 and pair[0] in tables and isinstance(tables[pair[0]], dict)
-            and pair[1] in (tables[pair[0]].get("columns") or ()) for pair in citations):
+            isinstance(pair, (list, tuple)) and len(pair) == 2 and named(pair[0], str) and pair[0] in tables
+            and isinstance(tables[pair[0]], dict) and isinstance(tables[pair[0]].get("columns"), (list, tuple))
+            and named(pair[1], str) and pair[1] in tables[pair[0]]["columns"] for pair in citations):
         bad("FINDINGS['citations']", citations, "give a list of (table, column) pairs of TABLES")
     pattern = findings.get("citation")
     if not isinstance(pattern, re.Pattern) or "number" not in pattern.groupindex:
@@ -431,7 +437,7 @@ def parse_stream(text: str) -> Session:
     """The session as the stream shows it. A line that is not a JSON event, an event with no string `type`, and a
     second start or result report are malformed; an event of a type the command does not read is passed over."""
     session = Session()
-    for line in text.splitlines():
+    for line in text.split("\n"):  # never splitlines: U+2028, U+2029 and U+0085 are raw inside a JSON event
         if not line.strip():
             continue
         try:

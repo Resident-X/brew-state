@@ -18,7 +18,8 @@ the result report), `start_set` and `result_set` (fields given other values),
 `failed_reads` (paths it reads whose tool result is an error), `lines` (lines it
 prints as they are, after its start report), `garbled` (bytes that are not UTF-8,
 printed to its output and its error stream) and `no_result` (it prints no result
-report and exits 0). The scenario's `auth_stdout`, when given, is what `auth
+report and exits 0) and `raw_unicode` (its assistant and result lines carry non-ASCII
+characters raw, as the real command line's JSON does). The scenario's `auth_stdout`, when given, is what `auth
 status` prints in place of its report, and `auth` its exit status.
 """
 
@@ -135,7 +136,8 @@ def main():
     if outcome.get("exit"):
         sys.stderr.write(outcome.get("stderr", "the reviewer crashed"))
         return outcome["exit"]
-    print(json.dumps({"type": "assistant", "message": {"content": [{"type": "text", "text": text}]}}))
+    ascii_only = not outcome.get("raw_unicode")
+    print(json.dumps({"type": "assistant", "message": {"content": [{"type": "text", "text": text}]}}, ensure_ascii=ascii_only))
     report = {"type": "result", "subtype": "success", "is_error": False, "result": text, "session_id": session,
               "num_turns": base["turns"] + outcome.get("turns", 1),
               "duration_api_ms": base["api_ms"] + outcome.get("api_ms", 500),
@@ -146,7 +148,7 @@ def main():
     report.update(outcome.get("result_set", {}))
     for key in outcome.get("result_omit", []):
         report.pop(key, None)
-    print(json.dumps(report))
+    print(json.dumps(report, ensure_ascii=ascii_only))
     return 0
 
 

@@ -1446,10 +1446,23 @@ INVENTORY = {
             "columns as text": '{"Verdicts": {"columns": "Item"}}', "no columns": '{"Verdicts": {"columns": []}}',
             "a column twice": '{"Verdicts": {"columns": ["Item", "Item"]}}',
             "a verdict column it does not have": '{"Verdicts": {"columns": ["Item"], "verdict_column": "V", "verdicts": ["p"]}}',
-            "verdicts null": '{"Verdicts": {"columns": ["Item", "V"], "verdict_column": "V", "verdicts": None}}'}.items()},
+            "verdicts null": '{"Verdicts": {"columns": ["Item", "V"], "verdict_column": "V", "verdicts": None}}',
+            "columns as a set": '{"Verdicts": {"columns": {"Item", "Verdict"}}}',
+            "columns as a frozenset": '{"Verdicts": {"columns": frozenset({"Item", "Verdict"})}}',
+            "a verdict column that is a list": '{"Verdicts": {"columns": ["Item", "V"], "verdict_column": [], "verdicts": ["p"]}}',
+            "a verdict column that is a mapping": '{"Verdicts": {"columns": ["Item", "V"], "verdict_column": {}, "verdicts": ["p"]}}'}.items()},
         **{f"FINDINGS {name}": ("FINDINGS = {", f"FINDINGS = {value}\n_FINDINGS = {{") for name, value in {
             "a number": "5", "an empty mapping": "{}", "a list": "[]"}.items()},
         "FINDINGS table it does not have": ('"table": "Findings"', '"table": "Nope"'),
+        **{f"FINDINGS table as {name}": ('"table": "Findings"', f'"table": {value}')
+           for name, value in {"a list": "[]", "a mapping": "{}", "a set": '{"Findings"}', "a number": "5", "null": "None"}.items()},
+        **{f"FINDINGS number column as {name}": ('"number": "Finding"', f'"number": {value}')
+           for name, value in {"a list": "[]", "a mapping": "{}"}.items()},
+        **{f"FINDINGS citations table as {name}": ('"citations": [("Verdicts", "Rests on")]', f'"citations": [({value}, "Rests on")]')
+           for name, value in {"a list": "[]", "a mapping": "{}", "a set": '{"Verdicts"}', "a number": "5"}.items()},
+        **{f"FINDINGS citations column as {name}": ('"citations": [("Verdicts", "Rests on")]', f'"citations": [("Verdicts", {value})]')
+           for name, value in {"a list": "[]", "a mapping": "{}", "a set": '{"Rests on"}'}.items()},
+        "FINDINGS citations as a mapping": ('"citations": [("Verdicts", "Rests on")]', '"citations": {"Verdicts": "Rests on"}'),
         "FINDINGS number column it does not have": ('"number": "Finding"', '"number": "Nope"'),
         "FINDINGS checklist as a set": ('"checklist": ["A-1", "B-1", "C-1"]', '"checklist": {"A-1", "B-1"}'),
         "FINDINGS checklist garbage": ('"checklist": ["A-1", "B-1", "C-1"]', '"checklist": [None, 5]'),
@@ -1633,6 +1646,17 @@ class HostileInputs(Fixture):
                 self.fresh()
                 self.scenario({"units": {"alpha": [{"garbled": True} if lines == "garbled" else {"lines": lines}]}})
                 self.assert_unit_failed("alpha", ["the reviewer of unit alpha", word], "--bound", "3")
+        for name, raw in {"a line separator": "\u2028", "a paragraph separator": "\u2029", "a next line": "\u0085"}.items():
+            with self.subTest(control=f"{name} written raw inside an event"):
+                self.fresh()
+                separators = "a\u2028b\u2029c\u0085d"
+                event = json.dumps({"type": "rate_limit_event", "note": f"x{raw}y {separators}"}, ensure_ascii=False)
+                tables = {"Verdicts": verdicts(("A-1", "pass", separators))}
+                self.scenario({"setup": {"lines": [event], "raw_unicode": True},
+                               "units": {"alpha": [{"raw_unicode": True, "lines": [event],
+                                                    "text": json.dumps({"tables": tables}, ensure_ascii=False)}]}})
+                status, text, _ = self.outcome()
+                self.assertEqual(status, 0, "a correct session is not refused for a character that only looks like a line end: " + text)
         with self.subTest(control="an event of a type the command does not read"):
             self.fresh()
             self.scenario({"setup": {"lines": [json.dumps({"type": "rate_limit_event", "rate_limit_info": {"status": "allowed"}})]}})
@@ -1735,6 +1759,15 @@ class HostileInputs(Fixture):
                 attribute = name.split(" ")[0]
                 self.assert_refused(["review_caller_hostile.py", attribute], caller="hostile", started=0)
                 self.assertFalse(os.path.exists(self.out))
+
+    def test_a_caller_value_that_raises_when_checked_is_refused_naming_the_module_and_never_a_traceback(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C4: The exit status is 0 when the merged record is written, 1 when the command refuses or a unit fails, and 2 when the agent command line is missing or not logged in, each with a line beginning REFUSED or CANNOT RUN as the other board commands print; a review folder inside the repository, a folder that does not exist, an output folder inside the review folder or containing it or inside the repository, a caller name with no module or whose module lacks a required attribute, an output folder that already holds a record when no unit is named to run again, an output folder in use by another run, and a bound below one are refused. Each REFUSED and CANNOT RUN line names its cause and what to do about it. The report is available as text and as JSON and the two hold the same facts. Out of scope: the merge's own refusals, which each caller names.
+        self.fresh()
+        text = caller_text().replace('TOOLS = ("Read", "Glob")', 'class Odd:\n    def __eq__(self, other):\n        raise RuntimeError("no")\n'
+                                     '    __hash__ = None\n\n\nTOOLS = (Odd(),)')
+        self.write(os.path.join(self.callers, "review_caller_odd.py"), text)
+        self.assert_refused(["review_caller_odd.py", "cannot be checked", "RuntimeError"], caller="odd", started=0)
+        self.assertFalse(os.path.exists(self.out))
 
     def test_a_caller_hook_that_returns_a_hostile_value_is_refused_or_fails_its_unit_naming_the_hook(self):
         # SOL-HW-REVIEW-FAN-OUT-DRIVER.C4: The exit status is 0 when the merged record is written, 1 when the command refuses or a unit fails, and 2 when the agent command line is missing or not logged in, each with a line beginning REFUSED or CANNOT RUN as the other board commands print; a review folder inside the repository, a folder that does not exist, an output folder inside the review folder or containing it or inside the repository, a caller name with no module or whose module lacks a required attribute, an output folder that already holds a record when no unit is named to run again, an output folder in use by another run, and a bound below one are refused. Each REFUSED and CANNOT RUN line names its cause and what to do about it. The report is available as text and as JSON and the two hold the same facts. Out of scope: the merge's own refusals, which each caller names.
@@ -1934,7 +1967,9 @@ class Documentation(unittest.TestCase):
                       "unit whose last run again failed is unsettled", "flagged `no report`",
                       "neither text nor a tool use", "A pattern with no `round` group matches this round's citations only",
                       'FINDINGS["round"](review_folder)', 'FINDINGS["earlier"](review_folder)', "leaves any other match as written",
-                      "naming the cell and the citation", "the caller's unit prompt must forbid it"):
+                      "naming the cell and the citation", "the caller's unit prompt must forbid it",
+                      "each cell text or a finite number and never `null`, `true` or `false`",
+                      "a caller's unit prompt must tell its reviewers to write text"):
             self.assertIn(words, section, f"the section says {words!r}")
         self.assertIn("task hw:review-fan-out", section)
         for text in (taskfile[taskfile.index("  hw:test:\n"):].splitlines()[1],
