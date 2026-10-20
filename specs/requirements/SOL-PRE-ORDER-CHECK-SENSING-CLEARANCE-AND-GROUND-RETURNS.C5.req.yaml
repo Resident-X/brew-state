@@ -2,11 +2,11 @@ id: SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS.C5
 type: criterion
 title: Each rule is shown to fail on a fault seeded for it in a copy of the throwaway proof design
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |-
-  The on-demand seeded-fault proof introduces into a copy of a throwaway design, outside the tracked tree, a sensing item closer to a noisy net than the declared clearance, a board rules record that is silent on sensing, a connector below the declared ratio of signal to ground-return pins, a connector pin on a class declared neither ground nor signal and a connector of two signal classes below the stricter ratio, and requires the check to fail each, the record of each seeded run naming the fault and the rule that caught it; the committed proof design stays passing. A missing record or declaration the rule needs fails; a design with no connector or sensing class the rule inspects is not failed for that; an explicit none is accepted. The proof is the existing on-demand seeded-fault proof, extended, and runs in neither gate. Out of scope: the existing seeded-fault proofs and the rules owned by other leaves of this task.
+  The on-demand seeded-fault proof introduces into a copy of a throwaway design, outside the tracked tree, a sensing item closer than the declared clearance to a noisy net outside the Mains class and to one inside it (the latter at a declared clearance above the signed one), a pad clearance override below the declared sensing clearance, a board rules record that is silent on sensing, a board rules record with a misspelt key, a connector whose signal pins exceed the declared signal pins per return, a connector with signal pins and no ground-return pin, a connector pin on a class declared neither ground nor signal and a connector of two signal classes over the smaller signal pins per return, and requires the check to fail each, the record of each seeded run naming the fault and the rule that caught it; the committed proof design stays passing. A missing record or declaration the rule needs fails; a design with no connector or sensing class the rule inspects is not failed for that; an explicit none is accepted. The proof is the existing on-demand seeded-fault proof, extended, and runs in neither gate. Out of scope: the existing seeded-fault proofs and the rules owned by other leaves of this task.
 links:
   - target: SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS
     type: criterion-of

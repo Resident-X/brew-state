@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The pre-order check fails a sensing net too close to a noisy net and a connector short of ground returns
 status: active
-version: 1
+version: 2
 text: |-
   Adds the board rules record and the sensing-clearance and ground-return rules to the pre-order check, each shown to fail on a seeded fault.
 links:
