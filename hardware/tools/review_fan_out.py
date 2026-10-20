@@ -22,7 +22,10 @@ the unit and the review folder, so a prompt can name what the starter wrote
 there. FINDINGS["checklist"] is a list, or a function of the review folder
 resolved once per run before the setup session starts. RENDER(review_folder,
 tables) returns file names with their text, which are written into the output
-folder after the merge and named in the report. No caller is registered here.
+folder after the merge and named in the report; a name is one plain ASCII
+component (letters, digits, full stops, underscores, hyphens), not ending in a
+full stop or .part, at most 64 characters, not a Windows device name such as CON
+or COM1. No caller is registered here.
 
 FINDINGS names the findings table and how the merge numbers it, and holds a
 `citation` pattern with a `number` group that finds the cells' citations of a
@@ -68,6 +71,7 @@ import math
 import os
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import time
@@ -114,6 +118,15 @@ RATE_PATTERN = re.compile(r"rate.?limit|too many requests|\b429\b|overloaded", r
 LOGIN_PATTERN = re.compile(r"not logged in|please run /login|invalid api key", re.IGNORECASE)
 #: The names in the output folder the driver uses itself, which a rendered record may not take.
 RESERVED_NAMES = (RECORD, SETUPS, RERUNS, LOCK, UNITS_FOLDER, FAILED_FOLDER, UNSETTLED_FOLDER)
+#: What the driver adds to a file's name to write it whole before it takes the name; no rendered name may end in it.
+SCRATCH_SUFFIX = ".part"
+#: The longest a rendered record's file name may be, in characters.
+RENDERED_NAME_LONGEST = 64
+#: The names a Windows file system reserves for a device, which a rendered name may not take with or without an extension.
+DEVICE_NAMES = frozenset(["con", "prn", "aux", "nul"] + [f"{kind}{n}" for kind in ("com", "lpt") for n in range(1, 10)])
+#: The one plain component a rendered record's file name must be: ASCII letters, digits, full stops, underscores and
+#: hyphens, beginning with a letter or digit and not ending in a full stop.
+RENDERED_NAME = re.compile(r"[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9_-])?")
 UNIT_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 CALLER_NAME = re.compile(r"^[a-z][a-z0-9_]*$")
 #: The environment variables that keep a session from loading the project's and user's instructions and memory.
@@ -925,7 +938,7 @@ def stamp() -> str:
 
 def write_json(path: str, content: Any) -> None:
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    scratch = f"{path}.part"
+    scratch = f"{path}{SCRATCH_SUFFIX}"
     with open(scratch, "w", encoding="utf-8") as handle:
         json.dump(content, handle, indent=1, sort_keys=True)
         handle.write("\n")
@@ -1492,29 +1505,51 @@ def rendered_earlier(folder: str) -> List[str]:
         listed = record.get(key, []) if isinstance(record, dict) else None
         if not isinstance(listed, list) or not all(isinstance(name, str) for name in listed):
             raise Refused([f"the record {path} gives {key} as {listed!r:.80}, not a list of file names; {RESTORE}"])
-        names += listed
+        reserved = {name_key(own) for own in RESERVED_NAMES}
+        names += [name for name in listed if rendered_name_ok(name) and name_key(name) not in reserved]
     return list(dict.fromkeys(names))
 
 
+def rendered_name_ok(name: str) -> bool:
+    """Whether a name is one the driver accepts for a rendered file: one plain ASCII component that neither ends in a
+    full stop nor in the suffix of the driver's own scratch files, compared without regard to case, is at most
+    RENDERED_NAME_LONGEST characters and is not a device name Windows reserves, with or without an extension."""
+    return (bool(RENDERED_NAME.fullmatch(name)) and not name.casefold().endswith(SCRATCH_SUFFIX)
+            and len(name) <= RENDERED_NAME_LONGEST and name.split(".")[0].casefold() not in DEVICE_NAMES)
+
+
 def name_key(name: str) -> str:
-    """A file name as a folder that ignores case and trailing dots and spaces would hold it."""
-    return name.rstrip(". ").casefold()
+    """A file name as a folder that ignores case would hold it."""
+    return name.casefold()
+
+
+def is_regular_file(path: str) -> bool:
+    """Whether the path is a regular file itself, not a link to one, a folder or anything else."""
+    try:
+        return stat.S_ISREG(os.lstat(path).st_mode)
+    except OSError:
+        return False
 
 
 def left_over(folder: str, earlier: Sequence[str], rendered: Sequence[str]) -> List[str]:
     """The files an earlier merge wrote that are still in the folder and that this merge does not render again."""
     again = {name_key(name) for name in rendered}
-    return [name for name in earlier if name_key(name) not in again and os.path.lexists(os.path.join(folder, name))]
+    return [name for name in earlier if name_key(name) not in again and is_regular_file(os.path.join(folder, name))]
 
 
 def rendered_problems(caller, folder: str, files: Dict[str, str], earlier: Sequence[str]) -> List[str]:
-    """Why the files a caller's RENDER returned cannot be written: a name with a path in it, a name the driver uses
-    itself, two names that differ only in case or in trailing dots and spaces, or one the output folder holds that no earlier merge wrote. Names are
-    compared without regard to case or trailing dots and spaces, since a folder on some systems holds one file for names that differ in them."""
+    """Why the files a caller's RENDER returned cannot be written: a name that is not one plain component of ASCII
+    letters, digits, full stops, underscores and hyphens that begins with a letter or digit and ends in neither a full
+    stop nor the scratch suffix, one longer than RENDERED_NAME_LONGEST characters or one Windows reserves for a device,
+    a name the driver uses itself, two names that differ only in case, or one the output
+    folder holds that no earlier merge wrote or that an earlier merge wrote and has since become a link or a folder.
+    Names are compared without regard to case, since a folder on some systems holds one file for names that differ in it."""
     who, found = f"caller {caller.REVIEW_CALLER_NAME}", []
     reserved = {name_key(name) for name in RESERVED_NAMES}
     wrote = {name_key(name) for name in earlier}
-    held = {name_key(name) for name in os.listdir(folder)} if os.path.isdir(folder) else set()
+    held: Dict[str, List[str]] = {}
+    for entry in os.listdir(folder) if os.path.isdir(folder) else []:
+        held.setdefault(name_key(entry), []).append(entry)
     seen: Dict[str, str] = {}
     for name in files:
         key = name_key(name)
@@ -1523,11 +1558,26 @@ def rendered_problems(caller, folder: str, files: Dict[str, str], earlier: Seque
         elif key in reserved:
             found.append(f"the {who}'s RENDER names a file {name!r}, which the command uses in the output folder; "
                          f"use a name other than {', '.join(RESERVED_NAMES)}")
+        elif not rendered_name_ok(name):
+            found.append(f"the {who}'s RENDER names a file {name!r}, which is not one plain component of ASCII letters, digits, "
+                         f"full stops, underscores and hyphens that begins with a letter or digit and ends in neither a full stop "
+                         f"nor {SCRATCH_SUFFIX}, is at most {RENDERED_NAME_LONGEST} characters long and is not a name Windows "
+                         f"reserves for a device (CON, PRN, AUX, NUL, COM1 to COM9, LPT1 to LPT9, with or without an extension); "
+                         f"rename it")
         elif key in seen:
-            found.append(f"the {who}'s RENDER names {seen[key]!r} and {name!r}, which differ only in case or trailing dots and spaces; name them apart")
-        elif (key in held or os.path.lexists(os.path.join(folder, name))) and key not in wrote:
-            found.append(f"the {who}'s RENDER names a file {name!r}, which the output folder already holds and no earlier "
-                         "merge wrote; name another file, or move that one away")
+            found.append(f"the {who}'s RENDER names {seen[key]!r} and {name!r}, which differ only in case; name them apart")
+        else:
+            present = held.get(key, [])
+            if not present and os.path.lexists(os.path.join(folder, name)):
+                present = [name]
+            if present and key not in wrote:
+                found.append(f"the {who}'s RENDER names a file {name!r}, which the output folder already holds and no earlier "
+                             "merge wrote; name another file, or move that one away")
+            else:
+                for entry in present:
+                    if not is_regular_file(os.path.join(folder, entry)):
+                        found.append(f"the {who}'s RENDER names a file {name!r}, which an earlier merge wrote but the output "
+                                     f"folder now holds {entry!r} as a link or a folder, not a file; move it away")
         seen.setdefault(key, name)
     return found
 

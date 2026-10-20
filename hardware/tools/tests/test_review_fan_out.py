@@ -23,6 +23,7 @@ import sys
 import tempfile
 import textwrap
 import unittest
+import unicodedata
 from unittest import mock
 
 TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -2235,24 +2236,155 @@ class CallerSeam(Fixture):
         self.assertEqual(self.read_out("Notes.md"), "someone else's")
 
     def test_a_rendered_name_that_differs_from_the_drivers_own_name_or_another_rendered_name_only_in_trailing_dots_or_spaces_is_refused(self):
-        # SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C4: A caller may supply a function of the review folder and the merged tables that returns file names with their text. The driver calls it before writing anything, then writes each file into the output folder after the merge and lists the names it wrote in the record it writes and in its report, in text and in JSON with the same content. It refuses a name that carries a path, a name the driver itself uses in the output folder, and a name that the output folder already holds unless an earlier merge wrote it, which the driver knows from the list of rendered names in the record that merge wrote, so a merge after running named units again replaces the files the earlier merge wrote and never a file put there by anyone else. A function that raises fails the run naming the caller, after the record in table form is written and with the report naming the earlier merge's rendered files as not of this merge. A caller that supplies none writes no file beyond the record in table form. Out of scope: the content of any rendered record.
+        # SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C4: A caller may supply a function of the review folder and the merged tables that returns file names with their text. The driver calls it before writing anything, then writes each file into the output folder after the merge and lists the names it wrote in the record it writes and in its report, in text and in JSON with the same content. It accepts a name only if it is one plain component of ASCII letters, digits, full stops, underscores and hyphens that begins with a letter or digit and ends in neither a full stop nor the suffix the driver gives its own scratch files, and refuses any other name. It also refuses a name that, compared without regard to case, equals a name the driver itself uses in the output folder or another name rendered in the same merge, and a name that the output folder already holds unless an earlier merge wrote it and it is still a regular file, which the driver knows from the list of rendered names in the record that merge wrote, so a merge after running named units again replaces the files the earlier merge wrote and never a file put there by anyone else, nor one that has since become a link or a folder. A function that raises fails the run naming the caller, after the record in table form is written and with the report naming the earlier merge's rendered files as not of this merge. A caller that supplies none writes no file beyond the record in table form. Out of scope: the content of any rendered record.
         self.rendering_caller()
-        for reserved in ("Record.json.", "record.json ", "UNITS.", ".review-fan-out.lock ", "setups.json. .", "Failed "):
+        for reserved in ("Record.json.", "record.json ", "UNITS.", ".review-fan-out.lock ", "setups.json. .", "Failed ", "summary.md."):
             for as_json in (True, False):
                 shutil.rmtree(self.out, ignore_errors=True)
                 with mock.patch.dict(os.environ, {"RENDER_MODE": "named", "RENDER_NAME": reserved}):
                     status, text, _ = self.run_command(as_json=as_json)
                 self.assertEqual(status, 1, f"{reserved!r}: {text}")
-                self.assertIn("which the command uses", text, reserved)
+                self.assertIn("ends in neither a full stop", text, reserved)
                 self.assertFalse(os.path.exists(os.path.join(self.out, "record.json")), f"{reserved!r}: no record")
         for as_json in (True, False):
             shutil.rmtree(self.out, ignore_errors=True)
             with mock.patch.dict(os.environ, {"RENDER_MODE": "dotpair"}):
                 status, text, _ = self.run_command(as_json=as_json)
             self.assertEqual(status, 1, text)
-            self.assertIn("differ only in case or trailing dots and spaces", text)
-            self.assertIn("summary.md.", text)
+            self.assertIn("'summary.md.'", text)
             self.assertFalse(os.path.exists(os.path.join(self.out, "record.json")))
+
+    def test_a_rendered_name_that_is_not_one_plain_ascii_component_or_ends_in_the_scratch_suffix_is_refused_and_nothing_is_written(self):
+        # SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C4: A caller may supply a function of the review folder and the merged tables that returns file names with their text. The driver calls it before writing anything, then writes each file into the output folder after the merge and lists the names it wrote in the record it writes and in its report, in text and in JSON with the same content. It accepts a name only if it is one plain component of ASCII letters, digits, full stops, underscores and hyphens that begins with a letter or digit and ends in neither a full stop nor the suffix the driver gives its own scratch files, and refuses any other name. It also refuses a name that, compared without regard to case, equals a name the driver itself uses in the output folder or another name rendered in the same merge, and a name that the output folder already holds unless an earlier merge wrote it and it is still a regular file, which the driver knows from the list of rendered names in the record that merge wrote, so a merge after running named units again replaces the files the earlier merge wrote and never a file put there by anyone else, nor one that has since become a link or a folder. A function that raises fails the run naming the caller, after the record in table form is written and with the report naming the earlier merge's rendered files as not of this merge. A caller that supplies none writes no file beyond the record in table form. Out of scope: the content of any rendered record.
+        self.rendering_caller()
+        refused = ("record.json.part", "setups.json.part", "reruns.json.part", "RECORD.JSON.PART", "notes.md.part",
+                   "caf\u00e9.md", "cafe\u0301.md", "\u30ce\u30fc\u30c8.md", "-notes.md", ".notes.md", "_notes.md", "-",
+                   "notes.", "notes.md.", "has space.md", "tab\t.md", "line\n.md", "notes.md\n")
+        for name in refused:
+            for as_json in (True, False):
+                shutil.rmtree(self.out, ignore_errors=True)
+                with mock.patch.dict(os.environ, {"RENDER_MODE": "named", "RENDER_NAME": name}):
+                    status, text, _ = self.run_command(as_json=as_json)
+                self.assertEqual(status, 1, f"{name!r}: {text}")
+                self.assertIn("one plain component of ASCII letters, digits, full stops, underscores and hyphens", text, repr(name))
+                self.assertFalse(os.path.exists(os.path.join(self.out, "record.json")), f"{name!r}: no record")
+                self.assertEqual(set(os.listdir(self.out)) - {"units", "setups.json", "failed", "unsettled"}, set(), repr(name))
+
+    def test_a_rendered_name_is_at_most_sixty_four_characters_long(self):
+        # SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C4: A caller may supply a function of the review folder and the merged tables that returns file names with their text. The driver calls it before writing anything, then writes each file into the output folder after the merge and lists the names it wrote in the record it writes and in its report, in text and in JSON with the same content. It refuses a name that carries a path, a name the driver itself uses in the output folder, and a name that the output folder already holds unless an earlier merge wrote it, which the driver knows from the list of rendered names in the record that merge wrote, so a merge after running named units again replaces the files the earlier merge wrote and never a file put there by anyone else. A function that raises fails the run naming the caller, after the record in table form is written and with the report naming the earlier merge's rendered files as not of this merge. A caller that supplies none writes no file beyond the record in table form. Out of scope: the content of any rendered record.
+        self.rendering_caller()
+        for name in ("a" * 61 + ".md", "b" * 64):
+            self.assertEqual(len(name), 64)
+            for as_json in (True, False):
+                shutil.rmtree(self.out, ignore_errors=True)
+                with mock.patch.dict(os.environ, {"RENDER_MODE": "named", "RENDER_NAME": name}):
+                    status, text, _ = self.run_command(as_json=as_json)
+                self.assertEqual(status, 0, f"{name!r}: {text}")
+                self.assertEqual(self.read_out(name), "x")
+                self.assertIn(name, json.loads(self.read_out("record.json"))["rendered"])
+        for name in ("a" * 62 + ".md", "c" * 65, "d" * 300):
+            self.assertGreater(len(name), 64)
+            for as_json in (True, False):
+                shutil.rmtree(self.out, ignore_errors=True)
+                with mock.patch.dict(os.environ, {"RENDER_MODE": "named", "RENDER_NAME": name}):
+                    status, text, _ = self.run_command(as_json=as_json)
+                self.assertEqual(status, 1, f"{len(name)}: {text}")
+                self.assertIn("is at most 64 characters long", text)
+                self.assertFalse(os.path.exists(os.path.join(self.out, "record.json")), "no record")
+                self.assertEqual(set(os.listdir(self.out)) - {"units", "setups.json", "failed", "unsettled"}, set())
+
+    def test_a_rendered_name_the_windows_file_system_reserves_for_a_device_is_refused_with_or_without_an_extension_in_any_case(self):
+        # SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C4: A caller may supply a function of the review folder and the merged tables that returns file names with their text. The driver calls it before writing anything, then writes each file into the output folder after the merge and lists the names it wrote in the record it writes and in its report, in text and in JSON with the same content. It refuses a name that carries a path, a name the driver itself uses in the output folder, and a name that the output folder already holds unless an earlier merge wrote it, which the driver knows from the list of rendered names in the record that merge wrote, so a merge after running named units again replaces the files the earlier merge wrote and never a file put there by anyone else. A function that raises fails the run naming the caller, after the record in table form is written and with the report naming the earlier merge's rendered files as not of this merge. A caller that supplies none writes no file beyond the record in table form. Out of scope: the content of any rendered record.
+        self.rendering_caller()
+        for name in ("con", "CON", "Nul.txt", "COM1.md", "lpt9", "aux.tar.gz", "Prn", "com9", "LPT1.md"):
+            for as_json in (True, False):
+                shutil.rmtree(self.out, ignore_errors=True)
+                with mock.patch.dict(os.environ, {"RENDER_MODE": "named", "RENDER_NAME": name}):
+                    status, text, _ = self.run_command(as_json=as_json)
+                self.assertEqual(status, 1, f"{name!r}: {text}")
+                self.assertIn("is not a name Windows reserves for a device", text, name)
+                self.assertFalse(os.path.exists(os.path.join(self.out, "record.json")), f"{name!r}: no record")
+                self.assertEqual(set(os.listdir(self.out)) - {"units", "setups.json", "failed", "unsettled"}, set(), repr(name))
+        for name in ("console.md", "com10.md", "a.con", "com0", "lpt", "nullable", "aux1.md"):
+            shutil.rmtree(self.out, ignore_errors=True)
+            with mock.patch.dict(os.environ, {"RENDER_MODE": "named", "RENDER_NAME": name}):
+                status, text, _ = self.run_command(as_json=True)
+            self.assertEqual(status, 0, f"{name!r}: {text}")
+            self.assertEqual(self.read_out(name), "x")
+
+    def test_a_name_the_drivers_own_record_lists_as_rendered_is_not_reported_as_not_of_this_merge(self):
+        # SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C4: A caller may supply a function of the review folder and the merged tables that returns file names with their text. The driver calls it before writing anything, then writes each file into the output folder after the merge and lists the names it wrote in the record it writes and in its report, in text and in JSON with the same content. It refuses a name that carries a path, a name the driver itself uses in the output folder, and a name that the output folder already holds unless an earlier merge wrote it, which the driver knows from the list of rendered names in the record that merge wrote, so a merge after running named units again replaces the files the earlier merge wrote and never a file put there by anyone else. A function that raises fails the run naming the caller, after the record in table form is written and with the report naming the earlier merge's rendered files as not of this merge. A caller that supplies none writes no file beyond the record in table form. Out of scope: the content of any rendered record.
+        self.rendering_caller()
+        status, text, _ = self.run_command(as_json=True)
+        self.assertEqual(status, 0, text)
+        record = json.loads(self.read_out("record.json"))
+        record["rendered"] = record["rendered"] + ["record.json", "UNITS", "Setups.json", "x" * 65, "con"]
+        self.write(os.path.join(self.out, "record.json"), json.dumps(record))
+        with mock.patch.dict(os.environ, {"RENDER_MODE": "fewer"}):
+            status, text, _ = self.run_command("--rerun", "alpha", as_json=True)
+        self.assertEqual(status, 0, text)
+        report = json.loads(text)
+        self.assertEqual(report["not_this_merge"], ["second.md"])
+        self.assertEqual(json.loads(self.read_out("record.json"))["not_this_merge"], ["second.md"])
+        self.assertEqual(review_fan_out.rendered_earlier(self.out), ["summary.md", "second.md"])
+
+    def test_a_rendered_name_of_plain_ascii_is_accepted_and_the_same_name_in_nfc_and_nfd_form_is_never_written_twice(self):
+        # SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C4: A caller may supply a function of the review folder and the merged tables that returns file names with their text. The driver calls it before writing anything, then writes each file into the output folder after the merge and lists the names it wrote in the record it writes and in its report, in text and in JSON with the same content. It accepts a name only if it is one plain component of ASCII letters, digits, full stops, underscores and hyphens that begins with a letter or digit and ends in neither a full stop nor the suffix the driver gives its own scratch files, and refuses any other name. It also refuses a name that, compared without regard to case, equals a name the driver itself uses in the output folder or another name rendered in the same merge, and a name that the output folder already holds unless an earlier merge wrote it and it is still a regular file, which the driver knows from the list of rendered names in the record that merge wrote, so a merge after running named units again replaces the files the earlier merge wrote and never a file put there by anyone else, nor one that has since become a link or a folder. A function that raises fails the run naming the caller, after the record in table form is written and with the report naming the earlier merge's rendered files as not of this merge. A caller that supplies none writes no file beyond the record in table form. Out of scope: the content of any rendered record.
+        self.rendering_caller()
+        for name in ("layout-review-2.md", "a", "Notes_1.v2.txt", "7.md"):
+            for as_json in (True, False):
+                shutil.rmtree(self.out, ignore_errors=True)
+                with mock.patch.dict(os.environ, {"RENDER_MODE": "named", "RENDER_NAME": name}):
+                    status, text, _ = self.run_command(as_json=as_json)
+                self.assertEqual(status, 0, f"{name!r}: {text}")
+                self.assertEqual(self.read_out(name), "x")
+                self.assertIn(name, json.loads(self.read_out("record.json"))["rendered"])
+        nfc, nfd = unicodedata.normalize("NFC", "caf\u00e9.md"), unicodedata.normalize("NFD", "caf\u00e9.md")
+        self.assertNotEqual(nfc, nfd)
+        for name in (nfc, nfd):
+            shutil.rmtree(self.out, ignore_errors=True)
+            with mock.patch.dict(os.environ, {"RENDER_MODE": "named", "RENDER_NAME": name}):
+                status, text, _ = self.run_command(as_json=True)
+            self.assertEqual(status, 1, text)
+            self.assertEqual(set(os.listdir(self.out)) - {"units", "setups.json", "failed", "unsettled"}, set())
+            self.assertFalse(os.path.exists(os.path.join(self.out, "record.json")))
+
+    def test_an_earlier_written_name_that_has_become_a_link_or_a_folder_is_refused_and_nothing_outside_the_output_folder_is_written(self):
+        # SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C4: A caller may supply a function of the review folder and the merged tables that returns file names with their text. The driver calls it before writing anything, then writes each file into the output folder after the merge and lists the names it wrote in the record it writes and in its report, in text and in JSON with the same content. It accepts a name only if it is one plain component of ASCII letters, digits, full stops, underscores and hyphens that begins with a letter or digit and ends in neither a full stop nor the suffix the driver gives its own scratch files, and refuses any other name. It also refuses a name that, compared without regard to case, equals a name the driver itself uses in the output folder or another name rendered in the same merge, and a name that the output folder already holds unless an earlier merge wrote it and it is still a regular file, which the driver knows from the list of rendered names in the record that merge wrote, so a merge after running named units again replaces the files the earlier merge wrote and never a file put there by anyone else, nor one that has since become a link or a folder. A function that raises fails the run naming the caller, after the record in table form is written and with the report naming the earlier merge's rendered files as not of this merge. A caller that supplies none writes no file beyond the record in table form. Out of scope: the content of any rendered record.
+        self.rendering_caller()
+        status, text, _ = self.run_command(as_json=True)
+        self.assertEqual(status, 0, text)
+        outside = os.path.join(self.root, "outside-target.txt")
+        self.write(outside, "untouched")
+        for kind in ("link", "dangling", "folder"):
+            for as_json in (True, False):
+                path = os.path.join(self.out, "summary.md")
+                if os.path.islink(path) or os.path.isfile(path):
+                    os.remove(path)
+                elif os.path.isdir(path):
+                    shutil.rmtree(path)
+                if kind == "link":
+                    os.symlink(outside, path)
+                elif kind == "dangling":
+                    os.symlink(os.path.join(self.root, "never-made.txt"), path)
+                else:
+                    os.mkdir(path)
+                before = self.read_out("record.json")
+                status, text, _ = self.run_command("--rerun", "alpha", as_json=as_json)
+                self.assertEqual(status, 1, f"{kind}: {text}")
+                self.assertIn("'summary.md'", text)
+                self.assertIn("as a link or a folder", text, kind)
+                with open(outside, encoding="utf-8") as handle:
+                    self.assertEqual(handle.read(), "untouched", kind)
+                self.assertFalse(os.path.exists(os.path.join(self.root, "never-made.txt")), kind)
+                self.assertEqual(self.read_out("record.json"), before, f"{kind}: the record is not rewritten")
+        # a link or a folder is not listed as the driver's own file left over either
+        path = os.path.join(self.out, "summary.md")
+        shutil.rmtree(path)
+        os.symlink(outside, path)
+        os.remove(os.path.join(self.out, "second.md"))
+        os.mkdir(os.path.join(self.out, "second.md"))
+        self.assertEqual(review_fan_out.left_over(self.out, ["second.md", "summary.md"], []), [])
 
     def test_a_file_an_earlier_merge_wrote_that_this_merge_does_not_render_again_is_named_as_not_of_this_merge_and_stays_the_drivers(self):
         # SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C4: A caller may supply a function of the review folder and the merged tables that returns file names with their text. The driver calls it before writing anything, then writes each file into the output folder after the merge and lists the names it wrote in the record it writes and in its report, in text and in JSON with the same content. It refuses a name that carries a path, a name the driver itself uses in the output folder, and a name that the output folder already holds unless an earlier merge wrote it, which the driver knows from the list of rendered names in the record that merge wrote, so a merge after running named units again replaces the files the earlier merge wrote and never a file put there by anyone else. A function that raises fails the run naming the caller, after the record in table form is written and with the report naming the earlier merge's rendered files as not of this merge. A caller that supplies none writes no file beyond the record in table form. Out of scope: the content of any rendered record.
@@ -2503,12 +2635,16 @@ class Documentation(unittest.TestCase):
             "the task's description": (task, ("WebFetch", "retrieval grant", "unit and the review folder", "checklist (a list, or a function",
                                               "rendered record", "setup session keeps the read tools alone")),
             "the module description": (doc, ("WebFetch", "unit_prompt(unit, review_folder)", "checklist as a function",
-                                             "RENDER(review_folder, tables)", "the setup session keeps the read tools alone")),
+                                             "RENDER(review_folder, tables)", "the setup session keeps the read tools alone",
+                                             "at most 64 characters", "not a Windows device name")),
             "the hardware notes": (section, ("WebFetch", "unit_prompt(unit, review_folder)", "`FINDINGS[\"checklist\"]` may be a function",
                                              "`RENDER(review_folder, tables)`", "The retrieval grant", "read tools alone",
                                              "a fetched page is text the reviewer did not write", "reviewers write nothing",
                                              "the setup session fetches nothing",
-                                             "every verdict is checked structurally at the merge")),
+                                             "every verdict is checked structurally at the merge",
+                                             "one plain component of ASCII letters, digits, full stops, underscores and hyphens",
+                                             "ends in neither a full stop nor `.part`",
+                                             "is at most 64 characters long and is not a name Windows reserves for a device")),
         }
         for place, (text, clauses) in places.items():
             for words in clauses:
