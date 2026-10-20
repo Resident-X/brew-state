@@ -1618,6 +1618,17 @@ class TheSensingRulesRunDirectly(SensingCopy):
                 found, lines = self.found("sensing_clearance")
                 self.assertEqual(bool([v for v in found if "noisy class Power" in v[4]]), fails, lines)
 
+    def test_a_class_only_the_layout_gives_a_connector_net_is_resolved_not_taken_for_default(self):
+        # SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS.C2: A connector pin on a class declared none of ground, signal or non-signal fails
+        # Default is a declared signal class in this record, so a pin KiCad places in Foo but the check read as Default would pass
+        Q = board_prove.sexpr.Quoted
+        board_prove.connector("/F0", "/GND")(self.seed)
+        self.seed.layout(lambda tree: tree.insert(len(tree) - 1, ["net_class", Q("Foo"), Q("written by an older KiCad"), ["add_net", Q("/F0")]]))
+        found, lines = self.found("ground_return")
+        pin = [v for v in found if v[3].endswith("connector J9 pin 1 [/F0]")]
+        self.assertEqual(len(pin), 1, lines)
+        self.assertIn("pin 1 of connector J9 is on net /F0, in the net class Foo, which", pin[0][4])
+
     def test_the_design_own_stricter_rule_is_still_held_because_the_sensing_rules_run_apart_from_it(self):
         # SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS.C1: inserts on a temporary copy, after the design's own rules
         self.seed.write(".kicad_dru", self.seed.read(".kicad_dru")

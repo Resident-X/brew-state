@@ -4396,6 +4396,16 @@ def class_blocks(layout: list) -> List[list]:
     return sexpr.children(layout, "net_class")
 
 
+def layout_class_names(layout: list) -> Set[str]:
+    """The names of the (net_class ...) blocks a layout file carries; a block with no string name is no class."""
+    return {block[1] for block in class_blocks(layout) if len(block) > 1 and isinstance(block[1], str)}
+
+
+def resolvable_classes(project: dict, layout: list) -> Set[str]:
+    """Every net class KiCad can place a net of the layout in: the project file's, the layout's own blocks', and Mains."""
+    return project_class_names(project) | layout_class_names(layout)
+
+
 def class_batches(names: Set[str], classes: Sequence[str]) -> List[List[str]]:
     """`names`, in batches small enough that one run's assertion failures stay below KiCad's report limit.
 
@@ -5526,7 +5536,7 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
         names = layout_nets(tree)
         project_copy = os.path.join(copy, os.path.basename(design.project))
         widths, unwidthed = class_widths(project)
-        project_classes = project_class_names(project)
+        project_classes = resolvable_classes(project, tree)
         classes = sorted(project_classes - {DEFAULT_CLASS})
         members, why = class_members(kicad_cli, scratch, project_copy, classes, names, nonce,
                                      layout_version(tree), class_blocks(tree))

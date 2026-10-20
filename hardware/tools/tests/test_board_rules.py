@@ -352,6 +352,14 @@ class TheGroundReturnRule(unittest.TestCase):
         self.assertIn("in the net class Default", found[0].message)
         self.assertEqual(self.found(connector("J1", ("1", "/S0"), ("2", "/GND"))), [])
 
+    def test_the_classes_asked_of_kicad_are_the_projects_and_the_layouts_own_blocks_without_default(self):
+        # SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS.C2: A connector pin on a class declared none of ground, signal or non-signal fails
+        project = {"net_settings": {"classes": [{"name": "Default"}, {"name": "Proj", "track_width": "abc"}]}}
+        layout = sexpr.parse_one('(kicad_pcb (net_class "Foo" "d" (add_net "/F")) (net_class Bare) (net_class) (net_class "Proj"))')
+        self.assertEqual(board_check.layout_class_names(layout), {"Foo", "Bare", "Proj"})
+        self.assertEqual(board_check.resolvable_classes(project, layout), {"Default", "Proj", "Foo", "Bare", "Mains"})
+        self.assertEqual(board_check.resolvable_classes({}, sexpr.parse_one("(kicad_pcb)")), {"Mains"})
+
     def resolved(self, project, assigned):
         """The members a layout resolves to for the classes the check asks KiCad about, given each net's project class."""
         asked = board_check.project_class_names(project) - {board_check.DEFAULT_CLASS}
