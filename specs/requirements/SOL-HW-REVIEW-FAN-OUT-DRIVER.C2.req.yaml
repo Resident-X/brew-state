@@ -2,11 +2,11 @@ id: SOL-HW-REVIEW-FAN-OUT-DRIVER.C2
 type: criterion
 title: Each session's start report is checked, and the setup session is shown to have opened no image and judged nothing
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
-text: |-
-  Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that reads documents and records and asks for no judgement and no image; a setup answer other than a bare acknowledgement fails the run, so no forked reviewer inherits a verdict. Out of scope: the content of a caller's prompt for its units.
+text: |
+  Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that reads documents and records and asks for no judgement and no image and for one fixed token as the whole answer; a setup answer other than that token after trimming fails the run, so no forked reviewer inherits a verdict, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file. Out of scope: the content of a caller's prompt for its units.
 links:
   - target: SOL-HW-REVIEW-FAN-OUT-DRIVER
     type: criterion-of
