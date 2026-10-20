@@ -63,6 +63,11 @@ parts:
         absolute_max_v: 6
         absolute_min_v: -0.3
         tolerates_driven_unpowered: false
+      - pin: "1"
+        domain: ground
+        absolute_max_v: 15
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
   - lcsc: C9000014
     source:
       document: none -- synthetic limits
@@ -87,6 +92,11 @@ parts:
         tolerates_driven_unpowered: false
       - pin: "1"
         domain: supply3v3
+        absolute_max_v: 7
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      - pin: "2"
+        domain: ground
         absolute_max_v: 7
         absolute_min_v: -0.3
         tolerates_driven_unpowered: false
@@ -119,6 +129,16 @@ parts:
         tolerates_driven_unpowered: false
       - pin: "11"
         domain: supply3v3
+        absolute_max_v: 6
+        absolute_min_v: -0.5
+        tolerates_driven_unpowered: false
+      - pin: "21"
+        domain: ground
+        absolute_max_v: 6
+        absolute_min_v: -0.5
+        tolerates_driven_unpowered: false
+      - pin: "8"
+        domain: ground
         absolute_max_v: 6
         absolute_min_v: -0.5
         tolerates_driven_unpowered: false

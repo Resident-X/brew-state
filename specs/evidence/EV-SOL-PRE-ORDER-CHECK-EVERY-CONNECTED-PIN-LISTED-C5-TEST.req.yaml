@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED-C5-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C5
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-20T03:50:58.727605Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad.py::EveryTrackedDesignPassesTheConnectivityCheck.test_every_design_the_repository_tracks_is_held_to_a_record_and_passes
+  artifact_version: 2fffd9ced3eaec7cc807fc5f18c203fc6c0560b2
+attested_by: crun-e77bfc23887dc38f
+links:
+  - target: SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C5
+    type: satisfies

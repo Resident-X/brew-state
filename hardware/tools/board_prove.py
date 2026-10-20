@@ -54,6 +54,10 @@ NAME = "gate-proof"
 KEYS_DESIGN = "hardware/proof/record-keys-proof"
 KEYS_NAME = "record-keys-proof"
 KEYS_TARGET = (KEYS_DESIGN, KEYS_NAME)
+#: The circuit-review proof design, whose integrated circuit U4 leaves ten pins on no other pin and no rail, each on a net of its own
+#: and none listed in the pin-limit record.
+REVIEW_DESIGN = "hardware/proof/circuit-review-proof"
+REVIEW_NAME = "circuit-review-proof"
 
 
 class Seed:
@@ -1403,6 +1407,14 @@ FAULTS: List[tuple] = [
          "      - pin: 2\n        domain: logic\n        absolute_max_v: 5.5\n        absolute_min_v: -0.3\n        tolerates_driven_unpowered: false"), KEYS_TARGET),
     ("an integrated circuit the pin-limit record omits", "pin limits: every integrated circuit and semiconductor has an entry in the pin-limit record", "pin_limit",
      "the pin-limit record omits the integrated circuit U1", pin_limits("- lcsc: C9000005", "- lcsc: C9000099"), KEYS_TARGET),
+    ("a connected pin of a listed integrated circuit left out of its entry", "pin coverage: a connected pin of a listed semiconductor or integrated circuit that its entry omits fails, naming the part and the pin", "pin_limit",
+     "the pin-limit record entry for the integrated circuit U1, catalogue number C9000005, omits U1 pin 1, which is connected on net /LV_A",
+     pin_limits('      - pin: PA0\n        domain: logic\n        absolute_max_v: 3.6\n        absolute_min_v: -0.3\n        tolerates_driven_unpowered: false\n', ""),
+     KEYS_TARGET, "U1 pin 2"),
+    ("a connected pin of a listed integrated circuit left out beside pins on no net", "pin coverage: a connected pin of a listed part that its entry omits fails while the part's pins on no other pin and no rail, which the entry never lists, are not failed", "pin_limit",
+     "the pin-limit record entry for the integrated circuit U4, catalogue number C9200032, omits U4 pin 13, which is connected on net /WDI",
+     pin_limits('      - pin: "PA17"\n        domain: logic\n        absolute_max_v: 4.1\n        absolute_min_v: -0.3\n        tolerates_driven_unpowered: false\n', ""),
+     (REVIEW_DESIGN, REVIEW_NAME), "U4 pin 5"),
 ]
 
 

@@ -2293,6 +2293,18 @@ def voltage_rules(design: Design, yaml, root: str, repository: Repository, not_f
         elif number(ref) not in entries:
             fail("pin_limit", where, f"the pin-limit record omits the {kind(ref)} {ref}, catalogue number {number(ref)}; "
                                      "add its entry")
+    rails = {net_key(rail) for rail, _ in domains.values()}
+    for ref in sorted(placed):
+        entry = entries.get(number(ref))
+        if entry is None or kind(ref) not in (INTEGRATED_CIRCUIT, SEMICONDUCTOR) or limits_form:
+            continue
+        for net, node in by_part.get(ref, []):
+            if len(nets[net]) < 2 and net_key(net) not in rails:
+                continue
+            if not any(node.pin == str(listed["pin"]) or str(listed["pin"]) in node.names() for listed in entry["pins"]):
+                fail("pin_limit", f"{schematic} {node.describe()}",
+                     f"the pin-limit record entry for the {kind(ref)} {ref}, catalogue number {number(ref)}, omits {node.describe()}, "
+                     f"which is connected on net {net}; add an entry for it, by its number or its name")
     for ref, wanted in lacking:
         fail("pin_limit", f"{schematic} {ref}",
              f"the pin-limit record lists pin {wanted} of catalogue number {number(ref)}, which the part {ref} does not have; "
