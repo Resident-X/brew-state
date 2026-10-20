@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C1
+type: criterion
+title: A caller may grant its reviewers the read tools and one read-only retrieval tool, the setup session keeps the read tools alone, and any other tool is still refused
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  A caller's tool set may be the read tools, or the read tools and the one retrieval tool, and the driver starts each reviewer with the caller's set. Any tool outside those four is refused at load as before, and the setup session is started with the read tools alone whatever the caller grants. The start report of a session that reports a tool outside its granted set fails the run, as now. Out of scope: whether a fork can retrieve, and what a retrieved document holds.
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM
+    type: criterion-of

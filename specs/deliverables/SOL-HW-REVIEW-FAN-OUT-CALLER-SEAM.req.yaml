@@ -1,0 +1,34 @@
+id: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM
+type: deliverable
+category: solution
+title: The review fan-out driver carries a retrieval grant, a prompt that sees the review folder, a per-folder checklist and a rendered record for the callers
+status: active
+version: 1
+text: |
+  Why this exists. The driver SOL-HW-REVIEW-FAN-OUT-DRIVER is finished and has no caller, and building the layout caller showed that four things a caller needs have no place in it as built: a reviewer's grant is limited to the read tools, so the read-only retrieval of a published document that a rule-kind item or a datasheet needs is refused at load; a reviewer's prompt is given the unit and not the review folder, so it cannot name the round's listed items or the board's own items; the checklist is a fixed list fixed at load, so a checklist that is the catalogue's items plus the board's plan rows and a free pass cannot be stated; and the merge writes only the table form of the record, so a caller whose record is a document has no place to write it. The layout, schematic, critical-routing and production-files solutions each need some of the four. They are requirements of the driver as the shared seam, not a defect in work the driver's criteria asked for, so they are built once, here, before the callers. The reasoning for the mechanism is in DEC-REVIEW-FAN-OUT-BY-UNIT-FROM-SHARED-SETUP and DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND, and a session building this does not reopen either. This is the sixth solution under DEL-HW-REVIEW-FAN-OUT and is built before the layout, schematic and production-files solutions.
+
+  What it does. It extends the driver's caller definition with four optional attributes, and a caller that supplies none behaves exactly as before.
+
+  Settled before the build.
+
+  - Retrieval. The driver names one read-only retrieval tool beside the three read tools, WebFetch, which fetches a published document at an address and writes nothing. A caller may grant its reviewers the read tools alone or the read tools and that one tool; any other tool is refused at load as now. The setup session keeps the read tools alone, so it still reads documents and records and fetches nothing. The check of each session's start report against the granted set is unchanged and already compares the reported tools with the granted ones.
+  - The review folder in the prompt. A caller's reviewer prompt is built from the unit and the review folder, so it can read the round's own fields and listed items from a file the starter wrote there. The driver reads no such file and names none; what the folder holds is the caller's and the starter's.
+  - The checklist. A caller's checklist is either the list it is now or a function of the review folder, resolved once per merge before any result is checked, as the caller's first-round attribute already is. The merge treats the resolved list as it treats a list: it refuses a verdict or a raised-by value outside it, and orders the findings by it, so a caller whose checklist places the board's plan rows and the free pass after the catalogue's items gets those findings numbered after the items' own.
+  - The rendered record. A caller may supply a function of the review folder and the merged tables that returns file names with their text. After the merge the driver writes each into the output folder beside the record in table form, refuses a name with a path in it or one that the output folder already holds, and names the files in its report, in text and in JSON. A caller that supplies none writes nothing more.
+  - The proof the driver has is kept: the driver's existing tests pass unchanged, the new tests use the driver's stub over synthetic callers and synthetic review folders, and need no model and no KiCad.
+  - The hardware notes and the command's description name the four attributes where they list what a caller defines.
+
+  Out of scope: any caller; what a retrieved document is or whether retrieval works from a forked reviewer, which the layout solution's proof run measures; the merge's other rules.
+links:
+  - target: DEC-REVIEW-FAN-OUT-BY-UNIT-FROM-SHARED-SETUP
+    type: justified-by
+  - target: DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND
+    type: justified-by
+  - target: DEL-HW-REVIEW-FAN-OUT.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3
+    type: targets
+  - target: SOL-HW-REVIEW-FAN-OUT-DRIVER
+    type: depends-on

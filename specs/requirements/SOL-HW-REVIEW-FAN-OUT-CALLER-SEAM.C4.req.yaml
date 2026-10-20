@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C4
+type: criterion
+title: A caller's rendered record is written into the output folder after the merge and named in the report
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A caller may supply a function of the review folder and the merged tables that returns file names with their text. The driver writes each into the output folder after the merge and names them in its report, in text and in JSON with the same content. It refuses a name that carries a path or that the output folder already holds, and a function that raises fails the run naming the caller and leaves the merged record in table form written. A caller that supplies none writes no file beyond the record in table form. Out of scope: the content of any rendered record.
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM
+    type: criterion-of

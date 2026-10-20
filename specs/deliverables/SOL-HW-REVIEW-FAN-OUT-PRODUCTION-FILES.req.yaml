@@ -3,11 +3,11 @@ type: deliverable
 category: solution
 title: A task fans the production-files check out by group of placed parts and by layers and merges them into one check record that blocks the order on any row that is not a match
 status: active
-version: 1
+version: 2
 text: |
-  Why this exists. The ordering step's production-files check gives a verdict to every placed part and to every fabrication layer, one reviewer in one context, and it is repeated at every order and in its blind proof. The reasoning, measurements and options rejected are in DEC-REVIEW-FAN-OUT-BY-UNIT-FROM-SHARED-SETUP, and DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND settles that a check judged by unit is the same check; a session building this does not reopen either. This is the fifth of five solutions under DEL-HW-REVIEW-FAN-OUT. It adds the production-files check as a caller of the driver SOL-HW-REVIEW-FAN-OUT-DRIVER and does not change the driver; it is independent of the layout, critical-routing and schematic solutions. Its units are smaller than the reviews', so its saving is smaller, and it is built because the check is repeated at every order and in its proof.
+  Why this exists. The ordering step's production-files check gives a verdict to every placed part and to every fabrication layer, one reviewer in one context, and it is repeated at every order and in its blind proof. The reasoning, measurements and options rejected are in DEC-REVIEW-FAN-OUT-BY-UNIT-FROM-SHARED-SETUP, and DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND settles that a check judged by unit is the same check; a session building this does not reopen either. This is the fifth of six solutions under DEL-HW-REVIEW-FAN-OUT. It adds the production-files check as a caller of the driver SOL-HW-REVIEW-FAN-OUT-DRIVER as the caller-seam solution SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM extends it, and does not change the driver itself; it is independent of the layout, critical-routing and schematic solutions. Its units are smaller than the reviews', so its saving is smaller, and it is built because the check is repeated at every order and in its proof.
 
-  What it does. The check is judged by a few reviewers each holding a bounded group of placed parts that share footprints, and one reviewer holding every fabrication layer, the drill file and the outline, and the merge writes one production-files check record.
+  What it does. The check is judged by a few reviewers each holding a bounded group of placed parts that share footprints, and one reviewer holding every fabrication layer, the drill file and the outline, and the merge writes one production-files check record through the rendered record the caller-seam solution adds, with the commit judged and the tools and commands read from the review folder the driver passes the caller's prompts.
 
   Settled before the build.
 
@@ -39,4 +39,6 @@ links:
   - target: SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT
     type: depends-on
   - target: SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF
+    type: depends-on
+  - target: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM
     type: depends-on
