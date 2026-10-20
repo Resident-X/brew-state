@@ -120,7 +120,11 @@ class UnitFailed(Exception):
 
 
 class LoginLost(UnitFailed):
-    """A unit whose call found the agent command line no longer logged in."""
+    """A unit whose call found the agent command line no longer logged in, with the cause the command line gave."""
+
+    def __init__(self, unit: str, cause: str, sessions: Sequence[Dict[str, Any]] = ()):
+        super().__init__(f"unit {unit} failed: {cause}", sessions)
+        self.cause = cause
 
 
 class RateLimited(Exception):
@@ -227,25 +231,75 @@ def unit_names(caller, review: str) -> List[str]:
 # --- The agent command line --------------------------------------------------------------------
 
 
+def named(value: Any, kind) -> bool:
+    """Whether `value` is of `kind` (a bool is never a number), and a string is not empty."""
+    if kind is str:
+        return isinstance(value, str) and bool(value.strip())
+    if kind is bool:
+        return isinstance(value, bool)
+    return isinstance(value, kind) and not isinstance(value, bool)
+
+
+def field_problem(source: Any, key: str, kind, what: str, where: str) -> Optional[str]:
+    """Why `source[key]` cannot be relied on: absent, or not of `kind`. The one place the agent output's fields are typed."""
+    if not isinstance(source, dict) or source.get(key) is None:
+        return f"{where} has no {what}"
+    if not named(source[key], kind):
+        return f"{where} gives {what} as {source[key]!r}, which is not {KIND_WORDS[kind]}"
+    return None
+
+
+KIND_WORDS = {str: "a non-empty string", list: "a list", dict: "a mapping", bool: "true or false",
+              (int, float): "a number", int: "a whole number"}
+#: The figures a result report must give for a session that succeeded, with the kind of each.
+FIGURE_FIELDS = (("total_cost_usd", (int, float)), ("duration_api_ms", (int, float)), ("num_turns", int))
+TOKEN_FIELDS = (("cache_read", "cache_read_input_tokens"), ("cache_write", "cache_creation_input_tokens"),
+                ("fresh", "input_tokens"), ("generated", "output_tokens"))
+#: The lists a start report must give.
+START_LISTS = ("tools", "mcp_servers", "skills", "slash_commands", "plugins")
+
+
 class Session:
-    """One session's start report, tool uses and result report, as the agent command line printed them."""
+    """One session's start report, tool uses and result report, as the agent command line printed them.
+
+    `malformed` holds every field the command relies on that the output gave
+    with the wrong type, and `absent` the figures and text a result report that
+    succeeded lacks; neither is ever defaulted.
+    """
 
     def __init__(self):
         self.start: Dict[str, Any] = {}
-        self.tool_uses: List[Tuple[str, Dict[str, Any]]] = []
+        self.tool_uses: List[Tuple[str, Dict[str, Any], str]] = []
+        self.failed_tool_uses: set = set()
         self.blocks: List[Tuple[str, str]] = []
         self.result: Optional[Dict[str, Any]] = None
+        self.malformed: List[str] = []
+        self.absent: List[str] = []
         self.exit_code = 0
         self.stderr = ""
         self.wall_s = 0.0
 
     @property
     def id(self) -> str:
-        return str((self.result or {}).get("session_id") or self.start.get("session_id") or "")
+        found = self.start.get("session_id")
+        return found if isinstance(found, str) else ""
 
     @property
     def text(self) -> str:
-        return str((self.result or {}).get("result") or "")
+        found = (self.result or {}).get("result")
+        return found if isinstance(found, str) else ""
+
+    @property
+    def succeeded(self) -> bool:
+        return self.exit_code == 0 and self.result is not None and self.result.get("is_error") is False
+
+    @property
+    def reported(self) -> bool:
+        """Whether the result report gave every figure, so the session's cost can be told."""
+        result = self.result or {}
+        usage = result.get("usage")
+        return (all(named(result.get(key), kind) for key, kind in FIGURE_FIELDS) and isinstance(usage, dict)
+                and all(named(usage.get(key), int) for _, key in TOKEN_FIELDS))
 
     def said(self) -> str:
         """What the session returned, for a failure to quote."""
@@ -296,17 +350,73 @@ def parse_stream(text: str) -> Session:
         if kind == "system" and event.get("subtype") == "init":
             session.start = event
         elif kind == "assistant":
-            for item in (event.get("message") or {}).get("content") or []:
-                if not isinstance(item, dict):
-                    session.blocks.append(("unknown", ""))
-                    continue
-                kind = str(item.get("type"))
-                session.blocks.append((kind, str(item.get("text") or "") if kind == "text" else ""))
-                if kind == "tool_use":
-                    session.tool_uses.append((str(item.get("name")), item.get("input") or {}))
+            message = event.get("message")
+            content = message.get("content") if isinstance(message, dict) else None
+            if not isinstance(content, list):
+                session.malformed.append("printed an assistant event with no `message.content` list")
+                continue
+            for item in content:
+                parse_block(session, item)
+        elif kind == "user":
+            message = event.get("message")
+            for item in (message.get("content") if isinstance(message, dict) else None) or []:
+                if isinstance(item, dict) and item.get("type") == "tool_result" and item.get("is_error") is True:
+                    session.failed_tool_uses.add(item.get("tool_use_id"))
         elif kind == "result":
             session.result = event
+            parse_result_report(session, event)
     return session
+
+
+def parse_block(session: Session, item: Any) -> None:
+    """One content block of an assistant event, kept in the session's history; what it relies on is typed here."""
+    if not isinstance(item, dict) or not isinstance(item.get("type"), str):
+        session.blocks.append(("untyped", ""))
+        session.malformed.append("printed a content block with no string `type`")
+        return
+    kind = item["type"]
+    if kind == "text":
+        text = item.get("text")
+        if not isinstance(text, str):
+            session.malformed.append("printed a text block with no string `text`")
+        session.blocks.append((kind, text if isinstance(text, str) else ""))
+        return
+    session.blocks.append((kind, ""))
+    if kind != "tool_use":
+        return
+    name = item.get("name")
+    if not named(name, str):
+        session.malformed.append("printed a tool use with no string `name`")
+        return
+    given = item.get("input")
+    if not isinstance(given, dict):
+        session.malformed.append(f"printed a {name} tool use with no `input` mapping")
+        return
+    if name == "Read" and not named(given.get("file_path"), str):
+        session.malformed.append("printed a Read tool use with no string `input.file_path`; it cannot be shown which file was read")
+    session.tool_uses.append((name, given, str(item.get("id") or "")))
+
+
+def parse_result_report(session: Session, result: Dict[str, Any]) -> None:
+    """Type the result report's fields: a mistyped one is malformed, and one a session that succeeded lacks is absent."""
+    where = "printed a result report that"
+    flag = result.get("is_error")
+    if not isinstance(flag, bool):
+        session.malformed.append(f"{where} has no `is_error` true or false")
+    usage = result.get("usage")
+    checks = [(result, key, kind, key) for key, kind in FIGURE_FIELDS] + [(result, "usage", dict, "usage")]
+    checks += [(usage, key, int, f"usage.{key}") for _, key in TOKEN_FIELDS] if isinstance(usage, dict) else []
+    for source, key, kind, label in checks:
+        if source.get(key) is None:
+            session.absent.append(label)
+        elif not named(source[key], kind):
+            session.malformed.append(f"{where} gives `{label}` as {source[key]!r}, which is not {KIND_WORDS[kind]}")
+    if result.get("result") is None:
+        session.absent.append("result")
+    elif not isinstance(result["result"], str):
+        session.malformed.append(f"{where} gives `result` as {result['result']!r}, which is not text")
+    if result.get("session_id") is not None and not isinstance(result["session_id"], str):
+        session.malformed.append(f"{where} gives `session_id` as {result['session_id']!r}, which is not a string")
 
 
 def call_agent(program: str, prompt: str, tools: Sequence[str], cwd: str, resume: Optional[str] = None,
@@ -347,31 +457,50 @@ def with_rate_retry(call: Callable[[], Session], wait: float, sleep: Callable[[f
 
 
 def start_problems(session: Session, label: str, tools: Sequence[str], model: Optional[str], review: str) -> List[str]:
-    """What the session's start report shows that it should not, each naming the session."""
-    start, found = session.start, []
+    """What the session's reports show that they should not, each naming the session.
+
+    A field the command relies on that the output leaves out or gives the wrong
+    type is a problem naming the field, never a default.
+    """
+    found = [f"{label} {why}" for why in session.malformed]
+    if session.succeeded and session.absent:
+        found.append(f"{label} printed a result report without {', '.join(session.absent)}; its cost and answer cannot be told")
+    start = session.start
     if not start:
-        return [f"{label} printed no start report; check the agent command line prints stream-json events"]
-    if sorted(start.get("tools") or []) != sorted(tools):
-        found.append(f"{label} started with tools {sorted(start.get('tools') or [])}, not the {sorted(tools)} it was granted")
-    if model and start.get("model") != model:
-        found.append(f"{label} started with model {start.get('model')}, not {model}")
-    if start.get("mcp_servers"):
-        found.append(f"{label} started with MCP servers {start.get('mcp_servers')}; none may be loaded")
-    if start.get("skills"):
-        found.append(f"{label} started with skills {start.get('skills')}, which it was asked to exclude")
-    if start.get("slash_commands"):
-        found.append(f"{label} started with commands {start.get('slash_commands')}, which it was asked to exclude")
-    outside = [str(plugin.get("name") if isinstance(plugin, dict) else plugin) for plugin in start.get("plugins") or []
+        return found + [f"{label} printed no start report; check the agent command line prints stream-json events"]
+    typed = {}
+    for key in ("model", "cwd", "session_id"):
+        why = field_problem(start, key, str, f"`{key}`", f"{label}'s start report")
+        found += [why] if why else []
+        typed[key] = start.get(key) if not why else None
+    for key in START_LISTS:
+        why = field_problem(start, key, list, f"`{key}`", f"{label}'s start report")
+        found += [why] if why else []
+        typed[key] = start.get(key) if not why else None
+    if typed["tools"] is not None:
+        if not all(isinstance(tool, str) for tool in typed["tools"]):
+            found.append(f"{label}'s start report gives `tools` as {typed['tools']!r}, which is not a list of names")
+        elif sorted(typed["tools"]) != sorted(tools):
+            found.append(f"{label} started with tools {sorted(typed['tools'])}, not the {sorted(tools)} it was granted")
+    if typed["model"] is not None and model and typed["model"] != model:
+        found.append(f"{label} started with model {typed['model']}, not {model}")
+    if typed["mcp_servers"]:
+        found.append(f"{label} started with MCP servers {typed['mcp_servers']}; none may be loaded")
+    if typed["skills"]:
+        found.append(f"{label} started with skills {typed['skills']}, which it was asked to exclude")
+    if typed["slash_commands"]:
+        found.append(f"{label} started with commands {typed['slash_commands']}, which it was asked to exclude")
+    outside = [str(plugin.get("name") if isinstance(plugin, dict) else plugin) for plugin in typed["plugins"] or []
                if not (isinstance(plugin, dict) and plugin.get("path") == "builtin")]
     if outside:
         found.append(f"{label} started with plugins {outside}, which it was asked to exclude")
-    if os.path.realpath(str(start.get("cwd") or "")) != os.path.realpath(review):
-        found.append(f"{label} started in {start.get('cwd')}, not the review folder {review}")
+    if typed["cwd"] is not None and os.path.realpath(typed["cwd"]) != os.path.realpath(review):
+        found.append(f"{label} started in {typed['cwd']}, not the review folder {review}")
     return found
 
 
 def non_text(path: str, review: str) -> bool:
-    """Whether a read of `path` opens a file whose type is not text."""
+    """Whether a read of `path` opens a file whose type is not text, or one that cannot be shown to be text."""
     full = path if os.path.isabs(path) else os.path.join(review, path)
     if full.lower().endswith(NON_TEXT_SUFFIXES):
         return True
@@ -379,7 +508,7 @@ def non_text(path: str, review: str) -> bool:
         with open(full, "rb") as handle:
             head = handle.read(8192)
     except OSError:
-        return False
+        return True
     if b"\0" in head:
         return True
     try:
@@ -393,15 +522,19 @@ def setup_problems(session: Session, review: str) -> List[str]:
     """What the setup session's history shows: an image opened, a tool outside its grant, nothing read, or text that may be a judgement."""
     found = []
     reads = 0
-    for name, given in session.tool_uses:
+    for name, given, use in session.tool_uses:
         if name not in READ_TOOLS:
             found.append(f"the setup session used {name}, a tool it was not granted")
         elif name == "Read":
             reads += 1
-            path = str(given.get("file_path") or "")
+            path = given.get("file_path")
+            if not isinstance(path, str):
+                continue  # the start_problems naming the missing file_path fails the run
+            if use and use in session.failed_tool_uses:
+                continue  # the stream itself shows the read failed, so it opened nothing
             if non_text(path, review):
-                found.append(f"the setup session opened {path}, a file whose type is not text; it may read documents "
-                             "and records only, so the forked reviewers stay as blind as fresh ones")
+                found.append(f"the setup session opened {path}, a file whose type is not text, or cannot be shown to be "
+                             "text; it may read documents and records only, so the forked reviewers stay as blind as fresh ones")
     if not reads:
         found.append("the setup session read nothing; it must read what its prompt asks before a fork can start from it")
     for kind, text in session.blocks:
@@ -421,14 +554,13 @@ def setup_problems(session: Session, review: str) -> List[str]:
 
 
 def figures(session: Session) -> Dict[str, Any]:
-    """The cumulative figures a result report gives, and the tokens as the session reports them."""
-    result, usage = session.result or {}, (session.result or {}).get("usage") or {}
-    return {"cost_usd": float(result.get("total_cost_usd") or 0), "api_ms": int(result.get("duration_api_ms") or 0),
-            "turns": int(result.get("num_turns") or 0), "wall_s": round(session.wall_s, 3),
-            "tokens": {"cache_read": int(usage.get("cache_read_input_tokens") or 0),
-                       "cache_write": int(usage.get("cache_creation_input_tokens") or 0),
-                       "fresh": int(usage.get("input_tokens") or 0),
-                       "generated": int(usage.get("output_tokens") or 0)}}
+    """The cumulative figures a result report gives, and the tokens as the session reports them; zero when it gave none."""
+    if not session.reported:
+        return {**empty_figures(), "wall_s": round(session.wall_s, 3)}
+    result, usage = session.result, session.result["usage"]
+    return {"cost_usd": float(result["total_cost_usd"]), "api_ms": int(result["duration_api_ms"]),
+            "turns": int(result["num_turns"]), "wall_s": round(session.wall_s, 3),
+            "tokens": {key: int(usage[field]) for key, field in TOKEN_FIELDS}}
 
 
 def own(cumulative: Dict[str, Any], setup: Optional[Dict[str, Any]]) -> Dict[str, Any]:
@@ -485,7 +617,8 @@ def table_problems(caller, review: str, unit: str, tables: Dict[str, Any]) -> Li
             if absent:
                 found.append(f"unit {unit}'s table {name!r} row {number} lacks the column {absent}")
             verdict = declared[name].get("verdict_column")
-            if verdict and verdict in row and row[verdict] not in declared[name]["verdicts"]:
+            if verdict and verdict in row and (not isinstance(row[verdict], str)
+                                               or row[verdict] not in declared[name]["verdicts"]):
                 found.append(f"unit {unit}'s table {name!r} row {number} has the verdict {row[verdict]!r}, outside "
                              f"{list(declared[name]['verdicts'])}")
     findings = caller.FINDINGS
@@ -652,10 +785,12 @@ class Run:
                 except UnitFailed as error:
                     raise UnitFailed(f"unit {unit} failed: {error}", sessions)
                 cumulative = figures(session)
-                figure = own(cumulative, base)
-                if not fork:
+                # A session that gave no figures cost nothing that can be told, and has no setup session's to take off.
+                figure = own(cumulative, base) if session.reported else cumulative
+                if not fork and session.reported:
                     base = cumulative
-                flags = ["no cache read"] if fork and figure["tokens"]["cache_read"] == 0 else []
+                flags = ["no report"] if not session.reported else (
+                    ["no cache read"] if fork and figure["tokens"]["cache_read"] == 0 else [])
                 sessions.append({"attempt": number, "session": session.id, "mode": "fork" if fork else "setup session",
                                  "flags": flags, **figure})
                 problems = start_problems(session, label, self.caller.TOOLS, model, self.review)
@@ -683,7 +818,7 @@ class Run:
         except UnitFailed:
             raise
         except board_check.CannotRun as error:
-            raise LoginLost(f"unit {unit} failed: {error}", sessions)
+            raise LoginLost(unit, str(error), sessions)
         except Exception as error:  # a defect in one unit's worker is that unit's failure and the others go on
             raise UnitFailed(f"unit {unit} failed: {type(error).__name__}: {error}", sessions)
 
@@ -695,7 +830,7 @@ class Run:
         except UnitFailed as error:
             raise Refused([f"the setup session {error}; wait, then run again"])
         result = session.result or {}
-        if session.exit_code != 0 or result.get("is_error") or not session.id:
+        if session.exit_code != 0 or result.get("is_error"):
             raise Refused([f"the setup session failed and returned: {session.said()}; check the agent command line runs "
                            "from the review folder, then run again"])
         problems = start_problems(session, "the setup session", READ_TOOLS, model, self.review) + setup_problems(session, self.review)
@@ -709,7 +844,7 @@ class Run:
     def run(self, order: Sequence[str], named: Sequence[str]) -> Tuple[Dict[str, Any], Dict[str, Optional[UnitFailed]]]:
         """Judge `named` units (all of `order` when none), returning the setup entry and each unit's failure, if any."""
         session, cumulative = self.setup_session(self.model)
-        model = str(session.start.get("model"))
+        model = session.start["model"]
         setup = {"id": session.id, "at": stamp(), "kind": "rerun" if named else "initial",
                  "units": list(named or order), "model": model, "cumulative": cumulative, **own(cumulative, None)}
         known = read_json(os.path.join(self.out, SETUPS)) if os.path.isfile(os.path.join(self.out, SETUPS)) else []
@@ -728,7 +863,7 @@ class Run:
                 try:
                     if error.sessions:
                         write_json(self.failed_path(unit), self.failed_sessions(unit) + error.sessions)
-                except OSError as lost:
+                except (OSError, ValueError) as lost:
                     failures[unit] = UnitFailed(f"{error}; its cost could not be kept ({lost})", error.sessions)
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.bound) as pool:
@@ -878,6 +1013,23 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout, err=sys.stderr) -> in
             lacking = [name for name in order if name not in named and not os.path.isfile(os.path.join(folder, UNITS_FOLDER, f"{name}.json"))]
             if lacking:
                 return refuse([f"the output folder holds no result for {', '.join(lacking)}; name each of them with --rerun too"])
+            unreadable, unsettled = [], []
+            for name in order:
+                failed = os.path.join(folder, FAILED_FOLDER, f"{name}.json")
+                if not os.path.isfile(failed):
+                    continue
+                try:
+                    if not isinstance(read_json(failed), list):
+                        raise ValueError("it is not a list of sessions")
+                except (OSError, ValueError) as error:
+                    unreadable.append(f"the record of unit {name}'s failed attempts {failed} cannot be read ({error}); "
+                                      "restore it, or delete it to run the unit again without its cost")
+                    continue
+                if name not in named:
+                    unsettled.append(name)
+            if unreadable or unsettled:
+                return refuse(unreadable + [f"unit {name}'s last run again failed, so its kept result is not settled; name "
+                                            f"{name} with --rerun too" for name in unsettled])
         try:
             program = require_agent()
         except board_check.CannotRun as error:
@@ -932,7 +1084,7 @@ def execute(report, caller, review, folder, order, named, program, bound, args, 
         report["result"], report["detail"] = "FAILED", f"{len(broken)} of {len(order)} units failed: {', '.join(broken)}; the others' results are kept in {folder}"
         lost = [failures[unit] for unit in broken if isinstance(failures[unit], LoginLost)]
         if lost:
-            report["result"], report["cannot_run"] = "CANNOT RUN", str(lost[0]).split(": ", 1)[1]
+            report["result"], report["cannot_run"] = "CANNOT RUN", lost[0].cause
         return finish(report, out, args.json, err)
     try:
         merged = merge(caller, review, order, results)

@@ -11,7 +11,11 @@ environment variables it was given. It sleeps to show concurrency. A setup
 session reads method.md unless the scenario's `setup.reads` says otherwise,
 `setup.narration` lists content blocks it writes before its reads (each its own
 event, or with the first read in one event when `setup.same_event` is set), and
-`setup.uses` lists tools it uses besides Read.
+`setup.uses` lists tools it uses besides Read. Any session's scenario entry may
+also hold `start_omit` and `result_omit` (fields left out of the start report and
+the result report), `start_set` and `result_set` (fields given other values),
+`read_inputs` (the raw input of each Read it makes, in place of `reads`) and
+`failed_reads` (paths it reads whose tool result is an error).
 """
 
 import json
@@ -78,8 +82,13 @@ def main():
              "tools": tools, "mcp_servers": scenario.get("mcp_servers", []), "model": model,
              "skills": scenario.get("skills", []), "slash_commands": scenario.get("slash_commands", []),
              "plugins": scenario.get("plugins", [{"name": "p", "path": "builtin"}])}
+    start.update(outcome.get("start_set", {}))
+    for key in outcome.get("start_omit", []):
+        start.pop(key, None)
     print(json.dumps(start))
-    uses = [{"type": "tool_use", "name": "Read", "input": {"file_path": path}} for path in reads]
+    inputs = outcome.get("read_inputs", [{"file_path": path} for path in reads + outcome.get("failed_reads", [])])
+    uses = [{"type": "tool_use", "id": f"toolu_{number}", "name": "Read", "input": given} for number, given in enumerate(inputs)]
+    failed = [use["id"] for use in uses[len(inputs) - len(outcome.get("failed_reads", [])):]] if outcome.get("failed_reads") else []
     uses += [{"type": "tool_use", "name": name, "input": {}} for name in outcome.get("uses", [])]
     narration = outcome.get("narration", [])
     if narration and outcome.get("same_event"):
@@ -90,6 +99,9 @@ def main():
             print(json.dumps({"type": "assistant", "message": {"content": [block]}}))
     for use in uses:
         print(json.dumps({"type": "assistant", "message": {"content": [use]}}))
+        if use.get("id") in failed:
+            print(json.dumps({"type": "user", "message": {"content": [
+                {"type": "tool_result", "tool_use_id": use["id"], "is_error": True, "content": "File does not exist."}]}}))
     if outcome.get("rate_limit"):
         print(json.dumps({"type": "result", "is_error": True, "result": "API Error: 429 rate limit exceeded",
                           "api_error_status": 429, "session_id": session}))
@@ -107,13 +119,17 @@ def main():
         sys.stderr.write(outcome.get("stderr", "the reviewer crashed"))
         return outcome["exit"]
     print(json.dumps({"type": "assistant", "message": {"content": [{"type": "text", "text": text}]}}))
-    print(json.dumps({"type": "result", "subtype": "success", "is_error": False, "result": text, "session_id": session,
-                      "num_turns": base["turns"] + outcome.get("turns", 1),
-                      "duration_api_ms": base["api_ms"] + outcome.get("api_ms", 500),
-                      "total_cost_usd": round(base["cost"] + outcome.get("cost", 0.05), 6),
-                      "usage": {"input_tokens": outcome.get("fresh", 3), "output_tokens": outcome.get("generated", 100),
-                                "cache_read_input_tokens": outcome.get("cache_read", 5000),
-                                "cache_creation_input_tokens": outcome.get("cache_write", 200)}}))
+    report = {"type": "result", "subtype": "success", "is_error": False, "result": text, "session_id": session,
+              "num_turns": base["turns"] + outcome.get("turns", 1),
+              "duration_api_ms": base["api_ms"] + outcome.get("api_ms", 500),
+              "total_cost_usd": round(base["cost"] + outcome.get("cost", 0.05), 6),
+              "usage": {"input_tokens": outcome.get("fresh", 3), "output_tokens": outcome.get("generated", 100),
+                        "cache_read_input_tokens": outcome.get("cache_read", 5000),
+                        "cache_creation_input_tokens": outcome.get("cache_write", 200)}}
+    report.update(outcome.get("result_set", {}))
+    for key in outcome.get("result_omit", []):
+        report.pop(key, None)
+    print(json.dumps(report))
     return 0
 
 

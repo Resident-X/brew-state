@@ -336,6 +336,78 @@ class StartReports(Fixture):
         self.assertEqual(status, 1, text)
         self.assertRegex(text, r"REFUSED \| the setup session started with model claude-real-1, not sonnet")
 
+    def test_a_start_report_that_leaves_out_or_mistypes_a_field_the_command_relies_on_is_refused_naming_the_field(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that reads documents and records and asks for no judgement and no image and for one fixed token as the whole answer; any text the setup session writes, in its answer or between its tool uses, other than that token after trimming, and any content block of its history that is neither text nor a tool use, fails the run, so no forked reviewer inherits a verdict, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file. Out of scope: the content of a caller's prompt for its units.
+        cases = {"model": 5, "cwd": 7, "session_id": ["x"], "tools": "Read", "mcp_servers": "none", "skills": {},
+                  "slash_commands": 0, "plugins": "builtin"}
+        for extra in ((), ("--model", "model-a")):
+            for key, wrong in cases.items():
+                for how, scenario in (("omits", {"setup": {"start_omit": [key]}}), ("mistypes", {"setup": {"start_set": {key: wrong}}})):
+                    with self.subTest(key=key, how=how, extra=extra):
+                        shutil.rmtree(self.out, ignore_errors=True)
+                        for call in os.listdir(self.log):
+                            os.remove(os.path.join(self.log, call))
+                        self.scenario(scenario)
+                        status, text, _ = self.run_command(*extra)
+                        self.assertEqual(status, 1, text)
+                        word = "has no" if how == "omits" else "gives"
+                        self.assertRegex(text, rf"REFUSED \| the setup session's start report {word} (a )?`{key}`")
+                        self.assertNotIn("None", text)
+                        self.assertEqual(self.forks(), [], "no fork is started on a start report that cannot be relied on")
+        shutil.rmtree(self.out, ignore_errors=True)
+        self.scenario({"setup": {"start_set": {"tools": ["Read", 3, "Glob", "Grep"]}}})
+        status, text, _ = self.run_command()
+        self.assertEqual(status, 1, text)
+        self.assertIn("gives `tools` as ['Read', 3, 'Glob', 'Grep'], which is not a list of names", text)
+
+    def test_a_fork_whose_start_report_leaves_out_or_mistypes_a_field_fails_its_unit_without_a_retry(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that reads documents and records and asks for no judgement and no image and for one fixed token as the whole answer; any text the setup session writes, in its answer or between its tool uses, other than that token after trimming, and any content block of its history that is neither text nor a tool use, fails the run, so no forked reviewer inherits a verdict, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file. Out of scope: the content of a caller's prompt for its units.
+        for key, wrong in (("model", 5), ("cwd", None), ("session_id", 3), ("tools", "Read"), ("plugins", {})):
+            for how, outcome in (("omits", {"start_omit": [key]}), ("mistypes", {"start_set": {key: wrong}})):
+                if how == "mistypes" and wrong is None:
+                    continue
+                with self.subTest(key=key, how=how):
+                    shutil.rmtree(self.out, ignore_errors=True)
+                    for call in os.listdir(self.log):
+                        os.remove(os.path.join(self.log, call))
+                    self.scenario({"units": {"alpha": [outcome]}})
+                    status, text, _ = self.run_command()
+                    self.assertEqual(status, 1, text)
+                    self.assertRegex(text, rf"FAILED \| unit alpha failed: the reviewer of unit alpha's start report (has no|gives) (a )?`{key}`")
+                    self.assertEqual(len([call for call in self.forks() if call["unit"] == "alpha"]), 1)
+                    self.assertFalse(os.path.exists(os.path.join(self.out, "units", "alpha.json")))
+                    self.assertTrue(os.path.isfile(os.path.join(self.out, "units", "bravo.json")))
+
+    def test_the_forks_are_started_with_the_model_the_setup_session_reported_when_none_is_asked_for(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that reads documents and records and asks for no judgement and no image and for one fixed token as the whole answer; any text the setup session writes, in its answer or between its tool uses, other than that token after trimming, and any content block of its history that is neither text nor a tool use, fails the run, so no forked reviewer inherits a verdict, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file. Out of scope: the content of a caller's prompt for its units.
+        self.scenario({"model": "claude-real-1"})
+        status, text, _ = self.run_command()
+        self.assertEqual(status, 0, text)
+        self.assertEqual({self.flag(fork, "--model") for fork in self.forks()}, {"claude-real-1"})
+        self.assertNotIn("--model", self.calls()[0]["args"], "the setup session is asked for none")
+
+    def test_a_read_that_cannot_be_shown_to_be_text_fails_the_run_unless_the_stream_shows_it_failed(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that reads documents and records and asks for no judgement and no image and for one fixed token as the whole answer; any text the setup session writes, in its answer or between its tool uses, other than that token after trimming, and any content block of its history that is neither text nor a tool use, fails the run, so no forked reviewer inherits a verdict, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file. Out of scope: the content of a caller's prompt for its units.
+        method = os.path.join(self.review, "method.md")
+        for name, setup in {"no file_path": {"read_inputs": [{"file_path": method}, {}]},
+                            "a file_path that is not a string": {"read_inputs": [{"file_path": method}, {"file_path": 5}]},
+                            "an empty file_path": {"read_inputs": [{"file_path": method}, {"file_path": ""}]},
+                            "an input that is not a mapping": {"read_inputs": [{"file_path": method}, "units"]}}.items():
+            with self.subTest(case=name):
+                shutil.rmtree(self.out, ignore_errors=True)
+                self.refused({"setup": setup}, "the setup session printed a", "Read tool use with no")
+                self.assertEqual(self.forks(), [])
+        for name, path in {"a file that is absent": "notes/absent", "a folder": "units", "an unknown suffix": "views/absent.dat"}.items():
+            with self.subTest(case=name):
+                shutil.rmtree(self.out, ignore_errors=True)
+                self.refused({"setup": {"reads": [method, path]}}, path, "cannot be shown to be text")
+        for path in ("notes/absent", "views/absent.png"):
+            with self.subTest(failed=path):
+                shutil.rmtree(self.out, ignore_errors=True)
+                self.scenario({"setup": {"failed_reads": [path]}})
+                status, text, _ = self.run_command()
+                self.assertEqual(status, 0, "a read the stream shows failed opened nothing: " + text)
+
     def test_the_setup_session_is_started_with_read_tools_the_fixed_ask_and_no_loaded_instructions(self):
         # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that reads documents and records and asks for no judgement and no image and for one fixed token as the whole answer; any text the setup session writes, in its answer or between its tool uses, other than that token after trimming, and any content block of its history that is neither text nor a tool use, fails the run, so no forked reviewer inherits a verdict, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file. Out of scope: the content of a caller's prompt for its units.
         status, text, _ = self.run_command()
@@ -486,6 +558,8 @@ class Failures(Fixture):
         status, text, err = self.run_command("--bound", "1")
         self.assertEqual(status, 2, text)
         self.assertIn("is not logged in; log it in, then run again", err)
+        self.assertNotIn("unit alpha failed", err, "the cause alone is reported, as the command line gave it")
+        self.assertEqual(review_fan_out.LoginLost("alpha", "the cause").cause, "the cause")
         self.assertRegex(text, r"FAILED \| unit alpha failed: .*is not logged in")
         self.assertRegex(text, r"RESULT \| CANNOT RUN \| 1 of 3 units failed: alpha; the others' results are kept in")
         for unit in ("bravo", "charlie"):
@@ -839,6 +913,72 @@ class Cost(Fixture):
         self.assertEqual(report["totals"]["cost_usd"], 0.5)
 
 
+    def test_an_attempt_with_no_result_report_records_zero_figures_marked_so_and_never_negative_ones(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C5: Against a stub that reports a fork's cost, API time and turn count cumulatively including its setup session, as the agent command line does, the record gives each fork its own cost, time and turns, the setup session its own, and the run their sum; token usage is taken as each session reports it, split into tokens read from the cache, written to it, fresh and generated, and a fork that reads no cache is flagged. The record is in the text and the JSON report. Out of scope: judging whether a run was worth its cost.
+        self.scenario({"units": {"bravo": [{"exit": 3}, {}]}})
+        status, text, _ = self.run_command("--bound", "3", as_json=True)
+        self.assertEqual(status, 0, text)
+        report = json.loads(text)
+        first, second = self.kept("bravo")["sessions"]
+        self.assertEqual((first["cost_usd"], first["api_ms"], first["turns"]), (0.0, 0, 0))
+        self.assertEqual(first["tokens"], {"cache_read": 0, "cache_write": 0, "fresh": 0, "generated": 0})
+        self.assertEqual(first["flags"], ["no report"])
+        self.assertEqual((second["cost_usd"], second["api_ms"], second["turns"]), (0.05, 500, 1), "the retry takes the setup session off")
+        self.assertEqual(second["flags"], [])
+        bravo = [unit for unit in report["units"] if unit["unit"] == "bravo"][0]
+        self.assertAlmostEqual(bravo["own"]["cost_usd"], 0.05)
+        self.assertIn("no report", bravo["flags"])
+        self.assertAlmostEqual(report["totals"]["cost_usd"], 0.20, msg="the setup session and three units, each once")
+        self.assertEqual((report["totals"]["api_ms"], report["totals"]["turns"]), (2000, 4))
+        for unit in report["units"]:
+            self.assertGreaterEqual(unit["own"]["cost_usd"], 0)
+            self.assertGreaterEqual(unit["own"]["turns"], 0)
+
+    def test_a_unit_whose_every_attempt_has_no_result_report_costs_nothing_in_the_totals(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C5: Against a stub that reports a fork's cost, API time and turn count cumulatively including its setup session, as the agent command line does, the record gives each fork its own cost, time and turns, the setup session its own, and the run their sum; token usage is taken as each session reports it, split into tokens read from the cache, written to it, fresh and generated, and a fork that reads no cache is flagged. The record is in the text and the JSON report. Out of scope: judging whether a run was worth its cost.
+        self.scenario({"units": {"alpha": [{"exit": 3}]}})
+        status, text, _ = self.run_command("--bound", "3", as_json=True)
+        self.assertEqual(status, 1, text)
+        report = json.loads(text)
+        alpha = [unit for unit in report["units"] if unit["unit"] == "alpha"][0]
+        self.assertEqual((alpha["own"]["cost_usd"], alpha["own"]["api_ms"], alpha["own"]["turns"]), (0.0, 0, 0))
+        self.assertEqual(alpha["flags"], ["no report"])
+        self.assertAlmostEqual(report["totals"]["cost_usd"], 0.15)
+
+    def test_a_setup_session_or_a_fork_whose_successful_result_report_lacks_or_mistypes_a_figure_is_named(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C5: Against a stub that reports a fork's cost, API time and turn count cumulatively including its setup session, as the agent command line does, the record gives each fork its own cost, time and turns, the setup session its own, and the run their sum; token usage is taken as each session reports it, split into tokens read from the cache, written to it, fresh and generated, and a fork that reads no cache is flagged. The record is in the text and the JSON report. Out of scope: judging whether a run was worth its cost.
+        cases = {"cost": ({"result_omit": ["total_cost_usd"]}, "without total_cost_usd"),
+                 "api time": ({"result_omit": ["duration_api_ms"]}, "without duration_api_ms"),
+                 "turns mistyped": ({"result_set": {"num_turns": "3"}}, "gives `num_turns` as '3'"),
+                 "usage": ({"result_omit": ["usage"]}, "without usage"),
+                 "a token count": ({"result_set": {"usage": {"input_tokens": 1}}}, "usage.output_tokens"),
+                 "is_error": ({"result_omit": ["is_error"]}, "no `is_error`"),
+                 "the text": ({"result_omit": ["result"]}, "without result")}
+        for name, (outcome, word) in cases.items():
+            with self.subTest(case=name, session="setup"):
+                shutil.rmtree(self.out, ignore_errors=True)
+                for call in os.listdir(self.log):
+                    os.remove(os.path.join(self.log, call))
+                self.scenario({"setup": outcome})
+                status, text, _ = self.run_command()
+                self.assertEqual(status, 1, text)
+                self.assertRegex(text, r"REFUSED \| the setup session printed a result report")
+                self.assertIn(word, text)
+                self.assertEqual(self.forks(), [])
+            with self.subTest(case=name, session="fork"):
+                shutil.rmtree(self.out, ignore_errors=True)
+                for call in os.listdir(self.log):
+                    os.remove(os.path.join(self.log, call))
+                self.scenario({"units": {"alpha": [outcome]}})
+                status, text, _ = self.run_command("--bound", "3", as_json=True)
+                self.assertEqual(status, 1, text)
+                alpha = [unit for unit in json.loads(text)["units"] if unit["unit"] == "alpha"][0]
+                self.assertEqual(alpha["status"], "failed")
+                self.assertIn(word, alpha["detail"])
+                self.assertEqual(len([call for call in self.forks() if call["unit"] == "alpha"]), 1, "not retried")
+                self.assertGreaterEqual(alpha["own"]["cost_usd"], 0)
+
+
 class MergeBase(unittest.TestCase):
     """A synthetic caller loaded from a temporary folder, for the merge's tests."""
 
@@ -926,6 +1066,19 @@ class Merge(MergeBase):
         rejected(lambda r: r["bravo"]["Findings"][0].update(Item="Z-9"), "no item of the checklist")
         rejected(lambda r: r["charlie"]["Verdicts"][0].update(**{"Rests on": "F7"}), "cites a finding 7 the unit did not raise")
         rejected(lambda r: r["charlie"].update(Verdicts="pass"), "not a list of rows")
+
+    def test_a_verdict_that_is_not_a_string_is_refused_whatever_collection_the_caller_declares_its_verdicts_in(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C6: Over synthetic unit results and a synthetic caller, the merge rejects a table with a column the caller's table does not have and a verdict outside the caller's set, replaces every finding number a reviewer wrote with the number the checklist's order gives and rewrites the citations of them in the verdict rows, leaves a citation of an earlier round's finding as written, tells the two by the round each citation carries against the round the caller names as this one, and refuses a citation of an earlier round's finding that the review folder's earlier rounds do not hold, reports two findings that the caller's key assigns to the same item or place and keeps both, and gives the same record for every order the units arrive in. For a caller that declares no findings table nothing is renumbered. It reads no model and no file outside the unit results and the review folder. Out of scope: what a caller's tables must cover and whether a verdict is right.
+        for verdicts_in in ('("pass", "fail")', '{"pass", "fail"}', '["pass", "fail"]'):
+            caller = self.caller()
+            caller.TABLES["Verdicts"]["verdicts"] = eval(verdicts_in)
+            for wrong in (["pass"], {"v": 1}, 3, None):
+                with self.subTest(verdicts=verdicts_in, wrong=wrong):
+                    results = self.results()
+                    results["alpha"]["Verdicts"][0]["Verdict"] = wrong
+                    with self.assertRaises(review_fan_out.Refused) as caught:
+                        review_fan_out.merge(caller, self.folder, self.ORDER, results)
+                    self.assertIn(f"has the verdict {wrong!r}", " ".join(caught.exception.causes))
 
     def test_a_caller_with_no_findings_table_has_nothing_renumbered(self):
         # SOL-HW-REVIEW-FAN-OUT-DRIVER.C6: Over synthetic unit results and a synthetic caller, the merge rejects a table with a column the caller's table does not have and a verdict outside the caller's set, replaces every finding number a reviewer wrote with the number the checklist's order gives and rewrites the citations of them in the verdict rows, leaves a citation of an earlier round's finding as written, tells the two by the round each citation carries against the round the caller names as this one, and refuses a citation of an earlier round's finding that the review folder's earlier rounds do not hold, reports two findings that the caller's key assigns to the same item or place and keeps both, and gives the same record for every order the units arrive in. For a caller that declares no findings table nothing is renumbered. It reads no model and no file outside the unit results and the review folder. Out of scope: what a caller's tables must cover and whether a verdict is right.
@@ -1025,7 +1178,7 @@ class RoundedMerge(MergeBase):
 
 class Rerun(Fixture):
     def test_named_units_are_run_again_in_a_new_setup_session_and_merged_with_the_kept_results(self):
-        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C8: The command keeps each unit's result in its output folder. Given the names of units to run again, it runs only those, replaces their results, and merges again; it refuses a name that is not a unit of the review, and the record shows which units were run again and when, and that a new setup session was started for them. A unit that failed, or that needs a view the round's starter has since rendered, is therefore run without repeating the others. Out of scope: deciding which units to run again.
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C8: The command keeps each unit's result in its output folder. Given the names of units to run again, it runs only those, replaces their results, and merges again; it refuses a name that is not a unit of the review and refuses a run that leaves out a unit whose last run again failed, naming that unit, and the record shows which units were run again and when, and that a new setup session was started for them. A unit that failed, or that needs a view the round's starter has since rendered, is therefore run without repeating the others. Out of scope: deciding which units to run again.
         self.scenario({})
         status, text, _ = self.run_command(as_json=True)
         self.assertEqual(status, 0, text)
@@ -1058,7 +1211,7 @@ class Rerun(Fixture):
         self.assertIn("| run again", text)
 
     def test_a_unit_that_failed_is_run_again_alone_and_the_record_is_then_written(self):
-        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C8: The command keeps each unit's result in its output folder. Given the names of units to run again, it runs only those, replaces their results, and merges again; it refuses a name that is not a unit of the review, and the record shows which units were run again and when, and that a new setup session was started for them. A unit that failed, or that needs a view the round's starter has since rendered, is therefore run without repeating the others. Out of scope: deciding which units to run again.
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C8: The command keeps each unit's result in its output folder. Given the names of units to run again, it runs only those, replaces their results, and merges again; it refuses a name that is not a unit of the review and refuses a run that leaves out a unit whose last run again failed, naming that unit, and the record shows which units were run again and when, and that a new setup session was started for them. A unit that failed, or that needs a view the round's starter has since rendered, is therefore run without repeating the others. Out of scope: deciding which units to run again.
         self.scenario({"units": {"charlie": [{"exit": 1}]}})
         status, text, _ = self.run_command()
         self.assertEqual(status, 1, text)
@@ -1075,7 +1228,7 @@ class Rerun(Fixture):
         self.assertEqual(len(report["setup_sessions"]), 2)
 
     def test_a_rerun_that_fails_again_keeps_the_earlier_results_and_the_earlier_record(self):
-        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C8: The command keeps each unit's result in its output folder. Given the names of units to run again, it runs only those, replaces their results, and merges again; it refuses a name that is not a unit of the review, and the record shows which units were run again and when, and that a new setup session was started for them. A unit that failed, or that needs a view the round's starter has since rendered, is therefore run without repeating the others. Out of scope: deciding which units to run again.
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C8: The command keeps each unit's result in its output folder. Given the names of units to run again, it runs only those, replaces their results, and merges again; it refuses a name that is not a unit of the review and refuses a run that leaves out a unit whose last run again failed, naming that unit, and the record shows which units were run again and when, and that a new setup session was started for them. A unit that failed, or that needs a view the round's starter has since rendered, is therefore run without repeating the others. Out of scope: deciding which units to run again.
         self.run_command()
         record = os.path.join(self.out, "record.json")
         with open(record, encoding="utf-8") as handle:
@@ -1089,7 +1242,7 @@ class Rerun(Fixture):
             self.assertEqual(handle.read(), before)
 
     def test_a_rerun_refuses_a_name_that_is_no_unit_and_an_output_folder_with_nothing_to_merge_with(self):
-        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C8: The command keeps each unit's result in its output folder. Given the names of units to run again, it runs only those, replaces their results, and merges again; it refuses a name that is not a unit of the review, and the record shows which units were run again and when, and that a new setup session was started for them. A unit that failed, or that needs a view the round's starter has since rendered, is therefore run without repeating the others. Out of scope: deciding which units to run again.
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C8: The command keeps each unit's result in its output folder. Given the names of units to run again, it runs only those, replaces their results, and merges again; it refuses a name that is not a unit of the review and refuses a run that leaves out a unit whose last run again failed, naming that unit, and the record shows which units were run again and when, and that a new setup session was started for them. A unit that failed, or that needs a view the round's starter has since rendered, is therefore run without repeating the others. Out of scope: deciding which units to run again.
         status, text, _ = self.run_command("--rerun", "alpha")
         self.assertEqual(status, 1)
         self.assertIn("holds no earlier result to run alpha again against; run without --rerun into a new folder first", text)
@@ -1104,6 +1257,130 @@ class Rerun(Fixture):
         self.assertEqual(status, 1)
         self.assertIn("holds no result for bravo; name each of them with --rerun too", text)
         self.assertEqual(self.calls(), [], "nothing was started")
+
+
+    def failed_rerun_of_alpha(self):
+        self.run_command()
+        self.scenario({"units": {"alpha": [{"exit": 1}]}})
+        status, text, _ = self.run_command("--rerun", "alpha")
+        self.assertEqual(status, 1, text)
+        self.assertTrue(os.path.isfile(os.path.join(self.out, "failed", "alpha.json")))
+        for name in os.listdir(self.log):
+            os.remove(os.path.join(self.log, name))
+        self.scenario({})
+
+    def test_a_run_that_leaves_out_a_unit_whose_last_run_again_failed_is_refused_naming_it(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C8: The command keeps each unit's result in its output folder. Given the names of units to run again, it runs only those, replaces their results, and merges again; it refuses a name that is not a unit of the review and refuses a run that leaves out a unit whose last run again failed, naming that unit, and the record shows which units were run again and when, and that a new setup session was started for them. A unit that failed, or that needs a view the round's starter has since rendered, is therefore run without repeating the others. Out of scope: deciding which units to run again.
+        self.failed_rerun_of_alpha()
+        record = os.path.join(self.out, "record.json")
+        with open(record, encoding="utf-8") as handle:
+            before = handle.read()
+        for as_json in (False, True):
+            status, text, _ = self.run_command("--rerun", "bravo", as_json=as_json)
+            self.assertEqual(status, 1, text)
+            if as_json:
+                self.assertTrue(any("unit alpha's last run again failed" in why and "name alpha with --rerun too" in why
+                                    for why in json.loads(text)["refusals"]))
+            else:
+                self.assertIn("REFUSED | unit alpha's last run again failed, so its kept result is not settled; name alpha with --rerun too", text)
+        self.assertEqual(self.calls(), [], "nothing was started")
+        with open(record, encoding="utf-8") as handle:
+            self.assertEqual(handle.read(), before, "the earlier record stands")
+        self.assertFalse(os.path.exists(os.path.join(self.out, review_fan_out.LOCK)))
+        status, text, _ = self.run_command("--rerun", "bravo", "--rerun", "alpha")
+        self.assertEqual(status, 0, "named too, it is run again with the other: " + text)
+        self.assertFalse(os.path.exists(os.path.join(self.out, "failed", "alpha.json")), "a successful run again clears it")
+
+    def test_a_successful_run_again_of_the_unit_clears_what_made_a_later_run_refuse(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C8: The command keeps each unit's result in its output folder. Given the names of units to run again, it runs only those, replaces their results, and merges again; it refuses a name that is not a unit of the review and refuses a run that leaves out a unit whose last run again failed, naming that unit, and the record shows which units were run again and when, and that a new setup session was started for them. A unit that failed, or that needs a view the round's starter has since rendered, is therefore run without repeating the others. Out of scope: deciding which units to run again.
+        self.failed_rerun_of_alpha()
+        status, text, _ = self.run_command("--rerun", "alpha")
+        self.assertEqual(status, 0, text)
+        self.assertFalse(os.path.exists(os.path.join(self.out, "failed", "alpha.json")))
+        status, text, _ = self.run_command("--rerun", "bravo")
+        self.assertEqual(status, 0, "alpha is settled, so bravo alone may be run again: " + text)
+
+    def test_a_failed_record_that_cannot_be_read_is_a_named_refusal_and_not_a_traceback(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C8: The command keeps each unit's result in its output folder. Given the names of units to run again, it runs only those, replaces their results, and merges again; it refuses a name that is not a unit of the review and refuses a run that leaves out a unit whose last run again failed, naming that unit, and the record shows which units were run again and when, and that a new setup session was started for them. A unit that failed, or that needs a view the round's starter has since rendered, is therefore run without repeating the others. Out of scope: deciding which units to run again.
+        self.run_command()
+        for content in ("{not json", "{}"):
+            with self.subTest(content=content):
+                self.write(os.path.join(self.out, "failed", "charlie.json"), content)
+                status, text, _ = self.run_command("--rerun", "alpha")
+                self.assertEqual(status, 1, text)
+                self.assertRegex(text, r"REFUSED \| the record of unit charlie's failed attempts .*charlie\.json cannot be read")
+                self.assertIn("delete it", text)
+                self.assertNotIn("Traceback", text)
+        self.assertFalse(os.path.exists(os.path.join(self.out, review_fan_out.LOCK)))
+
+    def test_a_failed_record_that_turns_unreadable_mid_run_is_that_unit_s_failure_and_not_a_traceback(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C8: The command keeps each unit's result in its output folder. Given the names of units to run again, it runs only those, replaces their results, and merges again; it refuses a name that is not a unit of the review and refuses a run that leaves out a unit whose last run again failed, naming that unit, and the record shows which units were run again and when, and that a new setup session was started for them. A unit that failed, or that needs a view the round's starter has since rendered, is therefore run without repeating the others. Out of scope: deciding which units to run again.
+        self.scenario({"units": {"alpha": [{"exit": 1}]}})
+        real = review_fan_out.Run.failed_sessions
+
+        def unreadable(run, unit):
+            if unit == "alpha":
+                raise ValueError("bad json")
+            return real(run, unit)
+        with mock.patch.object(review_fan_out.Run, "failed_sessions", unreadable):
+            status, text, _ = self.run_command("--bound", "3")
+        self.assertEqual(status, 1, text)
+        self.assertRegex(text, r"FAILED \| unit alpha failed after 2 attempts; .*its cost could not be kept \(bad json\)")
+        self.assertNotIn("Traceback", text)
+
+
+class Parsing(unittest.TestCase):
+    """The agent command line's events as the command reads them, over synthetic streams."""
+
+    def stream(self, *events):
+        return "\n".join(json.dumps(event) for event in events)
+
+    def test_an_event_or_block_the_command_relies_on_that_is_ill_formed_is_named_and_never_defaulted(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that reads documents and records and asks for no judgement and no image and for one fixed token as the whole answer; any text the setup session writes, in its answer or between its tool uses, other than that token after trimming, and any content block of its history that is neither text nor a tool use, fails the run, so no forked reviewer inherits a verdict, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file. Out of scope: the content of a caller's prompt for its units.
+        use = lambda **given: {"type": "assistant", "message": {"content": [{"type": "tool_use", **given}]}}
+        cases = {"a tool use with no name": (use(input={}), "tool use with no string `name`"),
+                 "a tool use with a name that is not text": (use(name=7, input={}), "tool use with no string `name`"),
+                 "a tool use with no input": (use(name="Grep"), "Grep tool use with no `input` mapping"),
+                 "an assistant event with no content": ({"type": "assistant", "message": "x"}, "no `message.content` list"),
+                 "a content list that is text": ({"type": "assistant", "message": {"content": "hello"}}, "no `message.content` list"),
+                 "a block with no type": ({"type": "assistant", "message": {"content": [{"text": "x"}]}}, "content block with no string `type`"),
+                 "a block that is not a mapping": ({"type": "assistant", "message": {"content": ["x"]}}, "content block with no string `type`"),
+                 "a text block with no text": ({"type": "assistant", "message": {"content": [{"type": "text"}]}}, "text block with no string `text`")}
+        for name, (event, word) in cases.items():
+            with self.subTest(case=name):
+                session = review_fan_out.parse_stream(self.stream(event))
+                self.assertTrue(any(word in why for why in session.malformed), session.malformed)
+                self.assertFalse(any(name == "None" for name, _, _ in session.tool_uses))
+                problems = review_fan_out.start_problems(session, "the session", ["Read"], None, "/review")
+                self.assertTrue(any(word in why for why in problems), problems)
+        session = review_fan_out.parse_stream(self.stream({"type": "assistant", "message": {"content": [{"type": "text"}]}}))
+        self.assertEqual(session.blocks, [("text", "")])
+
+    def test_a_result_report_that_succeeded_without_a_figure_or_with_a_mistyped_one_is_named(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C5: Against a stub that reports a fork's cost, API time and turn count cumulatively including its setup session, as the agent command line does, the record gives each fork its own cost, time and turns, the setup session its own, and the run their sum; token usage is taken as each session reports it, split into tokens read from the cache, written to it, fresh and generated, and a fork that reads no cache is flagged. The record is in the text and the JSON report. Out of scope: judging whether a run was worth its cost.
+        full = {"type": "result", "is_error": False, "result": "ok", "total_cost_usd": 0.1, "duration_api_ms": 5, "num_turns": 1,
+                "usage": {"input_tokens": 1, "output_tokens": 2, "cache_read_input_tokens": 3, "cache_creation_input_tokens": 4}}
+        good = review_fan_out.parse_stream(self.stream(full))
+        self.assertTrue(good.reported)
+        self.assertEqual((good.malformed, good.absent), ([], []))
+        for key in ("total_cost_usd", "duration_api_ms", "num_turns", "usage", "result"):
+            gone = review_fan_out.parse_stream(self.stream({k: v for k, v in full.items() if k != key}))
+            self.assertEqual(gone.absent, [key])
+            if key != "result":
+                self.assertEqual(review_fan_out.figures(gone)["cost_usd"], 0.0, "no figure is made up")
+        for key in ("input_tokens", "output_tokens", "cache_read_input_tokens", "cache_creation_input_tokens"):
+            gone = review_fan_out.parse_stream(self.stream({**full, "usage": {k: v for k, v in full["usage"].items() if k != key}}))
+            self.assertEqual(gone.absent, [f"usage.{key}"])
+            self.assertFalse(gone.reported)
+        for key, wrong in (("total_cost_usd", "0.1"), ("duration_api_ms", True), ("num_turns", 1.5), ("usage", []), ("result", 5),
+                           ("is_error", "no"), ("session_id", 4)):
+            bad = review_fan_out.parse_stream(self.stream({**full, key: wrong}))
+            self.assertTrue(any(f"`{key}`" in why for why in bad.malformed), (key, bad.malformed))
+        bad = review_fan_out.parse_stream(self.stream({**full, "usage": {**full["usage"], "input_tokens": "1"}}))
+        self.assertTrue(any("`usage.input_tokens`" in why for why in bad.malformed))
+        silent = review_fan_out.parse_stream(self.stream({k: v for k, v in full.items() if k != "is_error"}))
+        self.assertTrue(any("no `is_error`" in why for why in silent.malformed))
+        self.assertFalse(silent.succeeded)
 
 
 class Documentation(unittest.TestCase):
@@ -1132,6 +1409,8 @@ class Documentation(unittest.TestCase):
         for words in ("version 2.1.304", "slash commands", "`--model` takes a full model id", "the built-in plugins and agents",
                       "the account email", "the branch, the status and the recent commit subjects", "outside any work tree",
                       "the hooks and memory exclusions", "any text it writes other than the fixed token",
+                      "is never defaulted or counted as cooperative", "unless the stream itself shows that read failed",
+                      "unit whose last run again failed is unsettled", "flagged `no report`",
                       "neither text nor a tool use", "A pattern with no `round` group matches this round's citations only",
                       'FINDINGS["round"](review_folder)', 'FINDINGS["earlier"](review_folder)', "leaves any other match as written",
                       "naming the cell and the citation", "the caller's unit prompt must forbid it"):
