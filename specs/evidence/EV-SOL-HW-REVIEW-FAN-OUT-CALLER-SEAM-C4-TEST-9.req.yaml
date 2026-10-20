@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM-C4-TEST-9
+type: evidence
+title: test evidence for SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C4
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-20T18:19:33.969745Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_fan_out.py::test_a_rendered_name_that_differs_from_the_drivers_own_name_or_another_rendered_name_only_in_trailing_dots_or_spaces_is_refused
+  artifact_version: d8242fd1c24f478c7e6ab375d789f7c9eaf9a838 (HEAD) plus uncommitted working-tree edits to hardware/README.md, hardware/tools/review_fan_out.py and hardware/tools/tests/test_review_fan_out.py
+attested_by: crun-e169d405aaf6f861
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C4
+    type: satisfies
