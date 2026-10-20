@@ -8,7 +8,7 @@ Replace the OEM control board and mains switching of a Sunbeam EM7000 thermobloc
 
 ## 2. The machine as found
 
-Two thermoblocks (coffee and steam, each about 1 kW), a Ulka EP5 coffee pump that also feeds hot water, a JYPC-4 steam pump, a three-way solenoid valve (brew or hot water), a two-way solenoid valve that vents the coffee block to the drain, a manual steam knob valve with a microswitch, an operator panel (five keys, eight indicator elements, a buzzer) and a gauge assembly (two stepper gauges and a low-water indicator), a flow meter on the coffee pump's suction line, three NTC thermistors, a tank level switch, and mechanical thermostats and thermal fuses in series with the loads. The OEM control board (two Holtek microcontrollers) is replaced. The full record is `reference-machine.md` (the machine as found) and `connector-pinouts.md` (what each connector carries); both are normative and are not repeated here.
+Two thermoblocks (coffee and steam, each about 1 kW), a Ulka EP5 coffee pump that also feeds hot water, a JYPC-4 steam pump, a three-way solenoid valve (brew or hot water), a two-way solenoid valve that vents the coffee block to the drain, a manual steam knob valve with a microswitch, an operator panel (five keys, eight indicator elements, a buzzer) and a gauge assembly (two stepper gauges and a low-water indicator), a flow meter on the coffee pump's suction line, three NTC thermistors, a tank level switch, and mechanical thermostats in series with the loads (the parts list also names a thermal fuse, a published, unverified derived view; none was seen at the board end or found by the owner, `../reference-machine.md` § Protection). The OEM control board (two Holtek microcontrollers) is replaced. The full record is `reference-machine.md` (the machine as found) and `connector-pinouts.md` (what each connector carries); both are normative and are not repeated here.
 
 ## 3. Architecture
 
@@ -22,7 +22,7 @@ mains inlet: Schaffner FN9222-15-06 filter, T10A fuse, RN3404 MOV
    +-- RBdimmer Standard #2 (steam pump)    DIM <- controller
    +-- 4-channel mechanical relay module -> 3-way valve, 2-way vent valve (+ 2 spare)
    +-- BL0942 isolated energy meters x2 (upstream of each SSR) -> controller UART
-   (the OEM thermostats and thermal fuses stay in series with their loads)
+   (the OEM thermostats stay in series with their loads; a thermal fuse is not recorded as fitted, `../reference-machine.md` § Protection)
 
 controller board (low voltage only; prototype PCB or perfboard)
    WeAct MiniSTM32H743 on female headers
@@ -76,7 +76,7 @@ Detailed in `temperature-sensing-front-end.md`. In short:
 
 ## 7. Safety layers
 
-- OEM thermostats (coffee 110 C, steam 200 C, pump 110 C) and thermal fuses stay in series with their loads. [PL]
+- OEM thermostats (coffee 110 C, steam 200 C, pump 110 C) stay in series with their loads. [PL] The parts list also names a steam-block thermal fuse (240 C), a published, unverified derived view: none was seen at the board end and none was found by the owner (`../reference-machine.md` § Protection), so none is recorded as fitted.
 - Mains inlet: T10A slow-blow fuse, filter, MOV; a 1-2 A branch fuse on each dimmer's live; one shared TR5 fuse on the valve branches; T2A on the IRM supply recommended, not required (`mains-inlet-protection.md`). Chain rated above its fuse and the valve branches fused (`DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`): FN9222-15-06 filter (coupler rating unverified), trunk at least 1.5 mm2, one shared TR5 fuse on the valve branches.
 - Valve vent: normally open, fails to the venting state.
 - OPVs: steam OPV on the pump (and on the block if no check valve lies between); a new brew OPV.
@@ -89,7 +89,7 @@ Typical-based 5 V budget is about 0.53 A (worst case with the stepper maximum ab
 
 ## 9. Physical
 
-The control cavity is 133.5 x 130.5 mm and 34.5 mm deep floor to rim, with 23.4 mm usable above the original board's top face within about 2 mm of a wall and 28 mm elsewhere (measured and inferred: `../reference-machine.md` § Controller enclosure as found, which supersedes the earlier 130 x 130 x 28 mm owner statement and the 25 mm note); the BOM estimate with everything inside is roughly 80% full, which it calls too tight with a barrier. Proposed, not decided: mount the SSRs direct to the side wall in the bottom zone near the pumps (the wall is plastic and unearthed as found (reference-machine.md § Controller enclosure as found); each SSR dissipates about 5-6.5 W, which conflicts thermally with the IRM-10-5's derating from 50 C). The H743 sits on four 1x22 female header pieces (2.54 mm pitch; inner columns 33.02 mm apart, outer 38.10 mm, mounting holes 35.56 x 61.38 mm); keep the USB-C end and the NRST/BOOT0/K1/SWD end reachable. Stack height is about 22 mm. Mains-side island gaps on the hand-cut IRM carrier are 4-5 mm or more, then conformal coat with the pins masked.
+The control cavity is 133.5 x 130.5 mm and 34.5 mm deep floor to rim, with 23.4 mm usable above the original board's top face within about 2 mm of a wall and 28 mm elsewhere (the 23.4 mm inferred from measured readings; the 28 mm an owner allowance resting on the AC/DC module's top, a single point, not a measured usable height: `../reference-machine.md` § Controller enclosure as found, which supersedes the earlier 130 x 130 x 28 mm owner statement and the 25 mm note); the BOM estimate with everything inside is roughly 80% full, which it calls too tight with a barrier. Proposed, not decided: mount the SSRs direct to the side wall in the bottom zone near the pumps (the wall is plastic and unearthed as found (reference-machine.md § Controller enclosure as found); each SSR dissipates about 5-6.5 W, which conflicts thermally with the IRM-10-5's derating from 50 C). The H743 sits on four 1x22 female header pieces (2.54 mm pitch; inner columns 33.02 mm apart, outer 38.10 mm, mounting holes 35.56 x 61.38 mm); keep the USB-C end and the NRST/BOOT0/K1/SWD end reachable. Stack height is about 22 mm. Mains-side island gaps on the hand-cut IRM carrier are 4-5 mm or more, then conformal coat with the pins masked.
 
 ## 10. Verification and commissioning
 

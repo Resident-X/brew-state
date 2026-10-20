@@ -66,7 +66,7 @@ Each node must be read with `show` before linking, and existing coverage checked
 
 ## E. Housekeeping and unresolved items from the refresh
 
-- The mainboard's own height (an estimate; the cavity is 34.5 mm deep, with 23.4 mm usable above the original board within about 2 mm of a wall and 28 mm elsewhere: `../reference-machine.md` § Controller enclosure as found, which supersedes the 25 mm note) and the dimmer module's height (footprint 50 x 16 mm).
+- The mainboard's own height (an estimate; the cavity is 34.5 mm deep, with 23.4 mm usable above the original board within about 2 mm of a wall and 28 mm elsewhere, an owner allowance resting on the AC/DC module's top, a single point: `../reference-machine.md` § Controller enclosure as found, which supersedes the 25 mm note) and the dimmer module's height (footprint 50 x 16 mm).
 - The 10 A chain margin is resolved by `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE` (15 A filter, trunk above the fuse); the 15 A filter's coupler rating is unverified and its termination type is not recorded.
 - Whether the IRM-10-5 has an internal fuse (the old text and the BOM disagreed).
 - Nothing specifies ferrules for the screw terminals, the FN9222's termination type, the earth conductor and chassis stud, or the temperature ratings of PVC wire and flex near the hot blocks.
