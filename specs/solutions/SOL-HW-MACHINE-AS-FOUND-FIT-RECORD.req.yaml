@@ -25,7 +25,7 @@ links:
     type: justified-by
 brief_confirmation:
   confirmer: claude-sonnet-5-5 (independent brief reviewer)
-  fingerprint: 56226375da9f4e7a6df4066f47eade092883ea8b8d999547a9861060bec0b740
+  fingerprint: c5d2a413d4ed6ae1c82827f679f6b50e3e705b719a92cdb9d4846dfa0d554922
   gating_profile: ""
 design_question_answers:
   - answered_by: SOL-HW-MACHINE-AS-FOUND-FIT-RECORD.C3
