@@ -12,7 +12,7 @@ text: |
   Settled before the build.
 
   - The units are the layout catalogue's areas, found as the layout caller finds them. Each area's reviewer decides which of its items bear on the critical nets, as the method's step 4 has the reviewer decide, judges those, and lists the rest with the reason.
-  - The merge writes one pass: every catalogue item either has a verdict row or is on the list, once; the pass number, the commit judged and the views are inputs from whoever runs the check, as the layout round's fields are; the pass is appended to the plan's section and never replaces an earlier pass, since the history command refuses that.
+  - The merge writes one pass: every catalogue item either has a verdict row or is on the list, once; the pass number, the commit judged and the views are inputs from whoever runs the check, as the layout round's fields are; the pass is rendered through the rendered record the caller-seam solution adds, in the form the plan's section holds, into the output folder, which is outside the repository; whoever runs the check appends it below the earlier passes and never in place of one, since the history command refuses that.
   - The rule-kind items rest on the rules table alone here, as the method says, because the pre-order check fails a board that is not fully routed and is not run at this step.
   - Re-routes follow the method's own loop, a failing pass and a later pass at the re-routed commit; each pass is one run of the command.
   - The tests need no model and no KiCad, using the driver's stub over synthetic plans.
@@ -39,4 +39,6 @@ links:
   - target: SOL-HW-REVIEW-FAN-OUT-LAYOUT
     type: depends-on
   - target: SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS
+    type: depends-on
+  - target: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM
     type: depends-on

@@ -5,8 +5,8 @@ status: active
 version: 1
 measurement_type: binary
 verification: test
-text: |
-  The driver passes the review folder to the caller's prompt function with the unit, for a forked reviewer and for the one unit judged in the setup session. A caller whose prompt function takes the unit alone is refused at load naming the attribute. Out of scope: any file the folder holds.
+text: |-
+  The driver passes the review folder to the caller's prompt function with the unit, for a forked reviewer and for the one unit judged in the setup session. A caller whose prompt function takes the unit alone is refused at load naming the attribute, and a prompt function that raises fails the run naming the caller and the unit. Out of scope: any file the folder holds.
 links:
   - target: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM
     type: criterion-of
