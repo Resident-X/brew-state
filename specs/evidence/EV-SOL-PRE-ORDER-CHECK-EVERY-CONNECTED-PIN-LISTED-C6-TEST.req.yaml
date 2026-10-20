@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED-C6-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C6
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-20T03:50:58.795571Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_voltage.py::TheHardwareNotesCarryAnEntryForEachRule.test_the_pin_limit_entry_and_bullet_state_the_coverage_failure_its_exemption_and_its_name_and_no_longer_exempt_a_current_limited_pin
+  artifact_version: 2fffd9ced3eaec7cc807fc5f18c203fc6c0560b2
+attested_by: crun-e77bfc23887dc38f
+links:
+  - target: SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C6
+    type: satisfies
