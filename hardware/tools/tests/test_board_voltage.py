@@ -916,7 +916,7 @@ class TheHardwareNotesCarryAnEntryForEachRule(unittest.TestCase):
             lines = handle.read().splitlines()
         start = lines.index("  hw:reads:")
         description = next(line for line in lines[start:] if line.strip().startswith("desc:"))
-        self.assertIn("derating policy and pin-limit records", description)
+        self.assertIn("derating policy, pin-limit and board rules records", description)
 
 
 class EveryTrackedDesignCarriesTheRecordsTheRulesRead(World):

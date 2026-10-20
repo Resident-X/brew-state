@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS-C1-TEST-19
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-20T11:50:35.394283Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad.py::test_the_proof_requires_the_mains_pair_rule_to_decide_after_the_signed_rule
+  artifact_version: e875e6d460352c571c9733f4412e4e84065c4d3f
+attested_by: crun-e4d26c30ff44e3ad
+links:
+  - target: SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS.C1
+    type: satisfies

@@ -2,11 +2,11 @@ id: SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS.C1
 type: criterion
 title: A sensing net closer to a switching or drive net than the declared clearance fails
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |-
-  A board rules record, board-rules.yaml, found by the nearest-folder rule and marked synthetic in a proof design, holds a sensing mapping of classes (net classes carrying precision sensing), noisy_classes, clearance_mm and source, and each mapping may state none explicitly; silence, a clearance without its source, or no figure fails. The check inserts on a temporary copy, after the design's own rules and ahead of the signed Mains rule so that the signed rule stays last and wins, one rule per sensing and noisy class pair at the declared clearance, or at the larger of that clearance and the signed clearance where the pair involves the Mains class, and fails where a sensing item sits closer. The layout practice catalogue's sensing item moves from reviewer judgement to enforced. Out of scope: inferring classes from net names and the choice of the real clearance figure.
+  A board rules record, board-rules.yaml, found by the nearest-folder rule and marked synthetic in a proof design, holds a sensing mapping of classes (net classes carrying precision sensing), noisy_classes, clearance_mm and source, and each mapping may state none explicitly; silence, a clearance without its source, or no figure fails. The check inserts on a temporary copy, after the design's own rules and ahead of the signed Mains rule, one rule per sensing and noisy class pair that does not involve the Mains class at the declared clearance, and after the signed rule, one rule per pair that involves the Mains class holding a clearance constraint only at the larger of the declared clearance and the signed clearance, so that no rule loosens the signed figure and the signed creepage stays with the signed rule; it fails where a sensing item sits closer than its pair's figure. A local clearance override on a pad or footprint on a sensing or noisy class net that is below the declared sensing clearance fails. The layout practice catalogue's sensing item moves from reviewer judgement to enforced. Out of scope: inferring classes from net names and the choice of the real clearance figure.
 links:
   - target: SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS
     type: criterion-of

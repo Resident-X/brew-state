@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS-C5-TEST-8
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS.C5
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-20T11:50:38.740484Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_rules.py::test_each_mapping_may_state_none_explicitly
+  artifact_version: e875e6d460352c571c9733f4412e4e84065c4d3f
+attested_by: crun-e4d26c30ff44e3ad
+links:
+  - target: SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS.C5
+    type: satisfies

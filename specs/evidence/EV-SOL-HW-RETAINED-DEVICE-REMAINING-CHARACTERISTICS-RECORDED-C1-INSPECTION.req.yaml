@@ -1,0 +1,16 @@
+id: EV-SOL-HW-RETAINED-DEVICE-REMAINING-CHARACTERISTICS-RECORDED-C1-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-RETAINED-DEVICE-REMAINING-CHARACTERISTICS-RECORDED.C1
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-20T11:38:59.109888Z"
+artifact:
+  kind: external
+  reference: 'engine-command: staircase validate --format json'
+  artifact_version: 6f519f4a054daa33c78cc9d4cc8da0033c6b5587
+attested_by: crun-344ad6d7654d9514
+links:
+  - target: SOL-HW-RETAINED-DEVICE-REMAINING-CHARACTERISTICS-RECORDED.C1
+    type: satisfies

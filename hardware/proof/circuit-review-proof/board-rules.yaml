@@ -1,0 +1,7 @@
+# A synthetic board rules record, made only to prove the pre-order check against the
+# throwaway design beside it. The design declares no sensing net class and no ground
+# net class, so it states none for each mapping. Being marked synthetic, the check
+# accepts it only for a design marked not for manufacture.
+sensing: none
+ground_returns: none
+synthetic: true

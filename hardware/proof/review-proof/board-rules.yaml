@@ -1,0 +1,27 @@
+# A synthetic board rules record, made only to prove the pre-order check against the
+# throwaway layout review proof design beside it. Its figures are not read from any
+# guideline and must never be used for a board that is ordered: being marked
+# synthetic, the check accepts it only for a design marked not for manufacture.
+sensing:
+  classes:
+    - Sensing
+  noisy_classes:
+    - Mains
+    - Power
+  clearance_mm: 0.5
+  source: none -- synthetic figure chosen to exercise the check, not read from a guideline
+ground_returns:
+  ground_classes:
+    - Ground
+  non_signal_classes:
+    - Mains
+    - Power
+    - Supply
+  signal_classes:
+    - class: Default
+      signal_pins_per_return: 2
+      source: none -- synthetic figure chosen to exercise the check, not read from a guideline
+    - class: Sensing
+      signal_pins_per_return: 1
+      source: none -- synthetic figure chosen to exercise the check, not read from a guideline
+synthetic: true
