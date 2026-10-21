@@ -6,9 +6,11 @@ reviewer and nothing of the designer's reasoning. For a board committed in a
 repository this command writes it, outside the repository: the board's design
 files as the commit holds them, with its plan, its rules table and the records
 those name; the method and the hardware notes; the rendered views and the
-placement view; the pre-order check's report; and one round file that holds the
-round's own fields. It holds no session or notes file and no other file the
-commit does not hold. For a round after the first it also holds the earlier
+placement view; the pre-order check's report; two extracts written from the
+commit, the layout facts (the positions, pads, segments, vias and zones of the
+board file) and the method's sections a layout review needs; and one round file
+that holds the round's own fields. It holds no session or notes file and no other
+file the commit does not hold. For a round after the first it also holds the earlier
 rounds of the board's review record as the commit holds them, since a verdict
 row may cite a finding an earlier round closed by a reason, and for a first
 round it holds no review record.
@@ -31,11 +33,12 @@ with the reason the changed regions touch it, its changed regions and the line
 saying why every other item is not judged; a full round gives none of them. A
 missing or malformed field refuses the command, naming it.
 
---add-view puts a view the starter rendered, and the command that rendered it,
-into a folder this command wrote and into the round file's views, and records the
-item whose cannot judge asked for the view, with that Why, so the merge can build
-the row from them once the unit is judged again. It refuses a view that does not
-exist and a folder this command did not write.
+--add-view puts a view the starter rendered into the added-views folder of a
+folder this command wrote and records, in a resolutions file there, the item whose
+cannot judge asked for the view, with that Why, the view and the command that
+rendered it, so the merge can build the row from them once the unit is judged
+again. The round file is not rewritten and nothing of the shared context changes.
+It refuses a view that does not exist and a folder this command did not write.
 
 Each cause is reported on one line beginning REFUSED, a RESULT line comes last,
 and the exit status is 0 when the folder is written, 1 when the command refuses
@@ -46,6 +49,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import re
 import shutil
@@ -59,12 +63,21 @@ sys.path.insert(0, TOOLS_DIR)
 import board_check  # noqa: E402
 import board_review_history  # noqa: E402
 import review_seed  # noqa: E402
+import sexpr  # noqa: E402
 
 REPO = review_seed.REPO
 #: The round file, in the review folder's root, and the marker that says this command wrote it.
 ROUND_FILE = "round.json"
 TOOL = "review-folder"
 ADDED_VIEWS = "added-views"
+#: The file of the added-views folder that records each cannot judge a view was added for.
+RESOLUTIONS = "resolutions.json"
+#: The extracts written into the folder from the commit: the layout facts, and the method's sections a layout review needs.
+LAYOUT_FACTS = "layout-facts.txt"
+METHOD_EXTRACT = "method-extract.md"
+METHOD = "docs/board-design-method.md"
+#: The method's sections in the method extract, in the order it holds them; the last is the whole layout practice catalogue.
+METHOD_SECTIONS = ("Layout review", "Layout review views", "Layout practice catalogue")
 CHECK_REPORT = review_seed.REPORT
 VIEWS = review_seed.VIEWS
 PLACEMENT = review_seed.PLACEMENT
@@ -172,11 +185,6 @@ def read_round(folder: str) -> Dict[str, Any]:
     problems = round_problems(content, fields)
     if problems:
         raise ReviewFolderProblem(f"the round file {path} holds fields that are missing or malformed: " + "; ".join(problems))
-    entries = content.get("cannot_judge", [])
-    if not isinstance(entries, list) or not all(isinstance(entry, dict) and all(
-            one_line(entry.get(key)) for key in ("item", "why", "view")) for entry in entries):
-        raise ReviewFolderProblem(f"the round file {path} gives its cannot judge entries as {entries!r}, which are not each "
-                                  "an item, a Why and a view; add them with the folder command's --add-view")
     return content
 
 
@@ -192,6 +200,185 @@ def design_in(folder: str) -> str:
         raise ReviewFolderProblem(f"the review folder {folder} holds {len(found)} KiCad project files outside its views; it "
                                   "must hold the one design under review, so write it with the folder command")
     return found[0]
+
+
+def read_resolutions(folder: str) -> List[Dict[str, str]]:
+    """The cannot judge resolutions the add-view mode recorded in a review folder, in the order they were added; none when
+    nothing was added. Each is an item, the Why of its cannot judge, the view added for it and the command that rendered
+    the view, and the view must be a file of the folder."""
+    path = os.path.join(folder, ADDED_VIEWS, RESOLUTIONS)
+    if not os.path.exists(path):
+        return []
+    try:
+        with open(path, encoding="utf-8") as handle:
+            content = json.load(handle)
+    except (OSError, ValueError, RecursionError) as error:
+        raise ReviewFolderProblem(f"the resolutions file {path} cannot be read ({error}); add the views again with the folder "
+                                  "command's --add-view")
+    entries = content.get("resolutions") if isinstance(content, dict) and content.get("tool") == TOOL else None
+    if not isinstance(entries, list) or not all(isinstance(entry, dict) and all(
+            one_line(entry.get(key)) for key in ("item", "why", "view", "command")) for entry in entries):
+        raise ReviewFolderProblem(f"the resolutions file {path} holds {entries!r:.100}, which is not a list of an item, a Why, a "
+                                  "view and a command each; add the views with the folder command's --add-view")
+    for entry in entries:
+        if not os.path.isfile(os.path.join(folder, entry["view"])):
+            raise ReviewFolderProblem(f"the resolutions file {path} names the view {entry['view']}, which the folder does not "
+                                      "hold; add the view again with the folder command's --add-view")
+    return [dict(entry) for entry in entries]
+
+
+# --- The extracts written from the commit -------------------------------------------------------
+
+
+class FactsError(ValueError):
+    """The board file cannot be read for the layout facts."""
+
+
+def method_section(text: str, heading: str) -> Optional[str]:
+    """The method's `## <heading>` section, up to the next level-two heading; None when the method has none."""
+    found = re.search(r"^## " + re.escape(heading) + r"[ \t]*\n.*?(?=^## |\Z)", text, re.M | re.S)
+    return found.group(0).rstrip() + "\n" if found else None
+
+
+def missing_sections(text: str) -> List[str]:
+    """The sections of METHOD_SECTIONS the method text lacks."""
+    return [heading for heading in METHOD_SECTIONS if method_section(text, heading) is None]
+
+
+def method_extract(text: str) -> str:
+    """The method's layout review section, its views section and the whole layout practice catalogue, as the extract the
+    shared context holds; a method that lacks one is a refusal naming it."""
+    lacking = missing_sections(text)
+    if lacking:
+        raise Refused([f"the method {METHOD} has no `## {heading}` section, which the review's shared context holds; give "
+                       "documents that hold it" for heading in lacking])
+    return ("METHOD EXTRACT from " + METHOD + ": the sections of the method that a layout review needs, in this order.\n\n"
+            + "\n".join(method_section(text, heading) for heading in METHOD_SECTIONS))
+
+
+def millimetres(value: Any) -> str:
+    text = ("%.4f" % float(value)).rstrip("0").rstrip(".")
+    return "0" if text in ("-0", "") else text
+
+
+def reference_key(reference: str):
+    found = re.match(r"([A-Za-z]+)(\d+)", reference)
+    return (found.group(1), int(found.group(2)), reference) if found else (reference, 0, reference)
+
+
+def layout_facts(text: str, name: str) -> str:
+    """The positions, pads, segments, vias and zones of a layout file, as plain text a reviewer reads a distance from: no
+    judgement, millimetres in board coordinates, the same text for the same file. A file that cannot be read is a FactsError."""
+    try:
+        root = sexpr.parse_one(text)
+        return facts_text(root, name)
+    except (sexpr.SexprError, ValueError, IndexError, TypeError) as error:
+        raise FactsError(f"the layout file {name} cannot be read for the layout facts ({error}); commit a layout file KiCad "
+                         "wrote")
+
+
+def net_name(node: Any, names: Dict[str, str]) -> str:
+    """The net a pad, segment, via or zone belongs to: KiCad writes `(net <id> "<name>")` or `(net "<name>")`."""
+    if node is None or len(node) < 2:
+        return "-"
+    if len(node) > 2:
+        return str(node[2])
+    return names.get(str(node[1]), str(node[1]))
+
+
+def facts_text(root: list, name: str) -> str:
+    kids, kid = sexpr.children, sexpr.child
+    f = millimetres
+    names = {str(n[1]): str(n[2]) for n in kids(root, "net") if len(n) > 2}
+    out = [f"LAYOUT FACTS extracted from {name} (millimetres, board coordinates, y grows downward; angles in degrees as in "
+           "the file). Pad positions are absolute (footprint position and rotation applied).", "", "== BOARD =="]
+    for layers in kids(root, "layers")[:1]:
+        out.append("layers: " + ", ".join(f"{l[1]}({l[2]})" for l in layers[1:] if isinstance(l, list) and len(l) > 2))
+    for g in root[1:]:
+        if isinstance(g, list) and sexpr.head(g) in ("gr_line", "gr_rect", "gr_arc", "gr_circle", "gr_poly"):
+            layer = kid(g, "layer")
+            if layer and layer[1] == "Edge.Cuts":
+                start, end = kid(g, "start"), kid(g, "end")
+                out.append(f"{g[0]} Edge.Cuts " + (f"({f(start[1])},{f(start[2])})-({f(end[1])},{f(end[2])})" if start and end else ""))
+    out += ["", "== FOOTPRINTS (reference | library id | layer | at x,y,rot | value) =="]
+    parts = []
+    for fp in kids(root, "footprint"):
+        reference = value = ""
+        for p in kids(fp, "property"):
+            if p[1] == "Reference":
+                reference = str(p[2])
+            if p[1] == "Value":
+                value = str(p[2])
+        for t in kids(fp, "fp_text"):
+            if len(t) > 2 and t[1] == "reference" and not reference:
+                reference = str(t[2])
+            if len(t) > 2 and t[1] == "value" and not value:
+                value = str(t[2])
+        at, layer = kid(fp, "at"), kid(fp, "layer")
+        rotation = float(at[3]) if len(at) > 3 else 0.0
+        parts.append((reference, str(fp[1]), str(layer[1]), float(at[1]), float(at[2]), rotation, value, fp))
+    parts.sort(key=lambda part: (reference_key(part[0]), part[1], part[3], part[4]))
+    for reference, library, layer, x, y, rotation, value, fp in parts:
+        out.append(f"{reference} | {library} | {layer} | at {f(x)},{f(y)},{f(rotation)} | {value}")
+    out += ["", "== PADS (per footprint: pad number | absolute x,y | shape size w x h | layers | net) =="]
+    for reference, library, layer, x, y, rotation, value, fp in parts:
+        out.append(f"{reference} ({layer}):")
+        angle = math.radians(rotation)
+        for pad in kids(fp, "pad"):
+            at = kid(pad, "at")
+            px, py = float(at[1]), float(at[2])
+            ax = x + px * math.cos(angle) + py * math.sin(angle)
+            ay = y - px * math.sin(angle) + py * math.cos(angle)
+            turned = (float(at[3]) if len(at) > 3 else 0.0) + rotation
+            size, layers = kid(pad, "size"), kid(pad, "layers")
+            out.append(f"  {pad[1]} | {f(ax)},{f(ay)} | {pad[3] if len(pad) > 3 else ''} {f(size[1])}x{f(size[2])}"
+                       f"{' rot ' + f(turned) if turned % 360 else ''} | {' '.join(map(str, layers[1:])) if layers else ''} | "
+                       f"{net_name(kid(pad, 'net'), names)}")
+    out += ["", "== TRACK SEGMENTS per net (start -> end | width | layer) =="]
+    segments: Dict[str, list] = {}
+    for s in kids(root, "segment"):
+        start, end = kid(s, "start"), kid(s, "end")
+        segments.setdefault(net_name(kid(s, "net"), names), []).append(
+            (str(kid(s, "layer")[1]), f(start[1]), f(start[2]), f(end[1]), f(end[2]), f(kid(s, "width")[1])))
+    for net in sorted(segments):
+        out.append(f"{net}:")
+        for layer, x1, y1, x2, y2, width in sorted(segments[net]):
+            out.append(f"  {layer} | ({x1},{y1}) -> ({x2},{y2}) | w {width}")
+    out += ["", "== VIAS (x,y | size/drill | layers | net) =="]
+    vias = []
+    for v in kids(root, "via"):
+        at, layers = kid(v, "at"), kid(v, "layers")
+        vias.append((net_name(kid(v, "net"), names), float(at[1]), float(at[2]), f(kid(v, "size")[1]), f(kid(v, "drill")[1]),
+                     "-".join(map(str, layers[1:])) if layers else ""))
+    for net, x, y, size, drill, layers in sorted(vias):
+        out.append(f"{net} | {f(x)},{f(y)} | {size}/{drill} | {layers}")
+    out += ["", "== ZONES (name | net | layers | clearance | min thickness | connect | outline bbox and vertices | filled polygons count) =="]
+    for z in kids(root, "zone"):
+        zone_name = kid(z, "name")
+        named = kid(z, "net_name")
+        net = str(named[1]) if named and len(named) > 1 else net_name(kid(z, "net"), names)
+        layers = kid(z, "layer") or kid(z, "layers")
+        polygon = kid(z, "polygon")
+        pts = kid(polygon, "pts") if polygon else None
+        xy = [(float(p[1]), float(p[2])) for p in kids(pts, "xy")] if pts else []
+        box = (f"bbox ({f(min(p[0] for p in xy))},{f(min(p[1] for p in xy))})-({f(max(p[0] for p in xy))},"
+               f"{f(max(p[1] for p in xy))})") if xy else ""
+        vertices = " ".join(f"({f(p[0])},{f(p[1])})" for p in xy)
+        connect = kid(z, "connect_pads")
+        clearance = kid(connect, "clearance") if connect else None
+        thickness = kid(z, "min_thickness")
+        out.append(f"{zone_name[1] if zone_name else '-'} | net {net}"
+                   f" | {' '.join(map(str, layers[1:])) if layers else ''} | clearance {f(clearance[1]) if clearance else '-'}"
+                   f" | min thickness {f(thickness[1]) if thickness else '-'} | {'keepout' if kid(z, 'keepout') else 'copper pour'}"
+                   f" | {box} | vertices {vertices} | filled polygons {len(kids(z, 'filled_polygon'))}")
+    out += ["", "== OTHER GRAPHICS (non-Edge.Cuts gr_ items: type layer endpoints) =="]
+    for g in root[1:]:
+        if isinstance(g, list) and sexpr.head(g).startswith("gr_") and sexpr.head(g) != "gr_text":
+            layer = kid(g, "layer")
+            if layer and layer[1] != "Edge.Cuts":
+                start, end = kid(g, "start"), kid(g, "end")
+                out.append(f"{g[0]} {layer[1]} " + (f"({f(start[1])},{f(start[2])})-({f(end[1])},{f(end[2])})" if start and end else ""))
+    return "\n".join(out) + "\n"
 
 
 # --- The command --------------------------------------------------------------------------------
@@ -235,9 +422,9 @@ def committed_board(repo: str, commit: str, design: str) -> Dict[str, Any]:
     files = review_seed.design_files(repo, sha, design)
     projects = [name for name in files if "/" not in name and name.endswith(".kicad_pro")]
     layouts = [name for name in files if "/" not in name and name.endswith(".kicad_pcb")]
-    if len(projects) != 1 or not layouts:
+    if len(projects) != 1 or len(layouts) != 1:
         raise Refused([f"the commit {commit} holds no board at {design}: it needs the design folder's one KiCad project and "
-                       f"its layout, and holds {len(projects)} projects and {len(layouts)} layouts there"])
+                       f"its one layout, and holds {len(projects)} projects and {len(layouts)} layouts there"])
     return {"sha": sha, "files": files}
 
 
@@ -308,6 +495,20 @@ def write_folder(args: argparse.Namespace, out: str, repo: str, documents_repo: 
     except review_seed.Refused as error:
         causes.append(str(error))
         documents = None
+    extracts: Dict[str, str] = {}
+    if board:
+        layout = next(name for name in board["files"] if "/" not in name and name.endswith(".kicad_pcb"))
+        try:
+            extracts[LAYOUT_FACTS] = layout_facts(board["files"][layout].decode("utf-8"), layout)
+        except (FactsError, UnicodeDecodeError) as error:
+            causes.append(str(error))
+    if documents and METHOD in documents:
+        try:
+            extracts[METHOD_EXTRACT] = method_extract(documents[METHOD].decode("utf-8"))
+        except Refused as error:
+            causes += error.causes
+        except UnicodeDecodeError:
+            causes.append(f"the method {METHOD} is not UTF-8 text; give documents that hold it")
     if causes:
         raise Refused(causes)
     os.makedirs(out, exist_ok=True)
@@ -319,7 +520,10 @@ def write_folder(args: argparse.Namespace, out: str, repo: str, documents_repo: 
         shutil.copytree(args.views, os.path.join(out, VIEWS))
         shutil.copytree(args.placement, os.path.join(out, PLACEMENT))
         shutil.copyfile(args.check_report, os.path.join(out, CHECK_REPORT))
-        content = {"tool": TOOL, "fields": list(fields), "cannot_judge": [], **{key: values[key] for key in values
+        for extract, text in extracts.items():
+            with open(os.path.join(out, extract), "w", encoding="utf-8", newline="") as handle:
+                handle.write(text)
+        content = {"tool": TOOL, "fields": list(fields), **{key: values[key] for key in values
                    if key in fields or key in NARROW_FIELDS and values[key] not in (None, [], "")}}
         with open(os.path.join(out, ROUND_FILE), "w", encoding="utf-8") as handle:
             handle.write(settled(content))
@@ -328,7 +532,7 @@ def write_folder(args: argparse.Namespace, out: str, repo: str, documents_repo: 
         shutil.rmtree(out, ignore_errors=True)
         raise
     return {"result": "WRITTEN", "folder": out, "commit": board["sha"], "design": args.design,
-            "design_files": written, "documents": sorted(documents), "round": {key: content.get(key) for key in fields}}
+            "design_files": written, "documents": sorted(documents), "extracts": sorted(extracts), "round": {key: content.get(key) for key in fields}}
 
 
 def pair_of(entry: str) -> Dict[str, str]:
@@ -338,12 +542,15 @@ def pair_of(entry: str) -> Dict[str, str]:
 
 
 def add_view(args: argparse.Namespace) -> Dict[str, Any]:
-    """A view added to a folder this command wrote, with the cannot judge it resolves; or a refusal naming every cause."""
+    """A view added to a folder this command wrote, with the cannot judge it resolves; or a refusal naming every cause. The
+    view goes to the added-views folder and the resolution to the file there; the round file is not rewritten."""
     folder = os.path.abspath(args.add_view)
     causes: List[str] = []
     content: Dict[str, Any] = {}
+    held: List[Dict[str, str]] = []
     try:
         content = read_round(folder)
+        held = read_resolutions(folder)
     except ReviewFolderProblem as error:
         causes.append(f"{folder} is not a review folder the command wrote and can add to: {error}")
     if content and "views" not in content["fields"]:
@@ -351,9 +558,9 @@ def add_view(args: argparse.Namespace) -> Dict[str, Any]:
     view = os.path.abspath(args.view) if args.view else None
     if view is None or not os.path.isfile(view):
         causes.append(f"the view {args.view} does not exist; render it, then give the file")
-    elif not PLAIN_NAME.fullmatch(os.path.basename(view)):
+    elif not PLAIN_NAME.fullmatch(os.path.basename(view)) or os.path.basename(view) == RESOLUTIONS:
         causes.append(f"the view's file name {os.path.basename(view)!r} is not a plain name of letters, digits, dots, dashes "
-                      "and underscores; rename it")
+                      "and underscores, or is the name of the resolutions file; rename it")
     elif os.path.lexists(os.path.join(folder, ADDED_VIEWS, os.path.basename(view))):
         causes.append(f"the folder already holds an added view named {os.path.basename(view)}; give the new view another name")
     command = args.view_command[0] if args.view_command and len(args.view_command) == 1 else None
@@ -367,14 +574,13 @@ def add_view(args: argparse.Namespace) -> Dict[str, Any]:
     name = os.path.basename(view)
     os.makedirs(os.path.join(folder, ADDED_VIEWS), exist_ok=True)
     shutil.copyfile(view, os.path.join(folder, ADDED_VIEWS, name))
-    content["views"] = content["views"] + [f"{command} (added view: {ADDED_VIEWS}/{name})"]
-    content["cannot_judge"] = content.get("cannot_judge", []) + [
-        {"item": args.cannot_judge_item.strip(), "why": args.cannot_judge_why.strip(), "view": f"{ADDED_VIEWS}/{name}"}]
-    scratch = os.path.join(folder, ROUND_FILE + ".part")
+    entry = {"item": args.cannot_judge_item.strip(), "why": args.cannot_judge_why.strip(), "view": f"{ADDED_VIEWS}/{name}",
+             "command": command.strip()}
+    scratch = os.path.join(folder, ADDED_VIEWS, RESOLUTIONS + ".part")
     with open(scratch, "w", encoding="utf-8") as handle:
-        handle.write(settled(content))
-    os.replace(scratch, os.path.join(folder, ROUND_FILE))
-    return {"result": "ADDED", "folder": folder, "view": f"{ADDED_VIEWS}/{name}", "item": args.cannot_judge_item.strip()}
+        handle.write(settled({"tool": TOOL, "resolutions": held + [entry]}))
+    os.replace(scratch, os.path.join(folder, ADDED_VIEWS, RESOLUTIONS))
+    return {"result": "ADDED", "folder": folder, "view": f"{ADDED_VIEWS}/{name}", "item": entry["item"]}
 
 
 def finish(report: Dict[str, Any], as_json: bool, out_stream) -> int:

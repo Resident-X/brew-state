@@ -18,6 +18,7 @@ TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, TOOLS)
 
 import review_folder  # noqa: E402
+import review_kit_fixtures as kit_fx  # noqa: E402
 
 DESIGN = "hardware/synth/board"
 METHOD = """# Synthetic board design method
@@ -64,6 +65,18 @@ Every item carries fields.
 
 Unrelated: #### NOT-1. Not a layout item
 """
+#: The same method with a fourth area, no cross-reference of which links it to another, so a round can fall in two groups.
+METHOD_SENSE = METHOD.replace("## Ordering", """### Sensing (SENSE)
+
+#### SENSE-1. The probe is kept short
+
+- **Applies when:** always.
+
+#### SENSE-2. The probe is shielded
+
+- **Applies when:** always.
+
+## Ordering""")
 README = "# Synthetic hardware notes\n\nThe views index and the facts.\n"
 OWN_NONE = "| none | | | | | | | | | |"
 OWN_ROWS = ("| BOARD-1 | always | Asks | Passes | Fails | `classes` | judgement | quality | the plan | How it is met |\n"
@@ -118,8 +131,29 @@ CHECK_LINES = ["DESIGN | hardware/synth/board/board.kicad_pro | PASS",
 VIEW_COMMANDS = ["task hw:views -- --board board.kicad_pcb --project board.kicad_pro --out <views>",
                  "task hw:placement -- --board board.kicad_pcb --project board.kicad_pro --out <placement>"]
 
+#: A layout file of two parts, a track, a via and a zone, with synthetic names and figures, for the layout facts.
+BOARD_PCB = """(kicad_pcb (version 20240108) (generator "synthetic")
+ (layers (0 "F.Cu" signal) (31 "B.Cu" signal) (44 "Edge.Cuts" user))
+ (net 0 "") (net 1 "GND") (net 2 "VCC")
+ (gr_line (start 0 0) (end 40 0) (layer "Edge.Cuts") (width 0.1))
+ (gr_line (start 0 0) (end 0 30) (layer "Edge.Cuts") (width 0.1))
+ (gr_line (start 1 1) (end 2 2) (layer "F.SilkS") (width 0.1))
+ (footprint "Lib:C_0603" (layer "F.Cu") (at 10 10 90)
+  (property "Reference" "C2") (property "Value" "100nF")
+  (pad "1" smd rect (at -0.8 0) (size 0.9 0.95) (layers "F.Cu" "F.Mask") (net 2 "VCC"))
+  (pad "2" smd rect (at 0.8 0) (size 0.9 0.95) (layers "F.Cu" "F.Mask") (net 1 "GND")))
+ (footprint "Lib:U_8" (layer "F.Cu") (at 20 10)
+  (property "Reference" "C10") (property "Value" "chip")
+  (pad "1" smd rect (at 0 0) (size 1 1) (layers "F.Cu") (net 2 "VCC")))
+ (segment (start 10 10.8) (end 20 10) (width 0.25) (layer "F.Cu") (net 2))
+ (via (at 15 10) (size 0.8) (drill 0.4) (layers "F.Cu" "B.Cu") (net 1))
+ (zone (net 1) (net_name "GND") (layer "B.Cu") (name "gnd") (connect_pads (clearance 0.3)) (min_thickness 0.2)
+  (polygon (pts (xy 0 0) (xy 40 0) (xy 40 30) (xy 0 30))))
+)
+"""
+
 BOARD_FILES = {
-    "board.kicad_pro": "{}\n", "board.kicad_pcb": "(kicad_pcb committed)\n", "board.kicad_sch": "(kicad_sch)\n",
+    "board.kicad_pro": "{}\n", "board.kicad_pcb": BOARD_PCB, "board.kicad_sch": "(kicad_sch)\n",
     "board.kicad_dru": "(version 1)\n", "fp-lib-table": "(fp_lib_table)\n", "board.pretty/part.kicad_mod": "(footprint part)\n",
     "design-rules.md": "# Rules\n", "constraints.md": "# Constraints\n", "separation-basis.yaml": "standard: synthetic\n",
 }
@@ -131,9 +165,9 @@ def git(repo: str, *args: str) -> str:
     return done.stdout.strip()
 
 
-def write(path: str, text: str) -> None:
+def write(path: str, text) -> None:
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8") as handle:
+    with open(path, "wb" if isinstance(text, bytes) else "w", **({} if isinstance(text, bytes) else {"encoding": "utf-8"})) as handle:
         handle.write(text)
 
 
@@ -158,8 +192,9 @@ def make_views(root: str) -> dict:
     views, placement = os.path.join(root, "views-in"), os.path.join(root, "placement-in")
     write(os.path.join(views, "index.txt"), "layer-F.Cu.png\n")
     write(os.path.join(views, "facts.txt"), "net facts\n")
-    write(os.path.join(views, "layer-F.Cu.png"), "png")
+    write(os.path.join(views, "layer-F.Cu.png"), kit_fx.png(200, 120, 30))
     write(os.path.join(placement, "index.txt"), "placement.png\n")
+    write(os.path.join(placement, "placement.png"), kit_fx.png(160, 100, 60))
     write(os.path.join(placement, "measures.txt"), "LENGTH 1\n")
     report = os.path.join(root, "report-in.txt")
     write(report, "\n".join(CHECK_LINES) + "\n")
