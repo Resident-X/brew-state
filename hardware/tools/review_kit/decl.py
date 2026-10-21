@@ -122,11 +122,33 @@ class Declaration:
 
 def added_by(relative: str, patterns: Sequence[str], is_dir: bool = False) -> Optional[str]:
     """The first `added_during_round` pattern the path matches, tried on the whole path relative to the review folder (a `*`
-    crosses `/`); a directory is also tried with a closing `/`, so `notes/*` holds the folder `notes` itself."""
+    crosses `/`) with case folded on both sides; a directory is also tried with a closing `/`, so `notes/*` holds the folder
+    `notes` itself."""
+    path = relative.casefold()
     for pattern in patterns:
-        if fnmatch.fnmatchcase(relative, pattern) or (is_dir and fnmatch.fnmatchcase(relative + "/", pattern)):
+        folded = pattern.casefold()
+        if fnmatch.fnmatchcase(path, folded) or (is_dir and fnmatch.fnmatchcase(path + "/", folded)):
             return pattern
     return None
+
+
+def artefact_paths(source: str, folder: Optional[str] = None) -> List[Tuple[str, bool]]:
+    """The relative paths (and whether each is a directory) an artefact answers to: its source as declared with `..` removed
+    and, given the review folder, the path it resolves to on disk with links followed, and each link on the way to it, which
+    the folder hash holds by its target alone."""
+    declared = posixpath.normpath(source.replace(os.sep, "/"))
+    found: List[Tuple[str, bool]] = [(declared, False)]
+    if folder is not None:
+        root = os.path.realpath(folder)
+        resolved = os.path.relpath(os.path.realpath(os.path.join(root, source)), root).replace(os.sep, "/")
+        if resolved != ".." and not resolved.startswith("../"):
+            found.append((resolved, False))
+        parts = declared.split("/")
+        for count in range(1, len(parts)):
+            prefix = "/".join(parts[:count])
+            if os.path.islink(os.path.join(root, prefix)):
+                found.append((prefix, True))
+    return found
 
 
 # --- Reading ----------------------------------------------------------------------------------
@@ -150,23 +172,24 @@ def read_file(path: str) -> str:
         return handle.read()
 
 
-def load(path: str, reader: Callable[[str], str] = read_file) -> Declaration:
-    """The declaration in the file, or a DeclarationError naming the file and every problem."""
+def load(path: str, reader: Callable[[str], str] = read_file, folder: Optional[str] = None) -> Declaration:
+    """The declaration in the file, or a DeclarationError naming the file and every problem. Given the review folder, the paths
+    added during the round are held to its files as they resolve on disk."""
     try:
         text = reader(path)
     except (OSError, UnicodeDecodeError) as error:
         raise DeclarationError(path, [Problem(None, None, f"cannot be read ({error})")])
-    return parse(text, path)
+    return parse(text, path, folder)
 
 
-def parse(text: str, file: str) -> Declaration:
+def parse(text: str, file: str, folder: Optional[str] = None) -> Declaration:
     try:
         raw = json.loads(text, object_pairs_hook=no_duplicates)
     except Duplicate as error:
         raise DeclarationError(file, [Problem(None, str(error), f"gives the key {str(error)!r} twice in one object")])
     except (ValueError, RecursionError) as error:
         raise DeclarationError(file, [Problem(None, None, f"is not valid JSON ({error})")])
-    return build(raw, file)
+    return build(raw, file, folder)
 
 
 def slots_of(template: str) -> Tuple[List[str], Optional[str]]:
@@ -196,7 +219,7 @@ def positive(value: Any) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool) and value > 0
 
 
-def build(raw: Any, file: str) -> Declaration:
+def build(raw: Any, file: str, folder: Optional[str] = None) -> Declaration:
     problems: List[Problem] = []
 
     def bad(where: Optional[str], thing: Optional[str], what: str) -> None:
@@ -219,20 +242,22 @@ def build(raw: Any, file: str) -> Declaration:
         bad(None, "deny", "`deny` is not a list of patterns")
         deny = []
     budget = read_budget(raw.get("budget", {}), bad)
-    added = read_added(raw.get("added_during_round", []), artefacts, bad)
+    added = read_added(raw.get("added_during_round", []), artefacts, bad, folder)
     if problems:
         raise DeclarationError(file, problems)
     return Declaration(file, artefacts, units, dict(templates), shape, tuple(deny), budget, added)
 
 
-def read_added(raw: Any, artefacts: Mapping[str, Artefact], bad) -> Tuple[str, ...]:
-    """The paths the caller adds to the review folder during the round; none may be an artefact of the shared context."""
+def read_added(raw: Any, artefacts: Mapping[str, Artefact], bad, folder: Optional[str] = None) -> Tuple[str, ...]:
+    """The paths the caller adds to the review folder during the round; none may be an artefact of the shared context. A
+    pattern is matched against each artefact's path as it resolves on disk (given the review folder) with links followed and
+    case folded, as well as against its declared source with `..` removed."""
     if not text_list(raw) or any(not item.strip() or item.startswith("/") for item in raw):
         bad(None, "added_during_round", "`added_during_round` is not a list of patterns, each a path relative to the review folder")
         return ()
     for name, artefact in artefacts.items():
-        source = posixpath.normpath(artefact.source.replace(os.sep, "/"))
-        pattern = added_by(source, raw)
+        pattern = next((hit for path, is_dir in artefact_paths(artefact.source, folder)
+                        for hit in [added_by(path, raw, is_dir)] if hit is not None), None)
         if pattern is not None:
             bad(f"artefact {name}", name, f"artefact {name!r} (source {artefact.source!r}) matches the `added_during_round` pattern "
                                           f"{pattern!r}; an artefact of the shared context cannot be a path added during the round")

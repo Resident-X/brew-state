@@ -212,6 +212,44 @@ class LoadTests(unittest.TestCase):
             with self.subTest(bad=bad):
                 self.assertIn("`added_during_round`", "\n".join(refused(fx.declaration_dict(added_during_round=bad)).lines))
 
+    def with_source(self, source, patterns, name="guide.md"):
+        raw = fx.declaration_dict(added_during_round=patterns)
+        raw["artefacts"][name]["source"] = source
+        return raw
+
+    def test_a_pattern_matches_artefact_paths_with_case_folded_and_dot_dot_removed(self):
+        # SOL-HW-REVIEW-KIT.C7: none of which may be an artefact of the shared context, the patterns being matched against the paths with case folded and not as declared
+        for source, pattern in (("docs/guide.md", "DOCS/*"), ("Docs/Guide.md", "docs/guide.md"), ("views/../docs/guide.md", "docs/*"),
+                                ("docs/./guide.md", "docs/guide.md"), ("docs//guide.md", "docs/*")):
+            with self.subTest(source=source, pattern=pattern):
+                text = "\n".join(refused(self.with_source(source, [pattern])).lines)
+                self.assertIn("artefact 'guide.md'", text)
+                self.assertIn(repr(pattern), text)
+        loaded = decl.parse(json.dumps(self.with_source("views/../docs/guide.md", ["notes/*"])), FILE)
+        self.assertEqual(loaded.added_during_round, ("notes/*",), "a pattern that matches no resolved artefact path is accepted")
+
+    def test_a_pattern_is_matched_against_the_path_an_artefact_resolves_to_through_a_link(self):
+        # SOL-HW-REVIEW-KIT.C7: the patterns being matched against the paths as they resolve on disk, with links followed
+        with tempfile.TemporaryDirectory() as base:
+            folder = fx.review_folder(os.path.join(base, "review"))
+            os.symlink(os.path.join(folder, "docs"), os.path.join(folder, "alias"))
+            os.symlink(os.path.join(folder, "docs", "guide.md"), os.path.join(folder, "single.md"))
+            for source, pattern in (("alias/guide.md", "docs/*"), ("alias/guide.md", "alias"), ("single.md", "docs/guide.md"),
+                                    ("alias/../alias/guide.md", "docs/guide.md"), ("ALIAS/guide.md", "Docs/Guide.md")):
+                with self.subTest(source=source, pattern=pattern):
+                    raw = self.with_source(source, [pattern])
+                    with self.assertRaises(decl.DeclarationError) as raised:
+                        decl.parse(json.dumps(raw), FILE, folder)
+                    self.assertIn("artefact 'guide.md'", "\n".join(raised.exception.lines))
+                    path = os.path.join(base, "caller.json")
+                    fx.write(base, "caller.json", json.dumps(raw))
+                    with self.assertRaises(decl.DeclarationError):
+                        decl.load(path, folder=folder)
+                    self.assertEqual(decl.build(self.with_source(source, ["elsewhere/*"]), FILE, folder).added_during_round,
+                                     ("elsewhere/*",))
+            self.assertEqual(decl.parse(json.dumps(self.with_source("alias/guide.md", ["docs/*"])), FILE).added_during_round,
+                             ("docs/*",), "without the review folder only the declared path can be matched")
+
 
 class SchemaTests(unittest.TestCase):
     def setUp(self):

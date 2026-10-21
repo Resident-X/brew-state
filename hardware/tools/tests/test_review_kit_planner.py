@@ -328,7 +328,7 @@ class CostModelTests(unittest.TestCase):
                       (0.155206, 558782, 38959, 34568), (0.126963, 270276, 8961, 41795), (0.071786, 279237, 40388, 6974),
                       (0.037318, 319625, 7156, 5672)]
 
-    def test_the_small_tier_prices_predict_the_recorded_small_tier_run_within_fifteen_per_cent(self):
+    def test_the_small_tier_prices_reproduce_the_run_they_were_fitted_to_within_fifteen_per_cent(self):
         # SOL-HW-REVIEW-KIT.C6: the prices and rates are data, refitted from telemetry
         recorded = sum(cost for cost, *_ in self.HAIKU_SESSIONS)
         self.assertAlmostEqual(recorded, 1.21, delta=0.01)
@@ -337,6 +337,22 @@ class CostModelTests(unittest.TestCase):
         self.assertLess(abs(predicted - recorded) / recorded, 0.15)
         sonnet = sum(cm.Prices().cost(read, write, out) for _, read, write, out in self.HAIKU_SESSIONS)
         self.assertGreater(sonnet, 2 * recorded, "the mid-tier prices would have predicted far more, so the model matters")
+
+    # Two later recorded small-tier runs, as run totals: (sessions, cache read, cache written, fresh input, generated, cost USD).
+    HELD_OUT_RUNS = {"haiku-3": (23, 7754909, 558264, 64, 412059, 2.048541), "haiku-2": (27, 9165577, 579238, 70, 384898, 2.069024)}
+
+    def test_prices_fitted_only_from_the_first_small_tier_run_predict_two_later_recorded_runs_within_fifteen_per_cent(self):
+        # SOL-HW-REVIEW-KIT.C6: the prices and rates are data, refitted from telemetry; held out, the prices are checked against runs they were not fitted to
+        rows = [{"cost_usd": cost, "cache_read": read, "cache_write": write, "generated": out}
+                for cost, read, write, out in self.HAIKU_SESSIONS]
+        prices = cm.fit(rows).prices
+        self.assertEqual(prices.source, "fitted")
+        for name, (sessions, read, write, fresh, generated, recorded) in self.HELD_OUT_RUNS.items():
+            with self.subTest(run=name):
+                predicted = prices.cost(read, write, generated)
+                self.assertLess(abs(predicted - recorded) / recorded, 0.15, f"{name}: predicted {predicted:.3f}, recorded {recorded}")
+                midtier = cm.Prices().cost(read, write, generated)
+                self.assertGreater(midtier, 2 * recorded, "the mid-tier prices would have predicted far more")
 
     def test_the_small_tier_prices_are_the_fit_of_the_recorded_sessions(self):
         # SOL-HW-REVIEW-KIT.C6: the prices and rates are data, refitted from telemetry

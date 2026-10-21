@@ -175,9 +175,9 @@ def resolved_declaration(caller: Caller, review: str) -> decl.Declaration:
         return given
     try:
         if isinstance(given, str):
-            return decl.load(os.path.join(os.path.dirname(caller.path), given))
+            return decl.load(os.path.join(os.path.dirname(caller.path), given), folder=review)
         if isinstance(given, dict):
-            return decl.build(given, file)
+            return decl.build(given, file, review)
     except decl.DeclarationError as error:
         raise Refused([f"the caller {caller.name}'s declaration is refused: {line}" for line in error.lines])
     raise Refused([f"the caller {caller.name}'s declaration is {given!r:.100}, not a path, a mapping or a Declaration; fix the caller"])

@@ -300,6 +300,19 @@ class TheCommand(Proofed):
         self.assertGreater(json.loads(text)["plans"]["design-loop"]["predicted"]["cost_usd"], small * 2,
                            "the same design loop on the mid-tier is priced at the mid-tier's much higher prices")
 
+    def test_the_dry_output_warns_when_a_model_has_no_price_and_names_it(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: a plan mode that prints the plan and the predicted cost and time without calling the model; the prediction of a model the price table lacks is flagged
+        status, text, err = self.go("--dry", "--only", "design-loop", "--design-model", "claude-unlisted-9")
+        self.assertEqual(status, 0, text + err)
+        shutil.rmtree(self.work)
+        warnings = [line for line in text.splitlines() if line.startswith("WARNING | design-loop | the model")]
+        self.assertEqual(len(warnings), 1, text)
+        self.assertIn("'claude-unlisted-9'", warnings[0])
+        self.assertIn("priced at the default", warnings[0])
+        status, text, err = self.go("--dry")
+        self.assertEqual(status, 0, text + err)
+        self.assertNotIn("no entry in the price table", text, "the models the table holds are not warned")
+
     def test_a_flag_runs_only_one_of_the_two_rounds_and_the_pre_order_figures_alone_are_recorded_not_judged(self):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: the replicas the design-loop round uses, and the pre-order round's three replicas run once and their figures recorded
         status, text, err = self.go("--only", "design-loop")

@@ -376,6 +376,82 @@ class RoundTripTests(unittest.TestCase):
         self.assertEqual(json.loads(structured.raw)["tables"]["Verdicts"][0]["Rests on"], "x | y")
 
 
+CLEAR_SHAPE = rs.AnswerShape((
+    rs.TableShape("Verdicts", ("Item", "Verdict"), key="Item", verdict_column="Verdict",
+                  verdicts=("pass", "fail", "cannot judge")),))
+CLEAR_ITEMS = ("A-1", "A-2", "A-3")
+
+
+def clear_attempt(rows, asked=False):
+    tables = {"Verdicts": [{"Item": item, "Verdict": outcome} for item, outcome in rows]}
+    found = rs.Assessment(rs.STRUCTURED, "", tables, judge_asked=asked)
+    found.problems = rs.local_problems(tables, CLEAR_SHAPE, "u", CLEAR_ITEMS)
+    return found
+
+
+class RepairNeverClearsAFailTests(unittest.TestCase):
+    def marked(self, first_rows, later_rows):
+        first, later = clear_attempt(first_rows, asked=True), clear_attempt(later_rows)
+        rs.mark_cleared([first], later, CLEAR_SHAPE, "fail", CLEAR_ITEMS, "u")
+        return first, later
+
+    def test_a_later_answer_that_passes_a_first_answer_fail_carries_a_local_problem_naming_the_item(self):
+        # SOL-HW-REVIEW-KIT.C6: a repaired answer that clears a fail the first answer raised, by passing the item, carries a local problem naming the item, so the first answer stands over it
+        first, later = self.marked([("A-1", "fail"), ("A-2", "cannot judge"), ("A-3", "pass")],
+                                   [("A-1", "pass"), ("A-2", "pass"), ("A-3", "pass")])
+        self.assertEqual(later.cleared, ["A-1"])
+        self.assertEqual([p.cls for p in later.problems], [rs.LOCAL])
+        self.assertIn("'A-1'", later.problems[0].what)
+        self.assertEqual(rs.standing([first, later]), 0)
+
+    def test_a_later_answer_that_leaves_a_first_answer_fail_out_carries_a_local_problem_naming_the_item(self):
+        # SOL-HW-REVIEW-KIT.C6: a repaired answer that clears a fail the first answer raised, by leaving the item out, carries a local problem naming the item
+        first, later = self.marked([("A-1", "pass"), ("A-2", "fail"), ("A-3", "cannot judge")], [("A-1", "pass"), ("A-3", "pass")])
+        self.assertEqual(later.cleared, ["A-2"])
+        self.assertTrue(any("'A-2'" in p.line() for p in later.problems))
+        self.assertEqual(rs.standing([first, later]), 0)
+
+    def test_a_later_answer_that_keeps_the_fail_and_adds_fails_or_fixes_a_cannot_judge_is_untouched(self):
+        # SOL-HW-REVIEW-KIT.C6: a repaired answer that merely adds fails or changes a cannot judge is untouched
+        first, later = self.marked([("A-1", "fail"), ("A-2", "cannot judge"), ("A-3", "pass")],
+                                   [("A-1", "fail"), ("A-2", "fail"), ("A-3", "fail")])
+        self.assertEqual((later.cleared, later.problems), ([], []))
+        self.assertEqual(rs.standing([first, later]), 1)
+
+    def test_an_invalid_first_answer_row_is_not_a_fail_a_repair_can_clear(self):
+        # SOL-HW-REVIEW-KIT.C6: an item whose row in the first answer was invalid (off-checklist, two items in a cell) is not a valid fail to carry
+        first, later = self.marked([("A-1", "pass"), ("A-2", "pass"), ("A-3", "pass"), ("B-9", "fail"), ("A-1 and A-2", "fail")],
+                                   [("A-1", "pass"), ("A-2", "pass"), ("A-3", "pass")])
+        self.assertEqual(later.cleared, [])
+        self.assertEqual(later.problems, [])
+        self.assertEqual(rs.standing([first, later]), 1)
+
+    def test_a_fatal_or_tableless_later_answer_is_not_marked(self):
+        # SOL-HW-REVIEW-KIT.C6: a repair never clears a fail; an answer with no tables has no verdicts to compare
+        first = clear_attempt([("A-1", "fail"), ("A-2", "pass"), ("A-3", "pass")], asked=True)
+        later = rs.Assessment(rs.NONE, "", None, problems=[rs.Problem(rs.FATAL, "u", "no object")])
+        rs.mark_cleared([first], later, CLEAR_SHAPE, "fail", CLEAR_ITEMS, "u")
+        self.assertEqual((later.cleared, len(later.problems)), ([], 1))
+
+    def test_over_generated_attempt_pairs_the_standing_attempt_never_holds_fewer_valid_fails_than_the_first(self):
+        # SOL-HW-REVIEW-KIT.C6: a repair never clears a fail: the items failing in the standing attempt are never fewer than the valid items failing in the first
+        rng = random.Random(20261022)
+        names = list(CLEAR_ITEMS) + ["B-9", "A-1 and A-2", "A-1"]
+        verdicts = ("pass", "fail", "cannot judge")
+
+        def rows():
+            return [(rng.choice(names), rng.choice(verdicts)) for _ in range(rng.randint(0, 6))]
+
+        for _ in range(400):
+            first_rows, later_rows = rows(), rows()
+            first, later = clear_attempt(first_rows, asked=rng.random() < 0.5), clear_attempt(later_rows)
+            rs.mark_cleared([first], later, CLEAR_SHAPE, "fail", CLEAR_ITEMS, "u")
+            stood = [first, later][rs.standing([first, later])]
+            valid_first = {i for i, v in first_rows if v == "fail" and i in CLEAR_ITEMS}
+            failing = {row["Item"] for row in stood.tables["Verdicts"] if row["Verdict"] == "fail"}
+            self.assertTrue(valid_first <= failing, (first_rows, later_rows))
+
+
 class AttemptTests(unittest.TestCase):
     def attempt(self, locals_=0, fatal=False, covered=0, label=""):
         problems = [rs.Problem(rs.LOCAL, f"w{n}", "local") for n in range(locals_)]

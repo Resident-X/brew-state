@@ -425,6 +425,14 @@ class AddedDuringRoundTests(unittest.TestCase):
                 self.assertIn("added during the round", str(raised.exception))
                 self.assertEqual(changed.executor.calls, [])
 
+    def test_the_folder_hash_leaves_out_listed_paths_whatever_their_case(self):
+        # SOL-HW-REVIEW-KIT.C7: the patterns being matched with case folded, so the hash leaves out what the load-time check counts as covered
+        folder = self.harness.review
+        listed = store.folder_hash(folder, ["ROUND/*"])
+        fx.write(folder, "Round/A.txt", "one")
+        self.assertEqual(store.folder_hash(folder, ["round/*"]), listed)
+        self.assertNotEqual(store.folder_hash(folder, []), listed)
+
     def test_the_folder_hash_is_unchanged_when_only_listed_paths_change(self):
         # SOL-HW-REVIEW-KIT.C7: the hash leaves out the listed paths, and only them
         folder = self.harness.review

@@ -8,8 +8,11 @@ number at once. The plan grows as results come back:
   empty answer) appends a fresh fork of the same parent as the next attempt;
 - a local problem appends a repair turn in that unit's own session;
 - a first answer holding a verdict row of the cannot-judge verdict (when the declaration has one) appends one repair
-  turn in the unit's own session, advising it to retrieve a document its Why asks for and otherwise to keep the verdict;
-  the answer to that turn stands whatever it says, and a cannot judge that remains is no failure, only the merge's to resolve;
+  turn in the unit's own session, advising it to retrieve a document its Why asks for (when the caller grants the retrieval
+  tool) and otherwise to keep the verdict; the answer to that turn stands whatever it says about a cannot judge, and a cannot
+  judge that remains is no failure, only the merge's to resolve;
+- a repaired answer that clears a fail the first answer raised on a valid checklist item, by passing the item or leaving it
+  out, carries a local problem naming the item, so the first answer stands over it: a repair never clears a fail;
 - a call refused for a rate limit waits on the clock and is retried by the
   executor, the same call each time; a refusal that outlasts the retries counts as
   an error.
@@ -159,13 +162,13 @@ def failed_assessment(kind: str, said: str, label: str) -> results.Assessment:
 
 class Scheduler:
     def __init__(self, executor: ex.Executor, clock, concurrency=None, attempts: int = DEFAULT_ATTEMPTS,
-                 cannot_judge: Optional[str] = merge.CANNOT_JUDGE):
+                 cannot_judge: Optional[str] = merge.CANNOT_JUDGE, fail: str = merge.FAIL, retrieval: bool = True):
         if isinstance(attempts, bool) or not isinstance(attempts, int) or attempts < 1:
             raise ValueError(f"a unit gets {attempts!r} attempts; it must be a whole number of one or more")
         self.executor, self.clock = executor, clock
         self.concurrency = concurrency or ThreadedConcurrency()
         self.attempts = attempts
-        self.cannot_judge = cannot_judge
+        self.cannot_judge, self.fail, self.retrieval = cannot_judge, fail, retrieval
 
     # The shared context ----------------------------------------------------------------------
 
@@ -223,6 +226,7 @@ class Scheduler:
                                           round_label)
             else:
                 assessed = failed_assessment(outcome.kind, outcome.said(), label)
+            results.mark_cleared(record.attempts, assessed, declaration.shape, self.fail, items, label)
             record.add(assessed)
             node["problems"] = [problem.line() for problem in assessed.problems]
             asked = (results.cannot_judge_rows(assessed.tables, declaration.shape, self.cannot_judge)
@@ -235,7 +239,7 @@ class Scheduler:
                 parent_id, parent_session, fork, message = root_node, root_id, True, fresh_message
             else:
                 parent_id, parent_session, fork = node_id, outcome.session.id, False
-                turn = results.judge_prompt(asked) if asked else ""
+                turn = results.judge_prompt(asked, self.retrieval) if asked else ""
                 if assessed.local:
                     turn = messages.repair_prompt([problem.line() for problem in assessed.local]) + ("\n\n" + turn if turn else "")
                 message = messages.prompt_message(turn)

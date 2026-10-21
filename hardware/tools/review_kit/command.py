@@ -466,6 +466,8 @@ class Run:
         except (planner.OverBudget, planner.BoundBelowOne, ValueError) as error:
             raise Refusal([str(error)])
         self.report["agent"] = {"program": program, "version": self.version}
+        self.report["notes"] += [cm.unpriced_text(model) for model in
+                                 cm.unpriced([self.args.model] + [context.model for context in found[1:]])]
         self.report["plan"] = plan_summary(self.plan, self.shared, self.bound)
 
     # The record after the sessions, before it is written ------------------------------------------
@@ -531,7 +533,9 @@ class Run:
     def execute(self, environ: Mapping[str, str]) -> None:
         clock = ex.SystemClock()
         executor = ex.ClaudeCliExecutor(program=self.program, environ=dict(environ), clock=clock, out=self.streams_folder)
-        runner = scheduler.Scheduler(executor, clock)
+        rules = self.prepared.rules
+        runner = scheduler.Scheduler(executor, clock, cannot_judge=rules.cannot_judge, fail=rules.fail,
+                                     retrieval=caller_module.RETRIEVAL_TOOL in self.prepared.tools)
         self.before = saved_names(self.streams_folder)
         prompt_for = ensemble.prompt_for(self.prepared.declaration, self.policy, self.prepared.unit_text)
         common = dict(prompt_for=prompt_for, round_label=self.prepared.rules.round_label, contexts=self.contexts,

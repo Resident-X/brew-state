@@ -63,6 +63,7 @@ import review_folder  # noqa: E402
 import review_seed  # noqa: E402
 from review_kit import caller as kit_caller  # noqa: E402
 from review_kit import command, proof, scheduler, store, streams  # noqa: E402
+from review_kit import costmodel as cost_model  # noqa: E402
 from review_kit import executor as ex  # noqa: E402
 
 REPO = review_seed.REPO
@@ -422,6 +423,8 @@ def dry_lines(plans: Mapping[str, Mapping[str, Any]], singles: Sequence[proof.Ru
         replicas = dict(ROUNDS)[name]
         predicted = plan["predicted"]
         found.append(f"MODEL | {name} | {models_text(models[name], plan)}")
+        found += [f"WARNING | {name} | {cost_model.unpriced_text(model)}" for model in cost_model.unpriced(
+            [models[name]] + [context["model"] for context in plan.get("contexts", ())])]
         found.append(f"PLAN | {name} | {replicas} replicas | {len(plan['groups'])} groups | {plan['forks']} forks | bound {plan['bound']} | "
                      f"shared context {plan['shared_tokens']} tokens | variants {', '.join(plan['variants'])}")
         found += [f"GROUP | {name} | {group['id']} | units {', '.join(group['units'])} | {group['replicas']} replicas | expected "

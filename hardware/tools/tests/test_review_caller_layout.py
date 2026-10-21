@@ -1245,6 +1245,14 @@ class Documentation(unittest.TestCase):
         self.assertIn("the layout review's caller for it, the command that writes a committed board's review folder", notes.splitlines()[5])
         self.assertIn("--keep-work-tree <folder>", self.flat(notes[notes.index("## The proof designs"):]))
 
+    def test_no_document_states_the_cost_multiple_as_twice_the_single_mean(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: the criterion holds when the cost is at most 1.25 times the single mean; no place restates it as twice
+        for path in (("Taskfile.yml",), ("hardware", "README.md"), ("docs", "board-design-method.md")):
+            text = self.flat(self.read(*path)).lower()
+            for words in ("twice its mean", "cost multiple of 2"):
+                self.assertNotIn(words, text, f"{'/'.join(path)} says {words!r}")
+        self.assertIn("cost at most 1.25 times its mean", self.flat(self.read("Taskfile.yml")))
+
     def test_the_task_runner_names_the_new_commands_and_their_tests(self):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C7: The method's layout review section says that a round may be judged by unit and what the merge checks, that the round's fields come from whoever starts it, that the unit which raised a finding writes its Planning shortfall entry from the plan row, that a cannot judge is resolved by adding the view and re-running the unit with the row recording the cannot judge, the view and the verdict, that the merged round is appended below the earlier rounds and committed by whoever started the round at the end of the round, and that judging it with one reviewer stays valid; the sentence that a proof is repeated after the step changes names the form that changed; the hardware notes describe the layout caller and the folder command and what each needs. Checked by reading each place against these clauses. Out of scope: the routing section's critical-routing check.
         taskfile = self.read("Taskfile.yml")

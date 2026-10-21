@@ -13,6 +13,7 @@ import io
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -58,7 +59,7 @@ session_id = "stub-" + uuid.uuid4().hex[:8]
 text = " ".join(block.get("text", "") for block in json.loads(stdin)["message"]["content"] if block.get("type") == "text")
 with open(os.environ["STUB_LOG"], "a", encoding="utf-8") as handle:
     handle.write(json.dumps({"args": args, "cwd": os.getcwd(), "session": session_id, "resume": resume,
-                             "fork": "--fork-session" in args, "model": model}) + "\\n")
+                             "fork": "--fork-session" in args, "model": model, "text": text}) + "\\n")
 mcp = [{"name": "extra", "status": "connected"}] if scenario.get("mcp") else []
 if resume is None and scenario.get("root_error"):
     sys.stdout.write(ex.stream_text(session_id, text="the service failed", is_error=True, api_error_status=500, tools=tools,
@@ -744,6 +745,44 @@ class Options(Case):
         self.assertEqual(self.run_command("--model", "a-full-model-id")[0], 0)
         self.assertEqual({c["model"] for c in self.calls()}, {"a-full-model-id"})
         self.assertTrue(all(c["args"][c["args"].index("--model") + 1] == "a-full-model-id" for c in self.calls()))
+
+    def test_a_model_the_price_table_lacks_is_noted_as_priced_at_the_default(self):
+        # SOL-HW-REVIEW-KIT.C6: the prices are data by model; a model with no entry is priced at the default and the plan says so
+        status, out, err = self.run_command("--model", "a-full-model-id", fmt="json")
+        self.assertEqual(status, 0, err)
+        notes = json.loads(out)["notes"]
+        self.assertEqual(len([n for n in notes if "price table" in n]), 1)
+        self.assertIn("'a-full-model-id'", [n for n in notes if "price table" in n][0])
+        self.assertIn("priced at the default", "\n".join(notes))
+        shutil.rmtree(self.out)
+        status, out, err = self.run_command("--model", "claude-haiku-5-5", fmt="json")
+        self.assertEqual(status, 0, err)
+        self.assertEqual([n for n in json.loads(out)["notes"] if "price table" in n], [])
+        shutil.rmtree(self.out)
+        status, out, err = self.run_command(fmt="json")
+        self.assertEqual([n for n in json.loads(out)["notes"] if "price table" in n], [], "no model flag leaves the model to the agent")
+
+    def cannot_judge_turns(self):
+        return [c["text"] for c in self.calls() if c["resume"] is not None and not c["fork"] and "You gave cannot judge" in c["text"]]
+
+    def test_the_cannot_judge_turn_advises_retrieval_when_the_caller_grants_the_tool_and_does_not_otherwise(self):
+        # SOL-HW-REVIEW-KIT.C6: a cannot judge in the first answer appends one repair turn advising retrieval with the retrieval tool the caller grants and otherwise to keep the cannot judge naming the view or document it needs
+        self.scenario(verdicts={"i1": "cannot judge"})
+        self.write_caller(extra="retrieval = True\n")
+        self.run_command()
+        granted = self.cannot_judge_turns()
+        self.assertTrue(granted)
+        self.assertTrue(all("retrieval tool you have" in turn for turn in granted))
+        shutil.rmtree(self.out)
+        os.remove(self.log)
+        self.write_caller()
+        self.run_command()
+        plain = self.cannot_judge_turns()
+        self.assertEqual(len(plain), len(granted), "the turn still applies")
+        for turn in plain:
+            self.assertIn("i1:", turn)
+            self.assertIn("name the view or document you need", turn)
+            self.assertNotIn("retriev", turn)
 
     def test_every_session_is_started_in_the_review_folder_with_one_set_of_flags(self):
         self.assertEqual(self.run_command()[0], 0)

@@ -274,6 +274,9 @@ class Assessment:
     note: str = ""
     #: Set on an answer that was followed by the turn about its cannot-judge rows: the turn's answer stands over it.
     judge_asked: bool = False
+    #: The items on which the unit's first answer raised a fail that this answer passes or leaves out; the answer carries a
+    #: local problem naming each, and `standing` never lets such an answer replace one that holds the fail.
+    cleared: List[str] = field(default_factory=list)
 
     @property
     def fatal(self) -> List[Problem]:
@@ -285,7 +288,7 @@ class Assessment:
 
     def as_dict(self) -> Dict[str, Any]:
         return {"source": self.source, "raw": self.raw, "tables": self.tables, "note": self.note,
-                "items_covered": self.items_covered, "judge_asked": self.judge_asked,
+                "items_covered": self.items_covered, "judge_asked": self.judge_asked, "cleared": list(self.cleared),
                 "repairs": [problem.line() for problem in self.repairs],
                 "problems": [{"class": problem.cls, "where": problem.where, "what": problem.what}
                              for problem in self.problems]}
@@ -328,12 +331,52 @@ def cannot_judge_rows(tables: Optional[Dict[str, Any]], shape: AnswerShape, valu
     return found
 
 
-def judge_prompt(rows: Sequence[Tuple[str, str]]) -> str:
-    """The turn that asks a session about the items it could not judge."""
+def judge_prompt(rows: Sequence[Tuple[str, str]], retrieval: bool = True) -> str:
+    """The turn that asks a session about the items it could not judge. It advises retrieval only when the session has the
+    retrieval tool."""
     listed = "\n".join(f"- {item}: {why}" for item, why in rows)
-    return ("You gave cannot judge for these items, with this Why:\n" + listed + "\n\nIf the Why asks for a published document, "
-            "retrieve it with the retrieval tool you have and re-judge the item; otherwise keep cannot judge and name the view "
-            "needed. Return the whole answer, every table in full, and change nothing else.")
+    advice = ("If the Why asks for a published document, retrieve it with the retrieval tool you have and re-judge the item; "
+              "otherwise keep cannot judge and name the view needed. " if retrieval else
+              "Keep cannot judge and name the view or document you need. ")
+    return ("You gave cannot judge for these items, with this Why:\n" + listed + "\n\n" + advice
+            + "Return the whole answer, every table in full, and change nothing else.")
+
+
+def failed_items(tables: Optional[Dict[str, Any]], shape: AnswerShape, fail: str, items: Optional[Sequence[str]],
+                 valid_only: bool = True) -> List[str]:
+    """The items with a verdict row of `fail`, in table order. With `valid_only`, a row whose item cell is not one of the unit's
+    items (an item off the checklist, or two items in one cell) is not a fail of any item and is left out."""
+    found: List[str] = []
+    for table in shape.tables:
+        if not table.verdict_column or not table.key or fail not in table.verdicts:
+            continue
+        for row in (tables or {}).get(table.name, []):
+            item = row.get(table.key)
+            if row.get(table.verdict_column) == fail and (not valid_only or items is None or item in items) and item not in found:
+                found.append(item)
+    return found
+
+
+def cleared_fails(first: Assessment, later: Assessment, shape: AnswerShape, fail: str, items: Optional[Sequence[str]]) -> List[str]:
+    """The items on which the first answer holds a fail on a valid row that the later answer does not: passed, changed to
+    another verdict, or left out. A later answer that adds fails or changes a cannot judge clears nothing."""
+    if first.tables is None or later.tables is None:
+        return []
+    still = set(failed_items(later.tables, shape, fail, items, valid_only=False))
+    return [item for item in failed_items(first.tables, shape, fail, items) if item not in still]
+
+
+def mark_cleared(attempts: Sequence[Assessment], later: Assessment, shape: AnswerShape, fail: str, items: Optional[Sequence[str]],
+                 unit: str) -> None:
+    """Set on a later answer the fails it clears from the unit's first answer (the first of `attempts` that holds tables),
+    with a local problem naming each item, so that `standing` keeps the first answer over it."""
+    first = next((each for each in attempts if each.tables is not None), None)
+    if first is None or later.fatal or later.tables is None:
+        return
+    later.cleared = cleared_fails(first, later, shape, fail, items)
+    later.problems += [Problem(LOCAL, f"unit {unit}", f"clears the fail the first answer raised on item {item!r}, by passing it "
+                                                      "or leaving it out; a fail stands, so keep it as the first answer gave it")
+                       for item in later.cleared]
 
 
 # --- Attempts ----------------------------------------------------------------------------------
@@ -341,15 +384,15 @@ def judge_prompt(rows: Sequence[Tuple[str, str]]) -> str:
 
 def standing(attempts: Sequence[Assessment]) -> int:
     """The index of the attempt that stands: the first with no problems that was not followed by the turn about its cannot-judge
-    rows (that turn's answer stands over it, whatever it says), else the one with no fatal problem and the fewest
-    local problems, else the most items covered, else the first. A later attempt never replaces a better one."""
+    rows (that turn's answer stands over it, whatever it says, except that an answer which clears a fail the first answer
+    raised never stands over it), else the one with no fatal problem, no cleared fail and the fewest local problems, else the most items covered, else the first. A later attempt never replaces a better one."""
     if not attempts:
         raise ValueError("a unit with no attempt has none that stands")
     for index, attempt in enumerate(attempts):
         if not attempt.problems and not attempt.judge_asked:
             return index
-    return min(range(len(attempts)), key=lambda index: (bool(attempts[index].fatal), len(attempts[index].local),
-                                                        -attempts[index].items_covered, index))
+    return min(range(len(attempts)), key=lambda index: (bool(attempts[index].fatal), bool(attempts[index].cleared),
+                                                        len(attempts[index].local), -attempts[index].items_covered, index))
 
 
 class UnitRecord:

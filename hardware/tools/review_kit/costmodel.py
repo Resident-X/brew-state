@@ -50,6 +50,16 @@ def prices_for(model: Optional[str], table: Mapping[str, Prices] = PRICES_BY_MOD
     return table.get(model, default or Prices()) if model is not None else (default or Prices())
 
 
+def unpriced(models: Sequence[Optional[str]], table: Mapping[str, Prices] = PRICES_BY_MODEL) -> List[str]:
+    """The named models, once each in the order given, that the price table does not hold and so are priced at the default."""
+    return [model for model in dict.fromkeys(models) if model is not None and model not in table]
+
+
+def unpriced_text(model: str) -> str:
+    return (f"the model {model!r} has no entry in the price table, so it is priced at the default (mid-tier) prices and the "
+            "predicted cost is likely wrong")
+
+
 @dataclass(frozen=True)
 class Timing:
     """Seconds per call and output tokens per second."""

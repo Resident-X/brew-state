@@ -492,6 +492,85 @@ class CannotJudgeTurnTests(unittest.TestCase):
         harness = self.judged([("i1", "cannot judge", "needs the datasheet"), ("i2", "pass", "")], attempts=1)
         self.assertEqual(len(self.g1(harness.fresh())), 1)
 
+    # A repaired answer never clears a fail.
+
+    def lane(self, record):
+        return [l for l in record["lanes"] if l["group"] == "G1"][0]
+
+    def test_a_repair_that_flips_a_first_answer_fail_to_pass_leaves_the_first_answer_standing_and_names_the_item(self):
+        # SOL-HW-REVIEW-KIT.C6: a repaired answer, from this turn or from a repair of a local problem, that clears a fail the first answer raised, by passing the item or leaving it out, carries a local problem naming the item, so the first answer stands over it and a repair never clears a fail
+        harness = self.judged([("i1", "fail", "wrong"), ("i2", "cannot judge", "needs the datasheet")],
+                              script={"G1.r1.a2": self.answer_of([("i1", "pass", "ok"), ("i2", "pass", "read it")])}, attempts=2)
+        lane = self.lane(harness.fresh())
+        self.assertEqual(lane["record"]["standing"], 0)
+        self.assertEqual(lane["record"]["attempts"][1]["cleared"], ["i1"])
+        problems = lane["record"]["attempts"][1]["problems"]
+        self.assertEqual([p["class"] for p in problems], ["local"])
+        self.assertIn("'i1'", problems[0]["what"])
+        self.assertIn("clears the fail", problems[0]["what"])
+        verdicts = {r["Item"]: r["Verdict"] for r in lane["record"]["attempts"][lane["record"]["standing"]]["tables"]["Verdicts"]}
+        self.assertEqual(verdicts["i1"], "fail")
+
+    def test_a_repair_that_drops_a_first_answer_fail_leaves_the_first_answer_standing_over_a_third_attempt_too(self):
+        # SOL-HW-REVIEW-KIT.C6: a repaired answer that leaves out a fail the first answer raised carries a local problem naming the item, so the first answer stands over it
+        dropped = self.answer_of([("i2", "pass", "")])
+        harness = self.judged([("i1", "fail", "wrong"), ("i2", "cannot judge", "needs the datasheet")],
+                              script={"G1.r1.a2": dropped, "G1.r1.a3": dropped}, attempts=3)
+        record = harness.fresh()
+        lane = self.lane(record)
+        self.assertEqual(len(self.g1(record)), 3)
+        self.assertEqual(lane["record"]["standing"], 0)
+        self.assertEqual([a["cleared"] for a in lane["record"]["attempts"]], [[], ["i1"], ["i1"]])
+        self.assertIn("'i1'", " ".join(p["what"] for p in lane["record"]["attempts"][2]["problems"]))
+
+    def test_a_repair_that_keeps_the_fail_and_fixes_the_cannot_judge_stands(self):
+        # SOL-HW-REVIEW-KIT.C6: a repaired answer that merely adds fails or changes a cannot judge is untouched
+        harness = self.judged([("i1", "fail", "wrong"), ("i2", "cannot judge", "needs the datasheet")],
+                              script={"G1.r1.a2": self.answer_of([("i1", "fail", "wrong"), ("i2", "fail", "read it")])}, attempts=2)
+        lane = self.lane(harness.fresh())
+        self.assertEqual(lane["record"]["standing"], 1)
+        self.assertEqual(lane["record"]["attempts"][1]["cleared"], [])
+        self.assertEqual(lane["record"]["attempts"][1]["problems"], [])
+        self.assertIsNone(lane["failure"])
+
+    def test_a_local_repair_that_clears_a_first_answer_fail_is_held_to_it_too(self):
+        # SOL-HW-REVIEW-KIT.C6: a repaired answer from a repair of a local problem that clears a fail the first answer raised carries a local problem naming the item
+        first = self.answer_of([("i1", "fail", "wrong"), ("zz", "pass", "")])  # an item off the checklist and no verdict for i2
+        harness = fx.Harness(self, script={"G1.r1.a1": first, "G1.r1.a2": self.answer_of([("i1", "pass", "ok"), ("i2", "pass", "")])},
+                             attempts=2)
+        lane = self.lane(harness.fresh())
+        self.assertEqual(lane["record"]["attempts"][1]["cleared"], ["i1"])
+        self.assertEqual(lane["record"]["standing"], 0, "the first answer holds fewer problems than the repair that cleared its fail")
+        self.assertEqual(lane["record"]["attempts"][0]["cleared"], [])
+
+    def test_an_invalid_first_answer_row_that_the_repair_fixes_is_not_a_cleared_fail(self):
+        # SOL-HW-REVIEW-KIT.C6: an item whose row in the first answer was invalid is not a valid fail to carry
+        first = self.answer_of([("i1", "pass", ""), ("i2", "pass", ""), ("zz", "fail", "off the checklist"), ("i1 and i2", "fail", "two")])
+        harness = fx.Harness(self, script={"G1.r1.a1": first, "G1.r1.a2": self.answer_of([("i1", "pass", ""), ("i2", "pass", "")])},
+                             attempts=2)
+        lane = self.lane(harness.fresh())
+        self.assertEqual(lane["record"]["attempts"][1]["cleared"], [])
+        self.assertEqual(lane["record"]["standing"], 1)
+        self.assertIsNone(lane["failure"])
+
+    def test_the_cannot_judge_turn_advises_retrieval_only_when_the_scheduler_is_told_the_session_has_the_tool(self):
+        # SOL-HW-REVIEW-KIT.C6: advising it to retrieve a document its Why asks for with the retrieval tool the caller grants and otherwise to keep the cannot judge naming the view it needs
+        rows = [("i1", "cannot judge", "needs the datasheet"), ("i2", "pass", "")]
+        script = {"G1.r1.a2": self.answer_of([("i1", "cannot judge", "no view"), ("i2", "pass", "")])}
+        without = self.judged(rows, script=script)
+        without.scheduler.retrieval = False
+        record = without.fresh()
+        turn = [c for c in without.executor.calls if c.label == "G1.r1.a2"][0]
+        self.assertEqual(len(self.g1(record)), 2, "the turn still applies")
+        self.assertIn("i1: needs the datasheet", turn.message)
+        self.assertIn("keep cannot judge and name the view or document you need", turn.message.lower())
+        for text in ("retrieve", "retrieval tool", "published document"):
+            self.assertNotIn(text, turn.message)
+        granted = self.judged(rows, script=script)
+        granted.fresh()
+        advised = [c for c in granted.executor.calls if c.label == "G1.r1.a2"][0]
+        self.assertIn("retrieval tool you have", advised.message)
+
 
 def harness_decl():
     return decl.parse(json.dumps(fx.declaration_dict()), "caller.json")
