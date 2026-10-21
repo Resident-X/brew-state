@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES-PROOF.C2
+type: criterion
+title: The proof command records a single run as a baseline the kit loads and refuses to run the single form again for a key that has one
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Over the kit's stub, the proof command for the production-files check runs the single form once through the kit and writes it as a baseline file the kit's proof loads, keyed by the hash of the seed list, the design commit, the model, the form and the prompt hash; run again for a key whose baseline is recorded it refuses to run the single form and names the key, and for a key that differs it runs it; a review folder that lies inside the repository is refused naming it. The command's record is written in text and JSON with the same content. Out of scope: any live run and the pooled criterion's arithmetic, which the kit's own tests hold.
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES-PROOF
+    type: criterion-of

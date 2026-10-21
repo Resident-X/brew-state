@@ -2,11 +2,11 @@ id: SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING.C1
 type: criterion
 title: Each area's reviewer decides which of its items bear on the critical nets, judges those, and lists the rest with the reason
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |-
-  From a synthetic review folder the caller's units are the layout catalogue's areas, found by the layout caller's own finding, and each unit's prompt asks for a verdict row for every item of its area that bears on the critical nets and a line with the reason for every item that does not. A folder with no catalogue areas is refused naming what is missing. Out of scope: the content of any catalogue item and which items do bear, which is the reviewer's judgement.
+  From a synthetic review folder the caller's units are the layout catalogue's areas, found by the layout caller's own finding, and each unit's prompt asks for a verdict row for every item of its area that bears on the critical nets and `bears on no critical net` with the reason for every item that does not, and the units include one for the board's own items when the plan's table has rows, and none for a comparison with the plan or a free pass; the couplings are the layout caller's. A folder with no catalogue areas is refused naming what is missing. The layout caller's units and tests are unchanged by the shared helpers. Out of scope: the content of any catalogue item and which items do bear, which is the reviewer's judgement.
 links:
   - target: SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING
     type: criterion-of

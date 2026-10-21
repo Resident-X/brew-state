@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING.C5
+type: criterion
+title: The layout folder command writes a critical-routing folder with the pass's own round fields and no review record
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Over a synthetic repository with a routed board, the folder command with `--review critical-routing` writes a folder whose round file holds the pass number, commit and views and no kind or check lines, whose method extract holds the routing section, without a placement folder or check report unless given, and for a pass after the first copies no review record; it refuses missing or malformed pass fields, and the layout mode's behaviour and tests are unchanged. Out of scope: rendering the views.
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING
+    type: criterion-of

@@ -1,12 +1,12 @@
 id: SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING.C2
 type: criterion
-title: The merged pass gives every item a verdict row or a place on the list once, and is read by the placement and critical routing history command as a single reviewer's pass is
+title: The merged pass gives every item one verdict row, renders those bearing on no critical net as the list, and is read by the placement and critical routing history command as a single reviewer's pass is
 status: active
-version: 2
+version: 3
 measurement_type: binary
 verification: test
 text: |
-  Over synthetic unit results, the merge fails naming an item that has neither a verdict row nor a place on the list, and an item that has both or either twice; it fails a pass whose number, commit judged or views are missing or malformed; and it renders the pass in the form the method gives for the plan's critical routing section as a file in the output folder, which the check's runner appends below the earlier passes and never in place of one. A plan holding the rendered pass appended to a synthetic plan and a hand-written pass are passed through the reader the board placement and critical routing history command uses, and what it reads from the two has the same shape. It fails a pass that still holds a cannot judge verdict, naming the item and the view it needs, and a failing pass is followed by a new run at the re-routed commit, not by an edit of the pass. Out of scope: whether a verdict is right and the history command's checks of the repository's history.
+  Over synthetic unit results, the merge fails naming an item that has no verdict row and an item given twice; it fails a pass whose number, commit judged or views are missing or malformed; and it renders the pass in the form the method gives for the plan's critical routing section as a file in the output folder, which the check's runner appends below the earlier passes and never in place of one. A plan holding the rendered pass appended to a synthetic plan and a hand-written pass are passed through the reader the board placement and critical routing history command uses, and what it reads from the two has the same shape. It fails a pass that still holds a cannot judge, naming the item and the view it needs, and renders a resolved one as `cannot judge, then <verdict>`; a fail is rendered as a plain fail for the designer to put right in the row before the router runs. A replica's `bears on no critical net` gives way to another replica's verdict for the same item. Out of scope: whether a verdict is right and the history command's checks of the repository's history.
 links:
   - target: SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING
     type: criterion-of

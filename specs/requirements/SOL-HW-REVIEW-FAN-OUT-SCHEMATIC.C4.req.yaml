@@ -2,11 +2,11 @@ id: SOL-HW-REVIEW-FAN-OUT-SCHEMATIC.C4
 type: criterion
 title: A review folder for a committed schematic holds what the schematic review step gives a reviewer, the sheet drawings included, and nothing of the designer's reasoning
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |-
-  Over a synthetic repository with a committed schematic, an exported netlist and rendered sheet drawings, a command writes a review folder outside the repository holding the schematic and its project files as the commit holds them, the netlist, every record the review step reads, the sheet drawings, the method, the hardware notes and the check's report, and holds no review record and no file the commit does not hold. It refuses a folder inside the repository, a folder that is not new or empty, a missing netlist, a netlist older than the committed schematic, and a sheet with no drawing. Out of scope: exporting the netlist, drawing the sheets and running the check.
+  Over a synthetic repository with a committed schematic, an exported netlist and rendered sheet drawings, a command writes a review folder outside the repository holding the schematic and its project files as the commit holds them, the netlist, every record the review step reads, the sheet drawings, the method, the hardware notes and the check's report, and holds no review record for a first round and, for a later round, only the earlier rounds of the schematic review record as recorded, and no file the commit does not hold. It refuses a folder inside the repository, a folder that is not new or empty, a missing netlist, a netlist whose parts or sheets differ from the committed schematic's, and a sheet with no drawing. The command is `task hw:schematic-review-folder`, with add-view and add-document modes as the layout folder command's. Out of scope: exporting the netlist, drawing the sheets and running the check.
 links:
   - target: SOL-HW-REVIEW-FAN-OUT-SCHEMATIC
     type: criterion-of

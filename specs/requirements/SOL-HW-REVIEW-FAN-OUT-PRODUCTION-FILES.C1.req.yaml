@@ -2,11 +2,11 @@ id: SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES.C1
 type: criterion
 title: The production-files caller groups the placed parts by footprint into groups of bounded size and gives the fabrication layers one unit
 status: active
-version: 2
+version: 3
 measurement_type: binary
 verification: test
 text: |-
-  From synthetic placement and parts records the caller's units are groups of rows that share a footprint, none holding more than the stated number of rows and every row in exactly one group, and one unit for the fabrication layers, the drill file and the outline. A folder whose placement file cannot be read is refused naming it. Out of scope: judging a row and the kit's mechanics.
+  From synthetic placement and parts records the caller's units are groups of rows that share a footprint, none holding more than the stated number of rows and every row in exactly one group, and one unit for the fabrication layers, the drill file and the outline. A folder whose placement file cannot be read is refused naming it. None holds more than ten rows, and a part whose footprint has no drawing is in a unit of its own footprint name and its prompt says so. Out of scope: judging a row and the kit's mechanics.
 links:
   - target: SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES
     type: criterion-of

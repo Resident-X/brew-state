@@ -2,11 +2,11 @@ id: SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES.C4
 type: criterion
 title: The ordering step and the hardware notes say that the check may be judged by unit and that the preview step stays outside every reviewer
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |-
-  The method's ordering section says that the production-files check may be judged by unit, what the merge checks, that the assembler's preview is obtained outside the reviewers, and that judging it with one reviewer stays valid; the sentence that a proof is repeated after the step changes names the form that changed; the hardware notes' description of the production-files proof names the fanned-out run. Checked by reading each place against these clauses. Out of scope: the layout, routing and schematic sections.
+  The method's ordering section says that the production-files check may be judged by unit, what the merge checks, that the assembler's preview is obtained outside the reviewers, and that judging it with one reviewer stays valid; the sentence that a proof is repeated after the step changes names the form that changed; the hardware notes' description of the production-files proof names the fanned-out run. Checked by reading each place against these clauses. The method also states that the fanned-out form is relied on only once its proof is recorded. Out of scope: the layout, routing and schematic sections.
 links:
   - target: SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES
     type: criterion-of
