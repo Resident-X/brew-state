@@ -1,0 +1,45 @@
+{
+ "about": "Reductions of recorded sessions, made with hardware/tools/review_kit/reduce.py: image bytes replaced by their size, absolute paths of the recording machine replaced. Each entry names what the recording is, which session it was forked from and the figures the tests hold the checks to.",
+ "probes": {
+  "p1": {"file": "probes/p1.jsonl", "what": "root, no result schema: one model call that acknowledges", "ack": "ROOT-READY", "parent": null},
+  "p2": {"file": "probes/p2.jsonl", "what": "fork of p1 started with a result-schema flag the root did not have: the schema adds a tool to the fork alone and the fork read nothing from the cache", "parent": "p1"},
+  "p3": {"file": "probes/p3.jsonl", "what": "fork of p1 with a further tool added: most of the prefix was still read from the cache", "parent": "p1"},
+  "p4": {"file": "probes/p4.jsonl", "what": "root with a result schema: one call that acknowledges through the schema tool", "ack": "ROOT-READY", "parent": null},
+  "p5": {"file": "probes/p5.jsonl", "what": "fork of p4 with the same schema: reads the whole prefix", "parent": "p4"},
+  "p6": {"file": "probes/p6.jsonl", "what": "node forked from p4: one call that acknowledges through the schema tool", "ack": "NODE-READY", "parent": "p4"},
+  "p7": {"file": "probes/p7.jsonl", "what": "fork of the node p6, a fork of a fork: reads the whole prefix", "parent": "p6"}
+ },
+ "probe_figures": {
+  "p1": {"first_call_read": 3223, "prefix_written": 3261},
+  "p2": {"first_call_read": 0, "prefix_tokens_the_parent_wrote": 3261},
+  "p3": {"first_call_read": 5809},
+  "p5": {"first_call_read": 6644, "prefix_tokens_the_parent_wrote": 6644},
+  "p7": {"first_call_read": 8176, "prefix_tokens_the_lineage_wrote": 8176}
+ },
+ "setup_narrated": {"file": "setup_narrated.jsonl", "what": "a setup session of the earlier driver that read the documents in several calls and wrote text between them", "calls": 8, "narration": "Still reading the method's remaining catalogue sections and the README's tail.", "ack": "SETUP-READ-COMPLETE"},
+ "validation": {
+  "what": "the live validation of the shared-context shape on four units: one root per model and the forks of it",
+  "roots": {"sonnet": "validation/root-sonnet.jsonl", "haiku": "validation/root-haiku.jsonl"},
+  "forks": {
+   "sonnet": ["sonnet-FULL-area-EMI", "sonnet-FULL-area-MAINS", "sonnet-FULL-area-POWER", "sonnet-FULL-area-WORK", "sonnet-TERSE-area-EMI", "sonnet-TERSE-area-MAINS", "sonnet-TERSE-area-POWER", "sonnet-TERSE-area-WORK"],
+   "haiku": ["haiku-FULL-area-EMI", "haiku-FULL-area-MAINS", "haiku-FULL-area-POWER", "haiku-FULL-area-WORK"]
+  },
+  "reported_cost_usd": {"sonnet_root": 1.1259, "sonnet_forks": 0.7677, "haiku_root": 0.3336, "haiku_forks": 0.3348, "run": 2.562},
+  "reported_note": "the run ledger's own sums; each fork's report is cumulative over its root's"
+ },
+ "layout_run": {
+  "what": "the layout review run whose forks made 390 opens of 91 distinct view tiles; the setup session of that run and one reduced transcript per fork, the records the setup session held left out",
+  "setup": "layout_run/setup.jsonl",
+  "units": ["area-CLOCK", "area-CONN", "area-DECOUPLE", "area-EMI", "area-FLOOR", "area-GROUND", "area-MAINS", "area-MFG", "area-POWER", "area-SENSE", "area-TEST", "area-WORK", "plan-and-free-pass"],
+  "rows": "layout_run/rows.json",
+  "image_opens": {"total": 390, "distinct": 91, "held": 0, "new": 389, "failed": 1, "repeated_within_a_fork": 1, "opens_of_a_tile_another_fork_had_opened": 299},
+  "image_opens_by_unit": {"area-CLOCK": 12, "area-CONN": 23, "area-DECOUPLE": 11, "area-EMI": 71, "area-FLOOR": 56, "area-GROUND": 24, "area-MAINS": 18, "area-MFG": 31, "area-POWER": 26, "area-SENSE": 22, "area-TEST": 20, "area-WORK": 68, "plan-and-free-pass": 8},
+  "distinct_note": "a tile is told apart by its file name; by its path under the review folder the run opened 92, one more, because the one open that failed named views/placement-r1c2.png and the placement tile of that name lies in placement/"
+ },
+ "setup_rule": {
+  "what": "the start of a setup session of the earlier driver and of one fork of it: both carry the setup session's system rule, which tells the session to write nothing but one token and to judge nothing",
+  "setup": "layout_run/setup.jsonl",
+  "fork": "layout_run/area-CLOCK.jsonl",
+  "rule_marker": "Write no text of your own at any point"
+ }
+}
