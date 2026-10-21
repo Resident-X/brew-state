@@ -23,6 +23,8 @@ round it holds no review record.
                      [--round-fields number,kind,commit,views,check] [--json]
     review_folder.py --add-view <folder> --view <file> --view-command <text>
                      --cannot-judge-item <item> --cannot-judge-why <text> [--json]
+    review_folder.py --add-document <folder> --document <text file> --source <where the figure comes from>
+                     --cannot-judge-item <item> --cannot-judge-why <text> [--json]
 
 The round's fields are the set --round-fields names, which is a parameter of the
 command: the layout review's are its number, kind, the commit judged (taken from
@@ -40,6 +42,14 @@ rendered it, so the merge can build the row from them once the unit is judged
 again. The round file is not rewritten and nothing of the shared context changes.
 It refuses a view that does not exist and a folder this command did not write.
 
+--add-document is the same for a cannot judge whose Why asks for a document the folder
+lacks and the plan gives no address to fetch it from: it puts a text file holding the
+figure or passage into the added-documents folder of a folder this command wrote and
+records in the same resolutions file the item, the Why, the document and the source
+the figure comes from. It refuses a file that does not exist, is not UTF-8 text or is
+larger than 64 KiB, an empty or multi-line source, a name the folder already holds, an
+item the folder's checklist does not hold and a folder this command did not write.
+
 Each cause is reported on one line beginning REFUSED, a RESULT line comes last,
 and the exit status is 0 when the folder is written, 1 when the command refuses
 and 2 when git is missing. --json prints the same facts as one JSON document.
@@ -55,7 +65,7 @@ import re
 import shutil
 import subprocess
 import sys
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
 
 TOOLS_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, TOOLS_DIR)
@@ -70,6 +80,12 @@ REPO = review_seed.REPO
 ROUND_FILE = "round.json"
 TOOL = "review-folder"
 ADDED_VIEWS = "added-views"
+#: The folder of a review folder that holds the text files added to resolve a cannot judge that needed a document.
+ADDED_DOCUMENTS = "added-documents"
+#: The largest text file the add-document mode takes.
+DOCUMENT_LIMIT = 64 * 1024
+#: The checklist entry of the comparison with the plan and the free pass, which no catalogue item or plan row names.
+COMPARISON_ITEM = "PLAN-AND-FREE-PASS"
 #: The file of the added-views folder that records each cannot judge a view was added for.
 RESOLUTIONS = "resolutions.json"
 #: The extracts written into the folder from the commit: the layout facts, and the method's sections a layout review needs.
@@ -84,7 +100,7 @@ PLACEMENT = review_seed.PLACEMENT
 #: A board's review record, in the board's own folder.
 RECORD = board_review_history.RECORD
 #: The folders of a review folder that hold no design.
-NOT_DESIGN = (VIEWS, PLACEMENT, ADDED_VIEWS)
+NOT_DESIGN = (VIEWS, PLACEMENT, ADDED_VIEWS, ADDED_DOCUMENTS)
 KINDS = ("full", "narrow")
 #: The layout review's round fields, in the order a round file gives them.
 LAYOUT_FIELDS = ("number", "kind", "commit", "views", "check")
@@ -203,9 +219,10 @@ def design_in(folder: str) -> str:
 
 
 def read_resolutions(folder: str) -> List[Dict[str, str]]:
-    """The cannot judge resolutions the add-view mode recorded in a review folder, in the order they were added; none when
-    nothing was added. Each is an item, the Why of its cannot judge, the view added for it and the command that rendered
-    the view, and the view must be a file of the folder."""
+    """The cannot judge resolutions the add-view and add-document modes recorded in a review folder, in the order they were
+    added; none when nothing was added. Each is an item, the Why of its cannot judge and either the view added for it with
+    the command that rendered it or the document added for it with its source; an entry with no kind is a view, and every
+    entry comes back with its kind. The file added must be a file of the folder."""
     path = os.path.join(folder, ADDED_VIEWS, RESOLUTIONS)
     if not os.path.exists(path):
         return []
@@ -213,18 +230,22 @@ def read_resolutions(folder: str) -> List[Dict[str, str]]:
         with open(path, encoding="utf-8") as handle:
             content = json.load(handle)
     except (OSError, ValueError, RecursionError) as error:
-        raise ReviewFolderProblem(f"the resolutions file {path} cannot be read ({error}); add the views again with the folder "
-                                  "command's --add-view")
+        raise ReviewFolderProblem(f"the resolutions file {path} cannot be read ({error}); add the views and documents again "
+                                  "with the folder command's --add-view and --add-document")
     entries = content.get("resolutions") if isinstance(content, dict) and content.get("tool") == TOOL else None
-    if not isinstance(entries, list) or not all(isinstance(entry, dict) and all(
-            one_line(entry.get(key)) for key in ("item", "why", "view", "command")) for entry in entries):
-        raise ReviewFolderProblem(f"the resolutions file {path} holds {entries!r:.100}, which is not a list of an item, a Why, a "
-                                  "view and a command each; add the views with the folder command's --add-view")
+    keys = {"view": ("item", "why", "view", "command"), "document": ("item", "why", "document", "source")}
+    if not isinstance(entries, list) or not all(
+            isinstance(entry, dict) and entry.get("kind", "view") in keys
+            and all(one_line(entry.get(key)) for key in keys[entry.get("kind", "view")]) for entry in entries):
+        raise ReviewFolderProblem(f"the resolutions file {path} holds {entries!r:.100}, which is not a list of an item, a Why "
+                                  "and a view with its command or a document with its source each; add them with the folder "
+                                  "command's --add-view and --add-document")
     for entry in entries:
-        if not os.path.isfile(os.path.join(folder, entry["view"])):
-            raise ReviewFolderProblem(f"the resolutions file {path} names the view {entry['view']}, which the folder does not "
-                                      "hold; add the view again with the folder command's --add-view")
-    return [dict(entry) for entry in entries]
+        kind = entry.get("kind", "view")
+        if not os.path.isfile(os.path.join(folder, entry[kind])):
+            raise ReviewFolderProblem(f"the resolutions file {path} names the {kind} {entry[kind]}, which the folder does not "
+                                      f"hold; add the {kind} again with the folder command's --add-{kind}")
+    return [{**entry, "kind": entry.get("kind", "view")} for entry in entries]
 
 
 # --- The extracts written from the commit -------------------------------------------------------
@@ -541,18 +562,92 @@ def pair_of(entry: str) -> Dict[str, str]:
     return {"item": item.strip(), "reason": reason.strip()}
 
 
+def held_folder(folder: str, causes: List[str]) -> Tuple[Dict[str, Any], List[Dict[str, str]]]:
+    """The round file and the resolutions of a folder this command wrote; a cause is added when it cannot be added to."""
+    try:
+        return read_round(folder), read_resolutions(folder)
+    except ReviewFolderProblem as error:
+        causes.append(f"{folder} is not a review folder the command wrote and can add to: {error}")
+        return {}, []
+
+
+def record_resolution(folder: str, held: List[Dict[str, str]], entry: Dict[str, str]) -> None:
+    """The resolutions file of the folder with one more entry, replaced whole so a failure leaves the earlier file. A view
+    is recorded without a kind, as it always was."""
+    os.makedirs(os.path.join(folder, ADDED_VIEWS), exist_ok=True)
+    entries = [{key: value for key, value in one.items() if not (key == "kind" and value == "view")} for one in held + [entry]]
+    scratch = os.path.join(folder, ADDED_VIEWS, RESOLUTIONS + ".part")
+    with open(scratch, "w", encoding="utf-8") as handle:
+        handle.write(settled({"tool": TOOL, "resolutions": entries}))
+    os.replace(scratch, os.path.join(folder, ADDED_VIEWS, RESOLUTIONS))
+
+
+def known_items(folder: str) -> Set[str]:
+    """The items the folder's checklist holds, as far as the folder can tell: the catalogue's in its method extract, the
+    plan's board items and the comparison with the plan. Empty when the folder holds no catalogue item, so the checklist is
+    not known."""
+    try:
+        with open(os.path.join(folder, METHOD_EXTRACT), encoding="utf-8") as handle:
+            catalogue = set(re.findall(r"(?m)^#### ([A-Z]+-\d+)\. ", handle.read()))
+        with open(os.path.join(folder, design_in(folder), "layout-plan.md"), encoding="utf-8") as handle:
+            own = set(re.findall(r"(?m)^\|\s*(BOARD-[1-9][0-9]*)\s*\|", handle.read()))
+    except (OSError, UnicodeDecodeError, ReviewFolderProblem):
+        return set()
+    return (catalogue | own | {COMPARISON_ITEM}) if catalogue else set()
+
+
+def add_document(args: argparse.Namespace) -> Dict[str, Any]:
+    """A text file added to a folder this command wrote, with the cannot judge it resolves and where its figure comes from;
+    or a refusal naming every cause. The file goes to the added-documents folder and the resolution to the resolutions
+    file; the round file is not rewritten."""
+    folder = os.path.abspath(args.add_document)
+    causes: List[str] = []
+    content, held = held_folder(folder, causes)
+    document = os.path.abspath(args.document) if args.document else None
+    if document is None or not os.path.isfile(document):
+        causes.append(f"the document {args.document} does not exist; write the figure or passage into a text file, then give it")
+    else:
+        name = os.path.basename(document)
+        if os.path.getsize(document) > DOCUMENT_LIMIT:
+            causes.append(f"the document {name} is larger than {DOCUMENT_LIMIT // 1024} KiB; give only the figure or passage "
+                          "the Why asks for")
+        else:
+            try:
+                with open(document, "rb") as handle:
+                    handle.read().decode("utf-8")
+            except UnicodeDecodeError:
+                causes.append(f"the document {name} is not UTF-8 text; give the figure or passage as a text file")
+        if not PLAIN_NAME.fullmatch(name):
+            causes.append(f"the document's file name {name!r} is not a plain name of letters, digits, dots, dashes and "
+                          "underscores; rename it")
+        elif os.path.lexists(os.path.join(folder, ADDED_DOCUMENTS, name)):
+            causes.append(f"the folder already holds an added document named {name}; give the new document another name")
+    for what, value in (("where the figure comes from (--source)", args.source),
+                        ("the item whose cannot judge asked for the document (--cannot-judge-item)", args.cannot_judge_item),
+                        ("the cannot judge's Why (--cannot-judge-why)", args.cannot_judge_why)):
+        if not one_line(value):
+            causes.append(f"{what} is missing or not one line of text")
+    if content and one_line(args.cannot_judge_item):
+        known = known_items(folder)
+        if known and args.cannot_judge_item.strip() not in known:
+            causes.append(f"the item {args.cannot_judge_item.strip()!r} is not on the folder's checklist; give the item's exact name")
+    if causes:
+        raise Refused(causes)
+    name = os.path.basename(document)
+    os.makedirs(os.path.join(folder, ADDED_DOCUMENTS), exist_ok=True)
+    shutil.copyfile(document, os.path.join(folder, ADDED_DOCUMENTS, name))
+    entry = {"kind": "document", "item": args.cannot_judge_item.strip(), "why": args.cannot_judge_why.strip(),
+             "document": f"{ADDED_DOCUMENTS}/{name}", "source": args.source.strip()}
+    record_resolution(folder, held, entry)
+    return {"result": "ADDED", "folder": folder, "document": entry["document"], "item": entry["item"]}
+
+
 def add_view(args: argparse.Namespace) -> Dict[str, Any]:
     """A view added to a folder this command wrote, with the cannot judge it resolves; or a refusal naming every cause. The
     view goes to the added-views folder and the resolution to the file there; the round file is not rewritten."""
     folder = os.path.abspath(args.add_view)
     causes: List[str] = []
-    content: Dict[str, Any] = {}
-    held: List[Dict[str, str]] = []
-    try:
-        content = read_round(folder)
-        held = read_resolutions(folder)
-    except ReviewFolderProblem as error:
-        causes.append(f"{folder} is not a review folder the command wrote and can add to: {error}")
+    content, held = held_folder(folder, causes)
     if content and "views" not in content["fields"]:
         causes.append("the folder's round fields hold no views, so it has no Views field to add the view to")
     view = os.path.abspath(args.view) if args.view else None
@@ -576,10 +671,7 @@ def add_view(args: argparse.Namespace) -> Dict[str, Any]:
     shutil.copyfile(view, os.path.join(folder, ADDED_VIEWS, name))
     entry = {"item": args.cannot_judge_item.strip(), "why": args.cannot_judge_why.strip(), "view": f"{ADDED_VIEWS}/{name}",
              "command": command.strip()}
-    scratch = os.path.join(folder, ADDED_VIEWS, RESOLUTIONS + ".part")
-    with open(scratch, "w", encoding="utf-8") as handle:
-        handle.write(settled({"tool": TOOL, "resolutions": held + [entry]}))
-    os.replace(scratch, os.path.join(folder, ADDED_VIEWS, RESOLUTIONS))
+    record_resolution(folder, held, entry)
     return {"result": "ADDED", "folder": folder, "view": f"{ADDED_VIEWS}/{name}", "item": entry["item"]}
 
 
@@ -598,7 +690,8 @@ def finish(report: Dict[str, Any], as_json: bool, out_stream) -> int:
         print("ROUND | " + " | ".join(f"{key} {clean(str(round_[key]))}" for key in round_), file=out_stream)
         print(f"RESULT | WRITTEN | {clean(report['folder'])}", file=out_stream)
     elif report["result"] == "ADDED":
-        print(f"RESULT | ADDED | {clean(report['view'])} | cannot judge of {clean(report['item'])}", file=out_stream)
+        print(f"RESULT | ADDED | {clean(report.get('view') or report['document'])} | cannot judge of {clean(report['item'])}",
+              file=out_stream)
     else:
         print(f"RESULT | {report['result']} | {clean(report['detail'])}", file=out_stream)
     return status
@@ -626,13 +719,20 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout) -> int:
     parser.add_argument("--others", help="a narrow round's line saying why every other item is not judged")
     parser.add_argument("--add-view", help="a review folder this command wrote, to add a rendered view to")
     parser.add_argument("--view", help="the rendered view file to add")
-    parser.add_argument("--cannot-judge-item", help="the item whose cannot judge asked for the view")
+    parser.add_argument("--add-document", help="a review folder this command wrote, to add a text file holding a figure to")
+    parser.add_argument("--document", help="the text file to add, holding the figure or passage a cannot judge's Why asks for")
+    parser.add_argument("--source", help="where the figure in the document comes from, as one line")
+    parser.add_argument("--cannot-judge-item", help="the item whose cannot judge asked for the view or document")
     parser.add_argument("--cannot-judge-why", help="that cannot judge's Why")
     parser.add_argument("--json", action="store_true", help="print the report as one JSON document")
     args = parser.parse_args(argv)
     try:
+        if args.add_view and args.add_document:
+            parser.error("--add-view and --add-document are separate modes; give one")
         if args.add_view:
             report = add_view(args)
+        elif args.add_document:
+            report = add_document(args)
         else:
             required = ("repo", "commit", "design", "out", "views", "placement", "check_report")
             missing = [f"--{name.replace('_', '-')}" for name in required if not getattr(args, name)]

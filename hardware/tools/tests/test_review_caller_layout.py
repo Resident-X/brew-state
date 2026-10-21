@@ -66,7 +66,7 @@ text = " ".join(block.get("text", "") for block in json.loads(stdin)["message"][
 units = re.findall(r"Your unit: (\\S+)", text)
 with open(os.environ["STUB_LOG"], "a", encoding="utf-8") as handle:
     handle.write(json.dumps({"args": args, "tools": flag("--tools"), "cwd": os.getcwd(), "session": session_id, "resume": resume,
-                             "fork": "--fork-session" in args, "units": units}) + "\\n")
+                             "fork": "--fork-session" in args, "units": units, "prompt": text}) + "\\n")
 if resume is None:
     sys.stdout.write(ex.stream_text(session_id, text="ACK", cost=0.01, api_ms=100, turns=1, read=0, write=1000, generated=2,
                                     tools=tools, model=model, cwd=os.getcwd()))
@@ -194,6 +194,13 @@ class Folder(unittest.TestCase):
         for word in words:
             self.assertIn(word, text)
         return text
+
+    def add_document(self, item="CLOCK-1", why="needs the datasheet of Y1: the pin spacing is not in the folder", name="vo-pins.txt",
+                     source="manufacturer datasheet, package drawing", folder=None):
+        document = os.path.join(self.root, name)
+        fx.write(document, "Pin spacing: 2.54 mm\n")
+        status, text = fx.run_folder(fx.add_document_argv(folder or self.folder, document, source, item, why))
+        self.assertEqual(status, 0, text)
 
     def copy_of(self, name="broken"):
         folder = os.path.join(self.root, name)
@@ -347,7 +354,7 @@ class TheUnits(Folder):
         self.assertEqual({name: artefact.kind for name, artefact in declaration.artefacts.items() if artefact.kind != "text"},
                          {"layout-facts.txt": "extract", "method-extract.md": "extract", "placement/placement.png": "image",
                           "views/layer-F.Cu.png": "image"})
-        self.assertEqual(declaration.added_during_round, ("added-views/*",))
+        self.assertEqual(declaration.added_during_round, ("added-views/*", "added-documents/*"))
         self.assertEqual(declaration.budget.wall_s, 350)
         self.assertEqual(set(declaration.needed), set(declaration.artefacts))
         for held in fx.BOARD_FILES:
@@ -736,6 +743,55 @@ class TheMerge(Folder):
         again = results()
         again["area-CLOCK"]["Verdicts"] = [verdict("CLOCK-1", "cannot judge", "needs crop-Y2: still not enough")]
         self.refused(lambda: merged(self.folder, again), "item CLOCK-1 is still cannot judge", "asks for crop-Y2")
+
+    def test_a_cannot_judge_whose_why_asks_for_a_document_names_the_add_document_command_with_its_flags_and_the_rerun(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C3: Over synthetic unit results, the merge fails naming an item that has no verdict row and an item that has two, fails a round whose number, kind, commit judged, views or check lines are missing or malformed, writes the opening lines in the order the method gives with the round kind and, for a narrow round, its changed regions, the listed items with their reasons and the line saying why every other item is not judged, and reports two findings that cite the same view and board place, keeping both. Rule-kind items rest on the check's report and the rules table as the method says, which the merge does not judge. Findings of the item units are numbered in the checklist's order and the findings of the comparison and free-pass unit follow, in the order that unit lists them. A round that still holds a cannot judge verdict fails, naming the item and the view its Why asks for, since the method resolves it within the round; the round's starter renders the view, adds it with the folder command's add-view mode and re-runs that unit, and the merged row, built from the item, Why and view the resolutions file holds and the re-run's verdict, with the added views folded into the round's Views field at the render, records the cannot judge, the view or the document added and the verdict reached, in that order. Out of scope: whether a verdict is right.
+        given = results()
+        given["area-CLOCK"]["Verdicts"] = [verdict("CLOCK-1", "cannot judge", "needs the datasheet of Y1: the pin spacing is not shown")]
+        text = self.refused(lambda: merged(self.folder, given), "item CLOCK-1 is still cannot judge",
+                            "or run unit area-CLOCK again with --rerun if the document can be retrieved",
+                            "`--add-document <review folder> --document <file> --source <where the figure comes from> "
+                            "--cannot-judge-item CLOCK-1 --cannot-judge-why <the Why>`", "then run unit area-CLOCK again with --rerun")
+        view = results()
+        view["area-CLOCK"]["Verdicts"] = [verdict("CLOCK-1", "cannot judge", "needs crop-Y1: no crop of the crystal")]
+        self.assertNotIn("--add-document", self.refused(lambda: merged(self.folder, view), "item CLOCK-1 is still cannot judge"),
+                         "a view is not a document")
+        self.add_document()
+        after = self.refused(lambda: merged(self.folder, given), "the folder already holds a document added for this item",
+                             "run unit area-CLOCK again with --rerun")
+        self.assertNotIn("render that view", after)
+        self.assertNotIn("--add-document", after, "the document exists, so it is not asked for again")
+
+    def test_a_resolved_cannot_judge_with_a_document_is_one_row_recording_the_cannot_judge_then_the_document_then_the_verdict(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C3: Over synthetic unit results, the merge fails naming an item that has no verdict row and an item that has two, fails a round whose number, kind, commit judged, views or check lines are missing or malformed, writes the opening lines in the order the method gives with the round kind and, for a narrow round, its changed regions, the listed items with their reasons and the line saying why every other item is not judged, and reports two findings that cite the same view and board place, keeping both. Rule-kind items rest on the check's report and the rules table as the method says, which the merge does not judge. Findings of the item units are numbered in the checklist's order and the findings of the comparison and free-pass unit follow, in the order that unit lists them. A round that still holds a cannot judge verdict fails, naming the item and the view its Why asks for, since the method resolves it within the round; the round's starter renders the view, adds it with the folder command's add-view mode and re-runs that unit, and the merged row, built from the item, Why and view the resolutions file holds and the re-run's verdict, with the added views folded into the round's Views field at the render, records the cannot judge, the view or the document added and the verdict reached, in that order. Out of scope: whether a verdict is right.
+        self.add_document()
+        self.add_view(item="FLOOR-1", why="needs crop-F1: none", name="crop-F1.svg")
+        given = results()
+        given["area-CLOCK"]["Verdicts"] = [verdict("CLOCK-1", "fail", "Finding 1.1.", "crop-Y1 at (5, 5)")]
+        given["area-CLOCK"]["Findings"] = [finding(1, "CLOCK-1")]
+        text = rendered(self.folder, given)
+        row = next(line for line in text.splitlines() if line.startswith("| CLOCK-1 "))
+        cells = [cell.strip() for cell in row.strip("|").split("|")]
+        self.assertEqual(cells[3], "cannot judge; added-documents/vo-pins.txt; fail")
+        self.assertEqual(cells[5], "Cannot judge: needs the datasheet of Y1: the pin spacing is not in the folder. Finding 1.1.")
+        head = text.split("### Verdicts")[0]
+        self.assertNotIn("added-documents", head, "a document has no command, so the Views field holds only views")
+        self.assertIn("(added view: added-views/crop-F1.svg)", head)
+        self.assertEqual(text.count("added-documents/vo-pins.txt"), 1)
+        again = results()
+        again["area-CLOCK"]["Verdicts"] = [verdict("CLOCK-1", "cannot judge", "needs the standard's table: still not enough")]
+        self.refused(lambda: merged(self.folder, again), "item CLOCK-1 is still cannot judge")
+
+    def test_a_recorded_document_for_an_item_outside_the_round_or_without_a_verdict_row_fails_the_merge_naming_it(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C3: Over synthetic unit results, the merge fails naming an item that has no verdict row and an item that has two, fails a round whose number, kind, commit judged, views or check lines are missing or malformed, writes the opening lines in the order the method gives with the round kind and, for a narrow round, its changed regions, the listed items with their reasons and the line saying why every other item is not judged, and reports two findings that cite the same view and board place, keeping both. Rule-kind items rest on the check's report and the rules table as the method says, which the merge does not judge. Findings of the item units are numbered in the checklist's order and the findings of the comparison and free-pass unit follow, in the order that unit lists them. A round that still holds a cannot judge verdict fails, naming the item and the view its Why asks for, since the method resolves it within the round; the round's starter renders the view, adds it with the folder command's add-view mode and re-runs that unit, and the merged row, built from the item, Why and view the resolutions file holds and the re-run's verdict, with the added views folded into the round's Views field at the render, records the cannot judge, the view or the document added and the verdict reached, in that order. Out of scope: whether a verdict is right.
+        folder = self.copy_of()
+        self.add_document(item="CLOCK-1", folder=folder)
+        given = results()
+        given["area-CLOCK"]["Verdicts"] = []
+        self.refused(lambda: merged(folder, given), "records a cannot judge for CLOCK-1", "no verdict row")
+        fx.set_round(folder, kind="narrow", items=[{"item": "FLOOR-1", "reason": "r"}], regions=["r"], others="rest")
+        self.refused(lambda: merged(folder, {"area-FLOOR": {"Verdicts": [verdict("FLOOR-1")]}}), "records a cannot judge for 'CLOCK-1'",
+                     "not an item this round judges")
 
     def test_a_cannot_judge_whose_view_is_already_added_says_to_run_the_unit_again_and_otherwise_to_add_the_view(self):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C3: A round that still holds a cannot judge verdict fails, naming the item and the view its Why asks for, since the method resolves it within the round; the round's starter renders the view, adds it with the folder command's add-view mode and re-runs that unit
@@ -1164,6 +1220,58 @@ class TheCommandEndToEnd(Folder):
         self.assertEqual(report["reran"][0]["units"], ["area-CLOCK"])
 
 
+    def test_a_cannot_judge_needing_a_document_is_resolved_by_adding_the_document_and_running_that_unit_again(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C3: Over synthetic unit results, the merge fails naming an item that has no verdict row and an item that has two, fails a round whose number, kind, commit judged, views or check lines are missing or malformed, writes the opening lines in the order the method gives with the round kind and, for a narrow round, its changed regions, the listed items with their reasons and the line saying why every other item is not judged, and reports two findings that cite the same view and board place, keeping both. Rule-kind items rest on the check's report and the rules table as the method says, which the merge does not judge. Findings of the item units are numbered in the checklist's order and the findings of the comparison and free-pass unit follow, in the order that unit lists them. A round that still holds a cannot judge verdict fails, naming the item and the view its Why asks for, since the method resolves it within the round; the round's starter renders the view, adds it with the folder command's add-view mode and re-runs that unit, and the merged row, built from the item, Why and view the resolutions file holds and the re-run's verdict, with the added views folded into the round's Views field at the render, records the cannot judge, the view or the document added and the verdict reached, in that order. Out of scope: whether a verdict is right.
+        why = "needs the datasheet of Y1: the pin spacing is not in the folder"
+        run = Command(self)
+        run.scenario(verdicts={"CLOCK-1": "cannot judge"}, why={"CLOCK-1": why})
+        status, text, _ = run.go("--format", "json")
+        joined = "; ".join(json.loads(text)["refusals"])
+        self.assertEqual(status, 1, text)
+        self.assertIn("item CLOCK-1 is still cannot judge", joined)
+        self.assertIn("--add-document <review folder> --document <file> --source <where the figure comes from>", joined)
+        before = {path: slurp(os.path.join(self.folder, path)) for path in ("round.json", "layout-facts.txt", "method-extract.md")}
+        self.add_document(why=why, name="vo3526-pins.txt", source="the VO3526 datasheet, package drawing")
+        self.assertEqual(before, {path: slurp(os.path.join(self.folder, path)) for path in before}, "no shared-context file changed")
+        calls_before = len(run.calls())
+        run.scenario(verdicts={"CLOCK-1": "pass"})
+        status, text, err = run.go("--rerun", "area-CLOCK", "--format", "json")
+        self.assertEqual(status, 0, "the kit accepts the added document as a path added during the round: " + text + err)
+        again = run.calls()[calls_before:]
+        forks = [call for call in again if call["resume"] is not None]
+        self.assertEqual({tuple(call["units"]) for call in forks}, {("area-FLOOR", "area-GROUND", "area-CLOCK")})
+        for call in forks:
+            self.assertIn("added-documents/vo3526-pins.txt", call["prompt"], "the unit's prompt names the document to read")
+            self.assertIn("the figure comes from: the VO3526 datasheet, package drawing", call["prompt"])
+            self.assertIn(why, call["prompt"])
+            self.assertIn("open them with Read", call["prompt"])
+        first = [call for call in again if call["resume"] is None]
+        self.assertNotIn("vo3526-pins", first[0]["prompt"], "the shared context does not hold the document")
+        written = slurp(os.path.join(run.out, "round-1.md"))
+        cells = [cell.strip() for cell in next(line for line in written.splitlines() if line.startswith("| CLOCK-1 ")).strip("|").split("|")]
+        self.assertEqual(cells[3], "cannot judge; added-documents/vo3526-pins.txt; pass")
+        self.assertEqual(json.loads(text)["reran"][0]["units"], ["area-CLOCK"])
+
+    def test_a_document_outside_the_paths_added_during_the_round_would_be_refused_by_the_rerun(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C3: Over synthetic unit results, the merge fails naming an item that has no verdict row and an item that has two, fails a round whose number, kind, commit judged, views or check lines are missing or malformed, writes the opening lines in the order the method gives with the round kind and, for a narrow round, its changed regions, the listed items with their reasons and the line saying why every other item is not judged, and reports two findings that cite the same view and board place, keeping both. Rule-kind items rest on the check's report and the rules table as the method says, which the merge does not judge. Findings of the item units are numbered in the checklist's order and the findings of the comparison and free-pass unit follow, in the order that unit lists them. A round that still holds a cannot judge verdict fails, naming the item and the view its Why asks for, since the method resolves it within the round; the round's starter renders the view, adds it with the folder command's add-view mode and re-runs that unit, and the merged row, built from the item, Why and view the resolutions file holds and the re-run's verdict, with the added views folded into the round's Views field at the render, records the cannot judge, the view or the document added and the verdict reached, in that order. Out of scope: whether a verdict is right.
+        def views_only(name, folder):
+            loaded = load_with_synthetic_couplings(name, folder)
+            loaded.module.ADDED = [f"{review_folder.ADDED_VIEWS}/*"]
+            return loaded
+
+        with mock.patch.object(kit_caller, "load", views_only):
+            run = Command(self)
+            run.scenario(verdicts={"CLOCK-1": "cannot judge"}, why={"CLOCK-1": "needs the datasheet of Y1: the pin spacing"})
+            self.assertEqual(run.go("--format", "json")[0], 1)
+            self.add_document()
+            run.scenario(verdicts={"CLOCK-1": "pass"})
+            status, text, err = run.go("--rerun", "area-CLOCK", "--format", "json")
+            self.assertEqual(status, 1, text + err)
+            self.assertIn("differs from the recorded", "; ".join(json.loads(text)["refusals"]))
+        self.assertEqual(prepared(self.folder).declaration.added_during_round, ("added-views/*", "added-documents/*"),
+                         "as shipped the caller lists both folders")
+
+
 class Documentation(unittest.TestCase):
     def read(self, *path):
         with open(os.path.join(REPO, *path), encoding="utf-8") as handle:
@@ -1201,6 +1309,25 @@ class Documentation(unittest.TestCase):
             self.assertIn(words, section, f"the layout review section says {words!r}")
         for gone in ("setup session",):
             self.assertNotIn(gone, section, f"the layout review section no longer names the retired {gone!r}")
+
+    def test_the_method_and_the_notes_say_a_cannot_judge_needing_a_document_is_resolved_by_adding_it_and_the_row_records_it(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C7: The method's layout review section says that a round may be judged by unit and what the merge checks, that the round's fields come from whoever starts it, that the unit which raised a finding writes its Planning shortfall entry from the plan row, that a cannot judge is resolved by adding the view, or the document its Why asks for when the plan names no address to fetch it from, and re-running the unit with the row recording the cannot judge, the view or document and the verdict, that the merged round is appended below the earlier rounds and committed by whoever started the round at the end of the round, and that judging it with one reviewer stays valid; the sentence that a proof is repeated after the step changes names the form that changed; the hardware notes describe the layout caller and the folder command and what each needs. Checked by reading each place against these clauses. Out of scope: the routing section's critical-routing check.
+        section = self.layout_review()
+        for words in ("or, when the Why asks for a document the plan gives no address to fetch it from, write the figure into a "
+                      "text file and add it with the add-document mode", "which records the item, its Why, the document and its source",
+                      "with the document in the view's place when a document was added"):
+            self.assertIn(words, section)
+        notes = self.read("hardware", "README.md")
+        folder = self.flat(notes[notes.index("--add-document <review folder>"):].split("\n\n")[0])
+        for words in ("at most 64 KiB", "`added-documents/`", "`added-views/resolutions.json`", "`added-documents/*`",
+                      "the unit's prompt on the re-run names the document and its source", "is not UTF-8 text",
+                      "a folder the command did not write"):
+            self.assertIn(words, folder)
+        caller = self.flat(notes[notes.index("**The layout caller.**"):].split("\n")[0])
+        self.assertIn("the view or the document and the verdict reached", caller)
+        self.assertIn("--add-document <folder>", self.read("Taskfile.yml"))
+        self.assertNotIn(": ", self.read("Taskfile.yml").split("hw:review-folder:\n    desc: ")[1].split("\n")[0].split(" for example ")[0].replace("Pass the arguments after --", ""),
+                         "a plain desc holds no colon and space")
 
     def test_the_sentence_that_a_proof_is_repeated_names_the_form_that_changed(self):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C7: The method's layout review section says that a round may be judged by unit and what the merge checks, that the round's fields come from whoever starts it, that the unit which raised a finding writes its Planning shortfall entry from the plan row, that a cannot judge is resolved by adding the view and re-running the unit with the row recording the cannot judge, the view and the verdict, that the merged round is appended below the earlier rounds and committed by whoever started the round at the end of the round, and that judging it with one reviewer stays valid; the sentence that a proof is repeated after the step changes names the form that changed; the hardware notes describe the layout caller and the folder command and what each needs. Checked by reading each place against these clauses. Out of scope: the routing section's critical-routing check.

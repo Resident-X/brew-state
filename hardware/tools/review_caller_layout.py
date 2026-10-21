@@ -34,8 +34,11 @@ verdict is right.
 
 A cannot judge is resolved within the round: the folder command's add-view mode puts
 the view in the added-views folder and records the item, the Why and the view in a
-resolutions file there, the unit is run again with --rerun, and the row the render
-writes records the cannot judge, the view and the verdict reached, in that order.
+resolutions file there, or its add-document mode puts a text file holding the figure
+in the added-documents folder and records the item, the Why, the document and its
+source in the same file; the unit is run again with --rerun, and the row the render
+writes records the cannot judge, the view or document and the verdict reached, in that
+order.
 """
 
 from __future__ import annotations
@@ -88,7 +91,7 @@ COUPLED = (("POWER", "MAINS"), ("MFG", "POWER"))
 #: Where the extracts the shared context holds come from.
 PRODUCER = "task hw:review-folder"
 #: The folder of views rendered during the round, which the declaration lists as added during the round.
-ADDED = f"{review_folder.ADDED_VIEWS}/*"
+ADDED = [f"{review_folder.ADDED_VIEWS}/*", f"{review_folder.ADDED_DOCUMENTS}/*"]
 IMAGES = (".png", ".jpg", ".jpeg")
 #: The documents of the design folder the shared context holds are its .md and .yaml files.
 DOCUMENT_SUFFIXES = (".md", ".yaml")
@@ -398,8 +401,13 @@ def preface(review: str, round_: Dict[str, Any], resolutions: Sequence[Dict[str,
         earlier = (f" This is round {round_['number']}: the earlier rounds of the review record are in {design}/"
                    f"{review_folder.RECORD}, and a verdict row may cite a finding an earlier round raised and closed by a "
                    "reason, written `finding <that round>.<n>`.")
-    added = (f" Views rendered during the round to resolve a cannot judge are in {review_folder.ADDED_VIEWS}/; they are not "
-             "among the images above, so open them with Read." if resolutions else "")
+    added = ""
+    if any(entry["kind"] == "view" for entry in resolutions):
+        added += (f" Views rendered during the round to resolve a cannot judge are in {review_folder.ADDED_VIEWS}/; they are "
+                  "not among the images above, so open them with Read.")
+    if any(entry["kind"] == "document" for entry in resolutions):
+        added += (f" Documents added during the round to resolve a cannot judge are in {review_folder.ADDED_DOCUMENTS}/; they "
+                  "are not part of the shared context, so open them with Read.")
     return PREFACE.format(design=design, plan=PLAN, earlier=earlier, added=added)
 
 
@@ -409,13 +417,20 @@ def output_spec(round_: Dict[str, Any]) -> str:
 
 
 def resolved_text(listed: Sequence[str], resolutions: Sequence[Dict[str, str]]) -> str:
-    """What a unit run again is told of the views added for its items' cannot judge, none for a unit with no such item."""
+    """What a unit run again is told of the views and documents added for its items' cannot judge, none for a unit with no
+    such item."""
     lines = []
     for entry in resolutions:
-        if entry["item"] in listed:
+        if entry["item"] not in listed:
+            continue
+        if entry["kind"] == "document":
+            lines.append(f"- {entry['item']}: it was `cannot judge` because {entry['why']} The document added for it is "
+                         f"{entry['document']} (the figure comes from: {entry['source']}). Open it with Read and judge the "
+                         "item again against the figure it holds.")
+        else:
             lines.append(f"- {entry['item']}: it was `cannot judge` because {entry['why']} The view added for it is "
                          f"{entry['view']} (rendered with: {entry['command']}). Open it with Read and judge the item again.")
-    return ("\nItems whose cannot judge was resolved by an added view:\n" + "\n".join(lines) + "\n") if lines else ""
+    return ("\nItems whose cannot judge was resolved by an added view or document:\n" + "\n".join(lines) + "\n") if lines else ""
 
 
 def unit_values(review: str, round_: Dict[str, Any], units: Dict[str, List[str]],
@@ -492,7 +507,7 @@ def build_declaration(review: str) -> Dict[str, Any]:
                           "expected_output_tokens": expected_tokens(unit, listed), "values": values[unit]}
     return {"artefacts": documents, "templates": {"area": AREA_TEMPLATE, "plan": PLAN_TEMPLATE}, "units": declared,
             "schema": SCHEMA, "deny": ["designer-notes*", "session*"], "budget": {"wall_s": WALL_SECONDS},
-            "added_during_round": [ADDED]}
+            "added_during_round": list(ADDED)}
 
 
 def declaration(review: str) -> Dict[str, Any]:
@@ -542,7 +557,7 @@ def checks(tables: Dict[str, Any]) -> List[str]:
     for entry in ROUND["resolutions"]:
         if entry["item"] not in judged:
             found.append(f"the folder records a cannot judge for {entry['item']!r}, which is not an item this round judges; "
-                         "the item was mistyped when the view was added, so add the view again with the item's exact name")
+                         "the item was mistyped when the view or document was added, so add it again with the item's exact name")
         elif counts[entry["item"]] == 0:
             found.append(f"the folder records a cannot judge for {entry['item']}, which has no verdict row in this round; "
                          "run the unit that judges it again with --rerun")
@@ -552,13 +567,19 @@ def checks(tables: Dict[str, Any]) -> List[str]:
             asks = re.match(r"needs (.+?):", row["Why"])
             where = f"unit {unit}" if unit else "the unit that judged it"
             wanted = asks.group(1) if asks else repr(row["Why"])
-            if any(entry["item"] == row["Item"] for entry in ROUND["resolutions"]):
-                action = (f"the folder already holds a view added for this item, so run {where} again with --rerun; add a view "
-                          "only if the one added is not the view the Why asks for")
+            added = [entry for entry in ROUND["resolutions"] if entry["item"] == row["Item"]]
+            if added:
+                what = "document" if added[-1]["kind"] == "document" else "view"
+                action = (f"the folder already holds a {what} added for this item, so run {where} again with --rerun; add "
+                          f"another only if the one added is not what the Why asks for")
             else:
                 action = f"render that view, add it with the folder command's --add-view and run {where} again with --rerun"
                 if any(word in row["Why"].lower() for word in DOCUMENT_WORDS):
-                    action += f", or run {where} again with --rerun if the document can be retrieved"
+                    action += (f", or run {where} again with --rerun if the document can be retrieved; if the plan names no "
+                               "address to fetch it from, write the figure it asks for into a text file and add it with the "
+                               "folder command's `--add-document <review folder> --document <file> --source <where the figure "
+                               f"comes from> --cannot-judge-item {row['Item']} --cannot-judge-why <the Why>`, then run {where} "
+                               "again with --rerun")
             found.append(f"item {row['Item']} is still cannot judge, and the method resolves it within the round; its Why asks "
                          f"for {wanted}: {action}")
     if PLAN_UNIT in units and not tables["Plan and free pass"]["rows"]:
@@ -602,11 +623,11 @@ def earlier_findings(review: str) -> List[Tuple[str, int]]:
 
 
 def verdict_row(row: Dict[str, Any], entries: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
-    """A verdict row as the record gives it; one that resolves a cannot judge records the cannot judge, then each view
-    added for it, then the verdict reached, and the Why the unit gave it after the cannot judge's own."""
+    """A verdict row as the record gives it; one that resolves a cannot judge records the cannot judge, then each view or
+    document added for it, then the verdict reached, and the Why the unit gave it after the cannot judge's own."""
     if not entries:
         return row
-    steps = [part for entry in entries for part in ("cannot judge", entry["view"])]
+    steps = [part for entry in entries for part in ("cannot judge", entry["document" if entry["kind"] == "document" else "view"])]
     asked = " ".join(f"Cannot judge: {entry['why']}." for entry in entries)
     return {**row, "Verdict": "; ".join(steps + [row["Verdict"]]), "Why": f"{asked} {row['Why']}"}
 
@@ -625,7 +646,8 @@ def render(review: str, tables: Dict[str, Any]) -> Dict[str, str]:
         entries.setdefault(entry["item"], []).append(entry)
     rows = sorted((row for row in tables["Verdicts"]["rows"] if row["Item"] != PLAN_ENTRY), key=lambda row: order[row["Item"]])
     number = round_["number"]
-    views = round_["views"] + [f"{entry['command']} (added view: {entry['view']})" for entry in resolutions]
+    views = round_["views"] + [f"{entry['command']} (added view: {entry['view']})" for entry in resolutions
+                               if entry["kind"] == "view"]
     text = [f"## Round {number}", "", f"- **Board judged**: {round_['commit']}", "- **Views**: the commands the views were "
             "rendered with, as run, and any view rendered in the round to resolve a cannot judge, with its command:", "",
             "```", *views, "```", "", "- **Pre-order check**: the board's `DESIGN` line and every `FIGURE` and "

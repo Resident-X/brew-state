@@ -226,6 +226,13 @@ def run_folder(argv: list):
     return status, out.getvalue()
 
 
+def add_document_argv(folder: str, document: str, source: str = "datasheet table 3, pin spacing", item: str = "CLOCK-1",
+                      why: str = "needs the pin spacing of the crystal: the datasheet is not in the folder") -> list:
+    """The folder command's arguments for adding a text file that holds a figure, to resolve a cannot judge."""
+    return ["--add-document", folder, "--document", document, "--source", source, "--cannot-judge-item", item,
+            "--cannot-judge-why", why]
+
+
 def write_review_folder(root: str, own: str = OWN_NONE, number: int = 1, kind: str = "full", narrow: bool = False,
                         record: str = RECORD) -> str:
     """A review folder written by the folder command from a synthetic repository; its path."""

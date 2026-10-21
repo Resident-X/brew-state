@@ -502,6 +502,146 @@ class TheAddViewMode(Case):
         self.assertIn("hold no views, so it has no Views field", text)
 
 
+class TheAddDocumentMode(Case):
+    WHY = "needs the pin spacing of the crystal: the datasheet is not in the folder"
+
+    def setUp(self):
+        super().setUp()
+        status, text = self.run_with("--documents-repo", self.repo)
+        self.assertEqual(status, 0, text)
+        self.document = os.path.join(self.root, "crystal-pins.txt")
+        fx.write(self.document, "Pin spacing: 2.54 mm\n")
+
+    def add(self, *drop, folder=None, document=None, **given):
+        argv = fx.add_document_argv(folder or self.out, document or self.document, **given)
+        for flag in drop:
+            at = argv.index(flag)
+            del argv[at:at + 2]
+        return fx.run_folder(argv)
+
+    def test_a_document_and_its_source_are_added_to_the_added_documents_folder_and_recorded_with_the_item_and_why(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C5: Over a synthetic repository with a committed board, a command writes a review folder outside the repository holding the board's design files as the commit holds them, its plan, rules table and the records those name, the method, the hardware notes, the rendered views and placement view the round's first step names, a layout-facts extract written from the board file that lists the positions, pads, segments, vias and zones the layout items measure, and the check's report, together with one round file holding the round's number, kind, commit judged, views, check lines and, for a narrow round, listed items with a reason for each, changed regions and the line saying why every other item is not judged, taken from the command's arguments, and holds no session or notes file and no other file the commit does not hold; it holds no review record for a first round, and for a later round only the earlier rounds of the record as recorded, because a verdict row may cite a finding an earlier round closed by a reason. It refuses a folder inside the repository, a folder that is not new or empty, a commit that does not hold a board, views that are missing, and round fields of the set in use that are missing or malformed, the set being a parameter of the command, a narrow round without its reasons, changed regions or why-others line included. An add-view mode adds a rendered view and its command to the added-views folder of a folder the command wrote and records the item whose cannot judge asked for it, with that Why and the view, in a resolutions file there, neither being part of the shared context and the round file not being rewritten, and an add-document mode adds a text file holding the figure or passage that a cannot judge's Why asks for, with its source, to the same folder and records the item, that Why and the document in the same resolutions file, since a cannot judge can need a document the folder lacks and no address in the plan to fetch it from, and each mode refuses a file that does not exist or a folder the command did not write. The review seeding command's copy of the commit's files is generalised to take the repository, commit and design, with the documents optionally from a second repository, rendering stays in the seeding command, and the seeding command's existing tests still pass. Out of scope: rendering the views and running the check.
+        before = {name: slurp(os.path.join(self.out, name)) for name in ("round.json", "method-extract.md", "layout-facts.txt")}
+        shared = files_under(self.out)
+        status, text = self.add()
+        self.assertEqual(status, 0, text)
+        self.assertEqual(text.splitlines()[-1], "RESULT | ADDED | added-documents/crystal-pins.txt | cannot judge of CLOCK-1")
+        self.assertEqual(self.read("added-documents", "crystal-pins.txt"), "Pin spacing: 2.54 mm\n")
+        self.assertEqual(json.loads(self.read("added-views", review_folder.RESOLUTIONS)),
+                         {"tool": review_folder.TOOL, "resolutions": [{
+                             "kind": "document", "item": "CLOCK-1", "why": self.WHY, "document": "added-documents/crystal-pins.txt",
+                             "source": "datasheet table 3, pin spacing"}]})
+        for name, content in before.items():
+            self.assertEqual(slurp(os.path.join(self.out, name)), content, f"{name} is not rewritten")
+        self.assertEqual(files_under(self.out) - shared, {"added-documents/crystal-pins.txt", "added-views/resolutions.json"},
+                         "nothing but the added folders changes, so no file of the shared context does")
+        view = os.path.join(self.root, "crop-Y1.svg")
+        fx.write(view, "<svg/>")
+        status, text = fx.run_folder(["--add-view", self.out, "--view", view, "--view-command", "kicad-cli pcb export svg ...",
+                                      "--cannot-judge-item", "CLOCK-1", "--cannot-judge-why", "needs crop-Y1: none rendered"])
+        self.assertEqual(status, 0, text)
+        second = os.path.join(self.root, "more-pins.txt")
+        fx.write(second, "Lead pitch: 5.08 mm")
+        self.assertEqual(self.add(document=second)[0], 0)
+        held = review_folder.read_resolutions(self.out)
+        self.assertEqual([(entry["kind"], entry.get("document") or entry["view"]) for entry in held],
+                         [("document", "added-documents/crystal-pins.txt"), ("view", "added-views/crop-Y1.svg"),
+                          ("document", "added-documents/more-pins.txt")], "views and documents are recorded in the order added")
+
+    def test_json_names_the_document_added_and_a_refusal(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C5: Over a synthetic repository with a committed board, a command writes a review folder outside the repository holding the board's design files as the commit holds them, its plan, rules table and the records those name, the method, the hardware notes, the rendered views and placement view the round's first step names, a layout-facts extract written from the board file that lists the positions, pads, segments, vias and zones the layout items measure, and the check's report, together with one round file holding the round's number, kind, commit judged, views, check lines and, for a narrow round, listed items with a reason for each, changed regions and the line saying why every other item is not judged, taken from the command's arguments, and holds no session or notes file and no other file the commit does not hold; it holds no review record for a first round, and for a later round only the earlier rounds of the record as recorded, because a verdict row may cite a finding an earlier round closed by a reason. It refuses a folder inside the repository, a folder that is not new or empty, a commit that does not hold a board, views that are missing, and round fields of the set in use that are missing or malformed, the set being a parameter of the command, a narrow round without its reasons, changed regions or why-others line included. An add-view mode adds a rendered view and its command to the added-views folder of a folder the command wrote and records the item whose cannot judge asked for it, with that Why and the view, in a resolutions file there, neither being part of the shared context and the round file not being rewritten, and an add-document mode adds a text file holding the figure or passage that a cannot judge's Why asks for, with its source, to the same folder and records the item, that Why and the document in the same resolutions file, since a cannot judge can need a document the folder lacks and no address in the plan to fetch it from, and each mode refuses a file that does not exist or a folder the command did not write. The review seeding command's copy of the commit's files is generalised to take the repository, commit and design, with the documents optionally from a second repository, rendering stays in the seeding command, and the seeding command's existing tests still pass. Out of scope: rendering the views and running the check.
+        status, text = fx.run_folder(fx.add_document_argv(self.out, os.path.join(self.root, "none.txt")) + ["--json"])
+        refused = json.loads(text)
+        self.assertEqual((status, refused["result"]), (1, "REFUSED"))
+        self.assertIn("does not exist", refused["refusals"][0])
+        status, text = fx.run_folder(fx.add_document_argv(self.out, self.document) + ["--json"])
+        self.assertEqual(status, 0)
+        self.assertEqual(json.loads(text), {"result": "ADDED", "folder": self.out, "document": "added-documents/crystal-pins.txt",
+                                            "item": "CLOCK-1"})
+        status, text = fx.run_folder(fx.add_document_argv(self.out, self.document) + ["--json"])
+        self.assertEqual(status, 1)
+        self.assertIn("already holds an added document named crystal-pins.txt", json.loads(text)["refusals"][0])
+
+    def test_a_document_that_is_missing_not_utf_8_text_or_larger_than_64_kib_is_refused_and_nothing_is_written(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C5: Over a synthetic repository with a committed board, a command writes a review folder outside the repository holding the board's design files as the commit holds them, its plan, rules table and the records those name, the method, the hardware notes, the rendered views and placement view the round's first step names, a layout-facts extract written from the board file that lists the positions, pads, segments, vias and zones the layout items measure, and the check's report, together with one round file holding the round's number, kind, commit judged, views, check lines and, for a narrow round, listed items with a reason for each, changed regions and the line saying why every other item is not judged, taken from the command's arguments, and holds no session or notes file and no other file the commit does not hold; it holds no review record for a first round, and for a later round only the earlier rounds of the record as recorded, because a verdict row may cite a finding an earlier round closed by a reason. It refuses a folder inside the repository, a folder that is not new or empty, a commit that does not hold a board, views that are missing, and round fields of the set in use that are missing or malformed, the set being a parameter of the command, a narrow round without its reasons, changed regions or why-others line included. An add-view mode adds a rendered view and its command to the added-views folder of a folder the command wrote and records the item whose cannot judge asked for it, with that Why and the view, in a resolutions file there, neither being part of the shared context and the round file not being rewritten, and an add-document mode adds a text file holding the figure or passage that a cannot judge's Why asks for, with its source, to the same folder and records the item, that Why and the document in the same resolutions file, since a cannot judge can need a document the folder lacks and no address in the plan to fetch it from, and each mode refuses a file that does not exist or a folder the command did not write. The review seeding command's copy of the commit's files is generalised to take the repository, commit and design, with the documents optionally from a second repository, rendering stays in the seeding command, and the seeding command's existing tests still pass. Out of scope: rendering the views and running the check.
+        binary = os.path.join(self.root, "pins.bin")
+        fx.write(binary, b"\xff\xfe\x00 pins")
+        large = os.path.join(self.root, "large.txt")
+        fx.write(large, "x" * (64 * 1024 + 1))
+        for document, word in ((os.path.join(self.root, "gone.txt"), "does not exist; write the figure"),
+                               (binary, "is not UTF-8 text"), (large, "is larger than 64 KiB")):
+            with self.subTest(word=word):
+                status, text = self.add(document=document)
+                self.assertEqual(status, 1, text)
+                self.assertIn(word, text)
+                self.assertFalse(os.path.exists(os.path.join(self.out, "added-documents")), "a refused command writes nothing")
+                self.assertFalse(os.path.exists(os.path.join(self.out, "added-views")))
+        exact = os.path.join(self.root, "exact.txt")
+        fx.write(exact, "x" * (64 * 1024))
+        self.assertEqual(self.add(document=exact)[0], 0, "a file of exactly 64 KiB is taken")
+
+    def test_an_empty_source_item_or_why_a_repeated_name_a_bad_name_and_an_item_off_the_checklist_are_refused(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C5: Over a synthetic repository with a committed board, a command writes a review folder outside the repository holding the board's design files as the commit holds them, its plan, rules table and the records those name, the method, the hardware notes, the rendered views and placement view the round's first step names, a layout-facts extract written from the board file that lists the positions, pads, segments, vias and zones the layout items measure, and the check's report, together with one round file holding the round's number, kind, commit judged, views, check lines and, for a narrow round, listed items with a reason for each, changed regions and the line saying why every other item is not judged, taken from the command's arguments, and holds no session or notes file and no other file the commit does not hold; it holds no review record for a first round, and for a later round only the earlier rounds of the record as recorded, because a verdict row may cite a finding an earlier round closed by a reason. It refuses a folder inside the repository, a folder that is not new or empty, a commit that does not hold a board, views that are missing, and round fields of the set in use that are missing or malformed, the set being a parameter of the command, a narrow round without its reasons, changed regions or why-others line included. An add-view mode adds a rendered view and its command to the added-views folder of a folder the command wrote and records the item whose cannot judge asked for it, with that Why and the view, in a resolutions file there, neither being part of the shared context and the round file not being rewritten, and an add-document mode adds a text file holding the figure or passage that a cannot judge's Why asks for, with its source, to the same folder and records the item, that Why and the document in the same resolutions file, since a cannot judge can need a document the folder lacks and no address in the plan to fetch it from, and each mode refuses a file that does not exist or a folder the command did not write. The review seeding command's copy of the commit's files is generalised to take the repository, commit and design, with the documents optionally from a second repository, rendering stays in the seeding command, and the seeding command's existing tests still pass. Out of scope: rendering the views and running the check.
+        for flag, word in (("--source", "where the figure comes from"), ("--cannot-judge-item", "the item whose cannot judge asked"),
+                           ("--cannot-judge-why", "the cannot judge's Why")):
+            status, text = self.add(flag)
+            self.assertEqual(status, 1)
+            self.assertIn(word, text)
+        for blank in ("", "   ", "two\nlines"):
+            status, text = self.add(source=blank)
+            self.assertEqual(status, 1, blank)
+            self.assertIn("where the figure comes from (--source) is missing or not one line", text)
+        status, text = self.add(item="CLOCK-9")
+        self.assertEqual(status, 1)
+        self.assertIn("'CLOCK-9' is not on the folder's checklist", text)
+        for item in ("CLOCK-1", "FLOOR-2", "PLAN-AND-FREE-PASS"):
+            fx.write(os.path.join(self.root, f"{item}.txt"), "figure")
+            self.assertEqual(self.add(document=os.path.join(self.root, f"{item}.txt"), item=item)[0], 0, item)
+        self.assertIn("already holds an added document named crystal-pins.txt", (self.add(), self.add())[1][1])
+        bad = os.path.join(self.root, "bad name.txt")
+        fx.write(bad, "x")
+        self.assertIn("is not a plain name", self.add(document=bad)[1])
+        self.assertFalse(os.path.exists(os.path.join(self.out, "added-documents", "bad name.txt")))
+
+    def test_a_folder_the_command_did_not_write_is_not_added_a_document(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C5: Over a synthetic repository with a committed board, a command writes a review folder outside the repository holding the board's design files as the commit holds them, its plan, rules table and the records those name, the method, the hardware notes, the rendered views and placement view the round's first step names, a layout-facts extract written from the board file that lists the positions, pads, segments, vias and zones the layout items measure, and the check's report, together with one round file holding the round's number, kind, commit judged, views, check lines and, for a narrow round, listed items with a reason for each, changed regions and the line saying why every other item is not judged, taken from the command's arguments, and holds no session or notes file and no other file the commit does not hold; it holds no review record for a first round, and for a later round only the earlier rounds of the record as recorded, because a verdict row may cite a finding an earlier round closed by a reason. It refuses a folder inside the repository, a folder that is not new or empty, a commit that does not hold a board, views that are missing, and round fields of the set in use that are missing or malformed, the set being a parameter of the command, a narrow round without its reasons, changed regions or why-others line included. An add-view mode adds a rendered view and its command to the added-views folder of a folder the command wrote and records the item whose cannot judge asked for it, with that Why and the view, in a resolutions file there, neither being part of the shared context and the round file not being rewritten, and an add-document mode adds a text file holding the figure or passage that a cannot judge's Why asks for, with its source, to the same folder and records the item, that Why and the document in the same resolutions file, since a cannot judge can need a document the folder lacks and no address in the plan to fetch it from, and each mode refuses a file that does not exist or a folder the command did not write. The review seeding command's copy of the commit's files is generalised to take the repository, commit and design, with the documents optionally from a second repository, rendering stays in the seeding command, and the seeding command's existing tests still pass. Out of scope: rendering the views and running the check.
+        stranger = os.path.join(self.root, "stranger")
+        fx.write(os.path.join(stranger, "round.json"), json.dumps({"number": 1}))
+        for folder, word in ((stranger, "not one the folder command wrote"), (os.path.join(self.root, "nowhere"), "cannot be read"),
+                             (self.root, "cannot be read")):
+            status, text = self.add(folder=folder)
+            self.assertEqual(status, 1, text)
+            self.assertIn("is not a review folder the command wrote and can add to", text)
+            self.assertIn(word, text)
+        self.assertFalse(os.path.exists(os.path.join(self.out, "added-documents")))
+        self.assertFalse(os.path.exists(os.path.join(stranger, "added-documents")))
+
+    def test_resolutions_written_without_a_kind_read_as_views_and_a_damaged_document_entry_is_named(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C5: Over a synthetic repository with a committed board, a command writes a review folder outside the repository holding the board's design files as the commit holds them, its plan, rules table and the records those name, the method, the hardware notes, the rendered views and placement view the round's first step names, a layout-facts extract written from the board file that lists the positions, pads, segments, vias and zones the layout items measure, and the check's report, together with one round file holding the round's number, kind, commit judged, views, check lines and, for a narrow round, listed items with a reason for each, changed regions and the line saying why every other item is not judged, taken from the command's arguments, and holds no session or notes file and no other file the commit does not hold; it holds no review record for a first round, and for a later round only the earlier rounds of the record as recorded, because a verdict row may cite a finding an earlier round closed by a reason. It refuses a folder inside the repository, a folder that is not new or empty, a commit that does not hold a board, views that are missing, and round fields of the set in use that are missing or malformed, the set being a parameter of the command, a narrow round without its reasons, changed regions or why-others line included. An add-view mode adds a rendered view and its command to the added-views folder of a folder the command wrote and records the item whose cannot judge asked for it, with that Why and the view, in a resolutions file there, neither being part of the shared context and the round file not being rewritten, and an add-document mode adds a text file holding the figure or passage that a cannot judge's Why asks for, with its source, to the same folder and records the item, that Why and the document in the same resolutions file, since a cannot judge can need a document the folder lacks and no address in the plan to fetch it from, and each mode refuses a file that does not exist or a folder the command did not write. The review seeding command's copy of the commit's files is generalised to take the repository, commit and design, with the documents optionally from a second repository, rendering stays in the seeding command, and the seeding command's existing tests still pass. Out of scope: rendering the views and running the check.
+        os.makedirs(os.path.join(self.out, "added-views"))
+        fx.write(os.path.join(self.out, "added-views", "crop.svg"), "<svg/>")
+        path = os.path.join(self.out, "added-views", review_folder.RESOLUTIONS)
+        old = {"item": "A", "why": "w", "view": "added-views/crop.svg", "command": "c"}
+        fx.write(path, json.dumps({"tool": review_folder.TOOL, "resolutions": [old]}))
+        self.assertEqual(review_folder.read_resolutions(self.out), [{**old, "kind": "view"}], "an entry with no kind is a view")
+        self.assertEqual(self.add()[0], 0, "a document is added after a view written before the kind existed")
+        self.assertNotIn("kind", json.loads(slurp(path, "r"))["resolutions"][0], "the old entry is written back as it was")
+        good = slurp(path, "r")
+        document = {"kind": "document", "item": "A", "why": "w", "document": "added-documents/crystal-pins.txt", "source": "s"}
+        for entry, word in (({**document, "source": ""}, "not a list of an item"), ({**document, "kind": "scrap"}, "not a list of an item"),
+                            ({k: v for k, v in document.items() if k != "document"}, "not a list of an item"),
+                            ({**document, "document": "added-documents/gone.txt"}, "added-documents/gone.txt"),
+                            ({**old, "kind": "view", "command": ""}, "not a list of an item")):
+            with self.subTest(word=word):
+                fx.write(path, json.dumps({"tool": review_folder.TOOL, "resolutions": [entry]}))
+                with self.assertRaises(review_folder.ReviewFolderProblem) as caught:
+                    review_folder.read_resolutions(self.out)
+                self.assertIn(word, str(caught.exception))
+                self.assertEqual(self.add(document=self.document, item="CLOCK-1")[0], 1, "a damaged file is not added to")
+        fx.write(path, good)
+        self.assertEqual(len(review_folder.read_resolutions(self.out)), 2)
+
+
 # --- The seeding command's generalised copy --------------------------------------------------------
 
 
