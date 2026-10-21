@@ -1106,17 +1106,22 @@ class Documentation(unittest.TestCase):
                       "the merged row records the `cannot judge`, the view and the verdict reached, in that order",
                       "appended below the record's earlier rounds, which stay as they are",
                       "whoever started the round commits it at the end of the round", "before any change to the board",
-                      "Judging a round with one reviewer, a person or an agent session that does not use the command, stays valid"):
+                      "Judging a round with one reviewer, a person or an agent session that does not use the command, stays valid",
+                      "task hw:review-run -- --caller layout", "each reviewer a fork of one shared context",
+                      "with two reviewers of each so that a fail either raises stands"):
             self.assertIn(words, section, f"the layout review section says {words!r}")
+        for gone in ("setup session",):
+            self.assertNotIn(gone, section, f"the layout review section no longer names the retired {gone!r}")
 
     def test_the_sentence_that_a_proof_is_repeated_names_the_form_that_changed(self):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C7: The method's layout review section says that a round may be judged by unit and what the merge checks, that the round's fields come from whoever starts it, that the unit which raised a finding writes its Planning shortfall entry from the plan row, that a cannot judge is resolved by adding the view and re-running the unit with the row recording the cannot judge, the view and the verdict, that the merged round is appended below the earlier rounds and committed by whoever started the round at the end of the round, and that judging it with one reviewer stays valid; the sentence that a proof is repeated after the step changes names the form that changed; the hardware notes describe the layout caller and the folder command and what each needs. Checked by reading each place against these clauses. Out of scope: the routing section's critical-routing check.
         section = self.layout_review()
         sentence = section[section.index("Repeat the proof after changing"):].split("`hardware/README.md` describes")[0]
         for words in ("in the form that changed", "repeats the single-reviewer proof above", "repeats the fanned-out proof",
-                      "task hw:review-proof -- --work <folder>", "with the same four tools in both",
-                      "to report every seed the single reviewer reports in no more time and at no more cost",
-                      "A change to the catalogue or the views repeats both",
+                      "task hw:review-proof -- --work <folder>", "judges it against the recorded single-reviewer runs",
+                      "by the review kit's pooled criterion, without running the single reviewer again",
+                      "at most half the single mean time and at most twice the single mean cost",
+                      "recorded and not bounded", "A change to the catalogue or the views repeats both",
                       "The recorded proof of one form stands for that form alone"):
             self.assertIn(words, sentence)
         self.assertNotIn("Repeat the proof after changing the catalogue, the views or this step.", section)
@@ -1125,19 +1130,26 @@ class Documentation(unittest.TestCase):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C7: The method's layout review section says that a round may be judged by unit and what the merge checks, that the round's fields come from whoever starts it, that the unit which raised a finding writes its Planning shortfall entry from the plan row, that a cannot judge is resolved by adding the view and re-running the unit with the row recording the cannot judge, the view and the verdict, that the merged round is appended below the earlier rounds and committed by whoever started the round at the end of the round, and that judging it with one reviewer stays valid; the sentence that a proof is repeated after the step changes names the form that changed; the hardware notes describe the layout caller and the folder command and what each needs. Checked by reading each place against these clauses. Out of scope: the routing section's critical-routing check.
         notes = self.read("hardware", "README.md")
         section = self.flat(notes[notes.index("## The layout review by unit"):].split("\n## ")[0])
-        for words in ("review_folder.py", "review_caller_layout.py", "layout_review_proof.py", "review_agent_tap.py",
+        for words in ("review_folder.py", "review_caller_layout.py", "layout_review_proof.py", "`layout-facts.txt`",
                       "It needs git and Python, no KiCad and no model", "needs the agent command line on the search path and logged in",
                       "and no KiCad", "the commit that holds the board", "round.json", "`--round-fields number,kind,commit,views,check`",
                       "The set of fields is a parameter", "--item ITEM=reason", "--add-view", "added-views/", "`--rerun`",
                       "`area-<code>`", "`board-items`", "`plan-and-free-pass`", "`Read`, `Glob`, `Grep` and `WebFetch`",
-                      "the setup session keeps the read tools alone", "exactly one verdict row",
-                      "round-<n>.md", "committed by whoever started the round", "`BOUND`",
+                      "`added-views/resolutions.json`", "exactly one verdict row",
+                      "round-<n>.md", "committed by whoever started the round", "`--bound`",
                       "`--keep-work-tree`", "money", "on demand and in neither the build round nor the nightly",
-                      "the most reviewers that ran together", "calls refused for a rate limit"):
+                      "`hardware/tools/tests/fixtures/review_baselines/layout_single_runs.json`", "`claude-sonnet-5-5`",
+                      "two replicas of each group", "with a cost multiple of 2.0", "The single reviewer is never run again",
+                      "`--dry`", "`--only design-loop`", "`proof-record.json`", "counted from the saved streams",
+                      "calls refused for a rate limit", "counted from the executor's retries"):
             self.assertIn(words, section, f"the hardware notes' section says {words!r}")
+        for gone in ("setup session", "SETUP"):
+            self.assertNotIn(gone, notes, f"the hardware notes no longer name the retired {gone!r}")
+        self.assertNotIn("## The review fan-out command", notes)
         listed = self.flat(notes[notes.index("- `task hw:test` runs"):].splitlines()[0])
-        for words in ("review fan-out command", "layout review's caller", "review folder command", "layout review proof command"):
+        for words in ("review kit", "layout review's caller", "review folder command", "layout review proof command"):
             self.assertIn(words, listed)
+        self.assertNotIn("review fan-out command", listed)
         commands = notes[notes.index("## The commands"):notes.index("## The schematic sheets")]
         for words in ("task hw:review-folder", "task hw:review-proof"):
             self.assertIn(words, commands)
@@ -1152,12 +1164,14 @@ class Documentation(unittest.TestCase):
         for words in ("review_folder.py", "on demand", "neither the build round nor the nightly", "Needs git and Python 3.9 or newer, no KiCad and no model",
                       "--add-view", "the set of round fields being a parameter"):
             self.assertIn(words, folder)
-        for words in ("layout_review_proof.py", "review_agent_tap.py", "on demand", "neither the build round nor the nightly", "spends the agent command line's usage",
-                      "agent command line on the search path and logged in", "the most reviewers that ran together", "the layout caller's bound"):
+        for words in ("layout_review_proof.py", "on demand", "neither the build round nor the nightly", "spends the agent command line's usage",
+                      "agent command line on the search path and logged in", "cost multiple of 2.0", "never runs the single reviewer",
+                      "--dry", "--only design-loop or --only pre-order"):
             self.assertIn(words, proof)
         for text in (taskfile[taskfile.index("  hw:test:\n"):].splitlines()[1], taskfile[taskfile.index("  hw:test:round:"):].splitlines()[1]):
-            for words in ("review fan-out command", "layout review", "review folder command", "layout review proof command"):
+            for words in ("review kit", "layout review", "review folder command", "layout review proof command"):
                 self.assertIn(words, text)
+            self.assertNotIn("review fan-out command", text)
 
 
 if __name__ == "__main__":
