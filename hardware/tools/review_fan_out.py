@@ -15,7 +15,9 @@ which checks the merge makes, is a caller's: a Python module named
 review_caller_<name> beside this command, or in the folder --callers names. It
 exposes SETUP_PROMPT, unit_prompt(unit, review_folder), units(review_folder),
 TOOLS, BOUND, TABLES, FINDINGS and CHECK, and may define the retrieval grant, the
-checklist as a function and the rendered record. TOOLS is some of the read tools
+checklist as a function, the rendered record and SETUP_DOCUMENTS(review_folder), the
+paths (relative to the review folder) of documents whose text the setup prompt holds
+itself, sent on standard input, so that the setup session reads nothing with a tool. TOOLS is some of the read tools
 and, as the retrieval grant, WebFetch, which fetches a published document and
 writes nothing; the setup session keeps the read tools alone. unit_prompt takes
 the unit and the review folder, so a prompt can name what the starter wrote
@@ -249,6 +251,12 @@ def caller_problems(module, path: str) -> List[str]:
     if callable(module.unit_prompt) and not accepts(module.unit_prompt, 2):
         found.append(f"the caller {module.REVIEW_CALLER_NAME} ({path}) gives a unit_prompt that does not accept the unit "
                      "and the review folder; make it unit_prompt(unit, review_folder)")
+    if hasattr(module, "SETUP_DOCUMENTS") and not callable(module.SETUP_DOCUMENTS):
+        bad("SETUP_DOCUMENTS", module.SETUP_DOCUMENTS, "make it a function of the review folder that returns the paths of "
+                                                       "the documents the setup session is given, or leave it out")
+    elif hasattr(module, "SETUP_DOCUMENTS") and not accepts(module.SETUP_DOCUMENTS, 1):
+        found.append(f"the caller {module.REVIEW_CALLER_NAME} ({path}) gives a SETUP_DOCUMENTS that does not accept the "
+                     "review folder; make it SETUP_DOCUMENTS(review_folder)")
     if hasattr(module, "RENDER"):
         if not callable(module.RENDER):
             bad("RENDER", module.RENDER, "make it a function of the review folder and the merged tables")
@@ -332,6 +340,8 @@ def texts(value: Any) -> bool:
 #: What each of a caller's hooks must return, and the words that say so.
 RETURNS = {
     "units": (lambda value: isinstance(value, (list, tuple)), "a list of unit names"),
+    "SETUP_DOCUMENTS": (lambda value: isinstance(value, (list, tuple)) and all(named(path, str) for path in value),
+                        "a list of paths, each text, relative to the review folder"),
     "unit_prompt": (lambda value: named(value, str), "the unit's prompt as text"),
     "checklist": (lambda value: isinstance(value, (list, tuple)) and texts(value) and len(set(value)) == len(value),
                   "a list of distinct item names"),
@@ -602,10 +612,14 @@ def parse_result_report(session: Session, result: Dict[str, Any]) -> None:
 
 
 def call_agent(program: str, prompt: str, tools: Sequence[str], cwd: str, resume: Optional[str] = None,
-               fork: bool = False, model: Optional[str] = None, system_rule: Optional[str] = None) -> Session:
-    """One call of the agent command line, its stream of events read; a call refused for a rate limit raises RateLimited."""
-    command = [program, "-p", prompt, "--output-format", "stream-json", "--verbose", "--tools", ",".join(tools),
-               "--allowedTools", ",".join(tools), "--permission-mode", "dontAsk"] + quiet_arguments()
+               fork: bool = False, model: Optional[str] = None, system_rule: Optional[str] = None,
+               stdin_text: Optional[str] = None) -> Session:
+    """One call of the agent command line, its stream of events read; a call refused for a rate limit raises RateLimited.
+    With `stdin_text` the prompt is that text, sent on standard input and not as an argument, which the operating system
+    limits in size."""
+    command = [program, "-p"] + ([] if stdin_text is not None else [prompt])
+    command += ["--output-format", "stream-json", "--verbose", "--tools", ",".join(tools),
+                "--allowedTools", ",".join(tools), "--permission-mode", "dontAsk"] + quiet_arguments()
     if resume:
         command += ["--resume", resume]
         if fork:
@@ -617,7 +631,8 @@ def call_agent(program: str, prompt: str, tools: Sequence[str], cwd: str, resume
     began = time.time()
     try:
         done = subprocess.run(command, cwd=cwd, capture_output=True, text=True, encoding="utf-8", errors="replace",
-                              env={**os.environ, **QUIET_ENVIRONMENT})
+                              env={**os.environ, **QUIET_ENVIRONMENT},
+                              **({"input": stdin_text} if stdin_text is not None else {"stdin": subprocess.DEVNULL}))
     except (OSError, subprocess.SubprocessError) as error:
         raise board_check.CannotRun(f"the agent command line {program} could not be started ({error}); check it is "
                                     "installed and runs, then run again")
@@ -715,9 +730,42 @@ def non_text(path: str, review: str) -> bool:
     return False
 
 
-def setup_findings(session: Session, review: str) -> Tuple[List[str], List[str]]:
+def document_texts(review: str, listed: Sequence[str]) -> List[Tuple[str, str]]:
+    """Each document a caller names for the setup session with its text; a path that repeats, is absolute or climbs out of
+    the review folder, names no file, or names a file whose type is not text is a refusal naming it."""
+    found: List[Tuple[str, str]] = []
+    problems = []
+    seen = set()
+    for path in listed:
+        if path in seen:
+            problems.append(f"the caller names the setup document {path} more than once; name each once")
+            continue
+        seen.add(path)
+        full = os.path.join(review, path)
+        if os.path.isabs(path) or ".." in path.replace("\\", "/").split("/") or not inside(os.path.realpath(full),
+                                                                                       os.path.realpath(review)):
+            problems.append(f"the caller names the setup document {path}, which is not inside the review folder; name a "
+                            "path relative to it")
+        elif not os.path.isfile(full):
+            problems.append(f"the caller names the setup document {path}, which is not a file in the review folder; "
+                            "name only files that exist")
+        elif non_text(path, review):
+            problems.append(f"the caller names the setup document {path}, a file whose type is not text, or cannot be "
+                            "shown to be text; the setup session is given documents and records only")
+        else:
+            try:
+                with open(full, encoding="utf-8") as handle:
+                    found.append((path, handle.read()))
+            except (OSError, UnicodeDecodeError) as error:
+                problems.append(f"the caller names the setup document {path}, which cannot be read as text ({error})")
+    if problems:
+        raise Refused(problems)
+    return found
+
+
+def setup_findings(session: Session, review: str, inline: bool = False) -> Tuple[List[str], List[str]]:
     """The setup session's problems in two lists: text written between its tool uses, which a fresh session may not
-    repeat, and every other problem, which a fresh session would repeat."""
+    repeat, and every other problem, which a fresh session would repeat. A session given its documents' text reads none."""
     narrated: List[str] = []
     found = []
     reads = 0
@@ -734,7 +782,7 @@ def setup_findings(session: Session, review: str) -> Tuple[List[str], List[str]]
             if non_text(path, review):
                 found.append(f"the setup session opened {path}, a file whose type is not text, or cannot be shown to be "
                              "text; it may read documents and records only, so the forked reviewers stay as blind as fresh ones")
-    if not reads:
+    if not reads and not inline:
         found.append("the setup session read nothing; it must read what its prompt asks before a fork can start from it")
     for kind, text in session.blocks:
         if kind == "text" and text.strip() not in ("", ACK):
@@ -1091,6 +1139,8 @@ class Run:
                  sleep: Callable[[float], None] = time.sleep):
         self.caller, self.review, self.out, self.program = caller, review, out, program
         self.bound, self.model, self.wait, self.sleep = bound, model, wait, sleep
+        #: The documents a caller names for the setup session, each as (path, text); None for a caller that names none.
+        self.documents: Optional[List[Tuple[str, str]]] = None
 
     def unit_path(self, unit: str) -> str:
         return os.path.join(self.out, UNITS_FOLDER, f"{unit}.json")
@@ -1167,6 +1217,13 @@ class Run:
         except Exception as error:  # a defect in one unit's worker is that unit's failure and the others go on
             raise UnitFailed(f"unit {unit} failed: {type(error).__name__}: {error}", sessions)
 
+    def resolve_documents(self) -> None:
+        """The documents a caller names for the setup session, read once before any session starts, so a document that is
+        missing, outside the review folder or not text costs no session."""
+        if hasattr(self.caller, "SETUP_DOCUMENTS"):
+            listed = hook("SETUP_DOCUMENTS", self.caller.SETUP_DOCUMENTS, self.review, caller=self.caller)
+            self.documents = document_texts(self.review, listed)
+
     def resolve_checklist(self) -> None:
         """A checklist given as a function becomes its list, once, before the setup session starts, so the per-unit
         checks and the merge read the same list; a list is left as it is."""
@@ -1189,13 +1246,17 @@ class Run:
     def checked_setup(self, model: Optional[str]) -> Tuple[Session, Dict[str, Any], List[Tuple[Session, Dict[str, Any]]]]:
         """A setup session that fails only for text written between its tool uses is started again, up to twice."""
         prompt = f"{self.caller.SETUP_PROMPT.rstrip()}\n\n{ACK_INSTRUCTION}"
+        stdin_text = None
+        if self.documents is not None:
+            blocks = "".join(f"=== {path} ===\n{text.rstrip()}\n\n" for path, text in self.documents)
+            stdin_text = f"{self.caller.SETUP_PROMPT.rstrip()}\n\n{blocks}{ACK_INSTRUCTION}"
         earlier: List[Tuple[Session, Dict[str, Any]]] = []
         attempt = 0
         while True:
             attempt += 1
             try:
                 session = with_rate_retry(lambda: call_agent(self.program, prompt, READ_TOOLS, self.review, model=model,
-                                                                 system_rule=SETUP_RULE),
+                                                                 system_rule=SETUP_RULE, stdin_text=stdin_text),
                                           self.wait, self.sleep)
             except UnitFailed as error:
                 raise Refused([f"the setup session {error}; wait, then run again"])
@@ -1204,7 +1265,7 @@ class Run:
             if session.exit_code != 0 or result.get("is_error") is not False:
                 raise Refused(problems + [f"the setup session failed and returned: {session.said()}; check the agent command "
                                           "line runs from the review folder, then run again"])
-            narrated, others = setup_findings(session, self.review)
+            narrated, others = setup_findings(session, self.review, self.documents is not None)
             if not narrated and not problems and not others:
                 return session, figures(session), earlier
             if problems or others or attempt == SETUP_ATTEMPTS:
@@ -1220,6 +1281,7 @@ class Run:
     def run(self, order: Sequence[str], named: Sequence[str]) -> Tuple[Dict[str, Any], Dict[str, Optional[UnitFailed]]]:
         """Judge `named` units (all of `order` when none), returning the setup entry and each unit's failure, if any."""
         self.resolve_checklist()
+        self.resolve_documents()
         session, cumulative, earlier = self.setup_session(self.model)
         model = session.start["model"]
         kind = "rerun" if named else "initial"

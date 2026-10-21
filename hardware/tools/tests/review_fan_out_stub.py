@@ -19,7 +19,7 @@ the result report), `start_set` and `result_set` (fields given other values),
 prints as they are, after its start report), `garbled` (bytes that are not UTF-8,
 printed to its output and its error stream) and `no_result` (it prints no result
 report and exits 0) and `raw_unicode` (its assistant and result lines carry non-ASCII
-characters raw, as the real command line's JSON does). A call with no unit whose prompt lacks the setup session's token plays the scenario's `single` entry, when it has one, as a lone reviewer judging the whole review in one session. The scenario's `auth_stdout`, when given, is what `auth
+characters raw, as the real command line's JSON does). A prompt sent on standard input (no argument after -p) is read and logged as `stdin`, and is also the prompt. A call with no unit whose prompt lacks the setup session's token plays the scenario's `single` entry, when it has one, as a lone reviewer judging the whole review in one session. The scenario's `auth_stdout`, when given, is what `auth
 status` prints in place of its report, and `auth` its exit status.
 """
 
@@ -49,6 +49,10 @@ def main():
             print(scenario["auth_stdout"] if "auth_stdout" in scenario else json.dumps({"loggedIn": scenario.get("auth", 0) == 0}))
         return scenario.get("auth", 0)
     prompt = flag(args, "-p")
+    stdin = None
+    if prompt is None or prompt.startswith("--"):  # no prompt argument: the prompt is on standard input
+        stdin = sys.stdin.read()
+        prompt = stdin
     resume, forked = flag(args, "--resume"), "--fork-session" in args
     began = time.time()
     unit = re.search(r"UNIT=(\S+)", prompt)
@@ -89,7 +93,7 @@ def main():
     time.sleep(outcome.get("sleep", scenario.get("sleep", 0)))
     entry = {"args": args, "cwd": os.getcwd(), "unit": unit, "forked": forked, "resume": resume, "session": session,
              "began": began, "ended": time.time(), "env": sorted(k for k in os.environ if k.startswith("CLAUDE_CODE")),
-             "prompt": prompt}
+             "prompt": prompt, "stdin": stdin}
     with open(os.path.join(log, f"{began:.6f}-{uuid.uuid4()}.json"), "w", encoding="utf-8") as handle:
         json.dump(entry, handle)
     start = {"type": "system", "subtype": "init", "session_id": session, "cwd": scenario.get("cwd", os.getcwd()),

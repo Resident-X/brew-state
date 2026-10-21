@@ -10,7 +10,8 @@ output and exit status on unchanged, and writes one JSON file for the call into
 the folder named by REVIEW_TAP_LOG: when it began and ended, its session, whether
 it resumed or forked a session, its exit status, whether the call was refused for
 a rate limit, and each document it retrieved with whether the retrieval failed.
-Only the layout review proof reads those files, so the command's own behaviour is
+A prompt the command sends on standard input is read once and passed on to the real
+program. Only the layout review proof reads those files, so the command's own behaviour is
 the same with or without it.
 """
 
@@ -51,10 +52,14 @@ def entry_of(args: List[str], began: float, ended: float, done: subprocess.Compl
 def main(argv: List[str]) -> int:
     program = os.environ.get(AGENT_ENV) or review_fan_out.DEFAULT_AGENT
     log = os.environ.get(LOG_ENV)
-    if argv[:2] == ["auth", "status"] or not log:
+    if argv[:2] == ["auth", "status"]:
         return subprocess.run([program, *argv]).returncode
+    # A prompt sent on standard input reaches the real program; a terminal is left alone.
+    held = None if sys.stdin is None or sys.stdin.isatty() else sys.stdin.read()
+    if not log:
+        return subprocess.run([program, *argv], input=held, text=True).returncode
     began = time.time()
-    done = subprocess.run([program, *argv], capture_output=True, text=True, encoding="utf-8", errors="replace")
+    done = subprocess.run([program, *argv], capture_output=True, text=True, encoding="utf-8", errors="replace", input=held)
     ended = time.time()
     os.makedirs(log, exist_ok=True)
     with open(os.path.join(log, f"{began:.6f}-{uuid.uuid4()}.json"), "w", encoding="utf-8") as handle:

@@ -112,6 +112,36 @@ class TheTap(Stubbed):
         self.assertEqual(os.environ[review_fan_out.AGENT_ENV], self.program, "the environment is put back")
         self.assertNotIn(review_agent_tap.LOG_ENV, os.environ)
 
+    def stub_calls(self):
+        found = []
+        for name in sorted(os.listdir(self.log)):
+            if name.endswith(".json"):
+                with open(os.path.join(self.log, name), encoding="utf-8") as handle:
+                    found.append(json.load(handle))
+        return found
+
+    def test_a_prompt_sent_on_standard_input_reaches_the_program_through_the_tap(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: Run the single-reviewer form and the fanned-out form on one seeded copy of the layout review proof design from the review folder the folder command assembles with the design from the seeded copy's repository and commit kept by the seeding command's opt-in flag, both forms with the same four tools, in sessions with no record of the seeds, the fanned-out form at the full unit count with the reviewers running together. The fanned-out form reports every seeded defect as a finding against the catalogue item that covers it, and every seed the single reviewer reports; the findings that match no seed and the verdicts item by item are compared and a difference explained. Record for the setup and each unit and for each run the wall time, the tokens read, written and generated, the cost, the document retrievals and any that failed, and any call refused for a rate limit, and set the layout caller's bound on reviewers at once from that. The fanned-out run takes no more time and costs no more than the single-reviewer run. A seed not reported is closed where the gap lies, a catalogue amendment, a correction to the review step or to what it gives a reviewer, and the run repeated in a new session. The evidence names the exact model and the commit. Out of scope: the schematic, critical-routing and production-files proofs.
+        self.scenario({"setup": {"answer": "an answer"}})
+        text = "the documents of the review\n=== method.md ===\nthe method \u00e9\n"
+        with proof.tapped(self.work, "stdin") as log:
+            program = review_fan_out.require_agent()
+            session = review_fan_out.call_agent(program, "", ("Read",), self.root, stdin_text=text)
+        self.assertTrue(session.succeeded)
+        sent = self.stub_calls()
+        self.assertEqual([call["stdin"] for call in sent], [text], "the program saw the text on its standard input")
+        self.assertTrue(sent[0]["args"][1].startswith("--"), "and no prompt argument")
+        self.assertEqual(len(proof.tap_calls(log)), 1, "and the call is still logged")
+
+    def test_a_call_with_no_standard_input_reaches_the_program_with_none(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: Run the single-reviewer form and the fanned-out form on one seeded copy of the layout review proof design from the review folder the folder command assembles with the design from the seeded copy's repository and commit kept by the seeding command's opt-in flag, both forms with the same four tools, in sessions with no record of the seeds, the fanned-out form at the full unit count with the reviewers running together. The fanned-out form reports every seeded defect as a finding against the catalogue item that covers it, and every seed the single reviewer reports; the findings that match no seed and the verdicts item by item are compared and a difference explained. Record for the setup and each unit and for each run the wall time, the tokens read, written and generated, the cost, the document retrievals and any that failed, and any call refused for a rate limit, and set the layout caller's bound on reviewers at once from that. The fanned-out run takes no more time and costs no more than the single-reviewer run. A seed not reported is closed where the gap lies, a catalogue amendment, a correction to the review step or to what it gives a reviewer, and the run repeated in a new session. The evidence names the exact model and the commit. Out of scope: the schematic, critical-routing and production-files proofs.
+        self.scenario({"setup": {"answer": "an answer"}})
+        with proof.tapped(self.work, "argument"):
+            program = review_fan_out.require_agent()
+            review_fan_out.call_agent(program, "no unit here", ("Read",), self.root)
+        sent = self.stub_calls()
+        self.assertEqual([(call["stdin"], call["args"][1]) for call in sent], [(None, "no unit here")])
+
     def test_a_retrieval_and_whether_it_failed_are_logged_with_the_session_that_made_it(self):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: Run the single-reviewer form and the fanned-out form on one seeded copy of the layout review proof design from the review folder the folder command assembles with the design from the seeded copy's repository and commit kept by the seeding command's opt-in flag, both forms with the same four tools, in sessions with no record of the seeds, the fanned-out form at the full unit count with the reviewers running together. The fanned-out form reports every seeded defect as a finding against the catalogue item that covers it, and every seed the single reviewer reports; the findings that match no seed and the verdicts item by item are compared and a difference explained. Record for the setup and each unit and for each run the wall time, the tokens read, written and generated, the cost, the document retrievals and any that failed, and any call refused for a rate limit, and set the layout caller's bound on reviewers at once from that. The fanned-out run takes no more time and costs no more than the single-reviewer run. A seed not reported is closed where the gap lies, a catalogue amendment, a correction to the review step or to what it gives a reviewer, and the run repeated in a new session. The evidence names the exact model and the commit. Out of scope: the schematic, critical-routing and production-files proofs.
         uses = [{"name": "WebFetch", "input": {"url": "https://example.invalid/a"}, "failed": False},

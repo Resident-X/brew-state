@@ -572,6 +572,54 @@ class Command:
         return [call for call in self.calls() if call["forked"]]
 
 
+class TheSetupDocuments(Folder):
+    def test_the_setup_documents_are_those_the_prompt_lists_in_order_and_only_where_they_exist(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; a folder whose method has no catalogue areas, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        design = "hardware/synth/board"
+        fx.write(os.path.join(self.folder, design, "zeta.yaml"), "a: 1\n")
+        fx.write(os.path.join(self.folder, design, "alpha.md"), "alpha\n")
+        fx.write(os.path.join(self.folder, design, "notes.txt"), "not listed\n")
+        listed = review_caller_layout.SETUP_DOCUMENTS(self.folder)
+        self.assertEqual(listed, [
+            "docs/board-design-method.md", "hardware/README.md", "round.json", "check-report.txt", "views/index.txt",
+            "views/facts.txt", "placement/index.txt", "placement/measures.txt",
+            f"{design}/layout-plan.md", f"{design}/design-rules.md",
+            f"{design}/alpha.md", f"{design}/constraints.md", f"{design}/separation-basis.yaml", f"{design}/zeta.yaml"])
+        for path in listed:
+            self.assertFalse(path.endswith((".kicad_pcb", ".kicad_sch", ".kicad_pro", ".png", ".svg")), path)
+        self.assertEqual(review_fan_out.document_texts(self.folder, listed)[0][0], "docs/board-design-method.md")
+
+    def test_an_optional_document_that_is_absent_is_skipped_and_the_layout_review_is_listed_where_it_exists(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; a folder whose method has no catalogue areas, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        design = "hardware/synth/board"
+        for path in ("views/facts.txt", "placement/index.txt", "placement/measures.txt", f"{design}/design-rules.md"):
+            os.remove(os.path.join(self.folder, path))
+        fx.write(os.path.join(self.folder, design, "layout-review.md"), "# Record\n")
+        listed = review_caller_layout.SETUP_DOCUMENTS(self.folder)
+        for gone in ("views/facts.txt", "placement/index.txt", "placement/measures.txt", f"{design}/design-rules.md"):
+            self.assertNotIn(gone, listed)
+        self.assertEqual(listed[listed.index(f"{design}/layout-plan.md"):][:2],
+                         [f"{design}/layout-plan.md", f"{design}/layout-review.md"])
+        self.assertEqual(listed.count("round.json"), 1)
+
+    def test_the_setup_prompt_asks_for_no_judgement_and_no_image_and_the_layout_run_sends_the_documents_on_standard_input(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that asks for no judgement and no image and for one fixed token as the whole answer and that either tells it which documents and records to read or, when the caller names them as files, holds their text itself, sent on standard input so that the session has no tool use to narrate between; any text the setup session writes, in its answer or between its tool uses, other than that token after trimming, and any content block of its history that is neither text, a tool use nor a thinking block whose text is empty, fails the run, so no forked reviewer inherits a verdict; a thinking block that carries text, and a redacted one, fail it; a setup session that fails only for text written between its tool uses is started again, up to twice, before the run fails, and every attempt's session is reported with its cost, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file, as does a file the caller names whose type is not text, before any session is started. Out of scope: the content of a caller's prompt for its units.
+        self.assertIn("do not open any view image, the design's schematic or its layout", review_caller_layout.SETUP_PROMPT)
+        self.assertIn("Judge nothing", review_caller_layout.SETUP_PROMPT)
+        run = Command(self)
+        run.scenario_for(self.folder, setup={"reads": []})
+        status, text, _ = run.go("--json")
+        self.assertEqual(status, 0, text)
+        setup = [call for call in run.calls() if call["unit"] is None and not call["forked"] and "-p" in call["args"]][0]
+        self.assertTrue(setup["args"][1].startswith("--"), "no prompt argument")
+        for path in review_caller_layout.SETUP_DOCUMENTS(self.folder):
+            self.assertIn(f"=== {path} ===", setup["stdin"])
+        self.assertNotIn(".kicad_", "".join(line for line in setup["stdin"].splitlines() if line.startswith("=== ")))
+        self.assertNotIn(".png", "".join(line for line in setup["stdin"].splitlines() if line.startswith("=== ")))
+        with open(os.path.join(self.folder, "hardware/synth/board/layout-plan.md"), encoding="utf-8") as handle:
+            self.assertIn(handle.read().rstrip(), setup["stdin"])
+
+
 class TheToolGrant(Folder):
     def test_the_caller_is_a_valid_caller_that_grants_the_read_tools_and_the_one_retrieval_tool(self):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C6: Against the driver's stub, every reviewer of the layout caller is started with the read tools and the one retrieval tool and no other, and a run whose session reports a different tool set, any MCP server or another working directory fails naming the unit. Out of scope: whether a document can be retrieved, which the proof run records.

@@ -63,11 +63,24 @@ FINDING_TABLE = ["Finding", "Item", "Raised by", "Severity", "What and where", "
 RECORD_FINDING_TABLE = [column for column in FINDING_TABLE if column != "Item"]
 
 SETUP_PROMPT = (
-    "Read, in this folder, docs/board-design-method.md and hardware/README.md; round.json; check-report.txt; views/index.txt, "
-    "views/facts.txt, placement/index.txt and placement/measures.txt where they exist; and, in the folder that holds the one "
-    "KiCad project file (find it with Glob for **/*.kicad_pro), its layout-plan.md, its design-rules.md, its layout-review.md "
-    "where it exists, and every other .md and .yaml file in that folder. Read the method and the plan in full. These are "
-    "documents and records only: do not open any view image, the design's schematic or its layout.")
+    "The documents and records of this review follow; they are all you need. Judge nothing and open nothing: do not open "
+    "any view image, the design's schematic or its layout. Take the method and the plan in full.")
+
+#: The documents and records at the review folder's root the setup session is given, in this order, each where it exists.
+ROOT_DOCUMENTS = ("docs/board-design-method.md", "hardware/README.md", "round.json", "check-report.txt", "views/index.txt",
+                  "views/facts.txt", "placement/index.txt", "placement/measures.txt")
+#: The design folder's documents given first, in this order, before its other .md and .yaml files.
+DESIGN_DOCUMENTS = ("layout-plan.md", "design-rules.md", "layout-review.md")
+
+
+def SETUP_DOCUMENTS(review: str) -> List[str]:
+    """The paths, relative to the review folder, of the documents and records the setup session is given."""
+    found = [path for path in ROOT_DOCUMENTS if os.path.isfile(os.path.join(review, path))]
+    design = design_path(review)
+    named = [path for path in DESIGN_DOCUMENTS if os.path.isfile(os.path.join(review, design, path))]
+    others = sorted(name for name in os.listdir(os.path.join(review, design)) if name.endswith((".md", ".yaml"))
+                    and name not in DESIGN_DOCUMENTS and os.path.isfile(os.path.join(review, design, name)))
+    return found + [os.path.normpath(os.path.join(design, name)) for name in named + others]
 
 TOOLS = ("Read", "Glob", "Grep", "WebFetch")
 #: The most reviewers at once: the full unit count until the live demonstration sets it from what that run observes.
