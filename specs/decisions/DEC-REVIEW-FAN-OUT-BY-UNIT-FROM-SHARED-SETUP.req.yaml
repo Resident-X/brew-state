@@ -2,7 +2,7 @@ id: DEC-REVIEW-FAN-OUT-BY-UNIT-FROM-SHARED-SETUP
 type: decision
 category: operational
 title: A judged review that divides into independent units is carried out by one setup session and one forked read-only reviewer per unit, merged by a deterministic step
-status: active
+status: deprecated
 version: 2
 decided_by: david
 text: |
@@ -46,3 +46,5 @@ links:
     type: addresses
   - target: OBL-VERIFICATION-DISCIPLINE-001.C9
     type: addresses
+attributes:
+  deprecation_reason: Measured at the layout review's full unit count it cost twice the single reviewer and missed a seed; replaced by the shared-context decision

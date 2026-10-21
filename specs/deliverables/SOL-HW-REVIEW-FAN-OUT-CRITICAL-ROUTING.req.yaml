@@ -3,25 +3,23 @@ type: deliverable
 category: solution
 title: A task fans the critical-routing check out by catalogue area and merges the areas into one pass of the layout plan
 status: active
-version: 2
+version: 3
 text: |
-  Why this exists. Step 4 of the method's routing section judges the layout checklist items that bear on the critical nets, with the board still closed and before the router runs, because a critical net's route costs one net's re-route to change then and a great deal once the router has built around it. It is the cheapest place in the method to protect a first-pass board, it is repeated on every board and after every re-route, and it is one reviewer going through the whole checklist to find which items bear. The reasoning, measurements and options rejected are in DEC-REVIEW-FAN-OUT-BY-UNIT-FROM-SHARED-SETUP, and DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND settles that a review judged by unit is the same review; a session building this does not reopen either. This is the third of six solutions under DEL-HW-REVIEW-FAN-OUT. It adds the critical-routing check as a caller of the driver and reuses the layout caller's finding of areas.
+  Why this exists. Step 4 of the method's routing section judges the layout checklist items that bear on the critical nets, with the board still closed and before the router runs, because a critical net's route costs one net's re-route to change then and a great deal once the router has built around it. It is the cheapest place in the method to protect a first-pass board, it is repeated on every board and after every re-route, and it is one reviewer going through the whole checklist to find which items bear. The reasoning, measurements and options rejected are in DEC-REVIEW-FAN-OUT-FROM-SHARED-CONTEXT-WITH-REPLICAS, and DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND settles that a review judged by unit is the same review; a session building this does not reopen either. This is the third of six solutions under DEL-HW-REVIEW-FAN-OUT. It adds the critical-routing check as a caller of the review kit and reuses the layout caller's finding of areas.
 
   What it records is not a review round. The check records a pass in the board's layout plan, under a section of passes numbered from 1 and only ever appended, each pass holding the commit judged, the views as they were run, a verdict table with a row for every item that bears on the critical nets and, below it, every other item with the reason it bears on none. It has no findings table and no round number, and a different command reads it: the board placement and critical routing history check, not the review record history check.
 
   Settled before the build.
 
   - The units are the layout catalogue's areas, found as the layout caller finds them. Each area's reviewer decides which of its items bear on the critical nets, as the method's step 4 has the reviewer decide, judges those, and lists the rest with the reason.
-  - The merge writes one pass: every catalogue item either has a verdict row or is on the list, once; the pass number, the commit judged and the views are inputs from whoever runs the check, as the layout round's fields are; the pass is rendered through the rendered record the caller-seam solution adds, in the form the plan's section holds, into the output folder, which is outside the repository; whoever runs the check appends it below the earlier passes and never in place of one, since the history command refuses that.
+  - The merge writes one pass: every catalogue item either has a verdict row or is on the list, once; the pass number, the commit judged and the views are inputs from whoever runs the check, as the layout round's fields are; the pass is rendered through the rendered record the kit's caller contract provides, in the form the plan's section holds, into the output folder, which is outside the repository; whoever runs the check appends it below the earlier passes and never in place of one, since the history command refuses that.
   - The rule-kind items rest on the rules table alone here, as the method says, because the pre-order check fails a board that is not fully routed and is not run at this step.
   - Re-routes follow the method's own loop, a failing pass and a later pass at the re-routed commit; each pass is one run of the command.
-  - The tests need no model and no KiCad, using the driver's stub over synthetic plans.
+  - The tests need no model and no KiCad, using the kit's stub over synthetic plans.
   - The proof design is the method proof design under the hardware proof folder, the only committed design whose layout plan holds a critical routing section. The seeded copy is made as the circuit review proof's copy is: a session that has not read the catalogue seeds critical-net defects into a copy in a temporary work tree outside the repository, keeps the copy's records consistent, and writes the seed list apart from both the copy and the review folder, and the review folder is assembled by the layout solution's folder command. The proof runs both forms on that copy and compares them as the layout solution's proof does.
 
   Out of scope: the layout review round, the placement judging, and the history command's own checks.
 links:
-  - target: DEC-REVIEW-FAN-OUT-BY-UNIT-FROM-SHARED-SETUP
-    type: justified-by
   - target: DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND
     type: justified-by
   - target: DEL-HW-REVIEW-FAN-OUT.C7
@@ -40,3 +38,5 @@ links:
     type: depends-on
   - target: SOL-HW-REVIEW-KIT
     type: depends-on
+  - target: DEC-REVIEW-FAN-OUT-FROM-SHARED-CONTEXT-WITH-REPLICAS
+    type: justified-by

@@ -2,11 +2,11 @@ id: SOL-HW-REVIEW-FAN-OUT-SCHEMATIC.C2
 type: criterion
 title: The merge gives every catalogue item a verdict row and covers every net, part and sheet of the schematic, and names no row for anything that does not exist
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |-
-  Over a synthetic netlist, a synthetic sheet list and synthetic unit results, the merge fails naming a catalogue item with no verdict row, a net, part or sheet of the netlist or sheet list that appears in no item's rows, and a row that names a net, part or sheet that does not exist. It rejects a table with a column the method's table does not have, numbers this round's findings at the merge as the driver does, and gives the same record whatever order the units arrive in. Out of scope: which nets an item selects, whether a verdict is right, and the free pass.
+  Over a synthetic netlist, a synthetic sheet list and synthetic unit results, the merge fails naming a catalogue item with no verdict row, a net, part or sheet of the netlist or sheet list that appears in no item's rows, and a row that names a net, part or sheet that does not exist. It rejects a table with a column the method's table does not have, numbers this round's findings at the merge as the kit does, and gives the same record whatever order the units arrive in. Out of scope: which nets an item selects, whether a verdict is right, and the free pass.
 links:
   - target: SOL-HW-REVIEW-FAN-OUT-SCHEMATIC
     type: criterion-of

@@ -42,3 +42,5 @@ links:
     type: addresses
   - target: OBL-VERIFICATION-DISCIPLINE-001.C9
     type: addresses
+  - target: DEC-REVIEW-FAN-OUT-BY-UNIT-FROM-SHARED-SETUP
+    type: supersedes
