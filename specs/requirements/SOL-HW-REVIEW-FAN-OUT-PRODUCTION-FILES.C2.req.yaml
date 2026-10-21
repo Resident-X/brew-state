@@ -2,11 +2,11 @@ id: SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES.C2
 type: criterion
 title: The merge gives a parts row to every row of the placement file and a layers row to every fabrication layer, and reports every row that is not a match as blocking the order
 status: active
-version: 2
+version: 3
 measurement_type: binary
 verification: test
 text: |-
-  Over a synthetic placement file and synthetic unit results, the merge fails naming a placement row with no parts row or with two, a parts row for a part not in the file, and a fabrication layer, the drill file or the outline with no layers row. It rejects a verdict outside the three the ordering step allows, refuses, before any session starts, opening fields that are missing or malformed, refuses a verdict other than cannot judge for a part whose footprint has no drawing, writes the check record in the form the ordering step gives, and reports every row that is not a match as blocking the order. Out of scope: whether a verdict is right.
+  Over a synthetic placement file and synthetic unit results, the merge fails naming a placement row with no parts row or with two, a parts row for a part not in the file, and a fabrication layer, the drill file or the outline with no layers row. It rejects a verdict outside the three the ordering step allows, refuses, before any session starts, opening fields that are missing or malformed, refuses a verdict other than cannot judge for a part whose footprint has no drawing, writes the check record in the form the ordering step gives, and reports every row that is not a match as blocking the order. Over the same inputs each unit's prompt names the unit's rows, the three verdicts and where the drawings and images lie in the review folder, so a reviewer on the small tier needs only the folder and the prompt, and the record names every row that is not a match with what it blocks. Out of scope: whether a verdict is right.
 links:
   - target: SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES
     type: criterion-of
