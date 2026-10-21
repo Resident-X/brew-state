@@ -30,7 +30,7 @@ import layout_fixtures as fx  # noqa: E402
 import review_caller_layout  # noqa: E402
 import review_folder  # noqa: E402
 from review_kit import caller as kit_caller  # noqa: E402
-from review_kit import catalogue, command, merge, messages, planner  # noqa: E402
+from review_kit import catalogue, command, costmodel, merge, messages, planner  # noqa: E402
 from review_kit import results as kit_results  # noqa: E402
 from review_kit import executor as ex  # noqa: E402
 
@@ -128,6 +128,18 @@ def results(items=ITEMS, plan_notes=("Compared every region with the plan; the f
     return found
 
 
+#: The couplings the synthetic catalogue is planned with: its areas are not the real ones, so the pairs are the test's own.
+SYNTHETIC_COUPLED = (("FLOOR", "GROUND"), ("CLOCK", "FLOOR"))
+real_load = kit_caller.load
+
+
+def load_with_synthetic_couplings(name, folder):
+    """The caller as the kit loads it, its couplings those of the synthetic catalogue."""
+    loaded = real_load(name, folder)
+    loaded.module.COUPLED = SYNTHETIC_COUPLED
+    return loaded
+
+
 def prepared(folder):
     return kit_caller.load("layout", TOOLS).prepare(folder)
 
@@ -161,6 +173,9 @@ class Folder(unittest.TestCase):
         self.root = os.path.realpath(tempfile.mkdtemp(prefix="layout-caller-test-"))
         self.addCleanup(shutil.rmtree, self.root, True)
         self.folder = self.write_folder(self.root)
+        patched = mock.patch.object(kit_caller, "load", load_with_synthetic_couplings)
+        patched.start()
+        self.addCleanup(patched.stop)
 
     def write_folder(self, root, number=None, narrow=None, own=None, method=None, extra=None):
         repo = fx.make_repo(root, own if own is not None else self.own, method=method or self.method)
@@ -189,7 +204,7 @@ class Folder(unittest.TestCase):
 
 class TheUnits(Folder):
     def test_the_declaration_gives_one_unit_per_catalogue_area_and_one_for_the_plan_and_the_free_pass(self):
-        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a pair of areas that the catalogue's cross-references link and the declaration does not couple fails the test; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a coupling the declaration states that no cross-reference of the catalogue supports fails the test, a cross-reference alone does not make a coupling, and the declared couplings (power with mains and the manufacturing items with power, whose item MFG-5 cites a power finding) leave at least six groups, the largest within the declared time budget; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
         package = prepared(self.folder)
         self.assertEqual(list(package.declaration.units), ["area-FLOOR", "area-GROUND", "area-CLOCK", "plan-and-free-pass"])
         self.assertEqual({unit: list(item.items) for unit, item in package.declaration.units.items()},
@@ -197,7 +212,7 @@ class TheUnits(Folder):
         self.assertEqual(package.checklist, ("FLOOR-1", "FLOOR-2", "GROUND-1", "CLOCK-1", PLAN_ENTRY))
 
     def test_the_board_items_unit_is_there_when_the_plans_table_has_rows_and_stands_before_the_plan_unit(self):
-        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a pair of areas that the catalogue's cross-references link and the declaration does not couple fails the test; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a coupling the declaration states that no cross-reference of the catalogue supports fails the test, a cross-reference alone does not make a coupling, and the declared couplings (power with mains and the manufacturing items with power, whose item MFG-5 cites a power finding) leave at least six groups, the largest within the declared time budget; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
         folder = self.write_folder(os.path.join(self.root, "own"), own=fx.OWN_ROWS)
         package = prepared(folder)
         self.assertEqual(list(package.declaration.units), ["area-FLOOR", "area-GROUND", "area-CLOCK", "board-items",
@@ -208,7 +223,7 @@ class TheUnits(Folder):
         self.assertNotIn("board-items", prepared(self.folder).declaration.units)
 
     def test_the_units_are_planned_into_groups_with_each_coupled_set_in_one_group(self):
-        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a pair of areas that the catalogue's cross-references link and the declaration does not couple fails the test; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a coupling the declaration states that no cross-reference of the catalogue supports fails the test, a cross-reference alone does not make a coupling, and the declared couplings (power with mains and the manufacturing items with power, whose item MFG-5 cites a power finding) leave at least six groups, the largest within the declared time budget; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
         declaration = prepared(self.folder).declaration
         self.assertEqual(declaration.units["area-FLOOR"].couples_with, ("area-GROUND", "area-CLOCK"))
         self.assertEqual(declaration.units["area-GROUND"].couples_with, ("area-FLOOR",))
@@ -216,39 +231,63 @@ class TheUnits(Folder):
         groups = planner.pack(declaration)
         self.assertEqual(groups, [["area-FLOOR", "area-GROUND", "area-CLOCK"], ["plan-and-free-pass"]])
 
-    def test_a_pair_of_areas_the_catalogue_links_and_the_declaration_does_not_couple_fails_the_test(self):
-        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a pair of areas that the catalogue's cross-references link and the declaration does not couple fails the test; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
-        self.assertEqual(self.uncoupled_links(self.folder), [], "the synthetic catalogue links nothing the declaration lacks")
+    def test_a_coupling_the_declaration_states_that_no_cross_reference_of_the_catalogue_supports_fails_the_test(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a coupling the declaration states that no cross-reference of the catalogue supports fails the test, a cross-reference alone does not make a coupling, and the declared couplings (power with mains and the manufacturing items with power, whose item MFG-5 cites a power finding) leave at least six groups, the largest within the declared time budget; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        linked = fx.METHOD_SENSE.replace("#### CLOCK-1. The crystal sits at its pins\n",
+                                         "#### CLOCK-1. The crystal sits at its pins\n\nIt reads `FLOOR-2`.\n")
+        linked = linked.replace("#### GROUND-1. Ground is a plane\n", "#### GROUND-1. Ground is a plane\n\nIt reads `FLOOR-1`.\n")
+        folder = self.write_folder(os.path.join(self.root, "linked"), method=linked)
+        self.assertEqual(self.unsupported_couplings(folder), [], "each declared coupling has a cross-reference behind it")
+        self.assertEqual(self.unsupported_couplings(self.folder), [("CLOCK", "FLOOR"), ("FLOOR", "GROUND")],
+                         "a catalogue that links nothing supports none of the declared couplings")
+        unlinked = linked.replace("It reads `FLOOR-2`.", "It reads the floor.")
+        folder = self.write_folder(os.path.join(self.root, "unlinked"), method=unlinked)
+        self.assertEqual(self.unsupported_couplings(folder), [("CLOCK", "FLOOR")], "one coupling lost its cross-reference")
+        loaded = kit_caller.load("layout", TOOLS)
+        loaded.module.COUPLED = ()
+        self.assertEqual(self.unsupported_couplings(folder, loaded), [], "a coupling not declared cannot be unsupported")
+
+    def test_a_cross_reference_alone_does_not_make_a_coupling(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a coupling the declaration states that no cross-reference of the catalogue supports fails the test, a cross-reference alone does not make a coupling, and the declared couplings (power with mains and the manufacturing items with power, whose item MFG-5 cites a power finding) leave at least six groups, the largest within the declared time budget; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
         method = fx.METHOD_SENSE.replace("#### CLOCK-1. The crystal sits at its pins\n",
                                          "#### CLOCK-1. The crystal sits at its pins\n\nIt reads `SENSE-1` and `FLOOR-2`.\n")
-        method = method.replace("#### GROUND-1. Ground is a plane\n", "#### GROUND-1. Ground is a plane\n\nIt reads `FLOOR-1`.\n")
         folder = self.write_folder(os.path.join(self.root, "linked"), method=method)
-        self.assertEqual(self.uncoupled_links(folder), [("CLOCK", "SENSE")], "a link to an area the declaration does not couple")
+        self.assertIn(("CLOCK", "SENSE"), self.links(slurp(os.path.join(folder, "docs", "board-design-method.md"))))
         package = prepared(folder)
         self.assertEqual(package.declaration.units["area-CLOCK"].couples_with, ("area-FLOOR",))
+        self.assertEqual(package.declaration.units["area-SENSE"].couples_with, ())
         self.assertEqual(planner.pack(package.declaration), [["area-FLOOR", "area-GROUND", "area-CLOCK"], ["area-SENSE"],
-                                                             ["plan-and-free-pass"]], "and the two sit in different groups")
-        loaded = kit_caller.load("layout", TOOLS)
-        loaded.module.COUPLED = loaded.module.COUPLED + (("CLOCK", "SENSE"),)
-        self.assertEqual(self.uncoupled_links(folder, loaded), [], "declared coupled, the pair is in one group")
-        loaded.module.COUPLED = ()
-        self.assertEqual(self.uncoupled_links(folder, loaded), [("CLOCK", "FLOOR"), ("CLOCK", "SENSE"), ("FLOOR", "GROUND")],
-                         "without its couplings the declaration fails for every link the catalogue has")
+                                                             ["plan-and-free-pass"]], "the linked area stays in its own group")
 
-    def test_every_pair_of_areas_the_real_catalogue_links_is_declared_coupled_and_so_in_one_group(self):
-        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a pair of areas that the catalogue's cross-references link and the declaration does not couple fails the test; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+    def test_every_coupling_the_declaration_states_has_a_cross_reference_in_the_real_catalogue(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a coupling the declaration states that no cross-reference of the catalogue supports fails the test, a cross-reference alone does not make a coupling, and the declared couplings (power with mains and the manufacturing items with power, whose item MFG-5 cites a power finding) leave at least six groups, the largest within the declared time budget; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
         method = slurp(os.path.join(REPO, "docs", "board-design-method.md"))
         folder = self.copy_of("real")
         fx.write(os.path.join(folder, "docs", "board-design-method.md"), method)
         links = self.links(method)
         self.assertGreaterEqual(len(links), 5, "the real catalogue cross-references several areas")
-        self.assertIn(("MAINS", "POWER"), links)
-        self.assertIn(("GROUND", "MAINS"), links)
-        self.assertEqual(self.uncoupled_links(folder), [])
-        groups = planner.pack(prepared(folder).declaration)
+        real = real_load("layout", TOOLS)
+        self.assertEqual(sorted(tuple(sorted(pair)) for pair in real.module.COUPLED),
+                         [("MAINS", "POWER"), ("MFG", "POWER")])
+        self.assertEqual(self.unsupported_couplings(folder, real), [])
+        groups = planner.pack(real.prepare(folder).declaration)
         where = {unit: number for number, units in enumerate(groups) for unit in units}
-        for first, second in links:
+        for first, second in real.module.COUPLED:
             self.assertEqual(where[f"area-{first}"], where[f"area-{second}"], f"{first} and {second} are judged together")
+
+    def test_the_real_method_plans_at_least_six_groups_and_the_largest_is_within_the_wall_budget(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a coupling the declaration states that no cross-reference of the catalogue supports fails the test, a cross-reference alone does not make a coupling, and the declared couplings (power with mains and the manufacturing items with power, whose item MFG-5 cites a power finding) leave at least six groups, the largest within the declared time budget; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        method = slurp(os.path.join(REPO, "docs", "board-design-method.md"))
+        folder = self.copy_of("real")
+        fx.write(os.path.join(folder, "docs", "board-design-method.md"), method)
+        declaration = real_load("layout", TOOLS).prepare(folder).declaration
+        groups = planner.pack(declaration)
+        self.assertGreaterEqual(len(groups), 6, f"the groups are {[len(group) for group in groups]}")
+        timing = costmodel.Timing()
+        seconds = [timing.seconds(costmodel.CALLS_PER_FORK, sum(declaration.units[unit].expected_output_tokens for unit in group))
+                   for group in groups]
+        self.assertLessEqual(max(seconds), declaration.budget.wall_s,
+                             f"the largest group {max(groups, key=len)} is expected to take {max(seconds):.0f} s")
 
     def links(self, method):
         """The pairs of areas the catalogue's items cross-reference by identifier, each pair in sorted order."""
@@ -265,17 +304,18 @@ class TheUnits(Folder):
                         found.add(tuple(sorted((current, cited.group(1)))))
         return sorted(found)
 
-    def uncoupled_links(self, folder, loaded=None):
-        """The linked pairs of areas in the folder's method whose units the declaration does not put in one coupled set."""
-        declaration = (loaded or kit_caller.load("layout", TOOLS)).prepare(folder).declaration
-        sets = planner.coupled_sets(declaration)
-        together = {unit: number for number, units in enumerate(sets) for unit in units}
-        return [(first, second) for first, second in self.links(slurp(os.path.join(folder, "docs", "board-design-method.md")))
-                if f"area-{first}" in together and f"area-{second}" in together
-                and together[f"area-{first}"] != together[f"area-{second}"]]
+    def unsupported_couplings(self, folder, loaded=None):
+        """The couplings the caller declares between two areas of the folder's method that no cross-reference of its catalogue
+        links, each pair in sorted order."""
+        loaded = loaded or kit_caller.load("layout", TOOLS)
+        units = loaded.prepare(folder).declaration.units
+        links = self.links(slurp(os.path.join(folder, "docs", "board-design-method.md")))
+        declared = {tuple(sorted((unit[len("area-"):], other[len("area-"):])))
+                    for unit, found in units.items() for other in found.couples_with}
+        return sorted(pair for pair in declared if pair not in links)
 
     def test_the_shared_context_holds_the_whole_catalogue_and_each_prompt_only_its_own_area_and_items(self):
-        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a pair of areas that the catalogue's cross-references link and the declaration does not couple fails the test; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a coupling the declaration states that no cross-reference of the catalogue supports fails the test, a cross-reference alone does not make a coupling, and the declared couplings (power with mains and the manufacturing items with power, whose item MFG-5 cites a power finding) leave at least six groups, the largest within the declared time budget; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
         package = prepared(self.folder)
         shared = messages.shared_context(catalogue.admit(package.declaration, self.folder)).message
         for held in ("### Floorplan (FLOOR)", "#### FLOOR-2.", "### Grounding (GROUND)", "#### GROUND-1.", "### Clocks (CLOCK)",
@@ -296,7 +336,7 @@ class TheUnits(Folder):
             self.assertNotIn(area, plan, "the comparison unit carries no area block")
 
     def test_the_shared_context_artefacts_are_the_folders_extracts_records_and_every_image(self):
-        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a pair of areas that the catalogue's cross-references link and the declaration does not couple fails the test; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a coupling the declaration states that no cross-reference of the catalogue supports fails the test, a cross-reference alone does not make a coupling, and the declared couplings (power with mains and the manufacturing items with power, whose item MFG-5 cites a power finding) leave at least six groups, the largest within the declared time budget; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
         declaration = prepared(self.folder).declaration
         design = fx.DESIGN
         self.assertEqual(sorted(declaration.artefacts), sorted([
@@ -314,7 +354,7 @@ class TheUnits(Folder):
             self.assertNotIn(held, declaration.artefacts if held.endswith(("kicad_pcb", "kicad_sch")) else (), "no board file")
 
     def test_a_later_round_names_its_record_and_holds_it_in_the_shared_context(self):
-        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a pair of areas that the catalogue's cross-references link and the declaration does not couple fails the test; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a coupling the declaration states that no cross-reference of the catalogue supports fails the test, a cross-reference alone does not make a coupling, and the declared couplings (power with mains and the manufacturing items with power, whose item MFG-5 cites a power finding) leave at least six groups, the largest within the declared time budget; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
         folder = self.write_folder(os.path.join(self.root, "later"), number=2)
         package = prepared(folder)
         self.assertIn(f"{fx.DESIGN}/layout-review.md", package.declaration.artefacts)
@@ -325,7 +365,7 @@ class TheUnits(Folder):
         self.assertNotIn("This is round", prepared(self.folder).unit_text("area-FLOOR"))
 
     def test_the_real_method_gives_a_unit_for_each_of_its_catalogue_areas(self):
-        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a pair of areas that the catalogue's cross-references link and the declaration does not couple fails the test; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a coupling the declaration states that no cross-reference of the catalogue supports fails the test, a cross-reference alone does not make a coupling, and the declared couplings (power with mains and the manufacturing items with power, whose item MFG-5 cites a power finding) leave at least six groups, the largest within the declared time budget; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
         method = slurp(os.path.join(REPO, "docs", "board-design-method.md"))
         folder = self.copy_of("real")
         fx.write(os.path.join(folder, "docs", "board-design-method.md"), method)
@@ -336,7 +376,7 @@ class TheUnits(Folder):
         self.assertEqual(list(prepared(folder).declaration.units), [f"area-{code}" for code, _, _ in found] + ["plan-and-free-pass"])
 
     def test_a_method_with_no_catalogue_areas_or_lacking_a_section_is_refused_naming_what_is_missing(self):
-        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a pair of areas that the catalogue's cross-references link and the declaration does not couple fails the test; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a coupling the declaration states that no cross-reference of the catalogue supports fails the test, a cross-reference alone does not make a coupling, and the declared couplings (power with mains and the manufacturing items with power, whose item MFG-5 cites a power finding) leave at least six groups, the largest within the declared time budget; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
         method = os.path.join(self.folder, "docs", "board-design-method.md")
         text = slurp(method)
         fx.write(method, re.sub(r"^### (Floorplan|Grounding|Clocks) \(\w+\)$", r"### \1", text, flags=re.M))
@@ -351,7 +391,7 @@ class TheUnits(Folder):
         self.refused(lambda: prepared(self.folder), "no readable method")
 
     def test_a_folder_lacking_an_extract_or_an_index_or_a_view_or_the_extracts_section_is_refused_naming_it(self):
-        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a pair of areas that the catalogue's cross-references link and the declaration does not couple fails the test; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a coupling the declaration states that no cross-reference of the catalogue supports fails the test, a cross-reference alone does not make a coupling, and the declared couplings (power with mains and the manufacturing items with power, whose item MFG-5 cites a power finding) leave at least six groups, the largest within the declared time budget; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
         for path, word in (("layout-facts.txt", "holds no layout-facts.txt"), ("method-extract.md", "holds no method-extract.md"),
                            ("check-report.txt", "holds no check-report.txt"), ("views/index.txt", "holds no views/index.txt"),
                            ("placement/index.txt", "holds no placement/index.txt"),
@@ -369,7 +409,7 @@ class TheUnits(Folder):
         self.refused(lambda: prepared(folder), "holds no rendered view image")
 
     def test_a_plan_whose_table_of_own_items_cannot_be_read_is_refused_naming_what_is_missing(self):
-        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a pair of areas that the catalogue's cross-references link and the declaration does not couple fails the test; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a coupling the declaration states that no cross-reference of the catalogue supports fails the test, a cross-reference alone does not make a coupling, and the declared couplings (power with mains and the manufacturing items with power, whose item MFG-5 cites a power finding) leave at least six groups, the largest within the declared time budget; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
         plan = os.path.join(self.folder, fx.DESIGN, "layout-plan.md")
         good = fx.plan(fx.OWN_ROWS)
         for name, text, word in (
@@ -383,7 +423,7 @@ class TheUnits(Folder):
                 self.refused(lambda: prepared(self.folder), word)
 
     def test_a_folder_that_holds_no_one_design_or_no_round_file_is_refused(self):
-        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a pair of areas that the catalogue's cross-references link and the declaration does not couple fails the test; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a coupling the declaration states that no cross-reference of the catalogue supports fails the test, a cross-reference alone does not make a coupling, and the declared couplings (power with mains and the manufacturing items with power, whose item MFG-5 cites a power finding) leave at least six groups, the largest within the declared time budget; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
         fx.write(os.path.join(self.folder, "second", "other.kicad_pro"), "{}")
         self.refused(lambda: prepared(self.folder), "holds 2 KiCad project files")
         shutil.rmtree(os.path.join(self.folder, "second"))
@@ -391,7 +431,7 @@ class TheUnits(Folder):
         self.refused(lambda: prepared(self.folder), "round file", "cannot be read")
 
     def test_a_loaded_caller_meets_the_kits_contract(self):
-        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a pair of areas that the catalogue's cross-references link and the declaration does not couple fails the test; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a coupling the declaration states that no cross-reference of the catalogue supports fails the test, a cross-reference alone does not make a coupling, and the declared couplings (power with mains and the manufacturing items with power, whose item MFG-5 cites a power finding) leave at least six groups, the largest within the declared time budget; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
         loaded = kit_caller.load("layout", TOOLS)
         for attribute in kit_caller.REQUIRED + ("retrieval", "checklist", "place", "round_label", "earlier_findings"):
             self.assertTrue(hasattr(loaded.module, attribute), attribute)
@@ -496,7 +536,7 @@ class TheBoardsOwnItems(Folder):
         self.assertEqual(order, ["FLOOR-1", "FLOOR-2", "GROUND-1", "CLOCK-1", "BOARD-1", "BOARD-2", PLAN_ENTRY])
 
     def test_the_board_items_unit_prompt_names_the_plan_table_and_holds_no_area_block(self):
-        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a pair of areas that the catalogue's cross-references link and the declaration does not couple fails the test; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a coupling the declaration states that no cross-reference of the catalogue supports fails the test, a cross-reference alone does not make a coupling, and the declared couplings (power with mains and the manufacturing items with power, whose item MFG-5 cites a power finding) leave at least six groups, the largest within the declared time budget; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
         text = prepared(self.folder).unit_text("board-items")
         self.assertIn("- BOARD-1\n- BOARD-2", text)
         self.assertIn(f"{fx.DESIGN}/layout-plan.md", text)

@@ -78,11 +78,11 @@ CITATION = re.compile(r"(?<![\w.])[Ff]inding (?P<round>\d+)\.(?P<number>\d+)\b")
 VIEW_NAME = re.compile(r"\b((?:layer|net|crop|classes|assembly|3d|placement)[\w.+/-]*)")
 POINT = re.compile(r"\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)")
 
-#: The areas whose items the catalogue's own cross-references link, so that one's verdicts can rest on another's finding:
-#: each pair is judged in one group. The catalogue's cross-references are read by a test that fails when a pair they link
-#: is not here.
-COUPLED = (("POWER", "MAINS"), ("GROUND", "MAINS"), ("GROUND", "EMI"), ("GROUND", "FLOOR"), ("CLOCK", "FLOOR"),
-           ("CLOCK", "DECOUPLE"), ("MFG", "POWER"), ("WORK", "POWER"))
+#: The areas whose verdicts the layout reviews showed depend on another area's findings: power with mains, and the
+#: manufacturing items with power. Each pair is judged in one group. A cross-reference between two areas of the catalogue does not make a
+#: coupling, since the planner joins couplings transitively and coupling every linked pair leaves nine of twelve areas in one
+#: group; a test fails when a coupling here has no cross-reference of the catalogue to support it.
+COUPLED = (("POWER", "MAINS"), ("MFG", "POWER"))
 #: Where the extracts the shared context holds come from.
 PRODUCER = "task hw:review-folder"
 #: The folder of views rendered during the round, which the declaration lists as added during the round.
