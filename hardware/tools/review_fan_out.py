@@ -16,7 +16,7 @@ review_caller_<name> beside this command, or in the folder --callers names. It
 exposes SETUP_PROMPT, unit_prompt(unit, review_folder), units(review_folder),
 TOOLS, BOUND, TABLES, FINDINGS and CHECK, and may define the retrieval grant, the
 checklist as a function, the rendered record and SETUP_DOCUMENTS(review_folder), the
-paths (relative to the review folder) of documents whose text the setup prompt holds
+entries (each a path relative to the review folder, or a (label, text) pair for an extract) of documents whose text the setup prompt holds
 itself, sent on standard input, so that the setup session reads nothing with a tool. TOOLS is some of the read tools
 and, as the retrieval grant, WebFetch, which fetches a published document and
 writes nothing; the setup session keeps the read tools alone. unit_prompt takes
@@ -340,8 +340,10 @@ def texts(value: Any) -> bool:
 #: What each of a caller's hooks must return, and the words that say so.
 RETURNS = {
     "units": (lambda value: isinstance(value, (list, tuple)), "a list of unit names"),
-    "SETUP_DOCUMENTS": (lambda value: isinstance(value, (list, tuple)) and all(named(path, str) for path in value),
-                        "a list of paths, each text, relative to the review folder"),
+    "SETUP_DOCUMENTS": (lambda value: isinstance(value, (list, tuple)) and all(
+        named(entry, str) or (isinstance(entry, (list, tuple)) and len(entry) == 2 and all(isinstance(part, str) for part in entry)
+                              and named(entry[0], str)) for entry in value),
+                        "a list of entries, each a path, text, relative to the review folder, or a (label, text) pair of texts"),
     "unit_prompt": (lambda value: named(value, str), "the unit's prompt as text"),
     "checklist": (lambda value: isinstance(value, (list, tuple)) and texts(value) and len(set(value)) == len(value),
                   "a list of distinct item names"),
@@ -730,13 +732,38 @@ def non_text(path: str, review: str) -> bool:
     return False
 
 
-def document_texts(review: str, listed: Sequence[str]) -> List[Tuple[str, str]]:
-    """Each document a caller names for the setup session with its text; a path that repeats, is absolute or climbs out of
-    the review folder, names no file, or names a file whose type is not text is a refusal naming it."""
+def extract_problem(label: str, text: str) -> Optional[str]:
+    """Why an extract a caller supplies as a (label, text) pair cannot be given to the setup session, None when it can."""
+    if not text.strip():
+        return f"the caller supplies the setup extract {label} with no text; supply only extracts that hold something"
+    if "\0" in text or any(ord(char) < 32 and char not in "\t\n\r" for char in text):
+        return (f"the caller supplies the setup extract {label} with a NUL or control character in its text, so it cannot "
+                "be shown to be text; the setup session is given documents and records only")
+    return None
+
+
+def document_texts(review: str, listed: Sequence[Any]) -> List[Tuple[str, str]]:
+    """Each document a caller names for the setup session with its text; an entry is a path relative to the review folder or
+    a (label, text) pair for an extract. A path or label that repeats, a path that is absolute or climbs out of
+    the review folder, names no file, or names a file whose type is not text, and an extract with no text or with control
+    characters in it, is a refusal naming it."""
     found: List[Tuple[str, str]] = []
     problems = []
     seen = set()
-    for path in listed:
+    for entry in listed:
+        if not isinstance(entry, str):
+            label, text = entry
+            if label in seen:
+                problems.append(f"the caller names the setup document {label} more than once; name each once")
+                continue
+            seen.add(label)
+            problem = extract_problem(label, text)
+            if problem:
+                problems.append(problem)
+            else:
+                found.append((label, text))
+            continue
+        path = entry
         if path in seen:
             problems.append(f"the caller names the setup document {path} more than once; name each once")
             continue

@@ -26,9 +26,13 @@ METHOD = """# Synthetic board design method
 
 Steps of a review.
 
+## Layout review views
+
+Views of a review.
+
 ## Layout practice catalogue
 
-Intro.
+Intro of the catalogue.
 
 ### How an item is read
 

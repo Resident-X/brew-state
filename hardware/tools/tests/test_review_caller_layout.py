@@ -92,19 +92,19 @@ class Folder(unittest.TestCase):
 
 class TheUnits(Folder):
     def test_a_full_round_has_a_unit_for_each_catalogue_area_and_one_for_the_plan_and_the_free_pass(self):
-        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; a folder whose method has no catalogue areas, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; each unit's prompt holds the section of the catalogue for its own area and the setup session's documents hold no area section, the same for every unit; a folder whose method has no catalogue areas or lacks a section the setup needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
         caller = review_fan_out.load_caller("layout", TOOLS)
         self.assertEqual(review_fan_out.unit_names(caller, self.folder),
                          ["area-FLOOR", "area-GROUND", "area-CLOCK", "plan-and-free-pass"])
 
     def test_the_checklist_is_the_catalogue_in_the_methods_order_and_no_other_section(self):
-        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; a folder whose method has no catalogue areas, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; each unit's prompt holds the section of the catalogue for its own area and the setup session's documents hold no area section, the same for every unit; a folder whose method has no catalogue areas or lacks a section the setup needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
         self.assertEqual(review_caller_layout.checklist(self.folder),
                          ["FLOOR-1", "FLOOR-2", "GROUND-1", "CLOCK-1", review_caller_layout.PLAN_ENTRY])
         self.assertEqual(review_caller_layout.unit_items(self.folder)["area-FLOOR"], ["FLOOR-1", "FLOOR-2"])
 
     def test_the_real_method_gives_a_unit_for_each_of_its_catalogue_areas(self):
-        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; a folder whose method has no catalogue areas, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; each unit's prompt holds the section of the catalogue for its own area and the setup session's documents hold no area section, the same for every unit; a folder whose method has no catalogue areas or lacks a section the setup needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
         with open(os.path.join(REPO, "docs", "board-design-method.md"), encoding="utf-8") as handle:
             method = handle.read()
         os.remove(os.path.join(self.folder, "docs", "board-design-method.md"))
@@ -115,7 +115,7 @@ class TheUnits(Folder):
         self.assertTrue(all(ids for _, _, ids in found), "an area heading of the real method holds no item")
 
     def test_a_method_with_no_catalogue_areas_is_refused_naming_what_is_missing(self):
-        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; a folder whose method has no catalogue areas, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; each unit's prompt holds the section of the catalogue for its own area and the setup session's documents hold no area section, the same for every unit; a folder whose method has no catalogue areas or lacks a section the setup needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
         caller = review_fan_out.load_caller("layout", TOOLS)
         method = os.path.join(self.folder, "docs", "board-design-method.md")
         with open(method, encoding="utf-8") as handle:
@@ -128,7 +128,7 @@ class TheUnits(Folder):
         self.refused(lambda: review_fan_out.unit_names(caller, self.folder), "no readable method")
 
     def test_a_plan_whose_table_of_own_items_cannot_be_read_is_refused_naming_what_is_missing(self):
-        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; a folder whose method has no catalogue areas, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; each unit's prompt holds the section of the catalogue for its own area and the setup session's documents hold no area section, the same for every unit; a folder whose method has no catalogue areas or lacks a section the setup needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
         caller = review_fan_out.load_caller("layout", TOOLS)
         plan = os.path.join(self.folder, fx.DESIGN, "layout-plan.md")
         good = fx.plan(fx.OWN_ROWS)
@@ -144,7 +144,7 @@ class TheUnits(Folder):
         self.refused(lambda: review_fan_out.unit_names(caller, self.folder), "no readable plan")
 
     def test_a_folder_that_holds_no_one_design_or_no_round_file_is_refused(self):
-        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; a folder whose method has no catalogue areas, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; each unit's prompt holds the section of the catalogue for its own area and the setup session's documents hold no area section, the same for every unit; a folder whose method has no catalogue areas or lacks a section the setup needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
         caller = review_fan_out.load_caller("layout", TOOLS)
         fx.write(os.path.join(self.folder, "second", "other.kicad_pro"), "{}")
         self.refused(lambda: review_fan_out.unit_names(caller, self.folder), "holds 2 KiCad project files")
@@ -157,7 +157,7 @@ class TheBoardsOwnItems(Folder):
     own = fx.OWN_ROWS
 
     def test_a_plan_with_own_items_adds_a_unit_for_them_before_the_plan_unit(self):
-        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; a folder whose method has no catalogue areas, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; each unit's prompt holds the section of the catalogue for its own area and the setup session's documents hold no area section, the same for every unit; a folder whose method has no catalogue areas or lacks a section the setup needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
         caller = review_fan_out.load_caller("layout", TOOLS)
         self.assertEqual(review_fan_out.unit_names(caller, self.folder),
                          ["area-FLOOR", "area-GROUND", "area-CLOCK", "board-items", "plan-and-free-pass"])
@@ -593,34 +593,120 @@ class Command:
 
 
 class TheSetupDocuments(Folder):
-    def test_the_setup_documents_are_those_the_prompt_lists_in_order_and_only_where_they_exist(self):
-        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; a folder whose method has no catalogue areas, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+    def texts(self):
+        return dict(review_fan_out.document_texts(self.folder, review_caller_layout.SETUP_DOCUMENTS(self.folder)))
+
+    def test_the_setup_holds_the_review_sections_and_the_catalogue_introduction_then_the_records_in_order(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; each unit's prompt holds the section of the catalogue for its own area and the setup session's documents hold no area section, the same for every unit; a folder whose method has no catalogue areas or lacks a section the setup needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
         design = "hardware/synth/board"
         fx.write(os.path.join(self.folder, design, "zeta.yaml"), "a: 1\n")
         fx.write(os.path.join(self.folder, design, "alpha.md"), "alpha\n")
         fx.write(os.path.join(self.folder, design, "notes.txt"), "not listed\n")
         listed = review_caller_layout.SETUP_DOCUMENTS(self.folder)
-        self.assertEqual(listed, [
-            "docs/board-design-method.md", "hardware/README.md", "round.json", "check-report.txt", "views/index.txt",
-            "views/facts.txt", "placement/index.txt", "placement/measures.txt",
-            f"{design}/layout-plan.md", f"{design}/design-rules.md",
+        self.assertEqual([entry if isinstance(entry, str) else entry[0].split(" (")[0] for entry in listed[:3]],
+                         ["docs/board-design-method.md"] * 3)
+        self.assertEqual(listed[3:], [
+            "round.json", "check-report.txt", "views/index.txt", "views/facts.txt", "placement/index.txt",
+            "placement/measures.txt", f"{design}/layout-plan.md", f"{design}/design-rules.md",
             f"{design}/alpha.md", f"{design}/constraints.md", f"{design}/separation-basis.yaml", f"{design}/zeta.yaml"])
-        for path in listed:
-            self.assertFalse(path.endswith((".kicad_pcb", ".kicad_sch", ".kicad_pro", ".png", ".svg")), path)
-        self.assertEqual(review_fan_out.document_texts(self.folder, listed)[0][0], "docs/board-design-method.md")
+        self.assertNotIn("hardware/README.md", listed)
+        for entry in listed[3:]:
+            self.assertFalse(entry.endswith((".kicad_pcb", ".kicad_sch", ".kicad_pro", ".png", ".svg")), entry)
+        joined = "\n".join(self.texts().values())
+        for wanted in ("Steps of a review.", "Views of a review.", "Intro of the catalogue.", "Every item carries fields."):
+            self.assertIn(wanted, joined)
 
-    def test_an_optional_document_that_is_absent_is_skipped_and_the_layout_review_is_listed_where_it_exists(self):
-        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; a folder whose method has no catalogue areas, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
-        design = "hardware/synth/board"
-        for path in ("views/facts.txt", "placement/index.txt", "placement/measures.txt", f"{design}/design-rules.md"):
-            os.remove(os.path.join(self.folder, path))
-        fx.write(os.path.join(self.folder, design, "layout-review.md"), "# Record\n")
-        listed = review_caller_layout.SETUP_DOCUMENTS(self.folder)
-        for gone in ("views/facts.txt", "placement/index.txt", "placement/measures.txt", f"{design}/design-rules.md"):
-            self.assertNotIn(gone, listed)
-        self.assertEqual(listed[listed.index(f"{design}/layout-plan.md"):][:2],
-                         [f"{design}/layout-plan.md", f"{design}/layout-review.md"])
-        self.assertEqual(listed.count("round.json"), 1)
+    def test_the_setup_holds_no_area_section_and_no_other_method_section(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; each unit's prompt holds the section of the catalogue for its own area and the setup session's documents hold no area section, the same for every unit; a folder whose method has no catalogue areas or lacks a section the setup needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        extracts = "\n".join(text for entry, text in self.texts().items() if entry.startswith("docs/board-design-method.md"))
+        self.assertIn("Intro of the catalogue.", extracts)
+        for absent in ("### Floorplan (FLOOR)", "FLOOR-1", "Parts are grouped", "GROUND-1", "CLOCK-1", "crystal sits",
+                       "## Ordering", "NOT-1", "Synthetic hardware notes"):
+            self.assertNotIn(absent, extracts)
+        self.assertNotIn("Synthetic hardware notes", "\n".join(self.texts().values()))
+
+    def test_the_setup_is_byte_identical_for_every_unit_of_every_round_kind(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; each unit's prompt holds the section of the catalogue for its own area and the setup session's documents hold no area section, the same for every unit; a folder whose method has no catalogue areas or lacks a section the setup needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        first = review_caller_layout.SETUP_DOCUMENTS(self.folder)
+        run = Command(self)
+        run.scenario_for(self.folder, setup={"reads": []})
+        status, text, _ = run.go("--json")
+        self.assertEqual(status, 0, text)
+        setups = [call for call in run.calls() if call["unit"] is None and not call["forked"] and "-p" in call["args"]]
+        self.assertEqual(len(setups), 1, "one setup session, which every fork starts from")
+        self.assertEqual(review_caller_layout.SETUP_DOCUMENTS(self.folder), first)
+        self.assertNotIn("### Floorplan (FLOOR)", setups[0]["stdin"])
+        fx.set_round(self.folder, kind="narrow", items=[{"item": "CLOCK-1", "reason": "moved"}], regions=["r"], others="rest")
+        self.assertEqual(review_caller_layout.SETUP_DOCUMENTS(self.folder), first, "a narrow round's setup is the same")
+
+    def test_an_area_unit_prompt_holds_its_own_area_block_and_no_other_area(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; each unit's prompt holds the section of the catalogue for its own area and the setup session's documents hold no area section, the same for every unit; a folder whose method has no catalogue areas or lacks a section the setup needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        floor = review_caller_layout.unit_prompt("area-FLOOR", self.folder)
+        ground = review_caller_layout.unit_prompt("area-GROUND", self.folder)
+        clock = review_caller_layout.unit_prompt("area-CLOCK", self.folder)
+        self.assertIn("### Floorplan (FLOOR)", floor)
+        self.assertIn("#### FLOOR-2. Signals stay apart", floor)
+        self.assertIn("other areas of the catalogue are not given", floor)
+        for text, own, others in ((floor, "FLOOR", ("GROUND-1", "CLOCK-1", "Grounding", "Clocks")),
+                                  (ground, "GROUND", ("FLOOR-1", "FLOOR-2", "CLOCK-1", "Floorplan", "Clocks")),
+                                  (clock, "CLOCK", ("FLOOR-1", "GROUND-1", "Floorplan", "Grounding"))):
+            self.assertIn(f"({own})", text)
+            for other in others:
+                self.assertNotIn(other, text.split("Your unit:")[1].split("Return exactly one JSON")[0], other)
+        self.assertIn("the schematic has a crystal", clock)
+        self.assertNotIn("Unrelated", clock, "the last area's block ends at the next method section")
+        self.assertNotIn("Ordering", clock)
+
+    def test_the_board_items_and_plan_units_carry_no_area_block(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; each unit's prompt holds the section of the catalogue for its own area and the setup session's documents hold no area section, the same for every unit; a folder whose method has no catalogue areas or lacks a section the setup needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        root = tempfile.mkdtemp(prefix="layout-caller-own-")
+        self.addCleanup(shutil.rmtree, root, True)
+        folder = fx.write_review_folder(root, own=fx.OWN_ROWS)
+        for unit in ("board-items", "plan-and-free-pass"):
+            text = review_caller_layout.unit_prompt(unit, folder)
+            for absent in ("### Floorplan", "FLOOR-1", "GROUND-1", "CLOCK-1", "other areas of the catalogue"):
+                self.assertNotIn(absent, text.replace("FLOOR-1, FLOOR-2", ""))
+
+    def test_a_method_lacking_a_section_the_setup_needs_is_refused_naming_it_with_no_session_started(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; each unit's prompt holds the section of the catalogue for its own area and the setup session's documents hold no area section, the same for every unit; a folder whose method has no catalogue areas or lacks a section the setup needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        method = os.path.join(self.folder, "docs", "board-design-method.md")
+        with open(method, encoding="utf-8") as handle:
+            text = handle.read()
+        cases = {"## Layout review views": text.replace("## Layout review views", "## Renamed views"),
+                 "## Layout review": text.replace("## Layout review\n", "## Renamed review\n"),
+                 "introduction": text.replace("Intro of the catalogue.\n\n### How an item is read\n\nEvery item carries fields.\n\n", "")}
+        for name, changed in cases.items():
+            with self.subTest(section=name):
+                fx.write(method, changed)
+                self.assertNotEqual(changed, text)
+                shutil.rmtree(os.path.join(self.root, "out"), ignore_errors=True)
+                run = Command(self)
+                run.scenario_for(self.folder)
+                status, output, _ = run.go("--json")
+                self.assertEqual(status, 1, output)
+                self.assertIn("REFUSED", output)
+                self.assertIn(name if name != "introduction" else "introduction", output)
+                self.assertEqual(run.calls(), [], "no session was started")
+
+    def test_a_narrow_rounds_area_prompt_names_only_the_listed_items_and_holds_its_area_block(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; each unit's prompt holds the section of the catalogue for its own area and the setup session's documents hold no area section, the same for every unit; a folder whose method has no catalogue areas or lacks a section the setup needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        fx.set_round(self.folder, kind="narrow", items=[{"item": "FLOOR-2", "reason": "moved"}], regions=["r"], others="rest")
+        text = review_caller_layout.unit_prompt("area-FLOOR", self.folder)
+        self.assertIn("- FLOOR-2: moved", text)
+        self.assertNotIn("FLOOR-1", text)
+        self.assertIn("### Floorplan (FLOOR)", text)
+        self.assertIn("#### FLOOR-2. Signals stay apart", text)
+
+    def test_the_real_methods_shared_setup_is_far_smaller_than_the_whole_method(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; each unit's prompt holds the section of the catalogue for its own area and the setup session's documents hold no area section, the same for every unit; a folder whose method has no catalogue areas or lacks a section the setup needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        with open(os.path.join(REPO, "docs", "board-design-method.md"), encoding="utf-8") as handle:
+            method = handle.read()
+        fx.write(os.path.join(self.folder, "docs", "board-design-method.md"), method)
+        extracts = [entry for entry in review_caller_layout.SETUP_DOCUMENTS(self.folder) if not isinstance(entry, str)]
+        self.assertEqual(len(extracts), 3)
+        size = sum(len(text) for _, text in extracts)
+        self.assertLess(size, 0.35 * len(method))
+        self.assertNotIn("(FLOOR)", "".join(text for _, text in extracts))
 
     def test_the_setup_prompt_asks_for_no_judgement_and_no_image_and_the_layout_run_sends_the_documents_on_standard_input(self):
         # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that asks for no judgement and no image and for one fixed token as the whole answer and that either tells it which documents and records to read or, when the caller names them as files, holds their text itself, sent on standard input so that the session has no tool use to narrate between; any text the setup session writes, in its answer or between its tool uses, other than that token after trimming, and any content block of its history that is neither text, a tool use nor a thinking block whose text is empty, fails the run, so no forked reviewer inherits a verdict; a thinking block that carries text, and a redacted one, fail it; a setup session that fails only for text written between its tool uses is started again, up to twice, before the run fails, and every attempt's session is reported with its cost, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file, as does a file the caller names whose type is not text, before any session is started. Out of scope: the content of a caller's prompt for its units.
@@ -632,8 +718,8 @@ class TheSetupDocuments(Folder):
         self.assertEqual(status, 0, text)
         setup = [call for call in run.calls() if call["unit"] is None and not call["forked"] and "-p" in call["args"]][0]
         self.assertTrue(setup["args"][1].startswith("--"), "no prompt argument")
-        for path in review_caller_layout.SETUP_DOCUMENTS(self.folder):
-            self.assertIn(f"=== {path} ===", setup["stdin"])
+        for entry in review_caller_layout.SETUP_DOCUMENTS(self.folder):
+            self.assertIn(f"=== {entry if isinstance(entry, str) else entry[0]} ===", setup["stdin"])
         self.assertNotIn(".kicad_", "".join(line for line in setup["stdin"].splitlines() if line.startswith("=== ")))
         self.assertNotIn(".png", "".join(line for line in setup["stdin"].splitlines() if line.startswith("=== ")))
         with open(os.path.join(self.folder, "hardware/synth/board/layout-plan.md"), encoding="utf-8") as handle:
@@ -744,7 +830,7 @@ class TheCommandEndToEnd(Folder):
 
 class ThePrompts(Folder):
     def test_a_units_prompt_names_the_unit_the_round_the_output_form_and_what_the_folder_holds(self):
-        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; a folder whose method has no catalogue areas, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; each unit's prompt holds the section of the catalogue for its own area and the setup session's documents hold no area section, the same for every unit; a folder whose method has no catalogue areas or lacks a section the setup needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
         text = review_caller_layout.unit_prompt("area-GROUND", self.folder)
         for words in ("UNIT=area-GROUND", "round.json", "hardware/synth/board/", "GROUND-1", "This round is full", "fetch a published document", "`finding 1.<n>`", "PLAN-AND-FREE-PASS", "no cell holds a line break",
                       "write it from the row's text and the layout alone"):
@@ -756,7 +842,7 @@ class ThePrompts(Folder):
         self.assertIn("Return an empty Verdicts table", plan)
 
     def test_a_prompt_for_a_unit_the_round_has_not_is_refused_and_a_later_round_names_its_record(self):
-        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; a folder whose method has no catalogue areas, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; each unit's prompt holds the section of the catalogue for its own area and the setup session's documents hold no area section, the same for every unit; a folder whose method has no catalogue areas or lacks a section the setup needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
         with self.assertRaises(review_caller_layout.ReviewFolderProblem):
             review_caller_layout.unit_prompt("area-NOPE", self.folder)
         root = tempfile.mkdtemp(prefix="layout-caller-test-")

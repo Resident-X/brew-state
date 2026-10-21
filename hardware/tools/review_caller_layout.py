@@ -64,23 +64,75 @@ RECORD_FINDING_TABLE = [column for column in FINDING_TABLE if column != "Item"]
 
 SETUP_PROMPT = (
     "The documents and records of this review follow; they are all you need. Judge nothing and open nothing: do not open "
-    "any view image, the design's schematic or its layout. Take the method and the plan in full.")
+    "any view image, the design's schematic or its layout. Take the method's layout review sections and the plan in full; the "
+    "catalogue section for your area comes with your unit.")
 
-#: The documents and records at the review folder's root the setup session is given, in this order, each where it exists.
-ROOT_DOCUMENTS = ("docs/board-design-method.md", "hardware/README.md", "round.json", "check-report.txt", "views/index.txt",
-                  "views/facts.txt", "placement/index.txt", "placement/measures.txt")
+#: The records at the review folder's root the setup session is given after the method's extracts, in this order, each where it exists.
+ROOT_DOCUMENTS = ("round.json", "check-report.txt", "views/index.txt", "views/facts.txt", "placement/index.txt",
+                  "placement/measures.txt")
 #: The design folder's documents given first, in this order, before its other .md and .yaml files.
 DESIGN_DOCUMENTS = ("layout-plan.md", "design-rules.md", "layout-review.md")
+#: The method sections every unit needs, by heading, and the label each is given in the setup.
+REVIEW_SECTION = "Layout review"
+VIEWS_SECTION = "Layout review views"
+CATALOGUE_HEADING = "Layout practice catalogue"
 
 
-def SETUP_DOCUMENTS(review: str) -> List[str]:
-    """The paths, relative to the review folder, of the documents and records the setup session is given."""
+def method_section(review: str, heading: str) -> str:
+    """The method's `## <heading>` section in the review folder, up to the next level-two heading, by heading."""
+    text = read_text(review, METHOD, "method")
+    found = re.search(r"^## " + re.escape(heading) + r"[ \t]*\n.*?(?=^## |\Z)", text, re.M | re.S)
+    if found is None:
+        raise ReviewFolderProblem(f"the method in the review folder {review} has no `## {heading}` section, which every "
+                                  "unit's setup needs")
+    return found.group(0).rstrip() + "\n"
+
+
+def catalogue_split(review: str) -> Tuple[str, Dict[str, str]]:
+    """The catalogue's introduction, the text before its first area heading, and each area's block by code: its heading
+    line to the next area heading or the end of the catalogue."""
+    text = read_text(review, METHOD, "method")
+    section = board_history.LAYOUT_CATALOGUE.search(text)
+    if section is None:
+        raise ReviewFolderProblem(f"the method in the review folder {review} has no `## {CATALOGUE_HEADING}` section, "
+                                  "so there are no catalogue areas to take units from")
+    lines = section.group(1).split("\n")
+    starts = [index for index, line in enumerate(lines) if AREA.match(line)]
+    if not starts:
+        raise ReviewFolderProblem(f"the method in the review folder {review} has no catalogue area heading of the form "
+                                  "`### <name> (<CODE>)`, so there are no units to take from it")
+    intro = "\n".join(lines[:starts[0]]).strip()
+    if not intro:
+        raise ReviewFolderProblem(f"the layout practice catalogue in the method of the review folder {review} has no "
+                                  "introduction before its first area heading, which every unit's setup needs")
+    blocks = {}
+    for position, start in enumerate(starts):
+        end = starts[position + 1] if position + 1 < len(starts) else len(lines)
+        blocks[AREA.match(lines[start]).group(2)] = "\n".join(lines[start:end]).strip() + "\n"
+    return f"## {CATALOGUE_HEADING}\n\n{intro}\n", blocks
+
+
+def listed_items_only(block: str, listed: Sequence[str]) -> str:
+    """An area's block with only the items of `listed`: its heading and the text before its first item, then each listed
+    item's own text, so a narrow round's prompt names no item the round does not judge."""
+    parts = re.split(r"(?m)^(?=#### )", block)
+    kept = [parts[0]] + [part for part in parts[1:] if (ITEM.match(part) and ITEM.match(part).group(1) in listed)]
+    return "".join(kept).rstrip() + "\n"
+
+
+def SETUP_DOCUMENTS(review: str) -> List[Any]:
+    """What every unit needs, the same for every unit: the method's layout review section, its views section and the
+    catalogue's introduction as (label, text) extracts, then the paths, relative to the review folder, of the records."""
+    extracts = [(f"{METHOD} (section: {REVIEW_SECTION})", method_section(review, REVIEW_SECTION)),
+                (f"{METHOD} (section: {VIEWS_SECTION})", method_section(review, VIEWS_SECTION)),
+                (f"{METHOD} (section: {CATALOGUE_HEADING}, introduction only; each unit's prompt holds the area it judges)",
+                 catalogue_split(review)[0])]
     found = [path for path in ROOT_DOCUMENTS if os.path.isfile(os.path.join(review, path))]
     design = design_path(review)
     named = [path for path in DESIGN_DOCUMENTS if os.path.isfile(os.path.join(review, design, path))]
     others = sorted(name for name in os.listdir(os.path.join(review, design)) if name.endswith((".md", ".yaml"))
                     and name not in DESIGN_DOCUMENTS and os.path.isfile(os.path.join(review, design, name)))
-    return found + [os.path.normpath(os.path.join(design, name)) for name in named + others]
+    return extracts + found + [os.path.normpath(os.path.join(design, name)) for name in named + others]
 
 TOOLS = ("Read", "Glob", "Grep", "WebFetch")
 #: The most reviewers at once: the full unit count until the live demonstration sets it from what that run observes.
@@ -275,6 +327,12 @@ def unit_prompt(unit: str, review_folder_path: str) -> str:
         else:
             text += ("\nThis round is full. Judge each of these items, in this order, and give one verdict row to each of them "
                      "and to no other item: " + ", ".join(listed) + ".\n")
+        if unit.startswith("area-"):
+            block = catalogue_split(review_folder_path)[1][unit[len("area-"):]]
+            if round_["kind"] == "narrow":
+                block = listed_items_only(block, listed)
+            text += ("\nThe catalogue section for your area follows. The other areas of the catalogue are not given to you; "
+                     "judge only your items.\n\n" + block + "\n")
         if unit == OWN_UNIT:
             text += (f"These are the board's own items, in the table of them in {design_path(review_folder_path)}/{PLAN}; "
                      "each is judged on its own Passes and Judged on.\n")

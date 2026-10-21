@@ -664,6 +664,39 @@ class InlineSetup(Fixture):
                 self.assertIn(word, line)
                 self.assertEqual(self.calls(), [], "no session was started")
 
+    def test_a_label_and_text_pair_is_given_in_the_setup_prompt_beside_the_files_in_the_callers_order(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that asks for no judgement and no image and for one fixed token as the whole answer and that either tells it which documents and records to read or, when the caller names them as files, holds their text itself, sent on standard input so that the session has no tool use to narrate between; any text the setup session writes, in its answer or between its tool uses, other than that token after trimming, and any content block of its history that is neither text, a tool use nor a thinking block whose text is empty, fails the run, so no forked reviewer inherits a verdict; a thinking block that carries text, and a redacted one, fail it; a setup session that fails only for text written between its tool uses is started again, up to twice, before the run fails, and every attempt's session is reported with its cost, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file, as does a file the caller names whose type is not text, before any session is started. Out of scope: the content of a caller's prompt for its units.
+        self.documents([["method.md (section: Review)", "only the review\n"], "notes/extra.txt"])
+        status, text, _ = self.run_command()
+        self.assertEqual(status, 0, text)
+        stdin = self.setups()[0]["stdin"]
+        self.assertIn("=== method.md (section: Review) ===\nonly the review\n", stdin)
+        self.assertIn("=== notes/extra.txt ===\nextra note\n", stdin)
+        self.assertLess(stdin.index("only the review"), stdin.index("extra note"))
+        self.assertNotIn("the method\n", stdin, "the file method.md was not named, only an extract labelled with it")
+
+    def test_a_bad_extract_is_refused_before_any_session(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that asks for no judgement and no image and for one fixed token as the whole answer and that either tells it which documents and records to read or, when the caller names them as files, holds their text itself, sent on standard input so that the session has no tool use to narrate between; any text the setup session writes, in its answer or between its tool uses, other than that token after trimming, and any content block of its history that is neither text, a tool use nor a thinking block whose text is empty, fails the run, so no forked reviewer inherits a verdict; a thinking block that carries text, and a redacted one, fail it; a setup session that fails only for text written between its tool uses is started again, up to twice, before the run fails, and every attempt's session is reported with its cost, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file, as does a file the caller names whose type is not text, before any session is started. Out of scope: the content of a caller's prompt for its units.
+        cases = {"empty text": [["extract", "  \n"]], "a NUL": [["extract", "a\u0000b"]],
+                 "a control character": [["extract", "a\u0007b"]], "a label that repeats a path": [["method.md", "x"], "method.md"],
+                 "a label twice": [["extract", "a"], ["extract", "b"]], "an empty label": [["", "text"]],
+                 "a triple": [["a", "b", "c"]], "a non-text body": [["extract", 5]]}
+        for name, listed in cases.items():
+            with self.subTest(case=name):
+                shutil.rmtree(self.out, ignore_errors=True)
+                self.documents(listed)
+                status, text, _ = self.run_command()
+                self.assertEqual(status, 1, text)
+                self.assertIn("REFUSED", text)
+                self.assertEqual(self.calls(), [], "no session was started")
+
+    def test_a_pair_with_tabs_and_line_breaks_is_given_as_it_is(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that asks for no judgement and no image and for one fixed token as the whole answer and that either tells it which documents and records to read or, when the caller names them as files, holds their text itself, sent on standard input so that the session has no tool use to narrate between; any text the setup session writes, in its answer or between its tool uses, other than that token after trimming, and any content block of its history that is neither text, a tool use nor a thinking block whose text is empty, fails the run, so no forked reviewer inherits a verdict; a thinking block that carries text, and a redacted one, fail it; a setup session that fails only for text written between its tool uses is started again, up to twice, before the run fails, and every attempt's session is reported with its cost, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file, as does a file the caller names whose type is not text, before any session is started. Out of scope: the content of a caller's prompt for its units.
+        self.documents([["extract", "a\tb\r\nc\n"]])
+        status, text, _ = self.run_command()
+        self.assertEqual(status, 0, text)
+        self.assertIn("=== extract ===", self.setups()[0]["stdin"])
+
     def test_a_setup_documents_hook_that_raises_or_returns_the_wrong_kind_is_refused_before_any_session(self):
         # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that asks for no judgement and no image and for one fixed token as the whole answer and that either tells it which documents and records to read or, when the caller names them as files, holds their text itself, sent on standard input so that the session has no tool use to narrate between; any text the setup session writes, in its answer or between its tool uses, other than that token after trimming, and any content block of its history that is neither text, a tool use nor a thinking block whose text is empty, fails the run, so no forked reviewer inherits a verdict; a thinking block that carries text, and a redacted one, fail it; a setup session that fails only for text written between its tool uses is started again, up to twice, before the run fails, and every attempt's session is reported with its cost, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file, as does a file the caller names whose type is not text, before any session is started. Out of scope: the content of a caller's prompt for its units.
         for name, body in {"a string": "return 'method.md'", "a list of numbers": "return [1]",
