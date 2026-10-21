@@ -50,6 +50,15 @@ def declaration_dict(**changes: Any) -> Dict[str, Any]:
     return found
 
 
+def keyed_declaration_dict() -> Dict[str, Any]:
+    """The base declaration with a verdict table whose key is two columns, the item then a part of it."""
+    found = declaration_dict()
+    found["schema"]["tables"][0] = {"name": "Verdicts", "columns": ["Item", "Part", "Verdict", "Note"],
+                                    "key": ["Item", "Part"], "verdict_column": "Verdict",
+                                    "verdicts": ["pass", "fail", "cannot judge"]}
+    return found
+
+
 def declaration_text(raw: Optional[Dict[str, Any]] = None) -> str:
     return json.dumps(raw if raw is not None else BASE, indent=1)
 

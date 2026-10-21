@@ -301,7 +301,7 @@ def outcome_from_run(run_id: str, formed: FormPlan, run: scheduler.RunResult, fi
         for table in shape.tables:
             if table.verdict_column and table.key:
                 for row in tables.get(table.name, []):
-                    given.setdefault(row[table.key], []).append(row[table.verdict_column])
+                    given.setdefault(table.label(row), []).append(row[table.verdict_column])
     verdict_table = next((t for t in shape.tables if t.verdict_column and t.key), None)
     verdicts = ({item: merge.merged_verdict(verdict_table, merge.Rules(), found) for item, found in given.items()}
                 if verdict_table else {})

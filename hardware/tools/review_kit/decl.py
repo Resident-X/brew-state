@@ -19,6 +19,10 @@ the file, and the unit or table, and the artefact, slot or column that is wrong.
       "budget": {"wall_s", "usd", "context_tokens", "tree_saving_usd"}
     }
 
+A table's `key` is the name of one column, or a list of column names of which the first is the item; the
+other key columns, if any, make the key a combination, and a verdict table gives one verdict to each combination
+of its key cells for each item of the unit.
+
 The tables yield the `results.AnswerShape` the results module checks an answer
 against and, through `result_schema`, the JSON schema the sessions are given, so
 one change to a table changes both.
@@ -399,12 +403,24 @@ def read_schema(raw: Any, bad) -> results.AnswerShape:
         if not text_list(columns) or not columns or len(set(columns)) != len(columns):
             bad(where, "columns", f"{where} has no list of distinct column names")
             continue
-        key = entry.get("key")
-        if key is not None and key not in columns:
-            bad(where, str(key), f"{where}'s key {key!r} is not one of its columns {columns}")
+        raw_key = entry.get("key")
+        if isinstance(raw_key, list):
+            if not text_list(raw_key) or not raw_key or len(set(raw_key)) != len(raw_key):
+                bad(where, "key", f"{where}'s key is a list that is not made of distinct column names")
+                raw_key = None
+            key_columns = list(raw_key or [])
+        else:
+            key_columns = [] if raw_key is None else [raw_key]
+        for column in key_columns:
+            if column not in columns:
+                bad(where, str(column), f"{where}'s key {column!r} is not one of its columns {columns}")
+        key = key_columns[0] if key_columns else None
         verdict_column = entry.get("verdict_column")
         if verdict_column is not None and verdict_column not in columns:
             bad(where, str(verdict_column), f"{where}'s verdict column {verdict_column!r} is not one of its columns {columns}")
+        if verdict_column is not None and verdict_column in key_columns:
+            bad(where, str(verdict_column), f"{where}'s key names its verdict column {verdict_column!r}; a verdict cannot be part of "
+                                            "what the row is a verdict on")
         verdicts = entry.get("verdicts", [])
         if not text_list(verdicts):
             bad(where, "verdicts", f"{where}'s verdicts are not a list of text")
@@ -421,7 +437,8 @@ def read_schema(raw: Any, bad) -> results.AnswerShape:
         if not text_list(numeric) or any(name not in columns for name in numeric):
             bad(where, "numeric", f"{where}'s numeric columns are not a list of its columns")
             numeric = []
-        tables.append(results.TableShape(label, tuple(columns), key, verdict_column, tuple(verdicts), tuple(numeric)))
+        tables.append(results.TableShape(label, tuple(columns), key, verdict_column, tuple(verdicts), tuple(numeric),
+                                        tuple(key_columns[1:])))
     findings = read_findings(raw.get("findings"), tables, bad)
     return results.AnswerShape(tuple(tables), findings)
 
@@ -512,6 +529,9 @@ def describe(shape: results.AnswerShape) -> str:
         line = f"- `{table.name}`: a list of rows, each with the columns {', '.join(f'`{c}`' for c in table.columns)}"
         if table.key:
             line += f"; `{table.key}` names what the row is about"
+            if table.extra_key:
+                line += (f", and with {', '.join(f'`{c}`' for c in table.extra_key)} it names the one thing the row is a verdict on; "
+                         "give each such combination one row")
         if table.verdict_column:
             line += f"; `{table.verdict_column}` is one of {', '.join(repr(v) for v in table.verdicts)}"
         if table.numeric:

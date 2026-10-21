@@ -454,5 +454,47 @@ class Adjudication(unittest.TestCase):
             self.assertEqual([row for row in after["tables"]["Findings"]["rows"]], record["tables"]["Findings"]["rows"])
 
 
+
+class SeveralKeyColumns(unittest.TestCase):
+    SHAPE = decl.parse(json.dumps(fx.keyed_declaration_dict()), "caller.json").shape
+
+    @staticmethod
+    def part(item, part, value="pass", note=""):
+        return {"Item": item, "Part": part, "Verdict": value, "Note": note}
+
+    def merged(self, *answers):
+        replicas = {f"r{n}": {"Verdicts": list(rows), "Findings": []} for n, rows in enumerate(answers, 1)}
+        return merge.merge(self.SHAPE, RULES, ["u"], {"u": replicas})
+
+    def by_combination(self, record):
+        table = record["tables"]["Verdicts"]
+        return {(row["Item"], row["Part"]): (row["Verdict"], by, dissent)
+                for row, by, dissent in zip(table["rows"], table["raised_by"], table["dissent"])}
+
+    def test_replicas_are_merged_any_fail_for_each_combination_of_one_item(self):
+        # SOL-HW-REVIEW-KIT.C14: replicas are merged any-fail per combination
+        record = self.merged([self.part("i1", "x"), self.part("i1", "y", "fail", "bad")],
+                             [self.part("i1", "x", "fail"), self.part("i1", "y")])
+        found = self.by_combination(record)
+        self.assertEqual(2, len(found))
+        self.assertEqual(("fail", ["r2"], [["r1", "pass"]]), found[("i1", "x")])
+        self.assertEqual(("fail", ["r1"], [["r2", "pass"]]), found[("i1", "y")])
+
+    def test_a_combination_one_replica_passes_stays_a_pass_beside_a_failed_sibling(self):
+        # SOL-HW-REVIEW-KIT.C14: replicas are merged any-fail per combination
+        record = self.merged([self.part("i1", "x"), self.part("i1", "y", "fail")],
+                             [self.part("i1", "x"), self.part("i1", "y", "cannot judge")])
+        found = self.by_combination(record)
+        self.assertEqual(("pass", ["r1", "r2"], []), found[("i1", "x")])
+        self.assertEqual(("fail", ["r1"], [["r2", "cannot judge"]]), found[("i1", "y")])
+
+    def test_a_single_column_key_is_still_merged_per_item(self):
+        # SOL-HW-REVIEW-KIT.C14: a single-column key behaves as before
+        record = merge.merge(PLAIN, RULES, ["u"], {"u": {"r1": tables([verdict("i1", "pass"), verdict("i2")]),
+                                                      "r2": tables([verdict("i1", "fail"), verdict("i2")])}})
+        rows = record["tables"]["Verdicts"]
+        self.assertEqual([("i1", "fail"), ("i2", "pass")], [(r["Item"], r["Verdict"]) for r in rows["rows"]])
+
+
 if __name__ == "__main__":
     unittest.main()

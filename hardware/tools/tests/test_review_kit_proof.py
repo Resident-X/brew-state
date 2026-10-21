@@ -676,5 +676,57 @@ class Record(unittest.TestCase):
         self.assertNotIn("/Users", buffer.getvalue())
 
 
+class VerdictsPerCombination(unittest.TestCase):
+    SEEDS = [{"id": "S1", "item": "i1"}]
+
+    def outcome(self, answers):
+        """Run the multi-key declaration as one fork per group answering `answers[label]` and record the run."""
+        h = fx.Harness(self, raw=fx.keyed_declaration_dict())
+        catalogue_ = catalogue.admit(h.declaration, h.review, results_folder=h.out)
+        formed = proof.form_plan(proof.SINGLE, h.declaration, catalogue_, h.spec, bound=4, cli_version="9.9.9", tool_commit="abc1234")
+
+        def reply(call, number):
+            if call.label == "root":
+                return ex.Reply(text="ack", write=100)
+            group = next(g for g in formed.plan.groups if g.id == call.label.split(".")[0])
+            items = [i for u in group.units for i in h.declaration.units[u].items]
+            rows = []
+            for item in items:
+                rows += answers.get(item) or [{"Item": item, "Part": "x", "Verdict": "pass", "Note": ""}]
+            return ex.Reply(structured={"tables": {"Verdicts": rows, "Findings": []}}, text="done")
+
+        executor = ex.StubExecutor(replies=reply, clock=h.clock, policy=h.policy)
+        result = proof.run_form(scheduler.Scheduler(executor, h.clock, scheduler.SerialConcurrency(), 1), formed, h.spec)
+        figures = [telemetry.SessionFigures("only", None, 0.1, 1000, 1.0, 1, 1,
+                                            {"cache_read": 1, "cache_write": 1, "fresh": 1, "generated": 1}, 1)]
+        return proof.outcome_from_run("o", formed, result, figures, self.SEEDS, lambda seed, row: False, seeded_commit="s")
+
+    @staticmethod
+    def row(item, part, value):
+        return {"Item": item, "Part": part, "Verdict": value, "Note": ""}
+
+    def test_a_run_records_a_verdict_for_each_combination_not_one_per_item(self):
+        # SOL-HW-REVIEW-KIT.C14: the proof compares verdicts per combination
+        outcome = self.outcome({"i1": [self.row("i1", "x", "pass"), self.row("i1", "y", "fail")]})
+        self.assertEqual("pass", outcome.verdicts['["i1", "x"]'])
+        self.assertEqual("fail", outcome.verdicts['["i1", "y"]'])
+        self.assertNotIn("i1", outcome.verdicts)
+        self.assertEqual("pass", outcome.verdicts['["j1", "x"]'])
+
+    def test_the_differences_from_the_single_runs_are_found_per_combination(self):
+        # SOL-HW-REVIEW-KIT.C14: the proof compares verdicts per combination
+        single = self.outcome({"i1": [self.row("i1", "x", "pass"), self.row("i1", "y", "pass")]})
+        fanned = self.outcome({"i1": [self.row("i1", "x", "pass"), self.row("i1", "y", "fail")]})
+        found = proof.verdict_differences([single], fanned, {})
+        self.assertEqual(['["i1", "y"]'], [d["item"] for d in found])
+        self.assertEqual(("fail", "pass"), (found[0]["fanned"], found[0]["single"]))
+
+    def test_the_record_round_trips_through_json_with_combination_keys(self):
+        # SOL-HW-REVIEW-KIT.C14: the proof compares verdicts per combination
+        outcome = self.outcome({"i1": [self.row("i1", "x", "pass"), self.row("i1", "y", "fail")]})
+        again = proof.RunOutcome.from_dict(json.loads(json.dumps(outcome.as_dict())))
+        self.assertEqual(outcome.verdicts, again.verdicts)
+
+
 if __name__ == "__main__":
     unittest.main()

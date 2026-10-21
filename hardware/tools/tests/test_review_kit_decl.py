@@ -384,5 +384,60 @@ class PromptTests(unittest.TestCase):
         self.assertIn("whole corrected answer", text)
 
 
+
+class SeveralKeyColumns(unittest.TestCase):
+    def test_a_key_column_the_table_lacks_is_refused_naming_it(self):
+        # SOL-HW-REVIEW-KIT.C14: a declaration naming a key column the table lacks is refused naming it
+        raw = fx.keyed_declaration_dict()
+        raw["schema"]["tables"][0]["key"] = ["Item", "Nowhere"]
+        error = refused(raw)
+        self.assertEqual(len(error.lines), 1)
+        self.assertIn("table Verdicts", error.lines[0])
+        self.assertIn("'Nowhere'", error.lines[0])
+
+    def test_the_first_column_of_a_list_key_that_the_table_lacks_is_refused_naming_it(self):
+        # SOL-HW-REVIEW-KIT.C14: a declaration naming a key column the table lacks is refused naming it
+        raw = fx.keyed_declaration_dict()
+        raw["schema"]["tables"][0]["key"] = ["Ghost", "Part"]
+        self.assertIn("'Ghost'", refused(raw).lines[0])
+
+    def test_a_key_list_that_is_empty_repeats_a_column_or_holds_a_non_name_is_refused(self):
+        # SOL-HW-REVIEW-KIT.C14: a declaration naming a key column the table lacks is refused naming it
+        for bad in ([], ["Item", "Item"], ["Item", 3], ["Item", " "]):
+            raw = fx.keyed_declaration_dict()
+            raw["schema"]["tables"][0]["key"] = bad
+            self.assertIn("table Verdicts", refused(raw).lines[0], bad)
+
+    def test_a_key_naming_the_verdict_column_is_refused_naming_it(self):
+        # SOL-HW-REVIEW-KIT.C14: a declaration whose key includes the verdict column is refused naming it
+        for key in (["Item", "Verdict"], ["Verdict", "Item"]):
+            raw = fx.keyed_declaration_dict()
+            raw["schema"]["tables"][0]["key"] = key
+            error = refused(raw)
+            self.assertEqual(1, len(error.lines), key)
+            self.assertIn("table Verdicts", error.lines[0])
+            self.assertIn("'Verdict'", error.lines[0])
+
+    def test_a_list_key_gives_the_item_column_first_and_the_others_after_it(self):
+        # SOL-HW-REVIEW-KIT.C14: a verdict table's key may name several columns, the first being the item
+        table = decl.parse(json.dumps(fx.keyed_declaration_dict()), FILE).shape.table("Verdicts")
+        self.assertEqual(("Item", "Part"), table.key_columns)
+        self.assertEqual("Item", table.key)
+
+    def test_a_one_name_list_key_and_a_string_key_declare_the_same_table(self):
+        # SOL-HW-REVIEW-KIT.C14: a single-column key behaves as before
+        listed = fx.declaration_dict()
+        listed["schema"]["tables"][0]["key"] = ["Item"]
+        self.assertEqual(decl.parse(json.dumps(listed), FILE).shape, decl.parse(fx.declaration_text(), FILE).shape)
+
+    def test_the_prompt_says_the_key_columns_name_one_thing_to_give_one_row(self):
+        # SOL-HW-REVIEW-KIT.C14: a unit's answer gives a verdict to each combination once
+        text = decl.describe(decl.parse(json.dumps(fx.keyed_declaration_dict()), FILE).shape)
+        self.assertIn("`Part`", text)
+        self.assertIn("one row", text)
+        plain = decl.describe(decl.parse(fx.declaration_text(), FILE).shape)
+        self.assertNotIn("one row", plain)
+
+
 if __name__ == "__main__":
     unittest.main()
