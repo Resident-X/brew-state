@@ -50,7 +50,7 @@ def single(run_id, found, wall=1000.0, cost=5.0):
                             ("first_call_read",))
 
 
-def baselines_file(path, runs=None, seeds=SEEDS, design=TREE, model=lrp.MODEL):
+def baselines_file(path, runs=None, seeds=SEEDS, design=TREE, model=lrp.BASELINE_MODEL):
     """A baselines file of synthetic single runs: one found two of the three seeds, the other all three."""
     runs = runs if runs is not None else [single("one", ["S1", "S2"]), single("two", ["S1", "S2", "S3"])]
     key = proof.BaselineKey(proof.seed_list_hash(SEEDS), design, model, proof.SINGLE, PROMPT)
@@ -123,12 +123,14 @@ class TheCommand(Proofed):
         self.assertEqual(len([call for call in calls if call["resume"] is None]), 3,
                          "a shared context for the design loop, two for the pre-order round, and no single reviewer")
         models = [call["args"][call["args"].index("--model") + 1] for call in calls]
-        self.assertEqual(sorted(set(models)), sorted({lrp.MODEL, kit_small}))
-        self.assertEqual(models.count(kit_small), 1 + 2, "the pre-order round's small-tier root and its third replica of each group")
+        self.assertEqual(sorted(set(models)), sorted({lrp.BASELINE_MODEL, kit_small}))
+        self.assertEqual(models.count(lrp.BASELINE_MODEL), 1 + 2 * 2, "the pre-order round's mid-tier root and its first two replicas of each group")
+        self.assertEqual(models.count(kit_small), (1 + 2 * 2) + (1 + 2), "the design loop's root and four forks, and the pre-order round's small-tier root and third replicas")
         record = self.record()
         self.assertEqual(record["verdict"]["status"], "pass")
-        self.assertEqual(record["cost_multiple"], 2.0)
-        self.assertEqual(record["layout"]["model"], lrp.MODEL)
+        self.assertEqual(record["cost_multiple"], 1.25)
+        self.assertEqual(record["layout"]["models"], {"design-loop": kit_small, "pre-order": lrp.BASELINE_MODEL})
+        self.assertEqual(record["layout"]["baseline_model"], lrp.BASELINE_MODEL)
         self.assertEqual(record["layout"]["seeded_commit"], fx.git(self.source, "rev-parse", "HEAD"))
         self.assertEqual(record["seed_list_sha256"], proof.seed_list_hash(SEEDS))
         self.assertEqual([key["form"] for key in record["keys"]], [proof.SINGLE])
@@ -137,8 +139,8 @@ class TheCommand(Proofed):
         for seed, who in record["seed_replicas"].items():
             self.assertEqual(len(next(iter(who.values()))), 2, f"{seed} is raised by both replicas")
         self.assertEqual({seed: len(who) for seed, who in record["pre_order"]["seed_replicas"].items()}, {"S1": 3, "S2": 3, "S3": 3})
-        self.assertIn("PROOF | model claude-sonnet-5-5", text)
-        self.assertIn("cost multiple 2", text)
+        self.assertIn("PROOF | design loop on claude-haiku-5-5, pre-order on claude-sonnet-5-5 (third replica on the small tier) | baselines on claude-sonnet-5-5", text)
+        self.assertIn("cost multiple 1.25", text)
         self.assertIn("CRITERION | PROOF pass", text)
         self.assertIn("PRE-ORDER | three replicas | seeds 3 of 3", text)
         self.assertTrue(text.splitlines()[-1].startswith("RESULT | WRITTEN"))
@@ -191,7 +193,7 @@ class TheCommand(Proofed):
         self.assertEqual(self.calls(), [])
 
     def test_the_dry_mode_prints_each_plan_and_its_predicted_cost_and_time_and_starts_no_session(self):
-        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: a plan mode that prints the plan and the predicted cost and time without calling the model, beside the bounds of the cost multiple of 2.0 and half the single mean time
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: a plan mode that prints the plan and the predicted cost and time without calling the model, beside the bounds of the cost multiple of 1.25 and half the single mean time
         status, text, err = self.go("--dry")
         self.assertEqual(status, 0, text + err)
         self.assertEqual(self.calls(), [], "the model is not called")
@@ -202,7 +204,7 @@ class TheCommand(Proofed):
             self.assertRegex(text, rf"PREDICTED \| {name} \| \$[0-9.]+ \| [0-9.]+ s \|")
         self.assertIn("PLAN | design-loop | 2 replicas | 2 groups | 4 forks", text)
         self.assertIn("PLAN | pre-order | 3 replicas | 2 groups | 6 forks", text)
-        self.assertIn("COST MULTIPLE | 2 | design loop bounds: cost at most $10.00 (2 times the single mean $5.00), wall time at most 500 s "
+        self.assertIn("COST MULTIPLE | 1.25 | design loop bounds: cost at most $6.25 (1.25 times the single mean $5.00), wall time at most 500 s "
                       "(half the single mean 1000 s)", text)
         self.assertIn("figures recorded, not bounded", text)
         self.assertRegex(text, r"PREDICTED \| design-loop .*cost within its bound, time within its bound")
@@ -253,7 +255,7 @@ class TheCommand(Proofed):
         return text
 
     def test_the_dry_output_warns_when_the_prediction_is_over_a_bound_or_within_a_tenth_of_it(self):
-        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: a plan mode that prints the plan and the predicted cost and time without calling the model, beside the bounds of the cost multiple of 2.0 and half the single mean time
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: a plan mode that prints the plan and the predicted cost and time without calling the model, beside the bounds of the cost multiple of 1.25 and half the single mean time
         text = self.dry_with_mean_cost(0.8)
         self.assertRegex(text, r"PREDICTED \| design-loop .*cost over its bound")
         self.assertRegex(text, r"WARNING \| design-loop \| predicted cost \$[0-9.]+ against its bound \$[0-9.]+, over it or within 10% of it; "
@@ -265,20 +267,38 @@ class TheCommand(Proofed):
         text = self.dry_with_mean_cost(1.25)
         self.assertNotIn("WARNING", text, "a prediction clear of the bound by more than a tenth is not warned")
 
-    def test_the_dry_output_names_the_small_tier_replica_and_the_prices_it_is_predicted_at(self):
-        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: the pre-order round's three replicas, the third on the small-tier model with a root of its own, predicted by the cost model's one set of prices
+    def test_the_dry_output_names_the_small_tier_replica_and_prices_each_model_at_its_own_prices(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: the pre-order round's three replicas, the first two on the mid-tier and the third on the small-tier model with a root of its own, each predicted at its model's prices
         status, text, err = self.go("--dry", "--json")
         self.assertEqual(status, 0, text + err)
         document = json.loads(text)
-        self.assertEqual(document["plans"]["design-loop"]["contexts"], [], "two replicas never reach the small model")
+        self.assertEqual(document["plans"]["design-loop"]["contexts"], [], "two replicas of one model need no second root")
         pre_order = document["plans"]["pre-order"]
         self.assertEqual([context["model"] for context in pre_order["contexts"]], [kit_small])
         shutil.rmtree(self.work)
         status, text, err = self.go("--dry")
-        lines = [line for line in text.splitlines() if line.startswith("SMALL TIER")]
+        self.assertIn(f"MODEL | design-loop | all 4 forks on {kit_small}", text)
+        lines = [line for line in text.splitlines() if line.startswith("MODEL | pre-order")]
         self.assertEqual(len(lines), 1, text)
-        self.assertIn(f"SMALL TIER | pre-order | 2 forks on {kit_small} from a shared context of its own", lines[0])
-        self.assertIn("one set of prices", lines[0])
+        self.assertIn(f"4 forks on {lrp.BASELINE_MODEL}, 2 on {kit_small} from a shared context of its own", lines[0])
+        self.assertNotIn("SMALL TIER", text)
+        self.assertNotIn("upper bound", text)
+
+    def test_the_dry_prediction_of_the_small_tier_design_loop_is_below_the_bound_of_the_cost_multiple(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: both on the small-tier model ... a cost multiple of 1.25
+        recorded = [single("one", ["S1", "S2"], cost=2.839), single("two", ["S1", "S2", "S3"], cost=2.839)]
+        status, text, err = self.go("--dry", "--json", baselines=baselines_file(os.path.join(self.root, "recorded.json"), recorded))
+        self.assertEqual(status, 0, text + err)
+        plans = json.loads(text)["plans"]
+        bound = lrp.COST_MULTIPLE * 2.839
+        small = plans["design-loop"]["predicted"]["cost_usd"]
+        self.assertLess(small, bound)
+        shutil.rmtree(self.work)
+        status, text, err = self.go("--dry", "--json", "--design-model", lrp.BASELINE_MODEL,
+                                    baselines=baselines_file(os.path.join(self.root, "again.json"), recorded))
+        self.assertEqual(status, 0, text + err)
+        self.assertGreater(json.loads(text)["plans"]["design-loop"]["predicted"]["cost_usd"], small * 2,
+                           "the same design loop on the mid-tier is priced at the mid-tier's much higher prices")
 
     def test_a_flag_runs_only_one_of_the_two_rounds_and_the_pre_order_figures_alone_are_recorded_not_judged(self):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: the replicas the design-loop round uses, and the pre-order round's three replicas run once and their figures recorded
@@ -298,25 +318,25 @@ class TheCommand(Proofed):
         self.assertEqual(record["pre_order"]["seeds_found_count"], 3)
         self.assertIn("CRITERION | not judged", text)
 
-    def test_the_cost_multiple_is_two_so_a_run_over_one_and_a_quarter_times_the_single_mean_still_passes(self):
-        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: the kit's pooled criterion, with a cost multiple of 2.0 ... the cost at most twice its mean
+    def test_the_cost_multiple_is_one_and_a_quarter_so_a_run_inside_it_passes_and_one_over_it_fails(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: the kit's pooled criterion, with a cost multiple of 1.25 ... the cost at most 1.25 times its mean
         self.go("--only", "design-loop")
         spent = self.record()["fanned_runs"][0]["cost_usd"]
         self.assertGreater(spent, 0)
         shutil.rmtree(self.work)
-        mean = spent / 1.5
+        mean = spent / 1.1
         runs = [single("one", ["S1", "S2"], cost=mean), single("two", ["S1", "S2", "S3"], cost=mean)]
         status, text, err = self.go("--only", "design-loop", baselines=baselines_file(os.path.join(self.root, "dear.json"), runs))
         self.assertEqual(status, 0, text + err)
         record = self.record()
-        self.assertAlmostEqual(record["verdict"]["bounds"]["cost_usd"], 2.0 * mean)
-        self.assertGreater(record["fanned_runs"][0]["cost_usd"], 1.25 * mean, "over the bound the earlier design set")
+        self.assertAlmostEqual(record["verdict"]["bounds"]["cost_usd"], 1.25 * mean)
+        self.assertGreater(record["fanned_runs"][0]["cost_usd"], mean, "over the single mean, inside the multiple")
         cost = next(clause for clause in record["verdict"]["clauses"] if clause["clause"] == proof.COST)
         self.assertTrue(cost["ok"])
         shutil.rmtree(self.work)
-        runs = [single("one", ["S1", "S2"], cost=spent / 2.5), single("two", ["S1", "S2", "S3"], cost=spent / 2.5)]
+        runs = [single("one", ["S1", "S2"], cost=spent / 1.4), single("two", ["S1", "S2", "S3"], cost=spent / 1.4)]
         status, text, err = self.go("--only", "design-loop", baselines=baselines_file(os.path.join(self.root, "dearer.json"), runs))
-        self.assertEqual(status, 1, "a run over twice the single mean fails")
+        self.assertEqual(status, 1, "a run over 1.25 times the single mean fails")
         self.assertIn("FAIL cost", text)
         self.assertTrue(text.splitlines()[-1].startswith("RESULT | FAILED"))
 
@@ -389,8 +409,9 @@ class TheCommand(Proofed):
         os.remove(os.path.join(self.work, "held.txt"))
         status, text, _ = self.go("--bound", "0")
         self.assertEqual((status, "the bound 0 is below one" in text), (1, True))
-        status, text, _ = self.go("--model", " ")
-        self.assertEqual((status, "the model is empty" in text), (1, True))
+        for flag in ("--design-model", "--pre-order-model"):
+            status, text, _ = self.go(flag, " ")
+            self.assertEqual((status, f"{flag} is empty" in text), (1, True))
         status, text, _ = self.go("--json", "--bound", "0")
         self.assertEqual(json.loads(text)["result"], "REFUSED")
 
@@ -426,19 +447,31 @@ class TheBaselines(Proofed):
                 self.assertIn("they are not baselines for this run", text)
         self.assertEqual(self.calls(), [], "no session was started")
         shutil.rmtree(self.work, ignore_errors=True)
-        status, text, _ = self.go("--only", "design-loop", "--model", "claude-haiku-5-5")
+        status, text, _ = self.go("--only", "design-loop", baselines=baselines_file(other, model=kit_small))
         self.assertEqual(status, 1)
-        self.assertIn("model is claude-sonnet-5-5 and this run's is claude-haiku-5-5", text)
+        self.assertIn(f"model is {kit_small} and this run's is {lrp.BASELINE_MODEL}", text)
         shutil.rmtree(self.work, ignore_errors=True)
         status, text, _ = self.go("--only", "design-loop", baselines=os.path.join(self.root, "absent.json"))
         self.assertEqual(status, 1)
         self.assertIn("cannot be read as JSON", text)
         self.assertEqual(self.calls(), [])
 
+    def test_the_baseline_key_holds_the_single_runs_model_so_a_small_tier_run_is_accepted_and_a_different_seed_list_is_not(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: the baseline key giving the same seed list and design as the single runs and the model they ran on, which is the mid-tier, and not the model of the fanned-out run
+        status, text, err = self.go("--only", "design-loop")
+        self.assertEqual(status, 0, text + err)
+        record = self.record()
+        self.assertEqual(record["layout"]["models"]["design-loop"], kit_small)
+        self.assertEqual([key["model"] for key in record["keys"]], [lrp.BASELINE_MODEL], "the key holds the baselines' model")
+        shutil.rmtree(self.work, ignore_errors=True)
+        status, text, _ = self.go("--only", "design-loop", baselines=baselines_file(os.path.join(self.root, "seeds.json"), seeds=SEEDS[:2]))
+        self.assertEqual(status, 1)
+        self.assertIn("holds no single-reviewer runs of this seed list", text)
+
     def test_the_five_recorded_runs_are_the_baselines_for_the_seed_list_and_design_the_proof_seeds(self):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C9: the proof command takes the five recorded single-reviewer runs as baselines
         seeds = review_seed.seed_list(review_seed.SEEDS)["seeds"]
-        key, runs = lrp.baseline_runs(lrp.BASELINES, seeds, lrp.design_tree(), lrp.MODEL)
+        key, runs = lrp.baseline_runs(lrp.BASELINES, seeds, lrp.design_tree(), lrp.BASELINE_MODEL)
         self.assertEqual(len(runs), 5)
         self.assertEqual(key.prompt, "ca90e542e3fc18fa114622aac0376f016c0dd74b386de98dedf9e9f7676f5c4e", "the prompt hash as recorded")
         self.assertEqual(round(proof.mean([run.cost_usd for run in runs]), 3), 2.839)
@@ -446,7 +479,7 @@ class TheBaselines(Proofed):
         self.assertEqual(sorted(run.found for run in runs), [19, 20, 21, 21, 21])
         edited = [dict(seed, item="MFG-9") if seed["id"] == "S10" else seed for seed in seeds]
         with self.assertRaises(lrp.Refused):
-            lrp.baseline_runs(lrp.BASELINES, edited, lrp.design_tree(), lrp.MODEL)
+            lrp.baseline_runs(lrp.BASELINES, edited, lrp.design_tree(), lrp.BASELINE_MODEL)
 
 
 class TheStreamFigures(unittest.TestCase):
@@ -499,7 +532,7 @@ class TheStreamFigures(unittest.TestCase):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: any call refused for a rate limit, counted from the executor's retries
         limited = ex.Reply(is_error=True, api_error_status=429, text="Rate limit reached", exit_code=1)
         clock = mock.Mock(now=mock.Mock(return_value=0.0))
-        call = sess.Call(sess.SessionSpec(("Read",), "/work", model=lrp.MODEL, system="s"), sess.user_message([sess.text_block("m")]),
+        call = sess.Call(sess.SessionSpec(("Read",), "/work", model=lrp.BASELINE_MODEL, system="s"), sess.user_message([sess.text_block("m")]),
                          label="u")
         out = os.path.join(self.folder, "saved")
         ex.StubExecutor(lambda made, number: [limited, limited, ex.Reply(text="ok")], clock=clock, out=out, check_start=False).run(call)

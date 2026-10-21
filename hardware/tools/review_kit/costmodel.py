@@ -2,7 +2,8 @@
 
 The figures are those measured on the live runs: a call costs 1.7 seconds before
 it writes anything, output is written at 134 tokens a second, and a million
-tokens cost 0.10 USD read from the cache, 4.37 written to it and 8.95 generated.
+tokens cost 0.10 USD read from the cache, 4.37 written to it and 8.95 generated, on the mid-tier model the
+runs used. Each model has its own prices, keyed by model id in `PRICES_BY_MODEL`.
 They are data, not constants of the code: a plan names the values it used and
 whether they were fitted, and `fit` refits them from the figures of earlier runs
 given as plain mappings, so this module does not depend on how they were taken.
@@ -30,6 +31,23 @@ class Prices:
 
     def as_dict(self) -> Dict[str, Any]:
         return {"read": self.read, "write": self.write, "out": self.out, "source": self.source}
+
+
+#: The prices of the small-tier model, fitted by least squares from the 13 sessions of the recorded small-tier layout
+#: review run of 2026-10-22 (a root and its twelve forks and repairs: cache read, cache write and generated tokens against
+#: the cost each reported); the fit reproduces that run's 1.207 USD total to 0.3 per cent.
+HAIKU_PRICES = Prices(read=0.0389, write=1.2552, out=2.5202, source="fitted")
+
+#: The prices of each model the kit knows, by full model id. A model not listed is priced at the default `Prices()`.
+PRICES_BY_MODEL: Dict[str, Prices] = {
+    "claude-sonnet-5-5": Prices(),
+    "claude-haiku-5-5": HAIKU_PRICES,
+}
+
+
+def prices_for(model: Optional[str], table: Mapping[str, Prices] = PRICES_BY_MODEL, default: Optional[Prices] = None) -> Prices:
+    """The prices of a model: its entry in the table, else the default."""
+    return table.get(model, default or Prices()) if model is not None else (default or Prices())
 
 
 @dataclass(frozen=True)

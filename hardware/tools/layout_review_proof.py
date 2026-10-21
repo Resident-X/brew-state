@@ -6,16 +6,17 @@ design the board follow the method's review step blind. This is the one command 
 runs the seeding command with its opt-in flag that keeps the seeded copy's git work tree, writes the review folder with the
 folder command from that work tree and its commit (the layout facts and the round file included, the method and the hardware
 notes taken from this repository as the seeding command takes them), then runs the layout caller through the review kit's
-command on the real agent command line at the model of the recorded single-reviewer runs, twice: with two replicas, the
-design loop's round, and with three, the pre-order round's. The recorded single-reviewer runs of the same seed list, design
-and model are the baselines and the single reviewer is never run again.
+command on the real agent command line, twice: with two replicas, the design loop's round, on the small-tier model, and with
+three, the pre-order round's, the first two on the mid-tier model and the third on the small tier. The recorded
+single-reviewer runs of the same seed list and design, which ran on the mid-tier model, are the baselines whatever model the
+fanned-out run uses, and the single reviewer is never run again.
 
     layout_review_proof.py --work <new folder outside the repository> [--kicad-cli ...] [--resvg ...]
-                           [--model M] [--only design-loop|pre-order] [--bound N] [--dry] [--json]
+                           [--design-model M] [--pre-order-model M] [--only design-loop|pre-order] [--bound N] [--dry] [--json]
 
-The design loop's run is judged by the kit's pooled criterion with a cost multiple of 2.0: the seeds found are no fewer than
+The design loop's run is judged by the kit's pooled criterion with a cost multiple of 1.25: the seeds found are no fewer than
 the fewest any recorded single run found, no seed every single run found is missed, the wall time is at most half the single
-mean and the cost at most twice its mean. The pre-order round's figures are recorded and not bounded. The record,
+mean and the cost at most 1.25 times its mean. The pre-order round's figures are recorded and not bounded. The record,
 proof-record.json, and its text, proof-record.txt, are written in the work folder; they give every seed with the replicas
 that raised it, the findings that match no seed, the verdicts item by item with the differences from the single runs, each
 session's time, tokens read, written and generated, cost, first-call cache read and document retrievals with any that
@@ -25,10 +26,10 @@ The work folder keeps the review folder alone in <work>/review-tree/review, sinc
 folders above it; the seed list, the seeded copy and the kept work tree are under <work>/seed/, each round's output under
 <work>/out/<round>/, and the record in <work>. A session that guesses a path two levels up can still read them.
 
-The pre-order round's third replica runs on the layout caller's small-tier model with a shared context of its own; the cost
-model has one set of prices, so its forks are predicted at the review model's prices.
+The pre-order round's third replica runs on the layout caller's small-tier model with a shared context of its own, one root
+more; the cost model prices each model's sessions at that model's own prices.
 
---dry prints each selected run's plan and its predicted cost and time beside the bounds they would be held to (with a warning
+--dry prints each selected run's model or models, plan and its predicted cost and time beside the bounds they would be held to (with a warning
 when the design loop's prediction is over a bound or within a tenth of it), and starts no
 session and calls no model; it still seeds the copy and writes the review folder. --only runs one of the two rounds.
 
@@ -78,10 +79,14 @@ OUT_DIR = "out"
 RECORD = "proof-record.json"
 TEXT = "proof-record.txt"
 BASELINES = os.path.join(TOOLS_DIR, "tests", "fixtures", "review_baselines", "layout_single_runs.json")
-#: The model of the recorded single-reviewer runs, which the baseline key holds.
-MODEL = "claude-sonnet-5-5"
+#: The mid-tier model of the recorded single-reviewer runs, which the baseline key holds and the pre-order round's first two
+#: replicas run on.
+BASELINE_MODEL = "claude-sonnet-5-5"
+#: The small-tier model the design loop's two replicas run on.
+DESIGN_MODEL = "claude-haiku-5-5"
+PRE_ORDER_MODEL = BASELINE_MODEL
 #: The cost multiple of the pooled criterion for a round of the design loop.
-COST_MULTIPLE = 2.0
+COST_MULTIPLE = 1.25
 CALLER = "layout"
 #: The two rounds the proof runs, by name: the replicas of each group and the folder the run is kept in.
 ROUNDS: Tuple[Tuple[str, int], ...] = (("design-loop", 2), ("pre-order", 3))
@@ -348,8 +353,9 @@ def build(seeds: Sequence[Mapping[str, Any]], key: proof.BaselineKey, singles: S
 def lines_of(record: Mapping[str, Any]) -> List[str]:
     found = []
     layout = record["layout"]
-    found.append(f"PROOF | model {layout['model']} | tool commit {layout['tool_commit']} | seeded copy commit "
-                 f"{layout['seeded_commit']} | cost multiple {COST_MULTIPLE:g}")
+    found.append(f"PROOF | design loop on {layout['models']['design-loop']}, pre-order on {layout['models']['pre-order']} (third "
+                 f"replica on the small tier) | baselines on {layout['baseline_model']} | tool commit {layout['tool_commit']} | "
+                 f"seeded copy commit {layout['seeded_commit']} | cost multiple {COST_MULTIPLE:g}")
     if record["verdict"] is not None:
         found += [f"CRITERION | {line}" for line in proof.record_lines(record)]
     else:
@@ -394,7 +400,17 @@ def small_tier(plan: Mapping[str, Any]) -> Optional[Dict[str, Any]]:
     return {"model": ", ".join(found), "forks": sum(found.values())} if found else None
 
 
-def dry_lines(plans: Mapping[str, Mapping[str, Any]], singles: Sequence[proof.RunOutcome]) -> List[str]:
+def models_text(model: str, plan: Mapping[str, Any]) -> str:
+    """The model or models a round's sessions run on: the round's own, and the small tier's forks from a shared context of
+    its own, which is one root more."""
+    small = small_tier(plan)
+    if not small:
+        return f"all {plan['forks']} forks on {model}"
+    return (f"{plan['forks'] - small['forks']} forks on {model}, {small['forks']} on {small['model']} from a shared context of its "
+            "own (one root more); each is priced at its model's prices")
+
+
+def dry_lines(plans: Mapping[str, Mapping[str, Any]], singles: Sequence[proof.RunOutcome], models: Mapping[str, str]) -> List[str]:
     """The plan and predicted cost and time of each selected run, beside the bounds the design loop's run is held to."""
     cost = COST_MULTIPLE * proof.mean([run.cost_usd for run in singles])
     wall = proof.WALL_FRACTION * proof.mean([run.wall_s for run in singles])
@@ -405,15 +421,11 @@ def dry_lines(plans: Mapping[str, Mapping[str, Any]], singles: Sequence[proof.Ru
     for name, plan in plans.items():
         replicas = dict(ROUNDS)[name]
         predicted = plan["predicted"]
+        found.append(f"MODEL | {name} | {models_text(models[name], plan)}")
         found.append(f"PLAN | {name} | {replicas} replicas | {len(plan['groups'])} groups | {plan['forks']} forks | bound {plan['bound']} | "
                      f"shared context {plan['shared_tokens']} tokens | variants {', '.join(plan['variants'])}")
         found += [f"GROUP | {name} | {group['id']} | units {', '.join(group['units'])} | {group['replicas']} replicas | expected "
                   f"output {group['expected_output_tokens']} tokens" for group in plan["groups"]]
-        small = small_tier(plan)
-        if small:
-            found.append(f"SMALL TIER | {name} | {small['forks']} forks on {small['model']} from a shared context of its own, "
-                         "which is one root more; the cost model has one set of prices, the review model's, so their cost is "
-                         "predicted at those prices and is an upper bound")
         found.append(f"PREDICTED | {name} | ${predicted['cost_usd']} | {predicted['wall_s']} s | " + (
             f"cost {'within' if predicted['cost_usd'] <= cost else 'over'} its bound, time {'within' if predicted['wall_s'] <= wall else 'over'} "
             "its bound" if name == "design-loop" else "figures recorded, not bounded"))
@@ -453,7 +465,8 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout, err=sys.stderr, seed_
     parser.add_argument("--work", required=True, help="a new folder outside the repository the run keeps everything in")
     parser.add_argument("--kicad-cli", default="kicad-cli", help="KiCad's command-line tool (default: kicad-cli on the search path)")
     parser.add_argument("--resvg", default="resvg", help="the resvg program the views are drawn with (default: resvg on the search path)")
-    parser.add_argument("--model", default=MODEL, help=f"the full model id both rounds use for all but the third replica of the pre-order round (default: {MODEL}, the recorded runs')")
+    parser.add_argument("--design-model", default=DESIGN_MODEL, help=f"the full model id the design-loop round's replicas run on (default: {DESIGN_MODEL}, the small tier)")
+    parser.add_argument("--pre-order-model", default=PRE_ORDER_MODEL, help=f"the full model id the pre-order round's first two replicas run on; the third runs on the layout caller's small-tier model (default: {PRE_ORDER_MODEL}, the mid-tier)")
     parser.add_argument("--only", choices=[name for name, _ in ROUNDS], default=None,
                         help="run one round: design-loop (two replicas) or pre-order (three); default both")
     parser.add_argument("--bound", type=int, default=None, help="the most sessions at once (default: every fork together)")
@@ -478,8 +491,10 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout, err=sys.stderr, seed_
 
     if args.bound is not None and args.bound < 1:
         result["refusals"].append(f"the bound {args.bound} is below one; give one or more sessions at once")
-    if not args.model.strip():
-        result["refusals"].append("the model is empty; give a full model id")
+    for flag, value in (("--design-model", args.design_model), ("--pre-order-model", args.pre_order_model)):
+        if not value.strip():
+            result["refusals"].append(f"{flag} is empty; give a full model id")
+    models = {"design-loop": args.design_model, "pre-order": args.pre_order_model}
     if result["refusals"]:
         return finish(1)
     chosen = [(name, replicas) for name, replicas in ROUNDS if args.only in (None, name)]
@@ -489,18 +504,18 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout, err=sys.stderr, seed_
         folder = write_folder(work, seeded, documents_repo)
         with open(os.path.join(work, SEEDS), encoding="utf-8") as handle:
             seeds = json.load(handle)["seeds"]
-        key, singles = baseline_runs(baselines, seeds, tree(), args.model)
+        key, singles = baseline_runs(baselines, seeds, tree(), BASELINE_MODEL)
         if args.dry:
-            plans = {name: plan_of(folder, os.path.join(work, OUT_DIR, name), args.model, replicas, args.bound, environ)
+            plans = {name: plan_of(folder, os.path.join(work, OUT_DIR, name), models[name], replicas, args.bound, environ)
                      for name, replicas in chosen}
-            result.update(result="PLANNED", refusals=[], lines=dry_lines(plans, singles), plans=plans,
+            result.update(result="PLANNED", refusals=[], lines=dry_lines(plans, singles, models), plans=plans,
                           detail="no session was started and no model was called")
             return finish(0)
         runs: Dict[str, Tuple[proof.RunOutcome, Dict[str, Any]]] = {}
         os.makedirs(os.path.join(work, OUT_DIR), exist_ok=True)
         for name, replicas in chosen:
             output = os.path.join(work, OUT_DIR, name)
-            status, report = run_command(folder, output, args.model, replicas, args.bound, environ, main_command)
+            status, report = run_command(folder, output, models[name], replicas, args.bound, environ, main_command)
             if report.get("cannot_run"):
                 raise board_check.CannotRun(report["cannot_run"])
             if not store.holds_record(output):
@@ -514,7 +529,7 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout, err=sys.stderr, seed_
     except board_check.CannotRun as error:
         result.update(result=command.CANNOT_RUN, refusals=[], detail=str(error))
         return finish(2)
-    record = build(seeds, key, singles, runs, {"model": args.model, "tool_commit": tool_commit(), "seeded_commit": seeded["commit"],
+    record = build(seeds, key, singles, runs, {"models": models, "baseline_model": key.model, "tool_commit": tool_commit(), "seeded_commit": seeded["commit"],
                                                  "work": work, "bound": next(iter(runs.values()))[1]["command_report"]["bound"]})
     store.atomic_write_json(os.path.join(work, RECORD), record)
     lines = lines_of(record)

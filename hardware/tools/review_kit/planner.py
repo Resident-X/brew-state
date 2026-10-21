@@ -222,19 +222,24 @@ def default_prompt(declaration: decl.Declaration) -> Callable[[Sequence[str], st
 def make_plan(declaration: decl.Declaration, catalogue: cat.Catalogue, shared: messages.SharedContext,
               spec: sess.SessionSpec, *, bound: int, cli_version: str, tool_commit: str,
               replicas: Union[int, Mapping[str, int]] = 1, variants: Sequence[str] = (),
-              prices: cm.Prices = cm.Prices(), timing: cm.Timing = cm.Timing(), calls_per_fork: int = cm.CALLS_PER_FORK,
+              prices: Optional[cm.Prices] = None, timing: cm.Timing = cm.Timing(), calls_per_fork: int = cm.CALLS_PER_FORK,
               prompt_for: Optional[Callable[[Sequence[str], str], str]] = None, contexts: Sequence[Any] = ()) -> Plan:
     """The flat plan for a declaration: refused when the bound is below one or the shared context is over the budget.
 
     `contexts` are the shared contexts to build when a replica runs on a model other than the review's: objects giving
     `root_id`, `model`, `spec`, `shared` and `variants`, the review's own first. A group's replica forks from the context
-    that holds its variant; with none given every replica forks from the one root."""
+    that holds its variant; with none given every replica forks from the one root. Each context is priced at its own model's
+    prices (`costmodel.PRICES_BY_MODEL`); `prices`, when given, prices every node alike."""
     if isinstance(bound, bool) or not isinstance(bound, int) or bound < 1:
         raise BoundBelowOne(bound)
     budget = declaration.budget.context_tokens
     if budget is not None and shared.tokens > budget:
         raise OverBudget(shared.tokens, budget)
     prompt_for = prompt_for or default_prompt(declaration)
+    root_prices = prices or cm.prices_for(spec.model)
+    prices_of: Dict[str, cm.Prices] = {"root": root_prices}
+    for context in list(contexts)[1:]:
+        prices_of[context.root_id] = prices or cm.prices_for(context.model)
     packed = pack(declaration)
     counts = replica_counts(declaration, packed, replicas)
     groups: List[Group] = []
@@ -244,7 +249,7 @@ def make_plan(declaration: decl.Declaration, catalogue: cat.Catalogue, shared: m
                             sum(declaration.units[u].expected_output_tokens for u in units), count))
     root = Node("root", ROOT, None, None, None, 1, None, (), shared.prefix_sha, shared.prefix_sha)
     nodes = [root]
-    per_node = {"root": {"cost_usd": cm.root_cost(prices, shared.tokens), "wall_s": timing.seconds(1, cm.ACK_TOKENS)}}
+    per_node = {"root": {"cost_usd": cm.root_cost(root_prices, shared.tokens), "wall_s": timing.seconds(1, cm.ACK_TOKENS)}}
     parent_of: Dict[str, str] = {}
     for context in contexts:
         for variant_id in context.variants:
@@ -252,7 +257,7 @@ def make_plan(declaration: decl.Declaration, catalogue: cat.Catalogue, shared: m
     for context in list(contexts)[1:]:
         nodes.append(Node(context.root_id, ROOT, None, None, None, 1, None, (), context.shared.prefix_sha,
                           context.shared.prefix_sha))
-        per_node[context.root_id] = {"cost_usd": cm.root_cost(prices, context.shared.tokens),
+        per_node[context.root_id] = {"cost_usd": cm.root_cost(prices_of[context.root_id], context.shared.tokens),
                                      "wall_s": timing.seconds(1, cm.ACK_TOKENS)}
     durations: List[float] = []
     calls_of: Dict[str, int] = {}
@@ -266,8 +271,8 @@ def make_plan(declaration: decl.Declaration, catalogue: cat.Catalogue, shared: m
                         shared.prefix_sha, messages.sha256(messages.prompt_message(prompt)))
             nodes.append(node)
             seconds = timing.seconds(calls_per_fork, group.expected_output_tokens)
-            per_node[node.id] = {"cost_usd": cm.fork_cost(prices, shared.tokens, len(prompt), group.expected_output_tokens,
-                                                          calls_per_fork), "wall_s": seconds}
+            per_node[node.id] = {"cost_usd": cm.fork_cost(prices_of[node.parent], shared.tokens, len(prompt),
+                                                          group.expected_output_tokens, calls_per_fork), "wall_s": seconds}
             durations.append(seconds)
             calls_of[group.id] = calls_of.get(group.id, 0) + calls_per_fork
     wall = max(entry["wall_s"] for key, entry in per_node.items() if key == "root" or key.startswith("root.")) \
@@ -279,14 +284,14 @@ def make_plan(declaration: decl.Declaration, catalogue: cat.Catalogue, shared: m
                  "cost_ceiling_usd": declaration.budget.usd,
                  "within_cost_ceiling": None if declaration.budget.usd is None else cost <= declaration.budget.usd,
                  "per_node": {key: {k: round(v, 6) for k, v in entry.items()} for key, entry in per_node.items()}}
-    saving = cm.hoist_saving(prices, {a.name: a.tokens for a in catalogue.artefacts}, calls_of,
+    saving = cm.hoist_saving(root_prices, {a.name: a.tokens for a in catalogue.artefacts}, calls_of,
                              {a.name: [g.id for g in groups if a.name in g.needs] for a in catalogue.artefacts})
     threshold = declaration.budget.tree_saving_usd
     tree = {"saving_usd": round(saving, 6), "threshold_usd": threshold, "worth_building": saving >= threshold,
             "kept": "flat"}
     return Plan(tuple(groups), tuple(nodes), spec.as_dict(), spec.digest, shared.as_dict(), tuple(variants), bound,
-                prices.as_dict(), timing.as_dict(), calls_per_fork, predicted, tree, cli_version, tool_commit,
+                root_prices.as_dict(), timing.as_dict(), calls_per_fork, predicted, tree, cli_version, tool_commit,
                 tuple({"root_id": context.root_id, "model": context.model, "spec": context.spec.as_dict(),
-                       "spec_digest": context.spec.digest, "prefix_sha": context.shared.prefix_sha,
+                       "spec_digest": context.spec.digest, "prices": prices_of[context.root_id].as_dict(), "prefix_sha": context.shared.prefix_sha,
                        "variants": list(context.variants)} for context in list(contexts)[1:]),
                 tuple(declaration.added_during_round))

@@ -18,7 +18,7 @@ sys.path.insert(0, TOOLS)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import review_kit_fixtures as fx  # noqa: E402
-from review_kit import catalogue, costmodel as cm, decl, messages, planner  # noqa: E402
+from review_kit import catalogue, costmodel as cm, decl, ensemble, messages, planner  # noqa: E402
 
 
 def plain_units(outputs, **extra):
@@ -320,11 +320,91 @@ class CostModelTests(unittest.TestCase):
         custom = cm.Prices(1.0, 2.0, 3.0, "given")
         self.assertEqual(cm.fit([], custom).prices, custom)
 
+    # The cost, cache-read, cache-write and generated tokens of the 13 sessions of a recorded small-tier layout review run,
+    # a root, its twelve units' forks and the repairs, with the cost each reported; they total 1.2067 USD.
+    HAIKU_SESSIONS = [(0.35256, 269558, 270950, 291), (0.031106, 270276, 2264, 6131), (0.038628, 270276, 4463, 8260),
+                      (0.05711, 270276, 10630, 13186), (0.049234, 270276, 5049, 12268), (0.060285, 270276, 4953, 16727),
+                      (0.062062, 270276, 6622, 16770), (0.08215, 270276, 6228, 24963), (0.082302, 270276, 5787, 25200),
+                      (0.155206, 558782, 38959, 34568), (0.126963, 270276, 8961, 41795), (0.071786, 279237, 40388, 6974),
+                      (0.037318, 319625, 7156, 5672)]
+
+    def test_the_small_tier_prices_predict_the_recorded_small_tier_run_within_fifteen_per_cent(self):
+        # SOL-HW-REVIEW-KIT.C6: the prices and rates are data, refitted from telemetry
+        recorded = sum(cost for cost, *_ in self.HAIKU_SESSIONS)
+        self.assertAlmostEqual(recorded, 1.21, delta=0.01)
+        prices = cm.prices_for("claude-haiku-5-5")
+        predicted = sum(prices.cost(read, write, out) for _, read, write, out in self.HAIKU_SESSIONS)
+        self.assertLess(abs(predicted - recorded) / recorded, 0.15)
+        sonnet = sum(cm.Prices().cost(read, write, out) for _, read, write, out in self.HAIKU_SESSIONS)
+        self.assertGreater(sonnet, 2 * recorded, "the mid-tier prices would have predicted far more, so the model matters")
+
+    def test_the_small_tier_prices_are_the_fit_of_the_recorded_sessions(self):
+        # SOL-HW-REVIEW-KIT.C6: the prices and rates are data, refitted from telemetry
+        rows = [{"cost_usd": cost, "cache_read": read, "cache_write": write, "generated": out}
+                for cost, read, write, out in self.HAIKU_SESSIONS]
+        found = cm.fit(rows).prices
+        small = cm.prices_for("claude-haiku-5-5")
+        for figure in ("read", "write", "out"):
+            self.assertAlmostEqual(getattr(found, figure), getattr(small, figure), places=3)
+        self.assertEqual(small.source, "fitted")
+
+    def test_a_model_the_table_does_not_hold_is_priced_at_the_default_or_the_one_given(self):
+        # SOL-HW-REVIEW-KIT.C6: the prices and rates are data, refitted from telemetry
+        self.assertEqual(cm.prices_for("claude-sonnet-5-5"), cm.Prices())
+        self.assertEqual(cm.prices_for("unlisted-model"), cm.Prices())
+        self.assertEqual(cm.prices_for(None), cm.Prices())
+        custom = cm.Prices(1.0, 2.0, 3.0, "given")
+        self.assertEqual(cm.prices_for("unlisted-model", default=custom), custom)
+        self.assertEqual(cm.prices_for("claude-haiku-5-5", default=custom), cm.HAIKU_PRICES)
+
     def test_defaults_are_the_measured_figures(self):
         # SOL-HW-REVIEW-KIT.C6: the time target is estimated as 1.7 seconds per call plus the output tokens at the measured rate
         self.assertEqual((cm.Prices().read, cm.Prices().write, cm.Prices().out), (0.10, 4.37, 8.95))
         self.assertEqual((cm.Timing().per_call_s, cm.Timing().tok_per_s), (1.7, 134.0))
         self.assertTrue(math.isclose(cm.Timing().seconds(2, 268), 5.4))
+
+
+class PerModelPricing(Case):
+    def test_the_planner_prices_each_context_and_its_forks_at_the_prices_of_its_own_model(self):
+        # SOL-HW-REVIEW-KIT.C6: the predicted cost and time use the prices of each node's model
+        raw = fx.declaration_dict()
+        declaration = decl.parse(json.dumps(raw), "caller.json")
+        found = catalogue.admit(declaration, self.review)
+        shared = messages.shared_context(found)
+        spec = messages.make_spec(declaration, ("Read",), "/work", "claude-sonnet-5-5")
+        policy = ensemble.parse_policy({"variants": [{"id": "full"}, {"id": "small", "model": "claude-haiku-5-5"}]})
+        contexts = ensemble.contexts(spec, shared, policy)
+        made = planner.make_plan(declaration, found, shared, spec, bound=4, cli_version="9.9.9", tool_commit="abc1234",
+                                 replicas=2, variants=policy.ids, contexts=contexts)
+        per_node = made.predicted["per_node"]
+        small_root = contexts[1].root_id
+        self.assertAlmostEqual(per_node["root"]["cost_usd"], cm.root_cost(cm.Prices(), shared.tokens), places=5)
+        self.assertAlmostEqual(per_node[small_root]["cost_usd"], cm.root_cost(cm.HAIKU_PRICES, shared.tokens), places=5)
+        by_parent = {}
+        for node in made.lanes:
+            by_parent.setdefault(node.parent, []).append(node)
+        self.assertEqual(sorted(by_parent), sorted(["root", small_root]))
+        for parent, prices in (("root", cm.Prices()), (small_root, cm.HAIKU_PRICES)):
+            for node in by_parent[parent]:
+                group = next(g for g in made.groups if g.id == node.group)
+                expected = cm.fork_cost(prices, shared.tokens, 0, group.expected_output_tokens)
+                self.assertGreater(per_node[node.id]["cost_usd"], expected - 1e-3)
+                self.assertLess(per_node[node.id]["cost_usd"], expected + 0.01, "only the unit's prompt tokens are added")
+        self.assertEqual(made.contexts[0]["prices"], cm.HAIKU_PRICES.as_dict(), "the plan records each other context's prices")
+        self.assertEqual(made.prices, cm.Prices().as_dict(), "and the review's own")
+
+    def test_a_plan_on_the_small_tier_is_cheaper_than_the_same_plan_on_the_mid_tier_and_given_prices_override_the_table(self):
+        # SOL-HW-REVIEW-KIT.C6: the predicted cost and time use the prices of each node's model
+        declaration = decl.parse(json.dumps(fx.declaration_dict()), "caller.json")
+        found = catalogue.admit(declaration, self.review)
+        shared = messages.shared_context(found)
+
+        def cost(model, **kwargs):
+            spec = messages.make_spec(declaration, ("Read",), "/work", model)
+            return planner.make_plan(declaration, found, shared, spec, bound=4, cli_version="9.9.9", tool_commit="abc1234",
+                                     **kwargs).predicted["cost_usd"]
+        self.assertLess(cost("claude-haiku-5-5") * 2, cost("claude-sonnet-5-5"))
+        self.assertEqual(cost("claude-haiku-5-5", prices=cm.Prices()), cost("claude-sonnet-5-5"))
 
 
 if __name__ == "__main__":

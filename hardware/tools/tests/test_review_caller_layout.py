@@ -1196,7 +1196,7 @@ class Documentation(unittest.TestCase):
         for words in ("in the form that changed", "repeats the single-reviewer proof above", "repeats the fanned-out proof",
                       "task hw:review-proof -- --work <folder>", "judges it against the recorded single-reviewer runs",
                       "by the review kit's pooled criterion, without running the single reviewer again",
-                      "at most half the single mean time and at most twice the single mean cost",
+                      "at most half the single mean time and at most 1.25 times the single mean cost",
                       "recorded and not bounded", "A change to the catalogue or the views repeats both",
                       "The recorded proof of one form stands for that form alone"):
             self.assertIn(words, sentence)
@@ -1215,7 +1215,7 @@ class Documentation(unittest.TestCase):
                       "round-<n>.md", "committed by whoever started the round", "`--bound`",
                       "`--keep-work-tree`", "money", "on demand and in neither the build round nor the nightly",
                       "`hardware/tools/tests/fixtures/review_baselines/layout_single_runs.json`", "`claude-sonnet-5-5`",
-                      "two replicas of each group", "with a cost multiple of 2.0", "The single reviewer is never run again",
+                      "two replicas of each group", "with a cost multiple of 1.25", "The single reviewer is never run again",
                       "`--dry`", "`--only design-loop`", "`proof-record.json`", "counted from the saved streams",
                       "calls refused for a rate limit", "counted from the executor's retries"):
             self.assertIn(words, section, f"the hardware notes' section says {words!r}")
@@ -1241,7 +1241,7 @@ class Documentation(unittest.TestCase):
                       "--add-view", "the set of round fields being a parameter"):
             self.assertIn(words, folder)
         for words in ("layout_review_proof.py", "on demand", "neither the build round nor the nightly", "spends the agent command line's usage",
-                      "agent command line on the search path and logged in", "cost multiple of 2.0", "never runs the single reviewer",
+                      "agent command line on the search path and logged in", "cost multiple of 1.25", "never runs the single reviewer",
                       "--dry", "--only design-loop or --only pre-order"):
             self.assertIn(words, proof)
         for text in (taskfile[taskfile.index("  hw:test:\n"):].splitlines()[1], taskfile[taskfile.index("  hw:test:round:"):].splitlines()[1]):
