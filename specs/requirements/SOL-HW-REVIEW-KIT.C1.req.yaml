@@ -1,12 +1,12 @@
 id: SOL-HW-REVIEW-KIT.C1
 type: criterion
-title: Every session of a review is started from one session specification, and a session or fork that differs from it fails the run naming the session
+title: Every session of a review is started from one session specification, and a start report that differs from it fails the run naming the session
 status: active
 version: 1
 measurement_type: binary
 verification: test
 text: |-
-  Against the stub executor, the root, a fork, a repair turn and an adjudication turn of one review are each started with the same system prompt, appended system prompt, tool list, model and schema arguments, and differ only in the message and the resume and fork arguments; a specification that changes after the first session of a review has started is refused naming the field. The agent command line's arguments are built from the specification alone. Over recorded start reports, a session that reports other tools than the specification grants, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails the run naming the session; a fork whose recorded system prompt differs from its parent's fails it naming both. The recorded start reports of the earlier live runs, whose forks carried the setup session's rule, are fixtures the check rejects. Over recorded fork streams, a fork whose first call's cache read is below the parent's prefix size is flagged with both figures, the recorded probe whose tool set changed and which read nothing from the cache is flagged, a fork that reads the prefix is not, and the streams of one review that carry different system prompts are flagged naming the sessions. Out of scope: the cause of a miss beyond the changed field the specification shows.
+  Against the stub executor, the root, a fork, a repair turn and an adjudication turn of one review are each started with the same system prompt, appended system prompt, tool list, model and schema arguments, and differ only in the message and the resume and fork arguments; a specification that changes after the first session of a review has started is refused naming the field. The agent command line's arguments are built from the specification alone. Over recorded start reports, a session that reports other tools than the specification grants, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails the run naming the session. Out of scope: the checks of a session's recorded stream, which the stream criterion covers.
 links:
   - target: SOL-HW-REVIEW-KIT
     type: criterion-of
