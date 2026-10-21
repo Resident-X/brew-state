@@ -272,6 +272,8 @@ class Assessment:
     problems: List[Problem] = field(default_factory=list)
     items_covered: int = 0
     note: str = ""
+    #: Set on an answer that was followed by the turn about its cannot-judge rows: the turn's answer stands over it.
+    judge_asked: bool = False
 
     @property
     def fatal(self) -> List[Problem]:
@@ -283,7 +285,7 @@ class Assessment:
 
     def as_dict(self) -> Dict[str, Any]:
         return {"source": self.source, "raw": self.raw, "tables": self.tables, "note": self.note,
-                "items_covered": self.items_covered,
+                "items_covered": self.items_covered, "judge_asked": self.judge_asked,
                 "repairs": [problem.line() for problem in self.repairs],
                 "problems": [{"class": problem.cls, "where": problem.where, "what": problem.what}
                              for problem in self.problems]}
@@ -310,16 +312,41 @@ def assess(structured: Any, text: str, shape: AnswerShape, unit: str, items: Opt
     return Assessment(parsed.source, raw, tables, repairs, problems, covered, parsed.note)
 
 
+def cannot_judge_rows(tables: Optional[Dict[str, Any]], shape: AnswerShape, value: Optional[str]) -> List[Tuple[str, str]]:
+    """The (item, Why) of each verdict row whose verdict is `value`, in table order. A table without that verdict declared holds
+    none, and no value means a caller that declares no such verdict. The Why is the row's `Why` cell, else its other cells."""
+    found: List[Tuple[str, str]] = []
+    for table in shape.tables:
+        if not value or not table.verdict_column or not table.key or value not in table.verdicts:
+            continue
+        for row in (tables or {}).get(table.name, []):
+            if row.get(table.verdict_column) != value:
+                continue
+            others = [column for column in table.columns if column not in (table.key, table.verdict_column)]
+            why = str(row["Why"]) if "Why" in table.columns else "; ".join(str(row[c]) for c in others if str(row[c]).strip())
+            found.append((str(row[table.key]), why))
+    return found
+
+
+def judge_prompt(rows: Sequence[Tuple[str, str]]) -> str:
+    """The turn that asks a session about the items it could not judge."""
+    listed = "\n".join(f"- {item}: {why}" for item, why in rows)
+    return ("You gave cannot judge for these items, with this Why:\n" + listed + "\n\nIf the Why asks for a published document, "
+            "retrieve it with the retrieval tool you have and re-judge the item; otherwise keep cannot judge and name the view "
+            "needed. Return the whole answer, every table in full, and change nothing else.")
+
+
 # --- Attempts ----------------------------------------------------------------------------------
 
 
 def standing(attempts: Sequence[Assessment]) -> int:
-    """The index of the attempt that stands: the first with no problems, else the one with no fatal problem and the fewest
+    """The index of the attempt that stands: the first with no problems that was not followed by the turn about its cannot-judge
+    rows (that turn's answer stands over it, whatever it says), else the one with no fatal problem and the fewest
     local problems, else the most items covered, else the first. A later attempt never replaces a better one."""
     if not attempts:
         raise ValueError("a unit with no attempt has none that stands")
     for index, attempt in enumerate(attempts):
-        if not attempt.problems:
+        if not attempt.problems and not attempt.judge_asked:
             return index
     return min(range(len(attempts)), key=lambda index: (bool(attempts[index].fatal), len(attempts[index].local),
                                                         -attempts[index].items_covered, index))

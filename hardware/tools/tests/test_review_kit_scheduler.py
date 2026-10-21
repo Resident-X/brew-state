@@ -382,6 +382,117 @@ class ChecksOnTheStreamsTests(unittest.TestCase):
         self.assertFalse(os.path.exists(os.path.join(harness.out, store.LOCK_NAME)))
 
 
+class CannotJudgeTurnTests(unittest.TestCase):
+    def judged(self, verdict_rows, **options):
+        """A harness whose G1 first answer gives `verdict_rows` (item, verdict, note) for u1, with `script` for later nodes."""
+        script = dict(options.pop("script", {}))
+        answer = fx.good_answer(harness_decl(), ["u1"])
+        answer["tables"]["Verdicts"] = [{"Item": i, "Verdict": v, "Note": n} for i, v, n in verdict_rows]
+        script["G1.r1.a1"] = ex.Reply(structured=answer, text="x")
+        return fx.Harness(self, script=script, **options)
+
+    def answer_of(self, rows):
+        answer = fx.good_answer(harness_decl(), ["u1"])
+        answer["tables"]["Verdicts"] = [{"Item": i, "Verdict": v, "Note": n} for i, v, n in rows]
+        return ex.Reply(structured=answer, text="x")
+
+    def g1(self, record):
+        return [n for n in record["nodes"] if n["group"] == "G1"]
+
+    def test_a_first_answer_with_a_cannot_judge_gets_exactly_one_repair_turn_naming_the_item_and_advising_retrieval(self):
+        # SOL-HW-REVIEW-KIT.C6: A verdict row of cannot judge in a unit's first answer appends one repair turn in that unit's own session, advising it to retrieve a document its Why asks for with the retrieval tool the caller grants and otherwise to keep the cannot judge naming the view it needs
+        harness = self.judged([("i1", "cannot judge", "needs the datasheet of U1"), ("i2", "pass", "fine")],
+                              script={"G1.r1.a2": self.answer_of([("i1", "pass", "read"), ("i2", "pass", "fine")])})
+        record = harness.fresh()
+        nodes = self.g1(record)
+        self.assertEqual([(n["id"], n["role"], n["parent"]) for n in nodes],
+                         [("G1.r1.a1", "unit", "root"), ("G1.r1.a2", "repair", "G1.r1.a1")])
+        first, turn = [c for c in harness.executor.calls if c.label.startswith("G1.")]
+        self.assertFalse(turn.fork)
+        self.assertIn("--resume", turn.arguments)
+        self.assertNotIn("--fork-session", turn.arguments)
+        for text in ("i1: needs the datasheet of U1", "published document", "retrieval tool you have", "re-judge",
+                     "keep cannot judge and name the view needed"):
+            self.assertIn(text, turn.message)
+        self.assertNotIn("i2:", turn.message, "a row that judged is not listed")
+
+    def test_a_repaired_answer_that_retrieves_and_judges_replaces_the_cannot_judge(self):
+        # SOL-HW-REVIEW-KIT.C6: the repaired answer stands whatever it says
+        harness = self.judged([("i1", "cannot judge", "needs the datasheet"), ("i2", "pass", "")],
+                              script={"G1.r1.a2": self.answer_of([("i1", "pass", "read it"), ("i2", "pass", "")])})
+        record = harness.fresh()
+        lane = [l for l in record["lanes"] if l["group"] == "G1"][0]
+        self.assertEqual(lane["record"]["standing"], 1)
+        self.assertEqual({r["Item"]: r["Verdict"] for r in lane["record"]["attempts"][1]["tables"]["Verdicts"]}["i1"], "pass")
+        self.assertTrue(lane["record"]["attempts"][0]["judge_asked"])
+        self.assertFalse(lane["record"]["attempts"][1]["judge_asked"])
+        self.assertIsNone(lane["failure"])
+
+    def test_a_repaired_answer_that_still_says_cannot_judge_stands_and_is_not_a_failure(self):
+        # SOL-HW-REVIEW-KIT.C6: the repaired answer stands whatever it says, so a cannot judge that remains is not a failed attempt and goes to the caller's resolution at the merge
+        still = self.answer_of([("i1", "cannot judge", "needs crop-Y1: no view of it"), ("i2", "pass", "")])
+        harness = self.judged([("i1", "cannot judge", "needs crop-Y1: no view of it"), ("i2", "pass", "")],
+                              script={"G1.r1.a2": still})
+        record = harness.fresh()
+        self.assertEqual(len(self.g1(record)), 2, "no further turn")
+        lane = [l for l in record["lanes"] if l["group"] == "G1"][0]
+        self.assertEqual(lane["record"]["standing"], 1)
+        self.assertIsNone(lane["failure"])
+        self.assertFalse(record["units"]["u1"]["failed"])
+        self.assertEqual(lane["record"]["attempts"][1]["problems"], [])
+
+    def test_a_repaired_answer_that_gains_a_local_problem_leaves_the_first_answer_standing(self):
+        # SOL-HW-REVIEW-KIT.C6: best-of does not choose a worse attempt: a repair turn that gains a local problem is handled by the existing order
+        worse = self.answer_of([("i1", "pass", "read")])  # no verdict for i2
+        harness = self.judged([("i1", "cannot judge", "needs the datasheet"), ("i2", "pass", "")],
+                              script={"G1.r1.a2": worse, "G1.r1.a3": worse}, attempts=3)
+        record = harness.fresh()
+        lane = [l for l in record["lanes"] if l["group"] == "G1"][0]
+        self.assertEqual(lane["record"]["standing"], 0)
+        self.assertEqual(len(self.g1(record)), 3)
+
+    def test_a_caller_declaring_no_cannot_judge_verdict_gets_no_turn(self):
+        # SOL-HW-REVIEW-KIT.C6: a caller that declares no cannot-judge verdict gets no such turn
+        harness = self.judged([("i1", "cannot judge", "needs the datasheet"), ("i2", "pass", "")])
+        harness.scheduler.cannot_judge = None
+        record = harness.fresh()
+        self.assertEqual(len(self.g1(record)), 1)
+        raw = fx.declaration_dict()
+        raw["schema"]["tables"][0]["verdicts"] = ["pass", "fail"]
+        shape = decl.parse(json.dumps(raw), "caller.json").shape
+        rows = {"Verdicts": [{"Item": "i1", "Verdict": "cannot judge", "Note": "n"}]}
+        self.assertEqual(results.cannot_judge_rows(rows, shape, "cannot judge"), [])
+        self.assertEqual(results.cannot_judge_rows(rows, harness_decl().shape, "cannot judge"), [("i1", "n")])
+
+    def test_a_cannot_judge_after_a_local_repair_gets_no_further_turn(self):
+        # SOL-HW-REVIEW-KIT.C6: a verdict row of cannot judge in a unit's first answer appends one repair turn; a later answer's gets none
+        first = self.answer_of([("i1", "pass", "")])  # a local problem: no verdict for i2
+        second = self.answer_of([("i1", "cannot judge", "needs the datasheet"), ("i2", "pass", "")])
+        harness = fx.Harness(self, script={"G1.r1.a1": first, "G1.r1.a2": second}, attempts=4)
+        record = harness.fresh()
+        self.assertEqual([n["role"] for n in self.g1(record)], ["unit", "repair"])
+        lane = [l for l in record["lanes"] if l["group"] == "G1"][0]
+        self.assertEqual(lane["record"]["standing"], 1)
+        self.assertIsNone(lane["failure"])
+
+    def test_a_first_answer_with_a_local_problem_and_a_cannot_judge_gets_one_turn_holding_both(self):
+        # SOL-HW-REVIEW-KIT.C6: a verdict row of cannot judge in a unit's first answer appends one repair turn
+        first = self.answer_of([("i1", "cannot judge", "needs the datasheet")])  # and no verdict for i2
+        harness = fx.Harness(self, script={"G1.r1.a1": first,
+                                           "G1.r1.a2": self.answer_of([("i1", "pass", "x"), ("i2", "pass", "")])})
+        record = harness.fresh()
+        turns = [c for c in harness.executor.calls if c.label == "G1.r1.a2"]
+        self.assertEqual(len(turns), 1)
+        self.assertIn("gives no verdict for item 'i2'", turns[0].message)
+        self.assertIn("i1: needs the datasheet", turns[0].message)
+        self.assertEqual(len(self.g1(record)), 2)
+
+    def test_with_only_one_attempt_a_cannot_judge_gets_no_turn(self):
+        # SOL-HW-REVIEW-KIT.C6: a group gets a stated number of attempts, repair turns included
+        harness = self.judged([("i1", "cannot judge", "needs the datasheet"), ("i2", "pass", "")], attempts=1)
+        self.assertEqual(len(self.g1(harness.fresh())), 1)
+
+
 def harness_decl():
     return decl.parse(json.dumps(fx.declaration_dict()), "caller.json")
 

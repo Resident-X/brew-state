@@ -675,6 +675,19 @@ class TheMerge(Folder):
         given["plan-and-free-pass"]["Verdicts"] = [verdict(PLAN_ENTRY, "cannot judge", "needs crop-U1: none", kind="comparison")]
         self.refused(lambda: merged(self.folder, given), f"item {PLAN_ENTRY} is still cannot judge", "unit plan-and-free-pass")
 
+    def test_a_cannot_judge_whose_why_asks_for_a_document_also_says_to_run_the_unit_again_if_it_can_be_retrieved(self):
+        # SOL-HW-REVIEW-KIT.C6: a cannot judge that remains goes to the caller's resolution at the merge; the refusal says to run the unit again when its Why asks for a document that can be retrieved
+        for why in ("needs the datasheet of U1: the figure is not in the views", "needs the standard's clearance table",
+                    "the Specification gives the rating"):
+            given = results()
+            given["area-CLOCK"]["Verdicts"] = [verdict("CLOCK-1", "cannot judge", why)]
+            self.refused(lambda: merged(self.folder, given), "item CLOCK-1 is still cannot judge", "--add-view",
+                         "or run unit area-CLOCK again with --rerun if the document can be retrieved")
+        given = results()
+        given["area-CLOCK"]["Verdicts"] = [verdict("CLOCK-1", "cannot judge", "needs crop-Y1: no crop of the crystal")]
+        text = self.refused(lambda: merged(self.folder, given), "item CLOCK-1 is still cannot judge", "--add-view")
+        self.assertNotIn("can be retrieved", text, "a view is not a document")
+
     def test_a_cannot_judge_in_a_narrow_round_fails_the_merge_as_in_a_full_one(self):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C3: Over synthetic unit results, the merge fails naming an item that has no verdict row and an item that has two, fails a round whose number, kind, commit judged, views or check lines are missing or malformed, writes the opening lines in the order the method gives with the round kind and, for a narrow round, its changed regions, the listed items with their reasons and the line saying why every other item is not judged, and reports two findings that cite the same view and board place, keeping both. Rule-kind items rest on the check's report and the rules table as the method says, which the merge does not judge. Findings of the item units are numbered in the checklist's order and the findings of the comparison and free-pass unit follow, in the order that unit lists them. A round that still holds a cannot judge verdict fails, naming the item and the view its Why asks for, since the method resolves it within the round; the round's starter renders the view, adds it with the folder command's add-view mode and re-runs that unit, and the merged row, built from the item, Why and view the resolutions file holds and the re-run's verdict, with the added views folded into the round's Views field at the render, records the cannot judge, the view and the verdict reached, in that order. Out of scope: whether a verdict is right.
         folder = self.copy_of()

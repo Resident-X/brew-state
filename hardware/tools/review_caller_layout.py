@@ -77,6 +77,8 @@ RECORD_FINDING_TABLE = [column for column in FINDING_TABLE if column != "Item"]
 CITATION = re.compile(r"(?<![\w.])[Ff]inding (?P<round>\d+)\.(?P<number>\d+)\b")
 VIEW_NAME = re.compile(r"\b((?:layer|net|crop|classes|assembly|3d|placement)[\w.+/-]*)")
 POINT = re.compile(r"\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)")
+#: Words in a Why that mean the unit asked for a published document rather than a view.
+DOCUMENT_WORDS = ("datasheet", "document", "standard", "specification")
 
 #: The areas whose verdicts the layout reviews showed depend on another area's findings: power with mains, and the
 #: manufacturing items with power. Each pair is judged in one group. A cross-reference between two areas of the catalogue does not make a
@@ -555,6 +557,8 @@ def checks(tables: Dict[str, Any]) -> List[str]:
                           "only if the one added is not the view the Why asks for")
             else:
                 action = f"render that view, add it with the folder command's --add-view and run {where} again with --rerun"
+                if any(word in row["Why"].lower() for word in DOCUMENT_WORDS):
+                    action += f", or run {where} again with --rerun if the document can be retrieved"
             found.append(f"item {row['Item']} is still cannot judge, and the method resolves it within the round; its Why asks "
                          f"for {wanted}: {action}")
     if PLAN_UNIT in units and not tables["Plan and free pass"]["rows"]:
