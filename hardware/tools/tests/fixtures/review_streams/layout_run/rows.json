@@ -1,0 +1,377 @@
+{
+ "area-CLOCK": [
+  {
+   "Item": "CLOCK-1",
+   "Rests on": "crop-U4.png (board x 45.46 to 77.46 mm, y 9.9 to 23.8 mm); layer-F.Cu-r1c2.png, layer-B.Cu-r1c2.png and placement-r1c2.png (board x 45.8598 to 93.0598 mm, y -1.025 to 30.325 mm)",
+   "Verdict": "fail"
+  },
+  {
+   "Item": "CLOCK-2",
+   "Rests on": "crop-U4.png (board x 45.46 to 77.46 mm, y 9.9 to 23.8 mm); layer-F.Cu-r1c2.png, layer-In1.Cu-r1c2.png, layer-In2.Cu-r1c2.png, layer-B.Cu-r1c2.png and net-_GND-r1c2.png (board x 45.8598 to 93.0598 mm, y -1.025 to 30.325 mm)",
+   "Verdict": "fail"
+  },
+  {
+   "Item": "CLOCK-3",
+   "Rests on": "assembly-top-r1c1.png, assembly-top-r1c2.png, assembly-top-r2c2.png, assembly-bottom-r1c2.png, layer-F.Cu-r1c2.png, layer-In1.Cu-r1c2.png, layer-In2.Cu-r1c2.png, layer-B.Cu-r1c2.png, placement-r1c2.png; crystal Y1 at (69.7, 13.75)",
+   "Verdict": "pass"
+  },
+  {
+   "Item": "CLOCK-4",
+   "Rests on": "check-report.txt: DESIGN line for hardware/proof/review-proof/review-proof.kicad_pro is PASS with no VIOLATION line (so no courtyards_overlap or crystal_keepclear); design-rules.md row Crystal keep-clear; review-proof.kicad_dru rule Crystal keep-clear; no FIGURE line applies to a custom rule",
+   "Verdict": "pass"
+  }
+ ],
+ "area-CONN": [
+  {
+   "Item": "CONN-1",
+   "Rests on": "assembly-top-r1c1 (board x -1.3402 to 45.8598, y -1.025 to 30.325, J2 to D1 at (36-39, 3-26)); layer-F.Cu-r1c1 (same coordinates, +5V trunk x 37, y 3.5 to 30); layer-B.Cu-r1c1, layer-In1.Cu-r1c1, layer-In2.Cu-r1c1 (same tile); placement-r1c1 (same tile); assembly-bottom-r1c1 (same tile, no suppressor on B.Cu)",
+   "Verdict": "fail"
+  },
+  {
+   "Item": "CONN-2",
+   "Rests on": "assembly-top-r1c1 and assembly-top-r1c2 (U4 at (59.9-65.1, 11.4-16.6), Y1 at (67.6-71.8, 10.6-17); J2 at (34-42.4, 0.6-7.4)); assembly-top-r2c1 and assembly-top-r2c2 (holes H1, H2, H3, J4); assembly-bottom-r1c1, assembly-bottom-r1c2, assembly-bottom-r2c1, assembly-bottom-r2c2 (no part on B.Cu); 3d-angled (whole board); placement-r1c1, placement-r1c2, placement-r2c1, placement-r2c2",
+   "Verdict": "pass"
+  },
+  {
+   "Item": "CONN-3",
+   "Rests on": "3d-angled (whole board); 3d-top (whole board); 3d-bottom (whole board); assembly-top-r1c1 (J1 at (-1.3 to 45.9, 18.9), J2 at (37, 3.5)); assembly-top-r1c2 (U4 at (62.5, 14), Y1 at (69.7, 13.75)); assembly-top-r2c2 (J4 at (50.3, 55.5)); assembly-bottom-r1c1, assembly-bottom-r1c2, assembly-bottom-r2c1, assembly-bottom-r2c2; placement-r1c1, placement-r1c2, placement-r2c2",
+   "Verdict": "pass"
+  },
+  {
+   "Item": "CONN-4",
+   "Rests on": "layer-Edge.Cuts-r1c1, layer-Edge.Cuts-r1c2, layer-Edge.Cuts-r2c1 (H1 (3.5, 44), H2 (3.5, 56.5)), layer-Edge.Cuts-r2c2 (H3 (88.5, 56.5)); assembly-top-r2c1, assembly-top-r2c2, assembly-top-r1c1, assembly-top-r1c2; 3d-angled (whole board); placement-r2c1, placement-r2c2, placement-r1c1, placement-r1c2",
+   "Verdict": "pass"
+  }
+ ],
+ "area-DECOUPLE": [
+  {
+   "Item": "DECOUPLE-1",
+   "Rests on": "crop-U1 (board x 12 to 44, y 15.9 to 27.05); crop-U2 (x 27.015 to 59.015, y -0.85 to 59.8); crop-U3 (x 52.94 to 84.94, y 40.66 to 47.21); crop-U4 (x 45.46 to 77.46, y 9.9 to 23.8); placement-r1c1 (x -1.34 to 45.86, y -1.025 to 30.325); placement-r1c2 (x 45.86 to 93.06, y -1.025 to 30.325); placement-r2c1 (x -1.34 to 45.86, y 30.325 to 61.675); placement-r2c2 (x 45.86 to 93.06, y 30.325 to 61.675)",
+   "Verdict": "fail"
+  },
+  {
+   "Item": "DECOUPLE-2",
+   "Rests on": "crop-U2 (x 27.015 to 59.015, y -0.85 to 59.8); crop-U3 (x 52.94 to 84.94, y 40.66 to 47.21); crop-U4 (x 45.46 to 77.46, y 9.9 to 23.8); net-_GND-r1c1 (x -1.34 to 45.86, y -1.025 to 30.325); net-_GND-r1c2 (x 45.86 to 93.06, y -1.025 to 30.325); net-_GND-r2c2 (x 45.86 to 93.06, y 30.325 to 61.675)",
+   "Verdict": "fail"
+  },
+  {
+   "Item": "DECOUPLE-3",
+   "Rests on": "placement-r1c1 (whole board); placement-r1c2 (whole board); placement-r2c1 (whole board); placement-r2c2 (whole board)",
+   "Verdict": "not applicable"
+  },
+  {
+   "Item": "DECOUPLE-4",
+   "Rests on": "placement-r1c1 (whole board); placement-r1c2 (whole board); placement-r2c1 (whole board); placement-r2c2 (whole board)",
+   "Verdict": "not applicable"
+  },
+  {
+   "Item": "DECOUPLE-5",
+   "Rests on": "placement-r1c1 (whole board); placement-r1c2 (whole board); placement-r2c1 (whole board); placement-r2c2 (whole board)",
+   "Verdict": "not applicable"
+  },
+  {
+   "Item": "DECOUPLE-6",
+   "Rests on": "check-report.txt DESIGN line (PASS, no VIOLATION line) and FIGURE line DECOUPLE-6 via in the decoupling path (none, inherent zero); design-rules.md row Decoupling vias; check-report.txt line DECOUPLE-6 decoupling paths measured (8 paths of 3 circuits with a supply pin); crop-U2 (x 27.015 to 59.015, y -0.85 to 59.8); crop-U3 (x 52.94 to 84.94, y 40.66 to 47.21); crop-U4 (x 45.46 to 57.46 to 77.46, y 9.9 to 23.8)",
+   "Verdict": "pass"
+  }
+ ],
+ "area-EMI": [
+  {
+   "Item": "EMI-1",
+   "Rests on": "classes-r1c1, classes-r1c2, classes-r2c1, classes-r2c2 (whole board); net-_+5V-r1c1, net-_+5V-r1c2, net-_+5V-r2c1, net-_+5V-r2c2; net-_+3V3-r1c1, net-_+3V3-r1c2, net-_+3V3-r2c1, net-_+3V3-r2c2; net-_+3V3A-r1c1, net-_+3V3A-r1c2, net-_+3V3A-r2c1, net-_+3V3A-r2c2; net-_GND-r1c1, net-_GND-r1c2, net-_GND-r2c1, net-_GND-r2c2; net-_LOAD_RTN-r1c1, net-_LOAD_RTN-r1c2, net-_LOAD_RTN-r2c1, net-_LOAD_RTN-r2c2 (whole board)",
+   "Verdict": "fail"
+  },
+  {
+   "Item": "EMI-2",
+   "Rests on": "layer-F.Cu-r1c1, layer-F.Cu-r1c2, layer-F.Cu-r2c1, layer-F.Cu-r2c2; layer-B.Cu-r1c1, layer-B.Cu-r1c2, layer-B.Cu-r2c1, layer-B.Cu-r2c2; layer-In1.Cu-r1c1, layer-In1.Cu-r1c2, layer-In1.Cu-r2c1, layer-In1.Cu-r2c2; layer-In2.Cu-r1c1, layer-In2.Cu-r1c2, layer-In2.Cu-r2c1, layer-In2.Cu-r2c2; net-_+3V3-r1c1, net-_+3V3-r1c2, net-_+3V3-r2c1, net-_+3V3-r2c2; net-_+3V3A-r1c1, net-_+3V3A-r1c2, net-_+3V3A-r2c1, net-_+3V3A-r2c2; net-_AMP_FB-r1c1, net-_AMP_FB-r1c2, net-_AMP_FB-r2c1, net-_AMP_FB-r2c2; net-_AMP_OUT-r1c1, net-_AMP_OUT-r1c2, net-_AMP_OUT-r2c1, net-_AMP_OUT-r2c2; net-_GND-r1c1, net-_GND-r1c2, net-_GND-r2c1, net-_GND-r2c2; net-_LOAD_RTN-r1c1, net-_LOAD_RTN-r1c2, net-_LOAD_RTN-r2c1, net-_LOAD_RTN-r2c2; net-_MAINS_L-r1c1, net-_MAINS_L-r1c2, net-_MAINS_L-r2c1, net-_MAINS_L-r2c2; net-_MAINS_SW-r1c1, net-_MAINS_SW-r1c2, net-_MAINS_SW-r2c1, net-_MAINS_SW-r2c2; net-_+5V-r1c1, net-_+5V-r1c2, net-_+5V-r2c1, net-_+5V-r2c2 (whole board)",
+   "Verdict": "pass"
+  },
+  {
+   "Item": "EMI-3",
+   "Rests on": "assembly-top-r1c1, assembly-top-r1c2, assembly-top-r2c1, assembly-top-r2c2; assembly-bottom-r1c1, assembly-bottom-r1c2, assembly-bottom-r2c1, assembly-bottom-r2c2; layer-F.Cu-r1c1, layer-F.Cu-r1c2, layer-F.Cu-r2c1, layer-F.Cu-r2c2; layer-B.Cu-r1c1, layer-B.Cu-r1c2, layer-B.Cu-r2c1, layer-B.Cu-r2c2; layer-In1.Cu-r1c1, layer-In1.Cu-r1c2, layer-In1.Cu-r2c1, layer-In1.Cu-r2c2; layer-In2.Cu-r1c1, layer-In2.Cu-r1c2, layer-In2.Cu-r2c1, layer-In2.Cu-r2c2; placement-r1c1, placement-r1c2, placement-r2c1, placement-r2c2 (whole board)",
+   "Verdict": "fail"
+  },
+  {
+   "Item": "EMI-4",
+   "Rests on": "crop-U3 (board x 52.94 to 84.94, y 40.66 to 47.21); assembly-top-r2c2 (FB1 at (82.3, 43.05)); assembly-top-r1c1, assembly-top-r1c2, assembly-top-r2c1; assembly-bottom-r1c1, assembly-bottom-r1c2, assembly-bottom-r2c1, assembly-bottom-r2c2; placement-r2c2 (FB1, U3, C3), placement-r1c1, placement-r1c2, placement-r2c1",
+   "Verdict": "fail"
+  },
+  {
+   "Item": "EMI-5",
+   "Rests on": "crop-U4 (board x 45.46 to 77.46, y 9.9 to 23.8); assembly-top-r1c1, assembly-top-r1c2, assembly-top-r2c1, assembly-top-r2c2; assembly-bottom-r1c1, assembly-bottom-r1c2, assembly-bottom-r2c1, assembly-bottom-r2c2; placement-r1c1, placement-r1c2, placement-r2c1, placement-r2c2",
+   "Verdict": "not applicable"
+  }
+ ],
+ "area-FLOOR": [
+  {
+   "Item": "FLOOR-1",
+   "Rests on": "assembly-top-r1c1, assembly-top-r1c2, assembly-top-r2c1, assembly-top-r2c2, assembly-bottom-r1c1, assembly-bottom-r1c2, assembly-bottom-r2c1, assembly-bottom-r2c2, classes-r1c1, classes-r1c2, classes-r2c1, classes-r2c2, placement-r1c1, placement-r1c2, placement-r2c1, placement-r2c2 (placement REGION lines in measures.txt); whole board",
+   "Verdict": "pass"
+  },
+  {
+   "Item": "FLOOR-2",
+   "Rests on": "layer-F.Cu-r1c1, layer-F.Cu-r1c2, layer-F.Cu-r2c1, layer-F.Cu-r2c2, layer-In1.Cu-r1c1, layer-In1.Cu-r1c2, layer-In1.Cu-r2c1, layer-In1.Cu-r2c2, layer-In2.Cu-r1c1, layer-In2.Cu-r1c2, layer-In2.Cu-r2c1, layer-In2.Cu-r2c2, layer-B.Cu-r1c1, layer-B.Cu-r1c2, layer-B.Cu-r2c1, layer-B.Cu-r2c2, net-_AMP_FB-r1c1, net-_AMP_FB-r1c2, net-_AMP_FB-r2c1, net-_AMP_FB-r2c2, net-_AMP_OUT-r1c1, net-_AMP_OUT-r1c2, net-_AMP_OUT-r2c1, net-_AMP_OUT-r2c2, classes-r1c1, classes-r1c2, classes-r2c1, classes-r2c2; whole board, the failing place being (57, 28) to (57, 36) on layer-B.Cu-r1c2 and layer-B.Cu-r2c2",
+   "Verdict": "fail"
+  },
+  {
+   "Item": "FLOOR-3",
+   "Rests on": "assembly-top-r1c1, assembly-top-r1c2, assembly-top-r2c1, assembly-top-r2c2, assembly-bottom-r1c1, assembly-bottom-r1c2, assembly-bottom-r2c1, assembly-bottom-r2c2, net-_GND-r1c1, net-_GND-r1c2, net-_GND-r2c1, net-_GND-r2c2, net-_+3V3-r1c1, net-_+3V3-r1c2, net-_+3V3-r2c1, net-_+3V3-r2c2, net-_+3V3A-r1c1, net-_+3V3A-r1c2, net-_+3V3A-r2c1, net-_+3V3A-r2c2, net-_+5V-r1c1, net-_+5V-r1c2, net-_+5V-r2c1, net-_+5V-r2c2, classes-r1c1, classes-r1c2, classes-r2c1, classes-r2c2, placement-r1c1, placement-r1c2, placement-r2c1, placement-r2c2; whole board",
+   "Verdict": "fail"
+  },
+  {
+   "Item": "FLOOR-4",
+   "Rests on": "check-report.txt: DESIGN line for review-proof.kicad_pro is PASS with no VIOLATION line under it; design-rules.md rows Mains region parts, Low voltage region parts, Analog sensing region parts and Digital region parts, read against layout-plan.md floorplan table and review-proof.kicad_dru lines 32-43; placement-r1c1, placement-r1c2, placement-r2c1, placement-r2c2 (rule areas at the region bounds); whole board",
+   "Verdict": "pass"
+  },
+  {
+   "Item": "FLOOR-5",
+   "Rests on": "assembly-top-r1c1 at (6, 18.92) for J1 and (37, 3.5) for J2, assembly-top-r2c2 at (50.3, 55.5) for J4, assembly-bottom-r1c1, assembly-bottom-r2c1, assembly-bottom-r2c2 (no connector on the bottom side), placement-r1c1, placement-r2c2",
+   "Verdict": "pass"
+  }
+ ],
+ "area-GROUND": [
+  {
+   "Item": "GROUND-1",
+   "Rests on": "net-_GND-r1c1, net-_GND-r1c2, net-_GND-r2c1, net-_GND-r2c2 (whole board); layer-F.Cu, layer-In1.Cu, layer-In2.Cu, layer-B.Cu tiles r1c1, r1c2, r2c1, r2c2 (whole board); facts.txt line NET /GND",
+   "Verdict": "fail"
+  },
+  {
+   "Item": "GROUND-2",
+   "Rests on": "layer-In1.Cu and layer-In2.Cu tiles r1c1, r1c2, r2c1, r2c2 (whole board); layer-F.Cu and layer-B.Cu tiles r1c1, r1c2, r2c1, r2c2 (whole board); net-_GND tiles r1c1, r1c2, r2c1, r2c2; net-_AMP_OUT and net-_AMP_FB (whole board)",
+   "Verdict": "fail"
+  },
+  {
+   "Item": "GROUND-3",
+   "Rests on": "layer-In1.Cu and layer-In2.Cu tiles r1c1, r1c2, r2c1, r2c2 (whole board); net-_GND tiles r1c1, r1c2, r2c1, r2c2; net-_AMP_OUT tiles r1c1, r1c2, r2c1, r2c2",
+   "Verdict": "fail"
+  },
+  {
+   "Item": "GROUND-4",
+   "Rests on": "crop-U2 (board x 27.015 to 59.015, y -0.85 to 59.8); crop-U3 (board x 52.94 to 84.94, y 40.66 to 47.21); crop-U4 (board x 45.46 to 77.46, y 9.9 to 23.8); net-_GND tiles r1c1, r1c2, r2c1, r2c2",
+   "Verdict": "fail"
+  },
+  {
+   "Item": "GROUND-5",
+   "Rests on": "check-report.txt DESIGN line (PASS, no VIOLATION line); design-rules.md row Plated hole spacing (1.45 mm); review-proof.kicad_dru rule Plated hole spacing; layer-In1.Cu and layer-In2.Cu tiles r1c1, r1c2, r2c1, r2c2 (whole board); layer-F.Cu and layer-B.Cu tiles r1c1, r1c2, r2c1, r2c2",
+   "Verdict": "fail"
+  }
+ ],
+ "area-MAINS": [
+  {
+   "Item": "MAINS-1",
+   "Rests on": "check-report.txt: the board's DESIGN line (PASS), with no VIOLATION line under it; design-rules.md rows 'Mains separation, clearance' (3 mm) and 'Mains separation, creepage' (4 mm); review-proof.kicad_dru rule 'Mains separation'; separation-basis.yaml mains_to_low_voltage",
+   "Verdict": "pass"
+  },
+  {
+   "Item": "MAINS-2",
+   "Rests on": "classes-r1c1 and classes-r2c1 (board x -1.34 to 45.86, y -1.025 to 61.675, the whole mains region x 0 to 28); layer-F.Cu-r1c1, layer-F.Cu-r2c1; layer-In1.Cu-r1c1, layer-In1.Cu-r2c1; layer-In2.Cu-r1c1, layer-In2.Cu-r2c1; layer-B.Cu-r1c1, layer-B.Cu-r2c1; assembly-top-r1c1, assembly-top-r2c1; assembly-bottom-r1c1, assembly-bottom-r2c1; placement-r1c1, placement-r2c1 (mains region (0, 0)-(28, 60))",
+   "Verdict": "pass"
+  },
+  {
+   "Item": "MAINS-3",
+   "Rests on": "layer-F.Cu-r1c1, layer-In1.Cu-r1c1, layer-In2.Cu-r1c1, layer-B.Cu-r1c1 (board x -1.34 to 45.86, y -1.025 to 30.325; U1 is at y 18.92 to 24); classes-r1c1; crop-U1 (board x 12 to 44, y 15.9 to 27.05)",
+   "Verdict": "pass"
+  },
+  {
+   "Item": "MAINS-4",
+   "Rests on": "layer-Edge.Cuts-r1c1 (board x -1.34 to 45.86, y -1.025 to 30.325); assembly-top-r1c1; assembly-bottom-r1c1; crop-U1 (board x 12 to 44, y 15.9 to 27.05)",
+   "Verdict": "pass"
+  },
+  {
+   "Item": "MAINS-5",
+   "Rests on": "check-report.txt: the board's DESIGN line (PASS), with no mains_barrier VIOLATION line under it, and the line 'FIGURE | ... | MAINS-5 barrier copper | BARRIER_COPPER_MM2 | 0 mm\u00b2 of copper at most between the pad rows of a part that bridges the barrier'; design-rules.md row 'Barrier copper' (0 mm\u00b2, project text variable BARRIER_COPPER_MM2, source MAINS-5)",
+   "Verdict": "pass"
+  }
+ ],
+ "area-MFG": [
+  {
+   "Item": "MFG-1",
+   "Rests on": "check-report.txt DESIGN line for review-proof.kicad_pro (no VIOLATION line); design-rules.md rows Minimum clearance, Minimum track width, Minimum connection width, Minimum annular width, Minimum via diameter, Minimum hole size, Hole to hole, Copper to hole, Copper to board edge, Silkscreen clearance, Silkscreen text height, Silkscreen line width; review-proof.kicad_pro board_setup minimums; JLCPCB capabilities page and PCB Assembly FAQ Part 2 item 14, fetched; whole board",
+   "Verdict": "fail"
+  },
+  {
+   "Item": "MFG-2",
+   "Rests on": "layer-F.Paste-r1c2 at U4 (62.5, 14), board x 45.8598 to 93.0598, y -1.025 to 30.325; layer-B.Paste-r1c2, same bounds, empty. U4 is the only exposed-pad part and sits on F.Cu inside these bounds, so no other tile reaches it",
+   "Verdict": "pass"
+  },
+  {
+   "Item": "MFG-3",
+   "Rests on": "layer-F.Mask-r1c2 at U4 (62.5, 14), board x 45.8598 to 93.0598, y -1.025 to 30.325; layer-B.Mask-r1c2, same bounds, empty; crop-U4, board x 45.46 to 77.46, y 9.9 to 23.8",
+   "Verdict": "pass"
+  },
+  {
+   "Item": "MFG-4",
+   "Rests on": "check-report.txt DESIGN line (no paste_via VIOLATION) and FIGURE line MFG-4 paste over a via, PASTE_OVER_VIA_MM2, 0 mm2; design-rules.md row Paste over a via, 0 mm2; review-proof.kicad_pro text variable PASTE_OVER_VIA_MM2 = 0; whole board",
+   "Verdict": "pass"
+  },
+  {
+   "Item": "MFG-5",
+   "Rests on": "check-report.txt DESIGN line (no starved_thermal or ground_relief VIOLATION); design-rules.md row Ground pad reliefs; review-proof.kicad_dru rule Ground pad reliefs; layer-F.Cu r1c1 r1c2 r2c1 r2c2; layer-B.Cu r1c1 r1c2 r2c1 r2c2; layer-In1.Cu r1c1 r1c2 r2c1 r2c2; layer-In2.Cu r1c1 r1c2 r2c1 r2c2, each whole board",
+   "Verdict": "pass"
+  },
+  {
+   "Item": "MFG-6",
+   "Rests on": "check-report.txt DESIGN line (no pour_gap VIOLATION) and FIGURE line MFG-6 pour gap, Board Setup min_clearance, 0.15 mm; design-rules.md rows Pour gap and Minimum clearance (0.15 mm, matching JLCPCB 0.15 mm at 2 oz); whole board",
+   "Verdict": "pass"
+  },
+  {
+   "Item": "MFG-7",
+   "Rests on": "check-report.txt DESIGN line (no reference_off_silkscreen VIOLATION) and FIGURE line MFG-7 reference on silkscreen, none, inherent zero; design-rules.md row Reference designators on silkscreen; layer-F.SilkS r1c1 r1c2 r2c1 r2c2; layer-B.SilkS r1c1 r1c2 r2c1 r2c2, each whole board",
+   "Verdict": "pass"
+  },
+  {
+   "Item": "MFG-8",
+   "Rests on": "layer-F.SilkS r1c1 r1c2 r2c1 r2c2; layer-B.SilkS r1c1 r1c2 r2c1 r2c2; 3d-top; 3d-bottom, each whole board",
+   "Verdict": "pass"
+  },
+  {
+   "Item": "MFG-9",
+   "Rests on": "check-report.txt DESIGN line (no designator_astray VIOLATION) and FIGURE line MFG-9 designator beside its part, none, inherent zero; design-rules.md row Designators beside their parts; layer-F.SilkS r1c1 r1c2 r2c1 r2c2; layer-B.SilkS r1c1 r1c2 r2c1 r2c2, each whole board",
+   "Verdict": "pass"
+  },
+  {
+   "Item": "MFG-10",
+   "Rests on": "check-report.txt DESIGN line (no side_fiducials VIOLATION) and FIGURE line MFG-10 fiducials on a side, 3 fiducials at least; design-rules.md row Fiducials per assembled side; layer-F.Cu r1c1 r1c2 r2c1 r2c2; layer-B.Cu r1c1 r1c2 r2c1 r2c2, each whole board",
+   "Verdict": "pass"
+  }
+ ],
+ "area-POWER": [
+  {
+   "Item": "POWER-1",
+   "Rests on": "check-report.txt: DESIGN line for review-proof.kicad_pro (PASS) with no VIOLATION line under it, whole board; design-rules.md rows Mains track width, Power track width, Ground track width and Supply track width, with review-proof.kicad_dru rules of the same names",
+   "Verdict": "pass"
+  },
+  {
+   "Item": "POWER-2",
+   "Rests on": "net-_+5V-r1c1 (x -1.34 to 45.86, y -1.03 to 30.33); net-_+5V-r1c2; net-_+5V-r2c1 (x -1.34 to 45.86, y 30.33 to 61.68, the loop at about (22, 47)-(22, 50)); net-_+5V-r2c2; net-_+3V3-r1c2 (x 45.86 to 93.06, y -1.03 to 30.33, the loop at about (54.5, 4)-(56.5, 16)); net-_+3V3-r1c1; net-_+3V3-r2c2; net-_+3V3A-r2c2; net-_LOAD_RTN-r2c2; net-_LOAD_RTN-r1c1; net-_LOAD_RTN-r1c2; net-_LOAD_RTN-r2c1; net-_MAINS_L-r1c1; net-_MAINS_SW-r1c1; classes-r2c1; placement-r2c1; facts.txt",
+   "Verdict": "fail"
+  },
+  {
+   "Item": "POWER-3",
+   "Rests on": "net-_GND-r2c2 (x 45.86 to 93.06, y 30.33 to 61.68, the five vias at about x 62.96, y 54 to 58.8); net-_+5V-r1c1; net-_+5V-r2c1; net-_+5V-r2c2; net-_LOAD_RTN-r2c2; net-_MAINS_L-r1c1; net-_MAINS_SW-r1c1; net-_+3V3-r1c1; net-_+3V3-r1c2; net-_+3V3-r2c2; net-_+3V3A-r2c2; facts.txt",
+   "Verdict": "pass"
+  },
+  {
+   "Item": "POWER-4",
+   "Rests on": "crop-U4 (x 45.46 to 77.46, y 9.9 to 23.8); layer-F.Cu-r1c2 (x 45.86 to 93.06, y -1.03 to 30.33); layer-B.Cu-r1c2; layer-In1.Cu-r1c2; layer-In2.Cu-r1c2; layer-F.Mask-r1c2",
+   "Verdict": "fail"
+  },
+  {
+   "Item": "POWER-5",
+   "Rests on": "layer-F.Cu-r1c1 (x -1.34 to 45.86, y -1.03 to 30.33); layer-B.Cu-r1c1; assembly-top-r1c1",
+   "Verdict": "fail"
+  }
+ ],
+ "area-SENSE": [
+  {
+   "Item": "SENSE-1",
+   "Rests on": "net-_LOAD_RTN-r2c2.png (x 45.86 to 93.06, y 30.325 to 61.675); net-_AMP_FB-r2c2.png (same board place); net-_AMP_FB-r1c2.png and net-_AMP_OUT-r1c2.png (x 45.86 to 93.06, y -1.025 to 30.325); layer-F.Cu-r2c2.png (x 45.86 to 93.06, y 30.325 to 61.675); crop-U3.png (x 52.94 to 84.94, y 40.66 to 47.21)",
+   "Verdict": "fail"
+  },
+  {
+   "Item": "SENSE-2",
+   "Rests on": "placement-r1c2.png (U4, x 45.86 to 93.06, y -1.025 to 30.325); placement-r2c2.png (U3, x 45.86 to 93.06, y 30.325 to 61.675); facts.txt",
+   "Verdict": "not applicable"
+  },
+  {
+   "Item": "SENSE-3",
+   "Rests on": "crop-U3.png (x 52.94 to 84.94, y 40.66 to 47.21); net-_AMP_FB-r2c2.png (x 45.86 to 93.06, y 30.325 to 61.675); placement-r2c2.png (same board place)",
+   "Verdict": "pass"
+  },
+  {
+   "Item": "SENSE-4",
+   "Rests on": "net-_AMP_OUT-r1c2.png (x 45.86 to 93.06, y -1.025 to 30.325); net-_AMP_OUT-r2c2.png (x 45.86 to 93.06, y 30.325 to 61.675); net-_AMP_FB-r1c2.png and net-_AMP_FB-r2c2.png (same board places); classes-r1c2.png and classes-r2c2.png (same board places); layer-B.Cu-r1c2.png and layer-B.Cu-r2c2.png; layer-F.Cu-r1c2.png and layer-F.Cu-r2c2.png; layer-In1.Cu-r1c2.png and layer-In1.Cu-r2c2.png; layer-In2.Cu-r1c2.png and layer-In2.Cu-r2c2.png",
+   "Verdict": "fail"
+  },
+  {
+   "Item": "SENSE-5",
+   "Rests on": "assembly-top-r2c2.png (x 45.86 to 93.06, y 30.325 to 61.675); assembly-top-r1c2.png (x 45.86 to 93.06, y -1.025 to 30.325); assembly-bottom-r2c2.png (same board place as the first); 3d-angled.png (whole board); placement-r2c2.png (same board place as the first)",
+   "Verdict": "pass"
+  },
+  {
+   "Item": "SENSE-6",
+   "Rests on": "check-report.txt (DESIGN PASS with no VIOLATION line; FIGURE SENSE-6 sensing clearance, board-rules.yaml sensing.clearance_mm, 0.5 mm; whole board); design-rules.md (no row for the rules sensing_clearance and sensing_override; whole board); classes-r2c2.png (x 45.86 to 93.06, y 30.325 to 61.675); classes-r1c2.png (x 45.86 to 93.06, y -1.025 to 30.325); net-_AMP_OUT-r2c2.png and net-_AMP_FB-r2c2.png (same board place as the first)",
+   "Verdict": "fail"
+  }
+ ],
+ "area-TEST": [
+  {
+   "Item": "TEST-1",
+   "Rests on": "assembly-top-r1c1 and assembly-bottom-r1c1 at TP1 (37, 30), TP2 (38.5, 19) and U1, J1, J2; assembly-top-r2c1 and assembly-bottom-r2c1 at TP1 (37, 30); assembly-top-r2c2 and assembly-bottom-r2c2 at TP3 (49, 49.7), TP4 (57.04, 47.2), TP5 (62.96, 56.4), TP6 (66, 47.9) and J4; layer-F.Cu-r1c1, layer-F.Cu-r2c1, layer-F.Cu-r2c2, layer-B.Cu-r1c1, layer-B.Cu-r2c1, layer-B.Cu-r2c2 at the same places; 3d-angled whole board; placement-r1c1, placement-r2c1, placement-r2c2 at the same places",
+   "Verdict": "pass"
+  },
+  {
+   "Item": "TEST-2",
+   "Rests on": "assembly-top-r2c2 at TP5 (62.96, 56.4); assembly-bottom-r2c2 at TP3 (49, 49.7), TP4 (57.04, 47.2), TP6 (66, 47.9); assembly-bottom-r1c1 at TP1 (37, 30) and TP2 (38.5, 19); 3d-angled whole board; placement-r2c2 at TP5 (62.96, 56.4)",
+   "Verdict": "fail"
+  },
+  {
+   "Item": "TEST-3",
+   "Rests on": "assembly-top-r2c2 and assembly-bottom-r2c2 at R1 (57.04 to 62.96, 51) and TP3 to TP6; net-_LOAD_RTN-r2c2 at (49, 49.7) to (64.5, 45); net-_GND-r2c2 at (62.96, 49) to (62.96, 58.8) and (66, 47.9)",
+   "Verdict": "pass"
+  },
+  {
+   "Item": "TEST-4",
+   "Rests on": "assembly-top-r2c2 and assembly-bottom-r2c2 at (49 to 66, 47 to 57); net-_LOAD_RTN-r2c2 at (53.8, 55.5) to (64.5, 45); net-_GND-r2c2 at (62.96, 49) to (66, 47.9); layer-F.Cu-r2c2, layer-In1.Cu-r2c2, layer-In2.Cu-r2c2, layer-B.Cu-r2c2 at (49 to 66, 44 to 58)",
+   "Verdict": "fail"
+  },
+  {
+   "Item": "TEST-5",
+   "Rests on": "check-report.txt: the DESIGN line for review-proof.kicad_pro (PASS, no VIOLATION line under it) and the FIGURE line TEST-5 test point to courtyard, TEST_COURTYARD_MM, 1 mm at least; design-rules.md row Test pad to courtyard (1 mm, project text variable TEST_COURTYARD_MM); review-proof.kicad_pro text variable TEST_COURTYARD_MM set to 1",
+   "Verdict": "pass"
+  }
+ ],
+ "area-WORK": [
+  {
+   "Item": "WORK-1",
+   "Rests on": "placement (placement-r1c1, placement-r1c2, placement-r2c1, placement-r2c2; whole board); assembly-top (r1c1, r1c2, r2c1, r2c2; whole board); assembly-bottom (r1c1, r1c2, r2c1, r2c2; whole board); layer-F.Cu, layer-In1.Cu, layer-In2.Cu, layer-B.Cu (each r1c1, r1c2, r2c1, r2c2; whole board); net-_+3V3, net-_+3V3A, net-_+5V, net-_AMP_FB, net-_AMP_OUT, net-_GND, net-_LOAD_RTN, net-_MAINS_L, net-_MAINS_SW (each r1c1, r1c2, r2c1, r2c2; whole board); layout file positions",
+   "Verdict": "fail"
+  },
+  {
+   "Item": "WORK-2",
+   "Rests on": "check-report.txt DESIGN line (no VIOLATION) and FIGURE line WORK-2 route length WORK_DETOUR_RATIO 2; design-rules.md row Route length 2; review-proof.kicad_pro WORK_DETOUR_RATIO 2; whole board",
+   "Verdict": "fail"
+  },
+  {
+   "Item": "WORK-3",
+   "Rests on": "layer-F.Cu, layer-In1.Cu, layer-In2.Cu, layer-B.Cu (each r1c1, r1c2, r2c1, r2c2; whole board); net-_+3V3, net-_+3V3A, net-_+5V, net-_AMP_FB, net-_AMP_OUT, net-_GND, net-_LOAD_RTN, net-_MAINS_L, net-_MAINS_SW (each r1c1, r1c2, r2c1, r2c2; whole board); classes (r1c1, r1c2, r2c1, r2c2; whole board)",
+   "Verdict": "fail"
+  },
+  {
+   "Item": "WORK-4",
+   "Rests on": "check-report.txt DESIGN line (no VIOLATION) and FIGURE lines WORK-4 corner at a pad (90 degrees) and WORK-4 branch at a pad (90 degrees); design-rules.md rows Corners 90 and Branches at a pad 90; review-proof.kicad_dru line 20 track_angle min 90; whole board",
+   "Verdict": "fail"
+  },
+  {
+   "Item": "WORK-5",
+   "Rests on": "check-report.txt DESIGN line (no VIOLATION); design-rules.md row Jogs 0.3 mm; review-proof.kicad_dru line 22 track_segment_length min 0.3mm; whole board",
+   "Verdict": "fail"
+  },
+  {
+   "Item": "WORK-6",
+   "Rests on": "check-report.txt DESIGN line (no VIOLATION); design-rules.md (no row for KiCad's track_dangling check); whole board",
+   "Verdict": "fail"
+  },
+  {
+   "Item": "WORK-7",
+   "Rests on": "check-report.txt DESIGN line (no VIOLATION); design-rules.md (no row for KiCad's via_dangling check); whole board",
+   "Verdict": "fail"
+  },
+  {
+   "Item": "WORK-8",
+   "Rests on": "check-report.txt DESIGN line (no VIOLATION) and FIGURE line WORK-8 narrowing WORK_NECK_MM 8 mm; design-rules.md row Necks 8 mm; review-proof.kicad_pro WORK_NECK_MM 8; whole board",
+   "Verdict": "fail"
+  },
+  {
+   "Item": "WORK-9",
+   "Rests on": "check-report.txt DESIGN line (no VIOLATION) and FIGURE line WORK-9 direction WORK_ANGLE_TOLERANCE_DEG 15 degrees; design-rules.md row Track directions 15 degrees; review-proof.kicad_pro WORK_ANGLE_TOLERANCE_DEG 15; whole board",
+   "Verdict": "fail"
+  },
+  {
+   "Item": "WORK-10",
+   "Rests on": "check-report.txt DESIGN line (no VIOLATION) and FIGURE line WORK-10 pad entry WORK_PAD_ENTRY_RATIO 10; design-rules.md row Pad entries 10; review-proof.kicad_pro WORK_PAD_ENTRY_RATIO 10; whole board (applies: U4's QFN leads and U3's SOT-23-5 leads are pads more than twice as long as wide)",
+   "Verdict": "fail"
+  }
+ ],
+ "plan-and-free-pass": []
+}

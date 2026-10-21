@@ -2,13 +2,13 @@ id: DEC-REVIEW-FAN-OUT-BY-UNIT-FROM-SHARED-SETUP
 type: decision
 category: operational
 title: A judged review that divides into independent units is carried out by one setup session and one forked read-only reviewer per unit, merged by a deterministic step
-status: active
-version: 1
+status: deprecated
+version: 2
 decided_by: david
 text: |
   A review whose checklist divides into units that are judged independently, and whose units share a large read-only body of material, is carried out by one setup session that reads the shared material once and one reviewer per unit forked from that session, the forks running at the same time with read-only tools and their results merged by a deterministic step. The board design method's judged reviews are the cases this applies to: the layout review and the critical-routing check by catalogue area, the schematic review by catalogue area, and the production-files check by group of placed parts and by group of fabrication layers.
 
-  A fork inherits the setup session's context and nothing else, so a unit's reviewer never holds another unit's verdicts or the images another unit opened. The setup session holds only documents and records, never a verdict, a seed list or a designer's reasoning, so a forked reviewer is as blind as a fresh one. The reviewers run at the model the setup session runs at, which is the mid-tier the blind proofs already require, and with the read tools the proofs already grant, which the driver sets for each fork.
+  A fork inherits the setup session's context and nothing else, so a unit's reviewer never holds another unit's verdicts or the images another unit opened. The setup session holds only documents and records, never a verdict, a seed list or a designer's reasoning, so a forked reviewer is as blind as a fresh one. Its history may hold a thinking block whose text is empty, because the model cannot be reliably asked not to think and the block carries no text to inherit; the session is read-only, is asked to judge nothing and is barred from opening the board's design and views, so it has nothing to form a verdict about. The reviewers run at the model the setup session runs at, which is the mid-tier the blind proofs already require, and with the read tools the proofs already grant, which the driver sets for each fork.
 
   What does not fan out: steps that write files, steps that drive the board editor through the Konnect toolsets (visible only to the session that loaded them), and steps whose units depend on an earlier unit's result. A review with one unit, such as a narrow round that touches one area, is not forked: the setup session judges the unit itself, which costs what a fresh session costs, so every judged review can be run through the one command and the command decides from the units it finds. A review with two or more units forks them.
 rationale: |
@@ -46,3 +46,5 @@ links:
     type: addresses
   - target: OBL-VERIFICATION-DISCIPLINE-001.C9
     type: addresses
+attributes:
+  deprecation_reason: Measured at the layout review's full unit count it cost twice the single reviewer and missed a seed; replaced by the shared-context decision

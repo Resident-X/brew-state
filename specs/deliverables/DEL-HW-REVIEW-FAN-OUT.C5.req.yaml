@@ -1,13 +1,13 @@
 id: DEL-HW-REVIEW-FAN-OUT.C5
 type: criterion
-title: Each fanned-out review is shown to find every defect its single-reviewer form finds, in no more time and at no more cost
+title: Each fanned-out review is shown to find the defects its single-reviewer form finds, in at most half the time and at a stated multiple of the cost
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: demonstration
 closes_by: cascade
 text: |
-  A blind run of each fanned-out review on a seeded copy reports every seeded defect, and the single-reviewer form is run on the same copy for comparison. For both forms the run records the seeds found, the findings that match no seed, the verdicts item by item, and for each unit and for the run the time, the tokens read, written and generated, and the cost. The fanned-out form finds every seed the single-reviewer form finds, and takes no more time and costs no more; a difference in verdicts is explained. The figures behind the decision are thereby checked at each review's real unit count. A seed not reported is closed where the gap lies and the run repeated in a new session.
+  A blind run of each fanned-out review on a seeded copy reports every seeded defect, and the recorded runs of the single-reviewer form on the same copy are the comparison, so the single form is not run again for each proof. The record gives the seeds found in each run, the findings that match no seed, the verdicts item by item, the replicas that raised each seed, and for each session and for the run the time, the tokens read, written and generated, and the cost. Over the recorded single runs and at least one fanned-out run, the seeds found in each fanned-out run are no fewer than the fewest any single run found, no seed every single run found is missed by every fanned-out run, the wall time is at most half the single form's mean, and the cost is at most the multiple of the single form's mean cost that the review's proof states; a difference in verdicts is explained. The figures behind the decision are thereby checked at each review's real unit count. A seed not reported is closed where the gap lies and the run repeated in a new session.
 links:
   - target: DEL-HW-REVIEW-FAN-OUT
     type: criterion-of

@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-KIT-C4-TEST-43
+type: evidence
+title: test evidence for SOL-HW-REVIEW-KIT.C4
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-21T09:27:54.540833Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_kit_streamcheck.py::test_a_row_that_cannot_be_read_is_flagged_and_a_row_without_the_column_cites_nothing
+  artifact_version: 799201b5a5f1ee1a4fd74ad560081d88d5c8d3aa
+attested_by: crun-053588c2ff8878eb
+links:
+  - target: SOL-HW-REVIEW-KIT.C4
+    type: satisfies

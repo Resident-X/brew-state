@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-KIT-C13-TEST
+type: evidence
+title: test evidence for SOL-HW-REVIEW-KIT.C13
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-21T09:28:11.805431Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_kit_caller.py::test_a_caller_defining_none_behaves_as_one_defining_the_defaults
+  artifact_version: 799201b5a5f1ee1a4fd74ad560081d88d5c8d3aa
+attested_by: crun-053588c2ff8878eb
+links:
+  - target: SOL-HW-REVIEW-KIT.C13
+    type: satisfies

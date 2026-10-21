@@ -1,0 +1,1411 @@
+{
+ "version": 1,
+ "source": "Five single-reviewer runs of the layout review proof on its seeded copy (21 seeded defects), made at five tool commits and five seeded-copy commits and recorded in each run's proof report and answer. Seeds found, findings matching no seed and the verdicts are read from each run's answer by the proof's own round parser and seed matcher; wall time, cost and tokens are the proof report's figures for the one session of the run. Not recorded: each session's first-call cache read (null, named in the run's not_recorded), and the rendered single-reviewer prompt, whose hash here is the SHA-256 of the source text of the prompt functions single_prompt and prompt_preface, identical at all five tool commits. The design in the key is the git tree id of the proof design folder, identical at all five tool commits. The seed list hash is the SHA-256 of the seed list's canonical JSON (keys sorted, no spaces) and the list is not copied here. Run 1 and run 2 found all 21 seeds, run 3 missed 2 (S1, S11), run 4 missed 1 (S1), run 5 found all 21.",
+ "seeds": [
+  {
+   "id": "S1",
+   "item": "GROUND-1"
+  },
+  {
+   "id": "S2",
+   "item": "DECOUPLE-1"
+  },
+  {
+   "id": "S3",
+   "item": "POWER-5"
+  },
+  {
+   "id": "S4",
+   "item": "MAINS-2"
+  },
+  {
+   "id": "S5",
+   "item": "FLOOR-2"
+  },
+  {
+   "id": "S6",
+   "item": "SENSE-1"
+  },
+  {
+   "id": "S7",
+   "item": "CLOCK-1"
+  },
+  {
+   "id": "S8",
+   "item": "CONN-1"
+  },
+  {
+   "id": "S9",
+   "item": "TEST-2"
+  },
+  {
+   "id": "S10",
+   "item": "MFG-1"
+  },
+  {
+   "id": "S11",
+   "item": "EMI-4"
+  },
+  {
+   "id": "S12",
+   "item": "WORK-1"
+  },
+  {
+   "id": "S13",
+   "item": "WORK-3"
+  },
+  {
+   "id": "S14",
+   "item": "WORK-2"
+  },
+  {
+   "id": "S15",
+   "item": "WORK-4"
+  },
+  {
+   "id": "S16",
+   "item": "WORK-5"
+  },
+  {
+   "id": "S17",
+   "item": "WORK-8"
+  },
+  {
+   "id": "S18",
+   "item": "WORK-9"
+  },
+  {
+   "id": "S19",
+   "item": "WORK-10"
+  },
+  {
+   "id": "S20",
+   "item": "WORK-6"
+  },
+  {
+   "id": "S21",
+   "item": "WORK-7"
+  }
+ ],
+ "baselines": [
+  {
+   "key": {
+    "seeds": "59e51fa8ca177df3b3f933505df203ee665a4bd4e4d700b7108c0e9d12556d06",
+    "design": "a0bc3eb7da4d111ab94f62bc3652cc26ccf0eed3",
+    "model": "claude-sonnet-5-5",
+    "form": "single",
+    "prompt": "ca90e542e3fc18fa114622aac0376f016c0dd74b386de98dedf9e9f7676f5c4e"
+   },
+   "runs": [
+    {
+     "id": "layout-single-1",
+     "form": "single",
+     "tool_commit": "740cab46ca119dfce528f8c6923e131183a7937d",
+     "seeded_commit": "aef4f856987566fdf421c7ed9a7e16dc22ee9188",
+     "seeds_found": [
+      "S1",
+      "S2",
+      "S3",
+      "S4",
+      "S5",
+      "S6",
+      "S7",
+      "S8",
+      "S9",
+      "S10",
+      "S11",
+      "S12",
+      "S13",
+      "S14",
+      "S15",
+      "S16",
+      "S17",
+      "S18",
+      "S19",
+      "S20",
+      "S21"
+     ],
+     "unmatched": [
+      "FLOOR-3",
+      "POWER-2",
+      "POWER-4",
+      "GROUND-2",
+      "GROUND-3",
+      "GROUND-4",
+      "DECOUPLE-2",
+      "SENSE-4",
+      "SENSE-6",
+      "CLOCK-2",
+      "TEST-4",
+      "EMI-1",
+      "EMI-3",
+      "free pass"
+     ],
+     "verdicts": {
+      "FLOOR-1": "pass",
+      "FLOOR-2": "fail",
+      "FLOOR-3": "fail",
+      "FLOOR-4": "pass",
+      "FLOOR-5": "pass",
+      "POWER-1": "pass",
+      "POWER-2": "fail",
+      "POWER-3": "pass",
+      "POWER-4": "fail",
+      "POWER-5": "fail",
+      "GROUND-1": "fail",
+      "GROUND-2": "fail",
+      "GROUND-3": "fail",
+      "GROUND-4": "fail",
+      "GROUND-5": "pass",
+      "DECOUPLE-1": "fail",
+      "DECOUPLE-2": "fail",
+      "DECOUPLE-3": "not applicable",
+      "DECOUPLE-4": "not applicable",
+      "DECOUPLE-5": "not applicable",
+      "DECOUPLE-6": "pass",
+      "SENSE-1": "fail",
+      "SENSE-2": "not applicable",
+      "SENSE-3": "pass",
+      "SENSE-4": "fail",
+      "SENSE-5": "pass",
+      "SENSE-6": "fail",
+      "CLOCK-1": "fail",
+      "CLOCK-2": "fail",
+      "CLOCK-3": "pass",
+      "CLOCK-4": "pass",
+      "MAINS-1": "pass",
+      "MAINS-2": "fail",
+      "MAINS-3": "pass",
+      "MAINS-4": "pass",
+      "MAINS-5": "pass",
+      "CONN-1": "fail",
+      "CONN-2": "pass",
+      "CONN-3": "pass",
+      "CONN-4": "pass",
+      "TEST-1": "pass",
+      "TEST-2": "fail",
+      "TEST-3": "pass",
+      "TEST-4": "fail",
+      "TEST-5": "pass",
+      "MFG-1": "fail",
+      "MFG-2": "pass",
+      "MFG-3": "pass",
+      "MFG-4": "pass",
+      "MFG-5": "pass",
+      "MFG-6": "pass",
+      "MFG-7": "pass",
+      "MFG-8": "pass",
+      "MFG-9": "pass",
+      "MFG-10": "pass",
+      "EMI-1": "fail",
+      "EMI-2": "pass",
+      "EMI-3": "fail",
+      "EMI-4": "fail",
+      "EMI-5": "not applicable",
+      "WORK-1": "fail",
+      "WORK-2": "fail",
+      "WORK-3": "fail",
+      "WORK-4": "fail",
+      "WORK-5": "fail",
+      "WORK-6": "fail",
+      "WORK-7": "fail",
+      "WORK-8": "fail",
+      "WORK-9": "fail",
+      "WORK-10": "fail"
+     },
+     "raised_by": {
+      "S1": [
+       "single"
+      ],
+      "S2": [
+       "single"
+      ],
+      "S3": [
+       "single"
+      ],
+      "S4": [
+       "single"
+      ],
+      "S5": [
+       "single"
+      ],
+      "S6": [
+       "single"
+      ],
+      "S7": [
+       "single"
+      ],
+      "S8": [
+       "single"
+      ],
+      "S9": [
+       "single"
+      ],
+      "S10": [
+       "single"
+      ],
+      "S11": [
+       "single"
+      ],
+      "S12": [
+       "single"
+      ],
+      "S13": [
+       "single"
+      ],
+      "S14": [
+       "single"
+      ],
+      "S15": [
+       "single"
+      ],
+      "S16": [
+       "single"
+      ],
+      "S17": [
+       "single"
+      ],
+      "S18": [
+       "single"
+      ],
+      "S19": [
+       "single"
+      ],
+      "S20": [
+       "single"
+      ],
+      "S21": [
+       "single"
+      ]
+     },
+     "judged_by": {
+      "S1": [
+       "single"
+      ],
+      "S2": [
+       "single"
+      ],
+      "S3": [
+       "single"
+      ],
+      "S4": [
+       "single"
+      ],
+      "S5": [
+       "single"
+      ],
+      "S6": [
+       "single"
+      ],
+      "S7": [
+       "single"
+      ],
+      "S8": [
+       "single"
+      ],
+      "S9": [
+       "single"
+      ],
+      "S10": [
+       "single"
+      ],
+      "S11": [
+       "single"
+      ],
+      "S12": [
+       "single"
+      ],
+      "S13": [
+       "single"
+      ],
+      "S14": [
+       "single"
+      ],
+      "S15": [
+       "single"
+      ],
+      "S16": [
+       "single"
+      ],
+      "S17": [
+       "single"
+      ],
+      "S18": [
+       "single"
+      ],
+      "S19": [
+       "single"
+      ],
+      "S20": [
+       "single"
+      ],
+      "S21": [
+       "single"
+      ]
+     },
+     "sessions": [
+      {
+       "session": "a860b679-ae67-44bf-b1e5-bd8ef7b7bc2e",
+       "wall_s": 652.932,
+       "cost_usd": 2.20406,
+       "tokens_read": 4078454,
+       "tokens_written": 244579,
+       "tokens_generated": 81448,
+       "first_call_read": null
+      }
+     ],
+     "wall_s": 652.932,
+     "cost_usd": 2.20406,
+     "not_recorded": [
+      "first_call_read"
+     ]
+    },
+    {
+     "id": "layout-single-2",
+     "form": "single",
+     "tool_commit": "5606f54c18f963ecf273ab0583ccbaeb1f7c4eed",
+     "seeded_commit": "c1259eb0e2e2c33ca274f49966da35a7f18bf45a",
+     "seeds_found": [
+      "S1",
+      "S2",
+      "S3",
+      "S4",
+      "S5",
+      "S6",
+      "S7",
+      "S8",
+      "S9",
+      "S10",
+      "S11",
+      "S12",
+      "S13",
+      "S14",
+      "S15",
+      "S16",
+      "S17",
+      "S18",
+      "S19",
+      "S20",
+      "S21"
+     ],
+     "unmatched": [
+      "FLOOR-3",
+      "POWER-2",
+      "POWER-4",
+      "GROUND-2",
+      "GROUND-3",
+      "GROUND-4",
+      "GROUND-5",
+      "DECOUPLE-2",
+      "SENSE-4",
+      "SENSE-6",
+      "CLOCK-2",
+      "TEST-4",
+      "EMI-1",
+      "EMI-3"
+     ],
+     "verdicts": {
+      "FLOOR-1": "pass",
+      "FLOOR-2": "fail",
+      "FLOOR-3": "fail",
+      "FLOOR-4": "pass",
+      "FLOOR-5": "pass",
+      "POWER-1": "pass",
+      "POWER-2": "fail",
+      "POWER-3": "pass",
+      "POWER-4": "fail",
+      "POWER-5": "fail",
+      "GROUND-1": "fail",
+      "GROUND-2": "fail",
+      "GROUND-3": "fail",
+      "GROUND-4": "fail",
+      "GROUND-5": "fail",
+      "DECOUPLE-1": "fail",
+      "DECOUPLE-2": "fail",
+      "DECOUPLE-3": "not applicable",
+      "DECOUPLE-4": "not applicable",
+      "DECOUPLE-5": "not applicable",
+      "DECOUPLE-6": "pass",
+      "SENSE-1": "fail",
+      "SENSE-2": "not applicable",
+      "SENSE-3": "pass",
+      "SENSE-4": "fail",
+      "SENSE-5": "pass",
+      "SENSE-6": "fail",
+      "CLOCK-1": "fail",
+      "CLOCK-2": "fail",
+      "CLOCK-3": "pass",
+      "CLOCK-4": "pass",
+      "MAINS-1": "pass",
+      "MAINS-2": "fail",
+      "MAINS-3": "pass",
+      "MAINS-4": "pass",
+      "MAINS-5": "pass",
+      "CONN-1": "fail",
+      "CONN-2": "pass",
+      "CONN-3": "pass",
+      "CONN-4": "pass",
+      "TEST-1": "pass",
+      "TEST-2": "fail",
+      "TEST-3": "pass",
+      "TEST-4": "fail",
+      "TEST-5": "pass",
+      "MFG-1": "fail",
+      "MFG-2": "pass",
+      "MFG-3": "pass",
+      "MFG-4": "pass",
+      "MFG-5": "pass",
+      "MFG-6": "pass",
+      "MFG-7": "pass",
+      "MFG-8": "pass",
+      "MFG-9": "pass",
+      "MFG-10": "pass",
+      "EMI-1": "fail",
+      "EMI-2": "pass",
+      "EMI-3": "fail",
+      "EMI-4": "fail",
+      "EMI-5": "not applicable",
+      "WORK-1": "fail",
+      "WORK-2": "fail",
+      "WORK-3": "fail",
+      "WORK-4": "fail",
+      "WORK-5": "fail",
+      "WORK-6": "fail",
+      "WORK-7": "fail",
+      "WORK-8": "fail",
+      "WORK-9": "fail",
+      "WORK-10": "fail"
+     },
+     "raised_by": {
+      "S1": [
+       "single"
+      ],
+      "S2": [
+       "single"
+      ],
+      "S3": [
+       "single"
+      ],
+      "S4": [
+       "single"
+      ],
+      "S5": [
+       "single"
+      ],
+      "S6": [
+       "single"
+      ],
+      "S7": [
+       "single"
+      ],
+      "S8": [
+       "single"
+      ],
+      "S9": [
+       "single"
+      ],
+      "S10": [
+       "single"
+      ],
+      "S11": [
+       "single"
+      ],
+      "S12": [
+       "single"
+      ],
+      "S13": [
+       "single"
+      ],
+      "S14": [
+       "single"
+      ],
+      "S15": [
+       "single"
+      ],
+      "S16": [
+       "single"
+      ],
+      "S17": [
+       "single"
+      ],
+      "S18": [
+       "single"
+      ],
+      "S19": [
+       "single"
+      ],
+      "S20": [
+       "single"
+      ],
+      "S21": [
+       "single"
+      ]
+     },
+     "judged_by": {
+      "S1": [
+       "single"
+      ],
+      "S2": [
+       "single"
+      ],
+      "S3": [
+       "single"
+      ],
+      "S4": [
+       "single"
+      ],
+      "S5": [
+       "single"
+      ],
+      "S6": [
+       "single"
+      ],
+      "S7": [
+       "single"
+      ],
+      "S8": [
+       "single"
+      ],
+      "S9": [
+       "single"
+      ],
+      "S10": [
+       "single"
+      ],
+      "S11": [
+       "single"
+      ],
+      "S12": [
+       "single"
+      ],
+      "S13": [
+       "single"
+      ],
+      "S14": [
+       "single"
+      ],
+      "S15": [
+       "single"
+      ],
+      "S16": [
+       "single"
+      ],
+      "S17": [
+       "single"
+      ],
+      "S18": [
+       "single"
+      ],
+      "S19": [
+       "single"
+      ],
+      "S20": [
+       "single"
+      ],
+      "S21": [
+       "single"
+      ]
+     },
+     "sessions": [
+      {
+       "session": "29ccdfc3-08fc-4f87-9951-5989336180a0",
+       "wall_s": 705.512,
+       "cost_usd": 2.460667,
+       "tokens_read": 5271886,
+       "tokens_written": 261992,
+       "tokens_generated": 88172,
+       "first_call_read": null
+      }
+     ],
+     "wall_s": 705.512,
+     "cost_usd": 2.460667,
+     "not_recorded": [
+      "first_call_read"
+     ]
+    },
+    {
+     "id": "layout-single-3",
+     "form": "single",
+     "tool_commit": "0882bdee0a15fb04e2a69eec07332e26ef942d94",
+     "seeded_commit": "6c86daadf1643cc05c700aa723075720ba9cb9ed",
+     "seeds_found": [
+      "S2",
+      "S3",
+      "S4",
+      "S5",
+      "S6",
+      "S7",
+      "S8",
+      "S9",
+      "S10",
+      "S12",
+      "S13",
+      "S14",
+      "S15",
+      "S16",
+      "S17",
+      "S18",
+      "S19",
+      "S20",
+      "S21"
+     ],
+     "unmatched": [
+      "FLOOR-3",
+      "POWER-2",
+      "POWER-4",
+      "GROUND-2",
+      "GROUND-3",
+      "GROUND-4",
+      "GROUND-5",
+      "DECOUPLE-2",
+      "SENSE-4",
+      "SENSE-6",
+      "CLOCK-2",
+      "TEST-4",
+      "EMI-1",
+      "EMI-3",
+      "plan: TEST-1 row",
+      "plan: MFG-6 row"
+     ],
+     "verdicts": {
+      "FLOOR-2": "fail",
+      "FLOOR-3": "fail",
+      "FLOOR-4": "pass",
+      "FLOOR-5": "pass",
+      "POWER-1": "pass",
+      "POWER-2": "fail",
+      "POWER-3": "pass",
+      "POWER-4": "fail",
+      "POWER-5": "fail",
+      "GROUND-1": "fail",
+      "GROUND-2": "fail",
+      "GROUND-3": "fail",
+      "GROUND-4": "fail",
+      "GROUND-5": "fail",
+      "DECOUPLE-1": "fail",
+      "DECOUPLE-2": "fail",
+      "DECOUPLE-3": "not applicable",
+      "DECOUPLE-4": "not applicable",
+      "DECOUPLE-5": "not applicable",
+      "DECOUPLE-6": "pass",
+      "SENSE-1": "fail",
+      "SENSE-2": "not applicable",
+      "SENSE-3": "pass",
+      "SENSE-4": "fail",
+      "SENSE-5": "pass",
+      "SENSE-6": "fail",
+      "CLOCK-1": "fail",
+      "CLOCK-2": "fail",
+      "CLOCK-3": "pass",
+      "CLOCK-4": "pass",
+      "MAINS-1": "pass",
+      "MAINS-2": "fail",
+      "MAINS-3": "pass",
+      "MAINS-4": "pass",
+      "MAINS-5": "pass",
+      "CONN-1": "fail",
+      "CONN-2": "pass",
+      "CONN-3": "pass",
+      "CONN-4": "pass",
+      "TEST-1": "pass",
+      "TEST-2": "fail",
+      "TEST-3": "pass",
+      "TEST-4": "fail",
+      "TEST-5": "pass",
+      "MFG-1": "fail",
+      "MFG-2": "pass",
+      "MFG-3": "pass",
+      "MFG-4": "pass",
+      "MFG-5": "pass",
+      "MFG-6": "pass",
+      "MFG-7": "pass",
+      "MFG-8": "pass",
+      "MFG-9": "pass",
+      "MFG-10": "pass",
+      "EMI-1": "fail",
+      "EMI-2": "pass",
+      "EMI-3": "fail",
+      "EMI-4": "pass",
+      "EMI-5": "not applicable",
+      "WORK-1": "fail",
+      "WORK-2": "fail",
+      "WORK-3": "fail",
+      "WORK-4": "fail",
+      "WORK-5": "fail",
+      "WORK-6": "fail",
+      "WORK-7": "fail",
+      "WORK-8": "fail",
+      "WORK-9": "fail",
+      "WORK-10": "fail"
+     },
+     "raised_by": {
+      "S2": [
+       "single"
+      ],
+      "S3": [
+       "single"
+      ],
+      "S4": [
+       "single"
+      ],
+      "S5": [
+       "single"
+      ],
+      "S6": [
+       "single"
+      ],
+      "S7": [
+       "single"
+      ],
+      "S8": [
+       "single"
+      ],
+      "S9": [
+       "single"
+      ],
+      "S10": [
+       "single"
+      ],
+      "S12": [
+       "single"
+      ],
+      "S13": [
+       "single"
+      ],
+      "S14": [
+       "single"
+      ],
+      "S15": [
+       "single"
+      ],
+      "S16": [
+       "single"
+      ],
+      "S17": [
+       "single"
+      ],
+      "S18": [
+       "single"
+      ],
+      "S19": [
+       "single"
+      ],
+      "S20": [
+       "single"
+      ],
+      "S21": [
+       "single"
+      ]
+     },
+     "judged_by": {
+      "S1": [
+       "single"
+      ],
+      "S2": [
+       "single"
+      ],
+      "S3": [
+       "single"
+      ],
+      "S4": [
+       "single"
+      ],
+      "S5": [
+       "single"
+      ],
+      "S6": [
+       "single"
+      ],
+      "S7": [
+       "single"
+      ],
+      "S8": [
+       "single"
+      ],
+      "S9": [
+       "single"
+      ],
+      "S10": [
+       "single"
+      ],
+      "S11": [
+       "single"
+      ],
+      "S12": [
+       "single"
+      ],
+      "S13": [
+       "single"
+      ],
+      "S14": [
+       "single"
+      ],
+      "S15": [
+       "single"
+      ],
+      "S16": [
+       "single"
+      ],
+      "S17": [
+       "single"
+      ],
+      "S18": [
+       "single"
+      ],
+      "S19": [
+       "single"
+      ],
+      "S20": [
+       "single"
+      ],
+      "S21": [
+       "single"
+      ]
+     },
+     "sessions": [
+      {
+       "session": "e194f981-04fd-4ad1-97dc-2b724eec4ec3",
+       "wall_s": 896.918,
+       "cost_usd": 2.894614,
+       "tokens_read": 5637430,
+       "tokens_written": 313941,
+       "tokens_generated": 107129,
+       "first_call_read": null
+      }
+     ],
+     "wall_s": 896.918,
+     "cost_usd": 2.894614,
+     "not_recorded": [
+      "first_call_read"
+     ]
+    },
+    {
+     "id": "layout-single-4",
+     "form": "single",
+     "tool_commit": "96e9c260286e6b53599bd4d98cdaa40a4ab5b652",
+     "seeded_commit": "c4d8a0bccaff1f4fbbd1d183e8ebe77e2959f9ac",
+     "seeds_found": [
+      "S2",
+      "S3",
+      "S4",
+      "S5",
+      "S6",
+      "S7",
+      "S8",
+      "S9",
+      "S10",
+      "S11",
+      "S12",
+      "S13",
+      "S14",
+      "S15",
+      "S16",
+      "S17",
+      "S18",
+      "S19",
+      "S20",
+      "S21"
+     ],
+     "unmatched": [
+      "FLOOR-3",
+      "POWER-2",
+      "POWER-4",
+      "GROUND-2",
+      "GROUND-3",
+      "GROUND-4",
+      "GROUND-5",
+      "DECOUPLE-2",
+      "SENSE-4",
+      "SENSE-6",
+      "CLOCK-2",
+      "TEST-4",
+      "EMI-1",
+      "EMI-3",
+      "plan: the plan table",
+      "plan: rows MFG-5 and MFG-6",
+      "free pass"
+     ],
+     "verdicts": {
+      "FLOOR-1": "pass",
+      "FLOOR-2": "fail",
+      "FLOOR-3": "fail",
+      "FLOOR-4": "pass",
+      "FLOOR-5": "pass",
+      "POWER-1": "pass",
+      "POWER-2": "fail",
+      "POWER-3": "pass",
+      "POWER-4": "fail",
+      "POWER-5": "fail",
+      "GROUND-1": "fail",
+      "GROUND-2": "fail",
+      "GROUND-3": "fail",
+      "GROUND-4": "fail",
+      "GROUND-5": "fail",
+      "DECOUPLE-1": "fail",
+      "DECOUPLE-2": "fail",
+      "DECOUPLE-3": "not applicable",
+      "DECOUPLE-4": "not applicable",
+      "DECOUPLE-5": "not applicable",
+      "DECOUPLE-6": "pass",
+      "SENSE-1": "fail",
+      "SENSE-2": "not applicable",
+      "SENSE-3": "pass",
+      "SENSE-4": "fail",
+      "SENSE-5": "pass",
+      "SENSE-6": "fail",
+      "CLOCK-1": "fail",
+      "CLOCK-2": "fail",
+      "CLOCK-3": "pass",
+      "CLOCK-4": "pass",
+      "MAINS-1": "pass",
+      "MAINS-2": "fail",
+      "MAINS-3": "pass",
+      "MAINS-4": "pass",
+      "MAINS-5": "pass",
+      "CONN-1": "fail",
+      "CONN-2": "pass",
+      "CONN-3": "pass",
+      "CONN-4": "pass",
+      "TEST-1": "pass",
+      "TEST-2": "fail",
+      "TEST-3": "pass",
+      "TEST-4": "fail",
+      "TEST-5": "pass",
+      "MFG-1": "fail",
+      "MFG-2": "pass",
+      "MFG-3": "pass",
+      "MFG-4": "pass",
+      "MFG-5": "pass",
+      "MFG-6": "pass",
+      "MFG-7": "pass",
+      "MFG-8": "pass",
+      "MFG-9": "pass",
+      "MFG-10": "pass",
+      "EMI-1": "fail",
+      "EMI-2": "pass",
+      "EMI-3": "fail",
+      "EMI-4": "fail",
+      "EMI-5": "not applicable",
+      "WORK-1": "fail",
+      "WORK-2": "fail",
+      "WORK-3": "fail",
+      "WORK-4": "fail",
+      "WORK-5": "fail",
+      "WORK-6": "fail",
+      "WORK-7": "fail",
+      "WORK-8": "fail",
+      "WORK-9": "fail",
+      "WORK-10": "fail"
+     },
+     "raised_by": {
+      "S2": [
+       "single"
+      ],
+      "S3": [
+       "single"
+      ],
+      "S4": [
+       "single"
+      ],
+      "S5": [
+       "single"
+      ],
+      "S6": [
+       "single"
+      ],
+      "S7": [
+       "single"
+      ],
+      "S8": [
+       "single"
+      ],
+      "S9": [
+       "single"
+      ],
+      "S10": [
+       "single"
+      ],
+      "S11": [
+       "single"
+      ],
+      "S12": [
+       "single"
+      ],
+      "S13": [
+       "single"
+      ],
+      "S14": [
+       "single"
+      ],
+      "S15": [
+       "single"
+      ],
+      "S16": [
+       "single"
+      ],
+      "S17": [
+       "single"
+      ],
+      "S18": [
+       "single"
+      ],
+      "S19": [
+       "single"
+      ],
+      "S20": [
+       "single"
+      ],
+      "S21": [
+       "single"
+      ]
+     },
+     "judged_by": {
+      "S1": [
+       "single"
+      ],
+      "S2": [
+       "single"
+      ],
+      "S3": [
+       "single"
+      ],
+      "S4": [
+       "single"
+      ],
+      "S5": [
+       "single"
+      ],
+      "S6": [
+       "single"
+      ],
+      "S7": [
+       "single"
+      ],
+      "S8": [
+       "single"
+      ],
+      "S9": [
+       "single"
+      ],
+      "S10": [
+       "single"
+      ],
+      "S11": [
+       "single"
+      ],
+      "S12": [
+       "single"
+      ],
+      "S13": [
+       "single"
+      ],
+      "S14": [
+       "single"
+      ],
+      "S15": [
+       "single"
+      ],
+      "S16": [
+       "single"
+      ],
+      "S17": [
+       "single"
+      ],
+      "S18": [
+       "single"
+      ],
+      "S19": [
+       "single"
+      ],
+      "S20": [
+       "single"
+      ],
+      "S21": [
+       "single"
+      ]
+     },
+     "sessions": [
+      {
+       "session": "9c839aab-46d6-4145-a731-d9fd49e27f79",
+       "wall_s": 994.479,
+       "cost_usd": 3.179168,
+       "tokens_read": 6907164,
+       "tokens_written": 304401,
+       "tokens_generated": 126725,
+       "first_call_read": null
+      }
+     ],
+     "wall_s": 994.479,
+     "cost_usd": 3.179168,
+     "not_recorded": [
+      "first_call_read"
+     ]
+    },
+    {
+     "id": "layout-single-5",
+     "form": "single",
+     "tool_commit": "6d12f332a4f0ca840427dfadd7737d39994bfd19",
+     "seeded_commit": "3a70db962e66d5fcd006e7175e42c772ce98bce9",
+     "seeds_found": [
+      "S1",
+      "S2",
+      "S3",
+      "S4",
+      "S5",
+      "S6",
+      "S7",
+      "S8",
+      "S9",
+      "S10",
+      "S11",
+      "S12",
+      "S13",
+      "S14",
+      "S15",
+      "S16",
+      "S17",
+      "S18",
+      "S19",
+      "S20",
+      "S21"
+     ],
+     "unmatched": [
+      "FLOOR-3",
+      "POWER-2",
+      "POWER-4",
+      "GROUND-2",
+      "GROUND-3",
+      "GROUND-4",
+      "DECOUPLE-2",
+      "SENSE-4",
+      "SENSE-6",
+      "CLOCK-2",
+      "TEST-4",
+      "EMI-1",
+      "EMI-3",
+      "plan, row MFG-6",
+      "free pass"
+     ],
+     "verdicts": {
+      "FLOOR-1": "pass",
+      "FLOOR-2": "fail",
+      "FLOOR-3": "fail",
+      "FLOOR-4": "pass",
+      "FLOOR-5": "pass",
+      "POWER-1": "pass",
+      "POWER-2": "fail",
+      "POWER-3": "pass",
+      "POWER-4": "fail",
+      "POWER-5": "fail",
+      "GROUND-1": "fail",
+      "GROUND-2": "fail",
+      "GROUND-3": "fail",
+      "GROUND-4": "fail",
+      "GROUND-5": "pass",
+      "DECOUPLE-1": "fail",
+      "DECOUPLE-2": "fail",
+      "DECOUPLE-3": "not applicable",
+      "DECOUPLE-4": "not applicable",
+      "DECOUPLE-5": "not applicable",
+      "DECOUPLE-6": "pass",
+      "SENSE-1": "fail",
+      "SENSE-2": "not applicable",
+      "SENSE-3": "pass",
+      "SENSE-4": "fail",
+      "SENSE-5": "pass",
+      "SENSE-6": "fail",
+      "CLOCK-1": "fail",
+      "CLOCK-2": "fail",
+      "CLOCK-3": "pass",
+      "CLOCK-4": "pass",
+      "MAINS-1": "pass",
+      "MAINS-2": "fail",
+      "MAINS-3": "pass",
+      "MAINS-4": "pass",
+      "MAINS-5": "pass",
+      "CONN-1": "fail",
+      "CONN-2": "pass",
+      "CONN-3": "pass",
+      "CONN-4": "pass",
+      "TEST-1": "pass",
+      "TEST-2": "fail",
+      "TEST-3": "pass",
+      "TEST-4": "fail",
+      "TEST-5": "pass",
+      "MFG-1": "fail",
+      "MFG-2": "pass",
+      "MFG-3": "pass",
+      "MFG-4": "pass",
+      "MFG-5": "pass",
+      "MFG-6": "pass",
+      "MFG-7": "pass",
+      "MFG-8": "pass",
+      "MFG-9": "pass",
+      "MFG-10": "pass",
+      "EMI-1": "fail",
+      "EMI-2": "pass",
+      "EMI-3": "fail",
+      "EMI-4": "fail",
+      "EMI-5": "not applicable",
+      "WORK-1": "fail",
+      "WORK-2": "fail",
+      "WORK-3": "fail",
+      "WORK-4": "fail",
+      "WORK-5": "fail",
+      "WORK-6": "fail",
+      "WORK-7": "fail",
+      "WORK-8": "fail",
+      "WORK-9": "fail",
+      "WORK-10": "fail"
+     },
+     "raised_by": {
+      "S1": [
+       "single"
+      ],
+      "S2": [
+       "single"
+      ],
+      "S3": [
+       "single"
+      ],
+      "S4": [
+       "single"
+      ],
+      "S5": [
+       "single"
+      ],
+      "S6": [
+       "single"
+      ],
+      "S7": [
+       "single"
+      ],
+      "S8": [
+       "single"
+      ],
+      "S9": [
+       "single"
+      ],
+      "S10": [
+       "single"
+      ],
+      "S11": [
+       "single"
+      ],
+      "S12": [
+       "single"
+      ],
+      "S13": [
+       "single"
+      ],
+      "S14": [
+       "single"
+      ],
+      "S15": [
+       "single"
+      ],
+      "S16": [
+       "single"
+      ],
+      "S17": [
+       "single"
+      ],
+      "S18": [
+       "single"
+      ],
+      "S19": [
+       "single"
+      ],
+      "S20": [
+       "single"
+      ],
+      "S21": [
+       "single"
+      ]
+     },
+     "judged_by": {
+      "S1": [
+       "single"
+      ],
+      "S2": [
+       "single"
+      ],
+      "S3": [
+       "single"
+      ],
+      "S4": [
+       "single"
+      ],
+      "S5": [
+       "single"
+      ],
+      "S6": [
+       "single"
+      ],
+      "S7": [
+       "single"
+      ],
+      "S8": [
+       "single"
+      ],
+      "S9": [
+       "single"
+      ],
+      "S10": [
+       "single"
+      ],
+      "S11": [
+       "single"
+      ],
+      "S12": [
+       "single"
+      ],
+      "S13": [
+       "single"
+      ],
+      "S14": [
+       "single"
+      ],
+      "S15": [
+       "single"
+      ],
+      "S16": [
+       "single"
+      ],
+      "S17": [
+       "single"
+      ],
+      "S18": [
+       "single"
+      ],
+      "S19": [
+       "single"
+      ],
+      "S20": [
+       "single"
+      ],
+      "S21": [
+       "single"
+      ]
+     },
+     "sessions": [
+      {
+       "session": "8ca42203-a02c-4334-b78c-0a1868b9bf52",
+       "wall_s": 1061.89,
+       "cost_usd": 3.454273,
+       "tokens_read": 7138045,
+       "tokens_written": 348297,
+       "tokens_generated": 134275,
+       "first_call_read": null
+      }
+     ],
+     "wall_s": 1061.89,
+     "cost_usd": 3.454273,
+     "not_recorded": [
+      "first_call_read"
+     ]
+    }
+   ]
+  }
+ ]
+}

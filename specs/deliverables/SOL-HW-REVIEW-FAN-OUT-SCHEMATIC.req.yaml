@@ -3,25 +3,23 @@ type: deliverable
 category: solution
 title: A task fans a schematic review round out by catalogue area and merges the areas into one round, checking every net, part and sheet is covered
 status: active
-version: 2
+version: 3
 text: |
-  Why this exists. The schematic review judges every net, part and sheet of a schematic against twenty-four catalogue items in eighteen areas, one reviewer in one context, and its blind proof repeats that on a seeded copy. The reasoning, measurements and options rejected are in DEC-REVIEW-FAN-OUT-BY-UNIT-FROM-SHARED-SETUP, and DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND settles that a round judged by unit is the same round; a session building this does not reopen either. This is the fourth of six solutions under DEL-HW-REVIEW-FAN-OUT. It adds the schematic review as a caller of the driver SOL-HW-REVIEW-FAN-OUT-DRIVER as the caller-seam solution SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM extends it, and adds nothing to the driver beyond that seam; it is independent of the layout, critical-routing and production-files solutions.
+  Why this exists. The schematic review judges every net, part and sheet of a schematic against twenty-four catalogue items in eighteen areas, one reviewer in one context, and its blind proof repeats that on a seeded copy. The reasoning, measurements and options rejected are in DEC-REVIEW-FAN-OUT-FROM-SHARED-CONTEXT-WITH-REPLICAS, and DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND settles that a round judged by unit is the same round; a session building this does not reopen either. This is the fourth of five solutions under DEL-HW-REVIEW-FAN-OUT. It adds the schematic review as a declaration and a small module of checks and a rendered record for the review kit SOL-HW-REVIEW-KIT, and adds nothing to the kit; it is independent of the layout, critical-routing and production-files solutions.
 
-  What it does. The schematic review is judged by one reviewer per catalogue area and one for the whole-schematic free pass, from a setup session that has read the schematic's records, and the merge writes one round of the schematic review record through the rendered record the caller-seam solution adds.
+  What it does. The schematic review is judged by one reviewer per catalogue area and one for the whole-schematic free pass, from a shared context that holds the schematic's records, the sheet drawings and the part pages, and the merge writes one round of the schematic review record through the rendered record the kit's caller contract provides.
 
   Settled before the build.
 
   - The units are the circuit catalogue's area headings in the review folder's own method, found as the layout caller finds its own, and one unit for the free pass. The pin-voltage item selects every net and the derating item every part, so their areas are the largest units; the merge does not split them.
   - What an item selects is the reviewer's judgement from the item's condition and is not recorded, so the merge does not check it. It checks what can be computed: every catalogue item has a verdict row, every net and part the review folder's netlist holds and every sheet of the schematic has a row in some item's rows, and no row names a net, part or sheet that does not exist. A net, part or sheet no unit covered fails the run naming it. The sheet list comes from the schematic's own files.
-  - A reviewer opens every datasheet at its published address and never recalls it, so the caller grants read tools and read-only retrieval of a document at an address, through the retrieval grant the caller-seam solution adds, and nothing else; the driver checks the tool set from each session's start report. Whether retrieval works from a forked reviewer is not yet measured; the proof run records the retrievals per unit and whether any failed.
+  - A reviewer opens every datasheet at its published address and never recalls it, so the caller grants read tools and read-only retrieval of a document at an address, through the retrieval grant the kit's caller contract provides, and nothing else; the kit checks the tool set from each session's start report. Whether retrieval works from a forked reviewer is not yet measured; the proof run records the retrievals per unit and whether any failed.
   - The review folder for a committed schematic holds what the step gives a reviewer: the schematic and its project files, the netlist the first step exports, every record the step reads, the drawing of each sheet that the sheet-drawing command writes, which the drawing-convention item opens, the method, the hardware notes and the check's report, and nothing of the designer's reasoning. The method's own list of what the proof folder holds leaves the sheet drawings out; this solution amends it to name them.
   - The blind proof keeps its seeding as it is: a separate session that has not read the catalogue seeds a copy, writes the seed list apart and exports the netlist, and the review is run on that folder by sessions with no record of the seeds, in both forms, as the layout solution's proof does.
-  - The tests need no model and no KiCad, using the driver's stub over synthetic folders, netlists and unit results.
+  - The tests need no model and no KiCad, using the kit's stub over synthetic folders, netlists and unit results.
 
-  Out of scope: the layout, critical-routing and production-files solutions; the driver's mechanics; the content of the circuit catalogue.
+  Out of scope: the layout, critical-routing and production-files solutions; the kit's mechanics; the content of the circuit catalogue.
 links:
-  - target: DEC-REVIEW-FAN-OUT-BY-UNIT-FROM-SHARED-SETUP
-    type: justified-by
   - target: DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND
     type: justified-by
   - target: DEL-HW-REVIEW-FAN-OUT.C3
@@ -34,13 +32,13 @@ links:
     type: targets
   - target: OBL-VERIFICATION-DISCIPLINE-001.C9
     type: targets
-  - target: SOL-HW-REVIEW-FAN-OUT-DRIVER
-    type: depends-on
   - target: SOL-BOARD-CIRCUIT-REVIEW-SEEDED-PROOF
     type: depends-on
   - target: SOL-BOARD-CIRCUIT-PRACTICE-CATALOGUE
     type: depends-on
   - target: SOL-BOARD-SCHEMATIC-DRAWING-CONVENTION
     type: depends-on
-  - target: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM
+  - target: SOL-HW-REVIEW-KIT
     type: depends-on
+  - target: DEC-REVIEW-FAN-OUT-FROM-SHARED-CONTEXT-WITH-REPLICAS
+    type: justified-by

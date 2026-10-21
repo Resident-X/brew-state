@@ -1,7 +1,7 @@
 id: SOL-HW-REVIEW-FAN-OUT-DRIVER.C3
 type: criterion
 title: A unit that fails or returns a malformed result is run once more, a rate-limited call is retried, and a run that still fails names the unit and keeps the other results
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: test

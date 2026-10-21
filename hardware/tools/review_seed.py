@@ -32,8 +32,13 @@ layer, its board position and what it is, is written apart from the folder, to
 a path the caller names, and is refused inside the review folder or inside a
 design's folder.
 
-    review_seed.py --seeds <seed list file> --out <review folder> [--kicad-cli ...] [--resvg ...]
+    review_seed.py --seeds <seed list file> --out <review folder> [--keep-work-tree <folder>] [--kicad-cli ...] [--resvg ...]
     review_seed.py --print-prompt
+
+--keep-work-tree names a new folder outside the repository, which the seeded copy's git work tree is written to and
+kept in when the command succeeds, instead of being deleted with the temporary folder the default writes it to. The
+work tree is the folder's `repository` folder, and the command prints a KEPT line naming it and the commit that holds
+the design as the pre-order check judged it. Left out, nothing is kept and the command is as it was.
 
 --print-prompt prints the fixed prompt a blind review is started with. It
 names nothing seeded.
@@ -46,15 +51,18 @@ refused, and 2 when it cannot run, for example because a tool is missing.
 from __future__ import annotations
 
 import argparse
+import contextlib
+import io
 import json
 import os
 import shutil
 import subprocess
 import sys
+import tarfile
 import tempfile
 import time
 import uuid
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, Iterator, List, Optional, Tuple
 
 TOOLS = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, TOOLS)
@@ -580,6 +588,39 @@ def refusals(seeds: str, out: str, repo: str = REPO) -> List[str]:
     return found
 
 
+def keep_refusals(keep: str, seeds: str, out: str, repo: str = REPO) -> List[str]:
+    """Why the folder the seeded copy's work tree is kept in cannot be used where it is asked to go."""
+    found = []
+    if inside(keep, repo):
+        found.append(f"the work tree folder {keep} is inside the repository; keep it outside")
+    if os.path.isfile(keep):
+        found.append(f"the work tree folder {keep} is a file; give a new or empty folder")
+    elif os.path.isdir(keep) and os.listdir(keep):
+        found.append(f"the work tree folder {keep} already holds files; give a new or empty folder")
+    if inside(keep, out) or inside(out, keep):
+        found.append(f"the work tree folder {keep} and the review folder {out} hold one another; a reviewer in the review "
+                     "folder could read the seeded copy's history, so keep them apart")
+    if inside(seeds, keep):
+        found.append(f"the seed list {seeds} is inside the work tree folder {keep}; write it outside")
+    return found
+
+
+@contextlib.contextmanager
+def scratch_folder(keep: Optional[str]) -> Iterator[str]:
+    """The folder the seeded copy's work tree is written under: a temporary one deleted on leaving, or, when `keep` is
+    given, that folder, made new and left where it is."""
+    if keep is None:
+        with tempfile.TemporaryDirectory(prefix="review-seed-") as scratch:
+            yield scratch
+        return
+    os.makedirs(keep, exist_ok=True)
+    yield keep
+
+
+def commit_of(root: str) -> str:
+    return subprocess.run(["git", "-C", root, "rev-parse", "HEAD"], capture_output=True, text=True, check=True).stdout.strip()
+
+
 def seed_list(seeds) -> dict:
     return {"design": DESIGN, "seeds": [{"id": ident, "item": item, "layer": layer, "position": {"x": x, "y": y},
                                          "description": description}
@@ -629,10 +670,18 @@ def given(name: str) -> bool:
     return name in RECORDS or base.endswith(KICAD_FILES) or base in board_check.LIBRARY_TABLES
 
 
-def documents() -> Dict[str, bytes]:
-    """What the review step gives a reviewer besides the design, as the repository's last commit holds it."""
+def documents(repo: Optional[str] = None, commit: Optional[str] = None) -> Dict[str, bytes]:
+    """What the review step gives a reviewer besides the design: as the repository's last commit holds it, or, given a
+    repository, as its `commit` (HEAD when none) holds it, a document that commit lacks being a refusal."""
     found = {}
     for document in DOCUMENTS:
+        if repo is not None:
+            held = archived(repo, commit or "HEAD", document)
+            if document not in held:
+                raise Refused(f"the documents repository {repo} at {commit or 'HEAD'} holds no {document}; give a "
+                              "repository and commit that hold the method and the hardware notes")
+            found[document] = held[document]
+            continue
         held = board_prove.committed(document)
         if held is None:
             with open(os.path.join(REPO, document), "rb") as handle:
@@ -641,24 +690,66 @@ def documents() -> Dict[str, bytes]:
     return found
 
 
+def archived(repo: str, commit: str, path: str) -> Dict[str, bytes]:
+    """Every file `commit` of `repo` holds at or under `path`, by its path from the repository's root; none when the
+    commit or the path does not exist."""
+    archive = subprocess.run(["git", "-C", repo, "archive", "--format=tar", commit, "--", path], capture_output=True)
+    if archive.returncode != 0:
+        return {}
+    files = {}
+    with tarfile.open(fileobj=io.BytesIO(archive.stdout)) as tar:
+        for member in tar.getmembers():
+            if member.isfile():
+                files[member.name] = tar.extractfile(member).read()
+    return files
+
+
+def design_files(repo: str, commit: str, design: str) -> Dict[str, bytes]:
+    """The files of the design at `design`, a path from `repo`'s root, that the review step gives a reviewer, as
+    `commit` holds them, by their path inside the design's folder."""
+    prefix = design.rstrip("/") + "/"
+    return {name[len(prefix):]: content for name, content in archived(repo, commit, design).items()
+            if name.startswith(prefix) and given(name[len(prefix):])}
+
+
+def copy_commit(out: str, repo: str, commit: str, design: str, documents_repo: Optional[str] = None,
+                documents_commit: Optional[str] = None) -> List[str]:
+    """The design's given files as `commit` of `repo` holds them, written under `out` at the design's path from the
+    repository's root, and the documents beside them, as the last commit of this repository holds them or, when
+    `documents_repo` is given, as its `documents_commit` does. The names of the design's files written, by their path
+    inside the design's folder."""
+    files = design_files(repo, commit, design)
+    for name, content in files.items():
+        target = os.path.join(out, design, name)
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        with open(target, "wb") as handle:
+            handle.write(content)
+    for document, content in documents(documents_repo, documents_commit).items():
+        os.makedirs(os.path.dirname(os.path.join(out, document)), exist_ok=True)
+        with open(os.path.join(out, document), "wb") as handle:
+            handle.write(content)
+    return sorted(files)
+
+
+def same_time(out: str) -> None:
+    """Every file and folder under `out` given one time, so none is told from another by when it was written."""
+    stamp = time.time()
+    for directory, _, names in os.walk(out, topdown=False):
+        for name in names:
+            os.utime(os.path.join(directory, name), (stamp, stamp))
+        os.utime(directory, (stamp, stamp))
+
+
 def assemble(seed: board_prove.Seed, out: str, report: List[str], kicad_cli: str, resvg: str) -> Tuple[bool, str]:
     """The review folder written from the seeded copy; whether the views and the placement view were rendered, and
     their reports.
 
-    Only the committed design's files the review step gives a reviewer are copied,
-    by content alone, and once the folder is complete every file and folder in it
+    Only the design's files the review step gives a reviewer, as the seeded copy's
+    commit holds them, are copied, by content alone, and once the folder is complete every file and folder in it
     is given the same time, so no file in it is told from another by when it was
     written.
     """
-    files = [name for name in seed.files if given(name)]
-    for name in files:
-        target = os.path.join(out, DESIGN, name)
-        os.makedirs(os.path.dirname(target), exist_ok=True)
-        shutil.copyfile(os.path.join(seed.design, name), target)
-    for document, content in documents().items():
-        os.makedirs(os.path.dirname(os.path.join(out, document)), exist_ok=True)
-        with open(os.path.join(out, document), "wb") as handle:
-            handle.write(content)
+    files = copy_commit(out, seed.root, "HEAD", DESIGN)
     with open(os.path.join(out, REPORT), "w", encoding="utf-8") as handle:
         handle.write("\n".join(report) + "\n")
     command = [sys.executable, os.path.join(TOOLS, "board_views.py"), "--kicad-cli", kicad_cli, "--resvg", resvg,
@@ -675,11 +766,7 @@ def assemble(seed: board_prove.Seed, out: str, report: List[str], kicad_cli: str
                                 cwd=os.path.join(out, DESIGN), capture_output=True, text=True)
         said = (said + "\n" + (result.stdout + result.stderr).strip()).strip()
     leftovers(os.path.join(out, DESIGN), files, remove=True)
-    stamp = time.time()
-    for directory, _, names in os.walk(out, topdown=False):
-        for name in names:
-            os.utime(os.path.join(directory, name), (stamp, stamp))
-        os.utime(directory, (stamp, stamp))
+    same_time(out)
     return result.returncode == 0, said
 
 
@@ -687,6 +774,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--seeds", help="where to write the seed list, outside the review folder and every design's folder")
     parser.add_argument("--out", help="the review folder to write, new or empty, outside the repository")
+    parser.add_argument("--keep-work-tree", help="a new folder outside the repository to keep the seeded copy's git work tree in, "
+                                                 "which is otherwise deleted (default: keep nothing)")
     parser.add_argument("--kicad-cli", default="kicad-cli", help="KiCad's command-line tool (default: kicad-cli on the search path)")
     parser.add_argument("--resvg", default="resvg", help="the resvg program the views are drawn with (default: resvg on the search path)")
     parser.add_argument("--print-prompt", action="store_true", help="print the fixed prompt a blind review is started with, and stop")
@@ -697,7 +786,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     if not args.seeds or not args.out:
         parser.error("--seeds and --out are both required")
     seeds, out = os.path.abspath(args.seeds), os.path.abspath(args.out)
-    found = refusals(seeds, out)
+    keep = os.path.abspath(args.keep_work_tree) if args.keep_work_tree else None
+    found = refusals(seeds, out) + (keep_refusals(keep, seeds, out) if keep else [])
     if found:
         for why in found:
             print(f"REFUSED | {board_check.clean(why)}")
@@ -711,42 +801,51 @@ def main(argv: Optional[List[str]] = None) -> int:
         print(f"CANNOT RUN | {board_check.clean(str(error))}", file=sys.stderr)
         return 2
 
-    with tempfile.TemporaryDirectory(prefix="review-seed-") as scratch:
-        seed = board_prove.prepare(scratch, DESIGN, NAME)
-        for _, _, _, _, _, edit in SEEDS:
-            edit(seed)
-        try:
-            settle_layout(seed, args.kicad_cli)
-        except board_check.CannotRun as error:
-            print(f"CANNOT RUN | {board_check.clean(str(error))}", file=sys.stderr)
-            return 2
-        status, lines, stderr = board_prove.check(seed, args.kicad_cli)
-        if status == 2:
-            print(f"CANNOT RUN | the pre-order check could not run on the seeded copy: {board_check.clean(stderr)}",
-                  file=sys.stderr)
-            return 2
-        report = [line.replace(os.path.realpath(seed.root), ".").replace(seed.root, ".") for line in lines]
-        if status != 0:
-            print("REFUSED | the pre-order check fails the seeded copy, and a review begins only once it passes a "
-                  "board, so a seed the check catches is no test of the review")
-            for line in report[1:]:
-                print(f"CHECK | {line}")
-            print("RESULT | REFUSED | nothing was written")
-            return 1
-        print(f"CHECK | {report[-1]}")
-        os.makedirs(out, exist_ok=True)
-        rendered, said = assemble(seed, out, report, args.kicad_cli, args.resvg)
-        if not rendered:
-            shutil.rmtree(out, ignore_errors=True)
-            print(f"CANNOT RUN | the views or the placement view could not be rendered from the seeded copy: "
-                  f"{board_check.clean(said)}", file=sys.stderr)
-            return 2
+    completed = False
+    try:
+        with scratch_folder(keep) as scratch:
+            seed = board_prove.prepare(scratch, DESIGN, NAME)
+            for _, _, _, _, _, edit in SEEDS:
+                edit(seed)
+            try:
+                settle_layout(seed, args.kicad_cli)
+            except board_check.CannotRun as error:
+                print(f"CANNOT RUN | {board_check.clean(str(error))}", file=sys.stderr)
+                return 2
+            status, lines, stderr = board_prove.check(seed, args.kicad_cli)
+            if status == 2:
+                print(f"CANNOT RUN | the pre-order check could not run on the seeded copy: {board_check.clean(stderr)}",
+                      file=sys.stderr)
+                return 2
+            report = [line.replace(os.path.realpath(seed.root), ".").replace(seed.root, ".") for line in lines]
+            if status != 0:
+                print("REFUSED | the pre-order check fails the seeded copy, and a review begins only once it passes a "
+                      "board, so a seed the check catches is no test of the review")
+                for line in report[1:]:
+                    print(f"CHECK | {line}")
+                print("RESULT | REFUSED | nothing was written")
+                return 1
+            print(f"CHECK | {report[-1]}")
+            os.makedirs(out, exist_ok=True)
+            rendered, said = assemble(seed, out, report, args.kicad_cli, args.resvg)
+            if not rendered:
+                shutil.rmtree(out, ignore_errors=True)
+                print(f"CANNOT RUN | the views or the placement view could not be rendered from the seeded copy: "
+                      f"{board_check.clean(said)}", file=sys.stderr)
+                return 2
+            completed = True
+            kept_at = os.path.join(scratch, "repository"), commit_of(os.path.join(scratch, "repository"))
+    finally:
+        if keep and not completed:
+            shutil.rmtree(keep, ignore_errors=True)
     with open(seeds, "w", encoding="utf-8") as handle:
         json.dump(seed_list(SEEDS), handle, indent=2)
         handle.write("\n")
     for kind, line in zip(("VIEWS", "PLACEMENT"), [line for line in said.splitlines() if line.startswith("RESULT | ")]):
         print(f"{kind} | {line}")
     print(f"SEEDS | {len(SEEDS)} seeds | {seeds}")
+    if keep:
+        print(f"KEPT | {kept_at[0]} | {kept_at[1]}")
     print(f"RESULT | WRITTEN | {out}")
     return 0
 

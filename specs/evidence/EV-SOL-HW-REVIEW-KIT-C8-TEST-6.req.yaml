@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-KIT-C8-TEST-6
+type: evidence
+title: test evidence for SOL-HW-REVIEW-KIT.C8
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-21T09:28:07.43049Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_kit_merge.py::test_an_adjudication_that_tries_to_change_a_verdict_is_recorded_as_a_problem_and_ignored
+  artifact_version: 799201b5a5f1ee1a4fd74ad560081d88d5c8d3aa
+attested_by: crun-053588c2ff8878eb
+links:
+  - target: SOL-HW-REVIEW-KIT.C8
+    type: satisfies

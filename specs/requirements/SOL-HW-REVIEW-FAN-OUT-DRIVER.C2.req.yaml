@@ -1,7 +1,7 @@
 id: SOL-HW-REVIEW-FAN-OUT-DRIVER.C2
 type: criterion
 title: Each session's start report is checked, and the setup session is shown to have opened no image and judged nothing
-status: active
+status: deprecated
 version: 3
 measurement_type: binary
 verification: test

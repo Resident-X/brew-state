@@ -1,7 +1,7 @@
 id: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C1
 type: criterion
 title: A caller may grant its reviewers the read tools and one read-only retrieval tool, the setup session keeps the read tools alone, and any other tool is still refused
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: test

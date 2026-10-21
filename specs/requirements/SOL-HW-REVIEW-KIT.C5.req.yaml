@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT.C5
+type: criterion
+title: A review is declared as data, admitted before any session starts, and its shared context is built as one deterministic message
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Over synthetic declarations, a unit that needs an artefact the declaration does not list, a unit coupled with a unit that does not exist, a table whose key is not one of its columns, a verdict set that is empty and a template slot the unit does not fill are each refused at load with an error naming the file, the unit and the thing missing, before any session is started. Over a synthetic review folder, an artefact whose source lies outside the folder, one matching the deny list and a result of another unit of this round are each refused naming the artefact and the rule, and no session is started; an artefact that is admitted is measured by token count or length for text and by the patch formula for an image, and given its content hash. Over a synthetic review folder, the shared context holds every artefact any unit needs, in a fixed order, as text and image blocks in one message, holds no unit's prompt, asks for no tool use, and is byte-identical with the same prefix hash on two builds from the same declaration and folder; changing one artefact changes its block and the prefix hash. Its measured size is within five per cent of the sum of the artefacts' measured sizes. Over a synthetic declaration, the schema given to the sessions and the checks of the results module are both derived from the declared tables, so adding a verdict to a set or a column to a table changes both, and an answer with a verdict outside the set or a column the table lacks is classed as the results module classes it. Over synthetic templates, a unit's prompt is built from its template by filling the named slots with the unit's items and the declared values, and a template with a slot no value fills, or a value with no slot, is refused at load naming both the unit and the slot. Out of scope: the wording of any caller's prompt.
+links:
+  - target: SOL-HW-REVIEW-KIT
+    type: criterion-of

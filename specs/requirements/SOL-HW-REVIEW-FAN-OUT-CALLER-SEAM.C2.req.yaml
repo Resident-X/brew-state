@@ -1,7 +1,7 @@
 id: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C2
 type: criterion
 title: A caller's reviewer prompt takes the unit and the review folder
-status: active
+status: deprecated
 version: 2
 measurement_type: binary
 verification: test

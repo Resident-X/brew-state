@@ -1,7 +1,7 @@
 id: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C6
 type: criterion
 title: The command's description and the hardware notes name the four attributes a caller may define
-status: active
+status: deprecated
 version: 3
 measurement_type: binary
 verification: inspection

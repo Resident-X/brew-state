@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-FAN-OUT-LAYOUT-C4-TEST-6
+type: evidence
+title: test evidence for SOL-HW-REVIEW-FAN-OUT-LAYOUT.C4
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-21T11:36:09.134221Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_caller_layout.py::test_the_rendered_record_is_one_plain_file_named_for_its_round_whose_name_the_kit_accepts
+  artifact_version: 9585342c6d6404f8ad37a976ab03ebfd71732799
+attested_by: crun-d107694f4867d49d
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-LAYOUT.C4
+    type: satisfies

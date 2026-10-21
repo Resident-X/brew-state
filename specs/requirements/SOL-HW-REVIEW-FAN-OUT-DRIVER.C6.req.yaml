@@ -1,7 +1,7 @@
 id: SOL-HW-REVIEW-FAN-OUT-DRIVER.C6
 type: criterion
 title: The merge keeps each table's columns and verdicts, renumbers this round's findings only, reports findings that concern one place, and does not depend on arrival order
-status: active
+status: deprecated
 version: 3
 measurement_type: binary
 verification: test

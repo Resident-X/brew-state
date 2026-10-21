@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-KIT-C7-TEST-25
+type: evidence
+title: test evidence for SOL-HW-REVIEW-KIT.C7
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-21T09:28:12.604464Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_kit_rerun.py::test_folder_hash_holds_directories_and_links_to_directories
+  artifact_version: 799201b5a5f1ee1a4fd74ad560081d88d5c8d3aa
+attested_by: crun-053588c2ff8878eb
+links:
+  - target: SOL-HW-REVIEW-KIT.C7
+    type: satisfies

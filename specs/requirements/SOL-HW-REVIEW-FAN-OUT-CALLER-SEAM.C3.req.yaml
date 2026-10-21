@@ -1,7 +1,7 @@
 id: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C3
 type: criterion
 title: A caller's checklist may be a function of the review folder and the merge treats the resolved list as it treats a list
-status: active
+status: deprecated
 version: 2
 measurement_type: binary
 verification: test

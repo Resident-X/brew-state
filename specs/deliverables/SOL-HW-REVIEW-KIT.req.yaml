@@ -1,0 +1,119 @@
+id: SOL-HW-REVIEW-KIT
+type: deliverable
+category: solution
+title: A task runs any declared judged review as forks of one shared context built by the command, with replicas merged so that any fail stands, and proves it against the recorded single-reviewer runs
+status: active
+version: 1
+text: |
+  Why this exists. The first live runs of the fanned-out layout review failed on the way sessions were started: the setup session's system rule, that it write nothing but one token and judge nothing, was inherited by every forked reviewer, and nothing in the tests could show it because the stub never compared how sessions were started. DEC-REVIEW-FAN-OUT-FROM-SHARED-CONTEXT-WITH-REPLICAS sets the shared context as the shape; this solution builds the review kit that the callers move to, so that the whole machinery is built, tested and reviewed once; the earlier driver stays in the repository until the layout solution moves the last caller and removes it. A session building this does not reopen the decision.
+
+  What it does. It adds the review kit, a package beside the board tools that holds the machinery for any judged review and nothing of the board: the session specification and executor, the reading of an answer, the checks of a recorded stream, the declaration of a review, the planner and scheduler, the merge of replicas, the command that runs a declared review, and the proof harness that compares a fanned-out review with the recorded single-reviewer runs. It supersedes SOL-HW-REVIEW-FAN-OUT-DRIVER and SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM, whose behaviour the kit carries, and the callers are rebuilt on it by their own solutions. The parts are built in the order below, each proving one thing, inside one build.
+
+  Who reads its output. The person who runs a review, the builder in PER-BUILDER-001 at a bench with a PC, or an agent session with no prior context following the board design method, reads the command's report, its REFUSED and CANNOT RUN lines, the merged record and the hardware notes, and has no other source of what the command needs. Each such line therefore names its cause and what to do in the line itself, the record is the one the method already keeps and a person can read without the kit, and the hardware notes state the command's inputs, outputs and failure causes completely enough that the weakest agent tier that follows the method can run a review from them alone. The sessions the kit starts read the shared context and one unit's prompt and nothing else, so each unit's prompt states its items, its area and the result schema in plain terms.
+
+  Build order. The session specification and executor first, since they close the inherited-rule defect; then the reading of an answer; then the stream checks and telemetry on recorded streams; then the declaration, catalogue and shared context; then the planner and scheduler; then the merge and replicas; then the command, the removal of what it replaces being the layout solution's; then the proof harness.
+
+  Sessions and the executor.
+
+  - The agent command line is started only from a specification: print mode with stream-json input and output, a resume with the fork option for every session below the first, and the same system prompt, appended prompt, tool list, model and schema flags for every session. The only things that differ between the sessions of a review are the message and the session forked from. No setup-only system prompt exists.
+  - The command line's name is read from one environment variable, as the driver reads it now, so the tests stand a stub in its place.
+  - Every stream is saved verbatim in the review's output folder, with the specification and the message's hash, so any later check and any recorded fixture is made from what ran.
+  - The start report of every session is checked against the specification for the tools, model, MCP servers, instruction sources and working directory it shows. It carries no system prompt, so the system prompt a session used is read from the transcript Claude Code writes for the session, found by its identifier, and a fork's is compared with its parent's.
+  - A call refused for a rate limit is retried after a wait that grows, a bounded number of times, with the wait taken from an injected clock so the tests do not sleep; an error exit or an empty answer comes back as a typed result for the scheduler to act on, and the executor retries nothing else.
+  - The replay executor keys a recorded stream by the hash of the specification, the parent and the message, and fails naming the key when none is recorded.
+  - A contract smoke, run on demand and when the installed agent command line's version changes, runs seven small probes on two synthetic images for a few cents, saves their streams as fixtures, and asserts that a fork's system prompt equals its root's, that a fork reads its parent's prefix from the cache, and that a fork whose result-schema flag differs from its root's, which adds a tool to the fork alone, shows as a cache miss. The cache-miss probe recorded in the design is kept as a fixture the check must flag.
+  - The tests need no model and no KiCad.
+
+  Reading an answer.
+
+  - An answer is read from the structured output when the command line returned one, and otherwise as the one object holding a tables key extracted from the text, whatever prose, fence or trailing remark surrounds it. An answer with no such object is typed as holding none.
+  - A problem is classed. Cosmetic: a cell holding a vertical bar or a line break, a column name that differs only in case or surrounding space, a number given as text. The kit repairs it and records the repair. Local: a citation of a finding the unit did not raise, a checklist item with no verdict or with two, a verdict outside the declared set. The scheduler repairs it with a turn in the unit's own session. Fatal: no object, or a violation of the schema that cannot be mapped. The scheduler runs the unit again from the same parent. A round is never refused for a cosmetic problem.
+  - A cell is escaped when the record is rendered and the raw text is kept in the unit's result, so any string cell reads back through the review record history reader as written.
+  - Every attempt of a unit is kept. The attempt that stands is the one with no problems, else the fewest local problems, else the most items covered, else the first; a later attempt never replaces a better one.
+  - The tests use answers recorded from the live runs: prose before the object, a fence, a trailing remark, two objects, and the answers whose cells held a bar.
+
+  Checking a recorded stream.
+
+  - The shape of a shared-context node: exactly one model call, no tool use other than the acknowledgement the schema asks for, no text but the acknowledgement, no thinking block that carries text. The recorded stream in which the setup narrated between reads is rejected and the recorded one-call probe is accepted.
+  - A cache miss: a fork whose first call reads less from the cache than its parent's prefix holds is flagged, with the figures. The recorded probe that changed the tool set and read nothing is a fixture the check flags.
+  - The same system prompt: the streams of one review all carry one system prompt.
+  - Opens already in context: the artefacts a unit opened that its prefix already held, against the ones that were new, counted from the tool uses of its stream. The recorded run with 390 opens of 91 distinct tiles is a fixture with the count it must give.
+  - A unit's citations of the view it rested on name only artefacts that its context held, from the prefix or from what it opened.
+  - Figures: a session's own cost and time are its reported figures less its parent's, because the command line reports a fork's cumulatively, and its turns are as reported; calls are counted by distinct message identifier; tokens are split into read from the cache, written to it, fresh and generated; output tokens are taken from the result report. Run figures give the sharing ratio, the tokens written in more than one session, the critical-path time and the predicted time and cost against the actual. Over the recorded runs the figures sum to the reports' costs within two per cent.
+
+  Declaring a review and building its shared context.
+
+  - The declaration is a file the kit loads and validates with errors that name the file, the unit and the artefact, so a slip is reported as a unit that needs a view which is not an artefact and costs nothing.
+  - An artefact has a kind (text, image or extract), a source inside the review folder and, for an extract, a producer, which is a named command that writes the extract from the design.
+  - A unit declares the artefacts it needs, as the superset it may use; the units it is coupled with, whose findings can decide its verdicts; its items; the number of output tokens it is expected to write, refined from the telemetry of earlier runs; and its stakes.
+  - Admission, before any session starts: every artefact lies inside the review folder, none matches the deny list, and no result of another unit of this round is among them. A refusal names the artefact and the rule.
+  - Each artefact is measured: a text by its token count when one is recorded and otherwise by its length as an upper bound, an image by the model's patch formula, and each by its content hash.
+  - The shared context holds every artefact any unit needs, in a fixed order, and no unit's prompt. The same declaration and review folder give byte-identical bytes and the same prefix hash.
+  - A unit's prompt is a template with named slots; a template with a slot the unit does not fill, or a filled slot the template lacks, is refused at load.
+  - The result schema is declared as tables with a key column, columns and verdict sets, and the kit derives from it both the schema the sessions are given and what the results module checks, so one change to a table changes both.
+
+  Planning and running.
+
+  - Units a caller declares as coupled are in one group. Small units are packed into one group up to the largest unit's expected output, so that the largest group meets the review's time target, which is estimated as 1.7 seconds per call plus the output tokens at the measured rate; the prices and rates are data, refitted from telemetry, and the fitted values are recorded in the plan.
+  - The plan is flat: one shared context and one fork per group and replica. The planner computes what a tree with the artefacts needed by some groups held above them would save, records the figure and the threshold, and keeps the flat plan; a shared context larger than the review's context budget is refused, naming its size and the budget.
+  - The plan record holds every node with its role, parent, group, replica and attempt, the hash of each prefix, the session specification, the predicted cost and time, the agent command line's version and the tool commit.
+  - The scheduler runs at most the stated number of sessions at once; a bound below one is refused. It builds the shared context once, before any fork, and starts the forks together.
+  - A fatal result appends a fresh fork of the same parent; a local problem appends a repair turn in that unit's own session; a rate limit waits on the clock and retries the same node; an error or an empty answer is a fatal result. A unit gets a stated number of attempts and a unit that still has a problem is reported, with its other results kept.
+  - A rerun of named units rebuilds the recorded path with identical bytes, so the cache is hit inside its lifetime and otherwise the shared context is written once, and the record says a new shared context was started. A rerun refuses a unit the review does not have, refuses to leave out a unit whose last run failed, and refuses when the review folder's hash differs from the recorded one.
+  - A fresh run refuses an output folder that already holds a record, and the output folder holds a lock while a run is in it.
+  - The tests use the stub and the replay with an injected clock, and need no model.
+
+  Merging replicas and the caller contract.
+
+  - The merge holds no model. For a checklist item the merged verdict is a fail when any replica's verdict is a fail, a cannot judge when none failed and any could not judge, and a pass otherwise. Every row records which replicas raised its verdict. Findings the replicas raise for the same item and place are one finding with the replicas that raised it, and findings that differ are all kept.
+  - An adjudication, a later look at the disagreements by a further session, may attach a note to a finding that says it appears to be a false positive and why; it never changes a verdict, and a property test over generated adjudications shows the set of failing items is unchanged by it.
+  - A replica is a fork of the same shared context whose prompt differs in the order of the items, the order of the views and its framing, one of which is a terse hunt for failures; the variants are declared. The number of replicas comes from the unit's stakes in the declaration, two for a round of the design loop and three for the pre-order round, a round flag overriding it; the third replica may run on the small tier, and a replica on a different model has its own shared context and session specification, since the cache cannot be shared across models.
+  - The columns and verdict sets of the declared tables are enforced; this round's findings are renumbered in the checklist's order and the citations of them in the verdict rows rewritten, a citation of an earlier round's finding is left as written, told apart by the round it carries against the round the caller names as this one, and refused when the review folder's earlier rounds do not hold it; two findings that the caller's key assigns to the same place are reported and neither dropped; the merged record is the same for every order the units arrive in.
+  - A caller supplies its checks, a function of the merged tables returning problems, and a rendered record, a function returning file names with their text, written into the output folder after the merge under the file-name rules the earlier caller seam set: one plain component of ASCII letters, digits, full stops, underscores and hyphens that begins with a letter or digit and does not end with a full stop or with the kit's scratch suffix, at most sixty-four characters, not a reserved device name, and no name that equals, without regard to case, one the kit uses or another rendered in the same merge; a name that is already in the output folder is replaced only when the earlier merge wrote it and it is still a regular file.
+  - A caller's optional attributes are the retrieval grant, one read-only retrieval tool beside the three read tools and no other tool, the checklist as a function of the review folder resolved once before any session starts, and the review folder passed to the prompt function with the unit. A caller that defines none behaves as one that defines all three with their defaults. A module missing a required attribute, or a function that raises, is refused naming the caller and the attribute.
+
+  The command and the cutover.
+
+  - The command is a Python tool beside the other board tools with a task-runner entry, run on demand and in neither the build round nor the nightly. It needs the agent command line on the path and logged in, and says so.
+  - Exit 0 when the merged record is written, 1 when the command refuses or a unit fails, 2 when the agent command line is missing or not logged in, each with a line beginning REFUSED or CANNOT RUN that names its cause and what to do, as the other board commands print them. The refusals are: a review folder inside the repository or that does not exist, an output folder inside the review folder or containing it or inside the repository, a caller or declaration that cannot be loaded, an output folder that already holds a record when no unit is named to run again, an output folder in use by another run, a bound below one, and a shared context over the budget.
+  - The report is available as text and as JSON with the same content, and holds the plan, each session's own figures, the run's, the predicted against the actual, the checks that failed and the files rendered.
+  - The task runner's description of the command and the hardware notes say what it is, what it needs, that it is on demand, and what the report records; the hardware notes name what a start report cannot show or exclude and that the model flag takes a full model id; the task runner's description of the board tooling's tests and the hardware notes' list of tested tools name the kit's tests. A test parses the task runner's file and reads every review task's description, because a description holding a colon followed by a space once made the file invalid without any test noticing.
+  - The earlier driver module, its tests and stub, the setup rule, the narration restart, the chunked document reading and the tap shim stay until the last caller has moved to the kit, which the layout solution does and whose last criterion removes them, since the layout proof command and caller are built on them in this branch; nothing the kit adds imports them. Recorded streams are committed as fixtures reduced and scrubbed as the stream criterion states, because the earlier driver saved none.
+  - The tests drive the command over the stub with synthetic callers and folders.
+
+  The proof harness.
+
+  - A baseline is keyed by the hash of the seed list, the design commit, the model, the form and the hash of the prompt, with the seeded and tool commits recorded and not matched, since the five recorded layout runs were made at five tool commits. A run of a form whose baseline for the key is recorded is refused, naming the key, unless the key differs; the recorded single-reviewer runs of the layout proof are loaded as the first baselines.
+  - The pooled criterion: over the recorded single runs and at least one run of the fanned-out form on the same seeded copy, model and tool commit, the seeds the fanned-out form found in each run are no fewer than the fewest any recorded single run found; no seed that every single run found is missed by every fanned-out run; the fanned-out wall time is at most half the single form's mean; and its cost is at most the stated multiple of the single form's mean cost, the multiple a parameter of the proof that each review states. A second fanned-out run is made only when the first is within ten per cent of a bound.
+  - The record gives each run's seeds found, the findings that match no seed, the verdict differences with an explanation, and for every session its time, tokens read, written and generated, cost and first-call cache read, with each seed's replicas that raised it, so the rate at which one replica misses a seed and the correlation between replicas are measured and not assumed.
+  - Matching a seed to a finding is a function the caller supplies.
+  - The tests use recorded baselines and recorded fanned-out runs, and need no model.
+
+  The documentation clause that a session holding only the notes' section and the command's refusal lines can state the command's inputs, outputs and refusal causes is judged by a reading at review, beside the tests that tie each refusal to its documented cause and action, and the Haiku prices of the cost model were fitted from one recorded run and checked against two later ones.
+
+  Out of scope: any caller, whose declaration and checks are the callers' own solutions, the value of any review's cost bar, and a tree-shaped plan, which the plan record's figure says is not worth building at the sizes the board reviews have.
+links:
+  - target: DEC-REVIEW-FAN-OUT-FROM-SHARED-CONTEXT-WITH-REPLICAS
+    type: justified-by
+  - target: DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND
+    type: justified-by
+  - target: DEL-HW-REVIEW-FAN-OUT.C1
+    type: derives-from
+  - target: DEL-HW-REVIEW-FAN-OUT.C5
+    type: derives-from
+  - target: DEL-HW-REVIEW-FAN-OUT.C6
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3
+    type: targets
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: targets
+  - target: SOL-HW-REVIEW-FAN-OUT-DRIVER
+    type: supersedes
+  - target: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM
+    type: supersedes
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: 3ad209a87f73cb6a7e4fc4c8b1e80f73074dcd4443a946108b1ef4e323a411ed
+  gating_profile: ""

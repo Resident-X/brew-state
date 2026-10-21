@@ -1,7 +1,7 @@
 id: SOL-HW-REVIEW-FAN-OUT-DRIVER.C1
 type: criterion
 title: The command judges two or more units in reviewers forked from one setup session, a single unit in the setup session, and no more reviewers at once than the stated number
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: test

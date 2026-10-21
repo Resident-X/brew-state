@@ -3,14 +3,14 @@ type: decision
 category: operational
 title: A review round judged by unit is the same round as one judged by a single reviewer, with one verdict for every item and the findings numbered at the merge
 status: active
-version: 1
+version: 2
 decided_by: david
 text: |
   A review round judged by unit is the same round as one judged by a single reviewer: it gives every checklist item exactly one verdict, it is recorded as one round in the one review record in the form the method already gives, and the round kind, full or narrow, means what it already means. The method describes judging a round by unit as a way to carry out a round and leaves judging it with one reviewer valid, so a person, or an agent session without the driver, can still carry out a round and every round already recorded stands.
 
   A round judged by unit adds three things to the method's step, all of them done by the merge and none by a reviewer. Every checklist item has exactly one verdict row in the merged table, and a missing or duplicated item fails the merge, naming the item. The findings are numbered at the merge, in the checklist's order, never by the reviewer that raised them, so the round's finding numbers are the same however many reviewers there were; only this round's findings are renumbered, and a verdict row's citation of a finding an earlier round raised is left as written. A finding that two units raise for the same place is reported by the merge for the designer to resolve and is not dropped. The round's own fields, its number, kind, the commit judged, the views and the check's lines, are supplied to the command as inputs by whoever starts the round, since the merge has no model to write them. The comparison of the layout with the plan and the free pass over every view, which belong to no one area, are judged by a unit of their own, and the planning-cause trace for a first-review failure stays with the designer after the merge as it does now.
 
-  A reviewer forked from the setup session is a fresh reviewer for the method's rule that the closing round be judged by a fresh reviewer: the setup session holds only documents and records and no designer's reasoning, and no unit holds another unit's verdicts.
+  A reviewer forked from the shared context is a fresh reviewer for the method's rule that the closing round be judged by a fresh reviewer: the shared context holds only documents, records, rendered views and extracts of the design, never a verdict, a seed list or a designer's reasoning, and no unit holds another unit's verdicts.
 
   The method's sentence that a proof is repeated after the step it proves changes is read as naming the form that changed: a fanned-out form is proven on its own, and the single-reviewer form's recorded proof stands for the single-reviewer form, which is unchanged. The method's amendment says so beside the sentence.
 

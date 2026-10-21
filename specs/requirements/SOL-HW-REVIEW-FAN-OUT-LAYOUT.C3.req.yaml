@@ -2,11 +2,11 @@ id: SOL-HW-REVIEW-FAN-OUT-LAYOUT.C3
 type: criterion
 title: The merge gives every checklist item of a full round one verdict, takes the round's fields from its starter, and reports findings that concern one place
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |
-  Over synthetic unit results, the merge fails naming an item that has no verdict row and an item that has two, fails a round whose number, kind, commit judged, views or check lines are missing or malformed, writes the opening lines in the order the method gives with the round kind, and reports two findings that cite the same view and board place, keeping both. Rule-kind items rest on the check's report and the rules table as the method says, which the merge does not judge. Findings of the item units are numbered in the checklist's order and the findings of the comparison and free-pass unit follow, in the order that unit lists them. A full round that still holds a cannot judge verdict fails, naming the item and the view its Why asks for, since the method resolves it within the round; the round's starter renders the view and re-runs that unit. Out of scope: whether a verdict is right.
+  Over synthetic unit results, the merge fails naming an item that has no verdict row and an item that has two, fails a round whose number, kind, commit judged, views or check lines are missing or malformed, writes the opening lines in the order the method gives with the round kind and, for a narrow round, its changed regions, the listed items with their reasons and the line saying why every other item is not judged, and reports two findings that cite the same view and board place, keeping both. Rule-kind items rest on the check's report and the rules table as the method says, which the merge does not judge. Findings of the item units are numbered in the checklist's order and the findings of the comparison and free-pass unit follow, in the order that unit lists them. A round that still holds a cannot judge verdict fails, naming the item and the view its Why asks for, since the method resolves it within the round; the round's starter renders the view, adds it with the folder command's add-view mode and re-runs that unit, and the merged row, built from the item, Why and view the resolutions file holds and the re-run's verdict, with the added views folded into the round's Views field at the render, records the cannot judge, the view or the document added and the verdict reached, in that order. Out of scope: whether a verdict is right.
 links:
   - target: SOL-HW-REVIEW-FAN-OUT-LAYOUT
     type: criterion-of

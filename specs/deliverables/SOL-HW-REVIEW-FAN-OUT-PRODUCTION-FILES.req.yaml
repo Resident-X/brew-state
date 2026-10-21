@@ -3,11 +3,11 @@ type: deliverable
 category: solution
 title: A task fans the production-files check out by group of placed parts and by layers and merges them into one check record that blocks the order on any row that is not a match
 status: active
-version: 2
+version: 3
 text: |
-  Why this exists. The ordering step's production-files check gives a verdict to every placed part and to every fabrication layer, one reviewer in one context, and it is repeated at every order and in its blind proof. The reasoning, measurements and options rejected are in DEC-REVIEW-FAN-OUT-BY-UNIT-FROM-SHARED-SETUP, and DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND settles that a check judged by unit is the same check; a session building this does not reopen either. This is the fifth of six solutions under DEL-HW-REVIEW-FAN-OUT. It adds the production-files check as a caller of the driver SOL-HW-REVIEW-FAN-OUT-DRIVER as the caller-seam solution SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM extends it, and adds nothing to the driver beyond that seam; it is independent of the layout, critical-routing and schematic solutions. Its units are smaller than the reviews', so its saving is smaller, and it is built because the check is repeated at every order and in its proof.
+  Why this exists. The ordering step's production-files check gives a verdict to every placed part and to every fabrication layer, one reviewer in one context, and it is repeated at every order and in its blind proof. The reasoning, measurements and options rejected are in DEC-REVIEW-FAN-OUT-FROM-SHARED-CONTEXT-WITH-REPLICAS, and DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND settles that a check judged by unit is the same check; a session building this does not reopen either. This is the fifth of five solutions under DEL-HW-REVIEW-FAN-OUT. It adds the production-files check as a declaration and a small module of checks and a rendered record for the review kit SOL-HW-REVIEW-KIT, and adds nothing to the kit; it is independent of the layout, critical-routing and schematic solutions. Its units are smaller than the reviews', so its saving is smaller, and it is built because the check is repeated at every order and in its proof.
 
-  What it does. The check is judged by a few reviewers each holding a bounded group of placed parts that share footprints, and one reviewer holding every fabrication layer, the drill file and the outline, and the merge writes one production-files check record through the rendered record the caller-seam solution adds, with the commit judged and the tools and commands read from the review folder the driver passes the caller's prompts.
+  What it does. The check is judged by a few reviewers each holding a bounded group of placed parts that share footprints, and one reviewer holding every fabrication layer, the drill file and the outline, and the merge writes one production-files check record through the rendered record the kit's caller contract provides, with the commit judged and the tools and commands read from the review folder the kit passes the caller's prompts.
 
   Settled before the build.
 
@@ -16,12 +16,10 @@ text: |
   - The assembler's preview needs an account and an upload that a read-only session cannot hold. The step that obtains it stays outside every reviewer. The review folder holds the real preview for a real order, and for the proof the design's own rendered views as the proof's folder does.
   - The review folder for a real order is assembled by a command from the committed design and the production files the ordering step exports, holding what the step gives a reviewer. The exported files carry no record of the commit they came from, so the command takes the commit as an input and records it in the check record's opening fields; it does not claim to detect a mismatch.
   - The blind proof keeps its seeding as it is: the proof design's production files are seeded by a session that does not then check them, and the check is run by sessions with no record of the seeds, in both forms.
-  - The tests need no model and no KiCad, using the driver's stub over synthetic placement files, parts lists and unit results.
+  - The tests need no model and no KiCad, using the kit's stub over synthetic placement files, parts lists and unit results.
 
-  Out of scope: placing an order; the layout, critical-routing and schematic solutions; the driver's mechanics.
+  Out of scope: placing an order; the layout, critical-routing and schematic solutions; the kit's mechanics.
 links:
-  - target: DEC-REVIEW-FAN-OUT-BY-UNIT-FROM-SHARED-SETUP
-    type: justified-by
   - target: DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND
     type: justified-by
   - target: DEL-HW-REVIEW-FAN-OUT.C4
@@ -34,11 +32,11 @@ links:
     type: targets
   - target: OBL-VERIFICATION-DISCIPLINE-001.C9
     type: targets
-  - target: SOL-HW-REVIEW-FAN-OUT-DRIVER
-    type: depends-on
   - target: SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT
     type: depends-on
   - target: SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF
     type: depends-on
-  - target: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM
+  - target: SOL-HW-REVIEW-KIT
     type: depends-on
+  - target: DEC-REVIEW-FAN-OUT-FROM-SHARED-CONTEXT-WITH-REPLICAS
+    type: justified-by

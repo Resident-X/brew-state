@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT.C9
+type: criterion
+title: A unit's replicas differ as declared, their number follows the stakes or a round flag, and a replica on another model has its own shared context
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Over a synthetic declaration, a unit of normal stakes has two replicas and a unit of high stakes three, a round flag overrides the declared number, each replica's prompt differs from the others in the declared item order, view order and framing and is byte-identical on a second build, and a replica declared for a model other than the review's has its own shared context and session specification and shares no cache with the others. Out of scope: the content of any declared framing.
+links:
+  - target: SOL-HW-REVIEW-KIT
+    type: criterion-of

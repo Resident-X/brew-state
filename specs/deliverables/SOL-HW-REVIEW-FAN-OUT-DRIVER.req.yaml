@@ -2,7 +2,7 @@ id: SOL-HW-REVIEW-FAN-OUT-DRIVER
 type: deliverable
 category: solution
 title: A task runs a judged review as a setup session and one forked read-only reviewer per unit, bounded and recorded, and merges the units by a caller's checks
-status: active
+status: deprecated
 version: 3
 text: |
   Why this exists. Wall-clock time and token use are what slow this project most, and the method's judged reviews run one reviewer through every unit in one long context. The reasoning, the measurements and the options rejected are in DEC-REVIEW-FAN-OUT-BY-UNIT-FROM-SHARED-SETUP, and DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND settles that a round judged by unit is the same round; a session building this does not reopen either. This is the first of six solutions under DEL-HW-REVIEW-FAN-OUT and the one every other builds on: it builds the command, its handling of sessions and its generic merge, and no caller.
