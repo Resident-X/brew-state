@@ -291,7 +291,7 @@ def facts_text(root: list, name: str) -> str:
     f = millimetres
     names = {str(n[1]): str(n[2]) for n in kids(root, "net") if len(n) > 2}
     out = [f"LAYOUT FACTS extracted from {name} (millimetres, board coordinates, y grows downward; angles in degrees as in "
-           "the file). Pad positions are absolute (footprint position and rotation applied).", "", "== BOARD =="]
+           "the file). Pad positions are absolute (footprint position and rotation applied); a pad's rot is its absolute orientation as the file writes it.", "", "== BOARD =="]
     for layers in kids(root, "layers")[:1]:
         out.append("layers: " + ", ".join(f"{l[1]}({l[2]})" for l in layers[1:] if isinstance(l, list) and len(l) > 2))
     for g in root[1:]:
@@ -329,7 +329,7 @@ def facts_text(root: list, name: str) -> str:
             px, py = float(at[1]), float(at[2])
             ax = x + px * math.cos(angle) + py * math.sin(angle)
             ay = y - px * math.sin(angle) + py * math.cos(angle)
-            turned = (float(at[3]) if len(at) > 3 else 0.0) + rotation
+            turned = float(at[3]) if len(at) > 3 else 0.0
             size, layers = kid(pad, "size"), kid(pad, "layers")
             out.append(f"  {pad[1]} | {f(ax)},{f(ay)} | {pad[3] if len(pad) > 3 else ''} {f(size[1])}x{f(size[2])}"
                        f"{' rot ' + f(turned) if turned % 360 else ''} | {' '.join(map(str, layers[1:])) if layers else ''} | "

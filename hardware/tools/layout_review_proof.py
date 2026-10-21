@@ -21,7 +21,15 @@ that raised it, the findings that match no seed, the verdicts item by item with 
 session's time, tokens read, written and generated, cost, first-call cache read and document retrievals with any that
 failed, and the calls refused for a rate limit. A seed not reported is closed where the gap lies and the proof repeated.
 
---dry prints each selected run's plan and its predicted cost and time beside the bounds they would be held to, and starts no
+The work folder keeps the review folder alone in <work>/review-tree/review, since a session starts there and can read the
+folders above it; the seed list, the seeded copy and the kept work tree are under <work>/seed/, each round's output under
+<work>/out/<round>/, and the record in <work>. A session that guesses a path two levels up can still read them.
+
+The pre-order round's third replica runs on the layout caller's small-tier model with a shared context of its own; the cost
+model has one set of prices, so its forks are predicted at the review model's prices.
+
+--dry prints each selected run's plan and its predicted cost and time beside the bounds they would be held to (with a warning
+when the design loop's prediction is over a bound or within a tenth of it), and starts no
 session and calls no model; it still seeds the copy and writes the review folder. --only runs one of the two rounds.
 
 The agent command line is the program named by REVIEW_KIT_AGENT (claude when it is unset), logged in. A run costs money:
@@ -57,10 +65,16 @@ from review_kit import command, proof, scheduler, store, streams  # noqa: E402
 from review_kit import executor as ex  # noqa: E402
 
 REPO = review_seed.REPO
-SEEDED = "seeded-review"
-KEPT_TREE = "seeded-work"
-FOLDER = "review"
-SEEDS = "seeds.json"
+#: Where the work folder keeps each part, relative to it. A session starts in the review folder and can read the folders above
+#: it, so the review folder lives alone in a folder of its own and the seed material and the output folders sit beside that
+#: folder's parent, not in it.
+SEED_DIR = "seed"
+SEEDED = os.path.join(SEED_DIR, "seeded-review")
+KEPT_TREE = os.path.join(SEED_DIR, "seeded-work")
+SEEDS = os.path.join(SEED_DIR, "seeds.json")
+REVIEW_TREE = "review-tree"
+FOLDER = os.path.join(REVIEW_TREE, "review")
+OUT_DIR = "out"
 RECORD = "proof-record.json"
 TEXT = "proof-record.txt"
 BASELINES = os.path.join(TOOLS_DIR, "tests", "fixtures", "review_baselines", "layout_single_runs.json")
@@ -93,6 +107,7 @@ class Refused(Exception):
 
 def run_seed(work: str, kicad_cli: str, resvg: str) -> Dict[str, str]:
     """The seeding command, run with its flag that keeps the seeded copy's work tree; the work tree and the commit."""
+    os.makedirs(os.path.join(work, SEED_DIR), exist_ok=True)
     command_line = [sys.executable, os.path.join(TOOLS_DIR, "review_seed.py"), "--seeds", os.path.join(work, SEEDS), "--out",
                     os.path.join(work, SEEDED), "--keep-work-tree", os.path.join(work, KEPT_TREE), "--kicad-cli", kicad_cli,
                     "--resvg", resvg]
@@ -115,6 +130,7 @@ def write_folder(work: str, seeded: Dict[str, str], documents_repo: Optional[str
     """The review folder, written by the folder command from the kept work tree's commit, with the views and the check's
     report the seeding command rendered, and the method and notes of this repository."""
     folder = os.path.join(work, FOLDER)
+    os.makedirs(os.path.dirname(folder), exist_ok=True)
     report = os.path.join(work, SEEDED, review_seed.REPORT)
     argv = ["--repo", seeded["repository"], "--commit", seeded["commit"], "--design", review_seed.DESIGN, "--out", folder,
             "--views", os.path.join(work, SEEDED, review_seed.VIEWS),
@@ -367,6 +383,17 @@ def lines_of(record: Mapping[str, Any]) -> List[str]:
     return found
 
 
+def small_tier(plan: Mapping[str, Any]) -> Optional[Dict[str, Any]]:
+    """The forks a plan runs on a model other than the review's, and that model, none when every replica runs on the review's."""
+    variants = plan["variants"]
+    found = {}
+    for context in plan.get("contexts", ()):
+        count = sum(1 for group in plan["groups"] for replica in range(1, group["replicas"] + 1)
+                    if variants[(replica - 1) % len(variants)] in context["variants"])
+        found[context["model"]] = count
+    return {"model": ", ".join(found), "forks": sum(found.values())} if found else None
+
+
 def dry_lines(plans: Mapping[str, Mapping[str, Any]], singles: Sequence[proof.RunOutcome]) -> List[str]:
     """The plan and predicted cost and time of each selected run, beside the bounds the design loop's run is held to."""
     cost = COST_MULTIPLE * proof.mean([run.cost_usd for run in singles])
@@ -382,9 +409,21 @@ def dry_lines(plans: Mapping[str, Mapping[str, Any]], singles: Sequence[proof.Ru
                      f"shared context {plan['shared_tokens']} tokens | variants {', '.join(plan['variants'])}")
         found += [f"GROUP | {name} | {group['id']} | units {', '.join(group['units'])} | {group['replicas']} replicas | expected "
                   f"output {group['expected_output_tokens']} tokens" for group in plan["groups"]]
+        small = small_tier(plan)
+        if small:
+            found.append(f"SMALL TIER | {name} | {small['forks']} forks on {small['model']} from a shared context of its own, "
+                         "which is one root more; the cost model has one set of prices, the review model's, so their cost is "
+                         "predicted at those prices and is an upper bound")
         found.append(f"PREDICTED | {name} | ${predicted['cost_usd']} | {predicted['wall_s']} s | " + (
             f"cost {'within' if predicted['cost_usd'] <= cost else 'over'} its bound, time {'within' if predicted['wall_s'] <= wall else 'over'} "
             "its bound" if name == "design-loop" else "figures recorded, not bounded"))
+        if name == "design-loop":
+            near = [f"{what} ${figure} against its bound ${limit:.2f}" if what == "cost" else f"{what} {figure} s against its bound {limit:.0f} s"
+                    for what, figure, limit in (("cost", predicted["cost_usd"], cost), ("wall time", predicted["wall_s"], wall))
+                    if figure > limit * (1 - proof.NEAR)]
+            if near:
+                found.append(f"WARNING | {name} | predicted " + " and ".join(near) + f", over it or within {proof.NEAR:.0%} of it; a live run "
+                             "is likely to fail that bound or to need a second run")
     return found
 
 
@@ -414,7 +453,7 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout, err=sys.stderr, seed_
     parser.add_argument("--work", required=True, help="a new folder outside the repository the run keeps everything in")
     parser.add_argument("--kicad-cli", default="kicad-cli", help="KiCad's command-line tool (default: kicad-cli on the search path)")
     parser.add_argument("--resvg", default="resvg", help="the resvg program the views are drawn with (default: resvg on the search path)")
-    parser.add_argument("--model", default=MODEL, help=f"the full model id both rounds use (default: {MODEL}, the recorded runs')")
+    parser.add_argument("--model", default=MODEL, help=f"the full model id both rounds use for all but the third replica of the pre-order round (default: {MODEL}, the recorded runs')")
     parser.add_argument("--only", choices=[name for name, _ in ROUNDS], default=None,
                         help="run one round: design-loop (two replicas) or pre-order (three); default both")
     parser.add_argument("--bound", type=int, default=None, help="the most sessions at once (default: every fork together)")
@@ -452,14 +491,15 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout, err=sys.stderr, seed_
             seeds = json.load(handle)["seeds"]
         key, singles = baseline_runs(baselines, seeds, tree(), args.model)
         if args.dry:
-            plans = {name: plan_of(folder, os.path.join(work, name), args.model, replicas, args.bound, environ)
+            plans = {name: plan_of(folder, os.path.join(work, OUT_DIR, name), args.model, replicas, args.bound, environ)
                      for name, replicas in chosen}
             result.update(result="PLANNED", refusals=[], lines=dry_lines(plans, singles), plans=plans,
                           detail="no session was started and no model was called")
             return finish(0)
         runs: Dict[str, Tuple[proof.RunOutcome, Dict[str, Any]]] = {}
+        os.makedirs(os.path.join(work, OUT_DIR), exist_ok=True)
         for name, replicas in chosen:
-            output = os.path.join(work, name)
+            output = os.path.join(work, OUT_DIR, name)
             status, report = run_command(folder, output, args.model, replicas, args.bound, environ, main_command)
             if report.get("cannot_run"):
                 raise board_check.CannotRun(report["cannot_run"])

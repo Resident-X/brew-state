@@ -26,6 +26,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import layout_fixtures as fx  # noqa: E402
 import layout_review_proof as lrp  # noqa: E402
+import review_caller_layout  # noqa: E402
 import review_seed  # noqa: E402
 import test_review_caller_layout as layout_tests  # noqa: E402
 from review_kit import caller as kit_caller  # noqa: E402
@@ -33,6 +34,7 @@ from review_kit import executor as ex  # noqa: E402
 from review_kit import proof, store  # noqa: E402
 from review_kit import session as sess  # noqa: E402
 
+kit_small = review_caller_layout.SMALL_MODEL
 REPO = os.path.dirname(os.path.dirname(TOOLS))
 SEEDS = [{"id": "S1", "item": "FLOOR-1"}, {"id": "S2", "item": "CLOCK-1"}, {"id": "S3", "item": "GROUND-1"}]
 ALL_FAIL = {"FLOOR-1": "fail", "CLOCK-1": "fail", "GROUND-1": "fail"}
@@ -117,10 +119,12 @@ class TheCommand(Proofed):
         status, text, err = self.go()
         self.assertEqual(status, 0, text + err)
         calls = self.calls()
-        self.assertEqual(len(calls), (1 + 2 * 2) + (1 + 3 * 2), "a shared context and two groups of two replicas, then of three")
-        self.assertEqual(len([call for call in calls if call["resume"] is None]), 2, "two shared contexts and no single reviewer")
-        for call in calls:
-            self.assertEqual(call["args"][call["args"].index("--model") + 1], lrp.MODEL)
+        self.assertEqual(len(calls), (1 + 2 * 2) + (2 + 3 * 2), "a shared context and two groups of two replicas, then a second shared context for the small model and two groups of three")
+        self.assertEqual(len([call for call in calls if call["resume"] is None]), 3,
+                         "a shared context for the design loop, two for the pre-order round, and no single reviewer")
+        models = [call["args"][call["args"].index("--model") + 1] for call in calls]
+        self.assertEqual(sorted(set(models)), sorted({lrp.MODEL, kit_small}))
+        self.assertEqual(models.count(kit_small), 1 + 2, "the pre-order round's small-tier root and its third replica of each group")
         record = self.record()
         self.assertEqual(record["verdict"]["status"], "pass")
         self.assertEqual(record["cost_multiple"], 2.0)
@@ -193,7 +197,7 @@ class TheCommand(Proofed):
         self.assertEqual(self.calls(), [], "the model is not called")
         self.assertFalse(os.path.exists(os.path.join(self.work, lrp.RECORD)))
         for name in ("design-loop", "pre-order"):
-            self.assertFalse(os.path.exists(os.path.join(self.work, name)), "no run folder is made")
+            self.assertFalse(os.path.exists(os.path.join(self.work, lrp.OUT_DIR, name)), "no run folder is made")
             self.assertRegex(text, rf"PLAN \| {name} \| \d replicas \| 2 groups \| \d forks")
             self.assertRegex(text, rf"PREDICTED \| {name} \| \$[0-9.]+ \| [0-9.]+ s \|")
         self.assertIn("PLAN | design-loop | 2 replicas | 2 groups | 4 forks", text)
@@ -210,6 +214,72 @@ class TheCommand(Proofed):
         self.assertEqual(list(document["plans"]), ["pre-order"])
         self.assertEqual(document["result"], "PLANNED")
 
+    def test_no_folder_from_the_review_folders_parent_up_to_the_work_folder_holds_anything_but_the_review_folder(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: sessions with no record of the seeds, and no unit holding another unit's verdicts, so nothing sensitive is in a folder above a session's working directory
+        status, text, err = self.go()
+        self.assertEqual(status, 0, text + err)
+        folder = os.path.join(self.work, lrp.FOLDER)
+        self.assertEqual(os.path.dirname(os.path.dirname(folder)), self.work)
+        seen = []
+        above = os.path.dirname(folder)
+        while above != self.work:
+            self.assertEqual(os.listdir(above), [os.path.basename(folder) if not seen else os.path.basename(seen[-1])],
+                             f"{above} lists only the folder below it")
+            seen.append(above)
+            above = os.path.dirname(above)
+        self.assertEqual(seen, [os.path.join(self.work, lrp.REVIEW_TREE)])
+        everything = [name for _, _, names in os.walk(os.path.join(self.work, lrp.REVIEW_TREE)) for name in names]
+        for name in ("seeds.json", "proof-record.json", "record.json"):
+            self.assertNotIn(name, everything)
+        self.assertTrue(os.path.isfile(os.path.join(self.work, lrp.SEEDS)))
+        self.assertTrue(os.path.isdir(os.path.join(self.work, lrp.SEEDED)))
+        for name in ("design-loop", "pre-order"):
+            self.assertTrue(store.holds_record(os.path.join(self.work, lrp.OUT_DIR, name)), name)
+            self.assertFalse(os.path.exists(os.path.join(self.work, name)), "no output folder directly in the work folder")
+        for call in self.calls():
+            self.assertEqual(os.path.realpath(call["cwd"]), os.path.realpath(folder), "every session starts in the review folder")
+
+    def dry_with_mean_cost(self, divisor):
+        """The dry output over baselines whose mean cost makes the design loop's cost bound the predicted cost times `divisor`."""
+        status, text, err = self.go("--dry", "--json", "--only", "design-loop")
+        self.assertEqual(status, 0, text + err)
+        predicted = json.loads(text)["plans"]["design-loop"]["predicted"]["cost_usd"]
+        shutil.rmtree(self.work)
+        mean = predicted * divisor / lrp.COST_MULTIPLE
+        runs = [single("one", ["S1", "S2"], cost=mean), single("two", ["S1", "S2", "S3"], cost=mean)]
+        status, text, err = self.go("--dry", "--only", "design-loop", baselines=baselines_file(os.path.join(self.root, f"d{divisor}.json"), runs))
+        self.assertEqual(status, 0, text + err)
+        shutil.rmtree(self.work)
+        return text
+
+    def test_the_dry_output_warns_when_the_prediction_is_over_a_bound_or_within_a_tenth_of_it(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: a plan mode that prints the plan and the predicted cost and time without calling the model, beside the bounds of the cost multiple of 2.0 and half the single mean time
+        text = self.dry_with_mean_cost(0.8)
+        self.assertRegex(text, r"PREDICTED \| design-loop .*cost over its bound")
+        self.assertRegex(text, r"WARNING \| design-loop \| predicted cost \$[0-9.]+ against its bound \$[0-9.]+, over it or within 10% of it; "
+                               r"a live run is likely to fail that bound or to need a second run")
+        text = self.dry_with_mean_cost(1.05)
+        self.assertRegex(text, r"PREDICTED \| design-loop .*cost within its bound")
+        self.assertIn("WARNING | design-loop | predicted cost", text, "within a tenth below the bound is warned too")
+        self.assertIn("a live run is likely to fail that bound or to need a second run", text)
+        text = self.dry_with_mean_cost(1.25)
+        self.assertNotIn("WARNING", text, "a prediction clear of the bound by more than a tenth is not warned")
+
+    def test_the_dry_output_names_the_small_tier_replica_and_the_prices_it_is_predicted_at(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: the pre-order round's three replicas, the third on the small-tier model with a root of its own, predicted by the cost model's one set of prices
+        status, text, err = self.go("--dry", "--json")
+        self.assertEqual(status, 0, text + err)
+        document = json.loads(text)
+        self.assertEqual(document["plans"]["design-loop"]["contexts"], [], "two replicas never reach the small model")
+        pre_order = document["plans"]["pre-order"]
+        self.assertEqual([context["model"] for context in pre_order["contexts"]], [kit_small])
+        shutil.rmtree(self.work)
+        status, text, err = self.go("--dry")
+        lines = [line for line in text.splitlines() if line.startswith("SMALL TIER")]
+        self.assertEqual(len(lines), 1, text)
+        self.assertIn(f"SMALL TIER | pre-order | 2 forks on {kit_small} from a shared context of its own", lines[0])
+        self.assertIn("one set of prices", lines[0])
+
     def test_a_flag_runs_only_one_of_the_two_rounds_and_the_pre_order_figures_alone_are_recorded_not_judged(self):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: the replicas the design-loop round uses, and the pre-order round's three replicas run once and their figures recorded
         status, text, err = self.go("--only", "design-loop")
@@ -222,7 +292,7 @@ class TheCommand(Proofed):
         os.remove(self.log)
         status, text, err = self.go("--only", "pre-order")
         self.assertEqual(status, 0, text + err)
-        self.assertEqual(len(self.calls()), 7)
+        self.assertEqual(len(self.calls()), 8)
         record = self.record()
         self.assertIsNone(record["verdict"], "no criterion is applied to the pre-order round")
         self.assertEqual(record["pre_order"]["seeds_found_count"], 3)
@@ -279,7 +349,7 @@ class TheCommand(Proofed):
     def test_a_seed_only_one_replica_raised_names_that_replica_and_still_counts_as_found(self):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: the replicas that raised each seed; a seed is found when any replica raised it
         self.go("--only", "design-loop")
-        output = os.path.join(self.work, "design-loop")
+        output = os.path.join(self.work, lrp.OUT_DIR, "design-loop")
         record = store.read_record(output)
         lane = next(lane for lane in record["lanes"] if lane["replica"] == 2 and "area-GROUND" in lane["units"])
         attempt = lane["record"]["attempts"][lane["record"]["standing"]]

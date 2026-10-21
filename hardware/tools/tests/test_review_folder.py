@@ -98,9 +98,13 @@ class TheFolder(Case):
         self.assertIn("C2 | Lib:C_0603 | F.Cu | at 10,10,90 | 100nF", facts)
         self.assertLess(facts.index("C2 | Lib:C_0603 | F.Cu | at 10,10,90 | 100nF"), facts.index("C10 | Lib:U_8 | F.Cu | at 20,10,0 | chip"),
                         "references are in their natural order, C2 before C10")
-        self.assertIn("  1 | 10,10.8 | rect 0.9x0.95 rot 90 | F.Cu F.Mask | VCC", facts, "a pad's place has the part's rotation applied")
+        self.assertIn("  1 | 10,10.8 | rect 0.9x0.95 rot 90 | F.Cu F.Mask | VCC", facts, "a pad's place has the part's rotation applied and its own absolute angle is printed as written")
         self.assertIn("  2 | 10,9.2 | rect 0.9x0.95 rot 90 | F.Cu F.Mask | GND", facts)
-        self.assertIn("  1 | 20,10 | rect 1x1 | F.Cu | VCC", facts)
+        self.assertIn("  1 | 20,10 | rect 1x1 | F.Cu | VCC", facts, "a pad written with angle 0 prints no rotation")
+        self.assertIn("R3 | Lib:R_0603 | F.Cu | at 30,10,270 | 10k", facts)
+        self.assertIn("  1 | 30,9.2 | rect 0.9x0.95 rot 270 | F.Cu F.Mask | VCC", facts,
+                      "a pad's angle is absolute in the file and printed as written, the part's 270 not added to it")
+        self.assertIn("  2 | 30,10.8 | roundrect 0.9x0.95 rot 270 | F.Cu F.Mask | GND", facts)
         self.assertIn("VCC:", facts)
         self.assertIn("  F.Cu | (10,10.8) -> (20,10) | w 0.25", facts)
         self.assertIn("GND | 15,10 | 0.8/0.4 | F.Cu-B.Cu", facts)

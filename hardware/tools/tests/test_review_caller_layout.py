@@ -83,7 +83,7 @@ round_number = scenario.get("round", 1)
 for unit, body in re.findall(r"Your unit: (\\S+)\\n(.*?)(?=Your unit: |\\Z)", text, re.S):
     found = 0
     for item in re.findall(r"^- ([A-Z]+-\\d+)$", body, re.M):
-        verdict = scenario.get("verdicts", {}).get(item, "pass")
+        verdict = scenario.get("model_verdicts", {}).get(model, {}).get(item) or scenario.get("verdicts", {}).get(item, "pass")
         why = scenario.get("why", {}).get(item, "Judged on the views.")
         if verdict == "fail":
             found += 1
@@ -437,7 +437,8 @@ class TheUnits(Folder):
             self.assertTrue(hasattr(loaded.module, attribute), attribute)
         self.assertEqual(command.POLICY_ATTRIBUTE, "replica_policy")
         policy = command.ensemble.parse_policy(loaded.module.replica_policy)
-        self.assertEqual(policy.ids, ["full", "hunt"])
+        self.assertEqual(policy.ids, ["full", "hunt", "small"])
+        self.assertEqual([variant.model for variant in policy.variants], [None, None, review_caller_layout.SMALL_MODEL])
         self.assertEqual(dict(policy.by_stakes), {"low": 1, "normal": 2, "high": 3})
         self.assertEqual(prepared(self.folder).declaration.budget.wall_s, 350)
 
@@ -723,6 +724,21 @@ class TheMerge(Folder):
         again["area-CLOCK"]["Verdicts"] = [verdict("CLOCK-1", "cannot judge", "needs crop-Y2: still not enough")]
         self.refused(lambda: merged(self.folder, again), "item CLOCK-1 is still cannot judge", "asks for crop-Y2")
 
+    def test_a_cannot_judge_whose_view_is_already_added_says_to_run_the_unit_again_and_otherwise_to_add_the_view(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C3: A round that still holds a cannot judge verdict fails, naming the item and the view its Why asks for, since the method resolves it within the round; the round's starter renders the view, adds it with the folder command's add-view mode and re-runs that unit
+        given = results()
+        given["area-CLOCK"]["Verdicts"] = [verdict("CLOCK-1", "cannot judge", "needs crop-Y1: no crop of the crystal")]
+        before = self.refused(lambda: merged(self.folder, given), "item CLOCK-1 is still cannot judge", "render that view", "--add-view")
+        self.assertNotIn("already holds a view", before)
+        self.add_view()
+        after = self.refused(lambda: merged(self.folder, given), "item CLOCK-1 is still cannot judge",
+                             "the folder already holds a view added for this item", "run unit area-CLOCK again with --rerun")
+        self.assertNotIn("render that view", after, "the view exists, so it is not asked for again")
+        given["area-FLOOR"]["Verdicts"] = [verdict("FLOOR-1", "cannot judge", "needs crop-U9: no crop of U9"), verdict("FLOOR-2")]
+        other = self.refused(lambda: merged(self.folder, given), "item FLOOR-1 is still cannot judge")
+        self.assertIn("render that view, add it with the folder command's --add-view and run unit area-FLOOR", other,
+                      "an item with no added view is still told to add one")
+
     def test_a_full_round_whose_plan_unit_wrote_no_note_fails_the_merge(self):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C3: Over synthetic unit results, the merge fails naming an item that has no verdict row and an item that has two, fails a round whose number, kind, commit judged, views or check lines are missing or malformed, writes the opening lines in the order the method gives with the round kind and, for a narrow round, its changed regions, the listed items with their reasons and the line saying why every other item is not judged, and reports two findings that cite the same view and board place, keeping both. Rule-kind items rest on the check's report and the rules table as the method says, which the merge does not judge. Findings of the item units are numbered in the checklist's order and the findings of the comparison and free-pass unit follow, in the order that unit lists them. A round that still holds a cannot judge verdict fails, naming the item and the view its Why asks for, since the method resolves it within the round; the round's starter renders the view, adds it with the folder command's add-view mode and re-runs that unit, and the merged row, built from the item, Why and view the resolutions file holds and the re-run's verdict, with the added views folded into the round's Views field at the render, records the cannot judge, the view and the verdict reached, in that order. Out of scope: whether a verdict is right.
         self.refused(lambda: merged(self.folder, results(plan_notes=())), "unit plan-and-free-pass gave no note")
@@ -988,6 +1004,66 @@ class TheToolGrant(Folder):
         line = self.reviewer_refused(fork_cwd=os.path.join(self.root, "elsewhere"))
         self.assertIn("started in", line)
         self.assertIn(self.folder, line, "the folder its specification names")
+
+
+class TheSmallTierReplica(Folder):
+    def run_three(self, **scenario):
+        run = Command(self)
+        run.scenario(**scenario)
+        status, text, err = run.go("--format", "json", "--replicas", "3", "--model", "claude-sonnet-5-5")
+        return run, status, text, err
+
+    def test_a_round_of_three_replicas_plans_a_second_shared_context_for_the_small_model(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: the pre-order round's three replicas, the third on the small-tier model with a shared context of its own
+        run, status, text, err = self.run_three()
+        self.assertEqual(status, 0, text + err)
+        plan = json.loads(text)["plan"]
+        self.assertEqual(plan["variants"], ["full", "hunt", "small"])
+        self.assertEqual([(context["model"], context["variants"]) for context in plan["contexts"]],
+                         [(review_caller_layout.SMALL_MODEL, ["small"])], "the review's own context and one for the small model")
+        os.remove(run.log)
+        two = Command(self, out="out-two")
+        two.scenario()
+        status, text, err = two.go("--format", "json", "--replicas", "2", "--model", "claude-sonnet-5-5")
+        self.assertEqual(status, 0, text + err)
+        self.assertEqual(json.loads(text)["plan"]["contexts"], [], "two replicas never reach the small model")
+        self.assertEqual(json.loads(text)["plan"]["variants"], ["full", "hunt", "small"])
+        models = {call["args"][call["args"].index("--model") + 1] for call in two.calls()}
+        self.assertNotIn(review_caller_layout.SMALL_MODEL, models)
+
+    def test_the_third_replicas_lane_forks_from_the_small_models_root_with_that_model(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: the third replica forks from the small-tier root and is started with that model
+        run, status, text, err = self.run_three()
+        self.assertEqual(status, 0, text + err)
+        calls = run.calls()
+        roots = [call for call in calls if call["resume"] is None]
+        self.assertEqual(len(roots), 2, "a shared context for each model")
+
+        def model_of(call):
+            return call["args"][call["args"].index("--model") + 1]
+        small_root = next(call for call in roots if model_of(call) == review_caller_layout.SMALL_MODEL)
+        own_root = next(call for call in roots if model_of(call) != review_caller_layout.SMALL_MODEL)
+        forks = [call for call in calls if call["resume"] is not None]
+        self.assertEqual(len(forks), 6, "two groups of three replicas")
+        small = [call for call in forks if call["resume"] == small_root["session"]]
+        own = [call for call in forks if call["resume"] == own_root["session"]]
+        self.assertEqual((len(small), len(own)), (2, 4), "the third replica of each group, and the first two")
+        for call in small:
+            self.assertEqual(model_of(call), review_caller_layout.SMALL_MODEL)
+            self.assertTrue(call["fork"])
+        for call in own:
+            self.assertEqual(model_of(call), model_of(own_root))
+        self.assertNotEqual(model_of(own_root), review_caller_layout.SMALL_MODEL)
+
+    def test_a_fail_by_the_small_model_replica_stands_in_the_merge_like_any_other(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: the merge treats the third replica's fails like those of the others
+        run, status, text, err = self.run_three(model_verdicts={review_caller_layout.SMALL_MODEL: {"CLOCK-1": "fail"}})
+        self.assertEqual(status, 0, text + err)
+        report = json.loads(text)
+        verdicts = {row["Item"]: row["Verdict"] for row in report["tables"]["Verdicts"]["rows"]}
+        self.assertEqual(verdicts["CLOCK-1"], "fail", "a fail by one replica stands")
+        self.assertEqual({item: v for item, v in verdicts.items() if item != "CLOCK-1"}, {item: "pass" for item in verdicts if item != "CLOCK-1"})
+        self.assertEqual([row["Item"] for row in report["tables"]["Findings"]["rows"]], ["CLOCK-1"])
 
 
 class TheCommandEndToEnd(Folder):

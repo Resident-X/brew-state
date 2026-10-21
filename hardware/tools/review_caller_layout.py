@@ -91,11 +91,17 @@ IMAGES = (".png", ".jpg", ".jpeg")
 #: The documents of the design folder the shared context holds are its .md and .yaml files.
 DOCUMENT_SUFFIXES = (".md", ".yaml")
 
-#: Plain data the kit reads: the variants a unit's replicas take in turn (the prompt as declared, and the terse hunt for
-#: failures with the items and views the other way round) and the replicas by stakes.
+#: The small-tier model the third replica runs on, a full model id; it has a shared context of its own, since the cache is not
+#: shared across models.
+SMALL_MODEL = "claude-haiku-5-5"
+
+#: Plain data the kit reads: the variants a unit's replicas take in turn (the prompt as declared, the terse hunt for
+#: failures with the items and views the other way round, and the prompt as declared on the small-tier model, which only a
+#: round of three replicas reaches) and the replicas by stakes.
 replica_policy = {
     "variants": [{"id": "full"},
-                 {"id": "hunt", "item_order": "reversed", "view_order": "reversed", "terse": True}],
+                 {"id": "hunt", "item_order": "reversed", "view_order": "reversed", "terse": True},
+                 {"id": "small", "model": SMALL_MODEL}],
     "replicas": {"low": 1, "normal": 2, "high": 3},
 }
 retrieval = True
@@ -542,10 +548,15 @@ def checks(tables: Dict[str, Any]) -> List[str]:
         if row["Verdict"] == "cannot judge":
             unit = unit_of(row["Item"], units)
             asks = re.match(r"needs (.+?):", row["Why"])
+            where = f"unit {unit}" if unit else "the unit that judged it"
+            wanted = asks.group(1) if asks else repr(row["Why"])
+            if any(entry["item"] == row["Item"] for entry in ROUND["resolutions"]):
+                action = (f"the folder already holds a view added for this item, so run {where} again with --rerun; add a view "
+                          "only if the one added is not the view the Why asks for")
+            else:
+                action = f"render that view, add it with the folder command's --add-view and run {where} again with --rerun"
             found.append(f"item {row['Item']} is still cannot judge, and the method resolves it within the round; its Why asks "
-                         f"for {asks.group(1) if asks else repr(row['Why'])}: render that view, add it with the folder "
-                         "command's --add-view and run "
-                         + (f"unit {unit}" if unit else "the unit that judged it") + " again with --rerun")
+                         f"for {wanted}: {action}")
     if PLAN_UNIT in units and not tables["Plan and free pass"]["rows"]:
         found.append(f"unit {PLAN_UNIT} gave no note of the comparison with the plan and the free pass, which a full round "
                      "records; run it again with --rerun")
