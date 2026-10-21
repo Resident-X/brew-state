@@ -114,6 +114,6 @@ links:
   - target: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM
     type: supersedes
 brief_confirmation:
-  confirmer: claude-sonnet-5-5 (independent brief reviewer)
-  fingerprint: 3ad209a87f73cb6a7e4fc4c8b1e80f73074dcd4443a946108b1ef4e323a411ed
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: 72a8ebb78fc62efb205e76d39e5d1a548c3ca11e332b951e08bfcdc83f31d826
   gating_profile: ""
