@@ -353,3 +353,87 @@ class StoreTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class AddedDuringRoundTests(unittest.TestCase):
+    def setUp(self):
+        self.harness = fx.Harness(self, raw=fx.declaration_dict(added_during_round=["round/*"]), script=failing_g2())
+        self.first = self.harness.fresh()
+        self.harness.new_stub()
+
+    def refused(self, kind):
+        with self.assertRaises(kind) as raised:
+            self.harness.again(["u2", "u3"])
+        self.assertEqual(self.harness.executor.calls, [])
+        self.assertFalse(os.path.exists(os.path.join(self.harness.out, store.LOCK_NAME)))
+        return str(raised.exception)
+
+    def test_a_file_added_under_a_listed_path_is_accepted_and_the_rerun_runs(self):
+        # SOL-HW-REVIEW-KIT.C7: a review folder whose hash differs from the recorded one, except for a change confined to paths the caller's declaration lists as added during the round
+        fx.write(self.harness.review, "round/notes/finding.txt", "added during the round\n")
+        again = self.harness.again(["u2", "u3"])
+        self.assertEqual([c.label for c in self.harness.executor.calls], ["root", "G2.r1.a1"])
+        self.assertEqual(again["review_hash"], self.first["review_hash"])
+        self.assertEqual(again["plan"]["added_during_round"], ["round/*"])
+
+    def test_the_same_file_added_outside_the_listed_paths_is_refused_naming_it(self):
+        # SOL-HW-REVIEW-KIT.C7: a change to anything else in the review folder is still refused, naming the first differing path
+        fx.write(self.harness.review, "outside/finding.txt", "added outside\n")
+        text = self.refused(store.FolderChanged)
+        self.assertIn("'outside'", text)  # the new directory is the first path that differs
+        fx.write(self.harness.review, "round/inside.txt", "inside\n")
+        os.remove(os.path.join(self.harness.review, "outside", "finding.txt"))
+        os.rmdir(os.path.join(self.harness.review, "outside"))
+        fx.write(self.harness.review, "late.txt", "added outside\n")
+        self.assertIn("'late.txt'", self.refused(store.FolderChanged))
+
+    def test_a_change_to_a_shared_context_artefact_or_a_deleted_file_is_refused_naming_it(self):
+        # SOL-HW-REVIEW-KIT.C7: a change to a shared-context artefact or a deleted file is refused, naming the first differing path
+        guide = os.path.join(self.harness.review, "docs", "guide.md")
+        kept = read(guide)
+        fx.write(self.harness.review, "docs/guide.md", "changed\n")
+        fx.write(self.harness.review, "round/inside.txt", "inside\n")
+        self.assertIn("'docs/guide.md'", self.refused(store.FolderChanged))
+        fx.write(self.harness.review, "docs/guide.md", kept)
+        os.remove(os.path.join(self.harness.review, "extracts", "facts.txt"))
+        self.assertIn("'extracts/facts.txt'", self.refused(store.FolderChanged))
+
+    def test_a_link_replacing_a_file_and_a_changed_directory_entry_are_refused(self):
+        # SOL-HW-REVIEW-KIT.C7: a symlink replacing a file and a changed directory entry are still refused
+        guide = os.path.join(self.harness.review, "docs", "guide.md")
+        kept = read(guide)
+        elsewhere = os.path.join(self.harness.base, "elsewhere.md")
+        with open(elsewhere, "w", encoding="utf-8") as handle:
+            handle.write(kept)
+        os.remove(guide)
+        os.symlink(elsewhere, guide)
+        self.assertIn("'docs/guide.md'", self.refused(store.FolderChanged))
+        os.remove(guide)
+        with open(guide, "w", encoding="utf-8") as handle:
+            handle.write(kept)
+        os.mkdir(os.path.join(self.harness.review, "views", "emptied"))
+        self.assertIn("'views/emptied'", self.refused(store.FolderChanged))
+
+    def test_patterns_changed_between_run_and_rerun_are_refused(self):
+        # SOL-HW-REVIEW-KIT.C7: a rerun with different added-during-round patterns from the recorded ones is refused
+        for patterns in (["other/*"], ["round/*", "more/*"], []):
+            with self.subTest(patterns=patterns):
+                raw = fx.declaration_dict(added_during_round=patterns)
+                changed = fx.Harness(self, raw=raw, base=self.harness.base)
+                with self.assertRaises(store.PlanChanged) as raised:
+                    changed.again(["u2", "u3"])
+                self.assertIn("added during the round", str(raised.exception))
+                self.assertEqual(changed.executor.calls, [])
+
+    def test_the_folder_hash_is_unchanged_when_only_listed_paths_change(self):
+        # SOL-HW-REVIEW-KIT.C7: the hash leaves out the listed paths, and only them
+        folder = self.harness.review
+        plain, listed = store.folder_hash(folder), store.folder_hash(folder, ["round/*"])
+        fx.write(folder, "round/a/b.txt", "one")
+        self.assertEqual(store.folder_hash(folder, ["round/*"]), listed)
+        os.symlink(os.path.join(folder, "docs"), os.path.join(folder, "round", "link"))
+        fx.write(folder, "round/a/b.txt", "two")
+        self.assertEqual(store.folder_hash(folder, ["round/*"]), listed)
+        self.assertNotEqual(store.folder_hash(folder), plain)
+        self.assertEqual(store.folder_hash(self.harness.review, []), store.folder_hash(folder))
+        self.assertNotEqual(store.folder_hash(folder, ["round/*"]), store.folder_hash(folder, ["docs/*"]))

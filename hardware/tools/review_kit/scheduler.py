@@ -290,7 +290,8 @@ def lane_order(plan: planner.Plan, lanes: Sequence[LaneResult]) -> List[LaneResu
 
 
 def build_record(plan: planner.Plan, review_hash: str, run: RunResult, clock, kind: str,
-                 names: Sequence[str] = (), earlier: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+                 names: Sequence[str] = (), earlier: Optional[Dict[str, Any]] = None,
+                 review_files: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
     """The run record: the plan, every node with its figures, each lane's attempts, each unit's state, and the runs made.
     Given the earlier record and the rerun's results, the rerun's lanes replace those of the groups it ran."""
     lanes = lane_order(plan, run.lanes)
@@ -307,7 +308,7 @@ def build_record(plan: planner.Plan, review_hash: str, run: RunResult, clock, ki
     runs = list(earlier["runs"]) if earlier else []
     runs.append({"kind": kind, "at": stamp(run.root["started_at"]), "units": list(names) if names else plan.units,
                  "new_shared_context": run.new_shared_context})
-    return {"version": store.RECORD_VERSION, "review_hash": review_hash, "plan": plan.to_dict(),
+    return {"version": store.RECORD_VERSION, "review_hash": review_hash, "review_files": review_files or {}, "plan": plan.to_dict(),
             "shared_context": {"prefix_sha": plan.shared["prefix_sha"], "tokens": plan.shared["tokens"],
                                "started_at": run.root["started_at"], "new": run.new_shared_context},
             "nodes": [run.root] + list(run.extra_roots) + all_nodes, "lanes": all_lanes, "units": {u: units[u] for u in plan.units},
@@ -325,7 +326,8 @@ def run_review(scheduler: Scheduler, declaration: decl.Declaration, plan: planne
         store.check_fresh(out)
         store.write_plan(out, plan.to_dict())
         run = scheduler.run(declaration, plan, shared, spec, prompt_for, round_label, contexts=contexts)
-        record = build_record(plan, store.folder_hash(review_folder), run, scheduler.clock, "fresh")
+        review_hash, review_files = store.folder_entries(review_folder, plan.added_during_round)
+        record = build_record(plan, review_hash, run, scheduler.clock, "fresh", review_files=review_files)
         if finish is not None:
             record = finish(record)
         store.write_record(out, record)
@@ -341,14 +343,15 @@ def rerun_review(scheduler: Scheduler, declaration: decl.Declaration, plan: plan
     were run again, when, and whether the shared context had to be written anew."""
     with store.RunLock(out, scheduler.clock.now()):
         record = store.read_record(out)
-        review_hash = store.folder_hash(review_folder)
+        store.check_added_paths(record, plan)
+        review_hash, review_files = store.folder_entries(review_folder, plan.added_during_round)
         known = {unit for group in plan.groups for unit in group.units}
         groups = {plan.group_of(name).id for name in names if name in known}
         running = [unit for group in plan.groups if group.id in groups for unit in group.units]
-        store.check_rerun(record, review_hash, list(names), running)
+        store.check_rerun(record, review_hash, list(names), running, review_files)
         store.check_same_path(record, plan)
         run = scheduler.run(declaration, plan, shared, spec, prompt_for, round_label, only=groups, contexts=contexts)
-        record = build_record(plan, review_hash, run, scheduler.clock, "rerun", list(names), record)
+        record = build_record(plan, review_hash, run, scheduler.clock, "rerun", list(names), record, review_files)
         if finish is not None:
             record = finish(record)
         store.write_record(out, record)

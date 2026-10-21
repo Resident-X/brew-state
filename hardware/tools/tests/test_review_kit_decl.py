@@ -196,6 +196,22 @@ class LoadTests(unittest.TestCase):
         self.assertIn("wall_s as 0", "\n".join(refused(mutated(["budget", "wall_s"], 0)).lines))
         self.assertIn("`deny`", "\n".join(refused(mutated(["deny"], "x")).lines))
 
+    def test_paths_added_during_the_round_load_and_may_not_match_an_artefact(self):
+        # SOL-HW-REVIEW-KIT.C5: a path the declaration lists as added during the round that matches an artefact of the shared context is refused at load, naming file and artefact
+        loaded = decl.parse(json.dumps(fx.declaration_dict(added_during_round=["round/*", "notes.txt"])), FILE)
+        self.assertEqual(loaded.added_during_round, ("round/*", "notes.txt"))
+        self.assertEqual(decl.parse(fx.declaration_text(), FILE).added_during_round, ())
+        for pattern, name in (("docs/*", "guide.md"), ("docs/guide.md", "guide.md"), ("*/guide.md", "guide.md"),
+                              ("views/view_?.png", "view_a.png"), ("*", "guide.md")):
+            with self.subTest(pattern=pattern):
+                text = "\n".join(refused(fx.declaration_dict(added_during_round=[pattern])).lines)
+                self.assertIn(FILE, text)
+                self.assertIn(f"artefact '{name}'", text)
+                self.assertIn(repr(pattern), text)
+        for bad in ("round", ["/abs/*"], [""], [3]):
+            with self.subTest(bad=bad):
+                self.assertIn("`added_during_round`", "\n".join(refused(fx.declaration_dict(added_during_round=bad)).lines))
+
 
 class SchemaTests(unittest.TestCase):
     def setUp(self):

@@ -104,6 +104,8 @@ class Plan:
     #: The shared contexts built besides the review's own, one for each other model a replica runs on: the root node's id,
     #: the model, the specification and its digest, the prefix hash and the variants that fork from it.
     contexts: Tuple[Dict[str, Any], ...] = ()
+    #: The paths the declaration lists as added to the review folder during the round; the folder hash leaves them out.
+    added_during_round: Tuple[str, ...] = ()
 
     @property
     def roots(self) -> List[Node]:
@@ -135,7 +137,8 @@ class Plan:
                 "shared": self.shared, "variants": list(self.variants), "bound": self.bound, "prices": self.prices,
                 "timing": self.timing, "calls_per_fork": self.calls_per_fork, "predicted": self.predicted,
                 "tree": self.tree, "cli_version": self.cli_version, "tool_commit": self.tool_commit,
-                "contexts": [dict(context) for context in self.contexts]}
+                "contexts": [dict(context) for context in self.contexts],
+                "added_during_round": list(self.added_during_round)}
 
     @classmethod
     def from_dict(cls, raw: Mapping[str, Any]) -> "Plan":
@@ -144,7 +147,7 @@ class Plan:
         return cls(groups, tuple(Node.from_dict(n) for n in raw["nodes"]), raw["spec"], raw["spec_digest"], raw["shared"],
                    tuple(raw["variants"]), raw["bound"], raw["prices"], raw["timing"], raw["calls_per_fork"],
                    raw["predicted"], raw["tree"], raw["cli_version"], raw["tool_commit"],
-                   tuple(raw.get("contexts", ())))
+                   tuple(raw.get("contexts", ())), tuple(raw.get("added_during_round", ())))
 
 
 # --- Grouping ----------------------------------------------------------------------------------
@@ -285,4 +288,5 @@ def make_plan(declaration: decl.Declaration, catalogue: cat.Catalogue, shared: m
                 prices.as_dict(), timing.as_dict(), calls_per_fork, predicted, tree, cli_version, tool_commit,
                 tuple({"root_id": context.root_id, "model": context.model, "spec": context.spec.as_dict(),
                        "spec_digest": context.spec.digest, "prefix_sha": context.shared.prefix_sha,
-                       "variants": list(context.variants)} for context in list(contexts)[1:]))
+                       "variants": list(context.variants)} for context in list(contexts)[1:]),
+                tuple(declaration.added_during_round))

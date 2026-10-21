@@ -26,7 +26,10 @@ one change to a table changes both.
 
 from __future__ import annotations
 
+import fnmatch
 import json
+import os
+import posixpath
 import re
 import string
 from dataclasses import dataclass, field
@@ -39,7 +42,7 @@ STAKES = ("low", "normal", "high")
 #: The slots the kit fills in every template; a declared value may not take one of these names.
 BUILT_IN_SLOTS = ("unit", "items", "schema")
 SLOT_NAME = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
-TOP_KEYS = ("artefacts", "templates", "units", "schema", "deny", "budget")
+TOP_KEYS = ("artefacts", "templates", "units", "schema", "deny", "budget", "added_during_round")
 ARTEFACT_KEYS = ("kind", "source", "producer", "tokens")
 UNIT_KEYS = ("items", "template", "needs", "couples_with", "expected_output_tokens", "stakes", "values")
 TABLE_KEYS = ("name", "columns", "key", "verdict_column", "verdicts", "numeric")
@@ -106,6 +109,7 @@ class Declaration:
     shape: results.AnswerShape
     deny: Tuple[str, ...] = ()
     budget: Budget = field(default_factory=Budget)
+    added_during_round: Tuple[str, ...] = ()
 
     @property
     def needed(self) -> List[str]:
@@ -114,6 +118,15 @@ class Declaration:
 
     def json_schema(self) -> str:
         return schema_text(self.shape)
+
+
+def added_by(relative: str, patterns: Sequence[str], is_dir: bool = False) -> Optional[str]:
+    """The first `added_during_round` pattern the path matches, tried on the whole path relative to the review folder (a `*`
+    crosses `/`); a directory is also tried with a closing `/`, so `notes/*` holds the folder `notes` itself."""
+    for pattern in patterns:
+        if fnmatch.fnmatchcase(relative, pattern) or (is_dir and fnmatch.fnmatchcase(relative + "/", pattern)):
+            return pattern
+    return None
 
 
 # --- Reading ----------------------------------------------------------------------------------
@@ -206,9 +219,24 @@ def build(raw: Any, file: str) -> Declaration:
         bad(None, "deny", "`deny` is not a list of patterns")
         deny = []
     budget = read_budget(raw.get("budget", {}), bad)
+    added = read_added(raw.get("added_during_round", []), artefacts, bad)
     if problems:
         raise DeclarationError(file, problems)
-    return Declaration(file, artefacts, units, dict(templates), shape, tuple(deny), budget)
+    return Declaration(file, artefacts, units, dict(templates), shape, tuple(deny), budget, added)
+
+
+def read_added(raw: Any, artefacts: Mapping[str, Artefact], bad) -> Tuple[str, ...]:
+    """The paths the caller adds to the review folder during the round; none may be an artefact of the shared context."""
+    if not text_list(raw) or any(not item.strip() or item.startswith("/") for item in raw):
+        bad(None, "added_during_round", "`added_during_round` is not a list of patterns, each a path relative to the review folder")
+        return ()
+    for name, artefact in artefacts.items():
+        source = posixpath.normpath(artefact.source.replace(os.sep, "/"))
+        pattern = added_by(source, raw)
+        if pattern is not None:
+            bad(f"artefact {name}", name, f"artefact {name!r} (source {artefact.source!r}) matches the `added_during_round` pattern "
+                                          f"{pattern!r}; an artefact of the shared context cannot be a path added during the round")
+    return tuple(raw)
 
 
 def read_artefacts(raw: Any, bad) -> Dict[str, Artefact]:

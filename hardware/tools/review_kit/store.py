@@ -5,7 +5,7 @@ fresh run refuses an output folder that already holds a record; a run holds a lo
 in the output folder while it is in it, so two runs never share one. A rerun reads
 the record back and is refused for a unit the review does not have, for leaving
 out a unit whose last run failed, and for a review folder whose hash differs from
-the one recorded.
+the one recorded, leaving out the paths its declaration lists as added during the round.
 """
 
 from __future__ import annotations
@@ -14,7 +14,9 @@ import hashlib
 import json
 import os
 import tempfile
-from typing import Any, Dict, Optional, Sequence
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
+
+from . import decl
 
 PLAN_NAME, RECORD_NAME, LOCK_NAME = "plan.json", "record.json", "run.lock"
 RECORD_VERSION = 1
@@ -74,38 +76,67 @@ def atomic_write_json(path: str, content: Any) -> None:
         raise
 
 
-def folder_hash(folder: str) -> str:
-    """The hash of a folder's content: every file's relative path and bytes, in order of path, every directory's relative path
-    (an empty one included) and every link's target; a link to a directory is held as a link, not walked."""
+def folder_entries(folder: str, added: Sequence[str] = ()) -> Tuple[str, Dict[str, str]]:
+    """The hash of a folder's content and a digest for each entry, by relative path: every file's relative path and bytes, in
+    order of path, every directory's relative path (an empty one included) and every link's target; a link to a directory is
+    held as a link, not walked. An entry whose relative path matches a pattern of `added` is left out of both."""
     digest = hashlib.sha256()
+    entries: Dict[str, str] = {}
 
-    def relative_to(path: str) -> bytes:
-        return os.path.relpath(path, folder).replace(os.sep, "/").encode("utf-8")
+    def relative_to(path: str) -> str:
+        return os.path.relpath(path, folder).replace(os.sep, "/")
+
+    def hold(relative: str, pieces: Iterable[bytes], is_dir: bool = False) -> None:
+        if decl.added_by(relative, added, is_dir) is not None:
+            return
+        entry = hashlib.sha256()
+        for piece in pieces:
+            digest.update(piece)
+            entry.update(piece)
+        entries[relative] = entry.hexdigest()
+
+    def content(path: str) -> Iterable[bytes]:
+        with open(path, "rb") as handle:
+            for chunk in iter(lambda: handle.read(1 << 20), b""):
+                yield chunk
 
     for root, dirs, files in os.walk(folder):
         dirs.sort()
         for name in dirs:
             path = os.path.join(root, name)
+            relative = relative_to(path)
             if os.path.islink(path):
-                digest.update(b"dirlink:" + relative_to(path) + b"\0" + os.readlink(path).encode("utf-8") + b"\0")
+                hold(relative, [b"dirlink:" + relative.encode("utf-8") + b"\0" + os.readlink(path).encode("utf-8") + b"\0"], True)
             else:
-                digest.update(b"dir:" + relative_to(path) + b"\0")
+                hold(relative, [b"dir:" + relative.encode("utf-8") + b"\0"], True)
         for name in sorted(files):
             path = os.path.join(root, name)
-            digest.update(relative_to(path) + b"\0")
+            relative = relative_to(path)
+            pieces: List[bytes] = [relative.encode("utf-8") + b"\0"]
             if os.path.islink(path) and not os.path.exists(path):
-                digest.update(b"link:" + os.readlink(path).encode("utf-8"))
+                pieces.append(b"link:" + os.readlink(path).encode("utf-8"))
             elif os.path.islink(path):
-                digest.update(b"filelink:" + os.readlink(path).encode("utf-8") + b"\0")
-                with open(path, "rb") as handle:
-                    for chunk in iter(lambda: handle.read(1 << 20), b""):
-                        digest.update(chunk)
-            else:
-                with open(path, "rb") as handle:
-                    for chunk in iter(lambda: handle.read(1 << 20), b""):
-                        digest.update(chunk)
-            digest.update(b"\0")
-    return digest.hexdigest()
+                pieces.append(b"filelink:" + os.readlink(path).encode("utf-8") + b"\0")
+                if decl.added_by(relative, added) is None:
+                    pieces.extend(content(path))
+            elif decl.added_by(relative, added) is None:
+                pieces.extend(content(path))
+            pieces.append(b"\0")
+            hold(relative, pieces)
+    return digest.hexdigest(), entries
+
+
+def folder_hash(folder: str, added: Sequence[str] = ()) -> str:
+    """The hash of a folder's content, leaving out the paths matching `added`."""
+    return folder_entries(folder, added)[0]
+
+
+def first_difference(recorded: Mapping[str, str], now: Mapping[str, str]) -> Optional[str]:
+    """The first relative path, in order of path, that one of the two holds differently or not at all."""
+    for relative in sorted(set(recorded) | set(now)):
+        if recorded.get(relative) != now.get(relative):
+            return relative
+    return None
 
 
 def holds_record(out: str) -> bool:
@@ -177,10 +208,12 @@ def read_record(out: str) -> Dict[str, Any]:
     return record
 
 
-def check_rerun(record: Dict[str, Any], review_hash: str, names: Sequence[str], running: Optional[Sequence[str]] = None) -> None:
+def check_rerun(record: Dict[str, Any], review_hash: str, names: Sequence[str], running: Optional[Sequence[str]] = None,
+                entries: Optional[Mapping[str, str]] = None) -> None:
     """The refusals of a rerun, in order: nothing named, a name the review does not have, a unit whose last run failed
     left out, and a review folder whose hash differs from the recorded one. `running` is every unit the rerun will run: the
-    named ones and the others of their groups, which run with them; it defaults to the named ones."""
+    named ones and the others of their groups, which run with them; it defaults to the named ones. `entries` is the review
+    folder's digest for each path now, which names the first path that differs from the recorded ones."""
     if not names:
         raise NothingToRerun("no unit is named to run again; name at least one, or start a fresh run")
     known = list(record["units"])
@@ -193,8 +226,19 @@ def check_rerun(record: Dict[str, Any], review_hash: str, names: Sequence[str], 
         raise FailedUnitLeftOut(f"unit {failed[0]} failed on its last run and is not named{'' if len(failed) == 1 else f' (nor are {failed[1:]})'}; "
                                 "name it too, so the record does not keep a failed result as if it stood")
     if review_hash != record["review_hash"]:
-        raise FolderChanged(f"the review folder's hash {review_hash[:12]} differs from the recorded {record['review_hash'][:12]}, "
+        path = first_difference(record.get("review_files", {}), entries) if entries is not None and "review_files" in record else None
+        where = f" (the first path that differs is {path!r})" if path is not None else ""
+        raise FolderChanged(f"the review folder's hash {review_hash[:12]} differs from the recorded {record['review_hash'][:12]}{where}, "
                             "so the shared context would not be the same bytes; run the whole review again in a new output folder")
+
+
+def check_added_paths(record: Dict[str, Any], plan: Any) -> None:
+    """The paths the declaration lists as added during the round are those of the recorded run; the folder hash left out the
+    recorded ones, so another list would compare hashes of different content."""
+    if list(plan.added_during_round) != list(record["plan"].get("added_during_round", [])):
+        raise PlanChanged(f"the declaration now lists {list(plan.added_during_round)} as added during the round, not the recorded "
+                          f"{list(record['plan'].get('added_during_round', []))}, so the review folder cannot be compared with the "
+                          "recorded one; run the whole review again in a new output folder")
 
 
 def check_same_path(record: Dict[str, Any], plan: Any) -> None:
