@@ -39,7 +39,7 @@ text: |
   - The same system prompt: the streams of one review all carry one system prompt.
   - Opens already in context: the artefacts a unit opened that its prefix already held, against the ones that were new, counted from the tool uses of its stream. The recorded run with 390 opens of 91 distinct tiles is a fixture with the count it must give.
   - A unit's citations of the view it rested on name only artefacts that its context held, from the prefix or from what it opened.
-  - Figures: a session's own cost, time and turns are its reported figures less its parent's, because the command line reports a fork's cumulatively; calls are counted by distinct message identifier; tokens are split into read from the cache, written to it, fresh and generated; output tokens are taken from the result report. Run figures give the sharing ratio, the tokens written in more than one session, the critical-path time and the predicted time and cost against the actual. Over the recorded runs the figures sum to the reports' costs within two per cent.
+  - Figures: a session's own cost and time are its reported figures less its parent's, because the command line reports a fork's cumulatively, and its turns are as reported; calls are counted by distinct message identifier; tokens are split into read from the cache, written to it, fresh and generated; output tokens are taken from the result report. Run figures give the sharing ratio, the tokens written in more than one session, the critical-path time and the predicted time and cost against the actual. Over the recorded runs the figures sum to the reports' costs within two per cent.
 
   Declaring a review and building its shared context.
 
