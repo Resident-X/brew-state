@@ -245,6 +245,30 @@ class LocalAndFatalTests(unittest.TestCase):
                 self.assertIn("outside ['pass', 'fail']", found.problems[0].what)
                 self.assertIn("row 1", found.problems[0].where)
 
+    # SOL-HW-REVIEW-KIT.C3: a findings row or verdict row whose item is not one of the unit's items is classed local, naming the row, the cell and the allowed items
+    def test_a_findings_row_naming_two_items_in_one_cell_is_local(self):
+        shape = rs.AnswerShape(
+            (SHAPE.tables[0], rs.TableShape("Findings", ("Finding", "Item", "What"), key="Item", numeric=("Finding",))),
+            SHAPE.findings)
+        rows = [{"Finding": 1, "Item": "A-1", "What": "w"}, {"Finding": 2, "Item": "A-1 / A-2", "What": "w"}]
+        found = rs.assess(None, json.dumps(answer(findings=rows)), shape, "u", ITEMS)
+        self.assertEqual([problem.cls for problem in found.problems], [rs.LOCAL])
+        self.assertIsNotNone(found.tables)
+        self.assertIn("row 2", found.problems[0].where)
+        self.assertIn("'A-1 / A-2'", found.problems[0].what)
+        self.assertIn("'Item'", found.problems[0].what)
+        self.assertIn("['A-1', 'A-2']", found.problems[0].what)
+        fixed = [{"Finding": 1, "Item": "A-1", "What": "w"}, {"Finding": 2, "Item": "A-2", "What": "w"}]
+        self.assertEqual(rs.assess(None, json.dumps(answer(findings=fixed)), shape, "u", ITEMS).problems, [])
+
+    def test_a_verdict_row_with_an_unknown_item_is_local_and_names_row_cell_and_items(self):
+        found = assess(answer([verdict("A-1"), verdict("A-2"), verdict("A-1 / A-2")]))
+        self.assertEqual([problem.cls for problem in found.problems], [rs.LOCAL])
+        self.assertIn("row 3", found.problems[0].where)
+        self.assertIn("'A-1 / A-2'", found.problems[0].what)
+        self.assertIn("'Item'", found.problems[0].what)
+        self.assertIn("['A-1', 'A-2']", found.problems[0].what)
+
     def test_finding_numbers_must_be_whole_numbers_from_one_and_distinct(self):
         for numbers, text in (([0], "0"), ([1, 1], "two findings 1"), ([-2], "-2"), ([2.5], "2.5"), (["x"], "'x'")):
             with self.subTest(numbers=numbers):

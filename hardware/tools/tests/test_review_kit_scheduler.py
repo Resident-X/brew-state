@@ -267,6 +267,44 @@ class AppendedNodeTests(unittest.TestCase):
                 self.assertIsNotNone(lane["record"]["attempts"][0]["tables"])
         self.assertEqual(record["units"]["u2"]["problems"][0][:10], "replica 1:")
 
+    def stray_item_answer(self):
+        stray = fx.good_answer(harness_decl(), ["u1"])
+        stray["tables"]["Findings"] = [{"No": 1, "Item": "i1 / i2", "Detail": "d"}]
+        return stray
+
+    def test_a_findings_row_outside_the_checklist_gets_a_repair_turn_and_the_run_merges(self):
+        # SOL-HW-REVIEW-KIT.C6: a local problem, here a findings row naming two items in one cell, appends a repair turn listing the row, and the repaired answer stands
+        fixed = fx.good_answer(harness_decl(), ["u1"])
+        fixed["tables"]["Findings"] = [{"No": 1, "Item": "i1", "Detail": "d"}, {"No": 2, "Item": "i2", "Detail": "d"}]
+        harness = fx.Harness(self, script={"G1.r1.a1": ex.Reply(structured=self.stray_item_answer(), text="x"),
+                                           "G1.r1.a2": ex.Reply(structured=fixed, text="x")})
+        record = harness.fresh()
+        nodes = [n for n in record["nodes"] if n["group"] == "G1"]
+        self.assertEqual([(n["id"], n["role"]) for n in nodes], [("G1.r1.a1", "unit"), ("G1.r1.a2", "repair")])
+        repair = [c for c in harness.executor.calls if c.label == "G1.r1.a2"][0]
+        self.assertFalse(repair.fork)
+        self.assertIn("'i1 / i2'", repair.message)
+        self.assertIn("'Item'", repair.message)
+        self.assertIn("row 1", repair.message)
+        self.assertIn("['i1', 'i2']", repair.message)
+        lane = [l for l in record["lanes"] if l["group"] == "G1"][0]
+        self.assertEqual(lane["record"]["standing"], 1)
+        self.assertIsNone(lane["failure"])
+        self.assertFalse(record["units"]["u1"]["failed"])
+
+    def test_a_findings_row_outside_the_checklist_that_is_never_repaired_names_the_unit(self):
+        # SOL-HW-REVIEW-KIT.C6: a unit still holding a problem after its attempts is reported naming the unit and the row, and the other units' results are kept
+        stray = ex.Reply(structured=self.stray_item_answer(), text="x")
+        harness = fx.Harness(self, script={"G1.r1.a1": stray, "G1.r1.a2": stray, "G1.r1.a3": stray})
+        record = harness.fresh()
+        self.assertEqual(len([n for n in record["nodes"] if n["group"] == "G1"]), 3)
+        failures = [l["failure"] for l in record["lanes"] if l["failure"]]
+        self.assertEqual(len(failures), 1)
+        self.assertEqual(failures[0]["units"], ["u1"])
+        self.assertIn("'i1 / i2'", failures[0]["problems"][0])
+        self.assertTrue(record["units"]["u1"]["failed"])
+        self.assertFalse(record["units"]["u4"]["failed"])
+
     def test_a_later_attempt_never_replaces_a_better_one(self):
         # SOL-HW-REVIEW-KIT.C6: every attempt is kept and a later attempt never replaces a better one
         short = fx.good_answer(harness_decl(), ["u1"])

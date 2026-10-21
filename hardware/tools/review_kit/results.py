@@ -219,14 +219,25 @@ def local_problems(tables: Dict[str, Any], shape: AnswerShape, unit: str, items:
         for item, count in counts.items():
             if count > 1:
                 found.append(Problem(LOCAL, f"unit {unit} table {table.name!r}", f"gives item {item!r} {count} verdicts"))
-            if items is not None and item not in items:
-                found.append(Problem(LOCAL, f"unit {unit} table {table.name!r}", f"gives a verdict for item {item!r}, "
-                                                                               "which is not one of the unit's items"))
+        if items is not None:
+            for number, row in enumerate(rows, 1):
+                if row[table.key] not in items:
+                    found.append(Problem(LOCAL, f"unit {unit} table {table.name!r} row {number}",
+                                         f"gives a verdict for item {row[table.key]!r} in the {table.key!r} cell, which is "
+                                         f"not one of the unit's items; name exactly one of {list(items)} in that cell"))
         for item in items or []:
             if item not in counts:
                 found.append(Problem(LOCAL, f"unit {unit} table {table.name!r}", f"gives no verdict for item {item!r}"))
     findings = shape.findings
     if findings is not None:
+        found_table = shape.table(findings.table)
+        if items is not None and found_table is not None and found_table.key not in (None, findings.number):
+            for number, row in enumerate(tables.get(findings.table, []), 1):
+                if row[found_table.key] not in items:
+                    found.append(Problem(LOCAL, f"unit {unit} table {findings.table!r} row {number}",
+                                         f"raises a finding on {row[found_table.key]!r} in the {found_table.key!r} cell, "
+                                         f"which is not one of the unit's items; name exactly one of {list(items)} in that "
+                                         "cell and raise a separate finding for each item"))
         raised: List[int] = []
         for row in tables.get(findings.table, []):
             number = row[findings.number]
