@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: A task runs any declared judged review as forks of one shared context built by the command, with replicas merged so that any fail stands, and proves it against the recorded single-reviewer runs
 status: active
-version: 1
+version: 2
 text: |
   Why this exists. The first live runs of the fanned-out layout review failed on the way sessions were started: the setup session's system rule, that it write nothing but one token and judge nothing, was inherited by every forked reviewer, and nothing in the tests could show it because the stub never compared how sessions were started. DEC-REVIEW-FAN-OUT-FROM-SHARED-CONTEXT-WITH-REPLICAS sets the shared context as the shape; this solution builds the review kit that the callers move to, so that the whole machinery is built, tested and reviewed once; the earlier driver stays in the repository until the layout solution moves the last caller and removes it. A session building this does not reopen the decision.
 
@@ -50,7 +50,7 @@ text: |
   - Each artefact is measured: a text by its token count when one is recorded and otherwise by its length as an upper bound, an image by the model's patch formula, and each by its content hash.
   - The shared context holds every artefact any unit needs, in a fixed order, and no unit's prompt. The same declaration and review folder give byte-identical bytes and the same prefix hash.
   - A unit's prompt is a template with named slots; a template with a slot the unit does not fill, or a filled slot the template lacks, is refused at load.
-  - The result schema is declared as tables with a key column, columns and verdict sets, and the kit derives from it both the schema the sessions are given and what the results module checks, so one change to a table changes both.
+  - The result schema is declared as tables with a key column, columns and verdict sets, and the kit derives from it both the schema the sessions are given and what the results module checks, so one change to a table changes both. A verdict table's key may name several columns, the first being the item, and then each combination of the key is judged, merged and proved as one row.
 
   Planning and running.
 
