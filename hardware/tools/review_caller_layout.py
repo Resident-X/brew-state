@@ -110,6 +110,10 @@ replica_policy = {
     "replicas": {"low": 1, "normal": 2, "high": 3},
 }
 retrieval = True
+#: The most reviewers at once. It is the largest number the live runs ran with no call refused for a rate limit (20 forks at
+#: once in the design loop's run, 30 in the pre-order run), every fork reading the shared context from the cache. It is a value
+#: to change when a run is refused, not mechanics; a plan with fewer forks runs them all at once.
+bound = 30
 #: The review's time target in seconds, so the planner sizes groups well clear of the bound the proof is held to.
 WALL_SECONDS = 350
 

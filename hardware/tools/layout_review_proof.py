@@ -411,6 +411,11 @@ def models_text(model: str, plan: Mapping[str, Any]) -> str:
             "own (one root more); each is priced at its model's prices")
 
 
+#: Why the layout caller's bound is what it is, printed beside the plan's bound.
+BOUND_BASIS = ("the layout caller's bound, the largest number of reviewers at once the live runs ran with no call refused for a rate limit "
+               "(20 in the design loop, 30 in the pre-order round), and never more than the plan's forks")
+
+
 def dry_lines(plans: Mapping[str, Mapping[str, Any]], singles: Sequence[proof.RunOutcome], models: Mapping[str, str]) -> List[str]:
     """The plan and predicted cost and time of each selected run, beside the bounds the design loop's run is held to."""
     cost = COST_MULTIPLE * proof.mean([run.cost_usd for run in singles])
@@ -427,6 +432,7 @@ def dry_lines(plans: Mapping[str, Mapping[str, Any]], singles: Sequence[proof.Ru
             [models[name]] + [context["model"] for context in plan.get("contexts", ())])]
         found.append(f"PLAN | {name} | {replicas} replicas | {len(plan['groups'])} groups | {plan['forks']} forks | bound {plan['bound']} | "
                      f"shared context {plan['shared_tokens']} tokens | variants {', '.join(plan['variants'])}")
+        found.append(f"BOUND | {name} | {plan['bound']} at once | {BOUND_BASIS}")
         found += [f"GROUP | {name} | {group['id']} | units {', '.join(group['units'])} | {group['replicas']} replicas | expected "
                   f"output {group['expected_output_tokens']} tokens" for group in plan["groups"]]
         found.append(f"PREDICTED | {name} | ${predicted['cost_usd']} | {predicted['wall_s']} s | " + (

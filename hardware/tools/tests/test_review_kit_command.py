@@ -741,6 +741,47 @@ class Options(Case):
         self.assertEqual(json.loads(out)["plan"]["forks"], 3 * len(plan["groups"]))
         self.assertEqual(json.loads(out)["plan"]["bound"], 3 * len(plan["groups"]), "the default bound runs every fork at once")
 
+    def planned_bound(self, *extra, caller_extra=None, out=None):
+        if caller_extra is not None:
+            self.write_caller(extra=caller_extra)
+        status, text, err = self.run_command(*extra, out=out, fmt="json")
+        self.assertEqual(status, 0, text + err)
+        plan = json.loads(text)["plan"]
+        return plan["bound"], plan["forks"]
+
+    # SOL-HW-REVIEW-KIT.C13: a caller's optional bound is the most sessions at once, the plan's forks when it is absent
+    def test_the_callers_bound_defaults_to_every_fork_and_a_valid_one_sets_the_bound_never_above_the_forks(self):
+        bound, forks = self.planned_bound()
+        self.assertEqual(bound, forks, "absent: every fork at once")
+        self.assertGreater(forks, 1)
+        shutil.rmtree(self.out)
+        self.assertEqual(self.planned_bound(caller_extra="bound = 1\n"), (1, forks))
+        shutil.rmtree(self.out)
+        self.assertEqual(self.planned_bound(caller_extra="bound = None\n"), (forks, forks), "None is absent")
+        shutil.rmtree(self.out)
+        self.assertEqual(self.planned_bound(caller_extra=f"bound = {forks + 50}\n"), (forks, forks), "never above the forks")
+
+    def test_the_bound_flag_overrides_the_callers_bound(self):
+        # SOL-HW-REVIEW-KIT.C13: the command's --bound overrides the caller's bound
+        self.assertEqual(self.planned_bound("--bound", "2", caller_extra="bound = 1\n")[0], 2)
+
+    def test_an_invalid_caller_bound_is_refused_naming_the_caller_and_the_attribute(self):
+        # SOL-HW-REVIEW-KIT.C13: a bound that is not a whole number of 1 or more is refused naming the caller and the attribute
+        for source in ("0", "-2", "1.5", "'many'", "True", "[3]"):
+            with self.subTest(bound=source):
+                self.write_caller(extra=f"bound = {source}\n")
+                status, out, err = self.run_command()
+                self.assertEqual(status, 1, out + err)
+                line = next(line for line in out.splitlines() if line.startswith("REFUSED"))
+                self.assertIn("the caller demo", line)
+                self.assertIn("gives bound", line)
+                self.assertIn("whole number of 1 or more", line)
+        self.assertEqual(self.calls(), [], "no session was started")
+        self.write_caller(extra="bound = 0\n")
+        status, out, err = self.run_command(fmt="json")
+        self.assertEqual(status, 1)
+        self.assertTrue(any("gives bound" in line for line in json.loads(out)["refusals"]))
+
     def test_a_model_flag_is_given_to_every_session_as_a_full_model_id(self):
         self.assertEqual(self.run_command("--model", "a-full-model-id")[0], 0)
         self.assertEqual({c["model"] for c in self.calls()}, {"a-full-model-id"})

@@ -13,6 +13,8 @@ supplies, as module attributes:
 - `checklist` (optional): the items in the order findings are numbered by, as a list or a function of the review folder;
   the declared units' items in declaration order when it is absent. A function is called once, before any session starts.
 - `prompt(unit, review_folder)` or `prompt(unit)` (optional): a unit's prompt as text; the declared template's when absent.
+- `bound` (optional): the most sessions at once, a whole number of 1 or more; the number of forks the plan has when it is
+  absent, and never more than that. The command's `--bound` overrides it.
 - `place(row)`, `round_label(review_folder)`, `earlier_findings(review_folder)` and `first_finding(review_folder)`
   (optional): the place of a finding row, this round's label, the (round, number) pairs of findings the review folder's
   earlier rounds hold, and the number this round's first finding takes. A citation pattern with a round group needs
@@ -39,7 +41,7 @@ from .merge import Refused
 READ_TOOLS = ("Read", "Glob", "Grep")
 RETRIEVAL_TOOL = "WebFetch"
 REQUIRED = ("declaration", "checks", "render")
-OPTIONAL = ("retrieval", "checklist", "prompt", "place", "round_label", "earlier_findings", "first_finding")
+OPTIONAL = ("retrieval", "checklist", "prompt", "place", "round_label", "earlier_findings", "first_finding", "bound")
 CALLER_NAME = re.compile(r"[a-z][a-z0-9_]*")
 #: The names the kit uses in an output folder, which a rendered file may not take.
 KIT_NAMES = ("plan.json", "record.json", "run.lock", "streams")
@@ -139,6 +141,9 @@ def attribute_problems(caller: Caller) -> List[str]:
     if caller.defined("prompt") and module.prompt is not None:
         if not callable(module.prompt) or not (accepts(module.prompt, 1) or accepts(module.prompt, 2)):
             bad("prompt", "is not a function of the unit and, optionally, the review folder; make it prompt(unit, review_folder)")
+    if caller.defined("bound") and module.bound is not None:
+        if isinstance(module.bound, bool) or not isinstance(module.bound, int) or module.bound < 1:
+            bad("bound", f"is {module.bound!r:.100}, not a whole number of 1 or more; give the most sessions at once as a whole number")
     for attribute, count in (("place", 1), ("round_label", 1), ("earlier_findings", 1), ("first_finding", 1)):
         if caller.defined(attribute) and getattr(module, attribute) is not None:
             if not callable(getattr(module, attribute)) or not accepts(getattr(module, attribute), count):

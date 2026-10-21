@@ -206,6 +206,8 @@ class TheCommand(Proofed):
         self.assertIn("PLAN | pre-order | 3 replicas | 2 groups | 6 forks", text)
         self.assertIn("COST MULTIPLE | 1.25 | design loop bounds: cost at most $6.25 (1.25 times the single mean $5.00), wall time at most 500 s "
                       "(half the single mean 1000 s)", text)
+        self.assertRegex(text, r"BOUND \| design-loop \| 4 at once \| the layout caller's bound, the largest number of reviewers at once the live runs ran")
+        self.assertRegex(text, r"BOUND \| pre-order \| 6 at once \| ")
         self.assertIn("figures recorded, not bounded", text)
         self.assertRegex(text, r"PREDICTED \| design-loop .*cost within its bound, time within its bound")
         self.assertTrue(text.splitlines()[-1].startswith("RESULT | PLANNED"))

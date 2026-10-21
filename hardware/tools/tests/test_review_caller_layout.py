@@ -17,6 +17,8 @@ import shutil
 import stat
 import sys
 import tempfile
+import threading
+import time
 import unittest
 from unittest import mock
 
@@ -1270,6 +1272,64 @@ class TheCommandEndToEnd(Folder):
             self.assertIn("differs from the recorded", "; ".join(json.loads(text)["refusals"]))
         self.assertEqual(prepared(self.folder).declaration.added_during_round, ("added-views/*", "added-documents/*"),
                          "as shipped the caller lists both folders")
+
+
+class TheBoundOnReviewersAtOnce(Folder):
+    def test_the_layout_caller_declares_the_bound_the_live_runs_support(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: the layout caller's bound on groups at once is set from the live runs
+        self.assertEqual(review_caller_layout.bound, 30)
+        loaded = kit_caller.load("layout", TOOLS)
+        self.assertEqual(loaded.module.bound, 30)
+        self.assertEqual(kit_caller.attribute_problems(loaded), [])
+
+    def test_a_plan_of_forty_forks_runs_at_most_thirty_at_once_and_a_smaller_plan_all_of_its_forks(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: a plan of 40 forks runs at most 30 at once through the stub; one with fewer forks than the bound uses its fork count
+        from review_kit import scheduler
+        state = {"now": 0, "peak": 0, "bounds": []}
+        lock = threading.Lock()
+        real = scheduler.ThreadedConcurrency.run
+
+        def counted(self, tasks, bound):
+            state["bounds"].append(bound)
+
+            def wrap(task):
+                def inner():
+                    with lock:
+                        state["now"] += 1
+                        state["peak"] = max(state["peak"], state["now"])
+                    try:
+                        time.sleep(0.05)
+                        return task()
+                    finally:
+                        with lock:
+                            state["now"] -= 1
+                return inner
+            return real(self, [wrap(task) for task in tasks], bound)
+        run = Command(self)
+        run.scenario()
+        with mock.patch.object(scheduler.ThreadedConcurrency, "run", counted):
+            status, text, err = run.go("--format", "json", "--replicas", "20")
+        self.assertEqual(status, 0, text + err)
+        plan = json.loads(text)["plan"]
+        self.assertEqual(plan["forks"], 40)
+        self.assertEqual(plan["bound"], 30)
+        self.assertEqual(state["bounds"][-1], 30)
+        self.assertLessEqual(state["peak"], 30)
+        self.assertGreater(state["peak"], 1)
+        small = Command(self, out="out-small")
+        small.scenario()
+        status, text, err = small.go("--format", "json", "--replicas", "1")
+        self.assertEqual(status, 0, text + err)
+        plan = json.loads(text)["plan"]
+        self.assertLess(plan["forks"], 30)
+        self.assertEqual(plan["bound"], plan["forks"])
+
+    def test_the_hardware_notes_state_the_set_bound_and_no_longer_wait_for_a_live_demonstration(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: the hardware notes give the bound and its basis in place of waiting for the live demonstration to set it
+        with open(os.path.join(REPO, "hardware", "README.md"), encoding="utf-8") as handle:
+            text = " ".join(handle.read().split())
+        self.assertNotIn("until the live demonstration sets it", text)
+        self.assertIn("the caller's `bound`, 30, the largest number of reviewers at once the live runs ran with no call refused for a rate limit", text)
 
 
 class Documentation(unittest.TestCase):

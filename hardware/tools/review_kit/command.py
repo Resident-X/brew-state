@@ -192,7 +192,7 @@ def parser() -> Parser:
     found.add_argument("--callers", default=TOOLS_DIR, help="the folder to look for caller modules in (default: the tools folder)")
     found.add_argument("--review", required=True, help="the review folder the sessions read, outside the repository")
     found.add_argument("--out", required=True, help="the output folder, apart from the review folder and outside the repository")
-    found.add_argument("--bound", default=None, help="the most sessions at once (default: one for every fork the plan has)")
+    found.add_argument("--bound", default=None, help="the most sessions at once (default: the caller's bound, else one for every fork the plan has)")
     found.add_argument("--replicas", default=None, help="the number of replicas of every unit, in place of the declared stakes' number")
     found.add_argument("--model", default=None, help="the full model id every session uses (default: the agent command line's own)")
     found.add_argument("--rerun", action="append", default=[], help="a unit to run again, with the others' results kept; repeat for each")
@@ -423,7 +423,9 @@ class Run:
             self.group_counts = planner.replica_counts(declaration, self.groups, self.counts)
         except (ensemble.PolicyError, ValueError) as error:
             raise Refusal([f"{error}; give a whole number of 1 or more"])
-        self.bound = bound if bound is not None else max(1, sum(self.group_counts))
+        forks = max(1, sum(self.group_counts))
+        declared = getattr(loaded.module, "bound", None)
+        self.bound = bound if bound is not None else forks if declared is None else min(declared, forks)
         try:
             self.catalogue = cat.admit(declaration, self.review, results_folder=self.out)
         except cat.Refused as error:
