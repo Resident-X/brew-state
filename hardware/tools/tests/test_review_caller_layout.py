@@ -400,15 +400,35 @@ class TheMerge(Folder):
         again["area-CLOCK"]["Verdicts"] = [verdict("CLOCK-1", "cannot judge", "needs crop-Y2: still not enough")]
         self.refused(lambda: merged(self.folder, again), "item CLOCK-1 is still cannot judge", "asks for crop-Y2")
 
-    def test_a_full_round_whose_plan_unit_wrote_no_note_and_a_cell_the_table_cannot_hold_fail_the_merge(self):
+    def test_a_full_round_whose_plan_unit_wrote_no_note_fails_the_merge(self):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C3: Over synthetic unit results, the merge fails naming an item that has no verdict row and an item that has two, fails a round whose number, kind, commit judged, views or check lines are missing or malformed, writes the opening lines in the order the method gives with the round kind and, for a narrow round, its changed regions, the listed items with their reasons and the line saying why every other item is not judged, and reports two findings that cite the same view and board place, keeping both. Rule-kind items rest on the check's report and the rules table as the method says, which the merge does not judge. Findings of the item units are numbered in the checklist's order and the findings of the comparison and free-pass unit follow, in the order that unit lists them. A round that still holds a cannot judge verdict fails, naming the item and the view its Why asks for, since the method resolves it within the round; the round's starter renders the view, adds it with the folder command's add-view mode and re-runs that unit, and the merged row, built from the item, Why and view the add-view mode recorded and the re-run's verdict, records the cannot judge, the view and the verdict reached, in that order. Out of scope: whether a verdict is right.
         self.refused(lambda: merged(self.folder, results(plan_notes=())), "unit plan-and-free-pass gave no note")
-        given = results()
-        given["area-FLOOR"]["Verdicts"][0]["Why"] = "a | b"
-        given["area-GROUND"]["Verdicts"][0]["Why"] = "two\nlines"
-        self.refused(lambda: merged(self.folder, given), "the Verdicts table's row 1 (FLOOR-1) has a vertical bar", "row 3 (GROUND-1)")
         given = results(plan_notes=("  ",))
         self.refused(lambda: merged(self.folder, given), "the Plan and free pass table's row 1 is empty")
+
+    def test_a_vertical_bar_or_line_break_in_a_verdicts_or_findings_cell_is_written_sanitised_and_kept_raw_in_the_table_record(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C4: The merged round has the round heading, the opening fields with the round kind, the Verdicts table, the Plan and free pass section and the Findings table or the line saying no finding was raised, in the order the method gives. A record holding it and a hand-written round are passed through the reader the review record history command uses, and what it reads from the two has the same shape. Out of scope: the history command's own checks of the repository's history.
+        given = results()
+        given["area-FLOOR"] = {"Verdicts": [verdict("FLOOR-1", "fail", "Finding 1.1.", rests="layer-F.Cu | layer-B.Cu"), verdict("FLOOR-2")],
+                               "Findings": [finding(1, "FLOOR-1", what="classes at (10, 10):\r\nwrong\n\nplace|b")]}
+        given["area-GROUND"]["Verdicts"][0]["Why"] = "two\nlines and a||b"
+        out = merged(self.folder, given)
+        raw = {row["Item"]: row for row in out["tables"]["Verdicts"]["rows"]}
+        self.assertEqual(raw["FLOOR-1"]["Rests on"], "layer-F.Cu | layer-B.Cu", "the table-form record keeps the raw cell")
+        self.assertEqual(raw["GROUND-1"]["Why"], "two\nlines and a||b")
+        self.assertEqual(out["tables"]["Findings"]["rows"][0]["What and where"], "classes at (10, 10):\r\nwrong\n\nplace|b")
+        text = review_caller_layout.RENDER(self.folder, out["tables"])["round-1.md"]
+        self.assertNotIn("\r", text)
+        parsed = board_review_history.Round(board_review_history.round_bodies(text)[1])
+        self.assertEqual(parsed.faults, [])
+        floor = next(row for row in parsed.verdicts[1] if row[0] == "FLOOR-1")
+        self.assertIn("layer-F.Cu / layer-B.Cu", floor)
+        ground = next(row for row in parsed.verdicts[1] if row[0] == "GROUND-1")
+        self.assertIn("two lines and a / b", ground)
+        self.assertEqual({len(row) for row in parsed.verdicts[1]}, {len(parsed.verdicts[0])})
+        self.assertEqual(parsed.findings[1][0][3], "classes at (10, 10): wrong place / b")
+        self.assertEqual(len(parsed.findings[1][0]), len(parsed.findings[0]))
+        self.assertEqual(parsed.numbers, ["1.1"])
 
     def test_a_citation_of_an_earlier_rounds_finding_is_left_and_one_the_record_lacks_is_refused(self):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C3: Over synthetic unit results, the merge fails naming an item that has no verdict row and an item that has two, fails a round whose number, kind, commit judged, views or check lines are missing or malformed, writes the opening lines in the order the method gives with the round kind and, for a narrow round, its changed regions, the listed items with their reasons and the line saying why every other item is not judged, and reports two findings that cite the same view and board place, keeping both. Rule-kind items rest on the check's report and the rules table as the method says, which the merge does not judge. Findings of the item units are numbered in the checklist's order and the findings of the comparison and free-pass unit follow, in the order that unit lists them. A round that still holds a cannot judge verdict fails, naming the item and the view its Why asks for, since the method resolves it within the round; the round's starter renders the view, adds it with the folder command's add-view mode and re-runs that unit, and the merged row, built from the item, Why and view the add-view mode recorded and the re-run's verdict, records the cannot judge, the view and the verdict reached, in that order. Out of scope: whether a verdict is right.

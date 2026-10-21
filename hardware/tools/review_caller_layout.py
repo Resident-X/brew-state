@@ -307,14 +307,8 @@ def unit_of(item: str, given: Sequence[Tuple[str, str, List[str]]]) -> Optional[
     return OWN_UNIT if OWN_ITEM.fullmatch(item) else None
 
 
-def cell_problems(tables: Dict[str, Any]) -> List[str]:
+def note_problems(tables: Dict[str, Any]) -> List[str]:
     found = []
-    for name in ("Verdicts", "Findings"):
-        for number, row in enumerate(tables[name]["rows"], 1):
-            for column, value in row.items():
-                if isinstance(value, str) and ("|" in value or "\n" in value or "\r" in value):
-                    found.append(f"the {name} table's row {number} ({row.get('Item', '')}) has a vertical bar or a line break in "
-                                 f"{column!r}, which the record's table cannot hold; ask the unit to write it without")
     for number, row in enumerate(tables["Plan and free pass"]["rows"], 1):
         if not isinstance(row["Note"], str) or not row["Note"].strip():
             found.append(f"the Plan and free pass table's row {number} is empty; a note says what was compared or seen")
@@ -331,7 +325,7 @@ def CHECK(review: str, order: Sequence[str], tables: Dict[str, Any]) -> List[str
                     else [item for _, _, ids in given for item in ids] + own_items(review))
     except ReviewFolderProblem as error:
         return [str(error)]
-    found = cell_problems(tables)
+    found = note_problems(tables)
     rows = tables["Verdicts"]["rows"]
     counts = Counter(row["Item"] for row in rows)
     for item in expected:
@@ -407,9 +401,16 @@ FINDINGS = {"table": "Findings", "number": "Finding", "item": "Item", "checklist
 # --- The rendered round -------------------------------------------------------------------------
 
 
+def table_cell(value: Any) -> str:
+    """A cell as the record's table can hold it: each run of line breaks becomes one space and each run of vertical bars
+    one slash with a single space either side, so `a | b` is written `a / b`."""
+    text = re.sub(r"[ \t]*[\r\n]+[ \t]*", " ", str(value))
+    return re.sub(r"\s*\|(?:\s*\|)*\s*", " / ", text).strip()
+
+
 def table_lines(columns: Sequence[str], rows: Sequence[Dict[str, Any]]) -> List[str]:
     lines = ["| " + " | ".join(columns) + " |", "|" + "---|" * len(columns)]
-    return lines + ["| " + " | ".join(str(row[column]) for column in columns) + " |" for row in rows]
+    return lines + ["| " + " | ".join(table_cell(row[column]) for column in columns) + " |" for row in rows]
 
 
 def verdict_row(row: Dict[str, Any], entries: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
