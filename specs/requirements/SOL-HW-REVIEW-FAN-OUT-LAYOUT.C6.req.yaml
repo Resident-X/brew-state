@@ -2,11 +2,11 @@ id: SOL-HW-REVIEW-FAN-OUT-LAYOUT.C6
 type: criterion
 title: A layout reviewer is granted read tools and read-only retrieval of a document at an address, and the start report is checked against it
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |-
-  Against the driver's stub, every reviewer of the layout caller is started with the read tools and the one retrieval tool and no other, and a run whose session reports a different tool set, any MCP server or another working directory fails naming the unit. Out of scope: whether a document can be retrieved, which the proof run records.
+  Against the kit's stub, every reviewer of the layout caller is started with the read tools and the one retrieval tool and no other, and a run whose session reports a different tool set, any MCP server or another working directory fails naming the unit. Out of scope: whether a document can be retrieved, which the proof run records.
 links:
   - target: SOL-HW-REVIEW-FAN-OUT-LAYOUT
     type: criterion-of
