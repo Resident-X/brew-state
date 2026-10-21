@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import string
 import sys
 import tempfile
 import textwrap
@@ -91,6 +92,13 @@ class Loading(Case):
         self.assertIn("there is no caller module", self.refused(caller.load, "absent", self.callers))
         self.assertIn("not a lower-case name", self.refused(caller.load, "../x", self.callers))
         self.assertIn("not a lower-case name", self.refused(caller.load, "Demo", self.callers))
+
+    # SOL-HW-REVIEW-KIT.C13: a caller name with a trailing line break is not a lower-case name and is refused
+    def test_a_caller_name_with_a_trailing_line_break_is_refused(self):
+        with open(os.path.join(self.callers, "review_caller_a.py"), "w") as handle:
+            handle.write("raise RuntimeError('boom')\n")
+        for name in ("a\n", "a\n\n", "\na"):
+            self.assertIn("not a lower-case name", self.refused(caller.load, name, self.callers), repr(name))
 
     def test_a_good_module_loads_and_a_declaration_can_be_given_four_ways(self):
         self.assertEqual(sorted(self.load().prepare(self.review).declaration.units), ["u1", "u2", "u3", "u4"])
@@ -283,6 +291,28 @@ class Names(Case):
         for name in ("a/b.md", "../x.md", "a\\b.md", "a b.md", "café.md", ".hidden.md", "-x.md", "_x.md", "a$.md", "", "a\0b", ".", "..",
                      "x\n.md", "a:b.md"):
             self.assertTrue(self.problems(out, [name]), repr(name))
+
+    # SOL-HW-REVIEW-KIT.C13: a name that is not one plain component of ASCII letters, digits, full stops, underscores and hyphens, begins with a letter or digit, ends with a full stop, is over sixty-four characters, is a reserved device name ... is refused
+    def test_every_code_point_to_0x2ff_and_the_lookalikes_at_the_start_middle_and_end_of_a_name_agree_with_an_independent_oracle(self):
+        out = self.folder()
+        allowed = set(string.ascii_letters + string.digits + "._-")
+        devices = {"con", "prn", "aux", "nul"} | {f"{kind}{n}" for kind in ("com", "lpt") for n in range(1, 10)}
+
+        def oracle(name):
+            return (bool(name) and all(c in allowed for c in name) and name[0] in string.ascii_letters + string.digits
+                    and not name.endswith(".") and len(name) <= 64 and name.split(".")[0].lower() not in devices)
+
+        marks = [chr(code) for code in range(0x300)]
+        marks += ["\uff0e", "\u212a", "\u0660", "\u0661", "\u0669", "\u06f1", "\uff21", "\uff41", "\uff10", "\u2024", "\u2215",
+                  "\u2044", "\u212b", "\u017f", "\u0131", "\u1d00", "\u2010", "\u2212", "\u00a0", "\u200b", "\U0001d7ce"]
+        names = [shape.format(mark) for mark in marks for shape in ("{}x", "x{}x", "x{}")]
+        names += ["a\n", "a" * 64, "a" * 65, "CON", "x.", "aux.txt", "com10"]
+        for name in names:
+            if "\0" in name or "/" in name or "\\" in name:
+                continue
+            accepted = self.problems(out, [name]) == []
+            self.assertEqual(accepted, oracle(name), repr(name))
+        self.assertTrue(any(oracle(n) for n in names) and any(not oracle(n) for n in names))
 
     def test_a_name_ending_in_a_full_stop_is_refused_and_one_with_inner_stops_and_hyphens_is_not(self):
         out = self.folder()

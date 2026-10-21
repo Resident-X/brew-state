@@ -201,6 +201,15 @@ class CommandClauses(unittest.TestCase):
                        "A lock left by a killed run", "no longer exists"):
             self.assertIn(needle, " ".join(text.split()))
 
+    # SOL-HW-REVIEW-KIT.C11: the hardware notes' section states where the deny is enforced, what a session can read by path and what to do after a failed record write
+    def test_the_hardware_notes_state_the_deny_scope_the_read_by_path_limit_and_the_failed_record_write(self):
+        text = " ".join(section(read(README), "## The review kit command").split())
+        for needle in ("it is enforced when artefacts are admitted", "refuses the run before any session starts",
+                       "can read a file outside the shared context, the output folder included", "do not show its path to a session",
+                       "written before the record", "read as foreign", "run into a new output folder"):
+            self.assertIn(needle, text)
+        self.assertNotIn("no session may read", text)
+
     # SOL-HW-REVIEW-KIT.C11: the descriptions of the board tooling's tests and the list of tested tools name the kit's tests
     def test_the_tests_descriptions_and_the_notes_list_name_the_kits_tests(self):
         found = descriptions(read(TASKFILE))

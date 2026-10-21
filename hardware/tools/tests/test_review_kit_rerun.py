@@ -163,6 +163,21 @@ class RefusalTests(unittest.TestCase):
         fx.write(self.harness.review, "docs/extra.md", "new\n")
         self.refused(["u2", "u3"], store.FolderChanged)
 
+    def test_an_empty_directory_added_to_the_review_folder_changes_its_hash_and_the_rerun_is_refused(self):
+        # SOL-HW-REVIEW-KIT.C7: a review folder whose hash differs from the recorded one is refused
+        os.mkdir(os.path.join(self.harness.review, "docs", "empty"))
+        self.refused(["u2", "u3"], store.FolderChanged)
+
+    def test_a_file_replaced_by_a_link_to_the_same_bytes_changes_the_hash_and_the_rerun_is_refused(self):
+        # SOL-HW-REVIEW-KIT.C7: a review folder whose hash differs from the recorded one is refused
+        path = os.path.join(self.harness.review, "docs", "guide.md")
+        elsewhere = os.path.join(self.harness.base, "guide-copy.md")
+        with open(path, "rb") as handle, open(elsewhere, "wb") as copy:
+            copy.write(handle.read())
+        os.remove(path)
+        os.symlink(elsewhere, path)
+        self.refused(["u2", "u3"], store.FolderChanged)
+
     def test_no_names_is_refused(self):
         # SOL-HW-REVIEW-KIT.C7: given the names of units to run again
         self.assertIn("no unit is named", self.refused([], store.NothingToRerun))
@@ -305,6 +320,22 @@ class StoreTests(unittest.TestCase):
         self.assertNotIn(store.folder_hash(folder), (same, changed))
         copy = fx.review_folder(os.path.join(self.tmp.name, "copy"))
         self.assertEqual(store.folder_hash(copy), same)
+
+    def test_folder_hash_holds_directories_and_links_to_directories(self):
+        # SOL-HW-REVIEW-KIT.C7: a review folder whose hash differs from the recorded one
+        folder = fx.review_folder(os.path.join(self.tmp.name, "r"))
+        plain = store.folder_hash(folder)
+        os.mkdir(os.path.join(folder, "empty"))
+        empty = store.folder_hash(folder)
+        self.assertNotEqual(empty, plain)
+        os.rmdir(os.path.join(folder, "empty"))
+        self.assertEqual(store.folder_hash(folder), plain)
+        os.symlink(os.path.join(folder, "docs"), os.path.join(folder, "dirlink"))
+        linked = store.folder_hash(folder)
+        self.assertNotIn(linked, (plain, empty))
+        os.remove(os.path.join(folder, "dirlink"))
+        os.symlink(os.path.join(folder, "nowhere"), os.path.join(folder, "dirlink"))
+        self.assertNotEqual(store.folder_hash(folder), linked)
 
     def test_a_stale_lock_is_refused_with_what_to_do(self):
         # SOL-HW-REVIEW-KIT.C7: the output folder holds a lock while a run is in it

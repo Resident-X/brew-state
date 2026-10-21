@@ -75,16 +75,31 @@ def atomic_write_json(path: str, content: Any) -> None:
 
 
 def folder_hash(folder: str) -> str:
-    """The hash of a folder's content: every file's relative path and bytes, in order of path, and every link's target."""
+    """The hash of a folder's content: every file's relative path and bytes, in order of path, every directory's relative path
+    (an empty one included) and every link's target; a link to a directory is held as a link, not walked."""
     digest = hashlib.sha256()
+
+    def relative_to(path: str) -> bytes:
+        return os.path.relpath(path, folder).replace(os.sep, "/").encode("utf-8")
+
     for root, dirs, files in os.walk(folder):
         dirs.sort()
+        for name in dirs:
+            path = os.path.join(root, name)
+            if os.path.islink(path):
+                digest.update(b"dirlink:" + relative_to(path) + b"\0" + os.readlink(path).encode("utf-8") + b"\0")
+            else:
+                digest.update(b"dir:" + relative_to(path) + b"\0")
         for name in sorted(files):
             path = os.path.join(root, name)
-            relative = os.path.relpath(path, folder).replace(os.sep, "/")
-            digest.update(relative.encode("utf-8") + b"\0")
+            digest.update(relative_to(path) + b"\0")
             if os.path.islink(path) and not os.path.exists(path):
                 digest.update(b"link:" + os.readlink(path).encode("utf-8"))
+            elif os.path.islink(path):
+                digest.update(b"filelink:" + os.readlink(path).encode("utf-8") + b"\0")
+                with open(path, "rb") as handle:
+                    for chunk in iter(lambda: handle.read(1 << 20), b""):
+                        digest.update(chunk)
             else:
                 with open(path, "rb") as handle:
                     for chunk in iter(lambda: handle.read(1 << 20), b""):

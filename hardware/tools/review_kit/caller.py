@@ -40,7 +40,7 @@ READ_TOOLS = ("Read", "Glob", "Grep")
 RETRIEVAL_TOOL = "WebFetch"
 REQUIRED = ("declaration", "checks", "render")
 OPTIONAL = ("retrieval", "checklist", "prompt", "place", "round_label", "earlier_findings", "first_finding")
-CALLER_NAME = re.compile(r"^[a-z][a-z0-9_]*$")
+CALLER_NAME = re.compile(r"[a-z][a-z0-9_]*")
 #: The names the kit uses in an output folder, which a rendered file may not take.
 KIT_NAMES = ("plan.json", "record.json", "run.lock", "streams")
 RENDERED_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
@@ -85,7 +85,7 @@ class Caller:
 
 def load(name: str, folder: str) -> Caller:
     """The caller module review_caller_<name> in `folder`, or the cause it cannot be used."""
-    if not isinstance(name, str) or not CALLER_NAME.match(name):
+    if not isinstance(name, str) or not CALLER_NAME.fullmatch(name):
         raise Refused([f"the caller name {name!r} is not a lower-case name; give the <name> of a review_caller_<name> module"])
     path = os.path.join(folder, f"review_caller_{name}.py")
     if not os.path.isfile(path):
