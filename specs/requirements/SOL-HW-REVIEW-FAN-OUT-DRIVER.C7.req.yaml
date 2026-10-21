@@ -1,7 +1,7 @@
 id: SOL-HW-REVIEW-FAN-OUT-DRIVER.C7
 type: criterion
 title: The task runner's entry and the hardware notes say what the command is, what it needs and that it is on demand
-status: active
+status: deprecated
 version: 2
 measurement_type: binary
 verification: inspection

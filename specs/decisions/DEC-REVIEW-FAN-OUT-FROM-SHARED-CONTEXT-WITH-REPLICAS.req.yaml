@@ -1,0 +1,44 @@
+id: DEC-REVIEW-FAN-OUT-FROM-SHARED-CONTEXT-WITH-REPLICAS
+type: decision
+category: operational
+title: A judged review is carried out in forks of one shared context that the command builds from every artefact its units need, with replicas merged so that any fail stands
+status: active
+version: 1
+risk_level: medium
+text: |
+  A review whose checklist divides into units that are judged independently is carried out from one shared context that the command builds itself, and not from a setup session that reads documents. The command sends the shared context as one message holding every artefact the review's units may need, the documents, the whole catalogue, every rendered view as an image and any extract the caller's producer writes from the design, with no tool use, and judges each group of units in forks of that context. Every session of one review starts with the same system prompt, tool set, model and result schema, because a fork whose prefix differs from its parent's reads nothing from the cache.
+
+  A unit is judged in one fork, or in several forks of the same context that differ in the order and framing of their prompt, and the results are merged so that any fail stands. A review's units whose verdicts depend on each other's findings are declared as coupled by the caller and are judged in one group. Groups are sized so that the largest meets the review's time target, and small units are packed up to the largest unit's expected output. A replica is a fork that judges the same units from a prompt that differs; a review that decides a design round runs two, and the pre-order round runs three, the third on the small tier. Merging any fail means a fail raised by any replica is a fail in the round, each row records which replicas raised it, and a later check by another replica or a person may mark a finding a false positive but never clears a fail on its own.
+
+  The shared context is a flat prefix. The planner computes what splitting it into a tree, with an artefact needed by only some groups held in a node above them, would save, and records that figure; at the sizes the board reviews have the saving is under one per cent, so the flat prefix is the plan, and a prefix over the review's context budget is refused naming its size. A problem in a result is classed as cosmetic, local or fatal: a cosmetic one is repaired by the command and recorded, a local one by a turn in the unit's own session, a fatal one by a fresh fork, every attempt is kept and the best attempt stands, and a later attempt never replaces a better one.
+
+  The single-reviewer form stays valid and is the proof's baseline, as DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND settles. This replaces the choice that a setup session reads only documents and a reviewer forked from it opens the views itself, whose measured cost at the layout review's full unit count was twice the single reviewer's, with a seed missed.
+rationale: |
+  Context: DEC-REVIEW-FAN-OUT-BY-UNIT-FROM-SHARED-SETUP chose one setup session holding documents and a fork per unit that opens the views itself, on estimates measured at one to three areas. Built and run at the layout review's full unit count against the single reviewer's five recorded runs, it did not hold: the fanned-out run cost USD 6.92 against the single reviewer's mean of USD 2.84 and missed a seed, and three earlier live runs failed on driver defects. Analysis of the recorded sessions found the cause. The single reviewer surveys first, then judges: in 43 calls it reads every document, opens 73 view tiles once each and greps the layout file 8 times, then writes its 70 verdicts with all of that in context. Each fork rebuilt that survey itself: 390 tile opens of 91 distinct tiles against 73, and 74 greps against 8, which is 934,000 cache-written tokens against 348,000. A write costs 43 reads at the fitted prices (USD 4.37 per million written, 0.10 read, 8.95 generated), so the duplicated writes alone were USD 2.5 of the gap. Separately, the setup session's system rule, that it write nothing but one token and judge nothing, was inherited by every fork, so every reviewer was told not to judge. Live validation of the new shape on four units (USD 2.56): forks made one call each with no tool, cost USD 0.07 to 0.13 on the mid-tier, the shared context cost USD 1.13 once, and every assumption held. Recall on the 13 seeds of those four units: the single reviewer 13, the earlier fanned-out run 10, one full fork 12, one terse fork 13, their union 13, and a small-tier fork 13 in 87 to 174 seconds with four to ten times the thinking.
+
+  Trade-offs: A flat shared prefix writes every artefact once; a fork's cost is one read of the prefix, its own output and little else, so a round costs near the single reviewer's with time falling to the slowest group's. A per-unit setup, the earlier choice, pays the survey in every unit. A tree that writes each artefact once and has groups carry extras beat the flat prefix by under one per cent at one to two calls per unit and by two to six per cent at five to twenty, so the planner keeps the flat prefix unless its bound pays. A prefix built by a model's tool calls costs the single's survey again and brings back narration between calls, which the inline message avoids. Many thin units were fragile on cost and lost cross-item verdicts; coupled groups keep them together. A false negative is what a review cannot afford, because nothing downstream catches it, and a false positive is cheaply caught by a second look or at the fix, so replicas are merged any-fail: with a per-seed miss rate near 0.1 and replicas correlated at 0.3, the expected misses over the seeds fall from about 0.85 with one fork to about 0.06 with two and 0.007 with three. Replicas cost more than the single reviewer, so the cost bar for the proof is stated for the design loop and the pre-order round separately. Message Batches and Claude Code's workflows stay rejected for the reasons the earlier decision gave.
+
+  Reversibility: Moderate. The command's plan is data, so a single group with one replica is the single reviewer under a shared prefix, and dropping replicas or the tree is a change to a caller's policy. The kit replaces the earlier driver's session handling, so reverting means restoring that driver.
+
+  Consequences: The earlier driver's setup session, its rule and the narration restart are retired. A caller declares artefacts, units with their needs and couplings, a result schema, a replica policy and a time and cost budget, with checks and a rendered record as its only code. The proof of each review compares the fanned-out form pooled over runs against the recorded single-reviewer runs rather than one run against one run. The layout, schematic, production-files and critical-routing solutions consume the declaration and carry no session code.
+options_considered:
+  - option: One flat shared context built by the command, one fork per group, replicas merged any-fail
+    reason_rejected: ""
+  - option: One setup session that reads documents and a fork per unit that opens the views itself
+    reason_rejected: cost twice the single reviewer at the full unit count, each fork rebuilt the survey, and a seed was missed
+  - option: A tree of shared contexts with each artefact written once, as the default
+    reason_rejected: gains under one per cent at the sizes the board reviews have; kept as a case the planner takes only when its bound pays
+  - option: A shared context built by a model's tool calls
+    reason_rejected: costs the single reviewer's survey again and brings back narration between calls
+  - option: Thirteen thin units, one per area
+    reason_rejected: cost fragile and cross-item verdicts lost
+  - option: The single reviewer alone
+    reason_rejected: no time gain, and no second look to catch a miss
+chosen: One flat shared context built by the command, one fork per group, replicas merged any-fail
+links:
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C3
+    type: addresses
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3
+    type: addresses
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: addresses

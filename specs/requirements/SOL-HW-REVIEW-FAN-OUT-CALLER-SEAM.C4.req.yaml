@@ -1,7 +1,7 @@
 id: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C4
 type: criterion
 title: A caller's rendered record is written into the output folder after the merge and named in the report
-status: active
+status: deprecated
 version: 4
 measurement_type: binary
 verification: test

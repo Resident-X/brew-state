@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT.C11
+type: criterion
+title: The task runner and hardware notes describe the command, and the setup-session driver, its rule and the tap are removed
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The task runner's description of the command and the hardware notes' section on it say that it runs a declared review as forks of one shared context, that it is on demand and in neither the build round nor the nightly, that it needs the agent command line on the path and logged in, that the command line's name is read from one environment variable, what the report records, what a start report cannot show or exclude, and that the model flag takes a full model id; the descriptions of the board tooling's tests and the list of tested tools name the kit's tests. A test parses the task runner's file and finds each review task's description. Checked by reading each place against these clauses. After the change, a search of the repository's tools, tests, task runner and documents finds no reference to the earlier driver's module, its setup rule, its restart on narration, its chunked document reading or the tap shim, the earlier driver's and caller seam's tests are replaced by the kit's, and the nodes SOL-HW-REVIEW-FAN-OUT-DRIVER and SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM are superseded by this solution and the merge solution. Out of scope: the callers, which are changed by their own solutions.
+links:
+  - target: SOL-HW-REVIEW-KIT
+    type: criterion-of

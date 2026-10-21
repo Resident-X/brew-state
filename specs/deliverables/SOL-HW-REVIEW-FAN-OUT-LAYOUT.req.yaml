@@ -40,8 +40,6 @@ links:
     type: targets
   - target: OBL-VERIFICATION-DISCIPLINE-001.C9
     type: targets
-  - target: SOL-HW-REVIEW-FAN-OUT-DRIVER
-    type: depends-on
   - target: SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF
     type: depends-on
   - target: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES
@@ -52,7 +50,7 @@ links:
     type: depends-on
   - target: SOL-BOARD-REVIEW-LOOP-PROPORTIONATE
     type: depends-on
-  - target: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM
+  - target: SOL-HW-REVIEW-KIT
     type: depends-on
 brief_confirmation:
   confirmer: claude-sonnet-5-5 independent brief reviewer

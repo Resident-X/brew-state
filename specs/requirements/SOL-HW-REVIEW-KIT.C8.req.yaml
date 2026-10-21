@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT.C8
+type: criterion
+title: The merge enforces the tables, renumbers this round's findings, and a fail raised by any replica stands with its raisers recorded and never cleared by an adjudication
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Over synthetic unit results and a synthetic caller, the merge rejects a table with a column the declared table lacks and a verdict outside the declared set, replaces every finding number a reviewer wrote with the number the checklist's order gives and rewrites the citations of them in the verdict rows, leaves a citation of an earlier round's finding as written, tells the two by the round each citation carries against the round the caller names as this one, refuses a citation of an earlier round's finding that the review folder's earlier rounds do not hold, reports two findings the caller's key assigns to the same item or place keeping both, and gives the same record for every order the units arrive in. For a caller with no findings table nothing is renumbered. Over synthetic replica results for one unit, an item that any replica fails is a fail in the merged table, an item no replica fails that any could not judge is a cannot judge, and every other item is a pass; each row lists the replicas that raised its verdict; findings for the same item and place are one finding with the replicas that raised it, and differing findings are all kept. The merged table is the same for every order the replicas arrive in. Over generated adjudication results, including ones that call every finding a false positive, the merged tables after the adjudication fail exactly the items they failed before it, each adjudicated finding carries the adjudicator's note and the session that wrote it, and an adjudication that tries to change a verdict is recorded as a problem and ignored. Out of scope: whether an adjudicator's note is right.
+links:
+  - target: SOL-HW-REVIEW-KIT
+    type: criterion-of

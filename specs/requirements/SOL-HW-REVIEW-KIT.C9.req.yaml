@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT.C9
+type: criterion
+title: Replicas differ as declared, their number follows the stakes, and a caller supplies checks and a rendered record under the file-name rules
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Over a synthetic declaration, a unit of normal stakes has two replicas and a unit of high stakes three, a round flag overrides the declared number, each replica's prompt differs from the others in the declared item order, view order and framing and is byte-identical on a second build, and a replica declared for a model other than the review's has its own shared context and session specification and shares no cache with the others. Over synthetic callers, the rendered record's files are written into the output folder after the merge and named in the record and the report in text and JSON with the same content; a name that is not one plain component of ASCII letters, digits, full stops, underscores and hyphens, begins with a letter or digit, ends with a full stop, is over sixty-four characters, is a reserved device name, equals without regard to case a name the kit uses or another rendered name, or is already in the output folder and was not written by the earlier merge or has since become a link or a folder, is refused; a caller defining none of the retrieval grant, the checklist function and the review folder in the prompt behaves as one defining their defaults; a checklist function is resolved once before any session starts and a function that raises or returns a list with a repeated name fails the run naming the caller; and a module missing a required attribute is refused at load naming it. Out of scope: any real caller.
+links:
+  - target: SOL-HW-REVIEW-KIT
+    type: criterion-of

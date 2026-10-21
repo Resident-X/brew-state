@@ -34,13 +34,11 @@ links:
     type: targets
   - target: OBL-VERIFICATION-DISCIPLINE-001.C9
     type: targets
-  - target: SOL-HW-REVIEW-FAN-OUT-DRIVER
-    type: depends-on
   - target: SOL-BOARD-CIRCUIT-REVIEW-SEEDED-PROOF
     type: depends-on
   - target: SOL-BOARD-CIRCUIT-PRACTICE-CATALOGUE
     type: depends-on
   - target: SOL-BOARD-SCHEMATIC-DRAWING-CONVENTION
     type: depends-on
-  - target: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM
+  - target: SOL-HW-REVIEW-KIT
     type: depends-on

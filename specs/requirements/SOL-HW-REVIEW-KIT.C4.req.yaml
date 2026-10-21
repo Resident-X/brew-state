@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT.C4
+type: criterion
+title: A recorded stream is checked for its shape, re-opened artefacts and foreign citations, and its figures sum to the reports within two per cent
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Over recorded streams, the stream of a session that read documents in several calls and narrated between them fails the shape check naming the reason, the stream of the one-call acknowledgement passes, and a thinking block that carries text, a redacted one, and a text other than the acknowledgement each fail it. Over the recorded layout run whose forks made 390 opens of 91 distinct view tiles, the count of opens of artefacts held in the prefix and of new opens is the count the fixture states; a recorded verdict row that cites a view neither in the unit's prefix nor opened by it is flagged naming the row. Over the recorded streams of the live runs, a fork's cost, time and turns are its reported figures less the parent's, calls are counted by distinct message identifier, tokens are split into read from the cache, written to it, fresh and generated, and the sum of the sessions' own cost is within two per cent of the cost the runs' reports give. The run's figures give the sharing ratio, the tokens written in more than one session, the critical-path time and the predicted against the actual time and cost. Out of scope: judging whether a run was worth its cost.
+links:
+  - target: SOL-HW-REVIEW-KIT
+    type: criterion-of

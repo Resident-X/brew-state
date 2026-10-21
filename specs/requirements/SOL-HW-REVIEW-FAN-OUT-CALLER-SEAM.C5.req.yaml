@@ -1,7 +1,7 @@
 id: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM.C5
 type: criterion
 title: A caller defining none of the three optional attributes behaves as before, and the driver's existing tests pass with their prompt functions taking the review folder
-status: active
+status: deprecated
 version: 2
 measurement_type: binary
 verification: test

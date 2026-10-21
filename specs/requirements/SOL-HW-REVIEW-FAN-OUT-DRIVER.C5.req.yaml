@@ -1,7 +1,7 @@
 id: SOL-HW-REVIEW-FAN-OUT-DRIVER.C5
 type: criterion
 title: Each session's own time, tokens and cost are recorded, with the setup session's cumulative figures taken off each fork's
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: test

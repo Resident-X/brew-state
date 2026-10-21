@@ -2,7 +2,7 @@ id: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM
 type: deliverable
 category: solution
 title: The review fan-out driver carries a retrieval grant, a prompt that sees the review folder, a per-folder checklist and a rendered record for the callers
-status: active
+status: deprecated
 version: 5
 text: |+
   Why this exists. The driver SOL-HW-REVIEW-FAN-OUT-DRIVER is finished and has no caller, and building the layout caller showed that four things a caller needs have no place in it as built: a reviewer's grant is limited to the read tools, so the read-only retrieval of a published document that a rule-kind item or a datasheet needs is refused at load; a reviewer's prompt is given the unit and not the review folder, so it cannot name the round's listed items or the board's own items; the checklist is a fixed list fixed at load, so a checklist that is the catalogue's items plus the board's plan rows and a free pass cannot be stated; and the merge writes only the table form of the record, so a caller whose record is a document has no place to write it. The layout, schematic, critical-routing and production-files solutions each need some of the four. They are requirements of the driver as the shared seam, not a defect in work the driver's criteria asked for, so they are built once, here, before the callers. The reasoning for the mechanism is in DEC-REVIEW-FAN-OUT-BY-UNIT-FROM-SHARED-SETUP and DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND, and a session building this does not reopen either. This is the sixth solution under DEL-HW-REVIEW-FAN-OUT and is built before the layout, schematic and production-files solutions.
@@ -32,7 +32,7 @@ links:
     type: targets
   - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3
     type: targets
-  - target: SOL-HW-REVIEW-FAN-OUT-DRIVER
+  - target: SOL-HW-REVIEW-KIT
     type: depends-on
 brief_confirmation:
   confirmer: claude-sonnet-5-5 (independent brief reviewer)
