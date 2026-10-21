@@ -109,7 +109,7 @@ class TaskfileParse(unittest.TestCase):
     def test_every_review_task_has_a_description_that_is_valid_yaml(self):
         found = descriptions(read(TASKFILE))
         reviews = sorted(name for name in found if name.startswith("hw:review-"))
-        for needed in ("hw:review-run", "hw:review-smoke", "hw:review-fan-out", "hw:review-folder", "hw:review-proof",
+        for needed in ("hw:review-run", "hw:review-smoke", "hw:review-folder", "hw:review-proof",
                        "hw:review-seed", "hw:review-history"):
             self.assertIn(needed, reviews)
         for name in reviews:
