@@ -417,6 +417,7 @@ class StreamStore:
             meta = {"key": call.key, "spec_digest": call.spec.digest, "message_digest": call.message_digest,
                     "parent": call.parent, "fork": call.fork, "label": call.label, "kind": outcome.kind,
                     "exit_code": outcome.exit_code, "stderr": outcome.stderr, "wall_s": round(wall_s, 3),
+                    "attempts": outcome.attempts, "waits": list(outcome.waits),
                     "spec": call.spec.as_dict(), "arguments": call.arguments}
             with open(stem + META_SUFFIX, "w", encoding="utf-8") as handle:
                 json.dump(meta, handle, indent=1, ensure_ascii=False)
