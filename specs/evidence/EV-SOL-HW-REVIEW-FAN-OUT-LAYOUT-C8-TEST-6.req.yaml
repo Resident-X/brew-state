@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-FAN-OUT-LAYOUT-C8-TEST-6
+type: evidence
+title: test evidence for SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-21T11:36:12.237755Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_layout_review_proof.py::test_a_run_that_misses_a_seed_every_single_run_found_fails_the_criterion_and_the_record_is_still_written
+  artifact_version: 9585342c6d6404f8ad37a976ab03ebfd71732799
+attested_by: crun-d107694f4867d49d
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8
+    type: satisfies

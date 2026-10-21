@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-KIT-C4-TEST-17
+type: evidence
+title: test evidence for SOL-HW-REVIEW-KIT.C4
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-21T09:27:52.653816Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_kit_reduce.py::test_reducing_a_reduction_changes_nothing
+  artifact_version: 799201b5a5f1ee1a4fd74ad560081d88d5c8d3aa
+attested_by: crun-053588c2ff8878eb
+links:
+  - target: SOL-HW-REVIEW-KIT.C4
+    type: satisfies

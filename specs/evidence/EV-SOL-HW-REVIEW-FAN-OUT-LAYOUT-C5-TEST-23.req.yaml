@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-FAN-OUT-LAYOUT-C5-TEST-23
+type: evidence
+title: test evidence for SOL-HW-REVIEW-FAN-OUT-LAYOUT.C5
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-21T11:36:10.791776Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_folder.py::test_the_layout_facts_extract_lists_the_positions_pads_segments_vias_and_zones_of_the_board
+  artifact_version: 9585342c6d6404f8ad37a976ab03ebfd71732799
+attested_by: crun-d107694f4867d49d
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-LAYOUT.C5
+    type: satisfies

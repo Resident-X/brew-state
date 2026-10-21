@@ -1,0 +1,49 @@
+id: EV-SOL-HW-REVIEW-FAN-OUT-LAYOUT-C8-DEMONSTRATION
+type: evidence
+title: demonstration evidence for SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8
+status: active
+version: 1
+result: pass
+method: demonstration
+observed_at: "2026-10-21T21:37:48Z"
+valid_until: until-superseded
+artifact:
+  kind: inline
+text: |
+  # Fanned-out blind review of the layout review proof's seeded copy: SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8
+
+  - Verified commit: `c8d2e41e160f7f762a763ebbcd6ca28c05b5bb5b` on branch `req/SOL-HW-REVIEW-FAN-OUT-LAYOUT/layout-caller-build`. The runs below were made on earlier commits of the same branch (named per run); every change since is covered by the unit tests and by the round gate recorded with this evidence.
+
+  ## What was run
+
+  The layout review, fanned out by the review kit (`hw:review-proof`, the layout caller, the kit's command), on a copy of `hardware/proof/review-proof` seeded with 21 known layout defects (seed list hash recorded in the proof record), in sessions given no record of the seeds. The single-reviewer form was NOT run again: the five recorded single-reviewer runs of the same seed list and design (mid-tier model, 19 to 21 of 21 seeds, 653 to 1062 s, mean 862 s, USD 2.20 to 3.45, mean USD 2.84) are the baselines, loaded under the kit's baseline key (seed list, design, model).
+
+  ## Result: design loop, two small-tier replicas (full and hunt framing), tool commit 8ae666c
+
+  - Pooled criterion (cost multiple 1.25): PASS. Seeds found 21 of 21 (floor 19); no seed every single run found was missed; wall time 234 s against a bound of 431 s (half the single mean); cost USD 2.48 against a bound of USD 3.55.
+  - 28 sessions: one shared context (USD 0.35 to write, read from the cache by every fork), 20 forks, 7 repair turns. Calls refused for a rate limit: 0. Document retrievals: 4, none failed. Every fork's first call read the full shared context from the cache.
+  - Replica statistics: 2 misses in 42 replica-seed trials (4.8 per cent); correlation between replicas -0.05.
+  - Findings matching no seed: 40 (the single runs: 14 to 17). Most repeat across all runs and models (for example no ground plane under the signal tracks, the +5V trunk detour), which points to real properties of the proof design; the singletons are the candidates for false alarms and are not yet labelled.
+  - Verdict differences against the single runs: 2 at the first merge, 5 in the proof record; explained in the record as the fanned form failing items the single runs passed (FLOOR-4, PLAN-AND-FREE-PASS).
+  - The merge of this run was first refused: one replica gave `cannot judge` on MAINS-4 (a datasheet figure). After the first-answer cannot-judge repair turn (commit 8ae666c) the MAINS group was run again alone (6 sessions, USD 0.77) and the merged round was written.
+
+  ## Result: pre-order round, mid-tier replicas one and two with a small-tier third, tool commit 8ae666c
+
+  - 30 forks: USD 5.99, 255 s, 7 retrievals none failed, 0 refused calls. The union found all 21 seeds. Recorded and not bounded.
+  - The merge was refused on MAINS-4 (`cannot judge`: the VO3526 datasheet's pin spacing, which the review folder does not hold and the plan row names no address for). This led to the add-document mode (commit c8d2e41), which is covered by unit and end-to-end stub tests and has not been run live.
+
+  ## Other runs (small-tier replicas on the same shared context, informational)
+
+  - Mid-tier, two replicas, design loop, tool commit 9585342: 21 of 21, 210 s, USD 5.15 (the first run; 1.8 times the single mean, which is why the design loop moved to the small tier).
+  - Small-tier single replica: 21 of 21, USD 1.21, 245 s. Four further small-tier replicas, plain prompt: 19, 20, 20, 21 of 21 (misses S10 and S12, S12 once by both replicas of one pass). Two replicas with an engineered prompt (evidence first, hunt framing, a worked example, a self-check): 21 of 21 each, USD 1.40 to 1.42; two runs against five is not evidence that the prompt helps.
+
+  ## Tools
+
+  Claude Code 2.1.x command line, models `claude-sonnet-5-5` (mid-tier) and `claude-haiku-5-5` (small-tier); KiCad 10.0.7, resvg 0.48, Python 3.14, Task 3.49, macOS. Total live spend for the demonstration: about USD 22.5.
+
+  ## Commands
+
+  `python3 hardware/tools/layout_review_proof.py --work <new folder outside the repository> --kicad-cli <kicad-cli> --only design-loop` (and `--only pre-order`); the proof record is `proof-record.json` and its text in the work folder.
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8
+    type: satisfies
