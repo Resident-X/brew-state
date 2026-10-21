@@ -101,6 +101,14 @@ class Plan:
     tree: Dict[str, Any]
     cli_version: str
     tool_commit: str
+    #: The shared contexts built besides the review's own, one for each other model a replica runs on: the root node's id,
+    #: the model, the specification and its digest, the prefix hash and the variants that fork from it.
+    contexts: Tuple[Dict[str, Any], ...] = ()
+
+    @property
+    def roots(self) -> List[Node]:
+        """The root of every shared context, the review's own first."""
+        return [node for node in self.nodes if node.role == ROOT]
 
     @property
     def lanes(self) -> List[Node]:
@@ -126,7 +134,8 @@ class Plan:
                 "nodes": [node.as_dict() for node in self.nodes], "spec": self.spec, "spec_digest": self.spec_digest,
                 "shared": self.shared, "variants": list(self.variants), "bound": self.bound, "prices": self.prices,
                 "timing": self.timing, "calls_per_fork": self.calls_per_fork, "predicted": self.predicted,
-                "tree": self.tree, "cli_version": self.cli_version, "tool_commit": self.tool_commit}
+                "tree": self.tree, "cli_version": self.cli_version, "tool_commit": self.tool_commit,
+                "contexts": [dict(context) for context in self.contexts]}
 
     @classmethod
     def from_dict(cls, raw: Mapping[str, Any]) -> "Plan":
@@ -134,7 +143,8 @@ class Plan:
                        for g in raw["groups"])
         return cls(groups, tuple(Node.from_dict(n) for n in raw["nodes"]), raw["spec"], raw["spec_digest"], raw["shared"],
                    tuple(raw["variants"]), raw["bound"], raw["prices"], raw["timing"], raw["calls_per_fork"],
-                   raw["predicted"], raw["tree"], raw["cli_version"], raw["tool_commit"])
+                   raw["predicted"], raw["tree"], raw["cli_version"], raw["tool_commit"],
+                   tuple(raw.get("contexts", ())))
 
 
 # --- Grouping ----------------------------------------------------------------------------------
@@ -210,8 +220,12 @@ def make_plan(declaration: decl.Declaration, catalogue: cat.Catalogue, shared: m
               spec: sess.SessionSpec, *, bound: int, cli_version: str, tool_commit: str,
               replicas: Union[int, Mapping[str, int]] = 1, variants: Sequence[str] = (),
               prices: cm.Prices = cm.Prices(), timing: cm.Timing = cm.Timing(), calls_per_fork: int = cm.CALLS_PER_FORK,
-              prompt_for: Optional[Callable[[Sequence[str], str], str]] = None) -> Plan:
-    """The flat plan for a declaration: refused when the bound is below one or the shared context is over the budget."""
+              prompt_for: Optional[Callable[[Sequence[str], str], str]] = None, contexts: Sequence[Any] = ()) -> Plan:
+    """The flat plan for a declaration: refused when the bound is below one or the shared context is over the budget.
+
+    `contexts` are the shared contexts to build when a replica runs on a model other than the review's: objects giving
+    `root_id`, `model`, `spec`, `shared` and `variants`, the review's own first. A group's replica forks from the context
+    that holds its variant; with none given every replica forks from the one root."""
     if isinstance(bound, bool) or not isinstance(bound, int) or bound < 1:
         raise BoundBelowOne(bound)
     budget = declaration.budget.context_tokens
@@ -228,13 +242,24 @@ def make_plan(declaration: decl.Declaration, catalogue: cat.Catalogue, shared: m
     root = Node("root", ROOT, None, None, None, 1, None, (), shared.prefix_sha, shared.prefix_sha)
     nodes = [root]
     per_node = {"root": {"cost_usd": cm.root_cost(prices, shared.tokens), "wall_s": timing.seconds(1, cm.ACK_TOKENS)}}
+    parent_of: Dict[str, str] = {}
+    for context in contexts:
+        for variant_id in context.variants:
+            parent_of[variant_id] = context.root_id
+    for context in list(contexts)[1:]:
+        nodes.append(Node(context.root_id, ROOT, None, None, None, 1, None, (), context.shared.prefix_sha,
+                          context.shared.prefix_sha))
+        per_node[context.root_id] = {"cost_usd": cm.root_cost(prices, context.shared.tokens),
+                                     "wall_s": timing.seconds(1, cm.ACK_TOKENS)}
     durations: List[float] = []
     calls_of: Dict[str, int] = {}
     for group in groups:
         for replica in range(1, group.replicas + 1):
             variant = (variants[(replica - 1) % len(variants)] if variants else BASE_VARIANT)
             prompt = prompt_for(group.units, variant)
-            node = Node(f"{group.id}.r{replica}.a1", UNIT, "root", group.id, replica, 1, variant, group.units,
+            if contexts and variant not in parent_of:
+                raise ValueError(f"the variant {variant!r} forks from no shared context; the contexts hold {sorted(parent_of)}")
+            node = Node(f"{group.id}.r{replica}.a1", UNIT, parent_of.get(variant, "root"), group.id, replica, 1, variant, group.units,
                         shared.prefix_sha, messages.sha256(messages.prompt_message(prompt)))
             nodes.append(node)
             seconds = timing.seconds(calls_per_fork, group.expected_output_tokens)
@@ -242,7 +267,8 @@ def make_plan(declaration: decl.Declaration, catalogue: cat.Catalogue, shared: m
                                                           calls_per_fork), "wall_s": seconds}
             durations.append(seconds)
             calls_of[group.id] = calls_of.get(group.id, 0) + calls_per_fork
-    wall = per_node["root"]["wall_s"] + cm.makespan(durations, bound)
+    wall = max(entry["wall_s"] for key, entry in per_node.items() if key == "root" or key.startswith("root.")) \
+        + cm.makespan(durations, bound)
     target = declaration.budget.wall_s
     cost = sum(entry["cost_usd"] for entry in per_node.values())
     predicted = {"cost_usd": round(cost, 6), "wall_s": round(wall, 3),
@@ -256,4 +282,7 @@ def make_plan(declaration: decl.Declaration, catalogue: cat.Catalogue, shared: m
     tree = {"saving_usd": round(saving, 6), "threshold_usd": threshold, "worth_building": saving >= threshold,
             "kept": "flat"}
     return Plan(tuple(groups), tuple(nodes), spec.as_dict(), spec.digest, shared.as_dict(), tuple(variants), bound,
-                prices.as_dict(), timing.as_dict(), calls_per_fork, predicted, tree, cli_version, tool_commit)
+                prices.as_dict(), timing.as_dict(), calls_per_fork, predicted, tree, cli_version, tool_commit,
+                tuple({"root_id": context.root_id, "model": context.model, "spec": context.spec.as_dict(),
+                       "spec_digest": context.spec.digest, "prefix_sha": context.shared.prefix_sha,
+                       "variants": list(context.variants)} for context in list(contexts)[1:]))

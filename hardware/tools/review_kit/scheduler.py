@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import datetime
 import threading
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Tuple
 
 from . import decl, messages, planner, results, store, streamcheck, streams
@@ -115,10 +115,29 @@ class RunResult:
     root: Dict[str, Any]
     lanes: List[LaneResult]
     new_shared_context: bool
+    #: The roots of the shared contexts built for replicas on another model.
+    extra_roots: List[Dict[str, Any]] = field(default_factory=list)
 
     @property
     def failures(self) -> List[Dict[str, Any]]:
         return [lane.failure for lane in self.lanes if lane.failure is not None]
+
+
+class AllowedSpecs:
+    """The executor's specification guard for a review whose replicas run on more than one model: the specifications of the
+    other models' shared contexts are allowed beside the review's own, and any other specification is refused by the guard
+    that held the review's own."""
+
+    def __init__(self, inner, allowed: Sequence[sess.SessionSpec]):
+        self.inner, self.allowed = inner, list(allowed)
+
+    def bind(self, spec: sess.SessionSpec) -> None:
+        if any(spec == allowed for allowed in self.allowed):
+            return
+        self.inner.bind(spec)
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.inner, name)
 
 
 def clip(text: str, width: int = 300) -> str:
@@ -145,15 +164,17 @@ class Scheduler:
 
     # The shared context ----------------------------------------------------------------------
 
-    def start_root(self, spec: sess.SessionSpec, shared: messages.SharedContext, plan: planner.Plan) -> Tuple[Dict[str, Any], str, streams.Stream, bool]:
-        call = sess.Call(spec, shared.message, label="root")
+    def start_root(self, spec: sess.SessionSpec, shared: messages.SharedContext, plan: planner.Plan,
+                   root_id: Optional[str] = None) -> Tuple[Dict[str, Any], str, streams.Stream, bool]:
+        root_id = root_id or plan.root.id
+        call = sess.Call(spec, shared.message, label=root_id)
         outcome = self.executor.run(call)
         if outcome.kind != ex.OK:
-            raise RootFailed(f"the shared context session ended as {outcome.kind}: {outcome.said()}; check the agent command "
+            raise RootFailed(f"the shared context session {root_id} ended as {outcome.kind}: {outcome.said()}; check the agent command "
                              "line runs, then run again")
         stream = streams.read_stream(outcome.stream)
         first = outcome.session.calls[0] if outcome.session.calls else {"cache_read": 0, "cache_write": 0}
-        node = {"id": plan.root.id, "role": planner.ROOT, "parent": None, "group": None, "replica": None, "attempt": 1,
+        node = {"id": root_id, "role": planner.ROOT, "parent": None, "group": None, "replica": None, "attempt": 1,
                 "variant": None, "units": [], "prefix_sha": shared.prefix_sha, "message_sha": shared.prefix_sha,
                 "kind": outcome.kind, "tries": outcome.attempts, "waits": list(outcome.waits),
                 "flags": [str(flag) for flag in streamcheck.node_shape(stream, messages.ACK)],
@@ -164,14 +185,16 @@ class Scheduler:
     # One group and replica -------------------------------------------------------------------
 
     def lane(self, declaration: decl.Declaration, plan: planner.Plan, spec: sess.SessionSpec, root_id: str,
-             root_stream: streams.Stream, first: planner.Node, prompt: str, round_label: Optional[str]) -> LaneResult:
+             root_stream: streams.Stream, first: planner.Node, prompt: str, round_label: Optional[str],
+             root_node: Optional[str] = None) -> LaneResult:
         group = next(g for g in plan.groups if g.id == first.group)
         label = "+".join(group.units)
         items = [item for unit in group.units for item in declaration.units[unit].items]
         record = results.UnitRecord(label)
         lane = LaneResult(group.id, first.replica, group.units, [], record)
         prefix = streams.lineage_written([root_stream])
-        parent_id, parent_session, fork, message = plan.root.id, root_id, True, messages.prompt_message(prompt)
+        root_node = root_node or first.parent or plan.root.id
+        parent_id, parent_session, fork, message = root_node, root_id, True, messages.prompt_message(prompt)
         fresh_message = message
         for attempt in range(1, self.attempts + 1):
             node_id = f"{group.id}.r{first.replica}.a{attempt}"
@@ -200,7 +223,7 @@ class Scheduler:
             if not assessed.problems:
                 break
             if assessed.fatal:
-                parent_id, parent_session, fork, message = plan.root.id, root_id, True, fresh_message
+                parent_id, parent_session, fork, message = root_node, root_id, True, fresh_message
             else:
                 parent_id, parent_session, fork = node_id, outcome.session.id, False
                 message = messages.prompt_message(messages.repair_prompt([problem.line() for problem in assessed.local]))
@@ -214,16 +237,37 @@ class Scheduler:
 
     def run(self, declaration: decl.Declaration, plan: planner.Plan, shared: messages.SharedContext, spec: sess.SessionSpec,
             prompt_for: Optional[Callable[[Sequence[str], str], str]] = None, round_label: Optional[str] = None,
-            only: Optional[Set[str]] = None) -> RunResult:
-        """Run the plan, or only the groups `only` names. The bound comes from the plan."""
+            only: Optional[Set[str]] = None, contexts: Optional[Sequence[Any]] = None) -> RunResult:
+        """Run the plan, or only the groups `only` names. The bound comes from the plan.
+
+        With `contexts` (objects giving `root_id`, `spec`, `shared` and `variants`, the review's own first) a replica on
+        another model has a root and specification of its own: every root is started before any fork, together, and a fork
+        continues the root of the context that holds its variant."""
         if plan.bound < 1:
             raise planner.BoundBelowOne(plan.bound)
         prompt_for = prompt_for or planner.default_prompt(declaration)
-        root, root_id, root_stream, new = self.start_root(spec, shared, plan)
+        found = list(contexts) if contexts else [None]
+        if len(plan.roots) != len(found):
+            raise ValueError(f"the plan holds {len(plan.roots)} shared contexts and {len(found)} were given to run it with")
+        specs = [(context.root_id, context.spec, context.shared) if context is not None else (plan.root.id, spec, shared)
+                 for context in found]
+        if len(specs) > 1:
+            self.executor.guard = AllowedSpecs(getattr(self.executor.guard, "inner", self.executor.guard),
+                                               [other for _, other, _ in specs[1:]])
+        started = self.concurrency.run([(lambda each=each: self.start_root(each[1], each[2], plan, each[0])) for each in specs],
+                                       plan.bound)
+        roots = {each[0]: (begun[1], begun[2], each[1]) for each, begun in zip(specs, started)}
+        holder = {variant: context.root_id for context in found if context is not None for variant in context.variants}
         firsts = [node for node in plan.lanes if only is None or node.group in only]
-        tasks = [(lambda node=node: self.lane(declaration, plan, spec, root_id, root_stream, node,
-                                              prompt_for(node.units, node.variant), round_label)) for node in firsts]
-        return RunResult(root, self.concurrency.run(tasks, plan.bound), new)
+        tasks = []
+        for node in firsts:
+            root_node = holder.get(node.variant, plan.root.id) if holder else plan.root.id
+            session, root_stream, lane_spec = roots[root_node]
+            tasks.append(lambda node=node, root_node=root_node, session=session, root_stream=root_stream, lane_spec=lane_spec:
+                         self.lane(declaration, plan, lane_spec, session, root_stream, node,
+                                   prompt_for(node.units, node.variant), round_label, root_node))
+        lanes = self.concurrency.run(tasks, plan.bound)
+        return RunResult(started[0][0], lanes, any(begun[3] for begun in started), [begun[0] for begun in started[1:]])
 
 
 # --- The record --------------------------------------------------------------------------------
@@ -266,27 +310,32 @@ def build_record(plan: planner.Plan, review_hash: str, run: RunResult, clock, ki
     return {"version": store.RECORD_VERSION, "review_hash": review_hash, "plan": plan.to_dict(),
             "shared_context": {"prefix_sha": plan.shared["prefix_sha"], "tokens": plan.shared["tokens"],
                                "started_at": run.root["started_at"], "new": run.new_shared_context},
-            "nodes": [run.root] + all_nodes, "lanes": all_lanes, "units": {u: units[u] for u in plan.units},
+            "nodes": [run.root] + list(run.extra_roots) + all_nodes, "lanes": all_lanes, "units": {u: units[u] for u in plan.units},
             "runs": runs}
 
 
 def run_review(scheduler: Scheduler, declaration: decl.Declaration, plan: planner.Plan, shared: messages.SharedContext,
                spec: sess.SessionSpec, out: str, review_folder: str, prompt_for=None,
-               round_label: Optional[str] = None) -> Dict[str, Any]:
+               round_label: Optional[str] = None, contexts: Optional[Sequence[Any]] = None,
+               finish: Optional[Callable[[Dict[str, Any]], Dict[str, Any]]] = None) -> Dict[str, Any]:
     """A fresh run: refused when the output folder already holds a record, holding the folder's lock while it is in it, and
-    ending with the record written."""
+    ending with the record written. `finish`, when given, is called with the record before it is written, still under the
+    lock, and returns the record to write: the merge and the rendered files are made there."""
     with store.RunLock(out, scheduler.clock.now()):
         store.check_fresh(out)
         store.write_plan(out, plan.to_dict())
-        run = scheduler.run(declaration, plan, shared, spec, prompt_for, round_label)
+        run = scheduler.run(declaration, plan, shared, spec, prompt_for, round_label, contexts=contexts)
         record = build_record(plan, store.folder_hash(review_folder), run, scheduler.clock, "fresh")
+        if finish is not None:
+            record = finish(record)
         store.write_record(out, record)
         return record
 
 
 def rerun_review(scheduler: Scheduler, declaration: decl.Declaration, plan: planner.Plan, shared: messages.SharedContext,
                  spec: sess.SessionSpec, out: str, review_folder: str, names: Sequence[str], prompt_for=None,
-                 round_label: Optional[str] = None) -> Dict[str, Any]:
+                 round_label: Optional[str] = None, contexts: Optional[Sequence[Any]] = None,
+                 finish: Optional[Callable[[Dict[str, Any]], Dict[str, Any]]] = None) -> Dict[str, Any]:
     """Run the named units again along the recorded path: the shared context's identical bytes, then a fork for each replica
     of each group that holds a named unit. The named units' results replace the recorded ones, and the record says which units
     were run again, when, and whether the shared context had to be written anew."""
@@ -298,7 +347,9 @@ def rerun_review(scheduler: Scheduler, declaration: decl.Declaration, plan: plan
         running = [unit for group in plan.groups if group.id in groups for unit in group.units]
         store.check_rerun(record, review_hash, list(names), running)
         store.check_same_path(record, plan)
-        run = scheduler.run(declaration, plan, shared, spec, prompt_for, round_label, only=groups)
+        run = scheduler.run(declaration, plan, shared, spec, prompt_for, round_label, only=groups, contexts=contexts)
         record = build_record(plan, review_hash, run, scheduler.clock, "rerun", list(names), record)
+        if finish is not None:
+            record = finish(record)
         store.write_record(out, record)
         return record
