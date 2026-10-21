@@ -19,7 +19,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 TOOLS = os.path.dirname(HERE)
 sys.path.insert(0, TOOLS)
 
-from review_kit import streamcheck, streams  # noqa: E402
+from review_kit import streamcheck, streams, transcripts  # noqa: E402
 
 FIXTURES = os.path.join(HERE, "fixtures", "review_streams")
 with open(os.path.join(FIXTURES, "manifest.json"), encoding="utf-8") as handle:
@@ -374,11 +374,11 @@ class Reading(unittest.TestCase):
             path = os.path.join(projects, "-a-working-directory", "abc-123.jsonl")
             with open(path, "w", encoding="utf-8") as handle:
                 handle.write(text_of({"type": "user", "message": {"content": "hi"}}, shape))
-            self.assertEqual(streams.find_transcript("abc-123", projects), path)
-            self.assertIsNone(streams.find_transcript("abc-124", projects))
-            self.assertIsNone(streams.find_transcript("../abc-123", projects))
-            self.assertIsNone(streams.find_transcript("", projects))
-            self.assertEqual(streams.shape_record(path)["shapeHash"], "h")
+            self.assertEqual(transcripts.find_transcript("abc-123", None, projects), path)
+            for absent in ("abc-124", "../abc-123", ""):
+                with self.assertRaises(transcripts.TranscriptMissing):
+                    transcripts.find_transcript(absent, None, projects)
+            self.assertEqual(transcripts.shape_record(path)["shapeHash"], "h")
             read = streams.read_stream_file(path)
         self.assertEqual((read.system, read.tools, read.shape_hash, read.session_id), (("one", "two"), ("Read", "Grep"), "h", "abc-123"))
         self.assertEqual(read.system_prompt, "one\n\ntwo")
@@ -389,7 +389,7 @@ class Reading(unittest.TestCase):
             path = os.path.join(folder, "t.jsonl")
             with open(path, "w", encoding="utf-8") as handle:
                 handle.write(text_of({"type": "user", "message": {"content": "hi"}}))
-            self.assertIsNone(streams.shape_record(path))
+            self.assertIsNone(transcripts.shape_record(path))
 
     def test_the_recorded_sessions_read_back_the_figures_they_were_made_from(self):
         # SOL-HW-REVIEW-KIT.C4: calls are counted by distinct message identifier

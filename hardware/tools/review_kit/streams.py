@@ -28,7 +28,7 @@ reduction.
   "text": ...}` blocks and `shape.tools` lists tool names. The start report
   carries no system prompt, so the system prompt a session used is read from
   this record, which the reduction takes from the transcript found by the
-  session's identifier (`find_transcript`) and writes next to the stream.
+  session's identifier (`transcripts.find_transcript`) and writes next to the stream.
 
 An image block is `{"type": "image", "source": {"type": "base64",
 "media_type": ..., "bytes": N}}`: the bytes are replaced by their decoded size.
@@ -195,24 +195,6 @@ def read_stream(text: str) -> Stream:
 def read_stream_file(path: str) -> Stream:
     with open(path, encoding="utf-8") as handle:
         return read_stream(handle.read())
-
-
-def find_transcript(session_id: str, projects: str) -> Optional[str]:
-    """The transcript Claude Code wrote for the session, which lies in one folder per working directory under `projects`
-    and is named by the session's identifier; None when no folder holds it."""
-    if not re.fullmatch(r"[0-9A-Za-z-]+", session_id or ""):
-        return None
-    found = sorted(glob.glob(os.path.join(glob.escape(projects), "*", f"{session_id}.jsonl")))
-    return found[0] if found else None
-
-
-def shape_record(path: str) -> Optional[Dict[str, Any]]:
-    """The first `api-request-shape` record a transcript holds, which gives the system prompt of the session's first call."""
-    with open(path, encoding="utf-8") as handle:
-        for _, event in records(handle.read()):
-            if isinstance(event, dict) and event.get("type") == "api-request-shape":
-                return event
-    return None
 
 
 def names_in_message(blocks: Iterable[Dict[str, Any]]) -> List[str]:

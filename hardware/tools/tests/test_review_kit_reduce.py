@@ -25,6 +25,7 @@ sys.path.insert(0, TOOLS)
 from review_kit import reduce, streams  # noqa: E402
 
 FIXTURES = os.path.join(HERE, "fixtures", "review_streams")
+OTHER_FIXTURES = [os.path.join(HERE, "fixtures", name) for name in ("review_answers", "review_baselines")]
 #: A path of the machines recordings are made on, spelt as the recordings spell them.
 MACHINE = re.compile(r"/Users/|/private/tmp|/home/[a-z]|/var/folders|claude-501|-Users-|-private-tmp-")
 PNG = bytes(range(256)) * 20
@@ -330,6 +331,20 @@ class Fixtures(unittest.TestCase):
             with open(path, encoding="utf-8") as handle:
                 text = handle.read()
             name = os.path.relpath(path, FIXTURES)
+            self.assertIsNone(MACHINE.search(text), name)
+            self.assertEqual(reduce.leftovers(text), [], name)
+            self.assertNotIn("base64,", text, name)
+            for number, line in enumerate(text.splitlines(), 1):
+                self.assertNotRegex(line, r'"data": ?"[A-Za-z0-9+/=]{40,}', f"{name} line {number}")
+
+    def test_the_answer_and_baseline_fixtures_hold_no_path_of_the_recording_machine_or_an_image_byte(self):
+        # SOL-HW-REVIEW-KIT.C4: the fixtures are reductions of recorded sessions, with image bytes replaced by their size and absolute paths of the recording machine scrubbed
+        found = [os.path.join(directory, name) for root in OTHER_FIXTURES for directory, _, names in os.walk(root) for name in names]
+        self.assertGreaterEqual(len(found), 2)
+        for path in found:
+            with open(path, encoding="utf-8") as handle:
+                text = handle.read()
+            name = os.path.relpath(path, HERE)
             self.assertIsNone(MACHINE.search(text), name)
             self.assertEqual(reduce.leftovers(text), [], name)
             self.assertNotIn("base64,", text, name)

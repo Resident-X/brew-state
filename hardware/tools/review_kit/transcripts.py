@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import os
 import re
-from typing import List, Optional
+from typing import Any, Dict, Iterator, List, Optional
 
 SHAPE_RECORD = "api-request-shape"
 TRANSCRIPT_SUFFIX = ".jsonl"
@@ -34,14 +34,14 @@ def folder_name(cwd: str) -> str:
     return re.sub(r"[^A-Za-z0-9]", "-", os.path.realpath(cwd))
 
 
-def find_transcript(session_id: str, cwd: str, root: Optional[str] = None) -> str:
-    """The transcript file of the session, in the folder for `cwd` or else in any folder under the projects root."""
+def find_transcript(session_id: str, cwd: Optional[str] = None, root: Optional[str] = None) -> str:
+    """The transcript file of the session, in the folder for `cwd` when given or else in any folder under the projects root."""
     if not re.fullmatch(r"[A-Za-z0-9_-]+", session_id or ""):
         raise TranscriptMissing(f"the session identifier {session_id!r} is not one that names a transcript file")
     root = root or projects_root()
     name = session_id + TRANSCRIPT_SUFFIX
-    direct = os.path.join(root, folder_name(cwd), name)
-    if os.path.isfile(direct):
+    direct = os.path.join(root, folder_name(cwd), name) if cwd else None
+    if direct and os.path.isfile(direct):
         return direct
     try:
         folders = sorted(os.listdir(root))
@@ -52,14 +52,12 @@ def find_transcript(session_id: str, cwd: str, root: Optional[str] = None) -> st
         found = os.path.join(root, folder, name)
         if os.path.isfile(found):
             return found
-    raise TranscriptMissing(f"no transcript {name} under {root}; the session ran in {cwd}, so Claude Code should have "
-                            f"written {direct}")
+    where = f"; the session ran in {cwd}, so Claude Code should have written {direct}" if direct else ""
+    raise TranscriptMissing(f"no transcript {name} under {root}{where}")
 
 
-def system_prompts(path: str, session_id: str) -> List[str]:
-    """The system prompt of each distinct request shape the transcript records for the session, in order: the shape's
-    system text blocks joined by a line break."""
-    found: List[str] = []
+def shape_records(path: str, session_id: Optional[str] = None) -> Iterator[Dict[str, Any]]:
+    """The `api-request-shape` records of the transcript, in order; only the session's own when `session_id` is given."""
     try:
         with open(path, encoding="utf-8") as handle:
             lines = handle.read().split("\n")
@@ -72,8 +70,23 @@ def system_prompts(path: str, session_id: str) -> List[str]:
             record = json.loads(line)
         except (ValueError, RecursionError):
             continue
-        if not isinstance(record, dict) or record.get("type") != SHAPE_RECORD or record.get("sessionId") != session_id:
+        if not isinstance(record, dict) or record.get("type") != SHAPE_RECORD:
             continue
+        if session_id is not None and record.get("sessionId") != session_id:
+            continue
+        yield record
+
+
+def shape_record(path: str, session_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    """The first request shape record the transcript holds, which gives the system prompt of the session's first call."""
+    return next(shape_records(path, session_id), None)
+
+
+def system_prompts(path: str, session_id: str) -> List[str]:
+    """The system prompt of each distinct request shape the transcript records for the session, in order: the shape's
+    system text blocks joined by a line break."""
+    found: List[str] = []
+    for record in shape_records(path, session_id):
         shape = record.get("shape")
         blocks = shape.get("system") if isinstance(shape, dict) else None
         if not isinstance(blocks, list):

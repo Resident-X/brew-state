@@ -43,9 +43,10 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 if __package__ in (None, ""):
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from review_kit import streams  # type: ignore[no-redef]
+    from review_kit import streams, transcripts as transcript_reader  # type: ignore[no-redef]
 else:
     from . import streams
+    from . import transcripts as transcript_reader
 
 DEFAULT_LIMIT = 1500
 DEFAULT_RESULT_LIMIT = 400
@@ -253,11 +254,12 @@ def reduce_file(source: str, target: str, roots: Sequence[str] = (), after: Opti
     if transcripts is not None:
         stream = streams.read_stream(text)
         if stream.system is None:
-            found = streams.find_transcript(stream.session_id, transcripts)
-            if found is None:
+            try:
+                found = transcript_reader.find_transcript(stream.session_id, None, transcripts)
+                shape = transcript_reader.shape_record(found)
+            except transcript_reader.TranscriptMissing:
                 raise Refusal(f"no transcript named {stream.session_id}.jsonl lies under {transcripts}, so the system "
                               "prompt of the session cannot be taken; name the folder Claude Code keeps its transcripts in")
-            shape = streams.shape_record(found)
     reduced, counts = reduce_text(text, roots, limit, result_limit, skip, shape)
     left = leftovers(reduced)
     if left:
