@@ -6,7 +6,7 @@ version: 1
 measurement_type: binary
 verification: test
 text: |-
-  After the change, the layout caller is a declaration with checks and a rendered record that runs on the review kit, the proof command runs the kit's proof harness and takes the five recorded single-reviewer runs as baselines, and a search of the repository's tools, tests, task runner and documents finds no reference to the earlier driver's module, its setup rule, its restart on narration, its chunked document reading, its task entry or the tap shim; the earlier driver's and caller seam's tests and stub are gone, and the hardware notes' sections on them are replaced by the kit's. Out of scope: the schematic, production-files and critical-routing callers, which are changed by their own solutions.
+  After the change, the layout caller is a declaration with checks and a rendered record that runs on the review kit, the proof command runs the kit's proof harness and takes the five recorded single-reviewer runs as baselines, and a search of the repository's tools, tests, task runner and documents finds, outside the review kit's recorded-stream fixtures and the kit's tests that assert the retired parts are gone, no reference to the earlier driver's module, its setup rule, its restart on narration, its chunked document reading, its task entry or the tap shim; the earlier driver's and caller seam's tests and stub are gone, and the hardware notes' sections on them are replaced by the kit's. Out of scope: the schematic, production-files and critical-routing callers, which are changed by their own solutions.
 links:
   - target: SOL-HW-REVIEW-FAN-OUT-LAYOUT
     type: criterion-of
