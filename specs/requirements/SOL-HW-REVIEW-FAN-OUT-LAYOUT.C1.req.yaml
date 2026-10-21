@@ -2,11 +2,11 @@ id: SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1
 type: criterion
 title: The layout caller takes its units from the review folder's method and the board's plan
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |-
-  From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; a folder whose method has no catalogue areas, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+  From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; each unit's prompt holds the section of the catalogue for its own area and the setup session's documents hold no area section, the same for every unit; a folder whose method has no catalogue areas or lacks a section the setup needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
 links:
   - target: SOL-HW-REVIEW-FAN-OUT-LAYOUT
     type: criterion-of
