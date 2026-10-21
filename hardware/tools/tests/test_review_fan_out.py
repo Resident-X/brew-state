@@ -888,6 +888,39 @@ class Failures(Fixture):
         self.assertTrue(os.path.isfile(os.path.join(self.out, "units", "bravo.json")))
         self.assertFalse(os.path.exists(os.path.join(self.out, review_fan_out.LOCK)))
 
+    def test_a_parseable_answer_with_leading_prose_or_a_fence_is_accepted_and_the_unit_is_not_run_again(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C3: A unit whose reviewer exits with an error or returns nothing is run once more; a call refused for a rate limit is retried after a wait that grows, a bounded number of times; a unit that still fails fails the run, naming the unit and what the reviewer returned, and the other units' results are kept in the output. Out of scope: what a caller counts as a malformed result, which the caller defines.
+        real = json.dumps({"tables": {"Verdicts": verdicts(("A-1", "pass", "x"))}})
+        for answer in ("I checked every item. Here is the result:\n" + real, "Result:\n```json\n" + real + "\n```\n",
+                       "Note {not json} and {\"also\": } first.\n" + real + "\n", real + "\n```"):
+            with self.subTest(answer=answer):
+                shutil.rmtree(self.out, ignore_errors=True)
+                for call in os.listdir(self.log):
+                    os.remove(os.path.join(self.log, call))
+                self.scenario({"units": {"bravo": [{"text": answer}, {"text": "not json"}]}})
+                status, text, _ = self.run_command(as_json=True)
+                self.assertEqual(status, 0, text)
+                bravo = [unit for unit in json.loads(text)["units"] if unit["unit"] == "bravo"][0]
+                self.assertEqual(bravo["attempts"], 1)
+                self.assertEqual(len([call for call in self.forks() if call["unit"] == "bravo"]), 1, "not retried")
+
+    def test_an_answer_with_two_objects_trailing_prose_or_no_object_is_malformed_and_a_pure_json_answer_is_unchanged(self):
+        # SOL-HW-REVIEW-FAN-OUT-DRIVER.C3: A unit whose reviewer exits with an error or returns nothing is run once more; a call refused for a rate limit is retried after a wait that grows, a bounded number of times; a unit that still fails fails the run, naming the unit and what the reviewer returned, and the other units' results are kept in the output. Out of scope: what a caller counts as a malformed result, which the caller defines.
+        tables = {"Verdicts": verdicts(("A-1", "pass", "x"))}
+        real = json.dumps({"tables": tables})
+        self.assertEqual(review_fan_out.parse_result(real), tables)
+        self.assertEqual(review_fan_out.parse_result("  " + real + "\n"), tables)
+        self.assertEqual(review_fan_out.parse_result("```json\n" + real + "\n```"), tables)
+        self.assertEqual(review_fan_out.parse_result("Here {braces} then:\n" + real), tables)
+        for answer, why in ((real + "\n" + real, "more than one"), ("First " + real + " then " + real.replace("A-1", "A-2"), "more than one"),
+                            (real + "\nThat is all.", "text after"), ("Done.\n" + real + " done", "text after"),
+                            ("no braces at all", "not a JSON object"), ("{broken", "not a JSON object"),
+                            ("Result: {\"verdicts\": []}", "no `tables`"), ("[1, 2]", "no `tables`"), ("", "not a JSON object")):
+            with self.subTest(answer=answer):
+                with self.assertRaises(review_fan_out.Malformed) as caught:
+                    review_fan_out.parse_result(answer)
+                self.assertIn(why, str(caught.exception))
+
     def test_a_reviewer_s_words_about_a_rate_limit_or_a_login_are_not_the_command_line_saying_so(self):
         # SOL-HW-REVIEW-FAN-OUT-DRIVER.C3: A unit whose reviewer exits with an error or returns nothing is run once more; a call refused for a rate limit is retried after a wait that grows, a bounded number of times; a unit that still fails fails the run, naming the unit and what the reviewer returned, and the other units' results are kept in the output. Out of scope: what a caller counts as a malformed result, which the caller defines.
         prose = "R429 is overloaded and the user is not logged in"

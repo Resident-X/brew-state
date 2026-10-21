@@ -30,6 +30,15 @@ bound on reviewers at once from: the most reviewers that ran together and the
 calls refused for a rate limit. It decides nothing: whether a seed not reported
 is a gap, and where it is closed, is the review of the report.
 
+    layout_review_proof.py --fanned-only <an earlier run's work folder> [--model M] [--bound N] [--rate-limit-wait S] [--json]
+
+With --fanned-only the single reviewer is not started. The command reuses the single result the earlier run kept (proof-report.json,
+single/answer.md and seeds.json in that folder) and runs the fanned-out form alone, on the earlier run's review folder and so on the
+same seeded copy, into the first unused folder fanned-2, fanned-3 and so on inside it. If that left units failed, only those are run
+once more into the same folder with the fan-out command's rerun. It writes proof-report-<n>.json beside the earlier report and
+prints the same lines, with the reuse stated and the wall time and cost of the run and of the rerun apart and added. It refuses,
+starting no session, when the folder lacks a piece it reuses or the earlier single result recorded a problem.
+
 The agent command line is the program named by REVIEW_FAN_OUT_AGENT (claude when
 it is unset), logged in. A run costs money: it starts one session for the single
 reviewer and a setup session and a reviewer for each unit.
@@ -214,14 +223,18 @@ def run_single(folder: str, work: str, model: Optional[str], wait: float) -> Dic
             "rate_limited_calls": sum(1 for call in calls if call["rate_limited"]), "calls": len(calls)}
 
 
-def run_fanned(folder: str, work: str, model: Optional[str], bound: int, wait: float) -> Dict[str, Any]:
+def run_fanned(folder: str, work: str, model: Optional[str], bound: int, wait: float, name: str = FANNED,
+               rerun: Sequence[str] = ()) -> Dict[str, Any]:
     """The fan-out command on the folder with the layout caller, every reviewer running together; its record, each
-    unit's and the setup session's figures with the documents each retrieved, and what the tap saw."""
-    output = os.path.join(work, FANNED)
+    unit's and the setup session's figures with the documents each retrieved, and what the tap saw. Named units are run
+    again into the output folder `name` already holds, and the tap's log of that folder then holds both runs' calls."""
+    output = os.path.join(work, name)
     argv = ["--caller", "layout", "--review", folder, "--out", output, "--bound", str(bound), "--rate-limit-wait", str(wait),
             "--json"] + (["--model", model] if model else [])
+    for unit in rerun:
+        argv += ["--rerun", unit]
     out, err = io.StringIO(), io.StringIO()
-    with tapped(work, FANNED) as log:
+    with tapped(work, name) as log:
         began = time.time()
         status = review_fan_out.main(argv, out=out, err=err)
         wall = round(time.time() - began, 3)
@@ -325,6 +338,101 @@ def prove(folder: str, work: str, seeds: Sequence[Dict[str, Any]], model: Option
                               "rate_limited_calls": single["rate_limited_calls"] + fanned["rate_limited_calls"]}}
 
 
+# --- The fanned-out form alone, against a single result already kept --------------------------
+
+
+FANNED_ONLY_FILES = (REPORT, os.path.join(SINGLE, "answer.md"), SEEDS)
+
+
+def first_unused(work: str) -> int:
+    """The number of the first fanned-out output folder, from 2, the work folder does not hold."""
+    number = 2
+    while os.path.lexists(os.path.join(work, f"{FANNED}-{number}")) or os.path.lexists(os.path.join(work, f"proof-report-{number}.json")):
+        number += 1
+    return number
+
+
+def kept_proof(work: str) -> Dict[str, Any]:
+    """The earlier run's report and what the fanned-out form alone needs of it, or a refusal naming each piece missing."""
+    if not os.path.isdir(work):
+        raise Refused([f"the work folder {work} is not a folder; give the work folder of an earlier run"])
+    missing = [name for name in FANNED_ONLY_FILES if not os.path.isfile(os.path.join(work, name))]
+    causes = [f"the work folder {work} holds no {name}, which the fanned-out form alone reuses" for name in missing]
+    if causes:
+        raise Refused(causes)
+    try:
+        with open(os.path.join(work, REPORT), encoding="utf-8") as handle:
+            earlier = json.load(handle)
+        with open(os.path.join(work, SEEDS), encoding="utf-8") as handle:
+            seeds = json.load(handle)["seeds"]
+        folder, single = earlier["folder"], earlier["single"]
+        problems = single["problems"]
+    except (ValueError, KeyError, TypeError, OSError) as error:
+        raise Refused([f"the work folder {work} holds a {REPORT} or {SEEDS} that cannot be read: {type(error).__name__}: {error}"])
+    if not isinstance(folder, str) or not os.path.isdir(folder):
+        raise Refused([f"the review folder {folder} that the earlier run's {REPORT} names is not there"])
+    if problems:
+        raise Refused([f"the earlier run's single result recorded a problem, so it is not a result to compare with: "
+                       f"{'; '.join(str(why) for why in problems)}"])
+    with open(os.path.join(work, SINGLE, "answer.md"), encoding="utf-8") as handle:
+        answer = parsed_round(handle.read())
+    if not answer["verdicts"]:
+        raise Refused([f"the single reviewer's kept answer holds no Verdicts table that can be read, so no seed can be matched to it"])
+    return {"earlier": earlier, "seeds": seeds, "folder": folder, "single_round": answer}
+
+
+def prove_fanned_only(work: str, kept: Dict[str, Any], model: Optional[str], bound: Optional[int], wait: float) -> Dict[str, Any]:
+    """The fanned-out form alone on the kept review folder, into a new output folder; the units it left failed run once more,
+    only those, into the same folder; compared with the single result the earlier run kept."""
+    folder, earlier = kept["folder"], kept["earlier"]
+    number = first_unused(work)
+    name = f"{FANNED}-{number}"
+    units = review_caller_layout.units(folder)
+    first = run_fanned(folder, work, model, bound or len(units), wait, name)
+    failed = [unit["unit"] for unit in first["report"]["units"] if unit["status"] == "failed"]
+    fanned, again = first, None
+    if failed:
+        again = run_fanned(folder, work, model, bound or len(units), wait, name, rerun=failed)
+        fanned = again
+    totals_first = first["report"].get("totals", review_fan_out.empty_figures())
+    totals = fanned["report"].get("totals", review_fan_out.empty_figures())
+    wall = round(first["wall_s"] + (again["wall_s"] if again else 0.0), 3)
+    # The rerun's totals hold every session the folder has cost, the first run's included, so the rerun phase is the difference.
+    phases = {"output": os.path.join(work, name), "run": {"wall_s": first["wall_s"], "cost_usd": totals_first["cost_usd"],
+                                                           "status": first["status"]},
+              "rerun": None if again is None else {"units": failed, "wall_s": again["wall_s"], "status": again["status"],
+                                                  "cost_usd": round(totals["cost_usd"] - totals_first["cost_usd"], 6)},
+              "wall_s": wall, "cost_usd": totals["cost_usd"]}
+    final = {**fanned, "wall_s": wall}
+    found = fanned_round(fanned["report"]) if fanned["status"] == 0 else {"verdicts": {}, "raised_by": []}
+    single = earlier["single"]
+    both = compare(kept["seeds"], kept["single_round"], found)
+    return {"number": number, "units": units, "single": single, "fanned": final, "fanned_phases": phases,
+            "reused_single": {"from": os.path.join(work, REPORT), "wall_s": single["wall_s"], "cost_usd": single["cost_usd"],
+                              "seeded_commit": earlier["seeded_commit"], "tool_commit": earlier["tool_commit"],
+                              "same_seeded_copy": True},
+            "comparison": {**both, "time": {"single_s": single["wall_s"], "fanned_s": wall, "fanned_no_more": wall <= single["wall_s"]},
+                           "cost": {"single_usd": single["cost_usd"], "fanned_usd": totals["cost_usd"],
+                                    "fanned_no_more": totals["cost_usd"] <= single["cost_usd"]}},
+            "for_the_bound": {"bound_now": review_caller_layout.BOUND, "bound_run_with": final["bound"],
+                              "most_reviewers_together": final["peak_reviewers_together"],
+                              "rate_limited_calls": single["rate_limited_calls"] + final["rate_limited_calls"]}}
+
+
+def reuse_lines(report: Dict[str, Any]) -> List[str]:
+    clean = board_check.clean
+    reused, phases = report["reused_single"], report["fanned_phases"]
+    found = [f"REUSED SINGLE | the single result is reused from {clean(reused['from'])} (wall {reused['wall_s']} s, cost "
+             f"${reused['cost_usd']}, tool commit {reused['tool_commit']}); it ran on the same seeded copy, commit {reused['seeded_commit']}",
+             f"PHASES | {clean(phases['output'])} | run: wall {phases['run']['wall_s']} s, cost ${phases['run']['cost_usd']}"]
+    if phases["rerun"]:
+        found[-1] += (f" | rerun of {', '.join(phases['rerun']['units'])}: wall {phases['rerun']['wall_s']} s, cost "
+                      f"${phases['rerun']['cost_usd']} | round: wall {phases['wall_s']} s, cost ${phases['cost_usd']}")
+    else:
+        found[-1] += f" | no unit failed, so no rerun | round: wall {phases['wall_s']} s, cost ${phases['cost_usd']}"
+    return found
+
+
 # --- The report ---------------------------------------------------------------------------------
 
 
@@ -338,8 +446,9 @@ def lines_of(report: Dict[str, Any]) -> List[str]:
     figure = review_fan_out.figure_line
     single, fanned = report["single"], report["fanned"]
     inner = fanned["report"]
-    found = [f"PROOF | {clean(report['work'])} | tool commit {report['tool_commit']} | seeded copy commit {report['seeded_commit']}",
-             f"SINGLE | model {clean(single['model'])} | wall {single['wall_s']} s | {figure(single)} | retrievals "
+    found = [f"PROOF | {clean(report['work'])} | tool commit {report['tool_commit']} | seeded copy commit {report['seeded_commit']}"]
+    found += reuse_lines(report) if "reused_single" in report else []
+    found += [f"SINGLE | model {clean(single['model'])} | wall {single['wall_s']} s | {figure(single)} | retrievals "
              f"{single['retrieved']} failed {single['failed']} | refused for a rate limit {single['rate_limited_calls']}"]
     found += [f"SINGLE PROBLEM | {clean(why)}" for why in single["problems"]]
     found += [f"SETUP | {entry['id']} | {entry['model']} | {figure(entry)} | retrievals {entry['retrieved']} failed {entry['failed']}"
@@ -381,10 +490,38 @@ def refusals(work: str) -> List[str]:
     return found
 
 
+def fanned_only(work: str, args, result: Dict[str, Any], finish) -> int:
+    """The fanned-out form alone against the kept single result; the report is proof-report-<n>.json in the work folder."""
+    try:
+        kept = kept_proof(work)
+        proof = prove_fanned_only(work, kept, args.model, args.bound, args.rate_limit_wait)
+    except Refused as error:
+        result["refusals"] = error.causes
+        return finish(1)
+    except board_check.CannotRun as error:
+        result.update(result="CANNOT RUN", refusals=[], detail=str(error))
+        return finish(2)
+    earlier = kept["earlier"]
+    proof.update({"work": work, "tool_commit": tool_commit(), "seeded_commit": earlier["seeded_commit"], "folder": kept["folder"]})
+    path = os.path.join(work, f"proof-report-{proof['number']}.json")
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump(proof, handle, indent=1)
+        handle.write("\n")
+    ran = proof["fanned"]["status"] == 0
+    result.update(proof)
+    result.update(result="WRITTEN" if ran else "FAILED", refusals=[], lines=lines_of(proof),
+                  detail=path if ran else f"the fanned-out form did not run clean; the report is {path}")
+    return finish(0 if ran else 1)
+
+
 def main(argv: Optional[List[str]] = None, out=sys.stdout, err=sys.stderr,
          seed_runner=run_seed) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("--work", required=True, help="a new folder outside the repository the run keeps everything in")
+    parser.add_argument("--work", default=None, help="a new folder outside the repository the run keeps everything in")
+    parser.add_argument("--fanned-only", default=None, metavar="WORK",
+                        help="an earlier run's work folder: run only the fanned-out form on its review folder, into a new "
+                        "folder inside it, run the units it left failed once more, and compare it with the single result "
+                        "the earlier run kept")
     parser.add_argument("--kicad-cli", default="kicad-cli", help="KiCad's command-line tool (default: kicad-cli on the search path)")
     parser.add_argument("--resvg", default="resvg", help="the resvg program the views are drawn with (default: resvg on the search path)")
     parser.add_argument("--model", default=None, help="the model both forms use (default: the agent command line's own)")
@@ -393,8 +530,11 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout, err=sys.stderr,
                         help="seconds before the first retry of a call refused for a rate limit; it doubles each time")
     parser.add_argument("--json", action="store_true", help="print the report as one JSON document")
     args = parser.parse_args(argv)
-    work = os.path.abspath(args.work)
-    result: Dict[str, Any] = {"result": "REFUSED", "refusals": refusals(work), "detail": "nothing was run"}
+    if (args.work is None) == (args.fanned_only is None):
+        parser.error("give --work for a new run, or --fanned-only with an earlier run's work folder, and not both")
+    work = os.path.abspath(args.work or args.fanned_only)
+    result: Dict[str, Any] = {"result": "REFUSED", "refusals": [] if args.fanned_only else refusals(work),
+                              "detail": "nothing was run"}
 
     def finish(status: int) -> int:
         if args.json:
@@ -412,6 +552,8 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout, err=sys.stderr,
         result["refusals"].append(f"the bound {args.bound} is below one; give one or more reviewers at once")
     if result["refusals"]:
         return finish(1)
+    if args.fanned_only:
+        return fanned_only(work, args, result, finish)
     try:
         os.makedirs(work, exist_ok=True)
         seeded = seed_runner(work, args.kicad_cli, args.resvg)

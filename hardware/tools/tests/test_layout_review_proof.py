@@ -468,3 +468,116 @@ class TheProof(Stubbed):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+    def earlier_run(self):
+        self.host_scenario()
+        status, text, _ = self.go()
+        self.assertEqual(status, 0, text)
+        with open(os.path.join(self.work, proof.REPORT), encoding="utf-8") as handle:
+            return json.load(handle)
+
+    def only(self, *extra):
+        out, err = io.StringIO(), io.StringIO()
+        status = proof.main(["--fanned-only", self.work, "--rate-limit-wait", "0", *extra], out=out, err=err,
+                            seed_runner=lambda *given: self.fail("the seeding command must not run"))
+        return status, out.getvalue(), err.getvalue()
+
+    def fresh_log(self):
+        for name in os.listdir(self.log):
+            os.remove(os.path.join(self.log, name))
+
+    def single_calls(self):
+        calls = [json.load(open(os.path.join(self.log, name), encoding="utf-8")) for name in os.listdir(self.log) if name.endswith(".json")]
+        return [call for call in calls if call["unit"] is None and "SETUP-READ-COMPLETE" not in call["prompt"]]
+
+    def test_the_fanned_out_form_alone_reuses_the_kept_single_result_reruns_only_the_failed_unit_and_merges_one_comparison(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: Run the single-reviewer form and the fanned-out form on one seeded copy of the layout review proof design from the review folder the folder command assembles with the design from the seeded copy's repository and commit kept by the seeding command's opt-in flag, both forms with the same four tools, in sessions with no record of the seeds, the fanned-out form at the full unit count with the reviewers running together. The fanned-out form reports every seeded defect as a finding against the catalogue item that covers it, and every seed the single reviewer reports; the findings that match no seed and the verdicts item by item are compared and a difference explained. Record for the setup and each unit and for each run the wall time, the tokens read, written and generated, the cost, the document retrievals and any that failed, and any call refused for a rate limit, and set the layout caller's bound on reviewers at once from that. The fanned-out run takes no more time and costs no more than the single-reviewer run. A seed not reported is closed where the gap lies, a catalogue amendment, a correction to the review step or to what it gives a reviewer, and the run repeated in a new session. The evidence names the exact model and the commit. Out of scope: the schematic, critical-routing and production-files proofs.
+        first = self.earlier_run()
+        with open(self.scenario_path, encoding="utf-8") as handle:
+            scenario = json.load(handle)
+        scenario["units"] = {"area-GROUND": [{"exit": 1}, {"exit": 1}, {}]}
+        self.scenario(scenario)
+        self.fresh_log()
+        status, text, _ = self.only("--bound", "3")
+        lines = text.splitlines()
+        self.assertEqual(status, 0, text)
+        self.assertEqual(self.single_calls(), [], "the single reviewer is not started")
+        self.assertTrue(os.path.isfile(os.path.join(self.work, "proof-report-2.json")))
+        self.assertTrue(os.path.isdir(os.path.join(self.work, "fanned-2")))
+        self.assertTrue(os.path.isdir(os.path.join(self.work, "fanned")), "the earlier run's folder is left as it was")
+        reused = next(line for line in lines if line.startswith("REUSED SINGLE |"))
+        self.assertIn(f"reused from {os.path.join(self.work, proof.REPORT)}", reused)
+        self.assertIn(f"commit {first['seeded_commit']}", reused)
+        self.assertIn("same seeded copy", reused)
+        phases = next(line for line in lines if line.startswith("PHASES |"))
+        self.assertIn("rerun of area-GROUND", phases)
+        with open(os.path.join(self.work, "proof-report-2.json"), encoding="utf-8") as handle:
+            written = json.load(handle)
+        self.assertEqual(written["single"], first["single"], "the single result is the earlier run's")
+        parts = written["fanned_phases"]
+        self.assertEqual(parts["rerun"]["units"], ["area-GROUND"])
+        self.assertAlmostEqual(parts["cost_usd"], parts["run"]["cost_usd"] + parts["rerun"]["cost_usd"], places=6)
+        self.assertGreater(parts["rerun"]["cost_usd"], 0)
+        self.assertAlmostEqual(parts["wall_s"], parts["run"]["wall_s"] + parts["rerun"]["wall_s"], places=2)
+        self.assertEqual(written["fanned"]["status"], 0)
+        ground = [unit for unit in written["fanned"]["report"]["units"] if unit["unit"] == "area-GROUND"][0]
+        self.assertEqual(ground["status"], "kept", ground)
+        self.assertEqual(len(written["fanned"]["report"]["units"]), self.unit_count)
+        self.assertEqual({row["id"]: (row["single"], row["fanned"]) for row in written["comparison"]["seeds"]},
+                         {"S1": (True, False), "S2": (False, False), "S3": (False, True)})
+        self.assertEqual(written["comparison"]["cost"]["fanned_usd"], parts["cost_usd"])
+        self.assertTrue(lines[-1].startswith("RESULT | WRITTEN | "), lines[-1])
+        self.assertEqual(sum(line.startswith("UNIT |") for line in lines), self.unit_count)
+        self.fresh_log()
+        status, text, _ = self.only("--json")
+        self.assertEqual(status, 0, text)
+        self.assertTrue(os.path.isdir(os.path.join(self.work, "fanned-3")), "the next unused folder")
+        self.assertIsNone(json.loads(text)["fanned_phases"]["rerun"], "no unit failed, so no rerun")
+        self.assertEqual(self.single_calls(), [])
+
+    def test_the_fanned_out_form_alone_refuses_a_work_folder_lacking_a_piece_or_with_a_single_problem_and_starts_no_session(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: Run the single-reviewer form and the fanned-out form on one seeded copy of the layout review proof design from the review folder the folder command assembles with the design from the seeded copy's repository and commit kept by the seeding command's opt-in flag, both forms with the same four tools, in sessions with no record of the seeds, the fanned-out form at the full unit count with the reviewers running together. The fanned-out form reports every seeded defect as a finding against the catalogue item that covers it, and every seed the single reviewer reports; the findings that match no seed and the verdicts item by item are compared and a difference explained. Record for the setup and each unit and for each run the wall time, the tokens read, written and generated, the cost, the document retrievals and any that failed, and any call refused for a rate limit, and set the layout caller's bound on reviewers at once from that. The fanned-out run takes no more time and costs no more than the single-reviewer run. A seed not reported is closed where the gap lies, a catalogue amendment, a correction to the review step or to what it gives a reviewer, and the run repeated in a new session. The evidence names the exact model and the commit. Out of scope: the schematic, critical-routing and production-files proofs.
+        self.earlier_run()
+        self.fresh_log()
+        pieces = {"the report": proof.REPORT, "the single answer": os.path.join("single", "answer.md"), "the seeds": proof.SEEDS}
+        for label, name in pieces.items():
+            with self.subTest(missing=label):
+                path = os.path.join(self.work, name)
+                os.rename(path, path + ".away")
+                try:
+                    status, text, _ = self.only()
+                finally:
+                    os.rename(path + ".away", path)
+                self.assertEqual(status, 1, text)
+                self.assertIn(f"REFUSED | the work folder {self.work} holds no {name}", text)
+                self.assertTrue(text.splitlines()[-1].startswith("RESULT | REFUSED"))
+        with open(os.path.join(self.work, proof.REPORT), encoding="utf-8") as handle:
+            kept = json.load(handle)
+        review = kept["folder"]
+        os.rename(review, review + ".away")
+        status, text, _ = self.only()
+        os.rename(review + ".away", review)
+        self.assertEqual(status, 1, text)
+        self.assertIn("the review folder", text)
+        kept["single"]["problems"] = ["the single reviewer started with tools ['Bash']"]
+        with open(os.path.join(self.work, proof.REPORT), "w", encoding="utf-8") as handle:
+            json.dump(kept, handle)
+        status, text, _ = self.only("--json")
+        self.assertEqual(status, 1, text)
+        self.assertIn("recorded a problem", " ".join(json.loads(text)["refusals"]))
+        status, text, _ = self.only()
+        self.assertEqual(status, 1)
+        self.assertEqual(os.listdir(self.log), [], "no session was started")
+        self.assertFalse(os.path.exists(os.path.join(self.work, "fanned-2")))
+        status, _, _ = self.only("--bound", "0")
+        self.assertEqual(status, 1)
+        with mock.patch.object(sys, "stderr", io.StringIO()):
+            with self.assertRaises(SystemExit):
+                proof.main(["--work", self.work, "--fanned-only", self.work], out=io.StringIO(), err=io.StringIO())
+            with self.assertRaises(SystemExit):
+                proof.main([], out=io.StringIO(), err=io.StringIO())
+        shown = io.StringIO()
+        status = proof.main(["--fanned-only", os.path.join(self.root, "nowhere")], out=shown, err=io.StringIO())
+        self.assertEqual(status, 1)
+        self.assertIn("is not a folder", shown.getvalue())

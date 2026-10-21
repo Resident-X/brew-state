@@ -667,6 +667,45 @@ class TheSetupDocuments(Folder):
             for absent in ("### Floorplan", "FLOOR-1", "GROUND-1", "CLOCK-1", "other areas of the catalogue"):
                 self.assertNotIn(absent, text.replace("FLOOR-1, FLOOR-2", ""))
 
+    def test_the_setup_wording_addresses_only_the_setup_session_and_tells_the_continuing_sessions_nothing_against_opening_views(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; each unit's prompt holds the section of the catalogue for its own area and the setup session's documents hold no area section, the same for every unit; a folder whose method has no catalogue areas or lacks a section the setup needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        self.assertEqual(review_caller_layout.SETUP_PROMPT, (
+            "The documents and records of this review follow, for the sessions that continue from this one. In this session judge "
+            "nothing and open nothing beyond them. Take the method's layout review sections and the plan in full; the catalogue "
+            "section for your area comes with your unit."))
+        self.assertNotIn("all you need", review_caller_layout.SETUP_PROMPT)
+        self.assertNotIn("schematic", review_caller_layout.SETUP_PROMPT)
+        self.assertNotIn("layout.", review_caller_layout.SETUP_PROMPT)
+
+    def test_every_unit_with_items_is_told_once_to_open_the_views_it_rests_on_and_to_measure_distances_from_the_layout_file(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; each unit's prompt holds the section of the catalogue for its own area and the setup session's documents hold no area section, the same for every unit; a folder whose method has no catalogue areas or lacks a section the setup needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        root = tempfile.mkdtemp(prefix="layout-caller-discipline-")
+        self.addCleanup(shutil.rmtree, root, True)
+        folder = fx.write_review_folder(root, own=fx.OWN_ROWS)
+        units = review_caller_layout.units(folder)
+        self.assertIn("board-items", units)
+        self.assertIn("plan-and-free-pass", units)
+        for unit in units:
+            text = review_caller_layout.unit_prompt(unit, folder)
+            if unit == review_caller_layout.PLAN_UNIT:
+                self.assertNotIn("Before you judge an item", text)
+                continue
+            self.assertEqual(text.count(review_caller_layout.DISCIPLINE), 1, unit)
+            self.assertEqual(text.count("Before you judge an item, open in this session every view its Judged on names"), 1)
+            self.assertIn("state the distance in mm in Why", text)
+            self.assertIn("Rests on may cite only views you opened", text)
+            if unit.startswith("area-"):
+                self.assertLess(text.index(review_caller_layout.DISCIPLINE), text.index("The catalogue section for your area"))
+            self.assertGreater(text.index(review_caller_layout.DISCIPLINE), text.index("Judge each of these items"))
+
+    def test_a_narrow_round_unit_is_told_the_same_and_names_only_its_listed_items(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; each unit's prompt holds the section of the catalogue for its own area and the setup session's documents hold no area section, the same for every unit; a folder whose method has no catalogue areas or lacks a section the setup needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
+        fx.set_round(self.folder, kind="narrow", items=[{"item": "CLOCK-1", "reason": "moved"}], regions=["r"], others="rest")
+        text = review_caller_layout.unit_prompt("area-CLOCK", self.folder)
+        self.assertEqual(text.count(review_caller_layout.DISCIPLINE), 1)
+        self.assertIn("CLOCK-1: moved", text)
+        self.assertNotIn("FLOOR-1", text)
+
     def test_a_method_lacking_a_section_the_setup_needs_is_refused_naming_it_with_no_session_started(self):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's units are one per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass; each unit's prompt holds the section of the catalogue for its own area and the setup session's documents hold no area section, the same for every unit; a folder whose method has no catalogue areas or lacks a section the setup needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
         method = os.path.join(self.folder, "docs", "board-design-method.md")
@@ -710,8 +749,8 @@ class TheSetupDocuments(Folder):
 
     def test_the_setup_prompt_asks_for_no_judgement_and_no_image_and_the_layout_run_sends_the_documents_on_standard_input(self):
         # SOL-HW-REVIEW-FAN-OUT-DRIVER.C2: Each session's start report is read and a run whose report shows other tools than were granted, another model, any MCP server, an instruction source the command line was asked to exclude or another working directory fails naming the session. The setup session is started with the read tools only and a prompt that asks for no judgement and no image and for one fixed token as the whole answer and that either tells it which documents and records to read or, when the caller names them as files, holds their text itself, sent on standard input so that the session has no tool use to narrate between; any text the setup session writes, in its answer or between its tool uses, other than that token after trimming, and any content block of its history that is neither text, a tool use nor a thinking block whose text is empty, fails the run, so no forked reviewer inherits a verdict; a thinking block that carries text, and a redacted one, fail it; a setup session that fails only for text written between its tool uses is started again, up to twice, before the run fails, and every attempt's session is reported with its cost, and a read of a file whose type is not text in the setup session's tool uses fails the run naming the file, as does a file the caller names whose type is not text, before any session is started. Out of scope: the content of a caller's prompt for its units.
-        self.assertIn("do not open any view image, the design's schematic or its layout", review_caller_layout.SETUP_PROMPT)
-        self.assertIn("Judge nothing", review_caller_layout.SETUP_PROMPT)
+        self.assertIn("In this session judge nothing and open nothing beyond them", review_caller_layout.SETUP_PROMPT)
+        self.assertIn("Open no image and judge nothing", review_fan_out.ACK_INSTRUCTION, "the driver's own ask is unchanged")
         run = Command(self)
         run.scenario_for(self.folder, setup={"reads": []})
         status, text, _ = run.go("--json")

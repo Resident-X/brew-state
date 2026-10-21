@@ -864,15 +864,41 @@ def total(parts: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
 # --- The merge ---------------------------------------------------------------------------------
 
 
-def parse_result(text: str) -> Dict[str, Any]:
-    """The tables a reviewer returned: a JSON object, alone or in a code fence, with a `tables` mapping."""
+def result_object(text: str) -> Any:
+    """The JSON value a reviewer's answer holds: the whole text when it is JSON, else the one top-level object in it after
+    any leading prose and an optional code fence, followed by nothing but whitespace and a closing fence."""
     body = text.strip()
-    fenced = re.match(r"^```[a-z]*\n(.*)\n```$", body, re.DOTALL)
-    body = fenced.group(1) if fenced else body
     try:
-        found = json.loads(body)
+        return json.loads(body)
     except (ValueError, RecursionError):
+        pass
+    decoder, found = json.JSONDecoder(), []
+    position = body.find("{")
+    while position != -1:
+        try:
+            value, end = decoder.raw_decode(body, position)
+        except (ValueError, RecursionError):
+            position = body.find("{", position + 1)
+            continue
+        if isinstance(value, dict):
+            found.append((value, position, end))
+            position = body.find("{", end)
+        else:
+            position = body.find("{", position + 1)
+    if not found:
         raise Malformed(["the reviewer's answer is not a JSON object"])
+    objects = [entry for entry in found if isinstance(entry[0].get("tables"), dict)] or found
+    if len(objects) > 1:
+        raise Malformed(["the reviewer's answer holds more than one JSON object"])
+    value, _, end = objects[0]
+    if re.sub(r"^\s*(```)?\s*$", "", body[end:]):
+        raise Malformed(["the reviewer's answer has text after the JSON object"])
+    return value
+
+
+def parse_result(text: str) -> Dict[str, Any]:
+    """The tables a reviewer returned: a JSON object with a `tables` mapping, alone, in a code fence or after leading prose."""
+    found = result_object(text)
     if not isinstance(found, dict) or not isinstance(found.get("tables"), dict):
         raise Malformed(["the reviewer's answer has no `tables` mapping"])
     return found["tables"]

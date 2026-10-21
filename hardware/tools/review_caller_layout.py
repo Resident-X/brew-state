@@ -63,9 +63,17 @@ FINDING_TABLE = ["Finding", "Item", "Raised by", "Severity", "What and where", "
 RECORD_FINDING_TABLE = [column for column in FINDING_TABLE if column != "Item"]
 
 SETUP_PROMPT = (
-    "The documents and records of this review follow; they are all you need. Judge nothing and open nothing: do not open "
-    "any view image, the design's schematic or its layout. Take the method's layout review sections and the plan in full; the "
-    "catalogue section for your area comes with your unit.")
+    "The documents and records of this review follow, for the sessions that continue from this one. In this session judge "
+    "nothing and open nothing beyond them. Take the method's layout review sections and the plan in full; the catalogue "
+    "section for your area comes with your unit.")
+
+#: What a unit with items is told after its item list: the views and positions its verdicts rest on are read in its own session.
+DISCIPLINE = (
+    "Before you judge an item, open in this session every view its Judged on names, on every tile whose board coordinates "
+    "reach the place judged; the documents above are the method and the records, not views, and Rests on may cite only "
+    "views you opened. Where an item asks whether a part stands beside, at, near or far from another, read both parts' "
+    "positions and their pad positions from the layout file (the `(footprint`, `(at` and the net's segments) and state the "
+    "distance in mm in Why; a view shows which parts to compare, not how far apart they are.")
 
 #: The records at the review folder's root the setup session is given after the method's extracts, in this order, each where it exists.
 ROOT_DOCUMENTS = ("round.json", "check-report.txt", "views/index.txt", "views/facts.txt", "placement/index.txt",
@@ -327,6 +335,7 @@ def unit_prompt(unit: str, review_folder_path: str) -> str:
         else:
             text += ("\nThis round is full. Judge each of these items, in this order, and give one verdict row to each of them "
                      "and to no other item: " + ", ".join(listed) + ".\n")
+        text += "\n" + DISCIPLINE + "\n"
         if unit.startswith("area-"):
             block = catalogue_split(review_folder_path)[1][unit[len("area-"):]]
             if round_["kind"] == "narrow":
