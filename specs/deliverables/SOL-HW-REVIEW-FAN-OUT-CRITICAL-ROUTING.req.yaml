@@ -41,3 +41,7 @@ links:
     type: depends-on
   - target: DEC-REVIEW-FAN-OUT-FROM-SHARED-CONTEXT-WITH-REPLICAS
     type: justified-by
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: b7bb82595dec379b697172a64d111b468dec3166377526cf436fd9adcbf125cd
+  gating_profile: ""
