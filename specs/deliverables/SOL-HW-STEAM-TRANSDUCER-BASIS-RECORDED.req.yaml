@@ -27,3 +27,7 @@ links:
     type: justified-by
   - target: DEC-STEAM-BLOCK-IS-A-FLASH-GENERATOR
     type: justified-by
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 brief reviewer
+  fingerprint: a1e1e9e871c533b313c54d7e53dc4c6ecdd48abc21b6dfcee34ed9a83db61b75
+  gating_profile: ""
