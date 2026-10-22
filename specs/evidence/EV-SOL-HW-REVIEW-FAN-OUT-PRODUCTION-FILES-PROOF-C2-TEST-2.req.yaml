@@ -1,0 +1,15 @@
+id: EV-SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES-PROOF-C2-TEST-2
+type: evidence
+title: test evidence for SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES-PROOF.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-22T09:09:47Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_production_files_review_proof.py::test_run_again_for_a_key_whose_baseline_is_recorded_the_single_form_is_refused_and_the_key_named
+  artifact_version: a8b97ba309a8a5b6f9f1e97591331527e460bdae
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES-PROOF.C2
+    type: satisfies

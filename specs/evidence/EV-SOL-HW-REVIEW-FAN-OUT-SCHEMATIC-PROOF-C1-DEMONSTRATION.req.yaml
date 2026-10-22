@@ -1,0 +1,48 @@
+id: EV-SOL-HW-REVIEW-FAN-OUT-SCHEMATIC-PROOF-C1-DEMONSTRATION
+type: evidence
+title: demonstration evidence for SOL-HW-REVIEW-FAN-OUT-SCHEMATIC-PROOF.C1
+status: active
+version: 1
+result: pass
+method: demonstration
+observed_at: "2026-10-22T09:09:47Z"
+artifact:
+  kind: inline
+text: |
+  # Fanned-out blind review of the circuit review proof's second seeded copy: SOL-HW-REVIEW-FAN-OUT-SCHEMATIC-PROOF.C1
+
+  - Verified commit: `a8b97ba309a8a5b6f9f1e97591331527e460bdae` on branch `req/SOL-HW-REVIEW-FAN-OUT-PROOFS/live-proofs`. The runs below were made at tool commit `dcf86dd`; the commits since changed the command's baseline guard and lock (covered by the unit tests recorded against SOL-HW-REVIEW-PROOFS-REFUSE-UNUSABLE-BASELINE-AND-HELD-LOCK.C1) and left the fanned-out flow as run.
+
+  ## What was run
+
+  The first seed list (14 value and rating edits, from an earlier session): the single form on claude-sonnet-5-5 found 14 of 14 in 1122 s for USD 3.858, and the fanned-out form (two claude-haiku-5-5 replicas, 4 groups, 16 sessions) found 14 of 14 in 264 s for USD 2.39. The seeds found sat exactly at the single run's floor, so this criterion's second fanned-out run is made on a second seed list with other defects.
+
+  The second seed list: 10 seeds in a copy of `hardware/proof/circuit-review-proof` seeded by a session that had not read the circuit practice catalogue (5 part removals, among them a decoupling capacitor at each of two integrated circuits and a pull-up network; a reversed LED and a reversed polarised capacitor; and 3 value edits), committed in a git work tree outside the repository, which the pre-order check passes. A first attempt of 12 seeds failed the pre-order check (electrical-rule, pin-limit and parity errors) and was discarded before any run. The catalogue item that covers each seed was assigned by a separate session that read the catalogue and not the review. Seed list hash `7561c5ef…`; baseline key `5e1d828a…`; seeded commit `541416d`.
+
+  The single form was run once through the kit on claude-sonnet-5-5 on this copy (`task hw:schematic-review-proof`) and is recorded as the second group of `hardware/tools/tests/fixtures/review_baselines/schematic_single_runs.json`. The fanned-out form ran at the full unit count: 5 groups, 10 forks, two claude-haiku-5-5 replicas, in sessions given no record of the seeds.
+
+  ## Result: pooled criterion, cost multiple 1.25: PASS
+
+  - Single run: 10 of 10 seeds, 1303.5 s, USD 3.593, 24 findings matching no seed.
+  - Fanned-out run 1: 10 of 10, 344.0 s, USD 2.520, 19 sessions, 89 findings matching no seed.
+  - Fanned-out run 2 (made because the seeds found sat at the single floor of 10): 10 of 10, 218.2 s, USD 1.694, 17 sessions, 95 findings matching no seed.
+  - Clauses over both runs: seeds found 10 and 10 against a floor of 10; no seed every single run found is missed; wall time 344 s and 218 s against a bound of 651.8 s (half the single mean); cost USD 2.52 and 1.69 against a bound of USD 4.49 (1.25 times the single mean). The stated multiple of 1.25 held, so no new multiple is stated.
+  - Replica statistics: 1 miss in 40 replica-seed trials (2.5 per cent); correlation between replicas -0.026.
+  - Document retrievals: 18 in run 1 and 12 in run 2, none failed. Calls refused for a rate limit: 0.
+
+  ## Merged rounds and verdict differences
+
+  Both merged rounds were refused, and the proof records the refusal and does not resolve it. Run 1: rows that name a net the netlist does not write (`U4 /NRST`, `/+3V3`, `/+5V`), and PINV-1 on /MAINS_N held as cannot judge for a surge analysis of the input that the folder does not hold. Run 2: DRAW-1 given a `none` row and rows for what it selects, PARTS-1 on U3 held as cannot judge for the MCP1700 data sheet, and BUSL-1 on /SDA, /SCL and /SDA_J held as cannot judge for the MSPM0C1104 output-low-voltage figure. The seeds are judged from the replicas' findings by their Item cell, so the criterion is judged whether or not the merged round is accepted.
+
+  Verdict differences against the single run: 166 in run 1 and 157 in run 2. Most (77 and 83) are items the single run passed and the replicas failed, with 89 and 95 findings matching no seed against 24 for the single run; many of these repeat across both runs, which points to properties of the proof design that the single run did not raise, and the singletons are not labelled as false alarms. The rest are items the single run did not judge by that net, part or sheet, and 4 to 8 rows the replicas held as cannot judge for a missing data sheet.
+
+  ## Tools and cost
+
+  Claude Code 2.1.304 command line; models claude-sonnet-5-5 (mid-tier) and claude-haiku-5-5 (small tier); KiCad 10.0.7, resvg 0.48.1, Python 3.14, macOS. Live spend for this demonstration: USD 7.81 (single USD 3.59, fanned USD 2.52 and USD 1.69), the seeding and mapping sessions not included.
+
+  ## Commands
+
+  `task hw:schematic-review-proof -- --work <new folder outside the repository> --seeded-repo <git work tree holding the seeded copy> --seeds <seed list> --kicad-cli <kicad-cli>`; the proof record is `proof-record.json` and its text in the work folder.
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-SCHEMATIC-PROOF.C1
+    type: satisfies

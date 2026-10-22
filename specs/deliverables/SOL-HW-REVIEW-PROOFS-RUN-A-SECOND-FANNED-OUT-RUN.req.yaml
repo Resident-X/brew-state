@@ -9,6 +9,8 @@ text: |
 
   What it does. The shared proof harness runs the fanned-out form once and judges it; only when the kit's verdict requires a second run does it run the form a second time, in its own output folder and under its own run id, and it returns both runs, which the command records and the kit judges together. It never runs a third. The schematic, critical-routing, production-files and layout review proof commands make their fanned-out runs through it, and their dry runs say a second run may follow and count its cost and time as up to twice the first's.
 
+  A second run that fails, or is refused, after the first was paid for stops the command as any failed run does and writes no proof record, so the first run's cost and seeds are read from the sessions' saved results in the work folder's output folder for that run.
+
   Out of scope: the figures of any one proof's runs, which are that proof's own demonstration.
 links:
   - target: DEL-MAINTENANCE.C1

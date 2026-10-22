@@ -1,0 +1,47 @@
+id: EV-SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING-PROOF-C1-DEMONSTRATION
+type: evidence
+title: demonstration evidence for SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING-PROOF.C1
+status: active
+version: 1
+result: pass
+method: demonstration
+observed_at: "2026-10-22T09:09:47Z"
+artifact:
+  kind: inline
+text: |
+  # Fanned-out blind review of the method proof design's seeded critical routing: SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING-PROOF.C1
+
+  - Verified commit: `a8b97ba309a8a5b6f9f1e97591331527e460bdae` on branch `req/SOL-HW-REVIEW-FAN-OUT-PROOFS/live-proofs`. The recorded runs were made at tool commit `3ec7ee5`; the commits since changed a baseline description string and test heads only.
+
+  ## What was run
+
+  A copy of `hardware/proof/method-proof` seeded with 8 known critical-routing defects on its Power, Supply and Ground nets by a session that had not read the layout practice catalogue, committed in a git work tree outside the repository, which the pre-order check passes: a 1 mm neck narrowed from 0.5 to 0.25 mm on +5V at the R1 pad (S1), the ground via of J1 pin 2 removed (S2), a detour of about 14.6 mm on /+3V3_REG against about 3.5 mm (S3), the ground vias of U2 pin 7 and C2 pad 2 moved 7 mm and 4.5 mm away (S4, S5), two extra vias with a hop on /+5V_IN (S6) and the ground vias of C3 and C1 removed (S7, S8). The catalogue item that covers each seed was assigned by a separate session that read the catalogue and not the review. Seed list hash `e296d7a4…`; baseline key `1c0b88dd…`; seeded commit `3f0a106`.
+
+  The single form was run once through the kit on claude-sonnet-5-5 (`task hw:critical-routing-review-proof`) and is recorded as `hardware/tools/tests/fixtures/review_baselines/critical_routing_single_runs.json`. The fanned-out form ran at the full unit count: 9 groups, 18 forks, two claude-haiku-5-5 replicas, in sessions given no record of the seeds, over a review folder holding the method, the layout facts, the critical-routing views and the placement view.
+
+  ## First run: the criterion failed, from a defect in the command
+
+  The first run gave the review folder the views and not the placement view. The replicas held POWER-2 (the item that covers S1), FLOOR-3, CONN-4, EMI-3 and EMI-5 as cannot judge, each asking for the placement view, and the merged pass was refused. The pooled criterion failed: 5 of 8 seeds against the single run's 6, S1 missed by both replicas, USD 1.47 against a bound of USD 1.19. The command was corrected to render the placement view and give it to the folder command; the baseline recorded against the folder without it was removed, and this run was repeated, so it is the one recorded here.
+
+  ## Result: pooled criterion, cost multiple 1.25: PASS
+
+  - Single run: 5 of 8 seeds (S2, S4, S5, S7, S8), 427.9 s, USD 1.492, 2 findings matching no seed, 3 sessions (one repair turn).
+  - Fanned-out run: 6 of 8 (S1, S2, S4, S5, S7, S8), 133.8 s, USD 1.239, 19 sessions, 10 findings matching no seed; the merged pass was written and names S1, S2, S4, S5, S7 and S8.
+  - Clauses: seeds found 6 against a floor of 5; no seed every single run found is missed; wall time 133.8 s against a bound of 213.9 s (half the single mean); cost USD 1.239 against a bound of USD 1.865 (1.25 times the single mean). No clause is within ten per cent of its bound, so no second fanned-out run was made. The stated multiple of 1.25 held, so no new multiple is stated.
+  - Replica statistics: 6 misses in 16 replica-seed trials (37.5 per cent); correlation between replicas 0.467. S3 and S6 were raised by the replicas as findings under WORK-3 and not under WORK-2 and WORK-7, the items the seed list names, so they do not count as found; the single run found neither.
+  - Document retrievals: 3, none failed. Calls refused for a rate limit: 0.
+
+  ## Verdict differences
+
+  21 against the single run. Most are items the single run held as bearing on no critical net and the replicas judged not applicable, failed (3) or passed (4): the replicas read the critical-class items more widely than the single reviewer. Three are items the single run passed and the replicas failed, on the +5V_IN vias at (106, 103.5) and (107, 103.5) whose plane openings touch, the GND plane clearance at the mounting holes, and a decoupling capacitor 7.3 mm from its supply pin. The 10 findings matching no seed are of these kinds and are not labelled as false alarms.
+
+  ## Tools and cost
+
+  Claude Code 2.1.304 command line; models claude-sonnet-5-5 (mid-tier) and claude-haiku-5-5 (small tier); KiCad 10.0.7, resvg 0.48.1, Python 3.14, macOS. Live spend for this demonstration: USD 3.88 for the first run and the recorded one (first run: single USD 0.95, fanned USD 1.47; recorded: single USD 1.49, fanned USD 1.24), the seeding and mapping sessions not included.
+
+  ## Commands
+
+  `task hw:critical-routing-review-proof -- --work <new folder outside the repository> --seeded-repo <git work tree holding the seeded copy> --seeds <seed list> --kicad-cli <kicad-cli> --resvg <resvg>`; the proof record is `proof-record.json` and its text in the work folder.
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING-PROOF.C1
+    type: satisfies
