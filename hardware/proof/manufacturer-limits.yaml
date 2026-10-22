@@ -1,0 +1,116 @@
+# NOT FOR MANUFACTURE. A synthetic manufacturer limits record, made only to prove the
+# board-minimums rule of the pre-order check against the throwaway designs beside it,
+# which find it as the nearest manufacturer-limits.yaml at or above their folders. Its
+# figures are not read from any manufacturer's page and must never be used for a board
+# that is ordered: being marked synthetic, the check accepts it only for a design marked
+# not for manufacture. Its age limit is far beyond any real one so the committed proof
+# never goes stale. Each figure sits at or below the value every proof design sets, and
+# below the loosest one the review proofs' seeded copies set, so every committed proof
+# design and every seeded copy of one passes.
+synthetic: true
+source: none -- synthetic figures chosen to exercise the check, not read from a manufacturer's page
+read_on: 2026-10-20
+max_age_days: 36500
+processes:
+  - copper_layers: 2
+    outer_copper_oz: 1
+    limits:
+      min_clearance:
+        mm: 0.1
+        citation:
+          section: none -- synthetic section
+          limit: none -- synthetic figure for min_clearance
+          condition: 2 copper layers, 1 oz finished outer copper
+      min_track_width:
+        mm: 0.1
+        citation:
+          section: none -- synthetic section
+          limit: none -- synthetic figure for min_track_width
+          condition: 2 copper layers, 1 oz finished outer copper
+      min_through_hole_diameter:
+        mm: 0.2
+        citation:
+          section: none -- synthetic section
+          limit: none -- synthetic figure for min_through_hole_diameter
+          condition: 2 copper layers, 1 oz finished outer copper
+      min_hole_to_hole:
+        mm: 0.45
+        citation:
+          section: none -- synthetic section
+          limit: none -- synthetic figure for min_hole_to_hole
+          condition: 2 copper layers, 1 oz finished outer copper
+      min_via_annular_width:
+        mm: 0.2
+        citation:
+          section: none -- synthetic section
+          limit: none -- synthetic figure for min_via_annular_width
+          condition: 2 copper layers, 1 oz finished outer copper
+      min_via_diameter:
+        mm: 0.25
+        citation:
+          section: none -- synthetic section
+          limit: none -- synthetic figure for min_via_diameter
+          condition: 2 copper layers, 1 oz finished outer copper
+      min_hole_clearance:
+        mm: 0.15
+        citation:
+          section: none -- synthetic section
+          limit: none -- synthetic figure for min_hole_clearance
+          condition: 2 copper layers, 1 oz finished outer copper
+      min_copper_edge_clearance:
+        mm: 0.2
+        citation:
+          section: none -- synthetic section
+          limit: none -- synthetic figure for min_copper_edge_clearance
+          condition: 2 copper layers, 1 oz finished outer copper
+  - copper_layers: 4
+    outer_copper_oz: 1
+    limits:
+      min_clearance:
+        mm: 0.09
+        citation:
+          section: none -- synthetic section
+          limit: none -- synthetic figure for min_clearance
+          condition: 4 copper layers, 1 oz finished outer copper
+      min_track_width:
+        mm: 0.09
+        citation:
+          section: none -- synthetic section
+          limit: none -- synthetic figure for min_track_width
+          condition: 4 copper layers, 1 oz finished outer copper
+      min_through_hole_diameter:
+        mm: 0.2
+        citation:
+          section: none -- synthetic section
+          limit: none -- synthetic figure for min_through_hole_diameter
+          condition: 4 copper layers, 1 oz finished outer copper
+      min_hole_to_hole:
+        mm: 0.45
+        citation:
+          section: none -- synthetic section
+          limit: none -- synthetic figure for min_hole_to_hole
+          condition: 4 copper layers, 1 oz finished outer copper
+      min_via_annular_width:
+        mm: 0.2
+        citation:
+          section: none -- synthetic section
+          limit: none -- synthetic figure for min_via_annular_width
+          condition: 4 copper layers, 1 oz finished outer copper
+      min_via_diameter:
+        mm: 0.25
+        citation:
+          section: none -- synthetic section
+          limit: none -- synthetic figure for min_via_diameter
+          condition: 4 copper layers, 1 oz finished outer copper
+      min_hole_clearance:
+        mm: 0.15
+        citation:
+          section: none -- synthetic section
+          limit: none -- synthetic figure for min_hole_clearance
+          condition: 4 copper layers, 1 oz finished outer copper
+      min_copper_edge_clearance:
+        mm: 0.2
+        citation:
+          section: none -- synthetic section
+          limit: none -- synthetic figure for min_copper_edge_clearance
+          condition: 4 copper layers, 1 oz finished outer copper

@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE-C4-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C4
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-22T14:47:45.117085Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_minimums.py::test_every_loose_rule_is_reported_each_at_its_own_line_and_a_design_with_no_rules_file_is_not_failed
+  artifact_version: d352f50daff978bfe88264260ecf3a8c2424f680
+attested_by: crun-991cc497f044fb8d
+links:
+  - target: SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C4
+    type: satisfies

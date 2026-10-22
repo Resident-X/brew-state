@@ -155,12 +155,14 @@ def write_folder(work: str, seeded: Dict[str, str], documents_repo: Optional[str
 # --- The baselines ------------------------------------------------------------------------------
 
 
-def design_tree(repo: str = REPO, ref: str = "HEAD", design: str = review_seed.DESIGN) -> str:
-    """The git tree id of the proof design's folder, which the baseline key holds as the design."""
-    done = subprocess.run(["git", "-C", repo, "rev-parse", f"{ref}:{design}"], capture_output=True, text=True)
-    if done.returncode != 0:
-        raise Refused([f"the tree of {design} at {ref} in {repo} cannot be read: {board_check.clean(done.stderr.strip())}"])
-    return done.stdout.strip()
+def design_key(repo: str = REPO, ref: str = "HEAD", design: str = review_seed.DESIGN) -> str:
+    """The key the baselines hold as the design: a hash of the files the layout review reads of the proof design, which are the
+    ones its seeding gives a reviewer (KiCad's files, the library tables and its named records), so a change to a file the
+    review does not read leaves every recorded baseline valid."""
+    try:
+        return review_seed.read_key(repo, ref, design, review_seed.given)
+    except review_seed.Refused as error:
+        raise Refused([str(error)])
 
 
 def baseline_runs(path: str, seeds: Sequence[Mapping[str, Any]], design: str, model: str
@@ -386,7 +388,7 @@ def refusals(work: str) -> List[str]:
 
 
 def main(argv: Optional[List[str]] = None, out=sys.stdout, err=sys.stderr, seed_runner=run_seed,
-         environ: Optional[Mapping[str, str]] = None, baselines: str = BASELINES, tree: Callable[[], str] = design_tree,
+         environ: Optional[Mapping[str, str]] = None, baselines: str = BASELINES, tree: Callable[[], str] = design_key,
          main_command: Callable[..., int] = command.main, documents_repo: Optional[str] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--work", required=True, help="a new folder outside the repository the run keeps everything in")

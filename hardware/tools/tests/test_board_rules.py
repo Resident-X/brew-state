@@ -34,7 +34,8 @@ SENSING = {"classes": ["Sensing"], "noisy_classes": ["Power", "Mains"], "clearan
 GROUND_RETURNS = {"ground_classes": ["Ground"], "non_signal_classes": ["Power", "Supply", "Mains"],
                   "signal_classes": [{"class": "Default", "signal_pins_per_return": 2, "source": SOURCE},
                                      {"class": "Sensing", "signal_pins_per_return": 1, "source": SOURCE}]}
-COMPLETE = {"sensing": SENSING, "ground_returns": GROUND_RETURNS, "synthetic": True}
+FABRICATION = {"outer_copper_oz": 1, "source": SOURCE}
+COMPLETE = {"sensing": SENSING, "ground_returns": GROUND_RETURNS, "fabrication": FABRICATION, "synthetic": True}
 
 
 def changed(**edits) -> dict:
@@ -631,6 +632,64 @@ class TheRulesAreRunOnTheDesignsTheyHold(unittest.TestCase):
         targets = set(re.findall(r"board-design-method\.md#(sense-6[^)\s]*)", notes))
         self.assertEqual(targets, {slug})
         self.assertNotIn("one of the four forms", method)
+
+
+def with_fabrication(**edits) -> dict:
+    fabrication = copy.deepcopy(FABRICATION)
+    for key, value in edits.items():
+        if value is Ellipsis:
+            del fabrication[key]
+        else:
+            fabrication[key] = value
+    return changed(fabrication=fabrication)
+
+
+class TheFabricationMappingIsRead(Tree):
+    def test_a_record_silent_on_fabrication_fails_naming_the_key_even_when_the_other_mappings_state_none(self):
+        # SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C1: a design that declares no outer copper weight fails
+        # SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C5: A missing record or declaration the rule needs fails
+        self.assertFails(changed(fabrication=...), "board-rules.yaml fabrication", "lacks fabrication")
+        self.assertFails(changed(fabrication=..., sensing="none", ground_returns="none"), "board-rules.yaml fabrication", "lacks fabrication")
+
+    def test_fabrication_may_not_state_none_where_the_other_mappings_may(self):
+        # SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C5: A missing record or declaration the rule needs fails; an explicit none is accepted (for the mappings that may state it, never the copper weight)
+        problems = self.assertFails(changed(fabrication="none"), "board-rules.yaml fabrication", "the order takes the finished outer copper weight as an option")
+        self.assertEqual(len(problems), 1)
+        self.assertEqual(self.problems(changed(sensing="none", ground_returns="none")), [])
+
+    def test_a_mapping_without_the_weight_or_its_source_fails_naming_the_missing_key(self):
+        # SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C1: the finished outer copper weight, declared in the board rules record's fabrication mapping, with the source that says why it was chosen
+        for key in ("outer_copper_oz", "source"):
+            with self.subTest(missing=key):
+                self.assertFails(with_fabrication(**{key: ...}), f"fabrication.{key}", f"lacks {key}")
+
+    def test_a_weight_that_is_not_a_positive_number_or_a_source_that_is_blank_fails(self):
+        # SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C3: the reader accepts the board rules record's fabrication mapping and still fails a value the decisions do not define
+        for weight in (0, -1, "1", "1 oz", True, None, float("nan"), [1]):
+            with self.subTest(weight=weight):
+                self.assertFails(with_fabrication(outer_copper_oz=weight), "fabrication.outer_copper_oz", "not a positive number of ounces")
+        for source in ("", "  ", 3, None):
+            with self.subTest(source=source):
+                self.assertFails(with_fabrication(source=source), "fabrication.source", "non-empty string")
+
+    def test_a_fractional_weight_and_a_heavier_one_are_accepted_as_declared(self):
+        # SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C3: This leaf extends the check's record reader to accept the board rules record's fabrication mapping
+        for weight in (0.5, 1, 2, 2.5):
+            with self.subTest(weight=weight):
+                data, problems = self.load(with_fabrication(outer_copper_oz=weight))
+                self.assertEqual(problems, [])
+                self.assertEqual(data["fabrication"]["outer_copper_oz"], weight)
+
+    def test_a_key_the_decisions_do_not_define_in_the_mapping_fails_naming_it(self):
+        # SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C3: the reader still fails a key the decisions do not define
+        self.assertFails(with_fabrication(outer_copper_ounces=1), "fabrication.outer_copper_ounces", "holds the key 'outer_copper_ounces'")
+        self.assertFails(with_fabrication(source=...) | {"fabrication": {"outer_copper_oz": 1, "sourc": SOURCE}}, "fabrication.sourc",
+                         "holds the key 'sourc'")
+        self.assertFails(dict(COMPLETE, fabricaton=FABRICATION), "board-rules.yaml fabricaton", "holds the key 'fabricaton'")
+
+    def test_a_fabrication_mapping_that_is_not_a_mapping_fails(self):
+        # SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C3: the reader accepts the board rules record's fabrication mapping
+        self.assertFails(changed(fabrication=["outer_copper_oz", 1]), "board-rules.yaml fabrication", "not a mapping of the keys outer_copper_oz, source")
 
 
 if __name__ == "__main__":

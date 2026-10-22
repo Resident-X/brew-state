@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE-C2-TEST-3
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-22T14:47:44.399021Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_parts.py::test_a_status_outside_the_closed_vocabulary_fails_naming_it
+  artifact_version: d352f50daff978bfe88264260ecf3a8c2424f680
+attested_by: crun-991cc497f044fb8d
+links:
+  - target: SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C2
+    type: satisfies

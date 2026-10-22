@@ -3,6 +3,8 @@ type: deliverable
 category: task
 title: The pre-order check also fails the defects in a design that its files can decide but no rule yet tests
 status: active
+seal_state: sealed
+seal_outcome: complete
 level: task
 version: 3
 text: |

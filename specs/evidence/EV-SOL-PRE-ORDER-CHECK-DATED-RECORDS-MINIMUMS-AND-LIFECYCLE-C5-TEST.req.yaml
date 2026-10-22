@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE-C5-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C5
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-22T14:47:45.332713Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad.py::test_each_minimums_and_lifecycle_fault_is_caught_on_a_copy_of_the_proof_design_and_the_committed_design_stays_passing
+  artifact_version: d352f50daff978bfe88264260ecf3a8c2424f680
+attested_by: crun-991cc497f044fb8d
+links:
+  - target: SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C5
+    type: satisfies

@@ -472,7 +472,7 @@ tasks:
       - python3 {{.HW_DIR}}/tools/board_check.py --root . --kicad-cli "{{.KICAD_CLI}}"
 
   hw:reads:
-    desc: List every file the board designs the repository tracks read, one per line, a folder read whole ending in a slash and the repository's top level written ./ — each design's own folder, every sheet its schematic reaches, every library its tables name and the separation basis, pin allocation, parts specification, catalogue extract, derating policy, pin-limit and board rules records it is held to. Runs no check and needs no KiCad, and is how the build round's gate learns which changed paths reach a board design. Needs Python 3.9 or newer and git 2.11 or newer only
+    desc: List every file the board designs the repository tracks read, one per line, a folder read whole ending in a slash and the repository's top level written ./ — each design's own folder, every sheet its schematic reaches, every library its tables name and the separation basis, pin allocation, parts specification, catalogue extract, derating policy, pin-limit, board rules and manufacturer limits records it is held to. Runs no check and needs no KiCad, and is how the build round's gate learns which changed paths reach a board design. Needs Python 3.9 or newer and git 2.11 or newer only
     dir: "{{.ROOT_DIR}}"
     cmds:
       - python3 {{.HW_DIR}}/tools/board_check.py --root . --list-reads

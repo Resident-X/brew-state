@@ -12,63 +12,127 @@ entries:
     library_class: basic
     stock: 1000
     unit_price: 0.01
+    lifecycle:
+      status: active
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-17
   - lcsc: C9100002
     library_class: basic
     stock: 1000
     unit_price: 0.01
+    lifecycle:
+      status: active
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-17
   - lcsc: C9100003
     library_class: basic
     stock: 1000
     unit_price: 0.01
+    lifecycle:
+      status: active
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-17
   - lcsc: C9100004
     library_class: basic
     stock: 1000
     unit_price: 0.01
+    lifecycle:
+      status: active
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-17
   - lcsc: C9100005
     library_class: basic
     stock: 1000
     unit_price: 0.01
+    lifecycle:
+      status: active
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-17
   - lcsc: C9100006
     library_class: basic
     stock: 1000
     unit_price: 0.01
+    lifecycle:
+      status: active
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-17
   - lcsc: C9100007
     library_class: basic
     stock: 1000
     unit_price: 0.01
+    lifecycle:
+      status: active
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-17
   - lcsc: C9100008
     library_class: basic
     stock: 1000
     unit_price: 0.01
+    lifecycle:
+      status: active
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-17
   - lcsc: C9100009
     library_class: basic
     stock: 1000
     unit_price: 0.01
+    lifecycle:
+      status: active
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-17
   - lcsc: C9100010
     library_class: basic
     stock: 1000
     unit_price: 0.01
+    lifecycle:
+      status: active
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-17
   - lcsc: C9100011
     library_class: basic
     stock: 1000
     unit_price: 0.01
+    lifecycle:
+      status: active
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-17
   - lcsc: C9100012
     library_class: basic
     stock: 1000
     unit_price: 0.01
+    lifecycle:
+      status: active
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-17
   - lcsc: C9100013
     library_class: basic
     stock: 1000
     unit_price: 0.01
+    lifecycle:
+      status: active
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-17
   - lcsc: C9100014
     library_class: basic
     stock: 1000
     unit_price: 0.01
+    lifecycle:
+      status: active
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-17
   - lcsc: C9100015
     library_class: basic
     stock: 1000
     unit_price: 0.01
+    lifecycle:
+      status: active
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-17
   - lcsc: C9100016
     library_class: basic
     stock: 1000
     unit_price: 0.01
+    lifecycle:
+      status: active
+      source: none -- synthetic lifecycle reading
+      read_on: 2026-10-17

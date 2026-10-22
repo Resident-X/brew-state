@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE-C1-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-22T14:47:43.170566Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_minimums.py::test_a_board_setup_minimum_looser_than_its_limit_fails_naming_the_key_the_figure_and_the_limit_cited
+  artifact_version: d352f50daff978bfe88264260ecf3a8c2424f680
+attested_by: crun-991cc497f044fb8d
+links:
+  - target: SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C1
+    type: satisfies

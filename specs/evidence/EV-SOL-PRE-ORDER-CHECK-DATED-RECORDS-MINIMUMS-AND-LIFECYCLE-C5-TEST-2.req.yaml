@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE-C5-TEST-2
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C5
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-22T14:47:45.40519Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad.py::test_the_proof_copy_carries_the_shared_limits_record_so_it_is_held_to_it_as_the_committed_design_is
+  artifact_version: d352f50daff978bfe88264260ecf3a8c2424f680
+attested_by: crun-991cc497f044fb8d
+links:
+  - target: SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C5
+    type: satisfies

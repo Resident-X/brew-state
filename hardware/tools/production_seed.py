@@ -76,6 +76,14 @@ CLASSES = review_seed.CLASSES
 DOCUMENTS = ("docs/board-design-method.md", "docs/board-manufacturer-jlcpcb.md", "hardware/README.md")
 #: The design's record of each position's catalogue part, which the step compares the parts list with, by path in the design's folder.
 RECORD = "parts-specification.yaml"
+
+
+def reads(name: str) -> bool:
+    """Whether the production-files review reads the design's file `name`, by its path inside the design's folder: KiCad's own
+    files of the design, its library tables, and the parts specification record the step compares the parts list with, and
+    nothing else the folder holds. It is the list the review's baseline key is made over."""
+    base = os.path.basename(name)
+    return name == RECORD or base.endswith(review_seed.KICAD_FILES) or base in board_check.LIBRARY_TABLES
 PRODUCTION = "production"
 GERBERS = "gerbers"
 LAYERS = "layers"

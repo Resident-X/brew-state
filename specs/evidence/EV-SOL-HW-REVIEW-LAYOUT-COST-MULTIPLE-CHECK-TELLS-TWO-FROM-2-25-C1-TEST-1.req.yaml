@@ -1,0 +1,15 @@
+id: EV-SOL-HW-REVIEW-LAYOUT-COST-MULTIPLE-CHECK-TELLS-TWO-FROM-2-25-C1-TEST-1
+type: evidence
+title: test evidence for SOL-HW-REVIEW-LAYOUT-COST-MULTIPLE-CHECK-TELLS-TWO-FROM-2-25.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-22T14:52:35Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_caller_layout.py::test_the_cost_multiple_check_refuses_a_multiple_of_2_and_not_one_that_only_begins_with_2
+links:
+  - target: SOL-HW-REVIEW-LAYOUT-COST-MULTIPLE-CHECK-TELLS-TWO-FROM-2-25.C1
+    type: satisfies
