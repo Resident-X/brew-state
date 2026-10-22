@@ -1,0 +1,385 @@
+#!/usr/bin/env python3
+"""Prove the fanned-out production-files check on the seeded production files of the layout review proof design, against its single-reviewer run.
+
+The production-files proof takes the layout review proof design's production files as `task hw:production-seed` seeds them: a
+rotated part, a reversed polarised part, an integrated circuit's first pin turned, a part moved, a catalogue number replaced, and
+a layer missing content, shifted and mirrored. That command is scripted, so no session seeds anything; it writes the production-files
+folder, which already holds the stand-in preview, and the seed list apart from it. This is the one command that does the rest: it
+runs the production-files caller through the review kit's command on the real agent command line, first the single form once on the
+mid-tier model, which it records as this review's baseline file because none is recorded in a form the kit loads (a baseline file
+that already holds the single run for this key is loaded and the single form is not run again), then the fanned-out form at the full
+unit count with the pre-order round's three replicas, two of them on the mid-tier model.
+
+    production_files_review_proof.py --work <new folder outside the repository> --folder <the production-files folder>
+                                     --seeds <the seed list> [--baseline-model M] [--fanned-model M] [--bound N]
+                                     [--baselines <file>] [--dry] [--json]
+
+The folder and the seed list are those `task hw:production-seed -- --seeds <seed list> --out <folder>` writes; the folder is outside
+this repository, outside the work folder and apart from the seed list, and the commit judged is the one its round file names. The seed
+list is a JSON file, either a list or an object with a `seeds` list, each seed an object with a non-empty `id` and `target`, the
+placed part or the layers the seed lands on (`R4`, `F.SilkS`, `drill, F.Mask, B.Mask`); a target that is neither a part of the placement
+file nor a layer of the layer images is refused, and so are ids given twice. A seed counts as found when the fanned-out check gives a
+row that is not a match, with its finding, against the parts row or a layer the seed list names for it.
+
+The fanned-out run is judged by the kit's pooled criterion with a cost multiple of 2.25, the multiple the layout pre-order run's 2.1
+times the single mean sets for three replicas of which two are on the mid-tier: the seeds found are no fewer than the fewest any
+single run found, no seed every single run found is missed, the wall time is at most half the single mean and the cost at most 2.25
+times its mean. The record, proof-record.json, and its text, proof-record.txt, are written in the work folder; they name the baseline
+key, give every seed with the replicas that raised it, the findings that match no seed, the verdicts row by row with the differences
+from the single run, each session's time, tokens read, written and generated and cost, and the calls refused for a rate limit. A seed
+not reported is closed where the gap lies and the proof repeated in a new session.
+
+Each run's output is under <work>/out/ and the record in <work>; the seed list is copied to <work>/seed/. The review folder is read in
+place, so a session cannot read the seed list or the work folder from it.
+
+--dry prints the plan of the fanned-out run and its predicted cost and time beside the bounds they would be held to, and, where no
+single run is recorded, the plan of the single form; it starts no session and calls no model.
+
+The agent command line is the program named by REVIEW_KIT_AGENT (claude when it is unset), logged in. A run costs money: the
+single form, and the shared context and a fork for each group and replica of the fanned-out form.
+
+Each cause is reported on one line beginning REFUSED, a RESULT line comes last, and the exit status is 0 when the criterion holds,
+1 when the command refuses, a run fails or the criterion does not hold or asks for a second run, and 2 when the agent command line is
+missing. --json prints the same facts as one JSON document.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import shutil
+import sys
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence
+
+TOOLS_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, TOOLS_DIR)
+
+import board_check  # noqa: E402
+import board_history  # noqa: E402
+import review_caller_production_files as caller  # noqa: E402
+import review_folder  # noqa: E402
+import review_proof_harness as harness  # noqa: E402
+import review_seed  # noqa: E402
+import schematic_review_proof as base  # noqa: E402
+from review_kit import command, proof, store  # noqa: E402
+from review_kit import costmodel as cost_model  # noqa: E402
+from review_kit import executor as ex  # noqa: E402
+
+Refused = harness.Refused
+REPO = review_seed.REPO
+CALLER = "production_files"
+DESIGN = review_seed.DESIGN
+SEED_DIR = "seed"
+SEEDS = os.path.join(SEED_DIR, "seeds.json")
+OUT_DIR = "out"
+SINGLE_OUT = os.path.join(OUT_DIR, "single")
+FANNED_OUT = os.path.join(OUT_DIR, "fanned")
+RECORD = "proof-record.json"
+TEXT = "proof-record.txt"
+BASELINES = os.path.join(TOOLS_DIR, "tests", "fixtures", "review_baselines", "production_files_single_runs.json")
+#: The mid-tier model the single form runs on, and so the baseline's, and the model the fanned-out run is started with.
+BASELINE_MODEL = "claude-sonnet-5-5"
+#: The cost multiple of the pooled criterion: the layout pre-order run's 2.1 times the single mean sets it for three replicas, two
+#: of them on the mid-tier.
+COST_MULTIPLE = 2.25
+REPLICAS = 3
+#: The recorded source of a baseline file this command writes.
+BASELINE_SOURCE = ("One single-reviewer run of the production-files proof on its seeded production files, made through the review "
+                   "kit's single form on the mid-tier model by production_files_review_proof.py; wall time, cost and tokens are "
+                   "the kit's figures for the one session of the run.")
+
+
+# --- The folder and the seed list -----------------------------------------------------------------
+
+
+def folder_causes(folder: str, work: str) -> List[str]:
+    """Why the production-files folder is not a folder outside this repository and the work folder that the caller can read."""
+    if not os.path.isdir(folder):
+        return [f"the review folder {folder} is not a folder; give the folder `task hw:production-seed` wrote"]
+    found = []
+    if review_seed.inside(folder, REPO):
+        found.append(f"the review folder {folder} is inside the repository; give the folder outside it that the seeding wrote")
+    if review_seed.inside(folder, work) or review_seed.inside(work, folder):
+        found.append(f"the review folder {folder} and the work folder {work} hold one another; keep them apart")
+    return found
+
+
+def seeds_causes(seeds: str, folder: str, work: str) -> List[str]:
+    found = []
+    if not os.path.isfile(seeds):
+        return [f"the seed list {seeds} does not exist; give the file `task hw:production-seed` wrote apart"]
+    for name, where in (("this repository", REPO), ("the review folder", folder), ("the work folder", work)):
+        if review_seed.inside(seeds, where):
+            found.append(f"the seed list {seeds} is inside {name} {where}; keep it apart from the files and the review folder")
+    return found
+
+
+def targets(item: str) -> List[str]:
+    """The parts and layers a seed's target names, a target naming several separated by commas."""
+    return [each.strip() for each in item.split(",") if each.strip()]
+
+
+def load_seeds(path: str, folder: str) -> List[Dict[str, Any]]:
+    """The seed list: each seed an id and the part or layers it lands on, kept as the seed's `item`. A list that is not readable,
+    a seed without an id or a target, an id given twice and a target that is no placed part or layer of the folder are refused."""
+    try:
+        with open(path, encoding="utf-8") as handle:
+            loaded = json.load(handle)
+    except (OSError, ValueError) as error:
+        raise Refused([f"the seed list {path} cannot be read as JSON ({error})"])
+    listed = loaded.get("seeds") if isinstance(loaded, dict) else loaded
+    if not isinstance(listed, list) or not listed:
+        raise Refused([f"the seed list {path} holds no list of seeds; give a list, or an object with a `seeds` list"])
+    causes = []
+    for number, seed in enumerate(listed, 1):
+        if not isinstance(seed, dict) or not all(isinstance(seed.get(key), str) and seed[key].strip() for key in ("id", "target")):
+            causes.append(f"seed {number} of the seed list has no `id` and `target` as text; give each seed its id and the part "
+                          "or layers it lands on")
+    ids = [seed["id"] for seed in listed if isinstance(seed, dict) and isinstance(seed.get("id"), str)]
+    causes += [f"the seed list gives the id {each} twice" for each in dict.fromkeys(ids) if ids.count(each) > 1]
+    if causes:
+        raise Refused(causes)
+    try:
+        known = {row[0] for row in caller.placement_rows(folder)} | {entry["layer"] for entry in caller.layer_images(folder)}
+    except review_folder.ReviewFolderProblem as error:
+        raise Refused([str(error)])
+    unknown = [f"the seed {seed['id']} names {each!r}, which is no placed part of the placement file or layer of the layer images"
+               for seed in listed for each in targets(seed["target"]) if each not in known]
+    if unknown:
+        raise Refused(unknown)
+    return [{**seed, "item": seed["target"].strip()} for seed in listed]
+
+
+def judged_commit(folder: str) -> str:
+    """The commit the folder's round file says the files were exported from."""
+    try:
+        return str(caller.production_round(folder)["commit"])
+    except review_folder.ReviewFolderProblem as error:
+        raise Refused([str(error)])
+
+
+# --- Matching seeds to results ------------------------------------------------------------------
+
+
+def parsed_round(text: str) -> Dict[str, Any]:
+    """The rows, of the merged record's Parts and Layers tables, whose verdict is not a match."""
+    lines = text.splitlines()
+    found = []
+    for header in (caller.PARTS_TABLE, caller.LAYERS_TABLE):
+        _, rows, _ = board_history.table(lines, header)
+        found += [row[0].strip("`") for row in rows if row[-2].strip("` ") != caller.MATCHES]
+    return {"raised_by": found}
+
+
+def names(item: str, cell: str) -> bool:
+    return cell.strip().casefold() in [each.casefold() for each in targets(item)]
+
+
+def matches(seed: Mapping[str, Any], row: Mapping[str, Any]) -> bool:
+    """Whether a finding, which a `differs` row raises, is of the part or a layer the seed lands on."""
+    return names(seed["item"], str(row.get("Item", "")))
+
+
+# --- The record and its text ----------------------------------------------------------------------
+
+
+def build(seeds: Sequence[Mapping[str, Any]], key: proof.BaselineKey, singles: Sequence[proof.RunOutcome], fanned: proof.RunOutcome,
+          extra: Mapping[str, Any], context: Mapping[str, Any]) -> Dict[str, Any]:
+    """The kit's record of the proof over the fanned-out run, and what the run's saved streams show."""
+    record = proof.build_record(seeds, singles, [fanned], COST_MULTIPLE, [key])
+    record["production_files"] = dict(context, fanned=extra, baseline_key=key.id)
+    return record
+
+
+def lines_of(record: Mapping[str, Any]) -> List[str]:
+    context = record["production_files"]
+    extra = context["fanned"]
+    found = [f"PROOF | single form on {context['baseline_model']} ({context['single_form']}) | fanned form on "
+             f"{context['models']['fanned']} with {REPLICAS} replicas | tool commit {context['tool_commit']} | files exported at "
+             f"commit {context['seeded_commit']} | cost multiple {COST_MULTIPLE:g}"]
+    found.append(f"BASELINE KEY | {context['baseline_key']}")
+    found += [f"CRITERION | {line}" for line in proof.record_lines(record)]
+    found.append(f"ROUND | fanned | refused for a rate limit {extra['refused_for_a_rate_limit']} | merged check "
+                 f"{'written' if extra['merged'] else 'refused'} | seeds the merged check names "
+                 f"{', '.join(extra['merged_round_seeds_found'] or []) or 'none'}")
+    for seed in record["seeds"]:
+        for name, replicas in record["seed_replicas"].get(seed, {}).items():
+            found.append(f"SEED | {seed} | {name} | raised by {', '.join(replicas) or 'none'}")
+    for run in record["fanned_runs"]:
+        found += [f"UNSEEDED | {board_check.clean(each)}" for each in run["unmatched"]]
+        found += [f"SESSION | {each['session']} | {each['wall_s']:g} s | read {each['tokens_read']} wrote {each['tokens_written']} "
+                  f"generated {each['tokens_generated']} | {each['cost_usd']:g} USD | first call read {each['first_call_read']}"
+                  for each in run["sessions"]]
+    for run_id, differences in record.get("verdict_differences", {}).items():
+        found += [f"VERDICT DIFFERENCE | {run_id} | {each['item']} | fanned {each['fanned']} | single {each['single']}"
+                  for each in differences]
+    found.append(f"BOUND | groups at once in the run {context['bound']} | calls refused for a rate limit "
+                 f"{extra['refused_for_a_rate_limit']}")
+    return found
+
+
+def dry_lines(plan: Mapping[str, Any], model: str, single: Optional[List[proof.RunOutcome]],
+              single_plan: Optional[Mapping[str, Any]], key: Optional[proof.BaselineKey] = None) -> List[str]:
+    """The plan and predicted cost and time of the fanned-out run, beside the bounds it is held to."""
+    found = ["DRY | no session is started and no model is called"]
+    if single:
+        mean_cost, mean_wall = proof.mean([run.cost_usd for run in single]), proof.mean([run.wall_s for run in single])
+        found.append(f"SINGLE | recorded under key {key}: {len(single)} run(s) | mean ${mean_cost:.2f} | mean {mean_wall:.0f} s")
+    else:
+        mean_cost, mean_wall = single_plan["predicted"]["cost_usd"], single_plan["predicted"]["wall_s"]
+        found.append(f"SINGLE | none recorded under key {key}, so the single form would run once on {BASELINE_MODEL} | predicted "
+                     f"${mean_cost:.2f} | {mean_wall:.0f} s | {single_plan['forks']} fork | the bounds below are from the prediction")
+    cost, wall = COST_MULTIPLE * mean_cost, proof.WALL_FRACTION * mean_wall
+    found.append(f"COST MULTIPLE | {COST_MULTIPLE:g} | bounds: cost at most ${cost:.2f} ({COST_MULTIPLE:g} times the single mean "
+                 f"${mean_cost:.2f}), wall time at most {wall:.0f} s (half the single mean {mean_wall:.0f} s)")
+    predicted = plan["predicted"]
+    other = [context["model"] for context in plan.get("contexts", ())]
+    found += [f"WARNING | {cost_model.unpriced_text(each)}" for each in cost_model.unpriced([model] + other)]
+    found.append(f"PLAN | fanned | {REPLICAS} replicas | {len(plan['groups'])} groups | {plan['forks']} forks | bound "
+                 f"{plan['bound']} | shared context {plan['shared_tokens']} tokens | variants {', '.join(plan['variants'])}")
+    found += [f"GROUP | {group['id']} | units {', '.join(group['units'])} | {group['replicas']} replicas | expected output "
+              f"{group['expected_output_tokens']} tokens" for group in plan["groups"]]
+    found.append(f"PREDICTED | fanned | ${predicted['cost_usd']} | {predicted['wall_s']} s | cost "
+                 f"{'within' if predicted['cost_usd'] <= cost else 'over'} its bound, time "
+                 f"{'within' if predicted['wall_s'] <= wall else 'over'} its bound")
+    near = [f"{what} {figure} against its bound {limit:.2f}" for what, figure, limit in
+            (("cost", predicted["cost_usd"], cost), ("wall time", predicted["wall_s"], wall)) if figure > limit * (1 - proof.NEAR)]
+    if near:
+        found.append("WARNING | predicted " + " and ".join(near) + f", over it or within {proof.NEAR:.0%} of it; a live run is "
+                     "likely to fail that bound or to need a second run")
+    return found
+
+
+# --- The command --------------------------------------------------------------------------------
+
+
+def refusals(work: str) -> List[str]:
+    found = []
+    if review_seed.inside(work, REPO):
+        found.append(f"the work folder {work} is inside the repository; give a folder outside it")
+    if os.path.isfile(work):
+        found.append(f"the work folder {work} is a file; give a new or empty folder")
+    elif os.path.isdir(work) and os.listdir(work):
+        found.append(f"the work folder {work} already holds files; give a new or empty folder")
+    return found
+
+
+def single_key(folder: str, work: str, model: str, seeds: Sequence[Mapping[str, Any]], tree: str,
+               environ: Mapping[str, str]) -> proof.BaselineKey:
+    """The key the single form would be recorded under: the seed list, the design, the model and the prompt it would be given."""
+    run = harness.settled_run(CALLER, TOOLS_DIR, folder, os.path.join(work, SINGLE_OUT), model, environ)
+    try:
+        formed = harness.single_plan(run, environ)
+    except ex.CannotRun as error:
+        raise board_check.CannotRun(str(error))
+    return harness.baseline_key(seeds, tree, model, formed)
+
+
+def recorded_under(path: str, key: proof.BaselineKey) -> Optional[List[proof.RunOutcome]]:
+    """The single runs recorded under exactly this key, None when the file is absent or holds none; a file that cannot be read is
+    refused."""
+    if not os.path.exists(path):
+        return None
+    try:
+        return proof.load_baselines(path).recorded(key) or None
+    except proof.BaselineFileError as error:
+        raise Refused([str(error)])
+
+
+def main(argv: Optional[List[str]] = None, out=sys.stdout, err=sys.stderr, environ: Optional[Mapping[str, str]] = None,
+         baselines: str = BASELINES, main_command: Callable[..., int] = command.main) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument("--work", required=True, help="a new folder outside the repository the run keeps its output in")
+    parser.add_argument("--folder", required=True, help="the production-files folder `task hw:production-seed` wrote, outside the repository")
+    parser.add_argument("--seeds", required=True, help="the seed list `task hw:production-seed` wrote apart from the folder")
+    parser.add_argument("--baseline-model", default=BASELINE_MODEL, help=f"the full model id the single form runs on (default: {BASELINE_MODEL}, the mid-tier)")
+    parser.add_argument("--fanned-model", default=BASELINE_MODEL, help=f"the full model id the fanned-out run is started with (default: {BASELINE_MODEL}); the caller's own replica policy names the model of each replica")
+    parser.add_argument("--bound", type=int, default=None, help="the most sessions at once (default: every fork together)")
+    parser.add_argument("--baselines", default=None, help="the baselines file the single run is read from or recorded in (default: the review's own)")
+    parser.add_argument("--dry", action="store_true", help="print the plan and the predicted cost and time and start no session")
+    parser.add_argument("--json", action="store_true", help="print the result as one JSON document")
+    args = parser.parse_args(argv)
+    environ = dict(environ if environ is not None else os.environ)
+    work, folder, seeds_path = os.path.abspath(args.work), os.path.abspath(args.folder), os.path.abspath(args.seeds)
+    baselines = os.path.abspath(args.baselines) if args.baselines else baselines
+    result: Dict[str, Any] = {"result": command.REFUSED, "refusals": refusals(work), "detail": "nothing was run", "lines": []}
+
+    def finish(status: int) -> int:
+        if args.json:
+            json.dump(result, out, indent=1)
+            out.write("\n")
+        else:
+            for line in result["lines"]:
+                print(line, file=out)
+            for why in result["refusals"]:
+                print(f"REFUSED | {board_check.clean(why)}", file=out)
+            print(f"RESULT | {result['result']} | {board_check.clean(result['detail'])}", file=err if status == 2 else out)
+        return status
+
+    if args.bound is not None and args.bound < 1:
+        result["refusals"].append(f"the bound {args.bound} is below one; give one or more sessions at once")
+    for flag, value in (("--baseline-model", args.baseline_model), ("--fanned-model", args.fanned_model)):
+        if not value.strip():
+            result["refusals"].append(f"{flag} is empty; give a full model id")
+    if not result["refusals"]:
+        result["refusals"] += folder_causes(folder, work) + seeds_causes(seeds_path, folder, work)
+    if result["refusals"]:
+        return finish(1)
+    try:
+        seeds = load_seeds(seeds_path, folder)
+        commit = judged_commit(folder)
+        tree = base.design_tree(REPO, "HEAD", DESIGN)
+        os.makedirs(os.path.join(work, SEED_DIR), exist_ok=True)
+        shutil.copyfile(seeds_path, os.path.join(work, SEEDS))
+        key = single_key(folder, work, args.baseline_model, seeds, tree, environ)
+        singles = recorded_under(baselines, key)
+        if args.dry:
+            plan = harness.plan_of(CALLER, TOOLS_DIR, folder, os.path.join(work, FANNED_OUT), args.fanned_model, REPLICAS, args.bound, environ)
+            single_plan = None if singles else harness.single_plan_of(CALLER, TOOLS_DIR, folder, os.path.join(work, SINGLE_OUT),
+                                                                      args.baseline_model, environ)
+            result.update(result="PLANNED", refusals=[], lines=dry_lines(plan, args.fanned_model, singles, single_plan, key),
+                          plan=plan, detail="no session was started and no model was called")
+            return finish(0)
+        os.makedirs(os.path.join(work, OUT_DIR), exist_ok=True)
+        if singles:
+            single_form = f"recorded under key {key}"
+        else:
+            key, outcome = harness.run_single(CALLER, TOOLS_DIR, folder, os.path.join(work, SINGLE_OUT), args.baseline_model,
+                                              environ, seeds, commit, tree, matches, baselines, BASELINE_SOURCE)
+            singles, single_form = [outcome], f"run now, recorded in {baselines} under key {key}"
+        output = os.path.join(work, FANNED_OUT)
+        status, report = harness.run_command(CALLER, TOOLS_DIR, folder, output, args.fanned_model, REPLICAS, args.bound, environ,
+                                             main_command)
+        if report.get("cannot_run"):
+            raise board_check.CannotRun(report["cannot_run"])
+        if not store.holds_record(output):
+            raise Refused([f"fanned: {why}" for why in report["refusals"]] or ["fanned: the run wrote no record"])
+        fanned, extra = harness.outcome_of(CALLER, TOOLS_DIR, "production-files-fanned-3", folder, output, seeds, commit, matches,
+                                           parsed_round, names, "fanned")
+        extra["command_report"] = {"result": report["result"], "detail": report["detail"], "refusals": report["refusals"],
+                                   "bound": report["plan"]["bound"]}
+    except Refused as error:
+        result["refusals"] = error.causes
+        return finish(1)
+    except board_check.CannotRun as error:
+        result.update(result=command.CANNOT_RUN, refusals=[], detail=str(error))
+        return finish(2)
+    record = build(seeds, key, singles, fanned, extra, {
+        "models": {"fanned": args.fanned_model}, "baseline_model": key.model, "single_form": single_form,
+        "tool_commit": harness.tool_commit(), "seeded_commit": commit, "work": work, "bound": extra["command_report"]["bound"]})
+    store.atomic_write_json(os.path.join(work, RECORD), record)
+    lines = lines_of(record)
+    with open(os.path.join(work, TEXT), "w", encoding="utf-8") as handle:
+        handle.write("\n".join(lines) + "\n")
+    held = record["verdict"]["accepted"]
+    result.update(result="WRITTEN" if held else "FAILED", refusals=[], lines=lines, record=record,
+                  detail=os.path.join(work, RECORD) if held else
+                  f"the criterion is {record['verdict']['status']}; the record is {os.path.join(work, RECORD)}")
+    if not extra["merged"]:
+        result["lines"].append("NOTE | the merge was refused, so no check record was written; the seeds are judged from the replicas' findings")
+    return finish(0 if held else 1)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
