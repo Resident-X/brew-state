@@ -29,5 +29,5 @@ links:
     type: supersedes
 brief_confirmation:
   confirmer: claude-sonnet-5-5 (independent brief reviewer)
-  fingerprint: 1caad5c421a88d40b779e9c5fa2f91d7e392e6a8423df277018dfacb16daf5b7
+  fingerprint: e9a5ced0312547d2232ad00c71016fb3acfef5dda26d8a1259d3a6836dce24a1
   gating_profile: ""
