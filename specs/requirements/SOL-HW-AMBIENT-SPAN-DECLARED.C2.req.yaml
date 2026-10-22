@@ -1,0 +1,12 @@
+id: SOL-HW-AMBIENT-SPAN-DECLARED.C2
+type: criterion
+title: The humidity inside the enclosure is declared as condensing with the facts known of its moisture exposure
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  State in the same section that the humidity inside the controller's enclosure is declared as condensing, its worst case, until it is measured, and record as the builder's account, not measured, that the enclosure is sealed from the steam wand, that steam may be present in the machine around it, that moisture beyond the room's humidity would need a failure such as a burst water line beside it, and that a conformal coat is planned once the boards work. Out of scope: the pollution degree and whether the boards count as protected against moisture, which the separation basis settles.
+links:
+  - target: SOL-HW-AMBIENT-SPAN-DECLARED
+    type: criterion-of

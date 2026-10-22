@@ -1,0 +1,33 @@
+id: SOL-HW-ENCLOSURE-AIR-ASSUMED-RECORDED
+type: deliverable
+category: solution
+title: The air temperature the controller's parts are graded to is recorded for the design as a derived project assumption with its premises and its check
+status: active
+version: 2
+text: |
+  Records, in the board design constraints record, controller-board-design-constraints.md, the air temperature inside the controller's enclosure that the parts on the boards are graded to, as a project assumption. The machine is out of service with its original controller removed, so the air temperature cannot be measured on it running before the boards are designed; the design needs a figure to grade against now, and the measurement is moved to the closed machine at bring-up, where it checks the figure.
+
+  The figure is the top of the declared room-temperature span, which SOL-HW-AMBIENT-SPAN-DECLARED declares as 35 degC, plus an assumed rise of 35 K: 70 degC. The record gives it the grade project assumption, which that record defines as a value chosen where no fact exists, marked to replace, and states the derivation. The rise is unmeasured. No part is selected: the partition and feasibility task chooses the form of each function and the design task for each board chooses its parts from the manufacturer's catalogue, so the figure is a design target the selected parts are held to and not a figure derived from any selected part. It is set high so that the design is not graded to an optimistic figure, and a lower one could not be checked until the boards exist. As a check that the target can be met, the earlier design's candidate for the logic supply, the IRM-10-5, which is stocked in the catalogue but is the earlier design's choice and not this one's, carries 1.0 A at 70 degC on the chart values read for it against that design's worst-case load of 0.66 to 0.86 A, a thin margin that the boards' own dissipation, which the air figure excludes, reduces. The derating analysis grades every part chosen for any function against the figure, the mains inlet filter's derating above 50 degC among them, and if no catalogue part holds at it the figure is revisited with the reason recorded. The record says that an adopter's machine takes its own declared span and its own rise in place of both, and that the figure is replaced by what the bring-up measurement of the enclosure's air temperature establishes.
+
+  The record states the premises the figure rests on, with who stated each and when. First, the owner's plan, stated 2026-10-23: the two heater switching devices are mounted outside the controller enclosure, directly on the machine's metal wall at the bottom of the machine near the pumps, by cutting away the plastic side wall, so the owner's plan places the switches and their dissipation outside the enclosure, and any heat they pass to the enclosure through the shared wall is for the partition task to assess; if they are mounted inside it, the figure is derived again. Second, the heat the two thermoblocks give off near the enclosure is what drives the rise, and it is not estimated here. Third, the boards' own dissipation is not part of the air figure: the derating analysis adds it when it grades each part. The record also states that humidity is declared once, in reference-machine.md § Ambient, as condensing until measured, and cites it without declaring anything of its own.
+
+  Two entries are marked pending against the work that settles them. The check of the figure on the running machine is pending against the bring-up criterion that measures it, and ends when that work records the measured figure and its source. Whether mounting the heater switching devices on a cut wall keeps the retrofit within the requirement that the replacement electronics drop into the machine as found, or makes the switching assembly a device the retrofit adds, which that requirement leaves outside its scope, is pending against the partition and feasibility task, which also settles where each heater switch is judged against its rated temperature.
+rationale: |
+  The grade of every part, and the derating analysis that follows it, start from the air around the boards, and the figure for it is still an estimate. The machine cannot be run with its original controller to measure it, and waiting for the new boards to measure it would hold the partition of the circuitry for a figure that moves no part choice. Recording a conservative, derived and checked assumption lets design proceed on a stated figure, and the bring-up measurement that the requirement asks for confirms it or replaces it.
+links:
+  - target: DEL-HW-DESIGN-CONSTRAINTS.C7
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C14
+    type: targets
+  - target: REQ-MACHINE-CONFIGURATION-001.C7
+    type: targets
+  - target: SOL-HW-AMBIENT-SPAN-DECLARED
+    type: depends-on
+  - target: DEC-MACHINE-RECORD-FOLDER-PER-MACHINE
+    type: justified-by
+  - target: SOL-HW-ENCLOSURE-AMBIENT-MEASURED
+    type: supersedes
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: e9a5ced0312547d2232ad00c71016fb3acfef5dda26d8a1259d3a6836dce24a1
+  gating_profile: ""

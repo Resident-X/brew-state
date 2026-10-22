@@ -1,0 +1,12 @@
+id: SOL-HW-AMBIENT-SPAN-DECLARED.C3
+type: criterion
+title: What depends on the declared ambient conditions is listed and the documents that restate them agree
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Add a row for the ambient span and the enclosure humidity to the table of what depends on the declared values in reference-machine.md, naming each reader of them, and correct or point to the declaration from every document in docs/sunbeam-em7000/ that states an ambient or enclosure humidity figure. Out of scope: changing the plant model's ambient coefficient or any result generated from it.
+links:
+  - target: SOL-HW-AMBIENT-SPAN-DECLARED
+    type: criterion-of

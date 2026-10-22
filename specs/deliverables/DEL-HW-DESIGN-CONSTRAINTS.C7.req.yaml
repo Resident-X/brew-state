@@ -1,13 +1,13 @@
 id: DEL-HW-DESIGN-CONSTRAINTS.C7
 type: criterion
-title: The temperature inside the controller's enclosure is established on the running machine
+title: The air temperature inside the controller's enclosure that the parts are graded to is fixed for the design with its derivation and its check
 status: active
-version: 1
+version: 2
 measurement_type: binary
-verification: test
+verification: inspection
 closes_by: cascade
 text: |
-  The air temperature in the space the controller occupies is measured on the machine at sustained full heat with the enclosure closed, and recorded with how it was established and the room temperature at the time, so the figure the boards' parts are graded to rests on this machine rather than on an estimate. The humidity there, which cannot be measured while the machine runs, is recorded as taken at its worst.
+  The air temperature the boards' parts are graded to is recorded for the design as a project assumption with its derivation, the premises it rests on and the work that checks it against the running machine, so that the grade of every part rests on a stated figure that a later measurement can confirm or replace rather than on an unstated estimate. The humidity there, which cannot be measured while the machine runs, is recorded as taken at its worst.
 links:
   - target: DEL-HW-DESIGN-CONSTRAINTS
     type: criterion-of

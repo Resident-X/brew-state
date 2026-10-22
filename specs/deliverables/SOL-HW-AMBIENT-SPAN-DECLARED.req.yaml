@@ -1,0 +1,29 @@
+id: SOL-HW-AMBIENT-SPAN-DECLARED
+type: deliverable
+category: solution
+title: The room-temperature span the machine works across and the humidity inside the controller's enclosure are declared in the machine's configuration record
+status: active
+version: 4
+text: |
+  Declares in the machine's reference record, reference-machine.md, the ambient conditions the controller's enclosure sits in, as the declaration REQ-MACHINE-CONFIGURATION-001.C7 asks for. Until now the span of room temperature the machine works across is not declared anywhere; the only figure in the repository is the plant model's assumed indoor ambient, an estimate, and the grade of every part on the boards, and the top of the span the enclosure's rise is added to, would rest on it.
+
+  The span is a room temperature, not the temperature inside the enclosure. The builder states it from the room the machine stands in, a domestic kitchen: 10 degC at the coldest, a winter morning in the builder's kitchen, to 35 degC at the warmest. The top is a design figure set above the builder's own warmest room, about 28 degC on a summer day without air conditioning, so that the record also serves a machine standing in a warmer kitchen than this one; the bottom is the builder's account of their own room. Both are stated by the builder, not measured, and the record says so. The temperature inside the enclosure is a separate figure: the room plus the enclosure's rise, taken for the design as an assumption recorded in the board design constraints and checked by the measurement at bring-up, with the top of this span, 35 degC, as the room.
+
+  Humidity inside the enclosure is declared as condensing, its worst case, until it is measured, which a builder without a laboratory cannot do on a running machine. The record states what is known of the enclosure's moisture exposure, as the builder's account and not a measurement: the enclosure is sealed from the steam wand, steam may be present in the machine around it, moisture beyond the room's humidity would need a failure such as a burst water line beside it, and a conformal coat on the boards is planned once they work. This declaration is the one place the humidity is declared: SOL-HW-ENCLOSURE-AIR-ASSUMED-RECORDED, which depends on it for the top of the span, records the humidity in the design-constraints record by citing this declaration and declares nothing of its own. It does not choose the pollution degree or decide whether the boards count as protected against moisture; the separation basis does, from these facts.
+
+  The section goes beside the supply span in reference-machine.md and states each value with who declared it and how it was established, as the section on the supply does. The table of what depends on the declared values gains a row for the ambient span and the humidity, naming what reads them: the grading of the parts and the enclosure temperature figure, the bring-up measurement that corrects part temperatures to the top of the span, the separation basis's assumed environment, and the plant model's ambient coefficient in firmware/params/thermoblock.params, which was sized to an assumed indoor ambient and is not changed by this declaration. Any document in the machine's folder that states an ambient or enclosure humidity figure is corrected to match the declaration or points to it.
+rationale: |
+  The grade of every part on the boards is drawn from the air around them, and that air is the room plus what the machine adds. The addition is assumed for the design and checked by measurement on the machine at bring-up, but the room it is added to was never declared, so the figure the parts are graded to would rest on whatever span the designer assumed. Declaring the room's span once, where the other declared conditions live, makes the figure checkable by someone who stands in a different room: they replace the span and recompute.
+links:
+  - target: DEL-HW-DESIGN-CONSTRAINTS.C8
+    type: derives-from
+  - target: REQ-MACHINE-CONFIGURATION-001.C7
+    type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C14
+    type: targets
+  - target: DEC-MACHINE-RECORD-FOLDER-PER-MACHINE
+    type: justified-by
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: 81bc4cfa34a5160796736cd296df64fcb186b45f81b8239befa37d492aa7f772
+  gating_profile: ""

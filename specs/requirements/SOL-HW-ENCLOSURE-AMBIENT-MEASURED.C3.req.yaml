@@ -1,12 +1,12 @@
 id: SOL-HW-ENCLOSURE-AMBIENT-MEASURED.C3
 type: criterion
 title: Humidity inside the enclosure is recorded as taken at its worst, condensing
-status: active
-version: 1
+status: deprecated
+version: 2
 measurement_type: binary
 verification: inspection
 text: |
-  Record in the same section that humidity was not measured, why it cannot be with the builder's means, and that it is taken as condensing unless the boards are protected against moisture. Out of scope: measuring humidity, which belongs to a production-grade build.
+  Record in the same section that humidity was not measured, why it cannot be with the builder's means, and that it is taken as condensing unless the boards are protected against moisture, citing the declaration of the humidity in reference-machine.md that SOL-HW-AMBIENT-SPAN-DECLARED owns and declaring nothing of its own. Out of scope: declaring the humidity, which that solution does, and measuring it, which belongs to a production-grade build.
 links:
   - target: SOL-HW-ENCLOSURE-AMBIENT-MEASURED
     type: criterion-of

@@ -1,0 +1,16 @@
+id: EV-SOL-HW-ENCLOSURE-AIR-ASSUMED-RECORDED-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-ENCLOSURE-AIR-ASSUMED-RECORDED.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-22T20:49:15.89389Z"
+artifact:
+  kind: external
+  reference: 'inspection: docs/sunbeam-em7000/controller-board-design-constraints.md § Enclosure air temperature states the owner''s plan dated 2026-10-23 (heater switches outside the enclosure on the metal wall near the pumps, the switches and their dissipation placed outside by the plan, any heat passed through the shared wall left to the partition task; re-derive if inside), that the thermoblocks'' heat drives the rise and is not estimated, and that the boards'' own dissipation is added by the derating analysis and not in the air figure'
+  artifact_version: 7bacad7de18377dbe98484f4b98cca57e558f178
+attested_by: crun-0675a56556508887
+links:
+  - target: SOL-HW-ENCLOSURE-AIR-ASSUMED-RECORDED.C2
+    type: satisfies

@@ -1,0 +1,16 @@
+id: EV-SOL-HW-AMBIENT-SPAN-DECLARED-C3-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-AMBIENT-SPAN-DECLARED.C3
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-22T12:23:16.157361Z"
+artifact:
+  kind: external
+  reference: 'inspection: reference-machine.md § What depends on these values has a new two-column row (in the Declared value / What depends on it table; the supply table is left well-formed, a cell-count check of every table in the file finds none off) naming the grading of parts and enclosure temperature figure, the bring-up correction, the separation basis environment and the untouched plant-model ambient coefficient; grep of docs/sunbeam-em7000 for ambient/humidity/enclosure-moisture statements found restatements in controller-design/mains-inlet-protection.md (four places, including the conformal-coat line that called the box not sealed), controller-design/system-design.md, controller-design/control-system-bom.csv (conformal coating row, no longer states the box is unsealed or that steam leaks in) and component-specification.md (the ''top of the declared span'' phrase now reads ''declared supply span''), each now agreeing with or pointing to § Ambient; remaining hits are IRM spec derating curves, 20.3/25.4 °C resistance-reading conditions, or history notes, left alone. firmware/ untouched.'
+  artifact_version: 68c711f83d97c01d7373492fda5a2d6afb909734
+attested_by: crun-e3a7993191f98662
+links:
+  - target: SOL-HW-AMBIENT-SPAN-DECLARED.C3
+    type: satisfies

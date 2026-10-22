@@ -4,7 +4,7 @@ category: task
 title: How the circuitry divides between boards is chosen on evidence that it fits, before detailed design
 status: active
 level: task
-version: 1
+version: 2
 text: |
   With the constraints fixed, each function is given its form, a circuit the project designs or a module it buys, including whether the controller is designed onto the board or remains a module. The earlier design's modules, the controller module, the pump dimmers, the relay module, the supply carrier and the energy meters, are each reopened here, and a published reference design is preferred wherever one exists. The circuitry is then divided between boards and shown at block level to fit the space the machine provides, with each connector placed where its retained harness reaches and room found for the proof-of-life interlock. The separation basis between mains-referenced and low-voltage circuitry is declared and signed for here, before any layout, and spare capacity for the channels the machine is expected to gain is reserved wherever it costs no other criterion.
 
