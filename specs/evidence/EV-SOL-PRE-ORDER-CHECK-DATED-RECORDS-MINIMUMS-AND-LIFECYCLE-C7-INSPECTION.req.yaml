@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE-C7-INSPECTION
+type: evidence
+title: inspection evidence for SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C7
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-22T14:47:45.835469Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_minimums.py::test_each_rule_has_a_row_naming_what_fails_it_what_exempts_a_design_and_the_name_it_is_reported_under
+  artifact_version: d352f50daff978bfe88264260ecf3a8c2424f680
+attested_by: crun-991cc497f044fb8d
+links:
+  - target: SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C7
+    type: satisfies
