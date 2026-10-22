@@ -92,6 +92,8 @@ REPO = review_seed.REPO
 ROUND_FILE = "round.json"
 TOOL = "review-folder"
 ADDED_VIEWS = "added-views"
+#: The folder of a production-files review folder that holds the assembler's preview as supplied.
+PREVIEW = "preview"
 #: The folder of a review folder that holds the text files added to resolve a cannot judge that needed a document.
 ADDED_DOCUMENTS = "added-documents"
 #: The largest text file the add-document mode takes.
@@ -128,6 +130,11 @@ KINDS = ("full", "narrow")
 LAYOUT_FIELDS = ("number", "kind", "commit", "views", "check")
 #: The critical-routing check's pass fields: the pass number, the commit judged and the views, in the order a round file gives them.
 CRITICAL_FIELDS = ("number", "commit", "views")
+def is_production_fields(fields: Sequence[str]) -> bool:
+    """Whether a round file's fields are the production-files check's, the one test of that folder's review."""
+    return list(fields) == list(PRODUCTION_FIELDS)
+
+
 def is_critical_routing_fields(fields: Sequence[str]) -> bool:
     """Whether a round file's fields are a critical-routing pass's; the one test of a folder's review, since a layout folder
     may be written with any documented subset of its fields."""
@@ -136,8 +143,13 @@ def is_critical_routing_fields(fields: Sequence[str]) -> bool:
 
 #: The round fields each review's folder has.
 REVIEW_FIELDS = {LAYOUT: LAYOUT_FIELDS, CRITICAL_ROUTING: CRITICAL_FIELDS}
+#: The fields of a layout round and of a critical-routing pass, which are subsets of one list.
+LAYOUT_FIELD_NAMES = ("number", "kind", "commit", "views", "check")
+#: The production-files check's fields, in the order its round file gives them: the commit judged, the tools and the commands the
+#: files were exported and drawn with, and the line saying what the assembler's preview is.
+PRODUCTION_FIELDS = ("commit", "tools", "commands", "preview")
 #: Every field a set may name.
-FIELD_NAMES = ("number", "kind", "commit", "views", "check")
+FIELD_NAMES = LAYOUT_FIELD_NAMES + ("tools", "commands", "preview")
 #: The fields a narrow round adds to its set when the set has a kind.
 NARROW_FIELDS = ("items", "regions", "others")
 #: What a line of the pre-order check's report that a round states begins with.
@@ -190,6 +202,16 @@ def round_problems(values: Dict[str, Any], fields: Sequence[str] = LAYOUT_FIELDS
                          "VIOLATION line under it, each as one line of the report and at least the DESIGN line")
         elif sum(line.startswith("DESIGN |") for line in lines) != 1:
             found.append("the pre-order check's lines hold no DESIGN line, or more than one; give the board's one DESIGN line")
+    if "tools" in fields and not (one_line(values.get("tools")) and "```" not in values["tools"]):
+        found.append(f"the tools are {values.get('tools')!r}; give the versions of the export and drawing tools as one line of text")
+    if "commands" in fields:
+        commands = values.get("commands")
+        if not isinstance(commands, list) or not commands or not all(one_line(line) and "```" not in line for line in commands):
+            found.append(f"the commands are {commands!r}; give each command the files were exported or drawn with as one line "
+                         "of text, and at least one")
+    if "preview" in fields and not (one_line(values.get("preview")) and "```" not in values["preview"]):
+        found.append(f"the preview line is {values.get('preview')!r}; give what the assembler's preview is, with its date, as "
+                     "one line of text")
     if "kind" in fields and kind == "narrow":
         found += narrow_problems(values)
     elif "kind" not in fields or kind == "full":
@@ -230,6 +252,15 @@ def read_round(folder: str) -> Dict[str, Any]:
     if (not isinstance(content, dict) or content.get("tool") != TOOL or not isinstance(fields, list)
             or not all(name in FIELD_NAMES for name in fields)):
         raise ReviewFolderProblem(f"the round file {path} is not one the folder command wrote; write the folder with it")
+    if any(name in PRODUCTION_FIELDS[1:] for name in fields) and not is_production_fields(fields):
+        raise ReviewFolderProblem(f"the round file {path} mixes the production-files check's fields with another review's; "
+                                  "write the folder with the folder command")
+    if is_production_fields(fields):
+        stray = sorted(key for key in content if key not in ("tool", "fields") + tuple(PRODUCTION_FIELDS))
+        if stray:
+            raise ReviewFolderProblem(f"the round file {path} holds {', '.join(stray)}, which the production-files check's round "
+                                      f"file does not have (it holds {', '.join(PRODUCTION_FIELDS)}); write the folder with the "
+                                      "folder command")
     problems = round_problems(content, fields)
     if problems:
         raise ReviewFolderProblem(f"the round file {path} holds fields that are missing or malformed: " + "; ".join(problems))
@@ -474,9 +505,9 @@ def refusals(args: argparse.Namespace, out: str, repo: str, documents_repo: str,
         found.append(f"the review folder {out} is a file; give a new or empty folder")
     elif os.path.isdir(out) and os.listdir(out):
         found.append(f"the review folder {out} already holds files; give a new or empty folder")
-    unknown = [name for name in fields if name not in FIELD_NAMES]
+    unknown = [name for name in fields if name not in LAYOUT_FIELD_NAMES]
     if unknown:
-        found.append(f"the round fields {', '.join(unknown)} are not fields of a round; the fields are {', '.join(FIELD_NAMES)}")
+        found.append(f"the round fields {', '.join(unknown)} are not fields of a round; the fields are {', '.join(LAYOUT_FIELD_NAMES)}")
     else:
         found += round_problems(values, fields)
     given = [("views", args.views)] + ([("placement view", args.placement)] if review == LAYOUT or args.placement else [])
@@ -528,6 +559,12 @@ def earlier_numbers(text: str, number: int) -> List[int]:
                 break
             found.append(int(mark.group(1)))
     return found
+
+
+def round_content(fields: Sequence[str], values: Dict[str, Any]) -> Dict[str, Any]:
+    """The round file's content: the marker, the field set and the values of the fields in it (and a narrow round's own)."""
+    return {"tool": TOOL, "fields": list(fields), **{key: values[key] for key in values
+            if key in fields or key in NARROW_FIELDS and values[key] not in (None, [], "")}}
 
 
 def settled(content: Dict[str, Any]) -> str:
@@ -603,8 +640,7 @@ def write_folder(args: argparse.Namespace, out: str, repo: str, documents_repo: 
         for extract, text in extracts.items():
             with open(os.path.join(out, extract), "w", encoding="utf-8", newline="") as handle:
                 handle.write(text)
-        content = {"tool": TOOL, "fields": list(fields), **{key: values[key] for key in values
-                   if key in fields or key in NARROW_FIELDS and values[key] not in (None, [], "")}}
+        content = round_content(fields, values)
         with open(os.path.join(out, ROUND_FILE), "w", encoding="utf-8") as handle:
             handle.write(settled(content))
         review_seed.same_time(out)
