@@ -242,7 +242,7 @@ def write_baseline(path: str, source: str, seeds: Sequence[Mapping[str, Any]], k
                 held = json.load(handle)
         except (proof.BaselineFileError, OSError, ValueError) as error:
             raise Refused([f"the baselines file {path} cannot be added to ({error}); move it away, or give another file"])
-        if loaded.recorded(key):
+        if loaded.recorded(key) or any(group.get("key") == key.as_dict() for group in held.get("baselines", [])):
             raise Refused([f"the baselines file {path} already holds single runs under this key; a recorded baseline is not run again"])
         held["source"] = f"{held.get('source', '')} {source}".strip()
     held["baselines"] = list(held["baselines"]) + [{"key": key.as_dict(), "runs": [outcome.as_dict()]}]
@@ -336,12 +336,12 @@ def baseline_lock(path: str) -> Iterator[None]:
     """An exclusive advisory lock on a file beside the baselines file, held across reading the guard, running the single form and
     writing the baseline, so two invocations cannot both pay for one key and a write cannot drop another's. A lock already held is
     refused naming it, not waited for."""
-    lock = f"{path}.lock"
+    lock = f"{os.path.realpath(path)}.lock"
     os.makedirs(os.path.dirname(lock), exist_ok=True)
     with open(lock, "a", encoding="utf-8") as handle:
         try:
             fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except OSError:
+        except BlockingIOError:
             raise Refused([f"the lock {lock} is held by another run of a proof command on the baselines file {path}; wait for it "
                            "to finish"])
         try:

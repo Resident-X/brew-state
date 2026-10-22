@@ -176,8 +176,8 @@ def unraised(tables: Mapping[str, Any]) -> List[Dict[str, Any]]:
     """The verdict rows that are not a match and have no finding of their own, as findings of the row's item, so a seeded part or
     layer judged `cannot judge` is raised as one that differs is."""
     named = {finding.get("Item") for finding in tables.get("Findings", [])}
-    return [{"Finding": "", "Item": row["Item"], "What and where": row.get("Why", "")}
-            for row in tables.get("Verdicts", []) if row.get("Verdict") != caller.MATCHES and row["Item"] not in named]
+    return [{"Finding": "", "Item": row.get("Item", ""), "What and where": row.get("Why", "")}
+            for row in tables.get("Verdicts", []) if row.get("Verdict") != caller.MATCHES and row.get("Item", "") not in named]
 
 
 def names(item: str, cell: str) -> bool:

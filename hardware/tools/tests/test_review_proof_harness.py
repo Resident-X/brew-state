@@ -96,7 +96,7 @@ class TheLock(Held):
         with open(self.path + ".lock", "a", encoding="utf-8") as handle:
             fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
 
-    def test_a_baseline_written_for_one_key_keeps_the_one_another_invocation_wrote_after_the_guard_was_read(self):
+    def test_a_baseline_written_for_one_key_keeps_the_one_already_in_the_file(self):
         self.assertIsNone(harness.recorded_under(self.path, OTHER))
         self.write({"version": proof.BASELINES_VERSION, "source": "x", "seeds": [], "baselines": [self.group(KEY, [run("kept")])]})
         harness.write_baseline(self.path, "y", [], OTHER, run("added"))
