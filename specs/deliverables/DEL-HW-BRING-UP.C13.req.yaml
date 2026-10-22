@@ -1,0 +1,13 @@
+id: DEL-HW-BRING-UP.C13
+type: criterion
+title: The enclosure's air temperature at sustained full heat is measured in the closed machine and is within the figure the parts were graded to
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  Temperature probes where the boards sit, at least one near the top of the space and one near the heater side, with their leads routed out of the closed enclosure, record the air temperature through a run at sustained full heat, with both heaters at the duty that holds them at their highest set temperature and steam drawn, the room temperature read beside every reading, until no reading has moved by more than 0.5 degC over fifteen minutes. The highest settled reading less the room temperature read at the same time, with the instrument's stated accuracy added once for each of those two readings, added to the top of the declared room-temperature span, is no higher than the figure the parts were graded to.
+links:
+  - target: DEL-HW-BRING-UP
+    type: criterion-of

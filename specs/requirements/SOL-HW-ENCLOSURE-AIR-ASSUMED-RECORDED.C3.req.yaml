@@ -1,0 +1,12 @@
+id: SOL-HW-ENCLOSURE-AIR-ASSUMED-RECORDED.C3
+type: criterion
+title: Humidity in the enclosure is cited from its single declaration
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  State that humidity inside the enclosure is declared once, in reference-machine.md § Ambient, as condensing until measured, and cite it without declaring anything of its own. Out of scope: declaring or measuring humidity.
+links:
+  - target: SOL-HW-ENCLOSURE-AIR-ASSUMED-RECORDED
+    type: criterion-of

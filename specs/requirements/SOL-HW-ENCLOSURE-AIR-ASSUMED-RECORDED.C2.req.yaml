@@ -1,0 +1,12 @@
+id: SOL-HW-ENCLOSURE-AIR-ASSUMED-RECORDED.C2
+type: criterion
+title: The premises the figure rests on are recorded with who stated them and when
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  State the owner's plan, dated 2026-10-23, that the two heater switching devices are mounted outside the enclosure on the machine's metal wall near the pumps and so are not heat sources in it, that the thermoblocks' heat drives the rise and is not estimated here, and that the boards' own dissipation is added by the derating analysis and is not part of the air figure. Out of scope: deciding the switches' mounting, which the owner's plan and the partition task settle.
+links:
+  - target: SOL-HW-ENCLOSURE-AIR-ASSUMED-RECORDED
+    type: criterion-of
