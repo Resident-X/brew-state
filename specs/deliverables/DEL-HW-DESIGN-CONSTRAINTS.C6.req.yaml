@@ -1,6 +1,6 @@
 id: DEL-HW-DESIGN-CONSTRAINTS.C6
 type: criterion
-title: The pressure the steam-path transducer must survive is fixed for the design with its derivation, its premise and its check
+title: The pressure the steam-path transducer must survive is fixed for the design with its derivation and its check
 status: active
 version: 2
 measurement_type: binary
@@ -9,7 +9,7 @@ closes_by: cascade
 text: |
   The pressure the steam-path transducer must survive in service, and the proof and burst ratings the chosen part must carry above it, are stated before the part is chosen. The statement gives how the figure is derived, the premise it rests on and who stated that premise, and the check that closes it against the chosen part's own datasheet.
 
-  The figure answers to the pressure the transducer meets in service. The highest pressure the machine could generate in a fault is answered by the independent hardware layer, not by the transducer; a transducer lost to overpressure is a detected fault, not the containment.
+  The figure answers to the pressure the transducer meets in service. The highest pressure the machine could generate in a fault is answered by the independent hardware layer, not by the transducer.
 links:
   - target: DEL-HW-DESIGN-CONSTRAINTS
     type: criterion-of

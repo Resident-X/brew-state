@@ -7,7 +7,7 @@ measurement_type: binary
 verification: analysis
 closes_by: cascade
 text: |
-  For each heated load the protective device that, once operated, keeps power off until a person intervenes is identified from the thermostat and fuse facts established above, or the absence of one is recorded with the choice made to supply it.
+  For each heated load the protective device that, once operated, keeps power off until a person intervenes is identified from the thermostat and fuse facts established above, or the absence of one is recorded with the choice made to supply it as a device in series with the load at its block, off the boards.
 links:
   - target: DEL-BENCH-SAFETY-CHAIN-INSPECTION
     type: criterion-of

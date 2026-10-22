@@ -7,7 +7,7 @@ measurement_type: binary
 verification: inspection
 closes_by: cascade
 text: |
-  The steam side's over-pressure valve is identified, whether a check valve lies between it and the steam block is established, and the pressure it opens at is read from the machine, each recorded with how it was established.
+  The steam side's over-pressure valve is identified, whether a check valve lies between it and the steam block is established, and the pressure it opens at is read from the machine, each recorded with how it was established, and the opening pressure is compared with the in-service pressure recorded for the steam-path transducer, which that comparison confirms or revises.
 links:
   - target: DEL-BENCH-SAFETY-CHAIN-INSPECTION
     type: criterion-of
