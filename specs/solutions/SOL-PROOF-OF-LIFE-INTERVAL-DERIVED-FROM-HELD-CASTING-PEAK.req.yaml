@@ -11,8 +11,6 @@ text: |
 
   The work is analysis over the regenerated peak record and the figures record: it takes the peak as the generated record gives it, with the trip points, the element power at the top of the declared supply span and the lower bound of the thermal mass the figures record already carries, and combines the heaters by the shorter time. The corners come from the peak record and combine by the worst single corner, not by a sum.
 links:
-  - target: DEL-HW-DESIGN-CONSTRAINTS.C2
-    type: derives-from
   - target: REQ-SAFETY-CHAIN-001.C3
     type: targets
   - target: DEC-PROOF-OF-LIFE-INTERVAL-BOUNDED-BY-FIRST-PROTECTIVE-TRIP
@@ -25,3 +23,5 @@ links:
     type: depends-on
   - target: SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED
     type: depends-on
+  - target: DEL-HW-INTERLOCK-INTERVAL-DERIVED.C1
+    type: derives-from

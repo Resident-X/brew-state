@@ -2,7 +2,7 @@ id: DEL-HW-PARTITION-AND-FEASIBILITY.C5
 type: criterion
 title: Each board the division produces has a design task carrying the interlock or headroom allotted to that board
 status: active
-version: 5
+version: 6
 measurement_type: binary
 verification: inspection
 closes_by: cascade
@@ -12,6 +12,8 @@ text: |
   Each such task also records, with its source, every figure the controller boards' constraints record holds pending against the design of its board, such as a rail's budget, a branch fuse's rating, or the time a protective device takes to clear and the energy it lets through at the declared fault current, ending those marks.
 
   Each such task also authors, for its board, the pin allocation record, the parts specification record, the derating policy record and the pin-limit record, and keeps the catalogue extract current, in the forms the design-records decision sets, so the connectivity and parts checks have a record to hold the board to before it is ordered, and it points the firmware's pin assignment checks, the one for output channels and the one for sensor channels, at that board's pin allocation record, authoring beside it the controller's converter-input map that the sensor check reads, in the forms the decision sets.
+
+  Each such task that carries the interlock depends on DEL-HW-INTERLOCK-INTERVAL-DERIVED, which derives the proof-of-life removal interval from the held casting peak, so the interlock's timing is designed to a derived figure.
 links:
   - target: DEL-HW-PARTITION-AND-FEASIBILITY
     type: criterion-of
