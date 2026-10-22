@@ -77,6 +77,9 @@ METHOD_SENSE = METHOD.replace("## Ordering", """### Sensing (SENSE)
 - **Applies when:** always.
 
 ## Ordering""")
+#: The same method with the routing section the critical-routing check is in, ahead of the layout review.
+ROUTING_SECTION = "## Routing: critical nets by hand and locked, then the rest\n\nSteps of routing.\n\n"
+METHOD_ROUTING = METHOD.replace("## Layout review\n", ROUTING_SECTION + "## Layout review\n", 1)
 README = "# Synthetic hardware notes\n\nThe views index and the facts.\n"
 OWN_NONE = "| none | | | | | | | | | |"
 OWN_ROWS = ("| BOARD-1 | always | Asks | Passes | Fails | `classes` | judgement | quality | the plan | How it is met |\n"
@@ -214,6 +217,30 @@ def folder_argv(repo: str, out: str, inputs: dict, number: int = 1, kind: str = 
     for line in CHECK_LINES:
         argv += ["--check-line", line]
     return argv + list(extra)
+
+
+def critical_argv(repo: str, out: str, inputs: dict, number: int = 1, commit: str = "HEAD", placement: bool = False,
+                  extra=()) -> list:
+    """The folder command's arguments for a critical-routing pass: the pass's number, the commit and the views, and the
+    placement view only when asked for."""
+    argv = ["--review", "critical-routing", "--repo", repo, "--commit", commit, "--design", DESIGN, "--out", out,
+            "--views", inputs["views"], "--number", str(number), "--documents-repo", repo]
+    if placement:
+        argv += ["--placement", inputs["placement"]]
+    for command in VIEW_COMMANDS:
+        argv += ["--view-command", command]
+    return argv + list(extra)
+
+
+def write_critical_folder(root: str, own: str = OWN_NONE, number: int = 1, placement: bool = False, method: str = METHOD_ROUTING,
+                          extra=None) -> str:
+    """A critical-routing review folder written by the folder command from a synthetic repository; its path."""
+    repo = make_repo(root, own, extra=extra, method=method)
+    inputs = make_views(root)
+    out = os.path.join(root, "review-folder")
+    status, text = run_folder(critical_argv(repo, out, inputs, number, placement=placement))
+    assert status == 0, text
+    return out
 
 
 NARROW = ["--item", "FLOOR-1=the changed region holds its parts", "--item", "CLOCK-1=the crystal moved",

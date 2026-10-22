@@ -21,6 +21,9 @@ round it holds no review record.
                      --check-line <line>... [--item ITEM=reason... --region <text>... --others <text>]
                      [--documents-repo <repository> [--documents-commit <commit>]]
                      [--round-fields number,kind,commit,views,check] [--json]
+    review_folder.py --review critical-routing --repo <repository> --commit <commit> --design <board folder from the root>
+                     --out <new folder> --views <views folder> [--placement <placement folder>] --number N
+                     --view-command <text>... [--documents-repo <repository> [--documents-commit <commit>]] [--json]
     review_folder.py --add-view <folder> --view <file> --view-command <text>
                      --cannot-judge-item <item> --cannot-judge-why <text> [--json]
     review_folder.py --add-document <folder> --document <text file> --source <where the figure comes from>
@@ -34,6 +37,15 @@ set. A narrow round, one whose kind is narrow, also gives its listed items, each
 with the reason the changed regions touch it, its changed regions and the line
 saying why every other item is not judged; a full round gives none of them. A
 missing or malformed field refuses the command, naming it.
+
+--review critical-routing writes the folder the critical-routing check reads, the check step 4 of the method's routing section
+makes before the router runs. Its round fields are the pass number, the commit judged and the views, and no more: the round
+file holds no kind and no check lines. The method extract adds the routing section to the layout review's sections. The
+placement view is taken only when --placement is given, and the pre-order check's report not at all, since that check is not
+run at this step and --check-report, --kind, --check-line, --item, --region and --others are refused. A pass after the first
+copies no review record, its earlier passes being in the plan the commit holds. --add-view and --add-document serve this
+folder as they serve a layout folder; its checklist is the catalogue's items and the plan's board items, with no comparison
+with the plan. The layout review is the default.
 
 --add-view puts a view the starter rendered into the added-views folder of a
 folder this command wrote and records, in a resolutions file there, the item whose
@@ -94,6 +106,16 @@ METHOD_EXTRACT = "method-extract.md"
 METHOD = "docs/board-design-method.md"
 #: The method's sections in the method extract, in the order it holds them; the last is the whole layout practice catalogue.
 METHOD_SECTIONS = ("Layout review", "Layout review views", "Layout practice catalogue")
+#: The section of the method that holds the critical-routing check, which the critical-routing folder's extract adds.
+ROUTING_SECTION = "Routing: critical nets by hand and locked, then the rest"
+#: The section of the method that holds the catalogue a folder's items are taken from.
+CATALOGUE_SECTION = "Layout practice catalogue"
+#: The reviews the folder command writes a folder for, the layout review being the default.
+LAYOUT = "layout"
+CRITICAL_ROUTING = "critical-routing"
+REVIEWS = (LAYOUT, CRITICAL_ROUTING)
+#: The method's sections each review's extract holds, in order.
+REVIEW_SECTIONS = {LAYOUT: METHOD_SECTIONS, CRITICAL_ROUTING: (ROUTING_SECTION,) + METHOD_SECTIONS}
 CHECK_REPORT = review_seed.REPORT
 VIEWS = review_seed.VIEWS
 PLACEMENT = review_seed.PLACEMENT
@@ -104,6 +126,16 @@ NOT_DESIGN = (VIEWS, PLACEMENT, ADDED_VIEWS, ADDED_DOCUMENTS)
 KINDS = ("full", "narrow")
 #: The layout review's round fields, in the order a round file gives them.
 LAYOUT_FIELDS = ("number", "kind", "commit", "views", "check")
+#: The critical-routing check's pass fields: the pass number, the commit judged and the views, in the order a round file gives them.
+CRITICAL_FIELDS = ("number", "commit", "views")
+def is_critical_routing_fields(fields: Sequence[str]) -> bool:
+    """Whether a round file's fields are a critical-routing pass's; the one test of a folder's review, since a layout folder
+    may be written with any documented subset of its fields."""
+    return list(fields) == list(CRITICAL_FIELDS)
+
+
+#: The round fields each review's folder has.
+REVIEW_FIELDS = {LAYOUT: LAYOUT_FIELDS, CRITICAL_ROUTING: CRITICAL_FIELDS}
 #: Every field a set may name.
 FIELD_NAMES = ("number", "kind", "commit", "views", "check")
 #: The fields a narrow round adds to its set when the set has a kind.
@@ -261,20 +293,22 @@ def method_section(text: str, heading: str) -> Optional[str]:
     return found.group(0).rstrip() + "\n" if found else None
 
 
-def missing_sections(text: str) -> List[str]:
-    """The sections of METHOD_SECTIONS the method text lacks."""
-    return [heading for heading in METHOD_SECTIONS if method_section(text, heading) is None]
+def missing_sections(text: str, review: str = LAYOUT) -> List[str]:
+    """The sections the review's extract holds that the method text lacks."""
+    return [heading for heading in REVIEW_SECTIONS[review] if method_section(text, heading) is None]
 
 
-def method_extract(text: str) -> str:
-    """The method's layout review section, its views section and the whole layout practice catalogue, as the extract the
-    shared context holds; a method that lacks one is a refusal naming it."""
-    lacking = missing_sections(text)
+def method_extract(text: str, review: str = LAYOUT) -> str:
+    """The method's sections the review needs, as the extract the shared context holds: for the layout review its layout
+    review section, its views section and the whole layout practice catalogue, and for the critical-routing check the
+    routing section before them; a method that lacks one is a refusal naming it."""
+    lacking = missing_sections(text, review)
     if lacking:
         raise Refused([f"the method {METHOD} has no `## {heading}` section, which the review's shared context holds; give "
                        "documents that hold it" for heading in lacking])
-    return ("METHOD EXTRACT from " + METHOD + ": the sections of the method that a layout review needs, in this order.\n\n"
-            + "\n".join(method_section(text, heading) for heading in METHOD_SECTIONS))
+    needs = "a layout review" if review == LAYOUT else "the critical-routing check"
+    return ("METHOD EXTRACT from " + METHOD + f": the sections of the method that {needs} needs, in this order.\n\n"
+            + "\n".join(method_section(text, heading) for heading in REVIEW_SECTIONS[review]))
 
 
 def millimetres(value: Any) -> str:
@@ -409,8 +443,28 @@ def git(repo: str, *args: str) -> subprocess.CompletedProcess:
     return subprocess.run(["git", "-C", repo, *args], capture_output=True, text=True)
 
 
+#: The arguments a critical-routing folder has no use for, by the flag that gives each: its pass has no kind, no check lines
+#: and no listed items, and the pre-order check is not run at the step, so it has no report.
+NOT_OF_CRITICAL_ROUTING = (("kind", "--kind", "a pass has no kind"), ("check_line", "--check-line", "a pass has no check lines"),
+                           ("check_report", "--check-report", "the pre-order check is not run at this step, so a pass has no report"),
+                           ("item", "--item", "a pass lists no items"), ("region", "--region", "a pass lists no regions"),
+                           ("others", "--others", "a pass has no line saying why other items are not judged"))
+
+
+def review_refusals(args: argparse.Namespace, review: str, fields: Sequence[str]) -> List[str]:
+    """Why the arguments are not those of the review the folder is written for."""
+    if review == LAYOUT:
+        return []
+    found = [f"the critical-routing folder takes no {flag}: {why}; leave it out" for name, flag, why in NOT_OF_CRITICAL_ROUTING
+             if getattr(args, name) not in (None, [])]
+    if not is_critical_routing_fields(fields):
+        found.append(f"the critical-routing folder's round fields are {', '.join(CRITICAL_FIELDS)}, not {', '.join(fields)}; "
+                     "leave --round-fields out")
+    return found
+
+
 def refusals(args: argparse.Namespace, out: str, repo: str, documents_repo: str, values: Dict[str, Any],
-             fields: Sequence[str]) -> List[str]:
+             fields: Sequence[str], review: str = LAYOUT) -> List[str]:
     found = []
     for name, where in (("repository", repo), ("documents repository", documents_repo)):
         if review_seed.inside(out, where):
@@ -425,11 +479,12 @@ def refusals(args: argparse.Namespace, out: str, repo: str, documents_repo: str,
         found.append(f"the round fields {', '.join(unknown)} are not fields of a round; the fields are {', '.join(FIELD_NAMES)}")
     else:
         found += round_problems(values, fields)
-    for name, path in (("views", args.views), ("placement view", args.placement)):
+    given = [("views", args.views)] + ([("placement view", args.placement)] if review == LAYOUT or args.placement else [])
+    for name, path in given:
         if not os.path.isfile(os.path.join(path, "index.txt")):
             found.append(f"the {name} folder {path} is missing or holds no index.txt; render it with the command the "
                          "round's first step names, and give that folder")
-    if not os.path.isfile(args.check_report):
+    if review == LAYOUT and not os.path.isfile(args.check_report):
         found.append(f"the pre-order check's report {args.check_report} does not exist; run the check and give its report")
     return found
 
@@ -479,7 +534,8 @@ def settled(content: Dict[str, Any]) -> str:
     return json.dumps(content, indent=1, sort_keys=True) + "\n"
 
 
-def write_folder(args: argparse.Namespace, out: str, repo: str, documents_repo: Optional[str], fields: Sequence[str]) -> Dict[str, Any]:
+def write_folder(args: argparse.Namespace, out: str, repo: str, documents_repo: Optional[str], fields: Sequence[str],
+                 review: str = LAYOUT) -> Dict[str, Any]:
     """The review folder, or a refusal naming every cause."""
     values: Dict[str, Any] = {"number": args.number, "kind": args.kind, "views": args.view_command or [],
                               "check": args.check_line or []}
@@ -496,9 +552,10 @@ def write_folder(args: argparse.Namespace, out: str, repo: str, documents_repo: 
     except Refused as error:
         causes += error.causes
         values["commit"] = "0" * 7  # a commit that does not exist is the cause; the field itself is not reported twice
-    causes += refusals(args, out, repo, documents_repo or REPO, values, fields)
+    causes += review_refusals(args, review, fields)
+    causes += refusals(args, out, repo, documents_repo or REPO, values, fields, review)
     record = None
-    if board and "number" in fields and isinstance(args.number, int) and args.number > 1:
+    if board and review == LAYOUT and "number" in fields and isinstance(args.number, int) and args.number > 1:
         held = review_seed.archived(repo, board["sha"], f"{args.design.rstrip('/')}/{RECORD}")
         text = next(iter(held.values()), b"").decode("utf-8", errors="replace")
         record = earlier_rounds(text, args.number)
@@ -525,7 +582,7 @@ def write_folder(args: argparse.Namespace, out: str, repo: str, documents_repo: 
             causes.append(str(error))
     if documents and METHOD in documents:
         try:
-            extracts[METHOD_EXTRACT] = method_extract(documents[METHOD].decode("utf-8"))
+            extracts[METHOD_EXTRACT] = method_extract(documents[METHOD].decode("utf-8"), review)
         except Refused as error:
             causes += error.causes
         except UnicodeDecodeError:
@@ -539,8 +596,10 @@ def write_folder(args: argparse.Namespace, out: str, repo: str, documents_repo: 
             with open(os.path.join(out, args.design, RECORD), "w", encoding="utf-8") as handle:
                 handle.write(record)
         shutil.copytree(args.views, os.path.join(out, VIEWS))
-        shutil.copytree(args.placement, os.path.join(out, PLACEMENT))
-        shutil.copyfile(args.check_report, os.path.join(out, CHECK_REPORT))
+        if review == LAYOUT or args.placement:
+            shutil.copytree(args.placement, os.path.join(out, PLACEMENT))
+        if review == LAYOUT:
+            shutil.copyfile(args.check_report, os.path.join(out, CHECK_REPORT))
         for extract, text in extracts.items():
             with open(os.path.join(out, extract), "w", encoding="utf-8", newline="") as handle:
                 handle.write(text)
@@ -584,16 +643,18 @@ def record_resolution(folder: str, held: List[Dict[str, str]], entry: Dict[str, 
 
 def known_items(folder: str) -> Set[str]:
     """The items the folder's checklist holds, as far as the folder can tell: the catalogue's in its method extract, the
-    plan's board items and the comparison with the plan. Empty when the folder holds no catalogue item, so the checklist is
-    not known."""
+    plan's board items and, for a layout review's folder, the comparison with the plan, which a critical-routing folder
+    lacks. Empty when the folder holds no catalogue item, so the checklist is not known."""
     try:
         with open(os.path.join(folder, METHOD_EXTRACT), encoding="utf-8") as handle:
-            catalogue = set(re.findall(r"(?m)^#### ([A-Z]+-\d+)\. ", handle.read()))
+            section = method_section(handle.read(), CATALOGUE_SECTION) or ""
+        catalogue = set(re.findall(r"(?m)^#### ([A-Z]+-\d+)\. ", section))
         with open(os.path.join(folder, design_in(folder), "layout-plan.md"), encoding="utf-8") as handle:
             own = set(re.findall(r"(?m)^\|\s*(BOARD-[1-9][0-9]*)\s*\|", handle.read()))
+        comparison = set() if is_critical_routing_fields(read_round(folder)["fields"]) else {COMPARISON_ITEM}
     except (OSError, UnicodeDecodeError, ReviewFolderProblem):
         return set()
-    return (catalogue | own | {COMPARISON_ITEM}) if catalogue else set()
+    return (catalogue | own | comparison) if catalogue else set()
 
 
 def add_document(args: argparse.Namespace) -> Dict[str, Any]:
@@ -708,8 +769,12 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout) -> int:
     parser.add_argument("--check-report", help="the pre-order check's report on the board")
     parser.add_argument("--documents-repo", help="the repository the method and the hardware notes are taken from (default: this one)")
     parser.add_argument("--documents-commit", help="the commit of --documents-repo they are taken from (default: HEAD)")
-    parser.add_argument("--round-fields", default=",".join(LAYOUT_FIELDS),
-                        help="the round's fields, from number, kind, commit, views and check (default: all five, the layout review's)")
+    parser.add_argument("--review", choices=REVIEWS, default=LAYOUT,
+                        help="the review the folder is written for: layout (the default) or critical-routing, whose pass has "
+                             "the fields number, commit and views, no check report and an optional placement view")
+    parser.add_argument("--round-fields", default=None,
+                        help="the round's fields, from number, kind, commit, views and check (default: all five for the layout "
+                             "review, the layout review's; number, commit and views for critical-routing)")
     parser.add_argument("--number", type=int, help="the round's number")
     parser.add_argument("--kind", help="the round's kind, full or narrow")
     parser.add_argument("--view-command", action="append", help="a command a view was rendered with, as run; repeat for each")
@@ -734,13 +799,15 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout) -> int:
         elif args.add_document:
             report = add_document(args)
         else:
-            required = ("repo", "commit", "design", "out", "views", "placement", "check_report")
+            required = ("repo", "commit", "design", "out", "views") + (
+                ("placement", "check_report") if args.review == LAYOUT else ())
             missing = [f"--{name.replace('_', '-')}" for name in required if not getattr(args, name)]
             if missing:
                 parser.error(f"{', '.join(missing)} {'is' if len(missing) == 1 else 'are'} required")
-            fields = [name.strip() for name in args.round_fields.split(",") if name.strip()]
+            fields = [name.strip() for name in (args.round_fields or ",".join(REVIEW_FIELDS[args.review])).split(",")
+                      if name.strip()]
             report = write_folder(args, os.path.abspath(args.out), os.path.abspath(args.repo),
-                                  os.path.abspath(args.documents_repo) if args.documents_repo else None, fields)
+                                  os.path.abspath(args.documents_repo) if args.documents_repo else None, fields, args.review)
     except Refused as error:
         report = {"result": "REFUSED", "refusals": error.causes, "detail": "nothing was written"}
     except FileNotFoundError as error:
