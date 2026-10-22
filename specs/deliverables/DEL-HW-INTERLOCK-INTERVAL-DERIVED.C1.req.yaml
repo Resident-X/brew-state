@@ -1,0 +1,13 @@
+id: DEL-HW-INTERLOCK-INTERVAL-DERIVED.C1
+type: criterion
+title: The figures record states the proof-of-life removal interval with no pending mark
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  The figures record states the proof-of-life removal interval, the shorter of the two heaters' times at the worst single corner, and no pending mark remains against it.
+links:
+  - target: DEL-HW-INTERLOCK-INTERVAL-DERIVED
+    type: criterion-of
