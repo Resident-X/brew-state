@@ -103,7 +103,7 @@ REPLICAS = 2
 #: The recorded source of a baseline file this command writes.
 BASELINE_SOURCE = ("One single-reviewer run of the critical-routing proof on its seeded copy, made through the review kit's single "
                    "form on the mid-tier model by critical_routing_review_proof.py; wall time, cost and tokens are the kit's "
-                   "figures for the one session of the run.")
+                   "figures for the sessions of the run.")
 
 
 # --- The seeded copy and the folder -------------------------------------------------------------

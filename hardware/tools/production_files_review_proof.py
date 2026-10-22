@@ -94,7 +94,7 @@ REPLICAS = 3
 #: The recorded source of a baseline file this command writes.
 BASELINE_SOURCE = ("One single-reviewer run of the production-files proof on its seeded production files, made through the review "
                    "kit's single form on the mid-tier model by production_files_review_proof.py; wall time, cost and tokens are "
-                   "the kit's figures for the one session of the run.")
+                   "the kit's figures for the sessions of the run.")
 
 
 #: The tools line when a tool's version cannot be read, and gerbonara's, which the seeding pins and which is run in an environment of
