@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING-C2-TEST-4
+type: evidence
+title: test evidence for SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-22T04:35:24.406505Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_caller_critical_routing.py::test_findings_are_numbered_in_the_checklist_order_and_the_citations_follow_the_renumbering
+  artifact_version: d28799d5712207eff308745e82f90d67f9395f15
+attested_by: crun-cef8fb5be71a9348
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING.C2
+    type: satisfies

@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING-C3-TEST
+type: evidence
+title: test evidence for SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-22T04:35:27.078705Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_caller_critical_routing.py::test_the_routing_step_says_the_check_may_be_judged_by_unit_what_the_merge_checks_and_who_supplies_the_fields
+  artifact_version: d28799d5712207eff308745e82f90d67f9395f15
+attested_by: crun-cef8fb5be71a9348
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING.C3
+    type: satisfies
