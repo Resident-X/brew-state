@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-FAN-OUT-SCHEMATIC-C2-TEST-7
+type: evidence
+title: test evidence for SOL-HW-REVIEW-FAN-OUT-SCHEMATIC.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-22T05:41:29.886586Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_caller_schematic.py::test_a_findings_row_with_a_wrong_raised_by_a_severity_outside_the_four_a_closed_by_or_no_place_fails_the_merge
+  artifact_version: 92fbd6b7ca87447b9b1bb00e141b4431127954f9
+attested_by: crun-16b6127099732cfb
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-SCHEMATIC.C2
+    type: satisfies

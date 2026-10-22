@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-FAN-OUT-SCHEMATIC-C3-TEST
+type: evidence
+title: test evidence for SOL-HW-REVIEW-FAN-OUT-SCHEMATIC.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-22T05:41:33.461059Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_caller_schematic.py::test_a_session_that_reports_a_different_tool_set_fails_naming_the_unit
+  artifact_version: 92fbd6b7ca87447b9b1bb00e141b4431127954f9
+attested_by: crun-16b6127099732cfb
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-SCHEMATIC.C3
+    type: satisfies

@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-FAN-OUT-SCHEMATIC-C4-TEST-26
+type: evidence
+title: test evidence for SOL-HW-REVIEW-FAN-OUT-SCHEMATIC.C4
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-22T05:41:35.50104Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_schematic_review_folder.py::test_extra_files_in_the_sheets_folder_are_not_copied
+  artifact_version: 92fbd6b7ca87447b9b1bb00e141b4431127954f9
+attested_by: crun-16b6127099732cfb
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-SCHEMATIC.C4
+    type: satisfies
