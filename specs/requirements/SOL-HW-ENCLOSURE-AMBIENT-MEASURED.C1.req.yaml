@@ -2,11 +2,11 @@ id: SOL-HW-ENCLOSURE-AMBIENT-MEASURED.C1
 type: criterion
 title: The enclosure's air temperature at sustained full heat is measured with the enclosure closed and recorded with how it was established
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |
-  Log the air temperature at the positions the boards will occupy, with the leads routed out and the enclosure closed, through a run at sustained full heat until the readings settle, and record positions, logger, accuracy, duration, duty, settled readings and the room temperature in the machine's design-constraints record. Out of scope: grading any part against the figure, which the boards' design does.
+  Read the air temperature at the positions the boards will occupy, at least one near the top of the space and one near the heater side, with the leads routed out and the enclosure closed, through a run at sustained full heat with both heaters at the duty that holds them at their highest set temperature and steam drawn, at intervals of ten minutes or less, until no reading has moved by more than 0.5 degC over fifteen minutes. Record in the machine's design-constraints record the positions, the instrument and its stated accuracy, the duration and duty, every reading with the room temperature read beside it, the point at which the readings settled, and how each was established. Out of scope: grading any part against the figure, which the boards' design does.
 links:
   - target: SOL-HW-ENCLOSURE-AMBIENT-MEASURED
     type: criterion-of

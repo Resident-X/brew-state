@@ -1,0 +1,12 @@
+id: SOL-HW-AMBIENT-SPAN-DECLARED.C1
+type: criterion
+title: The span of room temperature the machine works across is declared with who stated it and that it was not measured
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  State in the ambient section of reference-machine.md the lowest and highest room temperature the machine works across, 10 degC and 28 degC, with the builder as the source and the statement that it was declared from the room the machine stands in, not measured. Out of scope: the temperature inside the enclosure, which the measurement of the running machine establishes.
+links:
+  - target: SOL-HW-AMBIENT-SPAN-DECLARED
+    type: criterion-of

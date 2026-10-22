@@ -1,0 +1,13 @@
+id: DEL-HW-DESIGN-CONSTRAINTS.C8
+type: criterion
+title: The ambient conditions the controller's enclosure sits in are declared in the machine's record
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The span of room temperature the machine works across, and the humidity inside the controller's enclosure, taken at its worst until it is measured, are stated in the machine's record with who stated them and how they were established, so that the figure the boards' parts are graded to adds to a declared top rather than an assumed one.
+links:
+  - target: DEL-HW-DESIGN-CONSTRAINTS
+    type: criterion-of
