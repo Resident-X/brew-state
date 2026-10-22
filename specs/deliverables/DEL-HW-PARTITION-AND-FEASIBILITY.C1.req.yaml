@@ -2,7 +2,7 @@ id: DEL-HW-PARTITION-AND-FEASIBILITY.C1
 type: criterion
 title: Each function's form, a designed circuit or a bought module, is decided with its reason
 status: active
-version: 2
+version: 3
 measurement_type: binary
 verification: analysis
 closes_by: cascade
@@ -10,6 +10,8 @@ text: |
   The reason names what about the function makes one form better, weighed against the fixed constraints and the cost boundary.
 
   A published reference design is preferred where one exists, and hardware already bought for the controller is weighed as an option before anything replaces it. Where the choice changes the controller, its effect on the firmware already written is part of the reason.
+
+  Where the choice places a part outside the enclosure or off the boards, such as the heater switching devices mounted on the machine's wall, the decision records whether the replacement still drops into the machine as found or the part is a device the retrofit adds, which the requirement that the electronics drop into the machine as found leaves outside its scope, and where that part is judged against its rated temperature, including any heat it passes into the enclosure.
 
   Where the controller boards' constraints record holds a figure pending against this decision, such as a bought module's isolation rating read from its manufacturer's current datasheet, the decision records that figure with its source, ending the mark.
 links:
