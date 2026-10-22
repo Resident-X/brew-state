@@ -18,6 +18,8 @@ The consequence matters: espresso and hot water are mutually exclusive in the **
 
 ## Supply
 
+In this folder "the declared span", unqualified, is this supply span, the one the 253 V figure is the top of. The span of room temperature declared in § Ambient is always called "the ambient span" or "the room-temperature span".
+
 | Value | Figure | Provenance |
 |---|---|---|
 | Supply voltage | 216–253 V AC | **Published, unverified**: the standard tolerance about the 230 V nominal, +10 % / −6 %, in AS 60038 *Standard voltages* (catalogue entry https://store.standards.org.au/product/as-60038-2022; the standard's text was not read at that source). The instruction manual's 230–240 V is an installation instruction — what to plug the machine into — and not the span that supply moves over |
@@ -31,9 +33,9 @@ The consequence matters: espresso and hot water are mutually exclusive in the **
 
 | Value | Figure | Provenance |
 |---|---|---|
-| Room temperature, lowest | 10 °C | **Owner statement, 2026-10-22**, declared, not measured: the owner's account of their own kitchen on a winter morning. No thermometer reading backs it |
-| Room temperature, highest | 35 °C | **Owner statement, 2026-10-22**, a design figure, not a measurement: set above the owner's own warmest room, about 28 °C on a summer day without air conditioning, so that the record also serves a machine standing in a warmer kitchen than this one. No thermometer reading backs it |
-| Humidity inside the controller's enclosure | Condensing | **Declared as the worst case, until it is measured.** The owner has no means of measuring it inside a running machine, so the worst case stands in for the reading. The facts below are the owner's account, not measurements |
+| Room temperature, lowest | 10 °C | **Owner statement, 2026-10-22**, declared, not measured: the owner's account of their own kitchen on a winter morning |
+| Room temperature, highest | 35 °C | **Owner statement, 2026-10-22**, a design figure, not a measurement: set above the owner's own warmest room, about 28 °C on a summer day without air conditioning, so that the record also serves a machine standing in a warmer kitchen than this one |
+| Humidity inside the controller's enclosure | Condensing | **Declared as the worst case, until it is measured.** It has not been measured, and the worst case stands in for the reading until it is. The facts below are the owner's account, not measurements |
 
 The span is the temperature of the room, not of the air inside the controller's enclosure. The enclosure's rise above the room is a separate figure, to be measured on the running machine and added to the top of this span, 35 °C. Someone standing in a different room replaces the two temperatures and recomputes whatever was drawn from them.
 
