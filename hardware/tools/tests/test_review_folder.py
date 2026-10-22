@@ -385,6 +385,212 @@ class TheFolder(Case):
         self.assertIn("the round's number is 0", refused["refusals"][0])
 
 
+class TheCriticalRoutingMode(Case):
+    """The folder command with --review critical-routing, over the same synthetic repository."""
+
+    ROUTED = fx.METHOD_ROUTING
+
+    def setUp(self):
+        super().setUp()
+        self.repo = fx.make_repo(os.path.join(self.root, "routed"), method=self.ROUTED)
+
+    def pass_argv(self, number=1, placement=False, extra=(), out=None, repo=None):
+        return fx.critical_argv(repo or self.repo, out or self.out, self.inputs, number, placement=placement, extra=extra)
+
+    def write(self, **how):
+        status, text = fx.run_folder(self.pass_argv(**how))
+        self.assertEqual(status, 0, text)
+        return text
+
+    def refused_with(self, *words, **how):
+        status, text = fx.run_folder(self.pass_argv(**how))
+        self.assertEqual(status, 1, text)
+        self.assertEqual(text.splitlines()[-1], "RESULT | REFUSED | nothing was written")
+        for word in words:
+            self.assertIn(word, text)
+        self.assertFalse(os.path.exists(how.get("out") or self.out), "a refused command writes nothing")
+        return text
+
+    def test_the_round_file_holds_the_pass_number_commit_and_views_and_no_kind_or_check_lines(self):
+        # SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING.C5: Over a synthetic repository with a routed board, the folder command with `--review critical-routing` writes a folder whose round file holds the pass number, commit and views and no kind or check lines, whose method extract holds the routing section, with a placement folder only when one is given and no check report, and for a pass after the first copies no review record; it refuses missing or malformed pass fields, a check report, and the layout mode's own options (the kind, check lines, listed items, regions, others and any round fields other than the pass's), and the layout mode's behaviour and tests are unchanged. Out of scope: rendering the views.
+        self.write(number=3)
+        content = json.loads(self.read("round.json"))
+        sha = fx.git(self.repo, "rev-parse", "HEAD")
+        self.assertEqual(content, {"tool": "review-folder", "fields": ["number", "commit", "views"], "number": 3, "commit": sha,
+                                   "views": fx.VIEW_COMMANDS})
+        for absent in ("kind", "check", "items", "regions", "others"):
+            self.assertNotIn(absent, content)
+        self.assertEqual(review_folder.read_round(self.out)["number"], 3, "the command's own reader takes the file")
+
+    def test_the_method_extract_holds_the_routing_section_before_the_layout_review_sections_and_the_catalogue(self):
+        # SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING.C5: Over a synthetic repository with a routed board, the folder command with `--review critical-routing` writes a folder whose round file holds the pass number, commit and views and no kind or check lines, whose method extract holds the routing section, with a placement folder only when one is given and no check report, and for a pass after the first copies no review record; it refuses missing or malformed pass fields, a check report, and the layout mode's own options (the kind, check lines, listed items, regions, others and any round fields other than the pass's), and the layout mode's behaviour and tests are unchanged. Out of scope: rendering the views.
+        self.write()
+        extract = self.read("method-extract.md")
+        order = ["## Routing: critical nets by hand and locked, then the rest\n", "## Layout review\n", "## Layout review views\n",
+                 "## Layout practice catalogue\n"]
+        self.assertEqual([extract.index(heading) for heading in order], sorted(extract.index(heading) for heading in order))
+        for held in ("Steps of routing.", "Steps of a review.", "#### FLOOR-1.", "#### CLOCK-1."):
+            self.assertIn(held, extract)
+        self.assertIn("the critical-routing check needs", extract.splitlines()[0])
+        for absent in ("## Ordering", "NOT-1"):
+            self.assertNotIn(absent, extract)
+
+    def test_the_folder_holds_no_placement_folder_and_no_check_report_unless_the_placement_is_given(self):
+        # SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING.C5: Over a synthetic repository with a routed board, the folder command with `--review critical-routing` writes a folder whose round file holds the pass number, commit and views and no kind or check lines, whose method extract holds the routing section, with a placement folder only when one is given and no check report, and for a pass after the first copies no review record; it refuses missing or malformed pass fields, a check report, and the layout mode's own options (the kind, check lines, listed items, regions, others and any round fields other than the pass's), and the layout mode's behaviour and tests are unchanged. Out of scope: rendering the views.
+        text = self.write()
+        held = files_under(self.out)
+        self.assertEqual(held, EXPECTED - {"check-report.txt", "placement/index.txt", "placement/measures.txt",
+                                           "placement/placement.png"})
+        self.assertFalse(os.path.exists(os.path.join(self.out, "placement")))
+        self.assertTrue(text.splitlines()[-1].startswith("RESULT | WRITTEN"))
+        shutil.rmtree(self.out)
+        self.write(placement=True)
+        self.assertEqual(files_under(self.out), EXPECTED - {"check-report.txt"}, "the placement view comes with it when given")
+        shutil.rmtree(self.out)
+        os.remove(os.path.join(self.inputs["placement"], "index.txt"))
+        self.refused_with("the placement view folder", "is missing or holds no index.txt", placement=True)
+
+    def test_a_pass_after_the_first_copies_no_review_record_and_needs_none(self):
+        # SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING.C5: Over a synthetic repository with a routed board, the folder command with `--review critical-routing` writes a folder whose round file holds the pass number, commit and views and no kind or check lines, whose method extract holds the routing section, with a placement folder only when one is given and no check report, and for a pass after the first copies no review record; it refuses missing or malformed pass fields, a check report, and the layout mode's own options (the kind, check lines, listed items, regions, others and any round fields other than the pass's), and the layout mode's behaviour and tests are unchanged. Out of scope: rendering the views.
+        for number in (1, 2, 5):
+            with self.subTest(number=number):
+                self.write(number=number)
+                self.assertFalse(os.path.exists(os.path.join(self.out, fx.DESIGN, "layout-review.md")))
+                self.assertEqual(files_under(self.out) & {f"{fx.DESIGN}/layout-review.md"}, set())
+                shutil.rmtree(self.out)
+        recorded = fx.make_repo(os.path.join(self.root, "recorded"), method=self.ROUTED)
+        status, text = fx.run_folder(self.pass_argv(number=2, repo=recorded))
+        self.assertEqual(status, 0, text)
+        self.assertFalse(os.path.exists(os.path.join(self.out, fx.DESIGN, "layout-review.md")), "a record the commit holds is not copied")
+        shutil.rmtree(self.out)
+        self.assertEqual(fx.run_folder(self.layout_argv(2, recorded))[0], 0)
+        self.assertTrue(os.path.exists(os.path.join(self.out, fx.DESIGN, "layout-review.md")), "the layout mode still copies it")
+
+    def layout_argv(self, number, repo):
+        return fx.folder_argv(repo, self.out, self.inputs, number, "full")
+
+    def test_a_pass_field_missing_or_malformed_is_refused_naming_the_field_in_text_and_in_json(self):
+        # SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING.C5: Over a synthetic repository with a routed board, the folder command with `--review critical-routing` writes a folder whose round file holds the pass number, commit and views and no kind or check lines, whose method extract holds the routing section, with a placement folder only when one is given and no check report, and for a pass after the first copies no review record; it refuses missing or malformed pass fields, a check report, and the layout mode's own options (the kind, check lines, listed items, regions, others and any round fields other than the pass's), and the layout mode's behaviour and tests are unchanged. Out of scope: rendering the views.
+        cases = (
+            (dict(number=0), (), "the round's number is 0"), (dict(number=-1), (), "the round's number is -1"),
+            (dict(), ("--number",), "the round's number is None"), (dict(), ("--view-command",), "the views are []"),
+            (dict(extra=("--view-command", "two\nlines")), (), "the views are"),
+            (dict(extra=("--view-command", "```fence")), (), "the views are"),
+            (dict(extra=("--view-command", "  ")), (), "the views are"))
+        for how, drop, word in cases:
+            with self.subTest(word=word, how=how, drop=drop):
+                argv = self.pass_argv(**how)
+                for flag in drop:
+                    while flag in argv:
+                        at = argv.index(flag)
+                        del argv[at:at + 2]
+                status, text = fx.run_folder(argv)
+                self.assertEqual(status, 1, text)
+                self.assertIn(word, text)
+                self.assertFalse(os.path.exists(self.out))
+                status, text = fx.run_folder(argv + ["--json"])
+                report = json.loads(text)
+                self.assertEqual((status, report["result"]), (1, "REFUSED"))
+                self.assertIn(word, "; ".join(report["refusals"]))
+        text = fx.run_folder(["--review", "critical-routing", "--repo", self.repo, "--commit", "no-such-commit", "--design", fx.DESIGN,
+                              "--out", self.out, "--views", self.inputs["views"], "--number", "1", "--view-command", "v",
+                              "--documents-repo", self.repo])[1]
+        self.assertIn("the commit no-such-commit is not in the repository", text)
+        self.assertFalse(os.path.exists(self.out))
+        os.remove(os.path.join(self.inputs["views"], "index.txt"))
+        self.refused_with("the views folder", "is missing or holds no index.txt")
+
+    def test_an_argument_a_pass_has_no_use_for_is_refused_naming_it(self):
+        # SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING.C5: Over a synthetic repository with a routed board, the folder command with `--review critical-routing` writes a folder whose round file holds the pass number, commit and views and no kind or check lines, whose method extract holds the routing section, with a placement folder only when one is given and no check report, and for a pass after the first copies no review record; it refuses missing or malformed pass fields, a check report, and the layout mode's own options (the kind, check lines, listed items, regions, others and any round fields other than the pass's), and the layout mode's behaviour and tests are unchanged. Out of scope: rendering the views.
+        for flag, value, word in (("--kind", "full", "--kind: a pass has no kind"),
+                                  ("--check-line", "DESIGN | x | PASS", "--check-line: a pass has no check lines"),
+                                  ("--check-report", self.inputs["report"], "--check-report: the pre-order check is not run"),
+                                  ("--item", "FLOOR-1=r", "--item: a pass lists no items"),
+                                  ("--region", "r", "--region: a pass lists no regions"),
+                                  ("--others", "why", "--others: a pass has no line saying why other items are not judged"),
+                                  ("--round-fields", "number,kind,commit,views,check", "round fields are number, commit, views")):
+            with self.subTest(flag=flag):
+                self.refused_with(word, extra=(flag, value))
+
+    def test_a_method_lacking_a_section_of_the_extract_is_refused_naming_it(self):
+        # SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING.C5: Over a synthetic repository with a routed board, the folder command with `--review critical-routing` writes a folder whose round file holds the pass number, commit and views and no kind or check lines, whose method extract holds the routing section, with a placement folder only when one is given and no check report, and for a pass after the first copies no review record; it refuses missing or malformed pass fields, a check report, and the layout mode's own options (the kind, check lines, listed items, regions, others and any round fields other than the pass's), and the layout mode's behaviour and tests are unchanged. Out of scope: rendering the views.
+        for heading in ("Routing: critical nets by hand and locked, then the rest", "Layout review", "Layout review views",
+                        "Layout practice catalogue"):
+            with self.subTest(heading=heading):
+                missing = fx.METHOD_ROUTING.replace(f"## {heading}\n", "## Renamed\n")
+                other = fx.make_repo(os.path.join(self.root, "m" + heading.replace(" ", "").replace(":", "").replace(",", "")), method=missing)
+                self.refused_with(f"no `## {heading}` section", repo=other)
+        self.refused_with("no `## Routing: critical nets by hand and locked, then the rest` section",
+                          repo=fx.make_repo(os.path.join(self.root, "plain"), method=fx.METHOD))
+
+    def test_the_layout_mode_is_the_default_and_its_folder_is_what_it_was(self):
+        # SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING.C5: Over a synthetic repository with a routed board, the folder command with `--review critical-routing` writes a folder whose round file holds the pass number, commit and views and no kind or check lines, whose method extract holds the routing section, with a placement folder only when one is given and no check report, and for a pass after the first copies no review record; it refuses missing or malformed pass fields, a check report, and the layout mode's own options (the kind, check lines, listed items, regions, others and any round fields other than the pass's), and the layout mode's behaviour and tests are unchanged. Out of scope: rendering the views.
+        status, text = fx.run_folder(self.layout_argv(1, self.repo))
+        self.assertEqual(status, 0, text)
+        self.assertEqual(files_under(self.out), EXPECTED)
+        self.assertEqual(json.loads(self.read("round.json"))["fields"], ["number", "kind", "commit", "views", "check"])
+        self.assertNotIn("Routing: critical nets", self.read("method-extract.md"))
+        shutil.rmtree(self.out)
+        status, again = fx.run_folder(["--review", "layout"] + self.layout_argv(1, self.repo))
+        self.assertEqual(status, 0, again)
+        self.assertEqual(files_under(self.out), EXPECTED)
+        shutil.rmtree(self.out)
+        plain = fx.make_repo(os.path.join(self.root, "plain"))
+        self.assertEqual(fx.run_folder(self.layout_argv(1, plain))[0], 0, "a layout method needs no routing section")
+        with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+            fx.run_folder(["--review", "schematic"] + self.layout_argv(1, plain))
+
+    def test_the_add_modes_serve_the_folder_and_its_checklist_has_no_comparison_item(self):
+        # SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING.C5: Over a synthetic repository with a routed board, the folder command with `--review critical-routing` writes a folder whose round file holds the pass number, commit and views and no kind or check lines, whose method extract holds the routing section, with a placement folder only when one is given and no check report, and for a pass after the first copies no review record; it refuses missing or malformed pass fields, a check report, and the layout mode's own options (the kind, check lines, listed items, regions, others and any round fields other than the pass's), and the layout mode's behaviour and tests are unchanged. Out of scope: rendering the views.
+        repo = fx.make_repo(os.path.join(self.root, "own"), own=fx.OWN_ROWS, method=self.ROUTED)
+        status, text = fx.run_folder(self.pass_argv(repo=repo))
+        self.assertEqual(status, 0, text)
+        view = os.path.join(self.root, "crop.svg")
+        fx.write(view, "<svg/>")
+        status, text = fx.run_folder(["--add-view", self.out, "--view", view, "--view-command", "render crop",
+                                      "--cannot-judge-item", "CLOCK-1", "--cannot-judge-why", "needs crop-Y1: none"])
+        self.assertEqual(status, 0, text)
+        document = os.path.join(self.root, "pins.txt")
+        fx.write(document, "Pin spacing: 2.54 mm\n")
+        for item, want in (("BOARD-2", 0), ("FLOOR-2", 0), (review_folder.COMPARISON_ITEM, 1), ("MISC-9", 1)):
+            with self.subTest(item=item):
+                status, text = fx.run_folder(fx.add_document_argv(self.out, document, item=item,
+                                                                  why="needs the datasheet: no figure in the folder"))
+                self.assertEqual(status, want, text)
+                if want:
+                    self.assertIn("is not on the folder's checklist", text)
+                document = os.path.join(self.root, f"pins-{item}.txt")
+                fx.write(document, "Pin spacing: 2.54 mm\n")
+        self.assertEqual(review_folder.known_items(self.out), {"FLOOR-1", "FLOOR-2", "GROUND-1", "CLOCK-1", "BOARD-1", "BOARD-2"})
+        layout = os.path.join(self.root, "layout-folder")
+        self.assertEqual(fx.run_folder(fx.folder_argv(repo, layout, self.inputs))[0], 0)
+        self.assertIn(review_folder.COMPARISON_ITEM, review_folder.known_items(layout), "the layout folder's checklist keeps it")
+
+
+    def test_a_critical_routing_folder_whose_round_file_holds_a_kind_check_lines_or_another_key_is_not_added_to(self):
+        # SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING.C5: Over a synthetic repository with a routed board, the folder command with `--review critical-routing` writes a folder whose round file holds the pass number, commit and views and no kind or check lines, whose method extract holds the routing section, with a placement folder only when one is given and no check report, and for a pass after the first copies no review record; it refuses missing or malformed pass fields, a check report, and the layout mode's own options (the kind, check lines, listed items, regions, others and any round fields other than the pass's), and the layout mode's behaviour and tests are unchanged. Out of scope: rendering the views.
+        repo = fx.make_repo(os.path.join(self.root, "keyed"), own=fx.OWN_ROWS, method=self.ROUTED)
+        self.assertEqual(fx.run_folder(self.pass_argv(repo=repo))[0], 0)
+        view = os.path.join(self.root, "crop.svg")
+        fx.write(view, "<svg/>")
+        document = os.path.join(self.root, "pins.txt")
+        fx.write(document, "Pin spacing: 2.54 mm\n")
+        for extra in ({"kind": "full"}, {"check": ["DESIGN | x"]}, {"kind": "full", "check": ["DESIGN | x"]}, {"bogus": 1}):
+            with self.subTest(extra=sorted(extra)):
+                folder = shutil.copytree(self.out, os.path.join(self.root, "keyed-" + "-".join(sorted(extra))))
+                fx.set_round(folder, **extra)
+                status, text = fx.run_folder(["--add-view", folder, "--view", view, "--view-command", "render crop",
+                                              "--cannot-judge-item", "CLOCK-1", "--cannot-judge-why", "needs crop-Y1: none"])
+                self.assertEqual(status, 1, text)
+                status_doc, text_doc = fx.run_folder(fx.add_document_argv(folder, document, item="CLOCK-1",
+                                                                          why="needs the datasheet: no figure in the folder"))
+                self.assertEqual(status_doc, 1, text_doc)
+                for key in extra:
+                    self.assertIn(key, text)
+                    self.assertIn(key, text_doc)
+                self.assertEqual(review_folder.known_items(folder), set(), "a folder the command would not add to has no known checklist")
+
+
 class TheAddViewMode(Case):
     def setUp(self):
         super().setUp()
@@ -602,6 +808,25 @@ class TheAddDocumentMode(Case):
         fx.write(bad, "x")
         self.assertIn("is not a plain name", self.add(document=bad)[1])
         self.assertFalse(os.path.exists(os.path.join(self.out, "added-documents", "bad name.txt")))
+
+    def test_a_layout_folder_written_with_a_kind_less_field_set_still_has_the_comparison_item_on_its_checklist(self):
+        # SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING.C5: Over a synthetic repository with a routed board, the folder command with `--review critical-routing` writes a folder whose round file holds the pass number, commit and views and no kind or check lines, whose method extract holds the routing section, with a placement folder only when one is given and no check report, and for a pass after the first copies no review record; it refuses missing or malformed pass fields, a check report, and the layout mode's own options (the kind, check lines, listed items, regions, others and any round fields other than the pass's), and the layout mode's behaviour and tests are unchanged. Out of scope: rendering the views.
+        other = os.path.join(self.root, "kindless")
+        argv = fx.folder_argv(self.repo, other, self.inputs, extra=["--round-fields", "number,commit,views,check"])
+        self.assertEqual(fx.run_folder(argv)[0], 0)
+        fx.write(os.path.join(self.root, "plan.txt"), "figure")
+        status, text = self.add(folder=other, document=os.path.join(self.root, "plan.txt"), item="PLAN-AND-FREE-PASS")
+        self.assertEqual(status, 0, text)
+        status, text = self.add(folder=other, item="NOT-AN-ITEM")
+        self.assertEqual(status, 1)
+        self.assertIn("'NOT-AN-ITEM' is not on the folder's checklist", text)
+
+    def test_a_folder_of_the_critical_routing_fields_alone_is_the_critical_routing_mode(self):
+        # SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING.C5: Over a synthetic repository with a routed board, the folder command with `--review critical-routing` writes a folder whose round file holds the pass number, commit and views and no kind or check lines, whose method extract holds the routing section, with a placement folder only when one is given and no check report, and for a pass after the first copies no review record; it refuses missing or malformed pass fields, a check report, and the layout mode's own options (the kind, check lines, listed items, regions, others and any round fields other than the pass's), and the layout mode's behaviour and tests are unchanged. Out of scope: rendering the views.
+        self.assertTrue(review_folder.is_critical_routing_fields(review_folder.CRITICAL_FIELDS))
+        for fields in (review_folder.LAYOUT_FIELDS, ("number", "commit", "views", "check"), ("number", "commit"),
+                       ("number", "commit", "views", "kind")):
+            self.assertFalse(review_folder.is_critical_routing_fields(fields), fields)
 
     def test_a_folder_the_command_did_not_write_is_not_added_a_document(self):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C5: Over a synthetic repository with a committed board, a command writes a review folder outside the repository holding the board's design files as the commit holds them, its plan, rules table and the records those name, the method, the hardware notes, the rendered views and placement view the round's first step names, a layout-facts extract written from the board file that lists the positions, pads, segments, vias and zones the layout items measure, and the check's report, together with one round file holding the round's number, kind, commit judged, views, check lines and, for a narrow round, listed items with a reason for each, changed regions and the line saying why every other item is not judged, taken from the command's arguments, and holds no session or notes file and no other file the commit does not hold; it holds no review record for a first round, and for a later round only the earlier rounds of the record as recorded, because a verdict row may cite a finding an earlier round closed by a reason. It refuses a folder inside the repository, a folder that is not new or empty, a commit that does not hold a board, views that are missing, and round fields of the set in use that are missing or malformed, the set being a parameter of the command, a narrow round without its reasons, changed regions or why-others line included. An add-view mode adds a rendered view and its command to the added-views folder of a folder the command wrote and records the item whose cannot judge asked for it, with that Why and the view, in a resolutions file there, neither being part of the shared context and the round file not being rewritten, and an add-document mode adds a text file holding the figure or passage that a cannot judge's Why asks for, with its source, to the same folder and records the item, that Why and the document in the same resolutions file, since a cannot judge can need a document the folder lacks and no address in the plan to fetch it from, and each mode refuses a file that does not exist or a folder the command did not write. The review seeding command's copy of the commit's files is generalised to take the repository, commit and design, with the documents optionally from a second repository, rendering stays in the seeding command, and the seeding command's existing tests still pass. Out of scope: rendering the views and running the check.

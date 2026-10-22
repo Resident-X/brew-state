@@ -144,6 +144,35 @@ def placement_rows(positions: List[Dict[str, str]]) -> List[List[str]]:
     return rows
 
 
+def read_placement_file(path: str) -> List[List[str]]:
+    """The rows of a placement file in the assembler's columns, as the conversion writes it, in the file's order: a Refused
+    naming the file when it cannot be read as UTF-8 text, lacks the columns, holds no part, holds a row of another width, a
+    blank designator or a designator twice (without regard to case)."""
+    try:
+        with open(path, encoding="utf-8", newline="") as handle:
+            rows = list(csv.reader(handle))
+    except (OSError, UnicodeDecodeError, csv.Error) as error:
+        raise Refused(f"the placement file {path} cannot be read ({error})") from None
+    if not rows or rows[0] != PLACEMENT_COLUMNS:
+        raise Refused(f"the placement file {path} has the columns {','.join(rows[0]) if rows else 'none'}, not "
+                      f"{','.join(PLACEMENT_COLUMNS)}")
+    found, seen = [], set()
+    for line, row in enumerate(rows[1:], start=2):
+        if not any(cell.strip() for cell in row):
+            continue
+        if len(row) != len(PLACEMENT_COLUMNS):
+            raise Refused(f"line {line} of the placement file {path} has {len(row)} columns, not {len(PLACEMENT_COLUMNS)}")
+        if not row[0].strip():
+            raise Refused(f"line {line} of the placement file {path} names no designator")
+        if row[0].strip().casefold() in seen:
+            raise Refused(f"the placement file {path} lists {row[0].strip()} twice")
+        seen.add(row[0].strip().casefold())
+        found.append([cell.strip() for cell in row])
+    if not found:
+        raise Refused(f"the placement file {path} lists no part")
+    return found
+
+
 def write_placement(path: str, rows: List[List[str]]) -> None:
     with open(path, "w", encoding="utf-8", newline="") as handle:
         writer = csv.writer(handle, quoting=csv.QUOTE_MINIMAL, lineterminator="\n")

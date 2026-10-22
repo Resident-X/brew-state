@@ -51,7 +51,6 @@ import os
 import re
 import subprocess
 import sys
-import types
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 TOOLS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -60,11 +59,10 @@ sys.path.insert(0, TOOLS_DIR)
 import board_check  # noqa: E402
 import board_review_history  # noqa: E402
 import review_folder  # noqa: E402
+import review_proof_harness as harness  # noqa: E402
 import review_seed  # noqa: E402
-from review_kit import caller as kit_caller  # noqa: E402
-from review_kit import command, proof, scheduler, store, streams  # noqa: E402
+from review_kit import command, proof, store  # noqa: E402
 from review_kit import costmodel as cost_model  # noqa: E402
-from review_kit import executor as ex  # noqa: E402
 
 REPO = review_seed.REPO
 #: Where the work folder keeps each part, relative to it. A session starts in the review folder and can read the folders above
@@ -102,10 +100,8 @@ VIEW_COMMANDS = [
 ]
 
 
-class Refused(Exception):
-    def __init__(self, causes: Sequence[str]):
-        super().__init__("; ".join(causes))
-        self.causes = list(causes)
+#: The refusal of the proof commands, the one class the shared harness raises.
+Refused = harness.Refused
 
 
 # --- The seeded copy and the folder -------------------------------------------------------------
@@ -214,45 +210,9 @@ def matches(seed: Mapping[str, Any], row: Mapping[str, Any]) -> bool:
 # --- The figures the kit's telemetry does not count -----------------------------------------------
 
 
-def saved(folder: str) -> List[Tuple[Dict[str, Any], str]]:
-    """Every session the executor saved in a streams folder, oldest first: its meta record and its stream as printed."""
-    found = []
-    for name in sorted(os.listdir(folder)) if os.path.isdir(folder) else []:
-        if not name.endswith(ex.META_SUFFIX):
-            continue
-        with open(os.path.join(folder, name), encoding="utf-8") as handle:
-            meta = json.load(handle)
-        with open(os.path.join(folder, name[:-len(ex.META_SUFFIX)] + ex.STREAM_SUFFIX), encoding="utf-8", newline="") as handle:
-            found.append((meta, handle.read()))
-    return found
-
-
-def retrievals(folder: str) -> Dict[str, Dict[str, int]]:
-    """The documents each session retrieved and how many retrievals failed, by session label, from the saved streams. A
-    retrieval failed when its result is an error or the stream holds no result for it."""
-    found: Dict[str, Dict[str, int]] = {}
-    for meta, text in saved(folder):
-        stream = streams.read_stream(text)
-        entry = found.setdefault(meta.get("label") or meta.get("key", "")[:12], {"retrieved": 0, "failed": 0})
-        for call in stream.calls:
-            for use in call.tool_uses:
-                if use.get("name") != RETRIEVAL_TOOL:
-                    continue
-                entry["retrieved"] += 1
-                result = stream.tool_results.get(use.get("id") or "")
-                if result is None or result.get("is_error") is True:
-                    entry["failed"] += 1
-    return found
-
-
-def refused_for_rate_limit(folder: str) -> int:
-    """The calls the service refused for a rate limit: each call the executor started again was refused once for each start
-    beyond its first, and a call that ended refused was refused on its last start too."""
-    total = 0
-    for meta, _ in saved(folder):
-        attempts = meta.get("attempts", 1)
-        total += attempts - 1 + (1 if meta.get("kind") == ex.RATE_LIMIT else 0)
-    return total
+saved = harness.saved
+retrievals = harness.retrievals
+refused_for_rate_limit = harness.refused_for_rate_limit
 
 
 # --- One run of the fanned-out form ---------------------------------------------------------------
@@ -261,29 +221,12 @@ def refused_for_rate_limit(folder: str) -> int:
 def run_command(folder: str, out: str, model: str, replicas: int, bound: Optional[int], environ: Mapping[str, str],
                 main: Callable[..., int] = command.main) -> Tuple[int, Dict[str, Any]]:
     """The kit's command on the folder with the layout caller; its exit status and report. The sessions run together."""
-    argv = ["--caller", CALLER, "--callers", TOOLS_DIR, "--review", folder, "--out", out, "--replicas", str(replicas),
-            "--model", model, "--format", "json"] + (["--bound", str(bound)] if bound is not None else [])
-    printed, error = io.StringIO(), io.StringIO()
-    status = main(argv, printed, error, environ)
-    try:
-        report = json.loads(printed.getvalue())
-    except ValueError:
-        report = {"result": command.REFUSED, "refusals": [f"the command printed no report: {error.getvalue().strip()[:300]}"],
-                  "cannot_run": None, "detail": "nothing was run"}
-    return status, report
+    return harness.run_command(CALLER, TOOLS_DIR, folder, out, model, replicas, bound, environ, main)
 
 
 def plan_of(folder: str, out: str, model: str, replicas: int, bound: Optional[int], environ: Mapping[str, str]) -> Dict[str, Any]:
     """The plan the command would run, with its predicted cost and time, made with no session and no model call."""
-    args = argparse.Namespace(caller=CALLER, callers=TOOLS_DIR, review=folder, out=out, bound=None if bound is None else str(bound),
-                              replicas=str(replicas), model=model, rerun=[], format="text")
-    run = command.Run(args, folder, out, command.REPO)
-    try:
-        run.settle(environ)
-        run.build_plan(ex.agent_program(environ))
-    except command.Refusal as error:
-        raise Refused(error.causes)
-    return run.report["plan"]
+    return harness.plan_of(CALLER, TOOLS_DIR, folder, out, model, replicas, bound, environ)
 
 
 def outcome_of(run_id: str, folder: str, out: str, seeds: Sequence[Mapping[str, Any]], seeded_commit: str,
@@ -291,43 +234,13 @@ def outcome_of(run_id: str, folder: str, out: str, seeds: Sequence[Mapping[str, 
     """The saved run in the proof's shape, and the facts about it the kit does not count: the retrievals by session, the
     calls refused for a rate limit, and whether the merged round names the seeds the replicas' findings name. `name` is the round
     a refusal names."""
-    name = name or run_id
-    record = store.read_record(out)
-    failed = [lane["failure"] for lane in record["lanes"] if lane["failure"] is not None]
-    if failed:
-        raise Refused([f"{name}: group {each['group']} replica {each['replica']} failed: {'; '.join(each['problems'])}; "
-                       f"the run is kept in {out}" for each in failed])
-    figures, problems = command.figures_of_run(os.path.join(out, command.STREAMS_FOLDER), set())
-    if problems:
-        raise Refused([f"{name}: {problem}" for problem in problems])
-    lanes = []
-    for lane in record["lanes"]:
-        entry = lane["record"]
-        tables = entry["attempts"][entry["standing"]]["tables"] if entry["standing"] is not None else {}
-        lanes.append(types.SimpleNamespace(group=lane["group"], replica=lane["replica"], units=tuple(lane["units"]),
-                                           unit_record=types.SimpleNamespace(standing=types.SimpleNamespace(tables=tables)),
-                                           failure=None))
-    declaration = kit_caller.load(CALLER, TOOLS_DIR).prepare(folder).declaration
-    formed = proof.FormPlan(proof.FANNED, declaration, None, types.SimpleNamespace(tool_commit=record["plan"]["tool_commit"]))
-    outcome = proof.outcome_from_run(run_id, formed, scheduler.RunResult({}, lanes, False), figures, seeds, matches,
-                                     seeded_commit=seeded_commit)
-    streams_folder = os.path.join(out, command.STREAMS_FOLDER)
-    rendered = [file for file in record.get("rendered", []) if file.endswith(".md")]
-    merged_round = None
-    if rendered:
-        with open(os.path.join(out, rendered[0]), encoding="utf-8") as handle:
-            merged_round = parsed_round(handle.read())
-    merged_found = ([seed["id"] for seed in seeds if any(names(seed["item"], cell) for cell in merged_round["raised_by"])]
-                    if merged_round else None)
-    return outcome, {"retrievals": retrievals(streams_folder), "refused_for_a_rate_limit": refused_for_rate_limit(streams_folder),
-                     "merged_round_seeds_found": merged_found, "merged": record["merged"] is not None}
+    return harness.outcome_of(CALLER, TOOLS_DIR, run_id, folder, out, seeds, seeded_commit, matches, parsed_round, names, name)
 
 
 # --- The record and its text ----------------------------------------------------------------------
 
 
-def total(figure: Mapping[str, Mapping[str, int]], name: str) -> int:
-    return sum(entry[name] for entry in figure.values())
+total = harness.total
 
 
 def build(seeds: Sequence[Mapping[str, Any]], key: proof.BaselineKey, singles: Sequence[proof.RunOutcome],
@@ -451,9 +364,7 @@ def dry_lines(plans: Mapping[str, Mapping[str, Any]], singles: Sequence[proof.Ru
 # --- The command --------------------------------------------------------------------------------
 
 
-def tool_commit() -> str:
-    done = subprocess.run(["git", "-C", REPO, "rev-parse", "HEAD"], capture_output=True, text=True)
-    return done.stdout.strip() if done.returncode == 0 else "unknown"
+tool_commit = harness.tool_commit
 
 
 def refusals(work: str) -> List[str]:

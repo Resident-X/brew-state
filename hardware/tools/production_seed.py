@@ -425,40 +425,62 @@ def render_views(clean: board_prove.Seed, out: str, kicad_cli: str, resvg: str) 
     return result.returncode == 0, said
 
 
-def assemble(clean: board_prove.Seed, out: str, placement: Dict[str, List[str]], order: List[str], parts: List[Dict[str, str]],
-             fields: List[str], fabrication: str, kicad_cli: str, resvg: str, gerbonara_python: str) -> Tuple[bool, str]:
-    """The production-files folder written; whether the views and the layer images were rendered, and their reports."""
+def write_folder(out: str, design: str, record: bytes, documents: Dict[str, bytes], placement: str, parts: str,
+                 fabrication: str, draw: Callable[[str, str], Tuple[bool, str]]) -> Tuple[bool, str]:
+    """A production-files folder written under `out`, which the seeding script and the real-order folder command both call.
+
+    The folder holds the placement file and the parts list as the text given, the Gerber and drill files copied from
+    `fabrication`, the design's parts specification record at `design` (the design's path from the repository's root)
+    as `record`, and `documents` at their paths from the root. `draw(out, production)` then puts in what is drawn or
+    supplied (the layer images, the footprint drawings, the views and the placement view, and whatever else the caller adds);
+    it returns whether they are in and what its tools reported. Last, every file and folder is given one time. Which design
+    and which commit the bytes come from is the caller's: this function reads none of them from the repository."""
     production = os.path.join(out, PRODUCTION)
     os.makedirs(production)
     with open(os.path.join(production, PLACEMENT_FILE), "w", encoding="utf-8", newline="") as handle:
-        handle.write(render_csv(production_files.PLACEMENT_COLUMNS, [placement[key] for key in order]))
+        handle.write(placement)
     with open(os.path.join(production, PARTS_FILE), "w", encoding="utf-8", newline="") as handle:
-        handle.write(render_csv(fields, [[row[field] for field in fields] for row in parts]))
+        handle.write(parts)
     shutil.copytree(fabrication, os.path.join(production, GERBERS))
-    record = os.path.join(out, DESIGN, RECORD)
-    os.makedirs(os.path.dirname(record), exist_ok=True)
-    shutil.copyfile(clean.path(RECORD), record)
-    for document, content in documents().items():
+    held = os.path.join(out, design, RECORD)
+    os.makedirs(os.path.dirname(held), exist_ok=True)
+    with open(held, "wb") as handle:
+        handle.write(record)
+    for document, content in documents.items():
         os.makedirs(os.path.dirname(os.path.join(out, document)), exist_ok=True)
         with open(os.path.join(out, document), "wb") as handle:
             handle.write(content)
-    drawn = subprocess.run([gerbonara_python, os.path.join(TOOLS, "production_files.py"), "render", "--gerbers",
-                            os.path.join(production, GERBERS), "--out", os.path.join(production, LAYERS), "--resvg", resvg],
-                           capture_output=True, text=True)
-    said = (drawn.stdout + drawn.stderr).strip()
-    if drawn.returncode != 0:
-        return False, said
-    drawn_footprints = io.StringIO()
-    if production_files.footprints(clean.path(".kicad_pcb"), os.path.join(production, FOOTPRINTS), kicad_cli, resvg,
-                                   drawn_footprints) != 0:
-        return False, (said + "\n" + drawn_footprints.getvalue()).strip()
-    rendered, views = render_views(clean, out, kicad_cli, resvg)
+    done, said = draw(out, production)
     stamp = time.time()
     for directory, _, names in os.walk(out, topdown=False):
         for name in names:
             os.utime(os.path.join(directory, name), (stamp, stamp))
         os.utime(directory, (stamp, stamp))
-    return rendered, (said + "\n" + views).strip()
+    return done, said
+
+
+def assemble(clean: board_prove.Seed, out: str, placement: Dict[str, List[str]], order: List[str], parts: List[Dict[str, str]],
+             fields: List[str], fabrication: str, kicad_cli: str, resvg: str, gerbonara_python: str) -> Tuple[bool, str]:
+    """The production-files folder written; whether the views and the layer images were rendered, and their reports."""
+    with open(clean.path(RECORD), "rb") as handle:
+        record = handle.read()
+
+    def draw(folder: str, production: str) -> Tuple[bool, str]:
+        drawn = subprocess.run([gerbonara_python, os.path.join(TOOLS, "production_files.py"), "render", "--gerbers",
+                                os.path.join(production, GERBERS), "--out", os.path.join(production, LAYERS), "--resvg", resvg],
+                               capture_output=True, text=True)
+        said = (drawn.stdout + drawn.stderr).strip()
+        if drawn.returncode != 0:
+            return False, said
+        drawn_footprints = io.StringIO()
+        if production_files.footprints(clean.path(".kicad_pcb"), os.path.join(production, FOOTPRINTS), kicad_cli, resvg,
+                                       drawn_footprints) != 0:
+            return False, (said + "\n" + drawn_footprints.getvalue()).strip()
+        rendered, views = render_views(clean, folder, kicad_cli, resvg)
+        return rendered, (said + "\n" + views).strip()
+    return write_folder(out, DESIGN, record, documents(), render_csv(production_files.PLACEMENT_COLUMNS,
+                        [placement[key] for key in order]), render_csv(fields, [[row[field] for field in fields] for row in parts]),
+                        fabrication, draw)
 
 
 def main(argv: Optional[List[str]] = None) -> int:

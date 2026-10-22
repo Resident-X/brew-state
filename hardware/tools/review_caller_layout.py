@@ -52,25 +52,24 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 TOOLS_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, TOOLS_DIR)
 
-import board_history  # noqa: E402
-import board_placement  # noqa: E402
 import board_review_history  # noqa: E402
+import review_catalogue  # noqa: E402
 import review_folder  # noqa: E402
 from review_kit import results  # noqa: E402
 from review_kit.merge import Refused  # noqa: E402
 
 ReviewFolderProblem = review_folder.ReviewFolderProblem
 METHOD = review_folder.METHOD
-PLAN = "layout-plan.md"
+PLAN = review_catalogue.PLAN
 #: The unit that compares the layout with the plan and makes the free pass, and the one for the board's own items.
 PLAN_UNIT = "plan-and-free-pass"
 OWN_UNIT = "board-items"
 #: The checklist entry a finding of the comparison and the free pass is raised against: they belong to no item. It is the
 #: checklist's last entry, so the merge numbers those findings after the item units' findings.
 PLAN_ENTRY = "PLAN-AND-FREE-PASS"
-AREA = re.compile(r"^### (.+) \(([A-Z]+)\)[ \t]*$")
-ITEM = re.compile(r"^#### ([A-Z]+-\d+)\. ")
-OWN_ITEM = re.compile(r"BOARD-[1-9][0-9]*")
+AREA = review_catalogue.AREA
+ITEM = review_catalogue.ITEM
+OWN_ITEM = review_catalogue.OWN_ITEM
 VERDICTS = ("pass", "fail", "not applicable", "cannot judge")
 VERDICT_TABLE = list(board_review_history.VERDICT_COLUMNS)
 #: The findings table as a reviewer returns it: its Item column, which says which checklist entry raised the finding, is
@@ -83,11 +82,9 @@ POINT = re.compile(r"\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)")
 #: Words in a Why that mean the unit asked for a published document rather than a view.
 DOCUMENT_WORDS = ("datasheet", "document", "standard", "specification")
 
-#: The areas whose verdicts the layout reviews showed depend on another area's findings: power with mains, and the
-#: manufacturing items with power. Each pair is judged in one group. A cross-reference between two areas of the catalogue does not make a
-#: coupling, since the planner joins couplings transitively and coupling every linked pair leaves nine of twelve areas in one
-#: group; a test fails when a coupling here has no cross-reference of the catalogue to support it.
-COUPLED = (("POWER", "MAINS"), ("MFG", "POWER"))
+#: The couplings the shared catalogue helpers state: power with mains and the manufacturing items with power. A test fails when a
+#: coupling here has no cross-reference of the catalogue to support it.
+COUPLED = review_catalogue.COUPLED
 #: Where the extracts the shared context holds come from.
 PRODUCER = "task hw:review-folder"
 #: The folder of views rendered during the round, which the declaration lists as added during the round.
@@ -124,13 +121,7 @@ WALL_SECONDS = 350
 ROUND: Dict[str, Any] = {}
 
 
-def read_text(review: str, path: str, what: str) -> str:
-    try:
-        with open(os.path.join(review, path), encoding="utf-8") as handle:
-            return handle.read()
-    except (OSError, UnicodeDecodeError) as error:
-        raise ReviewFolderProblem(f"the review folder {review} holds no readable {what} ({path}: {error}); write the folder "
-                                  "with the folder command")
+read_text = review_catalogue.read_text
 
 
 def design_path(review: str) -> str:
@@ -138,88 +129,19 @@ def design_path(review: str) -> str:
 
 
 def catalogue_split(review: str) -> Tuple[str, Dict[str, str]]:
-    """The catalogue's introduction, the text before its first area heading, and each area's block by code: its heading
-    line to the next area heading or the end of the catalogue."""
-    text = read_text(review, METHOD, "method")
-    section = board_history.LAYOUT_CATALOGUE.search(text)
-    if section is None:
-        raise ReviewFolderProblem(f"the method in the review folder {review} has no `## Layout practice catalogue` section, "
-                                  "so there are no catalogue areas to take units from")
-    lines = section.group(1).split("\n")
-    starts = [index for index, line in enumerate(lines) if AREA.match(line)]
-    if not starts:
-        raise ReviewFolderProblem(f"the method in the review folder {review} has no catalogue area heading of the form "
-                                  "`### <name> (<CODE>)`, so there are no units to take from it")
-    intro = "\n".join(lines[:starts[0]]).strip()
-    if not intro:
-        raise ReviewFolderProblem(f"the layout practice catalogue in the method of the review folder {review} has no "
-                                  "introduction before its first area heading, which the shared context needs")
-    blocks = {}
-    for position, start in enumerate(starts):
-        end = starts[position + 1] if position + 1 < len(starts) else len(lines)
-        blocks[AREA.match(lines[start]).group(2)] = "\n".join(lines[start:end]).strip() + "\n"
-    return intro, blocks
+    """The layout practice catalogue's introduction and each area's block by code."""
+    return review_catalogue.catalogue_split(review, review_catalogue.LAYOUT_SECTION)
 
 
-def listed_items_only(block: str, listed: Sequence[str]) -> str:
-    """An area's block with only the items of `listed`: its heading and the text before its first item, then each listed
-    item's own text, so a narrow round's prompt names no item the round does not judge."""
-    parts = re.split(r"(?m)^(?=#### )", block)
-    kept = [parts[0]] + [part for part in parts[1:] if (ITEM.match(part) and ITEM.match(part).group(1) in listed)]
-    return "".join(kept).rstrip() + "\n"
+listed_items_only = review_catalogue.listed_items_only
 
 
 def areas(review: str) -> List[Tuple[str, str, List[str]]]:
     """Each area heading of the method's layout practice catalogue, in order: its code, its name and its items' identifiers."""
-    text = read_text(review, METHOD, "method")
-    section = board_history.LAYOUT_CATALOGUE.search(text)
-    if section is None:
-        raise ReviewFolderProblem(f"the method in the review folder {review} has no `## Layout practice catalogue` section, "
-                                  "so there are no catalogue areas to take units from")
-    found: List[Tuple[str, str, List[str]]] = []
-    for line in section.group(1).split("\n"):
-        heading, item = AREA.match(line), ITEM.match(line)
-        if heading:
-            found.append((heading.group(2), heading.group(1), []))
-        elif item and found:
-            found[-1][2].append(item.group(1))
-    if not found:
-        raise ReviewFolderProblem(f"the method in the review folder {review} has no catalogue area heading of the form "
-                                  "`### <name> (<CODE>)`, so there are no units to take from it")
-    return found
+    return review_catalogue.areas(review, review_catalogue.LAYOUT_SECTION)
 
 
-def own_items(review: str) -> List[str]:
-    """The board's own items from the plan's table of them, none for the table's one `none` row."""
-    design = design_path(review)
-    path = os.path.join(design, PLAN)
-    lines = read_text(review, path, f"plan ({PLAN})").splitlines()
-    start = next((index for index, line in enumerate(lines) if line.strip().startswith("|")
-                  and board_placement.cells(line)[:2] == ["Item", "Applies when"]), None)
-    if start is None:
-        raise ReviewFolderProblem(f"the plan {path} holds no table of the board's own items, headed `| Item | Applies when | ...`; "
-                                  "it cannot be read, so the board's own items cannot be told")
-    header = board_placement.cells(lines[start])
-    divider = board_placement.cells(lines[start + 1]) if start + 1 < len(lines) and lines[start + 1].strip().startswith("|") else []
-    if len(divider) != len(header) or not all(re.fullmatch(r":?-+:?", cell) for cell in divider):
-        raise ReviewFolderProblem(f"the table of the board's own items in the plan {path} has no divider row under its header")
-    found, problems = [], []
-    for row in lines[start + 2:]:
-        if not row.strip().startswith("|"):
-            break
-        cells = board_placement.cells(row)
-        if len(cells) != len(header):
-            problems.append(f"the row {row.strip()[:80]!r} has {len(cells)} cells where the header has {len(header)}")
-        elif cells[0].lower() == "none" and len(found) == 0 and not problems:
-            continue
-        elif not OWN_ITEM.fullmatch(cells[0]):
-            problems.append(f"the row {row.strip()[:80]!r} gives its item as {cells[0]!r}, not BOARD-<n> or `none`")
-        else:
-            found.append(cells[0])
-    if problems or len(set(found)) != len(found):
-        raise ReviewFolderProblem(f"the table of the board's own items in the plan {path} cannot be read: "
-                                  + "; ".join(problems or ["an item is given twice"]))
-    return found
+own_items = review_catalogue.own_items
 
 
 def checklist(review: str) -> List[str]:
@@ -478,15 +400,7 @@ def expected_tokens(unit: str, listed: Sequence[str]) -> int:
 def coupled_to(unit: str, units: Dict[str, List[str]]) -> List[str]:
     """The other units of the round the declaration couples a unit with: the area pairs of COUPLED whose two areas both have a
     unit in the round."""
-    if not unit.startswith("area-"):
-        return []
-    code = unit[len("area-"):]
-    others = []
-    for first, second in COUPLED:
-        for mine, theirs in ((first, second), (second, first)):
-            if mine == code and f"area-{theirs}" in units:
-                others.append(f"area-{theirs}")
-    return sorted(set(others), key=list(units).index)
+    return review_catalogue.coupled_to(unit, units, COUPLED)
 
 
 def build_declaration(review: str) -> Dict[str, Any]:
