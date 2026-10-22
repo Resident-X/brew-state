@@ -3,9 +3,10 @@
 
 The production-files proof takes the layout review proof design's production files as `task hw:production-seed` seeds them: a
 rotated part, a reversed polarised part, an integrated circuit's first pin turned, a part moved, a catalogue number replaced, and
-a layer missing content, shifted and mirrored. That command is scripted, so no session seeds anything; it writes the production-files
-folder, which already holds the stand-in preview, and the seed list apart from it. This is the one command that does the rest: it
-runs the production-files caller through the review kit's command on the real agent command line, first the single form once on the
+a layer missing content, shifted and mirrored. That command is scripted, so no session seeds anything; it writes the production files
+folder, which holds the unseeded design's rendered views and placement view for the assembler's preview but no preview folder and no
+round file, and the seed list apart from it. This is the one command that does the rest: it completes a copy of the folder as a
+review folder, then runs the production-files caller through the review kit's command on the real agent command line, first the single form once on the
 mid-tier model, which it records as this review's baseline file because none is recorded in a form the kit loads (a baseline file
 that already holds the single run for this key is loaded and the single form is not run again), then the fanned-out form at the full
 unit count with the pre-order round's three replicas, two of them on the mid-tier model.
@@ -15,7 +16,11 @@ unit count with the pre-order round's three replicas, two of them on the mid-tie
                                      [--baselines <file>] [--dry] [--json]
 
 The folder and the seed list are those `task hw:production-seed -- --seeds <seed list> --out <folder>` writes; the folder is outside
-this repository, outside the work folder and apart from the seed list, and the commit judged is the one its round file names. The seed
+this repository, outside the work folder and apart from the seed list, and it is never written to. The command copies it to
+<work>/review and completes the copy as the production-files caller reads a review folder: a preview/ folder of the placement view's
+images, which stand in for the assembler's preview, and a round file written by the review folder command's own code naming the commit
+of this repository's HEAD, the versions of kicad-cli, gerbonara and resvg (as far as they can be read), the seeding command as the one command, and a line saying
+the preview is the unseeded design's rendered placement view standing in for the assembler's. The commit judged is that commit. The seed
 list is a JSON file, either a list or an object with a `seeds` list, each seed an object with a non-empty `id` and `target`, the
 placed part or the layers the seed lands on (`R4`, `F.SilkS`, `drill, F.Mask, B.Mask`); a target that is neither a part of the placement
 file nor a layer of the layer images is refused, and so are ids given twice. A seed counts as found when the fanned-out check gives a
@@ -29,8 +34,8 @@ key, give every seed with the replicas that raised it, the findings that match n
 from the single run, each session's time, tokens read, written and generated and cost, and the calls refused for a rate limit. A seed
 not reported is closed where the gap lies and the proof repeated in a new session.
 
-Each run's output is under <work>/out/ and the record in <work>; the seed list is copied to <work>/seed/. The review folder is read in
-place, so a session cannot read the seed list or the work folder from it.
+Each run's output is under <work>/out/ and the record in <work>; the seed list is copied to <work>/seed/ and the review folder given to
+the kit is <work>/review, which holds no seed list.
 
 --dry prints the plan of the fanned-out run and its predicted cost and time beside the bounds they would be held to, and, where no
 single run is recorded, the plan of the single form; it starts no session and calls no model.
@@ -49,6 +54,7 @@ import argparse
 import json
 import os
 import shutil
+import subprocess
 import sys
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence
 
@@ -72,6 +78,7 @@ CALLER = "production_files"
 DESIGN = review_seed.DESIGN
 SEED_DIR = "seed"
 SEEDS = os.path.join(SEED_DIR, "seeds.json")
+REVIEW_DIR = "review"
 OUT_DIR = "out"
 SINGLE_OUT = os.path.join(OUT_DIR, "single")
 FANNED_OUT = os.path.join(OUT_DIR, "fanned")
@@ -88,6 +95,18 @@ REPLICAS = 3
 BASELINE_SOURCE = ("One single-reviewer run of the production-files proof on its seeded production files, made through the review "
                    "kit's single form on the mid-tier model by production_files_review_proof.py; wall time, cost and tokens are "
                    "the kit's figures for the one session of the run.")
+
+
+#: The tools line when a tool's version cannot be read, and gerbonara's, which the seeding pins and which is run in an environment of
+#: its own.
+GERBONARA = "gerbonara 1.6.3"
+UNREAD = "version not read"
+PLACEMENT_VIEW = "placement"
+#: The ordering step's first two steps, which the seeding command runs on the unseeded design's last commit, as the round file's one
+#: command line.
+SEEDING_COMMAND = "task hw:production-seed -- --seeds <seed list> --out <folder>"
+PREVIEW_NOTE = ("the unseeded design's rendered placement view standing in for the assembler's preview, which a read-only session "
+                "cannot obtain; no assembler's preview was saved")
 
 
 # --- The folder and the seed list -----------------------------------------------------------------
@@ -151,12 +170,51 @@ def load_seeds(path: str, folder: str) -> List[Dict[str, Any]]:
     return [{**seed, "item": seed["target"].strip()} for seed in listed]
 
 
-def judged_commit(folder: str) -> str:
-    """The commit the folder's round file says the files were exported from."""
+def tool_version(program: str) -> str:
+    """The first line a tool prints for --version, or that its version was not read."""
     try:
-        return str(caller.production_round(folder)["commit"])
-    except review_folder.ReviewFolderProblem as error:
-        raise Refused([str(error)])
+        done = subprocess.run([program, "--version"], capture_output=True, text=True, timeout=15)
+    except (OSError, subprocess.SubprocessError):
+        return UNREAD
+    lines = (done.stdout or done.stderr).strip().splitlines()
+    return lines[0].strip() if done.returncode == 0 and lines else UNREAD
+
+
+def tools_line(environ: Mapping[str, str]) -> str:
+    return (f"kicad-cli {tool_version(environ.get('KICAD_CLI', 'kicad-cli'))}, {GERBONARA}, "
+            f"resvg {tool_version(environ.get('RESVG', 'resvg'))}")
+
+
+def complete_folder(folder: str, review: str, environ: Mapping[str, str]) -> str:
+    """Complete a copy of the seeded folder as a review folder at `review`, which is new or empty, and return the commit it names:
+    the placement view's images become its preview/ folder, and the round file is written by the review folder command's own code.
+    The seeded folder is only read. Refused when the copy cannot be made or holds no placement image."""
+    try:
+        board = review_folder.committed_board(REPO, "HEAD", DESIGN)
+    except review_folder.Refused as error:
+        raise Refused(error.causes)
+    if os.path.exists(review):
+        raise Refused([f"the review folder {review} already exists; give a new work folder"])
+    held = {PLACEMENT_VIEW: caller.images_in(folder, PLACEMENT_VIEW)}
+    if not held[PLACEMENT_VIEW]:
+        raise Refused([f"the folder {folder} holds no placement image ({PLACEMENT_VIEW}/ with a PNG or JPEG), which stands in for the "
+                       "assembler's preview; give the folder `task hw:production-seed` wrote"])
+    for stale in (review_folder.ROUND_FILE, review_folder.PREVIEW):
+        if os.path.exists(os.path.join(folder, stale)):
+            raise Refused([f"the folder {folder} already holds {stale}; give the folder `task hw:production-seed` wrote, which holds "
+                           "neither"])
+    shutil.copytree(folder, review, symlinks=True)
+    os.makedirs(os.path.join(review, review_folder.PREVIEW))
+    for name in held[PLACEMENT_VIEW]:
+        shutil.copyfile(os.path.join(folder, name), os.path.join(review, review_folder.PREVIEW, os.path.basename(name)))
+    values = {"commit": board["sha"], "tools": tools_line(environ), "commands": [SEEDING_COMMAND], "preview": PREVIEW_NOTE}
+    problems = review_folder.round_problems(values, review_folder.PRODUCTION_FIELDS)
+    if problems:
+        shutil.rmtree(review, ignore_errors=True)
+        raise Refused(problems)
+    with open(os.path.join(review, review_folder.ROUND_FILE), "w", encoding="utf-8") as handle:
+        handle.write(review_folder.settled(review_folder.round_content(review_folder.PRODUCTION_FIELDS, values)))
+    return board["sha"]
 
 
 # --- Matching seeds to results ------------------------------------------------------------------
@@ -314,10 +372,12 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout, err=sys.stderr, envir
         return finish(1)
     try:
         seeds = load_seeds(seeds_path, folder)
-        commit = judged_commit(folder)
-        tree = base.design_tree(REPO, "HEAD", DESIGN)
+        review = os.path.join(work, REVIEW_DIR)
+        commit = complete_folder(folder, review, environ)
+        folder = review
         os.makedirs(os.path.join(work, SEED_DIR), exist_ok=True)
         shutil.copyfile(seeds_path, os.path.join(work, SEEDS))
+        tree = base.design_tree(REPO, "HEAD", DESIGN)
         key = harness.single_key(CALLER, TOOLS_DIR, folder, os.path.join(work, SINGLE_OUT), args.baseline_model, seeds, tree, environ)
         singles = harness.recorded_under(baselines, key)
         if args.dry:

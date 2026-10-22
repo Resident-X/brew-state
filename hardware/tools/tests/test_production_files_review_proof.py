@@ -77,6 +77,9 @@ class Proofed(unittest.TestCase):
         self.addCleanup(shutil.rmtree, self.root, True)
         self.work = os.path.join(self.root, "proof-work")
         self.folder = pf.write_folder(self.root)
+        # The folder `task hw:production-seed` writes holds no round file and no preview folder.
+        os.remove(os.path.join(self.folder, "round.json"))
+        shutil.rmtree(os.path.join(self.folder, "preview"))
         self.seeds = os.path.join(self.root, "seeds.json")
         lfx.write(self.seeds, json.dumps({"design": pf.DESIGN, "seeds": SEEDS}))
         self.baselines = os.path.join(self.root, "baselines.json")
@@ -113,7 +116,10 @@ class Proofed(unittest.TestCase):
 
     def prompt(self):
         """The hash of the message the single form's session is given for this folder, as the command computes it."""
-        key = harness.single_key(pfp.CALLER, pfp.TOOLS_DIR, self.folder, os.path.join(self.work, pfp.SINGLE_OUT), MID, self.loaded(),
+        shutil.rmtree(self.work, ignore_errors=True)
+        review = os.path.join(self.work, pfp.REVIEW_DIR)
+        pfp.complete_folder(self.folder, review, dict(os.environ))
+        key = harness.single_key(pfp.CALLER, pfp.TOOLS_DIR, review, os.path.join(self.work, pfp.SINGLE_OUT), MID, self.loaded(),
                                  self.tree(), dict(os.environ))
         shutil.rmtree(self.work, ignore_errors=True)
         return key.prompt
@@ -163,7 +169,7 @@ class TheBaseline(Proofed):
         self.assertRegex(key.prompt, r"^[0-9a-f]{64}$")
         (run,) = loaded.recorded(key)
         self.assertEqual((run.form, run.seeds_found), (proof.SINGLE, ("S1", "S2")), "the mid-tier reviewer misses the part U1")
-        self.assertEqual(run.seeded_commit, lfx.round_file(self.folder)["commit"])
+        self.assertEqual(run.seeded_commit, pfp.review_folder.committed_board(REPO, "HEAD", pfp.DESIGN)["sha"])
         record = self.record()
         self.assertEqual(len(record["keys"]), 1)
         self.assertEqual(record["production_files"]["baseline_key"], key.id)
@@ -357,6 +363,59 @@ class TheReviewSpecifics(Proofed):
         self.assertTrue(os.path.isfile(os.path.join(self.work, pfp.SEEDS)))
         self.assertFalse(os.path.exists(os.path.join(self.folder, "seeds.json")))
         self.assertRegex(text, rf"SINGLE \| none recorded under key [0-9a-f]{{64}}, so the single form would run once on {MID}")
+
+
+def tree_of(root):
+    return {os.path.relpath(os.path.join(d, n), root): slurp(os.path.join(d, n), "rb")
+            for d, _, names in os.walk(root) for n in names}
+
+
+class TheCompletion(Proofed):
+    def complete(self):
+        review = os.path.join(self.root, "completed")
+        return review, pfp.complete_folder(self.folder, review, {"KICAD_CLI": "/nonexistent/kicad-cli"})
+
+    def test_the_seeded_folder_is_completed_in_a_copy_that_the_callers_prepare_accepts_and_the_folder_is_left_as_it_was(self):
+        # SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES-PROOF.C2: the proof command for the production-files check completes a copy of the seeded folder with a preview folder and a round file, and leaves the seeded folder as it was.
+        before = tree_of(self.folder)
+        review, commit = self.complete()
+        self.assertEqual(tree_of(self.folder), before, "the user's folder is byte-identical")
+        self.assertEqual(commit, pfp.review_folder.committed_board(REPO, "HEAD", pfp.DESIGN)["sha"])
+        round_ = caller.production_round(review)
+        self.assertEqual(round_["commit"], commit)
+        self.assertEqual(round_["commands"], [pfp.SEEDING_COMMAND])
+        self.assertIn("standing in for the assembler's preview", round_["preview"])
+        self.assertIn("gerbonara 1.6.3", round_["tools"])
+        self.assertTrue(caller.images_in(review, "preview"))
+        self.assertEqual(sorted(os.listdir(os.path.join(review, "preview"))),
+                         sorted(os.path.basename(each) for each in caller.images_in(self.folder, "placement")))
+        self.assertTrue(caller_tests.prepared(review).declaration.units)
+
+    def test_a_folder_that_holds_no_placement_image_or_already_holds_a_round_file_is_refused_and_nothing_is_written(self):
+        # SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES-PROOF.C2: the proof command refuses a folder it cannot complete naming the cause.
+        review = os.path.join(self.root, "completed")
+        with open(os.path.join(self.folder, "round.json"), "w", encoding="utf-8") as handle:
+            handle.write("{}")
+        with self.assertRaises(pfp.Refused) as raised:
+            pfp.complete_folder(self.folder, review, {})
+        self.assertIn("round.json", " ".join(raised.exception.causes))
+        os.remove(os.path.join(self.folder, "round.json"))
+        shutil.rmtree(os.path.join(self.folder, "placement"))
+        with self.assertRaises(pfp.Refused) as raised:
+            pfp.complete_folder(self.folder, review, {})
+        self.assertIn("no placement image", " ".join(raised.exception.causes))
+        self.assertFalse(os.path.exists(review))
+
+    def test_the_review_folder_the_kit_is_given_is_the_completed_copy_and_holds_no_seed_list(self):
+        # SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES-PROOF.C2: the folder given to the kit is the completed copy in the work folder, apart from the seed list.
+        before = tree_of(self.folder)
+        status, text, err = self.go("--dry")
+        self.assertEqual(status, 0, text + err)
+        review = os.path.join(self.work, pfp.REVIEW_DIR)
+        self.assertTrue(os.path.isfile(os.path.join(review, "round.json")))
+        self.assertFalse(os.path.exists(os.path.join(review, "seeds.json")))
+        self.assertEqual(tree_of(self.folder), before)
+        self.assertIn(f"{pfp.REVIEW_DIR}/", "".join(os.path.relpath(os.path.join(d, n), self.work) for d, _, ns in os.walk(review) for n in ns))
 
 
 class TheRefusals(Proofed):
