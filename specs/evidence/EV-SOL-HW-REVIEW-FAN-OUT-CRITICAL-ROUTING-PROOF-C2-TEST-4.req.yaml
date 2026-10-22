@@ -1,0 +1,15 @@
+id: EV-SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING-PROOF-C2-TEST-4
+type: evidence
+title: test evidence for SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING-PROOF.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-22T09:09:47Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_critical_routing_review_proof.py::test_a_single_session_that_fails_writes_no_baseline_and_the_command_starts_no_fanned_run
+  artifact_version: a8b97ba309a8a5b6f9f1e97591331527e460bdae
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING-PROOF.C2
+    type: satisfies

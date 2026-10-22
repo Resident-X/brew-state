@@ -40,3 +40,4 @@ __pycache__/
 # its shared cost log; the graph, not these, is the durable record
 .stage0/
 /.staircase/stage0-metrics.jsonl
+hardware/tools/tests/fixtures/review_baselines/*.lock

@@ -1,0 +1,43 @@
+id: EV-SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES-PROOF-C1-DEMONSTRATION
+type: evidence
+title: demonstration evidence for SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES-PROOF.C1
+status: active
+version: 1
+result: pass
+method: demonstration
+observed_at: "2026-10-22T09:09:47Z"
+artifact:
+  kind: inline
+text: |
+  # Fanned-out blind check of the layout review proof design's seeded production files: SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES-PROOF.C1
+
+  - Verified commit: `a8b97ba309a8a5b6f9f1e97591331527e460bdae` on branch `req/SOL-HW-REVIEW-FAN-OUT-PROOFS/live-proofs`. The single run was made at tool commit `efa3a5c`, the fanned-out runs of the recorded judgement at `dcf86dd`; the commits since changed the command's baseline guard and lock and left the flow as run.
+
+  ## What was run
+
+  The production files of `hardware/proof/review-proof` seeded by `task hw:production-seed` (8 seeds, scripted, so no seeding session exists): parts rotated, reversed, first-pin turned and moved, a catalogue number replaced, and layers missing content, shifted and mirrored. The command copies the seeded folder to its own work folder, adds the stand-in preview (the unseeded design's rendered placement view) and a round file naming the commit, and gives that copy to the kit, in sessions with no record of the seeds. The single form was run once through the kit on claude-sonnet-5-5 and is recorded as `hardware/tools/tests/fixtures/review_baselines/production_files_single_runs.json` (key `9cdcdf74…`). The fanned-out form ran the pre-order round's three replicas (full, hunt and small variants, all claude-sonnet-5-5) over 6 groups and 18 forks.
+
+  ## Result: pooled criterion, cost multiple 2.25: PASS
+
+  - Single run: 8 of 8 seeds, 478.7 s, USD 1.675, 3 findings matching no seed.
+  - Fanned-out run 1: 8 of 8, 151.0 s, USD 2.724, 26 sessions, 37 findings matching no seed.
+  - Fanned-out run 2: 8 of 8, 172.6 s, USD 2.996, 23 sessions, 26 findings matching no seed.
+  - Clauses over both runs: seeds found 8 and 8 against a floor of 8; no seed every single run found is missed; wall time 151 s and 173 s against a bound of 239.4 s (half the single mean); cost USD 2.72 and 3.00 against a bound of USD 3.77 (2.25 times the single mean). The stated multiple of 2.25 held, so no new multiple is stated.
+  - Replica statistics: 1 miss in 36 replica-seed trials (2.8 per cent); correlation between replicas -0.029. Calls refused for a rate limit: 0. The merged check was written in both runs and names all 8 seeds.
+
+  Two earlier invocations of the command each judged one fanned-out run alone: 8 of 8 in 173 s for USD 2.88 and 8 of 8 in 132 s for USD 3.10. Each held every clause and was still within ten per cent of the seeds floor, so the kit asked for a second run; that is why the command now runs the second fanned-out run and judges both (SOL-HW-REVIEW-PROOFS-RUN-A-SECOND-FANNED-OUT-RUN.C1). The recorded judgement is the third invocation.
+
+  ## Verdict differences
+
+  23 in run 1 and 17 in run 2, all against rows the single run passed as matches: 19 and 14 are held as cannot judge, and 4 and 3 as differs. The cannot-judge rows are parts whose position, rotation or first pin the replicas could not confirm independently, because the folder's preview is the unseeded design's own placement view standing in for the assembler's preview (the round file says so) and the replicas, told to check against an independent preview, hold the row where the single reviewer passed it. The differs rows are layers (B.Cu among them) where a replica reported no copper at the mounting-hole annuli. The 26 and 37 findings matching no seed are those rows and the same preview caveat; they are not labelled as false alarms.
+
+  ## Tools and cost
+
+  Claude Code 2.1.304 command line; model claude-sonnet-5-5 (all sessions); KiCad 10.0.7, resvg 0.48.1, gerbonara 1.6.3, Python 3.14, macOS. Live spend for this demonstration: USD 13.37 over the three invocations (single USD 1.67; fanned USD 2.88, 3.10, 2.72 and 3.00).
+
+  ## Commands
+
+  `task hw:production-seed -- --seeds <seed list> --out <folder>`, then `task hw:production-files-review-proof -- --work <new folder outside the repository> --folder <folder> --seeds <seed list>`; the proof record is `proof-record.json` and its text in the work folder.
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES-PROOF.C1
+    type: satisfies

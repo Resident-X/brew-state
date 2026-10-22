@@ -12,13 +12,15 @@ thin commands over one set of functions.
 from __future__ import annotations
 
 import argparse
+import contextlib
+import fcntl
 import io
 import json
 import os
 import subprocess
 import sys
 import types
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, Iterator, List, Mapping, Optional, Sequence, Tuple
 
 TOOLS_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, TOOLS_DIR)
@@ -127,13 +129,52 @@ def plan_of(caller: str, callers: str, folder: str, out: str, model: str, replic
     return run.report["plan"]
 
 
+#: Runs the fanned-out form once as the numbered run (1, then 2) and gives its outcome and the facts about it the kit does not count.
+RunOnce = Callable[[int], Tuple[proof.RunOutcome, Dict[str, Any]]]
+
+
+def numbered(run_id: str, output: str, index: int) -> Tuple[str, str]:
+    """The id and the output folder of the fanned-out run with this number: the first keeps the name given, a later one is named
+    beside it, so no two runs share an id or overwrite one another's output."""
+    return (run_id, output) if index == 1 else (f"{run_id}-run-{index}", f"{output}-{index}")
+
+
+def fanned_runs(run_once: RunOnce, singles: Sequence[proof.RunOutcome], cost_multiple: float) -> List[Tuple[proof.RunOutcome, Dict[str, Any]]]:
+    """The fanned-out runs a proof is judged over: one, or two when the first holds every clause but is within ten per cent of a
+    bound, which is when the kit's criterion requires a second run. It is never more than two. A run that fails raises as it does
+    from `run_once`, so the proof stops there."""
+    runs = [run_once(1)]
+    if proof.accept(singles, [runs[0][0]], cost_multiple).second_run_required:
+        runs.append(run_once(2))
+    return runs
+
+
+#: Reads a lane's tables and gives rows, shaped as the findings table's, that a seed may be matched against beside the findings.
+ExtraRows = Callable[[Mapping[str, Any]], Sequence[Mapping[str, Any]]]
+
+
+def widened(lanes: Sequence[Any], findings_table: str, extra_rows: ExtraRows) -> List[Any]:
+    """The lanes with each one's findings table holding the rows `extra_rows` gives for its tables after its own findings, so a
+    seed is raised by a row the replica judged without raising a finding for it. The lanes given are not changed."""
+    found = []
+    for lane in lanes:
+        tables = lane.unit_record.standing.tables or {}
+        rows = list(tables.get(findings_table, [])) + [dict(row) for row in extra_rows(tables)]
+        found.append(types.SimpleNamespace(group=lane.group, replica=lane.replica, units=lane.units, failure=lane.failure,
+                                           unit_record=types.SimpleNamespace(
+                                               standing=types.SimpleNamespace(tables={**tables, findings_table: rows}))))
+    return found
+
+
 def outcome_of(caller: str, callers: str, run_id: str, folder: str, out: str, seeds: Sequence[Mapping[str, Any]],
                seeded_commit: str, matches: proof.Match, parse_round: Callable[[str], Mapping[str, Any]],
-               names: Callable[[str, str], bool], name: Optional[str] = None) -> Tuple[proof.RunOutcome, Dict[str, Any]]:
+               names: Callable[[str, str], bool], name: Optional[str] = None,
+               extra_rows: Optional[ExtraRows] = None) -> Tuple[proof.RunOutcome, Dict[str, Any]]:
     """The saved run in the proof's shape, and the facts about it the kit does not count: the retrievals by session, the calls
     refused for a rate limit, and whether the merged round names the seeds the replicas' findings name. `name` is the round a
     refusal names; `parse_round` reads a rendered round into its `raised_by` cells and `names(item, cell)` says whether a cell names
-    an item."""
+    an item. `extra_rows`, when given, is read as `widened` reads it, so a row of a verdict table that raises no finding can name
+    a seed."""
     name = name or run_id
     record = store.read_record(out)
     failed = [lane["failure"] for lane in record["lanes"] if lane["failure"] is not None]
@@ -143,6 +184,7 @@ def outcome_of(caller: str, callers: str, run_id: str, folder: str, out: str, se
     figures, problems = command.figures_of_run(os.path.join(out, command.STREAMS_FOLDER), set())
     if problems:
         raise Refused([f"{name}: {problem}" for problem in problems])
+    prepared = kit_caller.load(caller, callers).prepare(folder)
     lanes = []
     for lane in record["lanes"]:
         entry = lane["record"]
@@ -150,7 +192,8 @@ def outcome_of(caller: str, callers: str, run_id: str, folder: str, out: str, se
         lanes.append(types.SimpleNamespace(group=lane["group"], replica=lane["replica"], units=tuple(lane["units"]),
                                            unit_record=types.SimpleNamespace(standing=types.SimpleNamespace(tables=tables)),
                                            failure=None))
-    prepared = kit_caller.load(caller, callers).prepare(folder)
+    if extra_rows is not None:
+        lanes = widened(lanes, prepared.declaration.shape.findings.table, extra_rows)
     declaration = prepared.declaration
     formed = proof.FormPlan(proof.FANNED, declaration, None, types.SimpleNamespace(tool_commit=record["plan"]["tool_commit"]))
     outcome = proof.outcome_from_run(run_id, formed, scheduler.RunResult({}, lanes, False), figures, seeds, matches,
@@ -219,7 +262,7 @@ def write_baseline(path: str, source: str, seeds: Sequence[Mapping[str, Any]], k
                 held = json.load(handle)
         except (proof.BaselineFileError, OSError, ValueError) as error:
             raise Refused([f"the baselines file {path} cannot be added to ({error}); move it away, or give another file"])
-        if loaded.recorded(key):
+        if loaded.recorded(key) or any(group.get("key") == key.as_dict() for group in held.get("baselines", [])):
             raise Refused([f"the baselines file {path} already holds single runs under this key; a recorded baseline is not run again"])
         held["source"] = f"{held.get('source', '')} {source}".strip()
     held["baselines"] = list(held["baselines"]) + [{"key": key.as_dict(), "runs": [outcome.as_dict()]}]
@@ -228,7 +271,7 @@ def write_baseline(path: str, source: str, seeds: Sequence[Mapping[str, Any]], k
 
 def run_single(caller: str, callers: str, folder: str, out: str, model: str, environ: Mapping[str, str],
                seeds: Sequence[Mapping[str, Any]], seeded_commit: str, design: str, matches: proof.Match, path: str,
-               source: str, run_id: str = SINGLE_RUN_ID) -> Tuple[proof.BaselineKey, proof.RunOutcome]:
+               source: str, run_id: str = SINGLE_RUN_ID, extra_rows: Optional[ExtraRows] = None) -> Tuple[proof.BaselineKey, proof.RunOutcome]:
     """Run the kit's single form once on the real executor, as the proof's baseline, and write it as a baseline file.
 
     The form is one unit holding every item of the review, with no shared context, run on `model` in one session through the
@@ -267,7 +310,61 @@ def run_single(caller: str, callers: str, folder: str, out: str, model: str, env
     figures, problems = command.figures_of_run(run.streams_folder, before)
     if problems:
         raise Refused([f"the single form's {problem}" for problem in problems])
+    if extra_rows is not None:
+        result = types.SimpleNamespace(lanes=widened(result.lanes, formed.declaration.shape.findings.table, extra_rows))
     outcome = proof.outcome_from_run(run_id, formed, result, figures, seeds, matches, seeded_commit=seeded_commit,
                                      rules=rules)
     write_baseline(path, source, seeds, key, outcome)
     return key, outcome
+
+
+# --- The guard a proof command holds before it pays for a single run --------------------------------
+
+
+def single_key(caller: str, callers: str, folder: str, out: str, model: str, seeds: Sequence[Mapping[str, Any]], design: str,
+               environ: Mapping[str, str]) -> proof.BaselineKey:
+    """The key the single form would be recorded under: the seed list, the design, the model and the prompt it would be given."""
+    run = settled_run(caller, callers, folder, out, model, environ)
+    try:
+        formed = single_plan(run, environ)
+    except ex.CannotRun as error:
+        raise board_check.CannotRun(str(error))
+    return baseline_key(seeds, design, model, formed)
+
+
+def recorded_under(path: str, key: proof.BaselineKey) -> Optional[List[proof.RunOutcome]]:
+    """The single runs recorded under exactly this key, None when the file is absent or holds nothing under the key. A file the
+    kit cannot load is refused, and so is one that holds the key with no runs, which is neither recorded nor free to be added to."""
+    if not os.path.exists(path):
+        return None
+    try:
+        loaded = proof.load_baselines(path)
+        with open(path, encoding="utf-8") as handle:
+            groups = json.load(handle)["baselines"]
+        empty = [number for number, group in enumerate(groups, 1)
+                 if proof.read_key(group["key"], path).id == key.id and not group["runs"]]
+    except (proof.BaselineFileError, OSError, ValueError, KeyError, TypeError) as error:
+        raise Refused([str(error)])
+    if empty and not loaded.recorded(key):
+        raise Refused([f"the baselines file {path} holds this key ({key}) with no runs; a partly written baseline is neither "
+                       "recorded nor added to, so repair or move the file"])
+    return loaded.recorded(key) or None
+
+
+@contextlib.contextmanager
+def baseline_lock(path: str) -> Iterator[None]:
+    """An exclusive advisory lock on a file beside the baselines file, held across reading the guard, running the single form and
+    writing the baseline, so two invocations cannot both pay for one key and a write cannot drop another's. A lock already held is
+    refused naming it, not waited for."""
+    lock = f"{os.path.realpath(path)}.lock"
+    os.makedirs(os.path.dirname(lock), exist_ok=True)
+    with open(lock, "a", encoding="utf-8") as handle:
+        try:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise Refused([f"the lock {lock} is held by another run of a proof command on the baselines file {path}; wait for it "
+                           "to finish"])
+        try:
+            yield
+        finally:
+            fcntl.flock(handle, fcntl.LOCK_UN)

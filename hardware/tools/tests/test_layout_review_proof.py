@@ -256,6 +256,56 @@ class TheCommand(Proofed):
         shutil.rmtree(self.work)
         return text
 
+    def near_bound_baselines(self, name, factor):
+        """A baselines file whose mean cost makes the design loop's cost bound the design loop's measured cost times `factor`, the
+        measured cost taken from a run over clearly looser baselines; the work folder is cleared again."""
+        status, text, err = self.go("--only", "design-loop")
+        self.assertEqual(status, 0, text + err)
+        measured = self.record()["fanned_runs"][0]["cost_usd"]
+        shutil.rmtree(self.work)
+        os.remove(self.log)
+        mean = measured * factor / lrp.COST_MULTIPLE
+        runs = [single("one", ["S1", "S2"], cost=mean), single("two", ["S1", "S2", "S3"], cost=mean)]
+        return baselines_file(os.path.join(self.root, name), runs)
+
+    def test_a_design_loop_run_within_a_tenth_of_a_bound_is_run_a_second_time_in_its_own_folder_and_both_are_judged(self):
+        # SOL-HW-REVIEW-PROOFS-RUN-A-SECOND-FANNED-OUT-RUN.C1: When the first fanned-out run of a proof command is within ten per cent of a bound of the kit's pooled criterion, the command runs the fanned-out form a second time in its own output folder and judges both runs together, and never runs a third.
+        baselines = self.near_bound_baselines("near.json", 1.05)
+        status, text, err = self.go("--only", "design-loop", baselines=baselines)
+        record = self.record()
+        self.assertEqual(len(record["fanned_runs"]), 2, "the second run is in the record, and there is no third")
+        self.assertEqual(len(record["layout"]["design_loop_runs"]), 2)
+        self.assertEqual([run["id"] for run in record["fanned_runs"]], ["layout-fanned-2", "layout-fanned-2-run-2"])
+        for folder in ("design-loop", "design-loop-2"):
+            self.assertTrue(store.holds_record(os.path.join(self.work, lrp.OUT_DIR, folder)), folder)
+        self.assertFalse(os.path.exists(os.path.join(self.work, lrp.OUT_DIR, "design-loop-3")))
+        self.assertEqual(status, 0 if record["verdict"]["accepted"] else 1, "the exit status is the pooled verdict's")
+        self.assertNotEqual(record["verdict"]["status"], "second-run-required")
+        self.assertIn("ROUND | design-loop-2 |", text)
+        self.assertEqual(len([call for call in self.calls() if call["resume"] is None]), 2, "one shared context for each run")
+        status, text, err = self.go("--only", "design-loop", "--json", baselines=baselines)
+        self.assertEqual(status, 1, "a work folder that already holds the record is refused, not run over")
+
+    def test_a_design_loop_run_clearly_inside_every_bound_is_the_only_run(self):
+        # SOL-HW-REVIEW-PROOFS-RUN-A-SECOND-FANNED-OUT-RUN.C1: When the first fanned-out run of a proof command is within ten per cent of a bound of the kit's pooled criterion, the command runs the fanned-out form a second time in its own output folder and judges both runs together, and never runs a third.
+        status, text, err = self.go("--only", "design-loop")
+        self.assertEqual(status, 0, text + err)
+        record = self.record()
+        self.assertEqual(len(record["fanned_runs"]), 1)
+        self.assertEqual(len(record["layout"]["design_loop_runs"]), 1)
+        self.assertFalse(os.path.exists(os.path.join(self.work, lrp.OUT_DIR, "design-loop-2")))
+
+    def test_the_dry_output_shows_the_second_run_line_with_the_cost_and_time_up_to_twice(self):
+        # SOL-HW-REVIEW-PROOFS-RUN-A-SECOND-FANNED-OUT-RUN.C1: When the first fanned-out run of a proof command is within ten per cent of a bound of the kit's pooled criterion, the command runs the fanned-out form a second time in its own output folder and judges both runs together, and never runs a third.
+        status, text, err = self.go("--dry", "--json")
+        self.assertEqual(status, 0, text + err)
+        document = json.loads(text)
+        predicted = document["plans"]["design-loop"]["predicted"]
+        line = next(each for each in document["lines"] if each.startswith("SECOND RUN | design-loop |"))
+        self.assertIn(f"${2 * predicted['cost_usd']:.2f}", line)
+        self.assertIn(f"{2 * predicted['wall_s']:.0f} s", line)
+        self.assertFalse([each for each in document["lines"] if each.startswith("SECOND RUN | pre-order")])
+
     def test_the_dry_output_warns_when_the_prediction_is_over_a_bound_or_within_a_tenth_of_it(self):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: a plan mode that prints the plan and the predicted cost and time without calling the model, beside the bounds of the cost multiple of 1.25 and half the single mean time
         text = self.dry_with_mean_cost(0.8)

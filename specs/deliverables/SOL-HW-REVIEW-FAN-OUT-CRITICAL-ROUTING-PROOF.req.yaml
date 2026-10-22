@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The fanned-out critical-routing check is proven blind on a seeded copy of the method proof design
 status: active
-version: 1
+version: 2
 text: |
   Why this exists. The critical-routing check of step 4 of the method's routing section is repeated on every board and after every re-route, and SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING builds its fanned-out form with tests over the kit's stub. Those tests show the mechanics, not that the fanned-out form finds the defects the single reviewer finds; DEL-HW-REVIEW-FAN-OUT.C5 requires a blind run on a seeded copy for each fanned-out review, and a run of the fanned-out form is a paid live run of its own. This solution holds that run, apart from the caller, so the caller ships with its tests and the method relies on the single-reviewer form of the check until this proof is recorded. The reasoning and the options rejected are in DEC-REVIEW-FAN-OUT-FROM-SHARED-CONTEXT-WITH-REPLICAS, and DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND settles that a pass judged by unit is the same pass; a session building this does not reopen either.
 
@@ -14,8 +14,12 @@ text: |
   - The seeding is done by a session that has not read the catalogue, in a copy in a temporary work tree outside the repository, with the copy's records kept consistent and the critical items locked, and the seed list is written apart from both the copy and the review folder.
   - The review folder is assembled by the layout folder command with `--review critical-routing`, and the checks run in sessions with no record of the seeds.
   - The single form is one unit holding every item with no shared context, on the mid-tier, run through the kit's single form on the same seeded copy; the proof refuses to run it again once its baseline is recorded for the key.
-  - The proof command is thin over the shared proof harness the callers use, and is a task of its own.
+  - The proof command is hardware/tools/critical_routing_review_proof.py behind the task hw:critical-routing-review-proof, built as hardware/tools/schematic_review_proof.py is: a module over hardware/tools/review_proof_harness.py that supplies the review's own folder writer, seed matching and constants. It takes the work folder, the seeded copy's git work tree and the seed list from the blind seeding session as arguments, since nothing scripts that seeding; it renders the views the critical-routing folder mode needs itself; and it writes the review folder with the review folder command's critical-routing mode. The fanned-out form runs two replicas and the cost multiple is 1.25. The baseline file is hardware/tools/tests/fixtures/review_baselines/critical_routing_single_runs.json, written by the live run.
+  - The critical-routing pass holds no findings table, so a seed counts as found when the fanned-out run gives a failing verdict against the item that covers it.
+  - The command's tests are in hardware/tools/tests/test_critical_routing_review_proof.py over the kit's stub, and the hardware readme and the descriptions of hw:test and hw:test:round name the command as those of the other proof commands are named.
   - The proof is a live run, on demand and in neither gate; the tests of the command need no model and no KiCad.
+
+  Live runs, 2026-10-22. The seeded copy of the method proof design held 8 seeds on the critical nets, seeded by a session that had not read the catalogue, with the pre-order check passing the copy: a 1 mm neck narrowed from 0.5 to 0.25 mm on +5V at the R1 pad (S1), the ground via of J1 pin 2 removed so two vias remain of three (S2), a detour of about 14.6 mm on /+3V3_REG against about 3.5 mm (S3), the ground vias of U2 pin 7 and C2 pad 2 moved 7 mm and 4.5 mm away (S4, S5), two extra vias with a hop on /+5V_IN (S6) and the ground vias of C3 and C1 removed (S7, S8). The first live run gave the review folder the views and not the placement view, so the replicas held POWER-2, the item that covers S1, and others as cannot judge for the placement view, the merged pass was refused, and the pooled criterion failed: 5 of 8 against the single run's 6, S1 missed by both replicas, USD 1.47 against a bound of USD 1.19. The command was corrected to render the placement view and give it to the folder command, the baseline recorded against the folder without it was removed, and the proof was run again: the single form on claude-sonnet-5-5 found 5 of 8 in 427.9 s for USD 1.492 and is recorded as the baseline file, and the fanned-out form, two claude-haiku-5-5 replicas over 9 groups in 19 sessions, found 6 of 8 in 133.8 s for USD 1.239 with the merged pass written, so the pooled criterion holds with the wall time at most 213.9 s and the cost at most USD 1.865 and no clause within ten per cent of its bound. S3 and S6 are raised by the replicas as findings under WORK-3, not under WORK-2 and WORK-7, the items the seed list names, so the seed list's item for a seed that two overlapping items cover decides whether it counts as found.
 
   Out of scope: the critical-routing caller, its folder mode and its tests; the layout review round's proof.
 links:
@@ -31,3 +35,7 @@ links:
     type: justified-by
   - target: OBL-VERIFICATION-DISCIPLINE-001.C9
     type: targets
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: 6fa28c30a5c3a89939f6628a8f85be55cf7cd6fdcaa7523fbc11a81ad6cf1db7
+  gating_profile: ""

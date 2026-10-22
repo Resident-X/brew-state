@@ -16,7 +16,9 @@ fanned-out run uses, and the single reviewer is never run again.
 
 The design loop's run is judged by the kit's pooled criterion with a cost multiple of 1.25: the seeds found are no fewer than
 the fewest any recorded single run found, no seed every single run found is missed, the wall time is at most half the single
-mean and the cost at most 1.25 times its mean. The pre-order round's figures are recorded and not bounded. The record,
+mean and the cost at most 1.25 times its mean. When the first design-loop run holds every clause but is within ten per cent of a
+bound, the command runs the design loop a second time in its own folder, <work>/out/design-loop-2, and judges both runs
+together; it never runs a third. The pre-order round's figures are recorded and not bounded. The record,
 proof-record.json, and its text, proof-record.txt, are written in the work folder; they give every seed with the replicas
 that raised it, the findings that match no seed, the verdicts item by item with the differences from the single runs, each
 session's time, tokens read, written and generated, cost, first-call cache read and document retrievals with any that
@@ -29,7 +31,7 @@ folders above it; the seed list, the seeded copy and the kept work tree are unde
 The pre-order round's third replica runs on the layout caller's small-tier model with a shared context of its own, one root
 more; the cost model prices each model's sessions at that model's own prices.
 
---dry prints each selected run's model or models, plan and its predicted cost and time beside the bounds they would be held to (with a warning
+--dry prints each selected run's model or models, plan and its predicted cost and time beside the bounds they would be held to (with a SECOND RUN line for the design loop, the cost and time up to twice, and a warning
 when the design loop's prediction is over a bound or within a tenth of it), and starts no
 session and calls no model; it still seeds the copy and writes the review folder. --only runs one of the two rounds.
 
@@ -38,7 +40,7 @@ the shared context and a fork for each group and replica, for each round.
 
 Each cause is reported on one line beginning REFUSED, a RESULT line comes last, and the exit status is 0 when the criterion
 holds (or, with --only pre-order, when the run completed and its figures are recorded), 1 when the command refuses, a run fails
-or the criterion does not hold or asks for a second run, and 2 when a tool or the agent command line is missing. --json
+or the criterion does not hold, and 2 when a tool or the agent command line is missing. --json
 prints the same facts as one JSON document.
 """
 
@@ -244,12 +246,12 @@ total = harness.total
 
 
 def build(seeds: Sequence[Mapping[str, Any]], key: proof.BaselineKey, singles: Sequence[proof.RunOutcome],
-          runs: Mapping[str, Tuple[proof.RunOutcome, Dict[str, Any]]], context: Mapping[str, Any]) -> Dict[str, Any]:
-    """The kit's record of the proof over the design loop's run, with the pre-order round's figures beside it, recorded and not
-    bounded, and what each run's saved streams show."""
+          runs: Mapping[str, Sequence[Tuple[proof.RunOutcome, Dict[str, Any]]]], context: Mapping[str, Any]) -> Dict[str, Any]:
+    """The kit's record of the proof over the design loop's fanned-out runs (one, or two when the first is within ten per cent of
+    a bound), with the pre-order round's figures beside it, recorded and not bounded, and what each run's saved streams show."""
     design = runs.get("design-loop")
     if design:
-        record = proof.build_record(seeds, singles, [design[0]], COST_MULTIPLE, [key])
+        record = proof.build_record(seeds, singles, [run for run, _ in design], COST_MULTIPLE, [key])
     else:
         record = {"version": 1, "seeds": [seed["id"] for seed in seeds], "seed_list_sha256": proof.seed_list_hash(seeds),
                   "cost_multiple": COST_MULTIPLE, "keys": [dict(key.as_dict(), id=key.id)], "verdict": None,
@@ -258,9 +260,10 @@ def build(seeds: Sequence[Mapping[str, Any]], key: proof.BaselineKey, singles: S
                                    "cost_usd": round(proof.mean([run.cost_usd for run in singles]), 6)}}
     pre_order = runs.get("pre-order")
     if pre_order:
-        record["pre_order"] = proof.run_report(pre_order[0])
-        record["pre_order"]["seed_replicas"] = {seed["id"]: list(pre_order[0].raised_by.get(seed["id"], ())) for seed in seeds}
-    record["layout"] = dict(context, rounds={name: extra for name, (_, extra) in runs.items()})
+        record["pre_order"] = proof.run_report(pre_order[0][0])
+        record["pre_order"]["seed_replicas"] = {seed["id"]: list(pre_order[0][0].raised_by.get(seed["id"], ())) for seed in seeds}
+    record["layout"] = dict(context, rounds={name: made[0][1] for name, made in runs.items()},
+                            design_loop_runs=[extra for _, extra in design or ()])
     return record
 
 
@@ -274,7 +277,9 @@ def lines_of(record: Mapping[str, Any]) -> List[str]:
         found += [f"CRITERION | {line}" for line in proof.record_lines(record)]
     else:
         found.append("CRITERION | not judged: the design loop's round was not run, so the pre-order round's figures are only recorded")
-    for name, extra in layout["rounds"].items():
+    rounds = list(layout["rounds"].items()) + [(f"design-loop-{number}", extra) for number, extra in
+                                              enumerate(layout.get("design_loop_runs", ())[1:], 2)]
+    for name, extra in rounds:
         found.append(f"ROUND | {name} | refused for a rate limit {extra['refused_for_a_rate_limit']} | retrievals "
                      f"{total(extra['retrievals'], 'retrieved')} failed {total(extra['retrievals'], 'failed')} | merged round "
                      f"{'written' if extra['merged'] else 'refused'} | seeds the merged round names "
@@ -299,7 +304,7 @@ def lines_of(record: Mapping[str, Any]) -> List[str]:
         found += [f"VERDICT DIFFERENCE | {run_id} | {each['item']} | fanned {each['fanned']} | single {each['single']}"
                   for each in differences]
     found.append(f"BOUND | groups at once in the run {layout['bound']} | calls refused for a rate limit "
-                 f"{sum(extra['refused_for_a_rate_limit'] for extra in layout['rounds'].values())}")
+                 f"{sum(extra['refused_for_a_rate_limit'] for _, extra in rounds)}")
     return found
 
 
@@ -352,6 +357,8 @@ def dry_lines(plans: Mapping[str, Mapping[str, Any]], singles: Sequence[proof.Ru
             f"cost {'within' if predicted['cost_usd'] <= cost else 'over'} its bound, time {'within' if predicted['wall_s'] <= wall else 'over'} "
             "its bound" if name == "design-loop" else "figures recorded, not bounded"))
         if name == "design-loop":
+            found.append(f"SECOND RUN | {name} | a second fanned-out run follows when the first is within {proof.NEAR:.0%} of a bound | "
+                         f"with it the cost is up to ${2 * predicted['cost_usd']:.2f} and the time up to {2 * predicted['wall_s']:.0f} s")
             near = [f"{what} ${figure} against its bound ${limit:.2f}" if what == "cost" else f"{what} {figure} s against its bound {limit:.0f} s"
                     for what, figure, limit in (("cost", predicted["cost_usd"], cost), ("wall time", predicted["wall_s"], wall))
                     if figure > limit * (1 - proof.NEAR)]
@@ -431,18 +438,26 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout, err=sys.stderr, seed_
             result.update(result="PLANNED", refusals=[], lines=dry_lines(plans, singles, models), plans=plans,
                           detail="no session was started and no model was called")
             return finish(0)
-        runs: Dict[str, Tuple[proof.RunOutcome, Dict[str, Any]]] = {}
+        runs: Dict[str, List[Tuple[proof.RunOutcome, Dict[str, Any]]]] = {}
         os.makedirs(os.path.join(work, OUT_DIR), exist_ok=True)
+
+        def fan_out_of(name: str, replicas: int) -> Callable[[int], Tuple[proof.RunOutcome, Dict[str, Any]]]:
+            def fan_out(index: int) -> Tuple[proof.RunOutcome, Dict[str, Any]]:
+                run_id, output = harness.numbered(f"layout-fanned-{replicas}", os.path.join(work, OUT_DIR, name), index)
+                status, report = run_command(folder, output, models[name], replicas, args.bound, environ, main_command)
+                if report.get("cannot_run"):
+                    raise board_check.CannotRun(report["cannot_run"])
+                if not store.holds_record(output):
+                    raise Refused([f"{name}: {why}" for why in report["refusals"]] or [f"{name}: the run wrote no record"])
+                fanned, extra = outcome_of(run_id, folder, output, seeds, seeded["commit"], name)
+                extra["command_report"] = {"result": report["result"], "detail": report["detail"],
+                                           "refusals": report["refusals"], "bound": report["plan"]["bound"]}
+                return fanned, extra
+            return fan_out
+
         for name, replicas in chosen:
-            output = os.path.join(work, OUT_DIR, name)
-            status, report = run_command(folder, output, models[name], replicas, args.bound, environ, main_command)
-            if report.get("cannot_run"):
-                raise board_check.CannotRun(report["cannot_run"])
-            if not store.holds_record(output):
-                raise Refused([f"{name}: {why}" for why in report["refusals"]] or [f"{name}: the run wrote no record"])
-            runs[name] = outcome_of(f"layout-fanned-{replicas}", folder, output, seeds, seeded["commit"], name)
-            runs[name][1]["command_report"] = {"result": report["result"], "detail": report["detail"],
-                                               "refusals": report["refusals"], "bound": report["plan"]["bound"]}
+            once = fan_out_of(name, replicas)
+            runs[name] = harness.fanned_runs(once, singles, COST_MULTIPLE) if name == "design-loop" else [once(1)]
     except Refused as error:
         result["refusals"] = error.causes
         return finish(1)
@@ -450,13 +465,13 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout, err=sys.stderr, seed_
         result.update(result=command.CANNOT_RUN, refusals=[], detail=str(error))
         return finish(2)
     record = build(seeds, key, singles, runs, {"models": models, "baseline_model": key.model, "tool_commit": tool_commit(), "seeded_commit": seeded["commit"],
-                                                 "work": work, "bound": next(iter(runs.values()))[1]["command_report"]["bound"]})
+                                                 "work": work, "bound": next(iter(runs.values()))[0][1]["command_report"]["bound"]})
     store.atomic_write_json(os.path.join(work, RECORD), record)
     lines = lines_of(record)
     with open(os.path.join(work, TEXT), "w", encoding="utf-8") as handle:
         handle.write("\n".join(lines) + "\n")
     held = record["verdict"] is None or record["verdict"]["accepted"]
-    refused_merge = [name for name, (_, extra) in runs.items() if not extra["merged"]]
+    refused_merge = [name for name, made in runs.items() if not all(extra["merged"] for _, extra in made)]
     result.update(result="WRITTEN" if held else "FAILED", refusals=[], lines=lines, record=record,
                   detail=os.path.join(work, RECORD) if held else
                   f"the criterion is {record['verdict']['status']}; the record is {os.path.join(work, RECORD)}")

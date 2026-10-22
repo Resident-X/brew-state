@@ -1,0 +1,210 @@
+{
+ "version": 1,
+ "source": "One single-reviewer run of the production-files proof on its seeded production files, made through the review kit's single form on the mid-tier model by production_files_review_proof.py; wall time, cost and tokens are the kit's figures for the sessions of the run.",
+ "seeds": [
+  {
+   "id": "S1",
+   "area": "placement file: rotation",
+   "target": "U3",
+   "description": "U3, the small-outline amplifier, turned 90 degrees in the placement file from the 0 its footprint is placed at on the board",
+   "item": "U3"
+  },
+  {
+   "id": "S2",
+   "area": "placement file: polarity",
+   "target": "D1",
+   "description": "D1, the polarised suppressor diode, reversed in the placement file, turned 180 degrees from the board's placement",
+   "item": "D1"
+  },
+  {
+   "id": "S3",
+   "area": "placement file: first-pin orientation",
+   "target": "U4",
+   "description": "U4, the controller in a leadless package with a pin-one marker, turned a quarter turn in the placement file from the board's placement",
+   "item": "U4"
+  },
+  {
+   "id": "S4",
+   "area": "placement file: position",
+   "target": "R4",
+   "description": "R4, a resistor, moved 4 mm along X in the placement file from where the board places it",
+   "item": "R4"
+  },
+  {
+   "id": "S5",
+   "area": "parts list: catalogue part",
+   "target": "R2",
+   "description": "R2's catalogue number in the parts list replaced by a number no position of the design carries, C9000099, the parts specification record mapping R2 to its own",
+   "item": "R2"
+  },
+  {
+   "id": "S6",
+   "area": "fabrication layer: missing content",
+   "target": "F.Mask, B.Mask",
+   "description": "the solder mask on both sides without its openings over the mains terminal block J1's through-hole pads, so the mask covers them",
+   "item": "F.Mask, B.Mask"
+  },
+  {
+   "id": "S7",
+   "area": "fabrication layer: shifted content",
+   "target": "drill, F.Mask, B.Mask",
+   "description": "the mounting hole H1 moved 4 mm along X and Y in the board the layers are exported from, so its drilled hole and its mask openings on both sides stand 4 mm from the design's",
+   "item": "drill, F.Mask, B.Mask"
+  },
+  {
+   "id": "S8",
+   "area": "fabrication layer: mirrored content",
+   "target": "F.SilkS",
+   "description": "every text on the front legend, the reference designators, exported mirrored",
+   "item": "F.SilkS"
+  }
+ ],
+ "baselines": [
+  {
+   "key": {
+    "seeds": "993bab85df4c4e0f33e97e17ee125af9fa60ae8a157a2d2357ed32b89cebaa81",
+    "design": "a0bc3eb7da4d111ab94f62bc3652cc26ccf0eed3",
+    "model": "claude-sonnet-5-5",
+    "form": "single",
+    "prompt": "b9deadeb6053c809dd5d7fa731c2f9efac69b03a1253ff47d96e0feeb25f2378"
+   },
+   "runs": [
+    {
+     "id": "single-1",
+     "form": "single",
+     "tool_commit": "efa3a5c",
+     "seeded_commit": "efa3a5cae679c492f169f0c6b24c06d60f438708",
+     "seeds_found": [
+      "S1",
+      "S2",
+      "S3",
+      "S4",
+      "S5",
+      "S6",
+      "S7",
+      "S8"
+     ],
+     "unmatched": [
+      "G1.r1: 2 | FID1 | FID1 (32,-41) is in the placement file and in the parts specification record (C9000032) but has no row in production/parts-list.csv, which names no fiducial.",
+      "G1.r1: 3 | FID2 | FID2 (87,-44) is in the placement file and in the record (C9000033) but has no row in production/parts-list.csv.",
+      "G1.r1: 4 | FID3 | FID3 (30,-10) is in the placement file and in the record (C9000034) but has no row in production/parts-list.csv."
+     ],
+     "verdicts": {
+      "TP1": "matches",
+      "TP2": "matches",
+      "TP3": "matches",
+      "TP4": "matches",
+      "TP5": "matches",
+      "TP6": "matches",
+      "C1": "matches",
+      "C2": "matches",
+      "C7": "matches",
+      "C8": "matches",
+      "C3": "matches",
+      "C4": "matches",
+      "C5": "matches",
+      "C6": "matches",
+      "D1": "differs",
+      "FB1": "matches",
+      "FID1": "differs",
+      "FID2": "differs",
+      "FID3": "differs",
+      "J1": "matches",
+      "J2": "matches",
+      "J4": "matches",
+      "R1": "matches",
+      "R2": "differs",
+      "R3": "matches",
+      "R4": "differs",
+      "U1": "matches",
+      "U2": "matches",
+      "U3": "differs",
+      "U4": "differs",
+      "Y1": "matches",
+      "F.Cu": "matches",
+      "F.Mask": "differs",
+      "F.SilkS": "differs",
+      "B.Cu": "matches",
+      "B.Mask": "differs",
+      "B.SilkS": "matches",
+      "In1.Cu": "matches",
+      "In2.Cu": "matches",
+      "Edge.Cuts": "matches",
+      "drill": "differs"
+     },
+     "raised_by": {
+      "S1": [
+       "G1.r1"
+      ],
+      "S2": [
+       "G1.r1"
+      ],
+      "S3": [
+       "G1.r1"
+      ],
+      "S4": [
+       "G1.r1"
+      ],
+      "S5": [
+       "G1.r1"
+      ],
+      "S6": [
+       "G1.r1"
+      ],
+      "S7": [
+       "G1.r1"
+      ],
+      "S8": [
+       "G1.r1"
+      ]
+     },
+     "judged_by": {
+      "S1": [
+       "G1.r1"
+      ],
+      "S2": [
+       "G1.r1"
+      ],
+      "S3": [
+       "G1.r1"
+      ],
+      "S4": [
+       "G1.r1"
+      ],
+      "S5": [
+       "G1.r1"
+      ],
+      "S6": [],
+      "S7": [],
+      "S8": [
+       "G1.r1"
+      ]
+     },
+     "sessions": [
+      {
+       "session": "root",
+       "wall_s": 6.168,
+       "cost_usd": 0.026116,
+       "tokens_read": 4785,
+       "tokens_written": 6191,
+       "tokens_generated": 73,
+       "first_call_read": 0
+      },
+      {
+       "session": "G1.r1.a1",
+       "wall_s": 472.531,
+       "cost_usd": 1.648599,
+       "tokens_read": 2623630,
+       "tokens_written": 189390,
+       "tokens_generated": 62858,
+       "first_call_read": 5510
+      }
+     ],
+     "wall_s": 478.699,
+     "cost_usd": 1.674715,
+     "not_recorded": []
+    }
+   ]
+  }
+ ]
+}

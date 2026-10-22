@@ -12,6 +12,7 @@ proof, which spends real money and is run by the operator.
 from __future__ import annotations
 
 import dataclasses
+import fcntl
 import io
 import json
 import os
@@ -110,11 +111,20 @@ class Proofed(unittest.TestCase):
     def tree(self):
         return lfx.git(self.seeded, "rev-parse", f"HEAD:{sfx.DESIGN}")
 
+    def prompt(self):
+        """The prompt hash the command's own key holds, taken from the kit's plan of the single form on a review folder the command
+        wrote; the work folder is cleared again."""
+        self.go("--dry")
+        key = harness.single_key(srp.CALLER, srp.TOOLS_DIR, os.path.join(self.work, srp.FOLDER), os.path.join(self.work, srp.SINGLE_OUT),
+                                 MID, SEEDS, self.tree(), dict(os.environ))
+        shutil.rmtree(self.work, ignore_errors=True)
+        return key.prompt
+
     def recorded(self, runs=None, model=MID, seeds=SEEDS, design=None):
         """A baselines file of synthetic single runs of this seed list, design and model: one found two of the three seeds, the
         other all three."""
         runs = runs if runs is not None else [single("one", ["S1", "S2"]), single("two", ["S1", "S2", "S3"])]
-        key = proof.BaselineKey(proof.seed_list_hash(seeds), design or self.tree(), model, proof.SINGLE, "p" * 64)
+        key = proof.BaselineKey(proof.seed_list_hash(seeds), design or self.tree(), model, proof.SINGLE, self.prompt())
         with open(self.baselines, "w", encoding="utf-8") as handle:
             json.dump({"version": proof.BASELINES_VERSION, "source": "synthetic", "seeds": seeds,
                        "baselines": [{"key": key.as_dict(), "runs": [run.as_dict() for run in runs]}]}, handle)
@@ -217,6 +227,60 @@ class TheCommand(Proofed):
                 self.assertEqual(len(loaded.keys), 2, "the file keeps the group it held and holds the new one")
                 self.assertEqual(self.record()["single_runs"][0]["id"], "single-1")
 
+    def again(self):
+        shutil.rmtree(self.work, ignore_errors=True)
+        if os.path.exists(self.log):
+            os.remove(self.log)
+        return self.go()
+
+    def test_a_baselines_file_that_holds_the_key_with_no_runs_or_is_unusable_is_refused_before_any_session(self):
+        # SOL-HW-REVIEW-PROOFS-REFUSE-UNUSABLE-BASELINE-AND-HELD-LOCK.C1: The schematic proof command refuses, before starting any session and naming the key and the file, a baselines file that holds the key with no runs or that the kit cannot use, and refuses an invocation while another holds the lock on that baselines file, so the single form is not run again for a key that has a group and two invocations cannot both pay for one key.
+        self.recorded(runs=[])
+        held = slurp(self.baselines, "rb")
+        status, text, err = self.again()
+        self.assertEqual(status, 1, text + err)
+        self.assertIn("with no runs", text)
+        self.assertIn(self.baselines, text)
+        self.assertEqual((self.calls(), slurp(self.baselines, "rb")), ([], held), "no session, and the file is left as it was")
+        good = {"key": {"seeds": "a", "design": "b", "model": "c", "form": proof.SINGLE, "prompt": "d"}, "runs": []}
+        for name, content in (("unreadable JSON", "{"),
+                              ("a wrong version", json.dumps({"version": 0, "baselines": [good]})),
+                              ("no baselines", json.dumps({"version": proof.BASELINES_VERSION, "baselines": []})),
+                              ("a group without runs", json.dumps({"version": proof.BASELINES_VERSION, "baselines": [{"key": good["key"]}]})),
+                              ("a run missing fields", json.dumps({"version": proof.BASELINES_VERSION,
+                                                                    "baselines": [{**good, "runs": [{"id": "one"}]}]}))):
+            with self.subTest(name=name):
+                lfx.write(self.baselines, content)
+                status, text, err = self.again()
+                self.assertEqual(status, 1, text + err)
+                self.assertIn("REFUSED", text)
+                self.assertEqual(self.calls(), [], "no session was started")
+                self.assertEqual(slurp(self.baselines), content, "the file is left as it was")
+
+    def test_a_baselines_file_whose_lock_is_held_refuses_a_second_invocation_without_a_session(self):
+        # SOL-HW-REVIEW-PROOFS-REFUSE-UNUSABLE-BASELINE-AND-HELD-LOCK.C1: The schematic proof command refuses, before starting any session and naming the key and the file, a baselines file that holds the key with no runs or that the kit cannot use, and refuses an invocation while another holds the lock on that baselines file, so the single form is not run again for a key that has a group and two invocations cannot both pay for one key.
+        with open(self.baselines + ".lock", "a", encoding="utf-8") as handle:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            status, text, err = self.go()
+        self.assertEqual(status, 1, text + err)
+        self.assertIn(self.baselines + ".lock", text)
+        self.assertEqual(self.calls(), [], "no session was started")
+        self.assertFalse(os.path.exists(self.baselines), "no baseline was written")
+        status, text, err = self.again()
+        self.assertEqual(status, 0, text + err)
+        self.assertTrue(os.path.exists(self.baselines), "the lock is released when the run ends")
+
+    def test_the_recorded_two_group_baselines_file_still_resolves_each_group_under_its_own_key(self):
+        # SOL-HW-REVIEW-PROOFS-REFUSE-UNUSABLE-BASELINE-AND-HELD-LOCK.C1: The schematic proof command refuses, before starting any session and naming the key and the file, a baselines file that holds the key with no runs or that the kit cannot use, and refuses an invocation while another holds the lock on that baselines file, so the single form is not run again for a key that has a group and two invocations cannot both pay for one key.
+        loaded = proof.load_baselines(srp.BASELINES)
+        self.assertEqual(len(loaded.keys), 2)
+        for key in loaded.keys.values():
+            self.assertTrue(key.prompt, "the recorded key holds the prompt, as the harness's key does")
+            found = harness.recorded_under(srp.BASELINES, key)
+            self.assertEqual([run.id for run in found], [run.id for run in loaded.recorded(key)])
+            self.assertTrue(found)
+        self.assertEqual(len({key.id for key in loaded.keys.values()}), 2)
+
     def test_the_fanned_run_is_judged_by_the_pooled_criterion_and_a_run_that_fails_it_exits_1(self):
         # SOL-HW-REVIEW-FAN-OUT-SCHEMATIC.C8: Over the kit's stub and synthetic folders, the proof command `task hw:schematic-review-proof` refuses a work folder inside the repository, a file or non-empty; a bound below 1 or an empty model; a seeded repository that is missing, not a git work tree with a commit, inside this repository or the work folder, dirty, or lacking the design; a seed list that is missing, unreadable, empty or malformed, has an id twice, names an item not in the catalogue, or lies inside this repository, the seeded repository or the work folder; a copy the pre-order check fails; and an unreadable baselines file. It never adds to a baselines file already holding the key, and a failed single session leaves no baseline written. It also checks the command's other behaviour. The single form is one session holding every item, with no replica and one fork, merged by the caller's own rules and written as a baseline file the kit loads; a verdict the caller names as a fail stands in the run's merged verdicts. A finding names a seed by its Item cell, and the merged round's Raised by cells are read with or without the round heading. The review folder is written by the folder command from the seeded commit with the netlist and the sheets, no folder from its parent up to the work folder holds anything else, and the check runs on the seeded copy with a report naming no path outside it and the round's records those of the committed method. A check that cannot run, a copy the check refuses, a failing export or drawing, or a missing agent command line stops the command with a cannot run before any session. The dry mode prints the plan, the group and fork counts and the predicted cost and time beside the bounds, takes the bounds from the prediction when no single run is recorded, warns when the prediction is over a bound or within a tenth of it, and starts no session. The proof record is written in text and in JSON with the same content: each run's seeds found, wall time, cost, findings matching no seed, sessions with their figures, retrievals and those that failed, calls refused for a rate limit, and the verdict differences between the forms, naming a seed no replica reported and the replicas that raised the others. The pooled criterion judges the fanned-out run, failing it, and the command exiting 1, when the seeds found fall below the floor, a seed every single run found is missed, the wall time exceeds half the single mean or the cost exceeds the stated multiple of the single mean, and requires a second fanned-out run when the first is within ten per cent of a bound. Out of scope: any live run, which the schematic proof solution holds.
         self.recorded([single("one", ["S1", "S2", "S3"], cost=0.01), single("two", ["S1", "S2", "S3"], cost=0.01)])
@@ -238,7 +302,8 @@ class TheCommand(Proofed):
         status, text, err = self.go()
         record = self.record()
         self.assertEqual(record["fanned_runs"][0]["seeds_found"], ["S1", "S2"])
-        self.assertEqual(record["seed_replicas"]["S3"], {record["fanned_runs"][0]["id"]: []})
+        # two seeds is the fewest a single run found, so the first run is within ten per cent of a bound and a second follows
+        self.assertEqual(record["seed_replicas"]["S3"], {run["id"]: [] for run in record["fanned_runs"]})
         self.assertIn("SEED | S3 | schematic-fanned-2 | raised by none", text)
         self.assertIn("SEED | S1 | schematic-fanned-2 | raised by", text)
 
@@ -352,17 +417,19 @@ class TheCommand(Proofed):
         self.assertNotIn("FAIL seeds-floor", text, "two seeds meet the fewest any single run found")
         self.assertRegex(text, r"FAIL .*S2")
 
-    def test_a_passing_first_run_within_a_tenth_of_a_bound_requires_a_second_fanned_run_and_exits_1(self):
-        # SOL-HW-REVIEW-FAN-OUT-SCHEMATIC.C8: Over the kit's stub and synthetic folders, the proof command `task hw:schematic-review-proof` refuses a work folder inside the repository, a file or non-empty; a bound below 1 or an empty model; a seeded repository that is missing, not a git work tree with a commit, inside this repository or the work folder, dirty, or lacking the design; a seed list that is missing, unreadable, empty or malformed, has an id twice, names an item not in the catalogue, or lies inside this repository, the seeded repository or the work folder; a copy the pre-order check fails; and an unreadable baselines file. It never adds to a baselines file already holding the key, and a failed single session leaves no baseline written. It also checks the command's other behaviour. The single form is one session holding every item, with no replica and one fork, merged by the caller's own rules and written as a baseline file the kit loads; a verdict the caller names as a fail stands in the run's merged verdicts. A finding names a seed by its Item cell, and the merged round's Raised by cells are read with or without the round heading. The review folder is written by the folder command from the seeded commit with the netlist and the sheets, no folder from its parent up to the work folder holds anything else, and the check runs on the seeded copy with a report naming no path outside it and the round's records those of the committed method. A check that cannot run, a copy the check refuses, a failing export or drawing, or a missing agent command line stops the command with a cannot run before any session. The dry mode prints the plan, the group and fork counts and the predicted cost and time beside the bounds, takes the bounds from the prediction when no single run is recorded, warns when the prediction is over a bound or within a tenth of it, and starts no session. The proof record is written in text and in JSON with the same content: each run's seeds found, wall time, cost, findings matching no seed, sessions with their figures, retrievals and those that failed, calls refused for a rate limit, and the verdict differences between the forms, naming a seed no replica reported and the replicas that raised the others. The pooled criterion judges the fanned-out run, failing it, and the command exiting 1, when the seeds found fall below the floor, a seed every single run found is missed, the wall time exceeds half the single mean or the cost exceeds the stated multiple of the single mean, and requires a second fanned-out run when the first is within ten per cent of a bound. Out of scope: any live run, which the schematic proof solution holds.
+    def test_a_passing_first_run_within_a_tenth_of_a_bound_is_followed_by_a_second_fanned_run_and_both_are_judged(self):
+        # SOL-HW-REVIEW-PROOFS-RUN-A-SECOND-FANNED-OUT-RUN.C1: When the first fanned-out run of a proof command is within ten per cent of a bound of the kit's pooled criterion, the command runs the fanned-out form a second time in its own output folder and judges both runs together, and never runs a third.
         self.recorded()
         self.assertEqual(self.go()[0], 0)
         cost = self.record()["fanned_runs"][0]["cost_usd"]
         shutil.rmtree(self.work)
         self.recorded([single("one", ["S1", "S2"], cost=cost / 0.95 / 1.25), single("two", ["S1", "S2"], cost=cost / 0.95 / 1.25)])
         status, text, err = self.go()
-        self.assertEqual(status, 1, text)
-        self.assertEqual(self.record()["verdict"]["status"], "second-run-required")
-        self.assertIn("a second fanned-out run is required: the first is within ten per cent of a bound", text)
+        self.assertEqual(status, 0, text)
+        record = self.record()
+        self.assertEqual([run["id"] for run in record["fanned_runs"]], ["schematic-fanned-2", "schematic-fanned-2-run-2"])
+        self.assertEqual(record["verdict"]["status"], "pass")
+        self.assertNotIn("a second fanned-out run is required", text)
 
     def test_the_record_is_written_in_text_and_in_json_with_the_same_content(self):
         # SOL-HW-REVIEW-FAN-OUT-SCHEMATIC.C8: Over the kit's stub and synthetic folders, the proof command `task hw:schematic-review-proof` refuses a work folder inside the repository, a file or non-empty; a bound below 1 or an empty model; a seeded repository that is missing, not a git work tree with a commit, inside this repository or the work folder, dirty, or lacking the design; a seed list that is missing, unreadable, empty or malformed, has an id twice, names an item not in the catalogue, or lies inside this repository, the seeded repository or the work folder; a copy the pre-order check fails; and an unreadable baselines file. It never adds to a baselines file already holding the key, and a failed single session leaves no baseline written. It also checks the command's other behaviour. The single form is one session holding every item, with no replica and one fork, merged by the caller's own rules and written as a baseline file the kit loads; a verdict the caller names as a fail stands in the run's merged verdicts. A finding names a seed by its Item cell, and the merged round's Raised by cells are read with or without the round heading. The review folder is written by the folder command from the seeded commit with the netlist and the sheets, no folder from its parent up to the work folder holds anything else, and the check runs on the seeded copy with a report naming no path outside it and the round's records those of the committed method. A check that cannot run, a copy the check refuses, a failing export or drawing, or a missing agent command line stops the command with a cannot run before any session. The dry mode prints the plan, the group and fork counts and the predicted cost and time beside the bounds, takes the bounds from the prediction when no single run is recorded, warns when the prediction is over a bound or within a tenth of it, and starts no session. The proof record is written in text and in JSON with the same content: each run's seeds found, wall time, cost, findings matching no seed, sessions with their figures, retrievals and those that failed, calls refused for a rate limit, and the verdict differences between the forms, naming a seed no replica reported and the replicas that raised the others. The pooled criterion judges the fanned-out run, failing it, and the command exiting 1, when the seeds found fall below the floor, a seed every single run found is missed, the wall time exceeds half the single mean or the cost exceeds the stated multiple of the single mean, and requires a second fanned-out run when the first is within ten per cent of a bound. Out of scope: any live run, which the schematic proof solution holds.
@@ -654,6 +721,15 @@ class TheHarness(Proofed):
         self.assertEqual(len(seen), 1)
         self.assertIsNotNone(seen[0], "the caller's prepared rules are passed, not left to the kit's default")
         self.assertEqual(seen[0].fail, "differs")
+
+    def test_the_command_makes_its_fanned_out_runs_through_the_shared_harness(self):
+        # SOL-HW-REVIEW-FAN-OUT-SCHEMATIC-PROOF.C1: The kit's pooled criterion judges the fanned-out run against the recorded single-reviewer runs of this review's seeded proof; a second fanned-out run is required only when the first is within ten per cent of a bound, and the command makes it.
+        for name in ("fanned_runs", "numbered"):
+            self.assertFalse(hasattr(srp, name), f"{name} is the harness's, not copied into the command")
+        with open(srp.__file__, encoding="utf-8") as handle:
+            source = handle.read()
+        for call in ("harness.fanned_runs(", "harness.numbered(", "harness.outcome_of(", "harness.run_command("):
+            self.assertIn(call, source)
 
     def test_the_layout_proof_keeps_every_name_it_exports_as_a_thin_use_of_the_shared_harness(self):
         # SOL-HW-REVIEW-FAN-OUT-SCHEMATIC.C8: Over the kit's stub and synthetic folders, the proof command `task hw:schematic-review-proof` refuses a work folder inside the repository, a file or non-empty; a bound below 1 or an empty model; a seeded repository that is missing, not a git work tree with a commit, inside this repository or the work folder, dirty, or lacking the design; a seed list that is missing, unreadable, empty or malformed, has an id twice, names an item not in the catalogue, or lies inside this repository, the seeded repository or the work folder; a copy the pre-order check fails; and an unreadable baselines file. It never adds to a baselines file already holding the key, and a failed single session leaves no baseline written. It also checks the command's other behaviour. The single form is one session holding every item, with no replica and one fork, merged by the caller's own rules and written as a baseline file the kit loads; a verdict the caller names as a fail stands in the run's merged verdicts. A finding names a seed by its Item cell, and the merged round's Raised by cells are read with or without the round heading. The review folder is written by the folder command from the seeded commit with the netlist and the sheets, no folder from its parent up to the work folder holds anything else, and the check runs on the seeded copy with a report naming no path outside it and the round's records those of the committed method. A check that cannot run, a copy the check refuses, a failing export or drawing, or a missing agent command line stops the command with a cannot run before any session. The dry mode prints the plan, the group and fork counts and the predicted cost and time beside the bounds, takes the bounds from the prediction when no single run is recorded, warns when the prediction is over a bound or within a tenth of it, and starts no session. The proof record is written in text and in JSON with the same content: each run's seeds found, wall time, cost, findings matching no seed, sessions with their figures, retrievals and those that failed, calls refused for a rate limit, and the verdict differences between the forms, naming a seed no replica reported and the replicas that raised the others. The pooled criterion judges the fanned-out run, failing it, and the command exiting 1, when the seeds found fall below the floor, a seed every single run found is missed, the wall time exceeds half the single mean or the cost exceeds the stated multiple of the single mean, and requires a second fanned-out run when the first is within ten per cent of a bound. Out of scope: any live run, which the schematic proof solution holds.

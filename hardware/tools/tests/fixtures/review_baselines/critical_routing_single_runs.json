@@ -1,0 +1,223 @@
+{
+ "version": 1,
+ "source": "One single-reviewer run of the critical-routing proof on its seeded copy, made through the review kit's single form on the mid-tier model by critical_routing_review_proof.py; wall time, cost and tokens are the kit's figures for the sessions of the run.",
+ "seeds": [
+  {
+   "id": "S1",
+   "item": "POWER-2",
+   "description": "+5V (Power) F.Cu track into R1 pad 1: the last 1 mm, (131.5,122.535)-(131.5,121.535), narrowed from 0.5 mm class width to 0.25 mm (within the 1 mm neck allowance, so the width check passes)."
+  },
+  {
+   "id": "S2",
+   "item": "POWER-3",
+   "description": "GND at J1 pin 2: one of the three locked ground vias removed, the via at (106.7,106.5); only vias (105.5,106.5) and (105.5,107.6) remain (plan: three for the 0.5 A return)."
+  },
+  {
+   "id": "S3",
+   "item": "WORK-2",
+   "description": "/+3V3_REG (Supply) B.Cu run from via (115,114.5)/(115,115.5) to TP2 pad (112.5,118): the direct diagonal (115,115.5)-(112.5,118) replaced by a long detour (115,115.5)->(115,119.5)->(113.5,121)->(110.5,121)->(109.5,120)->(109.5,119)->(110.5,118)->(112.5,118), 45-degree corners, about 14.6 mm instead of 3.5 mm, all 0.3 mm locked."
+  },
+  {
+   "id": "S4",
+   "item": "GROUND-4",
+   "description": "GND at U2 pin 7 (VSS, pad at 122.94,113.475): the ground via moved from (124.4,113.47), 1.5 mm from the pad, to (125.4,106.5), about 7 mm away, reached by a new F.Cu 0.3 mm track (124.4,113.47)->(125.4,112.47)->(125.4,106.5) running up the middle of U2; the pin's ground return loop to the planes is now long."
+  },
+  {
+   "id": "S5",
+   "item": "DECOUPLE-2",
+   "description": "GND at C2 pad 2 (116.5,102.46): one of its two ground vias, (117.8,102.46) beside the pad, moved to (121,101.3), about 4.5 mm away; only via (116.5,101.3) remains close to the pad."
+  },
+  {
+   "id": "S6",
+   "item": "WORK-7",
+   "description": "/+5V_IN (Power) F.Cu run J1 pin 1 -> JP1 pin 1 along y 103.5: an unnecessary layer change added between x 106 and 109, vias at (106,103.5) and (107,103.5) with a 1 mm B.Cu hop (106,103.5)-(107,103.5); F.Cu track 104-106 and 107-109, all 0.5 mm locked."
+  },
+  {
+   "id": "S7",
+   "item": "DECOUPLE-2",
+   "description": "GND at C3 pad 2 (120.2,113.75), the U2 supply decoupling capacitor: one of its two ground vias removed, the via at (119.55,112.62); only (120.2,112.6) remains (plan: two vias of its own)."
+  },
+  {
+   "id": "S8",
+   "item": "DECOUPLE-2",
+   "description": "GND at C1 pad 2 (112,112.54), the U1 input capacitor: one of its two ground vias removed, the via at (113.3,112.54); only (112,113.6) remains (plan: two vias of its own)."
+  }
+ ],
+ "baselines": [
+  {
+   "key": {
+    "seeds": "e296d7a411133bb1cd051ea2a3d2282048432ec5af1cdedffdf1d5f9ff3474c6",
+    "design": "a7721c00336cb201e1eb7f8d1787c429b32b411d",
+    "model": "claude-sonnet-5-5",
+    "form": "single",
+    "prompt": "b411ea5b07c588f65a8110fb5f77839d5846c5b9a607a76871d9f76de3bfc864"
+   },
+   "runs": [
+    {
+     "id": "single-1",
+     "form": "single",
+     "tool_commit": "3ec7ee5",
+     "seeded_commit": "3f0a10694e9cf418ab28e37bcca6702907d17b65",
+     "seeds_found": [
+      "S2",
+      "S4",
+      "S5",
+      "S7",
+      "S8"
+     ],
+     "unmatched": [
+      "G1.r1: 2 | GROUND-2 | layer-In1.Cu-r1c1.png and layer-In2.Cu-r1c1.png at about (106.5, 103.5), with net-_+5V_IN-r1c1.png and layer-B.Cu-r1c1.png. The clearance rings of the /+5V_IN vias at (106, 103.5) and (107, 103.5), 1.0 mm apart, merge into one figure-eight opening in both the In1.Cu and In2.Cu GND planes. The B.Cu hop track from (106, 103.5) to (107, 103.5) runs directly over the merged opening in the In2.Cu plane. The planes under the signal path are therefore not solid.",
+      "G1.r1: 5 | WORK-3 | net-_+3V3_REG-r2c1.png and layer-B.Cu-r2c1.png at about (112, 119.5). The test-point stub of /+3V3_REG leaves the via at (115, 114.5), which is 4.3 mm from TP2 at (112.5, 118). It runs down to (115, 119.5) and (113.5, 121), west to (110.5, 121), up round (109.5, 120) and (109.5, 119) to (110.5, 118), then back east to TP2. That is about 16 mm of track passing below and west of TP2 before doubling back. A direct track would be about 4 mm. Also net-_+5V_IN-r1c1.png and layer-B.Cu-r1c1.png at (106.5, 103.5): the /+5V_IN route drops to B.Cu between the vias at (106, 103.5) and (107, 103.5) and comes straight back to F.Cu with nothing on F.Cu to pass."
+     ],
+     "verdicts": {
+      "FLOOR-1": "bears on no critical net",
+      "FLOOR-2": "bears on no critical net",
+      "FLOOR-3": "pass",
+      "FLOOR-4": "bears on no critical net",
+      "FLOOR-5": "bears on no critical net",
+      "POWER-1": "pass",
+      "POWER-2": "pass",
+      "POWER-3": "fail",
+      "POWER-4": "not applicable",
+      "POWER-5": "not applicable",
+      "GROUND-1": "pass",
+      "GROUND-2": "fail",
+      "GROUND-3": "not applicable",
+      "GROUND-4": "fail",
+      "GROUND-5": "pass",
+      "DECOUPLE-1": "pass",
+      "DECOUPLE-2": "fail",
+      "DECOUPLE-3": "not applicable",
+      "DECOUPLE-4": "not applicable",
+      "DECOUPLE-5": "not applicable",
+      "DECOUPLE-6": "pass",
+      "SENSE-1": "bears on no critical net",
+      "SENSE-2": "bears on no critical net",
+      "SENSE-3": "bears on no critical net",
+      "SENSE-4": "bears on no critical net",
+      "SENSE-5": "bears on no critical net",
+      "SENSE-6": "bears on no critical net",
+      "CLOCK-1": "bears on no critical net",
+      "CLOCK-2": "bears on no critical net",
+      "CLOCK-3": "bears on no critical net",
+      "CLOCK-4": "bears on no critical net",
+      "MAINS-1": "bears on no critical net",
+      "MAINS-2": "bears on no critical net",
+      "MAINS-3": "bears on no critical net",
+      "MAINS-4": "bears on no critical net",
+      "MAINS-5": "bears on no critical net",
+      "CONN-1": "bears on no critical net",
+      "CONN-2": "bears on no critical net",
+      "CONN-3": "bears on no critical net",
+      "CONN-4": "bears on no critical net",
+      "TEST-1": "bears on no critical net",
+      "TEST-2": "bears on no critical net",
+      "TEST-3": "bears on no critical net",
+      "TEST-4": "bears on no critical net",
+      "TEST-5": "bears on no critical net",
+      "MFG-1": "bears on no critical net",
+      "MFG-2": "bears on no critical net",
+      "MFG-3": "bears on no critical net",
+      "MFG-4": "pass",
+      "MFG-5": "pass",
+      "MFG-6": "pass",
+      "MFG-7": "bears on no critical net",
+      "MFG-8": "bears on no critical net",
+      "MFG-9": "bears on no critical net",
+      "MFG-10": "bears on no critical net",
+      "EMI-1": "pass",
+      "EMI-2": "pass",
+      "EMI-3": "bears on no critical net",
+      "EMI-4": "bears on no critical net",
+      "EMI-5": "bears on no critical net",
+      "WORK-1": "pass",
+      "WORK-2": "pass",
+      "WORK-3": "fail",
+      "WORK-4": "pass",
+      "WORK-5": "pass",
+      "WORK-6": "pass",
+      "WORK-7": "pass",
+      "WORK-8": "pass",
+      "WORK-9": "pass",
+      "WORK-10": "pass"
+     },
+     "raised_by": {
+      "S2": [
+       "G1.r1"
+      ],
+      "S4": [
+       "G1.r1"
+      ],
+      "S5": [
+       "G1.r1"
+      ],
+      "S7": [
+       "G1.r1"
+      ],
+      "S8": [
+       "G1.r1"
+      ]
+     },
+     "judged_by": {
+      "S1": [
+       "G1.r1"
+      ],
+      "S2": [
+       "G1.r1"
+      ],
+      "S3": [
+       "G1.r1"
+      ],
+      "S4": [
+       "G1.r1"
+      ],
+      "S5": [
+       "G1.r1"
+      ],
+      "S6": [
+       "G1.r1"
+      ],
+      "S7": [
+       "G1.r1"
+      ],
+      "S8": [
+       "G1.r1"
+      ]
+     },
+     "sessions": [
+      {
+       "session": "root",
+       "wall_s": 5.484,
+       "cost_usd": 0.007572,
+       "tokens_read": 10182,
+       "tokens_written": 1420,
+       "tokens_generated": 73,
+       "first_call_read": 5091
+      },
+      {
+       "session": "G1.r1.a1",
+       "wall_s": 14.466,
+       "cost_usd": 0.288269,
+       "tokens_read": 148214,
+       "tokens_written": 66593,
+       "tokens_generated": 706,
+       "first_call_read": 5823
+      },
+      {
+       "session": "G1.r1.a2",
+       "wall_s": 407.905,
+       "cost_usd": 1.196212,
+       "tokens_read": 1434163,
+       "tokens_written": 125889,
+       "tokens_generated": 54920,
+       "first_call_read": 72416
+      }
+     ],
+     "wall_s": 427.855,
+     "cost_usd": 1.492053,
+     "not_recorded": []
+    }
+   ]
+  }
+ ]
+}
