@@ -3,9 +3,9 @@ type: deliverable
 category: solution
 title: The pre-order check fails board minimums looser than the dated manufacturer record and a part at end of life
 status: active
-version: 1
-text: |-
-  Adds the manufacturer limits rule and the catalogue lifecycle rule to the pre-order check, each shown to fail on a seeded fault.
+version: 2
+text: |
+  Adds the manufacturer limits rule and the catalogue lifecycle rule to the pre-order check, each shown to fail on a seeded fault. The finished outer copper weight a board is held to is declared in the board rules record, and one synthetic manufacturer limits record beside the proof designs, found by the nearest-folder rule, serves all five proof designs, each declaring the manufacturer's standard weight. The lifecycle mapping the rule requires on every placed part is added to the proof extracts that lack it, which would invalidate the recorded layout and production-files review baselines keyed on the review-proof folder's whole tree, so those baselines are keyed on the files the review reads instead, with their stored keys rewritten and no run repeated.
 links:
   - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED.C1
     type: derives-from
