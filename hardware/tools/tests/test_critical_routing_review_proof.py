@@ -11,6 +11,7 @@ Nothing here is the live proof, which spends real money and is run by the operat
 
 from __future__ import annotations
 
+import fcntl
 import io
 import json
 import os
@@ -121,7 +122,8 @@ class Proofed(unittest.TestCase):
         """The hash of the message the single form's session is given for this seeded copy, as the command computes it."""
         self.go("--dry")
         folder = os.path.join(self.work, crp.FOLDER)
-        key = crp.single_key(folder, self.work, MID, crp.load_seeds(self.seeds, folder), self.tree(), dict(os.environ))
+        key = harness.single_key(crp.CALLER, crp.TOOLS_DIR, folder, os.path.join(self.work, crp.SINGLE_OUT), MID,
+                                 crp.load_seeds(self.seeds, folder), self.tree(), dict(os.environ))
         shutil.rmtree(self.work)
         return key.prompt
 
@@ -218,6 +220,40 @@ class TheBaseline(Proofed):
         self.assertIn("cannot be read as JSON", text)
         self.assertEqual(self.calls(), [], "no session was started")
         self.assertEqual(slurp(self.baselines), "{", "an unreadable file is left as it was")
+
+    def test_a_baselines_file_that_holds_the_key_with_no_runs_or_is_unusable_is_refused_before_any_session(self):
+        # SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING-PROOF.C2: Over the kit's stub, the proof command for the critical-routing check runs the single form once through the kit and writes it as a baseline file the kit's proof loads, keyed by the hash of the seed list, the design commit, the model, the form and the prompt hash; run again for a key whose baseline is recorded it refuses to run the single form and names the key, and for a key that differs it runs it; a seed list or review folder that lies inside the repository is refused naming it. The command's record is written in text and JSON with the same content. Out of scope: any live run and the pooled criterion's arithmetic, which the kit's own tests hold.
+        self.recorded(runs=[])
+        held = slurp(self.baselines, "rb")
+        status, text, err = self.go()
+        self.assertEqual(status, 1, text + err)
+        self.assertIn("with no runs", text)
+        self.assertEqual((self.calls(), slurp(self.baselines, "rb")), ([], held), "no session, and the file is left as it was")
+        good = {"key": {"seeds": "a", "design": "b", "model": "c", "form": proof.SINGLE, "prompt": "d"}, "runs": []}
+        for name, content in (("a wrong version", {"version": 0, "baselines": [good]}),
+                              ("no baselines", {"version": proof.BASELINES_VERSION, "baselines": []}),
+                              ("a group without runs", {"version": proof.BASELINES_VERSION, "baselines": [{"key": good["key"]}]}),
+                              ("a run missing fields", {"version": proof.BASELINES_VERSION,
+                                                         "baselines": [{**good, "runs": [{"id": "one"}]}]})):
+            with self.subTest(name=name):
+                lfx.write(self.baselines, json.dumps(content))
+                status, text, err = self.again()
+                self.assertEqual(status, 1, text + err)
+                self.assertIn("REFUSED", text)
+                self.assertEqual(self.calls(), [], "no session was started")
+
+    def test_a_baselines_file_whose_lock_is_held_refuses_a_second_invocation_without_a_session(self):
+        # SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING-PROOF.C2: Over the kit's stub, the proof command for the critical-routing check runs the single form once through the kit and writes it as a baseline file the kit's proof loads, keyed by the hash of the seed list, the design commit, the model, the form and the prompt hash; run again for a key whose baseline is recorded it refuses to run the single form and names the key, and for a key that differs it runs it; a seed list or review folder that lies inside the repository is refused naming it. The command's record is written in text and JSON with the same content. Out of scope: any live run and the pooled criterion's arithmetic, which the kit's own tests hold.
+        with open(self.baselines + ".lock", "a", encoding="utf-8") as handle:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            status, text, err = self.go()
+        self.assertEqual(status, 1, text + err)
+        self.assertIn(self.baselines + ".lock", text)
+        self.assertEqual(self.calls(), [], "no session was started")
+        self.assertFalse(os.path.exists(self.baselines), "no baseline was written")
+        status, text, err = self.again()
+        self.assertIn(status, (0, 1), text + err)
+        self.assertTrue(os.path.exists(self.baselines), "the lock is released when the run ends")
 
     def test_the_record_is_written_in_text_and_in_json_with_the_same_content(self):
         # SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING-PROOF.C2: Over the kit's stub, the proof command for the critical-routing check runs the single form once through the kit and writes it as a baseline file the kit's proof loads, keyed by the hash of the seed list, the design commit, the model, the form and the prompt hash; run again for a key whose baseline is recorded it refuses to run the single form and names the key, and for a key that differs it runs it; a seed list or review folder that lies inside the repository is refused naming it. The command's record is written in text and JSON with the same content. Out of scope: any live run and the pooled criterion's arithmetic, which the kit's own tests hold.
@@ -417,6 +453,14 @@ class TheRefusals(Proofed):
 class TheModule(unittest.TestCase):
     def test_the_command_is_a_thin_use_of_the_shared_harness_and_names_its_own_baseline_file(self):
         # SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING-PROOF.C2: Over the kit's stub, the proof command for the critical-routing check runs the single form once through the kit and writes it as a baseline file the kit's proof loads, keyed by the hash of the seed list, the design commit, the model, the form and the prompt hash; run again for a key whose baseline is recorded it refuses to run the single form and names the key, and for a key that differs it runs it; a seed list or review folder that lies inside the repository is refused naming it. The command's record is written in text and JSON with the same content. Out of scope: any live run and the pooled criterion's arithmetic, which the kit's own tests hold.
+        # SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING-PROOF.C2: Over the kit's stub, the proof command for the critical-routing check runs the single form once through the kit and writes it as a baseline file the kit's proof loads, keyed by the hash of the seed list, the design commit, the model, the form and the prompt hash; run again for a key whose baseline is recorded it refuses to run the single form and names the key, and for a key that differs it runs it; a seed list or review folder that lies inside the repository is refused naming it. The command's record is written in text and JSON with the same content. Out of scope: any live run and the pooled criterion's arithmetic, which the kit's own tests hold.
+        for name in ("run_single", "outcome_of", "single_key", "recorded_under", "baseline_lock", "plan_of", "run_command"):
+            self.assertIs(getattr(crp, "harness"), harness)
+            self.assertFalse(hasattr(crp, name), f"{name} is the harness's, not copied into the command")
+        source = slurp(crp.__file__)
+        for call in ("harness.run_single(", "harness.outcome_of(", "harness.single_key(", "harness.recorded_under(",
+                     "harness.baseline_lock("):
+            self.assertIn(call, source)
         self.assertIs(crp.Refused, harness.Refused)
         self.assertEqual(os.path.relpath(crp.BASELINES, TOOLS), os.path.join("tests", "fixtures", "review_baselines",
                                                                               "critical_routing_single_runs.json"))

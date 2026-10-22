@@ -12,6 +12,7 @@ operator.
 
 from __future__ import annotations
 
+import fcntl
 import io
 import json
 import os
@@ -112,7 +113,8 @@ class Proofed(unittest.TestCase):
 
     def prompt(self):
         """The hash of the message the single form's session is given for this folder, as the command computes it."""
-        key = pfp.single_key(self.folder, self.work, MID, self.loaded(), self.tree(), dict(os.environ))
+        key = harness.single_key(pfp.CALLER, pfp.TOOLS_DIR, self.folder, os.path.join(self.work, pfp.SINGLE_OUT), MID, self.loaded(),
+                                 self.tree(), dict(os.environ))
         shutil.rmtree(self.work, ignore_errors=True)
         return key.prompt
 
@@ -207,6 +209,40 @@ class TheBaseline(Proofed):
         self.assertEqual(self.calls(), [], "no session was started")
         self.assertEqual(slurp(self.baselines), "{", "an unreadable file is left as it was")
 
+    def test_a_baselines_file_that_holds_the_key_with_no_runs_or_is_unusable_is_refused_before_any_session(self):
+        # SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES-PROOF.C2: Over the kit's stub, the proof command for the production-files check runs the single form once through the kit and writes it as a baseline file the kit's proof loads, keyed by the hash of the seed list, the design commit, the model, the form and the prompt hash; run again for a key whose baseline is recorded it refuses to run the single form and names the key, and for a key that differs it runs it; a review folder that lies inside the repository is refused naming it. The command's record is written in text and JSON with the same content. Out of scope: any live run and the pooled criterion's arithmetic, which the kit's own tests hold.
+        self.recorded(runs=[])
+        held = slurp(self.baselines, "rb")
+        status, text, err = self.go()
+        self.assertEqual(status, 1, text + err)
+        self.assertIn("with no runs", text)
+        self.assertEqual((self.calls(), slurp(self.baselines, "rb")), ([], held), "no session, and the file is left as it was")
+        good = {"key": {"seeds": "a", "design": "b", "model": "c", "form": proof.SINGLE, "prompt": "d"}, "runs": []}
+        for name, content in (("a wrong version", {"version": 0, "baselines": [good]}),
+                              ("no baselines", {"version": proof.BASELINES_VERSION, "baselines": []}),
+                              ("a group without runs", {"version": proof.BASELINES_VERSION, "baselines": [{"key": good["key"]}]}),
+                              ("a run missing fields", {"version": proof.BASELINES_VERSION,
+                                                         "baselines": [{**good, "runs": [{"id": "one"}]}]})):
+            with self.subTest(name=name):
+                lfx.write(self.baselines, json.dumps(content))
+                status, text, err = self.again()
+                self.assertEqual(status, 1, text + err)
+                self.assertIn("REFUSED", text)
+                self.assertEqual(self.calls(), [], "no session was started")
+
+    def test_a_baselines_file_whose_lock_is_held_refuses_a_second_invocation_without_a_session(self):
+        # SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES-PROOF.C2: Over the kit's stub, the proof command for the production-files check runs the single form once through the kit and writes it as a baseline file the kit's proof loads, keyed by the hash of the seed list, the design commit, the model, the form and the prompt hash; run again for a key whose baseline is recorded it refuses to run the single form and names the key, and for a key that differs it runs it; a review folder that lies inside the repository is refused naming it. The command's record is written in text and JSON with the same content. Out of scope: any live run and the pooled criterion's arithmetic, which the kit's own tests hold.
+        with open(self.baselines + ".lock", "a", encoding="utf-8") as handle:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            status, text, err = self.go()
+        self.assertEqual(status, 1, text + err)
+        self.assertIn(self.baselines + ".lock", text)
+        self.assertEqual(self.calls(), [], "no session was started")
+        self.assertFalse(os.path.exists(self.baselines), "no baseline was written")
+        status, text, err = self.again()
+        self.assertIn(status, (0, 1), text + err)
+        self.assertTrue(os.path.exists(self.baselines), "the lock is released when the run ends")
+
     def test_the_record_is_written_in_text_and_in_json_with_the_same_content(self):
         # SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES-PROOF.C2: Over the kit's stub, the proof command for the production-files check runs the single form once through the kit and writes it as a baseline file the kit's proof loads, keyed by the hash of the seed list, the design commit, the model, the form and the prompt hash; run again for a key whose baseline is recorded it refuses to run the single form and names the key, and for a key that differs it runs it; a review folder that lies inside the repository is refused naming it. The command's record is written in text and JSON with the same content. Out of scope: any live run and the pooled criterion's arithmetic, which the kit's own tests hold.
         self.scenario(verdicts={**ALL_DIFFER, "R2": "differs"})
@@ -239,6 +275,23 @@ class TheReviewSpecifics(Proofed):
                          "the merged check record names the same seeds as the replicas' findings")
         self.assertEqual(record["seed_replicas"]["S1"], {run["id"]: []})
         self.assertIn("SEED | S1 | production-files-fanned-3 | raised by none", text)
+
+    def test_a_seeded_part_the_fanned_check_cannot_judge_is_found_as_a_row_that_is_not_a_match(self):
+        # SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES-PROOF.C2: Over the kit's stub, the proof command for the production-files check runs the single form once through the kit and writes it as a baseline file the kit's proof loads, keyed by the hash of the seed list, the design commit, the model, the form and the prompt hash; run again for a key whose baseline is recorded it refuses to run the single form and names the key, and for a key that differs it runs it; a review folder that lies inside the repository is refused naming it. The command's record is written in text and JSON with the same content. Out of scope: any live run and the pooled criterion's arithmetic, which the kit's own tests hold.
+        self.scenario(verdicts={"U1": "cannot judge"}, model_verdicts={})
+        self.recorded([single("one", ["S1"], wall=1e6, cost=1e3), single("two", [], wall=1e6, cost=1e3)])
+        status, text, err = self.go()
+        self.assertEqual(status, 0, text + err)
+        run = self.record()["fanned_runs"][0]
+        self.assertEqual(run["seeds_found"], ["S3"], "U1 is judged cannot judge, raising no finding, and still names the seed")
+
+    def test_rows_that_are_not_a_match_and_have_no_finding_are_given_as_findings_of_their_item(self):
+        # SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES-PROOF.C2: Over the kit's stub, the proof command for the production-files check runs the single form once through the kit and writes it as a baseline file the kit's proof loads, keyed by the hash of the seed list, the design commit, the model, the form and the prompt hash; run again for a key whose baseline is recorded it refuses to run the single form and names the key, and for a key that differs it runs it; a review folder that lies inside the repository is refused naming it. The command's record is written in text and JSON with the same content. Out of scope: any live run and the pooled criterion's arithmetic, which the kit's own tests hold.
+        tables = {"Verdicts": [{"Item": "U1", "Verdict": "cannot judge", "Why": "no drawing"},
+                               {"Item": "R1", "Verdict": "differs", "Why": "see 1"}, {"Item": "R2", "Verdict": "matches", "Why": "ok"}],
+                  "Findings": [{"Finding": 1, "Item": "R1", "What and where": "turned"}]}
+        self.assertEqual(pfp.unraised(tables), [{"Finding": "", "Item": "U1", "What and where": "no drawing"}])
+        self.assertEqual(pfp.unraised({}), [])
 
     def test_a_seed_is_matched_by_the_exact_part_or_any_layer_it_names_without_regard_to_case(self):
         # SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES-PROOF.C2: Over the kit's stub, the proof command for the production-files check runs the single form once through the kit and writes it as a baseline file the kit's proof loads, keyed by the hash of the seed list, the design commit, the model, the form and the prompt hash; run again for a key whose baseline is recorded it refuses to run the single form and names the key, and for a key that differs it runs it; a review folder that lies inside the repository is refused naming it. The command's record is written in text and JSON with the same content. Out of scope: any live run and the pooled criterion's arithmetic, which the kit's own tests hold.
@@ -384,6 +437,14 @@ class TheRefusals(Proofed):
 class TheModule(unittest.TestCase):
     def test_the_command_is_a_thin_use_of_the_shared_harness_and_names_its_own_baseline_file(self):
         # SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES-PROOF.C2: Over the kit's stub, the proof command for the production-files check runs the single form once through the kit and writes it as a baseline file the kit's proof loads, keyed by the hash of the seed list, the design commit, the model, the form and the prompt hash; run again for a key whose baseline is recorded it refuses to run the single form and names the key, and for a key that differs it runs it; a review folder that lies inside the repository is refused naming it. The command's record is written in text and JSON with the same content. Out of scope: any live run and the pooled criterion's arithmetic, which the kit's own tests hold.
+        # SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES-PROOF.C2: Over the kit's stub, the proof command for the production-files check runs the single form once through the kit and writes it as a baseline file the kit's proof loads, keyed by the hash of the seed list, the design commit, the model, the form and the prompt hash; run again for a key whose baseline is recorded it refuses to run the single form and names the key, and for a key that differs it runs it; a review folder that lies inside the repository is refused naming it. The command's record is written in text and JSON with the same content. Out of scope: any live run and the pooled criterion's arithmetic, which the kit's own tests hold.
+        for name in ("run_single", "outcome_of", "single_key", "recorded_under", "baseline_lock", "plan_of", "run_command"):
+            self.assertIs(getattr(pfp, "harness"), harness)
+            self.assertFalse(hasattr(pfp, name), f"{name} is the harness's, not copied into the command")
+        source = slurp(pfp.__file__)
+        for call in ("harness.run_single(", "harness.outcome_of(", "harness.single_key(", "harness.recorded_under(",
+                     "harness.baseline_lock("):
+            self.assertIn(call, source)
         self.assertIs(pfp.Refused, harness.Refused)
         self.assertEqual(os.path.relpath(pfp.BASELINES, TOOLS), os.path.join("tests", "fixtures", "review_baselines",
                                                                               "production_files_single_runs.json"))

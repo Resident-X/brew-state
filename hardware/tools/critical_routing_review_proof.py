@@ -310,28 +310,6 @@ def refusals(work: str) -> List[str]:
     return found
 
 
-def single_key(folder: str, work: str, model: str, seeds: Sequence[Mapping[str, Any]], tree: str,
-               environ: Mapping[str, str]) -> proof.BaselineKey:
-    """The key the single form would be recorded under: the seed list, the design, the model and the prompt it would be given."""
-    run = harness.settled_run(CALLER, TOOLS_DIR, folder, os.path.join(work, SINGLE_OUT), model, environ)
-    try:
-        formed = harness.single_plan(run, environ)
-    except ex.CannotRun as error:
-        raise board_check.CannotRun(str(error))
-    return harness.baseline_key(seeds, tree, model, formed)
-
-
-def recorded_under(path: str, key: proof.BaselineKey) -> Optional[List[proof.RunOutcome]]:
-    """The single runs recorded under exactly this key, None when the file is absent or holds none; a file that cannot be read is
-    refused."""
-    if not os.path.exists(path):
-        return None
-    try:
-        return proof.load_baselines(path).recorded(key) or None
-    except proof.BaselineFileError as error:
-        raise Refused([str(error)])
-
-
 def main(argv: Optional[List[str]] = None, out=sys.stdout, err=sys.stderr, preparer: Callable[..., Dict[str, Any]] = prepare,
          environ: Optional[Mapping[str, str]] = None, baselines: str = BASELINES, main_command: Callable[..., int] = command.main,
          documents_repo: Optional[str] = None) -> int:
@@ -383,8 +361,8 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout, err=sys.stderr, prepa
         shutil.copyfile(seeds_path, os.path.join(work, SEEDS))
         sha = base.git(seeded, "rev-parse", "HEAD").stdout.strip()
         tree = base.design_tree(seeded, "HEAD", DESIGN)
-        key = single_key(folder, work, args.baseline_model, seeds, tree, environ)
-        singles = recorded_under(baselines, key)
+        key = harness.single_key(CALLER, TOOLS_DIR, folder, os.path.join(work, SINGLE_OUT), args.baseline_model, seeds, tree, environ)
+        singles = harness.recorded_under(baselines, key)
         if args.dry:
             plan = harness.plan_of(CALLER, TOOLS_DIR, folder, os.path.join(work, FANNED_OUT), args.design_model, REPLICAS, args.bound, environ)
             single_plan = None if singles else harness.single_plan_of(CALLER, TOOLS_DIR, folder, os.path.join(work, SINGLE_OUT),
@@ -393,12 +371,14 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout, err=sys.stderr, prepa
                           plan=plan, detail="no session was started and no model was called")
             return finish(0)
         os.makedirs(os.path.join(work, OUT_DIR), exist_ok=True)
-        if singles:
-            single_form = f"recorded under key {key}"
-        else:
-            key, outcome = harness.run_single(CALLER, TOOLS_DIR, folder, os.path.join(work, SINGLE_OUT), args.baseline_model,
-                                              environ, seeds, sha, tree, matches, baselines, BASELINE_SOURCE)
-            singles, single_form = [outcome], f"run now, recorded in {baselines} under key {key}"
+        with harness.baseline_lock(baselines):
+            singles = harness.recorded_under(baselines, key)
+            if singles:
+                single_form = f"recorded under key {key}"
+            else:
+                key, outcome = harness.run_single(CALLER, TOOLS_DIR, folder, os.path.join(work, SINGLE_OUT), args.baseline_model,
+                                                  environ, seeds, sha, tree, matches, baselines, BASELINE_SOURCE)
+                singles, single_form = [outcome], f"run now, recorded in {baselines} under key {key}"
         output = os.path.join(work, FANNED_OUT)
         status, report = harness.run_command(CALLER, TOOLS_DIR, folder, output, args.design_model, REPLICAS, args.bound, environ,
                                              main_command)
