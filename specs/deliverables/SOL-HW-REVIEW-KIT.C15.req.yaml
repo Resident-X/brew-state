@@ -2,11 +2,11 @@ id: SOL-HW-REVIEW-KIT.C15
 type: criterion
 title: A caller may name the verdict that counts as its fail verdict, and the kit holds that verdict as it holds fail
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |
-  Over synthetic declarations and a stub executor, a caller may name which of its verdicts is its fail verdict, a verdict of the verdict set of a table it declares; the kit then treats that verdict exactly as it treats fail: replicas are merged any-fail with it standing over a passing verdict, and no repair turn, cannot-judge turn or rerun clears it, the refusal naming the item and the verdict. A caller naming none keeps fail as its fail verdict, and a caller that names fail behaves as one that names none. A name outside the verdicts of the table is refused naming it and the table, before any session starts. Out of scope: any real caller.
+  Over synthetic declarations and a stub executor, a caller may name which of its verdicts is its fail verdict, a verdict of the verdict set of a table it declares; the kit then treats that verdict exactly as it treats fail: replicas are merged any-fail with it standing over a passing verdict, and no repair turn, cannot-judge turn or rerun clears it, the refusal naming the item and the verdict. A caller naming none keeps fail as its fail verdict, and a caller that names fail behaves as one that names none. A name carried by the verdict set of at least one table that has a key and a verdict column is accepted, a table whose verdict set lacks the name having no fail to hold. A name outside the verdicts of every such table is refused before any session starts, the refusal naming it and listing each verdict table with its verdict set, or saying that the declaration has no verdict table. A name that is not text or is blank is refused when the caller loads, naming the caller and the attribute, and so is the name cannot judge, naming the attribute, since the merge and the cannot-judge turn would otherwise collapse the two verdicts. Out of scope: any real caller.
 links:
   - target: SOL-HW-REVIEW-KIT
     type: criterion-of
