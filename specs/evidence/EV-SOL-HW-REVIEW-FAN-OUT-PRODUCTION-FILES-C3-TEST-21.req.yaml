@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES-C3-TEST-21
+type: evidence
+title: test evidence for SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-22T04:38:21.061304Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_production_review_folder.py::test_the_production_fields_are_checked_by_the_same_function_as_the_layout_reviews_and_the_layout_set_is_unchanged
+  artifact_version: d28799d5712207eff308745e82f90d67f9395f15
+attested_by: crun-d1216986c7302509
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES.C3
+    type: satisfies

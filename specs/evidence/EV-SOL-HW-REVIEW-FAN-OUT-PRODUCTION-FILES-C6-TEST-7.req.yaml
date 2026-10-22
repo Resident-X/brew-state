@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES-C6-TEST-7
+type: evidence
+title: test evidence for SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES.C6
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-22T04:38:17.844905Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_caller_production_files.py::test_the_run_plans_three_replicas_of_each_group_two_shared_contexts_and_the_small_model_for_the_third
+  artifact_version: d28799d5712207eff308745e82f90d67f9395f15
+attested_by: crun-d1216986c7302509
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES.C6
+    type: satisfies

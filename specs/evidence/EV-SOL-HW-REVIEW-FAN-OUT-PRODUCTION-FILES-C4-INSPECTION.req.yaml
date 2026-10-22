@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES-C4-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES.C4
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-22T04:38:21.291747Z"
+artifact:
+  kind: external
+  reference: 'docs/board-design-method.md (ordering section, the paragraph ''This check may be judged by unit instead of by one reviewer'' and the proof paragraph''s sentence ''Repeat the proof after changing this step, in the form that changed''); hardware/README.md (section ''The production-files check by unit'' and the proof designs paragraph on the ordering step): each read against the clauses - may be judged by unit; what the merge checks; the assembler''s preview obtained outside the reviewers; judging with one reviewer stays valid; the proof-repeat sentence names the form that changed; the notes'' proof description names the fanned-out run; the fanned-out form relied on only once its proof is recorded. The Documentation tests in test_review_caller_production_files.py pin the wording.'
+  artifact_version: d28799d5712207eff308745e82f90d67f9395f15
+attested_by: crun-d1216986c7302509
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES.C4
+    type: satisfies
