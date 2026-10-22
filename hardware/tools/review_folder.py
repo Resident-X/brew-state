@@ -170,6 +170,25 @@ class ReviewFolderProblem(Exception):
     """A review folder a judged review cannot be run on, with what to do about it."""
 
 
+#: The one file of the fabrication folder that is no layer: the job file, which the render draws no image of.
+JOB_FILE_SUFFIX = ".gbrjob"
+
+
+def unlisted_fabrication_files(gerbers: str, images: Any) -> List[str]:
+    """The files of the fabrication folder `gerbers`, by path from it, that no entry of the layer images index names as its
+    `source`, the job file apart. The index is the one authority for which layers get a row, so a Gerber or drill file it does
+    not list would be judged by no unit and named by no record. Names are compared without case."""
+    listed = {entry["source"].casefold() for entry in images if isinstance(entry, dict) and isinstance(entry.get("source"), str)} \
+        if isinstance(images, list) else set()
+    found = []
+    for directory, _, names in os.walk(gerbers):
+        for name in names:
+            path = os.path.relpath(os.path.join(directory, name), gerbers).replace(os.sep, "/")
+            if not name.casefold().endswith(JOB_FILE_SUFFIX) and path.casefold() not in listed:
+                found.append(path)
+    return sorted(found)
+
+
 # --- The round's fields -------------------------------------------------------------------------
 
 

@@ -25,7 +25,7 @@ replicas judge each unit: a full and a hunt framing on the mid-tier model, and t
 
 The checks receive the merged tables alone, so what the check judges is read once, when the declaration is resolved, and held for
 them. They fail a placement-file row with no row or two, a row for a part or layer the check does not judge, a verdict other than
-`cannot judge` for a part with no drawing, a row left without the cells its kind of row has, a row that is not `matches` with no
+`cannot judge` for a part with no drawing, a row left without the cells its kind of row has (a cell that is only a dash or n/a is missing), a row that is not `matches` with no
 Why, a `differs` with no finding, a finding of a row that matches and a finding that says nothing. The render writes
 production-files-check.md as the method's step 6 gives it, naming every row that is not `matches` and saying it blocks the order.
 """
@@ -163,7 +163,7 @@ def parts_footprints(review: str) -> Dict[str, str]:
     for row in rows:
         for designator in re.split(r"[,\s]+", str(row.get("Designator") or "").strip()):
             if designator and str(row.get("Footprint") or "").strip():
-                found.setdefault(designator, str(row["Footprint"]).strip())
+                found.setdefault(designator.casefold(), str(row["Footprint"]).strip())
     return found
 
 
@@ -183,36 +183,43 @@ def drawings(review: str) -> List[Dict[str, Any]]:
             raise ReviewFolderProblem(f"the footprint drawings index lists {entry['file']}, which the review folder {review} does "
                                       f"not hold in {FOOTPRINTS}/; write the folder with the production-files folder command")
         for name in used:
-            if name in carried and carried[name] != entry["file"]:
-                raise ReviewFolderProblem(f"the footprint drawings index lists {name} under two drawings, {carried[name]} and "
+            if name.casefold() in carried and carried[name.casefold()] != entry["file"]:
+                raise ReviewFolderProblem(f"the footprint drawings index lists {name} under two drawings, {carried[name.casefold()]} and "
                                           f"{entry['file']}; draw it again with the ordering step's second step")
-            carried[name] = entry["file"]
+            carried[name.casefold()] = entry["file"]
         found.append({"file": entry["file"], "footprint": entry["footprint"], "used_by": list(used)})
     return found
 
 
 def layer_images(review: str) -> List[Dict[str, str]]:
     """The layer images the index lists in its order, each with its layer's name and file; the drill file and the outline must
-    be among them, a layer twice or an image the folder lacks is a refusal."""
+    be among them, a layer twice (compared without case), an image the folder lacks or a Gerber or drill file in the fabrication
+    folder that no entry names as its source is a refusal."""
     index = read_json(review, f"{LAYERS}/index.json", "layer images index")
     found, seen = [], set()
     for entry in index["images"]:
         if not isinstance(entry, dict) or not isinstance(entry.get("file"), str) or not isinstance(entry.get("layer"), str):
             raise ReviewFolderProblem(f"the layer images index {LAYERS}/index.json in the review folder {review} lists {entry!r:.100}, "
                                       "not an image with its file and layer; draw it again with the ordering step's second step")
-        if entry["layer"] in seen:
+        if entry["layer"].casefold() in seen:
             raise ReviewFolderProblem(f"the layer images index lists the layer {entry['layer']} twice, so the check cannot give it "
                                       "one row; draw the layers again with the ordering step's second step")
-        seen.add(entry["layer"])
+        seen.add(entry["layer"].casefold())
         if not os.path.isfile(os.path.join(review, LAYERS, entry["file"])):
             raise ReviewFolderProblem(f"the layer images index lists {entry['file']}, which the review folder {review} does not "
                                       f"hold in {LAYERS}/; write the folder with the production-files folder command")
         found.append({"layer": entry["layer"], "file": entry["file"]})
     for needed, what in ((DRILL, "the drill file"), (OUTLINE, "the outline")):
-        if needed not in seen:
+        if needed.casefold() not in seen:
             raise ReviewFolderProblem(f"the layer images index lists no image of {what} ({needed}), so the check would not judge "
                                       "it; a layer the render lists no image for is not rendered and blocks the order, so draw the "
                                       "layers again with the ordering step's second step")
+    unlisted = review_folder.unlisted_fabrication_files(os.path.join(review, GERBERS), index["images"])
+    if unlisted:
+        raise ReviewFolderProblem(f"the review folder {review} holds {GERBERS}/{unlisted[0]}"
+                                  + (f" and {len(unlisted) - 1} more" if len(unlisted) > 1 else "")
+                                  + f", which the layer images index lists as no image's source, so no unit would judge it and no "
+                                  "row could name it; draw the layers again with the ordering step's second step")
     return found
 
 
@@ -225,12 +232,12 @@ def part_units(review: str) -> Dict[str, Dict[str, Any]]:
     placement file, its rows in that file's order in chunks of at most PARTS_PER_UNIT. A part no drawing lists is grouped
     by the footprint name of the parts list, or NO_DRAWING."""
     rows = placement_rows(review)
-    carried = {name: drawing for drawing in drawings(review) for name in drawing["used_by"]}
+    carried = {name.casefold(): drawing for drawing in drawings(review) for name in drawing["used_by"]}
     named = parts_footprints(review)
     groups: Dict[Tuple[bool, str], Dict[str, Any]] = {}
     for row in rows:
-        drawing = carried.get(row[0])
-        key = (True, drawing["file"]) if drawing else (False, named.get(row[0], NO_DRAWING))
+        drawing = carried.get(row[0].casefold())
+        key = (True, drawing["file"]) if drawing else (False, named.get(row[0].casefold(), NO_DRAWING))
         group = groups.setdefault(key, {"drawing": drawing, "footprint": drawing["footprint"] if drawing else key[1], "rows": []})
         group["rows"].append(row)
     units: Dict[str, Dict[str, Any]] = {}
@@ -247,7 +254,7 @@ def design_record(review: str) -> str:
     """The folder's one parts specification record, by its path from the review folder's root."""
     found = []
     for directory, _, files in os.walk(review):
-        found += [os.path.relpath(os.path.join(directory, name), review) for name in files if name == RECORD]
+        found += [os.path.relpath(os.path.join(directory, name), review) for name in files if name.casefold() == RECORD.casefold()]
     if len(found) != 1:
         raise ReviewFolderProblem(f"the review folder {review} holds {len(found)} files named {RECORD}; it holds the one record of "
                                   "the design under review, so write it with the production-files folder command")
@@ -259,7 +266,7 @@ def images_in(review: str, folder: str, prefixes: Sequence[str] = ("",)) -> List
     if not os.path.isdir(path):
         return []
     return sorted(f"{folder}/{name}" for name in os.listdir(path)
-                  if name.lower().endswith(IMAGES) and name.startswith(tuple(prefixes)) and os.path.isfile(os.path.join(path, name)))
+                  if name.casefold().endswith(IMAGES) and name.startswith(tuple(prefixes)) and os.path.isfile(os.path.join(path, name)))
 
 
 def shared_documents(review: str, record: str, files: Sequence[str]) -> Dict[str, Dict[str, Any]]:
@@ -328,7 +335,7 @@ layer matches only when none of the three is found. File is the Gerber or drill 
 
 OUTPUT = """Verdicts has one row for each item of your unit, with the columns {verdicts}. Item is the item's name as listed above. For \
 a placed part, fill the four columns {part_columns} and write `—` in {layer_columns}; for a layer, fill {layer_columns} and write \
-`—` in the four part columns. Verdict is one of matches, differs or cannot judge.
+`—` in the four part columns. Never write `—` or n/a in a column of your own row's kind: a part with no polarity states `none`. Verdict is one of matches, differs or cannot judge.
 
 Findings has the columns {findings}. Number your findings 1, 2, 3 in the order you raise them, in Finding, as whole numbers. Raise \
 at least one finding for each row you give `differs`, naming the row in Item, and none for a row that matches; What and where says \
@@ -456,6 +463,17 @@ def blank(value: Any) -> bool:
     return not " ".join(str(value).split()).strip()
 
 
+#: Words a reviewer writes for "not applicable"; the prompt makes the dash the marker of the other kind of row's columns, and a
+#: part's four comparisons and a layer's file and comparison are never not applicable (a part with no polarity states `none`).
+PLACEHOLDER_WORDS = frozenset({"n/a", "na", "not applicable", "nil", "tbd", "unknown"})
+
+
+def placeholder(value: Any) -> bool:
+    """True for a cell that is empty, holds no letter or digit (a dash, dots, a slash) or is a not-applicable word."""
+    text = " ".join(str(value).split()).casefold()
+    return not any(character.isalnum() for character in text) or text in PLACEHOLDER_WORDS
+
+
 def cited(row: Dict[str, Any]) -> List[int]:
     return [int(match.group("number")) for match in CITATION.finditer(str(row["Why"]))]
 
@@ -489,7 +507,8 @@ def finding_problems(rows: Sequence[Dict[str, Any]], findings: Sequence[Dict[str
 def checks(tables: Dict[str, Any]) -> List[str]:
     """What the merge refuses: a placement-file row with no verdict row or two, a verdict row for a part or layer the check does
     not judge, a verdict other than cannot judge for a part with no drawing, a row without the cells its kind of row has, a row
-    that is not a match with no Why, a differs with no finding, a finding of a row that matches and an empty finding."""
+    that is not a match with no Why, a differs with no finding, a finding of a row that matches and an empty finding.
+    A cell a row must carry is missing when it is blank or a placeholder: no letter or digit, or n/a and the like."""
     if not ROUND:
         return ["the production-files caller's checks ran before its declaration was resolved for a review folder, so the parts and "
                 "layers the check judges are not known; resolve the declaration first"]
@@ -517,11 +536,11 @@ def checks(tables: Dict[str, Any]) -> List[str]:
                          f"{verdict}; a part with no drawing is a part whose first pin or polarity cannot be judged, so its only "
                          "verdict is cannot judge, which blocks the order")
         needed = PART_COLUMNS if item in ROUND["parts"] else LAYER_COLUMNS if item in ROUND["layers"] else []
-        empty = [column for column in needed if blank(row[column])]
+        empty = [column for column in needed if placeholder(row[column])]
         if empty:
-            found.append(f"{'part' if item in ROUND['parts'] else 'layer'} {item} leaves {', '.join(empty)} empty; the record "
-                         "gives a part's four comparisons and a layer's file and what it was compared with, so run its unit again "
-                         "with --rerun")
+            found.append(f"{'part' if item in ROUND['parts'] else 'layer'} {item} leaves {', '.join(empty)} empty or as a "
+                         "placeholder such as —; the record gives a part's four comparisons (a part with no polarity states "
+                         "none) and a layer's file and what it was compared with, so run its unit again with --rerun")
         if verdict != MATCHES and blank(row["Why"]):
             found.append(f"item {item} is {verdict} with no Why; the row says what is wrong and where, or what it needs, so run "
                          "its unit again with --rerun")

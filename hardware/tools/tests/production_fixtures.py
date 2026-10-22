@@ -63,7 +63,7 @@ def make_work(root: str, parts=PLACED) -> str:
     work = os.path.join(root, "work")
     fx.write(os.path.join(work, "placement.csv"), placement_text(parts))
     fx.write(os.path.join(work, "parts-list.csv"), parts_text())
-    for name in ("board-F_Cu.gtl", "board.drl"):
+    for name in [f"{layer}.gbr" for layer in LAYERS] + ["board.gbrjob"]:
         fx.write(os.path.join(work, "gerbers", name), "G04 synthetic*\n")
     for folder, index in (("layers", layers_index()), ("footprints", footprints_index())):
         fx.write(os.path.join(work, folder, "index.json"), json.dumps(index))

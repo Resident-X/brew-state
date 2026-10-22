@@ -29,6 +29,7 @@ written, 1 when the command refuses and 2 when git is missing. --json prints the
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import shutil
 import sys
@@ -99,6 +100,18 @@ def input_refusals(args: argparse.Namespace, work: str) -> List[str]:
         for index in ("index.txt", "index.json"):
             if os.path.isdir(os.path.join(work, name)) and not os.path.isfile(os.path.join(work, name, index)):
                 found.append(f"the work folder's {name}/ holds no {index}; draw it with the ordering step's second step")
+    layers_index = os.path.join(work, production_seed.LAYERS, "index.json")
+    if os.path.isdir(os.path.join(work, production_seed.GERBERS)) and os.path.isfile(layers_index):
+        try:
+            with open(layers_index, encoding="utf-8") as handle:
+                images = json.load(handle).get("images")
+        except (OSError, ValueError, RecursionError, AttributeError):
+            images = None  # an index that cannot be read is the layer images index's own refusal, made when the check starts
+        if isinstance(images, list):
+            for name in review_folder.unlisted_fabrication_files(os.path.join(work, production_seed.GERBERS), images):
+                found.append(f"{production_seed.GERBERS}/{name} in the work folder {work} is a file the layer images index lists as "
+                             "no image's source, so no unit would judge it and no row could name it; draw the layers again with "
+                             "the ordering step's second step, or leave the file out")
     if os.path.isfile(os.path.join(work, WORK_FILES[0])):
         try:
             production_files.read_placement_file(os.path.join(work, WORK_FILES[0]))
@@ -118,7 +131,7 @@ def input_refusals(args: argparse.Namespace, work: str) -> List[str]:
             found.append(f"{link} is a symbolic link, which would put a file from outside the folder given into the review "
                          "folder; give the files themselves")
         for held in files_in(path) if os.path.isdir(path) else []:
-            if os.path.basename(held) == CHECK_RECORD:
+            if os.path.basename(held).casefold() == CHECK_RECORD.casefold():
                 found.append(f"{held} is a check record, which the review folder must not hold; leave it out of the folders given")
     return found
 
