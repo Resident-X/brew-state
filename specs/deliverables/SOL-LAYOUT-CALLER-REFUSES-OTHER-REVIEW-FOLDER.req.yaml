@@ -1,0 +1,23 @@
+id: SOL-LAYOUT-CALLER-REFUSES-OTHER-REVIEW-FOLDER
+type: deliverable
+category: solution
+title: The layout caller refuses a review folder written for another review, naming that review, before any session starts
+status: active
+version: 2
+text: |-
+  Why this exists. The layout caller reads its round's fields from the review folder's round file. Handed a folder written for another review (the critical-routing check, the production-files check or the schematic review), it fails with an unhandled KeyError on the layout round's kind field, which the other review's round file does not hold, instead of refusing the folder and naming the review it was written for as the other three callers do. The error names no folder and no review, so whoever started the round cannot tell a wrong folder from a broken caller. It was found in the build of DEL-HW-REVIEW-FAN-OUT on 2026-10-22.
+
+  What it does. No criterion states this refusal; the item extends the layout caller's field checking, which SOL-HW-REVIEW-FAN-OUT-LAYOUT.C3 gives the merge (a round whose fields are missing or malformed fails) and SOL-HW-REVIEW-FAN-OUT-LAYOUT.C5 gives the folder command (round fields of the set in use). Where the caller resolves its declaration and checklist, before any session starts, it identifies the review a folder was written for from its round file and refuses a folder written for any review but the layout review, naming that review. Everything the caller does with a layout folder is unchanged.
+
+  Out of scope: the other three callers' refusals, which already name the review; how a folder's review is recorded in its round file.
+
+  Serves REQ-BOARD-LAYOUT-PRACTICE-001.C1 by keeping a layout review from being started on a folder that is not a layout review's.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND
+    type: justified-by
+  - target: SOL-HW-REVIEW-FAN-OUT-LAYOUT
+    type: depends-on

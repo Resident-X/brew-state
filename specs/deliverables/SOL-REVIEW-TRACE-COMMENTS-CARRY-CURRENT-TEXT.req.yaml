@@ -1,0 +1,23 @@
+id: SOL-REVIEW-TRACE-COMMENTS-CARRY-CURRENT-TEXT
+type: deliverable
+category: solution
+title: Every trace comment on a test of the layout caller or the review kit carries its criterion's full current text, and a stale one fails
+status: active
+version: 2
+text: |-
+  Why this exists. The project's trace-comment form puts the criterion id and its text at the head of the test that verifies it. A comment that no longer says what the criterion says cannot be trusted as the signal of which test verifies which criterion. The criteria are frozen once evidenced, so a stale comment is corrected in the test, not the criterion. Found in the build of DEL-HW-REVIEW-FAN-OUT on 2026-10-22: many comments on the layout caller's tests (SOL-HW-REVIEW-FAN-OUT-LAYOUT.C3, .C5, .C7, .C8 and .C9) and on the review kit's tests (SOL-HW-REVIEW-KIT.C13) carried older or abbreviated text, and the schematic and production-files work had been checked with throwaway scripts that were not kept.
+
+  What it does. A repository tool reads the trace comments above the tests of the layout caller and of the review kit, reads each cited criterion's current text through the requirement engine, and in a write mode rewrites each comment to the full text; in a check mode it fails, naming the file, test and criterion, on any comment whose text differs or whose criterion does not exist. The check mode is a test in the board tooling's test set. It therefore runs in the nightly in full and in a build round whenever the board tier runs. It reads the requirement graph, so a round whose branch changes only a criterion's text does not switch the board tier on and the check meets that change in the nightly; this is a stated limit, not covered further. The comments are regenerated with the tool in the same change.
+
+  Out of scope: tests of other reviews' callers; what any test asserts; criteria of any other solution.
+
+  Serves the visibility of the criterion-to-verification mapping that OBL-VERIFICATION-DISCIPLINE-001.C3 requires.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C3
+    type: targets
+  - target: SOL-HW-REVIEW-FAN-OUT-LAYOUT
+    type: depends-on
+  - target: SOL-HW-REVIEW-KIT
+    type: depends-on

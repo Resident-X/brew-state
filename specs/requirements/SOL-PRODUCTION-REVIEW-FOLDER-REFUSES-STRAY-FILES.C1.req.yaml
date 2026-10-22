@@ -1,0 +1,12 @@
+id: SOL-PRODUCTION-REVIEW-FOLDER-REFUSES-STRAY-FILES.C1
+type: criterion
+title: The production-files folder command refuses a supplied folder holding a file that is not a kind that folder is meant to hold, naming it
+status: active
+version: 2
+measurement_type: binary
+verification: test
+text: |-
+  Over synthetic supplied folders, the production-files folder command refuses a folder holding a file that is not a kind that folder is meant to hold, reporting every such file with its folder, in text and in JSON with the same content, and writes no review folder. The folders and what each is meant to hold: views and placement-view, images and their index.txt; layers and footprints, images and their index.txt and index.json; preview, the assembler's preview as supplied (the file or files the assembler's preview consists of, with nothing added). A notes file, a session file or any other file outside those kinds is refused. Folders holding only the permitted kinds are assembled as before. Out of scope: judging an image's content.
+links:
+  - target: SOL-PRODUCTION-REVIEW-FOLDER-REFUSES-STRAY-FILES
+    type: criterion-of

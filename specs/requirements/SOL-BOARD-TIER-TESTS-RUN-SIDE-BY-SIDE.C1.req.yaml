@@ -1,0 +1,12 @@
+id: SOL-BOARD-TIER-TESTS-RUN-SIDE-BY-SIDE.C1
+type: criterion
+title: The board tier's tooling tests run each test file in a process of its own, several at once, and a failing file fails the stage naming it
+status: active
+version: 2
+measurement_type: threshold
+verification: test
+text: |-
+  Over a synthetic directory of test files, the stage runs each file in a process of its own with the serial run's environment and selection, several at once, reports each file's result as it finishes, and exits non-zero naming every file that fails, a file that crashes or cannot be imported included. The stage gives the same verdict run side by side as run one file after another, and two synthetic files that each need the one installed CAD tool both pass when run side by side. On the reference machine class the stage takes at most one third of the serial run's time over the same files, or the measured ratio and the achieved fraction are reported if that cannot be met. Out of scope: selecting tiers by changed path and the seeded-fault proof.
+links:
+  - target: SOL-BOARD-TIER-TESTS-RUN-SIDE-BY-SIDE
+    type: criterion-of

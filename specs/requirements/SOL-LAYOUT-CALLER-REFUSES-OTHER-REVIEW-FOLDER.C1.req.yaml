@@ -1,0 +1,12 @@
+id: SOL-LAYOUT-CALLER-REFUSES-OTHER-REVIEW-FOLDER.C1
+type: criterion
+title: Over a folder written for another review, the layout caller refuses it before any session starts, naming the review the folder is for
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Over synthetic review folders written for each of the other three reviews (critical-routing, production-files and schematic), the layout caller refuses each before any session is started, reporting an error that names the folder and the review it was written for and not an unhandled exception, in text and in JSON with the same content; no session is started for any of them. Over a synthetic layout folder, full and narrow, the caller's behaviour is as before the change. Out of scope: the other callers' refusals.
+links:
+  - target: SOL-LAYOUT-CALLER-REFUSES-OTHER-REVIEW-FOLDER
+    type: criterion-of

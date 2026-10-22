@@ -1,0 +1,23 @@
+id: SOL-PRODUCTION-REVIEW-FOLDER-REFUSES-STRAY-FILES
+type: deliverable
+category: solution
+title: The production-files folder command refuses a supplied folder holding a file that is not a kind that folder is meant to hold, naming it
+status: active
+version: 1
+text: |-
+  Why this exists. The production-files folder command copies the views, placement-view, preview, layers and footprints folders it is given wholesale and refuses in them only a production-files check record. A stray notes or session file left in a supplied folder therefore reaches the reviewers, although SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES.C3 requires a review folder with nothing of the designer's reasoning. The review kit's deny patterns for designer-notes and session files only protect the reader's side and do not stop a differently named file. It was found in the build of DEL-HW-REVIEW-FAN-OUT on 2026-10-22.
+
+  What it does. For each supplied folder the command knows the kinds of file it is meant to hold: images and the index files for the views, placement-view, layers and footprints folders, and the assembler's preview as supplied for the preview folder. It refuses a folder holding any other file, reporting every such file at once with its folder, alongside the refusals it already makes. Behaviour on folders holding only those kinds is unchanged.
+
+  Out of scope: judging whether an image's content carries reasoning; folders other than those named.
+
+  Restores SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES.C3 (nothing of the designer's reasoning), in service of REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets
+  - target: DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND
+    type: justified-by
+  - target: SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES
+    type: depends-on
