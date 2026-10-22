@@ -1,0 +1,12 @@
+id: SOL-REVIEW-TRACE-COMMENTS-CARRY-CURRENT-TEXT.C1
+type: criterion
+title: Every trace comment on a test of the layout caller or the review kit carries the full current text of its criterion, and a stale one fails the check
+status: active
+version: 2
+measurement_type: binary
+verification: test
+text: |-
+  Over the board tooling's tests of the layout caller and of the review kit, every trace comment citing a criterion carries that criterion's full current text, and the check fails, naming the file, test and criterion, on a synthetic test file whose comment holds an abbreviated text, an older text, or a criterion id that does not exist. The check is a test of the board tooling's test set, so it runs in the nightly and in every build round that runs the board tier. It passes over the files as delivered. Out of scope: tests of other reviews' callers.
+links:
+  - target: SOL-REVIEW-TRACE-COMMENTS-CARRY-CURRENT-TEXT
+    type: criterion-of
