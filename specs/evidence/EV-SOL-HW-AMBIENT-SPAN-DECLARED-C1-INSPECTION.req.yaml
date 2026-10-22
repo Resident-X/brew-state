@@ -1,0 +1,16 @@
+id: EV-SOL-HW-AMBIENT-SPAN-DECLARED-C1-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-AMBIENT-SPAN-DECLARED.C1
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-22T12:23:15.778774Z"
+artifact:
+  kind: external
+  reference: 'inspection: docs/sunbeam-em7000/reference-machine.md § Ambient states room temperature lowest 10 °C (the owner''s account of their kitchen on a winter morning, declared, not measured) and highest 35 °C (a design figure, not a measurement, set above the owner''s own warmest room of about 28 °C), each with its source, and says the span is the room''s, not the enclosure''s air. No project check reads this section, so no <path>::<TestFn> exists to cite.'
+  artifact_version: 68c711f83d97c01d7373492fda5a2d6afb909734
+attested_by: crun-e3a7993191f98662
+links:
+  - target: SOL-HW-AMBIENT-SPAN-DECLARED.C1
+    type: satisfies

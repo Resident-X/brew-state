@@ -1,0 +1,16 @@
+id: EV-SOL-HW-AMBIENT-SPAN-DECLARED-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-AMBIENT-SPAN-DECLARED.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-22T12:23:15.944219Z"
+artifact:
+  kind: external
+  reference: 'inspection: docs/sunbeam-em7000/reference-machine.md § Ambient declares humidity inside the enclosure as condensing, the worst case, until measured, and lists the four owner-account facts (sealed from steam wand; steam may be present around it; extra moisture needs a failure such as a burst water line; conformal coat planned) as not measured; it chooses no pollution degree and does not claim the boards are protected. No project check reads this section.'
+  artifact_version: 68c711f83d97c01d7373492fda5a2d6afb909734
+attested_by: crun-e3a7993191f98662
+links:
+  - target: SOL-HW-AMBIENT-SPAN-DECLARED.C2
+    type: satisfies
