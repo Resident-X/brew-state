@@ -1,0 +1,17 @@
+id: SOL-HW-REVIEW-PROOFS-REFUSE-UNUSABLE-BASELINE-AND-HELD-LOCK
+type: deliverable
+category: solution
+title: The schematic and layout review proof commands refuse an empty or unusable baselines file and a held lock, as the other proof commands do
+status: active
+version: 1
+text: |
+  Why this exists. The proof commands for the critical-routing and production-files reviews were built with one shared guard in the proof harness: a baselines file that holds the key with no runs, or that the kit cannot use, is refused before any session starts, and an exclusive lock on the resolved baselines path is held from reading the guard through the single run to writing the baseline, so two invocations cannot both pay for one key and a write cannot drop another's. The schematic proof command and the layout review proof command, built before it, keep their own unlocked sequence of reading the recorded baseline, running the single form and writing it. A baselines file holding the key with an empty group of runs reads as not recorded and the single form runs again and appends a second group under the same key, and two concurrent invocations both pay for a live single run, the later write refusing or dropping the earlier one.
+
+  What it does. Moves the schematic and layout proof commands onto the harness's guard and lock, with the behaviour for every other baselines file unchanged, and tests at the command level that an empty group, each unusable file shape and a held lock are refused before any session starts.
+
+  Out of scope: the critical-routing and production-files proof commands, which already use the harness's guard and lock.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: targets

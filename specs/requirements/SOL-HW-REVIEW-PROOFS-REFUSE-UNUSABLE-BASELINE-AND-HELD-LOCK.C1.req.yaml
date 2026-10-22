@@ -1,0 +1,13 @@
+id: SOL-HW-REVIEW-PROOFS-REFUSE-UNUSABLE-BASELINE-AND-HELD-LOCK.C1
+type: criterion
+title: The schematic and layout proof commands refuse an empty or unusable baselines file and a held lock before any session starts
+status: active
+version: 1
+measurement_type: binary
+verification: test
+scope: solution
+text: |-
+  The schematic proof command and the layout review proof command refuse, before starting any session and naming the key and the file, a baselines file that holds the key with no runs or that the kit cannot use, and refuse an invocation while another holds the lock on that baselines file, so the single form is not run again for a key that has a group and two invocations cannot both pay for one key.
+links:
+  - target: SOL-HW-REVIEW-PROOFS-REFUSE-UNUSABLE-BASELINE-AND-HELD-LOCK
+    type: criterion-of
