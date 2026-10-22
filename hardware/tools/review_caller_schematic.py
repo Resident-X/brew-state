@@ -131,8 +131,26 @@ def schematic_round(review: str) -> Dict[str, Any]:
 
 def areas(review: str) -> List[Tuple[str, str, List[str]]]:
     """Each area heading of the method's circuit practice catalogue, in order: its code, its name and its items' identifiers. An
-    area that holds no item is refused, since a unit judges at least one."""
+    area that holds no item, an area code given twice and an item outside any area are refused, since a unit judges at least one
+    item and every item of the catalogue is judged."""
     found = review_catalogue.areas(review, SECTION)
+    seen: set = set()
+    repeated: List[str] = []
+    outside: List[str] = []
+    for line in review_catalogue.section_body(review, SECTION).split("\n"):
+        area, item = review_catalogue.AREA.match(line), review_catalogue.ITEM.match(line)
+        if area:
+            if area.group(2) in seen and area.group(2) not in repeated:
+                repeated.append(area.group(2))
+            seen.add(area.group(2))
+        elif item and not seen:
+            outside.append(item.group(1))
+    if repeated:
+        raise ReviewFolderProblem(f"the circuit practice catalogue in the method of the review folder {review} repeats an area "
+                                  f"code ({', '.join(repeated)}); each area has its own code, since a unit is named for it")
+    if outside:
+        raise ReviewFolderProblem(f"the circuit practice catalogue in the method of the review folder {review} has the item "
+                                  f"{', '.join(outside)} before any area heading (`### <name> (<CODE>)`), so no unit would judge it")
     empty = [code for code, _, items in found if not items]
     if empty:
         raise ReviewFolderProblem(f"the circuit practice catalogue in the method of the review folder {review} has the area "
@@ -502,8 +520,7 @@ def row_problems(rows: Sequence[Dict[str, Any]], units: Dict[str, List[str]], na
         if item == FREE_PASS_ENTRY:
             if cell != NONE:
                 found.append(f"the free pass's row names {cell!r}, not `{NONE}`; the free pass judges the whole schematic")
-            continue
-        if cell != NONE and cell not in known:
+        elif cell != NONE and cell not in known:
             found.append(f"the row {pair(row)} names {cell!r}, which is no net, part or sheet of the netlist and the schematic; "
                          "name a net as the netlist writes it, a part by its reference designator and a sheet as the sheet list "
                          f"names it, and run unit {unit_of(item, units)} again with --rerun")

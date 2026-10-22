@@ -111,6 +111,13 @@ def given(name: str) -> bool:
     return base.endswith(KICAD_FILES) or base in board_check.LIBRARY_TABLES
 
 
+def not_a_record(name: str) -> bool:
+    """Whether any component of the record's path, a folder or the file, is named for the designer's reasoning or a review record,
+    without regard to case."""
+    return any(re.fullmatch(pattern.replace(".", r"\.").replace("*", ".*"), part, re.I)
+               for part in name.split("/") for pattern in NOT_RECORDS)
+
+
 def record_refusals(records: Sequence[str], held: Dict[str, bytes], design: str) -> List[str]:
     """Why the records named are not records of the design at the commit."""
     found: List[str] = []
@@ -130,10 +137,10 @@ def record_refusals(records: Sequence[str], held: Dict[str, bytes], design: str)
         base = os.path.basename(name)
         if not name.endswith(RECORD_SUFFIXES):
             found.append(f"the record {name} is not a Markdown or YAML file; a record is a .md or .yaml file of the design")
-        elif base == RECORD:
+        elif base.lower() == RECORD:
             found.append(f"the record {name} is the schematic review record, which the folder holds only as its earlier rounds "
                          "for a round after the first; leave it out")
-        elif any(re.fullmatch(pattern.replace(".", r"\.").replace("*", ".*"), base) for pattern in NOT_RECORDS):
+        elif not_a_record(name):
             found.append(f"the record {name} is the designer's reasoning or a review record, which the review never reads; leave "
                          "it out")
         elif name not in held:
