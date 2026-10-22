@@ -1,0 +1,461 @@
+{
+ "version": 1,
+ "source": "One single-reviewer run of the schematic review proof on its seeded copy, made through the review kit's single form on the mid-tier model by schematic_review_proof.py; wall time, cost and tokens are the kit's figures for the one session of the run.",
+ "seeds": [
+  {
+   "id": "S01",
+   "item": "DERATE-2",
+   "description": "R5 (heater opto LED series resistor) changed from 330 ohm to 33 ohm: LED current about 100 mA, above the MOC3023M 60 mA continuous maximum [sheet circuit-review-proof.kicad_sch; touches R5, /LED_A]"
+  },
+  {
+   "id": "S02",
+   "item": "DERATE-2",
+   "description": "R2 (triac gate resistor) changed from 1.1k to 220 ohm: gate pulse about 1.6 A at line peak, above U2's 1 A ITSM [sheet circuit-review-proof.kicad_sch; touches R2, /MAINS_TRIAC_G]"
+  },
+  {
+   "id": "S03",
+   "item": "PARTS-1",
+   "description": "C8 (MCU VDD bulk capacitor) changed from 10uF to 1uF, below the 10 uF CVDD the MSPM0C1104 requires [sheet circuit-review-proof.kicad_sch; touches C8, +3V3]"
+  },
+  {
+   "id": "S04",
+   "item": "PARTS-1",
+   "description": "C6 (MCP1700 output capacitor) changed from 10uF to 100nF, below the 1 uF minimum for LDO stability [sheet circuit-review-proof.kicad_sch; touches C6, +3V3]"
+  },
+  {
+   "id": "S05",
+   "item": "DERATE-2",
+   "description": "R7 (status LED series resistor) changed from 1k to 100 ohm: LED current about 25 mA, above the MCU pin's 6 mA drive limit [sheet circuit-review-proof.kicad_sch; touches R7, D1, /LED_DRV]"
+  },
+  {
+   "id": "S06",
+   "item": "PINV-1",
+   "description": "R13 (sense input series resistor) changed from 4.7k to 470 ohm: fault current into the ADC pin protection diode about 11 mA, above the 2 mA limit [sheet circuit-review-proof.kicad_sch; touches R13, /SENSE_ADC]"
+  },
+  {
+   "id": "S07",
+   "item": "RCFL-1",
+   "description": "C12 (sense filter capacitor) changed from 22nF to 2.2uF: settling time about 90 ms, far over the 2 ms requirement [sheet circuit-review-proof.kicad_sch; touches C12, /SENSE_ADC]"
+  },
+  {
+   "id": "S08",
+   "item": "EMSRC-2",
+   "description": "R1 (snubber resistor across the triac with C4) changed from 100 ohm to 1 ohm: turn-on discharge of C4 reaches hundreds of amperes at line peak, far above what the triac and C4 carry [sheet circuit-review-proof.kicad_sch; touches R1, C4]"
+  },
+  {
+   "id": "S09",
+   "item": "DERATE-2",
+   "description": "C7 (47uF input bulk capacitor on +5V) Rating property changed from 10V to 6.3V: insufficient derating margin at 5.25 V [sheet circuit-review-proof.kicad_sch; touches C7, +5V]"
+  },
+  {
+   "id": "S10",
+   "item": "SURGE-1",
+   "description": "RV1 mains varistor value changed from VDRS14T275BSE to VDRS14T130BSE (130 VAC part) on a 230 V mains line: conducts at normal mains voltage [sheet circuit-review-proof.kicad_sch; touches RV1, /MAINS_L, /MAINS_N]"
+  },
+  {
+   "id": "S11",
+   "item": "BUSL-1",
+   "description": "R12 (I2C pull-up) changed from 4.7k to 100k: pull-up too weak for I2C rise time [sheet circuit-review-proof.kicad_sch; touches R12, /SCL]"
+  },
+  {
+   "id": "S12",
+   "item": "DERATE-2",
+   "description": "R14 (U5 WDI pull-down) changed from 1k to 100 ohm: pull-down is too stiff, the watchdog input is held low against the PA17 kick output and the MCU pin is overloaded [sheet circuit-review-proof.kicad_sch; touches R14, /WDI]"
+  },
+  {
+   "id": "S13",
+   "item": "DERATE-2",
+   "description": "C9 (MCU decoupling capacitor) Rating property changed from 16V to 2.5V: below the 3.3 V rail it sits on, no derating margin [sheet circuit-review-proof.kicad_sch; touches C9, +3V3]"
+  },
+  {
+   "id": "S14",
+   "item": "SURGE-1",
+   "description": "F1 mains fuse changed from 0001.2501 (500 mA) to 0001.2516 with Rating 6.3A 250VAC: fuse no longer protects the 0.5 mm mains tracks (k2S2 4.46 A2s) or the heater path [sheet circuit-review-proof.kicad_sch; touches F1, /MAINS_L_FUSE]"
+  }
+ ],
+ "baselines": [
+  {
+   "key": {
+    "seeds": "018ea966fd1fee88da7b2ad3676fabceef9116061fb3b283dc4288e332d7e8b2",
+    "design": "37b935f9f223010fb5d48ffe275dd32a4e097208",
+    "model": "claude-sonnet-5-5",
+    "form": "single",
+    "prompt": "8c083e36dca7b6c605cd133baec1facff556d5e3c64ffe3250f2a3277689db49"
+   },
+   "runs": [
+    {
+     "id": "single-1",
+     "form": "single",
+     "tool_commit": "bb90f92",
+     "seeded_commit": "343ea8039c3ae2d6fe583b614e795ef2374cc25f",
+     "seeds_found": [
+      "S01",
+      "S02",
+      "S03",
+      "S04",
+      "S05",
+      "S06",
+      "S07",
+      "S08",
+      "S09",
+      "S10",
+      "S11",
+      "S12",
+      "S13",
+      "S14"
+     ],
+     "unmatched": [
+      "G1.r1: 4 | PINV-2 | PINV-2 | function | Sheet circuit-review-proof, /SENSE_IN and /SENSE_ADC: J5 can be driven to 5.25 V while U4 is unpowered (sensor and controller share +3V3). PA27 is not rated for it (pin-limits.yaml tolerates_driven_unpowered false). R13 470 ohm plus 100 ohm source gives 9.2 mA through the diodes into the +3V3 rail, above 2 mA, and powers the rail through the pin. | ",
+      "G1.r1: 8 | CAPD-1 | CAPD-1 | function | Sheet circuit-review-proof, C6 (100 nF) and C8 (1 uF): nominal values already below the 1.0 uF (U3 output) and 10 uF (U4 CVDD) the data sheets need, before any DC-bias, temperature or tolerance loss. | ",
+      "G1.r1: 9 | CAPD-1 | CAPD-1 | function | Sheet circuit-review-proof, C5, C12, C13, C2, C3: no maker bias or temperature curve and no derating arithmetic in any record; circuit-proof.md Not-bounded item 5 states the bias loss on C5 is unbounded. | ",
+      "G1.r1: 12 | SUPPLY-1 | SUPPLY-1 | function | Sheet circuit-review-proof, mains nets /MAINS_L_IN, /MAINS_L_FUSE, /MAINS_L, /MAINS_N, /MAINS_SNUB: no inrush figure in any record. With source impedance ≥1 ohm and connection at any phase the step into C1, C4 (and R1 1 ohm) reaches up to about 354 A, against J1 8 A, JP1 6 A and the BTA16-600B dIT/dt of 50 A/us. | ",
+      "G1.r1: 13 | SUPPLY-2 | SUPPLY-2 | function | Sheet circuit-review-proof, +5V and /+5V_IN: U3 (VIN min 2.3 V) and the LED path have no undervoltage lockout or supervisor on the 5 V rail, and the record has no threshold, hysteresis or dip. | ",
+      "G1.r1: 14 | SUPPLY-2 | SUPPLY-2 | function | Sheet circuit-review-proof, +3V3 and /+3V3_REG: U5 (VIT- 2.86-3.00 V, hysteresis 30 mV typical with no maximum) is on the rail, but no record shows the dip when the loads switch on against the hysteresis, and U5's RESET goes only to Q3, not to U4's NRST, so U4 depends on its own BOR (1.56-1.60 V falling, below its 1.62 V minimum). | ",
+      "G1.r1: 15 | FAULT-1 | FAULT-1 | safety | Sheet circuit-review-proof, heater cut-off chain U4 PA2, R6, Q2, U5, R3, Q3, U2, R2, Q1 (nets /HEAT_CMD, /WD_RESET, /SW_MID, /LED_K, /MAINS_OPTO_T2, /MAINS_TRIAC_G): circuit-proof.md gives 'bounded' for R6 open, Q2 short, U5 RESET stuck high, R3 open, Q3 short, U2 output short, R2 short and Q1 short. The heater stays energised and only the off-board thermostat ends it; the record says none is detected on the board and no test is imposed before power. | ",
+      "G1.r1: 16 | FAULT-1 | FAULT-1 | safety | Sheet circuit-review-proof, R14 on /WDI is in the proof-of-life path but has no row in the failure-mode table; with R14 open and PA17 not driving, WDI floats and the part disables its watchdog. | ",
+      "G1.r1: 17 | BARRIER-1 | BARRIER-1 | safety | Sheet circuit-review-proof, U2: the separation basis declares the heater-drive barrier reinforced. The MOC301XM/MOC302XM data sheet (Rev 1.5) gives VIORM 850 Vpk, VIOTM 6000 Vpk, VISO 4170 Vrms and creepage/clearance ≥7 mm, but states no insulation type (basic or reinforced) and cites no certificate, and the separation basis holds no table row for the transient withstand. A reinforced rating cannot be sourced. | ",
+      "G1.r1: 19 | ESD-1 | ESD-1 | function | Sheet circuit-review-proof, /SDA_J and /SCL_J at J3 (±4 kV contact, ±8 kV air declared): D2 and R9/R10 have no clamping arithmetic in the record. At the IEC 8 kV contact level the line reaches tens of volts (VBR up to 8.5 V plus 1 ohm×30 A), and R9/R10 100 ohm would pass hundreds of mA into PA0/PA1, which have no clamp and allow no injection current (SLASF90E §7.1 note 3), abs max 5.5 V. | ",
+      "G1.r1: 20 | ESD-1 | ESD-1 | function | Sheet circuit-review-proof, +3V3 at J3 pin 1: the touchable connector pin reaches U4 VDD (abs max 4.1 V) and U5 with no clamp. | ",
+      "G1.r1: 21 | TOUCH-1 | TOUCH-1 | safety | Sheet circuit-review-proof, C2 and C3 (2.2 nF Y2 to /MAINS_PE): no leakage arithmetic in any record, no ceramic frequency/voltage margin, no standard named for the limits. For scale: 2π×50×2.64 nF×250 V = 0.21 mA per capacitor, 0.41 mA total against 1.0 mA, and 0.21 mA touch with PE open against 0.25 mA, a 17 % margin. | ",
+      "G1.r1: 22 | EMSRC-1 | EMSRC-1 | quality | Sheet circuit-review-proof, C1, C2, C3: the inlet filter has no choke, and the record's 12 dB figure has no sourced attenuation against the switching spectrum; the 60 dBuV limit names no standard. | ",
+      "G1.r1: 24 | EMSRC-3 | EMSRC-3 | quality | Sheet circuit-review-proof, Q1: the heater's switching edge has no stated edge rate or loss figure in any record; the snubber discharge through R1 1 ohm can reach 100-354 A against dIT/dt 50 A/us. | ",
+      "G1.r1: 31 | DRAW-1 | DRAW-1 | cosmetic | Sheet circuit-review-proof: the single sheet carries the mains heater drive, the 5 V to 3.3 V regulator, the controller with its reset and debug header, the sensor interfaces and the LED, and takes the design's own name. It holds more than one function and has no function-naming title. I could not check text overlap from the SVG alone. | ",
+      "G1.r1: 32 | FREE-PASS | free pass | safety | Sheet circuit-review-proof, F1 (0001.2516, rating 6.3A 250VAC): constraints.md and circuit-proof.md row 3 declare a 500 mA time-lag fuse. A 6.3 A fuse does not clear the declared 5 A fault and its let-through exceeds the 0.5 mm track's 4.46 A²s. | ",
+      "G1.r1: 33 | FREE-PASS | free pass | function | circuit-proof.md rows 1, 2, 5, 6, 7, 8, 11 are worked with values the schematic no longer carries (R5 330 vs 33, R2 1.1k vs 220, R13 4.7k vs 470, C12 22 nF vs 2.2 uF, R7 1k vs 100, R14 1k vs 100, C6 10 uF vs 100 nF, C8 10 uF vs 1 uF). The circuit proof does not describe this schematic. | "
+     ],
+     "verdicts": {
+      "[\"PINV-1\", \"+3V3\"]": "fail",
+      "[\"PINV-1\", \"+5V\"]": "pass",
+      "[\"PINV-1\", \"/+3V3_REG\"]": "pass",
+      "[\"PINV-1\", \"/+5V_IN\"]": "pass",
+      "[\"PINV-1\", \"/HEAT_CMD\"]": "pass",
+      "[\"PINV-1\", \"/LED_A\"]": "pass",
+      "[\"PINV-1\", \"/LED_ANODE\"]": "pass",
+      "[\"PINV-1\", \"/LED_DRV\"]": "pass",
+      "[\"PINV-1\", \"/LED_K\"]": "pass",
+      "[\"PINV-1\", \"/MAINS_HEAT_SW\"]": "fail",
+      "[\"PINV-1\", \"/MAINS_L\"]": "fail",
+      "[\"PINV-1\", \"/MAINS_L_FUSE\"]": "pass",
+      "[\"PINV-1\", \"/MAINS_L_IN\"]": "pass",
+      "[\"PINV-1\", \"/MAINS_N\"]": "pass",
+      "[\"PINV-1\", \"/MAINS_OPTO_T2\"]": "fail",
+      "[\"PINV-1\", \"/MAINS_PE\"]": "pass",
+      "[\"PINV-1\", \"/MAINS_SNUB\"]": "pass",
+      "[\"PINV-1\", \"/MAINS_TRIAC_G\"]": "fail",
+      "[\"PINV-1\", \"/NRST\"]": "pass",
+      "[\"PINV-1\", \"/SCL\"]": "pass",
+      "[\"PINV-1\", \"/SCL_J\"]": "pass",
+      "[\"PINV-1\", \"/SDA\"]": "pass",
+      "[\"PINV-1\", \"/SDA_J\"]": "pass",
+      "[\"PINV-1\", \"/SENSE_ADC\"]": "fail",
+      "[\"PINV-1\", \"/SENSE_IN\"]": "fail",
+      "[\"PINV-1\", \"/SWCLK\"]": "pass",
+      "[\"PINV-1\", \"/SWDIO\"]": "pass",
+      "[\"PINV-1\", \"/SW_MID\"]": "pass",
+      "[\"PINV-1\", \"/WDI\"]": "pass",
+      "[\"PINV-1\", \"/WD_RESET\"]": "pass",
+      "[\"PINV-1\", \"GND\"]": "pass",
+      "[\"PINV-1\", \"unconnected-(D2-D2+-Pad3)\"]": "pass",
+      "[\"PINV-1\", \"unconnected-(D2-D2--Pad4)\"]": "pass",
+      "[\"PINV-1\", \"unconnected-(D2-NC-Pad5)\"]": "pass",
+      "[\"PINV-1\", \"unconnected-(U2-NC-Pad3)\"]": "pass",
+      "[\"PINV-1\", \"unconnected-(U2-NC-Pad5)\"]": "pass",
+      "[\"PINV-1\", \"unconnected-(U4-PA4-Pad5)\"]": "pass",
+      "[\"PINV-1\", \"unconnected-(U4-PA6-Pad10)\"]": "pass",
+      "[\"PINV-1\", \"unconnected-(U4-PA11-Pad6)\"]": "pass",
+      "[\"PINV-1\", \"unconnected-(U4-PA18-Pad14)\"]": "pass",
+      "[\"PINV-1\", \"unconnected-(U4-PA22-Pad17)\"]": "pass",
+      "[\"PINV-1\", \"unconnected-(U4-PA23-Pad18)\"]": "pass",
+      "[\"PINV-1\", \"unconnected-(U4-PA25-Pad20)\"]": "pass",
+      "[\"PINV-1\", \"unconnected-(U4-PA26-Pad1)\"]": "pass",
+      "[\"PINV-1\", \"unconnected-(U4-PA28-Pad3)\"]": "pass",
+      "[\"PINV-1\", \"unconnected-(U5-~{MR}-Pad3)\"]": "pass",
+      "[\"PINV-2\", \"/SENSE_IN\"]": "fail",
+      "[\"PINV-2\", \"/SENSE_ADC\"]": "fail",
+      "[\"PINV-2\", \"/SDA\"]": "pass",
+      "[\"PINV-2\", \"/SCL\"]": "pass",
+      "[\"PINV-2\", \"/SDA_J\"]": "pass",
+      "[\"PINV-2\", \"/SCL_J\"]": "pass",
+      "[\"PINV-2\", \"/SWDIO\"]": "pass",
+      "[\"PINV-2\", \"/SWCLK\"]": "pass",
+      "[\"PINV-2\", \"/NRST\"]": "pass",
+      "[\"PARTS-1\", \"U2\"]": "fail",
+      "[\"PARTS-1\", \"U3\"]": "fail",
+      "[\"PARTS-1\", \"U4\"]": "fail",
+      "[\"PARTS-1\", \"U5\"]": "pass",
+      "[\"PARTS-1\", \"D2\"]": "pass",
+      "[\"CAPD-1\", \"C6\"]": "fail",
+      "[\"CAPD-1\", \"C8\"]": "fail",
+      "[\"CAPD-1\", \"C5\"]": "fail",
+      "[\"CAPD-1\", \"C12\"]": "fail",
+      "[\"CAPD-1\", \"C13\"]": "fail",
+      "[\"CAPD-1\", \"C2\"]": "fail",
+      "[\"CAPD-1\", \"C3\"]": "fail",
+      "[\"CAPD-1\", \"C7\"]": "not applicable",
+      "[\"CAPD-1\", \"C9\"]": "not applicable",
+      "[\"CAPD-1\", \"C10\"]": "not applicable",
+      "[\"CAPD-1\", \"C1\"]": "not applicable",
+      "[\"CAPD-1\", \"C4\"]": "not applicable",
+      "[\"BUSL-1\", \"/SDA\"]": "pass",
+      "[\"BUSL-1\", \"/SDA_J\"]": "pass",
+      "[\"BUSL-1\", \"/SCL\"]": "fail",
+      "[\"BUSL-1\", \"/SCL_J\"]": "fail",
+      "[\"BUSL-1\", \"/NRST\"]": "pass",
+      "[\"STRAP-1\", \"U4\"]": "pass",
+      "[\"STRAP-1\", \"U5\"]": "pass",
+      "[\"STRAP-1\", \"Q2\"]": "pass",
+      "[\"STRAP-1\", \"Q3\"]": "pass",
+      "[\"STRAP-2\", \"U4\"]": "pass",
+      "[\"RCFL-1\", \"R13\"]": "fail",
+      "[\"RCFL-1\", \"C12\"]": "fail",
+      "[\"SUPPLY-1\", \"/+5V_IN\"]": "pass",
+      "[\"SUPPLY-1\", \"+5V\"]": "pass",
+      "[\"SUPPLY-1\", \"/+3V3_REG\"]": "pass",
+      "[\"SUPPLY-1\", \"+3V3\"]": "pass",
+      "[\"SUPPLY-1\", \"/MAINS_L_IN\"]": "fail",
+      "[\"SUPPLY-1\", \"/MAINS_L_FUSE\"]": "fail",
+      "[\"SUPPLY-1\", \"/MAINS_L\"]": "fail",
+      "[\"SUPPLY-1\", \"/MAINS_N\"]": "fail",
+      "[\"SUPPLY-1\", \"/MAINS_SNUB\"]": "fail",
+      "[\"SUPPLY-2\", \"+5V\"]": "fail",
+      "[\"SUPPLY-2\", \"/+5V_IN\"]": "fail",
+      "[\"SUPPLY-2\", \"+3V3\"]": "fail",
+      "[\"SUPPLY-2\", \"/+3V3_REG\"]": "fail",
+      "[\"POLAR-1\", \"C7\"]": "pass",
+      "[\"POLAR-1\", \"D1\"]": "pass",
+      "[\"POLAR-1\", \"D2\"]": "pass",
+      "[\"POLAR-1\", \"U2\"]": "pass",
+      "[\"CABLE-1\", \"J3\"]": "cannot judge",
+      "[\"FAULT-1\", \"U4\"]": "fail",
+      "[\"FAULT-1\", \"R6\"]": "fail",
+      "[\"FAULT-1\", \"Q2\"]": "fail",
+      "[\"FAULT-1\", \"U5\"]": "fail",
+      "[\"FAULT-1\", \"R3\"]": "fail",
+      "[\"FAULT-1\", \"Q3\"]": "fail",
+      "[\"FAULT-1\", \"R5\"]": "pass",
+      "[\"FAULT-1\", \"U2\"]": "fail",
+      "[\"FAULT-1\", \"R2\"]": "fail",
+      "[\"FAULT-1\", \"Q1\"]": "fail",
+      "[\"FAULT-1\", \"R14\"]": "fail",
+      "[\"INDEP-1\", \"U5\"]": "pass",
+      "[\"INDEP-1\", \"Q3\"]": "pass",
+      "[\"INDEP-1\", \"R3\"]": "pass",
+      "[\"INDEP-1\", \"R14\"]": "pass",
+      "[\"BARRIER-1\", \"U2\"]": "fail",
+      "[\"SURGE-1\", \"/MAINS_L\"]": "fail",
+      "[\"SURGE-1\", \"/MAINS_N\"]": "fail",
+      "[\"SURGE-1\", \"/MAINS_L_IN\"]": "fail",
+      "[\"SURGE-1\", \"/MAINS_L_FUSE\"]": "fail",
+      "[\"SURGE-1\", \"/MAINS_HEAT_SW\"]": "fail",
+      "[\"SURGE-1\", \"/MAINS_OPTO_T2\"]": "fail",
+      "[\"SURGE-1\", \"/MAINS_TRIAC_G\"]": "fail",
+      "[\"SURGE-1\", \"/MAINS_SNUB\"]": "fail",
+      "[\"SURGE-1\", \"/MAINS_PE\"]": "fail",
+      "[\"ESD-1\", \"/SDA_J\"]": "fail",
+      "[\"ESD-1\", \"/SCL_J\"]": "fail",
+      "[\"ESD-1\", \"+3V3\"]": "fail",
+      "[\"ESD-1\", \"/SWDIO\"]": "pass",
+      "[\"ESD-1\", \"/SWCLK\"]": "pass",
+      "[\"ESD-1\", \"/NRST\"]": "pass",
+      "[\"ESD-1\", \"/SENSE_IN\"]": "pass",
+      "[\"ESD-1\", \"/+5V_IN\"]": "pass",
+      "[\"TOUCH-1\", \"C2\"]": "fail",
+      "[\"TOUCH-1\", \"C3\"]": "fail",
+      "[\"EMSRC-1\", \"C1\"]": "fail",
+      "[\"EMSRC-1\", \"C2\"]": "fail",
+      "[\"EMSRC-1\", \"C3\"]": "fail",
+      "[\"EMSRC-2\", \"Q1\"]": "fail",
+      "[\"EMSRC-3\", \"Q1\"]": "fail",
+      "[\"EMSRC-3\", \"/SDA_J\"]": "pass",
+      "[\"EMSRC-3\", \"/SCL_J\"]": "pass",
+      "[\"EMSRC-3\", \"/SWDIO\"]": "pass",
+      "[\"EMSRC-3\", \"/SWCLK\"]": "pass",
+      "[\"DERATE-1\", \"circuit-review-proof\"]": "pass",
+      "[\"DERATE-2\", \"C1\"]": "pass",
+      "[\"DERATE-2\", \"C2\"]": "pass",
+      "[\"DERATE-2\", \"C3\"]": "pass",
+      "[\"DERATE-2\", \"C4\"]": "pass",
+      "[\"DERATE-2\", \"C5\"]": "pass",
+      "[\"DERATE-2\", \"C6\"]": "pass",
+      "[\"DERATE-2\", \"C7\"]": "fail",
+      "[\"DERATE-2\", \"C8\"]": "pass",
+      "[\"DERATE-2\", \"C9\"]": "fail",
+      "[\"DERATE-2\", \"C10\"]": "pass",
+      "[\"DERATE-2\", \"C12\"]": "pass",
+      "[\"DERATE-2\", \"C13\"]": "pass",
+      "[\"DERATE-2\", \"D1\"]": "fail",
+      "[\"DERATE-2\", \"D2\"]": "pass",
+      "[\"DERATE-2\", \"F1\"]": "pass",
+      "[\"DERATE-2\", \"FID1\"]": "pass",
+      "[\"DERATE-2\", \"FID2\"]": "pass",
+      "[\"DERATE-2\", \"FID3\"]": "pass",
+      "[\"DERATE-2\", \"FID4\"]": "pass",
+      "[\"DERATE-2\", \"FID5\"]": "pass",
+      "[\"DERATE-2\", \"FID6\"]": "pass",
+      "[\"DERATE-2\", \"J1\"]": "pass",
+      "[\"DERATE-2\", \"J2\"]": "pass",
+      "[\"DERATE-2\", \"J3\"]": "pass",
+      "[\"DERATE-2\", \"J4\"]": "pass",
+      "[\"DERATE-2\", \"J5\"]": "pass",
+      "[\"DERATE-2\", \"J6\"]": "pass",
+      "[\"DERATE-2\", \"JP1\"]": "pass",
+      "[\"DERATE-2\", \"JP2\"]": "pass",
+      "[\"DERATE-2\", \"JP3\"]": "pass",
+      "[\"DERATE-2\", \"Q1\"]": "pass",
+      "[\"DERATE-2\", \"Q2\"]": "pass",
+      "[\"DERATE-2\", \"Q3\"]": "pass",
+      "[\"DERATE-2\", \"R1\"]": "pass",
+      "[\"DERATE-2\", \"R2\"]": "fail",
+      "[\"DERATE-2\", \"R3\"]": "pass",
+      "[\"DERATE-2\", \"R5\"]": "fail",
+      "[\"DERATE-2\", \"R6\"]": "pass",
+      "[\"DERATE-2\", \"R7\"]": "fail",
+      "[\"DERATE-2\", \"R8\"]": "pass",
+      "[\"DERATE-2\", \"R9\"]": "pass",
+      "[\"DERATE-2\", \"R10\"]": "pass",
+      "[\"DERATE-2\", \"R11\"]": "pass",
+      "[\"DERATE-2\", \"R12\"]": "pass",
+      "[\"DERATE-2\", \"R13\"]": "pass",
+      "[\"DERATE-2\", \"R14\"]": "fail",
+      "[\"DERATE-2\", \"RV1\"]": "fail",
+      "[\"DERATE-2\", \"TP1\"]": "pass",
+      "[\"DERATE-2\", \"TP2\"]": "pass",
+      "[\"DERATE-2\", \"TP3\"]": "pass",
+      "[\"DERATE-2\", \"TP4\"]": "pass",
+      "[\"DERATE-2\", \"TP5\"]": "pass",
+      "[\"DERATE-2\", \"TP6\"]": "pass",
+      "[\"DERATE-2\", \"TP7\"]": "pass",
+      "[\"DERATE-2\", \"TP8\"]": "pass",
+      "[\"DERATE-2\", \"TP9\"]": "pass",
+      "[\"DERATE-2\", \"U2\"]": "fail",
+      "[\"DERATE-2\", \"U3\"]": "pass",
+      "[\"DERATE-2\", \"U4\"]": "fail",
+      "[\"DERATE-2\", \"U5\"]": "pass",
+      "[\"DRAW-1\", \"circuit-review-proof\"]": "fail",
+      "[\"FREE-PASS\", \"none\"]": "fail"
+     },
+     "raised_by": {
+      "S01": [
+       "G1.r1"
+      ],
+      "S02": [
+       "G1.r1"
+      ],
+      "S03": [
+       "G1.r1"
+      ],
+      "S04": [
+       "G1.r1"
+      ],
+      "S05": [
+       "G1.r1"
+      ],
+      "S06": [
+       "G1.r1"
+      ],
+      "S07": [
+       "G1.r1"
+      ],
+      "S08": [
+       "G1.r1"
+      ],
+      "S09": [
+       "G1.r1"
+      ],
+      "S10": [
+       "G1.r1"
+      ],
+      "S11": [
+       "G1.r1"
+      ],
+      "S12": [
+       "G1.r1"
+      ],
+      "S13": [
+       "G1.r1"
+      ],
+      "S14": [
+       "G1.r1"
+      ]
+     },
+     "judged_by": {
+      "S01": [
+       "G1.r1"
+      ],
+      "S02": [
+       "G1.r1"
+      ],
+      "S03": [
+       "G1.r1"
+      ],
+      "S04": [
+       "G1.r1"
+      ],
+      "S05": [
+       "G1.r1"
+      ],
+      "S06": [
+       "G1.r1"
+      ],
+      "S07": [
+       "G1.r1"
+      ],
+      "S08": [
+       "G1.r1"
+      ],
+      "S09": [
+       "G1.r1"
+      ],
+      "S10": [
+       "G1.r1"
+      ],
+      "S11": [
+       "G1.r1"
+      ],
+      "S12": [
+       "G1.r1"
+      ],
+      "S13": [
+       "G1.r1"
+      ],
+      "S14": [
+       "G1.r1"
+      ]
+     },
+     "sessions": [
+      {
+       "session": "root",
+       "wall_s": 3.164,
+       "cost_usd": 0.026963,
+       "tokens_read": 5126,
+       "tokens_written": 6392,
+       "tokens_generated": 74,
+       "first_call_read": 0
+      },
+      {
+       "session": "G1.r1.a1",
+       "wall_s": 963.874,
+       "cost_usd": 3.343103,
+       "tokens_read": 4609339,
+       "tokens_written": 351212,
+       "tokens_generated": 139770,
+       "first_call_read": 5781
+      },
+      {
+       "session": "G1.r1.a2",
+       "wall_s": 154.936,
+       "cost_usd": 0.487937,
+       "tokens_read": 356993,
+       "tokens_written": 32316,
+       "tokens_generated": 32297,
+       "first_call_read": 356993
+      }
+     ],
+     "wall_s": 1121.974,
+     "cost_usd": 3.858003,
+     "not_recorded": []
+    }
+   ]
+  }
+ ]
+}
