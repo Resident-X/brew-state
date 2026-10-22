@@ -1,7 +1,7 @@
 id: SOL-HW-ENCLOSURE-AMBIENT-MEASURED.C1
 type: criterion
 title: The enclosure's air temperature at sustained full heat is measured with the enclosure closed and recorded with how it was established
-status: active
+status: deprecated
 version: 2
 measurement_type: binary
 verification: test

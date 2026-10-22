@@ -1,7 +1,7 @@
 id: SOL-HW-ENCLOSURE-AMBIENT-MEASURED.C2
 type: criterion
 title: The figure the parts are graded to is the measured rise above the room added to the top of the declared ambient span
-status: active
+status: deprecated
 version: 3
 measurement_type: binary
 verification: analysis

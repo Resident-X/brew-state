@@ -2,7 +2,7 @@ id: SOL-HW-ENCLOSURE-AMBIENT-MEASURED
 type: deliverable
 category: solution
 title: The air temperature inside the controller's enclosure is measured on the running machine and recorded as the figure parts are graded to
-status: active
+status: deprecated
 version: 5
 text: |
   Measures the air temperature inside the controller's enclosure on this machine and records it in the machine's design-constraints record as an input to the partition, so the grade of every part on the boards is chosen against the enclosure the boards sit in rather than against the room or an estimate. The enclosure's surroundings are at present an estimate, unmeasured, and a part graded for that estimate is graded for a guess.

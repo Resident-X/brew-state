@@ -1,0 +1,12 @@
+id: SOL-HW-ENCLOSURE-AIR-ASSUMED-RECORDED.C1
+type: criterion
+title: The air temperature the parts are graded to is recorded as a project assumption with its derivation
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  State in controller-board-design-constraints.md the enclosure air temperature the parts are graded to, 70 degC, as the top of the declared room-temperature span plus an assumed rise of 35 K, graded project assumption, with its derivation as a design target that no selected part fixes, the earlier design's logic supply named only as a stocked candidate that holds at it, and the statements that the derating analysis grades every part chosen against it, that it is revisited if no catalogue part holds at it, and that an adopter replaces both figures. Out of scope: measuring the air temperature, which bring-up does.
+links:
+  - target: SOL-HW-ENCLOSURE-AIR-ASSUMED-RECORDED
+    type: criterion-of

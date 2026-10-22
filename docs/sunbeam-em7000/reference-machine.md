@@ -37,7 +37,7 @@ In this folder "the declared span", unqualified, is this supply span, the one th
 | Room temperature, highest | 35 °C | **Owner statement, 2026-10-22**, a design figure, not a measurement: set above the owner's own warmest room, about 28 °C on a summer day without air conditioning, so that the record also serves a machine standing in a warmer kitchen than this one |
 | Humidity inside the controller's enclosure | Condensing | **Declared as the worst case, until it is measured.** It has not been measured, and the worst case stands in for the reading until it is. The facts below are the owner's account, not measurements |
 
-The span is the temperature of the room, not of the air inside the controller's enclosure. The enclosure's rise above the room is a separate figure, to be measured on the running machine and added to the top of this span, 35 °C. Someone standing in a different room replaces the two temperatures and recomputes whatever was drawn from them.
+The span is the temperature of the room, not of the air inside the controller's enclosure. The enclosure's rise above the room is a separate figure, taken for the design as an assumed rise (`controller-board-design-constraints.md` § Enclosure air temperature), checked by the bring-up measurement on the running machine and added to the top of this span, 35 °C. Someone standing in a different room replaces the two temperatures and recomputes whatever was drawn from them.
 
 What the owner reports of the enclosure's moisture exposure (owner statement, 2026-10-22; none of it measured):
 

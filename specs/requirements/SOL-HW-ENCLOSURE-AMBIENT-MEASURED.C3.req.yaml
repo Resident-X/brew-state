@@ -1,7 +1,7 @@
 id: SOL-HW-ENCLOSURE-AMBIENT-MEASURED.C3
 type: criterion
 title: Humidity inside the enclosure is recorded as taken at its worst, condensing
-status: active
+status: deprecated
 version: 2
 measurement_type: binary
 verification: inspection

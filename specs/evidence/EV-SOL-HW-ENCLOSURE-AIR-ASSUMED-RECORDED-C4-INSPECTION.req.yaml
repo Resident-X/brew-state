@@ -1,0 +1,16 @@
+id: EV-SOL-HW-ENCLOSURE-AIR-ASSUMED-RECORDED-C4-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-ENCLOSURE-AIR-ASSUMED-RECORDED.C4
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-22T20:49:16.035639Z"
+artifact:
+  kind: external
+  reference: 'inspection: docs/sunbeam-em7000/controller-board-design-constraints.md § Enclosure air temperature and § Pending marks carry the check-on-the-running-machine mark against DEL-HW-BRING-UP.C13 and the cut-wall REQ-RETROFIT-FIT-001 / rated-temperature mark against DEL-HW-PARTITION-AND-FEASIBILITY, neither settled'
+  artifact_version: 7bacad7de18377dbe98484f4b98cca57e558f178
+attested_by: crun-0675a56556508887
+links:
+  - target: SOL-HW-ENCLOSURE-AIR-ASSUMED-RECORDED.C4
+    type: satisfies
