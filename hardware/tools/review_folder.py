@@ -134,6 +134,12 @@ def is_critical_routing_fields(fields: Sequence[str]) -> bool:
     return list(fields) == list(CRITICAL_FIELDS)
 
 
+def critical_round_extra_keys(content: Dict[str, Any]) -> List[str]:
+    """The keys of a critical-routing pass's round file that the pass does not own: any key outside the tool, the fields and
+    the fields' own values, such as a kind, check lines or listed items, which only a layout round has."""
+    return sorted(key for key in content if key not in ("tool", "fields") + CRITICAL_FIELDS)
+
+
 #: The round fields each review's folder has.
 REVIEW_FIELDS = {LAYOUT: LAYOUT_FIELDS, CRITICAL_ROUTING: CRITICAL_FIELDS}
 #: Every field a set may name.
@@ -233,6 +239,10 @@ def read_round(folder: str) -> Dict[str, Any]:
     problems = round_problems(content, fields)
     if problems:
         raise ReviewFolderProblem(f"the round file {path} holds fields that are missing or malformed: " + "; ".join(problems))
+    extra = critical_round_extra_keys(content) if is_critical_routing_fields(fields) else []
+    if extra:
+        raise ReviewFolderProblem(f"the round file {path} is a critical-routing pass's but holds {', '.join(extra)}, which a pass "
+                                  "does not have; write the folder with the folder command's --review critical-routing")
     return content
 
 
