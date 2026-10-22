@@ -22,6 +22,8 @@ import time
 import unittest
 from unittest import mock
 
+COST_MULTIPLE_OF_TWO = re.compile(r"cost multiple of 2(?!\.?\d)")
+
 TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, TOOLS)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -1436,9 +1438,19 @@ class Documentation(unittest.TestCase):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: the criterion holds when the cost is at most 1.25 times the single mean; no place restates it as twice
         for path in (("Taskfile.yml",), ("hardware", "README.md"), ("docs", "board-design-method.md")):
             text = self.flat(self.read(*path)).lower()
-            for words in ("twice its mean", "cost multiple of 2"):
-                self.assertNotIn(words, text, f"{'/'.join(path)} says {words!r}")
+            self.assertNotIn("twice its mean", text, f"{'/'.join(path)} says 'twice its mean'")
+            self.assertIsNone(COST_MULTIPLE_OF_TWO.search(text),
+                              f"{'/'.join(path)} says 'cost multiple of 2'; a multiple that only starts with 2, such as 2.25, is another figure")
         self.assertIn("cost at most 1.25 times its mean", self.flat(self.read("Taskfile.yml")))
+
+    def test_the_cost_multiple_check_refuses_a_multiple_of_2_and_not_one_that_only_begins_with_2(self):
+        # SOL-HW-REVIEW-LAYOUT-COST-MULTIPLE-CHECK-TELLS-TWO-FROM-2-25.C1: Change the test so it refuses a document that states the layout review's cost multiple as 2 and does not refuse one that states another multiple beginning with 2, such as 2.25 or 20
+        for stated in ("a cost multiple of 2", "judged with a cost multiple of 2 (seeds", "cost multiple of 2."):
+            with self.subTest(stated=stated):
+                self.assertIsNotNone(COST_MULTIPLE_OF_TWO.search(stated))
+        for stated in ("a cost multiple of 2.25", "a cost multiple of 20", "a cost multiple of 2.1", "a cost multiple of 1.25", ""):
+            with self.subTest(stated=stated):
+                self.assertIsNone(COST_MULTIPLE_OF_TWO.search(stated))
 
     def test_the_task_runner_names_the_new_commands_and_their_tests(self):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C7: The method's layout review section says that a round may be judged by unit and what the merge checks, that the round's fields come from whoever starts it, that the unit which raised a finding writes its Planning shortfall entry from the plan row, that a cannot judge is resolved by adding the view and re-running the unit with the row recording the cannot judge, the view and the verdict, that the merged round is appended below the earlier rounds and committed by whoever started the round at the end of the round, and that judging it with one reviewer stays valid; the sentence that a proof is repeated after the step changes names the form that changed; the hardware notes describe the layout caller and the folder command and what each needs. Checked by reading each place against these clauses. Out of scope: the routing section's critical-routing check.
