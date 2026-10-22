@@ -44,7 +44,7 @@ The agent command line is the program named by REVIEW_KIT_AGENT (claude when it 
 single form, and the shared context and a fork for each group and replica of the fanned-out form, twice over when a second run follows.
 
 Each cause is reported on one line beginning REFUSED, a RESULT line comes last, and the exit status is 0 when the criterion holds,
-1 when the command refuses, a run fails or the criterion does not hold or asks for a second run, and 2 when a tool or the agent
+1 when the command refuses, a run fails or the criterion does not hold, and 2 when a tool or the agent
 command line is missing. --json prints the same facts as one JSON document.
 """
 

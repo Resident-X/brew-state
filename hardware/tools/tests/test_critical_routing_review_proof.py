@@ -441,6 +441,50 @@ class TheRefusals(Proofed):
         self.refused("--design-model is empty", args=("--design-model", " "))
         self.refused("--baseline-model is empty", args=("--baseline-model", ""))
 
+    def near_bound_singles(self):
+        """Single runs whose cost bound the stub's first fanned-out run sits at ninety-five per cent of, so no other clause is near."""
+        self.recorded(dear("S1", "S2", "S3"))
+        self.assertEqual(self.go()[0], 0)
+        cost = self.record()["fanned_runs"][0]["cost_usd"]
+        shutil.rmtree(self.work)
+        each = cost / 0.95 / 1.25
+        return [single("one", ["S1", "S2", "S3"], wall=1e6, cost=each), single("two", ["S1", "S2"], wall=1e6, cost=each)], each
+
+    def test_a_first_fanned_run_within_a_tenth_of_a_bound_is_followed_by_a_second_and_both_are_judged_together_one_inside_every_bound_runs_once(self):
+        # SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING-PROOF.C1: Run the single-reviewer form and the fanned-out form on a copy of the method proof design, whose layout plan holds a critical routing section, seeded by a session that has not read the catalogue with defects on critical nets, among them a ground drawn as thin traces, a decoupling capacitor routed the long way round and a sense connection tapped off a load track, the seed list written apart, in sessions with no record of the seeds. No single-reviewer run of this check is recorded, so the proof runs the single form once through the kit on the mid-tier on the same seeded copy and records it as this review's baseline file before running the fanned-out form. The fanned-out form reports every seed the single-reviewer form reports, as a failing verdict against the item that covers it; the verdicts item by item are compared and a difference explained. Record for the shared context and each session and for each run the wall time, the tokens read, written and generated, the cost, the document retrievals and any call refused for a rate limit. The kit's pooled criterion judges the fanned-out run against the recorded single-reviewer run of this review's seeded proof: the seeds found are no fewer than the fewest any single run found, the wall time is at most half the single mean and the cost is at most 1.25 times the single mean, the multiple the layout proof uses for the design loop's replicas, unless the review's first measured run shows its replicas need more, in which case the proof states the new multiple and the evidence says why. A seed not reported is closed where the gap lies and the run repeated in a new session. The evidence names the exact model and the commit. Out of scope: the layout review round's proof.
+        singles, each = self.near_bound_singles()
+        self.recorded(singles)
+        status, text, err = self.go()
+        self.assertEqual(status, 0, text + err)
+        record = self.record()
+        self.assertEqual([run["id"] for run in record["fanned_runs"]], ["critical-routing-fanned-2", "critical-routing-fanned-2-run-2"])
+        self.assertEqual(len(record["critical_routing"]["fanned_runs"]), 2)
+        self.assertTrue(os.path.isdir(os.path.join(self.work, crp.FANNED_OUT)))
+        self.assertTrue(os.path.isdir(os.path.join(self.work, crp.FANNED_OUT + "-2")))
+        self.assertEqual(record["cost_multiple"], 1.25)
+        self.assertAlmostEqual(record["verdict"]["bounds"]["cost_usd"], 1.25 * each, places=6)
+        self.assertEqual(record["verdict"]["status"], "pass")
+        self.assertFalse(record["verdict"]["second_run_required"])
+        shutil.rmtree(self.work)
+        self.recorded(dear("S1", "S2", "S3"))
+        status, text, err = self.go()
+        self.assertEqual(status, 0, text + err)
+        record = self.record()
+        self.assertEqual([run["id"] for run in record["fanned_runs"]], ["critical-routing-fanned-2"])
+        self.assertEqual(len(record["critical_routing"]["fanned_runs"]), 1)
+        self.assertFalse(os.path.exists(os.path.join(self.work, crp.FANNED_OUT + "-2")))
+        self.assertAlmostEqual(record["verdict"]["bounds"]["cost_usd"], 1.25 * 1e3, places=6)
+
+    def test_a_single_session_that_fails_writes_no_baseline_and_the_command_starts_no_fanned_run(self):
+        # SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING-PROOF.C2: Over the kit's stub, the proof command for the critical-routing check runs the single form once through the kit and writes it as a baseline file the kit's proof loads, keyed by the hash of the seed list, the design commit, the model, the form and the prompt hash; run again for a key whose baseline is recorded it refuses to run the single form and names the key, and for a key that differs it runs it; a seed list or review folder that lies inside the repository is refused naming it. The command's record is written in text and JSON with the same content. Out of scope: any live run and the pooled criterion's arithmetic, which the kit's own tests hold.
+        self.scenario(verdicts=ALL_FAIL if "critical_routing" == "critical_routing" else ALL_DIFFER, fork_tools=["Read", "Bash", "StructuredOutput"])
+        status, text, err = self.go()
+        self.assertEqual(status, 1, text + err)
+        self.assertIn("the single form's session failed", text + err)
+        self.assertFalse(os.path.exists(self.baselines))
+        self.assertEqual([call for call in self.calls() if MID not in call["args"]], [], "no session of the fanned-out form was started")
+        self.assertFalse(os.path.exists(os.path.join(self.work, crp.RECORD)))
+
     def test_a_missing_agent_command_line_stops_the_run_with_a_cannot_run_and_writes_no_baseline(self):
         # SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING-PROOF.C2: Over the kit's stub, the proof command for the critical-routing check runs the single form once through the kit and writes it as a baseline file the kit's proof loads, keyed by the hash of the seed list, the design commit, the model, the form and the prompt hash; run again for a key whose baseline is recorded it refuses to run the single form and names the key, and for a key that differs it runs it; a seed list or review folder that lies inside the repository is refused naming it. The command's record is written in text and JSON with the same content. Out of scope: any live run and the pooled criterion's arithmetic, which the kit's own tests hold.
         with mock.patch.dict(os.environ, {ex.AGENT_ENV: os.path.join(self.root, "no-such-agent")}):

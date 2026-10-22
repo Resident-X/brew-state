@@ -1,0 +1,13 @@
+id: SOL-HW-REVIEW-PROOFS-RUN-A-SECOND-FANNED-OUT-RUN.C1
+type: criterion
+title: A proof command runs the fanned-out form a second time, in its own folder, when the first run is within ten per cent of a bound, and judges both runs together
+status: active
+version: 1
+measurement_type: binary
+verification: test
+scope: solution
+text: |-
+  When the first fanned-out run of a proof command is within ten per cent of a bound of the kit's pooled criterion, the command runs the fanned-out form a second time in its own output folder and judges both runs together, and never runs a third.
+links:
+  - target: SOL-HW-REVIEW-PROOFS-RUN-A-SECOND-FANNED-OUT-RUN
+    type: criterion-of

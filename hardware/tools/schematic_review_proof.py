@@ -30,6 +30,11 @@ with the differences from the single run, each session's time, tokens read, writ
 and the document retrievals with any that failed, per unit, and the calls refused for a rate limit. A seed not reported is closed
 where the gap lies and the proof repeated in a new session.
 
+The single run is recorded under a key of the seed list, the design, the model and the prompt. A baselines file that holds the key is
+loaded and the single form is not run again; one that holds the key with no runs, or that cannot be read, is refused before any
+session starts; another key runs the single form and is added beside the others. An exclusive lock on a file beside the baselines
+file is held from the re-read of the key through the single run to writing it, and a lock already held is refused, not waited for.
+
 The work folder keeps the review folder alone in <work>/review-tree/review, since a session starts there and can read the folders
 above it; the seed list, the check's report, the netlist export and the sheets are under <work>/seed/, each run's output under
 <work>/out/, and the record in <work>.
@@ -42,7 +47,7 @@ The agent command line is the program named by REVIEW_KIT_AGENT (claude when it 
 single form, and the shared context and a fork for each group and replica of the fanned-out form, twice over when a second run follows.
 
 Each cause is reported on one line beginning REFUSED, a RESULT line comes last, and the exit status is 0 when the criterion holds,
-1 when the command refuses, a run fails or the criterion does not hold or asks for a second run, and 2 when a tool or the agent
+1 when the command refuses, a run fails or the criterion does not hold, and 2 when a tool or the agent
 command line is missing. --json prints the same facts as one JSON document.
 """
 
@@ -257,23 +262,6 @@ def design_tree(repo: str, ref: str = "HEAD", design: Optional[str] = None) -> s
     return done.stdout.strip()
 
 
-def recorded_baseline(path: str, seeds: Sequence[Mapping[str, Any]], design: str, model: str
-                      ) -> Optional[Tuple[proof.BaselineKey, List[proof.RunOutcome]]]:
-    """The recorded single runs whose key holds this seed list, design and model, with the key; None when the file is absent or
-    holds none for them, so the single form is run. A file that cannot be read is refused."""
-    if not os.path.exists(path):
-        return None
-    try:
-        loaded = proof.load_baselines(path)
-    except proof.BaselineFileError as error:
-        raise Refused([str(error)])
-    wanted = {"seeds": proof.seed_list_hash(seeds), "design": design, "model": model}
-    for key in loaded.keys.values():
-        if key.form == proof.SINGLE and all(getattr(key, name) == value for name, value in wanted.items()):
-            return key, loaded.recorded(key)
-    return None
-
-
 # --- Matching seeds to findings -----------------------------------------------------------------
 
 
@@ -435,22 +423,24 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout, err=sys.stderr, prepa
         shutil.copyfile(seeds_path, os.path.join(work, SEEDS))
         sha = git(seeded, "rev-parse", "HEAD").stdout.strip()
         tree = design_tree(seeded)
-        recorded = recorded_baseline(baselines, seeds, tree, args.baseline_model)
+        key = harness.single_key(CALLER, TOOLS_DIR, folder, os.path.join(work, SINGLE_OUT), args.baseline_model, seeds, tree, environ)
+        recorded = harness.recorded_under(baselines, key)
         if args.dry:
             plan = harness.plan_of(CALLER, TOOLS_DIR, folder, os.path.join(work, FANNED_OUT), args.design_model, REPLICAS, args.bound, environ)
             single_plan = None if recorded else harness.single_plan_of(CALLER, TOOLS_DIR, folder, os.path.join(work, SINGLE_OUT),
                                                                         args.baseline_model, environ)
-            result.update(result="PLANNED", refusals=[], lines=dry_lines(plan, args.design_model, recorded[1] if recorded else None, single_plan),
+            result.update(result="PLANNED", refusals=[], lines=dry_lines(plan, args.design_model, recorded, single_plan),
                           plan=plan, detail="no session was started and no model was called")
             return finish(0)
         os.makedirs(os.path.join(work, OUT_DIR), exist_ok=True)
-        if recorded:
-            key, singles = recorded
-            single_form = "recorded"
-        else:
-            key, outcome = harness.run_single(CALLER, TOOLS_DIR, folder, os.path.join(work, SINGLE_OUT), args.baseline_model,
-                                              environ, seeds, sha, tree, matches, baselines, BASELINE_SOURCE)
-            singles, single_form = [outcome], "run now, recorded in " + baselines
+        with harness.baseline_lock(baselines):
+            singles = harness.recorded_under(baselines, key)
+            if singles:
+                single_form = "recorded"
+            else:
+                key, outcome = harness.run_single(CALLER, TOOLS_DIR, folder, os.path.join(work, SINGLE_OUT), args.baseline_model,
+                                                  environ, seeds, sha, tree, matches, baselines, BASELINE_SOURCE)
+                singles, single_form = [outcome], "run now, recorded in " + baselines
 
         def fan_out(index: int) -> Tuple[proof.RunOutcome, Dict[str, Any]]:
             run_id, output = harness.numbered("schematic-fanned-2", os.path.join(work, FANNED_OUT), index)
