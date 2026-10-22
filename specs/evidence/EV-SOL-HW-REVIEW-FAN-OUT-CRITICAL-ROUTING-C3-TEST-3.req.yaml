@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING-C3-TEST-3
+type: evidence
+title: test evidence for SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-22T04:35:27.221031Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_caller_critical_routing.py::test_the_sentence_that_a_proof_is_repeated_names_the_form_that_changed
+  artifact_version: d28799d5712207eff308745e82f90d67f9395f15
+attested_by: crun-cef8fb5be71a9348
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING.C3
+    type: satisfies

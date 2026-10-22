@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING-C3-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING.C3
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-22T04:35:28.088087Z"
+artifact:
+  kind: external
+  reference: 'docs/board-design-method.md (routing section, step 4, paragraph ''This check may be judged by unit instead of by one reviewer''); hardware/README.md (section ''The critical-routing check by unit''); Taskfile.yml (hw:review-folder, hw:test, hw:test:round descriptions): each read against the clauses - judged by unit; what the merge checks; number, commit judged and views supplied by whoever runs the check; one reviewer stays valid; the proof-repeat sentence names the form that changed; fanned-out form relied on only once its proof is recorded; notes describe the caller and what it needs. The Documentation tests in test_review_caller_critical_routing.py pin the wording.'
+  artifact_version: d28799d5712207eff308745e82f90d67f9395f15
+attested_by: crun-cef8fb5be71a9348
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING.C3
+    type: satisfies

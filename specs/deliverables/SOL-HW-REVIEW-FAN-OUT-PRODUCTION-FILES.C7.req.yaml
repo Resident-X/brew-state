@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES.C7
+type: criterion
+title: The production-files check names differs as its fail verdict, and a differs from any replica stands in the check record
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Over synthetic placement files and a stub executor, the production-files declaration names differs as the check's fail verdict and lists the verdicts differs, matches, cannot judge; a differs from one replica stands in the merged check record over a matches or a cannot judge from another, and no repair turn, cannot-judge turn or rerun turns a first-answer differs into matches; a cannot judge stands over a matches; and any row that is not matches blocks the order. Out of scope: a live session.
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES
+    type: criterion-of

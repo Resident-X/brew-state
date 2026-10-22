@@ -262,7 +262,7 @@ def merge_replicas(shape: results.AnswerShape, rules: Rules, unit: str, replicas
         if table.verdict_column and table.key:
             by_item: Dict[Any, List[Tuple[str, Dict[str, Any]]]] = {}
             for rid, row in rows[table.name]:
-                by_item.setdefault(row[table.key], []).append((rid, row))
+                by_item.setdefault(table.combination(row), []).append((rid, row))
             for item, given in by_item.items():
                 verdict = merged_verdict(table, rules, [row[table.verdict_column] for _, row in given])
                 chosen = next(row for _, row in given if row[table.verdict_column] == verdict)
@@ -400,13 +400,13 @@ def table_markdown(table: Mapping[str, Any], raised_by: bool = True, column: str
 
 
 def failing_items(shape: results.AnswerShape, rules: Rules, record: Mapping[str, Any]) -> List[Tuple[str, Any]]:
-    """The (table, item) pairs a merged record fails, in the order the record holds them."""
+    """The (table, item or key-cell tuple) pairs a merged record fails, in the order the record holds them."""
     found = []
     for table in shape.tables:
         if table.verdict_column and table.key:
             for row in record["tables"][table.name]["rows"]:
                 if row[table.verdict_column] == rules.fail:
-                    found.append((table.name, row[table.key]))
+                    found.append((table.name, table.combination(row)))
     return found
 
 

@@ -1,7 +1,7 @@
 id: SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES.C5
 type: criterion
 title: A fanned-out blind check of seeded production files meets the kit's pooled criterion against the recorded single-reviewer runs
-status: active
+status: deprecated
 version: 2
 measurement_type: binary
 verification: demonstration

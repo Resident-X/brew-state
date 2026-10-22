@@ -1,0 +1,33 @@
+id: SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING-PROOF
+type: deliverable
+category: solution
+title: The fanned-out critical-routing check is proven blind on a seeded copy of the method proof design
+status: active
+version: 1
+text: |
+  Why this exists. The critical-routing check of step 4 of the method's routing section is repeated on every board and after every re-route, and SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING builds its fanned-out form with tests over the kit's stub. Those tests show the mechanics, not that the fanned-out form finds the defects the single reviewer finds; DEL-HW-REVIEW-FAN-OUT.C5 requires a blind run on a seeded copy for each fanned-out review, and a run of the fanned-out form is a paid live run of its own. This solution holds that run, apart from the caller, so the caller ships with its tests and the method relies on the single-reviewer form of the check until this proof is recorded. The reasoning and the options rejected are in DEC-REVIEW-FAN-OUT-FROM-SHARED-CONTEXT-WITH-REPLICAS, and DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND settles that a pass judged by unit is the same pass; a session building this does not reopen either.
+
+  What it does. It seeds a copy of the method proof design, which is the only committed design whose layout plan holds a critical routing section, with defects on the critical nets; runs the single form once through the kit and records it as this review's baseline file, since no single-reviewer run of this check is recorded in a form the kit loads; runs the fanned-out form; and records both in the kit's proof record with the pooled criterion's verdict.
+
+  Settled before the build.
+
+  - The seeding is done by a session that has not read the catalogue, in a copy in a temporary work tree outside the repository, with the copy's records kept consistent and the critical items locked, and the seed list is written apart from both the copy and the review folder.
+  - The review folder is assembled by the layout folder command with `--review critical-routing`, and the checks run in sessions with no record of the seeds.
+  - The single form is one unit holding every item with no shared context, on the mid-tier, run through the kit's single form on the same seeded copy; the proof refuses to run it again once its baseline is recorded for the key.
+  - The proof command is thin over the shared proof harness the callers use, and is a task of its own.
+  - The proof is a live run, on demand and in neither gate; the tests of the command need no model and no KiCad.
+
+  Out of scope: the critical-routing caller, its folder mode and its tests; the layout review round's proof.
+links:
+  - target: DEL-HW-REVIEW-FAN-OUT.C5
+    type: derives-from
+  - target: SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING
+    type: depends-on
+  - target: SOL-HW-REVIEW-KIT
+    type: depends-on
+  - target: DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND
+    type: justified-by
+  - target: DEC-REVIEW-FAN-OUT-FROM-SHARED-CONTEXT-WITH-REPLICAS
+    type: justified-by
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: targets

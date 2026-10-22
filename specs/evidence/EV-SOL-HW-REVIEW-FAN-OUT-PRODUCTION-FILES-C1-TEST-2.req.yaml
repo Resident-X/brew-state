@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES-C1-TEST-2
+type: evidence
+title: test evidence for SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-22T04:38:12.222941Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_caller_production_files.py::test_no_unit_holds_more_than_ten_rows_and_every_row_is_in_exactly_one_group_in_placement_file_order
+  artifact_version: d28799d5712207eff308745e82f90d67f9395f15
+attested_by: crun-d1216986c7302509
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES.C1
+    type: satisfies

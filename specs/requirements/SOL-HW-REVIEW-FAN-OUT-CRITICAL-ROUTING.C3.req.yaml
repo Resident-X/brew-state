@@ -2,11 +2,11 @@ id: SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING.C3
 type: criterion
 title: The routing section's critical-routing step and the hardware notes say that the check may be judged by unit
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
-text: |
-  The method's routing section, in its step that checks the critical routing against the catalogue, says that the check may be judged by unit, what the merge checks, that its pass numbers and views are supplied by whoever runs it, and that judging it with one reviewer stays valid; the hardware notes describe the caller and what it needs. The sentence that a proof is repeated after the step changes names the form that changed. Checked by reading each place against these clauses. Out of scope: the layout review section.
+text: |-
+  The method's routing section, in its step that checks the critical routing against the catalogue, says that the check may be judged by unit, what the merge checks, that its pass numbers and views are supplied by whoever runs it, and that judging it with one reviewer stays valid; the hardware notes describe the caller and what it needs. The sentence that a proof is repeated after the step changes names the form that changed. Checked by reading each place against these clauses. The method also states that the fanned-out form is relied on only once its proof is recorded. Out of scope: the layout review section.
 links:
   - target: SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING
     type: criterion-of

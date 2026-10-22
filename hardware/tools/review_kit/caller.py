@@ -15,6 +15,10 @@ supplies, as module attributes:
 - `prompt(unit, review_folder)` or `prompt(unit)` (optional): a unit's prompt as text; the declared template's when absent.
 - `bound` (optional): the most sessions at once, a whole number of 1 or more; the number of forks the plan has when it is
   absent, and never more than that. The command's `--bound` overrides it.
+- `fail_verdict` (optional): which verdict of the declaration's verdict tables is the caller's fail verdict, as the verdict's text;
+  `fail` when it is absent. The kit holds that verdict as it holds `fail`: replicas merge any-fail with it standing over a
+  passing verdict and no repair, cannot-judge turn or rerun clears it. A name that no verdict table carries, or that is the
+  `cannot judge` verdict, is refused before any session starts.
 - `place(row)`, `round_label(review_folder)`, `earlier_findings(review_folder)` and `first_finding(review_folder)`
   (optional): the place of a finding row, this round's label, the (round, number) pairs of findings the review folder's
   earlier rounds hold, and the number this round's first finding takes. A citation pattern with a round group needs
@@ -41,7 +45,7 @@ from .merge import Refused
 READ_TOOLS = ("Read", "Glob", "Grep")
 RETRIEVAL_TOOL = "WebFetch"
 REQUIRED = ("declaration", "checks", "render")
-OPTIONAL = ("retrieval", "checklist", "prompt", "place", "round_label", "earlier_findings", "first_finding", "bound")
+OPTIONAL = ("retrieval", "checklist", "prompt", "place", "round_label", "earlier_findings", "first_finding", "bound", "fail_verdict")
 CALLER_NAME = re.compile(r"[a-z][a-z0-9_]*")
 #: The names the kit uses in an output folder, which a rendered file may not take.
 KIT_NAMES = ("plan.json", "record.json", "run.lock", "streams")
@@ -144,6 +148,11 @@ def attribute_problems(caller: Caller) -> List[str]:
     if caller.defined("bound") and module.bound is not None:
         if isinstance(module.bound, bool) or not isinstance(module.bound, int) or module.bound < 1:
             bad("bound", f"is {module.bound!r:.100}, not a whole number of 1 or more; give the most sessions at once as a whole number")
+    if caller.defined("fail_verdict") and module.fail_verdict is not None:
+        if not isinstance(module.fail_verdict, str) or not module.fail_verdict.strip():
+            bad("fail_verdict", f"is {module.fail_verdict!r:.100}, not the text of one of the declaration's verdicts")
+        elif module.fail_verdict == merge.CANNOT_JUDGE:
+            bad("fail_verdict", f"names {module.fail_verdict!r}, the verdict a session gives when it cannot judge; name another verdict")
     for attribute, count in (("place", 1), ("round_label", 1), ("earlier_findings", 1), ("first_finding", 1)):
         if caller.defined(attribute) and getattr(module, attribute) is not None:
             if not callable(getattr(module, attribute)) or not accepts(getattr(module, attribute), count):
@@ -208,6 +217,22 @@ def resolved_checklist(caller: Caller, review: str, declaration: decl.Declaratio
     return list(given)
 
 
+def resolved_fail_verdict(caller: Caller, shape: Any) -> str:
+    """The verdict the kit holds as the caller's fail: the one it names, else `fail`. A name is refused unless some verdict table
+    the declaration holds carries it; a table whose verdict set lacks it simply has no fail to hold, as a table lacking `fail`
+    has none today. Naming `fail`, the kit's own default, is the same as naming none and is always accepted. The `cannot judge`
+    verdict cannot be the fail verdict, since the two are handled apart; loading the caller refuses it."""
+    named = getattr(caller.module, "fail_verdict", None)
+    if named is None or named == merge.FAIL:
+        return merge.FAIL
+    tables = [table for table in shape.tables if table.verdict_column and table.key]
+    if not any(named in table.verdicts for table in tables):
+        held = "; ".join(f"table {table.name!r} has {list(table.verdicts)}" for table in tables) or "the declaration has no verdict table"
+        raise caller.refuse("fail_verdict", f"names {named!r}, which is a verdict of none of the declaration's verdict tables ({held}); "
+                                            "name a verdict of a table the declaration holds")
+    return named
+
+
 @dataclass
 class Prepared:
     """A caller settled for one review folder: its declaration, checklist, tools and merge rules, and the functions that
@@ -247,7 +272,8 @@ class Prepared:
             if isinstance(first, bool) or not isinstance(first, int) or first < 1:
                 raise Refused([f"{who}'s first_finding function returned {first!r:.100}, not a whole number of one or more; "
                                "fix the caller"])
-        rules = merge.Rules(tuple(checklist), getattr(module, "place", None), label, earlier, first, caller=who)
+        rules = merge.Rules(tuple(checklist), getattr(module, "place", None), label, earlier, first,
+                            fail=resolved_fail_verdict(caller, shape), caller=who)
         return cls(caller, review, declaration, tuple(checklist), granted_tools(caller), rules)
 
     def unit_text(self, unit: str, items: Optional[Sequence[str]] = None) -> str:

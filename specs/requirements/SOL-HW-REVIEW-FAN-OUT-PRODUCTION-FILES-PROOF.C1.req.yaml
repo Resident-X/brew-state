@@ -1,0 +1,14 @@
+id: SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES-PROOF.C1
+type: criterion
+title: A fanned-out blind check of seeded production files meets the kit's pooled criterion against the single-reviewer run recorded as its baseline
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |-
+  Run the single-reviewer form and the fanned-out form on the layout review proof design's production files seeded by `task hw:production-seed`, in sessions with no record of the seeds. No single-reviewer run of the check is recorded with its time and cost, so the proof runs the single form once through the kit on the mid-tier and records it as this review's baseline file before running the fanned-out form. The fanned-out form reports every seeded defect, a rotated part and a reversed polarised part among them, by a parts row or a layers row that is not a match, and every seed the single reviewer reports; the verdicts row by row are compared and a difference explained. Record for the shared context and each session and for each run the wall time, the tokens read, written and generated, the cost, and any call refused for a rate limit. The kit's pooled criterion judges the fanned-out run against the recorded single-reviewer run of this review's seeded proof: the seeds found are no fewer than the fewest any single run found, the wall time is at most half the single mean and the cost is at most 2.25 times the single mean, the multiple that the layout pre-order run's 2.1 times the single mean sets for three replicas, two on the mid-tier, unless the review's first measured run shows its replicas need more, in which case the proof states the new multiple and the evidence says why. A seed not reported is closed where the gap lies and the run repeated in a new session. The evidence names the exact model and the commit. Out of scope: placing an order and the other proofs.
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES-PROOF
+    type: criterion-of
+  - target: SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES.C5
+    type: supersedes

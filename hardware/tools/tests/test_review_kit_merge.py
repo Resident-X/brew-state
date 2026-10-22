@@ -454,5 +454,104 @@ class Adjudication(unittest.TestCase):
             self.assertEqual([row for row in after["tables"]["Findings"]["rows"]], record["tables"]["Findings"]["rows"])
 
 
+
+class SeveralKeyColumns(unittest.TestCase):
+    SHAPE = decl.parse(json.dumps(fx.keyed_declaration_dict()), "caller.json").shape
+
+    @staticmethod
+    def part(item, part, value="pass", note=""):
+        return {"Item": item, "Part": part, "Verdict": value, "Note": note}
+
+    def merged(self, *answers):
+        replicas = {f"r{n}": {"Verdicts": list(rows), "Findings": []} for n, rows in enumerate(answers, 1)}
+        return merge.merge(self.SHAPE, RULES, ["u"], {"u": replicas})
+
+    def by_combination(self, record):
+        table = record["tables"]["Verdicts"]
+        return {(row["Item"], row["Part"]): (row["Verdict"], by, dissent)
+                for row, by, dissent in zip(table["rows"], table["raised_by"], table["dissent"])}
+
+    def test_replicas_are_merged_any_fail_for_each_combination_of_one_item(self):
+        # SOL-HW-REVIEW-KIT.C14: replicas are merged any-fail per combination
+        record = self.merged([self.part("i1", "x"), self.part("i1", "y", "fail", "bad")],
+                             [self.part("i1", "x", "fail"), self.part("i1", "y")])
+        found = self.by_combination(record)
+        self.assertEqual(2, len(found))
+        self.assertEqual(("fail", ["r2"], [["r1", "pass"]]), found[("i1", "x")])
+        self.assertEqual(("fail", ["r1"], [["r2", "pass"]]), found[("i1", "y")])
+
+    def test_a_combination_one_replica_passes_stays_a_pass_beside_a_failed_sibling(self):
+        # SOL-HW-REVIEW-KIT.C14: replicas are merged any-fail per combination
+        record = self.merged([self.part("i1", "x"), self.part("i1", "y", "fail")],
+                             [self.part("i1", "x"), self.part("i1", "y", "cannot judge")])
+        found = self.by_combination(record)
+        self.assertEqual(("pass", ["r1", "r2"], []), found[("i1", "x")])
+        self.assertEqual(("fail", ["r1"], [["r2", "cannot judge"]]), found[("i1", "y")])
+
+    def test_a_single_column_key_is_still_merged_per_item(self):
+        # SOL-HW-REVIEW-KIT.C14: a single-column key behaves as before
+        record = merge.merge(PLAIN, RULES, ["u"], {"u": {"r1": tables([verdict("i1", "pass"), verdict("i2")]),
+                                                      "r2": tables([verdict("i1", "fail"), verdict("i2")])}})
+        rows = record["tables"]["Verdicts"]
+        self.assertEqual([("i1", "fail"), ("i2", "pass")], [(r["Item"], r["Verdict"]) for r in rows["rows"]])
+
+
+
+class NamedFailVerdict(unittest.TestCase):
+    PLAIN = decl.parse(json.dumps(fx.verdict_declaration_dict()), "caller.json").shape
+    KEYED = decl.parse(json.dumps(fx.verdict_declaration_dict(keyed=True)), "caller.json").shape
+    NAMED = merge.Rules(("i1", "i2"), None, fail="differs")
+
+    @staticmethod
+    def row(item, value, part=None):
+        found = {"Item": item, "Verdict": value, "Note": ""}
+        return dict(found, Part=part) if part else found
+
+    def merged(self, shape, rules, *answers, part=False):
+        replicas = {f"r{n}": {"Verdicts": list(rows), "Findings": []} for n, rows in enumerate(answers, 1)}
+        return merge.merge(shape, rules, ["u"], {"u": replicas})
+
+    def test_replicas_are_merged_any_fail_with_the_named_verdict_standing_over_a_passing_one(self):
+        # SOL-HW-REVIEW-KIT.C15: Over synthetic declarations and a stub executor, a caller may name which of its verdicts is its fail verdict, a verdict of the verdict set of a table it declares; the kit then treats that verdict exactly as it treats fail: replicas are merged any-fail with it standing over a passing verdict, and no repair turn, cannot-judge turn or rerun clears it, the refusal naming the item and the verdict. A caller naming none keeps fail as its fail verdict, and a caller that names fail behaves as one that names none. A name carried by the verdict set of at least one table that has a key and a verdict column is accepted, a table whose verdict set lacks the name having no fail to hold. A name outside the verdicts of every such table is refused before any session starts, the refusal naming it and listing each verdict table with its verdict set, or saying that the declaration has no verdict table. A name that is not text or is blank is refused when the caller loads, naming the caller and the attribute, and so is the name cannot judge, naming the attribute, since the merge and the cannot-judge turn would otherwise collapse the two verdicts. Out of scope: any real caller.
+        record = self.merged(self.PLAIN, self.NAMED, [self.row("i1", "matches"), self.row("i2", "matches")],
+                             [self.row("i1", "differs"), self.row("i2", "matches")])
+        table = record["tables"]["Verdicts"]
+        self.assertEqual([("i1", "differs"), ("i2", "matches")], [(r["Item"], r["Verdict"]) for r in table["rows"]])
+        self.assertEqual([["r2"], ["r1", "r2"]], table["raised_by"])
+        self.assertEqual([[["r1", "matches"]], []], table["dissent"])
+        self.assertEqual([("Verdicts", "i1")], merge.failing_items(self.PLAIN, self.NAMED, record))
+
+    def test_the_named_verdict_stands_over_a_cannot_judge_and_a_cannot_judge_over_a_pass(self):
+        # SOL-HW-REVIEW-KIT.C15: Over synthetic declarations and a stub executor, a caller may name which of its verdicts is its fail verdict, a verdict of the verdict set of a table it declares; the kit then treats that verdict exactly as it treats fail: replicas are merged any-fail with it standing over a passing verdict, and no repair turn, cannot-judge turn or rerun clears it, the refusal naming the item and the verdict. A caller naming none keeps fail as its fail verdict, and a caller that names fail behaves as one that names none. A name carried by the verdict set of at least one table that has a key and a verdict column is accepted, a table whose verdict set lacks the name having no fail to hold. A name outside the verdicts of every such table is refused before any session starts, the refusal naming it and listing each verdict table with its verdict set, or saying that the declaration has no verdict table. A name that is not text or is blank is refused when the caller loads, naming the caller and the attribute, and so is the name cannot judge, naming the attribute, since the merge and the cannot-judge turn would otherwise collapse the two verdicts. Out of scope: any real caller.
+        record = self.merged(self.PLAIN, self.NAMED, [self.row("i1", "cannot judge"), self.row("i2", "cannot judge")],
+                             [self.row("i1", "differs"), self.row("i2", "matches")])
+        self.assertEqual(["differs", "cannot judge"], [r["Verdict"] for r in record["tables"]["Verdicts"]["rows"]])
+
+    def test_a_caller_naming_none_does_not_hold_another_verdict_standing(self):
+        # SOL-HW-REVIEW-KIT.C15: Over synthetic declarations and a stub executor, a caller may name which of its verdicts is its fail verdict, a verdict of the verdict set of a table it declares; the kit then treats that verdict exactly as it treats fail: replicas are merged any-fail with it standing over a passing verdict, and no repair turn, cannot-judge turn or rerun clears it, the refusal naming the item and the verdict. A caller naming none keeps fail as its fail verdict, and a caller that names fail behaves as one that names none. A name carried by the verdict set of at least one table that has a key and a verdict column is accepted, a table whose verdict set lacks the name having no fail to hold. A name outside the verdicts of every such table is refused before any session starts, the refusal naming it and listing each verdict table with its verdict set, or saying that the declaration has no verdict table. A name that is not text or is blank is refused when the caller loads, naming the caller and the attribute, and so is the name cannot judge, naming the attribute, since the merge and the cannot-judge turn would otherwise collapse the two verdicts. Out of scope: any real caller.
+        record = self.merged(self.PLAIN, merge.Rules(("i1", "i2")), [self.row("i1", "matches"), self.row("i2", "matches")],
+                             [self.row("i1", "differs"), self.row("i2", "matches")])
+        self.assertEqual("matches", record["tables"]["Verdicts"]["rows"][0]["Verdict"])
+        self.assertEqual([], merge.failing_items(self.PLAIN, merge.Rules(("i1", "i2")), record))
+
+    def test_a_caller_naming_fail_merges_as_one_naming_none(self):
+        # SOL-HW-REVIEW-KIT.C15: Over synthetic declarations and a stub executor, a caller may name which of its verdicts is its fail verdict, a verdict of the verdict set of a table it declares; the kit then treats that verdict exactly as it treats fail: replicas are merged any-fail with it standing over a passing verdict, and no repair turn, cannot-judge turn or rerun clears it, the refusal naming the item and the verdict. A caller naming none keeps fail as its fail verdict, and a caller that names fail behaves as one that names none. A name carried by the verdict set of at least one table that has a key and a verdict column is accepted, a table whose verdict set lacks the name having no fail to hold. A name outside the verdicts of every such table is refused before any session starts, the refusal naming it and listing each verdict table with its verdict set, or saying that the declaration has no verdict table. A name that is not text or is blank is refused when the caller loads, naming the caller and the attribute, and so is the name cannot judge, naming the attribute, since the merge and the cannot-judge turn would otherwise collapse the two verdicts. Out of scope: any real caller.
+        shape = decl.parse(json.dumps(fx.declaration_dict()), "caller.json").shape
+        answers = ([self.row("i1", "pass"), self.row("i2", "fail")], [self.row("i1", "fail"), self.row("i2", "pass")])
+        named = self.merged(shape, merge.Rules(("i1", "i2"), None, fail="fail"), *answers)
+        none = self.merged(shape, merge.Rules(("i1", "i2")), *answers)
+        self.assertEqual(json.dumps(named, sort_keys=True), json.dumps(none, sort_keys=True))
+
+    def test_the_named_verdict_is_merged_any_fail_per_combination_of_a_several_column_key(self):
+        # SOL-HW-REVIEW-KIT.C15: Over synthetic declarations and a stub executor, a caller may name which of its verdicts is its fail verdict, a verdict of the verdict set of a table it declares; the kit then treats that verdict exactly as it treats fail: replicas are merged any-fail with it standing over a passing verdict, and no repair turn, cannot-judge turn or rerun clears it, the refusal naming the item and the verdict. A caller naming none keeps fail as its fail verdict, and a caller that names fail behaves as one that names none. A name carried by the verdict set of at least one table that has a key and a verdict column is accepted, a table whose verdict set lacks the name having no fail to hold. A name outside the verdicts of every such table is refused before any session starts, the refusal naming it and listing each verdict table with its verdict set, or saying that the declaration has no verdict table. A name that is not text or is blank is refused when the caller loads, naming the caller and the attribute, and so is the name cannot judge, naming the attribute, since the merge and the cannot-judge turn would otherwise collapse the two verdicts. Out of scope: any real caller.
+        record = self.merged(self.KEYED, self.NAMED,
+                             [self.row("i1", "matches", "x"), self.row("i1", "matches", "y"), self.row("i2", "matches", "x")],
+                             [self.row("i1", "matches", "x"), self.row("i1", "differs", "y"), self.row("i2", "matches", "x")])
+        table = record["tables"]["Verdicts"]
+        self.assertEqual([("i1", "x", "matches"), ("i1", "y", "differs"), ("i2", "x", "matches")],
+                         [(r["Item"], r["Part"], r["Verdict"]) for r in table["rows"]])
+        self.assertEqual([("Verdicts", ("i1", "y"))], merge.failing_items(self.KEYED, self.NAMED, record))
+
+
 if __name__ == "__main__":
     unittest.main()

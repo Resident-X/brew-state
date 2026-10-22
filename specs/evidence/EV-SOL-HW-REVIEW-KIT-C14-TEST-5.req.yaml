@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-KIT-C14-TEST-5
+type: evidence
+title: test evidence for SOL-HW-REVIEW-KIT.C14
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-22T01:38:06.407195Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_kit_decl.py::test_a_one_name_list_key_and_a_string_key_declare_the_same_table
+  artifact_version: 77e840fb67e90be55fb52dcfd237c47b44926a49
+attested_by: crun-013a5584d236a563
+links:
+  - target: SOL-HW-REVIEW-KIT.C14
+    type: satisfies

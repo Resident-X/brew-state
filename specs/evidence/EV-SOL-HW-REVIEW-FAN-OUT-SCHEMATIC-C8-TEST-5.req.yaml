@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-FAN-OUT-SCHEMATIC-C8-TEST-5
+type: evidence
+title: test evidence for SOL-HW-REVIEW-FAN-OUT-SCHEMATIC.C8
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-22T05:41:37.393646Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_schematic_review_proof.py::test_a_copy_the_check_refuses_a_check_that_cannot_run_and_an_export_or_drawing_that_fails_are_each_refused_or_cannot_run
+  artifact_version: 92fbd6b7ca87447b9b1bb00e141b4431127954f9
+attested_by: crun-16b6127099732cfb
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-SCHEMATIC.C8
+    type: satisfies

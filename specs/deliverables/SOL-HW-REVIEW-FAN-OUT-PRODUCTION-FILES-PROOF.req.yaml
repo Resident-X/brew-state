@@ -1,0 +1,33 @@
+id: SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES-PROOF
+type: deliverable
+category: solution
+title: The fanned-out production-files check is proven blind on the seeded production files of the layout review proof design
+status: active
+version: 1
+text: |
+  Why this exists. The ordering step's production-files check is the last check before payment and is repeated at every order, and SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES builds its fanned-out form with tests over the kit's stub. Those tests show the mechanics, not that the fanned-out form finds the defects the single reviewer finds; DEL-HW-REVIEW-FAN-OUT.C5 requires a blind run on a seeded copy for each fanned-out review, and a run of the fanned-out form is a paid live run of its own. This solution holds that run, apart from the caller, so the caller ships with its tests and the method relies on the single-reviewer form of the check until this proof is recorded. The reasoning and the options rejected are in DEC-REVIEW-FAN-OUT-FROM-SHARED-CONTEXT-WITH-REPLICAS, and DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND settles that a check judged by unit is the same check; a session building this does not reopen either.
+
+  What it does. It takes the layout review proof design's production files, seeded by the scripted seeding task the repository already holds, writes the review folder for them through the production folder command with the stand-in preview the proof's folder uses, runs the single form once through the kit and records it as this review's baseline file, since the recorded single run of this check holds no time or cost and is not loadable by the kit, then runs the fanned-out form and records both in the kit's proof record with the pooled criterion's verdict.
+
+  Settled before the build.
+
+  - The seeding is deterministic and scripted, so no seeding session exists and none is described; the checks run in sessions with no record of the seeds.
+  - The fanned-out form runs the pre-order round's three replicas, and the cost multiple is 2.25: the layout pre-order run cost 2.1 times the single mean, so 1.25 cannot hold for three replicas of which two are on the mid-tier.
+  - The single form is one unit holding every row with no shared context, on the mid-tier; the proof refuses to run it again once its baseline is recorded for the key.
+  - The proof command is thin over the shared proof harness the callers use, and is a task of its own.
+  - The proof is a live run, on demand and in neither gate; the tests of the command need no model and no KiCad.
+
+  Out of scope: the production-files caller, its folder command and its tests; placing an order.
+links:
+  - target: DEL-HW-REVIEW-FAN-OUT.C5
+    type: derives-from
+  - target: SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES
+    type: depends-on
+  - target: SOL-HW-REVIEW-KIT
+    type: depends-on
+  - target: DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND
+    type: justified-by
+  - target: DEC-REVIEW-FAN-OUT-FROM-SHARED-CONTEXT-WITH-REPLICAS
+    type: justified-by
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: targets

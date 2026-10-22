@@ -20,7 +20,7 @@ sys.path.insert(0, TOOLS)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import review_kit_fixtures as fx  # noqa: E402
-from review_kit import catalogue, planner, proof, scheduler, telemetry  # noqa: E402
+from review_kit import catalogue, merge, planner, proof, scheduler, telemetry  # noqa: E402
 from review_kit import executor as ex  # noqa: E402
 
 BASELINES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "review_baselines", "layout_single_runs.json")
@@ -674,6 +674,95 @@ class Record(unittest.TestCase):
         buffer = io.StringIO()
         json.dump(record, buffer)
         self.assertNotIn("/Users", buffer.getvalue())
+
+
+class VerdictsPerCombination(unittest.TestCase):
+    SEEDS = [{"id": "S1", "item": "i1"}]
+
+    def outcome(self, answers):
+        """Run the multi-key declaration as one fork per group answering `answers[label]` and record the run."""
+        h = fx.Harness(self, raw=fx.keyed_declaration_dict())
+        catalogue_ = catalogue.admit(h.declaration, h.review, results_folder=h.out)
+        formed = proof.form_plan(proof.SINGLE, h.declaration, catalogue_, h.spec, bound=4, cli_version="9.9.9", tool_commit="abc1234")
+
+        def reply(call, number):
+            if call.label == "root":
+                return ex.Reply(text="ack", write=100)
+            group = next(g for g in formed.plan.groups if g.id == call.label.split(".")[0])
+            items = [i for u in group.units for i in h.declaration.units[u].items]
+            rows = []
+            for item in items:
+                rows += answers.get(item) or [{"Item": item, "Part": "x", "Verdict": "pass", "Note": ""}]
+            return ex.Reply(structured={"tables": {"Verdicts": rows, "Findings": []}}, text="done")
+
+        executor = ex.StubExecutor(replies=reply, clock=h.clock, policy=h.policy)
+        result = proof.run_form(scheduler.Scheduler(executor, h.clock, scheduler.SerialConcurrency(), 1), formed, h.spec)
+        figures = [telemetry.SessionFigures("only", None, 0.1, 1000, 1.0, 1, 1,
+                                            {"cache_read": 1, "cache_write": 1, "fresh": 1, "generated": 1}, 1)]
+        return proof.outcome_from_run("o", formed, result, figures, self.SEEDS, lambda seed, row: False, seeded_commit="s")
+
+    @staticmethod
+    def row(item, part, value):
+        return {"Item": item, "Part": part, "Verdict": value, "Note": ""}
+
+    def test_a_run_records_a_verdict_for_each_combination_not_one_per_item(self):
+        # SOL-HW-REVIEW-KIT.C14: the proof compares verdicts per combination
+        outcome = self.outcome({"i1": [self.row("i1", "x", "pass"), self.row("i1", "y", "fail")]})
+        self.assertEqual("pass", outcome.verdicts['["i1", "x"]'])
+        self.assertEqual("fail", outcome.verdicts['["i1", "y"]'])
+        self.assertNotIn("i1", outcome.verdicts)
+        self.assertEqual("pass", outcome.verdicts['["j1", "x"]'])
+
+    def test_the_differences_from_the_single_runs_are_found_per_combination(self):
+        # SOL-HW-REVIEW-KIT.C14: the proof compares verdicts per combination
+        single = self.outcome({"i1": [self.row("i1", "x", "pass"), self.row("i1", "y", "pass")]})
+        fanned = self.outcome({"i1": [self.row("i1", "x", "pass"), self.row("i1", "y", "fail")]})
+        found = proof.verdict_differences([single], fanned, {})
+        self.assertEqual(['["i1", "y"]'], [d["item"] for d in found])
+        self.assertEqual(("fail", "pass"), (found[0]["fanned"], found[0]["single"]))
+
+    def test_the_record_round_trips_through_json_with_combination_keys(self):
+        # SOL-HW-REVIEW-KIT.C14: the proof compares verdicts per combination
+        outcome = self.outcome({"i1": [self.row("i1", "x", "pass"), self.row("i1", "y", "fail")]})
+        again = proof.RunOutcome.from_dict(json.loads(json.dumps(outcome.as_dict())))
+        self.assertEqual(outcome.verdicts, again.verdicts)
+
+
+
+class NamedFailVerdictOutcome(unittest.TestCase):
+    """A run recorded under a caller's named fail verdict merges the replicas' verdicts any-fail with it."""
+
+    SEEDS = RunsRecordedInOneShape.SEEDS
+
+    def setUp(self):
+        self.h = fx.Harness(self, raw=fx.verdict_declaration_dict(keyed=True), replicas=2)
+        self.catalogue = catalogue.admit(self.h.declaration, self.h.review, results_folder=self.h.out)
+
+    formed = RunsRecordedInOneShape.formed
+
+    def test_the_run_records_the_named_verdict_over_a_passing_one_across_replicas(self):
+        # SOL-HW-REVIEW-KIT.C15: Over synthetic declarations and a stub executor, a caller may name which of its verdicts is its fail verdict, a verdict of the verdict set of a table it declares; the kit then treats that verdict exactly as it treats fail: replicas are merged any-fail with it standing over a passing verdict, and no repair turn, cannot-judge turn or rerun clears it, the refusal naming the item and the verdict. A caller naming none keeps fail as its fail verdict, and a caller that names fail behaves as one that names none. A name carried by the verdict set of at least one table that has a key and a verdict column is accepted, a table whose verdict set lacks the name having no fail to hold. A name outside the verdicts of every such table is refused before any session starts, the refusal naming it and listing each verdict table with its verdict set, or saying that the declaration has no verdict table. A name that is not text or is blank is refused when the caller loads, naming the caller and the attribute, and so is the name cannot judge, naming the attribute, since the merge and the cannot-judge turn would otherwise collapse the two verdicts. Out of scope: any real caller.
+        h = self.h
+        formed = self.formed(proof.FANNED, replicas=2)
+
+        def reply(call, number):
+            if call.label == "root":
+                return ex.Reply(text="ack", write=100)
+            group = next(g for g in formed.plan.groups if g.id == call.label.split(".")[0])
+            rows = [{"Item": item, "Part": "x", "Verdict": "differs" if (item, call.label.split(".")[1]) == ("i1", "r2")
+                     else "matches", "Note": ""} for unit in group.units for item in formed.declaration.units[unit].items]
+            return ex.Reply(structured={"tables": {"Verdicts": rows, "Findings": []}}, text="done")
+
+        executor = ex.StubExecutor(replies=reply, clock=h.clock, policy=h.policy)
+        result = proof.run_form(scheduler.Scheduler(executor, h.clock, scheduler.SerialConcurrency(), 1), formed, h.spec)
+        figures = [telemetry.SessionFigures("only", None, 0.1, 1000, 1.0, 1, 1,
+                                            {"cache_read": 1, "cache_write": 1, "fresh": 1, "generated": 1}, 1)]
+        named = proof.outcome_from_run("o", formed, result, figures, self.SEEDS, lambda seed, row: False, seeded_commit="s",
+                                       rules=merge.Rules(fail="differs"))
+        plain = proof.outcome_from_run("o", formed, result, figures, self.SEEDS, lambda seed, row: False, seeded_commit="s")
+        self.assertEqual("differs", named.verdicts['["i1", "x"]'])
+        self.assertEqual("matches", plain.verdicts['["i1", "x"]'])
+        self.assertEqual("matches", named.verdicts['["i2", "x"]'])
 
 
 if __name__ == "__main__":

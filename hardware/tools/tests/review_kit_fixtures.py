@@ -50,6 +50,23 @@ def declaration_dict(**changes: Any) -> Dict[str, Any]:
     return found
 
 
+def keyed_declaration_dict() -> Dict[str, Any]:
+    """The base declaration with a verdict table whose key is two columns, the item then a part of it."""
+    found = declaration_dict()
+    found["schema"]["tables"][0] = {"name": "Verdicts", "columns": ["Item", "Part", "Verdict", "Note"],
+                                    "key": ["Item", "Part"], "verdict_column": "Verdict",
+                                    "verdicts": ["pass", "fail", "cannot judge"]}
+    return found
+
+
+def verdict_declaration_dict(ok: str = "matches", fail: str = "differs", keyed: bool = False) -> Dict[str, Any]:
+    """The base declaration with its verdict table's verdicts renamed: the passing one, the failing one, then cannot judge.
+    With `keyed` the table's key is two columns, the item then a part of it."""
+    found = keyed_declaration_dict() if keyed else declaration_dict()
+    found["schema"]["tables"][0]["verdicts"] = [ok, fail, "cannot judge"]
+    return found
+
+
 def declaration_text(raw: Optional[Dict[str, Any]] = None) -> str:
     return json.dumps(raw if raw is not None else BASE, indent=1)
 
@@ -156,7 +173,8 @@ class Harness:
         if call.label in self.script:
             return self.script[call.label]
         group = next(g for g in self.plan.groups if g.id == call.label.split(".")[0])
-        return ex.Reply(structured=good_answer(self.declaration, group.units), text="done")
+        passing = self.declaration.shape.tables[0].verdicts[0]
+        return ex.Reply(structured=good_answer(self.declaration, group.units, passing), text="done")
 
     def fresh(self):
         return scheduler.run_review(self.scheduler, self.declaration, self.plan, self.shared, self.spec, self.out, self.review)

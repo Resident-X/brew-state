@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-KIT-C15-TEST-22
+type: evidence
+title: test evidence for SOL-HW-REVIEW-KIT.C15
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-22T02:33:00.644974Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_kit_scheduler.py::test_a_rerun_holds_the_named_verdict_against_a_repair_as_a_fresh_run_does
+  artifact_version: 43cf1fd7e7d142ed3a1583e59f60d7466d3bc6fc
+attested_by: crun-5c3066263da34b9e
+links:
+  - target: SOL-HW-REVIEW-KIT.C15
+    type: satisfies

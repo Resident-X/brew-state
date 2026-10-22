@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES-C3-TEST-23
+type: evidence
+title: test evidence for SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-22T04:38:21.773028Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_production_review_folder.py::test_a_gerber_or_drill_file_the_layer_images_index_does_not_list_is_refused_naming_it_and_the_job_file_is_not_one
+  artifact_version: d28799d5712207eff308745e82f90d67f9395f15
+attested_by: crun-d1216986c7302509
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES.C3
+    type: satisfies

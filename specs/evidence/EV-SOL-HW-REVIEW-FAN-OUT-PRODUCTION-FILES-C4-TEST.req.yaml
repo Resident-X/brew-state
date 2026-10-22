@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES-C4-TEST
+type: evidence
+title: test evidence for SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES.C4
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-22T04:38:18.070325Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_caller_production_files.py::test_the_ordering_section_says_the_check_may_be_judged_by_unit_what_the_merge_checks_and_where_the_preview_step_stays
+  artifact_version: d28799d5712207eff308745e82f90d67f9395f15
+attested_by: crun-d1216986c7302509
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES.C4
+    type: satisfies

@@ -51,6 +51,24 @@ class TableShape:
     verdict_column: Optional[str] = None
     verdicts: Tuple[str, ...] = ()
     numeric: Tuple[str, ...] = ()
+    extra_key: Tuple[str, ...] = ()
+
+    @property
+    def key_columns(self) -> Tuple[str, ...]:
+        """The columns of the key, the item column first; empty for a table with no key."""
+        return () if self.key is None else (self.key,) + self.extra_key
+
+    def combination(self, row: Dict[str, Any]) -> Any:
+        """What a verdict row is a verdict on: its item for a one-column key, else the tuple of its key cells."""
+        if not self.extra_key:
+            return row[self.key]
+        return tuple(row[column] for column in self.key_columns)
+
+    def label(self, row: Dict[str, Any]) -> str:
+        """The combination as one text: the item for a one-column key, else the key cells as a JSON list."""
+        if not self.extra_key:
+            return str(row[self.key])
+        return json.dumps(list(self.combination(row)), ensure_ascii=False)
 
 
 @dataclass(frozen=True)
@@ -209,16 +227,20 @@ def local_problems(tables: Dict[str, Any], shape: AnswerShape, unit: str, items:
         if table.verdict_column is None or table.key is None:
             continue
         rows = tables.get(table.name, [])
-        counts: Dict[str, int] = {}
+        counts: Dict[Any, int] = {}
+        seen_items: set = set()
         for number, row in enumerate(rows, 1):
             verdict = row[table.verdict_column]
             if not isinstance(verdict, str) or verdict not in table.verdicts:
                 found.append(Problem(LOCAL, f"unit {unit} table {table.name!r} row {number}",
                                      f"has the verdict {verdict!r}, outside {list(table.verdicts)}"))
-            counts[row[table.key]] = counts.get(row[table.key], 0) + 1
-        for item, count in counts.items():
+            counts[table.combination(row)] = counts.get(table.combination(row), 0) + 1
+            seen_items.add(row[table.key])
+        for combination, count in counts.items():
             if count > 1:
-                found.append(Problem(LOCAL, f"unit {unit} table {table.name!r}", f"gives item {item!r} {count} verdicts"))
+                what = (f"gives item {combination!r} {count} verdicts" if not table.extra_key else
+                        f"gives the combination {list(combination)!r} of {list(table.key_columns)} {count} verdicts")
+                found.append(Problem(LOCAL, f"unit {unit} table {table.name!r}", what))
         if items is not None:
             for number, row in enumerate(rows, 1):
                 if row[table.key] not in items:
@@ -226,7 +248,7 @@ def local_problems(tables: Dict[str, Any], shape: AnswerShape, unit: str, items:
                                          f"gives a verdict for item {row[table.key]!r} in the {table.key!r} cell, which is "
                                          f"not one of the unit's items; name exactly one of {list(items)} in that cell"))
         for item in items or []:
-            if item not in counts:
+            if item not in seen_items:
                 found.append(Problem(LOCAL, f"unit {unit} table {table.name!r}", f"gives no verdict for item {item!r}"))
     findings = shape.findings
     if findings is not None:
@@ -311,13 +333,15 @@ def assess(structured: Any, text: str, shape: AnswerShape, unit: str, items: Opt
     covered = 0
     for table in shape.tables:
         if table.verdict_column and table.key:
-            covered += len({row[table.key] for row in tables.get(table.name, []) if row[table.key] in (items or [row[table.key]])})
+            covered += len({table.combination(row) for row in tables.get(table.name, [])
+                            if row[table.key] in (items or [row[table.key]])})
     return Assessment(parsed.source, raw, tables, repairs, problems, covered, parsed.note)
 
 
 def cannot_judge_rows(tables: Optional[Dict[str, Any]], shape: AnswerShape, value: Optional[str]) -> List[Tuple[str, str]]:
-    """The (item, Why) of each verdict row whose verdict is `value`, in table order. A table without that verdict declared holds
-    none, and no value means a caller that declares no such verdict. The Why is the row's `Why` cell, else its other cells."""
+    """The (what the row is a verdict on, Why) of each verdict row whose verdict is `value`, in table order: the item for a
+    one-column key, else the combination as a JSON list of the key cells. A table without that verdict declared holds none, and
+    no value means a caller that declares no such verdict. The Why is the row's `Why` cell, else its other cells."""
     found: List[Tuple[str, str]] = []
     for table in shape.tables:
         if not value or not table.verdict_column or not table.key or value not in table.verdicts:
@@ -325,9 +349,9 @@ def cannot_judge_rows(tables: Optional[Dict[str, Any]], shape: AnswerShape, valu
         for row in (tables or {}).get(table.name, []):
             if row.get(table.verdict_column) != value:
                 continue
-            others = [column for column in table.columns if column not in (table.key, table.verdict_column)]
+            others = [column for column in table.columns if column not in table.key_columns + (table.verdict_column,)]
             why = str(row["Why"]) if "Why" in table.columns else "; ".join(str(row[c]) for c in others if str(row[c]).strip())
-            found.append((str(row[table.key]), why))
+            found.append((table.label(row), why))
     return found
 
 
@@ -344,21 +368,24 @@ def judge_prompt(rows: Sequence[Tuple[str, str]], retrieval: bool = True) -> str
 
 def failed_items(tables: Optional[Dict[str, Any]], shape: AnswerShape, fail: str, items: Optional[Sequence[str]],
                  valid_only: bool = True) -> List[str]:
-    """The items with a verdict row of `fail`, in table order. With `valid_only`, a row whose item cell is not one of the unit's
-    items (an item off the checklist, or two items in one cell) is not a fail of any item and is left out."""
+    """The combinations (the item for a one-column key, else the key cells as a JSON list) with a verdict row of `fail`, in table
+    order. With `valid_only`, a row whose item cell is not one of the unit's items (an item off the checklist, or two items in one
+    cell) is not a fail of any item and is left out."""
     found: List[str] = []
     for table in shape.tables:
         if not table.verdict_column or not table.key or fail not in table.verdicts:
             continue
         for row in (tables or {}).get(table.name, []):
             item = row.get(table.key)
-            if row.get(table.verdict_column) == fail and (not valid_only or items is None or item in items) and item not in found:
-                found.append(item)
+            if row.get(table.verdict_column) == fail and (not valid_only or items is None or item in items):
+                label = table.label(row)
+                if label not in found:
+                    found.append(label)
     return found
 
 
 def cleared_fails(first: Assessment, later: Assessment, shape: AnswerShape, fail: str, items: Optional[Sequence[str]]) -> List[str]:
-    """The items on which the first answer holds a fail on a valid row that the later answer does not: passed, changed to
+    """The combinations on which the first answer holds a fail on a valid row that the later answer does not: passed, changed to
     another verdict, or left out. A later answer that adds fails or changes a cannot judge clears nothing."""
     if first.tables is None or later.tables is None:
         return []
@@ -369,14 +396,17 @@ def cleared_fails(first: Assessment, later: Assessment, shape: AnswerShape, fail
 def mark_cleared(attempts: Sequence[Assessment], later: Assessment, shape: AnswerShape, fail: str, items: Optional[Sequence[str]],
                  unit: str) -> None:
     """Set on a later answer the fails it clears from the unit's first answer (the first of `attempts` that holds tables),
-    with a local problem naming each item, so that `standing` keeps the first answer over it."""
+    with a local problem naming each combination, so that `standing` keeps the first answer over it."""
     first = next((each for each in attempts if each.tables is not None), None)
     if first is None or later.fatal or later.tables is None:
         return
     later.cleared = cleared_fails(first, later, shape, fail, items)
-    later.problems += [Problem(LOCAL, f"unit {unit}", f"clears the fail the first answer raised on item {item!r}, by passing it "
-                                                      "or leaving it out; a fail stands, so keep it as the first answer gave it")
-                       for item in later.cleared]
+    keys = [table for table in shape.tables if table.verdict_column and table.key and fail in table.verdicts and table.extra_key]
+    named = "fail" if fail == "fail" else f"fail (the verdict {fail!r})"
+    for label in later.cleared:
+        what = f"the combination {label} of {list(keys[0].key_columns)}" if keys else f"item {label!r}"
+        later.problems.append(Problem(LOCAL, f"unit {unit}", f"clears the {named} the first answer raised on {what}, by passing it "
+                                                             "or leaving it out; a fail stands, so keep it as the first answer gave it"))
 
 
 # --- Attempts ----------------------------------------------------------------------------------

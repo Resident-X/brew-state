@@ -1,7 +1,7 @@
 id: SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING.C4
 type: criterion
 title: A fanned-out critical-routing check of a seeded copy meets the kit's pooled criterion against the recorded single-reviewer runs
-status: active
+status: deprecated
 version: 2
 measurement_type: binary
 verification: demonstration

@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES-C2-TEST-12
+type: evidence
+title: test evidence for SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-22T04:38:14.880845Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_caller_production_files.py::test_a_differs_needs_a_finding_a_finding_needs_a_row_that_is_not_a_match_and_a_cited_finding_is_the_rows_own
+  artifact_version: d28799d5712207eff308745e82f90d67f9395f15
+attested_by: crun-d1216986c7302509
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES.C2
+    type: satisfies
