@@ -82,7 +82,8 @@ class Proofed(unittest.TestCase):
         self.work = os.path.join(self.root, "work")
         self.source = lfx.make_repo(os.path.join(self.root, "source"), method=lfx.METHOD_ROUTING)
         self.seeded = self.source
-        self.views = lfx.make_views(self.root)["views"]
+        made = lfx.make_views(self.root)
+        self.views, self.placement = made["views"], made["placement"]
         self.seeds = os.path.join(self.root, "seeds.json")
         lfx.write(self.seeds, json.dumps({"design": lfx.DESIGN, "seeds": SEEDS}))
         self.baselines = os.path.join(self.root, "baselines.json")
@@ -113,7 +114,7 @@ class Proofed(unittest.TestCase):
 
     def preparer(self, work, seeded, kicad_cli, resvg):
         """What the views command leaves, synthetic."""
-        return {"views": self.views}
+        return {"views": self.views, "placement": self.placement}
 
     def tree(self):
         return lfx.git(self.seeded, "rev-parse", f"HEAD:{lfx.DESIGN}")
@@ -340,6 +341,8 @@ class TheReviewSpecifics(Proofed):
         self.assertTrue(content["views"][0].startswith("task hw:views -- --board board.kicad_pcb --project board.kicad_pro --class Power "
                                                        "--class Supply --class Ground"))
         self.assertTrue(os.path.isfile(os.path.join(folder, "views", "layer-F.Cu.png")))
+        self.assertTrue(os.path.isfile(os.path.join(folder, "placement", "index.txt")), "the placement view is in the folder")
+        self.assertTrue(os.path.isfile(os.path.join(folder, "placement", "measures.txt")))
         self.assertFalse(os.path.exists(os.path.join(folder, "check-report.txt")))
         self.assertEqual(os.listdir(os.path.dirname(folder)), ["review"], "the folder is alone where a session can read upward")
         self.assertFalse(os.path.exists(os.path.join(folder, "seeds.json")))
@@ -355,7 +358,11 @@ class TheReviewSpecifics(Proofed):
 
         with mock.patch.object(crp, "subprocess", types.SimpleNamespace(run=fake)):
             prepared = crp.prepare(self.work, self.seeded, "kicad-cli-x", "resvg-x")
-        (argv, cwd), = said
+        (argv, cwd), (placed, placed_cwd) = said
+        self.assertEqual(os.path.basename(placed[1]), "board_placement.py")
+        self.assertEqual(placed[placed.index("--kicad-cli") + 1], "kicad-cli-x")
+        self.assertEqual(prepared["placement"], placed[placed.index("--out") + 1])
+        self.assertEqual(placed_cwd, cwd)
         self.assertEqual(os.path.basename(argv[1]), "board_views.py")
         self.assertEqual(argv[argv.index("--kicad-cli") + 1], "kicad-cli-x")
         self.assertEqual(argv[argv.index("--resvg") + 1], "resvg-x")
@@ -366,6 +373,20 @@ class TheReviewSpecifics(Proofed):
         with mock.patch.object(crp, "subprocess", types.SimpleNamespace(run=lambda argv, **kwargs: subprocess.CompletedProcess(argv, 2, "", "no resvg"))):
             with self.assertRaises(crp.board_check.CannotRun):
                 crp.prepare(os.path.join(self.root, "again"), self.seeded, "k", "r")
+
+    def test_a_failing_placement_render_is_refused_or_cannot_run_naming_the_placement_view(self):
+        # SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING-PROOF.C2: Over the kit's stub, the proof command for the critical-routing check runs the single form once through the kit and writes it as a baseline file the kit's proof loads, keyed by the hash of the seed list, the design commit, the model, the form and the prompt hash; run again for a key whose baseline is recorded it refuses to run the single form and names the key, and for a key that differs it runs it; a seed list or review folder that lies inside the repository is refused naming it. The command's record is written in text and JSON with the same content. Out of scope: any live run and the pooled criterion's arithmetic, which the kit's own tests hold.
+        def fake(code):
+            return lambda argv, **kwargs: subprocess.CompletedProcess(argv, code if "board_placement.py" in argv[1] else 0, "bad placement", "")
+
+        with mock.patch.object(crp, "subprocess", types.SimpleNamespace(run=fake(1))):
+            with self.assertRaises(crp.Refused) as raised:
+                crp.prepare(os.path.join(self.root, "p1"), self.seeded, "k", "r")
+        self.assertIn("placement view", str(raised.exception.args))
+        with mock.patch.object(crp, "subprocess", types.SimpleNamespace(run=fake(2))):
+            with self.assertRaises(crp.board_check.CannotRun) as raised:
+                crp.prepare(os.path.join(self.root, "p2"), self.seeded, "k", "r")
+        self.assertIn("placement view", str(raised.exception))
 
 
 class TheRefusals(Proofed):

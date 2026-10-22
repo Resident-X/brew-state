@@ -6,7 +6,7 @@ whose layout plan holds a critical routing section, and has a reviewer that did 
 routing section blind. The copy is seeded by a session that has not read the layout practice catalogue, working in a temporary git
 work tree outside this repository: it keeps the copy's records consistent, keeps the critical items locked, commits the copy at the
 design's path from the repository's root, and writes the seed list apart. This is the one command that does the rest: it renders
-the layout review views of the committed copy with the views command, writes the review folder with the review folder command's
+the layout review views of the committed copy with the views command and its placement view with the placement command, writes the review folder with the review folder command's
 critical-routing mode from that commit (the method and the hardware notes taken from this repository), then runs the critical-routing
 caller through the review kit's command on the real agent command line, first the single form once on the mid-tier model, which it
 records as this review's baseline file because none is recorded in a form the kit loads (a baseline file that already holds the
@@ -33,11 +33,11 @@ retrievals with any that failed, and the calls refused for a rate limit. A seed 
 proof repeated in a new session.
 
 The work folder keeps the review folder alone in <work>/review-tree/review, since a session starts there and can read the folders
-above it; the seed list, the views and the exported copy are under <work>/seed/, each run's output under <work>/out/, and the
+above it; the seed list, the views, the placement view and the exported copy are under <work>/seed/, each run's output under <work>/out/, and the
 record in <work>.
 
 --dry prints the plan of the fanned-out run, a line saying a second run may follow, and its predicted cost and time (up to twice, counting the second) beside the bounds they would be held to, and, where no
-single run is recorded, the plan of the single form; it starts no session and calls no model, but it still renders the views and
+single run is recorded, the plan of the single form; it starts no session and calls no model, but it still renders the views and the placement view and
 writes the review folder.
 
 The agent command line is the program named by REVIEW_KIT_AGENT (claude when it is unset), logged in. A run costs money: the
@@ -84,6 +84,7 @@ SEED_DIR = "seed"
 SEEDS = os.path.join(SEED_DIR, "seeds.json")
 EXPORT = os.path.join(SEED_DIR, "export")
 VIEWS = os.path.join(SEED_DIR, "views")
+PLACEMENT_DIR = os.path.join(SEED_DIR, "placement")
 REVIEW_TREE = "review-tree"
 FOLDER = os.path.join(REVIEW_TREE, "review")
 OUT_DIR = "out"
@@ -133,8 +134,8 @@ def view_commands() -> List[str]:
 
 
 def prepare(work: str, seeded: str, kicad_cli: str, resvg: str) -> Dict[str, Any]:
-    """What the review folder is written from: the layout review views of the committed copy, rendered by the views command from
-    the copy's files as the commit holds them."""
+    """What the review folder is written from: the layout review views of the committed copy, rendered by the views command, and its
+    placement view, rendered by the placement command, from the copy's files as the commit holds them."""
     sha = base.git(seeded, "rev-parse", "HEAD").stdout.strip()
     export = os.path.join(work, EXPORT, DESIGN)
     for name, content in review_seed.archived(seeded, sha, DESIGN).items():
@@ -152,7 +153,15 @@ def prepare(work: str, seeded: str, kicad_cli: str, resvg: str) -> Dict[str, Any
         raise board_check.CannotRun(f"the views could not be rendered: {board_check.clean((done.stderr or done.stdout).strip())}")
     if done.returncode != 0:
         raise Refused([f"the views of the seeded copy could not be rendered: {board_check.clean(done.stdout.strip())}"])
-    return {"views": views}
+    placement = os.path.join(work, PLACEMENT_DIR)
+    done = subprocess.run([sys.executable, os.path.join(TOOLS_DIR, "board_placement.py"), "--kicad-cli", kicad_cli, "--resvg", resvg,
+                           "--board", f"{NAME}.kicad_pcb", "--project", f"{NAME}.kicad_pro", "--out", placement],
+                          cwd=export, capture_output=True, text=True)
+    if done.returncode == 2:
+        raise board_check.CannotRun(f"the placement view could not be rendered: {board_check.clean((done.stderr or done.stdout).strip())}")
+    if done.returncode != 0:
+        raise Refused([f"the placement view of the seeded copy could not be rendered: {board_check.clean((done.stdout or done.stderr).strip())}"])
+    return {"views": views, "placement": placement}
 
 
 def write_folder(work: str, seeded: str, prepared: Mapping[str, Any], documents_repo: Optional[str] = None) -> str:
@@ -161,7 +170,7 @@ def write_folder(work: str, seeded: str, prepared: Mapping[str, Any], documents_
     folder = os.path.join(work, FOLDER)
     os.makedirs(os.path.dirname(folder), exist_ok=True)
     argv = ["--review", review_folder.CRITICAL_ROUTING, "--repo", seeded, "--commit", "HEAD", "--design", DESIGN, "--out", folder,
-            "--views", prepared["views"], "--number", "1"] + (["--documents-repo", documents_repo] if documents_repo else [])
+            "--views", prepared["views"], "--placement", prepared["placement"], "--number", "1"] + (["--documents-repo", documents_repo] if documents_repo else [])
     for line in view_commands():
         argv += ["--view-command", line]
     out = io.StringIO()
