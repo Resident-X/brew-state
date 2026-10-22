@@ -19,3 +19,7 @@ links:
     type: targets
   - target: SOL-HW-REVIEW-FAN-OUT-LAYOUT
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 brief reviewer
+  fingerprint: d83de527c6fc03326b8e6a76100f29a8d98290ac54d34b3720b132515c0e951a
+  gating_profile: ""
