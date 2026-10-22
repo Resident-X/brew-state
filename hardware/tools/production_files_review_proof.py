@@ -66,6 +66,7 @@ import board_history  # noqa: E402
 import review_caller_production_files as caller  # noqa: E402
 import review_folder  # noqa: E402
 import review_proof_harness as harness  # noqa: E402
+import production_seed  # noqa: E402
 import review_seed  # noqa: E402
 import schematic_review_proof as base  # noqa: E402
 from review_kit import command, proof, store  # noqa: E402
@@ -323,6 +324,16 @@ def dry_lines(plan: Mapping[str, Any], model: str, single: Optional[List[proof.R
 # --- The command --------------------------------------------------------------------------------
 
 
+def design_key(repo: str = REPO, ref: str = "HEAD", design: str = DESIGN) -> str:
+    """The key the baseline holds as the design: a hash of the files the production-files review reads of the proof design,
+    which are its KiCad files, its library tables and its parts specification record, so a change to a file the review does
+    not read, such as the catalogue extract, leaves the recorded baseline valid."""
+    try:
+        return review_seed.read_key(repo, ref, design, production_seed.reads)
+    except review_seed.Refused as error:
+        raise Refused([str(error)])
+
+
 def refusals(work: str) -> List[str]:
     found = []
     if review_seed.inside(work, REPO):
@@ -380,7 +391,7 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout, err=sys.stderr, envir
         folder = review
         os.makedirs(os.path.join(work, SEED_DIR), exist_ok=True)
         shutil.copyfile(seeds_path, os.path.join(work, SEEDS))
-        tree = base.design_tree(REPO, "HEAD", DESIGN)
+        tree = design_key(REPO, "HEAD", DESIGN)
         key = harness.single_key(CALLER, TOOLS_DIR, folder, os.path.join(work, SINGLE_OUT), args.baseline_model, seeds, tree, environ)
         singles = harness.recorded_under(baselines, key)
         if args.dry:

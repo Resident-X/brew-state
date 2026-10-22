@@ -737,7 +737,7 @@ class TheHarness(Proofed):
             self.assertIs(getattr(lrp, name), getattr(harness, name), name)
         self.assertIs(lrp.Refused, harness.Refused)
         self.assertIs(srp.Refused, harness.Refused)
-        for name in ("run_command", "plan_of", "outcome_of", "run_seed", "write_folder", "baseline_runs", "design_tree", "parsed_round",
+        for name in ("run_command", "plan_of", "outcome_of", "run_seed", "write_folder", "baseline_runs", "design_key", "parsed_round",
                      "names", "matches", "build", "lines_of", "small_tier", "models_text", "dry_lines", "refusals", "main", "check_lines",
                      "RECORD", "TEXT", "BASELINES", "SEEDS", "SEEDED", "KEPT_TREE", "FOLDER", "REVIEW_TREE", "OUT_DIR", "COST_MULTIPLE",
                      "BASELINE_MODEL", "DESIGN_MODEL", "PRE_ORDER_MODEL", "CALLER", "ROUNDS", "VIEW_COMMANDS", "REPO"):

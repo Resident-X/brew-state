@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE-C1-TEST-6
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-22T14:47:43.536229Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_minimums.py::test_a_process_the_record_does_not_list_fails_naming_the_layers_the_weight_and_what_it_lists
+  artifact_version: d352f50daff978bfe88264260ecf3a8c2424f680
+attested_by: crun-991cc497f044fb8d
+links:
+  - target: SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C1
+    type: satisfies

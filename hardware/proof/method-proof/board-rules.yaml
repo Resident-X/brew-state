@@ -7,4 +7,7 @@
 # manufacture.
 sensing: none
 ground_returns: none
+fabrication:
+  outer_copper_oz: 1
+  source: none -- synthetic weight, the manufacturer's standard one, chosen to exercise the check
 synthetic: true

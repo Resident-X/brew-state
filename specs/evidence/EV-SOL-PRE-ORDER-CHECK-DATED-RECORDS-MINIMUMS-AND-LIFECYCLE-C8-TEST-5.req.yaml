@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE-C8-TEST-5
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C8
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-22T14:47:46.27301Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_baseline_key.py::test_the_key_is_the_hash_of_the_sorted_path_and_content_hash_lines_pinned_here
+  artifact_version: d352f50daff978bfe88264260ecf3a8c2424f680
+attested_by: crun-991cc497f044fb8d
+links:
+  - target: SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C8
+    type: satisfies

@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-LAYOUT-COST-MULTIPLE-CHECK-TELLS-TWO-FROM-2-25.C1
+type: criterion
+title: The test that no document restates the layout review's cost multiple as 2 tells 2 from a figure that begins with 2
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Change the test so it refuses a document that states the layout review's cost multiple as 2 and does not refuse one that states another multiple beginning with 2, such as 2.25 or 20, so the board tier of the build round passes on the production-files proof's task description. Checked by running the test against the current documents, which pass, and against text carrying a multiple of 2, which it refuses. Out of scope: the figures the documents state, and any other check in that test module.
+links:
+  - target: SOL-HW-REVIEW-LAYOUT-COST-MULTIPLE-CHECK-TELLS-TWO-FROM-2-25
+    type: criterion-of

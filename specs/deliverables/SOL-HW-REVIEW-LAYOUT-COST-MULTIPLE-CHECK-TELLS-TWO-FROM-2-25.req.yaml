@@ -1,0 +1,25 @@
+id: SOL-HW-REVIEW-LAYOUT-COST-MULTIPLE-CHECK-TELLS-TWO-FROM-2-25
+type: deliverable
+category: solution
+title: The test that no document restates the layout review's cost multiple as 2 tells 2 from a figure that begins with 2
+status: active
+version: 1
+text: |
+  Why this exists. The layout review's test that no document restates the cost multiple as twice the single mean matches the words "cost multiple of 2" as a substring, so it also fails on the text "cost multiple of 2.25", the figure the production-files proof is judged by. The production-files proof's task description states that figure, so the board tier of the build round failed on main with no document wrong. Found when the board tier of an unrelated build round failed on it.
+
+  What it does. Makes the test match the figure 2 exactly, so a multiple that only begins with 2 is another figure and is not refused, and a document that still says a multiple of 2 for the layout review is refused as before.
+
+  Out of scope: the figures the documents state, and any other check in that test module.
+
+  Settled. A figure is the number as written, so "2" followed by a decimal point and digits, or by more digits, is a different figure from 2. The fix lives in the one test (hardware/tools/tests/test_review_caller_layout.py); no document changes.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: targets
+  - target: SOL-HW-REVIEW-FAN-OUT-LAYOUT
+    type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 brief reviewer
+  fingerprint: d83de527c6fc03326b8e6a76100f29a8d98290ac54d34b3720b132515c0e951a
+  gating_profile: ""

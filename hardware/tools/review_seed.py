@@ -52,6 +52,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import hashlib
 import io
 import json
 import os
@@ -704,12 +705,37 @@ def archived(repo: str, commit: str, path: str) -> Dict[str, bytes]:
     return files
 
 
-def design_files(repo: str, commit: str, design: str) -> Dict[str, bytes]:
-    """The files of the design at `design`, a path from `repo`'s root, that the review step gives a reviewer, as
-    `commit` holds them, by their path inside the design's folder."""
+def design_files(repo: str, commit: str, design: str, reads: Callable[[str], bool] = given) -> Dict[str, bytes]:
+    """The files of the design at `design`, a path from `repo`'s root, that `reads` names (by default those the review
+    step gives a reviewer), as `commit` holds them, by their path inside the design's folder."""
     prefix = design.rstrip("/") + "/"
     return {name[len(prefix):]: content for name, content in archived(repo, commit, design).items()
-            if name.startswith(prefix) and given(name[len(prefix):])}
+            if name.startswith(prefix) and reads(name[len(prefix):])}
+
+
+def key_of(files: Dict[str, bytes]) -> str:
+    """The key a recorded review baseline holds as the design: the SHA-256 of one line for each file, in order of path, that
+    holds the path inside the design's folder, a NUL byte, the SHA-256 of the file's content as hex and a newline. It moves
+    when a file is added, removed, renamed or changed, and for nothing else."""
+    digest = hashlib.sha256()
+    for name in sorted(files):
+        digest.update(f"{name}\0{hashlib.sha256(files[name]).hexdigest()}\n".encode())
+    return digest.hexdigest()
+
+
+def read_key(repo: str, commit: str, design: str, reads: Callable[[str], bool]) -> str:
+    """The baseline key of the design at `design` as `commit` of `repo` holds it, over the files a review reads, which
+    `reads` names by their path inside the design's folder.
+
+    Each review keys over its own read list, with this one helper given the list, so that a change to a file the review
+    does not read, such as the catalogue extract or a record only the pre-order check reads, leaves the key as it was and a
+    change to a file it reads changes it. A design that holds none of the files is refused, since its key would stand
+    for no design at all.
+    """
+    files = design_files(repo, commit, design, reads)
+    if not files:
+        raise Refused(f"the files of {design} that the review reads cannot be read at {commit} in {repo}")
+    return key_of(files)
 
 
 def copy_commit(out: str, repo: str, commit: str, design: str, documents_repo: Optional[str] = None,
