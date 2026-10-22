@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-FAN-OUT-SCHEMATIC.C7
+type: criterion
+title: The schematic declaration grants read tools and read-only retrieval and sets the replicas, time budget and bound, and the start report is checked against the grant
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Over synthetic declarations and a stub executor, the schematic declaration grants a reviewer the read tools and the one read-only retrieval tool and no other; sets two replicas, the full and hunt framings, on the small-tier model; sets the time budget at 350 seconds and the bound on reviewers at once at 30; and the kit's check of the start report against the grant fails a run whose reviewer holds any other tool. Out of scope: a live session.
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-SCHEMATIC
+    type: criterion-of
