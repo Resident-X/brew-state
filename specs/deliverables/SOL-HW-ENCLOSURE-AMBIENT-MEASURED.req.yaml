@@ -25,3 +25,7 @@ links:
     type: justified-by
   - target: SOL-HW-AMBIENT-SPAN-DECLARED
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: 5fc7375a703071c83278cf213a185bc05a4b09183b568a705b3f3b986b74e116
+  gating_profile: ""
