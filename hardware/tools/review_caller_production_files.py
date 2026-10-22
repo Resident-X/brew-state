@@ -14,8 +14,9 @@ check: it stands and blocks the order as every row that is not `matches` does, s
 The kit keeps one verdict table per answer in which every unit item has a row, so a reviewer gives its rows in one table, Verdicts,
 that holds the columns of both of the record's tables; the merge checks them for the kind of row they are and the render writes
 the record's Parts and Layers tables from them. Replicas are merged by the kit with any row that is not `matches` standing: the
-verdict list below is ordered `differs`, `matches`, `cannot judge` for that reason, the kit taking a `cannot judge` first and then
-the verdict earliest in the list.
+check names `differs` as its fail verdict, which the kit holds as it holds a fail, so a `differs` stands over a `cannot judge` and a
+`matches` from another replica and no repair turn, `cannot judge` turn or rerun clears it; the verdict list below is ordered
+`differs`, `matches`, `cannot judge`, so a `cannot judge` stands over a `matches`.
 
 The review folder is the one production_review_folder.py writes. Its round file holds the commit judged, the tools, the commands
 and the line saying what the assembler's preview is, which the merge has no model to write, so they are read when the declaration
@@ -72,8 +73,8 @@ LAYER_VIEWS = ("layer-",)
 ASSEMBLY_VIEWS = ("assembly-", "3d-")
 
 MATCHES, DIFFERS, CANNOT_JUDGE = "matches", "differs", "cannot judge"
-#: The ordering step's three verdicts, in the order the merge reads them: the kit takes a `cannot judge` first and then the verdict
-#: earliest in this list, so a `differs` stands over a `matches`.
+#: The ordering step's three verdicts, in the order the merge reads them: the kit takes the fail verdict (`differs`) first, then a
+#: `cannot judge`, then the verdict earliest in this list.
 VERDICTS = (DIFFERS, MATCHES, CANNOT_JUDGE)
 PART_COLUMNS = ["Position (file / preview)", "Rotation (file / preview)", "Polarity or first pin (file / preview)",
                 "Catalogue part (record / parts list)"]
@@ -102,6 +103,8 @@ replica_policy = {
     "replicas": {"low": 1, "normal": 2, "high": 3},
 }
 STAKES = "high"
+#: The verdict the check holds as the kit holds a fail: a `differs` stands over a `cannot judge` and over a `matches` when replicas merge, and no repair turn, cannot-judge turn or rerun clears it.
+fail_verdict = DIFFERS
 #: The most reviewers at once: the layout caller's, the largest number the live runs ran with no call refused for a rate limit.
 bound = 30
 #: The check's time target in seconds, so the planner sizes groups well clear of the bound.
