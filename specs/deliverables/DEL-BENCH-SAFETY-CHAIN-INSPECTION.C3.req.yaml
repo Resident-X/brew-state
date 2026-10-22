@@ -1,0 +1,13 @@
+id: DEL-BENCH-SAFETY-CHAIN-INSPECTION.C3
+type: criterion
+title: The fitted steam pump's variant and rated pressure are established on the machine
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The variant of the steam pump fitted is read from the machine and its rated pressure taken from that variant's own datasheet, each recorded with how it was established.
+links:
+  - target: DEL-BENCH-SAFETY-CHAIN-INSPECTION
+    type: criterion-of

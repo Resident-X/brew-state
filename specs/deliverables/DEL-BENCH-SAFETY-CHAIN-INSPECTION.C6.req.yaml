@@ -1,0 +1,13 @@
+id: DEL-BENCH-SAFETY-CHAIN-INSPECTION.C6
+type: criterion
+title: The hardware layer that contains steam-side pressure without power, sensing or command is chosen from the established facts
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  The form of the hardware layer that contains or releases steam-side pressure without power, sensing or command is chosen from the facts established above, with the rejected forms and the reason, and the choice names the pressure it answers to.
+links:
+  - target: DEL-BENCH-SAFETY-CHAIN-INSPECTION
+    type: criterion-of

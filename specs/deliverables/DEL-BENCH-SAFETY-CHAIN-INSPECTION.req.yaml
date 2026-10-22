@@ -1,0 +1,26 @@
+id: DEL-BENCH-SAFETY-CHAIN-INSPECTION
+type: deliverable
+category: task
+title: The relief, protection and thermostat facts the safety chain rests on are established on the machine as found, and the choices that follow are made
+status: active
+level: task
+version: 1
+text: |
+  The facts about the machine's pressure relief and protective devices that the safety chain rests on are established by inspecting this machine as found, and the choices that follow from them are made. They are: the steam side's over-pressure valve, whether a check valve lies between it and the steam block, and the pressure it opens at; whether a check valve lies between the brew pump's outlet and the brew block, which decides whether a relief or a pressure tap on the brew pump's outlet side sees the block's pressure or only the pump's; which variant of the steam pump is fitted and so its rated pressure; whether each thermostat resets itself or must be reset by hand; and the rating and location of any thermal fuse inside a heater assembly. Each is recorded with how it was established.
+
+  The two element thermostats are wired in series with their element leads at the board terminals and the pump thermostat with the coffee pump's lead, so the board carries the same current whether a thermostat resets itself or not, and none of these facts changes a board circuit. They gate the hardware layer that contains pressure without power, sensing or command, the non-restoring protection, firmware fault handling and the energising of mains at bring-up, which is why the boards' design does not wait on this task.
+rationale: |
+  These facts were held inside the criterion that fixes the constraints the boards are designed against, which made the partition and feasibility task, and every board after it, wait on measurements that change no circuit. The distinction that matters is where the consequence lands: pressure containment, the non-restoring protection and energisation, not the boards. Giving the facts their own task keeps the dependency where they are used. The roadmap's physical-configuration criterion already names the open pressure-relief question as part of this phase.
+links:
+  - target: DEL-BREW-STATE-DELIVERY.C2
+    type: derives-from
+  - target: REQ-SAFETY-CHAIN-001.C5
+    type: targets
+  - target: REQ-SAFETY-CHAIN-001.C4
+    type: targets
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C5
+    type: targets
+  - target: REQ-MACHINE-CONFIGURATION-001.C3
+    type: targets
+  - target: DEC-STEAM-BLOCK-IS-A-FLASH-GENERATOR
+    type: justified-by

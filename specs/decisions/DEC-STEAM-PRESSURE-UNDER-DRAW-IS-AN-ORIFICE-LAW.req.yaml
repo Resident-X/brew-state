@@ -3,13 +3,13 @@ type: decision
 category: tactical
 title: Steam pressure under a draw is an orifice law of the feed rate, and trapped pressure is saturation only while the block holds liquid
 status: active
-version: 1
+version: 2
 rationale: |
   Context: DEC-STEAM-BLOCK-IS-A-FLASH-GENERATOR fixes the direction: with the wand open the feed sets the pressure, and with the wand shut and liquid trapped the pressure is saturation at the casting temperature. It leaves the form of both relations open. The plant model has no state that tells a block holding liquid from a dry one, so a shut dry block would read as saturated. The only saturation relation in the plant is an affine slope that understates pressure badly above about 130 C, where the casting ceiling sits.
 
   Trade-offs: Flow through a tube, valve and tip is turbulent, so the pressure drop across the restriction goes as the square of the flow, which one coefficient describes. That coefficient is an estimate with a wide error and is declared with its origin, as every plant coefficient is; a gauge on the steam path is the measurement that would displace it. A linear law would describe laminar flow and is not the regime here. An algebraic law is kept because no measurement supports a pressure time constant, and one is added only if a test needs it. A held liquid inventory is the smallest state that separates the trapped case from the dry one: feed raises it, boiling lowers it, and the saturation relation applies only while it is above zero with the wand shut. The saturation relation is a declared property of water valid to the casting ceiling, and the ceiling is a declared control limit with its origin, chosen from the saturation table and not offered as containment.
 
-  Reversibility: Every element is plant-model and declaration data, reversible in firmware. The hardware layer that contains trapped pressure without power, sensing or command stays owned by DEL-HW-DESIGN-CONSTRAINTS.C6.
+  Reversibility: Every element is plant-model and declaration data, reversible in firmware. The hardware layer that contains trapped pressure without power, sensing or command stays owned by DEL-BENCH-SAFETY-CHAIN-INSPECTION.C6.
 
   Consequences: The affine pressure relation and the pressure-deficit state are retired from the steam side, with the coefficient that fed the deficit. The pressure band and ready figures in the steam declaration were derived through the affine slope and are re-derived from the new relations. The plant description states the orifice law, the inventory state, the saturation relation, their declared errors and what they leave out.
 options_considered:

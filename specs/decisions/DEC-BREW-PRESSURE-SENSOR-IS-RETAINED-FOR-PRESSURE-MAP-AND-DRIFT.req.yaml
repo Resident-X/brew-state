@@ -2,7 +2,7 @@ id: DEC-BREW-PRESSURE-SENSOR-IS-RETAINED-FOR-PRESSURE-MAP-AND-DRIFT
 type: decision
 title: The brew pressure sensor is retained for the pressure map and the drift watch, as the complement of the flow meter rather than a redundant copy
 status: active
-version: 1
+version: 2
 rationale: |
   Context: Once a safety-only relief sits above the working range, the brew pressure sensor is no longer needed to find the cap, and the question is whether it stays. Flow and pressure are complementary rather than redundant: with pressure and the flow meter together the resistance of the puck is observable, while pressure alone cannot give volume per stroke and flow alone cannot give the pressure the coffee saw. A pressure-commanded profile segment (DEC-PROFILE-SEGMENTS-COMMAND-PRESSURE-OR-FLOW) also needs the pressure to close its loop.
 
@@ -10,7 +10,7 @@ rationale: |
 
   Reversibility: Reversible: the tap is a tee and the sensor is a small part. Dropping it later means giving up the pressure map, the drift watch and any pressure-commanded segment together.
 
-  Consequences: The brew pressure measurement requirement is met by this sensor when it is fitted and read, and stays open until then. Where the tap sits depends on the inspection of whether a check valve lies between the brew pump outlet and the brew block (DEL-HW-DESIGN-CONSTRAINTS.C6): if none does, a tap on the cold side between the pump and the block sees the block's pressure and shows the relief's operation at the sensor; if one does, the tap has to sit on the block side to read the pressure the coffee saw, and the relief's operation is not visible from a pump-side tap. The sensor's range has to cover the relief's setting.
+  Consequences: The brew pressure measurement requirement is met by this sensor when it is fitted and read, and stays open until then. Where the tap sits depends on the inspection of whether a check valve lies between the brew pump outlet and the brew block (DEL-BENCH-SAFETY-CHAIN-INSPECTION.C2): if none does, a tap on the cold side between the pump and the block sees the block's pressure and shows the relief's operation at the sensor; if one does, the tap has to sit on the block side to read the pressure the coffee saw, and the relief's operation is not visible from a pump-side tap. The sensor's range has to cover the relief's setting.
 options_considered:
   - option: Retain the brew pressure sensor as the complement of the flow meter
     reason_rejected: ""

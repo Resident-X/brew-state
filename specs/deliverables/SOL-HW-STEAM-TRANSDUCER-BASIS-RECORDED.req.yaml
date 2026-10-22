@@ -1,0 +1,27 @@
+id: SOL-HW-STEAM-TRANSDUCER-BASIS-RECORDED
+type: deliverable
+category: solution
+title: The pressure the steam-path transducer must survive and the ratings the part must carry are recorded as a derived basis with its premise and its check
+status: active
+version: 1
+text: |
+  Records, in the board design constraints record, controller-board-design-constraints.md, the pressure the steam-path transducer must survive in service and the proof and burst ratings the chosen part must carry, so the transducer can be chosen by the partition and feasibility task without waiting on inspection of the machine.
+
+  The steam block holds no standing water and the transducer is exposed to the steam the block produces. With the wand open the feed sets the pressure; with the wand shut and liquid left in the block the pressure is saturation at the casting temperature, and the casting ceiling of about 150 degC bounds that to under 4 bar gauge (DEC-STEAM-BLOCK-IS-A-FLASH-GENERATOR). The steam pump carries an over-pressure valve on its cold side opening at about 4 to 5 bar, with no check valve between it and the block, which caps the block at its setting (owner statement 2026-10-11, recorded in reference-machine.md, not yet confirmed on the machine). The record therefore states the in-service pressure as 5 bar gauge, graded owner statement for the cap and inferred for the figure, with the premise that the relief caps the block marked as the premise inspection of the machine confirms or revises.
+
+  The record states the ratings the part must carry above it: proof pressure at least 1.5 times, 7.5 bar gauge, and burst pressure at least 2 times, 10 bar gauge, graded project assumption as margins chosen where no requirement fixes them. It states the earlier design's 0.5 MPa XDB401 as the baseline the figures are checked against, with the overload of 7.5 bar gauge and burst of 15 bar gauge relayed from the owner-supplied family datasheet, graded published unverified, so the baseline meets both ratings. It states the range requirement as the steam accuracy of 0.775 bar already in the record, which a higher-range part meets because the family's accuracy is a fraction of full scale.
+
+  The record states the check: the chosen part's own datasheet gives a proof pressure and a burst pressure at or above these ratings and a range that meets the accuracy, and the partition and feasibility task records them with their source, ending the pending mark held against the transducer. It states that the highest pressure the machine could generate in a fault, 14.5 bar gauge at the steam thermostat's nominal trip with liquid trapped, is not this figure: the independent hardware layer answers to it, whose facts the machine inspection task establishes.
+rationale: |
+  The transducer part is chosen by the partition and feasibility task, and its choice would otherwise wait on the inspection of a relief valve whose only evidence is an owner statement on a machine that is out of service. The pressure the transducer meets in service is bounded by the feed, the casting ceiling and the pump's relief, all of which the record already holds; the 14.5 bar saturation at the thermostat trip is a fault pressure that a sensor is not asked to contain. Recording a derived basis with its premise lets the part be chosen now, and inspection can only confirm it or revise it before the part is ordered.
+links:
+  - target: DEL-HW-DESIGN-CONSTRAINTS.C6
+    type: derives-from
+  - target: REQ-MEASUREMENT-001.C8
+    type: targets
+  - target: REQ-MACHINE-CONFIGURATION-001.C3
+    type: targets
+  - target: DEC-MACHINE-RECORD-FOLDER-PER-MACHINE
+    type: justified-by
+  - target: DEC-STEAM-BLOCK-IS-A-FLASH-GENERATOR
+    type: justified-by

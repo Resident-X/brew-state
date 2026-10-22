@@ -1,0 +1,13 @@
+id: DEL-BENCH-SAFETY-CHAIN-INSPECTION.C1
+type: criterion
+title: The steam side's relief and any check valve in front of it are established on the machine, with the pressure the relief opens at
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The steam side's over-pressure valve is identified, whether a check valve lies between it and the steam block is established, and the pressure it opens at is read from the machine, each recorded with how it was established.
+links:
+  - target: DEL-BENCH-SAFETY-CHAIN-INSPECTION
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-HW-STEAM-TRANSDUCER-BASIS-RECORDED.C1
+type: criterion
+title: The in-service pressure the transducer must survive is recorded with its derivation, premise and grades
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  State in controller-board-design-constraints.md the in-service pressure of the steam path, 5 bar gauge, derived from the steam pump's over-pressure valve opening at 4 to 5 bar with no check valve between it and the block, cross-checked against the casting ceiling's saturation pressure of under 4 bar gauge, with the grade of each input, the owner statement that supplies the relief and its date, and the premise that the relief caps the block marked as the premise the machine inspection confirms or revises. Out of scope - the fault pressure at the thermostat trip, which the hardware pressure layer answers to.
+links:
+  - target: SOL-HW-STEAM-TRANSDUCER-BASIS-RECORDED
+    type: criterion-of

@@ -1,0 +1,13 @@
+id: DEL-BENCH-SAFETY-CHAIN-INSPECTION.C7
+type: criterion
+title: The protection that holds each heated load off after it has operated is identified
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  For each heated load the protective device that, once operated, keeps power off until a person intervenes is identified from the thermostat and fuse facts established above, or the absence of one is recorded with the choice made to supply it.
+links:
+  - target: DEL-BENCH-SAFETY-CHAIN-INSPECTION
+    type: criterion-of
