@@ -536,7 +536,7 @@ class TheBaselines(Proofed):
     def test_the_five_recorded_runs_are_the_baselines_for_the_seed_list_and_design_the_proof_seeds(self):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C9: the proof command takes the five recorded single-reviewer runs as baselines
         seeds = review_seed.seed_list(review_seed.SEEDS)["seeds"]
-        key, runs = lrp.baseline_runs(lrp.BASELINES, seeds, lrp.design_tree(), lrp.BASELINE_MODEL)
+        key, runs = lrp.baseline_runs(lrp.BASELINES, seeds, lrp.design_key(), lrp.BASELINE_MODEL)
         self.assertEqual(len(runs), 5)
         self.assertEqual(key.prompt, "ca90e542e3fc18fa114622aac0376f016c0dd74b386de98dedf9e9f7676f5c4e", "the prompt hash as recorded")
         self.assertEqual(round(proof.mean([run.cost_usd for run in runs]), 3), 2.839)
@@ -544,7 +544,7 @@ class TheBaselines(Proofed):
         self.assertEqual(sorted(run.found for run in runs), [19, 20, 21, 21, 21])
         edited = [dict(seed, item="MFG-9") if seed["id"] == "S10" else seed for seed in seeds]
         with self.assertRaises(lrp.Refused):
-            lrp.baseline_runs(lrp.BASELINES, edited, lrp.design_tree(), lrp.BASELINE_MODEL)
+            lrp.baseline_runs(lrp.BASELINES, edited, lrp.design_key(), lrp.BASELINE_MODEL)
 
 
 class TheStreamFigures(unittest.TestCase):

@@ -49,7 +49,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from typing import Dict, List, Optional, Sequence, Set, Tuple
+from typing import Dict, List, NamedTuple, Optional, Sequence, Set, Tuple
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -1530,9 +1530,16 @@ CATALOGUE_NAME = "catalogue-extract.yaml"
 POSITION_KEYS = ("reference", "value", "package", "rating", "lcsc", "class")
 #: The keys an entry of the catalogue extract holds, every one required.
 ENTRY_KEYS = ("lcsc", "library_class", "stock", "unit_price")
-#: The keys an entry may hold beside them: a lifecycle mapping, which holds all three of LIFECYCLE_KEYS when present.
+#: The keys an entry may hold beside them: a lifecycle mapping, which holds all three of LIFECYCLE_KEYS when present and
+#: which the lifecycle rule requires on the entry of every part the design places.
 OPTIONAL_ENTRY_KEYS = ("lifecycle",)
 LIFECYCLE_KEYS = ("status", "source", "read_on")
+#: The lifecycle statuses an entry may state: the rule fails the first three below, and a part whose status states that no
+#: source publishes one is not failed for that.
+ACTIVE = "active"
+NO_SOURCE = "no source publishes one"
+UNFIT_STATUSES = ("not recommended for new designs", "end of life", "obsolete")
+LIFECYCLE_STATUSES = (ACTIVE,) + UNFIT_STATUSES + (NO_SOURCE,)
 
 DERATING_NAME = "derating-policy.yaml"
 PIN_LIMITS_NAME = "pin-limits.yaml"
@@ -1651,8 +1658,17 @@ def read_specification(yaml, root: str, repository: Repository, design: Design, 
     return (None if problems else stated), problems
 
 
+class Extract(NamedTuple):
+    """The catalogue extract as the parts checks read it: each entry's stock and its lifecycle mapping (None where the
+    entry has none) by catalogue number, and the age the extract allows a reading."""
+
+    stock: Dict[str, object]
+    lifecycle: Dict[str, Optional[Dict[str, object]]]
+    max_age_days: Optional[int]
+
+
 def read_extract(yaml, root: str, repository: Repository, design: Design, today: datetime.date,
-                 not_for_manufacture: bool) -> Tuple[Optional[Dict[str, object]], List[Violation]]:
+                 not_for_manufacture: bool) -> Tuple[Optional[Extract], List[Violation]]:
     """The catalogue extract's entries by catalogue number, or what stops it being usable.
 
     An extract that states itself too old or dated later than today is still read, and the violation says so.
@@ -1693,6 +1709,7 @@ def read_extract(yaml, root: str, repository: Repository, design: Design, today:
                        "date the extract", "parts_catalogue")
     entries = data.get("entries")
     found: Dict[str, object] = {}
+    lifecycles: Dict[str, Optional[Dict[str, object]]] = {}
     if "entries" in data:
         if not isinstance(entries, list):
             bad("entries", f"entries is not a list of catalogue entries")
@@ -1714,6 +1731,10 @@ def read_extract(yaml, root: str, repository: Repository, design: Design, today:
                         for key in ("status", "source"):
                             if key in entry["lifecycle"]:
                                 reading.text(f"{life}.{key}", entry["lifecycle"][key])
+                        status = entry["lifecycle"].get("status")
+                        if isinstance(status, str) and status.strip() and status not in LIFECYCLE_STATUSES:
+                            reading.bad(f"{life}.status", f"{life}.status is {status!r}, where it is one of "
+                                                          f"{', '.join(LIFECYCLE_STATUSES)}")
                         if "read_on" in entry["lifecycle"]:
                             reading.date(f"{life}.read_on", entry["lifecycle"]["read_on"])
                     if reading.found:
@@ -1745,7 +1766,10 @@ def read_extract(yaml, root: str, repository: Repository, design: Design, today:
                         bad(f"{where}.lcsc", f"{where}.lcsc is {key}, which another entry also carries, so the extract "
                                              "is malformed; keep one entry for each catalogue number", "parts_catalogue")
                     found[key] = stock if "stock" in entry else None
-    return (found if usable else None), problems
+                    life = entry.get("lifecycle")
+                    lifecycles[key] = life if isinstance(life, dict) else None
+    return (Extract(found, lifecycles, limit if isinstance(limit, int) and not isinstance(limit, bool) else None)
+            if usable else None), problems
 
 
 def read_optional(yaml, root: str, repository: Repository, design: Design, name: str, rule: str, what: str,
@@ -1982,14 +2006,52 @@ def check_parts(yaml, root: str, design: Design, repository: Repository, today: 
                             f"has '{part[key] if part[key] is not None else ABSENT}'"))
         number = part["lcsc"]
         if catalogue is not None and number is not None and number.strip():
-            if number.strip() not in catalogue:
+            if number.strip() not in catalogue.stock:
                 found.append(Violation(design.project, "parts_catalogue", f"{reference} lcsc",
                                        f"the position {reference} has the catalogue number {number}, which the "
                                        "catalogue extract does not list"))
-            elif catalogue[number.strip()] == 0:
-                found.append(Violation(design.project, "parts_catalogue", f"{reference} lcsc",
-                                       f"the position {reference} has the catalogue number {number}, which the "
-                                       "catalogue extract shows with no stock"))
+            else:
+                if catalogue.stock[number.strip()] == 0:
+                    found.append(Violation(design.project, "parts_catalogue", f"{reference} lcsc",
+                                           f"the position {reference} has the catalogue number {number}, which the "
+                                           "catalogue extract shows with no stock"))
+                found += part_lifecycle(design, reference, number.strip(), catalogue, today)
+    return found
+
+
+def part_lifecycle(design: Design, reference: str, number: str, catalogue: Extract, today: datetime.date
+                   ) -> List[Violation]:
+    """What is wrong with the lifecycle the catalogue extract states for a placed part, if anything.
+
+    The mapping is required on the entry of every part the design places. A status of end of life, obsolete or not
+    recommended for new designs fails; so does a reading older than the age the extract allows itself, or dated later
+    than today. A status stating that no source publishes one is not failed for that: the mapping's source names the
+    sources that were looked at.
+    """
+    def fail(message: str) -> List[Violation]:
+        return [Violation(design.project, "parts_lifecycle", f"{reference} lifecycle", message)]
+
+    life = catalogue.lifecycle.get(number)
+    if life is None:
+        return fail(f"the position {reference}, catalogue number {number}, has no lifecycle in the catalogue extract; "
+                    "read the part's lifecycle status from its maker or the catalogue and add the entry's lifecycle "
+                    "mapping holding status, source and read_on")
+    status = life.get("status")
+    found = []
+    if status in UNFIT_STATUSES:
+        found += fail(f"the position {reference}, catalogue number {number}, has the lifecycle status '{status}' "
+                      f"(source: {life.get('source')}, read on {life.get('read_on')}); choose a part that is active, or "
+                      "one whose status no source publishes, and record it")
+    read_on = iso_date(life.get("read_on"))
+    if read_on is None:
+        return found
+    if read_on > today:
+        found += fail(f"the lifecycle of {reference}, catalogue number {number}, is dated {read_on.isoformat()}, later "
+                      f"than today ({today.isoformat()}), so its date cannot be trusted")
+    elif catalogue.max_age_days is not None and (today - read_on).days > catalogue.max_age_days:
+        found += fail(f"the lifecycle of {reference}, catalogue number {number}, was read on {read_on.isoformat()}, "
+                      f"{(today - read_on).days} days before today ({today.isoformat()}), past the "
+                      f"{catalogue.max_age_days} days the extract allows; read the part's lifecycle again and date it")
     return found
 
 
@@ -2332,7 +2394,9 @@ def voltage_rules(design: Design, yaml, root: str, repository: Repository, not_f
 
 BOARD_RULES_NAME = "board-rules.yaml"
 #: The keys of the board rules record, of the sensing mapping, of the ground-return mapping and of each signal class in it.
-BOARD_RULES_KEYS = ("sensing", "ground_returns", "synthetic")
+BOARD_RULES_KEYS = ("sensing", "ground_returns", "fabrication", "synthetic")
+#: The keys of the fabrication mapping: the finished outer copper weight the order must select, and why that weight was chosen.
+FABRICATION_KEYS = ("outer_copper_oz", "source")
 SENSING_KEYS = ("classes", "noisy_classes", "clearance_mm", "source")
 GROUND_RETURN_KEYS = ("ground_classes", "non_signal_classes", "signal_classes")
 SIGNAL_CLASS_KEYS = ("class", "signal_pins_per_return", "source")
@@ -2361,8 +2425,9 @@ def load_board_rules(yaml, root: str, repository: Repository, design: Design, no
     if find_record(root, design.directory, repository.tracked, BOARD_RULES_NAME) is None:
         return None, [Violation(design.project, "board_rules_record", os.path.join(design.directory, BOARD_RULES_NAME),
                                 f"there is no {BOARD_RULES_NAME} in the design's folder or any folder above it, so the "
-                                "sensing-clearance and ground-return rules have nothing to hold the design to; add the "
-                                f"record, stating each of sensing and ground_returns, or {NOTHING} where the design has none")]
+                                "sensing-clearance, ground-return and board-minimums rules have nothing to hold the design to; "
+                                f"add the record, stating each of sensing and ground_returns, or {NOTHING} where the design has "
+                                "none, and the fabrication mapping with the finished outer copper weight the order selects")]
     data, reading = read_optional(yaml, root, repository, design, BOARD_RULES_NAME, "board_rules_record",
                                   "board rules record", BOARD_RULES_KEYS, not_for_manufacture)
     if data is None:
@@ -2374,7 +2439,28 @@ def load_board_rules(yaml, root: str, repository: Repository, design: Design, no
             reading.bad(key, f"{key} is {data[key]!r}, where it is a mapping or the word {NOTHING} for a design with none")
         else:
             read(reading, data[key])
+    if "fabrication" in data:
+        read_fabrication(reading, data["fabrication"])
     return (None if reading.found else data), reading.found
+
+
+def read_fabrication(reading: Reading, fabrication) -> None:
+    """The fabrication mapping's form: the finished outer copper weight in ounces and the source that says why it was chosen.
+
+    Unlike the other mappings it may not state none, because the manufacturer takes the weight as an order option and
+    no layout file carries it, so a design that declares none is held to no process.
+    """
+    if fabrication == NOTHING:
+        reading.bad("fabrication", f"fabrication is the word {NOTHING}, where it is a mapping of {', '.join(FABRICATION_KEYS)}: "
+                                   "the order takes the finished outer copper weight as an option and no layout file "
+                                   "carries it, so a design declares the weight it orders")
+        return
+    if not reading.mapping("fabrication", fabrication, FABRICATION_KEYS, FABRICATION_KEYS, "a fabrication declaration"):
+        return
+    if "outer_copper_oz" in fabrication:
+        reading.positive("fabrication.outer_copper_oz", fabrication["outer_copper_oz"], " of ounces")
+    if "source" in fabrication:
+        reading.text("fabrication.source", fabrication["source"])
 
 
 def class_names(reading: Reading, path: str, names, empty: bool = False) -> List[str]:
@@ -2814,6 +2900,222 @@ def mains_rule(design: Design, rules: Optional[List[list]], signed: Optional[Tup
         elif signed is not None and declared < signed[index] - 1e-9:
             found += fail(where, f"the design declares a {kind} of {declared:g} mm, below the signed "
                                  f"{signed[index]:g} mm in its separation basis record")
+    return found
+
+
+# --- The manufacturer limits record and the board minimums --------------------------
+
+MANUFACTURER_LIMITS_NAME = "manufacturer-limits.yaml"
+#: The keys of the manufacturer limits record, of each process in it, and of the figure and citation of each limit.
+MANUFACTURER_LIMITS_KEYS = ("read_on", "source", "max_age_days", "processes", "synthetic")
+PROCESS_KEYS = ("copper_layers", "outer_copper_oz", "limits")
+LIMIT_FIGURE_KEYS = ("mm", "citation")
+#: The entry of the dated prose manufacturer record a limit was read from: its section, its limit and its condition.
+LIMIT_CITATION_KEYS = ("section", "limit", "condition")
+#: A limit is named for the board-setup minimum it bounds, as KiCad names it.
+LIMIT_NAME = re.compile(r"min_[a-z0-9_]+")
+MINIMUMS_RULE = "board_minimums"
+#: The board-setup minimum each constraint of a custom rule, and each net class's clearance and track width, is held to.
+CONSTRAINT_LIMITS = {
+    "clearance": "min_clearance",
+    "track_width": "min_track_width",
+    "hole_size": "min_through_hole_diameter",
+    "hole_to_hole": "min_hole_to_hole",
+    "annular_width": "min_via_annular_width",
+    "via_diameter": "min_via_diameter",
+    "hole_clearance": "min_hole_clearance",
+    "edge_clearance": "min_copper_edge_clearance",
+}
+#: What a net class of the project file states that a limit bounds, by the constraint it is held as.
+CLASS_FIGURES = (("clearance", "min_clearance"), ("track_width", "min_track_width"))
+#: How many millimetres a unit a custom rule may write a length in is; a rule with a bare number writes millimetres.
+RULE_UNITS = {"": 1.0, "mm": 1.0, "mil": 0.0254, "in": 25.4}
+RULE_LENGTH = re.compile(r"([0-9]+(?:\.[0-9]+)?)(mm|mil|in)?")
+#: How much below a limit a figure may sit and not be looser than it: float rounding only, as the voltage rules allow.
+LIMIT_SLACK = 1e-9
+
+
+class Limits(NamedTuple):
+    """The manufacturer limits record as the minimums rule reads it: each process's limits, by the process's copper
+    layer count and finished outer copper weight, each limit its millimetres and the citation naming its entry."""
+
+    processes: Dict[Tuple[int, float], Dict[str, Tuple[float, Dict[str, str]]]]
+    record: str
+
+
+def load_manufacturer_limits(yaml, root: str, repository: Repository, design: Design, today: datetime.date,
+                             not_for_manufacture: bool) -> Tuple[Optional[Limits], List[Violation]]:
+    """The manufacturer limits record the design is held to, and the violations of its form, its age and its use.
+
+    The record is found as the separation basis record is: the nearest at or above the design's folder. A design whose
+    folders hold none fails, and so does one whose record is not in its form, is synthetic on an orderable board, is
+    read longer ago than its own max_age_days or is dated later than today. A record too old or dated later is still
+    returned, so the minimums are judged beside the failure; one not in its form is not.
+    """
+    what = "manufacturer limits record"
+    rule = "manufacturer_limits_record"
+    if find_record(root, design.directory, repository.tracked, MANUFACTURER_LIMITS_NAME) is None:
+        return None, [Violation(design.project, rule, os.path.join(design.directory, MANUFACTURER_LIMITS_NAME),
+                                f"there is no {MANUFACTURER_LIMITS_NAME} in the design's folder or any folder above it, so the "
+                                "board's minimums have no manufacturer limits to be held to; add the record, stating what "
+                                "the manufacturer makes with the date it was read")]
+    data, reading = read_optional(yaml, root, repository, design, MANUFACTURER_LIMITS_NAME, rule, what,
+                                  MANUFACTURER_LIMITS_KEYS, not_for_manufacture)
+    if data is None:
+        return None, reading.found
+    record = reading.record
+    read_on = iso_date(data.get("read_on")) if "read_on" in data else None
+    if "read_on" in data:
+        reading.date("read_on", data["read_on"])
+    if "source" in data:
+        reading.text("source", data["source"])
+    limit = data.get("max_age_days")
+    if "max_age_days" in data and (isinstance(limit, bool) or not isinstance(limit, int) or limit <= 0):
+        reading.bad("max_age_days", f"max_age_days is {limit!r}, where it is a whole number of days above zero")
+    processes: Dict[Tuple[int, float], Dict[str, Tuple[float, Dict[str, str]]]] = {}
+    if "processes" in data and reading.listed("processes", data["processes"], "processes"):
+        keys: List[str] = []
+        for index, entry in enumerate(data["processes"]):
+            where = f"processes[{index}]"
+            if not reading.mapping(where, entry, PROCESS_KEYS, PROCESS_KEYS, "a process"):
+                continue
+            ok_layers = "copper_layers" not in entry or reading.whole(f"{where}.copper_layers", entry["copper_layers"], 1, 64)
+            ok_weight = "outer_copper_oz" not in entry or reading.positive(f"{where}.outer_copper_oz", entry["outer_copper_oz"],
+                                                                           " of ounces")
+            figures: Dict[str, Tuple[float, Dict[str, str]]] = {}
+            if "limits" in entry and not isinstance(entry["limits"], dict):
+                reading.bad(f"{where}.limits", f"{where}.limits is not a mapping from the name of a board-setup minimum to its "
+                                               f"figure ({', '.join(LIMIT_FIGURE_KEYS)})")
+            elif "limits" in entry:
+                if not entry["limits"]:
+                    reading.bad(f"{where}.limits", f"{where}.limits lists no limit, so the process would hold a board to nothing")
+                for name, figure in entry["limits"].items():
+                    at = f"{where}.limits.{name}"
+                    if not isinstance(name, str) or not LIMIT_NAME.fullmatch(name):
+                        reading.bad(at, f"{at} is not the name of a board-setup minimum as KiCad names it (min_track_width, "
+                                        "min_clearance and the like)")
+                        continue
+                    if not reading.mapping(at, figure, LIMIT_FIGURE_KEYS, LIMIT_FIGURE_KEYS, "a limit"):
+                        continue
+                    ok_mm = "mm" not in figure or reading.positive(f"{at}.mm", figure["mm"], " of millimetres")
+                    cited: Dict[str, str] = {}
+                    if "citation" in figure and reading.mapping(f"{at}.citation", figure["citation"], LIMIT_CITATION_KEYS,
+                                                                LIMIT_CITATION_KEYS, "a citation"):
+                        for part in LIMIT_CITATION_KEYS:
+                            if part in figure["citation"] and reading.text(f"{at}.citation.{part}", figure["citation"][part]):
+                                cited[part] = figure["citation"][part]
+                    if ok_mm and "mm" in figure and len(cited) == len(LIMIT_CITATION_KEYS):
+                        figures[name] = (float(figure["mm"]), cited)
+            if ok_layers and ok_weight and "copper_layers" in entry and "outer_copper_oz" in entry:
+                keys.append(f"{entry['copper_layers']} copper layers at {entry['outer_copper_oz']:g} oz")
+                processes[(entry["copper_layers"], float(entry["outer_copper_oz"]))] = figures
+        reading.distinct("processes", keys, "the process")
+    if reading.found:
+        return None, reading.found
+    found = []
+    if read_on is not None and read_on > today:
+        found.append(Violation(design.project, rule, f"{record} read_on",
+                               f"the record is dated {read_on.isoformat()}, later than today ({today.isoformat()}), so its date "
+                               "cannot be trusted"))
+    elif read_on is not None and isinstance(limit, int) and (today - read_on).days > limit:
+        found.append(Violation(design.project, rule, f"{record} read_on",
+                               f"the record was read on {read_on.isoformat()}, {(today - read_on).days} days before today "
+                               f"({today.isoformat()}), past the {limit} days it allows itself; read the manufacturer's "
+                               "limits again and date the record"))
+    return Limits(processes, record), found
+
+
+def rule_length_mm(text) -> Optional[float]:
+    """A length a custom rule writes, in millimetres: a bare number, or one in mm, mil or in; None for any other form."""
+    if isinstance(text, (list, sexpr.Quoted)):
+        return None
+    match = RULE_LENGTH.fullmatch(str(text))
+    return float(match.group(1)) * RULE_UNITS[match.group(2) or ""] if match else None
+
+
+def board_minimums(design: Design, project: dict, rules: Optional[List[list]], tree: list, limits: Limits,
+                   outer_copper_oz: float) -> List[Violation]:
+    """Every minimum the board sets that is looser than the manufacturer limit of its process.
+
+    The process is the layout's copper layer count, read from its own layer stack,
+    and the finished outer copper weight the board rules record declares. A
+    process the record does not list fails. For the limits of that process: each
+    board-setup minimum a limit names must be stated by the project file and be no
+    smaller than the limit, since an unstated one would be KiCad's own default,
+    which no record reviews; each net class's clearance and track width is held to
+    the limit of min_clearance and min_track_width; and every minimum a custom
+    rule's constraint sets is held to the limit of the board-setup minimum
+    CONSTRAINT_LIMITS maps its kind to, converted to millimetres from the unit the
+    rule writes it in. A kind the map does not hold, such as track_angle, creepage
+    or courtyard_clearance, is not judged, and neither is a minimum the record
+    does not state. A minimum a rule writes in a form that cannot be read as a
+    length fails, since it cannot be shown to be no looser than the limit.
+    """
+    def fail(location: str, message: str) -> Violation:
+        return Violation(design.project, MINIMUMS_RULE, location, message)
+
+    layers = len(copper_layers(tree))
+    wanted = (layers, float(outer_copper_oz))
+    process = limits.processes.get(wanted)
+    if process is None:
+        listed = "; ".join(f"{count} copper layers at {weight:g} oz" for count, weight in sorted(limits.processes)) or "none"
+        return [fail(limits.record, f"the board has {layers} copper layers and its board rules record declares a finished outer "
+                                    f"copper weight of {outer_copper_oz:g} oz, a process {limits.record} does not list (it lists "
+                                    f"{listed}); change the layer count or the weight, or add the manufacturer's limits for "
+                                    "that process to the record")]
+    process_name = f"{layers} copper layers at {outer_copper_oz:g} oz"
+    found = []
+
+    def cited(name: str) -> str:
+        figure, citation = process[name]
+        return (f"{limits.record} limits {name}, {figure:g} mm for {process_name}, read from "
+                f"{citation['section']}: {citation['limit']}, {citation['condition']}")
+
+    for name in sorted(process):
+        value = setting(project, "board", "design_settings", "rules", name)
+        where = f"{design.project} board.design_settings.rules.{name}"
+        if value is None:
+            found.append(fail(where, f"the project file's board setup states no {name}, which {cited(name)} bounds, so KiCad "
+                                     "would apply its own default, which no record reviews; set it in Board Setup to at least "
+                                     "the limit"))
+        elif isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+            found.append(fail(where, f"the project file's board setup gives {name} as {json.dumps(value)[:40]}, which is not a "
+                                     f"number of millimetres, so it cannot be held to the limit; {cited(name)}"))
+        elif value < process[name][0] - LIMIT_SLACK:
+            found.append(fail(where, f"the board setup's {name} is {value:g} mm, looser than the manufacturer's {cited(name)}; "
+                                     "raise it to at least the limit"))
+    for entry in setting(project, "net_settings", "classes") or []:
+        if not isinstance(entry, dict):
+            continue
+        for key, name in CLASS_FIGURES:
+            if name not in process or key not in entry:
+                continue
+            value = entry[key]
+            where = f"{design.project} net_settings.classes '{entry.get('name')}' {key}"
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+                found.append(fail(where, f"the net class {entry.get('name')} gives its {key} as {json.dumps(value)[:40]}, which "
+                                         f"is not a number of millimetres, so it cannot be held to the limit; {cited(name)}"))
+            elif value < process[name][0] - LIMIT_SLACK:
+                found.append(fail(where, f"the net class {entry.get('name')} has a {key} of {value:g} mm, looser than the "
+                                         f"manufacturer's {cited(name)}; raise it to at least the limit"))
+    for rule in rules or []:
+        for constraint in sexpr.children(rule, "constraint"):
+            kind = str(constraint[1]) if len(constraint) > 1 else ""
+            name = CONSTRAINT_LIMITS.get(kind)
+            if name is None or name not in process:
+                continue
+            for clause in constraint[2:]:
+                if sexpr.head(clause) != "min" or len(clause) != 2:
+                    continue
+                value = rule_length_mm(clause[1])
+                where = f"{design.rules} {rule_at(rule)}"
+                if value is None:
+                    found.append(fail(where, f"{rule_at(rule)} writes its {kind} minimum as {one_line(clause)}, where the check "
+                                             "reads a length as a number with mm, mil or in, or a bare number of millimetres, so "
+                                             f"it cannot be shown to be no looser than the limit; {cited(name)}"))
+                elif value < process[name][0] - LIMIT_SLACK:
+                    found.append(fail(where, f"{rule_at(rule)} sets a {kind} minimum of {value:g} mm, looser than the "
+                                             f"manufacturer's {cited(name)}; raise it to at least the limit, or remove the rule"))
     return found
 
 
@@ -5391,6 +5693,8 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
     board_rules, rules_problems = load_board_rules(yaml, root, repository, design, not_for_manufacture)
     rules_record = find_record(root, design.directory, repository.tracked, BOARD_RULES_NAME) or BOARD_RULES_NAME
     found += rules_problems
+    limits, limit_problems = load_manufacturer_limits(yaml, root, repository, design, today, not_for_manufacture)
+    found += limit_problems
     sensing = board_rules["sensing"] if board_rules is not None and board_rules["sensing"] != NOTHING else None
     if sensing and read is not None:
         read.append(("SENSE-6 sensing clearance", f"{BOARD_RULES_NAME} sensing.clearance_mm",
@@ -5437,6 +5741,8 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
                 return found
             found += measured(design, copper, figures, corner)
             found += pasted
+            if limits is not None and board_rules is not None:
+                found += board_minimums(design, project, rules, tree, limits, board_rules["fabrication"]["outer_copper_oz"])
         rules_copy = os.path.join(copy, os.path.basename(design.rules))
         existing = "(version 1)\n"
         if rules is not None and os.path.exists(rules_copy):
@@ -5661,7 +5967,7 @@ def design_reads(top: str, files: List[str], git: str = "git") -> List[str]:
     For each design that is its own folder, written with a trailing slash so a
     file deleted from it is still one the design read, every file its folder,
     its sheets and its libraries hold, and the separation basis, pin allocation, parts specification,
-    catalogue extract, derating policy, pin-limit and board rules records it is held to, whether or not a record is committed. A design in the top folder reads
+    catalogue extract, derating policy, pin-limit, board rules and manufacturer limits records it is held to, whether or not a record is committed. A design in the top folder reads
     the whole repository, written as WHOLE_REPOSITORY.
     """
     repository = Repository(top, files, git)
@@ -5671,7 +5977,7 @@ def design_reads(top: str, files: List[str], git: str = "git") -> List[str]:
         reads.add(design.directory + "/" if design.directory else WHOLE_REPOSITORY)
         reads.update(design_files(design, repository)[0])
         for name in (RECORD_NAME, PIN_RECORD_NAME, PARTS_RECORD_NAME, CATALOGUE_NAME, DERATING_NAME, PIN_LIMITS_NAME,
-                     BOARD_RULES_NAME):
+                     BOARD_RULES_NAME, MANUFACTURER_LIMITS_NAME):
             record = find_record(top, design.directory, repository.tracked, name)
             if record:
                 reads.add(record)

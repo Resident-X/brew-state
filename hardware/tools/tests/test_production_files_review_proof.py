@@ -109,7 +109,7 @@ class Proofed(unittest.TestCase):
         return sorted({meta["label"].split(".a")[0] for meta, _ in harness.saved(os.path.join(self.work, pfp.SINGLE_OUT, "streams"))})
 
     def tree(self):
-        return pfp.base.design_tree(REPO, "HEAD", pfp.DESIGN)
+        return pfp.design_key(REPO, "HEAD", pfp.DESIGN)
 
     def loaded(self):
         return pfp.load_seeds(self.seeds, self.folder)

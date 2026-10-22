@@ -63,7 +63,7 @@
   {
    "key": {
     "seeds": "993bab85df4c4e0f33e97e17ee125af9fa60ae8a157a2d2357ed32b89cebaa81",
-    "design": "a0bc3eb7da4d111ab94f62bc3652cc26ccf0eed3",
+    "design": "38c7d53e631e6684eeeffb3bdf753cd80a1fce9ddc328041a46b2fd462066037",
     "model": "claude-sonnet-5-5",
     "form": "single",
     "prompt": "b9deadeb6053c809dd5d7fa731c2f9efac69b03a1253ff47d96e0feeb25f2378"

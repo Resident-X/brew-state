@@ -24,4 +24,7 @@ ground_returns:
     - class: Sensing
       signal_pins_per_return: 1
       source: none -- synthetic figure chosen to exercise the check, not read from a guideline
+fabrication:
+  outer_copper_oz: 1
+  source: none -- synthetic weight, the manufacturer's standard one, chosen to exercise the check
 synthetic: true

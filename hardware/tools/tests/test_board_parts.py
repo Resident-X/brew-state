@@ -42,7 +42,18 @@ positions:
     lcsc: C100
 """
 
-EXTRACT = """\
+#: A lifecycle mapping as an entry of the catalogue extract states it, read a day before the extract was.
+LIFE = """\
+    lifecycle:
+      status: active
+      source: the maker's published status
+      read_on: 2026-09-30
+"""
+
+
+def extract_text(first: str = LIFE, second: str = LIFE) -> str:
+    """The catalogue extract with the lifecycle text given for its first and its second entry, '' for none."""
+    return f"""\
 source: a synthetic reading
 read_on: 2026-10-01
 max_age_days: 30
@@ -51,11 +62,14 @@ entries:
     library_class: basic
     stock: 500
     unit_price: 0.002
-  - lcsc: C200
+{first}  - lcsc: C200
     library_class: extended
     stock: 3
     unit_price: 1.5
-"""
+{second}"""
+
+
+EXTRACT = extract_text()
 
 
 def symbol(lib_id, reference, value, footprint="", lcsc=None, rating=None, unit=1, on_board="yes", project="board",
@@ -118,6 +132,11 @@ class Design(unittest.TestCase):
 
     def rules(self, **more):
         return sorted({v.rule for v in self.run_check(**more)})
+
+    def without_lifecycle(self, **more):
+        """The lines of the check but those of the lifecycle rule, for a test of the extract's own age, which ages the
+        readings of its entries with it."""
+        return [line for line in self.lines(**more) if " | parts_lifecycle | " not in line]
 
     def only(self, **more):
         found = self.lines(**more)
@@ -340,17 +359,21 @@ class PartsAgainstTheExtract(Design):
 
     def test_an_extract_past_its_own_age_limit_fails(self):
         # SOL-HW-PARTS-CHECK.C2: A part the catalogue extract does not show in stock fails the check, and so does an extract past its age limit
-        line = self.only(today=datetime.date(2026, 11, 1))
+        found = self.without_lifecycle(today=datetime.date(2026, 11, 1))
+        self.assertEqual(len(found), 1, found)
+        line = found[0]
         self.assertIn("parts_catalogue | " + "hw/machine/catalogue-extract.yaml read_on", line)
         self.assertIn("31 days before today (2026-11-01), past the 30 days it allows itself", line)
 
     def test_an_extract_exactly_at_its_age_limit_passes(self):
         # SOL-HW-PARTS-CHECK.C2: A part the catalogue extract does not show in stock fails the check, and so does an extract past its age limit
-        self.assertEqual(self.lines(today=datetime.date(2026, 10, 31)), [])
+        self.assertEqual(self.without_lifecycle(today=datetime.date(2026, 10, 31)), [])
 
     def test_an_extract_dated_later_than_today_fails(self):
         # SOL-HW-PARTS-CHECK.C2: A part the catalogue extract does not show in stock fails the check, and so does an extract past its age limit
-        self.assertIn("is dated 2026-10-01, later than today (2026-09-30)", self.only(today=datetime.date(2026, 9, 30)))
+        found = self.without_lifecycle(today=datetime.date(2026, 9, 30))
+        self.assertEqual(len(found), 1, found)
+        self.assertIn("is dated 2026-10-01, later than today (2026-09-30)", found[0])
 
     def test_the_catalogue_is_never_fetched(self):
         # SOL-HW-PARTS-CHECK.C2: A part the catalogue extract does not show in stock fails the check, and so does an extract past its age limit
@@ -488,18 +511,13 @@ class UsableRecords(Design):
         self.assertEqual(self.rules(), ["parts_catalogue", "parts_record"])
 
 
-LIFE = """\
-    lifecycle:
-      status: active
-      source: the maker's published status
-      read_on: 2026-10-01
-"""
-
-
 class CatalogueLifecycle(Design):
     def with_lifecycle(self, lifecycle: str = LIFE, after: str = "    unit_price: 0.002\n") -> None:
+        """The extract with `lifecycle` as the mapping of the entry whose last line is `after`, the other entry keeping its own."""
+        first = after == "    unit_price: 0.002\n"
         self.assertIn(after, EXTRACT)
-        self.write("hw/machine/catalogue-extract.yaml", EXTRACT.replace(after, after + lifecycle, 1) + "synthetic: true\n")
+        self.write("hw/machine/catalogue-extract.yaml",
+                   extract_text(first=lifecycle if first else LIFE, second=LIFE if first else lifecycle) + "synthetic: true\n")
 
     def lifecycle_lines(self):
         return [line for line in self.lines() if "lifecycle" in line]
@@ -509,19 +527,21 @@ class CatalogueLifecycle(Design):
         self.with_lifecycle()
         self.assertEqual(self.lines(), [])
 
-    def test_the_lifecycle_mapping_is_optional_on_an_entry(self):
-        # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
-        self.assertEqual(self.lines(), [])
-        self.with_lifecycle(after="    unit_price: 1.5\n")
+    def test_the_lifecycle_mapping_is_optional_on_an_entry_no_placed_part_uses(self):
+        # SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C2: The catalogue extract's lifecycle mapping is required on the entry of every part the design places
+        self.write("hw/machine/catalogue-extract.yaml",
+                   EXTRACT + "  - lcsc: C300\n    library_class: basic\n    stock: 4\n    unit_price: 1\nsynthetic: true\n")
         self.assertEqual(self.lines(), [])
 
     def test_a_status_may_state_that_no_source_publishes_one(self):
         # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
-        self.with_lifecycle(LIFE.replace("active", "no source publishes one"))
+        # SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C2: a part whose status states that no source publishes one and names the sources looked at is not failed for that
+        self.with_lifecycle(LIFE.replace("active", "no source publishes one").replace("the maker's published status", "the maker's site and the catalogue, neither of which states one"))
         self.assertEqual(self.lines(), [])
 
     def test_a_lifecycle_mapping_missing_any_of_its_three_keys_fails_naming_it(self):
         # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
+        # SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C2: a mapping missing any of the three fields fails
         for key in ("status", "source", "read_on"):
             with self.subTest(missing=key):
                 kept = "".join(line + "\n" for line in LIFE.splitlines() if not line.strip().startswith(key + ":"))
@@ -556,7 +576,7 @@ class CatalogueLifecycle(Design):
         # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
         for bad in ("'01/10/2026'", "'2026-02-30'", "2026-10-01T09:00:00", "soon", "20261001", "null"):
             with self.subTest(read_on=bad):
-                self.with_lifecycle(LIFE.replace("read_on: 2026-10-01", f"read_on: {bad}"))
+                self.with_lifecycle(LIFE.replace("read_on: 2026-09-30", f"read_on: {bad}"))
                 self.assertIn("entries[0].lifecycle.read_on", self.only())
                 self.assertIn("is not a valid calendar date written as YYYY-MM-DD", self.only())
 
@@ -567,8 +587,89 @@ class CatalogueLifecycle(Design):
 
     def test_a_lifecycle_on_a_later_entry_is_named_by_its_position(self):
         # SOL-PRE-ORDER-CHECK-READS-RECORD-KEYS.C1: The check accepts and reads every key the record decisions define, fails one they do not, and is shown to on a seeded copy
-        self.with_lifecycle(LIFE.replace("read_on: 2026-10-01", "read_on: never"), after="    unit_price: 1.5\n")
+        self.with_lifecycle(LIFE.replace("read_on: 2026-09-30", "read_on: never"), after="    unit_price: 1.5\n")
         self.assertIn("entries[1].lifecycle.read_on", self.only())
+
+    def test_a_status_outside_the_closed_vocabulary_fails_naming_it(self):
+        # SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C2: a status outside active, not recommended for new designs, end of life, obsolete or no-source-publishes-one fails
+        for status in ("discontinued", "Active", "EOL", "end-of-life", "not recommended"):
+            with self.subTest(status=status):
+                self.with_lifecycle(LIFE.replace("active", status))
+                self.assertEqual(self.rules(), ["parts_record"])
+                self.assertIn(f"entries[0].lifecycle.status is '{status}', where it is one of active, not recommended for new designs, "
+                              "end of life, obsolete, no source publishes one", self.only())
+
+
+class LifecycleOfThePlacedParts(Design):
+    """The lifecycle rule: the mapping is required of every placed part, and three statuses fail it."""
+
+    def with_life(self, first: str = LIFE, second: str = LIFE, today=TODAY):
+        self.write("hw/machine/catalogue-extract.yaml", extract_text(first, second) + "synthetic: true\n")
+        return self.lines(today=today)
+
+    def test_a_placed_part_whose_entry_lacks_the_mapping_fails_naming_each_position_and_its_catalogue_number(self):
+        # SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C2: The catalogue extract's lifecycle mapping is required on the entry of every part the design places; an absent mapping fails
+        # SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C4: A failure is reported with the rule's name, the design, and the offending item (part reference) in terms a builder can act on
+        found = self.with_life(first="")
+        self.assertEqual(len(found), 2, found)
+        for reference in ("R1", "R2"):
+            line = next(line for line in found if f"| {reference} lifecycle |" in line)
+            self.assertTrue(line.startswith(f"VIOLATION | hw/machine/board/board.kicad_pro | parts_lifecycle | {reference} lifecycle | "), line)
+            self.assertIn(f"the position {reference}, catalogue number C100, has no lifecycle in the catalogue extract", line)
+        only_u1 = self.with_life(second="")
+        self.assertEqual(len(only_u1), 1, only_u1)
+        self.assertIn("| U1 lifecycle | the position U1, catalogue number C200, has no lifecycle", only_u1[0])
+
+    def test_each_of_the_three_unfit_statuses_fails_and_the_others_pass(self):
+        # SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C2: A part whose status is end of life, obsolete or not recommended for new designs fails
+        for status in ("end of life", "obsolete", "not recommended for new designs"):
+            with self.subTest(status=status):
+                found = self.with_life(second=LIFE.replace("active", status))
+                self.assertEqual(len(found), 1, found)
+                self.assertIn("| parts_lifecycle | U1 lifecycle |", found[0])
+                self.assertIn(f"the position U1, catalogue number C200, has the lifecycle status '{status}'", found[0])
+                self.assertIn("the maker's published status", found[0])
+        for status in ("active", "no source publishes one"):
+            with self.subTest(status=status):
+                self.assertEqual(self.with_life(second=LIFE.replace("active", status)), [])
+
+    def test_an_entry_no_placed_part_uses_is_not_judged_at_end_of_life(self):
+        # SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C2: the rule decides the parts the design places
+        self.write("hw/machine/catalogue-extract.yaml", extract_text() + "  - lcsc: C300\n    library_class: basic\n    stock: 4\n"
+                   "    unit_price: 1\n" + LIFE.replace("active", "obsolete") + "synthetic: true\n")
+        self.assertEqual(self.lines(), [])
+
+    def test_a_reading_older_than_the_extracts_max_age_days_fails_and_one_at_the_limit_passes(self):
+        # SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C2: a read_on older than the extract's max_age_days fails
+        # the extract is read on 2026-10-01 and allows 30 days; today is 2026-10-12, so a reading on 2026-09-12 is 30 days old
+        at_limit = LIFE.replace("2026-09-30", "2026-09-12")
+        self.assertEqual(self.with_life(second=at_limit), [])
+        found = self.with_life(second=LIFE.replace("2026-09-30", "2026-09-11"))
+        self.assertEqual(len(found), 1, found)
+        self.assertIn("| parts_lifecycle | U1 lifecycle |", found[0])
+        self.assertIn("was read on 2026-09-11, 31 days before today (2026-10-12), past the 30 days the extract allows", found[0])
+
+    def test_a_reading_dated_later_than_today_fails(self):
+        # SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C2: a read_on that is not a trustworthy date within the extract's max_age_days fails
+        found = self.with_life(second=LIFE.replace("2026-09-30", "2026-10-13"))
+        self.assertEqual(len(found), 1, found)
+        self.assertIn("is dated 2026-10-13, later than today (2026-10-12)", found[0])
+
+    def test_an_end_of_life_part_with_a_stale_reading_fails_for_both(self):
+        # SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C2: status and read_on are each held
+        found = self.with_life(second=LIFE.replace("active", "obsolete").replace("2026-09-30", "2026-08-01"))
+        self.assertEqual(len(found), 2, found)
+
+    def test_a_part_the_extract_does_not_list_is_a_catalogue_failure_and_not_a_lifecycle_one(self):
+        # SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C2: the rule decides the parts whose entry the extract holds
+        self.schematic(GOOD.replace('"C200"', '"C999"'))
+        self.write("hw/machine/parts-specification.yaml", RECORD.replace("lcsc: C200", "lcsc: C999") + "synthetic: true\n")
+        self.assertEqual(self.rules(), ["parts_catalogue"])
+
+    def test_the_rules_stay_inside_the_existing_parts_check(self):
+        # SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C3: The lifecycle rule is added to the existing pre-order check as a further rule, reading only the design's files and the records the design is held to
+        self.assertEqual(self.lines(), [])
+        self.assertEqual(self.with_life(second=LIFE.replace("active", "obsolete")) and self.rules(), ["parts_lifecycle"])
 
 
 class WhatTheRoundReads(Design):

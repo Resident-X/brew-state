@@ -91,7 +91,7 @@
   {
    "key": {
     "seeds": "59e51fa8ca177df3b3f933505df203ee665a4bd4e4d700b7108c0e9d12556d06",
-    "design": "a0bc3eb7da4d111ab94f62bc3652cc26ccf0eed3",
+    "design": "75a8b394983d79a0a2f4b8c5f23847d707fdcb7d3b0054025a7c52b4a2fe8d67",
     "model": "claude-sonnet-5-5",
     "form": "single",
     "prompt": "ca90e542e3fc18fa114622aac0376f016c0dd74b386de98dedf9e9f7676f5c4e"

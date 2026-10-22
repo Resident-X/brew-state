@@ -63,6 +63,9 @@ REVIEW_NAME = "circuit-review-proof"
 SENSING_DESIGN = "hardware/proof/review-proof"
 SENSING_NAME = "review-proof"
 SENSING_TARGET = (SENSING_DESIGN, SENSING_NAME)
+#: The records the proof designs share, found by the nearest-folder rule above their own folders, by path from the
+#: repository's root. A seeded copy carries them beside the design so it is held to them as the repository's designs are.
+SHARED_RECORDS = ("hardware/proof/manufacturer-limits.yaml",)
 
 
 class Seed:
@@ -93,6 +96,16 @@ class Seed:
     def read(self, suffix: str) -> str:
         with open(self.path(suffix), encoding="utf-8") as handle:
             return handle.read()
+
+    def replace_shared(self, record: str, old: str, new: str) -> None:
+        """Replace text in a record the proof designs share, by its path from the repository's root, in this copy only."""
+        path = os.path.join(self.root, record)
+        with open(path, encoding="utf-8") as handle:
+            text = handle.read()
+        if old not in text:
+            raise AssertionError(f"the shared record {record} no longer contains {old!r}; the fault cannot be seeded")
+        with open(path, "w", encoding="utf-8") as handle:
+            handle.write(text.replace(old, new, 1))
 
     def write(self, suffix: str, text: str) -> None:
         with open(self.path(suffix), "w", encoding="utf-8") as handle:
@@ -316,6 +329,10 @@ def pin_limits(old: str, new: str):
 
 def board_rules(old: str, new: str):
     return lambda seed: seed.replace("board-rules.yaml", old, new)
+
+
+def limits(old: str, new: str):
+    return lambda seed: seed.replace_shared(SHARED_RECORDS[0], old, new)
 
 
 def resistor_over_its_rating(seed: Seed) -> None:
@@ -1510,6 +1527,24 @@ FAULTS: List[tuple] = [
     ("a ground-return connector of two signal classes over the smaller signal pins per return", "ground returns: a connector carrying several signal classes is held to the smallest signal_pins_per_return among them", "ground_return",
      "connector J9 has 2 signal pins (1 [/AMP_OUT], 2 [/+3V3]) and 1 ground-return pins (3 [/GND]); hardware/proof/review-proof/board-rules.yaml ground_returns lets one return serve 1 signal pins at most",
      connector("/AMP_OUT", "/+3V3", "/GND", record=supply_a_signal), SENSING_TARGET),
+    # The board-minimums and lifecycle rules
+    ("a board-setup track width looser than the manufacturer's limit for its process", "board minimums: a board whose minimum track width is looser than the manufacturer limits record's figure for its process fails", "board_minimums",
+     "the board setup's min_track_width is 0.05 mm, looser than the manufacturer's hardware/proof/manufacturer-limits.yaml limits min_track_width, 0.1 mm for 2 copper layers at 1 oz",
+     lambda seed: seed.project(lambda data: data["board"]["design_settings"]["rules"].update(min_track_width=0.05))),
+    ("a design whose copper layers and outer copper weight the manufacturer limits record does not list", "board minimums: a board whose process the record does not list fails", "board_minimums",
+     "its board rules record declares a finished outer copper weight of 2 oz, a process hardware/proof/manufacturer-limits.yaml does not list",
+     board_rules("outer_copper_oz: 1", "outer_copper_oz: 2")),
+    ("a board rules record declaring no outer copper weight", "board minimums: a design whose board rules record declares no finished outer copper weight fails", "board_rules_record",
+     "fabrication lacks outer_copper_oz", board_rules("  outer_copper_oz: 1\n", "")),
+    ("a manufacturer limits record read longer ago than its own max_age_days", "board minimums: a record older than its own max_age_days fails", "manufacturer_limits_record",
+     "past the 30 days it allows itself",
+     lambda seed: (limits("max_age_days: 36500", "max_age_days: 30")(seed), limits("read_on: 2026-10-20", "read_on: 2026-01-01")(seed))),
+    ("a part whose catalogue lifecycle status is end of life", "lifecycle: a part whose status is end of life, obsolete or not recommended for new designs fails", "parts_lifecycle",
+     "the position R1, catalogue number C9000002, has the lifecycle status 'end of life'",
+     extract("    stock: 1001\n    unit_price: 0.01\n    lifecycle:\n      status: active", "    stock: 1001\n    unit_price: 0.01\n    lifecycle:\n      status: end of life")),
+    ("a part whose catalogue entry lacks its lifecycle mapping", "lifecycle: the mapping is required on the entry of every part the design places", "parts_lifecycle",
+     "the position R1, catalogue number C9000002, has no lifecycle in the catalogue extract",
+     extract("    stock: 1001\n    unit_price: 0.01\n    lifecycle:\n      status: active\n      source: none -- synthetic lifecycle reading\n      read_on: 2026-10-14\n", "    stock: 1001\n    unit_price: 0.01\n")),
 ]
 
 
@@ -1551,6 +1586,16 @@ def prepare(scratch: str, design: str = DESIGN, name: str = NAME) -> Seed:
             os.makedirs(os.path.dirname(target), exist_ok=True)
             with open(target, "wb") as handle:
                 handle.write(content)
+    for record in SHARED_RECORDS:
+        shared = committed(record)
+        target = os.path.join(root, record)
+        if shared is not None:
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            with open(target, "wb") as handle:
+                handle.write(shared[record])
+        elif os.path.isfile(os.path.join(REPO, record)):
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            shutil.copyfile(os.path.join(REPO, record), target)
     subprocess.run(["git", "init", "-q", root], check=True)
     seed = Seed(root, design, name)
     seed.files = sorted(os.path.relpath(path, design) for path in held)
