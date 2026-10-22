@@ -150,10 +150,11 @@ def outcome_of(caller: str, callers: str, run_id: str, folder: str, out: str, se
         lanes.append(types.SimpleNamespace(group=lane["group"], replica=lane["replica"], units=tuple(lane["units"]),
                                            unit_record=types.SimpleNamespace(standing=types.SimpleNamespace(tables=tables)),
                                            failure=None))
-    declaration = kit_caller.load(caller, callers).prepare(folder).declaration
+    prepared = kit_caller.load(caller, callers).prepare(folder)
+    declaration = prepared.declaration
     formed = proof.FormPlan(proof.FANNED, declaration, None, types.SimpleNamespace(tool_commit=record["plan"]["tool_commit"]))
     outcome = proof.outcome_from_run(run_id, formed, scheduler.RunResult({}, lanes, False), figures, seeds, matches,
-                                     seeded_commit=seeded_commit)
+                                     seeded_commit=seeded_commit, rules=prepared.rules)
     streams_folder = os.path.join(out, command.STREAMS_FOLDER)
     rendered = [file for file in record.get("rendered", []) if file.endswith(".md")]
     merged_round = None
@@ -266,6 +267,7 @@ def run_single(caller: str, callers: str, folder: str, out: str, model: str, env
     figures, problems = command.figures_of_run(run.streams_folder, before)
     if problems:
         raise Refused([f"the single form's {problem}" for problem in problems])
-    outcome = proof.outcome_from_run(run_id, formed, result, figures, seeds, matches, seeded_commit=seeded_commit)
+    outcome = proof.outcome_from_run(run_id, formed, result, figures, seeds, matches, seeded_commit=seeded_commit,
+                                     rules=rules)
     write_baseline(path, source, seeds, key, outcome)
     return key, outcome

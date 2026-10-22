@@ -11,6 +11,7 @@ proof, which spends real money and is run by the operator.
 
 from __future__ import annotations
 
+import dataclasses
 import io
 import json
 import os
@@ -19,6 +20,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import types
 import unittest
 from unittest import mock
 
@@ -29,12 +31,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import board_check  # noqa: E402
 import layout_fixtures as lfx  # noqa: E402
 import layout_review_proof as lrp  # noqa: E402
+import review_kit_fixtures as fx  # noqa: E402
 import review_proof_harness as harness  # noqa: E402
 import schematic_fixtures as sfx  # noqa: E402
 import schematic_review_proof as srp  # noqa: E402
 import test_review_caller_schematic as caller_tests  # noqa: E402
 from review_kit import executor as ex  # noqa: E402
-from review_kit import proof, store  # noqa: E402
+from review_kit import decl, merge, proof, store  # noqa: E402
 
 REPO = os.path.dirname(os.path.dirname(TOOLS))
 
@@ -554,6 +557,59 @@ class TheHarness(Proofed):
         self.assertEqual(len(plan["groups"]), 1)
         self.assertEqual(plan["groups"][0]["replicas"], 1)
         self.assertEqual(sorted(plan["groups"][0]["units"]), sorted(["area-PINV", "area-STRAP", "area-DERATE", "free-pass"]))
+
+    def test_a_caller_naming_a_fail_verdict_other_than_fail_has_it_stand_in_the_runs_merged_verdicts(self):
+        # SOL-HW-REVIEW-FAN-OUT-SCHEMATIC.C6: Run the single-reviewer form and the fanned-out form on one copy of the circuit review proof design seeded by a session that has not read the catalogue, in sessions with no record of the seeds, the fanned-out form at the full unit count with the design loop's two small-tier replicas. The fanned-out form reports every seeded defect as a finding against the catalogue item that covers it, and every seed the single reviewer reports; the findings that match no seed and the verdicts item by item are compared and a difference explained. Record for the shared context and each session and for each run the wall time, the tokens read, written and generated, the cost, the number of datasheet retrievals and any that failed, and any call refused for a rate limit. The kit's pooled criterion judges the fanned-out run against the recorded single-reviewer runs of this review's seeded proof, the single form being run once through the kit on the mid-tier on the same seeded copy, since none is recorded in a form the kit loads, and recorded as this review's baseline file: the seeds found are no fewer than the fewest any single run found, the wall time is at most half the single mean and the cost is at most 1.25 times the single mean, the multiple the layout proof uses, unless the review's first measured run shows its replicas need more, in which case the proof states the new multiple and the evidence says why. A seed not reported is closed where the gap lies and the run repeated in a new session. The evidence names the exact model and the commit. Out of scope: the layout, critical-routing and production-files proofs.
+        record = {"plan": {"tool_commit": "tool"}, "merged": None, "rendered": [],
+                  "lanes": [{"group": "G1", "replica": index, "units": ["u1"], "failure": None,
+                             "record": {"standing": 0, "attempts": [{"tables": {"Verdicts": [
+                                 {"Item": "i1", "Verdict": verdict, "Note": ""}], "Findings": []}}]}}
+                            for index, verdict in ((1, "matches"), (2, "cannot judge"), (3, "differs"))]}
+        declaration = decl.parse(json.dumps(fx.verdict_declaration_dict()), "caller.json")
+        rules = merge.Rules(fail="differs")
+        prepared = types.SimpleNamespace(declaration=declaration, rules=rules)
+        loaded = types.SimpleNamespace(prepare=lambda folder: prepared)
+        with mock.patch.object(harness.kit_caller, "load", return_value=loaded), \
+                mock.patch.object(harness.store, "read_record", return_value=record), \
+                mock.patch.object(harness.command, "figures_of_run", return_value=([], [])), \
+                mock.patch.object(harness, "retrievals", return_value=0), \
+                mock.patch.object(harness, "refused_for_rate_limit", return_value=0):
+            outcome, _ = harness.outcome_of("demo", "callers", "run", "folder", self.root, [], "seeded",
+                                            lambda seed, row: False, lambda text: {}, lambda item, cell: False)
+        self.assertEqual(outcome.verdicts, {"i1": "differs"}, "the named verdict stands over cannot judge and a pass")
+        prepared.rules = merge.Rules()
+        with mock.patch.object(harness.kit_caller, "load", return_value=loaded), \
+                mock.patch.object(harness.store, "read_record", return_value=record), \
+                mock.patch.object(harness.command, "figures_of_run", return_value=([], [])), \
+                mock.patch.object(harness, "retrievals", return_value=0), \
+                mock.patch.object(harness, "refused_for_rate_limit", return_value=0):
+            plain, _ = harness.outcome_of("demo", "callers", "run", "folder", self.root, [], "seeded",
+                                          lambda seed, row: False, lambda text: {}, lambda item, cell: False)
+        self.assertEqual(plain.verdicts, {"i1": "cannot judge"}, "a caller naming none keeps the kit's fail")
+
+    def test_the_single_forms_recorded_baseline_is_merged_with_the_callers_own_rules(self):
+        # SOL-HW-REVIEW-FAN-OUT-SCHEMATIC.C6: Run the single-reviewer form and the fanned-out form on one copy of the circuit review proof design seeded by a session that has not read the catalogue, in sessions with no record of the seeds, the fanned-out form at the full unit count with the design loop's two small-tier replicas. The fanned-out form reports every seeded defect as a finding against the catalogue item that covers it, and every seed the single reviewer reports; the findings that match no seed and the verdicts item by item are compared and a difference explained. Record for the shared context and each session and for each run the wall time, the tokens read, written and generated, the cost, the number of datasheet retrievals and any that failed, and any call refused for a rate limit. The kit's pooled criterion judges the fanned-out run against the recorded single-reviewer runs of this review's seeded proof, the single form being run once through the kit on the mid-tier on the same seeded copy, since none is recorded in a form the kit loads, and recorded as this review's baseline file: the seeds found are no fewer than the fewest any single run found, the wall time is at most half the single mean and the cost is at most 1.25 times the single mean, the multiple the layout proof uses, unless the review's first measured run shows its replicas need more, in which case the proof states the new multiple and the evidence says why. A seed not reported is closed where the gap lies and the run repeated in a new session. The evidence names the exact model and the commit. Out of scope: the layout, critical-routing and production-files proofs.
+        folder = srp.write_folder(self.work, self.seeded, self.preparer(self.work, self.seeded, "k"), self.source)
+        seen = []
+        real_resolve = harness.kit_caller.Prepared.resolve.__func__
+        real_outcome = proof.outcome_from_run
+
+        def resolve(cls, caller, review):
+            found = real_resolve(cls, caller, review)
+            found.rules = dataclasses.replace(found.rules, fail="differs")
+            return found
+
+        def outcome(*args, **kwargs):
+            seen.append(kwargs.get("rules"))
+            return real_outcome(*args, **kwargs)
+
+        with mock.patch.object(harness.kit_caller.Prepared, "resolve", classmethod(resolve)), \
+                mock.patch.object(proof, "outcome_from_run", outcome):
+            harness.run_single("schematic", TOOLS, folder, os.path.join(self.root, "single-out"), MID, dict(os.environ), SEEDS,
+                               lfx.git(self.seeded, "rev-parse", "HEAD"), self.tree(), srp.matches, self.baselines, "synthetic")
+        self.assertEqual(len(seen), 1)
+        self.assertIsNotNone(seen[0], "the caller's prepared rules are passed, not left to the kit's default")
+        self.assertEqual(seen[0].fail, "differs")
 
     def test_the_layout_proof_keeps_every_name_it_exports_as_a_thin_use_of_the_shared_harness(self):
         # SOL-HW-REVIEW-FAN-OUT-SCHEMATIC.C6: Run the single-reviewer form and the fanned-out form on one copy of the circuit review proof design seeded by a session that has not read the catalogue, in sessions with no record of the seeds, the fanned-out form at the full unit count with the design loop's two small-tier replicas. The fanned-out form reports every seeded defect as a finding against the catalogue item that covers it, and every seed the single reviewer reports; the findings that match no seed and the verdicts item by item are compared and a difference explained. Record for the shared context and each session and for each run the wall time, the tokens read, written and generated, the cost, the number of datasheet retrievals and any that failed, and any call refused for a rate limit. The kit's pooled criterion judges the fanned-out run against the recorded single-reviewer runs of this review's seeded proof, the single form being run once through the kit on the mid-tier on the same seeded copy, since none is recorded in a form the kit loads, and recorded as this review's baseline file: the seeds found are no fewer than the fewest any single run found, the wall time is at most half the single mean and the cost is at most 1.25 times the single mean, the multiple the layout proof uses, unless the review's first measured run shows its replicas need more, in which case the proof states the new multiple and the evidence says why. A seed not reported is closed where the gap lies and the run repeated in a new session. The evidence names the exact model and the commit. Out of scope: the layout, critical-routing and production-files proofs.
