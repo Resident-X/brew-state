@@ -23,7 +23,9 @@ The answer's Verdicts table is keyed by Item and Net or part, one row for each p
 for an item that selects nothing; replicas are merged any fail per pair. Its Findings table holds the method's columns and the
 item that raised each. The merge fails an item with no verdict row, a row for something that is no item of the checklist, a net,
 part or sheet that no item's rows name, a row naming a net, part or sheet that does not exist, an item that selects nothing and
-also selects something, a pass or fail with nothing under Rests on, a not applicable or fail with nothing under Why, a fail that
+also selects something in the answer of one and the same replica (replicas that disagree whether an item selects anything leave the rows of
+those that judged what it selects, and the `none` row gives way, as does the `none` row of a replica whose own real rows lost to
+another replica's verdicts for the same pair), a pass or fail with nothing under Rests on, a not applicable or fail with nothing under Why, a fail that
 cites no finding of its own item or of an earlier round, a finding of an item that does not fail, a finding not raised by its
 item, a severity outside the catalogue's four, a Closed by the reviewer wrote, and a cannot judge still held.
 
@@ -532,6 +534,29 @@ def row_problems(rows: Sequence[Dict[str, Any]], units: Dict[str, List[str]], na
     return found
 
 
+def settled(table: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """The merged Verdicts rows with each `none` row that gives way left out. Replicas that disagree whether an item selects
+    anything leave a `none` row beside the rows of the replicas that judged what it selects, and those rows stand. A `none` row
+    stands when no other replica gave the item a row, and beside the rows of the replica that gave it, which the item check
+    refuses: the replica ids that raised each row say which replica gave which."""
+    rows = table["rows"]
+    raised = table.get("raised_by") or [[] for _ in rows]
+    by_item: Dict[str, List[int]] = {}
+    for index, row in enumerate(rows):
+        if row["Item"] != FREE_PASS_ENTRY:
+            by_item.setdefault(row["Item"], []).append(index)
+    gives_way = set()
+    for indexes in by_item.values():
+        nothing = [i for i in indexes if rows[i]["Net or part"] == NONE]
+        something = [i for i in indexes if rows[i]["Net or part"] != NONE]
+        if not nothing or not something:
+            continue
+        own = {rid for i in something for rid in raised[i]}
+        if not own.intersection(rid for i in nothing for rid in raised[i]):
+            gives_way.update(nothing)
+    return [row for index, row in enumerate(rows) if index not in gives_way]
+
+
 def item_problems(rows: Sequence[Dict[str, Any]], units: Dict[str, List[str]]) -> List[str]:
     """Every item has a verdict row, and an item that selects nothing selects nothing else."""
     counts = Counter(row["Item"] for row in rows)
@@ -632,7 +657,7 @@ def checks(tables: Dict[str, Any]) -> List[str]:
         return ["the schematic caller's checks ran before its declaration was resolved for a review folder, so the items the round "
                 "judges and the schematic's nets, parts and sheets are not known; resolve the declaration first"]
     units, names, label = ROUND["units"], ROUND["names"], ROUND["label"]
-    rows, findings = tables["Verdicts"]["rows"], tables["Findings"]["rows"]
+    rows, findings = settled(tables["Verdicts"]), tables["Findings"]["rows"]
     found = row_problems(rows, units, names) + item_problems(rows, units) + coverage_problems(rows, names)
     found += resolution_problems(rows, units)
     found += [cannot_judge_problem(row, units) for row in rows if row["Verdict"] == "cannot judge"]
@@ -689,7 +714,7 @@ def render(review: str, tables: Dict[str, Any]) -> Dict[str, str]:
     if isinstance(number, bool) or not isinstance(number, int) or not RENDERED.fullmatch(name):
         raise Refused([f"the round number {number!r} does not give a file name of the form round-<n>.md; write the folder with the "
                        "folder command"])
-    rows = sorted((row for row in tables["Verdicts"]["rows"] if row["Item"] != FREE_PASS_ENTRY),
+    rows = sorted((row for row in settled(tables["Verdicts"]) if row["Item"] != FREE_PASS_ENTRY),
                   key=lambda row: (order[row["Item"]], row["Net or part"] != NONE, row["Net or part"]))
     made = []
     for row in rows:
