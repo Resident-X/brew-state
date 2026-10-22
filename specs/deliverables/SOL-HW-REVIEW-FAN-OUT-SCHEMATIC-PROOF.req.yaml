@@ -1,0 +1,34 @@
+id: SOL-HW-REVIEW-FAN-OUT-SCHEMATIC-PROOF
+type: deliverable
+category: solution
+title: The fanned-out schematic review is proven blind on a seeded copy of the circuit review proof design
+status: active
+version: 1
+text: |
+  Why this exists. The schematic review is repeated on every board before layout, and SOL-HW-REVIEW-FAN-OUT-SCHEMATIC builds its fanned-out form with tests over the kit's stub. Those tests show the mechanics, not that the fanned-out form finds the defects the single reviewer finds; DEL-HW-REVIEW-FAN-OUT.C5 requires a blind run on a seeded copy for each fanned-out review, and a run of the fanned-out form is a paid live run of its own. This solution holds that run, apart from the caller, so the caller ships with its tests and the method relies on the single-reviewer form of the review until this proof is recorded. The reasoning and the options rejected are in DEC-REVIEW-FAN-OUT-FROM-SHARED-CONTEXT-WITH-REPLICAS, and DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND settles that a round judged by unit is the same round; a session building this does not reopen either.
+
+  What it does. It seeds a copy of the circuit review proof design with defects the catalogue covers; runs the single form once through the kit and records it as this review's baseline file, since no single-reviewer run of this review is recorded in a form the kit loads; runs the fanned-out form with the schematic caller's declaration; and records both in the kit's proof record with the pooled criterion's verdict. The proof command is the schematic caller's `task hw:schematic-review-proof`, whose refusals and baseline behaviour are held by SOL-HW-REVIEW-FAN-OUT-SCHEMATIC.C8.
+
+  Settled before the build.
+
+  - The seeding is done by a session that has not read the catalogue, in a copy in a temporary work tree outside the repository, and the seed list is written apart from both the copy and the review folder; the checks run in sessions with no record of the seeds.
+  - The first live run used a seeded copy of 14 seeds, value and rating edits only, all by a blind seeding session except one replaced by hand. The single form on claude-sonnet-5-5 found 14 of 14 in 1122 seconds for USD 3.858 and is recorded as the baseline file. The fanned-out form, two claude-haiku-5-5 replicas over 4 groups in 16 sessions, found 14 of 14 in 264 seconds for USD 2.39, so the time bound of half the single mean and the cost bound of 1.25 times the single mean, USD 4.82, held.
+  - The kit's pooled criterion requires a second fanned-out run, because the first run's seeds found sat exactly at the floor set by the single run. The second run is made after the schematic caller's merge was corrected and on a seed list that adds defects other than value and rating edits, such as a missing part, a wrong connection and a missing decoupling capacitor, since the first list covers only value and rating defects.
+  - The first run's merged round was refused for two reasons: replicas disagreed whether an item selects anything, which the schematic caller's merge now resolves, and the round held cannot judge verdicts, the pin-voltage item on several nets among them, which the round's runner resolves with the folder command's add-view and add-document modes and a rerun of the unit. The proof command does not do that. The pooled criterion judges seeds from the replicas' findings, a finding matching a seed by its Item cell, so the second run is judged on those findings whether or not its merged round is accepted; the proof records each run's merged round, accepted or refused, with the reason and the cannot judge items held, and does not resolve them.
+  - The single form is one unit holding every item with no shared context, on the mid-tier; the proof refuses to run it again once its baseline is recorded for the key.
+  - The proof is a live run, on demand and in neither gate; the tests of the command need no model and no KiCad.
+
+  Out of scope: the schematic caller, its folder command and its tests; the other reviews' proofs.
+links:
+  - target: DEL-HW-REVIEW-FAN-OUT.C5
+    type: derives-from
+  - target: SOL-HW-REVIEW-FAN-OUT-SCHEMATIC
+    type: depends-on
+  - target: SOL-HW-REVIEW-KIT
+    type: depends-on
+  - target: DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND
+    type: justified-by
+  - target: DEC-REVIEW-FAN-OUT-FROM-SHARED-CONTEXT-WITH-REPLICAS
+    type: justified-by
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: targets

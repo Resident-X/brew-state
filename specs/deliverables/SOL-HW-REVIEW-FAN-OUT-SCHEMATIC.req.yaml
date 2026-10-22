@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: A task fans a schematic review round out by catalogue area and merges the areas into one round, checking every net, part and sheet is covered
 status: active
-version: 5
+version: 6
 text: |
   Why this exists. The schematic review judges every net, part and sheet of a schematic against every item of the circuit practice catalogue, one reviewer in one context, and its blind proof repeats that on a seeded copy. The reasoning, measurements and options rejected are in DEC-REVIEW-FAN-OUT-FROM-SHARED-CONTEXT-WITH-REPLICAS, and DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND settles that a round judged by unit is the same round; a session building this does not reopen either. This is the fourth of seven solutions under DEL-HW-REVIEW-FAN-OUT. It adds the schematic review as a declaration and a small module of checks and a rendered record for the review kit SOL-HW-REVIEW-KIT, and adds to the kit only a verdict table keyed by several columns (SOL-HW-REVIEW-KIT.C14), since its record gives one row to each item and net, part or sheet; it is independent of the layout, critical-routing and production-files solutions.
 
@@ -24,8 +24,7 @@ text: |
   - The round's fields, its number, the commit judged, the netlist command and the records read, are written by the folder command into the round file and checked when the declaration is resolved, before any session starts; for a round after the first the folder holds the earlier rounds of `schematic-review.md` as recorded, since a fail's Why may cite a finding an earlier round closed by a reason.
   - A reviewer opens every datasheet at its published address and never recalls it, so the caller grants read tools and read-only retrieval of a document at an address, through the retrieval grant the kit's caller contract provides, and nothing else; the kit checks the tool set from each session's start report. Retrieval from a forked reviewer worked in the layout caller's proof (four retrievals in its design-loop run and seven in its pre-order run, none failed); the schematic review leans on datasheets far more, so the proof run records the retrievals per unit and any that failed.
   - The review folder for a committed schematic holds what the step gives a reviewer: the schematic and its project files, the netlist the first step exports, every record the step reads, the drawing of each sheet that the sheet-drawing command writes, which the drawing-convention item opens, the method, the hardware notes and the check's report, and nothing of the designer's reasoning. The method's own list of what the proof folder holds leaves the sheet drawings out; this solution amends it to name them.
-  - The blind proof keeps its seeding as it is: a separate session that has not read the catalogue seeds a copy, writes the seed list apart and exports the netlist, and the review is run on that folder by sessions with no record of the seeds, in both forms, as the layout solution's proof does.
-  - No single-reviewer run of the circuit review proof is recorded in a form the kit loads (its seed list and session records were kept outside the repository), so the proof runs the single form once through the kit on the mid-tier on the same seeded copy and records it as this review's baseline file.
+  - The blind proof of the fanned-out form is held by SOL-HW-REVIEW-FAN-OUT-SCHEMATIC-PROOF, apart from this caller, and the method relies on the single-reviewer form of the review until that proof is recorded.
   - The tests need no model and no KiCad, using the kit's stub over synthetic folders, netlists and unit results.
 
   Out of scope: the layout, critical-routing and production-files solutions; the kit's mechanics; the content of the circuit catalogue.
