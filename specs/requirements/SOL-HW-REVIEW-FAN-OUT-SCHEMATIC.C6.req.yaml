@@ -1,7 +1,7 @@
 id: SOL-HW-REVIEW-FAN-OUT-SCHEMATIC.C6
 type: criterion
 title: A fanned-out blind review of a seeded proof schematic meets the kit's pooled criterion against the recorded single-reviewer runs
-status: active
+status: deprecated
 version: 3
 measurement_type: binary
 verification: demonstration
