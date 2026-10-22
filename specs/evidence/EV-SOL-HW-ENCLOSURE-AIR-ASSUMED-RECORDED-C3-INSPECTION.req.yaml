@@ -1,0 +1,16 @@
+id: EV-SOL-HW-ENCLOSURE-AIR-ASSUMED-RECORDED-C3-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-ENCLOSURE-AIR-ASSUMED-RECORDED.C3
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-22T20:49:15.963067Z"
+artifact:
+  kind: external
+  reference: 'inspection: docs/sunbeam-em7000/controller-board-design-constraints.md § Enclosure air temperature states humidity is declared once in reference-machine.md § Ambient as condensing until measured, cites it and declares nothing of its own'
+  artifact_version: 7bacad7de18377dbe98484f4b98cca57e558f178
+attested_by: crun-0675a56556508887
+links:
+  - target: SOL-HW-ENCLOSURE-AIR-ASSUMED-RECORDED.C3
+    type: satisfies
