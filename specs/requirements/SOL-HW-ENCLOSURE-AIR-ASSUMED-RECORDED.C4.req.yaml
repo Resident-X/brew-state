@@ -6,7 +6,7 @@ version: 1
 measurement_type: binary
 verification: inspection
 text: |
-  Mark the check of the figure on the running machine as pending against the bring-up criterion that measures it, and mark whether mounting the heater switches on a cut wall stays within the requirement that the electronics drop into the machine as found, and where each switch is judged against its rated temperature, as pending against the partition and feasibility task. Out of scope: settling either.
+  Mark the check of the figure on the running machine as pending against the bring-up criterion that measures it, DEL-HW-BRING-UP.C13, and mark whether mounting the heater switches on a cut wall stays within the requirement that the electronics drop into the machine as found, and where each switch is judged against its rated temperature, as pending against the partition and feasibility task, DEL-HW-PARTITION-AND-FEASIBILITY.C1. Out of scope: settling either.
 links:
   - target: SOL-HW-ENCLOSURE-AIR-ASSUMED-RECORDED
     type: criterion-of
