@@ -33,3 +33,7 @@ links:
     type: justified-by
   - target: OBL-VERIFICATION-DISCIPLINE-001.C9
     type: targets
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: 770991f7ab38763425aa187752910d4afd1efad7eb44547f4b68d2bacc852d70
+  gating_profile: ""
