@@ -25,3 +25,7 @@ links:
     type: depends-on
   - target: DEC-MACHINE-RECORD-FOLDER-PER-MACHINE
     type: justified-by
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: 75afa1f51fe888e8da08e891bdec9a854ac3656a36ffa6c657f7237383e9cad4
+  gating_profile: ""
