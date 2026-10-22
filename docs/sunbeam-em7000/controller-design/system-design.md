@@ -85,7 +85,7 @@ Detailed in `temperature-sensing-front-end.md`. In short:
 
 ## 8. Power
 
-Typical-based 5 V budget is about 0.53 A (worst case with the stepper maximum about 0.66 to 0.86 A) (many items estimated); the IRM-10-5 (10 W, 2 A) derates to about 75% at 60 C and 50% at 70 C; the board's own DC-DC makes the 3.3 V, 1 A max. The enclosure ambient is unmeasured.
+Typical-based 5 V budget is about 0.53 A (worst case with the stepper maximum about 0.66 to 0.86 A) (many items estimated); the IRM-10-5 (10 W, 2 A) derates to about 75% at 60 C and 50% at 70 C; the board's own DC-DC makes the 3.3 V, 1 A max. The air temperature inside the enclosure is unmeasured; the room's span and the humidity inside the enclosure are declared in `reference-machine.md` § Ambient.
 
 ## 9. Physical
 

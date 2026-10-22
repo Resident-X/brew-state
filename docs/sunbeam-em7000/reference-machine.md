@@ -27,6 +27,25 @@ The consequence matters: espresso and hot water are mutually exclusive in the **
 | Prospective fault current at the outlet | 6 kA | **Project assumption — replace with your value**, from the breaking capacity printed on the breaker protecting your outlet or from your distributor's declared fault level. A compliant installation's breaker can break the fault current where it sits, and an outlet further down the same circuit sees less; 6 kA is a breaking capacity commonly printed on residential breakers. The breaker here has not been read |
 | Wiring authority | AS/NZS 3000 | **Inferred** from the machine's market: it is an AU/NZ-market model (§ The machine), and AS/NZS 3000 is the wiring rules of that jurisdiction |
 
+## Ambient
+
+| Value | Figure | Provenance |
+|---|---|---|
+| Room temperature, lowest | 10 °C | **Owner statement, 2026-10-22**, declared, not measured: the owner's account of their own kitchen on a winter morning. No thermometer reading backs it |
+| Room temperature, highest | 35 °C | **Owner statement, 2026-10-22**, a design figure, not a measurement: set above the owner's own warmest room, about 28 °C on a summer day without air conditioning, so that the record also serves a machine standing in a warmer kitchen than this one. No thermometer reading backs it |
+| Humidity inside the controller's enclosure | Condensing | **Declared as the worst case, until it is measured.** The owner has no means of measuring it inside a running machine, so the worst case stands in for the reading. The facts below are the owner's account, not measurements |
+
+The span is the temperature of the room, not of the air inside the controller's enclosure. The enclosure's rise above the room is a separate figure, to be measured on the running machine and added to the top of this span, 35 °C. Someone standing in a different room replaces the two temperatures and recomputes whatever was drawn from them.
+
+What the owner reports of the enclosure's moisture exposure (owner statement, 2026-10-22; none of it measured):
+
+- The enclosure is sealed from the steam wand.
+- Steam may be present in the machine around the enclosure.
+- Moisture beyond the room's humidity would need a failure, such as a burst water line beside the enclosure.
+- A conformal coat on the boards is planned once the boards work.
+
+This section does not choose the pollution degree and does not decide whether the boards count as protected against moisture. The separation basis decides both, from these facts.
+
 ## Heating and load
 
 | Value | Figure | Provenance |
@@ -300,6 +319,7 @@ If you replace this file, these are the parts of the graph your substitution rea
 | Sensing already fitted | `REQ-MEASUREMENT-001.C4`, `.C5`, `.C6`, `.C7`, `.C8`, `REQ-WATER-SUPPLY-001.C2`, `REQ-ACTUATION-CONFIRMATION-001.C5` |
 | Wiring authority | `OBL-ELECTRICAL-THERMAL-SAFETY-001.C9`, `REQ-ELECTRICAL-INSTALL-001` |
 | Enclosure envelope, mounting points, harness entries and part positions | `REQ-RETROFIT-FIT-001.C1` and `.C2`; the board outlines, partition and connector placement the partition and feasibility task decides; the connectors and counts in [`connector-pinouts.md`](connector-pinouts.md) |
+| Ambient span, humidity inside the enclosure | `REQ-MACHINE-CONFIGURATION-001.C7`; the grading of every part on the controller boards and the enclosure temperature figure drawn from the top of the span (`REQ-ELECTRICAL-INSTALL-001.C14`; [`controller-board-design-constraints.md`](controller-board-design-constraints.md) and the enclosure measurement work); the bring-up measurement that corrects part temperatures to the top of the span; the assumed environment of the separation basis. The plant model's ambient coefficient in `firmware/params/thermoblock.params` was sized to an assumed indoor ambient and is **not** changed by this declaration: that coefficient and the analysis records under `docs/` generated from it are untouched, so no pinned record needs regenerating |
 
 The clearest case is the supply. At 253 V, the top of the declared span and the figure the budget is spent against (`REQ-POWER-BUDGET-001.C6`), the two measured elements together draw about 10.18 A before either pump runs, and about 10.5 A with both: over a 10 A outlet's rating outright, where the manual's figures suggested roughly 330 W of headroom at 240 V. Even at 240 V, inside the span, they draw about 9.95 A with both pumps running. At 120 V the same installed heating is over 16 A, so concurrency is simply unavailable there regardless — which does not change any requirement, but does change what the machine can be asked for, and makes `DEC-PLUMBING-LEFT-AS-BUILT` a decision worth re-reading rather than inheriting.
 
