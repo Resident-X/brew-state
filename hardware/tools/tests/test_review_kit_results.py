@@ -610,5 +610,54 @@ class SeveralKeyColumnTests(unittest.TestCase):
         self.assertEqual(["gives item 'A-1' 2 verdicts"], found)
 
 
+
+class NamedFailVerdict(unittest.TestCase):
+    PLAIN = rs.AnswerShape((
+        rs.TableShape("Verdicts", ("Item", "Why", "Verdict"), key="Item", verdict_column="Verdict",
+                      verdicts=("matches", "differs", "cannot judge")),))
+    KEYED = rs.AnswerShape((
+        rs.TableShape("Verdicts", ("Item", "Part", "Why", "Verdict"), key="Item", verdict_column="Verdict",
+                      verdicts=("matches", "differs", "cannot judge"), extra_key=("Part",)),))
+
+    @staticmethod
+    def held(rows, keyed=False):
+        cells = [{"Item": r[0], "Part": r[1], "Why": "", "Verdict": r[2]} if keyed else {"Item": r[0], "Why": "", "Verdict": r[1]}
+                 for r in rows]
+        return rs.Assessment(rs.STRUCTURED, "", {"Verdicts": cells})
+
+    def test_the_named_verdict_is_the_one_a_later_answer_may_not_clear_and_fail_is_not(self):
+        # SOL-HW-REVIEW-KIT.C15: Over synthetic declarations and a stub executor, a caller may name which of its verdicts is its fail verdict, a verdict of the verdict set of a table it declares; the kit then treats that verdict exactly as it treats fail: replicas are merged any-fail with it standing over a passing verdict, and no repair turn, cannot-judge turn or rerun clears it, the refusal naming the item and the verdict. A caller naming none keeps fail as its fail verdict, and a caller that names fail behaves as one that names none. A name carried by the verdict set of at least one table that has a key and a verdict column is accepted, a table whose verdict set lacks the name having no fail to hold. A name outside the verdicts of every such table is refused before any session starts, the refusal naming it and listing each verdict table with its verdict set, or saying that the declaration has no verdict table. A name that is not text or is blank is refused when the caller loads, naming the caller and the attribute, and so is the name cannot judge, naming the attribute, since the merge and the cannot-judge turn would otherwise collapse the two verdicts. Out of scope: any real caller.
+        first = self.held([("A-1", "differs"), ("A-2", "matches")])
+        later = self.held([("A-1", "matches"), ("A-2", "matches")])
+        self.assertEqual(["A-1"], rs.cleared_fails(first, later, self.PLAIN, "differs", ["A-1", "A-2"]))
+        self.assertEqual([], rs.cleared_fails(first, later, self.PLAIN, "fail", ["A-1", "A-2"]))
+        self.assertEqual(["A-1"], rs.failed_items(first.tables, self.PLAIN, "differs", ["A-1", "A-2"]))
+        rs.mark_cleared([first], later, self.PLAIN, "differs", ["A-1", "A-2"], "u")
+        self.assertEqual(["A-1"], later.cleared)
+        self.assertEqual(1, len(later.problems))
+        self.assertIn("'A-1'", later.problems[0].what)
+        self.assertIn("'differs'", later.problems[0].what)
+        self.assertEqual(0, rs.standing([first, later]))
+
+    def test_the_named_verdict_is_held_per_combination_of_a_several_column_key(self):
+        # SOL-HW-REVIEW-KIT.C15: Over synthetic declarations and a stub executor, a caller may name which of its verdicts is its fail verdict, a verdict of the verdict set of a table it declares; the kit then treats that verdict exactly as it treats fail: replicas are merged any-fail with it standing over a passing verdict, and no repair turn, cannot-judge turn or rerun clears it, the refusal naming the item and the verdict. A caller naming none keeps fail as its fail verdict, and a caller that names fail behaves as one that names none. A name carried by the verdict set of at least one table that has a key and a verdict column is accepted, a table whose verdict set lacks the name having no fail to hold. A name outside the verdicts of every such table is refused before any session starts, the refusal naming it and listing each verdict table with its verdict set, or saying that the declaration has no verdict table. A name that is not text or is blank is refused when the caller loads, naming the caller and the attribute, and so is the name cannot judge, naming the attribute, since the merge and the cannot-judge turn would otherwise collapse the two verdicts. Out of scope: any real caller.
+        first = self.held([("A-1", "x", "differs"), ("A-1", "y", "differs")], keyed=True)
+        later = self.held([("A-1", "x", "matches"), ("A-1", "y", "differs")], keyed=True)
+        self.assertEqual(['["A-1", "x"]'], rs.cleared_fails(first, later, self.KEYED, "differs", ["A-1"]))
+        rs.mark_cleared([first], later, self.KEYED, "differs", ["A-1"], "u")
+        self.assertIn('combination ["A-1", "x"]', later.problems[0].what)
+        self.assertIn("'differs'", later.problems[0].what)
+
+    def test_a_caller_naming_fail_gets_the_text_of_one_naming_none(self):
+        # SOL-HW-REVIEW-KIT.C15: Over synthetic declarations and a stub executor, a caller may name which of its verdicts is its fail verdict, a verdict of the verdict set of a table it declares; the kit then treats that verdict exactly as it treats fail: replicas are merged any-fail with it standing over a passing verdict, and no repair turn, cannot-judge turn or rerun clears it, the refusal naming the item and the verdict. A caller naming none keeps fail as its fail verdict, and a caller that names fail behaves as one that names none. A name carried by the verdict set of at least one table that has a key and a verdict column is accepted, a table whose verdict set lacks the name having no fail to hold. A name outside the verdicts of every such table is refused before any session starts, the refusal naming it and listing each verdict table with its verdict set, or saying that the declaration has no verdict table. A name that is not text or is blank is refused when the caller loads, naming the caller and the attribute, and so is the name cannot judge, naming the attribute, since the merge and the cannot-judge turn would otherwise collapse the two verdicts. Out of scope: any real caller.
+        plain = rs.AnswerShape((rs.TableShape("Verdicts", ("Item", "Why", "Verdict"), key="Item", verdict_column="Verdict",
+                                              verdicts=("pass", "fail", "cannot judge")),))
+        first = rs.Assessment(rs.STRUCTURED, "", {"Verdicts": [{"Item": "A-1", "Why": "", "Verdict": "fail"}]})
+        later = rs.Assessment(rs.STRUCTURED, "", {"Verdicts": [{"Item": "A-1", "Why": "", "Verdict": "pass"}]})
+        rs.mark_cleared([first], later, plain, "fail", ["A-1"], "u")
+        self.assertEqual("clears the fail the first answer raised on item 'A-1', by passing it or leaving it out; a fail "
+                         "stands, so keep it as the first answer gave it", later.problems[0].what)
+
+
 if __name__ == "__main__":
     unittest.main()

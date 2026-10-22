@@ -576,5 +576,94 @@ def harness_decl():
     return decl.parse(json.dumps(fx.declaration_dict()), "caller.json")
 
 
+
+class NamedFailVerdictTests(unittest.TestCase):
+    """The same defect, a verdict a caller names as its fail, driven through every path that could clear it."""
+
+    NAMES = (("pass", "fail"), ("matches", "differs"))
+
+    @staticmethod
+    def answer(rows):
+        return ex.Reply(structured={"tables": {"Verdicts": [{"Item": i, "Verdict": v, "Note": ""} for i, v in rows],
+                                               "Findings": []}}, text="x")
+
+    def harness(self, ok, fail, script, attempts=3, name_it=True):
+        harness = fx.Harness(self, raw=fx.verdict_declaration_dict(ok, fail), script=script, attempts=attempts)
+        if name_it:
+            harness.scheduler.fail = fail
+        return harness
+
+    def paths(self, ok, fail):
+        a1, a2 = "G1.r1.a1", "G1.r1.a2"
+        flipped = self.answer([("i1", ok), ("i2", ok)])
+        return {
+            "the first answer": ({a1: self.answer([("i1", fail), ("i2", ok)])}, False),
+            "a repair of a local problem": ({a1: self.answer([("i1", fail)]), a2: flipped}, True),
+            "the cannot-judge turn": ({a1: self.answer([("i1", fail), ("i2", "cannot judge")]), a2: flipped}, True),
+            "a repair that leaves the item out": ({a1: self.answer([("i1", fail), ("i2", "cannot judge")]),
+                                                   a2: self.answer([("i2", ok)])}, True),
+        }
+
+    @staticmethod
+    def lane(record):
+        return [l for l in record["lanes"] if l["group"] == "G1"][0]
+
+    @staticmethod
+    def standing_verdicts(lane):
+        held = lane["record"]["attempts"][lane["record"]["standing"]]["tables"]["Verdicts"]
+        return {row["Item"]: row["Verdict"] for row in held}
+
+    def test_the_named_verdict_stands_through_every_path_that_could_clear_it_as_fail_does(self):
+        # SOL-HW-REVIEW-KIT.C15: Over synthetic declarations and a stub executor, a caller may name which of its verdicts is its fail verdict, a verdict of the verdict set of a table it declares; the kit then treats that verdict exactly as it treats fail: replicas are merged any-fail with it standing over a passing verdict, and no repair turn, cannot-judge turn or rerun clears it, the refusal naming the item and the verdict. A caller naming none keeps fail as its fail verdict, and a caller that names fail behaves as one that names none. A name carried by the verdict set of at least one table that has a key and a verdict column is accepted, a table whose verdict set lacks the name having no fail to hold. A name outside the verdicts of every such table is refused before any session starts, the refusal naming it and listing each verdict table with its verdict set, or saying that the declaration has no verdict table. A name that is not text or is blank is refused when the caller loads, naming the caller and the attribute, and so is the name cannot judge, naming the attribute, since the merge and the cannot-judge turn would otherwise collapse the two verdicts. Out of scope: any real caller.
+        for ok, fail in self.NAMES:
+            for path, (script, clears) in self.paths(ok, fail).items():
+                with self.subTest(fail=fail, path=path):
+                    lane = self.lane(self.harness(ok, fail, script).fresh())
+                    self.assertEqual(self.standing_verdicts(lane)["i1"], fail)
+                    self.assertEqual(lane["record"]["standing"], 0)
+                    cleared = [a["cleared"] for a in lane["record"]["attempts"]]
+                    self.assertEqual(cleared[-1], ["i1"] if clears else [])
+                    if clears:
+                        problems = lane["record"]["attempts"][-1]["problems"]
+                        self.assertEqual([p["class"] for p in problems], ["local"])
+                        self.assertIn("'i1'", problems[0]["what"])
+                        self.assertIn("clears the fail", problems[0]["what"])
+                        if fail != "fail":
+                            self.assertIn(repr(fail), problems[0]["what"])
+                    if not clears:
+                        self.assertIsNone(lane["failure"])
+
+    def test_a_rerun_holds_the_named_verdict_against_a_repair_as_a_fresh_run_does(self):
+        # SOL-HW-REVIEW-KIT.C15: Over synthetic declarations and a stub executor, a caller may name which of its verdicts is its fail verdict, a verdict of the verdict set of a table it declares; the kit then treats that verdict exactly as it treats fail: replicas are merged any-fail with it standing over a passing verdict, and no repair turn, cannot-judge turn or rerun clears it, the refusal naming the item and the verdict. A caller naming none keeps fail as its fail verdict, and a caller that names fail behaves as one that names none. A name carried by the verdict set of at least one table that has a key and a verdict column is accepted, a table whose verdict set lacks the name having no fail to hold. A name outside the verdicts of every such table is refused before any session starts, the refusal naming it and listing each verdict table with its verdict set, or saying that the declaration has no verdict table. A name that is not text or is blank is refused when the caller loads, naming the caller and the attribute, and so is the name cannot judge, naming the attribute, since the merge and the cannot-judge turn would otherwise collapse the two verdicts. Out of scope: any real caller.
+        for ok, fail in self.NAMES:
+            with self.subTest(fail=fail):
+                harness = self.harness(ok, fail, {"G1.r1.a1": self.answer([("i1", ok), ("i2", ok)])})
+                harness.fresh()
+                script = {"G1.r1.a1": self.answer([("i1", fail), ("i2", "cannot judge")]),
+                          "G1.r1.a2": self.answer([("i1", ok), ("i2", ok)])}
+                harness.new_stub(script)
+                harness.scheduler.fail = fail
+                lane = self.lane(harness.again(["u1"]))
+                self.assertEqual(self.standing_verdicts(lane)["i1"], fail)
+                self.assertEqual(lane["record"]["attempts"][-1]["cleared"], ["i1"])
+                self.assertIn(repr("i1"), lane["record"]["attempts"][-1]["problems"][0]["what"])
+
+    def test_a_caller_naming_none_holds_only_fail_so_another_verdict_is_cleared_freely(self):
+        # SOL-HW-REVIEW-KIT.C15: Over synthetic declarations and a stub executor, a caller may name which of its verdicts is its fail verdict, a verdict of the verdict set of a table it declares; the kit then treats that verdict exactly as it treats fail: replicas are merged any-fail with it standing over a passing verdict, and no repair turn, cannot-judge turn or rerun clears it, the refusal naming the item and the verdict. A caller naming none keeps fail as its fail verdict, and a caller that names fail behaves as one that names none. A name carried by the verdict set of at least one table that has a key and a verdict column is accepted, a table whose verdict set lacks the name having no fail to hold. A name outside the verdicts of every such table is refused before any session starts, the refusal naming it and listing each verdict table with its verdict set, or saying that the declaration has no verdict table. A name that is not text or is blank is refused when the caller loads, naming the caller and the attribute, and so is the name cannot judge, naming the attribute, since the merge and the cannot-judge turn would otherwise collapse the two verdicts. Out of scope: any real caller.
+        script = self.paths("matches", "differs")["the cannot-judge turn"][0]
+        lane = self.lane(self.harness("matches", "differs", script, name_it=False).fresh())
+        self.assertEqual(lane["record"]["standing"], 1)
+        self.assertEqual(self.standing_verdicts(lane)["i1"], "matches")
+        self.assertEqual([a["cleared"] for a in lane["record"]["attempts"]], [[], []])
+
+    def test_a_caller_naming_fail_behaves_as_one_naming_none(self):
+        # SOL-HW-REVIEW-KIT.C15: Over synthetic declarations and a stub executor, a caller may name which of its verdicts is its fail verdict, a verdict of the verdict set of a table it declares; the kit then treats that verdict exactly as it treats fail: replicas are merged any-fail with it standing over a passing verdict, and no repair turn, cannot-judge turn or rerun clears it, the refusal naming the item and the verdict. A caller naming none keeps fail as its fail verdict, and a caller that names fail behaves as one that names none. A name carried by the verdict set of at least one table that has a key and a verdict column is accepted, a table whose verdict set lacks the name having no fail to hold. A name outside the verdicts of every such table is refused before any session starts, the refusal naming it and listing each verdict table with its verdict set, or saying that the declaration has no verdict table. A name that is not text or is blank is refused when the caller loads, naming the caller and the attribute, and so is the name cannot judge, naming the attribute, since the merge and the cannot-judge turn would otherwise collapse the two verdicts. Out of scope: any real caller.
+        for path, (script, _) in self.paths("pass", "fail").items():
+            with self.subTest(path=path):
+                named = self.lane(self.harness("pass", "fail", script, name_it=True).fresh())
+                none = self.lane(self.harness("pass", "fail", script, name_it=False).fresh())
+                self.assertEqual(json.dumps(named, sort_keys=True), json.dumps(none, sort_keys=True))
+
+
 if __name__ == "__main__":
     unittest.main()
