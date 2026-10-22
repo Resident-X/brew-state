@@ -400,5 +400,96 @@ class Names(Case):
             self.assertIn("not a list of file names", self.refused(caller.earlier_names, broken))
 
 
+
+class FailVerdict(Case):
+    NAMED = "differs"
+
+    def declared(self, **kwargs):
+        return fx.verdict_declaration_dict(**kwargs)
+
+    def prepare(self, extra="", **kwargs):
+        return self.load(extra, declaration=self.declared(**kwargs)).prepare(self.review)
+
+    def two_tables(self):
+        raw = self.declared()
+        raw["schema"]["tables"].insert(1, {"name": "Parts", "columns": ["Item", "Verdict"], "key": "Item",
+                                           "verdict_column": "Verdict", "verdicts": ["good", "broken", "cannot judge"]})
+        return raw
+
+    def test_a_caller_naming_a_verdict_of_its_table_has_the_kit_hold_that_verdict_as_its_fail(self):
+        # SOL-HW-REVIEW-KIT.C15: Over synthetic declarations and a stub executor, a caller may name which of its verdicts is its fail verdict, a verdict of the verdict set of a table it declares; the kit then treats that verdict exactly as it treats fail: replicas are merged any-fail with it standing over a passing verdict, and no repair turn, cannot-judge turn or rerun clears it, the refusal naming the item and the verdict. A caller naming none keeps fail as its fail verdict, and a caller that names fail behaves as one that names none. A name carried by the verdict set of at least one table that has a key and a verdict column is accepted, a table whose verdict set lacks the name having no fail to hold. A name outside the verdicts of every such table is refused before any session starts, the refusal naming it and listing each verdict table with its verdict set, or saying that the declaration has no verdict table. A name that is not text or is blank is refused when the caller loads, naming the caller and the attribute, and so is the name cannot judge, naming the attribute, since the merge and the cannot-judge turn would otherwise collapse the two verdicts. Out of scope: any real caller.
+        self.assertEqual("differs", self.prepare("fail_verdict = 'differs'\n").rules.fail)
+
+    def test_a_caller_naming_none_keeps_fail_and_one_naming_fail_behaves_as_one_naming_none(self):
+        # SOL-HW-REVIEW-KIT.C15: Over synthetic declarations and a stub executor, a caller may name which of its verdicts is its fail verdict, a verdict of the verdict set of a table it declares; the kit then treats that verdict exactly as it treats fail: replicas are merged any-fail with it standing over a passing verdict, and no repair turn, cannot-judge turn or rerun clears it, the refusal naming the item and the verdict. A caller naming none keeps fail as its fail verdict, and a caller that names fail behaves as one that names none. A name carried by the verdict set of at least one table that has a key and a verdict column is accepted, a table whose verdict set lacks the name having no fail to hold. A name outside the verdicts of every such table is refused before any session starts, the refusal naming it and listing each verdict table with its verdict set, or saying that the declaration has no verdict table. A name that is not text or is blank is refused when the caller loads, naming the caller and the attribute, and so is the name cannot judge, naming the attribute, since the merge and the cannot-judge turn would otherwise collapse the two verdicts. Out of scope: any real caller.
+        base = fx.declaration_dict()
+        bare = self.load(declaration=base).prepare(self.review)
+        named = self.load("fail_verdict = 'fail'\n", declaration=base).prepare(self.review)
+        none = self.load("fail_verdict = None\n", declaration=base).prepare(self.review)
+        self.assertEqual("fail", bare.rules.fail)
+        self.assertEqual(bare.rules, named.rules)
+        self.assertEqual(bare.rules, none.rules)
+        self.assertEqual(bare.checklist, named.checklist)
+        self.assertEqual(bare.tools, named.tools)
+
+    def test_a_name_outside_the_verdicts_of_the_table_is_refused_naming_it_and_the_table(self):
+        # SOL-HW-REVIEW-KIT.C15: Over synthetic declarations and a stub executor, a caller may name which of its verdicts is its fail verdict, a verdict of the verdict set of a table it declares; the kit then treats that verdict exactly as it treats fail: replicas are merged any-fail with it standing over a passing verdict, and no repair turn, cannot-judge turn or rerun clears it, the refusal naming the item and the verdict. A caller naming none keeps fail as its fail verdict, and a caller that names fail behaves as one that names none. A name carried by the verdict set of at least one table that has a key and a verdict column is accepted, a table whose verdict set lacks the name having no fail to hold. A name outside the verdicts of every such table is refused before any session starts, the refusal naming it and listing each verdict table with its verdict set, or saying that the declaration has no verdict table. A name that is not text or is blank is refused when the caller loads, naming the caller and the attribute, and so is the name cannot judge, naming the attribute, since the merge and the cannot-judge turn would otherwise collapse the two verdicts. Out of scope: any real caller.
+        for name in ("broken", "Differs", "pass"):
+            with self.subTest(name=name):
+                caller_ = self.load(f"fail_verdict = {name!r}\n", declaration=self.declared())
+                text = self.refused(caller_.prepare, self.review)
+                self.assertIn(f"fail_verdict names {name!r}", text)
+                self.assertIn("table 'Verdicts'", text)
+                self.assertIn("['matches', 'differs', 'cannot judge']", text)
+                self.assertIn("the caller demo", text)
+
+    def test_a_name_valid_in_one_verdict_table_and_absent_from_another_is_held_where_it_is_carried(self):
+        # SOL-HW-REVIEW-KIT.C15: Over synthetic declarations and a stub executor, a caller may name which of its verdicts is its fail verdict, a verdict of the verdict set of a table it declares; the kit then treats that verdict exactly as it treats fail: replicas are merged any-fail with it standing over a passing verdict, and no repair turn, cannot-judge turn or rerun clears it, the refusal naming the item and the verdict. A caller naming none keeps fail as its fail verdict, and a caller that names fail behaves as one that names none. A name carried by the verdict set of at least one table that has a key and a verdict column is accepted, a table whose verdict set lacks the name having no fail to hold. A name outside the verdicts of every such table is refused before any session starts, the refusal naming it and listing each verdict table with its verdict set, or saying that the declaration has no verdict table. A name that is not text or is blank is refused when the caller loads, naming the caller and the attribute, and so is the name cannot judge, naming the attribute, since the merge and the cannot-judge turn would otherwise collapse the two verdicts. Out of scope: any real caller.
+        self.assertEqual("broken", self.load("fail_verdict = 'broken'\n", declaration=self.two_tables()).prepare(self.review).rules.fail)
+        self.assertEqual("differs", self.load("fail_verdict = 'differs'\n", declaration=self.two_tables()).prepare(self.review).rules.fail)
+        text = self.refused(self.load("fail_verdict = 'nowhere'\n", declaration=self.two_tables()).prepare, self.review)
+        self.assertIn("table 'Verdicts'", text)
+        self.assertIn("table 'Parts'", text)
+        self.assertIn("'nowhere'", text)
+
+    def test_a_name_in_a_several_column_key_table_is_accepted_and_held(self):
+        # SOL-HW-REVIEW-KIT.C15: Over synthetic declarations and a stub executor, a caller may name which of its verdicts is its fail verdict, a verdict of the verdict set of a table it declares; the kit then treats that verdict exactly as it treats fail: replicas are merged any-fail with it standing over a passing verdict, and no repair turn, cannot-judge turn or rerun clears it, the refusal naming the item and the verdict. A caller naming none keeps fail as its fail verdict, and a caller that names fail behaves as one that names none. A name carried by the verdict set of at least one table that has a key and a verdict column is accepted, a table whose verdict set lacks the name having no fail to hold. A name outside the verdicts of every such table is refused before any session starts, the refusal naming it and listing each verdict table with its verdict set, or saying that the declaration has no verdict table. A name that is not text or is blank is refused when the caller loads, naming the caller and the attribute, and so is the name cannot judge, naming the attribute, since the merge and the cannot-judge turn would otherwise collapse the two verdicts. Out of scope: any real caller.
+        prepared = self.prepare("fail_verdict = 'differs'\n", keyed=True)
+        self.assertEqual("differs", prepared.rules.fail)
+        self.assertEqual(("Item", "Part"), prepared.declaration.shape.tables[0].key_columns)
+
+    def test_the_cannot_judge_verdict_is_refused_when_the_caller_loads_naming_the_attribute(self):
+        # SOL-HW-REVIEW-KIT.C15: Over synthetic declarations and a stub executor, a caller may name which of its verdicts is its fail verdict, a verdict of the verdict set of a table it declares; the kit then treats that verdict exactly as it treats fail: replicas are merged any-fail with it standing over a passing verdict, and no repair turn, cannot-judge turn or rerun clears it, the refusal naming the item and the verdict. A caller naming none keeps fail as its fail verdict, and a caller that names fail behaves as one that names none. A name carried by the verdict set of at least one table that has a key and a verdict column is accepted, a table whose verdict set lacks the name having no fail to hold. A name outside the verdicts of every such table is refused before any session starts, the refusal naming it and listing each verdict table with its verdict set, or saying that the declaration has no verdict table. A name that is not text or is blank is refused when the caller loads, naming the caller and the attribute, and so is the name cannot judge, naming the attribute, since the merge and the cannot-judge turn would otherwise collapse the two verdicts. Out of scope: any real caller.
+        text = self.refused(lambda: self.load("fail_verdict = 'cannot judge'\n", declaration=self.declared()))
+        self.assertIn("gives fail_verdict that names 'cannot judge'", text)
+        self.assertIn("the caller demo", text)
+
+    def test_a_caller_naming_fail_on_a_declaration_whose_verdicts_lack_fail_behaves_as_one_naming_none(self):
+        # SOL-HW-REVIEW-KIT.C15: Over synthetic declarations and a stub executor, a caller may name which of its verdicts is its fail verdict, a verdict of the verdict set of a table it declares; the kit then treats that verdict exactly as it treats fail: replicas are merged any-fail with it standing over a passing verdict, and no repair turn, cannot-judge turn or rerun clears it, the refusal naming the item and the verdict. A caller naming none keeps fail as its fail verdict, and a caller that names fail behaves as one that names none. A name carried by the verdict set of at least one table that has a key and a verdict column is accepted, a table whose verdict set lacks the name having no fail to hold. A name outside the verdicts of every such table is refused before any session starts, the refusal naming it and listing each verdict table with its verdict set, or saying that the declaration has no verdict table. A name that is not text or is blank is refused when the caller loads, naming the caller and the attribute, and so is the name cannot judge, naming the attribute, since the merge and the cannot-judge turn would otherwise collapse the two verdicts. Out of scope: any real caller.
+        declared = self.declared()
+        bare = self.load(declaration=declared).prepare(self.review)
+        named = self.load("fail_verdict = 'fail'\n", declaration=declared).prepare(self.review)
+        self.assertNotIn("fail", declared["schema"]["tables"][0]["verdicts"])
+        self.assertEqual("fail", named.rules.fail)
+        self.assertEqual(bare.rules, named.rules)
+
+    def test_a_declaration_with_no_verdict_table_is_refused_saying_so_for_a_name(self):
+        # SOL-HW-REVIEW-KIT.C15: Over synthetic declarations and a stub executor, a caller may name which of its verdicts is its fail verdict, a verdict of the verdict set of a table it declares; the kit then treats that verdict exactly as it treats fail: replicas are merged any-fail with it standing over a passing verdict, and no repair turn, cannot-judge turn or rerun clears it, the refusal naming the item and the verdict. A caller naming none keeps fail as its fail verdict, and a caller that names fail behaves as one that names none. A name carried by the verdict set of at least one table that has a key and a verdict column is accepted, a table whose verdict set lacks the name having no fail to hold. A name outside the verdicts of every such table is refused before any session starts, the refusal naming it and listing each verdict table with its verdict set, or saying that the declaration has no verdict table. A name that is not text or is blank is refused when the caller loads, naming the caller and the attribute, and so is the name cannot judge, naming the attribute, since the merge and the cannot-judge turn would otherwise collapse the two verdicts. Out of scope: any real caller.
+        raw = fx.declaration_dict()
+        table = raw["schema"]["tables"][0]
+        del table["verdict_column"], table["verdicts"]
+        text = self.refused(self.load("fail_verdict = 'differs'\n", declaration=raw).prepare, self.review)
+        self.assertIn("fail_verdict names 'differs'", text)
+        self.assertIn("the declaration has no verdict table", text)
+
+    def test_an_attribute_that_is_not_the_text_of_a_verdict_is_refused_at_load_naming_it(self):
+        # SOL-HW-REVIEW-KIT.C15: Over synthetic declarations and a stub executor, a caller may name which of its verdicts is its fail verdict, a verdict of the verdict set of a table it declares; the kit then treats that verdict exactly as it treats fail: replicas are merged any-fail with it standing over a passing verdict, and no repair turn, cannot-judge turn or rerun clears it, the refusal naming the item and the verdict. A caller naming none keeps fail as its fail verdict, and a caller that names fail behaves as one that names none. A name carried by the verdict set of at least one table that has a key and a verdict column is accepted, a table whose verdict set lacks the name having no fail to hold. A name outside the verdicts of every such table is refused before any session starts, the refusal naming it and listing each verdict table with its verdict set, or saying that the declaration has no verdict table. A name that is not text or is blank is refused when the caller loads, naming the caller and the attribute, and so is the name cannot judge, naming the attribute, since the merge and the cannot-judge turn would otherwise collapse the two verdicts. Out of scope: any real caller.
+        for source in ("fail_verdict = 5", "fail_verdict = ''", "fail_verdict = '  '", "fail_verdict = ['differs']"):
+            with self.subTest(source=source):
+                text = self.refused(lambda s=source: self.load(s))
+                self.assertIn("gives fail_verdict that", text)
+                self.assertIn("the caller demo", text)
+
+
 if __name__ == "__main__":
     unittest.main()

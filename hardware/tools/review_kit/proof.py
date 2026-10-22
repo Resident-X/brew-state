@@ -271,12 +271,14 @@ def finding_text(row: Mapping[str, Any], columns: Sequence[str]) -> str:
 
 def outcome_from_run(run_id: str, formed: FormPlan, run: scheduler.RunResult, figures: Sequence[telemetry.SessionFigures],
                      seeds: Sequence[Seed], match: Match, *, seeded_commit: str,
-                     seed_item: Callable[[Seed], str] = lambda seed: seed["item"]) -> RunOutcome:
+                     seed_item: Callable[[Seed], str] = lambda seed: seed["item"],
+                     rules: Optional[merge.Rules] = None) -> RunOutcome:
     """A run of a form recorded in the proof's shape.
 
     The replicas' answers are read lane by lane: a seed is raised by a replica when `match(seed, row)` holds for a row of
     its findings table, and found when any replica raised it. A replica judged a seed's item when its group holds that
-    item. The wall time is the critical path of the sessions and the cost their sum."""
+    item. The wall time is the critical path of the sessions and the cost their sum. `rules` names the caller's fail verdict for
+    the merged verdicts; the kit's own when it is left out."""
     shape = formed.declaration.shape
     if shape.findings is None:
         raise ProofError("the declaration has no findings table, so no finding can name a seed")
@@ -303,7 +305,7 @@ def outcome_from_run(run_id: str, formed: FormPlan, run: scheduler.RunResult, fi
                 for row in tables.get(table.name, []):
                     given.setdefault(table.label(row), []).append(row[table.verdict_column])
     verdict_table = next((t for t in shape.tables if t.verdict_column and t.key), None)
-    verdicts = ({item: merge.merged_verdict(verdict_table, merge.Rules(), found) for item, found in given.items()}
+    verdicts = ({item: merge.merged_verdict(verdict_table, rules or merge.Rules(), found) for item, found in given.items()}
                 if verdict_table else {})
     totals = telemetry.run_figures(figures)
     return RunOutcome(run_id, formed.form, formed.plan.tool_commit, seeded_commit,

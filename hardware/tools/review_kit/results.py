@@ -402,9 +402,10 @@ def mark_cleared(attempts: Sequence[Assessment], later: Assessment, shape: Answe
         return
     later.cleared = cleared_fails(first, later, shape, fail, items)
     keys = [table for table in shape.tables if table.verdict_column and table.key and fail in table.verdicts and table.extra_key]
+    named = "fail" if fail == "fail" else f"fail (the verdict {fail!r})"
     for label in later.cleared:
         what = f"the combination {label} of {list(keys[0].key_columns)}" if keys else f"item {label!r}"
-        later.problems.append(Problem(LOCAL, f"unit {unit}", f"clears the fail the first answer raised on {what}, by passing it "
+        later.problems.append(Problem(LOCAL, f"unit {unit}", f"clears the {named} the first answer raised on {what}, by passing it "
                                                              "or leaving it out; a fail stands, so keep it as the first answer gave it"))
 
 

@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: A task runs any declared judged review as forks of one shared context built by the command, with replicas merged so that any fail stands, and proves it against the recorded single-reviewer runs
 status: active
-version: 2
+version: 4
 text: |
   Why this exists. The first live runs of the fanned-out layout review failed on the way sessions were started: the setup session's system rule, that it write nothing but one token and judge nothing, was inherited by every forked reviewer, and nothing in the tests could show it because the stub never compared how sessions were started. DEC-REVIEW-FAN-OUT-FROM-SHARED-CONTEXT-WITH-REPLICAS sets the shared context as the shape; this solution builds the review kit that the callers move to, so that the whole machinery is built, tested and reviewed once; the earlier driver stays in the repository until the layout solution moves the last caller and removes it. A session building this does not reopen the decision.
 
@@ -50,7 +50,7 @@ text: |
   - Each artefact is measured: a text by its token count when one is recorded and otherwise by its length as an upper bound, an image by the model's patch formula, and each by its content hash.
   - The shared context holds every artefact any unit needs, in a fixed order, and no unit's prompt. The same declaration and review folder give byte-identical bytes and the same prefix hash.
   - A unit's prompt is a template with named slots; a template with a slot the unit does not fill, or a filled slot the template lacks, is refused at load.
-  - The result schema is declared as tables with a key column, columns and verdict sets, and the kit derives from it both the schema the sessions are given and what the results module checks, so one change to a table changes both. A verdict table's key may name several columns, the first being the item, and then each combination of the key is judged, merged and proved as one row.
+  - The result schema is declared as tables with a key column, columns and verdict sets, and the kit derives from it both the schema the sessions are given and what the results module checks, so one change to a table changes both. A verdict table's key may name several columns, the first being the item, and then each combination of the key is judged, merged and proved as one row. A key that names the table's verdict column is refused, since a verdict in the key would stop replicas of one item merging any-fail.
 
   Planning and running.
 
@@ -70,7 +70,7 @@ text: |
   - A replica is a fork of the same shared context whose prompt differs in the order of the items, the order of the views and its framing, one of which is a terse hunt for failures; the variants are declared. The number of replicas comes from the unit's stakes in the declaration, two for a round of the design loop and three for the pre-order round, a round flag overriding it; the third replica may run on the small tier, and a replica on a different model has its own shared context and session specification, since the cache cannot be shared across models.
   - The columns and verdict sets of the declared tables are enforced; this round's findings are renumbered in the checklist's order and the citations of them in the verdict rows rewritten, a citation of an earlier round's finding is left as written, told apart by the round it carries against the round the caller names as this one, and refused when the review folder's earlier rounds do not hold it; two findings that the caller's key assigns to the same place are reported and neither dropped; the merged record is the same for every order the units arrive in.
   - A caller supplies its checks, a function of the merged tables returning problems, and a rendered record, a function returning file names with their text, written into the output folder after the merge under the file-name rules the earlier caller seam set: one plain component of ASCII letters, digits, full stops, underscores and hyphens that begins with a letter or digit and does not end with a full stop or with the kit's scratch suffix, at most sixty-four characters, not a reserved device name, and no name that equals, without regard to case, one the kit uses or another rendered in the same merge; a name that is already in the output folder is replaced only when the earlier merge wrote it and it is still a regular file.
-  - A caller's optional attributes are the retrieval grant, one read-only retrieval tool beside the three read tools and no other tool, the checklist as a function of the review folder resolved once before any session starts, and the review folder passed to the prompt function with the unit. A caller that defines none behaves as one that defines all three with their defaults. A module missing a required attribute, or a function that raises, is refused naming the caller and the attribute.
+  - A caller's optional attributes are the retrieval grant, one read-only retrieval tool beside the three read tools and no other tool, the checklist as a function of the review folder resolved once before any session starts, and the review folder passed to the prompt function with the unit. A caller that defines none behaves as one that defines all three with their defaults. A caller may also name which verdict of its tables is its fail verdict, a verdict of the table's verdict set, which the kit then merges and holds against clearing exactly as it does fail; naming none keeps fail, and a name outside the table's verdicts is refused naming it before any session starts. A module missing a required attribute, or a function that raises, is refused naming the caller and the attribute.
 
   The command and the cutover.
 
@@ -114,6 +114,6 @@ links:
   - target: SOL-HW-REVIEW-FAN-OUT-CALLER-SEAM
     type: supersedes
 brief_confirmation:
-  confirmer: claude-sonnet-5-5 brief reviewer
-  fingerprint: 5655b1797117cfb141f05bb718f3e14c5bd4810be19d5ef54a45275d58f17680
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: 2e8faf421809a30aa751432f7f2fbdf62b73bf108f8595510976cdb1744733a2
   gating_profile: ""

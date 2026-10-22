@@ -855,5 +855,39 @@ class Entry(unittest.TestCase):
         self.assertTrue(done.stdout.startswith("REFUSED | "), done.stdout)
 
 
+
+class NamedFailVerdict(Case):
+    def named(self, name):
+        self.write_caller(extra=f"fail_verdict = {name!r}\n", declaration=fx.verdict_declaration_dict())
+        self.scenario(verdicts={item: "matches" for item in ("i1", "i2", "j1", "k1", "k2", "m1")})
+
+    def test_a_name_outside_the_verdicts_of_the_table_is_refused_before_any_session_starts(self):
+        # SOL-HW-REVIEW-KIT.C15: Over synthetic declarations and a stub executor, a caller may name which of its verdicts is its fail verdict, a verdict of the verdict set of a table it declares; the kit then treats that verdict exactly as it treats fail: replicas are merged any-fail with it standing over a passing verdict, and no repair turn, cannot-judge turn or rerun clears it, the refusal naming the item and the verdict. A caller naming none keeps fail as its fail verdict, and a caller that names fail behaves as one that names none. A name carried by the verdict set of at least one table that has a key and a verdict column is accepted, a table whose verdict set lacks the name having no fail to hold. A name outside the verdicts of every such table is refused before any session starts, the refusal naming it and listing each verdict table with its verdict set, or saying that the declaration has no verdict table. A name that is not text or is blank is refused when the caller loads, naming the caller and the attribute, and so is the name cannot judge, naming the attribute, since the merge and the cannot-judge turn would otherwise collapse the two verdicts. Out of scope: any real caller.
+        self.named("broken")
+        status, out, err = self.run_command()
+        self.assertEqual(status, 1, out + err)
+        line = next(line for line in out.splitlines() if line.startswith("REFUSED"))
+        self.assertIn("'broken'", line)
+        self.assertIn("table 'Verdicts'", line)
+        self.assertIn("the caller demo", line)
+        self.assertEqual(self.calls(), [], "no session was started")
+        self.assertFalse(os.path.exists(self.out))
+        status, out, err = self.run_command(fmt="json")
+        self.assertEqual(status, 1)
+        self.assertIn("table 'Verdicts'", json.loads(out)["refusals"][0])
+
+    def test_a_run_for_a_caller_naming_a_verdict_merges_it_and_renders_it(self):
+        # SOL-HW-REVIEW-KIT.C15: Over synthetic declarations and a stub executor, a caller may name which of its verdicts is its fail verdict, a verdict of the verdict set of a table it declares; the kit then treats that verdict exactly as it treats fail: replicas are merged any-fail with it standing over a passing verdict, and no repair turn, cannot-judge turn or rerun clears it, the refusal naming the item and the verdict. A caller naming none keeps fail as its fail verdict, and a caller that names fail behaves as one that names none. A name carried by the verdict set of at least one table that has a key and a verdict column is accepted, a table whose verdict set lacks the name having no fail to hold. A name outside the verdicts of every such table is refused before any session starts, the refusal naming it and listing each verdict table with its verdict set, or saying that the declaration has no verdict table. A name that is not text or is blank is refused when the caller loads, naming the caller and the attribute, and so is the name cannot judge, naming the attribute, since the merge and the cannot-judge turn would otherwise collapse the two verdicts. Out of scope: any real caller.
+        self.named("differs")
+        self.scenario(verdicts={"i1": "differs", "i2": "matches", "j1": "matches", "k1": "matches", "k2": "matches",
+                                "m1": "matches"})
+        status, out, err = self.run_command()
+        self.assertEqual((status, err), (0, ""), out)
+        with open(os.path.join(self.out, "summary.md"), encoding="utf-8") as handle:
+            rendered = handle.read().splitlines()
+        self.assertIn("i1: differs", rendered)
+        self.assertIn("i2: matches", rendered)
+
+
 if __name__ == "__main__":
     unittest.main()
