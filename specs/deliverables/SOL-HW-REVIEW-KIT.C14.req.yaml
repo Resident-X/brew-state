@@ -2,11 +2,11 @@ id: SOL-HW-REVIEW-KIT.C14
 type: criterion
 title: A verdict table keyed by several columns is judged, merged and proved per combination of its key
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |
-  Over synthetic declarations, a verdict table's key may name several columns, the first being the item: a unit's answer gives a verdict to each combination once and refuses a combination twice, an item of the unit with no row, and a row whose item is not the unit's; replicas are merged any-fail per combination; the proof compares verdicts per combination; a declaration naming a key column the table lacks is refused naming it. A single-column key behaves as before. Out of scope: any real caller.
+  Over synthetic declarations, a verdict table's key may name several columns, the first being the item: a unit's answer gives a verdict to each combination once and refuses a combination twice, an item of the unit with no row, and a row whose item is not the unit's; replicas are merged any-fail per combination; the proof compares verdicts per combination; a declaration naming a key column the table lacks is refused naming it, and so is one whose several-column key names the table's verdict column, naming the table and the column, since a verdict in the key would stop replicas of one item merging any-fail. A single-column key behaves as before. Out of scope: any real caller.
 links:
   - target: SOL-HW-REVIEW-KIT
     type: criterion-of
