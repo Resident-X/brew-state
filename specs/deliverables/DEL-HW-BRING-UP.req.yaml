@@ -48,3 +48,5 @@ links:
     type: targets
   - target: REQ-ELECTRICAL-INSTALL-001.C13
     type: targets
+  - target: DEL-HW-INTERLOCK-INTERVAL-DERIVED
+    type: depends-on

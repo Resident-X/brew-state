@@ -1,0 +1,24 @@
+id: DEL-HW-INTERLOCK-INTERVAL-DERIVED
+type: deliverable
+category: task
+title: The proof-of-life removal interval is derived and carried in the figures record
+status: active
+level: task
+version: 1
+text: |
+  The proof-of-life removal interval is derived from the temperature each heater's casting reaches under the corrected control, and the controller boards' figures record carries it in place of the pending mark. The derivation is an analysis over the regenerated peak casting record. It is not board design and needs no board to exist.
+rationale: |
+  The interval fixes the timing of one circuit, the interlock's removal path, and not the division of the circuitry between boards, which needs only room for the interlock. Holding the partition and every other board's design until the control that keeps the castings below their trip points has been corrected and re-simulated ties the first schematics to an unrelated simulation programme. Giving the interval its own task keeps the dependency exactly where the figure is used.
+
+  The interlock's timing is designed to a figure, not to an assumption, and a figure taken from a control that lets the casting pass its trip point would understate the hazard.
+links:
+  - target: DEL-CONTROLLER-HARDWARE.C13
+    type: derives-from
+  - target: DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE
+    type: depends-on
+  - target: REQ-SAFETY-CHAIN-001.C3
+    type: targets
+  - target: DEC-PROOF-OF-LIFE-INTERVAL-BOUNDED-BY-FIRST-PROTECTIVE-TRIP
+    type: justified-by
+  - target: DEC-PROOF-OF-LIFE-INTERLOCK-IN-FIRST-HARDWARE
+    type: justified-by

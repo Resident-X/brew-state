@@ -1,0 +1,13 @@
+id: DEL-CONTROLLER-HARDWARE.C13
+type: criterion
+title: The proof-of-life removal interval is derived from the held casting peak
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  The interval within which loss of the controller's proof of life must remove heater power is derived from the time a heater takes to reach its retained protection's trip point, starting from the hottest its casting reaches while the control is holding it. The controller boards' figures record carries the derived interval where it carried a pending mark, and it does so before the interlock's timing is designed.
+links:
+  - target: DEL-CONTROLLER-HARDWARE
+    type: criterion-of
