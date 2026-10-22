@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-FAN-OUT-SCHEMATIC.C8
+type: criterion
+title: The proof command refuses unsafe or malformed inputs and records a single run as a baseline only once for a key
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Over the kit's stub and synthetic folders, the proof command `task hw:schematic-review-proof` refuses a work folder inside the repository, a file or non-empty; a bound below 1 or an empty model; a seeded repository that is missing, not a git work tree with a commit, inside this repository or the work folder, dirty, or lacking the design; a seed list that is missing, unreadable, empty or malformed, has an id twice, names an item not in the catalogue, or lies inside this repository, the seeded repository or the work folder; a copy the pre-order check fails; and an unreadable baselines file. It never adds to a baselines file already holding the key, and a failed single session leaves no baseline written. Out of scope: any live run, which the blind review criterion holds.
+links:
+  - target: SOL-HW-REVIEW-FAN-OUT-SCHEMATIC
+    type: criterion-of
