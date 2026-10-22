@@ -1,0 +1,13 @@
+id: DEL-BENCH-SAFETY-CHAIN-INSPECTION.C5
+type: criterion
+title: The rating and location of any thermal fuse inside a heater assembly are established on the machine
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Whether a thermal fuse is fitted inside each heater assembly is established, and where one is, its rating and location are recorded; where none is found, its absence is recorded with how it was looked for.
+links:
+  - target: DEL-BENCH-SAFETY-CHAIN-INSPECTION
+    type: criterion-of

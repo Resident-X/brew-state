@@ -1,0 +1,13 @@
+id: DEL-BENCH-SAFETY-CHAIN-INSPECTION.C2
+type: criterion
+title: Whether a check valve lies between the brew pump's outlet and the brew block is established on the machine
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Whether a check valve lies between the brew pump's outlet and the brew block, or inside the block, is established by inspecting the machine, and the record states what a relief or pressure tap on the pump's outlet side therefore sees.
+links:
+  - target: DEL-BENCH-SAFETY-CHAIN-INSPECTION
+    type: criterion-of

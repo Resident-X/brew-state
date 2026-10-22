@@ -4,7 +4,7 @@ category: task
 title: The steam path is a flash generator in the plant model and the control, with feed setting pressure and heater power setting dryness
 status: active
 level: task
-version: 1
+version: 2
 text: |
   The steam path is a flash generator in the plant model and in the control. Water is fed to a block that holds no standing water, so while the wand is open the pressure is set by the steam flowing out through the tube, valve and tip and is set by the feed, not by the casting temperature. The feed pump is the actuator for pressure and quantity and heater power is the actuator for dryness, which is the balance between the heater, the sensible heat of the water fed and the latent heat carried out.
 
@@ -16,7 +16,7 @@ rationale: |
 
   What this replaces, read in this session. The plant relation that recomputes steam pressure from block temperature through the affine saturation slope (stated in DEL-SIM-STEAM-DRAW-TERM.C3 and in SOL-PLANT-STEAM-DRAW-ENERGY.C3 and .C4, the latter requiring that pressure revert to the affine relation the instant demand returns to zero). The steam control law that holds temperature at rest and tracks pressure during a draw by driving the heater to its ceiling and engaging feed later (SOL-SIM-STEAM-BAND-SUSTAINED). The feed-withhold-below-ready-pressure behaviour is the readiness task's, not this one's. Criteria on sealed solutions cannot be superseded one by one, so the criteria below state the replaced behaviour in full and the slicing session supersedes the owning solutions.
 
-  Left open on purpose: whether a check valve lies between the steam relief and the block, what the steam transducer withstands, and the hardware layer that contains trapped pressure without power or sensing are owned by the inspection criterion DEL-HW-DESIGN-CONSTRAINTS.C6, and this task does not stand in for them. The casting ceiling is a declared figure; the decision's quoted steam-table values are properties of water, not results of this project.
+  Left open on purpose: whether a check valve lies between the steam relief and the block, and the hardware layer that contains trapped pressure without power or sensing, are settled by the machine inspection and the choice made from it, and this task does not stand in for them. The casting ceiling is a declared figure; the decision's quoted steam-table values are properties of water, not results of this project.
 links:
   - target: DEL-BREW-STATE-DELIVERY.C1
     type: derives-from

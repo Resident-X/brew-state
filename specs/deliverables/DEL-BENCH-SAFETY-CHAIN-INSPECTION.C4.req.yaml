@@ -1,0 +1,13 @@
+id: DEL-BENCH-SAFETY-CHAIN-INSPECTION.C4
+type: criterion
+title: Whether each thermostat resets itself or needs a hand reset is established on the machine
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Each of the coffee, steam and pump thermostats is established as self-resetting or hand-reset by inspecting the machine, and recorded as such.
+links:
+  - target: DEL-BENCH-SAFETY-CHAIN-INSPECTION
+    type: criterion-of

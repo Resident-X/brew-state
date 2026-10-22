@@ -1,0 +1,12 @@
+id: SOL-HW-STEAM-TRANSDUCER-BASIS-RECORDED.C2
+type: criterion
+title: The ratings the chosen part must carry above that pressure are recorded with the baseline they are checked against
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  State in controller-board-design-constraints.md the proof pressure of at least 7.5 bar gauge and burst pressure of at least 10 bar gauge the part must carry, as 1.5 and 2 times the in-service pressure, graded project assumption, the earlier design's 0.5 MPa XDB401 with its relayed overload and burst as the baseline that meets both, graded published unverified, and the range requirement that follows from the steam accuracy figure already recorded. Out of scope - choosing the part.
+links:
+  - target: SOL-HW-STEAM-TRANSDUCER-BASIS-RECORDED
+    type: criterion-of
