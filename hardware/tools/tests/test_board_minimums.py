@@ -445,7 +445,7 @@ class TheBoardIsHeldToTheLimitsOfItsProcess(unittest.TestCase):
 
     def test_a_minimum_written_in_a_form_that_cannot_be_read_as_a_length_fails(self):
         # SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C1: The rule fails a minimum it cannot show to be no looser than the limit
-        for written in ('"0.2mm"', "0.2cm", "wide", "(expr 1)", "-0.1mm", "1e-3mm"):
+        for written in ('"0.2mm"', "0.2cm", "wide", "(expr 1)", "-0.1mm", "1e-3mm", "0.2mm 0.01mm", ""):
             with self.subTest(written=written):
                 found = minimums(self.everything_project(), rules_of(f'(rule "r"\n\t(constraint track_width (min {written})))\n'),
                                  self.everything_limits())

@@ -3105,9 +3105,9 @@ def board_minimums(design: Design, project: dict, rules: Optional[List[list]], t
             if name is None or name not in process:
                 continue
             for clause in constraint[2:]:
-                if sexpr.head(clause) != "min" or len(clause) != 2:
+                if sexpr.head(clause) != "min":
                     continue
-                value = rule_length_mm(clause[1])
+                value = rule_length_mm(clause[1]) if len(clause) == 2 else None
                 where = f"{design.rules} {rule_at(rule)}"
                 if value is None:
                     found.append(fail(where, f"{rule_at(rule)} writes its {kind} minimum as {one_line(clause)}, where the check "
