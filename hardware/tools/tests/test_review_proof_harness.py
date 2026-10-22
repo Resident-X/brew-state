@@ -122,5 +122,78 @@ class TheSeedRows(unittest.TestCase):
         self.assertEqual(wide.unit_record.standing.tables["Findings"], [{"Item": "Z"}])
 
 
+SINGLES = [run("one"), run("two")]
+SINGLES = [proof.RunOutcome(each.id, proof.SINGLE, "tool", "seeded", ("S1", "S2"), (), {}, {}, {}, each.sessions, 1000.0, 5.0)
+           for each in SINGLES]
+MULTIPLE = 1.25
+
+
+def fanned(run_id, found=3, wall=100.0, cost=1.0):
+    seeds = tuple(f"S{number}" for number in range(1, found + 1))
+    return proof.RunOutcome(run_id, proof.FANNED, "tool", "seeded", seeds, (), {}, {}, {}, (), wall, cost)
+
+
+class FannedRuns(unittest.TestCase):
+    """The fanned-out runs a proof is judged over, made over synthetic outcomes: the figures the kit's criterion reads are the
+    runs' own, so no session is started."""
+
+    def go(self, *outcomes):
+        called = []
+
+        def run_once(index):
+            called.append(index)
+            return outcomes[index - 1], {"index": index}
+
+        return harness.fanned_runs(run_once, SINGLES, MULTIPLE), called
+
+    # SOL-HW-REVIEW-FAN-OUT-SCHEMATIC-PROOF.C1, SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING-PROOF.C1 and
+    # SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES-PROOF.C1: The kit's pooled criterion judges the fanned-out run against the recorded
+    # single-reviewer runs; a second fanned-out run is required only when the first is within ten per cent of a bound.
+    def test_a_first_run_clearly_inside_every_bound_runs_the_form_once(self):
+        runs, called = self.go(fanned("first"), fanned("never"))
+        self.assertEqual(called, [1])
+        self.assertEqual([each.id for each, _ in runs], ["first"])
+        self.assertTrue(proof.accept(SINGLES, [each for each, _ in runs], MULTIPLE).accepted)
+
+    def test_a_first_run_within_ten_per_cent_of_a_bound_runs_the_form_exactly_twice_and_both_are_returned(self):
+        for name, near in (("wall time", fanned("first", wall=480.0)), ("cost", fanned("first", cost=6.0)),
+                           ("seeds", fanned("first", found=2))):
+            with self.subTest(name):
+                runs, called = self.go(near, fanned("second"))
+                self.assertEqual(called, [1, 2])
+                self.assertEqual([each.id for each, _ in runs], ["first", "second"])
+                self.assertEqual([extra["index"] for _, extra in runs], [1, 2], "each run keeps the facts about it")
+                self.assertTrue(proof.accept(SINGLES, [each for each, _ in runs], MULTIPLE).accepted)
+
+    def test_a_second_run_that_fails_a_clause_fails_the_proof_naming_the_clause(self):
+        runs, _ = self.go(fanned("first", wall=480.0), fanned("second", wall=600.0))
+        verdict = proof.accept(SINGLES, [each for each, _ in runs], MULTIPLE)
+        self.assertFalse(verdict.accepted)
+        self.assertFalse(verdict.second_run_required)
+        self.assertEqual(verdict.failed, [proof.WALL_TIME])
+        self.assertIn("second took 600 s", verdict.as_dict()["clauses"][2]["detail"])
+
+    def test_a_second_run_still_within_ten_per_cent_of_a_bound_is_not_followed_by_a_third(self):
+        runs, called = self.go(fanned("first", wall=480.0), fanned("second", wall=490.0), fanned("third"))
+        self.assertEqual(called, [1, 2])
+        self.assertEqual(len(runs), 2)
+        self.assertTrue(proof.accept(SINGLES, [each for each, _ in runs], MULTIPLE).accepted)
+
+    def test_a_run_that_fails_stops_the_proof_as_it_raises(self):
+        def run_once(index):
+            raise harness.Refused([f"fanned: run {index} failed"])
+
+        with self.assertRaises(harness.Refused):
+            harness.fanned_runs(run_once, SINGLES, MULTIPLE)
+
+    def test_the_runs_have_distinct_ids_and_output_folders_and_the_first_keeps_its_name(self):
+        out = os.path.join("work", "out", "fanned")
+        self.assertEqual(harness.numbered("x-fanned-2", out, 1), ("x-fanned-2", out))
+        second = harness.numbered("x-fanned-2", out, 2)
+        self.assertNotEqual(second[0], "x-fanned-2")
+        self.assertNotEqual(second[1], out)
+        self.assertFalse(second[1].startswith(out + os.sep), "the second run's folder is not inside the first's")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -29,7 +29,7 @@ row that is not a match, with its finding, against the parts row or a layer the 
 The fanned-out run is judged by the kit's pooled criterion with a cost multiple of 2.25, the multiple the layout pre-order run's 2.1
 times the single mean sets for three replicas of which two are on the mid-tier: the seeds found are no fewer than the fewest any
 single run found, no seed every single run found is missed, the wall time is at most half the single mean and the cost at most 2.25
-times its mean. The record, proof-record.json, and its text, proof-record.txt, are written in the work folder; they name the baseline
+times its mean. When the first fanned-out run holds every clause but is within ten per cent of a bound, the command runs the fanned-out form a second time in its own folder, <work>/out/fanned-2, and judges both runs together; it never runs a third. The record, proof-record.json, and its text, proof-record.txt, are written in the work folder; they name the baseline
 key, give every seed with the replicas that raised it, the findings that match no seed, the verdicts row by row with the differences
 from the single run, each session's time, tokens read, written and generated and cost, and the calls refused for a rate limit. A seed
 not reported is closed where the gap lies and the proof repeated in a new session.
@@ -37,11 +37,11 @@ not reported is closed where the gap lies and the proof repeated in a new sessio
 Each run's output is under <work>/out/ and the record in <work>; the seed list is copied to <work>/seed/ and the review folder given to
 the kit is <work>/review, which holds no seed list.
 
---dry prints the plan of the fanned-out run and its predicted cost and time beside the bounds they would be held to, and, where no
+--dry prints the plan of the fanned-out run, a line saying a second run may follow, and its predicted cost and time (up to twice, counting the second) beside the bounds they would be held to, and, where no
 single run is recorded, the plan of the single form; it starts no session and calls no model.
 
 The agent command line is the program named by REVIEW_KIT_AGENT (claude when it is unset), logged in. A run costs money: the
-single form, and the shared context and a fork for each group and replica of the fanned-out form.
+single form, and the shared context and a fork for each group and replica of the fanned-out form, twice over when a second run follows.
 
 Each cause is reported on one line beginning REFUSED, a RESULT line comes last, and the exit status is 0 when the criterion holds,
 1 when the command refuses, a run fails or the criterion does not hold or asks for a second run, and 2 when the agent command line is
@@ -56,7 +56,7 @@ import os
 import shutil
 import subprocess
 import sys
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 TOOLS_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, TOOLS_DIR)
@@ -250,25 +250,26 @@ def matches(seed: Mapping[str, Any], row: Mapping[str, Any]) -> bool:
 # --- The record and its text ----------------------------------------------------------------------
 
 
-def build(seeds: Sequence[Mapping[str, Any]], key: proof.BaselineKey, singles: Sequence[proof.RunOutcome], fanned: proof.RunOutcome,
-          extra: Mapping[str, Any], context: Mapping[str, Any]) -> Dict[str, Any]:
-    """The kit's record of the proof over the fanned-out run, and what the run's saved streams show."""
-    record = proof.build_record(seeds, singles, [fanned], COST_MULTIPLE, [key])
-    record["production_files"] = dict(context, fanned=extra, baseline_key=key.id)
+def build(seeds: Sequence[Mapping[str, Any]], key: proof.BaselineKey, singles: Sequence[proof.RunOutcome], fanned: Sequence[proof.RunOutcome],
+          extras: Sequence[Mapping[str, Any]], context: Mapping[str, Any]) -> Dict[str, Any]:
+    """The kit's record of the proof over the fanned-out runs (one, or two when the first is within ten per cent of a bound), and what each run's saved streams show."""
+    record = proof.build_record(seeds, singles, list(fanned), COST_MULTIPLE, [key])
+    record["production_files"] = dict(context, fanned=extras[0], fanned_runs=list(extras), baseline_key=key.id)
     return record
 
 
 def lines_of(record: Mapping[str, Any]) -> List[str]:
     context = record["production_files"]
-    extra = context["fanned"]
     found = [f"PROOF | single form on {context['baseline_model']} ({context['single_form']}) | fanned form on "
              f"{context['models']['fanned']} with {REPLICAS} replicas | tool commit {context['tool_commit']} | files exported at "
              f"commit {context['seeded_commit']} | cost multiple {COST_MULTIPLE:g}"]
     found.append(f"BASELINE KEY | {context['baseline_key']}")
     found += [f"CRITERION | {line}" for line in proof.record_lines(record)]
-    found.append(f"ROUND | fanned | refused for a rate limit {extra['refused_for_a_rate_limit']} | merged check "
-                 f"{'written' if extra['merged'] else 'refused'} | seeds the merged check names "
-                 f"{', '.join(extra['merged_round_seeds_found'] or []) or 'none'}")
+    for number, extra in enumerate(context["fanned_runs"], 1):
+        round_label = "fanned" if number == 1 else f"fanned-{number}"
+        found.append(f"ROUND | {round_label} | refused for a rate limit {extra['refused_for_a_rate_limit']} | merged check "
+                     f"{'written' if extra['merged'] else 'refused'} | seeds the merged check names "
+                     f"{', '.join(extra['merged_round_seeds_found'] or []) or 'none'}")
     for seed in record["seeds"]:
         for name, replicas in record["seed_replicas"].get(seed, {}).items():
             found.append(f"SEED | {seed} | {name} | raised by {', '.join(replicas) or 'none'}")
@@ -281,7 +282,7 @@ def lines_of(record: Mapping[str, Any]) -> List[str]:
         found += [f"VERDICT DIFFERENCE | {run_id} | {each['item']} | fanned {each['fanned']} | single {each['single']}"
                   for each in differences]
     found.append(f"BOUND | groups at once in the run {context['bound']} | calls refused for a rate limit "
-                 f"{extra['refused_for_a_rate_limit']}")
+                 f"{sum(each['refused_for_a_rate_limit'] for each in context["fanned_runs"])}")
     return found
 
 
@@ -309,6 +310,8 @@ def dry_lines(plan: Mapping[str, Any], model: str, single: Optional[List[proof.R
     found.append(f"PREDICTED | fanned | ${predicted['cost_usd']} | {predicted['wall_s']} s | cost "
                  f"{'within' if predicted['cost_usd'] <= cost else 'over'} its bound, time "
                  f"{'within' if predicted['wall_s'] <= wall else 'over'} its bound")
+    found.append(f"SECOND RUN | a second fanned-out run follows when the first is within {proof.NEAR:.0%} of a bound | with it the "
+                 f"cost is up to ${2 * predicted['cost_usd']:.2f} and the time up to {2 * predicted['wall_s']:.0f} s")
     near = [f"{what} {figure} against its bound {limit:.2f}" for what, figure, limit in
             (("cost", predicted["cost_usd"], cost), ("wall time", predicted["wall_s"], wall)) if figure > limit * (1 - proof.NEAR)]
     if near:
@@ -396,26 +399,31 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout, err=sys.stderr, envir
                 key, outcome = harness.run_single(CALLER, TOOLS_DIR, folder, os.path.join(work, SINGLE_OUT), args.baseline_model,
                                                   environ, seeds, commit, tree, matches, baselines, BASELINE_SOURCE, extra_rows=unraised)
                 singles, single_form = [outcome], f"run now, recorded in {baselines} under key {key}"
-        output = os.path.join(work, FANNED_OUT)
-        status, report = harness.run_command(CALLER, TOOLS_DIR, folder, output, args.fanned_model, REPLICAS, args.bound, environ,
-                                             main_command)
-        if report.get("cannot_run"):
-            raise board_check.CannotRun(report["cannot_run"])
-        if not store.holds_record(output):
-            raise Refused([f"fanned: {why}" for why in report["refusals"]] or ["fanned: the run wrote no record"])
-        fanned, extra = harness.outcome_of(CALLER, TOOLS_DIR, "production-files-fanned-3", folder, output, seeds, commit, matches,
-                                           parsed_round, names, "fanned", extra_rows=unraised)
-        extra["command_report"] = {"result": report["result"], "detail": report["detail"], "refusals": report["refusals"],
-                                   "bound": report["plan"]["bound"]}
+
+        def fan_out(index: int) -> Tuple[proof.RunOutcome, Dict[str, Any]]:
+            run_id, output = harness.numbered("production-files-fanned-3", os.path.join(work, FANNED_OUT), index)
+            status, report = harness.run_command(CALLER, TOOLS_DIR, folder, output, args.fanned_model, REPLICAS, args.bound, environ,
+                                                 main_command)
+            if report.get("cannot_run"):
+                raise board_check.CannotRun(report["cannot_run"])
+            if not store.holds_record(output):
+                raise Refused([f"fanned: {why}" for why in report["refusals"]] or ["fanned: the run wrote no record"])
+            fanned, extra = harness.outcome_of(CALLER, TOOLS_DIR, run_id, folder, output, seeds, commit, matches, parsed_round, names,
+                                               "fanned", extra_rows=unraised)
+            extra["command_report"] = {"result": report["result"], "detail": report["detail"], "refusals": report["refusals"],
+                                       "bound": report["plan"]["bound"]}
+            return fanned, extra
+
+        runs = harness.fanned_runs(fan_out, singles, COST_MULTIPLE)
     except Refused as error:
         result["refusals"] = error.causes
         return finish(1)
     except board_check.CannotRun as error:
         result.update(result=command.CANNOT_RUN, refusals=[], detail=str(error))
         return finish(2)
-    record = build(seeds, key, singles, fanned, extra, {
+    record = build(seeds, key, singles, [run for run, _ in runs], [extra for _, extra in runs], {
         "models": {"fanned": args.fanned_model}, "baseline_model": key.model, "single_form": single_form,
-        "tool_commit": harness.tool_commit(), "seeded_commit": commit, "work": work, "bound": extra["command_report"]["bound"]})
+        "tool_commit": harness.tool_commit(), "seeded_commit": commit, "work": work, "bound": runs[0][1]["command_report"]["bound"]})
     store.atomic_write_json(os.path.join(work, RECORD), record)
     lines = lines_of(record)
     with open(os.path.join(work, TEXT), "w", encoding="utf-8") as handle:
@@ -424,7 +432,7 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout, err=sys.stderr, envir
     result.update(result="WRITTEN" if held else "FAILED", refusals=[], lines=lines, record=record,
                   detail=os.path.join(work, RECORD) if held else
                   f"the criterion is {record['verdict']['status']}; the record is {os.path.join(work, RECORD)}")
-    if not extra["merged"]:
+    if not all(extra["merged"] for _, extra in runs):
         result["lines"].append("NOTE | the merge was refused, so no check record was written; the seeds are judged from the replicas' findings")
     return finish(0 if held else 1)
 

@@ -454,12 +454,13 @@ class TheModule(unittest.TestCase):
     def test_the_command_is_a_thin_use_of_the_shared_harness_and_names_its_own_baseline_file(self):
         # SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING-PROOF.C2: Over the kit's stub, the proof command for the critical-routing check runs the single form once through the kit and writes it as a baseline file the kit's proof loads, keyed by the hash of the seed list, the design commit, the model, the form and the prompt hash; run again for a key whose baseline is recorded it refuses to run the single form and names the key, and for a key that differs it runs it; a seed list or review folder that lies inside the repository is refused naming it. The command's record is written in text and JSON with the same content. Out of scope: any live run and the pooled criterion's arithmetic, which the kit's own tests hold.
         # SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING-PROOF.C2: Over the kit's stub, the proof command for the critical-routing check runs the single form once through the kit and writes it as a baseline file the kit's proof loads, keyed by the hash of the seed list, the design commit, the model, the form and the prompt hash; run again for a key whose baseline is recorded it refuses to run the single form and names the key, and for a key that differs it runs it; a seed list or review folder that lies inside the repository is refused naming it. The command's record is written in text and JSON with the same content. Out of scope: any live run and the pooled criterion's arithmetic, which the kit's own tests hold.
-        for name in ("run_single", "outcome_of", "single_key", "recorded_under", "baseline_lock", "plan_of", "run_command"):
+        for name in ("run_single", "outcome_of", "single_key", "recorded_under", "baseline_lock", "plan_of", "run_command",
+                     "fanned_runs", "numbered"):
             self.assertIs(getattr(crp, "harness"), harness)
             self.assertFalse(hasattr(crp, name), f"{name} is the harness's, not copied into the command")
         source = slurp(crp.__file__)
         for call in ("harness.run_single(", "harness.outcome_of(", "harness.single_key(", "harness.recorded_under(",
-                     "harness.baseline_lock("):
+                     "harness.baseline_lock(", "harness.fanned_runs(", "harness.numbered("):
             self.assertIn(call, source)
         self.assertIs(crp.Refused, harness.Refused)
         self.assertEqual(os.path.relpath(crp.BASELINES, TOOLS), os.path.join("tests", "fixtures", "review_baselines",

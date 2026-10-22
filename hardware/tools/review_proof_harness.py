@@ -129,6 +129,26 @@ def plan_of(caller: str, callers: str, folder: str, out: str, model: str, replic
     return run.report["plan"]
 
 
+#: Runs the fanned-out form once as the numbered run (1, then 2) and gives its outcome and the facts about it the kit does not count.
+RunOnce = Callable[[int], Tuple[proof.RunOutcome, Dict[str, Any]]]
+
+
+def numbered(run_id: str, output: str, index: int) -> Tuple[str, str]:
+    """The id and the output folder of the fanned-out run with this number: the first keeps the name given, a later one is named
+    beside it, so no two runs share an id or overwrite one another's output."""
+    return (run_id, output) if index == 1 else (f"{run_id}-run-{index}", f"{output}-{index}")
+
+
+def fanned_runs(run_once: RunOnce, singles: Sequence[proof.RunOutcome], cost_multiple: float) -> List[Tuple[proof.RunOutcome, Dict[str, Any]]]:
+    """The fanned-out runs a proof is judged over: one, or two when the first holds every clause but is within ten per cent of a
+    bound, which is when the kit's criterion requires a second run. It is never more than two. A run that fails raises as it does
+    from `run_once`, so the proof stops there."""
+    runs = [run_once(1)]
+    if proof.accept(singles, [runs[0][0]], cost_multiple).second_run_required:
+        runs.append(run_once(2))
+    return runs
+
+
 #: Reads a lane's tables and gives rows, shaped as the findings table's, that a seed may be matched against beside the findings.
 ExtraRows = Callable[[Mapping[str, Any]], Sequence[Mapping[str, Any]]]
 
