@@ -3,6 +3,8 @@ type: deliverable
 category: task
 title: The constraints the controller boards are designed against are fixed with their sources
 status: active
+seal_state: sealed
+seal_outcome: complete
 level: task
 version: 3
 text: |

@@ -2,11 +2,11 @@ id: SOL-HW-STEAM-TRANSDUCER-BASIS-RECORDED.C3
 type: criterion
 title: The check that closes the figures against the chosen part is recorded with its owner
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
-text: |-
-  State in controller-board-design-constraints.md the check that the chosen part's own datasheet gives proof and burst pressures at or above the stated ratings and a range that meets the accuracy, that the figures are recorded against the part with their source, and that the pending mark held against the steam-path pressure transducer cites the recorded basis. Out of scope - reading any datasheet.
+text: |
+  State in controller-board-design-constraints.md the check that the chosen part's own datasheet gives proof and burst pressures at or above the stated ratings and a range inside both range bounds, that the figures are recorded against the part with their source, the owner of that check (DEL-HW-PARTITION-AND-FEASIBILITY.C1, which chooses the transducer) and the owner of the premise check (DEL-BENCH-SAFETY-CHAIN-INSPECTION.C1); that the pending mark held against the steam-path pressure transducer cites the recorded basis; and that component-specification.md no longer states the transducer's range and accuracy as unspecified without pointing at the basis. Out of scope - reading any datasheet.
 links:
   - target: SOL-HW-STEAM-TRANSDUCER-BASIS-RECORDED
     type: criterion-of

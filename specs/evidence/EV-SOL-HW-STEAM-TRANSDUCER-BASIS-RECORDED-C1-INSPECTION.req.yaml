@@ -1,0 +1,16 @@
+id: EV-SOL-HW-STEAM-TRANSDUCER-BASIS-RECORDED-C1-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-STEAM-TRANSDUCER-BASIS-RECORDED.C1
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-23T00:11:13.905908Z"
+artifact:
+  kind: external
+  reference: 'inspection: Inspection of the delivered § Steam-path transducer pressure in docs/sunbeam-em7000/controller-board-design-constraints.md. C1 clauses: (a) in-service pressure 5 bar gauge graded inferred: row ''In-service pressure the transducer must survive'' = 5 bar gauge, inferred. (b) derivation as larger of valve setting (about 4 to 5 bar, on the pump at its outlet, limits feed whether or not a check valve lies downstream) and saturation at casting ceiling (under 4 bar gauge): rows ''Steam pump over-pressure valve setting'' and ''Saturation bound at the casting ceiling'' and the derivation cell ''The larger of the two rows above''; max(5, <4)=5. (c) premises with grade, who and when: Premises table, three rows (valve opens at no more than about 5 bar gauge, owner statement 2026-10-11; valve sees pump outlet, owner statement 2026-10-11; casting ceiling holds near 150 C, fixed by DEC-STEAM-BLOCK-IS-A-FLASH-GENERATOR and so carrying no evidence grade per the file''s evidence-grade rule), each effect cell says the machine inspection confirms or revises it. (d) absence of a check valve is owner reasoning and not a premise: closing paragraph after the premises table. (e) out of scope fault pressure: ''What is not this figure'' paragraph (14.5 bar gauge at 200 C trip, about 16 at tolerance, answered by the hardware layer).'
+  artifact_version: a3bbd5c6dc96dd52933582d8651fa3f1045d7989
+attested_by: crun-fa8f0f9fa6496839
+links:
+  - target: SOL-HW-STEAM-TRANSDUCER-BASIS-RECORDED.C1
+    type: satisfies
