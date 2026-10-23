@@ -27,3 +27,7 @@ links:
     type: depends-on
   - target: SOL-TOOL-TESTS-RUN-SIDE-BY-SIDE
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: 458a6361b27ef03a1ef0eaee6229f9f4f4c0d0d7e6764e209bce68f14d3ab942
+  gating_profile: ""
