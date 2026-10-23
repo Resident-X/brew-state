@@ -71,6 +71,8 @@ class ControllerPart(Proved):
                          "a controller part record lacking its catalogue number",
                          "a controller part record holding a key no decision names",
                          "a controller part record listing a pin twice",
+                         "a controller part record not marked synthetic in the design's own folder",
+                         "a second controller whose catalogue number differs from the controller part record",
                          "a synthetic controller part record applied to a design not marked not for manufacture"):
             self.assertIn(required, names)
         self.assertEqual({fault[2] for fault in faults}, {"controller_part", "controller_record"})
@@ -81,7 +83,8 @@ class ControllerPart(Proved):
         found = outcomes()
         for name, words in (("a controller whose catalogue number differs from the controller part record", "gate-proof.kicad_sch U1"),
                             ("a controller with no LCSC field", "gate-proof.kicad_sch U1"),
-                            ("a pin allocation entry naming a pin the controller part record omits", "pin-allocation.yaml channel lv_b")):
+                            ("a pin allocation entry naming a pin the controller part record omits", "pin-allocation.yaml channel lv_b"),
+                            ("a second controller whose catalogue number differs from the controller part record", "gate-proof.kicad_sch U1B")):
             with self.subTest(fault=name):
                 caught, evidence = found[name]
                 self.assertTrue(caught, evidence)

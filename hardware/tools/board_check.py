@@ -1538,6 +1538,16 @@ class ControllerRecord:
         self.pins = pins
 
 
+def machine_folder(directory: str) -> Optional[str]:
+    """A design's machine folder, hardware/<machine>: the first folder below hardware/ that holds the design.
+
+    A design directly under hardware/, or outside it, has none, and neither has one under hardware/proof/, which
+    holds proof designs and not a machine's.
+    """
+    parts = directory.replace(os.sep, "/").split("/")
+    return "/".join(parts[:2]) if len(parts) > 2 and parts[0] == "hardware" and parts[1] != "proof" else None
+
+
 def read_controller_record(yaml, root: str, repository: Repository, design: Design, not_for_manufacture: bool
                            ) -> Tuple[Optional[ControllerRecord], Optional[str], List[Violation]]:
     """The controller part record the design's folders hold, its path, and the violations of its form.
@@ -1549,6 +1559,13 @@ def read_controller_record(yaml, root: str, repository: Repository, design: Desi
                                   "controller part record", CONTROLLER_KEYS, not_for_manufacture)
     if reading is None:
         return None, None, []
+    if data is not None and data.get("synthetic") is not True:
+        own = machine_folder(design.directory)
+        if os.path.dirname(reading.record) != own:
+            reading.bad("", f"the {reading.what} is not marked synthetic and is not in the machine's own folder "
+                            f"({own or 'the design is in no machine folder, so it has none'}), and only the record "
+                            "there names the selected controller; a record nearer the design cannot stand in for it, so "
+                            "remove this record, or mark it synthetic if it is made only to prove the check")
     if data is not None:
         for key in ("part", "lcsc"):
             if key in data:
