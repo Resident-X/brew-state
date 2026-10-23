@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT-CACHE-LIFETIME.C3
+type: criterion
+title: The cost model prices cache writes for each lifetime and predicts a plan at its own lifetime's price
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Each model the price table holds carries a write price for each lifetime, the five-minute price being the one-hour price times 1.25 over 2 until a five-minute run is recorded, with read and generated prices shared by both lifetimes. Against the stub, the same plan predicted at five minutes costs less than at one hour by exactly the shared contexts' and forks' written tokens times the difference in write price, and the plan names the lifetime and the prices it used. Each row a fit reads carries the lifetime its session ran at, a row that names none being one hour; the fit refits each lifetime's write price from the rows of that lifetime alone and leaves a lifetime with too few rows at its price, so a set of rows recorded at both lifetimes gives both prices and one recorded at a single lifetime leaves the other's as it was. Out of scope: proof records, which the proof-record criterion covers, and the figures a later refit gives.
+links:
+  - target: SOL-HW-REVIEW-KIT-CACHE-LIFETIME
+    type: criterion-of

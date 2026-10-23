@@ -1,0 +1,29 @@
+id: SOL-HW-REVIEW-KIT-CACHE-LIFETIME
+type: deliverable
+category: solution
+title: The review kit's sessions write the prompt cache for five minutes unless the run asks for one hour
+status: active
+version: 1
+text: |
+  Why this exists. The review kit starts every session through the agent command line and leaves the prompt cache's lifetime to the command line, which on a Claude subscription writes for one hour. Every recorded stream that carries the split of cache writes by lifetime (the contract smoke's probes and the validation runs' shared contexts among the committed fixtures, and every transcript of the 24 review-run folders on the recording machine) shows its writes at the one-hour rate and none at the five-minute rate; the stream reducer drops the split, so the other committed fixtures cannot show it. A one-hour write is billed at twice the input price and a five-minute write at one and a quarter times it, and a read restarts either lifetime's timer. Within a run the forks, repair turns, retries and replicas read the shared context back to back, so the root's entry is not expected to sit five minutes idle and the hour buys nothing there; where it does lapse, under a low bound or a long rate-limit wait, the kit's existing cache-miss check (SOL-HW-REVIEW-KIT.C4) flags the fork whose first call reads less than its parent's prefix, so a lapse is reported rather than assumed away. A replica on another model has its own shared context and is checked the same way. At list prices (for the mid-tier model USD 4 per million tokens for a one-hour write, 2.50 for a five-minute write, 0.20 for a read and 10 generated), across the 24 recorded review-run folders, repricing the writes at five minutes takes the mid-tier sessions from about USD 115.7 to 98.6 (about 15 per cent) and the small-tier sessions from about USD 23.3 to 20.3 (about 13 per cent); the shared context's write is the part that moves, about USD 1.06 against 0.66 for one mid-tier root of about 265 thousand tokens.
+
+  The hour pays only when a rerun starts more than five minutes after a run's last call and the shared context's bytes are unchanged, which in a real round is the cannot-judge follow-up after a view or document is added. A changed board changes the review folder, so it is a new run with a new shared context whatever the lifetime. A late rerun on five minutes rewrites the shared context, about USD 0.66 for a mid-tier root against the USD 0.40 a run saves, and the rerun's record already says whether a new shared context was started. The person running a round that expects such follow-ups can ask for the hour.
+
+  It is maintenance rather than new delivery because the kit is delivered and its task sealed: the reviews it runs are how every board is judged against layout and circuit practice before it is ordered, and this item changes what each such review costs without changing what it judges, and adds a check that fails on the defect of a session written at a lifetime it did not ask for.
+
+  What it does. Makes the cache lifetime part of the session specification, five minutes unless the run asks for one hour; passes it to every session the kit starts; checks each recorded session's writes against it so that a command line which ignores the request fails the run instead of costing more unseen; prices cache writes per lifetime in the cost model; records the lifetime in the command's report and each proof record; and lets the task runner's review tasks take it from one task variable.
+
+  Out of scope: the lifetime of sessions the kit does not start (the build sessions, subagents and interactive sessions), keep-alive calls that refresh an idle cache, which calls the kit makes or when, the models a review uses, and the figures a refit gives once five-minute runs are recorded.
+
+  Settled. The command line reads the lifetime of its main conversation, print mode included, from the environment variable CLAUDE_CODE_PROMPT_CACHE_TTL, whose values are 5m and 1h; left unset it is one hour on a subscription and five minutes on an API key or a cloud platform (Claude Code 2.1.304). The kit sets it for every session, so the account a review runs on does not decide it. A stream reports each call's cache writes split by lifetime, which is what the check reads. Until a five-minute run is recorded, a model's five-minute write price is its one-hour write price times 1.25 over 2, the ratio of the published multipliers; read and generated prices do not depend on the lifetime. Adding the field leaves every digest of a one-hour specification as it was, so the replays, records and baselines made before the change still match, and a record or baseline that names no lifetime is a one-hour one, which is the lifetime it ran at. The baselines' key stays as it is: the lifetime is recorded with each run, as the tool commit is, and not matched, so a five-minute fanned-out run is judged against the recorded one-hour single runs and the record names both lifetimes.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3
+    type: targets
+  - target: SOL-HW-REVIEW-KIT
+    type: depends-on
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: targets

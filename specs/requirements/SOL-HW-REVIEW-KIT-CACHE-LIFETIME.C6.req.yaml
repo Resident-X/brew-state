@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT-CACHE-LIFETIME.C6
+type: criterion
+title: Every proof record names the cache lifetime of each run it holds
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Against the stub and over recorded runs, the record of a proof names the lifetime of every run it holds, the loaded baselines' included, a baseline recorded before the field existed being named as one hour; the text of the record states the lifetime beside each run's cost, so a cost clause judged across lifetimes says so; and the baseline key computed for a run is the same whichever lifetime the run used, so a five-minute fanned-out run loads the one-hour single runs recorded for its seed list, design, model, form and prompt. Out of scope: the cost multiples the proofs state.
+links:
+  - target: SOL-HW-REVIEW-KIT-CACHE-LIFETIME
+    type: criterion-of
