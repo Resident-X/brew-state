@@ -49,7 +49,7 @@ links:
     type: depends-on
 brief_confirmation:
   confirmer: claude-sonnet-5-5 blind brief reviewer
-  fingerprint: f73f4ba48b00b459d0892821af7031c2b0cba960132d2d927bcbc93163e6bd43
+  fingerprint: abedf8b870068f157cab7bdf84461e4e85588db97177b8d5d80c48843b5b44cc
   gating_profile: ""
 design_question_answers:
   - answered_by: SOL-HW-FUNCTION-FORM-DECIDED.C1
