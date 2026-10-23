@@ -92,7 +92,7 @@ BASELINE = {
     "CLAUDE.md": "# instructions\n",
     "hardware/README.md": "# hardware\n",
     "hardware/tools/board_views.py": "print('views')\n",
-    "hardware/tools/tests/test_board_check_kicad.py": "pass\n",
+    "hardware/tools/tests/board_kicad_fixtures.py": "pass\n",
     ".gitattributes": "*.sh text eol=lf\n",
     ".gitignore": "firmware/.pio/\n",
 }
@@ -703,7 +703,7 @@ class TheHostPathSelection(unittest.TestCase):
             (
                 "firmware/", "Taskfile.yml", ".github/workflows/", "CLAUDE.md", ".gitattributes",
                 "hardware/README.md", "hardware/tools/board_check.py", "hardware/tools/board_views.py",
-                "hardware/tools/tests/test_board_check_kicad.py",
+                "hardware/tools/tests/board_kicad_fixtures.py",
             ),
             round_gate.HOST_READS,
         )
@@ -712,7 +712,7 @@ class TheHostPathSelection(unittest.TestCase):
         # SOL-VERIFY-ROUND-GATE-HOST-TIER-BY-PATH.C2: The round gate runs both tiers when it cannot tell what changed
         for path in (
             "CLAUDE.md", ".gitattributes", "hardware/README.md", "hardware/tools/board_check.py",
-            "hardware/tools/board_views.py", "hardware/tools/tests/test_board_check_kicad.py",
+            "hardware/tools/board_views.py", "hardware/tools/tests/board_kicad_fixtures.py",
         ):
             with self.subTest(path=path):
                 repository = SyntheticRepository()
@@ -2435,7 +2435,7 @@ class TheDocumentsSayWhenTheBoardCheckRuns(unittest.TestCase):
         section = text[text.index("## When the board check runs"): text.index("## The locked-copper check")]
         for words in (
             "tooling tests", "the rasteriser", "monospaced font", "`task hw:test:round`", "`task hw:verify`",
-            "`BOARD_TESTS_WITHOUT_PROOF`", "`Proved`", "test_board_check_kicad.py", "`task hw:reads`",
+            "`BOARD_TESTS_WITHOUT_PROOF`", "`Proved`", "board_kicad_fixtures.py", "`task hw:reads`",
             "first nightly run demonstrates",
         ):
             self.assertIn(words, section)
@@ -2444,7 +2444,7 @@ class TheDocumentsSayWhenTheBoardCheckRuns(unittest.TestCase):
         # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C3: The project instructions and the hardware notes say when the board check runs
         # What the notes say names what the code has, so a rename in one is seen in the other.
         notes = self.read("hardware/README.md")
-        with open(os.path.join(REPOSITORY, "hardware", "tools", "tests", "test_board_check_kicad.py"), encoding="utf-8") as handle:
+        with open(os.path.join(REPOSITORY, "hardware", "tools", "tests", "board_kicad_fixtures.py"), encoding="utf-8") as handle:
             tests = handle.read()
         variable = re.search(r'(?m)^WITHOUT_PROOF = "([A-Z_]+)"', tests).group(1)
         self.assertIn(f"`{variable}`", notes)

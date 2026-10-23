@@ -6,7 +6,7 @@ schematic symbols are positions the design places, what each failure names, and
 whether the specification record and the catalogue extract are usable. Each of
 these can be wrong while the check still reports a pass, which is the failure
 worth a test. The check run against KiCad and the seeded-fault proof are in
-test_board_check_kicad.py.
+the test_board_check_kicad_*.py files.
 """
 
 from __future__ import annotations

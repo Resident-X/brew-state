@@ -8,7 +8,7 @@ nets are given as KiCad's netlist would give them; the schematic holds the
 parts, with their catalogue numbers, values and ratings. Each of these can be
 wrong while the check still reports a pass, which is the failure worth a test.
 The check run against KiCad and the seeded-fault proof are in
-test_board_check_kicad.py.
+the test_board_check_kicad_*.py files.
 """
 
 from __future__ import annotations

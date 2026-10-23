@@ -280,7 +280,7 @@ changes something the host tier reads: anything under `firmware/`, the
 other files those tests open (`CLAUDE.md`, `.gitattributes`,
 `hardware/README.md`, `hardware/tools/board_check.py`,
 `hardware/tools/board_views.py` and
-`hardware/tools/tests/test_board_check_kicad.py`; no board design among them). That set of paths
+`hardware/tools/tests/board_kicad_fixtures.py`; no board design among them). That set of paths
 is declared once, as `HOST_READS` in [`tools/round_gate.py`](tools/round_gate.py),
 and the complete verification holds it to being the whole of what the tier
 reads: `task fw:host-closure` runs the tier in a git repository holding only the

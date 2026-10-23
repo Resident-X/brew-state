@@ -370,7 +370,7 @@ class TheDefaultDeclaredPathsAreTheRoundGatesHostReads(unittest.TestCase):
             "hardware/tools/board_check.py": "check\n",
             "hardware/tools/board_other.py": "other\n",
             "hardware/tools/board_views.py": "views\n",
-            "hardware/tools/tests/test_board_check_kicad.py": "test\n",
+            "hardware/tools/tests/board_kicad_fixtures.py": "test\n",
             "CLAUDE.md": "instructions\n",
             ".gitattributes": "* text=auto\n",
             "Taskfile.yml.orig": "o\n",
@@ -384,7 +384,7 @@ class TheDefaultDeclaredPathsAreTheRoundGatesHostReads(unittest.TestCase):
             sorted([
                 "./.github/workflows/w.yml", "./Taskfile.yml", "./firmware/src/a.c", "./CLAUDE.md",
                 "./.gitattributes", "./hardware/README.md", "./hardware/tools/board_check.py",
-                "./hardware/tools/board_views.py", "./hardware/tools/tests/test_board_check_kicad.py",
+                "./hardware/tools/board_views.py", "./hardware/tools/tests/board_kicad_fixtures.py",
             ]),
             sorted(setting.logged("files")),
         )

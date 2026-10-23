@@ -7,7 +7,7 @@ which of the board's minimums (the board setup's, each net class's, each custom
 rule's) are looser than the limit of that process. Each of these can be wrong
 while the check still reports a pass, which is the failure worth a test. The
 check run against KiCad, the tracked designs and the seeded-fault proof are in
-test_board_check_kicad.py.
+the test_board_check_kicad_*.py files.
 """
 
 from __future__ import annotations
