@@ -358,6 +358,51 @@ class TheLayerListingOrder(unittest.TestCase):
         self.assertEqual(as_json, ["F.Cu", "In2.Cu", "In10.Cu", "drill"])
         self.assertEqual(as_text, as_json)
 
+    #: Run under the Python that holds gerbonara: render with the stack's layers handed over in the discovery order the argument names.
+    DISCOVERY_DRIVER = (
+        "import sys\n"
+        "sys.path.insert(0, sys.argv[1])\n"
+        "import production_files\n"
+        "from gerbonara import LayerStack\n"
+        "def rotated(items, how):\n"
+        "    items = list(items)\n"
+        "    if how == 'reverse':\n"
+        "        return items[::-1]\n"
+        "    return items[len(items) // 3:] + items[:len(items) // 3]\n"
+        "how = sys.argv[2]\n"
+        "opened = LayerStack.open\n"
+        "def open_in_order(*args, **kwargs):\n"
+        "    stack = opened(*args, **kwargs)\n"
+        "    stack.graphic_layers = dict(rotated(stack.graphic_layers.items(), how))\n"
+        "    return stack\n"
+        "LayerStack.open = open_in_order\n"
+        "drills = LayerStack.drill_layers\n"
+        "LayerStack.drill_layers = property(lambda self: rotated(drills.fget(self), how))\n"
+        "sys.exit(production_files.render(sys.argv[3], sys.argv[4], sys.argv[5]))\n")
+
+    def render_discovered(self, how, out):
+        """The render of the exported layers when gerbonara hands them over reversed or rotated; the images and both forms of the index."""
+        result = subprocess.run([GERBONARA_PYTHON, "-c", self.DISCOVERY_DRIVER, TOOLS, how, _STATE["gerbers"], out, RESVG],
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        with open(os.path.join(out, "index.json"), encoding="utf-8") as handle:
+            as_json = json.load(handle)
+        with open(os.path.join(out, "index.txt"), encoding="utf-8") as handle:
+            as_text = handle.read()
+        return as_json, as_text, sorted(os.listdir(out))
+
+    def test_the_render_lists_images_and_index_in_the_fixed_order_whatever_order_the_layers_are_discovered_in(self):
+        # SOL-ROUND-GATE-NOTES-MISSING-TOOL-UNDER-HOSTED-RUNNER.C2: The images and both forms of the index (text and JSON) share that order, built from layers presented in more than one discovery order
+        with tempfile.TemporaryDirectory(prefix="production-files-discovery-") as work:
+            runs = {how: self.render_discovered(how, os.path.join(work, how)) for how in ("reverse", "rotated")}
+        for how, (as_json, as_text, files) in runs.items():
+            with self.subTest(discovered=how):
+                self.assertEqual([image["layer"] for image in as_json["images"]], IMAGES)
+                self.assertEqual(re.findall(r"^IMAGE \| layer-(.*)\.png \|", as_text, re.M), IMAGES)
+                self.assertEqual(files, sorted(["index.txt", "index.json"] + [f"layer-{name}.png" for name in IMAGES]))
+        self.assertEqual(runs["reverse"][0], runs["rotated"][0])
+        self.assertEqual(runs["reverse"][1], runs["rotated"][1])
+
 
 class TheFootprintDrawings(unittest.TestCase):
     """SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C1: The method's ordering step compares every placed part's position, rotation and polarity with the assembler's preview before payment."""
