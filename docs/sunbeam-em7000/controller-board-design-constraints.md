@@ -643,7 +643,7 @@ Channel: § What each channel requires, *Steam-path pressure sensing*. Default: 
 |---|---|---|---|---|---|---|---|---|---|---|
 | Pressure transducer plumbed into the steam path, of the earlier design's kind (`controller-design/control-system-bom.csv`, *XDB401 3.3V I2C*) | 1 | **No stocked candidate.** Searched "pressure transducer", "pressure sensor" and "XDB401": no in-stock result. Searched "pressure": the in-stock pressure sensors returned are board-mounted parts (MPX5999D, MS561101BA03-50), not transducers fitted into a water path | — | — | Not applicable: no stocked candidate | Not applicable: no stocked candidate | Not applicable: no stocked candidate | — | https://jlcpcb.com/parts | 2026-10-13 |
 
-The board-side parts of this channel, its connector and any conditioning, follow the transducer's interface, an I²C bus as the baseline with a 3-pin spare analogue input as the fallback (`controller-board-function-forms.md` § Steam-path pressure sensing).
+The board-side parts of this channel, its connector and any conditioning, follow the transducer's interface, an I²C bus as the baseline with a 4-pin spare analogue input (5V, 3V3, GND, signal) as the fallback (`controller-board-function-forms.md` § Steam-path pressure sensing).
 
 ### Gauge drive, both gauges
 
