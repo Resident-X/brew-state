@@ -6,7 +6,7 @@ version: 1
 measurement_type: binary
 verification: inspection
 text: |
-  The check that closes the basis against the chosen part includes the part's own datasheet media temperature rating, recorded against the part with its source and revision or read date. Each candidate the record already cites is checked against the stated temperature; a candidate whose rating falls short, such as one limited to 125 degC media, is recorded as unfit, and a candidate whose datasheet gives no media temperature is recorded as absent, not adequate. Out of scope: choosing the part, which the board design task does against the recorded basis.
+  The check that closes the basis against the chosen part includes the part's own datasheet media temperature rating, recorded against the part with its source and revision or read date. Each candidate the record already cites is checked against the stated temperature, or, where the chosen form places the part behind a condensate leg, against the temperature the leg's design delivers to the part; a candidate whose rating falls short of the temperature it meets, such as one limited to 125 degC media exposed to the steam directly, is recorded as unfit, and a candidate whose datasheet gives no media temperature is recorded as absent, not adequate. Out of scope: choosing the part, which the board design task does against the recorded basis.
 links:
   - target: SOL-HW-STEAM-TRANSDUCER-MEDIA-TEMPERATURE-RECORDED
     type: criterion-of
