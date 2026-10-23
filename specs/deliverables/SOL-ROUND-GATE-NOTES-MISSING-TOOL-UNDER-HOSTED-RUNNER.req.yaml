@@ -1,15 +1,21 @@
 id: SOL-ROUND-GATE-NOTES-MISSING-TOOL-UNDER-HOSTED-RUNNER
 type: deliverable
 category: solution
-title: The round gate notes a missing board tool under the hosted runner's task output
+title: Three tests that pass only on the author's host are corrected so the nightly verification passes on the hosted runner
 status: active
-version: 1
+version: 2
 text: |
-  The round gate's tests of its own task-running seam include one that runs the real task runner on a throwaway task and requires the line the task writes to standard error with the missing-tool marker to be noted by the gate. That test passes on the author's machine and fails when GITHUB_ACTIONS is set, which it always is on the hosted runner: the real task runner then writes its output differently, so the marker line is not found. It was not seen on the nightly because the host tier stopped at the golden-trajectory failure before the tool tests ran; the first hosted run that got past it (a throwaway probe of the cross-host arithmetic fix, run 38981305869) showed it, and it reproduces on the author's machine with GITHUB_ACTIONS=true.
+  The nightly full verification of main runs on a hosted Linux runner, and three of its tests passed only on the author's machine. Each is a defect in sealed work where behaviour depended on the host the code was written on, and each fails the night's hw:test:round or fw:test (and so fw:host-closure) there.
 
-  The failure is not only in the test. The gate's noting of the missing-tool marker is how a round or a night reports that a board tool is absent, so if the hosted task runner moves the marker line, the gate under-reports exactly on the hosted runner where it matters. The correction is to make the gate note the marker under the task runner's hosted-runner output (or to have the gate run the task so that the output is the same under both), and to make the test run under both settings so that a change in either fails it. Out of scope: any other test in the round gate's suite, and what the gate does with a noted marker.
+  First, the round gate's test of its own task-running seam runs the real task runner on a throwaway task and requires the line written to standard error with the missing-tool marker to be noted. It passes on the author's machine and fails on the hosted runner, which sets CI: the task runner then colours its own command header and writes the colour reset after the newline, so the next line it passes through begins with an escape sequence and the gate's test for the marker at the start of the line does not match. It reproduces locally with CI=true; GITHUB_ACTIONS alone does not trigger it. The failure is not only in the test: the gate's noting of the marker is how a round or a night reports that a board tool is absent, so a board tool absent on the hosted runner is under-reported exactly where it matters. The correction is in the shared task-running seam, so a round and a night note the marker whether or not the task runner colours its output.
+
+  Second, the production-files layer index lists the inner copper layers in the order the export's files are discovered, which differs between hosts, so the index of a board with In1.Cu and In2.Cu is not the same on every host. An index a reader works down must list layers in one stated order.
+
+  Third, the review-kit declaration test that matches an `added_during_round` pattern against the path an artefact resolves to through a link includes a row whose source differs from the link only in case. It holds on a case-insensitive filesystem and fails on a case-sensitive one, where that source names nothing. The behaviour under test is path resolution and case-folded pattern matching; the row must exercise it on either kind of filesystem.
+
+  The correction in each case is to make the behaviour host-independent and the test able to fail on a plausible regression on either host, not to skip it on the host where it fails. Out of scope: any other test in these suites, and what the gate does with a noted marker.
 rationale: |
-  Found while proving the cross-host arithmetic fix on a hosted runner (https://github.com/Resident-X/brew-state/actions/runs/38981305869): the host tier's tool tests had never run on a hosted runner past the golden-trajectory failure, so a test that depends on the environment it runs in had only ever been run where it was written. It restores the behaviour SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1 delivered (the gate reports a missing board tool) on the runner where the night runs, and is a defect in sealed work, so it belongs in the maintenance lane rather than in the arithmetic fix.
+  Found by the nightly verification of main on its hosted Linux runner (https://github.com/Resident-X/brew-state/actions/runs/39741899288) and, for the first, earlier on a throwaway probe run (38981305869). All three are tests that had only ever run where they were written. Each restores behaviour that sealed work already requires to hold on every supported host, so they are one maintenance item: the same cause, the same gate, one correction round, verified by one hosted run. The solution's identifier names the first failure only; it is kept because the node is unbuilt and its identifier is already cited.
 links:
   - target: DEL-MAINTENANCE.C1
     type: derives-from
