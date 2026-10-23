@@ -3,17 +3,19 @@ type: deliverable
 category: solution
 title: The board tier's tooling tests run side by side by test file, and a failing file fails the stage naming it
 status: active
-version: 2
-text: |-
+version: 3
+text: |
   Why this exists. For a change under hardware/ the build round's gate takes about 60 minutes, because the round's board-tooling test task runs about 2260 tests serially in one process, about 36 minutes on a 10-core machine. A per-file profile that ran the 45 test files 8 at a time took 4 minutes wall for the files that need no CAD tool; the slowest were the board history tests at 245 seconds and the board views tests at 210 seconds. The files that need a CAD tool were not profiled. The round is the only verification a change gets before it merges (DEC-VERIFICATION-ROUND-TARGETED-NIGHTLY-FULL), and a round that long outruns a single shell call and slows iteration. Found while running the round for the build of DEL-HW-REVIEW-FAN-OUT on 2026-10-22. SOL-TOOL-TESTS-RUN-SIDE-BY-SIDE did the same for the firmware tooling's tests and left this stage alone.
 
-  What it does. The task that runs the board tier's tooling tests runs each test file in a process of its own, several at once, with the same environment, test selection and tools as the serial run, states each file's result as it finishes, and fails the stage when any file fails, naming it. The test set is unchanged, so the verdict is the serial run's verdict, including for files that need the CAD tool, which share the one installed tool without interfering. The seeded-fault proof stays on demand and outside the stage.
+  What it does. The task that runs the board tier's tooling tests runs each test file in a process of its own, several at once, with the same environment, test selection and tools as the serial run, states each file's result as it finishes, and fails the stage when any file fails, naming it. The test set is unchanged, so the verdict is the serial run's verdict, including for files that need the CAD tool, which share the one installed tool without interfering. A directory holding no test file fails the stage, and a missing tool still stops the round naming it rather than reading as a finding. The on-demand full run of the board tooling's tests uses the same runner, so the two do not drift. The seeded-fault proof stays on demand and outside the stage.
 
-  Measurement step. The files that need the CAD tool were not profiled, so the one-third ceiling is established by this item's own measurement on those files first, on the reference machine class. If the ceiling cannot be met, the item reports the measured serial time, the side-by-side time and the achieved fraction.
+  Measurement step. The files that need the CAD tool were not profiled, so the serial time and the side-by-side time over the round's own files are measured by this item, on an unloaded 10-core development machine with the tools installed and warm, and recorded with their ratio. The side-by-side time must be at most one third of the serial time; a stage that misses it is not finished.
+
+  Placement. The firmware tooling's side-by-side runner is extended into the one runner both suites use, rather than a second runner written for the board suite: it gains running each file from the serial run's working directory, forwarding a missing tool's notice to its own error output once, and a worker cap per suite. That keeps the empty-run, crash and import handling in one place, and the later change that hands a runner the selected units lands once. A test runner plugin was rejected because it divides work by test rather than by file and adds a dependency.
 
   No requirement criterion is about the duration of a round. This item serves OBL-VERIFICATION-DISCIPLINE-001.C7 only as far as the round must be bearable unattended; it does not restore it.
 
-  Out of scope: selecting which tiers a change runs, which stays path-based as DEC-VERIFICATION-ROUND-TARGETED-NIGHTLY-FULL settles; speeding any single test; the nightly's full board test run.
+  Out of scope: selecting which tiers a change runs, which stays path-based as DEC-VERIFICATION-ROUND-TARGETED-NIGHTLY-FULL settles; speeding any single test. The nightly runs the same stage, so it gains the same speed-up without a separate change.
 links:
   - target: DEL-MAINTENANCE.C1
     type: derives-from
