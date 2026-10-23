@@ -50,7 +50,7 @@ locus:
     ref: docs/sunbeam-em7000/controller-board-function-forms.md § Controller
   - marking: existing
     ref: docs/sunbeam-em7000/component-specification.md § Controller row and Against the declared figure
-  - marking: existing
+  - marking: created
     ref: 'hardware/tools pre-order board check: controller-part rule'
 plan_provenance:
   approved_plan_id: PLAN-DEL-HW-PARTITION-AND-FEASIBILITY-SLICE-1
