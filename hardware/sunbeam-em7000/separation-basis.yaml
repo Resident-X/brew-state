@@ -1,0 +1,145 @@
+# The separation basis record of the Sunbeam EM7000 machine: the one figure for the distance
+# between mains-referenced and low-voltage conductors that every board design in this folder
+# is held to, read by the pre-order board check. Drafted, not accepted: accepted_by and
+# accepted_on are left out until the owner signs, in their own act, under the identity the
+# project records their acts under. Whoever drafts this record does not write them.
+#
+# The tables are those of IEC 60664-1 (insulation coordination for equipment within
+# low-voltage supply systems), Annex F. The standard is copyrighted and not reproduced; each
+# row below is the one row the inputs select, read through two freely published derivations:
+#   [TI-SEMINAR] Texas Instruments, "Demystifying clearance and creepage distance for
+#     high-voltage end equipment", Power Supply Design Seminar, https://www.ti.com/lit/pdf/SLUP421,
+#     read 2026-10-23: its Table F.1 slide (rated impulse voltage by line-to-neutral voltage
+#     and overvoltage category) and its Table F.2 slide (clearance by required transient
+#     voltage and pollution degree, at 2 000 m, with reinforced insulation dimensioned at the
+#     rated impulse voltage one step higher than basic).
+#   [TI-SLUAAR5] Texas Instruments, "Circuit Board Insulation Design According to IEC60664",
+#     SLUAAR5, August 2023, https://www.ti.com/lit/pdf/sluaar5, read 2026-10-23: the reinforced
+#     creepage distance is twice the basic distance of Table F.4.
+#   [EMA-CREEPAGE] EMA Design Automation, "PCB clearance and creepage distance table",
+#     https://www.ema-eda.com/ema-resources/blog/pcb-clearance-and-creepage-distance-table/,
+#     read 2026-10-23: its creepage table by RMS voltage, pollution degree and material group,
+#     the 250 V and 320 V rows. At 253 V rms the row at 250 V is below the working voltage, so
+#     the next row up, 320 V, is the one used and no interpolation is made.
+# The basis the figures are read at: 253 V rms is the top of the declared span, so it falls in
+# the 300 V line-to-neutral row of the rated impulse voltage table, which gives 2.5 kV at
+# overvoltage category II for basic insulation and so 4.0 kV (one step up) for reinforced.
+# Reinforced is the insulation every barrier below is declared to provide (see barrier_types).
+#
+# Pollution degree 3, boards not protected against moisture. The enclosure is sealed from the
+# steam wand, but steam may be present in the machine around it and a burst water line beside it
+# would put water on the boards (owner statement, reference-machine.md, Ambient span); a conformal
+# coat is planned once the boards work and is not applied, so degree 3 is taken and the boards
+# count as unprotected. Coating them later would be a fresh basis, not an edit of this one.
+#
+# Material group IIIb, the worst case. The laminate's tracking index (CTI) is a maker's figure
+# not yet read for the board to be ordered; group IIIb (100 <= CTI < 175) is the weakest group,
+# and a laminate of any better group (IIIa, 175 <= CTI < 400, as a common FR-4 is sold) needs no
+# more at this voltage and pollution degree, as the creepage row for 320 V shows 5.0 mm for both.
+# The figure therefore holds whichever of the two the laminate proves to be.
+standard: "IEC 60664-1, Annex F tables F.1, F.2 and F.4, read through the freely published derivations [TI-SEMINAR], [TI-SLUAAR5] and [EMA-CREEPAGE] cited above and in table_rows"
+supply: "230 V nominal, single phase, 216 V to 253 V, 50 Hz"
+working_voltage: "253 V rms (358 V peak), the top of the declared span"
+pollution_degree: 3
+material_group: IIIb
+environment: "household appliance interior; water, steam and repeated heating and cooling at and around the enclosure; condensation possible; boards uncoated and not protected against moisture"
+overvoltage_category: 2
+altitude_m: 2000
+barriers:
+  - supply-module
+  - heater-switch
+  - pump-drive
+  - supply-timing-front-end
+  - mains-presence-confirm
+  - valve-switch
+  - pressure-sensor-water-path
+# Every barrier is reinforced and none has its low-voltage side bonded to protective earth: the
+# logic supply is a Class II module whose output is not referenced to earth, and the cavity's
+# walls are plastic (docs/sunbeam-em7000/controller-board-design-constraints.md, Logic supply;
+# reference-machine.md, What the walls are made of). The USB connector, the debug header and the
+# operator's controls sit on the low-voltage side and can be touched, so a single insulation
+# failure must not reach them. The owner accepts or corrects each insulation type when signing.
+barrier_types:
+  - barrier: supply-module
+    insulation: reinforced
+    earth_bonded: false
+    touchable:
+      - USB connector
+      - operator controls
+      - enclosure
+    formed_by: the bought logic-supply module's input-to-output isolation, and the module-to-board spacing the carrier keeps
+  - barrier: heater-switch
+    insulation: reinforced
+    earth_bonded: false
+    touchable:
+      - USB connector
+      - operator controls
+      - enclosure
+    formed_by: the opto-triac between the heater drive and the triac gate, and the board spacing around it; the triac's insulated tab to the earthed wall is basic, to earth
+  - barrier: pump-drive
+    insulation: reinforced
+    earth_bonded: false
+    touchable:
+      - USB connector
+      - operator controls
+      - enclosure
+    formed_by: the opto-triac between each pump drive and its triac, and the board spacing around it
+  - barrier: supply-timing-front-end
+    insulation: reinforced
+    earth_bonded: false
+    touchable:
+      - USB connector
+      - operator controls
+      - enclosure
+    formed_by: the AC-input optocoupler presenting both crossings of the supply, and the board spacing around it
+  - barrier: mains-presence-confirm
+    insulation: reinforced
+    earth_bonded: false
+    touchable:
+      - USB connector
+      - operator controls
+      - enclosure
+    formed_by: the AC-input optocoupler on each heater channel, and the board spacing around it
+  - barrier: valve-switch
+    insulation: reinforced
+    earth_bonded: false
+    touchable:
+      - USB connector
+      - operator controls
+      - enclosure
+    formed_by: the relay's coil-to-contact insulation, and the board spacing around it
+  - barrier: pressure-sensor-water-path
+    insulation: reinforced
+    earth_bonded: false
+    touchable:
+      - water path and steam wand
+      - USB connector
+      - operator controls
+    formed_by: the transducer's insulation between its sensing circuit and the wetted water path
+mains_to_low_voltage:
+  clearance_mm: 3.0
+  creepage_mm: 10.0
+table_rows:
+  - citation:
+      document: "IEC 60664-1 Table F.1 and Table F.2, as read in [TI-SEMINAR] (https://www.ti.com/lit/pdf/SLUP421)"
+      edition: "as reproduced in the 2023 seminar; tables unchanged in kind across editions (2000 m clearance, inhomogeneous field)"
+      locator: "Table F.1: up to 300 V line to neutral, overvoltage category II, 2.5 kV for basic, so 4.0 kV for reinforced; Table F.2: 4.0 kV, pollution degree 3, 3.0 mm"
+    inputs:
+      working_voltage_v: 300
+      insulation: reinforced
+      overvoltage_category: 2
+      pollution_degree: 3
+      altitude_m: 2000
+    figure:
+      clearance_mm: 3.0
+  - citation:
+      document: "IEC 60664-1 Table F.4, as read in [EMA-CREEPAGE] (https://www.ema-eda.com/ema-resources/blog/pcb-clearance-and-creepage-distance-table/); doubled for reinforced as stated in [TI-SLUAAR5] (https://www.ti.com/lit/pdf/sluaar5)"
+      edition: "as reproduced on the page read 2026-10-23"
+      locator: "Table F.4: 320 V rms, pollution degree 3, material group IIIa and IIIb, 5.0 mm basic, doubled to 10.0 mm for reinforced insulation"
+    inputs:
+      working_voltage_v: 320
+      insulation: reinforced
+      pollution_degree: 3
+      material_group: IIIb
+    figure:
+      creepage_mm: 10.0
