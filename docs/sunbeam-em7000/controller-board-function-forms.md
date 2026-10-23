@@ -131,8 +131,8 @@ Source numbers (S1…) are in § Sources read. Prices and stock are in § Availa
 | | |
 |---|---|
 | Row | *Flow sensing* |
-| Form | **Designed**: a pull-up to the 5 V rail and a Schmitt-trigger buffer to the controller's capture input |
-| Reason | The meter's output is a pulse train held up to 5 V on the original board by 2 kΩ (`connector-pinouts.md`); one resistor and one single-gate buffer (0.07 USD, `controller-board-design-constraints.md`, *Flow sensing*) take it to a 3.3 V input. Whether the output is open-drain or push-pull is not yet read, so the pull-up is fitted and a push-pull output tolerates it |
+| Form | **Designed**: a pull-up to the 3.3 V rail, a series resistor and a filter capacitor, to the controller's capture input, with a footprint for a single-gate Schmitt-trigger buffer in the line (supplied at 3.3 V, its input rated for 5 V) and a link that fits or bypasses it. The buffer is not fitted by default |
+| Reason | The meter's output is a pulse train held up to 5 V on the original board by 2 kΩ (`connector-pinouts.md`), the level of the original controller's own supply. The capture input chosen is rated for 5 V (`component-specification.md`, *Five-volt tolerance*), so a push-pull output at 5 V does no harm, and an open-drain output is brought to a 3.3 V level by a 3.3 V pull-up with no buffer. Whether the output is open-drain or push-pull is not yet read, so the pull-up is fitted either way. The cable runs beside the pump and heater switching, so the buffer footprint (0.07 USD fitted, `controller-board-design-constraints.md`, *Flow sensing*) lets the line be cleaned up without a new board if it proves noisy |
 | Hardware already bought | The fitted meter, retained (the row's floor) |
 | Reference | None found as a manufacturer note for a Hall flow meter into a 3.3 V input. Looked in: manufacturer notes and the TI and community pages returned by search on 2026-10-23, which gave a single-gate Schmitt buffer as the single-chip form, in a thread and not a design |
 | Properties | None carried |

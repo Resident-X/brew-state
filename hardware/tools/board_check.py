@@ -1545,7 +1545,7 @@ def machine_folder(directory: str) -> Optional[str]:
     holds proof designs and not a machine's.
     """
     parts = directory.replace(os.sep, "/").split("/")
-    return "/".join(parts[:2]) if len(parts) > 2 and parts[0] == "hardware" and parts[1] != "proof" else None
+    return "/".join(parts[:2]) if len(parts) >= 2 and parts[0] == "hardware" and parts[1] != "proof" else None
 
 
 def read_controller_record(yaml, root: str, repository: Repository, design: Design, not_for_manufacture: bool
