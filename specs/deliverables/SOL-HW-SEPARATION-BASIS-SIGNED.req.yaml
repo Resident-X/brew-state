@@ -3,9 +3,9 @@ type: deliverable
 category: solution
 title: The machine's separation basis between mains and low voltage is declared from a cited standard and signed by the owner before any layout
 status: active
-version: 2
+version: 3
 text: |-
-  Writes the machine's separation basis record in the form the separation-basis decision sets. It states every barrier with its insulation type, the overvoltage category, the altitude, the pollution degree and the table rows used. It judges each barrier part's proving candidate against its barrier, ends the pending marks held against the basis, and has the owner accept it under their own identity. The build stops at the drafted record and the request to the owner; the leaf closes on the owner's own act, and the owner's pending acceptance holds every leaf that depends on this one.
+  Writes the machine's separation basis record in the form the separation-basis decision sets. It states every barrier with its insulation type, the overvoltage category, the altitude, the pollution degree and the table rows used. It judges each barrier part's proving candidate against its barrier, ends the pending marks held against the basis, and has the owner accept it under their own identity. The build stops at the drafted record and the request to the owner; the leaf closes on the owner's acceptance, and the owner's pending acceptance holds every leaf that depends on this one.
 
   Settled for the build:
   - Reuse. The record is read by the board check's own reader and floor rule, which are already built; no check code changes. The test reads the committed record through that reader, never a second validator.
