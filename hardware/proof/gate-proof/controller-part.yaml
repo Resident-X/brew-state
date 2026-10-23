@@ -1,0 +1,10 @@
+# A synthetic controller part record, made only to prove the pre-order check's controller
+# rule against the throwaway design beside it. The design's controller is a two-pin stand-in, CTRL. It names no machine's selected
+# controller and must never be used for a board that is ordered: being marked
+# synthetic, the check accepts it only for a design marked not for manufacture.
+synthetic: true
+part: "SYNTHETIC-CTRL"
+lcsc: "C9000005"
+pins:
+  - PA0
+  - PA1

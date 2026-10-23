@@ -72,6 +72,11 @@ RECORD_NAME = "separation-basis.yaml"
 #: The record a design's connectivity is held to, found the way RECORD_NAME is.
 PIN_RECORD_NAME = "pin-allocation.yaml"
 
+#: The record naming the one microcontroller a design is held to, found the way RECORD_NAME is.
+CONTROLLER_RECORD_NAME = "controller-part.yaml"
+#: The keys that record holds; every one but synthetic is required.
+CONTROLLER_KEYS = ("part", "lcsc", "pins", "synthetic")
+
 #: Every rule the check adds to the temporary copy's rules file is named with
 #: this, and a design rule whose name contains it fails, so a line of KiCad's
 #: report naming it can only come from the check.
@@ -1517,6 +1522,83 @@ def connectivity(design: Design, record: str, channels: List[Channel], nets: Dic
                 found.append(fail(f"{design.schematic} {pin.describe()}",
                                   f"net {name} is on controller pin {', '.join(pin.ports())} ({pin.describe()}), which the "
                                   "record does not list; list the channel it carries, or take the connection off the pin"))
+    return found
+
+
+# --- The controller part record and the controller a design places ----------------
+
+
+class ControllerRecord:
+    """The controller part record as read: the maker's part number, the catalogue number and the port pins the part has."""
+
+    def __init__(self, path: str, part: str, lcsc: str, pins: Set[str]):
+        self.path = path
+        self.part = part
+        self.lcsc = lcsc
+        self.pins = pins
+
+
+def read_controller_record(yaml, root: str, repository: Repository, design: Design, not_for_manufacture: bool
+                           ) -> Tuple[Optional[ControllerRecord], Optional[str], List[Violation]]:
+    """The controller part record the design's folders hold, its path, and the violations of its form.
+
+    No record at all gives no path and no violation, since a design that places no controller needs none; whether
+    one is owed is `controller_part`'s to say. A record that cannot be used gives its path and no record.
+    """
+    data, reading = read_optional(yaml, root, repository, design, CONTROLLER_RECORD_NAME, "controller_record",
+                                  "controller part record", CONTROLLER_KEYS, not_for_manufacture)
+    if reading is None:
+        return None, None, []
+    if data is not None:
+        for key in ("part", "lcsc"):
+            if key in data:
+                reading.text(key, data[key])
+        pins = data.get("pins")
+        if "pins" in data and reading.listed("pins", pins, "port pins"):
+            for index, pin in enumerate(pins):
+                if not isinstance(pin, str) or PORT_PIN.fullmatch(pin) is None:
+                    reading.bad(f"pins[{index}]", f"pins[{index}] is {pin!r}, where it is a port pin's name, port letter "
+                                                  "then number, as in PC6")
+            reading.distinct("pins", [pin for pin in pins if isinstance(pin, str)], "the pin")
+    if reading.found:
+        return None, reading.record, reading.found
+    return ControllerRecord(reading.record, data["part"].strip(), data["lcsc"].strip(), set(data["pins"])), reading.record, []
+
+
+def controller_part(design: Design, path: Optional[str], record: Optional[ControllerRecord], channels: Optional[List[Channel]],
+                    pin_record: Optional[str], nets: Dict[str, List[PinNode]],
+                    placed: Dict[str, Dict[str, Optional[str]]]) -> List[Violation]:
+    """The ways the controller a design places departs from the controller part record.
+
+    A controller is every placed part with a pin named as a port pin, the test the connectivity check applies, so a
+    design that places none is not held to the record at all. Each controller's LCSC field must equal the record's
+    catalogue number, and each channel of the pin allocation record must name a controller pin the part has.
+    """
+    controllers = sorted({pin.ref for pins in nets.values() for pin in pins if pin.ports()})
+    if not controllers:
+        return []
+    if path is None:
+        return [Violation(design.project, "controller_record", os.path.join(design.directory, CONTROLLER_RECORD_NAME),
+                          f"there is no {CONTROLLER_RECORD_NAME} in the design's folder or any folder above it, so there is "
+                          f"no selected controller to hold the design to; the design places {', '.join(controllers)} with "
+                          "port pins, and the record must name the part, its catalogue number and its port pins")]
+    if record is None:
+        return []
+    found: List[Violation] = []
+    for ref in controllers:
+        number = ((placed.get(ref) or {}).get("lcsc") or "").strip()
+        if number != record.lcsc:
+            found.append(Violation(
+                design.project, "controller_part", f"{design.schematic} {ref}",
+                f"the controller {ref} " + (f"has the catalogue number {number}" if number else "has no LCSC field")
+                + f", where the controller part record names {record.lcsc}, the selected {record.part}; build the board "
+                  "around the selected part, or change the selection before the board is ordered"))
+    for channel in channels or []:
+        if channel.controller_pin not in record.pins:
+            found.append(Violation(
+                design.project, "controller_part", f"{pin_record} channel {channel.channel}",
+                f"channel {channel.channel} names controller pin {channel.controller_pin}, which the selected "
+                f"{record.part} does not have; the controller part record lists the pins it has"))
     return found
 
 
@@ -5686,6 +5768,9 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
     pin_record = find_record(root, design.directory, repository.tracked, PIN_RECORD_NAME)
     channels, pin_problems = read_pin_record(yaml, root, design, pin_record, not_for_manufacture)
     found += pin_problems
+    controller_record, controller_path, controller_problems = read_controller_record(yaml, root, repository, design,
+                                                                                      not_for_manufacture)
+    found += controller_problems
 
     found += check_parts(yaml, root, design, repository, today, not_for_manufacture)
     found += read_derating(yaml, root, repository, design, not_for_manufacture)
@@ -5770,6 +5855,9 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
                 parts = schematic_parts(parsed) if parsed is not None else {}
                 if parsed is not None and channels is not None:
                     found += connectivity(design, pin_record, channels, schematic_pin_nodes(parsed))
+                if parsed is not None:
+                    found += controller_part(design, controller_path, controller_record, channels, pin_record,
+                                             schematic_pin_nodes(parsed), placed_positions(root, design, repository)[0])
             except sexpr.SexprError as error:
                 why = f"KiCad's netlist could not be read ({error})"
             if netlist is not None:
@@ -5966,7 +6054,7 @@ def design_reads(top: str, files: List[str], git: str = "git") -> List[str]:
 
     For each design that is its own folder, written with a trailing slash so a
     file deleted from it is still one the design read, every file its folder,
-    its sheets and its libraries hold, and the separation basis, pin allocation, parts specification,
+    its sheets and its libraries hold, and the separation basis, pin allocation, controller part, parts specification,
     catalogue extract, derating policy, pin-limit, board rules and manufacturer limits records it is held to, whether or not a record is committed. A design in the top folder reads
     the whole repository, written as WHOLE_REPOSITORY.
     """
@@ -5976,8 +6064,8 @@ def design_reads(top: str, files: List[str], git: str = "git") -> List[str]:
     for design in designs:
         reads.add(design.directory + "/" if design.directory else WHOLE_REPOSITORY)
         reads.update(design_files(design, repository)[0])
-        for name in (RECORD_NAME, PIN_RECORD_NAME, PARTS_RECORD_NAME, CATALOGUE_NAME, DERATING_NAME, PIN_LIMITS_NAME,
-                     BOARD_RULES_NAME, MANUFACTURER_LIMITS_NAME):
+        for name in (RECORD_NAME, PIN_RECORD_NAME, CONTROLLER_RECORD_NAME, PARTS_RECORD_NAME, CATALOGUE_NAME, DERATING_NAME,
+                     PIN_LIMITS_NAME, BOARD_RULES_NAME, MANUFACTURER_LIMITS_NAME):
             record = find_record(top, design.directory, repository.tracked, name)
             if record:
                 reads.add(record)

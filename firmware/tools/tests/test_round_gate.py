@@ -1515,6 +1515,7 @@ RUNS_BY_NAME = (
     ("a separation basis record outside the hardware tree", "elsewhere/separation-basis.yaml"),
     ("a parts specification record outside the hardware tree", "elsewhere/parts-specification.yaml"),
     ("a catalogue extract outside the hardware tree", "elsewhere/catalogue-extract.yaml"),
+    ("a controller part record outside the hardware tree", "elsewhere/controller-part.yaml"),
     ("the round gate's own code", "firmware/tools/round_gate.py"),
     ("the code the round gate shares with the complete verification", "firmware/tools/task_gate.py"),
     ("the task runner's definition file", "Taskfile.yml"),

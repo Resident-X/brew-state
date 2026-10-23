@@ -21,7 +21,7 @@ sys.path.insert(0, TOOLS)
 import board_check  # noqa: E402
 import board_prove  # noqa: E402
 from board_kicad_fixtures import load_tests, setUpModule  # noqa: E402,F401
-from board_kicad_fixtures import KICAD_CLI, Proved, outcomes  # noqa: E402
+from board_kicad_fixtures import Copy, KICAD_CLI, Proved, outcomes  # noqa: E402
 
 
 
@@ -57,6 +57,56 @@ class Parts(Proved):
         self.assertEqual(status, 0, lines)
         self.assertEqual([line for line in lines if line.startswith("VIOLATION") and "| parts_" in line], [])
 
+
+
+class ControllerPart(Proved):
+    def test_every_controller_part_failure_fails_and_is_named(self):
+        # SOL-HW-CONTROLLER-MCU-SELECTED.C4: Every tracked board design whose controller part differs from the selected part fails the pre-order board check. A design whose pin allocation names controller pins the selected part does not have also fails. The failure names the rule, the design and the offending part, as the check's other failures do, and it clears only when the design carries the selected part. The selected part is recorded in a record the board check reads, and the keys of that record are defined by an amendment to the design-records decision made in the same change, since the check refuses a key no decision names. The rule extends the existing pre-order board check rather than adding a separate check. It is proven to fail on a seeded fault, and every tracked design passes it. Proof designs marked not for manufacture are exempt only where their synthetic records say so. Out of scope: checks of the firmware's pin assignment, which already compare against the pin allocation record. The record holds the maker's orderable part number, the catalogue number, and the port-pin names the part has, with an optional synthetic marker. The check identifies the controller as every placed part with a port-pin-named pin, and its catalogue-number field must equal the record's. A design that places no such part passes. A design that places one and has no record fails. Each proof design is exempt only through a synthetic record that names its own synthetic controller.
+        faults = [fault for fault in board_prove.FAULTS if fault[1].startswith("controller part:")]
+        names = {fault[0] for fault in faults}
+        for required in ("a controller whose catalogue number differs from the controller part record",
+                         "a controller with no LCSC field",
+                         "a pin allocation entry naming a pin the controller part record omits",
+                         "a controller part record that does not exist", "a controller part record that cannot be parsed",
+                         "a controller part record lacking its catalogue number",
+                         "a controller part record holding a key no decision names",
+                         "a controller part record listing a pin twice",
+                         "a synthetic controller part record applied to a design not marked not for manufacture"):
+            self.assertIn(required, names)
+        self.assertEqual({fault[2] for fault in faults}, {"controller_part", "controller_record"})
+        self.assertCaught(*names)
+
+    def test_each_controller_failure_is_caught_with_the_line_that_names_the_rule_the_design_and_the_part(self):
+        # SOL-HW-CONTROLLER-MCU-SELECTED.C4: Every tracked board design whose controller part differs from the selected part fails the pre-order board check. A design whose pin allocation names controller pins the selected part does not have also fails. The failure names the rule, the design and the offending part, as the check's other failures do, and it clears only when the design carries the selected part. The selected part is recorded in a record the board check reads, and the keys of that record are defined by an amendment to the design-records decision made in the same change, since the check refuses a key no decision names. The rule extends the existing pre-order board check rather than adding a separate check. It is proven to fail on a seeded fault, and every tracked design passes it. Proof designs marked not for manufacture are exempt only where their synthetic records say so. Out of scope: checks of the firmware's pin assignment, which already compare against the pin allocation record. The record holds the maker's orderable part number, the catalogue number, and the port-pin names the part has, with an optional synthetic marker. The check identifies the controller as every placed part with a port-pin-named pin, and its catalogue-number field must equal the record's. A design that places no such part passes. A design that places one and has no record fails. Each proof design is exempt only through a synthetic record that names its own synthetic controller.
+        found = outcomes()
+        for name, words in (("a controller whose catalogue number differs from the controller part record", "gate-proof.kicad_sch U1"),
+                            ("a controller with no LCSC field", "gate-proof.kicad_sch U1"),
+                            ("a pin allocation entry naming a pin the controller part record omits", "pin-allocation.yaml channel lv_b")):
+            with self.subTest(fault=name):
+                caught, evidence = found[name]
+                self.assertTrue(caught, evidence)
+                self.assertIn(" | controller_part | ", evidence)
+                self.assertIn("gate-proof.kicad_pro", evidence)
+                self.assertIn(words, evidence)
+
+
+class TheUnmodifiedProofDesignPassesTheControllerRule(Copy):
+    def test_the_throwaway_design_as_committed_passes_with_its_own_synthetic_controller(self):
+        # SOL-HW-CONTROLLER-MCU-SELECTED.C4: Every tracked board design whose controller part differs from the selected part fails the pre-order board check. A design whose pin allocation names controller pins the selected part does not have also fails. The failure names the rule, the design and the offending part, as the check's other failures do, and it clears only when the design carries the selected part. The selected part is recorded in a record the board check reads, and the keys of that record are defined by an amendment to the design-records decision made in the same change, since the check refuses a key no decision names. The rule extends the existing pre-order board check rather than adding a separate check. It is proven to fail on a seeded fault, and every tracked design passes it. Proof designs marked not for manufacture are exempt only where their synthetic records say so. Out of scope: checks of the firmware's pin assignment, which already compare against the pin allocation record. The record holds the maker's orderable part number, the catalogue number, and the port-pin names the part has, with an optional synthetic marker. The check identifies the controller as every placed part with a port-pin-named pin, and its catalogue-number field must equal the record's. A design that places no such part passes. A design that places one and has no record fails. Each proof design is exempt only through a synthetic record that names its own synthetic controller.
+        status, lines = self.check()
+        self.assertEqual(status, 0, lines)
+        self.assertEqual([v for v in self.violations(lines) if v[2] in ("controller_part", "controller_record")], [])
+        record = self.seed.read("controller-part.yaml")
+        self.assertIn("synthetic: true", record)
+        self.assertIn("part: \"SYNTHETIC-CTRL\"", record)
+
+    def test_a_synthetic_controller_record_is_refused_for_a_design_not_marked_not_for_manufacture(self):
+        # SOL-HW-CONTROLLER-MCU-SELECTED.C4: Every tracked board design whose controller part differs from the selected part fails the pre-order board check. A design whose pin allocation names controller pins the selected part does not have also fails. The failure names the rule, the design and the offending part, as the check's other failures do, and it clears only when the design carries the selected part. The selected part is recorded in a record the board check reads, and the keys of that record are defined by an amendment to the design-records decision made in the same change, since the check refuses a key no decision names. The rule extends the existing pre-order board check rather than adding a separate check. It is proven to fail on a seeded fault, and every tracked design passes it. Proof designs marked not for manufacture are exempt only where their synthetic records say so. Out of scope: checks of the firmware's pin assignment, which already compare against the pin allocation record. The record holds the maker's orderable part number, the catalogue number, and the port-pin names the part has, with an optional synthetic marker. The check identifies the controller as every placed part with a port-pin-named pin, and its catalogue-number field must equal the record's. A design that places no such part passes. A design that places one and has no record fails. Each proof design is exempt only through a synthetic record that names its own synthetic controller.
+        self.seed.project(lambda data: data["text_variables"].pop("NOT_FOR_MANUFACTURE"))
+        status, lines = self.check()
+        self.assertEqual(status, 1, lines)
+        rules = {v[2] for v in self.violations(lines) if "controller-part.yaml" in v[3]}
+        self.assertEqual(rules, {"controller_record"})
 
 
 class Names(Proved):

@@ -1,0 +1,25 @@
+# A synthetic controller part record, made only to prove the pre-order check's controller
+# rule against the throwaway design beside it. The design's controller is the small microcontroller it places. It names no machine's selected
+# controller and must never be used for a board that is ordered: being marked
+# synthetic, the check accepts it only for a design marked not for manufacture.
+synthetic: true
+part: "MSPS003F4SPW20R"
+lcsc: "C9100007"
+pins:
+  - PA0
+  - PA1
+  - PA11
+  - PA17
+  - PA18
+  - PA19
+  - PA2
+  - PA20
+  - PA22
+  - PA23
+  - PA24
+  - PA25
+  - PA26
+  - PA27
+  - PA28
+  - PA4
+  - PA6
