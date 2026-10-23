@@ -27,6 +27,10 @@ links:
     type: justified-by
   - target: DEC-HEATER-DRIVE-GATED-BY-SUPERVISION
     type: justified-by
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 brief reviewer
+  fingerprint: b0b51da2c9414375ba3eeee087045ba292d8819a9fad52e0797a95ab83ecddc9
+  gating_profile: ""
 design_question_answers:
   - answered_by: SOL-HW-CONTROLLER-MCU-SELECTED.C4
     class: new-condition
