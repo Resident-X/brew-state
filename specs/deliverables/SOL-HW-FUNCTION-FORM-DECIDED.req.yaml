@@ -33,6 +33,14 @@ links:
     type: depends-on
   - target: SOL-CONTROLLER-CHANNEL-ENUMERATION
     type: depends-on
+  - target: REQ-RETROFIT-FIT-001.C2
+    type: targets
+  - target: SOL-HW-MODULE-PROPERTIES-CARRIED-FORWARD
+    type: depends-on
+  - target: SOL-HW-STEAM-TRANSDUCER-BASIS-RECORDED
+    type: depends-on
+  - target: SOL-HW-ENCLOSURE-AIR-ASSUMED-RECORDED
+    type: depends-on
 design_question_answers:
   - answered_by: SOL-HW-FUNCTION-FORM-DECIDED.C1
     class: whole-set
