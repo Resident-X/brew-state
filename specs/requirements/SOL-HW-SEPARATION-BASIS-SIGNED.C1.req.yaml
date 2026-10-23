@@ -15,7 +15,7 @@ text: |-
   - the overvoltage category and the altitude;
   - the barriers. Every barrier named has exactly one barrier_types entry, giving its insulation type, basic or reinforced, whether its low-voltage side is bonded to protective earth, the low-voltage parts a person can touch beyond it (such as a service port, the operator's controls or the enclosure), and the part or spacing that forms it;
   - only the table rows its own inputs select, never a whole table, each with its citation.
-  The mains-to-low-voltage clearance and creepage are at or above the floor those rows give. A test reads the committed record with the board check's own record reader and separation-floor rule and finds it valid. Out of scope: any board layout, and separation pairs other than mains to low voltage, which the check does not compare.
+  The mains-to-low-voltage clearance and creepage are at or above the floor those rows give. A test finds the committed record valid under the board check's own reading of it, including the floor its own inputs set. Out of scope: any board layout, and separation pairs other than mains to low voltage, which the check does not compare.
 links:
   - target: SOL-HW-SEPARATION-BASIS-SIGNED
     type: criterion-of

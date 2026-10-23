@@ -27,6 +27,20 @@ links:
     type: justified-by
   - target: DEC-HEATER-DRIVE-GATED-BY-SUPERVISION
     type: justified-by
+  - target: SOL-HW-CONTROLLER-MCU-SELECTED
+    type: depends-on
+  - target: SOL-HW-SEPARATION-BASIS-SIGNED
+    type: depends-on
+  - target: REQ-RETROFIT-FIT-001.C2
+    type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C1
+    type: targets
+  - target: REQ-HARDWARE-HEADROOM-001.C2
+    type: targets
+  - target: REQ-HARDWARE-HEADROOM-001.C3
+    type: targets
+  - target: REQ-SAFETY-CHAIN-001.C2
+    type: targets
 design_question_answers:
   - answered_by: SOL-HW-BOARD-DIVISION-AND-FLOORPLAN.C3
     class: whole-set

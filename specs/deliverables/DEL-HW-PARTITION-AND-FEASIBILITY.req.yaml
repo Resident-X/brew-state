@@ -4,13 +4,15 @@ category: task
 title: How the circuitry divides between boards is chosen on evidence that it fits, before detailed design
 status: active
 level: task
-version: 2
+version: 3
 text: |
   With the constraints fixed, each function is given its form, a circuit the project designs or a module it buys, including whether the controller is designed onto the board or remains a module. The earlier design's modules, the controller module, the pump dimmers, the relay module, the supply carrier and the energy meters, are each reopened here, and a published reference design is preferred wherever one exists. The circuitry is then divided between boards and shown at block level to fit the space the machine provides, with each connector placed where its retained harness reaches and room found for the proof-of-life interlock. The separation basis between mains-referenced and low-voltage circuitry is declared and signed for here, before any layout, and spare capacity for the channels the machine is expected to gain is reserved wherever it costs no other criterion.
 
   The owner's stated starting points are inputs to weigh, not mandates: both boards inside the existing controller enclosure; mains connections on its left and sensor and low-voltage harnesses on its right, where they enter today; heater switches kept off-board on heatsinks; valve relays and pump drive on a mains board; the controller board designed first and made as narrow as it can be, leaving room for the mains board; each board within the manufacturer's lowest price band; and the layer count chosen per board, with a ground plane favoured under the sensing.
 rationale: |
   The division between boards decides what each board design task is, so it comes before them. Showing fit at block level costs hours; finding a misfit in a finished layout costs the layout. The separation basis is a safety figure that must be chosen by someone who signs for it and before the layout it constrains, not inferred from whatever the layout ended up with.
+
+  The per-board design tasks of the fifth criterion are authored once the division of the circuitry, the controller part, the separation basis and the block-level cost estimate exist, because the number of boards, what each carries and the part and figures each is designed against all come from them. SOL-HW-BOARD-DIVISION-AND-FLOORPLAN, SOL-HW-CONTROLLER-MCU-SELECTED, SOL-HW-SEPARATION-BASIS-SIGNED and SOL-HW-BOARD-COST-ESTIMATED cover the other uncovered criteria; the fifth criterion is sliced when those are built, and until then it is the one criterion of this task left without a covering solution on purpose.
 links:
   - target: DEL-CONTROLLER-HARDWARE.C2
     type: derives-from

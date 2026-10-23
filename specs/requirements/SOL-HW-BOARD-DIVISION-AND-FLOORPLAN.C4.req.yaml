@@ -6,7 +6,7 @@ version: 1
 measurement_type: binary
 verification: inspection
 text: |-
-  Each anticipated channel kind is either given a place, on the board side its kind belongs to, or recorded as not given one. A place is a connector position, an interface and a block area. The kinds are every row of the component specification's room for anticipated channels, a further switched output such as another valve, and further temperature and pressure inputs of the kinds already in use. A kind not given a place names the criterion reserving it would have weakened, whether an isolation distance, the fit or the cost boundary. None is silently dropped. Out of scope: fitting any anticipated channel's parts.
+  Each anticipated channel kind is either given a place, on the board side its kind belongs to, or recorded as not given one. A place is a connector position, an interface with the loading it already carries and the loading the channel adds, and a block area. No place requires re-selecting a part already bought. The kinds are every row of the component specification's room for anticipated channels, a further switched output such as another valve, and further temperature and pressure inputs of the kinds already in use. A kind not given a place names the criterion reserving it would have weakened, whether an isolation distance, the fit or the cost boundary. None is silently dropped. Out of scope: fitting any anticipated channel's parts.
 links:
   - target: SOL-HW-BOARD-DIVISION-AND-FLOORPLAN
     type: criterion-of

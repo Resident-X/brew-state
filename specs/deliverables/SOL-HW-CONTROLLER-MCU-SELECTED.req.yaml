@@ -5,7 +5,7 @@ title: The controller board's microcontroller is selected as a specific part, sh
 status: active
 version: 1
 text: |-
-  Selects the specific microcontroller designed onto the controller board, before any board's pin allocation. It records the reason, the datasheet source and the cost, and shows that every bus function the anticipated channels need lands on free pins. It states the effect on the firmware's target build, and makes the board check fail any design built around a different controller.
+  Selects the specific microcontroller designed onto the controller board, before any board's pin allocation. It records the reason, the datasheet source and the cost, and shows that every bus function the anticipated channels need lands on free pins. It states the effect on the firmware's target build, and records the selected part in a form the board check reads, defining that record's keys in the design-records decision in the same change, so the board check fails any design built around a different controller.
 links:
   - target: DEL-HW-PARTITION-AND-FEASIBILITY.C7
     type: derives-from
