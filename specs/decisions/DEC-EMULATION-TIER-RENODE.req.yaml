@@ -1,11 +1,11 @@
 id: DEC-EMULATION-TIER-RENODE
 type: decision
 category: strategic
-title: The emulation tier's peripheral models run in Renode via PythonPeripheral against SVD-derived STM32F4 register maps
+title: The emulation tier's peripheral models run in Renode via PythonPeripheral against SVD-derived register maps of the controller's family
 status: active
-version: 2
+version: 3
 text: |
-  The emulation tier runs the shipping firmware binary under Renode, an open-source, MIT-licensed embedded-systems emulator, with peripheral behaviour modelled through Renode's PythonPeripheral mechanism against SVD-derived STM32F4 register maps. Peripheral models are written in Python so they can call the same plant-model implementation the host tier already exercises, rather than a second, re-implemented model.
+  The emulation tier runs the shipping firmware binary under Renode, an open-source, MIT-licensed embedded-systems emulator, with peripheral behaviour modelled through Renode's PythonPeripheral mechanism against SVD-derived register maps of the controller's family. The family is the one DEC-CONTROLLER-BASELINE-STM32H743 baselines. Until the delivery task that moves the target onto the selected part is done, the emulated machine is an STM32F4 stand-in that is not the controller. Peripheral models are written in Python so they can call the same plant-model implementation the host tier already exercises, rather than a second, re-implemented model.
 rationale: |
   Context: DEC-SIM-VERIFICATION-TOOLCHAIN commits the emulation tier to running the compiled firmware binary in "an emulator" against modelled peripherals, deliberately leaving the specific tool open because each tier is defined by the class of defect it nets, not the tool. That left the tier's implementer with no graph-recorded tool choice to build against. The only concrete precedent anywhere in the repository was a non-authoritative working-notes file naming Renode with a PythonPeripheral-based approach — a load-bearing fact stated in prose and required by nothing, the exact pattern this project's own authoring discipline warns against. This decision closes that gap before DEL-SIM-EMULATION-TIER's first solution is implemented.
 
@@ -32,4 +32,6 @@ links:
   - target: DEL-SIM-EMULATION-TIER.C2
     type: addresses
   - target: DEL-SIM-EMULATION-TIER.C3
+    type: addresses
+  - target: DEC-CONTROLLER-BASELINE-STM32H743
     type: addresses

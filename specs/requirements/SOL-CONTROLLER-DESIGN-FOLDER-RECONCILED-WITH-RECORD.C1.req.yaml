@@ -1,0 +1,12 @@
+id: SOL-CONTROLLER-DESIGN-FOLDER-RECONCILED-WITH-RECORD.C1
+type: criterion
+title: Each same-named copy in the earlier design folder is compared with its live root document and every difference is carried or marked superseded
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  For each document that exists both in the machine record's root and in the earlier design folder, every row or passage in which the copy differs from the root document is classified as still true and absent from the root, in which case it is carried into the root document or the design-constraints record, or as superseded, in which case it is marked so in place. A copy is removed only once its differences are classified. Out of scope: the folder's other files.
+links:
+  - target: SOL-CONTROLLER-DESIGN-FOLDER-RECONCILED-WITH-RECORD
+    type: criterion-of

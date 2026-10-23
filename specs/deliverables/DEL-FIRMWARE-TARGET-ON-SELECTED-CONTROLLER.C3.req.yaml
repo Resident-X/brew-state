@@ -1,0 +1,13 @@
+id: DEL-FIRMWARE-TARGET-ON-SELECTED-CONTROLLER.C3
+type: criterion
+title: Every peripheral model the emulation drives is expressed on the selected part and its evidence is recorded again
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |-
+  Each modelled peripheral reads and writes the selected part's registers and offsets. The emulation tier's checks on addressing and the closed-loop run are recorded again on that machine, replacing the evidence that was recorded on the stand-in.
+links:
+  - target: DEL-FIRMWARE-TARGET-ON-SELECTED-CONTROLLER
+    type: criterion-of

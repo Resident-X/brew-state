@@ -1,0 +1,13 @@
+id: DEL-FIRMWARE-TARGET-ON-SELECTED-CONTROLLER.C2
+type: criterion
+title: The emulated machine describes the selected controller part with register maps taken from its manufacturer's description
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |-
+  The machine the emulation tier runs describes the selected part: its memory map, its clock and reset controller and its peripherals, with the register maps for the peripherals the firmware drives generated from the manufacturer's register description of that part, pinned by content so a change to it is noticed.
+links:
+  - target: DEL-FIRMWARE-TARGET-ON-SELECTED-CONTROLLER
+    type: criterion-of

@@ -1,0 +1,24 @@
+id: DEL-FIRMWARE-TARGET-ON-SELECTED-CONTROLLER
+type: deliverable
+category: task
+title: The firmware target build, the seam implementation and the emulation tier run on the selected controller part
+status: active
+level: task
+version: 1
+text: |
+  The firmware's target build, its hardware-backed implementation of the hardware seam and the emulation tier were built against an STM32F4-family part that the project named only so a target build could exist before any controller was chosen. The controller is the STM32H743 baselined by DEC-CONTROLLER-BASELINE-STM32H743, so the target build, the emulated machine, the register description its peripheral models are written against and the evidence recorded on them all follow the selected part. The emulator and the method stand; the part and its register maps change. The control logic does not change, which is the property the seam exists to demonstrate.
+links:
+  - target: DEL-BREW-STATE-DELIVERY.C4
+    type: derives-from
+  - target: REQ-CONTROL-HARDWARE-SEAM-001.C3
+    type: targets
+  - target: REQ-PREENERGISATION-VERIFICATION-001.C2
+    type: targets
+  - target: REQ-HARDWARE-HEADROOM-001.C4
+    type: targets
+  - target: DEC-CONTROLLER-BASELINE-STM32H743
+    type: justified-by
+  - target: DEC-EMULATION-TIER-RENODE
+    type: justified-by
+  - target: SOL-HW-CONTROLLER-MCU-SELECTED
+    type: depends-on

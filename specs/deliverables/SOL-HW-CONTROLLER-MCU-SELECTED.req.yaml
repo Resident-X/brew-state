@@ -7,7 +7,7 @@ version: 2
 text: |-
   Selects the specific microcontroller designed onto the controller board, before any board's pin allocation. It records the reason, the datasheet source and the cost, and shows that every bus function the anticipated channels need lands on free pins. It states the effect on the firmware's target build, and records the selected part in a form the board check reads, defining that record's keys in the design-records decision in the same change, so the board check fails any design built around a different controller.
 
-  Settled before the build. The part defaults to the STM32F407VGT6 in the LQFP100 package that the component specification has already assessed and the target build already compiles for; the selection confirms it against the current datasheet and catalogue, and names another part only if the reads fail it. The board check identifies the design's controller structurally: every placed part with a pin whose name is a port pin (the definition the connectivity check already uses) is a controller, and its catalogue-number field must equal the record's. A design that places no such part passes the rule, so a board with no microcontroller is not failed. A design that places one but has no record to be held to fails, as the design-records decision already requires of a design with no record. Each proof design carries a synthetic controller record marked synthetic that names its own synthetic controller; no exemption key is added. The component specification's statement that controller selection is answered later against measured plant parameters is rewritten in the same change, since it contradicts the target-family decision and is false once this lands, and its 3.3 V output-high row cites the gauge-drive form rather than reopening it.
+  Settled before the build. The controller's family is the STM32H743, baselined by the controller-baseline decision, designed bare onto the board; this selection names the specific orderable part within that family, its package and its reason. The earlier design's pin allocation was made on the STM32H743VIT6 in the 100-pin package, which is the default to confirm against the current datasheet and the board manufacturer's catalogue; another part of the family is named only if those reads fail it. The F4 family the target build still names is a stand-in and is not the controller; the selection states what that means for the build (the retarget it needs), as the firmware-effect criterion requires. The board check identifies the design's controller structurally: every placed part with a pin whose name is a port pin (the definition the connectivity check already uses) is a controller, and its catalogue-number field must equal the record's. A design that places no such part passes the rule, so a board with no microcontroller is not failed. A design that places one but has no record to be held to fails, as the design-records decision already requires of a design with no record. Each proof design carries a synthetic controller record marked synthetic that names its own synthetic controller; no exemption key is added. The component specification's statement that controller selection is answered later against measured plant parameters is rewritten in the same change, since it contradicts the baseline decision and is false once this lands, and its 3.3 V output-high row cites the gauge-drive form rather than reopening it.
 links:
   - target: DEL-HW-PARTITION-AND-FEASIBILITY.C7
     type: derives-from
@@ -17,8 +17,6 @@ links:
     type: targets
   - target: REQ-COST-DISCIPLINE-001.C1
     type: targets
-  - target: DEC-PREHARDWARE-TARGET-FAMILY
-    type: justified-by
   - target: DEC-IN-STREAM-PROBES-ANTICIPATED
     type: justified-by
   - target: DEC-BOARD-MANUFACTURER-JLCPCB
@@ -27,6 +25,10 @@ links:
     type: justified-by
   - target: DEC-HEATER-DRIVE-GATED-BY-SUPERVISION
     type: justified-by
+  - target: DEC-CONTROLLER-BASELINE-STM32H743
+    type: justified-by
+  - target: REQ-HARDWARE-HEADROOM-001.C5
+    type: targets
 brief_confirmation:
   confirmer: claude-sonnet-5-5 brief reviewer
   fingerprint: b0b51da2c9414375ba3eeee087045ba292d8819a9fad52e0797a95ab83ecddc9

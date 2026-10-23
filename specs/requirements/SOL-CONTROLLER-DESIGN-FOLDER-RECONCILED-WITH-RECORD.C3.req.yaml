@@ -1,0 +1,12 @@
+id: SOL-CONTROLLER-DESIGN-FOLDER-RECONCILED-WITH-RECORD.C3
+type: criterion
+title: The root derived views agree with the sources that govern them
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The root bill of materials and electrical requirements sheet agree with the channel enumeration they are cut from; where they disagreed, they are corrected and not the source. Out of scope: the enumeration itself.
+links:
+  - target: SOL-CONTROLLER-DESIGN-FOLDER-RECONCILED-WITH-RECORD
+    type: criterion-of

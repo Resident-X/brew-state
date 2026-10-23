@@ -1,12 +1,12 @@
 id: SOL-FLOW-METER-READING-AT-CONTROLLER.C2
 type: criterion
-title: The meter's signal line is wired to an STM32F4 pre-hardware target on an input matching its signal type
+title: The meter's signal line is wired to the bench sensing board on an input matching its signal type
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |
-  Per DEC-HEATER-DRIVE-GATED-BY-SUPERVISION, an STM32F4-family board bought for bench sensing is wired
+  Per DEC-HEATER-DRIVE-GATED-BY-SUPERVISION, the board bought for bench sensing is wired
   to the meter's signal line on a peripheral matching the signal type the prior criterion establishes.
   If the signal is an analogue voltage or current, the HW_SENSOR_FLOW channel in
   firmware/include/hw_interface.h and its backing table in firmware/src/hw/stm32/hw_stm32.c, which
@@ -20,8 +20,8 @@ text: |
   the code comment at hw_stm32.c's SENSOR_INPUT_NONE entry, which currently explains the absence by
   the meter being wired to the OEM controller rather than this board, is updated to match.
 
-  Out of scope: the final production controller selection, which this wiring does not constitute or
-  foreclose per DEC-PREHARDWARE-TARGET-FAMILY, and driving any SSR or heater channel from this
+  Out of scope: the production controller, which is the part DEC-CONTROLLER-BASELINE-STM32H743 baselines and
+  which this wiring does not constitute or foreclose, and driving any SSR or heater channel from this
   board, which DEC-HEATER-DRIVE-GATED-BY-SUPERVISION admits for bench work but which this slice does
   not cover.
 links:

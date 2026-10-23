@@ -1,0 +1,12 @@
+id: SOL-HW-CONTROLLER-MCU-SELECTED.C5
+type: criterion
+title: No live record document names a part outside the baselined family as the controller
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  No document of the machine's live record names a controller outside the baselined family as the controller, except in a sentence that says that part is not chosen. This covers the record's channel enumeration, component specification, function-forms record and design-constraints record. It does not cover the earlier design's working folder, whose reconciliation another node carries. Out of scope: the firmware's own build configuration, which the retarget node carries.
+links:
+  - target: SOL-HW-CONTROLLER-MCU-SELECTED
+    type: criterion-of

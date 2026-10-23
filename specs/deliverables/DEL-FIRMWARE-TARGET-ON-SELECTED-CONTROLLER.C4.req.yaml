@@ -1,0 +1,13 @@
+id: DEL-FIRMWARE-TARGET-ON-SELECTED-CONTROLLER.C4
+type: criterion
+title: No build configuration, emulation file or test names a different part as the controller
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |-
+  Nothing in the target build, the emulation machine, its tooling or their tests names a part other than the selected one as the controller, except in a sentence that says it is not chosen. The decision that chose the emulation tool states the selected part's family as the one whose register maps it uses.
+links:
+  - target: DEL-FIRMWARE-TARGET-ON-SELECTED-CONTROLLER
+    type: criterion-of

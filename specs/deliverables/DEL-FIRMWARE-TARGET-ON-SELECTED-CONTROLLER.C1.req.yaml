@@ -1,0 +1,13 @@
+id: DEL-FIRMWARE-TARGET-ON-SELECTED-CONTROLLER.C1
+type: criterion
+title: The target build names the selected controller part and builds the hardware seam against it with no change to the control logic
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |-
+  The target build's board definition and the hardware-backed implementation of the seam name the part the controller selection chose. Building them against that part changes no control-logic source, and the host and target builds still produce the same control behaviour. Out of scope: driving real peripherals, which no hardware yet allows.
+links:
+  - target: DEL-FIRMWARE-TARGET-ON-SELECTED-CONTROLLER
+    type: criterion-of
