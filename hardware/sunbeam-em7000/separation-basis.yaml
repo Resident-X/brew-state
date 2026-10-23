@@ -24,7 +24,8 @@
 # The basis the figures are read at: 253 V rms is the top of the declared span, so it falls in
 # the 300 V line-to-neutral row of the rated impulse voltage table, which gives 2.5 kV at
 # overvoltage category II for basic insulation and so 4.0 kV (one step up) for reinforced.
-# Reinforced is the insulation every barrier below is declared to provide (see barrier_types).
+# Reinforced is the insulation every barrier below that switches or senses mains directly is declared
+# to provide; the pressure-sensor water-path barrier alone is basic (see barrier_types).
 #
 # Pollution degree 3, boards not protected against moisture. The enclosure is sealed from the
 # steam wand, but steam may be present in the machine around it and a burst water line beside it
@@ -53,12 +54,28 @@ barriers:
   - mains-presence-confirm
   - valve-switch
   - pressure-sensor-water-path
-# Every barrier is reinforced and none has its low-voltage side bonded to protective earth: the
-# logic supply is a Class II module whose output is not referenced to earth, and the cavity's
-# walls are plastic (docs/sunbeam-em7000/controller-board-design-constraints.md, Logic supply;
-# reference-machine.md, What the walls are made of). The USB connector, the debug header and the
-# operator's controls sit on the low-voltage side and can be touched, so a single insulation
-# failure must not reach them. The owner accepts or corrects each insulation type when signing.
+# Every barrier that switches or senses mains directly (supply module, heater switch, pump drive,
+# supply-timing front end, mains-presence confirm, valve switch) is reinforced, mains to low
+# voltage, and none has its low-voltage side bonded to protective earth: the logic supply is a
+# Class II module whose output is not referenced to earth, and the cavity's walls are plastic
+# (docs/sunbeam-em7000/controller-board-design-constraints.md, Logic supply; reference-machine.md,
+# What the walls are made of). The USB connector, the debug header and the operator's controls sit
+# on the low-voltage side and can be touched, so a single insulation failure must not reach them.
+# The one exception is pressure-sensor-water-path, declared basic, on these facts (owner
+# statements, 2026-10-23; reference-machine.md, line 269 for the first): the machine's heater
+# thermoblocks, solenoids and walls are bonded to protective earth, the inlet earth wire
+# splitting to those metal parts. The pressure sensors connect through PTFE tube, so the sensor
+# body is not bonded to earth, but the water in the tube touches the earthed block and so is
+# referenced to earth through the earthed block (water is a poor earth reference, and the sensor
+# is not itself bonded). A single heater or solenoid insulation fault goes into the earthed block
+# and trips protection, so the water path is not mains-live under a single fault. The barrier is
+# therefore earth-referenced water to the low-voltage electronics, at low-voltage working
+# voltage, and needs basic insulation at that level, not reinforced mains to low voltage; the
+# PTFE tube adds creepage. The remaining risk is a double fault, earth lost and a heater faulted,
+# which the standard does not ask the design to survive and which relies on the block's earth
+# bond staying sound. If the machine's earth bonding or the PTFE connection changes, the owner
+# re-declares this basis. The owner accepts or corrects each insulation type, this one included,
+# when signing.
 barrier_types:
   - barrier: supply-module
     insulation: reinforced
@@ -109,13 +126,13 @@ barrier_types:
       - enclosure
     formed_by: the relay's coil-to-contact insulation, and the board spacing around it
   - barrier: pressure-sensor-water-path
-    insulation: reinforced
+    insulation: basic
     earth_bonded: false
     touchable:
       - water path and steam wand
       - USB connector
       - operator controls
-    formed_by: the transducer's insulation between its sensing circuit and the wetted water path
+    formed_by: the transducer's insulation between its sensing circuit and the wetted water path, which is referenced to earth through the earthed heater or solenoid block it touches, at low-voltage working voltage, with the PTFE tube between sensor and block adding creepage
 mains_to_low_voltage:
   clearance_mm: 3.0
   creepage_mm: 10.0

@@ -73,6 +73,24 @@ class SeparationBasisRecord(unittest.TestCase):
             self.assertEqual(len(found), 1, key)
             self.assertIn(f"mains_to_low_voltage.{key}", found[0].location)
 
+    def test_only_the_earth_referenced_sensor_barrier_is_basic_and_every_mains_barrier_is_reinforced(self):
+        # SOL-HW-SEPARATION-BASIS-SIGNED.C1: Every barrier named has exactly one barrier_types entry, giving its insulation type, ... .
+        _, data = committed()
+        types = {entry["barrier"]: entry["insulation"] for entry in data["barrier_types"]}
+        sensor = "pressure-sensor-water-path"
+        self.assertEqual(types[sensor], "basic")
+        mains = [name for name in types if name != sensor]
+        self.assertEqual(len(mains), 6)
+        self.assertEqual({types[name] for name in mains}, {"reinforced"}, types)
+        text = open(os.path.join(ROOT, RECORD), encoding="utf-8").read()
+        for fact in ("referenced to earth through the earthed block", "PTFE", "double fault", "owner"):
+            self.assertIn(fact, text)
+        entry = next(e for e in data["barrier_types"] if e["barrier"] == sensor)
+        self.assertIn("referenced to earth through the earthed", entry["formed_by"])
+        # the floor is still read at reinforced because mains barriers remain
+        strongest = max(types.values(), key=board_check.STRENGTH.get)
+        self.assertEqual(strongest, "reinforced")
+
     def test_the_record_states_the_inputs_the_figures_are_read_at(self):
         # SOL-HW-SEPARATION-BASIS-SIGNED.C1: It states the named standard, the declared supply and the working voltage at the top of its span, the pollution degree, the material group, the environment, the overvoltage category and the altitude, only the table rows its own inputs select, each with its citation.
         _, data = committed()
@@ -83,7 +101,12 @@ class SeparationBasisRecord(unittest.TestCase):
         self.assertEqual(data["pollution_degree"], 3)
         for row in data["table_rows"]:
             self.assertTrue(all(row["citation"][k].strip() for k in board_check.CITATION_KEYS))
-        self.assertLessEqual(len(data["table_rows"]), 4)
+        strongest = max((entry["insulation"] for entry in data["barrier_types"]), key=board_check.STRENGTH.get)
+        for row in data["table_rows"]:
+            self.assertTrue(board_check.row_applies(row["inputs"], data, 253.0, strongest), row["inputs"])
+            for key in ("overvoltage_category", "pollution_degree", "material_group", "altitude_m"):
+                if key in row["inputs"]:
+                    self.assertEqual(row["inputs"][key], data[key], key)
 
     def test_a_barrier_without_an_entry_is_refused(self):
         # SOL-HW-SEPARATION-BASIS-SIGNED.C1: Every barrier named has exactly one barrier_types entry.
@@ -91,6 +114,40 @@ class SeparationBasisRecord(unittest.TestCase):
         short = dict(data, barrier_types=data["barrier_types"][1:])
         _, problems = reading(short)
         self.assertTrue(any("holds no entry" in p.message for p in problems))
+
+    def test_an_input_no_table_row_is_read_at_leaves_the_figure_without_a_floor(self):
+        # SOL-HW-SEPARATION-BASIS-SIGNED.C1: The mains-to-low-voltage clearance and creepage are at or above the floor those rows give.
+        _, data = committed()
+        # each mutation leaves the rows as drafted and changes the input they are read at; the keys are the figures left with no applicable row
+        mutations = [("altitude_m", 3000, ["clearance_mm"]),
+                     ("material_group", "IIIa", ["creepage_mm"]),
+                     ("pollution_degree", 2, ["clearance_mm", "creepage_mm"]),
+                     ("overvoltage_category", 3, ["clearance_mm"]),
+                     ("working_voltage", "400 V rms", ["clearance_mm", "creepage_mm"])]
+        for key, value, figures in mutations:
+            found = board_check.separation_floor(DESIGN, RECORD, signed_from(dict(data, **{key: value})))
+            self.assertEqual(sorted(p.location.rsplit(".", 1)[1] for p in found), sorted(figures), key)
+            self.assertTrue(all("no table row" in p.message for p in found), key)
+
+    def test_an_input_the_floor_needs_and_the_record_lacks_is_refused(self):
+        # SOL-HW-SEPARATION-BASIS-SIGNED.C1: It states the named standard, the declared supply and the working voltage at the top of its span, the pollution degree, the material group, the environment, the overvoltage category and the altitude.
+        _, data = committed()
+        for key in ("overvoltage_category", "altitude_m"):
+            found = board_check.separation_floor(DESIGN, RECORD, signed_from({k: v for k, v in data.items() if k != key}))
+            self.assertEqual([p.location for p in found], [f"{RECORD} {key}"], key)
+        found = board_check.separation_floor(DESIGN, RECORD, signed_from(dict(data, working_voltage="about 253 V")))
+        self.assertEqual([p.location for p in found], [f"{RECORD} working_voltage"])
+
+    def test_a_duplicate_or_incomplete_barrier_entry_is_refused(self):
+        # SOL-HW-SEPARATION-BASIS-SIGNED.C1: Every barrier named has exactly one barrier_types entry, giving its insulation type, ... .
+        _, data = committed()
+        entries = data["barrier_types"]
+        _, problems = reading(dict(data, barrier_types=entries + [dict(entries[0])]))
+        self.assertTrue(any("already describes" in p.message for p in problems))
+        for key in ("touchable", "formed_by", "insulation", "earth_bonded"):
+            incomplete = [{k: v for k, v in entries[0].items() if k != key}] + entries[1:]
+            _, problems = reading(dict(data, barrier_types=incomplete))
+            self.assertTrue(any(key in p.message for p in problems), key)
 
 
 if __name__ == "__main__":
