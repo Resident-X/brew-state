@@ -1,0 +1,16 @@
+id: EV-SOL-HW-SEPARATION-BASIS-SIGNED-C3-ANALYSIS
+type: evidence
+title: analysis evidence for SOL-HW-SEPARATION-BASIS-SIGNED.C3
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-10-23T13:27:12.200486Z"
+artifact:
+  kind: external
+  reference: 'analysis: docs/sunbeam-em7000/controller-board-function-forms.md section The candidates against the declared basis, arithmetic shown per barrier (the pressure-sensor barrier judged as basic insulation at low-voltage working voltage, water referenced to earth through the earthed block, on the owner''s statements of 2026-10-23), each part judged on test voltage only with working isolation voltage recorded as absent; pending marks ended in docs/sunbeam-em7000/controller-board-design-constraints.md'
+  artifact_version: 10a6429fc9e40de837579abe4de480fd0bb7aef7
+attested_by: crun-f4c815f38fe3e1d7
+links:
+  - target: SOL-HW-SEPARATION-BASIS-SIGNED.C3
+    type: satisfies

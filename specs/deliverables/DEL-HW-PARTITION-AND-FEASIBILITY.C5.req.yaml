@@ -2,11 +2,11 @@ id: DEL-HW-PARTITION-AND-FEASIBILITY.C5
 type: criterion
 title: Each board the division produces has a design task carrying the interlock or headroom allotted to that board
 status: active
-version: 8
+version: 9
 measurement_type: binary
 verification: inspection
 closes_by: cascade
-text: |
+text: |-
   Each such task delivers, for its board, the epic's proof before order, separation and held-off criteria, its schematic review and its layout review, with the design method applied to that board rather than only written. Each covers ordering and receiving its board, checks the manufacturer's production files against its assembly preview before payment, records the quoted order cost against the running total of the declared spend before ordering, depends on the further pre-order checks, so no board's records need a key the pre-order check does not yet accept, and is a prerequisite of bring-up, so none of the epic's criteria can close on the gate or the method alone without a board having been designed, proven and made.
 
   Each such task also records, with its source, every figure the controller boards' constraints record holds pending against the design of its board, such as a rail's budget, a branch fuse's rating, or the time a protective device takes to clear and the energy it lets through at the declared fault current, ending those marks.
@@ -17,7 +17,7 @@ text: |
 
   Each such task that carries the interlock depends on DEL-HW-INTERLOCK-INTERVAL-DERIVED, which derives the proof-of-life removal interval from the held casting peak, so the interlock's timing is designed to a derived figure.
 
-  Each off-board assembly the choice of form creates, such as the heater-switch assembly on the machine's wall (a designed wall board for the two heaters, its triacs bolted to the machine's metal wall, and the element harness to the wall), also has a design task. That task designs the wall board, selecting its opto-triacs and triacs against the targets the function-forms record sets; judges against the triacs' own thermal ratings whether the machine's wall alone sinks the heat or a spreader plate is needed; judges the assembly thermally against the enclosure air temperature the controller boards' constraints record holds, an assumption that bring-up measures, including the heat it passes into the enclosure through the wall; and designs the element harness to the wall. The design task for an off-board assembly that includes the steam-path transducer's condensate leg designs the leg and records the temperature it delivers to the transducer, with its source, against the media temperature the basis states. It records, with its source, every figure the constraints record holds pending against it.
+  Each off-board assembly the choice of form creates, such as the heater-switch assembly on the machine's wall (a designed wall board for the two heaters, its triacs bolted to the machine's metal wall, and the element harness to the wall), also has a design task. That task designs the wall board, selecting its opto-triacs and triacs against the targets the function-forms record sets; judges against the triacs' own thermal ratings whether the machine's wall alone sinks the heat or a spreader plate is needed; judges the assembly thermally against the enclosure air temperature the controller boards' constraints record holds, an assumption that bring-up measures, including the heat it passes into the enclosure through the wall; and designs the element harness to the wall. The design task for an off-board assembly that includes the steam-path transducer's condensate leg designs the leg and records the temperature it delivers to the transducer, with its source, against the media temperature the basis states. The design task that carries a pressure channel also selects the transducer actually fitted and records, from its maker's current document with the source, its insulation withstand between its circuit and its wetted body, judged against the barrier the separation basis declares for that sensor, with the arithmetic shown. A withstand that cannot be sourced counts as absent, not adequate. Where no candidate meets the barrier, the task forms the barrier elsewhere in the assembly, or the owner re-declares the basis from the machine's own earth bonding before the part is ordered. It records, with its source, every figure the constraints record holds pending against it.
 links:
   - target: DEL-HW-PARTITION-AND-FEASIBILITY
     type: criterion-of
