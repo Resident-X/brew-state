@@ -1,0 +1,16 @@
+id: EV-SOL-HW-STEAM-TRANSDUCER-BASIS-RECORDED-C3-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-STEAM-TRANSDUCER-BASIS-RECORDED.C3
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-23T00:11:14.056459Z"
+artifact:
+  kind: external
+  reference: 'inspection: C3: ''The check'' paragraph states datasheet proof/burst at or above the ratings, range inside both bounds, figures recorded against the part with source; owner of the check DEL-HW-PARTITION-AND-FEASIBILITY.C1 and of the premise check DEL-BENCH-SAFETY-CHAIN-INSPECTION.C1. Pending marks: the transducer-part row now cites the basis and names DEL-HW-PARTITION-AND-FEASIBILITY.C1; new row for the premise check owned by DEL-BENCH-SAFETY-CHAIN-INSPECTION.C1. component-specification.md Steam-path pressure sensing row now points at the basis and § Sensing accuracy instead of ''range and accuracy not yet specified''. Overload/burst held once in the new section; § Pressure sensors gets a cross-reference row only. DEL-HW-DESIGN-CONSTRAINTS.C6: figure, derivation, premises with who stated them, check against the chosen part''s datasheet, and fault pressure left to the hardware layer are all present as above. The carried-forward-module sentence that said a pressure sensor''s range, overload and burst are not carried forward now excepts the steam-path transducer and points at the new section, so no live sentence contradicts the basis.'
+  artifact_version: a3bbd5c6dc96dd52933582d8651fa3f1045d7989
+attested_by: crun-fa8f0f9fa6496839
+links:
+  - target: SOL-HW-STEAM-TRANSDUCER-BASIS-RECORDED.C3
+    type: satisfies

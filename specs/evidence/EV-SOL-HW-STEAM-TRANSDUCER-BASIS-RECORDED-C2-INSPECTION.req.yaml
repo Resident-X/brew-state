@@ -1,0 +1,16 @@
+id: EV-SOL-HW-STEAM-TRANSDUCER-BASIS-RECORDED-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-STEAM-TRANSDUCER-BASIS-RECORDED.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-23T00:11:13.983816Z"
+artifact:
+  kind: external
+  reference: 'inspection: C2: proof 1.5 x 5 = 7.5 bar gauge and burst 2 x 5 = 10 bar gauge, project assumption, with ''What the margins are replaced by'' paragraph naming an adopter''s own figures or a published rating basis. Baseline: XDB401 0.5 MPa = 5 bar FS; overload 150% x 5 = 7.5 bar gauge read as proof (7.5 >= 7.5 required, equality), burst 300% x 5 = 15 bar gauge (15 >= 10), graded published unverified relayed from control-system-bom.csv XDB401 row (cited as relay source, not edited). Range: upper bound = accuracy / fractional accuracy = 0.25 bar / 0.01 = 25 bar (0.775 / 0.01 = 77.5 bar on the ceiling alone, not used), row ''Upper bound on the part''s full scale''; lower bound covers ready-pressure-bar 2.0 bar gauge, row ''Lower bound on the part''s range''. The part is not chosen.'
+  artifact_version: a3bbd5c6dc96dd52933582d8651fa3f1045d7989
+attested_by: crun-fa8f0f9fa6496839
+links:
+  - target: SOL-HW-STEAM-TRANSDUCER-BASIS-RECORDED.C2
+    type: satisfies
