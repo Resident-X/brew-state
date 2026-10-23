@@ -1,0 +1,12 @@
+id: SOL-ROUND-GATE-NOTES-MISSING-TOOL-UNDER-HOSTED-RUNNER.C3
+type: criterion
+title: The linked-artefact pattern test passes on case-sensitive and case-insensitive filesystems
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The review-kit declaration test of a pattern matched against the path an artefact resolves to through a link passes on a case-sensitive and on a case-insensitive filesystem, with every row still able to fail if the resolution or the case folding is removed. A row whose source differs from a link only in case is exercised where that source names the link and is not asserted where it names nothing. Out of scope: other declaration tests and the pattern syntax.
+links:
+  - target: SOL-ROUND-GATE-NOTES-MISSING-TOOL-UNDER-HOSTED-RUNNER
+    type: criterion-of

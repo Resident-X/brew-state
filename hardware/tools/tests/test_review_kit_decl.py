@@ -235,7 +235,7 @@ class LoadTests(unittest.TestCase):
             os.symlink(os.path.join(folder, "docs"), os.path.join(folder, "alias"))
             os.symlink(os.path.join(folder, "docs", "guide.md"), os.path.join(folder, "single.md"))
             for source, pattern in (("alias/guide.md", "docs/*"), ("alias/guide.md", "alias"), ("single.md", "docs/guide.md"),
-                                    ("alias/../alias/guide.md", "docs/guide.md"), ("ALIAS/guide.md", "Docs/Guide.md")):
+                                    ("alias/../alias/guide.md", "docs/guide.md"), ("alias/guide.md", "DOCS/Guide.MD")):
                 with self.subTest(source=source, pattern=pattern):
                     raw = self.with_source(source, [pattern])
                     with self.assertRaises(decl.DeclarationError) as raised:
@@ -247,6 +247,11 @@ class LoadTests(unittest.TestCase):
                         decl.load(path, folder=folder)
                     self.assertEqual(decl.build(self.with_source(source, ["elsewhere/*"]), FILE, folder).added_during_round,
                                      ("elsewhere/*",))
+            if os.path.lexists(os.path.join(folder, "ALIAS")):
+                # a filesystem that folds case resolves the differently cased link, so that source is exercised there and asserted nowhere else
+                with self.assertRaises(decl.DeclarationError) as raised:
+                    decl.parse(json.dumps(self.with_source("ALIAS/guide.md", ["Docs/Guide.md"])), FILE, folder)
+                self.assertIn("artefact 'guide.md'", "\n".join(raised.exception.lines))
             self.assertEqual(decl.parse(json.dumps(self.with_source("alias/guide.md", ["docs/*"])), FILE).added_during_round,
                              ("docs/*",), "without the review folder only the declared path can be matched")
 

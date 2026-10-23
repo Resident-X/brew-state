@@ -2153,10 +2153,34 @@ class AnUntrackedDesignFailsTheRoundWhateverElseCannotBeTold(unittest.TestCase):
         self.assertIn("Running the board tier rather than skipping it", chosen.reason)
 
 
+class TheGateNotesAMarkerLineBehindAnEscapeSequence(unittest.TestCase):
+    def run_noting_lines(self, lines):
+        process = mock.Mock()
+        process.stderr = iter(lines)
+        process.wait.return_value = 2
+        with mock.patch.object(task_gate.subprocess, "Popen", return_value=process), \
+                mock.patch("sys.stderr") as stderr, mock.patch("builtins.print"):
+            status, noted = task_gate.run_noting("task", "t", ".", "round gate", "board tier", round_gate.MISSING_TOOL)
+        return noted, "".join(call.args[0] for call in stderr.write.call_args_list)
+
+    def test_a_marker_line_led_by_an_escape_sequence_is_noted_and_passed_on_unchanged(self):
+        # SOL-ROUND-GATE-NOTES-MISSING-TOOL-UNDER-HOSTED-RUNNER.C1: a pure case feeds the gate a marker line preceded by an escape sequence
+        for lead in ("", "\x1b[0m", "\x1b[31;1m", "\x1b[0m\x1b[0m", "\x1b[?25h"):
+            with self.subTest(lead=lead):
+                line = f"{lead}CANNOT RUN | a tool is missing\n"
+                noted, passed = self.run_noting_lines(["progress\n", line])
+                self.assertEqual(["CANNOT RUN | a tool is missing"], noted)
+                self.assertEqual("progress\n" + line, passed)
+
+    def test_a_line_that_only_mentions_the_marker_or_has_none_is_not_noted(self):
+        # SOL-ROUND-GATE-NOTES-MISSING-TOOL-UNDER-HOSTED-RUNNER.C1: the gate notes the line that begins with the marker
+        noted, _ = self.run_noting_lines(["\x1b[0mtask: CANNOT RUN | x\n", "\x1b[0m plain\n", "\x1b[1mCANNOT\n"])
+        self.assertEqual([], noted)
+
+
 @unittest.skipUnless(shutil.which("task"), "the real task runner is not installed")
 class TheRealTaskRunnerLetsTheMissingToolLineReachTheGate(unittest.TestCase):
-    def test_a_line_a_task_writes_to_standard_error_is_noted_by_its_marker(self):
-        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+    def noted_with(self, colour):
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
         with open(os.path.join(directory.name, "Taskfile.yml"), "w", encoding="utf-8") as handle:
@@ -2169,13 +2193,23 @@ class TheRealTaskRunnerLetsTheMissingToolLineReachTheGate(unittest.TestCase):
                 "      - echo 'CANNOT RUN | a tool the task needs is missing' >&2\n"
                 "      - exit 2\n"
             )
-        with mock.patch("sys.stderr"), mock.patch("builtins.print"):
-            status, noted = task_gate.run_noting(
+        environment = {name: value for name, value in os.environ.items()
+                       if name not in ("CI", "FORCE_COLOR", "NO_COLOR", "CLICOLOR_FORCE")}
+        if colour:
+            environment["CI"] = "true"
+        with mock.patch.dict(os.environ, environment, clear=True), mock.patch("sys.stderr"), mock.patch("builtins.print"):
+            return task_gate.run_noting(
                 shutil.which("task"), "needs-tool", directory.name, "round gate", "board tier",
                 round_gate.MISSING_TOOL,
             )
-        self.assertNotEqual(0, status)
-        self.assertEqual(["CANNOT RUN | a tool the task needs is missing"], noted)
+
+    def test_a_line_a_task_writes_to_standard_error_is_noted_by_its_marker(self):
+        # SOL-ROUND-GATE-NOTES-MISSING-TOOL-UNDER-HOSTED-RUNNER.C1: The test runs the real task runner on a throwaway task under both settings and fails if either does not note the line
+        for colour in (False, True):
+            with self.subTest(colour_forced=colour):
+                status, noted = self.noted_with(colour)
+                self.assertNotEqual(0, status)
+                self.assertEqual(["CANNOT RUN | a tool the task needs is missing"], noted)
 
 
 # --- The declaration the task runner carries --------------------------------

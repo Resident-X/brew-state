@@ -1,0 +1,12 @@
+id: SOL-ROUND-GATE-NOTES-MISSING-TOOL-UNDER-HOSTED-RUNNER.C2
+type: criterion
+title: The production-files layer index lists layers in one fixed order on every host
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The production-files layer index lists a board's layers in one fixed order on every host: front copper, front mask, front legend, front paste, back copper, back mask, back legend, back paste, the inner copper layers in ascending layer number, the outline, then the drill files, with any other layer after the drill files by name. The images and both forms of the index (text and JSON) share that order. The test builds the index from layers presented in more than one discovery order, including an export with more than nine inner layers, and fails if the listed order changes. Out of scope: the images' content and the other fields of the index.
+links:
+  - target: SOL-ROUND-GATE-NOTES-MISSING-TOOL-UNDER-HOSTED-RUNNER
+    type: criterion-of
