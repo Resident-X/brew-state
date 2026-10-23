@@ -1,0 +1,19 @@
+id: EV-SOL-HW-SEPARATION-BASIS-SIGNED-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-SEPARATION-BASIS-SIGNED.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-23T22:13:34Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: 'inspection: hardware/sunbeam-em7000/separation-basis.yaml accepted_by and accepted_on, commit 916c8b7c'
+text: |
+  The basis record hardware/sunbeam-em7000/separation-basis.yaml carries accepted_by (david) and accepted_on (2026-10-23, the UTC date), entered by commit 916c8b7c after the project owner told the drafting assistant in session to sign on their behalf and accept. The criterion has the owner enter the values themselves. The drafter did not choose or infer them, and the record's header comment states they were entered on the owner's instruction, with the commit as the audit trail.
+
+  This is a literal departure from the criterion's text that the owner's own act be the entry. A blind review of the commit flagged it, and a second review of this evidence flagged that a plain pass overstates it. The owner was told of that finding and accepted the basis as entered, on their own decision in session on 2026-10-24: the acceptance stands as the owner's, given by their direction. The criterion's wording was not amended. The result is pass on the owner's acceptance of the departure, not on the entry being the owner's own edit.
+links:
+  - target: SOL-HW-SEPARATION-BASIS-SIGNED.C2
+    type: satisfies
