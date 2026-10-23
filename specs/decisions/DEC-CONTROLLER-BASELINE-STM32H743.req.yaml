@@ -1,0 +1,33 @@
+id: DEC-CONTROLLER-BASELINE-STM32H743
+type: decision
+category: strategic
+title: The controller's microcontroller baseline is the STM32H743, designed bare onto the board
+status: active
+version: 1
+decided_by: david
+risk_level: medium
+text: |
+  The controller board carries an STM32H743 microcontroller, designed bare onto the board, and the machine is designed around that family from here. This is the baseline, and the part within the family, its package and its pin allocation are chosen by the partition task's controller-selection criterion. The STM32F4 family that the pre-hardware target build names was only ever a stand-in for verification; it is not the controller and no hardware design figure is taken from it. The earlier design's bought controller module is not kept; only its chip is, designed onto the board.
+rationale: |
+  Context: DEC-PREHARDWARE-TARGET-FAMILY nominated the STM32F4 family so a target build could exist before any controller was chosen, and said that a controller in another family supersedes the nomination rather than reworking it. The earlier bought-module design carried an STM32H743 module chosen for its 16-bit converters. The accuracy the temperature and pressure sensing must reach for control is not yet fully established, so the project takes the accurate side of the choice while that is open. DEL-HW-PARTITION-AND-FEASIBILITY.C7 asks for the selection before any board's pin allocation, and the function-forms record and the component specification had been written against the F4 stand-in.
+
+  Trade-offs: The STM32H743 reads an analogue channel at 16 bits where the F407 reads at 12. On a PT1000 behind a ratiometric divider over 80 to 150 degC that is about 0.03 degC per count against about 0.5 degC ideal, or about 1.5 degC at a realistic 10.5 effective bits, and averaging recovers at most about two bits of that. The in-stream probes the controller reserves room for are read by a converter of the MAX31865 class (DEC-IN-STREAM-PROBES-ANTICIPATED), which does not depend on the microcontroller's own converter, so that decision stands unchanged; the larger converter margin covers the channels read directly and leaves room for the accuracy the control proves to need. The H743 also runs faster and carries more peripherals and memory, which the half-cycle actuation and the anticipated channels use. Its unit price in the board manufacturer's catalogue, read 2026-10-13 in controller-board-design-constraints.md, is about 11.4 USD against about 6.2 USD for the F407, a difference small against the board and the machine. Staying on the F4 family was rejected because it fixes the converter margin at the least accurate end before the needed accuracy is known, and a larger chip is cheap to carry while a smaller one is expensive to replace after boards are ordered. Buying the WeAct module was rejected: every module in the catalogue is a development board wave-soldered by hand, and the project designs its boards for the board manufacturer to place. Deferring the family until measured plant parameters confirm the need was rejected because the board's pin allocation cannot start without a part.
+
+  Reversibility: Moderate. The control logic is unaffected by the choice, because the hardware seam is what the target build exists to demonstrate. Changing the part after boards are ordered costs the boards, so the choice is made before pin allocation and is checked by the pre-order board check.
+
+  Consequences: DEC-PREHARDWARE-TARGET-FAMILY is superseded. The target build and the emulation tier still name an F4 part, so the firmware's target family has to move to the H7 family as later firmware work, which is authored as its own node; until then the F4 name in the build is a verification stand-in and nothing reads it as the controller. The component specification, the function-forms record and the cost rows are corrected so the F4 appears only where a sentence says it is not chosen. A sensing-resolution criterion is authored so the converter margin is required by a node and not only by this decision.
+options_considered:
+  - option: Baseline the controller on the STM32H743, designed bare onto the controller board
+    reason_rejected: ""
+  - option: Stay on the STM32F4 family (the STM32F407VGT6)
+    reason_rejected: fixes the converter margin at its least accurate end before the accuracy control needs is known, and replacing the chip after boards are ordered costs the boards
+  - option: Buy the WeAct MiniSTM32H743 module
+    reason_rejected: every module in the catalogue is a hand-soldered development board, while the project's boards are designed for the manufacturer to place
+  - option: Defer the family until measured plant parameters confirm the need
+    reason_rejected: the board's pin allocation cannot start without a part
+chosen: Baseline the controller on the STM32H743, designed bare onto the controller board
+links:
+  - target: DEC-PREHARDWARE-TARGET-FAMILY
+    type: supersedes
+  - target: DEL-HW-PARTITION-AND-FEASIBILITY.C7
+    type: addresses

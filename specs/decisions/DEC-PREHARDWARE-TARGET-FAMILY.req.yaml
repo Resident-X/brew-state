@@ -2,7 +2,7 @@ id: DEC-PREHARDWARE-TARGET-FAMILY
 type: decision
 category: strategic
 title: The target build's STM32F4 family is nominated for verification, not selected as the machine's controller
-status: active
+status: deprecated
 version: 2
 decided_by: david
 text: |
@@ -30,3 +30,5 @@ chosen: Nominate the STM32F4 family for the pre-hardware target build and leave 
 links:
   - target: REQ-CONTROL-HARDWARE-SEAM-001.C3
     type: addresses
+attributes:
+  deprecation_reason: 'Superseded by DEC-CONTROLLER-BASELINE-STM32H743: the controller is in the STM32H7 family, so the F4 nomination for the target build is replaced, as this decision''s own text provides.'
