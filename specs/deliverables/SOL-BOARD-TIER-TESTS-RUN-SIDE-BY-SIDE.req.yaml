@@ -28,6 +28,6 @@ links:
   - target: SOL-TOOL-TESTS-RUN-SIDE-BY-SIDE
     type: depends-on
 brief_confirmation:
-  confirmer: claude-sonnet-5-5 (independent brief reviewer)
-  fingerprint: b13acfc74bfc353d9d4ae6cab649025492d5270631410e9a8340b19711e75fcc
+  confirmer: claude-sonnet-5-5 brief reviewer
+  fingerprint: 43443686e36d13ee31ff248c10505ec9d5d62cc70cbcafc79ccbc08d3f5cf147
   gating_profile: ""
