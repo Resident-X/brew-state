@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT-CACHE-LIFETIME.C2
+type: criterion
+title: A recorded session whose cache writes landed at another lifetime than its specification's fails the run naming the session
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Over recorded streams, a session that wrote to the cache at the lifetime its specification gives passes; the recorded one-hour streams fail when the specification gives five minutes, naming the session, the lifetime asked and the tokens written at each lifetime; a stream that records cache writes without saying at which lifetime fails naming the session, because it cannot be told; and a session that wrote nothing to the cache passes. The contract smoke asserts the same of its probes. Out of scope: whether a fork read its parent's prefix, which the cache-miss check already covers.
+links:
+  - target: SOL-HW-REVIEW-KIT-CACHE-LIFETIME
+    type: criterion-of

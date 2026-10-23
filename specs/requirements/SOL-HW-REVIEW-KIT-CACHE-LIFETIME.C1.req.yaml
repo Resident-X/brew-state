@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT-CACHE-LIFETIME.C1
+type: criterion
+title: Every session of a review is started with one cache lifetime, five minutes unless the run asks for one hour
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The cache lifetime is a field of the session specification whose values are five minutes and one hour, five minutes when the run names none. Against the stub executor, a review started with no lifetime starts its root, forks, repair turns and adjudication turns with five minutes, and one started with an hour starts them all with the hour; a value other than the two is refused before any session starts, naming the value and the two it may be. The real executor gives each session the lifetime through the environment variable the agent command line reads for it, and the environment variables the kit already sets for every session are kept. A rerun starts with the lifetime recorded for the run, and a rerun asked for another lifetime is refused naming the field, as any other change to the specification is. The command's report, in text and in JSON, names the lifetime. Out of scope: checking that the command line wrote at that lifetime, which the stream criterion covers.
+links:
+  - target: SOL-HW-REVIEW-KIT-CACHE-LIFETIME
+    type: criterion-of

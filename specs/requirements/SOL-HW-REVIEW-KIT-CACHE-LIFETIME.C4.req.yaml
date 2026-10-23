@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT-CACHE-LIFETIME.C4
+type: criterion
+title: Every task runner task that starts review sessions takes the cache lifetime from one task variable that defaults to five minutes
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The review command, the contract smoke and each review proof task pass the lifetime from one task variable, five minutes when it is not set, so that a run can be asked for the hour from the task runner's command line without editing a file. A test parses the task runner's file and finds the variable's default and its use in each task that starts review sessions, and finds no such task that leaves it out. The task runner's descriptions and the hardware notes' section on the command say that the lifetime defaults to five minutes, that the hour suits a round expecting a rerun more than five minutes after its last call, and what each costs. Out of scope: the tasks that start no review session.
+links:
+  - target: SOL-HW-REVIEW-KIT-CACHE-LIFETIME
+    type: criterion-of
