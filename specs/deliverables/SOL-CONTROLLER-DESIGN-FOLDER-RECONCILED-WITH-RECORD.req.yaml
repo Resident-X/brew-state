@@ -17,3 +17,7 @@ links:
     type: justified-by
   - target: DEC-CONTROLLER-BASELINE-STM32H743
     type: justified-by
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 brief reviewer
+  fingerprint: 761130ea1734e43cf1b9fbda491bfa2a48e821f472f73a0b3d68fcbd599288ac
+  gating_profile: ""
