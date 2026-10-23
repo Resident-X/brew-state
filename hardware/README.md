@@ -396,7 +396,7 @@ For each design the check runs KiCad's own electrical rule check on the schemati
   - a placed controller whose `LCSC` field is not the record's `lcsc`, or that has none, naming the part and both numbers (`controller_part`);
   - a channel of the pin allocation record whose `controller_pin` is not among the record's `pins`, naming the channel and the part (`controller_part`).
 
-  The rule identifies a controller only by its port-named pins, so a symbol with no port-named pin (pins named `GPIO4` or `P0.04`, say) is not a controller to it. The pin allocation rule catches that: every design must carry a pin allocation record whose channels each need a port-named controller pin on their net, so a design whose only microcontroller has no port-named pin fails there. The two rules together are the guard.
+  The rule identifies a controller only by its port-named pins, so a symbol with no port-named pin (pins named `GPIO4` or `P0.04`, say) is not a controller to it. The pin allocation rule catches that: every design must carry a pin allocation record whose channels each need a port-named controller pin on their net, so a design whose only microcontroller has no port-named pin fails there. The two rules together are the guard. A library symbol that names a pin with the datasheet's suffix (for example `PC14-OSC32_IN` or `PH0-OSC_IN`) is split on `/` only, so such a name does not match the port-pin test; name the pin `PC14` or `PC14/OSC32_IN` so the controller is recognised.
 
 A design that declares `MAINS` as `present` must also:
 

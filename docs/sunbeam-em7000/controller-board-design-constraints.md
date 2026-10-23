@@ -633,8 +633,10 @@ Channel: § What each channel requires, *Flow sensing*. Default: the fitted OEM 
 
 | Part class (form) | Count | JLCPCB part | Package | Class | Stock | Unit price (break) | Per-part fee | Assembly | Source | Read |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Pull-up resistor to the 5 V rail. Searched by part number | 1; build 2 | C25804, 0603WAF1002T5E, UNI-ROYAL, 10 kΩ ±1 % | 0603 | Basic | 31 995 536 | 0.0022 USD (1–999) | None Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/26547-0603WAF1002T5E/C25804 | 2026-10-13 |
-| Schmitt-trigger buffer taking a 5 V pulse into a lower-voltage input. Searched "74LVC1G17": no Basic or Preferred part in the results | 1; build 2 | C10425, SN74LVC1G17DCKR, Texas Instruments | SC-70-5 | Extended | 98 027 | 0.07 USD (1–99) | 3.07 USD Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/TexasInstruments-SN74LVC1G17DCKR/C10425 | 2026-10-13 |
+| Pull-up resistor to the 3.3 V rail (10 kΩ as a baseline; the value is the board design's). Searched by part number | 1; build 2 | C25804, 0603WAF1002T5E, UNI-ROYAL, 10 kΩ ±1 % | 0603 | Basic | 31 995 536 | 0.0022 USD (1–999) | None Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/26547-0603WAF1002T5E/C25804 | 2026-10-13 |
+| Schmitt-trigger buffer, supplied at 3.3 V with an input rated for 5 V, a footprint with a link that fits or bypasses it and not fitted by default; priced as if fitted. Searched "74LVC1G17": no Basic or Preferred part in the results | 0 by default, 1 if fitted; build 2 | C10425, SN74LVC1G17DCKR, Texas Instruments | SC-70-5 | Extended | 98 027 | 0.07 USD (1–99) | 3.07 USD Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/TexasInstruments-SN74LVC1G17DCKR/C10425 | 2026-10-13 |
+| Series resistor in the capture line (the value is the board design's). Searched by part number, the same part class as the pull-up | 1; build 2 | C25804, 0603WAF1002T5E, UNI-ROYAL, 10 kΩ ±1 % | 0603 | Basic | 31 995 536 | 0.0022 USD (1–999) | None Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/26547-0603WAF1002T5E/C25804 | 2026-10-13 |
+| Filter capacitor on the capture line, 100 nF 50 V X7R. Searched "100nF 0603 50V" | 1; build 2 | C14663, CC0603KRX7R9BB104, YAGEO | 0603 | Basic | 53 317 730 | 0.014 USD (1–499) | None Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/YAGEO-CC0603KRX7R9BB104/C14663 | 2026-10-13 |
 
 ### Steam-path pressure sensing
 
