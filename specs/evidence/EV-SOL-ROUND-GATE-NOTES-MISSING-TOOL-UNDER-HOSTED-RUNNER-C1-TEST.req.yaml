@@ -1,0 +1,19 @@
+id: EV-SOL-ROUND-GATE-NOTES-MISSING-TOOL-UNDER-HOSTED-RUNNER-C1-TEST
+type: evidence
+title: The round gate's tests pass on the hosted Ubuntu runner (SOL-ROUND-GATE-NOTES-MISSING-TOOL-UNDER-HOSTED-RUNNER.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-23T01:09:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: https://github.com/Resident-X/brew-state/actions/runs/39881999075
+text: |
+  A probe workflow on a throwaway branch (since deleted) ran on ubuntu-24.04 at the commit one step after 2b9d1ba0, which differs from it only by the probe workflow file. It installed the task runner, KiCad, the rasteriser and the Gerber renderer at the versions the nightly workflow pins, and ran test_round_gate (the real-task-runner test and the escape-sequence cases) with the runner's own CI setting. The hosted runner sets CI, the setting under which these tests failed in the nightly (run 39741899288). The run concluded success: https://github.com/Resident-X/brew-state/actions/runs/39881999075
+
+  The criterion's test is the module run on the hosted runner; this is a purpose-built probe running those modules on the same runner image, not a dispatch of the nightly itself. The local round gate was stopped before it finished, so this probe and the first nightly after merge are the confirmation.
+links:
+  - target: SOL-ROUND-GATE-NOTES-MISSING-TOOL-UNDER-HOSTED-RUNNER.C1
+    type: satisfies
