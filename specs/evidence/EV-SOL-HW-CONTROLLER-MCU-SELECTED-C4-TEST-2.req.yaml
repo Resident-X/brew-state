@@ -1,0 +1,16 @@
+id: EV-SOL-HW-CONTROLLER-MCU-SELECTED-C4-TEST-2
+type: evidence
+title: test evidence for SOL-HW-CONTROLLER-MCU-SELECTED.C4
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-23T10:23:56.601566Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check.py::TheDesignsControllerIsHeldToTheRecord.test_a_channel_naming_a_controller_pin_the_record_does_not_list_fails_naming_the_channel_and_the_pin
+  artifact_version: 8249bdab7fb96379a2de88ea985ad09c4107c93a
+attested_by: crun-0b5de09e448908f2
+links:
+  - target: SOL-HW-CONTROLLER-MCU-SELECTED.C4
+    type: satisfies

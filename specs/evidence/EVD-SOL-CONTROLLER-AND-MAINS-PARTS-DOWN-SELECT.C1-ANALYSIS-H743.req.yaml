@@ -1,0 +1,16 @@
+id: EVD-SOL-CONTROLLER-AND-MAINS-PARTS-DOWN-SELECT.C1-ANALYSIS-H743
+type: evidence
+title: analysis evidence that the selected controller serves every enumerated channel simultaneously
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-10-23T10:35:29Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: 'docs/sunbeam-em7000/component-specification.md section ''Does a candidate controller serve every channel at once'' (the STM32H743VIT6, LQFP100, against the channel enumeration in controller-io.md: 32 enumerated pins plus 13 anticipated digital pins and 5 conversion inputs, 50 of 78 usable pins placed, the resource that binds first named) and ''Where each function lands'''
+  artifact_version: 296116c14da2dd222f6e7337ee3d423efea52e8b
+links:
+  - target: SOL-CONTROLLER-AND-MAINS-PARTS-DOWN-SELECT.C1
+    type: satisfies

@@ -1,0 +1,16 @@
+id: EV-SOL-HW-CONTROLLER-MCU-SELECTED-C6-ANALYSIS
+type: evidence
+title: analysis evidence for SOL-HW-CONTROLLER-MCU-SELECTED.C6
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-10-23T10:35:29Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: docs/sunbeam-em7000/component-specification.md section 'Resolution of the channels read directly' (the part's converters resolve to 16 bits, judged against REQ-HARDWARE-HEADROOM-001.C5; the in-stream temperature probes keep dedicated converters per DEC-IN-STREAM-PROBES-ANTICIPATED) and section 'Where each function lands' (conversion pins)
+  artifact_version: 296116c14da2dd222f6e7337ee3d423efea52e8b
+links:
+  - target: SOL-HW-CONTROLLER-MCU-SELECTED.C6
+    type: satisfies

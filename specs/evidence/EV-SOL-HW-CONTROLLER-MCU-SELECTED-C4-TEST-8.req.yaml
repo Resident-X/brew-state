@@ -1,0 +1,16 @@
+id: EV-SOL-HW-CONTROLLER-MCU-SELECTED-C4-TEST-8
+type: evidence
+title: test evidence for SOL-HW-CONTROLLER-MCU-SELECTED.C4
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-23T10:23:57.031148Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad_records.py::ControllerPart.test_each_controller_failure_is_caught_with_the_line_that_names_the_rule_the_design_and_the_part
+  artifact_version: 8249bdab7fb96379a2de88ea985ad09c4107c93a
+attested_by: crun-0b5de09e448908f2
+links:
+  - target: SOL-HW-CONTROLLER-MCU-SELECTED.C4
+    type: satisfies
