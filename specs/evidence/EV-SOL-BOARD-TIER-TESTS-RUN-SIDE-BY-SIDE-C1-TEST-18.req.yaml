@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-TIER-TESTS-RUN-SIDE-BY-SIDE-C1-TEST-18
+type: evidence
+title: test evidence for SOL-BOARD-TIER-TESTS-RUN-SIDE-BY-SIDE.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-23T05:46:15.742338Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_kicad_shared_copy.py::test_a_test_that_changes_the_shared_copy_fails_and_the_tests_that_only_read_it_pass
+  artifact_version: ff713aa0be62772ca68f4a62961521490be9008d
+attested_by: crun-c81e34198d61f1c6
+links:
+  - target: SOL-BOARD-TIER-TESTS-RUN-SIDE-BY-SIDE.C1
+    type: satisfies
