@@ -1,3 +1,5 @@
+> **[Fork, kept as history.]** This is the copy of `../component-specification.md` refreshed on 2026-10-12 against the bought-module design. The root document is the live record and governs; this copy's passages are classified in `_carry-forward/reconciliation.md`, and the README of this folder says where the design now is.
+
 # Component specification and list
 
 **This file is local, like `reference-machine.md` and `controller-io.md`.** It answers the question those two leave open: given every channel the machine needs, what property must each part have, which part has been selected, does the selected part meet the property and on what evidence, and what is still undecided or unmeasured.

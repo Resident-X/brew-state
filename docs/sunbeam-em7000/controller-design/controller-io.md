@@ -1,3 +1,5 @@
+> **[Fork, kept as history.]** This is the copy of `../controller-io.md` refreshed on 2026-10-12 against the bought-module design. The root document is the live record and governs; this copy's passages are classified in `_carry-forward/reconciliation.md`, and the README of this folder says where the design now is.
+
 # Controller I/O enumeration
 
 **This file is local, like `reference-machine.md`.** It answers one question: what does a controller have to provide to serve every channel this machine already senses or drives, plus every channel the graph has since decided to add? It is written by hand; `DEL-COMPONENT-SPECIFICATION.C6` (regenerating a specification and purchase list from the graph) is a later criterion of the parent task and is not attempted here.
