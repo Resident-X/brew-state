@@ -1,0 +1,12 @@
+id: SOL-HW-FUNCTION-FORM-DECIDED.C4
+type: criterion
+title: The record can be followed by a builder holding only the repository and the public sources it cites
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The record of forms lands in the machine's record folder beside the constraints record, and every reason and figure in it cites a source a reader holding only this repository and the publicly available documents it names can follow; nothing rests on knowledge private to the author, an unpublished conversation, or a part in hand that the record does not describe. A designer of any later board task, or an adopter on a different machine or supply, can tell from it which function has which form and why, without re-deriving the choice. Out of scope: the board design tasks that consume it, and translating the record for another machine, which an adopter does against their own record.
+links:
+  - target: SOL-HW-FUNCTION-FORM-DECIDED
+    type: criterion-of
