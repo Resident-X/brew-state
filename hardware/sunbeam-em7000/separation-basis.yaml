@@ -63,13 +63,17 @@ barriers:
 # on the low-voltage side and can be touched, so a single insulation failure must not reach them.
 # The one exception is pressure-sensor-water-path, declared basic, on these facts (owner
 # statements, 2026-10-23; reference-machine.md, line 269 for the first): the machine's heater
-# thermoblocks, solenoids and walls are bonded to protective earth, the inlet earth wire
-# splitting to those metal parts. The pressure sensors connect through PTFE tube, so the sensor
+# thermoblocks, solenoids and metal walls elsewhere in the machine (not the cavity's plastic walls) are bonded to
+# protective earth, the inlet earth wire splitting to those metal parts. The pressure sensors connect through PTFE tube, so the sensor
 # body is not bonded to earth, but the water in the tube touches the earthed block and so is
 # referenced to earth through the earthed block (water is a poor earth reference, and the sensor
 # is not itself bonded). A single heater or solenoid insulation fault goes into the earthed block,
-# so on the owner's reading the water path is not mains-live under a single fault (the device that
-# then clears the fault is the safety chain's, not established by this record). The barrier is
+# so on the owner's reading the water path is not mains-live under a single fault. Whether the
+# fault draws enough current to open the inlet fuse or the upstream breaker, in what time, and what
+# potential the block and the water in it reach meanwhile, is not shown by this record: the
+# clearing time and let-through at the declared fault current are recorded by the design task of
+# the board or assembly (DEL-HW-PARTITION-AND-FEASIBILITY.C5), and the earth bond's resistance is
+# required by REQ-ELECTRICAL-INSTALL-001.C6 and measured on the finished machine. The barrier is
 # therefore earth-referenced water to the low-voltage electronics, at low-voltage working
 # voltage, and needs basic insulation at that level, not reinforced mains to low voltage; the
 # PTFE tube adds creepage. The remaining risk is a double fault, earth lost and a heater faulted,
@@ -93,7 +97,7 @@ barrier_types:
       - USB connector
       - operator controls
       - enclosure
-    formed_by: the opto-triac between the heater drive and the triac gate, and the board spacing around it; the triac's insulated tab to the earthed wall is basic, to earth
+    formed_by: the opto-triac between the heater drive and the triac gate, and the board spacing around it; the triac's insulated tab to the machine's metal wall (owner statement, `reference-machine.md` line 269; bond not measured, `REQ-ELECTRICAL-INSTALL-001.C6`) is basic, to earth
   - barrier: pump-drive
     insulation: reinforced
     earth_bonded: false
