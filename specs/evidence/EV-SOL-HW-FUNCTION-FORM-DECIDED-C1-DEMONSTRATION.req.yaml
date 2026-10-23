@@ -1,0 +1,17 @@
+id: EV-SOL-HW-FUNCTION-FORM-DECIDED-C1-DEMONSTRATION
+type: evidence
+title: demonstration evidence for SOL-HW-FUNCTION-FORM-DECIDED.C1
+status: active
+version: 1
+result: pass
+method: demonstration
+observed_at: "2026-10-23T05:17:18.870647Z"
+artifact:
+  kind: inline
+  artifact_version: 3fc6df278f6a2397e623457f3c3f052e95b752da
+attested_by: crun-edd8d2cc5cac54a9
+text: |-
+  Analysis of the delivered record against each clause. Set check: the record's per-function sections cover all rows of component-specification.md § What each channel requires (controller; coffee and steam element switching; heater gate drive; pumps; valves; supply-timing front end; temperature, flow and steam-pressure sensing; gauge drive; heater mains-presence confirm; low-water indication; operator panel; low-voltage supply; wiring and connectors), plus the proof-of-life interlock and the mains inlet filter; the table 'Every module of the earlier design, reopened by name' names each module of the earlier design. Heater switches: the form is a designed circuit on one all-through-hole wall board for the two heaters only (per heater a zero-cross opto-triac, an insulated-tab snubberless triac, a snubber and a MOV, faston tabs, a low-voltage-only control cable; triac tabs on the machine's metal wall as heatsink, spreader plate if the assembly task finds one needed; own board or break-off section and hand-soldered parts left to the board design; pumps stay on the mains board). Reason shown by figures: branded relay RA2425-D06 69.00 USD each (138 USD for two, 55 % of the 250 USD spend) and RM1A23D25 about 34 USD (search result only, 2026-10-23) against about 1.20 USD per heater for the four principal parts read (0.8416 + 0.2897 + 0.0467 + 0.027), the same circuit a zero-cross relay contains; barrier ratings sourced from the opto-triac sheet; gate parts at the triac; no mains on the control cable. Opto-triac chosen by the margin rule: 800 V MOC3083M is 2.2 times the 358 V peak (the 400 V part's 11 % being rejected, the 600 V part's 1.7 times accepted). 'Cheaper than a designed equivalent', the relay's 70 C rating finding and the relay's off-state leakage text are removed. Each section carries form, reason, reference or where looked, the spec row cited, carried-forward properties met by sourced figures or recorded absent, hardware already bought (none) and firmware effect at the seam. A new § Terms defines every term the entries use and the entries cite it, so each entry stands alone. Added after the cold review: controller reference R3 (ST AN4488 Rev 7) read and its sections cited; R4 (relay coil drive notes) recorded as located and not read, nothing taken from it.
+links:
+  - target: SOL-HW-FUNCTION-FORM-DECIDED.C1
+    type: satisfies

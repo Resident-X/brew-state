@@ -145,21 +145,20 @@ two boards, and the panel board is retained, but carries no controller to speak 
 
 | Resource | Count | (struck) | Notes |
 |---|---|---|---|
-| Analogue conversion inputs | 4 | — | Coffee, steam and wand temperature, plus the steam-path pressure transducer that `DEC-STEAM-PRESSURE-SENSOR-ADDED` adds and which is not yet fitted |
+| Analogue conversion inputs | 4 | — | Coffee, steam and wand temperature, plus the board's separate spare analogue input (5V, 3V3, GND and a filtered input), which is the analogue fallback for the steam-path pressure transducer that `DEC-STEAM-PRESSURE-SENSOR-ADDED` adds and which is not yet fitted. The transducer's baseline interface is I²C (`controller-board-function-forms.md` § Steam-path pressure sensing), counted in the serial peripherals row |
 | Timer input capture | 1 | — | Flow meter. Its signal is established digital: a pulse train pulled up to the 5 V rail and landing on a general-purpose port pin. Whether the output is open-drain or push-pull is pending (not yet read; it is read when the board carrying the device is designed, and does not block the division of the circuitry into boards), and the K-factor stays open |
 | Timer compare outputs | 5 | — | Both pumps, provisioned for a firing instant within the cycle; the panel's anode rail gate, whose modulation is how indicator brightness varies; and the two gauge step clocks, which need an even rate to sweep smoothly rather than stutter |
 | External-interrupt pins | 1 | — | Mains zero-cross, on both edges |
 | Plain digital inputs | 5 | — | Tank level, the two control-knob microswitches, and the two mains-presence sense channels on the heating elements. The panel's keys are not here: they share lines with the indicators and are counted in the row below |
 | Plain digital outputs | 14 | — | Two heater channels, two valve channels, the buzzer, the water indicator on the gauge assembly, the panel's five shared lines, and the two gauge direction lines plus the driver reset. The panel's five are bidirectional — each sinks its indicator group's current and is read as an input once the anode rail is blanked — so eight indicator elements and five keys together cost five pins. See [`connector-pinouts.md`](connector-pinouts.md) |
 | Stepper driver channels | 2 timer + 3 digital | — | The two gauges, through a `VID66-08` on the gauge assembly rather than into the windings. If that board is retained the driver is inherited: the controller supplies a direction level and a step clock per gauge plus a shared reset. The step clocks need timer channels — an uneven rate reads as needle stutter. Retaining an out-of-production driver is an obtainability risk, distinct from the unknown-condition question `OBL-PHYSICAL-CONFIGURATION-001.C3` asks, not a saving |
-| Serial peripherals | 0 | — | The two-wire operator link this row costed is not an inter-board link and cannot be retained; a display link is a separate question this table does not settle |
-| **Pin total** | **30** | — | Summing the pin costs above: 4 + 1 + 5 + 1 + 5 + 14. The gauge lines are counted in the timer and digital-output rows rather than in a row of their own. The controller I/O bill of materials reaches a higher figure for the same machine because it also carries the brew-path pressure channel no decision has yet added and a display link |
+| Serial peripherals | 1 I²C bus | — | The steam-path pressure transducer's I²C bus, two pins, the baseline interface the operator settled on 2026-10-23; the same two signal lines can carry a UART, so the pins are chosen on a pair that carries both functions. The two-wire operator link this row costed is not an inter-board link and cannot be retained; a display link is a separate question this table does not settle |
+| **Pin total** | **32** | — | Summing the pin costs above: 4 + 2 + 1 + 5 + 1 + 5 + 14. The gauge lines are counted in the timer and digital-output rows rather than in a row of their own. The controller I/O bill of materials reaches a higher figure for the same machine because it also carries the brew-path pressure channel no decision has yet added and a display link |
 
 ### What the candidate provides
 
 The candidate assessed is the **STM32F407VGT6** in LQFP100 — the exact part
-`DEC-PREHARDWARE-TARGET-FAMILY` nominates for the pre-hardware target build, so the board the list
-buys and the board definition the target build compiles against are the same one. Figures are the
+`DEC-PREHARDWARE-TARGET-FAMILY` nominates for the pre-hardware target build, so the part assessed and the board definition the target build compiles against are the same one. Figures are the
 manufacturer's (ST datasheet `DS8626`). The pin-compatible VET6 differs only in carrying 512 KB of
 flash instead of 1 MB; it is not assessed here, because choosing it would narrow the compute envelope
 `DEC-HEATER-DRIVE-GATED-BY-SUPERVISION` asks to be sized generously and would do so on no evidence,
@@ -167,7 +166,7 @@ the compute demand being unquantified in both directions.
 
 | Resource | Provided | Demanded | Remaining |
 |---|---|---|---|
-| General-purpose I/O | 82 raw; about 78 usable | 30 | About 48. The raw count includes the SWD pins and PH0/PH1, which carry the HSE crystal — and `DEC-MAINS-PHASED-ACTUATION-BELOW-SEAM` requires a crystal-derived control period, so those two are spoken for by this design rather than optional |
+| General-purpose I/O | 82 raw; about 78 usable | 32 | About 46. The raw count includes the SWD pins and PH0/PH1, which carry the HSE crystal — and `DEC-MAINS-PHASED-ACTUATION-BELOW-SEAM` requires a crystal-derived control period, so those two are spoken for by this design rather than optional |
 | 12-bit ADC units / external channels | 3 units. ADC1 and ADC2 bring out 16 external channels each in this package; ADC3 brings out fewer, several of its inputs sitting on a port LQFP100 does not carry | 4 channels, on one unit | Ample, and the three units can convert concurrently if a later channel needs it |
 | 16-bit timers | 12 in total: 2 advanced motor-control, 8 general-purpose, and 2 basic with no I/O channels at all | 6 channels (5 compare, 1 capture) | Ample — but the usable pool for these channels is the 10 with I/O, not 12 |
 | 32-bit general-purpose timers | 2 | 0 | Both free |
@@ -179,7 +178,7 @@ the compute demand being unquantified in both directions.
 **Simultaneity holds, and the resource that would bite first is named.** No two channels contend for
 the same unit at these counts: the four conversion inputs fit one ADC with twelve channels to spare,
 the six timer channels fit inside two general-purpose timers let alone ten, and the
-thirty pins fit inside seventy-eight. Fitting them on one timer is not the same as placing them
+thirty-two pins fit inside seventy-eight. Fitting them on one timer is not the same as placing them
 there: a flow-pulse input capture, two mains-phased compare outputs, two gauge step clocks and an indicator rail gate would share a
 prescaler and a time base.
 With ten I/O-capable timers available there is no reason to accept it. The one resource with a structural constraint rather than a
@@ -209,15 +208,17 @@ movements directly sets its own thresholds and the row disappears. That trade si
 
 | Anticipated channel | Where it comes from | Costs |
 |---|---|---|
-| Brew-path pressure transducer | `REQ-MEASUREMENT-001.C7` requires brew pressure measured rather than inferred; no decision has yet added a part | 1 conversion input |
+| Brew-path pressure transducer | `REQ-MEASUREMENT-001.C7` requires brew pressure measured rather than inferred; no decision has yet added a part. The same class and interface as the steam-path transducer: an XDB401-class transducer on a second I²C bus, since the part's address is fixed (`controller-design/decisions.md` D12) | 2 digital pins for the second bus; the analogue fallback through a spare analogue input costs 1 conversion input |
 | Current sensing | Recorded in `controller-io.md` § Channels not enumerated as not fitted and not decided | 1–2 conversion inputs |
-| Weight-based endpoint control | Named in `REQ-HARDWARE-HEADROOM-001` as the immediate deferred capability | 2 digital pins to a load-cell amplifier |
+| Weight-based endpoint control | Named in `REQ-HARDWARE-HEADROOM-001` as the immediate deferred capability. Up to two load-cell channels, two HX711-class amplifiers on about four digital pins or one two-channel converter, for a drip-tray platform, so one single-point platform cell or two cells summed serve a cup placed anywhere on the tray. An external Bluetooth scale is the alternative and belongs to the display unit, which owns the network-facing surface (`DEC-NETWORK-SURFACE-IS-A-SEPARATE-DISPLAY-UNIT`). The open-source survey of 2026-10-23 is concepts only: Gaggiuino and GaggiMate (load cells with HX711-class amplifiers, plus Bluetooth scales), Decent openscale and ESPresso Scale (ADS1232, Bluetooth scales) | About 4 digital pins to up to two load-cell amplifiers |
 | Direct group-head instrumentation | Named in the same requirement as the general case | 1–2 conversion inputs |
+| In-stream temperature, brew outlet and steam outlet | `DEC-IN-STREAM-PROBES-ANTICIPATED`: two PT1000 probes, each read by an RTD-to-digital converter of the MAX31865 class on a shared SPI bus with one chip select each, the front end taking a 2-wire or 3-wire probe per channel so the probe bought decides. The earlier design carried a PT1000 outlet probe and a PT1000 with MAX31865 front-end option (`controller-design/control-system-bom.csv`, *PT1000 spike probe*; `controller-design/controller-io-bom.csv`, rows T-B*) | No conversion input; about 5 digital pins (three shared bus lines and two chip selects) |
 | Real-time clock | Not fitted, not decided | 0 pins running off the internal low-speed oscillator, 2 with the 32.768 kHz crystal that anything wanting to timestamp would need — the internal oscillator drifts too far to be useful for that |
 
-Roughly five further conversion inputs and two digital pins. Against twelve unused channels on one
-ADC unit and forty-eight unused pins, every anticipated channel fits without displacing a current one,
-which is what `REQ-HARDWARE-HEADROOM-001.C1` and `DEL-COMPONENT-SPECIFICATION.C4` ask to be shown.
+Roughly five further conversion inputs at most (the brew fallback 1, current sensing 1–2, group-head instrumentation 1–2) and up to thirteen digital pins (2 + 4 + 5 + 2). Against twelve unused channels on one
+ADC unit and forty-six unused pins, every anticipated channel fits without displacing a current one, with seven
+channels and thirty-three pins still unused after all of them,
+which is what `REQ-HARDWARE-HEADROOM-001.C1` and `DEL-COMPONENT-SPECIFICATION.C4` ask to be shown. The pins are counted as free pins; that the two I²C buses, the serial bus and the amplifiers' lines land on pins carrying the functions they need is the controller selection's and the board task's to show (`REQ-HARDWARE-HEADROOM-001.C2`).
 
 ### What this assessment does not establish
 
@@ -227,11 +228,11 @@ which is what `REQ-HARDWARE-HEADROOM-001.C1` and `DEL-COMPONENT-SPECIFICATION.C4
   No headroom claim is made about them in either direction; taking the larger-flash variant is a
   refusal to narrow an unmeasured envelope, not a claim that the smaller one is insufficient.
 - **A specific board's usable subset is narrower than the part's.** These figures are the
-  microcontroller's. A purpose-built development board spends pins on its own function — onboard
-  memory, camera and display headers, an Ethernet footprint — and its spare capacity is spare for
-  that function first. Whichever board is bought, the pins it actually brings out to a connector must
-  be checked against this table from its own schematic before the purchase closes. That check is
-  named in the list below rather than assumed here.
+  microcontroller's. The controller is designed onto the controller board rather than bought as a
+  module (`controller-board-function-forms.md` § Controller), so no development board spends pins on
+  its own function. The pins the board's own functions use are subtracted in the board's pin
+  allocation, authored by the design task for the board, against the part
+  `DEL-HW-PARTITION-AND-FEASIBILITY.C7` selects.
 - **This is not a selection.** `DEC-PREHARDWARE-TARGET-FAMILY` and
   `DEC-HEATER-DRIVE-GATED-BY-SUPERVISION` both state in terms that controller selection is answered
   later against measured plant parameters, and `REQ-HARDWARE-HEADROOM-001` frames the choice as one
@@ -274,8 +275,8 @@ chosen; it is not predicted here.
 | Channel | Must satisfy | Capability floor already achieved | Part chosen | Provenance | Cost |
 |---|---|---|---|---|---|
 | Controller | Every row of the resource assessment above, simultaneously, with room for the anticipated channels. Checked against the specific board's own schematic, since a board's usable pins are fewer than its microcontroller's | None — the machine carries no part serving this | *undecided* | *undecided* | |
-| Coffee element switching | Commandable once per supply half-cycle; carries 4.80 A at the top of the declared supply span; dissipates of the order of 6 W at full duty, in an ambient that is pending: on the owner's plan, 2026-10-23, the two heater switches are mounted outside the enclosure, and where each is judged against its rated temperature is open (`controller-board-design-constraints.md` § Pending marks); the air inside the enclosure is graded to an assumed 70 °C until bring-up measures it (§ Enclosure air temperature; the room-temperature span is in `reference-machine.md` § Ambient); commanded across an isolating barrier; does **not** reach the de-energised state on failure by itself, so the channel depends on the series interlock discussed above | Hongfa `HF3FD/012HST` relay: isolated, fails open, but cannot be commanded per half-cycle. Clears every property except the one that matters most here | *undecided* | *undecided* | |
-| Steam element switching | As above, at 5.38 A and of the order of 7 W | Hongfa `HF3FD/012HST` relay, same reading | *undecided* | *undecided* | |
+| Coffee element switching | Commandable once per supply half-cycle; carries 4.80 A at the top of the declared supply span; dissipates 4.25 W at full duty (17.1 W in the 15 A overload band; the sourced triac dissipation of `controller-board-function-forms.md` § Parts off the boards), in an ambient that is pending: on the owner's plan, 2026-10-23, the two heater switches are mounted outside the enclosure, on a designed wall board whose triacs bolt to the machine's metal wall (the form decided in `controller-board-function-forms.md` § Coffee element switching and steam element switching), as a device the retrofit adds, and each triac is judged against its rated temperature by the design task for the heater-switch assembly (`controller-board-function-forms.md` § Parts off the boards); the air inside the enclosure is graded to an assumed 70 °C until bring-up measures it (§ Enclosure air temperature; the room-temperature span is in `reference-machine.md` § Ambient); commanded across an isolating barrier; does **not** reach the de-energised state on failure by itself, so the channel depends on the series interlock discussed above | Hongfa `HF3FD/012HST` relay: isolated, fails open, but cannot be commanded per half-cycle. Clears every property except the one that matters most here | *undecided* | *undecided* | |
+| Steam element switching | As above, at 5.38 A and 4.84 W at full duty (same source) | Hongfa `HF3FD/012HST` relay, same reading | *undecided* | *undecided* | |
 | Heater gate drive, both channels | Firing at the zero crossing in hardware rather than at an instant the controller estimates, which removes this channel's exposure to the unbounded edge-versus-crossing offset; isolation between the controller pin and the mains-referenced gate | None on this channel — the OEM relay needed no gate drive | *undecided* | *undecided* | |
 | Coffee pump switching | A firing instant placed within the cycle; isolated gate drive; de-energised on failure. Current 0.46 A rms at 253 V, the sizing value under an assumed 0.5 power-factor floor (nameplate 48 W; `connector-pinouts.md` § Pumps: running current) | `MOC3021` opto-triac into a triac. Phase-capable: this channel's floor is already at the requirement | *undecided* | *undecided* | |
 | Steam pump switching | As above; 0.19 A rms at 253 V (nameplate 22 W), the sizing value on the same basis | `MOC3021` opto-triac into a triac | *undecided* | *undecided* | |
@@ -284,7 +285,7 @@ chosen; it is not predicted here.
 | Supply-timing front end | Both crossings of every cycle; a barrier holding under fault and under water, steam and thermal cycling; read as an input rather than followed as a clock | `PC817` optocoupler on a half-wave feed. Isolation adequate; **fails the both-crossings property**, which is the one this design added | *undecided* | *undecided* | |
 | Coffee, steam and wand temperature sensing | Analogue resistance, NTC, at the accuracy `controller-io.md` states per channel | `EM70025`, `EM70020` and the wand disc sensor, fitted and working | *undecided* | *undecided* | |
 | Flow sensing | A pulse train on a general-purpose port pin, pulled up to the 5 V rail; open-drain versus push-pull, and the K-factor, stay open | The fitted OEM meter | *undecided* | *undecided* | |
-| Steam-path pressure sensing | Analogue conversion; the part not yet selected. Its range and accuracy bounds and the proof and burst pressures it must carry are stated in `controller-board-design-constraints.md` § Steam-path transducer pressure and § Sensing accuracy, and are checked against the part once chosen | None — added by decision, never fitted | *undecided* | *undecided* | |
+| Steam-path pressure sensing | Analogue conversion; a bought transducer, the form decided in `controller-board-function-forms.md`, whose fitted part is selected by the design task for the board or assembly carrying it. Its range and accuracy bounds and the proof and burst pressures it must carry are stated in `controller-board-design-constraints.md` § Steam-path transducer pressure and § Sensing accuracy, and are checked against the part once chosen | None — added by decision, never fitted | *undecided* | *undecided* | |
 | Gauge drive, both gauges | Two direction levels, two step clocks needing timer channels, and a shared reset — **all five clearing a 3.15 V input threshold**, which is the retained driver's guaranteed `VIH` and does not relax with its supply. A 5 V drive clears it outright; a 3.3 V part qualifies only if its own `VOH` guarantee reaches 3.15 V at the current these inputs draw, and otherwise the channel carries five level shifters. Figures and their provenance in [`connector-pinouts.md`](connector-pinouts.md). The controller does not provide stepper drive: the `VID66-08` sits on the gauge assembly, which is retained, so the driver is inherited. That is not a saving — the part is out of production, which makes an unobtainable device a single point of failure on a channel with no fallback, and is an obtainability risk, distinct from the unknown-condition question `OBL-PHYSICAL-CONFIGURATION-001.C3` asks. Specifying a controller that could drive the movements directly keeps both options | OEM `VID66-08` on the gauge assembly, two-channel, serving both gauges today and inherited rather than bought | *undecided* | *undecided* |  |
 | Heater mains-presence confirm, both elements | Two isolated AC-sense inputs reporting whether mains actually reached each element, which distinguishes a relay that did not close, a welded contact and an open thermal cutout from a command that was obeyed. Reinforced isolation, mains-crossing | OEM `LTV814` AC-input optocoupler through a 120 kΩ 1 W resistor, fitted and working | *undecided* | *undecided* | |
 | Low-water indication, visual | One output sinking an indicator cathode on the gauge assembly, whose anode rail is the button panel's gated rail extended over the gauge harness | The fitted indicator, retained with the gauge assembly | *undecided* | *undecided* | |

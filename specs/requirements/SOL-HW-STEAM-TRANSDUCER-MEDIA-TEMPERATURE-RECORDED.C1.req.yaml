@@ -1,0 +1,12 @@
+id: SOL-HW-STEAM-TRANSDUCER-MEDIA-TEMPERATURE-RECORDED.C1
+type: criterion
+title: The media temperature the steam-path transducer must survive is recorded with its premise and source
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The steam-path transducer basis states the media temperature the part must survive in service, derived from the saturation temperature at the in-service pressure (158.8 degC at 6 bar absolute, steam tables) or with the reason the casting ceiling governs instead, with the premise it rests on, who stated the premise, its grade and what ends it, in the shape the basis uses for its pressure figure. Out of scope: the pressure figures and ratings, which the recorded basis already holds.
+links:
+  - target: SOL-HW-STEAM-TRANSDUCER-MEDIA-TEMPERATURE-RECORDED
+    type: criterion-of
