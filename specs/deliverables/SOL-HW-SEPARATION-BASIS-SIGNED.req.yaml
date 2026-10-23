@@ -3,9 +3,17 @@ type: deliverable
 category: solution
 title: The machine's separation basis between mains and low voltage is declared from a cited standard and signed by the owner before any layout
 status: active
-version: 1
+version: 2
 text: |-
   Writes the machine's separation basis record in the form the separation-basis decision sets. It states every barrier with its insulation type, the overvoltage category, the altitude, the pollution degree and the table rows used. It judges each barrier part's proving candidate against its barrier, ends the pending marks held against the basis, and has the owner accept it under their own identity. The build stops at the drafted record and the request to the owner; the leaf closes on the owner's own act, and the owner's pending acceptance holds every leaf that depends on this one.
+
+  Settled for the build:
+  - Reuse. The record is read by the board check's own reader and floor rule, which are already built; no check code changes. The test reads the committed record through that reader, never a second validator.
+  - While the record is unsigned the reader reports only the unsigned acceptance. The test asserts that the only problems are the accepted_by and accepted_on unsigned ones (none once signed), and runs the floor rule on the record's own figures taken as signed. The test never writes acceptance values into the record.
+  - The barriers are those the function-forms record's Barrier parts table names, including the supply-timing front end and each main-presence confirm.
+  - Insulation is reinforced for any barrier whose low-voltage side a person can touch unless the drafting shows that side bonded to protective earth; the owner accepts the result.
+  - Pollution degree 3 with the boards uncoated, as the ambient span record leaves it; working voltage is 253 V rms at the top of the declared span, written with its number leading; overvoltage category and material group are taken from the cited source and stated with their reasons.
+  - The hardware notes gain the adopter section C4 asks for.
 links:
   - target: DEL-HW-PARTITION-AND-FEASIBILITY.C3
     type: derives-from
