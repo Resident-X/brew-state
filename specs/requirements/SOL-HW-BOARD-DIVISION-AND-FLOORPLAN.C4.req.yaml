@@ -1,0 +1,12 @@
+id: SOL-HW-BOARD-DIVISION-AND-FLOORPLAN.C4
+type: criterion
+title: Each anticipated channel kind is given a place or recorded as not given one, naming the criterion reserving it would have weakened
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Each anticipated channel kind is either given a place, on the board side its kind belongs to, or recorded as not given one. A place is a connector position, an interface and a block area. The kinds are every row of the component specification's room for anticipated channels, a further switched output such as another valve, and further temperature and pressure inputs of the kinds already in use. A kind not given a place names the criterion reserving it would have weakened, whether an isolation distance, the fit or the cost boundary. None is silently dropped. Out of scope: fitting any anticipated channel's parts.
+links:
+  - target: SOL-HW-BOARD-DIVISION-AND-FLOORPLAN
+    type: criterion-of

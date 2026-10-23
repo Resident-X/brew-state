@@ -1,0 +1,12 @@
+id: SOL-HW-CONTROLLER-MCU-SELECTED.C3
+type: criterion
+title: The selection states its effect on the firmware's target build and hardware-backed seam
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The selection states whether the part is in the family the pre-hardware target build nominates. Where it is, the selection states whether the target build compiles for the selected part unchanged, and names any change it needs. Where it is not, the selection states the effect on the target build and on the hardware-backed implementation of the hardware seam, and supersedes the target-family nomination through a new decision rather than reworking it. Out of scope: making the firmware change itself, which is later firmware work.
+links:
+  - target: SOL-HW-CONTROLLER-MCU-SELECTED
+    type: criterion-of

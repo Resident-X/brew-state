@@ -1,0 +1,12 @@
+id: SOL-HW-BOARD-DIVISION-AND-FLOORPLAN.C1
+type: criterion
+title: Every function is assigned to one board or off-board assembly, each owner starting point followed or departed from with its reason
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Every function the function-forms record gives a form is assigned to exactly one board or off-board assembly, with the reason for the assignment. Each of the owner's stated starting points is recorded as followed or departed from, with the reason; they are inputs to weigh, not mandates. The starting points are: both boards inside the existing controller enclosure; mains connections on its left and low-voltage harnesses on its right; heater switches off-board; valve relays and pump drive on a mains board; the controller board made as narrow as it can be; each board within the manufacturer's lowest price band; and the layer count chosen per board, with a ground plane favoured under the sensing. Each board's layer count is stated with its reason. A function left unassigned fails. Out of scope: schematics and part selection, which each board's design task does.
+links:
+  - target: SOL-HW-BOARD-DIVISION-AND-FLOORPLAN
+    type: criterion-of

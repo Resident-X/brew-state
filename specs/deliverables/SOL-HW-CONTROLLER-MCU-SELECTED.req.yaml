@@ -1,0 +1,55 @@
+id: SOL-HW-CONTROLLER-MCU-SELECTED
+type: deliverable
+category: solution
+title: The controller board's microcontroller is selected as a specific part, shown to carry every current and anticipated channel, with its effect on the firmware stated
+status: active
+version: 1
+text: |-
+  Selects the specific microcontroller designed onto the controller board, before any board's pin allocation. It records the reason, the datasheet source and the cost, and shows that every bus function the anticipated channels need lands on free pins. It states the effect on the firmware's target build, and makes the board check fail any design built around a different controller.
+links:
+  - target: DEL-HW-PARTITION-AND-FEASIBILITY.C7
+    type: derives-from
+  - target: REQ-HARDWARE-HEADROOM-001.C1
+    type: targets
+  - target: REQ-HARDWARE-HEADROOM-001.C2
+    type: targets
+  - target: REQ-COST-DISCIPLINE-001.C1
+    type: targets
+  - target: DEC-PREHARDWARE-TARGET-FAMILY
+    type: justified-by
+  - target: DEC-IN-STREAM-PROBES-ANTICIPATED
+    type: justified-by
+  - target: DEC-BOARD-MANUFACTURER-JLCPCB
+    type: justified-by
+  - target: DEC-BOARD-DESIGN-RECORDS-AS-YAML
+    type: justified-by
+  - target: DEC-HEATER-DRIVE-GATED-BY-SUPERVISION
+    type: justified-by
+design_question_answers:
+  - answered_by: SOL-HW-CONTROLLER-MCU-SELECTED.C4
+    class: new-condition
+  - answered_by: SOL-HW-CONTROLLER-MCU-SELECTED.C4
+    class: whole-set
+  - answered_by: SOL-HW-CONTROLLER-MCU-SELECTED.C4
+    class: served-statement
+  - answered_by: SOL-HW-CONTROLLER-MCU-SELECTED.C4
+    class: existing-capability
+  - answered_by: SOL-HW-CONTROLLER-MCU-SELECTED.C1
+    class: consumer-intent
+  - answered_by: SOL-HW-CONTROLLER-MCU-SELECTED.C1
+    class: consumer-self-sufficiency
+interfaces:
+  - firmware/platformio.ini target build environment
+  - firmware/include/hw_interface.h hardware seam
+  - hardware/tools/board_check.py
+  - docs/sunbeam-em7000/component-specification.md § Room for the channels the graph anticipates
+locus:
+  - marking: existing
+    ref: docs/sunbeam-em7000/controller-board-function-forms.md § Controller
+  - marking: existing
+    ref: docs/sunbeam-em7000/component-specification.md § Controller row and Against the declared figure
+  - marking: existing
+    ref: 'hardware/tools pre-order board check: controller-part rule'
+plan_provenance:
+  approved_plan_id: PLAN-DEL-HW-PARTITION-AND-FEASIBILITY-SLICE-1
+  target: DEL-HW-PARTITION-AND-FEASIBILITY

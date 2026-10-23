@@ -1,0 +1,12 @@
+id: SOL-HW-SEPARATION-BASIS-SIGNED.C2
+type: criterion
+title: The basis is accepted by the owner's own act, never written in by whoever drafts it
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  accepted_by and accepted_on record the owner's own acceptance: the owner's actor identity in this project, and the date they accepted. The drafted record is put before the owner and both values are requested from them. Whoever drafts the record never writes or infers them. Until the owner signs, the record stays unsigned, and this criterion and the leaf are unmet. A later change to any figure, input or barrier needs a fresh acceptance. Out of scope: any cryptographic signature, which the separation-basis decision does not ask for.
+links:
+  - target: SOL-HW-SEPARATION-BASIS-SIGNED
+    type: criterion-of

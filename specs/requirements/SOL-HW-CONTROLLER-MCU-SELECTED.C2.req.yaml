@@ -1,0 +1,12 @@
+id: SOL-HW-CONTROLLER-MCU-SELECTED.C2
+type: criterion
+title: Every bus function the function-forms record and the anticipated channels assign lands on pins free after the current channels
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |-
+  The selection shows that the part carries every bus function the function-forms record and the anticipated channels assign, on pins still free once the current channels are served. Each function is named with the pin and alternate function that carry it, read from the datasheet. The set includes at least two I2C-capable pin pairs, at least one of them also UART-capable, an SPI bus with two chip selects, and the load-cell amplifier lines. The selection also shows spare capacity on the interfaces in use, not only free pins: the timers the half-cycle and phase-angle actuation needs, conversion channels, and bus loading. A function that cannot land on a free pin fails the selection. The list of functions is not cut down to suit the part. Out of scope: which board connector each function reaches, which is the board design task's.
+links:
+  - target: SOL-HW-CONTROLLER-MCU-SELECTED
+    type: criterion-of

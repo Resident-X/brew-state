@@ -1,0 +1,12 @@
+id: SOL-HW-BOARD-COST-ESTIMATED.C3
+type: criterion
+title: Every pending mark held against the block-level cost estimate is ended or re-pointed with its reason
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Every entry the controller boards' constraints record marks pending against the block-level cost estimate is ended with its figure and source. These are the unmeasured fabrication and assembly charges, the JLCONE prices, the minimum quantity charged per part, and the shipping weight and cost. A mark that only a quoted order can settle is re-pointed to the design task of the board it belongs to, with that reason, and not deleted. Each document that restates an ended figure is brought to match in the same change. Out of scope: marks held against board design tasks for rail budgets, fuses and protective clearing times.
+links:
+  - target: SOL-HW-BOARD-COST-ESTIMATED
+    type: criterion-of

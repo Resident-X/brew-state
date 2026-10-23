@@ -1,0 +1,12 @@
+id: SOL-HW-CONTROLLER-MCU-SELECTED.C4
+type: criterion
+title: A board design built around a controller other than the selected part fails the pre-order board check
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Every tracked board design whose controller part differs from the selected part fails the pre-order board check. A design whose pin allocation names controller pins the selected part does not have also fails. The failure names the rule, the design and the offending part, as the check's other failures do, and it clears only when the design carries the selected part. The rule extends the existing pre-order board check and its record reading rather than adding a separate check. It is proven to fail on a fault seeded into a copy of a throwaway proof design, and every tracked design passes it. Proof designs marked not for manufacture are exempt only where their synthetic records say so. Out of scope: checks of the firmware's pin assignment, which already compare against the pin allocation record.
+links:
+  - target: SOL-HW-CONTROLLER-MCU-SELECTED
+    type: criterion-of

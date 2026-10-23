@@ -1,0 +1,12 @@
+id: SOL-HW-BOARD-COST-ESTIMATED.C2
+type: criterion
+title: The total is weighed against what remains of the declared spend, and an overrun is acted on rather than recorded
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |-
+  The sum of every estimate, together with spend to date, is weighed against what remains of the declared spend in the component specification, and the running total there is brought current. Where the total exceeds what remains, the estimate records what is changed to bring it inside, or that the owner is asked to revisit the declared figure. It is never left as an overrun noted and carried on. Out of scope: changing the declared figure, which only the owner does.
+links:
+  - target: SOL-HW-BOARD-COST-ESTIMATED
+    type: criterion-of
