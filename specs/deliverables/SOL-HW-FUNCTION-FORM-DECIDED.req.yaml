@@ -3,9 +3,13 @@ type: deliverable
 category: solution
 title: Each controller function is given its form, a designed circuit or a bought module, with its reason, and the figures held pending against that choice are recorded
 status: active
-version: 1
-text: |-
+version: 2
+text: |
   Decides, for every function the replacement electronics serve, whether it is a circuit the project designs or a module it buys, each with a reason weighed against the fixed constraints and the cost boundary, reopening every module of the earlier design, and records with its source each figure the controller boards' design-constraints record holds pending against that choice.
+
+  The forms settled for the four choices the record rests on are these. The controller's microcontroller is designed onto the controller board and assembled by the board manufacturer, not bought as a module, and the module of the earlier design is not kept; the part stays within the family the target build nominates, so the firmware's target build is unaffected, and the part itself is selected by the partition task's controller-selection criterion before any board's pin allocation. The coffee and steam elements are each switched by a bought zero-cross solid-state relay in one replaceable package, bolted with thermal paste to a heatsink on the machine's wall; it is a device the retrofit adds, outside the drop-in scope of the requirement that the electronics fit the machine as found, and its thermal judgement belongs to the design task for the assembly carrying it, against the assumed enclosure air temperature. The reason is that it is the circuit the project would otherwise build, an opto-triac, a triac and a snubber, bought complete as one bolt-on package with no heat spreader to design, and cheaper than a designed equivalent. The record proves the form with a branded relay whose manufacturer datasheet gives its isolation rating; the relay of the earlier design or any other may be fitted once its own rating is sourced and meets the target, and until then its rating counts as absent. The logic supply is a bought, certified, encapsulated AC-DC module soldered on the board, the carrier board is dropped, and the module is rated with margin over the logic-supply budget. Each mains-barrier part is recorded with the rating it is required to carry as a design target and proven feasible with one candidate whose figure is sourced from its manufacturer's current datasheet; the part fitted is selected by the board design task against that target, from the board manufacturer's catalogue, and nothing in the earlier design is selected by this record.
+
+  The record of forms is the machine's function-forms record beside the controller boards' design-constraints record. The pending marks in the constraints record that this choice ends are replaced there with their value, source and grade, and the component specification is changed only where it restates an ended figure.
 links:
   - target: DEL-HW-PARTITION-AND-FEASIBILITY.C1
     type: derives-from
