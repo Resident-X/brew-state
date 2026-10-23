@@ -1,0 +1,16 @@
+id: EV-SOL-HW-SEPARATION-BASIS-SIGNED-C4-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-SEPARATION-BASIS-SIGNED.C4
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-23T13:27:12.2699Z"
+artifact:
+  kind: external
+  reference: 'inspection: hardware/README.md section Re-deriving the separation basis for a different supply or altitude'
+  artifact_version: 10a6429fc9e40de837579abe4de480fd0bb7aef7
+attested_by: crun-f4c815f38fe3e1d7
+links:
+  - target: SOL-HW-SEPARATION-BASIS-SIGNED.C4
+    type: satisfies

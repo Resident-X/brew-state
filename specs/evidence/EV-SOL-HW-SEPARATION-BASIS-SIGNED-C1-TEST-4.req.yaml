@@ -1,0 +1,16 @@
+id: EV-SOL-HW-SEPARATION-BASIS-SIGNED-C1-TEST-4
+type: evidence
+title: test evidence for SOL-HW-SEPARATION-BASIS-SIGNED.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-23T13:27:11.69519Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_separation_basis_record.py::test_a_figure_below_its_floor_is_caught_by_the_same_rule
+  artifact_version: 10a6429fc9e40de837579abe4de480fd0bb7aef7
+attested_by: crun-f4c815f38fe3e1d7
+links:
+  - target: SOL-HW-SEPARATION-BASIS-SIGNED.C1
+    type: satisfies
