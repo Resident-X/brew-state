@@ -110,10 +110,10 @@ graph. What this document adds is that it is no longer only an unbuilt requireme
 device the actuation scheme demands actively worsens the failure mode it protects against, so the two
 are coupled in a way they were not when the heaters were switched by relays.
 
-Both elements sit downstream of a per-block series thermostat and a one-shot thermal device, neither
-of which the controller can reach (`DEC-HEATER-DRIVE-GATED-BY-SUPERVISION`). Those bound the hazard;
-they do not satisfy the criterion, which is about the controller's own failure rather than the
-temperature's.
+Both elements sit downstream of a per-block series thermostat, which the controller cannot reach
+(`DEC-HEATER-DRIVE-GATED-BY-SUPERVISION`). Whether a one-shot thermal device is also fitted is not
+established, and nothing here relies on one. The thermostat bounds the hazard; it does not satisfy
+the criterion, which is about the controller's own failure rather than the temperature's.
 
 ## What the supply-timing front end needs
 
@@ -191,7 +191,7 @@ The controller is the **STM32H743VIT6** from STMicroelectronics: an Arm Cortex-M
 
 | Anticipated channel | Where it comes from | Costs |
 |---|---|---|
-| Brew-path pressure transducer | `REQ-MEASUREMENT-001.C7` requires brew pressure measured rather than inferred; no decision has yet added a part. The same class and interface as the steam-path transducer: an XDB401-class transducer on a second I²C bus, since the part's address is fixed (`controller-design/decisions.md` D12) | 2 digital pins for the second bus; the analogue fallback through a spare analogue input costs 1 conversion input |
+| Brew-path pressure transducer | `REQ-MEASUREMENT-001.C7` requires brew pressure measured rather than inferred; `DEC-BREW-PRESSURE-SENSOR-IS-RETAINED-FOR-PRESSURE-MAP-AND-DRIFT` keeps a brew pressure sensor as the complement of the flow meter, so the channel stays and the part is not selected here. The same class and interface as the steam-path transducer: an XDB401-class transducer on a second I²C bus, since the part's address is fixed (`controller-design/decisions.md` D12) | 2 digital pins for the second bus; the analogue fallback through a spare analogue input costs 1 conversion input |
 | Current sensing | Recorded in `controller-io.md` § Channels not enumerated as not fitted and not decided | 1–2 conversion inputs |
 | Weight-based endpoint control | Named in `REQ-HARDWARE-HEADROOM-001` as the immediate deferred capability. Up to two load-cell channels, two HX711-class amplifiers on about four digital pins or one two-channel converter, for a drip-tray platform, so one single-point platform cell or two cells summed serve a cup placed anywhere on the tray. An external Bluetooth scale is the alternative and belongs to the display unit, which owns the network-facing surface (`DEC-NETWORK-SURFACE-IS-A-SEPARATE-DISPLAY-UNIT`). The open-source survey of 2026-10-23 is concepts only: Gaggiuino and GaggiMate (load cells with HX711-class amplifiers, plus Bluetooth scales), Decent openscale and ESPresso Scale (ADS1232, Bluetooth scales) | About 4 digital pins to up to two load-cell amplifiers |
 | Direct group-head instrumentation | Named in the same requirement as the general case | 1–2 conversion inputs |

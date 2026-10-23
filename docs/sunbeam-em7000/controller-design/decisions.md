@@ -1,5 +1,7 @@
 # Decisions and facts log
 
+> **[History of the bought-module design, written 2026-10-12. Its statements that nothing here is in the graph, and any module choice, predate the controller baseline decision and the function-forms record; this folder loses where it disagrees with them. Role and precedence: README.md.]**
+
 Written 2026-10-12 at the close of the controller-design discussion session (staircase session `3CD30AB4-5763-4EE0-8610-FD0C090674AA`, project `brew-state`). It is the single record of what has been decided, what is only the owner's statement, and what is a recommendation awaiting a decision. Nothing here is in the graph yet.
 
 Status words used throughout this folder:

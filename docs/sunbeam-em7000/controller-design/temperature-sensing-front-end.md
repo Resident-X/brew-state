@@ -1,5 +1,7 @@
 # Temperature and pressure sensing front end
 
+> **[Source the custom board draws on, written for the bought-module design. Module choices in it are history; this folder loses where it disagrees with the graph or the record documents. Role and precedence: README.md.]**
+
 Refreshed 2026-10-12 from the earlier working notes, against `decisions.md` (which supersedes older text) and the current design data (`control-system-bom.csv`, `part-numbers.csv`, `passive-and-drive-components.csv`, `h743-pin-allocation.csv`, `module-interconnect.csv`). **Not baselined, not traced to any criterion, and not evidence for anything.** Nothing here has been authored in the graph. Provenance tags: parts list, schematic, owner statement, inferred, unmeasured, chosen, to confirm.
 
 ## 1. Current position and why

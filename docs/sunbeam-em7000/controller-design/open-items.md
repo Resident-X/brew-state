@@ -1,6 +1,8 @@
 # Open items
 
-Ranked by what blocks what. Written 2026-10-12. Status words are defined in `decisions.md`. Nothing here is in the graph.
+> **[History of the bought-module design, written 2026-10-12. Its statements that nothing here is in the graph, and any module choice, predate the controller baseline decision and the function-forms record; this folder loses where it disagrees with them. Role and precedence: README.md.]**
+
+Ranked by what blocks what. Written 2026-10-12. Status words are defined in `decisions.md`. These are working notes of the module design; the graph's decisions, including `DEC-CONTROLLER-BASELINE-STM32H743`, govern (README.md).
 
 ## A. Machine inspection (one session with calipers, a pitch gauge, a torch and a meter)
 
@@ -44,9 +46,9 @@ These settle most of the hydraulic unknowns and should be done before any plumbi
 - **A vent state per mode table** (idle, flush, shot, hot water, steam, fault).
 - Whether to fit the optional test tee on the vent branch.
 
-## D. Graph work (nothing authored)
+## D. Graph work (as written on 2026-10-12; check the graph before acting on any item)
 
-Each node must be read with `show` before linking, and existing coverage checked first.
+Each node must be read with `show` before linking, and existing coverage checked first. Several items below have since been covered by graph nodes (the controller baseline, the brew pressure sensor, the in-stream probes); search the graph before authoring.
 
 - A decision adding the brew pressure transducer; `REQ-MEASUREMENT-001.C7` has no inbound `addresses` link. The precedent is `DEC-STEAM-PRESSURE-SENSOR-ADDED`.
 - A decision adding the outlet water temperature probe (the declared sensing list in `SOL-CHANNEL-ENUMERATION-CORRECTED.C1` is three NTCs). `DEC-DEVICE-RETENTION-BOUNDARY` is unaffected because the NTCs stay.
@@ -62,7 +64,7 @@ Each node must be read with `show` before linking, and existing coverage checked
 - **Overtaken by `DEC-PROOF-OF-LIFE-INTERLOCK-IN-FIRST-HARDWARE` (2026-10-18): the interlock is built into the first controller hardware, not deferred.** The proof-of-life interlock, deferred: downstream zero-cross sensing can verify that the master relay opened but cannot be the trip path, since `REQ-SAFETY-CHAIN-001` requires the chain to owe nothing to the controller or firmware.
 - The accuracy-versus-speed axis for temperature sensing, which nothing in the graph rules on, and recalibration as a maintenance activity, which follows from using a sensor that drifts.
 
-- **Stale slice files are cited by the graph.** 22 spec files cite `docs/sunbeam-em7000/controller-io.md`, 6 cite `component-specification.md`, 2 cite `controller-io-bom.csv` and 1 cites `control-board-electrical-requirements.csv` (evidence nodes such as `EVD-SOL-CHANNEL-MEASUREMENT-FIGURES.C1-INSPECTION`, solutions such as `SOL-CONTROLLER-CHANNEL-ENUMERATION`, and `DEC-U8-BOARD-RETENTION-UNVERIFIED`); `reference-machine.md` is cited by 24 and `connector-pinouts.md` by 5. Those nodes verified the old content. Deleting or rewriting the old files would orphan or invalidate that evidence. The graph work has to decide, node by node, whether to supersede the cited nodes against the refreshed files in this folder, repoint them, or leave the old files as the historical record. Read each node with `show` first.
+- **Stale slice files are cited by the graph. Resolved by the reconciliation of this folder.** The root documents `controller-io.md`, `component-specification.md`, `controller-io-bom.csv` and `control-board-electrical-requirements.csv` stay where they are, because graph nodes cite them by path, and they are the current record: the root enumeration governs its two derived views, and this folder's same-named copies are older forks. Each difference between a copy and its root document was classified, and either carried into the root document or marked in place as superseded, in `_carry-forward/reconciliation.md`. No graph node cites a path that no longer exists, so no node needs repointing.
 
 ## E. Housekeeping and unresolved items from the refresh
 
@@ -75,9 +77,9 @@ Each node must be read with `show` before linking, and existing coverage checked
 - PC6 is both the S8 switch input and the optional USART6 TX; it only matters if the BL0942 meters need a transmit line.
 - Whether the gauge step clocks need timer outputs (the allocation assigns plain GPIO).
 - Whether the OEM valves are kept or the BOM's valve rows are replacements; the owner's statement on the three-way valve (a planned replacement, nothing bought) is recorded in `../controller-board-design-constraints.md` § Purchases ahead of verification, and the question stands for the other valve; the BOM is in AUD against a declared 250 USD figure, so no total is given.
-- Whether the graph has changed since the old text on `DEC-PREHARDWARE-TARGET-FAMILY`, the zero-cross enumeration row and `SOL-CHANNEL-ENUMERATION-CORRECTED.C4`.
+- The controller choice is now recorded in `DEC-CONTROLLER-BASELINE-STM32H743`, which supersedes `DEC-PREHARDWARE-TARGET-FAMILY`. Whether the graph has changed since the old text on the zero-cross enumeration row and `SOL-CHANNEL-ENUMERATION-CORRECTED.C4` is not re-read here; the root `controller-io.md` is the current enumeration.
 
 - Harness connector families are not identified (pitch, ways and first pin of every retained connector are recorded in `../connector-pinouts.md`); panel and gauge parts are not specified.
 - The rail-gate and buzzer stage parts are in the BOM; the relay module's snubber count is 2.
 - All prices are estimates; no catalogue numbers have been checked against stock.
-- The old `controller-selection-working/` folder has been removed (git history, commit `07913f4`). The four stale slice files in `docs/sunbeam-em7000/` (`controller-io.md`, `component-specification.md`, `controller-io-bom.csv`, `control-board-electrical-requirements.csv`) are superseded in content by this folder but are cited by path from graph nodes, so they stay until the graph is dealt with (section D).
+- The old `controller-selection-working/` folder has been removed (git history, commit `07913f4`). The four slice files in `docs/sunbeam-em7000/` (`controller-io.md`, `component-specification.md`, `controller-io-bom.csv`, `control-board-electrical-requirements.csv`) are the current record and stay where they are, because graph nodes cite them by path; this folder's copies of them are history (see D and README.md).
