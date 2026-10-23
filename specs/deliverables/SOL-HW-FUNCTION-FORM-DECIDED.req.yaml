@@ -45,6 +45,10 @@ links:
     type: depends-on
   - target: SOL-HW-ENCLOSURE-AIR-ASSUMED-RECORDED
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: 4b7b8983b2ee365dccc9639795fce2a8db56e9e20b6061114e9b8d31241c61ef
+  gating_profile: ""
 design_question_answers:
   - answered_by: SOL-HW-FUNCTION-FORM-DECIDED.C1
     class: whole-set
