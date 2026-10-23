@@ -108,11 +108,12 @@ def run_module(module: str, directory: str, cwd: str | None = None) -> dict:
         status, output = done.returncode, done.stdout + done.stderr
     except OSError as error:
         status, output = 1, f"could not start: {error}\n"
-    counted = re.search(r"^Ran (\d+) tests? in ", output, re.MULTILINE)
+    # unittest prints its own summary last, so an earlier one is a nested run's the module printed
+    counted = re.findall(r"^Ran (\d+) tests? in ", output, re.MULTILINE)
     return {
         "module": module,
         "status": status,
-        "tests": int(counted.group(1)) if counted else 0,
+        "tests": int(counted[-1]) if counted else 0,
         "seconds": time.monotonic() - started,
         "output": output,
     }
