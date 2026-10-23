@@ -4754,8 +4754,8 @@ class AMissingToolIsNamedByEveryModuleOfBoardTests(Tree):
     """A module of board tests that cannot find KiCad or the rasteriser stops with a line naming it, as every board command does."""
 
     TESTS = os.path.dirname(os.path.abspath(__file__))
-    KICAD_ONLY = ("test_board_check_kicad_discovery", "test_locked_copper", "test_review_seed")
-    WITH_RASTERISER = ("test_board_views", "test_board_placement")
+    KICAD_ONLY = ("test_board_check_kicad_discovery", "test_locked_copper_recording", "test_review_seed")
+    WITH_RASTERISER = ("test_board_views_rendering", "test_board_placement")
 
     def run_module(self, module: str, **environment):
         return subprocess.run([sys.executable, "-m", "unittest", module], cwd=self.TESTS, capture_output=True, text=True,
@@ -4894,7 +4894,7 @@ class TheRoundRunsTheToolingTestsWithoutTheSeededFaultProof(unittest.TestCase):
         round_task, full_task = self.task_block("hw:test:round"), self.task_block("hw:test")
         self.assertIn(f'      {self.module.WITHOUT_PROOF}: "1"', round_task)
         self.assertNotIn(self.module.WITHOUT_PROOF, full_task)
-        discovery = "python3 {{.FW_DIR}}/tools/run_tool_tests.py --tests {{.HW_DIR}}/tools/tests --cwd . --worker-cap 6 {{.CLI_ARGS}}"
+        discovery = "python3 {{.FW_DIR}}/tools/run_tool_tests.py --tests {{.HW_DIR}}/tools/tests --cwd . --worker-cap 4 {{.CLI_ARGS}}"
         self.assertIn(discovery, round_task)
         self.assertIn(discovery, full_task)
         for text in (round_task, full_task):

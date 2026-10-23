@@ -20,7 +20,7 @@ sys.path.insert(0, TOOLS)
 
 import board_prove  # noqa: E402
 from board_kicad_fixtures import load_tests, setUpModule  # noqa: E402,F401
-from board_kicad_fixtures import Copy, KICAD_CLI, Proved, outcomes  # noqa: E402
+from board_kicad_fixtures import Copy, KICAD_CLI, Proved, SharedCopy, outcomes  # noqa: E402
 
 
 
@@ -195,7 +195,7 @@ class TheTrackedDesignsPassTheFiducialAndPolarityMarkRules(unittest.TestCase):
 
 
 
-class TheCleanDesignStatesTheFiguresOfTheDecouplingAndSilkscreenRules(Copy):
+class TheCleanDesignStatesTheFiguresOfTheDecouplingAndSilkscreenRules(SharedCopy):
     # SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C3: Each rule the method proof design's review adds fails on a fault seeded for it and passes the clean design
     """The report states the two inherent zeros, and how much of the layout the decoupling rule measured."""
 

@@ -20,6 +20,7 @@ choosing that.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import subprocess
@@ -116,3 +117,53 @@ class Copy(unittest.TestCase):
                         board_prove.NAME + ".kicad_pcb"], cwd=self.seed.design, check=True, capture_output=True)
         with open(out, encoding="utf-8") as handle:
             return json.load(handle)
+
+
+def tree_fingerprint(root: str) -> str:
+    """A hash of the names and contents of every file under `root`, the git folder aside, whose own files git rewrites when it only reads."""
+    digest = hashlib.sha256()
+    for directory, folders, files in os.walk(root):
+        folders[:] = sorted(folder for folder in folders if folder != ".git")
+        for file in sorted(files):
+            path = os.path.join(directory, file)
+            digest.update(os.path.relpath(path, root).encode("utf-8") + b"\0")
+            with open(path, "rb") as handle:
+                digest.update(handle.read())
+            digest.update(b"\0")
+    return digest.hexdigest()
+
+
+class SharedCopy(unittest.TestCase):
+    """A copy of the proof design, and the result of checking it, made once for the class and shared by its tests.
+
+    For a class whose tests only read the copy and that result. A test that
+    changes its copy, seeding a fault or editing a file, derives from Copy
+    instead and has a copy of its own. The copy is fingerprinted once the class
+    has made it, and verified unchanged after each test, so a test that changed
+    what the others share fails by name.
+    """
+
+    @classmethod
+    def prepare_seed(cls, root: str):
+        return board_prove.prepare(root)
+
+    @classmethod
+    def setUpClass(cls):
+        scratch = tempfile.TemporaryDirectory(prefix="board-test-")
+        cls.addClassCleanup(scratch.cleanup)
+        cls.scratch = scratch
+        cls.seed = cls.prepare_seed(scratch.name)
+        cls.result = board_prove.check(cls.seed, KICAD_CLI)
+        cls.fingerprint = tree_fingerprint(scratch.name)
+
+    def tearDown(self):
+        self.assertEqual(self.fingerprint, tree_fingerprint(self.scratch.name),
+                         "this test changed the copy of the design its class shares")
+
+    def check(self):
+        status, lines, stderr = self.result
+        self.assertNotEqual(status, 2, stderr)
+        return status, lines
+
+    def violations(self, lines):
+        return [line.split(" | ") for line in lines if line.startswith("VIOLATION | ")]
