@@ -1,8 +1,13 @@
 # The separation basis record of the Sunbeam EM7000 machine: the one figure for the distance
 # between mains-referenced and low-voltage conductors that every board design in this folder
-# is held to, read by the pre-order board check. Drafted, not accepted: accepted_by and
-# accepted_on are left out until the owner signs, in their own act, under the identity the
-# project records their acts under. Whoever drafts this record does not write them.
+# is held to, read by the pre-order board check. Accepted by the owner under the identity the
+# project records their acts under. The owner instructed the drafting assistant in session on
+# 2026-10-24 (local time): "Sign it in my behalf as me, I accept", after being told that
+# the owner's acceptance criterion has the owner enter the values themselves, and offered to
+# prepare the lines blank. accepted_by and accepted_on were entered on that
+# instruction; accepted_on is the UTC date, as the check refuses a date later than the day it
+# runs. The commit that adds them is the audit trail. A change to any figure, input or barrier
+# needs a fresh acceptance.
 #
 # The tables are those of IEC 60664-1 (insulation coordination for equipment within
 # low-voltage supply systems), Annex F. The standard is copyrighted and not reproduced; each
@@ -46,6 +51,8 @@ material_group: IIIb
 environment: "household appliance interior; water, steam and repeated heating and cooling at and around the enclosure; condensation possible; boards uncoated and not protected against moisture"
 overvoltage_category: 2
 altitude_m: 2000
+accepted_by: david
+accepted_on: 2026-10-23
 barriers:
   - supply-module
   - heater-switch
