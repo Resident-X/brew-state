@@ -1,5 +1,7 @@
 # Hydraulic lines, tank to outlet
 
+> **[Source the custom board draws on, written for the bought-module design. Module choices in it are history; this folder loses where it disagrees with the graph or the record documents. Role and precedence: README.md.]**
+
 Every device in order on each line of the replacement design, with where it comes from. It is built from `reference-machine.md`, the service manual parts list and schematic, the owner's statements of 2026-10-11/12 and the replacement design (`decisions.md`). Where the files do not establish an item or its position it says **UNESTABLISHED**; it does not fill the gap from typical coffee-machine practice.
 
 Provenance tags: **[PL]** service manual parts list, position not stated; **[SCH]** read from the service manual circuit diagram; **[OWN]** owner statement, not confirmed on the machine; **[INF]** inferred; **[ADD]** added by the replacement design; **[WEB]** published, unverified. "Retained" means the base-machine part stays; "new" means the base machine lacks it.

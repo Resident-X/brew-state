@@ -1,0 +1,16 @@
+id: EV-SOL-CONTROLLER-DESIGN-FOLDER-RECONCILED-WITH-RECORD-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-CONTROLLER-DESIGN-FOLDER-RECONCILED-WITH-RECORD.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-23T11:57:18.550536Z"
+artifact:
+  kind: external
+  reference: 'docs/sunbeam-em7000/controller-design/README.md (rewritten): names DEC-CONTROLLER-BASELINE-STM32H743, root controller-io.md, component-specification.md, controller-board-function-forms.md, controller-board-design-constraints.md and hardware/README.md as where the design now is; gives every file in the folder a role (source, history or change record); makes no claim to supersede the root documents. Banners on decisions.md, system-design.md, open-items.md, pcb-plan.md, hydraulic-lines.md, heater-drive-and-supply-timing.md, mains-inlet-protection.md, temperature-sensing-front-end.md, module-interconnect.csv'
+  artifact_version: 6e74607e373883c4d9d7b22a88a069b3a74aa5aa
+attested_by: crun-b2dad67e0df18ca8
+links:
+  - target: SOL-CONTROLLER-DESIGN-FOLDER-RECONCILED-WITH-RECORD.C2
+    type: satisfies

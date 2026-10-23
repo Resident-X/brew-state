@@ -1,0 +1,14 @@
+id: REQ-HARDWARE-HEADROOM-001.C5
+type: criterion
+title: Channels the controller reads directly are not limited in resolution below what the control may need
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The controller does not become the limit on how finely a directly read channel can be resolved. The accuracy the control needs from each such channel is not yet established, and reversing the choice once boards are made means rebuying them, so the converter the controller provides leaves resolution in hand beyond what the channel is assumed to need today. A channel that needs more than any converter of the controller offers is read by a dedicated converter instead, and room for that converter is reserved.
+
+  Out of scope: which converter or resolution is chosen, and the accuracy the control needs, which measurement on the built machine establishes.
+links:
+  - target: REQ-HARDWARE-HEADROOM-001
+    type: criterion-of

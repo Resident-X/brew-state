@@ -2,11 +2,13 @@ id: SOL-HW-CONTROLLER-MCU-SELECTED.C4
 type: criterion
 title: A board design built around a controller other than the selected part fails the pre-order board check
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |-
   Every tracked board design whose controller part differs from the selected part fails the pre-order board check. A design whose pin allocation names controller pins the selected part does not have also fails. The failure names the rule, the design and the offending part, as the check's other failures do, and it clears only when the design carries the selected part. The selected part is recorded in a record the board check reads, and the keys of that record are defined by an amendment to the design-records decision made in the same change, since the check refuses a key no decision names. The rule extends the existing pre-order board check rather than adding a separate check. It is proven to fail on a seeded fault, and every tracked design passes it. Proof designs marked not for manufacture are exempt only where their synthetic records say so. Out of scope: checks of the firmware's pin assignment, which already compare against the pin allocation record.
+
+  The record holds the maker's orderable part number, the catalogue number, and the port-pin names the part has, with an optional synthetic marker. The check identifies the controller as every placed part with a port-pin-named pin, and its catalogue-number field must equal the record's. A design that places no such part passes. A design that places one and has no record fails. Each proof design is exempt only through a synthetic record that names its own synthetic controller.
 links:
   - target: SOL-HW-CONTROLLER-MCU-SELECTED
     type: criterion-of

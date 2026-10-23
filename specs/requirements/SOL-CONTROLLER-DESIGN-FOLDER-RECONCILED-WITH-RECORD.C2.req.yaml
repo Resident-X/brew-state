@@ -1,0 +1,12 @@
+id: SOL-CONTROLLER-DESIGN-FOLDER-RECONCILED-WITH-RECORD.C2
+type: criterion
+title: The earlier design folder's entry document states where the design now is and what each retained file is for
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The entry document names the controller baseline decision, the function-forms record, the design-constraints record and the board designs as where the design now is, and gives each retained file a role: a source the custom board draws on, history of the module-based design, or a change record. It makes no claim that the folder's files supersede the root documents. Out of scope: rewriting the retained files themselves beyond a stale-section banner.
+links:
+  - target: SOL-CONTROLLER-DESIGN-FOLDER-RECONCILED-WITH-RECORD
+    type: criterion-of

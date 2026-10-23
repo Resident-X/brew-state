@@ -1,0 +1,16 @@
+id: EV-SOL-CONTROLLER-DESIGN-FOLDER-RECONCILED-WITH-RECORD-C1-INSPECTION
+type: evidence
+title: inspection evidence for SOL-CONTROLLER-DESIGN-FOLDER-RECONCILED-WITH-RECORD.C1
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-23T11:57:18.475512Z"
+artifact:
+  kind: external
+  reference: docs/sunbeam-em7000/controller-design/_carry-forward/reconciliation.md sections 1-4 (one row per passage group classified carried or superseded), 6 (facts carried) and 7; the copies marked in place in controller-design/controller-io.md, component-specification.md, controller-io-bom.csv and control-board-electrical-requirements.csv; carried facts in root controller-io.md. No copy removed. Cold review's four issues fixed in 6e74607e
+  artifact_version: 6e74607e373883c4d9d7b22a88a069b3a74aa5aa
+attested_by: crun-b2dad67e0df18ca8
+links:
+  - target: SOL-CONTROLLER-DESIGN-FOLDER-RECONCILED-WITH-RECORD.C1
+    type: satisfies

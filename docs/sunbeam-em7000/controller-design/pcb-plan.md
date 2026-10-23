@@ -1,5 +1,7 @@
 # PCB plan
 
+> **[History of the bought-module design, written 2026-10-12. Its statements that nothing here is in the graph, and any module choice, predate the controller baseline decision and the function-forms record; this folder loses where it disagrees with them. Role and precedence: README.md.]**
+
 Written 2026-10-12. This is a recommendation, not a decision (D21 in `decisions.md`), and it is the starting input for the discussion of what the graph should hold for an AI-assisted PCB manufacture method.
 
 **Superseded 2026-10-12.** The through-hole, hand-soldered, low-voltage-only plan below was replaced in discussion session `93DF4C50-C8BE-40D9-82BE-9E17E063C7E8` by the graph epic `DEL-CONTROLLER-HARDWARE`: designed boards, factory-assembled, with mains switching on its own board where the partition task decides. Kept as the record of the earlier position and of the footprint facts it lists.

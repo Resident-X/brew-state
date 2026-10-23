@@ -1,0 +1,16 @@
+id: EV-SOL-HW-CONTROLLER-MCU-SELECTED-C5-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-CONTROLLER-MCU-SELECTED.C5
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-23T10:23:56.459324Z"
+artifact:
+  kind: external
+  reference: 'grep -rniE ''f407|stm32f4|ds8626|an4488'' docs/sunbeam-em7000 --exclude-dir=controller-design --include=''*.md'' --include=''*.csv'': every remaining hit sits in a sentence saying that part is not chosen (component-specification.md, controller-board-function-forms.md, controller-board-design-constraints.md)'
+  artifact_version: 8249bdab7fb96379a2de88ea985ad09c4107c93a
+attested_by: crun-0b5de09e448908f2
+links:
+  - target: SOL-HW-CONTROLLER-MCU-SELECTED.C5
+    type: satisfies

@@ -1,5 +1,7 @@
 # Mains inlet protection
 
+> **[Source the custom board draws on, written for the bought-module design. Module choices in it are history; this folder loses where it disagrees with the graph or the record documents. Role and precedence: README.md.]**
+
 Refreshed 2026-10-12 from `decisions.md` (which supersedes older text), the current design data in this folder, and the earlier working note of the same name. **Not baselined, not traced to any criterion, and not evidence for anything.** It records why the inlet parts and the 5 V supply were chosen and, more usefully, which variants of them are wrong, because most of the cost of this decision was spent discovering that the obvious part numbers are the wrong ones.
 
 Chosen parts (`decisions.md`): inlet is the Schaffner FN9222-15-06 with a T10A slow-blow on the active and an RN3404 MOV (D8, Chosen; filter and trunk rated above the fuse by `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`). The supply is one Mean Well IRM-10-5 on a hand-cut single-sided copper-clad carrier, a recommended (not required) T2A slow-blow fuse, and an output of 100 nF and 47-100 uF (D7, Chosen).

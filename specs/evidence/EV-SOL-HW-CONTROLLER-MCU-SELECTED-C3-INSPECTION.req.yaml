@@ -1,0 +1,16 @@
+id: EV-SOL-HW-CONTROLLER-MCU-SELECTED-C3-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-CONTROLLER-MCU-SELECTED.C3
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-23T10:23:56.388864Z"
+artifact:
+  kind: external
+  reference: docs/sunbeam-em7000/component-specification.md section 'What the selection means for the firmware' (target build, seam implementation, emulation tier; carried by DEL-FIRMWARE-TARGET-ON-SELECTED-CONTROLLER) and controller-board-function-forms.md Controller Firmware row
+  artifact_version: 8249bdab7fb96379a2de88ea985ad09c4107c93a
+attested_by: crun-0b5de09e448908f2
+links:
+  - target: SOL-HW-CONTROLLER-MCU-SELECTED.C3
+    type: satisfies

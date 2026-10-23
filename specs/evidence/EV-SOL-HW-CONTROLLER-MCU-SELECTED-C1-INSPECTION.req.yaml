@@ -1,0 +1,16 @@
+id: EV-SOL-HW-CONTROLLER-MCU-SELECTED-C1-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-CONTROLLER-MCU-SELECTED.C1
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-23T10:23:56.241471Z"
+artifact:
+  kind: external
+  reference: docs/sunbeam-em7000/component-specification.md sections 'The part selected', 'What the selected part provides', 'Room for the channels the graph anticipates', 'The component list' (Controller row), 'Against the declared figure'; plus controller-board-function-forms.md section Controller and controller-board-design-constraints.md section 'Manufacturer stock and price' (Controller)
+  artifact_version: 8249bdab7fb96379a2de88ea985ad09c4107c93a
+attested_by: crun-0b5de09e448908f2
+links:
+  - target: SOL-HW-CONTROLLER-MCU-SELECTED.C1
+    type: satisfies

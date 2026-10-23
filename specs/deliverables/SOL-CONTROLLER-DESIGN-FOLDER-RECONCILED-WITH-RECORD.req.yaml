@@ -1,0 +1,23 @@
+id: SOL-CONTROLLER-DESIGN-FOLDER-RECONCILED-WITH-RECORD
+type: deliverable
+category: solution
+title: The earlier design folder is reconciled with the live machine record so the documents say where the design now is
+status: active
+version: 1
+text: |
+  Reconciles the earlier bought-module design folder with the machine record it sits beside. That folder holds two kinds of content: parts and design data the custom controller board still draws on, and the module-based design the board replaces. Its entry document says its files supersede the record's root documents, but the root documents were kept current and the folder's same-named copies were not, so the claim is backwards and a reader cannot tell which governs. The solution makes the entry document state where the design now is (the controller baseline decision, the function-forms and design-constraints records, and the board designs), marks what each retained file is for, compares each same-named copy with its live root document and carries every difference that still holds into the root document or marks it superseded before the copy is removed or bannered, and brings the root derived views into agreement with the sources that govern them. Documents that graph nodes cite by path are not moved; a path that goes away is first replaced in every node that cites it.
+
+  Out of scope: the controller selection and the board designs, which other nodes carry.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-MACHINE-RECORD-001.C3
+    type: targets
+  - target: DEC-MACHINE-RECORD-FOLDER-PER-MACHINE
+    type: justified-by
+  - target: DEC-CONTROLLER-BASELINE-STM32H743
+    type: justified-by
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 brief reviewer
+  fingerprint: 761130ea1734e43cf1b9fbda491bfa2a48e821f472f73a0b3d68fcbd599288ac
+  gating_profile: ""

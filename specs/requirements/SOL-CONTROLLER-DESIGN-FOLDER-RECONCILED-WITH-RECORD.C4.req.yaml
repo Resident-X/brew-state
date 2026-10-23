@@ -1,0 +1,12 @@
+id: SOL-CONTROLLER-DESIGN-FOLDER-RECONCILED-WITH-RECORD.C4
+type: criterion
+title: Every graph node that cites a document path cites a path that exists
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  After any document is removed or moved, no node cites its former path: each citing node and evidence record names the surviving document or the commit that holds the removed one. Out of scope: documents that stay where they are.
+links:
+  - target: SOL-CONTROLLER-DESIGN-FOLDER-RECONCILED-WITH-RECORD
+    type: criterion-of

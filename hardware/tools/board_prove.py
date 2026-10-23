@@ -311,6 +311,25 @@ def repeat_symbol(reference: str):
     return lambda seed: seed.schematic(edit)
 
 
+def second_controller(reference: str, number: str):
+    """A second controller, a copy of the symbol at `reference` renamed and carrying the catalogue number `number`."""
+    def edit(tree: list) -> None:
+        for index, symbol in enumerate(tree):
+            if sexpr.head(symbol) == "symbol" and any(
+                    len(prop) > 2 and prop[1] == "Reference" and prop[2] == reference
+                    for prop in sexpr.children(symbol, "property")):
+                twin = copy.deepcopy(symbol)
+                rename_in(twin, reference, reference + "B")
+                sexpr.child(twin, "uuid")[1] = sexpr.Quoted("0b0e5c1a-0000-4000-8000-0000000000e6")
+                for prop in sexpr.children(twin, "property"):
+                    if len(prop) > 2 and prop[1] == "LCSC":
+                        prop[2] = sexpr.Quoted(number)
+                tree.insert(index + 1, twin)
+                return
+        raise AssertionError(f"the proof schematic has no symbol {reference}")
+    return lambda seed: seed.schematic(edit)
+
+
 def parts(old: str, new: str):
     return lambda seed: seed.replace("parts-specification.yaml", old, new)
 
@@ -1367,6 +1386,22 @@ FAULTS: List[tuple] = [
     ("a pin allocation entry lacking its controller pin", "pin allocation: a record missing a required key fails", "pin_allocation", "the entry lacks controller_pin", pin_record("    controller_pin: PA0\n", "")),
     ("a pin allocation entry naming a connector without its pin", "pin allocation: a record missing a required key fails", "pin_allocation", "gives only one of connector and connector_pin", pin_record("    connector_pin: 1\n", "")),
     ("a synthetic pin allocation record applied to a design not marked not for manufacture", "pin allocation: a synthetic record cannot pass an orderable board", "pin_allocation", "marked synthetic", variables(lambda v: v.pop("NOT_FOR_MANUFACTURE"))),
+    # Controller part
+    ("a controller whose catalogue number differs from the controller part record", "controller part: a controller other than the selected part fails", "controller_part", "the controller U1 has the catalogue number C9000005, where the controller part record names C9000099",
+     lambda seed: seed.replace("controller-part.yaml", 'lcsc: "C9000005"', 'lcsc: "C9000099"')),
+    ("a controller with no LCSC field", "controller part: a controller whose catalogue number is absent fails", "controller_part", "the controller U1 has no LCSC field", drop_field("U1", "LCSC")),
+    ("a pin allocation entry naming a pin the controller part record omits", "controller part: a channel on a pin the selected part does not have fails", "controller_part", "channel lv_b names controller pin PA1, which the selected SYNTHETIC-CTRL does not have",
+     lambda seed: seed.replace("controller-part.yaml", "  - PA1\n", "")),
+    ("a controller part record that does not exist", "controller part: a design placing a controller with no record fails", "controller_record", "there is no controller-part.yaml", remove("controller-part.yaml")),
+    ("a controller part record that cannot be parsed", "controller part: the record is readable", "controller_record", "cannot be parsed", lambda seed: seed.replace("controller-part.yaml", "pins:\n", "pins: [unclosed\n")),
+    ("a controller part record lacking its catalogue number", "controller part: a record missing a required key fails", "controller_record", "lacks lcsc", lambda seed: seed.replace("controller-part.yaml", 'lcsc: "C9000005"\n', "")),
+    ("a controller part record holding a key no decision names", "controller part: the record is read only in its one form", "controller_record", "holds the key 'package'", lambda seed: seed.replace("controller-part.yaml", "synthetic: true\n", "synthetic: true\npackage: LQFP144\n")),
+    ("a controller part record listing a pin twice", "controller part: a pin is listed once", "controller_record", "lists the pin 'PA0' more than once", lambda seed: seed.replace("controller-part.yaml", "  - PA1\n", "  - PA1\n  - PA0\n")),
+    ("a synthetic controller part record applied to a design not marked not for manufacture", "controller part: a synthetic record cannot pass an orderable board", "controller_record", "marked synthetic", variables(lambda v: v.pop("NOT_FOR_MANUFACTURE"))),
+    ("a controller part record not marked synthetic in the design's own folder", "controller part: a record nearer the design than the machine's cannot stand in for it", "controller_record", "is not marked synthetic and is not in the machine's own folder",
+     lambda seed: seed.replace("controller-part.yaml", "synthetic: true\n", "synthetic: false\n")),
+    ("a second controller whose catalogue number differs from the controller part record", "controller part: every controller is held to the record", "controller_part", "the controller U1B has the catalogue number C9000077, where the controller part record names C9000005",
+     second_controller("U1", "C9000077")),
     # Parts
     ("a part whose value differs from the specification record", "parts: a stated property that differs fails", "parts_part", "R1 value differs: the record states '100k' and the design has '1M'",
      lambda seed: seed.replace(".kicad_sch", '(property "Value" "100k"', '(property "Value" "1M"')),

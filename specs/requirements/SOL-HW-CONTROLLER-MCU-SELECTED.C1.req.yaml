@@ -2,11 +2,11 @@ id: SOL-HW-CONTROLLER-MCU-SELECTED.C1
 type: criterion
 title: The microcontroller is selected as a specific orderable part with its reason, source and cost
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |-
-  The selection names one orderable microcontroller part. It gives the reason the part serves every channel of the channel enumeration at once, in timing, conversion and communication resources, and the anticipated channels, with the headroom the project must preserve. The reason is judged against the component specification's controller row and its resource assessment, which are cited rather than restated. The part's figures are read from the manufacturer's current datasheet, with its revision or read date. Its stock, library class and unit price are read from the board manufacturer's catalogue, with the read date. The component specification's controller row records the part chosen, its provenance and its cost, and its running total against the declared spend is brought current. A builder holding only the repository and the public documents it cites can follow the reason. Out of scope: the pin allocation of any board, which each board's design task authors, and the plant-parameter measurements that later confirm the headroom.
+  The selection names one orderable microcontroller part. It gives the reason the part serves every channel of the channel enumeration at once, in timing, conversion and communication resources, and the anticipated channels, with the headroom the project must preserve. The reason is judged against the component specification's controller row and its resource assessment, which are cited rather than restated. The part's figures are read from the manufacturer's current datasheet, with its revision or read date. Its stock, library class and unit price are read from the board manufacturer's catalogue, with the read date. The component specification's controller row records the part chosen, its provenance and its cost, and its running total against the declared spend is brought current. A builder holding only the repository and the public documents it cites can follow the reason. The selection also names the part's package and memory variant, and why they were chosen: the smallest package of the part's family that carries the channel enumeration and the anticipated channels with headroom and that the board manufacturer assembles, and the memory variant whose extra capacity the headroom requirement justifies. Out of scope: the pin allocation of any board, which each board's design task authors, and the plant-parameter measurements that later confirm the headroom.
 links:
   - target: SOL-HW-CONTROLLER-MCU-SELECTED
     type: criterion-of

@@ -1,5 +1,7 @@
 # Heater drive and supply timing
 
+> **[Source the custom board draws on, written for the bought-module design. Module choices in it are history; this folder loses where it disagrees with the graph or the record documents. Role and precedence: README.md.]**
+
 Refreshed 2026-10-12 from `decisions.md` (which supersedes older text), the current design data in this folder, and the earlier working note of the same name. **Not baselined, not traced to any criterion, and not evidence for anything.** It records whether the controller needs a zero-cross reference for the heaters, what drives the heaters, how the burst scheme works, why the BL0942 energy meters are fitted, and how each switching channel is snubbed. Nothing here is in the graph yet (`decisions.md`).
 
 Status words follow `decisions.md`: Chosen, Owner decision, Agreed, Recommended, Owner statement, Parts list, Schematic, Published unverified, Inferred, Unmeasured.

@@ -1,0 +1,14 @@
+# A synthetic controller part record, made only to prove the pre-order check's controller
+# rule against the throwaway design beside it. The design's controller is the small microcontroller it places. It names no machine's selected
+# controller and must never be used for a board that is ordered: being marked
+# synthetic, the check accepts it only for a design marked not for manufacture.
+synthetic: true
+part: "ATtiny85-20M"
+lcsc: "C9000019"
+pins:
+  - PB0
+  - PB1
+  - PB2
+  - PB3
+  - PB4
+  - PB5

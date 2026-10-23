@@ -1,5 +1,7 @@
 # System design: replacement control system for the Sunbeam EM7000
 
+> **[History of the bought-module design, written 2026-10-12. Its statements that nothing here is in the graph, and any module choice, predate the controller baseline decision and the function-forms record; this folder loses where it disagrees with them. Role and precedence: README.md.]**
+
 The holistic description of the design as it stands on 2026-10-12. It gathers what the other files in this folder say in detail, so a reader can understand the whole before opening any of them. Status words and provenance tags are defined in `decisions.md`; the line-by-line plumbing is in `hydraulic-lines.md`. Nothing here is in the graph yet, and none of it is baselined.
 
 ## 1. Purpose

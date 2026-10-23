@@ -1,0 +1,12 @@
+id: SOL-HW-CONTROLLER-MCU-SELECTED.C7
+type: criterion
+title: The flow meter's pulse train lands on a timer capture pin rated for the level it can reach
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The selection places the flow meter's digital pulse train on a pin that can capture pulse timing and that the datasheet rates for the highest level the meter's line can reach, whether the meter's output is open-drain or push-pull. The pin sits on a timer of its own, so no other channel's timing contends with it. Out of scope: the pull-up rail and any buffer, which the flow-sensing form carries, and the firmware that decodes the pulses.
+links:
+  - target: SOL-HW-CONTROLLER-MCU-SELECTED
+    type: criterion-of
