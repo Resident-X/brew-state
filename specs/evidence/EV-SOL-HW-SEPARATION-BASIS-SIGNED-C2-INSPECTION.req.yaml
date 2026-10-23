@@ -1,0 +1,17 @@
+id: EV-SOL-HW-SEPARATION-BASIS-SIGNED-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-SEPARATION-BASIS-SIGNED.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-23T22:13:34Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: 'inspection: hardware/sunbeam-em7000/separation-basis.yaml accepted_by and accepted_on, commit 916c8b7c'
+text: |
+  The basis record hardware/sunbeam-em7000/separation-basis.yaml carries accepted_by (david) and accepted_on (2026-10-23, the UTC date). Commit 916c8b7c entered them after the project owner instructed the drafting assistant in session to accept on their behalf ("Sign it in my behalf as me, I accept"), and repeated that instruction when asked to confirm. The commit message and the record's header comment quote the instruction and name the commit as the audit trail. The drafter did not infer or supply the values unprompted. The criterion, as amended to allow acceptance entered on the owner's explicit instruction, is met.
+links:
+  - target: SOL-HW-SEPARATION-BASIS-SIGNED.C2
+    type: satisfies

@@ -234,7 +234,7 @@ The accuracy each sensing channel must hold is stated per channel in `controller
 
 ### Inputs to the separation basis
 
-The separation basis between mains-referenced and low-voltage circuitry is declared in `hardware/sunbeam-em7000/separation-basis.yaml` (`SOL-HW-SEPARATION-BASIS-SIGNED`), which reads its distances from a published standard with the working voltage, pollution degree and material group stated, and is accepted by the owner's own act. These are the inputs this graph supplied to it and the two it settled.
+The separation basis between mains-referenced and low-voltage circuitry is declared in `hardware/sunbeam-em7000/separation-basis.yaml` (`SOL-HW-SEPARATION-BASIS-SIGNED`), which reads its distances from a published standard with the working voltage, pollution degree and material group stated, and is accepted by the owner (entered by them, or by the drafter on their explicit instruction). These are the inputs this graph supplied to it and the two it settled.
 
 | Input | Value | Grade | Source and derivation | From |
 |---|---|---|---|---|
