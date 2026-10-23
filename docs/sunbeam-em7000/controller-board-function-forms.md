@@ -143,12 +143,12 @@ Source numbers (S1…) are in § Sources read. Prices and stock are in § Availa
 | | |
 |---|---|
 | Row | *Steam-path pressure sensing* |
-| Form | **Bought**: a pressure transducer with a ratiometric 0.5–4.5 V output plumbed into the steam path, read through a conversion input with divider conditioning on the controller board. § The steam-path transducer holds the targets and the candidate |
-| Reason | No stocked transducer exists in the catalogue (`controller-board-design-constraints.md`, *Steam-path pressure sensing*), and a transducer that meets steam under 5 bar gauge is a wetted, pressure-rated part that cannot be designed from board components. A ratiometric analogue output reads on a conversion input the enumeration already has (`component-specification.md` § What the enumeration demands, *Analogue conversion inputs*), against the earlier design's I²C part whose address and conversion scheme no requirement fixes |
-| Hardware already bought | None |
+| Form | **Bought**: an XDB401-class pressure transducer with a 3.3 V supply and an I²C output, plumbed into the steam path behind the condensate leg, read over an I²C bus (settled by the operator, 2026-10-23). The earlier design chose this part: the XDB401 3.3 V I2C variant (`controller-design/control-system-bom.csv`, *XDB401 3.3V I2C*; `controller-design/decisions.md` D12), not bought yet. The sensor is also made with a 3.3 V supply and a 0.4–2.5 V analogue output, which the board reads through a separate spare analogue input. § The steam-path transducer holds the targets and the candidate that proves the form |
+| Reason | No stocked transducer exists in the catalogue (`controller-board-design-constraints.md`, *Steam-path pressure sensing*), and a transducer that meets steam under 5 bar gauge is a wetted, pressure-rated part that cannot be designed from board components. The earlier design's part is kept as the form because the operator chose it (2026-10-23). **Interface: digital I²C as the baseline**, because a digital reading over the lead is less exposed to noise from the mains wiring than an analogue voltage. The earlier design put its two pressure sensors on two separate I²C buses because the part's address is fixed at 0x7F as shipped (`controller-design/decisions.md` D12; `controller-design/module-interconnect.csv`, *XDB401 3.3V I2C #1* and *#2*). **UART is kept possible**: the board's 4-pin digital sensor header (3V3, GND, two signal lines) puts its two signal lines on controller pins that carry both an I²C and a UART function; the pins are chosen with the controller part (`DEL-HW-PARTITION-AND-FEASIBILITY.C7`) and the board task. **Analogue fallback**: a separate 3-pin spare analogue input (3V3, GND, a filtered input to a conversion channel), also usable for expansion, serves the 0.4–2.5 V variant. Every signal line leaving the enclosure carries transient protection and a series resistor, and the 3V3 feed to the sensor is short-safe. The conversion input is counted against the spare analogue input (`component-specification.md` § What the enumeration demands, *Analogue conversion inputs*)  |
+| Hardware already bought | None: the XDB401-class transducer is not bought yet |
 | Reference | None found as a published design for a steam transducer on a flash generator. Looked in: manufacturer datasheets for the candidates of § The steam-path transducer, which are component documents |
-| Properties | *Pressure sensors* rows: **Isolation** from the water path, § Barrier parts; **Accuracy** ±0.775 bar and the binding ±0.25 bar, § The steam-path transducer; **Overload and burst**, § The steam-path transducer; the rest set aside |
-| Firmware | The seam already enumerates the steam-pressure channel (`HW_SENSOR_STEAM_PRESSURE`); the analogue read does not change it |
+| Properties | *Pressure sensors* rows: **Isolation** from the water path, § Barrier parts: the XDB401's published insulation is 100 MΩ at 500 V with no withstand voltage, so its withstand is **absent**, and the proof stays with the sourced candidate, the fitted part's own sourced insulation being the check of the board task; **Accuracy** ±0.775 bar and the binding ±0.25 bar, § The steam-path transducer; **Overload and burst**, § The steam-path transducer; **Input thresholds**: 3.3 V supply and I²C logic, no level shifter (`controller-board-design-constraints.md`, *Pressure sensors*); **Default states**: address 0x7F as shipped, re-addressing unconfirmed; the rest set aside |
+| Firmware | The seam already enumerates the steam-pressure channel (`HW_SENSOR_STEAM_PRESSURE`); the reading arrives over the I²C bus or, on the fallback, the analogue read, and neither changes the seam |
 
 ### Gauge drive, both gauges
 
@@ -259,7 +259,7 @@ None was kept by default (`controller-board-design-constraints.md` § Carried-fo
 | RBdimmer, the pump dimmers, one zero-cross output shared | *Coffee and steam pump switching*, *Supply-timing front end* | Not kept; opto-triac and triac designed, front end designed |
 | Songle four-channel module, the valve relay module and its driver | *Two-way and three-way valve switching* | Not kept; relay and driver designed |
 | RC-and-varistor snubber modules across the valve contacts | *Two-way and three-way valve switching* | Not kept; set aside as not to be inherited |
-| XDB401, the two pressure sensors | *Steam-path pressure sensing* | Not kept: no withstand voltage is published for it; the brew-path transducer was added by no decision |
+| XDB401, the two pressure sensors | *Steam-path pressure sensing* | Kept, in the XDB401-class form and I²C interface, for the steam path by the operator's choice (2026-10-23); its withstand voltage is absent, and the brew-path transducer was added by no decision |
 | Mean Well IRM-10-5 and its hand-cut carrier, the logic supply | *Low-voltage supply* | Carrier not kept; the IRM-10-5 is not the proving candidate, its margin at 70 °C being thin |
 | BL0942 energy meters | *Heater mains-presence confirm* | Not kept |
 | Schaffner FN9222-15-06, the inlet filter | *Mains inlet filter* | Kept as the decision settles |
@@ -328,7 +328,7 @@ Each part forming a mains barrier, with the rating it must carry as a design tar
 | Each pump drive | Designed opto-triac | onsemi MOC3052M: input to output isolation voltage 4170 VACRMS, 60 Hz, one minute, described as an internal device dielectric breakdown rating (S5, Rev. 4, September 2022) | A working isolation voltage: the datasheet gives only the test voltage |
 | The supply-timing front end, and each mains-presence confirm | Designed AC-input optocoupler | Lite-On LTV-814: isolation voltage 5000 Vrms (S10, Rev. K, effective 01/05/2019), measured AC for one minute at 40–60 % RH; isolation resistance 5×10¹⁰ Ω at 500 VDC | A working isolation voltage |
 | Each valve switch | Designed relay | Hongfa HF115F-Q: coil to contacts 5000 VAC for one minute; open contacts 1000 VAC for one minute; surge coil to contacts 10 kV 1.2/50 µs; insulation resistance 1000 MΩ at 500 VDC (S8, 2024 Rev. 1.00). The HF32FA-G, the floor's family, gives the same 5000 VAC and a maximum switching voltage of 250 VAC (S9, 2026 Rev. 1.00) | The open-contact figure is 1000 VAC, below the coil-to-contact figure, so a barrier that relies on open contacts is not given by this part |
-| Pressure sensors' insulation from the water path | Bought transducer | Ashcroft S1: insulation withstand voltage 500 Vac; insulation resistance over 100 MΩ at 100 VDC (S11, Rev I, 19 May 2026) | The duration and the test points of the 500 Vac. The earlier design's XDB401 gives insulation resistance over 100 MΩ at 500 V and no withstand voltage (`controller-board-design-constraints.md`, *Pressure sensors*): absent. For the other transducers read, see § The steam-path transducer |
+| Pressure sensors' insulation from the water path | Bought transducer | Ashcroft S1: insulation withstand voltage 500 Vac; insulation resistance over 100 MΩ at 100 VDC (S11, Rev I, 19 May 2026) | The duration and the test points of the 500 Vac. The XDB401-class transducer the operator chose (2026-10-23) gives insulation resistance over 100 MΩ at 500 V and no withstand voltage (`controller-board-design-constraints.md`, *Pressure sensors*): its withstand is absent, and the fitted part's own sourced insulation is the check of the board task. For the other transducers read, see § The steam-path transducer |
 
 ## The steam-path transducer
 
@@ -342,6 +342,8 @@ Each part forming a mains barrier, with the rating it must carry as a design tar
 | Full scale | At least 2.0 bar gauge and at most 25 bar | *Lower bound on the part's range*, *Upper bound on the part's full scale* |
 
 **Candidate**, checked against it: Ashcroft S1, 316L fittings, range code 100 (0–100 psi, 6.895 bar), ratiometric 0.5–4.5 Vdc on a 5 Vdc ± 0.5 Vdc supply (S11).
+
+The S1 proves the pressure, burst, range and insulation figures of the form; the interface the board reads is the XDB401-class part's I²C, and S1's 5 V ratiometric output is not the fitted interface.
 
 | Check | Datasheet figure | Result |
 |---|---|---|
@@ -364,7 +366,7 @@ Each part forming a mains barrier, with the rating it must carry as a design tar
 | WIKA A-10 (S13, PE 81.60, 02/2026) | Medium limit 80 °C, or 100 °C in the extended range; overpressure limit 2 times for ranges at or above 1.6 bar; **no burst pressure is published** in that sheet, so burst is absent; insulation voltage DC 500 V |
 | Danfoss MBS 3000 (S14, 2020.12) | Media temperature −40 to 85 °C; overload and burst each 6 × full scale; insulation resistance over 100 MΩ at 500 VDC and no withstand voltage published, so the insulation rating is absent |
 | Nidec P-7100-103G (S15) | Meets proof and burst (maximum pressure 2.0 MPa, break-down 3.0 MPa for the 0–1.0 MPa range) and gives a dielectric strength of 500 VAC for 60 s, but its operating range is −20 to 70 °C and no steam statement is given; price listings seen on 2026-10-23 for the family ran from 116 USD to 314 USD per part, high against the declared spend |
-| XDB401 (the earlier design's) | Insulation resistance only; no withstand voltage published |
+| XDB401 (the earlier design's, and the operator's choice of form) | Insulation resistance only; no withstand voltage published, so it does not prove the form; the Ashcroft S1 stays the proving candidate |
 
 ## Availability and price
 

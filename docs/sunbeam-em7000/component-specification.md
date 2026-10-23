@@ -145,15 +145,15 @@ two boards, and the panel board is retained, but carries no controller to speak 
 
 | Resource | Count | (struck) | Notes |
 |---|---|---|---|
-| Analogue conversion inputs | 4 | — | Coffee, steam and wand temperature, plus the steam-path pressure transducer that `DEC-STEAM-PRESSURE-SENSOR-ADDED` adds and which is not yet fitted |
+| Analogue conversion inputs | 4 | — | Coffee, steam and wand temperature, plus the board's separate spare analogue input (3V3, GND and a filtered input), which is the analogue fallback for the steam-path pressure transducer that `DEC-STEAM-PRESSURE-SENSOR-ADDED` adds and which is not yet fitted. The transducer's baseline interface is I²C (`controller-board-function-forms.md` § Steam-path pressure sensing), counted in the serial peripherals row |
 | Timer input capture | 1 | — | Flow meter. Its signal is established digital: a pulse train pulled up to the 5 V rail and landing on a general-purpose port pin. Whether the output is open-drain or push-pull is pending (not yet read; it is read when the board carrying the device is designed, and does not block the division of the circuitry into boards), and the K-factor stays open |
 | Timer compare outputs | 5 | — | Both pumps, provisioned for a firing instant within the cycle; the panel's anode rail gate, whose modulation is how indicator brightness varies; and the two gauge step clocks, which need an even rate to sweep smoothly rather than stutter |
 | External-interrupt pins | 1 | — | Mains zero-cross, on both edges |
 | Plain digital inputs | 5 | — | Tank level, the two control-knob microswitches, and the two mains-presence sense channels on the heating elements. The panel's keys are not here: they share lines with the indicators and are counted in the row below |
 | Plain digital outputs | 14 | — | Two heater channels, two valve channels, the buzzer, the water indicator on the gauge assembly, the panel's five shared lines, and the two gauge direction lines plus the driver reset. The panel's five are bidirectional — each sinks its indicator group's current and is read as an input once the anode rail is blanked — so eight indicator elements and five keys together cost five pins. See [`connector-pinouts.md`](connector-pinouts.md) |
 | Stepper driver channels | 2 timer + 3 digital | — | The two gauges, through a `VID66-08` on the gauge assembly rather than into the windings. If that board is retained the driver is inherited: the controller supplies a direction level and a step clock per gauge plus a shared reset. The step clocks need timer channels — an uneven rate reads as needle stutter. Retaining an out-of-production driver is an obtainability risk, distinct from the unknown-condition question `OBL-PHYSICAL-CONFIGURATION-001.C3` asks, not a saving |
-| Serial peripherals | 0 | — | The two-wire operator link this row costed is not an inter-board link and cannot be retained; a display link is a separate question this table does not settle |
-| **Pin total** | **30** | — | Summing the pin costs above: 4 + 1 + 5 + 1 + 5 + 14. The gauge lines are counted in the timer and digital-output rows rather than in a row of their own. The controller I/O bill of materials reaches a higher figure for the same machine because it also carries the brew-path pressure channel no decision has yet added and a display link |
+| Serial peripherals | 1 I²C bus | — | The steam-path pressure transducer's I²C bus, two pins, the baseline interface the operator settled on 2026-10-23; the same two signal lines can carry a UART, so the pins are chosen on a pair that carries both functions. The two-wire operator link this row costed is not an inter-board link and cannot be retained; a display link is a separate question this table does not settle |
+| **Pin total** | **32** | — | Summing the pin costs above: 4 + 2 + 1 + 5 + 1 + 5 + 14. The gauge lines are counted in the timer and digital-output rows rather than in a row of their own. The controller I/O bill of materials reaches a higher figure for the same machine because it also carries the brew-path pressure channel no decision has yet added and a display link |
 
 ### What the candidate provides
 
@@ -166,7 +166,7 @@ the compute demand being unquantified in both directions.
 
 | Resource | Provided | Demanded | Remaining |
 |---|---|---|---|
-| General-purpose I/O | 82 raw; about 78 usable | 30 | About 48. The raw count includes the SWD pins and PH0/PH1, which carry the HSE crystal — and `DEC-MAINS-PHASED-ACTUATION-BELOW-SEAM` requires a crystal-derived control period, so those two are spoken for by this design rather than optional |
+| General-purpose I/O | 82 raw; about 78 usable | 32 | About 46. The raw count includes the SWD pins and PH0/PH1, which carry the HSE crystal — and `DEC-MAINS-PHASED-ACTUATION-BELOW-SEAM` requires a crystal-derived control period, so those two are spoken for by this design rather than optional |
 | 12-bit ADC units / external channels | 3 units. ADC1 and ADC2 bring out 16 external channels each in this package; ADC3 brings out fewer, several of its inputs sitting on a port LQFP100 does not carry | 4 channels, on one unit | Ample, and the three units can convert concurrently if a later channel needs it |
 | 16-bit timers | 12 in total: 2 advanced motor-control, 8 general-purpose, and 2 basic with no I/O channels at all | 6 channels (5 compare, 1 capture) | Ample — but the usable pool for these channels is the 10 with I/O, not 12 |
 | 32-bit general-purpose timers | 2 | 0 | Both free |
@@ -178,7 +178,7 @@ the compute demand being unquantified in both directions.
 **Simultaneity holds, and the resource that would bite first is named.** No two channels contend for
 the same unit at these counts: the four conversion inputs fit one ADC with twelve channels to spare,
 the six timer channels fit inside two general-purpose timers let alone ten, and the
-thirty pins fit inside seventy-eight. Fitting them on one timer is not the same as placing them
+thirty-two pins fit inside seventy-eight. Fitting them on one timer is not the same as placing them
 there: a flow-pulse input capture, two mains-phased compare outputs, two gauge step clocks and an indicator rail gate would share a
 prescaler and a time base.
 With ten I/O-capable timers available there is no reason to accept it. The one resource with a structural constraint rather than a
@@ -208,15 +208,17 @@ movements directly sets its own thresholds and the row disappears. That trade si
 
 | Anticipated channel | Where it comes from | Costs |
 |---|---|---|
-| Brew-path pressure transducer | `REQ-MEASUREMENT-001.C7` requires brew pressure measured rather than inferred; no decision has yet added a part | 1 conversion input |
+| Brew-path pressure transducer | `REQ-MEASUREMENT-001.C7` requires brew pressure measured rather than inferred; no decision has yet added a part. The same class and interface as the steam-path transducer: an XDB401-class transducer on a second I²C bus, since the part's address is fixed (`controller-design/decisions.md` D12) | 2 digital pins for the second bus; the analogue fallback through a spare analogue input costs 1 conversion input |
 | Current sensing | Recorded in `controller-io.md` § Channels not enumerated as not fitted and not decided | 1–2 conversion inputs |
-| Weight-based endpoint control | Named in `REQ-HARDWARE-HEADROOM-001` as the immediate deferred capability | 2 digital pins to a load-cell amplifier |
+| Weight-based endpoint control | Named in `REQ-HARDWARE-HEADROOM-001` as the immediate deferred capability. Up to two load-cell channels, two HX711-class amplifiers on about four digital pins or one two-channel converter, for a drip-tray platform, so one single-point platform cell or two cells summed serve a cup placed anywhere on the tray. An external Bluetooth scale is the alternative and belongs to the display unit, which owns the network-facing surface (`DEC-NETWORK-SURFACE-IS-A-SEPARATE-DISPLAY-UNIT`). The open-source survey of 2026-10-23 is concepts only: Gaggiuino and GaggiMate (load cells with HX711-class amplifiers, plus Bluetooth scales), Decent openscale and ESPresso Scale (ADS1232, Bluetooth scales) | About 4 digital pins to up to two load-cell amplifiers |
 | Direct group-head instrumentation | Named in the same requirement as the general case | 1–2 conversion inputs |
+| In-stream temperature, brew outlet and steam outlet | `DEC-IN-STREAM-PROBES-ANTICIPATED`: two PT1000 probes, each read by an RTD-to-digital converter of the MAX31865 class on a shared SPI bus with one chip select each, the front end taking a 2-wire or 3-wire probe per channel so the probe bought decides. The earlier design carried a PT1000 outlet probe and a PT1000 with MAX31865 front-end option (`controller-design/control-system-bom.csv`, *PT1000 spike probe*; `controller-design/controller-io-bom.csv`, rows T-B*) | No conversion input; about 5 digital pins (three shared bus lines and two chip selects) |
 | Real-time clock | Not fitted, not decided | 0 pins running off the internal low-speed oscillator, 2 with the 32.768 kHz crystal that anything wanting to timestamp would need — the internal oscillator drifts too far to be useful for that |
 
-Roughly five further conversion inputs and two digital pins. Against twelve unused channels on one
-ADC unit and forty-eight unused pins, every anticipated channel fits without displacing a current one,
-which is what `REQ-HARDWARE-HEADROOM-001.C1` and `DEL-COMPONENT-SPECIFICATION.C4` ask to be shown.
+Roughly five further conversion inputs at most (the brew fallback 1, current sensing 1–2, group-head instrumentation 1–2) and up to thirteen digital pins (2 + 4 + 5 + 2). Against twelve unused channels on one
+ADC unit and forty-six unused pins, every anticipated channel fits without displacing a current one, with seven
+channels and thirty-three pins still unused after all of them,
+which is what `REQ-HARDWARE-HEADROOM-001.C1` and `DEL-COMPONENT-SPECIFICATION.C4` ask to be shown. The pins are counted as free pins; that the two I²C buses, the serial bus and the amplifiers' lines land on pins carrying the functions they need is the controller selection's and the board task's to show (`REQ-HARDWARE-HEADROOM-001.C2`).
 
 ### What this assessment does not establish
 
