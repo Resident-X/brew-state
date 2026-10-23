@@ -1,0 +1,12 @@
+id: SOL-HW-CONTROLLER-MCU-SELECTED.C6
+type: criterion
+title: The selection states the converter resolution of directly read channels and the room kept for a dedicated converter
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The selection states the resolution of the converter the part gives the channels the controller reads directly, and judges it against the headroom requirement for the resolution of directly read channels: the margin the choice leaves beyond what those channels are assumed to need today, and the room reserved for a dedicated converter on a channel that needs more than the part offers. A part whose converter leaves no margin beyond that assumption fails the selection. Out of scope: the accuracy the control needs, which measurement on the built machine establishes.
+links:
+  - target: SOL-HW-CONTROLLER-MCU-SELECTED
+    type: criterion-of

@@ -31,3 +31,5 @@ links:
     type: supersedes
   - target: DEL-HW-PARTITION-AND-FEASIBILITY.C7
     type: addresses
+  - target: REQ-HARDWARE-HEADROOM-001.C5
+    type: addresses

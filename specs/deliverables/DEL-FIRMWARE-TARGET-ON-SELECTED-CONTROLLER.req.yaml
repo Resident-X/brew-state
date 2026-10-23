@@ -7,6 +7,8 @@ level: task
 version: 1
 text: |
   The firmware's target build, its hardware-backed implementation of the hardware seam and the emulation tier were built against an STM32F4-family part that the project named only so a target build could exist before any controller was chosen. The controller is the STM32H743 baselined by DEC-CONTROLLER-BASELINE-STM32H743, so the target build, the emulated machine, the register description its peripheral models are written against and the evidence recorded on them all follow the selected part. The emulator and the method stand; the part and its register maps change. The control logic does not change, which is the property the seam exists to demonstrate.
+
+  The tasks and solutions that justify the test build, the emulation tier and the plant-model identity by the superseded nomination (DEL-SIM-EMULATION-TIER, SOL-CONTROL-HARDWARE-SEAM-HOST-SIM and SOL-ONBOARD-PLANT-MODEL-IDENTITY) keep that link as history while their finished work stands on the stand-in. This task repoints them to the baseline decision when the target is moved.
 links:
   - target: DEL-BREW-STATE-DELIVERY.C4
     type: derives-from
