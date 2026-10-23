@@ -72,8 +72,8 @@ barriers:
 # fault draws enough current to open the inlet fuse or the upstream breaker, in what time, and what
 # potential the block and the water in it reach meanwhile, is not shown by this record: the
 # clearing time and let-through at the declared fault current are recorded by the design task of
-# the board or assembly (DEL-HW-PARTITION-AND-FEASIBILITY.C5), and the earth bond's resistance is
-# required by REQ-ELECTRICAL-INSTALL-001.C6 and measured on the finished machine. The barrier is
+# the board or assembly (the fitted-part design task), and the earth bond's resistance is
+# required by the protective-earth continuity requirement and measured on the finished machine. The barrier is
 # therefore earth-referenced water to the low-voltage electronics, at low-voltage working
 # voltage, and needs basic insulation at that level, not reinforced mains to low voltage; the
 # PTFE tube adds creepage. The remaining risk is a double fault, earth lost and a heater faulted,
@@ -97,7 +97,7 @@ barrier_types:
       - USB connector
       - operator controls
       - enclosure
-    formed_by: the opto-triac between the heater drive and the triac gate, and the board spacing around it; the triac's insulated tab to the machine's metal wall (owner statement, `reference-machine.md` line 269; bond not measured, `REQ-ELECTRICAL-INSTALL-001.C6`) is basic, to earth
+    formed_by: the opto-triac between the heater drive and the triac gate, and the board spacing around it; the triac's insulated tab to the machine's metal wall (owner statement, `reference-machine.md` line 269; bond not measured; the protective-earth continuity requirement has it measured on the finished machine) is basic, to earth
   - barrier: pump-drive
     insulation: reinforced
     earth_bonded: false
