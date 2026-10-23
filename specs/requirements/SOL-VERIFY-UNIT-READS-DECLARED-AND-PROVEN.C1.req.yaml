@@ -1,0 +1,45 @@
+id: SOL-VERIFY-UNIT-READS-DECLARED-AND-PROVEN.C1
+type: criterion
+title: Each verification unit's inputs are read from its declaration, its imports and the products it names
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A reader of declarations lists every unit of every kind the solution names. For each unit it gives the unit's inputs and tools:
+  - its own file or files;
+  - the repository modules it imports, followed transitively. This includes function-level and conditional imports, and modules found through a folder the unit adds to the import path.
+  - its declared paths, expanded against the working tree: a file, a folder taken whole, or a glob;
+  - the inputs and tools of every product it names, followed transitively through products that consume products;
+  - the tools it names.
+
+  A declared input may be marked as read from the last commit rather than the working tree, and the listing carries that mark.
+
+  The reader refuses, naming the unit and the entry:
+  - a declaration that names a path matching no file;
+  - an unknown product;
+  - an unknown tool;
+  - a cycle among products.
+
+  It lists a discovered unit with no declaration as undeclared, rather than giving it empty inputs.
+
+  Tests over a synthetic repository drive each of these cases, and each test fails if the listed inputs, tools, marks or refusal are wrong:
+  - a module importing a helper that imports another;
+  - an import inside a function;
+  - a module found through an added import path;
+  - an import of a module outside the repository;
+  - a declared folder;
+  - a glob;
+  - a product consuming a product;
+  - an input marked as read from the last commit;
+  - a missing path;
+  - an unknown product;
+  - an unknown tool;
+  - a product cycle;
+  - a build or check declared in a tier's declaration file;
+  - a test module with no declaration.
+
+  Out of scope: deciding which units a round runs, and the nightly's judgement of the declarations.
+links:
+  - target: SOL-VERIFY-UNIT-READS-DECLARED-AND-PROVEN
+    type: criterion-of

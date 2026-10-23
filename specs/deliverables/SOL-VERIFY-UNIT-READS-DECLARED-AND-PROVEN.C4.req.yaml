@@ -1,0 +1,25 @@
+id: SOL-VERIFY-UNIT-READS-DECLARED-AND-PROVEN.C4
+type: criterion
+title: Every unit in the repository passes the nightly declaration check
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  A run of the nightly workflow, started by hand against this solution's branch, passes with no undeclared unit, no read outside a unit's inputs, no build dependency outside its declaration, and no closed-tree failure. Its record lists the following.
+  - Reads the catalogue found missing. For each read the 2026-10-23 catalogue found the board tier's selection missing, the record names the unit that now declares it. Those reads are:
+    - the board design method;
+    - the manufacturer record;
+    - the nightly workflow declaration;
+    - the cutover check's folders;
+    - the four board records the solution names;
+    - the committed designs the proof-design tests read.
+  - Test identifiers. The record lists the test identifiers each suite ran before and after the change. Every difference is a move, naming the old and the new identifier.
+  - Slow units with fast tests. The record lists every unit whose own tests take under ten seconds but whose run, setup included, takes more than thirty. The list is empty.
+
+  The before-and-after test identifiers come from the same suites on this solution's base commit and on its branch.
+
+  Out of scope: a unit's declaration staying correct after this run, which the nightly checks from then on.
+links:
+  - target: SOL-VERIFY-UNIT-READS-DECLARED-AND-PROVEN
+    type: criterion-of

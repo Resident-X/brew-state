@@ -1,0 +1,14 @@
+id: SOL-VERIFY-ROUND-RUNS-CHANGED-UNITS.C9
+type: criterion
+title: The nightly runs every board unit on a hosted runner with the board tools installed
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  The complete verification's single declaration lists every board unit, the tooling tests that run the seeded-fault proof excepted. The scheduled nightly run against main therefore runs every board unit to completion, even after another gate fails, on a hosted runner. That runner installs the CAD tool at the version the check requires, from a free, named source, together with the rasteriser and the monospaced font the tooling tests need. The run reports board failures the way it reports every other gate.
+
+  Out of scope: the seeded-fault proof, which stays on demand; runners for other operating systems; caching the CAD tool install beyond what the runner offers.
+links:
+  - target: SOL-VERIFY-ROUND-RUNS-CHANGED-UNITS
+    type: criterion-of

@@ -1,0 +1,40 @@
+id: SOL-VERIFY-ROUND-RUNS-CHANGED-UNITS.C1
+type: criterion
+title: The round runs a unit only when no pass is recorded for the content it reads
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The round gate computes, for each unit, a key over:
+  - the content of its inputs as the working tree holds them, uncommitted files and files that are untracked but not ignored included;
+  - whether git tracks each input;
+  - the expanded list of those inputs;
+  - its declaration;
+  - the gate's selection code;
+  - the versions of the tools its declaration names.
+
+  It runs the unit unless a pass younger than seven days is recorded for that key. It records a pass only after the unit passes in a round, writing each record atomically, and keeps the records in one store under git's common directory, shared by every worktree of the clone. A round asked to disregard the store runs every unit. When the store, a declaration or the working tree cannot be read, the affected units run and the round says why. The gate keeps no path list of its own.
+
+  Tests over a synthetic repository drive each of the following, and each test fails if the units run or the passes recorded are wrong:
+  - a second round with nothing changed;
+  - a changed input;
+  - a file added to a declared folder;
+  - a deleted input;
+  - a renamed input;
+  - an input that becomes tracked;
+  - an uncommitted edit;
+  - a changed declaration;
+  - a changed tool version;
+  - a pass older than the limit;
+  - a failed unit rerun;
+  - a store shared with a sibling worktree;
+  - two rounds recording at once;
+  - a round that disregards the store;
+  - an unreadable store;
+  - an unreadable declaration.
+
+  Out of scope: sharing records between machines, and the content of the declarations.
+links:
+  - target: SOL-VERIFY-ROUND-RUNS-CHANGED-UNITS
+    type: criterion-of

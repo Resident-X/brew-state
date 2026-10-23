@@ -1,0 +1,124 @@
+id: SOL-VERIFY-ROUND-RUNS-CHANGED-UNITS
+type: deliverable
+category: solution
+title: A build round runs only the verification units whose inputs changed since they last passed
+status: active
+version: 1
+text: |
+  Why this exists. A build round selects whole tiers by changed path. A sentence changed in the hardware notes runs the host tier and every board tooling test, about forty-five minutes, to repeat checks of that file that take under a second. Any edit to the firmware tree runs the twenty-minute emulation tier. A second round after a one-line fix pays the whole cost again. DEC-VERIFICATION-ROUND-TARGETED-NIGHTLY-FULL now has the round run only the verification units whose inputs changed since they last passed. SOL-VERIFY-UNIT-READS-DECLARED-AND-PROVEN supplies every unit's declared inputs and tools. This solution makes the round use them.
+
+  What it does.
+
+  Pass records.
+  - The key. For every unit, the round computes a key over:
+    - the content of each input as the working tree holds it, uncommitted edits and untracked files that are not ignored included;
+    - whether git tracks each input;
+    - the expanded list of inputs;
+    - the unit's declaration;
+    - the selection code, meaning the round gate's own modules and the declaration reader;
+    - the versions of the tools the declaration names.
+  - When a unit runs. The round runs the unit unless a pass is recorded for that key and the pass is younger than seven days. The age limit bounds how long a test that depends on the date, or a lucky pass of a flaky test, can be reused.
+  - Recording passes. A pass is recorded only after the unit passes in a round. It is never recorded for a failed, skipped or unreached unit.
+  - The store. The records sit in one store under git's common directory, so every worktree of the clone shares it. Each record is written atomically, so two rounds running at once cannot corrupt it.
+  - Starting fresh. The builder can run a round that disregards the store.
+  - Failing closed. The round runs every affected unit, and says why, when:
+    - the store cannot be read;
+    - a declaration cannot be read or names something missing;
+    - the working tree's content cannot be read.
+
+  Runners.
+  - Each tier's runner takes the list of selected units. These are the firmware tooling runner, the emulation suite, the board tooling stage, the firmware unit-test runner (which gains a subset mode, while its check that every suite is claimed stays in the nightly), the build-time checks, the builds, the host runs, and the board check, one named design at a time.
+  - A product is built when any selected unit needs it, even when the product's own build unit is skipped.
+  - A tier with no selected unit is not started, and the round says so. The firmware tooling runner's failure on an empty run stays for any run the round does start.
+
+  What the round keeps from before:
+  - the tier order, and stopping at a failing tier;
+  - the changed-lines sweep, measured from the merge-base with main as now;
+  - failing on an untracked board design file, naming it;
+  - the named-tool stops, now raised only when a selected unit needs the tool;
+  - the exit status as the verdict.
+
+  What goes. The round gate's own path lists are removed: the host reads, the emulation reads, the board reads and the board file names. Selection reads the declarations alone.
+
+  Closing lines. For each tier the round states:
+  - the units it ran;
+  - the units it skipped, each with the time of the pass the skip relied on and the time saved, taken from the nightly's last recorded duration;
+  - the units not reached.
+
+  These are plain statements a gate worker can report from directly.
+
+  Units that read committed content. The proof-design tests read their designs from the last commit, not the working tree. Their declarations mark those inputs as commit-read. For those inputs the key is taken from the committed content. When the working tree changes one of them without committing it, the closing lines say that the unit verified the committed version, and name the file.
+
+  The task definitions divided by group. The task-runner definition keeps the shared variables and the gate tasks (the round gate, the daily verification and the daily-result reader) at its root. It includes one file per task group: firmware, hardware and graph tooling. A unit that reads one task then reads one group's file. Every task keeps its name, description and commands. Two traps:
+  - The task runner namespaces an included file's tasks unless the include is flattened.
+  - The root's variables reach an included file only as the task runner's rules allow. Check that each one an included task uses still resolves.
+
+  Several tests read a task's text, and some start the task runner: the review-kit command tests, the schematic sheets task test and the gate tests. They read and run from the group files.
+
+  One board design at a time. The board check accepts the name of one tracked design and checks only that design. Its read listing states each design's reads apart from the others, and marks as shared the reads every design has: the tool code, the manufacturer record and the other records found above the designs. The check already computes reads per design and loops over designs one at a time.
+
+  Tests that need the CAD tool. They run locally with the installed tool, found the way the board tier finds it now. The nightly's hosted runner keeps installing the CAD tool, the rasteriser and the monospaced font.
+
+  Documentation. Every account of the gate that states whole-tier selection is brought into line, and the document checks that compare these accounts with the gate's behaviour are updated with them. The accounts are:
+  - the project instructions' "How this project verifies" section, including its closed-tree paragraph;
+  - the hardware notes on when the board check runs;
+  - the firmware notes and the emulation notes;
+  - the round gate's module description;
+  - the descriptions and comments of the round-gate and daily-verification tasks;
+  - the mutation sweep's task description.
+
+  Close-out. When this solution's work lands, two engine supersessions run, in this order. The previews on 2026-10-23 named exactly these edges.
+
+  1. Supersede SOL-HW-GATE-IN-ROUND-AND-NIGHTLY with this solution:
+     - retarget DEL-HW-PARTITION-AND-FEASIBILITY's dependency to this solution;
+     - drop SOL-BOARD-TIER-TESTS-RUN-SIDE-BY-SIDE's dependency on the superseded board gate. That solution is a prerequisite of SOL-VERIFY-UNIT-READS-DECLARED-AND-PROVEN, so retargeting it here would make a cycle.
+
+     The superseded gate's contribution to DEL-HW-DESIGN-VERIFICATION.C7 stays as recorded, because that epic is sealed and its composition is frozen.
+
+  2. Supersede SOL-VERIFY-ROUND-GATE-HOST-TIER-BY-PATH with this solution:
+     - keep DEL-MAINTENANCE.C1, which this solution already contributes to;
+     - retarget SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS's dependency to this solution. That sweep solution's behaviour, measured from the merge-base, is unchanged.
+
+  The carried-forward behaviour:
+  - the host documentation criterion and the board documentation criterion become this solution's documentation criterion;
+  - the board gate's nightly run on a hosted runner with the CAD tool becomes this solution's nightly criterion;
+  - the host tier's closed tree becomes SOL-VERIFY-UNIT-READS-DECLARED-AND-PROVEN's.
+
+  Watch for.
+  - A key must change when anything a unit reads changes. That includes a file added to or removed from a declared folder, a rename, and a file becoming tracked: the board check finds only tracked designs, so tracking a design changes its result without changing its content.
+  - Do not let the store move with the worktree. A store per worktree makes every fresh worktree a full round, and most rounds in this project start in a fresh worktree.
+  - A first round on a clean clone runs every unit. That is expected, and its closing lines say no pass was recorded.
+  - The coverage demonstration needs the nightly's observed reads for today's units. Start the nightly workflow by hand against this branch rather than waiting for main.
+
+  Out of scope:
+  - writing the declarations and their nightly check (SOL-VERIFY-UNIT-READS-DECLARED-AND-PROVEN);
+  - the mutation sweep's selection;
+  - sharing pass records between machines or with the hosted nightly;
+  - selecting individual tests within a unit.
+rationale: |
+  Keying a skip on the content a unit reads, rather than on the branch's difference from main, does two things at once. A unit runs only when something it depends on actually changed. A pass is also reused across the rounds of one branch and across sibling branches on the same machine, which is where most of a session's waiting goes: the second and third rounds after a review finding. A difference from the merge-base can do neither. It also mis-measures a branch whenever the local view of main is stale.
+
+  Superseding the two path-selection solutions rather than amending them follows the project's practice. Their criteria state whole-tier selection, which this solution contradicts. Their still-correct behaviour carries forward in the criteria here and in SOL-VERIFY-UNIT-READS-DECLARED-AND-PROVEN.
+
+  The demonstration over the project's own merged history is the check that coverage was not lost. It replays the last thirty merged changes against today's units, with the recorded passes disregarded. For every unit the old tier selection would have run and the new selection skips, it requires the unit's observed reads to exclude every changed file. Agreement with the old selection is not the test, because that selection is known to over-select and to miss reads. The observed reads come from the nightly workflow started by hand against the branch.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: DEC-VERIFICATION-ROUND-TARGETED-NIGHTLY-FULL
+    type: justified-by
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C1
+    type: targets
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C3
+    type: targets
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C7
+    type: targets
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets
+  - target: SOL-VERIFY-UNIT-READS-DECLARED-AND-PROVEN
+    type: depends-on
+  - target: SOL-VERIFY-ROUND-GATE-HOST-TIER-BY-PATH
+    type: supersedes
+  - target: SOL-HW-GATE-IN-ROUND-AND-NIGHTLY
+    type: supersedes
+  - target: SOL-VERIFY-NIGHTLY-FULL-ON-MAIN
+    type: depends-on

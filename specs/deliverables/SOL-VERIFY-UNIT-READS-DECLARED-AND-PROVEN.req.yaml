@@ -1,0 +1,111 @@
+id: SOL-VERIFY-UNIT-READS-DECLARED-AND-PROVEN
+type: deliverable
+category: solution
+title: Every verification unit declares what it reads, checked nightly against what it is seen to read
+status: active
+version: 1
+text: |
+  Why this exists. The build round selects whole tiers by changed path. A one-sentence edit to a document that a single cheap check reads runs that check's whole tier, up to forty-five minutes. DEC-VERIFICATION-ROUND-TARGETED-NIGHTLY-FULL now has the round select individual verification units by what each one reads, so every unit has to declare its reads, narrowly and truthfully. This solution:
+  - writes those declarations;
+  - restructures the places where a unit cannot be declared narrowly as it stands;
+  - adds a light nightly check of the declarations.
+
+  It does not change what the round runs; SOL-VERIFY-ROUND-RUNS-CHANGED-UNITS does that, on top of this.
+
+  What a unit is. A unit is the smallest piece of verification that runs in a process of its own and gives its own verdict. The units are:
+  - one host build environment's build;
+  - one build-time check command;
+  - one firmware unit-test suite;
+  - one host executable run under the sanitizers;
+  - one test module of the firmware tooling;
+  - one test module of the emulation suite;
+  - one test file of the board tooling;
+  - the pre-order check of one board design.
+
+  These are not units: the full-sweep shards, the changed-lines sweep, the host tier's closed-tree run and the seeded-fault proof.
+
+  What a declaration holds. Each unit's declaration sits beside the unit and can be read without running it.
+  - Where it lives. In a Python test module, it is a module-level value. For the builds, checks, suites, host runs and design checks, it is one declaration file per tier, beside the task definitions.
+  - What it lists:
+    - repository paths: a file, a folder taken whole, or a glob;
+    - named products;
+    - the tools the unit needs, by name, from a closed list the reader knows how to ask for a version: the C compiler, the build system and its platform, the CAD tool, the rasteriser, the gerber library, the emulator, git and the interpreter.
+  - Commit-read inputs. An input the unit reads from the last commit rather than from the working tree is marked so. The proof-design tests read their designs this way.
+  - Code a unit loads. The repository code a Python unit loads is found from its imports, not declared by hand. That covers module-level, function-level and conditional imports, and modules found through a folder the unit adds to the import path. It is followed transitively through repository modules.
+  - Products. A product is a shared, expensive output that several units consume: each host and target build, each simulation run the emulation modules share, and the native build the analysis records regenerate from. A product is declared once, with its own reads and tools. A unit that names a product inherits those, transitively.
+  - A unit's inputs are, in full:
+    - its own file or files;
+    - its import closure;
+    - its declared paths, expanded against the working tree;
+    - the inputs of every product it names.
+  - Refusals. A declaration that names a path matching no file, an unknown product or an unknown tool is refused, naming it.
+
+  Restructuring so declarations are narrow. Some units cannot be declared narrowly as they stand, because one module mixes a sub-second check with an expensive setup, or because one test imports another test module.
+  - Document checks get modules of their own. Every check that compares a document with behaviour, with a record or with another document moves into a test module that carries no shared setup it does not use. These include:
+    - the round gate's checks of the project instructions and the hardware notes;
+    - the figures-record classes of the casting-peak module, which compare text against the committed casting-peak record and need no simulation;
+    - the checks of the hardware notes and the task definitions in the board tooling and review-kit tests;
+    - the cutover check that scans the hardware and documentation folders.
+  - Simulation runs move to the classes that need them. Six emulation modules run a simulation in their module-level setup even for classes that do not use it: the sweep, protection-margin, stability, identifiability, closed-loop and cross-tier modules. They obtain the run through the product, and only in the classes that need it.
+  - Helpers move out of test modules. Helpers that one test module imports from another move into fixture modules. The cases found are:
+    - the plant-checks helpers, imported by six tooling test modules: gate coverage, estimator limits, pin assignment, mutation sweep, sensor assignment and target model;
+    - the task helpers that the mutation-sweep, daily-status and verify-gate tests import from the round-gate tests;
+    - the review-caller modules that the layout, critical-routing, production-files and schematic proof tests import for fixtures;
+    - the board-check tests' import of the board-check tests that need the CAD tool.
+
+  Nightly check. The nightly runs every unit regardless, so a declaration that misses a read costs a day, not a defect on main. This check makes the miss visible, and it is kept cheap.
+  - Observed reads. Each Python unit runs at night with its reads observed: files opened, folders listed, and the repository paths passed to processes it starts. A repository file read outside the unit's inputs fails the nightly, naming the unit and the file. Reads outside the repository, of the interpreter and installed packages, and of temporary folders the unit creates are not judged.
+  - Compiled units. The builds, including the builds the emulation suite consumes, are judged against the compiler's own dependency output.
+  - Closed tree. The existing closed-tree run of the host tier takes its path set from the union of the host units' declared inputs, instead of from the round gate's single list.
+  - Reads inside tools. Reads made inside a tool that a board or emulation unit starts, such as the CAD tool following a library table or the emulator loading its scripts, are declared through the products and through the board check's own read listing. They are not proven separately.
+  - Undeclared units. A unit without a declaration fails the nightly, naming it.
+  - Durations. The nightly records each unit's duration.
+
+  Coverage is kept. Restructuring moves tests but removes none. The set of test identifiers each suite runs is recorded before and after the change, and every difference is a move listed with its old and new name.
+
+  Evidence. The demonstration runs through the nightly workflow started by hand against this solution's branch. There is no wait for main. The tests that need the CAD tool run locally with the installed tool, found the way the board tier finds it now.
+
+  Watch for. A catalogue of every unit, taken on 2026-10-23, found reads that the board tier's path selection misses today. Each has to land in a declaration, and the observed-read check must catch any that are left out.
+  - Nineteen board tooling files read the board design method, seventeen of them test files and two of them fixture helpers, and the board-minimums tests read the manufacturer record. Both are under the documentation folder.
+  - The production-seed tests read the nightly workflow declaration.
+  - The cutover check walks every file under the hardware and documentation folders, and the task definitions.
+  - The board check reads four records by name: derating policy, pin limits, board rules and manufacturer limits. The round gate's list of board file names omits all four.
+  - The proof-design tests read designs from the last commit, through a committed copy and design keys taken at HEAD. Their inputs carry the commit-read mark.
+
+  Other traps.
+  - Tests that discover what they read. Some tests walk every tool module, every firmware source, every tracked design through git, or every workflow file. They declare the folder, not a list of files.
+  - The pre-build script. The build-time checks also run inside every environment's build, through the build system's pre-build script. A build's declaration therefore covers the checks' reads.
+  - Build products. The checks that read build products depend on a build of the same tree, and that build is their product.
+  - Shared module state. The pooled proof outcomes and the production export stay shared within their module. Observation is per unit, not per class.
+
+  Prerequisite. The board tooling tests have to run one file per process (SOL-BOARD-TIER-TESTS-RUN-SIDE-BY-SIDE) before their files can be units.
+
+  Out of scope:
+  - changing which units the round runs;
+  - the task-definition split and checking one board design at a time, which SOL-VERIFY-ROUND-RUNS-CHANGED-UNITS carries;
+  - the mutation sweep's population and changed-lines selection;
+  - the seeded-fault proof;
+  - moving figures that tools parse out of markdown tables into data files.
+rationale: |
+  The round can skip a unit only if it knows everything the unit reads. This solution builds that knowledge without changing round behaviour, so it can be built and tested on its own. Its evidence comes from the nightly workflow started by hand against the branch, not from waiting for main.
+
+  Declarations are written by hand and checked by observation, not generated from observation. A generated list records only what one run happened to read, and silently drops a read that a different input would have caused. A hand declaration that misses a read fails the nightly instead. The import closure is computed, not declared, because it is exact and mechanical.
+
+  The nightly check is kept light because the nightly already runs every unit, so a missed declaration costs at most a day. Two heavier proofs were left out: closed-tree runs of the board and emulation tiers, and observing reads made inside the CAD tool and the emulator. They would find a miss a little sooner, but would double the longest nightly jobs.
+
+  The restructuring is part of declaring. A declaration can only be as narrow as the unit it describes, and the catalogue found sub-second document checks bound to twenty-minute setups.
+
+  Moving figures out of markdown tables into data files was considered and left out. Once the checks that read those tables are units of their own, an edit to the surrounding prose costs seconds, so the move would not change round time.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: DEC-VERIFICATION-ROUND-TARGETED-NIGHTLY-FULL
+    type: justified-by
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C3
+    type: targets
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: targets
+  - target: SOL-BOARD-TIER-TESTS-RUN-SIDE-BY-SIDE
+    type: depends-on
+  - target: SOL-VERIFY-NIGHTLY-FULL-ON-MAIN
+    type: depends-on

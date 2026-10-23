@@ -1,0 +1,27 @@
+id: SOL-VERIFY-ROUND-RUNS-CHANGED-UNITS.C5
+type: criterion
+title: Every account of the gate describes selection by unit
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  These accounts of the gate state that the round runs each unit whose inputs changed since it last passed, where the passes are kept, how old a pass may be, and how to make a round disregard them:
+  - the project instructions' account of the gates, including its paragraph on the nightly closed-tree run;
+  - the hardware notes' account of when the board check runs;
+  - the firmware notes and the emulation notes;
+  - the round gate's module description;
+  - the descriptions of the round-gate and daily-verification tasks.
+
+  They also state that:
+  - the nightly runs every unit and checks the declarations by observed reads, by build dependency output and by the host tier's closed tree;
+  - the round gate is the only verification a change gets before it merges, with no separate pull-request gate, and a build round's gate worker finds it as the task the project declares for a build round;
+  - the seeded-fault proof stays on demand;
+  - the rasteriser and the monospaced font are needed by board tooling tests the round can run.
+
+  None of these accounts, nor the mutation sweep's task description, still states that a tier is selected as a whole by changed path, or that the sweep runs in every gate. The document checks that compare these accounts with the gate's behaviour pass against the new wording.
+
+  Out of scope: any cadence the verification-cadence decision does not set, and the operator skills installed from upstream.
+links:
+  - target: SOL-VERIFY-ROUND-RUNS-CHANGED-UNITS
+    type: criterion-of

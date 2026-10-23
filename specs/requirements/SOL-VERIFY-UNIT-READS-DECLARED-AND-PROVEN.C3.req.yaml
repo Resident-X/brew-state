@@ -1,0 +1,18 @@
+id: SOL-VERIFY-UNIT-READS-DECLARED-AND-PROVEN.C3
+type: criterion
+title: The nightly runs the host tier in a tree holding only the host units' declared inputs
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The complete verification's closed-tree run of the host tier builds, from the tracked files, a tree holding exactly the union of the host units' inputs. It runs the host tier's builds, build-time checks and tests in that tree, and fails when any of them fails. A union that selects no tracked file fails the run rather than passing it. This replaces the round gate's single list as the run's path set.
+
+  Tests over synthetic trees show the run failing when a host unit is made to read, through a started process, a file outside the union, and passing when every file read lies inside it.
+
+  The round does not run this check. The nightly runs it, through the complete verification's declaration.
+
+  Out of scope: closed-tree runs of the emulation and board tiers, and how long the run takes.
+links:
+  - target: SOL-VERIFY-UNIT-READS-DECLARED-AND-PROVEN
+    type: criterion-of

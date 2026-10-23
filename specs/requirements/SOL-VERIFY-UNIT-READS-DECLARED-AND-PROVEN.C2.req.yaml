@@ -1,0 +1,23 @@
+id: SOL-VERIFY-UNIT-READS-DECLARED-AND-PROVEN.C2
+type: criterion
+title: The nightly fails a unit that reads a repository file outside its inputs
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The complete verification runs every Python unit with its reads observed: files opened, folders listed, and repository paths passed to processes it starts. It fails, naming the unit and the file, when a unit reads a repository file outside its inputs. It judges the builds, including those the emulation suite consumes, against the compiler's dependency output in the same way. It ignores reads outside the repository, reads of the interpreter and installed packages, and reads of temporary folders the unit creates. It fails, naming the unit, when a unit has no declaration. It records each unit's duration.
+
+  Tests over synthetic units drive each of these cases, and each test fails if the verdict or the named file is wrong:
+  - a unit that opens an undeclared file;
+  - a unit that lists an undeclared folder;
+  - a unit that starts a process on an undeclared path;
+  - a unit that reads only declared inputs;
+  - a unit that reads only interpreter and temporary files;
+  - a build whose dependency output includes an undeclared header;
+  - an undeclared unit.
+
+  Out of scope: reads made inside a tool that a board or emulation unit starts, which are declared through products and the board check's own read listing.
+links:
+  - target: SOL-VERIFY-UNIT-READS-DECLARED-AND-PROVEN
+    type: criterion-of
