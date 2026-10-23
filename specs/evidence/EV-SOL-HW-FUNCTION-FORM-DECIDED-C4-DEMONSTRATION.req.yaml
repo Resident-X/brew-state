@@ -1,0 +1,17 @@
+id: EV-SOL-HW-FUNCTION-FORM-DECIDED-C4-DEMONSTRATION
+type: evidence
+title: demonstration evidence for SOL-HW-FUNCTION-FORM-DECIDED.C4
+status: active
+version: 1
+result: pass
+method: demonstration
+observed_at: "2026-10-23T05:17:19.287429Z"
+artifact:
+  kind: inline
+  artifact_version: 3fc6df278f6a2397e623457f3c3f052e95b752da
+attested_by: crun-edd8d2cc5cac54a9
+text: |-
+  Inspection of the delivered record. Every figure in controller-board-function-forms.md cites a source in the table 'Sources read' (S1-S3 and S5-S16 (S17, the ST BTA16 sheet DS2114 Rev 11; S18 Lite-On MOC3083 Rev B; S19 Ashcroft and S20 ifm practice pages): maker, revision or date printed, public address, read 2026-10-23), a numbered reference design (R1-R5, with R3 and R4 marked not read), a repository record by section, or a dated owner statement; JLCPCB prices cite the part page address and the read date. Nothing rests on private knowledge or a part in hand: the record states that nothing was bought. A later board designer can read, per function, the form, the reason, the targets for the fitted part and what is left to the board or assembly task, and an adopter can see which figures are the machine's (supply span, 70 C assumption, element resistances) and replace them. Legibility sweep: a § Terms section defines row, floor, seam, half-cycle, opto-triac, zero-cross and random-phase, triac, snubber, MOV, the carried-forward constraint names, the 358 V peak, the margin rule, mains-presence confirm and design task; entries that leaned on unstated context (controller family, pump and valve earlier-design modules, phase angle, commutating rate, edge input, OEM) now define the term or cite its section. Added after the final review: S4 is recorded as unused (dropped with the bought relay); S21 (the two XIDIBEI product pages, maker's product page, not a datasheet) is added; the barrier table states the target is checked against the stocked Lite-On sheet (S18) with the onsemi MOC3083M the second-source equivalent, met by both.
+links:
+  - target: SOL-HW-FUNCTION-FORM-DECIDED.C4
+    type: satisfies
