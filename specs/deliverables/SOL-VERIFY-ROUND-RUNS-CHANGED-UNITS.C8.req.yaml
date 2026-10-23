@@ -1,0 +1,20 @@
+id: SOL-VERIFY-ROUND-RUNS-CHANGED-UNITS.C8
+type: criterion
+title: The board check checks and lists reads one design at a time
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The board check accepts the name of one tracked design and checks only that design, giving the verdict and findings the full run gives for it. It refuses, naming it, a design that is not tracked. Its read listing states each design's reads apart from the others, and marks as shared the reads every design has: the tool code, the manufacturer record and other records found above the designs.
+
+  Tests over synthetic designs drive each of the following, and each test fails if the designs checked or the reads attributed are wrong:
+  - a named design;
+  - an untracked name;
+  - two designs sharing a record;
+  - a design-local record.
+
+  Out of scope: the design rules the check applies.
+links:
+  - target: SOL-VERIFY-ROUND-RUNS-CHANGED-UNITS
+    type: criterion-of

@@ -1,0 +1,24 @@
+id: SOL-VERIFY-ROUND-RUNS-CHANGED-UNITS.C2
+type: criterion
+title: A change runs exactly the units that read what it changed
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Over a synthetic repository holding units of every kind, with products shared between them, tests drive a change to each of the following and fail if the round runs any unit that does not read the changed file or skips one that does:
+  - a document no unit reads;
+  - a document read only by a document check;
+  - one tool module, which runs its tests and every unit importing it;
+  - one board design, which runs that design's check and the units reading it;
+  - the board check's code, which checks every design;
+  - a firmware source, which runs the builds, checks, suites, host runs and emulation modules whose inputs include it, building the products they need;
+  - one task group's file;
+  - a product's input, which runs every consumer of that product;
+  - a test fixture module;
+  - a change and then a fix to one unit's input, where the second round runs only that unit.
+
+  Out of scope: the mutation sweep's changed-lines selection.
+links:
+  - target: SOL-VERIFY-ROUND-RUNS-CHANGED-UNITS
+    type: criterion-of

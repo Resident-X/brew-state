@@ -1,0 +1,14 @@
+id: SOL-VERIFY-ROUND-RUNS-CHANGED-UNITS.C7
+type: criterion
+title: The task definitions are divided into one included file per task group with every task unchanged
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  The task-runner definition keeps the shared variables and the gate tasks at its root, and includes one file for each task group: firmware, hardware and graph tooling. The record lists every task with its description and its commands, as the task runner reports them at the solution's base commit and on the branch, and shows that no task was added, lost, renamed or changed. Every variable an included task uses resolves to the value it had before. The tests that read a task's text read it from its group's file and pass.
+
+  Out of scope: changing any task's behaviour.
+links:
+  - target: SOL-VERIFY-ROUND-RUNS-CHANGED-UNITS
+    type: criterion-of

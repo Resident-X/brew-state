@@ -1,0 +1,12 @@
+id: SOL-VERIFY-ROUND-RUNS-CHANGED-UNITS.C3
+type: criterion
+title: Each tier runs exactly the units the round selected
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Each tier's runner runs exactly the units the round selected: the firmware tooling, the emulation suite, the board tooling stage, the firmware unit-test suites, the build-time checks, the builds, the host runs and the board check, design by design. A tier with no selected unit is not started. A failing tier stops the round, with later tiers and the sweep reported as not reached. A selected unit needing a missing or too-old tool stops the round naming the tool, and a round selecting no unit that needs a tool runs without it. An untracked board design file fails the round naming it. The exit status is the verdict. The closing lines state, for each tier, the units run, the units skipped with the time of the pass each relied on and the time saved from the nightly's last recorded duration, and the units not reached. Tests drive a tier with none selected, a failing unit, a missing tool needed and not needed, an untracked design and a mixed round, and each fails if the units run, the verdict or a closing statement is wrong. Out of scope: the order of tests within a unit.
+links:
+  - target: SOL-VERIFY-ROUND-RUNS-CHANGED-UNITS
+    type: criterion-of

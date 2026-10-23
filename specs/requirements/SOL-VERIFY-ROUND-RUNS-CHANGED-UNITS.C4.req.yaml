@@ -1,0 +1,12 @@
+id: SOL-VERIFY-ROUND-RUNS-CHANGED-UNITS.C4
+type: criterion
+title: A unit that reads committed content is keyed and reported on that content
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  For a unit whose declaration marks inputs as read from the last commit, as the proof-design tests read their designs, the key is taken from the committed content of those inputs. When the working tree changes one of them without committing it, the closing lines state that the unit verified the committed version and name the file. Tests drive such a unit with a committed change, with an uncommitted change and with no change, and each fails if the unit is skipped against content it did not read or the statement is missing. Out of scope: making those tests read the working tree.
+links:
+  - target: SOL-VERIFY-ROUND-RUNS-CHANGED-UNITS
+    type: criterion-of

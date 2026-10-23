@@ -1,0 +1,24 @@
+id: SOL-VERIFY-ROUND-RUNS-CHANGED-UNITS.C6
+type: criterion
+title: Over the last thirty merged pull requests no unit that read a changed file is skipped
+status: active
+version: 1
+measurement_type: threshold
+verification: demonstration
+text: |
+  A run of the nightly workflow, started by hand against this solution's branch, provides each current unit's reads as the nightly established them. For a Python unit these are its observed reads. For a build, a firmware unit-test suite and a host run they are the compiler's dependency output. For reads inside a tool that a board or emulation unit starts, they are the unit's declared inputs, and the record marks that the check for those units can only confirm the declaration. For each of the thirty pull requests merged most recently before the branch, the record replays the pull request's changed files against today's units and declarations, with the pass store disregarded. A changed file that no longer exists is matched by its path.
+
+  For every pull request:
+  - Every unit the old tier selection ran but the new selection skips has reads that include none of the changed files.
+  - Every unit whose reads include a changed file is selected.
+
+  The record also reports, for each pull request, the units and time the old selection ran and the units and time the new selection runs, using the nightly's recorded durations.
+
+  Two live rounds are measured on the reference machine, each after a full round has recorded passes:
+  - A round on a branch changing only a document that no unit reads runs no unit.
+  - A round changing only a document that document checks read completes in at most two minutes.
+
+  Out of scope: rounds on a clean clone with no recorded pass.
+links:
+  - target: SOL-VERIFY-ROUND-RUNS-CHANGED-UNITS
+    type: criterion-of
