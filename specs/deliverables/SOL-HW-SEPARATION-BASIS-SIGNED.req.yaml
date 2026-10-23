@@ -29,6 +29,10 @@ links:
     type: justified-by
   - target: DEC-DEVICE-RETENTION-BOUNDARY
     type: justified-by
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: 9ab179cd71c254168cf1260aac6414ebb37bf96383a2babf270f68841cc0764c
+  gating_profile: ""
 design_question_answers:
   - answered_by: SOL-HW-SEPARATION-BASIS-SIGNED.C1
     class: whole-set
