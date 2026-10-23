@@ -2,7 +2,7 @@ id: DEL-HW-PARTITION-AND-FEASIBILITY.C5
 type: criterion
 title: Each board the division produces has a design task carrying the interlock or headroom allotted to that board
 status: active
-version: 7
+version: 8
 measurement_type: binary
 verification: inspection
 closes_by: cascade
@@ -16,6 +16,8 @@ text: |
   The derating policy record each such task authors grades every part chosen for its board against the enclosure air temperature the controller boards' constraints record holds, and where no catalogue part holds at that figure the task records the revisit of the figure in the constraints record, with its reason, instead of stretching the part's rating.
 
   Each such task that carries the interlock depends on DEL-HW-INTERLOCK-INTERVAL-DERIVED, which derives the proof-of-life removal interval from the held casting peak, so the interlock's timing is designed to a derived figure.
+
+  Each off-board assembly the choice of form creates, such as the heater-switch assembly on the machine's wall (a designed wall board for the two heaters, its triacs bolted to the machine's metal wall, and the element harness to the wall), also has a design task. That task designs the wall board, selecting its opto-triacs and triacs against the targets the function-forms record sets; judges against the triacs' own thermal ratings whether the machine's wall alone sinks the heat or a spreader plate is needed; judges the assembly thermally against the enclosure air temperature the controller boards' constraints record holds, an assumption that bring-up measures, including the heat it passes into the enclosure through the wall; and designs the element harness to the wall. The design task for an off-board assembly that includes the steam-path transducer's condensate leg designs the leg and records the temperature it delivers to the transducer, with its source, against the media temperature the basis states. It records, with its source, every figure the constraints record holds pending against it.
 links:
   - target: DEL-HW-PARTITION-AND-FEASIBILITY
     type: criterion-of

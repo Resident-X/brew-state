@@ -1,0 +1,15 @@
+id: DEL-HW-PARTITION-AND-FEASIBILITY.C7
+type: criterion
+title: The controller's microcontroller part is selected, with its reason and its effect on the firmware, before any board's pin allocation
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  The microcontroller designed onto the controller board is selected, as a specific part, before any board's pin allocation is authored. The selection records the part, the reason it serves the channel enumeration and the headroom the project is required to preserve, and its source read from the manufacturer's current datasheet with revision or read date. The part is within the family the pre-hardware target build nominates unless the selection records why it is not; where the part is in another family, the selection states the effect on the firmware's target build and hardware-backed seam implementation, and supersedes the nomination of the target family rather than reworking it. Where the part is in the nominated family, the selection states that the target build is unaffected. The selection shows the part carries, on pins free after the current channels, every bus function the function-forms record and the anticipated channels assign: two I2C-capable pin pairs, at least one of them also UART-capable, an SPI bus with two chip selects, and the load-cell amplifier lines. A board's pin allocation authored against a controller the selection has not named fails.
+
+  Out of scope: the pin allocation itself, which each board's design task authors; the plant-parameter measurements the controller's headroom is later checked against.
+links:
+  - target: DEL-HW-PARTITION-AND-FEASIBILITY
+    type: criterion-of

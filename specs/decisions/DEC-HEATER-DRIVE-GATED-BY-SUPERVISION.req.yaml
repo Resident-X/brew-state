@@ -3,7 +3,7 @@ type: decision
 category: strategic
 title: Bench heater drive is admissible on the protective devices the machine already carries, and the board is sized to a worst-case envelope as the prospective controller
 status: active
-version: 3
+version: 4
 text: |
   Heater channels may be wired and driven during bench characterisation, and the parts that switch them may be bought and fitted now. This is a deliberate relaxation of an earlier gate, not a correction of one: the decision it supersedes blocked heater drive on the proof-of-life interlock having no covering work and on the steam-side relief question being open, and both of those remain true. What has changed is the judgement about whether they need to be true before the machine may be heated on a bench.
 
@@ -13,7 +13,7 @@ text: |
 
   The protective chain the delivered machine requires is unchanged and unweakened. The proof-of-life interlock is still owed and still gates the assembled machine; its covering work now sits with the controller hardware under DEC-PROOF-OF-LIFE-INTERLOCK-IN-FIRST-HARDWARE; supervision is not proof of life and is not offered as a substitute for it. Nor is any element of the chain disabled, delayed or bypassed here -- the devices that exist keep acting, and what is absent is absent because it has not been built, which is a different thing from an override. A mechanical relief fitting may likewise be added now; an unresolved relief question is a reason to fit one, not a reason to withhold a component list.
 
-  The board bought is sized to a worst-case input, output and compute envelope rather than to the channels currently in view, and serves as both the bench instrument and the prospective machine controller. Buying instrumentation, measuring the machine with it, then discarding it for a second board costs more than buying once with headroom, and a real target board is needed for on-target timing verification in any case. Formal controller selection still happens against measured plant parameters and is not settled here.
+  The board bought is sized to a worst-case input, output and compute envelope rather than to the channels currently in view, and serves as both the bench instrument and the prospective machine controller. Buying instrumentation, measuring the machine with it, then discarding it for a second board costs more than buying once with headroom, and a real target board is needed for on-target timing verification in any case. The controller's part is selected before board design by the controller boards' partition task, sized with the headroom the project requires, and is not settled here; measured plant parameters later confirm that headroom rather than choose the part.
 
   Since this was decided, the device class on the two heater channels has changed underneath it.
   DEC-MAINS-PHASED-ACTUATION-BELOW-SEAM requires a device commandable every half-cycle, which retires the
