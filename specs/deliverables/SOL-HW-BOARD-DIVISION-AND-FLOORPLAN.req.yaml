@@ -1,0 +1,64 @@
+id: SOL-HW-BOARD-DIVISION-AND-FLOORPLAN
+type: deliverable
+category: solution
+title: The circuitry is divided between boards and a block-level floorplan shows each fits the enclosure as found, with harness connectors, the interlock and reserved headroom placed
+status: active
+version: 1
+text: |-
+  Assigns every function to a board or off-board assembly, weighing the owner's starting points as inputs. It draws a block-level floorplan per board against the recorded enclosure, mounting and harness entries, placing the large parts, every connector, the proof-of-life interlock and the separation from mains. It records, for each anticipated channel kind, where it is reserved or why it is not.
+links:
+  - target: DEL-HW-PARTITION-AND-FEASIBILITY.C2
+    type: derives-from
+  - target: DEL-HW-PARTITION-AND-FEASIBILITY.C4
+    type: derives-from
+  - target: REQ-RETROFIT-FIT-001.C1
+    type: targets
+  - target: PER-BUILDER-001.C5
+    type: targets
+  - target: DEC-DEVICE-RETENTION-BOUNDARY
+    type: justified-by
+  - target: DEC-PROOF-OF-LIFE-INTERLOCK-IN-FIRST-HARDWARE
+    type: justified-by
+  - target: DEC-IN-STREAM-PROBES-ANTICIPATED
+    type: justified-by
+  - target: DEC-BOARD-SEPARATION-BASIS-RECORD
+    type: justified-by
+  - target: DEC-BOARD-MANUFACTURER-JLCPCB
+    type: justified-by
+  - target: DEC-HEATER-DRIVE-GATED-BY-SUPERVISION
+    type: justified-by
+  - target: SOL-HW-CONTROLLER-MCU-SELECTED
+    type: depends-on
+  - target: SOL-HW-SEPARATION-BASIS-SIGNED
+    type: depends-on
+  - target: REQ-RETROFIT-FIT-001.C2
+    type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C1
+    type: targets
+  - target: REQ-HARDWARE-HEADROOM-001.C2
+    type: targets
+  - target: REQ-HARDWARE-HEADROOM-001.C3
+    type: targets
+  - target: REQ-SAFETY-CHAIN-001.C2
+    type: targets
+design_question_answers:
+  - answered_by: SOL-HW-BOARD-DIVISION-AND-FLOORPLAN.C3
+    class: whole-set
+  - answered_by: SOL-HW-BOARD-DIVISION-AND-FLOORPLAN.C2
+    class: served-statement
+  - answered_by: SOL-HW-BOARD-DIVISION-AND-FLOORPLAN.C2
+    class: consumer-intent
+  - answered_by: SOL-HW-BOARD-DIVISION-AND-FLOORPLAN.C2
+    class: consumer-self-sufficiency
+interfaces:
+  - docs/sunbeam-em7000/reference-machine.md § Controller enclosure as found
+  - docs/sunbeam-em7000/connector-pinouts.md
+  - docs/sunbeam-em7000/controller-board-function-forms.md
+  - docs/sunbeam-em7000/component-specification.md § Room for the channels the graph anticipates
+  - hardware/sunbeam-em7000/separation-basis.yaml
+locus:
+  - marking: created
+    ref: docs/sunbeam-em7000/ board division and floorplan record
+plan_provenance:
+  approved_plan_id: PLAN-DEL-HW-PARTITION-AND-FEASIBILITY-SLICE-1
+  target: DEL-HW-PARTITION-AND-FEASIBILITY

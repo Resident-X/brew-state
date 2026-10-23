@@ -1,0 +1,12 @@
+id: SOL-HW-SEPARATION-BASIS-SIGNED.C4
+type: criterion
+title: An adopter on a different supply can re-derive the basis rather than inherit it
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The basis states its figures against the declared supply. Beside the record, the hardware notes say which inputs an adopter on a different supply or altitude replaces, which table rows of the cited source they re-read, and that they sign the result under their own identity. A builder holding only the repository and the public sources it cites can follow them. Out of scope: deriving figures for any supply other than the declared one.
+links:
+  - target: SOL-HW-SEPARATION-BASIS-SIGNED
+    type: criterion-of

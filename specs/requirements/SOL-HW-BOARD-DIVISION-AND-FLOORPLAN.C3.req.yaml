@@ -1,0 +1,12 @@
+id: SOL-HW-BOARD-DIVISION-AND-FLOORPLAN.C3
+type: criterion
+title: Every retained harness reaches its connector without modification, with mains and low-voltage kept apart
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Every retained harness the connector record lists lands on a board connector placed where that harness enters the cavity and reaches it as found. The connector is identified by its board, its position and its first pin. A harness that must change is named with what about the retrofit forces that change to that specific harness. Mains and low-voltage runs, terminations and the paths between them are kept apart across the whole floorplan. Out of scope: harnesses for devices the retrofit adds, which bring their own connections.
+links:
+  - target: SOL-HW-BOARD-DIVISION-AND-FLOORPLAN
+    type: criterion-of

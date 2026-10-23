@@ -1,0 +1,12 @@
+id: SOL-HW-SEPARATION-BASIS-SIGNED.C3
+type: criterion
+title: Each barrier part's rating is judged against the barrier the basis declares, and the marks held against the basis are ended
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |-
+  For every barrier part the function-forms record names, its proving candidate's isolation rating is judged against the insulation its barrier is declared to provide, at the declared working voltage and overvoltage category, with the arithmetic shown. The barrier parts are the supply module, the heater switches, the pump drives and their zero-cross output, the valve switches, and the pressure sensors' insulation from the water path. A rating that cannot be sourced counts as absent, not adequate. Every pending mark the controller boards' constraints record holds against the separation basis is ended with its value and source. This includes the pollution degree and the material group, and the basis half of the barrier-rating mark, whose fitted-part half is re-pointed to the design task of the board or assembly carrying each part. Each document that restates an ended figure is brought to match in the same change. Out of scope: selecting the parts actually fitted, which each board's design task does against these barriers.
+links:
+  - target: SOL-HW-SEPARATION-BASIS-SIGNED
+    type: criterion-of
