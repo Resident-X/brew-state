@@ -67,13 +67,14 @@ barriers:
 # splitting to those metal parts. The pressure sensors connect through PTFE tube, so the sensor
 # body is not bonded to earth, but the water in the tube touches the earthed block and so is
 # referenced to earth through the earthed block (water is a poor earth reference, and the sensor
-# is not itself bonded). A single heater or solenoid insulation fault goes into the earthed block
-# and trips protection, so the water path is not mains-live under a single fault. The barrier is
+# is not itself bonded). A single heater or solenoid insulation fault goes into the earthed block,
+# so on the owner's reading the water path is not mains-live under a single fault (the device that
+# then clears the fault is the safety chain's, not established by this record). The barrier is
 # therefore earth-referenced water to the low-voltage electronics, at low-voltage working
 # voltage, and needs basic insulation at that level, not reinforced mains to low voltage; the
 # PTFE tube adds creepage. The remaining risk is a double fault, earth lost and a heater faulted,
-# which the standard does not ask the design to survive and which relies on the block's earth
-# bond staying sound. If the machine's earth bonding or the PTFE connection changes, the owner
+# which the owner takes as outside what the design must survive (no clause of the standard is
+# cited for that) and which relies on the block's earth bond staying sound. If the machine's earth bonding or the PTFE connection changes, the owner
 # re-declares this basis. The owner accepts or corrects each insulation type, this one included,
 # when signing.
 barrier_types:
