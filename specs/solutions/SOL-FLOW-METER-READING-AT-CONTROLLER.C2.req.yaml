@@ -1,12 +1,12 @@
 id: SOL-FLOW-METER-READING-AT-CONTROLLER.C2
 type: criterion
-title: The meter's signal line is wired to the bench sensing board on an input matching its signal type
+title: The meter's signal line is wired to the controller board running test firmware on an input matching its signal type
 status: active
 version: 2
 measurement_type: binary
 verification: inspection
 text: |
-  Per DEC-HEATER-DRIVE-GATED-BY-SUPERVISION, the board bought for bench sensing is wired
+  Per DEC-HEATER-DRIVE-GATED-BY-SUPERVISION, the controller board, running bench test firmware, is wired
   to the meter's signal line on a peripheral matching the signal type the prior criterion establishes.
   If the signal is an analogue voltage or current, the HW_SENSOR_FLOW channel in
   firmware/include/hw_interface.h and its backing table in firmware/src/hw/stm32/hw_stm32.c, which
