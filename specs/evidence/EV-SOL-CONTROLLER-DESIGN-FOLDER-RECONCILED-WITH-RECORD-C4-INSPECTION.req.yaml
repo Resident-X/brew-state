@@ -1,0 +1,16 @@
+id: EV-SOL-CONTROLLER-DESIGN-FOLDER-RECONCILED-WITH-RECORD-C4-INSPECTION
+type: evidence
+title: inspection evidence for SOL-CONTROLLER-DESIGN-FOLDER-RECONCILED-WITH-RECORD.C4
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-23T11:57:18.693707Z"
+artifact:
+  kind: external
+  reference: 'Inspection: no document removed or moved (git diff --name-status shows only modifications and one added file); all 13 distinct docs/sunbeam-em7000 paths cited by graph node files exist; engine-command: ./engine/staircase validate --format json (valid, 0 errors)'
+  artifact_version: 6e74607e373883c4d9d7b22a88a069b3a74aa5aa
+attested_by: crun-b2dad67e0df18ca8
+links:
+  - target: SOL-CONTROLLER-DESIGN-FOLDER-RECONCILED-WITH-RECORD.C4
+    type: satisfies
