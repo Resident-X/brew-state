@@ -5,8 +5,8 @@ status: active
 version: 1
 measurement_type: binary
 verification: demonstration
-text: |-
-  The contract smoke is run on the real agent command line with the lifetime left at its default, after the change, and passes: every probe's writes are recorded at five minutes and none at one hour, every fork whose specification matches its root's reads the root's prefix from the cache, and the probe whose result-schema flag differs is still flagged as a cache miss. Its streams are reduced and committed as fixtures beside the one-hour ones, and the demonstration records the command line's version, the streams' per-lifetime figures and the smoke's cost. Out of scope: a full review run at five minutes, whose saving the recorded figures already give.
+text: |
+  The contract smoke is run on the real agent command line with the lifetime left at its default, after the change, and passes: every probe's writes are recorded at five minutes and none at one hour, every fork whose specification matches its root's reads the root's prefix from the cache, and the probe whose result-schema flag differs is still flagged as a cache miss. Its streams are reduced with the split of writes by lifetime kept and committed as a second probe set in their own folder beside the one-hour probes, named in the fixtures' manifest with the lifetime each set ran at, so the tests that iterate the probes read each set against its own lifetime. The demonstration records the command line's version, the streams' per-lifetime figures and the smoke's cost. Out of scope: a full review run at five minutes, whose saving the recorded figures already give.
 links:
   - target: SOL-HW-REVIEW-KIT-CACHE-LIFETIME
     type: criterion-of
