@@ -8,6 +8,7 @@ change to how a task is started reaches both.
 
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 
@@ -52,6 +53,10 @@ def capture(task: str, name: str, repo: str, label: str) -> tuple[int, str]:
     return done.returncode, done.stdout
 
 
+#: The terminal control sequences a task runner writes when it colours its output, which can lead a line the task itself wrote.
+ESCAPE = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
+
+
 def run_noting(
     task: str, name: str, repo: str, label: str, what: str, marker: str
 ) -> tuple[int, list[str]]:
@@ -75,8 +80,9 @@ def run_noting(
     for line in process.stderr:
         sys.stderr.write(line)
         sys.stderr.flush()
-        if line.startswith(marker):
-            noted.append(line.strip())
+        plain = ESCAPE.sub("", line)
+        if plain.startswith(marker):
+            noted.append(plain.strip())
     status = process.wait()
     say(f"{label}: {name} {'passed' if status == 0 else f'FAILED with exit status {status}'}")
     return status, noted

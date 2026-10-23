@@ -312,6 +312,53 @@ class TheLayerImages(unittest.TestCase):
                       '--resvg "$RESVG"', ordering_section())
 
 
+class TheLayerListingOrder(unittest.TestCase):
+    """SOL-ROUND-GATE-NOTES-MISSING-TOOL-UNDER-HOSTED-RUNNER.C2: The production-files layer index lists layers in one fixed order on every host"""
+
+    SIDES = ["F.Cu", "F.Mask", "F.SilkS", "F.Paste", "B.Cu", "B.Mask", "B.SilkS", "B.Paste"]
+
+    def listed(self, names):
+        drawn = [(name, object(), f"{index}-{name}.gbr") for index, name in enumerate(names)]
+        return [name for name, _, _ in production_files.in_listing_order(drawn)]
+
+    def test_layers_discovered_in_any_order_are_listed_in_one_fixed_order(self):
+        # SOL-ROUND-GATE-NOTES-MISSING-TOOL-UNDER-HOSTED-RUNNER.C2: The test builds the index from layers presented in more than one discovery order and fails if the listed order changes
+        want = self.SIDES + ["In1.Cu", "In2.Cu", "Edge.Cuts", "drill", "Zeta", "alpha-mech"]
+        shuffles = [list(want), list(reversed(want)), want[1::2] + want[0::2], want[5:] + want[:5]]
+        for names in shuffles:
+            with self.subTest(order=names):
+                self.assertEqual(self.listed(names), want)
+
+    def test_more_than_nine_inner_layers_are_listed_by_layer_number_not_by_text(self):
+        # SOL-ROUND-GATE-NOTES-MISSING-TOOL-UNDER-HOSTED-RUNNER.C2: the inner copper layers in ascending layer number, including an export with more than nine inner layers
+        inner = [f"In{number}.Cu" for number in range(1, 13)]
+        want = ["F.Cu", "B.Cu"] + inner + ["Edge.Cuts", "drill"]
+        for names in (list(reversed(want)), sorted(want), want[::2] + want[1::2]):
+            with self.subTest(order=names):
+                self.assertEqual(self.listed(names), ["F.Cu", "B.Cu"] + inner + ["Edge.Cuts", "drill"])
+
+    def test_drill_files_of_one_rank_keep_to_their_source_name(self):
+        # SOL-ROUND-GATE-NOTES-MISSING-TOOL-UNDER-HOSTED-RUNNER.C2: then the drill files, in an order that does not depend on discovery
+        drawn = [("drill", object(), "b-NPTH.drl"), ("drill", object(), "a-PTH.drl")]
+        for items in (drawn, drawn[::-1]):
+            self.assertEqual([source for _, _, source in production_files.in_listing_order(items)], ["a-PTH.drl", "b-NPTH.drl"])
+
+    def test_the_images_and_both_forms_of_the_index_share_the_listed_order(self):
+        # SOL-ROUND-GATE-NOTES-MISSING-TOOL-UNDER-HOSTED-RUNNER.C2: The images and both forms of the index (text and JSON) share that order
+        drawn = production_files.in_listing_order([("In10.Cu", None, "f.gbr"), ("drill", None, "d.drl"), ("In2.Cu", None, "e.gbr"),
+                                                   ("F.Cu", None, "a.gbr")])
+        images = [{"file": f"layer-{name}.png", "layer": name, "source": source, "px_per_mm": 16} for name, _, source in drawn]
+        header = {"gerbers": "g", "frame_mm": {"x_min": 0, "y_min": 0, "x_max": 1, "y_max": 1}, "frame_note": "n"}
+        with tempfile.TemporaryDirectory() as out:
+            production_files.write_index(out, header, images, [])
+            with open(os.path.join(out, "index.json"), encoding="utf-8") as handle:
+                as_json = [image["layer"] for image in json.load(handle)["images"]]
+            with open(os.path.join(out, "index.txt"), encoding="utf-8") as handle:
+                as_text = re.findall(r"^IMAGE \| layer-(.*)\.png \|", handle.read(), re.M)
+        self.assertEqual(as_json, ["F.Cu", "In2.Cu", "In10.Cu", "drill"])
+        self.assertEqual(as_text, as_json)
+
+
 class TheFootprintDrawings(unittest.TestCase):
     """SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C1: The method's ordering step compares every placed part's position, rotation and polarity with the assembler's preview before payment."""
 

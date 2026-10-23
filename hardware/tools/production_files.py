@@ -78,6 +78,8 @@ USES = {("top", "copper"): "F.Cu", ("bottom", "copper"): "B.Cu", ("top", "mask")
         ("top", "silk"): "F.SilkS", ("bottom", "silk"): "B.SilkS", ("top", "paste"): "F.Paste", ("bottom", "paste"): "B.Paste",
         ("mechanical", "outline"): "Edge.Cuts"}
 DRILL = "drill"
+#: The order the layers are drawn and listed in, whatever order the export is discovered in: the sides' layers, the inner copper, the outline, then the drill files.
+SIDE_ORDER = ["F.Cu", "F.Mask", "F.SilkS", "F.Paste", "B.Cu", "B.Mask", "B.SilkS", "B.Paste"]
 
 
 class Refused(Exception):
@@ -230,6 +232,25 @@ def layer_name(key: Tuple[str, str]) -> str:
     return USES.get(key, "-".join(key))
 
 
+def layer_rank(name: str) -> Tuple[int, int, str]:
+    """Where a layer of this name stands in the listing: the sides' layers, the inner copper in ascending layer number, the outline, the drill files, then any other layer by name."""
+    if name in SIDE_ORDER:
+        return (0, SIDE_ORDER.index(name), "")
+    inner = re.match(r"In(\d+)\.Cu$", name)
+    if inner:
+        return (1, int(inner.group(1)), "")
+    if name == "Edge.Cuts":
+        return (2, 0, "")
+    if name == DRILL:
+        return (3, 0, "")
+    return (4, 0, name)
+
+
+def in_listing_order(drawn: list) -> list:
+    """The (name, layer, source) entries in the order the images and both forms of the index list them; entries of one rank keep to their source's file name, so the order does not depend on how the export was discovered."""
+    return sorted(drawn, key=lambda item: (layer_rank(item[0]), os.path.basename(str(item[2] or ""))))
+
+
 def caption(svg: str, text: str) -> str:
     """`text` drawn in the top left corner of an SVG gerbonara wrote, in the units of its view box."""
     box = re.search(r'viewBox="([-\d.e+]+) ([-\d.e+]+) ([-\d.e+]+) ([-\d.e+]+)"', svg)
@@ -306,6 +327,7 @@ def render(gerbers: str, out: str, resvg: str, stream=None) -> int:
     images = []
     drawn = [(name, layer, layer.original_path if hasattr(layer, "original_path") else "") for name, _, layer in layers]
     drawn += [(DRILL, drill, getattr(drill, "original_path", "")) for drill in drills]
+    drawn = in_listing_order(drawn)
     with tempfile.TemporaryDirectory(prefix="production-render-") as scratch:
         for name, layer, source in drawn:
             file = f"layer-{name}.png"
