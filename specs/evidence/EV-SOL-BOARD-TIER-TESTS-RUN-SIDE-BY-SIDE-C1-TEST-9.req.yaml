@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-TIER-TESTS-RUN-SIDE-BY-SIDE-C1-TEST-9
+type: evidence
+title: test evidence for SOL-BOARD-TIER-TESTS-RUN-SIDE-BY-SIDE.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-23T05:46:15.09715Z"
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_run_tool_tests.py::test_the_worker_count_asked_for_is_the_one_reported
+  artifact_version: ff713aa0be62772ca68f4a62961521490be9008d
+attested_by: crun-c81e34198d61f1c6
+links:
+  - target: SOL-BOARD-TIER-TESTS-RUN-SIDE-BY-SIDE.C1
+    type: satisfies

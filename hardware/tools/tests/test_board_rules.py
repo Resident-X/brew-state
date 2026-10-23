@@ -7,7 +7,7 @@ declaration becomes and in what order, which local clearance overrides fail,
 and how a connector's pins are counted against the declared ratio. Each of these
 can be wrong while the check still reports a pass, which is the failure worth a
 test. The check run against KiCad, the tracked designs and the seeded-fault
-proof are in test_board_check_kicad.py.
+proof are in the test_board_check_kicad_*.py files.
 """
 
 from __future__ import annotations

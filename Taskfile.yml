@@ -637,7 +637,11 @@ tasks:
       RESVG: "{{.RESVG}}"
       GERBONARA_PYTHON: "{{.GERBONARA_PYTHON}}"
     cmds:
-      - python3 -m unittest discover -s {{.HW_DIR}}/tools/tests {{.CLI_ARGS}}
+      # Each test file runs in a process of its own, side by side, from this
+      # directory as the serial discover run did; the runner fails when it finds
+      # no file. Arguments after -- reach it, so `task hw:test -- --workers 1`
+      # runs them one at a time.
+      - python3 {{.FW_DIR}}/tools/run_tool_tests.py --tests {{.HW_DIR}}/tools/tests --cwd . --worker-cap 4 {{.CLI_ARGS}}
 
   hw:test:round:
     desc: Run the tests covering the board tooling as hw:test does, the review kit's, the layout review caller's, the critical-routing check caller's, the production-files check caller's and its folder command's, the schematic review's caller, the schematic review folder command and the schematic review proof command, the review folder command's, the layout review proof command's, the critical-routing review proof command's and the production-files review proof command's among them (they stand a stub in place of the agent command line and need no model), without the tests that need the seeded-fault proof, which stays on demand (hw:test runs the whole suite) — the part the build round's gate runs for a change that can matter to a board and the nightly complete verification runs every night. Against the real kicad-cli and resvg, so it needs the tools hw:test does, KiCad 10.0 or newer, resvg 0.47 or newer, a monospaced font for the layout review views' captions, which the tests need as well as the views, and gerbonara 1.6.3 in a virtual environment of its own (set GERBONARA_PYTHON=/path/to/that/python when python3 is not it) for the production-files tests, and a missing one stops the run with a CANNOT RUN line naming it
@@ -648,4 +652,8 @@ tasks:
       GERBONARA_PYTHON: "{{.GERBONARA_PYTHON}}"
       BOARD_TESTS_WITHOUT_PROOF: "1"
     cmds:
-      - python3 -m unittest discover -s {{.HW_DIR}}/tools/tests {{.CLI_ARGS}}
+      # Each test file runs in a process of its own, side by side, from this
+      # directory as the serial discover run did; the runner fails when it finds
+      # no file. Arguments after -- reach it, so `task hw:test -- --workers 1`
+      # runs them one at a time.
+      - python3 {{.FW_DIR}}/tools/run_tool_tests.py --tests {{.HW_DIR}}/tools/tests --cwd . --worker-cap 4 {{.CLI_ARGS}}

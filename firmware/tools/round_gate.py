@@ -173,7 +173,7 @@ HOST_READS = (
     "hardware/README.md",
     "hardware/tools/board_check.py",
     "hardware/tools/board_views.py",
-    "hardware/tools/tests/test_board_check_kicad.py",
+    "hardware/tools/tests/board_kicad_fixtures.py",
 )
 
 #: Every path the board tier reads that is not a KiCad file wherever it sits: the

@@ -9,13 +9,15 @@ signed figure, what a project file marks as excluded, and whether the tools it
 needs are there. Each of these can be wrong while KiCad's checks still run and
 report nothing, which is exactly the failure worth a test: a pass that is not
 one. What KiCad itself finds is driven against the real tool in
-test_board_check_kicad.py.
+the test_board_check_kicad_*.py files.
 """
 
 from __future__ import annotations
 
 import contextlib
 import datetime
+import glob
+import importlib
 import inspect
 import io
 import json
@@ -4752,8 +4754,8 @@ class AMissingToolIsNamedByEveryModuleOfBoardTests(Tree):
     """A module of board tests that cannot find KiCad or the rasteriser stops with a line naming it, as every board command does."""
 
     TESTS = os.path.dirname(os.path.abspath(__file__))
-    KICAD_ONLY = ("test_board_check_kicad", "test_locked_copper", "test_review_seed")
-    WITH_RASTERISER = ("test_board_views", "test_board_placement")
+    KICAD_ONLY = ("test_board_check_kicad_discovery", "test_locked_copper_recording", "test_review_seed")
+    WITH_RASTERISER = ("test_board_views_rendering", "test_board_placement")
 
     def run_module(self, module: str, **environment):
         return subprocess.run([sys.executable, "-m", "unittest", module], cwd=self.TESTS, capture_output=True, text=True,
@@ -4808,16 +4810,20 @@ class TheRoundRunsTheToolingTestsWithoutTheSeededFaultProof(unittest.TestCase):
     what needs it: every check-behaviour test that can run without the pooled proof stays in."""
 
     def setUp(self):
-        import test_board_check_kicad as module
+        import board_kicad_fixtures as module
         self.module = module
+        self.modules = [importlib.import_module(os.path.basename(path)[: -len(".py")])
+                        for path in sorted(glob.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_board_check_kicad_*.py")))]
 
     def loaded(self, without_proof: bool):
         environment = {self.module.WITHOUT_PROOF: "1"} if without_proof else {}
+        tests = []
         with mock.patch.dict(os.environ, environment):
             if not without_proof:
                 os.environ.pop(self.module.WITHOUT_PROOF, None)
-            suite = unittest.TestLoader().loadTestsFromModule(self.module)
-        return list(self.module.tests_of(suite))
+            for module in self.modules:
+                tests.extend(self.module.tests_of(unittest.TestLoader().loadTestsFromModule(module)))
+        return tests
 
     @staticmethod
     def needs_the_proof(test) -> bool:
@@ -4851,7 +4857,7 @@ class TheRoundRunsTheToolingTestsWithoutTheSeededFaultProof(unittest.TestCase):
         everything = {test.id() for test in self.loaded(False)}
         subset = {test.id() for test in self.loaded(True)}
         self.assertLess(subset, everything)
-        self.assertIn(f"{self.module.__name__}.TheSeededFaultProof.test_the_clean_design_passes_and_every_fault_is_caught_without_touching_the_tree", everything)
+        self.assertTrue(any(test.endswith(".TheSeededFaultProof.test_the_clean_design_passes_and_every_fault_is_caught_without_touching_the_tree") for test in everything))
 
     def test_a_test_pulling_the_pooled_proof_in_is_seen_whatever_it_derives_from(self):
         # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
@@ -4888,7 +4894,7 @@ class TheRoundRunsTheToolingTestsWithoutTheSeededFaultProof(unittest.TestCase):
         round_task, full_task = self.task_block("hw:test:round"), self.task_block("hw:test")
         self.assertIn(f'      {self.module.WITHOUT_PROOF}: "1"', round_task)
         self.assertNotIn(self.module.WITHOUT_PROOF, full_task)
-        discovery = "python3 -m unittest discover -s {{.HW_DIR}}/tools/tests {{.CLI_ARGS}}"
+        discovery = "python3 {{.FW_DIR}}/tools/run_tool_tests.py --tests {{.HW_DIR}}/tools/tests --cwd . --worker-cap 4 {{.CLI_ARGS}}"
         self.assertIn(discovery, round_task)
         self.assertIn(discovery, full_task)
         for text in (round_task, full_task):

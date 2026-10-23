@@ -176,12 +176,14 @@ class TheRunnerRunsEveryModuleAndFailsOnNothingToRun(unittest.TestCase):
             self.assertIn(f"ok     {name}: 2 tests", together.stdout)
         self.assertIn("PASSED: 2 modules, 4 tests, 0 failed", together.stdout)
         self.assertIn("on 2 workers", together.stdout)
+        self.assertRegex(together.stdout, r"PASSED: .*, \d+\.\d+s on 2 workers")
 
     def test_the_worker_count_asked_for_is_the_one_reported(self):
         """The closing line states the number of workers the run used."""
+        # SOL-BOARD-TIER-TESTS-RUN-SIDE-BY-SIDE.C1: Over a synthetic directory of test files, the stage runs each file in a process of its own from the serial run's working directory, with the serial run's environment and test selection, several at once, at most four unless asked for more; reports each file's result as it finishes; and exits non-zero naming every file that fails, a file that crashes or cannot be imported included. A directory holding no test file fails the stage rather than passing. A file that cannot run because a tool it needs is missing makes the stage report that tool by name on its error output in the form the round reads as a failure to look, once however many files report it, so the round stops naming the tool rather than reporting a finding. The stage gives the same verdict run side by side as run one file after another, and two synthetic files that each need the one installed CAD tool both pass when run side by side. The on-demand full run of the board tooling's tests runs its files the same way. A test file divided to shorten the stage keeps every test it held, each in exactly one of the files it is divided into: the stage runs the same tests before and after the division, and the tests that need the seeded-fault proof stay outside the stage and inside the on-demand full run, as before. Tests of one class that only read a copy of a proof design and the result of checking it share one copy and one check made for the class, and a test that changes its copy has a copy of its own, so a test that changed a shared copy would be caught and no test sees another's change. Every test process the stage starts makes its git commits unsigned, whatever signing the user's own git configuration asks for, so scratch commits neither queue on one signing agent across the files run at once nor wait on a passphrase. The stage states its wall time and how many files it ran at once when it finishes. Out of scope: selecting tiers by changed path and the seeded-fault proof.
         # SOL-TOOL-TESTS-RUN-SIDE-BY-SIDE.C1: The task running the firmware tooling's tests runs each test module in a process of its own, side by side
         self.module("test_a", PASSING)
-        self.assertIn("on 3 workers", self.run_runner("--workers", "3").stdout)
+        self.assertRegex(self.run_runner("--workers", "3").stdout, r", \d+\.\d+s on 3 workers")
 
     def test_without_a_worker_count_the_cpu_count_is_used_up_to_six(self):
         """Unasked, the runner uses the CPU count, never more than six, and one when the count is unknown."""
@@ -219,6 +221,211 @@ class TheRunnerRunsEveryModuleAndFailsOnNothingToRun(unittest.TestCase):
                 commands.append(line[len("      - "):].strip())
         (runner,) = [command for command in commands if "tools/run_tool_tests.py" in command]
         self.assertTrue(runner.endswith("{{.CLI_ARGS}}"), runner)
+
+
+CANNOT_RUN = """
+import sys, unittest
+def setUpModule():
+    print("CANNOT RUN | the tool named {name} was not found", file=sys.stderr, flush=True)
+    raise unittest.SkipTest("tool missing")
+class Needs(unittest.TestCase):
+    def test_needs(self):
+        pass
+"""
+
+
+class TheRunnerRunsFilesFromTheSerialRunsDirectoryAndForwardsAMissingTool(unittest.TestCase):
+    def setUp(self):
+        self.directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        self.root = tempfile.TemporaryDirectory()
+        self.addCleanup(self.root.cleanup)
+        self.tests = os.path.join(self.directory.name, "tests")
+        os.mkdir(self.tests)
+
+    def module(self, name: str, source: str) -> None:
+        with open(os.path.join(self.tests, name + ".py"), "w", encoding="utf-8") as handle:
+            handle.write(textwrap.dedent(source))
+
+    def run_runner(self, *extra: str, env: dict | None = None) -> subprocess.CompletedProcess:
+        return subprocess.run(
+            [sys.executable, os.path.join(TOOLS, "run_tool_tests.py"), "--tests", self.tests,
+             "--cwd", self.root.name, *extra],
+            capture_output=True, text=True, check=False, env=env,
+        )
+
+    def test_each_file_runs_from_the_named_directory_with_the_runners_environment(self):
+        """Every file sees the working directory it was told to and the environment the runner was given."""
+        # SOL-BOARD-TIER-TESTS-RUN-SIDE-BY-SIDE.C1: Over a synthetic directory of test files, the stage runs each file in a process of its own from the serial run's working directory, with the serial run's environment and test selection, several at once, at most four unless asked for more; reports each file's result as it finishes; and exits non-zero naming every file that fails, a file that crashes or cannot be imported included. A directory holding no test file fails the stage rather than passing. A file that cannot run because a tool it needs is missing makes the stage report that tool by name on its error output in the form the round reads as a failure to look, once however many files report it, so the round stops naming the tool rather than reporting a finding. The stage gives the same verdict run side by side as run one file after another, and two synthetic files that each need the one installed CAD tool both pass when run side by side. The on-demand full run of the board tooling's tests runs its files the same way. A test file divided to shorten the stage keeps every test it held, each in exactly one of the files it is divided into: the stage runs the same tests before and after the division, and the tests that need the seeded-fault proof stay outside the stage and inside the on-demand full run, as before. Tests of one class that only read a copy of a proof design and the result of checking it share one copy and one check made for the class, and a test that changes its copy has a copy of its own, so a test that changed a shared copy would be caught and no test sees another's change. Every test process the stage starts makes its git commits unsigned, whatever signing the user's own git configuration asks for, so scratch commits neither queue on one signing agent across the files run at once nor wait on a passphrase. The stage states its wall time and how many files it ran at once when it finishes. Out of scope: selecting tiers by changed path and the seeded-fault proof.
+        self.module("test_where", f"""
+            import os, unittest
+            class Where(unittest.TestCase):
+                def test_where(self):
+                    self.assertEqual(os.path.realpath({self.root.name!r}), os.path.realpath(os.getcwd()))
+                    self.assertEqual("kept", os.environ.get("RUN_TOOL_TESTS_MARK"))
+            """)
+        self.module("test_where_too", f"""
+            import os, unittest
+            class WhereToo(unittest.TestCase):
+                def test_where(self):
+                    self.assertEqual(os.path.realpath({self.root.name!r}), os.path.realpath(os.getcwd()))
+            """)
+        result = self.run_runner(env={**os.environ, "RUN_TOOL_TESTS_MARK": "kept"})
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertIn("PASSED: 2 modules, 2 tests", result.stdout)
+
+    def test_a_file_commits_unsigned_though_signing_is_on_in_the_runners_environment(self):
+        """Side by side files do not queue on a signing agent: git is told not to sign, and the count already set is kept."""
+        # SOL-BOARD-TIER-TESTS-RUN-SIDE-BY-SIDE.C1: Over a synthetic directory of test files, the stage runs each file in a process of its own from the serial run's working directory, with the serial run's environment and test selection, several at once, at most four unless asked for more; reports each file's result as it finishes; and exits non-zero naming every file that fails, a file that crashes or cannot be imported included. A directory holding no test file fails the stage rather than passing. A file that cannot run because a tool it needs is missing makes the stage report that tool by name on its error output in the form the round reads as a failure to look, once however many files report it, so the round stops naming the tool rather than reporting a finding. The stage gives the same verdict run side by side as run one file after another, and two synthetic files that each need the one installed CAD tool both pass when run side by side. The on-demand full run of the board tooling's tests runs its files the same way. A test file divided to shorten the stage keeps every test it held, each in exactly one of the files it is divided into: the stage runs the same tests before and after the division, and the tests that need the seeded-fault proof stay outside the stage and inside the on-demand full run, as before. Tests of one class that only read a copy of a proof design and the result of checking it share one copy and one check made for the class, and a test that changes its copy has a copy of its own, so a test that changed a shared copy would be caught and no test sees another's change. Every test process the stage starts makes its git commits unsigned, whatever signing the user's own git configuration asks for, so scratch commits neither queue on one signing agent across the files run at once nor wait on a passphrase. The stage states its wall time and how many files it ran at once when it finishes. Out of scope: selecting tiers by changed path and the seeded-fault proof.
+        self.module("test_commit", f"""
+            import os, subprocess, tempfile, unittest
+            class Commits(unittest.TestCase):
+                def test_commit(self):
+                    with tempfile.TemporaryDirectory() as repo:
+                        run = lambda *a: subprocess.run(["git", *a], cwd=repo, capture_output=True, text=True)
+                        self.assertEqual(0, run("init").returncode)
+                        done = run("-c", "user.name=t", "-c", "user.email=t@t", "commit", "--allow-empty", "-m", "x")
+                        self.assertEqual(0, done.returncode, done.stderr)
+                        self.assertEqual("a", os.environ.get("GIT_CONFIG_VALUE_0"))
+            """)
+        env = {**os.environ, "GIT_CONFIG_COUNT": "2", "GIT_CONFIG_KEY_0": "user.note", "GIT_CONFIG_VALUE_0": "a",
+               "GIT_CONFIG_KEY_1": "commit.gpgsign", "GIT_CONFIG_VALUE_1": "true"}
+        env["GIT_CONFIG_COUNT"] = "3"
+        env.update({"GIT_CONFIG_KEY_2": "gpg.program", "GIT_CONFIG_VALUE_2": "/nonexistent/gpg"})
+        result = self.run_runner(env=env)
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
+    def test_every_failing_crashing_or_unimportable_file_is_named_and_the_stage_fails(self):
+        """A failing file, a file that cannot be imported and a file that crashes the interpreter are all named."""
+        # SOL-BOARD-TIER-TESTS-RUN-SIDE-BY-SIDE.C1: Over a synthetic directory of test files, the stage runs each file in a process of its own from the serial run's working directory, with the serial run's environment and test selection, several at once, at most four unless asked for more; reports each file's result as it finishes; and exits non-zero naming every file that fails, a file that crashes or cannot be imported included. A directory holding no test file fails the stage rather than passing. A file that cannot run because a tool it needs is missing makes the stage report that tool by name on its error output in the form the round reads as a failure to look, once however many files report it, so the round stops naming the tool rather than reporting a finding. The stage gives the same verdict run side by side as run one file after another, and two synthetic files that each need the one installed CAD tool both pass when run side by side. The on-demand full run of the board tooling's tests runs its files the same way. A test file divided to shorten the stage keeps every test it held, each in exactly one of the files it is divided into: the stage runs the same tests before and after the division, and the tests that need the seeded-fault proof stay outside the stage and inside the on-demand full run, as before. Tests of one class that only read a copy of a proof design and the result of checking it share one copy and one check made for the class, and a test that changes its copy has a copy of its own, so a test that changed a shared copy would be caught and no test sees another's change. Every test process the stage starts makes its git commits unsigned, whatever signing the user's own git configuration asks for, so scratch commits neither queue on one signing agent across the files run at once nor wait on a passphrase. The stage states its wall time and how many files it ran at once when it finishes. Out of scope: selecting tiers by changed path and the seeded-fault proof.
+        self.module("test_good", PASSING)
+        self.module("test_bad", FAILING)
+        self.module("test_unimportable", UNIMPORTABLE)
+        self.module("test_crashes", """
+            import os, unittest
+            class Crashes(unittest.TestCase):
+                def test_crashes(self):
+                    os._exit(7)
+            """)
+        result = self.run_runner()
+        self.assertEqual(1, result.returncode)
+        for name in ("test_bad", "test_unimportable", "test_crashes"):
+            self.assertIn(f"FAILED {name}", result.stdout)
+        self.assertNotIn("FAILED test_good", result.stdout)
+        self.assertTrue(result.stdout.rstrip().endswith("test_bad, test_crashes, test_unimportable"), result.stdout)
+
+    def test_each_result_is_reported_as_the_file_finishes(self):
+        """A quick file's line is out before a slow file has finished."""
+        # SOL-BOARD-TIER-TESTS-RUN-SIDE-BY-SIDE.C1: Over a synthetic directory of test files, the stage runs each file in a process of its own from the serial run's working directory, with the serial run's environment and test selection, several at once, at most four unless asked for more; reports each file's result as it finishes; and exits non-zero naming every file that fails, a file that crashes or cannot be imported included. A directory holding no test file fails the stage rather than passing. A file that cannot run because a tool it needs is missing makes the stage report that tool by name on its error output in the form the round reads as a failure to look, once however many files report it, so the round stops naming the tool rather than reporting a finding. The stage gives the same verdict run side by side as run one file after another, and two synthetic files that each need the one installed CAD tool both pass when run side by side. The on-demand full run of the board tooling's tests runs its files the same way. A test file divided to shorten the stage keeps every test it held, each in exactly one of the files it is divided into: the stage runs the same tests before and after the division, and the tests that need the seeded-fault proof stay outside the stage and inside the on-demand full run, as before. Tests of one class that only read a copy of a proof design and the result of checking it share one copy and one check made for the class, and a test that changes its copy has a copy of its own, so a test that changed a shared copy would be caught and no test sees another's change. Every test process the stage starts makes its git commits unsigned, whatever signing the user's own git configuration asks for, so scratch commits neither queue on one signing agent across the files run at once nor wait on a passphrase. The stage states its wall time and how many files it ran at once when it finishes. Out of scope: selecting tiers by changed path and the seeded-fault proof.
+        marker = os.path.join(self.root.name, "quick-done")
+        self.module("test_slow", f"""
+            import os, time, unittest
+            class Slow(unittest.TestCase):
+                def test_waits_for_the_quick_report(self):
+                    for _ in range(300):
+                        if os.path.exists({marker!r}):
+                            return
+                        time.sleep(0.1)
+                    self.fail("the quick file was not reported while this one ran")
+            """)
+        self.module("test_quick", PASSING)
+        process = subprocess.Popen(
+            [sys.executable, os.path.join(TOOLS, "run_tool_tests.py"), "--tests", self.tests,
+             "--cwd", self.root.name, "--workers", "2"],
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+        )
+        first = process.stdout.readline()
+        open(marker, "w").close()
+        rest = process.stdout.read()
+        process.wait()
+        self.assertIn("ok     test_quick", first)
+        self.assertEqual(0, process.returncode, first + rest)
+
+    def test_a_modules_own_test_count_is_read_not_a_nested_runs_it_printed_first(self):
+        """A module whose output holds a nested run's `Ran 0 tests` before its own `Ran 3 tests` is counted as 3 and passes."""
+        # SOL-BOARD-TIER-TESTS-RUN-SIDE-BY-SIDE.C1: Over a synthetic directory of test files, the stage runs each file in a process of its own from the serial run's working directory, with the serial run's environment and test selection, several at once, at most four unless asked for more; reports each file's result as it finishes; and exits non-zero naming every file that fails, a file that crashes or cannot be imported included. A directory holding no test file fails the stage rather than passing. A file that cannot run because a tool it needs is missing makes the stage report that tool by name on its error output in the form the round reads as a failure to look, once however many files report it, so the round stops naming the tool rather than reporting a finding. The stage gives the same verdict run side by side as run one file after another, and two synthetic files that each need the one installed CAD tool both pass when run side by side. The on-demand full run of the board tooling's tests runs its files the same way. A test file divided to shorten the stage keeps every test it held, each in exactly one of the files it is divided into: the stage runs the same tests before and after the division, and the tests that need the seeded-fault proof stay outside the stage and inside the on-demand full run, as before. Tests of one class that only read a copy of a proof design and the result of checking it share one copy and one check made for the class, and a test that changes its copy has a copy of its own, so a test that changed a shared copy would be caught and no test sees another's change. Every test process the stage starts makes its git commits unsigned, whatever signing the user's own git configuration asks for, so scratch commits neither queue on one signing agent across the files run at once nor wait on a passphrase. The stage states its wall time and how many files it ran at once when it finishes. Out of scope: selecting tiers by changed path and the seeded-fault proof.
+        self.module("test_nests", """
+            import unittest
+            print("Ran 0 tests in 0.001s")
+            print("OK (skipped=1)")
+            class Three(unittest.TestCase):
+                def test_a(self): pass
+                def test_b(self): pass
+                def test_c(self): pass
+            """)
+        for workers in ("1", "2"):
+            result = self.run_runner("--workers", workers)
+            self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+            self.assertIn("ok     test_nests: 3 tests", result.stdout)
+            self.assertIn("PASSED: 1 modules, 3 tests, 0 failed", result.stdout)
+
+    def test_an_empty_directory_fails_when_run_from_a_directory(self):
+        """A directory with no test file fails the stage in this form too."""
+        # SOL-BOARD-TIER-TESTS-RUN-SIDE-BY-SIDE.C1: Over a synthetic directory of test files, the stage runs each file in a process of its own from the serial run's working directory, with the serial run's environment and test selection, several at once, at most four unless asked for more; reports each file's result as it finishes; and exits non-zero naming every file that fails, a file that crashes or cannot be imported included. A directory holding no test file fails the stage rather than passing. A file that cannot run because a tool it needs is missing makes the stage report that tool by name on its error output in the form the round reads as a failure to look, once however many files report it, so the round stops naming the tool rather than reporting a finding. The stage gives the same verdict run side by side as run one file after another, and two synthetic files that each need the one installed CAD tool both pass when run side by side. The on-demand full run of the board tooling's tests runs its files the same way. A test file divided to shorten the stage keeps every test it held, each in exactly one of the files it is divided into: the stage runs the same tests before and after the division, and the tests that need the seeded-fault proof stay outside the stage and inside the on-demand full run, as before. Tests of one class that only read a copy of a proof design and the result of checking it share one copy and one check made for the class, and a test that changes its copy has a copy of its own, so a test that changed a shared copy would be caught and no test sees another's change. Every test process the stage starts makes its git commits unsigned, whatever signing the user's own git configuration asks for, so scratch commits neither queue on one signing agent across the files run at once nor wait on a passphrase. The stage states its wall time and how many files it ran at once when it finishes. Out of scope: selecting tiers by changed path and the seeded-fault proof.
+        result = self.run_runner()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("no test module found", result.stderr)
+
+    def test_the_same_verdict_side_by_side_as_one_after_another(self):
+        """A mixed directory and an all-passing one each give the verdict and the named files on one worker as on several."""
+        # SOL-BOARD-TIER-TESTS-RUN-SIDE-BY-SIDE.C1: Over a synthetic directory of test files, the stage runs each file in a process of its own from the serial run's working directory, with the serial run's environment and test selection, several at once, at most four unless asked for more; reports each file's result as it finishes; and exits non-zero naming every file that fails, a file that crashes or cannot be imported included. A directory holding no test file fails the stage rather than passing. A file that cannot run because a tool it needs is missing makes the stage report that tool by name on its error output in the form the round reads as a failure to look, once however many files report it, so the round stops naming the tool rather than reporting a finding. The stage gives the same verdict run side by side as run one file after another, and two synthetic files that each need the one installed CAD tool both pass when run side by side. The on-demand full run of the board tooling's tests runs its files the same way. A test file divided to shorten the stage keeps every test it held, each in exactly one of the files it is divided into: the stage runs the same tests before and after the division, and the tests that need the seeded-fault proof stay outside the stage and inside the on-demand full run, as before. Tests of one class that only read a copy of a proof design and the result of checking it share one copy and one check made for the class, and a test that changes its copy has a copy of its own, so a test that changed a shared copy would be caught and no test sees another's change. Every test process the stage starts makes its git commits unsigned, whatever signing the user's own git configuration asks for, so scratch commits neither queue on one signing agent across the files run at once nor wait on a passphrase. The stage states its wall time and how many files it ran at once when it finishes. Out of scope: selecting tiers by changed path and the seeded-fault proof.
+        self.module("test_a", PASSING)
+        self.module("test_b", PASSING)
+        for workers in ("1", "4"):
+            self.assertEqual(0, self.run_runner("--workers", workers).returncode)
+        self.module("test_bad", FAILING)
+        self.module("test_unimportable", UNIMPORTABLE)
+        closings = []
+        for workers in ("1", "4"):
+            result = self.run_runner("--workers", workers)
+            self.assertEqual(1, result.returncode)
+            closings.append(result.stdout.rstrip().splitlines()[-1].rsplit(": ", 1)[1])
+        self.assertEqual(["test_bad, test_unimportable"] * 2, closings)
+
+    def test_a_missing_tool_is_reported_once_on_the_error_output_at_the_start_of_a_line(self):
+        """Three files that each report the same missing tool put one CANNOT RUN line on stderr, and the stage fails."""
+        # SOL-BOARD-TIER-TESTS-RUN-SIDE-BY-SIDE.C1: Over a synthetic directory of test files, the stage runs each file in a process of its own from the serial run's working directory, with the serial run's environment and test selection, several at once, at most four unless asked for more; reports each file's result as it finishes; and exits non-zero naming every file that fails, a file that crashes or cannot be imported included. A directory holding no test file fails the stage rather than passing. A file that cannot run because a tool it needs is missing makes the stage report that tool by name on its error output in the form the round reads as a failure to look, once however many files report it, so the round stops naming the tool rather than reporting a finding. The stage gives the same verdict run side by side as run one file after another, and two synthetic files that each need the one installed CAD tool both pass when run side by side. The on-demand full run of the board tooling's tests runs its files the same way. A test file divided to shorten the stage keeps every test it held, each in exactly one of the files it is divided into: the stage runs the same tests before and after the division, and the tests that need the seeded-fault proof stay outside the stage and inside the on-demand full run, as before. Tests of one class that only read a copy of a proof design and the result of checking it share one copy and one check made for the class, and a test that changes its copy has a copy of its own, so a test that changed a shared copy would be caught and no test sees another's change. Every test process the stage starts makes its git commits unsigned, whatever signing the user's own git configuration asks for, so scratch commits neither queue on one signing agent across the files run at once nor wait on a passphrase. The stage states its wall time and how many files it ran at once when it finishes. Out of scope: selecting tiers by changed path and the seeded-fault proof.
+        for name in ("test_one", "test_two", "test_three"):
+            self.module(name, CANNOT_RUN.format(name="synthetic-cad-tool"))
+        self.module("test_other", CANNOT_RUN.format(name="resvg"))
+        result = self.run_runner()
+        self.assertEqual(1, result.returncode)
+        lines = result.stderr.splitlines()
+        self.assertEqual(1, lines.count("CANNOT RUN | the tool named synthetic-cad-tool was not found"), result.stderr)
+        self.assertEqual(1, lines.count("CANNOT RUN | the tool named resvg was not found"), result.stderr)
+        self.assertEqual(2, len([line for line in lines if line.startswith("CANNOT RUN |")]))
+        self.assertNotIn("PASSED", result.stdout)
+
+    def test_the_round_reads_the_runners_missing_tool_line_as_a_failure_to_look(self):
+        """The round's own reader of a task's error output notes the one line the real runner forwards."""
+        # SOL-BOARD-TIER-TESTS-RUN-SIDE-BY-SIDE.C1: Over a synthetic directory of test files, the stage runs each file in a process of its own from the serial run's working directory, with the serial run's environment and test selection, several at once, at most four unless asked for more; reports each file's result as it finishes; and exits non-zero naming every file that fails, a file that crashes or cannot be imported included. A directory holding no test file fails the stage rather than passing. A file that cannot run because a tool it needs is missing makes the stage report that tool by name on its error output in the form the round reads as a failure to look, once however many files report it, so the round stops naming the tool rather than reporting a finding. The stage gives the same verdict run side by side as run one file after another, and two synthetic files that each need the one installed CAD tool both pass when run side by side. The on-demand full run of the board tooling's tests runs its files the same way. A test file divided to shorten the stage keeps every test it held, each in exactly one of the files it is divided into: the stage runs the same tests before and after the division, and the tests that need the seeded-fault proof stay outside the stage and inside the on-demand full run, as before. Tests of one class that only read a copy of a proof design and the result of checking it share one copy and one check made for the class, and a test that changes its copy has a copy of its own, so a test that changed a shared copy would be caught and no test sees another's change. Every test process the stage starts makes its git commits unsigned, whatever signing the user's own git configuration asks for, so scratch commits neither queue on one signing agent across the files run at once nor wait on a passphrase. The stage states its wall time and how many files it ran at once when it finishes. Out of scope: selecting tiers by changed path and the seeded-fault proof.
+        import task_gate
+        for name in ("test_one", "test_two"):
+            self.module(name, CANNOT_RUN.format(name="synthetic-cad-tool"))
+        stub = os.path.join(self.root.name, "task")
+        with open(stub, "w", encoding="utf-8") as handle:
+            handle.write(f"#!/bin/sh\nexec {sys.executable} {os.path.join(TOOLS, 'run_tool_tests.py')} "
+                         f"--tests {self.tests} --cwd {self.root.name} >/dev/null\n")
+        os.chmod(stub, 0o755)
+        with open(os.devnull, "w") as quiet, mock.patch.object(task_gate, "say"), \
+                mock.patch.object(sys, "stderr", new=quiet):
+            status, noted = task_gate.run_noting(
+                stub, "hw:test:round", REPOSITORY, "round", "tests", "CANNOT RUN |")
+        self.assertEqual(1, status)
+        self.assertEqual(["CANNOT RUN | the tool named synthetic-cad-tool was not found"], noted)
+
+    def test_the_worker_cap_bounds_the_default_and_a_request_overrides_it(self):
+        """Unasked, a suite's own cap bounds the worker count; asked, the request is used whatever the cap."""
+        # SOL-BOARD-TIER-TESTS-RUN-SIDE-BY-SIDE.C1: Over a synthetic directory of test files, the stage runs each file in a process of its own from the serial run's working directory, with the serial run's environment and test selection, several at once, at most four unless asked for more; reports each file's result as it finishes; and exits non-zero naming every file that fails, a file that crashes or cannot be imported included. A directory holding no test file fails the stage rather than passing. A file that cannot run because a tool it needs is missing makes the stage report that tool by name on its error output in the form the round reads as a failure to look, once however many files report it, so the round stops naming the tool rather than reporting a finding. The stage gives the same verdict run side by side as run one file after another, and two synthetic files that each need the one installed CAD tool both pass when run side by side. The on-demand full run of the board tooling's tests runs its files the same way. A test file divided to shorten the stage keeps every test it held, each in exactly one of the files it is divided into: the stage runs the same tests before and after the division, and the tests that need the seeded-fault proof stay outside the stage and inside the on-demand full run, as before. Tests of one class that only read a copy of a proof design and the result of checking it share one copy and one check made for the class, and a test that changes its copy has a copy of its own, so a test that changed a shared copy would be caught and no test sees another's change. Every test process the stage starts makes its git commits unsigned, whatever signing the user's own git configuration asks for, so scratch commits neither queue on one signing agent across the files run at once nor wait on a passphrase. The stage states its wall time and how many files it ran at once when it finishes. Out of scope: selecting tiers by changed path and the seeded-fault proof.
+        self.assertEqual(8, run_tool_tests.default_workers(10, 8))
+        self.assertEqual(3, run_tool_tests.default_workers(3, 8))
+        self.assertEqual(2, run_tool_tests.default_workers(10, 2))
+        self.module("test_a", PASSING)
+        self.assertIn("on 2 workers", self.run_runner("--worker-cap", "2").stdout)
+        self.assertIn("on 4 workers", self.run_runner("--worker-cap", "2", "--workers", "4").stdout)
+        refused = self.run_runner("--worker-cap", "0")
+        self.assertEqual(2, refused.returncode)
+        self.assertIn("--worker-cap must be at least 1", refused.stderr)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-TIER-TESTS-RUN-SIDE-BY-SIDE-C1-TEST-11
+type: evidence
+title: test evidence for SOL-BOARD-TIER-TESTS-RUN-SIDE-BY-SIDE.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-23T05:46:15.242788Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_tool_test_runner_cad.py::test_two_files_each_running_the_installed_tool_both_pass_together
+  artifact_version: ff713aa0be62772ca68f4a62961521490be9008d
+attested_by: crun-c81e34198d61f1c6
+links:
+  - target: SOL-BOARD-TIER-TESTS-RUN-SIDE-BY-SIDE.C1
+    type: satisfies
