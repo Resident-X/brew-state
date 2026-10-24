@@ -12,6 +12,8 @@ text: |
   The correction is made in the division record and carried through every statement of the point 3 decision there and in any record that restates it, including the decision it lists as pending about the fixing rule, and the record's own check script and expected output are regenerated from the corrected data. The board's fixing and its stiffness are stated in the record, not assumed.
 
   The same record is corrected where its parts list departs from the parts the machine needs and the catalogue as read. The main board's count of unique Extended part types leaves out the 120 kΩ mains-sense resistor of the supply-timing front end, so the count is 19 where the record says 18, and every figure that follows from the count, among them the Extended-fee total and the comparison with Standard assembly, is recomputed. The seven header types and the shunt, which the record grades as assumed to be Extended parts, were read in the manufacturer's catalogue on 2026-10-25 and are all Extended, so the assumption is replaced by the reading and the figures that rested on it lose their assumed grade. Both corrections are made in the same regeneration of the record's check script as the point 3 correction.
+
+  The record's pending owner decision about the extended-part fee against hand-sourcing the through-hole parts (D10) is recorded as decided on 2026-10-25: the owner hand-solders the through-hole types that drive the assembly cost, and the manufacturer assembles only the surface-mount parts. The record's baseline, comparison tables and the statements that every part stays on the manufacturer's order meanwhile are brought to match, with the saving the decision brings.
 links:
   - target: DEL-MAINTENANCE.C1
     type: derives-from
