@@ -1,0 +1,12 @@
+id: SOL-HW-BOARD-FOUR-POINT-FIXING-RESTORED.C2
+type: criterion
+title: Each mains tab that moves for the hole at point 3 is redrawn at the fixing distance and named as a harness change
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Each tab pad nearer than the fixing distance to the centre of the hole at point 3, and each tab whose position follows from moving it at the as-found minimum pitch, is redrawn so every pad meets the distance. Each such tab is named as a harness change with what about the retrofit forces it, the distance it moves, and the lead slack it leaves of the owner's stated slack. The record states that the owner measures the real slack of each affected lead before the board is ordered. A tab that moves without that statement, or a move that breaks the pitch or any other rule of the record, fails. Out of scope: the owner's measurement itself.
+links:
+  - target: SOL-HW-BOARD-FOUR-POINT-FIXING-RESTORED
+    type: criterion-of

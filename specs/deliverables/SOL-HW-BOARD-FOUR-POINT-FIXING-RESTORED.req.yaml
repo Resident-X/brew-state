@@ -1,0 +1,23 @@
+id: SOL-HW-BOARD-FOUR-POINT-FIXING-RESTORED
+type: deliverable
+category: solution
+title: The board division record holds the board on all four mounting points and counts every Extended part type on the main board as read
+status: active
+version: 1
+text: |
+  Restores REQ-RETROFIT-FIT-001.C1 and REQ-RETROFIT-FIT-001.C2 for the board division and floorplan record: that record draws point 3 as no screw and no hole, the board resting on the plastic boss, and attributes that to the owner's decision of 2026-10-24. The owner's intent is a screw at point 3, the board held at all four of the machine's mounting points as the original board was, and the owner did not decide otherwise. The record is corrected to the owner's intent, and the work that follows from a hole at point 3 is done with it.
+
+  A hole at point 3 puts the rule of DEC-BOARD-PRE-ORDER-RULE-READINGS in force there: mains copper keeps 13.25 mm from the hole's centre (the signed 10.0 mm, the 3.0 mm extent of the footprint and the 0.25 mm drawing tolerance). The record's own distance check, run against point 3 on 2026-10-25, finds one mains rectangle inside it: the pad of tab 9, 11.38 mm from the centre, 1.87 mm short. The steam-pump strip, the next nearest, stands 16.45 mm away. Tab 9 therefore moves down by at least 1.87 mm, and tabs 8 and 7 move with it to keep the as-found minimum pitch of 8.3 mm, which makes the move a harness change of those three leads, named and justified as the record names the moves of tabs 1 to 3, with the lead slack each keeps stated. The owner's measurement of that slack with a rule is theirs and is taken before the board is ordered.
+
+  The correction is made in the division record and carried through every statement of the point 3 decision there and in any record that restates it, including the decision it lists as pending about the fixing rule, and the record's own check script and expected output are regenerated from the corrected data. The board's fixing and its stiffness are stated in the record, not assumed.
+
+  The same record is corrected where its parts list departs from the parts the machine needs and the catalogue as read. The main board's count of unique Extended part types leaves out the 120 kΩ mains-sense resistor of the supply-timing front end, so the count is 19 where the record says 18, and every figure that follows from the count, among them the Extended-fee total and the comparison with Standard assembly, is recomputed. The seven header types and the shunt, which the record grades as assumed to be Extended parts, were read in the manufacturer's catalogue on 2026-10-25 and are all Extended, so the assumption is replaced by the reading and the figures that rested on it lose their assumed grade. Both corrections are made in the same regeneration of the record's check script as the point 3 correction.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-RETROFIT-FIT-001.C1
+    type: targets
+  - target: REQ-RETROFIT-FIT-001.C2
+    type: targets
+  - target: SOL-HW-BOARD-DIVISION-AND-FLOORPLAN
+    type: depends-on
