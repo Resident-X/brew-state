@@ -2,11 +2,11 @@ id: SOL-HW-BOARD-COST-ESTIMATED.C1
 type: criterion
 title: Every board and off-board assembly has a block-level estimate covering fabrication, assembly, parts, shipping and a second spin
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: analysis
 text: |-
-  Every board and off-board assembly the division names has a block-level cost estimate at its chosen outline and layer count. The estimate covers fabrication against the manufacturer's price breaks; assembly with its setup fees and the loading fee of each part outside the basic library; the parts at the build quantity; shipping; and a likely second spin. Each figure cites its public source and read date, or is marked as an estimate with its basis, so an adopter can re-price it in their own market. A board or assembly left out fails. Out of scope: the quoted order cost each board's design task records before ordering.
+  Every board and off-board assembly the division names has a block-level cost estimate at its chosen outline and layer count. The estimate covers fabrication against the manufacturer's price breaks; assembly with its setup fees and the loading fee of each part outside the basic library; the parts at the build quantity; shipping, by the cheapest method quoted to the builder's country at the order's chargeable weight with the other methods listed; the import tax on the order as an estimated line with its basis, counted in the total; and a likely second spin. Each figure cites its public source and read date, or is marked as an estimate with its basis, so an adopter can re-price it in their own market. A board or assembly left out fails. Out of scope: the quoted order cost each board's design task records before ordering.
 links:
   - target: SOL-HW-BOARD-COST-ESTIMATED
     type: criterion-of
