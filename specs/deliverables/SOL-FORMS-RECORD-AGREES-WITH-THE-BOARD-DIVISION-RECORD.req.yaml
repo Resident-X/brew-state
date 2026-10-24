@@ -1,0 +1,15 @@
+id: SOL-FORMS-RECORD-AGREES-WITH-THE-BOARD-DIVISION-RECORD
+type: deliverable
+category: solution
+title: The function-forms record is corrected where the board division record departs from it
+status: active
+version: 1
+text: |
+  The controller board function-forms record gives each controller function its form and reason. The board division record that followed it (written after the owner's later statements and measurements) departs from that record in named places: where the interlock relay sits and what it cuts, where the mains-presence confirm sits and its polarity under neutral-side switching, the heater wall board's parts and blade terminals, the harness changes at the heater terminals, the valve relay part, the logic supply margin, the mains inlet assembly's mounting, and the heater triac's type. The division record states which of the two governs each point, but the function-forms record itself still says the earlier things, so a reader of that record alone is misled on those points. This solution corrects the function-forms record where the division record departs from it, so what is derived from the machine record agrees with it. It edits that one record and no code.
+
+  Scope: each row of the division record's table of departures from the forms record, and the forms record's leakage and snubber-bound section, which assumes a live-side switch. Out of scope: any change to a decision or to the division record.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-MACHINE-RECORD-001.C6
+    type: targets

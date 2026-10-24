@@ -2,12 +2,12 @@ id: DEL-HW-BRING-UP.C4
 type: criterion
 title: Mains is first connected only after the hold-off, interlock, isolation and arrival checks pass
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: demonstration
 closes_by: cascade
 text: |
-  Nothing reaches mains potential that has not been shown working without it: the low-voltage functions, every load held off, removal of heater power on loss of proof of life, the isolation test and the arrival inspection all pass first.
+  Nothing reaches mains potential that has not been shown working without it: the low-voltage functions, every load held off, removal of heater power on loss of proof of life, with the interlock open no load's live lead continuous with the supply's live, the isolation test and the arrival inspection all pass first.
 
   The first connection is made by one person working alone through a residual-current-protected supply with the current limited, for which a series lamp limiter suffices, so a fault shows as a trip or a limited current rather than as damage.
 links:

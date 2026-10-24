@@ -1,0 +1,12 @@
+id: SOL-FORMS-RECORD-AGREES-WITH-THE-BOARD-DIVISION-RECORD.C2
+type: criterion
+title: The heater triac is named as the type its datasheet shows, and the confirm's leakage and snubber bound is stated for a neutral-side switch
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The function-forms record names the heater triac as the standard four-quadrant type its datasheet shows, not as a snubberless type, and its section on the heater switch's leakage against the mains-presence confirm is re-derived for the neutral-side switching of the machine as found: the confirm reads on while the switch is open and the element intact, and off while the triac conducts. The inspector reads the datasheet's type designation and the re-derived bound against the connector record's statement of which conductor the original board's switch interrupts. Out of scope: the choice of triac.
+links:
+  - target: SOL-FORMS-RECORD-AGREES-WITH-THE-BOARD-DIVISION-RECORD
+    type: criterion-of

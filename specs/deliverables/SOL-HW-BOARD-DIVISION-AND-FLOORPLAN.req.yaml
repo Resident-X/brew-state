@@ -3,9 +3,17 @@ type: deliverable
 category: solution
 title: The circuitry is divided between boards and a block-level floorplan shows each fits the enclosure as found, with harness connectors, the interlock and reserved headroom placed
 status: active
-version: 1
+version: 2
 text: |-
   Assigns every function to a board or off-board assembly, weighing the owner's starting points as inputs. It draws a block-level floorplan per board against the recorded enclosure, mounting and harness entries, placing the large parts, every connector, the proof-of-life interlock and the separation from mains. It records, for each anticipated channel kind, where it is reserved or why it is not.
+
+  Settled for the build:
+  - The deliverable is one new record, docs/sunbeam-em7000/controller-board-division.md, beside the function-forms and design-constraints records. It changes no code, and the existing records change only to carry the owner's later measurements, statements and acceptances; every figure it uses is restated with its source, not cited to an inspection sheet.
+  - The interlock is a series element in the heaters' supply path, as the function-forms record sets; its block size rests on the worst-case series contact rating for the element currents, and does not wait for the proof-of-life interval.
+  - The lid-screw mounting points and the as-found ceiling and floor clearances are placement constraints the floorplan states and holds.
+  - The floorplan stays at block level; part-level regions are each board's design task.
+  - Reed element and mounting positions come from the machine record's location-dependent parts and mounting entries.
+  - A barrier the signed separation basis does not list, such as a relay coil-to-contact barrier if the interlock is a relay, is reported by the record for the board design task; it does not change the basis here.
 links:
   - target: DEL-HW-PARTITION-AND-FEASIBILITY.C2
     type: derives-from
@@ -41,6 +49,10 @@ links:
     type: targets
   - target: REQ-SAFETY-CHAIN-001.C2
     type: targets
+brief_confirmation:
+  confirmer: brief-reviewer-sonnet (claude-sonnet-5-5)
+  fingerprint: 4502d67dc43c0a439c3ac7fe9618063cdf02e872cc26e9cf72587e0c87fe03bc
+  gating_profile: ""
 design_question_answers:
   - answered_by: SOL-HW-BOARD-DIVISION-AND-FLOORPLAN.C3
     class: whole-set

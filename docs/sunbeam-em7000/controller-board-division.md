@@ -1,0 +1,5024 @@
+# Controller boards: the division of the circuitry and the floorplan of each board
+
+**This file is local, like `controller-board-function-forms.md`, which it sits beside.** It gives every function that record gives a form to one board or one off-board assembly, with the reason; compares three ways of dividing the circuitry between boards and says which the comparison supports; draws a dimensioned block-level floorplan of each board against the enclosure as found; and records where each retained harness lands, where the proof-of-life interlock sits and what carries mains as a result, and where each anticipated channel kind is given room or why it is not. An adopter fitting a different machine replaces this file along with the records it is derived from.
+
+## Owner intent carried in
+
+Each row is a statement the owner made that shaped this record: what they said, when, what it changed in the division, and the section that holds the consequence. A later reader should not have to rediscover any of it from the sessions that produced it. The dates are 2026 and the statements are quoted short or paraphrased.
+
+| Statement | Date | What it changed in the division | Where this record holds it |
+|---|---|---|---|
+| A board need not be a rectangle; an elbow that wraps round another board is allowed | 2026-10-12 | The outline is stored as a polygon and checked as one; division B's mains board carries a bay for the module's DC end; the narrow elbow controller board was weighed and dropped for want of fixings | § The owner's starting points; § Candidate divisions; the outline in § Appendix |
+| Hand-solder only the parts that drive assembly cost; the tank reed is fitted by hand and left off the order | 2026-10-12 and 2026-10-19 | The reed is not counted in the manufacturer's assembly and has its hand access marked; the through-hole parts that raise the cost are priced as hand-fitted | § The tank reed; § What the owner fits by hand |
+| The extended-part fee against hand-sourcing the parts is the owner's call: "if reasonable I might just pay" | 2026-10-23 | The record states the fee total and what hand-sourcing saves, and chooses neither: every part stays on the manufacturer's order (an owner decision pending, § Owner decisions pending, D10) | § What the owner fits by hand |
+| Heater switches go at the bottom next to the pumps, with a cut through the side plastic that bonds the heat plate to the metal wall | 2026-10-04 | The two heater triacs are on an off-board wall board bolted to the machine's metal wall | § Every function has one owner; § The heater wall board |
+| Same connectors, so each harness replugs straight in, with extra connectors for new sensors | 2026-10-12 | Every retained harness has a header of its own plug family, pitch and pin-1 orientation; the anticipated sensors have headers | § Every retained harness reaches its connector; § The anticipated channel kinds |
+| A measurement of heater power, voltage, frequency and total current may be wanted, to detect a runaway and to calibrate over temperature; show the allocation first and remove kinds by priority | 2026-10-12 | The kinds are all given a place first and removed in a stated order, by arithmetic; the total supply current has a shunt in the neutral return, read through the voltage measurement's isolating part (as of 2026-10-24); frequency is read from the one timing front end | § The anticipated channel kinds |
+| The zero crossing is one measurement on one board, shared by all | 2026-10-12 | `TIMING` and `IN_COND` serve every channel and both crossings; no second zero-crossing circuit is drawn | § Every function has one owner; § The anticipated channel kinds |
+| A spare analogue input is wanted, and the steam transducer's connector is to be shared with it or split from it | 2026-10-12 and 2026-10-23 | A spare analogue header and circuit; the transducer's digital header and the analogue spare are two connectors | § The anticipated channel kinds |
+| The original harness reaches only the original tab, so heater current comes out of the enclosure from that tab, and a small copper bridge goes out to the wall board and back | 2026-10-24 | First drawn as the element leads staying on tabs 4 and 5 with a piggyback terminal each and a wire out from it, and the return coming back to a piggyback on tab 3. **Replaced the same day** by the first and second rows after the one on the logic supply module (tabs 4 and 5 removed, in-line blade joiners, a landing for the return) | § The path of the heater current |
+| The wall cut is accepted, kept as small as the passage needs; how the wall board is supported is decided later, in its own design task | 2026-10-24 | The least opening is stated for the owner to confirm (an owner decision pending, § Owner decisions pending, D11); no support is fixed here, only the distances a support must give | § The heater wall board, *The wall cut, and the owner's acceptance* |
+| Off-board means not installed in the enclosure with the boards; it may be made as a section that snaps off one of them | 2026-10-24 | The definition used for every owner of a function; the wall board's own board and break-away forms are both costed | § Every function has one owner; § The heater wall board |
+| The wall board may be a break-away section whose cost is shared in the panel | 2026-10-24 | Costed against its own board, with the saving stated; the record keeps its own board and leaves the choice open (an owner decision pending, § Owner decisions pending, D9) | § The heater wall board |
+| Mains and low voltage may share a board, with the creepage held on the board | 2026-10-24 | Division A, one board, holds the signed 3.0 mm clearance and 10.0 mm creepage by distance and by milled slots | § Zones and the barrier; § Candidate divisions |
+| Compare one board of about the enclosure's width that meets the mounting points against two or three boards | 2026-10-24 | The three candidate divisions A, B and C with their costs, fixings and fit | § Candidate divisions |
+| 1 oz copper is a cost matter and depends on the current each path drives | 2026-10-24 | Both boards are 1 oz, the heater path is wide pours, and where 1 oz cannot carry a path, 2 oz and off-board wiring are weighed | § Layer counts, *Copper weight*; § Copper that carries the heater current |
+| The lid screws at points 1 and 2 are required | 2026-10-24 | The board is held at points 1 and 2 and at point 4; the three tabs nearest point 1 move to clear the fixing rule | § The fixing rule and the tabs that move |
+| At point 3 there is no screw and no hole: the board rests on the plastic boss | 2026-10-24 | No hole at point 3; no lead end, joint or heavy part lies over the boss top; the boss's top diameter is checked on the machine and is not recorded here | § The fixing rule and the tabs that move, *Point 3* |
+| Mains copper on the wall board stays at least 5.0 mm from the edge that lies against the metal wall; the triac leads are bent and the board stands off the wall by at least 5.0 mm on plastic standoffs and screws | 2026-10-24 | Every mains rectangle of the wall board, and now every part body and mains lead end, stands 5.0 mm in from the wall edge, and the board stands off 5.0 mm parallel to the wall with its back face toward it; the 10.0 mm to the metal holds only when the board is edge-on to the wall, which this record does not claim, so the rule is 5.0 mm from the copper to the metal in any orientation, the basis's basic row applied to an earth bond that the basis says is not measured; the wall-to-copper barrier is reported as one the basis does not list | § The heater wall board, *Mains copper and the metal wall* |
+| The relay's contact heat is budgeted at 0.5 W at 10.18 A with the coil at its full drive, and bring-up measures the closed-contact drop at about 10 A | 2026-10-24 | Contact heat is stated as an assumption beside the datasheet's unsourced worst case; the relay has a heat row; the coil is fed only through the proof-of-life path, with nothing that keeps it above drop-out beyond the removal interval after proof of life stops, and bring-up records the coil below 0.5 V in each rest state of the controller | § The interlock block, *The coil's feed*; § Heat |
+| Whether the interlock relay needs a reduced-hold coil drive was left to this record | 2026-10-24 | Dropped: by the record's own estimate the drive saves nothing (0.98 W at the full drive against 1.01 W held, since the contact heating at about 10 A dominates and rises as the coil force falls), and a hold stage with storage of its own is a latch risk against the proof-of-life requirement; the requirement that the coil is fed only through the proof-of-life path stays | § The interlock block; § Options considered and dropped |
+| The master interlock relay goes on the main board, in the `LINE` to `LINE1` link, so that it cuts the live feed of every load, heaters, pumps and valves, and not the heaters alone; the owner asked why it was not there, was told the reasons given in this row and in § Options considered and dropped, and approved | 2026-10-24 | `K_IL` moved from the wall board's common return to the main board; the wall board lost the relay, its coil pocket and the coil conductors of its low-voltage cable; the main board's mains column was re-ordered to put the relay between tabs 1 and 2; the logic supply and the timing front end are fed from `LINE` and `NEUTRAL` upstream of the contact so that the controller keeps power when it opens; the reserved valve position (kind 6) was not kept for want of room, and the owner has since removed it by choice (rows below). **The reasons it moved:** in the common return it cut the two heaters only, while the pumps and the valves keep their live feed from `LINE1` by the retained daisy-chain wires; `LINE1` is the one conductor of the main board from which every load's live lead is fed, so one relay in its link cuts them all; and the coil no longer needs a conductor across the cable to the wall board. **That every load's live lead is fed from `LINE1` rests on the owner's visual trace, not on a measurement, and bring-up checks it by continuity** (§ Reported for the board design tasks, item 32) | § The heater path, the interlock and the wall board; § The main board's floorplan, *The mains-side blocks*; § The anticipated channel kinds, kind 6 |
+| The 70 °C enclosure air is probably not real: the owner expects to insulate the thermoblocks | 2026-10-24 | 70 °C stays the assumed figure for every grade and distance, said plainly, and the 5 V rail is also sized at 50 °C; bring-up replaces both, and the relay choice is not proven until the bring-up measurement of its body | § What the division is weighed against; § Heat; § The logic supply against this board; § The interlock block |
+| The tab slack of about 10 mm is the owner's estimate; accept what is left once the fixing rule is met | 2026-10-24 | The margin rule (3.0 mm extent, 0.25 mm drawing tolerance, 13.25 mm to every hole centre) is an obligation on the board design task; the three tabs move 6.9, 7.0 and 7.5 mm and leave 3.1, 3.0 and 2.5 mm of the slack (they moved 9.7, 9.3 and 9.3 mm and left 0.3, 0.7 and 0.7 mm while every pad was drawn a 7.0 mm square); the owner measures the real slack with a rule before ordering | § The fixing rule and the tabs that move |
+| All nine tab blades stand with their wide face parallel to X, along the bottom edge | 2026-10-24 | A tab's pad is the blade's section with an annulus, 7.0 mm along X and 1.45 mm along Y, and not a 7.0 mm square; the cut-back of the two pads either side of the open interlock contact is gone; every distance that rested on the square (the gaps between pads, the distances to the fixings, the tab positions, the slack left, the tab strip and the link copper) is recomputed | § The fixing rule and the tabs that move; § Zones and the barrier |
+| Heater current sensing may sit on the wall board, or at the common feed on the mains board for the total current | 2026-10-24 | First drawn on the wall board, in the common return, with an isolated output on the wall board's low-voltage cable. **Replaced the same day** by the owner's measurement-set row below (one sensor for the total current, the wall board's dropped) | § The anticipated channel kinds, kind 9 |
+| The tallest part on the original board is the AC/DC module, measured at 28 mm | 2026-10-24 | The ceiling the record already used stands: 27.9 mm in the interior and 23.3 mm within about 2 mm of a wall | § What the division is weighed against |
+| The tank reed was remeasured: its lower lead is 15.3 mm above the original board's bottom edge and 121.25 mm from its left edge | 2026-10-24 | The reed's lower lead is at the recorded (122, 17.5) and its upper lead 20 mm above, midpoint (122, 27.5); the earlier hand-access rectangle was dropped for a body strip and a radius round each pad | § The tank reed |
+| The original board measures 133.2 × 125.1 mm (±0.2, perhaps not exactly square) | 2026-10-24 | This record's outline stays X 1.0 to 132.0, Y 2.0 to 127.0 (131.0 × 125.0 mm): the datum is the cavity wall and the original board's own edges are inferred, not measured | § The main board's floorplan, *Outline, fixings and margins* |
+| The interlock relay is to stand at least A8's 15 mm from the logic-supply module, and A8 applies to the relay as a heat source of about 1 W against every part that derates | 2026-10-24 | The relay dissipates 0.98 W, or 1.03 W with its coil at the low end of its tolerance, so it is a source in A8's own terms; the module stands 20.0 mm from its body and the voltage measurement, an 85 °C part, 15.0 mm from it, directly below the module; the two sensing blocks within 20 mm of it (`BREW_A_C`, `PT1_C`) moved right, and the analogue region holds its blocks with kind 5 in it at the spacing the drawing keeps (the earlier record's 1.5 mm gap had it over capacity until kind 5 was removed; see the measurement-set row below); the module moved up 3.3 mm and the microcontroller block is drawn at its estimate to stay 15.0 mm from it; of the five mains-side parts rated to 85 °C two hold 15 mm from both sources and three do not, with the arithmetic of why | § Heat; § The anticipated channel kinds |
+| The spare valve relay place, kind 6, is not wanted | 2026-10-24 | Kind 6 is recorded as **not reserved by the owner's choice (2026-10-24)** and not for fit; no criterion is named, because none is weakened; its block, its tenth tab and the step of the removal order that held it are gone | § The anticipated channel kinds, kind 6 |
+| The valves do not need a 20 A relay: their coils draw 0.129 A steady and 0.203 A at inrush together | 2026-10-24 | `K_V1` and `K_V2` are the Hongfa HF32FA-G/005-HSL1 (17.6 × 10.1 × 12.7 mm, 5 V coil, 10 A contacts, 1.61 USD) in place of the HF115F-Q (3.21 USD); `K_IL` stays the HF115F-Q, which carries 10.96 A | § The valve relays; § The mains-side blocks |
+| Relay contacts rated 250 V AC as their maximum switching voltage are accepted at the 253 V top of the span (1.2 % over), because the supply voltage is measured and the control can refuse to run well above the span; blocking the 358 V peak while off and the reinforced coil-to-contact isolation still apply, and a semiconductor switch is not covered | 2026-10-24 | The 250 V part is allowed for the valve relays; the constraints record carries the acceptance in *Rated for the supply* and the script reads it from there; this record checks the open-contact rating against 358 V and the coil-to-contact rating against the 4.0 kV target | § The valve relays |
+| The supply voltage is measured, and the control refuses to run well above the span; the refusal threshold is a control-design number above 253 V (260 V is an example) and is not 250 V, since the grid can exceed 250 V | 2026-10-24 | Kind 1 is **required**, not anticipated: `REQ-MEASUREMENT-001.C10` makes the supply voltage that sets heater and pump delivery known to the control to a declared accuracy, and one measurement serves that and the cut-out. It is given an isolated measurement `VMEAS` at the zone boundary and a conditioning block `VM_C`; the accuracy is declared by the sensing task (`DEL-SENSOR-NECESSITY-PROVEN.C2` computes how necessary it is) and the threshold by the control design, and neither is set here | § The anticipated channel kinds, kind 1 |
+| Both weight channels are kept; weight is last to go | 2026-10-24 | Kind 2 keeps both load-cell channels and stands last in the removal order; its footprint is redone with real parts (an HX711-class SOP-16 amplifier, five passives, a 5-way header) and the regions are redrawn, since the header strips and the analogue region were zones this record drew and not physical limits | § The anticipated channel kinds |
+| The pumps are 48 W and 22 W on their nameplates | 2026-10-24 | The sizing currents 0.46 A and 0.19 A at 253 V stand (the constraints record carries them as the sizing values, the nameplate voltage's square-law scaling of the running current; its assumed power-factor floor of 0.5 on the nameplate power at 253 V gives the smaller 0.379 A and 0.174 A, which are not used); they are the pump part of the 10.96 A behind `K_IL`, of the 5 V rail's relay and drive loads, and of the shared-fuse proposal | § The interlock block; § The fuses |
+| Is a smaller logic-supply module enough, and could one fuse serve the pumps? | 2026-10-24 | Asked, not decided (owner decisions pending, § Owner decisions pending, D5 and D6). The module stays the IRM-20-5: the smaller IRM-10-5 has 1.06 times this board's 5 V load at 70 °C against the 2.0 the forms record calls adequate, and 2.13 times at 50 °C. The fuses stay as `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE` arranges them, and one shared fuse is put to the owner as a decision pending (§ Owner decisions pending, D5) | § The logic supply against this board; § The fuses |
+| The main board's tabs 4 and 5, the element lead landings, do nothing now that the mains-presence confirms are on the wall board and no heater current runs through board copper there: remove them. The retained element leads keep their female terminals and plug onto in-line insulated male-to-male 6.3 mm blade joiners near the wall cut, strapped or clipped to something, and a new wire runs from each joiner to the wall board's blade terminals `OUT_S` and `OUT_C`. The wall board's return comes to a dedicated pad on the main board tied to the `NEUTRAL` copper, not to a piggyback crimp | 2026-10-24 | Tabs 4 and 5 are gone and the main board keeps seven harness tabs (1, 2 and 3 moved; 6 to 9 as found); the `STMHEATER` and `COFHEATER` leads are not changed (nothing cut, lengthened or re-terminated) and meet a joiner where they met a tab; the return lands on a landing that takes the tab part's own blade, beside tab 3, in a 7.0 mm pour of `NEUTRAL` that the heater return crosses; the pads' hold-out rules and the 8.0 mm channel kept for their leads are gone | § The path of the heater current; § Every retained harness reaches its connector; § The heater wall board |
+| Use the freed left-edge room: move the voltage measurement `VMEAS` there, away from the interlock relay's heat; put one current sensor in the `LINE` to `LINE1` link beside the relay's contact end (13 × 8 mm and 48 mm² of conditioning), sensing the total supply current, 10.96 A with every load on, and drop the heater current sensor from the wall board so that no isolated signal crosses the cable; frequency stays from the zero-cross front end, voltage from `VMEAS`, current from the link sensor. Re-attempt the 85 °C layout the room might allow, and report whether kind 5 fits again | 2026-10-24 | The three measurements and their interfaces are stated (§ The anticipated channel kinds, *Voltage, frequency and total current*). **Two of the placements do not hold under this record's own rules and are drawn differently, for the owner to confirm (owner decisions pending, § Owner decisions pending, D3 and D4).** The 13 × 8 mm isolated sensor cannot stand in the link (its low-voltage pocket has no exit, and its length needs the relay moved 3.0 mm, which costs 85.2 mm² of the analogue region), so the total current is sensed by a shunt in the `NEUTRAL` return at tab 3's pad, which carries the same current, and read as a second channel of `VMEAS`'s isolating part; and `VMEAS` stays under the module, because the pocket of a barrier part must stand at the zone boundary. Kind 5 fits, with 123.0 mm² of the analogue region to spare at the spacing the drawing keeps (the region's top edge is also corrected from Y 30.1, where the module once stood, to Y 31.0); the 85 °C parts hold no better than before, with the arithmetic of why in § Heat | § The anticipated channel kinds; § Heat; § The path of the heater current; § Options considered and dropped |
+| The heater wall board is hand-soldered by the owner, so its size and its part count are to be minimal ("less is more": fewer parts to get wrong, and a smaller board) | 2026-10-24 | The board is 57.0 × 42.5 mm = 2 422.5 mm² (80 × 57 mm = 4 560 mm² before), 47 % smaller, with 39 hand joints (70 before) and four Extended types (the triac, the opto-triac, the blade terminal and the header; the earlier count of two left the terminal and the header out): the sensor, the two confirms and the two snubbers are gone, the header is three ways, and the gate network is counted from the maker's figure | § The heater wall board; § What the owner fits by hand |
+| Drop the two mains-presence confirms from the populated board on the condition that the sensing design (the supply current, and each heater's resistance modelled over temperature and calibrated one at a time: 4.80 A coffee against 5.38 A steam, with the pumps and valves adding about 0.8 A) resolves a stuck-on triac, a triac that fails to close and an open element; if it does not, they go back. Keep the places unpopulated only if the board stays at the minimal outline, with the unpopulated pads' copper held to the separation rules as if fitted; the main board's confirm inputs stay reserved and the cable keeps its spare ways | 2026-10-24 | **The condition is only partly met, so whether the confirms stay off the board is an owner decision pending (§ Owner decisions pending, D2).** They are left off the drawn board for now, the owner's wish for a minimal board that is hand-soldered, on a condition that is met for a stuck-on triac and for "no heater current when commanded" and **is not met** for telling a triac that fails to close from an open element, which the supply current cannot tell apart; both give the same safe response (the heater power removed or held off). **Recommendation: keep them dropped and revisit when the sensing task proves the current check.** Putting them back costs two places of two parts each (four parts), 12 hand joints and a board 23.5 % larger (57.0 × 52.5 mm, 2 992.5 mm²), checked as a second layout; `IN_COND`'s two inputs stay reserved | § The heater wall board; § Reported for the board design tasks, item 29 |
+| The board as found switches the neutral side of every load, so a confirm across an element's switched lead and the neutral reads on when the switch is open and off when the triac conducts; the forms record's wording and its leakage bound seem to assume a live-side switch | 2026-10-24 | The polarity is stated (stuck-on reads off while commanded off, failed-to-close reads on while commanded on, an open element reads off), the forms record's bound of about 22 nF on the snubber capacitor is re-derived for this topology (it falls away), and the departure is entered in the table of disagreements; the forms record is not edited | § The heater wall board, *The mains-presence confirm*; § What this record's words depart from in the forms record |
+| The pump drives carry no snubber and no varistor: say so plainly and why, check them against the EMC and surge criteria and against the turn-off voltage of an inductive vibratory pump, and say so if the check cannot be closed from sourced figures | 2026-10-24 | Stated, with the check; it cannot be closed from sourced figures and is an open item for the design task | § The pump drives |
+| None of the four fixings can be touched: points 1 and 2, the lid screws, are recessed deep in a slot in the lid, and points 3 and 4, which carry no lid screw, are inside the closed case behind another panel | 2026-10-24 | Nothing in the geometry: the 10.0 mm mounting-hole rule applies as written to every fixing. The owner's choice between moving the three tabs 6.9, 7.0 and 7.5 mm (3.1, 3.0 and 2.5 mm of slack left) and amending the rule for fixings that cannot be reached is an owner decision pending (§ Owner decisions pending, D1) | § The fixing rule and the tabs that move |
+| Could tabs 1 to 3 be re-ordered now that tabs 4 and 5 are gone? | 2026-10-24 | No: the order stays (`LINE1`, `LINE`, `NEUTRAL`), because a re-order would need about 18 mm more lead reach against the owner's slack of about 10 mm (the figures of that discussion, not recomputed here); the owner measures the real lead reach if a re-order is wanted | § The fixing rule and the tabs that move |
+
+## Options considered and dropped
+
+Each is an option this record weighed. The reason is the one that decided it, with the figure where there is one; the graph holds the criteria and this file holds the arithmetic. A figure marked *computed here* is printed by the script of § Appendix.
+
+| Option | Why it was dropped, or left open |
+|---|---|
+| A narrow controller board along the right edge, possibly an elbow | It would carry points 2 and 4, which lie on one line 117 mm apart, and leave the mains side on a board with one fixing (§ Candidate divisions) |
+| Division B, a mains board and a low-voltage board | Dearer by about 20 USD at block level (the board fee at an area other than 103 × 103 mm is inferred, so only the whole dollar is stated) and each board is held by fewer fixings than A12 asks |
+| Division C, a three-board split | Dearer by about 21 USD at block level even with its two small boards at the lowest band's price; its controller board has no fixing of its own |
+| A hole at point 3 | The owner's decision: the board rests on the boss; a hole would also move tabs 7, 8 and 9 |
+| The wall board as a section that breaks off the main board | Saves 2.49 USD of fabrication and ties every respin of the safety-critical wall board to the four-layer main board's order; left open as the owner's choice (an owner decision pending, § Owner decisions pending, D9) |
+| 2 oz copper for the heater return on the main board | 36.40 USD more at two layers in the lowest band and unmeasured at four; off-board wiring adds nothing to the board (an owner decision pending, § Owner decisions pending, D13) |
+| **The heater return carried on main-board copper from the heater terminals to tab 3** (this record's earlier reading) | It would have needed 5.72 mm of 1 oz copper where the channel between the tab pads and the blocks leaves 5.0 mm; with tabs 4 and 5 gone the return lands beside tab 3 and crosses only a 7.0 mm pour, 8.5 mm long (§ The path of the heater current) |
+| The wall board edge-on to the wall with its mains copper at the edge | The signed basis gives no mains-to-metal distance for copper over a board edge; the copper stays 5.0 mm in and the board stands off 5.0 mm, and the 10.0 mm to the metal that the two make together holds only edge-on, which is not claimed |
+| Holding 10.0 mm of copper to the wall edge with no stand-off | It would grow the board by 5 mm more for nothing the stand-off does not already give |
+| A basic mains-to-earth pair signed in the basis | An amendment outside this slice; the wall-to-copper barrier is reported instead (an owner decision pending, § Owner decisions pending, D15) |
+| The proof-of-life contact on a low-voltage signal line | A shorted triac bypasses it, so it does not remove power |
+| **The interlock relay on the wall board, in the heaters' common return** (this record's first placement) | Dropped on the owner's approval of 2026-10-24 for the main board. It cut the two heaters and left the pumps and the valves live from `LINE1`; its coil needed a conductor across the cable to the wall board; and it put a 0.9 W part 10.0 mm from the steam triac (4.84 W) against A8's 15 mm, with the current sensor 12.0 mm from the coffee triac against 20 mm |
+| **Spreading the triacs 4.0 mm and moving the sensor 7.2 mm** to hold A8 with the relay on the wall board | Dropped with the relay: the wall board would have grown to 95 mm wide and about 68 deep (the figures of the round-2 homework ruling, not recomputed here). With the relay gone the sensor stands 20.5 mm from the coffee triac on an 80 × 57 mm board |
+| **Accepting the sensor 12.0 mm from the coffee triac against a restated A8** | No record holds a thermal model that would show 12 mm acceptable; the sensor is placed to the 20 mm instead |
+| **The interlock relay in the top relay place of the main board**, level with the top of the stack where `K_V2` stands (the fallback) | The link from tab 2 to the relay and back to tab 1 would be two runs of 92 mm of 7.0 mm pour, 26.4 squares, 12.9 mΩ and 1.55 W at 10.96 A against the 0.5 W link budget (computed here); the re-ordered column puts the relay between tabs 1 and 2 instead |
+| **A reserved fourth relay place, `K_SPARE`, for a further switched output (kind 6)** | Not kept: it was first lost for room (the bottom 14.5 mm of the stack holds the timing front end, which needs 13.0 mm between neighbours), and the owner then removed it by choice on 2026-10-24, so kind 6 is recorded as not reserved by the owner's choice (2026-10-24) (§ The anticipated channel kinds, row 6) |
+| **A 7.0 mm square pad for every tab** (this record's earlier drawing) | The owner reads every blade with its wide face parallel to X, so a pad is 7.0 mm along X and 1.45 mm along Y, the blade's section and an annulus; the square left 1.3 mm between the pads of tabs 1 and 2 and again between those of tabs 2 and 3, and moved the three tabs nearest point 1 by 9.7, 9.3 and 9.3 mm against the 6.9, 7.0 and 7.5 mm they move now |
+| **Holding every 85 °C part 15 mm from both heat sources, the module and `K_IL`** | The five mains-side parts rated to 85 °C (the valve relays, the pump opto-triacs and the voltage measurement's isolating part) need 55.2 mm along the barrier column and 31.1 mm of it stands 15 mm from both sources (computed here), so at most three fit there; counting every position of the module, every split of the parts above or below it and every order, three hold only if `K_V1` stands between the two sources, and the two arrangements built that do so each break a rule (§ Heat); the drawn stack holds two (`K_V2`, `P_S`) and reports `K_V1`, `P_C` and `VMEAS` as not held, each against the module |
+| **`VMEAS` between the interlock relay and the module** (this record's earlier place) | It stood 4.0 mm from the interlock relay against A8's 15 mm, which the owner does not accept for an 85 °C part; it now stands directly below the module, 15.0 mm from the relay's body, which raised the module 3.3 mm and left the microcontroller block 31.1 mm of height to keep 15.0 mm from the module (§ Heat) |
+| **`K_V1` between the interlock relay and the module, with `VMEAS` above the module** | It is the one family of arrangements that holds a third 85 °C part (`P_C`), and the two built here each break a rule: with the module at its lowest, no trace from tab 6 reaches the relay's contact copper keeping 5.0 mm from the other nets and `WT1_C` stands 18.3 mm from the module against A8's 20; with the module where it stood and the shared fuse in the gap beside the relay, no trace reaches the pad of tab 3 from the rest of the `LINE` and `NEUTRAL` copper (all computed here, § Heat) |
+| The mains-presence confirm on the main board | It would put two barrier parts at the main board's boundary and two more mains conductors in the cable |
+| One connector for the steam transducer shared with the spare input | It would put 5 V on the digital pair's connector (§ Every function has one owner) |
+| **The 13 × 8 mm isolated current sensor in the link beside the relay's contact end** (the owner's placement of 2026-10-24) | Not drawn. Its primary is 8 mm long in the direction of the current and the room between the pad of tab 2 (right edge X 12.0) and the relay's contact copper (X 17.0) is 5.0 mm, so the relay would move 3.0 mm to the right; the three sensing blocks nearest it (`PT1_C`, `BREW_A_C`, `WT1_C`) would then stand 17.3, 17.0 and 17.0 mm from its body against A8's 20, and the analogue region would lose 85.2 mm² of capacity, 1 189.7 to 1 104.5 (56.8 mm² at 2.0 mm), all computed here. Its low-voltage pocket would stand in the pad column, where no pocket has an exit: every line from it to the low-voltage zone crosses the taps from `LINE` and `NEUTRAL` to the module's and the voltage measurement's pads, and the surface rules need slots the whole way |
+| **A shunt in the link on the `LINE` side, read by a second barrier part** | Not drawn. The shunt (7.0 mm long) still does not fit the 5.0 mm between the pad and the contact copper without moving the relay; its reference is `LINE`, which is 253 V from the voltage divider's `NEUTRAL`, so one isolating part with two inputs that share a reference cannot read both; and a second barrier part needs another 5.0 mm of the boundary column, which has none to give (§ Heat) |
+| **`VMEAS` moved into the left column the tabs 4 and 5 left** | Not drawn. It would stand 17.5 mm or more from the module and 15 mm or more from the relay, which holds A8, but its pocket would have no route to the low-voltage zone: the zone boundary is 44 mm away, the taps to the module's pads run up the same column, and a pocket that stands anywhere but the zone boundary needs 20.3 mm of clear width between mains copper or slots all the way (§ Heat) |
+| **Piggyback terminals on tabs 3, 4 and 5 for the wall board's wires** | Dropped on 2026-10-24: once the confirms moved to the wall board the pads of tabs 4 and 5 did nothing and the heater current ran through no board copper there; the retained leads plug onto in-line joiners and the return has a landing of its own (§ The path of the heater current) |
+| **A copper bridge on the main board for the heater current, out to the wall board and back** | Dropped with the two pads: the heater return crosses only the pour from its landing to the pad of tab 3 (§ Copper that carries the heater current) |
+| **A heater current sensor on the wall board** | Dropped by the owner on 2026-10-24: one sensor reads the total current, and no isolated signal crosses the cable (§ The anticipated channel kinds, kind 9) |
+| **The two mains-presence confirms populated on the wall board** | Dropped on the condition of 2026-10-24 (§ The heater wall board, *The mains-presence confirm*): 12 hand joints, one Extended type and about 220 mm² saved; they go back if the sensing design does not resolve the faults |
+| **The confirm places kept on the wall board, not populated** | Not kept: they grow the board from 57.0 × 42.5 mm to 57.0 × 52.5 mm (+570 mm², +23.5 %), because four mains ends then fill the row, so the header can no longer stand in the middle of it and moves above them; the board price stays 4.00 USD in the band, and a respin to add them later costs about that. Whether they come back is an owner decision pending (§ Owner decisions pending, D2; § The heater wall board, *The mains-presence confirm*) |
+| **A snubber across each heater triac** | Dropped on 2026-10-24: the load is resistive, so the commutating current falls at 2.4 to 2.9 A/ms against the 7 A/ms the triac's (dV/dt)c is rated at, with 0.11 to 0.14 V/µs of reapplied voltage against its 10 V/µs (§ The heater wall board, *Snubbers and varistors*); each is also a path around the open triac |
+| **A re-ordered tab column** | Not drawn: a re-order would need about 18 mm more lead reach against about 10 mm of slack (the owner's figures of 2026-10-24, not recomputed here); the order `LINE1`, `LINE`, `NEUTRAL` stays |
+| Leaving the supply voltage as a removable, anticipated kind | `REQ-MEASUREMENT-001.C10` requires the supply voltage to be known to the control, and the owner requires it: kind 1 is given a place and is not in the removal order (§ The anticipated channel kinds) |
+| Standard assembly instead of Economic | Dearer at 18 unique Extended types; the two cross at 26 (§ What the owner fits by hand) |
+| The earlier 11.1 × 29.0 mm reed hand-access rectangle | It had no source; replaced by a body strip and a radius round each pad |
+| **A reduced-hold coil drive for the interlock relay (the economiser)** | Dropped on 2026-10-24: by the record's own estimate it saves nothing (0.98 W at the full drive against 1.01 W held, since the contact heating at about 10 A dominates and rises as the coil force falls), and a hold stage with storage of its own is a latch risk against the proof-of-life requirement (§ The interlock block); the coil is fed at its full drive only through the proof-of-life path |
+| **The 20 A HF115F-Q for the valve relays** (this record's earlier choice) | Replaced on 2026-10-24: the valve coils draw 0.129 A steady and 0.203 A at inrush together, the 10 A contacts of the small relay carry them 78 and 49 times over, and the HF32FA-G/005-HSL1 is 17.6 × 10.1 mm and 1.61 USD against 41.0 × 12.7 mm and 3.21 USD (§ The valve relays) |
+| **The valve relays level with their tabs, at X 17 to 58 mm** | A short relay there would have its coil end 31 mm in from the zone boundary, so a low-voltage trace from it would have to keep 10.0 mm from mains copper all round; the relays stand at the zone boundary, X 44.5 to 62.1, and their mains leads run 35 and 37 mm from the tab pads (§ The mains-side blocks) |
+| **The IRM-10-5 as the logic supply** | 1.06 times this board's 5 V load at 70 °C against the 2.0 the forms record calls adequate; it would give 2.13 times at 50 °C, which is not measured, so the module stays the IRM-20-5 and the smaller one is the owner's to take up once bring-up has measured the air (an owner decision pending, § Owner decisions pending, D6); it would save 264 mm² (1 425 against 1 161) and 2.5 mm of height (§ The logic supply against this board) |
+| **One shared fuse for both pumps, or for the pumps and the valves** | Not drawn: `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE` fuses each pump branch on its own so that a fault in one does not stop the other, and the record keeps that arrangement; sharing is an owner decision pending (§ Owner decisions pending, D5; § The fuses) |
+| **A 12 × 12 mm allowance for each weight circuit, and four header strips of 1 530 mm² of capacity** | Replaced: each weight circuit is drawn from the amplifier's sheet and A4 at 19.0 × 7.2 mm, and the regions are the rectangles the blocks are drawn in, 1 634.5 and 1 491.0 mm² with the gap counted (§ The anticipated channel kinds) |
+
+## Owner decisions pending
+
+**This is the one list of the decisions that are the owner's and are not made.** Each item gives the question, what this record draws meanwhile, and where the record holds the consequence; every other mention in this record points here, and nothing in this list is settled elsewhere. A decision the owner has made is in § Owner intent carried in. The script checks that each item is stated here with its words "Owner decision pending", that the section it concerns points to it, and that no other mention of a decision pending lacks the pointer.
+
+**D1. The tab moves, or an amendment of the 10.0 mm fixing rule.** Owner decision pending: keep the moves of the three tabs nearest point 1, 6.9, 7.0 and 7.5 mm, which leave 3.1, 3.0 and 2.5 mm of the owner's 10 mm of lead slack, or amend the 10.0 mm mounting-hole rule (`DEC-BOARD-PRE-ORDER-RULE-READINGS`) for fixings that cannot be touched, which the owner alone can do and which is outside this slice. None of the four fixings can be touched (the owner, 2026-10-24). *Drawn meanwhile:* the rule as written and the three moves; the exception is not taken. The owner measures the real slack of the three leads with a rule before the board is ordered. *Held in:* § The fixing rule and the tabs that move.
+
+**D2. Whether the two mains-presence confirms come back onto the wall board.** Owner decision pending: the confirms are left off the drawn board (the owner's wish for a minimal, hand-soldered board) on the condition that the sensing design resolves a stuck-on triac, a triac that fails to close and an open element; the condition is met for a stuck-on triac and for "no heater current when commanded" and is not met for telling a triac that fails to close from an open element. *Recommendation:* keep them dropped and revisit when the sensing task proves the current check. *Cost of adding them back:* two places of two parts each (four parts), 12 hand joints and a board 23.5 % larger; `IN_COND`'s two inputs stay reserved. *Held in:* § The heater wall board, *The mains-presence confirm*.
+
+**D3. Where the supply current is sensed.** Owner decision pending: the owner confirms the placement drawn, a shunt in the neutral return at the pad of tab 3 read as the second channel of the voltage measurement's isolating part, or asks for the relay to move so that the owner's 13 × 8 mm isolated sensor stands in the `LINE` to `LINE1` link. The owner's own placement does not hold under this record's rules: it costs analogue-region capacity, puts three sensing blocks under A8's 20 mm and leaves the sensor's pocket without an exit. The drawn placement also assumes an isolating part with two inputs on one reference, which no record names. *Held in:* § The anticipated channel kinds, *Voltage, frequency and total current*.
+
+**D4. The voltage measurement's place and the 85 °C stack.** Owner decision pending: the drawn stack keeps `VMEAS` directly under the module, 15.0 mm from the interlock relay (the owner's figure for an 85 °C part against a source of about 1 W), and holds two of the five 85 °C parts 15 mm from the module; the third what-if holds three at the price of the voltage measurement's distance from the relay and a part of the analogue region, and keeps kind 5. The drawn stack is the default. *Held in:* § Heat; § Reported for the board design tasks, item 19.
+
+**D5. One shared fuse for both pumps, or for the pumps and the valves.** Owner decision pending: the proposal replaces the three fuse holders that `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE` arranges (a fuse for each pump and one for the two valves) by one. It is not drawn; it gives up the independence of the two pumps and returns two holders' area. No smaller approved fuse that meets the 6 kA was found. *Held in:* § The fuses.
+
+**D6. The smaller IRM-10-5 as the logic supply.** Owner decision pending: whether to take the IRM-10-5 once bring-up has measured the air. The module stays the IRM-20-5 meanwhile: the IRM-10-5 has 1.06 times this board's 5 V load at 70 °C against the 2.0 the forms record calls adequate, and 2.13 times at 50 °C, which is not measured. *Held in:* § The logic supply against this board.
+
+**D7. Whether the two wall-board varistors stay.** Owner decision pending: they are kept, being the only surge clamp any record draws on the heater branch, and dropping both saves four joints if the inlet filter's surge rating is sourced and the surge criterion is met without them; the decision depends on D16. *Held in:* § The heater wall board, *Snubbers and varistors*.
+
+**D8. A blade terminal or a solder pad for the return landing.** Owner decision pending: the landing takes the tab part's own blade, so the return wire ends in a female push-on; a solder pad would remove a blade and two hand joints. The blade is drawn. *Held in:* § The path of the heater current, *The return landing*.
+
+**D9. The wall board as its own board, or a section that breaks off the main board.** Owner decision pending: the record keeps its own board, 2.49 USD dearer at best and decoupled from the main board's respins; the section is the owner's starting point and stays open. *Held in:* § The heater wall board, the comparison of forms.
+
+**D10. The extended-part fee against hand-sourcing the parts.** Owner decision pending ("if reasonable I might just pay", 2026-10-23): every part stays on the manufacturer's order meanwhile, and the record states the fee total and what hand-sourcing the through-hole types saves. *Held in:* § What the owner fits by hand, and what the extended parts cost.
+
+**D11. The size of the wall cut.** Owner decision pending: the owner has accepted the wall cut, kept as small as the passage needs; the figure, 410 mm² in three places, is what the owner is asked to confirm. A larger cut needs a reason recorded beside it. *Held in:* § The heater wall board, *The wall cut, and the owner's acceptance*.
+
+**D12. The removal-order priority of kinds 3, 4 and 5.** Owner decision pending: of the three, one can keep its place; the drawn order removes kinds 3 and 4 and keeps kind 5, the second current channel, which senses a safety-relevant quantity, and the owner may reorder. Weight (kind 2) is last and kinds 1 and 6 are outside the order by the owner's decisions. *Held in:* § The anticipated channel kinds.
+
+**D13. 2 oz copper against off-board wiring.** Owner decision pending: no path needs more than 1 oz now, so the weighing decides nothing here; its figures stay for the owner, and this record takes 1 oz and no wiring on the board. *Held in:* § Layer counts, *Copper weight*; § Copper that carries the heater current.
+
+**D14. Where the mains-entry assembly is mounted.** Owner decision pending: the assembly (inlet, filter and the 10 A inlet fuse held with it) is off-board; the board-end leads stay on tabs 2 and 3 either way, and no place is claimed for it inside the enclosure. *Held in:* § Every function has one owner; § Reported for the board design tasks, item 5.
+
+**D15. A basic mains-to-earth pair in the separation basis.** Owner decision pending: the basis lists the triac's insulated tab to the metal wall and signs no distance for mains copper toward that wall; this record applies the basis's basic creepage row, 5.0 mm, and reports the wall-to-copper barrier as unlisted. Signing a basic mains-to-earth pair is an amendment outside this slice, and the earth bond it relies on is not measured. *Held in:* § The heater wall board, *Mains copper and the metal wall*.
+
+**D16. The fuse and a varistor on the main board in place of the appliance inlet.** Owner decision pending: the owner's proposal of 2026-10-24, which is not drawn and needs a decision amendment of `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`, the owner's check of the original board's varistor (`RV1`, marked `VDR-14N471K`, per the circuit diagram in `reference-machine.md`), a 10 A holder, and an EMC judgement on dropping the inlet's filter. *Held in:* § The fuses.
+
+## How this record is built, and what it decides
+
+**This is a derived view, and its sources govern.** Every figure is read off a source named beside it: a row of `reference-machine.md`, `connector-pinouts.md`, `controller-board-function-forms.md`, `controller-board-design-constraints.md`, `component-specification.md`, `hardware/sunbeam-em7000/separation-basis.yaml` or `docs/board-manufacturer-jlcpcb.md`; a manufacturer's sheet (P1 to P14 of § Sources read, each read on 2026-10-24); an owner statement with its date; or a decision in the graph. Where this file and one of those disagree, the source is right and this file is corrected. Grades are those of `controller-board-design-constraints.md` § Evidence grades, with three more used here: **computed**, arithmetic on named figures that is shown; **estimate**, a block area or footprint that no sheet or record fixes yet, marked in its row; and **assumption**, a value this record chose where no fact exists, numbered A1 to A32 in § Assumptions with its basis, which the project replaces when the fact is read. Nothing here is graded better than the weakest figure it rests on.
+
+**One data block holds the geometry, and the script checks what it can.** Every rectangle, position and rule of both floorplans, the tabs, the reed, the slots, the heater path, the interlock's link, the anticipated kinds and the cost inputs are in the one `floorplan-data` block of § Appendix. The script of that appendix **re-derives this record's arithmetic from that block**: it computes every distance, path, area and total, compares the tables of this file with it, and compares what it prints with the expected output beside it, so a prose table and the data cannot drift apart unseen. **It does not make the data right.** Three kinds of figure are held differently. A figure with a source record is **read from that record and compared**, and the script fails if the row is missing or differs: the separation basis (the signed clearance and creepage and the basic creepage that is half the reinforced one), the nine tabs, seven drawn and two removed (names, positions, blade width and thickness), the four mounting points and the cavity, the reed's lead positions, intrusion 1, the maker's limits (the least slot, the copper-to-slot and board-edge distances, the lowest band, the slot-density charge, the recommended annular ring, the track width tolerance), the load currents, the top and peak of the supply span, the breaking capacity a fuse must have, the owner's acceptance of a relay's maximum switching voltage (its figure, its date, its attribution to the owner's statement and the top of the span it names, each of which must equal the data), the unit prices of the two relay types and the gauge drivers' phase current. A figure with none is an **assumption**, and where the data block holds it as a number its row of § Assumptions carries a `name=value` token that the data must equal (A1, A2, A8, A14 to A17, A20, A22, A24, A28, A30 and A31: 31 tokens): a token missing, doubled or unequal fails. The other assumptions (A3 to A7, A9 to A13, A18, A19, A21, A23, A25 to A27, A29 and A32) fix part sizes, rules and bookkeeping that the data holds only as drawn rectangles and rules, and a change to one of them is seen by the script only through the tables it compares and the distances it computes. The owner of every function is checked to be non-blank, a declared board or assembly, and the one the owner table names. **The limit:** an edit made to both an assumption's row and the data passes, and so does an edit to a figure no source and no token covers; that is a visible prose change for a reviewer to read, and not something the script can see. **What is counted, not typed:** the header pins and header types (each header block carries its ways and pitch), the joints of every part (a relay's or the module's are its pins), the number of Extended types and their fee, the current sensors on the 5 V rail (one for each kept kind that carries one), the capacities of the regions and the kinds' areas are counted by the script from the blocks and compared with the prose, so a count stated in the text and not in the data cannot go stale unseen. A change to a figure is made in the data block and the tables are corrected to what the script prints.
+
+**What this record decides, and what it leaves.** It decides who owns each function, the division, each board's outline, fixings and block placement, the form of the heater wall board, the path of the heater current and the place of the interlock, the connector of every retained harness and the tabs that move, each anticipated kind's place, and which parts the owner fits by hand. It does not draw schematics or select parts: the part fitted is the design task's for the board or assembly that carries it, and every part named below proves a footprint and a rating, nothing more. It does not estimate the chosen division's cost in detail, which the cost estimate does from the charges recorded in `docs/board-manufacturer-jlcpcb.md`; the figures here are the block-level comparison the choice rests on. It does not choose the interlock's mechanism or its removal interval, how the wall board is supported, or the rating of the faston tabs the wall board uses; § Reported for the board design tasks lists what each task is handed.
+
+## How to read the coordinates
+
+Every position on the main board is in the datum of `reference-machine.md` § Datum and axes: millimetres from the inside lower-left corner of the cavity, looking into it at the component face, X to the right and Y up. **Left** is the vertical edge where the mains wiring enters, X = 0; **right** is the edge the low-voltage bundle enters through, X = 133.5. A block is a rectangle written as its X range, its Y range and its size. The heater wall board has a frame of its own, in § The heater wall board: **u** along the edge that lies against the machine's wall and **v** away from that wall. The tables below are checked against the data block by the script of § Appendix, so a builder holding this repository and a Python interpreter can repeat every fit, distance and reach check made here.
+
+## What the division is weighed against
+
+| Input | Value | Source |
+|---|---|---|
+| Inside size of the cavity | 133.5 mm along X by 130.5 mm along Y, each ±0.5 mm; floor to the rim the lid closes onto 34.5 mm ±0.5; the lid's inside face is 28.87 mm ±1.0 above the floor | `reference-machine.md` § Usable envelope (items `A1.1`, `A1.2`, `A2`, `A2.lid`; measured; the 28.87 mm inferred) |
+| The original board | 133.2 × 125.1 mm, each ±0.2 (the owner's caliper remeasurement of 2026-10-24, board out of the machine; it may not be exactly square), 1.5 mm thick (1.5 to 1.6), on 4 mm standoffs, top face 5.5 mm above the floor; it filled the cavity along X. The datum is the cavity wall and the original board's own edges were not measured against it, so they are inferred | `reference-machine.md` § Original board and its mounting |
+| Height above a board's top face | 28 mm for a part anywhere but within about 2 mm of a wall, 23.4 mm within about 2 mm of a wall, both from the original's top face, 33.5 mm above the floor; the 28 mm is the tallest part on the original board, its AC/DC module, measured at 28 mm ±0.5 (owner, 2026-10-24) | `reference-machine.md` § Across the lid, and the ceiling to work to |
+| This record's board | 1.6 mm FR-4, the manufacturer's default, on the same 4 mm standoffs: top face 5.6 mm above the floor, so **27.9 mm** and **23.3 mm** (33.5 − 5.6; 28.87 − 5.6) | computed; `docs/board-manufacturer-jlcpcb.md` § Price bands, *The quote's default options* |
+| Intrusion 1, on the floor | Corner at (58, 0); 47.5 mm along X; 20 mm of straight edge along Y, then a half circle of the 47.5 mm width, so it reaches Y = 43.75 (centre (81.75, 20), radius 23.75); 3.5 mm ±0.2 high, which leaves 0.5 mm nominal (−0.2 to 1.2) under a board on 4 mm standoffs | `reference-machine.md` § Intrusions into the cavity (item `A3.1`; measured) |
+| Intrusion 2, on the floor | A strip along the wall at Y = 0: X 0 to 133.5, Y 0 to 3; 1.85 mm ±0.2 high | same (item `A3.2`) |
+| Mounting points | 1 at (6.5, 6.5), hole 3.15 mm; 2 at (126.7, 6.5), 3.1 mm; 3 at (6.5, 123.5), 3.1 mm; 4 at (127, 123.5), 3.1 mm; each ±0.5 mm, an M3 × 5 mm pan-head screw into a plastic boss. **This record's board has no hole at point 3** (the owner, 2026-10-24: no screw and no hole there, the board rests on the plastic boss). **None of the four fixings can be touched** (the owner, 2026-10-24): points 1 and 2 are the lid screws, recessed deep in a slot in the lid, and points 3 and 4, which carry no lid screw, are inside the closed case behind another panel | `reference-machine.md` § Mounting points; owner statement |
+| The lid | Screwed down through the board's mounts 1 and 2, which the lid's two screw bosses align with; points 3 and 4 carry no lid screw; the boss and screw sizes were not read; the owner requires the lid screws at points 1 and 2 | same, *The lid is screwed down through the board's lower two mounts* (owner statement, 2026-10-20, item `L1`; 2026-10-24) |
+| Low-voltage harnesses | One bundle through a cut-away in the right wall centred at X = 133.5, Y = 103.5 (±1 mm), 33 mm wide; shortest wire 40 mm (the two knob microswitches), longest 65 mm (the steam-block and steam-wand temperature sensors), each ±5 mm | `reference-machine.md` § Where each harness enters the cavity (items `B0.*`) |
+| Mains harness | Along the left edge; the whole left side of the cavity is open from Y = 8 to Y = 122.5 (±2 mm); nine tabs, centres X = 8.5 ±1, at Y = 13.6, 22.3, 30.6, 52.9, 66.2, 79.1, 91.4, 101.2 and 111.4 (±1); each 6.36 mm wide, 0.81 mm thick, standing 9.9 mm clear of the board; the owner states the cable slack leaves a fit need of about 10 mm. Tabs 4 and 5 (Y 52.9 and 66.2, the element leads) are not used by this record's board (§ The path of the heater current) | `reference-machine.md` same section; `connector-pinouts.md` § The nine terminals |
+| Tank reed element | Through-hole; **lower lead at X = 122.0 mm, Y = 17.5 mm, upper lead 20 mm above it at Y = 37.5, midpoint (122.0, 27.5), each ±1**; long axis along Y; body on the back face (inferred); fitted by the owner by hand and left off the order. The owner's caliper reading of 2026-10-24 (lower hole 15.3 mm above the original board's bottom edge, 121.25 mm from its left edge) fits it; the original board's edges were inferred, not measured, against the datum | `reference-machine.md` § Where each location-dependent part is mounted, *The tank reed and its float* |
+| Supply and element currents | 216 to 253 V, 358 V peak; coffee element 4.80 A, steam element 5.38 A rms at 253 V, both 10.18 A; both pumps 0.46 A and 0.19 A at their sizing values (nameplates 48 W and 22 W) and both valve coils 0.129 A steady and 0.203 A at their inrush, so **10.96 A** behind the interlock relay and 11.03 A at the coils' inrush; about 15 A for half an hour in the inlet fuse's overload band | `controller-board-design-constraints.md` § Supply budget, § Upstream protection and fault current |
+| Separation basis | Reinforced insulation, mains to low voltage: **3.0 mm clearance, 10.0 mm creepage**, signed by the owner 2026-10-23; its table row for basic insulation at 320 V, pollution degree 3, is **5.0 mm** creepage, which the file states as the basic figure that the reinforced one doubles. The file gives no mains-to-mains distance (A3) | `hardware/sunbeam-em7000/separation-basis.yaml` |
+| Distance the board check holds from a fixing to mains copper | The larger of the signed clearance and creepage, 10.0 mm, from each mounting hole's pad copper and courtyard to every mains pad, track, via and pour fill, on every layer | `DEC-BOARD-PRE-ORDER-RULE-READINGS`, *Mounting holes* |
+| Air temperature parts are graded to | 70 °C, a project assumption. **The owner thinks 70 °C will not be real and expects to insulate the thermoblocks; this record keeps 70 °C as the assumed figure** (and sizes the 5 V rail at 50 °C as well), so every grade and distance below is on the cautious side, and bring-up measures the real air | `controller-board-design-constraints.md` § Enclosure air temperature; owner statement, 2026-10-24 |
+| Declared spend | 250 USD, covering what the retrofit adds | `component-specification.md` § The component list |
+| Board maker's bands and charges | The lowest fabrication band is a single board within 102 × 102 mm (2 layers 4.00 USD, 4 layers 8.00 USD, 5 boards); at 103 × 103 mm it is 9.20 USD (2 layers) and 31.60 USD (4 layers); above that the price is read at the quote. Economic assembly: setup 8.18 USD, stencil 1.53 USD, hand-soldering labour 3.58 USD an order, 0.0164 USD a hand-soldered joint, 3.07 USD feeder loading for each unique Extended part an order, 0.0016 USD a machine-placed joint, two boards at least. Standard assembly: setup 25.56 USD, stencil 8.21 USD, 16.42 USD of fixtures for one to 29 boards, and 1.53 USD feeder loading for each unique Basic, Preferred or Extended part | `docs/board-manufacturer-jlcpcb.md` § Price bands and the fabrication order, § Assembly limits, § Assembly charges, § Parts library classes and their fees (read 2026-10-13) |
+| Track width for a current | At least 0.381 mm for each ampere of the highest continuous current a power net carries, at 1 oz | `docs/board-design-method.md` POWER-1 (TI SNVA021C § 5) |
+
+## Assumptions
+
+Each is a value this record needed and no record holds. A change to one is made here, with its dependants in the same change. A `name=value` token in a row is the figure the data block must equal; the script reads it from here and fails if it is missing, doubled or unequal, so a figure that no source holds cannot change in the data without a change in this table.
+
+| No. | Assumption and basis | Where it bites |
+|---|---|---|
+| A1 | The extent of a mounting fixing, its pad and courtyard, is a circle of radius **E = 3.0 mm** (`E=3.0`) about the hole centre. This is **an obligation on the board design task, not an estimate**: the footprint is drawn with pad and courtyard inside radius E, and a stock M3 footprint that is larger is not used. The lid screw's head, 6.0 mm across (the ISO 7045 maximum for M3; the machine record gives only "M3 × 5 mm Phillips pan-head"), lies inside it. Sensitivity: at a courtyard radius of 3.45 mm (no footprint is chosen) mains copper would need 13.70 mm, tab 1 would move 10.1 mm and exceed the owner's 10 mm | Mains copper stays E + 10.0 + 0.25 = **13.25 mm** from every hole centre (the drawing tolerance is `draw_tol=0.25` mm, stated once); parts stay `lid_keep=3.5` mm from points 1, 2 and 4 |
+| A2 | A mains tab's pad is the section of its blade with an annulus all round: the blade is 6.36 mm wide along X and 0.81 mm thick along Y (both read from the connector record), standing with its wide face parallel to X (the owner's reading of 2026-10-24, all nine blades), and the annulus is `tab_ring=0.32` mm, at least the maker's recommended 0.20 mm for a plated hole on a multilayer board (read from the maker's record): the pad is 7.0 mm along X and 1.45 mm along Y. The bought board-mounted tab's own footprint is not read; the design task draws it inside this pad or enlarges the pad and re-runs the distances. The landing for the wall board's return wire takes the same board-mounted blade and the same pad | The tab-to-fixing distance, the gaps between pads and the tab strip |
+| A3 | Mains copper of different nets keeps **3.0 mm in a straight line and 5.0 mm by surface path round the milled slots**, **for every pair in the data**, the seven tab pads, the return landing's pad, the neutral pour, the shunt's two lands, the two link pours and the pumps' and valves' `NEUTRAL` pieces included: no pair is excused for belonging to one block or one strip, and no exemption is claimed for a part's own pin pitch, since no sheet read here gives one. The basis states no mains-to-mains distance; the 3.0 mm is its signed reinforced clearance used as a conservative upper bound (the basic clearance row of 2.5 kV is not in the signed file, and no smaller figure is claimed), and the 5.0 mm is its basic creepage at 320 V, pollution degree 3, which is the file's own figure for copper at working voltage, 253 V rms. **A pair across the open interlock contact, `LINE` against `LINE1`, keeps the signed reinforced pair, 3.0 mm and 10.0 mm by surface path round a slot, and takes no credit for the relay's own contact gap** (P2 gives 1 000 VAC between open contacts, which is not used). Between the two pieces of mains copper of `TIMING` and of `VMEAS` lie the series resistors and the optocoupler's input pins, which bridge the gap; their own pad pitches are not modelled and no sheet is read for the resistors, which is reported (§ Reported for the board design tasks, item 3). There is no other exemption: for each optocoupler its own pins are checked pin to pin round its slot, on both boards, the unpopulated confirm places included | Spacing of the mains blocks and of the tab pads; the eight milled slots |
+| A4 | Support-part allowance: a 0603-class passive 10.8 mm² (a 3.0 × 1.8 mm courtyard, 5.4 mm², times 2 for escape and routing); a small-signal transistor 18 mm²; a diode 10 mm²; a voltage clamp 8 mm² | Every low-voltage block's drawn area |
+| A5 | A header's footprint is its row, (ways − 1) × pitch + 4.5 mm (+ 5.0 mm for three ways or more at 2.54 mm pitch), by 7.0 mm deep (7.5 mm at 2.54 mm pitch); the maker's sheets for the JST families are not read here. **The load-cell headers `WT1_H` and `WT2_H` are taken at 2.0 mm pitch, like the other 2.0 mm harness headers of this board, an assumption**: the load cells' cable connector is not chosen, and at 2.54 mm this rule gives 15.2 × 7.5 mm for five ways, not the 7.0 × 12.5 mm that the owner gives and 2.0 mm gives, which would change the header regions' demand and the steps that remove kinds 3 and 4 | Every connector rectangle |
+| A6 | A 5 × 20 mm fuse holder with its clips is 24 × 9 mm, no more than 15 mm high (a 20 mm cartridge and two 2 mm clips; the catalogue entry's own outline is not read). `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE` names subminiature slow-blow fuses, which are smaller than a 5 × 20 mm cartridge; no sourced one meets the 6 kA the constraints record assumes (§ The fuses) | The three fuse holders |
+| A7 | Small mains parts: a DIP-6 opto-triac footprint is 10 × 9 mm on the main board (body 8.51 × 6.35 mm, rows 7.62 mm apart, P4); on the wall board, with its rows along u, 10 × 11 mm; a DIP-4 or SMD-4 optocoupler with a 120 kΩ resistor 10 × 11 mm for a mains-presence confirm place on the wall board (not populated) and an SMD-4 part 10 × 5 mm on the main board (its own sheet is not re-read); a DPAK triac 10 × 8 mm; a varistor 15 × 6 mm; the shunt of the neutral return, two resistors side by side across the 7.0 mm of the copper, 7.0 mm long in the direction of the current with a 3.2 mm body between two lands of 1.9 mm, so 7.0 × 7.0 mm = 49 mm². **This geometry is an assumption and its source is still needed**: a standard 2512 is 6.3 × 3.2 mm with its terminals at the 3.2 mm ends, which puts about 7.4 mm along the current and not 7.0, so the drawn geometry needs a part with its terminals along the 6.3 mm sides (a long-side-termination part) or lands drawn about 0.4 mm farther apart; the design task selects the part and reads its land pattern, and the script repeats the distances from the data | The pump strips, the timing block and the wall board |
+| A8 | Heat placement. **Two heat sources of a watt or more:** the logic-supply module (1.25 W at this board's load) and the interlock relay `K_IL` (0.98 W at its nominal coil, 1.03 W with the coil at the low end of its tolerance, so a source by A8's own figure of `heat_w=1.0` W, and by the owner's instruction of 2026-10-24). **No part that derates**, a part rated to 85 °C or less, that is 15 K or less over the assumed 70 °C air, within `heat_class=15.0` mm of either source (`heat_mcu=15.0` mm for the microcontroller, rated to 85 °C), **and no precision sensing block within `heat_sense=20.0` mm** of either; likewise `heat_opto=20.0` mm for the wall board's opto-triacs and the unpopulated confirm places' optocouplers (rated to 85 °C), from the triac bodies; the interlock relay, rated to 125 °C, stands **`heat_relay=15.0` mm** from the module, the owner's figure, whatever its class. A part's class is its rated ambient limit less the air: the valve relays 85 °C (P6); the pump opto-triacs and `VMEAS`'s isolating part 85 °C (A21); the timing optocoupler LTV-814S 100 °C (P12), 30 K over the air and so outside the class, which `TIMING` is listed as. The record holds no thermal model of the enclosure, so these are placement rules and not predictions. The script tests every distance, and the parts that stand under the rule are named in the data as reported and each must be under it (§ Heat). **Heat sources against each other:** the two heater triacs, 4.25 W and 4.84 W on one metal wall, are held 10.0 mm apart by A31, an assumption pending the wall board's thermal judgement | § Heat |
+| A9 | The two knob microswitches are dry contacts that want a pull-up and a filter capacitor each; the retention decision says a retained contact "wants a pull-up", and no record holds the knob inputs' values | `FE_KNOB` |
+| A10 | A mains conductor through the wall is 1.5 mm² (the trunk's minimum, `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`) and 3.5 mm across over its insulation; the metal wall is not located in this machine record | The wall cut |
+| A11 | Joint counts for the assembly charges are counted from the blocks and not typed: a fuse holder with its clips 4, a tab 2, a relay or the module its pins (the interlock relay 6, its two 1.3 mm coil holes and four 1.5 mm contact holes, P2; a valve relay 4, two coil and two contact pins, P6; the module 4, P1), a header its ways, and on the wall board a triac 3, an opto-triac 6 with the two resistors of its gate network 4 (360 Ω and 330 Ω, Figure 12 of P4), a varistor 2, a blade terminal 2 and its header its ways; a confirm place not populated adds an optocoupler 4 and its resistor 2 if it is fitted; the shunt's resistors on the main board are placed by the machine | § What the owner fits by hand |
+| A12 | A board is held by at least three fixings that do not lie on one line; a rest on a boss supports but does not hold against lift, so a board on two fixings and a rest, or on one, needs a third fixing that the machine record does not hold | § Candidate divisions |
+| A13 | Every header type, and the shunt of the neutral return, is an Extended part of the manufacturer's catalogue: the seven header types of § What the owner fits by hand (counted from the blocks by their ways and pitch) and the shunt are graded **assumed** because no catalogue class is read for any of them | The Extended-fee totals, 21.49 USD of the main board's 55.26 and none of the wall board's |
+| A14 | The interlock relay's closed-contact heat is budgeted at **0.5 W at 10.18 A** (`relay_contact_w=0.5`) with the coil at its full drive of `relay_coil_w=0.4` W (5 V across 62 Ω): 4.8 mΩ, a drop of 49 mV, and 0.58 W at the 10.96 A the relay carries. The coil is fed at its full drive and nothing else (the reduced-hold drive is dropped); with the coil at the low end of its tolerance, 55.8 Ω, it dissipates 0.448 W. The sheet's 100 mΩ maximum is a qualification bound at 1 A and 6 VDC, not a figure at current, and taken at 10.18 A it would be 10.4 W, shown beside the budget as the unsourced worst case. Bring-up measures the drop at about 10 A (§ The interlock block) | § The interlock block; § Heat |
+| A15 | A trace's route is searched for a trace of width `trace_w=0.30` mm (0.381 mm for each ampere of the largest current a lead carries, 0.46 A for a pump, is 0.18 mm, so 0.30 mm has room), at the maker's ±20 % track width tolerance (read from the maker's record), so a half width of 0.18 mm, and with half a grid cell, 0.25 mm, in addition, since the centreline is snapped to a grid of 0.5 mm: a route that exists holds every distance with 0.43 mm to spare, and the maker's own minimum track, 0.10 mm, is not the figure used | The route search of § Every retained harness reaches its connector |
+| A16 | The shunt of the neutral return loses `sensor_mohm=1.0` mΩ in the path, a budget for a part not chosen and not a fact: 0.12 W at the 11.01 A the neutral carries with every load on, 0.23 W at 15 A | § The path of the heater current; § The anticipated channel kinds, kind 9 |
+| A17 | The tank reed's keep-out is a body strip `strip_w=4.0` mm wide between the two pads (the element and its insulating compound) and a hand-access zone of `hand_r=5.0` mm radius round each pad, for the iron and a finger; no source gives either figure. The reed's lower lead is held within `reed_tol=1.0` mm of the recorded position, the criterion's own figure | § The tank reed |
+| A18 | A region holds a set of blocks when two things hold. **The area**, the necessary condition: the sum of each block's area grown by the spacing the drawing keeps, 0.3 mm in the header regions and 0.4 mm in the analogue region, does not exceed the union of the region's rectangles grown the same way; the spacing is the drawn one and no larger allowance (the earlier record counted a 1.5 mm gap that the drawing does not keep). The drawn blocks stand 0.3 mm or more apart in the header regions and 0.4 mm in the analogue region, and the script holds the spacing to what the capacity counts. **For the headers, an arrangement**: an exhaustive search of every placement of the headers, each turned or not, finds out whether one exists; the drawn columns are one arrangement and not a limit. No block of another class lies in a region now. The regions are the rectangles the kept blocks are drawn in, and the script checks that each block lies inside the union of its region's rectangles | § The anticipated channel kinds |
+| A19 | The top of the point 3 boss is not recorded; until it is read on the machine no lead end, solder joint or heavy part lies within 3.5 mm of the point's centre (the keep-out of the other fixings) | § The fixing rule and the tabs that move, *Point 3* |
+| A20 | The copper of the link from tab 2 through the relay to tab 1 loses at most **`link_loss_w=0.5` W** at the machine's steady supply current, 10.96 A with every load on (and at the heaters' 10.18 A). The figure is a budget and not a fact: it is the heat the link may add beside the relay's own, and the script computes the link's loss from its regions and fails above it | § The interlock block |
+| A21 | The pump opto-triac `MOC3052M` of `P_C` and `P_S` and the isolating part of `VMEAS` are taken as rated to 85 °C: the wall board's opto-triac MOC3083 is rated to 85 °C (S16 of the forms record), the pump part's own range is not re-read, and `VMEAS`'s part is not chosen; each is placed as an 85 °C part against A8, and a different rating, once the part is chosen, changes its row | § Heat |
+| A22 | The wall board stands off the metal wall by at least **`standoff=5.0` mm** on plastic standoffs and screws, **parallel to the wall** (this record's reading, like the face below: the owner decided the 5.0 mm stand-off from the metal wall on 2026-10-24 and did not say "parallel"); the mains copper, every part body and every mains lead end keep the basic creepage, 5.0 mm, from the edge against the wall. **This record's reading of which face faces the wall:** the back face, the one that carries the hand-soldered joints and, but for the two triacs, no part, faces the wall, and the component face faces away from it; the two triacs are the exception, their tab faces bolted to the wall and their bent leads passing through the board from the wall side. The wall board's design task confirms or changes the reading. **Not claimed:** the 10.0 mm to the metal that an edge-on board would give, and any 5.0 mm from the metal to a lead end or a joint on the back face, which protrude into the gap by the length of the lead, a length no sheet read here gives; the 5.0 mm is from the copper, the basis's basic row applied to an earth bond that the basis says is not measured (the protective-earth continuity requirement has the owner measure it on the finished machine, at bring-up) | § The heater wall board, *Mains copper and the metal wall* |
+| A23 | The interlock relay's contact terminals, read from the vertical-terminal drawing of P2 (the outline views and the PCB layout, on 2026-10-24; the sheet's text does not say which holes belong to which terminal, so this is the drawing's reading, the two feet of the end view standing 7.56 mm apart across the body and each foot's two legs 5 mm apart in the side view): the relay has **two contact terminals, 7.56 mm apart across its 12.7 mm body**, each a 6.3 mm quick-connect blade (0.8 mm thick, its wide face along the body's length) standing on **two Ø1.5 mm holes (+0.1 mm) 5.0 mm apart along the length**, the four holes of the sheet's 4 × Ø1.5; the two coil holes, 2 × Ø1.3, are 7.56 mm apart across the body and 2.5 mm in from the coil end, 37.5 mm from the second column of contact holes, and the far contact column is 1.0 mm in from the end of the 41 mm length. The layout is a bottom view and the terminals are symmetric about the body's axis, so the mirror to the component side changes nothing. The contact copper is drawn 8.0 mm along X, the legs 1.0 mm in from its left edge and 2.0 mm from its right, and its two halves stand 3.0 mm apart; each leg stands at least 1.0 mm (the hole's 0.8 mm radius and the 0.20 mm annulus the maker recommends) inside its copper | The relay's contact rectangles |
+| A24 | Copper at 1 oz is 35 µm of annealed copper at 1.72 × 10⁻⁸ Ω·m: **`sheet_mohm=0.491` mΩ** for each square (the published resistivity of the metal, not a datasheet's figure) | Every resistance of a copper region |
+| A25 | The logic supply module's mains copper is two pads, one about each AC pin, each **6.0 mm square** (the pins are 1.0 mm, P1, which leaves a ring of 2.5 mm); the middle of the module's AC end carries no copper | The module's mains rectangles `MODULE.n` and `MODULE.l`; the valve relays' leads |
+| A26 | A valve relay's contact copper is the 2.76 mm end of its body that holds the contact pins and **8.85 mm tall** (the two contact pins 6.35 mm apart, P6, each with a pad ring of 0.97 mm, the 1.3 mm hole of the sheet's PCB layout and the 0.32 mm annulus of A2, and 0.28 mm more), centred on the body's 10.1 mm width, so it stands 0.625 mm in from each side of the body; its coil pocket is the 3.2 mm end that holds the coil pins, the body's full 10.1 mm width; the sheet's drawing gives the two columns of holes 15.24 mm apart (P6), which leaves 11.64 mm between the copper and the pocket against the signed 10.0 mm creepage; which end is which is chosen so that the contact end faces the tab pads | The valve relays' rectangles |
+| A27 | A weight circuit is the amplifier's SOP-16L courtyard, 11.0 × 7.4 mm = 81 mm² (body 9.9 × 3.9 mm and lead span 6.0 mm, P11, with 0.7 mm of land and courtyard assumed each side), and five passives of A4's 10.8 mm² (the sheet's Figure 1: the 10 µF analogue-supply capacitor, the 0.1 µF reference capacitor, a 0.1 µF at the digital supply, and two for the bridge inputs; the external PNP and its two resistors of that figure are left out because the 5 V rail feeds the analogue supply): 135.4 mm², drawn as a row 19.0 × 7.2 mm = 136.8 mm² (11.0 mm of amplifier, 8.0 mm of passives) | The two weight circuits |
+| A28 | The 5 V rail's loads that no record or sheet fixes: each opto-triac LED is driven at `opto_led_ma=15` mA (the forms record brackets it between 5 and 60 mA; four LEDs, two heater and two pump), the panel's indicators and buzzer take `panel_ma=60` mA, the flow meter `flow_ma=15` mA, each pressure transducer `pressure_ma=10` mA (two), each in-stream probe converter `probe_ma=2` mA (two), each current sensor `sense_ma=10` mA (three), each load-cell bridge is `loadcell_ohm=350` Ω across the 5 V (two), the voltage measurement's isolated output stage takes `vm_out_ma=5` mA, and the headers, pull-ups and thermistor dividers together `misc_ma=10` mA. None is read from a sheet; each is replaced when the part is chosen | § The logic supply against this board |
+| A29 | The voltage measurement `VMEAS` is drawn as `TIMING` is, a strip 5.0 mm deep (the 2512 resistors' and the optocoupler's courtyards of A7) with its mains copper in two pieces, `VMEAS.N` on `NEUTRAL` and `VMEAS.L` on `LINE`, 6.5 mm apart, one side of a slot and a pocket on the other: a series divider of two 1 W 2512 resistors on `LINE` (A7's 9 × 5 mm each) and an isolating part astride the slot, its first input across the divider and `NEUTRAL`, **its second input across the shunt of the neutral return (kind 9), which stands at `NEUTRAL`'s potential, so the two inputs share the part's input reference**; the parts bridge the gap between the pieces, 37.5 × 5.0 mm = 188 mm², an estimate; no isolating part is chosen, none with two input channels is named, and no figure for one is read (§ Reported for the board design tasks, item 20) | `VMEAS`; kinds 1 and 9 |
+| A30 | The logic supply module's input current is found at an input power factor of `module_pf=0.5`, the project's floor for the pumps (`controller-board-design-constraints.md`), because no sheet read here gives the IRM-20's: 4.70 W out at 79 % is 5.9 W in, 0.05 A at 253 V; it is the part of the neutral's current that the link does not carry | § The path of the heater current |
+| A31 | The two heater triacs stand at least **`heat_triac=10.0`** mm apart, body to body, on the one metal wall that is each one's heatsink: about one tab face's width (10.4 mm, P3). It is an assumption and not a sourced figure: no record or sheet gives how far the heat of a tab face spreads in the wall, so the figure only keeps the two faces from sharing one footprint; the wall board's design task replaces it with its thermal judgement of the wall (`DEL-HW-PARTITION-AND-FEASIBILITY.C5`) | § The heater wall board, *Heat*; § Reported for the board design tasks, item 30 |
+| A32 | The two pumps' returns join the neutral pour on an inner layer of the four-layer main board. The script searches for a surface trace from each pump's `NEUTRAL` piece (`P_C.N`, `P_S.N`) to the pour and finds none, so the data gives the join as an inner layer and the script requires that no surface route exist for them; that an inner layer can carry the join, with the signed distances kept from mains copper of other nets on that layer and from the planes, **is not shown here** | § The path of the heater current; § Reported for the board design tasks, item 31 |
+
+## Every function has one owner
+
+An **off-board assembly** is one not installed in the enclosure with the boards; it may still be made as a section that snaps off one of them. There are three: the heater wall board, the mains-entry assembly and the steam-path assembly. Everything else is on **the main board**, the one board in the enclosure (§ Candidate divisions says why it is one). The first column is the heading of the forms record, § The record of forms, word for word; the script compares it with that record's headings, and a function left out fails. The second column names the function's owner and no other, and the script compares it with the owner in the data block: a blank owner, one that is not a declared board or assembly, or a board named in this column that the data does not give fails. Two functions are split across boards on purpose and the data says why. The reasons rest on the figures of § What the division is weighed against and on the cited sections.
+
+| Function (forms record) | Owner | Why this owner |
+|---|---|---|
+| Controller | Main board, `MCU` | The one controller serves every channel, so every block reaches it; the bundle of low-voltage harnesses enters on the right, and the controller sits 15.0 mm from the logic supply, A8's figure and the one heat source of a watt or more on the board bar the interlock relay (§ Heat), in the upper right of the board. `DEC-CONTROLLER-BASELINE-STM32H743` |
+| Coffee element switching and steam element switching | Heater wall board (off-board) | The owner's plan is to bolt the two triacs to the machine's metal wall, outside the enclosure (`controller-board-design-constraints.md` § Enclosure air temperature, *Premises*; owner statements, 2026-10-04 and 2026-10-23). Each triac dissipates 4.25 W (coffee) and 4.84 W (steam) at full duty and 17.1 W in the 15 A overload band (`controller-board-function-forms.md` § Parts off the boards); outside, that heat goes into the wall and not into air the other parts are graded to. The board as found switches the neutral side of every load, the active conductor reaching each load by the retained `LINE1` daisy-chain (`connector-pinouts.md` § The source of each live feed), so the switch sits in the element's neutral-side path, between the element lead and the neutral, and the element lead keeps its female terminal and plugs onto an in-line blade joiner near the wall cut instead of a tab (§ The path of the heater current) |
+| Heater gate drive, both channels | Main board, `DRV_HEAT` | The split the forms record sets: one small transistor per channel sinks the opto-triac's LED current from the 5 V rail, and the cable between the boards carries that current and nothing at mains potential. The opto-triac it drives is part of the heater switch and is on the heater wall board |
+| Coffee pump switching and steam pump switching | Main board, `P_C` and `P_S` | The pump leads end on tabs 7 and 8, which stay where they are; each drive (fuse, snubberless triac, random-phase opto-triac) sits level with its tab so the switched lead is short, and the opto-triac's low-voltage side lies at the zone boundary |
+| Two-way valve switching and three-way valve switching | Main board, `K_V1` and `K_V2` | The valve leads end on tabs 6 and 9; one small relay each (the HF32FA-G/005-HSL1, § The valve relays), standing at the zone boundary with a mains lead of 35 and 37 mm from its tab pad, and the shared fuse `VFUSE` in the column left of the module. A relay's coil pins are 15.24 mm from its contact pins and its coil pocket 11.64 mm from its contact copper, against the signed 10.0 mm creepage |
+| Supply-timing front end | Main board, `TIMING` and `IN_COND` | One AC-input optocoupler on `LINE` and `NEUTRAL` serves every channel and both crossings; it stays a single measurement on one board, as the forms record has it and as the owner asked |
+| Coffee, steam and wand temperature sensing | Main board, `FE_NTC` and the three thermistor headers | The headers are retained connectors on the right; the dividers sit 23.8 mm from the logic supply and 75.8 mm from the interlock relay (§ Heat) |
+| Flow sensing | Main board, `FE_FLOW` and header `CZ1` | As above, on the right |
+| Steam-path pressure sensing | The steam-path assembly (off-board) | The forms record decides the transducer is bought and sits in the steam path, and that the form is not chosen on a part; the assembly's design is its task's. Its two headers, `STM_D` (digital) and `SPARE_A` (analogue), are on the main board and are the connectors of that harness. The headers are **split**, as the forms record sets: the digital header's two signal lines sit on pins that carry an I²C and a UART function and its supply is 3V3, while the analogue spare takes 5V, 3V3, GND and a filtered input; sharing one connector would put 5 V on the digital pair's connector |
+| Gauge drive, both gauges | Main board, `FE_GAUGE` and header `SP2` | The buffer sits between the controller and the five lines to the retained `VID66-08`, which is on the retained gauge assembly |
+| Heater mains-presence confirm | Heater wall board; **no places on the drawn board**, two (`PRES_S` and `PRES_C`) on a second layout, **not populated** | The owner's wish of 2026-10-24 for a minimal hand-soldered board, to drop the two confirms from the populated board on the condition that the sensing design resolves a stuck-on triac, a triac that fails to close and an open element, **a condition only partly met, so an owner decision pending** (§ Owner decisions pending, D2; § The heater wall board, *The mains-presence confirm*). The function stays assigned to the wall board, where the confirm taps each element's switched node, `OUT_S` or `OUT_C`, and the neutral at the `RET` pad through 120 kΩ and 1 W, so that a later add-back needs two small parts at each place; the places are checked as a second layout, 23.5 % larger, and are not on the drawn board. Its two low-voltage outputs would return to `IN_COND` on the main board, whose inputs stay reserved |
+| Low-water indication, visual | Main board, `FE_WATER` | One transistor sinking the retained indicator's cathode, reached through `SP2` |
+| Operator panel: keys, indicators, buzzer | Main board, `FE_PANEL` and header `CON2` | The seven lines are three transistors and five resistors; the panel is a retained passive assembly |
+| Low-voltage supply (the logic supply) | Main board, `MODULE` | The bought module straddles the zone boundary, mains pins on the mains side and 5 V pins on the low-voltage side, 45 mm apart (P1); it stays the IRM-20-5 against this board's 5 V load (§ The logic supply against this board). **Its mains pins are fed from `LINE` and `NEUTRAL` upstream of the interlock contact**, so the controller keeps power when the relay opens (§ The interlock block) |
+| Wiring, connectors, mains-rated terminals | Main board and wall board, each its own | One connector per recorded retained connector, on the board the harness reaches (§ Harnesses): the main board the seven tabs it keeps, the return landing, the seven harness headers, the heater wall board's low-voltage header and the anticipated headers; the wall board its three blade terminals and its three-way header. The function is split because no one board carries the connectors of both harnesses |
+| Proof-of-life interlock | Main board: the relay `K_IL` and its drive `POL` | The forms record asks for a series element in each heater's supply path that removes power whatever the switching device does. The heaters' supply, and that of every pump and valve, is the one conductor `LINE1` that the retained daisy-chain wires feed to each load (`connector-pinouts.md` § The source of each live feed), and its only source on the board is the link from tab 2 to tab 1. The contact sits in that link, so a shorted triac is cut off with the rest, and so is every other load, on the premise that every load's live lead comes from `LINE1`, which rests on the owner's visual trace and is checked at bring-up (§ The path of the heater current; § Reported for the board design tasks, item 32). The coil is driven by `POL` beside it and is unenergised when the controller stops |
+| Mains inlet filter | The mains-entry assembly (off-board) | The forms record settles it as a bought inlet filter with no control input, no barrier and no output, so it is a panel-mounted appliance inlet and not a board part; the 10 A inlet fuse is held with it, since the board's 5 × 20 mm holder is listed for 6.3 A (`controller-board-design-constraints.md` § Manufacturer stock and price, per channel, *Wiring, connectors, mains-rated terminals*). Where the owner mounts it is an owner decision pending (§ Owner decisions pending, D14; `connector-pinouts.md` § The source of each live feed); the board-end leads stay on tabs 2 and 3 either way. No place is claimed for it inside the enclosure. The owner's proposal of 2026-10-24 to carry the fuse and a varistor on the main board in its place is a separate owner decision pending (§ Owner decisions pending, D16) |
+
+Three channels are not rows of the forms record and are assigned here so none is left out: the **tank level** (the reed element, `REED`, on the main board, hand-fitted at the position the machine record gives), the **control-knob microswitch inputs** (header `KNOB`, `FE_KNOB`) and the **supply voltage measurement** that `REQ-MEASUREMENT-001.C10` requires (the isolated measurement `VMEAS` and its conditioning `VM_C`, § The anticipated channel kinds, kind 1). No USB connector is placed: no function in the forms record needs one, and the programming header is part of the `MCU` block.
+
+## The owner's starting points
+
+Each is an input weighed, not a mandate.
+
+| Starting point | Followed or departed from | Reason |
+|---|---|---|
+| Both boards inside the existing controller enclosure | Followed for the main board; departed from for the wall board | The wall board is outside by the owner's plan, so the triacs can bear on the metal wall. The division has one board in the enclosure, not two |
+| Mains connections on the left, low-voltage harnesses on the right | Followed | The seven tabs it keeps are on the left edge at X = 8.5; the seven harness headers are at the right, X 113.6 to 131.5, and the anticipated headers and the wall board's low-voltage header at X 88 to 131.5, Y 34 to 75; the zone boundary lies between (X 61 to 71) |
+| Heater switches off-board | Followed; the interlock relay is not on the wall board | The two heater triacs and their opto-triacs are on the wall board; the confirms are not on the drawn board (an owner decision pending, § Owner decisions pending, D2) and the current is sensed on the main board. The interlock relay is on the main board, in the link that feeds every load, so it cuts the pumps and the valves as well (owner's approval, 2026-10-24) |
+| Valve relays and pump drive on a mains board, or on a board shared with the low-voltage circuitry with the basis's clearance and creepage held on the board | The second | One board. The signed 3.0 mm and 10.0 mm are held by distance, and by milled slots between every low-voltage pocket and the mains copper that stands nearer than 10.0 mm (§ Zones and the barrier); mains copper of different nets is held apart by 3.0 mm and 5.0 mm of path, and across the open interlock contact by the signed pair |
+| The controller board as narrow as it can be, possibly an elbow | Departed from | There is no separate controller board. A narrow board along the right edge would carry mounting points 2 and 4, which lie on one line, 117 mm apart, and would leave the mains side on a board held by one fixing (§ Candidate divisions) |
+| The heater wall board a section that breaks off another board | Departed from, left open | Its own board. As a section it saves 2.49 USD of fabrication and would tie every respin of the safety-critical wall board to a respin of the four-layer main board (§ The heater wall board); the owner may still choose the section (an owner decision pending, § Owner decisions pending, D9) |
+| Each board within the lowest price band, weighed against one board of about the enclosure's width that meets the mounting points | Followed for the wall board (57.0 × 42.5 mm, inside 102 × 102); departed from for the main board | Mounting points 1 and 2, which the lid screws hold, are 120.2 mm apart in X, and the mains-side blocks span 124.1 mm in Y (the pads of the seven tabs alone 92.3 mm); no board that carries them lies within 102 mm, so the band is not available to it and its price is read at the quote |
+| The layer count chosen per board, with a ground plane favoured under the sensing | Followed | § Layer counts |
+
+## Candidate divisions
+
+All three divide the same circuitry and leave the heater wall board as it is; the in-enclosure boards differ. Fabrication is for five boards, leaded HASL, 1.6 mm, 1 oz, at the charges read on 2026-10-13. A board within 102 × 102 mm has the maker's published band price; above it the maker publishes no table: its price is the engineering fee plus a board fee, the maker's two published points at 103 × 103 mm give the fee for that area (2 layers 4.00 + 5.20 USD, 4 layers 25.00 + 6.60 USD), and **the board fee at any other area is inferred here as proportional to it**, which is an inference and not a published figure; the engineering fee, the band prices, the assembly charges and the connector parts are published. Every figure is block level and is re-read at the quote by the cost estimate.
+
+**Outlines.** Division A's board is 131.0 × 125.0 mm. Division B's mains board is 69 mm wide and 125 mm high with a 15 × 27 mm bay for the module's DC end, 69 × 125 = 8 625 plus 15 × 27 = 405, **9 030 mm²**; its low-voltage board is 59 mm wide and 125 mm high less the same bay, 59 × 125 = 7 375 less 405, **6 970 mm²**; the 3 mm between them is not counted, and the two total 16 000 mm². Division C keeps B's mains board; its controller board is **60 × 60 mm** (3 600 mm²) and its front-end board **50 × 60 mm** (3 000 mm²), both inside 102 × 102 mm, so each takes the maker's published band price (8.00 USD at four layers, 4.00 USD at two) and not the inferred fee. A's and B's boards are over 125 mm along Y and are outside the band.
+
+| | A: one board spanning the enclosure | B: a mains board and a low-voltage board | C: a three-board split |
+|---|---|---|---|
+| Boards, layers, outline | One, 4 layers, 131.0 × 125.0 = 16 375 mm² | Mains board 2 layers, 69 mm wide plus a 15 × 27 mm bay for the module's DC end, 9 030 mm²; low-voltage board 4 layers, 6 970 mm²; 3 mm between | Mains board as B (2 layers, 9 030 mm²); controller board 4 layers, 60 × 60 mm, 3 600 mm²; front-end board 2 layers, 50 × 60 mm, 3 000 mm² |
+| Fabrication, estimated (certain part) | 25.00 + 6.60 × 16 375 / 10 609 = **35.0** USD (25.00) | 8.43 + 29.34 = **38.0** USD (29.00) | 8.43 + 8.00 + 4.00 = **20.5** USD (16.00) |
+| Assembly charges that grow with the order count | Setup and stencil 9.71 USD; hand-soldering labour 3.58 USD | Two orders: 19.42 USD; labour 7.16 USD; one Extended header type on both orders, 3.07 USD | Three orders: 29.13 USD; labour 10.74 USD; two such duplicates, 6.14 USD |
+| Inter-board connector parts | None | One link of 24 conductors: eight 5-way headers at 0.0855 USD (C157991) = 0.68 USD, and 40 hand-soldered joints = 0.66 USD; the mating housings and cable are not priced in the catalogue records | Two links: 1.37 USD of parts and 1.31 USD of joints |
+| Total of the three rows above | **48.5** USD | **69.0** USD, 20.5 more | **69.0** USD, 20.5 more |
+| Fixings each board holds (the machine's bosses are points 1 to 4; point 3 has no hole, § The fixing rule and the tabs that move) | One board on points 1, 2 and 4: a triangle, three fixings, and the boss at point 3 as a rest | The mains board on point 1 alone, with the rest at point 3; the low-voltage board on points 2 and 4, two fixings on one line | The mains board as B; the front-end board on points 2 and 4; **the controller board on none** |
+| Fit | Blocks fill 10 569 of 16 375 mm² (65 %) | 10 569 of 15 690 mm² (67 %) after a 3 mm gap and two link headers of about 155 mm², but each board is held by fewer fixings than A12 asks | Not shown: a board with no boss of its own carries no recorded fixing |
+| Separation | The signed 3.0 and 10.0 mm held on one board, by distance and by slots | Unchanged: the barrier parts' low-voltage pockets still sit on the mains board; the gap adds distance the basis does not count | As B |
+| Bring-up | Low-voltage circuits are brought up with the module, relays and fuse holders unfitted (all through-hole, fitted last); 5 V is fed at the module's two DC pads | The low-voltage board has no mains copper at all | As B |
+
+**What the comparison supports: A.** Three reasons, in the order of their weight. C's two small boards take the maker's published band price (20.5 USD of fabrication for C, of which 12.00 USD is the published band prices and the rest the inferred fee of its mains board), which brings C level with B; A is still the cheapest of the three by about 20 USD, and the weighing below holds on the new figures.
+
+1. **Fixings.** The board check holds mains copper at least the signed 10.0 mm from a mounting hole's pad and courtyard (`DEC-BOARD-PRE-ORDER-RULE-READINGS`), which with the obligation E = 3.0 mm and the 0.25 mm drawing tolerance (A1) means 13.25 mm from the hole's centre. The pad of tab 9 stands 11.4 mm from point 3 and the pad of tab 1 stood 6.4 mm from point 1 (§ The fixing rule and the tabs that move). The owner's decision is that point 3 carries no screw and no hole, so the left half of the cavity has one usable fixing, point 1, and a rest at point 3; any division that puts the mains circuits on their own board leaves that board on one fixing. Division A is the only one in which a board is held at three points that do not lie on a line: points 1, 2 and 4. The point 3 boss, 83.9 mm from the line from point 1 to point 4, rests on the point 3 boss alone. The heavy parts are on or below that line (the interlock relay) or straddle it (the module); what stands in the corner is the two pump strips' small parts and the two valve relays, 17.6 × 10.1 mm each, the nearer of them 38.0 mm from the point 3 centre.
+2. **Cost.** A is the cheapest at block level by about 20.5 USD (B and C), 8 % of the 250 USD declared spend each. The ranking does not depend on the inferred board-fee slope: A's area exceeds B's two boards' by 375 mm² (the 3 mm gap), about 0.23 USD at the maker's four-layer slope, while B adds 3.07 + 9.71 + 3.58 USD of fixed assembly charges, a second engineering fee of at least 4.00 USD and the link parts; and C's gap to A is made of the setup, stencil and labour of its two extra orders (26.58 USD more than A's), its duplicate Extended fees (6.14 USD) and its links (2.68 USD), against the 14.76 USD of fabrication it saves (exact figures: the table rounds to the half dollar, since the board fee at an area other than the maker's two published points is inferred and supports no finer figure).
+3. **Fit.** One outline spends the cavity best: B and C give up the gap and the link headers out of the same cavity.
+
+**Charges common to the three.** The Extended-part feeder fees, 55.26 USD for the main board's 18 unique types (§ What the owner fits by hand), the through-hole joints, 131 at 0.0164 USD = 2.15 USD, and a few hundred machine-placed joints at 0.0016 USD, about 1 USD (the count is not yet known), do not differ between the three beyond the duplicates counted above. The heater wall board's own costs and the cables to it are the same in every division and are left out.
+
+**What A costs, and what it gives up.** A's four layers are bought for the whole outline, including the mains zone that does not need them: against two layers at the same area the fee is 23.0 USD higher (35.0 against 12.0 USD; at 103 × 103 mm the maker's own figures differ by 22.40 USD). Its re-spin is one board: a change to the mains circuits re-spins the low-voltage circuits and the other way round. The low-voltage circuits share a board with mains copper, 10.3 mm or more from it. The staged build above is what takes the sting out of the last point.
+
+## Layer counts
+
+| Board | Layers | Reason |
+|---|---|---|
+| Main board | **4**: top, an inner ground plane under the low-voltage circuits, an inner supply plane, bottom | The owner favours a ground plane under the sensing; the thermistor dividers and the two RTD converters read to ±2 °C and better on a board that also switches two pumps and drives relays. The controller's maker asks for low-impedance supply connections, "typically achieved with thick track widths and, preferably, the use of dedicated power supply planes in multilayer PCBs" (P5 § 7.4). The four-layer fee exceeds a two-layer one by 23.0 USD at this area; a two-layer board with a pour is the fallback if the cost estimate finds the spend too thin, and the floorplan holds either. The planes are pulled back at least 10.0 mm from every mains copper edge on every layer |
+| Heater wall board | **2** | All through-hole except the current sensor, mains and its own low-voltage drive; no sensing of a small signal, so no ground plane to favour. Two layers is the 4.00 USD band price. Its copper is 1 oz |
+
+**Copper weight.** Both boards use 1 oz finished outer copper, the maker's introductory price, wherever wide tracks or pours carry the current: the `LINE` to `LINE1` link (its narrowest region 5.75 mm, against the 5.72 mm that 15 A needs), the neutral return's pour and shunt lands (7.0 mm) and every region of the wall board's heater path (7.0 mm against 5.72 mm). **No place needs more now.** One place did when the heater return was to cross the main board from the heater terminals to tab 3: it would have needed 5.72 mm and had 5.0 mm between the tab pads and the relay contact ends, and heavier copper (2 oz, which halves the width) was weighed against off-board wiring for it, at **36.40 USD more** for 2 oz at two layers in the lowest band (40.40 USD against 4.00 USD, read; the four-layer price at this outline is unmeasured). With tabs 4 and 5 gone the return lands beside tab 3 and crosses a pour 7.0 mm wide (§ Copper that carries the heater current), so the weighing no longer decides anything; its figure stays here for the owner (an owner decision pending, § Owner decisions pending, D13).
+
+## The fixing rule and the tabs that move
+
+**Finding.** The lid screws hold the board at points 1 and 2 (the owner requires them; none of the four fixings can be touched, below), and the board check holds mains copper at least 10.0 mm from a mounting hole's pad and courtyard whether or not the fixing is bonded to protective earth (`DEC-BOARD-PRE-ORDER-RULE-READINGS`). The rule measures the **footprint's pad and courtyard**, not the screw head, and no footprint is chosen. This record therefore makes the extent an obligation on the board design task: **the mounting footprint is drawn with pad and courtyard inside a circle of radius E = 3.0 mm about the hole centre, and a stock M3 footprint that is larger is not used** (A1). The margin rule follows: every mains rectangle keeps E + 10.0 + 0.25 = **13.25 mm** from each hole centre, the 0.25 mm being the drawing tolerance, stated once. A tab's pad is 7.0 mm along X and 1.45 mm along Y about its centre (A2), the blade standing with its wide face parallel to X (the owner's reading of 2026-10-24), so the pad's X range holds the hole's X and the distance is measured straight up from the pad's lower edge: the centre stays 0.725 mm further than the rule asks. Whether a lid screw can be reached from outside the machine depended on which face of the lid its head is on, which the machine record does not say; the owner has since said that none of the four can be touched (below), and the rule holds the distance either way.
+
+The original board does not meet it: the pad of its tab 1 stands 6.38 mm from the point 1 centre and that of its tab 2 15.07 mm. The nine tabs are read as found (`reference-machine.md`, ±1 mm); the three nearest point 1 move.
+
+| Tab | As found, Y (mm) | Pad edge from point 1, as found (mm) | Pad edge from point 1, now (mm) | This record's Y | Move (mm) | Slack left of the owner's 10 mm (mm) | Lead |
+|---|---|---|---|---|---|---|---|
+| 1 | 13.6 | 6.38 | 13.27 | **20.5** | +6.9 | 3.1 | `LINE1`, red |
+| 2 | 22.3 | 15.07 | 22.07 | **29.3** | +7.0 | 3.0 | `LINE`, brown |
+| 3 | 30.6 | 23.38 | 30.88 | **38.1** | +7.5 | 2.5 | `NEUTRAL`, blue |
+| 6 to 9 | as found | 71.9 or more | | unchanged | none | | the other four (tabs 4 and 5 are removed, § The path of the heater current) |
+
+Tab 1 must clear the fixing: its pad's lower edge stays 13.25 mm from the hole centre, so its centre is at least 6.5 + 13.25 + 0.725 = 20.475 mm up and is drawn at **20.5**. Tab 2 must stay at least the as-found minimum pitch of 8.3 mm above it, and the link sets more: the copper of `LINE1` must be 5.775 mm wide from the pad's lower edge to its upper edge at 25.55 mm (the width 15 A needs, § Copper that carries the heater current), the gap across the open contact is 3.0 mm, and the pad of tab 2 must stand inside the `LINE` copper above it, so tab 2 is at least 29.225 mm up and is drawn at **29.3**. Tab 3 follows by the same rule: the pad of tab 3 stands 3.0 mm above the upper edge of the `LINE` copper, 34.3 mm (its 5.75 mm of width above the gap), and 5.0 mm from it by path round the slot `SL_LN`, so tab 3 is at 38.1 mm, **not because of the fixing, which it clears, but because tabs 1 and 2 take its place**. The script tests that each moved tab is needed: brought 0.5 mm back toward where it was found, any of the three breaks a rule of this record. The tabs' X, 8.5 mm, is unchanged. Each tab pad is 7.0 mm along X and 1.45 mm along Y at its centre (A2): the pad of tab 1 is Y 19.775 to 21.225, that of tab 2 Y 28.575 to 30.025 and that of tab 3 Y 37.375 to 38.825, and the pads of tabs 1 and 2 stand 7.35 mm apart, those of tabs 2 and 3 7.35 mm, with no cut-back on any side. The strip that holds the seven pads, the return landing's pad, the neutral pour with the shunt's lands and the two link pours (X 5.0 to 17.0) is derived from them: Y 19.8 to 112.1. The least distance of any mains copper from a hole centre is 13.27 mm, the lower edge of the pad of tab 1 and of the `LINE1` pour that holds it, against the rule's 13.25; the script checks every mains rectangle against every hole.
+
+**This is a harness change, named as the machine record asks any moved tab to be.** The leads are `LINE1` (red, out to the loads), `LINE` (brown, in from the plug) and `NEUTRAL` (blue). What forces it is the fixing distance the new boards are held to and the original was not. The leads are not cut, lengthened or re-terminated: each female push-on terminal fits the tab 6.9, 7.0 and 7.5 mm further up. The owner states that the cable slack leaves a fit need of about 10 mm (`connector-pinouts.md` § The nine terminals, owner statement, 2026-10-20), so the moves leave **3.1, 3.0 and 2.5 mm** of it. The owner accepts what is left (2026-10-24) and **measures the real slack of each of the three leads with a rule before the board is ordered**; if one is short, a push-on extender at the tab, a female and male spade in one piece, keeps the harness unmodified. If neither serves, the remedy lies outside this record: the signed figure governs the fixing, and the owner alone amends it. Nothing here changes `hardware/sunbeam-em7000/separation-basis.yaml`. The tab's height is the recorded 9.9 mm clear of the board only if the bought tab gives it: the board-mounted tab in § What the owner fits by hand is the proving candidate, its blade height is not read, and the assembly task reads it; a tab that does not stand at the recorded height is a harness change of its own.
+
+**The fixings cannot be touched.** The owner states (2026-10-24) that none of the four fixings can be touched: points 1 and 2 are the lid screws, recessed deep in a slot in the lid, and points 3 and 4, which carry no lid screw, are inside the closed case behind another panel. The 10.0 mm rule of `DEC-BOARD-PRE-ORDER-RULE-READINGS` applies whether or not the fixing is bonded, and this record applies it as written and does not change it. **Owner decision pending (§ Owner decisions pending, D1):** the three tab moves above, 6.9, 7.0 and 7.5 mm, which leave 3.1, 3.0 and 2.5 mm of the owner's 10 mm of lead slack, or an amendment of the rule for fixings that cannot be reached, which is the owner's and outside this slice; the moves are drawn, and if the rule is amended the three tabs are redrawn from the fixing distance that replaces it and the figures of this section are recomputed.
+
+**Point 3.** The owner's decision is that point 3 carries **no screw and no hole: the board rests on the plastic boss.** The rule for the boss: no lead end, solder joint or heavy part lies over the boss top. The boss's top diameter is checked on the machine and is not recorded here (A19); until it is read, the check keeps every lead end, joint and heavy part 3.5 mm or more from the point's centre. The nearest lead end or joint is tab 9's pad, 11.4 mm from the centre; the nearest heavy part is the module, 50.2 mm away. **No tenth tab is drawn.** The earlier floorplan reserved one for the added device (kind 6); its pad reached within 0.2 mm of the point's centre and could not move down at the 8.3 mm pitch, so it did not meet this rule, and the owner has removed the reserved relay place by choice (§ The anticipated channel kinds, row 6). The push-on load of the terminals near the boss, tab 9's, presses straight down onto it. Points 1 and 2 are the lid screws and stay; point 4 keeps its screw. Points 2 and 4 are 71.4 and 72.1 mm from the nearest mains copper.
+
+## The main board's floorplan
+
+### Outline, fixings and margins
+
+The outline is a polygon in the data and here a rectangle, **X 1.0 to 132.0 and Y 2.0 to 127.0: 131.0 × 125.0 mm, 16 375 mm²**, square corners, 1.6 mm thick. The cavity is 133.5 × 130.5 mm (±0.5), so the margins are 1.0 mm at the left (where the wall is open from Y = 8 to 122.5), 1.5 mm at the right, 2.0 mm at the bottom and 3.5 mm at the top; with the cavity's ±0.5 mm and the maker's ±0.2 mm on a routed outline the least are 0.8 mm at the right and 2.8 mm at the top. **The board fits the envelope**, and every block and tab pad stands at least 0.3 mm inside the board's edge, the maker's recommended figure for components to the edge (`docs/board-manufacturer-jlcpcb.md` § Hole-to-hole and clearances to holes and edges). The original board measures 133.2 × 125.1 mm (±0.2, perhaps not exactly square; owner, 2026-10-24); this outline is smaller on purpose and is not copied from it. The datum is the cavity wall, and the original board's own edges were not measured against it but inferred, so nothing here rests on where they were.
+
+| Fixing | Hole centre (mm) | Hole | Edge distances (mm) | Nearest part (distance from the centre, mm) |
+|---|---|---|---|---|
+| Point 1, lid screw | (6.5, 6.5) | 3.15 mm | 5.5 left, 4.5 bottom | Mains copper 13.27 (the lower edge of the pad of tab 1 and of its link pour) |
+| Point 2, lid screw | (126.7, 6.5) | 3.1 mm | 5.3 right, 4.5 bottom | `REED` keep-out 6.0 (its lower pad's centre is 12.0); mains copper 71.4 |
+| Point 4 | (127.0, 123.5) | 3.1 mm | 5.0 right, 3.5 top | `SP2` 5.0; mains copper 72.1 |
+| Point 3 | no screw and no hole: the board rests on the boss | | | § The fixing rule and the tabs that move |
+
+Each edge distance exceeds the 3.0 mm extent E (A1) by at least 0.5 mm. The **lid-screw clearance** is held as a 3.5 mm part-free circle about points 1, 2 and 4 and about the point 3 boss (A19); the lid's own boss and screw sizes were not read, so the clearance a lid screw needs to pass is **unconfirmed** and is the design task's to check on the lid.
+
+### Zones and the barrier
+
+Mains copper occupies the left of the board and the low-voltage circuits the right. Between them lies the **barrier**, a band at least 10.0 mm wide that the barrier parts bridge: the logic-supply module, the three relays, the two pump opto-triacs, the timing optocoupler and the voltage measurement's isolating part. Each barrier part's low-voltage side is a **pocket** (a rectangle in the tables), and the signed distances hold between every pocket and every mains rectangle, not only between a part's own two sides.
+
+**Mains against low voltage.** For every pair of a low-voltage conductor and a mains conductor the board keeps a straight distance of at least the signed 3.0 mm clearance **and** a shortest path over the board's surface, taken round the milled slots, of at least the signed 10.0 mm creepage. A part's own body bridging its two sides is the only exception, and for the four strips whose isolating part straddles a slot (`TIMING`, `VMEAS` and the two pump drives) the part's own pins are checked pin to pin instead. A slot's ends lie far enough past the facing copper that the path round them reaches 10.0 mm; the script measures the path and does not assume it.
+
+**Mains against mains (A3).** Mains copper of different nets, every pair in the data, keeps 3.0 mm in a straight line and the basic creepage, 5.0 mm, by surface path round the slots. **Across the open interlock contact**, the copper on `LINE` against the copper on `LINE1`, the pair is the signed reinforced one, **3.0 mm straight and 10.0 mm by path, and no credit is taken for the relay's own contact gap** (the 1 000 VAC the sheet gives between open contacts is not used): a bridge there would defeat the interlock. It is held by **one slot, `SL_LINK`**, 1.0 mm wide, running from the board's left edge to X = 31.0 between the two tab pads (7.35 mm apart), between the two link pours and between the relay's two contact halves (3.0 mm apart, each on its own terminal of the relay, 7.56 mm apart: A23). A slot that reaches the board's edge cannot be walked round at that end, so the path round its right end is the one that counts, and the script measures it. The rule is the one rule for every pair: the seven tab pads and the return landing's pad are held to it against each other and against the link pours and the neutral pour (the pads of tabs 1 to 3 stand 7.35 mm apart, so none needs a slot), and a second slot, `SL_LN`, between the `LINE` pour and the pad of tab 3 and the shunt's first land above it (3.075 and 4.5 mm apart) holds the 5.0 mm by path. The mains copper of the timing strip, the voltage measurement and the module is on `LINE` and `NEUTRAL` upstream of the contact, in a piece for each net, and is held to the same pair against the `LINE1` copper.
+
+**The slots.** There are eight, each 1.0 mm wide (the maker's smallest non-plated slot, which the script reads from its record) and none within 0.2 mm of any copper or pocket (the maker's copper-to-slot figure, read the same way); where the board carries a part over a slot, the part's body bridges it:
+
+| Slot | X (mm) | Y (mm) | Length (mm) | What it separates |
+|---|---|---|---|---|
+| `SL_LINK` | 1.0 to 31.0 | 26.55 to 27.55 | 30.0 | The `LINE` copper from the `LINE1` copper: the two tab pads, the two link pours and the relay's two contact halves. It is open at the board's left edge, and the relay body stands over it |
+| `SL_LN` | 1.0 to 19.0 | 35.30 to 36.30 | 18.0 | The `LINE` link pour from the pad of tab 3 (`NEUTRAL`) and from the shunt's first land above it; it is open at the board's left edge |
+| `SL_VM` | 62.0 to 63.0 | 43.40 to 58.40 | 15.0 | The voltage measurement's mains pin from its low-voltage pin and its pocket from its own mains copper; the isolating part straddles it, and a slot closed at both ends is walked round at both |
+| `SL_VP` | 36.0 to 67.5 | 91.10 to 92.10 | 31.5 | `K_V1`'s contact copper and its pocket from the coffee-pump strip's mains copper above them |
+| `SL_PP` | 17.0 to 57.5 | 103.10 to 104.10 | 40.5 | The two pump strips' mains copper from each other |
+| `SL_PV` | 36.0 to 67.5 | 115.10 to 116.10 | 31.5 | The steam-pump strip's mains copper from `K_V2`'s contact copper and pocket above it |
+| `SL_PUMPS` | 57.5 to 58.5 | 91.10 to 116.10 | 25.0 | The pump strips' mains pins from their own low-voltage pins, and each strip's pocket from the strip beside it; the two optocouplers straddle it, and it joins `SL_VP` and `SL_PV` |
+| `SL_TIM` | 57.3 to 58.3 | 2.00 to 12.50 | 10.5 | The timing strip's mains pin from its low-voltage pin; it is open at the board's bottom edge, and the optocoupler straddles it |
+
+Counted from the data, the eight slots are 202 mm of slot path, and for five boards of 0.0164 m² each that is 12.3 m of slot path per m² of board, against 80 m per m² (the maker's figure, read by the script) before the maker charges for routing slots (`docs/board-manufacturer-jlcpcb.md` § Price bands and the fabrication order, *Extra charge for routing slots*), so no charge arises. 4 pocket-to-mains pairs stand under 10.0 mm apart in a straight line, from 4.2 mm; every one is held by a slot, the least surface path being 12.9 mm. The isolating parts' own pins, mains row against low-voltage row, are 15.8 mm (`TIMING`), 12.9 mm (`VMEAS`) and 58.3 mm (`P_C` and `P_S`, where the slot network closes the way round) apart round the slots. A slot is not drawn for the module's or the relays' own two sides: the module's mains pads and its pocket are 37.6 mm apart, `K_IL`'s contact copper and pocket 25.0 mm, and a valve relay's 11.64 mm (A26). 14 pairs of mains copper of different nets, from different parts, stand nearer than the creepage their rule asks, 9 of them across the open contact; every one is held by distance or by a slot, the least surface path being 7.3 mm.
+
+Three rules hold between blocks, and the script of § Appendix checks all three:
+
+- a low-voltage block lies 10.0 mm or more from every mains copper rectangle (the least, 10.3 mm);
+- a pocket lies 3.0 mm or more from the mains copper of any block and, round the slots, 10.0 mm or more by surface path (the least, 4.2 mm straight and 12.9 mm by path);
+- mains copper of different nets lies 3.0 mm or more apart and 5.0 mm or more by path (the least, 3.0 mm straight and 7.3 mm by path), and across the open interlock contact 3.0 mm and 10.0 mm (A3; the least straight, 3.0 mm); the tab pads and the link pours are in this rule like any other copper, with no exemption.
+
+### The mains-side blocks
+
+Mains copper is drawn as the rectangle each block's mains parts must stay inside; the body is the part's whole footprint, its low-voltage end included. The block `TABSTRIP` is derived by the script from the seven tab pads, the return landing's pad, the neutral pour with the shunt's lands and the two link pours. **The stack runs up the board in tab order for the link relay and the pump drives.** The timing front end lies along the bottom edge, below the link, where it holds the signed 10.0 mm from the `LINE1` copper above it; the relay `K_IL` is centred on Y = 27.05, the middle of the 3.0 mm gap across the open contact between the two link pours; the fuse holder stands in the left column and the voltage measurement directly below the module, 15.0 mm above the relay's body; the module stands **20.0 mm above `K_IL`'s body**, the voltage measurement between them, which A8 asks of a part that derates (15 mm); and above the module stand the first valve relay, the two pump drives and the second valve relay, packed up to the board's top edge. A valve relay's mains copper is inset 0.625 mm from its body (A26), so it keeps 3.0 mm from the copper beside it with 2.4 mm between bodies. **The pump drives stand at the levels of their tabs, their lower edges 1.7 mm and 3.9 mm above the tab centres; the valve relays do not.** A valve relay's coil pocket must reach the zone boundary, because a low-voltage trace from it has to keep 10.0 mm from every mains conductor (the widest gap between mains copper along the stack is 11.2 mm and such a trace needs 20.3 mm to pass, computed in § Heat), so the small relay stands at X 44.5 to 62.1 and its mains lead runs from the tab pad across the stack, 35 mm for tab 6 and 37 mm for tab 9 (the shortest routes the script finds, which keep 5.0 mm from every other net with the trace's half width and a margin, A15). The pump drives start at X 20.0 so that the leads of tabs 7 and 8 have routes between the pad column and the strips. The runs of any length are those two valve leads and the `LINE` and `NEUTRAL` taps that the module, the timing front end and the voltage measurement need (§ Every retained harness reaches its connector).
+
+| Block | Function | X (mm) | Y (mm) | Size (mm) | Area (mm²) | What it holds, and its allowance |
+|---|---|---|---|---|---|---|
+| `TABSTRIP` | Seven 6.3 mm tab pads and the return landing on the left edge, the neutral pour with its shunt, and the two link pours | 5.0 to 17.0 | 19.8 to 112.1 | 12.0 × 92.3 | 1108 | The seven tab pads and the landing's pad, each 7.0 mm along X and 1.45 mm along Y (A2) about X = 8.5 (X 5.0 to 12.0); the shunt `I_SHUNT` (Y 38.825 to 45.825) with its two lands of 1.9 mm, `I_SHUNT.a` on the pad of tab 3 and `I_SHUNT.b` on the pour, and the neutral pour `LK_N` (`NEUTRAL`, X 5.0 to 12.0, Y 45.825 to 49.0) that holds the landing's pad (Y 45.875 to 47.325); and the two link pours `LK_L` (`LINE`, Y 28.55 to 34.3) and `LK_L1` (`LINE1`, Y 19.775 to 25.55), X 5.0 to 17.0, each holding the pad of its tab (tab 2 and tab 1) and joining it to the relay's contact half; the strip is the envelope of the pads, the neutral pour and the two link pours, not one copper pour |
+| `TIMING` | Supply-timing front end: AC-input optocoupler and its series resistors | 19.8 to 65.3 | 2.5 to 9.5 | 45.5 × 7.0 | 319 | SMD-4 optocoupler 10 × 5 (A7) 50 + two 1 W series resistors (2512, courtyard 9 × 5) 90 = 140 mm² in 45.5 × 7 mm, upstream of the contact and 10.3 mm from the `LINE1` copper above it; its mains copper is in two pieces, `TIMING.L` on `LINE` (X 19.8 to 29.0) and `TIMING.N` on `NEUTRAL` (X 37.0 to 55.3), 8.0 mm apart, the parts bridging the gap; its pocket and the slot `SL_TIM` stand at its right end; the optocoupler is rated to 100 °C (P12), 30 K over the air, outside A8's 85 °C class |
+| `K_IL` | Relay K_IL, the proof-of-life interlock, in the link from tab 2 to tab 1: contact end left, coil end right | 17.0 to 58.0 | 19.8 to 34.3 | 41.0 × 14.5 (14.525) | 596 | HF115F-Q/005-1H, vertical-terminal variant, 41.0 mm long and 12.7 mm wide, 15.7 mm high (P2): its body at Y 20.7 to 33.4, centred on the 27.05 mm of the gap between the two link pours, its contact terminals 7.56 mm apart at Y 23.27 and 30.83 (A23); the block is drawn 14.525 mm tall (Y 19.775 to 34.3, the lower edge of the pad of tab 1, so 595.5 mm², shown as 596) to hold the contact copper that stands beyond the body: `K_IL.a` on `LINE`, Y 28.55 to 34.3, and `K_IL.b` on `LINE1`, Y 19.8 to 25.55, each X 17.0 to 25.0; its heat rectangle is its body, X 17.0 to 58.0 and Y 20.7 to 33.4 |
+| `VFUSE` | Shared fuse holder for both valve branches | 17.0 to 26.0 | 45.5 to 69.5 | 9.0 × 24.0 | 216 | 24 × 9 mm holder (assumption A6) turned to stand along Y in the column left of the module, clear of the corridor the `LINE` and `NEUTRAL` taps need between the link and the holder; its copper is its two clips, the neutral clip `VFUSE.n` (`NEUTRAL`, Y 45.5 to 50.5, 5.0 mm from the neutral pour, which takes the valves' return) and the relay-side clip `VFUSE.v` (Y 64.5 to 69.5) |
+| `VMEAS` | Supply-voltage measurement (kind 1) and the shunt channel of the supply-current measurement (kind 9): a series divider and an isolating part with low-voltage outputs | 32.5 to 70.0 | 48.4 to 53.4 | 37.5 × 5.0 | 188 | A strip like `TIMING`, 5.0 mm deep (A29): two 1 W 2512 series resistors and the isolating part; the mains copper in two pieces, `VMEAS.N` (`NEUTRAL`, X 32.5 to 43.5) beside the module's neutral pad and `VMEAS.L` (`LINE`, X 50.0 to 60.0), the slot `SL_VM` at X 62.0 to 63.0 and the pocket X 65.0 to 70.0; the part is not chosen, and the barrier is one the basis does not list (§ The anticipated channel kinds, kind 1); it stands directly below the module, 0.0 mm from it, and 15.0 mm from the interlock relay's body; its isolating part also takes the second channel, the shunt of the neutral return (A29, kind 9) |
+| `MODULE` | Logic supply, IRM-20-5: AC pins left, DC pins right | 32.5 to 84.9 | 53.4 to 80.6 | 52.4 × 27.2 | 1425 | 52.4 × 27.2 mm, 24 mm high (P1); AC pins at X = 35.9, Y = 56.6 (N) and 77.4 (L), DC pins at X = 80.9, Y = 56.6 and 64.6, 12.9 and 20.9 mm above the top of intrusion 1 at that X; its mains copper is the two 6.0 mm pads about the AC pins (A25), `MODULE.n` on `NEUTRAL` and `MODULE.l` on `LINE`, and its mains pins are fed from `LINE` and `NEUTRAL` upstream of the contact; 20.0 mm from `K_IL`'s body |
+| `K_V1` | Relay K_V1, two-way valve (tab 6): contact end left, coil end right | 44.5 to 62.1 | 80.6 to 90.7 | 17.6 × 10.1 | 178 | Hongfa HF32FA-G/005-HSL1, 17.6 × 10.1 mm, 12.7 mm high (P6): contact pins 0.96 mm and coil pins 1.4 mm from the ends of the body, 15.24 mm apart (A26); the contact copper is X 44.5 to 47.26 and Y 81.225 to 90.075 (8.85 mm tall) and the pocket X 58.9 to 62.1, the body's full 10.1 mm; the body stands on the module's, 0.0 mm from it, and the relay is an 85 °C part not held from the module (§ Heat); the lead to the pad of tab 6 runs 35 mm |
+| `P_C` | Coffee-pump drive: fuse holder, DPAK triac, DIP-6 opto-triac with its slot | 20.0 to 65.5 | 93.1 to 102.1 | 45.5 × 9.0 | 410 | 24 × 9 holder (A6) 216 + 10 × 8 triac (A7) 80 + 10 × 9 opto-triac (A7) 90 = 386 mm² in 45.5 × 9 mm, leaving 24 mm² for two gate and series resistors (A4, 10.8 mm² each); its lower edge 1.7 mm above the centre of tab 7, the lead running 9 mm to its copper; its opto-triac straddles the slot `SL_PUMPS`; 12.5 mm from the module (§ Heat), not held; its mains copper is two pieces, `P_C` on `COFFPUMP` (X 20.0 to 46.5) and `P_C.N` on `NEUTRAL`, the triac's MT1 end (X 51.5 to 55.5), 5.0 mm apart, whose join to the neutral pour is on an inner layer (A32) |
+| `P_S` | Steam-pump drive | 20.0 to 65.5 | 105.1 to 114.1 | 45.5 × 9.0 | 410 | As `P_C`; the lead of tab 8 (pad Y 100.475 to 101.925) runs 10 mm to the strip's copper; 24.5 mm from the module; its pieces are `P_S` (X 20.0 to 46.5) and `P_S.N` (X 51.5 to 55.5) |
+| `K_V2` | Relay K_V2, three-way valve (tab 9): contact end left, coil end right | 44.5 to 62.1 | 116.5 to 126.6 | 17.6 × 10.1 | 178 | As `K_V1` (its contact copper X 44.5 to 47.26, Y 117.125 to 125.975); the lead to the pad of tab 9 runs 37 mm; 38.0 mm from the point 3 centre |
+
+Rectangles inside the blocks, for the checks: the mains copper of `MODULE` is two pads of 6.0 mm square about the AC pins, X 32.9 to 38.9 and Y 53.6 to 59.6 (`NEUTRAL`) and 74.4 to 80.4 (`LINE`) (the AC pins at X = 35.9, Y = 56.6 and 77.4; A25); its low-voltage pocket is X 76.5 to 84.9, Y 53.9 to 67.9 (the DC pins at X = 80.9, Y = 56.6 and 64.6). The pins are read from P1's bottom-view drawing (AC/N 3.2 mm and AC/L 24.0 mm from one long edge, −V 3.2 and +V 11.2 mm from the same edge, the AC and DC pins 45 mm apart) and mirrored to the component side with the AC pins at the left. `K_IL`'s mains rectangles are its two contact halves, X 17.0 to 25.0 (8.0 mm wide: A23), 3.0 mm apart, with the four legs at X = 18.0 and 23.0 and Y = 23.27 and 30.83, and its pocket is its coil end, X 50.0 to 58.0, with the coil holes at X = 55.5, 7.56 mm apart across the body (P2). A valve relay's mains rectangle is its contact end, X 44.5 to 47.26, and its pocket its coil end, X 58.9 to 62.1, with the coil pins at X = 60.7, 7.6 mm apart, and the contact pins at X = 45.46, 6.35 mm apart (P6; A26). Each pump strip's mains copper is in two pieces, the pump's switched lead from X 20.0 to 46.5 and, 5.0 mm beyond it, the triac's `NEUTRAL` end `P_C.N` or `P_S.N` from X 51.5 to 55.5, and its pocket is X 60.5 to 65.5; the shared fuse holder's copper is its two clips, `VFUSE.n` on `NEUTRAL` (Y 45.5 to 50.5) and `VFUSE.v` on the valves' side (Y 64.5 to 69.5), X 17.0 to 26.0; the timing strip's mains copper is X 19.8 to 29.0 and 37.0 to 55.3 and its pocket X 60.3 to 65.3. **The interlock relay's length.** The datasheet's drawing gives 41 mm overall for the vertical-terminal variant (the ordering code without the 3) and 45 mm for the horizontal-terminal variant, whose 41 mm is the span to its terminal's holes and 31.5 mm to the back of its body (P2); the floorplan draws 41.0 mm and **requires the vertical-terminal variant**, since the horizontal variant's quick-connect tabs would stand a further 4 mm toward the tab pads, to X 13.0, over the link pours, where nothing here draws them.
+
+### The low-voltage blocks
+
+| Block | Function | X (mm) | Y (mm) | Size (mm) | Area (mm²) | Allowance and basis |
+|---|---|---|---|---|---|---|
+| `MCU` | Controller, STM32H743VIT6, decoupling, crystals, reset, boot, programming header, 3.3 V regulator | 72.0 to 104.3 | 95.6 to 126.7 | 32.3 × 31.1 | 1005 | Estimate: LQFP-100 land 17.5 × 17.5 mm (306) + 40 passives (432) + HSE and LSE crystals (66) + programming header (70) + reset switch and boot link (60) + regulator and its two capacitors (68) = 1 002 mm², drawn 1 005 (A4, P5): the one block drawn with no allowance, because the board's top edge and the 15.0 mm it keeps from the module leave it 31.1 mm of height; it had 87 mm² of margin before the voltage measurement moved under the module |
+| `CON2` | Panel harness header CON2, 9 ways, 2.0 mm pitch | 124.5 to 131.5 | 76.0 to 96.5 | 7.0 × 20.5 | 144 | Footprint (A5) |
+| `SP2` | Gauge harness header SP2, 9 ways, 2.0 mm pitch | 124.5 to 131.5 | 98.0 to 118.5 | 7.0 × 20.5 | 144 | Footprint (A5) |
+| `KNOB` | Knob microswitch header, 4 ways, 1.95 mm pitch | 113.6 to 124.0 | 108.0 to 115.0 | 10.4 × 7.0 | 73 | Footprint (A5) |
+| `FLOW` | Flow meter header CZ1, 3 ways, 2.54 mm pitch | 113.9 to 124.0 | 98.0 to 105.5 | 10.1 × 7.5 | 76 | Footprint (A5) |
+| `TEMP_C` | Coffee-block thermistor header RT1, 2 ways, 2.54 mm | 117.0 to 124.0 | 86.0 to 93.5 | 7.0 × 7.5 | 53 | Footprint (A5) |
+| `TEMP_S` | Steam-block thermistor header, 2 ways, 2.54 mm | 117.0 to 124.0 | 76.0 to 83.5 | 7.0 × 7.5 | 53 | Footprint (A5) |
+| `TEMP_W` | Wand thermistor header, 2 ways, 2.54 mm, fitted rotated 180 degrees | 114.0 to 121.0 | 119.0 to 126.5 | 7.0 × 7.5 | 53 | Footprint (A5) |
+| `DRV_K1` | Coil driver for K_V1: transistor, flyback diode, pull-down | 65.5 to 72.0 | 80.6 to 90.7 | 6.5 × 10.1 | 66 | 3 passives and a transistor and a diode: 18 + 10 + 3 × 10.8 = 60 mm², drawn 66 to sit against the relay pocket, 10.3 mm from the mains copper of `P_C` |
+| `DRV_K2` | Coil driver for K_V2 | 65.5 to 72.0 | 116.5 to 126.6 | 6.5 × 10.1 | 66 | As `DRV_K1` |
+| `DRV_PC` | LED drive for the coffee pump's opto-triac | 66.0 to 72.0 | 93.1 to 102.1 | 6.0 × 9.0 | 54 | Transistor, base resistor, pull-down, LED resistor: 18 + 3 × 10.8 = 50 mm², drawn 54 |
+| `DRV_PS` | LED drive for the steam pump's opto-triac | 66.0 to 72.0 | 105.1 to 114.1 | 6.0 × 9.0 | 54 | As `DRV_PC` |
+| `DRV_TIM` | Output conditioning of the timing optocoupler | 66.5 to 72.5 | 2.7 to 8.7 | 6.0 × 6.0 | 36 | Two passives: 22 mm², drawn 36 |
+| `FE_GAUGE` | Gauge drive: octal buffer, five pull-downs, two decoupling capacitors | 72.0 to 93.5 | 80.6 to 92.6 | 21.5 × 12.0 | 258 | SOIC-20 courtyard 15 × 11 = 165 + 7 × 10.8 = 76: 241 mm², drawn 258 (R3 § Gauge drive) |
+| `DRV_HEAT` | LED-drive stages for the two heater opto-triacs | 94.0 to 102.5 | 79.8 to 91.8 | 8.5 × 12.0 | 102 | 2 × (transistor 18 + 3 passives 32) = 100 mm², drawn 102 |
+| `FE_PANEL` | Operator panel: gate switch for the anode rail, five key pull-ups, buzzer switch | 105.0 to 115.0 | 75.0 to 91.0 | 10.0 × 16.0 | 160 | The forms record's three transistors and five resistors: 3 × 18 + 5 × 10.8 = 108, plus three base and pull-down resistors 32: 140 mm², drawn 160 |
+| `FE_NTC` | Three thermistor dividers with filter capacitors | 105.5 to 113.5 | 92.5 to 106.5 | 8.0 × 14.0 | 112 | Three passives per channel (R2 of the forms record, SBAA338): 9 × 10.8 = 97 mm², drawn 112 |
+| `FE_FLOW` | Flow input: pull-up, series resistor, filter capacitor, Schmitt buffer footprint and its link | 105.0 to 113.0 | 107.5 to 117.5 | 8.0 × 10.0 | 80 | 3 × 10.8 + 25 + 10.8 = 68 mm², drawn 80 |
+| `FE_STMD` | Steam-transducer digital header protection: two series resistors, two pull-ups, two clamps | 105.0 to 113.0 | 118.5 to 126.5 | 8.0 × 8.0 | 64 | 4 × 10.8 + 2 × 8 = 59 mm², drawn 64 |
+| `POL` | Proof-of-life circuit that drives K_IL's coil (mechanism not chosen) | 70.5 to 82.5 | 31.0 to 43.0 | 12.0 × 12.0 | 144 | Estimate: one 8-pin circuit 40 + four passives 43 + driver 18 + diode 10 + status feedback 22 = 133 mm², drawn 144; marked an estimate, the mechanism is the design task's |
+| `BREW_D_C` | Brew-path pressure, digital header protection | 87.5 to 97.5 | 31.0 to 39.0 | 10.0 × 8.0 | 80 | 59 mm², drawn 80 |
+| `FE_KNOB` | Knob microswitch inputs: two pull-ups and two filter capacitors | 71.0 to 79.0 | 43.5 to 49.5 | 8.0 × 6.0 | 48 | 43 mm², drawn 48 |
+| `FE_WATER` | Tank-level input conditioning and the low-water indicator sink | 108.5 to 116.5 | 32.0 to 40.0 | 8.0 × 8.0 | 64 | Reed pull-up and filter 22 + transistor 18 + two resistors 22 = 62 mm², drawn 64 |
+| `IN_COND` | Input conditioning for the zero crossing, and the two mains-presence inputs, which stay reserved | 98.0 to 108.0 | 31.0 to 39.0 | 10.0 × 8.0 | 80 | Six passives: 65 mm², drawn 80 |
+| `WB_LV10` | Header for the heater wall board's low-voltage cable, 10 ways, 2.54 mm | 123.7 to 131.2 | 44.5 to 72.5 | 7.5 × 28.0 | 210 | Footprint (A5) |
+| `STM_D` | Steam-transducer digital header, 4 ways (3V3, GND, SCL, SDA) | 93.0 to 100.5 | 65.3 to 77.9 | 7.5 × 12.6 | 95 | Footprint (A5) |
+| `BREW_D` | Brew-path pressure digital header, 4 ways | 108.1 to 115.6 | 44.5 to 57.1 | 7.5 × 12.6 | 95 | Footprint (A5) |
+| `PT1_H` | In-stream probe 1 header, 4 ways | 115.9 to 123.4 | 44.5 to 57.1 | 7.5 × 12.6 | 95 | Footprint (A5) |
+| `BREW_A` | Brew-path pressure analogue header, 4 ways | 108.1 to 115.6 | 57.4 to 70.0 | 7.5 × 12.6 | 95 | Footprint (A5) |
+| `PT2_H` | In-stream probe 2 header, 4 ways | 115.9 to 123.4 | 57.4 to 70.0 | 7.5 × 12.6 | 95 | Footprint (A5) |
+| `SPARE_A` | Spare analogue header for the steam transducer's analogue fallback, 4 ways (5V, 3V3, GND, input) | 85.2 to 92.7 | 44.5 to 57.1 | 7.5 × 12.6 | 95 | Footprint (A5) |
+| `SPARE_AN2_H` | Second spare analogue header, 4 ways | 85.2 to 92.7 | 57.4 to 70.0 | 7.5 × 12.6 | 95 | Footprint (A5) |
+| `CURR1_H` | Current-sensing header, first channel, 3 ways | 93.0 to 100.5 | 44.5 to 54.6 | 7.5 × 10.1 | 76 | Footprint (A5) |
+| `CURR2_H` | Current-sensing header, second channel, 3 ways, 2.54 mm | 93.0 to 100.5 | 54.9 to 65.0 | 7.5 × 10.1 | 76 | Footprint (A5); kind 5, in the column of `CURR1_H`, 0.3 mm from it and from `STM_D` |
+| `WT1_H` | Weight channel 1 load-cell header, 5 ways, 2.0 mm | 100.8 to 107.8 | 44.5 to 57.0 | 7.0 × 12.5 | 88 | Footprint (A5, at the 2.0 mm pitch it assumes for these headers; the owner gives 7.0 × 12.5 mm); kind 2 |
+| `WT2_H` | Weight channel 2 load-cell header, 5 ways, 2.0 mm | 100.8 to 107.8 | 57.3 to 69.8 | 7.0 × 12.5 | 88 | As `WT1_H` |
+| `PT1_C` | In-stream temperature converter 1: RTD-to-digital converter, reference resistor, capacitors | 76.5 to 90.5 | 3.0 to 13.0 | 14.0 × 10.0 | 140 | SSOP-20 courtyard 72 + 6 × 10.8 = 137 mm², drawn 140; in the analogue region, 20.0 mm from the interlock relay |
+| `PT2_C` | In-stream temperature converter 2 | 91.0 to 105.0 | 3.0 to 13.0 | 14.0 × 10.0 | 140 | As `PT1_C` |
+| `FE_SPAREA` | Spare analogue input (the steam transducer's analogue fallback): divider, filter, series resistor, clamp | 105.5 to 115.5 | 3.0 to 11.0 | 10.0 × 8.0 | 80 | 4 × 10.8 + 8 = 51 mm², drawn 80; in the analogue region |
+| `BREW_A_C` | Brew-path pressure, analogue fallback: divider, filter, clamp | 78.0 to 88.0 | 14.5 to 22.5 | 10.0 × 8.0 | 80 | 51 mm², drawn 80; in the analogue region, 20.0 mm from the interlock relay |
+| `SPARE_AN2_C` | A second spare analogue input: divider, filter, clamp | 88.4 to 97.8 | 14.5 to 22.5 | 9.4 × 8.0 | 75 | 51 mm², drawn 75 (it was 80; the margin is 47 % instead of 57 %, to leave kind 5 its row); in the analogue region |
+| `CURR1_C` | Current-sensing channel 1: burden and filter | 98.2 to 104.2 | 14.5 to 22.5 | 6.0 × 8.0 | 48 | 3 × 10.8 = 32 mm², drawn 48 as 6 × 8 mm; in the analogue region |
+| `I_C` | Supply current measurement (kind 9): conditioning of the isolated shunt channel | 104.6 to 110.6 | 14.5 to 22.5 | 6.0 × 8.0 | 48 | 3 × 10.8 = 32 mm², drawn 48; conditions the isolated output of `VMEAS`'s shunt channel; in the analogue region |
+| `CURR2_C` | Current-sensing channel 2: burden and filter | 111.0 to 117.0 | 14.5 to 22.5 | 6.0 × 8.0 | 48 | 3 × 10.8 = 32 mm², drawn 48 as 6 × 8 mm; in the analogue region; kind 5 |
+| `WT1_C` | Weight channel 1: HX711-class amplifier (SOP-16L) and its passives | 78.0 to 97.0 | 22.9 to 30.1 | 19.0 × 7.2 | 137 | The amplifier's courtyard 11.0 × 7.4 = 81 mm² and five passives 54 mm² = 135.4 mm², drawn 136.8 as a row (A27, P11); in the analogue region, 20.0 mm or more from the module and 20.0 mm or more from the interlock relay; kind 2 |
+| `WT2_C` | Weight channel 2: HX711-class amplifier and its passives | 97.5 to 116.5 | 22.9 to 30.1 | 19.0 × 7.2 | 137 | As `WT1_C` |
+| `VM_C` | Supply-voltage measurement: conditioning of the isolated output | 116.0 to 122.7 | 3.0 to 10.2 | 6.7 × 7.2 | 48 | A divider, a filter capacitor and a clamp: 3 × 10.8 = 32 mm², drawn 48 as `I_C` is; in the analogue region, 20.0 mm or more from the module and from the interlock relay; the isolated signal reaches it from the pocket of `VMEAS` over a low-voltage trace of about 60 mm; kind 1 |
+| `REED` | Tank reed element pads, hand-fitted, with its body strip and hand access | 117.0 to 127.0 | 12.5 to 42.5 | 10.0 × 30.0 | 300 | Pads at (122.0, 17.5) and (122.0, 37.5), 20.0 mm apart along Y; the rectangle is the bounding box of the keep-out of § The tank reed (a body strip and 5.0 mm round each pad, A17), not a part |
+
+**Block areas and their allowance.** The allowance for the support parts that no part selection has yet named is stated in every row: a block's drawn area is the sum of its named parts' footprints and the allowance for its support passives (A4), plus a margin of 8 to 70 %, the larger where a block is drawn to the height of the part beside it. Its basis is the counts of the reference designs the forms record cites: **ST AN4938 Rev 7, Tables 8 and 9** give the controller's reference design 23 mandatory passives (20 of 100 nF, one of 4.7 µF, two of 2.2 µF) and 17 optional ones (five 10 kΩ, one 0 Ω, four 100 nF, two 1.5 pF, three 1 µF, two 3.9 pF) that is 40 passives, the number used for `MCU`, the two crystals counted apart (that table is for the TFBGA240; the 100-lead package has fewer supply pins, so 40 is an upper bound; P5); **TI SBAA338** gives three passives per thermistor channel; and the forms record states the per-channel passives of the flow input, the panel (three transistors and five resistors), the heater drive stages and the low-water stage. A row whose basis is not one of those is marked as an estimate there. The part-level regions of each block are the board design task's.
+
+**The sum of the blocks.** The mains-side bodies total 5 026 mm² (the strip of the tab pads, the neutral pour and the link pours 1 108.2 and the nine blocks 3 917.3) and the low-voltage blocks 5 244 mm²; with the reed's keep-out box, 300 mm², that is **10 569 mm² of the 16 375 mm² outline, 65 %**, leaving 5 806 mm² for routing, the slots and the spacing between blocks. That free area is not usable for low-voltage circuits as its size suggests: most of it lies in the mains zone, where a low-voltage block must stand 10.0 mm from mains copper, and the rest is bounded by the two heat sources' 20 mm keep-out for sensing blocks (A8), the lead-end rule along the intrusions, the reed's hand access and the lid-screw circles. These, not the free area, decide what fits (§ The anticipated channel kinds).
+
+### Heights, the underside, and hand access
+
+| Part | Height above the board (mm) | Ceiling here (mm) | Margin |
+|---|---|---|---|
+| `MODULE` IRM-20-5 | 24.0 (P1) | 27.9; it lies 32.5 mm or more from every edge, so the 23.3 mm limit does not apply | 3.9 mm |
+| Relays `K_V1`, `K_IL`, `K_V2` | 15.7 for `K_IL` (P2), 12.7 for the valve relays (P6) | 27.9; the left end of `K_IL` is 17.0 mm from the open left side | 12.2 mm |
+| Tabs and the return landing | The blade stands 9.9 mm clear (`connector-pinouts.md`); the bought tab's blade height is unread, and the assembly task reads it | 27.9 | 18.0 mm above the bare blade |
+| Fuse holders | 15 at most (A6) | 27.9 | 12.9 mm |
+| Harness headers on the right, within 2 mm of the right wall | Under 15 (the makers' sheets are not read; A5) | 23.3 | At least 8.3 mm |
+
+The tallest part on the original board was measured at 28 mm and the machine record calls it its AC/DC module; the ceiling of 27.9 mm stands on that height, and the replacement module is 24.0 mm. The original board's circuit diagram shows a transformer `T1` (230 V, 9 V, 2.5 VA) as its control supply and no AC/DC module, so the part measured as the tallest is probably `T1` (inferred); the ceiling is the measured height whichever part it is.
+
+**Underside.** Economic assembly places one side, so nothing is fitted on the back; only through-hole lead ends reach it. With the 4 mm standoffs and a 1.6 mm board, a lead end protrudes by the part's pin length less the board (P1: the module's pins are 3.5 ±1 mm below its body, so 1.9 mm, 0.9 to 2.9) against 0.5 mm (−0.2 to 1.2) of room over intrusion 1 and 2.15 mm (1.45 to 2.85) over intrusion 2. **No lead end is placed over either.** The checks: the module's DC pins at (80.9, 56.6) and (80.9, 64.6) lie 12.9 and 20.9 mm above the top of intrusion 1 at X = 80.9, Y = 43.7; the interlock relay's coil holes at X = 55.5 lie 2.5 mm left of intrusion 1's corner at X = 58 and the valve relays' pins are 35 mm or more above it, and the script holds any lead end beside the straight edge at least the intrusion's position tolerance, ±0.5 mm (`reference-machine.md`), from it (the nearest lead end beside it is the reed's lower pad, 16.5 mm beyond its far face); every through-hole header lies either at X = 105.5 or more, where there is no intrusion, or at Y = 44.5 or more (the intrusion's top is 43.5 mm at X = 85.2 and falls to the right); and the through-hole parts nearest the bottom wall are the reed's lower pad (Y = 17.5) and tab 1 (Y = 19.8), 14.5 mm above intrusion 2. The through-hole parts' lead ends are at least 1.0 mm outside both intrusions in the script's check.
+
+### The tank reed
+
+The element's lower lead is at (122.0, 17.5) and its upper lead 20.0 mm above it at (122.0, 37.5), so its midpoint is at (122.0, 27.5), **0 mm from the recorded position, inside the 1 mm tolerance** (`reference-machine.md`, remeasured by the owner on 2026-10-24: the lower hole 15.3 mm above the original board's bottom edge and 121.25 mm from its left edge). The script takes the element's midpoint from the two pads and checks it against the record. It is through-hole, with its body on the back face as on the original (inferred in the machine record). The lower pad is 12.0 mm from point 2's centre.
+
+**Its keep-out** replaces an earlier hand-access rectangle that had no source. It is a body strip 4.0 mm wide along the 20 mm between the pads (the element and its insulating compound) and a hand-access zone of **5.0 mm radius round each pad**, for the iron and a finger. Both are assumptions (A17), stated as such; the zone's bounding box is X 117.0 to 127.0, Y 12.5 to 42.5, centred on the midpoint, and it clears the point 2 lid-screw circle by 2.5 mm. **Nothing lies in it**: the script checks every block, tab pad and fixing against the strip and the two circles. Two blocks stood in the new zone and moved: the wall board's header `WB_LV10` and the spare analogue header `SPARE_A` (their places are in the table of the low-voltage blocks). The reed is hand-fitted and is not counted in the manufacturer's assembly. Over the back face at X = 122 there is no intrusion (intrusion 1 ends at X = 105.5).
+
+### Heat
+
+The heat sources of a watt or more on the main board are two. **The logic supply**: the module's own derating curve reaches 50 % of its rated current at 70 °C (P1), so the most it delivers there is 10 W at 5 V; at its typical 79 % efficiency (P1) it dissipates 10 / 0.79 − 10 = **2.66 W** (5.32 W at its full 20 W, which the curve does not allow at 70 °C), and it dissipates **1.25 W at this board's load** of 0.94 A, 4.70 W out (§ The logic supply against this board). That figure takes the sheet's typical efficiency, which is given at rated load, over a load of 23 % of its rated 20 W, where the sheet gives none: it is flat-efficiency and an estimate, and a loss that falls in proportion to the load from 5.32 W at rated load to the sheet's 0.1 W at no load gives 1.32 W, 0.08 W more; either is over A8's watt. **The interlock relay** dissipates its coil, 0.4 W at its nominal 62 Ω (0.448 W with the coil 10 % under, at 55.8 Ω), and its contacts, which carry all of the machine's current: 0.58 W at the budgeted 4.8 mΩ and 10.96 A, so 0.98 W, and **1.03 W with the coil at the low end of its tolerance**: a source by A8's own figure, and by the owner's instruction of 2026-10-24 whatever the arithmetic. The valve relays' coils are 0.23 W each (P6) and the pump triacs carry 0.46 A and 0.19 A rms; none reaches a watt. The microcontroller and the regulator's dissipation are not recorded and sit inside the `MCU` block. The 70 °C air is an assumption; **the owner thinks it will not be real and expects to insulate the thermoblocks, and this record keeps 70 °C** so that the distances below stay on the cautious side.
+
+| Part or block | From the module's body (mm) | From the interlock relay's body (mm) | Rule (A8) | Held |
+|---|---|---|---|---|
+| `MCU` | 15.0 | 63.8 | 15 | Yes |
+| `FE_NTC`, the thermistor dividers | 23.8 | 75.8 | 20 | Yes |
+| `PT1_C`, `PT2_C`, the RTD converters | 40.4, 40.9 | 20.0, 33.9 | 20 | Yes |
+| `BREW_A_C`, `SPARE_AN2_C`, analogue inputs | 30.9, 31.1 | 20.0, 30.4 | 20 | Yes |
+| `CURR1_C`, `I_C`, `CURR2_C`, current inputs | 33.6, 36.6, 40.4 | 40.2, 46.6, 53.0 | 20 | Yes |
+| `WT1_C`, `WT2_C`, `VM_C`, the weight and voltage circuits | 23.3, 26.5, 53.2 | 20.0, 39.5, 58.9 | 20 | Yes |
+| `FE_SPAREA`, the analogue fallback | 47.1 | 48.5 | 20 | Yes |
+| `FE_GAUGE`, `POL`, `DRV_HEAT`, digital stages | 0.0, 10.4, 9.1 | 49.2, 12.5, 58.7 | None: no part there derates or senses | Not applicable |
+| The 85 °C part `K_V1`, the two-way valve relay | 0.0 | 47.2 | 15 | **Not held** (from the module) |
+| The 85 °C part `K_V2`, the three-way valve relay | 35.9 | 83.1 | 15 | Held |
+| The 85 °C part `P_C`, the coffee pump's opto-triac | 12.5 | 59.7 | 15 | **Not held** (from the module) |
+| The 85 °C part `P_S`, the steam pump's opto-triac | 24.5 | 71.7 | 15 | Held |
+| The 85 °C part `VMEAS`, the voltage measurement's isolating part | 0.0 | 15.0 | 15 | **Not held** (from the module; held from the relay, as the owner requires) |
+| The interlock relay `K_IL`, against the module | 20.0 | | 15 (the owner's figure) | **Held** |
+| `TIMING`, the timing optocoupler, outside the class (100 °C, 30 K over the air, P12) | 43.9 | 11.2 | None: no distance is claimed | Outside the class |
+
+**The interlock relay is held from the module and is now a source itself.** `K_IL` stands 20.0 mm from the module's body; the voltage measurement, 15.0 mm above the relay's body, stands between them, directly below the module. The two sensing blocks that stood within 20 mm of the relay, `BREW_A_C` (10.0 mm) and `PT1_C` (16.9 mm), moved right to 20.0 mm and 20.0 mm, which the analogue region holds, with kind 5, at the spacing the drawing keeps (§ The anticipated channel kinds); the weight and voltage circuits stand 20.0 mm or more from it. The relay choice is still not proven until the bring-up measurement (§ The interlock block). The script tests the microcontroller, every sensing block and every 85 °C part against both sources, and the heat lists name every low-voltage block: one that is in none of them fails.
+
+**The parts rated to 85 °C.** A8 asks 15 mm of every part that derates. Besides the microcontroller, the mains-side parts rated to 85 °C are the valve relays (−40 to 85 °C, P6), the pump opto-triacs (taken as 85 °C, A21) and the voltage measurement's isolating part (not chosen, 85 °C assumed, A21). A valve relay's own rise is about 61 K at the rated coil voltage by the sheet's temperature-rise line (read off the plot; the sheet does not say for which coil, standard or sensitive), which puts its winding at 146 °C at an 85 °C ambient against 155 °C for its insulation class F, and its coil is energised only while its valve is open, once per delivery, with contacts that carry 0.13 A. `TIMING`'s optocoupler (Lite-On LTV-814S) is rated to 100 °C (P12), 30 K over the air against the 15 K of the class, so it is listed outside the class with its distances and no claim. Against the two sources, **three of the five stand under 15 mm, each from the module: `K_V1` against the module's body (0.0 mm), `VMEAS` directly below it (0.0 mm) and `P_C` 12.5 mm above it**; `P_S` (24.5 mm) and `K_V2` (35.9 mm) hold, and all five hold from the relay.
+
+**Why they cannot all hold, computed.** A barrier part's pocket stands at the zone boundary: a low-voltage trace to a pocket inside the mains zone needs a channel across the stack. Kept 10.0 mm from every mains conductor by distance alone, a trace needs 20.3 mm between mains copper (2 × 10.0 mm and the trace) and the widest gap between mains copper along the stack is 11.2 mm; with a slot down each side the rules ask only 3.0 mm straight and 10.0 mm by path, which that gap would give, but a channel from the left column to the low-voltage zone divides the mains copper above it from the mains copper below it, and the `LINE` and `NEUTRAL` taps feed pieces on both sides (the module's pads above, the timing front end and the link below), so they would have to cross it, on a layer where the planes are pulled back 10.0 mm from mains copper as well. No pocket is drawn inside the mains zone. Along the boundary, the stretch that stands 15 mm or more from both sources is Y 2.3 to 5.7 and Y 95.6 to 126.7, 31.1 mm; the five parts need 55.2 mm there (10.1 + 10.1 + 9.0 + 9.0 + 5.0 and four gaps of 3.0 mm), so at most 3 of them fit. The script counts every arrangement of the five along the column: each position of the module from 15 mm above the relay's body, each split of the parts above or below it, each order, with the four parts that are fed from a tab in tab order (a lead cannot pass another net's copper in the 8.0 mm channel between the pads and the stack) and `VMEAS` no nearer the relay than 15 mm. **At most 3 hold, and every arrangement that holds 3 stands K_V1 between the two sources.** The drawn stack holds 2. The two arrangements that hold 3 with K_V1 between the sources, built in the data as the first two what-ifs, hold K_V2, P_C, P_S and K_V2, P_C, P_S. The first, with the module at its lowest and `VMEAS` above it, breaks two rules: WT1_C stands 18.3 mm from the module against A8's 20, and the region AR_b stands 17.4 mm from the module (a trace from tab 6 to the relay's contact copper exists, since only the shared fuse's two clips are copper and not the holder's whole body). The second, with the module where it stood and `K_V1` and the shared fuse in the gap between the sources, breaks two: no trace reaches the pad of tab 3 from the rest of the `LINE` and `NEUTRAL` copper, because the fuse closes the way out between itself and the pad column, and the region AR_b stands 19.1 mm from the module. **The record finds no arrangement that holds 3 and meets every rule, and does not prove there is none**: another place for the shared fuse or for `VMEAS` is the owner's to ask for (§ Reported for the board design tasks, item 19).
+
+**The room tabs 4 and 5 left does not help the 85 °C parts.** The two pads and the 8.0 mm channel kept for their leads are gone, which leaves the left column X 5.0 to 17.0 free of mains copper from Y 49.0, the top of the neutral pour, to Y 78.4, the foot of the pad of tab 6: 29.4 mm. A part there would stand 15.5 mm from the module, whose body starts at X 32.5, and above Y 48.4 15 mm or more from the relay, so it would hold A8 against both sources. But every barrier part has a low-voltage pocket whose traces need a route to the low-voltage zone, 44 mm or more to the right, and the argument above shuts that route: no pocket is drawn in the column, and the stretch of the boundary that stands 15 mm from both sources stays 31.1 mm against the 55.2 mm that the five parts need. What the room does give is the neutral return's landing and shunt (§ The path of the heater current), and the fuse holder `VFUSE` its clearance from the pad column.
+
+**Three of the five can hold, at a price (the third what-if).** The module can stand 3.3 mm lower, at Y 50.1, the lowest the sensing blocks allow, if the voltage measurement leaves the gap under it. The third what-if puts it in the gap the module left: P_C then stands 15.8 mm from the module and holds, as K_V2 (39.2 mm) and P_S (27.8 mm) do; K_V1 then stands 3.3 mm from the module and VMEAS then stands 0.0 mm from the module, and the voltage measurement would then stand 11.7 mm from the relay's body against the owner's 15; and the region AR_b stands 19.1 mm from the module, so its top edge would return to Y 30.1: cut back to Y 30.1, its capacity falls from 1 189.7 to 1 154.3 mm² against the 1 066.7 the drawn blocks need, 87.6 mm² spare, so kind 5 stays. The third what-if holds K_V2, P_C, P_S: three parts, and fails two (K_V1, VMEAS), at a cost of 3.3 mm of VMEAS's distance from the relay and 35.4 mm² of the analogue region; the drawn one holds two (K_V2, P_S) and fails three (K_V1 and VMEAS, 0.0 mm from the module each, and P_C, 12.5 mm). **The record draws the arrangement that keeps the owner's 15 mm for VMEAS and keeps kind 5; the choice between the two is the owner's (an owner decision pending, § Owner decisions pending, D4)** (§ Reported for the board design tasks, item 19).
+
+**Bring-up measures the body of `K_V1`, `P_C`'s opto-triac and `VMEAS`'s isolating part beside the running module against 85 °C**, and the part is moved or changed if it exceeds that; the module dissipates 1.25 W at this board's load, and the owner expects the air to be cooler than the assumed 70 °C. If `K_V1` is the one that fails, the HF115F-Q (125 °C, 41.0 mm long against the 17.6 mm of the HF32FA-G) is the stated fallback, and it is not a swap: the column holds no 41 mm stretch for it, so the valve column would be redrawn.
+
+### The logic supply against this board
+
+The module's size rests on the 5 V this board's own loads draw; the 0.66 to 0.86 A of the working design was a scale only and not this board's budget (`controller-board-function-forms.md` § Low-voltage supply). The table sums them, and each row says what it is read from. Relay coils are taken at the low end of the sheets' ±10 % tolerance on the coil resistance, so at their highest current, the controller at the sheet's maximum for its busiest state, and each load no record fixes is an assumption with a token in A28.
+
+| Load | mA at 5 V | Grade and source |
+|---|---|---|
+| K_IL coil | 89.6 | Sheet: 62 Ω ±10 % (P2): 80.6 mA at 62 Ω and 89.6 mA at 55.8 Ω, the low end of the tolerance, which is the figure used; the full drive and nothing else (the reduced-hold drive is dropped) |
+| Valve relay coils | 102.9 | Sheet: two coils of 108 Ω ±10 % (P6): 46.3 mA each at 108 Ω and 51.4 mA each at 97.2 Ω, which is the figure used |
+| Controller | 439.0 | Sheet: STM32H743 at 480 MHz, regulator mode VOS0, all peripherals enabled, code in ITCM, 439 mA at a junction of 85 °C and 226 mA typical at 25 °C (P10, Table 119); passed through a linear 3.3 V regulator, so the 5 V rail carries all of it (the constraints record prices an AMS1117-3.3) |
+| Gauge drivers | 72.0 | Record: about 18 mA a phase at 5 V in a 280 Ω coil, four phases, a conditional bound and not a measurement (`connector-pinouts.md` § Gauge and water-indicator board, *What the driver's control lines ask for*) |
+| Weight amplifiers | 3.0 | Sheet: 1.5 mA each in normal operation, two (P11) |
+| Load-cell excitation | 28.6 | Assumption (A28): two bridges of 350 Ω across 5 V |
+| Opto-triac LED drives | 60.0 | Assumption (A28): four LEDs, two heater and two pump, at 15 mA, inside the 5 to 60 mA of the forms record |
+| Panel indicators and buzzer | 60.0 | Assumption (A28) |
+| Flow meter | 15.0 | Assumption (A28) |
+| Pressure transducers | 20.0 | Assumption (A28), two |
+| In-stream probe converters | 4.0 | Assumption (A28), two |
+| Current sensors | 30.0 | Assumption (A28), three: the first channel's, the second channel's (kind 5) and the supply current's (kind 9) |
+| Voltage measurement output | 5.0 | Assumption (A28) |
+| Headers, pull-ups and dividers | 10.0 | Assumption (A28) |
+| **Total** | **939 mA** (0.94 A) | 726 mA with the controller at its typical 226 mA |
+
+| Module | At 70 °C: current and times the load | At 50 °C: current and times the load | Footprint (mm²) | Notes |
+|---|---|---|---|---|
+| IRM-20-5 | 2.0 A, **2.13** | 3.6 A, **3.83** | 1425 | 52.4 × 27.2 × 24 mm, 4 A rated; the sheet's chart for the 5 V model holds 100 % to 45 °C and 50 % at 70 °C (P1), so 90 % at 50 °C by the straight line between; 79 % efficient typically |
+| IRM-10-5 | 1.0 A, **1.06** | 2.0 A, **2.13** | 1161 | 45.7 × 25.4 × 21.5 mm, 2 A rated; the chart holds 100 % to 50 °C and 50 % at 70 °C (P7); 77 % efficient typically, not the 82 % of the 12 V and higher models |
+
+**The choice.** The forms record calls 2.3 times adequate and 1.16 times thin (§ Low-voltage supply), and the owner's figure is 2 times. At 70 °C the IRM-20-5 has 2.13 times this board's load and the IRM-10-5 has 1.06, so the smaller module does not reach 2 and **the module stays the IRM-20-5**; the script fails if the chosen module has under 2.0 times, and fails if the smaller one reaches it, so the record is corrected on the day it does. At 50 °C, which the owner expects once the thermoblocks are insulated, the IRM-10-5 would have 2.13 times, and would save 264 mm² (1 425 against 1 161) and 2.5 mm of height. **The air is not measured**, so the smaller module is the owner's to take up after bring-up has measured it (an owner decision pending, § Owner decisions pending, D6); taking it up changes the module's block, pins and heat rows and the forms record's disagreement list (§ What this record's words depart from in the forms record). The controller's 439 mA is its figure with every peripheral on at full speed, which the firmware is not expected to reach; at its typical 226 mA the budget is 726 mA and the IRM-10-5 would have 1.38 times at 70 °C, still under 2. The IRM-20-5 delivers 4.70 W at this load and dissipates 4.70 / 0.79 − 4.70 = 1.25 W, an estimate at 79 % that the sheet gives only at rated load (§ Heat).
+
+### The checks, stated
+
+The script of § Appendix reads the data block and the source records and prints, for the main board: the sources it compared and the assumption tokens; the outline and its margins; the heights against the ceiling; the tabs' pitch, moves and slack and the strip derived from the pads; the least mains-copper distance to every mounting hole, **13.27 mm** against the rule's 13.25, and that each moved tab is needed; the point 3 boss figures; the reed's lead positions and keep-out, clear of every block; the least distance from a low-voltage block to mains copper, **10.3 mm** (rule 10.0); the pocket pairs and the least surface path round the slots, **12.9 mm** (rule 10.0); the isolating parts' pin paths; the slot path per board; every pair of mains copper of different nets, the tab pads and the link pours included, and those across the open contact; the interlock relay's terminals against the sheet's drawing; the interlock's link, its loss, its taps and the loads behind it against its rating; the neutral return (the landing's pad, the pour, the shunt's lands, their widths against 15 A, the landing's pitch from the tabs, the shunt's loss, and the neutral taps leaving the pour above the shunt); the shortest routes of a trace, with its half width and a margin, from the first piece of a net to each of the others; each retained harness header within its reach of the cut-away (§ Harnesses); the heat distances against both sources, with the 85 °C class listed, the arithmetic of why they cannot all hold, the count of every arrangement and the three what-ifs that hold a third part, the analogue regions' distance from both sources and their top edge, and the relay moved right to make room for a sensor 8 mm long; the removal steps of § The anticipated channel kinds and the kinds kept or removed against the blocks drawn; the valve relay's ratings against the loads and the supply; the 5 V rail's budget against both modules; the shared fuse's arithmetic and the breaking capacities found; the function and harness coverage against their source records; the parts, joints and header types counted from the blocks, and the cost totals. **It is a consistency check, not a proof that the inputs are right**: it fails when its arithmetic breaks a rule this record states, when a figure that has a source record differs from it, when an assumption differs from its token, or when a table of this file differs from the data. It does not say the sources are right, and an edit made to an assumption's row and to the data together passes (§ How this record is built).
+
+## The heater path, the interlock and the wall board
+
+### The path of the heater current, and what carries mains
+
+The board as found switches the neutral side of every load: `LINE1` reaches each load by the retained daisy-chain wire and the load's other lead ends on its tab (`connector-pinouts.md` § The source of each live feed). `LINE1` is also a pass-through on the board as found: nothing else on the board connects to it, and the script holds that sentence of the connector record. **The supply path of every heater, and of every pump and valve, is therefore** as the data block's ordered link and the wall board's chain list it, for the steam element:
+
+`LINE` (tab 2) → the pad of tab 2, inside the link pour **`LK_L`** → the relay's contact half **`K_IL.a`**, through its two legs → **the contact of `K_IL`** → the contact half **`K_IL.b`** → the link pour **`LK_L1`** that holds the pad of tab 1 (`LINE1`) → the retained daisy-chain wire to the element's fixed lead → the element → its series thermostat → the element lead's female terminal, **plugged onto an in-line insulated male-to-male blade joiner** (*The joiners*, below) → a new wire to blade terminal `OUT_S` on the wall board → copper **S1** → triac `TRI_S` → copper **S2** → the common-return pour **RC** → the `RET` pad, a blade terminal → a wire back to the main board's **return landing `WB_RET`** → the neutral pour **`LK_N`** → the **shunt `I_SHUNT`** → the pad of tab 3 → the retained `NEUTRAL` lead's female terminal.
+
+The coffee element goes through its own joiner, `OUT_C`, copper S1, `TRI_C` and copper **S3** into the same pour RC and from there along the same path: `RET`, the wire back, the landing, the shunt and the pad of tab 3. **The contact opens the live feed**, so it lies in series with each heater's supply path and also in the supply path of each pump and each valve coil, whose live leads come from the same `LINE1` wire. **The taps**: the module's AC pins, the timing front end's input and the voltage measurement's input leave the chain upstream of the contact, at the link pour `LK_L` on `LINE` and at the neutral pour `LK_N`, above the shunt, on `NEUTRAL` (the `taps` of the data block), so the controller keeps power when the contact opens. **The short copper region that bridges the heater current out and back is the wall board's S1 to `RET`**, no run longer than 7.0 mm and 26.0 mm of copper in all from an element's blade terminal through its triac to the return pad (the steam and the coffee path alike), none across the board. The retained element lead keeps its female terminal and plugs onto a joiner, so **the heater current touches the main board's copper in two places only**: the link between the pads of tabs 2 and 1, and the neutral return from the landing to the pad of tab 3. The link is 5.03 squares from the tab centres through the relay's two contact halves, which pass the machine's whole supply, 10.96 A with both elements, both pumps at their sizing currents and both valve coils (4.80 + 5.38 + 0.46 + 0.19 + 0.129 A) and 15 A in the fuse's overload band, in regions at least 5.75 mm wide against the 5.72 mm that 15 A needs at 0.381 mm for each ampere. The neutral return is the landing's pad (X 5.0 to 12.0, Y 45.875 to 47.325) in a pour 7.0 mm wide, then the shunt, then the pad of tab 3; it carries the heaters' 10.18 A and every other load's return, **11.01 A** in all with every load on (the link's 10.96 A and the module's 0.05 A, A30) and 15 A in the overload band, in copper 7.0 mm wide against the 5.72 mm that 15 A needs. The earlier ideas of a copper bridge on the board, out to the wall board and back, and of piggyback terminals on tabs 3, 4 and 5 are dropped (§ Options considered and dropped).
+
+**Every load's return joins the neutral pour above the shunt.** The heaters' return arrives at the landing `WB_RET`. Each pump's triac ends, at its MT1 end, on a `NEUTRAL` piece of its strip, `P_C.N` and `P_S.N` (X 51.5 to 55.5, 5.0 mm from the strip's own copper, which now ends at X 46.5); the two valves' return runs through their shared fuse, whose neutral clip `VFUSE.n` (Y 45.5 to 50.5, 5.0 mm from the neutral pour) takes it, while its relay-side clip `VFUSE.v` stands at Y 64.5 to 69.5; and the module's neutral pad `MODULE.n` is the sixth. The data block lists the six returns (`return.branches`), each with the copper it ends on and the copper it joins, and the script checks that each ends on `NEUTRAL` copper, that **each joins the neutral pour `LK_N`, above the shunt, and none joins at the pad of tab 3, on the plug side**, where the shunt could not read its current and a stuck-on triac would not show, and that the returns joined above the shunt add up to every load's return, 11.01 A, no more and no less: a return left out, or moved to the pad of tab 3, fails it, and so does a shunt that is not in the data, which the script refuses by name. Four of the six join by copper on the surface: the heaters' through the landing's own pour, the valves' across the 5.0 mm between `VFUSE.n` and the pour, the module's by its tap from the pour. **The two pumps' do not**: the script searches for a surface trace from each piece to the pour that keeps the basic creepage from every other net and the signed 10.0 mm from low-voltage blocks, and **no surface route exists for `P_C.N` and `P_S.N`** (the channel between the tab pads and the strips is 8.0 mm wide, and a trace needs the basic creepage and its own half width from the copper on each side), so the data gives their join as an inner layer of the four-layer board and the script requires that no surface route exist for them. That an inner layer can carry it, with the signed distances kept on that layer, is **an assumption (A32) and not a check** of this record; it is the main board's design task's (§ Reported for the board design tasks, item 31).
+
+**Which board carries mains as a result.** The main board carries mains in its left zone (the seven tabs and the return landing, the link, the neutral pour and its shunt, the relay's contact end, the module's input, the voltage measurement, the pump and valve circuits) and low voltage in its right; the heater wall board carries mains and the low voltage that drives its parts. They are joined by **two cables that do not meet**: three mains conductors (the two element wires from their joiners and the return to the landing, out through the left of the cavity) and a low-voltage cable of three conductors in use (from `WB_LV10` at the right of the board, out through the right cut-away with the bundle). **The cable carries no coil drive**, since the relay is on the main board, and no signal from a sensor, since the current is sensed on the main board. Its signals, counted from the records, are the two LED lines of the heater opto-triacs and their 5 V supply: **three conductors**. The main board's ten-way header stays, with seven ways spare (four if the confirm places are ever fitted, which need three more), and the wall board's header is three ways. Neither cable crosses the board and neither passes the other.
+
+**The joiners.** Each retained element lead keeps its female push-on terminal (nothing cut, lengthened or re-terminated) and plugs onto one blade of an in-line, insulated, male-to-male 6.3 mm blade joiner; a new wire with a female terminal at each end runs from the joiner's other blade to the wall board's `OUT_S` or `OUT_C`. The joiner is strapped or clipped to something fixed near the wall cut, so that the wire to the wall board is short and the joint does not hang on the lead or on the wire; the owner chooses the anchor (a cable tie to the loom, or a clip on the case wall), which this record does not place because the machine record holds neither the wall cut nor the leads' present ends. **The lead's reach is unknown**: the length of each element lead from where it left the old board's tab 4 or 5 to the thermoblock is not recorded, and the owner measures it with a rule; if a lead does not reach the cut, the joiner stays at the lead's end and the new wire is lengthened by the shortfall (a wire of at least 1.5 mm², A10), so the joiner's place never moves the lead. The joiner's insulation and its current rating, 15 A in the overload band, are not sourced here; the assembly task reads them (§ Reported for the board design tasks, item 6).
+
+**The return landing.** The wall board's return wire ends on a landing `WB_RET` of the main board: a pad of the tab's own section, 7.0 mm along X and 1.45 mm along Y (A2), at Y 46.6 in the `NEUTRAL` pour `LK_N`, 8.5 mm from tab 3 (the least tab pitch is 8.3 mm, so two female housings do not touch), taking the same board-mounted blade as the tabs (C20626100), so the return wire ends in a female push-on like the others. It is the eighth blade on the board but not a harness tab: no retained lead lands on it. The owner asked for a pad tied to the `NEUTRAL` copper and not a piggyback on tab 3's blade. If a solder pad for the wire is preferred it removes a blade and two hand joints and leaves the pour as it is; the choice is an owner decision pending (§ Owner decisions pending, D8; § Reported for the board design tasks, item 6).
+
+**Why the contact is where it is.** A shorted triac holds its element energised whatever the controller commands, so only a series element that removes power independently of the switching device protects: it must lie in every path that powers a heater. The conductor that feeds each heater's hot side is `LINE1`, and its only source on the board is the link from `LINE` (tab 2), so one contact there cuts both heaters and a shorted triac holds nothing: its element has no live feed. The varistor lies across the triac on the wall board and is no path round the contact; the logic supply and the timing front end are tapped upstream of the contact, on the side that stays live. A block on the low-voltage LED line that drives the opto-triac would not meet this, because a shorted triac bypasses the line. The contact opens one pole, the live, upstream of the daisy-chain; the neutral side of each load keeps its switch and returns to `NEUTRAL`, so with the contact open **no load has a live feed, provided that `LINE1` is the one conductor through which every load's live lead is fed**. **That premise is not shown by the images and has not been measured.** It rests on the owner's visual trace of the unplugged board (2026-10-20), which `connector-pinouts.md` grades inspected and says the photographs do not independently show (§ The source of each live feed: the runs from the other six tabs were not followed through, and the per-terminal links are "not shown by the images"), and on the hardwired daisy-chain from `LINE1` to each load's fixed lead. The claim that the interlock cuts every load is therefore an inference from that trace, and **it is not proven until the bring-up continuity check** that `DEL-HW-BRING-UP.C4` now requires: with the relay open and the machine unplugged, by meter, from the supply live (`LINE`, the plug's L pin) to the live lead of each heater, each pump and each valve coil, there is no continuity (§ Reported for the board design tasks, item 32). The safety requirement that power to the heaters is available only while the controller is demonstrably running is met by this placement on that premise: the relay is in series with each heater's supply path, and the continuity check is what shows the premise on this machine.
+
+**What the loads do with everything cut.** The constraints record gives every output one state to fail into: not heating, not pumping and not holding any output energised (`controller-board-design-constraints.md` § Output failure states, `DEF-SAFE-STATE`). With the live feed removed the two heaters are de-energised, which is the state each heater switch must fail into, and the interlock is what gives it where the switch alone cannot; both pumps stop, de-energised; both valve coils are de-energised, which is their required state. **Whether de-energised is also the two-way valve's open-to-drain, venting state is not established** (the constraints record states the same, and `reference-machine.md` § Protection holds a de-energised vent as a hypothesis), so this record states the required fail state and claims no venting state. The controller, the logic supply and the timing front end keep power through the taps upstream of the contact, so the controller stays up to see the cut.
+
+### Copper that carries the heater current
+
+The rule for the copper is 0.381 mm for each ampere of the highest continuous current at 1 oz (`docs/board-design-method.md` POWER-1): 1.83 mm for the coffee element's 4.80 A, 2.05 mm for the steam element's 5.38 A, 3.88 mm for both elements' 10.18 A, **4.18 mm for the 10.96 A of the whole supply** at the link, and **5.72 mm for the 15 A of the fuse's overload band**, which the heater branches' board copper is rated for (`controller-board-design-constraints.md` § Upstream protection and fault current). The regions on the wall board are 7.0 mm wide throughout, and so are the neutral pour and the shunt's lands on the main board, so each exceeds the 5.72 mm. The link's regions on the main board are 5.75 to 5.775 mm wide (the pours that hold the pads, and the contact halves, between the fixing distance and the 3.0 mm pair across the open contact), so the narrowest, `K_IL.a` and `LK_L`, exceed the 5.72 mm by 0.03 mm; the script tests every region at 15 A. At 1 oz the sheet resistance is 1.72 × 10⁻⁸ Ω·m / 35 µm = 0.491 mΩ for each square (computed; the resistivity is the published figure for annealed copper, not a datasheet's; A24). The regions are the rectangles of the data block, in the order of the chain; the script computes each region's squares, resistance and dissipation from them and takes the longest run from the same list.
+
+**Temperature rise, an estimate.** The rule above states no temperature rise. By the IPC-2221 formula for an outer layer, I = 0.048 · ΔT^0.44 · A^0.725 (A in square mils, ΔT in kelvin), the narrowest link region, 5.75 mm of 1 oz copper (312 mil²), rises about 18 K at 10.96 A and about 36 K at 15 A, and the 7.0 mm regions about 13 K and 26 K, on outer copper with the planes pulled back 10.0 mm from every mains copper edge, so that no plane carries heat away. The constants are the standard's own and are not read from a sheet in this repository, so these figures are estimates, which the script computes from the constants in its data; the design task judges the rise against the board material's limit.
+
+| Region (wall board frame) | Length (mm) | Width (mm) | Squares | Resistance (mΩ) |
+|---|---|---|---|---|
+| **S1**, `OUT_S` pad edge (u = 8.0) to the steam triac's near lead (u = 13.7); and its mirror for the coffee element, the coffee triac's near lead (u = 43.3) to the `OUT_C` pad edge (u = 49.0) | 5.7 | 7.0 | 0.81 | 0.40 |
+| **S2**, the steam triac's far lead (u = 18.7) to the common-return pour (u = 25.0) | 6.3 | 7.0 | 0.90 | 0.44 |
+| **S3**, the coffee triac's far lead (u = 38.3) to the pour's far edge (u = 32.0) | 6.3 | 7.0 | 0.90 | 0.44 |
+| **RC**, the common-return pour, u 25.0 to 32.0, v 5.0 to 12.0, where the two element paths meet | 7.0 | 7.0 | 1.00 | 0.49 |
+| **RET**, the return terminal's 7.0 mm pad, v 12.0 to 19.0, on the same copper | 7.0 | 7.0 | 1.00 | 0.49 |
+
+| Path | Copper in it | Resistance (mΩ) | Current | Dissipation | At 15 A |
+|---|---|---|---|---|---|
+| Steam element | S1 + S2 | 0.40 + 0.44 = 0.84 | 5.38 A | **24 mW** | 189 mW |
+| Coffee element | S1 + S3 | 0.40 + 0.44 = 0.84 | 4.80 A | **19 mW** | 189 mW |
+| Both, in the common return | RC + RET | 0.49 + 0.49 = 0.98 | 10.18 A | **102 mW** | 221 mW |
+
+The wall board has no sensor in the return now: the supply current is sensed on the main board, by the shunt in the neutral return, whose own loss is budgeted at 1.0 mΩ (A16): 0.12 W at the 11.01 A the neutral carries with every load on and 0.23 W at 15 A. The relay's contact is on the main board and adds nothing here. The longest run is RC, 7.0 mm, 12 % of the board's 57 mm width, and the copper from a blade terminal to the return pad is 26.0 mm in the steam path and in the coffee path. **No run crosses the board.** Dissipation in the copper is 145 mW with both elements on (102 mW in the common return, 24 and 19 mW in the two element paths) and 189 to 221 mW per path in the 15 A band, against the triacs' 4.25 and 4.84 W.
+
+**Heavier copper against off-board wiring.** The division's costing asks for the weighing wherever 1 oz cannot carry a path, and no path needs it now: the return that was to cross the 5.0 mm channel from the heater terminals to tab 3 lands beside tab 3 in a pour 7.0 mm wide, and every copper region of both boards is wide enough for 15 A at 1 oz. What was weighed stays for the owner (an owner decision pending, § Owner decisions pending, D13): 2 oz copper halves the width needed, 2.86 mm at 15 A, at 36.40 USD more for two layers in the lowest band (40.40 USD against 4.00 USD, read) and an unmeasured price at four layers, while off-board wiring adds nothing to the board. This record takes 1 oz and no wiring on the board.
+
+The faston tab, the joiner and the wall board's blade terminals are rated by their maker; the rating is not sourced in the forms record (`controller-board-function-forms.md` § Parts off the boards), so the assembly task reads it and checks it against 15 A.
+
+### The interlock block, its size and its place
+
+The block is the relay `K_IL`, drawn as a Hongfa HF115F-Q, one form A, with the 5 V coil, ordering code `HF115F-Q/005-1H` by P2's ordering table (coil voltage 005, contact arrangement 1H, vertical quick-connect terminals, AgNi contacts), placed **on the main board, in the link between tab 2 (`LINE`) and tab 1 (`LINE1`)**, so that it is in series with the live feed of every load. **Its size rests on the worst-case series contact rating for the current of every load behind it, and does not wait for the proof-of-life interval.**
+
+**The part, its ordering code, and what the records do not hold.** P2's ordering table makes the coil voltage a code in the part number: `005` is the 5 V coil (62 Ω ±10 %, pick-up 3.5 V at most) and `012` the 12 V coil (360 Ω ±10 %, pick-up 8.4 V at most). Every coil figure of this record, the 62 Ω, the 0.4 W, the 89.6 mA on the 5 V rail and the `POL` drive from that rail, is for the 5 V code, `HF115F-Q/005-1H`, and a 12 V coil would not pick up from the 5 V rail (8.4 V against 5 V). The forms record's catalogue row for the family, C5318991, is `HF115F-Q/012-1H`, the **12 V** coil, so it is not the part this record draws. **The 5 V variant's catalogue number and price are not recorded: the design task must match a stocked part; the estimate uses the 12 V part's price** (3.2119 USD at one to nine, read in the forms record) and its Extended class, assumed to hold for the 5 V variant. The forms record names the HF115F-Q only for the valve switch and leaves the interlock's mechanism and parts to the design task (`DEL-HW-PARTITION-AND-FEASIBILITY.C5`; § What this record's words depart from in the forms record): **this record does not choose the interlock's mechanism.** It draws the block as this relay so that the block has a footprint, a contact rating and a heat to be sized with, and a series element of another kind that meets the same figures replaces it.
+
+| Basis | Figure | Source |
+|---|---|---|
+| Ordering code | `HF115F-Q/005-1H`: coil code 005 (5 V), contact arrangement 1H (one form A), vertical quick-connect terminals (no terminal code 3), AgNi contacts (no code T). The forms record's catalogue row, C5318991, is `HF115F-Q/012-1H`, the 12 V coil; **the 5 V variant's catalogue number and price are not recorded** | P2 ordering information; `controller-board-function-forms.md` |
+| Contact rating | 20 A at 250 VAC; UL 20 A at 277 VAC; 440 VAC and 300 VDC maximum switching voltage; 5 000 VA maximum switching power; 1 000 VAC between open contacts, which this record does not use | P2 |
+| Loads behind the contact | Both elements 4.80 + 5.38 = **10.18 A** rms at 253 V; both pumps 0.46 + 0.19 = 0.65 A at their sizing values (their starting current is not recorded); both valve coils 0.129 A steady and 0.203 A at their inrush: **10.96 A steady and 11.03 A at the coils' inrush**; 15 A in the inlet fuse's overload band | `controller-board-design-constraints.md` § Supply budget; § Upstream protection and fault current |
+| Margin on current | 20 / 10.96 = **1.82**; 20 / 11.03 = 1.81; 20 / 15 = **1.33** | computed |
+| Safety approval ratings (VDE), one form A, AgNi | 18 A at 250 VAC at 105 °C and 16 A at 250 VAC at 125 °C of ambient (12 A at 400 VAC at 105 °C); UL 20 A at 277 VAC. Margins on the 10.96 A the contact carries: 18 / 10.96 = **1.64** and 16 / 10.96 = **1.46**; on the 15 A of the overload band: 18 / 15 = 1.20 and 16 / 15 = **1.07** | P2; computed |
+| Margin on voltage | 440 / 358 = **1.23** on the peak; 440 / 253 = 1.74 on the rms | computed |
+| Margin on switching power | 5 000 / 2 773 = **1.80** (10.96 A at 253 V); 5 000 / 3 795 = 1.32 at 15 A | computed |
+| Coil | 5 V, 62 Ω ±10 %: 80.6 mA and 400 mW at 62 Ω, 89.6 mA and 0.448 W at 55.8 Ω, the low end of the tolerance; pick-up 3.5 V at most, drop-out 0.5 V at least; ambient to 125 °C; temperature rise 55 K at the rated voltage, 137.5 K for each watt | P2; computed |
+| Contact resistance | 100 mΩ at most, initial, at 1 A and 6 VDC: a qualification bound, not a figure at 10 A | P2 |
+| Electrical endurance | 3 × 10⁴ operations at 20 A, 277 VAC, resistive load, room temperature, 1 s on and 9 s off; mechanical 1 × 10⁷. **The sheet gives no figure for an inductive load**, and the loads behind the contact include two pump motors and two valve coils | P2 |
+| Contact heat | **Budgeted at 0.5 W at 10.18 A with the coil at its full drive** (4.8 mΩ, a drop of 49 mV; 0.58 W at 10.96 A and 1.1 W at 15 A), an assumption (A14). The unsourced worst case, the 100 mΩ bound taken at current, is 10.4 W at 10.18 A and 22.5 W at 15 A | A14; computed |
+| Link copper | 4 regions from the tab centres to the contact legs and back, **5.03 squares = 2.47 mΩ**, the narrowest 5.75 mm | computed |
+| Link loss | **0.26 W at 10.18 A**, **0.30 W at 10.96 A**, 0.56 W at 15 A, against the budget of 0.5 W (A20); the 15 A band is over it by 0.06 W, for the half hour the fuse allows | computed |
+| Footprint and height | 29 × 12.7 mm body; 41 mm overall with the vertical terminal, 45 mm with the horizontal terminal; 15.7 mm high; PCB holes 2 of 1.3 mm (the coil, 7.56 mm apart across the body) and 4 of 1.5 mm (the contacts, two pairs 5 mm apart along the body, the pairs 7.56 mm apart across it), 37.5 mm from the coil holes to the second column of contact holes (A23) | P2 |
+
+**Opening under load.** The contact opens on a fault or when the controller stops, with the heaters' resistive 10.18 A, which the sheet's endurance figure covers at 20 A, and with the pumps' and coils' small inductive currents, 0.65 A and 0.13 A, which the sheet does not rate. **The contact life under the inductive part is unsourced and is left to bring-up**: bring-up opens the relay with the pumps and the valves running and reads the closed-contact drop again afterwards. At the sheet's 3 × 10⁴ operations, ten operations a day would last 8.2 years (30 000 / 3 650, arithmetic); how many operations a day the mechanism makes is the design task's. The pumps' starting current is not recorded either, and is left to bring-up.
+
+**The heat row.** The relay dissipates its coil, 0.4 W at 62 Ω (0.448 W at 55.8 Ω), and its contacts: 0.98 W in all, 0.58 W of it in the contacts at 10.96 A, and 1.03 W with the coil at the low end of its tolerance. The datasheet's own rise leaves no room: 55 K at 0.4 W is 137.5 K for each watt, so at the assumed 70 °C air the coil alone brings the body to 125 °C, the limit of the datasheet's ambient range, before any contact heat, and 0.98 W at the same 137.5 K for each watt would put the body at 70 + 135 = 205 °C, 80 K past the 125 °C limit. That arithmetic is a pessimistic bound, since the contact pins carry heat into wide copper rather than through the coil, and the datasheet gives no figure for it; but it is not a margin, and **the relay choice is not proven until the bring-up measurement.** The sheet's safety-approval (VDE) rating for this variant, one form A with AgNi contacts, is 18 A at 250 VAC at 105 °C and 16 A at 125 °C of ambient (P2), against the 10.96 A the contact carries and the 15 A of the overload band: 1.64 and 1.46 times the steady current, and 1.20 and 1.07 times the 15 A. The body stands at or above the 125 °C ambient limit at the assumed 70 °C air with the coil alone, so the 16 A figure is the one to lean on, and the sheet rates ambient and not body. **The device that carries the safety claim therefore has no sourced thermal margin at the coil drive it is held at** (the full 5 V, for as long as proof of life lasts). **Sourced:** the 20 A at 250 VAC rating, the 440 VAC and 300 VDC maximum, the 100 mΩ qualification bound at 1 A, the coil data, the 55 K coil rise, the VDE ratings above and the 125 °C ambient limit. **Estimated here, not sourced:** the 4.8 mΩ and the 0.5 W of contact heat (A14), the 0.98 W in all, and any body temperature. A reduced-hold coil drive was weighed and is dropped: it saved nothing by the estimate the record made of it (§ Options considered and dropped). Bring-up measures, with the contact closed at about 10 A, the drop across the contact with a meter and the body temperature: **over about 50 mV** (the 0.5 W of A14 over 10.18 A is 49 mV) means the relay is moved or changed. The 70 °C is the assumed air, which the owner thinks will not be real; it is kept so that this arithmetic stays cautious.
+
+**The coil's feed**, a requirement on the main board's design task, in these words: *the coil is fed only through the proof-of-life path. No level, timer, charge store or latch keeps the coil above the relay's drop-out voltage for longer than the removal interval after proof of life stops. This holds whatever level the controller's output rests at: high, low or floating. Bring-up stops the controller in each rest state and records the coil voltage falling below 0.5 V within the interval.* The reason is that requirement's second sentence: what counts as demonstrating the controller is running must not be satisfiable by a controller that has stopped making progress, and a feed with storage of its own could outlast one.
+
+**The logic supply keeps power when the contact opens.** The module's AC pins, the timing front end's input and the voltage measurement's input are fed from `LINE` and `NEUTRAL` **upstream of the contact**: from the link pour `LK_L` on the `LINE` side, and from the neutral pour `LK_N` above the shunt, not from the pad of tab 3, which is on the plug side of it. The data block names both taps; the script checks that each tapped block is on the net `LINE`, that nothing on the main board but the link's own copper, the pad of tab 1 and the pour that holds it, is on the `LINE1` net (the connector record's sentence that nothing else on the board connects to `LINE1` is what it is held to), and that the `LINE`-and-`NEUTRAL` pieces of the module's two pads, of the voltage measurement and of the timing strip each have a route for a trace from the first, the longest 54 mm, which keeps the signed 10.0 mm from the `LINE1` copper. **The route is shown for the two nets as one group, with no clearance kept between a `LINE` and a `NEUTRAL` trace**: it shows that a corridor for a trace exists, and the two traces side by side, 5.0 mm apart, are the design task's (§ Reported for the board design tasks, item 11). Where the tap meets the link is the design task's.
+
+Drawn on the main board, the block is 41.0 × 14.525 mm (`K_IL`: its 41 mm length by 12.7 mm of body and up to 0.93 mm of contact copper beyond the body at each side), centred on the 3.0 mm gap between the two link pours, with its contact end's two halves, `K_IL.a` on `LINE` and `K_IL.b` on `LINE1`, 3.0 mm apart over the slot `SL_LINK` (A23); its coil end is the low-voltage pocket of the mains-side table, and the coil is driven by `POL` 12.5 mm from it. The coil is unenergised when the drive is lost or the controller's proof of life stops, so the contact is open in each; there is no cable between the drive and the coil to come loose. The circuit that decides when, and the removal interval, are the design task's (`DEC-PROOF-OF-LIFE-INTERLOCK-IN-FIRST-HARDWARE`).
+
+**Barriers the signed basis does not list.** The basis names seven barriers; three that this record reports are none of them. **The interlock's coil-to-contact barrier**: the basis names the valve relays' coil-to-contact insulation (`valve-switch`), and the interlock relay is the same kind of part with the same insulation at another place. **The voltage measurement's isolating part**: a mains-side divider and a shunt, both at `NEUTRAL`'s reference, and a part with an isolated low-voltage output at `VMEAS`, a barrier of the kind the supply-timing optocoupler is but with a part no source names, so no rating is read for it; it takes the shunt as a second input, so the supply current adds no barrier of its own. **The wall-to-mains-copper barrier**: the basis covers the triac's insulated tab to the machine's metal wall, as basic insulation to earth, and gives no distance for mains copper over a board edge toward that wall (§ The heater wall board, *Mains copper and the metal wall*). **This record does not change the basis.** It reports each barrier to the design task of the board that carries it, which either shows the part meets the figure the basis gives for reinforced insulation or raises the amendment with the owner.
+
+### The valve relays
+
+The valve relays `K_V1` and `K_V2` switch the two valve coils, which draw 0.129 A rms steady and 0.203 A rms at inrush together (`controller-board-design-constraints.md` § Supply budget), against the 10.96 A that `K_IL` carries. A 20 A relay is oversize for them, and this record replaces the forms record's HF115F-Q for them by the **Hongfa HF32FA-G/005-HSL1**, the 5 V sensitive-coil part of the OEM's own family that the constraints record already priced (C91370, Extended, 3 671 in stock and 1.6115 USD at one to nine on 2026-10-13). The interlock relay stays the HF115F-Q. Every figure of the table is from P6 (2026 Rev. 1.00, read 2026-10-24) unless it names another source.
+
+| Basis | Figure | Source |
+|---|---|---|
+| Contact rating | 10 A at 250 VAC resistive; maximum switching current 10 A; maximum switching power 2 500 VA; AgSnO2 contacts; contact resistance 70 mΩ at most, initial, at 1 A and 6 VDC | P6 |
+| Maximum switching voltage | **250 VAC**, so the 253 V top of the span is 1.2 % over it: **accepted by the owner for relay contacts on 2026-10-24**, on the ground that the supply voltage is measured and the control refuses to run well above the span; the constraints record carries the acceptance in *Rated for the supply* and the script reads it there. Blocking the 358 V peak while off and the reinforced coil-to-contact isolation still apply, and a semiconductor switch is not covered | P6; `controller-board-design-constraints.md` |
+| Margin on current | 10 / 0.129 = **78** steady and 10 / 0.203 = 49 at inrush; the sheet's endurance is 1.5 × 10⁴ operations at 10 A and 250 VAC resistive at 85 °C, 1 s on and 9 s off, and 1 × 10⁶ mechanical, with **no figure for an inductive load**, which a valve coil is (unsourced, left to bring-up) | P6; computed |
+| Margin on voltage | Open contacts 1 000 VAC for one minute = 1 414 V peak against the 358 V that must be blocked while off: **3.95** | P6; computed |
+| Isolation | Coil to contacts 5 000 VAC for one minute = **7.07 kV** peak against the 4.0 kV reinforced target (the forms record's comparison, which judges test voltage only and never calls a part adequate); creepage and clearance "over 8 mm" and "meets VDE 0700, 0631 reinforce insulation", which is under the signed 10.0 mm creepage as the interlock relay's "over 8 mm" is (§ Reported for the board design tasks, item 2) | P6 |
+| Coil | 5 V sensitive coil, 108 Ω ±10 %, **46.3 mA** and **231 mW** at 5 V (51.4 mA at 97.2 Ω, the low end of the tolerance, which the 5 V rail's budget uses); pick-up 3.75 V at most, drop-out 0.25 V at least, 8.5 V at most; operate 8 ms and release 4 ms at most | P6; computed |
+| Outline | 17.6 × 10.1 mm, 12.7 mm high, pins 3.6 mm below the board, the two columns of holes 15.24 mm apart; ambient −40 to **85 °C** | P6 |
+| Self-heating | The sheet's temperature-rise line reads about 61 K at the rated coil voltage (47 K at 80 %), read off the plot; the sheet does not say for which coil it is drawn. At the 85 °C ambient limit that is 146 °C against 155 °C for insulation class F (P6 lists the class); the coil is energised only while its valve is open | P6; read off the plot |
+| Price | 1.6115 USD against 3.2119 USD, the forms record's price for the HF115F-Q/012-1H (C5318991), the only variant of that family priced in the records: **3.20** USD less for the two, in the same Extended class and at the same fee | `controller-board-design-constraints.md`, `controller-board-function-forms.md` (read 2026-10-13) |
+
+**What changes in the floorplan.** The relay is 17.6 mm long where the HF115F-Q was 41 mm, so it no longer spans from the tab pad to the zone boundary: it stands at the boundary and its mains lead crosses the stack (§ The mains-side blocks). Its coil takes 46 mA each, 92.6 mA for both, against 161 mA for two HF115F-Q coils; the shared fuse `VFUSE` is unchanged, and the coil drive is a low-side transistor and a flyback diode as the forms record has it (`DRV_K1`, `DRV_K2`). **What it costs in heat.** The sheet's ambient limit is 85 °C against the HF115F-Q's 125 °C, so a valve relay is a part that derates, and the stack puts `K_V1` on the module's body (§ Heat, which shows why not every 85 °C part can hold 15 mm): not held, with the bring-up measurement as the claim and the HF115F-Q as the fallback. **The extended-part count** rises by one type, 3.07 USD, which the two relays' saving of 3.20 USD at the unit price roughly pays (§ What the owner fits by hand).
+
+### The pump drives
+
+**The two pump drives, `P_C` and `P_S`, carry no snubber and no varistor, and this record says so plainly.** Each is a random-phase opto-triac (onsemi MOC3052M, P14) driving a snubberless triac (WeEn BTA204S-600B, P13) in series with the pump and its branch fuse, and nothing lies across the triac or across the pump's line.
+
+**Why none.** The forms record chose a snubberless triac so that an inductive pump's turn-off needs no snubber, which would be a path around the off triac. P13 rates the BTA204S-600B at a commutating current rate of at least 6 A/ms at 125 °C, 400 V and 4 A rms, with a commutating voltage rate of 20 V/µs and no snubber (its "snubberless condition"), and calls it a "series B" triac that commutates the full rated current at the maximum junction temperature without the aid of one. The pump's own rate of change of current at its current zero, **for a full sine**, is 2π × 50 Hz × (0.46 A × √2) = 204 A/s = 0.20 A/ms for the coffee pump and 0.08 A/ms for the steam pump (0.19 A), 29 and 71 times under the rating. **But each pump has a series diode (the owner's statement; inferred from meter behaviour), so its current is a half wave**, whose peak is twice its rms and not √2 times it: 2π × 50 Hz × (2 × 0.46 A) = 289 A/s, so the rates are 0.29 A/ms and 0.12 A/ms, 21 and 50 times under the rating, and the margin on the commutating rate is **21 times at the least, not 29**. P14 says a random-phase driver "can allow snubberless operation" where the load is resistive and the noise on the line is under its guaranteed dv/dt, 1 000 V/µs at least, and asks that the static dv/dt and the commutating dv/dt be considered for an inductive load.
+
+**The check against the EMC and surge criteria and the turn-off voltage, as far as the sheets close it.** (1) *Blocking:* the triac and the opto-triac both block 600 V (P13, P14) against 358 V peak, a margin of 1.68, 242 V above the peak. (2) *Turn-off:* a triac turns off at its current zero, so what is left in the pump's inductance then is the energy at the holding current, ½ L I_H² with I_H at most 30 mA (P13), and the voltage across the triac after turn-off follows the source, 358 V at the most; the series diode in each pump (the owner's statement; inferred from meter behaviour) blocks the other half-cycle. (3) *Surge:* a surge reaching `LINE1` is the one the basis assigns (2.5 kV basic, 4.0 kV reinforced; `REQ-ELECTRICAL-INSTALL-001.C10`, judged from makers' ratings), through the branch fuse and the pump's coil; the opto-triac's 1 A is a single-cycle rating and the triac's 25 A (P13) a 20 ms one, and no sheet read gives either a rating for a 1.2/50 µs pulse. **What does not close, and is an open item for the design task:** that each pump has a series diode at all, which the half-wave margin above assumes (the owner's statement, inferred from meter behaviour and not measured; with no diode the full-sine margins of 29 and 71 times apply); the pump coil's inductance, and the series diode's voltage rating, which together set the voltage the triac sees as the diode blocks and the current falls to zero; the commutating dV/dt of the real circuit (the sheet's 20 V/µs is a test condition, not this circuit's); the conducted emission of a random-phase edge at an arbitrary phase against the limits that govern household appliances, which this record does not quote because the standard is declared for the jurisdiction and no figure is taken from memory (`OBL-ELECTROMAGNETIC-COMPATIBILITY-001`); and the surge withstand of the drive and of the diode judged from the makers' ratings. The obligation states its limits as met by design and by analysis, because the builder has no instrument that measures emissions, so the design task closes these by analysis and says what it could not.
+
+### The fuses
+
+Each pump branch has its own fuse holder and the two valve branches share one, as `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE` arranges: the decision reasons that the two pumps serve different water paths, so that a fault in one should not stop the other, and that both valves serve one, so that one fuse is enough. The floorplan draws that arrangement: `P_C`, `P_S` and `VFUSE`, three holders of 24 × 9 mm = 216 mm² each (A6).
+
+**Owner decision pending (§ Owner decisions pending, D5): one shared fuse for both pumps, or for the pumps and the valves.** The proposal replaces the three holders by one, and is not drawn. The figures are the script's:
+
+| Item | Figure |
+|---|---|
+| Load behind a shared fuse | 0.46 + 0.19 + 0.129 = **0.779** A steady and 0.46 + 0.19 + 0.203 = **0.853** A with the coils' inrush at 253 V, under the 1 A that the proposal allows (the pumps at their sizing currents; their start surge is not recorded) |
+| Space saved | Two holders of 24 × 9 mm = **432** mm², which the pump strips would give back; the record does not spend it, and both strips keep their size until the owner decides |
+| What it still protects | The pump flex, which was found with no fuse along the loom at the board end: one fuse in front of both branches opens on a fault in either, so it protects each pump's flex as a branch fuse of its own would, at the rating of the pair |
+| What it gives up | A fault in one branch drops both pumps and the valves, where the decision keeps the pumps apart so that a fault in one does not stop the other; the heaters are on the inlet fuse and are unaffected; and the fuse rating, sized for the pair's start surge and the coils' inrush together, is higher than either pump's own, so a fault in the smaller pump's branch is cleared at a higher current |
+
+**A smaller approved holder or fuse.** The decision names subminiature slow-blow fuses; the board's holder is the 5 × 20 mm one of the forms record's proving candidate (C3131, listed 250 V and 6.3 A). The constraints record assumes a prospective fault current of 6 kA and requires every fuse and breaker in the chain to break at least that. **None was found that does.** Sourced: a 5.2 × 20 mm ceramic time-lag, 0.5 to 12 A, **1 500 A** at 250 V AC (P8); a 5 × 20 mm glass time-lag, **35 A** or ten times its rating at 250 V AC (P9); and the same maker's 6.3 × 32 mm ceramic, 10 000 A at 125 V AC but 200 to 1 500 A at 250 V AC by rating (P8's family). A retailer's listing gives a subminiature radial time-lag (Schurter MXT 250) at 100 A; that figure was not read at the maker's sheet. The shortfall is the same for the inlet fuse, which the chain also asks 6 kA of; it is the project assumption's to replace. None of them makes the holder smaller: a 5.2 × 20 mm cartridge is no shorter than a 5 × 20 mm one. The script fails if a sourced option reaches the 6 kA, so this statement is corrected on the day one is found.
+
+**Owner decision pending (§ Owner decisions pending, D16): the fuse and a varistor on the main board, in place of the appliance inlet.** The owner proposed on 2026-10-24 to carry the fuse and the varistor on the main board at the entry, at tabs 2 and 3, the varistor hard against the fuse and downstream of it, since the original board carries its own protection and the machine as found has a fixed mains lead with no inlet. **It is not drawn.** The original board's varistor is `RV1`, marked `VDR-14N471K` (14 mm, 470 V), across the live and neutral at its mains entry with the X2 capacitor `C1` (`reference-machine.md`, from the circuit diagram), and the owner checks that disc on the board. Adopting the proposal changes `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`, whose chain is the filter, the 10 A fuse, the varistor and the trunk, so it needs a decision amendment; it also needs a 10 A holder (the board's 5 × 20 mm holder is listed 6.3 A), leaves the fuse as short of the 6 kA as above, drops the inlet's EMI filter, which is an EMC question for `OBL-ELECTROMAGNETIC-COMPATIBILITY-001`, and keeps the 1.5 mm² trunk. The decision on the wall-board varistors (D7) depends on it.
+
+### The heater wall board
+
+**Form: its own board.** The comparison, at the maker's charges read on 2026-10-13:
+
+| | Its own board | A section that breaks off the main board |
+|---|---|---|
+| Fabrication | Inside the lowest band: 57.0 × 42.5 mm, 2 layers, five boards, **4.00 USD**; through the maker's own application, read at 2 layers in the band, 2.00 USD | The main board is outside the band already, so the section adds only its area to the panel's board fee, at the panel's four layers: 6.60 × 2 422.5 / 10 609 = **1.51** USD (inferred): saves 2.49 USD, or costs 0.49 USD less than the application's price |
+| What a respin costs | The wall board's own order, 4.00 USD | The four-layer main board's order with it, at block level about 48 USD with its assembly (§ Candidate divisions) |
+| Where the section joins | | Along the main board's left edge, outside the cavity; the break line carries no copper; the section's low-voltage header lies 10.0 mm or more from its own mains copper as it does as a board, and the only copper near the join is the main board's tab strip, which is mains copper, 4.0 mm in from the left edge at X = 1.0. Copper keeps 0.2 mm from a routed break line (`docs/board-manufacturer-jlcpcb.md` § Hole-to-hole and clearances to holes and edges); nothing is energised while the two are joined |
+| Assembly | Hand-fitted by the owner, or one order of its own | Shares the main board's assembly order; hand-fitting is not forced |
+| Respin likelihood | High: the spreader plate, the interface between tab and wall, the faston rating and the support are all still the assembly task's | The wall board's changes are coupled to a board that has no reason to change |
+
+The decision, subject to owner decision D9: **its own board**, 2.49 USD dearer at best and decoupled from the main board's order; the owner's starting point was a section "to cut fabrication cost", and the saving is that 2.49 USD (it was 1.16 USD before the board shrank). The section stays open as the owner's choice (an owner decision pending, § Owner decisions pending, D9). **The wall board no longer carries the interlock relay**: it carries only the two triacs with their opto-triacs and gate networks, two varistors, three blade terminals and a three-way header.
+
+**Outline and blocks.** The wall board is **57.0 × 42.5 mm**, 2 422.5 mm², two layers, 1 oz, inside the 102 × 102 mm band (it was 80 × 57 mm, 4 560 mm²). Its frame: **u** runs along the edge that lies nearest the machine's metal wall and **v** away from it, from the corner at the left of the steam side. It is all through-hole, since the current sensor that was its one surface-mount part is gone. **The triacs stand 14.2 mm apart** (their tab faces 24.6 mm apart) and the opto-triacs stand 20.0 mm from the triac bodies, the closest A8 allows. **Why this size:** the two rows set the width alike, 55.0 mm each from the first part to the last: the triac row from the steam blade terminal to the coffee one, and the opto-triac row, where each opto-triac is 10.0 mm wide and stands 10.0 mm clear of the header (a low-voltage part, which must stand 10.0 mm from every mains rectangle) that sits between them; the depth is the 20.0 mm from the triac bodies (v 10.5) to the opto-triacs, their 11.0 mm and 1.0 mm to the edge. The board was shaped by the sensor, the confirms, the snubbers and a common-return pour that ran up its middle to the sensor; with them gone it is the board the other rules set.
+
+| Block | Function | u (mm) | v (mm) | Size (mm) | Area (mm²) | Basis |
+|---|---|---|---|---|---|---|
+| `OUT_S` | Steam element out: 6.3 mm blade terminal, wire from the steam lead's joiner | 1.0 to 8.0 | 5.0 to 12.0 | 7.0 × 7.0 | 49 | 7.0 × 7.0 pad, 5.0 mm in from the wall edge |
+| `TRI_S` | Steam triac BTA16-600BRG, insulated TO-220AB, tab bolted to the wall, leads bent to the pads | 11.0 to 21.4 | 5.0 to 10.5 | 10.4 × 5.5 | 57 | B 10.4 × C 4.6 mm body (P3); the body is bolted to the wall and its leads are bent to the pads, whose land is 5.5 mm deep; near lead at u = 13.7 on `S1`, far lead at u = 18.7 on `S2` |
+| `MOV_S` | Steam varistor across the triac | 1.0 to 16.0 | 17.0 to 23.0 | 15.0 × 6.0 | 90 | 15 × 6 mm (A7), its ends on the element side (u 1.0 to 4.5) and the return side (u 12.5 to 16.0), 5.0 mm from the copper of the triac row |
+| `OPTO_S` | Steam zero-cross opto-triac MOC3083, DIP-6, rows along u, with the two resistors of its gate network | 1.0 to 11.0 | 30.5 to 41.5 | 10.0 × 11.0 | 110 | 10 × 11 mm, rows along u 7.62 mm apart (body 8.51 × 6.35 mm, P4); 20.0 mm from the triac body, A8; mains end v 30.5 to 34.0, low-voltage end v 38.0 to 41.5; it straddles the slot `WS_STEAM` |
+| `TRI_C` | Coffee triac | 35.6 to 46.0 | 5.0 to 10.5 | 10.4 × 5.5 | 57 | As `TRI_S`; near lead at u = 43.3 on `S1`, far lead at u = 38.3 on `S3` |
+| `MOV_C` | Coffee varistor across the triac | 41.0 to 56.0 | 17.0 to 23.0 | 15.0 × 6.0 | 90 | 15 × 6 mm |
+| `OUT_C` | Coffee element out: blade terminal, wire from the coffee lead's joiner | 49.0 to 56.0 | 5.0 to 12.0 | 7.0 × 7.0 | 49 | 7.0 × 7.0 pad |
+| `OPTO_C` | Coffee zero-cross opto-triac | 46.0 to 56.0 | 30.5 to 41.5 | 10.0 × 11.0 | 110 | As `OPTO_S`; it straddles `WS_COFFEE` |
+| `WB3` | Low-voltage cable header, 3 ways, 2.54 mm | 21.0 to 35.6 | 32.0 to 39.5 | 14.6 × 7.5 | 110 | Footprint (A5); 10.0 mm from every mains rectangle, between the two opto-triacs (10.0 mm from each mains end) |
+
+The mains copper of each block is the rectangle of its row, or, where a part has two ends on different nets, the two end rectangles (the varistors across the triacs: `.a` on the element's side, `.b` on the return); its low-voltage pocket is the far end of the rectangle, and the copper regions S1 to S3, RC and `RET` are further mains rectangles of the data block. Each opto-triac's mains end is its rectangle's near 3.5 mm (v 30.5 to 34.0) and its pocket the far 3.5 mm (v 38.0 to 41.5). The script of § Appendix checks that every block lies inside the outline, that none overlaps another, that every mains rectangle lies at least the basic creepage, 5.0 mm, from the wall edge, that mains copper of different nets from different parts lies 3.0 mm or more apart and 5.0 mm or more by surface path round the slots (the triac's two leads and the two ends of each varistor are the parts' own spacing; the least between different parts is 5.0 mm), that every pocket lies 3.0 mm or more from mains copper and by surface path round the slots 10.0 mm or more, that the low-voltage header lies 10.0 mm or more from every mains rectangle, that the opto-triacs keep their 20 mm from the triacs, and that the largest dimension, 57 mm, is inside the lowest band's 102 mm. It runs the same checks on the second layout, with the places of the confirms (below).
+
+**The slots.** Two slots, each 1.0 mm wide and none within 0.2 mm of copper or a pocket, serve the same rule as on the main board; the part over a slot bridges it, and each slot is open at a board edge, where a path cannot turn round its end:
+
+| Slot | u (mm) | v (mm) | Length (mm) | What it separates |
+|---|---|---|---|---|
+| `WS_STEAM` | 0.0 to 13.0 | 35.5 to 36.5 | 13.0 | The steam opto-triac's mains pins from its low-voltage pins; open at the left edge |
+| `WS_COFFEE` | 44.0 to 57.0 | 35.5 to 36.5 | 13.0 | The same for the coffee side; open at the right edge |
+
+Counted from the data, that is 26 mm of slot path, 10.7 m of slot path per m² of board against the maker's 80 m per m². No pocket stands under 10.0 mm from mains copper in a straight line (the nearest is 15.0 mm), so the slots hold only the opto-triacs' own pins, 12.1 mm apart round the slot. A tap from `RET` to a confirm place, if the places are ever fitted, is routed above the slot's ends (the design task's).
+
+**How the triac tabs reach the wall.** Each triac is an insulated-tab TO-220AB, a body 10.0 to 10.4 mm wide and 4.4 to 4.6 mm thick, 15.2 to 15.9 mm from the tab's top to the lead ends, with a tab hole of about 3.8 mm (reference I of P3's Table 6, read as the hole's diameter). The triac's flat tab face lies on the metal wall and an M3 screw through the tab's hole bolts it there. The tab is insulated to 2 500 VRMS (UL1557, no duration stated; P3), so it is isolated from the triac's own terminals, and the wall is earth-bonded (owner statement, as recorded in `reference-machine.md`; the bond is not measured). **The leads are bent** to bridge the stand-off between the wall and the board's pads; the bend and the length left over are the design task's to check against P3's 15.2 to 15.9 mm. The two faces are 24.6 mm apart centre to centre (u = 16.2 and 40.8); a spreader plate between tab and wall, if the assembly task finds one needed, is its choice.
+
+**Mains copper and the metal wall.** The basis lists one place the metal wall enters: the triac's insulated tab to the machine's metal wall, basic insulation to earth (`heater-switch` in `hardware/sunbeam-em7000/separation-basis.yaml`). It gives no distance for mains copper over a board edge toward that wall, and its signed pair, 3.0 mm and 10.0 mm, is the reinforced one for mains to low voltage. The wall board's mains copper therefore keeps a distance this record sets: **at least 5.0 mm from the board edge that lies against the metal wall**, the basis's own creepage row for basic insulation at 320 V, pollution degree 3 (5.0 mm, which exceeds the 3.0 mm clearance), applied between mains copper and the earth-bonded wall, a bond that the basis says is not measured (the owner measures it at bring-up); the script computes the 5.0 mm from the basis. The owner's decision is that **the triac leads are bent and the board stands off the wall by at least 5.0 mm on plastic standoffs and screws** (A22). **The board stands parallel to the wall, 5.0 mm off it, with its back face toward the wall**; A22 gives the reading and what it leaves unclaimed. **What is claimed is the 5.0 mm from mains copper to the metal by the nearest path, in any orientation of the board;** a lead end or a joint that protrudes toward the wall is nearer by its protrusion, and is not claimed. If the board stands edge-on to the wall, the copper's 5.0 mm in from the edge and the 5.0 mm of stand-off together are 10.0 mm to the metal; **that holds only edge-on and is not claimed**, because how the board is supported is left to its design task (below), and in a parallel orientation the metal is 5.0 mm from the copper. Every mains rectangle, every part body and every mains lead end of the data block starts at v = 5.0 or more (the script checks all three, with no exceptions); the blocks stand 5.0 mm in from the wall edge accordingly, which, with the rest, makes the board 42.5 mm deep and 57.0 mm wide, inside the 102 × 102 mm band. **This wall-to-copper barrier is one the signed basis does not list**, and this record reports it as such without changing the basis (§ The interlock block). Whether the owner amends the basis to sign a basic mains-to-earth pair is an owner decision pending (§ Owner decisions pending, D15).
+
+**The wall cut, and the owner's acceptance.** The cut has two parts: windows that expose the metal under the two tab faces, each at least 10.4 × 15.9 mm = 165 mm², two of them 330 mm²; and a passage for the three mains conductors, which with A10 is 3 × 3.5 mm side by side plus 2 mm either side, 14.5 mm, by 5.5 mm, 80 mm². **The least opening is therefore 410 mm²** in three places. The low-voltage cable does not use it; it leaves by the right cut-away that the bundle already has. The machine record does not locate the metal wall or the plastic wall the owner plans to cut, so this record does not place the cut against the cavity. **The owner accepts the wall cut, kept as small as the passage needs**, as the division's acceptance criteria record it on 2026-10-24, resting on the owner's plan of 2026-10-04 and 2026-10-23 to cut away the plastic side wall at the bottom of the machine near the pumps, so that the heat plate's bond to the metal wall is reached (`controller-board-design-constraints.md` § Enclosure air temperature, *Premises*; owner statements). The size above is the figure the owner is asked to confirm that acceptance for (an owner decision pending, § Owner decisions pending, D11); a larger cut needs a reason recorded beside it. **How the wall board is supported is not decided here.** It is the wall board's design task's. This record fixes what a support must give and nothing else: the board's wall edge stands at least 5.0 mm clear of the metal, on plastic standoffs and plastic screws, so that no metal fixing joins the board to the wall; the board's orientation to the wall, the number and places of its fixings and any bracket are open.
+
+**Heat.** The two triacs dissipate 4.25 W and 4.84 W each (`controller-board-function-forms.md` § Parts off the boards) and lie 14.2 mm apart, body to body. **They share one metal wall**: both tab faces lie on it and it is each one's heatsink, so each heats the wall the other sits on, and the nearer they stand the more of one's heat the other's face feels. The sheets give the junction's side of that and nothing of the wall's: the triac's junction-to-case resistance is 2.1 K/W (P3, in the forms record), so the junction stands 8.9 K and 10.2 K over its case at the two dissipations, and with the junction held under 125 °C the case may stand at 116.1 °C and 114.8 °C. At the 70 °C air that the constraints record assumes the wall and the tab interface may then rise 44.8 K over the air for the 4.84 W triac: **9.3 K/W from the tab face to the air if it heats the wall alone, and 4.9 K/W if both heat it at once** (9.09 W together). The sheets give neither the interface's nor the wall's resistance, so whether the wall is that good a sink, and whether a spreader plate is needed, is the wall board's design task's to judge (`DEL-HW-PARTITION-AND-FEASIBILITY.C5`; § Reported for the board design tasks, item 30). The script holds the two bodies at least 10.0 mm apart (A31, an assumption, 4.2 mm under the 14.2 mm drawn) and prints the arithmetic above from the forms record's figures. The relay is not on this board, so no part of it dissipates a watt but the triacs; the opto-triacs, whose operating range ends at 85 °C (P4; `controller-board-function-forms.md` § Parts off the boards, S16), lie 20.0 mm from the triac bodies, the 20 mm of A8 held (`heat_opto`), and the script tests that distance for the unpopulated places too. How much of the triacs' heat the wall carries away is the design task's judgement. **Hand access.** Every joint of the board but the two triacs' six is on its back face, which carries no part but the triacs, so the owner's iron reaches them before the board is mounted; the triacs' joints are on the component face, which faces away from the wall.
+
+**The mains-presence confirm: polarity, the condition it was dropped on, and the places.** *Polarity.* The board as found switches the neutral side of every load, and `LINE1` reaches each element's fixed lead by the daisy chain (`connector-pinouts.md`, *Which conductor of a load the original board's switching device interrupts: the neutral side*), so on the wall board an element's switched lead `OUT_x` goes to its triac and the triac to the neutral at `RET`, and the board has no `LINE` feed. A confirm across `OUT_x` and `RET` (an AC-input optocoupler through 120 kΩ, 1.8 mA at the span's bottom) therefore reads **on when the triac is open and the element intact**, since the node floats up to line through the element's 47.0 to 52.7 Ω, and **off when the triac conducts**, since the node then stands at the triac's on-state drop, 1.55 V at most at 22.5 A (P3, Table 2). Stuck-on reads off while commanded off, failed-to-close reads on while commanded on, an open element reads off, and so does everything with the interlock open, since nothing then reaches `LINE1`. The forms record's wording, "on while mains reaches the element", and its section *The heater switch's leakage against the mains-presence confirm* assume a live-side switch, where the node would stand at neutral through the element when the triac is open; the table of disagreements records it and the forms record is not edited. *The leakage bound, re-derived.* With the triac open and the element intact, the leakage and any snubber current run from the node to neutral beside the confirm's branch and through the element: a 0.1 µF capacitor would pass 7.9 mA at 253 V and drop 0.37 V across 47.0 Ω, which the confirm does not feel against the 253 V at the node; with the element open the node is fed from nothing, so neither the snubber nor the triac's leakage (5 µA at 25 °C, 2 mA at 125 °C, P3) can raise it. The forms record's bound of about 22 nF therefore falls away for this topology. *The condition.* The owner's wish was a minimal board that is hand-soldered, and the two confirms were to be dropped from the populated board on the condition that the sensing design resolves a stuck-on triac, a triac that fails to close and an open element. The design reads the supply current (the shunt in the neutral return, 11.01 A with every load on, 15 A in the overload band) with the supply voltage (`VMEAS`) and each heater's resistance modelled over temperature and calibrated one heater at a time (the coffee element 4.80 A and the steam element 5.38 A at 253 V, 4.10 A and 4.60 A at 216 V), the pumps and valves adding at most 0.46 + 0.19 + 0.129 = 0.78 A (0.67 A at 216 V), known from what is commanded. *Stuck-on* (current while commanded off): the extra current is 4.10 A at the least, against at most 0.78 A of error if the model of the pumps and valves were wrong by all of their current, so a threshold anywhere in the 3.3 A between them resolves it, and a sensing error of ±1.6 A (11 % of the 15 A band) is allowed. **Resolved.** *Failed-to-close and open element* (no heater current when commanded on): the deficit is the same 4.10 A or more, resolved as "the commanded heater draws nothing". **Not resolved apart:** a triac that does not close and an element that is open both draw nothing; both want the same response (heater off, interlock open, fault flagged) and neither is a hazard, but the confirm by its polarity would have told them apart (failed-to-close reads on, open reads off). *Which heater:* the two currents differ by 0.58 A at 253 V and 0.49 A at 216 V, so naming the heater from the total needs the sensing error and the model of the pumps and valves under ±0.24 A, 1.6 % of the band; the response, cutting both, does not need the name. **The condition is therefore only partly met**: it is met for the hazard and for "no current when commanded", and **not for the split between a triac that fails to close and an open element**, which is a diagnosis. **Owner decision pending (§ Owner decisions pending, D2): whether the two confirms come back.** They stay dropped for now, the owner's wish for a minimal board that is hand-soldered, and a triac that fails to close and an open element give the same safe response, the heater power removed or held off, so no hazard waits on the answer. **Recommendation: keep them dropped, and revisit when the sensing task has proved the current check** (`DEL-SENSOR-NECESSITY-PROVEN.C2`). **What adding them back costs:** two places of two parts each (an optocoupler and a 120 kΩ resistor), four parts, 12 more hand joints, and a board 23.5 % larger, 57.0 × 52.5 mm in place of 57.0 × 42.5 mm. A stuck-at-zero reading of the supply current would hide a stuck-on triac, so the block thermistors, which read a rising temperature with the heater commanded off, are the second channel the control can use; the sensing task declares the accuracy (`DEL-SENSOR-NECESSITY-PROVEN.C2`). *The places.* Kept unpopulated they obey the separation rules as if fitted. They are drawn as a second layout in the data (`wall_dnp`) and the script runs every wall check on it: **57.0 × 52.5 mm = 2 992.5 mm² against 57.0 × 42.5 = 2 422.5 mm², 570.0 mm² or 23.5 % more**, 10.0 mm deeper, with a six-way header (42 joints fitted against 39) and a T of slots across the row; fitted later they add 12 joints and one Extended type. Four mains ends then fill the row the optocouplers stand in, each 5.0 mm from the next, so the header, which must stand 10.0 mm from mains copper, can no longer stand in the middle of it and moves above them. The board price stays 4.00 USD in the band. The owner's test was that the board stay at the minimal outline; it does not, so the places are not on the drawn board, and adding the confirm later costs a respin of this 4.00 USD board. The main board's two `IN_COND` inputs stay reserved and the cable keeps its spare ways.
+
+**Snubbers and varistors, reviewed.** *The snubbers are dropped.* The triac is the BTA16-600BRG, which P3 lists as the standard four-quadrant "B" type (marking BTA16-600B) and not a Snubberless™ one (those are the ...BW types), whatever the forms record and the brief call it. P3 rates it for a static dV/dt of at least 400 V/µs at 125 °C and for a commutating (dV/dt)c of at least 10 V/µs at a (dI/dt)c of 7 A/ms. On a resistive load the current and the voltage reach zero together: at the steam element's 5.38 A the current falls at 2π × 50 Hz × 5.38 A × √2 = 2.39 A/ms (2.87 A/ms at 60 Hz), 2.9 times under the 7 A/ms (2.4 times at 60 Hz), and the voltage reapplied at that instant rises at 2π × 50 Hz × 358 V = 0.113 V/µs (0.135 V/µs at 60 Hz) against 10 V/µs, 88 times under (74 times). The opto-triac MOC3083M (P4) is a zero-cross part (inhibit voltage 20 V at most) with a static dv/dt of 600 V/µs at least, and its sheet's own hot-line circuit says its 39 Ω and 0.01 µF snubber "may or may not be necessary depending upon the particular triac and load use". A snubber is also a path around the off triac, and each costs two parts and four hand joints. **Both are dropped.** What the snubber would have bought is protection against line transients faster than the 400 V/µs static rating: a transient that reached the triac through the element's 47.0 Ω can turn the off triac on for the rest of the half-cycle, at most 10 ms, 13.6 J into the steam element at 253 V, a nuisance and not a hazard, which the supply-current check and the element's thermostat bound. *The emissions and flicker criteria* (`OBL-ELECTROMAGNETIC-COMPATIBILITY-001.C1` and `.C2`) are not affected: a zero-cross opto-triac fires within 20 V of the zero, a step of at most 20 V / 47.0 Ω = 0.43 A into the element, and the triac turns off at its current zero, so the heaters add no edge that a snubber would have softened; flicker and harmonics follow from the firing pattern the control sets, not from a snubber. No limit is quoted: the standard is declared for the jurisdiction and this record takes no figure from memory. *The varistors are kept.* The surge criterion (`REQ-ELECTRICAL-INSTALL-001.C10`) asks the protection to be rated for the surge that the basis's overvoltage category assigns, a rated impulse of 2.5 kV basic and 4.0 kV reinforced (`separation-basis.yaml`), judged from the makers' ratings. The devices on a heater branch are the triac, which blocks 600 V and takes 700 V non-repetitively for 10 ms (P3, VDSM = VDRM + 100 V), and the opto-triac, which blocks 800 V and carries 1 A for a single cycle (P4) through the 360 Ω of its gate network: a 2.5 kV surge across the branch would drive up to 2 500 V / 360 Ω = 6.9 A through the opto-triac, 6.9 times its single-cycle rating, and 2 500 V / 47.0 Ω = 53 A through the triac, a third of its 160 A. The sheets give no rating for a microsecond pulse, so neither can be judged within makers' ratings with or without a varistor, and a clamp that keeps the opto-triac within 1 A would have to stand at 360 V, which is the line's peak; the maker's own noisy-environment circuit puts a varistor beside the snubber "to protect the power triac and driver from transient overvoltages > VDRM max" (P14, Figure 8). What can be said is that these two varistors are the only surge clamp any record draws on the heater branch, and that the inlet filter's surge rating is in no record. **They stay** (two parts, four hand joints, 180 mm², standing in the room the 20 mm heat rule leaves, so the outline would not shrink without them). *Owner decision pending (§ Owner decisions pending, D7):* drop both, which saves four joints, if the inlet filter's rating is sourced and the surge criterion is met without them; the wall board's design task judges the varistor's clamp against the opto-triac's 1 A and the triac's 700 V.
+
+## Every retained harness reaches its connector
+
+A retained harness lands on a connector placed where it enters the cavity and reaches it as found. **A low-voltage harness reaches** when its connector lies within that harness's recorded reach of the cut-away, and where no reach is recorded for it within the bundle's recorded minimum. The reach is measured as a straight line from the cut-away's centre, (133.5, 103.5), to the connector's **farthest corner** (the opening is 33 mm wide, so the distance to its nearest point is also given), and is held to the recorded reach less its ±5 mm. A straight line is a lower bound of a wire's length; the machine record holds no slack for the low-voltage side. The script checks every harness the connector record lists against a connector of the data block.
+
+| Harness | Connector as found; as read | This record's connector: board, footprint, first pin | First pin and orientation as found | Reach (recorded → limit held), farthest corner, nearest point of the opening |
+|---|---|---|---|---|
+| Operator panel | `CON2`, 9 ways, 1.96 mm ±0.1, 0.5 mm pins; JST PH family *inferred* (header `B9B-PH-K`, housing `PHR-9`) | Main board, `CON2`: X 124.5 to 131.5, Y 76.0 to 96.5; row along Y at X = 128.0; **pin 1 at (128.0, 78.25)**, pin 9 at (128.0, 94.25) | Pin 1 nearest the bottom edge of the board (inspected) | No per-harness reach: bundle minimum 40 → **35**; **28.9** mm; 2.0 mm |
+| Gauge assembly | `SP2`, 9 ways, same type, fitted rotated 180° from `CON2` | `SP2`: X 124.5 to 131.5, Y 98.0 to 118.5; **pin 1 at (128.0, 116.25)**, pin 9 at (128.0, 100.25) | Pin 1 nearest the top edge (inspected) | 40 → **35**; **17.5**; 2.0 |
+| Knob microswitches, hot water `S7` and steam `S8` | One four-way, 1.95 mm ±0.1, 0.5 mm pins; family not identified | `KNOB`: X 113.6 to 124.0, Y 108.0 to 115.0; row along X at Y = 111.5; **pin 1 at (121.73, 111.5)**, pin 4 at (115.88, 111.5) | Pin 1 nearest the right edge, the hot-water switch's red lead (inspected) | The shortest wire, 40, is these two: 40 → **35**; **23.0**; 9.5 |
+| Flow meter | `CZ1`, 3 ways, 2.54 mm, 0.63 mm pins; family not identified | `FLOW`: X 113.9 to 124.0, Y 98.0 to 105.5; row along X at Y = 101.75; **pin 1 at (116.41, 101.75)**, pin 3 at (121.49, 101.75) | Pin 1 the contact at the square pad, on the left; 5 V on pin 1, signal on pin 3 (inspected) | 40 → **35**; **20.4**; 9.5 |
+| Coffee-block thermistor | `RT1`, 2 ways, 2.54 mm, 0.63 mm pins | `TEMP_C`: X 117.0 to 124.0, Y 86.0 to 93.5; row along Y at X = 120.5; **pin 1 (square pad) at (120.5, 88.48)**, pin 2 at (120.5, 91.02) | Pin 1 the square pad; either order works, a thermistor has no polarity (owner) | 40 → **35**; **24.1**; 9.5 |
+| Steam-block thermistor | 2 ways, same | `TEMP_S`: X 117.0 to 124.0, Y 76.0 to 83.5; pin 1 at (120.5, 78.48), pin 2 at (120.5, 81.02) | As above | Longest wire, 65, is this sensor's: 65 → **60**; **32.1**; 10.1 |
+| Steam-wand thermistor | 2 ways, same, fitted rotated 180° | `TEMP_W`: X 114.0 to 121.0, Y 119.0 to 126.5; **pin 1 at (117.5, 124.02)**, pin 2 at (117.5, 121.48) | Pin 1 at the opposite end from the other two | Longest wire, 65, is this sensor's: 65 → **60**; **30.2**; 12.5 |
+
+Every connector reaches as found. Each header mates the **plug family, pitch and pin-1 orientation** the harness already has, so each plugs in without a new crimp: the pitch, way count and pin thickness above are the identification, and a test fit of the housing settles a family only inferred (`connector-pinouts.md`); the header part is the design task's. The row direction of `FLOW` and of the thermistor headers is not recorded. `KNOB`'s row lies along X because its pin 1 is described as nearest the right edge, and `CON2`'s and `SP2`'s along Y because theirs are nearest the bottom and the top; `FLOW`'s along X is a reading of "on the left side", and the thermistors' along Y is arbitrary, a thermistor having no polarity. **The owner confirms `FLOW`'s pin 1 with a meter at the first fitting**, since a reversed plug puts 5 V on the signal line. No low-voltage harness changes.
+
+**The mains harness reaches as found when the board keeps each tab at its recorded position and height; a tab that moves is a harness change, named and justified.** All seven tabs the board keeps are at X = 8.5 mm, as found.
+
+| Tab | Silkscreen, lead | As found, Y (mm) | This record, Y (mm) | Change | What it carries on this board |
+|---|---|---|---|---|---|
+| 1 | `LINE1`, red | 13.6 | **20.5** | **+6.9, named** (§ The fixing rule and the tabs that move) | Out to the loads: the link's output from `K_IL`'s second contact half, through the pour `LK_L1` that holds the pad |
+| 2 | `LINE`, brown | 22.3 | **29.3** | **+7.0, named** | The mains in: the link's input to `K_IL`'s first contact half through the pour `LK_L`, and the taps to the module and the timing front end, upstream of the contact |
+| 3 | `NEUTRAL`, blue | 30.6 | **38.1** | **+7.5, named**, to give tabs 1 and 2 their room | The neutral of the whole machine: the shunt reads its current; the pumps', the valves', the module's and the heaters' returns reach the pad through the pour and the shunt |
+| 4 | `STMHEATER`, black | 52.9 | no tab | **Removed** (the owner, 2026-10-24); the lead is not changed | The steam element lead keeps its female terminal and plugs onto an in-line blade joiner; a wire runs from the joiner to `OUT_S` |
+| 5 | `COFHEATER`, red | 66.2 | no tab | **Removed** (the owner, 2026-10-24); the lead is not changed | The coffee element lead keeps its female terminal and plugs onto an in-line blade joiner; a wire runs from the joiner to `OUT_C` |
+| 6 | `COFVALVE`, brown | 79.1 | 79.1 | None | The two-way valve, switched by `K_V1`, whose contact copper a 35 mm lead reaches |
+| 7 | `COFFPUMP`, white | 91.4 | 91.4 | None | The coffee pump, from `P_C` |
+| 8 | `STEAMPUMP`, black | 101.2 | 101.2 | None | The steam pump, from `P_S` |
+| 9 | `HOTVALVE`, blue | 111.4 | 111.4 | None | The three-way valve, switched by `K_V2`, whose contact copper a 37 mm lead reaches |
+
+**The heater element leads no longer land on the board**: tabs 4 and 5 are removed (the owner, 2026-10-24) and each lead keeps its female terminal and plugs onto an in-line blade joiner near the wall cut (§ The path of the heater current, *The joiners*), so no lead is changed. The passage from there through the wall to the wall board is the cut of § The heater wall board. **No harness changes except the three named**: nothing is cut, lengthened or re-terminated. The return wire of the wall board ends on a landing of the main board, not on a retained lead. The graph's `SOL-HW-BOARD-DIVISION-AND-FLOORPLAN.C2`, `.C3` and `.C4` already say it so, all amended in place (item 26 of § Reported for the board design tasks lists what each carries). **Each valve and pump lead runs from its tab to its own block** (9 and 10 mm for the pumps, 35 and 37 mm for the valves, which cross the stack), and the script finds the shortest route a trace can take, on a grid of half a millimetre, that keeps the basic creepage (5.0 mm) from the copper of every other net, the signed 10.0 mm from every low-voltage block and pocket (and from the `LINE1` copper for `LINE`), the hole keep-out of each fixing and the board edge, and crosses no slot. **Every one of those distances is held with the trace's half width and a margin in addition** (A15: a trace of 0.30 mm at the maker's ±20 % width tolerance, half 0.18 mm, and half a grid cell, 0.25 mm, 0.43 mm in all), so a route that exists holds its distances with 0.43 mm to spare, and the route of the steam pump's lead, which held only by a margin under 0.25 mm before the half width was counted, holds with it. The clearance round each piece of copper is the straight distance, so a corner is cleared in a circle and not in a square, and where a slot lies between a point and the copper the straight clearance of 3.0 mm is kept and the creepage is the path round the slot, which the pair rules of the record measure for the copper itself. A net whose pieces touch needs none. The traces themselves are the design task's.
+
+| Net | Between | Shortest route |
+|---|---|---|
+| COFVALVE | the pad of tab 6 and the contact end of `K_V1` | 35 mm |
+| HOTVALVE | the pad of tab 9 and the contact end of `K_V2` | 37 mm |
+| COFFPUMP | the pad of tab 7 and `P_C` | 9 mm |
+| STEAMPUMP | the pad of tab 8 and `P_S` | 10 mm |
+| LINE and NEUTRAL | the first of the pieces of the pair (the `LINE` pour `LK_L` with the pad of tab 2, and `K_IL.a`) and, in turn, the pad of tab 3 and the shunt's first land, the neutral pour `LK_N`, the valves' neutral clip `VFUSE.n`, the timing strip's, the voltage measurement's and each of the module's two pads, all on `LINE` and `NEUTRAL` upstream of the contact, the two nets taken as one group (the longest of the routes); the two pumps' `NEUTRAL` pieces are left out, for no surface route exists to them (§ The path of the heater current) | 49 mm |
+
+The last row is the longest of the routes of that group: the supply for the module, the timing front end and the voltage measurement. It shows that a route for the set exists and that it keeps the signed pair from the `LINE1` copper; **it is not the routing of the taps**, from `LK_L` and from the neutral pour `LK_N`, which is the design task's, and **the two nets are routed as one group**: a `LINE` trace and a `NEUTRAL` trace side by side would need 5.0 mm between them, which the search does not keep (§ Reported for the board design tasks, item 11).
+
+**Mains and low voltage are kept apart across the whole floorplan.** Every low-voltage block lies 10.0 mm or more from mains copper (10.3 mm the least); every barrier part's low-voltage pocket lies at least 3.0 mm from the mains copper of any block and 10.0 mm or more from it by surface path round the eight milled slots (12.9 mm the least), and no pocket is left to distance alone: 4 pairs stand nearer than 10.0 mm straight and each is held by a slot; low-voltage traces cross the barrier only at those parts; the mains harness enters on the left and the low-voltage on the right; and the two cables to the wall board leave on opposite sides of the cavity and meet only at the wall board, whose own low-voltage header lies 10.0 mm or more from its mains copper (10.0 mm) and whose pockets are slotted in the same way.
+
+## The anticipated channel kinds
+
+**The kinds** are every row of `component-specification.md` § Room for the channels the graph anticipates (the brew-path pressure transducer, current sensing, weight-based endpoint control, direct group-head instrumentation, the two in-stream temperature probes, the real-time clock), a further switched output such as another valve, further temperature and pressure inputs of the kinds already in use, a measurement of the supply voltage, of its frequency and of the total supply current (which control may use to detect a runaway or to calibrate the machine over temperature), and a spare analogue input. The mains zero crossing stays a single measurement on one board that every function shares, and has no place of its own here. **Three kinds are fixed by the owner, not by the arithmetic below:** kind 6 is removed by choice (2026-10-24); kind 1, the supply voltage, is required by `REQ-MEASUREMENT-001.C10` and is never removed; and kind 2, weight, is kept, with both load-cell channels, and is last in the removal order. **Every kind was given its place first**, at the block size of its row, in the region its kind belongs to: low-voltage circuits and headers on the right, mains-side parts at the barrier. The regions are the rectangles the blocks are drawn in. The header regions are **H_A** (X 85.0 to 105.0, Y 44.5 to 78.0) and **H_B** (X 105.0 to 131.5, Y 44.5 to 74.5), where a through-hole header can stand: no lead end lies over an intrusion, which puts a header at Y 44.5 or more there. The analogue circuit region is three rectangles, **AR_a** (X 76.5 to 117.0, Y 3.0 to 13.0), **AR_b** (X 78.0 to 117.0, Y 13.0 to 31.0) and **AR2** (X 117.0 to 123.2, Y 3.0 to 11.5), the part of the board 20 mm or more from the module's body and from the interlock relay's body, which is A8's rule for sensing circuits against the two heat sources, outside the reed's keep-out and the lid-screw circle of point 2. AR_b ends at Y 31.0, where the low-voltage blocks of other classes (`POL`, `BREW_D_C` and `IN_COND`) begin; the module's body less 20 mm would allow Y 33.4, and the earlier record kept Y 30.1, where the module stood before it moved up 3.3 mm for the voltage measurement (the script now computes the edge from the rules and fails if it differs). The earlier record sized four header strips (1 530.0 mm²) and an analogue region (1 113.8 mm²) by the blocks that happened to sit in them, and took them for limits; they were zones this record had drawn. They are redrawn here as the rectangles that the rules leave free, and a region holds a set of blocks when two things hold (A18). **The area**, the necessary condition: the blocks' areas, each grown by the spacing the drawing keeps (0.3 mm in the header regions and 0.4 mm in the analogue region, and no larger allowance), do not exceed the union of the region's rectangles grown the same way, **1 489.1 mm²** for headers and **1 189.7 mm²** for circuits. **For the headers, an arrangement**: the script searches every placement of the headers in the header regions, each header turned or not, each kept 0.3 mm from the next, and finds out whether one exists. No block of another class lies in a region now (`DRV_TIM` stands outside the analogue region). The binding rules are these, by assumption and not by the free area of the outline, which is 5 806 mm² and mostly on the mains side where a low-voltage block may not stand: the two heat sources' 20 mm for sensing circuits (A8); the header regions' lead-end rule over the intrusions; the reed's hand-access keep-out (A17); the lid-screw circles (A1); and the 10.0 mm that every low-voltage block keeps from mains copper. The kinds that may be removed go in the order of the second column of the table of kinds below, and the table of steps counts the demand after each removal, **stopping at the first step where both regions fit**, the headers by area and by an arrangement. **None is silently dropped**: every kind has a row. Removing a kind removes its block and its place on the board only; its pins stay free on the controller (`component-specification.md` § Where each function lands). **No place requires re-selecting a part already bought**: nothing is bought (`controller-board-design-constraints.md` § Purchases ahead of verification), and every place keeps the controller, the module, the relays and the triacs as the forms record proves them.
+
+| Step | Header regions: demand (mm²) | Over capacity (mm²) | Analogue region: demand (mm²) | Over capacity (mm²) | What the step does |
+|---|---|---|---|---|---|
+| step 0 | 1650.9 | 161.8 | 1261.6 | 71.8 | Every kind has been given its place in turn and nothing is removed; the header area is over capacity, and the analogue region is over as well |
+| step 1 | 1436.4 | 0.0 | 1174.2 | 0.0 | Kind 3 removed (two two-way thermistor headers, one four-way pressure header and one circuit): both areas fit, and no arrangement of the headers exists, because kind 4's two three-way headers cannot be placed |
+| step 2 | 1274.2 | 0.0 | 1066.7 | 0.0 | Kind 4 removed (two three-way headers and two circuits): both areas fit and an arrangement of the headers exists and is drawn: **the removal stops here** |
+
+The allocation therefore removes kinds 3 and 4 and keeps kind 5, the second current-sensing channel, and kind 2, weight, both load-cell channels of it. **Neither removed kind can be placed, alone or together, and what stops them is the headers.** The owner asked that every kind be given its place first and be removed only if it truly cannot fit, so each was tried at the spacing the drawing keeps, and not at the 1.5 mm gap the earlier record counted, which the drawing does not hold. The drawn kinds fill 1 274.2 mm² of the header regions' 1 489.1 and 1 066.7 mm² of the analogue region's 1 189.7. *Kind 3 alone* needs 214.5 of the 214.9 mm² the header regions have spare and 87.4 of the 123.1 the analogue region has, so it fits by area; *kind 4 alone* needs 162.2 of the 214.9 and 107.5 of the 123.1, so it fits by area; *both together* need 376.7 mm² of headers against 214.9 and 194.9 mm² of circuits against 123.1, which neither region holds (step 0). Area is the necessary condition only, and the headers are rectangles. The script searches every placement of the headers in the header regions: the drawn twelve have one (the drawing), **kind 3's three headers added to them leave 0.4 mm² of slack and no arrangement exists, and kind 4's two three-way headers added leave 52.6 mm² of slack and no arrangement exists either**, which is why step 1 does not stop the removal. **Of kinds 3, 4 and 5, one can be given its place and the other two cannot**: removing kinds 3 and 4 fits, removing kinds 3 and 5 fits, removing kinds 4 and 5 fits, removing only kind 3 does not fit, removing only kind 4 does not fit and removing only kind 5 does not fit, so which of the three keeps its place is the removal order's choice and the owner's to reorder (an owner decision pending, § Owner decisions pending, D12); the order below keeps kind 5, the second current channel, which senses a safety-relevant quantity, and gives up the further inputs and the group-head channels. What the drawing fixes is that the twelve headers stand in 6 columns of the two header regions, 0.3 mm apart; the search does not rest on it, since it places every header at every position and turn, and the columns are what the regions' width allows (the regions are 46.5 mm wide and seven headers side by side need 7 × 7.0 mm and six spacings, 50.8 mm). The rule they would weaken is **the fit**: the header regions are the rectangles that the lead-end rule over the intrusions, the 10.0 mm from mains copper, the reed's keep-out and the lid-screw circles leave free for a through-hole header. **Kind 5 fits.** The analogue region has 123.0 mm² spare after the drawn kinds; its top edge is Y 31.0, where `POL`, `BREW_D_C` and `IN_COND` begin, and not the Y 30.1 where the module stood before it moved up 3.3 mm. **If the voltage measurement leaves the gap under the module and the module drops 3.3 mm** (the third what-if of § Heat) **the edge returns to Y 30.1, 35.4 mm² of the capacity goes and 87.6 mm² stay: kind 5 stays.** The shown allocation is the result after kinds 3 and 4 are removed, kind 6 is not reserved by the owner's choice (2026-10-24) (row 6), and kind 1 is given a place whatever the arithmetic (row 1). The script derives the table above and the kinds' areas below from the data block, and fails if a removed kind has a block drawn, if a kept kind lacks one, if the allocation does not fit at the step it stops at, or if an arrangement of the headers is claimed that the search does not find. It prints the arrangement it finds, or that none exists, for each step and for each removed kind alone; the 12 headers stand in 6 columns of the two header regions.
+
+| Kind | Removal order (first removed first) | Kind | Place | Where: block, header position, first pin | Interface: loading carried now → added | Block area (mm²) |
+|---|---|---|---|---|---|---|
+| 1 | Not in the order: required | Supply voltage measurement | **Given.** `REQ-MEASUREMENT-001.C10` requires the supply voltage that sets heater and pump delivery to be known to the control to a declared accuracy, and one measurement serves that and the control's cut-out above the span (a threshold above 253 V that the control design sets, 260 V for example, and not 250 V, which the grid can exceed). The accuracy is declared by the sensing task, with the other sensing figures, and not by this record; `DEL-SENSOR-NECESSITY-PROVEN.C2` computes how necessary it is. The isolating part is a **barrier the basis does not list** and is reported like the others (§ The interlock block; § Reported for the board design tasks, item 1), judged by the forms record's *Barrier parts* method: its test voltage against the 4.0 kV reinforced target, with no part chosen and no rating read. It stands directly below the module, 15.0 mm from the interlock relay's body, which the owner asks of an 85 °C part against a source of about 1 W (§ Heat); that raised the module 3.3 mm. Its isolating part also reads the supply current's shunt as a second channel (kind 9) | `VMEAS` (X 32.5 to 70.0, Y 48.4 to 53.4) in the stack at the zone boundary, on `LINE` and `NEUTRAL` upstream of the contact, and `VM_C` (X 116.0 to 122.7, Y 3.0 to 10.2) in the analogue region; no connector | **One conversion input**, PB1 (ADC12_INP5): with the nine pins already used (the four current channels' PC0, PC1, PC4 and PC5, and PA0, PA1, PA2, PA3 and PA6 of kinds 7, 8, 9, 5 and 12) and this one, 10 of the 16 conversion pins are used and 6 remain (PA4, PA5, PA7, PB0 and the analogue-only PC2_C and PC3_C); one isolated, conditioned signal reaches it from the pocket of `VMEAS`; it adds 5 mA to the 5 V rail (A28) | 236 |
+| 2 | 4, last | Weight-based endpoint, two load-cell amplifiers | **Given.** Both channels, as the owner asked; the footprint is the HX711 sheet's SOP-16L amplifier and five passives, 137 mm² a channel, in place of the earlier 12 × 12 mm allowance of 144 mm² (A27) | `WT1_H` (X 100.8 to 107.8, Y 44.5 to 57.0) and `WT2_H` (Y 57.3 to 69.8), five ways at 2.0 mm (an assumption, A5), 7.0 × 12.5 mm, first pin at the lower end; circuits `WT1_C` (X 78.0 to 97.0) and `WT2_C` (X 97.5 to 116.5), Y 22.9 to 30.1 | Two digital pins each, data and clock: PC8, PC9, PC11, PC12, which `component-specification.md` already places (its weight row), so none is taken from the 26 digital pins that remain after the placed functions; no shared bus; each channel adds 14.3 mA of bridge excitation and 1.5 mA of amplifier to the 5 V rail | 449 |
+| 3 | 1 | Further temperature and pressure inputs of the kinds in use | **Not given one.** The weakened criterion is **the fit**, bound by the header regions: alone, the kind needs 214.5 of the 214.9 mm² the header regions have spare and 87.4 of the 123.1 the analogue region has, which the areas allow, and **no arrangement of the headers exists** (§ above): its two two-way headers and its four-way one cannot be placed at the 0.3 mm spacing the drawing keeps | If given: two two-way thermistor headers, one four-way pressure header and one circuit | If given: two conversion inputs (PA4, PA5) and one on the second I²C bus of kind 12 | 280 |
+| 4 | 2 | Direct group-head instrumentation, two channels | **Not given one.** The weakened criterion is **the fit**, bound by the header regions: alone, the kind needs 162.2 of the 214.9 mm² the header regions have spare and 107.5 of the 123.1 the analogue region has, which the areas allow, and **no arrangement of the headers exists** (§ above): its two three-way headers cannot be placed at the 0.3 mm spacing the drawing keeps | If given: two three-way headers and two circuits | If given: two conversion inputs (PA7, PB0) | 248 |
+| 5 | 3 | A second current-sensing channel | **Given**: the allocation stops at step 2, before it (it is third in the order), and it fits with 123.0 mm² of the analogue region to spare (§ above) | `CURR2_H` (X 93.0 to 100.5, Y 54.9 to 65.0), three ways, first pin at the lower end, in the column of `CURR1_H`; circuit `CURR2_C` (X 111.0 to 117.0, Y 14.5 to 22.5) in the analogue region | A conversion input on PA3 (ADC12_INP15), and 10 mA on the 5 V rail (A28) | 124 |
+| 6 | Not in the order: removed by the owner's choice | A further switched output, such as another valve | **Not reserved, by the owner's choice** (2026-10-24), and not for want of room: no criterion is named, because none is weakened. The relay place that was reserved for it (`K_SPARE`) had been lost for room when the interlock relay moved to the main board, and the owner has now removed the kind; its block, its tenth tab and its step of the removal order are gone | None | None | 0 |
+| 7 | Not in the order: fixed | A spare analogue input | **Given** | `SPARE_AN2_H` (X 85.2 to 92.7, Y 57.4 to 70.0), four ways, first pin at the lower end; circuit `SPARE_AN2_C` | A conversion input on PA0 (ADC1_INP16), one of the 16 | 170 |
+| 8 | Not in the order: fixed | Current sensing, first channel | **Given** | `CURR1_H` (X 93.0 to 100.5, Y 44.5 to 54.6), three ways, first pin at the lower end; circuit `CURR1_C` | A conversion input on PA2 (ADC12_INP14) | 124 |
+| 9 | Not in the order: fixed | Total supply current measurement | **Given**, as a shunt in the neutral return and a second channel of `VMEAS`'s isolating part. The owner's placement, a 13 × 8 mm isolated sensor in the `LINE` to `LINE1` link beside the relay's contact end, is weighed and not drawn (below; § Options considered and dropped) | The shunt `I_SHUNT` (X 5.0 to 12.0, Y 38.8 to 45.8) between the pad of tab 3 and the neutral pour; `VMEAS` (X 32.5 to 70.0, Y 48.4 to 53.4) reads it; `I_C` (X 104.6 to 110.6, Y 14.5 to 22.5) in the analogue region conditions the isolated output | A conversion input on PA1 (ADC1_INP17) | 97 (49 + 48) |
+| 10 | Not in the order: fixed | Real-time clock | **Given**, inside `MCU` | The 32.768 kHz crystal and its two load capacitors are counted in the `MCU` block's allowance (they are optional parts of P5 Table 9) | PC14 and PC15 (OSC32); no further pin | 0 beyond `MCU` |
+| 11 | Not in the order: fixed (`DEC-IN-STREAM-PROBES-ANTICIPATED`) | In-stream temperature, two PT1000 probes | **Given** | `PT1_H` (X 115.9 to 123.4, Y 44.5 to 57.1) and `PT2_H` (X 115.9 to 123.4, Y 57.4 to 70.0), four ways each, first pin at the lower end; circuits `PT1_C` and `PT2_C` | SPI2 on PB13, PB14, PB15, chip selects PB12 and PD8; the bus carries none now and gains two converters, **24 µs for an exchange of three bytes at 1 MHz, 0.24 % of the 10 ms step each** (an assumed clock and size, `component-specification.md` § Where each function lands) | 469 |
+| 12 | Not in the order: fixed | Brew-path pressure transducer | **Given**, digital and analogue | `BREW_D` (X 108.1 to 115.6, Y 44.5 to 57.1) with `BREW_D_C`, and `BREW_A` (X 108.1 to 115.6, Y 57.4 to 70.0) with `BREW_A_C`; four ways each, first pin at the lower end | A second I²C bus, I2C2 on PB10 and PB11, which also carry a UART: no device now, one transducer added, **0.65 ms of the 10 ms step at 100 kbit/s, 6.5 %, and 1.6 % at 400 kbit/s** for a seven-byte exchange (an assumed bound); and PA6 (ADC12_INP3) for the analogue fallback | 349 |
+| — | Not removable | Supply frequency measurement | **Given, shared** | The timing front end `TIMING` and `IN_COND`: its output is read on both edges, so the supply's period is measured from it | PA10, capture on both edges (TIM1_CH3); adds nothing | 0 |
+
+**Voltage, frequency and total current, where each goes.** Three measurements, three interfaces. *Frequency* is read from the one timing front end (`TIMING`, `IN_COND`), which is also the zero crossing: one shared measurement on one board, nothing added; its output is captured on both edges (PA10, TIM1_CH3) and the supply's period is the time between like edges. *Supply voltage* (row 1) is read by `VMEAS`, a series divider on `LINE` and `NEUTRAL` taken upstream of the contact so that the control still reads the supply with the interlock open, through the first channel of the isolating part, and conditioned by `VM_C`, 53.2 mm from the module and 58.9 mm from the interlock relay, to one conversion input (PB1). *Total supply current* is sensed by the shunt `I_SHUNT` in the neutral return at the pad of tab 3, where every load's return passes (the heaters' 10.18 A, the pumps' and valves' 0.78 A and the module's 0.05 A: 11.01 A with every load on, which is the link's 10.96 A and the module's current), and read as the second channel of `VMEAS`'s isolating part, the shunt standing at `NEUTRAL`'s potential, which the divider's input is also referred to; `I_C` conditions the isolated output to one conversion input (PA1). The interface is one isolated analogue pair per channel from one barrier part to two conversion inputs, PB1 and PA1, and the capture on PA10; the heater wall board carries none of the three. **Why not in the link, where the owner placed it.** The owner asked for one sensor in the `LINE` to `LINE1` link beside the relay's contact end, a 13 × 8 mm isolated part with 48 mm² of conditioning, and for the wall board's sensor to go. Under this record's own rules that part cannot stand there: (1) its primary is 8 mm long in the direction of the current and there are 5.0 mm between the pad of tab 2 and the relay's contact copper, so the relay moves 3.0 mm, and the sensing blocks nearest it then stand 17.3, 17.0, 17.0 from the relay against A8's 20 (`PT1_C`, `BREW_A_C`, `WT1_C`, in mm) while the analogue region loses 85.2 mm² of capacity (1 189.7 to 1 104.5; 56.8 mm² for a 2.0 mm move), computed here; (2) its low-voltage pocket, 3 mm beyond the primary, would stand in the pad column, where no pocket has an exit: the argument of § Heat applies, and every line from it to the low-voltage zone crosses the `LINE` and `NEUTRAL` taps; (3) a shunt in the link instead stands at `LINE`'s potential, 253 V from the divider's `NEUTRAL`, so one isolating part with two inputs that share a reference could not read both, and a second barrier part would need 5.0 mm of the boundary column that has none to give. The neutral carries the same current, a shunt there shares `VMEAS`'s reference, adds no barrier part and moves nothing. **The owner confirms this, or asks for the relay to move** (an owner decision pending, § Owner decisions pending, D3), which costs the 85.2 mm² above (kind 5 stays) and puts three sensing blocks under A8's 20 mm, and does not remove the pocket's missing exit. The conditioning `I_C` and the interface are the same either way. The allocation of the cable's conductors is the wall board's design task's.
+
+The steam-path pressure transducer's own connector is **split from the spare input**, as the forms record sets: `STM_D` (digital, X 93.0 to 100.5, Y 65.3 to 77.9) and `SPARE_A` (analogue, X 85.2 to 92.7, Y 44.5 to 57.1) are two four-way headers, not one. The digital header's two signal lines sit on I²C and UART pins and its supply is 3V3; the analogue spare takes 5V, 3V3, GND and a filtered input so that a sensor rated for either supply is fed in its own specification; one connector shared between them would put 5 V on the digital pair's header, and the spare would no longer serve a second analogue sensor. **The removal order is a recommendation for the owner to reorder** (an owner decision pending, § Owner decisions pending, D12): its basis is that a kind a decision or a requirement already backs stays whatever the arithmetic (the PT1000 pair, `DEC-IN-STREAM-PROBES-ANTICIPATED`; the brew-path transducer, which a requirement asks to be measured; the supply voltage, which `REQ-MEASUREMENT-001.C10` requires); that a kind that senses a safety-relevant quantity (the heater current detects a runaway) stands above one that serves calibration or an endpoint; that the biggest and least decided blocks go first, except that the owner has put weight, both channels, last of all. The order is therefore the further inputs (3), the group-head channels (4), the second current channel (5), and weight (2); kind 1 is outside it because a requirement asks for it, and kind 6 because the owner removed it.
+
+## What the owner fits by hand, and what the extended parts cost
+
+Economic assembly is chosen over Standard: the main board meets its limits (layer count 4, thickness 1.6 mm, a single board of 131 × 125 mm, 0.5 mm lead pitch against 0.40, one side placed) and it is cheaper at this part count. Economic costs 8.18 + 1.53 USD fixed and 3.07 USD feeder loading for each unique Extended part. Standard costs 25.56 + 8.21 + 16.42 USD fixed (single-sided, two fixtures for one to 29 boards) and **1.53 USD feeder loading for each unique Basic, Preferred or Extended part**, not for the Extended parts alone (`docs/board-manufacturer-jlcpcb.md` § Parts library classes and their fees). At the main board's 18 unique Extended types and no Basic type, Economic is 64.97 USD and Standard 77.73 USD; each Basic or Preferred type adds 1.53 USD to Standard and nothing to Economic. The two cross at 26.3 unique Extended types if there are no Basic or Preferred types, and later for every one there is, so the conclusion holds at 17 (computed from the charges above; `docs/board-manufacturer-jlcpcb.md` § Assembly limits and § Assembly charges).
+
+| Part type, the proving candidates of the forms record | Class | Fee an order (USD) | Where |
+|---|---|---|---|
+| STM32H743VIT6, C114409 | Extended | 3.07 | Machine-placed |
+| Logic-supply module IRM-20-5, C6280121 | Extended | 3.07 | Through-hole |
+| Pump opto-triac MOC3052M, C8965 | Extended | 3.07 | Machine-placed or through-hole by the part fitted |
+| Pump triac BTA204S-600B, C256462 | Extended | 3.07 | Machine-placed |
+| Interlock relay HF115F-Q/005-1H, 5 V coil; its catalogue number is not recorded, so it is priced and classed as the 12 V variant, C5318991 | Extended, **assumed** (as the 12 V variant) | 3.07 | Through-hole |
+| Valve relay HF32FA-G/005-HSL1, C91370 | Extended | 3.07 | Through-hole |
+| AC-input optocoupler LTV-814S, C108051 | Extended | 3.07 | Machine-placed |
+| Fuse holder 5 × 20 mm, C3131 | Extended | 3.07 | Through-hole |
+| Fuse clip, C3130 | Extended | 3.07 | Through-hole |
+| 6.3 mm tab, board-mounted, C20626100 | Extended | 3.07 | Through-hole |
+| Shunt resistor of the neutral return, 2512, 1 mΩ class, not chosen | Extended, **assumed** (A13) | 3.07 | Machine-placed |
+| 7 header types for the harnesses and the anticipated channels, counted from the blocks by ways and pitch (4-way 1.95 mm, 5-way 2.0 mm, 9-way 2.0 mm, 2-way 2.54 mm, 3-way 2.54 mm, 4-way 2.54 mm, 10-way 2.54 mm), the parts not yet read | Extended, **assumed** (A13) | 7 × 3.07 | Through-hole |
+| **18 types** | | **55.26** | |
+
+18 types at 3.07 USD is **55.26 USD, 22 % of the 250 USD declared spend**, before the parts themselves; 21.49 USD of it, the 7 header types, rests on the assumption A13 that every header is an Extended part, since no catalogue class is read for any of them. **Hand-sourcing** a part type means the owner buys it elsewhere, leaves it off the order and solders it; it saves the type's 3.07 USD and the manual joints. It is practical only for the through-hole types; fitting an LQFP-100 at 0.5 mm, a DPAK or a four-pin SMD optocoupler by hand is not offered. The through-hole types are 13 (the module, the two relay types, the two fuse parts, the tab and 7 headers): 13 × 3.07 = 39.91 USD, plus the manual charges of the main board's 131 joints (A11: the module 4, the interlock relay 6, two valve relays 8, three holders 12, the seven tabs and the return landing 16, 85 header pins) at 0.0164 USD = 2.15 USD, plus the 3.58 USD hand-soldering labour: **45.64 USD saved** if the owner fits all of it (round 4 gave 45.62 USD: round 5 loses the two removed tabs' four joints, gains the landing's two and the second current channel's three header pins, and the shunt, which the machine places, adds an Extended type but no hand joint). **The choice is the owner's, an owner decision pending (§ Owner decisions pending, D10)** ("if reasonable I might just pay", 2026-10-23): it is 45.64 USD against sourcing 13 part types elsewhere (their prices and the postage are not read here) and hand-soldering 131 joints, among them the mains-barrier module and relays.
+
+**What is hand-fitted in this record, and what it saves.**
+
+| Part | Why the owner fits it | Saved against the manufacturer fitting it |
+|---|---|---|
+| Tank reed element, two joints | The owner's statement that the reed is fitted by hand at the recorded position and left off the order (`reference-machine.md`); it is not in the catalogue records read | Up to 3.10 USD: the 3.07 USD of an Extended part if it is one, and two joints at 0.0164 USD; the catalogue was not searched for it |
+| The whole heater wall board | A small all-through-hole mains assembly whose triacs the owner bolts to the wall in any case and which the owner solders by hand, so its size and part count are kept minimal (2026-10-24); hand-fitting is not forced, since the board may be made as a section sharing the main board's assembly | **26.21 USD**: four unique Extended types (the triac BTA16-600BRG C9100, the opto-triac MOC3083 C10797, the blade terminal C20626100 that the main board's table also lists as Extended, and the three-way header, which A13 takes as Extended) at 3.07 = 12.28 USD; its 39 joints (A11: triacs 6, opto-triacs 12, their gate networks 8, varistors 4, terminals 6, header 3) at 0.0164 = 0.64 USD; labour 3.58 USD; setup 8.18 USD and stencil 1.53 USD for an order of its own. It was 26.72 USD with 70 joints and four Extended types, and 20.07 USD with 39 joints when only the triac and the opto-triac were counted as Extended |
+
+Left to the manufacturer on the main board, as the baseline of the comparison: the module, the relays, the fuse holders, the tabs and the headers, so that the mains-barrier joints are the manufacturer's. The staged build keeps the owner's option to fit them last.
+
+## Reported for the board design tasks
+
+1. **Three barriers are not among the basis's seven.** The interlock relay's coil-to-contact barrier (the valve-switch kind of insulation at another place), the wall-to-mains-copper barrier and the voltage measurement's isolating part, which now takes the supply current's shunt as a second channel, are unlisted (§ The interlock block); the valve relays' own barrier is the listed valve-switch kind, with another part. This record does not change the basis; the design task of the board that carries each reports it or raises the amendment with the owner. The wall board keeps its mains copper, its part bodies and its mains lead ends 5.0 mm from the wall edge and stands off 5.0 mm, parallel to the wall with its back face toward it; the 10.0 mm to the metal that the two make together holds only edge-on and is not claimed, and the 5.0 mm is the basis's basic row applied to an earth bond that the basis says is not measured (A22).
+2. **Parts' own spacing is under 10.0 mm, or unread.** The relays' creepage is "over 8 mm" (P2 and P6), the opto-triac's external creepage and clearance are 7 mm or more, 10 mm or more only in the 0.4-inch lead-spacing option (P4), and the voltage measurement's isolating part's rating is not read at all, no part being chosen. The board's distances are held by slots and gaps; whether a part whose body gives less than the signed creepage forms the reinforced barrier is the fitted-part check's, together with the working isolation voltage no sheet gives.
+3. **Mains-to-mains spacing is not in the basis.** This record holds 3.0 mm straight and 5.0 mm by path between mains copper of different nets, every pair in the data, the seven tab pads, the return landing and the link pours included (A3), and the signed 3.0 mm and 10.0 mm across the open interlock contact; on the wall board the two ends of each varistor and the copper either side of each triac are held to it as any other pair, the unpopulated confirm places' copper included. **`TIMING` and `VMEAS` are held to it as two pieces of mains copper each**, with the series resistors and the optocoupler's input pins bridging the gap between them; those parts' own pad pitches are not modelled and no sheet is read for the 2512 resistors or for `VMEAS`'s isolating part, which the design task checks against the sheets of the parts it chooses.
+4. **The fixing distance forces three tabs to move**, 6.9, 7.0 and 7.5 mm, and leaves 3.1, 3.0 and 2.5 mm of the owner's 10 mm slack (§ The fixing rule and the tabs that move). The footprint of each mounting hole is drawn inside E = 3.0 mm; a larger stock footprint is not used. The owner measures each of the three leads' slack with a rule before ordering and, if one is short, uses a push-on extender at the tab. **None of the four fixings can be touched, and the owner's choice between these moves and amending the rule for such fixings is an owner decision pending** (§ Owner decisions pending, D1; § The fixing rule and the tabs that move). The point 3 boss's top is read on the machine; no tenth tab is drawn. The lid boss's and screw's sizes are unread.
+5. **The mains-entry assembly** (inlet, filter, 10 A inlet fuse) is off-board and no place is claimed for it inside the enclosure; where it is mounted is an owner decision pending (§ Owner decisions pending, D14), as is the owner's proposal to carry the fuse and a varistor on the main board in its place (D16); the filter's body, coupler and termination are unread, and `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE` itself says its fit is to be confirmed.
+6. **The faston tabs, the joiners and the wall board's blade terminals** carry up to 15 A; their rating is not sourced (`controller-board-function-forms.md`), the bought board-mounted tab's blade height against the recorded 9.9 mm is the assembly task's, and so are the joiners' insulation and rating, the element leads' reach to the wall cut (unmeasured) and the choice between a blade and a solder pad for the return landing (§ The path of the heater current).
+7. **The interlock's mechanism and removal interval are pending**, the interval resting on a casting peak the control does not yet hold (`controller-board-design-constraints.md` § Proof-of-life removal interval). `POL`'s area is an estimate. **The coil's feed is the main board's design task's**, in the words of § The interlock block: the coil is fed only through the proof-of-life path, and no level, timer, charge store or latch keeps it above drop-out for longer than the removal interval after proof of life stops, in any rest state of the controller; bring-up stops the controller in each rest state and records the coil voltage below 0.5 V. There is no reduced-hold drive (§ Options considered and dropped).
+8. **The tab blades are read: all nine stand with their wide face parallel to X** (the owner, 2026-10-24). The bought board-mounted tab's own footprint is not read, so the pad is the blade's section with an annulus (A2); the design task draws the footprint inside it, or enlarges the pad and re-runs the distances, which the script repeats from the data.
+9. **The interlock relay's heat is budgeted, not sourced, and the relay is a heat source.** The contact heat is 0.5 W at 10.18 A with the coil at its full drive (A14), 0.98 W in all and 1.03 W with the coil at the low end of its tolerance; A8 applies to it against every part that derates and every sensing block, and the script tests it (§ Heat); bring-up measures the closed-contact drop at about 10 A (over 50 mV moves or changes the relay) and the body temperature. The sheet's VDE ratings for the variant, 18 A at 105 °C and 16 A at 125 °C of ambient, are the only sourced figures that fall with temperature (1.46 and 1.07 times the 10.96 A and the 15 A at 125 °C): the relay has no sourced thermal margin at the held coil drive. The 70 °C air the arithmetic uses is assumed; the owner thinks it will not be real.
+10. **What opening the contact does to its life is unsourced.** The pumps' starting current and the contact's endurance under the pump motors and valve coils are in no record; bring-up opens the relay with them running and reads the closed-contact drop again.
+11. **The taps from `LINE` and `NEUTRAL` to the module and the timing front end** are the design task's to route. The record shows a route from the first piece of the pair to each of the others, 49 mm the longest, that keeps 10.0 mm from the `LINE1` copper and 5.0 mm from every other net; **it takes `LINE` and `NEUTRAL` as one group**, so the 5.0 mm that a `LINE` trace and a `NEUTRAL` trace need between them is not kept, and a route for the two side by side is not shown; where each tap leaves the link and the neutral pour is the task's.
+12. **The interlock relay's contact terminals** are drawn from the sheet's drawing (A23): two terminals 7.56 mm apart across the body, each on two holes 5.0 mm apart along it, so the two contact halves stand 3.0 mm apart over the slot; a valve relay's contact and coil ends are the sheet's two columns of holes, 15.24 mm apart (A26).
+13. **The wall board's design task is handed**: how the board is supported (only the 5.0 mm stand-off on plastic standoffs and screws is fixed); how the bent triac leads bridge the stand-off; the three-way cable's conductors (the LED supply and the two returns) and whether the cable stays ten conductors; the varistor's clamp against the opto-triac's 1 A and the triac's 700 V, or the inlet filter's rating if it makes the varistors redundant (§ The heater wall board, *Snubbers and varistors*); and the spreader plate, if one is needed. If the confirm places are ever fitted, the tap of each from `RET` is routed above the slot's end.
+14. **The headers' parts** are not read: the 9-way family is inferred, the others unidentified; a test fit settles them. The heights of the headers and fuse holders are not read.
+15. **The forms record's bound on the snubber capacitor, about 22 nF, assumes a live-side switch** and falls away for this board's neutral-side switch (§ The heater wall board, *The mains-presence confirm*); no snubber is fitted.
+16. **No path needs two-ounce copper now** (§ Copper that carries the heater current); its price at four layers at this outline stays unmeasured.
+17. **No USB connector** is placed. The basis lists one among the touchable parts; none of the forms record's functions needs one.
+18. **Assumptions A1 to A32** are for the project to replace as each fact is read. A1 and A2 set the tab moves; A6 and A7 set the pump strips' widths; A13 to A24 are the earlier rounds', of which A15 (the trace width) and A21 (the 85 °C class members) are this round's: the header class, the relay's contact heat, the sensor's loss, the reed keep-out, the fit bookkeeping, the boss, the link budget, the stand-off, the relay's contact terminals and the sheet resistance; A25 to A30 are the module's pads, the valve relay's copper and pocket, the weight circuit, the 5 V rail's loads, the voltage measurement's block and the module's power factor; A31 and A32 are the least distance between the heater triacs and the pumps' inner-layer join.
+19. **The 85 °C parts nearest the module are not held.** `K_V1` stands on the module's body (0.0 mm), `VMEAS` directly below it (0.0 mm, and 15.0 mm from the relay) and `P_C` 12.5 mm above it, against A8's 15 mm; at most three of the five can hold and the drawn stack holds two; the arrangements that hold three each break a rule and none that meets every rule was found, which is unproved (§ Heat, computed). Bring-up measures the three bodies beside the running module against 85 °C; if `K_V1` fails, the HF115F-Q is its stated fallback and needs the column redrawn (§ Heat). **Owner decision pending (§ Owner decisions pending, D4):** the third what-if holds three (K_V2, P_C, P_S) at the price of the voltage measurement's distance from the relay (11.7 mm against the owner's 15) and 35.4 mm² of the analogue region, which keeps kind 5 (87.6 mm² remain); the drawn stack keeps the 15 mm and holds two.
+20. **The voltage measurement's accuracy and cut-out belong to other tasks.** The accuracy is declared by the sensing task with the other sensing figures (`REQ-MEASUREMENT-001.C10`) and the refusal threshold above 253 V by the control design; neither is set here. The isolating part, its rating and the barrier report (item 1) are the main board's design task's, and `VMEAS`'s area is an estimate (A29). **The isolating part is taken to have two input channels that share the `NEUTRAL` reference** (the voltage divider and the shunt); no record read names such a part, and if none exists the shunt channel needs a barrier part of its own, for which the boundary column has no room (§ Heat), and the placement of the current sensing reopens with the owner.
+21. **The valve relays.** The 250 V maximum switching voltage is the owner's acceptance for relay contacts (§ The valve relays); the contact life under a valve coil is unsourced and left to bring-up; the contact terminals are read from the drawing (A26); and the mains leads of 35 and 37 mm are the design task's to route.
+22. **Owner decisions pending** are listed once, in § Owner decisions pending, D1 to D16, and not here; two of them concern the fuses (D5, D16) and the smaller IRM-10-5 (D6). No smaller approved fuse meeting the 6 kA was found.
+23. **The 5 V rail's assumed loads** (A28) are replaced as the parts are chosen; the controller's share is its sheet figure through a linear regulator, and a switching regulator would take less of the rail.
+24. **The microcontroller block has no allowance.** It is drawn at its 1 002 mm² estimate (1 005 mm²) because the board's top edge and the 15.0 mm it keeps from the module leave it 31.1 mm of height; if the part layout needs more, the module or the stack moves, not the heat rule.
+25. **Kind 5, the second current-sensing channel, is given its place** (§ The anticipated channel kinds): it fits with 123.0 mm² of the analogue region spare at the spacing the drawing keeps; the region's top edge was corrected from Y 30.1 to Y 31.0, and if the module is lowered (the third what-if of § Heat) the edge returns to Y 30.1 and 87.6 mm² remain.
+26. **The criteria this record was built against are all amended in place, and none departs from it** (version 2 of each). `SOL-HW-BOARD-DIVISION-AND-FLOORPLAN.C2` carries the joiner arrangement (each element lead keeps its female terminal and plugs onto an in-line blade joiner, and the current returns by a new wire to a neutral landing on the main board) and now says "a snubber, where one is fitted", which this record's wall board and pump drives satisfy by fitting none; `.C3` carries the joiner arrangement and the wall cut; `.C4` says the total *supply* current, which this record senses (10.96 A with every load on and 11.01 A in the neutral, kind 9, by the shunt in the neutral return), and lets a kind be recorded as not reserved by the owner's choice with its date, which kind 6 is. `DEL-SENSOR-NECESSITY-PROVEN.C2` carries the supply current in the same words, and `DEL-HW-BRING-UP.C4` requires the continuity check of item 32. **The existing records this solution edits** (`reference-machine.md`, `controller-board-design-constraints.md` and `controller-design/component-specification.md`) change only to carry the owner's measurements, statements and acceptances (the reed's position and the caliper readings, the original board's protection parts, the acceptance of a 250 V relay at the top of the span); none of them is a figure of this record's own.
+27. **The heater triac is not a Snubberless™ part.** The BTA16-600BRG is the standard four-quadrant "B" type (P3, Table 9: marking BTA16-600B, IGT 50 mA, static dV/dt 400 V/µs at least); the forms record's and the brief's "snubberless" is the ...BW type (BTA16-600BWRG). The arithmetic of § The heater wall board shows the B type enough on a resistive load; the design task may choose the ...BW part of the same family and package if it wants the margin.
+28. **The pump drives carry no snubber and no varistor, and the check against the EMC and surge criteria is not closed** from sourced figures (§ The pump drives): the margins on the commutating rate, 21 and 50 times, assume each pump's series diode, which is the owner's statement and not measured; the pump coil's inductance, the series diode's rating, the circuit's commutating dV/dt, the conducted emission and the surge withstand are the design task's, closed by analysis.
+29. **The round 5 owner decisions pending are in § Owner decisions pending, D1 to D4, D7 and D8:** the tab moves against amending the 10.0 mm rule (D1); whether the two confirms come back (D2); the current sensing's placement (D3); the voltage measurement's distance from the relay against a third held 85 °C part (D4; item 19); the two varistors (D7); and a blade or a solder pad for the return landing (D8).
+30. **The two heater triacs share one metal wall** (§ The heater wall board, *Heat*): 4.25 W and 4.84 W, 14.2 mm apart body to body, against an assumed least of 10.0 mm (A31). The sheets allow the junction rise (8.9 K and 10.2 K) and the case limit (116.1 °C and 114.8 °C); they give no interface or wall resistance, so the wall-plus-interface resistance to the air that each triac needs is 9.3 K/W alone and 4.9 K/W with both on, at the assumed 70 °C air, and whether the wall meets it, or a spreader plate or more distance is needed, is the wall board's design task's (`DEL-HW-PARTITION-AND-FEASIBILITY.C5`). Open until it judges.
+31. **The pumps' returns join the neutral pour on an inner layer** (A32; § The path of the heater current): the script finds no surface route for `P_C.N` or `P_S.N`, so the join is an inner layer of the four-layer board, which the main board's design task shows, keeping the signed distances on that layer. The valves' and the heaters' returns, and the module's, join by surface copper.
+32. **The interlock cuts every load only if every load's live lead is fed from `LINE1`, which is the owner's visual trace and not a measurement.** `connector-pinouts.md` grades the trace inspected and says the images do not show the links of terminals 4 to 9 (§ The source of each live feed); this record's claim that "no load has a live feed" with the contact open rests on it (§ The path of the heater current, *Why the contact is where it is*). **Open until bring-up, and not waived by any design task:** the continuity check that `DEL-HW-BRING-UP.C4` requires. With the relay open and the machine unplugged, by meter, from the supply live (`LINE`, the plug's L pin) to the live lead of each heater element, each pump and each valve coil, there is no continuity; any reading of continuity means a load has a live feed past the relay, and the interlock does not cut it. The same check is repeated after any change to the loom or the board that touches a live lead.
+
+## What this record's words depart from in the forms record
+
+The forms record is not edited here. Where its words differ from this division, it is the reasons below that govern until the forms record is corrected.
+
+| The forms record says | This record | Why |
+|---|---|---|
+| The wall board has faston tabs for the live feed and the element lead, and a cable to the controller board that carries low voltage only | The wall board has a blade terminal for each element's wire and one for the return; there are **two** cables, three mains conductors and a three-way low-voltage cable (the LED supply and two returns), which carries no coil drive and no sensor signal; the live feed is not on the wall board | The retained harness must not change: each element's other lead reaches a joiner and the `LINE1` daisy-chain reaches the fixed lead directly, so the switch is in the neutral-side path and the board as found switches that side |
+| The interlock is on the controller board, in series with each heater's supply path | **Agreed in effect, and wider.** It is on the main board (the controller board of that record), in the one link from tab 2 to tab 1 through which every load's live lead is fed (`LINE1` by the retained daisy-chain wires), so it is in series with **each heater's supply path and with every pump's and valve's**, not with the two heaters' alone; a shorted triac, whose element has no live feed, is cut off with the rest | The owner's approval of 2026-10-24: the relay in the heaters' common return on the wall board cut the heaters only and needed its coil conductors in the cable; the forms record's own words, a series element in each heater's supply path, are met either way. The forms record is not edited here and its words stand until its owner corrects them |
+| No place for the mains-presence confirm | **The drawn wall board has no confirm place.** A second layout, with the two places unpopulated, is checked by the script and is 23.5 % larger; the owner's condition for dropping the confirms is only partly met, which is an owner decision pending (§ Owner decisions pending, D2) | § The heater wall board, *The mains-presence confirm*; § Every function has one owner |
+| Valve relays and pump drives on the mains board | On the main board; there is no separate mains board | § Candidate divisions |
+| **Two retained harnesses change, the leads of the coffee and the steam element** (`COFHEATER`, terminal 5, and `STMHEATER`, terminal 4), which end at the wall board's faston tabs; "the only retained harnesses that change are the two element leads" (§ Wiring, connectors, mains-rated terminals, *Harness*, and *Drop-in*) | **Three different retained harnesses change, the leads of tabs 1, 2 and 3** (`LINE1`, `LINE`, `NEUTRAL`), each fitting its tab 6.9, 7.0 and 7.5 mm further up; **the element leads do not change**: tabs 4 and 5 are removed, and each lead keeps its female terminal and plugs onto an in-line insulated male-to-male 6.3 mm blade joiner near the wall cut, with nothing cut, lengthened or re-terminated, and a new wire runs from the joiner to the wall board's `OUT_S` or `OUT_C` | The forms record's words stay accurate in their own terms, that the element leads end at the wall board's blade terminals, by way of the new wire: the original harness reaches only the original tab, and the owner removed the two tabs because they carried nothing once the confirms moved to the wall board and no heater current ran through board copper there (2026-10-24); the fixing rule forces tabs 1 to 3 to move (§ The fixing rule and the tabs that move) |
+| The heater switch's section on leakage: the mains-presence confirm "reports whether mains reached the element", reads "on while mains reaches the element", and the snubber capacitor is bounded at about 22 nF because, with the element open between the confirm's tap and the neutral, the snubber's current runs in the confirm's branch | **The board as found switches the neutral side of every load** (`connector-pinouts.md`), so the confirm across an element's switched lead and the neutral reads **on when the triac is open and the element intact, and off when the triac conducts**: stuck-on reads off while commanded off, failed-to-close reads on while commanded on, an open element reads off, and so does the whole board with the interlock open. The 22 nF bound falls away: with the element open the node is fed from nothing, and with it intact the snubber's current runs through the element; the confirm is not populated in any case | The forms record's reading is of a live-side switch, where the node stands at the neutral through the element when the triac is open; the arithmetic is in § The heater wall board, *The mains-presence confirm*. The forms record is not edited |
+| The heater switch: "an insulated-tab snubberless triac, a snubber (a resistor and capacitor across the triac) and a MOV", the triac the BTA16-600BRG (S17) | The BTA16-600BRG is the **standard four-quadrant "B" type**, not a Snubberless™ one (P3, Table 9); **no snubber is fitted**, the varistor is kept, and the opto-triac's gate network is two resistors (360 Ω and 330 Ω, Figure 12 of P4) | A resistive load commutates a standard triac with 2.9 times the margin on dI/dt and 88 times on dV/dt (§ The heater wall board, *Snubbers and varistors*); the forms record is not edited |
+| The valve relays' proving candidate is the HF115F-Q, and the HF32FA-G "does not meet *Rated for the supply*" with its 250 VAC maximum switching voltage under the 253 V top of the span (§ Two-way and three-way valve switching) | **The valve relays are the HF32FA-G/005-HSL1**; the interlock relay stays the HF115F-Q | The forms record allows "a different relay ... once its own datasheet's voltage rating is sourced and meets the target"; the owner accepted a 250 VAC contact rating at the top of the span for relay contacts on 2026-10-24 (`controller-board-design-constraints.md`, *Rated for the supply*), and the sheet's 1 000 VAC between open contacts and 5 000 VAC coil to contacts meet the blocking and isolation figures that the acceptance leaves in force (§ The valve relays). The forms record is not edited |
+| The IRM-10-5 "is not the proving candidate, its margin at 70 °C being thin", and the IRM-20-5 has 2.3 times the earlier design's 0.86 A | **Agreed**, on this board's own load: the IRM-20-5 stays, with 2.13 times a 0.94 A budget at 70 °C; the IRM-10-5 has 1.06 times at 70 °C and 2.13 at 50 °C | The forms record's load was a scale only; the budget here is summed from the sheets of the parts the board carries (§ The logic supply against this board). The forms record is not edited |
+| The mains inlet filter is a "bought" module of the decision's chain; no mounting place is stated and nothing is said of where its fuse is held (§ Mains inlet filter) | The filter is a **panel-mounted appliance inlet**, off-board, and the **10 A inlet fuse is held with it**, because the board's 5 × 20 mm holder is listed for 6.3 A; where the owner mounts it is an owner decision pending (§ Owner decisions pending, D14) | The forms record's row says only that the filter is bought, with no control input, no barrier and no output; the panel mounting and the fuse's place are this record's reading of the decision's chain and of the constraints record's stock table (§ Every function has one owner). The forms record is not edited |
+| The HF115F-Q is the proving candidate of the **valve** switch (§ Two-way and three-way valve switching), and the interlock's mechanism and parts are the design task's (§ Proof-of-life interlock) | The interlock block is **drawn as an HF115F-Q relay**, the 5 V coil `HF115F-Q/005-1H`, and the valve relays are the HF32FA-G; this record does not choose the interlock's mechanism | The block needs a footprint, a contact rating and a heat to be sized with, and the relay family that the forms record already proves for a 20 A contact is the one used; a series element of another kind that meets the same figures replaces it. The forms record is not edited |
+
+## Sources read
+
+Every address was opened on **2026-10-24** and the figures read from its text or drawing; the retailer's listing of a radial fuse mentioned in § The fuses was not a sheet and is not listed.
+
+| No. | Document | Revision printed | Address |
+|---|---|---|---|
+| P1 | Mean Well IRM-20 series specification, *Mechanical Specification* and derating curve; dimensions 52.4 × 27.2 × 24 mm, pins, efficiency (typ.) 79 % at 5 V, 4.2 kVac withstand | File `IRM-20-SPEC 2025-11-21` | https://www.meanwell.com/Upload/PDF/IRM-20/IRM-20-SPEC.PDF (the forms record's S1) |
+| P2 | Hongfa HF115F-Q: outline 29 × 12.7 × 15.7 mm and the drawing of both terminal variants (41 mm and 45 mm), PCB layout, contact ratings, electrical endurance, dielectric strength between open contacts, coil data (pick-up, drop-out, power, temperature rise), creepage | 2024 Rev. 1.00 | https://source.hongfa.com/Uploads/Product/PDF/HF115F-Q_en.pdf (S8) |
+| P3 | STMicroelectronics DS2114, BTA16 family, Table 1 *Absolute maximum ratings*, Tables 2 to 4 (static characteristics, standard and Snubberless™ types), Table 6 *TO-220AB Insulated and non Insulated package mechanical data* and Table 9 *Ordering information* | Rev 11, May 2018 | The Internet Archive's copy of https://www.st.com/resource/en/datasheet/bta16.pdf (S17) |
+| P4 | onsemi MOC3083M/D: package PDIP6 8.51 × 6.35 mm, 2.54 mm pitch; external creepage and clearance; absolute maximum ratings, static dv/dt, inhibit voltage and Figure 12 *Hot-Line Switching Application Circuit* | Rev. 2, September 2022 | https://www.onsemi.com/download/data-sheet/pdf/moc3083m-d.pdf (S16) |
+| P5 | STMicroelectronics AN4938, § 7.4 *Decoupling*, Tables 8 and 9 | Rev 7, October 2024 | The Internet Archive's copy of https://www.st.com/resource/en/application_note/an4938-getting-started-with-stm32h74xig-and-stm32h75xig-mcu-hardware-development-stmicroelectronics.pdf (R3) |
+| P6 | Hongfa HF32FA-G: outline 17.6 × 10.1 × 12.7 mm and the PCB layout, contact ratings, maximum switching voltage, coil data of the sensitive 5 V coil, dielectric strength, creepage, ambient range | 2026 Rev. 1.00 | https://source.hongfa.com/Uploads/Product/PDF/HF32FA-G_en.pdf (S9 of the forms record) |
+| P7 | Mean Well IRM-10 series specification: 45.7 × 25.4 × 21.5 mm, pins, 2 A at 5 V, efficiency 77 % at 5 V, derating curve | File `IRM-10-SPEC 2025-08-08` | https://www.meanwell.com/Upload/PDF/IRM-10/IRM-10-SPEC.PDF (S2 of the forms record) |
+| P8 | Multicomp Pro 5.2 × 20 mm time-lag ceramic cartridge fuse: interrupting rating 1 500 A at 250 V AC from 0.5 to 12 A; and the same maker's 6.3 × 32 mm ceramic sheet (200 A to 1 500 A at 250 V AC, 10 000 A at 125 V AC) | Farnell datasheets 2842926 and 2842928 | https://www.farnell.com/datasheets/2842926.pdf and https://www.farnell.com/datasheets/2842928.pdf |
+| P9 | Multicomp Pro 5 × 20 mm time-lag glass cartridge fuse: 250 V AC, breaking capacity 35 A or ten times the rating | Farnell datasheet 3665666, V1.0 (2021-12-20) | https://www.farnell.com/datasheets/3665666.pdf |
+| P10 | STMicroelectronics DS12110, STM32H742xI/G and STM32H743xI/G, *Electrical characteristics (rev V)*, Table 119: supply current in Run mode, 480 MHz, VOS0, all peripherals enabled, code in ITCM | Rev 11, January 2026 | The Internet Archive's copy of https://www.st.com/resource/en/datasheet/stm32h743vi.pdf (the machine record's source for the controller) |
+| P11 | AVIA Semiconductor HX711, 24-bit ADC for weigh scales: SOP-16L package (body 9.9 × 3.9 mm, lead span 6.0 mm), supply 2.6 to 5.5 V, under 1.5 mA in normal operation, the typical application of its Figure 1 | V2.0 | https://e2e.ti.com/cfs-file/__key/communityserver-discussions-components-files/73/HX711.pdf (a copy of the maker's sheet) |
+| P12 | Lite-On LTV-814 series, AC-input optocoupler (the LTV-814S is the surface-mount part): operating temperature −30 to +100 °C, 5 000 Vrms isolation | The copy hosted by the part's catalogue entry C108051 | https://datasheet.lcsc.com/datasheet/pdf/bc51d065248a46be93525386c92657f3.pdf |
+| P13 | WeEn BTA204S-600B, 3Q Hi-Com triac: quick reference data (VDRM 600 V, IT(RMS) 4 A, ITSM 25 A, IH, IGT) and dynamic characteristics (dVD/dt, dIcom/dt) | Rev.02, 19 March 2025 | https://www.ween-semi.com/datasheet/BTA204S-600B.pdf (S7 of the forms record) |
+| P14 | onsemi MOC3051M, MOC3052M, MOC3053M random-phase triac driver: absolute maximum ratings (VDRM 600 V, ITSM 1 A), static dv/dt, and the applications information on snubberless operation and Figures 8 and 9 | MOC3052M/D, Rev. 4, September 2022 | https://www.onsemi.com/download/data-sheet/pdf/moc3052m-d.pdf (S5 of the forms record) |
+
+Records read as sources: `reference-machine.md`, `connector-pinouts.md`, `controller-board-function-forms.md`, `controller-board-design-constraints.md`, `component-specification.md`, `hardware/sunbeam-em7000/separation-basis.yaml`, `docs/board-manufacturer-jlcpcb.md`, `docs/board-design-method.md`. Decisions: `DEC-DEVICE-RETENTION-BOUNDARY`, `DEC-BOARD-SEPARATION-BASIS-RECORD`, `DEC-BOARD-PRE-ORDER-RULE-READINGS`, `DEC-PROOF-OF-LIFE-INTERLOCK-IN-FIRST-HARDWARE`, `DEC-IN-STREAM-PROBES-ANTICIPATED`, `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`, `DEC-CONTROLLER-BASELINE-STM32H743`, `DEC-BOARD-MANUFACTURER-JLCPCB`. Owner statements: those of § Owner intent carried in, and the lid, mains-entry and slack statements of 2026-10-20, as the machine record cites them. Nothing in this record rests on `controller-design/`, the earlier design.
+
+## Appendix: the checks
+
+One data block and one script. The data block holds every rectangle, position and rule of both floorplans and the inputs of the cost comparison; the script reads it from this file, computes every distance, surface path, area, resistance and total from it, compares the tables of this file with it, and compares what it prints with the expected output below. A builder holding this repository and any Python 3 interpreter repeats every check made here:
+
+```
+python3 -I -c "import re,sys; t=open(sys.argv[1]).read(); open(sys.argv[2],'w').write(re.search(r'^\`\`\`python\n(.*?)^\`\`\`', t, re.S|re.M).group(1))" docs/sunbeam-em7000/controller-board-division.md checks.py
+python3 -I checks.py docs/sunbeam-em7000/controller-board-division.md main
+python3 -I checks.py docs/sunbeam-em7000/controller-board-division.md wall
+python3 -I checks.py docs/sunbeam-em7000/controller-board-division.md --tables
+python3 -I checks.py docs/sunbeam-em7000/controller-board-division.md --selftest
+```
+
+`main` and `wall` print the figures quoted in the sections above and end with `all main board checks pass` or `all wall board checks pass`, or with `FAIL:` and each breach, and a non-zero status. `--tables` prints every cell of a table of this file as the data generates it and reports each that the file does not hold. `--selftest` perturbs the data, the text of the source records, the assumption tokens and the record's own text, and requires, for each perturbation, a message of the check it targets: every perturbation names that check, and a mismatch of a table of this file, which a producer can regenerate to match the data, does not count, nor does a message of another check that the perturbation happens to break. The script reads the separation basis, `connector-pinouts.md`, `reference-machine.md`, `controller-board-function-forms.md`, `controller-board-design-constraints.md` and `docs/board-manufacturer-jlcpcb.md` from their places in this repository. **Its checks are a consistency check, not a guard of the inputs** (§ How this record is built): the figures that have a source are compared with it, the assumptions are compared with their tokens, and the rest is the record's own arithmetic. The checks are these fifteen:
+
+| Guard | What it holds | A perturbation the selftest makes |
+|---|---|---|
+| 1. Outline, ceiling | The outline polygon lies inside the cavity with its tolerances; every block lies inside the outline, at least the maker's board-edge distance (read from the maker's record) from its edge, and none overlaps another; every height is under its ceiling | The outline shrunk 7 mm on the right, so blocks lie outside it; the module made 30 mm high; the edge distance weakened to 0 |
+| 2. Tabs, against the connector record | Every tab's name, as-found position, blade width and blade thickness equals the connector record's, and every row of that record is either drawn or listed as removed, with its name and as-found position (a tab both drawn and removed, or neither, fails); the pitch is at least the least as-found pitch; the X is unchanged; a pad is the blade's section with an annulus at least the maker's recommended ring; the strip is derived from the pads, the return landing's pad, the neutral pour with its shunt and the two link pours; the moves and the slack left are computed and the tables hold them; **each moved tab is needed**: brought 0.5 mm back toward its as-found place, any of them breaks a rule; **a tab the connector record has and the board does not draw is the owner's removal**, which the owner-intent table of the record states with its date: a tab the decision names that is drawn or not listed as removed, a tab listed as removed that no decision names, or a decision missing from the table, fails | A tab moved 0.3 mm toward the fixing; **a tab moved 3.1 mm with its as-found position moved with it**; the second or third tab moved 0.5 mm beyond what the rules need; the blade's thickness changed in the data, and in the connector record; the pads of two nets brought together with the pitch rule weakened; the pad of the removed tab 4 restored; **tab 4 drawn and taken off the removed list, which fails by the owner's decision and not by a path length; the owner's row taken out of the table, or its date changed**; a removed tab lost track of, or renamed |
+| 3. Every hole, against the machine record | The four mounting points and the cavity equal the machine record's rows; mains copper is at least E + 10.0 + 0.25 mm from every hole centre, and every body keeps its keep-out from it; the point 3 boss keeps lead ends, joints and heavy parts clear | A hole moved under a tab; a mounting-point row and the cavity width changed in the record; the lid keep-out weakened to 1.0 mm |
+| 4. The reed | The lower lead is within the tolerance of the machine record's sentence, which the script reads, and the upper lead is its recorded pitch above; the keep-out is centred on the midpoint, inside the outline, and clear of every block, tab pad and lid-screw circle | The reed moved 2 mm; the sentence removed from the record; the tolerance widened to 5 mm; a block placed in its keep-out |
+| 5. Creepage | The basis is read from `separation-basis.yaml`. Every pocket is at least 3.0 mm straight and 10.0 mm by surface path round the slots from every mains rectangle; each optocoupler's pins are 10.0 mm apart round their slot; **mains copper of different nets, every pair in the data, the tab pads, the return landing, the neutral pour, the shunt's lands and the link pours included, on the wall board the unpopulated confirm places' copper as well, and no pair excused for sharing a block**, is 3.0 mm and the basic 5.0 mm apart, and across the open interlock contact 3.0 mm and 10.0 mm; the interlock relay's terminals: each leg stands inside its copper by the hole's radius and the maker's ring, the coil pocket is the 12.7 mm body centred on the two contact terminals; no slot cuts copper, none is narrower than the maker's least, none is nearer copper than the maker's figure; the slot density is under the maker's | A slot shortened, on each board and for the slot between the link and the neutral pad; the signed creepage changed in the basis or in the data; the relay's two contacts 1.5 mm apart, or on one net; a relay leg moved out of its copper; two tab pads brought together; the two ends of a varistor 2 mm apart; an unpopulated confirm place's mains copper brought to 1.0 mm from the other's |
+| 6. The wall edge | Every mains rectangle of the wall board, the unpopulated confirm places' included, **every part body, and the mains lead ends of the opto-triacs**, is at least the basic creepage from the edge against the wall, with no exceptions | A mains rectangle moved to 3.0 mm, and a confirm place's; **a part body moved within 5 mm of the edge with its copper left where it was; an opto-triac's mains pins moved within 5 mm of it** |
+| 7. The heater path and the link | The wall board's chains are contiguous from the element to the return and share their copper after the triacs; every region is wide enough for 15 A; the squares, resistance, dissipation and longest run are computed. On the main board the link passes **the contact of `K_IL`, by its value and not only that a contact is named, standing between the relay's two halves on `LINE` and on `LINE1`**, and runs from the pour that holds the `LINE` tab's pad to the one that holds the `LINE1` tab's through that contact, each region lies inside its mains rectangle, is wide enough for 15 A, and the loss is under the budget at the steady supply current; the taps are on the net `LINE`, and the neutral taps leave the pour above the shunt; the `LINE1` net reaches only the relay's contact copper, the link pour and the pad of tab 1; **the neutral return runs from the pad of tab 3 through the shunt's two lands to the pour that holds the landing's pad, each touching the next and wide enough for 15 A, the landing a tab pitch from the nearest tab, and the voltage measurement has the `NEUTRAL` piece the shunt channel shares;** the loads behind the relay (read from the constraints record) are under its rating; **every load's return, the heaters' at the landing and the pumps', the valves' and the module's, ends on `NEUTRAL` copper and joins the neutral pour above the shunt and none at the pad of tab 3, the returns joined above the shunt add up to every load's return (11.01 A), and a data block with no shunt is refused by name** | A link of a chain removed; a region narrowed; the logic supply tapped from the `LINE1` net; the shunt moved off the return path (its second land lifted off the pour); the neutral tapped from the pad of tab 3, below the shunt; the least tab pitch raised so that the landing stands short of it; the shunt's first land narrowed to 4 mm; **a pump's return, and the valves' return, joined at the pad of tab 3 on the plug side; a return left out; a return ended on copper of another net; the shunt taken away, or given no part; the contact of another relay named in the link, no contact named, or the contact between the wrong two regions** |
+| 8. Coverage and owners | The functions assigned equal the forms record's headings; every owner is non-blank, a declared board or assembly, and the one the owner table names, and no function is in the table twice; every harness heading of the connector record has a connector; every kind has a row; the kinds removed or kept agree with the blocks drawn and with the step the allocation stops at, the first at which the areas fit at the spacing drawn and an exhaustive search finds an arrangement of the headers, the least spacing drawn is no less than the spacing the capacity counts, every block of a kept kind lies inside its region, and kind 6 has no block; **a kind the data marks required cites a requirement criterion in the record's row, says required, and stands outside the removal order, and a row that says required is marked in the data; every kind of the record's table is in the data and no kind of the data is without a row, so a required kind deleted from the data is refused by name, and so is a data block that marks no kind required** | A function dropped; an owner blanked, or one the record does not declare; a harness dropped; a block of a removed kind drawn; a circuit block of the kept kind 5 taken away; kind 6 recorded as given; a kind kept that the regions cannot hold; a block drawn outside its region; **the required mark removed from the supply voltage kind; the supply voltage kind, which is required, deleted from the data; every required mark deleted** |
+| 9. Heat | The controller, the sensing blocks and the opto-triacs (and, on the second wall layout, the unpopulated confirm places' optocouplers) keep their distances (A8) from **both heat sources, the module and the interlock relay**, each a source of a watt or more by the script's own figures; every low-voltage block is in a heat list; the 85 °C class's members are rated 15 K or less over the air and the parts listed outside it more; the 85 °C parts that stand under 15 mm from a source are the ones the data reports as not held, no more and no fewer, and `VMEAS` holds 15 mm from the relay; the arithmetic of why they cannot all hold, the count of every arrangement of them along the barrier column, and **the three what-if arrangements that hold a third part, each of which must break a rule**; the interlock relay keeps 15 mm from the module; **each analogue region keeps 20 mm from both sources, holds no block of another class and reaches as far as the rules leave it free**; and the relay moved right by the 3.0 mm and the 2.0 mm that a sensor 8 mm long would need is computed, with the sensing blocks it then breaks and the capacity it costs; **the two heater triacs stand at least the assumed 10.0 mm apart on their one wall (A31), and the junction rise, case limit and the wall's resistance each triac needs are computed from the forms record's figures** | An opto-triac moved to 9.5 mm from a triac; the opto-triac rule weakened to 10 mm; the analogue region stopped at Y 30.1 where the module once stood, and drawn over the relay's keep-out; the module moved 7.5 mm toward the interlock relay; the voltage measurement moved 8 mm toward the relay; a sensing block moved to 10 mm from the relay; the list of sensing blocks emptied; a part that holds reported as not held, and one that does not hold left out of the report; the voltage measurement accepted as not held from the relay; a 125 °C part left in the 85 °C class; the relay weakened to under a watt; **the coffee triac moved to 7.2 mm from the steam triac; the least distance raised to 20 mm** |
+| 10. Routes | Every net whose copper is in separate pieces has a route for a trace of the width of A15 at the maker's tolerance, with half a grid cell in addition, that keeps its distances (where a slot lies between a point and the copper, the 3.0 mm straight and the creepage round the slot) and crosses no slot; **the pumps' returns, which join by an inner layer, are left out of the search, and each is shown to have no surface route; a return that has one and is called inner fails** | A slot drawn across a valve's channel; the trace widened until a lead has no route; the margin dropped; **the valves' return, which has a surface route, called an inner-layer join** |
+| 11. Assumptions | Every `name=value` token of the Assumptions table equals the data, once, and the script knows every token | Each of the 31 tokens changed in the data and in the record's row |
+| 12. The selftest | Each perturbation of the data, of the text of the source records, of the tokens and of the record's own text names the check it targets, and counts as caught only when a message of that check is produced, so a check that stops checking is itself caught; a message about a table of the record does not count, and nor does a message of another check that the perturbation breaks by the way. A perturbation of a counted figure is caught by the counted-figure check, which names the figure | Every perturbation above (100 of the data in all), 48 changes to the record's own text (16 named: the confirm polarity, the owner's row that removes tabs 4 and 5 and its date, the series diode, the coil's feed requirement in three ways, the interlock relay's ordering code, catalogue number and thermal margin, the premise that the interlock cuts every load and its bring-up check, the wall board's orientation, a pending decision left without its pointer to the list, a pending decision that the list does not hold, a decision stated twice; and, for each of the 16 pending owner decisions, its words called "Decision made" and its pointer taken out), and 20 changes to the source records' text (the forms record's triac dissipation, junction-to-case resistance and the price that stands for the interlock relay, a tab, a tab's thickness, a mounting point, the basis, the reed, the cavity, the maker's edge distance, annular ring and track tolerance, a load current, the connector record's statement about `LINE1`, the valve relay's price, the owner's acceptance withdrawn, its figure changed to 240 V, its label taken off and its owner taken out, the breaking capacity the chain needs) |
+| 13. The valve relays, the rail and the fuses | The valve relay's contact rating against the coils' inrush, its open-contact peak against the 358 V blocked, its coil-to-contact peak against the 4.0 kV target, its switching voltage equal to the figure the owner accepted in the constraints record (not merely under it), and its price and the 12 V variant's price that stands for the interlock relay's (the 5 V variant's is not recorded) against the records; the 5 V budget summed from the sheets (each coil at the low end of its resistance tolerance) and the assumptions, the chosen module at 2.0 times or more at 70 °C and the smaller module under it; the shared fuse's load under 1 A and no sourced fuse reaching the breaking capacity | The switching voltage made 230 V, and 240 V; the open contacts made 200 V; the smaller module counted adequate; the rail loaded beyond the module; a coil taken at its nominal resistance; a fuse found at 6 kA |
+| 14. What is counted | The header pins and header types (by ways and pitch), the joints of every part, the Extended types and their fee, the current sensors on the rail, the kinds' areas, and the wall board's Extended types, joints and saving are counted from the blocks and must equal what the text and the tables state | A pin added to a header; a header's pitch changed, in a harness header and in the weight headers; a joint added to the module; a fuse holder taken out of a pump strip (each changes a count the record states, and the counted-figure check names it) |
+| 15. Required statements, the pending owner decisions and the relay's ratings | The statements the record must keep, word for word: the coil's feed requirement, the confirm polarity, the pump drives' series diode, the interlock relay's 5 V ordering code and that its catalogue number and price are not recorded, that it has no sourced thermal margin, that the claim that the interlock cuts every load rests on the owner's trace and is not proven until the bring-up continuity check, that this check is among the open items, and the wall board's orientation to the wall; the relay's safety-approval (VDE) ratings against the current it carries and its overload band; the copper's temperature-rise estimate, from the constants of the data; every pending owner decision stated once in the record's list with its title and its words, pointed to from the section it concerns, and no other mention of one without the pointer | Each statement taken out or reworded; the coil's feed paragraph deleted; each of the 16 decisions called made and not pending, and its pointer taken out; a pending decision mentioned with no pointer; a decision stated twice; a decision dropped from the data, retitled, or given a home that does not point to it; the ratings taken out, or the highest-ambient rating put under the overload band |
+
+### The data
+
+One block holds the geometry of both boards and every input the checks use that no source record holds. Rectangles are `[x0, y0, x1, y1]`; the main board is in the datum frame and the wall board in its own `u`, `v` frame. A mains rectangle is `[id, rectangle, net]`; a net written `LINE|NEUTRAL` is on both.
+
+```floorplan-data
+{
+  "note": "All lengths in millimetres. A rectangle is [x0, y0, x1, y1] (main board: datum frame; wall board: u along the wall edge, v away from it).",
+  "basis": {"clearance": 3.0, "creepage": 10.0, "band": 102.0, "edge_min": 0.3},
+  "maker": {"ring": 0.2},
+  "cavity": {"w": 133.5, "h": 130.5, "tol": 0.5, "maker_tol": 0.2},
+  "ceiling": {"interior": 27.9, "edge": 23.3, "edge_band": 2.0},
+  "fixing": {"E": 3.0, "draw_tol": 0.25, "lid_keep": 3.5},
+  "outline": [[1.0, 2.0], [132.0, 2.0], [132.0, 127.0], [1.0, 127.0]],
+  "holes": {"P1": [6.5, 6.5], "P2": [126.7, 6.5], "P4": [127.0, 123.5]},
+  "boss": {"P3": [6.5, 123.5]},
+  "cut_centre": [133.5, 103.5],
+  "tabs": {
+    "x": 8.5,
+    "ring": 0.32,
+    "blade": 6.36,
+    "thick": 0.81,
+    "pitch": 8.3,
+    "joints": 2,
+    "slack_estimate": 10.0,
+    "height": 9.9,
+    "list": [
+      {"n": 1, "name": "LINE1", "y": 20.5, "found": 13.6},
+      {"n": 2, "name": "LINE", "y": 29.3, "found": 22.3},
+      {"n": 3, "name": "NEUTRAL", "y": 38.1, "found": 30.6},
+      {"n": 6, "name": "COFVALVE", "y": 79.1, "found": 79.1},
+      {"n": 7, "name": "COFFPUMP", "y": 91.4, "found": 91.4},
+      {"n": 8, "name": "STEAMPUMP", "y": 101.2, "found": 101.2},
+      {"n": 9, "name": "HOTVALVE", "y": 111.4, "found": 111.4}
+    ],
+    "removed": [{"n": 4, "name": "STMHEATER", "found": 52.9}, {"n": 5, "name": "COFHEATER", "found": 66.2}],
+    "removal": {"row": "The main board's tabs 4 and 5", "date": "2026-10-24"}
+  },
+  "reed": {"recorded": [122.0, 17.5], "lower": [122.0, 17.5], "pitch": 20.0, "tol": 1.0, "hand_r": 5.0, "strip_w": 4.0},
+  "intrusions": {
+    "one_x0": 58.0,
+    "one_x1": 105.5,
+    "one_straight": 20.0,
+    "one_cx": 81.75,
+    "one_r": 23.75,
+    "two_y1": 3.0,
+    "one_h": 3.5,
+    "two_h": 1.85,
+    "lead_room": 0.5,
+    "pos_tol": 0.5
+  },
+  "slot_width_min": 1.0,
+  "slot_copper": 0.2,
+  "slot_density": 80.0,
+  "trace": {"w": 0.3, "tol": 0.2},
+  "loads": {"coffee": 4.8, "steam": 5.38, "coffee_pump": 0.46, "steam_pump": 0.19, "coil_steady": 0.129, "coil_inrush": 0.203, "overload": 15.0},
+  "relay": {"rating_a": 20.0, "endurance_ops": 30000, "coil_ohm": 62.0, "coil_tol": 0.1, "rise_k": 55.0, "ambient_c": 125.0, "vde": [[105.0, 18.0], [125.0, 16.0]]},
+  "copper_rise": {"k": 0.048, "area_exp": 0.725, "rise_exp": 0.44, "oz_um": 35.0},
+  "open_contact": {"nets": ["LINE", "LINE1"]},
+  "owner_decisions": [
+    {"id": "D1", "title": "The tab moves, or an amendment of the 10.0 mm fixing rule", "home": "The fixing rule and the tabs that move"},
+    {"id": "D2", "title": "Whether the two mains-presence confirms come back onto the wall board", "home": "The heater wall board"},
+    {"id": "D3", "title": "Where the supply current is sensed", "home": "The anticipated channel kinds"},
+    {"id": "D4", "title": "The voltage measurement's place and the 85 °C stack", "home": "Heat"},
+    {"id": "D5", "title": "One shared fuse for both pumps, or for the pumps and the valves", "home": "The fuses"},
+    {"id": "D6", "title": "The smaller IRM-10-5 as the logic supply", "home": "The logic supply against this board"},
+    {"id": "D7", "title": "Whether the two wall-board varistors stay", "home": "The heater wall board"},
+    {"id": "D8", "title": "A blade terminal or a solder pad for the return landing", "home": "The path of the heater current"},
+    {"id": "D9", "title": "The wall board as its own board, or a section that breaks off the main board", "home": "The heater wall board"},
+    {"id": "D10", "title": "The extended-part fee against hand-sourcing the parts", "home": "What the owner fits by hand"},
+    {"id": "D11", "title": "The size of the wall cut", "home": "The heater wall board"},
+    {"id": "D12", "title": "The removal-order priority of kinds 3, 4 and 5", "home": "The anticipated channel kinds"},
+    {"id": "D13", "title": "2 oz copper against off-board wiring", "home": "Layer counts"},
+    {"id": "D14", "title": "Where the mains-entry assembly is mounted", "home": "Every function has one owner"},
+    {"id": "D15", "title": "A basic mains-to-earth pair in the separation basis", "home": "The heater wall board"},
+    {"id": "D16", "title": "The fuse and a varistor on the main board in place of the appliance inlet", "home": "The fuses"}
+  ],
+  "link": {
+    "budget_w": 0.5,
+    "strip": [{"id": "LK_L", "rect": [5.0, 28.55, 17.0, 34.3], "net": "LINE"}, {"id": "LK_L1", "rect": [5.0, 19.775, 17.0, 25.55], "net": "LINE1"}],
+    "chain": [
+      {"id": "LK_L from the tab centre to X = 17", "in": "LK_L", "rect": [8.5, 28.55, 17.0, 34.3], "axis": "x"},
+      {"id": "K_IL.a to its legs", "in": "K_IL.a", "rect": [17.0, 28.55, 23.0, 34.3], "axis": "x"},
+      {"contact": "K_IL"},
+      {"id": "K_IL.b from its legs", "in": "K_IL.b", "rect": [17.0, 19.775, 23.0, 25.55], "axis": "x"},
+      {"id": "LK_L1 from X = 17 to the tab centre", "in": "LK_L1", "rect": [8.5, 19.775, 17.0, 25.55], "axis": "x"}
+    ],
+    "taps": [
+      {"from": "LK_L", "net": "LINE", "to": ["MODULE", "TIMING", "VMEAS"]},
+      {"from": "LK_N", "net": "NEUTRAL", "to": ["MODULE", "TIMING", "VMEAS"]}
+    ]
+  },
+  "return": {
+    "landing": {"id": "WB_RET", "y": 46.6, "net": "NEUTRAL"},
+    "pour": {"id": "LK_N", "rect": [5.0, 45.825, 12.0, 49.0], "net": "NEUTRAL"},
+    "shunt": {
+      "id": "I_SHUNT",
+      "rect": [5.0, 38.825, 12.0, 45.825],
+      "lands": [["I_SHUNT.a", [5.0, 38.825, 12.0, 40.725]], ["I_SHUNT.b", [5.0, 43.925, 12.0, 45.825]]],
+      "fit": [["shunt", 0]],
+      "parts": 2
+    },
+    "module_pf": 0.5,
+    "branches": [
+      {"load": "coffee element", "amps": "coffee", "via": "WB_RET", "joins": "LK_N", "layer": "surface"},
+      {"load": "steam element", "amps": "steam", "via": "WB_RET", "joins": "LK_N", "layer": "surface"},
+      {"load": "coffee pump", "amps": "coffee_pump", "via": "P_C.N", "joins": "LK_N", "layer": "inner"},
+      {"load": "steam pump", "amps": "steam_pump", "via": "P_S.N", "joins": "LK_N", "layer": "inner"},
+      {"load": "valve coils", "amps": "coil_steady", "via": "VFUSE.n", "joins": "LK_N", "layer": "surface"},
+      {"load": "logic supply", "amps": "module", "via": "MODULE.n", "joins": "LK_N", "layer": "surface"}
+    ]
+  },
+  "fallback": {"anchor": "K_V2", "width": 7.0},
+  "mains_blocks": [
+    {
+      "id": "TIMING",
+      "fn": "Supply-timing front end: AC-input optocoupler and its series resistors",
+      "body": [19.8, 2.5, 65.3, 9.5],
+      "mains": [["TIMING.L", [19.8, 2.5, 29.0, 9.5], "LINE"], ["TIMING.N", [37.0, 2.5, 55.3, 9.5], "NEUTRAL"]],
+      "pockets": [[60.3, 2.7, 65.3, 8.7]],
+      "pins": [],
+      "h": 5.0,
+      "dip": {"centre": [57.8, 6.0], "row": 5.0, "pin_dy": 1.27, "pins": 2},
+      "fit": [["ac_opto", 0]]
+    },
+    {
+      "id": "K_IL",
+      "fn": "Relay K_IL, the proof-of-life interlock, in the LINE to LINE1 link: contact end left, coil end right",
+      "body": [17.0, 19.775, 58.0, 34.3],
+      "mains": [["K_IL.a", [17.0, 28.55, 25.0, 34.3], "LINE"], ["K_IL.b", [17.0, 19.775, 25.0, 25.55], "LINE1"]],
+      "pockets": [[50.0, 20.7, 58.0, 33.4]],
+      "pins": [[18.0, 23.27], [23.0, 23.27], [18.0, 30.83], [23.0, 30.83], [55.5, 23.27], [55.5, 30.83]],
+      "h": 15.7,
+      "heat": [17.0, 20.7, 58.0, 33.4],
+      "terminals": {"centre_y": 27.05, "pitch_y": 7.56, "legs_x": [18.0, 23.0], "hole": 1.6, "coil_x": 55.5, "body_w": 12.7},
+      "fit": [["k_il", "pins"]]
+    },
+    {
+      "id": "VFUSE",
+      "fn": "Shared fuse holder for both valve branches",
+      "body": [17.0, 45.5, 26.0, 69.5],
+      "mains": [["VFUSE.v", [17.0, 64.5, 26.0, 69.5], "VFUSE"], ["VFUSE.n", [17.0, 45.5, 26.0, 50.5], "NEUTRAL"]],
+      "pockets": [],
+      "pins": [],
+      "h": 15.0,
+      "fit": [["holder", 4], ["clip", 0]]
+    },
+    {
+      "id": "VMEAS",
+      "fn": "Supply-voltage measurement: series divider on LINE and NEUTRAL, an isolating part and its low-voltage output",
+      "body": [32.5, 48.4, 70.0, 53.4],
+      "mains": [["VMEAS.N", [32.5, 48.4, 43.5, 53.4], "NEUTRAL"], ["VMEAS.L", [50.0, 48.4, 60.0, 53.4], "LINE"]],
+      "pockets": [[65.0, 48.4, 70.0, 53.4]],
+      "pins": [],
+      "h": 5.0,
+      "dip": {"centre": [62.5, 50.9], "row": 3.81, "pin_dy": 2.54, "pins": 3},
+      "hot": [58.0, 48.4, 68.0, 53.4]
+    },
+    {
+      "id": "MODULE",
+      "fn": "Logic supply, IRM-20-5: AC pins left, DC pins right",
+      "body": [32.5, 53.4, 84.9, 80.6],
+      "mains": [["MODULE.n", [32.9, 53.6, 38.9, 59.6], "NEUTRAL"], ["MODULE.l", [32.9, 74.4, 38.9, 80.4], "LINE"]],
+      "pockets": [[76.5, 53.9, 84.9, 67.9]],
+      "pins": [[35.9, 56.6], [35.9, 77.4], [80.9, 56.6], [80.9, 64.6]],
+      "h": 24.0,
+      "fit": [["module", "pins"]]
+    },
+    {
+      "id": "K_V1",
+      "fn": "Relay K_V1, two-way valve (tab 6): contact end left, coil end right",
+      "body": [44.5, 80.6, 62.1, 90.7],
+      "mains": [["K_V1", [44.5, 81.225, 47.26, 90.075], "COFVALVE"]],
+      "pockets": [[58.9, 80.6, 62.1, 90.7]],
+      "pins": [[60.7, 81.85], [60.7, 89.45], [45.46, 82.475], [45.46, 88.825]],
+      "h": 12.7,
+      "pad_hole": 1.3,
+      "fit": [["valve_relay", "pins"]]
+    },
+    {
+      "id": "P_C",
+      "fn": "Coffee-pump drive: fuse holder, DPAK triac, DIP-6 opto-triac with its slot",
+      "body": [20.0, 93.1, 65.5, 102.1],
+      "mains": [["P_C", [20.0, 93.1, 46.5, 102.1], "COFFPUMP"], ["P_C.N", [51.5, 93.1, 55.5, 102.1], "NEUTRAL"]],
+      "pockets": [[60.5, 93.1, 65.5, 102.1]],
+      "pins": [],
+      "h": 15.0,
+      "dip": {"centre": [58.0, 97.6], "row": 3.81, "pin_dy": 2.54, "pins": 3},
+      "hot": [53.0, 93.1, 63.0, 102.1],
+      "fit": [["holder", 4], ["clip", 0], ["pump_triac", 0], ["pump_opto", 0]]
+    },
+    {
+      "id": "P_S",
+      "fn": "Steam-pump drive",
+      "body": [20.0, 105.1, 65.5, 114.1],
+      "mains": [["P_S", [20.0, 105.1, 46.5, 114.1], "STEAMPUMP"], ["P_S.N", [51.5, 105.1, 55.5, 114.1], "NEUTRAL"]],
+      "pockets": [[60.5, 105.1, 65.5, 114.1]],
+      "pins": [],
+      "h": 15.0,
+      "dip": {"centre": [58.0, 109.6], "row": 3.81, "pin_dy": 2.54, "pins": 3},
+      "hot": [53.0, 105.1, 63.0, 114.1],
+      "fit": [["holder", 4], ["clip", 0], ["pump_triac", 0], ["pump_opto", 0]]
+    },
+    {
+      "id": "K_V2",
+      "fn": "Relay K_V2, three-way valve (tab 9): contact end left, coil end right",
+      "body": [44.5, 116.5, 62.1, 126.6],
+      "mains": [["K_V2", [44.5, 117.125, 47.26, 125.975], "HOTVALVE"]],
+      "pockets": [[58.9, 116.5, 62.1, 126.6]],
+      "pins": [[60.7, 117.75], [60.7, 125.35], [45.46, 118.375], [45.46, 124.725]],
+      "h": 12.7,
+      "pad_hole": 1.3,
+      "fit": [["valve_relay", "pins"]]
+    }
+  ],
+  "lv_blocks": [
+    {
+      "id": "MCU",
+      "fn": "Controller, STM32H743VIT6, decoupling, crystals, reset, boot, programming header, 3.3 V regulator",
+      "rect": [72.0, 95.6, 104.3, 126.7],
+      "tht": false,
+      "fit": [["mcu", 0]]
+    },
+    {
+      "id": "CON2",
+      "fn": "Panel harness header CON2, 9 ways, 2.0 mm pitch",
+      "rect": [124.5, 76.0, 131.5, 96.5],
+      "tht": true,
+      "h": 15.0,
+      "conn": {"ways": 9, "pitch": 2.0}
+    },
+    {
+      "id": "SP2",
+      "fn": "Gauge harness header SP2, 9 ways, 2.0 mm pitch",
+      "rect": [124.5, 98.0, 131.5, 118.5],
+      "tht": true,
+      "h": 15.0,
+      "conn": {"ways": 9, "pitch": 2.0}
+    },
+    {
+      "id": "KNOB",
+      "fn": "Knob microswitch header, 4 ways, 1.95 mm pitch",
+      "rect": [113.6, 108.0, 124.0, 115.0],
+      "tht": true,
+      "h": 15.0,
+      "conn": {"ways": 4, "pitch": 1.95}
+    },
+    {
+      "id": "FLOW",
+      "fn": "Flow meter header CZ1, 3 ways, 2.54 mm pitch",
+      "rect": [113.9, 98.0, 124.0, 105.5],
+      "tht": true,
+      "h": 15.0,
+      "conn": {"ways": 3, "pitch": 2.54}
+    },
+    {
+      "id": "TEMP_C",
+      "fn": "Coffee-block thermistor header RT1, 2 ways, 2.54 mm",
+      "rect": [117.0, 86.0, 124.0, 93.5],
+      "tht": true,
+      "h": 15.0,
+      "conn": {"ways": 2, "pitch": 2.54}
+    },
+    {
+      "id": "TEMP_S",
+      "fn": "Steam-block thermistor header, 2 ways, 2.54 mm",
+      "rect": [117.0, 76.0, 124.0, 83.5],
+      "tht": true,
+      "h": 15.0,
+      "conn": {"ways": 2, "pitch": 2.54}
+    },
+    {
+      "id": "TEMP_W",
+      "fn": "Wand thermistor header, 2 ways, 2.54 mm, fitted rotated 180 degrees",
+      "rect": [114.0, 119.0, 121.0, 126.5],
+      "tht": true,
+      "h": 15.0,
+      "conn": {"ways": 2, "pitch": 2.54}
+    },
+    {"id": "DRV_K1", "fn": "Coil driver for K_V1: transistor, flyback diode, pull-down", "rect": [65.5, 80.6, 72.0, 90.7], "tht": false},
+    {"id": "DRV_K2", "fn": "Coil driver for K_V2", "rect": [65.5, 116.5, 72.0, 126.6], "tht": false},
+    {"id": "DRV_PC", "fn": "LED drive for the coffee pump's opto-triac", "rect": [66.0, 93.1, 72.0, 102.1], "tht": false},
+    {"id": "DRV_PS", "fn": "LED drive for the steam pump's opto-triac", "rect": [66.0, 105.1, 72.0, 114.1], "tht": false},
+    {"id": "DRV_TIM", "fn": "Output conditioning of the timing optocoupler", "rect": [66.5, 2.7, 72.5, 8.7], "tht": false},
+    {
+      "id": "FE_GAUGE",
+      "fn": "Gauge drive: octal buffer, five pull-downs, two decoupling capacitors",
+      "rect": [72.0, 80.6, 93.5, 92.6],
+      "tht": false
+    },
+    {"id": "DRV_HEAT", "fn": "LED-drive stages for the two heater opto-triacs", "rect": [94.0, 79.8, 102.5, 91.8], "tht": false},
+    {
+      "id": "FE_PANEL",
+      "fn": "Operator panel: gate switch for the anode rail, five key pull-ups, buzzer switch",
+      "rect": [105.0, 75.0, 115.0, 91.0],
+      "tht": false
+    },
+    {"id": "FE_NTC", "fn": "Three thermistor dividers with filter capacitors", "rect": [105.5, 92.5, 113.5, 106.5], "tht": false},
+    {
+      "id": "FE_FLOW",
+      "fn": "Flow input: pull-up, series resistor, filter capacitor, Schmitt buffer footprint and its link",
+      "rect": [105.0, 107.5, 113.0, 117.5],
+      "tht": false
+    },
+    {
+      "id": "FE_STMD",
+      "fn": "Steam-transducer digital header protection: two series resistors, two pull-ups, two clamps",
+      "rect": [105.0, 118.5, 113.0, 126.5],
+      "tht": false
+    },
+    {
+      "id": "POL",
+      "fn": "Proof-of-life circuit that drives K_IL's coil, with the reduced-hold drive (mechanism not chosen)",
+      "rect": [70.5, 31.0, 82.5, 43.0],
+      "tht": false
+    },
+    {"id": "BREW_D_C", "fn": "Brew-path pressure, digital header protection", "rect": [87.5, 31.0, 97.5, 39.0], "tht": false},
+    {"id": "FE_KNOB", "fn": "Knob microswitch inputs: two pull-ups and two filter capacitors", "rect": [71.0, 43.5, 79.0, 49.5], "tht": false},
+    {"id": "FE_WATER", "fn": "Tank-level input conditioning and the low-water indicator sink", "rect": [108.5, 32.0, 116.5, 40.0], "tht": false},
+    {
+      "id": "IN_COND",
+      "fn": "Input conditioning for the zero crossing and the two mains-presence inputs",
+      "rect": [98.0, 31.0, 108.0, 39.0],
+      "tht": false
+    },
+    {
+      "id": "WB_LV10",
+      "fn": "Header for the heater wall board's low-voltage cable, 10 ways, 2.54 mm",
+      "rect": [123.7, 44.5, 131.2, 72.5],
+      "tht": true,
+      "h": 15.0,
+      "region": "hdr",
+      "conn": {"ways": 10, "pitch": 2.54}
+    },
+    {
+      "id": "STM_D",
+      "fn": "Steam-transducer digital header, 4 ways (3V3, GND, SCL, SDA)",
+      "rect": [93.0, 65.3, 100.5, 77.9],
+      "tht": true,
+      "h": 15.0,
+      "region": "hdr",
+      "conn": {"ways": 4, "pitch": 2.54}
+    },
+    {
+      "id": "BREW_D",
+      "fn": "Brew-path pressure digital header, 4 ways",
+      "rect": [108.1, 44.5, 115.6, 57.1],
+      "tht": true,
+      "h": 15.0,
+      "region": "hdr",
+      "kind": 12,
+      "conn": {"ways": 4, "pitch": 2.54}
+    },
+    {
+      "id": "PT1_H",
+      "fn": "In-stream probe 1 header, 4 ways",
+      "rect": [115.9, 44.5, 123.4, 57.1],
+      "tht": true,
+      "h": 15.0,
+      "region": "hdr",
+      "kind": 11,
+      "conn": {"ways": 4, "pitch": 2.54}
+    },
+    {
+      "id": "BREW_A",
+      "fn": "Brew-path pressure analogue header, 4 ways",
+      "rect": [108.1, 57.4, 115.6, 70.0],
+      "tht": true,
+      "h": 15.0,
+      "region": "hdr",
+      "kind": 12,
+      "conn": {"ways": 4, "pitch": 2.54}
+    },
+    {
+      "id": "PT2_H",
+      "fn": "In-stream probe 2 header, 4 ways",
+      "rect": [115.9, 57.4, 123.4, 70.0],
+      "tht": true,
+      "h": 15.0,
+      "region": "hdr",
+      "kind": 11,
+      "conn": {"ways": 4, "pitch": 2.54}
+    },
+    {
+      "id": "SPARE_A",
+      "fn": "Spare analogue header for the steam transducer's analogue fallback, 4 ways (5V, 3V3, GND, input)",
+      "rect": [85.2, 44.5, 92.7, 57.1],
+      "tht": true,
+      "h": 15.0,
+      "region": "hdr",
+      "conn": {"ways": 4, "pitch": 2.54}
+    },
+    {
+      "id": "SPARE_AN2_H",
+      "fn": "Second spare analogue header, 4 ways",
+      "rect": [85.2, 57.4, 92.7, 70.0],
+      "tht": true,
+      "h": 15.0,
+      "region": "hdr",
+      "kind": 7,
+      "conn": {"ways": 4, "pitch": 2.54}
+    },
+    {
+      "id": "CURR1_H",
+      "fn": "Current-sensing header, first channel, 3 ways",
+      "rect": [93.0, 44.5, 100.5, 54.6],
+      "tht": true,
+      "h": 15.0,
+      "region": "hdr",
+      "kind": 8,
+      "conn": {"ways": 3, "pitch": 2.54}
+    },
+    {
+      "id": "PT1_C",
+      "fn": "In-stream temperature converter 1: RTD-to-digital converter, reference resistor, capacitors",
+      "rect": [76.5, 3.0, 90.5, 13.0],
+      "tht": false,
+      "region": "ana",
+      "kind": 11
+    },
+    {"id": "PT2_C", "fn": "In-stream temperature converter 2", "rect": [91.0, 3.0, 105.0, 13.0], "tht": false, "region": "ana", "kind": 11},
+    {
+      "id": "FE_SPAREA",
+      "fn": "Spare analogue input (the steam transducer's analogue fallback): divider, filter, series resistor, clamp",
+      "rect": [105.5, 3.0, 115.5, 11.0],
+      "tht": false,
+      "region": "ana"
+    },
+    {
+      "id": "BREW_A_C",
+      "fn": "Brew-path pressure, analogue fallback: divider, filter, clamp",
+      "rect": [78.0, 14.5, 88.0, 22.5],
+      "tht": false,
+      "region": "ana",
+      "kind": 12
+    },
+    {
+      "id": "SPARE_AN2_C",
+      "fn": "A second spare analogue input: divider, filter, clamp",
+      "rect": [88.4, 14.5, 97.8, 22.5],
+      "tht": false,
+      "region": "ana",
+      "kind": 7
+    },
+    {
+      "id": "CURR1_C",
+      "fn": "Current-sensing channel 1: burden and filter",
+      "rect": [98.2, 14.5, 104.2, 22.5],
+      "tht": false,
+      "region": "ana",
+      "kind": 8
+    },
+    {
+      "id": "I_C",
+      "fn": "Heater current measurement: its conditioning on the main board",
+      "rect": [104.6, 14.5, 110.6, 22.5],
+      "tht": false,
+      "region": "ana",
+      "kind": 9
+    },
+    {
+      "fn": "Weight channel 1 load-cell header, 5 ways, 2.0 mm",
+      "tht": true,
+      "h": 15.0,
+      "rect": [100.8, 44.5, 107.8, 57.0],
+      "id": "WT1_H",
+      "region": "hdr",
+      "kind": 2,
+      "conn": {"ways": 5, "pitch": 2.0}
+    },
+    {
+      "fn": "Weight channel 2 load-cell header, 5 ways, 2.0 mm",
+      "tht": true,
+      "h": 15.0,
+      "rect": [100.8, 57.3, 107.8, 69.8],
+      "id": "WT2_H",
+      "region": "hdr",
+      "kind": 2,
+      "conn": {"ways": 5, "pitch": 2.0}
+    },
+    {
+      "id": "WT1_C",
+      "fn": "Weight channel 1: HX711-class amplifier (SOP-16) and its passives",
+      "rect": [78.0, 22.9, 97.0, 30.1],
+      "tht": false,
+      "region": "ana",
+      "kind": 2
+    },
+    {
+      "id": "WT2_C",
+      "fn": "Weight channel 2: HX711-class amplifier (SOP-16) and its passives",
+      "rect": [97.5, 22.9, 116.5, 30.1],
+      "tht": false,
+      "region": "ana",
+      "kind": 2
+    },
+    {
+      "id": "VM_C",
+      "fn": "Supply voltage measurement: conditioning of the isolated output",
+      "rect": [116.0, 3.0, 122.7, 10.2],
+      "tht": false,
+      "region": "ana",
+      "kind": 1
+    },
+    {
+      "id": "CURR2_C",
+      "fn": "Current-sensing channel 2: burden and filter",
+      "rect": [111.0, 14.5, 117.0, 22.5],
+      "tht": false,
+      "region": "ana",
+      "kind": 5
+    },
+    {
+      "id": "CURR2_H",
+      "fn": "Current-sensing header, second channel, 3 ways",
+      "rect": [93.0, 54.9, 100.5, 65.0],
+      "tht": true,
+      "h": 15.0,
+      "region": "hdr",
+      "kind": 5,
+      "conn": {"ways": 3, "pitch": 2.54}
+    }
+  ],
+  "reed_block_fn": "Tank reed element pads, hand-fitted, with its body strip and hand access",
+  "slots": [
+    {"id": "SL_LINK", "rect": [1.0, 26.55, 31.0, 27.55]},
+    {"id": "SL_LN", "rect": [1.0, 35.3, 19.0, 36.3]},
+    {"id": "SL_TIM", "rect": [57.3, 2.0, 58.3, 12.5]},
+    {"id": "SL_VM", "rect": [62.0, 43.4, 63.0, 58.4]},
+    {"id": "SL_VP", "rect": [36.0, 91.1, 67.5, 92.1]},
+    {"id": "SL_PP", "rect": [17.0, 103.1, 57.5, 104.1]},
+    {"id": "SL_PV", "rect": [36.0, 115.1, 67.5, 116.1]},
+    {"id": "SL_PUMPS", "rect": [57.5, 91.1, 58.5, 116.1]}
+  ],
+  "route_groups": {"LINE": "LINE|NEUTRAL", "NEUTRAL": "LINE|NEUTRAL"},
+  "reach": {"CON2": 35, "SP2": 35, "KNOB": 35, "FLOW": 35, "TEMP_C": 35, "TEMP_S": 60, "TEMP_W": 60},
+  "heat": {
+    "sources": ["MODULE", "K_IL"],
+    "source_w": 1.0,
+    "air_c": 70.0,
+    "class_k": 15.0,
+    "limits": {"mcu": 15.0, "sense": 20.0, "relay": 15.0, "opto": 20.0, "class": 15.0, "triac": 10.0},
+    "mcu": ["MCU"],
+    "sense": ["FE_NTC", "PT1_C", "PT2_C", "BREW_A_C", "SPARE_AN2_C", "CURR1_C", "I_C", "FE_SPAREA", "WT1_C", "WT2_C", "VM_C", "CURR2_C"],
+    "digital": ["FE_GAUGE", "POL", "DRV_HEAT"],
+    "other": ["DRV_K1", "DRV_K2", "DRV_PC", "DRV_PS", "DRV_TIM", "FE_PANEL", "FE_FLOW", "FE_STMD", "BREW_D_C", "FE_KNOB", "FE_WATER", "IN_COND"],
+    "class85": [
+      {"id": "K_V1", "limit_c": 85.0},
+      {"id": "K_V2", "limit_c": 85.0},
+      {"id": "P_C", "limit_c": 85.0},
+      {"id": "P_S", "limit_c": 85.0},
+      {"id": "VMEAS", "limit_c": 85.0}
+    ],
+    "outside": [{"id": "TIMING", "limit_c": 100.0}],
+    "accepted": [["K_V1", "MODULE"], ["P_C", "MODULE"], ["VMEAS", "MODULE"]],
+    "required_held": [["VMEAS", "K_IL"]]
+  },
+  "regions": {
+    "gap": {"hdr": 0.3, "ana": 0.4},
+    "alternatives": [[3, 4], [3, 5], [4, 5], [3], [4], [5]],
+    "hdr": [{"id": "H_A", "rect": [85.0, 44.5, 105.0, 78.0]}, {"id": "H_B", "rect": [105.0, 44.5, 131.5, 74.5]}],
+    "ana": [
+      {"id": "AR_a", "rect": [76.5, 3.0, 117.0, 13.0]},
+      {"id": "AR_b", "rect": [78.0, 13.0, 117.0, 31.0]},
+      {"id": "AR2", "rect": [117.0, 3.0, 123.2, 11.5]}
+    ],
+    "strip_h": 7.0,
+    "other": {},
+    "top_of": "AR_b",
+    "relay_bound": ["AR_a", "AR_b"]
+  },
+  "kinds": [
+    {"n": 1, "name": "Supply voltage measurement", "blocks": ["VMEAS", "VM_C"], "fixed": true, "required": true},
+    {"n": 2, "name": "Weight-based endpoint, two load-cell amplifiers", "blocks": ["WT1_H", "WT2_H", "WT1_C", "WT2_C"], "rank": 4},
+    {
+      "n": 3,
+      "name": "Further temperature and pressure inputs of the kinds in use",
+      "hdr": [[7.0, 7.5], [7.0, 7.5], [7.5, 12.6]],
+      "ana": [[10.0, 8.0]],
+      "rank": 1
+    },
+    {
+      "n": 4,
+      "name": "Direct group-head instrumentation, two channels",
+      "hdr": [[7.5, 10.1], [7.5, 10.1]],
+      "ana": [[6.0, 8.0], [6.0, 8.0]],
+      "rank": 2
+    },
+    {"n": 5, "name": "A second current-sensing channel", "rank": 3, "sensor": true, "blocks": ["CURR2_H", "CURR2_C"]},
+    {"n": 6, "name": "A further switched output, such as another valve", "none": true, "fixed": true},
+    {"n": 7, "name": "A spare analogue input", "blocks": ["SPARE_AN2_H", "SPARE_AN2_C"], "fixed": true},
+    {"n": 8, "name": "Current sensing, first channel", "blocks": ["CURR1_H", "CURR1_C"], "fixed": true, "sensor": true},
+    {"n": 9, "name": "Total supply current measurement", "blocks": ["I_C"], "fixed": true, "sensor": true, "shunt": true},
+    {"n": 10, "name": "Real-time clock", "blocks": [], "fixed": true},
+    {"n": 11, "name": "In-stream temperature, two PT1000 probes", "blocks": ["PT1_H", "PT2_H", "PT1_C", "PT2_C"], "fixed": true},
+    {"n": 12, "name": "Brew-path pressure transducer", "blocks": ["BREW_D", "BREW_A", "BREW_D_C", "BREW_A_C"], "fixed": true}
+  ],
+  "functions": [
+    {"name": "Controller", "owner": "main"},
+    {"name": "Coffee element switching and steam element switching", "owner": "wall"},
+    {"name": "Heater gate drive, both channels", "owner": "main"},
+    {"name": "Coffee pump switching and steam pump switching", "owner": "main"},
+    {"name": "Two-way valve switching and three-way valve switching", "owner": "main"},
+    {"name": "Supply-timing front end", "owner": "main"},
+    {"name": "Coffee, steam and wand temperature sensing", "owner": "main"},
+    {"name": "Flow sensing", "owner": "main"},
+    {"name": "Steam-path pressure sensing", "owner": "steam path"},
+    {"name": "Gauge drive, both gauges", "owner": "main"},
+    {"name": "Heater mains-presence confirm", "owner": "wall"},
+    {"name": "Low-water indication, visual", "owner": "main"},
+    {"name": "Operator panel: keys, indicators, buzzer", "owner": "main"},
+    {"name": "Low-voltage supply (the logic supply)", "owner": "main"},
+    {
+      "name": "Wiring, connectors, mains-rated terminals",
+      "owner": "main and wall",
+      "split": "each board carries the connectors of the harnesses that reach it"
+    },
+    {"name": "Proof-of-life interlock", "owner": "main"},
+    {"name": "Mains inlet filter", "owner": "inlet"}
+  ],
+  "extra_channels": ["Tank level (the reed element)", "Control-knob microswitch inputs"],
+  "harnesses": [
+    {"source": "Front panel button and indicator board", "connector": "CON2"},
+    {"source": "Gauge and water-indicator board", "connector": "SP2"},
+    {"source": "Knob microswitches", "connector": "KNOB"},
+    {"source": "Flow meter", "connector": "FLOW"},
+    {"source": "Temperature sensors", "connector": "TEMP_C TEMP_S TEMP_W"},
+    {"source": "The nine terminals", "connector": "tabs 1 to 9"}
+  ],
+  "wall": {
+    "size": [57.0, 42.5],
+    "standoff": 5.0,
+    "blocks": [
+      {
+        "id": "OUT_S",
+        "fn": "Steam element out: 6.3 mm blade terminal, wire from the in-line blade joiner of the steam element lead",
+        "body": [1.0, 5.0, 8.0, 12.0],
+        "mains": [["OUT_S", [1.0, 5.0, 8.0, 12.0], "S"]],
+        "pockets": [],
+        "fit": [["terminal", 2]]
+      },
+      {
+        "id": "TRI_S",
+        "fn": "Steam triac BTA16-600BRG, insulated TO-220AB, tab bolted to the wall, leads bent to the pads",
+        "body": [11.0, 5.0, 21.4, 10.5],
+        "mains": [],
+        "pockets": [],
+        "fit": [["triac", 3]]
+      },
+      {"id": "TRI_C", "fn": "Coffee triac", "body": [35.6, 5.0, 46.0, 10.5], "mains": [], "pockets": [], "fit": [["triac", 3]]},
+      {
+        "id": "OUT_C",
+        "fn": "Coffee element out: blade terminal, wire from the in-line blade joiner of the coffee element lead",
+        "body": [49.0, 5.0, 56.0, 12.0],
+        "mains": [["OUT_C", [49.0, 5.0, 56.0, 12.0], "C"]],
+        "pockets": [],
+        "fit": [["terminal", 2]]
+      },
+      {
+        "id": "MOV_S",
+        "fn": "Steam varistor across the triac",
+        "body": [1.0, 17.0, 16.0, 23.0],
+        "mains": [["MOV_S.a", [1.0, 17.0, 4.5, 23.0], "S"], ["MOV_S.b", [12.5, 17.0, 16.0, 23.0], "R"]],
+        "pockets": [],
+        "fit": [["varistor", 2]]
+      },
+      {
+        "id": "MOV_C",
+        "fn": "Coffee varistor across the triac",
+        "body": [41.0, 17.0, 56.0, 23.0],
+        "mains": [["MOV_C.a", [52.5, 17.0, 56.0, 23.0], "C"], ["MOV_C.b", [41.0, 17.0, 44.5, 23.0], "R"]],
+        "pockets": [],
+        "fit": [["varistor", 2]]
+      },
+      {
+        "id": "OPTO_S",
+        "fn": "Steam zero-cross opto-triac MOC3083, DIP-6, rows along u",
+        "body": [1.0, 30.5, 11.0, 41.5],
+        "mains": [["OPTO_S.m", [1.0, 30.5, 11.0, 34.0], "OPTO_S"]],
+        "pockets": [["OPTO_S.l", [1.0, 38.0, 11.0, 41.5]]],
+        "fit": [["opto_triac", 6], ["gate_resistor", 4]],
+        "dip": {"centre": [6.0, 36.0], "row": 3.81, "pin_dy": 2.54, "pins": 3, "axis": "u", "slot": "WS_STEAM"}
+      },
+      {
+        "id": "OPTO_C",
+        "fn": "Coffee zero-cross opto-triac",
+        "body": [46.0, 30.5, 56.0, 41.5],
+        "mains": [["OPTO_C.m", [46.0, 30.5, 56.0, 34.0], "OPTO_C"]],
+        "pockets": [["OPTO_C.l", [46.0, 38.0, 56.0, 41.5]]],
+        "fit": [["opto_triac", 6], ["gate_resistor", 4]],
+        "dip": {"centre": [51.0, 36.0], "row": 3.81, "pin_dy": 2.54, "pins": 3, "axis": "u", "slot": "WS_COFFEE"}
+      }
+    ],
+    "lv": [
+      {
+        "id": "WB3",
+        "fn": "Low-voltage cable header, 3 ways, 2.54 mm",
+        "rect": [21.0, 32.0, 35.6, 39.5],
+        "conn": {"ways": 3, "pitch": 2.54},
+        "fit": [["header", "ways"]]
+      }
+    ],
+    "copper": [
+      {"id": "S1s", "rect": [8.0, 5.0, 13.7, 12.0], "net": "S"},
+      {"id": "S2", "rect": [18.7, 5.0, 25.0, 12.0], "net": "R"},
+      {"id": "S3", "rect": [32.0, 5.0, 38.3, 12.0], "net": "R"},
+      {"id": "S1c", "rect": [43.3, 5.0, 49.0, 12.0], "net": "C"},
+      {"id": "RC", "rect": [25.0, 5.0, 32.0, 12.0], "net": "R"},
+      {"id": "RET", "rect": [25.0, 12.0, 32.0, 19.0], "net": "R", "fit": [["terminal", 2]]}
+    ],
+    "slots": [{"id": "WS_STEAM", "rect": [0.0, 35.5, 13.0, 36.5]}, {"id": "WS_COFFEE", "rect": [44.0, 35.5, 57.0, 36.5]}],
+    "sheet_mohm": 0.491,
+    "axes": {"S1s": "u", "S2": "u", "S3": "u", "S1c": "u", "RC": "v", "RET": "v"},
+    "chains": {"steam": ["S1s", "TRI_S", "S2", "RC", "RET"], "coffee": ["S1c", "TRI_C", "S3", "RC", "RET"]},
+    "table_keys": [["S1", "S1s"], ["S2", "S2"], ["S3", "S3"], ["RC", "RC"], ["RET", "RET"]],
+    "budgets": {"relay_contact_w": 0.5, "sensor_mohm": 1.0, "relay_coil_w": 0.4},
+    "heat": {"triacs": {"TRI_S": 4.84, "TRI_C": 4.25}, "thermal": {"rth_jc": 2.1, "tj_max": 125.0}, "opto": ["OPTO_S", "OPTO_C"]}
+  },
+  "wall_dnp": {
+    "size": [57.0, 52.5],
+    "standoff": 5.0,
+    "blocks": [
+      {
+        "id": "OUT_S",
+        "fn": "Steam element out: 6.3 mm blade terminal, wire from the in-line blade joiner of the steam element lead",
+        "body": [1.0, 5.0, 8.0, 12.0],
+        "mains": [["OUT_S", [1.0, 5.0, 8.0, 12.0], "S"]],
+        "pockets": [],
+        "fit": [["terminal", 2]]
+      },
+      {
+        "id": "TRI_S",
+        "fn": "Steam triac BTA16-600BRG, insulated TO-220AB, tab bolted to the wall, leads bent to the pads",
+        "body": [11.0, 5.0, 21.4, 10.5],
+        "mains": [],
+        "pockets": [],
+        "fit": [["triac", 3]]
+      },
+      {"id": "TRI_C", "fn": "Coffee triac", "body": [35.6, 5.0, 46.0, 10.5], "mains": [], "pockets": [], "fit": [["triac", 3]]},
+      {
+        "id": "OUT_C",
+        "fn": "Coffee element out: blade terminal, wire from the in-line blade joiner of the coffee element lead",
+        "body": [49.0, 5.0, 56.0, 12.0],
+        "mains": [["OUT_C", [49.0, 5.0, 56.0, 12.0], "C"]],
+        "pockets": [],
+        "fit": [["terminal", 2]]
+      },
+      {
+        "id": "MOV_S",
+        "fn": "Steam varistor across the triac",
+        "body": [1.0, 17.0, 16.0, 23.0],
+        "mains": [["MOV_S.a", [1.0, 17.0, 4.5, 23.0], "S"], ["MOV_S.b", [12.5, 17.0, 16.0, 23.0], "R"]],
+        "pockets": [],
+        "fit": [["varistor", 2]]
+      },
+      {
+        "id": "MOV_C",
+        "fn": "Coffee varistor across the triac",
+        "body": [41.0, 17.0, 56.0, 23.0],
+        "mains": [["MOV_C.a", [52.5, 17.0, 56.0, 23.0], "C"], ["MOV_C.b", [41.0, 17.0, 44.5, 23.0], "R"]],
+        "pockets": [],
+        "fit": [["varistor", 2]]
+      },
+      {
+        "id": "OPTO_S",
+        "fn": "Steam zero-cross opto-triac MOC3083, DIP-6, rows along u",
+        "body": [1.0, 30.5, 11.0, 41.5],
+        "mains": [["OPTO_S.m", [1.0, 30.5, 11.0, 34.0], "OPTO_S"]],
+        "pockets": [["OPTO_S.l", [1.0, 38.0, 11.0, 41.5]]],
+        "fit": [["opto_triac", 6], ["gate_resistor", 4]],
+        "dip": {"centre": [6.0, 36.0], "row": 3.81, "pin_dy": 2.54, "pins": 3, "axis": "u", "slot": "WS_L"}
+      },
+      {
+        "id": "OPTO_C",
+        "fn": "Coffee zero-cross opto-triac",
+        "body": [46.0, 30.5, 56.0, 41.5],
+        "mains": [["OPTO_C.m", [46.0, 30.5, 56.0, 34.0], "OPTO_C"]],
+        "pockets": [["OPTO_C.l", [46.0, 38.0, 56.0, 41.5]]],
+        "fit": [["opto_triac", 6], ["gate_resistor", 4]],
+        "dip": {"centre": [51.0, 36.0], "row": 3.81, "pin_dy": 2.54, "pins": 3, "axis": "u", "slot": "WS_R"}
+      },
+      {
+        "id": "PRES_S",
+        "fn": "Steam mains-presence confirm place, not populated: AC-input optocoupler and its 120 kOhm 1 W resistor",
+        "body": [16.0, 30.5, 26.0, 41.5],
+        "mains": [["PRES_S.m", [16.0, 30.5, 26.0, 34.0], "PRES_S"]],
+        "pockets": [["PRES_S.l", [16.0, 38.0, 26.0, 41.5]]],
+        "fit": [],
+        "dip": {"centre": [21.0, 36.0], "row": 3.81, "pin_dy": 1.27, "pins": 2, "axis": "u", "slot": "WS_L"},
+        "dnp": [["confirm_opto", 4], ["confirm_resistor", 2]]
+      },
+      {
+        "id": "PRES_C",
+        "fn": "Coffee mains-presence confirm place, not populated",
+        "body": [31.0, 30.5, 41.0, 41.5],
+        "mains": [["PRES_C.m", [31.0, 30.5, 41.0, 34.0], "PRES_C"]],
+        "pockets": [["PRES_C.l", [31.0, 38.0, 41.0, 41.5]]],
+        "fit": [],
+        "dip": {"centre": [36.0, 36.0], "row": 3.81, "pin_dy": 1.27, "pins": 2, "axis": "u", "slot": "WS_R"},
+        "dnp": [["confirm_opto", 4], ["confirm_resistor", 2]]
+      }
+    ],
+    "lv": [
+      {
+        "id": "WB6",
+        "fn": "Low-voltage cable header, 6 ways, 2.54 mm",
+        "rect": [17.0, 44.0, 39.2, 51.5],
+        "conn": {"ways": 6, "pitch": 2.54},
+        "fit": [["header", "ways"]]
+      }
+    ],
+    "copper": [
+      {"id": "S1s", "rect": [8.0, 5.0, 13.7, 12.0], "net": "S"},
+      {"id": "S2", "rect": [18.7, 5.0, 25.0, 12.0], "net": "R"},
+      {"id": "S3", "rect": [32.0, 5.0, 38.3, 12.0], "net": "R"},
+      {"id": "S1c", "rect": [43.3, 5.0, 49.0, 12.0], "net": "C"},
+      {"id": "RC", "rect": [25.0, 5.0, 32.0, 12.0], "net": "R"},
+      {"id": "RET", "rect": [25.0, 12.0, 32.0, 19.0], "net": "R", "fit": [["terminal", 2]]}
+    ],
+    "slots": [
+      {"id": "WS_L", "rect": [0.0, 35.5, 29.0, 36.5]},
+      {"id": "WS_M", "rect": [28.5, 29.0, 29.5, 43.5]},
+      {"id": "WS_R", "rect": [29.0, 35.5, 57.0, 36.5]}
+    ],
+    "sheet_mohm": 0.491,
+    "axes": {"S1s": "u", "S2": "u", "S3": "u", "S1c": "u", "RC": "v", "RET": "v"},
+    "chains": {"steam": ["S1s", "TRI_S", "S2", "RC", "RET"], "coffee": ["S1c", "TRI_C", "S3", "RC", "RET"]},
+    "table_keys": [["S1", "S1s"], ["S2", "S2"], ["S3", "S3"], ["RC", "RC"], ["RET", "RET"]],
+    "budgets": {"relay_contact_w": 0.5, "sensor_mohm": 1.0, "relay_coil_w": 0.4},
+    "heat": {"triacs": {"TRI_S": 4.84, "TRI_C": 4.25}, "thermal": {"rth_jc": 2.1, "tj_max": 125.0}, "opto": ["OPTO_S", "OPTO_C", "PRES_S", "PRES_C"]}
+  },
+  "cost": {
+    "fee": {
+      "eng2": 4.0,
+      "eng4": 25.0,
+      "slope2": 5.2,
+      "slope4": 6.6,
+      "ref_area": 10609.0,
+      "band2": 4.0,
+      "band4": 8.0,
+      "boards": 5,
+      "band": 102.0,
+      "setup": 8.18,
+      "stencil": 1.53,
+      "labour": 3.58,
+      "joint_hand": 0.0164,
+      "joint_machine": 0.0016,
+      "ext_econ": 3.07,
+      "ext_std": 1.53,
+      "setup_std": 25.56,
+      "stencil_std": 8.21,
+      "fixtures_std": 16.42
+    },
+    "A": {"boards": [{"name": "one board", "layers": 4, "w": 131.0, "h": 125.0}], "orders": 1, "dup_ext": 0, "links": 0},
+    "B": {
+      "boards": [
+        {"name": "mains board", "layers": 2, "w": 69.0, "h": 125.0, "bay": [15.0, 27.0], "bay_sign": 1},
+        {"name": "low-voltage board", "layers": 4, "w": 59.0, "h": 125.0, "bay": [15.0, 27.0], "bay_sign": -1}
+      ],
+      "orders": 2,
+      "dup_ext": 1,
+      "links": 1
+    },
+    "C": {
+      "boards": [
+        {"name": "mains board", "layers": 2, "w": 69.0, "h": 125.0, "bay": [15.0, 27.0], "bay_sign": 1},
+        {"name": "controller board", "layers": 4, "area": 3600.0, "w": 60.0, "h": 60.0},
+        {"name": "front-end board", "layers": 2, "area": 3000.0, "w": 50.0, "h": 60.0}
+      ],
+      "orders": 3,
+      "dup_ext": 2,
+      "links": 2
+    },
+    "link_parts": 0.684,
+    "link_joints": 40
+  },
+  "parts": {
+    "main": [
+      {"n": "STM32H743VIT6", "id": "C114409", "cls": "Extended", "tht": false, "tag": "mcu"},
+      {"n": "Logic-supply module IRM-20-5", "id": "C6280121", "cls": "Extended", "tht": true, "tag": "module"},
+      {"n": "Pump opto-triac MOC3052M", "id": "C8965", "cls": "Extended", "tht": false, "tag": "pump_opto"},
+      {"n": "Pump triac BTA204S-600B", "id": "C256462", "cls": "Extended", "tht": false, "tag": "pump_triac"},
+      {"n": "Interlock relay HF115F-Q/005-1H, 5 V coil (catalogue number not recorded; priced and classed as the 12 V variant C5318991)", "id": "", "cls": "Extended", "tht": true, "tag": "k_il"},
+      {"n": "Valve relay HF32FA-G/005-HSL1", "id": "C91370", "cls": "Extended", "tht": true, "tag": "valve_relay"},
+      {"n": "AC-input optocoupler LTV-814S", "id": "C108051", "cls": "Extended", "tht": false, "tag": "ac_opto"},
+      {"n": "Fuse holder 5 x 20 mm", "id": "C3131", "cls": "Extended", "tht": true, "tag": "holder"},
+      {"n": "Fuse clip", "id": "C3130", "cls": "Extended", "tht": true, "tag": "clip"},
+      {"n": "6.3 mm tab, board-mounted", "id": "C20626100", "cls": "Extended", "tht": true, "tag": "tab"},
+      {"n": "Shunt resistor, 2512, 1 mohm class (not chosen)", "id": "", "cls": "Extended", "tht": false, "tag": "shunt"}
+    ],
+    "wall": [
+      {"n": "Triac BTA16-600BRG", "id": "C9100", "cls": "Extended", "tags": ["triac"]},
+      {"n": "Opto-triac MOC3083", "id": "C10797", "cls": "Extended", "tags": ["opto_triac"]},
+      {"n": "6.3 mm tab, board-mounted (the main board's part)", "id": "C20626100", "cls": "Extended", "tags": ["terminal"]},
+      {"n": "Header, 3 ways, 2.54 mm (assumed Extended, A13)", "id": "", "cls": "Extended", "tags": ["header"]},
+      {"n": "Varistors, gate resistors", "id": "", "cls": "Basic", "tags": ["varistor", "gate_resistor"]}
+    ]
+  },
+  "pump_drive": {"rating_a_ms": 6.0, "mains_hz": 50.0},
+  "valve_relay": {
+    "part": "HF32FA-G/005-HSL1",
+    "jlc": "C91370",
+    "body": [17.6, 10.1, 12.7],
+    "coil_ohm": 108.0,
+    "rating_a": 10.0,
+    "max_v": 250.0,
+    "span_top": 253.0,
+    "peak": 358.0,
+    "open_contact_vac": 1000.0,
+    "coil_contact_vac": 5000.0,
+    "target_kv": 4.0,
+    "price": 1.6115,
+    "k_il_price": 3.2119,
+    "count": 2,
+    "coil_tol": 0.1,
+    "rise_k": 61.0,
+    "ambient_c": 85.0,
+    "insulation_c": 155.0
+  },
+  "rail": {
+    "volts": 5.0,
+    "controller_ma": 439.0,
+    "controller_typ_ma": 226.0,
+    "gauge": {"phases": 4, "phase_ma": 18.0},
+    "hx711_ma": 1.5,
+    "hx711_count": 2,
+    "assumed": {
+      "opto_led_ma": 15.0,
+      "opto_leds": 4,
+      "panel_ma": 60.0,
+      "flow_ma": 15.0,
+      "pressure_ma": 10.0,
+      "pressure_count": 2,
+      "probe_ma": 2.0,
+      "probe_count": 2,
+      "sense_ma": 10.0,
+      "sense_count": 3,
+      "loadcell_ohm": 350.0,
+      "loadcell_count": 2,
+      "vm_out_ma": 5.0,
+      "misc_ma": 10.0
+    },
+    "modules": [
+      {"name": "IRM-20-5", "amps": 4.0, "at70": 0.5, "at50": 0.9, "w": 52.4, "d": 27.2, "h": 24.0, "eff": 0.79, "chosen": true, "no_load_w": 0.1},
+      {"name": "IRM-10-5", "amps": 2.0, "at70": 0.5, "at50": 1.0, "w": 45.7, "d": 25.4, "h": 21.5, "eff": 0.77}
+    ],
+    "adequate": 2.0
+  },
+  "fuse": {
+    "holder": [24.0, 9.0],
+    "holders": 3,
+    "share_limit_a": 1.0,
+    "required_a": 6000.0,
+    "options": [{"name": "5 x 20 glass time-lag", "break_a": 35.0}, {"name": "5.2 x 20 ceramic time-lag", "break_a": 1500.0}]
+  },
+  "what_if": [
+    {
+      "name": "with the module at its lowest, the voltage measurement above it and K_V1 between the sources",
+      "mains_blocks": {
+        "VMEAS": {
+          "body": [32.5, 75.6, 70.0, 80.6],
+          "mains": [["VMEAS.L", [32.5, 75.6, 43.5, 80.6], "LINE"], ["VMEAS.N", [50.0, 75.6, 60.0, 80.6], "NEUTRAL"]],
+          "pockets": [[65.0, 75.6, 70.0, 80.6]],
+          "dip": {"centre": [62.5, 78.1], "row": 3.81, "pin_dy": 2.54, "pins": 3},
+          "hot": [58.0, 75.6, 68.0, 80.6]
+        },
+        "MODULE": {
+          "body": [32.5, 48.4, 84.9, 75.6],
+          "mains": [["MODULE.n", [32.9, 48.6, 38.9, 54.6], "NEUTRAL"], ["MODULE.l", [32.9, 69.4, 38.9, 75.4], "LINE"]],
+          "pockets": [[76.5, 48.9, 84.9, 62.9]],
+          "pins": [[35.9, 51.6], [35.9, 72.4], [80.9, 51.6], [80.9, 59.6]]
+        },
+        "K_V1": {
+          "body": [44.5, 38.3, 62.1, 48.4],
+          "mains": [["K_V1", [44.5, 38.925, 47.26, 47.775], "COFVALVE"]],
+          "pockets": [[58.9, 38.3, 62.1, 48.4]],
+          "pins": [[60.7, 39.55], [60.7, 47.15], [45.46, 40.175], [45.46, 46.525]]
+        }
+      },
+      "lv_blocks": {
+        "MCU": {"rect": [72.0, 92.3, 105.0, 125.3]},
+        "DRV_K1": {"rect": [65.5, 38.3, 72.0, 48.4]},
+        "FE_GAUGE": {"rect": [72.0, 79.8, 93.5, 91.8]},
+        "POL": {"rect": [72.5, 31.0, 84.3, 43.0]},
+        "FE_KNOB": {"rect": [84.4, 39.1, 93.5, 44.4]}
+      },
+      "slots": [
+        {"id": "SL_LINK", "rect": [1.0, 26.55, 31.0, 27.55]},
+        {"id": "SL_LN", "rect": [1.0, 35.3, 19.0, 36.3]},
+        {"id": "SL_TIM", "rect": [57.3, 2.0, 58.3, 12.5]},
+        {"id": "SL_VP", "rect": [36.0, 91.1, 67.5, 92.1]},
+        {"id": "SL_PP", "rect": [17.0, 103.1, 57.5, 104.1]},
+        {"id": "SL_PV", "rect": [36.0, 115.1, 67.5, 116.1]},
+        {"id": "SL_PUMPS", "rect": [57.5, 91.1, 58.5, 116.1]},
+        {"id": "SL_VM", "rect": [62.0, 70.6, 63.0, 85.6]},
+        {"id": "SL_VMH", "rect": [36.0, 35.3, 69.0, 36.3]}
+      ],
+      "heat": {"accepted": [["K_V1", "MODULE"], ["K_V1", "K_IL"], ["VMEAS", "MODULE"]]}
+    },
+    {
+      "name": "with the module where it stood, K_V1 and the shared fuse in the gap between the sources and the voltage measurement above the module",
+      "mains_blocks": {
+        "VFUSE": {"body": [17.0, 37.9, 41.0, 46.9], "mains": [["VFUSE.n", [17.0, 37.9, 22.0, 46.9], "NEUTRAL"], ["VFUSE.v", [36.0, 37.9, 41.0, 46.9], "VFUSE"]]},
+        "VMEAS": {
+          "body": [32.5, 77.3, 70.0, 82.3],
+          "mains": [["VMEAS.L", [32.5, 77.3, 43.5, 82.3], "LINE"], ["VMEAS.N", [50.0, 77.3, 60.0, 82.3], "NEUTRAL"]],
+          "pockets": [[65.0, 77.3, 70.0, 82.3]],
+          "dip": {"centre": [62.5, 79.8], "row": 3.81, "pin_dy": 2.54, "pins": 3},
+          "hot": [58.0, 77.3, 68.0, 82.3]
+        },
+        "MODULE": {
+          "body": [32.5, 50.1, 84.9, 77.3],
+          "mains": [["MODULE.n", [32.9, 50.3, 38.9, 56.3], "NEUTRAL"], ["MODULE.l", [32.9, 71.1, 38.9, 77.1], "LINE"]],
+          "pockets": [[76.5, 50.6, 84.9, 64.6]],
+          "pins": [[35.9, 53.3], [35.9, 74.1], [80.9, 53.3], [80.9, 61.3]]
+        },
+        "K_V1": {
+          "body": [44.5, 40.0, 62.1, 50.1],
+          "mains": [["K_V1", [44.5, 40.625, 47.26, 49.475], "COFVALVE"]],
+          "pockets": [[58.9, 40.0, 62.1, 50.1]],
+          "pins": [[60.7, 41.25], [60.7, 48.85], [45.46, 41.875], [45.46, 48.225]]
+        }
+      },
+      "lv_blocks": {
+        "MCU": {"rect": [72.0, 92.3, 105.0, 125.3]},
+        "DRV_K1": {"rect": [65.5, 40.0, 72.0, 50.1]},
+        "FE_GAUGE": {"rect": [72.0, 79.8, 93.5, 91.8]},
+        "POL": {"rect": [72.5, 31.0, 84.5, 43.0]},
+        "FE_KNOB": {"rect": [72.5, 43.5, 80.5, 49.5]}
+      },
+      "slots": [
+        {"id": "SL_LINK", "rect": [1.0, 26.55, 31.0, 27.55]},
+        {"id": "SL_LN", "rect": [1.0, 35.3, 60.0, 36.3]},
+        {"id": "SL_VF", "rect": [42.4, 37.0, 43.4, 51.0]},
+        {"id": "SL_VN", "rect": [25.0, 47.9, 42.4, 48.9]},
+        {"id": "SL_TIM", "rect": [57.3, 2.0, 58.3, 12.5]},
+        {"id": "SL_VM", "rect": [62.0, 72.3, 63.0, 87.3]},
+        {"id": "SL_PP", "rect": [17.0, 103.1, 57.5, 104.1]},
+        {"id": "SL_PV", "rect": [36.0, 115.1, 67.5, 116.1]},
+        {"id": "SL_PUMPS", "rect": [57.5, 91.1, 58.5, 116.1]}
+      ],
+      "heat": {"accepted": [["K_V1", "MODULE"], ["K_V1", "K_IL"], ["VMEAS", "MODULE"]]}
+    },
+    {
+      "name": "with the module lowered 3.3 mm to the lowest the sensing blocks allow and the voltage measurement 11.7 mm from the interlock relay, in the gap the module left",
+      "mains_blocks": {
+        "VMEAS": {
+          "body": [32.5, 45.1, 70.0, 50.1],
+          "mains": [["VMEAS.N", [32.5, 45.1, 43.5, 50.1], "NEUTRAL"], ["VMEAS.L", [50.0, 45.1, 60.0, 50.1], "LINE"]],
+          "pockets": [[65.0, 45.1, 70.0, 50.1]],
+          "dip": {"centre": [62.5, 47.6], "row": 3.81, "pin_dy": 2.54, "pins": 3},
+          "hot": [58.0, 45.1, 68.0, 50.1]
+        },
+        "MODULE": {
+          "body": [32.5, 50.1, 84.9, 77.3],
+          "mains": [["MODULE.n", [32.9, 50.3, 38.9, 56.3], "NEUTRAL"], ["MODULE.l", [32.9, 71.1, 38.9, 77.1], "LINE"]],
+          "pockets": [[76.5, 50.6, 84.9, 64.6]],
+          "pins": [[35.9, 53.3], [35.9, 74.1], [80.9, 53.3], [80.9, 61.3]]
+        }
+      },
+      "lv_blocks": {},
+      "slots": [
+        {"id": "SL_LINK", "rect": [1.0, 26.55, 31.0, 27.55]},
+        {"id": "SL_LN", "rect": [1.0, 35.3, 19.0, 36.3]},
+        {"id": "SL_TIM", "rect": [57.3, 2.0, 58.3, 12.5]},
+        {"id": "SL_VM", "rect": [62.0, 40.1, 63.0, 55.1]},
+        {"id": "SL_VP", "rect": [36.0, 91.1, 67.5, 92.1]},
+        {"id": "SL_PP", "rect": [17.0, 103.1, 57.5, 104.1]},
+        {"id": "SL_PV", "rect": [36.0, 115.1, 67.5, 116.1]},
+        {"id": "SL_PUMPS", "rect": [57.5, 91.1, 58.5, 116.1]}
+      ],
+      "heat": {"accepted": [["K_V1", "MODULE"], ["VMEAS", "MODULE"], ["VMEAS", "K_IL"]], "required_held": []}
+    }
+  ]
+}
+```
+
+### The script
+
+```python
+"""Consistency checks for controller-board-division.md.
+
+    python3 -I checks.py RECORD main          main board, functions, harnesses, kinds and costs
+    python3 -I checks.py RECORD wall          heater wall board
+    python3 -I checks.py RECORD --tables      print the cells the record's tables are generated from, and report each that differs
+    python3 -I checks.py RECORD --selftest    perturb the data, the sources, the tokens and the record's own text and require each to be caught by the check it targets
+
+RECORD is the path of the markdown record. The script re-derives this record's arithmetic from its own floorplan-data block, compares
+the tables of the record with it, and compares what each command prints with the expected-output block beside the script. It does
+not make the data right: a figure that has a source record (the separation basis, the nine tabs, the mounting holes and cavity, the
+reed's position, the maker's limits, the load currents) is read from that record and compared, and the figures that have none are
+the record's assumptions, each carrying a `name=value` token in its row of the Assumptions table that the data must equal. A change
+made to both an assumption's row and the data passes; that is a prose change a reader sees. The forms record, the connector record,
+the machine record, the constraints record, the maker's record and the basis are read from the folders the record is in.
+"""
+import copy, heapq, itertools, json, math, os, re, sys
+
+EPS = 1e-9
+
+# ---------------------------------------------------------------- reading the record
+def blocks_of(text, label):
+    return re.findall(r'^```' + re.escape(label) + r'\n(.*?)^```', text, re.S | re.M)
+
+def load(path):
+    text = open(path, encoding='utf-8').read()
+    found = blocks_of(text, 'floorplan-data')
+    if len(found) != 1:
+        raise SystemExit('FAIL: the record must hold exactly one floorplan-data block, found %d' % len(found))
+    return text, json.loads(found[0])
+
+def section(text, title):
+    """The text under the first heading that contains `title`, up to the next heading of the same or a higher level."""
+    lines = text.split('\n')
+    for i, ln in enumerate(lines):
+        m = re.match(r'^(#+) (.*)$', ln)
+        if m and title in m.group(2):
+            out = []
+            for ln2 in lines[i + 1:]:
+                m2 = re.match(r'^(#+) ', ln2)
+                if m2 and len(m2.group(1)) <= len(m.group(1)):
+                    break
+                out.append(ln2)
+            return '\n'.join(out)
+    return None
+
+def table_rows(sec):
+    rows = {}
+    for ln in (sec or '').split('\n'):
+        if not ln.startswith('|') or re.match(r'^\|[\s:|-]+\|$', ln):
+            continue
+        cells = [c.strip() for c in ln.strip().strip('|').split('|')]
+        rows.setdefault(re.sub(r'[`*]', '', cells[0]), cells)
+    return rows
+
+PROSES = []
+
+class Prose:
+    """Cells the record's tables must hold, generated from the data. A row is found by its first cell: the key itself, or the
+    key followed by a space or a comma."""
+
+    def __init__(self, text, register=True):
+        self.text, self.want, self.labels = text, [], {}
+        if register:
+            PROSES.append(self)
+
+    def expect(self, heading, key, col, value, label=None):
+        self.want.append((heading, key, col, value))
+        if label:
+            self.labels[(heading, key, col, value)] = label
+
+    def mention(self, heading, value, label=None):
+        """A figure the text of a section must state, outside any table: a cell with no row and no column."""
+        self.want.append((heading, None, None, value))
+        if label:
+            self.labels[(heading, None, None, value)] = label
+
+    def present(self, heading, phrase, what):
+        """A statement of the record that the script requires word for word: if it is gone, a check names it."""
+        self.mention(heading, phrase, 'required statement missing (%s)' % what)
+
+    def counted(self, heading, value, what, key=None, col=None):
+        """A figure the script counts from the blocks, which the text of the section (or the cell of a row) must state."""
+        (self.mention(heading, value, 'counted figure not stated (%s)' % what) if key is None else self.expect(heading, key, col, value, 'counted figure not stated (%s)' % what))
+
+    def check(self):
+        bad, cache = [], {}
+        for w in self.want:
+            heading, key, col, value = w
+            label = self.labels.get(w)
+            if key is None:
+                body = re.sub(r'[`*]', '', section(self.text, heading) or '')
+                if value not in body:
+                    bad.append(('%s: "%s" lacks %s' % (label, heading, value)) if label else 'table in "%s": the text lacks %s' % (heading, value))
+                continue
+            rows = cache.setdefault(heading, table_rows(section(self.text, heading)))
+            hit = [k for k in rows if k == key or k.startswith(key + ' ') or k.startswith(key + ',')]
+            if not hit:
+                bad.append(('%s: "%s" has no row %s' % (label, heading, key)) if label else 'table in "%s" has no row %s' % (heading, key))
+            elif col >= len(rows[hit[0]]) or value not in re.sub(r'[`*]', '', rows[hit[0]][col]):
+                bad.append(('%s: "%s", row %s, column %d lacks %s' % (label, heading, key, col + 1, value)) if label else 'table in "%s", row %s, column %d lacks %s' % (heading, key, col + 1, value))
+        return bad
+
+# ---------------------------------------------------------------- the sources the figures are read from
+SOURCE_FILES = (
+    ('basis', ('..', '..', 'hardware', 'sunbeam-em7000', 'separation-basis.yaml')),
+    ('pinouts', ('connector-pinouts.md',)),
+    ('machine', ('reference-machine.md',)),
+    ('forms', ('controller-board-function-forms.md',)),
+    ('constraints', ('controller-board-design-constraints.md',)),
+    ('maker', ('..', 'board-manufacturer-jlcpcb.md')),
+)
+
+def source_texts(record_dir):
+    return {k: open(os.path.join(record_dir, *p), encoding='utf-8').read() for k, p in SOURCE_FILES}
+
+def num(s):
+    return float(s)
+
+def parse_sources(texts):
+    """The figures of the source records this record's data must equal. Every lookup is by the row's own words; a row that is
+    missing or does not parse is a failure, never a default."""
+    src, bad = {}, []
+
+    def need(key, pattern, text, flags=0, what=None):
+        m = re.search(pattern, text, flags)
+        if not m:
+            bad.append('source: %s not found' % (what or key))
+            return None
+        return m
+
+    m = need('basis', r'^mains_to_low_voltage:\s*\n\s+clearance_mm:\s*([0-9.]+)\s*\n\s+creepage_mm:\s*([0-9.]+)', texts['basis'], re.M, 'the separation basis row mains_to_low_voltage')
+    if m:
+        src['clearance'], src['creepage'] = num(m.group(1)), num(m.group(2))
+    m = need('basic', r'([0-9.]+) mm basic, doubled to ([0-9.]+) mm for reinforced', texts['basis'], 0, 'the separation basis creepage row (basic, doubled for reinforced)')
+    if m:
+        src['basic'] = num(m.group(1))
+        if 'creepage' in src and (abs(2 * src['basic'] - num(m.group(2))) > EPS or abs(num(m.group(2)) - src['creepage']) > EPS):
+            bad.append('source: the basis creepage row is not the basic figure doubled')
+
+    tabs = {}
+    for ln in (section(texts['pinouts'], 'The nine terminals') or '').split('\n'):
+        cells = [c.strip() for c in ln.strip().strip('|').split('|')]
+        if ln.startswith('|') and len(cells) >= 5 and cells[0].isdigit():
+            ym = re.fullmatch(r'([0-9.]+) mm', cells[4])
+            if ym:
+                tabs[int(cells[0])] = (cells[1].strip('`'), num(ym.group(1)))
+    if sorted(tabs) != list(range(1, 10)):
+        bad.append('source: the connector record\'s nine terminals did not parse (found %s)' % sorted(tabs))
+    src['tabs'] = tabs
+    for what, pattern in (('LINE1 as a pass-through', r'nothing else on the board connects to `LINE1`'),
+                          ('LINE1 daisy-chained to every load', r'`LINE1`, the active, daisy-chains to one side of every pump, valve and thermoblock element'),
+                          ('the neutral side of every load switched', r'the original board switches the neutral side of every load')):
+        if not re.search(pattern, texts['pinouts']):
+            bad.append('source: the connector record no longer says %s' % what)
+    m = need('slack', r'fit need of about ([0-9.]+) mm', texts['pinouts'], 0, 'the owner\'s fit need of the tab slack')
+    if m:
+        src['slack'] = num(m.group(1))
+    m = need('tab_height', r'stands \*\*([0-9.]+) mm clear of the board\*\*|stands ([0-9.]+) mm clear of the board', texts['pinouts'], 0, 'the tabs\' height')
+    if m:
+        src['tab_height'] = num(m.group(1) or m.group(2))
+    m = need('tab_width', r'\*\*([0-9.]+) mm ±0\.1 mm wide\*\*', texts['pinouts'], 0, 'the tab width')
+    if m:
+        src['tab_width'] = num(m.group(1))
+    m = need('tab_thick', r'\*\*([0-9.]+) mm thick\*\*', texts['pinouts'], 0, 'the tab thickness')
+    if m:
+        src['tab_thick'] = num(m.group(1))
+
+    machine = texts['machine']
+    for key, pattern in (('cavity_w', r'^\| Inside length along X, wall to wall \| ([0-9.]+) mm \| ±([0-9.]+) mm'), ('cavity_h', r'^\| Inside width along Y, wall to wall \| ([0-9.]+) mm \| ±([0-9.]+) mm')):
+        m = need(key, pattern, machine, re.M, 'the cavity row ' + key)
+        if m:
+            src[key] = (num(m.group(1)), num(m.group(2)))
+    holes = {}
+    for m in re.finditer(r'^\| ([1-4]) \| ([0-9.]+) mm \| ([0-9.]+) mm \| ([0-9.]+) mm \|', machine, re.M):
+        holes[int(m.group(1))] = (num(m.group(2)), num(m.group(3)))
+    if sorted(holes) != [1, 2, 3, 4]:
+        bad.append('source: the machine record\'s four mounting points did not parse (found %s)' % sorted(holes))
+    src['holes'] = holes
+    m = need('reed', r'with its lower lead at X = ([0-9.]+) mm, Y = ([0-9.]+) mm in the datum[^.]*?upper lead ([0-9.]+) mm above that', machine, re.S, 'the reed\'s lead positions')
+    if m:
+        src['reed'] = (num(m.group(1)), num(m.group(2)), num(m.group(3)))
+    m = need('intr', r'^\| 1 \| ([0-9.]+) mm, ([0-9.]+) mm \| ([0-9.]+) mm along X, then ([0-9.]+) mm of straight edge', machine, re.M, 'the row of intrusion 1')
+    if m:
+        src['intr1'] = tuple(num(m.group(i)) for i in range(1, 5))
+    m = need('intr_tol', r'±([0-9.]+) mm in position and size', machine, 0, 'the intrusions\' position tolerance')
+    if m:
+        src['intr_tol'] = num(m.group(1))
+
+    maker = texts['maker']
+    for key, pattern, what in (('slot_min', r'^\| Minimum non-plated slot width \| ([0-9.]+) mm', 'the maker\'s least non-plated slot'),
+                               ('slot_copper', r'^\| Copper to a routed board edge or routed slot \| ([0-9.]+) mm', 'the maker\'s copper to a routed slot'),
+                               ('edge_min', r'^\| Traces and components to board edge, recommended \| More than ([0-9.]+) mm', 'the maker\'s components to the edge'),
+                               ('band', r'^\| Board-size threshold of the lowest price band \| A single board within or equal to ([0-9.]+) × ([0-9.]+) mm', 'the maker\'s lowest band'),
+                               ('ring_ml', r'^\| PTH annular ring \| ([0-9.]+) mm recommended, [0-9.]+ mm absolute minimum \| Multilayer boards, 1 oz', 'the maker\'s recommended annular ring on a multilayer board'),
+                               ('track_tol', r'^\| Track width tolerance \| ±([0-9.]+) %', 'the maker\'s track width tolerance'),
+                               ('slot_density', r'Slots 0\.8–1\.0 mm wide: [0-9.]+ USD per metre of slot path above ([0-9.]+) m per m²', 'the maker\'s slot-density charge')):
+        m = need(key, pattern, maker, re.M, what)
+        if m:
+            src[key] = num(m.group(1))
+    if 'track_tol' in src:
+        src['track_tol'] /= 100.0
+
+    sb = section(texts['constraints'], 'Supply budget') or ''
+    loads = {}
+    for key, pattern in (('coffee', r'\| Coffee thermoblock element \| ([0-9.]+) A'), ('steam', r'\| Steam thermoblock element \| ([0-9.]+) A'),
+                         ('coffee_pump', r'\*\*([0-9.]+) A rms\*\* \(coffee pump\) and \*\*|\| ([0-9.]+) A rms \(coffee pump\) and'),
+                         ('steam_pump', r'\(coffee pump\) and ([0-9.]+) A rms \(steam pump\)'),
+                         ('coil_steady', r'At most ([0-9.]+) A rms steady together'), ('coil_inrush', r'inrush at most ([0-9.]+) A rms together'),
+                         ('overload', r'[Aa]bout ([0-9]+) A for half an hour')):
+        m = re.search(pattern, sb) or (re.search(pattern, texts['constraints']) if key == 'overload' else None)
+        if not m:
+            bad.append('source: the constraints record\'s supply budget has no %s figure' % key)
+        else:
+            loads[key] = num([g for g in m.groups() if g][0])
+    src['loads'] = loads
+    m = need('gauge', r'phase current lands near ([0-9.]+) mA', texts['pinouts'], 0, 'the gauge drivers\' phase current')
+    if m:
+        src['gauge_ma'] = num(m.group(1))
+    cons = texts['constraints']
+    m = need('span', r'^\| Supply voltage span \| ([0-9.]+)–([0-9.]+) V AC', cons, re.M, 'the constraints record\'s supply voltage span')
+    if m:
+        src['span_top'] = num(m.group(2))
+    m = need('peak', r'^\| Peak working voltage \| ([0-9.]+) V \|', cons, re.M, 'the constraints record\'s peak working voltage')
+    if m:
+        src['peak'] = num(m.group(1))
+    m = need('break', r'^\| Breaking capacity each fuse and breaker in the chain must have \| At least the prospective fault current, ([0-9.]+) kA', cons, re.M, 'the constraints record\'s breaking capacity')
+    if m:
+        src['breaking_a'] = num(m.group(1)) * 1000.0
+    m = need('accept', r'\*\*Owner acceptance, ([0-9]{4}-[0-9]{2}-[0-9]{2}):\*\* a relay whose contacts are rated ([0-9.]+) V AC as their maximum switching voltage is accepted at the ([0-9.]+) V top of the span.{0,300}?on the owner\'s statement', cons, re.S, 'the owner\'s dated acceptance of a relay rated at its maximum switching voltage at the top of the span')
+    if m:
+        src['accepted_date'] = m.group(1)
+        src['accepted_v'] = num(m.group(2))
+        src['accepted_top'] = num(m.group(3))
+    m = need('vprice', r'C91370, HF32FA-G/005-HSL1, Hongfa \(5 V coil\) \| [^|]*\| Extended \| ([0-9 ]+) \| ([0-9.]+) USD \(1–9\)', cons, 0, 'the constraints record\'s row for the HF32FA-G/005-HSL1')
+    if m:
+        src['valve_price'] = num(m.group(2))
+    forms = texts['forms']
+    m = need('triac_w', r'Coffee, [0-9.]+ A rms, [0-9.]+ A mean: [^*]*\*\*([0-9.]+) W\*\*\. Steam, [0-9.]+ A rms, [0-9.]+ A mean: [^*]*\*\*([0-9.]+) W\*\*', forms, 0, 'the forms record\'s dissipation of the heater triac at the element currents')
+    if m:
+        src['triac_w'] = (num(m.group(1)), num(m.group(2)))
+    m = need('rth', r'Rth\(j-c\) ([0-9.]+) °C/W \(AC\), TO-220AB insulated; .{0,120}?Tj maximum ([0-9.]+) °C', forms, re.S, 'the forms record\'s junction-to-case resistance and junction limit of the heater triac')
+    if m:
+        src['rth_jc'], src['tj_max'] = num(m.group(1)), num(m.group(2))
+    m = need('kprice', r'HF115F-Q/012-1H relay, count 2 \| C5318991 \| Extended \| ([0-9 ]+) \| ([0-9.]+) \(1–9\)', texts['forms'], 0, 'the forms record\'s row for the HF115F-Q')
+    if m:
+        src['relay_price'] = num(m.group(2))
+    return src, bad
+
+def check_sources(D, src):
+    """The data against the figures read from the records."""
+    bad = []
+    def eq(what, a, b):
+        if a is None or b is None or abs(a - b) > EPS:
+            bad.append('%s is %s in the data and %s in its source' % (what, a, b))
+    if 'clearance' in src:
+        eq('the signed clearance', D['basis']['clearance'], src['clearance'])
+        eq('the signed creepage', D['basis']['creepage'], src['creepage'])
+    if 'cavity_w' in src:
+        eq('the cavity width', D['cavity']['w'], src['cavity_w'][0])
+        eq('the cavity height', D['cavity']['h'], src['cavity_h'][0])
+        eq('the cavity tolerance', D['cavity']['tol'], src['cavity_w'][1])
+    tabs = src.get('tabs', {})
+    seen = set()
+    for x in D['tabs']['list']:
+        n = x['n']
+        seen.add(n)
+        if n not in tabs:
+            bad.append('tab %d is not in the connector record' % n)
+            continue
+        if x['name'] != tabs[n][0]:
+            bad.append('tab %d is named %s in the data and %s in the connector record' % (n, x['name'], tabs[n][0]))
+        eq('tab %d as found' % n, x['found'], tabs[n][1])
+    for r in D['tabs'].get('removed', []):
+        n = r['n']
+        if n in seen:
+            bad.append('tab %d is drawn in the data and is also listed as removed' % n)
+        seen.add(n)
+        if n not in tabs:
+            bad.append('removed tab %d is not in the connector record' % n)
+        elif r['name'] != tabs[n][0]:
+            bad.append('removed tab %d is named %s in the data and %s in the connector record' % (n, r['name'], tabs[n][0]))
+        else:
+            eq('removed tab %d as found' % n, r['found'], tabs[n][1])
+    bad += ['the connector record\'s tab %d is neither drawn nor listed as removed in the data' % n for n in tabs if n not in seen]
+    if len(tabs) == 9:
+        eq('the least as-found tab pitch', D['tabs']['pitch'], min(b[1] - a[1] for a, b in zip([tabs[n] for n in range(1, 9)], [tabs[n] for n in range(2, 10)])))
+    for key, v in (('slack_estimate', 'slack'), ('height', 'tab_height')):
+        if v in src:
+            eq('the tabs\' ' + key, D['tabs'][key], src[v])
+    if 'tab_width' in src:
+        eq('the tab width', D['tabs']['blade'], src['tab_width'])
+    if 'tab_thick' in src:
+        eq('the tab thickness', D['tabs']['thick'], src['tab_thick'])
+    if 'ring_ml' in src:
+        if D['tabs']['ring'] < src['ring_ml'] - EPS:
+            bad.append('the tab pad\'s annulus is %g mm, under the maker\'s recommended %g mm' % (D['tabs']['ring'], src['ring_ml']))
+        eq('the maker\'s recommended annular ring', D['maker']['ring'], src['ring_ml'])
+    if 'track_tol' in src:
+        eq('the maker\'s track width tolerance', D['trace']['tol'], src['track_tol'])
+    holes = src.get('holes', {})
+    if len(holes) == 4:
+        for name, n in (('P1', 1), ('P2', 2), ('P4', 4)):
+            if tuple(D['holes'][name]) != holes[n]:
+                bad.append('mounting hole %s is %s in the data and %s in the machine record' % (name, tuple(D['holes'][name]), holes[n]))
+        if tuple(D['boss']['P3']) != holes[3]:
+            bad.append('the point 3 boss is %s in the data and %s in the machine record' % (tuple(D['boss']['P3']), holes[3]))
+    if 'reed' in src:
+        if tuple(D['reed']['recorded']) != src['reed'][:2]:
+            bad.append('the reed\'s recorded lower lead is %s in the data and %s in the machine record' % (tuple(D['reed']['recorded']), src['reed'][:2]))
+        eq('the reed\'s lead pitch', D['reed']['pitch'], src['reed'][2])
+    if 'intr1' in src:
+        i = D['intrusions']
+        eq('intrusion 1 corner X', i['one_x0'], src['intr1'][0])
+        eq('intrusion 1 length along X', i['one_x1'] - i['one_x0'], src['intr1'][2])
+        eq('intrusion 1 straight edge', i['one_straight'], src['intr1'][3])
+    if 'intr_tol' in src:
+        eq('the intrusions\' position tolerance', D['intrusions']['pos_tol'], src['intr_tol'])
+    for key, got in (('slot_min', D['slot_width_min']), ('slot_copper', D['slot_copper']), ('edge_min', D['basis']['edge_min']), ('band', D['basis']['band']), ('slot_density', D['slot_density'])):
+        if key in src:
+            eq('the maker\'s ' + key, got, src[key])
+    vr = D['valve_relay']
+    if 'span_top' in src:
+        eq('the top of the supply span', vr['span_top'], src['span_top'])
+    if 'peak' in src:
+        eq('the peak working voltage', vr['peak'], src['peak'])
+    if 'breaking_a' in src:
+        eq('the breaking capacity a fuse must have', D['fuse']['required_a'], src['breaking_a'])
+    if 'gauge_ma' in src:
+        eq('the gauge drivers\' phase current', D['rail']['gauge']['phase_ma'], src['gauge_ma'])
+    if 'accepted_v' in src:
+        eq('the valve relay\'s maximum switching voltage, the figure the owner accepted', vr['max_v'], src['accepted_v'])
+        eq('the top of the supply span the owner\'s acceptance names', vr['span_top'], src['accepted_top'])
+    if 'valve_price' in src:
+        eq('the valve relay\'s unit price', vr['price'], src['valve_price'])
+    if 'relay_price' in src:
+        eq('the unit price of the 12 V variant that stands for the 5 V interlock relay (its own price is not recorded)', vr['k_il_price'], src['relay_price'])
+    wt = D['wall']['heat']
+    if 'triac_w' in src:
+        eq('the coffee triac\'s dissipation', wt['triacs']['TRI_C'], src['triac_w'][0])
+        eq('the steam triac\'s dissipation', wt['triacs']['TRI_S'], src['triac_w'][1])
+    if 'rth_jc' in src:
+        eq('the triac\'s junction-to-case resistance', wt['thermal']['rth_jc'], src['rth_jc'])
+        eq('the triac\'s junction limit', wt['thermal']['tj_max'], src['tj_max'])
+    L = src.get('loads', {})
+    cur = D['loads']
+    for key in ('coffee', 'steam', 'coffee_pump', 'steam_pump', 'coil_steady', 'coil_inrush', 'overload'):
+        if key in L:
+            eq('the load current ' + key, cur[key], L[key])
+    return bad
+
+# ---------------------------------------------------------------- the assumptions' tokens
+TOKENS = {
+    'E': lambda D: D['fixing']['E'],
+    'draw_tol': lambda D: D['fixing']['draw_tol'],
+    'lid_keep': lambda D: D['fixing']['lid_keep'],
+    'tab_ring': lambda D: D['tabs']['ring'],
+    'trace_w': lambda D: D['trace']['w'],
+    'reed_tol': lambda D: D['reed']['tol'],
+    'hand_r': lambda D: D['reed']['hand_r'],
+    'strip_w': lambda D: D['reed']['strip_w'],
+    'heat_mcu': lambda D: D['heat']['limits']['mcu'],
+    'heat_sense': lambda D: D['heat']['limits']['sense'],
+    'heat_relay': lambda D: D['heat']['limits']['relay'],
+    'heat_opto': lambda D: D['heat']['limits']['opto'],
+    'heat_class': lambda D: D['heat']['limits']['class'],
+    'heat_triac': lambda D: D['heat']['limits']['triac'],
+    'heat_w': lambda D: D['heat']['source_w'],
+    'standoff': lambda D: D['wall']['standoff'],
+    'relay_contact_w': lambda D: D['wall']['budgets']['relay_contact_w'],
+    'relay_coil_w': lambda D: D['wall']['budgets']['relay_coil_w'],
+    'sensor_mohm': lambda D: D['wall']['budgets']['sensor_mohm'],
+    'link_loss_w': lambda D: D['link']['budget_w'],
+    'sheet_mohm': lambda D: D['wall']['sheet_mohm'],
+    'module_pf': lambda D: D['return']['module_pf'],
+    'opto_led_ma': lambda D: D['rail']['assumed']['opto_led_ma'],
+    'panel_ma': lambda D: D['rail']['assumed']['panel_ma'],
+    'flow_ma': lambda D: D['rail']['assumed']['flow_ma'],
+    'pressure_ma': lambda D: D['rail']['assumed']['pressure_ma'],
+    'probe_ma': lambda D: D['rail']['assumed']['probe_ma'],
+    'sense_ma': lambda D: D['rail']['assumed']['sense_ma'],
+    'loadcell_ohm': lambda D: D['rail']['assumed']['loadcell_ohm'],
+    'vm_out_ma': lambda D: D['rail']['assumed']['vm_out_ma'],
+    'misc_ma': lambda D: D['rail']['assumed']['misc_ma'],
+}
+
+TOKEN_PATHS = {'E': ('fixing', 'E'), 'draw_tol': ('fixing', 'draw_tol'), 'lid_keep': ('fixing', 'lid_keep'), 'tab_ring': ('tabs', 'ring'), 'trace_w': ('trace', 'w'),
+               'reed_tol': ('reed', 'tol'), 'hand_r': ('reed', 'hand_r'), 'strip_w': ('reed', 'strip_w'), 'heat_mcu': ('heat', 'limits', 'mcu'), 'heat_sense': ('heat', 'limits', 'sense'),
+               'heat_relay': ('heat', 'limits', 'relay'), 'heat_opto': ('heat', 'limits', 'opto'), 'heat_class': ('heat', 'limits', 'class'), 'heat_triac': ('heat', 'limits', 'triac'),
+               'heat_w': ('heat', 'source_w'), 'standoff': ('wall', 'standoff'), 'relay_contact_w': ('wall', 'budgets', 'relay_contact_w'), 'relay_coil_w': ('wall', 'budgets', 'relay_coil_w'),
+               'sensor_mohm': ('wall', 'budgets', 'sensor_mohm'), 'link_loss_w': ('link', 'budget_w'), 'sheet_mohm': ('wall', 'sheet_mohm'), 'module_pf': ('return', 'module_pf'),
+               'opto_led_ma': ('rail', 'assumed', 'opto_led_ma'), 'panel_ma': ('rail', 'assumed', 'panel_ma'), 'flow_ma': ('rail', 'assumed', 'flow_ma'), 'pressure_ma': ('rail', 'assumed', 'pressure_ma'),
+               'probe_ma': ('rail', 'assumed', 'probe_ma'), 'sense_ma': ('rail', 'assumed', 'sense_ma'), 'loadcell_ohm': ('rail', 'assumed', 'loadcell_ohm'), 'vm_out_ma': ('rail', 'assumed', 'vm_out_ma'),
+               'misc_ma': ('rail', 'assumed', 'misc_ma')}
+
+def check_tokens(text, D, record_tokens=None):
+    """Every assumption token of the record's Assumptions table against the data, and every token the script knows against the
+    record: a token missing from the record, present twice, or unequal to the data is a failure."""
+    bad, found = [], {}
+    sec = section(text, 'Assumptions') or ''
+    for name, val in re.findall(r'`([A-Za-z_]+)=(-?[0-9.]+)`', sec):
+        found.setdefault(name, []).append(float(val))
+    for name, vals in found.items():
+        if name not in TOKENS:
+            bad.append('the Assumptions table carries a token the script does not know: %s' % name)
+    for name, get in TOKENS.items():
+        vals = found.get(name, [])
+        if len(vals) != 1:
+            bad.append('assumption token %s appears %d times in the Assumptions table, once is required' % (name, len(vals)))
+        elif abs(vals[0] - get(D)) > EPS:
+            bad.append('assumption token %s is %g in the table and %g in the data' % (name, vals[0], get(D)))
+    return bad
+
+# ---------------------------------------------------------------- geometry
+def rd(a, b):
+    return math.hypot(max(b[0] - a[2], a[0] - b[2], 0), max(b[1] - a[3], a[1] - b[3], 0))
+def ov(a, b):
+    return a[0] < b[2] - EPS and b[0] < a[2] - EPS and a[1] < b[3] - EPS and b[1] < a[3] - EPS
+def pt(p):
+    return (p[0], p[1], p[0], p[1])
+def grow(r, d):
+    return (r[0] - d, r[1] - d, r[2] + d, r[3] + d)
+def area(r):
+    return (r[2] - r[0]) * (r[3] - r[1])
+def inside(r, o):
+    return r[0] >= o[0] - EPS and r[1] >= o[1] - EPS and r[2] <= o[2] + EPS and r[3] <= o[3] + EPS
+def bbox_of(poly):
+    return (min(p[0] for p in poly), min(p[1] for p in poly), max(p[0] for p in poly), max(p[1] for p in poly))
+def poly_area(poly):
+    n = len(poly)
+    return abs(sum(poly[i][0] * poly[(i + 1) % n][1] - poly[(i + 1) % n][0] * poly[i][1] for i in range(n))) / 2
+def in_poly(p, poly):
+    x, y, c = p[0], p[1], False
+    for i in range(len(poly)):
+        (x0, y0), (x1, y1) = poly[i], poly[(i + 1) % len(poly)]
+        if abs((x1 - x0) * (y - y0) - (y1 - y0) * (x - x0)) < 1e-9 and min(x0, x1) - EPS <= x <= max(x0, x1) + EPS and min(y0, y1) - EPS <= y <= max(y0, y1) + EPS:
+            return True
+        if (y0 > y) != (y1 > y) and x < (x1 - x0) * (y - y0) / (y1 - y0) + x0:
+            c = not c
+    return c
+def rect_in_poly(r, poly):
+    corners = [(r[0], r[1]), (r[2], r[1]), (r[2], r[3]), (r[0], r[3])]
+    return all(in_poly(c, poly) for c in corners) and not any(r[0] + EPS < v[0] < r[2] - EPS and r[1] + EPS < v[1] < r[3] - EPS for v in poly)
+def seg_rect(p, q, r):
+    """Distance from the segment pq to rectangle r (0 when they meet)."""
+    if crosses(p, q, r) or in_rect(p, r) or in_rect(q, r):
+        return 0.0
+    corners = [(r[0], r[1]), (r[2], r[1]), (r[2], r[3]), (r[0], r[3])]
+    def to_seg(c):
+        dx, dy = q[0] - p[0], q[1] - p[1]
+        t = 0.0 if dx == dy == 0 else max(0.0, min(1.0, ((c[0] - p[0]) * dx + (c[1] - p[1]) * dy) / (dx * dx + dy * dy)))
+        return math.hypot(c[0] - p[0] - t * dx, c[1] - p[1] - t * dy)
+    return min([to_seg(c) for c in corners] + [rd(pt(p), r), rd(pt(q), r)])
+def in_rect(p, r):
+    return r[0] <= p[0] <= r[2] and r[1] <= p[1] <= r[3]
+def in_union(r, rects):
+    """True when rectangle r lies wholly inside the union of the rectangles."""
+    xs = sorted({r[0], r[2]} | {x for q in rects for x in (q[0], q[2]) if r[0] < x < r[2]})
+    for a, b in zip(xs, xs[1:]):
+        mid = (a + b) / 2
+        cur = r[1]
+        for lo, hi in sorted((q[1], q[3]) for q in rects if q[0] <= mid <= q[2]):
+            if lo <= cur + EPS:
+                cur = max(cur, hi)
+        if cur < r[3] - EPS:
+            return False
+    return True
+def edge_distance(r, poly):
+    return min(seg_rect(poly[i], poly[(i + 1) % len(poly)], r) for i in range(len(poly)))
+def rng(a, b):
+    return '%.1f to %.1f' % (a, b)
+def size(r):
+    return '%.1f × %.1f' % (r[2] - r[0], r[3] - r[1])
+def sq(x):
+    return '%d' % int(x + 0.5)
+def half(x):
+    """A cost to the nearest half dollar: the board fee at an area other than the maker's two published points is inferred, which supports no finer figure."""
+    return math.floor(x * 2 + 0.5) / 2
+
+def crosses(p, q, r):
+    """True when the segment pq passes through the interior of rectangle r."""
+    x0, y0, x1, y1 = r
+    dx, dy, t0, t1 = q[0] - p[0], q[1] - p[1], 0.0, 1.0
+    for pp, qq in ((-dx, p[0] - x0), (dx, x1 - p[0]), (-dy, p[1] - y0), (dy, y1 - p[1])):
+        if abs(pp) < EPS:
+            if qq <= EPS:
+                return False
+        else:
+            t = qq / pp
+            if pp < 0:
+                if t > t1:
+                    return False
+                t0 = max(t0, t)
+            else:
+                if t < t0:
+                    return False
+                t1 = min(t1, t)
+    return t1 - t0 > EPS
+
+def edge_points(r, step, near=None, limit=None):
+    x0, y0, x1, y1 = r
+    nx, ny = max(int(round((x1 - x0) / step)), 1), max(int(round((y1 - y0) / step)), 1)
+    pts = []
+    for i in range(nx + 1):
+        x = x0 + (x1 - x0) * i / nx
+        pts += [(x, y0), (x, y1)]
+    for j in range(ny + 1):
+        y = y0 + (y1 - y0) * j / ny
+        pts += [(x0, y), (x1, y)]
+    if near is not None:
+        pts = [p for p in pts if rd(pt(p), near) < limit]
+    return pts
+
+def surface_path(a, b, slots, limit, outline=None):
+    """Shortest path over the board surface from rectangle a to rectangle b, round the slot rectangles (a slot is not crossed).
+    Sampled every 0.25 mm along the facing edges and 0.1 mm to the slot corners: exact to about 0.1 mm. Pairs the straight line
+    of which already exceeds `limit` are not worth measuring. A slot corner that lies on the board's outline is not a point a path
+    can turn round, because beyond it there is no board."""
+    def free(p, q):
+        x0, x1, y0, y1 = min(p[0], q[0]), max(p[0], q[0]), min(p[1], q[1]), max(p[1], q[1])
+        for sl in slots:
+            if sl[2] <= x0 or sl[0] >= x1 or sl[3] <= y0 or sl[1] >= y1:
+                continue
+            if crosses(p, q, sl):
+                return False
+        return True
+    # the shortest straight segment between the rectangles: when it crosses no slot it is the surface path
+    def facing(lo_a, hi_a, lo_b, hi_b):
+        if hi_a < lo_b:
+            return hi_a, lo_b
+        if hi_b < lo_a:
+            return lo_a, hi_b
+        mid = (max(lo_a, lo_b) + min(hi_a, hi_b)) / 2
+        return mid, mid
+    xa, xb = facing(a[0], a[2], b[0], b[2])
+    ya, yb = facing(a[1], a[3], b[1], b[3])
+    if free((xa, ya), (xb, yb)):
+        return math.hypot(xa - xb, ya - yb)
+    best = math.inf
+    for p in edge_points(a, 0.25, b, limit):
+        for q in edge_points(b, 0.25, a, limit):
+            d = math.hypot(p[0] - q[0], p[1] - q[1])
+            if d < best and free(p, q):
+                best = d
+    if not slots:
+        return best
+    ob = bbox_of(outline) if outline else None
+    on_edge = lambda c: ob is not None and (abs(c[0] - ob[0]) < EPS or abs(c[0] - ob[2]) < EPS or abs(c[1] - ob[1]) < EPS or abs(c[1] - ob[3]) < EPS)
+    cs = [c for c in ((s[i], s[j]) for s in slots for i in (0, 2) for j in (1, 3)) if not on_edge(c)]
+    fa, fb = edge_points(a, 0.1), edge_points(b, 0.1)
+    da = [min([math.hypot(p[0] - c[0], p[1] - c[1]) for p in fa if free(p, c)] or [math.inf]) for c in cs]
+    db = [min([math.hypot(p[0] - c[0], p[1] - c[1]) for p in fb if free(p, c)] or [math.inf]) for c in cs]
+    dist, done = list(da), [False] * len(cs)
+    queue = [(d, i) for i, d in enumerate(dist)]
+    heapq.heapify(queue)
+    while queue:
+        d, i = heapq.heappop(queue)
+        if done[i]:
+            continue
+        done[i] = True
+        for j in range(len(cs)):
+            if not done[j] and free(cs[i], cs[j]):
+                nd = d + math.hypot(cs[i][0] - cs[j][0], cs[i][1] - cs[j][1])
+                if nd < dist[j]:
+                    dist[j] = nd
+                    heapq.heappush(queue, (nd, j))
+    return min(best, min(dist[i] + db[i] for i in range(len(cs))))
+
+def slot_rects(slots):
+    return [tuple(s['rect']) for s in slots]
+
+def dip_paths(blocks, slots, limit, outline=None):
+    """Pin-to-pin surface path round the slots of each opto-coupler: its mains row against its low-voltage row."""
+    out = {}
+    for b in blocks:
+        d = b.get('dip')
+        if not d:
+            continue
+        cx, cy = d['centre']
+        offs = [(k - (d['pins'] - 1) / 2) * d['pin_dy'] for k in range(d['pins'])]
+        if d.get('axis') == 'u':
+            mp, lp = [(cx + o, cy - d['row']) for o in offs], [(cx + o, cy + d['row']) for o in offs]
+        else:
+            mp, lp = [(cx - d['row'], cy + o) for o in offs], [(cx + d['row'], cy + o) for o in offs]
+        out[b['id']] = min(surface_path(pt(a), pt(c), slots, limit, outline) for a in mp for c in lp)
+    return out
+
+def mains_of(b):
+    """A block's mains rectangles as (id, rect, net) triples."""
+    return [(m[0], tuple(m[1]), m[2]) for m in b['mains']]
+
+def pair_rule(items, slots, bas, reinforced, outline=None, own=()):
+    """Every pair of mains rectangles on different nets keeps the signed clearance straight and the basic creepage by surface path
+    round the slots; a pair across the open interlock contact keeps the signed reinforced creepage, with no credit for anything but
+    copper and slots. `items` are (id, rect, net, owner). No pair is excused for sharing an owner: the only exemptions are the
+    pairs named in `own`, each a part's own pin pitch from its sheet (the record's data gives each with its sheet and its pitch)."""
+    bad, least_s, least_p, n, n_re = [], math.inf, math.inf, 0, 0
+    own = {frozenset(p) for p in own}
+    for i, (a, ra, na, oa) in enumerate(items):
+        for b, rb, nb, ob in items[i + 1:]:
+            if na == nb or frozenset((a, b)) in own:
+                continue
+            across = bool(reinforced) and ((reinforced[0] in na.split('|') and nb == reinforced[1]) or (reinforced[0] in nb.split('|') and na == reinforced[1]))
+            need = bas['creepage'] if across else bas['basic']
+            d = rd(ra, rb)
+            least_s = min(least_s, d)
+            if d < bas['clearance'] - EPS:
+                bad.append('mains copper %s and %s are %.2f mm apart, the clearance is %.1f' % (a, b, d, bas['clearance']))
+            if d < need - EPS:
+                n += 1
+                n_re += 1 if across else 0
+                L = surface_path(ra, rb, slots, need, outline)
+                least_p = min(least_p, L)
+                if L < need - 0.05:
+                    bad.append('surface path of %.1f mm between mains copper %s and %s, the rule is %.1f' % (L, a, b, need))
+    return bad, least_s, least_p, n, n_re
+
+# ---------------------------------------------------------------- main board model
+def reed_zone(D):
+    r = D['reed']
+    lo, up, h = r['lower'], [r['lower'][0], r['lower'][1] + r['pitch']], r['hand_r']
+    box = (lo[0] - h, lo[1] - h, lo[0] + h, up[1] + h)
+    strip = (lo[0] - r['strip_w'] / 2, lo[1], lo[0] + r['strip_w'] / 2, up[1])
+    return lo, up, box, strip
+
+def reed_hits(D, rect):
+    lo, up, box, strip = reed_zone(D)
+    h = D['reed']['hand_r']
+    return rd(rect, pt(lo)) < h or rd(rect, pt(up)) < h or ov(rect, strip)
+
+def tab_pads(D, found=False):
+    """The pad of each tab: the blade's section (its width along X, its thickness along Y, the blade standing with its wide face
+    parallel to X) with the annulus all round: a rectangle of blade + 2 ring by thickness + 2 ring about the tab's centre."""
+    t = D['tabs']
+    hx = t['blade'] / 2 + t['ring']
+    hy = t['thick'] / 2 + t['ring']
+    out = {}
+    for x in t['list']:
+        y = x['found'] if found else x['y']
+        out[x['n']] = (t['x'] - hx, y - hy, t['x'] + hx, y + hy)
+    return out
+
+def tab_nets(D):
+    return {x['n']: x['name'] for x in D['tabs']['list']}
+
+def landing_pad(D):
+    """The pad of the return landing: the same section as a tab's pad (the landing takes the same board-mounted blade) about the tab column."""
+    t = D['tabs']
+    hx = t['blade'] / 2 + t['ring']
+    hy = t['thick'] / 2 + t['ring']
+    y = D['return']['landing']['y']
+    return (t['x'] - hx, y - hy, t['x'] + hx, y + hy)
+
+def return_items(D):
+    """The mains copper of the neutral return as (id, rect, net, owner): the landing's pad, the pour that holds it and the shunt's two lands."""
+    R = D['return']
+    items = [(R['landing']['id'], landing_pad(D), R['landing']['net'], R['landing']['id']),
+             (R['pour']['id'], tuple(R['pour']['rect']), R['pour']['net'], R['pour']['id'])]
+    items += [(i, tuple(r), 'NEUTRAL', R['shunt']['id']) for i, r in R['shunt']['lands']]
+    return items
+
+def padname(k):
+    return 'the return landing' if k == 'R' else 'the pad of tab %d' % k
+
+def main_items(D):
+    """Every mains rectangle of the main board as (id, rect, net, owner): each tab pad and each link region with its own id as its
+    owner, then each block's rectangles with the block as owner. No pair is excused for sharing an owner."""
+    pads = tab_pads(D)
+    nets = tab_nets(D)
+    items = [('tab %d' % n, r, nets[n], 'tab %d' % n) for n, r in pads.items()]
+    items += [(l['id'], tuple(l['rect']), l['net'], l['id']) for l in D['link']['strip']]
+    items += return_items(D)
+    for b in D['mains_blocks']:
+        items += [(i, r, net, b['id']) for i, r, net in mains_of(b)]
+    return items
+
+def main_model(D):
+    pads = tab_pads(D)
+    pads['R'] = landing_pad(D)
+    links = [tuple(l['rect']) for l in D['link']['strip']] + [r for _, r, _, _ in return_items(D)]
+    strip = bbox_of([(p[0], p[1]) for p in list(pads.values()) + links] + [(p[2], p[3]) for p in list(pads.values()) + links])
+    bodies, pockets = {'TABSTRIP': strip}, []
+    for b in D['mains_blocks']:
+        bodies[b['id']] = tuple(b['body'])
+        pockets += [(b['id'], tuple(p)) for p in b['pockets']]
+    for b in D['lv_blocks']:
+        bodies[b['id']] = tuple(b['rect'])
+    bodies['REED'] = reed_zone(D)[2]
+    return pads, strip, bodies, main_items(D), pockets
+
+CELL = 0.5
+
+def trace_reach(D):
+    """How far a trace's centreline must stand from the copper of another net, a slot, a hole's keep-out or the board edge, beyond the
+    distance the rule asks of the copper: the trace's half-width at the maker's width tolerance, and half a grid cell (the centreline
+    is snapped to the grid), so a route that exists holds its distances with that margin."""
+    t = D['trace']
+    return t['w'] / 2 * (1 + t['tol']) + CELL / 2
+
+
+def corridors(D, items, pockets, outline, slots, keep, bas, reinforced):
+    """For every net whose mains copper is in more than one separate piece, the shortest route of a trace from the first piece to each of the others (the longest is reported): over a
+    grid of half a millimetre, eight ways, never within the basic creepage of the copper of another net, within the signed creepage
+    of a low-voltage block or a pocket, within the hole keep-out of a fixing or across a slot. A net whose pieces touch needs none.
+    The result is the length in millimetres, or None where no route exists."""
+    ob = bbox_of(outline)
+    ext = trace_reach(D)
+    nx, ny = int((ob[2] - ob[0]) / CELL) + 1, int((ob[3] - ob[1]) / CELL) + 1
+    def cells(r, strict=True):
+        i0, i1 = int(math.ceil((r[0] - ob[0]) / CELL - 1e-9)), int(math.floor((r[2] - ob[0]) / CELL + 1e-9))
+        j0, j1 = int(math.ceil((r[1] - ob[1]) / CELL - 1e-9)), int(math.floor((r[3] - ob[1]) / CELL + 1e-9))
+        for j in range(max(j0, 0), min(j1, ny - 1) + 1):
+            for i in range(max(i0, 0), min(i1, nx - 1) + 1):
+                x, y = ob[0] + i * CELL, ob[1] + j * CELL
+                if not strict or (r[0] + 1e-6 < x < r[2] - 1e-6 and r[1] + 1e-6 < y < r[3] - 1e-6):
+                    yield j * nx + i
+    base = bytearray(nx * ny)
+    em = D['basis']['edge_min'] + ext
+    for k in cells((ob[0] - 1, ob[1] - 1, ob[2] + 1, ob[3] + 1), False):
+        x, y = ob[0] + (k % nx) * CELL, ob[1] + (k // nx) * CELL
+        if x < ob[0] + em or x > ob[2] - em or y < ob[1] + em or y > ob[3] - em:
+            base[k] = 1
+    for ctr in D['holes'].values():
+        for k in cells((ctr[0] - keep - ext, ctr[1] - keep - ext, ctr[0] + keep + ext, ctr[1] + keep + ext), False):
+            if math.hypot(ob[0] + (k % nx) * CELL - ctr[0], ob[1] + (k // nx) * CELL - ctr[1]) < keep + ext:
+                base[k] = 1
+    for s in slots:
+        for k in cells(grow(s, D['slot_copper'] + ext)):
+            base[k] = 1
+    def slot_between(p, q):
+        x0, x1, y0, y1 = min(p[0], q[0]), max(p[0], q[0]), min(p[1], q[1]), max(p[1], q[1])
+        for sl in slots:
+            if sl[2] <= x0 or sl[0] >= x1 or sl[3] <= y0 or sl[1] >= y1:
+                continue
+            if crosses(p, q, sl):
+                return True
+        return False
+    def near(r, d):
+        """The cells a trace's centreline may not use for the copper (or block) r: nearer than the signed clearance by straight
+        distance, or nearer than d by straight distance with no slot between the cell and the copper (a slot makes the surface path
+        the longer way round, which the pair rules of the record measure); the distance is straight and not a square grown by d."""
+        dmin = bas['clearance'] + ext
+        for k in cells(grow(r, d), False):
+            x, y = ob[0] + (k % nx) * CELL, ob[1] + (k // nx) * CELL
+            dd = rd(r, (x, y) * 2)
+            if dd < dmin - 1e-6:
+                yield k
+            elif dd < d - 1e-6:
+                q = (min(max(x, r[0]), r[2]), min(max(y, r[1]), r[3]))
+                if not slot_between((x, y), q):
+                    yield k
+    for b in D['lv_blocks']:
+        for k in near(tuple(b['rect']), bas['creepage'] + ext):
+            base[k] = 1
+    for _, p in pockets:
+        for k in near(p, bas['creepage'] + ext):
+            base[k] = 1
+    by_net = {}
+    groups = D.get('route_groups', {})
+    for i, r, net, o in items:
+        by_net.setdefault(groups.get(net, net), []).append((i, r))
+    out, missed = {}, []
+    for net, rects in by_net.items():
+        comps = []
+        for i, r in rects:
+            hit = [c for c in comps if any(rd(r, q) < 1e-6 for _, q in c)]
+            merged = [(i, r)] + [m for c in hit for m in c]
+            comps = [c for c in comps if c not in hit] + [merged]
+        if len(comps) < 2:
+            continue
+        blocked = bytearray(base)
+        for n2, rr in by_net.items():
+            if n2 != net:
+                reinf = (reinforced[0] in net.split('|') and n2 == reinforced[1]) or (reinforced[0] in n2.split('|') and net == reinforced[1])
+                for _, r in rr:
+                    for k in near(r, (bas['creepage'] if reinf else bas['basic']) + ext):
+                        blocked[k] = 1
+        corridors.grid = getattr(corridors, 'grid', {})
+        corridors.grid[net] = (bytes(blocked), nx, ny, ob, [[r for _, r in c] for c in comps])
+        start = {k for _, r in comps[0] for k in cells(r, False) if not blocked[k]}
+        worst = 0.0
+        for comp in comps[1:]:
+            goal = {k for _, r in comp for k in cells(r, False) if not blocked[k]}
+            dist = {k: 0.0 for k in start}
+            heap = [(0.0, k) for k in start]
+            heapq.heapify(heap)
+            found = None
+            while heap:
+                d, k = heapq.heappop(heap)
+                if d > dist.get(k, math.inf):
+                    continue
+                if k in goal:
+                    found = d
+                    break
+                x, y = k % nx, k // nx
+                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)):
+                    a, b = x + dx, y + dy
+                    if not (0 <= a < nx and 0 <= b < ny) or blocked[b * nx + a]:
+                        continue
+                    if dx and dy and (blocked[y * nx + a] or blocked[b * nx + x]):
+                        continue
+                    nd = d + CELL * (math.sqrt(2) if dx and dy else 1.0)
+                    if nd < dist.get(b * nx + a, math.inf):
+                        dist[b * nx + a] = nd
+                        heapq.heappush(heap, (nd, b * nx + a))
+            if found is None:
+                worst = None
+                missed.append('%s: from %s to %s' % (net, '+'.join(i for i, _ in comps[0]), '+'.join(i for i, _ in comp)))
+                break
+            worst = max(worst, found)
+        out[net] = worst
+    corridors.missed = missed
+    return out
+
+def intrusion_top(D, x):
+    i = D['intrusions']
+    if x < i['one_x0'] or x > i['one_x1']:
+        return 0.0
+    return i['one_straight'] + math.sqrt(max(i['one_r'] ** 2 - (x - i['one_cx']) ** 2, 0))
+
+def intrusion_side(D, x, y):
+    """How far a lead end lies to the side of intrusion 1's straight edges, when it lies beside them; None otherwise."""
+    i = D['intrusions']
+    if y > i['one_straight'] or (i['one_x0'] <= x <= i['one_x1']):
+        return None
+    return min(abs(x - i['one_x0']), abs(x - i['one_x1']))
+
+def kind_area(D, bodies, k):
+    if 'area' in k:
+        return k['area']
+    a = sum(area(bodies[n]) for n in k.get('blocks', []) if n in bodies)
+    a += sum(area(tuple(b['body'])) for b in D['wall']['blocks'] if b['id'] in k.get('wall', []))
+    a += k.get('extra_area', 0.0)
+    if k.get('shunt'):
+        a += area(tuple(D['return']['shunt']['rect']))
+    a += sum(w * h for reg in ('hdr', 'ana') for w, h in k.get(reg, []))
+    return a
+
+def removal_order(D):
+    return [k['n'] for k in sorted((k for k in D['kinds'] if 'rank' in k), key=lambda k: k['rank'])]
+
+def union_grown_area(rects, g):
+    """The area of the union of the rectangles, each grown by g on its high sides: what blocks that are each grown by g the same way can fill."""
+    gr = [(r[0], r[1], r[2] + g, r[3] + g) for r in rects]
+    xs = sorted({v for r in gr for v in (r[0], r[2])})
+    total = 0.0
+    for a, b in zip(xs, xs[1:]):
+        cur, hi = 0.0, None
+        for lo, up in sorted((r[1], r[3]) for r in gr if r[0] <= a and r[2] >= b):
+            if hi is None or lo > hi:
+                cur += up - lo
+                hi = up
+            elif up > hi:
+                cur += up - hi
+                hi = up
+        total += cur * (b - a)
+    return total
+
+def region_capacity(D):
+    """What each class of region can hold: the union of its rectangles grown by the spacing the drawing keeps in that class (A18)."""
+    g = D['regions']['gap']
+    cap = {k: union_grown_area([tuple(r['rect']) for r in D['regions'][k]], g[k]) for k in ('hdr', 'ana')}
+    boxes = {b['id']: b['rect'] for b in D['lv_blocks']}
+    for reg, ids in D['regions'].get('other', {}).items():
+        cap[reg] -= sum((boxes[i][2] - boxes[i][0] + g[reg]) * (boxes[i][3] - boxes[i][1] + g[reg]) for i in ids)
+    return cap
+
+def region_demand(D, removed):
+    """What the blocks of the kinds not removed need in each class of region, each block grown by the spacing of its class; a kind that
+    is not drawn gives its block sizes (the `hdr` and `ana` lists of its row)."""
+    g = D['regions']['gap']
+    dem = {'hdr': 0.0, 'ana': 0.0}
+    for b in D['lv_blocks']:
+        if b.get('region') and b.get('kind') not in removed:
+            r = b['rect']
+            dem[b['region']] += (r[2] - r[0] + g[b['region']]) * (r[3] - r[1] + g[b['region']])
+    for k in D['kinds']:
+        if k['n'] not in removed:
+            for reg in ('hdr', 'ana'):
+                dem[reg] += sum((w + g[reg]) * (h + g[reg]) for w, h in k.get(reg, []))
+    return dem
+
+def header_blocks(D, removed):
+    """The sizes (width, height) of every header the kinds not removed need: the blocks drawn and the sizes a kind not drawn lists."""
+    out = [(b['rect'][2] - b['rect'][0], b['rect'][3] - b['rect'][1]) for b in D['lv_blocks'] if b.get('region') == 'hdr' and b.get('kind') not in removed]
+    for k in D['kinds']:
+        if k['n'] not in removed:
+            out += [tuple(x) for x in k.get('hdr', [])]
+    return out
+
+ARRANGEMENTS = {}
+
+def arrangement(D, reg, blocks):
+    """Whether every block of `blocks` (width, height), each turned or not, can be placed inside the rectangles of the class `reg` with
+    the spacing of that class kept between blocks, whatever the blocks' places are now. An exhaustive search over every placement that
+    is pushed down and to the left against another block or the floor: each block and each rectangle's top grown by the spacing on
+    its high sides, in steps of 0.1 mm; the lowest, leftmost free stretch of the floor takes one of the blocks left (in either
+    turn) or is given up, the area given up never over what the region has beyond the blocks; a state met again with no less area
+    given up is not searched again. The rectangles must stand in a row on one floor, touching, which is how the header regions are
+    drawn; None is returned for any other shape. True when an arrangement exists."""
+    g = D['regions']['gap'][reg]
+    G = int(round(g * 10))
+    rs = sorted((tuple(x['rect']) for x in D['regions'][reg]), key=lambda r: r[0])
+    if any(abs(r[1] - rs[0][1]) > EPS for r in rs) or any(abs(a[2] - b[0]) > EPS for a, b in zip(rs, rs[1:])):
+        return None
+    u = lambda v: int(round(v * 10))
+    segs, start = [], 0
+    for r in rs:
+        end = u(r[2] - rs[0][0]) + G
+        segs.append((start, end, u(r[3] - rs[0][1]) + G))
+        start = end
+    width = segs[-1][1]
+    items = sorted((u(w) + G, u(h) + G) for w, h in blocks)
+    key = (tuple(segs), tuple(items))
+    if key in ARRANGEMENTS:
+        return ARRANGEMENTS[key]
+    types = sorted(set(items))
+    counts = [items.count(x) for x in types]
+    slack = sum((e - s) * c for s, e, c in segs) - sum(w * h for w, h in items)
+    top = lambda x0, x1: min(c for s, e, c in segs if s < x1 and e > x0)
+    seen = {}
+    def merge(sky):
+        out = []
+        for s in sky:
+            if out and out[-1][2] == s[2] and out[-1][1] == s[0]:
+                out[-1] = (out[-1][0], s[1], s[2])
+            else:
+                out.append(s)
+        return out
+    def solve(sky, waste):
+        if not any(counts):
+            return True
+        k = (tuple(sky), tuple(counts))
+        if k in seen and seen[k] <= waste:
+            return False
+        seen[k] = waste
+        i = min(range(len(sky)), key=lambda j: (sky[j][2], sky[j][0]))
+        x0, x1, y = sky[i]
+        for t_, (w, h) in enumerate(types):
+            if not counts[t_]:
+                continue
+            for iw, ih in {(w, h), (h, w)}:
+                if iw <= x1 - x0 and y + ih <= top(x0, x0 + iw):
+                    ns = list(sky)
+                    ns[i:i + 1] = [(x0, x0 + iw, y + ih)] + ([(x0 + iw, x1, y)] if x1 > x0 + iw else [])
+                    counts[t_] -= 1
+                    ok = solve(merge(ns), waste)
+                    counts[t_] += 1
+                    if ok:
+                        return True
+        lower = [sky[j][2] for j in (i - 1, i + 1) if 0 <= j < len(sky)]
+        if lower and waste + (x1 - x0) * (min(lower) - y) <= slack:
+            ns = list(sky)
+            ns[i] = (x0, x1, min(lower))
+            return solve(merge(ns), waste + (x1 - x0) * (min(lower) - y))
+        return False
+    ARRANGEMENTS[key] = slack >= 0 and solve([(0, width, 0)], 0)
+    return ARRANGEMENTS[key]
+
+def allocation(D):
+    """The removal steps: demand and overflow of the header regions and the analogue regions, each block counted with the spacing the
+    drawing keeps in its class against the regions counted the same way (A18). Step 0 removes nothing; each later step removes the next
+    kind of the removal order; the allocation stops at the first step where both classes fit, and the headers fit only when an
+    arrangement of them exists, the area being no more than the necessary condition. Returns the capacity, the steps as
+    (step, kind removed or None, demand), the index of the step it stops at (None if no step fits) and, for each step, the
+    state of the search for an arrangement of the headers: 'over' (the area is over, not searched), 'none' or 'found'."""
+    cap = region_capacity(D)
+    steps, removed, stop, arr = [], set(), None, {}
+    def at(n, gone):
+        dem = region_demand(D, removed)
+        steps.append((n, gone, dem))
+        if dem['hdr'] > cap['hdr'] + EPS:
+            arr[n] = 'over'
+        else:
+            arr[n] = 'found' if arrangement(D, 'hdr', header_blocks(D, removed)) else 'none'
+        return arr[n] != 'none' and arr[n] != 'over' and dem['ana'] <= cap['ana'] + EPS
+    if at(0, None):
+        stop = 0
+    for n in removal_order(D):
+        if stop is not None:
+            break
+        removed.add(n)
+        if at(len(steps), n):
+            stop = len(steps) - 1
+    return cap, steps, stop, arr
+
+def stack_gap(D):
+    ys = sorted((b['body'][1], b['body'][3]) for b in D['mains_blocks'])
+    return max(ys[i + 1][0] - ys[i][1] for i in range(len(ys) - 1)), ys
+
+def fabrication(c, board):
+    f = c['fee']
+    w, h = board['w'], board['h']
+    a = board_area(board)
+    if w <= f['band'] and h <= f['band']:
+        v = f['band4'] if board['layers'] == 4 else f['band2']
+        return v, v, True
+    eng, slope = (f['eng4'], f['slope4']) if board['layers'] == 4 else (f['eng2'], f['slope2'])
+    return eng + slope * a / f['ref_area'], eng, False
+
+def board_area(board):
+    """A board's area: its width by its height, plus or minus the bay for the module's DC end."""
+    bay = board.get('bay')
+    return board['w'] * board['h'] + (board.get('bay_sign', 1) * bay[0] * bay[1] if bay else 0.0)
+
+def costs(D):
+    c, res = D['cost'], {}
+    f = c['fee']
+    for name in 'ABC':
+        d = c[name]
+        fab = [fabrication(c, b) for b in d['boards']]
+        asm, lab, dup = d['orders'] * (f['setup'] + f['stencil']), d['orders'] * f['labour'], d['dup_ext'] * f['ext_econ']
+        lp, lj = d['links'] * c['link_parts'], d['links'] * c['link_joints'] * f['joint_hand']
+        res[name] = dict(fab=sum(x[0] for x in fab), lines=[(b['name'], x[0], x[2]) for b, x in zip(d['boards'], fab)],
+                         asm=asm, lab=lab, dup=dup, lp=lp, lj=lj, total=sum(x[0] for x in fab) + asm + lab + dup + lp + lj)
+    return res
+
+# ---------------------------------------------------------------- owners of the functions
+OWNER_LABELS = {'main': 'main board', 'wall': 'wall board', 'steam path': 'steam-path assembly', 'inlet': 'mains-entry assembly'}
+
+def check_decisions(D, text):
+    """Every owner decision still pending is stated once, in the record's list of them, with its words; the section it concerns points to it;
+    and no other mention of a decision pending in the record lacks the pointer to the list."""
+    ds = D.get('owner_decisions') or []
+    if not ds:
+        return ['the data lists no owner decisions pending']
+    body = section(text, 'Owner decisions pending')
+    if body is None:
+        return ['the record has no section "Owner decisions pending"']
+    bad, items = [], {}
+    for ln in body.split('\n'):
+        m = re.match(r'^\*\*(D[0-9]+)\. (.*?)\.\*\* (.*)$', ln)
+        if m:
+            items.setdefault(m.group(1), []).append(m)
+    for i_ in sorted(set(items) - {d['id'] for d in ds}):
+        bad.append('the record lists an owner decision %s that the data does not' % i_)
+    for d in ds:
+        found = items.get(d['id'], [])
+        if len(found) != 1:
+            bad.append('the owner decision %s is stated %d times in the list of owner decisions pending, once is required' % (d['id'], len(found)))
+            continue
+        m = found[0]
+        if m.group(2) != d['title']:
+            bad.append('the owner decision %s is titled "%s" in the record and "%s" in the data' % (d['id'], m.group(2), d['title']))
+        if not m.group(3).startswith('Owner decision pending'):
+            bad.append('the owner decision %s does not state "Owner decision pending" in the record\'s list' % d['id'])
+        home = re.sub(r'\*', '', section(text, d['home']) or '')
+        if not re.search(r'Owner decisions pending, %s(?![0-9])' % d['id'], home):
+            bad.append('the section "%s" does not point to the owner decision %s' % (d['home'], d['id']))
+    outside = re.sub(r'^```.*?^```', '', text, flags=re.S | re.M).replace(body, '', 1)
+    for m in re.finditer(r'(?i)(?<!§ Owner )decisions? pending', outside):
+        line_start, line_end = outside.rfind('\n', 0, m.start()) + 1, outside.find('\n', m.end())
+        if outside[line_start] != '#' and not re.search(r'Owner decisions pending, D[0-9]', outside[m.start():min(m.end() + 200, line_end if line_end >= 0 else len(outside))]):
+            bad.append('the record mentions an owner decision pending without pointing to the list: "%s"' % outside[max(m.start() - 40, line_start):m.end() + 30])
+    return bad
+
+def check_removal_decision(D, text):
+    """A tab of the connector record that the board does not draw is removed by the owner's decision, which the owner-intent table of the
+    record states with its date: the tabs the decision names are not drawn and are listed as removed, and a tab listed as removed is one
+    the decision names."""
+    bad, tb = [], D['tabs']
+    rm = tb.get('removal') or {}
+    rows = table_rows(section(text, 'Owner intent carried in'))
+    hit = [cells for key, cells in rows.items() if rm.get('row') and key.startswith(rm['row'])]
+    if not hit:
+        return ['the owner-intent table of the record has no row that starts "%s", the owner\'s decision that removes the tabs the data lists as removed' % rm.get('row')]
+    cells = hit[0]
+    if len(cells) < 2 or cells[1] != rm['date']:
+        bad.append('the owner-intent row of the removed tabs is dated %s and the data says %s' % (cells[1] if len(cells) > 1 else 'nothing', rm['date']))
+    if 'remove' not in cells[0].lower():
+        bad.append('the owner-intent row "%s" does not say the tabs are removed' % rm['row'])
+    named = {int(n) for n in re.findall(r'[0-9]+', rm['row'])}
+    drawn = {x['n'] for x in tb['list']}
+    listed = {x['n'] for x in tb.get('removed', [])}
+    for n in sorted(named):
+        if n in drawn:
+            bad.append('tab %d is drawn, and the owner decided on %s to remove it' % (n, rm['date']))
+        if n not in listed:
+            bad.append('tab %d is not listed as removed in the data, and the owner decided on %s to remove it' % (n, rm['date']))
+    for n in sorted(listed - named):
+        bad.append('tab %d is listed as removed and no owner decision of the record removes it' % n)
+    return bad
+
+def check_owners(D, text):
+    """C1: every function of the forms record has one non-blank owner, a board or an off-board assembly the record declares, and
+    the owner table of the record names exactly that owner and no other; a function the record splits across boards says so."""
+    bad = []
+    rows = {}
+    for ln in (section(text, 'Every function has one owner') or '').split('\n'):
+        if ln.startswith('|') and not re.match(r'^\|[\s:|-]+\|$', ln):
+            cells = [c.strip() for c in ln.strip().strip('|').split('|')]
+            rows.setdefault(re.sub(r'[`*]', '', cells[0]), []).append(cells)
+    for name, found in rows.items():
+        if len(found) > 1:
+            bad.append('the owner table holds the function %s %d times' % (name, len(found)))
+    for f in D['functions']:
+        owner = (f.get('owner') or '').strip()
+        parts = [p.strip() for p in owner.split(' and ')] if owner else []
+        if not parts or any(p not in OWNER_LABELS for p in parts):
+            bad.append('the function %s has the owner "%s", which is blank or not a board or assembly the record declares' % (f['name'], owner))
+            continue
+        if len(parts) > 1 and not f.get('split'):
+            bad.append('the function %s has %d owners and gives no reason for splitting it' % (f['name'], len(parts)))
+        row = rows.get(f['name'])
+        if not row:
+            continue
+        cell = re.sub(r'[`*]', '', row[0][1] if len(row[0]) > 1 else '').lower()
+        for key, label in OWNER_LABELS.items():
+            if (label in cell) != (key in parts):
+                bad.append('the owner cell of %s %s "%s" and the data %s it' % (f['name'], 'names' if label in cell else 'does not name', label, 'does not give' if label in cell else 'gives'))
+    return bad
+
+def part_counts(D):
+    """From the blocks: the count and joints of each part tag, the header types as (ways, pitch) with the number of each, and the
+    header pins. A block's fit lists its parts as [tag, joints]; a relay's or the module's joints are its pins; a tab has two."""
+    counts, types, pins = {}, {}, 0
+    def add(tag, joints, n=1):
+        c, j = counts.get(tag, (0, 0))
+        counts[tag] = (c + n, j + joints * n)
+    for b in D['mains_blocks']:
+        for tag, j in b.get('fit', []):
+            add(tag, len(b['pins']) if j == 'pins' else j)
+    for b in D['lv_blocks']:
+        for tag, j in b.get('fit', []):
+            add(tag, j)
+        if b.get('conn'):
+            k = (b['conn']['ways'], b['conn']['pitch'])
+            types[k] = types.get(k, 0) + 1
+            pins += b['conn']['ways']
+    add('tab', D['tabs']['joints'], len(D['tabs']['list']) + 1)
+    for tag, j in D['return']['shunt'].get('fit', []):
+        add(tag, j)
+    return counts, types, pins
+
+def wall_counts(D):
+    """The wall board's parts by tag, from the blocks, the copper regions and the header: (count, joints)."""
+    W, counts = D['wall'], {}
+    for b in W['blocks'] + W['copper'] + W['lv']:
+        for tag, j in b.get('fit', []):
+            c, jj = counts.get(tag, (0, 0))
+            counts[tag] = (c + 1, jj + (b['conn']['ways'] if j == 'ways' else j))
+    return counts
+
+def rows_of_kinds(text):
+    """The table of kinds of the record, by its first cell, with the raw cells (backticks kept so the criterion ids can be found)."""
+    rows = {}
+    for ln in (section(text, 'The anticipated channel kinds') or '').split('\n'):
+        if ln.startswith('|') and not re.match(r'^\|[\s:|-]+\|$', ln):
+            cells = [c.strip() for c in ln.strip().strip('|').split('|')]
+            rows.setdefault(cells[0], cells)
+    return rows
+
+def apply_what_if(D, wi):
+    """A copy of the data with the what-if's blocks, slots and heat lists in place of the drawn ones."""
+    d = copy.deepcopy(D)
+    d.pop('what_if', None)
+    for key in ('mains_blocks', 'lv_blocks'):
+        for b in d[key]:
+            b.update(copy.deepcopy(wi[key].get(b['id'], {})))
+    d['slots'] = copy.deepcopy(wi['slots'])
+    d['heat'].update(copy.deepcopy(wi['heat']))
+    return d
+
+def max_held(D, bas, ob, gap=None):
+    """Every way of standing the parts of the 85 C class along the barrier column: the module (a heat source) at every position from
+    the interlock relay's 15 mm up, each part above or below it, each order, the parts that are fed from a tab in the order of their
+    tabs (a lead cannot pass another net's copper in the channel), a part below the module no nearer the interlock relay than the
+    rule where the record requires it, and the parts packed with the clearance between their copper: the most parts that hold 15 mm
+    from both sources, and the arrangements that hold that many."""
+    ht, lim = D['heat'], D['heat']['limits']
+    mbx = {b['id']: b for b in D['mains_blocks']}
+    il = tuple(mbx['K_IL']['heat'])
+    mod = tuple(mbx['MODULE']['body'])
+    mh = mod[3] - mod[1]
+    ids = [p['id'] for p in ht['class85']]
+    hot = {n: (tuple(mbx[n]['hot']) if mbx[n].get('hot') else tuple(mbx[n]['body'])) for n in ids}
+    size = {n: hot[n][3] - hot[n][1] for n in ids}
+    inset = {n: min(m[1][1] - mbx[n]['body'][1] for m in mbx[n]['mains']) for n in ids}
+    gap = bas['clearance'] if gap is None else gap
+    gp = lambda a, b: max(gap - inset[a] - inset[b], 0.0)
+    tab_y = {x['name']: x['y'] for x in D['tabs']['list']}
+    supply = {x['name'] for x in D['tabs']['list'] if x['name'] in {m[2] for b in D['mains_blocks'] for m in b['mains']} and x['n'] > 3}
+    fed = {n: tab_y[mbx[n]['mains'][0][2]] for n in ids if mbx[n]['mains'][0][2] in supply}
+    top, floor = ob[3] - bas['edge_min'], il[3] + gap
+    required = {tuple(x) for x in ht.get('required_held', [])}
+    cls = lim['class']
+    best, sets = 0, []
+    ym = il[3] + lim['relay']
+    while ym + mh <= top + EPS:
+        mtop = ym + mh
+        for mask in range(1 << len(ids)):
+            above = [n for i, n in enumerate(ids) if mask >> i & 1]
+            below = [n for n in ids if n not in above]
+            tab_a, tab_b = [n for n in above if n in fed], [n for n in below if n in fed]
+            if tab_a and tab_b and max(fed[n] for n in tab_b) > min(fed[n] for n in tab_a):
+                continue
+            for pa in itertools.permutations(above):
+                if [n for n in pa if n in fed] != sorted([n for n in pa if n in fed], key=lambda n: -fed[n]):
+                    continue
+                y, prev, pos = top, None, []
+                for n in pa:
+                    if prev is not None:
+                        y -= gp(prev, n)
+                    y0 = y - size[n]
+                    pos.append((n, y0))
+                    y, prev = y0, n
+                if pos and pos[-1][1] < mtop - EPS:
+                    continue
+                held_a = [n for n, y0 in pos if y0 >= mtop + cls - EPS]
+                for pb in itertools.permutations(below):
+                    if [n for n in pb if n in fed] != sorted([n for n in pb if n in fed], key=lambda n: -fed[n]):
+                        continue
+                    y, prev, posb = ym, None, []
+                    for n in pb:
+                        if prev is not None:
+                            y -= gp(prev, n)
+                        y0 = y - size[n]
+                        posb.append((n, y0))
+                        y, prev = y0, n
+                    if posb and posb[-1][1] < floor - EPS:
+                        continue
+                    if any(y0 < il[3] + cls - EPS for n, y0 in posb if (n, 'K_IL') in required):
+                        continue
+                    held_b = [n for n, y0 in posb if y0 >= il[3] + cls - EPS and y0 + size[n] <= ym - cls + EPS]
+                    k = len(held_a) + len(held_b)
+                    if k > best:
+                        best, sets = k, []
+                    if k == best and len(sets) < 40:
+                        sets.append((round(ym, 2), tuple(pa), tuple(pb), tuple(held_a + held_b)))
+        ym += 0.2
+    return best, sets
+
+def held_parts(D):
+    """The parts of the 85 C class that stand the rule's distance from every heat source."""
+    mbx = {b['id']: b for b in D['mains_blocks']}
+    rect = lambda n, key: tuple(mbx[n].get(key) or mbx[n]['body'])
+    return sorted(p['id'] for p in D['heat']['class85'] if all(rd(rect(sname, 'heat'), rect(p['id'], 'hot')) >= D['heat']['limits']['class'] - EPS for sname in D['heat']['sources']))
+
+def kept_sensor_kinds(D):
+    """The current sensors on the rail: one for each kind that carries a sensor and has a block drawn."""
+    drawn = {b['id'] for b in D['lv_blocks']}
+    return sum(1 for k in D['kinds'] if k.get('sensor') and any(n in drawn for n in k.get('blocks', [])))
+
+def rail_rows(D):
+    """The 5 V rail's loads in mA, each coil at the low end of its resistance tolerance, and the total at the controller's maximum and typical."""
+    ra, rl, vr, il = D['rail']['assumed'], D['rail'], D['valve_relay'], D['relay']
+    v5 = rl['volts']
+    rows = [('K_IL coil', 1000.0 * v5 / (il['coil_ohm'] * (1 - il['coil_tol']))),
+            ('Valve relay coils', 1000.0 * v5 / (vr['coil_ohm'] * (1 - vr['coil_tol'])) * vr['count']),
+            ('Controller', rl['controller_ma']),
+            ('Gauge drivers', rl['gauge']['phases'] * rl['gauge']['phase_ma']),
+            ('Weight amplifiers', rl['hx711_ma'] * rl['hx711_count']),
+            ('Load-cell excitation', 1000.0 * v5 / ra['loadcell_ohm'] * ra['loadcell_count']),
+            ('Opto-triac LED drives', ra['opto_led_ma'] * ra['opto_leds']),
+            ('Panel indicators and buzzer', ra['panel_ma']),
+            ('Flow meter', ra['flow_ma']),
+            ('Pressure transducers', ra['pressure_ma'] * ra['pressure_count']),
+            ('In-stream probe converters', ra['probe_ma'] * ra['probe_count']),
+            ('Current sensors', ra['sense_ma'] * kept_sensor_kinds(D)),
+            ('Voltage measurement output', ra['vm_out_ma']),
+            ('Headers, pull-ups and dividers', ra['misc_ma'])]
+    total = sum(v for _, v in rows)
+    return rows, total, total - rl['controller_ma'] + rl['controller_typ_ma']
+
+# ---------------------------------------------------------------- the main board
+def check_main(D, text, out, record_dir, src=None, route=True, need=False, whatif=False, proof=False):
+    bad, prose = [], Prose(text, register=need or whatif)
+    if src is None:
+        src, sbad = parse_sources(source_texts(record_dir))
+        bad += sbad
+    bad += check_sources(D, src)
+    bad += check_tokens(text, D)
+    bad += check_removal_decision(D, text)
+    shunt = D.get('return', {}).get('shunt')
+    if not shunt or not shunt.get('lands') or not shunt.get('rect') or shunt.get('parts', 0) < 1:
+        return bad + ['the neutral return has no current shunt (the data\'s return.shunt is missing, or has no lands, no rectangle or no part), so the supply current has nothing to read it and the record\'s claim that a shunt carries every load\'s return has nothing behind it']
+    cav, bas, fx, tb = D['cavity'], D['basis'], D['fixing'], D['tabs']
+    bas = dict(bas, basic=bas['creepage'] / 2)
+    keep = fx['E'] + bas['creepage'] + fx['draw_tol']
+    pads, strip, bodies, items, pockets = main_model(D)
+    mains = [(i, r) for i, r, _, _ in items]
+    outline = [tuple(p) for p in D['outline']]
+    ob = bbox_of(outline)
+    heading = 'The mains-side blocks'
+    out.append('sources: separation basis %.1f / %.1f / %.1f mm (clearance, basic and signed creepage), %d tabs, %d mounting points, the cavity, the reed, intrusion 1, the maker\'s limits and %d load currents read from their records and equal to the data' % (
+        bas['clearance'], bas['basic'], bas['creepage'], len(src.get('tabs', {})), len(src.get('holes', {})), len(src.get('loads', {}))))
+    out.append('assumption tokens: %d of the Assumptions table equal to the data' % len(TOKENS))
+
+    # guard 1: the outline in the cavity, every body in the outline, every height under its ceiling
+    mk = cav['maker_tol']
+    limit = (mk, mk, cav['w'] - cav['tol'] - mk, cav['h'] - cav['tol'] - mk)
+    if not all(limit[0] <= p[0] <= limit[2] and limit[1] <= p[1] <= limit[3] for p in outline):
+        bad.append('the outline lies outside the cavity of %.1f x %.1f mm (each +/-%.1f, routed outline +/-%.1f)' % (cav['w'], cav['h'], cav['tol'], mk))
+    nominal = (ob[0], cav['w'] - ob[2], ob[1], cav['h'] - ob[3])
+    least = min(ob[0] - mk, cav['w'] - cav['tol'] - ob[2] - mk, ob[1] - mk, cav['h'] - cav['tol'] - ob[3] - mk)
+    oa = poly_area(outline)
+    out.append('outline %.1f x %.1f mm = %.0f mm2; margins left %.1f right %.1f bottom %.1f top %.1f mm, least with tolerances %.1f mm' % (
+        ob[2] - ob[0], ob[3] - ob[1], oa, *nominal, least))
+    for n, r in bodies.items():
+        if not rect_in_poly(r, outline):
+            bad.append('%s lies outside the outline' % n)
+    for n, r in pads.items():
+        if not rect_in_poly(r, outline):
+            bad.append('%s lies outside the outline' % padname(n))
+    for i, r, _, o in items:
+        if not rect_in_poly(r, outline):
+            bad.append('the mains copper %s lies outside the outline' % i)
+        elif o in bodies and not inside(r, bodies[o]):
+            bad.append('the mains copper %s lies outside the body of %s' % (i, o))
+    names = list(bodies)
+    for i, a in enumerate(names):
+        for b in names[i + 1:]:
+            if ov(bodies[a], bodies[b]):
+                bad.append('%s and %s overlap' % (a, b))
+    edge = min(edge_distance(r, outline) for r in list(bodies.values()) + list(pads.values()))
+    if edge < bas['edge_min'] - EPS:
+        bad.append('a block or pad stands %.2f mm from the board edge, the least allowed is %.1f' % (edge, bas['edge_min']))
+    sums = (sum(area(bodies[b['id']]) for b in D['mains_blocks']) + area(strip), sum(area(tuple(b['rect'])) for b in D['lv_blocks']), area(bodies['REED']))
+    out.append('%d blocks inside the outline, the nearest %.1f mm from its edge, none overlapping: mains-side %.0f + low-voltage %.0f + reed keep-out %.0f = %.0f mm2, %.0f %% of the outline' % (
+        len(bodies), edge, *sums, sum(sums), sum(sums) / oa * 100))
+    thou = lambda x: '{:,.0f}'.format(x).replace(',', ' ')
+    prose.mention('The low-voltage blocks', 'The mains-side bodies total %s mm²' % thou(sums[0]))
+    prose.mention('The low-voltage blocks', 'the low-voltage blocks %s mm²' % thou(sums[1]))
+    prose.mention('The low-voltage blocks', '%s mm² of the %s mm² outline, %.0f %%' % (thou(sum(sums)), thou(oa), sum(sums) / oa * 100))
+    prose.mention('The low-voltage blocks', 'leaving %s mm² for routing' % thou(oa - sum(sums)))
+    prose.mention('Candidate divisions', 'Blocks fill %s of %s mm² (%.0f %%)' % (thou(sum(sums)), thou(oa), sum(sums) / oa * 100))
+    prose.mention('Candidate divisions', '%s of 15 690 mm² (%.0f %%)' % (thou(sum(sums)), sum(sums) / 15690.0 * 100))
+    c = D['ceiling']
+    heights = [(b['id'], tuple(b['body']), b['h'], 'mains') for b in D['mains_blocks']] + [(b['id'], tuple(b['rect']), b['h'], 'lv') for b in D['lv_blocks'] if b.get('h')]
+    heights.append(('TABS', strip, tb['height'], 'tab'))
+    margins = {}
+    for n, r, h, kind in heights:
+        wall = min(r[0], r[1], cav['w'] - r[2], cav['h'] - r[3])
+        ceiling = c['edge'] if wall <= c['edge_band'] + EPS else c['interior']
+        if h > ceiling:
+            bad.append('%s stands %.1f mm high under a ceiling of %.1f mm' % (n, h, ceiling))
+        key = 'MODULE' if n == 'MODULE' else 'Relays' if n.startswith('K_') else 'Tabs' if n == 'TABS' else 'Fuse holders' if n in ('VFUSE', 'P_C', 'P_S') else 'Harness headers' if kind == 'lv' else None
+        if key:
+            margins[key] = min(margins.get(key, 99), ceiling - h)
+    out.append('heights: %d parts, least margin %.1f mm' % (len(heights), min(margins.values())))
+    for key, m in margins.items():
+        prose.expect('Heights, the underside, and hand access', key, 3, '%.1f' % m)
+
+    # guard 2: the tabs, against the connector record's rows
+    tl = sorted(tb['list'], key=lambda x: x['y'])
+    pitch = min(tl[i + 1]['y'] - tl[i]['y'] for i in range(len(tl) - 1))
+    if pitch < tb['pitch'] - EPS:
+        bad.append('tab pitch %.2f mm, least allowed %.1f' % (pitch, tb['pitch']))
+    moves = {x['n']: x['y'] - x['found'] for x in tb['list']}
+    for n, m in moves.items():
+        if abs(m) > tb['slack_estimate']:
+            bad.append('tab %d moves %.1f mm, past the owner\'s estimate of %.0f mm' % (n, m, tb['slack_estimate']))
+    named = sorted(n for n, m in moves.items() if abs(m) > EPS)
+    slack = {n: tb['slack_estimate'] - moves[n] for n in named}
+    out.append('tabs: %d pads and the return landing inside the outline, least pitch %.1f mm, moves %s mm, slack left %s mm, strip X %.1f to %.1f Y %.1f to %.1f' % (
+        len(pads) - 1, pitch, ' '.join('%+.1f' % moves[n] for n in named), ' '.join('%.1f' % slack[n] for n in named), strip[0], strip[2], strip[1], strip[3]))
+    found_pads = tab_pads(D, found=True)
+    P1 = D['holes']['P1']
+    fixing = 'The fixing rule and the tabs that move'
+    for n in named:
+        x = [t for t in tb['list'] if t['n'] == n][0]
+        prose.expect(fixing, str(n), 1, '%.1f' % x['found'])
+        prose.expect(fixing, str(n), 2, '%.2f' % rd(pt(P1), found_pads[n]))
+        prose.expect(fixing, str(n), 3, '%.2f' % rd(pt(P1), pads[n]))
+        prose.expect(fixing, str(n), 4, '%.1f' % x['y'])
+        prose.expect(fixing, str(n), 5, '%+.1f' % moves[n])
+        prose.expect(fixing, str(n), 6, '%.1f' % slack[n])
+        prose.expect('Every retained harness reaches its connector', str(n), 2, '%.1f' % x['found'])
+        prose.expect('Every retained harness reaches its connector', str(n), 3, '%.1f' % x['y'])
+
+    # guard 3: every hole against mains copper, bodies and the boss
+    near = {}
+    for h, ctr in D['holes'].items():
+        near[h] = min(rd(pt(ctr), r) for _, r in mains)
+        if near[h] < keep - EPS:
+            bad.append('mains copper %.2f mm from %s, the rule is %.2f' % (near[h], h, keep))
+        for n, r in list(bodies.items()) + [(padname(k), v) for k, v in pads.items()]:
+            if rd(pt(ctr), r) < fx['lid_keep'] - EPS:
+                bad.append('%s lies inside the %.1f mm keep-out of %s' % (n, fx['lid_keep'], h))
+    out.append('mains copper to the mounting holes, rule %.2f mm: %s' % (keep, ', '.join('%s %.2f' % (h, m) for h, m in near.items())))
+    for h, ctr in D['holes'].items():
+        row = {'P1': 'Point 1, lid screw', 'P2': 'Point 2, lid screw', 'P4': 'Point 4'}[h]
+        prose.expect('Outline, fixings and margins', row, 1, '(%.1f, %.1f)' % tuple(ctr))
+        prose.expect('Outline, fixings and margins', row, 3, ('%.1f left' % (ctr[0] - ob[0])) if ctr[0] < 60 else ('%.1f right' % (ob[2] - ctr[0])))
+        prose.expect('Outline, fixings and margins', row, 4, ('%.2f' if h == 'P1' else '%.1f') % near[h])
+    boss = D['boss']['P3']
+    lo, up, box, strip_zone = reed_zone(D)
+    leads = [('tab %d' % t['n'], pads[t['n']]) for t in tb['list']] + [('the return landing', pads['R'])] + [('%s pin' % b['id'], pt(p)) for b in D['mains_blocks'] for p in b['pins']]
+    leads += [(b['id'], tuple(b['rect'])) for b in D['lv_blocks'] if b['tht']] + [('the reed lower pad', pt(lo)), ('the reed upper pad', pt(up))]
+    lead = min((rd(pt(boss), r), n) for n, r in leads)
+    heavy = min((rd(pt(boss), tuple(b['body'])), b['id']) for b in D['mains_blocks'] if b['h'] >= 15.7 or b['id'] == 'MODULE')
+    for what, d in (('a lead end or joint', lead), ('a heavy part', heavy)):
+        if d[0] < fx['lid_keep'] - EPS:
+            bad.append('%s (%s) lies within %.1f mm of the point 3 boss' % (d[1], what, fx['lid_keep']))
+    out.append('point 3 boss: nearest lead end or joint %.1f mm (%s), nearest heavy part %.1f mm (%s)' % (lead[0], lead[1], heavy[0], heavy[1]))
+
+    # guard 4: the reed
+    rd_ = D['reed']
+    if math.hypot(lo[0] - rd_['recorded'][0], lo[1] - rd_['recorded'][1]) > rd_['tol'] + EPS:
+        bad.append('the reed\'s lower lead (%.1f, %.1f) is more than %.1f mm from the recorded (%.1f, %.1f)' % (*lo, rd_['tol'], *rd_['recorded']))
+    mid = (lo[0], (lo[1] + up[1]) / 2)
+    if math.hypot((box[0] + box[2]) / 2 - mid[0], (box[1] + box[3]) / 2 - mid[1]) > 0.05:
+        bad.append('the reed keep-out is not centred on the element\'s midpoint')
+    for p in (lo, up):
+        if not in_poly(p, outline):
+            bad.append('a reed pad lies outside the outline')
+    for n, r in [(a, b) for a, b in bodies.items() if a != 'REED'] + [(padname(k), v) for k, v in pads.items()]:
+        if reed_hits(D, r):
+            bad.append('%s lies inside the reed keep-out' % n)
+    for h, ctr in D['holes'].items():
+        if min(math.hypot(ctr[0] - p[0], ctr[1] - p[1]) for p in (lo, up)) < rd_['hand_r'] + fx['lid_keep'] - EPS:
+            bad.append('the reed keep-out reaches the lid-screw circle of %s' % h)
+    out.append('reed: lower lead (%.1f, %.1f), upper lead (%.1f, %.1f), midpoint (%.1f, %.1f), keep-out X %.1f to %.1f Y %.1f to %.1f, clear of every block' % (
+        *lo, *up, *mid, box[0], box[2], box[1], box[3]))
+    prose.expect('The low-voltage blocks', 'REED', 2, rng(box[0], box[2]))
+    prose.expect('The low-voltage blocks', 'REED', 3, rng(box[1], box[3]))
+
+    # guard 5: mains against low voltage, and mains against mains, by straight distance and by the surface path round the slots
+    slots = D['slots']
+    sr = slot_rects(slots)
+    sc = D['slot_copper']
+    for s in slots:
+        r = tuple(s['rect'])
+        if min(r[2] - r[0], r[3] - r[1]) < D['slot_width_min'] - EPS:
+            bad.append('slot %s is narrower than %.1f mm' % (s['id'], D['slot_width_min']))
+        if not inside(r, (ob[0], ob[1], ob[2], ob[3])) or not rect_in_poly(r, outline):
+            bad.append('slot %s lies outside the outline' % s['id'])
+        for n, rr in mains + pockets + [(b['id'], tuple(b['rect'])) for b in D['lv_blocks']] + [(padname(k), v) for k, v in pads.items()]:
+            if ov(grow(r, sc), rr):
+                bad.append('slot %s cuts the copper of %s' % (s['id'], n))
+    lv_least = min(rd(tuple(b['rect']), r) for b in D['lv_blocks'] for _, r in mains)
+    for b in D['lv_blocks']:
+        d = min(rd(tuple(b['rect']), r) for _, r in mains)
+        if d < bas['creepage'] - EPS:
+            bad.append('the low-voltage block %s is %.1f mm from mains copper' % (b['id'], d))
+    dips = {b['id'] for b in D['mains_blocks'] if b.get('dip')}
+    straight, path, pairs = math.inf, math.inf, 0
+    for a, m in [(o, r) for _, r, _, o in items]:
+        for b, p in pockets:
+            if a == b and a in dips:
+                continue
+            d = rd(m, p)
+            straight = min(straight, d)
+            if d < bas['clearance'] - EPS:
+                bad.append('the pocket of %s is %.2f mm from the mains copper of %s, the clearance is %.1f' % (b, d, a, bas['clearance']))
+            if d < bas['creepage'] - EPS:
+                pairs += 1
+                L = surface_path(m, p, sr, bas['creepage'], outline)
+                path = min(path, L)
+                if L < bas['creepage'] - 0.05:
+                    bad.append('surface path of %.1f mm between the mains copper of %s and the pocket of %s, creepage is %.1f' % (L, a, b, bas['creepage']))
+    pins = dip_paths(D['mains_blocks'], sr, 12.0, outline)
+    for n, L in pins.items():
+        path = min(path, L)
+        if L < bas['creepage'] - 0.05:
+            bad.append('opto-coupler %s: pin-to-pin surface path of %.1f mm, creepage is %.1f' % (n, L, bas['creepage']))
+    out.append('low voltage to mains copper: least %.1f mm of %.1f; pockets to mains copper: least straight %.1f mm of %.1f, %d pairs under %.1f mm straight all held by slots, least surface path %.1f mm of %.1f' % (
+        lv_least, bas['creepage'], straight, bas['clearance'], pairs, bas['creepage'], path, bas['creepage']))
+    out.append('opto-coupler pin-to-pin paths round the slots: ' + ', '.join('%s %.1f mm' % (n, L) for n, L in pins.items()))
+    plen = sum(max(s['rect'][2] - s['rect'][0], s['rect'][3] - s['rect'][1]) for s in slots)
+    if plen * 1000.0 / oa > D['slot_density']:
+        bad.append('slot path of %.1f m per m2 reaches the maker\'s %.0f m per m2' % (plen * 1000.0 / oa, D['slot_density']))
+    out.append('slots: %d of %.0f mm of slot path = %.1f m per m2 of board, against %.0f' % (len(slots), plen, plen * 1000.0 / oa, D['slot_density']))
+    reinforced = D['open_contact']['nets']
+    names = set(tab_nets(D).values())
+    if reinforced[0] not in names or reinforced[1] not in names:
+        bad.append('the open contact is between nets %s that are not among the tabs the connector record names' % reinforced)
+    pb, mm, pp, npairs, nre = pair_rule(items, sr, bas, reinforced, outline)
+    bad += pb
+    across = min(rd(ra, rb) for a, ra, na, oa in items for b, rb, nb, ob in items if reinforced[0] in na.split('|') and nb == reinforced[1])
+    zb = 'Zones and the barrier'
+    prose.mention(zb, 'the eight slots are %.0f mm of slot path' % plen)
+    prose.mention(zb, '%.1f m of slot path per m²' % (plen * 1000.0 / oa))
+    prose.mention(zb, '%d pocket-to-mains pairs stand under %.1f mm apart in a straight line, from %.1f mm' % (pairs, bas['creepage'], straight))
+    prose.mention(zb, 'every one is held by a slot, the least surface path being %.1f mm' % path)
+    prose.mention(zb, 'are %.1f mm (TIMING), %.1f mm (VMEAS) and %.1f mm (P_C and P_S' % (pins['TIMING'], pins['VMEAS'], pins['P_C']))
+    prose.mention(zb, '%d pairs of mains copper of different nets, from different parts, stand nearer than the creepage their rule asks, %d of them across the open contact' % (npairs, nre))
+    prose.mention(zb, 'held by distance or by a slot, the least surface path being %.1f mm' % pp)
+    prose.mention(zb, 'every mains copper rectangle (the least, %.1f mm)' % lv_least)
+    prose.mention(zb, '(the least, %.1f mm straight and %.1f mm by path)' % (straight, path))
+    prose.mention(zb, '(the least, %.1f mm straight and %.1f mm by path)' % (mm, pp))
+    out.append('mains copper of different nets, from different parts: least straight %.1f mm of %.1f, %d pairs under the basic creepage of %.1f mm by straight line, all held by distance or slots, least surface path %.1f mm of %.1f (%d of them across the open interlock contact, where the rule is the signed %.1f mm: least straight %.1f mm)' % (
+        mm, bas['clearance'], npairs, bas['basic'], pp, bas['basic'], nre, bas['creepage'], across))
+
+    # the interlock's link: the copper between tab 2 and tab 1 through the relay's contact, its loss and its taps
+    L = D['link']
+    cur, bud = D['loads'], L
+    behind = cur['coffee'] + cur['steam'] + cur['coffee_pump'] + cur['steam_pump']
+    total_steady = behind + cur['coil_steady']
+    total_inrush = behind + cur['coil_inrush']
+    tabs_by_net = {v: k for k, v in tab_nets(D).items()}
+    ids = {i: (r, net) for i, r, net, _ in items}
+    regions, prev, squares = [], None, 0.0
+    for k, step in enumerate(L['chain']):
+        if 'contact' in step:
+            prev = None
+            continue
+        r = tuple(step['rect'])
+        host = ids.get(step['in'])
+        if host is None or not inside(r, host[0]):
+            bad.append('the link region %s does not lie inside the mains copper %s' % (step['id'], step['in']))
+        if prev is not None and rd(prev, r) > 1e-6:
+            bad.append('the link region %s does not touch the one before it' % step['id'])
+        length, width = ((r[2] - r[0]), (r[3] - r[1])) if step['axis'] == 'x' else ((r[3] - r[1]), (r[2] - r[0]))
+        if width < 0.381 * cur['overload'] - EPS:
+            bad.append('the link region %s is %.2f mm wide, %.2f A needs %.2f' % (step['id'], width, cur['overload'], 0.381 * cur['overload']))
+        squares += length / width
+        regions.append((step['id'], length, width))
+        prev = r
+    contacts = [(i_, s['contact']) for i_, s in enumerate(L['chain']) if 'contact' in s]
+    if len(contacts) != 1 or contacts[0][1] != 'K_IL':
+        bad.append('the link passes %s, and the interlock\'s contact is the one of K_IL, between the copper on LINE and the copper on LINE1' % (('the contact of %s' % ', '.join(repr(c) for _, c in contacts)) if contacts else 'no relay contact'))
+    else:
+        i_c = contacts[0][0]
+        around = [L['chain'][i_c - 1].get('in') if i_c > 0 else None, L['chain'][i_c + 1].get('in') if i_c + 1 < len(L['chain']) else None]
+        if around != ['K_IL.a', 'K_IL.b']:
+            bad.append('the contact of K_IL does not stand between its two halves, K_IL.a on LINE and K_IL.b on LINE1, in the link: it stands between %s and %s' % tuple(around))
+    k_il_part = [b for b in D['mains_blocks'] if b['id'] == 'K_IL']
+    if not k_il_part or not any(t == 'k_il' for t, _ in k_il_part[0].get('fit', [])):
+        bad.append('the block K_IL is not fitted with the interlock relay part')
+    first, last = [s for s in L['chain'] if 'rect' in s][0], [s for s in L['chain'] if 'rect' in s][-1]
+    for end, net in ((first, 'LINE'), (last, 'LINE1')):
+        host = ids.get(end['in'])
+        pad = pads[tabs_by_net[net]]
+        if host is None or host[1] != net or not inside(pad, host[0]) or abs(end['rect'][0] - tb['x']) > EPS:
+            bad.append('the link does not run from the %s tab\'s pad: its end region %s does not hold the pad of that tab and its centre' % (net, end['id']))
+    kil = [b for b in D['mains_blocks'] if b['id'] == 'K_IL'][0]
+    tm = kil['terminals']
+    ring = D['maker']['ring']
+    lower, upper = tm['centre_y'] - tm['pitch_y'] / 2, tm['centre_y'] + tm['pitch_y'] / 2
+    cop = {m[0]: tuple(m[1]) for m in kil['mains']}
+    for name, y, net in (('K_IL.b', lower, 'LINE1'), ('K_IL.a', upper, 'LINE')):
+        rect = cop[name]
+        if [m[2] for m in kil['mains'] if m[0] == name][0] != net:
+            bad.append('the contact terminal at Y %.2f is on %s, which is not the net %s of the interlock\'s %s side' % (y, name, net, 'input' if net == 'LINE' else 'output'))
+        for lx in tm['legs_x']:
+            r_ = tm['hole'] / 2 + ring
+            if not (rect[0] <= lx - r_ + EPS and lx + r_ <= rect[2] + EPS and rect[1] <= y - r_ + EPS and y + r_ <= rect[3] + EPS):
+                bad.append('the leg at (%.2f, %.2f) of the interlock relay\'s contact terminal does not stand %.2f mm (its hole\'s radius and the maker\'s annular ring) inside the copper %s' % (lx, y, r_, name))
+            if [lx, y] not in [list(p) for p in kil['pins']] and not any(abs(p[0] - lx) < EPS and abs(p[1] - y) < EPS for p in kil['pins']):
+                bad.append('the leg at (%.2f, %.2f) of the interlock relay is not among its pins' % (lx, y))
+    for p in ([(tm['coil_x'], tm['centre_y'] - tm['pitch_y'] / 2), (tm['coil_x'], tm['centre_y'] + tm['pitch_y'] / 2)]):
+        if not any(abs(q[0] - p[0]) < EPS and abs(q[1] - p[1]) < EPS for q in kil['pins']):
+            bad.append('the coil pin at (%.2f, %.2f) of the interlock relay is not among its pins' % p)
+    if len(kil['pins']) != 2 * len(tm['legs_x']) + 2:
+        bad.append('the interlock relay has %d pins in the data, the sheet has %d holes' % (len(kil['pins']), 2 * len(tm['legs_x']) + 2))
+    hp = kil['pockets'][0]
+    if abs((hp[3] - hp[1]) - tm['body_w']) > EPS or abs((hp[1] + hp[3]) / 2 - tm['centre_y']) > EPS:
+        bad.append('the interlock relay\'s coil pocket is not the %g mm body centred on the contact terminals' % tm['body_w'])
+    if not inside(tuple(kil['heat']), tuple(kil['body'])):
+        bad.append('the interlock relay\'s heat rectangle lies outside its block')
+    out.append('interlock relay terminals (P2): contact tabs %.2f mm apart across the body, each on two %g mm holes %g mm apart along it (X %s), at Y %.2f on LINE1 and %.2f on LINE; coil holes at X %g; every leg stands %.2f mm inside its copper' % (
+        tm['pitch_y'], tm['hole'], abs(tm['legs_x'][1] - tm['legs_x'][0]), ' and '.join('%g' % x for x in tm['legs_x']), lower, upper, tm['coil_x'], tm['hole'] / 2 + ring))
+    r_link = squares * D['wall']['sheet_mohm']
+    loss = lambda i: r_link * i * i / 1000.0
+    narrow = min(w for _, _, w in regions)
+    if loss(cur['coffee'] + cur['steam']) > L['budget_w'] + EPS:
+        bad.append('the link\'s copper loses %.2f W at %.2f A, the budget is %.1f W' % (loss(cur['coffee'] + cur['steam']), cur['coffee'] + cur['steam'], L['budget_w']))
+    if loss(total_steady) > L['budget_w'] + EPS:
+        bad.append('the link\'s copper loses %.2f W at %.2f A, the budget is %.1f W' % (loss(total_steady), total_steady, L['budget_w']))
+    out.append('link LINE to LINE1 through K_IL: %d copper regions, %.2f squares = %.2f mohm, narrowest %.2f mm (15 A needs %.2f); loss %.2f W at %.2f A, %.2f W at %.2f A (all loads steady), %.2f W at %.0f A, against a budget of %.1f W' % (
+        len(regions), squares, r_link, narrow, 0.381 * cur['overload'], loss(cur['coffee'] + cur['steam']), cur['coffee'] + cur['steam'], loss(total_steady), total_steady, loss(cur['overload']), cur['overload'], L['budget_w']))
+    sec_il = 'The interlock block, its size and its place'
+    prose.expect(sec_il, 'Link copper', 1, '%.2f squares' % squares)
+    prose.expect(sec_il, 'Link copper', 1, '%.2f mΩ' % r_link)
+    prose.expect(sec_il, 'Link loss', 1, '%.2f W at %.2f A' % (loss(cur['coffee'] + cur['steam']), cur['coffee'] + cur['steam']))
+    prose.expect(sec_il, 'Link loss', 1, '%.2f W at %.2f A' % (loss(total_steady), total_steady))
+    prose.expect(sec_il, 'Link loss', 1, '%.2f W at %.0f A' % (loss(cur['overload']), cur['overload']))
+    fb = D['fallback']
+    fb_run = (bodies[fb['anchor']][1] + bodies[fb['anchor']][3]) / 2 - (pads[tabs_by_net['LINE']][1] + pads[tabs_by_net['LINE']][3]) / 2
+    fb_sq = 2 * fb_run / fb['width']
+    fb_loss = fb_sq * D['wall']['sheet_mohm'] * total_steady ** 2 / 1000.0
+    out.append('dropped option, the relay in the top relay place (%s): two runs of %.0f mm of %.1f mm pour, %.1f squares = %.1f mohm, %.2f W at %.2f A against the budget of %.1f W' % (
+        fb['anchor'], fb_run, fb['width'], fb_sq, fb_sq * D['wall']['sheet_mohm'], fb_loss, total_steady, L['budget_w']))
+    prose.expect('Options considered and dropped', 'The interlock relay in the top relay place', 1, '%.2f W at %.2f A' % (fb_loss, total_steady))
+    prose.expect('Options considered and dropped', 'The interlock relay in the top relay place', 1, '%.1f squares' % fb_sq)
+    if fb_loss <= L['budget_w']:
+        bad.append('the relay in the top relay place would lose %.2f W in its link, inside the budget, and the option is recorded as dropped for its loss' % fb_loss)
+    taps = []
+    for t in L['taps']:
+        host = ids.get(t['from'])
+        if host is None or host[1] != t['net']:
+            bad.append('the tap from %s is not on the net %s' % (t['from'], t['net']))
+        for to in t['to']:
+            if to not in bodies:
+                bad.append('the tap %s feeds %s, which is not a block' % (t['from'], to))
+            elif t['net'] not in [n for _, _, n2, o2 in items if o2 == to for n in n2.split('|')]:
+                bad.append('the block %s is not on the net %s that the tap %s gives it' % (to, t['net'], t['from']))
+            taps.append((t['net'], to))
+    if any(net == 'LINE1' for net, _ in taps):
+        bad.append('a tap leaves the LINE1 net, which the interlock contact cuts')
+    on_line1 = sorted({o for i, r, net, o in items if 'LINE1' in net.split('|')})
+    if on_line1 != sorted(['K_IL', 'tab %d' % tabs_by_net['LINE1'], 'LK_L1']):
+        bad.append('the LINE1 net reaches %s, the connector record has nothing else on the board connect to LINE1' % on_line1)
+    out.append('taps upstream of the contact: %s; the LINE1 net reaches only %s' % (', '.join('%s to %s' % (n, t) for n, t in taps), ' and '.join(on_line1)))
+    rl = D['relay']
+    margin = lambda i: rl['rating_a'] / i
+    out.append('relay K_IL behind it: %.2f A steady and %.2f A with the valve coils at their inrush (%.2f A of elements, %.2f A of pumps), against %.0f A: margins %.2f and %.2f, %.2f at the %.0f A overload band; electrical endurance %d operations at %.0f A resistive (P2)' % (
+        total_steady, total_inrush, cur['coffee'] + cur['steam'], cur['coffee_pump'] + cur['steam_pump'], rl['rating_a'], margin(total_steady), margin(total_inrush), margin(cur['overload']), cur['overload'], rl['endurance_ops'], rl['rating_a']))
+    wb = D['wall']['budgets']
+    el = cur['coffee'] + cur['steam']
+    v5 = D['rail']['volts']
+    r_contact = wb['relay_contact_w'] / el ** 2 * 1e3
+    contact_w = r_contact * total_steady ** 2 / 1e3
+    coil_nom, coil_low = v5 ** 2 / rl['coil_ohm'], v5 ** 2 / (rl['coil_ohm'] * (1 - rl['coil_tol']))
+    if abs(coil_nom - wb['relay_coil_w']) > 0.01:
+        bad.append('the interlock relay\'s coil is %.3f W at %g ohm and 5 V, the budget says %g W' % (coil_nom, rl['coil_ohm'], wb['relay_coil_w']))
+    il_nom, il_max = wb['relay_coil_w'] + contact_w, coil_low + contact_w
+    out.append('relay K_IL heat: coil %.1f W (%.3f W with the coil %.0f %% under %g ohm); contacts %.1f W at %.2f A (%.1f mohm, %.0f mV; %.2f W at %.2f A), so %.2f W and %.2f W at the coil\'s low tolerance; unsourced worst case at 100 mohm: %.1f W at %.2f A' % (
+        wb['relay_coil_w'], coil_low, rl['coil_tol'] * 100, rl['coil_ohm'], wb['relay_contact_w'], el, r_contact, r_contact * el, contact_w, total_steady, il_nom, il_max, 0.1 * el ** 2, el))
+    # the neutral return: tab 3's pad, the shunt, the pour that holds the landing; every other neutral branch leaves the pour
+    RT = D['return']
+    lands = {i: tuple(r) for i, r in RT['shunt']['lands']}
+    la, lb = [i for i, _ in RT['shunt']['lands']]
+    pour, shr = tuple(RT['pour']['rect']), tuple(RT['shunt']['rect'])
+    nt = tabs_by_net['NEUTRAL']
+    if rd(pads[nt], lands[la]) > 1e-6:
+        bad.append('the shunt\'s first land does not touch the pad of tab %d' % nt)
+    if rd(lands[lb], pour) > 1e-6:
+        bad.append('the shunt\'s second land does not touch the neutral pour')
+    if not inside(pads['R'], pour):
+        bad.append('the return landing\'s pad does not lie inside the neutral pour')
+    if not (inside(lands[la], shr) and inside(lands[lb], shr)):
+        bad.append('a shunt land lies outside the shunt')
+    for nm, r in [(RT['pour']['id'], pour)] + list(lands.items()):
+        if r[2] - r[0] < 0.381 * cur['overload'] - EPS:
+            bad.append('the neutral return copper %s is %.2f mm wide, %.0f A needs %.2f' % (nm, r[2] - r[0], cur['overload'], 0.381 * cur['overload']))
+    land_pitch = min(abs(RT['landing']['y'] - t['y']) for t in tb['list'])
+    if land_pitch < tb['pitch'] - EPS:
+        bad.append('the return landing stands %.2f mm from the nearest tab, the least pitch is %.1f' % (land_pitch, tb['pitch']))
+    if RT['landing']['net'] != 'NEUTRAL' or RT['pour']['net'] != 'NEUTRAL':
+        bad.append('the return landing and its pour are not on the net NEUTRAL')
+    if not any(t['from'] == RT['pour']['id'] and t['net'] == 'NEUTRAL' for t in L['taps']):
+        bad.append('the neutral taps do not leave from the pour above the shunt')
+    _, rail_ma, _ = rail_rows(D)
+    mod_ch = [m for m in D['rail']['modules'] if m.get('chosen')][0]
+    module_a = D['rail']['volts'] * rail_ma / 1000.0 / mod_ch['eff'] / (RT['module_pf'] * D['valve_relay']['span_top'])
+    pieces = {i: net for i, _, net, _ in items}
+    amps_of = lambda key: module_a if key == 'module' else cur[key]
+    plug_side = 'the pad of tab %d' % nt
+    expected_loads = {'coffee', 'steam', 'coffee_pump', 'steam_pump', 'coil_steady', 'module'}
+    if sorted(b['amps'] for b in RT['branches']) != sorted(expected_loads):
+        bad.append('the returns the data gives are of %s, and the loads that return through the neutral are %s' % (sorted(b['amps'] for b in RT['branches']), sorted(expected_loads)))
+    neutral_a = 0.0
+    for b in RT['branches']:
+        if pieces.get(b['via']) != 'NEUTRAL':
+            bad.append('the return of the %s does not end on copper of the net NEUTRAL (%s is %s)' % (b['load'], b['via'], pieces.get(b['via'], 'not copper of the data')))
+        if b.get('layer') not in ('surface', 'inner'):
+            bad.append('the return of the %s gives no layer for its join to the neutral pour' % b['load'])
+        if b['joins'] == RT['pour']['id']:
+            neutral_a += amps_of(b['amps'])
+        elif b['joins'] in (plug_side, 'tab %d' % nt):
+            bad.append('the return of the %s joins at %s, on the plug side of the shunt: its current never passes the shunt, so a stuck-on triac would not show in the supply current' % (b['load'], plug_side))
+        else:
+            bad.append('the return of the %s joins at %s and not at the neutral pour %s above the shunt: its current would not pass the shunt' % (b['load'], b['joins'], RT['pour']['id']))
+    if abs(neutral_a - (total_steady + module_a)) > 1e-9:
+        bad.append('the shunt carries %.2f A of the returns that join above it and every load on returns %.2f A' % (neutral_a, total_steady + module_a))
+    prose.mention('The path of the heater current', '%.2f A in all with every load on' % neutral_a)
+    shunt_w = lambda i: wb['sensor_mohm'] * i * i / 1000.0
+    vm = [b for b in D['mains_blocks'] if b['id'] == 'VMEAS'][0]
+    if not any(m[2] == 'NEUTRAL' for m in vm['mains']):
+        bad.append('VMEAS has no mains piece on NEUTRAL, the reference the shunt channel shares with the voltage divider')
+    out.append('neutral return: the landing\'s pad at Y %.1f stands %.1f mm from the nearest tab; the shunt (%.1f mohm, %d parts side by side, X %.1f to %.1f, Y %.1f to %.1f) stands between the pad of tab %d and the pour, which is %.1f mm wide against the %.2f mm that %.0f A needs; the neutral carries %.2f A with every load on (the link\'s %.2f A and the module\'s %.2f A at the assumed power factor %.1f): shunt loss %.2f W, %.2f W at %.0f A' % (
+        RT['landing']['y'], land_pitch, wb['sensor_mohm'], RT['shunt']['parts'], shr[0], shr[2], shr[1], shr[3], nt, pour[2] - pour[0], 0.381 * cur['overload'], cur['overload'],
+        neutral_a, total_steady, module_a, RT['module_pf'], shunt_w(neutral_a), shunt_w(cur['overload']), cur['overload']))
+    sec_h = 'The interlock block, its size and its place'
+    prose.expect(sec_h, 'Contact heat', 1, '%.2f W' % contact_w)
+    prose.expect(sec_h, 'Contact heat', 1, '%.1f W at %.2f A' % (0.1 * el ** 2, el))
+    prose.expect(sec_h, 'Coil', 1, '%.3f W' % coil_low)
+    if total_inrush > rl['rating_a'] or cur['overload'] > rl['rating_a']:
+        bad.append('the loads behind K_IL exceed its contact rating')
+    prose.expect('The interlock block, its size and its place', 'Margin on current', 1, '%.2f' % margin(total_steady))
+    prose.expect('The interlock block, its size and its place', 'Margin on current', 1, '%.2f' % margin(cur['overload']))
+    for ph in ('the coil is fed only through the proof-of-life path.', 'No level, timer, charge store or latch keeps the coil above the relay\'s drop-out voltage for longer than the removal interval after proof of life stops.',
+               'This holds whatever level the controller\'s output rests at: high, low or floating.', 'Bring-up stops the controller in each rest state and records the coil voltage falling below 0.5 V within the interval.'):
+        prose.present(sec_h, ph, 'the coil\'s feed requirement')
+    vde = sorted(rl.get('vde') or [])
+    if not vde:
+        bad.append('the interlock relay has no safety-approval (VDE) rating in the data, and the record states its thermal margin from it')
+    else:
+        if vde[-1][1] < cur['overload'] - EPS:
+            bad.append('the interlock relay\'s VDE rating at %g C of ambient is %g A, under the %g A of the overload band' % (vde[-1][0], vde[-1][1], cur['overload']))
+        for t_, a_ in vde:
+            prose.expect(sec_h, 'Safety approval ratings', 1, '%.2f' % (a_ / total_steady))
+            prose.expect(sec_h, 'Safety approval ratings', 1, '%.2f' % (a_ / cur['overload']))
+        prose.mention(sec_h, '%s times the steady current, and %s times the %.0f A' % (' and '.join('%.2f' % (a_ / total_steady) for _, a_ in vde), ' and '.join('%.2f' % (a_ / cur['overload']) for _, a_ in vde), cur['overload']))
+        out.append('relay K_IL safety-approval ratings (P2): %s of ambient; margins %s on the %.2f A the contact carries and %s on the %.0f A of the overload band; the body stands at or above the %g C ambient limit with the coil alone, so the lowest rating is the one to lean on' % (
+            ', '.join('%g A at %g C' % (a_, t_) for t_, a_ in vde), ' and '.join('%.2f' % (a_ / total_steady) for _, a_ in vde), total_steady, ' and '.join('%.2f' % (a_ / cur['overload']) for _, a_ in vde), cur['overload'], rl['ambient_c']))
+    cr = D['copper_rise']
+    mil = lambda mm: mm / 0.0254
+    area_mil2 = lambda w_mm: mil(w_mm) * mil(cr['oz_um'] / 1000.0)
+    rise_k = lambda amps, w_mm: (amps / (cr['k'] * area_mil2(w_mm) ** cr['area_exp'])) ** (1.0 / cr['rise_exp'])
+    w_wide = pour[2] - pour[0]
+    out.append('copper temperature rise, an estimate (IPC-2221 outer layer, planes pulled back): the narrowest link region %.2f mm (%.0f mil2) %.1f K at %.2f A and %.1f K at %.0f A; the %.1f mm regions %.1f K and %.1f K' % (
+        narrow, area_mil2(narrow), rise_k(total_steady, narrow), total_steady, rise_k(cur['overload'], narrow), cur['overload'], w_wide, rise_k(total_steady, w_wide), rise_k(cur['overload'], w_wide)))
+    cop_s = 'Copper that carries the heater current'
+    prose.mention(cop_s, '(%.0f mil²)' % area_mil2(narrow))
+    prose.mention(cop_s, 'about %.0f K at %.2f A and about %.0f K at %.0f A' % (rise_k(total_steady, narrow), total_steady, rise_k(cur['overload'], narrow), cur['overload']))
+    prose.mention(cop_s, 'the %.1f mm regions about %.0f K and %.0f K' % (w_wide, rise_k(total_steady, w_wide), rise_k(cur['overload'], w_wide)))
+    bad += check_decisions(D, text)
+    prose.present(sec_h, 'HF115F-Q/005-1H', 'the interlock relay\'s 5 V ordering code')
+    prose.present(sec_h, 'catalogue number and price are not recorded: the design task must match a stocked part; the estimate uses the 12 V part\'s price', 'the 5 V variant\'s catalogue number and price')
+    prose.present(sec_h, 'no sourced thermal margin at the coil drive it is held at', 'the interlock relay\'s thermal margin')
+    prose.present('The path of the heater current', 'it is not proven until the bring-up continuity check', 'the premise that the interlock cuts every load')
+    prose.present('Reported for the board design tasks', 'there is no continuity', 'the bring-up continuity check')
+    prose.present('Reported for the board design tasks', 'the owner\'s visual trace and not a measurement', 'the premise that the interlock cuts every load')
+    prose.present('The heater wall board', 'with its back face toward the wall', 'the wall board\'s orientation to the wall')
+    out.append('owner decisions pending: %d, each stated once in the record\'s list with its words, pointed to from the section it concerns, and no other mention of a decision pending without the pointer' % len(D['owner_decisions']))
+
+    inner = {b['via'] for b in RT['branches'] if b.get('layer') == 'inner'}
+    if route:
+        runs = corridors(D, [x for x in items if x[0] not in inner], pockets, outline, sr, keep, bas, reinforced)
+        for net, length in runs.items():
+            if length is None:
+                bad.append('no route exists for a trace of the net %s between its copper, round the slots, the other nets and the low-voltage blocks (%s)' % (net, '; '.join(m for m in corridors.missed if m.startswith(net + ':'))))
+        shown = lambda n: n.replace('|', ' and ')
+        out.append('traces between the separate pieces of one net, shortest route that keeps the basic creepage from other nets (the signed creepage from LINE1) and %.1f mm from low-voltage blocks, round the slots: %s' % (
+            bas['creepage'], ', '.join('%s %s' % (shown(n), ('%.0f mm' % v) if v is not None else 'none') for n, v in sorted(runs.items()))))
+        for n, v in runs.items():
+            prose.expect('Every retained harness reaches its connector', shown(n), 2, '%.0f mm' % v if v is not None else 'none')
+        if whatif or proof:
+            for i_ in sorted(inner):
+                run_i = corridors(D, [x for x in items if x[0] not in inner or x[0] == i_], pockets, outline, sr, keep, bas, reinforced).get('LINE|NEUTRAL')
+                if run_i is not None:
+                    bad.append('the return piece %s has a route of %.0f mm on the surface, so the data should not give its join as an inner layer' % (i_, run_i))
+            out.append('returns joined by an inner layer, because no surface route exists for a trace to them beside the tab pads and the strips: %s' % (', '.join(sorted(inner)) or 'none'))
+            prose.mention('The path of the heater current', 'no surface route exists for %s' % ' and '.join('`%s`' % i_ for i_ in sorted(inner)).replace('`', ''))
+
+    # lead ends over the intrusions, harness reach, heat
+    ends = [('%s pin' % b['id'], p) for b in D['mains_blocks'] for p in b['pins']] + [('a reed pad', lo), ('a reed pad', up)]
+    for b in D['lv_blocks']:
+        if b['tht']:
+            r = b['rect']
+            ends += [('%s lead end' % b['id'], (x, y)) for x in (r[0], r[2]) for y in (r[1], r[3])]
+    it = D['intrusions']
+    side = math.inf
+    for n, (x, y) in ends:
+        if y < intrusion_top(D, x) + 1.0 or y < it['two_y1'] + 1.0:
+            bad.append('%s lies over an intrusion' % n)
+        s = intrusion_side(D, x, y)
+        if s is not None:
+            side = min(side, s)
+            if s < it['pos_tol'] - EPS:
+                bad.append('%s lies %.2f mm from the side of intrusion 1, whose position is read to %.1f mm' % (n, s, it['pos_tol']))
+    out.append('nearest lead end to the side of intrusion 1 (its position read to %.1f mm): %.1f mm' % (it['pos_tol'], side))
+    cut = D['cut_centre']
+    names_h = {'CON2': 'Operator panel', 'SP2': 'Gauge assembly', 'KNOB': 'Knob microswitches', 'FLOW': 'Flow meter', 'TEMP_C': 'Coffee-block thermistor',
+               'TEMP_S': 'Steam-block thermistor', 'TEMP_W': 'Steam-wand thermistor'}
+    reach = {}
+    for n, lim in D['reach'].items():
+        r = bodies[n]
+        far = max(math.hypot(x - cut[0], y - cut[1]) for x in (r[0], r[2]) for y in (r[1], r[3]))
+        reach[n] = (far, rd(r, (cut[0], cut[1] - 16.5, cut[0], cut[1] + 16.5)))
+        if far > lim:
+            bad.append('%s: farthest corner %.1f mm from the cut-away, limit %d' % (n, far, lim))
+        prose.expect('Every retained harness reaches its connector', names_h[n], 4, '%.1f' % far)
+        prose.expect('Every retained harness reaches its connector', names_h[n], 4, '%.1f' % reach[n][1])
+    out.append('harness reach (farthest corner / nearest point of the opening, limit): ' + ', '.join('%s %.1f / %.1f of %d' % (n, v[0], v[1], D['reach'][n]) for n, v in reach.items()) + ' mm')
+    ht = D['heat']
+    lim = ht['limits']
+    mbx = {b['id']: b for b in D['mains_blocks']}
+    srect = lambda n: tuple(mbx[n]['heat']) if mbx[n].get('heat') else bodies[n]
+    hrect = lambda n: tuple(mbx[n]['hot']) if n in mbx and mbx[n].get('hot') else bodies[n]
+    srcs = ht['sources']
+    classified = set(ht['mcu']) | set(ht['sense']) | set(ht['digital']) | set(ht['other'])
+    for b in D['lv_blocks']:
+        if not b['tht'] and b['id'] not in classified:
+            bad.append('the low-voltage block %s has no heat class: it is not in the controller, sensing, digital or other list' % b['id'])
+    for n in classified:
+        if n not in bodies:
+            bad.append('the heat lists name %s, which is not a block' % n)
+    _, total_ma_r, _ = rail_rows(D)
+    chm = [m for m in D['rail']['modules'] if m.get('chosen')][0]
+    pout_r = D['rail']['volts'] * total_ma_r / 1000.0
+    w_mod = pout_r / chm['eff'] - pout_r
+    watts = {'MODULE': w_mod, 'K_IL': il_max}
+    for sname in srcs:
+        if watts.get(sname, 0.0) < ht['source_w'] - EPS:
+            bad.append('%s dissipates %.2f W at most, under the %.1f W that makes it a source in A8' % (sname, watts.get(sname, 0.0), ht['source_w']))
+    out.append('heat sources, A8 (%g W or more): the module %.2f W at this board\'s load; the interlock relay %.2f W, or %.2f W with its coil %.0f %% under nominal, held to A8 by the owner\'s instruction of 2026-10-24 as well' % (
+        ht['source_w'], w_mod, il_nom, il_max, rl['coil_tol'] * 100))
+    dmat = {}
+    for sname in srcs:
+        for n in ht['mcu'] + ht['sense'] + ht['digital']:
+            dmat[(n, sname)] = rd(srect(sname), bodies[n])
+        for p in ht['class85']:
+            dmat[(p['id'], sname)] = rd(srect(sname), hrect(p['id']))
+    for sname in srcs:
+        for n in ht['mcu']:
+            if dmat[(n, sname)] < lim['mcu'] - EPS:
+                bad.append('%s is %.1f mm from the heat source %s, the rule is %g' % (n, dmat[(n, sname)], sname, lim['mcu']))
+        for n in ht['sense']:
+            if dmat[(n, sname)] < lim['sense'] - EPS:
+                bad.append('%s, a sensing block, is %.1f mm from the heat source %s, the rule is %g' % (n, dmat[(n, sname)], sname, lim['sense']))
+    air, ck = ht['air_c'], ht['class_k']
+    accepted = {tuple(x) for x in ht['accepted']}
+    not_held = {}
+    for p in ht['class85']:
+        if p['limit_c'] - air > ck + EPS:
+            bad.append('%s is rated to %g C, %g K over the %g C air, which is outside the %g K class A8 holds at %g mm' % (p['id'], p['limit_c'], p['limit_c'] - air, air, ck, lim['class']))
+        for sname in srcs:
+            d = dmat[(p['id'], sname)]
+            if d < lim['class'] - EPS:
+                not_held[(p['id'], sname)] = d
+                if (p['id'], sname) not in accepted:
+                    bad.append('%s, rated to %g C, is %.1f mm from the heat source %s, the rule is %g, and the record does not report it as not held' % (p['id'], p['limit_c'], d, sname, lim['class']))
+    for pair in accepted:
+        if pair not in not_held:
+            bad.append('the record reports %s as not held against %s but it is %.1f mm away, which holds' % (pair[0], pair[1], dmat.get(pair, math.nan)))
+    for o in ht['outside']:
+        if o['limit_c'] - air <= ck + EPS:
+            bad.append('%s is rated to %g C, only %g K over the air, and is inside the class A8 holds at %g mm, so it cannot be listed outside it' % (o['id'], o['limit_c'], o['limit_c'] - air, lim['class']))
+    pair_il = rd(srect('MODULE'), srect('K_IL'))
+    if pair_il < lim['relay'] - EPS:
+        bad.append('the interlock relay is %.1f mm from the module, the owner\'s figure is %g' % (pair_il, lim['relay']))
+    fmt = lambda n, sname: '%.1f' % dmat[(n, sname)]
+    out.append('heat from the module / from the interlock relay: controller %s / %s mm of %g; sensing blocks %.1f / %.1f mm or more of %g; digital stages %s mm from the module; the interlock relay from the module %.1f mm of %g (%s)' % (
+        fmt('MCU', 'MODULE'), fmt('MCU', 'K_IL'), lim['mcu'], min([dmat[(n, 'MODULE')] for n in ht['sense']] or [0.0]), min([dmat[(n, 'K_IL')] for n in ht['sense']] or [0.0]), lim['sense'],
+        ', '.join(fmt(n, 'MODULE') for n in ht['digital']), pair_il, lim['relay'], 'held' if pair_il >= lim['relay'] - EPS else 'not held'))
+    out.append('mains-side parts rated to 85 C (%g K or less over the %g C air), from the module / from the interlock relay (rule %g): %s' % (
+        ck, air, lim['class'], ', '.join('%s %.1f / %.1f mm (%s)' % (p['id'], dmat[(p['id'], 'MODULE')], dmat[(p['id'], 'K_IL')], 'held' if all(dmat[(p['id'], x)] >= lim['class'] - EPS for x in srcs) else 'not held') for p in ht['class85'])))
+    for o in ht['outside']:
+        for sname in srcs:
+            dmat[(o['id'], sname)] = rd(srect(sname), hrect(o['id']))
+    out.append('outside the class, by their sheets: %s' % ', '.join('%s %g C, %g K over the air, %.1f mm from the module and %.1f mm from the interlock relay' % (o['id'], o['limit_c'], o['limit_c'] - air, dmat[(o['id'], 'MODULE')], dmat[(o['id'], 'K_IL')]) for o in ht['outside']))
+    # why they cannot all hold: the barrier column's free length against the frontage the parts need
+    hot_rects = [hrect(p['id']) for p in ht['class85']]
+    hx0, hx1 = min(r[0] for r in hot_rects), max(r[2] for r in hot_rects)
+    ylo, yhi = ob[1] + bas['edge_min'], ob[3] - bas['edge_min']
+    step, spans, cur_start, y = 0.05, [], None, ylo
+    while y <= yhi + 1e-9:
+        ok = all(rd((hx0, y, hx1, y), srect(sname)) >= lim['class'] - EPS for sname in srcs)
+        if ok and cur_start is None:
+            cur_start = y
+        if not ok and cur_start is not None:
+            spans.append((cur_start, y - step))
+            cur_start = None
+        y += step
+    if cur_start is not None:
+        spans.append((cur_start, yhi))
+    free_len = max((b - a for a, b in spans), default=0.0)
+    sizes = {p['id']: hrect(p['id'])[3] - hrect(p['id'])[1] for p in ht['class85']}
+    gap = bas['clearance']
+    best = (0, ())
+    ids85 = list(sizes)
+    for mask in range(1, 1 << len(ids85)):
+        sel = [ids85[i] for i in range(len(ids85)) if mask >> i & 1]
+        stack = sum(sizes[n] for n in sel) + gap * (len(sel) - 1)
+        if stack <= free_len + EPS and len(sel) > best[0]:
+            best = (len(sel), tuple(sel))
+    need_all = sum(sizes.values()) + gap * (len(sizes) - 1)
+    ys = sorted((r[1], r[3]) for i, r, _, o in items if o in mbx)
+    merged = []
+    for lo_, hi_ in ys:
+        if merged and lo_ <= merged[-1][1]:
+            merged[-1][1] = max(merged[-1][1], hi_)
+        else:
+            merged.append([lo_, hi_])
+    widest_gap = max((merged[i + 1][0] - merged[i][1] for i in range(len(merged) - 1)), default=0.0)
+    lv_corridor = 2 * bas['creepage'] + D['trace']['w']
+    if widest_gap >= lv_corridor - EPS:
+        bad.append('the widest gap between mains copper along the stack is %.1f mm, enough for a low-voltage trace (%.1f mm), so a pocket need not stand at the boundary' % (widest_gap, lv_corridor))
+    out.append('why they cannot all hold: a barrier part\'s pocket stands at the zone boundary, since a trace kept %g mm from mains copper by distance alone needs %.1f mm (2 x %g mm and the trace) to pass and the widest gap between mains copper along the stack is %.1f mm, and a slotted channel across the stack would divide the taps from one another; the boundary stays %g mm or more from both sources only over %s, %.1f mm; the %d parts need %.1f mm there with %g mm between them, so at most %d of them fit there' % (
+        bas['creepage'], lv_corridor, bas['creepage'], widest_gap, lim['class'], ', '.join('Y %.1f to %.1f' % x for x in spans), free_len, len(sizes), need_all, gap, best[0]))
+    if best[0] >= len(sizes):
+        bad.append('all %d parts of the 85 C class fit the %.1f mm that clears the rule, and the record says they cannot' % (len(sizes), free_len))
+    if len(not_held) and best[0] < len(sizes) - len({p for p, _ in not_held}):
+        bad.append('the drawn stack holds fewer parts than the %d that fit' % best[0])
+    held_drawn = held_parts(D)
+    for pair in ht.get('required_held', []):
+        if tuple(pair) in accepted:
+            bad.append('%s must hold %g mm from %s and the record accepts it as not held' % (pair[0], lim['class'], pair[1]))
+    if whatif:
+        best_n, best_sets = max_held(D, bas, ob)
+        below_sets = sorted({x[2] for x in best_sets})
+        prose.mention('Heat', 'At most %d hold, and every arrangement that holds %d stands %s between the two sources' % (best_n, best_n, ' or '.join('+'.join(b) for b in below_sets)))
+        prose.mention('Heat', 'The drawn stack holds %d' % len(held_drawn))
+        held2s = []
+        for wi in D['what_if']:
+            D2 = apply_what_if(D, wi)
+            msgs2 = [m for m in check_main(D2, text, [], record_dir, src, route=True, whatif=False) if not m.startswith('table in') and not m.startswith('assumption token') and not m.startswith('the Assumptions table')]
+            held2 = held_parts(D2)
+            held2s.append(held2)
+            out.append('what-if, %s: %s hold; it breaks %d rule%s of this record: %s' % (wi['name'], ', '.join(held2), len(msgs2), '' if len(msgs2) == 1 else 's', '; '.join(m[:150] for m in msgs2)))
+            for m in msgs2:
+                mm_ = re.match(r'(\w+), a sensing block, is ([0-9.]+) mm from the heat source MODULE', m)
+                if mm_:
+                    prose.mention('Heat', '%s stands %s mm from the module against A8\'s %g' % (mm_.group(1), mm_.group(2), lim['sense']))
+                mm_ = re.match(r'the region (\w+) stands ([0-9.]+) mm from the heat source MODULE', m)
+                if mm_:
+                    prose.mention('Heat', 'the region %s stands %s mm from the module' % (mm_.group(1), mm_.group(2)))
+            if wi is D['what_if'][-1]:
+                m2 = {b['id']: b for b in D2['mains_blocks']}
+                hr2 = lambda n: tuple(m2[n].get('hot') or m2[n]['body'])
+                sr2 = lambda n: tuple(m2[n].get('heat') or m2[n]['body'])
+                for pid in ('K_V1', 'P_C', 'VMEAS'):
+                    prose.mention('Heat', '%s then stands %.1f mm from the module' % (pid, rd(sr2('MODULE'), hr2(pid))))
+                prose.mention('Heat', 'the voltage measurement would then stand %.1f mm from the relay\'s body' % rd(sr2('K_IL'), hr2('VMEAS')))
+            if len(held2) <= len(held_drawn):
+                bad.append('the what-if %s holds %d parts, no more than the drawn stack\'s %d, so it is not an arrangement that holds more' % (wi['name'], len(held2), len(held_drawn)))
+            if not msgs2:
+                bad.append('the what-if %s holds %d parts of the 85 C class, more than the drawn stack\'s %d, and meets every rule of this record' % (wi['name'], len(held2), len(held_drawn)))
+        out.append('the most the 85 C parts can hold along the barrier column, counted over every position of the module, every split above or below it and every order with the tab-fed parts in tab order: %d (%s); the drawn stack holds %d (%s); every arrangement that holds %d stands %s between the two sources' % (
+            best_n, ', '.join('/'.join(x[3]) for x in best_sets[:1]), len(held_drawn), ', '.join(held_drawn), best_n, ' or '.join('+'.join(b) for b in below_sets)))
+        prose.mention('Heat', 'The two arrangements that hold %d with K_V1 between the sources, built in the data as the first two what-ifs, hold %s and %s' % (best_n, ', '.join(held2s[0]), ', '.join(held2s[1])))
+        prose.mention('Heat', 'The third what-if holds %s' % ', '.join(held2s[2]))
+        if best_n < len(held_drawn):
+            bad.append('the drawn stack holds %d parts of the 85 C class and the count says at most %d can' % (len(held_drawn), best_n))
+    sec_why = 'Heat'
+    prose.mention(sec_why, 'needs %.1f mm between mains copper' % lv_corridor)
+    prose.mention(sec_why, 'the widest gap between mains copper along the stack is %.1f mm' % widest_gap)
+    prose.mention(sec_why, 'is %s, %.1f mm' % (' and '.join('Y %.1f to %.1f' % x for x in spans), free_len))
+    prose.mention(sec_why, 'the five parts need %.1f mm there' % need_all)
+    prose.mention(sec_why, 'so at most %d of them fit' % best[0])
+    prose.expect('Options considered and dropped', 'Holding every 85 °C part', 1, '%.1f' % need_all)
+    prose.expect('Options considered and dropped', 'Holding every 85 °C part', 1, '%.1f' % free_len)
+    sec_heat = 'Heat'
+    groups = (('MCU', ['MCU']), ('FE_NTC', ['FE_NTC']), ('PT1_C', ['PT1_C', 'PT2_C']), ('BREW_A_C', ['BREW_A_C', 'SPARE_AN2_C']),
+              ('CURR1_C', [n for n in ('CURR1_C', 'I_C', 'CURR2_C') if n in ht['sense']]), ('WT1_C', ['WT1_C', 'WT2_C', 'VM_C']), ('FE_SPAREA', ['FE_SPAREA']), ('FE_GAUGE', ht['digital']))
+    for key, group in groups:
+        for n in group:
+            if (n, 'MODULE') not in dmat:
+                continue
+            prose.expect(sec_heat, key, 1, '%.1f' % dmat[(n, 'MODULE')])
+            prose.expect(sec_heat, key, 2, '%.1f' % dmat[(n, 'K_IL')])
+    for p in ht['class85']:
+        for col, sname in ((1, 'MODULE'), (2, 'K_IL')):
+            prose.expect(sec_heat, 'The 85 °C part ' + p['id'], col, '%.1f' % dmat[(p['id'], sname)])
+        prose.expect(sec_heat, 'The 85 °C part ' + p['id'], 4, 'Held' if all(dmat[(p['id'], x)] >= lim['class'] - EPS for x in srcs) else 'Not held')
+    for o in ht['outside']:
+        prose.expect(sec_heat, o['id'], 1, '%.1f' % dmat[(o['id'], 'MODULE')])
+        prose.expect(sec_heat, o['id'], 2, '%.1f' % dmat[(o['id'], 'K_IL')])
+        prose.expect(sec_heat, o['id'], 4, 'Outside the class')
+    prose.expect(sec_heat, 'The interlock relay', 1, '%.1f' % pair_il)
+    prose.expect(sec_heat, 'The interlock relay', 4, 'Held' if pair_il >= lim['relay'] - EPS else 'Not held')
+
+    # the anticipated kinds: the removal steps and the places
+    cap, steps, stop, arr = allocation(D)
+    gp = D['regions']['gap']
+    out.append('capacity with the spacing the drawing keeps counted (%.1f mm in the header regions, %.1f mm in the analogue region): header regions %.1f, analogue region %.1f' % (gp['hdr'], gp['ana'], cap['hdr'], cap['ana']))
+    section_kinds = 'The anticipated channel kinds'
+    words = {'over': 'not searched, the area is over', 'none': 'none exists', 'found': 'found'}
+    phrase = {'over': 'the header area is over capacity', 'none': 'no arrangement of the headers exists', 'found': 'an arrangement of the headers exists and is drawn'}
+    for n, gone, dem in steps:
+        out.append('removal step %d%s: header regions %.1f (over %.1f), analogue region %.1f (over %.1f); arrangement of the headers: %s' % (
+            n, (' (kind %d removed)' % gone) if gone else '', dem['hdr'], max(dem['hdr'] - cap['hdr'], 0), dem['ana'], max(dem['ana'] - cap['ana'], 0), words[arr[n]]))
+        prose.expect(section_kinds, 'step %d' % n, 1, '%.1f' % dem['hdr'])
+        prose.expect(section_kinds, 'step %d' % n, 2, '%.1f' % max(dem['hdr'] - cap['hdr'], 0))
+        prose.expect(section_kinds, 'step %d' % n, 3, '%.1f' % dem['ana'])
+        prose.expect(section_kinds, 'step %d' % n, 4, '%.1f' % max(dem['ana'] - cap['ana'], 0))
+        prose.expect(section_kinds, 'step %d' % n, 5, phrase[arr[n]])
+    removed_now = set(removal_order(D)[:stop]) if stop is not None else set(removal_order(D))
+    drawn_dem = region_demand(D, removed_now)
+    for k in D['kinds']:
+        if k['n'] in removed_now and (k.get('hdr') or k.get('ana')):
+            need_k = {reg: sum((w + gp[reg]) * (h + gp[reg]) for w, h in k.get(reg, [])) for reg in ('hdr', 'ana')}
+            spare_k = {reg: cap[reg] - drawn_dem[reg] for reg in ('hdr', 'ana')}
+            st = 'over' if need_k['hdr'] > spare_k['hdr'] + EPS else ('found' if arrangement(D, 'hdr', header_blocks(D, removed_now - {k['n']})) else 'none')
+            out.append('kind %d alone, with the drawn kinds and no other kind given a place: header regions need %.1f of %.1f spare, analogue region %.1f of %.1f spare; arrangement of the headers: %s' % (
+                k['n'], need_k['hdr'], spare_k['hdr'], need_k['ana'], spare_k['ana'], words[st]))
+            prose.expect(section_kinds, str(k['n']), 3, '%.1f of the %.1f' % (need_k['hdr'], spare_k['hdr']))
+            prose.expect(section_kinds, str(k['n']), 3, '%.1f of the %.1f' % (need_k['ana'], spare_k['ana']))
+            prose.expect(section_kinds, str(k['n']), 3, phrase[st])
+    names_k = lambda ns: ('only kind %d' % ns[0]) if len(ns) == 1 else ('kinds %s' % ' and '.join(str(n) for n in ns))
+    for alt in D['regions'].get('alternatives', []):
+        dm = region_demand(D, set(alt))
+        fit_h = dm['hdr'] <= cap['hdr'] + EPS and bool(arrangement(D, 'hdr', header_blocks(D, set(alt))))
+        fit_a = dm['ana'] <= cap['ana'] + EPS
+        out.append('removing %s: header regions %.1f of %.1f and an arrangement of the headers %s; analogue region %.1f of %.1f; it %s' % (
+            names_k(alt), dm['hdr'], cap['hdr'], 'exists' if fit_h else 'does not exist', dm['ana'], cap['ana'], 'fits' if fit_h and fit_a else 'does not fit'))
+        prose.mention(section_kinds, 'removing %s %s' % (names_k(alt), 'fits' if fit_h and fit_a else 'does not fit'))
+    if stop is None:
+        bad.append('the allocation does not fit the regions after every removable kind has gone')
+    for b in D['lv_blocks']:
+        if b.get('region') and not in_union(tuple(b['rect']), [tuple(g['rect']) for g in D['regions'][b['region']]]):
+            bad.append('%s lies outside its %s region' % (b['id'], b['region']))
+    order = removal_order(D)
+    removed = set(order[:stop]) if stop is not None else set(order)
+    kinds_rows = {re.sub(r'[`*]', '', k): v for k, v in rows_of_kinds(text).items()}
+    kind_nums = {k['n'] for k in D['kinds']}
+    for key, row_ in kinds_rows.items():
+        if key.isdigit() and int(key) not in kind_nums:
+            bad.append('kind %s is in the record\'s table of kinds%s and is not in the data: a kind is never silently dropped' % (key, ', and its row says required,' if 'required' in row_[1].lower() else ''))
+    for n_ in sorted(kind_nums):
+        if str(n_) not in kinds_rows:
+            bad.append('kind %d is in the data and has no row in the record\'s table of kinds' % n_)
+    if not any(k.get('required') for k in D['kinds']):
+        bad.append('the data marks no kind required, and the supply voltage measurement is required by the requirement its row of the record cites')
+    for k in D['kinds']:
+        drawn = [n for n in k.get('blocks', []) if n in bodies]
+        undrawn_lists = bool(k.get('hdr') or k.get('ana'))
+        if k['n'] in removed:
+            if drawn or any(b.get('kind') == k['n'] for b in D['lv_blocks']):
+                bad.append('kind %d is removed but a block of it is drawn' % k['n'])
+        elif k.get('none'):
+            if drawn or k.get('blocks') or undrawn_lists:
+                bad.append('kind %d is recorded as not given a place but a block of it is drawn' % k['n'])
+        elif len(drawn) != len(k.get('blocks', [])) or undrawn_lists:
+            bad.append('kind %d is given a place but not all its blocks are drawn' % k['n'])
+        prose.expect(section_kinds, str(k['n']), 6, sq(kind_area(D, bodies, k)))
+        row = kinds_rows.get(str(k['n']))
+        says_required = bool(row) and 'required' in row[1].lower()
+        if k.get('required') and not (says_required and re.search(r'`REQ-[A-Z-]+-[0-9]+\.C[0-9]+`', row[3])):
+            bad.append('kind %d is marked required in the data but its row of the record does not say required and cite the requirement criterion that requires it' % k['n'])
+        if says_required and not k.get('required'):
+            bad.append('the record\'s row of kind %d says required and the data does not mark it so' % k['n'])
+        if k.get('required') and ('rank' in k or k['n'] in removed):
+            bad.append('kind %d is required and stands in the removal order' % k['n'])
+    for reg in ('hdr', 'ana'):
+        for g in D['regions'][reg]:
+            gr = tuple(g['rect'])
+            for b in D['lv_blocks']:
+                if b.get('region') != reg and ov(gr, tuple(b['rect'])):
+                    bad.append('the region %s overlaps the block %s, which is not of its class' % (g['id'], b['id']))
+            if reg == 'ana':
+                for sname in srcs:
+                    if rd(srect(sname), gr) < lim['sense'] - EPS:
+                        bad.append('the region %s stands %.1f mm from the heat source %s, the sensing rule is %g' % (g['id'], rd(srect(sname), gr), sname, lim['sense']))
+                if reed_hits(D, gr) or ov(gr, box):
+                    bad.append('the region %s reaches the reed keep-out' % g['id'])
+    top_id = D['regions'].get('top_of')
+    if top_id:
+        g = [g for g in D['regions']['ana'] if g['id'] == top_id][0]['rect']
+        free_top, step_up = g[3], 0.05
+        while free_top + step_up <= ob[3] and all(rd(srect(n), (g[0], g[1], g[2], free_top + step_up)) >= lim['sense'] - EPS for n in srcs) and not any(
+                ov((g[0], g[1], g[2], free_top + step_up), tuple(b['rect'])) for b in D['lv_blocks'] if b.get('region') != 'ana'):
+            free_top += step_up
+        if abs(free_top - g[3]) > step_up + EPS:
+            bad.append('the region %s ends at Y %.1f and the rules leave it free to Y %.1f' % (top_id, g[3], free_top))
+        out.append('the region %s ends at Y %.1f, where the nearest block of another class stands and the module\'s body less %g mm is Y %.1f' % (top_id, g[3], lim['sense'], srect('MODULE')[1] - lim['sense']))
+    least_gap = {}
+    for reg in ('hdr', 'ana'):
+        rs = [tuple(b['rect']) for b in D['lv_blocks'] if b.get('region') == reg]
+        least_gap[reg] = min(rd(a_, b_) for i_, a_ in enumerate(rs) for b_ in rs[i_ + 1:])
+    for reg in ('hdr', 'ana'):
+        if least_gap[reg] < gp[reg] - EPS:
+            bad.append('the blocks drawn in the %s regions stand %.1f mm apart at the least, under the %.1f mm spacing the capacity counts' % (reg, least_gap[reg], gp[reg]))
+    out.append('least spacing between the blocks drawn in a region: header regions %.1f mm, analogue region %.1f mm, against the spacing the capacity counts (%.1f mm and %.1f mm)' % (least_gap['hdr'], least_gap['ana'], gp['hdr'], gp['ana']))
+    prose.expect('Assumptions', 'A18', 1, '%.1f mm or more apart in the header regions and %.1f mm in the analogue region' % (least_gap['hdr'], least_gap['ana']))
+    thou1 = lambda x: '{:,.1f}'.format(x).replace(',', ' ')
+    hdr_blocks = [b for b in D['lv_blocks'] if b.get('region') == 'hdr']
+    prose.mention(section_kinds, '%s mm² for headers and %s mm² for circuits' % (thou1(cap['hdr']), thou1(cap['ana'])))
+    prose.mention(section_kinds, 'which is %s mm² and mostly on the mains side' % thou(oa - sum(sums)))
+    prose.mention(section_kinds, 'the %d headers stand in %d columns' % (len(hdr_blocks), len({b['rect'][0] for b in hdr_blocks})))
+    gap, ys = stack_gap(D)
+    out.append('allocation fits at step %s, after the removal of kinds %s; the mains-side stack runs from Y %.1f to %.1f' % (
+        stop, ', '.join(str(n) for n in order[:stop]) or 'none', ys[0][0], max(y[1] for y in ys)))
+
+    if whatif:
+        # the owner's placement of an isolated sensor in the link: the relay moves right to make room for a primary 8 mm long
+        base_cap = cap['ana']
+        for dx in (3.0, 2.0):
+            D3 = copy.deepcopy(D)
+            kb = [b for b in D3['mains_blocks'] if b['id'] == 'K_IL'][0]
+            for key in ('body', 'heat'):
+                kb[key][0] += dx
+                kb[key][2] += dx
+            for m_ in kb['mains']:
+                m_[1][0] += dx
+                m_[1][2] += dx
+            for p_ in kb['pockets']:
+                p_[0] += dx
+                p_[2] += dx
+            for p_ in kb['pins']:
+                p_[0] += dx
+            for g_ in D3['regions']['ana']:
+                if g_['id'] in D3['regions'].get('relay_bound', []):
+                    g_['rect'][0] += dx
+            under = [(n, rd(tuple(kb['heat']), bodies[n])) for n in ht['sense'] if rd(tuple(kb['heat']), bodies[n]) < lim['sense'] - EPS]
+            cap3 = region_capacity(D3)['ana']
+            out.append('what-if, the interlock relay moved %.1f mm to the right to make room for a sensor 8 mm long between the pad of tab 2 and its contact copper: %s from the relay against A8\'s %g mm; the analogue region\'s capacity falls from %.1f to %.1f mm2, %.1f mm2 less' % (
+                dx, ', '.join('%s %.1f mm' % x for x in under), lim['sense'], base_cap, cap3, base_cap - cap3))
+            if dx == 3.0:
+                prose.mention(section_kinds, 'then stand %s from the relay against A8\'s %g' % (', '.join('%.1f' % d for _, d in under), lim['sense']))
+                prose.mention(section_kinds, 'loses %.1f mm² of capacity (%s to %s' % (base_cap - cap3, thou1(base_cap), thou1(cap3)))
+            else:
+                prose.mention(section_kinds, '%.1f mm² for a %.1f mm move' % (base_cap - cap3, dx))
+        D4 = apply_what_if(D, D['what_if'][-1])
+        m4 = {b['id']: b for b in D4['mains_blocks']}
+        top4 = [g_ for g_ in D4['regions']['ana'] if g_['id'] == D4['regions']['top_of']][0]
+        top4['rect'][3] = min(top4['rect'][3], m4['MODULE']['body'][1] - lim['sense'])
+        cap4, dem4 = region_capacity(D4), region_demand(D4, removed)
+        held4 = all(in_union(tuple(b['rect']), [tuple(g_['rect']) for g_ in D4['regions']['ana']]) for b in D4['lv_blocks'] if b.get('region') == 'ana' and b.get('kind') not in removed)
+        out.append('what-if, the third arrangement with the region %s cut back to Y %.1f, where the module\'s body less %g mm stands: the analogue region\'s capacity falls from %.1f to %.1f mm2 against the %.1f the drawn blocks need, %.1f mm2 spare, and the blocks of the kept kinds %s inside it' % (
+            top4['id'], top4['rect'][3], lim['sense'], base_cap, cap4['ana'], dem4['ana'], cap4['ana'] - dem4['ana'], 'all stand' if held4 else 'do not all stand'))
+        if not held4 or cap4['ana'] < dem4['ana'] - EPS:
+            bad.append('the third arrangement with the region cut back to Y %.1f does not hold the blocks of the kept kinds' % top4['rect'][3])
+        prose.mention('Heat', 'cut back to Y %.1f, its capacity falls from %s to %s mm² against the %s the drawn blocks need, %s mm² spare' % (top4['rect'][3], thou1(base_cap), thou1(cap4['ana']), thou1(dem4['ana']), thou1(cap4['ana'] - dem4['ana'])))
+
+    # the valve relays: the part, its ratings against the loads and the supply
+    vr = D['valve_relay']
+    sec_v = 'The valve relays'
+    peak_open = vr['open_contact_vac'] * math.sqrt(2)
+    peak_iso = vr['coil_contact_vac'] * math.sqrt(2)
+    if vr['rating_a'] < cur['coil_inrush']:
+        bad.append('the valve relay is rated %.1f A, below the coils\' inrush of %.3f A' % (vr['rating_a'], cur['coil_inrush']))
+    if peak_open < vr['peak']:
+        bad.append('the valve relay\'s open contacts give %.0f V peak, below the %.0f V it must block' % (peak_open, vr['peak']))
+    if peak_iso < vr['target_kv'] * 1000.0:
+        bad.append('the valve relay\'s coil to contacts gives %.0f V peak, below the %.1f kV target' % (peak_iso, vr['target_kv']))
+    coil_a = D['rail']['volts'] / vr['coil_ohm']
+    out.append('valve relays %s: %.1f A contacts against %.3f A steady and %.3f A at inrush (margins %.0f and %.0f); %.0f V maximum switching voltage against %.0f V at the top of the span (%.1f %% over, the owner\'s acceptance); open contacts %.0f V AC = %.0f V peak against %.0f V blocked (margin %.2f); coil to contacts %.0f V AC = %.2f kV against the %.1f kV target; coil %.0f ohm, %.1f mA and %.0f mW at %.0f V; %.4f USD against %.4f USD for the interlock relay type, %.2f USD less for two' % (
+        vr['part'], vr['rating_a'], cur['coil_steady'], cur['coil_inrush'], vr['rating_a'] / cur['coil_steady'], vr['rating_a'] / cur['coil_inrush'], vr['max_v'], vr['span_top'],
+        (vr['span_top'] / vr['max_v'] - 1) * 100, vr['open_contact_vac'], peak_open, vr['peak'], peak_open / vr['peak'], vr['coil_contact_vac'], peak_iso / 1000.0, vr['target_kv'],
+        vr['coil_ohm'], coil_a * 1000, coil_a * D['rail']['volts'] * 1000, D['rail']['volts'], vr['price'], vr['k_il_price'], (vr['k_il_price'] - vr['price']) * vr['count']))
+    prose.expect(sec_v, 'Margin on current', 1, '%.0f' % (vr['rating_a'] / cur['coil_steady']))
+    prose.expect(sec_v, 'Margin on voltage', 1, '%.2f' % (peak_open / vr['peak']))
+    prose.expect(sec_v, 'Isolation', 1, '%.2f kV' % (peak_iso / 1000.0))
+    prose.expect(sec_v, 'Coil', 1, '%.1f mA' % (coil_a * 1000))
+    prose.expect(sec_v, 'Coil', 1, '%.0f mW' % (coil_a * D['rail']['volts'] * 1000))
+    prose.expect(sec_v, 'Price', 1, '%.2f' % ((vr['k_il_price'] - vr['price']) * vr['count']))
+
+    # the pump drives: the current's rate of fall at its zero against the triac's commutating rating, for a full sine and for the half wave a series diode leaves
+    pdv = D['pump_drive']
+    sec_p = 'The pump drives'
+    fall = lambda i, peak_factor: 2 * math.pi * pdv['mains_hz'] * peak_factor * i / 1000.0
+    full = [fall(cur[k], math.sqrt(2)) for k in ('coffee_pump', 'steam_pump')]
+    halfw = [fall(cur[k], 2.0) for k in ('coffee_pump', 'steam_pump')]
+    out.append('pump drives: the current falls at its zero at %.2f and %.2f A/ms (coffee, steam) for a full sine, %.0f and %.0f times under the triac\'s %.0f A/ms; for the half wave of a series diode, whose peak is twice the rms, %.2f and %.2f A/ms, %.0f and %.0f times' % (
+        full[0], full[1], pdv['rating_a_ms'] / full[0], pdv['rating_a_ms'] / full[1], pdv['rating_a_ms'], halfw[0], halfw[1], pdv['rating_a_ms'] / halfw[0], pdv['rating_a_ms'] / halfw[1]))
+    prose.mention(sec_p, '%.2f A/ms for the coffee pump and %.2f A/ms for the steam pump' % (full[0], full[1]))
+    prose.mention(sec_p, '%.0f and %.0f times under the rating' % (pdv['rating_a_ms'] / full[0], pdv['rating_a_ms'] / full[1]))
+    prose.mention(sec_p, '%.2f A/ms and %.2f A/ms, %.0f and %.0f times under the rating' % (halfw[0], halfw[1], pdv['rating_a_ms'] / halfw[0], pdv['rating_a_ms'] / halfw[1]))
+    prose.present(sec_p, 'series diode', 'the pump drives\' series diode')
+    # the logic supply against this board's 5 V loads
+    ra, rl = D['rail']['assumed'], D['rail']
+    v5 = rl['volts']
+    rows, total_ma, typ_ma = rail_rows(D)
+    sec_r = 'The logic supply against this board'
+    for key, v in rows:
+        prose.expect(sec_r, key, 1, '%.1f' % v)
+    prose.expect(sec_r, 'Total', 1, '%.0f mA' % total_ma)
+    lines, chosen_margin = [], None
+    for mdl in rl['modules']:
+        m70, m50 = mdl['amps'] * mdl['at70'] * 1000.0 / total_ma, mdl['amps'] * mdl['at50'] * 1000.0 / total_ma
+        lines.append('%s %.1f A at 70 C (%.2f times) and %.1f A at 50 C (%.2f times)' % (mdl['name'], mdl['amps'] * mdl['at70'], m70, mdl['amps'] * mdl['at50'], m50))
+        prose.expect(sec_r, mdl['name'], 1, '%.2f' % m70)
+        prose.expect(sec_r, mdl['name'], 2, '%.2f' % m50)
+        prose.expect(sec_r, mdl['name'], 3, '%.0f' % (mdl['w'] * mdl['d']))
+        if mdl.get('chosen'):
+            chosen_margin = m70
+            if m70 < rl['adequate'] - EPS:
+                bad.append('the chosen module %s has %.2f times the 5 V budget at 70 C, the forms record calls %.1f adequate' % (mdl['name'], m70, rl['adequate']))
+    smaller = [mdl for mdl in rl['modules'] if not mdl.get('chosen')]
+    for mdl in smaller:
+        if mdl['amps'] * mdl['at70'] * 1000.0 / total_ma >= rl['adequate'] - EPS:
+            bad.append('the smaller module %s has %.2f times the budget at 70 C, at or over the %.1f that the record says it does not reach' % (mdl['name'], mdl['amps'] * mdl['at70'] * 1000.0 / total_ma, rl['adequate']))
+    ch = [mdl for mdl in rl['modules'] if mdl.get('chosen')][0]
+    pout = v5 * total_ma / 1000.0
+    out.append('5 V rail: %s = %.1f mA with the controller at its maximum (%.1f mA at its typical %g mA); %s; the chosen %s delivers %.2f W at this load and dissipates %.2f W at %.0f %% efficiency (%.2f W at the 70 C current)' % (
+        ', '.join('%s %.1f' % (k, v) for k, v in rows), total_ma, typ_ma, rl['controller_typ_ma'], '; '.join(lines), ch['name'], pout, pout / ch['eff'] - pout, ch['eff'] * 100,
+        ch['amps'] * ch['at70'] * v5 / ch['eff'] - ch['amps'] * ch['at70'] * v5))
+    prose.expect(sec_r, 'Total', 1, '%.2f' % (total_ma / 1000.0))
+    sm = smaller[0]
+    prose.mention(sec_r, 'at its typical %g mA the budget is %.0f mA and the IRM-10-5 would have %.2f times at 70 °C' % (rl['controller_typ_ma'], typ_ma, sm['amps'] * sm['at70'] * 1000.0 / typ_ma))
+    prose.mention(sec_r, 'delivers %.2f W at this load and dissipates %.2f / %.2f − %.2f = %.2f W' % (pout, pout, ch['eff'], pout, pout / ch['eff'] - pout))
+    rated_w = ch['amps'] * v5
+    loss_rated = rated_w / ch['eff'] - rated_w
+    loss_lin = ch['no_load_w'] + (loss_rated - ch['no_load_w']) * pout / rated_w
+    out.append('module efficiency at this load: %.0f %% of its rated %.0f W; the sheet gives %.0f %% at rated load only, so the %.2f W above is flat-efficiency; a loss that falls in proportion to the load from %.2f W at rated load to the sheet\'s %.1f W at no load gives %.2f W, %.2f W more' % (
+        pout / rated_w * 100, rated_w, ch['eff'] * 100, pout / ch['eff'] - pout, loss_rated, ch['no_load_w'], loss_lin, loss_lin - (pout / ch['eff'] - pout)))
+    sec_hh = 'Heat'
+    prose.mention(sec_hh, '%.2f W at this board\'s load' % w_mod)
+    prose.mention(sec_hh, '%.2f W' % loss_lin)
+    prose.mention(sec_hh, '%.0f %% of its rated' % (pout / rated_w * 100))
+    il_k_per_w = D['relay']['rise_k'] / wb['relay_coil_w']
+    il_body = ht['air_c'] + il_k_per_w * il_nom
+    out.append('relay K_IL body, at the sheet\'s %g K for the coil\'s %g W (%.1f K for each watt): %.2f W would put it at %g + %.0f = %.0f C against the %g C of its ambient range, an upper bound with no allowance for heat leaving by the pins, and not a margin' % (
+        D['relay']['rise_k'], wb['relay_coil_w'], il_k_per_w, il_nom, ht['air_c'], il_k_per_w * il_nom, il_body, D['relay']['ambient_c']))
+    prose.mention(sec_il, '%.0f °C' % il_body)
+    vr = D['valve_relay']
+    vr_body = vr['ambient_c'] + vr['rise_k']
+    if vr_body > vr['insulation_c'] + EPS:
+        bad.append('the valve relay at its ambient limit of %g C and its own rise of %g K is %g C, over the %g C of its insulation class' % (vr['ambient_c'], vr['rise_k'], vr_body, vr['insulation_c']))
+    out.append('valve relay own rise: about %g K at the rated coil voltage (the sheet\'s plotted line, read off the plot; it does not say for which coil), so %g C at its %g C ambient limit against %g C for insulation class F; %.0f mW of coil heat only while a valve is open' % (
+        vr['rise_k'], vr_body, vr['ambient_c'], vr['insulation_c'], D['rail']['volts'] ** 2 / vr['coil_ohm'] * 1000))
+    prose.mention(sec_hh, '%g K' % vr['rise_k'])
+    # the fuses: the sharing proposal and the breaking capacity
+    fu = D['fuse']
+    area_holder = fu['holder'][0] * fu['holder'][1]
+    shared_a = cur['coffee_pump'] + cur['steam_pump'] + cur['coil_steady']
+    shared_inrush = cur['coffee_pump'] + cur['steam_pump'] + cur['coil_inrush']
+    if shared_inrush > fu['share_limit_a'] + EPS:
+        bad.append('the shared fuse would carry %.3f A, over the %.1f A the proposal allows' % (shared_inrush, fu['share_limit_a']))
+    for o in fu['options']:
+        if o['break_a'] >= fu['required_a'] - EPS:
+            bad.append('the fuse option %s breaks %g A, which meets the %g A required; the record says none was found' % (o['name'], o['break_a'], fu['required_a']))
+    out.append('fuses: %d holders of %.0f x %.0f mm = %.0f mm2 each; one shared fuse for both pumps and both valves would carry %.3f A steady and %.3f A at the coils\' inrush and save %.0f mm2; sourced breaking capacities %s against the %.0f A required' % (
+        fu['holders'], fu['holder'][0], fu['holder'][1], area_holder, shared_a, shared_inrush, (fu['holders'] - 1) * area_holder,
+        ', '.join('%s %g A' % (o['name'], o['break_a']) for o in fu['options']), fu['required_a']))
+    sec_f = 'The fuses'
+    prose.expect(sec_f, 'Space saved', 1, '%.0f' % ((fu['holders'] - 1) * area_holder))
+    prose.expect(sec_f, 'Load behind a shared fuse', 1, '%.3f' % shared_a)
+    prose.expect(sec_f, 'Load behind a shared fuse', 1, '%.3f' % shared_inrush)
+
+    # functions, harnesses and kinds against their sources
+    forms = open(os.path.join(record_dir, 'controller-board-function-forms.md'), encoding='utf-8').read()
+    wanted = re.findall(r'^### (.*)$', forms.split('## The record of forms')[1].split('\n## ')[0], re.M)
+    mine = [f['name'] for f in D['functions']]
+    if sorted(mine) != sorted(wanted):
+        bad.append('functions differ from the forms record\'s: %s' % sorted(set(mine) ^ set(wanted)))
+    rows = table_rows(section(text, 'Every function has one owner'))
+    for name in mine:
+        if name not in rows:
+            bad.append('the owner table has no row for %s' % name)
+    bad += ['the owner table has a row the forms record does not: %s' % k for k in rows if k not in mine and k != 'Function (forms record)']
+    bad += check_owners(D, text)
+    pin = open(os.path.join(record_dir, 'connector-pinouts.md'), encoding='utf-8').read()
+    heads = re.findall(r'^#{2,3} (.*)$', pin, re.M)
+    others = re.findall(r'^### (.*)$', pin.split('## The other retained harnesses')[1].split('\n## ')[0], re.M)
+    expected_heads = [h for h in heads if re.search(r'connector$|harness$', h) and not h.startswith('What') and 'no harness' not in h] + [h for h in others if 'no harness' not in h] + ['The nine terminals']
+    for h in expected_heads:
+        if not any(x['source'] in h for x in D['harnesses']):
+            bad.append('the connector record\'s "%s" has no connector in the data' % h)
+    for x in D['harnesses']:
+        if not any(x['source'] in h for h in heads):
+            bad.append('the data names a harness, "%s", that the connector record does not' % x['source'])
+        bad += ['the connector %s of "%s" is not drawn' % (cn, x['source']) for cn in x['connector'].split() if cn not in bodies and cn not in ('tabs', 'to', '1', '9')]
+    split = [f['name'] for f in D['functions'] if f.get('split')]
+    out.append('functions: %d of the forms record\'s %d, each with one owner named in the owner table and no other (%d split across boards, each with its reason); connector record: %d harness headings, each with a connector' % (
+        len(mine), len(wanted), len(split), len(set(expected_heads))))
+
+    # costs
+    cs, f = costs(D), D['cost']['fee']
+    for name in 'ABC':
+        x = cs[name]
+        out.append('division %s: fabrication %.2f (%s), assembly charges %.2f, labour %.2f, duplicate Extended fees %.2f, link parts %.2f and joints %.2f, total %.2f USD' % (
+            name, x['fab'], ', '.join('%s %.2f%s' % (n, v, ' band' if b else '') for n, v, b in x['lines']), x['asm'], x['lab'], x['dup'], x['lp'], x['lj'], x['total']))
+        col = {'A': 1, 'B': 2, 'C': 3}[name]
+        prose.expect('Candidate divisions', 'Total of the three rows above', col, '%.1f' % half(x['total']))
+        prose.expect('Candidate divisions', 'Fabrication, estimated', col, '%.1f' % half(x['fab']))
+        if name != 'A':
+            prose.expect('Candidate divisions', 'Total of the three rows above', col, '%.1f more' % half(x['total'] - cs['A']['total']))
+    for name in 'BC':
+        for b in D['cost'][name]['boards']:
+            if 'bay' in b:
+                prose.expect('Candidate divisions', 'Boards, layers, outline', 'BC'.index(name) + 2, '{:,.0f}'.format(board_area(b)).replace(',', ' '))
+    counts, header_types, header_pins = part_counts(D)
+    pm = [p for p in D['parts']['main']]
+    types_main = [(p['n'], p['cls'], p['tht'], counts.get(p['tag'], (0, 0))[1]) for p in pm]
+    for p in pm:
+        if counts.get(p['tag'], (0, 0))[0] < 1:
+            bad.append('the part type %s has no block that holds one' % p['n'])
+    ntypes = len(pm) + len(header_types)
+    joints = sum(j for _, _, _, j in types_main) + header_pins
+    tht_types = sum(1 for _, _, t, _ in types_main if t) + len(header_types)
+    econ = f['setup'] + f['stencil'] + f['ext_econ'] * ntypes
+    fixed = f['setup_std'] + f['stencil_std'] + f['fixtures_std']
+    save_main = tht_types * f['ext_econ'] + joints * f['joint_hand'] + f['labour']
+    out.append('header types by ways and pitch, from the blocks: %s; %d header pins' % (', '.join('%d-way %g mm x %d' % (k[0], k[1], v) for k, v in sorted(header_types.items(), key=lambda kv: (kv[0][1], kv[0][0]))), header_pins))
+    out.append('Extended fees of the main board: %d types x %.2f = %.2f USD, of which %d assumed header types = %.2f; hand-fitting the %d through-hole types and their %d joints saves %.2f USD' % (
+        ntypes, f['ext_econ'], ntypes * f['ext_econ'], len(header_types), len(header_types) * f['ext_econ'], tht_types, joints, save_main))
+    out.append('Economic %.2f USD against Standard %.2f USD at %d unique Extended types and no Basic type; Standard adds %.2f for each Basic, Preferred or Extended type, so the two cross at %.1f Extended types with none' % (
+        econ, fixed + f['ext_std'] * ntypes, ntypes, f['ext_std'], (fixed - f['setup'] - f['stencil']) / (f['ext_econ'] - f['ext_std'])))
+    wcounts = wall_counts(D)
+    wp = D['parts']['wall']
+    wt = sum(1 for p in wp if p['cls'] == 'Extended' and all(wcounts.get(t, (0, 0))[0] for t in p['tags']))
+    wj = sum(wcounts.get(t, (0, 0))[1] for p in wp for t in p['tags'])
+    out.append('wall board hand-fitted: %d Extended types and %d joints save %.2f USD (its own order: %.2f setup and stencil, %.2f labour)' % (
+        wt, wj, wt * f['ext_econ'] + wj * f['joint_hand'] + f['labour'] + f['setup'] + f['stencil'], f['setup'] + f['stencil'], f['labour']))
+    sec_c = 'What the owner fits by hand, and what the extended parts cost'
+    cross = (fixed - f['setup'] - f['stencil']) / (f['ext_econ'] - f['ext_std'])
+    prose.counted(sec_c, '%d types at %.2f USD is %.2f USD' % (ntypes, f['ext_econ'], ntypes * f['ext_econ']), 'the Extended types and their fee')
+    prose.counted(sec_c, '%.2f USD of it, the %d header types' % (len(header_types) * f['ext_econ'], len(header_types)), 'the header types')
+    prose.counted(sec_c, '%.2f USD saved' % save_main, 'the hand-fitting saving')
+    prose.counted(sec_c, '%d joints' % joints, 'the joints')
+    prose.counted(sec_c, '%d header pins' % header_pins, 'the header pins')
+    wsave = wt * f['ext_econ'] + wj * f['joint_hand'] + f['labour'] + f['setup'] + f['stencil']
+    nwords = {1: 'one', 2: 'two', 3: 'three', 4: 'four', 5: 'five', 6: 'six', 7: 'seven'}
+    prose.counted(sec_c, '%.2f USD' % wsave, 'the wall board saving', 'The whole heater wall board', 2)
+    prose.counted(sec_c, '%s unique Extended types' % nwords.get(wt, str(wt)), 'the wall board\'s Extended types', 'The whole heater wall board', 2)
+    prose.counted(sec_c, '= %.2f USD' % (wt * f['ext_econ']), 'the wall board\'s Extended fee', 'The whole heater wall board', 2)
+    prose.counted(sec_c, 'its %d joints' % wj, 'the wall board\'s joints', 'The whole heater wall board', 2)
+    prose.mention(sec_c, 'Economic is %.2f USD and Standard %.2f USD' % (econ, fixed + f['ext_std'] * ntypes))
+    prose.mention(sec_c, 'cross at %.1f unique Extended types' % cross)
+    prose.counted(sec_c, '%d × %.2f' % (len(header_types), f['ext_econ']), 'the header types', '%d header types' % len(header_types), 2)
+    prose.counted(sec_c, '%.2f' % (ntypes * f['ext_econ']), 'the Extended types and their fee', '%d types' % ntypes, 2)
+
+    # the generated rows of the block tables
+    for b in D['mains_blocks']:
+        r = tuple(b['body'])
+        for col, v in ((2, rng(r[0], r[2])), (3, rng(r[1], r[3])), (4, size(r)), (5, sq(area(r)))):
+            prose.expect(heading, b['id'], col, v)
+    for col, v in ((2, rng(strip[0], strip[2])), (3, rng(strip[1], strip[3])), (4, size(strip)), (5, sq(area(strip)))):
+        prose.expect(heading, 'TABSTRIP', col, v)
+    for b in D['lv_blocks']:
+        r = tuple(b['rect'])
+        for col, v in ((2, rng(r[0], r[2])), (3, rng(r[1], r[3])), (4, size(r)), (5, sq(area(r)))):
+            prose.expect('The low-voltage blocks', b['id'], col, v)
+    for col, v in ((4, size(box)), (5, sq(area(box)))):
+        prose.expect('The low-voltage blocks', 'REED', col, v)
+    if 'accepted_date' in src:
+        prose.expect('Owner intent carried in', 'Relay contacts rated %g V AC' % vr['max_v'], 1, src['accepted_date'])
+        prose.mention('The valve relays', 'accepted by the owner for relay contacts on %s' % src['accepted_date'])
+    if need:
+        for x in tb['list']:
+            mv = x['y'] - x['found']
+            if abs(mv) < EPS:
+                continue
+            d = copy.deepcopy(D)
+            [t for t in d['tabs']['list'] if t['n'] == x['n']][0]['y'] -= math.copysign(0.5, mv)
+            try:
+                fails = [m for m in check_main(d, text, [], record_dir, src, route=False) if not m.startswith('table in') and not m.startswith('assumption token')]
+            except Exception as e:
+                fails = ['the model failed: %s' % type(e).__name__]
+            if not fails:
+                bad.append('tab %d is moved %+.1f mm and a tab 0.5 mm nearer its as-found place meets every rule of this record, so the move is more than a rule needs' % (x['n'], mv))
+    bad += prose.check()
+    return bad
+
+# ---------------------------------------------------------------- the heater wall board
+def wall_model(D):
+    W = D['wall']
+    mains = {}
+    for b in W['blocks']:
+        for n, r, net in b['mains']:
+            mains[n] = (tuple(r), net, b['id'])
+    for c in W['copper']:
+        mains[c['id']] = (tuple(c['rect']), c['net'], c['id'])
+    pockets = {n: (tuple(r), b['id']) for b in W['blocks'] for n, r in b['pockets']}
+    bodies = {b['id']: tuple(b['body']) for b in W['blocks']}
+    bodies.update({b['id']: tuple(b['rect']) for b in W['lv']})
+    return mains, pockets, bodies
+
+def copper_regions(D, mains):
+    """Length, width, squares and resistance of each heater copper region, along its current axis."""
+    W, reg = D['wall'], {}
+    for cu in W['copper']:
+        r = mains[cu['id']][0]
+        length, width = ((r[2] - r[0]), (r[3] - r[1])) if W['axes'][cu['id']] == 'u' else ((r[3] - r[1]), (r[2] - r[0]))
+        reg[cu['id']] = (length, width, length / width, length / width * W['sheet_mohm'])
+    return reg
+
+def check_wall(D, text, out, record_dir=None, src=None, nested=False):
+    bad, prose = [], Prose(text, register=not nested)
+    if src is None and record_dir is not None:
+        src, sbad = parse_sources(source_texts(record_dir))
+        bad += sbad
+    if src is not None:
+        bad += check_sources(D, src)
+    bad += check_tokens(text, D)
+    W, bas, f = D['wall'], dict(D['basis'], basic=D['basis']['creepage'] / 2), D['cost']['fee']
+    mains, pockets, bodies = wall_model(D)
+    w, h = W['size']
+    board = (0.0, 0.0, w, h)
+    bo = [(0.0, 0.0), (w, 0.0), (w, h), (0.0, h)]
+    sr = slot_rects(W['slots'])
+    out.append('wall board %g x %g mm = %g mm2' % (w, h, w * h))
+    if max(w, h) > bas['band']:
+        bad.append('the wall board lies outside the lowest price band of %g mm' % bas['band'])
+    for n, r in list(bodies.items()) + [(k, v[0]) for k, v in mains.items()]:
+        if not inside(r, board):
+            bad.append('%s lies outside the board' % n)
+    names = list(bodies)
+    for i, a in enumerate(names):
+        for b in names[i + 1:]:
+            if ov(bodies[a], bodies[b]):
+                bad.append('%s and %s overlap' % (a, b))
+    edge = min(edge_distance(r, [(0, 0), (w, 0), (w, h), (0, h)]) for r in list(bodies.values()) + [v[0] for v in mains.values()])
+    if edge < bas['edge_min'] - EPS:
+        bad.append('a block stands %.2f mm from the board edge, the least allowed is %.1f' % (edge, bas['edge_min']))
+    out.append('every block and mains rectangle lies %.1f mm or more inside the board edge (least allowed %.1f)' % (edge, bas['edge_min']))
+
+    # guard 6: every mains rectangle keeps the basic creepage from the edge against the wall, and the board stands off by the owner's figure
+    dw = bas['basic']
+    for n, (r, net, own) in mains.items():
+        if r[1] < dw - EPS:
+            bad.append('mains copper %s is %.1f mm from the wall edge, the rule is %.1f' % (n, r[1], dw))
+    near = min(r[1] for r, _, _ in mains.values())
+    lead_v = []
+    for b in W['blocks']:
+        if b['body'][1] < dw - EPS:
+            bad.append('the body of %s is %.1f mm from the wall edge, the rule is %.1f' % (b['id'], b['body'][1], dw))
+        d_ = b.get('dip')
+        if d_:
+            cx_, cy_ = d_['centre']
+            offs_ = [(k_ - (d_['pins'] - 1) / 2) * d_['pin_dy'] for k_ in range(d_['pins'])]
+            for p_ in ([(cx_ + o_, cy_ - d_['row']) for o_ in offs_] if d_.get('axis') == 'u' else [(cx_ - d_['row'], cy_ + o_) for o_ in offs_]):
+                lead_v.append(p_[1])
+                if p_[1] < dw - EPS:
+                    bad.append('a mains lead end of %s is %.1f mm from the wall edge, the rule is %.1f' % (b['id'], p_[1], dw))
+    near_body = min(b['body'][1] for b in W['blocks'])
+    out.append('mains copper to the wall edge: least %.1f mm of %.1f; part bodies least %.1f mm and mains lead ends of the opto-triacs least %.1f mm; with the %.1f mm stand-off, %.1f mm to the metal in an edge-on board only, which is not claimed' % (
+        near, dw, near_body, min(lead_v) if lead_v else math.inf, W['standoff'], near + W['standoff']))
+    items = [(n, r, net, own) for n, (r, net, own) in mains.items()]
+    pb, mm, pp, npairs, _ = pair_rule(items, sr, bas, [], bo)
+    bad += pb
+    out.append('mains copper of different nets, from different parts: least straight %.1f mm of %.1f, %d pairs under the basic creepage of %.1f mm by straight line%s' % (
+        mm, bas['clearance'], npairs, bas['basic'], ', all held by slots, least surface path %.1f mm' % pp if npairs else ''))
+
+    # guard 5, wall board: pockets by straight distance and by surface path
+    exempt = {b['id'] for b in W['blocks'] if b.get('dip')} | set(W.get('own_barrier', []))
+    straight, path, pairs = math.inf, math.inf, 0
+    for pn, (pr, own) in pockets.items():
+        for mn, (mr, net, mown) in mains.items():
+            if mown == own and own in exempt:
+                continue
+            d = rd(mr, pr)
+            straight = min(straight, d)
+            if d < bas['clearance'] - EPS:
+                bad.append('pocket %s is %.2f mm from %s, the clearance is %.1f' % (pn, d, mn, bas['clearance']))
+            if d < bas['creepage'] - EPS:
+                pairs += 1
+                L = surface_path(mr, pr, sr, bas['creepage'], bo)
+                path = min(path, L)
+                if L < bas['creepage'] - 0.05:
+                    bad.append('surface path of %.1f mm between %s and pocket %s, creepage is %.1f' % (L, mn, pn, bas['creepage']))
+    pins = dip_paths(W['blocks'], sr, 12.0, bo)
+    for n, L in pins.items():
+        path = min(path, L)
+        if L < bas['creepage'] - 0.05:
+            bad.append('opto-coupler %s: pin-to-pin surface path of %.1f mm, creepage is %.1f' % (n, L, bas['creepage']))
+    header = min(rd(tuple(b['rect']), r) for b in W['lv'] for r, _, _ in mains.values())
+    if header < bas['creepage'] - EPS:
+        bad.append('the low-voltage header is %.1f mm from mains copper' % header)
+    out.append('pockets: least straight %.1f mm of %.1f, %d pairs under %.1f mm straight all held by slots, least surface path %.1f mm of %.1f; the header is %.1f mm from mains copper' % (
+        straight, bas['clearance'], pairs, bas['creepage'], path, bas['creepage'], header))
+    out.append('opto-coupler pin-to-pin paths round the slots: ' + ', '.join('%s %.1f mm' % (n, L) for n, L in pins.items()))
+    for s in W['slots']:
+        r = tuple(s['rect'])
+        if min(r[2] - r[0], r[3] - r[1]) < D['slot_width_min'] - EPS:
+            bad.append('slot %s is narrower than %.1f mm' % (s['id'], D['slot_width_min']))
+        if not inside(r, board):
+            bad.append('slot %s lies outside the board' % s['id'])
+        for n, rr in [(k, v[0]) for k, v in mains.items()] + [(k, v[0]) for k, v in pockets.items()] + [(b['id'], tuple(b['rect'])) for b in W['lv']]:
+            if ov(grow(r, D['slot_copper']), rr):
+                bad.append('slot %s cuts the copper of %s' % (s['id'], n))
+    plen = sum(max(s['rect'][2] - s['rect'][0], s['rect'][3] - s['rect'][1]) for s in W['slots'])
+    if plen * 1000.0 / (w * h) > D['slot_density']:
+        bad.append('slot path of %.1f m per m2 reaches the maker\'s %.0f m per m2' % (plen * 1000.0 / (w * h), D['slot_density']))
+    out.append('slots: %d of %.0f mm of slot path = %.1f m per m2 of board, against %.0f' % (len(W['slots']), plen, plen * 1000.0 / (w * h), D['slot_density']))
+
+    # guard 7: the heater path, from the ordered chains
+    reg = copper_regions(D, mains)
+    cur = dict(D['loads'], both=D['loads']['coffee'] + D['loads']['steam'])
+    bud = W['budgets']
+    chains = W['chains']
+    for name, ids in chains.items():
+        if len([x for x in ids if x.startswith('TRI_')]) != 1:
+            bad.append('the %s path does not pass its triac once' % name)
+        prev = None
+        for x in ids:
+            r = mains[x][0] if x in mains else mains['SENSE.p'][0] if x == 'SENSE' else bodies[x]
+            if prev is not None and rd(prev, r) > 1e-6:
+                bad.append('%s path: %s does not touch the copper before it' % (name, x))
+            prev = r
+    lists = list(chains.values())
+    common = []
+    while all(len(l) > len(common) for l in lists) and len({l[-1 - len(common)] for l in lists}) == 1:
+        common.insert(0, lists[0][-1 - len(common)])
+    own = {n: [x for x in ids[:len(ids) - len(common)] if x in reg] for n, ids in chains.items()}
+    common = [x for x in common if x in reg]
+    if not common:
+        bad.append('the two heater paths share no copper after their triacs')
+    onpath = {x for v in own.values() for x in v} | set(common)
+    bad += ['copper region %s belongs to no heater path' % k for k in reg if k not in onpath]
+    for k, v in reg.items():
+        if v[1] < 0.381 * cur['overload'] - EPS:
+            bad.append('%s is %.1f mm wide, 15 A needs %.2f' % (k, v[1], 0.381 * cur['overload']))
+    mw = lambda ids, i: sum(reg[k][3] for k in ids) * i * i
+    steam, coffee = own.get('steam', []), own.get('coffee', [])
+    longest = max(reg.items(), key=lambda kv: kv[1][0])
+    totals = {n: sum(reg[x][0] for x in own.get(n, []) + common) for n in chains}
+    if longest[1][0] >= w / 2:
+        bad.append('a run of %.1f mm crosses half the board' % longest[1][0])
+    out.append('copper of the heater path: ' + ', '.join('%s %.1f x %.1f mm %.2f squares %.2f mohm' % (k, *reg[k]) for k in reg))
+    out.append('copper dissipation: steam path %.0f mW at %.2f A and %.0f mW at %.0f A, coffee path %.0f mW at %.2f A and %.0f mW at %.0f A, common return %.0f mW at %.2f A and %.0f mW at %.0f A' % (
+        mw(steam, cur['steam']), cur['steam'], mw(steam, cur['overload']), cur['overload'], mw(coffee, cur['coffee']), cur['coffee'], mw(coffee, cur['overload']), cur['overload'],
+        mw(common, cur['both']), cur['both'], mw(common, cur['overload']), cur['overload']))
+    out.append('longest run %s %.1f mm = %.0f %% of the %g mm width; copper run totals steam %.1f mm, coffee %.1f mm' % (longest[0], longest[1][0], longest[1][0] / w * 100, w, totals.get('steam', 0), totals.get('coffee', 0)))
+    cop = 'Copper that carries the heater current'
+    for key, rid in W['table_keys']:
+        for col, v in ((1, '%.1f' % reg[rid][0]), (3, '%.2f' % reg[rid][2]), (4, '%.2f' % reg[rid][3])):
+            prose.expect(cop, key, col, v)
+    for key, ids, i in (('Steam element', steam, cur['steam']), ('Coffee element', coffee, cur['coffee']), ('Both, in the common return', common, cur['both'])):
+        prose.expect(cop, key, 2, '%.2f' % sum(reg[k][3] for k in ids))
+        prose.expect(cop, key, 4, '%.0f mW' % mw(ids, i))
+        prose.expect(cop, key, 5, '%.0f mW' % mw(ids, cur['overload']))
+
+    # heat: the triacs against the parts that derate and sense, with the limits the Assumptions table carries
+    ht, lim = W['heat'], D['heat']['limits']
+    tri = {k: bodies[k] for k in ht['triacs']}
+    hot = {n: min(rd(bodies[n], r) for r in tri.values()) for n in ht['opto']}
+    for n in ht['opto']:
+        if hot[n] < lim['opto'] - EPS:
+            bad.append('%s is %.1f mm from a triac, the rule is %g' % (n, hot[n], lim['opto']))
+    ta = rd(*tri.values())
+    if ta < lim['triac'] - EPS:
+        bad.append('the two triacs stand %.1f mm apart on one metal wall, the assumed least is %g' % (ta, lim['triac']))
+    out.append('heat: triacs %.1f mm apart (the assumed least %g); opto-coupler parts %.1f mm or more from them, rule %g' % (ta, lim['triac'], min(hot[n] for n in ht['opto']), lim['opto']))
+    th, air_t, pw = ht['thermal'], D['heat']['air_c'], ht['triacs']
+    rise_t = {k: v * th['rth_jc'] for k, v in pw.items()}
+    room_t = {k: th['tj_max'] - rise_t[k] - air_t for k in pw}
+    total_t = sum(pw.values())
+    hot_k = max(pw, key=lambda k: pw[k])
+    alone_t, shared_t = room_t[hot_k] / pw[hot_k], min(room_t.values()) / total_t
+    if min(room_t.values()) <= 0:
+        bad.append('a triac\'s junction rise over its case leaves no room under the junction limit at the assumed air temperature')
+    out.append('triac heat: the two tab faces share one metal wall: %.2f W and %.2f W, %.2f W together; junction over case %.1f K and %.1f K at %g K/W; the case may stand at %.1f and %.1f C of the %g C limit, so at %g C air the wall and the tab interface may rise %.1f K over the air for the %.2f W triac: %.1f K/W from the tab face to the air if it heats the wall alone, %.1f K/W if both do' % (
+        pw['TRI_C'], pw['TRI_S'], total_t, rise_t['TRI_C'], rise_t['TRI_S'], th['rth_jc'], th['tj_max'] - rise_t['TRI_C'], th['tj_max'] - rise_t['TRI_S'], th['tj_max'], air_t, room_t[hot_k], pw[hot_k], alone_t, shared_t))
+    if nested is False:
+        for ph in ('%.2f W and %.2f W' % (pw['TRI_C'], pw['TRI_S']), '%.1f K and %.1f K' % (rise_t['TRI_C'], rise_t['TRI_S']), '%.1f K/W' % alone_t, '%.1f K/W' % shared_t, '%.1f mm apart' % ta):
+            prose.mention('The heater wall board', ph)
+    for ph in ('reads on when the triac is open and the element intact', 'off when the triac conducts', 'failed-to-close reads on while commanded on', 'an open element reads off'):
+        prose.present('The heater wall board', ph, 'the confirm polarity')
+    wcount = wall_counts(D)
+    wjoints = sum(j for _, j in wcount.values())
+    out.append('hand-soldered joints of the board: %d (%s)' % (wjoints, ', '.join('%s %d' % (t, wcount[t][1]) for t in sorted(wcount))))
+    section_wall = 'The heater wall board'
+    for b in W['blocks']:
+        r = tuple(b['body'])
+        for col, v in ((2, rng(r[0], r[2])), (3, rng(r[1], r[3])), (4, size(r)), (5, sq(area(r)))):
+            prose.expect(section_wall, b['id'], col, v)
+    sec = f['slope4'] * w * h / f['ref_area']
+    out.append('wall board fabrication: own board %.2f USD in the band; as a section %.2f USD (inferred), %.2f less, or %.2f more than the maker\'s application price of 2.00 USD' % (f['band2'], sec, f['band2'] - sec, sec - 2.0))
+    prose.expect(section_wall, 'Fabrication', 2, '%.2f' % sec)
+    if 'wall_dnp' in D and not nested:
+        D2 = copy.deepcopy(D)
+        D2['wall'] = D2.pop('wall_dnp')
+        sub_out = []
+        sub_bad = [b for b in check_wall(D2, text, sub_out, record_dir, src, nested=True) if not b.startswith('table in')]
+        V = D['wall_dnp']
+        w2, h2 = V['size']
+        dn = [b for b in V['blocks'] if b.get('dnp')]
+        extra = {}
+        for b in dn:
+            for tag, j in b['dnp']:
+                c0, j0 = extra.get(tag, (0, 0))
+                extra[tag] = (c0 + 1, j0 + j)
+        wc2 = wall_counts(D2)
+        out.append('the board with the %d unpopulated confirm places: %g x %g mm = %g mm2, %+.1f %% against the drawn board; %d joints fitted, and %d more if the places are fitted; %s' % (
+            len(dn), w2, h2, w2 * h2, (w2 * h2 / (w * h) - 1) * 100, sum(j for _, j in wc2.values()), sum(j for _, j in extra.values()), 'every check passes' if not sub_bad else 'it FAILS: ' + '; '.join(sub_bad)))
+        bad += ['the board with the unpopulated places: ' + b for b in sub_bad]
+    bad += prose.check()
+    return bad
+
+# ---------------------------------------------------------------- expected output, commands, selftest
+def expected(text, label, out):
+    found = blocks_of(text, label)
+    if len(found) != 1:
+        return ['the record has no expected-output block %s' % label]
+    want = found[0].rstrip('\n').split('\n')
+    if want != out:
+        first = next(((a, b) for a, b in zip(want, out) if a != b), None)
+        return ['the printed output differs from the block %s%s' % (label, (': "%s" against "%s"' % first) if first else ', in length')]
+    return []
+
+def run(cmd, text, D, record_dir):
+    out = []
+    bad = check_main(D, text, out, record_dir, need=True, whatif=True) if cmd == 'main' else check_wall(D, text, out, record_dir)
+    return out, bad
+
+def set_in(d, path, value):
+    for k in path[:-1]:
+        d = d[k]
+    d[path[-1]] = value
+
+def mb(d, i):
+    return [b for b in d['mains_blocks'] if b['id'] == i][0]
+
+def lvb(d, i):
+    return [b for b in d['lv_blocks'] if b['id'] == i][0]
+
+def slot(d, i):
+    return [s for s in d['slots'] if s['id'] == i][0]
+
+def move_block(d, i, dy):
+    b = mb(d, i)
+    b['body'][1] += dy
+    b['body'][3] += dy
+    for m in b['mains']:
+        m[1][1] += dy
+        m[1][3] += dy
+    for p in b['pockets']:
+        p[1] += dy
+        p[3] += dy
+    for key in ('hot', 'heat'):
+        if b.get(key):
+            b[key][1] += dy
+            b[key][3] += dy
+
+# Each perturbation of the data: (what, command, change, flags). A guard that stops guarding makes the selftest fail. The flags: 'route' runs the
+# route search, 'need' the check that every moved tab is needed, and 'proof' the proof that a join called inner has no surface route. What each
+# one targets is named in INTENDED, below.
+def tab(d, n):
+    return [t for t in d['tabs']['list'] if t['n'] == n][0]
+
+def pad_header(d, i):
+    lvb(d, i)['conn']['ways'] += 1
+
+GUARDS = (
+    ('move a tab 0.3 mm toward the fixing', 'main', lambda d: tab(d, 1).update(y=tab(d, 1)['y'] - 0.3)),
+    ('move a tab 3.1 mm and its as-found position with it', 'main', lambda d: tab(d, 6).update(y=76.0, found=76.0)),
+    ('move the third tab 0.5 mm beyond what the rules need', 'main', lambda d: tab(d, 3).update(y=tab(d, 3)['y'] + 0.5), 'need'),
+    ('move the second tab 0.5 mm beyond what the rules need', 'main', lambda d: tab(d, 2).update(y=tab(d, 2)['y'] + 0.5), 'need'),
+    ('bring the pads of two tabs of different nets together, the pitch rule weakened', 'main', lambda d: (d['tabs'].update(pitch=0.0), tab(d, 6).update(y=39.0))),
+    ('widen a tab pad by a thicker blade in the data', 'main', lambda d: d['tabs'].update(thick=7.0)),
+    ('shrink the outline by 7 mm on the right', 'main', lambda d: d.update(outline=[[1.0, 2.0], [125.0, 2.0], [125.0, 127.0], [1.0, 127.0]])),
+    ('move the reed 2 mm', 'main', lambda d: d['reed'].update(lower=[120.0, 17.5])),
+    ('shorten the slot between the link\'s two sides', 'main', lambda d: slot(d, 'SL_LINK')['rect'].__setitem__(2, 20.0)),
+    ('shorten the slot between the live link and the neutral pad', 'main', lambda d: slot(d, 'SL_LN')['rect'].__setitem__(2, 6.0)),
+    ('shorten the slot between the two pump strips', 'main', lambda d: slot(d, 'SL_PP')['rect'].__setitem__(2, 30.0)),
+    ('shorten the slot between the voltage measurement\'s two sides', 'main', lambda d: slot(d, 'SL_VM')['rect'].__setitem__(3, 51.0)),
+    ('drop a function', 'main', lambda d: d['functions'].pop()),
+    ('blank the owner of a function', 'main', lambda d: d['functions'][0].update(owner='')),
+    ('give a function an owner the record does not declare', 'main', lambda d: d['functions'][0].update(owner='cloud')),
+    ('bring a block into the reed keep-out', 'main', lambda d: lvb(d, 'MCU').update(rect=[112.0, 20.0, 120.0, 28.0])),
+    ('move a hole under a tab', 'main', lambda d: d['holes'].update(P1=[9.0, 9.0])),
+    ('make the module 30 mm high', 'main', lambda d: mb(d, 'MODULE').update(h=30.0)),
+    ('move the module 7.5 mm down toward the interlock relay', 'main', lambda d: move_block(d, 'MODULE', -7.5)),
+    ('move the voltage measurement 8 mm down toward the interlock relay', 'main', lambda d: move_block(d, 'VMEAS', -8.0)),
+    ('move a sensing block 10 mm from the interlock relay', 'main', lambda d: lvb(d, 'BREW_A_C').update(rect=[68.0, 14.5, 78.0, 22.5])),
+    ('empty the list of sensing blocks', 'main', lambda d: d['heat'].update(sense=[])),
+    ('report a part that holds as not held', 'main', lambda d: d['heat']['accepted'].append(['K_V2', 'MODULE'])),
+    ('stop reporting a part that does not hold', 'main', lambda d: d['heat']['accepted'].pop(0)),
+    ('accept the voltage measurement as not held from the interlock relay', 'main', lambda d: d['heat']['accepted'].append(['VMEAS', 'K_IL'])),
+    ('rate the voltage measurement\'s part to 125 C and leave it in the 85 C class', 'main', lambda d: d['heat']['class85'][4].update(limit_c=125.0)),
+    ('list a part rated to 85 C as outside the class', 'main', lambda d: d['heat']['outside'].append({'id': 'MCU', 'limit_c': 85.0})),
+    ('weaken the interlock relay to under a watt', 'main', lambda d: d['heat'].update(source_w=1.2)),
+    ('drop a harness connector', 'main', lambda d: d['harnesses'].pop()),
+    ('weaken the lid keep-out to 1.0 mm', 'main', lambda d: d['fixing'].update(lid_keep=1.0)),
+    ('weaken the least slot width to 0.2 mm', 'main', lambda d: d.update(slot_width_min=0.2)),
+    ('weaken the edge distance to 0', 'main', lambda d: d['basis'].update(edge_min=0.0)),
+    ('widen the reed tolerance to 5 mm', 'main', lambda d: d['reed'].update(tol=5.0)),
+    ('weaken the signed creepage to 8.0 mm', 'main', lambda d: d['basis'].update(creepage=8.0)),
+    ('bring the relay\'s two contacts 1.5 mm apart', 'main', lambda d: mb(d, 'K_IL')['mains'][1].__setitem__(1, [17.0, 19.775, 25.0, 27.05])),
+    ('put the relay\'s two contacts on one net', 'main', lambda d: mb(d, 'K_IL')['mains'][0].__setitem__(2, 'LINE1')),
+    ('move a relay leg out of its copper', 'main', lambda d: mb(d, 'K_IL')['terminals'].update(legs_x=[17.6, 23.0])),
+    ('narrow a link region', 'main', lambda d: d['link']['chain'][0].update(rect=[8.5, 28.55, 17.0, 31.0])),
+    ('tap the logic supply from the LINE1 net', 'main', lambda d: d['link']['taps'][0].update(net='LINE1')),
+    ('draw a block of a kind that is removed', 'main', lambda d: d['lv_blocks'].append({'id': 'TH1_H', 'fn': 'x', 'rect': [85.2, 70.3, 92.2, 77.8], 'tht': True, 'h': 15.0, 'region': 'hdr', 'kind': 3, 'conn': {'ways': 2, 'pitch': 2.54}})),
+    ('take the circuit block of the kept second current channel away', 'main', lambda d: (d.update(lv_blocks=[b for b in d['lv_blocks'] if b['id'] != 'CURR2_C']), d['heat']['sense'].remove('CURR2_C'))),
+    ('restore tab 4 as drawn and take it off the removed list', 'main', lambda d: (d['tabs']['list'].append({'n': 4, 'name': 'STMHEATER', 'y': 52.9, 'found': 52.9}), d['tabs'].update(removed=[r for r in d['tabs']['removed'] if r['n'] != 4]))),
+    ('restore the pad of the removed tab 4', 'main', lambda d: d['tabs']['list'].append({'n': 4, 'name': 'STMHEATER', 'y': 52.9, 'found': 52.9})),
+    ('lose track of the removed tab 5', 'main', lambda d: d['tabs']['removed'].pop()),
+    ('rename a removed tab', 'main', lambda d: d['tabs']['removed'][0].update(name='ELEMENT')),
+    ('move the current shunt off the return path: lift its second land off the pour', 'main', lambda d: d['return']['shunt']['lands'][1][1].__setitem__(3, 44.9)),
+    ('tap the neutral from the pad of tab 3, below the shunt', 'main', lambda d: d['link']['taps'][1].update(**{'from': 'tab 3'})),
+    ('raise the least tab pitch to 9.0 mm, so the return landing stands short of it', 'main', lambda d: d['tabs'].update(pitch=9.0)),
+    ('join a pump\'s return at the pad of tab 3, on the plug side of the shunt', 'main', lambda d: d['return']['branches'][2].update(joins='the pad of tab 3')),
+    ('join the valves\' return at the pad of tab 3, on the plug side of the shunt', 'main', lambda d: d['return']['branches'][4].update(joins='tab 3')),
+    ('leave a pump\'s return out of the neutral return', 'main', lambda d: d['return']['branches'].pop(3)),
+    ('end a pump\'s return on copper of another net', 'main', lambda d: mb(d, 'P_C')['mains'][1].__setitem__(2, 'COFFPUMP')),
+    ('call the valves\' return, which has a surface route, an inner-layer join', 'main', lambda d: d['return']['branches'][4].update(layer='inner'), 'route', 'proof'),
+    ('take the current shunt away', 'main', lambda d: d['return'].pop('shunt')),
+    ('give the current shunt no part', 'main', lambda d: d['return']['shunt'].update(parts=0)),
+    ('narrow the shunt\'s first land to 4 mm', 'main', lambda d: d['return']['shunt']['lands'][0][1].__setitem__(2, 9.0)),
+    ('stop the analogue region at Y 30.1, where the module once stood', 'main', lambda d: [r for r in d['regions']['ana'] if r['id'] == 'AR_b'][0]['rect'].__setitem__(3, 30.1)),
+    ('draw the analogue region over the interlock relay\'s keep-out', 'main', lambda d: [r for r in d['regions']['ana'] if r['id'] == 'AR_b'][0]['rect'].__setitem__(0, 70.0)),
+    ('draw a block for the further switched output that the owner removed', 'main', lambda d: [k for k in d['kinds'] if k['n'] == 6][0].update(blocks=['K_V1'])),
+    ('keep a kind that the regions cannot hold', 'main', lambda d: [k for k in d['kinds'] if k['n'] == 3][0].pop('rank')),
+    ('remove the required mark from the supply voltage kind', 'main', lambda d: [k for k in d['kinds'] if k['n'] == 1][0].pop('required')),
+    ('draw a block outside its region', 'main', lambda d: lvb(d, 'WT1_C').update(rect=[78.0, 22.9, 97.0, 31.5])),
+    ('make the valve relay\'s switching voltage 230 V', 'main', lambda d: d['valve_relay'].update(max_v=230.0)),
+    ('make the valve relay\'s switching voltage 240 V', 'main', lambda d: d['valve_relay'].update(max_v=240.0)),
+    ('give the valve relay\'s open contacts 200 V', 'main', lambda d: d['valve_relay'].update(open_contact_vac=200.0)),
+    ('count a smaller module as adequate', 'main', lambda d: d['rail']['modules'][1].update(at70=1.2)),
+    ('load the 5 V rail beyond the chosen module', 'main', lambda d: d['rail'].update(controller_ma=900.0)),
+    ('take a coil at its nominal resistance', 'main', lambda d: d['relay'].update(coil_tol=0.0)),
+    ('find a fuse that meets the breaking capacity', 'main', lambda d: d['fuse']['options'].append({'name': 'x', 'break_a': 6000.0})),
+    ('add a pin to a header, the record\'s counts unchanged', 'main', lambda d: pad_header(d, 'WT1_H')),
+    ('change the pitch of a header, the record\'s types unchanged', 'main', lambda d: lvb(d, 'KNOB')['conn'].update(pitch=2.54)),
+    ('add a joint to the module, the record\'s joints unchanged', 'main', lambda d: mb(d, 'MODULE')['pins'].append([40.0, 60.0])),
+    ('take a fuse holder out of the pump strip', 'main', lambda d: mb(d, 'P_C').update(fit=[['clip', 0], ['pump_triac', 0], ['pump_opto', 0]])),
+    ('widen the trace until the steam pump\'s lead has no route', 'main', lambda d: d['trace'].update(w=3.0), 'route'),
+    ('change the trace width tolerance', 'main', lambda d: d['trace'].update(tol=0.0), 'route'),
+    ('close the channel between a valve\'s tab and its relay with a slot', 'main', lambda d: d['slots'].append({'id': 'X', 'rect': [14.0, 70.0, 15.0, 100.0]}), 'route'),
+    ('bring a mains rectangle within 5 mm of the wall edge', 'wall', lambda d: d['wall']['blocks'][0]['mains'][0][1].__setitem__(1, 3.0)),
+    ('shorten the steam opto-triac\'s slot so its pins straddle the end', 'wall', lambda d: d['wall']['slots'][0]['rect'].__setitem__(2, 5.0)),
+    ('break the heater path chain', 'wall', lambda d: d['wall']['chains']['steam'].pop(2)),
+    ('narrow a heater copper region', 'wall', lambda d: d['wall']['copper'][1]['rect'].__setitem__(3, 8.0)),
+    ('widen the coffee triac toward the steam triac, 8.6 mm from it', 'wall', lambda d: [b for b in d['wall']['blocks'] if b['id'] == 'TRI_C'][0].update(body=[30.0, 5.0, 46.0, 10.5])),
+    ('move an opto-triac 9.5 mm from a triac', 'wall', lambda d: [b for b in d['wall']['blocks'] if b['id'] == 'OPTO_C'][0].update(body=[17.0, 20.0, 27.0, 31.0])),
+    ('bring an unpopulated confirm place 1.0 mm from the other\'s mains copper', 'wall', lambda d: [b for b in d['wall_dnp']['blocks'] if b['id'] == 'PRES_C'][0]['mains'][0][1].__setitem__(0, 27.0)),
+    ('bring an unpopulated confirm place within 5.0 mm of the wall edge', 'wall', lambda d: [b for b in d['wall_dnp']['blocks'] if b['id'] == 'PRES_S'][0]['mains'][0][1].__setitem__(1, 3.0)),
+    ('weaken the opto-triac distance rule to 10 mm', 'wall', lambda d: d['heat']['limits'].update(opto=10.0)),
+    ('relabel a copper region\'s net so it touches another', 'wall', lambda d: d['wall']['copper'][0].update(net='R')),
+    ('bring the two ends of a varistor 2 mm apart', 'wall', lambda d: [b for b in d['wall']['blocks'] if b['id'] == 'MOV_S'][0]['mains'][1].__setitem__(1, [6.5, 17.0, 10.0, 23.0])),
+    ('move the body of a part of the wall board within 5 mm of the wall edge, its copper left where it was', 'wall', lambda d: [b for b in d['wall']['blocks'] if b['id'] == 'MOV_S'][0]['body'].__setitem__(1, 3.0)),
+    ('move the mains pins of an opto-triac within 5 mm of the wall edge', 'wall', lambda d: [b for b in d['wall']['blocks'] if b['id'] == 'OPTO_S'][0]['dip'].update(centre=[6.0, 8.0])),
+    ('name the contact of another relay in the link', 'main', lambda d: d['link']['chain'][2].update(contact='K_V1')),
+    ('name no contact in the link', 'main', lambda d: d['link']['chain'][2].update(contact='')),
+    ('put the contact of the link between the wrong two regions', 'main', lambda d: d['link']['chain'].insert(1, d['link']['chain'].pop(2))),
+    ('delete the supply voltage kind, which is required, from the data', 'main', lambda d: d.update(kinds=[k for k in d['kinds'] if k['n'] != 1])),
+    ('delete every kind that the record marks required, and its mark', 'main', lambda d: d.update(kinds=[dict((a, b) for a, b in k.items() if a != 'required') for k in d['kinds']])),
+    ('take the safety-approval ratings out of the relay', 'main', lambda d: d['relay'].pop('vde')),
+    ('rate the relay at its highest ambient under the overload band', 'main', lambda d: d['relay']['vde'][1].__setitem__(1, 10.0)),
+    ('drop an owner decision from the data', 'main', lambda d: d['owner_decisions'].pop()),
+    ('retitle an owner decision in the data', 'main', lambda d: d['owner_decisions'][0].update(title='A different decision')),
+    ('give an owner decision a home that does not point to it', 'main', lambda d: d['owner_decisions'][0].update(home='Heat')),
+    ('change the pitch of the weight headers to 2.54 mm, the record unchanged', 'main', lambda d: lvb(d, 'WT1_H')['conn'].update(pitch=2.54)),
+)
+
+# What each perturbation of the data targets: a pattern that a message of the check it aims at matches. A perturbation is caught only when such a
+# message is produced. A message about a table of the record ('table in ...') never counts, since a producer can regenerate a table to match the
+# data, and nor does a message of some other check that the perturbation happens to break. A perturbation with no entry here fails the selftest.
+INTENDED = {
+    'move a tab 0.3 mm toward the fixing': r'mains copper [0-9.]+ mm from P1, the rule is',
+    'move a tab 3.1 mm and its as-found position with it': r'tab 6 as found is 76\.0 in the data and 79\.1 in its source',
+    'move the third tab 0.5 mm beyond what the rules need': r'tab 3 is moved .* more than a rule needs',
+    'move the second tab 0.5 mm beyond what the rules need': r'tab 2 is moved .* more than a rule needs',
+    'bring the pads of two tabs of different nets together, the pitch rule weakened': r'mains copper tab [0-9] and tab [0-9] are 0\.00 mm apart',
+    'widen a tab pad by a thicker blade in the data': r'the tab thickness is 7\.0 in the data and 0\.81 in its source',
+    'shrink the outline by 7 mm on the right': r'CON2 lies outside the outline',
+    'move the reed 2 mm': r"the reed's lower lead .* is more than 1\.0 mm from the recorded",
+    "shorten the slot between the link's two sides": r'surface path of [0-9.]+ mm between mains copper LK_L and LK_L1, the rule is 10\.0',
+    'shorten the slot between the live link and the neutral pad': r'between mains copper tab 3 and LK_L, the rule is 5\.0',
+    'shorten the slot between the two pump strips': r'between mains copper P_C and P_S, the rule is 5\.0',
+    "shorten the slot between the voltage measurement's two sides": r'opto-coupler VMEAS: pin-to-pin surface path',
+    'drop a function': r"functions differ from the forms record's",
+    'blank the owner of a function': r'the function Controller has the owner ""',
+    'give a function an owner the record does not declare': r'the function Controller has the owner "cloud"',
+    'bring a block into the reed keep-out': r'MCU lies inside the reed keep-out',
+    'move a hole under a tab': r'mounting hole P1 is \(9\.0, 9\.0\) in the data',
+    'make the module 30 mm high': r'MODULE stands 30\.0 mm high under a ceiling',
+    'move the module 7.5 mm down toward the interlock relay': r"the interlock relay is [0-9.]+ mm from the module, the owner's figure is",
+    'move the voltage measurement 8 mm down toward the interlock relay': r'VMEAS, rated to 85 C, is [0-9.]+ mm from the heat source K_IL',
+    'move a sensing block 10 mm from the interlock relay': r'BREW_A_C, a sensing block, is 10\.0 mm from the heat source K_IL',
+    'empty the list of sensing blocks': r'the low-voltage block .* has no heat class',
+    'report a part that holds as not held': r'the record reports K_V2 as not held against MODULE',
+    'stop reporting a part that does not hold': r'K_V1, rated to 85 C, is 0\.0 mm from the heat source MODULE.*does not report it as not held',
+    'accept the voltage measurement as not held from the interlock relay': r'VMEAS must hold 15 mm from K_IL',
+    "rate the voltage measurement's part to 125 C and leave it in the 85 C class": r'VMEAS is rated to 125 C',
+    'list a part rated to 85 C as outside the class': r'MCU is rated to 85 C, only 15 K over the air',
+    'weaken the interlock relay to under a watt': r'K_IL dissipates .* W at most, under the 1\.2 W that makes it a source in A8',
+    'drop a harness connector': r'has no connector in the data',
+    'weaken the lid keep-out to 1.0 mm': r'assumption token lid_keep',
+    'weaken the least slot width to 0.2 mm': r"the maker's slot_min is 0\.2 in the data",
+    'weaken the edge distance to 0': r"the maker's edge_min is 0\.0 in the data",
+    'widen the reed tolerance to 5 mm': r'assumption token reed_tol',
+    'weaken the signed creepage to 8.0 mm': r'the signed creepage is 8\.0 in the data and 10\.0 in its source',
+    "bring the relay's two contacts 1.5 mm apart": r'mains copper K_IL\.a and K_IL\.b are 1\.50 mm apart',
+    "put the relay's two contacts on one net": r'the contact terminal at Y 30\.83 is on K_IL\.a, which is not the net LINE',
+    'move a relay leg out of its copper': r'does not stand 1\.00 mm .* inside the copper',
+    'narrow a link region': r'the link region LK_L from the tab centre to X = 17 is 2\.45 mm wide',
+    'tap the logic supply from the LINE1 net': r'the tap from LK_L is not on the net LINE1',
+    'draw a block of a kind that is removed': r'kind 3 is removed but a block of it is drawn',
+    'take the circuit block of the kept second current channel away': r'kind 5 is given a place but not all its blocks are drawn',
+    'restore tab 4 as drawn and take it off the removed list': r'tab 4 is drawn, and the owner decided on 2026-10-24 to remove it',
+    'restore the pad of the removed tab 4': r'tab 4 is drawn in the data and is also listed as removed',
+    'lose track of the removed tab 5': r"the connector record's tab 5 is neither drawn nor listed as removed",
+    'rename a removed tab': r'removed tab 4 is named ELEMENT in the data and STMHEATER',
+    'move the current shunt off the return path: lift its second land off the pour': r"the shunt's second land does not touch the neutral pour",
+    'tap the neutral from the pad of tab 3, below the shunt': r'the neutral taps do not leave from the pour above the shunt',
+    'raise the least tab pitch to 9.0 mm, so the return landing stands short of it': r'the return landing stands 8\.50 mm from the nearest tab',
+    "join a pump's return at the pad of tab 3, on the plug side of the shunt": r'the return of the coffee pump joins at the pad of tab 3, on the plug side of the shunt',
+    "join the valves' return at the pad of tab 3, on the plug side of the shunt": r'the return of the valve coils joins at the pad of tab 3, on the plug side of the shunt',
+    "leave a pump's return out of the neutral return": r'the returns the data gives are of',
+    "end a pump's return on copper of another net": r'the return of the coffee pump does not end on copper of the net NEUTRAL',
+    "call the valves' return, which has a surface route, an inner-layer join": r'the return piece VFUSE\.n has a route of [0-9]+ mm on the surface',
+    'take the current shunt away': r'the neutral return has no current shunt',
+    'give the current shunt no part': r'the neutral return has no current shunt',
+    "narrow the shunt's first land to 4 mm": r'the neutral return copper I_SHUNT\.a is 4\.00 mm wide',
+    'stop the analogue region at Y 30.1, where the module once stood': r'the region AR_b ends at Y 30\.1 and the rules leave it free to Y 31\.0',
+    "draw the analogue region over the interlock relay's keep-out": r'the region AR_b stands 12\.0 mm from the heat source K_IL, the sensing rule',
+    'draw a block for the further switched output that the owner removed': r'kind 6 is recorded as not given a place but a block of it is drawn',
+    'keep a kind that the regions cannot hold': r'kind 3 is given a place but not all its blocks are drawn',
+    'remove the required mark from the supply voltage kind': r"the record's row of kind 1 says required and the data does not mark it so",
+    'draw a block outside its region': r'WT1_C lies outside its ana region',
+    "make the valve relay's switching voltage 230 V": r'the figure the owner accepted is 230\.0 in the data and 250\.0 in its source',
+    "make the valve relay's switching voltage 240 V": r'the figure the owner accepted is 240\.0 in the data and 250\.0 in its source',
+    "give the valve relay's open contacts 200 V": r"the valve relay's open contacts give 283 V peak",
+    'count a smaller module as adequate': r'the smaller module IRM-10-5 has [0-9.]+ times the budget at 70 C',
+    'load the 5 V rail beyond the chosen module': r'the chosen module IRM-20-5 has [0-9.]+ times the 5 V budget at 70 C',
+    'take a coil at its nominal resistance': r'K_IL dissipates 0\.98 W at most, under the 1\.0 W that makes it a source in A8',
+    'find a fuse that meets the breaking capacity': r'the fuse option x breaks 6000 A, which meets',
+    "add a pin to a header, the record's counts unchanged": r'counted figure not stated \(the header pins\)',
+    "change the pitch of a header, the record's types unchanged": r'counted figure not stated \(the header types\)',
+    "add a joint to the module, the record's joints unchanged": r'counted figure not stated \(the joints\)',
+    'take a fuse holder out of the pump strip': r'counted figure not stated \(the joints\)',
+    "widen the trace until the steam pump's lead has no route": r'no route exists for a trace of the net STEAMPUMP',
+    'change the trace width tolerance': r"the maker's track width tolerance is 0\.0 in the data",
+    "close the channel between a valve's tab and its relay with a slot": r'no route exists for a trace of the net COFVALVE',
+    'bring a mains rectangle within 5 mm of the wall edge': r'mains copper OUT_S is 3\.0 mm from the wall edge',
+    "shorten the steam opto-triac's slot so its pins straddle the end": r'opto-coupler OPTO_S: pin-to-pin surface path',
+    'break the heater path chain': r'steam path: RC does not touch the copper before it',
+    'narrow a heater copper region': r'S2 is 3\.0 mm wide, 15 A needs',
+    'widen the coffee triac toward the steam triac, 8.6 mm from it': r'the two triacs stand 8\.6 mm apart on one metal wall',
+    'move an opto-triac 9.5 mm from a triac': r'OPTO_C is 9\.5 mm from a triac, the rule is 20',
+    "bring an unpopulated confirm place 1.0 mm from the other's mains copper": r'the board with the unpopulated places: mains copper PRES_S\.m and PRES_C\.m are 1\.00 mm apart',
+    'bring an unpopulated confirm place within 5.0 mm of the wall edge': r'the board with the unpopulated places: mains copper PRES_S\.m is 3\.0 mm from the wall edge',
+    'weaken the opto-triac distance rule to 10 mm': r'assumption token heat_opto',
+    "relabel a copper region's net so it touches another": r'mains copper OUT_S and S1s are 0\.00 mm apart',
+    'bring the two ends of a varistor 2 mm apart': r'mains copper MOV_S\.a and MOV_S\.b are 2\.00 mm apart',
+    'move the body of a part of the wall board within 5 mm of the wall edge, its copper left where it was': r'the body of MOV_S is 3\.0 mm from the wall edge',
+    'move the mains pins of an opto-triac within 5 mm of the wall edge': r'a mains lead end of OPTO_S is',
+    'name the contact of another relay in the link': r"the link passes the contact of 'K_V1'",
+    'name no contact in the link': r"the link passes the contact of ''",
+    'put the contact of the link between the wrong two regions': r'the contact of K_IL does not stand between its two halves',
+    'delete the supply voltage kind, which is required, from the data': r"kind 1 is in the record's table of kinds, and its row says required, and is not in the data",
+    'delete every kind that the record marks required, and its mark': r'the data marks no kind required',
+    'take the safety-approval ratings out of the relay': r'the interlock relay has no safety-approval \(VDE\) rating',
+    'rate the relay at its highest ambient under the overload band': r'the interlock relay.s VDE rating at 125 C of ambient is 10 A, under the 15 A',
+    'drop an owner decision from the data': r'the record lists an owner decision D16 that the data does not',
+    'retitle an owner decision in the data': r'the owner decision D1 is titled',
+    'give an owner decision a home that does not point to it': r'the section "Heat" does not point to the owner decision D1',
+    'change the pitch of the weight headers to 2.54 mm, the record unchanged': r'counted figure not stated \(the header types\)',
+}
+
+# Each perturbation of the record's own text: (what, old, new, intended). Every occurrence of old is replaced (old may be a function of the
+# text). The data and the record then disagree, or a statement the script requires is gone, and the check that names it must fire.
+TEXT_PERTURBATIONS = (
+    ('take the confirm polarity statement out of the record', 'on when the triac is open and the element intact', 'something else', r'required statement missing \(the confirm polarity\)'),
+    ("take the owner's removal of tabs 4 and 5 out of the owner-intent table", "The main board's tabs 4 and 5, the element lead landings", "The main board's two heater tabs, the element lead landings", r'the owner-intent table of the record has no row that starts'),
+    ("change the date of the owner's removal of tabs 4 and 5", '| 2026-10-24 | Tabs 4 and 5 are gone', '| 2026-10-25 | Tabs 4 and 5 are gone', r'the owner-intent row of the removed tabs is dated 2026-10-25'),
+    ("take the series diode out of the pump drives' margins", 'series diode', 'plain wire', r"required statement missing \(the pump drives' series diode\)"),
+    ("take the no-storage sentence out of the coil's feed requirement", "No level, timer, charge store or latch keeps the coil above the relay's drop-out voltage for longer than the removal interval after proof of life stops.", 'Nothing more is said.', r"required statement missing \(the coil's feed requirement\)"),
+    ("take the bring-up sentence out of the coil's feed requirement", 'Bring-up stops the controller in each rest state and records the coil voltage falling below 0.5 V within the interval.', 'Bring-up checks it.', r"required statement missing \(the coil's feed requirement\)"),
+    ("delete the whole paragraph of the coil's feed requirement", lambda t: re.sub(r"\*\*The coil's feed\*\*.*?\n\n", '', t, count=1, flags=re.S), None, r"required statement missing \(the coil's feed requirement\)"),
+    ("take the interlock relay's 5 V ordering code out of the record", 'HF115F-Q/005-1H', 'HF115F-Q', r"required statement missing \(the interlock relay's 5 V ordering code\)"),
+    ("take the statement that the 5 V variant's catalogue number is not recorded out", 'catalogue number and price are not recorded: the design task must match a stocked part', 'catalogue number and price are recorded', r"required statement missing \(the 5 V variant's catalogue number and price\)"),
+    ("take the statement that the interlock relay has no sourced thermal margin out", 'no sourced thermal margin at the coil drive it is held at', 'a thermal margin', r"required statement missing \(the interlock relay's thermal margin\)"),
+    ('take the premise that the interlock cuts every load out of the record', 'it is not proven until the bring-up continuity check', 'it is proven', r'required statement missing \(the premise that the interlock cuts every load\)'),
+    ('take the bring-up continuity check out of the open items', 'there is no continuity', 'there is some continuity', r'required statement missing \(the bring-up continuity check\)'),
+    ("take the wall board's orientation out of the record", 'with its back face toward the wall', 'at some angle to the wall', r"required statement missing \(the wall board's orientation to the wall\)"),
+    ('leave a decision pending without its pointer to the list', "the choice is an owner decision pending (§ Owner decisions pending, D8; § Reported for the board design tasks, item 6).", "the choice is an owner decision pending (§ Reported for the board design tasks, item 6).", r'the record mentions an owner decision pending without pointing to the list'),
+    ('add a decision pending that the list does not hold', 'The point 3 boss\'s top is read on the machine; no tenth tab is drawn.', 'The point 3 boss\'s top is an owner decision pending.', r'the record mentions an owner decision pending without pointing to the list'),
+    ('state a decision in the list twice', '**D2. Whether the two', '**D3. Whether the two', r'the owner decision D3 is stated 2 times'),
+)
+
+def decision_perturbations(D):
+    out = []
+    for d in D['owner_decisions']:
+        i_ = d['id']
+        out.append(('call decision %s made and not pending' % i_, lambda t, i_=i_: re.sub(r'(?m)^(\*\*%s\. .*?\.\*\* )Owner decision pending' % i_, r'\1Decision made', t), None, r'the owner decision %s does not state "Owner decision pending"' % i_))
+        out.append(('take the pointer to decision %s out of the record' % i_, lambda t, i_=i_: re.sub(r'Owner decisions pending, %s(?![0-9])' % i_, 'elsewhere, %s' % i_, t), None, r'does not point to the owner decision %s(?![0-9])' % i_))
+    return tuple(out)
+
+# Each perturbation of a source record's text: (what, source, old, new, intended). The record's data must then fail against it.
+SOURCE_PERTURBATIONS = (
+    ("change one tab's Y in the connector record", 'pinouts', '| 79.1 mm |', '| 76.0 mm |', r'tab 6 as found is 79\.1 in the data and 76\.0 in its source'),
+    ('change the tab thickness in the connector record', 'pinouts', '**0.81 mm thick**', '**1.81 mm thick**', r'the tab thickness is 0\.81 in the data and 1\.81 in its source'),
+    ('delete a mounting-point row of the machine record', 'machine', '| 3 | 6.5 mm | 123.5 mm |', '| 3 | 6.5 mm | gone |', r"the machine record's four mounting points did not parse"),
+    ('change the signed creepage in the basis to 8.0', 'basis', 'creepage_mm: 10.0\ntable_rows', 'creepage_mm: 8.0\ntable_rows', r'the basis creepage row is not the basic figure doubled'),
+    ('remove the reed sentence from the machine record', 'machine', 'with its lower lead at X = 122 mm', 'with its lower lead somewhere', r"the reed's lead positions not found"),
+    ('move the cavity width in the machine record', 'machine', '| Inside length along X, wall to wall | 133.5 mm', '| Inside length along X, wall to wall | 130.0 mm', r'the cavity width is 133\.5 in the data and 130\.0 in its source'),
+    ("change the maker's edge distance", 'maker', 'More than 0.3 mm', 'More than 0.1 mm', r"the maker's edge_min is 0\.3 in the data and 0\.1 in its source"),
+    ("change the maker's recommended annular ring", 'maker', '| PTH annular ring | 0.20 mm recommended, 0.15 mm absolute minimum | Multilayer', '| PTH annular ring | 0.40 mm recommended, 0.15 mm absolute minimum | Multilayer', r"the tab pad's annulus is 0\.32 mm, under the maker's recommended 0\.4 mm"),
+    ("change the maker's track width tolerance", 'maker', '| Track width tolerance | ±20 %', '| Track width tolerance | ±30 %', r"the maker's track width tolerance is 0\.2 in the data and 0\.3 in its source"),
+    ("change the steam triac's dissipation in the forms record", 'forms', '4.114 + 0.724 = **4.84 W**', '4.114 + 0.724 = **5.84 W**', r"the steam triac's dissipation is 4\.84 in the data and 5\.84 in its source"),
+    ("change the triac's junction-to-case resistance in the forms record", 'forms', 'Rth(j-c) 2.1 °C/W (AC)', 'Rth(j-c) 3.1 °C/W (AC)', r"the triac's junction-to-case resistance is 2\.1 in the data and 3\.1 in its source"),
+    ('change a load current in the constraints record', 'constraints', '| Coffee thermoblock element | 4.80 A', '| Coffee thermoblock element | 4.00 A', r'the load current coffee is 4\.8 in the data and 4\.0 in its source'),
+    ('say in the connector record that LINE1 feeds something else', 'pinouts', 'nothing else on the board connects to `LINE1`', 'a second device connects to `LINE1`', r'the connector record no longer says LINE1 as a pass-through'),
+    ("change the valve relay's price in the constraints record", 'constraints', '1.6115 USD (1–9)', '2.6115 USD (1–9)', r"the valve relay's unit price is 1\.6115 in the data and 2\.6115 in its source"),
+    ("change the 12 V variant's price that stands for the interlock relay in the forms record", 'forms', '| 3.2119 (1–9) |', '| 4.2119 (1–9) |', r"the unit price of the 12 V variant that stands for the 5 V interlock relay"),
+    ("withdraw the owner's acceptance of a 250 V relay", 'constraints', 'is accepted at the 253 V top of the span', 'is not accepted at the 253 V top of the span', r"the owner's dated acceptance of a relay rated at its maximum switching voltage"),
+    ('change the accepted maximum switching voltage to 240 V', 'constraints', 'a relay whose contacts are rated 250 V AC as their maximum', 'a relay whose contacts are rated 240 V AC as their maximum', r'the figure the owner accepted is 250\.0 in the data and 240\.0 in its source'),
+    ("take the label from the owner's acceptance", 'constraints', '**Owner acceptance, 2026-10-24:**', '**Acceptance, 2026-10-24:**', r"the owner's dated acceptance of a relay rated at its maximum switching voltage"),
+    ('take the owner out of the acceptance', 'constraints', "on the owner's statement that the machine's own retained parts", "on a statement that the machine's own retained parts", r"the owner's dated acceptance of a relay rated at its maximum switching voltage"),
+    ('change the breaking capacity the chain needs', 'constraints', 'At least the prospective fault current, 6 kA', 'At least the prospective fault current, 10 kA', r'the breaking capacity a fuse must have is 6000\.0 in the data and 10000\.0 in its source'),
+)
+
+def selftest(text, D, record_dir):
+    """Each perturbation of the data, of the record's own text, of a source record and of an assumption token must be caught by the check it
+    targets: a message of that check, found by the pattern the perturbation names. A message about a table of the record does not count, and nor
+    does a message of another check that the perturbation happens to break."""
+    caught, total = 0, 0
+    src0, _ = parse_sources(source_texts(record_dir))
+
+    def verdict(name, bad, want):
+        nonlocal caught, total
+        total += 1
+        hits = [b for b in bad if not b.startswith('table in') and re.search(want, b)]
+        caught += 1 if hits else 0
+        print('%-62s %s' % (name[:62], ('fires: ' + hits[0][:90]) if hits else 'DID NOT FIRE its check /%s/%s' % (want, (' (other: ' + bad[0][:60] + ')') if bad else ' (no message at all)')))
+
+    for name, which, change, *flags in GUARDS:
+        want = INTENDED.get(name)
+        if want is None:
+            total += 1
+            print('%-62s DID NOT FIRE: no intended check is named for it' % name[:62])
+            continue
+        d = copy.deepcopy(D)
+        change(d)
+        try:
+            bad = check_main(d, text, [], record_dir, src0, route='route' in flags, need='need' in flags, proof='proof' in flags) if which == 'main' else check_wall(d, text, [], record_dir, src0)
+        except Exception as e:  # a perturbation that breaks the model outright is caught by no named check
+            bad = ['the model failed on it: %s' % type(e).__name__]
+        verdict(name, bad, want)
+    for name, old, new, want in TEXT_PERTURBATIONS + decision_perturbations(D):
+        t2 = old(text) if callable(old) else text.replace(old, new)
+        if t2 == text:
+            total += 1
+            print('%-62s DID NOT FIRE: the text to perturb is not in the record' % name[:62])
+            continue
+        verdict(name, check_main(D, t2, [], record_dir, src0, route=False) + check_wall(D, t2, [], record_dir, src0), want)
+    texts = source_texts(record_dir)
+    for name, key, old, new, want in SOURCE_PERTURBATIONS:
+        t = dict(texts)
+        if old not in t[key]:
+            total += 1
+            print('%-62s DID NOT FIRE: the text to perturb is not in the source' % name[:62])
+            continue
+        t[key] = t[key].replace(old, new)
+        src, sbad = parse_sources(t)
+        verdict(name, sbad + check_sources(D, src), want)
+    sec = section(text, 'Assumptions') or ''
+    for name, token in sorted(TOKENS.items()):
+        m = re.search(r'`%s=(-?[0-9.]+)`' % name, sec)
+        if not m:
+            continue
+        for what, new in (('change the data', None), ('change the record\'s token', float(m.group(1)) + 1.0)):
+            if new is None:
+                d = copy.deepcopy(D)
+                set_in(d, TOKEN_PATHS[name], TOKENS[name](D) + 1.0)
+                bad = check_tokens(text, d)
+            else:
+                bad = check_tokens(text.replace('`%s=%s`' % (name, m.group(1)), '`%s=%g`' % (name, new), 1), D)
+            verdict('token %s: %s' % (name, what), bad, r'assumption token %s ' % name)
+    print('token perturbations: each of the %d assumption tokens changed in the data and in the record\'s row' % len(TOKENS))
+    print('selftest: %d of %d perturbations caught by the check they target' % (caught, total))
+    return caught == total
+
+def main():
+    cmd = sys.argv[2].lstrip('-') if len(sys.argv) > 2 else ''
+    if cmd not in ('main', 'wall', 'tables', 'selftest'):
+        raise SystemExit(__doc__)
+    path = sys.argv[1]
+    text, D = load(path)
+    record_dir = os.path.dirname(os.path.abspath(path))
+    if cmd == 'selftest':
+        sys.exit(0 if selftest(text, D, record_dir) else 1)
+    if cmd == 'tables':
+        differ = run('main', text, D, record_dir)[1] + run('wall', text, D, record_dir)[1]
+        cells = [w for p in PROSES for w in p.want]
+        for heading, key, col, value in cells:
+            print(('%s | %s | column %d | %s' % (heading, key, col + 1, value)) if key is not None else ('%s | text | %s' % (heading, value)))
+        differ = [b for b in differ if b.startswith('table in')]
+        print('%d generated cells compared with the record; %d differ%s' % (len(cells), len(differ), (': ' + '; '.join(differ)) if differ else ''))
+        sys.exit(1 if differ else 0)
+    out, bad = run(cmd, text, D, record_dir)
+    bad += expected(text, 'expected-' + cmd, out)
+    print('\n'.join(out))
+    print('FAIL: ' + '; '.join(bad) if bad else 'all %s checks pass' % ('main board' if cmd == 'main' else 'wall board'))
+    sys.exit(1 if bad else 0)
+
+if __name__ == '__main__':
+    main()
+```
+
+### Expected output
+
+The main board:
+
+```expected-main
+sources: separation basis 3.0 / 5.0 / 10.0 mm (clearance, basic and signed creepage), 9 tabs, 4 mounting points, the cavity, the reed, intrusion 1, the maker's limits and 7 load currents read from their records and equal to the data
+assumption tokens: 31 of the Assumptions table equal to the data
+outline 131.0 x 125.0 mm = 16375 mm2; margins left 1.0 right 1.5 bottom 2.0 top 3.5 mm, least with tolerances 0.8 mm
+58 blocks inside the outline, the nearest 0.3 mm from its edge, none overlapping: mains-side 5026 + low-voltage 5244 + reed keep-out 300 = 10569 mm2, 65 % of the outline
+heights: 29 parts, least margin 3.9 mm
+tabs: 7 pads and the return landing inside the outline, least pitch 8.8 mm, moves +6.9 +7.0 +7.5 mm, slack left 3.1 3.0 2.5 mm, strip X 5.0 to 17.0 Y 19.8 to 112.1
+mains copper to the mounting holes, rule 13.25 mm: P1 13.27, P2 71.40, P4 72.12
+point 3 boss: nearest lead end or joint 11.4 mm (tab 9), nearest heavy part 50.2 mm (MODULE)
+reed: lower lead (122.0, 17.5), upper lead (122.0, 37.5), midpoint (122.0, 27.5), keep-out X 117.0 to 127.0 Y 12.5 to 42.5, clear of every block
+low voltage to mains copper: least 10.3 mm of 10.0; pockets to mains copper: least straight 4.2 mm of 3.0, 4 pairs under 10.0 mm straight all held by slots, least surface path 12.9 mm of 10.0
+opto-coupler pin-to-pin paths round the slots: TIMING 15.8 mm, VMEAS 12.9 mm, P_C 58.3 mm, P_S 58.3 mm
+slots: 8 of 202 mm of slot path = 12.3 m per m2 of board, against 80
+mains copper of different nets, from different parts: least straight 3.0 mm of 3.0, 14 pairs under the basic creepage of 5.0 mm by straight line, all held by distance or slots, least surface path 7.3 mm of 5.0 (9 of them across the open interlock contact, where the rule is the signed 10.0 mm: least straight 3.0 mm)
+interlock relay terminals (P2): contact tabs 7.56 mm apart across the body, each on two 1.6 mm holes 5 mm apart along it (X 18 and 23), at Y 23.27 on LINE1 and 30.83 on LINE; coil holes at X 55.5; every leg stands 1.00 mm inside its copper
+link LINE to LINE1 through K_IL: 4 copper regions, 5.03 squares = 2.47 mohm, narrowest 5.75 mm (15 A needs 5.71); loss 0.26 W at 10.18 A, 0.30 W at 10.96 A (all loads steady), 0.56 W at 15 A, against a budget of 0.5 W
+dropped option, the relay in the top relay place (K_V2): two runs of 92 mm of 7.0 mm pour, 26.4 squares = 12.9 mohm, 1.55 W at 10.96 A against the budget of 0.5 W
+taps upstream of the contact: LINE to MODULE, LINE to TIMING, LINE to VMEAS, NEUTRAL to MODULE, NEUTRAL to TIMING, NEUTRAL to VMEAS; the LINE1 net reaches only K_IL and LK_L1 and tab 1
+relay K_IL behind it: 10.96 A steady and 11.03 A with the valve coils at their inrush (10.18 A of elements, 0.65 A of pumps), against 20 A: margins 1.82 and 1.81, 1.33 at the 15 A overload band; electrical endurance 30000 operations at 20 A resistive (P2)
+relay K_IL heat: coil 0.4 W (0.448 W with the coil 10 % under 62 ohm); contacts 0.5 W at 10.18 A (4.8 mohm, 49 mV; 0.58 W at 10.96 A), so 0.98 W and 1.03 W at the coil's low tolerance; unsourced worst case at 100 mohm: 10.4 W at 10.18 A
+neutral return: the landing's pad at Y 46.6 stands 8.5 mm from the nearest tab; the shunt (1.0 mohm, 2 parts side by side, X 5.0 to 12.0, Y 38.8 to 45.8) stands between the pad of tab 3 and the pour, which is 7.0 mm wide against the 5.71 mm that 15 A needs; the neutral carries 11.01 A with every load on (the link's 10.96 A and the module's 0.05 A at the assumed power factor 0.5): shunt loss 0.12 W, 0.23 W at 15 A
+relay K_IL safety-approval ratings (P2): 18 A at 105 C, 16 A at 125 C of ambient; margins 1.64 and 1.46 on the 10.96 A the contact carries and 1.20 and 1.07 on the 15 A of the overload band; the body stands at or above the 125 C ambient limit with the coil alone, so the lowest rating is the one to lean on
+copper temperature rise, an estimate (IPC-2221 outer layer, planes pulled back): the narrowest link region 5.75 mm (312 mil2) 17.8 K at 10.96 A and 36.4 K at 15 A; the 7.0 mm regions 12.9 K and 26.3 K
+owner decisions pending: 16, each stated once in the record's list with its words, pointed to from the section it concerns, and no other mention of a decision pending without the pointer
+traces between the separate pieces of one net, shortest route that keeps the basic creepage from other nets (the signed creepage from LINE1) and 10.0 mm from low-voltage blocks, round the slots: COFFPUMP 9 mm, COFVALVE 35 mm, HOTVALVE 37 mm, LINE and NEUTRAL 49 mm, STEAMPUMP 10 mm
+returns joined by an inner layer, because no surface route exists for a trace to them beside the tab pads and the strips: P_C.N, P_S.N
+nearest lead end to the side of intrusion 1 (its position read to 0.5 mm): 16.5 mm
+harness reach (farthest corner / nearest point of the opening, limit): CON2 28.9 / 2.0 of 35, SP2 17.5 / 2.0 of 35, KNOB 23.0 / 9.5 of 35, FLOW 20.4 / 9.5 of 35, TEMP_C 24.1 / 9.5 of 35, TEMP_S 32.1 / 10.1 of 60, TEMP_W 30.2 / 12.5 of 60 mm
+heat sources, A8 (1 W or more): the module 1.25 W at this board's load; the interlock relay 0.98 W, or 1.03 W with its coil 10 % under nominal, held to A8 by the owner's instruction of 2026-10-24 as well
+heat from the module / from the interlock relay: controller 15.0 / 63.8 mm of 15; sensing blocks 23.3 / 20.0 mm or more of 20; digital stages 0.0, 10.4, 9.1 mm from the module; the interlock relay from the module 20.0 mm of 15 (held)
+mains-side parts rated to 85 C (15 K or less over the 70 C air), from the module / from the interlock relay (rule 15): K_V1 0.0 / 47.2 mm (not held), K_V2 35.9 / 83.1 mm (held), P_C 12.5 / 59.7 mm (not held), P_S 24.5 / 71.7 mm (held), VMEAS 0.0 / 15.0 mm (not held)
+outside the class, by their sheets: TIMING 100 C, 30 K over the air, 43.9 mm from the module and 11.2 mm from the interlock relay
+why they cannot all hold: a barrier part's pocket stands at the zone boundary, since a trace kept 10 mm from mains copper by distance alone needs 20.3 mm (2 x 10 mm and the trace) to pass and the widest gap between mains copper along the stack is 11.2 mm, and a slotted channel across the stack would divide the taps from one another; the boundary stays 15 mm or more from both sources only over Y 2.3 to 5.7, Y 95.6 to 126.7, 31.1 mm; the 5 parts need 55.2 mm there with 3 mm between them, so at most 3 of them fit there
+what-if, with the module at its lowest, the voltage measurement above it and K_V1 between the sources: K_V2, P_C, P_S hold; it breaks 2 rules of this record: WT1_C, a sensing block, is 18.3 mm from the heat source MODULE, the rule is 20; the region AR_b stands 17.4 mm from the heat source MODULE, the sensing rule is 20
+what-if, with the module where it stood, K_V1 and the shared fuse in the gap between the sources and the voltage measurement above the module: K_V2, P_C, P_S hold; it breaks 2 rules of this record: no route exists for a trace of the net LINE|NEUTRAL between its copper, round the slots, the other nets and the low-voltage blocks (LINE|NEUTRAL: from; the region AR_b stands 19.1 mm from the heat source MODULE, the sensing rule is 20
+what-if, with the module lowered 3.3 mm to the lowest the sensing blocks allow and the voltage measurement 11.7 mm from the interlock relay, in the gap the module left: K_V2, P_C, P_S hold; it breaks 1 rule of this record: the region AR_b stands 19.1 mm from the heat source MODULE, the sensing rule is 20
+the most the 85 C parts can hold along the barrier column, counted over every position of the module, every split above or below it and every order with the tab-fed parts in tab order: 3 (K_V2/P_S/P_C); the drawn stack holds 2 (K_V2, P_S); every arrangement that holds 3 stands K_V1 between the two sources
+capacity with the spacing the drawing keeps counted (0.3 mm in the header regions, 0.4 mm in the analogue region): header regions 1489.1, analogue region 1189.7
+removal step 0: header regions 1650.9 (over 161.8), analogue region 1261.6 (over 71.8); arrangement of the headers: not searched, the area is over
+removal step 1 (kind 3 removed): header regions 1436.4 (over 0.0), analogue region 1174.2 (over 0.0); arrangement of the headers: none exists
+removal step 2 (kind 4 removed): header regions 1274.2 (over 0.0), analogue region 1066.7 (over 0.0); arrangement of the headers: found
+kind 3 alone, with the drawn kinds and no other kind given a place: header regions need 214.5 of 214.9 spare, analogue region 87.4 of 123.1 spare; arrangement of the headers: none exists
+kind 4 alone, with the drawn kinds and no other kind given a place: header regions need 162.2 of 214.9 spare, analogue region 107.5 of 123.1 spare; arrangement of the headers: none exists
+removing kinds 3 and 4: header regions 1274.2 of 1489.1 and an arrangement of the headers exists; analogue region 1066.7 of 1189.7; it fits
+removing kinds 3 and 5: header regions 1355.3 of 1489.1 and an arrangement of the headers exists; analogue region 1120.4 of 1189.7; it fits
+removing kinds 4 and 5: header regions 1407.6 of 1489.1 and an arrangement of the headers exists; analogue region 1100.3 of 1189.7; it fits
+removing only kind 3: header regions 1436.4 of 1489.1 and an arrangement of the headers does not exist; analogue region 1174.2 of 1189.7; it does not fit
+removing only kind 4: header regions 1488.7 of 1489.1 and an arrangement of the headers does not exist; analogue region 1154.0 of 1189.7; it does not fit
+removing only kind 5: header regions 1569.8 of 1489.1 and an arrangement of the headers does not exist; analogue region 1207.8 of 1189.7; it does not fit
+the region AR_b ends at Y 31.0, where the nearest block of another class stands and the module's body less 20 mm is Y 33.4
+least spacing between the blocks drawn in a region: header regions 0.3 mm, analogue region 0.4 mm, against the spacing the capacity counts (0.3 mm and 0.4 mm)
+allocation fits at step 2, after the removal of kinds 3, 4; the mains-side stack runs from Y 2.5 to 126.6
+what-if, the interlock relay moved 3.0 mm to the right to make room for a sensor 8 mm long between the pad of tab 2 and its contact copper: PT1_C 17.3 mm, BREW_A_C 17.0 mm, WT1_C 17.0 mm from the relay against A8's 20 mm; the analogue region's capacity falls from 1189.7 to 1104.5 mm2, 85.2 mm2 less
+what-if, the interlock relay moved 2.0 mm to the right to make room for a sensor 8 mm long between the pad of tab 2 and its contact copper: PT1_C 18.2 mm, BREW_A_C 18.0 mm, WT1_C 18.0 mm from the relay against A8's 20 mm; the analogue region's capacity falls from 1189.7 to 1132.9 mm2, 56.8 mm2 less
+what-if, the third arrangement with the region AR_b cut back to Y 30.1, where the module's body less 20 mm stands: the analogue region's capacity falls from 1189.7 to 1154.3 mm2 against the 1066.7 the drawn blocks need, 87.6 mm2 spare, and the blocks of the kept kinds all stand inside it
+valve relays HF32FA-G/005-HSL1: 10.0 A contacts against 0.129 A steady and 0.203 A at inrush (margins 78 and 49); 250 V maximum switching voltage against 253 V at the top of the span (1.2 % over, the owner's acceptance); open contacts 1000 V AC = 1414 V peak against 358 V blocked (margin 3.95); coil to contacts 5000 V AC = 7.07 kV against the 4.0 kV target; coil 108 ohm, 46.3 mA and 231 mW at 5 V; 1.6115 USD against 3.2119 USD for the interlock relay type, 3.20 USD less for two
+pump drives: the current falls at its zero at 0.20 and 0.08 A/ms (coffee, steam) for a full sine, 29 and 71 times under the triac's 6 A/ms; for the half wave of a series diode, whose peak is twice the rms, 0.29 and 0.12 A/ms, 21 and 50 times
+5 V rail: K_IL coil 89.6, Valve relay coils 102.9, Controller 439.0, Gauge drivers 72.0, Weight amplifiers 3.0, Load-cell excitation 28.6, Opto-triac LED drives 60.0, Panel indicators and buzzer 60.0, Flow meter 15.0, Pressure transducers 20.0, In-stream probe converters 4.0, Current sensors 30.0, Voltage measurement output 5.0, Headers, pull-ups and dividers 10.0 = 939.1 mA with the controller at its maximum (726.1 mA at its typical 226 mA); IRM-20-5 2.0 A at 70 C (2.13 times) and 3.6 A at 50 C (3.83 times); IRM-10-5 1.0 A at 70 C (1.06 times) and 2.0 A at 50 C (2.13 times); the chosen IRM-20-5 delivers 4.70 W at this load and dissipates 1.25 W at 79 % efficiency (2.66 W at the 70 C current)
+module efficiency at this load: 23 % of its rated 20 W; the sheet gives 79 % at rated load only, so the 1.25 W above is flat-efficiency; a loss that falls in proportion to the load from 5.32 W at rated load to the sheet's 0.1 W at no load gives 1.32 W, 0.08 W more
+relay K_IL body, at the sheet's 55 K for the coil's 0.4 W (137.5 K for each watt): 0.98 W would put it at 70 + 135 = 205 C against the 125 C of its ambient range, an upper bound with no allowance for heat leaving by the pins, and not a margin
+valve relay own rise: about 61 K at the rated coil voltage (the sheet's plotted line, read off the plot; it does not say for which coil), so 146 C at its 85 C ambient limit against 155 C for insulation class F; 231 mW of coil heat only while a valve is open
+fuses: 3 holders of 24 x 9 mm = 216 mm2 each; one shared fuse for both pumps and both valves would carry 0.779 A steady and 0.853 A at the coils' inrush and save 432 mm2; sourced breaking capacities 5 x 20 glass time-lag 35 A, 5.2 x 20 ceramic time-lag 1500 A against the 6000 A required
+functions: 17 of the forms record's 17, each with one owner named in the owner table and no other (1 split across boards, each with its reason); connector record: 6 harness headings, each with a connector
+division A: fabrication 35.19 (one board 35.19), assembly charges 9.71, labour 3.58, duplicate Extended fees 0.00, link parts 0.00 and joints 0.00, total 48.48 USD
+division B: fabrication 37.76 (mains board 8.43, low-voltage board 29.34), assembly charges 19.42, labour 7.16, duplicate Extended fees 3.07, link parts 0.68 and joints 0.66, total 68.75 USD
+division C: fabrication 20.43 (mains board 8.43, controller board 8.00 band, front-end board 4.00 band), assembly charges 29.13, labour 10.74, duplicate Extended fees 6.14, link parts 1.37 and joints 1.31, total 69.12 USD
+header types by ways and pitch, from the blocks: 4-way 1.95 mm x 1, 5-way 2 mm x 2, 9-way 2 mm x 2, 2-way 2.54 mm x 3, 3-way 2.54 mm x 3, 4-way 2.54 mm x 7, 10-way 2.54 mm x 1; 85 header pins
+Extended fees of the main board: 18 types x 3.07 = 55.26 USD, of which 7 assumed header types = 21.49; hand-fitting the 13 through-hole types and their 131 joints saves 45.64 USD
+Economic 64.97 USD against Standard 77.73 USD at 18 unique Extended types and no Basic type; Standard adds 1.53 for each Basic, Preferred or Extended type, so the two cross at 26.3 Extended types with none
+wall board hand-fitted: 4 Extended types and 39 joints save 26.21 USD (its own order: 9.71 setup and stencil, 3.58 labour)
+```
+
+The heater wall board:
+
+```expected-wall
+wall board 57 x 42.5 mm = 2422.5 mm2
+every block and mains rectangle lies 1.0 mm or more inside the board edge (least allowed 0.3)
+mains copper to the wall edge: least 5.0 mm of 5.0; part bodies least 5.0 mm and mains lead ends of the opto-triacs least 32.2 mm; with the 5.0 mm stand-off, 10.0 mm to the metal in an edge-on board only, which is not claimed
+mains copper of different nets, from different parts: least straight 5.0 mm of 3.0, 0 pairs under the basic creepage of 5.0 mm by straight line
+pockets: least straight 15.0 mm of 3.0, 0 pairs under 10.0 mm straight all held by slots, least surface path 12.1 mm of 10.0; the header is 10.0 mm from mains copper
+opto-coupler pin-to-pin paths round the slots: OPTO_S 12.1 mm, OPTO_C 12.1 mm
+slots: 2 of 26 mm of slot path = 10.7 m per m2 of board, against 80
+copper of the heater path: S1s 5.7 x 7.0 mm 0.81 squares 0.40 mohm, S2 6.3 x 7.0 mm 0.90 squares 0.44 mohm, S3 6.3 x 7.0 mm 0.90 squares 0.44 mohm, S1c 5.7 x 7.0 mm 0.81 squares 0.40 mohm, RC 7.0 x 7.0 mm 1.00 squares 0.49 mohm, RET 7.0 x 7.0 mm 1.00 squares 0.49 mohm
+copper dissipation: steam path 24 mW at 5.38 A and 189 mW at 15 A, coffee path 19 mW at 4.80 A and 189 mW at 15 A, common return 102 mW at 10.18 A and 221 mW at 15 A
+longest run RC 7.0 mm = 12 % of the 57 mm width; copper run totals steam 26.0 mm, coffee 26.0 mm
+heat: triacs 14.2 mm apart (the assumed least 10); opto-coupler parts 20.0 mm or more from them, rule 20
+triac heat: the two tab faces share one metal wall: 4.25 W and 4.84 W, 9.09 W together; junction over case 8.9 K and 10.2 K at 2.1 K/W; the case may stand at 116.1 and 114.8 C of the 125 C limit, so at 70 C air the wall and the tab interface may rise 44.8 K over the air for the 4.84 W triac: 9.3 K/W from the tab face to the air if it heats the wall alone, 4.9 K/W if both do
+hand-soldered joints of the board: 39 (gate_resistor 8, header 3, opto_triac 12, terminal 6, triac 6, varistor 4)
+wall board fabrication: own board 4.00 USD in the band; as a section 1.51 USD (inferred), 2.49 less, or -0.49 more than the maker's application price of 2.00 USD
+the board with the 2 unpopulated confirm places: 57 x 52.5 mm = 2992.5 mm2, +23.5 % against the drawn board; 42 joints fitted, and 12 more if the places are fitted; every check passes
+```
