@@ -2,11 +2,11 @@ id: SOL-HW-BOARD-DIVISION-AND-FLOORPLAN.C3
 type: criterion
 title: Every retained harness reaches its connector without modification, with mains and low-voltage kept apart
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |-
-  Every retained harness the connector record lists lands on a board connector placed where that harness enters the cavity and reaches it as found. The connector is identified by its board, its position and its first pin. A harness that must change is named with what about the retrofit forces that change to that specific harness. Mains and low-voltage runs, terminations and the paths between them are kept apart across the whole floorplan. Out of scope: harnesses for devices the retrofit adds, which bring their own connections.
+  Every retained harness the connector record lists lands on a board connector placed where that harness enters the cavity and reaches it as found. The connector is identified by its board, its position and its first pin, and mates the plug family, pitch and pin-1 orientation of the existing harness so it replugs without a new crimp. The heater element leads keep their female terminals and plug onto in-line blade joiners, not board tabs, so the retained leads are not modified; the passage from the joiners through the enclosure wall to the heater wall board is recorded with the owner's acceptance of the wall cut, which is kept as small as the passage needs; how the wall board is supported is not decided in this record. A harness that must change is named with what about the retrofit forces that change to that specific harness. A low-voltage harness reaches as found when its connector lies within that harness's recorded reach of the cut-away where the bundle enters, and where no per-harness reach is recorded within the bundle's recorded minimum reach. A mains harness reaches as found when the board keeps each terminal tab at its recorded position and height; a tab that moves is a harness change, named and justified like any other. Mains and low-voltage runs, terminations and the paths between them are kept apart across the whole floorplan. Out of scope: harnesses for devices the retrofit adds, which bring their own connections.
 links:
   - target: SOL-HW-BOARD-DIVISION-AND-FLOORPLAN
     type: criterion-of

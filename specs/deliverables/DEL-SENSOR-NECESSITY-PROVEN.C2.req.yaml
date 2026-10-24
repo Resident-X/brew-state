@@ -1,13 +1,13 @@
 id: DEL-SENSOR-NECESSITY-PROVEN.C2
 type: criterion
-title: The supply voltage's necessity is established by the same computation
+title: The supply voltage's, frequency's and total heater current's necessity are established by the same computation
 status: active
-version: 1
+version: 2
 measurement_type: threshold
 verification: analysis
 closes_by: cascade
-text: |
-  The result states how much of the uncertainty in heat and water delivered the voltage reading removes, and the accuracy it must be known to for that, against the declared figure for it.
+text: |-
+  The result states how much of the uncertainty in heat and water delivered each of three readings removes, and the accuracy each must be known to for that, against the declared figure for it: the supply voltage, the supply frequency, and the total supply current. It also states whether control uses each to detect a runaway or to calibrate the machine over temperature. A reading found unneeded is named with its bound as an input to the cost decisions, so the room the controller boards reserve for it can be removed on that evidence.
 links:
   - target: DEL-SENSOR-NECESSITY-PROVEN
     type: criterion-of

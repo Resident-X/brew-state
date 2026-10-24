@@ -1,0 +1,16 @@
+id: EV-SOL-HW-BOARD-DIVISION-AND-FLOORPLAN-C3-ANALYSIS
+type: evidence
+title: analysis evidence for SOL-HW-BOARD-DIVISION-AND-FLOORPLAN.C3
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-10-24T16:26:26.984928Z"
+artifact:
+  kind: external
+  reference: 'docs/sunbeam-em7000/controller-board-division.md § Every retained harness reaches its connector; § The fixing rule and the tabs that move (including the lid screws that cannot be touched); § The path of the heater current (The joiners; The return landing); § The heater wall board (The wall cut, and the owner''s acceptance); the reach, tab positions and moves, the removed tabs and the connector coverage are computed by § Appendix: the checks (checks.py main)'
+  artifact_version: 2df6fea987f107e8972c0b14e06d2c5cf46a7544
+attested_by: crun-6a88dac717c05821
+links:
+  - target: SOL-HW-BOARD-DIVISION-AND-FLOORPLAN.C3
+    type: satisfies

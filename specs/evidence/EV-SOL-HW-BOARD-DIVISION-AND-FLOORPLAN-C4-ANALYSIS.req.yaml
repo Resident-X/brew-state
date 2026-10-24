@@ -1,0 +1,16 @@
+id: EV-SOL-HW-BOARD-DIVISION-AND-FLOORPLAN-C4-ANALYSIS
+type: evidence
+title: analysis evidence for SOL-HW-BOARD-DIVISION-AND-FLOORPLAN.C4
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-10-24T16:26:27.05818Z"
+artifact:
+  kind: external
+  reference: 'docs/sunbeam-em7000/controller-board-division.md § The anticipated channel kinds (the removal order, the demand and overflow of each step and the kinds'' areas are computed by § Appendix: the checks, checks.py main, and compared with the tables by --tables; kind 6 is recorded as not reserved by the owner''s choice (2026-10-24), naming no criterion because none is weakened, kind 1 is given a place and is tied to its requirement criterion, kind 9 is given a place as a shunt in the neutral return read by the voltage measurement''s isolating part (the owner''s placement in the link is weighed and not drawn), kinds 3 and 4 are removed because no arrangement of their headers exists at the 0.3 mm spacing the drawing keeps, by an exhaustive search, although the areas allow each one alone; of kinds 3, 4 and 5 only one can keep a place and the removal order keeps kind 5, with 123.0 mm2 of the analogue region spare)'
+  artifact_version: 2df6fea987f107e8972c0b14e06d2c5cf46a7544
+attested_by: crun-6a88dac717c05821
+links:
+  - target: SOL-HW-BOARD-DIVISION-AND-FLOORPLAN.C4
+    type: satisfies

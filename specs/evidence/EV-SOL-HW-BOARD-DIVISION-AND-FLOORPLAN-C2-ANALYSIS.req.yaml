@@ -1,0 +1,16 @@
+id: EV-SOL-HW-BOARD-DIVISION-AND-FLOORPLAN-C2-ANALYSIS
+type: evidence
+title: analysis evidence for SOL-HW-BOARD-DIVISION-AND-FLOORPLAN.C2
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-10-24T16:26:26.915289Z"
+artifact:
+  kind: external
+  reference: 'docs/sunbeam-em7000/controller-board-division.md § The main board''s floorplan (including § The logic supply against this board and § Heat); § The heater path, the interlock and the wall board (including § The path of the heater current with its joiners and return landing, § The valve relays, § The pump drives, § The fuses and § The heater wall board); the interlock relay''s 5 V ordering code (HF115F-Q/005-1H; its catalogue number and price are not recorded, priced as the 12 V variant) with its safety-approval ratings (18 A at 105 C, 16 A at 125 C) and the statement that it has no sourced thermal margin at the held coil drive; the premise that the interlock cuts every load, which rests on the owner''s visual trace and is checked at bring-up by continuity (§ Reported for the board design tasks, item 32); the wall board''s orientation to the wall and the 5.0 mm rule for part bodies and lead ends; § Appendix: the checks (checks.py main, wall, --tables, --selftest, run from the record); the heat distances against both heat sources, the count of every arrangement of the 85 C parts, the three what-if arrangements, the analogue regions'' distance from both sources and their top edge, the neutral return with every load''s return joined above the shunt, and the relay-move what-if are computed by checks.py main, and the wall board, the two triacs'' distance and thermal arithmetic on their one wall, and the second layout with the unpopulated confirm places by checks.py wall'
+  artifact_version: 2df6fea987f107e8972c0b14e06d2c5cf46a7544
+attested_by: crun-6a88dac717c05821
+links:
+  - target: SOL-HW-BOARD-DIVISION-AND-FLOORPLAN.C2
+    type: satisfies

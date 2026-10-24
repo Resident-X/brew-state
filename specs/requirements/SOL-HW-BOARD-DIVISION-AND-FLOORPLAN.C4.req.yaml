@@ -2,11 +2,11 @@ id: SOL-HW-BOARD-DIVISION-AND-FLOORPLAN.C4
 type: criterion
 title: Each anticipated channel kind is given a place or recorded as not given one, naming the criterion reserving it would have weakened
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |-
-  Each anticipated channel kind is either given a place, on the board side its kind belongs to, or recorded as not given one. A place is a connector position, an interface with the loading it already carries and the loading the channel adds, and a block area. No place requires re-selecting a part already bought. The kinds are every row of the component specification's room for anticipated channels, a further switched output such as another valve, and further temperature and pressure inputs of the kinds already in use. A kind not given a place names the criterion reserving it would have weakened, whether an isolation distance, the fit or the cost boundary. None is silently dropped. Out of scope: fitting any anticipated channel's parts.
+  Each anticipated channel kind is either given a place, on the board side its kind belongs to, or recorded as not given one. A place is a connector position, an interface with the loading it already carries and the loading the channel adds, and a block area. No place requires re-selecting a part already bought. The kinds are every row of the component specification's room for anticipated channels, a further switched output such as another valve, further temperature and pressure inputs of the kinds already in use, a measurement of the supply voltage, of its frequency and of the total supply current, which control may use to detect a runaway or to calibrate the machine over temperature, and a spare analog input; the mains zero crossing stays a single measurement on one board that every function shares, and is not given a place of its own here; for the steam pressure transducer's connector, the record states whether it is shared or split from the spare input. A kind not given a place names the criterion reserving it would have weakened, whether an isolation distance, the fit or the cost boundary, or records that the owner chose not to reserve it, with the date of that choice. None is silently dropped. The record gives every kind its place first and lists the kinds in the order they would be removed if the allocation does not fit, so the owner can prioritise from a full picture. Out of scope: fitting any anticipated channel's parts.
 links:
   - target: SOL-HW-BOARD-DIVISION-AND-FLOORPLAN
     type: criterion-of

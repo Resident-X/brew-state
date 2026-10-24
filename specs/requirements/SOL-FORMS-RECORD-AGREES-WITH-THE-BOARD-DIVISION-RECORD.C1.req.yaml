@@ -1,0 +1,12 @@
+id: SOL-FORMS-RECORD-AGREES-WITH-THE-BOARD-DIVISION-RECORD.C1
+type: criterion
+title: Each point on which the board division record departs from the forms record is corrected there, or the forms record says the division record governs it
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Every row of the board division record's table of departures from the function-forms record is carried into the function-forms record: the statement is corrected to the division record's reading, or the function-forms record says at that statement that the division record governs and names the section. A reader holding only the function-forms record is not told, at any of those points, what the division record has replaced. The inspector compares the departures table row by row against the function-forms record. Out of scope: the division record's own text and the decisions it cites.
+links:
+  - target: SOL-FORMS-RECORD-AGREES-WITH-THE-BOARD-DIVISION-RECORD
+    type: criterion-of
