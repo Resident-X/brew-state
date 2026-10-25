@@ -1,0 +1,16 @@
+id: EV-SOL-HW-BOARD-COST-ESTIMATED-C1-ANALYSIS
+type: evidence
+title: analysis evidence for SOL-HW-BOARD-COST-ESTIMATED.C1
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-10-25T01:59:43.569868Z"
+artifact:
+  kind: external
+  reference: docs/sunbeam-em7000/controller-board-cost-estimate.md § The estimate by board and assembly; § Main board; § Heater wall board; § Mains-entry assembly; § Steam-path assembly; § Shipping; § Import tax; § Second spin
+  artifact_version: c8c295b9e7a2ba1a0231dca105ee62077ba5471a
+attested_by: crun-68ec608795d47e98
+links:
+  - target: SOL-HW-BOARD-COST-ESTIMATED.C1
+    type: satisfies
