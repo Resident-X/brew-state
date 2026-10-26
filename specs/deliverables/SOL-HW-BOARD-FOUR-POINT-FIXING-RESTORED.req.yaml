@@ -23,7 +23,7 @@ text: |+
 
   The board-mounted tab chosen for the seven 6.3 mm tabs and the return landing, C20626100, is titled 4.8 mm by 0.5 mm in the manufacturer's catalogue and only named 6.3 mm in the footprint library, so the record confirms the blade width the harness needs or corrects the part.
 
-  The block-level cost estimate (SOL-HW-BOARD-COST-ESTIMATED) prices the hand-fitting decision and the corrected Extended-part count ahead of this record carrying them; this item is what brings the record into agreement with the estimate and must land before the per-board design tasks start from it.
+  The block-level cost estimate record, controller-board-cost-estimate.md, prices the hand-fitting decision and the corrected Extended-part count ahead of this record carrying them; this item is what brings the record into agreement with the estimate and must land before the per-board design tasks start from it.
 
 links:
   - target: DEL-MAINTENANCE.C1
