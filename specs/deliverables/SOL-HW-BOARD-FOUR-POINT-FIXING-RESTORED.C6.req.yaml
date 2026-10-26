@@ -2,11 +2,11 @@ id: SOL-HW-BOARD-FOUR-POINT-FIXING-RESTORED.C6
 type: criterion
 title: The tab part chosen for the 6.3 mm tabs matches the blade the harness needs
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: analysis
 text: |
-  The board division record's choice of the board-mounted tab for the seven 6.3 mm tabs and the return landing agrees with the blade the harness needs. The record states the blade width of the original board's tabs and of the part chosen, each with its source, and the part is confirmed or replaced by one of that width, in which case every figure that follows from the part is recomputed. Out of scope: choosing between catalogue parts of the same width, which the board design tasks do.
+  The board division record's choice of the board-mounted tab for the seven 6.3 mm tabs and the return landing agrees with the blade the harness needs. The record states the blade width and thickness of the original board's tabs and of the part chosen, each with its source, and the part is confirmed or replaced by one of that width and thickness, in which case every figure that follows from the part is recomputed. Out of scope: choosing between catalogue parts of the same width and thickness, which the board design tasks do.
 links:
   - target: SOL-HW-BOARD-FOUR-POINT-FIXING-RESTORED
     type: criterion-of
