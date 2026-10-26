@@ -1,12 +1,12 @@
 id: SOL-HW-BOARD-FOUR-POINT-FIXING-RESTORED.C5
 type: criterion
-title: Each wall-board triac can be fitted and removed with the board in place and without desoldering
+title: Each wall-board triac can be fitted and removed without desoldering or re-bending a lead
 status: active
 version: 1
 measurement_type: binary
 verification: analysis
 text: |
-  The heater wall board's record states the order in which the board and the two triacs are fitted to the machine and removed, and shows that each triac can be mounted to the metal wall and removed from it, with its mounting screw reached by a driver, while the board stays in place and without desoldering any joint. The owner's intent is that the triacs do not have their leads folded: both triacs stand on a right-angle heat-spreader bracket whose one leg is fixed to the board by two mounts and whose other leg bolts to the metal wall, so the unit is fitted and removed as one piece without desoldering and the leads run straight to the pads. The board is extended where it needs to be so that each mounting hole keeps the signed distance from every mains copper edge, and the depth the bracket adds is held within the cavity, the height of the triac plus a little. The record shows that form and weighs it against two others that give the same independence, the triacs past the board's short edge with their leads folded to the pads so the screw is reached from beside the board, and the triacs on the wall at a distance joined to the board by insulated wires; and states, for the form it keeps, the lead length or wire length, the bend and the creepage it needs, the bracket's material and thickness and the window to bare metal it needs in the wall's plastic. A form that needs a triac's leads re-bent at each fitting fails. Out of scope: the thermal analysis of the bracket and of its interface to the wall, which the assembly task does.
+  The heater wall board's record states the order in which the board and the two triacs are fitted to the machine and removed, and shows that each triac can be mounted to the metal wall and removed from it, with its mounting screw reached by a driver, without desoldering any joint and without re-bending a lead. The record shows the form it keeps and why it was chosen over the other forms it considered. Out of scope: the thermal analysis of the triacs' interface to the wall, which the assembly task does.
 links:
   - target: SOL-HW-BOARD-FOUR-POINT-FIXING-RESTORED
     type: criterion-of
