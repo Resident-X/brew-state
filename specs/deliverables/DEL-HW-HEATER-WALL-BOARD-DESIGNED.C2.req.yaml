@@ -1,0 +1,13 @@
+id: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C2
+type: criterion
+title: The board's layout passes the layout checklist, read from rendered views, before the board is ordered
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The review uses views of every layer and every critical net, and its findings are recorded and resolved.
+links:
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED
+    type: criterion-of

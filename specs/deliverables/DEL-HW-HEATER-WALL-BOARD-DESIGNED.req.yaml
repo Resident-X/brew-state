@@ -1,0 +1,41 @@
+id: DEL-HW-HEATER-WALL-BOARD-DESIGNED
+type: deliverable
+category: task
+title: The heater wall board and its element harness are designed, proven against their records and made
+status: active
+priority: must
+level: task
+version: 1
+text: |
+  The heater wall board is the off-board assembly that switches the two heaters on the machine's metal wall: a designed board for the two heaters, its triacs standing on a right-angle bracket whose one leg is fixed to the board and whose other leg bolts to the wall, with the element harness to the wall. It carries neither the interlock nor any reserved headroom, which the division record places on the main board. This task designs the board, proves it against its design records and the signed separation basis, and has it made.
+
+  Whether the board stays its own board or becomes a break-away section of the main board is an owner decision the division record holds pending; the task is needed either way, since the heater switches, their thermal judgement and their harness are designed here.
+links:
+  - target: DEL-HW-PARTITION-AND-FEASIBILITY.C5
+    type: derives-from
+  - target: DEL-CONTROLLER-HARDWARE.C3
+    type: derives-from
+  - target: DEL-CONTROLLER-HARDWARE.C4
+    type: derives-from
+  - target: DEL-CONTROLLER-HARDWARE.C8
+    type: derives-from
+  - target: DEL-CONTROLLER-HARDWARE.C10
+    type: derives-from
+  - target: DEL-CONTROLLER-HARDWARE.C11
+    type: derives-from
+  - target: DEL-CONTROLLER-HARDWARE.C12
+    type: derives-from
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED
+    type: depends-on
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3
+    type: targets
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+  - target: DEC-BOARD-SEPARATION-BASIS-RECORD
+    type: justified-by
+  - target: DEC-BOARD-DESIGN-RECORDS-AS-YAML
+    type: justified-by
+  - target: DEC-BOARD-MANUFACTURER-JLCPCB
+    type: justified-by

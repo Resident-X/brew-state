@@ -1,0 +1,13 @@
+id: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C16
+type: criterion
+title: The bracket that carries the triacs, its spacers and the thermal interface of the triac faces to the bracket and of the bracket to the wall are designed
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The record gives the bracket's drawing, how it is made or sourced, and the interface material, since none is in the catalogue and none is priced.
+links:
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED
+    type: criterion-of

@@ -1,0 +1,13 @@
+id: DEL-HW-MAIN-BOARD-DESIGNED.C11
+type: criterion
+title: The proof-of-life interlock's timing is designed to the derived removal interval
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  The design shows, with the arithmetic, that the interlock removes heater power within the interval the figures record states.
+links:
+  - target: DEL-HW-MAIN-BOARD-DESIGNED
+    type: criterion-of

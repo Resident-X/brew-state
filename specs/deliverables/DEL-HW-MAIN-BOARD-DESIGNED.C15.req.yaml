@@ -1,0 +1,13 @@
+id: DEL-HW-MAIN-BOARD-DESIGNED.C15
+type: criterion
+title: The interlock's drive is fed only through the proof-of-life path, and nothing keeps it energised past the interval in any controller rest state
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  No level, timer, charge store or latch holds the drive above its drop-out for longer than the removal interval when the controller is in reset, halted, unpowered or running.
+links:
+  - target: DEL-HW-MAIN-BOARD-DESIGNED
+    type: criterion-of

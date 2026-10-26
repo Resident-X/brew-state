@@ -1,0 +1,13 @@
+id: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C7
+type: criterion
+title: Every figure the controller boards' constraints record holds pending against the board is recorded with its source and its pending mark ended
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Such figures include a rail's budget, a branch fuse's rating, and the time a protective device takes to clear with the energy it lets through at the declared fault current.
+links:
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED
+    type: criterion-of

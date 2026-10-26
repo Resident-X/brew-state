@@ -1,0 +1,13 @@
+id: DEL-HW-MAIN-BOARD-DESIGNED.C12
+type: criterion
+title: The interlock's own barrier part is judged against the signed separation basis with the arithmetic shown
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  Where the signed basis lists no such barrier, such as a relay's coil-to-contact barrier, the owner re-declares the basis before the part is ordered.
+links:
+  - target: DEL-HW-MAIN-BOARD-DESIGNED
+    type: criterion-of

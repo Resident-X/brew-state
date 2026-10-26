@@ -1,0 +1,13 @@
+id: DEL-HW-MAIN-BOARD-DESIGNED.C17
+type: criterion
+title: Each owner decision the division record holds pending against the board is settled, or the board is recorded as drawn one way with the consequence of the other carried
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The decisions cover the tab moves against the mounting-hole rule, the current sensing placement, the voltage measurement's distance from the relay, the fuse arrangement, the varistors, the removal order of the channel kinds, and the fuse and varistor on the board in place of the inlet.
+links:
+  - target: DEL-HW-MAIN-BOARD-DESIGNED
+    type: criterion-of

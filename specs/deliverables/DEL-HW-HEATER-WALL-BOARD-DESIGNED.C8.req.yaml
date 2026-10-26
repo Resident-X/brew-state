@@ -1,0 +1,13 @@
+id: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C8
+type: criterion
+title: Every part is graded against the enclosure air temperature the constraints record holds
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  The grading is stated in the derating policy record; where no catalogue part holds at that figure, the revisit of the figure is recorded in the constraints record with its reason, and the part's rating is not stretched.
+links:
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED
+    type: criterion-of

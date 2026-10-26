@@ -1,0 +1,13 @@
+id: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C19
+type: criterion
+title: The surge clamps on the heater branch are kept or dropped, with the reason recorded
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The record states the surge rating the heater branch relies on once the clamps are dropped, sourced from the inlet filter.
+links:
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED
+    type: criterion-of

@@ -1,0 +1,13 @@
+id: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C20
+type: criterion
+title: The blade terminals' and joiners' current ratings are recorded with their source
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  A rating that cannot be sourced counts as absent, and the carried current is up to 15 A.
+links:
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED
+    type: criterion-of

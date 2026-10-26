@@ -1,0 +1,13 @@
+id: DEL-HW-MAIN-BOARD-DESIGNED.C16
+type: criterion
+title: Every load's live feed passes through the interlock's switched output
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The design shows each load's live lead fed from the interlock's switched side and states the premise that rests on the machine's retained wiring; the continuity measurement that confirms it on the built board is bring-up's.
+links:
+  - target: DEL-HW-MAIN-BOARD-DESIGNED
+    type: criterion-of

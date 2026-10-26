@@ -1,0 +1,13 @@
+id: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C9
+type: criterion
+title: The manufacturer's production files are checked against its assembly preview, and the quoted order cost is weighed against the running total of the declared spend, before payment
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The quoted cost is recorded against the running total before the order is placed.
+links:
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED
+    type: criterion-of

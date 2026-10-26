@@ -1,0 +1,13 @@
+id: DEL-HW-STEAM-PATH-ASSEMBLY-DESIGNED.C3
+type: criterion
+title: The transducer's withstand is judged against the barrier the separation basis declares for that sensor, with the arithmetic shown
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  Where no candidate meets the barrier, the task forms the barrier elsewhere in the assembly, or the owner re-declares the basis from the machine's own earth bonding, before the part is ordered.
+links:
+  - target: DEL-HW-STEAM-PATH-ASSEMBLY-DESIGNED
+    type: criterion-of

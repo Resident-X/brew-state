@@ -1,0 +1,13 @@
+id: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C15
+type: criterion
+title: The height of each triac's tab hole on the bracket's standing leg is fixed and recorded with its source
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The height comes from the triac's package drawing and the board's fixing, so that each triac's leads reach the board's pads and its tab face lies flat on the leg.
+links:
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED
+    type: criterion-of

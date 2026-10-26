@@ -4,7 +4,7 @@ category: task
 title: The built boards are brought up with every safety default demonstrated before the machine runs on them
 status: active
 level: task
-version: 4
+version: 5
 text: |
   The boards are first powered with no mains present and their low-voltage functions shown working. Every load is then shown held off with the controller in reset, unpowered and disconnected, and loss of the controller's proof of life is shown to remove heater power whatever has happened to the controller's clock, reset or supply. Only after that is the mains side energised, under supervision. In the machine, sensing accuracy is measured with the loads switching, protective continuity of touchable parts is measured on the finished installation, the enclosure's air temperature and the hottest parts' temperatures are measured at sustained full load with the enclosure closed, and the whole machine is shown to come back safe from a loss and return of mains.
 rationale: |
@@ -51,4 +51,12 @@ links:
   - target: DEL-HW-INTERLOCK-INTERVAL-DERIVED
     type: depends-on
   - target: DEL-BENCH-SAFETY-CHAIN-INSPECTION
+    type: depends-on
+  - target: DEL-HW-MAIN-BOARD-DESIGNED
+    type: depends-on
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED
+    type: depends-on
+  - target: DEL-HW-STEAM-PATH-ASSEMBLY-DESIGNED
+    type: depends-on
+  - target: DEL-HW-MAINS-ENTRY-ASSEMBLY-DESIGNED
     type: depends-on

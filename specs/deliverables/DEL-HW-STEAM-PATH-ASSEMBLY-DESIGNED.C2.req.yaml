@@ -1,0 +1,13 @@
+id: DEL-HW-STEAM-PATH-ASSEMBLY-DESIGNED.C2
+type: criterion
+title: The transducer actually fitted is selected and its insulation withstand between circuit and wetted body is recorded from its maker's current document
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  A withstand that cannot be sourced counts as absent and not as adequate.
+links:
+  - target: DEL-HW-STEAM-PATH-ASSEMBLY-DESIGNED
+    type: criterion-of
