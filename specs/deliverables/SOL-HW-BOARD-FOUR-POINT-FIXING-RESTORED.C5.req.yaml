@@ -2,11 +2,11 @@ id: SOL-HW-BOARD-FOUR-POINT-FIXING-RESTORED.C5
 type: criterion
 title: Each wall-board triac can be fitted and removed without desoldering or re-bending a lead
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: analysis
 text: |
-  The heater wall board's record states the order in which the board and the two triacs are fitted to the machine and removed, and shows that each triac can be mounted to the metal wall and removed from it, with its mounting screw reached by a driver, without desoldering any joint and without re-bending a lead. The record shows the form it keeps and why it was chosen over the other forms it considered. Out of scope: the thermal analysis of the triacs' interface to the wall, which the assembly task does.
+  The heater wall board's record shows the two triacs standing on a right-angle heat-spreader bracket whose one leg is fixed to the board by two mounts and whose other leg bolts to the metal wall, so that the board and the triacs are fitted to the machine and removed as one unit, with each fixing screw reached by a driver, without desoldering any joint and without bending or re-bending a lead. The record states the order in which the board and the triacs are fitted and removed, and why the bracket was chosen over the triacs past the board's short edge with their leads folded to the pads and over the triacs on the wall at a distance joined to the board by insulated wires. Both bracket mounts are mounting holes that keep the signed distance from the mains copper, as every other hole does; the earth-bonded bracket keeps the basic creepage the separation basis states from mains copper; the area of the wall cut is recomputed for the bracket's leg; and the depth the bracket adds is stated and graded as unconfirmed for the owner to check at assembly. The bracket replaces the record's owner row of 2026-10-24, its standoff assumption and its statement that no metal fixing joins the board to the wall, and each is brought to match. Out of scope: the thermal analysis of the triacs' interface to the wall, which the assembly task does.
 links:
   - target: SOL-HW-BOARD-FOUR-POINT-FIXING-RESTORED
     type: criterion-of
