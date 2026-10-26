@@ -1,0 +1,21 @@
+id: SOL-HW-MAINS-LEAD-RETAINED-RECORDS-ALIGNED
+type: deliverable
+category: solution
+title: The records are brought to the owner's ruling that the machine keeps its mains lead and the entry fuse and varistor sit on the main board
+status: active
+version: 1
+text: |
+  Restores REQ-RETROFIT-FIT-001.C2 for the mains lead: the machine keeps its existing fixed mains lead and fits no appliance inlet and no bought inlet filter. The owner's proposal of 2026-10-24, listed in the board division record as pending decision D16, is decided: the 10 A fuse and a varistor are carried on the main board where the lead's conductors land, at tabs 2 and 3, the varistor hard against the fuse and downstream of it, as the original board carried its own protection at its entry. The inlet filter is dropped. Whether the entry needs emission suppression in its place is decided by the main board's design task against the emission criteria, and is carried on the main board if it is. DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE is amended to this arrangement (version 5) as the first act of this correction.
+
+  The records still describe the superseded arrangement: the board division record gives the mains inlet filter to an off-board mains-entry assembly, lists where that assembly is mounted (D14) and the fuse-and-varistor proposal (D16) as pending owner decisions, counts three off-board assemblies, and carries D14 and D16 and the entry assembly's owner in its machine-readable data and in the check that reads it; the forms record, the design constraints record, the block-level cost estimate and the controller design folder's working notes and parts list restate the inlet filter, the inlet and the 15 A part. Each is brought to the decided arrangement, and every figure that follows is recomputed: the cost estimate prices the board-entry arrangement as the declared one.
+
+  What the correction leaves open is stated in the records, not hidden. The floorplan has no place drawn for the entry fuse holder, the varistor or any suppression part, and the record says so; placing them, which changes the main board's floorplan, is a separate piece of work. The owner-signed separation basis keeps its own wording and is not edited here. Owner decision D7 on the wall board's varistors stays pending, its stated dependency now being the board-entry varistor.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-RETROFIT-FIT-001.C2
+    type: targets
+  - target: DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE
+    type: justified-by
+  - target: SOL-HW-BOARD-DIVISION-AND-FLOORPLAN
+    type: depends-on

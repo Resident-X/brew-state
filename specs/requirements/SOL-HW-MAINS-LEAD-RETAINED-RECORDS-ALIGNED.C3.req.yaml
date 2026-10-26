@@ -1,0 +1,12 @@
+id: SOL-HW-MAINS-LEAD-RETAINED-RECORDS-ALIGNED.C3
+type: criterion
+title: The record's fuse section states the decided entry arrangement and what the floorplan has not yet placed
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The section states the fuse and varistor at tabs 2 and 3, the 10 A holder the board's 6.3 A holder cannot serve, the fuse's shortfall against the 6 kA the record names, the owner's check of the original board's varistor, and the loss of the inlet filter's emission suppression as the main board design's decision; and states that no place for these parts is drawn in the floorplan. Out of scope: drawing the parts into the floorplan.
+links:
+  - target: SOL-HW-MAINS-LEAD-RETAINED-RECORDS-ALIGNED
+    type: criterion-of
