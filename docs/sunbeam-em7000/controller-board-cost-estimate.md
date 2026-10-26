@@ -117,7 +117,7 @@ No other fabrication charge arises at the drawn configuration, each checked agai
 
 ### Assembly
 
-Economic assembly of the surface-mount parts only, charges as the price page gives them (read 2026-10-24; § Sources read). The count of unique Extended types the manufacturer places is **5**: the microcontroller, the triac C256462, the optocoupler, the shunt and the 120 kΩ mains-sense resistor. The 14 through-hole Extended types (the supply module, the pump opto-triac C8965, the interlock relay, the valve relay, the fuse holder, the fuse clip, the tab and seven header types) are the owner's, hand-soldered, and carry no manufacturer charge (§ What is settled before pricing). The division's count of 18 Extended types omits the 120 kΩ resistor, an Extended part of the supply-timing front end (§ What the library class allows), and rests on its assumption A13 that every header is Extended, which the 2026-10-25 read confirms.
+Economic assembly of the surface-mount parts only, charges as the price page gives them (read 2026-10-24; § Sources read). The count of unique Extended types the manufacturer places is **5**: the microcontroller, the triac C256462, the optocoupler, the shunt and the 120 kΩ mains-sense resistor. The 14 through-hole Extended types (the supply module, the pump opto-triac C8965, the interlock relay, the valve relay, the fuse holder, the fuse clip, the tab and seven header types) are the owner's, hand-soldered, and carry no manufacturer charge (§ What is settled before pricing). With them the main board has 19 unique Extended types, 5 placed by the manufacturer and 14 fitted by the owner, as the division record counts them; the 120 kΩ resistor is an Extended part of the supply-timing front end (§ What the library class allows), and every header is Extended, as the 2026-10-25 read found.
 
 | Charge | Working | USD |
 |---|---|---|
@@ -254,7 +254,7 @@ Read on 2026-10-25 from the same library search service as § Sources read, one 
 
 - **Every part this estimate prices is Extended.** The 14 parts read (the microcontroller, the supply module, the opto-triac C8965, the triac C256462, the interlock relay, the valve relay, the AC-input optocoupler, the fuse holder, the fuse clip, the tab, the 120 kΩ resistor, the wall board's triac C9100, opto-triac C10797 and varistor C49072860) are Extended. The varistor, priced as assumed Basic in § Heater wall board, is read as Extended; it is hand-fitted, so its class changes no figure.
 - **All seven header families and the shunt are Extended.** 2.54 mm 1×2, 1×3, 1×4 and 1×10, JST XH 2-, 3-, 4- and 10-way, and the 2.0 mm PH 5- and 9-way were read as Extended; the 1.95 mm 4-way was not found. No Basic or Preferred header, and no Basic or Preferred 2512 shunt in 241 rows, was found. The division's assumption A13 (`controller-board-division.md`, every header type and the shunt are Extended) is therefore confirmed as a reading, and the division record now carries the class as read, with its date.
-- **The division's earlier count of 18 omitted the 120 kΩ resistor** (C5126146, Extended), which this estimate counts; the division record now counts 19 unique Extended types, 5 placed by the manufacturer and 14 fitted by the owner, as this estimate does.
+- **The main board has 19 unique Extended types, 5 placed by the manufacturer and 14 fitted by the owner,** the 120 kΩ resistor (C5126146, Extended) among the five; the division record counts the same.
 
 **Parts read, all 2026-10-25** (stock and smallest-break unit price in USD; every one Extended, none Basic or Preferred):
 
