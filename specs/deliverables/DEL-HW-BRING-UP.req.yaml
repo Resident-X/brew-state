@@ -58,5 +58,3 @@ links:
     type: depends-on
   - target: DEL-HW-STEAM-PATH-ASSEMBLY-DESIGNED
     type: depends-on
-  - target: DEL-HW-MAINS-ENTRY-ASSEMBLY-DESIGNED
-    type: depends-on

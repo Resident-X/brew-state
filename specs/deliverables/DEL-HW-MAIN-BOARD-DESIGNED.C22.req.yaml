@@ -1,0 +1,13 @@
+id: DEL-HW-MAIN-BOARD-DESIGNED.C22
+type: criterion
+title: The mains entry protection is carried on the board at the retained mains lead
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  The machine's existing mains lead is retained, so no inlet or inlet filter is fitted. The design shows the fuse rated for the whole inlet chain and the surge clamp at the entry on the board, and judges the loss of the inlet filter's emission suppression against the emission criteria.
+links:
+  - target: DEL-HW-MAIN-BOARD-DESIGNED
+    type: criterion-of

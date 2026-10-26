@@ -45,5 +45,3 @@ links:
     type: depends-on
   - target: DEC-PROOF-OF-LIFE-INTERLOCK-IN-FIRST-HARDWARE
     type: justified-by
-  - target: DEL-HW-MAINS-ENTRY-ASSEMBLY-DESIGNED
-    type: depends-on
