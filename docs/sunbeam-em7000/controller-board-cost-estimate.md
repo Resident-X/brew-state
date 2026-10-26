@@ -27,7 +27,7 @@ The grades are those of `controller-board-design-constraints.md` § Evidence gra
   1. *One hand-fitted set.* The owner hand-solders **one** board's set of the through-hole parts, and the heater wall board: the hand-fitted parts are bought for one set (one machine), not two. The manufacturer still assembles the surface-mount parts of the minimum 2 boards, so the machine-placed parts, setup, stencil and joints stay as priced. The hand-fitted parts are charged at one set under the per-part rule of § The two per-part numbers.
   2. *Owner-sourced non-board items.* The owner sources the non-board items: the steam-path assembly (pressure transducer, tee, drop-leg tube, thread adaptor). It is not on the manufacturer's order and not in the board orders' total; it stays in the estimate as a labelled line, because the division names it and an assembly the division names may not be left out.
   3. *A stated preference on the mains harness, not a decision.* The owner's stated ideal is not to change the mains harness: the supply cord goes straight to the main board's mains tabs 2 and 3 as on the original board, with no appliance inlet. This record prices that variant (§ Mains entry). It is a preference: the division record's D16 stays pending an EMC judgement and a decision amendment, and the appliance-inlet variant, priced at 13.71 USD, is the alternative if the owner prefers it.
-  4. *The heater wall board stays a self-contained carrier*: the opto-triacs, their gate resistors, the three-way header, the varistors and the blade terminals, with the triacs, by the owner's stated intent, standing on a right-angle heat-spreader bracket that is fixed to the board and bolted to the wall (a cut and bent plate the owner makes or sources: it is not in the catalogue and is not priced here; a few dollars at most, an estimate whose basis is the owner's own fabrication); the triacs past the board's short edge, or wired at a distance, are the other forms, weighed with it by the maintenance item SOL-HW-BOARD-FOUR-POINT-FIXING-RESTORED, its criterion C5. The heater parts stay off the main board. If the edge form is chosen the board is about 10 mm shorter, in the same price band. Its pricing is unchanged: fabrication 4.00 USD, one set of parts.
+  4. *The heater wall board stays a self-contained carrier*: the opto-triacs, their gate resistors, the three-way header, the varistors and the blade terminals, with the triacs, by the owner's stated intent, standing on a right-angle heat-spreader bracket that is fixed to the board and bolted to the wall (a cut and bent plate the owner makes or sources: it is not in the catalogue and is not priced here; a few dollars at most, an estimate whose basis is the owner's own fabrication); the triacs past the board's short edge, or wired at a distance, are the other forms, weighed against it in `controller-board-division.md` § The heater wall board, *The bracket*. The heater parts stay off the main board. If the edge form is chosen the board is about 10 mm shorter, in the same price band. Its pricing is unchanged: fabrication 4.00 USD, one set of parts.
 - **The owner's answers of 2026-10-26, recorded as the owner's.** The owner, David Baker, answered on 2026-10-26 two questions about what the declared 250 USD counts:
   1. *The declared 250 USD excludes the items the owner sources*, the steam-path assembly (pressure transducer, tee, drop-leg tube, thread adaptor). They are priced here for completeness and are not counted against the declared figure.
   2. *The declared 250 USD does not count a likely second spin.* It covers the first order of the board orders only.
@@ -90,7 +90,7 @@ and prices that quantity at the smallest break's unit price, which every charged
 | Resistor 10 kΩ 0603 | C25804 | 20 / 10 | 18 | 30 |
 | Capacitor 100 nF 0603 | C14663 | 20 / 10 | 66 | 76 |
 | Fuse clip | C3130 | 2 / 5 | 6 | 11 |
-| 6.3 mm tab | C20626100 | 2 / 4 | 8 main, 6 wall | 12 main, 10 wall |
+| 6.3 mm tab | C20626104 | 2 / 4 | 8 main, 6 wall | 12 main, 10 wall |
 | Wall board triac | C9100 | 0 / 0 | 2 | 2 |
 | Wall board opto-triac | C10797 | 2 / 0 | 2 | 2 |
 | Wall board varistor | C49072860 | 2 / 1 | 4 | 5 |
@@ -138,7 +138,7 @@ Prices, classes and the two per-part numbers read 2026-10-24 from the library se
 | Microcontroller STM32H743VIT6 | C114409 | Extended | 1 | 2 | 2 | 10.6814 | 21.36 |
 | Pump triac BTA204S-600B | C256462 | Extended | 2 | 4 | 4 | 0.8543 | 3.42 |
 | AC-input optocoupler LTV-814S-TA1-A | C108051 | Extended | 1 | 2 | 4 | 0.1362 | 0.54 |
-| Mains-sense resistor 120 kΩ 2512 (not in the division's list of 18) | C5126146 | Extended | 2 | 4 | 7 | 0.0261 | 0.18 |
+| Mains-sense resistor 120 kΩ 2512 | C5126146 | Extended | 2 | 4 | 7 | 0.0261 | 0.18 |
 | Crystal 8 MHz | C115962 | Basic | 1 | 2 | 5 | 0.2462 | 1.23 |
 | Crystal 25 MHz | C9006 | Basic | 1 | 2 | 9 | 0.0951 | 0.86 |
 | Transistor 2N7002 | C8545 | Basic | 2 | 4 | 15 | 0.0161 | 0.24 |
@@ -163,29 +163,29 @@ Prices, classes and the two per-part numbers read 2026-10-24 from the library se
 | Valve relay HF32FA-G/005-HSL1 | C91370 | Extended | 2 | 2 | 1.6169 | 3.23 |
 | Fuse holder 5 × 20 mm | C3131 | Extended | 3 | 3 | 0.0847 | 0.25 |
 | Fuse clip | C3130 | Extended | 6 | 11 | 0.0326 | 0.36 |
-| 6.3 mm board tab (seven tabs and the return landing) | C20626100 | Extended | 8 | 12 | 0.0351 | 0.42 |
+| 6.3 mm board tab (seven tabs and the return landing) | C20626104 | Extended | 8 | 12 | 0.0374 | 0.45 |
 | Headers for the harnesses, seven types, 85 ways (estimate: 85 × 0.0204 USD a way, the dearer of the two rows read) | none | Extended | 85 ways | 85 ways | 0.0204 a way | 1.73 |
-| **Hand-fitted parts of the 14 types** | | | | | | **19.98** |
+| **Hand-fitted parts of the 14 types** | | | | | | **20.01** |
 
-6.38 + 1.18 + 6.43 + 3.23 + 0.25 + 0.36 + 0.42 + 1.73 = **19.98 USD**, bought separately. The mains-entry parts the owner also fits by hand to this board, 1.54 USD (§ Mains entry), are added to it: 19.98 + 1.54 = **21.52 USD**. The parts the manufacturer places and charges are 33.55 USD, the sum of the rows of the first table.
+6.38 + 1.18 + 6.43 + 3.23 + 0.25 + 0.36 + 0.45 + 1.73 = **20.01 USD**, bought separately. The mains-entry parts the owner also fits by hand to this board, 1.54 USD (§ Mains entry), are added to it: 20.01 + 1.54 = **21.55 USD**. The parts the manufacturer places and charges are 33.55 USD, the sum of the rows of the first table.
 
-**The 6.3 mm board tab is unresolved, and no price moves.** The catalogue titles C20626100 (BZXC BTC-3-PCB485005D) "4.8 × 0.5 mm", a short-leg solder-in blade; "6.3" appears only in EasyEDA's footprint name (`TH-2_L6.3-W0.5`), read 2026-10-25. Whether it is the right blade for the machine's 6.3 mm tabs is the design task's to settle, and the catalogue title supports 4.8 mm.
+**The 6.3 mm board tab is C20626104, replacing C20626100.** The catalogue titles C20626100 (BZXC BTC-3-PCB485005D) "4.8 × 0.5 mm", a short-leg solder-in blade; "6.3" appears only in EasyEDA's footprint name (`TH-2_L6.3-W0.5`), read 2026-10-25, and in the blade-width attribute the library gives every part of the family. The harness's blade is 6.36 mm wide and 0.81 mm thick (`connector-pinouts.md` § The nine terminals), so that part does not fit it, and the division record replaces it (`controller-board-division.md` § What the owner fits by hand, *The tab that fits the harness*). The replacement is C20626104 (BZXC BTC-3-PCB634908T), whose maker's drawing gives a blade 6.3 ±0.2 mm wide and 0.8 mm thick (+0, −0.03), Extended, stock 14 453, `leastPatchNumber` 2 and `lossNumber` 4 as the part it replaces, read from the library service on 2026-10-26 and from the drawing the part's page links the same day. **What follows from it is recomputed:** the class and the charged quantities are unchanged, and the unit price at one to 99 is 0.0374 USD against 0.0351 USD, so the main board's twelve tabs cost 0.45 USD against 0.42, the wall board's ten 0.37 against 0.35, and each total, shipping share, tax, board order and per-machine figure below that rests on them moves by those cents (the hand-fitted set 20.01 USD against 19.98, the wall board's parts 2.88 against 2.86, the board orders 149.68 against 149.63).
 
 The microcontroller's cost at the build count is 2 × 10.6814 = 21.36 USD plus its feeder loading, 3.07 USD, in the assembly table: 24.43 USD, against the 13.75 USD for one machine's part in `component-specification.md`'s *Controller* row (10.6814 + 3.07). That figure is contained in the main board's lines above and is not counted twice.
 
 ### Main board, first order
 
-Fabrication 35.19 + assembly 26.98 + parts the manufacturer places 33.55 = **95.72 USD** at the manufacturer, plus the 21.52 USD of hand-fitted parts of one set with the mains-entry parts: 95.72 + 21.52 = **117.24 USD** before shipping and tax.
+Fabrication 35.19 + assembly 26.98 + parts the manufacturer places 33.55 = **95.72 USD** at the manufacturer, plus the 21.55 USD of hand-fitted parts of one set with the mains-entry parts: 95.72 + 21.55 = **117.27 USD** before shipping and tax.
 
 ## Heater wall board
 
 57.0 × 42.5 mm, 2 layers, 1 oz, leaded HASL, within the lowest price band. All through-hole. By the owner's decision of 2026-10-25 the manufacturer fabricates it only, five boards in the main board's order (a separate design file in the same order, so it is not the charge for several designs in one file, `docs/board-manufacturer-jlcpcb.md` § Price bands and the fabrication order; that record does not say whether a second file in one order is charged, so **this is a quote check**: the order's quote with both files loaded), and the owner buys its parts, one set, and fits them by hand: no assembly order, so none of the setup, stencil, loading, joint or labour charges. It stays a self-contained carrier of the opto-triacs, their gate resistors, the three-way header, the varistors and the blade terminals, with the triacs mounted past its short edge or wired at a distance (the owner's statement 4, § What is settled before pricing); the heater parts stay off the main board. If the edge form is chosen the board is about 10 mm shorter, in the same price band, so no price moves.
 
 - **Fabrication.** The band price for 5 boards of 2 layers, leaded HASL, up to 102 × 102 mm: **4.00 USD** (`docs/board-manufacturer-jlcpcb.md` § Price bands and the fabrication order, read at the quote 2026-10-13, published unverified, read at source). Not re-read: the quote page takes no request without a design file. The page's JLCONE price for this band is 2.00 USD (same entry), which the estimate does not take (§ Marks ended and re-pointed).
-- **Assembly.** None at the manufacturer. The five Extended types for this board (the triac C9100, the opto-triac C10797, the tab C20626100, the three-way header and the varistor C49072860) are the owner's to fit, with the 39 joints a board of division A11, so no manufacturer fee arises.
-- **Parts, one set.** Charged quantity at one set, § The two per-part numbers. Triacs C9100: 2 × 0.8445 = 1.69. Opto-triacs C10797: 2 (minimum 2) × 0.2907 = 0.58. Tabs C20626100: 6 + 4 loss = 10 × 0.0351 = 0.35. Varistors 07D471K, C49072860: 4 + 1 loss = 5 × 0.0310 = 0.16 (read as Extended on 2026-10-25; the division assumes Basic, and the class changes no figure for a hand-fitted part). Gate and other resistors: 8 × 0.0030 = 0.02, estimate. Three-way header: 3 ways × 0.0204 = 0.06, estimate. 1.69 + 0.58 + 0.35 + 0.16 + 0.02 + 0.06 = **2.86 USD**, bought by the owner. Triac and opto-triac prices read 2026-10-24, the per-part numbers 2026-10-25; the C9100 and C10797 counts follow the division, halved from the two-board build quantity.
+- **Assembly.** None at the manufacturer. The five Extended types for this board (the triac C9100, the opto-triac C10797, the tab C20626104, the three-way header and the varistor C49072860) are the owner's to fit, with the 39 joints a board of division A11, so no manufacturer fee arises.
+- **Parts, one set.** Charged quantity at one set, § The two per-part numbers. Triacs C9100: 2 × 0.8445 = 1.69. Opto-triacs C10797: 2 (minimum 2) × 0.2907 = 0.58. Tabs C20626104: 6 + 4 loss = 10 × 0.0374 = 0.37. Varistors 07D471K, C49072860: 4 + 1 loss = 5 × 0.0310 = 0.16 (read as Extended on 2026-10-25, the class the division now records; the class changes no figure for a hand-fitted part). Gate and other resistors: 8 × 0.0030 = 0.02, estimate. Three-way header: 3 ways × 0.0204 = 0.06, estimate. 1.69 + 0.58 + 0.37 + 0.16 + 0.02 + 0.06 = **2.88 USD**, bought by the owner. Triac and opto-triac prices read 2026-10-24, the per-part numbers 2026-10-25; the C9100 and C10797 counts follow the division, halved from the two-board build quantity.
 
-4.00 + 2.86 = **6.86 USD** before shipping and tax.
+4.00 + 2.88 = **6.88 USD** before shipping and tax.
 
 ## Mains entry
 
@@ -199,7 +199,7 @@ Fabrication 35.19 + assembly 26.98 + parts the manufacturer places 33.55 = **95.
 | X2 capacitor 0.1 µF, 275 V, KNSCHA MPX104K31C3KN15600 | C489079 | 1 | 3 | 0.0383 | 0.11 |
 | **Mains-entry parts on the main board** | | | | | **1.54** |
 
-0.67 + 0.32 + 0.44 + 0.11 = **1.54 USD**, inside the main board's 21.52 USD of hand-fitted parts (§ Parts). The appliance-inlet assembly of the earlier variant, the Schaffner inlet filter with its fuse holder and varistor, is **removed** from the priced configuration: 13.71 USD (19.50 AUD × 0.70296, from the earlier design's bill, `docs/sunbeam-em7000/controller-design/control-system-bom.csv`: inlet filter FN9222-15-06 11.50 AUD, panel fuse holder and 10 A slow-blow fuse 5.00 AUD, varistor 3.00 AUD; estimates the bill says were not looked up). **That variant is the alternative if the owner prefers it**: it adds 13.71 USD and removes the 1.54 USD and that sum's shipping and tax share (1.54 × 0.2057 = 0.32, § Import tax), a net 13.71 − 1.54 − 0.32 = 11.85 USD on the first order, and its second-spin rebuy of the inlet filter is 8.08 USD (11.50 AUD × 0.70296), a net 8.08 − 1.54 − 0.32 = 6.22 USD on the second spin. The retained loom's connectors and the mains leads are not priced: the loom is the machine's own.
+0.67 + 0.32 + 0.44 + 0.11 = **1.54 USD**, inside the main board's 21.55 USD of hand-fitted parts (§ Parts). The appliance-inlet assembly of the earlier variant, the Schaffner inlet filter with its fuse holder and varistor, is **removed** from the priced configuration: 13.71 USD (19.50 AUD × 0.70296, from the earlier design's bill, `docs/sunbeam-em7000/controller-design/control-system-bom.csv`: inlet filter FN9222-15-06 11.50 AUD, panel fuse holder and 10 A slow-blow fuse 5.00 AUD, varistor 3.00 AUD; estimates the bill says were not looked up). **That variant is the alternative if the owner prefers it**: it adds 13.71 USD and removes the 1.54 USD and that sum's shipping and tax share (1.54 × 0.2057 = 0.32, § Import tax), a net 13.71 − 1.54 − 0.32 = 11.85 USD on the first order, and its second-spin rebuy of the inlet filter is 8.08 USD (11.50 AUD × 0.70296), a net 8.08 − 1.54 − 0.32 = 6.22 USD on the second spin. The retained loom's connectors and the mains leads are not priced: the loom is the machine's own.
 
 **Not priced.**
 - *A mains common-mode choke, or a filter module.* None was found: no in-stock rated 6–10 A choke or PCB filter module in the library service (the first 25 of 88 rows of the choke keyword in Chinese all had zero stock, and the English keywords returned signal inductors; the in-stock UU9.8 and UU10.5 types show no current rating on the pages read), and the distributor's own parts search (LCSC) was not reachable (HTTP 403). The library's in-stock inlet filters (Schaffner FN9222 rows have zero stock; TE C42547035 8.446 USD, C43205315 7.0451 USD and C44050533 7.9157 USD have stock 10, 7 and 4 and no rating in their titles) belong to the appliance-inlet variant, not this one.
@@ -228,7 +228,8 @@ Fabrication 35.19 + assembly 26.98 + parts the manufacturer places 33.55 = **95.
 | C2761720 | Y2 capacitor 2.2 nF (option) | 2, ellipse | 7.5 along x, staggered 2.0 along y | 1.52 | 0.91 |
 | C3131 | Fuse holder (existing, 6.3 A) | 2, oval | 22.0 | 1.0 × 2.2 | not read |
 | C3130 | Fuse clip (existing) | 2, oval | 5.15 | 2.4 × 1.0 | not read |
-| C20626100 | Board tab | 2, oval | 5.0 | 1.5 × 2.5 | 0.9 |
+| C20626100 | Board tab (replaced by C20626104) | 2, oval | 5.0 | 1.5 × 2.5 | 0.9 |
+| C20626104 | Board tab | not read | not read | not read | not read |
 | C49072860 | Varistor 07D471K (wall board) | 2 | 5.0 | not read | not read |
 
 The fuse C22447845's footprint is a leaded body with its pads 24.0 mm apart, whereas a 5 × 20 mm fuse held in clips has no leads; whether this part has leads, and so whether two clips at about 20 mm centres hold it, is for the design task to settle from the datasheet, with the slow-blow type.
@@ -252,8 +253,8 @@ The steam-path pressure transducer behind a drop leg, its tee and its thread ada
 Read on 2026-10-25 from the same library search service as § Sources read, one request a keyword, all answered HTTP 200. The reads are tabulated below so a reader can repeat them. The service is `POST https://jlcpcb.com/api/overseas-pcb-order/v1/shoppingCart/smtGood/selectSmtComponentList/v2`. Class is the service's `componentLibraryType`: `base` is Basic, `expand` is Extended, and an `expand` part flagged `preferredComponentFlag` is Preferred, which the manufacturer record says is exempt from Economic's feeder loading (`docs/board-manufacturer-jlcpcb.md` § Parts library classes and their fees). The decoding was confirmed on two known parts, C25804 (`base`, a Basic resistor, stock 40 764 574) and C114409 (`expand`, an Extended part, stock 623); the Preferred flag was not checked against a known Preferred part, so it is graded unconfirmed. Stock is the service's `stockCount`, the unit price its first price break (`componentPrices[0].productPrice`, USD), the package its `componentSpecificationEn`. The service filters on `componentLibraryType` `base` and `expand`, but a filter of `preferred` returns nothing for every part, so it cannot filter on Preferred; Preferred parts were found only by scanning, 40 to 241 rows a keyword, so **the Preferred scan was partial** and a Preferred part may exist that it did not reach.
 
 - **Every part this estimate prices is Extended.** The 14 parts read (the microcontroller, the supply module, the opto-triac C8965, the triac C256462, the interlock relay, the valve relay, the AC-input optocoupler, the fuse holder, the fuse clip, the tab, the 120 kΩ resistor, the wall board's triac C9100, opto-triac C10797 and varistor C49072860) are Extended. The varistor, priced as assumed Basic in § Heater wall board, is read as Extended; it is hand-fitted, so its class changes no figure.
-- **All seven header families and the shunt are Extended.** 2.54 mm 1×2, 1×3, 1×4 and 1×10, JST XH 2-, 3-, 4- and 10-way, and the 2.0 mm PH 5- and 9-way were read as Extended; the 1.95 mm 4-way was not found. No Basic or Preferred header, and no Basic or Preferred 2512 shunt in 241 rows, was found. The division's assumption A13 (`controller-board-division.md`, every header type and the shunt are Extended) is therefore confirmed as a reading. The division record is not edited here.
-- **The division's count of 18 omits the 120 kΩ resistor** (C5126146, Extended), which this estimate counts. The division's record is corrected by a maintenance item, not here.
+- **All seven header families and the shunt are Extended.** 2.54 mm 1×2, 1×3, 1×4 and 1×10, JST XH 2-, 3-, 4- and 10-way, and the 2.0 mm PH 5- and 9-way were read as Extended; the 1.95 mm 4-way was not found. No Basic or Preferred header, and no Basic or Preferred 2512 shunt in 241 rows, was found. The division's assumption A13 (`controller-board-division.md`, every header type and the shunt are Extended) is therefore confirmed as a reading, and the division record now carries the class as read, with its date.
+- **The division's earlier count of 18 omitted the 120 kΩ resistor** (C5126146, Extended), which this estimate counts; the division record now counts 19 unique Extended types, 5 placed by the manufacturer and 14 fitted by the owner, as this estimate does.
 
 **Parts read, all 2026-10-25** (stock and smallest-break unit price in USD; every one Extended, none Basic or Preferred):
 
@@ -268,7 +269,8 @@ Read on 2026-10-25 from the same library search service as § Sources read, one 
 | C108051 | LTV-814S-TA1-A | Extended | 11 589 | 0.1362 | SMD-4P |
 | C3131 | 5 × 20 mm fuse holder XC-7 | Extended | 89 099 | 0.0847 | plug-in |
 | C3130 | 5 × 20 mm fuse clip | Extended | 194 084 | 0.0326 | plug-in, 4.8 mm |
-| C20626100 | BTC-3-PCB485005D, 6.3 mm tab | Extended | 4 746 | 0.0351 | plug-in |
+| C20626100 | BTC-3-PCB485005D, 4.8 × 0.5 mm tab (replaced) | Extended | 4 746 | 0.0351 | plug-in |
+| C20626104 | BTC-3-PCB634908T, 6.3 × 0.8 mm tab (read 2026-10-26) | Extended | 14 453 | 0.0374 | plug-in |
 | C5126146 | FRC2512F1203TS, 120 kΩ 1 W 200 V | Extended | 19 820 | 0.0261 | 2512 |
 | C9100 | BTA16-600BRG | Extended | 10 230 | 0.8445 | TO-220AB |
 | C10797 | MOC3083 | Extended | 9 592 | 0.2907 | DIP-6 |
@@ -301,7 +303,7 @@ The catalogue lists JST XH at 2.5 mm pitch, and this table takes the catalogue's
 | Zero-cross opto-triac driver | MOC3063, MOC3052, MOC3083, MOC3023 | 43 | none. Extended: C77950 MOC3063S-TA1, 59 581, 0.2154; C6171201 MOC3083M, 3 252, 0.2517 |
 | 600 V triac, DPAK or TO-220 | BTA16, BTA204, triac, triac 600V | 40 | none. Extended: C256464 BTA204S-600D,118, 1 640, 0.8543 |
 | 5 × 20 mm fuse holder or clip | fuse holder, clip and holder keywords | 150 (53 matches) | none. Extended: C717030 PTF-77, 2-piece holder, 100 855, 0.1748 |
-| 6.3 mm faston PCB tab | faston and tab keywords | 40 | none. Only candidate C20626100, Extended |
+| 6.3 mm faston PCB tab | faston and tab keywords | 40 | none. The family C20626100 to C20626104, all Extended; C20626104 is the one whose drawing gives a 6.3 mm, 0.8 mm blade, and it is taken (read 2026-10-26) |
 | 120 kΩ resistor, 0603 | 120k 1% | not counted | Basic: C25808, 1 166 788, 0.0015 (100 mW, 75 V) |
 | 120 kΩ resistor, 0805 | 120k 1% | not counted | Preferred: C17436, `expand` with the flag, 123 353, 0.0035 (125 mW, 150 V) |
 | 120 kΩ resistor, 1206 | 120k 1% | 151 | none |
@@ -350,39 +352,39 @@ The basis is 0.633 kg: the through-hole parts are not on the manufacturer's asse
 
 The calculator also lists shipping on the builder's own DHL or UPS account at 2.00 USD at every weight. That is a charge for handing the parcel to the builder's carrier account, with the carrier's own charge billed to the builder separately and not quoted, so it is not taken as the cheapest quoted method.
 
-**The cheapest method at the 0.7 kg step is Global Standard Direct Line, 11.93 USD** (UPS Worldwide Express Saver is cheapest from 0.9 kg). Shipping, **11.93 USD**. If the manufacturer ships the two orders apart, the wall board's parcel of about 0.19 kg adds up to 9.62 USD (Global Standard Direct Line at 0.5 kg), which is not counted. The JLCONE application's special shipping rates are unmeasured (`docs/board-manufacturer-jlcpcb.md` § Shipping). Shipping is shared between the two orders in proportion to their goods, 117.24 and 6.86 of 124.10: main board 11.93 × 117.24 / 124.10 = 11.27, wall board 0.66. The owner-sourced assembly has no shipping.
+**The cheapest method at the 0.7 kg step is Global Standard Direct Line, 11.93 USD** (UPS Worldwide Express Saver is cheapest from 0.9 kg). Shipping, **11.93 USD**. If the manufacturer ships the two orders apart, the wall board's parcel of about 0.19 kg adds up to 9.62 USD (Global Standard Direct Line at 0.5 kg), which is not counted. The JLCONE application's special shipping rates are unmeasured (`docs/board-manufacturer-jlcpcb.md` § Shipping). Shipping is shared between the two orders in proportion to their goods, 117.27 and 6.88 of 124.15: main board 11.93 × 117.27 / 124.15 = 11.27, wall board 0.66. The owner-sourced assembly has no shipping.
 
 ## Import tax
 
-An estimate, counted in the total. **Basis:** the builder is in Australia, whose goods and services tax on imported goods is charged at 10 % (**an estimate**: the rate is stated from the statute, not read from a page, the pages tried returning HTTP 404). It is applied to the goods and the shipping together, the value on which an importer pays it: 0.10 × (124.10 + 11.93) = **13.60 USD**, shared by goods plus shipping: main board 0.10 × (117.24 + 11.27) = 12.85, wall board 0.10 × (6.86 + 0.66) = 0.75. Shipping and tax together are 11.93 + 13.60 = 25.53 USD on 124.10 of goods, 0.2057 of the goods. Customs duty is not counted (estimate: none is assumed on consignments of this kind and size; the builder's national tariff is read at re-pricing). Whether the manufacturer collects the tax at checkout is unmeasured; the line counts it once either way. The owner-sourced steam-path assembly is priced at Australian retail prices and carries no separate tax line.
+An estimate, counted in the total. **Basis:** the builder is in Australia, whose goods and services tax on imported goods is charged at 10 % (**an estimate**: the rate is stated from the statute, not read from a page, the pages tried returning HTTP 404). It is applied to the goods and the shipping together, the value on which an importer pays it: 0.10 × (124.15 + 11.93) = **13.61 USD**, shared by goods plus shipping (the shares are rounded and add to 13.60): main board 0.10 × (117.27 + 11.27) = 12.85, wall board 0.10 × (6.88 + 0.66) = 0.75. Shipping and tax together are 11.93 + 13.61 = 25.54 USD on 124.15 of goods, 0.2057 of the goods. Customs duty is not counted (estimate: none is assumed on consignments of this kind and size; the builder's national tariff is read at re-pricing). Whether the manufacturer collects the tax at checkout is unmeasured; the line counts it once either way. The owner-sourced steam-path assembly is priced at Australian retail prices and carries no separate tax line.
 
 ## Second spin
 
 The owner does not intend a second spin: the project's purpose is to get the boards right in one spin by comprehensive analysis and model review (owner statement, 2026-10-26). The estimate prices one anyway because the cost criterion it answers asks for "a likely second spin" to be covered, and by the owner's answer of 2026-10-26 it sits outside the declared figure. A second spin is the likely cost of correcting a board after bring-up. Estimate; the basis is each board's kind:
 
-- **Main board:** a full reorder of fabrication, the surface-mount assembly and parts at the first order's configuration (the on-board entry parts included), with one set of hand-fitted parts bought again: 95.72 + 21.52 = 117.24 USD. It carries the first controller board of the project, the mains barrier and the interlock; nothing on it is reusable once its copper changes.
-- **Wall board:** its fabrication and one set of parts again, fitted by the owner by hand: 4.00 + 2.86 = 6.86 USD. It is simple, all through-hole and has no sensing, so a respin changes copper and not parts (`controller-board-division.md` § The heater wall board).
+- **Main board:** a full reorder of fabrication, the surface-mount assembly and parts at the first order's configuration (the on-board entry parts included), with one set of hand-fitted parts bought again: 95.72 + 21.55 = 117.27 USD. It carries the first controller board of the project, the mains barrier and the interlock; nothing on it is reusable once its copper changes.
+- **Wall board:** its fabrication and one set of parts again, fitted by the owner by hand: 4.00 + 2.88 = 6.88 USD. It is simple, all through-hole and has no sensing, so a respin changes copper and not parts (`controller-board-division.md` § The heater wall board).
 - **Steam-path assembly, owner-sourced:** the transducer bought again, 21.09 USD (30.00 AUD × 0.70296), because its withstand rating is absent and a first choice may not be fittable.
 - **Mains entry:** nothing beyond the main board's reorder, which includes the entry parts; the appliance-inlet alternative rebuys its inlet filter, 8.08 USD (11.50 AUD × 0.70296), because its coupler rating is the one thing unverified (`controller-board-design-constraints.md` § Mains inlet filter, *Rating*).
 
-The two reorders ship in one parcel at the same 0.7 kg step, 11.93 USD, shared 11.27 and 0.66, and are taxed at the same 10 %: 0.10 × (124.10 + 11.93) = 13.60, shared 12.85 and 0.75. If the hand-fitted set is shipped apart, in its own parcel, the second spin adds the same 9.62 USD (Global Standard Direct Line at the 0.5 kg step) plus 10 % tax, 9.62 + 0.96 = 10.58 USD, as the first order's ship-apart case.
+The two reorders ship in one parcel at the same 0.7 kg step, 11.93 USD, shared 11.27 and 0.66, and are taxed at the same 10 %: 0.10 × (124.15 + 11.93) = 13.61, shared 12.85 and 0.75. If the hand-fitted set is shipped apart, in its own parcel, the second spin adds the same 9.62 USD (Global Standard Direct Line at the 0.5 kg step) plus 10 % tax, 9.62 + 0.96 = 10.58 USD, as the first order's ship-apart case.
 
 ## The estimate by board and assembly
 
 | Board or assembly | Fabrication | Assembly at the manufacturer | Parts at the manufacturer | Parts the owner fits (one set) | Shipping share | Import tax | **First order** | **Second spin** |
 |---|---|---|---|---|---|---|---|---|
-| Main board, with the mains-entry parts | 35.19 | 26.98 | 33.55 | 21.52 | 11.27 | 12.85 | **141.36** | **141.36** |
-| Heater wall board | 4.00 | none | none | 2.86 | 0.66 | 0.75 | **8.27** | **8.27** |
-| **The board orders** | | | | | | | **149.63** | **149.63** |
+| Main board, with the mains-entry parts | 35.19 | 26.98 | 33.55 | 21.55 | 11.27 | 12.85 | **141.39** | **141.39** |
+| Heater wall board | 4.00 | none | none | 2.88 | 0.66 | 0.75 | **8.29** | **8.29** |
+| **The board orders** | | | | | | | **149.68** | **149.68** |
 | Steam-path assembly, owner-sourced | none | none | none | 46.40 | none | in the price | **46.40** | **21.09** |
-| **The board orders and the owner-sourced assembly** | | | | | | | **196.03** | **170.72** |
+| **The board orders and the owner-sourced assembly** | | | | | | | **196.08** | **170.77** |
 
-The hand-fitted set with its shipping and tax share is 24.38 + 2.34 + 2.67 = 29.39 USD (24.38 = 21.52 + 2.86; shipping 11.93 × 24.38 / 124.10 = 2.34; tax 0.10 × (24.38 + 2.34) = 2.67); the rest of the board orders, what the manufacturer's order places, is 149.63 − 29.39 = 120.24 USD, shared by the two machines the two assembled boards serve. **Per machine** is that 120.24 / 2 = 60.12 plus the one set in full, 29.39, plus the owner-sourced assembly in full where it is counted:
+The hand-fitted set with its shipping and tax share is 24.43 + 2.35 + 2.68 = 29.46 USD (24.43 = 21.55 + 2.88; shipping 11.93 × 24.43 / 124.15 = 2.35; tax 0.10 × (24.43 + 2.35) = 2.68); the rest of the board orders, what the manufacturer's order places, is 149.68 − 29.46 = 120.22 USD, shared by the two machines the two assembled boards serve. **Per machine** is that 120.22 / 2 = 60.11 plus the one set in full, 29.46, plus the owner-sourced assembly in full where it is counted:
 
 | | First order | First order and likely second spin together |
 |---|---|---|
-| **The board orders** | 149.63; **89.51 a machine** (60.12 + 29.39) | 149.63 + 149.63 = **299.26**; **179.02 a machine** (89.51 + 89.51) |
-| **The board orders and the owner-sourced assembly** | 196.03; **135.91 a machine** (89.51 + 46.40) | 196.03 + 170.72 = **366.75**; **246.51 a machine** (135.91 + 89.51 + 21.09) |
+| **The board orders** | 149.68; **89.57 a machine** (60.11 + 29.46) | 149.68 + 149.68 = **299.36**; **179.14 a machine** (89.57 + 89.57) |
+| **The board orders and the owner-sourced assembly** | 196.08; **135.97 a machine** (89.57 + 46.40) | 196.08 + 170.77 = **366.85**; **246.63 a machine** (135.97 + 89.57 + 21.09) |
 
 Each figure above cites its source in the section that gives it. The figures that are estimates, and not reads, are: the main board's fabrication (inferred), the machine-placed joint count, the shunt, the headers, the unlisted passives, the wall board's resistors and header, the parts' mass, the chargeable weight and its 0.7 kg step, the import tax, the owner-sourced assembly and the alternative inlet assembly, and the second spin.
 
@@ -396,18 +398,18 @@ Each figure above cites its source in the section that gives it. The figures tha
 
 **What remains** is 250.00 − 0.00 = **250.00 USD**.
 
-**The weighing.** The board orders, first order, are **149.63 USD** (89.51 a machine), which is **100.37 USD inside** the 250.00 that remains. The total does not exceed what remains, so the weighing is met: nothing is changed to bring it inside, and the owner is not asked to revisit the figure.
+**The weighing.** The board orders, first order, are **149.68 USD** (89.57 a machine), which is **100.32 USD inside** the 250.00 that remains. The total does not exceed what remains, so the weighing is met: nothing is changed to bring it inside, and the owner is not asked to revisit the figure.
 
 **For information, outside the declared figure by the owner's answers.** These are not counted against the 250.00; they show what the total would be if the owner later chose to count them.
 
 | Total | USD (a machine) | Against 250.00, if counted |
 |---|---|---|
 | The owner-sourced steam-path assembly alone, estimate | 46.40 | not counted |
-| The board orders and the owner-sourced assembly, first order | 196.03 (135.91) | 53.97 inside |
-| The board orders, first order and likely second spin | 299.26 (179.02) | 49.26 over |
-| The board orders and the owner-sourced assembly, first order and likely second spin | 366.75 (246.51) | 116.75 over |
+| The board orders and the owner-sourced assembly, first order | 196.08 (135.97) | 53.92 inside |
+| The board orders, first order and likely second spin | 299.36 (179.14) | 49.36 over |
+| The board orders and the owner-sourced assembly, first order and likely second spin | 366.85 (246.63) | 116.85 over |
 
-**If the hand-fitted set ships apart.** The parcel is priced by the rule of § Shipping, the cheapest quoted method at the chargeable weight: at the 0.5 kg step that is Global Standard Direct Line, 9.62 USD. Taken as an addition to the 11.93 USD, with 10 % tax on it (an estimate with that basis), the first order rises by 9.62 + 0.96 = 10.58 USD: the board orders to 149.63 + 10.58 = 160.21, still 89.79 inside. The set's mass is about 0.19 kg (0.170 + 0.010 + 0.010), which takes the calculator's 0.5 kg step; the boards' own parcel, 0.443 kg, would be lighter and might price lower, so this is the upper figure.
+**If the hand-fitted set ships apart.** The parcel is priced by the rule of § Shipping, the cheapest quoted method at the chargeable weight: at the 0.5 kg step that is Global Standard Direct Line, 9.62 USD. Taken as an addition to the 11.93 USD, with 10 % tax on it (an estimate with that basis), the first order rises by 9.62 + 0.96 = 10.58 USD: the board orders to 149.68 + 10.58 = 160.26, still 89.74 inside. The set's mass is about 0.19 kg (0.170 + 0.010 + 0.010), which takes the calculator's 0.5 kg step; the boards' own parcel, 0.443 kg, would be lighter and might price lower, so this is the upper figure.
 
 **Savings available, for information.** Neither is applied in the figures above. Each is the owner's to take if more headroom is ever wanted; savings before tax, with the tax following at 10 %:
 
