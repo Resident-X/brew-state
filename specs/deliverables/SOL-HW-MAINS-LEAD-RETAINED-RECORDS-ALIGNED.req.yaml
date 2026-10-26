@@ -19,3 +19,7 @@ links:
     type: justified-by
   - target: SOL-HW-BOARD-DIVISION-AND-FLOORPLAN
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: 11b0dd738ee274192d09bf18015e99f1fbcbf3c99b658d49a01cc10c00e6dabb
+  gating_profile: ""
