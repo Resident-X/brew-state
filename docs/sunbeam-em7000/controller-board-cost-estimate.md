@@ -1,6 +1,6 @@
 # Controller boards: block-level cost estimate
 
-What the four things this machine's retrofit has made, bought or had assembled cost, estimated from the manufacturer's charges and weighed against what remains of the declared spend before any board is designed in detail. The four are the main board, the heater wall board, the mains-entry assembly and the steam-path assembly, the division of `controller-board-division.md` § Every function has one owner. In the configuration priced the mains entry is a set of parts on the main board (§ Mains entry) and the steam-path assembly is sourced by the owner, outside the board orders (§ Steam-path assembly, owner-sourced), so every total is shown without that assembly (*the board orders*) and with it (*the board orders and the owner-sourced assembly*). This is for the machine in `docs/sunbeam-em7000/` and its builder's country (Australia), so it lives in the machine's folder; a builder of another machine, or in another country, re-prices it by the steps in § Re-pricing it in another market.
+What the four things this machine's retrofit has made, bought or had assembled cost, estimated from the manufacturer's charges and weighed against what remains of the declared spend before any board is designed in detail. The four are the main board, the heater wall board, the mains-entry assembly and the steam-path assembly, the division of `controller-board-division.md` § Every function has one owner. In the configuration priced the mains entry is a set of parts on the main board (§ Mains entry) and the steam-path assembly is sourced by the owner, outside the board orders (§ Steam-path assembly, owner-sourced), so every total is shown without that assembly (*the board orders*, which is what the declared spend counts) and with it (*the board orders and the owner-sourced assembly*, for information). This is for the machine in `docs/sunbeam-em7000/` and its builder's country (Australia), so it lives in the machine's folder; a builder of another machine, or in another country, re-prices it by the steps in § Re-pricing it in another market.
 
 **This is a derived view, and its sources govern.** Every figure is read off a source named beside it with the date it was read, or is marked as an estimate with its basis. The manufacturer's limits and charges are `docs/board-manufacturer-jlcpcb.md`; the parts, their counts and the shipping destination are `controller-board-design-constraints.md` § Manufacturer stock and price, per channel; the boards, their outlines, layer counts and hand-fitted parts are `controller-board-division.md`; the declared figure is `component-specification.md`. Where this file and one of those disagree, the source is right and this file is corrected. A figure that has moved is replaced here, not annotated.
 
@@ -28,7 +28,9 @@ The grades are those of `controller-board-design-constraints.md` § Evidence gra
   2. *Owner-sourced non-board items.* The owner sources the non-board items: the steam-path assembly (pressure transducer, tee, drop-leg tube, thread adaptor). It is not on the manufacturer's order and not in the board orders' total; it stays in the estimate as a labelled line, because the division names it and an assembly the division names may not be left out.
   3. *A stated preference on the mains harness, not a decision.* The owner's stated ideal is not to change the mains harness: the supply cord goes straight to the main board's mains tabs 2 and 3 as on the original board, with no appliance inlet. This record prices that variant (§ Mains entry). It is a preference: the division record's D16 stays pending an EMC judgement and a decision amendment, and the appliance-inlet variant, priced at 13.71 USD, is the alternative if the owner prefers it.
   4. *The heater wall board stays a self-contained carrier*: the opto-triacs, their gate resistors, the three-way header, the varistors and the blade terminals, with the triacs, by the owner's stated intent, standing on a right-angle heat-spreader bracket that is fixed to the board and bolted to the wall (a cut and bent plate the owner makes or sources: it is not in the catalogue and is not priced here; a few dollars at most, an estimate whose basis is the owner's own fabrication); the triacs past the board's short edge, or wired at a distance, are the other forms, weighed with it by the maintenance item SOL-HW-BOARD-FOUR-POINT-FIXING-RESTORED, its criterion C5. The heater parts stay off the main board. If the edge form is chosen the board is about 10 mm shorter, in the same price band. Its pricing is unchanged: fabrication 4.00 USD, one set of parts.
-  5. *Open questions, not answered here*: whether the declared 250 USD excludes the owner-sourced items, and whether it counts a likely second spin (§ Weighed against the declared spend).
+- **The owner's answers of 2026-10-26, recorded as the owner's.** The owner, David Baker, answered on 2026-10-26 two questions about what the declared 250 USD counts:
+  1. *The declared 250 USD excludes the items the owner sources*, the steam-path assembly (pressure transducer, tee, drop-leg tube, thread adaptor). They are priced here for completeness and are not counted against the declared figure.
+  2. *The declared 250 USD does not count a likely second spin.* It covers the first order of the board orders only.
 - **Shipping.** To Australia, by the cheapest method the manufacturer's shipping calculator quotes at the order's chargeable weight, with the other methods listed (§ Shipping). One parcel, the hand-fitted parts assumed ordered into it. The owner-sourced assembly is not in the parcel and has no shipping line.
 - **Import tax.** An estimated line with its stated basis, counted in the total, because it is spend the build adds (§ Import tax).
 - **Parts at the build quantity.** For the machine-placed parts, one machine's count of the part times 2 (`controller-board-design-constraints.md` § Manufacturer stock and price, per channel, *Prices, breaks and the build quantity*); for the hand-fitted parts, one machine's count (one set). Each is raised to the part's minimum quantity where the library service gives one (§ The two per-part numbers, § Parts).
@@ -356,7 +358,7 @@ An estimate, counted in the total. **Basis:** the builder is in Australia, whose
 
 ## Second spin
 
-A second spin is the likely cost of correcting a board after bring-up. Estimate; the basis is each board's kind:
+The owner does not intend a second spin: the project's purpose is to get the boards right in one spin by comprehensive analysis and model review (owner statement, 2026-10-26). The estimate prices one anyway because the cost criterion it answers asks for "a likely second spin" to be covered, and by the owner's answer of 2026-10-26 it sits outside the declared figure. A second spin is the likely cost of correcting a board after bring-up. Estimate; the basis is each board's kind:
 
 - **Main board:** a full reorder of fabrication, the surface-mount assembly and parts at the first order's configuration (the on-board entry parts included), with one set of hand-fitted parts bought again: 95.72 + 21.52 = 117.24 USD. It carries the first controller board of the project, the mains barrier and the interlock; nothing on it is reusable once its copper changes.
 - **Wall board:** its fabrication and one set of parts again, fitted by the owner by hand: 4.00 + 2.86 = 6.86 USD. It is simple, all through-hole and has no sensing, so a respin changes copper and not parts (`controller-board-division.md` § The heater wall board).
@@ -386,40 +388,36 @@ Each figure above cites its source in the section that gives it. The figures tha
 
 ## Weighed against the declared spend
 
-**The declared figure** is **250 USD**, written in `component-specification.md` § The component list, *Declared spend: 250 USD*, with its running total in § Against the declared figure, which this estimate brings current. A figure is declared there; the weighing proceeds.
+**The declared figure** is **250 USD**, written in `component-specification.md` § The component list, *Declared spend: 250 USD*, with its running total in § Against the declared figure, which this estimate brings current. The figure is the owner's and is not changed here.
 
-**The count the declared spend takes** is what the owner pays for the minimum order, 5 fabricated and 2 assembled boards, one hand-fitted set, with the cost per machine beside it (§ What is settled before pricing).
+**What the declared figure counts.** The weighing counts the board orders: the manufacturer's orders for the two boards, the one set of hand-fitted parts including the on-board mains-entry parts (the owner's statements of 2026-10-25), shipping and import tax (the settled terms of § What is settled before pricing). By the owner's answers of 2026-10-26 the declared figure excludes the owner-sourced steam-path assembly and does not count a likely second spin. The count the declared spend takes is what the owner pays for the minimum order, 5 fabricated and 2 assembled boards, one hand-fitted set, with the cost per machine beside it.
 
 **Spend to date.** None is bought (`controller-board-design-constraints.md` § Purchases ahead of verification states none), so spend to date is 0. The controller's one-machine figure the specification carried as decided-not-yet-bought is a part of the main board's lines and is replaced by them, not added to them.
 
-**What remains** is 250.00 − 0.00 = **250.00 USD**. Two questions about the declared figure are the owner's and are not answered here (§ What is settled before pricing, statement 5): whether it excludes the owner-sourced items, and whether it counts a likely second spin. So the weighing shows each total, with and without the owner-sourced assembly and with and without the likely second spin:
+**What remains** is 250.00 − 0.00 = **250.00 USD**.
 
-| Total | USD (a machine) | Against 250.00 |
+**The weighing.** The board orders, first order, are **149.63 USD** (89.51 a machine), which is **100.37 USD inside** the 250.00 that remains. The total does not exceed what remains, so the weighing is met: nothing is changed to bring it inside, and the owner is not asked to revisit the figure.
+
+**For information, outside the declared figure by the owner's answers.** These are not counted against the 250.00; they show what the total would be if the owner later chose to count them.
+
+| Total | USD (a machine) | Against 250.00, if counted |
 |---|---|---|
-| The board orders, first order | 149.63 (89.51) | **100.37 inside** |
-| The board orders and the owner-sourced assembly, first order | 196.03 (135.91) | **53.97 inside** |
-| The board orders, first order and likely second spin | 299.26 (179.02) | **49.26 over** |
-| The board orders and the owner-sourced assembly, first order and likely second spin | 366.75 (246.51) | **116.75 over** |
+| The owner-sourced steam-path assembly alone, estimate | 46.40 | not counted |
+| The board orders and the owner-sourced assembly, first order | 196.03 (135.91) | 53.97 inside |
+| The board orders, first order and likely second spin | 299.26 (179.02) | 49.26 over |
+| The board orders and the owner-sourced assembly, first order and likely second spin | 366.75 (246.51) | 116.75 over |
 
-**Both first-order totals are inside what remains. Both totals with the likely second spin are over it.** `SOL-HW-BOARD-COST-ESTIMATED.C2` and its leaf are **unmet until the owner answers** the two questions below.
+**If the hand-fitted set ships apart.** The parcel is priced by the rule of § Shipping, the cheapest quoted method at the chargeable weight: at the 0.5 kg step that is Global Standard Direct Line, 9.62 USD. Taken as an addition to the 11.93 USD, with 10 % tax on it (an estimate with that basis), the first order rises by 9.62 + 0.96 = 10.58 USD: the board orders to 149.63 + 10.58 = 160.21, still 89.79 inside. The set's mass is about 0.19 kg (0.170 + 0.010 + 0.010), which takes the calculator's 0.5 kg step; the boards' own parcel, 0.443 kg, would be lighter and might price lower, so this is the upper figure.
 
-**If the hand-fitted set ships apart.** The parcel is priced by the rule of § Shipping, the cheapest quoted method at the chargeable weight: at the 0.5 kg step that is Global Standard Direct Line, 9.62 USD. Taken as an addition to the 11.93 USD, with 10 % tax on it (an estimate with that basis), each first order rises by 9.62 + 0.96 = 10.58 USD: the board orders to 149.63 + 10.58 = 160.21 (89.79 inside), the board orders and the owner-sourced assembly to 196.03 + 10.58 = 206.61 (43.39 inside). The set's mass is about 0.19 kg (0.170 + 0.010 + 0.010), which takes the calculator's 0.5 kg step; the boards' own parcel, 0.443 kg, would be lighter and might price lower, so these are the upper figures. With the second spin, which adds the same 10.58 USD, the totals are 299.26 + 2 × 10.58 = 320.42 (70.42 over) and 366.75 + 2 × 10.58 = 387.91 (137.91 over).
-
-**What is changed to bring the second-spin totals inside.** None is applied in the figures above. Each is the owner's; savings before tax, with the tax following at 10 %:
+**Savings available, for information.** Neither is applied in the figures above. Each is the owner's to take if more headroom is ever wanted; savings before tax, with the tax following at 10 %:
 
 | Change | Rests on | Saves before tax, each manufacturer order | Working |
 |---|---|---|---|
 | The further savings found by the 2026-10-25 catalogue read: the Basic DC-input optocoupler and the 120 kΩ Preferred chain | The design checks of § What the library class allows | 6.29 | 3.29 + 3.0; the header and fuse-holder options save nothing at the manufacturer |
 | The main board on 2 layers with a pour, the division's stated fallback | `controller-board-division.md` § Layer counts | 23.16 | 35.19 − 12.03; loses the inner ground plane the owner favours under the sensing |
 
-With both, each order is 1.10 × 29.45 = 32.40 USD less. The board orders then total 117.23 for the first order and 117.23 for the second spin, **234.46 together, 15.54 inside**. The board orders and the owner-sourced assembly total 163.63 for the first order and 138.32 for the second spin (170.72 − 32.40), **301.95 together, 51.95 over** even with every lever. 2 oz copper (D13) adds 36.40 USD at two layers in the lowest band and is not drawn.
+With both, each order is 1.10 × 29.45 = 32.40 USD less. 2 oz copper (D13) adds 36.40 USD at two layers in the lowest band and is not drawn.
 
-**The owner is asked two questions.** They are the ones that decide the overrun; the figure is the owner's alone to change, and nothing here changes it.
-
-1. *Does the declared 250 USD exclude the owner-sourced items, the steam-path assembly (46.40 USD, 21.09 USD more at a second spin)?*
-2. *Does the declared 250 USD count a likely second spin?*
-
-What each answer leaves: if the spin is **not** counted, both first-order totals are inside (100.37 or 53.97 USD to spare), the owner decides whether the second spin is counted; `SOL-HW-BOARD-COST-ESTIMATED.C2` and its leaf stay unmet until the owner answers. If the spin **is** counted and the owner-sourced items are **excluded**, the board orders with the spin are 299.26 USD, 49.26 over; the two levers above bring them to 234.46, 15.54 inside, at the cost of the main board's inner ground plane and two design checks, or the figure rises by at least 49.26. If the spin is counted and the owner-sourced items are **included**, the total is 366.75 USD, 116.75 over, and 51.95 over with both levers: the figure is to be raised by at least that, or the second spin is left out of what is counted. **`SOL-HW-BOARD-COST-ESTIMATED.C2` and its leaf stay unmet until the owner answers.**
 
 ## Marks ended and re-pointed
 

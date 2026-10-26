@@ -324,7 +324,8 @@ The controller is the one row so far closed, by § The part selected; no other r
 document.
 
 **Declared spend: 250 USD**, covering what the retrofit adds and excluding the machine it is added
-to. This is the figure `REQ-COST-DISCIPLINE-001.C5` and `DEL-COMPONENT-SPECIFICATION.C5` require to
+to, and, by the owner's answers of 2026-10-26, excluding what the owner sources himself (the
+steam-path assembly) and not counting a second spin. This is the figure `REQ-COST-DISCIPLINE-001.C5` and `DEL-COMPONENT-SPECIFICATION.C5` require to
 be written down rather than held in anyone's head, and it is the figure an adopter replaces with
 their own — currency, market and what they paid for their machine are all theirs.
 `REQ-COST-DISCIPLINE-001.C6` asks that the running total be *weighed* against it as decisions land,
@@ -379,16 +380,12 @@ chosen; it is not predicted here.
 | Salvaged to date | 0 |
 | **Declared spend** | **250** |
 | **Remaining, against what is bought** | **250.00** |
-| Block-level estimate, the board orders (the main board with the mains-entry parts and the heater wall board; the controller's 24.43 inside it), first order | 149.63 (89.51 a machine), on the owner's decision of 2026-10-25 to fit one set of the through-hole parts by hand and have the manufacturer assemble only the surface-mount parts |
+| Block-level estimate, the board orders (the main board with the mains-entry parts and the heater wall board; the controller's 24.43 inside it), first order: what the declared spend counts | 149.63 (89.51 a machine), on the owner's decision of 2026-10-25 to fit one set of the through-hole parts by hand and have the manufacturer assemble only the surface-mount parts |
 | **Board orders, first order, against what remains** | **100.37 inside** |
-| Board orders and the owner-sourced steam-path assembly, first order | 196.03 (135.91 a machine) |
-| **With the owner-sourced assembly, first order, against what remains** | **53.97 inside** |
-| Board orders with the likely second spin | 299.26 (179.02 a machine) |
-| **With the second spin, against what remains** | **49.26 over** |
-| Board orders and the owner-sourced assembly with the likely second spin | 366.75 (246.51 a machine) |
-| **With both, against what remains** | **116.75 over** |
+| For information, outside the declared figure: the owner-sourced steam-path assembly | 46.40; the board orders and it, first order, 196.03 (135.91 a machine), 53.97 inside |
+| For information, outside the declared figure: a likely second spin | board orders with it 299.26 (179.02 a machine), 49.26 over; with the steam rebuy as well, 366.75 (246.51 a machine), 116.75 over |
 
-Nothing has been bought, so spend to date is 0 and 250.00 USD remains. The running total is the block-level estimate of `controller-board-cost-estimate.md`, which prices every board and off-board assembly the division names (the steam-path assembly as an owner-sourced line, shown apart) at its chosen outline and layer count (fabrication, assembly, parts, shipping, import tax and a likely second spin) and which replaces the 13.74 USD carried here before it for the controller alone, now inside the main board's parts. The count the declared spend takes is what the owner pays for the minimum order, 5 boards fabricated and 2 assembled for each board the manufacturer makes, with the cost per machine shown beside it. Both first-order totals are inside what remains and both totals with the likely second spin are over it, so the owner is asked whether the declared figure excludes the owner-sourced steam-path assembly and whether it counts a likely second spin (`controller-board-cost-estimate.md` § Weighed against the declared spend); the figure is the owner's alone to change and stays 250 USD until the owner answers, and `SOL-HW-BOARD-COST-ESTIMATED.C2` of the cost estimate and its leaf stay unmet until then. The machine carries no part serving the controller channel, so there is no reused part to depart from, and the controller is a catalogue part of a mainstream family; no other channel is decided yet, so no other departure from the reused-or-commodity
+Nothing has been bought, so spend to date is 0 and 250.00 USD remains. The running total is the block-level estimate of `controller-board-cost-estimate.md`, which prices every board and off-board assembly the division names (the steam-path assembly as an owner-sourced line, shown apart) at its chosen outline and layer count (fabrication, assembly, parts, shipping, import tax and a likely second spin) and which replaces the 13.74 USD carried here before it for the controller alone, now inside the main board's parts. The count the declared spend takes is what the owner pays for the minimum order, 5 boards fabricated and 2 assembled for each board the manufacturer makes, with the cost per machine shown beside it. By the owner's answers of 2026-10-26 the declared spend counts the board orders: it excludes the items the owner sources (the steam-path assembly) and does not count a likely second spin. The board orders, first order, are 149.63 USD, 100.37 inside what remains, so the weighing is met and the figure stays 250 USD (`controller-board-cost-estimate.md` § Weighed against the declared spend). The owner-sourced assembly and a second spin are shown for information only. The machine carries no part serving the controller channel, so there is no reused part to depart from, and the controller is a catalogue part of a mainstream family; no other channel is decided yet, so no other departure from the reused-or-commodity
 default is yet owed a justification under `REQ-COST-DISCIPLINE-001.C2`. The total is kept running as
 rows close because `REQ-COST-DISCIPLINE-001.C6` judges a channel decided late against what is left,
 not against the headroom the first channel enjoyed.
