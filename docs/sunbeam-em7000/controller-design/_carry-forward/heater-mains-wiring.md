@@ -35,7 +35,7 @@ Old files (in `controller-selection-working/`) refreshed into `controller-design
 | Carrier / fitting detail | NEW in this file (summarised from the BOM carrier, terminal, fuse and capacitor rows): pin spacings, 4-5 mm gap, T2A fuse, 47-100 µF + 100 nF, 5.08 mm 300 V terminals, coat not a substitute for creepage |
 | Panel switch not fitted | CARRIED UNCHANGED. UPDATED: "eight pushbuttons and ~10 LED elements" replaced by the corrected panel inventory from `reference-machine.md` (ten tact switches in five pairs, eight indicators, three ground-switched inputs); `SOL-CHANNEL-ENUMERATION-CORRECTED.C4` kept with a to-confirm note |
 | Sourcing split | CARRIED UNCHANGED (added: no Mean Well from AliExpress) |
-| Open items | UPDATED: IRM-05-5 derating item (struck through in the old file) dropped as resolved and folded into the supply section; FN9222 letters, thermal-fuse rating, hard-switch, MOV consumable, thermal placement conflict kept; FN9222 termination, IRM internal fuse, enclosure ambient, worst-case-draw sizing added |
+| Open items | UPDATED: IRM-05-5 derating item (struck through in the old file) dropped as resolved and folded into the supply section; FN9222 letters, thermal-fuse rating, hard-switch, MOV consumable, thermal placement conflict kept; FN9222 termination, IRM internal fuse, enclosure ambient, worst-case-draw sizing added *Superseded, kept as logged:* the FN9222 is not fitted; the owner's ruling (`DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`) retains the fixed mains lead. |
 | Graph gap | CARRIED UNCHANGED, with a note that the graph search was not repeated in this refresh |
 
 ## wiring-and-connectors.csv
@@ -59,13 +59,13 @@ No rows were dropped. The drain hose and PTFE drop-leg tube are plumbing and wer
 
 ## Inconsistencies found and not resolved (to confirm)
 
-1. **Worst-case draw versus the 10 A chain.** `reference-machine.md`: both elements about 9.3 A at 230 V, worst case with both pumps 9.95 A at 240 V and 10.5 A at 253 V. The T10A fuse, the FN9222 (10 A at 50 °C) and the WB1565 trunk (10 A) all sit at that figure, and the "8-15 A uncovered band" starts below it. D8 is Chosen and `REQ-POWER-BUDGET-001` plans within the budget, so left as is; adequacy at the top of the supply range, and in-enclosure derating of the cable, are to confirm.
+1. **Worst-case draw versus the 10 A chain.** `reference-machine.md`: both elements about 9.3 A at 230 V, worst case with both pumps 9.95 A at 240 V and 10.5 A at 253 V. The T10A fuse, the FN9222 (10 A at 50 °C) and the WB1565 trunk (10 A) all sit at that figure, and the "8-15 A uncovered band" starts below it. D8 is Chosen and `REQ-POWER-BUDGET-001` plans within the budget, so left as is; adequacy at the top of the supply range, and in-enclosure derating of the cable, are to confirm. *Superseded, kept as logged:* the FN9222 is not fitted; the owner's ruling (`DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`) retains the fixed mains lead.
    *Superseded 2026-10-13, kept as logged:* the supply and its worst case are now `reference-machine.md` § Supply and § Heating and load, and the 10 A filter and trunk described here were replaced by `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`. Read those, not this item, for current figures.
 2. **IRM-10-5 internal fuse.** Old text said T2A internal; the BOM says the spec sheets read show none. Kept as unconfirmed; the external T2A is retained. Confirm in the user manual.
 3. **OEM connector types and pitches** (panel, gauge, flow meter CZ1, NTC plugs) are recorded in neither `connector-pinouts.md` nor `reference-machine.md`. The new landing-connector rows have no part numbers. Panel pin-1 orientation and buzzer terminal order are also not established.
 4. **XDB401 and PT1000 probe connectors** are not recorded; PVC-class hookup wire and PVC mains flex have no stated temperature rating near the thermoblocks and 140 C-class valves.
 5. **Ferrules** for stranded conductors in the SSR, dimmer and PCB screw terminals are not required or specified by any input.
-6. **FN9222 termination type** (tabs or screws) is not in the inputs, so the trunk terminal on the filter side cannot be matched.
+6. **FN9222 termination type** (tabs or screws) is not in the inputs, so the trunk terminal on the filter side cannot be matched. *Superseded, kept as logged:* the FN9222 is not fitted; the owner's ruling (`DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`) retains the fixed mains lead.
 7. **Earth bonding conductor and chassis stud** not named in the inputs.
 8. **EARU SSR-40DA**: zero-cross type, package and dimensions unconfirmed (carried, load-bearing).
 9. **`SOL-CHANNEL-ENUMERATION-CORRECTED.C4`** cited by the old inlet note for an enumeration that `reference-machine.md` has since corrected (eight pushbuttons recorded as ten switches in five pairs); the node was not read in this task (read-only `show` was not used), so whether its text still matches is to confirm.
