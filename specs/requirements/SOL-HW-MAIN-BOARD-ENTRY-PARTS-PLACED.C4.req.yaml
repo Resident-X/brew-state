@@ -1,0 +1,12 @@
+id: SOL-HW-MAIN-BOARD-ENTRY-PARTS-PLACED.C4
+type: criterion
+title: The division record's check passes with the redrawn floorplan
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The record's check passes for the main board, the wall board, the tables and the selftest, and every statement of the entry parts' place agrees with the data. Out of scope: any change to the wall board's floorplan.
+links:
+  - target: SOL-HW-MAIN-BOARD-ENTRY-PARTS-PLACED
+    type: criterion-of

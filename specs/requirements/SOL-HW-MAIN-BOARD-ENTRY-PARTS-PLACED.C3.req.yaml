@@ -1,0 +1,12 @@
+id: SOL-HW-MAIN-BOARD-ENTRY-PARTS-PLACED.C3
+type: criterion
+title: The board outline and the block-level cost estimate are re-run with the entry parts placed
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Any change to the outline, the layer count or the cost is stated and weighed against what remains of the declared spend before detailed design, and the cost record's own check passes. Out of scope: re-pricing parts the estimate already prices.
+links:
+  - target: SOL-HW-MAIN-BOARD-ENTRY-PARTS-PLACED
+    type: criterion-of

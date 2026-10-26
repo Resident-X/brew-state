@@ -1,0 +1,12 @@
+id: SOL-HW-MAIN-BOARD-ENTRY-PARTS-PLACED.C1
+type: criterion
+title: The floorplan places the entry fuse holder and varistor at tabs 2 and 3 with the varistor against the fuse and downstream of it
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Each part is drawn at its footprint inside the mains zone, the fuse holder sized for a 10 A fuse, and the record's own distance checks hold with them. Out of scope: any suppression part, which is placed only if the main board design decides one is needed.
+links:
+  - target: SOL-HW-MAIN-BOARD-ENTRY-PARTS-PLACED
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-HW-MAIN-BOARD-ENTRY-PARTS-PLACED.C2
+type: criterion
+title: The taps from the lead to the module and the timing front end remain routable with the entry parts placed
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The record shows a route for each tap that keeps the signed mains separations to the placed parts. Out of scope: routing the board.
+links:
+  - target: SOL-HW-MAIN-BOARD-ENTRY-PARTS-PLACED
+    type: criterion-of
