@@ -3,9 +3,9 @@ type: deliverable
 category: solution
 title: Each board's block-level cost is estimated from the manufacturer's charges and weighed against what remains of the declared spend before detailed design
 status: active
-version: 1
+version: 2
 text: |-
-  Estimates each board's and off-board assembly's cost at its chosen outline and layer count: fabrication against the manufacturer's price breaks, assembly with its setup and loading fees, parts, shipping and a likely second spin. It weighs the total against what remains of the declared spend and ends the pending cost marks held against the estimate.
+  Estimates each board's and off-board assembly's cost at its chosen outline and layer count: fabrication against the manufacturer's price breaks, assembly with its setup and loading fees, parts, shipping and a likely second spin. It weighs the total against what remains of the declared spend and ends the pending cost marks held against the estimate. Settled for the estimate: figures are in US dollars, the manufacturer's billing currency and the declared figure's; the count the declared spend takes is what the owner pays for the minimum order (the fabrication minimum of boards and the assembled quantity), with the cost per machine shown beside it; shipping is to the builder's country by the cheapest method the manufacturer quotes at the order's chargeable weight, with the other methods listed; import tax is an estimated line with its stated basis, counted in the total, because it is spend the build adds.
 links:
   - target: DEL-HW-PARTITION-AND-FEASIBILITY.C6
     type: derives-from
@@ -19,6 +19,10 @@ links:
     type: justified-by
   - target: SOL-HW-BOARD-DIVISION-AND-FLOORPLAN
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: aa34fc6815960688c34b323faaf6bac18be5019f934d57e179817d65513a8670
+  gating_profile: ""
 design_question_answers:
   - answered_by: SOL-HW-BOARD-COST-ESTIMATED.C2
     class: served-statement

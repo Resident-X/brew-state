@@ -1,0 +1,12 @@
+id: SOL-HW-BOARD-FOUR-POINT-FIXING-RESTORED.C1
+type: criterion
+title: The board design record places a screw and hole at point 3 and holds mains copper the signed distance from every hole
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The board division and floorplan record draws a mounting hole at point 3, at the position the machine record gives it and sized as the other holes are, with its footprint drawn inside the 3.0 mm extent the record already requires of every hole. The board is held at all four of the machine's mounting points. Every mains rectangle keeps the distance the signed separation requires from the centre of every hole, point 3 included, and the record's own distance check shows each figure. The record no longer says that point 3 carries no screw, no hole or a boss the board rests on, and no longer attributes that to the owner. Out of scope: amending the signed 10.0 mm separation, which only the owner does, and measuring the machine's boss.
+links:
+  - target: SOL-HW-BOARD-FOUR-POINT-FIXING-RESTORED
+    type: criterion-of

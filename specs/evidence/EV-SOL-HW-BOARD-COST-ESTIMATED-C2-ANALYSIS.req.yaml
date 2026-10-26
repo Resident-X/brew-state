@@ -1,0 +1,16 @@
+id: EV-SOL-HW-BOARD-COST-ESTIMATED-C2-ANALYSIS
+type: evidence
+title: analysis evidence for SOL-HW-BOARD-COST-ESTIMATED.C2
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-10-26T12:09:43.01944Z"
+artifact:
+  kind: external
+  reference: docs/sunbeam-em7000/controller-board-cost-estimate.md § Weighed against the declared spend; docs/sunbeam-em7000/component-specification.md § Against the declared figure
+  artifact_version: e5344d33f7f86b5f3cc03430fb357c81507eb278
+attested_by: crun-5ee82c35725028d2
+links:
+  - target: SOL-HW-BOARD-COST-ESTIMATED.C2
+    type: satisfies

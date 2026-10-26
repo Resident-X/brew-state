@@ -1,0 +1,12 @@
+id: SOL-HW-BOARD-FOUR-POINT-FIXING-RESTORED.C5
+type: criterion
+title: Each wall-board triac can be fitted and removed without desoldering or re-bending a lead
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The heater wall board's record states the order in which the board and the two triacs are fitted to the machine and removed, and shows that each triac can be mounted to the metal wall and removed from it, with its mounting screw reached by a driver, without desoldering any joint and without re-bending a lead. The record shows the form it keeps and why it was chosen over the other forms it considered. Out of scope: the thermal analysis of the triacs' interface to the wall, which the assembly task does.
+links:
+  - target: SOL-HW-BOARD-FOUR-POINT-FIXING-RESTORED
+    type: criterion-of

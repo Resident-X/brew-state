@@ -1,0 +1,12 @@
+id: SOL-HW-BOARD-FOUR-POINT-FIXING-RESTORED.C4
+type: criterion
+title: The Extended part count and the classes behind it are the ones read, with every figure that follows recomputed
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The board division record's count of unique Extended part types on the main board includes every type the machine's circuitry fits, among them the 120 kΩ mains-sense resistor, and the record states the count it reaches. The class of each header type and of the neutral-return shunt is the class read in the manufacturer's catalogue with its read date, and no figure of the record still carries the assumed grade that those classes replace. Every figure that follows from the count or from those classes, among them the Extended-fee total, the saving from hand-fitting the through-hole types and the comparison between Economic and Standard assembly, is recomputed and replaced, not annotated. The pump opto-triac C8965 is a DIP-6 through-hole part, so it counts among the hand-fitted types: the main board has 5 machine-placed and 14 hand-fitted Extended types, and the record's figures say so. Out of scope: choosing between parts of different classes, which the board design tasks do.
+links:
+  - target: SOL-HW-BOARD-FOUR-POINT-FIXING-RESTORED
+    type: criterion-of
