@@ -238,7 +238,7 @@ what depended on it (`.C5`) starts from this row existing at all.
 | Mains entry chain (the machine's retained fixed mains lead, with no appliance inlet and no filter; 10 A slow-blow fuse on the active and a varistor across line and neutral downstream of the fuse, on the main board at tabs 2 and 3; trunk of at least 1.5 mm² rated above the fuse; a shared slow-blow fuse on the valve branches and a slow-blow fuse on each pump branch) | None — passive protection of everything downstream: the heater switches, the pump drives, the valve relays and the 5 V supply | 1 chain | **New** (`DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`) | **Yes** | `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`; `controller-board-function-forms.md` § Mains entry protection; the parts are in `controller-design/mains-inlet-protection.md` |
 
 Every thermostat and the thermal fuse above is **retained**, and that is the point of stating it.
-The pressure-path rows carry their own retention state; the brew relief and the inlet chain are
+The pressure-path rows carry their own retention state; the brew relief and the mains entry chain are
 added. These are the parts `OBL-PHYSICAL-CONFIGURATION-001.C3` is written about: inherited from a
 machine of unknown age and duty, characteristically failing closed while appearing intact, and —
 unlike every channel in the two tables above — not addressable by a controller that could notice.

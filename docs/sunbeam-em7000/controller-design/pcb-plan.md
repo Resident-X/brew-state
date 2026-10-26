@@ -8,7 +8,7 @@ Written 2026-10-12. This is a recommendation, not a decision (D21 in `decisions.
 
 ## Position
 
-A low-voltage-only prototype PCB, hand-soldered through-hole, rather than building the whole controller on perfboard. The board carries: the H743 module on four 1x22 female header pieces, the six sensor dividers (4.7 kOhm low-TCR, 100 nF), the ULN2003A breakout, the 74HCT541 (DIP-20 in a socket), the two 2N5401 stages with their resistors, the key-line series resistors, the connectors, and the pull-ups and pull-downs. The mains parts stay off-board and are wired by harness: the SSRs, the dimmers, the relay module, the IRM-10-5 on its carrier, the BL0942 modules and the inlet chain.
+A low-voltage-only prototype PCB, hand-soldered through-hole, rather than building the whole controller on perfboard. The board carries: the H743 module on four 1x22 female header pieces, the six sensor dividers (4.7 kOhm low-TCR, 100 nF), the ULN2003A breakout, the 74HCT541 (DIP-20 in a socket), the two 2N5401 stages with their resistors, the key-line series resistors, the connectors, and the pull-ups and pull-downs. The mains parts stay off-board and are wired by harness: the SSRs, the dimmers, the relay module, the IRM-10-5 on its carrier, the BL0942 modules and the mains entry chain.
 
 ## Why
 
