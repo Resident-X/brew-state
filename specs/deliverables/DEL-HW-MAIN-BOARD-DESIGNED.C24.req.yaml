@@ -1,0 +1,13 @@
+id: DEL-HW-MAIN-BOARD-DESIGNED.C24
+type: criterion
+title: Where suppression is needed it is carried on the main board
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The suppression parts, such as a line-to-line capacitor and a common-mode choke, are placed on the main board at the entry, with their ratings and separation judged against the signed basis; if they cannot fit, the floorplan in the division record is revised and the basis is not relaxed.
+links:
+  - target: DEL-HW-MAIN-BOARD-DESIGNED
+    type: criterion-of

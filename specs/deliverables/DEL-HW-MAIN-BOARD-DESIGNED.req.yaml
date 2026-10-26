@@ -45,3 +45,5 @@ links:
     type: depends-on
   - target: DEC-PROOF-OF-LIFE-INTERLOCK-IN-FIRST-HARDWARE
     type: justified-by
+  - target: OBL-ELECTROMAGNETIC-COMPATIBILITY-001.C1
+    type: targets
