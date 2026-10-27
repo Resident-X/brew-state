@@ -3,6 +3,8 @@ type: deliverable
 category: task
 title: The proof-of-life removal interval is recorded as 100 ms, chosen, in every record that states it
 status: active
+seal_state: sealed
+seal_outcome: complete
 level: task
 version: 1
 text: |
