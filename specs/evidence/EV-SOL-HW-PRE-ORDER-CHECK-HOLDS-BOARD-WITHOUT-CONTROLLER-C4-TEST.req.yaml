@@ -1,0 +1,16 @@
+id: EV-SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER-C4-TEST
+type: evidence
+title: test evidence for SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER.C4
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-27T22:27:57.404069Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_no_controller.py::test_a_controller_design_lists_a_connectors_several_return_pins_in_full_and_passes
+  artifact_version: 09c6ab715b58f5b92e7b6f0b9981a7ed3cbc18ce
+attested_by: crun-bfc44219fd6f9469
+links:
+  - target: SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER.C4
+    type: satisfies
