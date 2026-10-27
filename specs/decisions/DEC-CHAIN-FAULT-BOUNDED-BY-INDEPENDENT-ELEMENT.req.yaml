@@ -1,0 +1,31 @@
+id: DEC-CHAIN-FAULT-BOUNDED-BY-INDEPENDENT-ELEMENT
+type: decision
+category: strategic
+title: A chain fault is acceptable when an independent chain element still bounds its hazard
+status: active
+version: 1
+text: |
+  A single fault in a part of the protective chain is acceptable when another element of the chain, independent of the failed part and of the controller, still bounds the hazard the part guarded against. Power removed and fault detected by the chain's own means remain acceptable outcomes; this adds a third, so a fault the chain cannot remove or detect with the parts it carries is not forced into a redundant duplicate of the failed part.
+rationale: |
+  Context: the main board's proof-of-life interlock is one relay contact in the shared live feed. Taking each of its parts as failed, a welded contact (and any fault that holds the coil energised) neither removes heater power nor is detected by the chain's own means, and the controller may not be relied on to notice it. REQ-SAFETY-CHAIN-001.C8 as first worded admitted only those two outcomes, so the interlock could not pass it with one contact. A second series contact also leaves the first one's weld unremoved and undetected, so it would meet the first wording only under the reading this decision makes explicit.
+
+  Trade-offs: the weld is not a hazard on its own, because the heater switches still switch; it removes one protective layer. What remains in series with each heated block is its series thermostat (110 degC coffee block, 200 degC steam block, resettable, as the reference machine records) and, once fitted, the non-restoring protective device the bench inspection identifies or supplies. DEC-HEATER-DRIVE-GATED-BY-SUPERVISION already grounds the machine's safety on that thermostat for the same reason. Accepting the bounded outcome costs a latent, undetected weld that waits on a second fault, and the second backstop is owed and not yet fitted. It saves a second relay, its drive channel and a re-floorplan of finished work, and avoids a monitor and latch that would need their own fault analysis.
+
+  Rejected: a second series contact with a re-floorplan (about 3.2 USD plus heat and space, and it still tolerates the first weld without removing or detecting it); a single contact with a mains sense on the switched side and a hardware latch (meets the first wording literally but needs the same re-floorplan, a sense strip with no free place, and fault analysis of the monitor and latch themselves); counting a controller start-up weld test as detection (the first wording excludes detection by the controller or its firmware).
+
+  Reversibility: the criterion can be tightened again before the boards are ordered; after ordering, detecting a weld is a board revision. The owner chose this on 2026-10-28 with the cost above stated.
+
+  Consequences: REQ-SAFETY-CHAIN-001.C8, the main board's interlock fault criterion and the interlock judgement leaf carry the third outcome; every fault resting on it names its bounding element and records that the non-restoring device is owed. The design method's single-fault rule is stricter than this and is reworded by maintenance work.
+options_considered:
+  - option: 'Accept a third outcome: the hazard still bounded by a named independent element of the chain'
+    reason_rejected: ""
+  - option: Second series contact with a re-floorplan
+    reason_rejected: still leaves the first contact's weld neither removed nor detected, and re-floorplans finished work for about 3.2 USD plus heat
+  - option: Single contact with a switched-side sense and a hardware latch
+    reason_rejected: meets the first wording but needs the same re-floorplan and fault analysis of the monitor and latch themselves
+  - option: Count a controller start-up weld test as detection
+    reason_rejected: the criterion excludes detection by the controller or its firmware
+chosen: 'Accept a third outcome: the hazard still bounded by a named independent element of the chain'
+links:
+  - target: REQ-SAFETY-CHAIN-001.C8
+    type: addresses
