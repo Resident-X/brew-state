@@ -64,3 +64,7 @@ links:
     type: derives-from
   - target: REQ-SAFETY-CHAIN-001.C8
     type: targets
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: 0071e658657a17ee546ab0d98acf44fa52f87f5ae41199a8b203c2917a950d0e
+  gating_profile: ""
