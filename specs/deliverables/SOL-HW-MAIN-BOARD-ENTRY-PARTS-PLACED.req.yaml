@@ -3,13 +3,15 @@ type: deliverable
 category: solution
 title: The main board floorplan places the mains entry's fuse and varistor at tabs 2 and 3
 status: active
-version: 1
+version: 2
 text: |
   Restores REQ-RETROFIT-FIT-001.C1 for the main board's floorplan. The owner's ruling that the machine keeps its existing mains lead puts the 10 A fuse and a varistor on the main board at tabs 2 and 3, and the floorplan in the board division record draws no place for them: no fuse holder (about 24 by 9 mm, as the three pump and valve holders), no 14 mm varistor disc, and no suppression part if the main board design decides the entry needs one. The only open mains-zone pocket near the entry, between the interlock relay, the shared valve fuse holder and the shunt corridor, is small and is crossed by the taps from the lead to the module and the timing front end.
 
   The floorplan is redrawn with the entry parts placed at tabs 2 and 3, the varistor hard against the fuse and downstream of it, every distance the record's check holds still holding, the taps still routable, and the board's outline and the cost estimate re-run with any change stated and weighed against what remains of the declared spend. The division of circuitry between boards is unchanged: the mains entry is already on the main board.
 
   Out of scope: choosing the parts' makers' part numbers beyond what the cost estimate already prices, deciding whether suppression is needed, which is the main board design's, and the signed separation basis.
+
+  Settled before the build: tabs 1 to 3 do not move, since the owner's acceptance of the tab slack holds only once the fixing rule is met. The board outline stays within the enclosure cavity the record's check already holds. The fuse sits in series between tab 2 and the link to the interlock relay, so every net now on the line side that the lead feeds, the taps included, becomes downstream of it; the net before the fuse is a new net held to the record's basic mains-to-mains separations. The fuse holder is a 24 by 9 mm part like the pump and valve holders, so the open pocket near the entry is too small for it and the blocks around it may move wherever the record's checks still hold. The record's own check script is the verification, run as its four commands (main board, wall board, tables, selftest); the block-level guards, the route search among them, are what show the taps still routable.
 links:
   - target: DEL-MAINTENANCE.C1
     type: derives-from
