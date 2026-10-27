@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The main board is drawn, laid out, reviewed and proven against its design records before it is ordered
 status: active
-version: 1
+version: 2
 text: |
   Designs the main controller board through the board design method (docs/board-design-method.md) to a board proven against its records and ready to order: the schematic drawn to the written convention and reviewed, the layout planned, placed, routed and reviewed from rendered views, the design records authored, and the pre-order check passing. It draws to the figures the main board's judgements leaf settles and does not reopen them.
 
@@ -85,4 +85,6 @@ links:
   - target: DEL-HW-MAIN-BOARD-DESIGNED.C21
     type: derives-from
   - target: DEL-HW-MAIN-BOARD-DESIGNED.C22
+    type: derives-from
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C25
     type: derives-from
