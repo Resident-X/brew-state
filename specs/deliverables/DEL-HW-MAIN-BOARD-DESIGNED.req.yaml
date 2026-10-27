@@ -1,0 +1,49 @@
+id: DEL-HW-MAIN-BOARD-DESIGNED
+type: deliverable
+category: task
+title: The main controller board is designed, proven against its records and made, carrying the proof-of-life interlock and the reserved headroom
+status: active
+priority: must
+level: task
+version: 1
+text: |
+  The main controller board is the one board the division places inside the enclosure. This task designs it, proves it against its design records and the signed separation basis, and has it made. It carries the proof-of-life interlock and every reserved headroom channel the board division record places, and the controller part the selection settled.
+
+  The board's design is not complete until the owner decisions the division record holds pending against it (the tab moves against amending the separation rule, the voltage measurement's distance from the relay, the placement of current sensing, the fuse and varistor arrangement, and the order channel kinds are removed in) are each settled or recorded as drawn one way meanwhile, and the interlock cuts every load only if every load's live lead is fed through it, which bring-up confirms by continuity.
+links:
+  - target: DEL-HW-PARTITION-AND-FEASIBILITY.C5
+    type: derives-from
+  - target: DEL-CONTROLLER-HARDWARE.C3
+    type: derives-from
+  - target: DEL-CONTROLLER-HARDWARE.C4
+    type: derives-from
+  - target: DEL-CONTROLLER-HARDWARE.C8
+    type: derives-from
+  - target: DEL-CONTROLLER-HARDWARE.C10
+    type: derives-from
+  - target: DEL-CONTROLLER-HARDWARE.C11
+    type: derives-from
+  - target: DEL-CONTROLLER-HARDWARE.C12
+    type: derives-from
+  - target: DEL-HW-PRE-ORDER-CHECKS-EXTENDED
+    type: depends-on
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3
+    type: targets
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+  - target: DEC-BOARD-SEPARATION-BASIS-RECORD
+    type: justified-by
+  - target: DEC-BOARD-DESIGN-RECORDS-AS-YAML
+    type: justified-by
+  - target: DEC-BOARD-MANUFACTURER-JLCPCB
+    type: justified-by
+  - target: DEL-CONTROLLER-HARDWARE.C9
+    type: derives-from
+  - target: DEL-HW-INTERLOCK-INTERVAL-DERIVED
+    type: depends-on
+  - target: DEC-PROOF-OF-LIFE-INTERLOCK-IN-FIRST-HARDWARE
+    type: justified-by
+  - target: OBL-ELECTROMAGNETIC-COMPATIBILITY-001.C1
+    type: targets

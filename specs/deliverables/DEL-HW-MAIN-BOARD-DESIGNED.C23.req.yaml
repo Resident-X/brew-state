@@ -1,0 +1,13 @@
+id: DEL-HW-MAIN-BOARD-DESIGNED.C23
+type: criterion
+title: Whether the mains entry needs emission suppression is decided and recorded
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  The conducted emission the machine would put on the supply without any filter is judged against the emission criteria, and the record states whether suppression at the entry is needed and the reason, since the inlet filter of the earlier design is not fitted.
+links:
+  - target: DEL-HW-MAIN-BOARD-DESIGNED
+    type: criterion-of

@@ -1,0 +1,13 @@
+id: DEL-HW-STEAM-PATH-ASSEMBLY-DESIGNED.C1
+type: criterion
+title: The condensate leg is designed and the temperature it delivers to the transducer is recorded with its source against the media temperature the basis states
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  The record names the leg's geometry and the source of the delivered temperature.
+links:
+  - target: DEL-HW-STEAM-PATH-ASSEMBLY-DESIGNED
+    type: criterion-of

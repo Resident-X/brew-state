@@ -1,0 +1,13 @@
+id: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C13
+type: criterion
+title: The assembly is judged thermally against the enclosure air temperature the constraints record holds, including the heat it passes into the enclosure through the wall
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  The enclosure air figure is an assumption that bring-up measures; the judgement states it as such.
+links:
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED
+    type: criterion-of

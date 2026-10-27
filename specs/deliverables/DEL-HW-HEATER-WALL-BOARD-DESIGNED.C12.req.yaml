@@ -1,0 +1,13 @@
+id: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C12
+type: criterion
+title: Whether the machine's wall alone sinks the triacs' heat or a spreader plate is needed is judged against the triacs' own thermal ratings
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  The judgement covers both triacs on the one wall together, with the arithmetic shown.
+links:
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED
+    type: criterion-of

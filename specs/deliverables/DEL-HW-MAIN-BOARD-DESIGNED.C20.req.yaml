@@ -1,0 +1,13 @@
+id: DEL-HW-MAIN-BOARD-DESIGNED.C20
+type: criterion
+title: Each retained tab's footprint is drawn from the bought part's own drawing and the board's distances are checked with it
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The pad of each retained tab is at least the bought part's own footprint, and every separation and fixing distance holds with it.
+links:
+  - target: DEL-HW-MAIN-BOARD-DESIGNED
+    type: criterion-of

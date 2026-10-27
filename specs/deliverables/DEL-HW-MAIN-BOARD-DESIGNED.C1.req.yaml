@@ -1,0 +1,13 @@
+id: DEL-HW-MAIN-BOARD-DESIGNED.C1
+type: criterion
+title: The board's schematic is drawn to the written convention and passes the circuit checklist before its layout begins
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Every net and part has a recorded verdict, the method's circuit practice is applied to this board and not only written, and any finding is closed by a change to the schematic or by a recorded reason; a reader with the repository can render every sheet.
+links:
+  - target: DEL-HW-MAIN-BOARD-DESIGNED
+    type: criterion-of

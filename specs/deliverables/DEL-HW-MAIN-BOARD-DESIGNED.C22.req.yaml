@@ -1,0 +1,13 @@
+id: DEL-HW-MAIN-BOARD-DESIGNED.C22
+type: criterion
+title: The mains entry's fuse and surge clamp are carried on the board at the retained mains lead
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  The machine's existing mains lead is retained and no inlet is fitted. The design shows the fuse rated for the whole entry chain and the surge clamp at the entry on the board.
+links:
+  - target: DEL-HW-MAIN-BOARD-DESIGNED
+    type: criterion-of

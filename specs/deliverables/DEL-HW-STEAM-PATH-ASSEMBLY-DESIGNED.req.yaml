@@ -1,0 +1,19 @@
+id: DEL-HW-STEAM-PATH-ASSEMBLY-DESIGNED
+type: deliverable
+category: task
+title: The steam-path pressure assembly, its condensate leg and its transducer's insulation are designed and judged against the separation basis
+status: active
+priority: must
+level: task
+version: 1
+text: |
+  The steam-path assembly is the off-board assembly holding the steam-path pressure transducer and the condensate leg that brings steam to it. The machine's plumbing is otherwise left as built, so this task designs the leg and selects the transducer actually fitted, and judges the transducer's insulation against the barrier the signed separation basis declares for that sensor. The assembly is a bought part and a fitted leg and not a board, so it has no schematic, layout or production files.
+links:
+  - target: DEL-HW-PARTITION-AND-FEASIBILITY.C5
+    type: derives-from
+  - target: DEL-CONTROLLER-HARDWARE.C4
+    type: derives-from
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets
+  - target: DEC-BOARD-SEPARATION-BASIS-RECORD
+    type: justified-by

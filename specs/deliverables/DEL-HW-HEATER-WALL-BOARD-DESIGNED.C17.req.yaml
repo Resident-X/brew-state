@@ -1,0 +1,13 @@
+id: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C17
+type: criterion
+title: The cut in the machine's wall is confirmed by the owner at the size the division record gives
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  A larger cut needs a recorded reason and the owner's renewed acceptance.
+links:
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED
+    type: criterion-of

@@ -1,0 +1,13 @@
+id: DEL-HW-MAIN-BOARD-DESIGNED.C19
+type: criterion
+title: The supply voltage measurement's isolating part is judged against the signed separation basis before it is ordered
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  The judgement states the part's own creepage and clearance with the arithmetic. Where the basis lists no such barrier, or no part carries both the voltage and the second current channel, the owner re-declares the basis or a separate barrier part is added before ordering.
+links:
+  - target: DEL-HW-MAIN-BOARD-DESIGNED
+    type: criterion-of

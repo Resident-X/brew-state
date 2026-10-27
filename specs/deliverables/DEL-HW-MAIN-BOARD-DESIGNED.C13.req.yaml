@@ -1,0 +1,13 @@
+id: DEL-HW-MAIN-BOARD-DESIGNED.C13
+type: criterion
+title: Each anticipated channel kind the division record places is designed in at its place, and each it does not place is recorded with the criterion reserving it would have weakened
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Reserved capacity is on the interfaces in use and is not only unused connector count.
+links:
+  - target: DEL-HW-MAIN-BOARD-DESIGNED
+    type: criterion-of

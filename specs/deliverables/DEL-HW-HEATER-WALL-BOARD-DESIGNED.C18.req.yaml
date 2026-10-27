@@ -1,0 +1,13 @@
+id: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C18
+type: criterion
+title: Each owner decision the division record holds pending against the board is settled, or the board is recorded as drawn one way with the consequence of the other carried
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The decisions include whether the board is its own board or a section of the main board, whether the mains-presence confirms come back, the wall cut, the varistors, and a basic mains-to-earth pair in the separation basis.
+links:
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED
+    type: criterion-of
