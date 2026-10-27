@@ -1311,12 +1311,21 @@ def mounting_holes(kicad_cli: str, design: Design, copy: str, layout: str, rules
 class Channel:
     """One entry of the pin allocation record: where a channel's net must land."""
 
-    def __init__(self, channel: str, net: str, controller_pin: str, connector: Optional[str], connector_pin: Optional[str]):
+    def __init__(self, channel: str, net: str, controller_pin: Optional[str], connector: Optional[str], connector_pin: Optional[str],
+                 far_channel: Optional[str] = None, rail: Optional[str] = None):
         self.channel = channel
         self.net = net
         self.controller_pin = controller_pin
         self.connector = connector
         self.connector_pin = connector_pin
+        self.far_channel = far_channel
+        self.rail = rail
+
+
+class PinChannels(list):
+    """The channels of a pin allocation record, and whether the record declares that its design places no controller."""
+
+    no_controller = False
 
 
 #: A controller pin's own name: port letter, then number, as in PC6.
@@ -1337,6 +1346,13 @@ def read_pin_record(yaml, root: str, design: Design, record: Optional[str], not_
     and `controller_pin`, and `connector` with `connector_pin` unless the channel
     stays on the board. Keys the check does not read, such as the firmware's
     own, are ignored.
+
+    A record whose top level carries `controller: none` declares that its design
+    places no controller: each entry then carries no controller pin, a connector
+    and its pin, and exactly one of `far_channel` and `rail`. In any record an
+    entry carrying `rail` in place of a controller pin lists a connector pin that
+    carries a supply or a return; its channel is a label and its net may be
+    listed by more than one rail entry.
     """
     def fail(location: str, message: str) -> Tuple[None, List[Violation]]:
         return None, [Violation(design.project, "pin_allocation", location, message)]
@@ -1364,7 +1380,15 @@ def read_pin_record(yaml, root: str, design: Design, record: Optional[str], not_
                                           "every channel the board carries")
 
     problems: List[Violation] = []
-    channels: List[Channel] = []
+    channels = PinChannels()
+    if "controller" in data:
+        if data["controller"] == "none":
+            channels.no_controller = True
+        else:
+            problems.append(Violation(design.project, "pin_allocation", f"{record} controller",
+                                      f"controller is {data['controller']!r}, where the only value it takes is none, declaring "
+                                      "that the design places no controller; leave the key out for a design that places one"))
+    declared = channels.no_controller
 
     def text(entry: dict, key: str, where: str, required: bool = True) -> Optional[str]:
         value = entry.get(key)
@@ -1389,17 +1413,43 @@ def read_pin_record(yaml, root: str, design: Design, record: Optional[str], not_
         name = text(entry, "channel", where)
         where = f"{record} channel {name}" if name else where
         net = text(entry, "net", where)
-        controller = text(entry, "controller_pin", where)
-        connector = text(entry, "connector", where, required=False)
-        connector_pin = text(entry, "connector_pin", where, required=False)
+        rail = text(entry, "rail", where, required=False)
+        far = text(entry, "far_channel", where, required=False)
+        has_rail, has_far = "rail" in entry, "far_channel" in entry
+        controller = None
+        if declared:
+            if "controller_pin" in entry:
+                problems.append(Violation(design.project, "pin_allocation", where,
+                                          "the record declares controller: none, so the entry carries no controller_pin; "
+                                          "the pin it names belongs to the board that places the controller"))
+            if has_rail == has_far:
+                problems.append(Violation(design.project, "pin_allocation", where,
+                                          "the entry carries " + ("both far_channel and rail" if has_rail else "neither far_channel nor rail")
+                                          + "; give exactly one, the far channel another design's record lists, or the rail "
+                                            "the pin carries"))
+        elif has_rail:
+            if "controller_pin" in entry:
+                problems.append(Violation(design.project, "pin_allocation", where,
+                                          "the entry carries both rail and controller_pin; a rail entry lists a supply or "
+                                          "return pin and carries no controller pin"))
+        else:
+            controller = text(entry, "controller_pin", where)
+        connector = text(entry, "connector", where, required=declared or has_rail)
+        connector_pin = text(entry, "connector_pin", where, required=declared or has_rail)
         if (connector is None) != (connector_pin is None):
             problems.append(Violation(design.project, "pin_allocation", where,
                                       "the entry gives only one of connector and connector_pin; give both, or neither for a "
                                       "channel that stays on the board with no connector"))
-        if name and net and controller:
-            channels.append(Channel(name, net, controller, connector, connector_pin))
+        if name and net and (controller or declared or has_rail):
+            channels.append(Channel(name, net, controller, connector, connector_pin, far, rail))
 
-    for label, key in (("channel", lambda c: c.channel), ("net", lambda c: c.net),
+    if not declared and not any(channel.controller_pin for channel in channels) and not problems:
+        problems.append(Violation(design.project, "pin_allocation", f"{record} channels",
+                                  "the record lists no channel with a controller pin, so it holds a design that places no "
+                                  "controller to nothing; a design that places none declares controller: none, and one that "
+                                  "places a controller lists the channels it drives"))
+
+    for label, key in (("channel", lambda c: c.channel), ("net", lambda c: None if c.rail else c.net),
                        ("controller pin", lambda c: c.controller_pin),
                        ("connector pin", lambda c: (c.connector, c.connector_pin) if c.connector else None)):
         seen: Dict[object, Channel] = {}
@@ -1473,6 +1523,9 @@ def connectivity(design: Design, record: str, channels: List[Channel], nets: Dic
     slash KiCad puts before a net of the top sheet. A controller pin is any pin
     named as a port pin, such as PC6, on a part the record names no connector
     for, and a connector pin is any pin of a connector reference the record names.
+    An entry with no controller pin, a rail or far channel entry, is held to its
+    connector pin alone; a record that declares no controller leaves the port
+    pins of a part to `controller_part`, which names the part.
     """
     def fail(location: str, message: str) -> Violation:
         return Violation(design.project, "connectivity", location, message)
@@ -1488,8 +1541,9 @@ def connectivity(design: Design, record: str, channels: List[Channel], nets: Dic
 
     for channel in channels:
         where = f"{record} channel {channel.channel}"
-        wanted = f"controller pin {channel.controller_pin}" + (
-            f" and connector pin {channel.connector} pin {channel.connector_pin}" if channel.connector else "")
+        wanted = " and ".join(
+            ([f"controller pin {channel.controller_pin}"] if channel.controller_pin else [])
+            + ([f"connector pin {channel.connector} pin {channel.connector_pin}"] if channel.connector else []))
         reached = pins_of(channel.net)
         if reached is None:
             found.append(fail(where, f"channel {channel.channel}: the record lists net {channel.net}, which the design does "
@@ -1497,7 +1551,7 @@ def connectivity(design: Design, record: str, channels: List[Channel], nets: Dic
             continue
         name, pins = reached
         controller = sorted({port for pin in pins if pin.ref not in connectors for port in pin.ports()})
-        if channel.controller_pin not in controller:
+        if channel.controller_pin and channel.controller_pin not in controller:
             found.append(fail(where, f"channel {channel.channel}: net {name} reaches "
                                      f"{'controller pin ' + ', '.join(controller) if controller else 'no controller pin'}, "
                                      f"where the record names controller pin {channel.controller_pin}"))
@@ -1507,7 +1561,8 @@ def connectivity(design: Design, record: str, channels: List[Channel], nets: Dic
                                      f"{'connector pin ' + ', '.join(landed) if landed else 'no connector pin'}, "
                                      f"where the record names connector pin {channel.connector} pin {channel.connector_pin}"))
 
-    listed_controller = {channel.controller_pin for channel in channels}
+    listed_controller = {channel.controller_pin for channel in channels if channel.controller_pin}
+    declared = getattr(channels, "no_controller", False)
     listed_connector = {(channel.connector, channel.connector_pin) for channel in channels if channel.connector}
     for name in sorted(nets):
         if name.startswith(UNCONNECTED_NET):
@@ -1518,7 +1573,7 @@ def connectivity(design: Design, record: str, channels: List[Channel], nets: Dic
                     found.append(fail(f"{design.schematic} {pin.describe()}",
                                       f"net {name} is on connector pin {pin.describe()}, which the record does not list; "
                                       "list the channel it carries, or take the connection off the pin"))
-            elif pin.ports() and not listed_controller.intersection(pin.ports()):
+            elif pin.ports() and not declared and not listed_controller.intersection(pin.ports()):
                 found.append(fail(f"{design.schematic} {pin.describe()}",
                                   f"net {name} is on controller pin {', '.join(pin.ports())} ({pin.describe()}), which the "
                                   "record does not list; list the channel it carries, or take the connection off the pin"))
@@ -1546,6 +1601,49 @@ def machine_folder(directory: str) -> Optional[str]:
     """
     parts = directory.replace(os.sep, "/").split("/")
     return "/".join(parts[:2]) if len(parts) >= 2 and parts[0] == "hardware" and parts[1] != "proof" else None
+
+
+def other_designs_records(design: Design, designs: List[Design], tracked: Set[str], root: str, own: Optional[str]) -> List[str]:
+    """The pin allocation records the other designs in this design's machine folder are held to, repository-relative.
+
+    A record is another design's when a different design in the machine folder finds it, and the record this design is
+    itself held to is not counted, so a record shared by both says nothing about the far side.
+    """
+    folder = machine_folder(design.directory)
+    if folder is None:
+        return []
+    found: List[str] = []
+    for other in designs:
+        if other.project == design.project or not (other.directory + "/").startswith(folder + "/"):
+            continue
+        record = find_record(root, other.directory, tracked, PIN_RECORD_NAME)
+        if record and record != own and record not in found:
+            found.append(record)
+    return found
+
+
+def far_channels(yaml, root: str, design: Design, record: str, channels: List[Channel], others: List[str]) -> List[Violation]:
+    """The far channels of a record that declares no controller which no other design's record lists.
+
+    A far channel is listed by another record when an entry there names it with a controller pin and a connector. A
+    record that cannot be read lists none, and its own design fails for it.
+    """
+    listed: Set[str] = set()
+    for other in others:
+        try:
+            with open(os.path.join(root, other), encoding="utf-8") as handle:
+                data = strict_yaml(yaml, handle.read())
+        except Exception:  # unreadable or malformed: the design it belongs to fails for it
+            continue
+        entries = data.get("channels") if isinstance(data, dict) else None
+        for entry in entries if isinstance(entries, list) else []:
+            if isinstance(entry, dict) and entry.get("controller_pin") and entry.get("connector") and isinstance(entry.get("channel"), str):
+                listed.add(entry["channel"].strip())
+    return [Violation(design.project, "pin_allocation", f"{record} channel {channel.channel}",
+                      f"channel {channel.channel} names far channel {channel.far_channel}, which no other design's record in "
+                      f"the machine folder lists with a controller pin and a connector ({', '.join(others) if others else 'it has no other design with a record'}); "
+                      "list it in the record of the board that places the controller, or correct the name")
+            for channel in channels if channel.far_channel and channel.far_channel not in listed]
 
 
 def read_controller_record(yaml, root: str, repository: Repository, design: Design, not_for_manufacture: bool
@@ -1590,8 +1688,26 @@ def controller_part(design: Design, path: Optional[str], record: Optional[Contro
     A controller is every placed part with a pin named as a port pin, the test the connectivity check applies, so a
     design that places none is not held to the record at all. Each controller's LCSC field must equal the record's
     catalogue number, and each channel of the pin allocation record must name a controller pin the part has.
+
+    A design whose pin allocation record declares that it places no controller fails for each part that has a
+    port-named pin and for each part whose catalogue number is the record's, naming the part; with no usable record
+    only the port-named pins are looked for.
     """
     controllers = sorted({pin.ref for pins in nets.values() for pin in pins if pin.ports()})
+    if getattr(channels, "no_controller", False):
+        found = [Violation(design.project, "controller_part", f"{design.schematic} {ref}",
+                           f"the pin allocation record {pin_record} declares controller: none, but the design places {ref}, "
+                           "a part with port-named pins; remove the declaration and list the channels the controller drives, "
+                           "or take the part off the board")
+                 for ref in controllers]
+        if record is not None:
+            found += [Violation(design.project, "controller_part", f"{design.schematic} {ref}",
+                                f"the pin allocation record {pin_record} declares controller: none, but the design places "
+                                f"{ref}, which carries the catalogue number {record.lcsc} of the selected {record.part}; "
+                                "remove the declaration, or take the part off the board")
+                      for ref in sorted(placed)
+                      if ref not in controllers and ((placed[ref] or {}).get("lcsc") or "").strip() == record.lcsc]
+        return found
     if not controllers:
         return []
     if path is None:
@@ -1611,7 +1727,7 @@ def controller_part(design: Design, path: Optional[str], record: Optional[Contro
                 + f", where the controller part record names {record.lcsc}, the selected {record.part}; build the board "
                   "around the selected part, or change the selection before the board is ordered"))
     for channel in channels or []:
-        if channel.controller_pin not in record.pins:
+        if channel.controller_pin and channel.controller_pin not in record.pins:
             found.append(Violation(
                 design.project, "controller_part", f"{pin_record} channel {channel.channel}",
                 f"channel {channel.channel} names controller pin {channel.controller_pin}, which the selected "
@@ -5785,6 +5901,10 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
     pin_record = find_record(root, design.directory, repository.tracked, PIN_RECORD_NAME)
     channels, pin_problems = read_pin_record(yaml, root, design, pin_record, not_for_manufacture)
     found += pin_problems
+    if channels is not None and getattr(channels, "no_controller", False) and machine_folder(design.directory):
+        all_designs = discover(root, sorted(repository.tracked))[0]
+        found += far_channels(yaml, root, design, pin_record, channels,
+                              other_designs_records(design, all_designs, repository.tracked, root, pin_record))
     controller_record, controller_path, controller_problems = read_controller_record(yaml, root, repository, design,
                                                                                       not_for_manufacture)
     found += controller_problems
@@ -6072,7 +6192,8 @@ def design_reads(top: str, files: List[str], git: str = "git") -> List[str]:
     For each design that is its own folder, written with a trailing slash so a
     file deleted from it is still one the design read, every file its folder,
     its sheets and its libraries hold, and the separation basis, pin allocation, controller part, parts specification,
-    catalogue extract, derating policy, pin-limit, board rules and manufacturer limits records it is held to, whether or not a record is committed. A design in the top folder reads
+    catalogue extract, derating policy, pin-limit, board rules and manufacturer limits records it is held to, whether or not a record is committed, and
+    the pin allocation records of the other designs in its machine folder, which its far channels are checked against. A design in the top folder reads
     the whole repository, written as WHOLE_REPOSITORY.
     """
     repository = Repository(top, files, git)
@@ -6086,6 +6207,7 @@ def design_reads(top: str, files: List[str], git: str = "git") -> List[str]:
             record = find_record(top, design.directory, repository.tracked, name)
             if record:
                 reads.add(record)
+        reads.update(other_designs_records(design, designs, repository.tracked, top, None))
     return sorted(reads)
 
 
