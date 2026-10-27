@@ -1,0 +1,16 @@
+id: EV-SOL-HW-MAIN-BOARD-ENTRY-PARTS-PLACED-C1-TEST
+type: evidence
+title: test evidence for SOL-HW-MAIN-BOARD-ENTRY-PARTS-PLACED.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-27T06:27:05.716887Z"
+artifact:
+  kind: external
+  reference: docs/sunbeam-em7000/controller-board-division.md::selftest
+  artifact_version: cd8feb4810a0b72d0fb613e4cda868166c660aae
+attested_by: crun-2b70b5561c76420b
+links:
+  - target: SOL-HW-MAIN-BOARD-ENTRY-PARTS-PLACED.C1
+    type: satisfies

@@ -112,7 +112,7 @@ The manufacturer publishes a board of this size as an engineering fee plus a boa
 No other fabrication charge arises at the drawn configuration, each checked against the manufacturer's page of extra charges:
 
 - The board is far under 650 cm² (it is 163.75 cm²), so neither the large-board fabrication charge nor the assembly large-board charge of 57.46 USD applies.
-- The eight slots are 202 mm of slot path, 12.3 m of slot path per m² of board against the 80 m per m² the routing charge starts above (`controller-board-division.md` § Zones and the barrier), and no slot is narrower than the 1.0 mm the manufacturer makes, so no routing charge arises.
+- The eight slots are 200 mm of slot path, 12.2 m of slot path per m² of board against the 80 m per m² the routing charge starts above (`controller-board-division.md` § Zones and the barrier), and no slot is narrower than the 1.0 mm the manufacturer makes, so no routing charge arises.
 - One design in the file, so no several-designs charge; no expedited build time is ordered, so neither the expedited fee nor its order-area multiplier is charged; the options are the quote's defaults, so the special-process charge is not expected, though the quote confirms that.
 
 ### Assembly
@@ -200,6 +200,8 @@ Fabrication 35.19 + assembly 26.98 + parts the manufacturer places 33.55 = **95.
 | **Mains-entry parts on the main board** | | | | | **1.54** |
 
 0.67 + 0.32 + 0.44 + 0.11 = **1.54 USD**, inside the main board's 21.55 USD of hand-fitted parts (§ Parts). The retained loom's connectors and the mains leads are not priced: the loom is the machine's own.
+
+**Where the entry parts stand on the board.** The division record draws the entry fuse holder (24 × 9 mm) and the varistor on the main board at tabs 2 and 3 (`controller-board-division.md` § The fuses and § The mains-side blocks). The fuse holder, the clips and the varistor are the parts priced above, hand-fitted, and the fuse's line side joins the pad of tab 2 on an inner layer of the four-layer board already priced (`controller-board-division.md` A32), so no layer is added. Drawing them changes no figure of this estimate (§ Weighed against the declared spend, *The entry parts' place did not change it*).
 
 **Not priced.**
 - *A mains common-mode choke, or a filter module.* None was found: no in-stock rated 6–10 A choke or PCB filter module in the library service (the first 25 of 88 rows of the choke keyword in Chinese all had zero stock, and the English keywords returned signal inductors; the in-stock UU9.8 and UU10.5 types show no current rating on the pages read), and the distributor's own parts search (LCSC) was not reachable (HTTP 403). The library's in-stock inlet filters (Schaffner FN9222 rows have zero stock; TE C42547035 8.446 USD, C43205315 7.0451 USD and C44050533 7.9157 USD have stock 10, 7 and 4 and no rating in their titles) are not fitted: the machine has no inlet.
@@ -400,6 +402,8 @@ Each figure above cites its source in the section that gives it. The figures tha
 
 **The weighing.** The board orders, first order, are **149.68 USD** (89.57 a machine), which is **100.32 USD inside** the 250.00 that remains. The total does not exceed what remains, so the weighing is met: nothing is changed to bring it inside, and the owner is not asked to revisit the figure.
 
+**The entry parts' place did not change it.** This estimate was re-run against the division record's drawing of the entry fuse holder and the varistor at tabs 2 and 3 (§ Mains entry, *Where the entry parts stand on the board*) and finds no change: the outline is still 131.0 × 125.0 mm (X 1.0 to 132.0, Y 2.0 to 127.0), 16 375 mm² as the division record's check counts it, the board still 4 layers, 1 oz, leaded HASL, 1.6 mm, in the price band of § Main board, 35.19 USD for fabrication, and the entry parts still 1.54 USD. The part counts that division record's check makes from its blocks (19 Extended types, 14 of them fitted by the owner, and 143 joints) do not include the entry parts, which this estimate prices apart: the 14 types of the hand-fitted table and the entry parts' 1.54 USD are two sums, added in 20.01 + 1.54 = 21.55 USD, as in § Mains entry. Every total is as it was: the board orders stay at 149.68 USD against the 250.00 that remains, 100.32 USD inside it, and nothing is left to bring inside.
+
 **For information, outside the declared figure by the owner's answers.** These are not counted against the 250.00; they show what the total would be if the owner later chose to count them.
 
 | Total | USD (a machine) | Against 250.00, if counted |
@@ -433,7 +437,7 @@ Every entry `controller-board-design-constraints.md` § Pending marks held again
 | Special-process charge | **Re-pointed** | The options are the quote's defaults, so none is expected; the quote confirms it |
 | Large-board charges (fabrication and assembly) | **Ended** | Neither applies: 163.75 cm² against 650 cm² |
 | Several-designs charge | **Ended** | Not incurred: one design in each file |
-| Routing rate for slots narrower than 0.8 mm | **Ended** | Not needed: the least slot drawn is 1.0 mm, at 12.3 and 10.7 m per m² against the 80 m per m² where a routing charge starts |
+| Routing rate for slots narrower than 0.8 mm | **Ended** | Not needed: the least slot drawn is 1.0 mm, at 12.2 and 9.8 m per m² against the 80 m per m² where a routing charge starts |
 | Expedited fee and the order-area multiplier above 2.0 m² | **Ended** | Not incurred: no expedited build time is ordered; the order is far under 0.5 m² |
 | Single-board surcharge, stencil storage, fixture storage | **Ended** | Charges of Standard assembly only; Economic assembly is chosen (`docs/board-manufacturer-jlcpcb.md` § Assembly charges) |
 | Fees of parts sourced outside the public library | **Ended** | None: every part on the manufacturer's orders and every hand-fitted part is a public-library part (§ Parts, § Mains entry). The transducer is sourced by the owner |
