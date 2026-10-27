@@ -23,3 +23,7 @@ links:
     type: depends-on
   - target: SOL-HW-BOARD-DIVISION-AND-FLOORPLAN
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 blind brief reviewer
+  fingerprint: b24e23863b5a29721cebdd19c78ab263636d0961f7de72e42a6463101d353de9
+  gating_profile: ""
