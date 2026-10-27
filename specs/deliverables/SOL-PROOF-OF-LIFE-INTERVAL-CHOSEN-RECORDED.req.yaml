@@ -13,3 +13,7 @@ links:
     type: targets
   - target: DEC-PROOF-OF-LIFE-INTERVAL-BOUNDED-BY-FIRST-PROTECTIVE-TRIP
     type: justified-by
+brief_confirmation:
+  confirmer: claude-sonnet-5-5
+  fingerprint: e9b2fbb892809dfedc765f85d0e40169d424d7bb2438e8a42ecaba717ffff834
+  gating_profile: ""
