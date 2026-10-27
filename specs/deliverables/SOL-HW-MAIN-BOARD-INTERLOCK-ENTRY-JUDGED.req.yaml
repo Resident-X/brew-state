@@ -66,5 +66,5 @@ links:
     type: targets
 brief_confirmation:
   confirmer: claude-sonnet-5-5 blind brief reviewer
-  fingerprint: c0bef2d3c793be18c6fff80323b1d26cc9072dac7a02273bb719a8e4b339529f
+  fingerprint: 6349cfe79036c7c11690a51cb282a36dfc104a81d4a098d975ce122ab1cfcba2
   gating_profile: ""
