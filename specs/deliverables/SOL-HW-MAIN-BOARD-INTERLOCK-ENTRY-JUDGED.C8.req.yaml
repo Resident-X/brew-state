@@ -2,11 +2,11 @@ id: SOL-HW-MAIN-BOARD-INTERLOCK-ENTRY-JUDGED.C8
 type: criterion
 title: The interlock's single faults are each examined, and each is removed, bounded by an independent element or detected
 status: active
-version: 2
+version: 3
 measurement_type: binary
 verification: analysis
 text: |
-  Every part of the interlock mechanism is taken as failed open, short and stuck, and each outcome is stated as heater power removed, the hazard still bounded by a named independent element of the chain, or the fault detected by the chain's own means before a second fault can combine with it, with the machine held from heating until a person attends. The drive is designed so that a single fault in it, including a shorted coupling capacitor or a shorted drive switch, removes power or is detected, with no reliance on one part of a kind that fails closed. A fault of the switching contact itself, which a single contact cannot remove, is recorded as bounded, naming the series thermostat of each heated block and the non-restoring protective device the bench inspection's C7 identifies or supplies, with what each bounds and that the second of them is owed and not yet fitted. The choice and the faults it rests on a bounding element are recorded. Drawing the mechanism and demonstrating it on a built board are out of scope.
+  Every part of the interlock mechanism is taken as failed open, short and stuck, and each outcome is stated as heater power removed, the hazard still bounded by a named independent element of the chain, or the fault detected by the chain's own means before a second fault can combine with it, with the machine held from heating until a person attends. The drive is designed so that a single fault in it, including a shorted coupling capacitor or a shorted drive switch, removes power; a single fault that instead leaves the contact held closed exactly as a weld of the contact would is recorded as bounded in the same way, each such fault named and marked latent, and the redundant drive channel that would remove it is recorded with the condition that would call for it. A fault of the switching contact itself, which a single contact cannot remove, is recorded as bounded, naming the series thermostat of each heated block and the non-restoring protective device the bench inspection's C7 identifies or supplies, with what each bounds and that the second of them is owed and not yet fitted. The choice and the faults it rests on a bounding element are recorded. Drawing the mechanism and demonstrating it on a built board are out of scope.
 links:
   - target: SOL-HW-MAIN-BOARD-INTERLOCK-ENTRY-JUDGED
     type: criterion-of
