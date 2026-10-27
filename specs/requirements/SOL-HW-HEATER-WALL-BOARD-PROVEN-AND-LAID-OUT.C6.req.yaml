@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C6
+type: criterion
+title: The layout passes the layout checklist, read from rendered views of every layer and every critical net, with the findings recorded and resolved
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The review uses views of every layer and every critical net, closes on a clean full round by a reviewer that did not draw the board, and its findings are recorded and resolved. Ordering the board is out of scope.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT
+    type: criterion-of

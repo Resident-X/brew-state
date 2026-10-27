@@ -1,0 +1,12 @@
+id: SOL-HW-MAIN-BOARD-INTERLOCK-ENTRY-JUDGED.C2
+type: criterion
+title: Each barrier part the signed basis does not list is judged against it with the arithmetic shown, and the owner re-declares the basis before the part is ordered
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The interlock relay's coil-to-contact barrier and the supply voltage measurement's isolating part each state the part's own creepage and clearance against the basis. The isolating part must carry both the voltage and the shunt's second current channel, or a separate barrier part is named. A barrier the basis does not list is reported, never absorbed by relaxing a distance. Signing a basis amendment is the owner's and out of scope; this criterion reports the barrier and judges the part.
+links:
+  - target: SOL-HW-MAIN-BOARD-INTERLOCK-ENTRY-JUDGED
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C9
+type: criterion
+title: The controller's converter-input map that the firmware's sensor check reads is authored beside the pin allocation record
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A pin assignment in the firmware that disagrees with the board fails a check before the board is ordered, and the firmware's output-channel and sensor-channel pin checks read this board's pin allocation record. Changing the firmware's checks themselves is out of scope.
+links:
+  - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT
+    type: criterion-of

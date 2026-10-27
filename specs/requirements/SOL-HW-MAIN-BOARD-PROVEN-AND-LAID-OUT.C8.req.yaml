@@ -1,0 +1,12 @@
+id: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C8
+type: criterion
+title: The board's design records are authored and the pre-order check passes with no judgement weighed against a failure
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The pin allocation record, the parts specification record, the derating policy record and the pin-limit record are authored for the board and the catalogue extract is current, so the connectivity and parts checks have records to hold the board to. Comparing the cable between the two boards' headers pin for pin is out of scope.
+links:
+  - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT
+    type: criterion-of

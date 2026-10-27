@@ -1,0 +1,12 @@
+id: SOL-HW-MAIN-BOARD-INTERLOCK-ENTRY-JUDGED.C1
+type: criterion
+title: The interlock removes heater power within 100 ms of the controller's last valid proof of life, with no rest state holding it energised longer
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The removal time is shown with its arithmetic, each figure read from its source including the relay's release time from its maker's datasheet, and the timeout exceeds the firmware's proof-of-life refresh period by the stated margin. Reset, halted, unpowered and running are each examined for a level, timer, charge store or latch that holds the drive above drop-out beyond the interval. The ceiling the interval must sit under and the removal time measured on a built board are out of scope.
+links:
+  - target: SOL-HW-MAIN-BOARD-INTERLOCK-ENTRY-JUDGED
+    type: criterion-of

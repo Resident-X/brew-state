@@ -1,0 +1,12 @@
+id: SOL-HW-MAIN-BOARD-INTERLOCK-ENTRY-JUDGED.C5
+type: criterion
+title: The pump drives' surge and emission margins are closed from sourced or measured figures
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The pump coil's inductance, the series diode's rating, the circuit's commutating rate and the conducted emission against the surge and emission criteria are each sourced or measured, and an assumed figure counts as open. Drawing the pump drives into the schematic and measuring emission on a built board are out of scope.
+links:
+  - target: SOL-HW-MAIN-BOARD-INTERLOCK-ENTRY-JUDGED
+    type: criterion-of

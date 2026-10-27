@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-ASSEMBLY-JUDGED.C5
+type: criterion
+title: The surge clamps on the heater branch are kept or dropped with the reason recorded, and the surge rating relied on once they are dropped is sourced
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The record states the surge rating the heater branch relies on once the clamps are dropped, sourced from the entry varistor on the main board. Buying or fitting the clamps is out of scope.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-ASSEMBLY-JUDGED
+    type: criterion-of

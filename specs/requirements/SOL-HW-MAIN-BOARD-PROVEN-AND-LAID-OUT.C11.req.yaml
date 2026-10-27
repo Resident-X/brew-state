@@ -1,0 +1,12 @@
+id: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C11
+type: criterion
+title: Every part is graded against the enclosure air temperature the constraints record holds
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The grading is stated in the derating policy record; where no catalogue part holds at that figure, the revisit of the figure is recorded in the constraints record with its reason, and the part's rating is not stretched. The enclosure air temperature as measured is out of scope.
+links:
+  - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT
+    type: criterion-of

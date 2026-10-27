@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C2
+type: criterion
+title: Every heater switch the board carries is held off without firmware acting while the controller's supply is rising or failing and when the cable to the switch comes loose
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The design holds each heater switch off in reset, unpowered and disconnected, with the circuit shown for each. The behaviour of the built board is out of scope.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT
+    type: criterion-of

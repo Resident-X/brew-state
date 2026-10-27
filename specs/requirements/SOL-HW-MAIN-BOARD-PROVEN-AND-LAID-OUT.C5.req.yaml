@@ -1,0 +1,12 @@
+id: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C5
+type: criterion
+title: Each net the division record joins on an inner layer is routed clear of every mounting hole, slot and low-voltage block, and each route is recorded
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The valve-relay net from its tab and the pump-strip net from its tab are among them. The signed separation basis is kept from all other copper on that layer, and where a net cannot be so routed the floorplan is revised and the basis is not relaxed. Nets the division record does not join on an inner layer are out of scope.
+links:
+  - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT
+    type: criterion-of

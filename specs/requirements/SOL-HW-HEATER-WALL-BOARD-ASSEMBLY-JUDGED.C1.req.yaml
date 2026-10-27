@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-ASSEMBLY-JUDGED.C1
+type: criterion
+title: The opto-triacs and triacs are selected against the targets the function-forms record sets, each with its rating against the load and the reason
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Each selection states the part, its rating against the load and why, read from the maker's current document. Drawing the parts into the schematic is out of scope.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-ASSEMBLY-JUDGED
+    type: criterion-of

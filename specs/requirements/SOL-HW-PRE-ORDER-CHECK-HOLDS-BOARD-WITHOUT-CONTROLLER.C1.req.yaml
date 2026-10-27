@@ -1,0 +1,12 @@
+id: SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER.C1
+type: criterion
+title: A pin allocation record that declares no controller is accepted only for a design that places no controller, and a design that places one fails naming the part
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The declaration fails a design that places a part with a port-named pin or a part whose catalogue number equals the machine's controller part record, naming the part, and a design that places no controller and carries no declaration fails as it does now. Comparing the cable between two headers pin for pin is out of scope.
+links:
+  - target: SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER
+    type: criterion-of

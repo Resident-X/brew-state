@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C1
+type: criterion
+title: The heater wall board's schematic is drawn to the written convention and every net and part has a circuit verdict before layout begins
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Every net and part has a recorded verdict, the method's circuit practice is applied to this board and not only written, and any finding is closed by a change to the schematic or by a recorded reason; a reader with the repository can render every sheet. Layout is covered by later criteria of this leaf and is not part of this one.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT
+    type: criterion-of

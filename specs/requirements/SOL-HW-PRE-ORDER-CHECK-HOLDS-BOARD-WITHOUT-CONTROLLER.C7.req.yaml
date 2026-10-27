@@ -1,0 +1,12 @@
+id: SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER.C7
+type: criterion
+title: The readme and the design method describe the declaration, the cross-board check, the rail entry and the residual they leave
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The statement that a board with no controller cannot pass the check is replaced, and the form of the pin allocation record in the readme carries the new keys. Writing the real boards' records is out of scope.
+links:
+  - target: SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER
+    type: criterion-of

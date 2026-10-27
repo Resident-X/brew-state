@@ -1,0 +1,78 @@
+id: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT
+type: deliverable
+category: solution
+title: The main board is drawn, laid out, reviewed and proven against its design records before it is ordered
+status: active
+version: 1
+text: |
+  Designs the main controller board through the board design method (docs/board-design-method.md) to a board proven against its records and ready to order: the schematic drawn to the written convention and reviewed, the layout planned, placed, routed and reviewed from rendered views, the design records authored, and the pre-order check passing. It draws to the figures the main board's judgements leaf settles and does not reopen them.
+
+  It covers the schematic and its circuit verdicts; every load held off while the controller is in reset, unpowered or disconnected; each anticipated channel kind placed or recorded as not reserved, with the capacity on the interfaces in use; each retained tab's footprint drawn from the bought part's own drawing; the suppression parts placed if the judgements leaf finds the entry needs them; the inner-layer routes of the nets the division record joins there; the finished layout meeting the signed separation basis on every layer; the pin allocation, parts specification, derating policy and pin-limit records and the current catalogue extract; the converter-input map the firmware's sensor check reads; the figures the constraints record holds pending against the board; and every part graded against the enclosure air temperature.
+
+  Settled for the build:
+  - All board work runs in the main session, because the Konnect toolsets are invisible to subagents; only the judged reviews fan out, to fresh reviewers that did not draw the board. The method's steps run in order and each is committed before the next.
+  - The board's records are authored in its own folder under hardware/sunbeam-em7000/, found by the check's nearest-folder rule, so that the heater wall board carries records of its own.
+  - The supply and return pins of the board's connectors are listed in its pin allocation record as rail entries, and the channels it drives to the wall board's header are listed with their controller pins, which the wall board's record then resolves to as far channels; both rest on the pre-order check as extended for a board that places no controller.
+  - The board's header to the wall board (the ten-way low-voltage header and the neutral return landing) is drawn to the interface the division record fixes; a change to that interface is an amendment to the record that the wall board leaf must also meet.
+  - A barrier the signed basis does not list is reported and the owner re-declares the basis before the part forming it is ordered; a distance is never relaxed to fit the layout. Where no catalogue part holds at the enclosure air figure, the revisit of the figure is recorded and the part's rating is not stretched.
+  - The enclosure air figure is an assumption that bring-up measures.
+  - The firmware's pin checks are wired to this board's records by this leaf, so a change here reads the host tier of the gate as well as the board tier.
+
+  Locus: hardware/sunbeam-em7000/ (a new folder for this board with its KiCad project and records), docs/sunbeam-em7000/ records for the constraints and division, and the files under firmware/ that the output-channel and sensor-channel pin checks read. Ordering the board belongs to the order leaf.
+rationale: |
+  Sized as one leaf because the method makes one board one agent session's worth of work, run through its steps in order, and the records, the layout and the proof all describe the same design: splitting the schematic from the layout would force the second leaf to start from a design the first one's reviews had already moved. The judgements are held out in their own leaf so that a late layout change does not re-review arithmetic that has not changed. A board design change forces full blind review rounds, so this leaf's cost is dominated by them and is budgeted as such.
+links:
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C1
+    type: derives-from
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C2
+    type: derives-from
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C3
+    type: derives-from
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C4
+    type: derives-from
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C5
+    type: derives-from
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C6
+    type: derives-from
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C7
+    type: derives-from
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C8
+    type: derives-from
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C13
+    type: derives-from
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C14
+    type: derives-from
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C20
+    type: derives-from
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C24
+    type: derives-from
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3
+    type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C13
+    type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C14
+    type: targets
+  - target: OBL-ELECTROMAGNETIC-COMPATIBILITY-001.C1
+    type: targets
+  - target: REQ-SAFETY-CHAIN-001.C2
+    type: targets
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+  - target: DEC-BOARD-SEPARATION-BASIS-RECORD
+    type: justified-by
+  - target: DEC-BOARD-DESIGN-RECORDS-AS-YAML
+    type: justified-by
+  - target: DEC-SCHEMATIC-DRAWN-TO-CONVENTION-AND-RENDERED-ON-DEMAND
+    type: justified-by
+  - target: DEC-BOARD-PRE-ORDER-RULE-READINGS
+    type: justified-by
+  - target: DEC-IN-STREAM-PROBES-ANTICIPATED
+    type: justified-by
+  - target: DEC-PROOF-OF-LIFE-INTERLOCK-IN-FIRST-HARDWARE
+    type: justified-by
+  - target: SOL-HW-MAIN-BOARD-INTERLOCK-ENTRY-JUDGED
+    type: depends-on
+  - target: SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER
+    type: depends-on

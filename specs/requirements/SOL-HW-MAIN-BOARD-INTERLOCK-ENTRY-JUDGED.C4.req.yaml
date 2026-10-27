@@ -1,0 +1,12 @@
+id: SOL-HW-MAIN-BOARD-INTERLOCK-ENTRY-JUDGED.C4
+type: criterion
+title: Each load's live lead is shown fed from the interlock's switched side, with the premise on the machine's retained wiring stated
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The record names every load and the lead the design feeds from the switched side, and states what the retained wiring is assumed to be. The continuity measurement that confirms it on the built board is bring-up's and is named as such. The continuity measurement on the built board is out of scope.
+links:
+  - target: SOL-HW-MAIN-BOARD-INTERLOCK-ENTRY-JUDGED
+    type: criterion-of
