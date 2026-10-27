@@ -173,6 +173,8 @@ Prices, classes and the two per-part numbers read 2026-10-24 from the library se
 
 The microcontroller's cost at the build count is 2 × 10.6814 = 21.36 USD plus its feeder loading, 3.07 USD, in the assembly table: 24.43 USD, against the 13.75 USD for one machine's part in `component-specification.md`'s *Controller* row (10.6814 + 3.07). That figure is contained in the main board's lines above and is not counted twice.
 
+**The interlock's drive is not in these lines.** The 19-part proof-of-life drive (`controller-board-division.md` § The interlock block, *The drive*) is a block whose parts the schematic leaf names, so the lines above carry no price for it. The division record bounds what it adds: up to six more Extended part types at 3.07 USD each, 18.42 USD at the worst and none if the parts are Basic (*Parts and cost of the added channel*); this estimate does not include that figure, and the schematic leaf's catalogue reading ends it.
+
 ### Main board, first order
 
 Fabrication 35.19 + assembly 26.98 + parts the manufacturer places 33.55 = **95.72 USD** at the manufacturer, plus the 21.55 USD of hand-fitted parts of one set with the mains-entry parts: 95.72 + 21.55 = **117.27 USD** before shipping and tax.
@@ -194,8 +196,8 @@ Fabrication 35.19 + assembly 26.98 + parts the manufacturer places 33.55 = **95.
 | Part | JLCPCB part | Count | Charged quantity | Unit price (USD) | Cost (USD) |
 |---|---|---|---|---|---|
 | Entry fuse clip, Littelfuse 01110501Z, 10 A 250 V (two a fuse, one fuse fitted) | C151075 | 2 | 4 | 0.1676 | 0.67 |
-| 10 A entry fuse, 5 × 20 mm, SCF520PF10A250V (two bought, one spare; the slow-blow type is **unconfirmed** in the catalogue entry, which gives 10 A, 250 V DC and 1.5 kA interrupting capacity and does not name the time-delay type) | C22447845 | 2 | 2 | 0.1621 | 0.32 |
-| Varistor 14D471K, 14 mm, 470 V class, 84.6 J | C8852 | 1 | 3 | 0.1477 | 0.44 |
+| 10 A entry fuse, 5 × 20 mm, SCF520PF10A250V (two bought, one spare; the slow-blow type is **unconfirmed** in the catalogue entry, which gives 10 A, 250 V DC and 1.5 kA interrupting capacity and does not name the time-delay type; the maker's sheet shows the SCF520 series is fast-acting, so this part is not the decision's slow-blow fuse and is replaced when one is chosen, `controller-board-design-constraints.md` § Mains entry: fuse, surge clamp and suppression judged) | C22447845 | 2 | 2 | 0.1621 | 0.32 |
+| Varistor 14D471K, 14 mm, 470 V class, 84.6 J in the catalogue entry (the maker's sheet gives 148 J, `controller-board-design-constraints.md` § Mains entry: fuse, surge clamp and suppression judged) | C8852 | 1 | 3 | 0.1477 | 0.44 |
 | X2 capacitor 0.1 µF, 275 V, KNSCHA MPX104K31C3KN15600 | C489079 | 1 | 3 | 0.0383 | 0.11 |
 | **Mains-entry parts on the main board** | | | | | **1.54** |
 
@@ -213,7 +215,7 @@ Fabrication 35.19 + assembly 26.98 + parts the manufacturer places 33.55 = **95.
 | Function | Parts read (LCSC, stock, price) |
 |---|---|
 | 5 × 20 mm clip or holder, 10 A | C151075 Littelfuse 01110501Z clip, 10 A 250 V, 4 051, 0.1676 (chosen); C182320 LS-502 clip, 10 A, 1 780, 0.0297; C58066 two-piece holder, rating not stated, 21 265, 0.2748; C3131 holder, **6.3 A**, 89 099, 0.0847 (the existing holder; its 6.3 A rating is below a 10 A fuse's); C3130 clip, no rating on the page read, 194 084, 0.0326 |
-| 10 A 5 × 20 mm fuse | C22447845 SCF520PF10A250V, 3 054, 0.1621 (chosen); C22447834 SCT520PT10A250V, 887, 0.1716; C2997142, mounting unresolved (SMD footprint name, through-hole body), 6 359, 0.1621; C47118149, 2 631, 0.1545. No ceramic-tube 10 A 5 × 20 mm part was found |
+| 10 A 5 × 20 mm fuse | C22447845 SCF520PF10A250V, 3 054, 0.1621 (chosen as priced; fast-acting, so open against the decision's slow-blow type); C22447834 SCT520PT10A250V, 887, 0.1716 (its sheet read on 2026-10-28: slow-blow, but the `P` code is the leaded type, not the leadless cartridge a clip holds; `controller-board-design-constraints.md` § Mains entry: fuse, surge clamp and suppression judged); C2997142, mounting unresolved (SMD footprint name, through-hole body), 6 359, 0.1621; C47118149, 2 631, 0.1545. No ceramic-tube 10 A 5 × 20 mm part was found |
 | X2 0.1 µF 275 VAC, pitch 10 mm | C489079 (chosen), 418 924, 0.0383; C93370, 4 741, 0.0446; C2888214, 5 152, 0.0657; C105759, 115 294, 0.0431. Pitch 15 mm: C2888213, 11 538, 0.0500. 0.22 µF pitch 10 mm: C22371563, 7 323, 0.0428 (Dongtong); 0.47 µF: C22371566, 37, 0.1243 |
 | Varistor 470 V class | 14 mm: C8852 (chosen), 78 738, 0.1477; C693460, 4 295, 0.0974. 10 mm: C2839518, 39 927, 0.0539. 7 mm: C49072860, 358 492, 0.0310 (31 J, the wall board's) |
 | Y2 2.2 nF, 250 or 300 VAC | C2761720 250 VAC, 291 123, 0.0295; C2803195 300 VAC, 183 155, 0.0302; C332371 250 VAC, 33 337, 0.0303. 4.7 nF: C48997974 300 VAC, 1 591, 0.0395; C2761721 250 VAC, 88 895, 0.0482 |

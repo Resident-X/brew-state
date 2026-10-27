@@ -1421,15 +1421,15 @@ class TheFiguresRecordStatesTheChosenIntervalAndKeepsItsCeilingPending(unittest.
                 figures, figures + "\nThe removal interval is unsettled.\n"),
             "the division's line 143 shape": (
                 division, division.replace(
-                    "It does not choose the interlock's mechanism, how the wall board",
-                    "It does not choose the interlock's mechanism or its removal interval, "
-                    "how the wall board", 1)),
+                    "and does not choose that drive's parts. It does not choose how the wall board",
+                    "and does not choose that drive's parts or its removal interval. "
+                    "It does not choose how the wall board", 1)),
             "the division's line 604 shape": (
                 division, division.replace(
-                    "The interlock's mechanism, the circuit that decides when, is left to the "
-                    "board design, to the removal interval of 100 ms, chosen (",
+                    "The circuit that decides when is *The drive*, below, to the removal "
+                    "interval of 100 ms, chosen, whose arithmetic is in",
                     "The circuit that decides when, and the removal interval, are the design "
-                    "task's (", 1)),
+                    "task's, whose arithmetic is in", 1)),
         }
         for name, (original, mutated) in mutations.items():
             with self.subTest(mutation=name):

@@ -1,0 +1,16 @@
+id: EV-SOL-HW-MAIN-BOARD-INTERLOCK-ENTRY-JUDGED-C5-ANALYSIS
+type: evidence
+title: analysis evidence for SOL-HW-MAIN-BOARD-INTERLOCK-ENTRY-JUDGED.C5
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-10-27T15:36:54.252767Z"
+artifact:
+  kind: external
+  reference: docs/sunbeam-em7000/controller-board-design-constraints.md::Pump-drives-surge-and-emission-margins
+  artifact_version: e5315b9f6416ee5fe7cc9aabfaeecc3d89b98cc6
+attested_by: crun-c67c5c2b39d8e794
+links:
+  - target: SOL-HW-MAIN-BOARD-INTERLOCK-ENTRY-JUDGED.C5
+    type: satisfies

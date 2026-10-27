@@ -1,0 +1,25 @@
+id: SOL-HW-PUMP-DRIVE-FIGURES-CLOSED
+type: deliverable
+category: solution
+title: The pump drives' open figures are replaced by the owner's readings and the margins recomputed
+status: active
+version: 1
+text: |
+  Why this exists. The pump drives' surge and emission margins cannot close until the quantities only the owner can supply are known: the pump coil's inductance, the series diode's rating and marking, and the pump's running current. The judgement leaf for the main board states the margins from the figures sourced and records each of these as open with the owner's act that settles it. The parent criterion asks for the margins closed from sourced or measured figures, so it stays open until these are in.
+
+  What it does. Takes the owner's readings (an LCR meter reading of each pump's coil, the series diode's marking, the pump current by clamp meter) and the makers' answers the judgement leaf names, replaces each open figure in the constraints record with the reading and its source, recomputes the commutating, surge and emission margins from them, and ends the pending marks they close.
+
+  Out of scope: drawing the pump drives into the schematic, measuring conducted emission on a built board, and any figure not named above.
+
+  Settled. A reading the owner has not yet taken stays open and is asked for; it is never assumed. The recomputed margins state where a reading moves a verdict, including whether the drive needs a part the judgement leaf did not add.
+rationale: |
+  Split from the main board's judgement leaf because the work is gated on readings only the owner can take, and keeping it there would have held seven finished judgements behind three meter readings. It is a leaf of its own under the same parent criterion so that criterion closes only when both are satisfied.
+links:
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C18
+    type: derives-from
+  - target: OBL-ELECTROMAGNETIC-COMPATIBILITY-001.C1
+    type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C10
+    type: targets
+  - target: SOL-HW-MAIN-BOARD-INTERLOCK-ENTRY-JUDGED
+    type: depends-on

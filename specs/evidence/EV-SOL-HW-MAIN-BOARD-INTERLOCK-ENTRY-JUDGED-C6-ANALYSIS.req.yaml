@@ -1,0 +1,16 @@
+id: EV-SOL-HW-MAIN-BOARD-INTERLOCK-ENTRY-JUDGED-C6-ANALYSIS
+type: evidence
+title: analysis evidence for SOL-HW-MAIN-BOARD-INTERLOCK-ENTRY-JUDGED.C6
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-10-27T15:36:54.325161Z"
+artifact:
+  kind: external
+  reference: 'docs/sunbeam-em7000/controller-board-design-constraints.md::Mains-entry-fuse-surge-clamp-and-suppression-judged (Breaking-capacity-against-the-projects-fault-level-assumption: per-part, per-approval-body table; governing basis open with owner acts)'
+  artifact_version: e5315b9f6416ee5fe7cc9aabfaeecc3d89b98cc6
+attested_by: crun-c67c5c2b39d8e794
+links:
+  - target: SOL-HW-MAIN-BOARD-INTERLOCK-ENTRY-JUDGED.C6
+    type: satisfies

@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The heater wall assembly's parts, heat sinking, bracket, harness and surge clamps are judged with their arithmetic and its owner decisions are settled or recorded as drawn
 status: active
-version: 1
+version: 2
 text: |
   Judges, for the heater wall assembly, the parts, heat sinking, bracket, harness and surge clamps the wall board's schematic and layout must carry, and settles the owner decisions the division record holds against it, so the schematic and layout leaf draws to settled figures. It is analysis and record work: no KiCad project is opened. Every judgement is written into the controller boards' design records with its arithmetic and the source of each figure read.
 
@@ -56,3 +56,5 @@ links:
     type: justified-by
   - target: DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE
     type: justified-by
+  - target: SOL-HW-MAIN-BOARD-INTERLOCK-ENTRY-JUDGED
+    type: depends-on

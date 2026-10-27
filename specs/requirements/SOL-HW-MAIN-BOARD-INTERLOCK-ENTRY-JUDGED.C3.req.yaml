@@ -1,12 +1,12 @@
 id: SOL-HW-MAIN-BOARD-INTERLOCK-ENTRY-JUDGED.C3
 type: criterion
-title: The interlock's series element is rated for the worst-case currents of both heater elements
+title: The interlock's series element is rated for the worst-case load currents
 status: active
-version: 1
+version: 3
 measurement_type: binary
 verification: analysis
 text: |
-  The rating is judged on the worst-case series rating for both elements' currents together, from the maker's current document, and does not wait for the removal interval. Drawing the element into the schematic is out of scope.
+  The rating is judged on the worst-case series rating for the current every load behind the contact can draw together, including the entry fuse's overload band, from the maker's current document, and does not wait for the removal interval. Drawing the element into the schematic is out of scope.
 links:
   - target: SOL-HW-MAIN-BOARD-INTERLOCK-ENTRY-JUDGED
     type: criterion-of

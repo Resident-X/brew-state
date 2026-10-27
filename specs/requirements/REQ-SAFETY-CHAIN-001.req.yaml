@@ -4,7 +4,7 @@ category: functional
 title: Protection acts on the machine without passing through the controller
 status: active
 priority: must
-version: 1
+version: 2
 text: |
   The protective chain is the part of the machine that has to work when everything else has failed. Its whole value comes from owing nothing to the controller, the firmware, or any state either of them holds.
 
@@ -24,3 +24,5 @@ links:
     type: derives-from
   - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C5
     type: derives-from
+  - target: DEC-CHAIN-FAULT-BOUNDED-BY-INDEPENDENT-ELEMENT
+    type: justified-by
