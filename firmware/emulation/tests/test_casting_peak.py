@@ -33,8 +33,8 @@ import run_casting_peak as casting  # noqa: E402
 import run_cross_tier_check as cross_tier  # noqa: E402
 import run_parameter_sweep as sweep  # noqa: E402
 
-#: The controller boards' figures record, which quotes the peaks and keeps the
-#: proof-of-life removal interval pending.
+#: The controller boards' figures record, which quotes the peaks, states the
+#: proof-of-life removal interval as chosen and keeps its ceiling pending.
 FIGURES_RECORD = os.path.join(REPOSITORY_DIR, "docs", "sunbeam-em7000",
                               "controller-board-design-constraints.md")
 
@@ -1145,7 +1145,8 @@ class TheFiguresRecordQuotesThePeakTheGeneratedRecordGives(unittest.TestCase):
 
 SIBLING = "SOL-PROOF-OF-LIFE-INTERVAL-DERIVED-FROM-HELD-CASTING-PEAK"
 INTERVAL_DECISION = "DEC-PROOF-OF-LIFE-INTERVAL-BOUNDED-BY-FIRST-PROTECTIVE-TRIP"
-TIME_FIGURE = re.compile(r"-?\d+(?:\.\d+)? ?(?:ms|s)\b")
+TIME_FIGURE = re.compile(
+    r"-?\d+(?:\.\d+)? ?(?:milliseconds?|seconds?|minutes?|ms|sec|min|s)\b", re.IGNORECASE)
 
 
 def _row_starting(text, prefix):
@@ -1199,6 +1200,17 @@ def _interval_problems(figures_text):
     if not any(SIBLING in line for line in registers):
         problems.append("the pending-marks register does not list the ceiling against %s"
                         % SIBLING)
+    for line in figures_text.splitlines():
+        lowered = line.lower()
+        if ("interval" in lowered and "pending" in lowered
+                and "ceiling" not in lowered and "mechanism" not in lowered):
+            problems.append("the record marks the interval pending outside the ceiling and "
+                            "the mechanism: %s" % line[:80])
+    heater = _row_starting(figures_text, "| Both heater switches | ")
+    if heater is None:
+        problems.append("the figures record has no row for the heater switches")
+    elif ("100 ms, chosen" not in heater[1] or "pending" in " ".join(heater).lower()):
+        problems.append("the heater-switch row does not hold the interval as 100 ms, chosen")
     register = figures_text.split("### Pending marks", 1)[-1]
     if any(line.startswith("| Proof-of-life removal interval | ") and "pending" in line.lower()
            for line in register.splitlines()):
@@ -1267,6 +1279,53 @@ class TheFiguresRecordStatesTheChosenIntervalAndKeepsItsCeilingPending(unittest.
                 self.assertNotEqual(figures, mutated)
                 self.assertTrue(_interval_problems(mutated),
                                 "the check does not notice %s" % name)
+
+    # SOL-PROOF-OF-LIFE-INTERVAL-CHOSEN-RECORDED.C3: a sentence anywhere in the
+    # record that ties the interval to a pending mark is refused unless it is about
+    # the ceiling or the mechanism, and the heater-switch row holds the interval
+    # as chosen.
+    def test_the_check_refuses_prose_and_the_heater_row_that_mark_the_interval_pending(self):
+        figures = _text(FIGURES_RECORD)
+        self.assertEqual([], _interval_problems(figures))
+        heater = next(line for line in figures.splitlines()
+                      if line.startswith("| Both heater switches | "))
+        prose = ("The interval within which it must act is pending in the figures record.")
+        paragraph = next(line for line in figures.splitlines()
+                         if line.startswith("**Removing heater power when the controller stops.**"))
+        mutations = {
+            "the interlock paragraph saying the interval is pending": figures.replace(
+                paragraph, paragraph.replace(
+                    "is chosen, 100 ms, with the ceiling it must sit under pending in",
+                    "is pending in", 1), 1),
+            "a new sentence saying the interval is pending": figures + "\n" + prose + "\n",
+            "the heater row reverted to pending": figures.replace(
+                heater, heater.replace("(100 ms, chosen)", "(pending)", 1), 1),
+            "the heater row losing the chosen interval": figures.replace(
+                heater, heater.replace("(100 ms, chosen)", "", 1), 1),
+            "the heater row removed": figures.replace(heater, "", 1),
+        }
+        for name, mutated in mutations.items():
+            with self.subTest(mutation=name):
+                self.assertNotEqual(figures, mutated)
+                self.assertTrue(_interval_problems(mutated),
+                                "the check does not notice %s" % name)
+        about_ceiling = figures + "\nThe ceiling on the interval is pending.\n"
+        about_mechanism = figures + "\nThe interval's mechanism is pending.\n"
+        self.assertEqual([], _interval_problems(about_ceiling))
+        self.assertEqual([], _interval_problems(about_mechanism))
+
+    # SOL-PROOF-OF-LIFE-INTERVAL-CHOSEN-RECORDED.C3: the interval row states no
+    # other time figure, however its unit is spelled.
+    def test_the_check_refuses_other_time_figures_in_any_spelling(self):
+        figures = _text(FIGURES_RECORD)
+        row = next(line for line in figures.splitlines()
+                   if line.startswith("| Proof-of-life removal interval | "))
+        for spelled in ("0.1 seconds", "100 milliseconds", "8 min", "2 sec", "0.5 s", "3 minutes"):
+            with self.subTest(figure=spelled):
+                mutated = figures.replace(row, row.replace("It must sit", spelled + " It must sit", 1), 1)
+                self.assertNotEqual(figures, mutated)
+                self.assertTrue(_interval_problems(mutated),
+                                "the check does not notice %s" % spelled)
 
     # SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1: the finding the figures record
     # states reads the generated record's own peaks, for both thermoblocks and the
