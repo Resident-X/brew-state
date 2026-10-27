@@ -1149,11 +1149,20 @@ TIME_FIGURE = re.compile(
     r"-?\d+(?:\.\d+)? ?(?:milliseconds?|seconds?|minutes?|ms|sec|min|s)\b", re.IGNORECASE)
 
 
+class DuplicatedRow(Exception):
+    pass
+
+
 def _row_starting(text, prefix):
-    for line in text.splitlines():
-        if line.startswith(prefix):
-            return [cell.strip() for cell in line.strip().strip("|").split("|")]
-    return None
+    """The one row opening with prefix, as its cells, or None when there is none.
+    A second row with the same opening cell is refused, so a row added beside the
+    real one cannot stand in for it or hide behind it."""
+    found = [line for line in text.splitlines() if line.startswith(prefix)]
+    if len(found) > 1:
+        raise DuplicatedRow(prefix.strip(" |"))
+    if not found:
+        return None
+    return [cell.strip() for cell in found[0].strip().strip("|").split("|")]
 
 
 def _interval_row(text):
@@ -1206,7 +1215,15 @@ def _record_prose_problems():
 def _interval_problems(figures_text):
     """Every way the figures record fails to state the interval as chosen at
     100 ms with its source, to name the ceiling and keep it pending against the
-    work that derives it, or presents a derived time as the interval."""
+    work that derives it, or presents a derived time as the interval. A row the
+    check resolves by its first cell that appears twice is refused."""
+    try:
+        return _interval_checks(figures_text)
+    except DuplicatedRow as duplicated:
+        return ["the figures record holds a second row for: %s" % duplicated]
+
+
+def _interval_checks(figures_text):
     problems = []
     row = _interval_row(figures_text)
     if row is None:
@@ -1236,9 +1253,9 @@ def _interval_problems(figures_text):
                                   figures_text):
         if float(start) > float(trip):
             problems.append("the record works a time from a start above the trip point")
-    registers = [line for line in figures_text.splitlines()
-                 if line.startswith("| Ceiling on the proof-of-life removal interval (")]
-    if not any(SIBLING in line for line in registers):
+    register_row = _row_starting(figures_text,
+                                 "| Ceiling on the proof-of-life removal interval (")
+    if register_row is None or SIBLING not in " ".join(register_row):
         problems.append("the pending-marks register does not list the ceiling against %s"
                         % SIBLING)
     problems.extend(_prose_problems(figures_text))
@@ -1316,6 +1333,31 @@ class TheFiguresRecordStatesTheChosenIntervalAndKeepsItsCeilingPending(unittest.
                 self.assertNotEqual(figures, mutated)
                 self.assertTrue(_interval_problems(mutated),
                                 "the check does not notice %s" % name)
+
+    # SOL-PROOF-OF-LIFE-INTERVAL-CHOSEN-RECORDED.C3: The check on the casting-peak
+    # record requires the figures record to state the chosen interval and name the
+    # ceiling, and refuses a record that marks the interval pending or states a
+    # derived time as the interval: a second row of any kind the check reads, added
+    # beside the real one, is refused.
+    def test_a_duplicated_structural_row_is_refused(self):
+        figures = _text(FIGURES_RECORD)
+        self.assertEqual([], _interval_problems(figures))
+        lines = figures.splitlines()
+        probe = "| Proof-of-life removal interval | **Pending** — derived from the peak. | — | x | y |"
+        prefixes = ("| Proof-of-life removal interval | ",
+                    "| Ceiling on the proof-of-life removal interval | ",
+                    "| Ceiling on the proof-of-life removal interval (",
+                    "| Both heater switches | ")
+        copies = {"the reviewer's probe row": figures + "\n" + probe + "\n"}
+        for prefix in prefixes:
+            real = next(line for line in lines if line.startswith(prefix))
+            copies[prefix.strip(" |")] = figures.replace(real, real + "\n" + real, 1)
+        for name, mutated in copies.items():
+            with self.subTest(duplicate=name):
+                self.assertNotEqual(figures, mutated)
+                self.assertTrue(any("second row" in problem
+                                    for problem in _interval_problems(mutated)),
+                                "the check does not refuse a second row: %s" % name)
 
     # SOL-PROOF-OF-LIFE-INTERVAL-CHOSEN-RECORDED.C3: a sentence anywhere in the
     # record that ties the interval to a pending mark is refused unless it is about
