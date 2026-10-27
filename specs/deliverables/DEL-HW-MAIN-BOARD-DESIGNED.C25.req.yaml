@@ -1,0 +1,13 @@
+id: DEL-HW-MAIN-BOARD-DESIGNED.C25
+type: criterion
+title: A single fault in the interlock either removes heater power or is detected by the chain's own means
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  Each part of the interlock (its switching contact, its coil, its drive and the parts that feed the drive) is taken in turn as failed in each way its kind can fail, open, short or stuck, and the design shows that the outcome is either heater power removed, or the fault detected by the chain's own means before a second fault can combine with it and the machine then held from heating until a person attends. Detection never rests on the controller or its firmware noticing. A fault that leaves the interlock looking healthy while it no longer removes power is the case this excludes.
+links:
+  - target: DEL-HW-MAIN-BOARD-DESIGNED
+    type: criterion-of

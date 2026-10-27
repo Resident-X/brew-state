@@ -2,11 +2,11 @@ id: SOL-HW-MAIN-BOARD-INTERLOCK-ENTRY-JUDGED.C6
 type: criterion
 title: The mains entry's fuse is rated for the whole entry chain, its surge clamp is judged, and whether suppression is needed is decided with the reason recorded
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: analysis
 text: |
-  The fuse rating, the surge clamp's rating against the surge the overvoltage category assigns, and the conducted emission the machine would put on the supply with no filter are judged with the arithmetic shown. The record states whether suppression at the entry is needed and why, since no inlet filter is fitted. Placing the fuse, clamp and any suppression parts on the board is out of scope.
+  The fuse rating, the surge clamp's rating against the surge the overvoltage category assigns, and the conducted emission the machine would put on the supply with no filter are judged with the arithmetic shown. The fuse's breaking capacity is judged against the project's declared fault-level assumption, and a shortfall is recorded with the owner's act that would replace the assumption (the installation's prospective fault current or breaker breaking capacity) and what it settles. The record states whether suppression at the entry is needed and why, since no inlet filter is fitted. Placing the fuse, clamp and any suppression parts on the board is out of scope.
 links:
   - target: SOL-HW-MAIN-BOARD-INTERLOCK-ENTRY-JUDGED
     type: criterion-of

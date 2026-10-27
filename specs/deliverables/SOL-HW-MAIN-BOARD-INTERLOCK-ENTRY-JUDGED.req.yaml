@@ -3,11 +3,11 @@ type: deliverable
 category: solution
 title: The main board's interlock, isolating parts, pump drives and mains entry are judged with their arithmetic and its owner decisions are settled or recorded as drawn
 status: active
-version: 1
+version: 2
 text: |
   Judges, for the main board, the designs and ratings its schematic must carry, and settles the owner decisions the division record holds against it, so the schematic and layout leaf draws to settled figures. It is analysis and record work: no KiCad project is opened. Every judgement is written into the controller boards' design records with its arithmetic and the source of each figure read.
 
-  It covers: the interlock's removal time against the 100 ms removal interval, and its drive in every controller rest state; the barrier parts the signed basis does not list (the interlock relay's coil-to-contact barrier and the supply voltage measurement's isolating part, which must also carry the shunt as a second current channel); the interlock's series element against both heater elements' worst-case currents; the premise behind each load's live lead being fed from the interlock's switched side; the pump drives' surge and emission margins; the mains entry's fuse and surge clamp and whether the entry needs suppression; and every owner decision the division record holds against the main board (the tab moves against the mounting-hole rule, current sensing placement, the voltage measurement's distance from the relay, the fuse arrangement, the logic supply module, the entry varistor, the neutral return landing, the removal order of the channel kinds and the copper weight).
+  It covers: the interlock's removal time against the 100 ms removal interval, and its drive in every controller rest state; the barrier parts the signed basis does not list (the interlock relay's coil-to-contact barrier and the supply voltage measurement's isolating part, which must also carry the shunt as a second current channel); the interlock's series element against both heater elements' worst-case currents; the premise behind each load's live lead being fed from the interlock's switched side; the pump drives' surge and emission margins; the interlock's own single faults, each removing power or detected by the chain's own means, which fixes the mechanism; the mains entry's fuse (including its breaking capacity against the project's fault-level assumption) and surge clamp and whether the entry needs suppression; and every owner decision the division record holds against the main board (the tab moves against the mounting-hole rule, current sensing placement, the voltage measurement's distance from the relay, the fuse arrangement, the logic supply module, the entry varistor, the neutral return landing, the removal order of the channel kinds and the copper weight).
 
   Settled for the build:
   - The removal interval is 100 ms, chosen; the design works to that figure and does not wait for the ceiling it must sit under, which is derived separately.
@@ -16,7 +16,9 @@ text: |
   - An owner decision closes either by the owner's answer or by recording the board as drawn one way with the consequence of the other carried; the drawn defaults are those in the division record's section of owner decisions pending.
   - A figure that cannot be sourced from the maker's current document, or measured, counts as open. A measurement only the owner can take is recorded as the owner's act with what it will settle.
 
-  Locus: docs/sunbeam-em7000/controller-board-design-constraints.md and controller-board-division.md, and the design records under hardware/sunbeam-em7000/. The continuity measurement of every live lead on the built board belongs to bring-up, and the wall board belongs to its own leaves.
+  Placement: extend the existing records, no new artefact. Interlock timing and entry-fuse figures with their arithmetic go into controller-board-design-constraints.md beside its proof-of-life, upstream-protection and mains-entry sections, ending the matching pending marks. Decision outcomes and pointers go into controller-board-division.md: the owner decisions pending section, the interlock block, the pump drives, the fuses and the reported items. The hardware/sunbeam-em7000/ design records are not touched: no board folder exists, the record schema has no place for a judgement, and the folder belongs to the schematic and layout leaf. Each figure's maker document and date are written into the record, since the repository is what a rebuilder holds. The division record's own check (its selftest) is run by hand for the main board, the wall board and the tables, because no gate runs it.
+
+  Locus: docs/sunbeam-em7000/controller-board-design-constraints.md and controller-board-division.md. The continuity measurement of every live lead on the built board belongs to bring-up, and the wall board belongs to its own leaves.
 rationale: |
   Sized as one leaf because the ten criteria are one kind of work, analysis and records with no KiCad session, read from the same division and constraints records and written into the same files; splitting them would repay the same readiness and review overhead for each part. It is kept apart from the schematic and layout leaf so that a late layout change does not force a re-review of arithmetic that has not changed, and so the interlock and entry figures are fixed before the schematic is drawn to them.
 links:
@@ -58,3 +60,7 @@ links:
     type: justified-by
   - target: DEC-BOARD-SEPARATION-BASIS-RECORD
     type: justified-by
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C25
+    type: derives-from
+  - target: REQ-SAFETY-CHAIN-001.C8
+    type: targets

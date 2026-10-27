@@ -1,13 +1,13 @@
 id: DEL-HW-MAIN-BOARD-DESIGNED.C21
 type: criterion
-title: The interlock's series element is rated for the worst-case element currents
+title: The interlock's series element is rated for the worst-case load currents
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: analysis
 closes_by: cascade
 text: |
-  The rating is judged on the worst-case series rating for the currents of both heater elements and does not wait for the removal interval.
+  The rating is judged on the worst-case series rating for the current every load behind the contact can draw, including the entry fuse's overload band, and does not wait for the removal interval.
 links:
   - target: DEL-HW-MAIN-BOARD-DESIGNED
     type: criterion-of
