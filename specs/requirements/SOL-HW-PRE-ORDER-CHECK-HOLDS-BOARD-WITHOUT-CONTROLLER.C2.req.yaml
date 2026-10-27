@@ -1,0 +1,12 @@
+id: SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER.C2
+type: criterion
+title: A controller-less record's entries are held to their net and connector pin, name exactly one of a far channel or a rail, and carry no controller pin
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  An entry with neither or both of far_channel and rail fails, an entry carrying a controller pin fails, a channel whose net does not reach its connector pin fails, a listed channel the design lacks fails, and any net on a pin of a listed connector that the record does not list fails. The firmware tier's checks are out of scope and unchanged.
+links:
+  - target: SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER
+    type: criterion-of

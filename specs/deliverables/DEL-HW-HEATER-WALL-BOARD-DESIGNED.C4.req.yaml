@@ -1,13 +1,13 @@
 id: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C4
 type: criterion
-title: The firmware's output-channel and sensor-channel pin checks read this board's pin allocation record
+title: The firmware's pin checks reach this board's header channels through the main board's pin allocation record
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 closes_by: cascade
 text: |
-  The converter-input map that the sensor check reads is authored beside the record where a channel crosses the board's header, so a pin assignment in the firmware that disagrees with the board fails a check before the board is ordered.
+  The firmware's output-channel and sensor-channel pin checks read the main board's pin allocation record, and each channel crossing this board's header resolves to a channel of that record through the cross-board check, so this board authors no converter-input map of its own; a pin assignment in the firmware that disagrees with the board fails a check before the board is ordered.
 links:
   - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED
     type: criterion-of

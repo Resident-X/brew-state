@@ -1,0 +1,12 @@
+id: SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER.C3
+type: criterion
+title: Each far channel is checked against the other designs' records in the same machine folder
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A far channel must be a channel with a controller pin and a connector in another design's record in the same machine folder, and one that no record lists fails the design, naming the channel. A design with no machine folder is exempt from the check. Comparing the cable's pin map between the two headers is out of scope.
+links:
+  - target: SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER
+    type: criterion-of

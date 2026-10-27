@@ -1,0 +1,12 @@
+id: SOL-HW-CONTROLLER-BOARDS-ORDERED-AND-RECEIVED.C2
+type: criterion
+title: The received boards are the ones the checked production files describe
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The owner reports the received boards against the checked files, and the record names any difference found. The criterion is open until the boards have been received. Bring-up of the received boards is out of scope.
+links:
+  - target: SOL-HW-CONTROLLER-BOARDS-ORDERED-AND-RECEIVED
+    type: criterion-of

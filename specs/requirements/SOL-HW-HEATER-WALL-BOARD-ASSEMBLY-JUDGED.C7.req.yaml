@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-ASSEMBLY-JUDGED.C7
+type: criterion
+title: Each owner decision the division record holds against the heater wall board is settled, or the board is recorded as drawn one way with the consequence of the other carried
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The decisions include whether the board is its own board or a section of the main board (D9), whether the mains-presence confirms come back (D2), the wall cut (D11), the wall board's varistors, decided jointly with the main board's entry varistor (D7), and a basic mains-to-earth pair in the separation basis (D15). Each record names the drawn default, the other choice and what it would change. Signing a basis amendment is the owner's and out of scope.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-ASSEMBLY-JUDGED
+    type: criterion-of

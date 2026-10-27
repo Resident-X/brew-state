@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C4
+type: criterion
+title: Every channel crossing the board's header resolves to a channel of the main board's pin allocation record, and the board authors no converter-input map
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A pin assignment in the firmware that disagrees with the board fails a check before the board is ordered, because the firmware's pin and sensor checks read the main board's record and the wall board's far channels resolve to it. Comparing the cable between the two headers pin for pin is out of scope.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT
+    type: criterion-of

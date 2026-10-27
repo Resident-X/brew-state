@@ -1,0 +1,12 @@
+id: SOL-HW-MAIN-BOARD-INTERLOCK-ENTRY-JUDGED.C7
+type: criterion
+title: Each owner decision the division record holds against the main board is settled, or the board is recorded as drawn one way with the consequence of the other carried
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The decisions include the tab moves against the mounting-hole rule (D1), the current sensing placement (D3), the voltage measurement's distance from the relay (D4), the fuse arrangement (D5), the choice of logic supply module (D6), the entry varistor, decided jointly with the wall board's varistors (D7), the blade terminal or solder pad for the neutral return landing (D8), the removal order of the channel kinds (D12) and the copper weight (D13). Each record names the drawn default, the other choice and what it would change. Redesigning the board to the choice not drawn is out of scope; only its consequence is carried.
+links:
+  - target: SOL-HW-MAIN-BOARD-INTERLOCK-ENTRY-JUDGED
+    type: criterion-of

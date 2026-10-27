@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-ASSEMBLY-JUDGED.C6
+type: criterion
+title: The cut in the machine's wall is confirmed by the owner at the size the division record gives
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The record gives the reason for the larger cut, and the owner's renewed acceptance of it is recorded. Without that acceptance the criterion is open. Cutting the wall is out of scope.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-ASSEMBLY-JUDGED
+    type: criterion-of

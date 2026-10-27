@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C3
+type: criterion
+title: The board's design records are authored and the pre-order check passes with no judgement weighed against a failure
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The pin allocation record, the parts specification record, the derating policy record and the pin-limit record are authored for the channels that cross the board's header and for its parts, and the catalogue extract is current, so the connectivity and parts checks have records to hold the board to. Ordering the board is out of scope.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT
+    type: criterion-of

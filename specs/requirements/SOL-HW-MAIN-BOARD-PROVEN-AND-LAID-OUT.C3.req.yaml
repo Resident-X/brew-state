@@ -1,0 +1,12 @@
+id: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C3
+type: criterion
+title: Each anticipated channel kind is designed in at its place on the interfaces in use, and each not placed is recorded with the criterion reserving it would have weakened
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Reserved capacity is on the interfaces in use and is not only unused connector count. Fitting the probes or sensors themselves is out of scope.
+links:
+  - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-ASSEMBLY-JUDGED.C3
+type: criterion
+title: The bracket, its spacers and the thermal interfaces are designed, and the tab-hole height on its standing leg is fixed with its source
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The height comes from the triac's package drawing and the board's fixing so that each triac's leads reach the board's pads and its tab face lies flat on the leg. The record gives the bracket's drawing, how it is made or sourced, the spacers, and the interface material of the triac faces to the bracket and of the bracket to the wall. Making or sourcing the physical bracket is out of scope.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-ASSEMBLY-JUDGED
+    type: criterion-of

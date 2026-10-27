@@ -1,0 +1,12 @@
+id: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C6
+type: criterion
+title: The finished layout meets the signed separation basis on every layer and a barrier the basis does not list is reported
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  A barrier that the signed basis does not list is reported, and the owner re-declares the basis before the part forming it is ordered; a distance is never relaxed to fit the layout. Signing a basis amendment is the owner's and out of scope.
+links:
+  - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT
+    type: criterion-of

@@ -1,0 +1,70 @@
+id: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT
+type: deliverable
+category: solution
+title: The heater wall board is drawn, laid out, reviewed and proven against its design records before it is ordered
+status: active
+version: 1
+text: |
+  Designs the heater wall board through the board design method (docs/board-design-method.md) to a board proven against its records and ready to order: the schematic drawn to the written convention and reviewed, the layout planned, placed, routed and reviewed from rendered views, the design records authored, and the pre-order check passing. It draws to the parts, thermal, bracket and harness figures the wall assembly's judgements leaf settles and does not reopen them.
+
+  It covers the schematic and its circuit verdicts; every heater switch held off while the controller is in reset, unpowered or disconnected; the finished layout meeting the signed separation basis on every layer; the design records authored for the channels that cross the board's header and for its parts; the board's header channels resolving to channels of the main board's pin allocation record; the figures the constraints record holds pending against the board; and every part graded against the enclosure air temperature.
+
+  Settled for the build:
+  - All board work runs in the main session, because the Konnect toolsets are invisible to subagents; only the judged reviews fan out, to fresh reviewers that did not draw the board. The method's steps run in order and each is committed before the next.
+  - The board places no controller. Its pin allocation record declares that, lists the channels crossing its header as far channels and its supply and return pins as rails, and is held to the main board's record by the pre-order check as extended for it. The board authors no converter-input map: the firmware's pin and sensor checks read the main board's record.
+  - The board's records are authored in its own folder under hardware/sunbeam-em7000/, found by the check's nearest-folder rule, so that the main board's records stay its own.
+  - The board is drawn as its own board. If the owner decides it is a section of the main board, this leaf is replaced by a change to the main board's design, which the judgements leaf's record of that decision carries.
+  - The interface to the main board (the low-voltage header and the neutral return landing) is the one the division record fixes and the main board's design has drawn; this leaf follows the main board's design and does not move it.
+  - A barrier the signed basis does not list is reported and the owner re-declares the basis before the part forming it is ordered; a distance is never relaxed to fit the layout. Where no catalogue part holds at the enclosure air figure, the revisit of the figure is recorded and the part's rating is not stretched.
+  - The enclosure air figure is an assumption that bring-up measures.
+
+  Locus: hardware/sunbeam-em7000/ (a new folder for this board with its KiCad project and records) and the docs/sunbeam-em7000/ constraints and division records. Ordering the board belongs to the order leaf.
+rationale: |
+  Sized as one leaf because the method makes one board one agent session's worth of work and its records, layout and proof all describe the same design. It follows the main board's leaf because the pre-order check holds the wall board's header channels to the main board's pin allocation record, which must exist first, and because the header interface should be fixed by the board that drives it before the board that receives it is finished.
+links:
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C1
+    type: derives-from
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C2
+    type: derives-from
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C3
+    type: derives-from
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C4
+    type: derives-from
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C5
+    type: derives-from
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C6
+    type: derives-from
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C7
+    type: derives-from
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C8
+    type: derives-from
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3
+    type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C13
+    type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C14
+    type: targets
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+  - target: DEC-BOARD-SEPARATION-BASIS-RECORD
+    type: justified-by
+  - target: DEC-BOARD-DESIGN-RECORDS-AS-YAML
+    type: justified-by
+  - target: DEC-SCHEMATIC-DRAWN-TO-CONVENTION-AND-RENDERED-ON-DEMAND
+    type: justified-by
+  - target: DEC-BOARD-PRE-ORDER-RULE-READINGS
+    type: justified-by
+  - target: SOL-HW-HEATER-WALL-BOARD-ASSEMBLY-JUDGED
+    type: depends-on
+  - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT
+    type: depends-on
+  - target: SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER
+    type: depends-on
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C11
+    type: derives-from
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C15
+    type: derives-from
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C19
+    type: derives-from

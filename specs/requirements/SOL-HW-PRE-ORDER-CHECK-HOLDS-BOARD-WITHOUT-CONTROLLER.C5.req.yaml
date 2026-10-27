@@ -1,0 +1,12 @@
+id: SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER.C5
+type: criterion
+title: Each failure is reported in text and in JSON naming the rule and the channel or part
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The text and the JSON output of the check carry the same findings for each failing case, and a passing controller-less design reports no failure. Failures of rules other than the pin allocation and connectivity rules are out of scope.
+links:
+  - target: SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER
+    type: criterion-of

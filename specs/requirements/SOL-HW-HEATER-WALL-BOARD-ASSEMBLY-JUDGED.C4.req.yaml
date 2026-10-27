@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-ASSEMBLY-JUDGED.C4
+type: criterion
+title: The element harness is designed and the blade terminals' and joiners' current ratings are recorded with their source
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The design names each lead's termination, rating and reach to the wall cut. A rating that cannot be sourced counts as absent, and the carried current is up to 15 A. Measuring the element leads' reach on the machine is out of scope.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-ASSEMBLY-JUDGED
+    type: criterion-of

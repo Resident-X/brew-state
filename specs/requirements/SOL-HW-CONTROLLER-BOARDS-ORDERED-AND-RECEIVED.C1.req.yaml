@@ -1,0 +1,12 @@
+id: SOL-HW-CONTROLLER-BOARDS-ORDERED-AND-RECEIVED.C1
+type: criterion
+title: Each board's production files are checked against the manufacturer's assembly preview and the quoted cost of the order is recorded against the running total before payment
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Each board's check compares every placed part with the preview, and payment waits until every row of both boards' tables matches. The quoted cost of the order is recorded against the running total of the declared spend before the order is placed. Payment and placing the order are the owner's and out of scope.
+links:
+  - target: SOL-HW-CONTROLLER-BOARDS-ORDERED-AND-RECEIVED
+    type: criterion-of

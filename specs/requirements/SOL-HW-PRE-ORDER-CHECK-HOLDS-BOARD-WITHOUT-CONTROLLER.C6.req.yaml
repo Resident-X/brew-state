@@ -1,0 +1,12 @@
+id: SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER.C6
+type: criterion
+title: The seeded-fault proof gains a case for each way the declaration can be abused
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  There is a seeded case for a controller placed under a no-controller declaration, a controller pin under the declaration, an entry with neither or both of far channel and rail, a far channel no other record lists, and an unlisted pin on a listed connector, each failing when the check is run on it by hand. Running the proof in either gate is out of scope; it is run by hand.
+links:
+  - target: SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER
+    type: criterion-of

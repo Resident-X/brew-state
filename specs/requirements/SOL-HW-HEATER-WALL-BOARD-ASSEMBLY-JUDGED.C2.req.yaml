@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-ASSEMBLY-JUDGED.C2
+type: criterion
+title: Whether the wall alone sinks both triacs' heat or a spreader plate is needed is judged against their thermal ratings, and the assembly against the enclosure air temperature
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The judgement covers both triacs on the one wall together with the arithmetic shown, includes the heat the assembly passes into the enclosure through the wall, and states the enclosure air figure as the assumption bring-up measures. The enclosure air temperature as measured is out of scope.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-ASSEMBLY-JUDGED
+    type: criterion-of
