@@ -1144,73 +1144,123 @@ class TheFiguresRecordQuotesThePeakTheGeneratedRecordGives(unittest.TestCase):
 
 
 SIBLING = "SOL-PROOF-OF-LIFE-INTERVAL-DERIVED-FROM-HELD-CASTING-PEAK"
+INTERVAL_DECISION = "DEC-PROOF-OF-LIFE-INTERVAL-BOUNDED-BY-FIRST-PROTECTIVE-TRIP"
+TIME_FIGURE = re.compile(r"-?\d+(?:\.\d+)? ?(?:ms|s)\b")
+
+
+def _row_starting(text, prefix):
+    for line in text.splitlines():
+        if line.startswith(prefix):
+            return [cell.strip() for cell in line.strip().strip("|").split("|")]
+    return None
 
 
 def _interval_row(text):
     """The figures record's row for the proof-of-life removal interval, as its
     cells, or None when there is no such row."""
-    for line in text.splitlines():
-        if line.startswith("| Proof-of-life removal interval | **"):
-            return [cell.strip() for cell in line.strip().strip("|").split("|")]
-    return None
+    return _row_starting(text, "| Proof-of-life removal interval | ")
 
 
 def _interval_problems(figures_text):
-    """Every way the figures record fails to keep the interval pending against
-    the work that settles it, or presents a time as a figure."""
+    """Every way the figures record fails to state the interval as chosen at
+    100 ms with its source, to name the ceiling and keep it pending against the
+    work that derives it, or presents a derived time as the interval."""
     problems = []
     row = _interval_row(figures_text)
     if row is None:
-        return ["the figures record has no pending row for the interval"]
-    if not row[1].startswith("**Pending**"):
-        problems.append("the interval is not marked pending")
-    if SIBLING not in row[1]:
-        problems.append("the interval is not pending against %s" % SIBLING)
-    if re.search(r"-?\d+(\.\d+)? s\b", row[1]):
-        problems.append("the pending row states a time")
+        return ["the figures record has no row for the interval"]
+    if not row[1].startswith("**100 ms, chosen"):
+        problems.append("the interval's value cell does not hold 100 ms, chosen")
+    if INTERVAL_DECISION not in row[1]:
+        problems.append("the interval does not cite %s" % INTERVAL_DECISION)
+    if "last valid proof of life" not in row[1] or "contact opening" not in row[1]:
+        problems.append("the interval row does not give its definition")
+    if "pending" in " ".join(row).lower():
+        problems.append("the interval row carries a pending mark")
+    for figure in TIME_FIGURE.findall(" ".join(row)):
+        if figure != "100 ms":
+            problems.append("the interval row states another time figure, %s" % figure)
+    ceiling = _row_starting(figures_text, "| Ceiling on the proof-of-life removal interval | ")
+    if ceiling is None:
+        problems.append("the figures record does not name the ceiling")
+    else:
+        if not ceiling[1].startswith("**Pending**"):
+            problems.append("the ceiling is not marked pending")
+        if SIBLING not in ceiling[1]:
+            problems.append("the ceiling is not pending against %s" % SIBLING)
+        if TIME_FIGURE.search(ceiling[1]):
+            problems.append("the pending ceiling states a time")
     for trip, start in re.findall(r"(?m)^- (?:Coffee|Steam): .*?\(([0-9.]+) − ([0-9.]+)\) K",
                                   figures_text):
         if float(start) > float(trip):
             problems.append("the record works a time from a start above the trip point")
     registers = [line for line in figures_text.splitlines()
-                 if line.startswith("| Proof-of-life removal interval | ")
-                 and not line.startswith("| Proof-of-life removal interval | **")]
+                 if line.startswith("| Ceiling on the proof-of-life removal interval (")]
     if not any(SIBLING in line for line in registers):
-        problems.append("the pending-marks register does not list the interval against %s"
+        problems.append("the pending-marks register does not list the ceiling against %s"
                         % SIBLING)
+    register = figures_text.split("### Pending marks", 1)[-1]
+    if any(line.startswith("| Proof-of-life removal interval | ") and "pending" in line.lower()
+           for line in register.splitlines()):
+        problems.append("the pending-marks register lists the interval itself as pending")
     return problems
 
 
-class TheFiguresRecordKeepsTheIntervalPendingWhileTheCastingExceedsItsTrip(unittest.TestCase):
-    """SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1 stops at the peak: the interval
-    is derived by the sibling solution once the control holds the casting, so
-    the figures record must keep it pending until then.
+class TheFiguresRecordStatesTheChosenIntervalAndKeepsItsCeilingPending(unittest.TestCase):
+    """The interval is chosen at 100 ms; the ceiling it must sit under is derived
+    by the sibling solution once the control holds the casting, so the figures
+    record keeps the ceiling pending until then.
     """
 
-    # SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1: the figures record quotes the
-    # peak and still marks the interval pending against the sibling solution,
-    # and presents no time as a figure.
-    def test_the_interval_is_pending_against_the_sibling_solution(self):
-        self.assertEqual([], _interval_problems(_text(FIGURES_RECORD)))
+    # SOL-PROOF-OF-LIFE-INTERVAL-CHOSEN-RECORDED.C3: The check on the casting-peak
+    # record requires the figures record to state the chosen interval and name the
+    # ceiling, and refuses a record that marks the interval pending or states a
+    # derived time as the interval.
+    def test_the_committed_figures_record_states_the_chosen_interval(self):
+        figures = _text(FIGURES_RECORD)
+        self.assertEqual([], _interval_problems(figures))
+        row = _interval_row(figures)
+        self.assertTrue(row[1].startswith("**100 ms, chosen"))
+        self.assertIn(INTERVAL_DECISION, row[1])
 
-    # SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1: and the check notices each way
-    # the record could stop saying so.
-    def test_the_check_notices_a_derived_interval_or_a_lost_pending_mark(self):
+    # SOL-PROOF-OF-LIFE-INTERVAL-CHOSEN-RECORDED.C3: the check notices each way the
+    # record could stop saying so.
+    def test_the_check_notices_a_pending_derived_or_lost_interval(self):
         figures = _text(FIGURES_RECORD)
         row = next(line for line in figures.splitlines()
-                   if line.startswith("| Proof-of-life removal interval | **Pending**"))
+                   if line.startswith("| Proof-of-life removal interval | "))
+        ceiling = next(line for line in figures.splitlines()
+                       if line.startswith("| Ceiling on the proof-of-life removal interval | "))
         mutations = {
-            "the pending mark removed": figures.replace(row, row.replace("**Pending**", "**Derived**", 1), 1),
-            "the sibling named no longer": figures.replace(SIBLING, "SOL-OTHER", 1),
-            "a time stated in the row": figures.replace(row, row.replace(
-                "**Pending**", "**Pending** (-8.2 s)", 1), 1),
+            "the interval marked pending again": figures.replace(
+                row, row.replace("**100 ms, chosen.**", "**Pending**", 1), 1),
+            "a pending mark added to the row": figures.replace(
+                row, row.replace("It must sit", "Pending. It must sit", 1), 1),
+            "a derived time in seconds as the interval": figures.replace(
+                row, row.replace("100 ms", "8.2 s", 1), 1),
+            "another time figure beside 100 ms": figures.replace(
+                row, row.replace("It must sit", "(or 250 ms) It must sit", 1), 1),
+            "100 ms changed to another figure": figures.replace(
+                row, row.replace("**100 ms, chosen.**", "**200 ms, chosen.**", 1), 1),
+            "the decision's id removed": figures.replace(
+                row, row.replace(INTERVAL_DECISION, "DEC-OTHER", 1), 1),
+            "the definition removed": figures.replace(
+                row, row.replace("last valid proof of life", "last command", 1), 1),
+            "the ceiling's pending mark lost": figures.replace(
+                ceiling, ceiling.replace("**Pending**", "**Derived**", 1), 1),
+            "the sibling named no longer in the ceiling row": figures.replace(
+                ceiling, ceiling.replace(SIBLING, "SOL-OTHER"), 1),
+            "the ceiling row removed": figures.replace(ceiling, "", 1),
+            "the interval row removed": figures.replace(row, "", 1),
             "the arithmetic shown": figures + "\n- Coffee: 192 J/K × (107 − 158.8) K = −9946 J; "
                                              "−9946 J / 1215 W = −8.2 s.\n",
-            "the row removed": figures.replace(row, "", 1),
-            "the register entry removed": "\n".join(
+            "the register entry for the ceiling removed": "\n".join(
                 line for line in figures.splitlines()
-                if not (line.startswith("| Proof-of-life removal interval | The control")
-                        and SIBLING in line)),
+                if not line.startswith("| Ceiling on the proof-of-life removal interval (")),
+            "the register marking the interval pending": figures.replace(
+                "| Ceiling on the proof-of-life removal interval (",
+                "| Proof-of-life removal interval | Pending | " + SIBLING
+                + " |\n| Ceiling on the proof-of-life removal interval (", 1),
         }
         for name, mutated in mutations.items():
             with self.subTest(mutation=name):
@@ -1226,7 +1276,7 @@ class TheFiguresRecordKeepsTheIntervalPendingWhileTheCastingExceedsItsTrip(unitt
         record = _committed_record()
         generated = {row[0]: row for row in casting.figure_rows(record)}
         finding = next(line for line in figures.splitlines()
-                       if line.startswith("**Finding: no interval can be derived"))
+                       if line.startswith("**Finding: no ceiling can yet be taken"))
         for label in ("Coffee thermoblock", "Steam thermoblock"):
             for figure in generated[label][1:4]:
                 self.assertIn("%s °C" % figure, finding)
@@ -1249,6 +1299,20 @@ class TheFiguresRecordKeepsTheIntervalPendingWhileTheCastingExceedsItsTrip(unitt
         self.assertNotIn("%s °C" % generated["Steam thermoblock"][1], drifted)
 
 
+class TheGeneratedRecordStatesTheIntervalAsChosen(unittest.TestCase):
+    # SOL-PROOF-OF-LIFE-INTERVAL-CHOSEN-RECORDED.C3: the generator's wording states
+    # the interval as 100 ms, chosen, and the ceiling as derived from the peak
+    # later, and a test holds the committed record to that wording.
+    def test_the_committed_record_states_the_interval_as_chosen_and_the_ceiling_as_later(self):
+        record = _committed_record()
+        self.assertIn("The proof-of-life removal interval is 100 ms, chosen.", record)
+        self.assertIn("The ceiling it must sit under, derived later from this record's peak",
+                      record)
+        self.assertIn("keeps the ceiling on the 100 ms interval pending", record)
+        self.assertNotIn("keeps the interval pending", record)
+        self.assertNotIn("The proof-of-life removal interval starts from", record)
+
+
 class TheGeneratedRecordSaysWhatItsPeaksAre(unittest.TestCase):
     """The record is diagnostic: its peaks are those of the control as shipped."""
 
@@ -1267,13 +1331,13 @@ class TheGeneratedRecordSaysWhatItsPeaksAre(unittest.TestCase):
         self.assertNotIn("climbs higher", head)
 
     # SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1: the section on what the record
-    # does not settle names the sibling solution that derives the interval from
+    # does not settle names the sibling solution that derives the ceiling from
     # the peak, and does not claim the figures record derives it.
-    def test_the_record_names_where_the_interval_is_derived(self):
+    def test_the_record_names_where_the_ceiling_is_derived(self):
         for text in (_committed_record(), casting.report_text(_findings())):
             section = text.split("## What this does not settle", 1)[1]
             self.assertIn("SOL-PROOF-OF-LIFE-INTERVAL-DERIVED-FROM-HELD-CASTING-PEAK", section)
-            self.assertIn("keeps the interval pending", section)
+            self.assertIn("keeps the ceiling on the 100 ms interval pending", section)
             self.assertNotIn("is derived from it in the", section)
 
     # SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1: the banner comes from the
