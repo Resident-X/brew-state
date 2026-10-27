@@ -194,8 +194,8 @@ Fabrication 35.19 + assembly 26.98 + parts the manufacturer places 33.55 = **95.
 | Part | JLCPCB part | Count | Charged quantity | Unit price (USD) | Cost (USD) |
 |---|---|---|---|---|---|
 | Entry fuse clip, Littelfuse 01110501Z, 10 A 250 V (two a fuse, one fuse fitted) | C151075 | 2 | 4 | 0.1676 | 0.67 |
-| 10 A entry fuse, 5 × 20 mm, SCF520PF10A250V (two bought, one spare; the slow-blow type is **unconfirmed** in the catalogue entry, which gives 10 A, 250 V DC and 1.5 kA interrupting capacity and does not name the time-delay type) | C22447845 | 2 | 2 | 0.1621 | 0.32 |
-| Varistor 14D471K, 14 mm, 470 V class, 84.6 J | C8852 | 1 | 3 | 0.1477 | 0.44 |
+| 10 A entry fuse, 5 × 20 mm, SCF520PF10A250V (two bought, one spare; the slow-blow type is **unconfirmed** in the catalogue entry, which gives 10 A, 250 V DC and 1.5 kA interrupting capacity and does not name the time-delay type; the maker's sheet shows the SCF520 series is fast-acting, so this part is not the decision's slow-blow fuse and is replaced when one is chosen, `controller-board-design-constraints.md` § Mains entry: fuse, surge clamp and suppression judged) | C22447845 | 2 | 2 | 0.1621 | 0.32 |
+| Varistor 14D471K, 14 mm, 470 V class, 84.6 J in the catalogue entry (the maker's sheet gives 148 J, `controller-board-design-constraints.md` § Mains entry: fuse, surge clamp and suppression judged) | C8852 | 1 | 3 | 0.1477 | 0.44 |
 | X2 capacitor 0.1 µF, 275 V, KNSCHA MPX104K31C3KN15600 | C489079 | 1 | 3 | 0.0383 | 0.11 |
 | **Mains-entry parts on the main board** | | | | | **1.54** |
 
