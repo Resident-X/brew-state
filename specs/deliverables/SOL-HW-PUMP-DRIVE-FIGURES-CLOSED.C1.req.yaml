@@ -1,0 +1,12 @@
+id: SOL-HW-PUMP-DRIVE-FIGURES-CLOSED.C1
+type: criterion
+title: Each open pump-drive figure is replaced by the owner's reading or the maker's answer and the margins recomputed
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Replace each open pump-drive figure in the controller boards' constraints record (the pump coil's inductance, the series diode's rating and marking, the circuit's commutating rate and the running current) with the owner's reading or the maker's answer and its source, recompute the commutating, surge and emission margins from them with the arithmetic shown, end the pending marks they close, and state whether the drive needs a part it does not carry. A figure still unread stays open and is asked for, never assumed. Out of scope: drawing the pump drives into the schematic and measuring conducted emission on a built board.
+links:
+  - target: SOL-HW-PUMP-DRIVE-FIGURES-CLOSED
+    type: criterion-of
