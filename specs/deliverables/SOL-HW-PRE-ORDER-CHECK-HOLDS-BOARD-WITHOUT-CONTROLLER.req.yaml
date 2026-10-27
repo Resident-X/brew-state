@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The pre-order check holds a board that places no controller to the channels crossing its header, and lists a connector's supply and return pins
 status: active
-version: 2
+version: 3
 text: |
   Extends the pre-order board check so a board that places no controller is held to the channels that cross its header, and so a connector's supply and return pins can be listed on any board. As built, the check requires every pin allocation record to name a port-named controller pin for every channel and to list every pin of a connector it names, so the heater wall board, which places no controller, cannot pass it, and a supply or ground pin on the main board's header to the wall board cannot be listed either.
 
@@ -34,6 +34,8 @@ links:
   - target: DEC-BOARD-DESIGN-RECORDS-AS-YAML
     type: justified-by
   - target: DEC-BOARD-PRE-ORDER-RULE-READINGS
+    type: justified-by
+  - target: DEC-KICAD-VIEW-STATE-FILE-NOT-COMMITTED
     type: justified-by
 brief_confirmation:
   confirmer: claude-sonnet-5-5 (independent brief reviewer)
