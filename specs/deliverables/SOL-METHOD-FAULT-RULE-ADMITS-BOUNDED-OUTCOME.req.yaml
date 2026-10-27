@@ -13,7 +13,7 @@ text: |
 
   Settled. The bounding element must be named, independent of the failed part and of the controller, and a fault that leaves the chain looking healthy while no such element bounds its hazard still fails. The rule keeps its failing examples and gains one for a bounded outcome that names no element.
 rationale: |
-  Sized as one leaf: one rule, one baseline. Authored under the maintenance lane because it remediates finished work (SOL-BOARD-CIRCUIT-PRACTICE-CATALOGUE) that now falls short of a widened requirement criterion; the criterion is not wrong, the method's wording of it is.
+  Sized as one leaf: one rule, one baseline. Authored under the maintenance lane because it remediates finished work (the circuit practice catalogue the method carries) that now falls short of a widened requirement criterion; the criterion is not wrong, the method's wording of it is.
 links:
   - target: DEL-MAINTENANCE.C1
     type: derives-from
