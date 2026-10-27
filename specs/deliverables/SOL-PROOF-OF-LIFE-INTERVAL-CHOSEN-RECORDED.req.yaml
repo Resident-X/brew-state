@@ -3,9 +3,9 @@ type: deliverable
 category: solution
 title: The proof-of-life removal interval is recorded as 100 ms, chosen, and the casting-peak check enforces it
 status: active
-version: 1
+version: 2
 text: |
-  The proof-of-life removal interval is recorded as 100 ms, chosen, wherever the records state it. The controller boards' figures record gives the figure with its definition (from the controller's last valid proof of life to the interlock's contact opening) and its source, the owner's ruling recorded in DEC-PROOF-OF-LIFE-INTERVAL-BOUNDED-BY-FIRST-PROTECTIVE-TRIP, in place of the pending mark, and names the derived first-trip time as the ceiling the figure must later be shown to sit under. The statements of the interval in the function-forms record, the board division record and the constraints record's per-channel and pending-mark tables agree with it. The check on the casting-peak record, which today requires the figures record to keep the interval pending, requires instead that the record states the chosen interval and points to the ceiling, and refuses a record that states it pending or states a derived time as the interval; the casting-peak record is regenerated.
+  The proof-of-life removal interval is recorded as 100 ms, chosen, wherever the records state it. The controller boards' figures record (the constraints record, docs/sunbeam-em7000/controller-board-design-constraints.md, which also holds the heater-switch failure-state row and the pending-marks register) gives the figure with its definition (from the controller's last valid proof of life to the interlock's contact opening) and its source, the owner's ruling recorded in DEC-PROOF-OF-LIFE-INTERVAL-BOUNDED-BY-FIRST-PROTECTIVE-TRIP, in place of the pending mark. The pending mark moves to the derived first-trip time, the ceiling the figure must later be shown to sit under, which stays pending against SOL-PROOF-OF-LIFE-INTERVAL-DERIVED-FROM-HELD-CASTING-PEAK in its own row and in the register; the finding that no interval can be derived is reworded to say no ceiling can yet be taken. The statements of the interval in the function-forms record, the board division record (its item 7 keeps the mechanism pending) and the constraints record's heater-switch row and pending-marks register agree with it. The check on the casting-peak record, which today requires the figures record to keep the interval pending, extends the existing interval check in the casting-peak test module: it requires the interval row to hold 100 ms and cite the decision, refuses a pending mark or any other time figure in that row, and requires the ceiling to be named; the casting-peak tool's wording states the interval as chosen and the ceiling as derived later, and the casting-peak record is regenerated.
 links:
   - target: DEL-HW-INTERLOCK-INTERVAL-CHOSEN.C1
     type: derives-from
@@ -13,3 +13,7 @@ links:
     type: targets
   - target: DEC-PROOF-OF-LIFE-INTERVAL-BOUNDED-BY-FIRST-PROTECTIVE-TRIP
     type: justified-by
+brief_confirmation:
+  confirmer: claude-sonnet-5-5
+  fingerprint: e9b2fbb892809dfedc765f85d0e40169d424d7bb2438e8a42ecaba717ffff834
+  gating_profile: ""

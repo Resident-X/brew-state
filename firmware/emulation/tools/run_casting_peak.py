@@ -3,9 +3,9 @@
 is holding its heater, across every operating phase the controller commands and
 every corner of the declared error.
 
-The proof-of-life removal interval is the time a heater left fully on takes to
-reach its retained protection's trip point, and it starts from the casting's
-temperature at that moment. The commanded figure does not bound that: the coffee
+The proof-of-life removal interval is chosen, 100 ms. It is held under a ceiling,
+the time a heater left fully on takes to reach its retained protection's trip
+point, and that starts from the casting's temperature at that moment. The commanded figure does not bound that: the coffee
 loop controls the water leaving the block and the steam loop controls pressure
 during a draw, and in both the casting runs hotter than the commanded figure by
 an amount no declared figure fixes. The plant model represents the casting, so
@@ -201,7 +201,7 @@ DRINKING_CEILING_MACRO = "DELIVERY_TOLERANCE_DRINKING_CEILING_WORD"
 STEAM_READY_MACRO = "STEAM_CONTROL_DECLARATION_READY_TEMPERATURE_WORD"
 
 #: The section of the controller boards' figures record that quotes the peaks
-#: and keeps the interval pending against them, as the heading it is written under.
+#: and keeps the ceiling on the interval pending against them, as the heading it is written under.
 FIGURES_RECORD_SECTION = "### Proof-of-life removal interval"
 
 #: The files a run is generated from, as the words the record's table names them
@@ -780,7 +780,8 @@ def report_text(findings):
     write("")
     write(BANNER)
     write("")
-    write("The proof-of-life removal interval starts from the temperature a heater's casting "
+    write("The proof-of-life removal interval is 100 ms, chosen. The ceiling it must sit under, "
+          "derived later from this record's peak, starts from the temperature a heater's casting "
           "has when the controller stops, and the commanded figure does not bound it: the coffee "
           "loop controls the water leaving the block and the steam loop controls pressure during "
           "a draw, and in both the casting runs hotter than the commanded figure by an amount no "
@@ -970,7 +971,7 @@ def report_text(findings):
     write("The trip points. This record stops at the hottest casting; the time a heater takes "
           "to climb from it to its protection's trip point is not derived here or in the "
           "controller boards' figures record, which only quotes this record's figures and "
-          "keeps the interval pending. It is derived from this record's peak by "
+          "keeps the ceiling on the 100 ms interval pending. The ceiling is derived from this record's peak by "
           "SOL-PROOF-OF-LIFE-INTERVAL-DERIVED-FROM-HELD-CASTING-PEAK, once the control holds "
           "the casting below its trip point.")
     return "\n".join(lines) + "\n"

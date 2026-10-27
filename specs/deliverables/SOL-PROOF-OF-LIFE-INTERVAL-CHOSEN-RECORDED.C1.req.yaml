@@ -2,11 +2,11 @@ id: SOL-PROOF-OF-LIFE-INTERVAL-CHOSEN-RECORDED.C1
 type: criterion
 title: The figures record states the removal interval as 100 ms, chosen, with its definition and source
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |
-  The controller boards' figures record states the proof-of-life removal interval as 100 ms, chosen, with its definition and its source, and no statement anywhere in the record marks it pending. Out of scope: deriving the ceiling.
+  The controller boards' figures record states the proof-of-life removal interval as 100 ms, chosen, with its definition (from the controller's last valid proof of life to the interlock's contact opening) and its source (the owner's ruling recorded in DEC-PROOF-OF-LIFE-INTERVAL-BOUNDED-BY-FIRST-PROTECTIVE-TRIP), and no statement anywhere in the record marks the interval pending. The record names the derived first-trip time as the ceiling the interval must later be shown to sit under, and marks that ceiling pending against SOL-PROOF-OF-LIFE-INTERVAL-DERIVED-FROM-HELD-CASTING-PEAK in its own row and in the pending-marks register. Out of scope: deriving the ceiling.
 links:
   - target: SOL-PROOF-OF-LIFE-INTERVAL-CHOSEN-RECORDED
     type: criterion-of

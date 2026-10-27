@@ -33,8 +33,8 @@ import run_casting_peak as casting  # noqa: E402
 import run_cross_tier_check as cross_tier  # noqa: E402
 import run_parameter_sweep as sweep  # noqa: E402
 
-#: The controller boards' figures record, which quotes the peaks and keeps the
-#: proof-of-life removal interval pending.
+#: The controller boards' figures record, which quotes the peaks, states the
+#: proof-of-life removal interval as chosen and keeps its ceiling pending.
 FIGURES_RECORD = os.path.join(REPOSITORY_DIR, "docs", "sunbeam-em7000",
                               "controller-board-design-constraints.md")
 
@@ -1144,79 +1144,318 @@ class TheFiguresRecordQuotesThePeakTheGeneratedRecordGives(unittest.TestCase):
 
 
 SIBLING = "SOL-PROOF-OF-LIFE-INTERVAL-DERIVED-FROM-HELD-CASTING-PEAK"
+INTERVAL_DECISION = "DEC-PROOF-OF-LIFE-INTERVAL-BOUNDED-BY-FIRST-PROTECTIVE-TRIP"
+TIME_FIGURE = re.compile(
+    r"-?\d+(?:\.\d+)? ?(?:milliseconds?|seconds?|minutes?|ms|sec|min|s)\b", re.IGNORECASE)
+
+
+class DuplicatedRow(Exception):
+    pass
+
+
+def _row_starting(text, prefix):
+    """The one row opening with prefix, as its cells, or None when there is none.
+    A second row with the same opening cell is refused, so a row added beside the
+    real one cannot stand in for it or hide behind it."""
+    found = [line for line in text.splitlines() if line.startswith(prefix)]
+    if len(found) > 1:
+        raise DuplicatedRow(prefix.strip(" |"))
+    if not found:
+        return None
+    return [cell.strip() for cell in found[0].strip().strip("|").split("|")]
 
 
 def _interval_row(text):
     """The figures record's row for the proof-of-life removal interval, as its
     cells, or None when there is no such row."""
-    for line in text.splitlines():
-        if line.startswith("| Proof-of-life removal interval | **"):
-            return [cell.strip() for cell in line.strip().strip("|").split("|")]
-    return None
+    return _row_starting(text, "| Proof-of-life removal interval | ")
+
+
+FUNCTION_FORMS_RECORD = os.path.join(os.path.dirname(FIGURES_RECORD), "controller-board-function-forms.md")
+DIVISION_RECORD = os.path.join(os.path.dirname(FIGURES_RECORD), "controller-board-division.md")
+UNSETTLED_VOCABULARY = re.compile(
+    r"pending|not chosen|is derived|to be derived|awaits derivation|does not choose"
+    r"|design task's|unsettled|not yet fixed")
+DISOWNED_INTERVAL = re.compile(r"does not choose[^.;]*interval")
+SENTENCE_END = re.compile(r"(?<=[.!?])(?:\*\*)?\s+(?=[A-Z*`(])")
+
+
+def _prose_problems(text):
+    """A bounded backstop, not a judge of meaning: the structural marks (the
+    interval row, the ceiling row, the register and the heater-switch row) are the
+    authority for the interval being chosen. This refuses any sentence about the
+    interval that carries a word from a fixed vocabulary (pending, not chosen,
+    is/to be derived, awaits derivation, does not choose, design task's,
+    unsettled, not yet fixed), unless that same sentence is about the ceiling or
+    the mechanism. A sentence that says the record does not choose the interval
+    is refused whatever else it names. Sentences are split on sentence ends and
+    table cells after hard wraps are joined; synonyms outside the vocabulary are
+    not caught."""
+    problems = []
+    joined = re.sub(r"(?<=\S)\n(?=[^\s|#\-*0-9])", " ", text)
+    for line in joined.splitlines():
+        for cell in line.split("|"):
+            for sentence in SENTENCE_END.split(cell):
+                lowered = sentence.lower()
+                if "interval" not in lowered:
+                    continue
+                about = "ceiling" in lowered or "mechanism" in lowered
+                if DISOWNED_INTERVAL.search(lowered) or (
+                        UNSETTLED_VOCABULARY.search(lowered) and not about):
+                    problems.append("a sentence leaves the interval unsettled: %s"
+                                    % sentence.strip()[:80])
+    return problems
+
+
+def _record_prose_problems():
+    return [problem for path in (FIGURES_RECORD, FUNCTION_FORMS_RECORD, DIVISION_RECORD)
+            for problem in _prose_problems(_text(path))]
 
 
 def _interval_problems(figures_text):
-    """Every way the figures record fails to keep the interval pending against
-    the work that settles it, or presents a time as a figure."""
+    """Every way the figures record fails to state the interval as chosen at
+    100 ms with its source, to name the ceiling and keep it pending against the
+    work that derives it, or presents a derived time as the interval. A row the
+    check resolves by its first cell that appears twice is refused."""
+    try:
+        return _interval_checks(figures_text)
+    except DuplicatedRow as duplicated:
+        return ["the figures record holds a second row for: %s" % duplicated]
+
+
+def _interval_checks(figures_text):
     problems = []
     row = _interval_row(figures_text)
     if row is None:
-        return ["the figures record has no pending row for the interval"]
-    if not row[1].startswith("**Pending**"):
-        problems.append("the interval is not marked pending")
-    if SIBLING not in row[1]:
-        problems.append("the interval is not pending against %s" % SIBLING)
-    if re.search(r"-?\d+(\.\d+)? s\b", row[1]):
-        problems.append("the pending row states a time")
+        return ["the figures record has no row for the interval"]
+    if not row[1].startswith("**100 ms, chosen"):
+        problems.append("the interval's value cell does not hold 100 ms, chosen")
+    if INTERVAL_DECISION not in row[1]:
+        problems.append("the interval does not cite %s" % INTERVAL_DECISION)
+    if "last valid proof of life" not in row[1] or "contact opening" not in row[1]:
+        problems.append("the interval row does not give its definition")
+    if "pending" in " ".join(row).lower():
+        problems.append("the interval row carries a pending mark")
+    for figure in TIME_FIGURE.findall(" ".join(row)):
+        if figure != "100 ms":
+            problems.append("the interval row states another time figure, %s" % figure)
+    ceiling = _row_starting(figures_text, "| Ceiling on the proof-of-life removal interval | ")
+    if ceiling is None:
+        problems.append("the figures record does not name the ceiling")
+    else:
+        if not ceiling[1].startswith("**Pending**"):
+            problems.append("the ceiling is not marked pending")
+        if SIBLING not in ceiling[1]:
+            problems.append("the ceiling is not pending against %s" % SIBLING)
+        if TIME_FIGURE.search(ceiling[1]):
+            problems.append("the pending ceiling states a time")
     for trip, start in re.findall(r"(?m)^- (?:Coffee|Steam): .*?\(([0-9.]+) − ([0-9.]+)\) K",
                                   figures_text):
         if float(start) > float(trip):
             problems.append("the record works a time from a start above the trip point")
-    registers = [line for line in figures_text.splitlines()
-                 if line.startswith("| Proof-of-life removal interval | ")
-                 and not line.startswith("| Proof-of-life removal interval | **")]
-    if not any(SIBLING in line for line in registers):
-        problems.append("the pending-marks register does not list the interval against %s"
+    register_row = _row_starting(figures_text,
+                                 "| Ceiling on the proof-of-life removal interval (")
+    if register_row is None or SIBLING not in " ".join(register_row):
+        problems.append("the pending-marks register does not list the ceiling against %s"
                         % SIBLING)
+    problems.extend(_prose_problems(figures_text))
+    heater = _row_starting(figures_text, "| Both heater switches | ")
+    if heater is None:
+        problems.append("the figures record has no row for the heater switches")
+    elif ("100 ms, chosen" not in heater[1] or "pending" in " ".join(heater).lower()):
+        problems.append("the heater-switch row does not hold the interval as 100 ms, chosen")
+    register = figures_text.split("### Pending marks", 1)[-1]
+    if any(line.startswith("| Proof-of-life removal interval | ") and "pending" in line.lower()
+           for line in register.splitlines()):
+        problems.append("the pending-marks register lists the interval itself as pending")
     return problems
 
 
-class TheFiguresRecordKeepsTheIntervalPendingWhileTheCastingExceedsItsTrip(unittest.TestCase):
-    """SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1 stops at the peak: the interval
-    is derived by the sibling solution once the control holds the casting, so
-    the figures record must keep it pending until then.
+class TheFiguresRecordStatesTheChosenIntervalAndKeepsItsCeilingPending(unittest.TestCase):
+    """The interval is chosen at 100 ms; the ceiling it must sit under is derived
+    by the sibling solution once the control holds the casting, so the figures
+    record keeps the ceiling pending until then.
     """
 
-    # SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1: the figures record quotes the
-    # peak and still marks the interval pending against the sibling solution,
-    # and presents no time as a figure.
-    def test_the_interval_is_pending_against_the_sibling_solution(self):
-        self.assertEqual([], _interval_problems(_text(FIGURES_RECORD)))
+    # SOL-PROOF-OF-LIFE-INTERVAL-CHOSEN-RECORDED.C3: The check on the casting-peak
+    # record requires the figures record to state the chosen interval and name the
+    # ceiling, and refuses a record that marks the interval pending or states a
+    # derived time as the interval.
+    def test_the_committed_figures_record_states_the_chosen_interval(self):
+        figures = _text(FIGURES_RECORD)
+        self.assertEqual([], _interval_problems(figures))
+        self.assertEqual([], _record_prose_problems())
+        row = _interval_row(figures)
+        self.assertTrue(row[1].startswith("**100 ms, chosen"))
+        self.assertIn(INTERVAL_DECISION, row[1])
 
-    # SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1: and the check notices each way
-    # the record could stop saying so.
-    def test_the_check_notices_a_derived_interval_or_a_lost_pending_mark(self):
+    # SOL-PROOF-OF-LIFE-INTERVAL-CHOSEN-RECORDED.C3: the check notices each way the
+    # record could stop saying so.
+    def test_the_check_notices_a_pending_derived_or_lost_interval(self):
         figures = _text(FIGURES_RECORD)
         row = next(line for line in figures.splitlines()
-                   if line.startswith("| Proof-of-life removal interval | **Pending**"))
+                   if line.startswith("| Proof-of-life removal interval | "))
+        ceiling = next(line for line in figures.splitlines()
+                       if line.startswith("| Ceiling on the proof-of-life removal interval | "))
         mutations = {
-            "the pending mark removed": figures.replace(row, row.replace("**Pending**", "**Derived**", 1), 1),
-            "the sibling named no longer": figures.replace(SIBLING, "SOL-OTHER", 1),
-            "a time stated in the row": figures.replace(row, row.replace(
-                "**Pending**", "**Pending** (-8.2 s)", 1), 1),
+            "the interval marked pending again": figures.replace(
+                row, row.replace("**100 ms, chosen.**", "**Pending**", 1), 1),
+            "a pending mark added to the row": figures.replace(
+                row, row.replace("It must sit", "Pending. It must sit", 1), 1),
+            "a derived time in seconds as the interval": figures.replace(
+                row, row.replace("100 ms", "8.2 s", 1), 1),
+            "another time figure beside 100 ms": figures.replace(
+                row, row.replace("It must sit", "(or 250 ms) It must sit", 1), 1),
+            "100 ms changed to another figure": figures.replace(
+                row, row.replace("**100 ms, chosen.**", "**200 ms, chosen.**", 1), 1),
+            "the decision's id removed": figures.replace(
+                row, row.replace(INTERVAL_DECISION, "DEC-OTHER", 1), 1),
+            "the definition removed": figures.replace(
+                row, row.replace("last valid proof of life", "last command", 1), 1),
+            "the ceiling's pending mark lost": figures.replace(
+                ceiling, ceiling.replace("**Pending**", "**Derived**", 1), 1),
+            "the sibling named no longer in the ceiling row": figures.replace(
+                ceiling, ceiling.replace(SIBLING, "SOL-OTHER"), 1),
+            "the ceiling row removed": figures.replace(ceiling, "", 1),
+            "the interval row removed": figures.replace(row, "", 1),
             "the arithmetic shown": figures + "\n- Coffee: 192 J/K × (107 − 158.8) K = −9946 J; "
                                              "−9946 J / 1215 W = −8.2 s.\n",
-            "the row removed": figures.replace(row, "", 1),
-            "the register entry removed": "\n".join(
+            "the register entry for the ceiling removed": "\n".join(
                 line for line in figures.splitlines()
-                if not (line.startswith("| Proof-of-life removal interval | The control")
-                        and SIBLING in line)),
+                if not line.startswith("| Ceiling on the proof-of-life removal interval (")),
+            "the register marking the interval pending": figures.replace(
+                "| Ceiling on the proof-of-life removal interval (",
+                "| Proof-of-life removal interval | Pending | " + SIBLING
+                + " |\n| Ceiling on the proof-of-life removal interval (", 1),
         }
         for name, mutated in mutations.items():
             with self.subTest(mutation=name):
                 self.assertNotEqual(figures, mutated)
                 self.assertTrue(_interval_problems(mutated),
                                 "the check does not notice %s" % name)
+
+    # SOL-PROOF-OF-LIFE-INTERVAL-CHOSEN-RECORDED.C3: The check on the casting-peak
+    # record requires the figures record to state the chosen interval and name the
+    # ceiling, and refuses a record that marks the interval pending or states a
+    # derived time as the interval: a second row of any kind the check reads, added
+    # beside the real one, is refused.
+    def test_a_duplicated_structural_row_is_refused(self):
+        figures = _text(FIGURES_RECORD)
+        self.assertEqual([], _interval_problems(figures))
+        lines = figures.splitlines()
+        probe = "| Proof-of-life removal interval | **Pending** — derived from the peak. | — | x | y |"
+        prefixes = ("| Proof-of-life removal interval | ",
+                    "| Ceiling on the proof-of-life removal interval | ",
+                    "| Ceiling on the proof-of-life removal interval (",
+                    "| Both heater switches | ")
+        copies = {"the reviewer's probe row": figures + "\n" + probe + "\n"}
+        for prefix in prefixes:
+            real = next(line for line in lines if line.startswith(prefix))
+            copies[prefix.strip(" |")] = figures.replace(real, real + "\n" + real, 1)
+        for name, mutated in copies.items():
+            with self.subTest(duplicate=name):
+                self.assertNotEqual(figures, mutated)
+                self.assertTrue(any("second row" in problem
+                                    for problem in _interval_problems(mutated)),
+                                "the check does not refuse a second row: %s" % name)
+
+    # SOL-PROOF-OF-LIFE-INTERVAL-CHOSEN-RECORDED.C3: a sentence anywhere in the
+    # record that ties the interval to a pending mark is refused unless it is about
+    # the ceiling or the mechanism, and the heater-switch row holds the interval
+    # as chosen.
+    def test_the_check_refuses_prose_and_the_heater_row_that_mark_the_interval_pending(self):
+        figures = _text(FIGURES_RECORD)
+        self.assertEqual([], _interval_problems(figures))
+        heater = next(line for line in figures.splitlines()
+                      if line.startswith("| Both heater switches | "))
+        prose = ("The interval within which it must act is pending in the figures record.")
+        paragraph = next(line for line in figures.splitlines()
+                         if line.startswith("**Removing heater power when the controller stops.**"))
+        mutations = {
+            "the interlock paragraph saying the interval is pending": figures.replace(
+                paragraph, paragraph.replace(
+                    "is chosen, 100 ms, with the ceiling it must sit under pending in",
+                    "is pending in", 1), 1),
+            "a new sentence saying the interval is pending": figures + "\n" + prose + "\n",
+            "the heater row reverted to pending": figures.replace(
+                heater, heater.replace("(100 ms, chosen)", "(pending)", 1), 1),
+            "the heater row losing the chosen interval": figures.replace(
+                heater, heater.replace("(100 ms, chosen)", "", 1), 1),
+            "the heater row removed": figures.replace(heater, "", 1),
+        }
+        for name, mutated in mutations.items():
+            with self.subTest(mutation=name):
+                self.assertNotEqual(figures, mutated)
+                self.assertTrue(_interval_problems(mutated),
+                                "the check does not notice %s" % name)
+        about_ceiling = figures + "\nThe ceiling on the interval is pending.\n"
+        about_mechanism = figures + "\nThe interval's mechanism is pending.\n"
+        self.assertEqual([], _interval_problems(about_ceiling))
+        self.assertEqual([], _interval_problems(about_mechanism))
+
+    # SOL-PROOF-OF-LIFE-INTERVAL-CHOSEN-RECORDED.C3: The check on the casting-peak
+    # record requires the figures record to state the chosen interval and name the
+    # ceiling, and refuses a record that marks the interval pending or states a
+    # derived time as the interval.
+    def test_the_prose_guard_refuses_each_sentence_that_leaves_the_interval_unsettled(self):
+        self.assertEqual([], _record_prose_problems())
+        figures = _text(FIGURES_RECORD)
+        division = _text(DIVISION_RECORD)
+        paragraph = next(line for line in figures.splitlines()
+                         if line.startswith("**Removing heater power when the controller stops.**"))
+        long_paragraph = paragraph + (
+            " The ceiling is derived from the held casting peak by the sibling work. "
+            "The interval is pending while the work goes on." " The removal interval is not yet fixed.")
+        mutations = {
+            "the pending sentence in a paragraph that names the ceiling elsewhere": (
+                figures, figures.replace(paragraph, long_paragraph, 1)),
+            "the interval derived, not chosen": (
+                figures, figures + "\nThe removal interval is derived, not chosen.\n"),
+            "the interval to be derived": (
+                figures, figures + "\nThe removal interval is to be derived later.\n"),
+            "the interval awaiting derivation": (
+                figures, figures + "\nThe removal interval awaits derivation.\n"),
+            "the interval handed to the design task": (
+                figures, figures + "\nThe removal interval is the design task's.\n"),
+            "the interval unsettled": (
+                figures, figures + "\nThe removal interval is unsettled.\n"),
+            "the division's line 143 shape": (
+                division, division.replace(
+                    "It does not choose the interlock's mechanism, how the wall board",
+                    "It does not choose the interlock's mechanism or its removal interval, "
+                    "how the wall board", 1)),
+            "the division's line 604 shape": (
+                division, division.replace(
+                    "The interlock's mechanism, the circuit that decides when, is left to the "
+                    "board design, to the removal interval of 100 ms, chosen (",
+                    "The circuit that decides when, and the removal interval, are the design "
+                    "task's (", 1)),
+        }
+        for name, (original, mutated) in mutations.items():
+            with self.subTest(mutation=name):
+                self.assertNotEqual(original, mutated)
+                self.assertTrue(_prose_problems(mutated),
+                                "the guard does not notice %s" % name)
+        forms = _text(FUNCTION_FORMS_RECORD)
+        self.assertTrue(_prose_problems(forms + "\nThe removal interval is not yet fixed.\n"))
+        for about in ("The ceiling on the interval is pending.",
+                      "The interval's mechanism is pending.",
+                      "The mechanism is the design task's, to the removal interval."):
+            with self.subTest(accepted=about):
+                self.assertEqual([], _prose_problems(figures + "\n" + about + "\n"))
+
+    # SOL-PROOF-OF-LIFE-INTERVAL-CHOSEN-RECORDED.C3: the interval row states no
+    # other time figure, however its unit is spelled.
+    def test_the_check_refuses_other_time_figures_in_any_spelling(self):
+        figures = _text(FIGURES_RECORD)
+        row = next(line for line in figures.splitlines()
+                   if line.startswith("| Proof-of-life removal interval | "))
+        for spelled in ("0.1 seconds", "100 milliseconds", "8 min", "2 sec", "0.5 s", "3 minutes"):
+            with self.subTest(figure=spelled):
+                mutated = figures.replace(row, row.replace("It must sit", spelled + " It must sit", 1), 1)
+                self.assertNotEqual(figures, mutated)
+                self.assertTrue(_interval_problems(mutated),
+                                "the check does not notice %s" % spelled)
 
     # SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1: the finding the figures record
     # states reads the generated record's own peaks, for both thermoblocks and the
@@ -1226,7 +1465,7 @@ class TheFiguresRecordKeepsTheIntervalPendingWhileTheCastingExceedsItsTrip(unitt
         record = _committed_record()
         generated = {row[0]: row for row in casting.figure_rows(record)}
         finding = next(line for line in figures.splitlines()
-                       if line.startswith("**Finding: no interval can be derived"))
+                       if line.startswith("**Finding: no ceiling can yet be taken"))
         for label in ("Coffee thermoblock", "Steam thermoblock"):
             for figure in generated[label][1:4]:
                 self.assertIn("%s °C" % figure, finding)
@@ -1249,6 +1488,20 @@ class TheFiguresRecordKeepsTheIntervalPendingWhileTheCastingExceedsItsTrip(unitt
         self.assertNotIn("%s °C" % generated["Steam thermoblock"][1], drifted)
 
 
+class TheGeneratedRecordStatesTheIntervalAsChosen(unittest.TestCase):
+    # SOL-PROOF-OF-LIFE-INTERVAL-CHOSEN-RECORDED.C3: the generator's wording states
+    # the interval as 100 ms, chosen, and the ceiling as derived from the peak
+    # later, and a test holds the committed record to that wording.
+    def test_the_committed_record_states_the_interval_as_chosen_and_the_ceiling_as_later(self):
+        record = _committed_record()
+        self.assertIn("The proof-of-life removal interval is 100 ms, chosen.", record)
+        self.assertIn("The ceiling it must sit under, derived later from this record's peak",
+                      record)
+        self.assertIn("keeps the ceiling on the 100 ms interval pending", record)
+        self.assertNotIn("keeps the interval pending", record)
+        self.assertNotIn("The proof-of-life removal interval starts from", record)
+
+
 class TheGeneratedRecordSaysWhatItsPeaksAre(unittest.TestCase):
     """The record is diagnostic: its peaks are those of the control as shipped."""
 
@@ -1267,13 +1520,13 @@ class TheGeneratedRecordSaysWhatItsPeaksAre(unittest.TestCase):
         self.assertNotIn("climbs higher", head)
 
     # SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1: the section on what the record
-    # does not settle names the sibling solution that derives the interval from
+    # does not settle names the sibling solution that derives the ceiling from
     # the peak, and does not claim the figures record derives it.
-    def test_the_record_names_where_the_interval_is_derived(self):
+    def test_the_record_names_where_the_ceiling_is_derived(self):
         for text in (_committed_record(), casting.report_text(_findings())):
             section = text.split("## What this does not settle", 1)[1]
             self.assertIn("SOL-PROOF-OF-LIFE-INTERVAL-DERIVED-FROM-HELD-CASTING-PEAK", section)
-            self.assertIn("keeps the interval pending", section)
+            self.assertIn("keeps the ceiling on the 100 ms interval pending", section)
             self.assertNotIn("is derived from it in the", section)
 
     # SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1: the banner comes from the

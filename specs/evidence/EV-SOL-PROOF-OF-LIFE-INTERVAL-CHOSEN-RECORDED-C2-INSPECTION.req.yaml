@@ -1,0 +1,16 @@
+id: EV-SOL-PROOF-OF-LIFE-INTERVAL-CHOSEN-RECORDED-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-PROOF-OF-LIFE-INTERVAL-CHOSEN-RECORDED.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-27T10:15:12.341227Z"
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_casting_peak.py::test_the_committed_figures_record_states_the_chosen_interval
+  artifact_version: bb5de9126237143743ff07b2627f9c919e08623f
+attested_by: crun-35a5b32f5b01b2ef
+links:
+  - target: SOL-PROOF-OF-LIFE-INTERVAL-CHOSEN-RECORDED.C2
+    type: satisfies
