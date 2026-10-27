@@ -2,11 +2,11 @@ id: SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER.C4
 type: criterion
 title: A rail entry may be listed in the record of a design that places a controller so a connector's supply and return pins can be held
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |
-  A connector pin carrying a supply or return can be listed by a rail entry with no controller pin, and a rail entry whose net does not reach its connector pin fails, as for any channel. Entries that carry a controller pin are out of scope here and unchanged.
+  A connector pin carrying a supply or return can be listed by a rail entry with no controller pin, and a rail entry whose net does not reach its connector pin fails, as for any channel. A rail entry's channel is a label unique within the record, and rail entries are exempt from the rule that a net is listed once, so a connector with several supply or several return pins is listed in full; each connector pin is still listed once. Entries that carry a controller pin are out of scope here and unchanged.
 links:
   - target: SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER
     type: criterion-of

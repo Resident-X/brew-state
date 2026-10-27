@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The pre-order check holds a board that places no controller to the channels crossing its header, and lists a connector's supply and return pins
 status: active
-version: 1
+version: 2
 text: |
   Extends the pre-order board check so a board that places no controller is held to the channels that cross its header, and so a connector's supply and return pins can be listed on any board. As built, the check requires every pin allocation record to name a port-named controller pin for every channel and to list every pin of a connector it names, so the heater wall board, which places no controller, cannot pass it, and a supply or ground pin on the main board's header to the wall board cannot be listed either.
 
@@ -13,6 +13,8 @@ text: |
   - The declaration is accepted only for a design that places no part with a port-named pin and no part whose LCSC number equals the machine's controller part record; a design that places either fails, naming the part. The residual, a different microcontroller with no port-named pin and another catalogue number, is stated in the readme.
   - The connectivity checks are unchanged apart from the controller-pin test: a channel whose net does not reach its connector pin, a channel the record lists that the design lacks, and any net on a pin of a listed connector that the record does not list still fail.
   - A design with no machine folder, such as a proof design, is exempt from the cross-board check, as a synthetic controller already exempts it from the controller part rule.
+  - A rail entry still carries a channel, as a label unique within the record rather than a name from the channel enumeration; rail entries are exempt from the net-listed-once rule so a header with several ground or supply pins can be listed in full, and each connector pin is still listed once. A far channel is held against every other design's record found in the same machine folder.
+  - The check has one text report and no machine-readable report, so failures are reported in text and none is added here. The seeded case for a far channel no other record lists runs in a synthetic machine folder, since the proof designs are copied to paths with no machine folder.
   - The check does not compare the cable pin for pin between two headers; it holds that each far channel exists and is driven by the other board.
   - The firmware tier's pin and sensor checks read only the controller's record and are not changed. The wall board authors no converter-input map.
   - The change reads no firmware source, but hardware/README.md and hardware/tools/board_check.py are among the paths the build round's host tier reads, so the round runs the host tier as well as the board tier. The seeded-fault proof is on demand and in neither gate, so its new cases are run by hand.
