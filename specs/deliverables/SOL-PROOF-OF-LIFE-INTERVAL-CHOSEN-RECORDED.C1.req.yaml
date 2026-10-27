@@ -1,0 +1,12 @@
+id: SOL-PROOF-OF-LIFE-INTERVAL-CHOSEN-RECORDED.C1
+type: criterion
+title: The figures record states the removal interval as 100 ms, chosen, with its definition and source
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The controller boards' figures record states the proof-of-life removal interval as 100 ms, chosen, with its definition and its source, and no statement anywhere in the record marks it pending. Out of scope: deriving the ceiling.
+links:
+  - target: SOL-PROOF-OF-LIFE-INTERVAL-CHOSEN-RECORDED
+    type: criterion-of

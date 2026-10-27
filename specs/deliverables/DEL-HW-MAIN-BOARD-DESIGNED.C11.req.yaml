@@ -2,12 +2,12 @@ id: DEL-HW-MAIN-BOARD-DESIGNED.C11
 type: criterion
 title: The proof-of-life interlock's timing is designed to the derived removal interval
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: analysis
 closes_by: cascade
 text: |
-  The design shows, with the arithmetic, that the interlock removes heater power within the interval the figures record states.
+  The design shows, with the arithmetic, that the interlock removes heater power within the 100 ms removal interval the figures record states, counted from the controller's last valid proof of life to the contact opening: the interlock's timeout, the drive circuit's delay, the coil's fall to the relay's drop-out voltage and the contact's release add to less than 100 ms, each figure read from its source with the relay's release time from its manufacturer's datasheet, and the timeout exceeds the firmware's proof-of-life refresh period by the margin the arithmetic states, so a normal refresh never trips it.
 links:
   - target: DEL-HW-MAIN-BOARD-DESIGNED
     type: criterion-of

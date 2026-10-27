@@ -1,0 +1,13 @@
+id: DEL-CONTROLLER-HARDWARE.C14
+type: criterion
+title: The proof-of-life removal interval is chosen as 100 ms and recorded before the interlock's timing is designed
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The interval within which loss of the controller's proof of life must remove heater power is chosen as 100 ms, counted from the controller's last valid proof of life to the interlock's contact opening, and the controller boards' figures record states it with its source and no pending mark before the interlock's timing is designed.
+links:
+  - target: DEL-CONTROLLER-HARDWARE
+    type: criterion-of

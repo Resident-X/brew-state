@@ -1,13 +1,13 @@
 id: DEL-HW-INTERLOCK-INTERVAL-DERIVED.C1
 type: criterion
-title: The figures record states the proof-of-life removal interval with no pending mark
+title: The figures record states the first-trip ceiling and shows the chosen removal interval below it
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: analysis
 closes_by: cascade
 text: |
-  The figures record states the proof-of-life removal interval, the shorter of the two heaters' times at the worst single corner, and no pending mark remains against it.
+  The figures record states the ceiling on the proof-of-life removal interval, the shorter of the two heaters' times at the worst single corner, with the arithmetic, and shows that the chosen 100 ms is below it, with no pending mark remaining against the ceiling.
 links:
   - target: DEL-HW-INTERLOCK-INTERVAL-DERIVED
     type: criterion-of

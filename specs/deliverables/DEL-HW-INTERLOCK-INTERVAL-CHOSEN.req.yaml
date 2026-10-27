@@ -1,0 +1,20 @@
+id: DEL-HW-INTERLOCK-INTERVAL-CHOSEN
+type: deliverable
+category: task
+title: The proof-of-life removal interval is recorded as 100 ms, chosen, in every record that states it
+status: active
+level: task
+version: 1
+text: |
+  The proof-of-life removal interval is 100 ms, chosen by the owner, and the controller boards' figures record, the record of the casting peak and the records that restate the interval all say so. It is not board design and needs no board to exist. The first-trip ceiling the chosen interval must sit under is derived and checked separately, in DEL-HW-INTERLOCK-INTERVAL-DERIVED.
+rationale: |
+  The main board's interlock timing is designed to a figure the figures record holds, and the circuit proof the design method requires before placement needs that figure sourced. Recording the chosen interval is a small piece of work that needs no simulation, so it is a task of its own that the board designs depend on, apart from the ceiling check, which waits on the corrected control and does not gate the boards' design.
+links:
+  - target: DEL-CONTROLLER-HARDWARE.C14
+    type: derives-from
+  - target: REQ-SAFETY-CHAIN-001.C3
+    type: targets
+  - target: DEC-PROOF-OF-LIFE-INTERVAL-BOUNDED-BY-FIRST-PROTECTIVE-TRIP
+    type: justified-by
+  - target: DEC-PROOF-OF-LIFE-INTERLOCK-IN-FIRST-HARDWARE
+    type: justified-by

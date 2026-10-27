@@ -1,0 +1,12 @@
+id: SOL-PROOF-OF-LIFE-INTERVAL-CHOSEN-RECORDED.C2
+type: criterion
+title: The records that restate the interval agree with the figures record
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The function-forms record, the board division record and the constraints record's heater-switch row and pending-marks table state the interval as the figures record does and mark none of it pending. Out of scope: choosing the interlock's mechanism or parts.
+links:
+  - target: SOL-PROOF-OF-LIFE-INTERVAL-CHOSEN-RECORDED
+    type: criterion-of
