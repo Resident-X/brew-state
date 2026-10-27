@@ -38,6 +38,6 @@ links:
   - target: DEC-KICAD-VIEW-STATE-FILE-NOT-COMMITTED
     type: justified-by
 brief_confirmation:
-  confirmer: claude-sonnet-5-5 (independent brief reviewer)
-  fingerprint: 70e33ca06b8eec875ffd39fb248f63801579cc2ac8c2cf6975df2d02b5777982
+  confirmer: claude-sonnet-5-5
+  fingerprint: 3e529b535ae6e08bdb041b3fafca08c718a1365f01548a1da348f9ea4c306ad2
   gating_profile: ""
