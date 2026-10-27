@@ -1,0 +1,13 @@
+id: DEL-HW-BRING-UP.C14
+type: criterion
+title: The interlock drive's pulse phases, gate levels and coil voltages are measured on the built board against the figures its arithmetic assumes
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  On the built board, the proof-of-life output's high phase and low phase are each measured and each is at least the minimum the board's drive arithmetic states. Each charge channel's gate level is read at its test point with the output toggling and with it held. The coil voltage is read at pick-up and at the held level with the enclosure at its warmest settled air temperature and the supply at its lowest declared voltage. Each reading is compared with the figure the judgement records state, and a reading outside it fails.
+links:
+  - target: DEL-HW-BRING-UP
+    type: criterion-of
