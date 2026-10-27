@@ -1,6 +1,6 @@
 id: DEL-HW-MAIN-BOARD-DESIGNED.C11
 type: criterion
-title: The proof-of-life interlock's timing is designed to the derived removal interval
+title: The proof-of-life interlock's timing is designed to the 100 ms removal interval
 status: active
 version: 2
 measurement_type: binary

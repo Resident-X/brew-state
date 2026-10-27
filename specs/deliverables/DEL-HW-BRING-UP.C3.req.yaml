@@ -7,7 +7,7 @@ measurement_type: binary
 verification: test
 closes_by: cascade
 text: |
-  The interval from loss to removal is measured against the 100 ms removal interval the figures record states, and the figures record shows that interval below the first-trip ceiling.
+  The interval from loss to removal is measured against the 100 ms removal interval the figures record states, and the figures record shows that interval below the first-trip ceiling. The interval is measured at the lowest supply voltage and the warmest enclosure air temperature the constraints record declares, where the relay's release is slowest.
 
   Loss is produced in each way the controller can lose it without its firmware's help: halted by its debugger, held in reset, and with its supply lowered below its operating range from an adjustable bench supply. Each case is run with a dummy load standing in for the heater, so the removal is shown not to depend on the controller's clock, reset or supply.
 links:

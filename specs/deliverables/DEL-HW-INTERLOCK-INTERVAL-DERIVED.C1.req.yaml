@@ -7,7 +7,7 @@ measurement_type: binary
 verification: analysis
 closes_by: cascade
 text: |
-  The figures record states the ceiling on the proof-of-life removal interval, the shorter of the two heaters' times at the worst single corner, with the arithmetic, and shows that the chosen 100 ms is below it, with no pending mark remaining against the ceiling.
+  The figures record states the ceiling on the proof-of-life removal interval, the shorter of the two heaters' times at the worst single corner, with the arithmetic, and shows that the chosen 100 ms is below it, with no pending mark remaining against the ceiling; where it is not below the ceiling, the interval is re-chosen and the interlock's timing re-designed before mains is connected.
 links:
   - target: DEL-HW-INTERLOCK-INTERVAL-DERIVED
     type: criterion-of
