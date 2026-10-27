@@ -65,6 +65,6 @@ links:
   - target: REQ-SAFETY-CHAIN-001.C8
     type: targets
 brief_confirmation:
-  confirmer: claude-sonnet-5-5 blind brief reviewer
-  fingerprint: 6349cfe79036c7c11690a51cb282a36dfc104a81d4a098d975ce122ab1cfcba2
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: affd40859ccd5cdc1a353ff0913b9acce45944352b9b7fe61fceba9f5a4d2b27
   gating_profile: ""
