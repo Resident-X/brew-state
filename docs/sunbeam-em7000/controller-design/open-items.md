@@ -33,13 +33,13 @@ These settle most of the hydraulic unknowns and should be done before any plumbi
 
 ## C. Design decisions awaiting the owner
 
-- The supply cord, appliance inlet and inlet filter sit ahead of the inlet fuse, protected only by the building's breaker (up to 20 A). The chosen filter is rated 15 A and its IEC C14 coupler 10 A, both above the machine's own draw (at most 10.5 A at 253 V) and below the breaker. This section is held to fault withstand until the breaker clears rather than to the breaker's rating, the ordinary arrangement for an appliance drawing under 10 A; the owner to confirm that basis (`controller-board-design-constraints.md` § Fault current, `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`).
+- The retained fixed mains lead sits ahead of the entry fuse on the main board, protected only by the building's breaker (up to 20 A); no appliance inlet or filter is fitted. The lead is the machine's own and its draw is at most 10.5 A at 253 V, below the breaker. This section is held to fault withstand until the breaker clears rather than to the breaker's rating, the ordinary arrangement for an appliance drawing under 10 A; the owner to confirm that basis (`controller-board-design-constraints.md` § Fault current, `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`).
 - PCB go or no-go (`pcb-plan.md`).
 - Whether the BL0942 current reading replaces the mains-presence confirm (D20).
 - The steam block trapped-pressure case: an S8 interlock on the steam heater, a hot-side relief valve, or both.
 - Whether to copy the OEM `Q7` and `Q8` stages as proposed (D18).
 - Steam pump drive (D4).
-- **Mains chain rating margin.** Resolved by `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`: filter FN9222-15-06 (15 A at 50 C), trunk at least 1.5 mm2 (WB1568), T10A unchanged, one shared TR5 fuse on the valve branches. Remaining to confirm: the 15 A filter's coupler rating (IEC C14 is 10 A), its termination type, the TR5 series.
+- **Mains chain rating margin.** Resolved by `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`: the fixed lead retained with no filter, trunk at least 1.5 mm2 (WB1568), T10A unchanged, one shared TR5 fuse on the valve branches. Remaining to confirm: the TR5 series.
 - **Heater switching cadence:** whole-cycle (20 ms) bursts or half-cycle; the files disagree.
 - **Steam heater with the knob shut:** the firmware's 137 C ready temperature heats against a closed knob, against F10 and the open trapped-pressure case.
 - **SSR mounting:** the side wall is proposed, not decided, and conflicts thermally with the IRM-10-5's derating. Superseded: the air temperature the parts are graded to is now the project assumption of `controller-board-design-constraints.md` § Enclosure air temperature, and the owner's plan of 2026-10-23 is to mount the heater switches outside the enclosure on the machine's metal wall (cutting away the plastic side wall), so this proposal and the 45-60 °C estimate are not the basis.
@@ -69,9 +69,9 @@ Each node must be read with `show` before linking, and existing coverage checked
 ## E. Housekeeping and unresolved items from the refresh
 
 - The mainboard's own height (an estimate; the cavity is 34.5 mm deep, with 23.4 mm usable above the original board within about 2 mm of a wall and 28 mm elsewhere, an owner allowance resting on the AC/DC module's top, a single point: `../reference-machine.md` § Controller enclosure as found, which supersedes the 25 mm note) and the dimmer module's height (footprint 50 x 16 mm).
-- The 10 A chain margin is resolved by `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE` (15 A filter, trunk above the fuse); the 15 A filter's coupler rating is unverified and its termination type is not recorded.
+- The 10 A chain margin is resolved by `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE` (trunk above the fuse; no filter is fitted, the fixed lead being retained).
 - Whether the IRM-10-5 has an internal fuse (the old text and the BOM disagreed).
-- Nothing specifies ferrules for the screw terminals, the FN9222's termination type, the earth conductor and chassis stud, or the temperature ratings of PVC wire and flex near the hot blocks.
+- Nothing specifies ferrules for the screw terminals, the earth conductor and chassis stud, or the temperature ratings of PVC wire and flex near the hot blocks.
 - The EARU SSR-40DA's zero-cross type, isolation rating, package and fail-short behaviour are unconfirmed; the dimmer's Z-C is believed full-wave but unmeasured; the BL0942 ZX delay and module isolation are unknown.
 - Heater switching cadence is stated as half-cycle burst-fire in the BOM and as whole-cycle granularity in the pin allocation; reconcile against `heater-drive-and-supply-timing.md`.
 - PC6 is both the S8 switch input and the optional USART6 TX; it only matters if the BL0942 meters need a transmit line.

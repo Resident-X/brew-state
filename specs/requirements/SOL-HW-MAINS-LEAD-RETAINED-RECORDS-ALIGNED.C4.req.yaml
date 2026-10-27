@@ -1,0 +1,12 @@
+id: SOL-HW-MAINS-LEAD-RETAINED-RECORDS-ALIGNED.C4
+type: criterion
+title: The forms, design constraints and cost estimate records and the controller design folder describe the retained lead and not an inlet
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  None of these describes an appliance inlet, a bought inlet filter or a mains-entry assembly as the machine's arrangement; the cost estimate prices the board-entry arrangement as the declared one with each figure that follows recomputed and its checks passing; the constraints record's figures that the emulation tests read are unchanged, and the records that name their inputs by hash are regenerated where an input changed. Out of scope: the signed separation basis.
+links:
+  - target: SOL-HW-MAINS-LEAD-RETAINED-RECORDS-ALIGNED
+    type: criterion-of

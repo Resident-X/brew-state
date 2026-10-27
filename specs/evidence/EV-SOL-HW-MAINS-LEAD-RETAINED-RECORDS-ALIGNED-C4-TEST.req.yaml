@@ -1,0 +1,16 @@
+id: EV-SOL-HW-MAINS-LEAD-RETAINED-RECORDS-ALIGNED-C4-TEST
+type: evidence
+title: test evidence for SOL-HW-MAINS-LEAD-RETAINED-RECORDS-ALIGNED.C4
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-27T02:55:08.208789Z"
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_casting_peak.py::test_the_record_states_the_sensing_error_beside_the_figure
+  artifact_version: f3158317bc239530148ec97beb3b299b339f2cd6
+attested_by: crun-e51446a7089cc84b
+links:
+  - target: SOL-HW-MAINS-LEAD-RETAINED-RECORDS-ALIGNED.C4
+    type: satisfies

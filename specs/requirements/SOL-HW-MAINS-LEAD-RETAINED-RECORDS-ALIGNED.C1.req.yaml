@@ -1,0 +1,12 @@
+id: SOL-HW-MAINS-LEAD-RETAINED-RECORDS-ALIGNED.C1
+type: criterion
+title: The board division record gives the mains entry to the main board and names two off-board assemblies
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The record's owner table assigns the mains entry's fuse and varistor to the main board and no longer names a mains inlet filter or a mains-entry assembly, its statement of the off-board assemblies names the heater wall board and the steam-path assembly, and every statement of the retained mains lead, the entry parts and the two-assembly count elsewhere in the record agrees. Out of scope: drawing the entry parts into the floorplan, and the signed separation basis.
+links:
+  - target: SOL-HW-MAINS-LEAD-RETAINED-RECORDS-ALIGNED
+    type: criterion-of

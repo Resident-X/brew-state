@@ -1,0 +1,12 @@
+id: SOL-HW-MAINS-LEAD-RETAINED-RECORDS-ALIGNED.C5
+type: criterion
+title: No active graph node states an appliance inlet, an inlet filter or a mains-entry assembly as the machine's arrangement
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  A search of the graph by the terms inlet, inlet filter, appliance inlet, mains entry, entry assembly and the filter's part number, through the engine, finds no active node that states them as the arrangement; each that does is amended, or recorded as historical context. Out of scope: nodes that use "inlet" for water, and the generic "supply inlet" wording of requirements that holds for a fixed lead.
+links:
+  - target: SOL-HW-MAINS-LEAD-RETAINED-RECORDS-ALIGNED
+    type: criterion-of

@@ -15,7 +15,7 @@ Two thermoblocks (coffee and steam, each about 1 kW), a Ulka EP5 coffee pump tha
 ## 3. Architecture
 
 ```
-mains inlet: Schaffner FN9222-15-06 filter, T10A fuse, RN3404 MOV
+mains entry: retained fixed lead, T10A fuse, varistor (on the main board at tabs 2 and 3)
    |
    +-- Mean Well IRM-10-5 (on a hand-cut carrier) -> 5 V -> controller board, accessories
    +-- SSR #1 (coffee heater) ---- ULN2003A breakout (low-side) <- controller
@@ -79,7 +79,7 @@ Detailed in `temperature-sensing-front-end.md`. In short:
 ## 7. Safety layers
 
 - OEM thermostats (coffee 110 C, steam 200 C, pump 110 C) stay in series with their loads. [PL] The parts list also names a steam-block thermal fuse (240 C), a published, unverified derived view: none was seen at the board end and none was found by the owner (`../reference-machine.md` § Protection), so none is recorded as fitted.
-- Mains inlet: T10A slow-blow fuse, filter, MOV; a 1-2 A branch fuse on each dimmer's live; one shared TR5 fuse on the valve branches; T2A on the IRM supply recommended, not required (`mains-inlet-protection.md`). Chain rated above its fuse and the valve branches fused (`DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`): FN9222-15-06 filter (coupler rating unverified), trunk at least 1.5 mm2, one shared TR5 fuse on the valve branches.
+- Mains entry: the retained fixed lead, T10A slow-blow fuse and varistor on the main board; a 1-2 A branch fuse on each dimmer's live; one shared TR5 fuse on the valve branches; T2A on the IRM supply recommended, not required (`mains-inlet-protection.md`). Chain rated above its fuse and the valve branches fused (`DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`): no filter (the fixed lead is retained), trunk at least 1.5 mm2, one shared TR5 fuse on the valve branches.
 - Valve vent: normally open, fails to the venting state.
 - OPVs: steam OPV on the pump (and on the block if no check valve lies between); a new brew OPV.
 - Defaults while the controller is in reset: pull-downs hold the SSRs and dimmers off; the valve relays' pulls are intended to hold them de-energised, which depends on the relay module's input polarity and on 5 V tolerance of the driving pins, both still to verify (`passive-and-drive-components.csv`, `open-items.md`).

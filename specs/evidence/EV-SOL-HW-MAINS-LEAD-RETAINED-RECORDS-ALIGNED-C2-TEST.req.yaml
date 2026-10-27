@@ -1,0 +1,16 @@
+id: EV-SOL-HW-MAINS-LEAD-RETAINED-RECORDS-ALIGNED-C2-TEST
+type: evidence
+title: test evidence for SOL-HW-MAINS-LEAD-RETAINED-RECORDS-ALIGNED.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-27T02:55:08.068165Z"
+artifact:
+  kind: external
+  reference: docs/sunbeam-em7000/controller-board-division.md::selftest
+  artifact_version: f3158317bc239530148ec97beb3b299b339f2cd6
+attested_by: crun-e51446a7089cc84b
+links:
+  - target: SOL-HW-MAINS-LEAD-RETAINED-RECORDS-ALIGNED.C2
+    type: satisfies

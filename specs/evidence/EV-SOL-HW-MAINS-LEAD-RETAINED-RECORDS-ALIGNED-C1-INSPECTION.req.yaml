@@ -1,0 +1,16 @@
+id: EV-SOL-HW-MAINS-LEAD-RETAINED-RECORDS-ALIGNED-C1-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-MAINS-LEAD-RETAINED-RECORDS-ALIGNED.C1
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-27T02:55:07.995067Z"
+artifact:
+  kind: external
+  reference: 'docs/sunbeam-em7000/controller-board-division.md § Every function has one owner, § Owner intent carried in: inspected against the criterion; check_owners run via the record''s main, wall, --tables and --selftest commands'
+  artifact_version: f3158317bc239530148ec97beb3b299b339f2cd6
+attested_by: crun-e51446a7089cc84b
+links:
+  - target: SOL-HW-MAINS-LEAD-RETAINED-RECORDS-ALIGNED.C1
+    type: satisfies

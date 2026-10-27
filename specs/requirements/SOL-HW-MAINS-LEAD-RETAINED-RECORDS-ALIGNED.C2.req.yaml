@@ -1,0 +1,12 @@
+id: SOL-HW-MAINS-LEAD-RETAINED-RECORDS-ALIGNED.C2
+type: criterion
+title: The record's owner decisions no longer list the mains-entry mounting or the fuse-and-varistor proposal as pending, and its check passes
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  D14 and D16 are removed from the pending list and from the machine-readable data, the entry assembly's owner label and the perturbation that expects the last decision id are brought to match, D7 states that its dependency is the board-entry varistor, and the record's check passes for the main board, the wall board, the tables and the selftest. Out of scope: settling any decision still pending.
+links:
+  - target: SOL-HW-MAINS-LEAD-RETAINED-RECORDS-ALIGNED
+    type: criterion-of

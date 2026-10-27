@@ -1,0 +1,16 @@
+id: EV-SOL-HW-MAINS-LEAD-RETAINED-RECORDS-ALIGNED-C5-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-MAINS-LEAD-RETAINED-RECORDS-ALIGNED.C5
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-27T02:55:08.281294Z"
+artifact:
+  kind: external
+  reference: 'engine-command: staircase query (inlet; inlet filter; appliance inlet; mains entry; mains-entry assembly; FN9222) then show; staircase validate: 0 errors'
+  artifact_version: f3158317bc239530148ec97beb3b299b339f2cd6
+attested_by: crun-e51446a7089cc84b
+links:
+  - target: SOL-HW-MAINS-LEAD-RETAINED-RECORDS-ALIGNED.C5
+    type: satisfies
