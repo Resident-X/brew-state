@@ -1,12 +1,12 @@
 id: SOL-PROOF-OF-LIFE-INTERVAL-DERIVED-FROM-HELD-CASTING-PEAK.C1
 type: criterion
-title: The figures record derives the proof-of-life interval from the held peak and ends its pending mark
+title: The figures record derives the ceiling from the held peak and shows the chosen interval under it
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: analysis
 text: |
-  The controller boards' figures record replaces its pending proof-of-life removal interval with the interval derived from each thermoblock's peak casting temperature produced by the corrected control as the regenerated peak record gives it, its trip point, its element power at the top of the declared supply span and the lower bound of its thermal mass, showing the arithmetic and naming the shorter of the two heaters as the one that sets it, and no statement anywhere in the record still marks the interval pending or bounds it only by the times taken from the commanded temperatures. Out of scope: the interlock's design.
+  The controller boards' figures record states the ceiling on the proof-of-life removal interval derived from each thermoblock's peak casting temperature produced by the corrected control as the regenerated peak record gives it, its trip point, its element power at the top of the declared supply span and the lower bound of its thermal mass, showing the arithmetic and naming the shorter of the two heaters as the one that sets it, and shows the chosen 100 ms below it, and no statement anywhere in the record bounds the ceiling only by the times taken from the commanded temperatures. Out of scope: the interlock's design and the choice of the interval.
 links:
   - target: SOL-PROOF-OF-LIFE-INTERVAL-DERIVED-FROM-HELD-CASTING-PEAK
     type: criterion-of

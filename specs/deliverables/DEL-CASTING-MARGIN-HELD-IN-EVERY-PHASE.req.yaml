@@ -4,7 +4,7 @@ category: task
 title: Each thermoblock's casting stays below its trip point by the declared margin in every phase, with warm-up and recovery commanded from energy
 status: active
 level: task
-version: 1
+version: 2
 text: |
   Each thermoblock's casting stays below its protection trip point by the declared margin in every phase the machine passes through: heating from cold, recovery after a draw, and a steam draw of any length, including one long enough that the casting keeps rising while the operator is still drawing. The margin holds at the lowest thermal mass the machine can be in as well as at nominal.
 
@@ -14,11 +14,11 @@ rationale: |
 
   Placement: a task directly under the roadmap's simulation phase criterion, beside the loop and robustness tasks whose guarantees it extends. Both loops are sealed as delivered, so the extension cannot be added beneath them. It depends on the steam flash-generator task because a steam draw of any length is only meaningful against the flash relations.
 
-  Dependency direction: the derivation of each thermoblock's peak casting temperature under control (SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED) is built against the control as it ships, and the energy-based warm-up and recovery change the peak, so the record it generates is stale once this task's control changes land. This task therefore owns regenerating that peak record (the last criterion). The proof-of-life interval is not derived here: the shipped control lets the coffee casting exceed its trip point, so no interval can honestly be derived until this task has held it, and the interval is owned by a separate solution that depends on this task. The peak derivation also waits on the plant model's element-power uncertainty covering the declared supply span.
+  Dependency direction: the derivation of each thermoblock's peak casting temperature under control (SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED) is built against the control as it ships, and the energy-based warm-up and recovery change the peak, so the record it generates is stale once this task's control changes land. This task therefore owns regenerating that peak record (the last criterion). The ceiling on the proof-of-life removal interval is not derived here: the shipped control lets the coffee casting exceed its trip point, so no ceiling can honestly be derived until this task has held it, and the ceiling is owned by a separate solution that depends on this task. The interval itself is chosen as 100 ms and does not wait on this task. The peak derivation also waits on the plant model's element-power uncertainty covering the declared supply span.
 
   What this replaces: the warm-up and recovery behaviour of the finished loops where it is driven by temperature error, which is read here from the requirement text and not from a sealed criterion, so slicing must read the loop solutions before naming what it supersedes. The margin itself is a declared figure that the owner has not given in this task, and none is invented here.
 
-  The peak casting record is regenerated as part of this task (the last criterion), so the record is not left standing on a controller that preceded the correction. The proof-of-life interval derived from the corrected peak is owned by SOL-PROOF-OF-LIFE-INTERVAL-DERIVED-FROM-HELD-CASTING-PEAK, which depends on this task.
+  The peak casting record is regenerated as part of this task (the last criterion), so the record is not left standing on a controller that preceded the correction. The ceiling on the proof-of-life interval derived from the corrected peak is owned by SOL-PROOF-OF-LIFE-INTERVAL-DERIVED-FROM-HELD-CASTING-PEAK, which depends on this task.
 links:
   - target: DEL-BREW-STATE-DELIVERY.C1
     type: derives-from

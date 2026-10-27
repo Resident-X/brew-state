@@ -1,0 +1,15 @@
+id: SOL-PROOF-OF-LIFE-INTERVAL-CHOSEN-RECORDED
+type: deliverable
+category: solution
+title: The proof-of-life removal interval is recorded as 100 ms, chosen, and the casting-peak check enforces it
+status: active
+version: 1
+text: |
+  The proof-of-life removal interval is recorded as 100 ms, chosen, wherever the records state it. The controller boards' figures record gives the figure with its definition (from the controller's last valid proof of life to the interlock's contact opening) and its source, the owner's ruling recorded in DEC-PROOF-OF-LIFE-INTERVAL-BOUNDED-BY-FIRST-PROTECTIVE-TRIP, in place of the pending mark, and names the derived first-trip time as the ceiling the figure must later be shown to sit under. The statements of the interval in the function-forms record, the board division record and the constraints record's per-channel and pending-mark tables agree with it. The check on the casting-peak record, which today requires the figures record to keep the interval pending, requires instead that the record states the chosen interval and points to the ceiling, and refuses a record that states it pending or states a derived time as the interval; the casting-peak record is regenerated.
+links:
+  - target: DEL-HW-INTERLOCK-INTERVAL-CHOSEN.C1
+    type: derives-from
+  - target: REQ-SAFETY-CHAIN-001.C3
+    type: targets
+  - target: DEC-PROOF-OF-LIFE-INTERVAL-BOUNDED-BY-FIRST-PROTECTIVE-TRIP
+    type: justified-by

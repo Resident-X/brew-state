@@ -5,7 +5,7 @@ title: The main controller board is designed, proven against its records and mad
 status: active
 priority: must
 level: task
-version: 1
+version: 2
 text: |
   The main controller board is the one board the division places inside the enclosure. This task designs it, proves it against its design records and the signed separation basis, and has it made. It carries the proof-of-life interlock and every reserved headroom channel the board division record places, and the controller part the selection settled.
 
@@ -41,9 +41,9 @@ links:
     type: justified-by
   - target: DEL-CONTROLLER-HARDWARE.C9
     type: derives-from
-  - target: DEL-HW-INTERLOCK-INTERVAL-DERIVED
-    type: depends-on
   - target: DEC-PROOF-OF-LIFE-INTERLOCK-IN-FIRST-HARDWARE
     type: justified-by
   - target: OBL-ELECTROMAGNETIC-COMPATIBILITY-001.C1
     type: targets
+  - target: DEL-HW-INTERLOCK-INTERVAL-CHOSEN
+    type: depends-on

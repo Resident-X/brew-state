@@ -1,0 +1,13 @@
+id: DEL-HW-INTERLOCK-INTERVAL-CHOSEN.C1
+type: criterion
+title: The records state the proof-of-life removal interval as 100 ms, chosen, with no pending mark
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The controller boards' figures record, the record of the casting peak and the records that restate the interval state it as 100 ms, chosen, and none marks it pending.
+links:
+  - target: DEL-HW-INTERLOCK-INTERVAL-CHOSEN
+    type: criterion-of

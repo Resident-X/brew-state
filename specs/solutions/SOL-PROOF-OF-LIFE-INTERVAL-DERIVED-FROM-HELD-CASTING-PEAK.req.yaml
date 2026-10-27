@@ -1,15 +1,17 @@
 id: SOL-PROOF-OF-LIFE-INTERVAL-DERIVED-FROM-HELD-CASTING-PEAK
 type: deliverable
 category: solution
-title: The proof-of-life removal interval is derived from the peak casting temperature the corrected control produces
+title: The ceiling on the proof-of-life removal interval is derived from the peak casting temperature the corrected control produces and the chosen interval is shown under it
 status: active
-version: 1
+version: 2
 text: |
-  The proof-of-life removal interval is derived from the hottest each heater's casting reaches while the controller is holding it. That peak is produced by the control as it stands once each casting is held below its trip point by the declared margin in every phase, so the interval stays pending in the controller boards' figures record until the held control has produced the peak.
+  The ceiling on the proof-of-life removal interval is derived from the hottest each heater's casting reaches while the controller is holding it. That peak is produced by the control as it stands once each casting is held below its trip point by the declared margin in every phase, so the ceiling stays pending in the controller boards' figures record until the held control has produced the peak.
 
-  Under the shipped control the coffee casting exceeds its trip point, so no interval can honestly be derived from it: a time to the trip point starting from a casting already past the trip point is not a figure, and starting from the commanded temperature would understate the hazard. This is why the interval waits on the control that holds the margin, on the regenerated peak casting record, and on the figures record the interval is written into.
+  Under the shipped control the coffee casting exceeds its trip point, so no ceiling can honestly be derived from it: a time to the trip point starting from a casting already past the trip point is not a figure, and starting from the commanded temperature would understate the hazard. This is why the ceiling check waits on the control that holds the margin, on the regenerated peak casting record, and on the figures record the ceiling is written into.
 
-  The work is analysis over the regenerated peak record and the figures record: it takes the peak as the generated record gives it, with the trip points, the element power at the top of the declared supply span and the lower bound of the thermal mass the figures record already carries, and combines the heaters by the shorter time. The corners come from the peak record and combine by the worst single corner, not by a sum.
+  The work is analysis over the regenerated peak record and the figures record: it takes the peak as the generated record gives it, with the trip points, the element power at the top of the declared supply span and the lower bound of the thermal mass the figures record already carries, and combines the heaters by the shorter time, then shows the chosen 100 ms interval below the ceiling with the arithmetic. The corners come from the peak record and combine by the worst single corner, not by a sum.
+
+  The chosen interval is recorded by SOL-PROOF-OF-LIFE-INTERVAL-CHOSEN-RECORDED and does not wait for this solution.
 links:
   - target: REQ-SAFETY-CHAIN-001.C3
     type: targets

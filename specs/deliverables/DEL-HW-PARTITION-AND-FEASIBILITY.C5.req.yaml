@@ -2,11 +2,11 @@ id: DEL-HW-PARTITION-AND-FEASIBILITY.C5
 type: criterion
 title: Each board the division produces has a design task carrying the interlock or headroom allotted to that board
 status: active
-version: 11
+version: 12
 measurement_type: binary
 verification: inspection
 closes_by: cascade
-text: |-
+text: |
   Each such task delivers, for its board, the epic's proof before order, separation and held-off criteria, its schematic review and its layout review, with the design method applied to that board rather than only written. Each covers ordering and receiving its board, checks the manufacturer's production files against its assembly preview before payment, records the quoted order cost against the running total of the declared spend before ordering, depends on the further pre-order checks, so no board's records need a key the pre-order check does not yet accept, and is a prerequisite of bring-up, so none of the epic's criteria can close on the gate or the method alone without a board having been designed, proven and made.
 
   Each such task also records, with its source, every figure the controller boards' constraints record holds pending against the design of its board, such as a rail's budget, a branch fuse's rating, or the time a protective device takes to clear and the energy it lets through at the declared fault current, ending those marks.
@@ -15,7 +15,7 @@ text: |-
 
   The derating policy record each such task authors grades every part chosen for its board against the enclosure air temperature the controller boards' constraints record holds, and where no catalogue part holds at that figure the task records the revisit of the figure in the constraints record, with its reason, instead of stretching the part's rating.
 
-  Each such task that carries the interlock depends on DEL-HW-INTERLOCK-INTERVAL-DERIVED, which derives the proof-of-life removal interval from the held casting peak, so the interlock's timing is designed to a derived figure. That task also judges the interlock's own barrier part, such as a relay's coil-to-contact barrier if the mechanism is a relay, against the separation basis with the arithmetic shown, and where the signed basis lists no such barrier the owner re-declares the basis before the part is ordered.
+  Each such task that carries the interlock depends on DEL-HW-INTERLOCK-INTERVAL-CHOSEN, which records the 100 ms proof-of-life removal interval, so the interlock's timing is designed to a recorded figure and does not wait on the first-trip ceiling check, DEL-HW-INTERLOCK-INTERVAL-DERIVED, which bring-up waits on. That task also judges the interlock's own barrier part, such as a relay's coil-to-contact barrier if the mechanism is a relay, against the separation basis with the arithmetic shown, and where the signed basis lists no such barrier the owner re-declares the basis before the part is ordered.
 
   The main board's design task routes each net that the board division record joins on an inner layer, the valve-relay net from its tab and the pump-strip net from its tab among them, on the inner layer clear of every mounting hole, slot and low-voltage block, with the signed separation basis kept from all other copper on that layer, and records each route; where a net cannot be so routed, the task revises the division record's floorplan rather than relaxing the basis.
 
