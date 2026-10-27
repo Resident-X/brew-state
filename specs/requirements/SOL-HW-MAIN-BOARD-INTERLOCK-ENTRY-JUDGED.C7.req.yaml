@@ -6,7 +6,7 @@ version: 1
 measurement_type: binary
 verification: inspection
 text: |
-  The decisions are the tab moves against the mounting-hole rule, the current sensing placement, the voltage measurement's distance from the relay, the fuse arrangement, the varistors and the removal order of the channel kinds. Each record names the drawn default, the other choice and what it would change. Redesigning the board to the choice not drawn is out of scope; only its consequence is carried.
+  The decisions include the tab moves against the mounting-hole rule (D1), the current sensing placement (D3), the voltage measurement's distance from the relay (D4), the fuse arrangement (D5), the choice of logic supply module (D6), the entry varistor, decided jointly with the wall board's varistors (D7), the blade terminal or solder pad for the neutral return landing (D8), the removal order of the channel kinds (D12) and the copper weight (D13). Each record names the drawn default, the other choice and what it would change. Redesigning the board to the choice not drawn is out of scope; only its consequence is carried.
 links:
   - target: SOL-HW-MAIN-BOARD-INTERLOCK-ENTRY-JUDGED
     type: criterion-of

@@ -62,3 +62,9 @@ links:
     type: depends-on
   - target: SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER
     type: depends-on
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C11
+    type: derives-from
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C15
+    type: derives-from
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C19
+    type: derives-from

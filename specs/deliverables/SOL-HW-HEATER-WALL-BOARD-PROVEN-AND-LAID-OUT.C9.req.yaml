@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C9
+type: criterion
+title: The drawn board carries the triacs and opto-triacs selected, the tab-hole height and bracket mounting, and the surge clamps as kept or dropped, as the assembly judgements settled them
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The schematic and the layout carry the parts selected, each triac's tab hole at the height fixed on the bracket's standing leg with the board's fixing, and the clamps as the judgements kept or dropped them. A part or dimension that departs from a judged figure is a finding recorded and resolved, not a silent change. Making the bracket and redoing the judgements are out of scope.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT
+    type: criterion-of

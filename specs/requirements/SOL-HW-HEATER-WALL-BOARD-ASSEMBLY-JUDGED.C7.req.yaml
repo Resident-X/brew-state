@@ -6,7 +6,7 @@ version: 1
 measurement_type: binary
 verification: inspection
 text: |
-  The decisions are whether the board is its own board or a section of the main board, whether the mains-presence confirms come back, the wall cut, the varistors, and a basic mains-to-earth pair in the separation basis. Each record names the drawn default, the other choice and what it would change. Signing a basis amendment is the owner's and out of scope.
+  The decisions include whether the board is its own board or a section of the main board (D9), whether the mains-presence confirms come back (D2), the wall cut (D11), the wall board's varistors, decided jointly with the main board's entry varistor (D7), and a basic mains-to-earth pair in the separation basis (D15). Each record names the drawn default, the other choice and what it would change. Signing a basis amendment is the owner's and out of scope.
 links:
   - target: SOL-HW-HEATER-WALL-BOARD-ASSEMBLY-JUDGED
     type: criterion-of

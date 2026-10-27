@@ -6,7 +6,7 @@ version: 1
 measurement_type: binary
 verification: inspection
 text: |
-  The statement that a board with no controller cannot pass the check is replaced, and the form of the pin allocation record in the readme carries the new keys. Writing the real boards' records is out of scope.
+  The statements that a board with no controller cannot pass the check, that a pin allocation record fails for an entry lacking a controller pin, and that the two rules together are the guard, are each replaced where they stand: in the readme's statement of the pin allocation rule, its connectivity-rule paragraph and its record-form table, and at the first paragraph of the design method. The readme's form of the pin allocation record carries the new keys, and the readme states the residual the declaration leaves, a different microcontroller with no port-named pin and another catalogue number. Rewriting the documents' other sections is out of scope.
 links:
   - target: SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER
     type: criterion-of

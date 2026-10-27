@@ -15,7 +15,7 @@ text: |
   - A design with no machine folder, such as a proof design, is exempt from the cross-board check, as a synthetic controller already exempts it from the controller part rule.
   - The check does not compare the cable pin for pin between two headers; it holds that each far channel exists and is driven by the other board.
   - The firmware tier's pin and sensor checks read only the controller's record and are not changed. The wall board authors no converter-input map.
-  - The change is under hardware/ and reads no firmware source, so the build round's board tier runs and the host tier does not. The seeded-fault proof is on demand and in neither gate, so its new cases are run by hand.
+  - The change reads no firmware source, but hardware/README.md and hardware/tools/board_check.py are among the paths the build round's host tier reads, so the round runs the host tier as well as the board tier. The seeded-fault proof is on demand and in neither gate, so its new cases are run by hand.
 
   Locus: hardware/tools/board_check.py (the pin allocation reader, the connectivity rule, the controller part rule and the list of files a design reads), its tests under hardware/tools/tests/, the seeded cases in hardware/tools/board_prove.py, hardware/README.md where it states the rule and the record form, and docs/board-design-method.md where it says a board with no controller cannot pass. Tests use synthetic designs and records in a temporary directory.
 rationale: |

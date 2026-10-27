@@ -76,3 +76,13 @@ links:
     type: depends-on
   - target: SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER
     type: depends-on
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C11
+    type: derives-from
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C15
+    type: derives-from
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C16
+    type: derives-from
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C21
+    type: derives-from
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C22
+    type: derives-from
