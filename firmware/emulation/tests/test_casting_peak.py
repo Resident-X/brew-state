@@ -1162,6 +1162,47 @@ def _interval_row(text):
     return _row_starting(text, "| Proof-of-life removal interval | ")
 
 
+FUNCTION_FORMS_RECORD = os.path.join(os.path.dirname(FIGURES_RECORD), "controller-board-function-forms.md")
+DIVISION_RECORD = os.path.join(os.path.dirname(FIGURES_RECORD), "controller-board-division.md")
+UNSETTLED_VOCABULARY = re.compile(
+    r"pending|not chosen|is derived|to be derived|awaits derivation|does not choose"
+    r"|design task's|unsettled|not yet fixed")
+DISOWNED_INTERVAL = re.compile(r"does not choose[^.;]*interval")
+SENTENCE_END = re.compile(r"(?<=[.!?])(?:\*\*)?\s+(?=[A-Z*`(])")
+
+
+def _prose_problems(text):
+    """A bounded backstop, not a judge of meaning: the structural marks (the
+    interval row, the ceiling row, the register and the heater-switch row) are the
+    authority for the interval being chosen. This refuses any sentence about the
+    interval that carries a word from a fixed vocabulary (pending, not chosen,
+    is/to be derived, awaits derivation, does not choose, design task's,
+    unsettled, not yet fixed), unless that same sentence is about the ceiling or
+    the mechanism. A sentence that says the record does not choose the interval
+    is refused whatever else it names. Sentences are split on sentence ends and
+    table cells after hard wraps are joined; synonyms outside the vocabulary are
+    not caught."""
+    problems = []
+    joined = re.sub(r"(?<=\S)\n(?=[^\s|#\-*0-9])", " ", text)
+    for line in joined.splitlines():
+        for cell in line.split("|"):
+            for sentence in SENTENCE_END.split(cell):
+                lowered = sentence.lower()
+                if "interval" not in lowered:
+                    continue
+                about = "ceiling" in lowered or "mechanism" in lowered
+                if DISOWNED_INTERVAL.search(lowered) or (
+                        UNSETTLED_VOCABULARY.search(lowered) and not about):
+                    problems.append("a sentence leaves the interval unsettled: %s"
+                                    % sentence.strip()[:80])
+    return problems
+
+
+def _record_prose_problems():
+    return [problem for path in (FIGURES_RECORD, FUNCTION_FORMS_RECORD, DIVISION_RECORD)
+            for problem in _prose_problems(_text(path))]
+
+
 def _interval_problems(figures_text):
     """Every way the figures record fails to state the interval as chosen at
     100 ms with its source, to name the ceiling and keep it pending against the
@@ -1200,12 +1241,7 @@ def _interval_problems(figures_text):
     if not any(SIBLING in line for line in registers):
         problems.append("the pending-marks register does not list the ceiling against %s"
                         % SIBLING)
-    for line in figures_text.splitlines():
-        lowered = line.lower()
-        if ("interval" in lowered and "pending" in lowered
-                and "ceiling" not in lowered and "mechanism" not in lowered):
-            problems.append("the record marks the interval pending outside the ceiling and "
-                            "the mechanism: %s" % line[:80])
+    problems.extend(_prose_problems(figures_text))
     heater = _row_starting(figures_text, "| Both heater switches | ")
     if heater is None:
         problems.append("the figures record has no row for the heater switches")
@@ -1231,6 +1267,7 @@ class TheFiguresRecordStatesTheChosenIntervalAndKeepsItsCeilingPending(unittest.
     def test_the_committed_figures_record_states_the_chosen_interval(self):
         figures = _text(FIGURES_RECORD)
         self.assertEqual([], _interval_problems(figures))
+        self.assertEqual([], _record_prose_problems())
         row = _interval_row(figures)
         self.assertTrue(row[1].startswith("**100 ms, chosen"))
         self.assertIn(INTERVAL_DECISION, row[1])
@@ -1313,6 +1350,57 @@ class TheFiguresRecordStatesTheChosenIntervalAndKeepsItsCeilingPending(unittest.
         about_mechanism = figures + "\nThe interval's mechanism is pending.\n"
         self.assertEqual([], _interval_problems(about_ceiling))
         self.assertEqual([], _interval_problems(about_mechanism))
+
+    # SOL-PROOF-OF-LIFE-INTERVAL-CHOSEN-RECORDED.C3: The check on the casting-peak
+    # record requires the figures record to state the chosen interval and name the
+    # ceiling, and refuses a record that marks the interval pending or states a
+    # derived time as the interval.
+    def test_the_prose_guard_refuses_each_sentence_that_leaves_the_interval_unsettled(self):
+        self.assertEqual([], _record_prose_problems())
+        figures = _text(FIGURES_RECORD)
+        division = _text(DIVISION_RECORD)
+        paragraph = next(line for line in figures.splitlines()
+                         if line.startswith("**Removing heater power when the controller stops.**"))
+        long_paragraph = paragraph + (
+            " The ceiling is derived from the held casting peak by the sibling work. "
+            "The interval is pending while the work goes on." " The removal interval is not yet fixed.")
+        mutations = {
+            "the pending sentence in a paragraph that names the ceiling elsewhere": (
+                figures, figures.replace(paragraph, long_paragraph, 1)),
+            "the interval derived, not chosen": (
+                figures, figures + "\nThe removal interval is derived, not chosen.\n"),
+            "the interval to be derived": (
+                figures, figures + "\nThe removal interval is to be derived later.\n"),
+            "the interval awaiting derivation": (
+                figures, figures + "\nThe removal interval awaits derivation.\n"),
+            "the interval handed to the design task": (
+                figures, figures + "\nThe removal interval is the design task's.\n"),
+            "the interval unsettled": (
+                figures, figures + "\nThe removal interval is unsettled.\n"),
+            "the division's line 143 shape": (
+                division, division.replace(
+                    "It does not choose the interlock's mechanism, how the wall board",
+                    "It does not choose the interlock's mechanism or its removal interval, "
+                    "how the wall board", 1)),
+            "the division's line 604 shape": (
+                division, division.replace(
+                    "The interlock's mechanism, the circuit that decides when, is left to the "
+                    "board design, to the removal interval of 100 ms, chosen (",
+                    "The circuit that decides when, and the removal interval, are the design "
+                    "task's (", 1)),
+        }
+        for name, (original, mutated) in mutations.items():
+            with self.subTest(mutation=name):
+                self.assertNotEqual(original, mutated)
+                self.assertTrue(_prose_problems(mutated),
+                                "the guard does not notice %s" % name)
+        forms = _text(FUNCTION_FORMS_RECORD)
+        self.assertTrue(_prose_problems(forms + "\nThe removal interval is not yet fixed.\n"))
+        for about in ("The ceiling on the interval is pending.",
+                      "The interval's mechanism is pending.",
+                      "The mechanism is the design task's, to the removal interval."):
+            with self.subTest(accepted=about):
+                self.assertEqual([], _prose_problems(figures + "\n" + about + "\n"))
 
     # SOL-PROOF-OF-LIFE-INTERVAL-CHOSEN-RECORDED.C3: the interval row states no
     # other time figure, however its unit is spelled.
