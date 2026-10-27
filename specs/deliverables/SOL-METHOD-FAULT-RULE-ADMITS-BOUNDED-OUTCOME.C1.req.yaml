@@ -1,0 +1,12 @@
+id: SOL-METHOD-FAULT-RULE-ADMITS-BOUNDED-OUTCOME.C1
+type: criterion
+title: The single-fault rule passes a fault bounded by a named independent element and fails one that names none
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Change FAULT-1 in the board design method so its passes admit a fault whose hazard is bounded by a named element of the chain independent of the failed part and of the controller, in addition to safe and detected, and its fails include a bounded outcome that names no element or an element that depends on the failed part or on the controller. Refresh the review baseline that pins the rule's wording, with a test showing that a schematic review record using the bounded outcome with a named element passes the rule and one naming no element fails it. Out of scope: any other rule of the method, and any board's own records.
+links:
+  - target: SOL-METHOD-FAULT-RULE-ADMITS-BOUNDED-OUTCOME
+    type: criterion-of

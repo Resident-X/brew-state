@@ -1,0 +1,23 @@
+id: SOL-METHOD-FAULT-RULE-ADMITS-BOUNDED-OUTCOME
+type: deliverable
+category: solution
+title: The method's single-fault rule admits a fault whose hazard an independent chain element still bounds
+status: active
+version: 1
+text: |
+  Why this exists. The board design method's single-fault rule (FAULT-1 in docs/board-design-method.md) passes a protective chain only when every part's fault leaves the protected output safe or is detected by the chain's own means. REQ-SAFETY-CHAIN-001.C8 now also admits the outcome that the hazard stays bounded by a named element of the chain that is independent of the failed part and of the controller (DEC-CHAIN-FAULT-BOUNDED-BY-INDEPENDENT-ELEMENT). The main board's interlock rests on that outcome for a welded contact and for two drive faults, so the schematic review of that board would fail the rule as the method still words it. The method and the review baseline that pins the rule's wording were finished before the criterion was widened.
+
+  What it does. Rewords FAULT-1 so a part's fault may also pass by naming the bounding element, with the checks the rule asks of that element, and refreshes the review baseline the rule is pinned by.
+
+  Out of scope: any other rule of the method, and the main board's own records.
+
+  Settled. The bounding element must be named, independent of the failed part and of the controller, and a fault that leaves the chain looking healthy while no such element bounds its hazard still fails. The rule keeps its failing examples and gains one for a bounded outcome that names no element.
+rationale: |
+  Sized as one leaf: one rule, one baseline. Authored under the maintenance lane because it remediates finished work (SOL-BOARD-CIRCUIT-PRACTICE-CATALOGUE) that now falls short of a widened requirement criterion; the criterion is not wrong, the method's wording of it is.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-SAFETY-CHAIN-001.C8
+    type: targets
+  - target: DEC-CHAIN-FAULT-BOUNDED-BY-INDEPENDENT-ELEMENT
+    type: justified-by
