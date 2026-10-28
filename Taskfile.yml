@@ -40,6 +40,11 @@ vars:
   GERBONARA_PYTHON:
     sh: 'if [ -n "${GERBONARA_PYTHON:-}" ]; then echo "$GERBONARA_PYTHON"; elif [ -x "{{.GERBONARA_VENV}}/bin/python" ]; then echo "{{.GERBONARA_VENV}}/bin/python"; else echo python3; fi'
 
+  # The Freerouting 2.5.0 jar the board design method routes with: `task hw:freerouting`
+  # fetches it here, and FREEROUTING_JAR=... points at one placed by hand.
+  FREEROUTING_JAR:
+    sh: 'echo "${FREEROUTING_JAR:-${XDG_CACHE_HOME:-$HOME/.cache}/brew-state/freerouting/freerouting-2.5.0.jar}"'
+
 tasks:
   sc:install:
     desc: Install/update the staircase binary into THIS repo (engine/staircase) via `go install` — repo-local GOBIN, never on global PATH (private module → GOPRIVATE + SSH rewrite applied inline)
@@ -628,6 +633,12 @@ tasks:
       - python3 -m venv "{{.GERBONARA_VENV}}"
       - '"{{.GERBONARA_VENV}}/bin/python" -m pip install --quiet gerbonara==1.6.3'
       - '"{{.GERBONARA_VENV}}/bin/python" -c "import gerbonara; assert gerbonara.__version__ == \"1.6.3\", gerbonara.__version__; print(\"gerbonara\", gerbonara.__version__, \"in {{.GERBONARA_VENV}}\")"'
+
+  hw:freerouting:
+    desc: Fetch the Freerouting 2.5.0 release jar the board design method routes with to FREEROUTING_JAR (by default a file in your user cache, outside the repository), keeping it only when its sha256 matches the release's, and leave a matching file alone. Safe to run again. Needs Python 3.9 or newer and network access the first time; running the jar needs a Java runtime 25 or newer
+    dir: "{{.ROOT_DIR}}"
+    cmds:
+      - python3 "{{.HW_DIR}}/tools/fetch_freerouting.py" "{{.FREEROUTING_JAR}}"
 
   hw:test:
     desc: Run the tests covering the board tooling (the pre-order check, the locked-copper check, the layout review views, the placement view, the placement and critical routing history check, the layout review record history check, the layout review proof's seeding command, the schematic sheet drawing command, the review kit (its session specification and executors, answer reading, stream checks and telemetry, declaration, catalogue and shared context, planner and scheduler, merge and replicas, caller contract, contract smoke, command and the task runner's file), the layout review's caller, the critical-routing check's caller and the catalogue helpers both share, the production-files check's caller and its folder command, the schematic review's caller, the schematic review folder command and the schematic review proof command (with the netlist and schematic readers they share and the proof harness the layout review proof command shares), the review folder command, the layout review proof command, the critical-routing review proof command and the production-files review proof command, and the production-files conversion, rendering and seeding command), against the real kicad-cli, resvg and gerbonara, the seeded-fault proof's own tests included — on demand; the build round's gate and the nightly complete verification run hw:test:round instead. Needs the same tools as hw:verify, resvg 0.47 or newer (set RESVG=/path/to/resvg when resvg is not on PATH), gerbonara 1.6.3 in a virtual environment of its own (set GERBONARA_PYTHON=/path/to/that/python when python3 is not it), and Task
