@@ -1,0 +1,23 @@
+id: DEC-KICAD-VIEW-STATE-FILE-NOT-COMMITTED
+type: decision
+category: tactical
+title: A KiCad per-user view-state file is deleted before a board is committed
+status: active
+version: 1
+decided_by: claude-orchestrator
+risk_level: low
+text: |
+  A KiCad editor writes a per-user view-state file, `<board>.kicad_prl`, beside a board whenever the board is opened or saved. It holds only the editor's own view settings (layer opacity, active layer, hidden nets), none of which any check reads, and it changes with each editor session. The board design method already tells the designer to delete it before committing. A board design or proof design in the repository therefore carries no such file, and a change that adds one is corrected by deleting it, not by ignoring it.
+rationale: |
+  Context: a KiCad editor writes a view-state file beside every board it opens or saves, and a stray one was committed with a proof design, which the review of that change caught. The graph held no decision on it; the board design method states the rule for the designer only.
+  Trade-offs: keeping the file commits per-user view settings that change with every editor session, so each session would put a spurious diff in the design. An ignore rule would state a repository-wide rule for one editor's artefact, and would let the file sit beside a design unseen by the person committing. Deleting it before the commit is what the method already prescribes and needs no new mechanism, and it loses nothing, since no check or record reads the file.
+  Reversibility: cheap. Adopting an ignore rule later supersedes this decision with no design file to change.
+  Consequences: a change that adds a view-state file to a board or proof design is corrected by deleting it. The board tooling is not changed to enforce the rule here.
+options_considered:
+  - option: Delete the file before committing
+    reason_rejected: ""
+  - option: Keep it committed
+    reason_rejected: it holds per-user view settings that change with every editor session, so each session would put a spurious diff in the design
+  - option: Exclude it from git with an ignore rule
+    reason_rejected: it states a repository-wide rule for one editor's artefact where the board design method already states the rule for the designer, and it would hide the editor's file from the person committing
+chosen: Delete the file before committing

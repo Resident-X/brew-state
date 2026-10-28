@@ -1,0 +1,16 @@
+id: EV-SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER-C1-TEST-7
+type: evidence
+title: test evidence for SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-27T22:27:56.312627Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad_no_controller.py::test_a_declared_design_that_places_a_controller_is_not_accepted
+  artifact_version: 09c6ab715b58f5b92e7b6f0b9981a7ed3cbc18ce
+attested_by: crun-bfc44219fd6f9469
+links:
+  - target: SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER.C1
+    type: satisfies

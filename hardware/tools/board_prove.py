@@ -50,7 +50,7 @@ REPO = os.path.dirname(os.path.dirname(TOOLS))
 DESIGN = "hardware/proof/gate-proof"
 NAME = "gate-proof"
 #: The proof design of the record keys, a folder of its own with records of its own, which the faults about those
-#: keys are seeded into. A fault names its design by a sixth element; one that names none is seeded into DESIGN.
+#: keys are seeded into. A fault names its design by a sixth element, which may carry a third, the folder its copy is placed in; one that names none is seeded into DESIGN.
 KEYS_DESIGN = "hardware/proof/record-keys-proof"
 KEYS_NAME = "record-keys-proof"
 KEYS_TARGET = (KEYS_DESIGN, KEYS_NAME)
@@ -1178,6 +1178,19 @@ def supply_a_signal(seed: Seed) -> None:
                  "signal_pins_per_return: 3\n      " + SOURCE + "synthetic")
 
 
+#: A pin allocation record declaring that its design places no controller, and each entry as given: the two nets of the
+#: throwaway design on the two pins of its connector.
+def declared_record(first: str, second: str):
+    head = "synthetic: true\ncontroller: none\nchannels:\n"
+    entry = "  - channel: {label}\n    net: {net}\n    connector: J2\n    connector_pin: {pin}\n{extra}"
+    return lambda seed: seed.write("pin-allocation.yaml", head + entry.format(label="lv_a", net="LV_A", pin=1, extra=first)
+                                   + (entry.format(label="lv_b", net="LV_B", pin=2, extra=second) if second is not None else ""))
+
+
+#: Where the far channel fault places its copy: a machine folder, which no proof design sits in, holding the copy alone.
+MACHINE_TARGET = (DESIGN, NAME, "hardware/seeded-machine/gate-proof")
+
+
 SIGNED = f"rule '{board_check.SIGNED_RULE}' clearance"
 CONDITION = board_check.MAINS_CONDITION
 
@@ -1386,6 +1399,19 @@ FAULTS: List[tuple] = [
     ("a pin allocation entry lacking its controller pin", "pin allocation: a record missing a required key fails", "pin_allocation", "the entry lacks controller_pin", pin_record("    controller_pin: PA0\n", "")),
     ("a pin allocation entry naming a connector without its pin", "pin allocation: a record missing a required key fails", "pin_allocation", "gives only one of connector and connector_pin", pin_record("    connector_pin: 1\n", "")),
     ("a synthetic pin allocation record applied to a design not marked not for manufacture", "pin allocation: a synthetic record cannot pass an orderable board", "pin_allocation", "marked synthetic", variables(lambda v: v.pop("NOT_FOR_MANUFACTURE"))),
+    # A pin allocation record that declares no controller
+    ("a controller placed under a no-controller declaration", "no-controller declaration: a design that places a controller fails, naming the part", "controller_part",
+     "declares controller: none, but the design places U1, a part with port-named pins", declared_record("    rail: signal_a\n", "    rail: signal_b\n")),
+    ("a controller pin listed under a no-controller declaration", "no-controller declaration: an entry carries no controller pin", "pin_allocation",
+     "the record declares controller: none, so the entry carries no controller_pin", declared_record("    rail: signal_a\n    controller_pin: PA0\n", "    rail: signal_b\n")),
+    ("a no-controller entry naming neither a far channel nor a rail", "no-controller declaration: an entry names exactly one of far_channel and rail", "pin_allocation",
+     "the entry carries neither far_channel nor rail", declared_record("", "    rail: signal_b\n")),
+    ("a no-controller entry naming both a far channel and a rail", "no-controller declaration: an entry names exactly one of far_channel and rail", "pin_allocation",
+     "the entry carries both far_channel and rail", declared_record("    rail: signal_a\n    far_channel: lv_a\n", "    rail: signal_b\n")),
+    ("a far channel that no other design's record lists", "no-controller declaration: a far channel must be listed by another design's record in the machine folder", "pin_allocation",
+     "names far channel lv_a, which no other design's record in the machine folder lists", lambda seed: declared_record("    far_channel: lv_a\n", "    rail: signal_b\n")(seed), MACHINE_TARGET),
+    ("a pin of a listed connector that a no-controller record omits", "no-controller declaration: a net on a pin of a listed connector must be listed", "connectivity",
+     "net /LV_B is on connector pin J2 pin 2, which the record does not list", declared_record("    rail: signal_a\n", None)),
     # Controller part
     ("a controller whose catalogue number differs from the controller part record", "controller part: a controller other than the selected part fails", "controller_part", "the controller U1 has the catalogue number C9000005, where the controller part record names C9000099",
      lambda seed: seed.replace("controller-part.yaml", 'lcsc: "C9000005"', 'lcsc: "C9000099"')),
@@ -1585,7 +1611,12 @@ FAULTS: List[tuple] = [
 
 def target_of(fault) -> Tuple[str, str]:
     """The design a fault is seeded into, as its folder from the repository's root and its name."""
-    return fault[5] if len(fault) > 5 else (DESIGN, NAME)
+    return tuple(fault[5][:2]) if len(fault) > 5 else (DESIGN, NAME)
+
+
+def destination_of(fault) -> Optional[str]:
+    """The folder a fault's copy is placed in when that is not the design's own, a third element of its design."""
+    return fault[5][2] if len(fault) > 5 and len(fault[5]) > 2 else None
 
 
 def committed(path: str) -> Optional[Dict[str, bytes]]:
@@ -1601,8 +1632,11 @@ def committed(path: str) -> Optional[Dict[str, bytes]]:
     return files or None
 
 
-def prepare(scratch: str, design: str = DESIGN, name: str = NAME) -> Seed:
+def prepare(scratch: str, design: str = DESIGN, name: str = NAME, destination: Optional[str] = None) -> Seed:
     """A fresh copy of the design at `design`, from the repository's root, in its own git work tree under `scratch`.
+
+    The copy sits at `destination`, a folder from the repository's root, when one is given, and the records the proof
+    designs share are placed beside it there, so a design can be seeded into a folder the repository has no design in.
 
     The files are copied as the repository's last commit holds them, so the copy
     is the committed design and not whatever else lies beside it or is edited in
@@ -1612,18 +1646,18 @@ def prepare(scratch: str, design: str = DESIGN, name: str = NAME) -> Seed:
     root = os.path.join(scratch, "repository")
     held = committed(design)
     if held is None:
-        shutil.copytree(os.path.join(REPO, design), os.path.join(root, design))
+        shutil.copytree(os.path.join(REPO, design), os.path.join(root, destination or design))
         held = {os.path.relpath(os.path.join(directory, file), root): b""
                 for directory, _, files in os.walk(os.path.join(root, design)) for file in files}
     else:
         for path, content in held.items():
-            target = os.path.join(root, path)
+            target = os.path.join(root, destination + path[len(design):] if destination else path)
             os.makedirs(os.path.dirname(target), exist_ok=True)
             with open(target, "wb") as handle:
                 handle.write(content)
     for record in SHARED_RECORDS:
         shared = committed(record)
-        target = os.path.join(root, record)
+        target = os.path.join(root, os.path.join(os.path.dirname(destination), os.path.basename(record)) if destination else record)
         if shared is not None:
             os.makedirs(os.path.dirname(target), exist_ok=True)
             with open(target, "wb") as handle:
@@ -1632,7 +1666,7 @@ def prepare(scratch: str, design: str = DESIGN, name: str = NAME) -> Seed:
             os.makedirs(os.path.dirname(target), exist_ok=True)
             shutil.copyfile(os.path.join(REPO, record), target)
     subprocess.run(["git", "init", "-q", root], check=True)
-    seed = Seed(root, design, name)
+    seed = Seed(root, destination or design, name)
     seed.files = sorted(os.path.relpath(path, design) for path in held)
     return seed
 
@@ -1653,7 +1687,7 @@ def check(seed: Seed, kicad_cli: str) -> Tuple[int, List[str], str]:
 def prove(fault, kicad_cli: str) -> Tuple[bool, str]:
     name, _, rule, text, edit = fault[:5]
     with tempfile.TemporaryDirectory(prefix="board-prove-") as scratch:
-        seed = prepare(scratch, *target_of(fault))
+        seed = prepare(scratch, *target_of(fault), destination_of(fault))
         edit(seed)
         status, lines, stderr = check(seed, kicad_cli)
     if status == 2:
@@ -1685,12 +1719,14 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     faults = [fault for fault in FAULTS if not args.only or any(word in fault[0] for word in args.only)]
     clean_ok = True
-    for design, name in dict.fromkeys([(DESIGN, NAME)] + [target_of(fault) for fault in faults]):
+    for design, name, destination in dict.fromkeys([(DESIGN, NAME, None)]
+                                                   + [(*target_of(fault), destination_of(fault)) for fault in faults]):
         with tempfile.TemporaryDirectory(prefix="board-prove-") as scratch:
-            seed = prepare(scratch, design, name)
+            seed = prepare(scratch, design, name, destination)
             status, lines, stderr = check(seed, args.kicad_cli)
         clean_ok = clean_ok and status == 0
-        print(f"{'CLEAN' if status == 0 else 'DIRTY'} | {'the throwaway design' if design == DESIGN else design} as committed | must pass | "
+        print(f"{'CLEAN' if status == 0 else 'DIRTY'} | {'the throwaway design' if design == DESIGN else design}"
+              f"{' placed at ' + destination if destination else ''} as committed | must pass | "
               + (" / ".join(lines[1:]) if lines else stderr))
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.jobs) as pool:
