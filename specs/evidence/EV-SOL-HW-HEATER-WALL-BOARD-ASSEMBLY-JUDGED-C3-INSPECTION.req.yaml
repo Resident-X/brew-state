@@ -1,0 +1,16 @@
+id: EV-SOL-HW-HEATER-WALL-BOARD-ASSEMBLY-JUDGED-C3-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-HEATER-WALL-BOARD-ASSEMBLY-JUDGED.C3
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-28T11:19:40.834586Z"
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_casting_peak.py::TheFiguresRecordStatesTheChosenIntervalAndKeepsItsCeilingPending::test_the_committed_figures_record_states_the_chosen_interval
+  artifact_version: daf168329b91ea056bcff70854f6e98555c7506d
+attested_by: crun-ff94d434b6a6f674
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-ASSEMBLY-JUDGED.C3
+    type: satisfies
