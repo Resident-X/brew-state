@@ -1,0 +1,15 @@
+id: EV-SOL-HW-HEATER-WALL-BOARD-ASSEMBLY-JUDGED-C6-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-HEATER-WALL-BOARD-ASSEMBLY-JUDGED.C6
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-28T12:06:39Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: 'docs/sunbeam-em7000/controller-board-division.md: the owner intent row of 2026-10-28 (the owner''s reply ''Do 1'' accepting the wall cut as preliminary) and the reason for the larger cut in the heater wall assembly section, at commit e4265ff7'
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-ASSEMBLY-JUDGED.C6
+    type: satisfies
