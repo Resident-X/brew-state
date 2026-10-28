@@ -61,3 +61,7 @@ links:
     type: justified-by
   - target: SOL-HW-MAIN-BOARD-INTERLOCK-ENTRY-JUDGED
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: 4e2dbbc2567ef3d1da70fefa63a1cec818ab4ecbb2eaaa4ce98ef728a1331c33
+  gating_profile: ""
