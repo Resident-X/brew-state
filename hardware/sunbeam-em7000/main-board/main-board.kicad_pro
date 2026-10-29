@@ -80,6 +80,7 @@
         "connection_width": "warning",
         "copper_edge_clearance": "error",
         "copper_sliver": "warning",
+        "courtyard_clearance": "error",
         "courtyards_overlap": "error",
         "creepage": "error",
         "diff_pair_gap_out_of_range": "error",
@@ -136,8 +137,7 @@
         "unconnected_items": "error",
         "unresolved_variable": "error",
         "via_dangling": "warning",
-        "zones_intersect": "error",
-        "courtyard_clearance": "error"
+        "zones_intersect": "error"
       },
       "rules": {
         "max_error": 0.005,
@@ -301,18 +301,29 @@
         "wire_width": 6
       },
       {
-        "clearance": 3.0,
-        "name": "MainsTrunk",
+        "clearance": 0.2,
+        "name": "Ground",
         "pcb_color": "rgba(0, 0, 0, 0.000)",
-        "priority": 0,
+        "priority": 4,
         "schematic_color": "rgba(0, 0, 0, 0.000)",
-        "track_width": 4.2,
+        "track_width": 0.45,
         "tuning_profile": "",
         "via_diameter": 0.75,
         "via_drill": 0.3
       },
       {
-        "clearance": 3.0,
+        "clearance": 1.5,
+        "name": "Mains",
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "priority": 7,
+        "schematic_color": "rgba(0, 0, 0, 0.000)",
+        "track_width": 0.2,
+        "tuning_profile": "",
+        "via_diameter": 0.75,
+        "via_drill": 0.3
+      },
+      {
+        "clearance": 1.5,
         "name": "MainsBranch",
         "pcb_color": "rgba(0, 0, 0, 0.000)",
         "priority": 1,
@@ -323,34 +334,23 @@
         "via_drill": 0.3
       },
       {
-        "clearance": 0.2,
-        "name": "Supply5V",
+        "clearance": 1.5,
+        "name": "MainsTrunk",
         "pcb_color": "rgba(0, 0, 0, 0.000)",
-        "priority": 2,
+        "priority": 0,
         "schematic_color": "rgba(0, 0, 0, 0.000)",
-        "track_width": 0.45,
+        "track_width": 4.2,
         "tuning_profile": "",
         "via_diameter": 0.75,
         "via_drill": 0.3
       },
       {
         "clearance": 0.2,
-        "name": "Supply3V3",
+        "name": "Noisy",
         "pcb_color": "rgba(0, 0, 0, 0.000)",
-        "priority": 3,
+        "priority": 6,
         "schematic_color": "rgba(0, 0, 0, 0.000)",
         "track_width": 0.2,
-        "tuning_profile": "",
-        "via_diameter": 0.75,
-        "via_drill": 0.3
-      },
-      {
-        "clearance": 0.2,
-        "name": "Ground",
-        "pcb_color": "rgba(0, 0, 0, 0.000)",
-        "priority": 4,
-        "schematic_color": "rgba(0, 0, 0, 0.000)",
-        "track_width": 0.45,
         "tuning_profile": "",
         "via_diameter": 0.75,
         "via_drill": 0.3
@@ -368,9 +368,9 @@
       },
       {
         "clearance": 0.2,
-        "name": "Noisy",
+        "name": "Supply3V3",
         "pcb_color": "rgba(0, 0, 0, 0.000)",
-        "priority": 6,
+        "priority": 3,
         "schematic_color": "rgba(0, 0, 0, 0.000)",
         "track_width": 0.2,
         "tuning_profile": "",
@@ -378,12 +378,12 @@
         "via_drill": 0.3
       },
       {
-        "clearance": 3.0,
-        "name": "Mains",
+        "clearance": 0.2,
+        "name": "Supply5V",
         "pcb_color": "rgba(0, 0, 0, 0.000)",
-        "priority": 7,
+        "priority": 2,
         "schematic_color": "rgba(0, 0, 0, 0.000)",
-        "track_width": 0.2,
+        "track_width": 0.45,
         "tuning_profile": "",
         "via_diameter": 0.75,
         "via_drill": 0.3
