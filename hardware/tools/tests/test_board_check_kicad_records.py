@@ -205,7 +205,7 @@ class RidingDomainsProof(Proved):
         self.assertCaught(*[fault[0] for fault in faults])
 
     def test_a_seeded_riding_fault_names_the_fault_and_the_rule_in_the_proofs_record_of_the_run(self):
-        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C3: ... and requires each to be caught.
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C3: The new keys are shown to fail on seeded faults and are stated in the hardware notes
         for fault in board_prove.FAULTS:
             if fault[1].startswith("riding domains:"):
                 caught, evidence = outcomes()[fault[0]]
