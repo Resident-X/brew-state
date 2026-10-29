@@ -1,12 +1,12 @@
 id: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C4
 type: criterion
-title: Each retained tab's footprint is drawn from the bought part's own drawing and the suppression parts the entry needs are placed with their separation judged
+title: The suppression parts the entry needs are placed with their separation judged
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
-text: |
-  The pad of each retained tab is at least the bought part's own footprint, and every separation and fixing distance holds with it. Where the judgements leaf finds suppression needed, the line-to-line capacitor and common-mode choke are placed at the entry with ratings and separation judged against the signed basis; if they cannot fit, the floorplan in the division record is revised and the basis is not relaxed. Buying the parts is out of scope.
+text: |-
+  With each retained tab's footprint as the schematic leaf drew it, every separation and fixing distance holds. Where the judgements leaf finds suppression needed, the line-to-line capacitor and common-mode choke are placed at the entry with ratings and separation judged against the signed basis; if they cannot fit, the floorplan in the division record is revised and the basis is not relaxed. Drawing the footprints and buying the parts are out of scope.
 links:
   - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT
     type: criterion-of

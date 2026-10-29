@@ -1,0 +1,13 @@
+id: DEL-HW-BRING-UP.C15
+type: criterion
+title: Every figure a board record carries to bring-up as a measurement is measured against its stated limit and recorded
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  Each figure that a board's design record carries to bring-up as a measurement, because the maker of its part does not publish it, is measured on the built board and compared with the limit the record states for it, and a reading outside its limit fails. A figure that concerns a mains-connected circuit is measured and compared before mains is first connected, except a figure that can only be read with mains present, which is measured at the first connection of mains made with its current limited. Each reading, the limit it was compared with and the result are recorded against the record that carries the figure, so that no figure the design relied on stays unmeasured.
+links:
+  - target: DEL-HW-BRING-UP
+    type: criterion-of

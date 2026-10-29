@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C3
+type: criterion
+title: The new keys are shown to fail on seeded faults and are stated in the hardware notes
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The seeded-fault proof introduces, into copies of the throwaway proof design, a divider part whose difference exceeds its share and each malformed declaration, and requires each to be caught. The hardware notes state the keys, and every tracked design passes in the build round and nightly. The record shape of other rules is out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS
+    type: criterion-of

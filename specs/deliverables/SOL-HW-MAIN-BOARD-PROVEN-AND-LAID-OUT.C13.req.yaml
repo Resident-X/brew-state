@@ -1,0 +1,12 @@
+id: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C13
+type: criterion
+title: The header to the wall board is drawn to the division record's interface and its channels are listed in the pin allocation record
+status: deprecated
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The ten-way low-voltage header to the wall board and the neutral return landing are drawn to the interface the division record fixes, and every channel crossing the header is listed in the pin allocation record with its controller pin, so the wall board's record can resolve to it. Comparing the cable between the two boards' headers pin for pin is out of scope.
+links:
+  - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT
+    type: criterion-of

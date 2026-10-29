@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-PARTS-WITHOUT-CATALOGUE-NUMBER.C2
+type: criterion
+title: The none convention is shown to fail on seeded faults and is stated in the hardware notes
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The throwaway proof design gains a position stated none in its synthetic record and symbol, which its committed state satisfies. The on-demand seeded-fault proof introduces each failing case of the previous criterion into a copy outside the repository and requires each to be caught. The hardware notes' parts-rule entry states the convention, and the build round runs the rule for a change to a record or design. Ordering parts is out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-PARTS-WITHOUT-CATALOGUE-NUMBER
+    type: criterion-of

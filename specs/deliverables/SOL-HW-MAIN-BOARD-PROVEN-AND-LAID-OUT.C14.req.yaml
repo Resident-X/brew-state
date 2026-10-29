@@ -1,0 +1,12 @@
+id: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C14
+type: criterion
+title: The division record names the pump-figures leaf as the owner of the pump drives' margins and its selftest passes on the floorplan as drawn
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The division record's note that the pump drives' margins are the design task's names the pump-figures leaf as their owner, and the division record's selftest passes on the floorplan as drawn. Changing the division itself is out of scope.
+links:
+  - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT
+    type: criterion-of

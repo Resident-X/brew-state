@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-PARTS-WITHOUT-CATALOGUE-NUMBER.C1
+type: criterion
+title: A position stated as none passes the parts rule without a lookup, and any other mismatch still fails
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a synthetic design, a position whose specification lcsc and symbol LCSC field both read none passes the parts rules with no catalogue-extract entry, stock or age figure consulted for it. A record none against a design number, a design none against a record number, a none against an absent field, and a none position whose value, package or rating differs each fail, naming the position and both values; an absent lcsc still fails. Every design that passed before still passes. The assembly preview, the pin-limit and derating rules, and the choice of which parts of a real board are hand-fitted are out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-PARTS-WITHOUT-CATALOGUE-NUMBER
+    type: criterion-of

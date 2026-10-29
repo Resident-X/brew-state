@@ -1,0 +1,12 @@
+id: SOL-HW-FIRMWARE-PIN-CHECKS-READ-MAIN-BOARD-RECORDS.C1
+type: criterion
+title: The firmware's output-channel and sensor-channel pin checks run in the firmware check target against the main board's pin allocation record and converter-input map
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  A firmware pin or converter-input assignment that disagrees with the record fails the check target, shown on the real records with one assignment altered, and the target passes with them as drawn. Changing the checks' own logic is out of scope.
+links:
+  - target: SOL-HW-FIRMWARE-PIN-CHECKS-READ-MAIN-BOARD-RECORDS
+    type: criterion-of

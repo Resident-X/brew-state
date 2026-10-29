@@ -1,7 +1,7 @@
 id: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C2
 type: criterion
 title: Every load the board switches is held off without firmware acting while the controller's supply is rising or failing and when a cable to a load's switch comes loose
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: inspection

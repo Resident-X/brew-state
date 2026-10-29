@@ -1,0 +1,14 @@
+id: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C6
+type: criterion
+title: The controller's converter-input map that the firmware's sensor check reads is authored beside the pin allocation record
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The map names, for each sensor channel the pin allocation record carries, the converter input of the selected controller part on the pin the record names, taken from the part's maker's description, so the firmware's sensor check has the map it reads. Wiring the pin checks to the records and changing the checks are out of scope.
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN
+    type: criterion-of
+  - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C9
+    type: supersedes

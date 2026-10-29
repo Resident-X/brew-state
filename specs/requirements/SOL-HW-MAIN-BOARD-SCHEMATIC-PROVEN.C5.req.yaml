@@ -1,0 +1,12 @@
+id: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C5
+type: criterion
+title: The board's design records are authored and the catalogue extract is current
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The pin allocation record, the parts specification record, the derating policy record and the pin-limit record are authored for the board and the catalogue extract is current, so the connectivity and parts checks have records to hold the board to. The pre-order check passing on the finished layout, and comparing the cable between the two boards' headers pin for pin, are out of scope.
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN
+    type: criterion-of

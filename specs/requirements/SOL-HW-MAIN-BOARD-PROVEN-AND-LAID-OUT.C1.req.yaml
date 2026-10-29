@@ -1,7 +1,7 @@
 id: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C1
 type: criterion
 title: The main board's schematic is drawn to the written convention and every net and part has a circuit verdict before layout begins
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: inspection
