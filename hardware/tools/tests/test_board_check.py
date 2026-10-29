@@ -3800,6 +3800,7 @@ class TheCrystalKeepClearIsInTheRulesFileOfABoardWithACrystal(unittest.TestCase)
                 self.assertIn("Y1 is a crystal, and the rules file holds no rule keeping the parts unrelated", found[0].message)
 
     def test_a_rule_exempting_every_other_part_holds_nothing_and_fails(self):
+        # SOL-LAYOUT-CATALOGUE-CRYSTAL-RELATED-PARTS.C2: The proof design's crystal keep-clear row and rule agree with the catalogue, and a test holds the two together
         # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
         blanket = KEEP_CLEAR.replace("&& B.Reference != 'C1'", "&& B.Reference != 'C1' && B.Reference != 'R1'")
         found = self.found(blanket)

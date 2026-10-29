@@ -1,0 +1,16 @@
+id: EV-SOL-LAYOUT-CATALOGUE-CRYSTAL-RELATED-PARTS-C2-TEST
+type: evidence
+title: test evidence for SOL-LAYOUT-CATALOGUE-CRYSTAL-RELATED-PARTS.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-29T11:38:55.746743Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_crystal_keep_clear_agreement.py::TheProofDesignsCrystalKeepClearAgreesWithTheMethod.test_the_committed_row_rules_file_and_method_agree
+  artifact_version: 6701084b25d9c7105563b0310e034ab4ecd5b050
+attested_by: crun-82a1644001e22c8b
+links:
+  - target: SOL-LAYOUT-CATALOGUE-CRYSTAL-RELATED-PARTS.C2
+    type: satisfies
