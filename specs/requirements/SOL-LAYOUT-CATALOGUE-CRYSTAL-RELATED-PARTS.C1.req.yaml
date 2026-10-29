@@ -1,0 +1,12 @@
+id: SOL-LAYOUT-CATALOGUE-CRYSTAL-RELATED-PARTS.C1
+type: criterion
+title: CLOCK-3 and CLOCK-4 count the controller's own pin-side parts as related to the oscillator and keep 25 mm for every other part
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The method's CLOCK-3 item names, in its definition of a part related to the oscillator, the controller's own pin-side parts (the series resistors on its pins, the reset network, and the debug header and test parts on those pins) alongside the crystal, its load capacitors, the controller, its decoupling capacitors and the regulator that feeds it with its capacitors. CLOCK-3's Passes text and CLOCK-4's Passes text state the same set and keep the 25 mm figure for every other part, and the Fails text of both is consistent with it. The check is the delivered text read clause by clause against this statement. The tooling, the figure of 25 mm and the handling of a crystal beside a connector or the analog sensing region are out of scope.
+links:
+  - target: SOL-LAYOUT-CATALOGUE-CRYSTAL-RELATED-PARTS
+    type: criterion-of

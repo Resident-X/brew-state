@@ -1,0 +1,12 @@
+id: SOL-LAYOUT-CATALOGUE-CRYSTAL-RELATED-PARTS.C2
+type: criterion
+title: The proof design's crystal keep-clear row and rule agree with the catalogue, and a test holds the two together
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The proof design's design-rules.md row for the crystal keep-clear states the extended related set and names the pin-side parts it exempts, and its rules file exempts exactly those parts together with the others CLOCK-3 counts related, while the 25 mm figure and the form of the rule are unchanged. A test reads the catalogue's CLOCK-3 and CLOCK-4 text and the proof's row and rules file and fails when the row or the rules file exempts a part the catalogue does not count related, or omits one it does, and a seeded change of either side is caught. Any existing test whose fixture text restates the old definition is updated, and the board check still reports a courtyards_overlap violation for an unrelated part within 25 mm and a crystal_keepclear violation for a rule that exempts every other part. Changing the board check's tooling is out of scope.
+links:
+  - target: SOL-LAYOUT-CATALOGUE-CRYSTAL-RELATED-PARTS
+    type: criterion-of

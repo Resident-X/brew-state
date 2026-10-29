@@ -1,0 +1,21 @@
+id: SOL-LAYOUT-CATALOGUE-CRYSTAL-RELATED-PARTS
+type: deliverable
+category: solution
+title: The catalogue counts the controller's own pin-side parts as related to the oscillator, so a board with a crystal beside its controller can pass the crystal keep-clear
+status: active
+version: 1
+text: |
+  The layout practice catalogue's CLOCK-3 and CLOCK-4 hold every part unrelated to the oscillator 25 mm from the crystal's courtyard, and define a related part as the crystal, its load capacitors, the controller whose oscillator pins it joins, that controller's decoupling capacitors, and the regulator that feeds it with its capacitors. A crystal beside a 100-pin controller (a 14 mm square package) has the controller's own pin-side parts within 25 mm unavoidably: the series resistors on its pins, the reset network, and the debug header and its test points on those pins. A board therefore cannot pass the check's courtyards_overlap violation of the crystal keep-clear while the practice is read honestly. The one-inch figure of the cited source is conservative for the 8 MHz and 32.768 kHz crystals the boards use, which need close load capacitors, short tracks, ground beneath and no digital track beside them, and none of that is lost by admitting the controller's own pin-side parts.
+
+  Settled before build: CLOCK-3's related set gains the controller's own pin-side parts, meaning the series resistors, the reset network and the debug and test parts that sit on the controller's pins. The 25 mm figure stays for every other part. The tooling needs no change: the board check verifies only the rule's form, and the exemptions are entries in the board's rules file. The method text (CLOCK-3 and CLOCK-4), the catalogue item's Passes text, and the proof design's design-rules.md row for the crystal keep-clear are updated together, and so is any test whose fixture text restates the old definition.
+rationale: |
+  Restores the behaviour that REQ-BOARD-LAYOUT-PRACTICE-001.C1 asks of the catalogue: every board is judged against every applicable item and can pass it. An item that no board with a 100-pin controller beside its crystal can meet is not applicable practice but an overstated one, and the catalogue is amended at its definition of related rather than the item being waived.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: DEC-BOARD-PRE-ORDER-RULE-READINGS
+    type: justified-by
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
