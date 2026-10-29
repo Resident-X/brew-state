@@ -11,6 +11,10 @@
         "tuning_profile_track_geometries": "warning",
         "footprint_filters_mismatch": "warning",
         "footprint_type_mismatch": "warning"
+      },
+      "rules": {
+        "min_track_width": 0.09,
+        "min_clearance": 0.09
       }
     }
   },
