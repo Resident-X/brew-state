@@ -2,11 +2,11 @@ id: SOL-LAYOUT-CATALOGUE-CRYSTAL-RELATED-PARTS.C2
 type: criterion
 title: The proof design's crystal keep-clear row and rule agree with the catalogue, and a test holds the two together
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
-text: |-
-  The proof design's design-rules.md row for the crystal keep-clear states the extended related set and names the pin-side parts it exempts, and its rules file exempts exactly those parts together with the others CLOCK-3 counts related, while the 25 mm figure and the form of the rule are unchanged. A test reads the catalogue's CLOCK-3 and CLOCK-4 text and the proof's row and rules file and fails when the row or the rules file exempts a part the catalogue does not count related, or omits one it does, and a seeded change of either side is caught. Any existing test whose fixture text restates the old definition is updated, and the board check still reports a courtyards_overlap violation for an unrelated part within 25 mm and a crystal_keepclear violation for a rule that exempts every other part. Changing the board check's tooling is out of scope.
+text: |
+  The proof design's design-rules.md row for the crystal keep-clear and its review-proof.kicad_dru stay as committed, because editing them invalidates the recorded layout-review baselines; the proof board carries none of the added pin-side kinds, so both remain true under the extended set, and the 25 mm figure and the form of the rule are unchanged. A test in its own file, needing no board-design program and reading only the synthetic proof and the method, reads CLOCK-3's related-set text, the row and the rules file as they stand and fails when a kind the row names is missing from CLOCK-3, when the row's exempt references differ from the references the rules file exempts in either direction, or when an exempt reference is not a footprint on the proof board. Seeded in-memory copies are caught: a kind dropped from the catalogue copy, an exemption added to the rules-file copy, and one removed from it. Any existing test whose fixture text restates the old definition is updated, and the board check still reports a courtyards_overlap violation for an unrelated part within 25 mm and a crystal_keepclear violation for a rule that exempts every other part, each of those existing tests carrying a trace line to this criterion. Changing the board check's tooling is out of scope.
 links:
   - target: SOL-LAYOUT-CATALOGUE-CRYSTAL-RELATED-PARTS
     type: criterion-of
