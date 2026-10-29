@@ -13,7 +13,7 @@ key_signals:
   - {name: "Carried: retained tab and link current ratings (row M18)", net: "LINE1", test_point: "TP104", block: "Dongguan Bozhong publishes no rating for tabs J101 J102 J103 J106 to J110 or for the link JP101. Bring-up step, mains connected after the first-power steps: thermocouple on each joint and on its lead 100 mm along, 30 minutes at the machine full load; rise over the surrounding air at most 40 K (110 degC cap less the 70 degC air assumed). Limit and source: open-items.md, Bring-up measurements carried."}
   - {name: "Carried: C0G ceramics of the interlock (row M7)", net: "", test_point: "", block: "Before mains, LCR meter: C202 and C204 at least 70 nF; C203 and C205 4.4547 to 4.9645 nF. Limit and source: open-items.md, Bring-up measurements carried."}
   - {name: "Interlock output: live to the loads", net: LINE1, test_point: TP104, block: "interlock contact: live only when the drive holds the coil (compare TP104 with TP103)"}
-  - {name: "Proof-of-life output at the buffer input", net: POL_OUT, test_point: TP203, block: "interlock: high and low phase widths (at least 25 us each) and the 10 ms refresh are measured here"}
+  - {name: "Proof-of-life output ahead of the buffer input series resistor R207", net: POL_OUT, test_point: TP203, block: "interlock: high and low phase widths (at least 25 us each) and the 10 ms refresh are measured here"}
   - {name: "Buffer output", net: POL_BUF, test_point: TP204, block: "interlock: the edges both channels see"}
   - {name: "Channel A gate", net: POL_GATE_A, test_point: TP201, block: "interlock channel A: held level with the output toggling and held; read against 1.8 V"}
   - {name: "Channel B gate", net: POL_GATE_B, test_point: TP202, block: "interlock channel B"}

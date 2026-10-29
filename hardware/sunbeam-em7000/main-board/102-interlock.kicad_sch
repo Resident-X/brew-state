@@ -2142,12 +2142,12 @@
 	(junction
 		(at 50.8 63.5)
 		(diameter 0)
-		(uuid "0ad64b38-6ca5-4e29-b15a-14be7282833a")
+		(uuid "d8999c3d-edf1-4f27-8ed2-4eda1c0b1351")
 	)
 	(junction
 		(at 63.5 63.5)
 		(diameter 0)
-		(uuid "7b889d09-4f2e-4d0b-9216-d8826fa87bb0")
+		(uuid "1d322c09-6cca-451d-bbe9-e939b0fe65ee")
 	)
 	(no_connect
 		(at 93.98 58.42)
@@ -2176,13 +2176,6 @@
 	(no_connect
 		(at 318.77 165.1)
 		(uuid "9269b9f2-b416-4182-ae66-c31b9eb23140")
-	)
-	(wire
-		(pts
-			(xy 38.1 63.5)
-			(xy 88.9 63.5)
-		)
-		(uuid "bf78a1da-86d1-449b-bb10-bcbf36e6fc2b")
 	)
 	(wire
 		(pts
@@ -2484,6 +2477,20 @@
 			(xy 38.1 63.5)
 		)
 		(uuid "a5d16e06-05a7-4a87-9cbc-d31f2b5b0f6e")
+	)
+	(wire
+		(pts
+			(xy 38.1 63.5)
+			(xy 40.64 63.5)
+		)
+		(uuid "b208d7f6-8786-42a4-8754-b7530e6667b1")
+	)
+	(wire
+		(pts
+			(xy 48.26 63.5)
+			(xy 88.9 63.5)
+		)
+		(uuid "73efbf10-6adf-43c8-8659-0c693170bab7")
 	)
 	(label "POL_BUF"
 		(at 152.4 107.95 0)
@@ -2805,6 +2812,16 @@
 		)
 		(uuid "28a41163-1f95-496c-a371-df951ae7bde9")
 	)
+	(label "POL_IN"
+		(at 76.2 63.5 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "d1ff83bc-13b1-4d09-9079-0f48cfa7753b")
+	)
 	(hierarchical_label "POL_OUT"
 		(shape input)
 		(at 25.4 63.5 180)
@@ -3003,15 +3020,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
-					(reference "R201")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "1 % 0603 100 mW"
 			(at 50.8 76.2 0)
 			(hide yes)
@@ -3020,7 +3028,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
+					(reference "R201")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 63.5 76.2 0)
@@ -3099,15 +3116,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
-					(reference "R202")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "1 % 0603 100 mW"
 			(at 63.5 76.2 0)
 			(hide yes)
@@ -3116,7 +3124,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
+					(reference "R202")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "74xGxx:74LVC1G17")
 		(at 101.6 63.5 0)
@@ -3197,15 +3214,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
-					(reference "U201")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "7 V absolute maximum VCC, Schmitt non-inverting buffer, VCC 4.5-5.5 V, VT+ 2.0 V max, VT- 0.5 V min, 5.5 V-tolerant input; the symbol is KiCad's single-gate Schmitt buffer with the same pin numbers (1 NC, 2 A, 3 GND, 4 Y, 5 VCC)"
 			(at 101.6 63.5 0)
 			(hide yes)
@@ -3214,7 +3222,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
+					(reference "U201")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:C")
 		(at 124.46 50.8 0)
@@ -3295,15 +3312,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
-					(reference "C201")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "X7R 50 V 0603 10 %"
 			(at 124.46 50.8 0)
 			(hide yes)
@@ -3312,7 +3320,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
+					(reference "C201")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Connector:TestPoint")
 		(at 139.7 63.5 0)
@@ -3480,15 +3497,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
-					(reference "C202")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "C0G 50 V +-5 % 1206"
 			(at 152.4 114.3 0)
 			(hide yes)
@@ -3497,7 +3505,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
+					(reference "C202")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 165.1 127 0)
@@ -3576,15 +3593,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
-					(reference "R205")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "1 % 0603 100 mW"
 			(at 165.1 127 0)
 			(hide yes)
@@ -3593,7 +3601,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
+					(reference "R205")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:D")
 		(at 177.8 127 0)
@@ -3672,15 +3689,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
-					(reference "D201")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "Schottky 30 V, VF 0.32 V max at 1 mA"
 			(at 177.8 127 0)
 			(hide yes)
@@ -3689,7 +3697,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
+					(reference "D201")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Diode:BAS16W")
 		(at 203.2 114.3 0)
@@ -3768,15 +3785,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
-					(reference "D202")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "low-leakage switching diode 85 V, VF 0.9 V max at 1 mA, IR 80 nA max at 75 V 150 C; pin 1 anode, pin 3 cathode (SOT-23), the symbol's pin 2 is the NC"
 			(at 203.2 114.3 0)
 			(hide yes)
@@ -3785,7 +3793,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
+					(reference "D202")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:C")
 		(at 228.6 127 0)
@@ -3866,15 +3883,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
-					(reference "C203")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "C0G 50 V +-5 % 0603"
 			(at 228.6 127 0)
 			(hide yes)
@@ -3883,7 +3891,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
+					(reference "C203")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 241.3 127 0)
@@ -3962,15 +3979,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
-					(reference "R203")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "1 % 0603 100 mW, 100 ppm/C"
 			(at 241.3 127 0)
 			(hide yes)
@@ -3979,7 +3987,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
+					(reference "R203")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Connector:TestPoint")
 		(at 228.6 101.6 0)
@@ -4147,15 +4164,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
-					(reference "C204")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "C0G 50 V +-5 % 1206"
 			(at 152.4 190.5 0)
 			(hide yes)
@@ -4164,7 +4172,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
+					(reference "C204")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 165.1 203.2 0)
@@ -4243,15 +4260,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
-					(reference "R206")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "1 % 0603 100 mW"
 			(at 165.1 203.2 0)
 			(hide yes)
@@ -4260,7 +4268,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
+					(reference "R206")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:D")
 		(at 177.8 203.2 0)
@@ -4339,15 +4356,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
-					(reference "D203")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "Schottky 30 V, VF 0.32 V max at 1 mA"
 			(at 177.8 203.2 0)
 			(hide yes)
@@ -4356,7 +4364,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
+					(reference "D203")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Diode:BAS16W")
 		(at 203.2 190.5 0)
@@ -4435,15 +4452,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
-					(reference "D204")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "low-leakage switching diode, pin 1 anode, pin 3 cathode"
 			(at 203.2 190.5 0)
 			(hide yes)
@@ -4452,7 +4460,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
+					(reference "D204")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:C")
 		(at 228.6 203.2 0)
@@ -4533,15 +4550,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
-					(reference "C205")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "C0G 50 V +-5 % 0603"
 			(at 228.6 203.2 0)
 			(hide yes)
@@ -4550,7 +4558,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
+					(reference "C205")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 241.3 203.2 0)
@@ -4629,15 +4646,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
-					(reference "R204")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "1 % 0603 100 mW, 100 ppm/C"
 			(at 241.3 203.2 0)
 			(hide yes)
@@ -4646,7 +4654,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
+					(reference "R204")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Connector:TestPoint")
 		(at 228.6 177.8 0)
@@ -4814,15 +4831,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
-					(reference "Q202")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "N-FET 30 V"
 			(at 279.4 127 0)
 			(hide yes)
@@ -4831,7 +4839,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
+					(reference "Q202")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Transistor_FET:Q_NMOS_GSD")
 		(at 279.4 203.2 0)
@@ -4912,15 +4929,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
-					(reference "Q201")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "N-FET 30 V, VGSth 0.6-1.1 V at 250 uA, RDSon 2.8 ohm max at 1.8 V 10 mA, Ciss 50 pF max; pin 1 gate, 2 source, 3 drain"
 			(at 279.4 203.2 0)
 			(hide yes)
@@ -4929,7 +4937,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
+					(reference "Q201")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Diode:BZX84Cxx")
 		(at 317.5 127 0)
@@ -5008,15 +5025,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
-					(reference "Z201")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "zener 12 V, 11.4-12.7 V at 5 mA, 250 mW; pin 1 anode, pin 3 cathode"
 			(at 317.5 127 0)
 			(hide yes)
@@ -5025,7 +5033,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
+					(reference "Z201")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Diode:BAS16W")
 		(at 342.9 127 0)
@@ -5104,15 +5121,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
-					(reference "D205")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "low-leakage switching diode, pin 1 anode, pin 3 cathode"
 			(at 342.9 127 0)
 			(hide yes)
@@ -5121,7 +5129,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
+					(reference "D205")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Diode:BZX84Cxx")
 		(at 317.5 165.1 0)
@@ -5200,15 +5217,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
-					(reference "Z202")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "zener 12 V"
 			(at 317.5 165.1 0)
 			(hide yes)
@@ -5217,7 +5225,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
+					(reference "Z202")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Diode:BAS16W")
 		(at 342.9 165.1 0)
@@ -5296,15 +5313,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
-					(reference "D206")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "low-leakage switching diode"
 			(at 342.9 165.1 0)
 			(hide yes)
@@ -5313,7 +5321,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
+					(reference "D206")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Relay:Relay_SPST-NO")
 		(at 381 101.6 0)
@@ -5394,15 +5411,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
-					(reference "K201")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "440 VAC max, 1 Form A AgNi, coil 5 V 62 ohm +-10 %, 20 A 250 VAC, pick-up 3.5 V max, drop-out 0.5 V min, release 8 ms max, operate 15 ms max"
 			(at 381 101.6 0)
 			(hide yes)
@@ -5411,7 +5419,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
+					(reference "K201")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Connector:TestPoint")
 		(at 368.3 152.4 0)
@@ -6740,6 +6757,102 @@
 			(project "main-board"
 				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
 					(reference "#PWR019")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:R")
+		(at 44.45 63.5 90)
+		(unit 1)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "7a2a2a84-0ebd-40ef-8e61-e6fe58f7a04e")
+		(property "Reference" "R207"
+			(at 44.45 59.69 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "1k"
+			(at 44.45 67.31 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
+			(at 44.45 63.5 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 44.45 63.5 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Resistor"
+			(at 44.45 63.5 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C21190"
+			(at 44.45 63.5 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "0603WAF1001T5E"
+			(at 44.45 63.5 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "UNI-ROYAL"
+			(at 44.45 63.5 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "1 % 0603 100 mW"
+			(at 44.45 63.5 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d4eff4da-5a0a-4845-84e8-c2aa91e03db5"
+					(reference "R207")
 					(unit 1)
 				)
 			)

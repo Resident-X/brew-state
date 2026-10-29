@@ -121,7 +121,7 @@ key_signals:
 - name: proof-of-life output
   net: POL_OUT
   test_point: TP203
-  block: 'PC7: the interlock drive''s input; its test point belongs to the interlock block that consumes it'
+  block: 'PC7: the interlock drive''s input, through R207 to the buffer; its test point belongs to the interlock block that consumes it'
 connector_pins:
 - pin: J401.1
   net: DBG_VTREF

@@ -816,7 +816,7 @@ parts:
       section: "9 Limiting values, Table 5; 10 Recommended operating conditions, Table 6"
       read_on: 2026-10-29
     pins:
-      # A input. Table 5 VI -0.5 to 7.0 V; recommended 0 to 5.5 V (Table 6). The datasheet states no input tolerance with VCC = 0 V: not stated, taken as not tolerated.
+      # A input. Table 5 VI -0.5 to 7.0 V; recommended 0 to 5.5 V (Table 6). The datasheet states no input tolerance with VCC = 0 V: not stated, taken as not tolerated. The pin is not marked tolerant: R207 (1 kohm, a series resistor in the net, which the check does not count as joining nets) stands between the controller's 3.3 V output on POL_OUT and this pin on POL_IN and limits the clamp current with +5V absent to 2.93 mA (circuit-proof/A_pol_series.log).
       - pin: "2"
         domain: supply5
         absolute_max_v: 7

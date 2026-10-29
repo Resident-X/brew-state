@@ -1,5 +1,5 @@
 # Parts specification of the Sunbeam EM7000 main controller board: one position for every part
-# schematic-spec.yaml lists (454), in sheet order, the sheet named above each group.
+# schematic-spec.yaml lists (455), in sheet order, the sheet named above each group.
 #
 # Form: the keys board_check.py reads of a position (reference, value, package, rating, lcsc, class)
 # and no others, since it fails any other key. So the figures the schema has no key for sit in the
@@ -332,6 +332,13 @@ positions:
     package: R_0603_1608Metric
     rating: 1 % 0603 100 mW
     lcsc: C25803
+    class: none
+  # R207: maker UNI-ROYAL; MPN 0603WAF1001T5E; catalogue class basic
+  - reference: R207
+    value: 1k
+    package: R_0603_1608Metric
+    rating: 1 % 0603 100 mW
+    lcsc: C21190
     class: none
   # C202: maker Murata; MPN GRM31C5C1H104JA01L; catalogue class extended
   - reference: C202
