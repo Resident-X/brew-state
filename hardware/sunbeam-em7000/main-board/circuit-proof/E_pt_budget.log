@@ -1,0 +1,27 @@
+RREF 4020 ohm; one code = 0.1227 ohm; at 0 degC 0.0314 degC per code, at 150 degC 0.0328
+full scale: RRTD/RREF must stay below 1 (an input above the reference produces full scale, Detailed Description):
+     0 degC: RTD  1000.00 ohm, ratio 0.2488  code     8151
+   100 degC: RTD  1385.05 ohm, ratio 0.3445  code    11290
+   125 degC: RTD  1479.51 ohm, ratio 0.3680  code    12060
+   150 degC: RTD  1573.25 ohm, ratio 0.3914  code    12824
+   200 degC: RTD  1758.56 ohm, ratio 0.4375  code    14334
+  ratio reaches 1 at about 890 degC (the earlier design's rating floor was 125 degC, 150 degC preferred)
+
+bias conditions (VBIAS 1.95-2.06 V; IOUT 0.2-5.75 mA allowed):
+  RTD shorted                bias current 0.512 mA, RTD self-heating 0.000 mW, RTD voltage 0.000 V (limit VBIAS)
+  0 degC                     bias current 0.410 mA, RTD self-heating 0.168 mW, RTD voltage 0.410 V (limit VBIAS)
+  150 degC, 50 ohm leads     bias current 0.362 mA, RTD self-heating 0.219 mW, RTD voltage 0.605 V (limit VBIAS)
+
+wait after enabling the bias (Note 4: >= 10.5 time constants of the input RC network, plus 1 ms for the protection devices):
+  4-wire / short leads                      : tau = 1573 ohm x 10 nF = 15.7 us, 10.5 tau = 165 us, wait 1.17 ms
+  2-wire, 50 ohm per lead (maker's maximum) : tau = 1673 ohm x 10 nF = 16.7 us, 10.5 tau = 176 us, wait 1.18 ms
+
+error contributors in degC (INFORMATION: no sensing-error figure is declared for an in-stream probe, controller-io.md; the accuracy part of the row fails on that):
+    T degC  RREF 0.1 %   RREF TCR 25ppm/K x 45 K  ADC offset +-3 LSB  FS +-1 LSB  INL +-1 LSB
+         0       0.256                     0.288               0.094       0.008        0.031
+       100       0.365                     0.411               0.097       0.011        0.032
+       150       0.421                     0.474               0.099       0.013        0.033
+  sum at 150 degC, linear, all contributors at once: 1.039 degC
+  the maker's front-page total accuracy, 0.5 degC (0.05 % of full scale), is stated for the maker's own conditions and is not applied to a PT1000 here
+
+2-wire cable: each ohm in the loop reads as 0.26 degC at 0 degC for a PT1000 (3.85 ohm per degC); 50 ohm per lead is a 25.6 degC error uncorrected

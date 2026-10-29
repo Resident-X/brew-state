@@ -1,0 +1,73 @@
+# The manufacturer limits of the Sunbeam EM7000 main board: what JLCPCB publishes it will make
+# for the board's process, a four-layer board with 1 oz finished outer copper, which is the
+# stackup the main board is designed to (four copper layers, 1.6 mm, 131.0 x 125.0 mm, leaded
+# HASL) and the outer weight that carries no surcharge.
+#
+# Each figure is the maker's published minimum as docs/board-manufacturer-jlcpcb.md records it
+# (read 2026-10-13), and as the maker's capabilities page showed it again when this record was
+# made on 2026-10-29; the two agree on every figure below. The citation names the entry of that
+# prose record the figure comes from: the heading its table sits under, its Limit cell and its
+# Condition cell. Where a limit has a hard minimum and a recommended value, the hard minimum is
+# written (the annular ring's absolute minimum, the plated hole's minimum to track); the layout
+# may set a stricter figure. The track and spacing figure is the multilayer 1 oz minimum of
+# 3.5 mil; the maker charges 20 % of the order amount on a board that carries track or spacing
+# of 3.0 to 3.5 mil at four layers, which is in the prose record and not a limit of capability,
+# so it is not written here. The maker's other extra-charge bands are in the prose record too.
+#
+# The board's project file must state each minimum named below, at least as strict as its figure,
+# and its board rules record must declare fabrication.outer_copper_oz: 1.
+read_on: 2026-10-29
+source: docs/board-manufacturer-jlcpcb.md, read from https://jlcpcb.com/capabilities/pcb-capabilities (Traces, Drilling, Outline and PCB Specifications tables) on 2026-10-13 and again on 2026-10-29
+max_age_days: 30
+processes:
+  - copper_layers: 4
+    outer_copper_oz: 1
+    limits:
+      min_clearance:
+        mm: 0.09
+        citation:
+          section: "Tracks and spacing"
+          limit: "Minimum track width and spacing"
+          condition: "Multilayer boards, 1 oz"
+      min_track_width:
+        mm: 0.09
+        citation:
+          section: "Tracks and spacing"
+          limit: "Minimum track width and spacing"
+          condition: "Multilayer boards, 1 oz"
+      min_through_hole_diameter:
+        mm: 0.15
+        citation:
+          section: "Drills, vias and annular rings"
+          limit: "Drill diameter range"
+          condition: "2-layer and multilayer boards; holes of 6.3 mm and over are routed from a smaller drill"
+      min_hole_to_hole:
+        mm: 0.45
+        citation:
+          section: "Hole-to-hole and clearances to holes and edges"
+          limit: "Pad hole to pad hole"
+          condition: "Any board"
+      min_via_annular_width:
+        mm: 0.15
+        citation:
+          section: "Drills, vias and annular rings"
+          limit: "PTH annular ring"
+          condition: "Multilayer boards, 1 oz"
+      min_via_diameter:
+        mm: 0.25
+        citation:
+          section: "Drills, vias and annular rings"
+          limit: "Minimum via hole / via diameter"
+          condition: "2-layer and multilayer boards"
+      min_hole_clearance:
+        mm: 0.28
+        citation:
+          section: "Hole-to-hole and clearances to holes and edges"
+          limit: "Plated hole to track"
+          condition: "Any board"
+      min_copper_edge_clearance:
+        mm: 0.2
+        citation:
+          section: "Hole-to-hole and clearances to holes and edges"
+          limit: "Copper to a routed board edge or routed slot"
+          condition: "Board outline routed"

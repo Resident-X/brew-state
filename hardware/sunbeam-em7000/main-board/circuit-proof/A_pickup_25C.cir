@@ -1,0 +1,18 @@
+Coil pick-up at 25 C: both gates 1.8 V, rail 4.75 V, coil at 68.2 ohm
+.include A_interlock.cir
+.include A_models.inc
+Vsup +5V GND 4.75
+Vga POL_GATE_A GND 1.8
+Vgb POL_GATE_B GND 1.8
+Rcoil +5V POL_COIL_LO 68.2
+.tran 1u 20u
+.control
+altermod NM vto=1.1 kp=0.5102
+run
+meas tran vlo FIND v(POL_COIL_LO) AT=19u
+let vcoil = 4.75 - vlo
+let icoil = vcoil/68.2
+let vpickup_limit = 3.5
+print vcoil icoil vpickup_limit
+.endc
+.end

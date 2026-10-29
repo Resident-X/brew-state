@@ -1,0 +1,57 @@
+Supply voltage channel input network: divider R601-R604 and filter R605 R606 C601 into AMC131M02 AIN0, 358 V peak line
+* Sheet "Supply voltage and current measurement". Refs and values are the sheet's (E1-supply-voltage-and-current-measurement.yaml).
+* Bdiff is a measurement source (AIN0P minus AIN0N), not a part.  Rzind models U601's channel 0 differential input impedance (not a part of the sheet): SBASA56 6.8 ZIND, gain 1/2/4, 275 kohm MINIMUM
+* (no typical or maximum is stated, so the high corner uses an ideal input).  Vline is the supply: 253 V rms = 357.8 V peak, 50 Hz (constraints record, Supply).
+R601 LINE VMEAS_N1 300k
+R602 VMEAS_N1 VMEAS_N2 300k
+R603 VMEAS_N2 VMEAS_DIV 300k
+R604 VMEAS_DIV NEUTRAL 750
+R605 VMEAS_DIV AMC_AIN0P 49.9
+R606 AMC_AIN0N NEUTRAL 49.9
+C601 AMC_AIN0P AMC_AIN0N 4.7n
+Rzind AMC_AIN0P AMC_AIN0N 275k
+Bdiff AMC_DIFF 0 V=V(AMC_AIN0P)-V(AMC_AIN0N)
+Vgnd NEUTRAL 0 0
+Vline LINE NEUTRAL SIN(0 357.8 50) AC 1
+.tran 20u 100m
+.control
+* --- nominal values, input impedance at its stated minimum
+run
+let vd = v(AMC_AIN0P)-v(AMC_AIN0N)
+meas tran vpk_nom MAX vd FROM=60m TO=100m
+meas tran vtr_nom MIN vd FROM=60m TO=100m
+* --- worst-high corner: R601-R603 at -1 % and -100 ppm/K x 45 K (to 70 degC air), R604 at +1 % and +100 ppm/K x 45 K, ideal input
+*     300k x 0.99 x (1 - 100e-6 x 45) = 295663.5 ; 750 x 1.01 x (1 + 100e-6 x 45) = 760.909 ; Rzind raised to 1e12
+alter R601 = 295663.5
+alter R602 = 295663.5
+alter R603 = 295663.5
+alter R604 = 760.909
+alter Rzind = 1e12
+run
+let vd = v(AMC_AIN0P)-v(AMC_AIN0N)
+meas tran vpk_high MAX vd FROM=60m TO=100m
+* --- worst-low corner: R601-R603 at +1 % and +100 ppm/K x 45 K, R604 at -1 % and -100 ppm/K x 45 K, Rzind 275k
+*     300k x 1.01 x (1 + 100e-6 x 45) = 304363.5 ; 750 x 0.99 x (1 - 100e-6 x 45) = 739.1
+alter R601 = 304363.5
+alter R602 = 304363.5
+alter R603 = 304363.5
+alter R604 = 739.1
+alter Rzind = 275k
+run
+let vd = v(AMC_AIN0P)-v(AMC_AIN0N)
+meas tran vpk_low MAX vd FROM=60m TO=100m
+* --- filter response at 50 Hz, nominal values (C601 at nominal 4.7 nF and at +10 % 5.17 nF)
+alter R601 = 300k
+alter R602 = 300k
+alter R603 = 300k
+alter R604 = 750
+alter Rzind = 275k
+ac lin 21 40 60
+meas ac gain50_nom FIND vm(AMC_DIFF) AT=50
+meas ac phase50_nom FIND vp(AMC_DIFF) AT=50
+alter C601 = 5.17n
+ac lin 21 40 60
+meas ac gain50_c10 FIND vm(AMC_DIFF) AT=50
+meas ac phase50_c10 FIND vp(AMC_DIFF) AT=50
+.endc
+.end

@@ -1,0 +1,45 @@
+# The converter-input map of the STM32H743VIT6 in LQFP100 (the main board's controller): the
+# converter input the firmware names for each analogue-capable port pin, and the pin it lands on.
+# Read by the firmware's sensor-assignment check (tools/check_sensor_assignment.py), which
+# resolves a sensor channel's converter input through this list and compares the pin with
+# pin-allocation.yaml.
+#
+# converter_input is the firmware's ADC_CHANNEL_n constant, n being the channel number of the
+# pin's ADC input in DS12110 Rev 11 Table 9, LQFP100 column (the INPn of ADCx_INPn, read
+# 2026-10-29 from the Internet Archive's copy of st.com stm32h743vi.pdf), as set out in the
+# converter-input map of controller-pin-table.md. The pin is written as the pin allocation
+# record writes it. Every converter input on a port pin of the package is listed, whether the
+# board uses it or not; the trailing comment names the net a used pin carries, or free.
+#
+# Not listed: PC2_C and PC3_C, the analogue-only pads (ADC3_INP0 and ADC3_INP1). They are
+# not port pins by name, so the pin form the check reads cannot write them, and ADC_CHANNEL_0
+# and ADC_CHANNEL_1 name channels of the other converters than the one that reaches them.
+inputs:
+  - converter_input: ADC_CHANNEL_3
+    controller_pin: PA6  # ADC12_INP3, BREW_AN
+  - converter_input: ADC_CHANNEL_4
+    controller_pin: PC4  # ADC12_INP4, NTC_WAND
+  - converter_input: ADC_CHANNEL_5
+    controller_pin: PB1  # ADC12_INP5, free
+  - converter_input: ADC_CHANNEL_7
+    controller_pin: PA7  # ADC12_INP7, free
+  - converter_input: ADC_CHANNEL_8
+    controller_pin: PC5  # ADC12_INP8, STMP_AN
+  - converter_input: ADC_CHANNEL_9
+    controller_pin: PB0  # ADC12_INP9, free
+  - converter_input: ADC_CHANNEL_10
+    controller_pin: PC0  # ADC123_INP10, NTC_COF
+  - converter_input: ADC_CHANNEL_11
+    controller_pin: PC1  # ADC123_INP11, NTC_STM
+  - converter_input: ADC_CHANNEL_14
+    controller_pin: PA2  # ADC12_INP14, CURR1_AN
+  - converter_input: ADC_CHANNEL_15
+    controller_pin: PA3  # ADC12_INP15, CURR2_AN
+  - converter_input: ADC_CHANNEL_16
+    controller_pin: PA0  # ADC1_INP16, SPARE_AN2
+  - converter_input: ADC_CHANNEL_17
+    controller_pin: PA1  # ADC1_INP17, free
+  - converter_input: ADC_CHANNEL_18
+    controller_pin: PA4  # ADC12_INP18, free
+  - converter_input: ADC_CHANNEL_19
+    controller_pin: PA5  # ADC12_INP19, free

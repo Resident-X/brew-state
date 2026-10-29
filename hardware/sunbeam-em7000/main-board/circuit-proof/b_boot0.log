@@ -1,0 +1,26 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: boot0 strap: level with jp401 open (r401 pull-down against the pin leakage)
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+No. of Data Rows : 3
+
+  Measurements for DC Analysis
+
+v_boot0_open        =  1.50000e-01
+
+
+Total analysis time (seconds) = 0.000247
+
+Total elapsed time (seconds) = 0.003 
+
+Total DRAM available = 16384.000 MB.
+DRAM currently available = 6246.641 MB.
+Maximum ngspice program size =    9.859 MB.
+Current ngspice program size =    9.859 MB.
+

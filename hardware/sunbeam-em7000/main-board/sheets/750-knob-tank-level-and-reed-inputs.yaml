@@ -1,0 +1,26 @@
+sheet: "Knob, tank-level and reed inputs"
+function: "Pull-ups and filters that read the two knob microswitches and the tank reed as dry contacts to ground."
+parts:
+  - {"ref": "J861", "lib_id": "Connector_Generic:Conn_01x04", "value": "KNOB", "rating": "4-way header, JST B4B-PH-K-S (2.00 mm; the harness measures 1.95 mm +/-0.1: family not identified)", "footprint": "Connector_JST:JST_PH_B4B-PH-K_1x04_P2.00mm_Vertical", "mpn": "B4B-PH-K-S(LF)(SN)", "maker": "JST", "lcsc": "C131334", "class": "extended", "hand": false, "function": "knob microswitch harness header", "mains": false, "sim_exclude": true}
+  - {"ref": "J862", "lib_id": "Connector_Generic:Conn_01x02", "value": "REED", "rating": "two through-hole pads 20.0 mm apart for the tank reed element", "footprint": "REED_PADS_P20.00mm", "mpn": "", "maker": "", "lcsc": "", "class": "none", "hand": true, "function": "tank reed element pads", "mains": false, "sim_exclude": true}
+  - {"ref": "R861", "lib_id": "Device:R", "value": "10k", "rating": "1% 100mW 75V 0603", "footprint": "Resistor_SMD:R_0603_1608Metric", "mpn": "0603WAF1002T5E", "maker": "UNI-ROYAL", "lcsc": "C25804", "class": "basic", "hand": false, "function": "pull-up of KNOB_HOT to +3V3", "mains": false, "sim_exclude": false}
+  - {"ref": "C861", "lib_id": "Device:C", "value": "100n", "rating": "10% X7R 50V 0603", "footprint": "Capacitor_SMD:C_0603_1608Metric", "mpn": "CC0603KRX7R9BB104", "maker": "YAGEO", "lcsc": "C14663", "class": "basic", "hand": false, "function": "filter on KNOB_HOT (contact bounce and induced pulses)", "mains": false, "sim_exclude": false}
+  - {"ref": "TP861", "lib_id": "Connector:TestPoint", "value": "TP", "rating": "test point", "footprint": "TestPoint:TestPoint_Pad_D1.5mm", "mpn": "", "maker": "", "lcsc": "", "class": "none", "hand": false, "function": "test point on KNOB_HOT", "mains": false, "sim_exclude": true}
+  - {"ref": "R862", "lib_id": "Device:R", "value": "10k", "rating": "1% 100mW 75V 0603", "footprint": "Resistor_SMD:R_0603_1608Metric", "mpn": "0603WAF1002T5E", "maker": "UNI-ROYAL", "lcsc": "C25804", "class": "basic", "hand": false, "function": "pull-up of KNOB_STEAM to +3V3", "mains": false, "sim_exclude": false}
+  - {"ref": "C862", "lib_id": "Device:C", "value": "100n", "rating": "10% X7R 50V 0603", "footprint": "Capacitor_SMD:C_0603_1608Metric", "mpn": "CC0603KRX7R9BB104", "maker": "YAGEO", "lcsc": "C14663", "class": "basic", "hand": false, "function": "filter on KNOB_STEAM (contact bounce and induced pulses)", "mains": false, "sim_exclude": false}
+  - {"ref": "TP862", "lib_id": "Connector:TestPoint", "value": "TP", "rating": "test point", "footprint": "TestPoint:TestPoint_Pad_D1.5mm", "mpn": "", "maker": "", "lcsc": "", "class": "none", "hand": false, "function": "test point on KNOB_STEAM", "mains": false, "sim_exclude": true}
+  - {"ref": "R863", "lib_id": "Device:R", "value": "10k", "rating": "1% 100mW 75V 0603", "footprint": "Resistor_SMD:R_0603_1608Metric", "mpn": "0603WAF1002T5E", "maker": "UNI-ROYAL", "lcsc": "C25804", "class": "basic", "hand": false, "function": "pull-up of TANK_LEVEL to +3V3", "mains": false, "sim_exclude": false}
+  - {"ref": "C863", "lib_id": "Device:C", "value": "100n", "rating": "10% X7R 50V 0603", "footprint": "Capacitor_SMD:C_0603_1608Metric", "mpn": "CC0603KRX7R9BB104", "maker": "YAGEO", "lcsc": "C14663", "class": "basic", "hand": false, "function": "filter on TANK_LEVEL (contact bounce and induced pulses)", "mains": false, "sim_exclude": false}
+  - {"ref": "TP863", "lib_id": "Connector:TestPoint", "value": "TP", "rating": "test point", "footprint": "TestPoint:TestPoint_Pad_D1.5mm", "mpn": "", "maker": "", "lcsc": "", "class": "none", "hand": false, "function": "test point on TANK_LEVEL", "mains": false, "sim_exclude": true}
+nets:
+  "KNOB_HOT": {"scope": "global", "pins": ["J861.1", "R861.1", "C861.1", "TP861.1"]}
+  "KNOB_STEAM": {"scope": "global", "pins": ["J861.3", "R862.1", "C862.1", "TP862.1"]}
+  "TANK_LEVEL": {"scope": "global", "pins": ["J862.2", "R863.1", "C863.1", "TP863.1"]}
+  "+3V3": {"scope": "power", "pins": ["R861.2", "R862.2", "R863.2"]}
+  "GND": {"scope": "power", "pins": ["J861.2", "J861.4", "J862.1", "C861.2", "C862.2", "C863.2"]}
+no_connect: []
+custom_symbols: []
+custom_footprints:
+  - {"name": "REED_PADS_P20.00mm", "from": "docs/sunbeam-em7000/controller-board-division.md, The tank reed (pads 20.0 mm apart along Y) and connector-pinouts.md (leads 20 mm apart, through holes)", "detail": "2 plated through-hole pads, pad 1 at (0,0) and pad 2 at (0,20.0); drill 1.0 mm, pad 2.0 mm round (the element's lead diameter is unmeasured: the owner reads it; open item)."}
+power_flags: []
+notes: "KNOB header (J861): pin 1 hot-water switch lead (red) = KNOB_HOT, pin 2 its other lead to GND, pin 3 steam switch lead (red) = KNOB_STEAM, pin 4 its other lead to GND; a contact has no polarity (connector-pinouts.md), so either lead may be the grounded one. Pin 1 is the contact nearest the right edge of the board. Reed (J862): two through-hole pads 20.0 mm apart, hand-fitted; pad 2 = TANK_LEVEL, pad 1 = GND. 10 k to +3V3 and 100 nF to ground on each line. The mains-presence inputs are not drawn."

@@ -1,0 +1,56 @@
+(1) +5V over-voltage
+    module trip 5.75 to 6.75 V; it can source 4.0 A rated and up to 6.4 A in overload; the part replaced (AP7361C) takes 6.5 V absolute maximum: 0.25 V over at the module's upper trip
+    clamp A, a zener at 5.6 V holding the rail under 6.5 V at 4.0 A: dissipation 22.4 W (35.8 W at the 6.4 A overload), and its tolerance (5 %) puts 5.32 V on a 5.25 V rail
+    clamp B, a TVS of the SMF6.0A class (the project's D402: VBR 6.67 to 7.37 V, VC 10.3 V at 19.4 A): conducts from 6.67 V, above the old part's 6.5 V, and at 4 A sits at about 8.0 V
+    neither clamp holds 6.5 V from a 4 A source with one SMD part; the module's own diode clamp and shut-down is its protection. Chosen: a regulator whose absolute maximum input is above the trip
+    LT1963AEST-3.3: IN 20 V absolute maximum -> margin 13.25 V over 6.75 V, 9.7 V over the USB path's 10.3 V clamp level
+    other parts on +5V, +5V_WB and +5V_GAUGE at 6.75 V (module trip, on the module's cable position the D402 level is 10.3 V):
+      U302 LT1963A input                     limit  20.0 V  margin  13.25 V  holds  (IN +/-20 V (LT1963A absolute maximum ratings))
+      U201 74AHCT1G17 VCC                    limit   7.0 V  margin   0.25 V  holds  (Nexperia 74AHC1G17/74AHCT1G17 Rev. 4 (15 Sep 2023) Table 5 limiting values, VCC -0.5 to +7.0 V)
+      U791 SN74HCT541 VCC                    limit   7.0 V  margin   0.25 V  holds  (Texas Instruments SCLS306C absolute maximum 7 V)
+      K201 coil, HF115F-Q/005                limit   7.5 V  margin   0.75 V  holds  (Hongfa HF115F-Q coil data: 5 V coil, maximum voltage 7.5 V for a short period, 62 ohm)
+      K731 K741 coils, HF32FA-G/005          limit   8.5 V  margin   1.75 V  holds  (Hongfa HF32FA-G 2026 Rev 1.00 coil data (circuit-proof.md valve coil row))
+      Q822 AO3401A gate to source            limit  12.0 V  margin   5.25 V  holds  (AO3401A Rev 3.1: VGS +/-12 V; gate swings 0 to 5.25 V against a source on +5V, 6.75 V at most)
+      C303 10 uF X5R                         limit  10.0 V  margin   3.25 V  holds  (rated voltage)
+      C302 47 uF electrolytic, C792 47 uF    limit  16.0 V  margin   9.25 V  holds  (rated voltage)
+      C671 C676 10 uF                        limit  25.0 V  margin  18.25 V  holds  (rated voltage (CL21A106KAYNNNE))
+      C201 C301 C791 100 nF                  limit  50.0 V  margin  43.25 V  holds  (rated voltage)
+      D205 D206 BAS116, D731 D741 1N4148WS   limit  75.0 V  margin  68.25 V  holds  (reverse voltage 75 V (circuit-proof.md rows))
+      HX711 U630 U631 (AVDD on +5V): the maker's sheet (Avia V2.0) states no absolute maximum; not shown (schematic-review.md 1.3, open item)
+      LED stages R703 R713 R763 R773 (180 ohm): IF = (6.75 - 0)/180 = 37.5 mA at most against the opto-triac's 60 mA absolute maximum
+      U201 and U791 keep 0.25 V; the module shuts its output down on the trip; off-board loads on the 5 V pins (sensors, gauge, wall board, buzzer) are the makers' and are not rated here
+(2) regulator output capacitance (LT1963A: stable with 10 uF, ceramic allowed, ESR 0 ohm at 3.3 V from Table 1)
+    one 22 uF X5R 10 V 0805: -20 % tolerance, -45 % at 3.4 V (plot reads -40 %; -45 % allows the reading), -13 % at 85 degC: 8.4 uF
+    one part against 10 uF: short; two in parallel (C304, C305): 16.8 uF, 1.68x the 10 uF
+    the part's rating is 85 degC: regulator dissipation below puts its tab well above the 70 degC air, so the capacitors sit at least 10 mm from the tab
+    cable-power inrush: nominal 2 x 22 = 44 uF at 0 V bias; at +20 % 52.8 uF
+(3) reset supervisor TLV803S on +3V3
+    threshold 2.87 to 2.99 V falling (2.93 typical, +40 mV hysteresis typical: release 2.97 typical); regulator output at least 3.200 V: margin 0.21 V (no spurious reset)
+    HX711 DVDD (Avia pin table)                      minimum 2.60 V: threshold window +0.27 to +0.39 V from it
+    oscillator Y601 and MAX31865 in the E records    minimum 2.97 V: threshold window -0.10 to +0.02 V from it
+    AMC131M02 DVDD (SBASA56 6.4)                     minimum 3.00 V: threshold window -0.13 to -0.01 V from it
+    controller: BOR3 falling 2.54 to 2.68 V, PVD6 falling 2.69 to 2.83 V (DS12110 Table 116): the supervisor's lowest trip 2.87 V is 0.04 V above PVD6's highest 2.83 V, so reset asserts before BOR3 acts and before the controller leaves the PVD6 range
+    window not covered for a load of 3.0 V minimum: a rail in 2.87 to 3.00 V is not reset on a part at the window's low end (up to 0.13 V). A 3.08 V-class threshold (MAX803 T grade, its sheet not read here) would put the window's top within a tenth of a volt of the regulator's lowest output 3.200 V and risk a reset on a load-step dip; the 2.93 V grade keeps 0.21 V
+    reset timing: asserted while VDD < VIT- and for 120 to 280 ms after VDD >= VIT- + 0.2 V; with the controller's NRST pull-up and C418 the release adds at most 7.6 ms (circuit-proof.md, Reset row)
+    NRST level held: VOL 0.4 V at 2 mA; the controller's pull-up is 3.4 V / 30 kohm = 113 uA, so VOL <= 0.2 V (500 uA row) against VIL 0.3 VDD = 0.99 V (3.3 V)
+    pull-up limits of the supervisor sheet: 10 kohm to 1 Mohm; the controller's 30 to 50 kohm is inside; leakage IOH 100 nA x 50 kohm = 5.0 mV
+(4) mains-presence inputs PE15 and PD7 (FT_h), series R764/R774 27 kohm and pull-down R765/R775 82 kohm
+    divider 0.7523 (0.7485 to 0.7560 with 1 % parts)
+    wall board high at the top of +5V_WB 5.125 V: pin 3.86 V (3.87 V at the 1 % extreme) against the 4.0 V limit with VDD absent (Table 109: min(VDD+4.0, 6)): margin 0.13 V
+    with VDD present the limit is 6 V: a wall board driving up to 6.75 V (module trip) gives 5.10 V; positive injection does not occur below the maximum (Table 110), so no clamp current flows
+    double fault, module trip with VDD absent: 5.10 V against 4.0 V (not covered; the module shuts down on the trip)
+    wall board must drive high at least VIH / k = 2.38 / 0.7485 = 3.18 V (VIH 0.7 VDD at VDD 3.4 V); a 5 V-class output meets it, a 3.3 V output with VOH under 3.18 V does not
+    wall board absent or off: pin = leakage x 82 kohm = 0.25 uA x 82 kohm = 20 mV (1.5 uA above VDD: 123 mV) against VIL 0.96 V: reads low, hysteresis 250 mV typical
+    wall board output low at up to 0.4 V reaches the pin at 0.30 V; load on the wall board output at 5.125 V: 47 uA
+    power: 5.125 V across 109 kohm is 0.24 mW (R764 0.06 mW, R765 0.18 mW) against 100 mW parts
+    the pins must be plain floating inputs in firmware: Table 109 note 4, internal pull resistors off above 4 V
+(5) USB static discharge, owner level 4 (8 kV contact, 15 kV air); USBLC6-2SC6 DS4260 Rev 7
+    clamp: level 4 15 kV air and 8 kV contact in the features (Table 1 prints 15 kV contact: contradiction, either meets level 4); VCL 12 V at 1 A and 17 V at 5 A (8/20 us); 3.5 pF maximum
+    residue at PA11 and PA12: the clamp's own table gives 17 V at 5 A, against the controller's 6 V DC limit (4 V with VDD absent): 11 V over; the controller sheet states no pulse withstand, so the residue is not bounded by it
+    8 kV contact through 330 ohm is 24 A: DS4260 2.1 gives 31.2 V with pin 5 open, about 23.0 V with D402 on the VBUS node (b_usb_power.py (e)); the 8/20 us table figure does not cover 24 A at 1 ns
+(6) pump snubber (R706 C701, R716 C711) and module inrush thermistor RT301, both not fitted
+    snubber 100 ohm + 100 nF X2 (C101's part, 310 VAC): leakage with the triac off 7.95 mA at 50 Hz, 9.54 mA at 60 Hz; R dissipates 9.1 mW; at turn-on from 358 V crest: 3.6 A peak, 6.4 mJ
+    the triac's VDRM is 600 V against the 358 V crest of the supply: the rule is to fit the snubber only if the scope reads over 600 V at turn-off (bring-up)
+    thermistor NTC10D-9: module 40 A typical at 230 Vac implies 8.1 ohm; at 358 V crest 44.0 A bare, 19.7 A with 10 ohm added (-55 %)
+    steady state: 0.46 ohm residual at 0.4 A (typical, 230 Vac) is 0.18 V and 0.07 W; the sheet's 2 A maximum steady current is 5x the module's 0.4 A; its 150 uF limit at 240 V against the module's input capacitance, which the module sheet does not state
+    link position: 1206 0 ohm chip rated 2 A with 10 A overload (UNI-ROYAL sheet, duration not stated) against 40 A typical inrush: a wire link is drawn instead

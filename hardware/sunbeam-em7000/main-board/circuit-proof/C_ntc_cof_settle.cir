@@ -1,0 +1,48 @@
+Settling and sample memory, NTC_COF (R501 R502 C501): supply step 0 to 3.3 V, sensor open
+* Source of every value: the sheet fragment of this block (generated from the same table).
+* Sim-only elements (names with SIM_) stand for the sensor, the converter's sample and hold and the supply.
+* Converter: DS12110 Rev 11 Table 77 / Table 174: CADC 4 pF (typ), tS 810.5 cycles, 16 bit, fADC 10 MHz.
+.model SWM SW(Ron=1m Roff=1e12 Vt=0.5 Vh=0.2)
+R501 SIM_STEP NTC_COF_SENS 10k
+RSIM_NTC NTC_COF_SENS 0 1T
+R502 NTC_COF_SENS NTC_COF 1k
+C501 NTC_COF 0 47n
+VSIM_STEP SIM_STEP 0 PWL(0 0 1u 3.3)
+CSIM_ADC ADC_H 0 4p
+SSIM_SH NTC_COF ADC_H CTL 0 SWM
+VSIM_CTL CTL 0 PULSE(0 1 30m 1n 1n 81.05u 100)
+.ic V(ADC_H)=0
+.tran 2u 45m
+.control
+* corner slow: every resistor at x1.0145, every capacitor at x1.2650 of nominal
+alter R501 = 10145
+alter R502 = 1014.5
+alter C501 = 5.9455e-08
+run
+meas tran vfin_slow FIND v(NTC_COF) AT=29m
+let errx_slow = (vfin_slow - v(NTC_COF))*1000
+meas tran t_set_slow WHEN errx_slow=0.02518 FALL=1
+meas tran v_win_slow FIND v(NTC_COF) AT=30.0811m
+let kick_uV_slow = (vfin_slow - v_win_slow)*1e6
+print kick_uV_slow
+meas tran t_rec_slow WHEN errx_slow=0.02518 FALL=2
+meas tran v_end_slow FIND v(NTC_COF) AT=44m
+let resid_uV_slow = (vfin_slow - v_end_slow)*1e6
+print resid_uV_slow
+* corner fast: every resistor at x0.9855, every capacitor at x0.7650 of nominal
+alter R501 = 9855
+alter R502 = 985.5
+alter C501 = 3.5955e-08
+run
+meas tran vfin_fast FIND v(NTC_COF) AT=29m
+let errx_fast = (vfin_fast - v(NTC_COF))*1000
+meas tran t_set_fast WHEN errx_fast=0.02518 FALL=1
+meas tran v_win_fast FIND v(NTC_COF) AT=30.0811m
+let kick_uV_fast = (vfin_fast - v_win_fast)*1e6
+print kick_uV_fast
+meas tran t_rec_fast WHEN errx_fast=0.02518 FALL=2
+meas tran v_end_fast FIND v(NTC_COF) AT=44m
+let resid_uV_fast = (vfin_fast - v_end_fast)*1e6
+print resid_uV_fast
+.endc
+.end

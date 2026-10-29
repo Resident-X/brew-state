@@ -1,0 +1,33 @@
+Flow input FLOW_IN with a 5 V push-pull meter output (5.125 V rail high, 5.25 V margin case) through R521, C520 and the TVS leakage
+* Source of every value: the sheet fragment of this block (generated from the same table).
+* Sim-only elements (names with SIM_) stand for the sensor, the converter's sample and hold and the supply.
+* Converter: DS12110 Rev 11 Table 77 / Table 174: CADC 4 pF (typ), tS 810.5 cycles, 16 bit, fADC 10 MHz.
+.model SWM SW(Ron=1m Roff=1e12 Vt=0.5 Vh=0.2)
+VSIM_V3V3 +3V3 0 3.6
+VSIM_5V SIM_5V 0 5.125
+R520 FLOW_RAW +3V3 10k
+R521 FLOW_RAW FLOW_F 1k
+C520 FLOW_F 0 47n
+* R522 is a zero-ohm link in the sheet (value 0); ngspice replaces 0 by 1e-12 ohm and then loses accuracy, so it is simulated as 1 mOhm
+R522 FLOW_F FLOW_IN 1m
+SSIM_HI SIM_5V PP_OUT CTLH 0 SWM
+SSIM_LO PP_OUT 0 CTLL 0 SWM
+RSIM_PP PP_OUT FLOW_RAW 25
+VSIM_CTLH CTLH 0 PULSE(0 1 100u 1n 1n 4.9m 10m)
+ESIM_INV CTLL 0 VALUE={1-v(CTLH)}
+ISIM_PAD FLOW_IN 0 1.5u
+.tran 5u 20m
+.control
+alter R520 = 9855
+alter R521 = 1014.5
+alter C520 = 5.9455e-08
+alter VSIM_5V = 5.125
+run
+meas tran vhigh_pp_5p125 MAX v(FLOW_IN) FROM=0.5m TO=10m
+meas tran vlow_pp_5p125 MIN v(FLOW_IN) FROM=5m TO=10m
+alter VSIM_5V = 5.25
+run
+meas tran vhigh_pp_5p25 MAX v(FLOW_IN) FROM=0.5m TO=10m
+meas tran vlow_pp_5p25 MIN v(FLOW_IN) FROM=5m TO=10m
+.endc
+.end

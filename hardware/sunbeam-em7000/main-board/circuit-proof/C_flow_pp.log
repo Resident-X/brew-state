@@ -1,0 +1,63 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: flow input flow_in with a 5 v push-pull meter output (5.125 v rail high, 5.25 v margin case) through r521, c520 and the tvs leakage
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
++3v3                                       3.6
+sim_5v                                   5.125
+flow_raw                            0.00907227
+flow_f                              0.00755052
+flow_in                             0.00755052
+pp_out                             3.62876e-07
+ctlh                                         0
+ctll                                         1
+esim_inv_int1                                1
+besim_inv#branch                             0
+esim_inv#branch                              0
+vsim_ctlh#branch                             0
+vsim_5v#branch                      -5.125e-12
+vsim_v3v3#branch                  -0.000364376
+
+
+No. of Data Rows : 4100
+vhigh_pp_5p125      =  5.11958e+00 at=  4.99389e-03
+vlow_pp_5p125       =  7.55052e-03 at=  9.99889e-03
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
++3v3                                       3.6
+sim_5v                                    5.25
+flow_raw                            0.00907227
+flow_f                              0.00755052
+flow_in                             0.00755052
+pp_out                             3.62876e-07
+ctlh                                         0
+ctll                                         1
+esim_inv_int1                                1
+besim_inv#branch                             0
+esim_inv#branch                              0
+vsim_ctlh#branch                             0
+vsim_5v#branch                       -5.25e-12
+vsim_v3v3#branch                  -0.000364376
+
+
+No. of Data Rows : 4100
+vhigh_pp_5p25       =  5.24427e+00 at=  4.99389e-03
+vlow_pp_5p25        =  7.55052e-03 at=  9.99889e-03
+Note: Simulation executed from .control section 

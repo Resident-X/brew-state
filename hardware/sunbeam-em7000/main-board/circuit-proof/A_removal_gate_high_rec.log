@@ -1,0 +1,37 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: interlock removal, step 1: gate decay after the last rising edge to the lowest fet threshold, slowest corner, output held high, variant rec
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
++5v                                       5.25
+pol_out                                      0
+pol_buf                             2.8875e-07
+pol_node_a                        -2.52922e-18
+pol_gate_a                        -1.48324e-26
+pol_mid                                  2.625
+pol_node_b                        -2.52922e-18
+pol_gate_b                        -1.48324e-26
+pol_coil_lo                               5.25
+pol_clamp_1                            5.24958
+pol_clamp_2                            5.24958
+vpol#branch                                  0
+vsup#branch                          -5.25e-09
+
+
+No. of Data Rows : 150291
+vstarta             =  4.30656e+00
+ta06                =  1.34429e+00
+tb06                =  1.34429e+00
+tdeca               =  1.24439e+00 targ=  1.34429e+00 trig=  9.99001e-02
+tdecb               =  1.24439e+00 targ=  1.34429e+00 trig=  9.99001e-02
+Note: Simulation executed from .control section 

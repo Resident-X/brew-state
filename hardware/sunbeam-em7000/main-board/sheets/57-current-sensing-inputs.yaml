@@ -1,0 +1,241 @@
+sheet: "Current sensing inputs"
+function: "Two current-sensor interfaces, each a three-way header with scaling, an unpopulated burden position and the converter filter"
+parts:
+  - ref: J570
+    lib_id: "Connector_Generic:Conn_01x03"
+    value: "CURR1_H"
+    rating: "2.54mm 0.63mm pins"
+    footprint: "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical"
+    mpn: "2.54mm 1x3 header"
+    maker: "not read"
+    lcsc: C49257
+    class: extended
+    hand: true
+    function: "current sensor 1 header: 1 sensor supply 5V, 2 sensor output, 3 return"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: D570
+    lib_id: "Device:D_TVS"
+    value: "PESD5V0F1BL"
+    rating: "bidirectional 5.5V standoff, 0.55pF max"
+    footprint: "Diode_SMD:D_SOD-882"
+    mpn: "PESD5V0F1BL,315"
+    maker: "Nexperia"
+    lcsc: C45961
+    class: extended
+    hand: false
+    function: "transient clamp on the sensor output at the header"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R570
+    lib_id: "Device:R"
+    value: "10k"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF1002T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C25804
+    class: basic
+    hand: false
+    function: "scaling top resistor: keeps a sensor output of up to 5.25 V under the converter pin's 4.0 V maximum"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R571
+    lib_id: "Device:R"
+    value: "20k"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF2002T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C4184
+    class: basic
+    hand: false
+    function: "scaling bottom resistor"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R572
+    lib_id: "Device:R"
+    value: "DNP"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF1002T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C25804
+    class: basic
+    hand: false
+    function: "burden position for a current-output sensor, not populated; value not sized (sensor not chosen)"
+    mains: false
+    sim_exclude: false
+    dnp: true
+  - ref: R573
+    lib_id: "Device:R"
+    value: "1k"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF1001T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C21190
+    class: basic
+    hand: false
+    function: "series resistor into the converter pin; sets the filter with C570"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: C570
+    lib_id: "Device:C"
+    value: "47n"
+    rating: "10% X7R 50V 0603"
+    footprint: "Capacitor_SMD:C_0603_1608Metric"
+    mpn: "CL10B473KB8NNNC"
+    maker: "Samsung Electro-Mechanics"
+    lcsc: C1622
+    class: basic
+    hand: false
+    function: "converter-input filter capacitor"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: TP570
+    lib_id: "Connector:TestPoint"
+    value: "TestPoint"
+    rating: "pad 1.5mm"
+    footprint: "TestPoint:TestPoint_Pad_D1.5mm"
+    mpn: ""
+    maker: ""
+    lcsc: ""
+    class: none
+    hand: false
+    function: "test point on CURR1_AN"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: J571
+    lib_id: "Connector_Generic:Conn_01x03"
+    value: "CURR2_H"
+    rating: "2.54mm 0.63mm pins"
+    footprint: "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical"
+    mpn: "2.54mm 1x3 header"
+    maker: "not read"
+    lcsc: C49257
+    class: extended
+    hand: true
+    function: "current sensor 2 header: 1 sensor supply 5V, 2 sensor output, 3 return"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: D571
+    lib_id: "Device:D_TVS"
+    value: "PESD5V0F1BL"
+    rating: "bidirectional 5.5V standoff, 0.55pF max"
+    footprint: "Diode_SMD:D_SOD-882"
+    mpn: "PESD5V0F1BL,315"
+    maker: "Nexperia"
+    lcsc: C45961
+    class: extended
+    hand: false
+    function: "transient clamp on the sensor output at the header"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R574
+    lib_id: "Device:R"
+    value: "10k"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF1002T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C25804
+    class: basic
+    hand: false
+    function: "scaling top resistor: keeps a sensor output of up to 5.25 V under the converter pin's 4.0 V maximum"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R575
+    lib_id: "Device:R"
+    value: "20k"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF2002T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C4184
+    class: basic
+    hand: false
+    function: "scaling bottom resistor"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R576
+    lib_id: "Device:R"
+    value: "DNP"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF1002T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C25804
+    class: basic
+    hand: false
+    function: "burden position for a current-output sensor, not populated; value not sized (sensor not chosen)"
+    mains: false
+    sim_exclude: false
+    dnp: true
+  - ref: R577
+    lib_id: "Device:R"
+    value: "1k"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF1001T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C21190
+    class: basic
+    hand: false
+    function: "series resistor into the converter pin; sets the filter with C571"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: C571
+    lib_id: "Device:C"
+    value: "47n"
+    rating: "10% X7R 50V 0603"
+    footprint: "Capacitor_SMD:C_0603_1608Metric"
+    mpn: "CL10B473KB8NNNC"
+    maker: "Samsung Electro-Mechanics"
+    lcsc: C1622
+    class: basic
+    hand: false
+    function: "converter-input filter capacitor"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: TP571
+    lib_id: "Connector:TestPoint"
+    value: "TestPoint"
+    rating: "pad 1.5mm"
+    footprint: "TestPoint:TestPoint_Pad_D1.5mm"
+    mpn: ""
+    maker: ""
+    lcsc: ""
+    class: none
+    hand: false
+    function: "test point on CURR2_AN"
+    mains: false
+    sim_exclude: false
+    dnp: false
+nets:
+  "+5V": {scope: power, pins: ["J570.1", "J571.1"]}
+  "CURR1_SIG": {scope: local, pins: ["J570.2", "D570.1", "R570.1"]}
+  "GND": {scope: power, pins: ["J570.3", "D570.2", "R571.2", "R572.2", "C570.2", "J571.3", "D571.2", "R575.2", "R576.2", "C571.2"]}
+  "CURR1_DIV": {scope: local, pins: ["R570.2", "R571.1", "R572.1", "R573.1"]}
+  "CURR1_AN": {scope: global, pins: ["R573.2", "C570.1", "TP570.1"]}
+  "CURR2_SIG": {scope: local, pins: ["J571.2", "D571.1", "R574.1"]}
+  "CURR2_DIV": {scope: local, pins: ["R574.2", "R575.1", "R576.1", "R577.1"]}
+  "CURR2_AN": {scope: global, pins: ["R577.2", "C571.1", "TP571.1"]}
+no_connect: []
+custom_symbols: []
+custom_footprints: []
+power_flags: []
+notes: "Two identical cells, signal left to right: header -> TVS -> divider -> series R -> filter -> label. R572 and R576 are drawn with the value text DNP and marked do-not-populate: they are the burden positions parallel to the bottom resistor. A current-output sensor is served by fitting a burden there, replacing the top resistor with a zero-ohm link and removing the bottom resistor; the values wait for the sensor, which the records leave to the owner."

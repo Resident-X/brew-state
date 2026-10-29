@@ -1,0 +1,1723 @@
+# The pin-limit record of the Sunbeam EM7000 main board, read by the pre-order board
+# check (pin-limit rule and the derated-voltage rule's net voltages). Every integrated
+# circuit and semiconductor the schematic places is listed, found by its LCSC number,
+# with the limits of each pin that is connected on a position of the part (the
+# controller lists all 100 of its pins). Every limit was read on 2026-10-29 from the
+# datasheet named in the entry, at the revision stated there.
+#
+# What the keys hold. absolute_max_v and absolute_min_v are the datasheet's absolute
+# maximum ratings for the pin, in volts against the board ground. The isolated-measurement
+# chip's high-side pins ride on HGND, which is mains neutral; their datasheet figures are
+# against HGND, so each is written here against board ground at the mains peak, the
+# datasheet figure above or below HGND plus or minus 357.8 V (the peak of 253 V rms). A figure a datasheet does not
+# state is marked 'not stated' in the comment above the pin, and the number written is
+# then the nearest stated figure (a recommended operating limit, a stand-off voltage or
+# the supply's own limit), never a guess; the record's form needs a number. The
+# recommended operating range of a pin sits in its comment where it differs from the
+# absolute maximum. tolerates_driven_unpowered is true only where the datasheet states a
+# tolerance for the pin with its part unpowered (or the part has no supply to lose);
+# where the datasheet is silent it is false, which the pin-limit rule reads as not
+# tolerated.
+#
+# A domain is a supply the pins hang from; its rail is a net of the design and
+# highest_voltage_v the most that net can reach. The rail nets of the three mains
+# domains are not yet in the Mains net class: the board's net classes are assigned when
+# the layout is drawn, and the mains domains must be on Mains-class nets by then.
+domains:
+  # the 3.3 V logic rail and +3V3A, which is fed from it; +3V3 3.135 to 3.6 V (circuit-proof.md, rails); +3V3A up to 3.6 V (DS12110 Table 112 VDDA maximum). One domain for both: a pin entry carries one domain for every position of its part
+  - name: logic
+    rail: +3V3
+    highest_voltage_v: 3.6
+  # the 5 V rail, 4.75 to 5.25 V (circuit-proof.md, rails; IRM-20 output +/-2.5 % gives 5.125 V, 5.25 V is the brief's rail-high case)
+  - name: supply5
+    rail: +5V
+    highest_voltage_v: 5.25
+  # board ground
+  - name: ground
+    rail: GND
+    highest_voltage_v: 0
+  # the cable-side USB VBUS ahead of the fuse, 4.75 to 5.25 V (USB 2.0 7.2.1 high-power function limit as circuit-proof.md uses it)
+  - name: usb_vbus
+    rail: /Controller/USB_VBUS
+    highest_voltage_v: 5.25
+  # switched-live side of the mains; the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak)
+  - name: mains_line
+    rail: /LINE
+    highest_voltage_v: 357.8
+  # the live feed to the supply module after its inrush position; the same mains peak
+  - name: mains_line_module
+    rail: /Logic supply/LINE_MOD
+    highest_voltage_v: 357.8
+  # mains neutral; alternates against board ground in the isolated-measurement chip's reference, so the same peak is stated
+  - name: mains_neutral
+    rail: /NEUTRAL
+    highest_voltage_v: 357.8
+  # the AMC131M02 analog inputs, which ride on HGND (mains neutral) and so on a Mains-class net: the peak of the mains conductor they ride on, 253 V rms is 357.8 V peak (separation-basis.yaml working_voltage), as a Mains-class rail must state. The input range above and below HGND (SBASA56 6.1, HGND - 1.6 V to HGND + 2.7 V) is in the pins' limits, written against board ground at that peak
+  - name: amc_inputs
+    rail: /Supply voltage and current measurement/AMC_AIN0P
+    highest_voltage_v: 357.8
+  # the AMC131M02 DCDC_CAP node, the output of its internal primary-side regulator; only a capacitor and a test point are on it. The datasheet states no operating voltage for the node, so its absolute maximum (6.1, DCDC_CAP to DGND 3.5 V) stands as the ceiling
+  - name: amc_dcdc_cap
+    rail: /Supply voltage and current measurement/AMC_DCDC_CAP
+    highest_voltage_v: 3.5
+  # the AMC131M02 high side, which rides on HGND (mains neutral) and so on Mains-class nets: the peak of the mains conductor it rides on, 357.8 V, as a Mains-class rail must state. The high-side regulator output is 2.6 to 3.2 V above HGND (SBASA56 6.5 table, HLDO_OUT); that offset is in the pins' limits, written against board ground at that peak (357.8 + 3.2 = 361.0 V)
+  - name: amc_high_side
+    rail: /Supply voltage and current measurement/AMC_HLDO_OUT
+    highest_voltage_v: 357.8
+  # the live between the plug-in tab and the board's input fuse F101, and the fuse's far side LINE_F up to the first-power link JP101: F101 joins LINE_IN and LINE_F, so one rail covers both; switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
+  - name: mains_line_input
+    rail: /Mains entry and load feed/LINE_F
+    highest_voltage_v: 357.8
+  # the live after the interlock relay K201 contact (pin 14), out to the load tab J101: the open contact leaves the whole mains peak across it; switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
+  - name: mains_line_switched
+    rail: /LINE1
+    highest_voltage_v: 357.8
+  # the coffee pump's live tab J107 and the pump fuse F701 pin 1, with PUMP_C_MT2 (triac T701 main terminal 2) on F701's far side: F701 joins COFFPUMP and PUMP_C_MT2, so one rail covers both; switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
+  - name: mains_coffee_pump
+    rail: /COFFPUMP
+    highest_voltage_v: 357.8
+  # the steam pump's live tab J108 and the pump fuse F711 pin 1, with PUMP_S_MT2 (triac T711 main terminal 2) on F711's far side: F711 joins STEAMPUMP and PUMP_S_MT2, so one rail covers both; switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
+  - name: mains_steam_pump
+    rail: /STEAMPUMP
+    highest_voltage_v: 357.8
+  # the coffee valve live tab J106 and valve relay K731 contact pin 13 (pin 14 is VALVE_COM); switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
+  - name: mains_coffee_valve
+    rail: /COFVALVE
+    highest_voltage_v: 357.8
+  # the hot-water valve live tab J109 and valve relay K741 contact pin 13 (pin 14 is VALVE_COM); switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
+  - name: mains_hot_valve
+    rail: /HOTVALVE
+    highest_voltage_v: 357.8
+  # the midpoint of the discharge pair R101 and R102 (1 Mohm each) between LINE and NEUTRAL: half the line-to-neutral peak in the circuit, but a Mains-class rail states the peak; switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
+  - name: mains_discharge_a
+    rail: /Mains entry and load feed/DISCH_A
+    highest_voltage_v: 357.8
+  # the midpoint of the discharge pair R103 and R104 (1 Mohm each) between LINE and NEUTRAL: half the line-to-neutral peak in the circuit, but a Mains-class rail states the peak; switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
+  - name: mains_discharge_b
+    rail: /Mains entry and load feed/DISCH_B
+    highest_voltage_v: 357.8
+  # the coffee triac's gate network between R705 and R704: the gate returns to MT2 and carries only the optocoupler's gate current, but the net is Mains class and states the peak; switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
+  - name: mains_pump_c_gate
+    rail: /Pump drives/PUMP_C_GATE_R
+    highest_voltage_v: 357.8
+  # the steam triac's gate network between R715 and R714: the gate returns to MT2 and carries only the optocoupler's gate current, but the net is Mains class and states the peak; switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
+  - name: mains_pump_s_gate
+    rail: /Pump drives/PUMP_S_GATE_R
+    highest_voltage_v: 357.8
+  # the coffee triac's snubber midpoint between R706 and the X2 capacitor C701 to NEUTRAL; switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
+  - name: mains_pump_c_snubber
+    rail: /Pump drives/PUMP_C_SNUB
+    highest_voltage_v: 357.8
+  # the steam triac's snubber midpoint between R716 and the X2 capacitor C711 to NEUTRAL; switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
+  - name: mains_pump_s_snubber
+    rail: /Pump drives/PUMP_S_SNUB
+    highest_voltage_v: 357.8
+  # the first node of the 3 x 300 kohm line divider R601 to R603: two thirds of the line-to-neutral peak in the circuit (238.5 V), but a Mains-class rail states the peak; switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
+  - name: mains_divider_n1
+    rail: /Supply voltage and current measurement/VMEAS_N1
+    highest_voltage_v: 357.8
+  # the second node of the 3 x 300 kohm line divider: one third of the line-to-neutral peak in the circuit (119.4 V), but a Mains-class rail states the peak; switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
+  - name: mains_divider_n2
+    rail: /Supply voltage and current measurement/VMEAS_N2
+    highest_voltage_v: 357.8
+  # the tap of the line divider, 750 ohm (R604) above NEUTRAL, 0.30 V peak in the circuit (357.8 x 750 / 900750), but a Mains-class rail states the peak; switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
+  - name: mains_divider_tap
+    rail: /Supply voltage and current measurement/VMEAS_DIV
+    highest_voltage_v: 357.8
+  # the midpoint of the two 60.4 kohm feed resistors R630 and R631 from LINE to the detector LED; switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
+  - name: mains_zero_cross
+    rail: /Zero-crossing detector/ZC_N1
+    highest_voltage_v: 357.8
+  # the gauge harness supply, +5V through the link JP791 (sheet 730: pin 1 of SP2 is +5V_GAUGE through JP791); the +5V figure
+  - name: gauge_supply
+    rail: /+5V_GAUGE
+    highest_voltage_v: 5.25
+  # the operator panel's gated indicator rail: Q822 (AO3401A) source on +5V, drain to ANODE_SW, then JP821 to ANODE_RAIL with a 22 kohm bleed to ground (sheet 740 notes); the +5V figure
+  - name: anode_rail
+    rail: /ANODE_RAIL
+    highest_voltage_v: 5.25
+  # the USB cable shield at J402 pin 4, tied to GND only through R403 (1 Mohm) and C419 (4.7 nF) in parallel with no direct tie (sheet 31). The shield belongs to the cable and the host, whose only supply on the cable is VBUS, so the working voltage is taken as the VBUS figure; the 8 kV human-body discharge the sheet notes leaves roughly 255 V for a moment on the 4.7 nF, which is a transient the 1 kV capacitor rating covers and not a working voltage
+  - name: usb_shield
+    rail: /Controller/USB_SHIELD
+    highest_voltage_v: 5.25
+  # output of the 5 V gauge buffer U791 through its 100 ohm series resistor R793 to SP2 pin 5 (sheet 730: the buffer lifts the 3.3 V gauge lines to 5 V logic); the +5V figure
+  - name: gauge_dir1_out
+    rail: /Gauge drive/GAUGE_DIR1_B
+    highest_voltage_v: 5.25
+  # output of the 5 V gauge buffer U791 through its 100 ohm series resistor R795 to SP2 pin 8; the +5V figure
+  - name: gauge_dir2_out
+    rail: /Gauge drive/GAUGE_DIR2_B
+    highest_voltage_v: 5.25
+  # output of the 5 V gauge buffer U791 through its 100 ohm series resistor R791 to SP2 pin 3, with a 10 kohm pull-down R806; the +5V figure
+  - name: gauge_reset_out
+    rail: /Gauge drive/GAUGE_RST_B
+    highest_voltage_v: 5.25
+  # output of the 5 V gauge buffer U791 through its 100 ohm series resistor R792 to SP2 pin 4; the +5V figure
+  - name: gauge_step1_out
+    rail: /Gauge drive/GAUGE_STEP1_B
+    highest_voltage_v: 5.25
+  # output of the 5 V gauge buffer U791 through its 100 ohm series resistor R794 to SP2 pin 9; the +5V figure
+  - name: gauge_step2_out
+    rail: /Gauge drive/GAUGE_STEP2_B
+    highest_voltage_v: 5.25
+  # the coffee heater's wall-board opto-triac LED cathode at WB_LV10 pin 2, returned through R763 (180 ohm) to the AO3400A drain; the LED anode is on +5V_WB, which is +5V through JP761 (sheet 720 notes), so the cathode cannot rise above the +5V figure
+  - name: heater_led_c_cathode
+    rail: /HEAT_C_LED_K
+    highest_voltage_v: 5.25
+  # the steam heater's wall-board opto-triac LED cathode at WB_LV10 pin 3, returned through R773 (180 ohm) to the AO3400A drain; the LED anode is on +5V_WB, so the cathode cannot rise above the +5V figure
+  - name: heater_led_s_cathode
+    rail: /HEAT_S_LED_K
+    highest_voltage_v: 5.25
+  # the wall board's coffee mains-present line at WB_LV10 pin 5, through the 27 kohm series resistor R764 to the controller pin PE15 (sheet 720 notes); the only supply on the ten-way header is +5V_WB, so the line cannot rise above the +5V figure
+  - name: mains_present_c_header
+    rail: /Heater LED drive and wall board header/MAINS_PRES_C_J
+    highest_voltage_v: 5.25
+  # the wall board's steam mains-present line at WB_LV10 pin 6, through the 27 kohm series resistor R774 to the controller pin PD7 (sheet 720 notes); the only supply on the ten-way header is +5V_WB, so the line cannot rise above the +5V figure
+  - name: mains_present_s_header
+    rail: /Heater LED drive and wall board header/MAINS_PRES_S_J
+    highest_voltage_v: 5.25
+  # load cell 1 signal minus at J630 pin 3 ahead of its 100 ohm series resistor R671 to the amplifier input; the bridge is excited from +5V (sheet E4: E+ is the +5V net, E- is GND), so its outputs lie between ground and the +5V figure
+  - name: load_cell_1_sense_n
+    rail: /Load-cell amplifiers/WT1_SN_RAW
+    highest_voltage_v: 5.25
+  # load cell 1 signal plus at J630 pin 4 ahead of its 100 ohm series resistor R670; the bridge is excited from +5V (sheet E4), so the +5V figure
+  - name: load_cell_1_sense_p
+    rail: /Load-cell amplifiers/WT1_SP_RAW
+    highest_voltage_v: 5.25
+  # load cell 2 signal minus at J635 pin 3 ahead of its 100 ohm series resistor R676; the bridge is excited from +5V (sheet E4), so the +5V figure
+  - name: load_cell_2_sense_n
+    rail: /Load-cell amplifiers/WT2_SN_RAW
+    highest_voltage_v: 5.25
+  # load cell 2 signal plus at J635 pin 4 ahead of its 100 ohm series resistor R675; the bridge is excited from +5V (sheet E4), so the +5V figure
+  - name: load_cell_2_sense_p
+    rail: /Load-cell amplifiers/WT2_SP_RAW
+    highest_voltage_v: 5.25
+  # the 8 MHz oscillator Y601 output, 3.3 V LVCMOS from its +3V3 supply (sheet E1), through R609 (33 ohm) to the isolated measurement chip's clock input; it cannot rise above its supply, the +3V3 figure
+  - name: amc_clock_out
+    rail: /Supply voltage and current measurement/AMC_CLK_OUT
+    highest_voltage_v: 3.6
+parts:
+  # U401 controller: U401
+  # All 100 pins of the LQFP100 are listed, the 22 left unconnected included. The datasheet states no tolerance for a pin driven while VDD is absent: Table 109's formula Min(VDD,...)+4.0 gives 4.0 V at VDD = 0, with the pull resistors off, and no leakage figure at VDD = 0 is stated (Table 147 gives leakage only for VIN up to Max(VDDXXX) and up to 5.5 V above it). tolerates_driven_unpowered is therefore false for every pin: not stated.
+  # Injection (Table 110, Table 146): -5 mA / 0 mA on FT_xxx, TT_xx, NRST and BOOT0 pins except PA4 and PA5, which take 0 / 0; the sum limit is +/-25 mA. Positive injection is not possible on these pins.
+  # The 'recommended operating' figures sit in each pin's comment; the record's absolute_max_v and absolute_min_v carry the Table 109 absolute maximum.
+  - lcsc: C114409
+    source:
+      document: "STM32H742xI/G STM32H743xI/G datasheet DS12110"
+      revision: "Rev 11 (January 2026)"
+      section: "7.2 Absolute maximum ratings, Table 109 Voltage characteristics; 7.3.1 General operating conditions, Table 112; 7.3.15 I/O port characteristics, Table 147; Table 9 pin definition and Table 8 legend for the class of each pin"
+      read_on: 2026-10-29
+    pins:
+      # PE2 (KEY1), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "1"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PE3 (KEY2), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "2"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PE4 (KEY3), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "3"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PE5 (KEY4), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "4"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PE6 (KEY5), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "5"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # VBAT (+3V3), Table 9 class S; Table 109 external main supply VDDX-VSS -0.3 to 4.0 V; recommended VDD 1.62 to 3.6 V, VDDA 1.62 to 3.6 V with the ADC used (Table 112)
+      - pin: "6"
+        domain: logic
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PC13 (no connect), Table 9 class FT; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "7"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PC14 (LSE_IN), Table 9 class FT; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "8"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PC15 (LSE_OUT), Table 9 class FT; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "9"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # VSS (GND), Table 9 class S; VDDX-VSS supply row, Table 109
+      - pin: "10"
+        domain: ground
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # VDD (+3V3), Table 9 class S; Table 109 external main supply VDDX-VSS -0.3 to 4.0 V; recommended VDD 1.62 to 3.6 V, VDDA 1.62 to 3.6 V with the ADC used (Table 112)
+      - pin: "11"
+        domain: logic
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PH0 (HSE_IN), Table 9 class FT; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "12"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PH1 (HSE_OUT), Table 9 class FT; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "13"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # NRST (NRST), Table 9 class RST; 'any other pins' row of Table 109 (NRST is neither FT nor TT nor BOOT0)
+      - pin: "14"
+        domain: logic
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PC0 (NTC_COF), Table 9 class FT_a; an FT_a pin used by the ADC is held to 4.0 V (Table 109 note 5)
+      - pin: "15"
+        domain: logic
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PC1 (NTC_STM), Table 9 class FT_ha; an FT_a pin used by the ADC is held to 4.0 V (Table 109 note 5)
+      - pin: "16"
+        domain: logic
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PC2_C (no connect), Table 9 class ANA TT_a; TT_xx row of Table 109 (VSS-0.3 to 4.0 V); recommended -0.3 V to VDD+0.3 V (Table 112)
+      - pin: "17"
+        domain: logic
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PC3_C (no connect), Table 9 class ANA TT_a; TT_xx row of Table 109 (VSS-0.3 to 4.0 V); recommended -0.3 V to VDD+0.3 V (Table 112)
+      - pin: "18"
+        domain: logic
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # VSSA (GND), Table 9 class S; VDDX-VSS supply row, Table 109
+      - pin: "19"
+        domain: ground
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # VREF+ (VREF+), Table 9 class S; 'any other pins' row of Table 109 (VSS-0.3 to 4.0 V)
+      - pin: "20"
+        domain: logic
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # VDDA (+3V3A), Table 9 class S; Table 109 external main supply VDDX-VSS -0.3 to 4.0 V; recommended VDD 1.62 to 3.6 V, VDDA 1.62 to 3.6 V with the ADC used (Table 112)
+      - pin: "21"
+        domain: logic
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PA0 (SPARE_AN2), Table 9 class FT_a; an FT_a pin used by the ADC is held to 4.0 V (Table 109 note 5)
+      - pin: "22"
+        domain: logic
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PA1 (no connect), Table 9 class FT_ha; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "23"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PA2 (CURR1_AN), Table 9 class FT_a; an FT_a pin used by the ADC is held to 4.0 V (Table 109 note 5)
+      - pin: "24"
+        domain: logic
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PA3 (CURR2_AN), Table 9 class FT_ha; an FT_a pin used by the ADC is held to 4.0 V (Table 109 note 5)
+      - pin: "25"
+        domain: logic
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # VSS (GND), Table 9 class S; VDDX-VSS supply row, Table 109
+      - pin: "26"
+        domain: ground
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # VDD (+3V3), Table 9 class S; Table 109 external main supply VDDX-VSS -0.3 to 4.0 V; recommended VDD 1.62 to 3.6 V, VDDA 1.62 to 3.6 V with the ADC used (Table 112)
+      - pin: "27"
+        domain: logic
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PA4 (no connect), Table 9 class TT_a; TT_xx row of Table 109 (VSS-0.3 to 4.0 V); recommended -0.3 V to VDD+0.3 V (Table 112)
+      - pin: "28"
+        domain: logic
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PA5 (no connect), Table 9 class TT_ha; TT_xx row of Table 109 (VSS-0.3 to 4.0 V); recommended -0.3 V to VDD+0.3 V (Table 112)
+      - pin: "29"
+        domain: logic
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PA6 (BREW_AN), Table 9 class FT_a; an FT_a pin used by the ADC is held to 4.0 V (Table 109 note 5)
+      - pin: "30"
+        domain: logic
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PA7 (no connect), Table 9 class TT_a; TT_xx row of Table 109 (VSS-0.3 to 4.0 V); recommended -0.3 V to VDD+0.3 V (Table 112)
+      - pin: "31"
+        domain: logic
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PC4 (NTC_WAND), Table 9 class TT_a; TT_xx row of Table 109 (VSS-0.3 to 4.0 V); recommended -0.3 V to VDD+0.3 V (Table 112)
+      - pin: "32"
+        domain: logic
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PC5 (STMP_AN), Table 9 class TT_a; TT_xx row of Table 109 (VSS-0.3 to 4.0 V); recommended -0.3 V to VDD+0.3 V (Table 112)
+      - pin: "33"
+        domain: logic
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PB0 (no connect), Table 9 class FT_a; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "34"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PB1 (no connect), Table 9 class TT_a; TT_xx row of Table 109 (VSS-0.3 to 4.0 V); recommended -0.3 V to VDD+0.3 V (Table 112)
+      - pin: "35"
+        domain: logic
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PB2 (no connect), Table 9 class FT_ha; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "36"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PE7 (no connect), Table 9 class TT_ha; TT_xx row of Table 109 (VSS-0.3 to 4.0 V); recommended -0.3 V to VDD+0.3 V (Table 112)
+      - pin: "37"
+        domain: logic
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PE8 (no connect), Table 9 class TT_ha; TT_xx row of Table 109 (VSS-0.3 to 4.0 V); recommended -0.3 V to VDD+0.3 V (Table 112)
+      - pin: "38"
+        domain: logic
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PE9 (no connect), Table 9 class TT_ha; TT_xx row of Table 109 (VSS-0.3 to 4.0 V); recommended -0.3 V to VDD+0.3 V (Table 112)
+      - pin: "39"
+        domain: logic
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PE10 (no connect), Table 9 class TT_ha; TT_xx row of Table 109 (VSS-0.3 to 4.0 V); recommended -0.3 V to VDD+0.3 V (Table 112)
+      - pin: "40"
+        domain: logic
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PE11 (no connect), Table 9 class TT_ha; TT_xx row of Table 109 (VSS-0.3 to 4.0 V); recommended -0.3 V to VDD+0.3 V (Table 112)
+      - pin: "41"
+        domain: logic
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PE12 (TANK_LEVEL), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "42"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PE13 (KNOB_HOT), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "43"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PE14 (KNOB_STEAM), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "44"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PE15 (MAINS_PRES_C), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "45"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PB10 (BREW_SCL), Table 9 class FT_f; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "46"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PB11 (BREW_SDA), Table 9 class FT_f; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "47"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # VCAP (VCAP), Table 9 class S; 'any other pins' row of Table 109; the pin is the core regulator output, nominally 1.0 to 1.4 V (Table 112 VCORE), and takes no external drive
+      - pin: "48"
+        domain: logic
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # VSS (GND), Table 9 class S; VDDX-VSS supply row, Table 109
+      - pin: "49"
+        domain: ground
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # VDD (+3V3), Table 9 class S; Table 109 external main supply VDDX-VSS -0.3 to 4.0 V; recommended VDD 1.62 to 3.6 V, VDDA 1.62 to 3.6 V with the ADC used (Table 112)
+      - pin: "50"
+        domain: logic
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PB12 (PT1_CS), Table 9 class FT_u; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "51"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PB13 (SPI2_SCK), Table 9 class FT_u; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "52"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PB14 (SPI2_MISO), Table 9 class FT_u; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "53"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PB15 (SPI2_MOSI), Table 9 class FT_u; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "54"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PD8 (PT2_CS), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "55"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PD9 (AMC_CS), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "56"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PD10 (AMC_DRDY), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "57"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PD11 (AMC_RESET), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "58"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PD12 (no connect), Table 9 class FT_fh; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "59"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PD13 (no connect), Table 9 class FT_fh; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "60"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PD14 (GAUGE_STEP1), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "61"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PD15 (GAUGE_STEP2), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "62"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PC6 (FLOW_IN), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "63"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PC7 (POL_OUT), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "64"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PC8 (WT1_DATA), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "65"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PC9 (WT1_CLK), Table 9 class FT_fh; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "66"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PA8 (PUMP_S_GATE), Table 9 class FT_fha; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "67"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PA9 (PUMP_C_GATE), Table 9 class FT_u; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "68"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PA10 (ZC_IN), Table 9 class FT_u; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "69"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PA11 (USB_DM), Table 9 class FT_u; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum; USB pin, driven through D401; surge residue is not rated (finding 2.2)
+      - pin: "70"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PA12 (USB_DP), Table 9 class FT_u; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum; USB pin, driven through D401; surge residue is not rated (finding 2.2)
+      - pin: "71"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PA13 (SWDIO), Table 9 class FT; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "72"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # VCAP (VCAP), Table 9 class S; 'any other pins' row of Table 109; the pin is the core regulator output, nominally 1.0 to 1.4 V (Table 112 VCORE), and takes no external drive
+      - pin: "73"
+        domain: logic
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # VSS (GND), Table 9 class S; VDDX-VSS supply row, Table 109
+      - pin: "74"
+        domain: ground
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # VDD (+3V3), Table 9 class S; Table 109 external main supply VDDX-VSS -0.3 to 4.0 V; recommended VDD 1.62 to 3.6 V, VDDA 1.62 to 3.6 V with the ADC used (Table 112)
+      - pin: "75"
+        domain: logic
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PA14 (SWCLK), Table 9 class FT; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "76"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PA15 (no connect), Table 9 class FT; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "77"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PC10 (no connect), Table 9 class FT_ha; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "78"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PC11 (WT2_DATA), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "79"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PC12 (WT2_CLK), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "80"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PD0 (GAUGE_DIR1), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "81"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PD1 (GAUGE_DIR2), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "82"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PD2 (HEAT_C_DRV), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "83"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PD3 (HEAT_S_DRV), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "84"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PD4 (VALVE_2W_DRV), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "85"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PD5 (VALVE_3W_DRV), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "86"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PD6 (GAUGE_RST), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "87"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PD7 (MAINS_PRES_S), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "88"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PB3 (SWO), Table 9 class FT; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "89"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PB4 (no connect), Table 9 class FT; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "90"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PB5 (ANODE_GATE), Table 9 class FT; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "91"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PB6 (no connect), Table 9 class FT_f; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "92"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PB7 (no connect), Table 9 class FT_fa; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "93"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # BOOT0 (BOOT0), Table 9 class B; Table 109 'Input voltage on BOOT0 pin' VSS to 9.0 V; Table 112 BOOT0 0 to 9 V
+      - pin: "94"
+        domain: logic
+        absolute_max_v: 9
+        absolute_min_v: 0
+        tolerates_driven_unpowered: false
+      # PB8 (STM_SCL), Table 9 class FT_fh; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "95"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PB9 (STM_SDA), Table 9 class FT_fh; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "96"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PE0 (LOWWATER_K), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "97"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # PE1 (BUZZER), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      - pin: "98"
+        domain: logic
+        absolute_max_v: 6
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # VSS (GND), Table 9 class S; VDDX-VSS supply row, Table 109
+      - pin: "99"
+        domain: ground
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # VDD (+3V3), Table 9 class S; Table 109 external main supply VDDX-VSS -0.3 to 4.0 V; recommended VDD 1.62 to 3.6 V, VDDA 1.62 to 3.6 V with the ADC used (Table 112)
+      - pin: "100"
+        domain: logic
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+  # interlock proof-of-life buffer: U201
+  - lcsc: C554579
+    source:
+      document: "74AHC1G17; 74AHCT1G17 Single Schmitt trigger buffer (Nexperia)"
+      revision: "Rev. 5 (14 March 2025)"
+      section: "9 Limiting values, Table 5; 10 Recommended operating conditions, Table 6"
+      read_on: 2026-10-29
+    pins:
+      # A input. Table 5 VI -0.5 to 7.0 V; recommended 0 to 5.5 V (Table 6). The datasheet states no input tolerance with VCC = 0 V: not stated, taken as not tolerated.
+      - pin: "2"
+        domain: supply5
+        absolute_max_v: 7
+        absolute_min_v: -0.5
+        tolerates_driven_unpowered: false
+      # GND
+      - pin: "3"
+        domain: ground
+        absolute_max_v: 7
+        absolute_min_v: -0.5
+        tolerates_driven_unpowered: true
+      # Y output. Table 5 gives the output a current limit (IOK +/-20 mA at VO < -0.5 V or VO > VCC + 0.5 V, IO +/-25 mA) and no voltage maximum of its own: not stated. The input and supply figure, -0.5 to 7.0 V, is used. Recommended 0 to VCC (Table 6). No output tolerance with VCC = 0 V is stated.
+      - pin: "4"
+        domain: supply5
+        absolute_max_v: 7
+        absolute_min_v: -0.5
+        tolerates_driven_unpowered: false
+      # VCC. Table 5 -0.5 to +7.0 V; recommended 4.5 to 5.5 V (Table 6).
+      - pin: "5"
+        domain: supply5
+        absolute_max_v: 7
+        absolute_min_v: -0.5
+        tolerates_driven_unpowered: false
+  # flow input buffer: U520
+  - lcsc: C10425
+    source:
+      document: "SN74LVC1G17 Single Schmitt-Trigger Buffer data sheet SCES351"
+      revision: "Y (October 2025)"
+      section: "5.1 Absolute Maximum Ratings; 5.3 Recommended Operating Conditions; the Ioff / partial-power-down statement of the features and the electrical characteristics"
+      read_on: 2026-10-29
+    pins:
+      # A input. 5.1 VI -0.5 to 6.5 V; recommended 0 to 5.5 V (5.3). Ioff: inputs and outputs take up to 5.5 V with VCC = 0 V (7.x Ioff row, VI or VO = 5.5 V, +/-10 uA).
+      - pin: "2"
+        domain: logic
+        absolute_max_v: 6.5
+        absolute_min_v: -0.5
+        tolerates_driven_unpowered: true
+      # GND
+      - pin: "3"
+        domain: ground
+        absolute_max_v: 6.5
+        absolute_min_v: -0.5
+        tolerates_driven_unpowered: true
+      # Y output. 5.1: -0.5 to 6.5 V in the high-impedance or power-off state, -0.5 to VCC + 0.5 V in the high or low state; the larger, power-off figure is used, as the record has one maximum per pin. Ioff covers a driven output with VCC = 0 V.
+      - pin: "4"
+        domain: logic
+        absolute_max_v: 6.5
+        absolute_min_v: -0.5
+        tolerates_driven_unpowered: true
+      # VCC. 5.1 -0.5 to 6.5 V; recommended operating 1.65 to 5.5 V (5.3).
+      - pin: "5"
+        domain: logic
+        absolute_max_v: 6.5
+        absolute_min_v: -0.5
+        tolerates_driven_unpowered: false
+  # gauge drive buffer: U791
+  - lcsc: C436096
+    source:
+      document: "SN54HCT541, SN74HCT541 Octal Buffers and Line Drivers With 3-State Outputs data sheet SCLS306"
+      revision: "E (May 2022)"
+      section: "5.1 Absolute Maximum Ratings; 5.2 Recommended Operating Conditions"
+      read_on: 2026-10-29
+    pins:
+      # A0 input. The datasheet states no input voltage maximum; the limit is a clamp current (IIK +/-20 mA at VI < 0 or VI > VCC): not stated. The recommended input range, 0 V to VCC with VCC at most 5.5 V (5.2), is used. No input tolerance with VCC = 0 V is stated.
+      - pin: "2"
+        domain: supply5
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: false
+      # A1 input. The datasheet states no input voltage maximum; the limit is a clamp current (IIK +/-20 mA at VI < 0 or VI > VCC): not stated. The recommended input range, 0 V to VCC with VCC at most 5.5 V (5.2), is used. No input tolerance with VCC = 0 V is stated.
+      - pin: "3"
+        domain: supply5
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: false
+      # A2 input. The datasheet states no input voltage maximum; the limit is a clamp current (IIK +/-20 mA at VI < 0 or VI > VCC): not stated. The recommended input range, 0 V to VCC with VCC at most 5.5 V (5.2), is used. No input tolerance with VCC = 0 V is stated.
+      - pin: "4"
+        domain: supply5
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: false
+      # A3 input. The datasheet states no input voltage maximum; the limit is a clamp current (IIK +/-20 mA at VI < 0 or VI > VCC): not stated. The recommended input range, 0 V to VCC with VCC at most 5.5 V (5.2), is used. No input tolerance with VCC = 0 V is stated.
+      - pin: "5"
+        domain: supply5
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: false
+      # A4 input. The datasheet states no input voltage maximum; the limit is a clamp current (IIK +/-20 mA at VI < 0 or VI > VCC): not stated. The recommended input range, 0 V to VCC with VCC at most 5.5 V (5.2), is used. No input tolerance with VCC = 0 V is stated.
+      - pin: "6"
+        domain: supply5
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: false
+      # G1 enable, tied to ground on this board. Not stated as for the other inputs; the recommended range is used.
+      - pin: "1"
+        domain: ground
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: false
+      # A5, tied to ground on this board. Not stated as for the other inputs; the recommended range is used.
+      - pin: "7"
+        domain: ground
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: false
+      # A6, tied to ground on this board. Not stated as for the other inputs; the recommended range is used.
+      - pin: "8"
+        domain: ground
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: false
+      # A7, tied to ground on this board. Not stated as for the other inputs; the recommended range is used.
+      - pin: "9"
+        domain: ground
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: false
+      # G2 enable, tied to ground on this board. Not stated as for the other inputs; the recommended range is used.
+      - pin: "19"
+        domain: ground
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: false
+      # GND
+      - pin: "10"
+        domain: ground
+        absolute_max_v: 7
+        absolute_min_v: -0.5
+        tolerates_driven_unpowered: true
+      # Y4 output. Voltage maximum not stated (clamp current IOK +/-20 mA at VO < 0 or VO > VCC, IO +/-35 mA); the recommended output range 0 V to VCC is used.
+      - pin: "14"
+        domain: supply5
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: false
+      # Y3 output. Voltage maximum not stated (clamp current IOK +/-20 mA at VO < 0 or VO > VCC, IO +/-35 mA); the recommended output range 0 V to VCC is used.
+      - pin: "15"
+        domain: supply5
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: false
+      # Y2 output. Voltage maximum not stated (clamp current IOK +/-20 mA at VO < 0 or VO > VCC, IO +/-35 mA); the recommended output range 0 V to VCC is used.
+      - pin: "16"
+        domain: supply5
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: false
+      # Y1 output. Voltage maximum not stated (clamp current IOK +/-20 mA at VO < 0 or VO > VCC, IO +/-35 mA); the recommended output range 0 V to VCC is used.
+      - pin: "17"
+        domain: supply5
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: false
+      # Y0 output. Voltage maximum not stated (clamp current IOK +/-20 mA at VO < 0 or VO > VCC, IO +/-35 mA); the recommended output range 0 V to VCC is used.
+      - pin: "18"
+        domain: supply5
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: false
+      # VCC. 5.1 -0.5 to 7 V; recommended 4.5 to 5.5 V (5.2).
+      - pin: "20"
+        domain: supply5
+        absolute_max_v: 7
+        absolute_min_v: -0.5
+        tolerates_driven_unpowered: false
+  # supply supervisor: U402
+  - lcsc: C132016
+    source:
+      document: "TLV803, TLV853, TLV863 (Chinese-language edition ZHCS187C of SBVS157C)"
+      revision: "C (April 2011, revised September 2015)"
+      section: "7.1 Absolute Maximum Ratings; 7.4 Recommended Operating Conditions"
+      read_on: 2026-10-29
+    pins:
+      # GND
+      - pin: "1"
+        domain: ground
+        absolute_max_v: 7
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: true
+      # RESET (open drain, active low). 7.1 'all other pins' -0.3 to +7 V. No tolerance with VDD = 0 V is stated.
+      - pin: "2"
+        domain: logic
+        absolute_max_v: 7
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # VDD. 7.1 0 to 7 V (not to be held at 7 V for more than 1000 h); recommended 1.1 to 6 V (7.4).
+      - pin: "3"
+        domain: logic
+        absolute_max_v: 7
+        absolute_min_v: 0
+        tolerates_driven_unpowered: false
+  # 3.3 V regulator: U302
+  - lcsc: C459918
+    source:
+      document: "LT1963A Series 1.5A Low Noise, Fast Transient Response LDO Regulators (Linear Technology, document 1963aff)"
+      revision: "no revision printed (copyright 2005)"
+      section: "Absolute Maximum Ratings (Notes 1, 2); Electrical Characteristics Note 11 and Note 13"
+      read_on: 2026-10-29
+    pins:
+      # IN. Absolute maximum +/-20 V (reverse battery protected). The input to output differential may not exceed +/-20 V (Note 2).
+      - pin: "1"
+        domain: supply5
+        absolute_max_v: 20
+        absolute_min_v: -20
+        tolerates_driven_unpowered: false
+      # GND (tab is ground). The datasheet lists no rating for the ground pin; the supply pin's figure is used.
+      - pin: "2"
+        domain: ground
+        absolute_max_v: 20
+        absolute_min_v: -20
+        tolerates_driven_unpowered: true
+      # OUT. Absolute maximum +/-20 V. Reverse output current is specified with IN grounded and OUT forced to the rated output voltage (Note 11), so a driven output with the input absent is a stated condition.
+      - pin: "3"
+        domain: logic
+        absolute_max_v: 20
+        absolute_min_v: -20
+        tolerates_driven_unpowered: true
+  # logic supply module: U301
+  - lcsc: C6280121
+    source:
+      document: "IRM-20 series 20W AC-DC High Reliable PCB-Mount Green Industrial Power Module specification (Mean Well), file IRM-20-SPEC"
+      revision: "2025-11-21 (no revision letter printed)"
+      section: "SPECIFICATION table, INPUT (voltage range) and PROTECTION (over voltage) rows"
+      read_on: 2026-10-29
+    pins:
+      # AC/L. The specification states an input range of 85 to 305 V ac and 120 to 430 V dc and no separate absolute maximum: not stated. 430 V (the dc range's top; 305 V ac is 431 V peak) is used.
+      - pin: "1"
+        domain: mains_line_module
+        absolute_max_v: 430
+        absolute_min_v: -430
+        tolerates_driven_unpowered: false
+      # AC/N. As pin 1.
+      - pin: "2"
+        domain: mains_neutral
+        absolute_max_v: 430
+        absolute_min_v: -430
+        tolerates_driven_unpowered: false
+      # -Vo. Not stated. The output's over-voltage protection range, 5.75 to 6.75 V (shut-off, clamped by a zener), bounds the output; 0 V is the return.
+      - pin: "3"
+        domain: ground
+        absolute_max_v: 6.75
+        absolute_min_v: 0
+        tolerates_driven_unpowered: false
+      # +Vo. The module's output voltage is 5 V +/-2.5 % (5.125 V), the over-voltage protection operates at 5.75 to 6.75 V. A voltage applied to the output from outside is not rated: not stated. 6.75 V is the top of the protection range.
+      - pin: "4"
+        domain: supply5
+        absolute_max_v: 6.75
+        absolute_min_v: 0
+        tolerates_driven_unpowered: false
+  # isolated delta-sigma converter: U601
+  # Pin 6 (GPO) is an unconnected output on this board and has no entry. High-side voltages are volts above the part's own HGND pin, stated in the amc_high_side domain; the datasheet states every high-side figure against HGND.
+  - lcsc: C31423783
+    source:
+      document: "AMC131M02 data sheet SBASA56"
+      revision: "SBASA56 (September 2023, no revision letter printed)"
+      section: "6.1 Absolute Maximum Ratings; 6.3 Recommended Operating Conditions; 6.5 Insulation Specifications; Pin Functions table 5-1"
+      read_on: 2026-10-29
+    pins:
+      # DCDC_OUT, high-side DC/DC output, 3.0 V typical above HGND (Section 6.5 power table). The absolute maximum table gives no high-side supply figure: not stated. The HLDO_OUT maximum, 3.2 V above HGND, is used; against board ground at the neutral peak it is 357.8 + 3.2 = 361.0 V, and its lowest, HGND + 0 V, is -357.8 V.
+      - pin: "1"
+        domain: amc_high_side
+        absolute_max_v: 361
+        absolute_min_v: -357.8
+        tolerates_driven_unpowered: false
+      # DCDC_HGND, joined to HGND (mains neutral) and so in the neutral's domain like pin 5, since it is the reference of the high side and not a supply above it; not stated, the isolation figure stands as for pin 5 (the working isolation voltage between HGND and DGND).
+      - pin: "2"
+        domain: mains_neutral
+        absolute_max_v: 1700
+        absolute_min_v: -1700
+        tolerates_driven_unpowered: false
+      # HLDO_IN, joined to DCDC_OUT. Not stated; as pin 1 (361.0 V and -357.8 V against board ground).
+      - pin: "3"
+        domain: amc_high_side
+        absolute_max_v: 361
+        absolute_min_v: -357.8
+        tolerates_driven_unpowered: false
+      # HLDO_OUT, 2.6 to 3.2 V above HGND with no load (6.5 power table). The absolute maximum table gives no figure: not stated. Against board ground at the neutral peak: 357.8 + 3.2 = 361.0 V, lowest -357.8 V.
+      - pin: "4"
+        domain: amc_high_side
+        absolute_max_v: 361
+        absolute_min_v: -357.8
+        tolerates_driven_unpowered: false
+      # HGND, on mains neutral. The high side is isolated from DGND: maximum repetitive peak isolation voltage VIORM 1700 V peak, working isolation 1200 V rms / 1700 V dc (6.5 insulation specifications). Not an absolute maximum of the pin; the working isolation figure bounds the voltage between HGND and DGND.
+      - pin: "5"
+        domain: mains_neutral
+        absolute_max_v: 1700
+        absolute_min_v: -1700
+        tolerates_driven_unpowered: false
+      # AIN1N. 6.1: HGND - 1.6 V to HGND + 2.7 V; recommended HGND - 1.3 V to HGND + 2.7 V at gain 1, 2 or 4, HGND + 0.9 V at higher gain (6.3). Against board ground at the neutral peak: 357.8 + 2.7 = 360.5 V highest and -357.8 - 1.6 = -359.4 V lowest. No input tolerance with the supply absent is stated.
+      - pin: "7"
+        domain: amc_inputs
+        absolute_max_v: 360.5
+        absolute_min_v: -359.4
+        tolerates_driven_unpowered: false
+      # AIN1P. As pin 7.
+      - pin: "8"
+        domain: amc_inputs
+        absolute_max_v: 360.5
+        absolute_min_v: -359.4
+        tolerates_driven_unpowered: false
+      # AIN0P. As pin 7.
+      - pin: "9"
+        domain: amc_inputs
+        absolute_max_v: 360.5
+        absolute_min_v: -359.4
+        tolerates_driven_unpowered: false
+      # AIN0N. As pin 7.
+      - pin: "10"
+        domain: amc_inputs
+        absolute_max_v: 360.5
+        absolute_min_v: -359.4
+        tolerates_driven_unpowered: false
+      # SYNC/RESET. 6.1 digital input voltage DGND - 0.3 V to DVDD + 0.3 V, which is 3.9 V with DVDD at the 3.6 V the rail reaches; recommended DGND to DVDD (6.3).
+      - pin: "11"
+        domain: logic
+        absolute_max_v: 3.9
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # DOUT. 6.1 states the digital figure for inputs only; outputs: not stated, the same figure used.
+      - pin: "12"
+        domain: logic
+        absolute_max_v: 3.9
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # DVDD. 6.1 DVDD to DGND -0.3 to 6.5 V; recommended 3 to 5.5 V (6.3).
+      - pin: "13"
+        domain: logic
+        absolute_max_v: 6.5
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # DCDC_CAP. 6.1 DCDC_CAP to DGND -0.3 to 3.5 V (internal LDO output; capacitor only).
+      - pin: "14"
+        domain: amc_dcdc_cap
+        absolute_max_v: 3.5
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # DGND. Not stated separately; the DVDD to DGND row's bounds are used.
+      - pin: "15"
+        domain: ground
+        absolute_max_v: 6.5
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: true
+      # DRDY. Output; not stated, as pin 12.
+      - pin: "16"
+        domain: logic
+        absolute_max_v: 3.9
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # CLKIN. 6.1 digital input row.
+      - pin: "17"
+        domain: logic
+        absolute_max_v: 3.9
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # SCLK. 6.1 digital input row.
+      - pin: "18"
+        domain: logic
+        absolute_max_v: 3.9
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # CS. 6.1 digital input row.
+      - pin: "19"
+        domain: logic
+        absolute_max_v: 3.9
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # DIN. 6.1 digital input row.
+      - pin: "20"
+        domain: logic
+        absolute_max_v: 3.9
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+  # in-stream temperature converters: U620, U621
+  # Pins 17 (NC) and 18 (DRDY, left unconnected) have no entry.
+  - lcsc: C118474
+    source:
+      document: "MAX31865 RTD-to-Digital Converter (Maxim Integrated, document 19-6478)"
+      revision: "Rev 3 (7/15)"
+      section: "Absolute Maximum Ratings; Recommended DC Operating Conditions"
+      read_on: 2026-10-29
+    pins:
+      # BIAS. Voltage range on BIAS, REFIN+, REFIN-, ISENSOR: -0.3 V to VDD + 0.3 V, 3.9 V with VDD at the 3.6 V the rail reaches. No tolerance with VDD = 0 V is stated.
+      - pin: "1"
+        domain: logic
+        absolute_max_v: 3.9
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # REFIN+. Voltage range on BIAS, REFIN+, REFIN-, ISENSOR: -0.3 V to VDD + 0.3 V, 3.9 V with VDD at the 3.6 V the rail reaches. No tolerance with VDD = 0 V is stated.
+      - pin: "2"
+        domain: logic
+        absolute_max_v: 3.9
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # REFIN-. Voltage range on BIAS, REFIN+, REFIN-, ISENSOR: -0.3 V to VDD + 0.3 V, 3.9 V with VDD at the 3.6 V the rail reaches. No tolerance with VDD = 0 V is stated.
+      - pin: "3"
+        domain: logic
+        absolute_max_v: 3.9
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # ISENSOR. Voltage range on BIAS, REFIN+, REFIN-, ISENSOR: -0.3 V to VDD + 0.3 V, 3.9 V with VDD at the 3.6 V the rail reaches. No tolerance with VDD = 0 V is stated.
+      - pin: "4"
+        domain: logic
+        absolute_max_v: 3.9
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # FORCE+. Voltage range on FORCE+, FORCE2, FORCE-, RTDIN+, RTDIN- relative to GND1: -50 V to +50 V. No tolerance with VDD = 0 V is stated.
+      - pin: "5"
+        domain: logic
+        absolute_max_v: 50
+        absolute_min_v: -50
+        tolerates_driven_unpowered: false
+      # FORCE2. Voltage range on FORCE+, FORCE2, FORCE-, RTDIN+, RTDIN- relative to GND1: -50 V to +50 V. No tolerance with VDD = 0 V is stated.
+      - pin: "6"
+        domain: logic
+        absolute_max_v: 50
+        absolute_min_v: -50
+        tolerates_driven_unpowered: false
+      # RTDIN+. Voltage range on FORCE+, FORCE2, FORCE-, RTDIN+, RTDIN- relative to GND1: -50 V to +50 V. No tolerance with VDD = 0 V is stated.
+      - pin: "7"
+        domain: logic
+        absolute_max_v: 50
+        absolute_min_v: -50
+        tolerates_driven_unpowered: false
+      # RTDIN-. Voltage range on FORCE+, FORCE2, FORCE-, RTDIN+, RTDIN- relative to GND1: -50 V to +50 V. No tolerance with VDD = 0 V is stated.
+      - pin: "8"
+        domain: logic
+        absolute_max_v: 50
+        absolute_min_v: -50
+        tolerates_driven_unpowered: false
+      # FORCE-. Voltage range on FORCE+, FORCE2, FORCE-, RTDIN+, RTDIN- relative to GND1: -50 V to +50 V. No tolerance with VDD = 0 V is stated.
+      - pin: "9"
+        domain: logic
+        absolute_max_v: 50
+        absolute_min_v: -50
+        tolerates_driven_unpowered: false
+      # GND. Supply row used: VDD relative to GND1 -0.3 to +4.0 V.
+      - pin: "10"
+        domain: ground
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: true
+      # SDI. All digital pins relative to DGND: -0.3 V to DVDD + 0.3 V (3.9 V at the 3.6 V rail).
+      - pin: "11"
+        domain: logic
+        absolute_max_v: 3.9
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # SCLK. As SDI.
+      - pin: "12"
+        domain: logic
+        absolute_max_v: 3.9
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # CS. As SDI.
+      - pin: "13"
+        domain: logic
+        absolute_max_v: 3.9
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # SDO, tri-state output. As SDI (the datasheet applies the row to every digital pin).
+      - pin: "14"
+        domain: logic
+        absolute_max_v: 3.9
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # DGND.
+      - pin: "15"
+        domain: ground
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: true
+      # GND (exposed-pad related ground pin).
+      - pin: "16"
+        domain: ground
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: true
+      # DVDD. -0.3 to +4.0 V; recommended 3.0 to 3.6 V.
+      - pin: "19"
+        domain: logic
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # VDD. -0.3 to +4.0 V; recommended 3.0 to 3.6 V.
+      - pin: "20"
+        domain: logic
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: false
+      # GND exposed pad.
+      - pin: "21"
+        domain: ground
+        absolute_max_v: 4
+        absolute_min_v: -0.3
+        tolerates_driven_unpowered: true
+  # load-cell amplifiers: U630, U631
+  # Pins 2 (BASE) and 13 (XO) are left unconnected and have no entry.
+  - lcsc: C6705483
+    source:
+      document: "HX711 24-Bit Analog-to-Digital Converter (ADC) for Weigh Scales (Avia Semiconductor)"
+      revision: "no revision printed (8 pages, footer AVIA SEMICONDUCTOR)"
+      section: "Table 1 Pin Description; Table 2 Key Electrical Characteristics (the document has no absolute maximum table)"
+      read_on: 2026-10-29
+    pins:
+      # VSUP. The datasheet states no absolute maximum ratings: not stated. The recommended operating range is used for the maximum (the supply range, 2.6 to 5.5 V, AVDD/VSUP 2.6 to 5.5 V, DVDD 2.6 to 5.5 V) and 0 V for the minimum; both are operating figures, not ratings, and the part is held to them as the most the datasheet allows. No unpowered tolerance is stated.
+      - pin: "1"
+        domain: supply5
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: false
+      # AVDD. The datasheet states no absolute maximum ratings: not stated. The recommended operating range is used for the maximum (the supply range, 2.6 to 5.5 V, AVDD/VSUP 2.6 to 5.5 V, DVDD 2.6 to 5.5 V) and 0 V for the minimum; both are operating figures, not ratings, and the part is held to them as the most the datasheet allows. No unpowered tolerance is stated.
+      - pin: "3"
+        domain: supply5
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: false
+      # VFB, tied to AGND when the regulator is not used (pin description).
+      - pin: "4"
+        domain: ground
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: true
+      # AGND.
+      - pin: "5"
+        domain: ground
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: true
+      # VBG, reference bypass output, 1.25 V typical. The datasheet states no absolute maximum ratings: not stated. The recommended operating range is used for the maximum (the supply range, 2.6 to 5.5 V, AVDD/VSUP 2.6 to 5.5 V, DVDD 2.6 to 5.5 V) and 0 V for the minimum; both are operating figures, not ratings, and the part is held to them as the most the datasheet allows. No unpowered tolerance is stated.
+      - pin: "6"
+        domain: supply5
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: false
+      # INA-. Common mode range AGND + 1.2 V to AVDD - 1.3 V (key electrical characteristics); not stated as a rating. The datasheet states no absolute maximum ratings: not stated. The recommended operating range is used for the maximum (the supply range, 2.6 to 5.5 V, AVDD/VSUP 2.6 to 5.5 V, DVDD 2.6 to 5.5 V) and 0 V for the minimum; both are operating figures, not ratings, and the part is held to them as the most the datasheet allows. No unpowered tolerance is stated.
+      - pin: "7"
+        domain: supply5
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: false
+      # INA+. As INA-.
+      - pin: "8"
+        domain: supply5
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: false
+      # INB-, tied to ground on this board.
+      - pin: "9"
+        domain: ground
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: true
+      # INB+, tied to ground on this board.
+      - pin: "10"
+        domain: ground
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: true
+      # PD_SCK. The datasheet states no absolute maximum ratings: not stated. The recommended operating range is used for the maximum (the supply range, 2.6 to 5.5 V, AVDD/VSUP 2.6 to 5.5 V, DVDD 2.6 to 5.5 V) and 0 V for the minimum; both are operating figures, not ratings, and the part is held to them as the most the datasheet allows. No unpowered tolerance is stated.
+      - pin: "11"
+        domain: logic
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: false
+      # DOUT. The datasheet states no absolute maximum ratings: not stated. The recommended operating range is used for the maximum (the supply range, 2.6 to 5.5 V, AVDD/VSUP 2.6 to 5.5 V, DVDD 2.6 to 5.5 V) and 0 V for the minimum; both are operating figures, not ratings, and the part is held to them as the most the datasheet allows. No unpowered tolerance is stated.
+      - pin: "12"
+        domain: logic
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: false
+      # XI, tied to ground to use the on-chip oscillator (pin description).
+      - pin: "14"
+        domain: ground
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: true
+      # RATE, tied to ground (10 Hz).
+      - pin: "15"
+        domain: ground
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: true
+      # DVDD. The datasheet states no absolute maximum ratings: not stated. The recommended operating range is used for the maximum (the supply range, 2.6 to 5.5 V, AVDD/VSUP 2.6 to 5.5 V, DVDD 2.6 to 5.5 V) and 0 V for the minimum; both are operating figures, not ratings, and the part is held to them as the most the datasheet allows. No unpowered tolerance is stated.
+      - pin: "16"
+        domain: logic
+        absolute_max_v: 5.5
+        absolute_min_v: 0
+        tolerates_driven_unpowered: false
+  # pump drive opto-triacs: U701, U711
+  # U701 and U711 are the surface-mount lead-bend MOC3052SVM (LCSC C899826), which replaced the MOC3052M C8965 on 2026-10-29 (C8965 showed stock 0). Both are in the one MOC3051M, MOC3052M, MOC3053M datasheet, whose ordering table gives the S, SR2 and V suffixes and whose note 4 applies the table to the MOC3052M family. The copy read is the onsemi MOC3052M/D Rev. 3 (May 2019) the LCSC product page links for C899826; the Fairchild Rev. 1.7 sheet (also read) gives the same absolute maximum ratings. The onsemi Rev. 4 sheet recorded in round 2 could not be fetched again; the figures used (VR 3 V, VDRM 600 V) are the same on Rev. 3 and Rev. 1.7.
+  # Pins 3 and 5 (no connection) have no entry.
+  - lcsc: C899826
+    source:
+      document: "MOC3051M, MOC3052M, MOC3053M 6-Pin DIP Random-Phase Triac Driver Optocoupler (600 Volt Peak) (onsemi), the family sheet of the SMT lead-bend MOC3052SVM"
+      revision: "MOC3052M/D Rev. 3 (May 2019)"
+      section: "Maximum Ratings (emitter and detector tables)"
+      read_on: 2026-10-29
+    pins:
+      # LED anode. The emitter's voltage limit is the 3 V reverse voltage (VR); the forward limit is a current (IF 60 mA continuous), set by the drive resistor and judged in circuit-proof.md. The anode is held to the drive net's own ceiling, the 5 V rail, and the reverse figure below it.
+      - pin: "1"
+        domain: supply5
+        absolute_max_v: 5.25
+        absolute_min_v: -3
+        tolerates_driven_unpowered: false
+      # LED cathode. The cathode may stand above the anode by VR = 3 V at most: 5.25 V + 3 V = 8.25 V.
+      - pin: "2"
+        domain: supply5
+        absolute_max_v: 8.25
+        absolute_min_v: 0
+        tolerates_driven_unpowered: false
+      # Main terminal. VDRM, off-state output terminal voltage, 600 V (either polarity).
+      - pin: "4"
+        domain: mains_line
+        absolute_max_v: 600
+        absolute_min_v: -600
+        tolerates_driven_unpowered: false
+      # Main terminal. VDRM 600 V.
+      - pin: "6"
+        domain: mains_line
+        absolute_max_v: 600
+        absolute_min_v: -600
+        tolerates_driven_unpowered: false
+  # zero-crossing optocoupler: U602
+  - lcsc: C108051
+    source:
+      document: "LTV-814 / 824 / 844 ( M, S, S-TA1 ) series, Lite-On document BNS-OD-C131/A4 (13 pages)"
+      revision: "no revision printed"
+      section: "ABSOLUTE MAXIMUM RATING table"
+      read_on: 2026-10-29
+    pins:
+      # Input LED, AC input (two anti-parallel LEDs). The input has a current limit, IF +/-50 mA, and no voltage rating: not stated. The voltage of the net that drives it is used (the mains peak).
+      - pin: "1"
+        domain: mains_line
+        absolute_max_v: 357.8
+        absolute_min_v: -357.8
+        tolerates_driven_unpowered: false
+      # Input LED, other terminal, on neutral. Not stated, as pin 1.
+      - pin: "2"
+        domain: mains_neutral
+        absolute_max_v: 357.8
+        absolute_min_v: -357.8
+        tolerates_driven_unpowered: false
+      # Emitter. Collector - emitter VCEO 35 V and emitter - collector VECO 6 V bound this terminal against the collector.
+      - pin: "3"
+        domain: ground
+        absolute_max_v: 35
+        absolute_min_v: -6
+        tolerates_driven_unpowered: true
+      # Collector. VCEO 35 V; VECO 6 V below the emitter.
+      - pin: "4"
+        domain: logic
+        absolute_max_v: 35
+        absolute_min_v: -6
+        tolerates_driven_unpowered: true
+  # Schottky clamp diodes: D201, D203
+  - lcsc: C21107
+    source:
+      document: "BAT54HT1/D Schottky Barrier Diode (onsemi)"
+      revision: "Rev. 9 (November 2024)"
+      section: "Maximum Ratings (reverse voltage VR 30 V)"
+      read_on: 2026-10-29
+    pins:
+      # K. A diode's limit is a voltage across it, not at one pin; each terminal is held to the reverse voltage in either direction, the form the reference designs use. VR 30 V.
+      - pin: "1"
+        domain: supply5
+        absolute_max_v: 30
+        absolute_min_v: -30
+        tolerates_driven_unpowered: true
+      # A. VR 30 V.
+      - pin: "2"
+        domain: ground
+        absolute_max_v: 30
+        absolute_min_v: -30
+        tolerates_driven_unpowered: true
+  # dual Schottky clamps: D502, D504, D506, D523, D524, D527, D528
+  - lcsc: C47546
+    source:
+      document: "BAT54 / BAT54A / BAT54C / BAT54S Schottky barrier diode (Diodes Incorporated), document DS11005"
+      revision: "Rev. 34-2"
+      section: "Maximum Ratings (VRRM = VRWM = VR = 30 V)"
+      read_on: 2026-10-29
+    pins:
+      # A (anode pair end). A diode's limit is a voltage across it, not at one pin; each terminal is held to the reverse voltage in either direction, the form the reference designs use. Working peak reverse voltage VRWM / VR 30 V.
+      - pin: "1"
+        domain: ground
+        absolute_max_v: 30
+        absolute_min_v: -30
+        tolerates_driven_unpowered: true
+      # K (cathode pair end), on the 3.3 V rails.
+      - pin: "2"
+        domain: logic
+        absolute_max_v: 30
+        absolute_min_v: -30
+        tolerates_driven_unpowered: true
+      # COM, the centre node of the series pair, on the protected line.
+      - pin: "3"
+        domain: logic
+        absolute_max_v: 30
+        absolute_min_v: -30
+        tolerates_driven_unpowered: true
+  # low-leakage diodes: D202, D204, D205, D206
+  # Pin 2 is unconnected on every position and has no entry.
+  - lcsc: C48502
+    source:
+      document: "BAS116 Low-leakage diode (Nexperia)"
+      revision: "5 August 2020"
+      section: "8 Limiting values, Table 5"
+      read_on: 2026-10-29
+    pins:
+      # A. A diode's limit is a voltage across it, not at one pin; each terminal is held to the reverse voltage in either direction, the form the reference designs use. Reverse voltage VR 75 V (Table 5; VRRM 85 V is the repetitive peak).
+      - pin: "1"
+        domain: supply5
+        absolute_max_v: 75
+        absolute_min_v: -75
+        tolerates_driven_unpowered: true
+      # K. VR 75 V.
+      - pin: "3"
+        domain: supply5
+        absolute_max_v: 75
+        absolute_min_v: -75
+        tolerates_driven_unpowered: true
+  # flyback diodes: D731, D741, D821
+  # Round 2 recorded this datasheet as not opened; the Wayback copy of vishay.com/docs/85751/1n4148ws.pdf opened this session.
+  - lcsc: C2128
+    source:
+      document: "1N4148WS Small Signal Fast Switching Diode (Vishay Semiconductors), document 85751"
+      revision: "Rev. 2.3 (06-Jul-17)"
+      section: "ABSOLUTE MAXIMUM RATINGS"
+      read_on: 2026-10-29
+    pins:
+      # K. A diode's limit is a voltage across it, not at one pin; each terminal is held to the reverse voltage in either direction, the form the reference designs use. Reverse voltage VR 75 V (VRRM 100 V repetitive peak).
+      - pin: "1"
+        domain: supply5
+        absolute_max_v: 75
+        absolute_min_v: -75
+        tolerates_driven_unpowered: true
+      # A. VR 75 V.
+      - pin: "2"
+        domain: supply5
+        absolute_max_v: 75
+        absolute_min_v: -75
+        tolerates_driven_unpowered: true
+  # ESD clamps on the 5 V class lines: D501, D503, D505, D520, D521, D522, D525, D526, D529, D530, D531, D570, D571
+  - lcsc: C45961
+    source:
+      document: "PESD5V0F1BL Femtofarad bidirectional ESD protection diode (Nexperia)"
+      revision: "14 April 2023"
+      section: "8 Limiting values, Table 5; Table 6 Characteristics (VRWM)"
+      read_on: 2026-10-29
+    pins:
+      # A1. Bidirectional. The limiting-values table states a pulse current (IPPM 2.5 A) and ESD ratings and no voltage maximum: not stated. The reverse stand-off voltage VRWM, 5.5 V maximum (Table 6), is used, as the highest steady voltage the part blocks.
+      - pin: "1"
+        domain: supply5
+        absolute_max_v: 5.5
+        absolute_min_v: -5.5
+        tolerates_driven_unpowered: true
+      # A2, to ground. As A1.
+      - pin: "2"
+        domain: ground
+        absolute_max_v: 5.5
+        absolute_min_v: -5.5
+        tolerates_driven_unpowered: true
+  # USB line clamp: D401
+  - lcsc: C7519
+    source:
+      document: "USBLC6-2 Very low capacitance ESD protection data sheet DS4260"
+      revision: "Rev 7 (December 2021)"
+      section: "Table 1 Absolute ratings; Table 2 Electrical characteristics (VRM, VBR)"
+      read_on: 2026-10-29
+    pins:
+      # I/O1 (D+). Reverse stand-off VRM 5.25 V (Table 2, leakage test point); breakdown VBR 6 V minimum at 1 mA. The absolute ratings table states ESD levels only: no voltage maximum is stated. The stand-off voltage is used; the lower bound is not stated, 0 V used.
+      - pin: "1"
+        domain: logic
+        absolute_max_v: 5.25
+        absolute_min_v: 0
+        tolerates_driven_unpowered: true
+      # I/O1 (D+), second terminal of the same line.
+      - pin: "6"
+        domain: logic
+        absolute_max_v: 5.25
+        absolute_min_v: 0
+        tolerates_driven_unpowered: true
+      # I/O2 (D-).
+      - pin: "3"
+        domain: logic
+        absolute_max_v: 5.25
+        absolute_min_v: 0
+        tolerates_driven_unpowered: true
+      # I/O2 (D-), second terminal.
+      - pin: "4"
+        domain: logic
+        absolute_max_v: 5.25
+        absolute_min_v: 0
+        tolerates_driven_unpowered: true
+      # GND.
+      - pin: "2"
+        domain: ground
+        absolute_max_v: 5.25
+        absolute_min_v: 0
+        tolerates_driven_unpowered: true
+      # VBUS. Stand-off voltage as for the I/O pins.
+      - pin: "5"
+        domain: usb_vbus
+        absolute_max_v: 5.25
+        absolute_min_v: 0
+        tolerates_driven_unpowered: true
+  # USB VBUS clamp: D402
+  - lcsc: C207260
+    source:
+      document: "SMF Series Transient Voltage Suppression Diodes, Surface Mount 200 W (Littelfuse)"
+      revision: "Revised 12/06/17"
+      section: "Maximum Ratings and Thermal Characteristics; parts table (VR, VBR, VC)"
+      read_on: 2026-10-29
+    pins:
+      # Cathode side on the cable VBUS. SMF6.0A is the unidirectional part: reverse stand-off voltage VR 6.0 V, breakdown 6.67 to 7.37 V at 10 mA, clamping 10.3 V at 19.4 A (parts table). Voltage below 0 V is the forward drop (VF) and is not rated in volts: not stated, 0 V used.
+      - pin: "1"
+        domain: usb_vbus
+        absolute_max_v: 6
+        absolute_min_v: 0
+        tolerates_driven_unpowered: true
+      # Anode, to ground.
+      - pin: "2"
+        domain: ground
+        absolute_max_v: 6
+        absolute_min_v: 0
+        tolerates_driven_unpowered: true
+  # interlock gate FETs: Q201, Q202
+  - lcsc: C179399
+    source:
+      document: "NX3008NBK 30 V, 350 mA dual N-channel Trench MOSFET (Nexperia)"
+      revision: "5 November 2022"
+      section: "8 Limiting values, Table 5 (VDS 30 V, VGS +/-8 V)"
+      read_on: 2026-10-29
+    pins:
+      # G. VGS +/-8 V.
+      - pin: "1"
+        domain: logic
+        absolute_max_v: 8
+        absolute_min_v: -8
+        tolerates_driven_unpowered: true
+      # S. VDS 30 V. The reverse drain-source figure is not stated; the body diode carries reverse current (limit IS in the datasheet).
+      - pin: "2"
+        domain: ground
+        absolute_max_v: 30
+        absolute_min_v: 0
+        tolerates_driven_unpowered: true
+      # D. VDS 30 V; reverse figure not stated, as for S.
+      - pin: "3"
+        domain: supply5
+        absolute_max_v: 30
+        absolute_min_v: 0
+        tolerates_driven_unpowered: true
+  # low-side switches: Q701, Q711, Q731, Q741, Q761, Q771, Q821, Q823, Q824
+  - lcsc: C20917
+    source:
+      document: "AO3400A 30V N-Channel MOSFET (Alpha & Omega Semiconductor)"
+      revision: "Rev 3.1 (July 2023)"
+      section: "Absolute Maximum Ratings (VDS 30 V, VGS +/-12 V)"
+      read_on: 2026-10-29
+    pins:
+      # G. VGS +/-12 V.
+      - pin: "1"
+        domain: logic
+        absolute_max_v: 12
+        absolute_min_v: -12
+        tolerates_driven_unpowered: true
+      # S. VDS 30 V. The reverse drain-source figure is not stated; the body diode carries reverse current (limit IS in the datasheet).
+      - pin: "2"
+        domain: ground
+        absolute_max_v: 30
+        absolute_min_v: 0
+        tolerates_driven_unpowered: true
+      # D. VDS 30 V; reverse figure not stated, as for S.
+      - pin: "3"
+        domain: supply5
+        absolute_max_v: 30
+        absolute_min_v: 0
+        tolerates_driven_unpowered: true
+  # anode rail high-side switch: Q822
+  - lcsc: C15127
+    source:
+      document: "AO3401A 30V P-Channel MOSFET (Alpha & Omega Semiconductor)"
+      revision: "Rev 3.1 (December 2023)"
+      section: "Absolute Maximum Ratings (VDS -30 V, VGS +/-12 V)"
+      read_on: 2026-10-29
+    pins:
+      # G. VGS +/-12 V.
+      - pin: "1"
+        domain: supply5
+        absolute_max_v: 12
+        absolute_min_v: -12
+        tolerates_driven_unpowered: true
+      # S, on the 5 V rail. VDS -30 V (drain below source); reverse figure not stated.
+      - pin: "2"
+        domain: supply5
+        absolute_max_v: 30
+        absolute_min_v: 0
+        tolerates_driven_unpowered: true
+      # D. VDS -30 V.
+      - pin: "3"
+        domain: supply5
+        absolute_max_v: 30
+        absolute_min_v: 0
+        tolerates_driven_unpowered: true

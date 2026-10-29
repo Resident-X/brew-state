@@ -1,0 +1,29 @@
+== gate pull-down: every NMOS stage (Q701 Q711 Q731 Q741 Q761 Q771 Q821 Q823 Q824)
+PASS  gate level under leakage: (Ilkg 350 nA + IGSS 100 nA) x (Rg + Rpd) = 45.5 mV vs VGS(th) min 0.65 V: margin x14
+PASS  leakage through the LED, pump drive: IDSS 5 uA (55 degC) is x2000 under IFT max 10 mA (the sheet states no minimum trigger current)
+PASS  leakage through the LED, heater drive: IDSS 5 uA is x1000 under IFT max 5 mA (the sheet states no minimum trigger current)
+PASS  leakage through a valve coil: 5 uA x 97.2 ohm = 0.49 mV vs drop-out 0.25 V min: x514
+
+== anode rail gate Q821 / Q822
+PASS  PMOS off, both pull-ups: gate pulled to +5V by R823 || R824 (11 k): VSG 0 V vs |VGS(th)| min 0.5 V; leakage drop: IGSS 100 nA x 11 k = 1.1 mV
+PASS  PMOS off, one pull-up open: gate pulled to +5V by 22 k: IGSS 100 nA x 22 k = 2.2 mV; VSG stays under 0.5 V by x227
+   both pull-ups open (a second fault): the gate floats and the switch keeps the state it had; the anode rail can stay lit after a command off. Indicators only; not detected by the board
+   anode rail with Q822 off: R825 22 k bleed to ground; leakage IDSS 1 uA x 22 k = 22 mV (rail reads 0 within 0.1 V)
+
+== gauge buffer U791 inputs (R796..R800 1 k series, R801..R805 10 k to ground)
+PASS  buffer VIH with the divider: controller VOH_min 2.735 V x 10 k / 11 k = 2.486 V vs HCT VIH 2.0 V: margin 0.486 V
+PASS  buffer VIL with the divider: VOL 0.4 V x 10 k / 11 k = 0.364 V vs VIL 0.8 V
+PASS  input level in reset: (Ilkg 350 nA + HCT II 1 uA) x 10 k = 13.5 mV vs VIL 0.8 V
+   +5V absent: input clamp current 2.60 mA (VDD 3.3 V, VCC rail held at 0.0 V by its loads); IIK limit 20 mA
+   +5V absent: input clamp current 1.60 mA (VDD 3.3 V, VCC rail held at 1.0 V by its loads); IIK limit 20 mA
+   +5V absent: input clamp current 2.90 mA (VDD 3.6 V, VCC rail held at 0.0 V by its loads); IIK limit 20 mA
+   +5V absent: input clamp current 1.90 mA (VDD 3.6 V, VCC rail held at 1.0 V by its loads); IIK limit 20 mA
+PASS  input clamp current, +5V absent: worst 2.90 mA per input vs IIK 20 mA (SCLS306C): x6.9
+   5 inputs x 2.90 mA = 14.5 mA could reach the +5V rail through the clamps if it is held low by nothing else
+
+== key lines KEY1..KEY5 and the anode rail
+PASS  pin voltage with VDD present: anode rail on (firmware-driven), VF taken as 0: pin <= 5.25 V; operating limit Min(VDD) + 3.6 V and below 5.5 V holds for VDD >= 1.65 V
+PASS  pin voltage with +3V3 absent, +5V present: ANODE_GATE is a floating input / low, Q821 gate pulled down, Q822 gate pulled to +5V: anode rail 22 mV, key pin <= 0.1 V
+   3V3 falling: Q822 turns off when ANODE_GATE leaves its high level; the rail bleeds through R825 22 k; the time to fall is set by the panel's wiring capacitance (unread), not bounded here (open item)
+
+SUMMARY: 0 failing []

@@ -1,0 +1,33 @@
+Supply current channel input network: shunt sense R607 R608 C602 into AMC131M02 AIN1, 15 A rms through a 1 mohm shunt
+* Sheet "Supply voltage and current measurement".  Refs and values are the sheet's.
+* Vshunt is the voltage across the neutral shunt: 15 A rms x sqrt(2) x 1 mohm = 21.2 mV peak, 50 Hz (constraints record, Upstream protection: about 15 A;
+* division record: shunt 1 mohm class).  Rzind1 models U601 channel 1's differential input impedance, gain 8-128: 1 Mohm MINIMUM (SBASA56 6.8 ZIND).
+* Bdiff is a measurement source (AIN1P minus AIN1N), not a part.
+R607 SHUNT_SENSE_IN AMC_AIN1P 330
+R608 SHUNT_SENSE_NEUTRAL AMC_AIN1N 330
+C602 AMC_AIN1P AMC_AIN1N 4.7n
+Rzind1 AMC_AIN1P AMC_AIN1N 1Meg
+Bdiff AMC_DIFF 0 V=V(AMC_AIN1P)-V(AMC_AIN1N)
+Vgnd NEUTRAL 0 0
+Vsns SHUNT_SENSE_NEUTRAL NEUTRAL 0
+Vshunt SHUNT_SENSE_IN SHUNT_SENSE_NEUTRAL SIN(0 0.0212132 50) AC 1
+.tran 20u 100m
+.control
+run
+let vd = v(AMC_AIN1P)-v(AMC_AIN1N)
+meas tran vpk_15A MAX vd FROM=60m TO=100m
+* corner: R607 R608 at +1 % (and +100 ppm/K x 45 K = 1.0045 x 1.01) and C602 +10 % (5.17 nF)
+alter R607 = 334.8
+alter R608 = 334.8
+alter C602 = 5.17n
+ac lin 21 40 60
+meas ac gain50_hi FIND vm(AMC_DIFF) AT=50
+meas ac phase50_hi FIND vp(AMC_DIFF) AT=50
+alter R607 = 330
+alter R608 = 330
+alter C602 = 4.7n
+ac lin 21 40 60
+meas ac gain50_nom FIND vm(AMC_DIFF) AT=50
+meas ac phase50_nom FIND vp(AMC_DIFF) AT=50
+.endc
+.end

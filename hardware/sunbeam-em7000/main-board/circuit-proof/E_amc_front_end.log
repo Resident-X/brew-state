@@ -1,0 +1,48 @@
+== channel 0 (supply voltage): divider and range
+nominal ratio with ZIND = 275 kohm (min): 8.300763e-04  (1 : 1204.7)
+nominal ratio with an ideal input:                 8.326395e-04
+worst-high ratio (R_LO +1 %, R_HI -1 %, opposite TCR over +45 K, ideal input): 8.571192e-04
+worst-low  ratio (reverse, ZIND at its 275 kohm minimum):                          8.064000e-04
+differential input at 253 V rms = 357.8 V peak: nominal 297.0 mV, worst-high 306.7 mV peak
+full scale +/-VREF/Gain = +/-1.200 V at gain 1: worst-high uses 25.6 % of full scale, headroom 3.91x
+line peak that reaches full scale (worst-high ratio): 1400 V peak = 990 V rms
+absolute input: AIN0P peak 306.7 mV against +2.7 V / -1.3 V (gain 1): inside
+range figure (reads 253 V rms = 358 V peak with every tolerance high): MET
+
+== channel 0: element stress (limiting element voltage, power at 70 degC air)
+each of R601..R603 at 253 V rms: 84.3 V rms (119.2 V peak) against 200 V max working: 42 %
+each: power 23.9 mW against 1000 mW at 70 degC ambient: 2.4 %
+entry varistor clamp 775 V across the chain: 258 V each against 400 V max overload (5 s); above the 200 V working figure for the transient; the maker states no microsecond surge rating
+one of the three shorted: 126 V rms across each remaining: 63 % of 200 V (two in the chain would leave one at 253 V, over 200 V)
+R604: 216.9 mV rms, 62.7 uW against 100 mW
+derating curve at 70 degC air: 100 % of rating (flat to 70 degC); the part's own rise at 24 mW is 2.4 % of the 1 W it is rated for
+
+== channel 0: fault, R604 open (divider mid-node floats up to the line through R601-R603 and R605)
+current into AIN0P through 900 kohm at 358 V peak: 0.398 mA against 10 mA continuous: 4.0 %
+
+== channel 1 (supply current): range
+15 A rms = 21.21 A peak across 1.0 mohm: 21.21 mV peak; 11.01 A rms: 15.57 mV peak
+full scale at gain 32: +/-37.5 mV: 15 A uses 57 % (headroom 1.77x); the current that reaches full scale: 26.5 A rms
+gain >= 8 absolute range HGND -1.3 V .. +0.9 V: shunt voltage 21.2 mV about NEUTRAL: inside
+series 330 + 330 ohm against ZIND 1 Mohm min: gain error 0.066 % (not a figure of the record, reported for the sensing task)
+range figure (reads 15 A rms, the fuse overload band, without clipping): MET
+
+== channel 1: fault, 6 kA through the shunt (prospective; the fuse limits it, its peak let-through is not stated)
+prospective voltage across 1.0 mohm at 6 kA: 6.00 V
+positive: (6.00 - 3.2) / 660 = 4.24 mA; negative: (6.00 - 1.6) / 660 = 6.67 mA against 10 mA continuous
+input current figure (<= 10 mA, SBASA56 6.1): MET
+least series resistance per leg for 6 V: 220 ohm; with 49.9 ohm legs: negative-direction current would be 44.1 mA (over 10 mA)
+largest shunt that keeps 330 ohm legs inside 10 mA at 6 kA: 1.37 mohm
+
+== anti-alias filters (SBASA56 9.1.2: a low-pass in front of each channel input; Fig. 9-1: 50 ohm + 4.7 nF)
+channel 0 (divider source impedance 749 ohm + 49.9 + 49.9): tau 3.991 us, corner 39.9 kHz, at 50 Hz: gain 0.99999921, phase 0.0718 deg (3.99 us); at 60 Hz phase 0.0862 deg
+channel 1 (330 + 330): tau 3.102 us, corner 51.3 kHz, at 50 Hz: gain 0.99999953, phase 0.0558 deg (3.10 us); at 60 Hz phase 0.0670 deg
+phase difference between the channels at 50 Hz: 0.0160 deg (AMC phase calibration registers can trim; no phase figure is declared)
+supply frequency of the record (50 Hz nominal, 60 Hz alternate): corners 665x and 855x above 60 Hz
+C0G tolerance +/-10 %: tau moves +/-10 %; corner stays above 60 Hz by more than 700x
+
+== divider accuracy contributors (INFORMATION: no accuracy figure is declared for the supply voltage; the row fails on that)
+resistor tolerance (1 %) and TCR (100 ppm/K over +45 K), ratio against ideal nominal: +2.940 % / -3.151 %
+ZIND loading (275 kohm min): 0.308 % low, bounded below only by the minimum the sheet gives (no maximum impedance is stated)
+AMC131M02 channel 0: gain error +/-0.2 % at 25 degC, drift 8 typ / 25 max ppm/K, offset +/-330 uV max at 25 degC, THD -94 dB max (SBASA56 6.8)
+offset 330 uV against 297 mV signal at 253 V: 0.11 % of peak

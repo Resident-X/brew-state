@@ -1,0 +1,29 @@
+In-stream probe 1 front end: reference resistor R640 and input filter C640 with the probe's cable, settling after the bias is enabled
+* Sheet "In-stream temperature converters".  Refs and values are the sheet's.  2-wire connection with the links fitted (the worst case for the filter's resistance:
+* the cable resistance is in the force path), 50 ohm per lead, the maker's maximum RCABLE (MAX31865 Rev 3 Recommended DC Operating Conditions).
+* PT1000 at 150 degC (the earlier design's rating floor for a probe in the brew water, controller-design/decisions.md): 1000 x (1 + 3.9083e-3 x 150 - 5.775e-7 x 150^2) = 1573.25 ohm.
+* Vbias models the bias generator as a step to 2.00 V (VBIAS typ.; 1.95-2.06 V, MAX31865 Electrical Characteristics) with the force switch to ground ideal.
+* The bias step starts at 10 us, so each settling time below is 10 us longer than the settling after the step.  Berr is a measurement source: the input-referred error against the final value; 0.5 LSB of a 15-bit conversion of the voltage across R640 (0.5 x 1.4147 V / 32768 = 21.6 uV).
+R640 PT1_BIAS PT1_FORCEP 4.02k
+C640 PT1_RTDINP PT1_RTDINN 10n
+Rl1 PT1_FORCEP PT1_RTDINP 1u
+Rcab1 PT1_FORCEP PT1_RTD_TOP 50
+Rrtd PT1_RTD_TOP PT1_RTD_BOT 1573.25
+Rcab2 PT1_RTD_BOT PT1_RTDINN 50
+Rl2 PT1_RTDINN PT1_FORCEN 1u
+Vbias PT1_BIAS 0 PULSE(0 2.0 10u 1u 1u 1 2)
+Vfn PT1_FORCEN 0 0
+Berr PT1_ERR 0 V=abs(v(PT1_RTDINP)-v(PT1_RTDINN)-0.587756)
+.tran 100n 2m
+.control
+run
+* final value check: 2.00 x 1673.25 / (4020 + 1673.25) = 0.587756 V
+let vd = v(PT1_RTDINP)-v(PT1_RTDINN)
+meas tran vfinal FIND vd AT=1.9m
+meas tran t_settle WHEN v(PT1_ERR)=21.6u FALL=1
+* corner: C640 at +10 % (X7R tolerance, bias derating only lowers it) and the cable at its maximum already; C640 at 11 nF
+alter C640 = 11n
+run
+meas tran t_settle_c110 WHEN v(PT1_ERR)=21.6u FALL=1
+.endc
+.end

@@ -1,0 +1,105 @@
+# Bring-up fragment, work package D (sheets 700 to 750).
+# Rails are derived from +5V through an isolating link; the source side of a derived rail is the +5V rail itself (owner B's row carries its test point and its own link).
+rails:
+  - name: "+5V_WB"
+    source_sides: ["+5V"]
+    load_side: "+5V_WB"
+    test_points: ["TP761"]
+    links: ["JP761"]
+    what: "LED supply of the heater wall board's two opto-triac LEDs, taken from +5V; leaves the board on WB_LV10 pin 1 (power-leaving). Test point TP761 is on the load side: open JP761 and read the resistance from TP761 to GND before power; the source side is read at the +5V test point (owner B)"
+  - name: "+5V_GAUGE"
+    source_sides: ["+5V"]
+    load_side: "+5V_GAUGE"
+    test_points: ["TP791"]
+    links: ["JP791"]
+    what: "supply of the retained gauge assembly through SP2 contact 1 (power-leaving) and the 47 uF latch-up capacitor C792; close JP791 with the +5V rail off (the capacitor charges from the rail)"
+  - name: "ANODE_RAIL"
+    source_sides: ["ANODE_SW"]
+    load_side: "ANODE_RAIL"
+    test_points: ["TP821"]
+    links: ["JP821"]
+    what: "gated and modulated anode rail of the panel's eight indicators and the gauge assembly's low-water indicator (CON2 pin 7, SP2 contact 7, power-leaving); produced by Q822 from +5V, held off by R823 and R824, bled by R825; TP821 on the switch drain (source side of JP821)"
+producer_only: []
+key_signals:
+  - {name: "Carried: pump gate resistor pulse (row M14)", net: "PUMP_C_GATE_R", test_point: "TP702", block: "Before mains: R704 R705 R714 R715 200 ohm +/-1 percent. At the first current-limited connection with the pump commanded: isolated probe across R704 and R714, at most 200 V across one resistor, pair peak current at most 1 A; after ten minutes of pump running the values are within 1 percent of the first reading. Limit and source: open-items.md, Bring-up measurements carried."}
+  - {name: "Carried: snubber resistor pulse (row M15)", net: "PUMP_C_SNUB", test_point: "TP702", block: "Only if R706 C701 or R716 C711 is fitted: worst case assumed 3.6 A and 6.4 mJ per turn-on; after ten minutes of pump running, cold and mains off, each resistor within 1 percent of 100 ohm and not discoloured. Limit and source: open-items.md, Bring-up measurements carried."}
+  - {name: "Carried: pump triac turn-off voltage staging (row M16)", net: "PUMP_S_MT2", test_point: "TP712", block: "Read at TP702 and TP712 first at the first current-limited connection with the lamp, then with the lamp removed and the pump at full load; the full-load reading is compared with 600 V. Limit and source: open-items.md, Bring-up measurements carried."}
+  - {name: "Carried: C792 reverse voltage (row M17)", net: "+5V_GAUGE", test_point: "TP791", block: "Scope, DC-coupled, minimum held, across C792 through JP791 closed and opened and mains on and off: no reverse voltage beyond the 50 mV resolution. Limit and source: open-items.md, Bring-up measurements carried."}
+  - {name: "Carried: key line levels with the panel connected (row M23)", net: "KEY1", test_point: "TP831", block: "Panel connected, indicators lit and unlit, on TP831 to TP835: pressed at most 0.940 V, released at least 2.520 V. Limit and source: open-items.md, Bring-up measurements carried."}
+  - {name: "Carried: knob filter capacitors C861 C862 C863 (row M9)", net: "KNOB_HOT", test_point: "TP861", block: "Before mains: LCR meter and the charge-time method at 3.6 V, each at least 90 nF. Limit and source: open-items.md, Bring-up measurements carried."}
+  - {name: "PUMP_C_GATE", net: "PUMP_C_GATE", test_point: "TP701", block: "coffee pump drive stage control input (PA9)"}
+  - {name: "PUMP_S_GATE", net: "PUMP_S_GATE", test_point: "TP711", block: "steam pump drive stage control input (PA8)"}
+  - {name: "Coffee pump triac MT2", net: "PUMP_C_MT2", test_point: "TP702", block: "mains-referenced: coffee pump triac T701 MT2 against NEUTRAL (TP106). Bring-up step: with the pump running from the controller, scope this node with an isolated or differential probe, never an earthed lead, at the instant the triac turns off (the pump's current zero, and at a stop command); if the voltage across the triac exceeds its 600 V rating (VDRM, WeEn BTA204S-600B Rev.02), fit the snubber R706 (100 ohm, 2512) and C701 (100 nF X2) across MT2 and MT1 and repeat; otherwise leave them unfitted (owner decision of 2026-10-29)"}
+  - {name: "Steam pump triac MT2", net: "PUMP_S_MT2", test_point: "TP712", block: "mains-referenced: steam pump triac T711 MT2 against NEUTRAL (TP106). Bring-up step: as TP702 for the steam pump; fit R716 (100 ohm, 2512) and C711 (100 nF X2) only if the turn-off voltage exceeds 600 V"}
+  - {name: "VALVE_2W_DRV", net: "VALVE_2W_DRV", test_point: "TP731", block: "two-way valve relay coil driver control input (PD4)"}
+  - {name: "VALVE_3W_DRV", net: "VALVE_3W_DRV", test_point: "TP741", block: "three-way valve relay coil driver control input (PD5)"}
+  - {name: "HEAT_C_DRV", net: "HEAT_C_DRV", test_point: "TP762", block: "coffee heater LED drive control input (PD2)"}
+  - {name: "HEAT_S_DRV", net: "HEAT_S_DRV", test_point: "TP772", block: "steam heater LED drive control input (PD3)"}
+  - {name: "GAUGE_RST", net: "GAUGE_RST", test_point: "TP792", block: "gauge buffer input, driver reset"}
+  - {name: "GAUGE_STEP1", net: "GAUGE_STEP1", test_point: "TP793", block: "gauge buffer input, gauge A step clock"}
+  - {name: "GAUGE_DIR1", net: "GAUGE_DIR1", test_point: "TP794", block: "gauge buffer input, gauge A direction"}
+  - {name: "GAUGE_STEP2", net: "GAUGE_STEP2", test_point: "TP795", block: "gauge buffer input, gauge B step clock"}
+  - {name: "GAUGE_DIR2", net: "GAUGE_DIR2", test_point: "TP796", block: "gauge buffer input, gauge B direction"}
+  - {name: "ANODE_GATE", net: "ANODE_GATE", test_point: "TP822", block: "anode rail gate control input (PB5)"}
+  - {name: "BUZZER", net: "BUZZER", test_point: "TP823", block: "buzzer stage control input (PE1)"}
+  - {name: "LOWWATER_K", net: "LOWWATER_K", test_point: "TP824", block: "low-water indicator sink control input (PE0)"}
+  - {name: "KEY1", net: "KEY1", test_point: "TP831", block: "panel key line PWR (PE2): key level and indicator sink"}
+  - {name: "KEY2", net: "KEY2", test_point: "TP832", block: "panel key line MAN (PE3)"}
+  - {name: "KEY3", net: "KEY3", test_point: "TP833", block: "panel key line ONE (PE4)"}
+  - {name: "KEY4", net: "KEY4", test_point: "TP834", block: "panel key line TWO (PE5)"}
+  - {name: "KEY5", net: "KEY5", test_point: "TP835", block: "panel key line PRG (PE6)"}
+  - {name: "KNOB_HOT", net: "KNOB_HOT", test_point: "TP861", block: "hot-water knob microswitch input (PE13)"}
+  - {name: "KNOB_STEAM", net: "KNOB_STEAM", test_point: "TP862", block: "steam knob microswitch input (PE14)"}
+  - {name: "TANK_LEVEL", net: "TANK_LEVEL", test_point: "TP863", block: "tank reed input (PE12)"}
+connector_pins:
+  # WB_LV10 (J761), 10 ways, pinout fixed in the shared conventions
+  - {pin: "J761.1", net: "+5V_WB", class: "power_leaving", why: "LED supply of the wall board's two opto-triac LEDs, through JP761 from +5V; nothing can power the board through it"}
+  - {pin: "J761.2", net: "HEAT_C_LED_K", class: "signal", why: "coffee opto-triac LED return, sunk by Q761 through R763"}
+  - {pin: "J761.3", net: "HEAT_S_LED_K", class: "signal", why: "steam opto-triac LED return, sunk by Q771 through R773"}
+  - {pin: "J761.4", net: "GND", class: "ground", why: "return"}
+  - {pin: "J761.5", net: "MAINS_PRES_C_J", class: "signal", why: "mains-presence confirm from the wall board, header side (net MAINS_PRES_C_J): through R764 (27 kohm) to PE15, which R765 (82 kohm) holds low with the wall board absent; the wall board must drive at least 3.2 V when on and at most 5.5 V"}
+  - {pin: "J761.6", net: "MAINS_PRES_S_J", class: "signal", why: "mains-presence confirm from the wall board, header side (net MAINS_PRES_S_J): through R774 (27 kohm) to PD7, which R775 (82 kohm) holds low with the wall board absent; the wall board must drive at least 3.2 V when on and at most 5.5 V"}
+  - {pin: "J761.7", net: "", class: "signal", why: "spare, not connected"}
+  - {pin: "J761.8", net: "", class: "signal", why: "spare, not connected"}
+  - {pin: "J761.9", net: "", class: "signal", why: "spare, not connected"}
+  - {pin: "J761.10", net: "", class: "signal", why: "spare, not connected"}
+  # SP2 (J791), contact 1 nearest the top edge
+  - {pin: "J791.1", net: "+5V_GAUGE", class: "power_leaving", why: "supply of the retained VID66-08 gauge driver through JP791 from +5V"}
+  - {pin: "J791.2", net: "GND", class: "ground", why: "return"}
+  - {pin: "J791.3", net: "GAUGE_RST_B", class: "signal", why: "driver reset, buffered, held low by R806"}
+  - {pin: "J791.4", net: "GAUGE_STEP1_B", class: "signal", why: "FA, gauge A step clock, buffered"}
+  - {pin: "J791.5", net: "GAUGE_DIR1_B", class: "signal", why: "DIRA, gauge A direction, buffered"}
+  - {pin: "J791.6", net: "LOWWATER_CATHODE", class: "signal", why: "WAT, low-water indicator cathode, sunk by Q824"}
+  - {pin: "J791.7", net: "ANODE_RAIL", class: "power_leaving", why: "gated anode rail that lights the low-water indicator, from Q822 through JP821"}
+  - {pin: "J791.8", net: "GAUGE_DIR2_B", class: "signal", why: "DIRB, gauge B direction, buffered"}
+  - {pin: "J791.9", net: "GAUGE_STEP2_B", class: "signal", why: "FB, gauge B step clock, buffered"}
+  # CON2 (J821), contact 1 nearest the bottom edge
+  - {pin: "J821.1", net: "BUZZER_P", class: "power_leaving", why: "buzzer drive side: +5V through R828 (100 ohm), switched on its return by Q823"}
+  - {pin: "J821.2", net: "BUZZER_N", class: "signal", why: "buzzer return, sunk by Q823"}
+  - {pin: "J821.3", net: "KEY1", class: "signal", why: "PWR key pair and one indicator cathode"}
+  - {pin: "J821.4", net: "KEY2", class: "signal", why: "MAN key pair and two indicator cathodes"}
+  - {pin: "J821.5", net: "KEY3", class: "signal", why: "ONE key pair and one indicator cathode"}
+  - {pin: "J821.6", net: "KEY4", class: "signal", why: "TWO key pair and two indicator cathodes"}
+  - {pin: "J821.7", net: "ANODE_RAIL", class: "power_leaving", why: "gated anode rail for all indicator elements, from Q822 through JP821"}
+  - {pin: "J821.8", net: "KEY5", class: "signal", why: "PRG key pair and two indicator cathodes"}
+  - {pin: "J821.9", net: "GND", class: "ground", why: "switch common"}
+  # KNOB (J861), contact 1 nearest the right edge
+  - {pin: "J861.1", net: "KNOB_HOT", class: "signal", why: "hot-water microswitch lead (red), pulled up"}
+  - {pin: "J861.2", net: "GND", class: "ground", why: "hot-water microswitch's other lead"}
+  - {pin: "J861.3", net: "KNOB_STEAM", class: "signal", why: "steam microswitch lead (red), pulled up"}
+  - {pin: "J861.4", net: "GND", class: "ground", why: "steam microswitch's other lead"}
+  # REED (J862)
+  - {pin: "J862.1", net: "GND", class: "ground", why: "reed element lead 1 (a contact has no polarity)"}
+  - {pin: "J862.2", net: "TANK_LEVEL", class: "signal", why: "reed element lead 2, pulled up"}
+rail_loads:
+  - {rail: "+5V", current_a: 0.1080, condition: "relay coils K731 and K741 together, 97.2 ohm (coil -10 %) at 5.25 V, 23 degC", source: "Hongfa HF32FA-G 2026 Rev 1.00 coil data (108 ohm +/-10 %); simulation D_valve_coil.cir icoil_max = 5.39810e-02 per coil"}
+  - {rail: "+5V", current_a: 0.0589, condition: "pump LED stages Q701 and Q711 on together at 5.25 V, R703/R713 -1 %, LED forward voltage taken as 0 (bound)", source: "D_led_stage.cir if_max_pump_bound = 2.94520e-02 per stage; MOC3052M/D Rev 4 maximum rating IF 60 mA is not approached"}
+  - {rail: "+5V", current_a: 0.0589, condition: "heater LED stages Q761 and Q771 on together through +5V_WB at 5.25 V, R763/R773 -1 %, VF 0 (bound)", source: "D_margins.py section 5; MOC3083M/D Rev 2 maximum rating IF 60 mA"}
+  - {rail: "+5V", current_a: 0.0146, condition: "U791 SN74HCT541PWR: ICC 80 uA plus 5 inputs at TTL levels, delta-ICC 2.9 mA each", source: "TI SCLS306C electrical characteristics (SN74, over temperature)"}
+  - {rail: "+5V", current_a: 0.1400, condition: "retained gauge assembly through SP2.1: four driver outputs at the +/-35 mA absolute maximum", source: "connector-pinouts.md § What the driver's control lines ask for (VID6608 datasheet rev 1, 2022, absolute maximum); the driver's supply current figure was not read"}
+  - {rail: "+5V", current_a: 0.0530, condition: "buzzer shorted, through R828 (100 ohm) at 5.25 V; the buzzer's own current is pending", source: "calculation, D_margins.py section 6"}
+  - {rail: "+5V", current_a: 0.1350, condition: "anode rail: five key pins sinking at the 20 mA IIO limit plus the low-water line at its 35 mA bound (indicator forward voltages pending)", source: "DS12110 Rev 11 Table 12 (20 mA per pin); D_margins.py section 8"}
+  - {rail: "+3V3", current_a: 0.0029, condition: "eight pull-ups (KEY1..KEY5, KNOB_HOT, KNOB_STEAM, TANK_LEVEL), each 3.6 V / 10 kohm, all closed", source: "calculation from the 10 kohm 1 % resistors"}
+first_power:
+  # none: no connector or header of this package can power the board. WB_LV10 pin 1, SP2 contact 1 and 7, CON2 pins 1 and 7 are power-leaving.
+  []

@@ -1,0 +1,47 @@
+# Bring-up fragment of work package A: the mains entry and the interlock (blocks 100-299).
+# Mains rule used: the live is a rail (a mains-referenced supply net), with source sides LINE_IN and LINE_F, the link JP101 and the load side LINE and LINE1.
+# NEUTRAL_IN and NEUTRAL are return nets (not rails, no link) but carry test points; they are the second pole of the one mains supply.
+rails:
+  - name: "Mains live (LINE)"
+    source_sides: [LINE_IN, LINE_F]
+    load_side: [LINE, LINE1]
+    test_points: [TP101, TP102, TP103, TP104]
+    links: [JP101]
+    what: "Produced by the retained mains lead at tab 2 (J102). Source side: J102 -> LINE_IN (TP101) -> fuse F101 (the series protective part) -> LINE_F (TP102) -> JP101 pin 1. Load side: JP101 pin 2 -> LINE (TP103: module through its series link JP303 on the Logic supply sheet, timing front end, voltage measurement, varistor RV101, X2 capacitor C101, discharge strings, interlock contact pin 13) and, through the interlock contact K201, LINE1 (TP104) to tab 1 (J101), which leaves the board for the loads. Opening JP101 separates the source side from every load. JP101 is a wire link in service (1.5 mm2) and carries up to 15 A in the fuse's band."
+producer_only: []
+key_signals:
+  - {name: "Carried: retained tab and link current ratings (row M18)", net: "LINE1", test_point: "TP104", block: "Dongguan Bozhong publishes no rating for tabs J101 J102 J103 J106 to J110 or for the link JP101. Bring-up step, mains connected after the first-power steps: thermocouple on each joint and on its lead 100 mm along, 30 minutes at the machine full load; rise over the surrounding air at most 40 K (110 degC cap less the 70 degC air assumed). Limit and source: open-items.md, Bring-up measurements carried."}
+  - {name: "Carried: C0G ceramics of the interlock (row M7)", net: "", test_point: "", block: "Before mains, LCR meter: C202 and C204 at least 70 nF; C203 and C205 4.4547 to 4.9645 nF. Limit and source: open-items.md, Bring-up measurements carried."}
+  - {name: "Interlock output: live to the loads", net: LINE1, test_point: TP104, block: "interlock contact: live only when the drive holds the coil (compare TP104 with TP103)"}
+  - {name: "Proof-of-life output at the buffer input", net: POL_OUT, test_point: TP203, block: "interlock: high and low phase widths (at least 25 us each) and the 10 ms refresh are measured here"}
+  - {name: "Buffer output", net: POL_BUF, test_point: TP204, block: "interlock: the edges both channels see"}
+  - {name: "Channel A gate", net: POL_GATE_A, test_point: TP201, block: "interlock channel A: held level with the output toggling and held; read against 1.8 V"}
+  - {name: "Channel B gate", net: POL_GATE_B, test_point: TP202, block: "interlock channel B"}
+  - {name: "Coil low end", net: POL_COIL_LO, test_point: TP205, block: "interlock: coil voltage = TP206 minus TP205; read at pick-up and held level, and falling under 0.5 V within the interval when the controller stops"}
+  - {name: "Coil high end (+5V at the relay)", net: "+5V", test_point: TP206, block: "interlock: the supply the coil sees (must stay at or above 4.75 V under the coil's load)"}
+  - {name: "Neutral on the plug side of the shunt", net: NEUTRAL_IN, test_point: TP105, block: "mains entry / shunt"}
+  - {name: "Neutral pour above the shunt", net: NEUTRAL, test_point: TP106, block: "mains entry / shunt: every load's return and the measurement reference"}
+  - {name: "Neutral on the plug side of the shunt, voltage pad", net: NEUTRAL_IN, test_point: TP107, block: "mains entry / shunt: second pad on the plug side of R105, read with TP108 for the voltage across the shunt (TP105 and TP106 carry the current)"}
+  - {name: "Neutral pour above the shunt, voltage pad", net: NEUTRAL, test_point: TP108, block: "mains entry / shunt: second pad on the neutral pour beside R105, read with TP107 for the voltage across the shunt"}
+supply_inputs:
+  - {pin: "J102.1", net: LINE_IN, class: supply_input, why: "tab 2: the retained mains lead's live conductor (brown, from the plug); powers the module, the controller and every load through F101 and JP101"}
+  - {pin: "J103.1", net: NEUTRAL_IN, class: supply_input, why: "tab 3: the retained mains lead's neutral (blue, from the plug); the return of the same supply, through the shunt R105 to NEUTRAL"}
+connector_pins:
+  - {pin: "J101.1", net: LINE1, class: power_leaving, why: "tab 1: the board feeds the live, after the interlock contact, to every load's fixed lead by the retained daisy-chain wire; nothing is fed in through it"}
+  - {pin: "J106.1", net: COFVALVE, class: signal, why: "tab 6: the two-way valve coil's switched side to relay K_V1; the coil is fed from LINE1 (tab 1), so power reaches this pin only through the board's own LINE1, not from outside"}
+  - {pin: "J107.1", net: COFFPUMP, class: signal, why: "tab 7: coffee pump's switched side to the pump drive; fed from LINE1"}
+  - {pin: "J108.1", net: STEAMPUMP, class: signal, why: "tab 8: steam pump's switched side to the pump drive; fed from LINE1"}
+  - {pin: "J109.1", net: HOTVALVE, class: signal, why: "tab 9: three-way valve coil's switched side to relay K_V2; fed from LINE1"}
+  - {pin: "J110.1", net: NEUTRAL, class: signal, why: "WB_RET landing: the heater wall board's return wire (the heater current's return from the triacs) onto the neutral pour above the shunt; the wall board is passive and fed from LINE1"}
+first_power:
+  - input: "J102.1 / LINE_IN (tab 2, live)"
+    means: "a lamp (a 60 W to 100 W 230 V incandescent lamp, or a 230 V halogen of the same rating) with its two leads fitted in JP101's two through-hole pads in place of the wire link; the lamp is upstream of everything the input feeds (between the pin and the lamp are only F101, TP101 and TP102)"
+    link: JP101
+    limited_current: "Short on the board: 253 V / hot lamp resistance. 60 W lamp: R = 230 V squared / 60 W = 882 ohm, 253 / 882 = 0.287 A; 100 W lamp: 529 ohm, 0.478 A (circuit-proof/A_calcs.out). Cold-filament inrush is larger for some tens of milliseconds and its ratio is not read from a source here, so it is not stated; F101 stays in series as protection. The lamp is not a fuse: it is the means, and it limits a short to those figures."
+  - input: "J103.1 / NEUTRAL_IN (tab 3, neutral)"
+    means: "the same lamp in JP101: tab 3 is the other end of the same supply loop, so no current can enter at tab 3 beyond what the lamp lets leave at tab 2 (the live is the only path by which the supply can drive a short through the board)"
+    link: JP101
+    limited_current: "As the row above, 0.287 A (60 W) to 0.478 A (100 W) at 253 V. The method asks every supply input for its own means; whether a second position in the neutral return is wanted is an owner decision (open-items.md, first power)."
+rail_loads:
+  - {rail: "+5V", current_a: 0.094, condition: "interlock coil K201 held, 62 ohm -10 % = 55.8 ohm at the rail's top 5.25 V (5.25/55.8), two FETs add under 1 ohm", source: "Hongfa HF115F-Q 2024 Rev. 1.00 coil data; controller-board-design-constraints.md 'Interlock removal time and drive', coil current row (94 mA)"}
+  - {rail: "+5V", current_a: 0.0017, condition: "POL: U201 supply 1.5 mA additional current with its input at 3.4 V (1.5 mA max at 85 C) + 10 uA static + two channels' pump charge 2 x 105.6 nF x 5.25 V x 100 Hz = 0.11 mA", source: "Nexperia 74AHC1G17/74AHCT1G17 Rev. 4 (15 Sep 2023) table 7 (delta ICC 1.5 mA, ICC 10 uA); computed"}

@@ -1,0 +1,282 @@
+rails:
+- name: PT1 excitation return (FORCE-)
+  source_sides:
+  - PT1_FORCEN_SRC
+  load_side: PT1_FORCEN
+  test_points:
+  - TP690
+  links:
+  - R690
+  what: 'The MAX31865 symbol types FORCE- (pin 9) power_out, so by the method''s rule the net is a rail. Produced by U620 pin 9 (the sink of the excitation current); the source side carries that pin, the link R690 (0 ohm)
+    and the test point. Load side: the probe header and the 3-wire/4-wire jumper. Opening the link disconnects the probe''s return from the converter. Power leaves the board only as the excitation current out of FORCE+.'
+- name: PT2 excitation return (FORCE-)
+  source_sides:
+  - PT2_FORCEN_SRC
+  load_side: PT2_FORCEN
+  test_points:
+  - TP691
+  links:
+  - R691
+  what: 'The MAX31865 symbol types FORCE- (pin 9) power_out, so by the method''s rule the net is a rail. Produced by U621 pin 9 (the sink of the excitation current); the source side carries that pin, the link R691 (0 ohm)
+    and the test point. Load side: the probe header and the 3-wire/4-wire jumper. Opening the link disconnects the probe''s return from the converter. Power leaves the board only as the excitation current out of FORCE+.'
+producer_only:
+- net: AMC_DCDC_OUT
+  producer: U601
+  caps:
+  - C603
+  - C604
+  bead: F601
+  test_point: TP605
+  what: isolated DC/DC output of the AMC131M02, mains-referenced; the datasheet's EMI bead F601 sits between it and AMC_HLDO_IN
+- net: AMC_DCDC_HGND
+  producer: U601
+  caps:
+  - C603
+  - C604
+  bead: F602
+  test_point: TP606
+  what: return of the isolated DC/DC output (pin DCDC_HGND), joined to HGND (NEUTRAL) through bead F602
+- net: AMC_HLDO_IN
+  producer: U601
+  caps:
+  - C605
+  - C606
+  bead: F601
+  test_point: TP607
+  what: input of the high-side LDO, after the bead
+- net: AMC_HLDO_OUT
+  producer: U601
+  caps:
+  - C607
+  - C608
+  test_point: TP608
+  what: high-side LDO output, 2.6 to 3.2 V unloaded; powers the converter's input stage only (GPO unused)
+- net: AMC_DCDC_CAP
+  producer: U601
+  caps:
+  - C612
+  test_point: TP609
+  what: primary-side LDO output on the low-voltage side, 3.5 V absolute maximum
+- net: PT1_BIAS
+  producer: U620
+  caps: []
+  part_required_by_datasheet: R640
+  test_point: TP620
+  what: MAX31865 bias output (2.0 V nominal) tied to REFIN+ and the top of the reference resistor R640
+- net: PT2_BIAS
+  producer: U621
+  caps: []
+  part_required_by_datasheet: R645
+  test_point: TP622
+  what: as PT1_BIAS for the second converter
+key_signals:
+- {name: "Carried: HX711 supply at the pin (row M1)", net: "+5V", test_point: "", block: "Module position: multimeter on VSUP of U630 and U631 at the first current-limited connection and at full load, scope held for the first second after mains on; at most 5.5 V (module 5.125 V at most). Worst case assumed above 5.5 V: module trip 6.75 V, D402 clamp 10.3 V. Limit and source: open-items.md, Bring-up measurements carried."}
+- {name: "Carried: HX711 input source resistance and sampling draw (row M2)", net: "WT1_INA_P", test_point: "TP671", block: "Before mains: legs R670 R671 R675 R676 100 ohm +/-1 percent, C670 and C675 0.1 uF +/-10 percent. Bench supply, mains off, bridge simulator: 100 conversions as built and with 1 kohm legs, mean shift at most one standard deviation. Limit and source: open-items.md, Bring-up measurements carried."}
+- {name: "Carried: load-cell and probe input capacitance (row M12)", net: "WT2_INA_P", test_point: "TP673", block: "LCR meter at the connector with the sensor and cable connected, unpowered: load cell at most 3.75 uF across the inputs; probe sensor at most 0.50 uF (from 10.5 R C + 1 ms within the 10 ms control step). Limit and source: open-items.md, Bring-up measurements carried."}
+- {name: "Carried: zero-crossing optocoupler timing (row M22)", net: "ZC_IN", test_point: "TP630", block: "Isolated or differential probe on TP603: assert delay 0.068 to 0.781 ms and release lead 0.296 to -0.008 ms after the true crossing, spread at most 12.8 degrees of the 50 Hz cycle; first current-limited connection. Limit and source: open-items.md, Bring-up measurements carried."}
+- {name: "Carried: ceramics of the measurement front ends (rows M7, M9 and M10)", net: "", test_point: "", block: "Before mains, LCR meter: C601 and C602 4.23 to 5.17 nF; C640 and C645 at most 11 nF; C630 0.6 to 1.4 nF; C603 to C608, C612, C670, C672, C675 and C677 by the charge-time method at least 50 percent of nominal. Limit and source: open-items.md, Bring-up measurements carried."}
+- name: converter data ready
+  net: AMC_DRDY
+  test_point: TP601
+  block: 'AMC131M02: falls when a new pair of readings is ready; shows the converter is clocked, enabled and converting'
+- name: converter clock
+  net: AMC_CLKIN
+  test_point: TP602
+  block: 'AMC131M02 clock after the 33 ohm termination: 8.000 MHz, 45 to 55 % duty'
+- name: divider tap
+  net: VMEAS_DIV
+  test_point: TP603
+  block: 'mains voltage divider: about 0.30 V peak at 253 V rms, in phase with the line; mains-referenced, measure with an isolated instrument'
+- name: shunt channel input
+  net: AMC_AIN1P
+  test_point: TP604
+  block: 'supply current channel after its filter: 21 mV peak at 15 A rms; mains-referenced'
+- name: shared SPI2 data out
+  net: SPI2_MISO
+  test_point: TP610
+  block: replies of the AMC131M02 and both MAX31865 converters
+- name: zero-crossing edge
+  net: ZC_IN
+  test_point: TP630
+  block: 'supply-timing front end: two falling edges per cycle (100 a second at 50 Hz); the delay against the line is read live'
+- name: probe 1 sense node
+  net: PT1_RTDINP
+  test_point: TP621
+  block: 'converter 1 RTDIN+: about 0.59 V with a 150 degC probe, 0.41 V at 0 degC'
+- name: probe 2 sense node
+  net: PT2_RTDINP
+  test_point: TP623
+  block: converter 2 RTDIN+
+- name: weight 1 data
+  net: WT1_DATA
+  test_point: TP670
+  block: 'HX711 channel 1 DOUT: high idle, low when a result is ready'
+- name: weight 1 signal
+  net: WT1_INA_P
+  test_point: TP671
+  block: 'HX711 channel 1 INA+ after the filter: 2.4 V common mode with the bridge connected'
+- name: weight 2 data
+  net: WT2_DATA
+  test_point: TP672
+  block: HX711 channel 2 DOUT
+- name: weight 2 signal
+  net: WT2_INA_P
+  test_point: TP673
+  block: HX711 channel 2 INA+ after the filter
+connector_pins:
+- pin: J620.1
+  net: PT1_FORCEP
+  class: signal
+  why: 'FORCE+ lead of probe 1: carries the converter''s bias current out to the probe (0.36 to 0.51 mA), not a supply input'
+- pin: J620.2
+  net: PT1_RTDINP
+  class: signal
+  why: RTDIN+ sense lead of probe 1
+- pin: J620.3
+  net: PT1_RTDINN
+  class: signal
+  why: RTDIN- sense lead of probe 1
+- pin: J620.4
+  net: PT1_FORCEN
+  class: signal
+  why: FORCE- return lead of probe 1 (switched to ground inside the converter)
+- pin: J625.1
+  net: PT2_FORCEP
+  class: signal
+  why: FORCE+ lead of probe 2
+- pin: J625.2
+  net: PT2_RTDINP
+  class: signal
+  why: RTDIN+ sense lead of probe 2
+- pin: J625.3
+  net: PT2_RTDINN
+  class: signal
+  why: RTDIN- sense lead of probe 2
+- pin: J625.4
+  net: PT2_FORCEN
+  class: signal
+  why: FORCE- return lead of probe 2
+- pin: J622.1
+  net: PT1_FORCEP
+  class: signal
+  why: 2-wire link, FORCE+ side
+- pin: J622.2
+  net: PT1_RTDINP
+  class: signal
+  why: 2-wire link, RTDIN+ side
+- pin: J623.1
+  net: PT1_RTDINN
+  class: signal
+  why: 2-wire and 3-wire link, RTDIN- side
+- pin: J623.2
+  net: PT1_FORCEN
+  class: signal
+  why: 2-wire and 3-wire link, FORCE- side
+- pin: J627.1
+  net: PT2_FORCEP
+  class: signal
+  why: 2-wire link, FORCE+ side, probe 2
+- pin: J627.2
+  net: PT2_RTDINP
+  class: signal
+  why: 2-wire link, RTDIN+ side, probe 2
+- pin: J628.1
+  net: PT2_RTDINN
+  class: signal
+  why: 2-wire and 3-wire link, RTDIN- side, probe 2
+- pin: J628.2
+  net: PT2_FORCEN
+  class: signal
+  why: 2-wire and 3-wire link, FORCE- side, probe 2
+- pin: J630.1
+  net: +5V
+  class: power_leaving
+  why: 'excitation E+ of load cell 1: the board supplies the bridge (about 14 mA at 350 ohm, assumed); nothing can power the board through it'
+- pin: J630.2
+  net: GND
+  class: ground
+  why: excitation return E- of load cell 1
+- pin: J630.3
+  net: WT1_SN_RAW
+  class: signal
+  why: A- signal lead of load cell 1
+- pin: J630.4
+  net: WT1_SP_RAW
+  class: signal
+  why: A+ signal lead of load cell 1
+- pin: J630.5
+  net: GND
+  class: ground
+  why: cable shield of load cell 1
+- pin: J635.1
+  net: +5V
+  class: power_leaving
+  why: excitation E+ of load cell 2
+- pin: J635.2
+  net: GND
+  class: ground
+  why: excitation return E- of load cell 2
+- pin: J635.3
+  net: WT2_SN_RAW
+  class: signal
+  why: A- signal lead of load cell 2
+- pin: J635.4
+  net: WT2_SP_RAW
+  class: signal
+  why: A+ signal lead of load cell 2
+- pin: J635.5
+  net: GND
+  class: ground
+  why: cable shield of load cell 2
+first_power: []
+first_power_note: 'No supply input of this package: every part draws from +3V3 or +5V, whose supply inputs, current-limit means and isolating links belong to the controller and logic-supply package and the entry package. The
+  two mains taps (LINE, NEUTRAL) are the entry package''s nets; the taps carry at most 0.40 mA peak (divider, through 900 kohm) and 3.0 mA peak (zero-cross feed, through 120.8 kohm).'
+rail_loads:
+- rail: +3V3
+  current_a: 0.023
+  condition: U601 AMC131M02 DVDD, high-resolution mode, all channels on, 8 MHz clock
+  source: SBASA56 6.8 IDVDD max 23 mA
+- rail: +3V3
+  current_a: 0.00494
+  condition: Y601 SiT8008B oscillator at 3.63 V, no load figure at 20 MHz plus 15 pF at 8 MHz
+  source: SiT8008B Rev 1.08 Table 1 Idd max 4.5 mA, plus C V f = 0.44 mA
+- rail: +3V3
+  current_a: 0.00441
+  condition: U620 MAX31865 (VDD and DVDD), bias on and converting, RTD above reference, bias output loaded by the shorted-RTD case 2.06 V / 4.02 kohm
+  source: MAX31865 Rev 3 Electrical Characteristics IDD 3.5 mA max, Note 6 +0.4 mA, 0.512 mA bias load
+- rail: +3V3
+  current_a: 0.00441
+  condition: U621 MAX31865, as U620
+  source: as U620
+- rail: +3V3
+  current_a: 0.0001
+  condition: U630 HX711 digital supply, normal operation
+  source: HX711 V2.0 Key Electrical Characteristics, digital supply current 100 uA
+- rail: +3V3
+  current_a: 0.0001
+  condition: U631 HX711 digital supply
+  source: as U630
+- rail: +3V3
+  current_a: 0.00016
+  condition: R632 pull-up with the zero-cross output low, 3.6 V / 22 kohm
+  source: Ohm's law on the sheet's values
+- rail: +3V3
+  current_a: 0.00014
+  condition: pull-ups R614 R615 R641 R646 each 3.6 V / 100 kohm, all low
+  source: Ohm's law on the sheet's values
+- rail: +5V
+  current_a: 0.0015
+  condition: U630 HX711 analog supply, normal operation, regulator unused
+  source: 'HX711 V2.0 features list: normal operation under 1.5 mA (Key Electrical Characteristics: 1.4 mA, including regulator)'
+- rail: +5V
+  current_a: 0.0015
+  condition: U631 HX711 analog supply
+  source: as U630
+- rail: +5V
+  current_a: 0.01464
+  condition: load cell 1 excitation at 5.125 V across an assumed 350 ohm bridge (no load cell is selected)
+  source: division A28 (350 ohm, an assumption the part's choice replaces); 5.125 V from IRM-20-SPEC 2025-11-21, 5 V +2.5 %
+- rail: +5V
+  current_a: 0.01464
+  condition: load cell 2 excitation, as load cell 1
+  source: as load cell 1

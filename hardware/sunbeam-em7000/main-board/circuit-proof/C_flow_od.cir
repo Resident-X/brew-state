@@ -1,0 +1,26 @@
+Flow input FLOW_IN: edges through R521 and C520 for an open-drain meter (3.3 V pull-up R520) and for a 5 V push-pull meter
+* Source of every value: the sheet fragment of this block (generated from the same table).
+* Sim-only elements (names with SIM_) stand for the sensor, the converter's sample and hold and the supply.
+* Converter: DS12110 Rev 11 Table 77 / Table 174: CADC 4 pF (typ), tS 810.5 cycles, 16 bit, fADC 10 MHz.
+.model SWM SW(Ron=1m Roff=1e12 Vt=0.5 Vh=0.2)
+VSIM_V3V3 +3V3 0 3.3
+R520 FLOW_RAW +3V3 10k
+R521 FLOW_RAW FLOW_F 1k
+C520 FLOW_F 0 47n
+* R522 is a zero-ohm link in the sheet (value 0); ngspice replaces 0 by 1e-12 ohm and then loses accuracy, so it is simulated as 1 mOhm
+R522 FLOW_F FLOW_IN 1m
+* meter output stages: open-drain = switch to ground; push-pull = switch to the 5 V rail (high) and to ground (low), 100 Hz square wave
+SSIM_OD FLOW_RAW 0 CTLA 0 SWM
+VSIM_CTLA CTLA 0 PULSE(0 1 100u 1n 1n 4.9m 10m)
+.tran 5u 20m
+.control
+alter R520 = 10145
+alter R521 = 1014.5
+alter C520 = 5.9455e-08
+run
+meas tran vhigh_od MAX v(FLOW_IN) FROM=0.5m TO=10m
+meas tran vlow_od MIN v(FLOW_IN) FROM=5m TO=10m
+meas tran t_vih_od TRIG v(FLOW_RAW) VAL=1.65 RISE=1 TARG v(FLOW_IN) VAL=2.31 RISE=1
+meas tran tr_10_90_od TRIG v(FLOW_IN) VAL=0.33 RISE=1 TARG v(FLOW_IN) VAL=2.97 RISE=1
+.endc
+.end

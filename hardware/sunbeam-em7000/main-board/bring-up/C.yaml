@@ -1,0 +1,73 @@
+# Bring-up fragment, work package C: sensing front ends (blocks 500-599)
+rails:
+  - {name: STMD_3V3, source_sides: [STMD_3V3_SRC], load_side: STMD_3V3, test_points: [TP523], links: [R540], what: "3.3 V feed of the digital steam-path pressure transducer: +3V3 through the PTC F520 to the test point and link R540, then pin 2 or 1 of J521; the PTC and the link are the only parts on the source side"}
+  - {name: BRWD_3V3, source_sides: [BRWD_3V3_SRC], load_side: BRWD_3V3, test_points: [TP526], links: [R541], what: "3.3 V feed of the digital brew-path pressure transducer: +3V3 through the PTC F521 to the test point and link R541, then pin 2 or 1 of J522; the PTC and the link are the only parts on the source side"}
+  - {name: SPAREA_3V3, source_sides: [SPAREA_3V3_SRC], load_side: SPAREA_3V3, test_points: [TP528], links: [R542], what: "3.3 V feed of the spare analogue input header: +3V3 through the PTC F522 to the test point and link R542, then pin 2 or 1 of J523; the PTC and the link are the only parts on the source side"}
+  - {name: BREWA_3V3, source_sides: [BREWA_3V3_SRC], load_side: BREWA_3V3, test_points: [TP530], links: [R543], what: "3.3 V feed of the brew-path analogue header: +3V3 through the PTC F523 to the test point and link R543, then pin 2 or 1 of J524; the PTC and the link are the only parts on the source side"}
+  - {name: SPAN2_3V3, source_sides: [SPAN2_3V3_SRC], load_side: SPAN2_3V3, test_points: [TP532], links: [R544], what: "3.3 V feed of the second spare analogue header: +3V3 through the PTC F524 to the test point and link R544, then pin 2 or 1 of J525; the PTC and the link are the only parts on the source side"}
+producer_only: []
+key_signals:
+  - {name: "Carried: filter capacitors C501 C502 C503 C520 C522 C523 C524 C570 C571 (row M6)", net: "", test_point: "", block: "Before mains: LCR meter and the charge-time method at the working voltage; each from 80 pF to 59.5 nF. Limit and source: open-items.md, Bring-up measurements carried."}
+  - {name: "Carried: sensor 3.3 V feed capacitance and plug-in dip (row M13)", net: "STMD_3V3", test_point: "TP523", block: "LCR meter at each sensor header feed pin with the sensor connected; scope on +3V3 (TP302) and on the feed (TP523, TP526, TP528, TP530, TP532) at plug-in: +3V3 stays at or above 3.0 V and the feed charges through at most 2.67 A for at most 0.20 s. Limit and source: open-items.md, Bring-up measurements carried."}
+  - {name: "Carried: I2C bus far end (row M20)", net: "STM_SCL", test_point: "TP521", block: "Line capacitance at most 400 pF (LCR meter, sensor and cable connected, unpowered); on TP521, TP522, TP524 and TP525 rise time 30 to 70 percent at most 1000 ns and low level at most 0.4 V. Limit and source: open-items.md, Bring-up measurements carried."}
+  - {name: "Carried: flow meter output levels (row M21)", net: "FLOW_IN", test_point: "TP520", block: "Flow meter connected, flowing and stopped: low level at most 0.940 V, high level at least 2.52 V. Limit and source: open-items.md, Bring-up measurements carried."}
+  - {name: NTC_COF, net: NTC_COF, test_point: TP501, block: "coffee-block thermistor divider and filter (PC0)"}
+  - {name: NTC_STM, net: NTC_STM, test_point: TP502, block: "steam-block thermistor divider and filter (PC1)"}
+  - {name: NTC_WAND, net: NTC_WAND, test_point: TP503, block: "wand thermistor divider and filter (PC4)"}
+  - {name: FLOW_IN, net: FLOW_IN, test_point: TP520, block: "flow-meter input after the link or buffer (PC6)"}
+  - {name: STM_SCL, net: STM_SCL, test_point: TP521, block: "steam-path I2C clock (PB8)"}
+  - {name: STM_SDA, net: STM_SDA, test_point: TP522, block: "steam-path I2C data (PB9)"}
+  - {name: BREW_SCL, net: BREW_SCL, test_point: TP524, block: "brew-path I2C clock (PB10)"}
+  - {name: BREW_SDA, net: BREW_SDA, test_point: TP525, block: "brew-path I2C data (PB11)"}
+  - {name: STMP_AN, net: STMP_AN, test_point: TP527, block: "steam-path analogue fallback after scaling and filter (PC5)"}
+  - {name: BREW_AN, net: BREW_AN, test_point: TP529, block: "brew-path analogue fallback after scaling and filter (PA6)"}
+  - {name: SPARE_AN2, net: SPARE_AN2, test_point: TP531, block: "second spare analogue after scaling and filter (PA0)"}
+  - {name: CURR1_AN, net: CURR1_AN, test_point: TP570, block: "current sensor 1 after scaling and filter (PA2)"}
+  - {name: CURR2_AN, net: CURR2_AN, test_point: TP571, block: "current sensor 2 after scaling and filter (PA3)"}
+connector_pins:
+  - {pin: "J501.1", net: "NTC_COF_SENS", class: signal, why: "coffee block thermistor, divider node; the thermistor has no polarity"}
+  - {pin: "J501.2", net: "GND", class: ground, why: "thermistor return"}
+  - {pin: "J502.1", net: "NTC_STM_SENS", class: signal, why: "steam block thermistor, divider node; the thermistor has no polarity"}
+  - {pin: "J502.2", net: "GND", class: ground, why: "thermistor return"}
+  - {pin: "J503.1", net: "NTC_WAND_SENS", class: signal, why: "steam wand disc thermistor, divider node; the thermistor has no polarity"}
+  - {pin: "J503.2", net: "GND", class: ground, why: "thermistor return"}
+  - {pin: "J520.1", net: "+5V", class: power_leaving, why: "5 V supply of the flow meter (record: pin 1 VCC5); unfused; nothing can power the board through it"}
+  - {pin: "J520.2", net: "GND", class: ground, why: "flow-meter ground"}
+  - {pin: "J520.3", net: "FLOW_RAW", class: signal, why: "flow-meter pulse output, up to 5.25 V"}
+  - {pin: "J521.1", net: "STMD_3V3", class: power_leaving, why: "3.3 V supply of the digital pressure transducer through the PTC and link; nothing can power the board through it"}
+  - {pin: "J521.2", net: "GND", class: ground, why: "transducer ground"}
+  - {pin: "J521.3", net: "STM_SCL_X", class: signal, why: "I2C clock"}
+  - {pin: "J521.4", net: "STM_SDA_X", class: signal, why: "I2C data"}
+  - {pin: "J522.1", net: "BRWD_3V3", class: power_leaving, why: "3.3 V supply of the digital pressure transducer through the PTC and link; nothing can power the board through it"}
+  - {pin: "J522.2", net: "GND", class: ground, why: "transducer ground"}
+  - {pin: "J522.3", net: "BREW_SCL_X", class: signal, why: "I2C clock"}
+  - {pin: "J522.4", net: "BREW_SDA_X", class: signal, why: "I2C data"}
+  - {pin: "J523.1", net: "+5V", class: power_leaving, why: "5 V supply of an analogue sensor; unfused"}
+  - {pin: "J523.2", net: "SPAREA_3V3", class: power_leaving, why: "3.3 V supply of an analogue sensor through the PTC and link"}
+  - {pin: "J523.3", net: "GND", class: ground, why: "sensor ground"}
+  - {pin: "J523.4", net: "SPAREA_RAW", class: signal, why: "analogue sensor output, up to 5.5 V"}
+  - {pin: "J524.1", net: "+5V", class: power_leaving, why: "5 V supply of an analogue sensor; unfused"}
+  - {pin: "J524.2", net: "BREWA_3V3", class: power_leaving, why: "3.3 V supply of an analogue sensor through the PTC and link"}
+  - {pin: "J524.3", net: "GND", class: ground, why: "sensor ground"}
+  - {pin: "J524.4", net: "BREWA_RAW", class: signal, why: "analogue sensor output, up to 5.5 V"}
+  - {pin: "J525.1", net: "+5V", class: power_leaving, why: "5 V supply of an analogue sensor; unfused"}
+  - {pin: "J525.2", net: "SPAN2_3V3", class: power_leaving, why: "3.3 V supply of an analogue sensor through the PTC and link"}
+  - {pin: "J525.3", net: "GND", class: ground, why: "sensor ground"}
+  - {pin: "J525.4", net: "SPAN2_RAW", class: signal, why: "analogue sensor output, up to 5.5 V"}
+  - {pin: "J570.1", net: "+5V", class: power_leaving, why: "5 V supply of the current sensor; unfused"}
+  - {pin: "J570.2", net: "CURR1_SIG", class: signal, why: "current sensor output"}
+  - {pin: "J570.3", net: "GND", class: ground, why: "current sensor return"}
+  - {pin: "J571.1", net: "+5V", class: power_leaving, why: "5 V supply of the current sensor; unfused"}
+  - {pin: "J571.2", net: "CURR2_SIG", class: signal, why: "current sensor output"}
+  - {pin: "J571.3", net: "GND", class: ground, why: "current sensor return"}
+first_power: []   # no supply input in this work package: every power pin of its headers leaves the board; a sensor with a supply of its own does not power the board through a signal pin
+rail_loads:
+  - {rail: "+3V3A", current_a: 0.0011, condition: "three thermistor dividers with every thermistor shorted at 3.6 V over the lowest top resistor (9.855 k): 3 x 3.6 / 9.855 k", source: "C_front_ends.py arithmetic; resistors UNI-ROYAL Feb.12 2019 V.3, tolerance per constraints record C25804"}
+  - {rail: "+3V3A", current_a: 0.00482, condition: "fault only: three thermistor leads cross-shorted at 5.25 V through the BAT54S clamps, 3 x 1.61 mA (rail at 3.3 V)", source: "circuit-proof/C_ntc_cof_clamp.log"}
+  - {rail: "+3V3", current_a: 0.0004, condition: "flow-meter pull-up R520 with the meter low at 3.6 V over 9.855 k, plus the 0.15 mA of a push-pull 5.125 V output through it", source: "C_front_ends.py; circuit-proof/C_flow_pp.cir"}
+  - {rail: "+3V3", current_a: 0.0066, condition: "four I2C pull-ups all low at 3.6 V over the lowest pull-up (2.178 k) less the 0.4 V low level: 4 x (3.6 - 0.4) / 2.178 k", source: "UM10204 Rev 7.0 Table 10; C_front_ends.py"}
+  - {rail: "+3V3", current_a: 0.006, condition: "two digital pressure transducers, 3 mA operating each (maker's page, XDB401 family, operating current at most 3 mA, read 2026-10-29)", source: "https://xdbsensor.com/product/xdb401-pro-ss316l-pressure-transducer-for-coffee-machine/"}
+  - {rail: "+3V3", current_a: 0.24, condition: "worst case if all three analogue headers' 3.3 V feeds are loaded to the PTC hold current at 70 degC (3 x 0.08 A) when 3.3 V sensors are fitted; the sensors are not chosen, so this is the feed's capacity and not a measured load", source: "Bourns MF-NSMF012 thermal derating chart"}
+  - {rail: "+5V", current_a: 0.015, condition: "flow meter, the record's assumption, unread", source: "controller-board-division.md assumption A28 (flow_ma = 15 mA; no sheet read)"}
+  - {rail: "+5V", current_a: 0.02, condition: "two current sensors at 10 mA each, the record's assumption, unread", source: "controller-board-division.md assumption A28 (sense_ma = 10 mA; no sheet read)"}
+  - {rail: "+5V", current_a: 0.03, condition: "three analogue-header 5V pins, unfused: if 5 V sensors are fitted, at 10 mA each by the same assumption (the pressure transducer figure of A28)", source: "controller-board-division.md assumption A28 (pressure_ma = 10 mA; no sheet read)"}

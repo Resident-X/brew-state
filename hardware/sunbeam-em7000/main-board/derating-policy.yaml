@@ -1,0 +1,198 @@
+# The derating policy of the Sunbeam EM7000 main board, read by the pre-order board check
+# (the derated-voltage rule reads each class's voltage share) and by the schematic review
+# (DERATE-1 and DERATE-2 read all three shares of a class).
+#
+# Adopted by the owner on 2026-10-29 ("agree, proceed") as proposed in schematic-spec.yaml
+# under derating_policy_proposed. The factors are those of NASA Goddard Space Flight Center,
+# EEE Parts Derating, Preferred Reliability Practice PD-ED-1201, Table 1, which the free
+# published copy states in full (https://klabs.org/DEI/References/design_guidelines/design_series/1201.pdf,
+# no date printed, read 2026-10-29). The proposal's factors match Table 1 row for row; no
+# other published source was found that differs.
+#
+# What a share means here. A share is the fraction of the part's rating that the stress may
+# use, so 0.6 on voltage is 60 % of the rated voltage. The 'power' share is the share of
+# rated power, or of rated current for the class whose Table 1 row states current. Table 1
+# states a figure for some quantities of a class and none for others. A quantity it states
+# no figure for takes the share 1, which means the maker's rating is the limit and the
+# policy adds no margin to it; each such source says so. Temperature is stated by the
+# table as a highest junction temperature (110 degC for semiconductor devices, 100 degC
+# for microcircuits) or as 60 % of the rated temperature (inductive devices). The
+# junction caps are carried here as the share of 125 degC, the lowest rated junction
+# maximum among the integrated circuits and semiconductors on this board (the controller,
+# the regulator, the supervisor, the TVS and Schottky diodes), so 110 degC is 0.88;
+# DERATE-2 holds a part to the absolute cap, 110 degC for both classes, at the
+# enclosure air plus the part's own rise.
+#
+# Relaxed by the owner on 2026-10-29 ('adopt'), for this hobbyist project, in three ways
+# against Table 1: (1) an integrated circuit run within its maker's recommended supply
+# range takes the voltage share 1 (Table 1: 0.8), so the check compares the applied voltage
+# to the maker's absolute maximum; (2) the junction cap for integrated circuits is 110 degC,
+# share 0.88 (Table 1: 100 degC, 0.8), the same as semiconductor devices; (3) the relay and
+# connector class takes the current share 1 (Table 1: 0.5), so relay contacts are held to the
+# maker's rating.
+#
+# Enclosure air: 70 degC is assumed at every part until the bring-up measurement of the
+# machine's real enclosure air; the assumption stands in the source below.
+#
+# Classes the board uses that Table 1 has no row for: fuses, resettable fuses, the varistor,
+# crystals and oscillators, thermistors, the switch, jumpers and links, test points, and the
+# mains-rated, safety-listed parts (the X2 capacitors, relay contacts, tabs and fuse clips).
+# The owner (a hobbyist project) accepted on 2026-10-29 ("agree, proceed") that for these the
+# maker's rating is the limit: each of the nine classes after the Table 1 classes below takes
+# the share 1 on voltage, power and temperature, adds no margin of its own, and says so in its
+# source lines. Where the maker states the rating the figure is the maker's, from the datasheet
+# the parts specification and the sheets cite; where the maker states none the part is held to
+# no voltage figure and its class in the parts specification is none. Relay contacts keep the
+# relay and connector class, whose Table 1 row already sets the voltage share 1.
+source: NASA Goddard Space Flight Center, EEE Parts Derating, Preferred Reliability Practice PD-ED-1201, Table 1 (https://klabs.org/DEI/References/design_guidelines/design_series/1201.pdf, no date printed, read 2026-10-29); adopted by the owner on 2026-10-29 as the proposal in schematic-spec.yaml derating_policy_proposed; for the classes Table 1 has no row for (fuse, resettable fuse, varistor, crystal and oscillator, thermistor, switch, jumper and link, test point, mains-rated safety part) the maker's rating is the limit, share 1, as the owner accepted on 2026-10-29 (hobbyist project, "agree, proceed"); relaxed by the owner on 2026-10-29 (hobbyist project, 'adopt') in three ways against Table 1, namely integrated circuit voltage share 1 instead of 0.8 (an integrated circuit within its maker's recommended supply range needs no further voltage derating), integrated circuit junction cap 110 degC (share 0.88) instead of 100 degC (0.8), and relay and connector current share 1 instead of 0.5 (relay contacts held to the maker's rating); enclosure air assumed at 70 degC until measured at bring-up
+classes:
+  - class: capacitor
+    voltage:
+      share: 0.6
+      source: PD-ED-1201 Table 1, Capacitors, max of 60 % of rated voltage
+    power:
+      share: 1
+      source: PD-ED-1201 Table 1 states no power or current factor for capacitors, so the maker's rating (ripple current at the temperature) is the limit
+    temperature:
+      share: 1
+      source: PD-ED-1201 Table 1 states no temperature factor for capacitors, so the maker's rated temperature, with its curve, is the limit
+  - class: resistor
+    voltage:
+      share: 1
+      source: PD-ED-1201 Table 1 states no voltage factor for resistors, so the maker's rated working voltage is the limit
+    power:
+      share: 0.6
+      source: PD-ED-1201 Table 1, Resistors, max of 60 % of rated power
+    temperature:
+      share: 1
+      source: PD-ED-1201 Table 1 states no temperature factor for resistors, so the maker's power-versus-temperature curve at the 70 degC enclosure air is the limit
+  - class: semiconductor
+    voltage:
+      share: 0.75
+      source: PD-ED-1201 Table 1, Semiconductor Devices, max of 75 % of rated voltage
+    power:
+      share: 0.5
+      source: PD-ED-1201 Table 1, Semiconductor Devices, max of 50 % of rated power
+    temperature:
+      share: 0.88
+      source: PD-ED-1201 Table 1, Semiconductor Devices, max junction temperature of 110 degC, carried as 110/125 of the lowest rated junction maximum on the board; the owner adopted the same 110 degC cap for integrated circuits on 2026-10-29
+  - class: integrated circuit
+    voltage:
+      share: 1
+      source: PD-ED-1201 Table 1, Microcircuits, states max supply voltage of 80 % of rated voltage; the owner relaxed it on 2026-10-29 (hobbyist project, 'adopt'), so an integrated circuit run within its maker's recommended supply range needs no further voltage derating and the check compares the applied voltage to the maker's absolute maximum at share 1
+    power:
+      share: 0.75
+      source: PD-ED-1201 Table 1, Microcircuits, max of 75 % of rated power
+    temperature:
+      share: 0.88
+      source: PD-ED-1201 Table 1, Microcircuits, states a max junction temperature of 100 degC; the owner adopted 110 degC on 2026-10-29 (hobbyist project, 'adopt'), carried as 110/125 of the lowest rated junction maximum on the board
+  - class: inductive device
+    voltage:
+      share: 0.5
+      source: PD-ED-1201 Table 1, Inductive Devices, max of 50 % of rated voltage
+    power:
+      share: 1
+      source: PD-ED-1201 Table 1 states no power or current factor for inductive devices, so the maker's rated current is the limit
+    temperature:
+      share: 0.6
+      source: PD-ED-1201 Table 1, Inductive Devices, max of 60 % of rated temperature
+  - class: relay and connector
+    voltage:
+      share: 1
+      source: PD-ED-1201 Table 1 states no voltage factor for relays and connectors, so the maker's rated voltage is the limit
+    power:
+      share: 1
+      source: PD-ED-1201 Table 1, Relays and Connectors, states max of 50 % of rated current; the owner relaxed it on 2026-10-29 (hobbyist project, 'adopt'), so relay contacts and connectors are held to the maker's rating
+    temperature:
+      share: 1
+      source: PD-ED-1201 Table 1 states no temperature factor for relays and connectors, so the maker's rated temperature is the limit
+  - class: fuse
+    voltage:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for fuses, so the maker's voltage and current rating is the limit; the owner accepted that on 2026-10-29
+    power:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for fuses, so the maker's rated current or power is the limit; the owner accepted that on 2026-10-29
+    temperature:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for fuses, so the maker's rated temperature is the limit; the owner accepted that on 2026-10-29
+  - class: resettable fuse
+    voltage:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for resettable (polymeric PTC) fuses, so the maker's maximum voltage and hold current is the limit; the owner accepted that on 2026-10-29
+    power:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for resettable (polymeric PTC) fuses, so the maker's rated current or power is the limit; the owner accepted that on 2026-10-29
+    temperature:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for resettable (polymeric PTC) fuses, so the maker's rated operating temperature is the limit; the owner accepted that on 2026-10-29
+  - class: varistor
+    voltage:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for varistors, so the maker's maximum continuous voltage is the limit; the owner accepted that on 2026-10-29
+    power:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for varistors, so the maker's rated current or power is the limit; the owner accepted that on 2026-10-29
+    temperature:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for varistors, so the maker's rated operating temperature is the limit; the owner accepted that on 2026-10-29
+  - class: crystal and oscillator
+    voltage:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for crystals and oscillators, so the maker's supply and drive-level figures is the limit; the owner accepted that on 2026-10-29
+    power:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for crystals and oscillators, so the maker's rated current or power is the limit; the owner accepted that on 2026-10-29
+    temperature:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for crystals and oscillators, so the maker's rated temperature range is the limit; the owner accepted that on 2026-10-29
+  - class: thermistor
+    voltage:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for thermistors, so the maker's maximum voltage and current is the limit; the owner accepted that on 2026-10-29
+    power:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for thermistors, so the maker's rated current or power is the limit; the owner accepted that on 2026-10-29
+    temperature:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for thermistors, so the maker's rated operating temperature is the limit; the owner accepted that on 2026-10-29
+  - class: switch
+    voltage:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for switches, so the maker's contact voltage and current rating is the limit; the owner accepted that on 2026-10-29
+    power:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for switches, so the maker's rated current or power is the limit; the owner accepted that on 2026-10-29
+    temperature:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for switches, so the maker's rated operating temperature is the limit; the owner accepted that on 2026-10-29
+  - class: jumper and link
+    voltage:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for jumpers and links, so the maker's voltage and current rating is the limit; the owner accepted that on 2026-10-29
+    power:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for jumpers and links, so the maker's rated current or power is the limit; the owner accepted that on 2026-10-29
+    temperature:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for jumpers and links, so the maker's rated operating temperature is the limit; the owner accepted that on 2026-10-29
+  - class: test point
+    voltage:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for test points, so the maker's voltage and current rating is the limit; the owner accepted that on 2026-10-29
+    power:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for test points, so the maker's rated current or power is the limit; the owner accepted that on 2026-10-29
+    temperature:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for test points, so the maker's rated operating temperature is the limit; the owner accepted that on 2026-10-29
+  - class: mains-rated safety part
+    voltage:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for mains-rated, safety-listed parts (X2 capacitors, relay contacts, tabs, fuse clips), so the maker's rated mains voltage and current is the limit; the owner accepted that on 2026-10-29
+    power:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for mains-rated, safety-listed parts (X2 capacitors, relay contacts, tabs, fuse clips), so the maker's rated current or power is the limit; the owner accepted that on 2026-10-29
+    temperature:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for mains-rated, safety-listed parts (X2 capacitors, relay contacts, tabs, fuse clips), so the maker's rated operating temperature is the limit; the owner accepted that on 2026-10-29

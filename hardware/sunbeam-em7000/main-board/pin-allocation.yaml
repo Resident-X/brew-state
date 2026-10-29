@@ -1,0 +1,305 @@
+# The pin allocation record of the Sunbeam EM7000 main board, read by the pre-order board
+# check (connectivity and pin_allocation rules).
+#
+# Every channel is a used port pin of the STM32H743VIT6 (U401, LQFP100) with the net it
+# drives, taken from controller-pin-table.md (DS12110 Rev 11 Table 9, LQFP100 column, read
+# 2026-10-29) and checked pin by pin against sheets/31-controller.yaml. The 22 port pins
+# that table leaves unconnected are not listed: they carry no net. A channel is named for
+# its net, lower case. A net local to a sheet is written with its sheet path, as KiCad
+# names it; a global net is written plain.
+#
+# A connector and connector pin are given only where the controller net itself lands on
+# a connector pin, which is what the check compares: J401 (serial-wire debug), J402 (USB
+# panel cable), J821 (operator panel), J861 (knob microswitches) and J862 (tank reed).
+# Every other controller net reaches its cable through a series part, a divider or a
+# buffer, so its channel stays on the board and is held to its controller pin alone.
+# Each remaining connected pin of the five named connectors is listed as a rail entry
+# (the check requires every connected pin of a named connector to be listed); a rail
+# entry's channel is a label and its net is held to its connector pin. J401 pin 10 is
+# listed as the rail entry NRST because NRST is not a port pin and so has no
+# controller_pin to give.
+#
+# No firmware_channel or firmware_sensor key is written: no source maps the firmware's
+# channel enumerations to these nets.
+channels:
+  - channel: key1
+    net: KEY1
+    controller_pin: PE2
+    connector: J821
+    connector_pin: '3'
+  - channel: key2
+    net: KEY2
+    controller_pin: PE3
+    connector: J821
+    connector_pin: '4'
+  - channel: key3
+    net: KEY3
+    controller_pin: PE4
+    connector: J821
+    connector_pin: '5'
+  - channel: key4
+    net: KEY4
+    controller_pin: PE5
+    connector: J821
+    connector_pin: '6'
+  - channel: key5
+    net: KEY5
+    controller_pin: PE6
+    connector: J821
+    connector_pin: '8'
+  - channel: lse_in
+    net: '/Controller/LSE_IN'
+    controller_pin: PC14
+  - channel: lse_out
+    net: '/Controller/LSE_OUT'
+    controller_pin: PC15
+  - channel: hse_in
+    net: '/Controller/HSE_IN'
+    controller_pin: PH0
+  - channel: hse_out
+    net: '/Controller/HSE_OUT'
+    controller_pin: PH1
+  - channel: ntc_cof
+    net: NTC_COF
+    controller_pin: PC0
+  - channel: ntc_stm
+    net: NTC_STM
+    controller_pin: PC1
+  - channel: spare_an2
+    net: SPARE_AN2
+    controller_pin: PA0
+  - channel: curr1_an
+    net: CURR1_AN
+    controller_pin: PA2
+  - channel: curr2_an
+    net: CURR2_AN
+    controller_pin: PA3
+  - channel: brew_an
+    net: BREW_AN
+    controller_pin: PA6
+  - channel: ntc_wand
+    net: NTC_WAND
+    controller_pin: PC4
+  - channel: stmp_an
+    net: STMP_AN
+    controller_pin: PC5
+  - channel: tank_level
+    net: TANK_LEVEL
+    controller_pin: PE12
+    connector: J862
+    connector_pin: '2'
+  - channel: knob_hot
+    net: KNOB_HOT
+    controller_pin: PE13
+    connector: J861
+    connector_pin: '1'
+  - channel: knob_steam
+    net: KNOB_STEAM
+    controller_pin: PE14
+    connector: J861
+    connector_pin: '3'
+  - channel: mains_pres_c
+    net: MAINS_PRES_C
+    controller_pin: PE15
+  - channel: brew_scl
+    net: BREW_SCL
+    controller_pin: PB10
+  - channel: brew_sda
+    net: BREW_SDA
+    controller_pin: PB11
+  - channel: pt1_cs
+    net: PT1_CS
+    controller_pin: PB12
+  - channel: spi2_sck
+    net: SPI2_SCK
+    controller_pin: PB13
+  - channel: spi2_miso
+    net: SPI2_MISO
+    controller_pin: PB14
+  - channel: spi2_mosi
+    net: SPI2_MOSI
+    controller_pin: PB15
+  - channel: pt2_cs
+    net: PT2_CS
+    controller_pin: PD8
+  - channel: amc_cs
+    net: AMC_CS
+    controller_pin: PD9
+  - channel: amc_drdy
+    net: AMC_DRDY
+    controller_pin: PD10
+  - channel: amc_reset
+    net: AMC_RESET
+    controller_pin: PD11
+  - channel: gauge_step1
+    net: GAUGE_STEP1
+    controller_pin: PD14
+  - channel: gauge_step2
+    net: GAUGE_STEP2
+    controller_pin: PD15
+  - channel: flow_in
+    net: FLOW_IN
+    controller_pin: PC6
+  - channel: pol_out
+    net: POL_OUT
+    controller_pin: PC7
+  - channel: wt1_data
+    net: WT1_DATA
+    controller_pin: PC8
+  - channel: wt1_clk
+    net: WT1_CLK
+    controller_pin: PC9
+  - channel: pump_s_gate
+    net: PUMP_S_GATE
+    controller_pin: PA8
+  - channel: pump_c_gate
+    net: PUMP_C_GATE
+    controller_pin: PA9
+  - channel: zc_in
+    net: ZC_IN
+    controller_pin: PA10
+  - channel: usb_dm
+    net: '/Controller/USB_DM'
+    controller_pin: PA11
+    connector: J402
+    connector_pin: '2'
+  - channel: usb_dp
+    net: '/Controller/USB_DP'
+    controller_pin: PA12
+    connector: J402
+    connector_pin: '1'
+  - channel: swdio
+    net: '/Controller/SWDIO'
+    controller_pin: PA13
+    connector: J401
+    connector_pin: '2'
+  - channel: swclk
+    net: '/Controller/SWCLK'
+    controller_pin: PA14
+    connector: J401
+    connector_pin: '4'
+  - channel: wt2_data
+    net: WT2_DATA
+    controller_pin: PC11
+  - channel: wt2_clk
+    net: WT2_CLK
+    controller_pin: PC12
+  - channel: gauge_dir1
+    net: GAUGE_DIR1
+    controller_pin: PD0
+  - channel: gauge_dir2
+    net: GAUGE_DIR2
+    controller_pin: PD1
+  - channel: heat_c_drv
+    net: HEAT_C_DRV
+    controller_pin: PD2
+  - channel: heat_s_drv
+    net: HEAT_S_DRV
+    controller_pin: PD3
+  - channel: valve_2w_drv
+    net: VALVE_2W_DRV
+    controller_pin: PD4
+  - channel: valve_3w_drv
+    net: VALVE_3W_DRV
+    controller_pin: PD5
+  - channel: gauge_rst
+    net: GAUGE_RST
+    controller_pin: PD6
+  - channel: mains_pres_s
+    net: MAINS_PRES_S
+    controller_pin: PD7
+  - channel: swo
+    net: '/Controller/SWO'
+    controller_pin: PB3
+    connector: J401
+    connector_pin: '6'
+  - channel: anode_gate
+    net: ANODE_GATE
+    controller_pin: PB5
+  - channel: stm_scl
+    net: STM_SCL
+    controller_pin: PB8
+  - channel: stm_sda
+    net: STM_SDA
+    controller_pin: PB9
+  - channel: lowwater_k
+    net: LOWWATER_K
+    controller_pin: PE0
+  - channel: buzzer
+    net: BUZZER
+    controller_pin: PE1
+  - channel: j401_1_dbg_vtref
+    net: '/Controller/DBG_VTREF'
+    rail: DBG_VTREF
+    connector: J401
+    connector_pin: '1'
+  - channel: j401_3_gnd
+    net: GND
+    rail: GND
+    connector: J401
+    connector_pin: '3'
+  - channel: j401_5_gnd
+    net: GND
+    rail: GND
+    connector: J401
+    connector_pin: '5'
+  - channel: j401_9_gnd
+    net: GND
+    rail: GND
+    connector: J401
+    connector_pin: '9'
+  - channel: j401_10_nrst
+    net: NRST
+    rail: NRST
+    connector: J401
+    connector_pin: '10'
+  - channel: j402_3_gnd
+    net: GND
+    rail: GND
+    connector: J402
+    connector_pin: '3'
+  - channel: j402_4_usb_shield
+    net: '/Controller/USB_SHIELD'
+    rail: USB_SHIELD
+    connector: J402
+    connector_pin: '4'
+  - channel: j402_5_usb_vbus
+    net: '/Controller/USB_VBUS'
+    rail: USB_VBUS
+    connector: J402
+    connector_pin: '5'
+  - channel: j821_1_buzzer_p
+    net: '/Operator panel and indicators/BUZZER_P'
+    rail: BUZZER_P
+    connector: J821
+    connector_pin: '1'
+  - channel: j821_2_buzzer_n
+    net: '/Operator panel and indicators/BUZZER_N'
+    rail: BUZZER_N
+    connector: J821
+    connector_pin: '2'
+  - channel: j821_7_anode_rail
+    net: ANODE_RAIL
+    rail: ANODE_RAIL
+    connector: J821
+    connector_pin: '7'
+  - channel: j821_9_gnd
+    net: GND
+    rail: GND
+    connector: J821
+    connector_pin: '9'
+  - channel: j861_2_gnd
+    net: GND
+    rail: GND
+    connector: J861
+    connector_pin: '2'
+  - channel: j861_4_gnd
+    net: GND
+    rail: GND
+    connector: J861
+    connector_pin: '4'
+  - channel: j862_1_gnd
+    net: GND
+    rail: GND
+    connector: J862
+    connector_pin: '1'

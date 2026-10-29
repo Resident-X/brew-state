@@ -1,0 +1,812 @@
+# The catalogue extract of the Sunbeam EM7000 main board: one entry for each distinct LCSC
+# catalogue number parts-specification.yaml gives a position, 98 numbers, read from JLCPCB's
+# parts library on 2026-10-29 (about 14:00 to 14:55 local time) through the search service the
+# library's own page uses, https://jlcpcb.com/api/overseas-pcb-order/v1/shoppingCart/smtGood/
+# selectSmtComponentList/v2, one keyword search for each number, every number matched exactly.
+#
+# library_class: the service's component library type, base as basic, expand as extended,
+#   and preferred where the service flags the part preferred. It agrees with the catalogue
+#   class the schematic sheets carry for every number.
+# stock: the service's stock count for the number at the time of reading, as a whole number.
+#   C899826 (onsemi MOC3052SVM, positions U701 and U711) was read later the same day,
+#   with the same search service and the same exact match, when C8965 (onsemi MOC3052M,
+#   through-hole) had shown 0 in this extract's first reading: the extract's entry for C8965
+#   is removed since no position uses it now. The MOC3052SR2VM, C899825, tape and reel,
+#   showed stock 1383, extended, 0.8058 USD at 1 to 9 on that reading; no position uses it.
+# unit_price: US dollars for one unit at the quantity tier of 1 to 9 pieces, the price the
+#   service lists for the first tier.
+# lifecycle: the library's search record carries no lifecycle field and no maker lifecycle
+#   page was read, so every entry states no source publishes one, with the source naming
+#   what was looked at. It is not a finding that the part is active.
+#
+# The 98 positions whose catalogue number is "none" (test points, owner-fitted links,
+# hand-fitted wire) have no catalogue entry to read; the check as written looks every
+# position's number up, so it does not find "none" here.
+read_on: 2026-10-29
+max_age_days: 14
+source: JLCPCB parts library search service (jlcpcb.com/api/overseas-pcb-order/v1/shoppingCart/smtGood/selectSmtComponentList/v2), read 2026-10-29
+entries:
+  - lcsc: C1588
+    library_class: basic
+    stock: 5273376
+    unit_price: 0.0098
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C1589
+    library_class: extended
+    stock: 2085736
+    unit_price: 0.0075
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C1591
+    library_class: extended
+    stock: 1016660
+    unit_price: 0.0077
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C1622
+    library_class: basic
+    stock: 952844
+    unit_price: 0.0059
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C1648
+    library_class: basic
+    stock: 1971955
+    unit_price: 0.0069
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C1669
+    library_class: preferred
+    stock: 608302
+    unit_price: 0.0054
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C2128
+    library_class: basic
+    stock: 2832459
+    unit_price: 0.0128
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C2337
+    library_class: extended
+    stock: 64801
+    unit_price: 0.1594
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C3131
+    library_class: extended
+    stock: 85371
+    unit_price: 0.0847
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C3790
+    library_class: extended
+    stock: 40543
+    unit_price: 0.0911
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C4184
+    library_class: basic
+    stock: 6594805
+    unit_price: 0.0021
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C4190
+    library_class: basic
+    stock: 5706092
+    unit_price: 0.0018
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C7519
+    library_class: extended
+    stock: 40809
+    unit_price: 0.1798
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C8852
+    library_class: extended
+    stock: 101199
+    unit_price: 0.1478
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C10425
+    library_class: extended
+    stock: 49321
+    unit_price: 0.0728
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C14663
+    library_class: basic
+    stock: 39446122
+    unit_price: 0.0081
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C15127
+    library_class: basic
+    stock: 962733
+    unit_price: 0.096
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C15849
+    library_class: basic
+    stock: 12685072
+    unit_price: 0.0146
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C15850
+    library_class: basic
+    stock: 8533351
+    unit_price: 0.0438
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C17313
+    library_class: extended
+    stock: 119079
+    unit_price: 0.0919
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C17888
+    library_class: basic
+    stock: 1833131
+    unit_price: 0.0085
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C17901
+    library_class: basic
+    stock: 2414683
+    unit_price: 0.0059
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C17924
+    library_class: preferred
+    stock: 197344
+    unit_price: 0.0055
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C17927
+    library_class: basic
+    stock: 3613759
+    unit_price: 0.0042
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C18002
+    library_class: extended
+    stock: 122758
+    unit_price: 0.0057
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C19666
+    library_class: basic
+    stock: 3081849
+    unit_price: 0.0169
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C19702
+    library_class: basic
+    stock: 12311179
+    unit_price: 0.0212
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C20917
+    library_class: basic
+    stock: 1161403
+    unit_price: 0.089
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C21107
+    library_class: extended
+    stock: 181230
+    unit_price: 0.0336
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C21189
+    library_class: basic
+    stock: 21334455
+    unit_price: 0.0022
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C21190
+    library_class: basic
+    stock: 32606041
+    unit_price: 0.0017
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C22775
+    library_class: basic
+    stock: 10041479
+    unit_price: 0.0023
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C22967
+    library_class: basic
+    stock: 756450
+    unit_price: 0.0028
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C23138
+    library_class: basic
+    stock: 3571960
+    unit_price: 0.002
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C23140
+    library_class: basic
+    stock: 4376895
+    unit_price: 0.0024
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C23185
+    library_class: basic
+    stock: 1448420
+    unit_price: 0.0021
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C23190
+    library_class: extended
+    stock: 8299
+    unit_price: 0.0026
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C23241
+    library_class: preferred
+    stock: 340968
+    unit_price: 0.0035
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C23254
+    library_class: basic
+    stock: 1105149
+    unit_price: 0.0027
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C23630
+    library_class: basic
+    stock: 2951030
+    unit_price: 0.0122
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C25803
+    library_class: basic
+    stock: 18213936
+    unit_price: 0.0029
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C25804
+    library_class: basic
+    stock: 37721423
+    unit_price: 0.0022
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C31850
+    library_class: basic
+    stock: 2997151
+    unit_price: 0.0042
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C32346
+    library_class: basic
+    stock: 456531
+    unit_price: 0.171
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C35218
+    library_class: extended
+    stock: 10470
+    unit_price: 0.0328
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C45961
+    library_class: extended
+    stock: 60750
+    unit_price: 0.088
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C47546
+    library_class: extended
+    stock: 243674
+    unit_price: 0.0282
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C48502
+    library_class: extended
+    stock: 2360
+    unit_price: 0.0218
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C49257
+    library_class: extended
+    stock: 181983
+    unit_price: 0.0284
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C57369
+    library_class: extended
+    stock: 13432
+    unit_price: 0.0711
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C85980
+    library_class: extended
+    stock: 37448
+    unit_price: 0.0202
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C91370
+    library_class: extended
+    stock: 3825
+    unit_price: 1.618
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C92811
+    library_class: extended
+    stock: 48712
+    unit_price: 0.1168
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C97946
+    library_class: extended
+    stock: 68383
+    unit_price: 0.2773
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C105936
+    library_class: extended
+    stock: 2458
+    unit_price: 0.0182
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C106858
+    library_class: extended
+    stock: 174413
+    unit_price: 0.0235
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C107198
+    library_class: extended
+    stock: 48079
+    unit_price: 0.0318
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C108051
+    library_class: extended
+    stock: 8276
+    unit_price: 0.1363
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C108437
+    library_class: extended
+    stock: 223990
+    unit_price: 0.0171
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C114409
+    library_class: extended
+    stock: 7584
+    unit_price: 10.689
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C115962
+    library_class: basic
+    stock: 235956
+    unit_price: 0.2464
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C118474
+    library_class: extended
+    stock: 14453
+    unit_price: 4.5576
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C131334
+    library_class: extended
+    stock: 157242
+    unit_price: 0.0456
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C132016
+    library_class: extended
+    stock: 46092
+    unit_price: 0.1928
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C141723
+    library_class: extended
+    stock: 534450
+    unit_price: 0.0109
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C157968
+    library_class: extended
+    stock: 10489
+    unit_price: 0.1402
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C163517
+    library_class: extended
+    stock: 89041
+    unit_price: 0.038
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C165623
+    library_class: extended
+    stock: 729
+    unit_price: 0.0849
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C170182
+    library_class: extended
+    stock: 158217
+    unit_price: 0.1578
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C179399
+    library_class: extended
+    stock: 3614
+    unit_price: 0.0405
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C207260
+    library_class: extended
+    stock: 7987
+    unit_price: 0.1836
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C256462
+    library_class: extended
+    stock: 4745
+    unit_price: 0.8549
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C318884
+    library_class: basic
+    stock: 1127410
+    unit_price: 0.0207
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C436096
+    library_class: extended
+    stock: 25015
+    unit_price: 0.4668
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C459918
+    library_class: extended
+    stock: 1203
+    unit_price: 7.4628
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C489079
+    library_class: extended
+    stock: 419137
+    unit_price: 0.0384
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C491130
+    library_class: extended
+    stock: 12858
+    unit_price: 0.08
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C492401
+    library_class: extended
+    stock: 927590
+    unit_price: 0.0187
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C492404
+    library_class: extended
+    stock: 181147
+    unit_price: 0.0326
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C554579
+    library_class: extended
+    stock: 3
+    unit_price: 0.0988
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C819601
+    library_class: extended
+    stock: 200
+    unit_price: 1.0432
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C899826
+    library_class: extended
+    stock: 482
+    unit_price: 0.5814
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C2898948
+    library_class: extended
+    stock: 1787
+    unit_price: 0.0212
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C2937625
+    library_class: extended
+    stock: 761484
+    unit_price: 0.0199
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C2960835
+    library_class: extended
+    stock: 18239
+    unit_price: 0.0335
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C4248455
+    library_class: extended
+    stock: 2000
+    unit_price: 0.5831
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C4747957
+    library_class: extended
+    stock: 118504
+    unit_price: 0.0305
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C5126066
+    library_class: extended
+    stock: 7321
+    unit_price: 0.0336
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C5258885
+    library_class: extended
+    stock: 7117
+    unit_price: 0.0159
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C6280121
+    library_class: extended
+    stock: 2560
+    unit_price: 6.3885
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C6705483
+    library_class: extended
+    stock: 141123
+    unit_price: 0.5077
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C20626104
+    library_class: extended
+    stock: 14379
+    unit_price: 0.0374
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C22447847
+    library_class: extended
+    stock: 183
+    unit_price: 0.136
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C31423783
+    library_class: extended
+    stock: 82
+    unit_price: 9.8226
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C32713268
+    library_class: extended
+    stock: 167098
+    unit_price: 0.0155
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C32713270
+    library_class: extended
+    stock: 122236
+    unit_price: 0.0328
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C41376037
+    library_class: extended
+    stock: 39099
+    unit_price: 0.0978
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29
+  - lcsc: C42431798
+    library_class: extended
+    stock: 36161
+    unit_price: 0.016
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-10-29

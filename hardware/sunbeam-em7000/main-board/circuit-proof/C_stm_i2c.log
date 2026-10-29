@@ -1,0 +1,53 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: rise time and low level of stm_scl and stm_sda, standard-mode 100 kbit/s, 400 pf bus on the cable side then on the board side
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
++3v3                                       3.6
+stm_scl                               0.539132
+stm_scl_x                             0.400001
+sim_vol                                    0.4
+sim_drv                                      1
+vsim_drv#branch                              0
+vsim_vol#branch                     0.00137142
+vsim_v3v3#branch                   -0.00137142
+
+
+No. of Data Rows : 9046
+tr_mcu_hi_cable     =  7.85734e-07 targ=  2.09695e-05 trig=  2.01838e-05
+tr_sensor_hi_cable  =  7.85745e-07 targ=  2.10077e-05 trig=  2.02220e-05
+vlow_mcu_hi_cable   =  5.39132e-01
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
++3v3                                       3.6
+stm_scl                               0.539132
+stm_scl_x                             0.400001
+sim_vol                                    0.4
+sim_drv                                      1
+vsim_drv#branch                              0
+vsim_vol#branch                     0.00137142
+vsim_v3v3#branch                   -0.00137142
+
+
+No. of Data Rows : 9041
+tr_mcu_hi_board     =  7.56607e-07 targ=  2.09338e-05 trig=  2.01772e-05
+tr_sensor_hi_board  =  7.56619e-07 targ=  2.09370e-05 trig=  2.01804e-05
+vlow_mcu_hi_board   =  5.39132e-01
+Note: Simulation executed from .control section 

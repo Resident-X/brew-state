@@ -1,0 +1,64 @@
+sheet: "Gauge drive"
+function: "Octal buffer that lifts the five 3.3 V gauge control lines to 5 V logic for the retained stepper driver, and the gauge harness header SP2."
+parts:
+  - {"ref": "U791", "lib_id": "74xx:74HCT541", "value": "SN74HCT541PWR", "rating": "7 V absolute maximum VCC, octal buffer, TTL-level inputs (VIH 2 V), 5 V outputs, 4.5-5.5 V, TSSOP-20", "footprint": "Package_SO:TSSOP-20_4.4x6.5mm_P0.65mm", "mpn": "SN74HCT541PWR", "maker": "Texas Instruments", "lcsc": "C436096", "class": "extended", "hand": false, "function": "gauge control buffer", "mains": false, "sim_exclude": false}
+  - {"ref": "C791", "lib_id": "Device:C", "value": "100n", "rating": "10% X7R 50V 0603", "footprint": "Capacitor_SMD:C_0603_1608Metric", "mpn": "CC0603KRX7R9BB104", "maker": "YAGEO", "lcsc": "C14663", "class": "basic", "hand": false, "function": "supply decoupling of U791 (the TI sheet states no value: 100 nF per the family's practice, open item)", "mains": false, "sim_exclude": false}
+  - {"ref": "C792", "lib_id": "Device:C_Polarized", "value": "47u", "rating": "aluminium electrolytic 16 V +/-20 % 105 degC, SMD 5 x 5.4 mm", "footprint": "Capacitor_SMD:CP_Elec_5x5.4", "mpn": "RST47UF16V034", "maker": "KNSCHA", "lcsc": "C4747957", "class": "extended", "hand": false, "function": "latch-up capacitor of the retained gauge driver (22 uF asked): positive on +5V_GAUGE", "mains": false, "sim_exclude": false}
+  - {"ref": "JP791", "lib_id": "Connector_Generic:Conn_01x02", "value": "LINK", "rating": "1x2 2.54 mm header + shunt jumper, 3 A, not mains", "footprint": "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical", "mpn": "PH2.54-1X2P-H25 + 2.54 Short Circuit Cap Closed", "maker": "JXTCONN + BOOMELE", "lcsc": "C42431798", "class": "extended", "hand": false, "function": "isolating link between +5V and the gauge supply +5V_GAUGE", "mains": false, "sim_exclude": true, "extra_bom": [{"lcsc": "C100114", "qty": 1, "what": "shunt jumper, extended, per record class read 2026-10-29"}]}
+  - {"ref": "TP791", "lib_id": "Connector:TestPoint", "value": "TP", "rating": "test point", "footprint": "TestPoint:TestPoint_Pad_D1.5mm", "mpn": "", "maker": "", "lcsc": "", "class": "none", "hand": false, "function": "test point on +5V_GAUGE", "mains": false, "sim_exclude": true}
+  - {"ref": "J791", "lib_id": "Connector_Generic:Conn_01x09", "value": "SP2", "rating": "9-way 2.0 mm header JST B9B-PH-K-S, 2 A", "footprint": "Connector_JST:JST_PH_B9B-PH-K_1x09_P2.00mm_Vertical", "mpn": "B9B-PH-K-S(LF)(SN)", "maker": "JST", "lcsc": "C157968", "class": "extended", "hand": false, "function": "gauge assembly harness header", "mains": false, "sim_exclude": true}
+  - {"ref": "R791", "lib_id": "Device:R", "value": "100", "rating": "1% 100mW 75V 0603", "footprint": "Resistor_SMD:R_0603_1608Metric", "mpn": "0603WAF1000T5E", "maker": "UNI-ROYAL", "lcsc": "C22775", "class": "basic", "hand": false, "function": "output series resistor of GAUGE_RST (edge damping on the harness)", "mains": false, "sim_exclude": false}
+  - {"ref": "R796", "lib_id": "Device:R", "value": "1k", "rating": "1% 100mW 75V 0603", "footprint": "Resistor_SMD:R_0603_1608Metric", "mpn": "0603WAF1001T5E", "maker": "UNI-ROYAL", "lcsc": "C21190", "class": "basic", "hand": false, "function": "input series resistor of GAUGE_RST: limits the input clamp current into an unpowered buffer", "mains": false, "sim_exclude": false}
+  - {"ref": "R801", "lib_id": "Device:R", "value": "10k", "rating": "1% 100mW 75V 0603", "footprint": "Resistor_SMD:R_0603_1608Metric", "mpn": "0603WAF1002T5E", "maker": "UNI-ROYAL", "lcsc": "C25804", "class": "basic", "hand": false, "function": "input pull-down of GAUGE_RST: holds the line low while the controller pin floats", "mains": false, "sim_exclude": false}
+  - {"ref": "TP792", "lib_id": "Connector:TestPoint", "value": "TP", "rating": "test point", "footprint": "TestPoint:TestPoint_Pad_D1.5mm", "mpn": "", "maker": "", "lcsc": "", "class": "none", "hand": false, "function": "test point on GAUGE_RST", "mains": false, "sim_exclude": true}
+  - {"ref": "R792", "lib_id": "Device:R", "value": "100", "rating": "1% 100mW 75V 0603", "footprint": "Resistor_SMD:R_0603_1608Metric", "mpn": "0603WAF1000T5E", "maker": "UNI-ROYAL", "lcsc": "C22775", "class": "basic", "hand": false, "function": "output series resistor of GAUGE_STEP1 (edge damping on the harness)", "mains": false, "sim_exclude": false}
+  - {"ref": "R797", "lib_id": "Device:R", "value": "1k", "rating": "1% 100mW 75V 0603", "footprint": "Resistor_SMD:R_0603_1608Metric", "mpn": "0603WAF1001T5E", "maker": "UNI-ROYAL", "lcsc": "C21190", "class": "basic", "hand": false, "function": "input series resistor of GAUGE_STEP1: limits the input clamp current into an unpowered buffer", "mains": false, "sim_exclude": false}
+  - {"ref": "R802", "lib_id": "Device:R", "value": "10k", "rating": "1% 100mW 75V 0603", "footprint": "Resistor_SMD:R_0603_1608Metric", "mpn": "0603WAF1002T5E", "maker": "UNI-ROYAL", "lcsc": "C25804", "class": "basic", "hand": false, "function": "input pull-down of GAUGE_STEP1: holds the line low while the controller pin floats", "mains": false, "sim_exclude": false}
+  - {"ref": "TP793", "lib_id": "Connector:TestPoint", "value": "TP", "rating": "test point", "footprint": "TestPoint:TestPoint_Pad_D1.5mm", "mpn": "", "maker": "", "lcsc": "", "class": "none", "hand": false, "function": "test point on GAUGE_STEP1", "mains": false, "sim_exclude": true}
+  - {"ref": "R793", "lib_id": "Device:R", "value": "100", "rating": "1% 100mW 75V 0603", "footprint": "Resistor_SMD:R_0603_1608Metric", "mpn": "0603WAF1000T5E", "maker": "UNI-ROYAL", "lcsc": "C22775", "class": "basic", "hand": false, "function": "output series resistor of GAUGE_DIR1 (edge damping on the harness)", "mains": false, "sim_exclude": false}
+  - {"ref": "R798", "lib_id": "Device:R", "value": "1k", "rating": "1% 100mW 75V 0603", "footprint": "Resistor_SMD:R_0603_1608Metric", "mpn": "0603WAF1001T5E", "maker": "UNI-ROYAL", "lcsc": "C21190", "class": "basic", "hand": false, "function": "input series resistor of GAUGE_DIR1: limits the input clamp current into an unpowered buffer", "mains": false, "sim_exclude": false}
+  - {"ref": "R803", "lib_id": "Device:R", "value": "10k", "rating": "1% 100mW 75V 0603", "footprint": "Resistor_SMD:R_0603_1608Metric", "mpn": "0603WAF1002T5E", "maker": "UNI-ROYAL", "lcsc": "C25804", "class": "basic", "hand": false, "function": "input pull-down of GAUGE_DIR1: holds the line low while the controller pin floats", "mains": false, "sim_exclude": false}
+  - {"ref": "TP794", "lib_id": "Connector:TestPoint", "value": "TP", "rating": "test point", "footprint": "TestPoint:TestPoint_Pad_D1.5mm", "mpn": "", "maker": "", "lcsc": "", "class": "none", "hand": false, "function": "test point on GAUGE_DIR1", "mains": false, "sim_exclude": true}
+  - {"ref": "R794", "lib_id": "Device:R", "value": "100", "rating": "1% 100mW 75V 0603", "footprint": "Resistor_SMD:R_0603_1608Metric", "mpn": "0603WAF1000T5E", "maker": "UNI-ROYAL", "lcsc": "C22775", "class": "basic", "hand": false, "function": "output series resistor of GAUGE_STEP2 (edge damping on the harness)", "mains": false, "sim_exclude": false}
+  - {"ref": "R799", "lib_id": "Device:R", "value": "1k", "rating": "1% 100mW 75V 0603", "footprint": "Resistor_SMD:R_0603_1608Metric", "mpn": "0603WAF1001T5E", "maker": "UNI-ROYAL", "lcsc": "C21190", "class": "basic", "hand": false, "function": "input series resistor of GAUGE_STEP2: limits the input clamp current into an unpowered buffer", "mains": false, "sim_exclude": false}
+  - {"ref": "R804", "lib_id": "Device:R", "value": "10k", "rating": "1% 100mW 75V 0603", "footprint": "Resistor_SMD:R_0603_1608Metric", "mpn": "0603WAF1002T5E", "maker": "UNI-ROYAL", "lcsc": "C25804", "class": "basic", "hand": false, "function": "input pull-down of GAUGE_STEP2: holds the line low while the controller pin floats", "mains": false, "sim_exclude": false}
+  - {"ref": "TP795", "lib_id": "Connector:TestPoint", "value": "TP", "rating": "test point", "footprint": "TestPoint:TestPoint_Pad_D1.5mm", "mpn": "", "maker": "", "lcsc": "", "class": "none", "hand": false, "function": "test point on GAUGE_STEP2", "mains": false, "sim_exclude": true}
+  - {"ref": "R795", "lib_id": "Device:R", "value": "100", "rating": "1% 100mW 75V 0603", "footprint": "Resistor_SMD:R_0603_1608Metric", "mpn": "0603WAF1000T5E", "maker": "UNI-ROYAL", "lcsc": "C22775", "class": "basic", "hand": false, "function": "output series resistor of GAUGE_DIR2 (edge damping on the harness)", "mains": false, "sim_exclude": false}
+  - {"ref": "R800", "lib_id": "Device:R", "value": "1k", "rating": "1% 100mW 75V 0603", "footprint": "Resistor_SMD:R_0603_1608Metric", "mpn": "0603WAF1001T5E", "maker": "UNI-ROYAL", "lcsc": "C21190", "class": "basic", "hand": false, "function": "input series resistor of GAUGE_DIR2: limits the input clamp current into an unpowered buffer", "mains": false, "sim_exclude": false}
+  - {"ref": "R805", "lib_id": "Device:R", "value": "10k", "rating": "1% 100mW 75V 0603", "footprint": "Resistor_SMD:R_0603_1608Metric", "mpn": "0603WAF1002T5E", "maker": "UNI-ROYAL", "lcsc": "C25804", "class": "basic", "hand": false, "function": "input pull-down of GAUGE_DIR2: holds the line low while the controller pin floats", "mains": false, "sim_exclude": false}
+  - {"ref": "TP796", "lib_id": "Connector:TestPoint", "value": "TP", "rating": "test point", "footprint": "TestPoint:TestPoint_Pad_D1.5mm", "mpn": "", "maker": "", "lcsc": "", "class": "none", "hand": false, "function": "test point on GAUGE_DIR2", "mains": false, "sim_exclude": true}
+  - {"ref": "R806", "lib_id": "Device:R", "value": "10k", "rating": "1% 100mW 75V 0603", "footprint": "Resistor_SMD:R_0603_1608Metric", "mpn": "0603WAF1002T5E", "maker": "UNI-ROYAL", "lcsc": "C25804", "class": "basic", "hand": false, "function": "pull-down on the driver's RST line the VID66-08 asks for, holding it low through start-up", "mains": false, "sim_exclude": false}
+nets:
+  "GAUGE_RST": {"scope": "global", "pins": ["R796.1", "TP792.1"]}
+  "GAUGE_RST_IN": {"scope": "local", "pins": ["R796.2", "R801.1", "U791.2"]}
+  "GAUGE_RST_Y": {"scope": "local", "pins": ["U791.18", "R791.1"]}
+  "GAUGE_RST_B": {"scope": "local", "pins": ["R791.2", "J791.3", "R806.1"]}
+  "GAUGE_STEP1": {"scope": "global", "pins": ["R797.1", "TP793.1"]}
+  "GAUGE_STEP1_IN": {"scope": "local", "pins": ["R797.2", "R802.1", "U791.3"]}
+  "GAUGE_STEP1_Y": {"scope": "local", "pins": ["U791.17", "R792.1"]}
+  "GAUGE_STEP1_B": {"scope": "local", "pins": ["R792.2", "J791.4"]}
+  "GAUGE_DIR1": {"scope": "global", "pins": ["R798.1", "TP794.1"]}
+  "GAUGE_DIR1_IN": {"scope": "local", "pins": ["R798.2", "R803.1", "U791.4"]}
+  "GAUGE_DIR1_Y": {"scope": "local", "pins": ["U791.16", "R793.1"]}
+  "GAUGE_DIR1_B": {"scope": "local", "pins": ["R793.2", "J791.5"]}
+  "GAUGE_STEP2": {"scope": "global", "pins": ["R799.1", "TP795.1"]}
+  "GAUGE_STEP2_IN": {"scope": "local", "pins": ["R799.2", "R804.1", "U791.5"]}
+  "GAUGE_STEP2_Y": {"scope": "local", "pins": ["U791.15", "R794.1"]}
+  "GAUGE_STEP2_B": {"scope": "local", "pins": ["R794.2", "J791.9"]}
+  "GAUGE_DIR2": {"scope": "global", "pins": ["R800.1", "TP796.1"]}
+  "GAUGE_DIR2_IN": {"scope": "local", "pins": ["R800.2", "R805.1", "U791.6"]}
+  "GAUGE_DIR2_Y": {"scope": "local", "pins": ["U791.14", "R795.1"]}
+  "GAUGE_DIR2_B": {"scope": "local", "pins": ["R795.2", "J791.8"]}
+  "+5V_GAUGE": {"scope": "global", "pins": ["JP791.2", "J791.1", "C792.1", "TP791.1"]}
+  "+5V": {"scope": "power", "pins": ["JP791.1", "U791.20", "C791.1"]}
+  "GND": {"scope": "power", "pins": ["U791.10", "U791.1", "U791.19", "U791.7", "U791.8", "U791.9", "C791.2", "C792.2", "J791.2", "R801.2", "R802.2", "R803.2", "R804.2", "R805.2", "R806.2"]}
+  "LOWWATER_CATHODE": {"scope": "global", "pins": ["J791.6"]}
+  "ANODE_RAIL": {"scope": "global", "pins": ["J791.7"]}
+no_connect:
+  - {"pin": "U791.13", "reason": "unused buffer output Y5 (its input A5 is tied low)"}
+  - {"pin": "U791.12", "reason": "unused buffer output Y6 (its input A6 is tied low)"}
+  - {"pin": "U791.11", "reason": "unused buffer output Y7 (its input A7 is tied low)"}
+custom_symbols: []
+custom_footprints: []
+power_flags: []
+notes: "Signal flows left to right: controller nets (GAUGE_RST, GAUGE_STEP1, GAUGE_DIR1, GAUGE_STEP2, GAUGE_DIR2) -> 1 k series -> buffer input (10 k to ground) -> buffer output -> 100 ohm -> SP2. Unused buffer inputs A5-A7 and both output enables to ground; Y5-Y7 unconnected. SP2 (J791) pin map from connector-pinouts.md, contact 1 nearest the top edge of the board: 1 +5V_GAUGE (through JP791), 2 GND, 3 RST, 4 FA (STEP1), 5 DIRA (DIR1), 6 WAT cathode (LOWWATER_CATHODE, driven on the panel sheet), 7 anode rail (ANODE_RAIL, gated on the panel sheet), 8 DIRB (DIR2), 9 FB (STEP2). Mating housing: JST PH 9-way (family inferred in the record; a test fit settles it)."

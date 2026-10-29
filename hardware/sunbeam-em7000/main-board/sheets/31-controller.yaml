@@ -1,0 +1,1120 @@
+sheet: Controller
+function: STM32H743VIT6 with its supply decoupling, core regulator capacitors, analogue supply and reference, 8 MHz and 32.768 kHz crystals, reset, boot strap, the serial-wire debug header, the protected USB panel-cable header and the cable-power path for bench work (surge clamp, resettable fuse straight to the cable position of the selector JP301 on the Logic supply sheet)
+parts:
+- ref: U401
+  lib_id: MCU_ST_STM32H7:STM32H743VITx
+  value: STM32H743VIT6
+  rating: LQFP-100 14x14 mm, 0.5 mm pitch, -40..85 degC
+  footprint: Package_QFP:LQFP-100_14x14mm_P0.5mm
+  mpn: STM32H743VIT6
+  maker: STMicroelectronics
+  lcsc: C114409
+  class: extended
+  hand: false
+  function: controller; pin-by-pin in the nets below
+  mains: false
+  sim_exclude: false
+- ref: C401
+  lib_id: Device:C
+  value: 100 nF
+  rating: X7R 50 V 10 % 0603
+  footprint: Capacitor_SMD:C_0603_1608Metric
+  mpn: CC0603KRX7R9BB104
+  maker: YAGEO
+  lcsc: C14663
+  class: basic
+  hand: false
+  function: VDD pin 11 decoupling, 100 nF per VDD pin (AN4938 2.2 and 7.4)
+  mains: false
+  sim_exclude: false
+- ref: C402
+  lib_id: Device:C
+  value: 100 nF
+  rating: X7R 50 V 10 % 0603
+  footprint: Capacitor_SMD:C_0603_1608Metric
+  mpn: CC0603KRX7R9BB104
+  maker: YAGEO
+  lcsc: C14663
+  class: basic
+  hand: false
+  function: VDD pin 27 decoupling, 100 nF per VDD pin (AN4938 2.2 and 7.4)
+  mains: false
+  sim_exclude: false
+- ref: C403
+  lib_id: Device:C
+  value: 100 nF
+  rating: X7R 50 V 10 % 0603
+  footprint: Capacitor_SMD:C_0603_1608Metric
+  mpn: CC0603KRX7R9BB104
+  maker: YAGEO
+  lcsc: C14663
+  class: basic
+  hand: false
+  function: VDD pin 50 decoupling, 100 nF per VDD pin (AN4938 2.2 and 7.4)
+  mains: false
+  sim_exclude: false
+- ref: C404
+  lib_id: Device:C
+  value: 100 nF
+  rating: X7R 50 V 10 % 0603
+  footprint: Capacitor_SMD:C_0603_1608Metric
+  mpn: CC0603KRX7R9BB104
+  maker: YAGEO
+  lcsc: C14663
+  class: basic
+  hand: false
+  function: VDD pin 75 decoupling, 100 nF per VDD pin (AN4938 2.2 and 7.4)
+  mains: false
+  sim_exclude: false
+- ref: C405
+  lib_id: Device:C
+  value: 100 nF
+  rating: X7R 50 V 10 % 0603
+  footprint: Capacitor_SMD:C_0603_1608Metric
+  mpn: CC0603KRX7R9BB104
+  maker: YAGEO
+  lcsc: C14663
+  class: basic
+  hand: false
+  function: VDD pin 100 decoupling, 100 nF per VDD pin (AN4938 2.2 and 7.4)
+  mains: false
+  sim_exclude: false
+- ref: C406
+  lib_id: Device:C
+  value: 100 nF
+  rating: X7R 50 V 10 % 0603
+  footprint: Capacitor_SMD:C_0603_1608Metric
+  mpn: CC0603KRX7R9BB104
+  maker: YAGEO
+  lcsc: C14663
+  class: basic
+  hand: false
+  function: VBAT decoupling, VBAT tied to +3V3 (AN4938 2.2)
+  mains: false
+  sim_exclude: false
+- ref: C407
+  lib_id: Device:C
+  value: 4.7 uF
+  rating: X5R 16 V 10 % 0603
+  footprint: Capacitor_SMD:C_0603_1608Metric
+  mpn: CL10A475KO8NNNC
+  maker: Samsung Electro-Mechanics
+  lcsc: C19666
+  class: basic
+  hand: false
+  function: single VDD bulk capacitor, 4.7 uF minimum for the package (AN4938 2.2)
+  mains: false
+  sim_exclude: false
+- ref: C408
+  lib_id: Device:C
+  value: 100 nF
+  rating: X7R 50 V 10 % 0603
+  footprint: Capacitor_SMD:C_0603_1608Metric
+  mpn: CC0603KRX7R9BB104
+  maker: YAGEO
+  lcsc: C14663
+  class: basic
+  hand: false
+  function: VDDA decoupling
+  mains: false
+  sim_exclude: false
+- ref: C409
+  lib_id: Device:C
+  value: 1 uF
+  rating: X5R 50 V 10 % 0603
+  footprint: Capacitor_SMD:C_0603_1608Metric
+  mpn: CL10A105KB8NNNC
+  maker: Samsung Electro-Mechanics
+  lcsc: C15849
+  class: basic
+  hand: false
+  function: VDDA decoupling (100 nF + 1 uF, AN4938 2.2)
+  mains: false
+  sim_exclude: false
+- ref: R302
+  lib_id: Device:R
+  value: '0'
+  rating: 0 ohm 0603 100 mW
+  footprint: Resistor_SMD:R_0603_1608Metric
+  mpn: 0603WAF0000T5E
+  maker: UNI-ROYAL
+  lcsc: C21189
+  class: basic
+  hand: false
+  function: 'isolating link +3V3A to VREF+ (AN4938 Table 9: 0 ohm star point between VDDA and VREF+); open it to use the internal reference buffer'
+  mains: false
+  sim_exclude: false
+- ref: C410
+  lib_id: Device:C
+  value: 100 nF
+  rating: X7R 50 V 10 % 0603
+  footprint: Capacitor_SMD:C_0603_1608Metric
+  mpn: CC0603KRX7R9BB104
+  maker: YAGEO
+  lcsc: C14663
+  class: basic
+  hand: false
+  function: VREF+ decoupling
+  mains: false
+  sim_exclude: false
+- ref: C411
+  lib_id: Device:C
+  value: 1 uF
+  rating: X5R 50 V 10 % 0603
+  footprint: Capacitor_SMD:C_0603_1608Metric
+  mpn: CL10A105KB8NNNC
+  maker: Samsung Electro-Mechanics
+  lcsc: C15849
+  class: basic
+  hand: false
+  function: VREF+ decoupling (100 nF + 1 uF, AN4938 2.2)
+  mains: false
+  sim_exclude: false
+- ref: C412
+  lib_id: Device:C
+  value: 2.2 uF
+  rating: X5R 16 V 10 % 0603
+  footprint: Capacitor_SMD:C_0603_1608Metric
+  mpn: CL10A225KO8NNNC
+  maker: Samsung Electro-Mechanics
+  lcsc: C23630
+  class: basic
+  hand: false
+  function: 'VCAP pin 48 core regulator capacitor (DS12110 Table 114: 2.2 uF, ESR < 100 mohm)'
+  mains: false
+  sim_exclude: false
+- ref: C413
+  lib_id: Device:C
+  value: 2.2 uF
+  rating: X5R 16 V 10 % 0603
+  footprint: Capacitor_SMD:C_0603_1608Metric
+  mpn: CL10A225KO8NNNC
+  maker: Samsung Electro-Mechanics
+  lcsc: C23630
+  class: basic
+  hand: false
+  function: VCAP pin 73 core regulator capacitor
+  mains: false
+  sim_exclude: false
+- ref: TP401
+  lib_id: Connector:TestPoint
+  value: TP
+  rating: pad 1.5 mm
+  footprint: TestPoint:TestPoint_Pad_D1.5mm
+  mpn: '-'
+  maker: '-'
+  lcsc: none
+  class: none
+  hand: false
+  function: test point on the core regulator net VCAP (producer-only)
+  mains: false
+  sim_exclude: false
+- ref: TP402
+  lib_id: Connector:TestPoint
+  value: TP
+  rating: pad 1.5 mm
+  footprint: TestPoint:TestPoint_Pad_D1.5mm
+  mpn: '-'
+  maker: '-'
+  lcsc: none
+  class: none
+  hand: false
+  function: test point on VREF+ (reference rail, load side of R302)
+  mains: false
+  sim_exclude: false
+- ref: TP403
+  lib_id: Connector:TestPoint
+  value: TP
+  rating: pad 1.5 mm
+  footprint: TestPoint:TestPoint_Pad_D1.5mm
+  mpn: '-'
+  maker: '-'
+  lcsc: none
+  class: none
+  hand: false
+  function: test point on +3V3A, source side of R302
+  mains: false
+  sim_exclude: false
+- ref: Y401
+  lib_id: Device:Crystal
+  value: 8 MHz
+  rating: YSX530GA 20 pF, +/-10 ppm, ESR 80 ohm max, C0 7 pF max, drive level 1-100 uW max, SMD5032-2P
+  footprint: Crystal:Crystal_SMD_5032-2Pin_5.0x3.2mm
+  mpn: X50328MSB2GI
+  maker: YXC
+  lcsc: C115962
+  class: basic
+  hand: false
+  function: HSE crystal (maker sheet read 2026-10-29)
+  mains: false
+  sim_exclude: false
+- ref: C414
+  lib_id: Device:C
+  value: 20 pF
+  rating: C0G 50 V 5 % 0603
+  footprint: Capacitor_SMD:C_0603_1608Metric
+  mpn: CL10C200JB8NNNC
+  maker: Samsung Electro-Mechanics
+  lcsc: C1648
+  class: basic
+  hand: false
+  function: HSE load capacitor on HSE_IN
+  mains: false
+  sim_exclude: false
+- ref: C415
+  lib_id: Device:C
+  value: 20 pF
+  rating: C0G 50 V 5 % 0603
+  footprint: Capacitor_SMD:C_0603_1608Metric
+  mpn: CL10C200JB8NNNC
+  maker: Samsung Electro-Mechanics
+  lcsc: C1648
+  class: basic
+  hand: false
+  function: HSE load capacitor on HSE_OUT
+  mains: false
+  sim_exclude: false
+- ref: Y402
+  lib_id: Device:Crystal
+  value: 32.768 kHz
+  rating: FC-135 12.5 pF, +/-20 ppm, R1 70 kohm max, drive level 0.5 uW max, SMD3215-2P
+  footprint: Crystal:Crystal_SMD_3215-2Pin_3.2x1.5mm
+  mpn: Q13FC13500004
+  maker: Seiko Epson
+  lcsc: C32346
+  class: basic
+  hand: false
+  function: LSE crystal; LSEDRV must be 11 (high drive), see the proof record
+  mains: false
+  sim_exclude: false
+- ref: C416
+  lib_id: Device:C
+  value: 4.7 pF
+  rating: C0G 50 V 0.25 pF 0603
+  footprint: Capacitor_SMD:C_0603_1608Metric
+  mpn: 0603CG4R7C500NT
+  maker: FH (Guangdong Fenghua Advanced Tech)
+  lcsc: C1669
+  class: preferred
+  hand: false
+  function: LSE load capacitor on LSE_IN
+  mains: false
+  sim_exclude: false
+- ref: C417
+  lib_id: Device:C
+  value: 4.7 pF
+  rating: C0G 50 V 0.25 pF 0603
+  footprint: Capacitor_SMD:C_0603_1608Metric
+  mpn: 0603CG4R7C500NT
+  maker: FH (Guangdong Fenghua Advanced Tech)
+  lcsc: C1669
+  class: preferred
+  hand: false
+  function: LSE load capacitor on LSE_OUT
+  mains: false
+  sim_exclude: false
+- ref: SW401
+  lib_id: Switch:SW_Push
+  value: RESET
+  rating: tactile 5.1x5.1 mm, 50 mA 12 V dc, contact resistance 100 mohm max
+  footprint: TS1187A_5.1x5.1mm_SMD
+  mpn: TS-1187A-B-A-B
+  maker: XKB Connection
+  lcsc: C318884
+  class: basic
+  hand: false
+  function: reset push button; pad 1 is the maker drawing's A and B (joined), pad 2 is C and D (joined); the button closes 1 to 2
+  mains: false
+  sim_exclude: false
+- ref: C418
+  lib_id: Device:C
+  value: 100 nF
+  rating: X7R 50 V 10 % 0603
+  footprint: Capacitor_SMD:C_0603_1608Metric
+  mpn: CC0603KRX7R9BB104
+  maker: YAGEO
+  lcsc: C14663
+  class: basic
+  hand: false
+  function: NRST capacitor against parasitic resets (DS12110 Figure 74)
+  mains: false
+  sim_exclude: false
+- ref: U402
+  lib_id: TLV803S
+  value: TLV803SDBZR
+  rating: 7 V absolute maximum VDD, 3.3 V supervisor, open-drain active-low RESET, threshold 2.87 to 2.99 V (2.93 V typical), 200 ms typical delay (120 to 280 ms), VDD 1.1 to 6 V, SOT-23 (pin 1 GND, 2 RESET, 3 VDD)
+  footprint: Package_TO_SOT_SMD:SOT-23
+  mpn: TLV803SDBZR
+  maker: Texas Instruments
+  lcsc: C132016
+  class: extended
+  hand: false
+  function: holds NRST low (wire-OR with SW401, J401.10 and the controller's own reset) while +3V3 is below its threshold and for 120 to 280 ms after it rises above it; the symbol is the project's TLV803S, the stock TPS3839DBZ geometry with the RESET pin typed open collector to match the maker's open-drain output (TI SBVS157A pin table gives 1 GND, 2 RESET, 3 VDD)
+  mains: false
+  sim_exclude: false
+- ref: C422
+  lib_id: Device:C
+  value: 100 nF
+  rating: X7R 50 V 10 % 0603
+  footprint: Capacitor_SMD:C_0603_1608Metric
+  mpn: CC0603KRX7R9BB104
+  maker: YAGEO
+  lcsc: C14663
+  class: basic
+  hand: false
+  function: U402 supply bypass, at its VDD pin (maker's note under the threshold row of its electrical characteristics asks for 0.1 uF ceramic near the supply terminals)
+  mains: false
+  sim_exclude: false
+- ref: TP404
+  lib_id: Connector:TestPoint
+  value: TP
+  rating: pad 1.5 mm
+  footprint: TestPoint:TestPoint_Pad_D1.5mm
+  mpn: '-'
+  maker: '-'
+  lcsc: none
+  class: none
+  hand: false
+  function: test point on NRST (key signal)
+  mains: false
+  sim_exclude: false
+- ref: R401
+  lib_id: Device:R
+  value: 10k
+  rating: 1 % 0603 100 mW
+  footprint: Resistor_SMD:R_0603_1608Metric
+  mpn: 0603WAF1002T5E
+  maker: UNI-ROYAL
+  lcsc: C25804
+  class: basic
+  hand: false
+  function: BOOT0 pull-down, boot from user flash
+  mains: false
+  sim_exclude: false
+- ref: JP401
+  lib_id: Connector_Generic:Conn_01x02
+  value: BOOT0_HI
+  rating: 1x2 2.54 mm header with shorting jumper
+  footprint: Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical
+  mpn: PZ254V-11-02P
+  maker: XFCN
+  lcsc: C492401
+  class: extended
+  hand: true
+  function: fit the jumper to boot the ST system bootloader (BOOT0 to +3V3); open = boot from flash
+  mains: false
+  sim_exclude: false
+- ref: J401
+  lib_id: Connector:Conn_ARM_JTAG_SWD_10
+  value: SWD
+  rating: 2x5 1.27 mm SMD pin header, Cortex Debug 10-pin
+  footprint: Connector_PinHeader_1.27mm:PinHeader_2x05_P1.27mm_Vertical_SMD
+  mpn: PZ1.27-2x5P TP
+  maker: hanxia
+  lcsc: C41376037
+  class: extended
+  hand: false
+  function: serial-wire debug and programming header, Cortex Debug 10-pin pinout
+  mains: false
+  sim_exclude: false
+- ref: TP405
+  lib_id: Connector:TestPoint
+  value: TP
+  rating: pad 1.5 mm
+  footprint: TestPoint:TestPoint_Pad_D1.5mm
+  mpn: '-'
+  maker: '-'
+  lcsc: none
+  class: none
+  hand: false
+  function: test point on DBG_VTREF (source side of R402)
+  mains: false
+  sim_exclude: false
+- ref: R402
+  lib_id: Device:R
+  value: 1k
+  rating: 1 % 0603 100 mW
+  footprint: Resistor_SMD:R_0603_1608Metric
+  mpn: 0603WAF1001T5E
+  maker: UNI-ROYAL
+  lcsc: C21190
+  class: basic
+  hand: false
+  function: 'series resistance in the debug header''s VTref path: limits what a probe that sources power on VTref can push into +3V3'
+  mains: false
+  sim_exclude: false
+- ref: JP402
+  lib_id: Connector_Generic:Conn_01x02
+  value: LINK_VTREF
+  rating: 1x2 2.54 mm header with shorting jumper
+  footprint: Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical
+  mpn: PZ254V-11-02P
+  maker: XFCN
+  lcsc: C492401
+  class: extended
+  hand: true
+  function: isolating link +3V3_DBG to +3V3
+  mains: false
+  sim_exclude: false
+- ref: TP406
+  lib_id: Connector:TestPoint
+  value: TP
+  rating: pad 1.5 mm
+  footprint: TestPoint:TestPoint_Pad_D1.5mm
+  mpn: '-'
+  maker: '-'
+  lcsc: none
+  class: none
+  hand: false
+  function: 'probe point on the HSE crystal node HSE_IN (key signal: clock); the only clock access, see notes'
+  mains: false
+  sim_exclude: false
+- ref: TP407
+  lib_id: Connector:TestPoint
+  value: TP
+  rating: pad 1.5 mm
+  footprint: TestPoint:TestPoint_Pad_D1.5mm
+  mpn: '-'
+  maker: '-'
+  lcsc: none
+  class: none
+  hand: false
+  function: 'test point on SWDIO (key signal: programming interface / boot strap)'
+  mains: false
+  sim_exclude: false
+- ref: TP408
+  lib_id: Connector:TestPoint
+  value: TP
+  rating: pad 1.5 mm
+  footprint: TestPoint:TestPoint_Pad_D1.5mm
+  mpn: '-'
+  maker: '-'
+  lcsc: none
+  class: none
+  hand: false
+  function: 'test point on SWCLK (key signal: programming interface / boot strap)'
+  mains: false
+  sim_exclude: false
+- ref: TP409
+  lib_id: Connector:TestPoint
+  value: TP
+  rating: pad 1.5 mm
+  footprint: TestPoint:TestPoint_Pad_D1.5mm
+  mpn: '-'
+  maker: '-'
+  lcsc: none
+  class: none
+  hand: false
+  function: 'test point on SWO (key signal: programming interface / boot strap)'
+  mains: false
+  sim_exclude: false
+- ref: TP410
+  lib_id: Connector:TestPoint
+  value: TP
+  rating: pad 1.5 mm
+  footprint: TestPoint:TestPoint_Pad_D1.5mm
+  mpn: '-'
+  maker: '-'
+  lcsc: none
+  class: none
+  hand: false
+  function: 'test point on BOOT0 (key signal: programming interface / boot strap)'
+  mains: false
+  sim_exclude: false
+- ref: J402
+  lib_id: Connector_Generic:Conn_01x05
+  value: USB_PANEL
+  rating: 1x5 2.54 mm header; carries D+, D-, GND, the cable shield and VBUS
+  footprint: Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical
+  mpn: PZ254V-11-05P
+  maker: XFCN
+  lcsc: C492404
+  class: extended
+  hand: true
+  function: 'panel-cable header to a panel-mounted USB connector on the side of the machine (the connector and cable are bought separately and are not on the board): 1 USB_DP, 2 USB_DM, 3 GND, 4 cable shield (to GND through R403 and C419 in parallel, no direct tie), 5 USB_VBUS (the cable''s supply, reaching the board only through D402, F401 and the cable position of JP301)'
+  mains: false
+  sim_exclude: false
+- ref: D401
+  lib_id: Power_Protection:USBLC6-2SC6
+  value: USBLC6-2SC6
+  rating: 5.25 V reverse stand-off, 2-line ESD array, IEC 61000-4-2 level 4 (15 kV air, 8 kV contact), 3.5 pF max per line to GND, SOT-23-6
+  footprint: Package_TO_SOT_SMD:SOT-23-6
+  mpn: USBLC6-2SC6
+  maker: STMicroelectronics
+  lcsc: C7519
+  class: extended
+  hand: false
+  function: 'ESD clamp on USB_DP and USB_DM at J402 (pins 1 and 6 on USB_DP, 3 and 4 on USB_DM, 2 on GND); pin 5 (VBUS rail) is on USB_VBUS, the cable side of F401, where the maker draws the part (DS4260 Rev 7, 2.5)'
+  mains: false
+  sim_exclude: false
+- ref: TP411
+  lib_id: Connector:TestPoint
+  value: TP
+  rating: pad 1.5 mm
+  footprint: TestPoint:TestPoint_Pad_D1.5mm
+  mpn: '-'
+  maker: '-'
+  lcsc: none
+  class: none
+  hand: false
+  function: 'test point on USB_DP (key signal: programming interface)'
+  mains: false
+  sim_exclude: false
+- ref: TP412
+  lib_id: Connector:TestPoint
+  value: TP
+  rating: pad 1.5 mm
+  footprint: TestPoint:TestPoint_Pad_D1.5mm
+  mpn: '-'
+  maker: '-'
+  lcsc: none
+  class: none
+  hand: false
+  function: 'test point on USB_DM (key signal: programming interface)'
+  mains: false
+  sim_exclude: false
+- ref: D402
+  lib_id: Device:D_TVS
+  value: SMF6.0A
+  rating: 'unidirectional TVS 200 W, VR 6.0 V, VBR 6.67 to 7.37 V, VC 10.3 V at 19.4 A, SOD-123FL'
+  footprint: Diode_SMD:D_SOD-123F
+  mpn: SMF6.0A
+  maker: Littelfuse
+  lcsc: C207260
+  class: extended
+  hand: false
+  function: 'surge and ESD clamp from USB_VBUS to GND at J402.5, ahead of the fuse; pin 1 on USB_VBUS, pin 2 on GND'
+  mains: false
+  sim_exclude: false
+- ref: F401
+  lib_id: Device:Polyfuse
+  value: MF-MSMF050-2
+  rating: 'PTC 0.50 A hold, 1.00 A trip, 15 V, 100 A, 1812'
+  footprint: Fuse:Fuse_1812_4532Metric
+  mpn: MF-MSMF050-2
+  maker: Bourns
+  lcsc: C17313
+  class: extended
+  hand: false
+  function: 'resettable fuse in the cable''s supply, rated for the 500 mA standard USB budget; USB_VBUS to USB_VBUS_F'
+  mains: false
+  sim_exclude: false
+- ref: R403
+  lib_id: Device:R
+  value: 1Meg
+  rating: 1 % 1206 250 mW, 200 V max working
+  footprint: Resistor_SMD:R_1206_3216Metric
+  mpn: 1206W4F1004T5E
+  maker: UNI-ROYAL
+  lcsc: C17927
+  class: basic
+  hand: false
+  function: 'cable shield to GND, in parallel with C419: bleeds the shield and keeps it from floating, with no DC path from a panel connector shell to controller ground'
+  mains: false
+  sim_exclude: false
+- ref: C419
+  lib_id: Device:C
+  value: 4.7 nF
+  rating: X7R 1000 V 10 % 1206
+  footprint: Capacitor_SMD:C_1206_3216Metric
+  mpn: CC1206KKX7RCBB472
+  maker: YAGEO
+  lcsc: C107198
+  class: extended
+  hand: false
+  function: 'cable shield to GND, in parallel with R403: returns the shield''s high-frequency and ESD current to GND; rated 1 kV, far over the roughly 255 V the 150 pF human-body charge of an 8 kV discharge would leave on 4.7 nF'
+  mains: false
+  sim_exclude: false
+- ref: TP413
+  lib_id: Connector:TestPoint
+  value: TP
+  rating: pad 1.5 mm
+  footprint: TestPoint:TestPoint_Pad_D1.5mm
+  mpn: '-'
+  maker: '-'
+  lcsc: none
+  class: none
+  hand: false
+  function: 'test point on USB_VBUS_F, the protected VBUS after the fuse, at pin 3 of the selector JP301 (key signal: cable power)'
+  mains: false
+  sim_exclude: false
+nets:
+  +3V3:
+    scope: power
+    pins:
+    - U401.11
+    - U401.27
+    - U401.50
+    - U401.75
+    - U401.100
+    - U401.6
+    - C401.1
+    - C402.1
+    - C403.1
+    - C404.1
+    - C405.1
+    - C406.1
+    - C407.1
+    - JP401.2
+    - JP402.2
+    - U402.3
+    - C422.1
+  GND:
+    scope: power
+    pins:
+    - U401.10
+    - U401.26
+    - U401.49
+    - U401.74
+    - U401.99
+    - U401.19
+    - C401.2
+    - C402.2
+    - C403.2
+    - C404.2
+    - C405.2
+    - C406.2
+    - C407.2
+    - C408.2
+    - C409.2
+    - C410.2
+    - C411.2
+    - C412.2
+    - C413.2
+    - C414.2
+    - D401.2
+    - J402.3
+    - D402.2
+    - R403.2
+    - C419.2
+    - C415.2
+    - C416.2
+    - C417.2
+    - C418.2
+    - R401.2
+    - J401.3
+    - J401.5
+    - J401.9
+    - SW401.2
+    - U402.1
+    - C422.2
+  +3V3A:
+    scope: power
+    pins:
+    - U401.21
+    - C408.1
+    - C409.1
+    - R302.1
+    - TP403.1
+  VREF+:
+    scope: power
+    pins:
+    - U401.20
+    - R302.2
+    - C410.1
+    - C411.1
+    - TP402.1
+  VCAP:
+    scope: local
+    pins:
+    - U401.48
+    - U401.73
+    - C412.1
+    - C413.1
+    - TP401.1
+  HSE_IN:
+    scope: local
+    pins:
+    - U401.12
+    - Y401.1
+    - C414.1
+    - TP406.1
+  HSE_OUT:
+    scope: local
+    pins:
+    - U401.13
+    - Y401.2
+    - C415.1
+  LSE_IN:
+    scope: local
+    pins:
+    - U401.8
+    - Y402.1
+    - C416.1
+  LSE_OUT:
+    scope: local
+    pins:
+    - U401.9
+    - Y402.2
+    - C417.1
+  NRST:
+    scope: global
+    pins:
+    - U401.14
+    - C418.1
+    - SW401.1
+    - J401.10
+    - TP404.1
+    - U402.2
+  BOOT0:
+    scope: local
+    pins:
+    - U401.94
+    - R401.1
+    - JP401.1
+    - TP410.1
+  SWDIO:
+    scope: local
+    pins:
+    - U401.72
+    - J401.2
+    - TP407.1
+  SWCLK:
+    scope: local
+    pins:
+    - U401.76
+    - J401.4
+    - TP408.1
+  SWO:
+    scope: local
+    pins:
+    - U401.89
+    - J401.6
+    - TP409.1
+  USB_DP:
+    scope: local
+    pins:
+    - U401.71
+    - J402.1
+    - D401.1
+    - D401.6
+    - TP411.1
+  USB_DM:
+    scope: local
+    pins:
+    - U401.70
+    - J402.2
+    - D401.3
+    - D401.4
+    - TP412.1
+  USB_VBUS:
+    scope: local
+    pins:
+    - J402.5
+    - D401.5
+    - D402.1
+    - F401.1
+  USB_VBUS_F:
+    scope: global
+    pins:
+    - F401.2
+    - TP413.1
+  USB_SHIELD:
+    scope: local
+    pins:
+    - J402.4
+    - R403.1
+    - C419.1
+  DBG_VTREF:
+    scope: local
+    pins:
+    - J401.1
+    - TP405.1
+    - R402.1
+  +3V3_DBG:
+    scope: local
+    pins:
+    - R402.2
+    - JP402.1
+  KEY1:
+    scope: global
+    pins:
+    - U401.1
+  KEY2:
+    scope: global
+    pins:
+    - U401.2
+  KEY3:
+    scope: global
+    pins:
+    - U401.3
+  KEY4:
+    scope: global
+    pins:
+    - U401.4
+  KEY5:
+    scope: global
+    pins:
+    - U401.5
+  NTC_COF:
+    scope: global
+    pins:
+    - U401.15
+  NTC_STM:
+    scope: global
+    pins:
+    - U401.16
+  SPARE_AN2:
+    scope: global
+    pins:
+    - U401.22
+  CURR1_AN:
+    scope: global
+    pins:
+    - U401.24
+  CURR2_AN:
+    scope: global
+    pins:
+    - U401.25
+  BREW_AN:
+    scope: global
+    pins:
+    - U401.30
+  NTC_WAND:
+    scope: global
+    pins:
+    - U401.32
+  STMP_AN:
+    scope: global
+    pins:
+    - U401.33
+  TANK_LEVEL:
+    scope: global
+    pins:
+    - U401.42
+  KNOB_HOT:
+    scope: global
+    pins:
+    - U401.43
+  KNOB_STEAM:
+    scope: global
+    pins:
+    - U401.44
+  MAINS_PRES_C:
+    scope: global
+    pins:
+    - U401.45
+  BREW_SCL:
+    scope: global
+    pins:
+    - U401.46
+  BREW_SDA:
+    scope: global
+    pins:
+    - U401.47
+  PT1_CS:
+    scope: global
+    pins:
+    - U401.51
+  SPI2_SCK:
+    scope: global
+    pins:
+    - U401.52
+  SPI2_MISO:
+    scope: global
+    pins:
+    - U401.53
+  SPI2_MOSI:
+    scope: global
+    pins:
+    - U401.54
+  PT2_CS:
+    scope: global
+    pins:
+    - U401.55
+  AMC_CS:
+    scope: global
+    pins:
+    - U401.56
+  AMC_DRDY:
+    scope: global
+    pins:
+    - U401.57
+  AMC_RESET:
+    scope: global
+    pins:
+    - U401.58
+  GAUGE_STEP1:
+    scope: global
+    pins:
+    - U401.61
+  GAUGE_STEP2:
+    scope: global
+    pins:
+    - U401.62
+  FLOW_IN:
+    scope: global
+    pins:
+    - U401.63
+  POL_OUT:
+    scope: global
+    pins:
+    - U401.64
+  WT1_DATA:
+    scope: global
+    pins:
+    - U401.65
+  WT1_CLK:
+    scope: global
+    pins:
+    - U401.66
+  PUMP_S_GATE:
+    scope: global
+    pins:
+    - U401.67
+  PUMP_C_GATE:
+    scope: global
+    pins:
+    - U401.68
+  ZC_IN:
+    scope: global
+    pins:
+    - U401.69
+  WT2_DATA:
+    scope: global
+    pins:
+    - U401.79
+  WT2_CLK:
+    scope: global
+    pins:
+    - U401.80
+  GAUGE_DIR1:
+    scope: global
+    pins:
+    - U401.81
+  GAUGE_DIR2:
+    scope: global
+    pins:
+    - U401.82
+  HEAT_C_DRV:
+    scope: global
+    pins:
+    - U401.83
+  HEAT_S_DRV:
+    scope: global
+    pins:
+    - U401.84
+  VALVE_2W_DRV:
+    scope: global
+    pins:
+    - U401.85
+  VALVE_3W_DRV:
+    scope: global
+    pins:
+    - U401.86
+  GAUGE_RST:
+    scope: global
+    pins:
+    - U401.87
+  MAINS_PRES_S:
+    scope: global
+    pins:
+    - U401.88
+  ANODE_GATE:
+    scope: global
+    pins:
+    - U401.91
+  STM_SCL:
+    scope: global
+    pins:
+    - U401.95
+  STM_SDA:
+    scope: global
+    pins:
+    - U401.96
+  LOWWATER_K:
+    scope: global
+    pins:
+    - U401.97
+  BUZZER:
+    scope: global
+    pins:
+    - U401.98
+no_connect:
+- pin: U401.7
+  reason: 'PC13 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+- pin: U401.17
+  reason: 'PC2_C unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+- pin: U401.18
+  reason: 'PC3_C unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+- pin: U401.23
+  reason: 'PA1 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+- pin: U401.28
+  reason: 'PA4 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+- pin: U401.29
+  reason: 'PA5 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+- pin: U401.31
+  reason: 'PA7 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+- pin: U401.34
+  reason: 'PB0 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+- pin: U401.35
+  reason: 'PB1 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+- pin: U401.36
+  reason: 'PB2 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+- pin: U401.37
+  reason: 'PE7 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+- pin: U401.38
+  reason: 'PE8 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+- pin: U401.39
+  reason: 'PE9 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+- pin: U401.40
+  reason: 'PE10 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+- pin: U401.41
+  reason: 'PE11 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+- pin: U401.59
+  reason: 'PD12 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+- pin: U401.60
+  reason: 'PD13 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+- pin: U401.77
+  reason: 'PA15 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+- pin: U401.78
+  reason: 'PC10 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+- pin: U401.90
+  reason: 'PB4 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+- pin: U401.92
+  reason: 'PB6 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+- pin: U401.93
+  reason: 'PB7 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+- pin: J401.7
+  reason: 'KEY: Cortex Debug 10-pin pin 7 is the key position, no contact'
+- pin: J401.8
+  reason: 'NC/TDI: JTAG data in, serial-wire use needs none'
+custom_symbols:
+- name: TLV803S
+  ref_prefix: U
+  note: 'TI SBVS157A (TLV803 3-pin voltage supervisors with active-low, open-drain reset) pin table, DBZ SOT-23-3; the stock TPS3839DBZ body and pin positions with RESET typed open collector'
+  pins:
+  - {number: '1', name: GND, type: power_in, unit: 1}
+  - {number: '2', name: '~{RESET}', type: open_collector, unit: 1}
+  - {number: '3', name: VDD, type: power_in, unit: 1}
+custom_footprints:
+- name: TS1187A_5.1x5.1mm_SMD
+  from: XKB Connection TS-1187A-X-X-X drawing, rev A0 (LCSC C318884 maker sheet), PCB LAYOUT top view
+  detail: four SMD pads 1.0 mm (X) by 0.75 mm (Y); pad centres X = +/-3.0 mm, Y = +/-1.875 mm (outer span 7.0 x 4.5 mm, inner span 5.0 x 3.0 mm); the two upper pads (A and B) are both numbered 1 and the
+    two lower pads (C and D) are both numbered 2, since the drawing joins A to B and C to D inside; body 5.1 x 5.1 mm
+power_flags:
+- +3V3
+- +3V3A
+- DBG_VTREF
+notes: 'Signal flow left to right: supply (left) -> U401 -> signals (right, global labels with the dictionary names). Positive supply at the top, ground at the bottom.
+
+  U401: draw all 100 pins; pins listed under no_connect carry a no-connect flag. Supply pins: five VDD (11, 27, 50, 75, 100) each with its own 100 nF placed at the pin, five VSS (10, 26, 49, 74, 99), VSSA
+  (19) to GND, VDDA (21) on +3V3A, VREF+ (20) on VREF+, VBAT (6) on +3V3, VCAP (48 and 73) joined on net VCAP with one 2.2 uF at each pin.
+
+  Crystals: Y401 with C414 and C415 close to PH0/PH1; Y402 with C416 and C417 close to PC14/PC15. Probe point TP406 is on HSE_IN, a probe point on the crystal''s own node: no pin is free for a buffered
+  clock (PA8 is MCO1 and is the steam pump gate; PC9 is MCO2 and is a load-cell clock), so the clock is observed at TP406 with a 10 Mohm 10 pF-class probe and the loading noted in the bring-up record.
+
+  Reset: SW401 and C418 from NRST to GND; no external pull-up (the part has one, 30 to 50 kohm, inside the 10 kohm to 1 Mohm the supervisor''s sheet asks of its RESET pull-up); J401.10 on NRST. U402 (TLV803S supervisor) on +3V3 with C422 at its VDD pin: its open-drain RESET (pin 2) is on NRST, wire-ORed with the button, the probe and the controller''s own reset, and holds the controller in reset while +3V3 is under 2.87 to 2.99 V and for 120 to 280 ms after it recovers (arithmetic in circuit-proof.md, Reset supervisor).
+
+  Debug: J401 is the Cortex Debug 10-pin header: 1 VTref (through R402, TP405 and JP402), 2 SWDIO, 3 GND, 4 SWCLK, 5 GND, 6 SWO, 7 key, 8 not connected, 9 GND detect, 10 reset.
+
+  Boot: R401 holds BOOT0 low; JP401 fitted puts BOOT0 on +3V3 for the ST bootloader. Fit the jumper only with the board in a state where the pump gates are held off by their own pull-downs (see the hold-off
+  facts).
+
+  USB: J402 is a five-way header for the panel cable to a side-of-machine USB connector (bought separately, not on the board): 1 USB_DP, 2 USB_DM, 3 GND, 4 cable shield (to GND through R403 and C419 in parallel), 5 USB_VBUS. D401 (USBLC6-2SC6) sits at J402 with D+ and D- passing through its pins 1/6 and 3/4, pin 2 on GND and pin 5 on USB_VBUS. USB_DP goes to PA12 and USB_DM to PA11 and to nothing else. No series resistor and no D+ pull-up: the controller''s full-speed driver manages its output impedance and has the embedded D+ pull-up (AN4879 Rev 10, 3.1 and Table 4). The shield is not tied straight to GND: R403 (1 MOhm) and C419 (4.7 nF, 1 kV) in parallel join it to GND, so a panel connector shell touching earthed machine metal cannot tie earth to controller ground, while the capacitor still returns discharge current (AN4879 states no shield arrangement in its text). PA9 stays the coffee pump gate: the controller''s VBUS sense function is not used, so VBUS reaches the board but not PA9; firmware runs the port with VBUS detection off and the B-session-valid override on (RM0433 Rev 8, 57.14.1).
+
+  Cable power (bench work with mains disconnected): USB_VBUS -> D402 (SMF6.0A, to GND) and F401 (500 mA hold PTC) -> USB_VBUS_F (TP413), which goes straight to pin 3 of the selector JP301 (Logic supply sheet) and nowhere else. There is no series blocking element: JP301 is the only thing that stops the cable and the module feeding each other. Its one shorting jumper joins +5V to the module (pins 1-2, as drawn) or to USB_VBUS_F (pins 2-3), never both, and no jumper position joins them. On the module pins the cable side is open at JP301 and the cable carries only the clamp''s and the controller''s own small currents; on the cable pins the module output is open. The board never sources current into the cable.
+
+  PB3 is wired to SWO (net SWO): it leaves the allocation record''s free list.
+
+  '

@@ -1,0 +1,37 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: coil pick-up at 70 c air: both gates 1.8 v, rail 4.75 v, coil 68.2 x 1.2 = 81.84 ohm, fet resistance x 1.28
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
++5v                                       4.75
+pol_out                                      0
+pol_buf                             2.6125e-07
+pol_node_a                         1.77124e-07
+pol_gate_a                                 1.8
+pol_mid                                0.17155
+pol_node_b                         1.77124e-07
+pol_gate_b                                 1.8
+pol_coil_lo                            0.43824
+pol_clamp_1                           0.593284
+pol_clamp_2                           0.593284
+vgb#branch                         -3.2143e-07
+vga#branch                         -3.2143e-07
+vsup#branch                         -0.0526852
+
+
+No. of Data Rows : 59
+vlo                 =  4.38240e-01
+vcoil = 4.311760e+00
+icoil = 5.268524e-02
+vpickup_limit = 4.200000e+00
+Note: Simulation executed from .control section 

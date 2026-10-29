@@ -1,0 +1,44 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: supply current channel input network: shunt sense r607 r608 c602 into amc131m02 ain1, 15 a rms through a 1 mohm shunt
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+shunt_sense_in                               0
+amc_ain1p                                    0
+shunt_sense_neutral                          0
+amc_ain1n                                    0
+amc_diff                                     0
+neutral                                      0
+bdiff#branch                                 0
+vshunt#branch                                0
+vsns#branch                                  0
+vgnd#branch                                  0
+
+
+No. of Data Rows : 5010
+vpk_15a             =  2.11992e-02 at=  8.49991e-02
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+No. of Data Rows : 21
+gain50_hi           =  9.99330e-01
+phase50_hi          =  -1.08684e-03
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+No. of Data Rows : 21
+gain50_nom          =  9.99340e-01
+phase50_nom         =  -9.73879e-04
+Note: Simulation executed from .control section 

@@ -157,6 +157,19 @@ What can be judged is the source inventory, which is what the criterion establis
 
 **The decision: the entry carries an X2 capacitor, 0.1 µF, across line and neutral, against the varistor on the line side of the shunt, and no common-mode choke and no Y capacitor.** The reasons: the dominant source is the pumps' phase-angle edge, which a line-to-line capacitor attenuates at the entry; the original board carried the same pair, a varistor and a 0.1 µF X2 capacitor (`reference-machine.md`, *Mains-entry surge and filter parts on the original board*); the capacitor is a catalogue part already priced (KNSCHA MPX104K31C3KN15600, C489079, 0.11 USD hand-fitted, `controller-board-cost-estimate.md` § Mains entry); and the emission cannot be measured to justify going without. A Y capacitor adds line-to-earth leakage to a machine whose earth bond is not measured, and a choke has no figure to size it. *The other choice*, no suppression, saves one hand-fitted part and leaves the emission unjudged and unmeasurable: it is not taken. *If a laboratory measurement ever shows a failure*, a common-mode choke is the next part, placed on the main board at the entry. The capacitor stores ½ × 0.1 µF × (358 V)² = 6.4 mJ at the span's peak, which stands on the plug's pins after unplugging; **its discharge arrangement is the schematic leaf's to draw** (`SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT`), with its place, which the floorplan does not yet hold.
 
+### Revisits of graded figures
+
+Parts whose maker states a maximum voltage below the top of the declared span, kept at the maker's rating (the rating is not stretched) on the owner's acceptance. The span is 216 V to 253 V rms (§ Supply), so the top is 253 V rms (357.8 V peak); a 250 VAC rating is 353.6 V peak. Each part is revisited when any of the conditions in the last column holds.
+
+| Part | Top of the declared span | The part's rating | Owner's acceptance | Revisit when |
+|---|---|---|---|---|
+| F101, entry fuse (SETfuse SCT520, 10 A) | 253 V rms | 250 VAC | 2026-10-29: accepted by the owner ("accept the fuse"); `open-items.md`, Owner risk acceptances (c2) | The span is widened above 253 V; monitoring shows the supply above 253 V; or a catalogue fuse of the same current and clip, rated at or above 253 V, is found at equal size and price |
+| F701, F711, pump branch fuses (SETfuse SCT520) | 253 V rms | 250 VAC | 2026-10-29, as F101 | As F101 |
+| F731, valve branch fuse (SETfuse SCT520) | 253 V rms | 250 VAC | 2026-10-29, as F101 | As F101 |
+| K731, K741, valve relays (Hongfa HF32FA-G) | 253 V rms | 250 VAC maximum switching voltage | 2026-10-29: accepted by the owner; `open-items.md`, Owner risk acceptances (c) | The span is widened above 253 V; monitoring shows the supply above 253 V; or a catalogue relay of the same footprint and coil, rated at or above 253 V, is found at equal size and price |
+
+The overshoot is 3 V in 250 V (1.2 %). No catalogue search for a part rated at or above 253 V is recorded for these positions; making that search is the third revisit condition, and it is made when the parts are bought.
+
 ### Pump drives: surge and emission margins
 
 The pump drives are a random-phase opto-triac (onsemi MOC3052M, P14) and a snubberless triac (WeEn BTA204S-600B, P13) in series with the pump and its branch fuse, with no snubber and no varistor (`controller-board-division.md` § The pump drives). Every figure below is either read from a maker's sheet named in that record's *Sources read* or marked **open** with the act that settles it, and an assumed figure is counted open.

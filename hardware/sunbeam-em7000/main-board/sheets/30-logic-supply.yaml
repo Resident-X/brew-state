@@ -1,0 +1,235 @@
+sheet: "Logic supply"
+function: "Mean Well IRM-20-5 module from LINE/NEUTRAL upstream of the interlock contact, through a series position that is a wire link in service and takes an inrush thermistor if the entry fuse opens at cold start, 5 V rail with a three-way selector that joins +5V to the module or to the cable-power path and never to both, 3.3 V low-dropout regulator rated for the module's over-voltage trip, with isolating link, filtered analogue 3.3 V"
+parts:
+  - ref: U301
+    lib_id: Converter_ACDC:IRM-20-5
+    value: "IRM-20-5"
+    rating: "85-305 Vac input, 5 V 4 A, 4.2 kVac in-out, 52.4x27.2x24 mm"
+    footprint: Converter_ACDC:Converter_ACDC_MeanWell_IRM-20-xx_THT
+    mpn: "IRM-20-5"
+    maker: "Mean Well"
+    lcsc: C6280121
+    class: extended
+    hand: true
+    function: "logic supply module; pins 1 AC/L, 2 AC/N, 3 -Vo, 4 +Vo; stock footprint pads match the maker's Case 219A drawing (AC/L to AC/N 20.8 mm, AC to DC columns 45 mm, +Vo 8 mm from -Vo)"
+    mains: true
+    sim_exclude: true
+  - ref: JP303
+    lib_id: Connector_Generic:Conn_01x02
+    value: "LINK_MOD"
+    rating: "two plated holes for a wire link (1.5 mm2 or a component-lead off-cut) between LINE and LINE_MOD: the link is fitted in service"
+    footprint: JP101_WireLink_P10mm
+    mpn: "none (owner-fitted wire)"
+    maker: "none"
+    lcsc: ""
+    class: none
+    hand: true
+    function: "series position in the module's mains feed, wire link in service so the board works with RT301 unfitted; remove the link when RT301 is fitted, never both: with both fitted the link shorts the thermistor. Open voltage across the link when the inrush thermistor RT301 replaces it is the thermistor's drop, under 253 V rms. Pin 1 = LINE side, pin 2 = LINE_MOD side (module). A 1206 0 ohm chip link was not used: its sheet gives 2 A rated and 10 A overload (UNI-ROYAL data sheet, 1206 row) and no duration, against the module's 40 A typical cold-start inrush (IRM-20 sheet), where the wire has no such limit"
+    mains: true
+    sim_exclude: true
+  - ref: RT301
+    lib_id: Device:Thermistor_NTC
+    value: "NTC 10D-9"
+    rating: "NTC inrush limiter 10 ohm at 25 degC +/-20 %, 2 A maximum steady state, 0.46 ohm residual, B 2700 K, 150 uF maximum load capacitance, no voltage rating stated by the maker, 11 mm disc, 7.5 mm lead pitch (Ruilon NTC series, rev. A6 2023-10-16)"
+    footprint: Capacitor_THT:C_Disc_D11.0mm_W5.0mm_P7.50mm
+    mpn: "NTC 10D-9"
+    maker: "RUILON (Shenzhen Ruilongyuan Elec)"
+    lcsc: C3790
+    class: extended
+    hand: true
+    dnp: true
+    function: "inrush limiter in the module's mains feed: NOT FITTED. Fit it, and remove the link JP303, only if the entry fuse F101 opens at a cold start (bring-up, logic supply step 8). At 253 V rms (358 V crest) the module's 40 A typical cold-start at 230 Vac implies about 8.1 ohm of source resistance (325 V / 40 A); 10 ohm added gives 358 / (8.1 + 10) = 19.8 A against 44 A, a 55 % cut; steady-state the thermistor drops its 0.46 ohm residual at the 0.4 A the module draws at 230 Vac (0.18 V, 0.07 W). The maker's datasheet (Ruilon NTC series rev. A6 2023-10-16, read again 2026-10-29) states no voltage rating for the NTC10D-9: its 240 V/120 V column heads the maximum allowable capacitance (150 uF at 240 V), a test condition and not a rating, so the part's derating class is none"
+    mains: true
+    sim_exclude: true
+  - ref: C301
+    lib_id: Device:C
+    value: "100 nF"
+    rating: "X7R 50 V 10 % 0603"
+    footprint: Capacitor_SMD:C_0603_1608Metric
+    mpn: "CC0603KRX7R9BB104"
+    maker: "YAGEO"
+    lcsc: C14663
+    class: basic
+    hand: false
+    function: "module output 0.1 uF named in the maker sheet's ripple test condition (note 2)"
+    mains: false
+    sim_exclude: false
+  - ref: C302
+    lib_id: Device:C_Polarized
+    value: "47 uF"
+    rating: "aluminium electrolytic 16 V 20 % SMD 6.3x5.2"
+    footprint: Capacitor_SMD:CP_Elec_6.3x5.2
+    mpn: "MVK 16V47 M 6.3*5.2"
+    maker: "SamYoung Electronics"
+    lcsc: C165623
+    class: extended
+    hand: false
+    function: "module output 47 uF named in the maker sheet's ripple test condition (note 2); + toward +5V_MOD"
+    mains: false
+    sim_exclude: false
+  - ref: TP301
+    lib_id: Connector:TestPoint
+    value: "TP"
+    rating: "pad 1.5 mm"
+    footprint: TestPoint:TestPoint_Pad_D1.5mm
+    mpn: "-"
+    maker: "-"
+    lcsc: none
+    class: none
+    hand: false
+    function: "test point on the module output, source side of JP301"
+    mains: false
+    sim_exclude: false
+  - ref: JP301
+    lib_id: Connector_Generic:Conn_01x03
+    value: "SEL_5V"
+    rating: "1x3 2.54 mm header with one shorting jumper, 3 A: pin 1 the module rail, pin 2 the common rail, pin 3 the cable path (the fuse output)"
+    footprint: Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical
+    mpn: "PZ254V-11-03P"
+    maker: "XFCN"
+    lcsc: C2937625
+    class: extended
+    hand: true
+    function: "selector for the 5 V rail's source: the one shorting jumper (C100114) sits on pins 1-2 for the module (as drawn, in service) or on pins 2-3 for cable power; a shorting jumper spans two adjacent pins and pin 2 takes one jumper, so no fitted state joins +5V_MOD to USB_VBUS_F. Silkscreen: 1-2 MODULE (MAINS), 2-3 USB ONLY (MAINS OFF). First power: a 22 ohm 5 W resistor's leads soldered to pins 1 and 2 in place of the jumper"
+    mains: false
+    sim_exclude: false
+  - ref: C303
+    lib_id: Device:C
+    value: "10 uF"
+    rating: "X5R 10 V 10 % 0603"
+    footprint: Capacitor_SMD:C_0603_1608Metric
+    mpn: "CL10A106KP8NNNC"
+    maker: "Samsung Electro-Mechanics"
+    lcsc: C19702
+    class: basic
+    hand: false
+    function: "regulator input bulk on +5V"
+    mains: false
+    sim_exclude: false
+  - ref: U302
+    lib_id: Regulator_Linear:LT1963AxST-3.3
+    value: "LT1963AEST-3.3#TRPBF"
+    rating: "input and output pins +/-20 V absolute maximum, 3.3 V 1.5 A LDO SOT-223 (pin 1 IN, 2 GND and tab, 3 OUT), output 3.200 to 3.400 V over line, load and temperature, dropout 0.35 V maximum at 500 mA, junction 125 degC operating, 150 degC maximum"
+    footprint: Package_TO_SOT_SMD:SOT-223-3_TabPin2
+    mpn: "LT1963AEST-3.3#TRPBF"
+    maker: "Analog Devices (Linear Technology)"
+    lcsc: C459918
+    class: extended
+    hand: false
+    function: "3.3 V regulator from +5V. Chosen because its input absolute maximum (20 V) is above the module's over-voltage trip (5.75 to 6.75 V) and above the cable path's clamp level (D402, 10.3 V), where the part it replaced (AP7361C, 6.5 V) was not, and a clamp cannot hold a 4 A source (circuit-proof.md, 3.3 V regulator rows). The tab is ground, so it sits on the ground pour; the proof uses the maker's 56 degC/W figure for 100 mm2 of top copper over a 2500 mm2 board, which the layout must provide"
+    mains: false
+    sim_exclude: false
+  - ref: C304
+    lib_id: Device:C
+    value: "22 uF"
+    rating: "X5R 10 V 20 % 0805, 85 degC"
+    footprint: Capacitor_SMD:C_0805_2012Metric
+    mpn: "LMK212BBJ226MG-T"
+    maker: "TAIYO YUDEN"
+    lcsc: C92811
+    class: extended
+    hand: false
+    function: "regulator output capacitor, one of two in parallel (C304, C305): the maker asks for 10 uF with ceramics allowed and no minimum ESR at 3.3 V (LT1963A, Table 1: 0 mohm); each part keeps 8.4 uF at 3.4 V, -20 % and 85 degC, so the pair keeps 16.8 uF (circuit-proof.md, 3.3 V regulator rows). Place at least 10 mm from the regulator's tab: X5R is rated to 85 degC and the tab's neighbourhood runs hotter than the 70 degC air"
+    mains: false
+    sim_exclude: false
+  - ref: C305
+    lib_id: Device:C
+    value: "22 uF"
+    rating: "X5R 10 V 20 % 0805, 85 degC"
+    footprint: Capacitor_SMD:C_0805_2012Metric
+    mpn: "LMK212BBJ226MG-T"
+    maker: "TAIYO YUDEN"
+    lcsc: C92811
+    class: extended
+    hand: false
+    function: "second regulator output capacitor in parallel with C304 (see C304)"
+    mains: false
+    sim_exclude: false
+  - ref: TP302
+    lib_id: Connector:TestPoint
+    value: "TP"
+    rating: "pad 1.5 mm"
+    footprint: TestPoint:TestPoint_Pad_D1.5mm
+    mpn: "-"
+    maker: "-"
+    lcsc: none
+    class: none
+    hand: false
+    function: "test point on the regulator output, source side of JP302"
+    mains: false
+    sim_exclude: false
+  - ref: JP302
+    lib_id: Connector_Generic:Conn_01x02
+    value: "LINK_3V3"
+    rating: "1x2 2.54 mm header with shorting jumper"
+    footprint: Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical
+    mpn: "PZ254V-11-02P"
+    maker: "XFCN"
+    lcsc: C492401
+    class: extended
+    hand: true
+    function: "isolating link +3V3_REG to +3V3 (jumper cap C100114)"
+    mains: false
+    sim_exclude: false
+  - ref: FB301
+    lib_id: Device:FerriteBead
+    value: "600R@100MHz"
+    rating: "0603, 0.50 ohm DC max, 350 mA, 25 %"
+    footprint: Inductor_SMD:L_0603_1608Metric
+    mpn: "FCM1608KF-601T03"
+    maker: "TAI-TECH"
+    lcsc: C141723
+    class: extended
+    hand: false
+    function: "filter between +3V3 and the analogue supply for VDDA and VREF+ (AN4938 2.2 optional; the reference design's part)"
+    mains: false
+    sim_exclude: false
+  - ref: TP303
+    lib_id: Connector:TestPoint
+    value: "TP"
+    rating: "pad 1.5 mm"
+    footprint: TestPoint:TestPoint_Pad_D1.5mm
+    mpn: "-"
+    maker: "-"
+    lcsc: none
+    class: none
+    hand: false
+    function: "test point on the ferrite output, source side of R301"
+    mains: false
+    sim_exclude: false
+  - ref: R301
+    lib_id: Device:R
+    value: "0"
+    rating: "0 ohm 0603 100 mW"
+    footprint: Resistor_SMD:R_0603_1608Metric
+    mpn: "0603WAF0000T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C21189
+    class: basic
+    hand: false
+    function: "isolating link +3V3A_FB to +3V3A"
+    mains: false
+    sim_exclude: false
+nets:
+  "LINE": {scope: global, pins: [JP303.1, RT301.1]}
+  "LINE_MOD": {scope: local, pins: [JP303.2, RT301.2, U301.1]}
+  "NEUTRAL": {scope: global, pins: [U301.2]}
+  "GND": {scope: power, pins: [U301.3, C301.2, C302.2, C303.2, U302.2, C304.2, C305.2]}
+  "+5V_MOD": {scope: power, pins: [U301.4, C301.1, C302.1, TP301.1, JP301.1]}
+  "+5V": {scope: power, pins: [JP301.2, C303.1, U302.1]}
+  "USB_VBUS_F": {scope: global, pins: [JP301.3]}
+  "+3V3_REG": {scope: power, pins: [U302.3, C304.1, C305.1, TP302.1, JP302.1]}
+  "+3V3": {scope: power, pins: [JP302.2, FB301.1]}
+  "+3V3A_FB": {scope: local, pins: [FB301.2, TP303.1, R301.1]}
+  "+3V3A": {scope: power, pins: [R301.2]}
+no_connect: []
+custom_symbols: []
+custom_footprints: []
+power_flags: [+5V, LINE_MOD, NEUTRAL]
+notes: |
+  Left to right: LINE/NEUTRAL (mains, left) -> JP303 wire link (RT301, the inrush thermistor, is the not-fitted alternative across the same two nets: LINE_MOD joins them to U301 pin 1) -> U301 -> +5V_MOD (TP301, C301, C302) -> JP301 (pins 1-2 as drawn; pins 2-3 takes USB_VBUS_F from the Controller sheet instead) -> +5V -> U302 -> +3V3_REG (TP302, C304, C305) -> JP302 -> +3V3 -> FB301 -> +3V3A_FB (TP303) -> R301 -> +3V3A.
+  Mains side is the left of U301 only (pins 1 and 2) with the link JP303 and the thermistor position RT301 in the live feed (net LINE_MOD between them and U301 pin 1 is mains class, like LINE); everything right of U301 is low voltage and the module is the barrier (4.2 kVac in-out, maker sheet). U301, JP303 and RT301 are hand-fitted through-hole; RT301 is not fitted (DNP). JP303 and RT301 are alternatives: the link is fitted in service, and the thermistor replaces it only if the entry fuse opens at cold start (bring-up step 8). JP303 uses the first-power link's footprint (JP101_WireLink_P10mm, 7.0 mm between pad edges); both positions carry the mains net class and sit on the mains side of the board with U301's input pins.
+  Power flags: +5V (beyond JP301 it has power_in pins only) needs a PWR_FLAG; LINE_MOD and NEUTRAL each carry one on U301's AC input pin (1 and 2), because the mains source is off the sheet and the module's inputs are power_in pins; +5V_MOD and +3V3_REG each have a power_out pin (U301.4, U302.3). +3V3 and +3V3A are flagged on the Controller sheet.
+  +3V3 and +5V load-side nets are seen by every other sheet by name. +3V3A is a rail made here; the Controller sheet uses it for VDDA and for VREF+ (through R302).
+  JP301 is a selector, not a link: its one shorting jumper joins +5V to +5V_MOD (module, as drawn) or to USB_VBUS_F (cable power, the fuse output USB_VBUS_F from the Controller sheet), and a shorting jumper cannot span both pairs, so no jumper position joins the module's output to the cable's supply: on pins 1-2 the cable side (pin 3) is open and nothing is driven into the cable, on pins 2-3 the module output (pin 1) is open. The selector alone stops the two feeding each other, and the board never sources current into the cable. The first-power position is the same selector: a 22 ohm 5 W resistor's leads soldered to pins 1 and 2 limit the +5V rail's draw while loads are checked (arithmetic in the proof record).
+  U302 is an LT1963AEST-3.3#TRPBF (Analog Devices, 20 V input), replacing the AP7361C-33ER-13 (6.5 V absolute maximum input) because the module's over-voltage trip reaches 6.75 V and a clamp cannot hold a 4 A source (circuit-proof.md, 3.3 V regulator rows). Its pins are 1 IN, 2 GND (tab), 3 OUT, so the tab and pad 2 are ground: the layout joins the tab to the ground pour with at least 100 mm2 of top copper (the proof's 56 degC/W). The output stage is two 22 uF X5R capacitors, C304 and C305.
