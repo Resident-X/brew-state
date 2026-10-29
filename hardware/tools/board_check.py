@@ -3787,7 +3787,7 @@ def workmanship_rules(design: Design, rules: Optional[List[list]]) -> List[Viola
 
 
 #: The least distance, in mm, the crystal keep-clear holds the parts unrelated to the oscillator from the crystal's courtyard.
-KEEP_CLEAR_MM = 25.0
+KEEP_CLEAR_MM = 10.0
 
 #: A footprint name that is a crystal or a ceramic resonator, as KiCad's own libraries name them.
 CRYSTAL_FOOTPRINT = re.compile(r"(?i)(crystal|resonator)_")

@@ -3764,13 +3764,13 @@ def rules_of(*texts: str) -> list:
 
 
 KEEP_CLEAR = ('(rule "Crystal keep-clear"\n\t(condition "A.Reference == \'Y1\' && B.Reference != \'C1\'")\n'
-              '\t(constraint courtyard_clearance (min 25mm)))')
+              '\t(constraint courtyard_clearance (min 10mm)))')
 
 
 class TheCrystalKeepClearIsInTheRulesFileOfABoardWithACrystal(unittest.TestCase):
     # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
     """A board with a crystal or a resonator needs the rule keeping unrelated
-    parts 25 mm from its courtyard, in the one form, exempting some parts and
+    parts 10 mm from its courtyard, in the one form, exempting some parts and
     not all of them; a board with none needs no rule.
     """
 
@@ -3781,17 +3781,21 @@ class TheCrystalKeepClearIsInTheRulesFileOfABoardWithACrystal(unittest.TestCase)
         return board_check.crystal_keep_clear(DESIGN, rules_of(*rules) if rules else None, tree or self.BOARD)
 
     def test_the_rule_in_its_form_passes(self):
+        # SOL-LAYOUT-CATALOGUE-CRYSTAL-KEEP-CLEAR-10MM.C2: The board check's tests catch a crystal keep-clear rule below the 10 mm floor, and the seeded fault stays figure-independent
         # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
         self.assertEqual(self.found(KEEP_CLEAR), [])
-        self.assertEqual(self.found(KEEP_CLEAR.replace("25mm", "30.5mm")), [])
+        self.assertEqual(self.found(KEEP_CLEAR.replace("10mm", "30.5mm")), [])
+        self.assertEqual(self.found(KEEP_CLEAR.replace("10mm", "25mm")), [])
 
     def test_a_board_with_no_crystal_needs_no_rule(self):
+        # SOL-LAYOUT-CATALOGUE-CRYSTAL-KEEP-CLEAR-10MM.C2: The board check's tests catch a crystal keep-clear rule below the 10 mm floor, and the seeded fault stays figure-independent
         # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
         plain = tree_of(named_part("C_0603", "C1", ("1", "/X", 1, 1)), named_part("Crystalline_Cap", "C2", ("1", "/X", 1, 1)))
         self.assertEqual(self.found(tree=plain), [])
         self.assertEqual([v.rule for v in self.found(tree=tree_of(named_part("Resonator_SMD", "X1", ("1", "/X", 1, 1))))], ["crystal_keepclear"])
 
     def test_a_board_whose_rules_file_lacks_the_rule_fails_naming_the_crystal(self):
+        # SOL-LAYOUT-CATALOGUE-CRYSTAL-KEEP-CLEAR-10MM.C2: The board check's tests catch a crystal keep-clear rule below the 10 mm floor, and the seeded fault stays figure-independent
         # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
         for what, rules in (("no rules file", ()), ("an unrelated rule", ('(rule "Other"\n\t(constraint clearance (min 1mm)))',))):
             with self.subTest(what=what):
@@ -3800,6 +3804,7 @@ class TheCrystalKeepClearIsInTheRulesFileOfABoardWithACrystal(unittest.TestCase)
                 self.assertIn("Y1 is a crystal, and the rules file holds no rule keeping the parts unrelated", found[0].message)
 
     def test_a_rule_exempting_every_other_part_holds_nothing_and_fails(self):
+        # SOL-LAYOUT-CATALOGUE-CRYSTAL-KEEP-CLEAR-10MM.C2: The board check's tests catch a crystal keep-clear rule below the 10 mm floor, and the seeded fault stays figure-independent
         # SOL-LAYOUT-CATALOGUE-CRYSTAL-RELATED-PARTS.C2: The proof design's crystal keep-clear row and rule agree with the catalogue, and a test holds the two together
         # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
         blanket = KEEP_CLEAR.replace("&& B.Reference != 'C1'", "&& B.Reference != 'C1' && B.Reference != 'R1'")
@@ -3810,23 +3815,26 @@ class TheCrystalKeepClearIsInTheRulesFileOfABoardWithACrystal(unittest.TestCase)
                          "an exemption for a part not on the board leaves R1 under the rule")
 
     def test_a_figure_below_the_keep_clear_fails(self):
+        # SOL-LAYOUT-CATALOGUE-CRYSTAL-KEEP-CLEAR-10MM.C2: The board check's tests catch a crystal keep-clear rule below the 10 mm floor, and the seeded fault stays figure-independent
         # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
-        found = self.found(KEEP_CLEAR.replace("25mm", "24.9mm"))
+        found = self.found(KEEP_CLEAR.replace("10mm", "9.9mm"))
         self.assertEqual([v.rule for v in found], ["crystal_keepclear"])
-        self.assertIn("keeps parts 24.9 mm from the courtyard of Y1, under the 25 mm", found[0].message)
+        self.assertIn("keeps parts 9.9 mm from the courtyard of Y1, under the 10 mm", found[0].message)
 
     def test_a_rule_in_any_other_form_does_not_hold_the_keep_clear(self):
+        # SOL-LAYOUT-CATALOGUE-CRYSTAL-KEEP-CLEAR-10MM.C2: The board check's tests catch a crystal keep-clear rule below the 10 mm floor, and the seeded fault stays figure-independent
         # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
         for what, rule in (("a layer", KEEP_CLEAR[:-1] + '\n\t(layer "F.Cu"))'),
                            ("a severity", KEEP_CLEAR[:-1] + '\n\t(severity ignore))'),
                            ("a looser condition", KEEP_CLEAR.replace("A.Reference == 'Y1' && ", "")),
                            ("another crystal", KEEP_CLEAR.replace("'Y1'", "'Y2'")),
                            ("a different constraint", KEEP_CLEAR.replace("courtyard_clearance", "clearance")),
-                           ("no unit", KEEP_CLEAR.replace("25mm", "25"))):
+                           ("no unit", KEEP_CLEAR.replace("10mm", "10"))):
             with self.subTest(what=what):
                 self.assertEqual([v.rule for v in self.found(rule)], ["crystal_keepclear"])
 
     def test_a_later_courtyard_rule_naming_the_crystal_that_loosens_it_fails(self):
+        # SOL-LAYOUT-CATALOGUE-CRYSTAL-KEEP-CLEAR-10MM.C2: The board check's tests catch a crystal keep-clear rule below the 10 mm floor, and the seeded fault stays figure-independent
         # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
         loosening = '(rule "Loose"\n\t(condition "A.Reference == \'Y1\'")\n\t(constraint courtyard_clearance (min 1mm)))'
         found = self.found(KEEP_CLEAR, loosening)
@@ -3835,6 +3843,7 @@ class TheCrystalKeepClearIsInTheRulesFileOfABoardWithACrystal(unittest.TestCase)
         self.assertEqual(self.found(KEEP_CLEAR, '(rule "Else"\n\t(condition "A.Reference == \'J9\'")\n\t(constraint courtyard_clearance (min 1mm)))'), [])
 
     def test_each_crystal_of_the_board_needs_its_own_rule(self):
+        # SOL-LAYOUT-CATALOGUE-CRYSTAL-KEEP-CLEAR-10MM.C2: The board check's tests catch a crystal keep-clear rule below the 10 mm floor, and the seeded fault stays figure-independent
         # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
         two = tree_of(named_part("Crystal_A", "Y1", ("1", "/X", 1, 1)), named_part("Crystal_B", "Y2", ("1", "/X", 1, 1)),
                       named_part("R_0603", "R1", ("1", "/Y", 1, 1)))
