@@ -2265,7 +2265,16 @@
 				)
 			)
 		)
-	)
+	
+		(property "LCSC" "none"
+			(at 58.42 40.64 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		))
 	(symbol
 		(lib_id "Device:Fuse")
 		(at 88.9 40.64 90)
@@ -2430,7 +2439,16 @@
 				)
 			)
 		)
-	)
+	
+		(property "LCSC" "none"
+			(at 119.38 40.64 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		))
 	(symbol
 		(lib_id "Connector_Generic:Conn_01x02")
 		(at 149.86 40.64 0)
@@ -2482,7 +2500,7 @@
 				)
 			)
 		)
-		(property "LCSC" ""
+		(property "LCSC" "none"
 			(at 149.86 40.64 0)
 			(hide yes)
 			(effects
@@ -2595,7 +2613,16 @@
 				)
 			)
 		)
-	)
+	
+		(property "LCSC" "none"
+			(at 180.34 40.64 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		))
 	(symbol
 		(lib_id "Device:Varistor")
 		(at 210.82 50.8 0)
@@ -3338,7 +3365,16 @@
 				)
 			)
 		)
-	)
+	
+		(property "LCSC" "none"
+			(at 58.42 99.06 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		))
 	(symbol
 		(lib_id "Connector_Generic:Conn_01x01")
 		(at 30.48 139.7 0)
@@ -3503,7 +3539,16 @@
 				)
 			)
 		)
-	)
+	
+		(property "LCSC" "none"
+			(at 58.42 139.7 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		))
 	(symbol
 		(lib_id "Device:R_Shunt")
 		(at 99.06 139.7 0)
@@ -3764,7 +3809,16 @@
 				)
 			)
 		)
-	)
+	
+		(property "LCSC" "none"
+			(at 167.64 139.7 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		))
 	(symbol
 		(lib_id "Connector_Generic:Conn_01x01")
 		(at 220.98 119.38 0)
@@ -4763,7 +4817,16 @@
 				)
 			)
 		)
-	)
+	
+		(property "LCSC" "none"
+			(at 73.66 139.7 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		))
 	(symbol
 		(lib_id "Connector:TestPoint")
 		(at 182.88 139.7 0)
@@ -4832,5 +4895,14 @@
 				)
 			)
 		)
-	)
+	
+		(property "LCSC" "none"
+			(at 182.88 139.7 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		))
 )

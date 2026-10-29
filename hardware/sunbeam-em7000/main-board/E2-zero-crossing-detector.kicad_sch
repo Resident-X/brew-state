@@ -1712,7 +1712,16 @@
 				)
 			)
 		)
-	)
+	
+		(property "LCSC" "none"
+			(at 121.92 77.47 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		))
 	(symbol
 		(lib_id "power:+3V3")
 		(at 116.84 66.04 0)

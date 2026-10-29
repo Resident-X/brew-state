@@ -3928,7 +3928,16 @@
 				)
 			)
 		)
-	)
+	
+		(property "LCSC" "none"
+			(at 55.88 63.5 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		))
 	(symbol
 		(lib_id "Connector:TestPoint")
 		(at 55.88 88.9 0)
@@ -3997,7 +4006,16 @@
 				)
 			)
 		)
-	)
+	
+		(property "LCSC" "none"
+			(at 55.88 88.9 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		))
 	(symbol
 		(lib_id "Connector:TestPoint")
 		(at 55.88 114.3 0)
@@ -4066,7 +4084,16 @@
 				)
 			)
 		)
-	)
+	
+		(property "LCSC" "none"
+			(at 55.88 114.3 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		))
 	(symbol
 		(lib_id "Connector:TestPoint")
 		(at 55.88 139.7 0)
@@ -4135,7 +4162,16 @@
 				)
 			)
 		)
-	)
+	
+		(property "LCSC" "none"
+			(at 55.88 139.7 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		))
 	(symbol
 		(lib_id "Connector:TestPoint")
 		(at 55.88 165.1 0)
@@ -4204,7 +4240,16 @@
 				)
 			)
 		)
-	)
+	
+		(property "LCSC" "none"
+			(at 55.88 165.1 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		))
 	(symbol
 		(lib_id "Device:R")
 		(at 242.57 63.5 90)
@@ -5237,7 +5282,16 @@
 				)
 			)
 		)
-	)
+	
+		(property "LCSC" "none"
+			(at 88.9 210.82 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		))
 	(symbol
 		(lib_id "power:GND")
 		(at 83.82 74.93 0)

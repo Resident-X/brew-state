@@ -2889,7 +2889,7 @@
 				)
 			)
 		)
-		(property "LCSC" ""
+		(property "LCSC" "none"
 			(at 38.1 63.5 0)
 			(hide yes)
 			(effects
@@ -3364,7 +3364,7 @@
 				)
 			)
 		)
-		(property "LCSC" ""
+		(property "LCSC" "none"
 			(at 139.7 63.5 0)
 			(hide yes)
 			(effects
@@ -4031,7 +4031,7 @@
 				)
 			)
 		)
-		(property "LCSC" ""
+		(property "LCSC" "none"
 			(at 228.6 101.6 0)
 			(hide yes)
 			(effects
@@ -4698,7 +4698,7 @@
 				)
 			)
 		)
-		(property "LCSC" ""
+		(property "LCSC" "none"
 			(at 228.6 177.8 0)
 			(hide yes)
 			(effects
@@ -5367,7 +5367,7 @@
 				)
 			)
 		)
-		(property "LCSC" ""
+		(property "LCSC" "none"
 			(at 381 101.6 0)
 			(hide yes)
 			(effects
@@ -5463,7 +5463,7 @@
 				)
 			)
 		)
-		(property "LCSC" ""
+		(property "LCSC" "none"
 			(at 368.3 152.4 0)
 			(hide yes)
 			(effects
@@ -5550,7 +5550,7 @@
 				)
 			)
 		)
-		(property "LCSC" ""
+		(property "LCSC" "none"
 			(at 368.3 63.5 0)
 			(hide yes)
 			(effects

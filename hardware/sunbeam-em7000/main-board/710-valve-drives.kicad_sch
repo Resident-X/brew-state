@@ -2308,7 +2308,7 @@
 				)
 			)
 		)
-		(property "LCSC" ""
+		(property "LCSC" "none"
 			(at 104.14 91.44 0)
 			(hide yes)
 			(effects
@@ -2790,7 +2790,7 @@
 				)
 			)
 		)
-		(property "LCSC" ""
+		(property "LCSC" "none"
 			(at 104.14 182.88 0)
 			(hide yes)
 			(effects

@@ -2958,7 +2958,16 @@
 				)
 			)
 		)
-	)
+	
+		(property "LCSC" "none"
+			(at 190.5 68.58 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		))
 	(symbol
 		(lib_id "Connector:TestPoint")
 		(at 124.46 71.12 0)
@@ -3018,7 +3027,16 @@
 				)
 			)
 		)
-	)
+	
+		(property "LCSC" "none"
+			(at 124.46 71.12 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		))
 	(symbol
 		(lib_id "Analog_ADC:HX711")
 		(at 165.1 177.8 0)
@@ -3950,7 +3968,16 @@
 				)
 			)
 		)
-	)
+	
+		(property "LCSC" "none"
+			(at 190.5 170.18 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		))
 	(symbol
 		(lib_id "Connector:TestPoint")
 		(at 124.46 172.72 0)
@@ -4010,7 +4037,16 @@
 				)
 			)
 		)
-	)
+	
+		(property "LCSC" "none"
+			(at 124.46 172.72 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		))
 	(symbol
 		(lib_id "power:+5V")
 		(at 162.56 55.88 0)

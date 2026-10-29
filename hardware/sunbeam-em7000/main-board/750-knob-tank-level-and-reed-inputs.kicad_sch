@@ -1416,7 +1416,7 @@
 				)
 			)
 		)
-		(property "LCSC" ""
+		(property "LCSC" "none"
 			(at 40.64 154.94 0)
 			(hide yes)
 			(effects
@@ -1723,6 +1723,15 @@
 					(size 1.27 1.27)
 				)
 			)
+		)
+		(property "LCSC" "none"
+			(at 134.62 66.04 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
 		))
 	(symbol
 		(lib_id "Device:R")
@@ -1986,6 +1995,15 @@
 					(size 1.27 1.27)
 				)
 			)
+		)
+		(property "LCSC" "none"
+			(at 134.62 104.14 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
 		))
 	(symbol
 		(lib_id "Device:R")
@@ -2242,6 +2260,15 @@
 		)
 	
 		(property "Rating" "test point"
+			(at 134.62 142.24 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "none"
 			(at 134.62 142.24 0)
 			(hide yes)
 			(effects

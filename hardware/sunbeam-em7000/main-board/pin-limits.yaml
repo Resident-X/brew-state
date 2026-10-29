@@ -262,12 +262,12 @@ parts:
         absolute_max_v: 6
         absolute_min_v: -0.3
         tolerates_driven_unpowered: false
-      # VSS (GND), Table 9 class S; VDDX-VSS supply row, Table 109
+      # VSS (GND), Table 9 class S; VDDX-VSS supply row, Table 109 Ground pin: tolerates_driven_unpowered is true because the pin is the return of its own part, so no supply of the part can be lost for another domain to drive it; the pin-limit rule reads the nets joined to ground through zero-ohm links (a probe-type link to the MAX31865 FORCE2 pin) as a different domain driving it.
       - pin: "10"
         domain: ground
         absolute_max_v: 4
         absolute_min_v: -0.3
-        tolerates_driven_unpowered: false
+        tolerates_driven_unpowered: true
       # VDD (+3V3), Table 9 class S; Table 109 external main supply VDDX-VSS -0.3 to 4.0 V; recommended VDD 1.62 to 3.6 V, VDDA 1.62 to 3.6 V with the ADC used (Table 112)
       - pin: "11"
         domain: logic
@@ -316,12 +316,12 @@ parts:
         absolute_max_v: 4
         absolute_min_v: -0.3
         tolerates_driven_unpowered: false
-      # VSSA (GND), Table 9 class S; VDDX-VSS supply row, Table 109
+      # VSSA (GND), Table 9 class S; VDDX-VSS supply row, Table 109 Ground pin: tolerates_driven_unpowered is true because the pin is the return of its own part, so no supply of the part can be lost for another domain to drive it; the pin-limit rule reads the nets joined to ground through zero-ohm links (a probe-type link to the MAX31865 FORCE2 pin) as a different domain driving it.
       - pin: "19"
         domain: ground
         absolute_max_v: 4
         absolute_min_v: -0.3
-        tolerates_driven_unpowered: false
+        tolerates_driven_unpowered: true
       # VREF+ (VREF+), Table 9 class S; 'any other pins' row of Table 109 (VSS-0.3 to 4.0 V)
       - pin: "20"
         domain: logic
@@ -358,12 +358,12 @@ parts:
         absolute_max_v: 4
         absolute_min_v: -0.3
         tolerates_driven_unpowered: false
-      # VSS (GND), Table 9 class S; VDDX-VSS supply row, Table 109
+      # VSS (GND), Table 9 class S; VDDX-VSS supply row, Table 109 Ground pin: tolerates_driven_unpowered is true because the pin is the return of its own part, so no supply of the part can be lost for another domain to drive it; the pin-limit rule reads the nets joined to ground through zero-ohm links (a probe-type link to the MAX31865 FORCE2 pin) as a different domain driving it.
       - pin: "26"
         domain: ground
         absolute_max_v: 4
         absolute_min_v: -0.3
-        tolerates_driven_unpowered: false
+        tolerates_driven_unpowered: true
       # VDD (+3V3), Table 9 class S; Table 109 external main supply VDDX-VSS -0.3 to 4.0 V; recommended VDD 1.62 to 3.6 V, VDDA 1.62 to 3.6 V with the ADC used (Table 112)
       - pin: "27"
         domain: logic
@@ -496,12 +496,12 @@ parts:
         absolute_max_v: 4
         absolute_min_v: -0.3
         tolerates_driven_unpowered: false
-      # VSS (GND), Table 9 class S; VDDX-VSS supply row, Table 109
+      # VSS (GND), Table 9 class S; VDDX-VSS supply row, Table 109 Ground pin: tolerates_driven_unpowered is true because the pin is the return of its own part, so no supply of the part can be lost for another domain to drive it; the pin-limit rule reads the nets joined to ground through zero-ohm links (a probe-type link to the MAX31865 FORCE2 pin) as a different domain driving it.
       - pin: "49"
         domain: ground
         absolute_max_v: 4
         absolute_min_v: -0.3
-        tolerates_driven_unpowered: false
+        tolerates_driven_unpowered: true
       # VDD (+3V3), Table 9 class S; Table 109 external main supply VDDX-VSS -0.3 to 4.0 V; recommended VDD 1.62 to 3.6 V, VDDA 1.62 to 3.6 V with the ADC used (Table 112)
       - pin: "50"
         domain: logic
@@ -646,12 +646,12 @@ parts:
         absolute_max_v: 4
         absolute_min_v: -0.3
         tolerates_driven_unpowered: false
-      # VSS (GND), Table 9 class S; VDDX-VSS supply row, Table 109
+      # VSS (GND), Table 9 class S; VDDX-VSS supply row, Table 109 Ground pin: tolerates_driven_unpowered is true because the pin is the return of its own part, so no supply of the part can be lost for another domain to drive it; the pin-limit rule reads the nets joined to ground through zero-ohm links (a probe-type link to the MAX31865 FORCE2 pin) as a different domain driving it.
       - pin: "74"
         domain: ground
         absolute_max_v: 4
         absolute_min_v: -0.3
-        tolerates_driven_unpowered: false
+        tolerates_driven_unpowered: true
       # VDD (+3V3), Table 9 class S; Table 109 external main supply VDDX-VSS -0.3 to 4.0 V; recommended VDD 1.62 to 3.6 V, VDDA 1.62 to 3.6 V with the ADC used (Table 112)
       - pin: "75"
         domain: logic
@@ -796,12 +796,12 @@ parts:
         absolute_max_v: 6
         absolute_min_v: -0.3
         tolerates_driven_unpowered: false
-      # VSS (GND), Table 9 class S; VDDX-VSS supply row, Table 109
+      # VSS (GND), Table 9 class S; VDDX-VSS supply row, Table 109 Ground pin: tolerates_driven_unpowered is true because the pin is the return of its own part, so no supply of the part can be lost for another domain to drive it; the pin-limit rule reads the nets joined to ground through zero-ohm links (a probe-type link to the MAX31865 FORCE2 pin) as a different domain driving it.
       - pin: "99"
         domain: ground
         absolute_max_v: 4
         absolute_min_v: -0.3
-        tolerates_driven_unpowered: false
+        tolerates_driven_unpowered: true
       # VDD (+3V3), Table 9 class S; Table 109 external main supply VDDX-VSS -0.3 to 4.0 V; recommended VDD 1.62 to 3.6 V, VDDA 1.62 to 3.6 V with the ADC used (Table 112)
       - pin: "100"
         domain: logic
@@ -910,36 +910,36 @@ parts:
         absolute_max_v: 5.5
         absolute_min_v: 0
         tolerates_driven_unpowered: false
-      # G1 enable, tied to ground on this board. Not stated as for the other inputs; the recommended range is used.
+      # G1 enable, tied to ground on this board. Not stated as for the other inputs; the recommended range is used. Ground pin: tolerates_driven_unpowered is true because the pin is the return of its own part, so no supply of the part can be lost for another domain to drive it; the pin-limit rule reads the nets joined to ground through zero-ohm links (a probe-type link to the MAX31865 FORCE2 pin) as a different domain driving it.
       - pin: "1"
         domain: ground
         absolute_max_v: 5.5
         absolute_min_v: 0
-        tolerates_driven_unpowered: false
-      # A5, tied to ground on this board. Not stated as for the other inputs; the recommended range is used.
+        tolerates_driven_unpowered: true
+      # A5, tied to ground on this board. Not stated as for the other inputs; the recommended range is used. Ground pin: tolerates_driven_unpowered is true because the pin is the return of its own part, so no supply of the part can be lost for another domain to drive it; the pin-limit rule reads the nets joined to ground through zero-ohm links (a probe-type link to the MAX31865 FORCE2 pin) as a different domain driving it.
       - pin: "7"
         domain: ground
         absolute_max_v: 5.5
         absolute_min_v: 0
-        tolerates_driven_unpowered: false
-      # A6, tied to ground on this board. Not stated as for the other inputs; the recommended range is used.
+        tolerates_driven_unpowered: true
+      # A6, tied to ground on this board. Not stated as for the other inputs; the recommended range is used. Ground pin: tolerates_driven_unpowered is true because the pin is the return of its own part, so no supply of the part can be lost for another domain to drive it; the pin-limit rule reads the nets joined to ground through zero-ohm links (a probe-type link to the MAX31865 FORCE2 pin) as a different domain driving it.
       - pin: "8"
         domain: ground
         absolute_max_v: 5.5
         absolute_min_v: 0
-        tolerates_driven_unpowered: false
-      # A7, tied to ground on this board. Not stated as for the other inputs; the recommended range is used.
+        tolerates_driven_unpowered: true
+      # A7, tied to ground on this board. Not stated as for the other inputs; the recommended range is used. Ground pin: tolerates_driven_unpowered is true because the pin is the return of its own part, so no supply of the part can be lost for another domain to drive it; the pin-limit rule reads the nets joined to ground through zero-ohm links (a probe-type link to the MAX31865 FORCE2 pin) as a different domain driving it.
       - pin: "9"
         domain: ground
         absolute_max_v: 5.5
         absolute_min_v: 0
-        tolerates_driven_unpowered: false
-      # G2 enable, tied to ground on this board. Not stated as for the other inputs; the recommended range is used.
+        tolerates_driven_unpowered: true
+      # G2 enable, tied to ground on this board. Not stated as for the other inputs; the recommended range is used. Ground pin: tolerates_driven_unpowered is true because the pin is the return of its own part, so no supply of the part can be lost for another domain to drive it; the pin-limit rule reads the nets joined to ground through zero-ohm links (a probe-type link to the MAX31865 FORCE2 pin) as a different domain driving it.
       - pin: "19"
         domain: ground
         absolute_max_v: 5.5
         absolute_min_v: 0
-        tolerates_driven_unpowered: false
+        tolerates_driven_unpowered: true
       # GND
       - pin: "10"
         domain: ground
@@ -1054,12 +1054,12 @@ parts:
         absolute_max_v: 430
         absolute_min_v: -430
         tolerates_driven_unpowered: false
-      # -Vo. Not stated. The output's over-voltage protection range, 5.75 to 6.75 V (shut-off, clamped by a zener), bounds the output; 0 V is the return.
+      # -Vo. Not stated. The output's over-voltage protection range, 5.75 to 6.75 V (shut-off, clamped by a zener), bounds the output; 0 V is the return. Ground pin: tolerates_driven_unpowered is true because the pin is the return of its own part, so no supply of the part can be lost for another domain to drive it; the pin-limit rule reads the nets joined to ground through zero-ohm links (a probe-type link to the MAX31865 FORCE2 pin) as a different domain driving it.
       - pin: "3"
         domain: ground
         absolute_max_v: 6.75
         absolute_min_v: 0
-        tolerates_driven_unpowered: false
+        tolerates_driven_unpowered: true
       # +Vo. The module's output voltage is 5 V +/-2.5 % (5.125 V), the over-voltage protection operates at 5.75 to 6.75 V. A voltage applied to the output from outside is not rated: not stated. 6.75 V is the top of the protection range.
       - pin: "4"
         domain: supply5

@@ -1131,49 +1131,49 @@ positions:
     package: R_0603_1608Metric
     rating: 1% 100mW 75V 0603
     lcsc: C23140
-    class: none
+    class: resistor
   # R610: maker UNI-ROYAL; MPN 0603WAF330JT5E; catalogue class basic
   - reference: R610
     value: '33'
     package: R_0603_1608Metric
     rating: 1% 100mW 75V 0603
     lcsc: C23140
-    class: none
+    class: resistor
   # R611: maker UNI-ROYAL; MPN 0603WAF330JT5E; catalogue class basic
   - reference: R611
     value: '33'
     package: R_0603_1608Metric
     rating: 1% 100mW 75V 0603
     lcsc: C23140
-    class: none
+    class: resistor
   # R612: maker UNI-ROYAL; MPN 0603WAF330JT5E; catalogue class basic
   - reference: R612
     value: '33'
     package: R_0603_1608Metric
     rating: 1% 100mW 75V 0603
     lcsc: C23140
-    class: none
+    class: resistor
   # R613: maker UNI-ROYAL; MPN 0603WAF330JT5E; catalogue class basic
   - reference: R613
     value: '33'
     package: R_0603_1608Metric
     rating: 1% 100mW 75V 0603
     lcsc: C23140
-    class: none
+    class: resistor
   # R614: maker UNI-ROYAL; MPN 0603WAF1003T5E; catalogue class basic
   - reference: R614
     value: 100k
     package: R_0603_1608Metric
     rating: 1% 100mW 75V 0603
     lcsc: C25803
-    class: none
+    class: resistor
   # R615: maker UNI-ROYAL; MPN 0603WAF1003T5E; catalogue class basic
   - reference: R615
     value: 100k
     package: R_0603_1608Metric
     rating: 1% 100mW 75V 0603
     lcsc: C25803
-    class: none
+    class: resistor
   # TP601: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP601
     value: TP_AMC_DRDY
@@ -1263,7 +1263,7 @@ positions:
     package: R_0603_1608Metric
     rating: 1% 100mW 75V 0603
     lcsc: C31850
-    class: none
+    class: resistor
   # C630: maker Samsung Electro-Mechanics; MPN CL10B102KB8NNNC; catalogue class basic
   - reference: C630
     value: 1n
@@ -2110,7 +2110,7 @@ positions:
     package: R_0603_1608Metric
     rating: 1% 100mW 75V 0603
     lcsc: C25803
-    class: none
+    class: resistor
   # R642: maker UNI-ROYAL; MPN 0603WAF0000T5E; catalogue class basic
   - reference: R642
     value: '0'
@@ -2138,7 +2138,7 @@ positions:
     package: R_0603_1608Metric
     rating: 1% 100mW 75V 0603
     lcsc: C25803
-    class: none
+    class: resistor
   # R647: maker UNI-ROYAL; MPN 0603WAF0000T5E; catalogue class basic
   - reference: R647
     value: '0'
@@ -2281,7 +2281,7 @@ positions:
     package: R_0603_1608Metric
     rating: 1% 100mW 75V 0603
     lcsc: C25803
-    class: none
+    class: resistor
   # TP670: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP670
     value: TP_WT1_DATA
@@ -2356,7 +2356,7 @@ positions:
     package: R_0603_1608Metric
     rating: 1% 100mW 75V 0603
     lcsc: C25803
-    class: none
+    class: resistor
   # TP672: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP672
     value: TP_WT2_DATA

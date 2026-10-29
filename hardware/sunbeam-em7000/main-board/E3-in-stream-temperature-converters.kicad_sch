@@ -3358,7 +3358,16 @@
 				)
 			)
 		)
-	)
+	
+		(property "LCSC" "none"
+			(at 165.1 71.12 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		))
 	(symbol
 		(lib_id "Device:C")
 		(at 193.04 60.96 0)
@@ -4005,7 +4014,16 @@
 				)
 			)
 		)
-	)
+	
+		(property "LCSC" "none"
+			(at 88.9 25.4 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		))
 	(symbol
 		(lib_id "Connector:TestPoint")
 		(at 205.74 43.18 0)
@@ -4065,7 +4083,16 @@
 				)
 			)
 		)
-	)
+	
+		(property "LCSC" "none"
+			(at 205.74 43.18 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		))
 	(symbol
 		(lib_id "Sensor_Temperature:MAX31865xTP")
 		(at 127 152.4 0)
@@ -4705,7 +4732,16 @@
 				)
 			)
 		)
-	)
+	
+		(property "LCSC" "none"
+			(at 165.1 172.72 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		))
 	(symbol
 		(lib_id "Device:C")
 		(at 193.04 162.56 0)
@@ -5352,7 +5388,16 @@
 				)
 			)
 		)
-	)
+	
+		(property "LCSC" "none"
+			(at 88.9 127 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		))
 	(symbol
 		(lib_id "Connector:TestPoint")
 		(at 205.74 144.78 0)
@@ -5412,7 +5457,16 @@
 				)
 			)
 		)
-	)
+	
+		(property "LCSC" "none"
+			(at 205.74 144.78 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		))
 	(symbol
 		(lib_id "power:+3V3")
 		(at 124.46 30.48 0)

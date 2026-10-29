@@ -735,7 +735,7 @@ sheets:
     footprint: JP101_WireLink_P10mm
     mpn: none (owner-fitted 1.5 mm2 wire)
     maker: none
-    lcsc: ''
+    lcsc: none
     class: none
     hand: true
     function: 'Isolating link in the live between the fuse and everything it feeds (bring-up): wire link in service, lamp or resistor on first power; open voltage across the link is 253 V rms'
@@ -839,7 +839,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: Test point, live in before the fuse (source side)
@@ -852,7 +852,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: Test point, live after the fuse and before the link JP101 (source side)
@@ -865,7 +865,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: Test point, live on the load side of JP101 (the module, through its series link JP303 on the Logic supply sheet, and the timing, measurement and relay contact taps are here)
@@ -878,7 +878,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: Test point, live out of the interlock contact to tab 1 (shows the interlock's result)
@@ -891,7 +891,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: Test point, neutral on the plug side of the shunt
@@ -904,7 +904,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: Test point, neutral pour above the shunt
@@ -917,7 +917,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: Test point, second pad on the plug side of the shunt, for reading the voltage across R105 (TP105 carries the current)
@@ -930,7 +930,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: Test point, second pad on the neutral pour above the shunt, for reading the voltage across R105 (TP106 carries the current)
@@ -1154,7 +1154,7 @@ sheets:
     footprint: Relay_HF115F-Q_1H_Vertical
     mpn: HF115F-Q/005-1H
     maker: Hongfa (Xiamen Hongfa Electroacoustic)
-    lcsc: ''
+    lcsc: none
     class: none
     hand: true
     function: 'Interlock relay: contact in series in the live feed (pin 13 = LINE, pin 14 = LINE1), coil A1 = +5V, A2 = POL_COIL_LO. The 5 V code was not found in the JLCPCB/LCSC catalogue on 2026-10-29 (only HF115F-Q/012-1H,
@@ -1456,7 +1456,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: Channel A gate (reads the held level with the output toggling and held)
@@ -1469,7 +1469,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: Channel B gate
@@ -1482,7 +1482,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: Buffer input = the controller's proof-of-life output (high and low phase widths are measured here)
@@ -1495,7 +1495,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: Buffer output (the edges both channels see)
@@ -1508,7 +1508,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: Coil low end (coil voltage = +5V minus this)
@@ -1521,7 +1521,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: Coil high end, on +5V at the relay (the supply the coil sees)
@@ -3543,7 +3543,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: 'key signal: data-ready, the front end''s output strobe'
@@ -3556,7 +3556,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: 'key signal: converter clock after the termination'
@@ -3569,7 +3569,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: 'key signal: divider tap, about 0.30 V peak at 253 V rms (mains-referenced copper)'
@@ -3582,7 +3582,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: 'key signal: shunt channel input after the filter, mains-referenced copper'
@@ -3595,7 +3595,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: 'producer-only net: the converter''s isolated supply output, mains-referenced'
@@ -3608,7 +3608,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: 'producer-only net: DCDC_HGND, the return of the isolated supply, mains-referenced'
@@ -3621,7 +3621,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: 'producer-only net: high-side LDO input after the bead, mains-referenced'
@@ -3634,7 +3634,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: 'producer-only net: high-side LDO output, 2.6-3.2 V, mains-referenced'
@@ -3647,7 +3647,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: 'producer-only net: DCDC_CAP, the primary-side LDO output, 3.5 V abs max'
@@ -3660,7 +3660,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: 'key signal: shared SPI2 data-out line, carries the converter''s and both RTD converters'' replies'
@@ -4042,7 +4042,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: 'key signal: the zero-crossing edge as the controller sees it (50 Hz supply: 100 edges a second)'
@@ -6688,7 +6688,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: 'key signal: DOUT of amplifier 1: high when idle, low when a result is ready'
@@ -6701,7 +6701,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: 'key signal: amplifier 1''s INA+ after the filter, the load cell''s signal node (full scale +/-20 mV at gain 128, AVDD 5 V)'
@@ -6831,7 +6831,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: 'key signal: DOUT of amplifier 2: high when idle, low when a result is ready'
@@ -6844,7 +6844,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: 'key signal: amplifier 2''s INA+ after the filter, the load cell''s signal node (full scale +/-20 mV at gain 128, AVDD 5 V)'
@@ -7137,7 +7137,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: test point on the PUMP_C_GATE control input
@@ -7278,7 +7278,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: test point on the PUMP_S_GATE control input
@@ -7322,7 +7322,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: 'test point on PUMP_C_MT2, the triac''s MT2: with NEUTRAL (TP106) it carries the turn-off voltage read with an isolated or differential probe (mains-referenced, never an earthed scope lead)'
@@ -7366,7 +7366,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: 'test point on PUMP_S_MT2, the triac''s MT2: with NEUTRAL (TP106) it carries the turn-off voltage read with an isolated or differential probe (mains-referenced, never an earthed scope lead)'
@@ -7607,7 +7607,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: test point on VALVE_2W_DRV
@@ -7690,7 +7690,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: test point on VALVE_3W_DRV
@@ -7836,7 +7836,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: test point on +5V_WB
@@ -7901,7 +7901,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: test point on HEAT_C_DRV
@@ -7966,7 +7966,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: test point on HEAT_S_DRV
@@ -8192,7 +8192,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: test point on +5V_GAUGE
@@ -8257,7 +8257,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: test point on GAUGE_RST
@@ -8309,7 +8309,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: test point on GAUGE_STEP1
@@ -8361,7 +8361,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: test point on GAUGE_DIR1
@@ -8413,7 +8413,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: test point on GAUGE_STEP2
@@ -8465,7 +8465,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: test point on GAUGE_DIR2
@@ -8776,7 +8776,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: test point on ANODE_SW (source side of the anode rail link)
@@ -8789,7 +8789,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: test point on ANODE_GATE
@@ -8867,7 +8867,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: test point on BUZZER
@@ -8919,7 +8919,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: test point on LOWWATER_K
@@ -8945,7 +8945,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: test point on KEY1
@@ -8971,7 +8971,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: test point on KEY2
@@ -8997,7 +8997,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: test point on KEY3
@@ -9023,7 +9023,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: test point on KEY4
@@ -9049,7 +9049,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: test point on KEY5
@@ -9213,7 +9213,7 @@ sheets:
     footprint: REED_PADS_P20.00mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: true
     function: tank reed element pads
@@ -9252,7 +9252,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: test point on KNOB_HOT
@@ -9291,7 +9291,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: test point on KNOB_STEAM
@@ -9330,7 +9330,7 @@ sheets:
     footprint: TestPoint:TestPoint_Pad_D1.5mm
     mpn: ''
     maker: ''
-    lcsc: ''
+    lcsc: none
     class: none
     hand: false
     function: test point on TANK_LEVEL

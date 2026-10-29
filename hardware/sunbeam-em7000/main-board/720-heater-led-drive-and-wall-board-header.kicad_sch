@@ -2288,7 +2288,16 @@
 				)
 			)
 		)
-	)
+	
+		(property "LCSC" "none"
+			(at 50.8 40.64 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		))
 	(symbol
 		(lib_id "Device:R")
 		(at 63.5 101.6 90)
@@ -2743,7 +2752,16 @@
 				)
 			)
 		)
-	)
+	
+		(property "LCSC" "none"
+			(at 50.8 91.44 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		))
 	(symbol
 		(lib_id "Connector_Generic:Conn_01x10")
 		(at 330.2 55.88 0)
@@ -3004,7 +3022,16 @@
 				)
 			)
 		)
-	)
+	
+		(property "LCSC" "none"
+			(at 227.33 152.4 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		))
 	(symbol
 		(lib_id "power:GND")
 		(at 85.09 55.88 0)

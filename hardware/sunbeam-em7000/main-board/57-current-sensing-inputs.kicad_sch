@@ -1918,6 +1918,15 @@
 					(size 1.27 1.27)
 				)
 			)
+		)
+		(property "LCSC" "none"
+			(at 88.9 55.88 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
 		))
 	(symbol
 		(lib_id "Connector_Generic:Conn_01x03")
@@ -2655,6 +2664,15 @@
 		)
 	
 		(property "Rating" "pad 1.5mm"
+			(at 88.9 132.08 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "none"
 			(at 88.9 132.08 0)
 			(hide yes)
 			(effects
