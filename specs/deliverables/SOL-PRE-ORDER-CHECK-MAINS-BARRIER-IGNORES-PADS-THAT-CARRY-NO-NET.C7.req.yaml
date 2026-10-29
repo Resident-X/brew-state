@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C7
+type: criterion
+title: A part whose only pads off the Mains class are numbered, coppered and netless fails by name as not known to bridge
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  On a synthetic layout, a part with Mains-class pads whose only other pads are numbered, have copper and have no net fails by name as not known to bridge the barrier. Out of scope: the figure BARRIER_COPPER_MM2, the strip geometry and the main board's layout.
+links:
+  - target: SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET
+    type: criterion-of

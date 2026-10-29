@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C9
+type: criterion
+title: A seeded copy of the proof design with a polarised through-hole part whose holes a turn maps onto themselves and no pad numbered 1 is caught as polarity_mark
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The seeded-fault harness holds a row on the throwaway proof design that renames a polarised through-hole part's pads from numbers to names so that no pad is numbered 1, on a part whose holes a turn maps onto themselves, and the check reports polarity_mark. The main board's silkscreen and every other pre-order rule are out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION
+    type: criterion-of

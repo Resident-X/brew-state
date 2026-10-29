@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL.C3
+type: criterion
+title: A courtyard_clearance rule outside the keep-clear form that names a crystal with != fails for that crystal
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A courtyard_clearance rule outside the keep-clear form fails the crystal keep-clear for the crystal it names with !=, in each of these forms: A.Reference != the crystal with a loosening minimum; and a bare B.Reference != the crystal with a small minimum. Out of scope: the related-part list of CLOCK-3, the 10 mm floor and the main board's rules file.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL
+    type: criterion-of

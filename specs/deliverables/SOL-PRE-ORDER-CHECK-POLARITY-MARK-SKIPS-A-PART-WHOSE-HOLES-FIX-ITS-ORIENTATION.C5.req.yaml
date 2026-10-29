@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C5
+type: criterion
+title: A polarised part whose plated holes fix no orientation fails polarity_mark
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A polarised part with no pad numbered 1 whose footprint has a single plated pad, or whose plated holes all lie at one point, fails polarity_mark, naming the part and saying its holes fix no orientation; a degenerate pattern is never exempt. Out of scope: which parts are polarised, the silk marks on the main board and the mark margin.
+links:
+  - target: SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION
+    type: criterion-of

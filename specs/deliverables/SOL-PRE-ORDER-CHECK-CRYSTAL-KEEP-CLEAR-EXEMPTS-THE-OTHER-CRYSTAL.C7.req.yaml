@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL.C7
+type: criterion
+title: A seeded two-crystal copy of the proof design whose second keep-clear is followed by a rule naming the first crystal as B.Reference == is caught as crystal_keepclear
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The seeded-fault harness holds a row on a two-crystal copy of the throwaway proof design whose second keep-clear is followed by a rule naming the first crystal as B.Reference ==, and the check reports crystal_keepclear. The proof design's committed rules and the layout review's baselines are out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C6
+type: criterion
+title: A net named unconnected-(...) carried by two or more pads is a real net and its pads count as netted pads
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Two pads carrying one net named unconnected-(...), including two pads of one number, count as netted pads off the Mains class; a part whose boxes they cause to overlap fails by name as unmeasurable. Out of scope: the figure BARRIER_COPPER_MM2, the strip geometry and the main board's layout.
+links:
+  - target: SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET
+    type: criterion-of

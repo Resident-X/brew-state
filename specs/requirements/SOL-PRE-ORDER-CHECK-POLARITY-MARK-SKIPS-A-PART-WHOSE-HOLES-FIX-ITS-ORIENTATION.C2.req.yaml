@@ -1,12 +1,12 @@
 id: SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C2
 type: criterion
-title: The through-hole exemption is shown against a seeded fault and is stated in the hardware notes
+title: A polarised part with no pad numbered 1 whose through-hole holes a turn maps onto themselves fails polarity_mark
 status: active
 version: 1
 measurement_type: binary
 verification: test
 text: |
-  The seeded-fault harness holds a row on the throwaway proof design that renames a polarised through-hole part's pads from numbers to names that a turn maps onto themselves, with no pad numbered 1, caught as polarity_mark, and the required-names dictionary in test_board_check_kicad_marks.py requires it. The hardware notes' polarity_mark entry and the paragraph on the rule state that a polarised part with no pad numbered 1 needs no first pin only when every plated pad is through-hole and no turn other than the identity maps its pads onto themselves, and fails otherwise. The main board's silkscreen and every other pre-order rule are out of scope.
+  A polarised part with no pad numbered 1 and only through-hole pads fails polarity_mark when a turn other than the identity maps its holes onto themselves in position and drill, as with four pads named A1, A2, 13 and 14 in a square, naming the part. Out of scope: which parts are polarised, the silk marks on the main board and the mark margin.
 links:
   - target: SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION
     type: criterion-of

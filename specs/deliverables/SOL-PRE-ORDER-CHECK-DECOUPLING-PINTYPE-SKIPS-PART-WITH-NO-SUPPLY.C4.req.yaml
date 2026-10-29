@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY.C4
+type: criterion
+title: An integrated circuit that cannot be matched to a category fails decoupling_pintype naming the position
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A U-referenced footprint with netted pads and none typed power fails decoupling_pintype naming the position in each of these cases: its entry has no category; its lcsc is none; its catalogue number is absent from the extract; no extract can be read; the extract is unusable, including one marked synthetic on an orderable design even when its entry carries an in-list category. Out of scope: the main board's records and the decoupling via measurement.
+links:
+  - target: SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY
+    type: criterion-of

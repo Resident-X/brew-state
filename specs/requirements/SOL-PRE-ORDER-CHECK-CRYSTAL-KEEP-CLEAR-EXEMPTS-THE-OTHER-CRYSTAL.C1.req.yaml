@@ -1,12 +1,12 @@
 id: SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL.C1
 type: criterion
-title: Only a B.Reference != clause inside the keep-clear form exempts a crystal; every other mention of it by == or != still counts as naming it
+title: On a layout of two crystals, a keep-clear rule for each that exempts the other with B.Reference != passes the crystal keep-clear
 status: active
 version: 1
 measurement_type: binary
 verification: test
 text: |
-  On a synthetic layout of two crystals with generic references, a rule for each crystal in the keep-clear form that exempts the other with B.Reference != passes the crystal keep-clear, and a rule for Y2 in that form that exempts Y1 does not count as naming Y1. A courtyard_clearance rule outside the form that names a crystal still fails for that crystal in each of these forms: A.Reference == the crystal; B.Reference == the crystal; A.Reference != the crystal with a loosening minimum; a bare B.Reference != the crystal with a small minimum; and A.Reference == 'Y2' && B.Reference == 'Y1' with a loose minimum, which is not the keep-clear form. A keep-clear for Y2 below the floor is reported once, for Y2. A keep-clear below the floor, one that exempts every other part, a crystal with no rule of its own and a keep-clear not naming its crystal as A each still fail, and a single-crystal layout reports as it did. The message of each failure is unchanged. The related-part list of CLOCK-3, the 10 mm floor and the main board's rules file are out of scope.
+  On a synthetic layout of two crystals with generic references, a rule for each crystal in the keep-clear form that exempts the other with B.Reference != passes the crystal keep-clear, and a rule for the second crystal in that form that exempts the first does not count as naming the first. The related-part list of CLOCK-3, the 10 mm floor and the main board's rules file are out of scope.
 links:
   - target: SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL
     type: criterion-of

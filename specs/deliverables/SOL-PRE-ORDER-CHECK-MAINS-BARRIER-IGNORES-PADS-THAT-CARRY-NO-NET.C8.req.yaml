@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C8
+type: criterion
+title: A part whose Mains-class and other pads overlap along both axes fails by name
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A part whose Mains-class group and other netted group have boxes overlapping along both axes fails by name as unmeasurable. Out of scope: the figure BARRIER_COPPER_MM2, the strip geometry and the main board's layout.
+links:
+  - target: SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET
+    type: criterion-of

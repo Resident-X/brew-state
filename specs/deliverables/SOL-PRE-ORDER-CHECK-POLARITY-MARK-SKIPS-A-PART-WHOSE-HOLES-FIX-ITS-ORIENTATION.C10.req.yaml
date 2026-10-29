@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C10
+type: criterion
+title: The hardware notes state when a polarised part with no pad numbered 1 needs no first pin
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The hardware notes' polarity_mark entry and the paragraph on the rule state that a polarised part with no pad numbered 1 needs no first pin only when every plated pad is through-hole, its holes lie at two or more positions, at least one pad is numbered and no turn other than the identity maps its holes onto themselves in position and drill, that the size and shape of the copper are not compared, and that it fails otherwise with the reason. Inspection: read both places against each clause and find all present. Out of scope: which parts are polarised, the silk marks on the main board and the mark margin.
+links:
+  - target: SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION
+    type: criterion-of

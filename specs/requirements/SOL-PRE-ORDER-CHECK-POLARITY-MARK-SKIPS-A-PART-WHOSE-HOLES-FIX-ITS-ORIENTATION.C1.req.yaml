@@ -1,12 +1,12 @@
 id: SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C1
 type: criterion
-title: A polarised through-hole part with no pad numbered 1 whose pads no turn maps onto themselves needs no first pin, and any other polarised part with no pad numbered 1 still fails with the reason
+title: A polarised through-hole part with no pad numbered 1 whose holes no turn maps onto themselves needs no first pin
 status: active
 version: 1
 measurement_type: binary
 verification: test
 text: |
-  On a synthetic design, a polarised part with no pad numbered 1 passes the polarity mark when every plated pad is through-hole and no turn other than the identity maps its pads onto themselves in position, size and shape, as with pads named 13, 14, A1 and A2 in an asymmetric pattern, or with duplicate pads 13 and 14 added. It fails, with the text "has no pad numbered 1" and the reason its pads are surface-mount or map onto themselves when turned, when any plated pad is surface-mount, or when a turn other than the identity maps the through-hole pads onto themselves, as with four pads named A1, A2, 13 and 14 in a square, and with surface-mount pads A and B on opposite sides of the centre. A polarised footprint with no numbered pad fails. A part with a pad numbered 1 is judged on that pad as before, a mark on the wrong side, a text-only mark and a part that is not polarised report as they did, and every design that passed before still passes. The failure carries the added reason in the check's text report, which is its only report. Which parts are polarised, the silk marks on the main board and the mark margin are out of scope.
+  On a synthetic design, a polarised part with no pad numbered 1 passes the polarity mark when every plated pad is through-hole, at least two plated holes lie apart, at least one pad is numbered and no turn other than the identity maps the holes onto themselves in position and drill, as with pads named 13, 14, A1 and A2 in an asymmetric pattern, and with duplicate pads 13 and 14 added. Which parts are polarised, the silk marks on the main board and the mark margin are out of scope.
 links:
   - target: SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION
     type: criterion-of

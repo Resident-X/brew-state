@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY.C5
+type: criterion
+title: A category that is an empty string or is not a string fails the catalogue extract read naming the entry, and the part is not skipped
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A catalogue extract entry whose category is an empty string, or a value that is not a string, fails the extract read naming the entry, and a U-referenced part using that entry is not skipped. A well-formed category on an entry is accepted by the extract read. Out of scope: the main board's records and the decoupling via measurement.
+links:
+  - target: SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY
+    type: criterion-of

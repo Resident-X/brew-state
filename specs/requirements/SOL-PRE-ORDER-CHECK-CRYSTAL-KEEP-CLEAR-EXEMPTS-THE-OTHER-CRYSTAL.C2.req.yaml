@@ -1,12 +1,12 @@
 id: SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL.C2
 type: criterion
-title: The two-crystal loosening cases are shown to fail on seeded rules and the hardware notes state which mention exempts and which names
+title: A courtyard_clearance rule outside the keep-clear form that names a crystal with == fails for that crystal
 status: active
 version: 1
 measurement_type: binary
 verification: test
 text: |
-  The seeded-fault harness holds two rows on a two-crystal copy of the throwaway proof design, one whose second keep-clear is followed by a rule naming the first crystal as B.Reference == and one by a rule with A.Reference != the first crystal and a minimum of 0mm, each caught as crystal_keepclear, and the required-names dictionary in test_board_check_kicad_marks.py requires both rows. The hardware notes' crystal_keepclear entry and the paragraph on the crystal keep-clear state that only a B.Reference != clause inside the keep-clear form exempts, and that any other mention of the crystal, by == or by != in another form, counts as naming it. The proof design's committed rules and the layout review's baselines are out of scope.
+  A courtyard_clearance rule outside the keep-clear form fails the crystal keep-clear for the crystal it names, in each of these forms: A.Reference == the crystal; B.Reference == the crystal; and A.Reference == the second crystal && B.Reference == the first crystal with a loose minimum, which is not the keep-clear form because B is compared with ==. Out of scope: the related-part list of CLOCK-3, the 10 mm floor and the main board's rules file.
 links:
   - target: SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL
     type: criterion-of

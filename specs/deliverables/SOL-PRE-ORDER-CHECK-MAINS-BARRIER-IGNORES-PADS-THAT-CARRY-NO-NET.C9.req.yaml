@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C9
+type: criterion
+title: The copper lying in the strip, an exempt pad's included, is still summed against the figure
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The area of all copper in the strip between the two groups, every pad of the board included and an exempt pad's copper among them, is added up against the figure and fails a part above it. Out of scope: the figure BARRIER_COPPER_MM2, the strip geometry and the main board's layout.
+links:
+  - target: SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET
+    type: criterion-of
