@@ -1,12 +1,12 @@
 id: SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY.C3
 type: criterion
-title: The supply key is shown to fail on a seeded fault and is stated in the hardware notes and the method
+title: The category reading is shown to fail on seeded faults and is stated in the hardware notes and the method
 status: active
 version: 1
 measurement_type: binary
 verification: test
 text: |
-  The seeded-fault harness holds a row on a copy of the throwaway proof design for the contradiction of C2, caught as decoupling_pintype, and the records test requires it. The hardware notes' parts specification key list, decoupling_pintype entry and DECOUPLE-6 paragraph, and the method's DECOUPLE-6, state the key, that its only value is none, and that a U-referenced part stating it is not refused. The main board's record entries and the committed proof designs' records are out of scope.
+  The seeded-fault harness holds a row for an in-list category on a part with a power-typed pad and a second row for a real integrated circuit whose entry has a category outside the list, each caught as decoupling_pintype, and the required-names dictionary in test_board_check_kicad_marks.py requires both. The hardware notes' catalogue-extract key list, decoupling_pintype entry and DECOUPLE-6 paragraph, and the method's DECOUPLE-6, state the category key, that an integrated circuit is skipped only when its published category is in the closed list, and that every other case is refused. The main board's records and the committed proof designs' records are out of scope.
 links:
   - target: SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY
     type: criterion-of

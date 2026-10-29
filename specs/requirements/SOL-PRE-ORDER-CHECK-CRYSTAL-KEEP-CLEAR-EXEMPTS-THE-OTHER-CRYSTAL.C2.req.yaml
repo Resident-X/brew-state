@@ -1,12 +1,12 @@
 id: SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL.C2
 type: criterion
-title: The two-crystal case is shown to fail on a seeded loosening rule and the hardware notes state which mention counts
+title: The two-crystal loosening cases are shown to fail on seeded rules and the hardware notes state which mention exempts and which names
 status: active
 version: 1
 measurement_type: binary
 verification: test
 text: |
-  The seeded-fault harness holds a row on a two-crystal copy of the throwaway proof design whose second keep-clear is followed by a rule naming the first crystal as B.Reference ==, caught as crystal_keepclear, and the records test requires the row. The hardware notes' crystal_keepclear entry and the paragraph on the crystal keep-clear state that a mention counts only as A.Reference == or B.Reference == the crystal, and that a != is an exemption. The proof design's committed rules and the layout review's baselines are out of scope.
+  The seeded-fault harness holds two rows on a two-crystal copy of the throwaway proof design, one whose second keep-clear is followed by a rule naming the first crystal as B.Reference == and one by a rule with A.Reference != the first crystal and a minimum of 0mm, each caught as crystal_keepclear, and the required-names dictionary in test_board_check_kicad_marks.py requires both rows. The hardware notes' crystal_keepclear entry and the paragraph on the crystal keep-clear state that only a B.Reference != clause inside the keep-clear form exempts, and that any other mention of the crystal, by == or by != in another form, counts as naming it. The proof design's committed rules and the layout review's baselines are out of scope.
 links:
   - target: SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL
     type: criterion-of

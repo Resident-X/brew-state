@@ -1,12 +1,12 @@
 id: SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C1
 type: criterion
-title: A no-connect pad and a pad that is not electrical are no pad off the Mains class, and a coppered numbered pad with no net still fails
+title: Only a pad with no net and no number or copper, and a lone no-connect pad, is no pad off the Mains class, and a pad on a Mains-class net always counts
 status: active
 version: 1
 measurement_type: binary
 verification: test
 text: |
-  On a synthetic layout, a part with Mains-class pads and a pad on a net named unconnected-(...) lying among them is measured by the strip between its Mains-class pads and its other netted pads, with the no-connect pad in neither group. A part whose only pads off the Mains class are no-connect pads, or unnumbered pads, or pads with no copper layer, is not reported. A part whose only pads off the Mains class are numbered, coppered and netless still fails by name as not known to bridge; a part whose two groups overlap along both axes still fails by name; and the copper in the strip, a no-connect pad's included, is still summed against the figure and fails a part above it. The message of each failure is unchanged, and every design that passed before still passes. The figure BARRIER_COPPER_MM2, the strip geometry and the main board's layout are out of scope.
+  On a synthetic layout, a part with Mains-class pads and a pad on a net named unconnected-(...) carried by no other pad, lying among them, is measured by the strip between its Mains-class pads and its other netted pads, with the no-connect pad in neither group. A part whose only pads off the Mains class are such no-connect pads, or netless pads with no number, or netless pads with no copper layer, is not reported. A pad on a Mains-class net counts as a Mains-class pad whether it has no number or no copper layer, so a part whose only Mains-class pad lacks a number, and a part whose only Mains-class pad lacks copper, are each still measured and still fail when copper lies in the strip. A net named unconnected-(...) carried by two pads is a real net and its pads count. A part whose only pads off the Mains class are numbered, coppered and netless still fails by name as not known to bridge; a part whose two groups overlap along both axes still fails by name; and the copper in the strip, an exempt pad's included, is still summed against the figure and fails a part above it. The message of each failure is unchanged apart from its closing advice, and every design that passed before still passes. The figure BARRIER_COPPER_MM2, the strip geometry and the main board's layout are out of scope.
 links:
   - target: SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET
     type: criterion-of
