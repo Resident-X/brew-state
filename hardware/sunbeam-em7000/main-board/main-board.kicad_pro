@@ -136,26 +136,27 @@
         "unconnected_items": "error",
         "unresolved_variable": "error",
         "via_dangling": "warning",
-        "zones_intersect": "error"
+        "zones_intersect": "error",
+        "courtyard_clearance": "error"
       },
       "rules": {
         "max_error": 0.005,
         "min_clearance": 0.09,
-        "min_connection": 0.0,
-        "min_copper_edge_clearance": 0.5,
+        "min_connection": 0.09,
+        "min_copper_edge_clearance": 0.3,
         "min_groove_width": 0.0,
-        "min_hole_clearance": 0.25,
-        "min_hole_to_hole": 0.25,
-        "min_microvia_diameter": 0.2,
-        "min_microvia_drill": 0.1,
+        "min_hole_clearance": 0.35,
+        "min_hole_to_hole": 0.45,
+        "min_microvia_diameter": 0.35,
+        "min_microvia_drill": 0.2,
         "min_resolved_spokes": 2,
-        "min_silk_clearance": 0.0,
-        "min_text_height": 0.8,
-        "min_text_thickness": 0.08,
-        "min_through_hole_diameter": 0.3,
+        "min_silk_clearance": 0.15,
+        "min_text_height": 1.0,
+        "min_text_thickness": 0.15,
+        "min_through_hole_diameter": 0.2,
         "min_track_width": 0.09,
-        "min_via_annular_width": 0.1,
-        "min_via_diameter": 0.5,
+        "min_via_annular_width": 0.2,
+        "min_via_diameter": 0.35,
         "solder_mask_to_copper_clearance": 0.0,
         "use_height_for_length_calcs": true
       },
@@ -295,9 +296,97 @@
         "schematic_color": "rgba(0, 0, 0, 0.000)",
         "track_width": 0.2,
         "tuning_profile": "",
-        "via_diameter": 0.6,
+        "via_diameter": 0.75,
         "via_drill": 0.3,
         "wire_width": 6
+      },
+      {
+        "clearance": 3.0,
+        "name": "MainsTrunk",
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "priority": 0,
+        "schematic_color": "rgba(0, 0, 0, 0.000)",
+        "track_width": 4.2,
+        "tuning_profile": "",
+        "via_diameter": 0.75,
+        "via_drill": 0.3
+      },
+      {
+        "clearance": 3.0,
+        "name": "MainsBranch",
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "priority": 1,
+        "schematic_color": "rgba(0, 0, 0, 0.000)",
+        "track_width": 0.2,
+        "tuning_profile": "",
+        "via_diameter": 0.75,
+        "via_drill": 0.3
+      },
+      {
+        "clearance": 0.2,
+        "name": "Supply5V",
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "priority": 2,
+        "schematic_color": "rgba(0, 0, 0, 0.000)",
+        "track_width": 0.45,
+        "tuning_profile": "",
+        "via_diameter": 0.75,
+        "via_drill": 0.3
+      },
+      {
+        "clearance": 0.2,
+        "name": "Supply3V3",
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "priority": 3,
+        "schematic_color": "rgba(0, 0, 0, 0.000)",
+        "track_width": 0.2,
+        "tuning_profile": "",
+        "via_diameter": 0.75,
+        "via_drill": 0.3
+      },
+      {
+        "clearance": 0.2,
+        "name": "Ground",
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "priority": 4,
+        "schematic_color": "rgba(0, 0, 0, 0.000)",
+        "track_width": 0.45,
+        "tuning_profile": "",
+        "via_diameter": 0.75,
+        "via_drill": 0.3
+      },
+      {
+        "clearance": 0.2,
+        "name": "Sense",
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "priority": 5,
+        "schematic_color": "rgba(0, 0, 0, 0.000)",
+        "track_width": 0.2,
+        "tuning_profile": "",
+        "via_diameter": 0.75,
+        "via_drill": 0.3
+      },
+      {
+        "clearance": 0.2,
+        "name": "Noisy",
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "priority": 6,
+        "schematic_color": "rgba(0, 0, 0, 0.000)",
+        "track_width": 0.2,
+        "tuning_profile": "",
+        "via_diameter": 0.75,
+        "via_drill": 0.3
+      },
+      {
+        "clearance": 3.0,
+        "name": "Mains",
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "priority": 7,
+        "schematic_color": "rgba(0, 0, 0, 0.000)",
+        "track_width": 0.2,
+        "tuning_profile": "",
+        "via_diameter": 0.75,
+        "via_drill": 0.3
       }
     ],
     "meta": {
@@ -305,7 +394,736 @@
     },
     "net_colors": {},
     "netclass_assignments": {},
-    "netclass_patterns": []
+    "netclass_patterns": [
+      {
+        "netclass": "MainsTrunk",
+        "pattern": "/Mains entry and load feed/LINE_IN"
+      },
+      {
+        "netclass": "MainsTrunk",
+        "pattern": "/Mains entry and load feed/LINE_F"
+      },
+      {
+        "netclass": "MainsTrunk",
+        "pattern": "/LINE"
+      },
+      {
+        "netclass": "MainsTrunk",
+        "pattern": "/LINE1"
+      },
+      {
+        "netclass": "MainsTrunk",
+        "pattern": "/Mains entry and load feed/NEUTRAL_IN"
+      },
+      {
+        "netclass": "MainsTrunk",
+        "pattern": "/NEUTRAL"
+      },
+      {
+        "netclass": "MainsBranch",
+        "pattern": "/COFFPUMP"
+      },
+      {
+        "netclass": "MainsBranch",
+        "pattern": "/Pump drives/PUMP_C_MT2"
+      },
+      {
+        "netclass": "MainsBranch",
+        "pattern": "/STEAMPUMP"
+      },
+      {
+        "netclass": "MainsBranch",
+        "pattern": "/Pump drives/PUMP_S_MT2"
+      },
+      {
+        "netclass": "MainsBranch",
+        "pattern": "/COFVALVE"
+      },
+      {
+        "netclass": "MainsBranch",
+        "pattern": "/HOTVALVE"
+      },
+      {
+        "netclass": "MainsBranch",
+        "pattern": "/Valve drives/VALVE_COM"
+      },
+      {
+        "netclass": "Supply5V",
+        "pattern": "+5V"
+      },
+      {
+        "netclass": "Supply5V",
+        "pattern": "/Logic supply/+5V_MOD"
+      },
+      {
+        "netclass": "Supply5V",
+        "pattern": "+5V_WB"
+      },
+      {
+        "netclass": "Supply5V",
+        "pattern": "+5V_GAUGE"
+      },
+      {
+        "netclass": "Supply5V",
+        "pattern": "/USB_VBUS_F"
+      },
+      {
+        "netclass": "Supply3V3",
+        "pattern": "+3V3"
+      },
+      {
+        "netclass": "Supply3V3",
+        "pattern": "/Logic supply/+3V3_REG"
+      },
+      {
+        "netclass": "Ground",
+        "pattern": "GND"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "+3V3A"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/Logic supply/+3V3A_FB"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/Flow, pressure and spare analogue inputs/BREWA_3V3"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/Flow, pressure and spare analogue inputs/BREWA_3V3_SRC"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/Flow, pressure and spare analogue inputs/BREWA_DIV"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/Flow, pressure and spare analogue inputs/BREWA_RAW"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/BREW_AN"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/CURR1_AN"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/Current sensing inputs/CURR1_DIV"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/Current sensing inputs/CURR1_SIG"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/CURR2_AN"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/Current sensing inputs/CURR2_DIV"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/Current sensing inputs/CURR2_SIG"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/NTC_COF"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/Thermistor inputs/NTC_COF_SENS"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/NTC_STM"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/Thermistor inputs/NTC_STM_SENS"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/NTC_WAND"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/Thermistor inputs/NTC_WAND_SENS"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/In-stream temperature converters/PT1_BIAS"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/In-stream temperature converters/PT1_FORCE2"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/In-stream temperature converters/PT1_FORCEN"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/In-stream temperature converters/PT1_FORCEN_SRC"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/In-stream temperature converters/PT1_FORCEP"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/In-stream temperature converters/PT1_RTDINN"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/In-stream temperature converters/PT1_RTDINP"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/In-stream temperature converters/PT2_BIAS"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/In-stream temperature converters/PT2_FORCE2"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/In-stream temperature converters/PT2_FORCEN"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/In-stream temperature converters/PT2_FORCEN_SRC"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/In-stream temperature converters/PT2_FORCEP"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/In-stream temperature converters/PT2_RTDINN"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/In-stream temperature converters/PT2_RTDINP"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/Flow, pressure and spare analogue inputs/SPAN2_3V3"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/Flow, pressure and spare analogue inputs/SPAN2_3V3_SRC"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/Flow, pressure and spare analogue inputs/SPAN2_DIV"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/Flow, pressure and spare analogue inputs/SPAN2_RAW"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/Flow, pressure and spare analogue inputs/SPAREA_3V3"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/Flow, pressure and spare analogue inputs/SPAREA_3V3_SRC"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/Flow, pressure and spare analogue inputs/SPAREA_DIV"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/Flow, pressure and spare analogue inputs/SPAREA_RAW"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/SPARE_AN2"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/STMP_AN"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/Controller/VREF+"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/Load-cell amplifiers/WT1_INA_N"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/Load-cell amplifiers/WT1_INA_P"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/Load-cell amplifiers/WT1_SN_RAW"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/Load-cell amplifiers/WT1_SP_RAW"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/Load-cell amplifiers/WT1_VBG"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/Load-cell amplifiers/WT2_INA_N"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/Load-cell amplifiers/WT2_INA_P"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/Load-cell amplifiers/WT2_SN_RAW"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/Load-cell amplifiers/WT2_SP_RAW"
+      },
+      {
+        "netclass": "Sense",
+        "pattern": "/Load-cell amplifiers/WT2_VBG"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "+5V_GAUGE"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "+5V_WB"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/ANODE_GATE"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Operator panel and indicators/ANODE_LS_G"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Operator panel and indicators/ANODE_PG"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/ANODE_RAIL"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Operator panel and indicators/ANODE_SW"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/BUZZER"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Operator panel and indicators/BUZZER_G"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Operator panel and indicators/BUZZER_N"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Operator panel and indicators/BUZZER_P"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/GAUGE_DIR1"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Gauge drive/GAUGE_DIR1_B"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Gauge drive/GAUGE_DIR1_IN"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Gauge drive/GAUGE_DIR1_Y"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/GAUGE_DIR2"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Gauge drive/GAUGE_DIR2_B"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Gauge drive/GAUGE_DIR2_IN"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Gauge drive/GAUGE_DIR2_Y"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/GAUGE_RST"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Gauge drive/GAUGE_RST_B"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Gauge drive/GAUGE_RST_IN"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Gauge drive/GAUGE_RST_Y"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/GAUGE_STEP1"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Gauge drive/GAUGE_STEP1_B"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Gauge drive/GAUGE_STEP1_IN"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Gauge drive/GAUGE_STEP1_Y"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/GAUGE_STEP2"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Gauge drive/GAUGE_STEP2_B"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Gauge drive/GAUGE_STEP2_IN"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Gauge drive/GAUGE_STEP2_Y"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/HEAT_C_DRV"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Heater LED drive and wall board header/HEAT_C_G"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "HEAT_C_LED_K"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Heater LED drive and wall board header/HEAT_C_SINK"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/HEAT_S_DRV"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Heater LED drive and wall board header/HEAT_S_G"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "HEAT_S_LED_K"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Heater LED drive and wall board header/HEAT_S_SINK"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/LOWWATER_CATHODE"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Operator panel and indicators/LOWWATER_G"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/LOWWATER_K"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Interlock/POL_BUF"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Interlock/POL_CLAMP_1"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Interlock/POL_CLAMP_2"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Interlock/POL_COIL_LO"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Interlock/POL_GATE_A"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Interlock/POL_GATE_B"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Interlock/POL_MID"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Interlock/POL_NODE_A"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Interlock/POL_NODE_B"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/POL_OUT"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/PUMP_C_GATE"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Pump drives/PUMP_C_GATE_G"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Pump drives/PUMP_C_GATE_R"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Pump drives/PUMP_C_LED_A"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Pump drives/PUMP_C_LED_K"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/PUMP_S_GATE"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Pump drives/PUMP_S_GATE_G"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Pump drives/PUMP_S_GATE_R"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Pump drives/PUMP_S_LED_A"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Pump drives/PUMP_S_LED_K"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Valve drives/VALVE_2W_COIL_K"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/VALVE_2W_DRV"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Valve drives/VALVE_2W_G"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Valve drives/VALVE_3W_COIL_K"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/VALVE_3W_DRV"
+      },
+      {
+        "netclass": "Noisy",
+        "pattern": "/Valve drives/VALVE_3W_G"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/Mains entry and load feed/LINE_IN"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/Mains entry and load feed/LINE_F"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/LINE"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/LINE1"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/Mains entry and load feed/NEUTRAL_IN"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/NEUTRAL"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/COFVALVE"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/COFFPUMP"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/STEAMPUMP"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/HOTVALVE"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/Valve drives/VALVE_COM"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/Mains entry and load feed/DISCH_A"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/Mains entry and load feed/DISCH_B"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/Pump drives/PUMP_C_MT2"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/Pump drives/PUMP_S_MT2"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/Pump drives/PUMP_C_GATE_R"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/Pump drives/PUMP_S_GATE_R"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/Pump drives/PUMP_C_OPTO_MT"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/Pump drives/PUMP_S_OPTO_MT"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/Pump drives/PUMP_C_TRIAC_G"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/Pump drives/PUMP_S_TRIAC_G"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/Supply voltage and current measurement/VMEAS_N1"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/Supply voltage and current measurement/VMEAS_N2"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/Supply voltage and current measurement/VMEAS_DIV"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/Supply voltage and current measurement/AMC_AIN0P"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/Supply voltage and current measurement/AMC_AIN0N"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/Supply voltage and current measurement/AMC_AIN1P"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/Supply voltage and current measurement/AMC_AIN1N"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/Supply voltage and current measurement/AMC_DCDC_OUT"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/Supply voltage and current measurement/AMC_DCDC_HGND"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/Supply voltage and current measurement/AMC_HLDO_IN"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/Supply voltage and current measurement/AMC_HLDO_OUT"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/Zero-crossing detector/ZC_N1"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/Zero-crossing detector/ZC_LED_A"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/SHUNT_SENSE_IN"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/SHUNT_SENSE_NEUTRAL"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/Logic supply/LINE_MOD"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/Pump drives/PUMP_C_SNUB"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/Pump drives/PUMP_S_SNUB"
+      }
+    ]
   },
   "pcbnew": {
     "last_paths": {
@@ -331,7 +1149,17 @@
     ]
   },
   "sheets": [],
-  "text_variables": {},
+  "text_variables": {
+    "BARRIER_COPPER_MM2": "0",
+    "MAINS": "present",
+    "PASTE_OVER_VIA_MM2": "0",
+    "TEST_COURTYARD_MM": "1",
+    "WORK_ANGLE_TOLERANCE_DEG": "0.1",
+    "WORK_DETOUR_RATIO": "1.3",
+    "WORK_NECK_MM": "1",
+    "WORK_PAD_ANGLE_DEG": "90",
+    "WORK_PAD_ENTRY_RATIO": "2"
+  },
   "tuning_profiles": {
     "meta": {
       "version": 0

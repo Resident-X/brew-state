@@ -1,0 +1,30 @@
+# The board rules record of the Sunbeam EM7000 main board: the figures the pre-order check reads
+# for sensing clearance, connector ground returns and the finished outer copper weight.
+sensing:
+  classes:
+    - Sense
+  noisy_classes:
+    - Noisy
+    - Mains
+  clearance_mm: 0.3
+  source: "the board's own figure, since no published practice states one (SENSE-6): 0.3 mm, 1.5 times the 0.2 mm clearance of the Default net class, chosen as the conservative figure the packed placement can hold; the practice is SENSE-4's, Texas Instruments, ADS8866 data sheet SBAS614C, March 2019, section 12.1 Layout Guidelines (keep the analog input signals and the reference input signals away from noise sources)"
+ground_returns:
+  ground_classes:
+    - Ground
+  non_signal_classes:
+    - Mains
+    - MainsTrunk
+    - MainsBranch
+    - Supply5V
+    - Supply3V3
+    - Noisy
+  signal_classes:
+    - class: Default
+      signal_pins_per_return: 1
+      source: "none -- no published practice or record in the repository states a figure; 1 signal pin per ground-return pin, the strictest whole number, is chosen as the conservative one"
+    - class: Sense
+      signal_pins_per_return: 1
+      source: "none -- no published practice or record in the repository states a figure; 1 signal pin per ground-return pin, the strictest whole number, is chosen as the conservative one"
+fabrication:
+  outer_copper_oz: 1
+  source: "1 oz finished outer copper, the weight JLCPCB's standard four-layer order carries without a surcharge, as manufacturer-limits.yaml lists the process and layout-plan.md states for the board"
