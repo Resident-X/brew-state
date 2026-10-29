@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-PARTS-WITHOUT-CATALOGUE-NUMBER-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-PRE-ORDER-CHECK-PARTS-WITHOUT-CATALOGUE-NUMBER.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-29T11:21:53.095228Z"
+artifact:
+  kind: external
+  reference: hardware/README.md (specification-record bullet and parts_part/parts_catalogue rule rows state the none convention)
+  artifact_version: a79ea1bc6ccba049131160ebd5b6aa668a788c6b
+attested_by: crun-b2df985d1aaa155c
+links:
+  - target: SOL-PRE-ORDER-CHECK-PARTS-WITHOUT-CATALOGUE-NUMBER.C2
+    type: satisfies

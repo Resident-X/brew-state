@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-PARTS-WITHOUT-CATALOGUE-NUMBER-C1-TEST-4
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-PARTS-WITHOUT-CATALOGUE-NUMBER.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-29T11:21:52.298742Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_parts.py::PartsWithoutCatalogueNumber.test_a_design_none_against_a_record_number_fails_naming_both
+  artifact_version: a79ea1bc6ccba049131160ebd5b6aa668a788c6b
+attested_by: crun-b2df985d1aaa155c
+links:
+  - target: SOL-PRE-ORDER-CHECK-PARTS-WITHOUT-CATALOGUE-NUMBER.C1
+    type: satisfies

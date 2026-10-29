@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-PARTS-WITHOUT-CATALOGUE-NUMBER-C2-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-PARTS-WITHOUT-CATALOGUE-NUMBER.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-29T11:21:52.946321Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad_records.py::Parts.test_every_none_convention_failure_fails_and_is_named
+  artifact_version: a79ea1bc6ccba049131160ebd5b6aa668a788c6b
+attested_by: crun-b2df985d1aaa155c
+links:
+  - target: SOL-PRE-ORDER-CHECK-PARTS-WITHOUT-CATALOGUE-NUMBER.C2
+    type: satisfies
