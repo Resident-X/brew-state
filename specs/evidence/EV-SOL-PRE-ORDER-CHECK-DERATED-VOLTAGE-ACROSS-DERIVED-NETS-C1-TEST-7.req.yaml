@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS-C1-TEST-7
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-29T10:38:52.636823Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_voltage.py::ARidingDomainIsJudgedByTheDifferenceOfItsVoltageAndItsHosts.test_a_riding_domain_lowest_voltage_follows_its_host_and_its_highest_tests_the_absolute_maximum
+  artifact_version: 3ec52e170712a8d7961106d8909808948b3af67e
+attested_by: crun-de6f084f0796b5d6
+links:
+  - target: SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C1
+    type: satisfies

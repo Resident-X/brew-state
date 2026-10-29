@@ -3,11 +3,11 @@ type: deliverable
 category: solution
 title: The derated-voltage rule judges a part joining two nets derived from the mains by the difference of their voltages
 status: active
-version: 1
+version: 2
 text: |
   The rule counts a part whose two nets both take their highest voltage from the mains domain as seeing the domain's full highest_voltage_v. A part across a divider's tap and its reference then fails for a swing it never sees, so the worst-case operating point REQ-ELECTRICAL-INSTALL-001.C13 asks for is overstated.
 
-  Settled before build: a pin-limit domain gains optional keys. rides_on names another listed domain whose voltage it follows. With it, exactly one of fraction (above 0, at most 1: its share of that domain's highest_voltage_v) or offset_v (above 0 and below the host's figure: volts below the host's) states how. A domain's own highest_voltage_v must equal the figure so derived. A part joining two nets then sees the difference of the two nets' voltages so worked out, and two nets of one host with no stated relation still count the full swing, so an undeclared divider remains a failure. A rides_on that names no listed domain, itself, or forms a cycle, a fraction or offset_v without rides_on, both together, and any other unknown key each fail. The change lands in the net-voltage function and record reader in hardware/tools/board_check.py and the hardware notes. DEC-BOARD-DESIGN-RECORDS-AS-YAML (domain keys) and DEC-BOARD-PRE-ORDER-RULE-READINGS (the working-voltage clause) are amended in the same change.
+  Settled before build: a pin-limit domain gains optional keys. rides_on names another listed domain whose voltage it follows. With it, exactly one of fraction (above 0, at most 1: its share of that domain's figure) or offset_v (signed and not zero: volts added to the host's figure, so a positive offset puts the riding net above its host and a negative one below it) states how. The riding net's highest voltage is the host's highest with the fraction applied or offset_v added, and its lowest is worked out from the host's lowest the same way; a chain of hosts is worked out through to its root. A domain's own highest_voltage_v must equal the highest figure so derived, so the pin-limit absolute-maximum test sees the true highest of a net that rides above its host and does not understate it. A part joining two nets then sees the difference of the two nets' voltages so worked out, and two nets of one host with no stated relation still count the full swing, so an undeclared divider remains a failure. The pairing is symmetric: a part's working voltage is the same whichever of its two nets is named first, and a mains domain on either net counts, not only on the first. The mains floor, that a mains domain is at least the peak of the basis working_voltage, applies to a mains domain with no rides_on; a mains domain with rides_on is held to its derivation from its host, which meets the floor directly or through its own hosts in turn. A rides_on that names no listed domain, itself, or forms a cycle, a fraction or offset_v without rides_on, both together, an offset_v of zero, an offset_v that leaves the derived figure not above 0, and any other unknown key each fail. The change lands in the net-voltage function and record reader in hardware/tools/board_check.py and the hardware notes. DEC-BOARD-DESIGN-RECORDS-AS-YAML (domain keys) and DEC-BOARD-PRE-ORDER-RULE-READINGS (the working-voltage clause) were already amended once, for the riding keys and the working-voltage clause, in the earlier graph change that split the main-board leaf (PR #227); this change amends them again only to settle the signed offset_v and the mains floor for a riding domain.
 rationale: |
   Restores the behaviour that REQ-ELECTRICAL-INSTALL-001.C13 asks of the derated-voltage rule: a part is judged at the voltage it actually sees, and a divider's tap is not charged the whole mains swing.
 links:
@@ -19,3 +19,7 @@ links:
     type: justified-by
   - target: DEC-BOARD-DESIGN-RECORDS-AS-YAML
     type: justified-by
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: c6701d2e637c72653a9396812a2f169ee5e2c00f2c8e52b997f1ec6f82d82d90
+  gating_profile: ""

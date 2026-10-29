@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS-C2-TEST-4
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-29T10:38:52.99665Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_voltage.py::AMalformedRidingDeclarationFailsThePinLimitRecord.test_a_cycle_of_hosts_fails_naming_each_domain_in_it
+  artifact_version: 3ec52e170712a8d7961106d8909808948b3af67e
+attested_by: crun-de6f084f0796b5d6
+links:
+  - target: SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C2
+    type: satisfies

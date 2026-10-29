@@ -2,11 +2,11 @@ id: SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C1
 type: criterion
 title: A part joining two nets derived from the mains is judged by the difference of their voltages
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |-
-  On a synthetic design with a mains domain and a domain riding on it by fraction, a part across the derived net and its reference passes when the difference is within the policy's share of its rating, and fails when it exceeds it, naming the part and the difference. The same holds for offset_v. A part across two nets of one host with no stated relation still counts the host's full highest_voltage_v. The power and temperature shares and the choice of derating figures are out of scope.
+  On a synthetic design with a mains domain and a domain riding on it by fraction, a part across the derived net and its reference passes when the difference is within the policy's share of its rating, and fails when it exceeds it, naming the part and the difference. The same holds for offset_v, above or below the host. The result is the same whichever of the two nets the part names first, and a mains domain on either net counts. A mains domain with rides_on passes the mains floor when its host meets it directly or through its own hosts and fails when that host does not, while a mains domain with no rides_on below the floor still fails. A part across two nets of one host with no stated relation still counts the host's full highest_voltage_v. The power and temperature shares and the choice of derating figures are out of scope.
 links:
   - target: SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS
     type: criterion-of

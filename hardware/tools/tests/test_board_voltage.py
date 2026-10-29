@@ -121,6 +121,12 @@ class World(unittest.TestCase):
         return board_check.voltage_rules(self.design, self.yaml, self.root, repository, True, mains or self.mains, basis,
                                          self.nets, self.mains_nets)
 
+    def read(self, reader):
+        files = [os.path.relpath(os.path.join(d, n), self.root).replace(os.sep, "/")
+                 for d, _, names in os.walk(self.root) for n in names]
+        repository = board_check.Repository(self.root, files)
+        return reader(self.yaml, self.root, repository, self.design, True)
+
     def lines(self, **more):
         return [v.line() for v in self.run_rules(**more)]
 
@@ -785,12 +791,6 @@ class TheRatingUnitAndDesignatorLettersAreReadIgnoringCase(World):
 
 
 class ADuplicateEntryIsRefusedRatherThanLettingTheLaterReplaceTheEarlier(World):
-    def read(self, reader):
-        files = [os.path.relpath(os.path.join(d, n), self.root).replace(os.sep, "/")
-                 for d, _, names in os.walk(self.root) for n in names]
-        repository = board_check.Repository(self.root, files)
-        return reader(self.yaml, self.root, repository, self.design, True)
-
     def test_a_strict_part_entry_followed_by_a_lax_one_for_the_same_catalogue_number_fails(self):
         # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C3: The rules read only the records the reader accepts.
         strict = limit_part("C200", ("1", "five", 3, 0, False))
@@ -868,6 +868,276 @@ class AReferenceDesignatorIsReadWithoutItsSurroundingSpace(World):
         self.assertEqual(len(found), 1, self.lines())
 
 
+RIDING_NETS = ("/MAINS_L", "/MAINS_N", "/TAP", "/HIGH", "/LOW")
+FIVE = {"/+5V": []}
+FIVE_DOMAIN = domain("five", "+5V", 5.25)
+BASE = [FIVE_DOMAIN, domain("mains_line", "MAINS_L", PEAK), domain("mains_neutral", "MAINS_N", PEAK)]
+
+
+def riding(name, rail, host, base=PEAK, fraction=None, offset_v=None):
+    """A domain riding on `host` whose own figure is the one its host's `base` figure derives."""
+    entry = {"name": name, "rail": rail, "highest_voltage_v": base * fraction if fraction is not None else base + offset_v,
+             "rides_on": host}
+    entry.update({"fraction": fraction} if fraction is not None else {"offset_v": offset_v})
+    return entry
+
+
+def across(first, second, rating, ref="C1"):
+    """A part with a single pin on each of the two nets, in the order given."""
+    return {first: pins((ref, "1", "")), second: pins((ref, "2", ""))}, [(ref, "x", "C100", rating, "mains part")]
+
+
+class ARidingDomainIsJudgedByTheDifferenceOfItsVoltageAndItsHosts(World):
+    def divider(self, domains, nets, rating, mains_nets=RIDING_NETS):
+        nets, parts = nets
+        self.build(parts, {**FIVE, **nets}, domains=domains, limits=(), mains_nets=mains_nets)
+
+    def test_a_part_across_a_fraction_tap_and_its_reference_passes_within_the_share_and_fails_above_it_naming_the_difference(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C1: On a synthetic design with a mains domain and a domain riding on it by fraction, a part across the derived net and its reference passes when the difference is within the policy's share of its rating, and fails when it exceeds it, naming the part and the difference.
+        domains = BASE + [riding("tap", "TAP", "mains_neutral", fraction=0.5)]
+        # the difference is half the mains peak, 176.78 V, far below the 353.55 V the whole domain would charge
+        self.divider(domains, across("/TAP", "/MAINS_N", "180V"), "180V")
+        self.assertEqual(self.found("derated_voltage"), [], self.lines())
+        self.divider(domains, across("/TAP", "/MAINS_N", "170V"), "170V")
+        found = self.found("derated_voltage")
+        self.assertEqual(len(found), 1)
+        self.assertIn("C1", found[0].message)
+        self.assertIn("176.777 V", found[0].message)
+        self.assertEqual(found[0].location, f"{self.design.schematic} C1")
+
+    def test_a_part_across_an_offset_net_passes_or_fails_by_the_offset_whether_it_sits_above_or_below_its_host(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C1: The same holds for offset_v, above or below the host.
+        for rail, offset in (("HIGH", 3.2), ("LOW", -3.2)):
+            with self.subTest(rail=rail):
+                domains = BASE + [riding(rail.lower(), rail, "mains_neutral", offset_v=offset)]
+                self.divider(domains, across("/" + rail, "/MAINS_N", "3.5V"), "3.5V")
+                self.assertEqual(self.found("derated_voltage"), [], self.lines())
+                self.divider(domains, across("/" + rail, "/MAINS_N", "3.1V"), "3.1V")
+                found = self.found("derated_voltage")
+                self.assertEqual(len(found), 1)
+                self.assertIn("3.2 V", found[0].message)
+
+    def test_the_result_is_the_same_whichever_net_the_part_names_first(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C1: The result is the same whichever of the two nets the part names first, and a mains domain on either net counts.
+        domains = BASE + [riding("tap", "TAP", "mains_neutral", fraction=0.5)]
+        for first, second in (("/TAP", "/MAINS_N"), ("/MAINS_N", "/TAP")):
+            with self.subTest(first=first):
+                self.divider(domains, across(first, second, "170V"), "170V")
+                found = self.found("derated_voltage")
+                self.assertEqual(len(found), 1)
+                self.assertIn("176.777 V", found[0].message)
+        # two unrelated mains domains of different figures: the larger counts from either side
+        domains = [FIVE_DOMAIN, domain("small", "MAINS_L", PEAK), domain("large", "MAINS_N", PEAK * 1.1)]
+        for first, second in (("/MAINS_L", "/MAINS_N"), ("/MAINS_N", "/MAINS_L")):
+            with self.subTest(first=first, unrelated=True):
+                self.divider(domains, across(first, second, "100V"), "100V", mains_nets=("/MAINS_L", "/MAINS_N"))
+                found = self.found("derated_voltage")
+                self.assertEqual(len(found), 1, self.lines())
+                self.assertIn("388.909 V", found[0].message)
+
+    def test_a_mains_domain_on_the_second_net_alone_still_counts_when_the_first_is_a_riding_net_of_another_host(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C1: a mains domain on either net counts, not only on the first.
+        domains = [FIVE_DOMAIN, domain("mains_line", "MAINS_L", PEAK * 1.1), domain("mains_neutral", "MAINS_N", PEAK),
+                   riding("tap", "TAP", "mains_line", base=PEAK * 1.1, fraction=0.5)]
+        for first, second in (("/TAP", "/MAINS_N"), ("/MAINS_N", "/TAP")):
+            with self.subTest(first=first):
+                self.divider(domains, across(first, second, "100V"), "100V", mains_nets=("/MAINS_L", "/MAINS_N", "/TAP"))
+                found = self.found("derated_voltage")
+                self.assertEqual(len(found), 1, self.lines())
+                self.assertIn("353.553 V", found[0].message)
+
+    def test_two_nets_riding_one_host_count_the_difference_and_unrelated_nets_count_the_larger_domain_figure(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C1: A part across two nets of one host with no stated relation still counts the host's full highest_voltage_v.
+        both = BASE + [riding("tap", "TAP", "mains_neutral", fraction=0.5), riding("high", "HIGH", "mains_neutral", fraction=0.25)]
+        self.divider(both, across("/TAP", "/HIGH", "88V"), "88V")
+        found = self.found("derated_voltage")
+        self.assertEqual(len(found), 1)
+        self.assertIn("88.3883 V", found[0].message)
+        self.divider(both, across("/TAP", "/HIGH", "89V"), "89V")
+        self.assertEqual(self.found("derated_voltage"), [], self.lines())
+        apart = BASE + [riding("tap", "TAP", "mains_line", fraction=0.5), riding("high", "HIGH", "mains_neutral", fraction=0.25)]
+        self.divider(apart, across("/TAP", "/HIGH", "170V"), "170V")
+        found = self.found("derated_voltage")
+        self.assertEqual(len(found), 1)
+        self.assertIn("176.777 V", found[0].message)
+        self.divider(apart, across("/TAP", "/HIGH", "180V"), "180V")
+        self.assertEqual(self.found("derated_voltage"), [], self.lines())
+        self.divider(both, across("/MAINS_L", "/MAINS_N", "300V"), "300V")
+        found = self.found("derated_voltage")
+        self.assertEqual(len(found), 1)
+        self.assertIn("353.553 V", found[0].message)
+
+    def test_a_chain_of_hosts_is_worked_through_to_its_root(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C1: a chain of hosts is worked out through to its root.
+        domains = BASE + [riding("tap", "TAP", "mains_neutral", fraction=0.5), riding("high", "HIGH", "tap", base=PEAK * 0.5, offset_v=3.2)]
+        self.divider(domains, across("/HIGH", "/TAP", "3.1V"), "3.1V")
+        self.assertEqual(len(self.found("derated_voltage")), 1)
+        self.divider(domains, across("/HIGH", "/TAP", "3.5V"), "3.5V")
+        self.assertEqual(self.found("derated_voltage"), [], self.lines())
+        self.divider(domains, across("/HIGH", "/MAINS_N", "170V"), "170V")
+        found = self.found("derated_voltage")
+        self.assertEqual(len(found), 1)
+        self.assertIn("173.577 V", found[0].message)
+
+    def test_a_riding_domain_lowest_voltage_follows_its_host_and_its_highest_tests_the_absolute_maximum(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C1: The riding net's highest voltage is the host's highest with the fraction applied or offset_v added, and its lowest is worked out from the host's lowest the same way.
+        domains = BASE + [riding("high", "HIGH", "mains_neutral", offset_v=3.2), riding("tap", "TAP", "mains_neutral", fraction=0.5)]
+        volts = None
+
+        def volts_of(domains):
+            self.divider(domains, across("/HIGH", "/TAP", "1000V"), "1000V")
+            listed = {}
+            nets = self.nets
+            return board_check.NetVoltages(
+                nets, {d["name"]: (d["rail"], d["highest_voltage_v"]) for d in domains}, set(self.mains_nets), set(), listed,
+                {d["name"]: (d["rides_on"], d.get("fraction"), d.get("offset_v")) for d in domains if "rides_on" in d})
+
+        volts = volts_of(domains)
+        self.assertAlmostEqual(volts.highest("/HIGH"), PEAK + 3.2)
+        self.assertAlmostEqual(volts.lowest("/HIGH"), -PEAK + 3.2)
+        self.assertAlmostEqual(volts.lowest("/TAP"), -PEAK / 2)
+
+    def test_a_mains_domain_riding_a_host_passes_the_floor_when_the_host_meets_it_and_fails_when_it_does_not(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C1: A mains domain with rides_on passes the mains floor when its host meets it directly or through its own hosts and fails when that host does not, while a mains domain with no rides_on below the floor still fails.
+        part = [("C1", "x", "C100", None, "none")]
+        tap = riding("tap", "TAP", "mains_neutral", fraction=0.5)
+        self.build(part, {**FIVE, "/TAP": []}, domains=BASE + [tap], limits=(), mains_nets=RIDING_NETS)
+        self.assertEqual(self.found("derated_voltage"), [], self.lines())
+        # through a host that itself rides: the chain's root meets the floor
+        deep = riding("deep", "HIGH", "tap", base=PEAK * 0.5, offset_v=1)
+        self.build(part, {**FIVE, "/TAP": [], "/HIGH": []}, domains=BASE + [tap, deep], limits=(), mains_nets=RIDING_NETS)
+        self.assertEqual(self.found("derated_voltage"), [], self.lines())
+        # the root of the chain is below the floor
+        weak = [FIVE_DOMAIN, domain("mains_line", "MAINS_L", PEAK), domain("mains_neutral", "MAINS_N", 100)]
+        weak_tap = riding("tap", "TAP", "mains_neutral", base=100, fraction=0.5)
+        self.build(part, {**FIVE, "/TAP": []}, domains=weak + [weak_tap], limits=(), mains_nets=RIDING_NETS)
+        found = [v for v in self.found("derated_voltage") if v.location.endswith("domains tap")]
+        self.assertEqual(len(found), 1, self.lines())
+        self.assertIn("the mains domain tap rides on mains_neutral", found[0].message)
+        self.assertIn("mains_neutral stating highest_voltage_v 100", found[0].message)
+        # and through a host that rides
+        weak_deep = riding("deep", "HIGH", "tap", base=50, offset_v=1)
+        self.build(part, {**FIVE, "/TAP": [], "/HIGH": []}, domains=weak + [weak_tap, weak_deep], limits=(), mains_nets=RIDING_NETS)
+        self.assertEqual(len([v for v in self.found("derated_voltage") if v.location.endswith("domains deep")]), 1)
+        # a mains domain with no rides_on below the floor still fails, and it is named
+        self.build(part, {**FIVE, "/TAP": []}, domains=weak + [riding("tap", "TAP", "mains_line", fraction=0.5)], limits=(), mains_nets=RIDING_NETS)
+        found = self.found("derated_voltage")
+        self.assertEqual([v.location.rsplit(" ", 1)[-1] for v in found], ["mains_neutral"], self.lines())
+
+    def test_records_without_the_riding_keys_are_judged_as_before(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C2: Records without the new keys read as before.
+        self.build([CAP, IC], cap_on_rails(), limits=[IC_LIMITS])
+        self.assertEqual(self.lines(), [])
+        self.assertEqual(self.read(board_check.read_pin_limits), [])
+
+
+class AMalformedRidingDeclarationFailsThePinLimitRecord(World):
+    def problems(self, *domains):
+        self.build([IC], {"/+5V": pins(("U1", "1", "A"))}, domains=BASE + list(domains),
+                   limits=[limit_part("C200", ("1", "five", 3, 0, False))], mains="none", mains_nets=())
+        return self.read(board_check.read_pin_limits)
+
+    def only(self, problems, *words):
+        self.assertEqual(len(problems), 1, [p.message for p in problems])
+        for word in words:
+            self.assertIn(word, problems[0].message)
+        return problems[0]
+
+    def test_a_well_formed_fraction_or_offset_declaration_is_accepted(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C2: Records without the new keys read as before.
+        self.assertEqual(self.problems(riding("tap", "TAP", "mains_neutral", fraction=0.5),
+                                       riding("high", "HIGH", "tap", base=PEAK * 0.5, offset_v=3.2),
+                                       riding("full", "FULL", "mains_line", fraction=1)), [])
+
+    def test_a_rides_on_naming_no_listed_domain_or_its_own_domain_fails_naming_the_domain_and_key(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C2: a rides_on that names no listed domain, names its own domain, or forms a cycle.
+        missing = self.only(self.problems({**riding("tap", "TAP", "mains_neutral", fraction=0.5), "rides_on": "ghost"}),
+                            "the domain tap", "rides_on", "ghost")
+        self.assertTrue(missing.location.endswith("rides_on"))
+        self.only(self.problems({**riding("tap", "TAP", "mains_neutral", fraction=0.5), "rides_on": "tap"}),
+                  "the domain tap", "rides_on naming itself")
+        self.only(self.problems({**riding("tap", "TAP", "mains_neutral", fraction=0.5), "rides_on": 7}), "rides_on", "7")
+
+    def test_a_cycle_of_hosts_fails_naming_each_domain_in_it(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C2: a rides_on that forms a cycle.
+        first = {**riding("a", "A", "b", base=100, fraction=0.5), "highest_voltage_v": 50}
+        second = {**riding("b", "B", "a", base=50, fraction=0.5), "highest_voltage_v": 25}
+        problems = self.problems(first, second)
+        named = sorted(re.search(r"the domain (\w+) has rides_on that leads back", p.message).group(1) for p in problems
+                       if "leads back" in p.message)
+        self.assertEqual(named, ["a", "b"])
+        # a domain that only leads into a cycle is not itself reported as being in it
+        third = riding("c", "C", "a", base=50, fraction=0.5)
+        problems = [p for p in self.problems(first, second, third) if "leads back" in p.message]
+        self.assertEqual(len(problems), 2)
+
+    def test_a_fraction_or_offset_without_rides_on_fails(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C2: a fraction or offset_v without rides_on.
+        for key, value in (("fraction", 0.5), ("offset_v", 1.0)):
+            with self.subTest(key=key):
+                self.only(self.problems({**domain("tap", "TAP", 5), key: value}), "the domain tap", f"states {key} without rides_on")
+
+    def test_rides_on_with_both_keys_or_neither_fails(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C2: fraction and offset_v together.
+        both = {**riding("tap", "TAP", "mains_neutral", fraction=0.5), "offset_v": 1.0}
+        self.only(self.problems(both), "the domain tap", "both fraction and offset_v")
+        neither = {**domain("tap", "TAP", 5), "rides_on": "mains_neutral"}
+        self.only(self.problems(neither), "the domain tap", "neither fraction nor offset_v")
+
+    def test_a_fraction_of_zero_above_one_or_not_a_number_fails_and_one_passes(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C2: a fraction of zero or above 1.
+        for fraction in (0, 1.01, -0.5, "half", True):
+            with self.subTest(fraction=fraction):
+                entry = {**riding("tap", "TAP", "mains_neutral", fraction=0.5), "fraction": fraction}
+                found = [p for p in self.problems(entry) if "fraction" in p.message and "above zero and at most one" in p.message]
+                self.assertEqual(len(found), 1)
+                self.assertIn("the domain tap", found[0].message)
+        self.assertEqual(self.problems(riding("tap", "TAP", "mains_neutral", fraction=1)), [])
+
+    def test_an_offset_of_zero_or_not_a_number_fails(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C2: an offset_v of zero.
+        for offset in (0, 0.0, "3", False):
+            with self.subTest(offset=offset):
+                entry = {**riding("tap", "TAP", "mains_neutral", offset_v=1), "offset_v": offset}
+                found = [p for p in self.problems(entry) if "offset_v" in p.message and "other than zero" in p.message]
+                self.assertEqual(len(found), 1)
+                self.assertIn("the domain tap", found[0].message)
+
+    def test_an_offset_leaving_the_derived_figure_not_above_zero_fails_and_one_just_above_passes(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C2: an offset_v that leaves the derived figure not above 0.
+        low = {**domain("low", "LOW", 5), "rides_on": "small", "offset_v": -5}
+        found = self.only(self.problems(domain("small", "SMALL", 5), low), "the domain low", "offset_v", "above 0")
+        self.assertTrue(found.location.endswith("offset_v"))
+        below = {**low, "offset_v": -6}
+        self.only(self.problems(domain("small", "SMALL", 5), below), "the domain low", "-1")
+        self.assertEqual(self.problems(domain("small", "SMALL", 5), {**low, "offset_v": -4.9, "highest_voltage_v": 0.1}), [])
+
+    def test_a_highest_voltage_that_differs_from_the_derived_figure_fails_through_a_chain_too(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C2: a domain's highest_voltage_v that differs from the figure derived.
+        wrong = {**riding("tap", "TAP", "mains_neutral", fraction=0.5), "highest_voltage_v": 200}
+        found = self.only(self.problems(wrong), "the domain tap", "highest_voltage_v 200", "176.777")
+        self.assertTrue(found.location.endswith("highest_voltage_v"))
+        # a chain is worked out from the root, so a host that rides is held to the same figure its child derives from
+        chain = riding("high", "HIGH", "tap", base=PEAK * 0.5, offset_v=3.2)
+        self.assertEqual(self.problems(riding("tap", "TAP", "mains_neutral", fraction=0.5), chain), [])
+        self.only(self.problems(riding("tap", "TAP", "mains_neutral", fraction=0.5), {**chain, "highest_voltage_v": 180}),
+                  "the domain high", "highest_voltage_v 180")
+        # float noise inside the check's slack is not a difference
+        self.assertEqual(self.problems({**riding("tap", "TAP", "mains_neutral", fraction=0.5), "highest_voltage_v": PEAK * 0.5 * (1 + 1e-12)}), [])
+
+    def test_any_other_unknown_key_on_a_domain_still_fails(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C2: any other unknown key.
+        for key in ("rides", "offset", "fractions", "ride_on"):
+            with self.subTest(key=key):
+                self.only(self.problems({**riding("tap", "TAP", "mains_neutral", fraction=0.5), key: 1}), f"the key '{key}'")
+
+    def test_the_rules_do_not_judge_a_record_whose_riding_keys_failed(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C2: Each of these fails the pin-limit record.
+        self.problems({**riding("tap", "TAP", "mains_neutral", fraction=0.5), "rides_on": "tap"})
+        self.assertEqual(self.lines(), [])
+        self.assertIsNone(self.read(board_check.load_pin_limits)[0])
+
+
 class TheHardwareNotesCarryAnEntryForEachRule(unittest.TestCase):
     def rows(self):
         with open(os.path.join(REPO, "hardware", "README.md"), encoding="utf-8") as handle:
@@ -893,6 +1163,20 @@ class TheHardwareNotesCarryAnEntryForEachRule(unittest.TestCase):
         self.assertIn("absolute_min_v", rows["pin_limit"])
         self.assertIn("not in the pin-limit record", rows["pin_limit"])
         self.assertIn("tolerates_driven_unpowered", rows["pin_limit"])
+
+    def test_the_notes_state_the_riding_keys_the_pairing_rule_and_the_floor_for_a_riding_domain(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C3: The hardware notes state the keys, and every tracked design passes in the build round and nightly.
+        with open(os.path.join(REPO, "hardware", "README.md"), encoding="utf-8") as handle:
+            text = handle.read()
+        record = next(line for line in text.splitlines() if line.startswith("| Pin-limit record (`pin-limits.yaml`)"))
+        for words in ("`rides_on`", "`fraction`", "`offset_v`", "a positive offset puts the riding net above its host", "forms a cycle",
+                      "naming the domain and the key", "differs from the derived figure"):
+            self.assertIn(words, record)
+        bullet = next(line for line in text.splitlines() if line.startswith("- **Derated voltage** (`derated_voltage`)"))
+        for words in ("unless one net rides on the other's domain or both ride on one host", "two nets of one host with no stated relation",
+                      "a mains domain with `rides_on` is held instead to its derivation from its host"):
+            self.assertIn(words, bullet)
+        self.assertIn("a riding mains domain on a host below the mains floor", text)
 
     def test_the_pin_limit_entry_and_bullet_state_the_coverage_failure_its_exemption_and_its_name_and_no_longer_exempt_a_current_limited_pin(self):
         # SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C6: The hardware notes' table of the pre-order check's rules extends the pin-limit rule's entry, and replaces its sentence that exempts a pin whose limit is a current, with what the coverage failure names, which pin it exempts and the name it is reported under.
