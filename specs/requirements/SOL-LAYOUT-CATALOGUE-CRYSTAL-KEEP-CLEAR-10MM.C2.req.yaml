@@ -1,0 +1,12 @@
+id: SOL-LAYOUT-CATALOGUE-CRYSTAL-KEEP-CLEAR-10MM.C2
+type: criterion
+title: The board check's tests catch a crystal keep-clear rule below the 10 mm floor, and the seeded fault stays figure-independent
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  In hardware/tools/tests/test_board_check.py, whose class docstring that says the rule keeps unrelated parts 25 mm (about :3773) reads 10 mm, the crystal keep-clear tests use a passing rule at 10mm and at a figure above it (30.5mm kept), a failing rule at 9.9mm whose message names 10 mm, the other-form cases (layer, severity, looser condition, another crystal, different constraint, no unit) rewritten on the 10mm rule and each still reporting crystal_keepclear, the exempt-everything case still failing, and a rule at 25mm passing, each carrying a trace line to this criterion. In hardware/tools/board_prove.py the seeded rule that exempts every other part (about :825, the only crystal seed) is written at 10mm and is still caught by crystal_keepclear; the seed is figure-independent, since the check fails an exempt-everything rule at any figure. Running the board check's unit tests and the seeded-fault proof for that seed shows each seeded case failing for the stated rule and no other. Out of scope: any change to the proof design's files, the method text, and the check's logic beyond the floor constant.
+links:
+  - target: SOL-LAYOUT-CATALOGUE-CRYSTAL-KEEP-CLEAR-10MM
+    type: criterion-of
