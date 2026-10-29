@@ -1,0 +1,12 @@
+id: SOL-LAYOUT-CATALOGUE-CRYSTAL-KEEP-CLEAR-10MM.C3
+type: criterion
+title: A test holds the method's figure, the check's floor and the proof design's rule in agreement
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A test in hardware/tools/tests/test_crystal_keep_clear_agreement.py, needing no board-design program, reads the figure CLOCK-3 and CLOCK-4 state in docs/board-design-method.md and the check's KEEP_CLEAR_MM, and fails when CLOCK-3's figure, CLOCK-4's figure and the constant are not all equal. It also reads the proof design's review-proof.kicad_dru Crystal keep-clear minimum and fails when it is below that figure. Seeded in-memory copies are caught: CLOCK-3 copied with a different figure, CLOCK-4 copied with a different figure, and the proof rule copied with a minimum below the floor. The existing assertions of that file that quote the old text are updated to the 10 mm text, and the file's other assertions pass unchanged. hardware/proof/review-proof/design-rules.md and review-proof.kicad_dru are not edited, and the proof design's pre-order check line still reads PASS; the review-proof test files that read them pass unchanged. Out of scope: the figures of any other catalogue item and the form of the proof design's rule.
+links:
+  - target: SOL-LAYOUT-CATALOGUE-CRYSTAL-KEEP-CLEAR-10MM
+    type: criterion-of
