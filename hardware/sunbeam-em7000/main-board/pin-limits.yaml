@@ -68,7 +68,7 @@ domains:
   - name: mains_line_input
     rail: /Mains entry and load feed/LINE_F
     highest_voltage_v: 357.8
-  # the live after the interlock relay K201 contact (pin 14), out to the load tab J101: the open contact leaves the whole mains peak across it; switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
+  # the live after the interlock relay K201 contact (pin 13), out to the load tab J101: the open contact leaves the whole mains peak across it; switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
   - name: mains_line_switched
     rail: /LINE1
     highest_voltage_v: 357.8

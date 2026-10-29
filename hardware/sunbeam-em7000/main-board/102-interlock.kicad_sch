@@ -2800,7 +2800,7 @@
 		)
 		(uuid "887dc981-8e9f-4d5b-a1fe-2d02148bb7e2")
 	)
-	(hierarchical_label "LINE"
+	(hierarchical_label "LINE1"
 		(shape bidirectional)
 		(at 406.4 114.3 0)
 		(effects
@@ -2809,9 +2809,9 @@
 			)
 			(justify left)
 		)
-		(uuid "c94978a1-3156-432a-9361-95936d262def")
+		(uuid "54b14893-9e89-4121-908e-00074ea1052a")
 	)
-	(hierarchical_label "LINE1"
+	(hierarchical_label "LINE"
 		(shape bidirectional)
 		(at 406.4 88.9 0)
 		(effects
@@ -2820,7 +2820,7 @@
 			)
 			(justify left)
 		)
-		(uuid "9e13b6bd-3748-411c-8dca-1f6c1c4860a4")
+		(uuid "5e8c1ab6-5a9a-4bf4-9ce7-37e3d6fb97cc")
 	)
 	(symbol
 		(lib_id "Connector:TestPoint")

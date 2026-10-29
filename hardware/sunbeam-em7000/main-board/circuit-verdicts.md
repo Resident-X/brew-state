@@ -64,8 +64,8 @@ Datasheets read 2026-10-29, saved under the work package's scratch folder, cited
 |---|---|---|---|
 | LINE_IN | PINV-1, SURGE-1, FAULT-1 | PASS (conductor rows: F6) | mains live before the fuse; run from tab 2 to F101 on an inner layer (division record A32); only F101.1, J102 and TP101 on it |
 | LINE_F | PINV-1, FAULT-1 | PASS | between F101 and JP101; source side of the rail: carries only the fuse, the link and TP102 |
-| LINE | PINV-1, SURGE-1, FAULT-1, SUPPLY-1 | PASS (F6 for copper) | after the fuse and link; varistor, X2, discharge strings, relay contact pin 13 and TP103; the module's and the measurement's taps (owners B, E) join here |
-| LINE1 | PINV-1, FAULT-1 | PASS | only K201.14, J101 and TP104 on the net, as the division record's check requires |
+| LINE | PINV-1, SURGE-1, FAULT-1, SUPPLY-1 | PASS (F6 for copper) | after the fuse and link; varistor, X2, discharge strings, relay contact pin 14 and TP103; the module's and the measurement's taps (owners B, E) join here |
+| LINE1 | PINV-1, FAULT-1 | PASS | only K201.13, J101 and TP104 on the net, as the division record's check requires |
 | NEUTRAL_IN | PINV-1 | PASS | tab 3, shunt pin 1, TP105 |
 | NEUTRAL | PINV-1, FAULT-1 | PASS | the neutral pour above the shunt: R105.4, RV101, C101, R102, R104, J110 and TP106; every other owner's return joins here |
 | SHUNT_SENSE_IN, SHUNT_SENSE_NEUTRAL | PINV-1, RCFL-1 | PASS | Kelvin sense pins R105.2 and R105.3; the filter and the AMC131M02 are owner E's; 21.2 mV peak at 15 A (the division record) |
