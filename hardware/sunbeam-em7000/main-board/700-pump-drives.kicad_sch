@@ -601,7 +601,7 @@
 				)
 			)
 		)
-		(symbol "Relay_SolidState:MOC3052M"
+		(symbol "main-board:MOC3052M"
 			(property "Reference" "U"
 				(at -5.334 4.826 0)
 				(show_name no)
@@ -661,17 +661,6 @@
 				)
 			)
 			(property "ki_keywords" "Opto-Triac Opto Triac Random Phase"
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "ki_fp_filters" "DIP*W7.62mm* SMDIP*W9.53mm* DIP*W10.16mm*"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -973,7 +962,7 @@
 				)
 			)
 		)
-		(symbol "Triac_Thyristor:BT136-600"
+		(symbol "main-board:BT136-600"
 			(property "Reference" "Q"
 				(at 5.08 1.905 0)
 				(show_name no)
@@ -1033,17 +1022,6 @@
 				)
 			)
 			(property "ki_keywords" "Triac"
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "ki_fp_filters" "TO?220*"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -3039,7 +3017,7 @@
 			)
 		))
 	(symbol
-		(lib_id "Relay_SolidState:MOC3052M")
+		(lib_id "main-board:MOC3052M")
 		(at 149.86 64.77 0)
 		(unit 1)
 		(in_bom yes)
@@ -3329,7 +3307,7 @@
 			)
 		))
 	(symbol
-		(lib_id "Triac_Thyristor:BT136-600")
+		(lib_id "main-board:BT136-600")
 		(at 214.63 69.85 0)
 		(unit 1)
 		(in_bom yes)
@@ -4005,7 +3983,7 @@
 			)
 		))
 	(symbol
-		(lib_id "Relay_SolidState:MOC3052M")
+		(lib_id "main-board:MOC3052M")
 		(at 149.86 154.94 0)
 		(unit 1)
 		(in_bom yes)
@@ -4295,7 +4273,7 @@
 			)
 		))
 	(symbol
-		(lib_id "Triac_Thyristor:BT136-600")
+		(lib_id "main-board:BT136-600")
 		(at 214.63 160.02 0)
 		(unit 1)
 		(in_bom yes)

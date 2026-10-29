@@ -4948,7 +4948,7 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "Device:Polyfuse"
+		(symbol "main-board:Polyfuse"
 			(pin_numbers
 				(hide yes)
 			)
@@ -5015,17 +5015,6 @@
 				)
 			)
 			(property "ki_keywords" "resettable fuse PTC PPTC polyfuse polyswitch"
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "ki_fp_filters" "*polyfuse* *PTC*"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -11267,7 +11256,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:Polyfuse")
+		(lib_id "main-board:Polyfuse")
 		(at 419.1 257.81 0)
 		(unit 1)
 		(in_bom yes)

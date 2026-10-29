@@ -221,7 +221,7 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "Connector_Generic:Conn_01x02"
+		(symbol "main-board:Conn_01x02"
 			(pin_names
 				(offset 1.016)
 				(hide yes)
@@ -285,17 +285,6 @@
 				)
 			)
 			(property "ki_keywords" "connector"
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "ki_fp_filters" "Connector*:*_1x??_*"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -1366,7 +1355,7 @@
 			)
 		))
 	(symbol
-		(lib_id "Connector_Generic:Conn_01x02")
+		(lib_id "main-board:Conn_01x02")
 		(at 40.64 154.94 180)
 		(unit 1)
 		(in_bom yes)

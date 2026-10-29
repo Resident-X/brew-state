@@ -5,7 +5,7 @@
 	(uuid "7474cf42-01e9-44fc-b040-62ba824a6554")
 	(paper "A3")
 	(lib_symbols
-		(symbol "74xx:74HCT541"
+		(symbol "main-board:74HCT541"
 			(property "Reference" "U"
 				(at -7.62 16.51 0)
 				(show_name no)
@@ -60,17 +60,6 @@
 				)
 			)
 			(property "ki_keywords" "TTL BUFFER 3State BUS"
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "ki_fp_filters" "DIP?20*"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -2805,7 +2794,7 @@
 		(uuid "dc2ac0f2-2a3a-4dda-a0fe-15a95545aaac")
 	)
 	(symbol
-		(lib_id "74xx:74HCT541")
+		(lib_id "main-board:74HCT541")
 		(at 180.34 111.76 0)
 		(unit 1)
 		(in_bom yes)

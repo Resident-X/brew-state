@@ -5,7 +5,7 @@
 	(uuid "ef2d8441-da55-4d7f-8dcb-a8cd72357c41")
 	(paper "A3")
 	(lib_symbols
-		(symbol "Relay:Relay_SPST-NO"
+		(symbol "main-board:Relay_SPST-NO"
 			(pin_names
 				(hide yes)
 			)
@@ -71,17 +71,6 @@
 				)
 			)
 			(property "ki_keywords" "1P1T 1-Form-A single pole throw NO"
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "ki_fp_filters" "Relay?SPST*"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -2932,7 +2921,7 @@
 			)
 		))
 	(symbol
-		(lib_id "Relay:Relay_SPST-NO")
+		(lib_id "main-board:Relay_SPST-NO")
 		(at 152.4 60.96 0)
 		(mirror y)
 		(unit 1)
@@ -3031,7 +3020,7 @@
 			)
 		))
 	(symbol
-		(lib_id "Relay:Relay_SPST-NO")
+		(lib_id "main-board:Relay_SPST-NO")
 		(at 152.4 152.4 0)
 		(mirror y)
 		(unit 1)
