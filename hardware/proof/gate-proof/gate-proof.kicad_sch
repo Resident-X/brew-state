@@ -743,7 +743,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C9000003"
+		(property "LCSC" "none"
 			(at 50.8 76.2 0)
 			(hide yes)
 			(effects

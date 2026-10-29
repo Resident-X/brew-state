@@ -2280,6 +2280,10 @@ def placed_positions(root: str, design: Design, repository: Repository
     return placed, repeated, disagreements
 
 
+#: What a position the manufacturer does not place states in place of a catalogue number; the catalogue is not read for it.
+NO_CATALOGUE_NUMBER = "none"
+
+
 def check_parts(yaml, root: str, design: Design, repository: Repository, today: datetime.date,
                 not_for_manufacture: bool) -> List[Violation]:
     """The design's placed parts held to its specification record and to the catalogue extract. Reads files only."""
@@ -2311,6 +2315,8 @@ def check_parts(yaml, root: str, design: Design, repository: Repository, today: 
                             f"the position {reference} {key} differs: the record states '{record[key]}' and the design "
                             f"has '{part[key] if part[key] is not None else ABSENT}'"))
         number = part["lcsc"]
+        if number is not None and number.strip() == NO_CATALOGUE_NUMBER:
+            continue
         if catalogue is not None and number is not None and number.strip():
             if number.strip() not in catalogue.stock:
                 found.append(Violation(design.project, "parts_catalogue", f"{reference} lcsc",
