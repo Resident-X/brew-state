@@ -822,7 +822,7 @@ def keep_clear_exempting_all(seed: Seed) -> None:
               for item in sexpr.children(sexpr.parse_one(seed.read(".kicad_pcb")), "footprint")]
     crystal_part(seed)
     exempt = "".join(f" && B.Reference != '{name}'" for name in others if name != "R2")
-    rule("Crystal keep-clear", f"A.Reference == 'R2'{exempt}", "(constraint courtyard_clearance (min 25mm))")(seed)
+    rule("Crystal keep-clear", f"A.Reference == 'R2'{exempt}", "(constraint courtyard_clearance (min 10mm))")(seed)
 
 
 def ground_class(seed: Seed) -> None:

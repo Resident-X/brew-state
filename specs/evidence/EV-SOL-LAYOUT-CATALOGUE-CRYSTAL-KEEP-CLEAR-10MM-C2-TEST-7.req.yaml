@@ -1,0 +1,16 @@
+id: EV-SOL-LAYOUT-CATALOGUE-CRYSTAL-KEEP-CLEAR-10MM-C2-TEST-7
+type: evidence
+title: test evidence for SOL-LAYOUT-CATALOGUE-CRYSTAL-KEEP-CLEAR-10MM.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-29T21:24:22.639157Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check.py::TheCrystalKeepClearIsInTheRulesFileOfABoardWithACrystal.test_a_later_courtyard_rule_naming_the_crystal_that_loosens_it_fails
+  artifact_version: 9414974c50ab315285a1284398beada40c75c0c9
+attested_by: crun-a0595b31f32f5a27
+links:
+  - target: SOL-LAYOUT-CATALOGUE-CRYSTAL-KEEP-CLEAR-10MM.C2
+    type: satisfies
