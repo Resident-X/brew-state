@@ -1,0 +1,14 @@
+id: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C11
+type: criterion
+title: A panel-cable USB connection is drawn that can power the board for bench work and cannot harm a connected computer with mains on, and the debug header is kept
+status: active
+version: 2
+measurement_type: binary
+verification: test
+text: |
+  The schematic carries a panel-cable connection from the controller's full-speed USB port to a panel-mounted connector on the side of the machine, with ESD protection on the data lines and the shield, and the serial-wire debug header is kept. The shield reaches controller ground only through a resistor and capacitor in parallel. A three-way selector joins the board's 5 V rail to either the cable's supply or the logic supply module, never both, so the board can run from the cable with mains off for bench work, never sources current into a computer's port, and with the selector on the module the cable carries data only while mains is connected. The cable position is a bench state with mains off: a plug-in transient up to the clamp level of the surge part on the cable path is accepted, and that transient can damage only the relay-driver buffers, whose failure leaves the safety relay open. With mains connected and a computer on the cable, no current path joins a mains-referenced net to a conductor of the cable beyond what the signed separation basis allows. The supply budget of a standard USB port and the hold-off of every load on cable power are shown. Placing the panel connector and the firmware's USB handling are out of scope.
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN
+    type: criterion-of
+  - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C15
+    type: supersedes

@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C2
+type: criterion
+title: A malformed rides_on, fraction or offset_v declaration fails the pin-limit record
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Each of these fails the pin-limit record, naming the domain and the key: a rides_on that names no listed domain, names its own domain, or forms a cycle; a fraction or offset_v without rides_on; fraction and offset_v together; a fraction of zero or above 1; an offset_v of zero or at or above the host's figure; a domain's highest_voltage_v that differs from the figure derived; any other unknown key. Records without the new keys read as before. The record shape of other rules is out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS
+    type: criterion-of

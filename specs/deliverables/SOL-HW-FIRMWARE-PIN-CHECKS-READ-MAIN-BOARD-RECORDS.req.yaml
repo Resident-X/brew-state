@@ -1,0 +1,31 @@
+id: SOL-HW-FIRMWARE-PIN-CHECKS-READ-MAIN-BOARD-RECORDS
+type: deliverable
+category: solution
+title: The firmware's pin checks read the main board's pin allocation record and converter-input map, and a change to either runs the host tier
+status: active
+version: 1
+text: |
+  Wires the firmware's output-channel and sensor-channel pin checks to the main board's pin allocation record and converter-input map, so a pin assignment in the firmware that disagrees with the board fails a check before the board is ordered. The checks already exist and are proven on synthetic input; this leaf points them at the real records once the firmware names the selected controller's pins, and makes the host tier of the round gate read those records.
+
+  Settled for the build:
+  - The wiring waits on the firmware target moving to the selected controller part, because the firmware's pin and converter-input tables name the stand-in part's pins today and a truthfully drawn board fails both checks against them. This leaf depends on that retarget and on the main board's proof, and does not change the firmware's tables itself.
+  - The two checks join the firmware's check target, read the board's records at the paths the board's folder holds them, and keep their reader strict and their exit statuses as they are.
+  - The two records are added to the paths the round gate's host tier reads, and the project instructions and firmware README that list those paths and the checks are updated in the same change, so a change to either record runs the host tier.
+  - The checks' own logic is not changed here.
+
+  Locus: the firmware check target in the Taskfile, the round gate's host-read paths in firmware/tools/round_gate.py, firmware/README.md, and the project instructions' list of hardware files the host tier reads.
+rationale: |
+  Split from the main board's design leaf because the wiring cannot go green while the firmware names the stand-in controller's pins: keeping it there would have held the board's proof behind a firmware retarget that is a separate task, or drawn the board around pins the selected controller does not have. Held to its own leaf, it depends on both and closes the parent criterion that asks the checks to read the board's record. The order leaf depends on it so no board is ordered before the checks hold it.
+links:
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C4
+    type: derives-from
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C4
+    type: derives-from
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets
+  - target: DEC-BOARD-DESIGN-RECORDS-AS-YAML
+    type: justified-by
+  - target: DEL-FIRMWARE-TARGET-ON-SELECTED-CONTROLLER
+    type: depends-on
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN
+    type: depends-on

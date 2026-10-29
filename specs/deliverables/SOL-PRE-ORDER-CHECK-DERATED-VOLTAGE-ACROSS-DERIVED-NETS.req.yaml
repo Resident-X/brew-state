@@ -1,0 +1,21 @@
+id: SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS
+type: deliverable
+category: solution
+title: The derated-voltage rule judges a part joining two nets derived from the mains by the difference of their voltages
+status: active
+version: 1
+text: |
+  The rule counts a part whose two nets both take their highest voltage from the mains domain as seeing the domain's full highest_voltage_v. A part across a divider's tap and its reference then fails for a swing it never sees, so the worst-case operating point REQ-ELECTRICAL-INSTALL-001.C13 asks for is overstated.
+
+  Settled before build: a pin-limit domain gains optional keys. rides_on names another listed domain whose voltage it follows. With it, exactly one of fraction (above 0, at most 1: its share of that domain's highest_voltage_v) or offset_v (above 0 and below the host's figure: volts below the host's) states how. A domain's own highest_voltage_v must equal the figure so derived. A part joining two nets then sees the difference of the two nets' voltages so worked out, and two nets of one host with no stated relation still count the full swing, so an undeclared divider remains a failure. A rides_on that names no listed domain, itself, or forms a cycle, a fraction or offset_v without rides_on, both together, and any other unknown key each fail. The change lands in the net-voltage function and record reader in hardware/tools/board_check.py and the hardware notes. DEC-BOARD-DESIGN-RECORDS-AS-YAML (domain keys) and DEC-BOARD-PRE-ORDER-RULE-READINGS (the working-voltage clause) are amended in the same change.
+rationale: |
+  Restores the behaviour that REQ-ELECTRICAL-INSTALL-001.C13 asks of the derated-voltage rule: a part is judged at the voltage it actually sees, and a divider's tap is not charged the whole mains swing.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C13
+    type: targets
+  - target: DEC-BOARD-PRE-ORDER-RULE-READINGS
+    type: justified-by
+  - target: DEC-BOARD-DESIGN-RECORDS-AS-YAML
+    type: justified-by

@@ -1,0 +1,14 @@
+id: REQ-ACTUATION-CONFIRMATION-001.C6
+type: criterion
+title: The machine confirms before it runs its loads after power-on that its outputs respond to command
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  An output that does not respond is most likely to be found after something has changed: power was removed, a part was replaced, a wire was disturbed. Confirming outputs only when a load is wanted finds the fault in the middle of the job, with the process already under way.
+
+  After power-on and before any load is run for a purpose, the machine commands each output that acts on the process and confirms, from the independent observation the first criterion requires, that it did what was commanded and that an output commanded off draws nothing. A machine that fails this confirmation does not run its loads. Power arriving, a stored state, or an earlier successful start is not evidence that the outputs respond now.
+links:
+  - target: REQ-ACTUATION-CONFIRMATION-001
+    type: criterion-of

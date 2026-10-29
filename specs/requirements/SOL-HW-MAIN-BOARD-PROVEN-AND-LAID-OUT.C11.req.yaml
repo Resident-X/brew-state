@@ -1,7 +1,7 @@
 id: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C11
 type: criterion
 title: Every part is graded against the enclosure air temperature the constraints record holds
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: analysis

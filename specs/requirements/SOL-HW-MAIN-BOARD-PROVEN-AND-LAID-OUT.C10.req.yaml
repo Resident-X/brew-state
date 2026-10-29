@@ -1,7 +1,7 @@
 id: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C10
 type: criterion
 title: Every figure the constraints record holds pending against the board is recorded with its source and its pending mark ended
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: inspection

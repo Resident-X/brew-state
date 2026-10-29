@@ -1,0 +1,12 @@
+id: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C4
+type: criterion
+title: Each retained tab's footprint is drawn from the bought part's own drawing
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The pad of each retained tab is at least the bought part's own footprint. Checking the board's separation and fixing distances with it, and placing the suppression parts, are out of scope.
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN
+    type: criterion-of

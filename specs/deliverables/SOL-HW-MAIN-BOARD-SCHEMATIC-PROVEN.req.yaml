@@ -1,0 +1,88 @@
+id: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN
+type: deliverable
+category: solution
+title: The main board's schematic is drawn and reviewed and its design records are authored before layout
+status: active
+version: 4
+text: |
+  Draws the main controller board's schematic through the board design method (docs/board-design-method.md) to the written convention, reviews it from every sheet, and authors the design records the pre-order check holds the board to, so layout starts from a reviewed schematic and records the checks can read. It draws to the figures the main board's judgements leaf settles and does not reopen them.
+
+  It covers the schematic and its circuit verdicts; every load held off while the controller is in reset, unpowered or disconnected; the interlock, its series element, the barrier parts, the entry fuse and surge clamp and each load's live lead as the judgements settled them; each anticipated channel kind placed or recorded as not reserved, with the capacity on the interfaces in use; each retained tab's footprint drawn from the bought part's own drawing; the protected USB panel-cable connection, its bench-power selector and the serial-wire debug header; the header to the wall board drawn to the division record's interface; the pin allocation, parts specification, derating policy and pin-limit records and the current catalogue extract; the converter-input map the firmware's sensor check reads; the figures the constraints record holds pending against the board; and every part graded against the enclosure air temperature. Layout, routing, the layout review and the pre-order check's pass on the finished board belong to SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.
+
+  Settled for the build:
+  - All board work runs in the main session, because the Konnect toolsets are invisible to subagents; only the judged reviews fan out, to fresh reviewers that did not draw the board. The method's steps run in order and each is committed before the next.
+  - The board's records are authored in its own folder under hardware/sunbeam-em7000/, found by the check's nearest-folder rule, so that the heater wall board carries records of its own.
+  - The supply and return pins of the board's connectors are listed in its pin allocation record as rail entries, and the channels it drives to the wall board's header are listed with their controller pins, which the wall board's record then resolves to as far channels; both rest on the pre-order check as extended for a board that places no controller.
+  - The board's header to the wall board (the ten-way low-voltage header and the neutral return landing) is drawn to the interface the division record fixes; a change to that interface is an amendment to the record that the wall board leaf must also meet.
+  - Where no catalogue part holds at the enclosure air figure, the revisit of the figure is recorded and the part's rating is not stretched. The enclosure air figure is an assumption that bring-up measures.
+  - Wiring the firmware's pin checks to this board's records is the firmware-wiring leaf's (SOL-HW-FIRMWARE-PIN-CHECKS-READ-MAIN-BOARD-RECORDS); this leaf authors the records and the converter-input map those checks will read and changes no firmware.
+  - The owner decisions the division record holds pending are drawn at the defaults recorded there; the consequence of the other way is carried.
+  - Rows of the constraints record's pending marks that name an owner act (the entry fuse breaking capacity, pump emission) are not closed here.
+  - A schematic change made during layout is an amendment to this leaf's schematic, re-reviewed here.
+
+  Locus: hardware/sunbeam-em7000/ (the board's KiCad schematic and its records), docs/sunbeam-em7000/ records for the constraints.
+rationale: |
+  Split from the main board's combined leaf on the owner's decision (2026-10-29): the schematic and its records are drawn and reviewed before layout begins, so the layout leaf starts from a reviewed design. The cost is that a later schematic change is an amendment here and not a silent edit during layout.
+links:
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C1
+    type: derives-from
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C3
+    type: derives-from
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C5
+    type: derives-from
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C7
+    type: derives-from
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C8
+    type: derives-from
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C11
+    type: derives-from
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C13
+    type: derives-from
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C15
+    type: derives-from
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C16
+    type: derives-from
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C20
+    type: derives-from
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C21
+    type: derives-from
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C22
+    type: derives-from
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C25
+    type: derives-from
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3
+    type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C13
+    type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C14
+    type: targets
+  - target: REQ-SAFETY-CHAIN-001.C2
+    type: targets
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+  - target: DEC-BOARD-SEPARATION-BASIS-RECORD
+    type: justified-by
+  - target: DEC-BOARD-DESIGN-RECORDS-AS-YAML
+    type: justified-by
+  - target: DEC-SCHEMATIC-DRAWN-TO-CONVENTION-AND-RENDERED-ON-DEMAND
+    type: justified-by
+  - target: DEC-BOARD-PRE-ORDER-RULE-READINGS
+    type: justified-by
+  - target: DEC-IN-STREAM-PROBES-ANTICIPATED
+    type: justified-by
+  - target: DEC-PROOF-OF-LIFE-INTERLOCK-IN-FIRST-HARDWARE
+    type: justified-by
+  - target: SOL-HW-MAIN-BOARD-INTERLOCK-ENTRY-JUDGED
+    type: depends-on
+  - target: SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER
+    type: depends-on
+  - target: DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER
+    type: justified-by
+  - target: DEC-UNPUBLISHED-MAKER-FIGURES-CARRIED-TO-BRING-UP
+    type: justified-by
+  - target: DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER
+    type: justified-by
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 blind brief reviewer
+  fingerprint: 3453dce65c5292af393c45018b8f9bc5600aabdaf08b2b23eb49bf1e9699cade
+  gating_profile: ""

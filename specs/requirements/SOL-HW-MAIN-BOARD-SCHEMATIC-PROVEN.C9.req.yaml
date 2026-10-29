@@ -1,0 +1,14 @@
+id: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C9
+type: criterion
+title: The drawn schematic carries the interlock, its series element, the barrier parts, the entry fuse and varistor and each load's live lead from the switched side as the judgements settled them
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The schematic carries the interlock circuit, its timing parts and whatever the judgements leaf settles to remove, bound or detect the interlock's own single faults, the series element at the rating judged, the relay and the voltage measurement's isolating part as judged against the basis, the entry fuse and surge clamp at the entry, and every load's live lead fed from the interlock's switched side. A part or net that departs from a judged figure is a finding recorded and resolved, not a silent change. Redoing the judgements and placing the parts on the board are out of scope.
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN
+    type: criterion-of
+  - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C12
+    type: supersedes

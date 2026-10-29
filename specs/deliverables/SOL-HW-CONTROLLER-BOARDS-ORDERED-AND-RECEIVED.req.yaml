@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: Both controller boards' production files are checked against the manufacturer's preview, the cost is weighed before payment, and the received boards are the ones checked
 status: active
-version: 1
+version: 2
 text: |
   Checks the production files of both controller boards against the manufacturer's assembly preview, weighs the quoted cost of the order against the running total of the declared spend before payment, and takes the boards through ordering and receipt, so the boards that arrive are the ones the checked files describe.
 
@@ -34,4 +34,8 @@ links:
   - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT
     type: depends-on
   - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT
+    type: depends-on
+  - target: SOL-HW-PUMP-DRIVE-FIGURES-CLOSED
+    type: depends-on
+  - target: SOL-HW-FIRMWARE-PIN-CHECKS-READ-MAIN-BOARD-RECORDS
     type: depends-on

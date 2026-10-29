@@ -1,0 +1,12 @@
+id: SOL-HW-CONTROLLER-BOARDS-ORDERED-AND-RECEIVED.C3
+type: criterion
+title: The order-date catalogue read looks for the parts the boards' accepted rating shortfalls could be replaced by, and the limits for unpublished figures are stated before payment
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  At the order date the manufacturer's catalogue is read for each part the board design accepted below the rating it needs: valve relays and fuses rated at or above 253 V rms, and a pump triac and opto-triac pair rated 800 V that is in stock. What is found, or that nothing is found, is recorded against each part before payment, and a part found in stock is brought to the schematic leaf as an amendment before the board is ordered. Each limit the board's records state for a figure a part's maker does not publish is stated in a board record before payment. Placing the order is out of scope.
+links:
+  - target: SOL-HW-CONTROLLER-BOARDS-ORDERED-AND-RECEIVED
+    type: criterion-of

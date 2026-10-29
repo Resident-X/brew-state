@@ -1,0 +1,12 @@
+id: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C12
+type: criterion
+title: Each figure a part's maker does not publish is recorded with its measurement and limit before layout begins
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Each figure the board's design relies on that a part's maker does not publish is recorded in a board record against the part, with the measurement on the built board that reads it and the limit that reading must meet, and the part is graded on the range its maker does publish. Measuring the figures is out of scope.
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN
+    type: criterion-of

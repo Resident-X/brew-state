@@ -1,0 +1,12 @@
+id: SOL-HW-FIRMWARE-PIN-CHECKS-READ-MAIN-BOARD-RECORDS.C2
+type: criterion
+title: A change to the main board's pin allocation record or converter-input map runs the round gate's host tier
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Both records are among the paths the host tier reads, and the project instructions and firmware README that list those paths and the checks state them. Selecting other tiers on those paths is out of scope.
+links:
+  - target: SOL-HW-FIRMWARE-PIN-CHECKS-READ-MAIN-BOARD-RECORDS
+    type: criterion-of

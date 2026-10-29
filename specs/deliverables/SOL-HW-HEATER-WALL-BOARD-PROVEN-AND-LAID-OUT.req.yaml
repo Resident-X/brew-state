@@ -58,8 +58,6 @@ links:
     type: justified-by
   - target: SOL-HW-HEATER-WALL-BOARD-ASSEMBLY-JUDGED
     type: depends-on
-  - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT
-    type: depends-on
   - target: SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER
     type: depends-on
   - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C11
@@ -68,3 +66,5 @@ links:
     type: derives-from
   - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C19
     type: derives-from
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN
+    type: depends-on

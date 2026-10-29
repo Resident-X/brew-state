@@ -4,7 +4,7 @@ category: functional
 title: Every output that acts on the process is confirmed against an independent observation
 status: active
 priority: must
-version: 2
+version: 3
 text: |
   The controller commands heaters, pumps and valves, and can observe what followed through sensing that does not depend on the command having been believed. Confirmation is the comparison between the two.
 

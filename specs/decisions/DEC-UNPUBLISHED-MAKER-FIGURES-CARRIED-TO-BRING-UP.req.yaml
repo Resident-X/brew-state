@@ -1,0 +1,38 @@
+id: DEC-UNPUBLISHED-MAKER-FIGURES-CARRIED-TO-BRING-UP
+type: decision
+category: strategic
+title: A figure a part's maker does not publish is carried to bring-up as a measurement with a stated limit and the part is graded on its published range
+status: active
+version: 2
+decided_by: david
+text: |
+  When a part's maker publishes no figure that a board record needs, the figure is carried to bring-up as a measurement on the built board with a stated limit, and the part is graded on the range its maker does publish. The gap is recorded against the part, the limit the measurement must meet is stated before the board is ordered, and a reading outside the limit fails bring-up. The rule applies to a figure the maker leaves out of its sheet, such as a part's absolute maximum on a pin whose range of operation is published, a crystal's shunt capacitance maximum, a ceramic capacitor's bias curve, an inrush maximum and duration, a connected sensor's capacitance, a resistor's pulse rating, and a capacitor's reverse-voltage rating. It never applies to a safety barrier's rating, and never to an absolute maximum that the part's operation needs to stay inside.
+rationale: |
+  Context: round 4 of the main board's schematic review left findings open only because a maker publishes no figure the review's items ask for: the HX711 absolute maximum (4.3), the Y402 shunt capacitance maximum, stated only as typical (4.6), the DC-bias curves of the ceramics that set a filter, a stability or a reference (4.7), the IRM-20 inrush maximum and duration and the pump snubber resistors' pulse rating, with no declared sensor capacitance (4.10, 4.12), the reverse-voltage rating of C302 and C792 (4.14), the snubber pulse (4.12, 4.21) and the coil inductance that Z201 and Z202 decay depends on, which the maker states none of (4.15). The review closes a finding only as met, not applicable, or overridden by a requirement the board serves, so a missing maker figure had no form in which to close, and an owner's plan to measure was ruled not to be a requirement the board serves (round 4, judgement on decision (d) of DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER). The owner, david, on 2026-10-29, answered 'go' to a proposal that read: 'when a maker publishes no figure, the figure is carried to bring-up as a measurement with a stated limit, and the part is graded on its published range; a project-level requirement so the review can close those findings with overridden by:'. This decision is that requirement. It serves REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1 and .C3, which allow a failed item to be resolved by a recorded finding that it is met or does not apply, and REQ-ELECTRICAL-INSTALL-001.C13, which grades every part to its derated rating at the worst case the design meets. The project is a hobbyist build with a bench to measure on.
+
+  Trade-offs: blocking every board on a missing maker figure would stop a design whenever a maker's sheet is silent, when the figure can be read off the built board in an afternoon and a purchaser has no way to make the maker publish; it would also push the design to parts with fuller sheets at higher cost or against the owner's sourcing. Ignoring the gap silently would let a board be ordered on an unstated assumption and lose the figure the review needs. Carrying the figure as a measurement with a limit keeps the gap in the record, states what the board must show, and costs a bring-up step and the risk that the reading fails, in which case the board is revised. Grading on the published range means the part is judged only on what a source states, so the gap never stretches a rating.
+
+  Reversibility: revisited when a maker publishes the figure, in which case the part is graded on it and the measurement is dropped, or when the bring-up measurement exceeds its stated limit, in which case the part is changed or the limit is re-derived with the owner's decision. Before the boards are ordered the rule can be withdrawn by a schematic change; after ordering a failed measurement is a board revision. Recording the rule changes no board part.
+
+  Consequences: the review may close a finding of this kind with 'overridden by:' this decision, naming the measurement and its limit; the finding reopens if the limit is not stated or the measurement is not part of bring-up. The rule never closes a finding on a safety barrier's rating (the separation basis judges those) or on an absolute maximum that the part's operation needs: a part whose operation depends on a pin staying inside a limit its maker does not publish is a part to replace, not a figure to measure. DEL-HW-BRING-UP.C15 is where the measurements are required: it requires every figure a board record carries to bring-up as a measurement to be measured on the built board against its stated limit, before mains is first connected where the figure concerns mains, and recorded. DEL-HW-BRING-UP.C14 requires the interlock drive's own measurements and is not a stand-in for it. This decision does not stand in for either.
+options_considered:
+  - option: Carry the figure to bring-up as a measurement with a stated limit and grade the part on its published range
+    reason_rejected: ""
+  - option: Block every board on a missing maker figure
+    reason_rejected: a purchaser cannot make a maker publish a figure, so the design stops on a gap that a reading on the built board settles, and it pushes parts toward fuller sheets at higher cost
+  - option: Ignore the gap silently
+    reason_rejected: the board is ordered on an unstated assumption and the figure the review needs is lost
+  - option: Accept the unpublished figure as the typical value
+    reason_rejected: a typical figure is not a limit, so the margin it would show is not a margin
+chosen: Carry the figure to bring-up as a measurement with a stated limit and grade the part on its published range
+links:
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: addresses
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3
+    type: addresses
+  - target: REQ-ELECTRICAL-INSTALL-001.C13
+    type: addresses
+  - target: DEL-HW-BRING-UP.C14
+    type: addresses
+  - target: DEL-HW-BRING-UP.C15
+    type: addresses
