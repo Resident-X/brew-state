@@ -30,6 +30,7 @@ class TheCleanDesignPassesEveryRule(SharedReviewProofCopy):
 
 class TheCrystalKeepClear(ReviewProofCopy):
     def test_an_unrelated_part_moved_within_25_mm_of_the_crystal_fails(self):
+        # SOL-LAYOUT-CATALOGUE-CRYSTAL-RELATED-PARTS.C2: the board check still reports a courtyards_overlap violation for an unrelated part within 25 mm
         # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
         self.seed.layout(lambda tree: review_seed.move(tree, "FB1", 73.8, 38.0))
         status, violations = self.check()
