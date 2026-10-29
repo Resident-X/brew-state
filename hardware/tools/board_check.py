@@ -1765,6 +1765,8 @@ SHARE_KEYS = ("share", "source")
 #: The keys of the pin-limit record, of each power domain, part, part source and pin in it.
 PIN_LIMITS_KEYS = ("domains", "parts", "synthetic")
 DOMAIN_KEYS = ("name", "rail", "highest_voltage_v")
+#: The keys a power domain may also state to ride on another domain's voltage.
+RIDING_KEYS = ("rides_on", "fraction", "offset_v")
 LIMIT_PART_KEYS = ("lcsc", "source", "pins")
 LIMIT_SOURCE_KEYS = ("document", "revision", "section", "read_on")
 LIMIT_PIN_KEYS = ("pin", "domain", "absolute_max_v", "absolute_min_v", "tolerates_driven_unpowered")
@@ -2052,6 +2054,94 @@ def read_pin_limits(yaml, root: str, repository: Repository, design: Design, not
     return load_pin_limits(yaml, root, repository, design, not_for_manufacture)[1]
 
 
+def ride(host: float, fraction: Optional[float], offset: Optional[float]) -> float:
+    """A riding domain's figure from its host's: the fraction of it, or the host's plus the signed offset."""
+    return host * fraction if fraction is not None else host + offset
+
+
+def read_riding(reading, entries: list) -> None:
+    """Reports the faults of the rides_on, fraction and offset_v keys of the power domains in `entries`, each naming
+    the domain and the key, and a highest_voltage_v that differs from the figure the keys derive."""
+    def number(value) -> bool:
+        return not isinstance(value, bool) and isinstance(value, (int, float)) and math.isfinite(value)
+
+    named = {e["name"]: e for e in entries if isinstance(e, dict) and isinstance(e.get("name"), str)}
+    index_of = {e["name"]: i for i, e in reversed(list(enumerate(entries))) if isinstance(e, dict) and isinstance(e.get("name"), str)}
+    relations: Dict[str, Tuple[str, Optional[float], Optional[float]]] = {}
+    for index, entry in enumerate(entries):
+        if not isinstance(entry, dict) or not isinstance(entry.get("name"), str):
+            continue
+        name, where = entry["name"], f"domains[{index}]"
+        if "rides_on" not in entry:
+            for key in ("fraction", "offset_v"):
+                if key in entry:
+                    reading.bad(f"{where}.{key}", f"the domain {name} states {key} without rides_on, so there is no "
+                                                  "domain for it to apply to; name the domain it rides on, or remove it")
+            continue
+        host, fraction, offset = entry["rides_on"], entry.get("fraction"), entry.get("offset_v")
+        sound = True
+        if not isinstance(host, str) or host not in named:
+            reading.bad(f"{where}.rides_on", f"the domain {name} has rides_on {host!r}, which domains does not list; "
+                                             "name a power domain the record lists")
+            sound = False
+        elif host == name:
+            reading.bad(f"{where}.rides_on", f"the domain {name} has rides_on naming itself; name another domain")
+            sound = False
+        if "fraction" in entry and "offset_v" in entry:
+            reading.bad(f"{where}.offset_v", f"the domain {name} states both fraction and offset_v; state exactly one")
+            sound = False
+        elif "fraction" not in entry and "offset_v" not in entry:
+            reading.bad(f"{where}.rides_on", f"the domain {name} states rides_on with neither fraction nor offset_v; "
+                                             "state exactly one")
+            sound = False
+        if "fraction" in entry and not (number(fraction) and 0 < fraction <= 1):
+            reading.bad(f"{where}.fraction", f"the domain {name} has fraction {fraction!r}, where it is a number above "
+                                             "zero and at most one, its share of the host's highest_voltage_v")
+            sound = False
+        if "offset_v" in entry and not (number(offset) and offset != 0):
+            reading.bad(f"{where}.offset_v", f"the domain {name} has offset_v {offset!r}, where it is a number other "
+                                             "than zero, the volts added to the host's highest_voltage_v")
+            sound = False
+        if sound:
+            relations[name] = (host, fraction, offset)
+    for name in relations:
+        seen, here = {name}, relations[name][0]
+        while here in relations and here not in seen:
+            seen.add(here)
+            here = relations[here][0]
+        if here == name:
+            reading.bad(f"domains[{index_of[name]}].rides_on",
+                        f"the domain {name} has rides_on that leads back to itself through its hosts; break the cycle")
+    derived: Dict[str, Optional[float]] = {}
+
+    def figure(name: str, trail: Tuple[str, ...] = ()) -> Optional[float]:
+        if name in derived:
+            return derived[name]
+        value: Optional[float] = None
+        if name not in trail:
+            if name in relations:
+                base = figure(relations[name][0], trail + (name,))
+                if base is not None:
+                    value = ride(base, relations[name][1], relations[name][2])
+                    if value <= 0:
+                        reading.bad(f"domains[{index_of[name]}].offset_v",
+                                    f"the domain {name} has offset_v that leaves its figure {value:g}, where it is "
+                                    "above 0; the figure derived from the host must be above 0")
+                        value = None
+            elif number(named[name].get("highest_voltage_v")):
+                value = named[name]["highest_voltage_v"]
+        derived[name] = value
+        return value
+
+    for name, entry in named.items():
+        value = figure(name)
+        stated = entry.get("highest_voltage_v")
+        if name in relations and value is not None and number(stated) and abs(stated - value) > VOLTAGE_SLACK * max(1.0, abs(value)):
+            reading.bad(f"domains[{index_of[name]}].highest_voltage_v",
+                        f"the domain {name} states highest_voltage_v {stated:g}, which differs from {value:g}, the figure "
+                        "derived from its host by rides_on and fraction or offset_v; state the derived figure")
+
+
 def load_pin_limits(yaml, root: str, repository: Repository, design: Design, not_for_manufacture: bool
                     ) -> Tuple[Optional[dict], List[Violation]]:
     """The pin-limit record's mapping and the violations of its form; no mapping where the design's folders
@@ -2064,7 +2154,7 @@ def load_pin_limits(yaml, root: str, repository: Repository, design: Design, not
     if "domains" in data and reading.listed("domains", data["domains"], "power domains"):
         for index, entry in enumerate(data["domains"]):
             where = f"domains[{index}]"
-            if not reading.mapping(where, entry, DOMAIN_KEYS, DOMAIN_KEYS, "a power domain"):
+            if not reading.mapping(where, entry, DOMAIN_KEYS + RIDING_KEYS, DOMAIN_KEYS, "a power domain"):
                 continue
             if "name" in entry and reading.text(f"{where}.name", entry["name"]):
                 domains.add(entry["name"])
@@ -2072,6 +2162,7 @@ def load_pin_limits(yaml, root: str, repository: Repository, design: Design, not
                 reading.text(f"{where}.rail", entry["rail"])
             if "highest_voltage_v" in entry:
                 reading.number(f"{where}.highest_voltage_v", entry["highest_voltage_v"])
+        read_riding(reading, data["domains"])
         reading.distinct("domains", [d["name"] for d in data["domains"]
                                      if isinstance(d, dict) and isinstance(d.get("name"), str)], "the domain")
         reading.distinct("domains", [net_key(d["rail"].strip()) for d in data["domains"]
@@ -2339,14 +2430,18 @@ class NetVoltages:
     capacitor joins nothing. The highest is the largest highest_voltage_v of
     those domains, and the lowest the smallest of 0 V for a domain other than a
     mains domain and minus its highest_voltage_v for a mains domain, since mains
-    alternates. A net no domain reaches has neither.
+    alternates, or for a domain that rides on a host its host's lowest with the
+    fraction applied or the offset added. A net no domain reaches has neither.
     """
 
     def __init__(self, nets: Dict[str, List[PinNode]], domains: Dict[str, Tuple[str, float]], mains_nets: Set[str],
-                 joiners: Set[str], listed: Dict[str, Set[str]]):
+                 joiners: Set[str], listed: Dict[str, Set[str]],
+                 rides: Optional[Dict[str, Tuple[str, Optional[float], Optional[float]]]] = None):
         """`domains` maps a domain's name to its rail and highest voltage, `joiners` holds the references of the
-        parts that join nets, and `listed` maps a net to the domains of the listed pins on it."""
+        parts that join nets, `listed` maps a net to the domains of the listed pins on it, and `rides` maps a
+        domain that rides on another to its host and its fraction or offset."""
         self.domains = domains
+        self.rides = rides or {}
         self.names = [name for name in nets if not name.rsplit("/", 1)[-1].startswith(UNCONNECTED_NET)]
         mains_keys = {net_key(name) for name in mains_nets}
         rails = {net_key(rail): name for name, (rail, _) in domains.items()}
@@ -2384,9 +2479,27 @@ class NetVoltages:
         held = self.domains_of(net)
         return max(self.domains[d][1] for d in held) if held else None
 
+    def lowest_of(self, domain: str) -> float:
+        if domain in self.rides:
+            host, fraction, offset = self.rides[domain]
+            return ride(self.lowest_of(host), fraction, offset)
+        return -self.domains[domain][1] if domain in self.mains else 0.0
+
     def lowest(self, net: str) -> Optional[float]:
         held = self.domains_of(net)
-        return min(-self.domains[d][1] if d in self.mains else 0.0 for d in held) if held else None
+        return min(self.lowest_of(d) for d in held) if held else None
+
+    def chain(self, domain: str) -> List[str]:
+        """The domain followed by its host, that host's host, and so on to the root."""
+        links = [domain]
+        while links[-1] in self.rides:
+            links.append(self.rides[links[-1]][0])
+        return links
+
+    def related(self, first: str, second: str) -> bool:
+        """Whether a domain of one net rides on a domain of the other, or both ride, directly or in a chain, on one host."""
+        return any(x != y and set(self.chain(x)) & set(self.chain(y))
+                   for x in self.domains_of(first) for y in self.domains_of(second))
 
     def from_mains(self, net: str) -> bool:
         """Whether the net takes its highest voltage from a mains domain."""
@@ -2397,12 +2510,13 @@ class NetVoltages:
 
 def working_voltage(volts: NetVoltages, nets: List[str]) -> float:
     """The largest, over every pair of the nets, of the difference between their highest voltages, where a pair both
-    taking theirs from a mains domain counts as that domain's highest_voltage_v, since mains swings between them."""
+    taking theirs from a mains domain counts as the largest highest_voltage_v of a mains domain on either, since mains
+    swings between them, unless one rides on the other's domain or both ride on one host, when it is the difference."""
     worst = 0.0
     for index, first in enumerate(nets):
         for second in nets[index + 1:]:
-            if volts.from_mains(first) and volts.from_mains(second):
-                mains = max(volts.domains[d][1] for d in volts.domains_of(first) & volts.mains)
+            if volts.from_mains(first) and volts.from_mains(second) and not volts.related(first, second):
+                mains = max(volts.domains[d][1] for d in (volts.domains_of(first) | volts.domains_of(second)) & volts.mains)
                 worst = max(worst, mains)
             else:
                 worst = max(worst, abs(volts.highest(first) - volts.highest(second)))
@@ -2431,8 +2545,10 @@ def voltage_rules(design: Design, yaml, root: str, repository: Repository, not_f
 
     domains: Dict[str, Tuple[str, float]] = {}
     entries: Dict[str, dict] = {}
+    rides: Dict[str, Tuple[str, Optional[float], Optional[float]]] = {}
     if limits is not None:
         domains = {d["name"]: (d["rail"], d["highest_voltage_v"]) for d in limits["domains"]}
+        rides = {d["name"]: (d["rides_on"], d.get("fraction"), d.get("offset_v")) for d in limits["domains"] if "rides_on" in d}
         entries = {str(p["lcsc"]).strip(): p for p in limits["parts"]}
 
     by_part: Dict[str, List[Tuple[str, PinNode]]] = {}
@@ -2464,7 +2580,7 @@ def voltage_rules(design: Design, yaml, root: str, repository: Repository, not_f
             if not matched:
                 lacking.append((ref, wanted))
     joiners = {ref for ref in by_part if kind(ref) == JOINS_NETS}
-    volts = NetVoltages(nets, domains, mains_nets, joiners, listed)
+    volts = NetVoltages(nets, domains, mains_nets, joiners, listed, rides)
 
     # The derated-voltage rule.
     if stated is not None:
@@ -2542,7 +2658,13 @@ def voltage_rules(design: Design, yaml, root: str, repository: Repository, not_f
                  "the Mains class; add the mains domain, with its rail a net of that class")
         elif peak is not None:
             for name in sorted(volts.mains):
-                if exceeds(peak, domains[name][1]):
+                root = volts.chain(name)[-1]
+                if root != name and exceeds(peak, domains[root][1]):
+                    fail("derated_voltage", f"{limits_path} domains {name}",
+                         f"the mains domain {name} rides on {rides[name][0]}, whose chain ends at {root} stating "
+                         f"highest_voltage_v {domains[root][1]:g}, below {peak:g} V, the peak of the separation basis "
+                         "working_voltage; the host must state at least the peak")
+                elif root == name and exceeds(peak, domains[name][1]):
                     fail("derated_voltage", f"{limits_path} domains {name}",
                          f"the mains domain {name} states highest_voltage_v {domains[name][1]:g}, below {peak:g} V, "
                          "the peak of the separation basis working_voltage; state at least the peak")

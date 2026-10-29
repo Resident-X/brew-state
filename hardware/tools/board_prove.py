@@ -361,6 +361,34 @@ def resistor_over_its_rating(seed: Seed) -> None:
     set_field("R1", "Rating", "100V")(seed)
 
 
+NEUTRAL_RAIL = "    rail: MAINS_N\n    highest_voltage_v: 353.5533906\n"
+LINE_RAIL = "    rail: MAINS_L\n    highest_voltage_v: 353.5533906\n"
+HALF_PEAK = "176.7766953"
+
+
+def neutral_domain(extra: str, highest: str = "353.5533906"):
+    """The mains neutral domain of the pin-limit record given `highest` as its figure and `extra` lines of keys."""
+    return pin_limits(NEUTRAL_RAIL, f"    rail: MAINS_N\n    highest_voltage_v: {highest}\n{extra}")
+
+
+def divider_over_its_rating(seed: Seed) -> None:
+    """The neutral domain made to ride on the line at half its figure, and R1 across them rated 100 V as a resistor."""
+    neutral_domain(f"    rides_on: mains_line\n    fraction: 0.5\n", HALF_PEAK)(seed)
+    resistor_over_its_rating(seed)
+
+
+def line_and_neutral_ride_each_other(seed: Seed) -> None:
+    """The line domain made to ride on the neutral and the neutral on the line, each at the whole of the other's figure."""
+    pin_limits(LINE_RAIL, LINE_RAIL + "    rides_on: mains_neutral\n    fraction: 1\n")(seed)
+    neutral_domain("    rides_on: mains_line\n    fraction: 1\n")(seed)
+
+
+def riding_domain_on_a_host_below_the_floor(seed: Seed) -> None:
+    """The line domain stated at 100 V and the neutral riding on it at half, which the record's derivation allows."""
+    pin_limits(LINE_RAIL, "    rail: MAINS_L\n    highest_voltage_v: 100\n")(seed)
+    neutral_domain("    rides_on: mains_line\n    fraction: 0.5\n", "50")(seed)
+
+
 def uncommitted_record(seed: Seed) -> None:
     seed.after.append(lambda seed: seed.replace("separation-basis.yaml", "accepted_by: david", "accepted_by: someone-else"))
 
@@ -1529,6 +1557,34 @@ FAULTS: List[tuple] = [
     # The derated-voltage and pin-limit rules
     ("a resistor across the mains pair rated below the policy's share of the mains peak", "derated voltage: a part whose working voltage exceeds the policy's voltage share of its rating fails", "derated_voltage",
      "the position R1 sees a working voltage of 353.553 V", resistor_over_its_rating, KEYS_TARGET),
+    ("a part across a divider's tap and its reference whose difference exceeds its share", "riding domains: a part joining two nets derived from the mains is judged by the difference of their voltages", "derated_voltage",
+     "the position R1 sees a working voltage of 176.777 V", divider_over_its_rating, KEYS_TARGET),
+    ("a mains domain riding on a host below the mains floor", "riding domains: a mains domain with rides_on fails the mains floor when its host does not meet it", "derated_voltage",
+     "the mains domain mains_neutral rides on mains_line, whose chain ends at mains_line stating highest_voltage_v 100", riding_domain_on_a_host_below_the_floor, KEYS_TARGET),
+    ("a rides_on naming no listed domain", "riding domains: a rides_on that names no listed domain fails the pin-limit record", "pin_limits_record",
+     "the domain mains_neutral has rides_on 'ghost'", neutral_domain("    rides_on: ghost\n    fraction: 1\n"), KEYS_TARGET),
+    ("a rides_on naming its own domain", "riding domains: a rides_on naming its own domain fails the pin-limit record", "pin_limits_record",
+     "the domain mains_neutral has rides_on naming itself", neutral_domain("    rides_on: mains_neutral\n    fraction: 1\n"), KEYS_TARGET),
+    ("two domains riding on each other", "riding domains: a rides_on that forms a cycle fails the pin-limit record", "pin_limits_record",
+     "the domain mains_neutral has rides_on that leads back to itself", line_and_neutral_ride_each_other, KEYS_TARGET),
+    ("a fraction without rides_on", "riding domains: a fraction without rides_on fails the pin-limit record", "pin_limits_record",
+     "the domain mains_neutral states fraction without rides_on", neutral_domain("    fraction: 0.5\n"), KEYS_TARGET),
+    ("an offset_v without rides_on", "riding domains: an offset_v without rides_on fails the pin-limit record", "pin_limits_record",
+     "the domain mains_neutral states offset_v without rides_on", neutral_domain("    offset_v: 1\n"), KEYS_TARGET),
+    ("a fraction and an offset_v together", "riding domains: fraction and offset_v together fail the pin-limit record", "pin_limits_record",
+     "the domain mains_neutral states both fraction and offset_v", neutral_domain("    rides_on: mains_line\n    fraction: 1\n    offset_v: 1\n"), KEYS_TARGET),
+    ("a fraction of zero", "riding domains: a fraction of zero fails the pin-limit record", "pin_limits_record",
+     "the domain mains_neutral has fraction 0, where it is a number above zero and at most one", neutral_domain("    rides_on: mains_line\n    fraction: 0\n"), KEYS_TARGET),
+    ("a fraction above one", "riding domains: a fraction above 1 fails the pin-limit record", "pin_limits_record",
+     "the domain mains_neutral has fraction 1.5, where it is a number above zero and at most one", neutral_domain("    rides_on: mains_line\n    fraction: 1.5\n"), KEYS_TARGET),
+    ("an offset_v of zero", "riding domains: an offset_v of zero fails the pin-limit record", "pin_limits_record",
+     "the domain mains_neutral has offset_v 0, where it is a number other than zero", neutral_domain("    rides_on: mains_line\n    offset_v: 0\n"), KEYS_TARGET),
+    ("an offset_v that leaves the derived figure not above zero", "riding domains: an offset_v leaving the derived figure not above 0 fails the pin-limit record", "pin_limits_record",
+     "the domain mains_neutral has offset_v that leaves its figure -46.4466", neutral_domain("    rides_on: mains_line\n    offset_v: -400\n"), KEYS_TARGET),
+    ("a highest_voltage_v that differs from the derived figure", "riding domains: a highest_voltage_v differing from the figure derived fails the pin-limit record", "pin_limits_record",
+     "the domain mains_neutral states highest_voltage_v 353.553, which differs from 176.777", neutral_domain("    rides_on: mains_line\n    fraction: 0.5\n"), KEYS_TARGET),
+    ("a riding key misspelt", "riding domains: any other unknown key fails the pin-limit record", "pin_limits_record",
+     "holds the key 'ride_on'", neutral_domain("    ride_on: mains_line\n"), KEYS_TARGET),
     ("a position with no class", "derated voltage: every position of the parts specification record carries a class", "derated_voltage",
      "the position J1 has no class", parts('    lcsc: "C9000001"\n    class: none', '    lcsc: "C9000001"'), KEYS_TARGET),
     ("a position naming a class the policy lacks", "derated voltage: a position's class is one the derating policy lists, or none", "derated_voltage",

@@ -191,6 +191,30 @@ class VoltageRulesProof(Proved):
 
 
 
+class RidingDomainsProof(Proved):
+    def test_a_divider_part_over_its_share_and_each_malformed_riding_declaration_is_caught_on_a_copy_of_the_throwaway_design(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C3: The seeded-fault proof introduces, into copies of the throwaway proof design, a divider part whose difference exceeds its share and each malformed declaration, and requires each to be caught.
+        faults = [fault for fault in board_prove.FAULTS if fault[1].startswith("riding domains:")]
+        self.assertEqual({board_prove.target_of(fault) for fault in faults}, {board_prove.KEYS_TARGET})
+        self.assertEqual(sorted(fault[2] for fault in faults), ["derated_voltage"] * 2 + ["pin_limits_record"] * 12)
+        for words in ("working voltage of 176.777 V", "rides on mains_line, whose chain ends at mains_line", "has rides_on 'ghost'",
+                      "rides_on naming itself", "leads back to itself", "states fraction without rides_on", "states offset_v without rides_on",
+                      "both fraction and offset_v", "has fraction 0,", "has fraction 1.5,", "has offset_v 0,", "leaves its figure",
+                      "which differs from 176.777", "holds the key 'ride_on'"):
+            self.assertTrue(any(words in fault[3] for fault in faults), words)
+        self.assertCaught(*[fault[0] for fault in faults])
+
+    def test_a_seeded_riding_fault_names_the_fault_and_the_rule_in_the_proofs_record_of_the_run(self):
+        # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C3: ... and requires each to be caught.
+        for fault in board_prove.FAULTS:
+            if fault[1].startswith("riding domains:"):
+                caught, evidence = outcomes()[fault[0]]
+                self.assertTrue(caught, evidence)
+                self.assertIn(f" | {fault[2]} | ", evidence)
+                self.assertIn(fault[3], evidence)
+
+
+
 class PinCoverageProof(Proved):
     def test_a_pin_left_out_of_a_listed_parts_entry_is_caught_on_a_copy_of_the_throwaway_design_that_spares_its_listed_pins(self):
         # SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C4: The on-demand seeded-fault proof removes from a copy of a throwaway design, outside the tracked tree, the entry of one connected pin of a listed part that keeps its other pins listed and requires the check to fail it, the record of the seeded run naming the fault and the rule that caught it
