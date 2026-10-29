@@ -3,11 +3,15 @@ type: deliverable
 category: solution
 title: The pre-order check accepts a part stated to have no assembler catalogue number and looks nothing up for it
 status: active
-version: 1
+version: 2
 text: |
   The parts rule holds every placed position to the parts specification record and the catalogue extract, and fails a position whose LCSC field is absent or whose number the extract does not show in stock (SOL-HW-PARTS-CHECK.C1, .C2). A hand-fitted connector, test point or link has no assembler catalogue number and so cannot pass, which the first real board meets.
 
-  Settled before build: a position that is not placed by the manufacturer states its catalogue number as the word none, lowercase, in both the record's lcsc key and the design's LCSC symbol field, and the two must agree, so an absent number stays a failure and silence never reads as compliance. For such a position the rule looks nothing up in the catalogue extract, consults no stock or age figure, and still compares value, package and rating. The change lands in the existing parts rules in hardware/tools/board_check.py and the hardware notes. DEC-BOARD-DESIGN-RECORDS-AS-YAML is amended to state the convention in the same change.
+  Settled before build: a position that is not placed by the manufacturer states its catalogue number as the word none, lowercase, in both the record's lcsc key and the design's LCSC symbol field, and the two must agree, so an absent number stays a failure and silence never reads as compliance. For such a position the rule looks nothing up in the catalogue extract, consults no stock or age figure, and still compares value, package and rating. DEC-BOARD-DESIGN-RECORDS-AS-YAML already states the convention; this change brings the code and the hardware notes into line with that decision.
+
+  Placement: extend check_parts in hardware/tools/board_check.py. When the design's stripped LCSC equals the word none, skip the catalogue-extract lookup for that position; this also skips the catalogue and lifecycle rules for it, since both run only inside the lookup. The record-versus-design comparison is unchanged, so a mismatch, or a differing value, package or rating, still fails. The spelling is exactly lowercase none; None, NONE and every other string are ordinary catalogue numbers, looked up and failing when absent. An empty field is not none and fails as a mismatch. Rejected: a new rule, an exemption keyed on the reference prefix (which decides by designator, not by what is stated), and skipping only when record and design both say none (the mismatch already fails, and looking up none would add a misleading extract failure).
+
+  Proof: the gate-proof design's J2 becomes the none position, with its record entry, schematic LCSC property and board footprint LCSC all none and its catalogue-extract entry removed, so the committed proof itself shows no lookup. The seeded-fault rows in board_prove.py (the existing J2 rows re-anchored on none, plus rows for each failing case of C1) are added to the required-names list in the records test. Unit tests in hardware/tools/tests/test_board_parts.py use synthetic ids and cover each case of C1. The hardware/README.md parts-rule entries state the convention. The main-board branch and its LCSC fields are not touched; writing none into its hand-fitted symbols belongs to the main-board leaf that depends on this change.
 rationale: |
   Restores the behaviour of the parts rule that a design is held to its record, without making a hand-fitted part impossible to pass.
 links:
@@ -23,3 +27,7 @@ links:
     type: derives-from
   - target: SOL-HW-PARTS-CHECK.C2
     type: derives-from
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 blind brief reviewer
+  fingerprint: 265e2f017c4330057d2956353082170dafff22e9da1e6ff57df287175f4081a3
+  gating_profile: ""

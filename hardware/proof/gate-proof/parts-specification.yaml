@@ -17,7 +17,7 @@ positions:
   - reference: J2
     value: "LV_IN"
     package: "PinHeader_1x02_P2.54mm_Vertical"
-    lcsc: "C9000003"
+    lcsc: "none"
     class: none
   - reference: R2
     value: "10k"

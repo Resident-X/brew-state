@@ -310,6 +310,97 @@ class PartsAgainstTheRecord(Design):
         self.assertIn("the position R1 is listed more than once", self.only())
 
 
+class PartsWithoutCatalogueNumber(Design):
+    """A hand-fitted position TP1 stated none in the record and the symbol, beside the GOOD parts."""
+
+    RECORD_TP = "  - reference: TP1\n    value: TP\n    package: TestPoint_Pad\n    lcsc: none\n"
+
+    def position(self, lcsc="none", value="TP", footprint="Test:TestPoint_Pad", rating=None):
+        self.schematic(GOOD, symbol("Device:TP", "TP1", value, footprint, lcsc, rating))
+
+    def setUp(self):
+        super().setUp()
+        self.write("hw/machine/parts-specification.yaml", RECORD + self.RECORD_TP + "synthetic: true\n")
+        self.position()
+
+    def test_a_position_stated_none_passes_with_no_extract_entry(self):
+        # SOL-PRE-ORDER-CHECK-PARTS-WITHOUT-CATALOGUE-NUMBER.C1: A position stated as none passes the parts rule without a lookup, and any other mismatch still fails
+        self.assertEqual(self.lines(), [])
+
+    def test_a_position_stated_none_consults_no_entry_stock_or_lifecycle(self):
+        # SOL-PRE-ORDER-CHECK-PARTS-WITHOUT-CATALOGUE-NUMBER.C1: A position stated as none passes the parts rule without a lookup, and any other mismatch still fails
+        hostile = EXTRACT.replace("entries:\n", "entries:\n  - lcsc: none\n    library_class: basic\n    stock: 0\n"
+                                  "    unit_price: 1\n    lifecycle:\n      status: obsolete\n      source: x\n"
+                                  "      read_on: 1999-01-01\n")
+        self.write("hw/machine/catalogue-extract.yaml", hostile + "synthetic: true\n")
+        self.assertEqual(self.lines(), [])
+
+    def test_a_record_none_against_a_design_number_fails_naming_both(self):
+        # SOL-PRE-ORDER-CHECK-PARTS-WITHOUT-CATALOGUE-NUMBER.C1: A position stated as none passes the parts rule without a lookup, and any other mismatch still fails
+        self.position(lcsc="C100")
+        self.assertEqual(self.only(), "VIOLATION | hw/machine/board/board.kicad_pro | parts_part | TP1 lcsc | the position "
+                                      "TP1 lcsc differs: the record states 'none' and the design has 'C100'")
+
+    def test_a_design_none_against_a_record_number_fails_naming_both(self):
+        # SOL-PRE-ORDER-CHECK-PARTS-WITHOUT-CATALOGUE-NUMBER.C1: A position stated as none passes the parts rule without a lookup, and any other mismatch still fails
+        self.write("hw/machine/parts-specification.yaml",
+                   RECORD + self.RECORD_TP.replace("lcsc: none", "lcsc: C100") + "synthetic: true\n")
+        self.assertEqual(self.only(), "VIOLATION | hw/machine/board/board.kicad_pro | parts_part | TP1 lcsc | the position "
+                                      "TP1 lcsc differs: the record states 'C100' and the design has 'none'")
+
+    def test_a_record_none_against_an_absent_field_fails(self):
+        # SOL-PRE-ORDER-CHECK-PARTS-WITHOUT-CATALOGUE-NUMBER.C1: A position stated as none passes the parts rule without a lookup, and any other mismatch still fails
+        self.position(lcsc=None)
+        self.assertEqual(self.only(), "VIOLATION | hw/machine/board/board.kicad_pro | parts_part | TP1 lcsc | the position "
+                                      "TP1 lcsc differs: the record states 'none' and the design has '(absent)'")
+
+    def test_a_record_none_against_an_empty_field_fails(self):
+        # SOL-PRE-ORDER-CHECK-PARTS-WITHOUT-CATALOGUE-NUMBER.C1: A position stated as none passes the parts rule without a lookup, and any other mismatch still fails
+        self.position(lcsc="")
+        self.assertIn("the record states 'none' and the design has ''", self.only())
+
+    def test_a_record_without_lcsc_still_fails_for_a_position_the_design_states_none(self):
+        # SOL-PRE-ORDER-CHECK-PARTS-WITHOUT-CATALOGUE-NUMBER.C1: A position stated as none passes the parts rule without a lookup, and any other mismatch still fails
+        self.write("hw/machine/parts-specification.yaml",
+                   RECORD + self.RECORD_TP.replace("    lcsc: none\n", "") + "synthetic: true\n")
+        self.assertIn("positions[3] lacks lcsc", "\n".join(self.lines()))
+
+    def test_a_none_position_whose_value_differs_fails(self):
+        # SOL-PRE-ORDER-CHECK-PARTS-WITHOUT-CATALOGUE-NUMBER.C1: A position stated as none passes the parts rule without a lookup, and any other mismatch still fails
+        self.position(value="OTHER")
+        self.assertIn("the position TP1 value differs: the record states 'TP' and the design has 'OTHER'", self.only())
+
+    def test_a_none_position_whose_package_differs_fails(self):
+        # SOL-PRE-ORDER-CHECK-PARTS-WITHOUT-CATALOGUE-NUMBER.C1: A position stated as none passes the parts rule without a lookup, and any other mismatch still fails
+        self.position(footprint="Test:Other")
+        self.assertIn("the position TP1 package differs: the record states 'TestPoint_Pad' and the design has 'Other'",
+                      self.only())
+
+    def test_a_none_position_whose_rating_differs_fails(self):
+        # SOL-PRE-ORDER-CHECK-PARTS-WITHOUT-CATALOGUE-NUMBER.C1: A position stated as none passes the parts rule without a lookup, and any other mismatch still fails
+        self.write("hw/machine/parts-specification.yaml",
+                   RECORD + self.RECORD_TP.replace("    lcsc: none\n", "    rating: 1A\n    lcsc: none\n") + "synthetic: true\n")
+        self.position(rating="2A")
+        self.assertIn("the position TP1 rating differs: the record states '1A' and the design has '2A'", self.only())
+
+    def test_only_the_lowercase_word_is_none_and_any_other_spelling_is_looked_up(self):
+        # SOL-PRE-ORDER-CHECK-PARTS-WITHOUT-CATALOGUE-NUMBER.C1: A position stated as none passes the parts rule without a lookup, and any other mismatch still fails
+        for spelling in ("None", "NONE", "nonee"):
+            with self.subTest(spelling=spelling):
+                self.write("hw/machine/parts-specification.yaml",
+                           RECORD + self.RECORD_TP.replace("lcsc: none", f'lcsc: "{spelling}"') + "synthetic: true\n")
+                self.position(lcsc=spelling)
+                self.assertIn(f"the position TP1 has the catalogue number {spelling}, which the catalogue extract does not list",
+                              self.only())
+
+    def test_a_none_position_with_surrounding_spaces_is_none(self):
+        # SOL-PRE-ORDER-CHECK-PARTS-WITHOUT-CATALOGUE-NUMBER.C1: A position stated as none passes the parts rule without a lookup, and any other mismatch still fails
+        self.write("hw/machine/parts-specification.yaml",
+                   RECORD + self.RECORD_TP.replace("lcsc: none", 'lcsc: " none "') + "synthetic: true\n")
+        self.position(lcsc=" none ")
+        self.assertEqual(self.lines(), [])
+
+
 class PartsAgainstTheExtract(Design):
     def test_a_number_absent_from_the_extract_fails_naming_the_position(self):
         # SOL-HW-PARTS-CHECK.C2: A part the catalogue extract does not show in stock fails the check, and so does an extract past its age limit

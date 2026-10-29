@@ -47,6 +47,16 @@ class Parts(Proved):
         self.assertEqual({fault[2] for fault in faults}, {"parts_record", "parts_part", "parts_catalogue"})
         self.assertCaught(*names)
 
+    def test_every_none_convention_failure_fails_and_is_named(self):
+        # SOL-PRE-ORDER-CHECK-PARTS-WITHOUT-CATALOGUE-NUMBER.C2: The throwaway proof design gains a position stated none in its synthetic record and symbol, which its committed state satisfies. The on-demand seeded-fault proof introduces each failing case of the previous criterion into a copy outside the repository and requires each to be caught.
+        required = ("a position stated none whose design field carries a number",
+                    "a position stated none in the design where the record has a number",
+                    "a position stated none in the record with no LCSC field in the design",
+                    "a position stated none whose value differs from the specification record",
+                    "a position stated none whose rating differs from the specification record",
+                    "a part whose package differs from the specification record")
+        self.assertCaught(*required)
+
     def test_the_unmodified_throwaway_design_passes_the_parts_check(self):
         # SOL-HW-PARTS-CHECK.C4: Each parts fault is shown to fail the check on a seeded copy of the throwaway design
         found = outcomes()
