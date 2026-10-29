@@ -1481,7 +1481,7 @@ FAULTS: List[tuple] = [
     ("a position stated none whose rating differs from the specification record", "parts: a none position is still compared on rating", "parts_part", "J2 rating differs: the record states '1A' and the design has '(absent)'",
      parts('    package: "PinHeader_1x02_P2.54mm_Vertical"\n    lcsc: "none"', '    package: "PinHeader_1x02_P2.54mm_Vertical"\n    rating: "1A"\n    lcsc: "none"')),
     ("a part whose number is absent from the extract", "parts: a part the extract does not list fails", "parts_catalogue", "R2 lcsc | the position R2 has the catalogue number C9000004, which the catalogue extract does not list",
-     extract("  - lcsc: C9000004\n    library_class: basic\n    stock: 1003\n    unit_price: 0.01\n", "")),
+     extract("  - lcsc: C9000004\n    library_class: basic\n    stock: 1003\n    unit_price: 0.01\n    lifecycle:\n      status: active\n      source: none -- synthetic lifecycle reading\n      read_on: 2026-10-14\n", "")),
     ("a part the extract shows out of stock", "parts: a part with no stock fails", "parts_catalogue", "the position J1 has the catalogue number C9000001, which the catalogue extract shows with no stock",
      extract("    stock: 1000", "    stock: 0")),
     ("an extract past its age limit", "parts: a stale extract fails", "parts_catalogue", "past the 36500 days it allows itself",
