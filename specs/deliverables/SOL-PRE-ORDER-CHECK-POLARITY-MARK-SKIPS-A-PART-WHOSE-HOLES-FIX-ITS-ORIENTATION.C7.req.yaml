@@ -6,7 +6,7 @@ version: 1
 measurement_type: binary
 verification: test
 text: |
-  Each failure of a polarised part with no pad numbered 1 carries the text "has no pad numbered 1" and one reason in the check's text report, which is its only report: its pads are surface-mount, its holes map onto themselves when turned, its holes fix no orientation, or none of its pads is numbered. Out of scope: which parts are polarised, the silk marks on the main board and the mark margin.
+  Each failure of a polarised part with no pad numbered 1 carries the text "has no pad numbered 1" and one reason in the check's text report, which is its only report: its pads are surface-mount, its holes map onto themselves when turned, its holes fix no orientation, or none of its pads is named. Out of scope: which parts are polarised, the silk marks on the main board and the mark margin.
 links:
   - target: SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION
     type: criterion-of
