@@ -1,4 +1,4 @@
-id: SOL-PRE-ORDER-CHECK-POLARITY-MARK-ACCEPTS-A-NAMED-FIRST-PAD
+id: SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION
 type: deliverable
 category: solution
 title: The polarity-mark rule does not require a first pin of a through-hole part whose hole pattern fixes its orientation
