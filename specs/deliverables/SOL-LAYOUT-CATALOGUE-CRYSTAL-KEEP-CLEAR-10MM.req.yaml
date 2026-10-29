@@ -25,3 +25,7 @@ links:
     type: justified-by
   - target: SOL-LAYOUT-CATALOGUE-CRYSTAL-RELATED-PARTS
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: e542088a23b349e8411886c129fdb0495947039fd595b8b075351c309edf68fe
+  gating_profile: ""
