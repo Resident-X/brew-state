@@ -185,12 +185,12 @@ In the verdict tables a line of `measures.txt` is cited without its bars (`CROSS
 
 ### Candidate 1
 
-**Commit**: ebb5fca142e67cd3c3c70866a1dabd71a5feedfd (`main-board: placement candidate 1`)
+**Commit**: 9e95809036c51462254f6de35fd5d3664f643bff (`main-board: placement candidate 1`)
 
 **Renders**: from the repository root, with `KICAD_CLI` set (the checkout is outside the working tree, the output folder outside every design's folder):
 
 ```
-git worktree add --detach /tmp/placement-work/wt-1 ebb5fca142e67cd3c3c70866a1dabd71a5feedfd
+git worktree add --detach /tmp/placement-work/wt-1 9e95809036c51462254f6de35fd5d3664f643bff
 (cd /tmp/placement-work/wt-1/hardware/sunbeam-em7000/main-board && task hw:placement -- --board main-board.kicad_pcb --project main-board.kicad_pro --out /tmp/placement-out-1)
 git worktree remove /tmp/placement-work/wt-1
 ```
@@ -238,12 +238,12 @@ All 24 images of `/tmp/placement-out-1/index.txt` (`placement-r1c1` to `placemen
 
 ### Candidate 2
 
-**Commit**: 95366492ee15cff4c90d390e2cee97091d1b33c2 (`main-board: placement candidate 2`)
+**Commit**: 810b7386428aa8f0c4516c98365a85320dc9a1a6 (`main-board: placement candidate 2`)
 
 **Renders**: from the repository root, with `KICAD_CLI` set (the checkout is outside the working tree, the output folder outside every design's folder):
 
 ```
-git worktree add --detach /tmp/placement-work/wt-2 95366492ee15cff4c90d390e2cee97091d1b33c2
+git worktree add --detach /tmp/placement-work/wt-2 810b7386428aa8f0c4516c98365a85320dc9a1a6
 (cd /tmp/placement-work/wt-2/hardware/sunbeam-em7000/main-board && task hw:placement -- --board main-board.kicad_pcb --project main-board.kicad_pro --out /tmp/placement-out-2)
 git worktree remove /tmp/placement-work/wt-2
 ```
