@@ -1,0 +1,25 @@
+id: SOL-PRE-ORDER-CHECK-POLARITY-MARK-ACCEPTS-A-NAMED-FIRST-PAD
+type: deliverable
+category: solution
+title: The polarity-mark rule judges a polarised part with no pad numbered 1 on the first numbered pad its footprint lists
+status: active
+version: 1
+text: |
+  The polarity-mark rule finds each polarised part and requires a mark on its own side's silkscreen nearer its first pad than any other. A part is polarised when its pins are named for anode and cathode or plus and minus, when its symbol is a polarised capacitor's, or when it has three or more pads on distinct nets; the first pad is the pad numbered 1, and a polarised part with no pad numbered 1 fails as having no first pin to mark. A relay's pads are named for its contacts and coil, 13, 14, A1 and A2, with no pad numbered 1, and four distinct nets make it polarised, so K201, K731 and K741 fail however the footprint is drawn.
+
+  Settled before build: the relays stay polarised, and the first pad is read differently. The rule serves the production-files step of the method, which holds every polarised part and every part with a first-pin mark to its mark and orientation at the assembler's preview (the method's production-files check), and a relay placed by the assembler has an orientation that step must judge as an integrated circuit's does. Excluding parts whose pads are named from the rule would leave that orientation judged by no mark at all; the method has no catalogue item for the mark, so no item narrows what counts as polarised. The first pad of a polarised part is the pad numbered 1 where the footprint has one; where it has none, it is the first pad the footprint lists that carries a pad number, the pad its library lists first. A pad's number here is KiCad's pad number field, which holds a name such as A1 as readily as a digit. A footprint with no numbered pad has no first pad and fails as it does now. The mark is judged on that pad exactly as it is on a pad numbered 1, and the symmetry test uses it. The message names the pad, so a part judged on a listed first pad says which one was taken. Rejected: a part kind by reference prefix (K is no more informative than U), and accepting a mark near any pad (a mark that does not single a pad out marks nothing, which the symmetry test already holds). A silk mark missing on a crystal such as Y601 is board work and is not in this change.
+
+  Placement: unmarked_pins in hardware/tools/board_check.py, where the first pads are the pads numbered 1; the no-pad-1 failure remains for a footprint with no numbered pad. Unit tests with synthetic references and pad names cover each case of C1, the existing seeded rows for the polarity mark stay, and a new row on the throwaway proof design renames its polarised part's pads from numbers to names and requires the unmarked first listed pad to be caught. The hardware notes' polarity_mark entry and the paragraph on the rule state the first-pad reading, and the method's production-files check needs no edit, since it already speaks of the first-pin orientation of every polarised part.
+rationale: |
+  Restores the behaviour that REQ-BOARD-LAYOUT-PRACTICE-001.C1 asks of the polarity-mark rule, which the pre-order check holds as a catalogue-kind rule: the marks an assembler and an inspector rely on are present on every assembled part with an orientation, so an orientation error can be seen at arrival inspection. A relay with named pads has an orientation and a first pad; the rule that cannot find the first pad of a part whose pads are not numbered reports a defect of the rule, and excluding the part would withdraw the check where it is needed.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: DEC-BOARD-PRE-ORDER-RULE-READINGS
+    type: justified-by
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+  - target: SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS
+    type: depends-on

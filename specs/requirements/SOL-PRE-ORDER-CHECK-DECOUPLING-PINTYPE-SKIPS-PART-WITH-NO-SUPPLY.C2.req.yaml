@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY.C2
+type: criterion
+title: A supply declaration the layout contradicts, or that is malformed, fails
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A position stating supply none whose footprint has a pad typed power input or power output fails decoupling_pintype naming the position. A supply value other than none, a supply that is not a string, an empty supply and a repeated supply key each fail the parts specification record read naming the position. The main board's record entries and any rule other than decoupling_pintype are out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY
+    type: criterion-of

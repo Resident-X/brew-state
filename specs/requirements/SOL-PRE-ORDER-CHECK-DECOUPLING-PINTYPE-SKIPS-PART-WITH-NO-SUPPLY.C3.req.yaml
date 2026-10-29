@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY.C3
+type: criterion
+title: The supply key is shown to fail on a seeded fault and is stated in the hardware notes and the method
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The seeded-fault harness holds a row on a copy of the throwaway proof design for the contradiction of C2, caught as decoupling_pintype, and the records test requires it. The hardware notes' parts specification key list, decoupling_pintype entry and DECOUPLE-6 paragraph, and the method's DECOUPLE-6, state the key, that its only value is none, and that a U-referenced part stating it is not refused. The main board's record entries and the committed proof designs' records are out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY
+    type: criterion-of

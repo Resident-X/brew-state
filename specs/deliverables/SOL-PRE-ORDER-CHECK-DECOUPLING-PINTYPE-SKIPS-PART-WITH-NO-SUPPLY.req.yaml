@@ -1,0 +1,25 @@
+id: SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY
+type: deliverable
+category: solution
+title: The pre-order check does not refuse an optocoupler or opto-triac for lacking a supply pin when its record states it has none
+status: active
+version: 1
+text: |
+  The decoupling rule finds a circuit's decoupling parts from the pads of the circuit that the layout file types power input or power output, and a pre-order rule, decoupling_pintype, refuses an orderable board whose integrated circuit has netted pads and none so typed, since the decoupling rule would measure nothing for it and the board would pass on that. The rule takes every footprint whose reference begins with U for an integrated circuit. An optocoupler or an opto-triac is referenced U and has no supply pin: its pads are an LED, a phototransistor or a triac output, and its symbol types none of them as a supply. The check therefore refuses each, and no change to the symbol's pin types can satisfy it without declaring a supply the part does not have. The main board's isolators U602, U701 and U711 are reported for this reason.
+
+  Settled before build: the part kind the check computes elsewhere does not tell the two apart. part_kind in hardware/tools/board_check.py reads the reference's leading letters, so U602 is an integrated circuit there as it is here, and keying on it would change nothing. The distinction is a fact about the part that no file the rule reads states today, so it is declared in a record, as DEC-BOARD-PRE-ORDER-RULE-READINGS asks of every rule input: a position of the parts specification record gains an optional key supply, whose only value is the word none, lowercase, stating that the part has no supply pin. The key is absent for every part that has one. For a position that states supply none, decoupling_pintype looks no further. For every other footprint whose reference begins with U the rule is unchanged: netted pads and none typed power input or power output is refused, so silence never reads as compliance. A position that states supply none whose footprint has a pad typed power input or power output fails the same rule, naming the position, because the declaration is contradicted by the layout. Any other value of supply, a supply that is not a string, and a repeated key each fail the record read, naming the position, in the way the record reader fails any other malformed key. The key has no effect on any other rule, and on the circuits the layout review views take (board_views.circuits), which already measure nothing for a part with no supply nets. Rejected: skipping footprints by a second reference prefix for isolators (a prefix decides by designator, not by what the part is), skipping a circuit whose every pad is typed passive (an integrated circuit whose supply pins were left untyped looks the same, which is the defect the rule exists to catch), and reading the part's description or name for the word opto (free text, not a statement the check can hold the design to).
+
+  Placement: POSITION_KEYS and the position reader in hardware/tools/board_check.py gain supply; untyped_circuits reads the positions of the parts specification record, which the parts check already finds by the nearest-folder rule, and the contradiction is reported by the same rule. Unit tests in a file of their own beside hardware/tools/tests/test_board_parts.py use synthetic references and values and cover each case of C1 and C2. The seeded-fault rows in hardware/tools/board_prove.py gain a row for the contradiction on a copy of the throwaway proof design; the committed proof designs' records are not edited, because none of them places an isolator. The hardware notes' parts specification key list, decoupling_pintype entry and DECOUPLE-6 paragraph, and DECOUPLE-6 in docs/board-design-method.md, state the key and the rule. DEC-BOARD-DESIGN-RECORDS-AS-YAML is amended in the graph change that authored this leaf to name the key. The main board's record entries for U602, U701 and U711 belong to the main-board leaf that depends on this change; this change touches no main-board file.
+rationale: |
+  Restores the behaviour that REQ-BOARD-LAYOUT-PRACTICE-001.C1 asks of the decoupling item and its rule: every integrated circuit that has a supply is held to the decoupling practice, and a part that has none is not refused for lacking one. A refusal that no symbol or layout change can satisfy is a defect in the check; the declared record key keeps an undeclared, untyped supply a failure.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: DEC-BOARD-PRE-ORDER-RULE-READINGS
+    type: justified-by
+  - target: DEC-BOARD-DESIGN-RECORDS-AS-YAML
+    type: justified-by
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by

@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-POLARITY-MARK-ACCEPTS-A-NAMED-FIRST-PAD.C1
+type: criterion
+title: A polarised part with no pad numbered 1 is judged on the first numbered pad its footprint lists, and one with no numbered pad still fails
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  On a synthetic design, a polarised part whose pads are named and none is numbered 1 passes the polarity mark when a silkscreen graphic of its own side stands nearer its first listed numbered pad than every other pad by more than the mark margin and breaks the pads' symmetry, and fails naming that pad when no graphic does or the drawing is unchanged by a symmetry that moves it. A part with a pad numbered 1 is judged on that pad as before, even when named pads precede it. A polarised footprint with no numbered pad still fails as having no first pin. A mark on the wrong side, a text-only mark and a part that is not polarised report as they did, and every design that passed before still passes. Which parts are polarised, the silk marks on the main board and the mark margin are out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-POLARITY-MARK-ACCEPTS-A-NAMED-FIRST-PAD
+    type: criterion-of

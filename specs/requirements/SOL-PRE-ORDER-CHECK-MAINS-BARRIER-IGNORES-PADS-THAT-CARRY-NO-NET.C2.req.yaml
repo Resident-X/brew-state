@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C2
+type: criterion
+title: The grouping is shown against a seeded fault and is stated in the method and the hardware notes
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The seeded-fault harness holds a row on the throwaway proof design's bridging part with a no-connect pad added beside a mains pad and copper under the part, caught as mains_barrier, and the records test requires it. MAINS-5 in the method and the mains_barrier entry and MAINS-5 paragraph in the hardware notes state that a pad with no number or no copper, and a pad on a net named unconnected-(...), is no pad off the Mains class. The main board's layout and every other pre-order rule are out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY.C1
+type: criterion
+title: A position stated to have no supply pin is not refused for lacking a typed supply pad, and any other integrated circuit without one still is
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  On a synthetic design not marked not for manufacture, a U-referenced position whose parts specification entry states supply none passes decoupling_pintype with no pad typed power input or power output. A U-referenced footprint with netted pads and none so typed, and no supply none, still fails, as does one whose entry states a different supply; a footprint of a position stating supply none does not change the measurement of any other circuit's decoupling, and every design that passed before still passes. The main board's record entries and the decoupling via measurement are out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY
+    type: criterion-of

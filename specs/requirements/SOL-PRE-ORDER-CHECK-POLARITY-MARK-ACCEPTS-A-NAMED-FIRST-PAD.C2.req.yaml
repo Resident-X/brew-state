@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-POLARITY-MARK-ACCEPTS-A-NAMED-FIRST-PAD.C2
+type: criterion
+title: The first-pad reading is shown against a seeded fault and is stated in the hardware notes
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The seeded-fault harness holds a row on the throwaway proof design that renames a polarised part's pads from numbers to names and leaves its first listed pad unmarked, caught as polarity_mark, and the records test requires it. The hardware notes' polarity_mark entry and the paragraph on the rule state that a part with no pad numbered 1 is judged on the first numbered pad its footprint lists. The main board's silkscreen and every other pre-order rule are out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-POLARITY-MARK-ACCEPTS-A-NAMED-FIRST-PAD
+    type: criterion-of
