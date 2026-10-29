@@ -1,0 +1,16 @@
+id: EV-SOL-LAYOUT-CATALOGUE-CRYSTAL-KEEP-CLEAR-10MM-C1-TEST
+type: evidence
+title: test evidence for SOL-LAYOUT-CATALOGUE-CRYSTAL-KEEP-CLEAR-10MM.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-29T21:24:21.988791Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_crystal_keep_clear_agreement.py::TheProofDesignsCrystalKeepClearAgreesWithTheMethod.test_the_method_keeps_the_stated_distance_for_other_parts_and_lists_the_pin_side_kinds
+  artifact_version: 9414974c50ab315285a1284398beada40c75c0c9
+attested_by: crun-a0595b31f32f5a27
+links:
+  - target: SOL-LAYOUT-CATALOGUE-CRYSTAL-KEEP-CLEAR-10MM.C1
+    type: satisfies
