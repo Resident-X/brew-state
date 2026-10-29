@@ -18,6 +18,17 @@ PROOF = os.path.join(REPO, "hardware", "proof", "review-proof")
 #: The kinds of part the row's exempt parts are named by, as the row words them.
 KINDS = ("load capacitors", "controller", "decoupling capacitor", "regulator")
 
+#: The clause of CLOCK-3's definition that counts each kind related, as that definition words it, so one can be missing alone.
+CLAUSES = {
+    "load capacitors": "one of its load capacitors",
+    "controller": "the controller whose oscillator pins it joins",
+    "decoupling capacitor": "its decoupling capacitors",
+    "regulator": "the regulator that feeds it with the regulator's own capacitors",
+}
+
+#: The clause counting the oscillator's own parts related, which the row names no kind for.
+CRYSTAL_CLAUSE = "the crystal or ceramic resonator"
+
 
 def read(*parts: str) -> str:
     with open(os.path.join(*parts), encoding="utf-8") as handle:
@@ -59,7 +70,9 @@ def disagreements(method: str, rules_table: str, rules: str, board: str) -> list
     named, definition = row_kinds(row), related_set(method)
     if named != list(KINDS):
         problems.append(f"the row names the kinds {named}, not {list(KINDS)}")
-    problems += [f"CLOCK-3 lacks the kind {kind}, which the row names" for kind in named if kind not in definition]
+    problems += [f"CLOCK-3 lacks the kind {kind}, which the row names" for kind in named if CLAUSES[kind] not in definition]
+    if CRYSTAL_CLAUSE not in definition:
+        problems.append(f"CLOCK-3 lacks the clause {CRYSTAL_CLAUSE}")
     in_row, in_rules = row_exempt(row), rule_exempt(rules)
     problems += [f"{ref} is exempt in the row and not in the rules file" for ref in sorted(in_row - in_rules)]
     problems += [f"{ref} is exempt in the rules file and not in the row" for ref in sorted(in_rules - in_row)]
@@ -93,10 +106,20 @@ class TheProofDesignsCrystalKeepClearAgreesWithTheMethod(unittest.TestCase):
         source = next(line for line in self.method[self.method.index("#### CLOCK-3. "):].split("\n") if line.startswith("- **Source:**"))
         self.assertIn("controller-board-division.md", source)
 
-    def test_a_kind_dropped_from_the_catalogue_copy_is_caught(self):
+    def test_each_kind_dropped_from_the_catalogue_copy_is_caught(self):
         # SOL-LAYOUT-CATALOGUE-CRYSTAL-RELATED-PARTS.C2: seeded in-memory copies are caught: a kind dropped from the catalogue copy
-        method = self.method.replace("and the regulator that feeds it with the regulator's own capacitors", "and nothing else")
-        self.assertIn("CLOCK-3 lacks the kind regulator, which the row names", disagreements(method, self.table, self.rules, self.board))
+        for kind, clause in CLAUSES.items():
+            with self.subTest(kind=kind):
+                self.assertEqual(self.method.count(clause), 1)
+                method = self.method.replace(clause, "nothing else")
+                self.assertEqual(disagreements(method, self.table, self.rules, self.board),
+                                 [f"CLOCK-3 lacks the kind {kind}, which the row names"])
+
+    def test_the_crystal_clause_dropped_from_the_catalogue_copy_is_caught(self):
+        # SOL-LAYOUT-CATALOGUE-CRYSTAL-RELATED-PARTS.C2: seeded in-memory copies are caught: the crystal clause dropped from the catalogue copy
+        self.assertEqual(self.method.count(CRYSTAL_CLAUSE), 1)
+        method = self.method.replace(CRYSTAL_CLAUSE, "nothing else")
+        self.assertEqual(disagreements(method, self.table, self.rules, self.board), [f"CLOCK-3 lacks the clause {CRYSTAL_CLAUSE}"])
 
     def test_an_exemption_added_to_the_rules_file_copy_is_caught(self):
         # SOL-LAYOUT-CATALOGUE-CRYSTAL-RELATED-PARTS.C2: seeded in-memory copies are caught: an exemption added to the rules-file copy
