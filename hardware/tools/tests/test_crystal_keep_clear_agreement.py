@@ -88,12 +88,12 @@ class TheProofDesignsCrystalKeepClearAgreesWithTheMethod(unittest.TestCase):
         self.board = read(PROOF, "review-proof.kicad_pcb")
 
     def test_the_committed_row_rules_file_and_method_agree(self):
-        # SOL-LAYOUT-CATALOGUE-CRYSTAL-RELATED-PARTS.C2: a test reads CLOCK-3's related-set text, the row and the rules file as they stand
+        # SOL-LAYOUT-CATALOGUE-CRYSTAL-RELATED-PARTS.C2: The proof design's crystal keep-clear row and rule agree with the catalogue, and a test holds the two together
         self.assertEqual(disagreements(self.method, self.table, self.rules, self.board), [])
         self.assertEqual(row_exempt(row_of(self.table)), {"C5", "C6", "U4", "C4", "U2", "C1", "C2"})
 
     def test_the_method_keeps_the_25_mm_for_other_parts_and_lists_the_pin_side_kinds(self):
-        # SOL-LAYOUT-CATALOGUE-CRYSTAL-RELATED-PARTS.C1: CLOCK-3 names the controller's own pin-side parts as a closed list and keeps 25 mm for every other part
+        # SOL-LAYOUT-CATALOGUE-CRYSTAL-RELATED-PARTS.C1: CLOCK-3 and CLOCK-4 count the controller's own pin-side parts as related to the oscillator and keep 25 mm for every other part
         definition = related_set(self.method)
         for words in ("series resistors on its pins", "pull-up, pull-down and filter parts", "reset network",
                       "boot-mode network", "debug header", "any other crystal or resonator on its oscillator pins",
@@ -107,7 +107,7 @@ class TheProofDesignsCrystalKeepClearAgreesWithTheMethod(unittest.TestCase):
         self.assertIn("controller-board-division.md", source)
 
     def test_each_kind_dropped_from_the_catalogue_copy_is_caught(self):
-        # SOL-LAYOUT-CATALOGUE-CRYSTAL-RELATED-PARTS.C2: seeded in-memory copies are caught: a kind dropped from the catalogue copy
+        # SOL-LAYOUT-CATALOGUE-CRYSTAL-RELATED-PARTS.C2: The proof design's crystal keep-clear row and rule agree with the catalogue, and a test holds the two together
         for kind, clause in CLAUSES.items():
             with self.subTest(kind=kind):
                 self.assertEqual(self.method.count(clause), 1)
@@ -116,23 +116,23 @@ class TheProofDesignsCrystalKeepClearAgreesWithTheMethod(unittest.TestCase):
                                  [f"CLOCK-3 lacks the kind {kind}, which the row names"])
 
     def test_the_crystal_clause_dropped_from_the_catalogue_copy_is_caught(self):
-        # SOL-LAYOUT-CATALOGUE-CRYSTAL-RELATED-PARTS.C2: seeded in-memory copies are caught: the crystal clause dropped from the catalogue copy
+        # SOL-LAYOUT-CATALOGUE-CRYSTAL-RELATED-PARTS.C2: The proof design's crystal keep-clear row and rule agree with the catalogue, and a test holds the two together
         self.assertEqual(self.method.count(CRYSTAL_CLAUSE), 1)
         method = self.method.replace(CRYSTAL_CLAUSE, "nothing else")
         self.assertEqual(disagreements(method, self.table, self.rules, self.board), [f"CLOCK-3 lacks the clause {CRYSTAL_CLAUSE}"])
 
     def test_an_exemption_added_to_the_rules_file_copy_is_caught(self):
-        # SOL-LAYOUT-CATALOGUE-CRYSTAL-RELATED-PARTS.C2: seeded in-memory copies are caught: an exemption added to the rules-file copy
+        # SOL-LAYOUT-CATALOGUE-CRYSTAL-RELATED-PARTS.C2: The proof design's crystal keep-clear row and rule agree with the catalogue, and a test holds the two together
         rules = self.rules.replace("&& B.Reference != 'C2'", "&& B.Reference != 'C2' && B.Reference != 'R1'")
         self.assertEqual(disagreements(self.method, self.table, rules, self.board), ["R1 is exempt in the rules file and not in the row"])
 
     def test_an_exemption_removed_from_the_rules_file_copy_is_caught(self):
-        # SOL-LAYOUT-CATALOGUE-CRYSTAL-RELATED-PARTS.C2: seeded in-memory copies are caught: one removed from it
+        # SOL-LAYOUT-CATALOGUE-CRYSTAL-RELATED-PARTS.C2: The proof design's crystal keep-clear row and rule agree with the catalogue, and a test holds the two together
         rules = self.rules.replace(" && B.Reference != 'C2'", "")
         self.assertEqual(disagreements(self.method, self.table, rules, self.board), ["C2 is exempt in the row and not in the rules file"])
 
     def test_an_exempt_reference_that_is_not_on_the_board_is_caught(self):
-        # SOL-LAYOUT-CATALOGUE-CRYSTAL-RELATED-PARTS.C2: fails when an exempt reference is not a footprint on the proof board
+        # SOL-LAYOUT-CATALOGUE-CRYSTAL-RELATED-PARTS.C2: The proof design's crystal keep-clear row and rule agree with the catalogue, and a test holds the two together
         table = self.table.replace("C1 and C2 |", "C1 and Z9 |")
         rules = self.rules.replace("B.Reference != 'C2'", "B.Reference != 'Z9'")
         self.assertEqual(disagreements(self.method, table, rules, self.board), ["Z9 is exempt and is not a footprint on the board"])
