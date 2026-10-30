@@ -273,6 +273,22 @@ class APolarisedPartWithNoPadNumberedOne(unittest.TestCase):
         duplicated = self.ASYMMETRIC + [hole("13", -3, -2, "A"), hole("14", 3, -2, "B")]
         self.assertEqual(self.found(relay("K201", duplicated)), [])
 
+    def test_duplicate_pads_do_not_hide_a_symmetric_pattern(self):
+        # SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C2: when a turn other than the identity maps its holes onto themselves in position and drill, a pad drawn twice at one hole being one hole
+        square = [hole("A1", -2, -2, "A"), hole("A2", 2, -2, "B"), hole("13", 2, 2, "C"), hole("14", -2, 2, "D")]
+        duplicated = square + [hole("13", 2, 2, "C"), hole("14", -2, 2, "D")]
+        found = self.found(relay("K201", duplicated))
+        self.assertEqual(len(found), 1)
+        self.assertIn("its holes map onto themselves when turned", found[0].message)
+
+    def test_a_repeated_pad_does_not_key_two_equal_holes(self):
+        # SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C3: A polarised part with two through-hole pads named + and -, no pad numbered 1, holes of one drill, fails polarity_mark, a repeated + pad being the same hole
+        names = {"D1": ("X", ["+", "-"])}
+        pads = [hole("+", -1.27, 0, "A"), hole("-", 1.27, 0, "B"), hole("+", -1.27, 0, "A")]
+        found = board_check.unmarked_pins(DESIGN, tree_of(part("D1", pads, attr="through_hole")), names)
+        self.assertEqual(len(found), 1)
+        self.assertIn("its holes map onto themselves when turned", found[0].message)
+
     def test_a_non_plated_mounting_hole_is_ignored_by_the_comparison(self):
         # SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C1: every plated pad is through-hole
         mounted = self.ASYMMETRIC + [hole("", 6, 6, "", kind="np_thru_hole", shape="circle")]
@@ -364,6 +380,14 @@ class APolarisedPartWithNoPadNumberedOne(unittest.TestCase):
         one_named = [hole("", -3, -2, "A"), hole("", 3, -2, "B"), hole("", -3, 2, "C"), hole("X", 0, 2, "D")]
         self.assertEqual(self.found(relay("K5", one_named)), [])
 
+    def test_a_name_on_a_non_plated_pad_does_not_name_the_footprint(self):
+        # SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C6: A polarised through-hole footprint none of whose plated pads is named fails polarity_mark, a name on a non-plated pad not counting
+        unnamed = [hole("", -3, -2, "A"), hole("", 3, -2, "B"), hole("", -3, 2, "C"), hole("", 0, 2, "D"),
+                   hole("MP", 6, 6, "", kind="np_thru_hole", shape="circle")]
+        found = self.found(relay("K5", unnamed))
+        self.assertEqual(len(found), 1)
+        self.assertIn("none of its pads is named", found[0].message)
+
     def test_each_failure_carries_the_old_text_and_one_reason(self):
         # SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C7: Each failure of a polarised part with no pad numbered 1 carries the text "has no pad numbered 1" and one reason in the check's text report, which is its only report: its pads are surface-mount, its holes map onto themselves when turned, its holes fix no orientation, or none of its pads is named
         reasons = ("its pads are surface-mount", "its holes map onto themselves when turned", "its holes fix no orientation",
@@ -403,7 +427,7 @@ class TheHardwareNotesStateWhenAPartNeedsNoFirstPin(unittest.TestCase):
         paragraph = next(line for line in lines if line.lstrip().startswith("- The polarity mark (`polarity_mark`)"))
         row = next(line for line in lines if line.startswith("| `polarity_mark` |"))
         for where, text in (("paragraph", paragraph), ("row", row)):
-            for clause in ("every plated pad is through-hole", "two or more positions", "a pad is named" if where == "row" else "at least one of its pads is named",
+            for clause in ("every plated pad is through-hole", "two or more positions", "a plated pad is named" if where == "row" else "at least one of its plated pads is named",
                            "other than the identity maps" if where == "paragraph" else "no turn but the identity maps", "in position and drill",
                            "its pads are surface-mount", "none of its pads is named", "its holes fix no orientation",
                            "its holes map onto themselves when turned"):

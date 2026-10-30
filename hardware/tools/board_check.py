@@ -1888,7 +1888,7 @@ class Extract(NamedTuple):
     stock: Dict[str, object]
     lifecycle: Dict[str, Optional[Dict[str, object]]]
     max_age_days: Optional[int]
-    category: Dict[str, Optional[str]] = {}
+    category: Optional[Dict[str, Optional[str]]] = None
 
 
 def read_extract(yaml, root: str, repository: Repository, design: Design, today: datetime.date,
@@ -4587,8 +4587,8 @@ def mains_barrier(design: Design, tree: list, fills, mains: Set[str], allowed: f
     carries no net is in neither group: one on a net named unconnected-(...)
     that no other pad carries, and one with no net that has no number or no
     copper layer. A part whose pads off the class are all such pads is not
-    judged. The copper of every pad, those included, still lies in the strip. `fills` are the layout's fills as KiCad
-    has refilled them.
+    judged. The copper of every pad, those included, still lies in the strip.
+    `fills` are the layout's fills as KiCad has refilled them.
     """
     table = board_geometry.net_table(tree)
     parts = []
@@ -5433,7 +5433,7 @@ def untyped_circuits(design: Design, tree: list, not_for_manufacture: bool,
         held = board_views.pads(footprint, table)
         typed = any(kind in ("power_in", "power_out") for _, kind in held)
         number = (positions.get(name) or {}).get("lcsc")
-        category = (catalogue.category.get(number.strip()) if catalogue is not None and isinstance(number, str)
+        category = ((catalogue.category or {}).get(number.strip()) if catalogue is not None and isinstance(number, str)
                     else None)
         supplyless = category in NO_SUPPLY_CATEGORIES
         if supplyless and typed:
@@ -5464,6 +5464,7 @@ def untyped_circuits_by_category(yaml, root: str, repository: Repository, design
     """
     if not_for_manufacture:
         return []
+    # The problems of this read and of placed_positions repeat check_parts' own reads and are reported there.
     catalogue = read_extract(yaml, root, repository, design, today, not_for_manufacture)[0]
     return untyped_circuits(design, tree, not_for_manufacture, catalogue, placed_positions(root, design, repository)[0])
 
@@ -5979,10 +5980,27 @@ def plated_holes(footprint: list) -> list:
     return holes
 
 
+def distinct_holes(holes: list) -> list:
+    """`holes` with each hole kept once: two pads drawn at one hole, in position, drill sizes and, for an oval drill, long
+    axis, are one hole, so a repeated pad does not move the centre of the pattern."""
+    def alike(one, other) -> bool:
+        if math.dist(one[0], other[0]) > PAD_MATCH or any(abs(a - b) > PAD_MATCH for a, b in zip(one[1], other[1])):
+            return False
+        if (one[2] is None) != (other[2] is None):
+            return False
+        return one[2] is None or abs(one[2][0] * other[2][1] - one[2][1] * other[2][0]) <= PAD_MATCH
+    kept: list = []
+    for hole in holes:
+        if not any(alike(hole, other) for other in kept):
+            kept.append(hole)
+    return kept
+
+
 def hole_turns(holes: list) -> list:
     """The turns other than the identity about the centre of `holes` that map them onto themselves in position and drill,
     each as a function of a board point. A hole is its position, its drill's sizes and, for an oval drill, the direction of
     its long axis; the pad's copper is not compared, and reflections do not count since a placed part cannot be mirrored."""
+    holes = distinct_holes(holes)
     cx = sum(hole[0][0] for hole in holes) / len(holes)
     cy = sum(hole[0][1] for hole in holes) / len(holes)
     anchor = max(holes, key=lambda hole: math.dist(hole[0], (cx, cy)))
@@ -6018,12 +6036,12 @@ def hole_turns(holes: list) -> list:
 
 def no_first_pin_reason(footprint: list, pads: List["board_geometry.Pad"]) -> str:
     """Why a polarised part with no pad numbered 1 is not excused from having a first pin, or '' when its holes key it:
-    every plated pad is through-hole, one is named, the holes lie at two or more positions and no turn but the identity
+    every plated pad is through-hole, one plated pad is named, the holes lie at two or more positions and no turn but the identity
     maps them onto themselves in position and drill."""
     plated = [node for node in sexpr.children(footprint, "pad") if not (len(node) > 2 and str(node[2]) == "np_thru_hole")]
     if any(len(node) < 3 or str(node[2]) != "thru_hole" for node in plated):
         return "its pads are surface-mount"
-    if not any(pad.number for pad in pads):
+    if not any(str(node[1]).strip() for node in plated if len(node) > 1):
         return "none of its pads is named"
     holes = plated_holes(footprint)
     if not any(math.dist(one[0], other[0]) > PAD_MATCH for one in holes for other in holes):
@@ -6047,7 +6065,7 @@ def unmarked_pins(design: Design, tree: list, parts: Dict[str, Tuple[str, List[s
     pad's by more than MARK_MARGIN, and the footprint's silkscreen is not
     unchanged by any symmetry of its pads that moves that pad. A polarised
     part with no pad numbered 1 has no first pin to mark, and fails with the
-    reason, unless every plated pad is through-hole, one pad is named, its
+    reason, unless every plated pad is through-hole, one plated pad is named, its
     holes lie at two or more positions and no turn but the identity maps them
     onto themselves in position and drill, in which case its holes fix its
     orientation and it needs no mark. The size and shape of the copper are not
