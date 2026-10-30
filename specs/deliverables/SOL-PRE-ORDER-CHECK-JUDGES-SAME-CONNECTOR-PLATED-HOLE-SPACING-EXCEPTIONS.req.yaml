@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The pre-order check passes a plated-hole spacing shortfall between pins of one connector at its own pitch only on a signed exception in the basis record
 status: active
-version: 1
+version: 2
 text: |
   The pre-order check passes a plated-hole spacing shortfall between pins of one connector at that connector's own pitch only on a same-connector exception the owner has signed in the separation basis record, and fails every other. The board's plated-hole spacing rule (the custom rule of the layout practice's item GROUND-5, a hole_to_hole constraint at the figure derived from the gaps the pins open in the ground plane) is kept. Five 2.0 mm-pitch headers of the main board, J630, J635, J791, J821 and J861, stand closer than that figure between adjacent holes, because a 2.0 mm pitch cannot reach it; the rule is the check's own derivation of where ring copper survives in a plane, not the manufacturer's minimum. The owner has agreed to excuse exactly those pairs, on the ground that these headers carry slow signals only and no fast signal crosses their strip, and to excuse nothing else. That ground is the owner's assertion; the tool does not check it, and the owner is shown the nets on each header's pins when accepting.
 
@@ -28,4 +28,6 @@ links:
   - target: DEC-BOARD-PRE-ORDER-RULE-READINGS
     type: justified-by
   - target: SOL-PRE-ORDER-CHECK-JUDGES-SIGNED-SPACING-EXCEPTIONS
+    type: depends-on
+  - target: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS
     type: depends-on
