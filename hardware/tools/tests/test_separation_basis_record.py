@@ -42,6 +42,14 @@ def signed_from(data):
     return board_check.Signed(float(pair["clearance_mm"]), float(pair["creepage_mm"]), data)
 
 
+def assert_draft(case, data):
+    """The record is a draft: no record-level acceptance, and every exception's two acceptance fields empty strings."""
+    case.assertNotIn("accepted_by", data)
+    case.assertNotIn("accepted_on", data)
+    for entry in data["accepted_exceptions"]:
+        case.assertEqual((entry["accepted_by"], entry["accepted_on"]), ("", ""), entry["between"])
+
+
 class SeparationBasisRecord(unittest.TestCase):
     def test_only_the_unsigned_acceptance_is_left_to_find(self):
         # SOL-HW-SEPARATION-BASIS-SIGNED.C1: A separation basis record, not marked synthetic, sits in the machine's hardware folder in the form the separation-basis decision sets. A test reads the committed record through the board check's own reader and finds the only problems, if any, to be the unsigned acceptance until the owner signs, and none once signed.
@@ -50,11 +58,10 @@ class SeparationBasisRecord(unittest.TestCase):
         _, problems = reading()
         left = [p for p in problems if not p.location.endswith(("accepted_by", "accepted_on"))]
         self.assertEqual(left, [], [p.line() for p in left])
-        if "accepted_by" not in data and "accepted_on" not in data:
-            self.assertEqual(len(problems), 2)
-            self.assertTrue(all("unsigned" in p.message for p in problems))
-        else:
-            self.assertEqual(problems, [])
+        # the draft state is pinned: the owner-acts leaf SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER changes this assertion when the owner accepts
+        assert_draft(self, data)
+        self.assertEqual(len(problems), 2)
+        self.assertTrue(all("unsigned" in p.message for p in problems))
 
     def test_every_barrier_has_exactly_one_type_and_the_floor_holds_on_its_own_figures(self):
         # SOL-HW-SEPARATION-BASIS-SIGNED.C1: Every barrier named has exactly one barrier_types entry, giving its insulation type, basic or reinforced, whether its low-voltage side is bonded to protective earth, the low-voltage parts a person can touch beyond it (such as a service port, the operator's controls or the enclosure), and the part or spacing that forms it; The mains-to-low-voltage clearance and creepage are at or above the floor those rows give. It also runs the check's floor rule on the record's own figures taken as signed and finds no violation.
@@ -158,6 +165,7 @@ class MainsToMainsRecord(unittest.TestCase):
     def test_the_mains_to_mains_mapping_holds_the_four_figures_and_the_entry_fuse(self):
         # SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS.C1: The committed record holds mains_to_mains with clearance_mm 1.5, terminal_clearance_mm 2.0, creepage_mm 4.1, creepage_ahead_of_fuse_mm 4.1, entry_fuse F101 and held_at_reinforced, and the check's own reader reads it with no problem other than the unsigned acceptance until the owner signs. The mains_to_low_voltage figures are out of scope and read 3.0 mm and 10.0 mm as before.
         _, data = committed()
+        assert_draft(self, data)
         held = data["mains_to_mains"]
         self.assertEqual({key: held[key] for key in ("clearance_mm", "terminal_clearance_mm", "creepage_mm", "creepage_ahead_of_fuse_mm")},
                          {"clearance_mm": 1.5, "terminal_clearance_mm": 2.0, "creepage_mm": 4.1, "creepage_ahead_of_fuse_mm": 4.1})
@@ -229,6 +237,7 @@ class MainsToMainsRecord(unittest.TestCase):
     def test_each_mains_to_mains_shortfall_the_owner_accepted_has_an_unsigned_entry(self):
         # SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS.C3: accepted_exceptions holds a mains_to_mains clearance entry with accepted_mm 1.08 for T701 and T711, one with 1.65 for R105 and one with 1.8 for each 1206 series resistor, every entry naming the one pair of pads or nets it excuses in between, with a reason and a bounding element, and its accepted_by and accepted_on left empty for the owner's acceptance. Each accepted_mm is below the signed figure it relaxes, a part's other pairs have no entry, and a part the owner did not accept has none. The mains-to-low-voltage entries are the next criterion's and out of scope here. The values are drafted from the schematic and the division record; confirming them against the main-board layout is the layout leaf's and out of scope here.
         _, data = committed()
+        assert_draft(self, data)
         held = data["mains_to_mains"]
         entries = [e for e in data["accepted_exceptions"] if e["pair"] == "mains_to_mains"]
         found = {(tuple(e["between"]), e["accepted_mm"]) for e in entries}
@@ -244,6 +253,12 @@ class MainsToMainsRecord(unittest.TestCase):
             self.assertTrue(entry["reason"].strip() and entry["bounded_by"].strip())
             self.assertEqual((entry["accepted_by"], entry["accepted_on"]), ("", ""))
             self.assertEqual(len(entry["between"]), 2)
+        # the triac shortfall is the gap between two lead pads, and the reason says the tab is not excused
+        for entry in entries:
+            if entry["between"][0] in ("T701.2", "T711.2"):
+                self.assertIn("lead-pad to lead-pad", entry["reason"])
+                self.assertIn("does not excuse the triac's tab", entry["reason"])
+                self.assertNotIn("tab lead", entry["reason"])
         # a part's other pairs have no entry, and a part the owner did not accept has none
         pairs = {frozenset(e["between"]) for e in data["accepted_exceptions"]}
         self.assertNotIn(frozenset(("T701.1", "T701.3")), pairs)
@@ -264,6 +279,7 @@ class MainsToMainsRecord(unittest.TestCase):
     def test_each_bought_part_creepage_shortfall_the_owner_accepted_has_an_unsigned_entry(self):
         # SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS.C4: accepted_exceptions holds a mains_to_low_voltage creepage entry with accepted_mm 8.0 for U601 and one with 7.0 for each of U701 and U711, each naming the one pair of pads it excuses in between, with its reason and bounding element and its accepted_by and accepted_on left empty for the owner's acceptance, and the reasons are those of the owner's recorded acceptance. K201, K731, K741 and U602 are out of scope here; their own leaf judges them. The values are drafted from the schematic and the division record; confirming them against the main-board layout is the layout leaf's and out of scope here.
         _, data = committed()
+        assert_draft(self, data)
         entries = [e for e in data["accepted_exceptions"] if e["pair"] == "mains_to_low_voltage"]
         self.assertEqual({(tuple(e["between"]), e["accepted_mm"]) for e in entries},
                          {(("U601.10", "U601.11"), 8.0), (("U701.1", "U701.6"), 7.0), (("U711.1", "U711.6"), 7.0)})

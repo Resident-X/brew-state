@@ -254,6 +254,16 @@ table_rows:
       material_group: IIIa
     figure:
       creepage_mm: 4.1
+# For the layout work, the limits of the bought-part creepage entries and the net names:
+#   (a) The U601 (8.0 mm) and U701 and U711 (7 mm) figures are the makers' body creepage, not the pad-to-pad
+#       land distance: a DIP-6 W7.62 land pair is about 6.0 mm apart and the SOIC-20W land gap about 7.4 mm.
+#       The entries therefore work only if the layout lengthens the path (a slot between the pad rows), and
+#       the layout leaf's C8 confirms that it does.
+#   (b) Only the U601 pin 10 to pin 11 pair is excused. Other facing pairs of that package that are mains
+#       against low voltage are not, and the check flags them.
+#   (c) The held_at_reinforced net names (/LINE and /LINE1, and /Mains entry and load feed/LINE_IN and
+#       /LINE1) are sheet-qualified as in the schematic netlist. The layout leaf reconciles them with the
+#       final netlist.
 # The spacing shortfalls the owner is to accept, one entry for each one pair of pads it excuses; a
 # part's other pairs are not excused by it. The distances are those the part's own land pattern
 # leaves between the pads named, from the main-board schematic and the KiCad footprint of each part
@@ -269,7 +279,7 @@ accepted_exceptions:
     constraint: clearance
     between: ["T701.2", "T701.1"]
     accepted_mm: 1.08
-    reason: "The land pattern of the coffee pump triac T701 (TO-252-3, tab on pin 2) leaves 1.08 mm between the pad of its tab lead, pin 2 (MT2), and the pad of pin 1 (MT1, on NEUTRAL); the package pitch forces it and the part is not changed."
+    reason: "The land pattern of the coffee pump triac T701 (TO-252-3) leaves 1.08 mm between the lead pad of pin 2 (MT2, the middle lead) and the lead pad of pin 1 (MT1, on NEUTRAL), a lead-pad to lead-pad gap; the package pitch forces it and the part is not changed. This entry does not excuse the triac's tab (the large pad on pin 2), which stands about 2.0 mm clear of those leads' pads and is held to the figure like any other pair."
     bounded_by: "The branch fuse F701 in series with MT2, then the 10 A entry fuse F101, interrupt a breakdown between the two pads, which can only carry the pump branch current."
     accepted_by: ""
     accepted_on: ""
@@ -277,7 +287,7 @@ accepted_exceptions:
     constraint: clearance
     between: ["T701.2", "T701.3"]
     accepted_mm: 1.08
-    reason: "The land pattern of the coffee pump triac T701 (TO-252-3, tab on pin 2) leaves 1.08 mm between the pad of its tab lead, pin 2 (MT2), and the pad of pin 3 (the gate, on PUMP_C_TRIAC_G); the package pitch forces it and the part is not changed."
+    reason: "The land pattern of the coffee pump triac T701 (TO-252-3) leaves 1.08 mm between the lead pad of pin 2 (MT2, the middle lead) and the lead pad of pin 3 (the gate, on PUMP_C_TRIAC_G), a lead-pad to lead-pad gap; the package pitch forces it and the part is not changed. This entry does not excuse the triac's tab (the large pad on pin 2), which stands about 2.0 mm clear of those leads' pads and is held to the figure like any other pair."
     bounded_by: "The branch fuse F701 in series with MT2, then the 10 A entry fuse F101, interrupt a breakdown between the two pads, which can only carry the pump branch current."
     accepted_by: ""
     accepted_on: ""
@@ -285,7 +295,7 @@ accepted_exceptions:
     constraint: clearance
     between: ["T711.2", "T711.1"]
     accepted_mm: 1.08
-    reason: "The land pattern of the steam pump triac T711 (TO-252-3, tab on pin 2) leaves 1.08 mm between the pad of its tab lead, pin 2 (MT2), and the pad of pin 1 (MT1, on NEUTRAL); the package pitch forces it and the part is not changed."
+    reason: "The land pattern of the steam pump triac T711 (TO-252-3) leaves 1.08 mm between the lead pad of pin 2 (MT2, the middle lead) and the lead pad of pin 1 (MT1, on NEUTRAL), a lead-pad to lead-pad gap; the package pitch forces it and the part is not changed. This entry does not excuse the triac's tab (the large pad on pin 2), which stands about 2.0 mm clear of those leads' pads and is held to the figure like any other pair."
     bounded_by: "The branch fuse F711 in series with MT2, then the 10 A entry fuse F101, interrupt a breakdown between the two pads, which can only carry the pump branch current."
     accepted_by: ""
     accepted_on: ""
@@ -293,7 +303,7 @@ accepted_exceptions:
     constraint: clearance
     between: ["T711.2", "T711.3"]
     accepted_mm: 1.08
-    reason: "The land pattern of the steam pump triac T711 (TO-252-3, tab on pin 2) leaves 1.08 mm between the pad of its tab lead, pin 2 (MT2), and the pad of pin 3 (the gate, on PUMP_S_TRIAC_G); the package pitch forces it and the part is not changed."
+    reason: "The land pattern of the steam pump triac T711 (TO-252-3) leaves 1.08 mm between the lead pad of pin 2 (MT2, the middle lead) and the lead pad of pin 3 (the gate, on PUMP_S_TRIAC_G), a lead-pad to lead-pad gap; the package pitch forces it and the part is not changed. This entry does not excuse the triac's tab (the large pad on pin 2), which stands about 2.0 mm clear of those leads' pads and is held to the figure like any other pair."
     bounded_by: "The branch fuse F711 in series with MT2, then the 10 A entry fuse F101, interrupt a breakdown between the two pads, which can only carry the pump branch current."
     accepted_by: ""
     accepted_on: ""
@@ -301,6 +311,10 @@ accepted_exceptions:
     constraint: clearance
     between: ["R105.1", "R105.4"]
     accepted_mm: 1.65
+    # The 1.65 mm comes from the custom footprint drawn for the Vishay WSK2512 shunt; no revision of the
+    # maker's datasheet is cited in this repository, and the owner confirms the figure from the datasheet at signing.
+    # Only this pair of R105's sense pads is excused; R105's other pad gaps are not, and are for the
+    # layout leaf's check.
     reason: "The current terminals of the neutral shunt R105, pads 1 and 4, stand 1.65 mm apart on the maker's land pattern (Vishay WSK2512, gap l = 1.65 mm); the lands are the shunt's own and both are at neutral potential."
     bounded_by: "The two lands differ by the shunt's own drop, 1 milliohm times the load current, 10 mV at the 10 A of the entry fuse F101; a bridge between them only shorts the shunt, and F101 bounds the current the lands carry."
     accepted_by: ""
