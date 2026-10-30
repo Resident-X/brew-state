@@ -52,18 +52,22 @@ domains:
   - name: mains_neutral
     rail: /NEUTRAL
     highest_voltage_v: 357.8
-  # the AMC131M02 analog inputs, which ride on HGND (mains neutral) and so on a Mains-class net: the peak of the mains conductor they ride on, 253 V rms is 357.8 V peak (separation-basis.yaml working_voltage), as a Mains-class rail must state. The input range above and below HGND (SBASA56 6.1, HGND - 1.6 V to HGND + 2.7 V) is in the pins' limits, written against board ground at that peak
+  # the AMC131M02 positive analog inputs AIN0P and AIN1P, which ride on HGND (mains neutral): at most 2.7 V above it (SBASA56 6.1, HGND + 2.7 V), so the input pair across C601 or C602 differs by at most that, the signal itself being about 0.3 V from the voltage divider tap and 250 mV from the shunt; 357.8 + 2.7 = 360.5 V against board ground. The negative inputs AIN0N and AIN1N sit at HGND and are in the neutral domain. The lower input range (HGND - 1.6 V) is in the pins' limits
   - name: amc_inputs
     rail: /Supply voltage and current measurement/AMC_AIN0P
-    highest_voltage_v: 357.8
+    highest_voltage_v: 360.5
+    rides_on: mains_neutral
+    offset_v: 2.7
   # the AMC131M02 DCDC_CAP node, the output of its internal primary-side regulator; only a capacitor and a test point are on it. The datasheet states no operating voltage for the node, so its absolute maximum (6.1, DCDC_CAP to DGND 3.5 V) stands as the ceiling
   - name: amc_dcdc_cap
     rail: /Supply voltage and current measurement/AMC_DCDC_CAP
     highest_voltage_v: 3.5
-  # the AMC131M02 high side, which rides on HGND (mains neutral) and so on Mains-class nets: the peak of the mains conductor it rides on, 357.8 V, as a Mains-class rail must state. The high-side regulator output is 2.6 to 3.2 V above HGND (SBASA56 6.5 table, HLDO_OUT); that offset is in the pins' limits, written against board ground at that peak (357.8 + 3.2 = 361.0 V)
+  # the AMC131M02 high side (DCDC_OUT, HLDO_IN, HLDO_OUT), which rides on HGND (mains neutral): the high-side regulator output is 2.6 to 3.2 V above HGND (SBASA56 6.5 table, HLDO_OUT), so a capacitor from one of these nets to HGND sees at most 3.2 V and the nets stand at 357.8 + 3.2 = 361.0 V against board ground, the figure the pins' limits state
   - name: amc_high_side
     rail: /Supply voltage and current measurement/AMC_HLDO_OUT
-    highest_voltage_v: 357.8
+    highest_voltage_v: 361
+    rides_on: mains_neutral
+    offset_v: 3.2
   # the live between the plug-in tab and the board's input fuse F101, and the fuse's far side LINE_F up to the first-power link JP101: F101 joins LINE_IN and LINE_F, so one rail covers both; switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
   - name: mains_line_input
     rail: /Mains entry and load feed/LINE_F
@@ -72,14 +76,18 @@ domains:
   - name: mains_line_switched
     rail: /LINE1
     highest_voltage_v: 357.8
-  # the coffee pump's live tab J107 and the pump fuse F701 pin 1, with PUMP_C_MT2 (triac T701 main terminal 2) on F701's far side: F701 joins COFFPUMP and PUMP_C_MT2, so one rail covers both; switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
+  # the coffee pump's live tab J107 and the pump fuse F701 pin 1, with PUMP_C_MT2 (triac T701 main terminal 2) on F701's far side: F701 joins COFFPUMP and PUMP_C_MT2, so one rail covers both. The triac switches the pump to neutral, so with the triac off these nets follow the live and never exceed its peak: they ride on LINE at fraction 1, the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak)
   - name: mains_coffee_pump
     rail: /COFFPUMP
     highest_voltage_v: 357.8
-  # the steam pump's live tab J108 and the pump fuse F711 pin 1, with PUMP_S_MT2 (triac T711 main terminal 2) on F711's far side: F711 joins STEAMPUMP and PUMP_S_MT2, so one rail covers both; switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
+    rides_on: mains_line
+    fraction: 1
+  # the steam pump's live tab J108 and the pump fuse F711 pin 1, with PUMP_S_MT2 (triac T711 main terminal 2) on F711's far side: F711 joins STEAMPUMP and PUMP_S_MT2, so one rail covers both. As the coffee pump, they follow the live and never exceed its peak: they ride on LINE at fraction 1, the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak)
   - name: mains_steam_pump
     rail: /STEAMPUMP
     highest_voltage_v: 357.8
+    rides_on: mains_line
+    fraction: 1
   # the coffee valve live tab J106 and valve relay K731 contact pin 13 (pin 14 is VALVE_COM); switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
   - name: mains_coffee_valve
     rail: /COFVALVE
@@ -88,22 +96,30 @@ domains:
   - name: mains_hot_valve
     rail: /HOTVALVE
     highest_voltage_v: 357.8
-  # the midpoint of the discharge pair R101 and R102 (1 Mohm each) between LINE and NEUTRAL: half the line-to-neutral peak in the circuit, but a Mains-class rail states the peak; switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
+  # the midpoint of the discharge pair R101 and R102 (1 Mohm each) between LINE and NEUTRAL: the two equal resistors share the line-to-neutral peak, so R101 sees half of it, 0.5 x 357.8 = 178.9 V. The model states the half against LINE; R102, between this midpoint and NEUTRAL, is a second host the record cannot name, so it still counts the full swing
   - name: mains_discharge_a
     rail: /Mains entry and load feed/DISCH_A
-    highest_voltage_v: 357.8
-  # the midpoint of the discharge pair R103 and R104 (1 Mohm each) between LINE and NEUTRAL: half the line-to-neutral peak in the circuit, but a Mains-class rail states the peak; switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
+    highest_voltage_v: 178.9
+    rides_on: mains_line
+    fraction: 0.5
+  # the midpoint of the discharge pair R103 and R104 (1 Mohm each) between LINE and NEUTRAL: as the pair R101 and R102, 0.5 x 357.8 = 178.9 V against LINE
   - name: mains_discharge_b
     rail: /Mains entry and load feed/DISCH_B
-    highest_voltage_v: 357.8
-  # the coffee triac's gate network between R705 and R704: the gate returns to MT2 and carries only the optocoupler's gate current, but the net is Mains class and states the peak; switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
+    highest_voltage_v: 178.9
+    rides_on: mains_line
+    fraction: 0.5
+  # the coffee triac's gate network between R705 and R704: MT2 - R704 (200 ohm) - this node - R705 (200 ohm) - the opto-triac, which conducts to the gate at about 1.5 V, so the two equal resistors share the MT2 peak, 0.5 x 357.8 = 178.9 V each at the instant the opto-triac fires
   - name: mains_pump_c_gate
     rail: /Pump drives/PUMP_C_GATE_R
-    highest_voltage_v: 357.8
-  # the steam triac's gate network between R715 and R714: the gate returns to MT2 and carries only the optocoupler's gate current, but the net is Mains class and states the peak; switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
+    highest_voltage_v: 178.9
+    rides_on: mains_line
+    fraction: 0.5
+  # the steam triac's gate network between R715 and R714: as the coffee triac's, R714 and R715 (200 ohm each) share the MT2 peak, 0.5 x 357.8 = 178.9 V each
   - name: mains_pump_s_gate
     rail: /Pump drives/PUMP_S_GATE_R
-    highest_voltage_v: 357.8
+    highest_voltage_v: 178.9
+    rides_on: mains_line
+    fraction: 0.5
   # the coffee triac's snubber midpoint between R706 and the X2 capacitor C701 to NEUTRAL; switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
   - name: mains_pump_c_snubber
     rail: /Pump drives/PUMP_C_SNUB
@@ -112,22 +128,30 @@ domains:
   - name: mains_pump_s_snubber
     rail: /Pump drives/PUMP_S_SNUB
     highest_voltage_v: 357.8
-  # the first node of the 3 x 300 kohm line divider R601 to R603: two thirds of the line-to-neutral peak in the circuit (238.5 V), but a Mains-class rail states the peak; switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
+  # the first node of the 3 x 300 kohm line divider R601 to R603 over the 750 ohm R604 (900750 ohm in all): 600750/900750 of the line-to-neutral peak, 357.8 x 0.666944213156 = 238.632639467 V
   - name: mains_divider_n1
     rail: /Supply voltage and current measurement/VMEAS_N1
-    highest_voltage_v: 357.8
-  # the second node of the 3 x 300 kohm line divider: one third of the line-to-neutral peak in the circuit (119.4 V), but a Mains-class rail states the peak; switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
+    highest_voltage_v: 238.632639467
+    rides_on: mains_line
+    fraction: 0.666944213156
+  # the second node of the line divider: 300750/900750 of the line-to-neutral peak, 357.8 x 0.333888426311 = 119.465278934 V
   - name: mains_divider_n2
     rail: /Supply voltage and current measurement/VMEAS_N2
-    highest_voltage_v: 357.8
-  # the tap of the line divider, 750 ohm (R604) above NEUTRAL, 0.30 V peak in the circuit (357.8 x 750 / 900750), but a Mains-class rail states the peak; switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
+    highest_voltage_v: 119.465278934
+    rides_on: mains_line
+    fraction: 0.333888426311
+  # the tap of the line divider, 750 ohm (R604) above NEUTRAL: 750/900750 of the line-to-neutral peak, 357.8 x 0.000832639467 = 0.297918401 V
   - name: mains_divider_tap
     rail: /Supply voltage and current measurement/VMEAS_DIV
-    highest_voltage_v: 357.8
-  # the midpoint of the two 60.4 kohm feed resistors R630 and R631 from LINE to the detector LED; switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
+    highest_voltage_v: 0.297918401
+    rides_on: mains_line
+    fraction: 0.000832639467
+  # the midpoint of the two 60.4 kohm feed resistors R630 and R631 from LINE to the detector LED: the equal resistors share the line-to-neutral peak less the LED's forward drop, taken as none, so 0.5 x 357.8 = 178.9 V (the LED drop is about 1.2 V)
   - name: mains_zero_cross
     rail: /Zero-crossing detector/ZC_N1
-    highest_voltage_v: 357.8
+    highest_voltage_v: 178.9
+    rides_on: mains_line
+    fraction: 0.5
   # the gauge harness supply, +5V through the link JP791 (sheet 730: pin 1 of SP2 is +5V_GAUGE through JP791); the +5V figure
   - name: gauge_supply
     rail: /+5V_GAUGE
@@ -1105,27 +1129,27 @@ parts:
         absolute_max_v: 1700
         absolute_min_v: -1700
         tolerates_driven_unpowered: false
-      # AIN1N. 6.1: HGND - 1.6 V to HGND + 2.7 V; recommended HGND - 1.3 V to HGND + 2.7 V at gain 1, 2 or 4, HGND + 0.9 V at higher gain (6.3). Against board ground at the neutral peak: 357.8 + 2.7 = 360.5 V highest and -357.8 - 1.6 = -359.4 V lowest. No input tolerance with the supply absent is stated.
+      # AIN1N. 6.1: HGND - 1.6 V to HGND + 2.7 V; recommended HGND - 1.3 V to HGND + 2.7 V at gain 1, 2 or 4, HGND + 0.9 V at higher gain (6.3). Against board ground at the neutral peak: 357.8 + 2.7 = 360.5 V highest and -357.8 - 1.6 = -359.4 V lowest. No input tolerance with the supply absent is stated. The negative inputs AIN1N and AIN0N sit at HGND (through R608 to the shunt's neutral side and R606 to NEUTRAL), so they take the mains_neutral domain; the positive inputs AIN1P and AIN0P take amc_inputs, up to 2.7 V above HGND.
       - pin: "7"
-        domain: amc_inputs
+        domain: mains_neutral
         absolute_max_v: 360.5
         absolute_min_v: -359.4
         tolerates_driven_unpowered: false
-      # AIN1P. As pin 7.
+      # AIN1P. As pin 7 in range, in the amc_inputs domain.
       - pin: "8"
         domain: amc_inputs
         absolute_max_v: 360.5
         absolute_min_v: -359.4
         tolerates_driven_unpowered: false
-      # AIN0P. As pin 7.
+      # AIN0P. As pin 7 in range, in the amc_inputs domain.
       - pin: "9"
         domain: amc_inputs
         absolute_max_v: 360.5
         absolute_min_v: -359.4
         tolerates_driven_unpowered: false
-      # AIN0N. As pin 7.
+      # AIN0N. As pin 7 in range and domain.
       - pin: "10"
-        domain: amc_inputs
+        domain: mains_neutral
         absolute_max_v: 360.5
         absolute_min_v: -359.4
         tolerates_driven_unpowered: false
