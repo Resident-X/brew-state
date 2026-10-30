@@ -1,0 +1,12 @@
+id: SOL-NIGHTLY-VERIFY-JOB-BUDGET-FITS-THE-BOARD-CHECK-RUN-LIMIT.C3
+type: criterion
+title: A test reads both figures and fails when either is changed without the other
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A test reads the gates job's timeout-minutes from the workflow file and the one-run limit from the board check, without KiCad, and fails both when the limit is raised without the budget and when the budget is lowered below the floor. Timing a real KiCad run is out of scope.
+links:
+  - target: SOL-NIGHTLY-VERIFY-JOB-BUDGET-FITS-THE-BOARD-CHECK-RUN-LIMIT
+    type: criterion-of
