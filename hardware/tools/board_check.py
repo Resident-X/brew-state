@@ -5906,6 +5906,82 @@ def pad_symmetries(pads: List["board_geometry.Pad"], firsts: List["board_geometr
     return found
 
 
+def plated_holes(footprint: list) -> list:
+    """Each plated pad's hole as (position, drill sizes smallest first, long axis or None): the pad's own `at` point placed on
+    the board with no drill offset, the drill's diameters, and for an oval drill the unit vector of its long axis as the pad lies."""
+    name = board_geometry.reference(footprint)
+    what = f"a pad of the footprint {name or '?'}"
+    at = board_geometry.placement(footprint, what)
+    holes = []
+    for node in sexpr.children(footprint, "pad"):
+        if len(node) > 2 and str(node[2]) == "np_thru_hole":
+            continue
+        own = sexpr.child(node, "at")
+        point = board_geometry.placed(board_geometry.xy(own, what), at)
+        angle = board_geometry.number(own, 3, what) if len(own) > 3 else 0.0
+        drill = sexpr.child(node, "drill")
+        sizes = [float(value) for value in (drill or [])[1:] if not isinstance(value, list) and str(value) != "oval"]
+        axis = None
+        if drill is not None and len(drill) > 1 and str(drill[1]) == "oval" and len(sizes) > 1 and abs(sizes[0] - sizes[1]) > PAD_MATCH:
+            axis = board_geometry.turned((1.0, 0.0) if sizes[0] > sizes[1] else (0.0, 1.0), angle)
+        holes.append((point, tuple(sorted(sizes[:2])), axis))
+    return holes
+
+
+def hole_turns(holes: list) -> list:
+    """The turns other than the identity about the centre of `holes` that map them onto themselves in position and drill,
+    each as a function of a board point. A hole is its position, its drill's sizes and, for an oval drill, the direction of
+    its long axis; the pad's copper is not compared, and reflections do not count since a placed part cannot be mirrored."""
+    cx = sum(hole[0][0] for hole in holes) / len(holes)
+    cy = sum(hole[0][1] for hole in holes) / len(holes)
+    anchor = max(holes, key=lambda hole: math.dist(hole[0], (cx, cy)))
+    reach = math.dist(anchor[0], (cx, cy))
+    if reach < PAD_MATCH:
+        return []
+    start = math.atan2(anchor[0][1] - cy, anchor[0][0] - cx)
+
+    def make(angle: float):
+        cos, sin = math.cos(angle), math.sin(angle)
+        return lambda p: (cx + (p[0] - cx) * cos - (p[1] - cy) * sin, cy + (p[0] - cx) * sin + (p[1] - cy) * cos)
+
+    def same(image, hole, other) -> bool:
+        if math.dist(image(hole[0]), other[0]) > PAD_MATCH or any(abs(a - b) > PAD_MATCH for a, b in zip(hole[1], other[1])):
+            return False
+        if (hole[2] is None) != (other[2] is None):
+            return False
+        if hole[2] is None:
+            return True
+        turned_axis = tuple(a - b for a, b in zip(image((hole[0][0] + hole[2][0], hole[0][1] + hole[2][1])), image(hole[0])))
+        return abs(turned_axis[0] * other[2][1] - turned_axis[1] * other[2][0]) <= PAD_MATCH
+
+    found = []
+    for target in holes:
+        if abs(math.dist(target[0], (cx, cy)) - reach) > PAD_MATCH:
+            continue
+        image = make(math.atan2(target[0][1] - cy, target[0][0] - cx) - start)
+        if all(any(same(image, hole, other) for other in holes) for hole in holes) \
+                and any(math.dist(image(hole[0]), hole[0]) > PAD_MATCH for hole in holes):
+            found.append(image)
+    return found
+
+
+def no_first_pin_reason(footprint: list, pads: List["board_geometry.Pad"]) -> str:
+    """Why a polarised part with no pad numbered 1 is not excused from having a first pin, or '' when its holes key it:
+    every plated pad is through-hole, one is named, the holes lie at two or more positions and no turn but the identity
+    maps them onto themselves in position and drill."""
+    plated = [node for node in sexpr.children(footprint, "pad") if not (len(node) > 2 and str(node[2]) == "np_thru_hole")]
+    if any(len(node) < 3 or str(node[2]) != "thru_hole" for node in plated):
+        return "its pads are surface-mount"
+    if not any(pad.number for pad in pads):
+        return "none of its pads is named"
+    holes = plated_holes(footprint)
+    if not any(math.dist(one[0], other[0]) > PAD_MATCH for one in holes for other in holes):
+        return "its holes fix no orientation"
+    if hole_turns(holes):
+        return "its holes map onto themselves when turned"
+    return ""
+
+
 def image_box(image, pad: "board_geometry.Pad") -> Tuple[float, float, float, float]:
     """The box about a pad's outline once `image` has carried it: (left, top, right, bottom)."""
     corners = [image(point) for point in pad.outline()]
@@ -5919,7 +5995,12 @@ def unmarked_pins(design: Design, tree: list, parts: Dict[str, Tuple[str, List[s
     footprint on its side's silkscreen stands nearer its copper than every other
     pad's by more than MARK_MARGIN, and the footprint's silkscreen is not
     unchanged by any symmetry of its pads that moves that pad. A polarised
-    part with no pad numbered 1 has no first pin to mark.
+    part with no pad numbered 1 has no first pin to mark, and fails with the
+    reason, unless every plated pad is through-hole, one pad is named, its
+    holes lie at two or more positions and no turn but the identity maps them
+    onto themselves in position and drill, in which case its holes fix its
+    orientation and it needs no mark. The size and shape of the copper are not
+    compared.
     """
     table = board_geometry.net_table(tree)
     found = []
@@ -5936,11 +6017,14 @@ def unmarked_pins(design: Design, tree: list, parts: Dict[str, Tuple[str, List[s
         silk = SILKSCREEN.get(side, "F.SilkS")
         firsts = [pad for pad in pads if pad.number == "1"]
         if not firsts:
+            reason = no_first_pin_reason(footprint, pads)
+            if not reason:
+                continue
             at = board_geometry.placement(footprint, f"the footprint {name}")
             found.append(Violation(
                 design.project, "polarity_mark", f"{name} at ({coordinate(at[0])}, {coordinate(at[1])}) mm",
                 f"a polarised part marks its first pin on the silkscreen: {name} has no pad numbered 1, so it has no first pin "
-                "to mark; number its first pad 1 and mark it"))
+                f"to mark, and its holes do not excuse that: {reason}; number its first pad 1 and mark it"))
             continue
         first = firsts[0]
         others = [pad for pad in pads if pad.number != "1"]

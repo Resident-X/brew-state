@@ -155,6 +155,8 @@ class TheFiducialAndPolarityMarkRules(Proved):
                                                                         ("R2 is not marked at pad 1", "draws nothing on F.SilkS")),
         "a plated through-hole polarised part with no mark": ("polarity_mark", "R2 pad 1 at (45, 10) mm",
                                                               ("R2 is not marked at pad 1", "draws nothing on F.SilkS")),
+        "a plated through-hole polarised part with no pad numbered 1 and holes a turn maps onto themselves": (
+            "polarity_mark", "R2 at (45, 10) mm", ("R2 has no pad numbered 1", "its holes map onto themselves when turned")),
         "a polarity mark on the wrong side of the part": ("polarity_mark", "R2 pad 1 at (45, 10) mm",
                                                          ("R2 is not marked at pad 1", "no graphic on F.SilkS nearer pad 1")),
         "a symmetric outline on a symmetric pad pattern": ("polarity_mark", "R2 pad 1 at (45, 10) mm",
@@ -174,6 +176,16 @@ class TheFiducialAndPolarityMarkRules(Proved):
                     self.assertIn(word, fields[4])
                 self.assertEqual([entry[2] for entry in board_prove.FAULTS if entry[0] == fault], [rule])
 
+
+    HOLES_FAULT = "a plated through-hole polarised part with no pad numbered 1 and holes a turn maps onto themselves"
+
+    def test_the_seeded_part_with_no_pad_numbered_one_and_self_mapping_holes_is_caught_with_its_reason(self):
+        # SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C9: The seeded-fault harness holds a row on the throwaway proof design that renames a polarised through-hole part's pads from numbers to names so that no pad is numbered 1, on a part whose holes a turn maps onto themselves, and the check reports polarity_mark
+        self.assertCaught(self.HOLES_FAULT)
+        fields = outcomes()[self.HOLES_FAULT][1].split(" | ")
+        self.assertEqual((fields[2], fields[3]), ("polarity_mark", "R2 at (45, 10) mm"))
+        self.assertIn("its holes map onto themselves when turned", fields[4])
+        self.assertEqual([entry[2] for entry in board_prove.FAULTS if entry[0] == self.HOLES_FAULT], ["polarity_mark"])
 
 
 class AnUnparseableSchematicFailsTheDesignWhichSwitchesOffPolarisationBySymbol(Copy):

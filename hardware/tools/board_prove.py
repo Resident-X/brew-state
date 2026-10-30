@@ -1024,6 +1024,19 @@ def through_hole_unmarked(seed: Seed) -> None:
     polarised_symbol_r2(seed)
 
 
+def through_hole_pads_renamed(seed: Seed) -> None:
+    """R2 left a plated through-hole part with its drills as the design has them and its pads renamed A and B, so no pad is
+    numbered 1 and a half turn maps its two equal holes onto themselves, with its schematic symbol a polarised capacitor's:
+    the only thing that makes R2 polarised."""
+    Q = sexpr.Quoted
+
+    def edit(tree: list) -> None:
+        for index, node in enumerate(sexpr.children(footprint(tree, "R2"), "pad")):
+            node[1] = Q("AB"[index])
+    seed.layout(edit)
+    polarised_symbol_r2(seed)
+
+
 def polarised_symbol_r2(seed: Seed) -> None:
     """R2's schematic symbol made a polarised capacitor's, a copy of the resistor symbol named C_Polarized: the only thing
     that makes R2 polarised."""
@@ -1596,6 +1609,10 @@ FAULTS: List[tuple] = [
      "R2 is not marked at pad 1, it draws nothing on F.SilkS", capacitor_unmarked),
     ("a plated through-hole polarised part with no mark", "assembly: a plated through-hole part is judged by the mark rule as a surface-mount part is", "polarity_mark",
      "R2 is not marked at pad 1, it draws nothing on F.SilkS", through_hole_unmarked),
+    ("a plated through-hole polarised part with no pad numbered 1 and holes a turn maps onto themselves",
+     "assembly: a part with no pad numbered 1 needs no first pin only where its holes fix its orientation", "polarity_mark",
+     "R2 has no pad numbered 1, so it has no first pin to mark, and its holes do not excuse that: its holes map onto themselves when turned",
+     through_hole_pads_renamed),
     ("a polarity mark on the wrong side of the part", "assembly: the mark is on the silkscreen of the part's own side", "polarity_mark",
      "R2 is not marked at pad 1, it has no graphic on F.SilkS nearer pad 1", mark_on_back),
     ("a symmetric outline on a symmetric pad pattern", "assembly: a drawing the pads' symmetry leaves unchanged marks nothing", "polarity_mark",
