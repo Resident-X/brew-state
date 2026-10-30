@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C3
+type: criterion
+title: A plated-hole shortfall outside the entry, or below its accepted distance, fails naming the pair
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a synthetic design, a hole_to_hole shortfall fails, naming the two pads, when it lies between pads of the same connector at a centre spacing other than the entry's pitch_mm, between pads of two different parts, for a connector with no entry, or at a measured distance below the entry's accepted_mm, the last also naming the entry. An entry for one connector does not excuse a shortfall of another. The judgement of the entry's own validity is the next criterion's and out of scope here.
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS
+    type: criterion-of

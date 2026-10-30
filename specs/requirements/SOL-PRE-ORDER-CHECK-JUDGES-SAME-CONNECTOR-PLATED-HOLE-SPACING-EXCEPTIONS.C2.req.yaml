@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C2
+type: criterion
+title: A plated-hole shortfall between pads of the entry's connector at its pitch, at or above the accepted distance, is reported and does not fail
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a synthetic design whose connector has two pads pitch_mm apart that the plated-hole spacing rule reports as a hole_to_hole shortfall, with an entry for that connector whose accepted_mm is no greater than the measured edge-to-edge distance, the check reports no hole_to_hole violation for that pair and prints one accepted-exception line giving the connector, the pitch, the measured and accepted distances and the reason. Both the rule's report and the check's text report are read; no other output form exists. Shortfalls outside the entry are the next criterion's and out of scope here.
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS
+    type: criterion-of

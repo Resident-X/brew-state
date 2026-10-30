@@ -1,7 +1,7 @@
 id: SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-JUDGED.C1
 type: criterion
 title: Each of K201, K731, K741 and U602 has its maker's creepage and clearance read and recorded against the basis figures
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: inspection
@@ -10,3 +10,5 @@ text: |-
 links:
   - target: SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-JUDGED
     type: criterion-of
+attributes:
+  deprecation_reason: 'Moved to SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-READ.C1: the reading is its own leaf; this leaf judges.'

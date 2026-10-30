@@ -1,7 +1,7 @@
 id: SOL-TEST-POINT-FOOTPRINT-COURTYARD-FITS-THE-PITCH.C2
 type: criterion
 title: Two test points 2.5 mm apart centre to centre pass the courtyard-distance rule on this footprint
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: test

@@ -2,7 +2,7 @@ id: SOL-TEST-POINT-FOOTPRINT-COURTYARD-FITS-THE-PITCH
 type: deliverable
 category: solution
 title: The test-point footprint's courtyard is narrow enough that test points at the method's pitch pass the courtyard-distance rule
-status: active
+status: deprecated
 version: 1
 text: |
   Gives the test-point footprint a courtyard 1.5 mm across, centred on its pad, so that test points set 2.5 mm apart pass the courtyard-distance rule of the layout practice (TEST-5) while the rule keeps measuring a test point against every other footprint, as the method states. The method sets test points at least 2.5 mm apart centre to centre and requires a test pad to stand at least 1.0 mm from the courtyard of any other part. The pad is 1.0 mm across, so at the 2.5 mm pitch a neighbour's courtyard edge, 2.5 − 0.75 = 1.75 mm from the pad's centre, leaves 1.75 − 0.5 = 1.25 mm to the pad's copper against the 1.0 mm required. A courtyard wider than 2.0 mm across would leave less than 1.0 mm and fail the rule at that pitch.
@@ -22,3 +22,5 @@ links:
     type: justified-by
   - target: SOL-PRE-ORDER-CHECK-TEST-POINT-COURTYARD-DISTANCE
     type: depends-on
+attributes:
+  deprecation_reason: 'Premise wrong: no tracked footprint has the defect. The main board''s 96 test points use the stock TestPoint:TestPoint_Pad_D1.5mm and fail the test-point courtyard rule at 2.5 mm pitch; the fix is a board-design hygiene step (swap to a small test-point footprint in the board''s own library), covered by SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT and its pre-order check, not by a library-footprint solution.'

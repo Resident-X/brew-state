@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C6
+type: criterion
+title: The record holds a drafted entry for each of the five headers and the check passes their holes
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The committed record holds one same_connector_pins entry for each of J630, J635, J791, J821 and J861 with pitch_mm 2.0, accepted_mm read from the main-board layout and no greater than the measured distance, the reason that the header carries slow signals only and no fast signal crosses its strip, a bounding element, and accepted_by and accepted_on empty. Read through the check's own reader, each entry is accepted as a form; run on the main-board layout, the plated-hole rule reports no hole_to_hole violation outside those entries. The owner's acceptance is out of scope here.
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS
+    type: criterion-of

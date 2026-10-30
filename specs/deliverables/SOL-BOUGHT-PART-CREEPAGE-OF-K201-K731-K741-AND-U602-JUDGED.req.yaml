@@ -1,18 +1,19 @@
 id: SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-JUDGED
 type: deliverable
 category: solution
-title: The creepage and clearance of the interlock relay, the valve relays and the voltage-reading optocoupler are read from their makers and met or signed as exceptions
+title: 'The creepage and clearance of the interlock relay, the valve relays and the voltage-reading optocoupler are judged against the signed figures: met on a published figure, excepted, or the part changed'
 status: active
-version: 1
+version: 2
 text: |
-  Judges the creepage and clearance of the bought parts whose makers' figures the owner's acceptance of bought-part creepage leaves open: the interlock relay K201, the valve relays K731 and K741, and the optocoupler U602. The acceptance records them as over 8 mm (the relays) and unknown until read from the makers (U602 and the K201 clearance), against the basis's 10.0 mm creepage and 3.0 mm clearance for mains to low voltage. With the exception mechanism in the check, a shortfall of these parts fails unless the figure is met or the owner signs an exception, so each part needs its maker's figure read before the record is signed.
+  Judges the creepage and clearance of the bought parts whose makers' figures the owner's acceptance of bought-part creepage leaves open: the interlock relay K201, the valve relays K731 and K741, and the optocoupler U602. The acceptance records them as over 8 mm (the relays) and unknown until read from the makers (U602 and the K201 clearance), against the basis's 10.0 mm creepage and 3.0 mm clearance for mains to low voltage. The reading is the reading leaf's. With the exception mechanism in the check, a shortfall of these parts fails unless the figure is met or the owner has accepted an exception, so each part is judged on the figures the reading found.
 
   Settled for the build:
-  - Each part's creepage and clearance between its mains-side and low-voltage-side pins, and for each relay between coil and contacts, is read from the maker's current document and recorded with that source and the arithmetic against the basis figure. A figure that cannot be sourced counts as absent, not adequate.
-  - A part meeting the basis figure needs nothing more. A part that does not has an owner's accepted exception, in the form the separation-basis decision sets, naming the pair of pads it excuses; the drafter proposes the entry and the owner signs the record.
-  - The parts are the four named, at the layout the main board's design task produces. Other bought parts are out of scope; U601, U701 and U711 are in their own leaf.
+  - A part meets the signed figure only on a figure its maker publishes, with the arithmetic against the basis figure recorded. A figure the maker does not publish counts as absent, not adequate, and the part is not accepted on it; the absent figure is put to the owner with the part, the pair and the choices, and the owner decides which: an exception stating the ground, a different part, or a published figure found.
+  - A part that does not meet the figure carries an accepted_exceptions entry in the form the separation-basis decision sets, naming the one pair of pads it excuses, with the ground stated and the element that bounds the fault, accepted_mm no greater than the published figure. The entry is drafted here with its acceptance fields left empty; the owner's acceptance of the record, which waits on this leaf, signs it.
+  - A part the owner decides to change is changed in the schematic and judged again on its own published figures.
+  - The parts are the four named, at the layout the main board's design task produces. Other bought parts are out of scope; U601, U701 and U711 are in the record leaf.
 rationale: |
-  Restores the behaviour REQ-ELECTRICAL-INSTALL-001.C9 asks of the barrier parts the build buys: each part's isolation rating is read from its maker's document and recorded with the source. The owner's acceptance of bought-part creepage leaves these four unread, and with the check failing an unlisted shortfall they would block the board; reading them is the correction.
+  Restores the behaviour REQ-ELECTRICAL-INSTALL-001.C9 and .C16 ask of the barrier parts the build buys: each part's isolation rating meets the declared insulation on a published figure, or the shortfall is the owner's signed exception for that pair. The owner's acceptance of bought-part creepage leaves these four unjudged, and with the check failing an unlisted shortfall they would block the board. The reading is split out to its own leaf because the makers' documents can be read at once, while the judgement waits on the signed record and on figures a maker may not publish, which the owner must decide.
 links:
   - target: DEL-MAINTENANCE.C1
     type: derives-from
@@ -27,4 +28,6 @@ links:
   - target: SOL-PRE-ORDER-CHECK-JUDGES-SIGNED-SPACING-EXCEPTIONS
     type: depends-on
   - target: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS
+    type: depends-on
+  - target: SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-READ
     type: depends-on

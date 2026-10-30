@@ -1,7 +1,7 @@
 id: SOL-TEST-POINT-FOOTPRINT-COURTYARD-FITS-THE-PITCH.C1
 type: criterion
 title: The test-point footprint draws a courtyard 1.5 mm across centred on its pad
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: test

@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C1
+type: criterion
+title: A record whose same_connector_pins entry is malformed fails separation_basis naming the entry and the key
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  An entry with pair same_connector_pins that lacks connector, pitch_mm, accepted_mm, reason, bounded_by, accepted_by or accepted_on, that holds a between or any other key the decision does not name, that repeats a key, that has a constraint other than hole_to_hole, that has a connector which is not a reference designator, or that has a pitch_mm or accepted_mm which is not a positive number, fails separation_basis naming the entry's position and the key. Two entries naming the same connector fail likewise. A record with no such entry passes this check. The judgement of shortfalls is out of scope here and is the next criterion's.
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS
+    type: criterion-of
