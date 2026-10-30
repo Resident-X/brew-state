@@ -28,6 +28,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import time
 import types
 import unittest
 from unittest import mock
@@ -1790,6 +1791,53 @@ import os, sys
 open(sys.argv[sys.argv.index("-o") + 1], "w").write(os.environ.get("KICAD_CONFIG_HOME", "unset"))
 """, sys.executable)
         self.assertEqual(board_check.run_kicad([tool, "pcb", "drc"], self.root, "out.txt"), ("/isolated", ""))
+
+    def shorten(self, seconds: int) -> None:
+        was, board_check.KICAD_TIMEOUT_S = board_check.KICAD_TIMEOUT_S, seconds
+        self.addCleanup(setattr, board_check, "KICAD_TIMEOUT_S", was)
+
+    def test_the_limit_on_one_kicad_run_is_7200_seconds(self):
+        # SOL-PRE-ORDER-CHECK-KICAD-RUN-LIMIT-FITS-A-POURED-BOARD.C1: The constant KICAD_TIMEOUT_S in hardware/tools/board_check.py equals 7200
+        self.assertEqual(board_check.KICAD_TIMEOUT_S, 7200)
+
+    def test_a_kicad_run_that_outlives_the_limit_is_reported_naming_the_limit_in_force(self):
+        # SOL-PRE-ORDER-CHECK-KICAD-RUN-LIMIT-FITS-A-POURED-BOARD.C2: With a KiCad run replaced by one that outlives a shortened limit, the check ... names the limit in force, and neither waits unbounded
+        tool = fake_tool(os.path.join(self.root, "kicad-cli"), "import time\ntime.sleep(30)", sys.executable)
+        for seconds in (1, 2):
+            with self.subTest(seconds=seconds):
+                self.shorten(seconds)
+                why = f"KiCad did not finish within {seconds} s"
+                started = time.monotonic()
+                self.assertEqual(board_check.run_kicad([tool, "pcb", "drc"], self.root, "out.txt"), (None, why))
+                self.assertEqual(board_check.run_report([tool, "pcb", "drc"], self.root), (None, why))
+                self.assertLess(time.monotonic() - started, 25)
+
+    def test_a_design_whose_kicad_runs_outlive_the_limit_fails_naming_the_limit(self):
+        # SOL-PRE-ORDER-CHECK-KICAD-RUN-LIMIT-FITS-A-POURED-BOARD.C2: the check fails the design with the message "KiCad did not finish within <limit> s" naming the limit in force
+        tool = fake_tool(os.path.join(self.root, "kicad-cli"), "import time\ntime.sleep(30)", sys.executable)
+        for path, text in (("a/a.kicad_pro", none_project()), ("a/a.kicad_sch", schematic()),
+                           ("a/a.kicad_pcb", "(kicad_pcb)"), ("a/a.kicad_dru", "(version 1)\n" + WORKMANSHIP)):
+            self.write(path, text)
+        repository = board_check.Repository(self.root, ["a/a.kicad_pro", "a/a.kicad_sch", "a/a.kicad_pcb", "a/a.kicad_dru"])
+        design = board_check.Design("a/a.kicad_pro")
+        for seconds in (1, 2):
+            with self.subTest(seconds=seconds):
+                self.shorten(seconds)
+                found = board_check.check_design(design, repository, tool, board_check.require_yaml(), TODAY, [])
+                unreadable = [v for v in found if v.rule == "design_unreadable"]
+                self.assertEqual([v.message for v in unreadable],
+                                 [f"the schematic cannot be checked: KiCad did not finish within {seconds} s",
+                                  f"the layout cannot be checked: KiCad did not finish within {seconds} s"])
+
+    def test_the_hardware_notes_state_the_limit_and_the_measurement_it_rests_on(self):
+        # SOL-PRE-ORDER-CHECK-KICAD-RUN-LIMIT-FITS-A-POURED-BOARD.C3: hardware/README.md states the 7200 s limit, the date 2026-10-31, the main board with its pours as the board measured, about 10 minutes for KiCad's creepage test and 20 to 30 minutes for the full design check, and that the figure is the margin over them
+        with open(os.path.join(REPO, "hardware", "README.md"), encoding="utf-8") as handle:
+            readme = handle.read()
+        paragraph = next(block for block in readme.split("\n\n") if "KICAD_TIMEOUT_S" in block)
+        for words in ("7200 s", "2026-10-31", "main board", "ground and neutral pours", "about 10 minutes",
+                      "creepage test", "20 to 30 minutes", "full design check", "four times", "margin"):
+            self.assertIn(words, paragraph)
+        self.assertNotIn("900 s", readme)
 
     def test_a_library_kicads_configuration_does_not_include_is_named_as_the_designs(self):
         design = board_check.Design("d/d.kicad_pro")

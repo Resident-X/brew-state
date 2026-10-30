@@ -6,6 +6,7 @@ One of the files the original test file is divided into by topic; the tests are 
 
 from __future__ import annotations
 
+import ast
 import contextlib
 import io
 import json
@@ -16,6 +17,7 @@ import struct
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 
 TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -511,6 +513,91 @@ class ExportStatus(unittest.TestCase):
         finally:
             board_check.KICAD_TIMEOUT_S = was
         self.assertEqual(str(raised.exception), "KiCad did not load the models of the board within 1 s")
+
+
+TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+class OneLimitOnAKiCadRun(unittest.TestCase):
+    """SOL-PRE-ORDER-CHECK-KICAD-RUN-LIMIT-FITS-A-POURED-BOARD.C1: The constant KICAD_TIMEOUT_S in hardware/tools/board_check.py equals 7200, and a test reads it and shows that hardware/tools/board_views.py applies that same constant to its KiCad runs and defines no limit of its own."""
+
+    def sources(self):
+        for name in ("board_views.py", "locked_copper.py"):
+            with open(os.path.join(TOOLS, name), encoding="utf-8") as handle:
+                yield name, ast.parse(handle.read())
+
+    def sleeper(self, name: str):
+        folder = tempfile.TemporaryDirectory(prefix="board-views-limit-")
+        self.addCleanup(folder.cleanup)
+        return tool(folder.name, name, "exec sleep 30"), folder.name
+
+    def shorten(self, seconds: int) -> None:
+        was, board_check.KICAD_TIMEOUT_S = board_check.KICAD_TIMEOUT_S, seconds
+        self.addCleanup(setattr, board_check, "KICAD_TIMEOUT_S", was)
+
+    def test_the_limit_is_7200_seconds(self):
+        # SOL-PRE-ORDER-CHECK-KICAD-RUN-LIMIT-FITS-A-POURED-BOARD.C1: The constant KICAD_TIMEOUT_S in hardware/tools/board_check.py equals 7200
+        self.assertEqual(board_check.KICAD_TIMEOUT_S, 7200)
+
+    def test_the_views_tool_defines_no_limit_of_its_own_and_passes_the_constant_to_every_run(self):
+        # SOL-PRE-ORDER-CHECK-KICAD-RUN-LIMIT-FITS-A-POURED-BOARD.C1: board_views.py applies that same constant to its KiCad runs and defines no limit of its own
+        probes = []
+        passed = 0
+        for name, tree in self.sources():
+            for node in ast.walk(tree):
+                if isinstance(node, (ast.Assign, ast.AnnAssign)):
+                    targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+                    for target in targets:
+                        label = target.id if isinstance(target, ast.Name) else getattr(target, "attr", "")
+                        self.assertNotIn("TIMEOUT", label.upper(), f"{name} defines a limit of its own, {label}")
+                if not isinstance(node, ast.Call):
+                    continue
+                for keyword in node.keywords:
+                    if keyword.arg != "timeout":
+                        continue
+                    if isinstance(keyword.value, ast.Constant):
+                        probes.append((name, keyword.value.value))
+                        continue
+                    self.assertEqual(ast.unparse(keyword.value), "board_check.KICAD_TIMEOUT_S", f"{name}:{node.lineno}")
+                    passed += 1
+        # The one figure that is not the limit is the short probe that asks resvg its version.
+        self.assertEqual(probes, [("board_views.py", 120)])
+        self.assertEqual(passed, 2, "the KiCad command and the rasteriser each take the limit from the constant")
+
+    def test_the_views_tool_reads_the_constant_when_it_runs_not_a_copy_taken_at_import(self):
+        # SOL-PRE-ORDER-CHECK-KICAD-RUN-LIMIT-FITS-A-POURED-BOARD.C1: board_views.py applies that same constant to its KiCad runs
+        for seconds in (1, 2):
+            with self.subTest(seconds=seconds):
+                self.shorten(seconds)
+                program, folder = self.sleeper(f"kicad-cli-{seconds}")
+                with self.assertRaises(board_views.Unreadable) as raised:
+                    board_views.kicad([program, "pcb", "drc"], folder, "check the board")
+                self.assertEqual(str(raised.exception), f"KiCad did not check the board within {seconds} s")
+                resvg, folder = self.sleeper(f"resvg-{seconds}")
+                with self.assertRaises(board_views.CannotRun) as raised:
+                    board_views.rasterise(resvg, os.path.join(folder, "a.svg"), os.path.join(folder, "a.png"))
+                self.assertIn(f"timed out after {seconds}", str(raised.exception))
+
+
+class AKiCadRunPastTheLimitFailsByName(unittest.TestCase):
+    """SOL-PRE-ORDER-CHECK-KICAD-RUN-LIMIT-FITS-A-POURED-BOARD.C2: With a KiCad run replaced by one that outlives a shortened limit, the check fails the design with the message "KiCad did not finish within <limit> s" naming the limit in force, and the views tool reports the same message, and neither waits unbounded."""
+
+    def test_the_views_tool_names_the_limit_in_force_and_does_not_wait_unbounded(self):
+        # SOL-PRE-ORDER-CHECK-KICAD-RUN-LIMIT-FITS-A-POURED-BOARD.C2: the views tool reports the message naming the limit in force, and does not wait unbounded
+        for seconds in (1, 3):
+            with self.subTest(seconds=seconds):
+                was, board_check.KICAD_TIMEOUT_S = board_check.KICAD_TIMEOUT_S, seconds
+                try:
+                    with tempfile.TemporaryDirectory(prefix="board-views-limit-") as folder:
+                        program = tool(folder, "kicad-cli", "exec sleep 30")
+                        started = time.monotonic()
+                        with self.assertRaises(board_views.Unreadable) as raised:
+                            board_views.kicad([program, "pcb", "export", "glb"], folder, "load the models of the board")
+                        elapsed = time.monotonic() - started
+                finally:
+                    board_check.KICAD_TIMEOUT_S = was
+                self.assertEqual(str(raised.exception), f"KiCad did not load the models of the board within {seconds} s")
+                self.assertLess(elapsed, 20)
 
 
 class ExportStatusThroughTheCommand(unittest.TestCase):

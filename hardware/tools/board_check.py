@@ -99,9 +99,11 @@ def probe_rule(nonce: str, netclass: str = "Mains") -> str:
 #: A value standing in for a signature rather than being one.
 PLACEHOLDERS = {"unsigned", "tbd", "todo", "none", "placeholder"}
 
-#: Generous, because a dense board's zone refill takes real time; a run that
-#: hangs past it fails the design rather than the check waiting forever.
-KICAD_TIMEOUT_S = 900
+#: The most one KiCad run may take. A board with ground and neutral pours and
+#: slots has checks that outlast 900 s, so this is about four times the slowest
+#: full design check measured on one (see the hardware notes); a run that hangs
+#: past it fails the design rather than the check waiting forever.
+KICAD_TIMEOUT_S = 7200
 
 #: The most failures of one kind KiCad's command-line layout check reports, as
 #: KiCad 10.0.7 is observed to do. Past it KiCad reports that many and drops the

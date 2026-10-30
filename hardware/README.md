@@ -10,6 +10,8 @@ A **board design** is a KiCad project file (`.kicad_pro`) together with the sche
 
 KiCad is run with a configuration the check makes for the run, not the one on the machine running it. That configuration names only the libraries KiCad installs with itself, and no `KICAD…` variable from the environment reaches KiCad. A symbol or footprint whose library only one machine's own KiCad setup names, in its global library tables or its path variables, is therefore reported by KiCad as a library its configuration does not include, and fails the design under `design_library`. Put such a library in the repository and name it in the design's own table.
 
+One KiCad run may take at most 7200 s. The limit is the constant `KICAD_TIMEOUT_S` in `hardware/tools/board_check.py`, and `hardware/tools/board_views.py` reads the same constant, so neither tool has a figure of its own. A run that outlives it fails the design as "KiCad did not finish within 7200 s", with the limit in force named, in the check and in the views command; the wait is finite, so a hung run still fails. The figure rests on a measurement made on 2026-10-31 on the main board with its ground and neutral pours and slots: KiCad's creepage test alone took about 10 minutes and the full design check 20 to 30 minutes. 7200 s is about four times the slowest of those, the margin that lets a slower machine or a denser board finish.
+
 ## What you need
 
 Every tool is free. The check stops with an error naming any tool that is missing or too old, rather than skipping the checks that need it.
