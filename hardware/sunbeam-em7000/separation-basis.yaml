@@ -259,6 +259,11 @@ table_rows:
 #       land distance: a DIP-6 W7.62 land pair is about 6.0 mm apart and the SOIC-20W land gap about 7.4 mm.
 #       The entries therefore work only if the layout lengthens the path (a slot between the pad rows), and
 #       the layout leaf's C8 confirms that it does.
+#   (a2) U602 (LTV-814S) states no creepage or clearance in its maker's sheet. Its four entries are the board's own
+#       pad gap (7.7 mm facing, 7.77 mm diagonal; 7.6 mm accepted), not a published figure, and say so; the owner
+#       decides whether to accept it, change the part or find a published figure. K201, K731 and K741 have no
+#       entry: their short figures are inside the part and the check measures only pad gaps (the division
+#       record, § The bought parts' creepage and clearance, judged).
 #   (b) Only the U601 pin 10 to pin 11 pair is excused. Other facing pairs of that package that are mains
 #       against low voltage are not, and the check flags them.
 #   (c) The held_at_reinforced net names (/LINE and /LINE1, and /Mains entry and load feed/LINE_IN and
@@ -412,6 +417,38 @@ accepted_exceptions:
     accepted_mm: 7.0
     reason: "The enclosure is sealed and inside the machine; the board has slots between pad rows where the spacing is ours; a conformal coat is planned; nothing mains-referenced is touchable beyond the items listed under each barrier (the owner's acceptance of 2026-10-29, bought-part creepage under the board's 10.0 mm figure). U711 MOC3052SVM gives an external creepage of at least 7 mm (onsemi MOC3052M/D Rev 4); the owner decided against the through-hole 0.4 inch spacing option for its assembly cost and hand soldering. Pins 1 (LED anode) and 6 (output) face each other across its barrier."
     bounded_by: "The part's tested isolation voltage (VISO 4170 Vrms) and the slot the layout cuts between its pad rows; proposed by the drafter for the owner to accept or correct."
+    accepted_by: ""
+    accepted_on: ""
+  - pair: mains_to_low_voltage
+    constraint: creepage
+    between: ["U602.1", "U602.4"]
+    accepted_mm: 7.6
+    reason: "The enclosure is sealed and inside the machine; the board has slots between pad rows where the spacing is ours; a conformal coat is planned; nothing mains-referenced is touchable beyond the items listed under each barrier (the owner's acceptance of 2026-10-29, bought-part creepage under the board's 10.0 mm figure). U602 LTV-814S: the maker publishes no creepage or clearance, only 5 000 Vrms isolation (Lite-On LTV-814 series, BNS-OD-C131/A4, read 2026-10-31). The 7.6 mm is the board's own pad gap of the footprint (facing, pad rows 9.0 mm apart less the 1.3 mm pad depth, 7.7 mm; pins 1 and 4 face each other across its barrier), not a published creepage, and the layout leaf's check confirms it. Unpublished: owner to decide: accept this distance, change the part, or find a published figure."
+    bounded_by: "The part's tested isolation voltage (5 000 Vrms for one minute, Lite-On LTV-814 series sheet p. 1) and the slot the layout may cut between its pad rows; proposed by the drafter for the owner to accept or correct."
+    accepted_by: ""
+    accepted_on: ""
+  - pair: mains_to_low_voltage
+    constraint: creepage
+    between: ["U602.2", "U602.3"]
+    accepted_mm: 7.6
+    reason: "The enclosure is sealed and inside the machine; the board has slots between pad rows where the spacing is ours; a conformal coat is planned; nothing mains-referenced is touchable beyond the items listed under each barrier (the owner's acceptance of 2026-10-29, bought-part creepage under the board's 10.0 mm figure). U602 LTV-814S: the maker publishes no creepage or clearance, only 5 000 Vrms isolation (Lite-On LTV-814 series, BNS-OD-C131/A4, read 2026-10-31). The 7.6 mm is the board's own pad gap of the footprint (facing, pad rows 9.0 mm apart less the 1.3 mm pad depth, 7.7 mm; pins 2 and 3 face each other across its barrier), not a published creepage, and the layout leaf's check confirms it. Unpublished: owner to decide: accept this distance, change the part, or find a published figure."
+    bounded_by: "The part's tested isolation voltage (5 000 Vrms for one minute, Lite-On LTV-814 series sheet p. 1) and the slot the layout may cut between its pad rows; proposed by the drafter for the owner to accept or correct."
+    accepted_by: ""
+    accepted_on: ""
+  - pair: mains_to_low_voltage
+    constraint: creepage
+    between: ["U602.1", "U602.3"]
+    accepted_mm: 7.6
+    reason: "The enclosure is sealed and inside the machine; the board has slots between pad rows where the spacing is ours; a conformal coat is planned; nothing mains-referenced is touchable beyond the items listed under each barrier (the owner's acceptance of 2026-10-29, bought-part creepage under the board's 10.0 mm figure). U602 LTV-814S: the maker publishes no creepage or clearance, only 5 000 Vrms isolation (Lite-On LTV-814 series, BNS-OD-C131/A4, read 2026-10-31). The 7.6 mm is the board's own pad gap of the footprint (diagonal, 7.77 mm; pins 1 and 3 face each other across its barrier), not a published creepage, and the layout leaf's check confirms it. Unpublished: owner to decide: accept this distance, change the part, or find a published figure."
+    bounded_by: "The part's tested isolation voltage (5 000 Vrms for one minute, Lite-On LTV-814 series sheet p. 1) and the slot the layout may cut between its pad rows; proposed by the drafter for the owner to accept or correct."
+    accepted_by: ""
+    accepted_on: ""
+  - pair: mains_to_low_voltage
+    constraint: creepage
+    between: ["U602.2", "U602.4"]
+    accepted_mm: 7.6
+    reason: "The enclosure is sealed and inside the machine; the board has slots between pad rows where the spacing is ours; a conformal coat is planned; nothing mains-referenced is touchable beyond the items listed under each barrier (the owner's acceptance of 2026-10-29, bought-part creepage under the board's 10.0 mm figure). U602 LTV-814S: the maker publishes no creepage or clearance, only 5 000 Vrms isolation (Lite-On LTV-814 series, BNS-OD-C131/A4, read 2026-10-31). The 7.6 mm is the board's own pad gap of the footprint (diagonal, 7.77 mm; pins 2 and 4 face each other across its barrier), not a published creepage, and the layout leaf's check confirms it. Unpublished: owner to decide: accept this distance, change the part, or find a published figure."
+    bounded_by: "The part's tested isolation voltage (5 000 Vrms for one minute, Lite-On LTV-814 series sheet p. 1) and the slot the layout may cut between its pad rows; proposed by the drafter for the owner to accept or correct."
     accepted_by: ""
     accepted_on: ""
   - pair: same_connector_pins

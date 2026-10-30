@@ -262,7 +262,7 @@ class MainsToMainsRecord(unittest.TestCase):
         # a part's other pairs have no entry, and a part the owner did not accept has none
         pairs = {frozenset(e["between"]) for e in data["accepted_exceptions"] if "between" in e}
         self.assertNotIn(frozenset(("T701.1", "T701.3")), pairs)
-        parts = {pad.split(".")[0] for e in data["accepted_exceptions"] for pad in e.get("between", [])}
+        parts = {pad.split(".")[0] for e in entries for pad in e["between"]}
         self.assertTrue(parts.isdisjoint({"K201", "K731", "K741", "U602", "F101", "RV101"}), parts)
         # the reader finds the entries well formed, and no problem but the unsigned record
         _, problems = reading()
@@ -282,8 +282,9 @@ class MainsToMainsRecord(unittest.TestCase):
         assert_draft(self, data)
         entries = [e for e in data["accepted_exceptions"] if e["pair"] == "mains_to_low_voltage"]
         self.assertEqual({(tuple(e["between"]), e["accepted_mm"]) for e in entries},
-                         {(("U601.10", "U601.11"), 8.0), (("U701.1", "U701.6"), 7.0), (("U711.1", "U711.6"), 7.0)})
-        self.assertEqual(len(entries), 3)
+                         {(("U601.10", "U601.11"), 8.0), (("U701.1", "U701.6"), 7.0), (("U711.1", "U711.6"), 7.0),
+                          (("U602.1", "U602.4"), 7.6), (("U602.2", "U602.3"), 7.6), (("U602.1", "U602.3"), 7.6), (("U602.2", "U602.4"), 7.6)})
+        self.assertEqual(len(entries), 7)
         for entry in entries:
             self.assertEqual(entry["constraint"], "creepage")
             self.assertLess(entry["accepted_mm"], data["mains_to_low_voltage"]["creepage_mm"])
@@ -292,9 +293,9 @@ class MainsToMainsRecord(unittest.TestCase):
             # the owner's recorded reasons, as the decision of 2026-10-29 states them
             for reason in ("sealed and inside the machine", "slots between pad rows", "conformal coat", "touchable"):
                 self.assertIn(reason, entry["reason"])
-        # K201, K731, K741 and U602 are their own leaf's: none is excused here
+        # K201, K731 and K741 have no entry: their short figure is inside the part and no pad pair shows it
         parts = {pad.split(".")[0] for e in entries for pad in e["between"]}
-        self.assertEqual(parts, {"U601", "U701", "U711"})
+        self.assertEqual(parts, {"U601", "U701", "U711", "U602"})
         _, problems = reading()
         self.assertEqual([p for p in problems if not p.location.endswith(("accepted_by", "accepted_on"))], [])
         # a creepage entry at or above the signed figure relaxes nothing, and the reader keeps the pair kind in its vocabulary
@@ -430,6 +431,72 @@ class MainsToMainsReadings(unittest.TestCase):
         # the old comment that said the 320 V row is used and no interpolation is made is gone
         self.assertNotIn("no interpolation is made", text)
         self.assertNotIn("the next row up, 320 V, is the one used", text)
+
+
+class BoughtPartsJudged(unittest.TestCase):
+    """The four bought parts judged against the signed figures: the drafted U602 entries and the division record's judgement."""
+
+    def division(self):
+        with open(os.path.join(ROOT, DIVISION), encoding="utf-8") as handle:
+            text = handle.read()
+        start = text.index("### The four parts judged against the signed figures")
+        return text[start:text.index("\n## ", start)]
+
+    def rows(self):
+        found = {}
+        for line in self.division().splitlines():
+            if line.startswith("| ") and not line.startswith(("| Part", "|---")):
+                cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+                found[(cells[0], cells[1])] = cells
+        return found
+
+    def test_each_part_and_quantity_has_a_row_with_the_signed_figure_and_absent_where_the_makers_state_nothing(self):
+        # SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-JUDGED.C2: For each of K201, K731, K741 and U602, the committed record and division record show exactly one of three states: the part's published creepage and clearance meet 10.0 mm and 3.0 mm; or the part's board pad gaps are what the check measures and the pad pairs that fall short each carry an accepted_exceptions entry in the check's form, with accepted_mm no greater than the measured gap, a stated ground and a bounding element, left unsigned; or the part is replaced by one in the first or second state. A figure inside the part that the board's pad gaps do not measure (the relays' published creepage over 8 mm, their clearance and U602's creepage and clearance where the maker publishes none) is recorded in the division record against the signed figure and counts as absent where unpublished: it is carried by the owner's recorded acceptance of bought-part creepage and put to the owner as an open decision to accept, change the part or find a published figure, and is never excused by an entry the check cannot judge. The owner's signature of the record is out of scope here and belongs to the acceptance leaf.
+        rows = self.rows()
+        self.assertEqual(sorted(rows), sorted([("K201", "Creepage"), ("K201", "Clearance"), ("K731 and K741", "Creepage"),
+                                               ("K731 and K741", "Clearance"), ("U602", "Creepage"), ("U602", "Clearance")]))
+        for (part, quantity), cells in rows.items():
+            self.assertEqual(len(cells), 7, cells)
+            self.assertIn("10.0 mm" if quantity == "Creepage" else "3.0 mm", cells[3], cells)
+            self.assertTrue(cells[4] and cells[5], cells)
+        # a figure the makers' table calls absent stays absent, and none is turned into an estimate
+        for key in (("K201", "Clearance"), ("K731 and K741", "Clearance"), ("U602", "Creepage"), ("U602", "Clearance")):
+            self.assertTrue(rows[key][2].startswith("absent"), rows[key])
+            self.assertIn("absent", rows[key][4], rows[key])
+        for key in (("K201", "Creepage"), ("K731 and K741", "Creepage")):
+            self.assertIn("over 8 mm", rows[key][2])
+            self.assertIn("not shown to meet", rows[key][4])
+
+    def test_the_relays_and_the_unpublished_figures_are_left_to_the_owner_and_nothing_is_signed(self):
+        # SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-JUDGED.C2: For each of K201, K731, K741 and U602, the committed record and division record show exactly one of three states: the part's published creepage and clearance meet 10.0 mm and 3.0 mm; or the part's board pad gaps are what the check measures and the pad pairs that fall short each carry an accepted_exceptions entry in the check's form, with accepted_mm no greater than the measured gap, a stated ground and a bounding element, left unsigned; or the part is replaced by one in the first or second state. A figure inside the part that the board's pad gaps do not measure (the relays' published creepage over 8 mm, their clearance and U602's creepage and clearance where the maker publishes none) is recorded in the division record against the signed figure and counts as absent where unpublished: it is carried by the owner's recorded acceptance of bought-part creepage and put to the owner as an open decision to accept, change the part or find a published figure, and is never excused by an entry the check cannot judge. The owner's signature of the record is out of scope here and belongs to the acceptance leaf.
+        text = self.division()
+        for phrase in ("accept the figure as published, change the part, or find a published figure",
+                       "accept this distance, change the part, or find a published figure", "*Recommendation:* accept K201, K731 and K741",
+                       "VDE 0700 and 0631", "Open layout item (not an exception)", "5.06 mm apart", "no exception for it"):
+            self.assertIn(phrase, " ".join(text.split()), phrase)
+        _, data = committed()
+        assert_draft(self, data)
+        parts = {pad.split(".")[0] for e in data["accepted_exceptions"] for pad in e.get("between", [])}
+        self.assertTrue(parts.isdisjoint({"K201", "K731", "K741"}), parts)
+
+    def test_the_four_u602_pad_pairs_are_unsigned_creepage_entries_stating_the_gap_is_the_boards(self):
+        # SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-JUDGED.C2: For each of K201, K731, K741 and U602, the committed record and division record show exactly one of three states: the part's published creepage and clearance meet 10.0 mm and 3.0 mm; or the part's board pad gaps are what the check measures and the pad pairs that fall short each carry an accepted_exceptions entry in the check's form, with accepted_mm no greater than the measured gap, a stated ground and a bounding element, left unsigned; or the part is replaced by one in the first or second state. A figure inside the part that the board's pad gaps do not measure (the relays' published creepage over 8 mm, their clearance and U602's creepage and clearance where the maker publishes none) is recorded in the division record against the signed figure and counts as absent where unpublished: it is carried by the owner's recorded acceptance of bought-part creepage and put to the owner as an open decision to accept, change the part or find a published figure, and is never excused by an entry the check cannot judge. The owner's signature of the record is out of scope here and belongs to the acceptance leaf.
+        _, data = committed()
+        entries = [e for e in data["accepted_exceptions"] if e.get("between", [""])[0].startswith("U602.")]
+        self.assertEqual(sorted(tuple(e["between"]) for e in entries),
+                         sorted([("U602.1", "U602.4"), ("U602.2", "U602.3"), ("U602.1", "U602.3"), ("U602.2", "U602.4")]))
+        for entry in entries:
+            self.assertEqual((entry["pair"], entry["constraint"]), ("mains_to_low_voltage", "creepage"))
+            self.assertLess(entry["accepted_mm"], data["mains_to_low_voltage"]["creepage_mm"])
+            self.assertLess(entry["accepted_mm"], 7.7)
+            self.assertEqual((entry["accepted_by"], entry["accepted_on"]), ("", ""))
+            self.assertIn("not a published creepage", entry["reason"])
+            self.assertIn("Unpublished: owner to decide: accept this distance, change the part, or find a published figure", entry["reason"])
+            self.assertTrue(entry["bounded_by"].strip())
+        # no clearance entry: the board's gap is over the signed clearance, so one would cover no shortfall
+        self.assertEqual([e for e in entries if e["constraint"] != "creepage"], [])
+        _, problems = reading()
+        self.assertEqual([p for p in problems if not p.location.endswith(("accepted_by", "accepted_on"))], [])
 
 
 class SameConnectorRecord(unittest.TestCase):
