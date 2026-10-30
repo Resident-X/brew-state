@@ -10,7 +10,7 @@ text: |
   Settled for the build:
   - The record reader accepts mains_to_mains, the functional insulation value and the location input in table_rows, and still fails any key those decisions do not name. mains_to_mains is required of a record held by a design that declares MAINS present; a design that declares none is exempt.
   - The floor is read as the rules decision sets, from the record's own rows. The figures read for the machine at 253 V rms, overvoltage category II, pollution degree 3, material group IIIb and 2000 m are clearance 1.5 mm, terminal clearance 2.0 mm and creepage 4.1 mm both downstream of the entry fuse and ahead of it (the interpolation between the 250 V and 320 V creepage rows, rounded up; a lower downstream figure needs a stated fault-clearing basis); this leaf does not sign them (the record leaf does) and its tests use synthetic figures.
-  - The record reader also accepts downstream_basis and held_at_reinforced in the mapping as the separation-basis decision sets them. A creepage_mm below creepage_ahead_of_fuse_mm with no downstream_basis fails. Each held_at_reinforced pair is held to the mains_to_low_voltage figures by an appended rule, so the pair across the interlock relay's open contact is not held to the lower mains-to-mains figures.
+  - The record reader also accepts downstream_basis and held_at_reinforced in the mapping as the separation-basis decision sets them. A creepage_mm below creepage_ahead_of_fuse_mm with no downstream_basis fails. Each held_at_reinforced pair is held by an appended rule to the larger of each mains_to_low_voltage figure and the matching mains_to_mains figure, so the pair across the interlock relay's open contact is never held to a lower figure than an unlisted mains pair.
   - A derived table row at the basis working voltage is read by the floor like any other.
   - The signed rules are appended after the signed Mains rule, in the same manner, so they are last among the rules the check inserts for other leaves and the design's own rules cannot loosen them. Terminal clearance applies between pads of one part and of neighbouring parts; the build fixes the KiCad condition that selects terminals in its readiness pass and shows by a seeded layout that it selects them.
   - Failures are reported under the existing names: separation_basis for the record, separation_floor for the floor, mains_declaration for MAINS_ENTRY, and KiCad's own clearance and creepage for the layout. The hardware notes' tables and the adopter section gain the new keys, the variable and the net class.
@@ -29,6 +29,6 @@ links:
   - target: SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES
     type: depends-on
 brief_confirmation:
-  confirmer: claude-sonnet-5-5 blind brief reviewer
-  fingerprint: 65d958ca86af1c9d1dd44489972b98ee3593799f0e21bd3c0426137272202b0b
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: 1f6e06ae9b551ab80a0173ff1c0f58e4ad3d09d5adb61c834384217049b7cf23
   gating_profile: ""
