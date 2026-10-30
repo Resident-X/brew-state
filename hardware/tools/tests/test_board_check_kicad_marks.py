@@ -53,6 +53,17 @@ class TheBarrierPasteAndPourRules(Proved):
                           "a ground class on a board whose rules file has no relief rule",
                           "a relief rule exempting a pad that is not an exposed pad")
 
+    def test_a_no_connect_pad_and_a_pad_on_a_mains_net_with_no_number_leave_the_part_measured(self):
+        # SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C12: The seeded-fault harness holds a row on the throwaway proof design's bridging part with a no-connect pad added beside a mains pad and copper under the part, and the check reports mains_barrier.
+        # SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C13: The seeded-fault harness holds a row on the throwaway proof design's bridging part with a pad on a Mains-class net given no number and copper under the part, and the check reports mains_barrier.
+        names = ("a no-connect pad beside a mains pad of a part with copper under it",
+                 "a pad on a Mains-class net given no number with copper under the part")
+        self.assertCaught(*names)
+        found = outcomes()
+        for name in names:
+            with self.subTest(fault=name):
+                self.assertEqual(found[name][1].split(" | ")[2], "mains_barrier")
+
     def test_each_failure_names_where_on_the_board_it_is(self):
         # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
         found = outcomes()

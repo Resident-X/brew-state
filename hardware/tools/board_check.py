@@ -4568,19 +4568,36 @@ def mains_barrier(design: Design, tree: list, fills, mains: Set[str], allowed: f
     not in it. A part with Mains-class pads and pads of no Mains class that
     cannot be measured fails by name: one whose two groups' boxes overlap along
     both axes, so no strip lies between them, or whose pads off the class have
-    no net, so it is not known to bridge. `fills` are the layout's fills as KiCad
+    no net, so it is not known to bridge. A pad on a Mains-class net is a
+    Mains-class pad whatever its number, copper layer or net name. A pad that
+    carries no net is in neither group: one on a net named unconnected-(...)
+    that no other pad carries, and one with no net that has no number or no
+    copper layer. A part whose pads off the class are all such pads is not
+    judged. The copper of every pad, those included, still lies in the strip. `fills` are the layout's fills as KiCad
     has refilled them.
     """
     table = board_geometry.net_table(tree)
     parts = []
     every = []
     found = []
-    for footprint in sexpr.children(tree, "footprint"):
-        placed = board_geometry.footprint_pads(footprint, table)
+    footprints = [(footprint, board_geometry.footprint_pads(footprint, table)) for footprint in sexpr.children(tree, "footprint")]
+    carriers: Dict[str, int] = {}
+    for _, placed in footprints:
         every += placed
+        for pad in placed:
+            carriers[pad.net] = carriers.get(pad.net, 0) + 1
+    for footprint, placed in footprints:
         inside = [pad for pad in placed if pad.net in mains]
-        outside = [pad for pad in placed if pad.net and pad.net not in mains]
-        unnetted = [pad for pad in placed if not pad.net]
+        outside, unnetted = [], []
+        for pad in placed:
+            if pad.net in mains:
+                continue
+            if pad.net:
+                lone = pad.net.rsplit("/", 1)[-1].startswith(UNCONNECTED_NET) and carriers[pad.net] == 1
+                if not lone:
+                    outside.append(pad)
+            elif pad.number and any(layer.endswith(".Cu") for layer in pad.layers):
+                unnetted.append(pad)
         if not inside or not (outside or unnetted):
             continue
         reason, strip = "", None
@@ -4600,7 +4617,8 @@ def mains_barrier(design: Design, tree: list, fills, mains: Set[str], allowed: f
                 f"{name} has Mains-class {', '.join(sorted({pad.net for pad in inside}))} ({pad_numbers(inside)}) and other "
                 f"pads ({pad_numbers(outside)}), and the copper between them cannot be measured: {reason}; the barrier "
                 "rule does not support such a part, so use a part whose Mains-class pads lie apart from its other pads "
-                "along one axis, with every pad that is not Mains-class on a net"))
+                "along one axis, with every numbered, coppered pad that is not Mains-class on a net, a pin meant to be open "
+                "being flagged no-connect in the schematic"))
             continue
         parts.append((footprint, inside, outside, strip))
     if not parts:

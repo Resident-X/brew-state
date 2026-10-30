@@ -811,6 +811,25 @@ def barrier_part(seed: Seed, second: Tuple[str, str, float, float]) -> None:
     seed.layout(lambda tree: tree.insert(len(tree) - 1, part))
 
 
+def barrier_part_beside_no_connect(seed: Seed) -> None:
+    """The bridging part of track_under_bridging_part with a third pad on a net named for a pin flagged no-connect, 3 mm
+    from the pad on Mains-class /MAINS_L on the side away from the other, and the /LV_B track between the two."""
+    thru = ["*.Cu", "*.Mask"]
+    part = small_part("X1", 30, 4, "0b0e5c1a-0000-4000-8000-000000000c00", ("1", "thru_hole", thru, "/MAINS_L", 0, 0, 1.6),
+                      ("2", "thru_hole", thru, "/LV_A", 6, 0, 1.6), ("3", "thru_hole", thru, "unconnected-(X1-Pad3)", -3, 0, 1.6))
+    seed.layout(lambda tree: (tree.insert(len(tree) - 1, part),
+                              tree.insert(len(tree) - 1, segment("/LV_B", 32, 4, 34, 4, "0b0e5c1a-0000-4000-8000-000000000c01"))))
+
+
+def barrier_part_with_unnumbered_mains_pad(seed: Seed) -> None:
+    """The bridging part of track_under_bridging_part with the number of the pad on Mains-class /MAINS_L left empty."""
+    thru = ["*.Cu", "*.Mask"]
+    part = small_part("X1", 30, 4, "0b0e5c1a-0000-4000-8000-000000000d00", ("", "thru_hole", thru, "/MAINS_L", 0, 0, 1.6),
+                      ("2", "thru_hole", thru, "/LV_A", 6, 0, 1.6))
+    seed.layout(lambda tree: (tree.insert(len(tree) - 1, part),
+                              tree.insert(len(tree) - 1, segment("/LV_B", 32, 4, 34, 4, "0b0e5c1a-0000-4000-8000-000000000d01"))))
+
+
 def crystal_part(seed: Seed) -> None:
     """R2 renamed, in the layout, to a footprint of a crystal's name: a board with a crystal."""
     seed.layout(lambda tree: footprint(tree, "R2").__setitem__(1, sexpr.Quoted("proof:Crystal_Seeded")))
@@ -1541,6 +1560,10 @@ FAULTS: List[tuple] = [
      "the boxes of its two groups of pads overlap along both axes, so no strip lies between them", lambda seed: barrier_part(seed, ("/LV_A", "", 0.5, 0.5))),
     ("a part whose only pads off the Mains class have no net", "separation: a part whose bridging cannot be known fails by name", "mains_barrier",
      "its only pads off the Mains class, pad 2, have no net, so whether it bridges the barrier is not known", lambda seed: barrier_part(seed, ("", "", 6, 0))),
+    ("a no-connect pad beside a mains pad of a part with copper under it", "separation: a no-connect pad is no pad off the class and the part is still measured", "mains_barrier",
+     "X1 joins Mains-class /MAINS_L (pad 1) to /LV_A (pad 2), and a track of net /LV_B on F.Cu lies under it", barrier_part_beside_no_connect),
+    ("a pad on a Mains-class net given no number with copper under the part", "separation: a pad on a Mains-class net counts whatever its number", "mains_barrier",
+     "X1 joins Mains-class /MAINS_L (pad (unnumbered)) to /LV_A (pad 2), and a track of net /LV_B on F.Cu lies under it", barrier_part_with_unnumbered_mains_pad),
     ("a crystal on a board whose rules file has no keep-clear", "clock: a board with a crystal holds the keep-clear rule", "crystal_keepclear",
      "R2 is a crystal, and the rules file holds no rule keeping the parts unrelated", crystal_part),
     ("a crystal keep-clear that exempts every other part", "clock: the keep-clear exempts no more than the parts related to the oscillator", "crystal_keepclear",
