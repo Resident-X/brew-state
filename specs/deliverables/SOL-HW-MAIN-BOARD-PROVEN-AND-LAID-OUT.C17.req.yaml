@@ -1,0 +1,12 @@
+id: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C17
+type: criterion
+title: The fabrication notes name the conformal coat the pollution degree 2 credit rests on and where it is applied
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The fabrication notes the board's production files carry name the conformal coat on which the separation basis record's pollution degree 2 credit rests, with its type and the maker's current datasheet, and state that it is applied before the board is energised in the machine and covers the gaps between the board's mains pads, except the keep-outs for contacts that the notes list by reference designator. A board whose notes name no coat, cite no datasheet, or leave a gap between mains pads uncovered without listing its keep-out, is reported, and the owner re-declares the basis before the board is ordered. Choosing the coat's supplier and applying the coat are out of scope.
+links:
+  - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT
+    type: criterion-of

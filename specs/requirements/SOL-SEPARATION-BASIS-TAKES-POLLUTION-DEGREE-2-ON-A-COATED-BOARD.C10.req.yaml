@@ -1,0 +1,14 @@
+id: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C10
+type: criterion
+title: The board division record restates the 2.6 mm creepage and pollution degree 2 everywhere it stated 4.1 mm or pollution degree 3
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The division record states the new figures at each place it stated the replaced ones, the places being its separation row, assumption A3, the option row on the second division, the paragraph on mains against mains, the rule list, finding 3, D15 and the bracket paragraph, the verification table's creepage row, the verification script's basis constants, expected-output strings and seeded faults, and the sentences reporting pairs under the basic creepage. A search of the record for 4.1 mm as a creepage figure and for pollution degree 3 finds none left unexplained, and the verification script passes on the record as edited. Out of scope is a distance the record chose larger than the figure for its own reason, such as the 5.0 mm wall-edge distance.
+links:
+  - target: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD
+    type: criterion-of
+  - target: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS.C6
+    type: supersedes

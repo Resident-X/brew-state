@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C3
+type: criterion
+title: The record's header holds the six conditions of the pollution degree 2 credit
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The header comment of the committed record holds a numbered block of six conditions, each naming its subject, in this order and with these figures: the coat before the boards are energised in the machine, with the coat type and datasheet named in the fabrication notes and the gaps between mains pads covered except documented contact keep-outs; the protection stated as coated and credited at pollution degree 2 only, never 1; a laminate comparative tracking index of at least 175; slots in creepage paths at least 1.0 mm wide, 1.5 mm if a pollution degree 3 credit must survive; the bring-up humidity reading confirming no condensation while energised, with the fall back to pollution degree 3 and 4.1 mm as a fresh basis; and the whole record re-signed by the owner. The header no longer says that coating the boards later would be a fresh basis. Out of scope is any condition beyond those six.
+links:
+  - target: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD
+    type: criterion-of

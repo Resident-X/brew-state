@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C6
+type: criterion
+title: The record holds a creepage entry and a clearance entry for each same-part pad pair under 1.5 mm
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The committed record holds, for each of the twenty-seven same-part pad pairs this leaf lists, a between entry of constraint creepage and one of constraint clearance, each of pair mains_to_mains, naming the two pads, with accepted_mm no more than the gap the layout rule check reports for the pair, and the check's own reader reads them with no problem other than the unsigned acceptances. Out of scope is a pair with a gap of 1.5 mm or more.
+links:
+  - target: SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED
+    type: criterion-of

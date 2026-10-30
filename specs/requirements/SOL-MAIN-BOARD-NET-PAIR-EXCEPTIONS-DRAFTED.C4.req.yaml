@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C4
+type: criterion
+title: No net-pair entry reduces the figure of a pair that can reach the supply voltage or of a held pair
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  No net-pair entry of the committed record holds a working_voltage_v of 250 or more, lists both nets of a pair in held_at_reinforced on opposite sides, lists LINE_MOD, a snubber net, LINE_IN, LINE_F, LINE1 or a load net, or lists a pump gate network net against a net outside its own network's three. Out of scope is a pair the leaf's list does not name.
+links:
+  - target: SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C11
+type: criterion
+title: The controller board design constraints record restates the pollution degree and the separation rows
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The constraints record's pollution degree row reads 2 with the boards protected against moisture by a coat and cites the decision's conditions, its separation and material-group rows restate the figures of the committed record, and a search of the record for pollution degree 3 and 4.1 mm finds none left unexplained. Out of scope is any row about another quantity.
+links:
+  - target: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD
+    type: criterion-of

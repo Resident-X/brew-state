@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS.C6
+type: criterion
+title: An entry naming an absent net, a net outside the Mains class, the open-contact pair or no shortfall fails closed
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  An entry listing a net the layout lacks, a net outside the Mains class, both nets of a pair in held_at_reinforced on opposite sides, or covering no reported shortfall fails as spacing_exception naming the entry, and a record that is unsigned or synthetic on an orderable board is honoured for no entry. Out of scope is a shortfall the check does not report.
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS
+    type: criterion-of

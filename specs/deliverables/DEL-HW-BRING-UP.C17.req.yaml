@@ -1,0 +1,13 @@
+id: DEL-HW-BRING-UP.C17
+type: criterion
+title: The coated boards stay above the dew point of the enclosure air through the run at sustained full heat
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  In the closed machine, the run at sustained full heat of the enclosure-air criterion also records the relative humidity of the enclosure air and the surface temperature of a coated board near the heater side, with each instrument's stated accuracy. At no reading, with both accuracies applied against the board, is the board's surface temperature at or below the dew point of the air at that reading. A run that shows condensation returns the separation basis to pollution degree 3 as a fresh basis for the owner to accept. Choosing the instruments is out of scope.
+links:
+  - target: DEL-HW-BRING-UP
+    type: criterion-of

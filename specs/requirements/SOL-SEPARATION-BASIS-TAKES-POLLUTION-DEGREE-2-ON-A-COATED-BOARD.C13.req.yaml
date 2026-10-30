@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C13
+type: criterion
+title: The design method states the slot width as the pollution degree 2 groove width
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Item MAINS-4 of docs/board-design-method.md states that the width it requires of a slot or groove is the pollution degree 2 figure, 1.0 mm, that it is held wider than 1 mm, and that a pollution degree 3 basis needs 1.5 mm. Out of scope is any other item.
+links:
+  - target: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD
+    type: criterion-of

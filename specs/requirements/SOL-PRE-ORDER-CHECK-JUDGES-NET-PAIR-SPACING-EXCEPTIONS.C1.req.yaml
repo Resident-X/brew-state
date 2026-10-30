@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS.C1
+type: criterion
+title: A record whose net-pair entry is malformed fails separation_basis naming the entry and the key
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  A record holding a nets_a entry that lacks a key, holds a key outside the form, repeats a key, holds both between and nets_a, gives an empty or repeating nets list, names a pair other than mains_to_mains, a constraint outside creepage and clearance, or a working_voltage_v or accepted_mm that is not a positive number, fails as separation_basis naming the entry and the key. A well-formed entry is read with no problem. Out of scope is whether the entry is signed or used, which the judgement decides.
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS
+    type: criterion-of

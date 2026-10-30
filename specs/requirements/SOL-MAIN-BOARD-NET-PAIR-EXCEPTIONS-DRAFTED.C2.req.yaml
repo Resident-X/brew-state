@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C2
+type: criterion
+title: Every net a net-pair entry lists is a Mains-class net of the main board
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Each net named in nets_a or nets_b of the committed record's net-pair entries is one of the Mains-class patterns of the main board's project file, written with its sheet prefix as the netlist writes it. Out of scope is a net the entries do not name.
+links:
+  - target: SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED
+    type: criterion-of

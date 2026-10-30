@@ -1,0 +1,13 @@
+id: DEL-HW-BRING-UP.C18
+type: criterion
+title: A bridge between two excepted nets of one low-voltage circuit is shown to create no hazard on the touchable side
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Before mains is first connected, a short-circuit analysis of the built mains-carrying boards is recorded that takes each pair of nets of one low-voltage circuit whose spacing the separation basis excuses below the 2.6 mm figure (the net-pair and same-part exceptions between neutral-referenced nets) and shows, for a bridge between the two nets, that no hazard arises on the touchable side. The analysis is inspected against the committed exceptions, pair by pair. Choosing the method of analysis is out of scope.
+links:
+  - target: DEL-HW-BRING-UP
+    type: criterion-of
