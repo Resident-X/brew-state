@@ -1,0 +1,12 @@
+id: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C16
+type: criterion
+title: The fabrication notes specify a laminate with a published comparative tracking index of at least 175
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The fabrication notes the board's production files carry specify a laminate whose published comparative tracking index is at least 175 (material group IIIa or better), the figure the separation basis record's material group rests on. When the laminate is chosen, the notes cite the laminate maker's current document for that index. A laminate whose published index is below 175, or one chosen with no such document cited, is reported and the owner re-declares the basis before the board is ordered. Choosing the laminate's supplier is out of scope.
+links:
+  - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT
+    type: criterion-of

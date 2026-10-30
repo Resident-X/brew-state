@@ -1,0 +1,12 @@
+id: SOL-NIGHTLY-VERIFY-JOB-BUDGET-FITS-THE-BOARD-CHECK-RUN-LIMIT.C2
+type: criterion
+title: The workflow comment and the hardware notes each state how the job budget relates to the one-run limit
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The comment beside timeout-minutes in the nightly workflow names the board gates and the one-run limit and states the floor, and hardware/README.md states beside the one-run limit that the nightly job's budget is held above it and that a larger limit needs a larger budget. Any change to what the board gates judge is out of scope.
+links:
+  - target: SOL-NIGHTLY-VERIFY-JOB-BUDGET-FITS-THE-BOARD-CHECK-RUN-LIMIT
+    type: criterion-of

@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS-C3-TEST-4
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-30T18:53:56.288624Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_voltage.py::TheDeratingExceptionsAreJudged.test_an_entry_below_the_working_voltage_beside_one_above_it_leaves_only_its_own_position_failing
+  artifact_version: cbf31805701210bb96838c81eede1c5fef22e671
+attested_by: crun-b65732e1086a7900
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C3
+    type: satisfies

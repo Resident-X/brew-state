@@ -113,13 +113,13 @@ class World(unittest.TestCase):
         self.mains = mains
         self.mains_nets = set(mains_nets)
 
-    def run_rules(self, mains=None, signed=True):
+    def run_rules(self, mains=None, signed=True, **more):
         files = [os.path.relpath(os.path.join(d, n), self.root).replace(os.sep, "/")
                  for d, _, names in os.walk(self.root) for n in names]
         repository = board_check.Repository(self.root, files)
         basis = board_check.Signed(3.0, 4.0, {"working_voltage": "250 V rms"}) if signed else None
         return board_check.voltage_rules(self.design, self.yaml, self.root, repository, True, mains or self.mains, basis,
-                                         self.nets, self.mains_nets)
+                                         self.nets, self.mains_nets, **more)
 
     def read(self, reader):
         files = [os.path.relpath(os.path.join(d, n), self.root).replace(os.sep, "/")
@@ -403,6 +403,234 @@ class TheDeratedVoltageRule(World):
         self.build([CAP, IC], cap_on_rails(), limits=[IC_LIMITS])
         self.record("pin-limits.yaml", {"domains": DOMAINS, "parts": [IC_LIMITS], "synthetic": True, "extra": 1})
         self.assertEqual(self.lines(), [])
+
+
+TODAY = datetime.date(2026, 10, 31)
+MAINS_NETS = {"/MAINS_L": pins(("R1", "1", ""), ("R2", "1", ""), ("J1", "1", "")),
+              "/MAINS_N": pins(("R1", "2", ""), ("R2", "2", ""), ("J1", "2", ""))}
+
+
+def accepted_entry(position="R1", accepted_v=354, **more):
+    return {"position": position, "accepted_v": accepted_v, "reason": "a synthetic ground", "bounded_by": "a synthetic element",
+            "accepted_by": "proof-owner", "accepted_on": "2026-10-01", **more}
+
+
+class TheDeratingExceptionsAreJudged(World):
+    """The derated-voltage rule's owner-accepted exceptions, on a synthetic design with two mains-fed parts of 100 V rating."""
+
+    R1 = ("R1", "10k", "C300", "100V", "mains part")
+    R2 = ("R2", "10k", "C300", "100V", "mains part")
+    J1 = ("J1", "hdr", "C400", "100V", "mains part")
+
+    def over(self, entries=None, parts=None, policy_extra=None, **more):
+        """R1 and R2, each at 353.553 V against a limit of 100 V, with the policy carrying `entries`; the rule's lines."""
+        policy = dict(POLICY)
+        if entries is not None:
+            policy = {**policy, "accepted_exceptions": entries}
+        policy.update(policy_extra or {})
+        self.build(parts or [self.R1, self.R2], MAINS_NETS, limits=(), policy=policy)
+        self.taken = []
+        return self.run_rules(today=TODAY, accepted=self.taken, **more)
+
+    def by_rule(self, violations, rule):
+        return [v for v in violations if v.rule == rule]
+
+    def test_a_signed_entry_at_or_above_the_working_voltage_passes_the_position_and_prints_an_accepted_line(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C2: On a synthetic design, a position whose working voltage exceeds its limit passes when its entry is signed and its accepted_v is no less than that working voltage, and the check prints an ACCEPTED line with the position, the working voltage, the limit, the accepted figure and the reason; the same position with no entry, or with an accepted_v below its working voltage, fails as derated_voltage. Other positions' shares are out of scope.
+        for accepted_v in (353.6, 400, PEAK):
+            with self.subTest(accepted_v=accepted_v):
+                found = self.over([accepted_entry("R1", accepted_v)], parts=[self.R1])
+                self.assertEqual(found, [])
+                self.assertEqual(len(self.taken), 1)
+                line = self.taken[0]
+                self.assertTrue(line.startswith(f"ACCEPTED | {self.design.project} | derating_exception | "), line)
+                self.assertIn("accepted_exceptions[0]", line)
+                for words in ("R1", "353.553 V", "100 V", f"{accepted_v:g} V", "a synthetic ground", "a synthetic element",
+                              "proof-owner"):
+                    self.assertIn(words, line)
+
+    def test_the_accepted_line_names_the_entry_by_its_place_in_the_list(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C2: On a synthetic design, a position whose working voltage exceeds its limit passes when its entry is signed and its accepted_v is no less than that working voltage, and the check prints an ACCEPTED line with the position, the working voltage, the limit, the accepted figure and the reason; the same position with no entry, or with an accepted_v below its working voltage, fails as derated_voltage. Other positions' shares are out of scope.
+        self.over([accepted_entry("R9", 400), accepted_entry("R1", 400, reason="the second ground")], parts=[self.R1])
+        accepted = [line for line in self.taken if "accepted_exceptions[1]" in line]
+        self.assertEqual(len(accepted), 1)
+        self.assertIn("the second ground", accepted[0])
+
+    def test_the_check_passes_the_position_when_no_list_receives_the_accepted_line(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C2: On a synthetic design, a position whose working voltage exceeds its limit passes when its entry is signed and its accepted_v is no less than that working voltage, and the check prints an ACCEPTED line with the position, the working voltage, the limit, the accepted figure and the reason; the same position with no entry, or with an accepted_v below its working voltage, fails as derated_voltage. Other positions' shares are out of scope.
+        self.build([self.R1], MAINS_NETS, limits=(), policy={**POLICY, "accepted_exceptions": [accepted_entry("R1", 400)]})
+        self.assertEqual(self.run_rules(today=TODAY), [])
+
+    def test_a_position_with_no_entry_or_an_entry_below_its_working_voltage_fails_as_derated_voltage(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C2: On a synthetic design, a position whose working voltage exceeds its limit passes when its entry is signed and its accepted_v is no less than that working voltage, and the check prints an ACCEPTED line with the position, the working voltage, the limit, the accepted figure and the reason; the same position with no entry, or with an accepted_v below its working voltage, fails as derated_voltage. Other positions' shares are out of scope.
+        for entries in (None, []):
+            with self.subTest(entries=entries):
+                found = self.over(entries, parts=[self.R1])
+                self.assertEqual([(v.rule, v.location) for v in found], [("derated_voltage", f"{self.design.schematic} R1")])
+                self.assertIn("353.553 V", found[0].message)
+                self.assertEqual(self.taken, [])
+        found = self.over([accepted_entry("R1", 300)], parts=[self.R1])
+        self.assertEqual([(v.rule, v.location) for v in found], [("derated_voltage", f"{self.design.schematic} R1")])
+        for words in ("accepted_exceptions[0]", "300 V", "353.553 V"):
+            self.assertIn(words, found[0].message)
+        self.assertEqual(self.taken, [])
+
+    def test_an_entry_just_below_the_working_voltage_fails_and_the_slack_passes_the_boundary(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C2: On a synthetic design, a position whose working voltage exceeds its limit passes when its entry is signed and its accepted_v is no less than that working voltage, and the check prints an ACCEPTED line with the position, the working voltage, the limit, the accepted figure and the reason; the same position with no entry, or with an accepted_v below its working voltage, fails as derated_voltage. Other positions' shares are out of scope.
+        self.assertEqual(len(self.over([accepted_entry("R1", PEAK - 0.001)], parts=[self.R1])), 1)
+        self.assertEqual(self.over([accepted_entry("R1", PEAK + 1e-12)], parts=[self.R1]), [])
+
+    def test_a_part_within_its_limit_prints_no_accepted_line(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C2: On a synthetic design, a position whose working voltage exceeds its limit passes when its entry is signed and its accepted_v is no less than that working voltage, and the check prints an ACCEPTED line with the position, the working voltage, the limit, the accepted figure and the reason; the same position with no entry, or with an accepted_v below its working voltage, fails as derated_voltage. Other positions' shares are out of scope.
+        found = self.over(None, parts=[("R1", "10k", "C300", "400V", "mains part")])
+        self.assertEqual(found, [])
+        self.assertEqual(self.taken, [])
+
+    def test_an_entry_excuses_only_its_own_position_and_the_second_over_limit_position_fails_naming_it(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C3: On a synthetic design with two positions over their limits and an entry for the first, the second still fails as derated_voltage naming it. Excusing a class or a net is out of scope.
+        found = self.over([accepted_entry("R1", 400)])
+        self.assertEqual([(v.rule, v.location) for v in found], [("derated_voltage", f"{self.design.schematic} R2")])
+        self.assertEqual(len(self.taken), 1)
+        self.assertIn("R1", self.taken[0])
+        found = self.over([accepted_entry("R2", 400)])
+        self.assertEqual([v.location for v in found], [f"{self.design.schematic} R1"])
+
+    def test_an_entry_for_a_part_does_not_excuse_another_part_of_the_same_class_rating_and_nets(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C3: On a synthetic design with two positions over their limits and an entry for the first, the second still fails as derated_voltage naming it. Excusing a class or a net is out of scope.
+        found = self.over([accepted_entry("R1", 400)], parts=[self.R1, self.R2, self.J1])
+        self.assertEqual(sorted(v.location for v in found), [f"{self.design.schematic} J1", f"{self.design.schematic} R2"])
+        self.assertEqual({v.rule for v in found}, {"derated_voltage"})
+
+    def test_two_entries_excuse_exactly_their_two_positions(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C3: On a synthetic design with two positions over their limits and an entry for the first, the second still fails as derated_voltage naming it. Excusing a class or a net is out of scope.
+        found = self.over([accepted_entry("R1", 400), accepted_entry("R2", 400)], parts=[self.R1, self.R2, self.J1])
+        self.assertEqual([v.location for v in found], [f"{self.design.schematic} J1"])
+        self.assertEqual(len(self.taken), 2)
+
+    def test_an_entry_below_the_working_voltage_beside_one_above_it_leaves_only_its_own_position_failing(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C3: On a synthetic design with two positions over their limits and an entry for the first, the second still fails as derated_voltage naming it. Excusing a class or a net is out of scope.
+        found = self.over([accepted_entry("R1", 400), accepted_entry("R2", 300)])
+        self.assertEqual([v.location for v in found], [f"{self.design.schematic} R2"])
+        self.assertIn("accepted_exceptions[1]", found[0].message)
+
+    def test_an_entry_covers_the_worst_pair_of_nets_of_its_position(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C3: On a synthetic design with two positions over their limits and an entry for the first, the second still fails as derated_voltage naming it. Excusing a class or a net is out of scope.
+        nets = {**MAINS_NETS, "/+5V": pins(("R1", "3", ""), ("U1", "1", "VDD_1")), "/GND": pins(("R1", "4", ""), ("U1", "2", "GND_2"))}
+        policy = {**POLICY, "accepted_exceptions": [accepted_entry("R1", 400)]}
+        self.build([self.R1, IC], nets, limits=[IC_LIMITS], policy=policy)
+        self.taken = []
+        self.assertEqual(self.run_rules(today=TODAY, accepted=self.taken), [])
+        self.assertIn("353.553 V", self.taken[0])
+
+    def test_an_unsigned_entry_fails_as_derating_exception_naming_it_and_leaves_the_position_failing(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C4: On a synthetic design, an entry whose accepted_by is empty, a placeholder or in angle brackets, or whose accepted_on is empty, not a YYYY-MM-DD date or future; an entry whose position is not a position of the design's schematic; an entry whose accepted_v does not exceed its position's limit; and an entry no position's failure uses each fail as derating_exception naming the entry; a synthetic record passes only a design marked not for manufacture. Honouring an unsigned entry is excluded.
+        for field, value, words in (("accepted_by", "", "accepted_by"), ("accepted_by", "   ", "accepted_by"),
+                                    ("accepted_by", None, "accepted_by"), ("accepted_by", "unsigned", "is a placeholder"),
+                                    ("accepted_by", "TBD", "is a placeholder"), ("accepted_by", "<owner>", "is a placeholder"),
+                                    ("accepted_by", "Placeholder", "is a placeholder"),
+                                    ("accepted_on", "", "accepted_on"), ("accepted_on", None, "accepted_on"),
+                                    ("accepted_on", "soon", "not a valid calendar date"),
+                                    ("accepted_on", "2026-02-31", "not a valid calendar date"),
+                                    ("accepted_on", "2026-11-01", "later than today (2026-10-31)")):
+            with self.subTest(field=field, value=value):
+                found = self.over([accepted_entry("R1", 400, **{field: value})], parts=[self.R1])
+                self.assertEqual(sorted((v.rule, v.location.split(" ", 1)[-1]) for v in found),
+                                 [("derated_voltage", "R1"), ("derating_exception", "accepted_exceptions[0]")])
+                entry = self.by_rule(found, "derating_exception")[0]
+                self.assertIn(words, entry.message)
+                self.assertIn("accepted_exceptions[0]", entry.message)
+                self.assertEqual(self.taken, [])
+
+    def test_the_day_of_today_is_signed_and_the_day_after_is_not(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C4: On a synthetic design, an entry whose accepted_by is empty, a placeholder or in angle brackets, or whose accepted_on is empty, not a YYYY-MM-DD date or future; an entry whose position is not a position of the design's schematic; an entry whose accepted_v does not exceed its position's limit; and an entry no position's failure uses each fail as derating_exception naming the entry; a synthetic record passes only a design marked not for manufacture. Honouring an unsigned entry is excluded.
+        self.assertEqual(self.over([accepted_entry("R1", 400, accepted_on="2026-10-31")], parts=[self.R1]), [])
+        self.assertEqual(len(self.over([accepted_entry("R1", 400, accepted_on="2026-11-01")], parts=[self.R1])), 2)
+
+    def test_an_entry_for_no_position_of_the_schematic_fails_as_derating_exception(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C4: On a synthetic design, an entry whose accepted_by is empty, a placeholder or in angle brackets, or whose accepted_on is empty, not a YYYY-MM-DD date or future; an entry whose position is not a position of the design's schematic; an entry whose accepted_v does not exceed its position's limit; and an entry no position's failure uses each fail as derating_exception naming the entry; a synthetic record passes only a design marked not for manufacture. Honouring an unsigned entry is excluded.
+        found = self.over([accepted_entry("R99", 400), accepted_entry("R1", 400)], parts=[self.R1])
+        self.assertEqual([(v.rule, v.location.split(" ", 1)[-1]) for v in found], [("derating_exception", "accepted_exceptions[0]")])
+        self.assertIn("R99", found[0].message)
+        self.assertIn("no position of the design's schematic", found[0].message)
+
+    def test_an_entry_whose_accepted_v_does_not_exceed_the_limit_relaxes_nothing_and_fails(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C4: On a synthetic design, an entry whose accepted_by is empty, a placeholder or in angle brackets, or whose accepted_on is empty, not a YYYY-MM-DD date or future; an entry whose position is not a position of the design's schematic; an entry whose accepted_v does not exceed its position's limit; and an entry no position's failure uses each fail as derating_exception naming the entry; a synthetic record passes only a design marked not for manufacture. Honouring an unsigned entry is excluded.
+        for accepted_v in (400, 500):
+            with self.subTest(accepted_v=accepted_v):
+                found = self.over([accepted_entry("R1", accepted_v)], parts=[("R1", "10k", "C300", "500V", "mains part")])
+                self.assertEqual([(v.rule, v.location.split(" ", 1)[-1]) for v in found], [("derating_exception", "accepted_exceptions[0]")])
+                self.assertIn("relaxes nothing", found[0].message)
+        found = self.over([accepted_entry("R1", 100)], parts=[self.R1])
+        self.assertEqual(sorted(v.rule for v in found), ["derated_voltage", "derating_exception"])
+        self.assertIn("relaxes nothing", self.by_rule(found, "derating_exception")[0].message)
+        self.assertEqual(self.taken, [])
+
+    def test_an_entry_just_above_the_limit_relaxes_something_and_is_not_failed_for_it(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C4: On a synthetic design, an entry whose accepted_by is empty, a placeholder or in angle brackets, or whose accepted_on is empty, not a YYYY-MM-DD date or future; an entry whose position is not a position of the design's schematic; an entry whose accepted_v does not exceed its position's limit; and an entry no position's failure uses each fail as derating_exception naming the entry; a synthetic record passes only a design marked not for manufacture. Honouring an unsigned entry is excluded.
+        found = self.over([accepted_entry("R1", 500.001)], parts=[("R1", "10k", "C300", "500V", "mains part")])
+        self.assertEqual([(v.rule, v.location.split(" ", 1)[-1]) for v in found], [("derating_exception", "accepted_exceptions[0]")])
+        self.assertIn("is used by no failure", found[0].message)
+
+    def test_an_entry_no_failure_uses_is_stale_and_fails_whatever_the_reason_the_position_is_not_failing(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C4: On a synthetic design, an entry whose accepted_by is empty, a placeholder or in angle brackets, or whose accepted_on is empty, not a YYYY-MM-DD date or future; an entry whose position is not a position of the design's schematic; an entry whose accepted_v does not exceed its position's limit; and an entry no position's failure uses each fail as derating_exception naming the entry; a synthetic record passes only a design marked not for manufacture. Honouring an unsigned entry is excluded.
+        for part in (("R1", "10k", "C300", "500V", "mains part"), ("R1", "10k", "C300", None, "none"),
+                     ("R1", "10k", "C300", "16V", "ghost"), ("R1", "10k", "C300", "no figure", "mains part")):
+            with self.subTest(part=part):
+                found = self.over([accepted_entry("R1", 800)], parts=[part])
+                stale = self.by_rule(found, "derating_exception")
+                self.assertEqual(len(stale), 1, [v.line() for v in found])
+                self.assertIn("accepted_exceptions[0]", stale[0].message)
+                self.assertIn("is used by no failure", stale[0].message)
+
+    def test_each_failing_entry_is_one_line_in_index_order_and_a_used_entry_is_not_also_stale(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C4: On a synthetic design, an entry whose accepted_by is empty, a placeholder or in angle brackets, or whose accepted_on is empty, not a YYYY-MM-DD date or future; an entry whose position is not a position of the design's schematic; an entry whose accepted_v does not exceed its position's limit; and an entry no position's failure uses each fail as derating_exception naming the entry; a synthetic record passes only a design marked not for manufacture. Honouring an unsigned entry is excluded.
+        found = self.over([accepted_entry("R9", 400), accepted_entry("R1", 400, accepted_by="unsigned"),
+                           accepted_entry("R2", 400)])
+        locations = [v.location.split(" ", 1)[-1] for v in self.by_rule(found, "derating_exception")]
+        self.assertEqual(locations, ["accepted_exceptions[0]", "accepted_exceptions[1]"])
+        self.assertEqual([v.location.split(" ", 1)[-1] for v in self.by_rule(found, "derated_voltage")], ["R1"])
+        self.assertEqual(len(self.taken), 1)
+
+    def test_the_failures_are_reported_as_lines_naming_the_design_and_the_rule(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C4: On a synthetic design, an entry whose accepted_by is empty, a placeholder or in angle brackets, or whose accepted_on is empty, not a YYYY-MM-DD date or future; an entry whose position is not a position of the design's schematic; an entry whose accepted_v does not exceed its position's limit; and an entry no position's failure uses each fail as derating_exception naming the entry; a synthetic record passes only a design marked not for manufacture. Honouring an unsigned entry is excluded.
+        found = self.by_rule(self.over([accepted_entry("R99", 400)], parts=[self.R1]), "derating_exception")
+        self.assertEqual(len(found), 1)
+        self.assertTrue(found[0].line().startswith(f"VIOLATION | {self.design.project} | derating_exception | "))
+        self.assertIn("derating-policy.yaml accepted_exceptions[0]", found[0].location)
+
+    def test_a_policy_that_failed_its_form_is_not_judged_for_its_entries(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C4: On a synthetic design, an entry whose accepted_by is empty, a placeholder or in angle brackets, or whose accepted_on is empty, not a YYYY-MM-DD date or future; an entry whose position is not a position of the design's schematic; an entry whose accepted_v does not exceed its position's limit; and an entry no position's failure uses each fail as derating_exception naming the entry; a synthetic record passes only a design marked not for manufacture. Honouring an unsigned entry is excluded.
+        found = self.over([accepted_entry("R9", 400), accepted_entry("R9", 400)], parts=[self.R1])
+        self.assertEqual(self.by_rule(found, "derating_exception"), [])
+        self.assertEqual(self.taken, [])
+
+    def test_a_pin_limit_record_that_failed_its_form_does_not_report_every_entry_stale(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C4: On a synthetic design, an entry whose accepted_by is empty, a placeholder or in angle brackets, or whose accepted_on is empty, not a YYYY-MM-DD date or future; an entry whose position is not a position of the design's schematic; an entry whose accepted_v does not exceed its position's limit; and an entry no position's failure uses each fail as derating_exception naming the entry; a synthetic record passes only a design marked not for manufacture. Honouring an unsigned entry is excluded.
+        self.build([self.R1], MAINS_NETS, limits=(), policy={**POLICY, "accepted_exceptions": [accepted_entry("R1", 400)]})
+        self.record("pin-limits.yaml", {"domains": "broken", "parts": [], "synthetic": True})
+        found = self.run_rules(today=TODAY, accepted=[])
+        self.assertEqual(self.by_rule(found, "derating_exception"), [])
+
+    def test_a_record_without_the_key_is_judged_as_before(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C2: On a synthetic design, a position whose working voltage exceeds its limit passes when its entry is signed and its accepted_v is no less than that working voltage, and the check prints an ACCEPTED line with the position, the working voltage, the limit, the accepted figure and the reason; the same position with no entry, or with an accepted_v below its working voltage, fails as derated_voltage. Other positions' shares are out of scope.
+        found = self.over(None)
+        self.assertEqual(sorted(v.location for v in found), [f"{self.design.schematic} R1", f"{self.design.schematic} R2"])
+
+    def test_a_synthetic_record_with_an_entry_honours_it_only_for_a_design_not_for_manufacture(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C4: On a synthetic design, an entry whose accepted_by is empty, a placeholder or in angle brackets, or whose accepted_on is empty, not a YYYY-MM-DD date or future; an entry whose position is not a position of the design's schematic; an entry whose accepted_v does not exceed its position's limit; and an entry no position's failure uses each fail as derating_exception naming the entry; a synthetic record passes only a design marked not for manufacture. Honouring an unsigned entry is excluded.
+        self.build([self.R1], MAINS_NETS, limits=(), policy={**POLICY, "accepted_exceptions": [accepted_entry("R1", 400)]})
+        problems = self.read(board_check.read_derating)
+        self.assertEqual(problems, [])
+        files = [os.path.relpath(os.path.join(d, n), self.root).replace(os.sep, "/") for d, _, names in os.walk(self.root) for n in names]
+        orderable = board_check.read_derating(self.yaml, self.root, board_check.Repository(self.root, files), self.design, False)
+        self.assertEqual([(v.rule, v.location.split(" ", 1)[-1]) for v in orderable], [("derating_record", "synthetic")])
+        self.assertIn("marked synthetic", orderable[0].message)
+        accepted = []
+        found = board_check.voltage_rules(self.design, self.yaml, self.root, board_check.Repository(self.root, files), False, "present",
+                                          board_check.Signed(3.0, 4.0, {"working_voltage": "250 V rms"}), self.nets, self.mains_nets,
+                                          TODAY, accepted)
+        self.assertEqual(accepted, [])
+        self.assertEqual([v.location for v in found if v.rule == "derated_voltage" and v.location.endswith(" R1")], [])
 
 
 class ThePinLimitRule(World):
@@ -1163,6 +1391,27 @@ class TheHardwareNotesCarryAnEntryForEachRule(unittest.TestCase):
         self.assertIn("absolute_min_v", rows["pin_limit"])
         self.assertIn("not in the pin-limit record", rows["pin_limit"])
         self.assertIn("tolerates_driven_unpowered", rows["pin_limit"])
+
+    def test_the_notes_state_the_entry_form_the_accepted_line_the_failures_the_owners_fields_and_the_series_midpoint(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C7: hardware/README.md states the accepted_exceptions entry form, the ACCEPTED line, the derated_voltage and derating_exception failures, that acceptance fields are the owner's and drafts stay unsigned, and that a series midpoint of two hosts is excused by an entry and not by a second rides_on host. Other checks' rows are out of scope.
+        with open(os.path.join(REPO, "hardware", "README.md"), encoding="utf-8") as handle:
+            text = handle.read()
+        bullet = next(line for line in text.splitlines() if line.startswith("- **Owner-accepted derating exceptions** (`derating_exception`)"))
+        for words in ("`accepted_exceptions`", "`position`", "`accepted_v`", "`reason`", "`bounded_by`", "`accepted_by`", "`accepted_on`",
+                      "an explicit empty list is a record that accepts none", "`ACCEPTED` line", "`derated_voltage`", "`derating_exception`",
+                      "`derating_record`", "excuses nothing but its own position", "no position of the design's schematic",
+                      "does not exceed the position's limit", "no position's failure uses it",
+                      "are the owner's", "a drafted entry stays unsigned until the owner signs it",
+                      "series midpoint", "not by a second `rides_on` host", "the owner signs that ground, which the check does not test"):
+            self.assertIn(words, bullet)
+        rows = self.rows()
+        self.assertIn("derating_exception", rows)
+        for words in ("unsigned", "ACCEPTED", "schematic does not place", "is used by no position's failure"):
+            self.assertIn(words, rows["derating_exception"])
+        self.assertIn("`accepted_v` is below its working voltage", rows["derated_voltage"])
+        self.assertIn("accepted_exceptions", rows["derating_record"])
+        record = next(line for line in text.splitlines() if line.startswith("| Derating policy record (`derating-policy.yaml`)"))
+        self.assertIn("an optional `accepted_exceptions`", record)
 
     def test_the_notes_state_the_riding_keys_the_pairing_rule_and_the_floor_for_a_riding_domain(self):
         # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS.C3: The hardware notes state the keys, and every tracked design passes in the build round and nightly.

@@ -99,9 +99,11 @@ def probe_rule(nonce: str, netclass: str = "Mains") -> str:
 #: A value standing in for a signature rather than being one.
 PLACEHOLDERS = {"unsigned", "tbd", "todo", "none", "placeholder"}
 
-#: Generous, because a dense board's zone refill takes real time; a run that
-#: hangs past it fails the design rather than the check waiting forever.
-KICAD_TIMEOUT_S = 900
+#: The most one KiCad run may take. A board with ground and neutral pours and
+#: slots has checks that outlast 900 s, so this is about four times the slowest
+#: full design check measured on one (see the hardware notes); a run that hangs
+#: past it fails the design rather than the check waiting forever.
+KICAD_TIMEOUT_S = 7200
 
 #: The most failures of one kind KiCad's command-line layout check reports, as
 #: KiCad 10.0.7 is observed to do. Past it KiCad reports that many and drops the
@@ -698,6 +700,16 @@ MAINS_TO_MAINS_FIGURES = ("clearance_mm", "terminal_clearance_mm", "creepage_mm"
 EXCEPTION_KEYS = ("pair", "constraint", "between", "accepted_mm", "reason", "bounded_by", "accepted_by", "accepted_on")
 EXCEPTION_PAIRS = ("mains_to_low_voltage", "mains_to_mains")
 EXCEPTION_CONSTRAINTS = ("clearance", "creepage")
+#: The third form of an entry, which excuses the plated-hole spacing between pads of one connector at its own pin pitch: its
+#: pair, the one constraint it names, and its keys, which hold a connector and its pitch where the spacing forms hold between.
+SAME_CONNECTOR_PAIR = "same_connector_pins"
+PLATED_HOLE_CONSTRAINT = "hole_to_hole"
+SAME_CONNECTOR_KEYS = ("pair", "constraint", "connector", "pitch_mm", "accepted_mm", "reason", "bounded_by", "accepted_by",
+                       "accepted_on")
+#: How far from an entry's pitch_mm the distance between two pad centres may stand for the pair to be at that pitch.
+PITCH_TOLERANCE_MM = 0.01
+#: A reference designator as a connector is named in an entry: letters, then digits.
+REFERENCE_DESIGNATOR = re.compile(r"[A-Za-z]+[0-9]+")
 #: The keys inside the inputs a record states, each of which is optional on a record; the rest of the forms the
 #: separation basis decision fixes for them are read in read_inputs.
 INSULATIONS = ("basic", "reinforced")
@@ -1028,14 +1040,17 @@ def read_exceptions(design: Design, record: str, data: dict) -> List[Violation]:
     reading = Reading(design, "separation_basis", record, "accepted_exceptions entry")
     if not reading.listed("accepted_exceptions", data["accepted_exceptions"], "spacing exceptions", empty=True):
         return reading.found
+    connectors: Dict[str, int] = {}
     for index, entry in enumerate(data["accepted_exceptions"]):
         where = f"accepted_exceptions[{index}]"
-        if not reading.mapping(where, entry, EXCEPTION_KEYS, EXCEPTION_KEYS, "an accepted_exceptions entry"):
+        same = isinstance(entry, dict) and entry.get("pair") == SAME_CONNECTOR_PAIR
+        keys = SAME_CONNECTOR_KEYS if same else EXCEPTION_KEYS
+        if not reading.mapping(where, entry, keys, keys, "an accepted_exceptions entry"):
             continue
         if "pair" in entry:
-            reading.one_of(f"{where}.pair", entry["pair"], EXCEPTION_PAIRS)
+            reading.one_of(f"{where}.pair", entry["pair"], EXCEPTION_PAIRS + (SAME_CONNECTOR_PAIR,))
         if "constraint" in entry:
-            reading.one_of(f"{where}.constraint", entry["constraint"], EXCEPTION_CONSTRAINTS)
+            reading.one_of(f"{where}.constraint", entry["constraint"], (PLATED_HOLE_CONSTRAINT,) if same else EXCEPTION_CONSTRAINTS)
         if "between" in entry:
             items = entry["between"]
             if not isinstance(items, list) or len(items) != 2:
@@ -1044,6 +1059,19 @@ def read_exceptions(design: Design, record: str, data: dict) -> List[Violation]:
             else:
                 for position, item in enumerate(items):
                     reading.text(f"{where}.between[{position}]", item)
+        if "connector" in entry:
+            connector = entry["connector"]
+            if not isinstance(connector, str) or not REFERENCE_DESIGNATOR.fullmatch(connector):
+                reading.bad(f"{where}.connector", f"{where}.connector is {connector!r}, where it is the reference designator "
+                                                  "of one connector, letters then digits, as J630")
+            elif connector in connectors:
+                reading.bad(f"{where}.connector", f"{where}.connector names {connector}, which accepted_exceptions[{connectors[connector]}] "
+                                                  "names already; one entry covers every pair of a connector at its pitch, so "
+                                                  "state it once")
+            else:
+                connectors[connector] = index
+        if "pitch_mm" in entry:
+            reading.positive(f"{where}.pitch_mm", entry["pitch_mm"], " of millimetres")
         if "accepted_mm" in entry:
             reading.positive(f"{where}.accepted_mm", entry["accepted_mm"], " of millimetres")
         for key in ("reason", "bounded_by"):
@@ -1965,7 +1993,11 @@ LIFECYCLE_STATUSES = (ACTIVE,) + UNFIT_STATUSES + (NO_SOURCE,)
 DERATING_NAME = "derating-policy.yaml"
 PIN_LIMITS_NAME = "pin-limits.yaml"
 #: The keys of the derating policy record, of each class in it, and of the share each class states for a quantity.
-DERATING_KEYS = ("source", "classes", "synthetic")
+DERATING_KEYS = ("source", "classes", "accepted_exceptions", "synthetic")
+#: The keys of each owner-accepted exception the derating policy record may list.
+DERATING_EXCEPTION_KEYS = ("position", "accepted_v", "reason", "bounded_by", "accepted_by", "accepted_on")
+#: The keys a record may leave out, which the derating policy record states beyond its required ones.
+DERATING_OPTIONAL_KEYS = ("synthetic", "accepted_exceptions")
 CLASS_KEYS = ("class", "voltage", "power", "temperature")
 SHARE_KEYS = ("share", "source")
 #: The keys of the pin-limit record, of each power domain, part, part source and pin in it.
@@ -2205,11 +2237,12 @@ def read_extract(yaml, root: str, repository: Repository, design: Design, today:
 
 
 def read_optional(yaml, root: str, repository: Repository, design: Design, name: str, rule: str, what: str,
-                  keys: Sequence[str], not_for_manufacture: bool) -> Tuple[Optional[dict], Optional[Reading]]:
+                  keys: Sequence[str], not_for_manufacture: bool, optional: Sequence[str] = ("synthetic",)
+                  ) -> Tuple[Optional[dict], Optional[Reading]]:
     """The record `name` the design's folders hold, read in its top-level form; nothing at all where they hold none.
 
-    The record is a mapping with `keys` and no others, its violations in the Reading returned. A design whose
-    folders hold no such record is not failed for it.
+    The record is a mapping with `keys` and no others, `optional` ones aside, its violations in the Reading
+    returned. A design whose folders hold no such record is not failed for it.
     """
     if find_record(root, design.directory, repository.tracked, name) is None:
         return None, None
@@ -2219,7 +2252,7 @@ def read_optional(yaml, root: str, repository: Repository, design: Design, name:
     if data is None:
         return None, reading
     reading.found += synthetic_problem(design, rule, record, data, what, not_for_manufacture)
-    reading.mapping("", data, keys, [key for key in keys if key != "synthetic"])
+    reading.mapping("", data, keys, [key for key in keys if key not in optional])
     return data, reading
 
 
@@ -2233,7 +2266,7 @@ def load_derating(yaml, root: str, repository: Repository, design: Design, not_f
     """The derating policy record's mapping and the violations of its form; no mapping where the design's
     folders hold none or the record is not in its form."""
     data, reading = read_optional(yaml, root, repository, design, DERATING_NAME, "derating_record",
-                                  "derating policy record", DERATING_KEYS, not_for_manufacture)
+                                  "derating policy record", DERATING_KEYS, not_for_manufacture, DERATING_OPTIONAL_KEYS)
     if data is None:
         return None, (reading.found if reading else [])
     if "source" in data:
@@ -2261,6 +2294,21 @@ def load_derating(yaml, root: str, repository: Repository, design: Design, not_f
                     reading.text(f"{at}.source", share["source"])
         reading.distinct("classes", [str(c["class"]).strip() for c in data["classes"]
                                      if isinstance(c, dict) and isinstance(c.get("class"), str)], "the class")
+    if "accepted_exceptions" in data and reading.listed("accepted_exceptions", data["accepted_exceptions"],
+                                                        "owner-accepted exceptions", empty=True):
+        for index, entry in enumerate(data["accepted_exceptions"]):
+            where = f"accepted_exceptions[{index}]"
+            if not reading.mapping(where, entry, DERATING_EXCEPTION_KEYS, DERATING_EXCEPTION_KEYS,
+                                   "an accepted_exceptions entry"):
+                continue
+            for key in ("position", "reason", "bounded_by"):
+                if key in entry:
+                    reading.text(f"{where}.{key}", entry[key])
+            if "accepted_v" in entry:
+                reading.positive(f"{where}.accepted_v", entry["accepted_v"], " of volts")
+        reading.distinct("accepted_exceptions", [entry["position"].strip() for entry in data["accepted_exceptions"]
+                                                 if isinstance(entry, dict) and isinstance(entry.get("position"), str)
+                                                 and entry["position"].strip()], "the position")
     return (None if reading.found else data), reading.found
 
 
@@ -2745,12 +2793,18 @@ def working_voltage(volts: NetVoltages, nets: List[str]) -> float:
 
 
 def voltage_rules(design: Design, yaml, root: str, repository: Repository, not_for_manufacture: bool, mains: Optional[str],
-                  signed: Optional[Signed], nets: Dict[str, List[PinNode]], mains_nets: Set[str]) -> List[Violation]:
+                  signed: Optional[Signed], nets: Dict[str, List[PinNode]], mains_nets: Set[str],
+                  today: Optional[datetime.date] = None, accepted: Optional[List[str]] = None) -> List[Violation]:
     """The derated-voltage rule and the pin-limit rule, which share one reading of each net's voltage.
 
     Both read the design's files and the records it is held to: the parts
     specification, the derating policy and the pin-limit record. A form the
     readers have already failed is not judged again.
+
+    A position over its limit passes on a signed entry of the derating policy's
+    accepted_exceptions that accepts at least its working voltage, which goes
+    into `accepted` as an ACCEPTED line; an entry that is unsigned, names no
+    position of the schematic, relaxes nothing or is used by no failure fails.
     """
     found: List[Violation] = []
     schematic = design.schematic
@@ -2804,6 +2858,15 @@ def voltage_rules(design: Design, yaml, root: str, repository: Repository, not_f
     volts = NetVoltages(nets, domains, mains_nets, joiners, listed, rides)
 
     # The derated-voltage rule.
+    day = today if today is not None else datetime.date.today()
+    exceptions: Dict[str, Tuple[int, dict]] = {}
+    if policy is not None:
+        for index, entry in enumerate(policy.get("accepted_exceptions") or []):
+            exceptions[entry["position"].strip()] = (index, entry)
+    used: Set[str] = set()
+    limits_seen: Dict[str, float] = {}
+    reported: Set[str] = set()
+    exception_at = f"{policy_path}" if policy_path else DERATING_NAME
     if stated is not None:
         classes: Optional[Dict[str, float]] = None
         if policy_path is None:
@@ -2860,10 +2923,50 @@ def voltage_rules(design: Design, yaml, root: str, repository: Repository, not_f
                 continue
             working = working_voltage(volts, reached)
             limit = classes[named] * peaks[0]
+            limits_seen[ref] = limit
             if exceeds(working, limit):
-                fail("derated_voltage", where,
-                     f"the position {ref} sees a working voltage of {working:g} V across {', '.join(reached)}, above "
-                     f"{limit:g} V, the class '{named}' voltage share {classes[named]:g} times its rating peak {peaks[0]:g} V")
+                message = (f"the position {ref} sees a working voltage of {working:g} V across {', '.join(reached)}, above "
+                           f"{limit:g} V, the class '{named}' voltage share {classes[named]:g} times its rating peak "
+                           f"{peaks[0]:g} V")
+                held = exceptions.get(ref)
+                if held is None:
+                    fail("derated_voltage", where, message)
+                    continue
+                index, entry = held
+                used.add(ref)
+                label = f"accepted_exceptions[{index}]"
+                if entry_unsigned(entry, None, day) is not None or not exceeds(entry["accepted_v"], limit):
+                    fail("derated_voltage", where, message + f"; {label} excuses nothing")
+                elif exceeds(working, entry["accepted_v"]):
+                    fail("derated_voltage", where, message + f"; {label} accepts only {entry['accepted_v']:g} V, below "
+                         "the working voltage")
+                elif accepted is not None:
+                    accepted.append("ACCEPTED | " + " | ".join(clean(field) for field in (
+                        design.project, "derating_exception", f"{exception_at} {label}",
+                        f"the position {ref} sees a working voltage of {working:g} V, above its limit of {limit:g} V, "
+                        f"and the owner accepts up to {entry['accepted_v']:g} V: {entry['reason'].strip()} "
+                        f"(bounded by {entry['bounded_by'].strip()}; accepted by {entry['accepted_by'].strip()} "
+                        f"on {iso_date(entry['accepted_on']).isoformat()})")))
+
+    # An entry of the derating policy that nothing uses, or that is no acceptance.
+    if policy is not None and stated is not None and not limits_form:
+        for ref, (index, entry) in sorted(exceptions.items(), key=lambda item: item[1][0]):
+            label = f"accepted_exceptions[{index}]"
+            at = f"{exception_at} {label}"
+            unsigned = entry_unsigned(entry, None, day)
+            if unsigned is not None:
+                fail("derating_exception", at, f"{label} for {ref}: {unsigned}; the owner signs an exception, and an "
+                                               "unsigned draft excuses nothing")
+            elif ref not in placed:
+                fail("derating_exception", at, f"{label} names {ref}, which is no position of the design's schematic; "
+                                               "name a position the schematic places, or remove the exception")
+            elif ref in limits_seen and not exceeds(entry["accepted_v"], limits_seen[ref]):
+                fail("derating_exception", at, f"{label} accepts {entry['accepted_v']:g} V for {ref}, which does not "
+                                               f"exceed its limit of {limits_seen[ref]:g} V, so it relaxes nothing; "
+                                               "remove the exception")
+            elif ref not in used:
+                fail("derating_exception", at, f"{label} is used by no failure: the rule reports no working voltage over "
+                                               f"the limit for {ref}; remove the exception, or restore the stress it excused")
 
     # The mains domain.
     if mains == "present" and not limits_form:
@@ -6444,6 +6547,10 @@ RULE_FIGURE = re.compile(r"\(rule '([^']*)' (?:clearance|creepage) ([0-9.]+) mm"
 #: A pad as KiCad's report describes it, and a net as it writes one between square brackets.
 REPORTED_PAD = re.compile(r"\bpad (\S+) (?:\[.*\] )?of (\S+)\s*(?:@|$)")
 REPORTED_NET = re.compile(r"\[(.*)\]")
+#: The name of the board's plated-hole spacing rule in its rules file, and KiCad's own text of that rule and its figure in a
+#: hole_to_hole violation.
+PLATED_HOLE_RULE = "Plated hole spacing"
+HOLE_RULE_FIGURE = re.compile(r"\(rule '([^']*)' min ([0-9.]+) mm")
 
 
 class Shortfall:
@@ -6469,6 +6576,17 @@ class Shortfall:
         found = REPORTED_NET.search(text)
         return found is not None and found.group(1) == token
 
+    def pads(self) -> Optional[List[Tuple[str, float, float]]]:
+        """The pad each of the two items is, as (reference designator, x, y) in mm from KiCad's own report, or None where an item is no pad."""
+        found = []
+        for item in self.items:
+            pad = REPORTED_PAD.search(item.get("description", ""))
+            where = item.get("pos") or {}
+            if pad is None or not all(isinstance(where.get(axis), (int, float)) for axis in ("x", "y")):
+                return None
+            found.append((pad.group(2), float(where["x"]), float(where["y"])))
+        return found
+
     def lies_between(self, tokens: List[Tuple[str, bool]]) -> bool:
         if len(self.texts) != 2:
             return False
@@ -6492,6 +6610,11 @@ class Judged:
 def reported_shortfalls(violations: Sequence[dict]) -> List[Shortfall]:
     found = []
     for entry in violations:
+        if entry.get("type") == PLATED_HOLE_CONSTRAINT:
+            reported = HOLE_RULE_FIGURE.search(entry.get("description", ""))
+            if reported is not None and reported.group(1) == PLATED_HOLE_RULE and len(entry.get("items") or []) == 2:
+                found.append(Shortfall(entry, SAME_CONNECTOR_PAIR, float(reported.group(2)), entry["items"]))
+            continue
         if entry.get("type") not in EXCEPTION_CONSTRAINTS:
             continue
         reported = RULE_FIGURE.search(entry.get("description", ""))
@@ -6517,6 +6640,82 @@ def entry_unsigned(entry: dict, record_day: Optional[datetime.date], today: date
         return (f"accepted_on {day.isoformat()} is later than the record's own accepted_on {record_day.isoformat()}, which "
                 "covers the exceptions it holds; the record needs a fresh acceptance")
     return None
+
+
+def plated_pad_centres(footprint: list) -> List[Tuple[float, float]]:
+    """The centre of each plated through-hole pad of a footprint as the layout places it, in mm."""
+    name = board_geometry.reference(footprint)
+    what = f"a pad of the footprint {name or '?'}"
+    at = board_geometry.placement(footprint, what)
+    return [board_geometry.placed(board_geometry.xy(sexpr.child(node, "at"), what), at)
+            for node in sexpr.children(footprint, "pad") if len(node) > 2 and str(node[2]) == "thru_hole"]
+
+
+def judge_same_connector(judged: Judged, index: int, entry: dict, record: str, design: Design, tree: list,
+                         shortfalls: Sequence[Shortfall]) -> None:
+    """One same_connector_pins entry judged against the plated-hole shortfalls the layout rule check reported.
+
+    A shortfall between two pads of the entry's connector whose centres, as
+    KiCad's report places them, stand pitch_mm apart is accepted when the
+    distance KiCad reported between the hole edges is no less than accepted_mm
+    and failed, naming the entry, when it is less. The entry fails when the
+    layout lacks its connector or places it without two plated pads pitch_mm
+    apart, when it is no less than the figure the plated-hole rule held for the
+    shortfalls it covers, or when it covers none that another entry has not taken.
+    """
+    where = f"{record} accepted_exceptions[{index}]"
+    label = f"accepted_exceptions[{index}]"
+    connector, pitch, accepted = entry["connector"], float(entry["pitch_mm"]), float(entry["accepted_mm"])
+
+    def fail(message: str) -> None:
+        judged.violations.append(Violation(design.project, "spacing_exception", where, f"{label} {message}"))
+
+    def at_pitch(one: Tuple[float, float], other: Tuple[float, float]) -> bool:
+        return abs(math.dist(one, other) - pitch) <= PITCH_TOLERANCE_MM + 1e-9
+
+    footprint = board_footprints(tree).get(connector)
+    if footprint is None:
+        fail(f"names the connector {connector}, which the layout lacks; name a connector of the layout, or remove the entry")
+        return
+    centres = plated_pad_centres(footprint)
+    if not any(at_pitch(one, other) for position, one in enumerate(centres) for other in centres[position + 1:]):
+        fail(f"names the connector {connector}, which the layout places without two plated pads {pitch:g} mm apart; correct "
+             "pitch_mm, or remove the entry")
+        return
+    covered = []
+    for found in shortfalls:
+        if found.pair != SAME_CONNECTOR_PAIR or id(found.entry) in judged.consumed:
+            continue
+        pads = found.pads()
+        if pads is not None and all(pad[0] == connector for pad in pads) and at_pitch(pads[0][1:], pads[1][1:]):
+            covered.append(found)
+    if not covered:
+        fail(f"covers the plated holes of {connector} at {pitch:g} mm pitch, where the layout rule check reports no shortfall "
+             "of them; remove the exception, or restore the geometry it excused")
+        return
+    figure = max(found.figure for found in covered)
+    if accepted >= figure:
+        fail(f"accepts {accepted:g} mm, which is not below the {figure:g} mm the plated-hole rule holds, so it relaxes nothing; "
+             "accept a smaller distance, or remove it")
+        return
+    seen: Set[tuple] = set()
+    for found in covered:
+        judged.consumed.add(id(found.entry))
+        if found.key() in seen:
+            continue
+        seen.add(found.key())
+        names = " and ".join(f"{connector}.{REPORTED_PAD.search(text).group(1)}" for text in found.texts)
+        if found.measured >= accepted:
+            judged.accepted.append(
+                "ACCEPTED | " + " | ".join(clean(field) for field in (
+                    design.project, "spacing_exception", where,
+                    f"accepted exception: plated-hole spacing of connector {connector} at {pitch:g} mm pitch between {names} "
+                    f"({'; '.join(found.texts)}) measures {found.measured:g} mm, accepted down to {accepted:g} mm against the "
+                    f"plated-hole rule's {found.figure:g} mm; reason: {entry['reason']}; bounded by: {entry['bounded_by']}")))
+        else:
+            fail(f"accepts the plated-hole spacing of connector {connector} at {pitch:g} mm pitch between {names} down to "
+                 f"{accepted:g} mm, and the layout leaves {found.measured:g} mm ({'; '.join(found.texts)}), below it; move the "
+                 "holes apart, or the owner accepts a smaller distance")
 
 
 def judge_exceptions(design: Design, record: str, signed: Signed, violations: Sequence[dict], tree: list,
@@ -6549,6 +6748,9 @@ def judge_exceptions(design: Design, record: str, signed: Signed, violations: Se
         unsigned = entry_unsigned(entry, record_day, today)
         if unsigned is not None:
             fail(index, f"is not an acceptance, so it excuses nothing: {unsigned}")
+            continue
+        if entry["pair"] == SAME_CONNECTOR_PAIR:
+            judge_same_connector(judged, index, entry, record, design, tree, shortfalls)
             continue
         tokens = [(token, token in pads) for token in entry["between"]]
         absent = [token for token, as_pad in tokens if not as_pad and token not in nets]
@@ -6598,7 +6800,7 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
                  accepted: Optional[List[str]] = None) -> List[Violation]:
     """Every violation of one design. `read`, when given, receives each measured rule's figure as the design sets it,
     as (item and what it measures, the text variable, the figure with its unit); `accepted`, the report line of each
-    spacing exception the owner signed that the layout uses."""
+    spacing exception, and of each derating exception, the owner signed that the design uses."""
     root = repository.root
     found = list(already)
     if any(v.rule == "design_discovery" for v in already):
@@ -6781,7 +6983,7 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
             if netlist is not None:
                 found += tool_named_nets(design, netlist)
                 found += voltage_rules(design, yaml, root, repository, not_for_manufacture, mains, signed,
-                                       schematic_pin_nodes(parsed), schematic_mains(netlist))
+                                       schematic_pin_nodes(parsed), schematic_mains(netlist), today, accepted)
             if netlist is None:
                 found.append(Violation(design.project, "design_unreadable", design.schematic,
                                        f"the schematic's net classes cannot be read from KiCad's netlist: {why}"))

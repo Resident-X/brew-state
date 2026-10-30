@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS-C4-TEST-19
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C4
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-30T14:34:37.800709Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_spacing_exceptions.py::AnEntryThatIsNoAcceptanceFailsClosedForTheSameConnector.test_a_hole_shortfall_between_other_than_two_items_is_left_an_ordinary_violation
+  artifact_version: 0d81a2bb8909fa87f20d39299622419605289c88
+attested_by: crun-3a91a698bf08c83d
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C4
+    type: satisfies

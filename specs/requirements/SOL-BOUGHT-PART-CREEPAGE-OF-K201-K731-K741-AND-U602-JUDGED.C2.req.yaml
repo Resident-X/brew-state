@@ -2,11 +2,11 @@ id: SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-JUDGED.C2
 type: criterion
 title: Each of the four parts meets the signed figures on a published figure, has an accepted exception, or is replaced
 status: active
-version: 2
+version: 3
 measurement_type: binary
 verification: test
 text: |
-  For each of K201, K731, K741 and U602, the committed record and schematic show exactly one of three states, and the check passes the layout on it: the part's published creepage and clearance meet 10.0 mm and 3.0 mm and it has no entry; or it has an accepted_exceptions entry for the one pair of pads it falls short on, with accepted_mm no greater than the published figure, a stated ground and a bounding element; or the part is replaced by one in the first or second state. A figure the maker does not publish counts as absent: the part is in none of the three states until the owner has decided and the decision is recorded. The owner's signature of the record is out of scope here and belongs to the acceptance leaf.
+  For each of K201, K731, K741 and U602, the committed record and division record show exactly one of three states: the part's published creepage and clearance meet 10.0 mm and 3.0 mm; or the part's board pad gaps are what the check measures and the pad pairs that fall short each carry an accepted_exceptions entry in the check's form, with accepted_mm no greater than the measured gap, a stated ground and a bounding element, left unsigned; or the part is replaced by one in the first or second state. A figure inside the part that the board's pad gaps do not measure (the relays' published creepage over 8 mm, their clearance and U602's creepage and clearance where the maker publishes none) is recorded in the division record against the signed figure and counts as absent where unpublished: it is carried by the owner's recorded acceptance of bought-part creepage and put to the owner as an open decision to accept, change the part or find a published figure, and is never excused by an entry the check cannot judge. The owner's signature of the record is out of scope here and belongs to the acceptance leaf.
 links:
   - target: SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-JUDGED
     type: criterion-of

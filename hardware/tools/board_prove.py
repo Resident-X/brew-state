@@ -253,6 +253,81 @@ CREEPAGE_SHORTFALL = both(records(("mains_to_low_voltage:\n  clearance_mm: 3.0\n
                           lambda seed: seed.replace(".kicad_dru", "(constraint creepage (min 4mm))", "(constraint creepage (min 13.5mm))"))
 
 
+def connector_entry(connector: str, pitch_mm: float, accepted_mm: float, by: str = "maintainer", on: str = "2026-10-12") -> str:
+    """One same_connector_pins entry of the separation basis record's accepted_exceptions, written as the synthetic record writes them."""
+    return (f"  - pair: same_connector_pins\n    constraint: hole_to_hole\n    connector: {connector}\n"
+            f"    pitch_mm: {pitch_mm:g}\n    accepted_mm: {accepted_mm:g}\n"
+            "    reason: synthetic -- slow signals only, a ground chosen to exercise the check\n"
+            "    bounded_by: synthetic -- an independent element chosen to exercise the check\n"
+            f"    accepted_by: {by}\n    accepted_on: \"{on}\"\n")
+
+
+def plated_hole_rule(figure: float):
+    """The board's plated-hole spacing rule, as the layout practice's item writes it, held to `figure` millimetres."""
+    def seed_it(seed: Seed) -> None:
+        seed.write(".kicad_dru", seed.read(".kicad_dru") + f'(rule "Plated hole spacing"\n\t(condition "A.Type == \'Pad\' && '
+                   f"A.Pad_Type == 'Through-hole' && B.Type == 'Pad' && B.Pad_Type == 'Through-hole'\")\n"
+                   f"\t(constraint hole_to_hole (min {figure:g}mm)))\n")
+    return seed_it
+
+
+def two_mm_header(*extra: Tuple[str, float, float]):
+    """J2 made a header at 2.0 mm pitch: its pad 2 moves to 2.0 mm from pad 1, and each of `extra`, a pad name and its
+    position from pad 1 in mm, is a further pad on no net, so that a second row stands to the left of the first.
+
+    The footprint is a library item of its own in the copy, drawn without silkscreen, and the design's
+    schematic and parts record name it, so the copy shows KiCad nothing but the hole spacing.
+    """
+    old = "PinHeader_1x02_P2.54mm_Vertical"
+    new = "PinHeader_1x02_P2.00mm_Vertical" + ("_Rows" if extra else "")
+
+    def reshape(footprint: list) -> None:
+        pad = [node for node in sexpr.children(footprint, "pad") if node[1] == "2"][0]
+        sexpr.child(pad, "at")[2] = "2.0"
+        for name, x, y in extra:
+            added = copy.deepcopy(pad)
+            added[1] = sexpr.Quoted(name)
+            sexpr.child(added, "at")[1:] = [f"{x:g}", f"{y:g}"]
+            if sexpr.child(added, "net") is not None:
+                added.remove(sexpr.child(added, "net"))
+            if sexpr.child(added, "uuid") is not None:
+                sexpr.child(added, "uuid")[1] = sexpr.Quoted(f"0b0e5c1a-0000-4000-8000-0000000003{int(name):02d}")
+            footprint.insert(footprint.index(pad) + 1, added)
+        for drawn in sexpr.children(footprint, "fp_line"):
+            if str(sexpr.child(drawn, "layer")[1]) == "F.SilkS":
+                footprint.remove(drawn)
+
+    def seed_it(seed: Seed) -> None:
+        library = sexpr.parse_one(seed.read(f"proof.pretty/{old}.kicad_mod"))
+        reshape(library)
+        library[1] = sexpr.Quoted(new)
+        for node in sexpr.children(library, "property"):
+            if node[1] == "Value":
+                node[2] = sexpr.Quoted(new)
+        seed.write(f"proof.pretty/{new}.kicad_mod", sexpr.dump(library) + "\n")
+
+        def edit(tree: list) -> None:
+            for footprint in sexpr.children(tree, "footprint"):
+                if [node for node in sexpr.children(footprint, "property") if node[1] == "Reference"][0][2] == "J2":
+                    reshape(footprint)
+                    footprint[1] = sexpr.Quoted(f"proof:{new}")
+        seed.layout(edit)
+        for suffix, anchor, was, now in ((".kicad_sch", '(property "Reference" "J2"', f'"proof:{old}"', f'"proof:{new}"'),
+                                         ("parts-specification.yaml", "reference: J2", old, new)):
+            text = seed.read(suffix)
+            at = text.index(anchor)
+            seed.write(suffix, text[:at] + text[at:].replace(was, now, 1))
+    return seed_it
+
+
+#: J2 as a 2.0 mm header stands its two pads 1.0 mm apart between hole edges, with U1's pad 1 and R2's pad 1 at 1.1 mm: a plated-hole
+#: rule of 1.05 mm leaves J2's pair the one shortfall, and a rule of 1.2 mm leaves the other pair a shortfall too.
+HEADER_SHORTFALL = both(two_mm_header(), plated_hole_rule(1.05))
+HEADER_AND_OTHER_PARTS = both(two_mm_header(), plated_hole_rule(1.2))
+#: A second row of two pads 2.0 mm to the left, the one beside pad 4 a further 0.1 mm out, so that pad 4 stands 2.1 mm from pad 2.
+TWO_ROW_SHORTFALL = both(two_mm_header(("3", -2.0, 0.0), ("4", -2.1, 2.0)), plated_hole_rule(1.2))
+
+
 def pin_record(old: str, new: str):
     return lambda seed: seed.replace("pin-allocation.yaml", old, new)
 
@@ -423,6 +498,39 @@ def resistor_over_its_rating(seed: Seed) -> None:
     parts('    rating: "0.25W"\n    lcsc: "C9000002"\n    class: none',
           '    rating: "100V"\n    lcsc: "C9000002"\n    class: resistor')(seed)
     set_field("R1", "Rating", "100V")(seed)
+
+
+def resistor_rated(volts: int):
+    """R1, across the mains pair, made a resistor of class resistor rated `volts` V in the record and the schematic."""
+    def seed_it(seed: Seed) -> None:
+        parts('    rating: "0.25W"\n    lcsc: "C9000002"\n    class: none',
+              f'    rating: "{volts}V"\n    lcsc: "C9000002"\n    class: resistor')(seed)
+        set_field("R1", "Rating", f"{volts}V")(seed)
+    return seed_it
+
+
+def second_resistor_over_its_rating(seed: Seed) -> None:
+    """R2 made a resistor of class resistor rated 2 V in the record and the schematic, beside R1 rated 100 V."""
+    parts('    rating: "0.25W"\n    lcsc: "C9000004"\n    class: none',
+          '    rating: "2V"\n    lcsc: "C9000004"\n    class: resistor')(seed)
+    set_field("R2", "Rating", "2V")(seed)
+    resistor_over_its_rating(seed)
+
+
+def derating_exceptions(*entries: str):
+    """The derating policy given the accepted_exceptions list of `entries`, each written as list items of its keys."""
+    return derating("synthetic: true\n", "accepted_exceptions:" + ("\n" + "".join(entries) if entries else " []\n") + "synthetic: true\n")
+
+
+def derating_entry(position: str, accepted_v: float, accepted_by: str = "proof-owner", accepted_on: str = "2026-10-01") -> str:
+    """One synthetic accepted_exceptions entry; its signature is a made-up name and a past date, nobody's own."""
+    return (f"  - position: {position}\n    accepted_v: {accepted_v}\n    reason: a synthetic ground, chosen to exercise the check\n"
+            f"    bounded_by: a synthetic element, which is no real part\n    accepted_by: {accepted_by}\n    accepted_on: {accepted_on}\n")
+
+
+def seeded(*edits):
+    """Each of `edits` applied in turn to the proof design's copy."""
+    return lambda seed: [edit(seed) for edit in edits] and None
 
 
 NEUTRAL_RAIL = "    rail: MAINS_N\n    highest_voltage_v: 353.5533906\n"
@@ -1577,6 +1685,23 @@ FAULTS: List[tuple] = [
     ("an exception that no shortfall uses", "accepted exceptions: an entry no reported shortfall uses fails", "spacing_exception",
      "where the layout rule check reports no shortfall",
      exceptions(exception_entry("mains_to_mains", "clearance", ("J1.1", "J1.2"), 0.5))),
+    # Accepted plated-hole spacing exceptions, between pads of one connector at its own pitch
+    ("a same-connector entry lacking its pitch", "same-connector exceptions: an entry of the form without a key fails naming it", "separation_basis",
+     "lacks pitch_mm", exceptions(connector_entry("J2", 2, 1.0).replace("    pitch_mm: 2\n", ""))),
+    ("a plated-hole shortfall at another centre spacing of the entry's connector", "same-connector exceptions: only pads at the entry's pitch are excused", "hole_to_hole",
+     "pad 4 [<no net>] of J2", both(TWO_ROW_SHORTFALL, exceptions(connector_entry("J2", 2, 1.0)))),
+    ("a plated-hole shortfall between two different parts", "same-connector exceptions: pads of two parts are never excused", "hole_to_hole",
+     "pad 1 [/LV_A] of U1", both(HEADER_AND_OTHER_PARTS, exceptions(connector_entry("J2", 2, 1.0)))),
+    ("a plated-hole shortfall below the distance its connector's entry accepts", "same-connector exceptions: a shortfall below its entry's accepted distance fails", "spacing_exception",
+     "down to 1.1 mm, and the layout leaves 1 mm", both(HEADER_AND_OTHER_PARTS, exceptions(connector_entry("J2", 2, 1.1)))),
+    ("a same-connector entry that is unsigned", "same-connector exceptions: an entry whose acceptance is a placeholder excuses nothing", "spacing_exception",
+     "accepted_by 'unsigned' is a placeholder", both(HEADER_SHORTFALL, exceptions(connector_entry("J2", 2, 1.0, by="unsigned")))),
+    ("a same-connector entry relaxing nothing", "same-connector exceptions: an entry accepting no less than the rule's figure fails", "spacing_exception",
+     "relaxes nothing", both(HEADER_AND_OTHER_PARTS, exceptions(connector_entry("J2", 2, 1.2)))),
+    ("a same-connector entry for a connector the layout lacks", "same-connector exceptions: an entry for an absent connector fails", "spacing_exception",
+     "which the layout lacks", both(HEADER_SHORTFALL, exceptions(connector_entry("J9", 2, 1.0)))),
+    ("a same-connector entry that no shortfall uses", "same-connector exceptions: an entry no reported shortfall uses fails", "spacing_exception",
+     "where the layout rule check reports no shortfall", both(plated_hole_rule(0.5), exceptions(connector_entry("J2", 2.54, 0.4)))),
     # Connectivity
     ("a channel's net moved to the other controller pin", "connectivity: a net must reach the controller pin its channel names", "connectivity", "net /LV_A reaches controller pin PA1, where the record names controller pin PA0", swap_labels(("LV_A", "96.52 76.2"), ("LV_B", "96.52 78.74"))),
     ("a channel's net moved to the other pin of its connector", "connectivity: a net must reach the connector pin its channel names", "connectivity", "net /LV_A reaches connector pin J2 pin 2, where the record names connector pin J2 pin 1", swap_labels(("LV_A", "45.72 76.2"), ("LV_B", "45.72 78.74"))),
@@ -1775,6 +1900,26 @@ FAULTS: List[tuple] = [
      "the domain mains_neutral states highest_voltage_v 353.553, which differs from 176.777", neutral_domain("    rides_on: mains_line\n    fraction: 0.5\n"), KEYS_TARGET),
     ("a riding key misspelt", "riding domains: any other unknown key fails the pin-limit record", "pin_limits_record",
      "holds the key 'ride_on'", neutral_domain("    ride_on: mains_line\n"), KEYS_TARGET),
+    ("an over-limit part with no accepted exception", "derating exceptions: a position over its limit with no entry fails as derated_voltage", "derated_voltage",
+     "the position R1 sees a working voltage of 353.553 V", seeded(resistor_over_its_rating, derating_exceptions()), KEYS_TARGET),
+    ("an accepted exception below the working voltage", "derating exceptions: an entry whose accepted_v is below the working voltage leaves the position failing as derated_voltage", "derated_voltage",
+     "accepted_exceptions[0] accepts only 300 V, below the working voltage",
+     seeded(resistor_over_its_rating, derating_exceptions(derating_entry("R1", 300))), KEYS_TARGET),
+    ("an unsigned accepted exception", "derating exceptions: an entry whose accepted_by is a placeholder fails as derating_exception", "derating_exception",
+     "accepted_exceptions[0] for R1: accepted_by 'unsigned' is a placeholder",
+     seeded(resistor_over_its_rating, derating_exceptions(derating_entry("R1", 400, accepted_by="unsigned"))), KEYS_TARGET),
+    ("an accepted exception for no position of the schematic", "derating exceptions: an entry whose position is no position of the schematic fails as derating_exception", "derating_exception",
+     "accepted_exceptions[0] names R99, which is no position of the design's schematic",
+     seeded(resistor_over_its_rating, derating_exceptions(derating_entry("R99", 400))), KEYS_TARGET),
+    ("an accepted exception for a part within its limit", "derating exceptions: an entry whose accepted_v does not exceed the position's limit fails as derating_exception", "derating_exception",
+     "accepted_exceptions[0] accepts 500 V for R1, which does not exceed its limit of 800 V, so it relaxes nothing",
+     seeded(resistor_rated(1000), derating_exceptions(derating_entry("R1", 500))), KEYS_TARGET),
+    ("an accepted exception no failure uses", "derating exceptions: an entry no position's failure uses fails as derating_exception", "derating_exception",
+     "accepted_exceptions[0] is used by no failure: the rule reports no working voltage over the limit for R1",
+     seeded(resistor_rated(1000), derating_exceptions(derating_entry("R1", 900))), KEYS_TARGET),
+    ("an accepted exception for one part beside a second over-limit part", "derating exceptions: an entry excuses only its own position, so a second over-limit part still fails as derated_voltage", "derated_voltage",
+     "the position R2 sees a working voltage of",
+     seeded(second_resistor_over_its_rating, derating_exceptions(derating_entry("R1", 400))), KEYS_TARGET, "the position R1 sees"),
     ("a position with no class", "derated voltage: every position of the parts specification record carries a class", "derated_voltage",
      "the position J1 has no class", parts('    lcsc: "C9000001"\n    class: none', '    lcsc: "C9000001"'), KEYS_TARGET),
     ("a position naming a class the policy lacks", "derated voltage: a position's class is one the derating policy lists, or none", "derated_voltage",

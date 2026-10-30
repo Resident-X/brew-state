@@ -1,0 +1,16 @@
+id: EV-SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-JUDGED-C2-TEST-3
+type: evidence
+title: test evidence for SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-JUDGED.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-30T17:19:39.435872Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_separation_basis_record.py::BoughtPartsJudged.test_the_four_u602_pad_pairs_are_unsigned_creepage_entries_stating_the_gap_is_the_boards
+  artifact_version: af79d516a34cd82a46af892973cbc190397bc45d
+attested_by: crun-981c321b7b55b5c7
+links:
+  - target: SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-JUDGED.C2
+    type: satisfies

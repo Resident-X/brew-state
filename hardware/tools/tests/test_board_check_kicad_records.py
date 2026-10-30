@@ -290,6 +290,84 @@ class TheRecordKeysProofDesignPasses(unittest.TestCase):
 
 
 
+
+class TheDeratingExceptionRules(Proved):
+    """Each failure of the owner-accepted derating exceptions fails on a fault seeded for it in a throwaway copy of a proof design."""
+
+    #: The seeded faults the proof must hold, each with the rule that must report it and the words its line must carry.
+    FAULTS = {
+        "an over-limit part with no accepted exception": ("derated_voltage", ("the position R1 sees a working voltage of 353.553 V",)),
+        "an accepted exception below the working voltage": ("derated_voltage", ("the position R1 sees", "accepted_exceptions[0] accepts only 300 V")),
+        "an unsigned accepted exception": ("derating_exception", ("accepted_exceptions[0] for R1", "is a placeholder")),
+        "an accepted exception for no position of the schematic": ("derating_exception", ("names R99", "no position of the design's schematic")),
+        "an accepted exception for a part within its limit": ("derating_exception", ("accepts 500 V for R1", "relaxes nothing")),
+        "an accepted exception no failure uses": ("derating_exception", ("is used by no failure",)),
+        "an accepted exception for one part beside a second over-limit part": ("derated_voltage", ("the position R2 sees",)),
+    }
+
+    def test_each_new_failure_is_caught_on_a_seeded_fault_under_the_rule_named_for_it(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C5: The on-demand proof seeds into a copy of the proof design an over-limit part with no entry, an entry below the working voltage, an unsigned entry, an entry for no position, an entry for a part within its limit, an entry no failure uses, and an entry for one part beside a second over-limit part, and requires each to fail under its rule, the design itself passing first. Faults of the other rules are out of scope.
+        self.assertCaught(*self.FAULTS)
+        found = outcomes()
+        for name, (rule, words) in self.FAULTS.items():
+            with self.subTest(fault=name):
+                fields = found[name][1].split(" | ")
+                self.assertEqual((fields[1], fields[2]), (board_prove.KEYS_TARGET[0] + "/" + board_prove.KEYS_TARGET[1] + ".kicad_pro", rule))
+                for word in words:
+                    self.assertIn(word, found[name][1])
+                self.assertEqual([entry[2] for entry in board_prove.FAULTS if entry[0] == name], [rule])
+
+    def test_the_seeded_row_for_a_second_part_leaves_the_excused_part_alone(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C5: The on-demand proof seeds into a copy of the proof design an over-limit part with no entry, an entry below the working voltage, an unsigned entry, an entry for no position, an entry for a part within its limit, an entry no failure uses, and an entry for one part beside a second over-limit part, and requires each to fail under its rule, the design itself passing first. Faults of the other rules are out of scope.
+        caught, evidence = outcomes()["an accepted exception for one part beside a second over-limit part"]
+        self.assertTrue(caught, evidence)
+        self.assertNotIn("the position R1 sees", evidence)
+        fault = next(entry for entry in board_prove.FAULTS if entry[0].endswith("beside a second over-limit part"))
+        caught, evidence = board_prove.prove((*fault[:6], "the position R2 sees"), KICAD_CLI)
+        self.assertFalse(caught)
+        self.assertIn("must leave alone", evidence)
+
+
+class TheDeratingExceptionRowsOfTheProof(unittest.TestCase):
+    """The rows the proof holds for the owner-accepted derating exceptions, read without running it."""
+
+    def test_the_proof_holds_a_row_for_each_of_the_seven_faults_and_leaves_the_other_rules_their_rows(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C5: The on-demand proof seeds into a copy of the proof design an over-limit part with no entry, an entry below the working voltage, an unsigned entry, an entry for no position, an entry for a part within its limit, an entry no failure uses, and an entry for one part beside a second over-limit part, and requires each to fail under its rule, the design itself passing first. Faults of the other rules are out of scope.
+        rows = [fault for fault in board_prove.FAULTS if fault[1].startswith("derating exceptions:")]
+        self.assertEqual(sorted(fault[0] for fault in rows), sorted(TheDeratingExceptionRules.FAULTS))
+        self.assertEqual(len(rows), 7)
+        self.assertEqual(sorted(fault[2] for fault in rows), ["derated_voltage"] * 3 + ["derating_exception"] * 4)
+        self.assertEqual({board_prove.target_of(fault) for fault in rows}, {board_prove.KEYS_TARGET})
+        self.assertEqual(len([fault for fault in board_prove.FAULTS if fault[1].startswith(("derated voltage:", "pin limits:"))]), 9)
+        self.assertEqual(len([fault for fault in board_prove.FAULTS if fault[1].startswith("riding domains:")]), 14)
+
+    def test_the_tracked_record_keys_proof_design_is_not_edited_for_the_optional_key(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C5: The on-demand proof seeds into a copy of the proof design an over-limit part with no entry, an entry below the working voltage, an unsigned entry, an entry for no position, an entry for a part within its limit, an entry no failure uses, and an entry for one part beside a second over-limit part, and requires each to fail under its rule, the design itself passing first. Faults of the other rules are out of scope.
+        with open(os.path.join(board_prove.REPO, "hardware", "proof", "record-keys-proof", "derating-policy.yaml"), encoding="utf-8") as handle:
+            self.assertNotIn("accepted_exceptions", handle.read())
+
+
+class ASignedDeratingExceptionPassesOnTheProofDesign(unittest.TestCase):
+    def test_a_signed_entry_for_the_over_limit_part_passes_the_design_and_is_reported_as_accepted(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C2: a position whose working voltage exceeds its limit passes when its entry is signed and its accepted_v is no less than that working voltage, and the check prints an ACCEPTED line.
+        def layout_rating(tree):
+            for prop in board_prove.sexpr.children(board_prove.footprint(tree, "R1"), "property"):
+                if len(prop) > 2 and prop[1] == "Rating":
+                    prop[2] = board_prove.sexpr.Quoted("100V")
+        with tempfile.TemporaryDirectory(prefix="board-test-") as scratch:
+            seed = board_prove.prepare(scratch, *board_prove.KEYS_TARGET)
+            board_prove.resistor_over_its_rating(seed)
+            seed.layout(layout_rating)
+            board_prove.derating_exceptions(board_prove.derating_entry("R1", 400))(seed)
+            status, lines = board_prove.check(seed, KICAD_CLI)[:2]
+        self.assertEqual(status, 0, lines)
+        self.assertEqual([line for line in lines if line.startswith("VIOLATION")], [])
+        accepted = [line for line in lines if line.startswith("ACCEPTED") and "| derating_exception |" in line]
+        self.assertEqual(len(accepted), 1, lines)
+        for words in ("accepted_exceptions[0]", "R1", "353.553 V", "80 V", "400 V", "a synthetic ground"):
+            self.assertIn(words, accepted[0])
+
+
 class TheProjectFilesNetClassesAreResolvedByKiCad(unittest.TestCase):
     """SOL-HW-BOARD-RULE-CHECK-GATE.C3: The separation basis is a written rule the layout check enforces at no less than the signed figure, and a mains-carrying design without it fails.
 

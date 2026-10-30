@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C1
+type: criterion
+title: A malformed accepted_exceptions entry fails derating_record naming the entry and the key
+status: active
+version: 2
+measurement_type: binary
+verification: test
+text: |-
+  On a synthetic design, an accepted_exceptions entry that is not a mapping, lacks any of the six keys, holds another key, repeats a position or gives a non-positive accepted_v fails the record as derating_record, naming the entry's place and the key; an explicit empty list passes, and an entry whose accepted_by or accepted_on is empty, a placeholder, malformed or future-dated is not a record fault. The judgement against the schematic's positions and the signature judgement are out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS
+    type: criterion-of
