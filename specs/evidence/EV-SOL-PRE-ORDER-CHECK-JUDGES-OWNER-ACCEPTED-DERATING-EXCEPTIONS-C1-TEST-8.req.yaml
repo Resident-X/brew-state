@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS-C1-TEST-8
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-30T18:53:55.357247Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check.py::TheDeratingPolicyRecordIsRead.test_a_record_failed_for_an_entry_is_not_returned_as_a_mapping_and_every_failure_is_the_record_rule
+  artifact_version: cbf31805701210bb96838c81eede1c5fef22e671
+attested_by: crun-b65732e1086a7900
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C1
+    type: satisfies

@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C3
+type: criterion
+title: An entry excuses only its own position
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a synthetic design with two positions over their limits and an entry for the first, the second still fails as derated_voltage naming it. Excusing a class or a net is out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS
+    type: criterion-of

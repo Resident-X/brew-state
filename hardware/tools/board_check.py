@@ -99,9 +99,11 @@ def probe_rule(nonce: str, netclass: str = "Mains") -> str:
 #: A value standing in for a signature rather than being one.
 PLACEHOLDERS = {"unsigned", "tbd", "todo", "none", "placeholder"}
 
-#: Generous, because a dense board's zone refill takes real time; a run that
-#: hangs past it fails the design rather than the check waiting forever.
-KICAD_TIMEOUT_S = 900
+#: The most one KiCad run may take. A board with ground and neutral pours and
+#: slots has checks that outlast 900 s, so this is about four times the slowest
+#: full design check measured on one (see the hardware notes); a run that hangs
+#: past it fails the design rather than the check waiting forever.
+KICAD_TIMEOUT_S = 7200
 
 #: The most failures of one kind KiCad's command-line layout check reports, as
 #: KiCad 10.0.7 is observed to do. Past it KiCad reports that many and drops the
@@ -1991,7 +1993,11 @@ LIFECYCLE_STATUSES = (ACTIVE,) + UNFIT_STATUSES + (NO_SOURCE,)
 DERATING_NAME = "derating-policy.yaml"
 PIN_LIMITS_NAME = "pin-limits.yaml"
 #: The keys of the derating policy record, of each class in it, and of the share each class states for a quantity.
-DERATING_KEYS = ("source", "classes", "synthetic")
+DERATING_KEYS = ("source", "classes", "accepted_exceptions", "synthetic")
+#: The keys of each owner-accepted exception the derating policy record may list.
+DERATING_EXCEPTION_KEYS = ("position", "accepted_v", "reason", "bounded_by", "accepted_by", "accepted_on")
+#: The keys a record may leave out, which the derating policy record states beyond its required ones.
+DERATING_OPTIONAL_KEYS = ("synthetic", "accepted_exceptions")
 CLASS_KEYS = ("class", "voltage", "power", "temperature")
 SHARE_KEYS = ("share", "source")
 #: The keys of the pin-limit record, of each power domain, part, part source and pin in it.
@@ -2231,11 +2237,12 @@ def read_extract(yaml, root: str, repository: Repository, design: Design, today:
 
 
 def read_optional(yaml, root: str, repository: Repository, design: Design, name: str, rule: str, what: str,
-                  keys: Sequence[str], not_for_manufacture: bool) -> Tuple[Optional[dict], Optional[Reading]]:
+                  keys: Sequence[str], not_for_manufacture: bool, optional: Sequence[str] = ("synthetic",)
+                  ) -> Tuple[Optional[dict], Optional[Reading]]:
     """The record `name` the design's folders hold, read in its top-level form; nothing at all where they hold none.
 
-    The record is a mapping with `keys` and no others, its violations in the Reading returned. A design whose
-    folders hold no such record is not failed for it.
+    The record is a mapping with `keys` and no others, `optional` ones aside, its violations in the Reading
+    returned. A design whose folders hold no such record is not failed for it.
     """
     if find_record(root, design.directory, repository.tracked, name) is None:
         return None, None
@@ -2245,7 +2252,7 @@ def read_optional(yaml, root: str, repository: Repository, design: Design, name:
     if data is None:
         return None, reading
     reading.found += synthetic_problem(design, rule, record, data, what, not_for_manufacture)
-    reading.mapping("", data, keys, [key for key in keys if key != "synthetic"])
+    reading.mapping("", data, keys, [key for key in keys if key not in optional])
     return data, reading
 
 
@@ -2259,7 +2266,7 @@ def load_derating(yaml, root: str, repository: Repository, design: Design, not_f
     """The derating policy record's mapping and the violations of its form; no mapping where the design's
     folders hold none or the record is not in its form."""
     data, reading = read_optional(yaml, root, repository, design, DERATING_NAME, "derating_record",
-                                  "derating policy record", DERATING_KEYS, not_for_manufacture)
+                                  "derating policy record", DERATING_KEYS, not_for_manufacture, DERATING_OPTIONAL_KEYS)
     if data is None:
         return None, (reading.found if reading else [])
     if "source" in data:
@@ -2287,6 +2294,21 @@ def load_derating(yaml, root: str, repository: Repository, design: Design, not_f
                     reading.text(f"{at}.source", share["source"])
         reading.distinct("classes", [str(c["class"]).strip() for c in data["classes"]
                                      if isinstance(c, dict) and isinstance(c.get("class"), str)], "the class")
+    if "accepted_exceptions" in data and reading.listed("accepted_exceptions", data["accepted_exceptions"],
+                                                        "owner-accepted exceptions", empty=True):
+        for index, entry in enumerate(data["accepted_exceptions"]):
+            where = f"accepted_exceptions[{index}]"
+            if not reading.mapping(where, entry, DERATING_EXCEPTION_KEYS, DERATING_EXCEPTION_KEYS,
+                                   "an accepted_exceptions entry"):
+                continue
+            for key in ("position", "reason", "bounded_by"):
+                if key in entry:
+                    reading.text(f"{where}.{key}", entry[key])
+            if "accepted_v" in entry:
+                reading.positive(f"{where}.accepted_v", entry["accepted_v"], " of volts")
+        reading.distinct("accepted_exceptions", [entry["position"].strip() for entry in data["accepted_exceptions"]
+                                                 if isinstance(entry, dict) and isinstance(entry.get("position"), str)
+                                                 and entry["position"].strip()], "the position")
     return (None if reading.found else data), reading.found
 
 
@@ -2771,12 +2793,18 @@ def working_voltage(volts: NetVoltages, nets: List[str]) -> float:
 
 
 def voltage_rules(design: Design, yaml, root: str, repository: Repository, not_for_manufacture: bool, mains: Optional[str],
-                  signed: Optional[Signed], nets: Dict[str, List[PinNode]], mains_nets: Set[str]) -> List[Violation]:
+                  signed: Optional[Signed], nets: Dict[str, List[PinNode]], mains_nets: Set[str],
+                  today: Optional[datetime.date] = None, accepted: Optional[List[str]] = None) -> List[Violation]:
     """The derated-voltage rule and the pin-limit rule, which share one reading of each net's voltage.
 
     Both read the design's files and the records it is held to: the parts
     specification, the derating policy and the pin-limit record. A form the
     readers have already failed is not judged again.
+
+    A position over its limit passes on a signed entry of the derating policy's
+    accepted_exceptions that accepts at least its working voltage, which goes
+    into `accepted` as an ACCEPTED line; an entry that is unsigned, names no
+    position of the schematic, relaxes nothing or is used by no failure fails.
     """
     found: List[Violation] = []
     schematic = design.schematic
@@ -2830,6 +2858,15 @@ def voltage_rules(design: Design, yaml, root: str, repository: Repository, not_f
     volts = NetVoltages(nets, domains, mains_nets, joiners, listed, rides)
 
     # The derated-voltage rule.
+    day = today if today is not None else datetime.date.today()
+    exceptions: Dict[str, Tuple[int, dict]] = {}
+    if policy is not None:
+        for index, entry in enumerate(policy.get("accepted_exceptions") or []):
+            exceptions[entry["position"].strip()] = (index, entry)
+    used: Set[str] = set()
+    limits_seen: Dict[str, float] = {}
+    reported: Set[str] = set()
+    exception_at = f"{policy_path}" if policy_path else DERATING_NAME
     if stated is not None:
         classes: Optional[Dict[str, float]] = None
         if policy_path is None:
@@ -2886,10 +2923,50 @@ def voltage_rules(design: Design, yaml, root: str, repository: Repository, not_f
                 continue
             working = working_voltage(volts, reached)
             limit = classes[named] * peaks[0]
+            limits_seen[ref] = limit
             if exceeds(working, limit):
-                fail("derated_voltage", where,
-                     f"the position {ref} sees a working voltage of {working:g} V across {', '.join(reached)}, above "
-                     f"{limit:g} V, the class '{named}' voltage share {classes[named]:g} times its rating peak {peaks[0]:g} V")
+                message = (f"the position {ref} sees a working voltage of {working:g} V across {', '.join(reached)}, above "
+                           f"{limit:g} V, the class '{named}' voltage share {classes[named]:g} times its rating peak "
+                           f"{peaks[0]:g} V")
+                held = exceptions.get(ref)
+                if held is None:
+                    fail("derated_voltage", where, message)
+                    continue
+                index, entry = held
+                used.add(ref)
+                label = f"accepted_exceptions[{index}]"
+                if entry_unsigned(entry, None, day) is not None or not exceeds(entry["accepted_v"], limit):
+                    fail("derated_voltage", where, message + f"; {label} excuses nothing")
+                elif exceeds(working, entry["accepted_v"]):
+                    fail("derated_voltage", where, message + f"; {label} accepts only {entry['accepted_v']:g} V, below "
+                         "the working voltage")
+                elif accepted is not None:
+                    accepted.append("ACCEPTED | " + " | ".join(clean(field) for field in (
+                        design.project, "derating_exception", f"{exception_at} {label}",
+                        f"the position {ref} sees a working voltage of {working:g} V, above its limit of {limit:g} V, "
+                        f"and the owner accepts up to {entry['accepted_v']:g} V: {entry['reason'].strip()} "
+                        f"(bounded by {entry['bounded_by'].strip()}; accepted by {entry['accepted_by'].strip()} "
+                        f"on {iso_date(entry['accepted_on']).isoformat()})")))
+
+    # An entry of the derating policy that nothing uses, or that is no acceptance.
+    if policy is not None and stated is not None and not limits_form:
+        for ref, (index, entry) in sorted(exceptions.items(), key=lambda item: item[1][0]):
+            label = f"accepted_exceptions[{index}]"
+            at = f"{exception_at} {label}"
+            unsigned = entry_unsigned(entry, None, day)
+            if unsigned is not None:
+                fail("derating_exception", at, f"{label} for {ref}: {unsigned}; the owner signs an exception, and an "
+                                               "unsigned draft excuses nothing")
+            elif ref not in placed:
+                fail("derating_exception", at, f"{label} names {ref}, which is no position of the design's schematic; "
+                                               "name a position the schematic places, or remove the exception")
+            elif ref in limits_seen and not exceeds(entry["accepted_v"], limits_seen[ref]):
+                fail("derating_exception", at, f"{label} accepts {entry['accepted_v']:g} V for {ref}, which does not "
+                                               f"exceed its limit of {limits_seen[ref]:g} V, so it relaxes nothing; "
+                                               "remove the exception")
+            elif ref not in used:
+                fail("derating_exception", at, f"{label} is used by no failure: the rule reports no working voltage over "
+                                               f"the limit for {ref}; remove the exception, or restore the stress it excused")
 
     # The mains domain.
     if mains == "present" and not limits_form:
@@ -6723,7 +6800,7 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
                  accepted: Optional[List[str]] = None) -> List[Violation]:
     """Every violation of one design. `read`, when given, receives each measured rule's figure as the design sets it,
     as (item and what it measures, the text variable, the figure with its unit); `accepted`, the report line of each
-    spacing exception the owner signed that the layout uses."""
+    spacing exception, and of each derating exception, the owner signed that the design uses."""
     root = repository.root
     found = list(already)
     if any(v.rule == "design_discovery" for v in already):
@@ -6906,7 +6983,7 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
             if netlist is not None:
                 found += tool_named_nets(design, netlist)
                 found += voltage_rules(design, yaml, root, repository, not_for_manufacture, mains, signed,
-                                       schematic_pin_nodes(parsed), schematic_mains(netlist))
+                                       schematic_pin_nodes(parsed), schematic_mains(netlist), today, accepted)
             if netlist is None:
                 found.append(Violation(design.project, "design_unreadable", design.schematic,
                                        f"the schematic's net classes cannot be read from KiCad's netlist: {why}"))

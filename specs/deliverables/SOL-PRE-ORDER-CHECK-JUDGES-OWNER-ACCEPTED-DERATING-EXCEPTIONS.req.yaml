@@ -1,0 +1,40 @@
+id: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS
+type: deliverable
+category: solution
+title: The derated-voltage rule passes a position only on an owner-signed exception for that position and fails every other
+status: active
+version: 2
+text: |
+  The derated-voltage rule passes a position the owner has accepted at a stated stress, only for that position and only up to that stress, and fails every other. The rule as built fails parts the owner has already accepted. At the top of the declared supply span, 253 V and a peak of 357.8 V, the fuses F101, F701, F711 and F731 and the valve relays K731 and K741 are 250 V parts; the decision DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER items (c) and (c2) record the owner's acceptance of them, on 2026-10-29, and say the board check keeps reporting them because the derating rule has no exception mechanism. Two further groups fail for reasons the rule cannot express: the unfitted pump snubber resistors R706 and R716 see a pulse stress the policy's steady share does not describe (item (d) of that decision keeps them unfitted), and the discharge resistors R102 and R104 see half the mains because each stands across a series midpoint, which a pin-limit domain cannot state since rides_on names one host and a midpoint of line and neutral is hosted by both.
+
+  Settled for the build:
+  - Record shape. The derating-policy.yaml record gains an optional accepted_exceptions list, an explicit empty list being a record that accepts none. This follows the plated-hole and spacing exceptions of the separation basis, which are per-entry owner acceptances read by the same check, and keeps the exception beside the share it excuses, where the derated-voltage rule already reads. Each entry holds position (a reference designator), accepted_v (the working voltage in volts the owner accepts, a positive number), reason (the owner's ground), bounded_by (the independent element that bounds the fault, or for a position whose stress the rule overstates, the figure that bounds it), accepted_by and accepted_on. All six keys must be present. An entry that is not a mapping, lacks a key, holds another key, repeats a position or gives a non-positive accepted_v fails the record as derating_record naming the entry and the key. The reader leaves the values of accepted_by and accepted_on alone: an empty, placeholder, malformed-date or future-dated signature is not a record fault and fails only as derating_exception, as below. The key is optional, so no edit to any proof design file is needed and the record-keys-proof file stays unchanged.
+  - Judgement. When a position's working voltage exceeds its limit, an entry for that position whose accepted_v is no less than the working voltage the rule worked out excuses it, and the check prints the position, the working voltage, the limit, the accepted figure and the reason as an ACCEPTED line. A position over its limit with no entry, or with an entry whose accepted_v is below its working voltage, fails as derated_voltage naming the entry where there is one. An entry excuses nothing but its own position: a second part over its limit stays a failure.
+  - Fail closed. An entry fails as derating_exception, naming it, when its accepted_by is empty, a placeholder or in angle brackets, or its accepted_on is empty, not a YYYY-MM-DD date or later than today; when its position is not a position of the design's schematic, an entry being matched against the schematic's placed positions; when its accepted_v does not exceed the position's limit, so the part needs no excuse; and when no position's failure uses it, so it is stale. A record marked synthetic is honoured only for a design marked not for manufacture, as the rule's other records are.
+  - No signing by the agent. Nothing in the check or in the record is signed by the agent. accepted_by and accepted_on are the owner's, and a drafted entry stays unsigned until the owner signs; the check fails an unsigned entry, which is the intended state of a draft.
+  - The series midpoint. A domain riding on two hosts is not added. The rides_on form is one host throughout the net-voltage function, the chain walk, the cycle test, the lowest-voltage derivation, the mains floor and the record reader, so a second host changes each and all their proofs, and the one pair of resistors it would serve is served by an exception that states the real stress and its ground. R102 and R104 are excused by entries whose accepted_v is the figure the rule works out and whose ground is that each stands across a series midpoint of line and neutral and sees half of it; the owner signs that ground, which the check does not test.
+  - The proof designs gain synthetic entries where a test needs them. Seeded-fault rows in the proof run, each required to be caught under its rule: an over-limit part with no entry (derated_voltage), an entry whose accepted_v is below the working voltage (derated_voltage), an unsigned entry, an entry for no position, an entry whose part is within its limit, an entry no failure uses, and an entry for one part leaving a second over-limit part failing. The hardware notes state the entry form, the ACCEPTED line, the failures and the unsigned drafts.
+
+  Out of scope: the drafted entries for F101, F701, F711, F731, K731, K741, R706, R716, R102 and R104, which the main board's layout leaf carries in the board branch with that board's records, the main board's own files,
+  the owner's signing of any entry, the policy's shares and the pin-limit domain form, the power and temperature shares, the mains floor, a second rides_on host, and any change to the values the main board's parts are rated at.
+rationale: |-
+  Restores the behaviour REQ-ELECTRICAL-INSTALL-001.C13 asks of the derated-voltage rule: a part is judged at the worst-case voltage it sees, and a position the owner has accepted at a stated stress, or whose real stress the rule cannot express, is passed by a scoped, signed, fail-closed exception and never by loosening the share. The recorded acceptances say the check keeps reporting the accepted parts for want of an exception mechanism; this supplies it without the agent signing for the owner.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C13
+    type: targets
+  - target: DEC-BOARD-PRE-ORDER-RULE-READINGS
+    type: justified-by
+  - target: DEC-BOARD-DESIGN-RECORDS-AS-YAML
+    type: justified-by
+  - target: DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER
+    type: justified-by
+  - target: SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS
+    type: depends-on
+  - target: SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS
+    type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: d6763c1a2499a19c9fd83084a4e139b3741eae095d5b315807a976cae56be338
+  gating_profile: ""

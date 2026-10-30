@@ -1,0 +1,29 @@
+id: SOL-NIGHTLY-VERIFY-JOB-BUDGET-FITS-THE-BOARD-CHECK-RUN-LIMIT
+type: deliverable
+category: solution
+title: The nightly gates job's time budget outlasts the board check's one-run limit so a hung KiCad run fails the design
+status: active
+version: 1
+text: |
+  The nightly verification's time budget is raised so that a hung KiCad run reaches the board check's own limit and fails the design by name, rather than the job being cancelled first. In .github/workflows/nightly-verify.yml the job `gates` runs `task fw:verify`, which includes the board gates (`hw:verify` and `hw:test:round`); both run KiCad several times, each run allowed up to KICAD_TIMEOUT_S in hardware/tools/board_check.py, 7200 s as built. The job's `timeout-minutes` is 120 as built, its comment citing only the emulation tier, so it equals the one-run limit: a truly hung run cannot reach its limit before the job is cancelled, the message "KiCad did not finish within 7200 s" never appears in the nightly, and the night shows cancelled instead of a named board failure.
+
+  Settled for the build:
+  - The smaller correct change is to raise the budget of the existing job, not to split the board gates into a job of their own. The gates are declared once in `task fw:verify` and the job runs that declaration so a gate added later runs without a line changing; a split would put a second list of gates in the workflow. The job's `timeout-minutes` is set to 240: the one-run limit of 120 minutes plus two hours for everything else the job does, which was measured at about twenty minutes for the emulation tier and 20 to 30 minutes for a full design check.
+  - The relationship is a floor: `timeout-minutes` must be at least KICAD_TIMEOUT_S / 60 plus 60. Neither figure is lowered; the one-run limit stays as the sibling solution set it.
+  - The workflow comment beside `timeout-minutes` is rewritten to name the board gates and the one-run limit as well as the emulation tier, and states the floor. hardware/README.md, beside the one-run limit, states that the nightly job's budget is held above it by that floor, and that a larger limit needs a larger budget.
+  - A test of the kind the repo already has for its workflows (alongside the nightly workflow tests in firmware/tools/tests) reads `timeout-minutes` of the `gates` job from the workflow file and KICAD_TIMEOUT_S from board_check.py and requires the floor. Raising the limit without the budget fails it, and so does lowering the budget. It runs without KiCad.
+
+  Out of scope: speeding the board gates, the other jobs' budgets, the sweep workflow, and any change to the limit.
+rationale: |
+  Restores the behaviour REQ-BOARD-LAYOUT-PRACTICE-001.C1 asks, that every board is judged before it is ordered, in the nightly run. The raised one-run limit is only true if the job that runs the board gates outlasts it; at equal budgets a hung run cancels the job and the design is never reported as failing. The budget is corrected and the relationship is pinned so it cannot drift.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+  - target: DEC-BOARD-PRE-ORDER-RULE-READINGS
+    type: justified-by
+  - target: SOL-PRE-ORDER-CHECK-KICAD-RUN-LIMIT-FITS-A-POURED-BOARD
+    type: depends-on

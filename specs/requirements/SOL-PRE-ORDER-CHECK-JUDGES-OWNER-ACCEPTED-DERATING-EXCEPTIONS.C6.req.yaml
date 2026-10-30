@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C6
+type: criterion
+title: The main board's record carries unsigned drafts for the ten positions, read through the check's own reader
+status: deprecated
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The main board's derating-policy.yaml holds one entry for each of F101, F701, F711, F731, K731, K741, R706, R716, R102 and R104, each with its accepted_v, ground and bounding element stated, the first six citing the owner's recorded acceptance of 2026-10-29, and every accepted_by and accepted_on empty; the check's own reader accepts the record's form, and no file in the repository carries the agent as accepted_by. The owner's signing and the main board's layout are out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS
+    type: criterion-of
