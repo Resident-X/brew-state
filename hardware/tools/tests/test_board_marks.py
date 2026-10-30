@@ -235,6 +235,208 @@ class AMarkedFirstPin(unittest.TestCase):
         self.assertEqual(len(self.found(diode(silk=lines("F.SilkS", (2.2, -1, 2.2, 3)), pads=pads))), 1)
 
 
+def hole(number, x, y, net, drill="0.8", shape="rect", size=(1.6, 1.6), kind="thru_hole", angle=0):
+    at = f"{x} {y} {angle}" if angle else f"{x} {y}"
+    return (f'(pad "{number}" {kind} {shape} (at {at}) (size {size[0]} {size[1]}) (drill {drill}) (layers "*.Cu") '
+            f'(net "{net}"))')
+
+
+def relay(reference, pads):
+    return part(reference, pads, attr="through_hole")
+
+
+
+
+class EverySymbolPolarised(dict):
+    """Names every part's symbol a polarised capacitor's, so the pads' nets alone need not make a part polarised."""
+
+    def get(self, key, default=None):
+        return ("C_Polarized", [])
+
+
+NO_SYMBOLS = EverySymbolPolarised()
+
+
+class APolarisedPartWithNoPadNumberedOne(unittest.TestCase):
+    def found(self, *items):
+        return board_check.unmarked_pins(DESIGN, tree_of(*items), NO_SYMBOLS)
+
+    # An asymmetric pattern of four named holes, as a relay's: no turn but the identity maps it onto itself.
+    ASYMMETRIC = [hole("13", -3, -2, "A"), hole("14", 3, -2, "B"), hole("A1", -3, 2, "C"), hole("A2", 0, 2, "D")]
+
+    def test_named_through_hole_pads_in_an_asymmetric_pattern_need_no_first_pin(self):
+        # SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C1: On a synthetic design, a polarised part with no pad numbered 1 passes the polarity mark when every plated pad is through-hole, at least two plated holes lie apart, at least one pad is named and no turn other than the identity maps the holes onto themselves in position and drill, as with pads named 13, 14, A1 and A2 in an asymmetric pattern, and with duplicate pads 13 and 14 added
+        self.assertEqual(self.found(relay("K731", self.ASYMMETRIC)), [])
+
+    def test_duplicate_pads_at_the_same_holes_leave_the_pattern_asymmetric_and_exempt(self):
+        # SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C1: and with duplicate pads 13 and 14 added
+        duplicated = self.ASYMMETRIC + [hole("13", -3, -2, "A"), hole("14", 3, -2, "B")]
+        self.assertEqual(self.found(relay("K201", duplicated)), [])
+
+    def test_duplicate_pads_do_not_hide_a_symmetric_pattern(self):
+        # SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C2: when a turn other than the identity maps its holes onto themselves in position and drill, a pad drawn twice at one hole being one hole
+        square = [hole("A1", -2, -2, "A"), hole("A2", 2, -2, "B"), hole("13", 2, 2, "C"), hole("14", -2, 2, "D")]
+        duplicated = square + [hole("13", 2, 2, "C"), hole("14", -2, 2, "D")]
+        found = self.found(relay("K201", duplicated))
+        self.assertEqual(len(found), 1)
+        self.assertIn("its holes map onto themselves when turned", found[0].message)
+
+    def test_a_repeated_pad_does_not_key_two_equal_holes(self):
+        # SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C3: A polarised part with two through-hole pads named + and -, no pad numbered 1, holes of one drill, fails polarity_mark, a repeated + pad being the same hole
+        names = {"D1": ("X", ["+", "-"])}
+        pads = [hole("+", -1.27, 0, "A"), hole("-", 1.27, 0, "B"), hole("+", -1.27, 0, "A")]
+        found = board_check.unmarked_pins(DESIGN, tree_of(part("D1", pads, attr="through_hole")), names)
+        self.assertEqual(len(found), 1)
+        self.assertIn("its holes map onto themselves when turned", found[0].message)
+
+    def test_a_non_plated_mounting_hole_is_ignored_by_the_comparison(self):
+        # SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C1: every plated pad is through-hole
+        mounted = self.ASYMMETRIC + [hole("", 6, 6, "", kind="np_thru_hole", shape="circle")]
+        self.assertEqual(self.found(relay("K731", mounted)), [])
+        square = [hole("A1", -2, -2, "A"), hole("A2", 2, -2, "B"), hole("13", 2, 2, "C"), hole("14", -2, 2, "D"),
+                  hole("", 5, 1, "", kind="np_thru_hole", shape="circle")]
+        self.assertEqual(len(self.found(relay("K731", square))), 1)
+
+    def test_holes_a_quarter_turn_maps_onto_themselves_fail_naming_the_part(self):
+        # SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C2: A polarised part with no pad numbered 1 and only through-hole pads fails polarity_mark when a turn other than the identity maps its holes onto themselves in position and drill, as with four pads named A1, A2, 13 and 14 in a square, naming the part
+        square = [hole("A1", -2, -2, "A"), hole("A2", 2, -2, "B"), hole("13", 2, 2, "C"), hole("14", -2, 2, "D")]
+        found = self.found(relay("K9", square))
+        self.assertEqual([(v.design, v.rule) for v in found], [("a/a.kicad_pro", "polarity_mark")])
+        self.assertIn("K9 at (10, 10) mm", found[0].location)
+        self.assertIn("K9 has no pad numbered 1", found[0].message)
+
+    def test_the_turn_is_found_however_the_part_is_turned_on_the_board(self):
+        # SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C2: when a turn other than the identity maps its holes onto themselves in position and drill
+        square = [hole("A1", -2, -2, "A"), hole("A2", 2, -2, "B"), hole("13", 2, 2, "C"), hole("14", -2, 2, "D")]
+        for angle in (30, 90, 180):
+            with self.subTest(angle=angle):
+                self.assertEqual(len(self.found(part("K9", square, attr="through_hole", angle=angle))), 1)
+                self.assertEqual(self.found(part("K731", self.ASYMMETRIC, attr="through_hole", angle=angle)), [])
+
+    def test_a_half_turn_of_two_equal_holes_fails_whatever_their_copper(self):
+        # SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C3: A polarised part with two through-hole pads named + and -, no pad numbered 1, holes of one drill and the pads one rect and one round, or of two sizes of copper, fails polarity_mark, because the holes fit the board either way
+        names = {"D1": ("X", ["+", "-"])}
+        shapes = [hole("+", -1.27, 0, "A", shape="rect"), hole("-", 1.27, 0, "B", shape="circle")]
+        sizes = [hole("+", -1.27, 0, "A", size=(2.4, 2.4)), hole("-", 1.27, 0, "B", size=(1.6, 1.6))]
+        for pads in (shapes, sizes):
+            found = board_check.unmarked_pins(DESIGN, tree_of(part("D1", pads, attr="through_hole")), names)
+            self.assertEqual(len(found), 1)
+            self.assertIn("its holes map onto themselves when turned", found[0].message)
+
+    def test_holes_of_two_drill_diameters_key_the_part_and_pass(self):
+        # SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C3: The same part with holes of two different drill diameters passes
+        names = {"D1": ("X", ["+", "-"])}
+        keyed = [hole("+", -1.27, 0, "A", drill="1.0"), hole("-", 1.27, 0, "B", drill="0.8")]
+        self.assertEqual(board_check.unmarked_pins(DESIGN, tree_of(part("D1", keyed, attr="through_hole")), names), [])
+        within = [hole("+", -1.27, 0, "A", drill="0.8"), hole("-", 1.27, 0, "B", drill="0.805")]
+        self.assertEqual(len(board_check.unmarked_pins(DESIGN, tree_of(part("D1", within, attr="through_hole")), names)), 1)
+
+    def test_two_oval_holes_pass_when_their_long_axes_differ_and_fail_when_they_agree(self):
+        # SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C3: The same part with two oval holes of the same size whose long axes lie at different angles passes, because a turn of the part does not bring the holes onto themselves; with the same oval holes at the same angle it fails
+        names = {"D1": ("X", ["+", "-"])}
+        oval = "oval 1.2 0.7"
+        differing = [hole("+", -1.27, 0, "A", drill=oval), hole("-", 1.27, 0, "B", drill=oval, angle=90)]
+        same = [hole("+", -1.27, 0, "A", drill=oval), hole("-", 1.27, 0, "B", drill=oval)]
+        self.assertEqual(board_check.unmarked_pins(DESIGN, tree_of(part("D1", differing, attr="through_hole")), names), [])
+        found = board_check.unmarked_pins(DESIGN, tree_of(part("D1", same, attr="through_hole")), names)
+        self.assertEqual(len(found), 1)
+        self.assertIn("its holes map onto themselves when turned", found[0].message)
+        upright = [hole("+", -1.27, 0, "A", drill="oval 0.7 1.2"), hole("-", 1.27, 0, "B", drill="oval 1.2 0.7")]
+        self.assertEqual(board_check.unmarked_pins(DESIGN, tree_of(part("D1", upright, attr="through_hole")), names), [])
+
+    def test_a_surface_mount_pad_fails_however_asymmetric_the_pattern(self):
+        # SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C4: A polarised part with no pad numbered 1 and any surface-mount plated pad fails polarity_mark however asymmetric its pads are, as with surface-mount pads A and B at (-1.5, 0) and (1.5, 0) and with an asymmetric surface-mount pattern
+        two = self.found(diode(pads=[pad("A", -1.5, 0, "K"), pad("B", 1.5, 0, "A")]))
+        self.assertEqual(len(two), 1)
+        asymmetric = [pad("13", -3, -2, "A"), pad("14", 3, -2, "B"), pad("A1", -3, 2, "C"), pad("A2", 0, 2, "D")]
+        found = self.found(part("K1", asymmetric))
+        self.assertEqual(len(found), 1)
+        self.assertIn("its pads are surface-mount", found[0].message)
+        mixed = self.ASYMMETRIC[:3] + [pad("A2", 0, 2, "D")]
+        found = self.found(part("K1", mixed, attr="through_hole"))
+        self.assertEqual(len(found), 1)
+        self.assertIn("its pads are surface-mount", found[0].message)
+
+    def test_a_single_plated_pad_or_holes_at_one_point_fix_no_orientation(self):
+        # SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C5: A polarised part with no pad numbered 1 whose footprint has a single plated pad, or whose plated holes all lie at one point, fails polarity_mark, naming the part and saying its holes fix no orientation; a degenerate pattern is never exempt
+        single = part("K1", [hole("A1", 0, 0, "A"), hole("", 4, 0, "B", kind="np_thru_hole", shape="circle"),
+                             hole("", 0, 4, "C", kind="np_thru_hole", shape="circle")], attr="through_hole")
+        one_point = part("K2", [hole("A1", 1, 1, "A"), hole("A2", 1, 1, "B"), hole("13", 1, 1.005, "C")], attr="through_hole")
+        for item, name in ((single, "K1"), (one_point, "K2")):
+            with self.subTest(part=name):
+                found = self.found(item)
+                self.assertEqual(len(found), 1)
+                self.assertIn(f"{name} at", found[0].location)
+                self.assertIn(f"{name} has no pad numbered 1", found[0].message)
+                self.assertIn("its holes fix no orientation", found[0].message)
+
+    def test_a_footprint_with_no_named_pad_fails_even_where_its_holes_are_asymmetric(self):
+        # SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C6: A polarised through-hole footprint none of whose pads is named fails polarity_mark even where its holes are asymmetric under every turn, naming the part and saying none of its pads is named
+        unnamed = [hole("", -3, -2, "A"), hole("", 3, -2, "B"), hole("", -3, 2, "C"), hole("", 0, 2, "D")]
+        found = self.found(relay("K5", unnamed))
+        self.assertEqual(len(found), 1)
+        self.assertIn("K5 at", found[0].location)
+        self.assertIn("none of its pads is named", found[0].message)
+        one_named = [hole("", -3, -2, "A"), hole("", 3, -2, "B"), hole("", -3, 2, "C"), hole("X", 0, 2, "D")]
+        self.assertEqual(self.found(relay("K5", one_named)), [])
+
+    def test_a_name_on_a_non_plated_pad_does_not_name_the_footprint(self):
+        # SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C6: A polarised through-hole footprint none of whose plated pads is named fails polarity_mark, a name on a non-plated pad not counting
+        unnamed = [hole("", -3, -2, "A"), hole("", 3, -2, "B"), hole("", -3, 2, "C"), hole("", 0, 2, "D"),
+                   hole("MP", 6, 6, "", kind="np_thru_hole", shape="circle")]
+        found = self.found(relay("K5", unnamed))
+        self.assertEqual(len(found), 1)
+        self.assertIn("none of its pads is named", found[0].message)
+
+    def test_each_failure_carries_the_old_text_and_one_reason(self):
+        # SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C7: Each failure of a polarised part with no pad numbered 1 carries the text "has no pad numbered 1" and one reason in the check's text report, which is its only report: its pads are surface-mount, its holes map onto themselves when turned, its holes fix no orientation, or none of its pads is named
+        reasons = ("its pads are surface-mount", "its holes map onto themselves when turned", "its holes fix no orientation",
+                   "none of its pads is named")
+        cases = [part("K1", [pad("A", -1.5, 0, "K"), pad("B", 1.5, 0, "A")]),
+                 relay("K2", [hole("A1", -2, -2, "A"), hole("A2", 2, -2, "B"), hole("13", 2, 2, "C"), hole("14", -2, 2, "D")]),
+                 relay("K3", [hole("A1", 0, 0, "A")] + [hole("", 4, 0, "B", kind="np_thru_hole", shape="circle")]),
+                 relay("K4", [hole("", -3, -2, "A"), hole("", 3, -2, "B"), hole("", -3, 2, "C")])]
+        for item, reason in zip(cases, reasons):
+            with self.subTest(reason=reason):
+                found = self.found(item)
+                self.assertEqual(len(found), 1)
+                self.assertIn("has no pad numbered 1", found[0].message)
+                self.assertEqual([r for r in reasons if r in found[0].message], [reason])
+
+    def test_a_part_with_a_pad_numbered_one_is_judged_on_that_pad_whatever_its_holes(self):
+        # SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C8: A part with a pad numbered 1 is judged on that pad whatever its pads are, a mark on the wrong side, a text-only mark and a part that is not polarised report as they did, and every design that passes before still passes
+        keyed = [hole("1", -3, -2, "A"), hole("14", 3, -2, "B"), hole("A1", -3, 2, "C"), hole("A2", 0, 2, "D")]
+        found = self.found(relay("K7", keyed))
+        self.assertEqual([(v.rule, v.location) for v in found], [("polarity_mark", "K7 pad 1 at (7, 8) mm")])
+        self.assertIn("K7 is not marked at pad 1, it draws nothing on F.SilkS", found[0].message)
+        self.assertNotIn("has no pad numbered 1", found[0].message)
+        marked = part("K7", keyed, lines("F.SilkS", (-3.8, -3, -3.8, -1)), attr="through_hole")
+        self.assertEqual(self.found(marked), [])
+        text = part("K7", keyed, '(fp_text user "1" (at -3.8 -2) (layer "F.SilkS"))', attr="through_hole")
+        self.assertEqual(len(self.found(text)), 1)
+        wrong = part("K7", keyed, lines("B.SilkS", (-3.8, -3, -3.8, -1)), attr="through_hole")
+        self.assertEqual(len(self.found(wrong)), 1)
+        self.assertEqual(self.found(part("R1", [pad(1, -1, 0, "A"), pad(2, 1, 0, "A")])), [])
+
+
+class TheHardwareNotesStateWhenAPartNeedsNoFirstPin(unittest.TestCase):
+    def test_the_paragraph_and_the_checks_table_row_carry_every_clause(self):
+        # SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C10: The hardware notes' polarity_mark entry and the paragraph on the rule state that a polarised part with no pad numbered 1 needs no first pin only when every plated pad is through-hole, its holes lie at two or more positions, at least one pad is named and no turn other than the identity maps its holes onto themselves in position and drill, that the size and shape of the copper are not compared, and that it fails otherwise with the reason
+        with open(os.path.join(os.path.dirname(TOOLS), "README.md"), encoding="utf-8") as handle:
+            lines = handle.read().splitlines()
+        paragraph = next(line for line in lines if line.lstrip().startswith("- The polarity mark (`polarity_mark`)"))
+        row = next(line for line in lines if line.startswith("| `polarity_mark` |"))
+        for where, text in (("paragraph", paragraph), ("row", row)):
+            for clause in ("every plated pad is through-hole", "two or more positions", "a plated pad is named" if where == "row" else "at least one of its plated pads is named",
+                           "other than the identity maps" if where == "paragraph" else "no turn but the identity maps", "in position and drill",
+                           "its pads are surface-mount", "none of its pads is named", "its holes fix no orientation",
+                           "its holes map onto themselves when turned"):
+                with self.subTest(where=where, clause=clause):
+                    self.assertIn(clause, text)
+        self.assertIn("size and shape of the copper are not compared", paragraph)
+        self.assertIn("size and shape are not compared", row)
+
+
 class WhichPartsArePolarised(unittest.TestCase):
     def found(self, *items, parts):
         return board_check.unmarked_pins(DESIGN, tree_of(*items), parts)

@@ -811,6 +811,25 @@ def barrier_part(seed: Seed, second: Tuple[str, str, float, float]) -> None:
     seed.layout(lambda tree: tree.insert(len(tree) - 1, part))
 
 
+def barrier_part_beside_no_connect(seed: Seed) -> None:
+    """The bridging part of track_under_bridging_part with a third pad on a net named for a pin flagged no-connect, 3 mm
+    from the pad on Mains-class /MAINS_L on the side away from the other, and the /LV_B track between the two."""
+    thru = ["*.Cu", "*.Mask"]
+    part = small_part("X1", 30, 4, "0b0e5c1a-0000-4000-8000-000000000c00", ("1", "thru_hole", thru, "/MAINS_L", 0, 0, 1.6),
+                      ("2", "thru_hole", thru, "/LV_A", 6, 0, 1.6), ("3", "thru_hole", thru, "unconnected-(X1-Pad3)", -3, 0, 1.6))
+    seed.layout(lambda tree: (tree.insert(len(tree) - 1, part),
+                              tree.insert(len(tree) - 1, segment("/LV_B", 32, 4, 34, 4, "0b0e5c1a-0000-4000-8000-000000000c01"))))
+
+
+def barrier_part_with_unnumbered_mains_pad(seed: Seed) -> None:
+    """The bridging part of track_under_bridging_part with the number of the pad on Mains-class /MAINS_L left empty."""
+    thru = ["*.Cu", "*.Mask"]
+    part = small_part("X1", 30, 4, "0b0e5c1a-0000-4000-8000-000000000d00", ("", "thru_hole", thru, "/MAINS_L", 0, 0, 1.6),
+                      ("2", "thru_hole", thru, "/LV_A", 6, 0, 1.6))
+    seed.layout(lambda tree: (tree.insert(len(tree) - 1, part),
+                              tree.insert(len(tree) - 1, segment("/LV_B", 32, 4, 34, 4, "0b0e5c1a-0000-4000-8000-000000000d01"))))
+
+
 def crystal_part(seed: Seed) -> None:
     """R2 renamed, in the layout, to a footprint of a crystal's name: a board with a crystal."""
     seed.layout(lambda tree: footprint(tree, "R2").__setitem__(1, sexpr.Quoted("proof:Crystal_Seeded")))
@@ -823,6 +842,26 @@ def keep_clear_exempting_all(seed: Seed) -> None:
     crystal_part(seed)
     exempt = "".join(f" && B.Reference != '{name}'" for name in others if name != "R2")
     rule("Crystal keep-clear", f"A.Reference == 'R2'{exempt}", "(constraint courtyard_clearance (min 10mm))")(seed)
+
+
+def two_crystals(seed: Seed, loosening_condition: str, minimum: str) -> None:
+    """R1 and R2 renamed to crystals, each held by a keep-clear exempting the other, then a rule that names R1 and loosens it."""
+    for reference in ("R1", "R2"):
+        seed.layout(lambda tree, reference=reference: footprint(tree, reference).__setitem__(1, sexpr.Quoted("proof:Crystal_Seeded")))
+    for crystal, other in (("R1", "R2"), ("R2", "R1")):
+        rule(f"Crystal keep-clear {crystal}", f"A.Reference == '{crystal}' && B.Reference != '{other}'",
+             "(constraint courtyard_clearance (min 10mm))")(seed)
+    rule("Loosening of the first crystal", loosening_condition, f"(constraint courtyard_clearance (min {minimum}))")(seed)
+
+
+def second_keep_clear_followed_by_a_rule_naming_the_first(seed: Seed) -> None:
+    """Two crystals with their keep-clears, the second followed by a rule naming the first as B with ==."""
+    two_crystals(seed, "A.Reference == 'R2' && B.Reference == 'R1'", "1mm")
+
+
+def rule_not_the_first_crystal_at_zero(seed: Seed) -> None:
+    """Two crystals with their keep-clears, then a rule whose condition is A.Reference != the first crystal at 0mm."""
+    two_crystals(seed, "A.Reference != 'R1'", "0mm")
 
 
 def ground_class(seed: Seed) -> None:
@@ -913,6 +952,24 @@ def via_in_decoupling_path(seed: Seed) -> None:
     seed.layout(edit)
 
 
+def categorised_u1(category: str, typed: bool):
+    """U1 on an orderable copy with a usable extract whose entry for U1's catalogue number states `category`, and its pads
+    typed power inputs where `typed`."""
+    Q = sexpr.Quoted
+
+    def seed_it(seed: Seed) -> None:
+        seed.project(lambda data: data["text_variables"].pop("NOT_FOR_MANUFACTURE"))
+        seed.replace("catalogue-extract.yaml", "synthetic: true", "")
+        seed.replace("catalogue-extract.yaml", "  - lcsc: C9000005\n    library_class: basic\n",
+                     f"  - lcsc: C9000005\n    library_class: basic\n    category: {category}\n")
+        if typed:
+            def edit(tree: list) -> None:
+                for number in ("1", "2"):
+                    pad(tree, "U1", number).append(["pintype", Q("power_in")])
+            seed.layout(edit)
+    return seed_it
+
+
 def reference_removed(seed: Seed) -> None:
     """R1's reference text taken out of the footprint."""
     def edit(tree: list) -> None:
@@ -981,6 +1038,19 @@ def through_hole_unmarked(seed: Seed) -> None:
                 layer = sexpr.child(node, "layer")
                 if layer is not None and str(layer[1]) == "F.SilkS":
                     part.remove(node)
+    seed.layout(edit)
+    polarised_symbol_r2(seed)
+
+
+def through_hole_pads_renamed(seed: Seed) -> None:
+    """R2 left a plated through-hole part with its drills as the design has them and its pads renamed A and B, so no pad is
+    numbered 1 and a half turn maps its two equal holes onto themselves, with its schematic symbol a polarised capacitor's:
+    the only thing that makes R2 polarised."""
+    Q = sexpr.Quoted
+
+    def edit(tree: list) -> None:
+        for index, node in enumerate(sexpr.children(footprint(tree, "R2"), "pad")):
+            node[1] = Q("AB"[index])
     seed.layout(edit)
     polarised_symbol_r2(seed)
 
@@ -1521,16 +1591,28 @@ FAULTS: List[tuple] = [
      "the boxes of its two groups of pads overlap along both axes, so no strip lies between them", lambda seed: barrier_part(seed, ("/LV_A", "", 0.5, 0.5))),
     ("a part whose only pads off the Mains class have no net", "separation: a part whose bridging cannot be known fails by name", "mains_barrier",
      "its only pads off the Mains class, pad 2, have no net, so whether it bridges the barrier is not known", lambda seed: barrier_part(seed, ("", "", 6, 0))),
+    ("a no-connect pad beside a mains pad of a part with copper under it", "separation: a no-connect pad is no pad off the class and the part is still measured", "mains_barrier",
+     "X1 joins Mains-class /MAINS_L (pad 1) to /LV_A (pad 2), and a track of net /LV_B on F.Cu lies under it", barrier_part_beside_no_connect),
+    ("a pad on a Mains-class net given no number with copper under the part", "separation: a pad on a Mains-class net counts whatever its number", "mains_barrier",
+     "X1 joins Mains-class /MAINS_L (pad (unnumbered)) to /LV_A (pad 2), and a track of net /LV_B on F.Cu lies under it", barrier_part_with_unnumbered_mains_pad),
     ("a crystal on a board whose rules file has no keep-clear", "clock: a board with a crystal holds the keep-clear rule", "crystal_keepclear",
      "R2 is a crystal, and the rules file holds no rule keeping the parts unrelated", crystal_part),
     ("a crystal keep-clear that exempts every other part", "clock: the keep-clear exempts no more than the parts related to the oscillator", "crystal_keepclear",
      "exempts every other part of the layout from the keep-clear of R2", keep_clear_exempting_all),
+    ("a second crystal's keep-clear followed by a rule naming the first crystal as B with ==", "clock: a rule naming the other crystal with == is a rule naming it", "crystal_keepclear",
+     "holds a courtyard_clearance constraint and names R1", second_keep_clear_followed_by_a_rule_naming_the_first),
+    ("a rule with A.Reference != the first crystal at 0mm on a board of two crystals", "clock: a rule naming a crystal with != outside the keep-clear form is a rule naming it", "crystal_keepclear",
+     "holds a courtyard_clearance constraint and names R1", rule_not_the_first_crystal_at_zero),
     ("a ground class on a board whose rules file has no relief rule", "manufacture: a board with ground pads holds the thermal relief rule", "ground_relief",
      "the rules file holds no rule giving them thermal reliefs", ground_class),
     ("a relief rule exempting a pad that is not an exposed pad", "manufacture: the relief rule exempts only an exposed pad", "ground_relief",
      "exempts R2 pad 2 from the reliefs of net class Ground, but it is not an exposed pad", reliefs_exempting_a_plain_pad),
     ("an integrated circuit with netted pads and no pad typed as a power pin on a design not marked not for manufacture", "layout: an orderable board's integrated circuit has its supply pads typed", "decoupling_pintype",
      "has netted pads and none typed power input or power output", variables(lambda v: v.pop("NOT_FOR_MANUFACTURE"))),
+    ("an in-list category on an integrated circuit with a pad typed power input", "layout: a part the category says has no supply pin is refused when a pad is typed as one", "decoupling_pintype",
+     "the layout contradicts the category", categorised_u1('"Triac, SCR Output Optoisolators"', True)),
+    ("a category outside the list on an integrated circuit with netted pads and none typed power", "layout: a real integrated circuit's category does not excuse its untyped supply pads", "decoupling_pintype",
+     "has netted pads and none typed power input or power output", categorised_u1('"Linear Voltage Regulators"', False)),
     ("a via between a decoupling capacitor's supply pad and the pin it decouples", "layout: no via sits in a decoupling capacitor's path", "decoupling_via",
      "via at (43, 13) mm of net /LV_A lies in the box from (42.15, 9.15) to (43.85, 16.6) mm about pad 1 of C9 of /LV_A and pad 1 of U1", via_in_decoupling_path),
     ("a reference designator on the fabrication layer", "manufacture: every part's reference is on a silkscreen layer", "reference_off_silkscreen",
@@ -1549,6 +1631,10 @@ FAULTS: List[tuple] = [
      "R2 is not marked at pad 1, it draws nothing on F.SilkS", capacitor_unmarked),
     ("a plated through-hole polarised part with no mark", "assembly: a plated through-hole part is judged by the mark rule as a surface-mount part is", "polarity_mark",
      "R2 is not marked at pad 1, it draws nothing on F.SilkS", through_hole_unmarked),
+    ("a plated through-hole polarised part with no pad numbered 1 and holes a turn maps onto themselves",
+     "assembly: a part with no pad numbered 1 needs no first pin only where its holes fix its orientation", "polarity_mark",
+     "R2 has no pad numbered 1, so it has no first pin to mark, and its holes do not excuse that: its holes map onto themselves when turned",
+     through_hole_pads_renamed),
     ("a polarity mark on the wrong side of the part", "assembly: the mark is on the silkscreen of the part's own side", "polarity_mark",
      "R2 is not marked at pad 1, it has no graphic on F.SilkS nearer pad 1", mark_on_back),
     ("a symmetric outline on a symmetric pad pattern", "assembly: a drawing the pads' symmetry leaves unchanged marks nothing", "polarity_mark",

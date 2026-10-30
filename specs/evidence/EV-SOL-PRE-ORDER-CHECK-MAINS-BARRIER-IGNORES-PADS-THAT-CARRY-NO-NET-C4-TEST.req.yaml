@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET-C4-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C4
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-30T04:25:32.752193Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check.py::ThePadsOffTheMainsClassThatCarryNoNetAreNotPadsOffIt.test_a_pad_on_a_mains_net_is_a_mains_pad_whatever_its_number_or_copper_layer
+  artifact_version: 91f996ddc80b4803d33ddf05ed728afb616b6a11
+attested_by: crun-87856928f283430f
+links:
+  - target: SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C4
+    type: satisfies

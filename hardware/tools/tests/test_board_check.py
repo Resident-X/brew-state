@@ -3029,6 +3029,151 @@ class NoCopperLiesUnderAPartThatBridgesTheBarrier(unittest.TestCase):
         self.assertIn("from (10.5, 9.5) to (15.5, 10.5) mm", found[0].message)
 
 
+def raw_part(reference: str, *pads: str) -> str:
+    """U-like footprint `reference` at (10, 10) holding pads written as (number, net, x, layers) in `pads`."""
+    body = "".join(f'(pad "{number}" smd rect (at {x} 0) (size 1 1) (layers {layers}) (net "{net}"))'
+                   for number, net, x, layers in pads)
+    return (f'(footprint "lib:raw" (layer "F.Cu") (at 10 10) (property "Reference" "{reference}" (at 0 0 0)) {body})')
+
+
+class ThePadsOffTheMainsClassThatCarryNoNetAreNotPadsOffIt(unittest.TestCase):
+    """A pad that carries no net, whether a lone no-connect pad or a netless pad
+    with no number or no copper, is in neither group of a part's pads; a pad on a
+    Mains-class net is always in the Mains group.
+    """
+
+    MAINS = {"/MAINS"}
+    COPPER = '"F.Cu" "F.Mask"'
+    NO_COPPER = '"F.Paste"'
+    TRACK = seg("/X", (11, 10), (15, 10))
+
+    def found(self, *items, mains=None):
+        return board_check.mains_barrier(DESIGN, tree_of(*items), [], self.MAINS if mains is None else mains, 0.0)
+
+    def rules(self, *items, mains=None):
+        return [(v.rule, v.location.split(": ")[1]) for v in self.found(*items, mains=mains)]
+
+    def lone(self, number="3", x=2, net="unconnected-(U1-Pad3)"):
+        return (number, net, x, self.COPPER)
+
+    def test_a_lone_no_connect_pad_among_the_mains_pads_is_in_neither_group_and_the_part_is_measured(self):
+        # SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C1: A lone no-connect pad lying among a part's Mains-class pads is in neither group and the part is measured
+        among = raw_part("U1", ("1", "/MAINS", 0, self.COPPER), self.lone(), ("4", "/MAINS", 4, self.COPPER), ("2", "/LV", 10, self.COPPER))
+        found = self.found(among, seg("/X", (15, 10), (19, 10)))
+        self.assertEqual([(v.rule, v.location.split(": ")[1]) for v in found], [("mains_barrier", "track of /X on F.Cu")])
+        self.assertIn("U1 joins Mains-class /MAINS (pads 1, 4) to /LV (pad 2)", found[0].message)
+        self.assertNotIn("not measurable", found[0].location)
+        self.assertEqual(self.found(among), [], "with nothing in the strip the measured part passes")
+        counted = raw_part("U1", ("1", "/MAINS", 0, self.COPPER), ("3", "/LV3", 2, self.COPPER), ("4", "/MAINS", 4, self.COPPER),
+                           ("2", "/LV", 10, self.COPPER))
+        self.assertEqual(self.rules(counted), [("mains_barrier", "barrier not measurable")], "the same pad on a real net widens the group")
+
+    def test_a_part_whose_only_other_pads_are_lone_no_connect_pads_is_not_reported(self):
+        # SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C2: A part whose only pads off the Mains class are lone no-connect pads is not reported
+        only = raw_part("U1", ("1", "/MAINS", 0, self.COPPER), self.lone("2", 6, "unconnected-(U1-Pad2)"),
+                        self.lone("3", 2, "/sheet/unconnected-(U1-Pad3)"))
+        self.assertEqual(self.found(only, self.TRACK), [])
+        self.assertEqual(self.found(only), [])
+
+    def test_a_netless_pad_with_no_number_or_no_copper_is_not_reported_including_a_numberless_tab_with_copper(self):
+        # SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C3: A part whose only pads off the Mains class are netless pads with no number or no copper layer is not reported
+        for what, pad in (("no number", ("", "", 6, self.COPPER)), ("no copper layer", ("2", "", 6, self.NO_COPPER)),
+                          ("neither", ("", "", 6, self.NO_COPPER))):
+            with self.subTest(pad=what):
+                self.assertEqual(self.found(raw_part("U1", ("1", "/MAINS", 0, self.COPPER), pad), self.TRACK), [])
+        mixed = raw_part("U1", ("1", "/MAINS", 0, self.COPPER), ("", "", 6, self.COPPER), ("2", "", 6, self.NO_COPPER))
+        self.assertEqual(self.found(mixed, self.TRACK), [], "the floating tab with copper is the accepted limit")
+
+    def test_a_pad_on_a_mains_net_is_a_mains_pad_whatever_its_number_or_copper_layer(self):
+        # SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C4: A part whose only Mains-class pad lacks a number, and a part whose only Mains-class pad lacks a copper layer, are each still measured and still fail when copper lies in the strip between that pad and the pads off the class.
+        for what, mains_pad in (("no number", ("", "/MAINS", 0, self.COPPER)), ("no copper layer", ("1", "/MAINS", 0, self.NO_COPPER))):
+            with self.subTest(pad=what):
+                found = self.found(raw_part("U1", mains_pad, ("2", "/LV", 6, self.COPPER)), self.TRACK)
+                self.assertEqual([v.rule for v in found], ["mains_barrier"])
+                self.assertIn("track of /X", found[0].location)
+                self.assertEqual(self.found(raw_part("U1", mains_pad, ("2", "/LV", 6, self.COPPER))), [])
+
+    def test_a_lone_pad_on_a_mains_net_named_unconnected_is_a_mains_pad(self):
+        # SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C5: A pad on a Mains-class net whose name begins unconnected-( and which no other pad carries is a Mains-class pad, not a no-connect pad: the part is measured with that pad in the Mains group, and fails when copper lies in the strip.
+        mains = {"/MAINS", "unconnected-(U1-Pad1)"}
+        part_ = raw_part("U1", ("1", "unconnected-(U1-Pad1)", 0, self.COPPER), ("2", "/LV", 6, self.COPPER))
+        found = self.found(part_, self.TRACK, mains=mains)
+        self.assertEqual([v.rule for v in found], ["mains_barrier"])
+        self.assertIn("Mains-class unconnected-(U1-Pad1) (pad 1)", found[0].message)
+        self.assertEqual(self.found(part_, mains=mains), [])
+        self.assertEqual(self.found(part_, self.TRACK), [], "off the class it is a no-connect pad and the part is not judged")
+
+    def test_a_net_named_unconnected_carried_by_two_pads_is_a_real_net_whose_pads_are_netted_pads(self):
+        # SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C6: Two pads carrying one net named unconnected-(...), including two pads of one number, count as netted pads off the Mains class; a part whose boxes they cause to overlap fails by name as unmeasurable.
+        for what, pads in (("two numbers", (("3", 2), ("4", -2))), ("one number twice", (("3", 2), ("3", -2)))):
+            with self.subTest(pads=what):
+                twice = raw_part("U1", ("1", "/MAINS", 0, self.COPPER), *[(n, "unconnected-(U1-Pad3)", x, self.COPPER) for n, x in pads],
+                                 ("2", "/LV", 10, self.COPPER))
+                found = self.found(twice)
+                self.assertEqual([(v.rule, v.location.split(": ")[1]) for v in found], [("mains_barrier", "barrier not measurable")])
+                self.assertIn("overlap along both axes", found[0].message)
+        across = raw_part("U1", ("1", "/MAINS", 0, self.COPPER), ("3", "unconnected-(U1-Pad3)", 6, self.COPPER))
+        other = raw_part("U2", ("3", "unconnected-(U1-Pad3)", 6, self.COPPER))
+        self.assertEqual(self.found(across, self.TRACK), [], "alone on the board it is a no-connect pad")
+        self.assertEqual([v.rule for v in self.found(across, other, seg("/X", (11, 10), (15, 10)))], ["mains_barrier"],
+                         "carried by a pad of another part too it is a real net, so the part is measured against it")
+
+    def test_a_part_whose_only_other_pads_are_numbered_coppered_and_netless_fails_as_not_known_to_bridge(self):
+        # SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C7: A part whose only pads off the Mains class are numbered, have copper and have no net fails by name as not known to bridge the barrier.
+        found = self.found(raw_part("U1", ("1", "/MAINS", 0, self.COPPER), ("2", "", 6, self.COPPER)))
+        self.assertEqual([(v.rule, v.location.split(": ")[1]) for v in found], [("mains_barrier", "barrier not measurable")])
+        self.assertIn("its only pads off the Mains class, pad 2, have no net, so whether it bridges the barrier is not known", found[0].message)
+        beside = raw_part("U1", ("1", "/MAINS", 0, self.COPPER), ("2", "", 6, self.COPPER), self.lone("3", 2),
+                          ("4", "", 8, self.NO_COPPER))
+        found = self.found(beside)
+        self.assertIn("its only pads off the Mains class, pad 2, have no net", found[0].message)
+
+    def test_overlapping_boxes_still_fail_with_exempt_pads_present(self):
+        # SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C8: A part whose Mains-class group and other netted group have boxes overlapping along both axes fails by name as unmeasurable.
+        crossed = raw_part("U1", ("1", "/MAINS", 0, self.COPPER), ("2", "/LV", 0.5, self.COPPER), self.lone("3", 8),
+                           ("", "", 9, self.COPPER))
+        found = self.found(crossed)
+        self.assertEqual([(v.rule, v.location.split(": ")[1]) for v in found], [("mains_barrier", "barrier not measurable")])
+        self.assertIn("U1 has Mains-class /MAINS (pad 1) and other pads (pad 2)", found[0].message)
+        self.assertIn("overlap along both axes", found[0].message)
+
+    def test_the_copper_of_an_exempt_pad_lying_in_the_strip_is_summed_against_the_figure(self):
+        # SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C9: The area of all copper in the strip between the two groups, every pad of the board included and an exempt pad's copper among them, is added up against the figure and fails a part above it.
+        for what, exempt in (("a no-connect pad", self.lone("3", 3)), ("a netless pad with no number", ("", "", 3, self.COPPER))):
+            with self.subTest(exempt=what):
+                part_ = raw_part("U1", ("1", "/MAINS", 0, self.COPPER), exempt, ("2", "/LV", 6, self.COPPER))
+                found = self.found(part_)
+                self.assertEqual([v.rule for v in found], ["mains_barrier"])
+                self.assertIn("1.000 square mm", found[0].message)
+                self.assertIn("pad of", found[0].location)
+                self.assertEqual(board_check.mains_barrier(DESIGN, tree_of(part_), [], self.MAINS, 1.0), [])
+                self.assertEqual(len(board_check.mains_barrier(DESIGN, tree_of(part_), [], self.MAINS, 0.9)), 1)
+
+    def test_the_closing_advice_of_the_unmeasurable_failures_is_the_only_change_to_their_message(self):
+        # SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C10: The message of each failure of the barrier rule is unchanged apart from its closing advice.
+        advice = ("so use a part whose Mains-class pads lie apart from its other pads along one axis, with every numbered, "
+                  "coppered pad that is not Mains-class on a net, a pin meant to be open being flagged no-connect in the schematic")
+        crossed = self.found(raw_part("U1", ("1", "/MAINS", 0, self.COPPER), ("2", "/LV", 0.5, self.COPPER)))
+        netless = self.found(raw_part("U1", ("1", "/MAINS", 0, self.COPPER), ("2", "", 6, self.COPPER)))
+        self.assertEqual(crossed[0].location, "U1 at (10, 10) mm: barrier not measurable")
+        self.assertEqual(crossed[0].message,
+                         "U1 has Mains-class /MAINS (pad 1) and other pads (pad 2), and the copper between them cannot be measured: "
+                         "the boxes of its two groups of pads overlap along both axes, so no strip lies between them; the barrier "
+                         "rule does not support such a part, " + advice)
+        self.assertTrue(netless[0].message.endswith("whether it bridges the barrier is not known; the barrier rule does not support such a part, " + advice))
+        copper = self.found(raw_part("U1", ("1", "/MAINS", 0, self.COPPER), ("2", "/LV", 6, self.COPPER)), self.TRACK)
+        self.assertEqual(copper[0].location, "U1 at (10, 10) mm: track of /X on F.Cu")
+        self.assertTrue(copper[0].message.endswith("so move the copper, and cut any pour back, clear of that strip"))
+
+    def test_a_part_that_passed_with_every_pad_on_a_net_still_passes(self):
+        # SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C11: Every design that passed the barrier rule before this change still passes.
+        self.assertEqual(self.found(BRIDGE, seg("/X", (11, 12), (15, 12))), [])
+        self.assertEqual(self.found(raw_part("U1", ("1", "/MAINS", 0, self.COPPER), ("2", "/LV", 6, self.COPPER),
+                                             ("3", "/LV2", 6, self.COPPER)), seg("/X", (11, 12), (15, 12))), [])
+        self.assertEqual(self.found(raw_part("U1", ("1", "/MAINS", 0, self.COPPER), ("2", "/LV", 6, self.COPPER)), mains=set()), [])
+        self.assertEqual(self.found(raw_part("U1", ("1", "/LV", 0, self.COPPER), ("2", "/LV2", 6, self.COPPER)), self.TRACK), [])
+
+
 class SolderPasteIsNotPrintedOverAViasHole(unittest.TestCase):
     # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
     """A via whose hole a pad's paste opening reaches into fails, whichever side
@@ -3850,6 +3995,96 @@ class TheCrystalKeepClearIsInTheRulesFileOfABoardWithACrystal(unittest.TestCase)
         found = self.found(KEEP_CLEAR, tree=two)
         self.assertEqual([v.location for v in found], [f"{DESIGN.rules} crystal Y2"])
         self.assertEqual(self.found(KEEP_CLEAR, KEEP_CLEAR.replace("'Y1'", "'Y2'"), tree=two), [])
+
+
+def keep_clear_for(crystal: str, *exempt: str, minimum: str = "10mm") -> str:
+    """The crystal keep-clear rule of `crystal` exempting the parts `exempt`."""
+    clauses = "".join(f" && B.Reference != '{name}'" for name in exempt)
+    return (f'(rule "Keep-clear {crystal}"\n\t(condition "A.Reference == \'{crystal}\'{clauses}")\n'
+            f'\t(constraint courtyard_clearance (min {minimum})))')
+
+
+def courtyard_rule(name: str, condition: str, minimum: str) -> str:
+    return f'(rule "{name}"\n\t(condition "{condition}")\n\t(constraint courtyard_clearance (min {minimum})))'
+
+
+class TheCrystalKeepClearOfABoardWithTwoCrystals(unittest.TestCase):
+    """On a layout of two crystals each keep-clear exempts the other, and only
+    that one mention, a B.Reference != clause inside the keep-clear form, does
+    not name a crystal; every other mention does.
+    """
+
+    BOARD = tree_of(named_part("Crystal_A", "Y1", ("1", "/X", 1, 1)), named_part("Crystal_B", "Y2", ("1", "/X", 1, 1)),
+                    named_part("C_0603", "C1", ("1", "/X", 1, 1)), named_part("R_0603", "R1", ("1", "/Y", 1, 1)))
+    PAIR = (keep_clear_for("Y1", "Y2", "C1"), keep_clear_for("Y2", "Y1", "C1"))
+
+    def found(self, *rules, tree=None):
+        return board_check.crystal_keep_clear(DESIGN, rules_of(*rules), tree or self.BOARD)
+
+    def naming(self, *rules):
+        """The (rule, crystal) pairs of the loosening-rule failures, sorted."""
+        return sorted(re.match(r"rule '([^']+)'(?: at line \d+)? holds a courtyard_clearance constraint and names (\w+),", v.message).groups()
+                      for v in self.found(*rules))
+
+    def test_a_keep_clear_for_each_crystal_exempting_the_other_passes(self):
+        # SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL.C1: On a layout of two crystals, a keep-clear rule for each that exempts the other with B.Reference != passes the crystal keep-clear
+        self.assertEqual(self.found(*self.PAIR), [])
+        self.assertEqual(self.found(*reversed(self.PAIR)), [])
+
+    def test_a_keep_clear_for_the_second_crystal_exempting_the_first_does_not_name_the_first(self):
+        # SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL.C1: On a layout of two crystals, a keep-clear rule for each that exempts the other with B.Reference != passes the crystal keep-clear
+        self.assertEqual(self.found(keep_clear_for("Y1", "C1"), keep_clear_for("Y2", "Y1", "C1")), [])
+
+    def test_a_rule_outside_the_form_naming_a_crystal_with_double_equals_fails_for_it(self):
+        # SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL.C2: A courtyard_clearance rule outside the keep-clear form that names a crystal with == fails for that crystal
+        for what, condition, crystals in (("A.Reference == beyond the form", "A.Reference == 'Y1' && A.Layer == 'F.Cu'", ["Y1"]),
+                                          ("B.Reference ==", "B.Reference == 'Y1'", ["Y1"]),
+                                          ("the second as A and the first as B ==", "A.Reference == 'Y2' && B.Reference == 'Y1'", ["Y1", "Y2"])):
+            with self.subTest(what=what):
+                self.assertEqual(self.naming(*self.PAIR, courtyard_rule("Loose", condition, "1mm")), [("Loose", crystal) for crystal in crystals])
+
+    def test_a_rule_outside_the_form_naming_a_crystal_with_not_equals_fails_for_it(self):
+        # SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL.C3: A courtyard_clearance rule outside the keep-clear form that names a crystal with != fails for that crystal
+        for what, condition, minimum in (("A.Reference !=", "A.Reference != 'Y1'", "0mm"),
+                                         ("a bare B.Reference !=", "B.Reference != 'Y1'", "1mm"),
+                                         ("a != clause after a == on B", "A.Reference == 'Y2' && B.Reference == 'C1' && B.Reference != 'Y1'", "1mm")):
+            with self.subTest(what=what):
+                self.assertIn(("Loose", "Y1"), self.naming(*self.PAIR, courtyard_rule("Loose", condition, minimum)))
+
+    def test_a_keep_clear_for_the_second_crystal_below_the_floor_is_reported_once_for_the_second(self):
+        # SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL.C4: A keep-clear for the second crystal below the floor is reported once, for the second crystal
+        found = self.found(self.PAIR[0], keep_clear_for("Y2", "Y1", "C1", minimum="9mm"))
+        self.assertEqual(len(found), 1)
+        self.assertIn("keeps parts 9 mm from the courtyard of Y2, under the 10 mm", found[0].message)
+
+    def test_each_other_failure_of_the_keep_clear_still_fails(self):
+        # SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL.C5: Each of these still fails the crystal keep-clear: a keep-clear below the 10 mm floor; a keep-clear that exempts every other part; a crystal of the layout with no rule of its own, including a second crystal with none; and a keep-clear that does not name its crystal as A
+        found = self.found(keep_clear_for("Y1", "Y2", "C1", minimum="9.9mm"), self.PAIR[1])
+        self.assertEqual([("keeps parts 9.9 mm" in v.message) for v in found], [True])
+        found = self.found(keep_clear_for("Y1", "Y2", "C1", "R1"), self.PAIR[1])
+        self.assertEqual(len(found), 1)
+        self.assertIn("exempts every other part of the layout from the keep-clear of Y1", found[0].message)
+        found = self.found(self.PAIR[0])
+        self.assertEqual([v.location for v in found], [f"{DESIGN.rules} crystal Y2"])
+        found = self.found(self.PAIR[1])
+        self.assertEqual([v.location for v in found], [f"{DESIGN.rules} crystal Y1"])
+        found = self.found(self.PAIR[1], courtyard_rule("Other", "A.Reference == 'C1' && B.Reference != 'Y1'", "10mm"))
+        self.assertEqual([v.location for v in found], [f"{DESIGN.rules} crystal Y1"], "a form with another part as A holds nothing for Y1")
+
+    def test_the_single_crystal_layout_and_each_message_are_as_they_were(self):
+        # SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL.C6: A single-crystal layout reports as it did before this change, and the message of each failure of the crystal keep-clear is unchanged
+        single = TheCrystalKeepClearIsInTheRulesFileOfABoardWithACrystal.BOARD
+        def messages(*rules):
+            return [re.sub(r" at line \d+", "", v.message) for v in board_check.crystal_keep_clear(DESIGN, rules_of(*rules), single)]
+
+        self.assertEqual(messages(KEEP_CLEAR, courtyard_rule("Loose", "B.Reference != 'Y1'", "1mm")),
+                         ["rule 'Loose' holds a courtyard_clearance constraint and names Y1, but not in the one form of the crystal keep-clear, "
+                          "so KiCad may apply it after the keep-clear and loosen it; remove it, or write it as the keep-clear"])
+        self.assertEqual(messages(KEEP_CLEAR.replace("10mm", "9mm")),
+                         ["rule 'Crystal keep-clear' keeps parts 9 mm from the courtyard of Y1, under the 10 mm the crystal keep-clear holds; raise its minimum"])
+        self.assertEqual(messages(KEEP_CLEAR.replace("'C1'", "'C1' && B.Reference != 'R1'")),
+                         ["rule 'Crystal keep-clear' exempts every other part of the layout from the keep-clear of Y1, so it holds nothing; "
+                          "exempt only the parts related to the oscillator"])
 
 
 class TheGroundPadReliefsAreInTheRulesFileOfABoardWithGroundPads(unittest.TestCase):

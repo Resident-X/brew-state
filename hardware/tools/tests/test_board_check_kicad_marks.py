@@ -48,8 +48,21 @@ class TheBarrierPasteAndPourRules(Proved):
                           "a part whose only pads off the Mains class have no net",
                           "a crystal on a board whose rules file has no keep-clear",
                           "a crystal keep-clear that exempts every other part",
+                          "a second crystal's keep-clear followed by a rule naming the first crystal as B with ==",
+                          "a rule with A.Reference != the first crystal at 0mm on a board of two crystals",
                           "a ground class on a board whose rules file has no relief rule",
                           "a relief rule exempting a pad that is not an exposed pad")
+
+    def test_a_no_connect_pad_and_a_pad_on_a_mains_net_with_no_number_leave_the_part_measured(self):
+        # SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C12: The seeded-fault harness holds a row on the throwaway proof design's bridging part with a no-connect pad added beside a mains pad and copper under the part, and the check reports mains_barrier.
+        # SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C13: The seeded-fault harness holds a row on the throwaway proof design's bridging part with a pad on a Mains-class net given no number and copper under the part, and the check reports mains_barrier.
+        names = ("a no-connect pad beside a mains pad of a part with copper under it",
+                 "a pad on a Mains-class net given no number with copper under the part")
+        self.assertCaught(*names)
+        found = outcomes()
+        for name in names:
+            with self.subTest(fault=name):
+                self.assertEqual(found[name][1].split(" | ")[2], "mains_barrier")
 
     def test_each_failure_names_where_on_the_board_it_is(self):
         # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
@@ -72,6 +85,8 @@ class TheDecouplingAndSilkscreenRules(Proved):
 
     FAULTS = {"a via between a decoupling capacitor's supply pad and the pin it decouples": "decoupling_via",
               "an integrated circuit with netted pads and no pad typed as a power pin on a design not marked not for manufacture": "decoupling_pintype",
+              "an in-list category on an integrated circuit with a pad typed power input": "decoupling_pintype",
+              "a category outside the list on an integrated circuit with netted pads and none typed power": "decoupling_pintype",
               "a reference designator on the fabrication layer": "reference_off_silkscreen",
               "a part with no reference text": "reference_off_silkscreen",
               "a reference designator inside a part's courtyard": "designator_astray"}
@@ -142,6 +157,8 @@ class TheFiducialAndPolarityMarkRules(Proved):
                                                                         ("R2 is not marked at pad 1", "draws nothing on F.SilkS")),
         "a plated through-hole polarised part with no mark": ("polarity_mark", "R2 pad 1 at (45, 10) mm",
                                                               ("R2 is not marked at pad 1", "draws nothing on F.SilkS")),
+        "a plated through-hole polarised part with no pad numbered 1 and holes a turn maps onto themselves": (
+            "polarity_mark", "R2 at (45, 10) mm", ("R2 has no pad numbered 1", "its holes map onto themselves when turned")),
         "a polarity mark on the wrong side of the part": ("polarity_mark", "R2 pad 1 at (45, 10) mm",
                                                          ("R2 is not marked at pad 1", "no graphic on F.SilkS nearer pad 1")),
         "a symmetric outline on a symmetric pad pattern": ("polarity_mark", "R2 pad 1 at (45, 10) mm",
@@ -161,6 +178,16 @@ class TheFiducialAndPolarityMarkRules(Proved):
                     self.assertIn(word, fields[4])
                 self.assertEqual([entry[2] for entry in board_prove.FAULTS if entry[0] == fault], [rule])
 
+
+    HOLES_FAULT = "a plated through-hole polarised part with no pad numbered 1 and holes a turn maps onto themselves"
+
+    def test_the_seeded_part_with_no_pad_numbered_one_and_self_mapping_holes_is_caught_with_its_reason(self):
+        # SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C9: The seeded-fault harness holds a row on the throwaway proof design that renames a polarised through-hole part's pads from numbers to names so that no pad is numbered 1, on a part whose holes a turn maps onto themselves, and the check reports polarity_mark
+        self.assertCaught(self.HOLES_FAULT)
+        fields = outcomes()[self.HOLES_FAULT][1].split(" | ")
+        self.assertEqual((fields[2], fields[3]), ("polarity_mark", "R2 at (45, 10) mm"))
+        self.assertIn("its holes map onto themselves when turned", fields[4])
+        self.assertEqual([entry[2] for entry in board_prove.FAULTS if entry[0] == self.HOLES_FAULT], ["polarity_mark"])
 
 
 class AnUnparseableSchematicFailsTheDesignWhichSwitchesOffPolarisationBySymbol(Copy):

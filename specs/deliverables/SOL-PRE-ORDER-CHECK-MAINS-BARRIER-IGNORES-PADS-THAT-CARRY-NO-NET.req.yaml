@@ -21,3 +21,7 @@ links:
     type: justified-by
   - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
     type: justified-by
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 blind brief reviewer
+  fingerprint: a611549a49fe5be97a5b7b512f4f9f11724932e6c52b956b5717db097f51bbdd
+  gating_profile: ""

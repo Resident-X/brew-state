@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY-C6-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY.C6
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-30T04:25:47.877949Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_parts_category.py::TheCategorySkipsOnlyAPartThatHasNoSupply.test_the_category_key_changes_no_other_circuits_measurement_and_no_passing_design_fails
+  artifact_version: 91f996ddc80b4803d33ddf05ed728afb616b6a11
+attested_by: crun-d51a20804fee5e3b
+links:
+  - target: SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY.C6
+    type: satisfies

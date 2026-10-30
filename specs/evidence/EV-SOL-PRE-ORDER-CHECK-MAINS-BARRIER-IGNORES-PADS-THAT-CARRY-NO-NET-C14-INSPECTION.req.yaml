@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET-C14-INSPECTION
+type: evidence
+title: inspection evidence for SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C14
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-30T04:25:33.464089Z"
+artifact:
+  kind: external
+  reference: 'inspection: docs/board-design-method.md MAINS-5 Passes and hardware/README.md BARRIER_COPPER_MM2 row and mains_barrier row each read against the four clauses (exempt netless/no-connect pads; Mains-class net counts whatever number, layer or name; two-carrier unconnected-( net is real; part with only exempt off-class pads not judged, floating-tab limit)'
+  artifact_version: 91f996ddc80b4803d33ddf05ed728afb616b6a11
+attested_by: crun-87856928f283430f
+links:
+  - target: SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C14
+    type: satisfies

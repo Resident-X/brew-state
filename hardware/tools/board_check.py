@@ -1746,8 +1746,13 @@ POSITION_KEYS = ("reference", "value", "package", "rating", "lcsc", "class")
 #: The keys an entry of the catalogue extract holds, every one required.
 ENTRY_KEYS = ("lcsc", "library_class", "stock", "unit_price")
 #: The keys an entry may hold beside them: a lifecycle mapping, which holds all three of LIFECYCLE_KEYS when present and
-#: which the lifecycle rule requires on the entry of every part the design places.
-OPTIONAL_ENTRY_KEYS = ("lifecycle",)
+#: which the lifecycle rule requires on the entry of every part the design places, and a category, the first category
+#: name of the part's parts-library record, a non-empty string when present.
+OPTIONAL_ENTRY_KEYS = ("lifecycle", "category")
+#: The parts-library first category names of parts that have no supply pin, read on 2026-10-30 from the records of
+#: C108051 (LITEON LTV-814S-TA1-A) and C899826 (onsemi MOC3052SVM). Optocouplers with a gate-driver or logic output and
+#: digital isolators have supply pins and are not listed.
+NO_SUPPLY_CATEGORIES = ("Transistor, Photovoltaic Output Optoisolators", "Triac, SCR Output Optoisolators")
 LIFECYCLE_KEYS = ("status", "source", "read_on")
 #: The lifecycle statuses an entry may state: the rule fails the first three below, and a part whose status states that no
 #: source publishes one is not failed for that.
@@ -1876,12 +1881,14 @@ def read_specification(yaml, root: str, repository: Repository, design: Design, 
 
 
 class Extract(NamedTuple):
-    """The catalogue extract as the parts checks read it: each entry's stock and its lifecycle mapping (None where the
-    entry has none) by catalogue number, and the age the extract allows a reading."""
+    """The catalogue extract as the parts checks read it: each entry's stock, its lifecycle mapping (None where the
+    entry has none) and its category (None where it has none) by catalogue number, and the age the extract allows a
+    reading."""
 
     stock: Dict[str, object]
     lifecycle: Dict[str, Optional[Dict[str, object]]]
     max_age_days: Optional[int]
+    category: Optional[Dict[str, Optional[str]]] = None
 
 
 def read_extract(yaml, root: str, repository: Repository, design: Design, today: datetime.date,
@@ -1927,6 +1934,7 @@ def read_extract(yaml, root: str, repository: Repository, design: Design, today:
     entries = data.get("entries")
     found: Dict[str, object] = {}
     lifecycles: Dict[str, Optional[Dict[str, object]]] = {}
+    categories: Dict[str, Optional[str]] = {}
     if "entries" in data:
         if not isinstance(entries, list):
             bad("entries", f"entries is not a list of catalogue entries")
@@ -1964,6 +1972,10 @@ def read_extract(yaml, root: str, repository: Repository, design: Design, today:
                 if "lcsc" in entry and (not isinstance(number, str) or not number.strip()):
                     bad(f"{where}.lcsc", f"{where}.lcsc is {number!r}, where it is a non-empty string")
                     number = None
+                category = entry.get("category")
+                if "category" in entry and (not isinstance(category, str) or not category.strip()):
+                    bad(f"{where}.category", f"{where}.category is {category!r}, where it is a non-empty string")
+                    category = None
                 klass = entry.get("library_class")
                 if "library_class" in entry and (not isinstance(klass, str) or not klass.strip()):
                     bad(f"{where}.library_class", f"{where}.library_class is {klass!r}, where it is a non-empty string")
@@ -1985,7 +1997,9 @@ def read_extract(yaml, root: str, repository: Repository, design: Design, today:
                     found[key] = stock if "stock" in entry else None
                     life = entry.get("lifecycle")
                     lifecycles[key] = life if isinstance(life, dict) else None
-    return (Extract(found, lifecycles, limit if isinstance(limit, int) and not isinstance(limit, bool) else None)
+                    categories[key] = category if isinstance(category, str) else None
+    return (Extract(found, lifecycles, limit if isinstance(limit, int) and not isinstance(limit, bool) else None,
+                    categories)
             if usable else None), problems
 
 
@@ -3825,7 +3839,9 @@ def crystal_keep_clear(design: Design, rules: Optional[List[list]], tree: list) 
     B only by reference, and which leaves at least one other footprint of the
     layout unexempted: a rule that exempts every part, or is written in any
     other form, holds nothing. Any other rule holding the constraint that names
-    the crystal is a rule KiCad may apply after it, so it fails too.
+    the crystal is a rule KiCad may apply after it, so it fails too. A rule in
+    that one form for another reference is passed over for this crystal: its
+    B.Reference != clauses only remove pairs, so it exempts and never names.
     """
     footprints = board_footprints(tree)
     crystals = sorted(reference for reference, footprint in footprints.items()
@@ -3861,6 +3877,10 @@ def crystal_keep_clear(design: Design, rules: Optional[List[list]], tree: list) 
                                        f"{crystal}, so it holds nothing; exempt only the parts related to the oscillator"))
         formed = {id(rule) for rule, _, _ in forms}
         for rule in holding:
+            text = sole_rule_form(rule)
+            elsewhere = KEEP_CLEAR_CONDITION.fullmatch(text) if text is not None else None
+            if elsewhere and elsewhere.group(1) != crystal:
+                continue
             if id(rule) in formed or f"'{crystal}'" not in " ".join(str(node[1]) for node in sexpr.children(rule, "condition") if len(node) > 1):
                 continue
             found.append(Violation(design.project, "crystal_keepclear", f"{design.rules} {rule_at(rule)}",
@@ -4562,19 +4582,36 @@ def mains_barrier(design: Design, tree: list, fills, mains: Set[str], allowed: f
     not in it. A part with Mains-class pads and pads of no Mains class that
     cannot be measured fails by name: one whose two groups' boxes overlap along
     both axes, so no strip lies between them, or whose pads off the class have
-    no net, so it is not known to bridge. `fills` are the layout's fills as KiCad
-    has refilled them.
+    no net, so it is not known to bridge. A pad on a Mains-class net is a
+    Mains-class pad whatever its number, copper layer or net name. A pad that
+    carries no net is in neither group: one on a net named unconnected-(...)
+    that no other pad carries, and one with no net that has no number or no
+    copper layer. A part whose pads off the class are all such pads is not
+    judged. The copper of every pad, those included, still lies in the strip.
+    `fills` are the layout's fills as KiCad has refilled them.
     """
     table = board_geometry.net_table(tree)
     parts = []
     every = []
     found = []
-    for footprint in sexpr.children(tree, "footprint"):
-        placed = board_geometry.footprint_pads(footprint, table)
+    footprints = [(footprint, board_geometry.footprint_pads(footprint, table)) for footprint in sexpr.children(tree, "footprint")]
+    carriers: Dict[str, int] = {}
+    for _, placed in footprints:
         every += placed
+        for pad in placed:
+            carriers[pad.net] = carriers.get(pad.net, 0) + 1
+    for footprint, placed in footprints:
         inside = [pad for pad in placed if pad.net in mains]
-        outside = [pad for pad in placed if pad.net and pad.net not in mains]
-        unnetted = [pad for pad in placed if not pad.net]
+        outside, unnetted = [], []
+        for pad in placed:
+            if pad.net in mains:
+                continue
+            if pad.net:
+                lone = pad.net.rsplit("/", 1)[-1].startswith(UNCONNECTED_NET) and carriers[pad.net] == 1
+                if not lone:
+                    outside.append(pad)
+            elif pad.number and any(layer.endswith(".Cu") for layer in pad.layers):
+                unnetted.append(pad)
         if not inside or not (outside or unnetted):
             continue
         reason, strip = "", None
@@ -4594,7 +4631,8 @@ def mains_barrier(design: Design, tree: list, fills, mains: Set[str], allowed: f
                 f"{name} has Mains-class {', '.join(sorted({pad.net for pad in inside}))} ({pad_numbers(inside)}) and other "
                 f"pads ({pad_numbers(outside)}), and the copper between them cannot be measured: {reason}; the barrier "
                 "rule does not support such a part, so use a part whose Mains-class pads lie apart from its other pads "
-                "along one axis, with every pad that is not Mains-class on a net"))
+                "along one axis, with every numbered, coppered pad that is not Mains-class on a net, a pin meant to be open "
+                "being flagged no-connect in the schematic"))
             continue
         parts.append((footprint, inside, outside, strip))
     if not parts:
@@ -5360,7 +5398,9 @@ def decoupling_vias(design: Design, tree: list, ground: Set[str]) -> List[Violat
     return found
 
 
-def untyped_circuits(design: Design, tree: list, not_for_manufacture: bool) -> List[Violation]:
+def untyped_circuits(design: Design, tree: list, not_for_manufacture: bool,
+                     catalogue: Optional[Extract] = None, positions: Optional[Dict[str, Dict[str, Optional[str]]]] = None
+                     ) -> List[Violation]:
     """Every integrated circuit of an orderable board that has netted pads and none typed as a power pin.
 
     A circuit is a footprint whose reference begins with U, as
@@ -5371,9 +5411,18 @@ def untyped_circuits(design: Design, tree: list, not_for_manufacture: bool) -> L
     design is such a board; its coverage line shows the paths measured. A
     circuit none of whose pads is on a net is not refused: it has no supply pad
     to decouple.
+
+    A circuit is also not refused when the catalogue number of its position
+    maps to an entry of the usable `catalogue` whose category is one of
+    NO_SUPPLY_CATEGORIES, since such a part has no supply pin; one of them with
+    a pad typed power input or power output is refused, the layout contradicting
+    the category. Every other case is refused as before: no usable extract, a
+    position with no number or a number the extract lacks, an entry without a
+    category, a category outside the list.
     """
     if not_for_manufacture:
         return []
+    positions = positions or {}
     import board_views
     table = board_geometry.net_table(tree)
     found = []
@@ -5382,15 +5431,42 @@ def untyped_circuits(design: Design, tree: list, not_for_manufacture: bool) -> L
         if not name.startswith("U"):
             continue
         held = board_views.pads(footprint, table)
-        if any(net for net, _ in held) and not any(kind in ("power_in", "power_out") for _, kind in held):
+        typed = any(kind in ("power_in", "power_out") for _, kind in held)
+        number = (positions.get(name) or {}).get("lcsc")
+        category = ((catalogue.category or {}).get(number.strip()) if catalogue is not None and isinstance(number, str)
+                    else None)
+        supplyless = category in NO_SUPPLY_CATEGORIES
+        if supplyless and typed:
+            at = board_geometry.placement(footprint, f"the footprint {name}")
+            found.append(Violation(
+                design.project, "decoupling_pintype", f"{name} at ({coordinate(at[0])}, {coordinate(at[1])}) mm",
+                f"DECOUPLE-6 {name}'s catalogue entry has the category '{category}', a part with no supply pin, and "
+                f"the layout contradicts the category: {name} has a pad typed power input or power output (pintype in "
+                "the layout file); correct the pad's type, or the category in the catalogue extract"))
+        elif any(net for net, _ in held) and not typed and not supplyless:
             at = board_geometry.placement(footprint, f"the footprint {name}")
             found.append(Violation(
                 design.project, "decoupling_pintype", f"{name} at ({coordinate(at[0])}, {coordinate(at[1])}) mm",
                 f"DECOUPLE-6 the decoupling rule measures every integrated circuit's decoupling: {name} has netted "
                 "pads and none typed power input or power output (pintype in the layout file), so the rule finds no "
                 f"supply nets for it and measures nothing; type {name}'s supply pads from its symbol's pin types, "
+                "record the part's category in the catalogue extract if the part has no supply pin, "
                 "or mark the design not for manufacture (NOT_FOR_MANUFACTURE=true) if it is a proof board"))
     return found
+
+
+def untyped_circuits_by_category(yaml, root: str, repository: Repository, design: Design, tree: list,
+                                 today: datetime.date, not_for_manufacture: bool) -> List[Violation]:
+    """untyped_circuits with the catalogue extract and the placed positions it reads the categories through.
+
+    The extract is the one check_parts reads, found by the same nearest-folder rule; one that cannot be read or is
+    unusable gives no category, and its own violations are reported by check_parts, not here.
+    """
+    if not_for_manufacture:
+        return []
+    # The problems of this read and of placed_positions repeat check_parts' own reads and are reported there.
+    catalogue = read_extract(yaml, root, repository, design, today, not_for_manufacture)[0]
+    return untyped_circuits(design, tree, not_for_manufacture, catalogue, placed_positions(root, design, repository)[0])
 
 
 def decoupling_paths(tree: list, ground: Set[str]) -> Tuple[int, list]:
@@ -5882,6 +5958,99 @@ def pad_symmetries(pads: List["board_geometry.Pad"], firsts: List["board_geometr
     return found
 
 
+def plated_holes(footprint: list) -> list:
+    """Each plated pad's hole as (position, drill sizes smallest first, long axis or None): the pad's own `at` point placed on
+    the board with no drill offset, the drill's diameters, and for an oval drill the unit vector of its long axis as the pad lies."""
+    name = board_geometry.reference(footprint)
+    what = f"a pad of the footprint {name or '?'}"
+    at = board_geometry.placement(footprint, what)
+    holes = []
+    for node in sexpr.children(footprint, "pad"):
+        if len(node) > 2 and str(node[2]) == "np_thru_hole":
+            continue
+        own = sexpr.child(node, "at")
+        point = board_geometry.placed(board_geometry.xy(own, what), at)
+        angle = board_geometry.number(own, 3, what) if len(own) > 3 else 0.0
+        drill = sexpr.child(node, "drill")
+        sizes = [float(value) for value in (drill or [])[1:] if not isinstance(value, list) and str(value) != "oval"]
+        axis = None
+        if drill is not None and len(drill) > 1 and str(drill[1]) == "oval" and len(sizes) > 1 and abs(sizes[0] - sizes[1]) > PAD_MATCH:
+            axis = board_geometry.turned((1.0, 0.0) if sizes[0] > sizes[1] else (0.0, 1.0), angle)
+        holes.append((point, tuple(sorted(sizes[:2])), axis))
+    return holes
+
+
+def distinct_holes(holes: list) -> list:
+    """`holes` with each hole kept once: two pads drawn at one hole, in position, drill sizes and, for an oval drill, long
+    axis, are one hole, so a repeated pad does not move the centre of the pattern."""
+    def alike(one, other) -> bool:
+        if math.dist(one[0], other[0]) > PAD_MATCH or any(abs(a - b) > PAD_MATCH for a, b in zip(one[1], other[1])):
+            return False
+        if (one[2] is None) != (other[2] is None):
+            return False
+        return one[2] is None or abs(one[2][0] * other[2][1] - one[2][1] * other[2][0]) <= PAD_MATCH
+    kept: list = []
+    for hole in holes:
+        if not any(alike(hole, other) for other in kept):
+            kept.append(hole)
+    return kept
+
+
+def hole_turns(holes: list) -> list:
+    """The turns other than the identity about the centre of `holes` that map them onto themselves in position and drill,
+    each as a function of a board point. A hole is its position, its drill's sizes and, for an oval drill, the direction of
+    its long axis; the pad's copper is not compared, and reflections do not count since a placed part cannot be mirrored."""
+    holes = distinct_holes(holes)
+    cx = sum(hole[0][0] for hole in holes) / len(holes)
+    cy = sum(hole[0][1] for hole in holes) / len(holes)
+    anchor = max(holes, key=lambda hole: math.dist(hole[0], (cx, cy)))
+    reach = math.dist(anchor[0], (cx, cy))
+    if reach < PAD_MATCH:
+        return []
+    start = math.atan2(anchor[0][1] - cy, anchor[0][0] - cx)
+
+    def make(angle: float):
+        cos, sin = math.cos(angle), math.sin(angle)
+        return lambda p: (cx + (p[0] - cx) * cos - (p[1] - cy) * sin, cy + (p[0] - cx) * sin + (p[1] - cy) * cos)
+
+    def same(image, hole, other) -> bool:
+        if math.dist(image(hole[0]), other[0]) > PAD_MATCH or any(abs(a - b) > PAD_MATCH for a, b in zip(hole[1], other[1])):
+            return False
+        if (hole[2] is None) != (other[2] is None):
+            return False
+        if hole[2] is None:
+            return True
+        turned_axis = tuple(a - b for a, b in zip(image((hole[0][0] + hole[2][0], hole[0][1] + hole[2][1])), image(hole[0])))
+        return abs(turned_axis[0] * other[2][1] - turned_axis[1] * other[2][0]) <= PAD_MATCH
+
+    found = []
+    for target in holes:
+        if abs(math.dist(target[0], (cx, cy)) - reach) > PAD_MATCH:
+            continue
+        image = make(math.atan2(target[0][1] - cy, target[0][0] - cx) - start)
+        if all(any(same(image, hole, other) for other in holes) for hole in holes) \
+                and any(math.dist(image(hole[0]), hole[0]) > PAD_MATCH for hole in holes):
+            found.append(image)
+    return found
+
+
+def no_first_pin_reason(footprint: list, pads: List["board_geometry.Pad"]) -> str:
+    """Why a polarised part with no pad numbered 1 is not excused from having a first pin, or '' when its holes key it:
+    every plated pad is through-hole, one plated pad is named, the holes lie at two or more positions and no turn but the identity
+    maps them onto themselves in position and drill."""
+    plated = [node for node in sexpr.children(footprint, "pad") if not (len(node) > 2 and str(node[2]) == "np_thru_hole")]
+    if any(len(node) < 3 or str(node[2]) != "thru_hole" for node in plated):
+        return "its pads are surface-mount"
+    if not any(str(node[1]).strip() for node in plated if len(node) > 1):
+        return "none of its pads is named"
+    holes = plated_holes(footprint)
+    if not any(math.dist(one[0], other[0]) > PAD_MATCH for one in holes for other in holes):
+        return "its holes fix no orientation"
+    if hole_turns(holes):
+        return "its holes map onto themselves when turned"
+    return ""
+
+
 def image_box(image, pad: "board_geometry.Pad") -> Tuple[float, float, float, float]:
     """The box about a pad's outline once `image` has carried it: (left, top, right, bottom)."""
     corners = [image(point) for point in pad.outline()]
@@ -5895,7 +6064,12 @@ def unmarked_pins(design: Design, tree: list, parts: Dict[str, Tuple[str, List[s
     footprint on its side's silkscreen stands nearer its copper than every other
     pad's by more than MARK_MARGIN, and the footprint's silkscreen is not
     unchanged by any symmetry of its pads that moves that pad. A polarised
-    part with no pad numbered 1 has no first pin to mark.
+    part with no pad numbered 1 has no first pin to mark, and fails with the
+    reason, unless every plated pad is through-hole, one plated pad is named, its
+    holes lie at two or more positions and no turn but the identity maps them
+    onto themselves in position and drill, in which case its holes fix its
+    orientation and it needs no mark. The size and shape of the copper are not
+    compared.
     """
     table = board_geometry.net_table(tree)
     found = []
@@ -5912,11 +6086,14 @@ def unmarked_pins(design: Design, tree: list, parts: Dict[str, Tuple[str, List[s
         silk = SILKSCREEN.get(side, "F.SilkS")
         firsts = [pad for pad in pads if pad.number == "1"]
         if not firsts:
+            reason = no_first_pin_reason(footprint, pads)
+            if not reason:
+                continue
             at = board_geometry.placement(footprint, f"the footprint {name}")
             found.append(Violation(
                 design.project, "polarity_mark", f"{name} at ({coordinate(at[0])}, {coordinate(at[1])}) mm",
                 f"a polarised part marks its first pin on the silkscreen: {name} has no pad numbered 1, so it has no first pin "
-                "to mark; number its first pad 1 and mark it"))
+                f"to mark, and its holes do not excuse that: {reason}; number its first pad 1 and mark it"))
             continue
         first = firsts[0]
         others = [pad for pad in pads if pad.number != "1"]
@@ -6260,7 +6437,7 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
     found += ground_reliefs(design, rules, tree, members)
     try:
         found += decoupling_vias(design, tree, ground_nets(members))
-        found += untyped_circuits(design, tree, not_for_manufacture)
+        found += untyped_circuits_by_category(yaml, root, repository, design, tree, today, not_for_manufacture)
         if read is not None:
             circuits, paths = decoupling_paths(tree, ground_nets(members))
             read.append(("DECOUPLE-6 decoupling paths measured", "the layout's pad pin types",
