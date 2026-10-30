@@ -273,7 +273,14 @@ table_rows:
 # that the reasons of the bought-part creepage entries are those of the owner's recorded acceptance
 # (DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER, residual risk (e), 2026-10-29). Every
 # accepted_by and accepted_on is left empty for the owner's own act, and the values are drafts until
-# the finished main-board layout confirms each pair and distance.
+# the finished main-board layout confirms each pair and distance. The last five entries are of the
+# same_connector_pins form, one for each of the five 2.0 mm-pitch harness headers J630, J635, J791, J821
+# and J861: each excuses only the plated-hole spacing between two pads of its own header whose centres
+# stand 2.0 mm apart, which the board's plated-hole spacing rule holds to a larger figure than a 2.0 mm
+# pitch can reach. Their ground, that the header carries slow signals only and no fast signal crosses
+# its strip, is the owner's assertion and the check does not test it; the owner is shown the nets on
+# each header's pins when accepting. Each accepted_mm is the 2.0 mm pitch less the 0.75 mm drill of the
+# JST PH pad of the footprint, to be confirmed against the finished layout.
 accepted_exceptions:
   - pair: mains_to_mains
     constraint: clearance
@@ -405,5 +412,50 @@ accepted_exceptions:
     accepted_mm: 7.0
     reason: "The enclosure is sealed and inside the machine; the board has slots between pad rows where the spacing is ours; a conformal coat is planned; nothing mains-referenced is touchable beyond the items listed under each barrier (the owner's acceptance of 2026-10-29, bought-part creepage under the board's 10.0 mm figure). U711 MOC3052SVM gives an external creepage of at least 7 mm (onsemi MOC3052M/D Rev 4); the owner decided against the through-hole 0.4 inch spacing option for its assembly cost and hand soldering. Pins 1 (LED anode) and 6 (output) face each other across its barrier."
     bounded_by: "The part's tested isolation voltage (VISO 4170 Vrms) and the slot the layout cuts between its pad rows; proposed by the drafter for the owner to accept or correct."
+    accepted_by: ""
+    accepted_on: ""
+  - pair: same_connector_pins
+    constraint: hole_to_hole
+    connector: J630
+    pitch_mm: 2.0
+    accepted_mm: 1.25
+    reason: "J630 (WT1_H) is the first load-cell header (5 ways), whose pins carry the supply, ground and the two raw bridge signals of weight channel 1. A 2.0 mm pitch with the 0.75 mm drill of its JST PH footprint leaves 1.25 mm between the edges of adjacent holes, which the board's plated-hole spacing rule, drawn for the rings its pins open in a ground plane, holds to a larger distance; a 2.0 mm pitch cannot reach it. The owner's ground is that this header carries slow signals only and that no fast signal crosses its strip: an assertion the owner makes, which the tool does not check."
+    bounded_by: "The layout review's item that no track runs over a gap in the ground plane beneath it: a fast track crossing the merged rings of this header's strip fails that item, so none can cross it unnoticed. Proposed by the drafter for the owner to accept or correct."
+    accepted_by: ""
+    accepted_on: ""
+  - pair: same_connector_pins
+    constraint: hole_to_hole
+    connector: J635
+    pitch_mm: 2.0
+    accepted_mm: 1.25
+    reason: "J635 (WT2_H) is the second load-cell header (5 ways), whose pins carry the supply, ground and the two raw bridge signals of weight channel 2. A 2.0 mm pitch with the 0.75 mm drill of its JST PH footprint leaves 1.25 mm between the edges of adjacent holes, which the board's plated-hole spacing rule, drawn for the rings its pins open in a ground plane, holds to a larger distance; a 2.0 mm pitch cannot reach it. The owner's ground is that this header carries slow signals only and that no fast signal crosses its strip: an assertion the owner makes, which the tool does not check."
+    bounded_by: "The layout review's item that no track runs over a gap in the ground plane beneath it: a fast track crossing the merged rings of this header's strip fails that item, so none can cross it unnoticed. Proposed by the drafter for the owner to accept or correct."
+    accepted_by: ""
+    accepted_on: ""
+  - pair: same_connector_pins
+    constraint: hole_to_hole
+    connector: J791
+    pitch_mm: 2.0
+    accepted_mm: 1.25
+    reason: "J791 (SP2) is the gauge harness header (9 ways), whose pins carry the gauge supply, ground, the gauge step, direction and reset lines, the low-water cathode and the anode rail, the gauge step lines among them, which the owner weighs against the ground when accepting. A 2.0 mm pitch with the 0.75 mm drill of its JST PH footprint leaves 1.25 mm between the edges of adjacent holes, which the board's plated-hole spacing rule, drawn for the rings its pins open in a ground plane, holds to a larger distance; a 2.0 mm pitch cannot reach it. The owner's ground is that this header carries slow signals only and that no fast signal crosses its strip: an assertion the owner makes, which the tool does not check."
+    bounded_by: "The layout review's item that no track runs over a gap in the ground plane beneath it: a fast track crossing the merged rings of this header's strip fails that item, so none can cross it unnoticed. Proposed by the drafter for the owner to accept or correct."
+    accepted_by: ""
+    accepted_on: ""
+  - pair: same_connector_pins
+    constraint: hole_to_hole
+    connector: J821
+    pitch_mm: 2.0
+    accepted_mm: 1.25
+    reason: "J821 (CON2) is the operator panel harness header (9 ways), whose pins carry the buzzer, the five key lines, the anode rail and ground. A 2.0 mm pitch with the 0.75 mm drill of its JST PH footprint leaves 1.25 mm between the edges of adjacent holes, which the board's plated-hole spacing rule, drawn for the rings its pins open in a ground plane, holds to a larger distance; a 2.0 mm pitch cannot reach it. The owner's ground is that this header carries slow signals only and that no fast signal crosses its strip: an assertion the owner makes, which the tool does not check."
+    bounded_by: "The layout review's item that no track runs over a gap in the ground plane beneath it: a fast track crossing the merged rings of this header's strip fails that item, so none can cross it unnoticed. Proposed by the drafter for the owner to accept or correct."
+    accepted_by: ""
+    accepted_on: ""
+  - pair: same_connector_pins
+    constraint: hole_to_hole
+    connector: J861
+    pitch_mm: 2.0
+    accepted_mm: 1.25
+    reason: "J861 (KNOB) is the knob switch header (4 ways), whose pins carry the two knob switch lines and ground. A 2.0 mm pitch with the 0.75 mm drill of its JST PH footprint leaves 1.25 mm between the edges of adjacent holes, which the board's plated-hole spacing rule, drawn for the rings its pins open in a ground plane, holds to a larger distance; a 2.0 mm pitch cannot reach it. The owner's ground is that this header carries slow signals only and that no fast signal crosses its strip: an assertion the owner makes, which the tool does not check."
+    bounded_by: "The layout review's item that no track runs over a gap in the ground plane beneath it: a fast track crossing the merged rings of this header's strip fails that item, so none can cross it unnoticed. Proposed by the drafter for the owner to accept or correct."
     accepted_by: ""
     accepted_on: ""

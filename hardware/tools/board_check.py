@@ -698,6 +698,16 @@ MAINS_TO_MAINS_FIGURES = ("clearance_mm", "terminal_clearance_mm", "creepage_mm"
 EXCEPTION_KEYS = ("pair", "constraint", "between", "accepted_mm", "reason", "bounded_by", "accepted_by", "accepted_on")
 EXCEPTION_PAIRS = ("mains_to_low_voltage", "mains_to_mains")
 EXCEPTION_CONSTRAINTS = ("clearance", "creepage")
+#: The third form of an entry, which excuses the plated-hole spacing between pads of one connector at its own pin pitch: its
+#: pair, the one constraint it names, and its keys, which hold a connector and its pitch where the spacing forms hold between.
+SAME_CONNECTOR_PAIR = "same_connector_pins"
+PLATED_HOLE_CONSTRAINT = "hole_to_hole"
+SAME_CONNECTOR_KEYS = ("pair", "constraint", "connector", "pitch_mm", "accepted_mm", "reason", "bounded_by", "accepted_by",
+                       "accepted_on")
+#: How far from an entry's pitch_mm the distance between two pad centres may stand for the pair to be at that pitch.
+PITCH_TOLERANCE_MM = 0.01
+#: A reference designator as a connector is named in an entry: letters, then digits.
+REFERENCE_DESIGNATOR = re.compile(r"[A-Za-z]+[0-9]+")
 #: The keys inside the inputs a record states, each of which is optional on a record; the rest of the forms the
 #: separation basis decision fixes for them are read in read_inputs.
 INSULATIONS = ("basic", "reinforced")
@@ -1028,14 +1038,17 @@ def read_exceptions(design: Design, record: str, data: dict) -> List[Violation]:
     reading = Reading(design, "separation_basis", record, "accepted_exceptions entry")
     if not reading.listed("accepted_exceptions", data["accepted_exceptions"], "spacing exceptions", empty=True):
         return reading.found
+    connectors: Dict[str, int] = {}
     for index, entry in enumerate(data["accepted_exceptions"]):
         where = f"accepted_exceptions[{index}]"
-        if not reading.mapping(where, entry, EXCEPTION_KEYS, EXCEPTION_KEYS, "an accepted_exceptions entry"):
+        same = isinstance(entry, dict) and entry.get("pair") == SAME_CONNECTOR_PAIR
+        keys = SAME_CONNECTOR_KEYS if same else EXCEPTION_KEYS
+        if not reading.mapping(where, entry, keys, keys, "an accepted_exceptions entry"):
             continue
         if "pair" in entry:
-            reading.one_of(f"{where}.pair", entry["pair"], EXCEPTION_PAIRS)
+            reading.one_of(f"{where}.pair", entry["pair"], EXCEPTION_PAIRS + (SAME_CONNECTOR_PAIR,))
         if "constraint" in entry:
-            reading.one_of(f"{where}.constraint", entry["constraint"], EXCEPTION_CONSTRAINTS)
+            reading.one_of(f"{where}.constraint", entry["constraint"], (PLATED_HOLE_CONSTRAINT,) if same else EXCEPTION_CONSTRAINTS)
         if "between" in entry:
             items = entry["between"]
             if not isinstance(items, list) or len(items) != 2:
@@ -1044,6 +1057,19 @@ def read_exceptions(design: Design, record: str, data: dict) -> List[Violation]:
             else:
                 for position, item in enumerate(items):
                     reading.text(f"{where}.between[{position}]", item)
+        if "connector" in entry:
+            connector = entry["connector"]
+            if not isinstance(connector, str) or not REFERENCE_DESIGNATOR.fullmatch(connector):
+                reading.bad(f"{where}.connector", f"{where}.connector is {connector!r}, where it is the reference designator "
+                                                  "of one connector, letters then digits, as J630")
+            elif connector in connectors:
+                reading.bad(f"{where}.connector", f"{where}.connector names {connector}, which accepted_exceptions[{connectors[connector]}] "
+                                                  "names already; one entry covers every pair of a connector at its pitch, so "
+                                                  "state it once")
+            else:
+                connectors[connector] = index
+        if "pitch_mm" in entry:
+            reading.positive(f"{where}.pitch_mm", entry["pitch_mm"], " of millimetres")
         if "accepted_mm" in entry:
             reading.positive(f"{where}.accepted_mm", entry["accepted_mm"], " of millimetres")
         for key in ("reason", "bounded_by"):
@@ -6444,6 +6470,10 @@ RULE_FIGURE = re.compile(r"\(rule '([^']*)' (?:clearance|creepage) ([0-9.]+) mm"
 #: A pad as KiCad's report describes it, and a net as it writes one between square brackets.
 REPORTED_PAD = re.compile(r"\bpad (\S+) (?:\[.*\] )?of (\S+)\s*(?:@|$)")
 REPORTED_NET = re.compile(r"\[(.*)\]")
+#: The name of the board's plated-hole spacing rule in its rules file, and KiCad's own text of that rule and its figure in a
+#: hole_to_hole violation.
+PLATED_HOLE_RULE = "Plated hole spacing"
+HOLE_RULE_FIGURE = re.compile(r"\(rule '([^']*)' min ([0-9.]+) mm")
 
 
 class Shortfall:
@@ -6469,6 +6499,17 @@ class Shortfall:
         found = REPORTED_NET.search(text)
         return found is not None and found.group(1) == token
 
+    def pads(self) -> Optional[List[Tuple[str, float, float]]]:
+        """The pad each of the two items is, as (reference designator, x, y) in mm from KiCad's own report, or None where an item is no pad."""
+        found = []
+        for item in self.items:
+            pad = REPORTED_PAD.search(item.get("description", ""))
+            where = item.get("pos") or {}
+            if pad is None or not all(isinstance(where.get(axis), (int, float)) for axis in ("x", "y")):
+                return None
+            found.append((pad.group(2), float(where["x"]), float(where["y"])))
+        return found
+
     def lies_between(self, tokens: List[Tuple[str, bool]]) -> bool:
         if len(self.texts) != 2:
             return False
@@ -6492,6 +6533,11 @@ class Judged:
 def reported_shortfalls(violations: Sequence[dict]) -> List[Shortfall]:
     found = []
     for entry in violations:
+        if entry.get("type") == PLATED_HOLE_CONSTRAINT:
+            reported = HOLE_RULE_FIGURE.search(entry.get("description", ""))
+            if reported is not None and reported.group(1) == PLATED_HOLE_RULE and len(entry.get("items") or []) == 2:
+                found.append(Shortfall(entry, SAME_CONNECTOR_PAIR, float(reported.group(2)), entry["items"]))
+            continue
         if entry.get("type") not in EXCEPTION_CONSTRAINTS:
             continue
         reported = RULE_FIGURE.search(entry.get("description", ""))
@@ -6517,6 +6563,82 @@ def entry_unsigned(entry: dict, record_day: Optional[datetime.date], today: date
         return (f"accepted_on {day.isoformat()} is later than the record's own accepted_on {record_day.isoformat()}, which "
                 "covers the exceptions it holds; the record needs a fresh acceptance")
     return None
+
+
+def plated_pad_centres(footprint: list) -> List[Tuple[float, float]]:
+    """The centre of each plated through-hole pad of a footprint as the layout places it, in mm."""
+    name = board_geometry.reference(footprint)
+    what = f"a pad of the footprint {name or '?'}"
+    at = board_geometry.placement(footprint, what)
+    return [board_geometry.placed(board_geometry.xy(sexpr.child(node, "at"), what), at)
+            for node in sexpr.children(footprint, "pad") if len(node) > 2 and str(node[2]) == "thru_hole"]
+
+
+def judge_same_connector(judged: Judged, index: int, entry: dict, record: str, design: Design, tree: list,
+                         shortfalls: Sequence[Shortfall]) -> None:
+    """One same_connector_pins entry judged against the plated-hole shortfalls the layout rule check reported.
+
+    A shortfall between two pads of the entry's connector whose centres, as
+    KiCad's report places them, stand pitch_mm apart is accepted when the
+    distance KiCad reported between the hole edges is no less than accepted_mm
+    and failed, naming the entry, when it is less. The entry fails when the
+    layout lacks its connector or places it without two plated pads pitch_mm
+    apart, when it is no less than the figure the plated-hole rule held for the
+    shortfalls it covers, or when it covers none that another entry has not taken.
+    """
+    where = f"{record} accepted_exceptions[{index}]"
+    label = f"accepted_exceptions[{index}]"
+    connector, pitch, accepted = entry["connector"], float(entry["pitch_mm"]), float(entry["accepted_mm"])
+
+    def fail(message: str) -> None:
+        judged.violations.append(Violation(design.project, "spacing_exception", where, f"{label} {message}"))
+
+    def at_pitch(one: Tuple[float, float], other: Tuple[float, float]) -> bool:
+        return abs(math.dist(one, other) - pitch) <= PITCH_TOLERANCE_MM + 1e-9
+
+    footprint = board_footprints(tree).get(connector)
+    if footprint is None:
+        fail(f"names the connector {connector}, which the layout lacks; name a connector of the layout, or remove the entry")
+        return
+    centres = plated_pad_centres(footprint)
+    if not any(at_pitch(one, other) for position, one in enumerate(centres) for other in centres[position + 1:]):
+        fail(f"names the connector {connector}, which the layout places without two plated pads {pitch:g} mm apart; correct "
+             "pitch_mm, or remove the entry")
+        return
+    covered = []
+    for found in shortfalls:
+        if found.pair != SAME_CONNECTOR_PAIR or id(found.entry) in judged.consumed:
+            continue
+        pads = found.pads()
+        if pads is not None and all(pad[0] == connector for pad in pads) and at_pitch(pads[0][1:], pads[1][1:]):
+            covered.append(found)
+    if not covered:
+        fail(f"covers the plated holes of {connector} at {pitch:g} mm pitch, where the layout rule check reports no shortfall "
+             "of them; remove the exception, or restore the geometry it excused")
+        return
+    figure = max(found.figure for found in covered)
+    if accepted >= figure:
+        fail(f"accepts {accepted:g} mm, which is not below the {figure:g} mm the plated-hole rule holds, so it relaxes nothing; "
+             "accept a smaller distance, or remove it")
+        return
+    seen: Set[tuple] = set()
+    for found in covered:
+        judged.consumed.add(id(found.entry))
+        if found.key() in seen:
+            continue
+        seen.add(found.key())
+        names = " and ".join(f"{connector}.{REPORTED_PAD.search(text).group(1)}" for text in found.texts)
+        if found.measured >= accepted:
+            judged.accepted.append(
+                "ACCEPTED | " + " | ".join(clean(field) for field in (
+                    design.project, "spacing_exception", where,
+                    f"accepted exception: plated-hole spacing of connector {connector} at {pitch:g} mm pitch between {names} "
+                    f"({'; '.join(found.texts)}) measures {found.measured:g} mm, accepted down to {accepted:g} mm against the "
+                    f"plated-hole rule's {found.figure:g} mm; reason: {entry['reason']}; bounded by: {entry['bounded_by']}")))
+        else:
+            fail(f"accepts the plated-hole spacing of connector {connector} at {pitch:g} mm pitch between {names} down to "
+                 f"{accepted:g} mm, and the layout leaves {found.measured:g} mm ({'; '.join(found.texts)}), below it; move the "
+                 "holes apart, or the owner accepts a smaller distance")
 
 
 def judge_exceptions(design: Design, record: str, signed: Signed, violations: Sequence[dict], tree: list,
@@ -6549,6 +6671,9 @@ def judge_exceptions(design: Design, record: str, signed: Signed, violations: Se
         unsigned = entry_unsigned(entry, record_day, today)
         if unsigned is not None:
             fail(index, f"is not an acceptance, so it excuses nothing: {unsigned}")
+            continue
+        if entry["pair"] == SAME_CONNECTOR_PAIR:
+            judge_same_connector(judged, index, entry, record, design, tree, shortfalls)
             continue
         tokens = [(token, token in pads) for token in entry["between"]]
         absent = [token for token, as_pad in tokens if not as_pad and token not in nets]

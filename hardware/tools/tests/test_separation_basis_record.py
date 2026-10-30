@@ -47,7 +47,7 @@ def assert_draft(case, data):
     case.assertNotIn("accepted_by", data)
     case.assertNotIn("accepted_on", data)
     for entry in data["accepted_exceptions"]:
-        case.assertEqual((entry["accepted_by"], entry["accepted_on"]), ("", ""), entry["between"])
+        case.assertEqual((entry["accepted_by"], entry["accepted_on"]), ("", ""), entry.get("between") or entry["connector"])
 
 
 class SeparationBasisRecord(unittest.TestCase):
@@ -260,9 +260,9 @@ class MainsToMainsRecord(unittest.TestCase):
                 self.assertIn("does not excuse the triac's tab", entry["reason"])
                 self.assertNotIn("tab lead", entry["reason"])
         # a part's other pairs have no entry, and a part the owner did not accept has none
-        pairs = {frozenset(e["between"]) for e in data["accepted_exceptions"]}
+        pairs = {frozenset(e["between"]) for e in data["accepted_exceptions"] if "between" in e}
         self.assertNotIn(frozenset(("T701.1", "T701.3")), pairs)
-        parts = {pad.split(".")[0] for e in data["accepted_exceptions"] for pad in e["between"]}
+        parts = {pad.split(".")[0] for e in data["accepted_exceptions"] for pad in e.get("between", [])}
         self.assertTrue(parts.isdisjoint({"K201", "K731", "K741", "U602", "F101", "RV101"}), parts)
         # the reader finds the entries well formed, and no problem but the unsigned record
         _, problems = reading()
@@ -430,6 +430,54 @@ class MainsToMainsReadings(unittest.TestCase):
         # the old comment that said the 320 V row is used and no interpolation is made is gone
         self.assertNotIn("no interpolation is made", text)
         self.assertNotIn("the next row up, 320 V, is the one used", text)
+
+
+class SameConnectorRecord(unittest.TestCase):
+    """The committed record's same_connector_pins entries, one for each 2.0 mm-pitch harness header, read through the check's own reader."""
+
+    HEADERS = ("J630", "J635", "J791", "J821", "J861")
+
+    def entries(self, data):
+        return [e for e in data["accepted_exceptions"] if e["pair"] == board_check.SAME_CONNECTOR_PAIR]
+
+    def test_each_of_the_five_headers_has_one_drafted_entry_with_its_acceptance_empty(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C6: The committed record holds one same_connector_pins entry for each of J630, J635, J791, J821 and J861 with pitch_mm 2.0, an accepted_mm drafted from the schematic and the division record, the reason that the header carries slow signals only and no fast signal crosses its strip, a bounding element, and the entry's own accepted_by and accepted_on empty. The five entries are read through the check's own reader from the committed record in whatever acceptance state the record as a whole is in, and each is accepted as a form; the test asserts nothing about whether the record as a whole reads signed or unsigned.
+        _, data = committed()
+        entries = self.entries(data)
+        self.assertEqual([e["connector"] for e in entries], list(self.HEADERS))
+        for entry in entries:
+            with self.subTest(connector=entry["connector"]):
+                self.assertEqual(sorted(entry), sorted(board_check.SAME_CONNECTOR_KEYS))
+                self.assertEqual((entry["constraint"], entry["pitch_mm"]), ("hole_to_hole", 2.0))
+                # the pitch less the 0.75 mm drill of the JST PH footprint, and below the plated-hole figure the layout practice derives
+                self.assertEqual(entry["accepted_mm"], 1.25)
+                self.assertIn("slow signals only", entry["reason"])
+                self.assertIn("no fast signal crosses its strip", entry["reason"])
+                self.assertIn("the owner makes, which the tool does not check", entry["reason"])
+                self.assertIn(entry["connector"], entry["reason"])
+                self.assertTrue(entry["bounded_by"].strip())
+                self.assertEqual((entry["accepted_by"], entry["accepted_on"]), ("", ""))
+
+    def test_the_checks_own_reader_accepts_each_entry_as_a_form_and_refuses_a_broken_one(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C6: The committed record holds one same_connector_pins entry for each of J630, J635, J791, J821 and J861 with pitch_mm 2.0, an accepted_mm drafted from the schematic and the division record, the reason that the header carries slow signals only and no fast signal crosses its strip, a bounding element, and the entry's own accepted_by and accepted_on empty. The five entries are read through the check's own reader from the committed record in whatever acceptance state the record as a whole is in, and each is accepted as a form; the test asserts nothing about whether the record as a whole reads signed or unsigned.
+        _, data = committed()
+        _, problems = reading()
+        self.assertEqual([p.line() for p in problems if "accepted_exceptions" in p.location], [])
+        first = next(i for i, e in enumerate(data["accepted_exceptions"]) if e["pair"] == board_check.SAME_CONNECTOR_PAIR)
+        for key in board_check.SAME_CONNECTOR_KEYS:
+            broken = [dict(e) for e in data["accepted_exceptions"]]
+            del broken[first][key]
+            _, found = reading(dict(data, accepted_exceptions=broken))
+            self.assertTrue(any(p.location.endswith(f"accepted_exceptions[{first}].{key}") and f"lacks {key}" in p.message
+                                for p in found), key)
+        twice = [dict(e) for e in data["accepted_exceptions"]]
+        twice[first + 1]["connector"] = twice[first]["connector"]
+        _, found = reading(dict(data, accepted_exceptions=twice))
+        self.assertTrue(any(p.location.endswith(f"accepted_exceptions[{first + 1}].connector") for p in found))
+        held = [dict(e) for e in data["accepted_exceptions"]]
+        held[first]["between"] = ["J630.1", "J630.2"]
+        _, found = reading(dict(data, accepted_exceptions=held))
+        self.assertTrue(any(p.location.endswith(f"accepted_exceptions[{first}].between") for p in found))
 
 
 if __name__ == "__main__":
