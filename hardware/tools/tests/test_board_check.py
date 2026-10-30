@@ -3852,6 +3852,96 @@ class TheCrystalKeepClearIsInTheRulesFileOfABoardWithACrystal(unittest.TestCase)
         self.assertEqual(self.found(KEEP_CLEAR, KEEP_CLEAR.replace("'Y1'", "'Y2'"), tree=two), [])
 
 
+def keep_clear_for(crystal: str, *exempt: str, minimum: str = "10mm") -> str:
+    """The crystal keep-clear rule of `crystal` exempting the parts `exempt`."""
+    clauses = "".join(f" && B.Reference != '{name}'" for name in exempt)
+    return (f'(rule "Keep-clear {crystal}"\n\t(condition "A.Reference == \'{crystal}\'{clauses}")\n'
+            f'\t(constraint courtyard_clearance (min {minimum})))')
+
+
+def courtyard_rule(name: str, condition: str, minimum: str) -> str:
+    return f'(rule "{name}"\n\t(condition "{condition}")\n\t(constraint courtyard_clearance (min {minimum})))'
+
+
+class TheCrystalKeepClearOfABoardWithTwoCrystals(unittest.TestCase):
+    """On a layout of two crystals each keep-clear exempts the other, and only
+    that one mention, a B.Reference != clause inside the keep-clear form, does
+    not name a crystal; every other mention does.
+    """
+
+    BOARD = tree_of(named_part("Crystal_A", "Y1", ("1", "/X", 1, 1)), named_part("Crystal_B", "Y2", ("1", "/X", 1, 1)),
+                    named_part("C_0603", "C1", ("1", "/X", 1, 1)), named_part("R_0603", "R1", ("1", "/Y", 1, 1)))
+    PAIR = (keep_clear_for("Y1", "Y2", "C1"), keep_clear_for("Y2", "Y1", "C1"))
+
+    def found(self, *rules, tree=None):
+        return board_check.crystal_keep_clear(DESIGN, rules_of(*rules), tree or self.BOARD)
+
+    def naming(self, *rules):
+        """The (rule, crystal) pairs of the loosening-rule failures, sorted."""
+        return sorted(re.match(r"rule '([^']+)'(?: at line \d+)? holds a courtyard_clearance constraint and names (\w+),", v.message).groups()
+                      for v in self.found(*rules))
+
+    def test_a_keep_clear_for_each_crystal_exempting_the_other_passes(self):
+        # SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL.C1: On a layout of two crystals, a keep-clear rule for each that exempts the other with B.Reference != passes the crystal keep-clear
+        self.assertEqual(self.found(*self.PAIR), [])
+        self.assertEqual(self.found(*reversed(self.PAIR)), [])
+
+    def test_a_keep_clear_for_the_second_crystal_exempting_the_first_does_not_name_the_first(self):
+        # SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL.C1: On a layout of two crystals, a keep-clear rule for each that exempts the other with B.Reference != passes the crystal keep-clear
+        self.assertEqual(self.found(keep_clear_for("Y1", "C1"), keep_clear_for("Y2", "Y1", "C1")), [])
+
+    def test_a_rule_outside_the_form_naming_a_crystal_with_double_equals_fails_for_it(self):
+        # SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL.C2: A courtyard_clearance rule outside the keep-clear form that names a crystal with == fails for that crystal
+        for what, condition, crystals in (("A.Reference == beyond the form", "A.Reference == 'Y1' && A.Layer == 'F.Cu'", ["Y1"]),
+                                          ("B.Reference ==", "B.Reference == 'Y1'", ["Y1"]),
+                                          ("the second as A and the first as B ==", "A.Reference == 'Y2' && B.Reference == 'Y1'", ["Y1", "Y2"])):
+            with self.subTest(what=what):
+                self.assertEqual(self.naming(*self.PAIR, courtyard_rule("Loose", condition, "1mm")), [("Loose", crystal) for crystal in crystals])
+
+    def test_a_rule_outside_the_form_naming_a_crystal_with_not_equals_fails_for_it(self):
+        # SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL.C3: A courtyard_clearance rule outside the keep-clear form that names a crystal with != fails for that crystal
+        for what, condition, minimum in (("A.Reference !=", "A.Reference != 'Y1'", "0mm"),
+                                         ("a bare B.Reference !=", "B.Reference != 'Y1'", "1mm"),
+                                         ("a != clause after a == on B", "A.Reference == 'Y2' && B.Reference == 'C1' && B.Reference != 'Y1'", "1mm")):
+            with self.subTest(what=what):
+                self.assertIn(("Loose", "Y1"), self.naming(*self.PAIR, courtyard_rule("Loose", condition, minimum)))
+
+    def test_a_keep_clear_for_the_second_crystal_below_the_floor_is_reported_once_for_the_second(self):
+        # SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL.C4: A keep-clear for the second crystal below the floor is reported once, for the second crystal
+        found = self.found(self.PAIR[0], keep_clear_for("Y2", "Y1", "C1", minimum="9mm"))
+        self.assertEqual(len(found), 1)
+        self.assertIn("keeps parts 9 mm from the courtyard of Y2, under the 10 mm", found[0].message)
+
+    def test_each_other_failure_of_the_keep_clear_still_fails(self):
+        # SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL.C5: Each of these still fails the crystal keep-clear: a keep-clear below the 10 mm floor; a keep-clear that exempts every other part; a crystal of the layout with no rule of its own, including a second crystal with none; and a keep-clear that does not name its crystal as A
+        found = self.found(keep_clear_for("Y1", "Y2", "C1", minimum="9.9mm"), self.PAIR[1])
+        self.assertEqual([("keeps parts 9.9 mm" in v.message) for v in found], [True])
+        found = self.found(keep_clear_for("Y1", "Y2", "C1", "R1"), self.PAIR[1])
+        self.assertEqual(len(found), 1)
+        self.assertIn("exempts every other part of the layout from the keep-clear of Y1", found[0].message)
+        found = self.found(self.PAIR[0])
+        self.assertEqual([v.location for v in found], [f"{DESIGN.rules} crystal Y2"])
+        found = self.found(self.PAIR[1])
+        self.assertEqual([v.location for v in found], [f"{DESIGN.rules} crystal Y1"])
+        found = self.found(self.PAIR[1], courtyard_rule("Other", "A.Reference == 'C1' && B.Reference != 'Y1'", "10mm"))
+        self.assertEqual([v.location for v in found], [f"{DESIGN.rules} crystal Y1"], "a form with another part as A holds nothing for Y1")
+
+    def test_the_single_crystal_layout_and_each_message_are_as_they_were(self):
+        # SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL.C6: A single-crystal layout reports as it did before this change, and the message of each failure of the crystal keep-clear is unchanged
+        single = TheCrystalKeepClearIsInTheRulesFileOfABoardWithACrystal.BOARD
+        def messages(*rules):
+            return [re.sub(r" at line \d+", "", v.message) for v in board_check.crystal_keep_clear(DESIGN, rules_of(*rules), single)]
+
+        self.assertEqual(messages(KEEP_CLEAR, courtyard_rule("Loose", "B.Reference != 'Y1'", "1mm")),
+                         ["rule 'Loose' holds a courtyard_clearance constraint and names Y1, but not in the one form of the crystal keep-clear, "
+                          "so KiCad may apply it after the keep-clear and loosen it; remove it, or write it as the keep-clear"])
+        self.assertEqual(messages(KEEP_CLEAR.replace("10mm", "9mm")),
+                         ["rule 'Crystal keep-clear' keeps parts 9 mm from the courtyard of Y1, under the 10 mm the crystal keep-clear holds; raise its minimum"])
+        self.assertEqual(messages(KEEP_CLEAR.replace("'C1'", "'C1' && B.Reference != 'R1'")),
+                         ["rule 'Crystal keep-clear' exempts every other part of the layout from the keep-clear of Y1, so it holds nothing; "
+                          "exempt only the parts related to the oscillator"])
+
+
 class TheGroundPadReliefsAreInTheRulesFileOfABoardWithGroundPads(unittest.TestCase):
     # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
     """A board with a pad on a ground net class needs the rule giving ground

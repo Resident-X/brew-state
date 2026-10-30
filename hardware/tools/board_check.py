@@ -3825,7 +3825,9 @@ def crystal_keep_clear(design: Design, rules: Optional[List[list]], tree: list) 
     B only by reference, and which leaves at least one other footprint of the
     layout unexempted: a rule that exempts every part, or is written in any
     other form, holds nothing. Any other rule holding the constraint that names
-    the crystal is a rule KiCad may apply after it, so it fails too.
+    the crystal is a rule KiCad may apply after it, so it fails too. A rule in
+    that one form for another reference is passed over for this crystal: its
+    B.Reference != clauses only remove pairs, so it exempts and never names.
     """
     footprints = board_footprints(tree)
     crystals = sorted(reference for reference, footprint in footprints.items()
@@ -3861,6 +3863,10 @@ def crystal_keep_clear(design: Design, rules: Optional[List[list]], tree: list) 
                                        f"{crystal}, so it holds nothing; exempt only the parts related to the oscillator"))
         formed = {id(rule) for rule, _, _ in forms}
         for rule in holding:
+            text = sole_rule_form(rule)
+            elsewhere = KEEP_CLEAR_CONDITION.fullmatch(text) if text is not None else None
+            if elsewhere and elsewhere.group(1) != crystal:
+                continue
             if id(rule) in formed or f"'{crystal}'" not in " ".join(str(node[1]) for node in sexpr.children(rule, "condition") if len(node) > 1):
                 continue
             found.append(Violation(design.project, "crystal_keepclear", f"{design.rules} {rule_at(rule)}",

@@ -825,6 +825,26 @@ def keep_clear_exempting_all(seed: Seed) -> None:
     rule("Crystal keep-clear", f"A.Reference == 'R2'{exempt}", "(constraint courtyard_clearance (min 10mm))")(seed)
 
 
+def two_crystals(seed: Seed, loosening_condition: str, minimum: str) -> None:
+    """R1 and R2 renamed to crystals, each held by a keep-clear exempting the other, then a rule that names R1 and loosens it."""
+    for reference in ("R1", "R2"):
+        seed.layout(lambda tree, reference=reference: footprint(tree, reference).__setitem__(1, sexpr.Quoted("proof:Crystal_Seeded")))
+    for crystal, other in (("R1", "R2"), ("R2", "R1")):
+        rule(f"Crystal keep-clear {crystal}", f"A.Reference == '{crystal}' && B.Reference != '{other}'",
+             "(constraint courtyard_clearance (min 10mm))")(seed)
+    rule("Loosening of the first crystal", loosening_condition, f"(constraint courtyard_clearance (min {minimum}))")(seed)
+
+
+def second_keep_clear_followed_by_a_rule_naming_the_first(seed: Seed) -> None:
+    """Two crystals with their keep-clears, the second followed by a rule naming the first as B with ==."""
+    two_crystals(seed, "A.Reference == 'R2' && B.Reference == 'R1'", "1mm")
+
+
+def rule_not_the_first_crystal_at_zero(seed: Seed) -> None:
+    """Two crystals with their keep-clears, then a rule whose condition is A.Reference != the first crystal at 0mm."""
+    two_crystals(seed, "A.Reference != 'R1'", "0mm")
+
+
 def ground_class(seed: Seed) -> None:
     """A Ground net class holding /LV_B, whose pads then want thermal reliefs."""
     def edit(data: dict) -> None:
@@ -1525,6 +1545,10 @@ FAULTS: List[tuple] = [
      "R2 is a crystal, and the rules file holds no rule keeping the parts unrelated", crystal_part),
     ("a crystal keep-clear that exempts every other part", "clock: the keep-clear exempts no more than the parts related to the oscillator", "crystal_keepclear",
      "exempts every other part of the layout from the keep-clear of R2", keep_clear_exempting_all),
+    ("a second crystal's keep-clear followed by a rule naming the first crystal as B with ==", "clock: a rule naming the other crystal with == is a rule naming it", "crystal_keepclear",
+     "holds a courtyard_clearance constraint and names R1", second_keep_clear_followed_by_a_rule_naming_the_first),
+    ("a rule with A.Reference != the first crystal at 0mm on a board of two crystals", "clock: a rule naming a crystal with != outside the keep-clear form is a rule naming it", "crystal_keepclear",
+     "holds a courtyard_clearance constraint and names R1", rule_not_the_first_crystal_at_zero),
     ("a ground class on a board whose rules file has no relief rule", "manufacture: a board with ground pads holds the thermal relief rule", "ground_relief",
      "the rules file holds no rule giving them thermal reliefs", ground_class),
     ("a relief rule exempting a pad that is not an exposed pad", "manufacture: the relief rule exempts only an exposed pad", "ground_relief",

@@ -48,6 +48,8 @@ class TheBarrierPasteAndPourRules(Proved):
                           "a part whose only pads off the Mains class have no net",
                           "a crystal on a board whose rules file has no keep-clear",
                           "a crystal keep-clear that exempts every other part",
+                          "a second crystal's keep-clear followed by a rule naming the first crystal as B with ==",
+                          "a rule with A.Reference != the first crystal at 0mm on a board of two crystals",
                           "a ground class on a board whose rules file has no relief rule",
                           "a relief rule exempting a pad that is not an exposed pad")
 
