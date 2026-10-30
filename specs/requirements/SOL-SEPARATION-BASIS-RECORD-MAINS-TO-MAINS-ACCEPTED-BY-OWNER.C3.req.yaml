@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER.C3
+type: criterion
+title: The acceptance covers the interpolation position, the terminal allowance and the material-group reading
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  For each of the three readings the record marks for the owner's check, the household-appliance standard's position on interpolating its creepage table, the 0.5 mm terminal allowance, and the material-group column of the 250 V and 320 V rows, the session records the owner's answer before acceptance is entered, as accepted or corrected. A corrected reading returns to the record's leaf and no acceptance is entered until the amended record has been shown again. Reading the standards' own text is out of scope here.
+links:
+  - target: SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER
+    type: criterion-of

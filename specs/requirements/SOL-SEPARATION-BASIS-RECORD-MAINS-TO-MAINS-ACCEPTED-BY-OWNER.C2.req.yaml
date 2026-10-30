@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER.C2
+type: criterion
+title: Acceptance is entered only on the owner's explicit instruction, as its own commit that quotes it
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The commit that enters accepted_by and accepted_on in the record and in each accepted_exceptions entry changes no other line of the record, and its message quotes verbatim the owner's instruction in the session that named the record. No such commit exists on the drafter's initiative, from silence, from approval of the presentation alone, or from the earlier acceptance of 2026-10-23. Whether the quoted words are an explicit instruction is judged by reading the message against the session; the commit's authorship is out of scope.
+links:
+  - target: SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER
+    type: criterion-of

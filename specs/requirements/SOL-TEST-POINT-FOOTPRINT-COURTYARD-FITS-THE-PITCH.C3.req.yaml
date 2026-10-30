@@ -1,7 +1,7 @@
 id: SOL-TEST-POINT-FOOTPRINT-COURTYARD-FITS-THE-PITCH.C3
 type: criterion
 title: A test point still fails the rule against another part's courtyard that stands nearer than the required distance
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: test

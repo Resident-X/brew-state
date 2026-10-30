@@ -1,0 +1,12 @@
+id: SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-READ.C2
+type: criterion
+title: The HF32FA-G figures are read from the rendered datasheet page
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The creepage and clearance recorded for K731 and K741 are read from the datasheet page rendered as an image, because the PDF's extracted text is garbled, and the record cites that page. Where the rendered page gives no figure, the figure is recorded as absent. Comparison with the signed figures is out of scope here.
+links:
+  - target: SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-READ
+    type: criterion-of

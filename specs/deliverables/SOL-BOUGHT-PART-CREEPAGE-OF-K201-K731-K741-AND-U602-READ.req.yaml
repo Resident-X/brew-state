@@ -1,0 +1,23 @@
+id: SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-READ
+type: deliverable
+category: solution
+title: The creepage and clearance of the interlock relay, the valve relays and the voltage-reading optocoupler are read from their makers' documents
+status: active
+version: 1
+text: |
+  Reads, from their makers' current documents, the creepage and clearance of the bought parts whose figures the owner's acceptance of bought-part creepage leaves open: the interlock relay K201 (Hongfa HF115F-Q), the valve relays K731 and K741 (Hongfa HF32FA-G) and the voltage-reading optocoupler U602 (LTV-814S). The reading is a fact-finding step; whether a part meets the signed figures, needs an exception or must change is the judging leaf's.
+
+  Settled for the build:
+  - Each part's creepage and clearance between its mains-side and low-voltage-side pins, and for each relay between coil and contacts, is recorded in the board division record (docs/sunbeam-em7000/controller-board-division.md) with the maker's document, its revision or date, the page or section, and the day it was read. A figure the documents do not give is recorded as absent, never estimated and never taken from a similar part.
+  - What is known before the build: the HF115F-Q datasheet states creepage over 8 mm and gives no clearance; the LTV-814S datasheet states only a 5 kVrms isolation rating and no creepage or clearance; the HF32FA-G datasheet PDF's text is font-garbled, so its page is rendered to an image and read from the image, not from extracted text.
+  - Where a datasheet is silent on a figure, the maker's published safety certificates for the part (the approval bodies' listings and reports the maker or the catalogue supplier host) are searched for it, and the search and its result are recorded, including "none found".
+  - Out of scope: comparing any figure with the signed 10.0 mm creepage and 3.0 mm clearance, writing an exception, choosing another part, and every part other than the four; U601, U701 and U711 are in their own leaf.
+rationale: |
+  Restores the behaviour REQ-ELECTRICAL-INSTALL-001.C9 asks of the barrier parts the build buys: each part's isolation rating is read from its maker's current document and recorded with that source, and a rating that cannot be sourced counts as absent. The reading is split from the judgement because it can be completed from the makers' documents alone, while the judgement waits on the signed record and on figures the makers may not publish.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C9
+    type: targets
+  - target: DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER
+    type: justified-by
