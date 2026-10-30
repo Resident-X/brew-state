@@ -6,7 +6,7 @@ version: 1
 measurement_type: binary
 verification: inspection
 text: |-
-  The record marks the 0.5 mm terminal allowance (Table 16 footnote of the household-appliance standard) and the permission to interpolate creepage between voltage rows (the creepage table's notes) as readings from reproductions, each with its source and its clause where the source gives one, unverified against the standard's own text, and the owner's acceptance includes checking them. A clause the sources do not give is stated as not found, not guessed. Reading the standard's own text beyond these two points is out of scope.
+  The record marks the 0.5 mm terminal allowance (Table 16 footnote of the household-appliance standard) and the permission to interpolate creepage between voltage rows (the creepage table's notes) as readings from reproductions, each with its source and its clause where the source gives one, unverified against the standard's own text, and the owner's acceptance includes checking them. A clause the sources do not give is stated as not found, not guessed. The same check covers the material-group column of the 250 V and 320 V rows used: they are drafter readings of IEC 60664-1 Table F.4 from reproductions (pollution degree 3, group III: 250 V = 4.0 mm, 320 V = 5.0 mm). Reading the standard's own text beyond these points is out of scope.
 links:
   - target: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS
     type: criterion-of

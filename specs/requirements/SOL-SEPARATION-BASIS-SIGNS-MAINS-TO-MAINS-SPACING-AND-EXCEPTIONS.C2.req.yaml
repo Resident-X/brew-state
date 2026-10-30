@@ -6,7 +6,7 @@ version: 2
 measurement_type: binary
 verification: test
 text: |-
-  The record's table_rows hold a row for each figure: the clearance row (2.5 kV), a terminal row carrying location terminal, and a derived creepage row at 253 V whose figure is the interpolation of the 250 V and 320 V rows rounded up to 4.1 mm, its citation naming both rows and the arithmetic. Each row has its citation (document, edition and the table and row), its inputs and its figure. The check's floor rule, run on the record's own figures taken as signed, finds no figure below its floor, and a creepage figure of 4.0 mm would fail it. Rows for the mains_to_low_voltage figures are out of scope and stay as signed.
+  The record's table_rows hold a row for each figure: the clearance row (2.5 kV), a terminal row carrying location terminal, and a derived creepage row at 253 V whose figure is the interpolation of the 250 V and 320 V rows rounded up to 4.1 mm, its citation naming both rows and the arithmetic. The derived row restates the inputs it was read at, material group included, as signed. Each row has its citation (document, edition and the table and row), its inputs and its figure. The check's floor rule, run on the record's own figures taken as signed, finds no figure below its floor, and a creepage figure of 4.0 mm would fail it. Rows for the mains_to_low_voltage figures are out of scope and stay as signed.
 links:
   - target: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS
     type: criterion-of
