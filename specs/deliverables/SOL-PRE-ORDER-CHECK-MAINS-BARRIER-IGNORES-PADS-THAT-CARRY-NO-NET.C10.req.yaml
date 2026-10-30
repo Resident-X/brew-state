@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C10
+type: criterion
+title: The message of each barrier failure is unchanged apart from its closing advice
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The message of each failure of the barrier rule is unchanged apart from its closing advice, which says that every numbered, coppered pad that is not Mains-class is on a net, a pin meant to be open being flagged no-connect in the schematic. Out of scope: the figure BARRIER_COPPER_MM2, the strip geometry and the main board's layout.
+links:
+  - target: SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET
+    type: criterion-of

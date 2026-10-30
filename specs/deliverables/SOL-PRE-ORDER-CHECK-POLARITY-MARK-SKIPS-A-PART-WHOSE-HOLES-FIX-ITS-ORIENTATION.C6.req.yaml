@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C6
+type: criterion
+title: A polarised footprint with no named pad fails polarity_mark
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A polarised through-hole footprint none of whose pads is named fails polarity_mark even where its holes are asymmetric under every turn, naming the part and saying none of its pads is named. Out of scope: which parts are polarised, the silk marks on the main board and the mark margin.
+links:
+  - target: SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION
+    type: criterion-of

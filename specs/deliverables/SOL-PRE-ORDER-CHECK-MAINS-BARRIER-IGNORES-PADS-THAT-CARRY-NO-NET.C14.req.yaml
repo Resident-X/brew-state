@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C14
+type: criterion
+title: The method and the hardware notes state which pads are off the Mains class and the accepted limit
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The design method's statement of the barrier rule and the hardware notes' mains_barrier entry and barrier paragraph state that a pad with no net and no number or no copper, and a pad on a net named unconnected-(...) that no other pad carries, is no pad off the class; that a pad on a Mains-class net counts whatever its number, layer or net name; that a net named so and carried by two or more pads is a real net; and that a part whose only off-class pads are exempt is not judged, the floating-tab limit included. Inspection: read each place against each clause and find all present. Out of scope: the figure BARRIER_COPPER_MM2, the strip geometry and the main board's layout.
+links:
+  - target: SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET
+    type: criterion-of

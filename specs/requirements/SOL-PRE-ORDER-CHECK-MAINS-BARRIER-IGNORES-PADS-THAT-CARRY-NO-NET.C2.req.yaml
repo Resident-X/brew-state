@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C2
+type: criterion
+title: A part whose only pads off the Mains class are lone no-connect pads is not reported
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  On a synthetic layout, a part with Mains-class pads whose only other pads are on nets named unconnected-(...), each carried by no other pad, is not reported by the barrier rule. Out of scope: the figure BARRIER_COPPER_MM2, the strip geometry and the main board's layout.
+links:
+  - target: SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY.C8
+type: criterion
+title: A seeded copy of the proof design with a real integrated circuit whose entry has a category outside the list is caught as decoupling_pintype
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The seeded-fault harness holds a row on an orderable copy of the throwaway proof design, with a non-synthetic extract whose entry for a U position's number carries a category outside the closed list and that position's pads netted and none typed power, and the check reports decoupling_pintype with the message saying the position has netted pads and none typed power input or power output. The committed proof designs' records are out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY
+    type: criterion-of

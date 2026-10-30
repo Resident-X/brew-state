@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY.C2
+type: criterion
+title: A part whose entry's category is in the closed list and whose footprint has a pad typed power input or power output fails decoupling_pintype naming the position
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  On the same orderable design and non-synthetic extract as the pass case, a U-referenced footprint whose entry's category is in the closed list and which has a pad typed power input or power output fails decoupling_pintype naming the position, with a message saying the layout contradicts the category. The main board's records and any rule other than decoupling_pintype are out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY
+    type: criterion-of

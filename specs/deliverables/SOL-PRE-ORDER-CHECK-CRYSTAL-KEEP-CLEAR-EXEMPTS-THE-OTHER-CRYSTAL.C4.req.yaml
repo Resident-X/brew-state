@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL.C4
+type: criterion
+title: A keep-clear for the second crystal below the floor is reported once, for the second crystal
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  On a layout of two crystals, a keep-clear for the second crystal below the 10 mm floor is reported once, for the second crystal, and not again for the first. Out of scope: the related-part list of CLOCK-3, the 10 mm floor and the main board's rules file.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL
+    type: criterion-of

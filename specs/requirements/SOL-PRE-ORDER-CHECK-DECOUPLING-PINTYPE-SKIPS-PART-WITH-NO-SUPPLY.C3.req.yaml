@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY.C3
+type: criterion
+title: An integrated circuit whose entry carries a category outside the closed list fails decoupling_pintype naming the position
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  On the same orderable design and non-synthetic extract, a U-referenced footprint with netted pads and none typed power, whose entry carries a regulator category or a gate-drive optocoupler category or any other category outside the closed list, fails decoupling_pintype naming the position, and the message carries the advice "record the part's category in the catalogue extract" beside its existing advice to type the supply pads. Out of scope: the main board's records and the decoupling via measurement.
+links:
+  - target: SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY
+    type: criterion-of

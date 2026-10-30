@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C11
+type: criterion
+title: Every design that passed the barrier rule before still passes
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Every design that passed the barrier rule before this change still passes. Out of scope: the figure BARRIER_COPPER_MM2, the strip geometry and the main board's layout.
+links:
+  - target: SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET
+    type: criterion-of

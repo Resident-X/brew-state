@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY.C1
+type: criterion
+title: A U-referenced part whose catalogue entry's category is in the closed no-supply list and none of whose pads is typed power is not refused by decoupling_pintype
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  On a synthetic design that is orderable (not marked not for manufacture) with a catalogue extract that is not marked synthetic, because an extract marked synthetic is unusable on an orderable design and the rule is not applied to one marked not for manufacture, a U-referenced footprint with netted pads and none typed power input or power output passes decoupling_pintype when its position's catalogue number maps to an extract entry whose category is exactly one of the two strings of the closed list. Each of the two strings is tried in turn. The main board's records and the decoupling via measurement are out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY
+    type: criterion-of

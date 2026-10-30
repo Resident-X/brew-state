@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C4
+type: criterion
+title: A polarised part with a surface-mount pad and no pad numbered 1 fails polarity_mark
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A polarised part with no pad numbered 1 and any surface-mount plated pad fails polarity_mark however asymmetric its pads are, as with surface-mount pads A and B at (-1.5, 0) and (1.5, 0) and with an asymmetric surface-mount pattern. Out of scope: which parts are polarised, the silk marks on the main board and the mark margin.
+links:
+  - target: SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION
+    type: criterion-of

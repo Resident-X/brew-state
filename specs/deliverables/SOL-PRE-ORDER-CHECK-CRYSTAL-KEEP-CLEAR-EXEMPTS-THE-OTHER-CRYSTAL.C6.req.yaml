@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL.C6
+type: criterion
+title: A single-crystal layout reports as it did, and the message of each failure is unchanged
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A single-crystal layout reports as it did before this change, and the message of each failure of the crystal keep-clear is unchanged. Out of scope: the related-part list of CLOCK-3, the 10 mm floor and the main board's rules file.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL
+    type: criterion-of

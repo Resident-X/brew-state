@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C5
+type: criterion
+title: A pad on a Mains-class net named unconnected-(...) and carried by one pad still counts as a Mains-class pad
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A pad on a Mains-class net whose name begins unconnected-( and which no other pad carries is a Mains-class pad, not a no-connect pad: the part is measured with that pad in the Mains group, and fails when copper lies in the strip. Out of scope: the figure BARRIER_COPPER_MM2, the strip geometry and the main board's layout.
+links:
+  - target: SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET
+    type: criterion-of

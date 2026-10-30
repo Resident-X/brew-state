@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY.C6
+type: criterion
+title: The category skip changes no other circuit's decoupling measurement and no design that passed before fails
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  With the category key present or absent on entries, the decoupling measurement of every circuit not skipped is unchanged, and every design that passed the pre-order check before this change still passes. The main board's records and the decoupling via measurement are out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY
+    type: criterion-of

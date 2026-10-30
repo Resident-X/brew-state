@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL.C8
+type: criterion
+title: A seeded two-crystal copy of the proof design with a rule A.Reference != the first crystal and a minimum of 0mm is caught as crystal_keepclear
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The seeded-fault harness holds a row on a two-crystal copy of the throwaway proof design with a rule whose condition is A.Reference != the first crystal and whose minimum is 0mm, and the check reports crystal_keepclear. Out of scope: the related-part list of CLOCK-3, the 10 mm floor and the main board's rules file.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL
+    type: criterion-of

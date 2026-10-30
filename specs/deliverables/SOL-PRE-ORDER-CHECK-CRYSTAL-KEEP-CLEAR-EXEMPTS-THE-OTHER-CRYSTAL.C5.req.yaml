@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL.C5
+type: criterion
+title: A keep-clear below the floor, one that exempts every other part, a crystal with no rule and a keep-clear not naming its crystal as A each still fail
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Each of these still fails the crystal keep-clear: a keep-clear below the 10 mm floor; a keep-clear that exempts every other part; a crystal of the layout with no rule of its own, including a second crystal with none; and a keep-clear that does not name its crystal as A. Out of scope: the related-part list of CLOCK-3, the 10 mm floor and the main board's rules file.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL
+    type: criterion-of

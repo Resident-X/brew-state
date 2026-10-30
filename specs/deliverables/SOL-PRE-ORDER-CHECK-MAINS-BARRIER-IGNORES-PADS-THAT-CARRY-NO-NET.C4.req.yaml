@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C4
+type: criterion
+title: A pad on a Mains-class net counts as a Mains-class pad whatever its number or copper layer
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A part whose only Mains-class pad lacks a number, and a part whose only Mains-class pad lacks a copper layer, are each still measured and still fail when copper lies in the strip between that pad and the pads off the class. Out of scope: the figure BARRIER_COPPER_MM2, the strip geometry and the main board's layout.
+links:
+  - target: SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET
+    type: criterion-of

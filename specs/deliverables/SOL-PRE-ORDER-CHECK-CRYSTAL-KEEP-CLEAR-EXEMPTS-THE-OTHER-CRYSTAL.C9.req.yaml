@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL.C9
+type: criterion
+title: The hardware notes state that only a B.Reference != clause inside the keep-clear form exempts and every other mention names
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The hardware notes' crystal_keepclear entry and the paragraph on the crystal keep-clear state that only a B.Reference != clause inside the keep-clear form exempts, and that any other mention of the crystal, by == or by != in another form, counts as naming it. Inspection: read both places against each clause and find all present. Out of scope: the related-part list of CLOCK-3, the 10 mm floor and the main board's rules file.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL
+    type: criterion-of

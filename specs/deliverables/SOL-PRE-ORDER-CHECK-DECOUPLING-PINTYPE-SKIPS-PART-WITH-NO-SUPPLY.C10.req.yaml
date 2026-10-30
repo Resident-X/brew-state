@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY.C10
+type: criterion
+title: The closed no-supply list holds exactly the two category strings read from the supplier's records, recorded with their sources in the hardware notes
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The closed list holds "Transistor, Photovoltaic Output Optoisolators" and "Triac, SCR Output Optoisolators" and no other string, and the hardware notes record each string verbatim with the catalogue number of the part it was read for, the URL of the part's record and the date it was read; state that the list rests on the supplier's category; and state, for each of the two parts, that the build recorded its datasheet as listing no supply pin. Inspection: re-read the two parts' records, compare each string character for character with the list and with the hardware notes, find no third string in the list, and find the supplier-category statement and the no-supply-pin record for both parts in the notes. Out of scope: the main board's records and the decoupling via measurement.
+links:
+  - target: SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY
+    type: criterion-of

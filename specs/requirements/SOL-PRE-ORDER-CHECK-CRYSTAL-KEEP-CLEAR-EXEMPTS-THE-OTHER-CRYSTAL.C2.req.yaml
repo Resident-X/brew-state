@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL.C2
+type: criterion
+title: A courtyard_clearance rule outside the keep-clear form that names a crystal with == fails for that crystal
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A courtyard_clearance rule outside the keep-clear form fails the crystal keep-clear for the crystal it names, in each of these forms: A.Reference == the crystal; B.Reference == the crystal; and A.Reference == the second crystal && B.Reference == the first crystal with a loose minimum, which is not the keep-clear form because B is compared with ==. Out of scope: the related-part list of CLOCK-3, the 10 mm floor and the main board's rules file.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL
+    type: criterion-of

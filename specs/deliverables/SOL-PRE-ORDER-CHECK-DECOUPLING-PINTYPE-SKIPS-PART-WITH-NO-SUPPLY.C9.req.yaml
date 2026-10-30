@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY.C9
+type: criterion
+title: The hardware notes and the method state the category key, that a part is skipped only for a closed-list category, and that every other case is refused
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The hardware notes' catalogue-extract key list, decoupling_pintype entry and decoupling paragraph, and the design method's decoupling pin-type statement, each state the optional category key and that it is the first category name of the parts-library record; that an integrated circuit is skipped only when its entry's category is in the closed list; that a skipped part with a power-typed pad still fails; and that every other case, an extract that cannot be read or is unusable, a number that is none or absent, an entry without a category, and a category outside the list, is refused. Inspection: read each of the four places against each clause and find all present. Out of scope: the main board's records and the decoupling via measurement.
+links:
+  - target: SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY
+    type: criterion-of

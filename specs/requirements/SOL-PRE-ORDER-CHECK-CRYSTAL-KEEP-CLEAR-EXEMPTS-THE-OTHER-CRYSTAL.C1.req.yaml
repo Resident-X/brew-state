@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL.C1
+type: criterion
+title: On a layout of two crystals, a keep-clear rule for each that exempts the other with B.Reference != passes the crystal keep-clear
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  On a synthetic layout of two crystals with generic references, a rule for each crystal in the keep-clear form that exempts the other with B.Reference != passes the crystal keep-clear, and a rule for the second crystal in that form that exempts the first does not count as naming the first. The related-part list of CLOCK-3, the 10 mm floor and the main board's rules file are out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL
+    type: criterion-of

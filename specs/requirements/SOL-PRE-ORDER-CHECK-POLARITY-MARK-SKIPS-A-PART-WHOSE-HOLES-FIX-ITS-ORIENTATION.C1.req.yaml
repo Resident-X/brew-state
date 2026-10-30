@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C1
+type: criterion
+title: A polarised through-hole part with no pad numbered 1 whose holes no turn maps onto themselves needs no first pin
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  On a synthetic design, a polarised part with no pad numbered 1 passes the polarity mark when every plated pad is through-hole, at least two plated holes lie apart, at least one pad is named and no turn other than the identity maps the holes onto themselves in position and drill, as with pads named 13, 14, A1 and A2 in an asymmetric pattern, and with duplicate pads 13 and 14 added. Which parts are polarised, the silk marks on the main board and the mark margin are out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION
+    type: criterion-of
