@@ -660,6 +660,11 @@ class PollutionDegreeTwoRecord(unittest.TestCase):
         # the nodes that carry the coat, the laminate and the humidity requirements are named by id
         for node in ("SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT", "SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT", "DEL-HW-BRING-UP"):
             self.assertIn(node, block, node)
+        # and so are the criteria within them
+        for criterion in ("SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C16", "SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C17",
+                          "SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C10", "DEL-HW-BRING-UP.C16", "DEL-HW-BRING-UP.C17"):
+            node, number = criterion.split(".")
+            self.assertRegex(block, re.escape(node) + r"\W+(?:\w+\W+){0,3}?" + number + r"\b", criterion)
         self.assertNotIn("Coating them later would be a fresh basis", text)
         self.assertNotIn("boards not protected against moisture", text)
         # the open reproductions the figures rest on, and that they are not the standard's text
@@ -778,6 +783,19 @@ class PollutionDegreeTwoRecord(unittest.TestCase):
                 done = subprocess.run([sys.executable, "-I", path, os.path.join(ROOT, DIVISION), board], capture_output=True, text=True, cwd=ROOT, timeout=900)
                 self.assertEqual(done.returncode, 0, done.stdout[-2000:] + done.stderr[-2000:])
                 self.assertEqual(done.stdout.strip().splitlines()[-1], f"all {board} board checks pass")
+
+    def test_the_division_separation_row_quotes_the_records_own_creepage_rows(self):
+        # SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C10: The division record states the new figures at each place it stated the replaced ones, the places being its separation row, assumption A3, the option row on the second division, the paragraph on mains against mains, the rule list, finding 3, D15 and the bracket paragraph, the verification table's creepage row, the verification script's basis constants, expected-output strings and seeded faults, and the sentences reporting pairs under the basic creepage.
+        _, data = committed()
+        rows = {r["inputs"]["working_voltage_v"]: r["figure"]["creepage_mm"] for r in data["table_rows"]
+                if r["inputs"].get("insulation") == "functional" and r["inputs"].get("working_voltage_v") in (250, 320)}
+        self.assertEqual(sorted(rows), [250, 320])
+        with open(os.path.join(ROOT, DIVISION), encoding="utf-8") as handle:
+            row = next(line for line in handle.read().splitlines() if line.startswith("| Separation basis"))
+        self.assertIn(f"{rows[250]} mm at 250 V and {rows[320]} mm at 320 V", row)
+        self.assertIn(f"{data['mains_to_mains']['creepage_mm']} mm", row)
+        for old in ("(4.0 mm)", "(5.0 mm)", "250 V row (", "320 V row ("):
+            self.assertNotIn(old, row)
 
     def test_the_constraints_record_the_readme_and_the_method_restate_pollution_degree_2(self):
         # SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C11: The constraints record's pollution degree row reads 2 with the boards protected against moisture by a coat and cites the decision's conditions, its separation and material-group rows restate the figures of the committed record, and a search of the record for pollution degree 3 and 4.1 mm finds none left unexplained. Out of scope is any row about another quantity.

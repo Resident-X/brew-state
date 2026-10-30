@@ -79,8 +79,10 @@
 #     therefore interpolated (see the derived row in table_rows). The mains_to_low_voltage
 #     creepage keeps the larger 10.0 mm figure, deliberately: the 320 V row, 3.2 mm basic, doubled
 #     for reinforced insulation is 6.4 mm, and the signed 10.0 mm stands 3.6 mm over that floor.
-#   [IECEX-1422] IECEx document 1422, on the interpolation of the creepage table between rows.
-#   [IECEE-DECISION] An IECEE decision sheet quoting note 1 of Table F.4.
+#   [IECEX-1422] IECEx document 1422, on the interpolation of the creepage table between rows,
+#     https://iecex.com/dmsdocument/1422
+#   [IECEE-DECISION] An IECEE decision sheet quoting note 1 of Table F.4,
+#     https://www.har-cert.com/doc/doc_12893_main1_OSM-IN%20273.pdf
 # The basis the figures are read at: 253 V rms is the top of the declared span, so it falls in
 # the 300 V line-to-neutral row of the rated impulse voltage table, which gives 2.5 kV at
 # overvoltage category II for basic insulation and so 4.0 kV (one step up) for reinforced.
