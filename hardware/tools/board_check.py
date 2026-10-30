@@ -949,7 +949,7 @@ def record_is_unmapped_fixture(yaml, root: str, record: Optional[str], not_for_m
             data = strict_yaml(yaml, handle.read())
     except Exception:  # a record that cannot be read is judged where it is read
         return False
-    return is_fixture(data, not_for_manufacture) and "mains_to_mains" not in data
+    return is_fixture(data, not_for_manufacture) and data.get("mains_to_mains") is None
 
 
 def read_mains_to_mains(design: Design, record: str, data: dict, fixture: bool = False) -> List[Violation]:
