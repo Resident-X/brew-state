@@ -359,8 +359,8 @@ class TheGroundReturnRule(unittest.TestCase):
         project = {"net_settings": {"classes": [{"name": "Default"}, {"name": "Proj", "track_width": "abc"}]}}
         layout = sexpr.parse_one('(kicad_pcb (net_class "Foo" "d" (add_net "/F")) (net_class Bare) (net_class) (net_class "Proj"))')
         self.assertEqual(board_check.layout_class_names(layout), {"Foo", "Bare", "Proj"})
-        self.assertEqual(board_check.resolvable_classes(project, layout), {"Default", "Proj", "Foo", "Bare", "Mains"})
-        self.assertEqual(board_check.resolvable_classes({}, sexpr.parse_one("(kicad_pcb)")), {"Mains"})
+        self.assertEqual(board_check.resolvable_classes(project, layout), {"Default", "Proj", "Foo", "Bare", "Mains", "Mains_Entry"})
+        self.assertEqual(board_check.resolvable_classes({}, sexpr.parse_one("(kicad_pcb)")), {"Mains", "Mains_Entry"})
 
     def resolved(self, project, assigned):
         """The members a layout resolves to for the classes the check asks KiCad about, given each net's project class."""

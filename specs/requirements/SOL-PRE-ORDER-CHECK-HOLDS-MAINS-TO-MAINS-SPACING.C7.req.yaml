@@ -2,11 +2,11 @@ id: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C7
 type: criterion
 title: Every tracked design passes the extended rules, and the hardware notes state the new keys, variable, class and report names
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |-
-  Every tracked design passes the check, the throwaway ones with synthetic mains_to_mains figures and MAINS_ENTRY, in the build round for board changes and nightly on main. The hardware notes' record-key list, text-variable list, checks table and adopter section state mains_to_mains, MAINS_ENTRY, Mains_Entry and the floor reading. The signed record of the machine is out of scope; its leaf adds the real figures.
+  Every tracked design passes the check, the throwaway ones passing as fixtures without the mains_to_mains mapping and MAINS_ENTRY, bar those kept to exercise the rules, which carry synthetic figures and MAINS_ENTRY, in the build round for board changes and nightly on main. The hardware notes' record-key list, text-variable list, checks table and adopter section state mains_to_mains, MAINS_ENTRY, Mains_Entry and the floor reading. The signed record of the machine is out of scope; its leaf adds the real figures.
 links:
   - target: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING
     type: criterion-of

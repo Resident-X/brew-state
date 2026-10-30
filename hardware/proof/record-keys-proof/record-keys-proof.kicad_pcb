@@ -88,6 +88,7 @@
 		)
 	)
 	(property "MAINS" "present")
+	(property "MAINS_ENTRY" "present")
 	(property "NOT_FOR_MANUFACTURE" "true")
 	(property "WORK_ANGLE_TOLERANCE_DEG" "0.1")
 	(property "WORK_DETOUR_RATIO" "1.3")

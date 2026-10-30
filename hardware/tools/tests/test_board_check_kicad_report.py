@@ -204,6 +204,10 @@ def over_limit_design(folder: str) -> Tuple[str, str]:
     with open(os.path.join(board_prove.REPO, board_prove.DESIGN, "gate-proof.kicad_pro"), encoding="utf-8") as handle:
         data = json.load(handle)
     data["net_settings"]["netclass_assignments"] = {"/LIVE_FEED": "Mains"}
+    # this board carries no net ahead of an entry fuse
+    data["text_variables"]["MAINS_ENTRY"] = "none"
+    data["net_settings"]["netclass_patterns"] = [entry for entry in data["net_settings"]["netclass_patterns"]
+                                                 if entry["netclass"] != "Mains_Entry"]
     data["board"]["design_settings"].setdefault("rules", {}).update(min_track_width=0.2, min_clearance=0.2)
     with open(project, "w", encoding="utf-8") as handle:
         json.dump(data, handle, indent=1)

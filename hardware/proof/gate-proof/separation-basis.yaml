@@ -15,6 +15,14 @@ barrier_types: []
 mains_to_low_voltage:
   clearance_mm: 3.0
   creepage_mm: 4.0
+mains_to_mains:
+  clearance_mm: 0.6
+  terminal_clearance_mm: 0.8
+  creepage_mm: 0.6
+  creepage_ahead_of_fuse_mm: 0.8
+  entry_fuse: R1
+  held_at_reinforced: []
+  downstream_basis: synthetic -- a stated fault current and the entry fuse clearing a tracking fault at it, chosen to exercise the check
 table_rows:
   - citation:
       document: synthetic clearance table
@@ -36,6 +44,59 @@ table_rows:
       material_group: IIIb
     figure:
       creepage_mm: 4.0
+  - citation:
+      document: synthetic conductor clearance table
+      edition: none
+      locator: row 3
+    inputs:
+      working_voltage_v: 250
+      insulation: basic
+      overvoltage_category: 2
+      pollution_degree: 2
+      material_group: IIIb
+      altitude_m: 2000
+    figure:
+      clearance_mm: 0.6
+  - citation:
+      document: synthetic terminal clearance table
+      edition: none
+      locator: row 4
+    inputs:
+      working_voltage_v: 250
+      insulation: basic
+      overvoltage_category: 2
+      pollution_degree: 2
+      material_group: IIIb
+      altitude_m: 2000
+      location: terminal
+    figure:
+      clearance_mm: 0.8
+  - citation:
+      document: synthetic basic creepage table
+      edition: none
+      locator: row 5
+    inputs:
+      working_voltage_v: 250
+      insulation: basic
+      overvoltage_category: 2
+      pollution_degree: 2
+      material_group: IIIb
+      altitude_m: 2000
+    figure:
+      creepage_mm: 0.8
+  - citation:
+      document: synthetic functional creepage table
+      edition: none
+      locator: row 6
+    inputs:
+      working_voltage_v: 250
+      insulation: functional
+      overvoltage_category: 2
+      pollution_degree: 2
+      material_group: IIIb
+      altitude_m: 2000
+    figure:
+      creepage_mm: 0.6
 accepted_by: david
 accepted_on: 2026-10-12
 synthetic: true

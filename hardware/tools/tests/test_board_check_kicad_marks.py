@@ -240,3 +240,55 @@ class TheCleanDesignStatesTheFiguresOfTheDecouplingAndSilkscreenRules(SharedCopy
                       "part's courtyard or nearer another part than their own", lines)
         self.assertIn(f"FIGURE | {design} | DECOUPLE-6 decoupling paths measured | the layout's pad pin types | 0 paths of 0 "
                       "circuits with a supply pin", lines)
+
+
+class TheMainsToMainsRules(Proved):
+    """Each failure of the spacing between conductors at different mains potentials fails on a fault seeded for it in a throwaway copy of a proof design."""
+
+    #: The seeded faults the proof must hold, each with the rule that must report it and the words its line must carry.
+    FAULTS = {
+        "a record lacking the terminal clearance of its mains_to_mains": ("separation_basis", "hardware/proof/record-keys-proof/record-keys-proof.kicad_pro",
+                                                                          ("mains_to_mains.terminal_clearance_mm", "lacks terminal_clearance_mm")),
+        "a signed mains-to-mains clearance below the floor the table rows give": ("separation_floor", "hardware/proof/gate-proof/gate-proof.kicad_pro",
+                                                                                   ("mains_to_mains.clearance_mm is 0.5 mm", "below the 0.6 mm floor")),
+        "a project with no MAINS_ENTRY declaration": ("mains_declaration", "hardware/proof/gate-proof/gate-proof.kicad_pro",
+                                                      ("text_variables.MAINS_ENTRY", "MAINS_ENTRY is not set")),
+        "a Mains track nearer a Mains track of another net than the signed clearance": ("clearance", "hardware/proof/gate-proof/gate-proof.kicad_pro",
+                                                                                          ("/MAINS_N", "/MAINS_L", "signed mains-to-mains spacing")),
+        "a Mains track nearer a Mains track of another net than the signed creepage, clear of the clearance": (
+            "creepage", "hardware/proof/gate-proof/gate-proof.kicad_pro", ("/MAINS_N", "/MAINS_L", "signed mains-to-mains spacing")),
+        "a Mains track nearer a Mains_Entry track than the signed creepage ahead of the fuse": (
+            "creepage", "hardware/proof/gate-proof/gate-proof.kicad_pro", ("/MAINS_N", "/MAINS_L", "signed creepage ahead of the fuse")),
+        "a signed creepage below the creepage ahead of the fuse with no downstream_basis": (
+            "separation_basis", "hardware/proof/gate-proof/gate-proof.kicad_pro", ("mains_to_mains.creepage_mm", "holds no downstream_basis")),
+        "a pair held at reinforced inside the mains-to-low-voltage figures": ("clearance", "hardware/proof/gate-proof/gate-proof.kicad_pro",
+                                                                              ("/MAINS_N", "/MAINS_L", "net pair held at reinforced")),
+    }
+
+    def test_each_new_failure_is_caught_on_a_seeded_fault_under_the_rule_named_for_it(self):
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C6: The on-demand seeded-fault proof gains one row for each failure above (a record missing a key, a figure below its floor, an invalid declaration, a clearance fault, a creepage fault, an ahead-of-fuse fault, a creepage below the ahead-of-fuse figure with no downstream_basis and a held_at_reinforced pair closer than the mains-to-low-voltage figures), made in a copy outside the tracked tree, each caught under the rule named for it; the rows join the proof's required-names dictionary. A rule unchanged by this leaf has no row added. Rules this leaf does not touch are out of scope and get no row.
+        self.assertCaught(*self.FAULTS)
+        found = outcomes()
+        for name, (rule, design, words) in self.FAULTS.items():
+            with self.subTest(fault=name):
+                fields = found[name][1].split(" | ")
+                self.assertEqual((fields[1], fields[2]), (design, rule))
+                for word in words:
+                    self.assertIn(word, found[name][1])
+                self.assertEqual([entry[2] for entry in board_prove.FAULTS if entry[0] == name], [rule])
+
+
+
+class TheMainsToMainsRowsOfTheProof(unittest.TestCase):
+    """The rows the proof holds for the spacing between conductors at different mains potentials, read without running it."""
+
+    def test_the_proof_holds_a_row_for_each_of_the_eight_failures_and_for_no_rule_this_leaf_leaves_alone(self):
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C6: The on-demand seeded-fault proof gains one row for each failure above (a record missing a key, a figure below its floor, an invalid declaration, a clearance fault, a creepage fault, an ahead-of-fuse fault, a creepage below the ahead-of-fuse figure with no downstream_basis and a held_at_reinforced pair closer than the mains-to-low-voltage figures), made in a copy outside the tracked tree, each caught under the rule named for it; the rows join the proof's required-names dictionary. A rule unchanged by this leaf has no row added. Rules this leaf does not touch are out of scope and get no row.
+        rows = [fault for fault in board_prove.FAULTS if fault[1].startswith("mains to mains:")]
+        self.assertEqual(sorted(fault[0] for fault in rows), sorted(TheMainsToMainsRules.FAULTS))
+        self.assertEqual(len(rows), 8)
+        # each is seeded in a copy of a proof design outside the tracked tree: the keys' own proof design for a missing key, else the gate's
+        self.assertEqual({board_prove.target_of(fault) for fault in rows}, {(board_prove.DESIGN, board_prove.NAME), board_prove.KEYS_TARGET})
+        # and the rules the leaf did not touch, the separation floor and the mounting holes, keep exactly the rows they had
+        self.assertEqual(len([fault for fault in board_prove.FAULTS if fault[1].startswith("separation floor:")]), 4)
+        self.assertEqual(len([fault for fault in board_prove.FAULTS if fault[1].startswith("mounting holes:")]), 5)

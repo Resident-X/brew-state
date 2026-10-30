@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-JUDGES-SIGNED-SPACING-EXCEPTIONS-C3-TEST-7
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-JUDGES-SIGNED-SPACING-EXCEPTIONS.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-30T10:27:44.21437Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad_spacing_exceptions.py::SpacingExceptionsRunDirectly.test_an_entry_of_the_other_pair_kind_or_the_other_constraint_excuses_nothing
+  artifact_version: 2e2c833d8f5f3def9b91e65a33ab331c447b027f
+attested_by: crun-5fb8d83729c3d082
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-SIGNED-SPACING-EXCEPTIONS.C3
+    type: satisfies

@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING-C2-TEST-9
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-30T09:23:46.553565Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_mains_to_mains.py::TheFloorIsRead.test_a_record_without_a_mapping_is_not_floor_read_as_one
+  artifact_version: a599ca1ade58ee6b2f2350fb2efe9b23789487e2
+attested_by: crun-7fdf1fbb4d62fdab
+links:
+  - target: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C2
+    type: satisfies

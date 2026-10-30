@@ -176,6 +176,36 @@ def crowd(seed: Seed) -> None:
     seed.layout(lambda tree: tree.insert(len(tree) - 1, segment("/LV_A", CROWD_X, 9, CROWD_X, 11, CROWD_UUID)))
 
 
+#: The track a mains-to-mains fault lays beside the /MAINS_L track that runs (10, 10) to (15, 10), 0.5 mm wide, on /MAINS_N:
+#: its edge stands `gap` mm from that track's, and over 0.8 mm from every pad.
+NEAR_MAINS_UUID = "0b0e5c1a-0000-4000-8000-000000000d01"
+#: Where along the track it runs, clear of the pads at either end of it.
+NEAR_MAINS_X = (11.8, 13.2)
+
+
+def mains_beside_mains(gap: float):
+    def seed_it(seed: Seed) -> None:
+        y = 10 + 0.25 + gap + 0.125
+        seed.layout(lambda tree: tree.insert(len(tree) - 1, segment("/MAINS_N", NEAR_MAINS_X[0], y, NEAR_MAINS_X[1], y, NEAR_MAINS_UUID)))
+    return seed_it
+
+
+def without_entry(seed: Seed) -> None:
+    """No net ahead of the entry fuse: MAINS_ENTRY none, and no net left in the Mains_Entry class."""
+    def edit(data: dict) -> None:
+        data["text_variables"]["MAINS_ENTRY"] = "none"
+        data["net_settings"]["netclass_patterns"] = [entry for entry in data["net_settings"]["netclass_patterns"]
+                                                     if entry["netclass"] != "Mains_Entry"]
+    seed.project(edit)
+
+
+def both(*edits: Callable[[Seed], None]):
+    def seed_it(seed: Seed) -> None:
+        for edit in edits:
+            edit(seed)
+    return seed_it
+
+
 def later_rule(condition: str):
     def seed_it(seed: Seed) -> None:
         text = seed.read(".kicad_dru")
@@ -187,6 +217,40 @@ def later_rule(condition: str):
 
 def record(old: str, new: str):
     return lambda seed: seed.replace("separation-basis.yaml", old, new)
+
+
+def records(*changes: Tuple[str, str]):
+    """Several replacements in the separation basis record, made in order."""
+    def seed_it(seed: Seed) -> None:
+        for old, new in changes:
+            seed.replace("separation-basis.yaml", old, new)
+    return seed_it
+
+
+def exception_entry(pair: str, constraint: str, between: Tuple[str, str], accepted_mm: float, by: str = "maintainer",
+                    on: str = "2026-10-12") -> str:
+    """One entry of the separation basis record's accepted_exceptions, written as the synthetic record writes them."""
+    return (f"  - pair: {pair}\n    constraint: {constraint}\n    between: [\"{between[0]}\", \"{between[1]}\"]\n"
+            f"    accepted_mm: {accepted_mm:g}\n    reason: synthetic -- a ground chosen to exercise the check\n"
+            f"    bounded_by: synthetic -- an independent element chosen to exercise the check\n"
+            f"    accepted_by: {by}\n    accepted_on: \"{on}\"\n")
+
+
+def exceptions(*entries: str):
+    """The record with `entries` as its accepted_exceptions, before its own acceptance."""
+    return record("accepted_by: david\naccepted_on: 2026-10-12\nsynthetic: true",
+                  "accepted_exceptions:\n" + "".join(entries) + "accepted_by: david\naccepted_on: 2026-10-12\nsynthetic: true")
+
+
+#: The gate-proof pads J1 pad 1 and pad 2, on /MAINS_L and /MAINS_N, stand 0.84 mm apart; a signed terminal clearance of
+#: 1.0 mm leaves that a shortfall of a mains_to_mains clearance and nothing else.
+TERMINAL_SHORTFALL = records(("  terminal_clearance_mm: 0.8\n", "  terminal_clearance_mm: 1.0\n"))
+#: R1 pad 2, on /MAINS_N, stands 13.19 mm from J2 pad 1 and 13.4058 mm from J2 pad 2, on /LV_A and /LV_B: a signed creepage
+#: of 13.5 mm, written into the design's rules as well, leaves each a shortfall of a mains_to_low_voltage creepage and nothing
+#: else, the mounting-hole distance of 13.5 mm being short of every plated hole on a low-voltage net.
+CREEPAGE_SHORTFALL = both(records(("mains_to_low_voltage:\n  clearance_mm: 3.0\n  creepage_mm: 4.0",
+                                    "mains_to_low_voltage:\n  clearance_mm: 3.0\n  creepage_mm: 13.5")),
+                          lambda seed: seed.replace(".kicad_dru", "(constraint creepage (min 4mm))", "(constraint creepage (min 13.5mm))"))
 
 
 def pin_record(old: str, new: str):
@@ -1483,6 +1547,36 @@ FAULTS: List[tuple] = [
      "of Mains-class net /MAINS_N on B.Cu", fixing_near_mains_pour),
     ("a part's oversize non-plated pad inside the signed distance of a Mains net with its hole clear", "mounting holes: a non-plated pad larger than its hole is held at its pad edge", "mounting_hole",
      "a non-plated hole or its pad stands", hole_with_oversize_pad),
+    # Mains to mains
+    ("a record lacking the terminal clearance of its mains_to_mains", "mains to mains: a record with no complete mains_to_mains mapping fails by key", "separation_basis",
+     "mains_to_mains lacks terminal_clearance_mm", record("  terminal_clearance_mm: 0.8\n", ""), KEYS_TARGET),
+    ("a signed mains-to-mains clearance below the floor the table rows give", "mains to mains: a signed figure below its floor fails", "separation_floor",
+     "the signed mains_to_mains.clearance_mm is 0.5 mm, below the 0.6 mm floor", record("mains_to_mains:\n  clearance_mm: 0.6", "mains_to_mains:\n  clearance_mm: 0.5")),
+    ("a project with no MAINS_ENTRY declaration", "mains to mains: a missing or contradicted MAINS_ENTRY fails", "mains_declaration",
+     "the project text variable MAINS_ENTRY is not set", variables(lambda values: values.pop("MAINS_ENTRY"))),
+    ("a Mains track nearer a Mains track of another net than the signed clearance", "mains to mains: two Mains-class items on different nets inside the signed clearance fail", "clearance",
+     f"rule '{board_check.MAINS_TO_MAINS_RULE}' clearance 0.6", mains_beside_mains(0.55)),
+    ("a Mains track nearer a Mains track of another net than the signed creepage, clear of the clearance", "mains to mains: two Mains-class items on different nets inside the signed creepage fail", "creepage",
+     f"rule '{board_check.MAINS_TO_MAINS_RULE}' creepage 0.6",
+     both(records(("mains_to_mains:\n  clearance_mm: 0.6", "mains_to_mains:\n  clearance_mm: 0.3"),
+                  ("figure:\n      clearance_mm: 0.6", "figure:\n      clearance_mm: 0.3")), without_entry, mains_beside_mains(0.45))),
+    ("a Mains track nearer a Mains_Entry track than the signed creepage ahead of the fuse", "mains to mains: a pair with a Mains_Entry item inside the signed creepage ahead of the fuse fails", "creepage",
+     f"rule '{board_check.AHEAD_OF_FUSE_RULE}' creepage 1.2",
+     records(("creepage_ahead_of_fuse_mm: 0.8", "creepage_ahead_of_fuse_mm: 1.2"), ("      creepage_mm: 0.8", "      creepage_mm: 1.2"))),
+    ("a signed creepage below the creepage ahead of the fuse with no downstream_basis", "mains to mains: a creepage below the one ahead of the fuse needs its downstream basis", "separation_basis",
+     "mapping holds no downstream_basis", record("  downstream_basis: synthetic -- a stated fault current and the entry fuse clearing a tracking fault at it, chosen to exercise the check\n", "")),
+    ("a pair held at reinforced inside the mains-to-low-voltage figures", "mains to mains: a net pair held at reinforced is held to the mains-to-low-voltage figures", "clearance",
+     f"rule '{board_check.REINFORCED_RULE} 1' clearance 3", record("  held_at_reinforced: []", '  held_at_reinforced:\n    - ["/MAINS_L", "/MAINS_N"]')),
+    # Accepted spacing exceptions
+    ("a shortfall below the distance its exception accepts", "accepted exceptions: a shortfall below its entry's accepted distance fails", "spacing_exception",
+     "down to 0.9 mm, and the layout leaves 0.84 mm",
+     both(TERMINAL_SHORTFALL, exceptions(exception_entry("mains_to_mains", "clearance", ("J1.1", "J1.2"), 0.9)))),
+    ("an exception that is unsigned", "accepted exceptions: an entry whose acceptance is a placeholder excuses nothing", "spacing_exception",
+     "accepted_by 'unsigned' is a placeholder",
+     both(TERMINAL_SHORTFALL, exceptions(exception_entry("mains_to_mains", "clearance", ("J1.1", "J1.2"), 0.8, by="unsigned")))),
+    ("an exception that no shortfall uses", "accepted exceptions: an entry no reported shortfall uses fails", "spacing_exception",
+     "where the layout rule check reports no shortfall",
+     exceptions(exception_entry("mains_to_mains", "clearance", ("J1.1", "J1.2"), 0.5))),
     # Connectivity
     ("a channel's net moved to the other controller pin", "connectivity: a net must reach the controller pin its channel names", "connectivity", "net /LV_A reaches controller pin PA1, where the record names controller pin PA0", swap_labels(("LV_A", "96.52 76.2"), ("LV_B", "96.52 78.74"))),
     ("a channel's net moved to the other pin of its connector", "connectivity: a net must reach the connector pin its channel names", "connectivity", "net /LV_A reaches connector pin J2 pin 2, where the record names connector pin J2 pin 1", swap_labels(("LV_A", "45.72 76.2"), ("LV_B", "45.72 78.74"))),

@@ -29,3 +29,7 @@ links:
     type: justified-by
   - target: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 blind brief reviewer
+  fingerprint: 418bc89b2d60c08a03650ddcf796ad27e87a417ccabcf420666ee430f73cd245
+  gating_profile: ""

@@ -128,7 +128,7 @@ def project(classes=("Power", "Ground"), assignments=None, mains="none", rules="
                                        for index, name in enumerate(classes)]
     settings["netclass_assignments"] = {"+3V3": "Power", "GND": "Ground"} if assignments is None else assignments
     settings["netclass_patterns"] = [{"netclass": netclass, "pattern": pattern} for netclass, pattern in patterns]
-    data["text_variables"] = {"MAINS": mains}
+    data["text_variables"] = {"MAINS": mains, **({"MAINS_ENTRY": "none"} if mains == "present" else {})}
     data["board"]["design_settings"]["rules"] = (
         {"min_track_width": MINIMUM_MM, "min_clearance": MINIMUM_MM} if rules == "default" else rules)
     return json.dumps(data, indent=1)

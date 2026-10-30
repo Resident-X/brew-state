@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING-C5-TEST-3
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C5
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-30T09:23:47.98939Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad_mains_to_mains.py::MainsToMainsRunDirectly.test_a_pair_with_a_mains_entry_item_between_the_downstream_and_the_ahead_of_the_fuse_creepage_fails
+  artifact_version: a599ca1ade58ee6b2f2350fb2efe9b23789487e2
+attested_by: crun-7fdf1fbb4d62fdab
+links:
+  - target: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C5
+    type: satisfies
