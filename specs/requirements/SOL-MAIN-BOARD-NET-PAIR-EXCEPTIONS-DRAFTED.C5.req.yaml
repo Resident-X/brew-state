@@ -2,11 +2,11 @@ id: SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C5
 type: criterion
 title: Each net-pair entry's reason states the derivation of its working voltage
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |-
-  Each net-pair entry's reason names the nets' places in the circuit and gives the fraction of the line or the offset from neutral each rests on, the arithmetic to the working voltage written, and the source of the figure (a pin-limit domain or the part values of the schematic); each bounded_by names an element that does not depend on the failed part. Out of scope is the owner's acceptance of the ground.
+  Each net-pair entry's reason names the nets' places in the circuit and gives the fraction of the line or the offset from neutral each rests on, the arithmetic to the working voltage written, and the source of the figure (a pin-limit domain or the part values of the schematic); each bounded_by names an element that does not depend on the failed part. Each reason for a half-mains or divider midpoint says the reduction holds while the resistor chain is intact and that a shorted resistor is a fault outside functional insulation, and the 84.5 V entry says 84.3 V is the pair's value. Out of scope is the owner's acceptance of the ground.
 links:
   - target: SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED
     type: criterion-of

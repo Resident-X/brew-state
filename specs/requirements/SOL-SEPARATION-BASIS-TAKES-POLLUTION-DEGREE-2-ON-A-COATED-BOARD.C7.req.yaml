@@ -1,12 +1,12 @@
 id: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C7
 type: criterion
-title: The record carries the five functional band rows of Table F.4 at pollution degree 2
+title: The record carries the eight functional band rows of Table F.4 at pollution degree 2
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |-
-  The record's table_rows hold exactly eight rows of insulation functional, location conductor, pollution degree 2 and material group IIIa, at working_voltage_v 10, 25, 50, 125, 160, 200, 250 and 320 with creepage_mm 0.40, 0.50, 1.20, 1.5, 1.6, 2.0, 2.5 and 3.2 and clearance_mm 0.2, 0.2, 0.2, 1.5, 1.5, 1.5, 1.5 and 1.5, the rows from 10 V to 50 V cited as readings from open reproductions with the IEC text unread, each citing Table F.4 and its reproduction, and the check's own reader reads them with no problem. The mains_to_mains floor rule, run with them present, reads the same floors as without them. Out of scope is any row at another pollution degree or material group.
+  The record's table_rows hold exactly eight rows of insulation functional, location conductor, pollution degree 2 and material group IIIa, at working_voltage_v 10, 25, 50, 125, 160, 200, 250 and 320 with creepage_mm 0.40, 0.50, 1.20, 1.5, 1.6, 2.0, 2.5 and 3.2 and clearance_mm 0.2, 0.2, 0.2, 1.5, 1.5, 1.5, 1.5 and 1.5, the rows from 10 V to 50 V cited as readings from open reproductions with the IEC text unread, each citing Table F.4 and its reproduction, with exactly the keys inputs {working_voltage_v, insulation functional, location conductor, pollution_degree 2, material_group IIIa} and figure {creepage_mm, clearance_mm} and no downstream_basis in the mapping, and the check's own reader reads them with no problem. The mains_to_mains floor rule, run with them present, reads the same floors as without them. Out of scope is any row at another pollution degree or material group.
 links:
   - target: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD
     type: criterion-of

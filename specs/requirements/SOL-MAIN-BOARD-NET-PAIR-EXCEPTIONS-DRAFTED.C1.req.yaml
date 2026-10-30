@@ -1,12 +1,12 @@
 id: SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C1
 type: criterion
-title: The record holds the eleven net-pair entries with the lists, working voltages and accepted distances this leaf sets
+title: The record holds the nine net-pair entries with the lists, working voltages and accepted distances this leaf sets
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |-
-  The committed record holds exactly eleven accepted_exceptions entries of the net-pair form, whose constraint, nets_a, nets_b, working_voltage_v and accepted_mm equal the eleven this leaf lists (entry 1 at 0.4 mm and entry 2 at 0.2 mm, both at 10 V), and the check's own reader reads them with no problem other than the unsigned acceptances. Out of scope is any entry of another form.
+  The committed record holds exactly nine accepted_exceptions entries of the net-pair form, whose constraint, nets_a, nets_b, working_voltage_v and accepted_mm equal the nine this leaf lists (entry 1 at 0.4 mm and entry 2 at 0.2 mm, both at 10 V), and the check's own reader reads them with no problem other than the unsigned acceptances. Out of scope is any entry of another form.
 links:
   - target: SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED
     type: criterion-of
