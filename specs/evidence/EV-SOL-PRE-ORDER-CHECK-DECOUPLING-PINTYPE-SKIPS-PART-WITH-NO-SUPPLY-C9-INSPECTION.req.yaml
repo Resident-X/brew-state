@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY-C9-INSPECTION
+type: evidence
+title: inspection evidence for SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY.C9
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-30T04:25:48.093928Z"
+artifact:
+  kind: external
+  reference: 'inspection: hardware/README.md (the catalogue extract bullet, the DECOUPLE-6 paragraph, the decoupling_pintype checks row) and docs/board-design-method.md (DECOUPLE-6 Passes), each read against the four clauses'
+  artifact_version: 91f996ddc80b4803d33ddf05ed728afb616b6a11
+attested_by: crun-d51a20804fee5e3b
+links:
+  - target: SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY.C9
+    type: satisfies

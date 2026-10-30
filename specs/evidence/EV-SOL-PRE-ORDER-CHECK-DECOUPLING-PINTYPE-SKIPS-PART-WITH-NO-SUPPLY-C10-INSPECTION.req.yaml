@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY-C10-INSPECTION
+type: evidence
+title: inspection evidence for SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY.C10
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-30T04:25:48.165261Z"
+artifact:
+  kind: external
+  reference: 'inspection: hardware/README.md The no-supply categories compared character for character with board_check.NO_SUPPLY_CATEGORIES after re-reading the JLCPCB records of C108051 and C899826 on 2026-10-30 and both datasheets'' pin figures; hardware/tools/tests/test_board_parts_category.py::TheCategorySkipsOnlyAPartThatHasNoSupply.test_the_closed_list_holds_exactly_the_two_strings'
+  artifact_version: 91f996ddc80b4803d33ddf05ed728afb616b6a11
+attested_by: crun-d51a20804fee5e3b
+links:
+  - target: SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY.C10
+    type: satisfies

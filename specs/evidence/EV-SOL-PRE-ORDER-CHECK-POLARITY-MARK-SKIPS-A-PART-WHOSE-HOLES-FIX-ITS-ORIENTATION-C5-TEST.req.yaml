@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION-C5-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C5
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-30T04:25:40.561672Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_marks.py::APolarisedPartWithNoPadNumberedOne.test_a_single_plated_pad_or_holes_at_one_point_fix_no_orientation
+  artifact_version: 91f996ddc80b4803d33ddf05ed728afb616b6a11
+attested_by: crun-76b2215d1245aef3
+links:
+  - target: SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C5
+    type: satisfies

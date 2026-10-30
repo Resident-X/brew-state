@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION-C9-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C9
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-30T04:25:40.92021Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad_marks.py::TheFiducialAndPolarityMarkRules.test_the_seeded_part_with_no_pad_numbered_one_and_self_mapping_holes_is_caught_with_its_reason
+  artifact_version: 91f996ddc80b4803d33ddf05ed728afb616b6a11
+attested_by: crun-76b2215d1245aef3
+links:
+  - target: SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION.C9
+    type: satisfies

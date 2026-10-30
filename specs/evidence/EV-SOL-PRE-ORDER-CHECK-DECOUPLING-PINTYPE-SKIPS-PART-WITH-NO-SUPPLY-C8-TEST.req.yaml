@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY-C8-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY.C8
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-30T04:25:48.020692Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad_marks.py::TheDecouplingAndSilkscreenRules.test_each_rule_fails_on_its_seeded_fault_and_names_where
+  artifact_version: 91f996ddc80b4803d33ddf05ed728afb616b6a11
+attested_by: crun-d51a20804fee5e3b
+links:
+  - target: SOL-PRE-ORDER-CHECK-DECOUPLING-PINTYPE-SKIPS-PART-WITH-NO-SUPPLY.C8
+    type: satisfies

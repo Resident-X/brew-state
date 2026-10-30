@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET-C12-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C12
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-30T04:25:33.324255Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad_marks.py::TheBarrierPasteAndPourRules.test_a_no_connect_pad_and_a_pad_on_a_mains_net_with_no_number_leave_the_part_measured
+  artifact_version: 91f996ddc80b4803d33ddf05ed728afb616b6a11
+attested_by: crun-87856928f283430f
+links:
+  - target: SOL-PRE-ORDER-CHECK-MAINS-BARRIER-IGNORES-PADS-THAT-CARRY-NO-NET.C12
+    type: satisfies

@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL-C7-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL.C7
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-30T04:25:25.803034Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad_marks.py::TheBarrierPasteAndPourRules.test_a_part_the_barrier_rule_cannot_measure_and_a_missing_rule_each_fail_by_name
+  artifact_version: 91f996ddc80b4803d33ddf05ed728afb616b6a11
+attested_by: crun-3a1c40ad36e593ad
+links:
+  - target: SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL.C7
+    type: satisfies

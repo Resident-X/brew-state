@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL-C1-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-30T04:25:25.299634Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check.py::TheCrystalKeepClearOfABoardWithTwoCrystals.test_a_keep_clear_for_each_crystal_exempting_the_other_passes
+  artifact_version: 91f996ddc80b4803d33ddf05ed728afb616b6a11
+attested_by: crun-3a1c40ad36e593ad
+links:
+  - target: SOL-PRE-ORDER-CHECK-CRYSTAL-KEEP-CLEAR-EXEMPTS-THE-OTHER-CRYSTAL.C1
+    type: satisfies
