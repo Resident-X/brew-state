@@ -1,0 +1,12 @@
+id: SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-JUDGED.C1
+type: criterion
+title: Each of K201, K731, K741 and U602 has its maker's creepage and clearance read and recorded against the basis figures
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  For each of the four parts the maker's current document gives the creepage and clearance between its mains-side and low-voltage-side pins (for a relay, coil to contacts), recorded with its source and the shortfall or margin against 10.0 mm and 3.0 mm. A figure the maker does not publish is recorded as absent and the part is not accepted on it. Parts other than the four are out of scope.
+links:
+  - target: SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-JUDGED
+    type: criterion-of

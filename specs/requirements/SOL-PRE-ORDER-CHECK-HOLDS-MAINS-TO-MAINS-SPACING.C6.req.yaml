@@ -2,11 +2,11 @@ id: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C6
 type: criterion
 title: Each new failure is shown to fail on a fault seeded for it in a copy of the throwaway proof design
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |-
-  The on-demand seeded-fault proof gains one row for each failure above (a record missing a key, a figure below its floor, an invalid declaration, a clearance fault, a creepage fault and an ahead-of-fuse fault), made in a copy outside the tracked tree, each caught under the rule named for it; the rows join the proof's required-names dictionary. A rule unchanged by this leaf has no row added. Rules this leaf does not touch are out of scope and get no row.
+  The on-demand seeded-fault proof gains one row for each failure above (a record missing a key, a figure below its floor, an invalid declaration, a clearance fault, a creepage fault, an ahead-of-fuse fault, a creepage below the ahead-of-fuse figure with no downstream_basis and a held_at_reinforced pair closer than the mains-to-low-voltage figures), made in a copy outside the tracked tree, each caught under the rule named for it; the rows join the proof's required-names dictionary. A rule unchanged by this leaf has no row added. Rules this leaf does not touch are out of scope and get no row.
 links:
   - target: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING
     type: criterion-of

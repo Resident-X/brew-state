@@ -2,11 +2,11 @@ id: SOL-PRE-ORDER-CHECK-JUDGES-SIGNED-SPACING-EXCEPTIONS.C1
 type: criterion
 title: A record whose accepted_exceptions is malformed fails separation_basis naming the entry and the key
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |-
-  An accepted_exceptions that is not a list, an entry lacking pair, constraint, parts, accepted_mm, reason, bounded_by, accepted_by or accepted_on, an unknown key in an entry, a repeated key, a pair or constraint outside its closed values, a parts list that is not one or two reference designators, and an accepted_mm that is not a positive number each fail separation_basis naming the entry's position and the key. A record with no accepted_exceptions key, or an explicit empty list, passes this check. The judgement of shortfalls is out of scope here and is the next criterion's.
+  An accepted_exceptions that is not a list, an entry lacking pair, constraint, parts, accepted_mm, reason, bounded_by, accepted_by or accepted_on, an unknown key in an entry, a repeated key, a pair or constraint outside its closed values, a between that is not a list of two items each a pad or a net name, and an accepted_mm that is not a positive number each fail separation_basis naming the entry's position and the key. A record with no accepted_exceptions key, or an explicit empty list, passes this check. The judgement of shortfalls is out of scope here and is the next criterion's.
 links:
   - target: SOL-PRE-ORDER-CHECK-JUDGES-SIGNED-SPACING-EXCEPTIONS
     type: criterion-of

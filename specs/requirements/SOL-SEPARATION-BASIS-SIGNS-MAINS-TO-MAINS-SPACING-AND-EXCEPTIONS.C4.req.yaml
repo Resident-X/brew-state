@@ -2,11 +2,11 @@ id: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS.C4
 type: criterion
 title: The record holds an accepted exception for each bought-part creepage shortfall the owner accepted
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |-
-  accepted_exceptions holds a mains_to_low_voltage creepage entry with accepted_mm 8.0 for U601 and one with 7.0 for each of U701 and U711, each with its reason, bounding element and signed acceptance, and the reasons are those of the owner's recorded acceptance. The other parts named in that acceptance whose makers' figures are unread or over 8 mm are out of scope and get no entry.
+  accepted_exceptions holds a mains_to_low_voltage creepage entry with accepted_mm 8.0 for U601 and one with 7.0 for each of U701 and U711, each naming the one pair of pads it excuses in between, with its reason, bounding element and signed acceptance, and the reasons are those of the owner's recorded acceptance. K201, K731, K741 and U602 are out of scope here; their own leaf judges them.
 links:
   - target: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS
     type: criterion-of

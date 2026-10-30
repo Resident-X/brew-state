@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS.C10
+type: criterion
+title: The terminal allowance and the interpolation are marked as drafter readings for the owner to check against the standard's text
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The record marks the 0.5 mm terminal allowance (Table 16 footnote of the household-appliance standard) and the permission to interpolate creepage between voltage rows (the creepage table's notes) as readings from reproductions, each with its source and its clause where the source gives one, unverified against the standard's own text, and the owner's acceptance includes checking them. A clause the sources do not give is stated as not found, not guessed. Reading the standard's own text beyond these two points is out of scope.
+links:
+  - target: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS
+    type: criterion-of

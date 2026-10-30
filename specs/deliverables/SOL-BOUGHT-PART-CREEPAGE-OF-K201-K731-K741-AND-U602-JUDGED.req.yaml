@@ -1,0 +1,30 @@
+id: SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-JUDGED
+type: deliverable
+category: solution
+title: The creepage and clearance of the interlock relay, the valve relays and the voltage-reading optocoupler are read from their makers and met or signed as exceptions
+status: active
+version: 1
+text: |
+  Judges the creepage and clearance of the bought parts whose makers' figures the owner's acceptance of bought-part creepage leaves open: the interlock relay K201, the valve relays K731 and K741, and the optocoupler U602. The acceptance records them as over 8 mm (the relays) and unknown until read from the makers (U602 and the K201 clearance), against the basis's 10.0 mm creepage and 3.0 mm clearance for mains to low voltage. With the exception mechanism in the check, a shortfall of these parts fails unless the figure is met or the owner signs an exception, so each part needs its maker's figure read before the record is signed.
+
+  Settled for the build:
+  - Each part's creepage and clearance between its mains-side and low-voltage-side pins, and for each relay between coil and contacts, is read from the maker's current document and recorded with that source and the arithmetic against the basis figure. A figure that cannot be sourced counts as absent, not adequate.
+  - A part meeting the basis figure needs nothing more. A part that does not has an owner's accepted exception, in the form the separation-basis decision sets, naming the pair of pads it excuses; the drafter proposes the entry and the owner signs the record.
+  - The parts are the four named, at the layout the main board's design task produces. Other bought parts are out of scope; U601, U701 and U711 are in their own leaf.
+rationale: |
+  Restores the behaviour REQ-ELECTRICAL-INSTALL-001.C9 asks of the barrier parts the build buys: each part's isolation rating is read from its maker's document and recorded with the source. The owner's acceptance of bought-part creepage leaves these four unread, and with the check failing an unlisted shortfall they would block the board; reading them is the correction.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C9
+    type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C16
+    type: targets
+  - target: DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER
+    type: justified-by
+  - target: DEC-BOARD-SEPARATION-BASIS-RECORD
+    type: justified-by
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-SIGNED-SPACING-EXCEPTIONS
+    type: depends-on
+  - target: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS
+    type: depends-on

@@ -2,11 +2,11 @@ id: SOL-PRE-ORDER-CHECK-JUDGES-SIGNED-SPACING-EXCEPTIONS.C3
 type: criterion
 title: A shortfall below its entry's accepted distance, or with no entry, fails naming the part
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |-
-  A layout whose measured distance is below accepted_mm fails spacing_exception naming the entry and both distances. A shortfall for a part with no entry, for an entry of the other pair, or for the other constraint of the same part fails as an ordinary violation, so an exception for the creepage of a part does not excuse its clearance. Parts whose measured distance meets the signed figure are out of scope and never reported.
+  A layout whose measured distance is below accepted_mm fails spacing_exception naming the entry and both distances. A shortfall between a pair with no entry, including another pair of the same part, for an entry of the other pair kind, or for the other constraint of the same pair fails as an ordinary violation, so an exception for one pair of a part's pads does not excuse another pair of them, nor an exception for creepage its clearance. Parts whose measured distance meets the signed figure are out of scope and never reported.
 links:
   - target: SOL-PRE-ORDER-CHECK-JUDGES-SIGNED-SPACING-EXCEPTIONS
     type: criterion-of
