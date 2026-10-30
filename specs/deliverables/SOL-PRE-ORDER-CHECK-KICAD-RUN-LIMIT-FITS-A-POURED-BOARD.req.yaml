@@ -1,0 +1,27 @@
+id: SOL-PRE-ORDER-CHECK-KICAD-RUN-LIMIT-FITS-A-POURED-BOARD
+type: deliverable
+category: solution
+title: The board check's limit on one KiCad run fits a board with poured planes and still fails a hung run
+status: active
+version: 1
+text: |
+  The board check's limit on one KiCad run is raised so that a board carrying ground and neutral pours and slots can finish. The limit is KICAD_TIMEOUT_S in hardware/tools/board_check.py, 900 s as built, and hardware/tools/board_views.py reads the same constant. On the main board with its pours, measured 2026-10-31, KiCad's creepage test alone takes about 10 minutes and the full design check 20 to 30 minutes, and the check reported "KiCad did not finish within 900 s" and failed the design for a run that was working. The limit is a defect against the item that asks every board to be judged before it is ordered, since a poured board can never be judged.
+
+  Settled for the build:
+  - The figure is 7200 s, about four times the slowest measured full run, so a slower machine or a denser board still finishes. It is one constant with both tools reading it; no second figure is introduced in either tool.
+  - A hung run still fails the design. The limit stays a finite cut-off, and a run past it is reported as the design failing with the message "KiCad did not finish within <limit> s", naming the limit in force, in the check and in the views tool. Raising the figure does not make a wait unbounded.
+  - hardware/README.md states the figure and its measured ground: the date, the board, the minutes measured for the creepage test and for the full check, and that the figure is the margin over them.
+  - Tests: a KiCad run replaced by one that outlives a shortened limit still fails the design by name, with the limit in the message, for the check and for the views tool; and a test reads the constant and requires board_views.py to take its limit from it. The tests run without KiCad and without waiting out the real limit.
+
+  Out of scope: speeding KiCad's own tests, running the checks in parallel, a per-board limit, the 199-assertion cut-off of KiCad's report, and any change to what the check judges.
+rationale: |-
+  Restores the behaviour REQ-BOARD-LAYOUT-PRACTICE-001.C1 asks: every board is judged against every applicable item before it is ordered. A poured board's checks outlast the 900 s limit, so the check fails a working run and the board can never be judged. The limit is corrected; a finite cut-off is kept so a hung run still fails.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+  - target: DEC-BOARD-PRE-ORDER-RULE-READINGS
+    type: justified-by

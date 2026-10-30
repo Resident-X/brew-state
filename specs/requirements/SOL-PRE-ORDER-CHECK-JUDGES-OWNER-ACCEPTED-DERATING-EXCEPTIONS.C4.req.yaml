@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C4
+type: criterion
+title: An entry that is unsigned, names no position, excuses nothing or is used by no failure fails derating_exception naming it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a synthetic design, an entry with a missing, placeholder or angle-bracket accepted_by, or a missing, malformed or future accepted_on; an entry whose position is no position of the layout; an entry whose accepted_v does not exceed its position's limit; and an entry no position's failure uses each fail as derating_exception naming the entry; a synthetic record passes only a design marked not for manufacture. Honouring an unsigned entry is excluded.
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS
+    type: criterion-of

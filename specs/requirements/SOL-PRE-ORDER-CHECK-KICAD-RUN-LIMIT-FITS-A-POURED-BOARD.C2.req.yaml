@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-KICAD-RUN-LIMIT-FITS-A-POURED-BOARD.C2
+type: criterion
+title: A KiCad run that outlives the limit still fails the design, naming the limit
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  With a KiCad run replaced by one that outlives a shortened limit, the check fails the design with the message "KiCad did not finish within <limit> s" naming the limit in force, and the views tool reports the same message, and neither waits unbounded. The test runs without KiCad and without waiting out the real limit; what the check judges once KiCad has finished is out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-KICAD-RUN-LIMIT-FITS-A-POURED-BOARD
+    type: criterion-of
