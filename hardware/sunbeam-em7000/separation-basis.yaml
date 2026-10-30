@@ -20,16 +20,44 @@
 #      certification reports, which this repository does not identify; the clause is not given
 #      by them and is stated as not found, and the standard's own text was not read.
 #   2. The material-group column of the 250 V and 320 V rows of IEC 60664-1 Table F.4 used for the
-#      creepage figures (pollution degree 3, material group III: 250 V = 4.0 mm, 320 V = 5.0 mm),
-#      read from the reproduction [EMA-CREEPAGE] and not from the standard.
+#      creepage figures (pollution degree 2, material group III: 250 V = 2.5 mm, 320 V = 3.2 mm, the
+#      "other materials" column and not the printed-wiring column), read from the reproductions
+#      cited below and not from the standard.
 #   3. Whether the household-appliance standard (IEC 60335-1) permits interpolation of its own
 #      creepage table. Nothing was found either way. If it refuses, the fallback is the 320 V row,
-#      5.0 mm, for creepage_mm and creepage_ahead_of_fuse_mm. The owner, or a test house, confirms
+#      3.2 mm, for creepage_mm and creepage_ahead_of_fuse_mm. The owner, or a test house, confirms
 #      the position before certification.
+#   4. The coat conditions below: that a conformal coat applied under them credits pollution
+#      degree 2, and the functional band rows of table_rows (the eight rows from 10 V to 320 V), which
+#      are readings from open reproductions, the rows below 25 V from KiCad's source tables, the IEC
+#      text unread.
+#
+# The credit of pollution degree 2 on a coated board rests on six conditions, all of them the
+# owner's to accept with the record:
+#   1. Coat: the boards are conformally coated before they are energised in the machine; the
+#      fabrication notes name the coat type and cite its datasheet, and the coat covers the gaps
+#      between mains pads, except the keep-outs documented for contacts. The main board's
+#      fabrication notes carry it (SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT, criterion C17), the
+#      heater wall board's (SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT, criterion C10) and the
+#      bring-up task checks it before mains is first connected (DEL-HW-BRING-UP, criterion C16).
+#   2. Degree: the record states the boards are protected against moisture, by the coat, and credits
+#      pollution degree 2 only. Pollution degree 1 is never credited: no coating test is planned
+#      and none is claimed.
+#   3. Laminate: the comparative tracking index (CTI) is at least 175 (material group IIIa), required by
+#      the main board's fabrication notes (SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT, criterion C16).
+#   4. Slots: every slot cut to lengthen a creepage path is at least 1.0 mm wide, 1.5 mm if a
+#      pollution degree 3 credit must survive. The layout practice's slot item already requires wider
+#      than 1 mm.
+#   5. Humidity: the bring-up humidity reading of the closed machine confirms no condensation on the
+#      boards while energised (DEL-HW-BRING-UP, criterion C17). If condensation appears, the basis falls
+#      back to pollution degree 3 and 4.1 mm, which is a fresh basis for the owner to accept.
+#   6. Signature: the whole record is re-signed by the owner. The previous acceptance covers figures
+#      this revision replaces and does not stand for them.
 #
 # The tables are those of IEC 60664-1 (insulation coordination for equipment within
 # low-voltage supply systems), Annex F. The standard is copyrighted and not reproduced; each
-# row below is the one row the inputs select, read through two freely published derivations:
+# row below is the one row the inputs select, read through freely published derivations. They are
+# reproductions and not the standard's text, and the standard's own text was not read:
 #   [TI-SEMINAR] Texas Instruments, "Demystifying clearance and creepage distance for
 #     high-voltage end equipment", Power Supply Design Seminar, https://www.ti.com/lit/pdf/SLUP421,
 #     read 2026-10-23: its Table F.1 slide (rated impulse voltage by line-to-neutral voltage
@@ -49,35 +77,35 @@
 #     the same number of digits as the table values; that is a reading of the 2007 edition text
 #     only, the 2020 edition and AMD1:2025 not having been read. The mains-to-mains creepage is
 #     therefore interpolated (see the derived row in table_rows). The mains_to_low_voltage
-#     creepage keeps the larger 10.0 mm figure, the 320 V row doubled for reinforced insulation,
-#     deliberately: it is unchanged by the interpolation.
+#     creepage keeps the larger 10.0 mm figure, deliberately: the 320 V row, 3.2 mm basic, doubled
+#     for reinforced insulation is 6.4 mm, and the signed 10.0 mm stands 3.6 mm over that floor.
+#   [IECEX-1422] IECEx document 1422, on the interpolation of the creepage table between rows.
+#   [IECEE-DECISION] An IECEE decision sheet quoting note 1 of Table F.4.
 # The basis the figures are read at: 253 V rms is the top of the declared span, so it falls in
 # the 300 V line-to-neutral row of the rated impulse voltage table, which gives 2.5 kV at
 # overvoltage category II for basic insulation and so 4.0 kV (one step up) for reinforced.
 # Reinforced is the insulation every barrier below that switches or senses mains directly is declared
 # to provide; the pressure-sensor water-path barrier alone is basic (see barrier_types).
 #
-# Pollution degree 3, boards not protected against moisture. The enclosure is sealed from the
-# steam wand, but steam may be present in the machine around it and a burst water line beside it
+# Pollution degree 2, boards protected against moisture by a conformal coat. The enclosure is sealed from
+# the steam wand, but steam may be present in the machine around it and a burst water line beside it
 # would put water on the boards (owner statement, reference-machine.md, Ambient span); a conformal
-# coat is planned once the boards work and is not applied, so degree 3 is taken and the boards
-# count as unprotected. Coating them later would be a fresh basis, not an edit of this one.
+# coat is applied before the boards are energised in the machine, under the six conditions above,
+# and the boards count as protected against moisture. Pollution degree 2 is credited, never 1.
 #
 # Material group IIIa, on the ground of a requirement on the main board's fabrication notes: a
 # laminate whose published comparative tracking index (CTI) is at least 175 (IIIa, 175 <= CTI <
 # 400, as a common FR-4 is sold). The requirement is carried by the main-board layout leaf
 # (SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT); no laminate is chosen yet, so no laminate maker's
-# document is cited. The ground is needed because a footnote of the household-appliance standard's
-# creepage tables, as reproduced in two certification reports, allows the lowest group (IIIb,
-# 100 <= CTI < 175) at pollution degree 3 only up to a working voltage of 50 V. The creepage rows
-# at 253 V are equal for IIIa and IIIb (5.0 mm at the 320 V row), so no figure changes with the
-# group. The standard's own text, which the reports only reproduce, was not read.
+# document is cited. The creepage rows at 253 V are equal for IIIa and IIIb in the pollution degree 2
+# material group III column (2.5 mm at the 250 V row, 3.2 mm at the 320 V row), so no figure changes
+# with the group. The standard's own text, which the reproductions only reproduce, was not read.
 standard: "IEC 60664-1, Annex F tables F.1, F.2 and F.4, read through the freely published derivations [TI-SEMINAR], [TI-SLUAAR5] and [EMA-CREEPAGE] cited above and in table_rows; for the terminals of a part, the footnote to Table 16 of IEC 60335-1 as reproduced in two certification reports"
 supply: "230 V nominal, single phase, 216 V to 253 V, 50 Hz"
 working_voltage: "253 V rms (358 V peak), the top of the declared span"
-pollution_degree: 3
+pollution_degree: 2
 material_group: IIIa
-environment: "household appliance interior; water, steam and repeated heating and cooling at and around the enclosure; condensation possible; boards uncoated and not protected against moisture"
+environment: "household appliance interior; water, steam and repeated heating and cooling at and around the enclosure; condensation possible; boards protected against moisture: coated"
 overvoltage_category: 2
 altitude_m: 2000
 barriers:
@@ -178,7 +206,8 @@ mains_to_low_voltage:
 # Between conductors at different potentials of the mains supply, read at the same inputs for basic
 # insulation: the clearance of the 2.5 kV row of Table F.2; the clearance between the terminals of a
 # part, which adds 0.5 mm for movement and assembly; and the creepage at 253 V, the linear
-# interpolation of the 250 V and 320 V rows of Table F.4 rounded up to 0.1 mm. F101 is the entry
+# interpolation of the 250 V and 320 V rows of Table F.4 at pollution degree 2 (2.5 mm and 3.2 mm)
+# rounded up to 0.1 mm. F101 is the entry
 # fuse: only the supply's own protection clears a fault ahead of it, and no stated basis shows F101
 # clearing a tracking fault between the pair downstream of it, so the basic creepage applies there
 # as well and there is no downstream_basis. The pair across the open contact of the interlock relay,
@@ -188,8 +217,8 @@ mains_to_low_voltage:
 mains_to_mains:
   clearance_mm: 1.5
   terminal_clearance_mm: 2.0
-  creepage_mm: 4.1
-  creepage_ahead_of_fuse_mm: 4.1
+  creepage_mm: 2.6
+  creepage_ahead_of_fuse_mm: 2.6
   entry_fuse: F101
   held_at_reinforced:
     - ["/LINE", "/LINE1"]
@@ -198,62 +227,175 @@ table_rows:
   - citation:
       document: "IEC 60664-1 Table F.1 and Table F.2, as read in [TI-SEMINAR] (https://www.ti.com/lit/pdf/SLUP421)"
       edition: "as reproduced in the 2023 seminar; tables unchanged in kind across editions (2000 m clearance, inhomogeneous field)"
-      locator: "Table F.1: up to 300 V line to neutral, overvoltage category II, 2.5 kV for basic, so 4.0 kV for reinforced; Table F.2: 4.0 kV, pollution degree 3, 3.0 mm"
+      locator: "Table F.1: up to 300 V line to neutral, overvoltage category II, 2.5 kV for basic, so 4.0 kV for reinforced; Table F.2: 4.0 kV, pollution degree 2, 3.0 mm"
     inputs:
       working_voltage_v: 300
       insulation: reinforced
       overvoltage_category: 2
-      pollution_degree: 3
+      pollution_degree: 2
       altitude_m: 2000
     figure:
       clearance_mm: 3.0
   - citation:
       document: "IEC 60664-1 Table F.4, as read in [EMA-CREEPAGE] (https://www.ema-eda.com/ema-resources/blog/pcb-clearance-and-creepage-distance-table/); doubled for reinforced as stated in [TI-SLUAAR5] (https://www.ti.com/lit/pdf/sluaar5)"
       edition: "as reproduced on the page read 2026-10-23"
-      locator: "Table F.4: 320 V rms, pollution degree 3, material group IIIa and IIIb, 5.0 mm basic, doubled to 10.0 mm for reinforced insulation"
+      locator: "Table F.4: 320 V rms, pollution degree 2, material group IIIa and IIIb, 3.2 mm basic, doubled to 6.4 mm for reinforced insulation; the floor of the row is 6.4 mm and the signed mains_to_low_voltage creepage of 10.0 mm stands 3.6 mm over it, deliberately"
     inputs:
       working_voltage_v: 320
       insulation: reinforced
-      pollution_degree: 3
+      pollution_degree: 2
       material_group: IIIa
     figure:
-      creepage_mm: 10.0
+      creepage_mm: 6.4
   - citation:
       document: "IEC 60664-1 Table F.1 and Table F.2, as read in [TI-SEMINAR] (https://www.ti.com/lit/pdf/SLUP421)"
       edition: "as reproduced in the 2023 seminar; tables unchanged in kind across editions (2000 m clearance, inhomogeneous field)"
-      locator: "Table F.1: up to 300 V line to neutral, overvoltage category II, 2.5 kV for basic insulation; Table F.2: 2.5 kV, pollution degree 3, 1.5 mm"
+      locator: "Table F.1: up to 300 V line to neutral, overvoltage category II, 2.5 kV for basic insulation; Table F.2: 2.5 kV, pollution degree 2, 1.5 mm"
     inputs:
       working_voltage_v: 300
       insulation: basic
       overvoltage_category: 2
-      pollution_degree: 3
+      pollution_degree: 2
       altitude_m: 2000
     figure:
       clearance_mm: 1.5
   - citation:
-      document: "the footnote to Table 16 of IEC 60335-1 (household and similar electrical appliances), adding 0.5 mm to the clearance for the movement and assembly of a terminal, applied to the 1.5 mm of IEC 60664-1 Table F.2 at 2.5 kV, pollution degree 3"
+      document: "the footnote to Table 16 of IEC 60335-1 (household and similar electrical appliances), adding 0.5 mm to the clearance for the movement and assembly of a terminal, applied to the 1.5 mm of IEC 60664-1 Table F.2 at 2.5 kV, pollution degree 2"
       edition: "as reproduced in two certification reports, which this repository does not identify; the standard's own text was not read; a drafter's reading from reproductions, unverified, for the owner to check"
       locator: "Table 16 footnote; the clause number is not given by the reports and is not found; 1.5 mm + 0.5 mm = 2.0 mm"
     inputs:
       working_voltage_v: 300
       insulation: basic
       overvoltage_category: 2
-      pollution_degree: 3
+      pollution_degree: 2
       altitude_m: 2000
       location: terminal
     figure:
       clearance_mm: 2.0
   - citation:
       document: "IEC 60664-1 Table F.4, rows 250 V and 320 V as read in [EMA-CREEPAGE] (https://www.ema-eda.com/ema-resources/blog/pcb-clearance-and-creepage-distance-table/), interpolated at 253 V under IEC 60664-1:2007 clause 5.2.4 (clause 5.2.3 for functional insulation)"
-      edition: "clause as read in the 2007 edition text only, the 2020 edition and AMD1:2025 not read; rows as reproduced on the page read 2026-10-23, the material-group column a drafter's reading for the owner to check; whether IEC 60335-1 permits interpolation of its own creepage table is not verified, and if it refuses the fallback is the 320 V row, 5.0 mm"
-      locator: "Table F.4, pollution degree 3, material group III, basic insulation: 250 V = 4.0 mm and 320 V = 5.0 mm; linear interpolation at 253 V = 4.0 + (5.0 - 4.0) x (253 - 250) / (320 - 250) = 4.0429 mm, 4.04 mm; rounded to the table's digits by the standard's rule that is 4.0 mm, and the figure signed is 4.1 mm, rounded up, a deliberate design margin of 0.1 mm over the standard's own result and not the standard's figure"
+      edition: "clause as read in the 2007 edition text only, the 2020 edition and AMD1:2025 not read; rows as reproduced on the page read 2026-10-23, the material-group column a drafter's reading for the owner to check; whether IEC 60335-1 permits interpolation of its own creepage table is not verified, and if it refuses the fallback is the 320 V row, 3.2 mm"
+      locator: "Table F.4, pollution degree 2, material group III (the \"other materials\" column), basic insulation: 250 V = 2.5 mm and 320 V = 3.2 mm; linear interpolation at 253 V = 2.5 + (3.2 - 2.5) x (253 - 250) / (320 - 250) = 2.53 mm; rounded to the table's digits by the standard's rule that is 2.5 mm, and the figure signed is 2.6 mm, rounded up, a deliberate design margin of 0.1 mm over the standard's own result and not the standard's figure; the rows are reproductions and not the standard"
     inputs:
       working_voltage_v: 253
       insulation: basic
-      pollution_degree: 3
+      pollution_degree: 2
       material_group: IIIa
     figure:
-      creepage_mm: 4.1
+      creepage_mm: 2.6
+# The functional band rows: eight rows of insulation functional, location conductor, pollution degree
+# 2 and material group IIIa, the table a listed net pair's working-voltage creepage is read from. The
+# band rule: between two adjacent rows the figure is the linear interpolation rounded up to 0.1 mm;
+# below 10 V the 10 V row is read; above the 320 V row there is no band figure; a pair at the supply
+# voltage is not reduced and keeps 2.6 mm. The mapping holds no downstream_basis, so a functional row
+# never enters the floor of a mains_to_mains figure. Creepage is the "other materials" column of Table
+# F.4, not the printed-wiring column (0.04 mm), whose footnote conditions were not read. Clearance is
+# Table F.2 up to 1.0 kV for the rows to 50 V (Table F.1: equipment up to 50 V at overvoltage
+# category II, a rated impulse voltage of 500 V, so 0.2 mm) and the signed 1.5 mm from 125 V.
+  - citation:
+      document: "IEC 60664-1 Table F.4 (10 V row, pollution degree 2, material group III, the \"other materials\" column), as read in [EMA-CREEPAGE] (https://www.ema-eda.com/ema-resources/blog/pcb-clearance-and-creepage-distance-table/); clearance: Table F.1 (up to 50 V, overvoltage category II, 500 V impulse) with Table F.2 up to 1.0 kV, 0.2 mm; the sources are reproductions and not the standard's text"
+      edition: "as reproduced on the page read 2026-10-23; read from open reproductions and KiCad's source tables, IEC text unread; a drafter's reading for the owner to check"
+      locator: "Table F.4, pollution degree 2, material group III, functional insulation, 10 V = 0.40 mm creepage, 0.2 mm clearance; band rule: between two adjacent rows the figure is the linear interpolation rounded up to 0.1 mm, below 10 V the 10 V row is read, above the 320 V row there is no band figure, and a pair at the supply voltage keeps 2.6 mm"
+    inputs:
+      working_voltage_v: 10
+      insulation: functional
+      location: conductor
+      pollution_degree: 2
+      material_group: IIIa
+    figure:
+      creepage_mm: 0.40
+      clearance_mm: 0.2
+  - citation:
+      document: "IEC 60664-1 Table F.4 (25 V row, pollution degree 2, material group III, the \"other materials\" column), as read in [EMA-CREEPAGE] (https://www.ema-eda.com/ema-resources/blog/pcb-clearance-and-creepage-distance-table/); clearance: Table F.1 (up to 50 V, overvoltage category II, 500 V impulse) with Table F.2 up to 1.0 kV, 0.2 mm; the sources are reproductions and not the standard's text"
+      edition: "as reproduced on the page read 2026-10-23; read from open reproductions and KiCad's source tables, IEC text unread; a drafter's reading for the owner to check"
+      locator: "Table F.4, pollution degree 2, material group III, functional insulation, 25 V = 0.50 mm creepage, 0.2 mm clearance; band rule: between two adjacent rows the figure is the linear interpolation rounded up to 0.1 mm, below 10 V the 10 V row is read, above the 320 V row there is no band figure, and a pair at the supply voltage keeps 2.6 mm"
+    inputs:
+      working_voltage_v: 25
+      insulation: functional
+      location: conductor
+      pollution_degree: 2
+      material_group: IIIa
+    figure:
+      creepage_mm: 0.50
+      clearance_mm: 0.2
+  - citation:
+      document: "IEC 60664-1 Table F.4 (50 V row, pollution degree 2, material group III, the \"other materials\" column), as read in [EMA-CREEPAGE] (https://www.ema-eda.com/ema-resources/blog/pcb-clearance-and-creepage-distance-table/); clearance: Table F.1 (up to 50 V, overvoltage category II, 500 V impulse) with Table F.2 up to 1.0 kV, 0.2 mm; the sources are reproductions and not the standard's text"
+      edition: "as reproduced on the page read 2026-10-23; read from open reproductions and KiCad's source tables, IEC text unread; a drafter's reading for the owner to check"
+      locator: "Table F.4, pollution degree 2, material group III, functional insulation, 50 V = 1.20 mm creepage, 0.2 mm clearance; band rule: between two adjacent rows the figure is the linear interpolation rounded up to 0.1 mm, below 10 V the 10 V row is read, above the 320 V row there is no band figure, and a pair at the supply voltage keeps 2.6 mm"
+    inputs:
+      working_voltage_v: 50
+      insulation: functional
+      location: conductor
+      pollution_degree: 2
+      material_group: IIIa
+    figure:
+      creepage_mm: 1.20
+      clearance_mm: 0.2
+  - citation:
+      document: "IEC 60664-1 Table F.4 (125 V row, pollution degree 2, material group III, the \"other materials\" column), as read in [EMA-CREEPAGE] (https://www.ema-eda.com/ema-resources/blog/pcb-clearance-and-creepage-distance-table/); clearance: the signed mains-to-mains clearance, 1.5 mm; the sources are reproductions and not the standard's text"
+      edition: "as reproduced on the page read 2026-10-23; read from the reproductions, IEC text unread; a drafter's reading for the owner to check"
+      locator: "Table F.4, pollution degree 2, material group III, functional insulation, 125 V = 1.5 mm creepage, 1.5 mm clearance; band rule: between two adjacent rows the figure is the linear interpolation rounded up to 0.1 mm, below 10 V the 10 V row is read, above the 320 V row there is no band figure, and a pair at the supply voltage keeps 2.6 mm"
+    inputs:
+      working_voltage_v: 125
+      insulation: functional
+      location: conductor
+      pollution_degree: 2
+      material_group: IIIa
+    figure:
+      creepage_mm: 1.5
+      clearance_mm: 1.5
+  - citation:
+      document: "IEC 60664-1 Table F.4 (160 V row, pollution degree 2, material group III, the \"other materials\" column), as read in [EMA-CREEPAGE] (https://www.ema-eda.com/ema-resources/blog/pcb-clearance-and-creepage-distance-table/); clearance: the signed mains-to-mains clearance, 1.5 mm; the sources are reproductions and not the standard's text"
+      edition: "as reproduced on the page read 2026-10-23; read from the reproductions, IEC text unread; a drafter's reading for the owner to check"
+      locator: "Table F.4, pollution degree 2, material group III, functional insulation, 160 V = 1.6 mm creepage, 1.5 mm clearance; band rule: between two adjacent rows the figure is the linear interpolation rounded up to 0.1 mm, below 10 V the 10 V row is read, above the 320 V row there is no band figure, and a pair at the supply voltage keeps 2.6 mm"
+    inputs:
+      working_voltage_v: 160
+      insulation: functional
+      location: conductor
+      pollution_degree: 2
+      material_group: IIIa
+    figure:
+      creepage_mm: 1.6
+      clearance_mm: 1.5
+  - citation:
+      document: "IEC 60664-1 Table F.4 (200 V row, pollution degree 2, material group III, the \"other materials\" column), as read in [EMA-CREEPAGE] (https://www.ema-eda.com/ema-resources/blog/pcb-clearance-and-creepage-distance-table/); clearance: the signed mains-to-mains clearance, 1.5 mm; the sources are reproductions and not the standard's text"
+      edition: "as reproduced on the page read 2026-10-23; read from the reproductions, IEC text unread; a drafter's reading for the owner to check"
+      locator: "Table F.4, pollution degree 2, material group III, functional insulation, 200 V = 2.0 mm creepage, 1.5 mm clearance; band rule: between two adjacent rows the figure is the linear interpolation rounded up to 0.1 mm, below 10 V the 10 V row is read, above the 320 V row there is no band figure, and a pair at the supply voltage keeps 2.6 mm"
+    inputs:
+      working_voltage_v: 200
+      insulation: functional
+      location: conductor
+      pollution_degree: 2
+      material_group: IIIa
+    figure:
+      creepage_mm: 2.0
+      clearance_mm: 1.5
+  - citation:
+      document: "IEC 60664-1 Table F.4 (250 V row, pollution degree 2, material group III, the \"other materials\" column), as read in [EMA-CREEPAGE] (https://www.ema-eda.com/ema-resources/blog/pcb-clearance-and-creepage-distance-table/); clearance: the signed mains-to-mains clearance, 1.5 mm; the sources are reproductions and not the standard's text"
+      edition: "as reproduced on the page read 2026-10-23; read from the reproductions, IEC text unread; a drafter's reading for the owner to check"
+      locator: "Table F.4, pollution degree 2, material group III, functional insulation, 250 V = 2.5 mm creepage, 1.5 mm clearance; band rule: between two adjacent rows the figure is the linear interpolation rounded up to 0.1 mm, below 10 V the 10 V row is read, above the 320 V row there is no band figure, and a pair at the supply voltage keeps 2.6 mm"
+    inputs:
+      working_voltage_v: 250
+      insulation: functional
+      location: conductor
+      pollution_degree: 2
+      material_group: IIIa
+    figure:
+      creepage_mm: 2.5
+      clearance_mm: 1.5
+  - citation:
+      document: "IEC 60664-1 Table F.4 (320 V row, pollution degree 2, material group III, the \"other materials\" column), as read in [EMA-CREEPAGE] (https://www.ema-eda.com/ema-resources/blog/pcb-clearance-and-creepage-distance-table/); clearance: the signed mains-to-mains clearance, 1.5 mm; the sources are reproductions and not the standard's text"
+      edition: "as reproduced on the page read 2026-10-23; read from the reproductions, IEC text unread; a drafter's reading for the owner to check"
+      locator: "Table F.4, pollution degree 2, material group III, functional insulation, 320 V = 3.2 mm creepage, 1.5 mm clearance; band rule: between two adjacent rows the figure is the linear interpolation rounded up to 0.1 mm, below 10 V the 10 V row is read, above the 320 V row there is no band figure, and a pair at the supply voltage keeps 2.6 mm"
+    inputs:
+      working_voltage_v: 320
+      insulation: functional
+      location: conductor
+      pollution_degree: 2
+      material_group: IIIa
+    figure:
+      creepage_mm: 3.2
+      clearance_mm: 1.5
 # For the layout work, the limits of the bought-part creepage entries and the net names:
 #   (a) The U601 (8.0 mm) and U701 and U711 (7 mm) figures are the makers' body creepage, not the pad-to-pad
 #       land distance: a DIP-6 W7.62 land pair is about 6.0 mm apart and the SOIC-20W land gap about 7.4 mm.

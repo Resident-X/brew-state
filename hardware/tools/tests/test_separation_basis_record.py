@@ -2,7 +2,11 @@
 from __future__ import annotations
 
 import datetime
+import fractions
+import math
 import os
+import re
+import subprocess
 import sys
 import unittest
 
@@ -47,12 +51,12 @@ def assert_draft(case, data):
     case.assertNotIn("accepted_by", data)
     case.assertNotIn("accepted_on", data)
     for entry in data["accepted_exceptions"]:
-        case.assertEqual((entry["accepted_by"], entry["accepted_on"]), ("", ""), entry.get("between") or entry["connector"])
+        case.assertEqual((entry["accepted_by"], entry["accepted_on"]), ("", ""), entry.get("between") or entry.get("connector") or entry.get("nets_a"))
 
 
 class SeparationBasisRecord(unittest.TestCase):
     def test_only_the_unsigned_acceptance_is_left_to_find(self):
-        # SOL-HW-SEPARATION-BASIS-SIGNED.C1: A separation basis record, not marked synthetic, sits in the machine's hardware folder in the form the separation-basis decision sets. A test reads the committed record through the board check's own reader and finds the only problems, if any, to be the unsigned acceptance until the owner signs, and none once signed.
+        # SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C9: The committed record holds no accepted_by and no accepted_on at its top level, no entry of its accepted_exceptions holds a signed acceptance, and the check's own reader finds the unsigned acceptance as the only problem with the record. The test never writes an acceptance into the record. Out of scope is the owner's acceptance, which is its own leaf.
         yaml, data = committed()
         self.assertIsNot(data.get("synthetic"), True)
         _, problems = reading()
@@ -62,6 +66,7 @@ class SeparationBasisRecord(unittest.TestCase):
         assert_draft(self, data)
         self.assertEqual(len(problems), 2)
         self.assertTrue(all("unsigned" in p.message for p in problems))
+        self.assertTrue(all(entry["accepted_by"] == "" and entry["accepted_on"] == "" for entry in data["accepted_exceptions"]))
 
     def test_every_barrier_has_exactly_one_type_and_the_floor_holds_on_its_own_figures(self):
         # SOL-HW-SEPARATION-BASIS-SIGNED.C1: Every barrier named has exactly one barrier_types entry, giving its insulation type, basic or reinforced, whether its low-voltage side is bonded to protective earth, the low-voltage parts a person can touch beyond it (such as a service port, the operator's controls or the enclosure), and the part or spacing that forms it; The mains-to-low-voltage clearance and creepage are at or above the floor those rows give. It also runs the check's floor rule on the record's own figures taken as signed and finds no violation.
@@ -102,13 +107,14 @@ class SeparationBasisRecord(unittest.TestCase):
                     "overvoltage_category", "altitude_m", "table_rows"):
             self.assertTrue(data.get(key), key)
         self.assertEqual(board_check.basis_voltage(data["working_voltage"]), 253.0)
-        self.assertEqual(data["pollution_degree"], 3)
+        self.assertEqual(data["pollution_degree"], 2)
         for row in data["table_rows"]:
             self.assertTrue(all(row["citation"][k].strip() for k in board_check.CITATION_KEYS))
         strongest = max((entry["insulation"] for entry in data["barrier_types"]), key=board_check.STRENGTH.get)
         for row in data["table_rows"]:
-            # a row of basic insulation is the floor of the mains-to-mains figures, so it is read at its own insulation
-            self.assertTrue(board_check.row_applies(row["inputs"], data, 253.0, row["inputs"].get("insulation", strongest)), row["inputs"])
+            # a row of basic insulation is the floor of the mains-to-mains figures, so it is read at its own insulation; a functional band row sits below the supply voltage by design and is read by the net-pair band, not the floor
+            if row["inputs"].get("insulation") != "functional":
+                self.assertTrue(board_check.row_applies(row["inputs"], data, 253.0, row["inputs"].get("insulation", strongest)), row["inputs"])
             for key in ("overvoltage_category", "pollution_degree", "material_group", "altitude_m"):
                 if key in row["inputs"]:
                     self.assertEqual(row["inputs"][key], data[key], key)
@@ -130,7 +136,7 @@ class SeparationBasisRecord(unittest.TestCase):
         # each mutation leaves the rows as drafted and changes the input they are read at; the keys are the figures left with no applicable row
         mutations = [("altitude_m", 3000, low_clearance + mains_clearance),
                      ("material_group", "IIIb", low_creepage + mains_creepage),
-                     ("pollution_degree", 2, low_clearance + low_creepage + mains_clearance + mains_creepage),
+                     ("pollution_degree", 3, low_clearance + low_creepage + mains_clearance + mains_creepage),
                      ("overvoltage_category", 3, low_clearance + mains_clearance),
                      ("working_voltage", "400 V rms", low_clearance + low_creepage + mains_clearance + mains_creepage)]
         for key, value, figures in mutations:
@@ -163,12 +169,12 @@ class MainsToMainsRecord(unittest.TestCase):
     """The committed record's mains_to_mains figures, table rows and accepted exceptions, read through the check's own reader."""
 
     def test_the_mains_to_mains_mapping_holds_the_four_figures_and_the_entry_fuse(self):
-        # SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS.C1: The committed record holds mains_to_mains with clearance_mm 1.5, terminal_clearance_mm 2.0, creepage_mm 4.1, creepage_ahead_of_fuse_mm 4.1, entry_fuse F101 and held_at_reinforced, and the check's own reader reads it with no problem other than the unsigned acceptance until the owner signs. The mains_to_low_voltage figures are out of scope and read 3.0 mm and 10.0 mm as before.
+        # SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C4: The committed record's mains_to_mains holds creepage_mm 2.6 and creepage_ahead_of_fuse_mm 2.6, clearance_mm 1.5, terminal_clearance_mm 2.0, entry_fuse F101 and the same held_at_reinforced pairs as before, and its mains_to_low_voltage holds clearance_mm 3.0 and creepage_mm 10.0. The check's own reader reads it with no problem other than the unsigned acceptance. Out of scope is any figure not named here.
         _, data = committed()
         assert_draft(self, data)
         held = data["mains_to_mains"]
         self.assertEqual({key: held[key] for key in ("clearance_mm", "terminal_clearance_mm", "creepage_mm", "creepage_ahead_of_fuse_mm")},
-                         {"clearance_mm": 1.5, "terminal_clearance_mm": 2.0, "creepage_mm": 4.1, "creepage_ahead_of_fuse_mm": 4.1})
+                         {"clearance_mm": 1.5, "terminal_clearance_mm": 2.0, "creepage_mm": 2.6, "creepage_ahead_of_fuse_mm": 2.6})
         self.assertEqual(held["entry_fuse"], "F101")
         self.assertIn("held_at_reinforced", held)
         self.assertEqual((data["mains_to_low_voltage"]["clearance_mm"], data["mains_to_low_voltage"]["creepage_mm"]), (3.0, 10.0))
@@ -183,17 +189,17 @@ class MainsToMainsRecord(unittest.TestCase):
             self.assertTrue(any(f"mains_to_mains.{key}" in p.location or key in p.message for p in problems), key)
 
     def test_the_entry_fuse_must_be_a_reference_the_record_names_and_the_figures_stay_in_order(self):
-        # SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS.C1: The committed record holds mains_to_mains with clearance_mm 1.5, terminal_clearance_mm 2.0, creepage_mm 4.1, creepage_ahead_of_fuse_mm 4.1, entry_fuse F101 and held_at_reinforced, and the check's own reader reads it with no problem other than the unsigned acceptance until the owner signs. The mains_to_low_voltage figures are out of scope and read 3.0 mm and 10.0 mm as before.
+        # SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C4: The committed record's mains_to_mains holds creepage_mm 2.6 and creepage_ahead_of_fuse_mm 2.6, clearance_mm 1.5, terminal_clearance_mm 2.0, entry_fuse F101 and the same held_at_reinforced pairs as before, and its mains_to_low_voltage holds clearance_mm 3.0 and creepage_mm 10.0. The check's own reader reads it with no problem other than the unsigned acceptance. Out of scope is any figure not named here.
         _, data = committed()
         held = data["mains_to_mains"]
-        for key, value in (("entry_fuse", ""), ("clearance_mm", 0), ("creepage_mm", "4.1")):
+        for key, value in (("entry_fuse", ""), ("clearance_mm", 0), ("creepage_mm", "2.6")):
             _, problems = reading(dict(data, mains_to_mains=dict(held, **{key: value})))
             self.assertTrue(any(f"mains_to_mains.{key}" in p.location for p in problems), key)
         _, problems = reading(dict(data, mains_to_mains=dict(held, terminal_clearance_mm=1.0)))
         self.assertTrue(any("terminal_clearance_mm" in p.location for p in problems))
 
     def test_every_figure_rests_on_a_cited_row_and_a_figure_below_its_floor_fails(self):
-        # SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS.C2: The record's table_rows hold a row for each figure: the clearance row (2.5 kV), a terminal row carrying location terminal, and a derived creepage row at 253 V whose figure is the interpolation of the 250 V and 320 V rows, 4.04 mm, signed rounded up to 4.1 mm, a deliberate 0.1 mm design margin over the standard's own rounded result of 4.0 mm, its citation naming both rows, the arithmetic and the clause that allows the interpolation (IEC 60664-1:2007 clause 5.2.4, per the 2007 edition, rows as read from reproductions), and stating the margin. The floor the check holds is the project's round-up, 4.1 mm, not the standard's rounding, 4.0 mm. The derived row restates the inputs it was read at, material group included, as signed. Each row has its citation (document, edition and the table and row), its inputs and its figure. The check's floor rule, run on the record's own figures taken as signed, finds no figure below its floor, and a creepage figure of 4.0 mm would fail it. Rows for the mains_to_low_voltage figures are out of scope and stay as signed.
+        # SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C5: The record's derived basic creepage row has working_voltage_v 253, pollution_degree 2 and material_group IIIa, figure creepage_mm 2.6, and a citation that names the 250 V row (2.5 mm) and the 320 V row (3.2 mm) of the pollution degree 2 material group III column of IEC 60664-1 Table F.4, the arithmetic giving 2.53 mm, the clause that allows the interpolation (IEC 60664-1:2007 clause 5.2.4), the 0.1 mm margin over the standard's own rounded 2.5 mm, and that the rows are read from reproductions and not from the standard. The citation keeps the fallback of the 320 V row, 3.2 mm, should the household-appliance standard refuse interpolation. Out of scope is the standard's own text.
         _, data = committed()
         rows = data["table_rows"]
         by = {}
@@ -204,20 +210,23 @@ class MainsToMainsRecord(unittest.TestCase):
         clearance = by[("basic", "conductor", ("clearance_mm",))]
         terminal = by[("basic", "terminal", ("clearance_mm",))]
         derived = by[("basic", "conductor", ("creepage_mm",))]
+        self.assertEqual(sum(1 for row in rows if row["inputs"].get("insulation") == "basic" and "creepage_mm" in row["figure"]), 1)
         self.assertEqual(clearance["inputs"].get("working_voltage_v"), 300)
         self.assertIn("2.5 kV", clearance["citation"]["locator"])
         self.assertEqual(terminal["inputs"]["location"], "terminal")
         self.assertEqual(terminal["figure"]["clearance_mm"], 2.0)
         self.assertEqual(derived["inputs"]["working_voltage_v"], 253)
         self.assertEqual(derived["inputs"]["material_group"], data["material_group"])
-        self.assertEqual(derived["figure"]["creepage_mm"], 4.1)
+        self.assertEqual(derived["figure"]["creepage_mm"], 2.6)
+        self.assertEqual((derived["inputs"]["pollution_degree"], derived["inputs"]["material_group"]), (2, "IIIa"))
         cited = " ".join(derived["citation"].values())
-        for phrase in ("250 V", "320 V", "4.0 + (5.0 - 4.0) x (253 - 250) / (320 - 250)", "4.04 mm", "clause 5.2.4", "0.1 mm"):
+        for phrase in ("250 V", "320 V", "2.5 mm", "3.2 mm", "2.5 + (3.2 - 2.5) x (253 - 250) / (320 - 250)", "2.53 mm", "clause 5.2.4", "0.1 mm",
+                       "pollution degree 2", "reproductions", "not the standard"):
             self.assertIn(phrase, cited)
         # the floor rule finds nothing below its floor on the record's own figures, and each figure is held to its row
         signed = signed_from(data)
         self.assertEqual(board_check.separation_floor(DESIGN, RECORD, signed), [])
-        for key, low in (("creepage_mm", 4.0), ("creepage_ahead_of_fuse_mm", 4.0), ("clearance_mm", 1.4), ("terminal_clearance_mm", 1.9)):
+        for key, low in (("creepage_mm", 2.5), ("creepage_ahead_of_fuse_mm", 2.5), ("clearance_mm", 1.4), ("terminal_clearance_mm", 1.9)):
             held = dict(data["mains_to_mains"], **{key: low})
             if key == "clearance_mm":
                 held["terminal_clearance_mm"] = 2.0
@@ -225,7 +234,7 @@ class MainsToMainsRecord(unittest.TestCase):
             self.assertEqual([p.location.split(" ", 1)[1] for p in found], [f"mains_to_mains.{key}"], key)
             self.assertIn("below the", found[0].message)
         # the figures at their floor pass
-        at_floor = dict(data["mains_to_mains"], creepage_mm=4.1, creepage_ahead_of_fuse_mm=4.1, clearance_mm=1.5, terminal_clearance_mm=2.0)
+        at_floor = dict(data["mains_to_mains"], creepage_mm=2.6, creepage_ahead_of_fuse_mm=2.6, clearance_mm=1.5, terminal_clearance_mm=2.0)
         self.assertEqual(board_check.separation_floor(DESIGN, RECORD, signed_from(dict(data, mains_to_mains=at_floor))), [])
         # a row removed leaves its figure with no floor, which fails by name
         for position, row in enumerate(rows):
@@ -329,16 +338,16 @@ class MainsToMainsRecord(unittest.TestCase):
         held = data["mains_to_mains"]
         self.assertNotIn("downstream_basis", held)
         self.assertEqual(held["creepage_mm"], held["creepage_ahead_of_fuse_mm"])
-        lower = dict(held, creepage_mm=3.0)
+        lower = dict(held, creepage_mm=2.0)
         _, problems = reading(dict(data, mains_to_mains=lower))
         self.assertTrue(any("downstream_basis" in p.message for p in problems))
         stated = dict(lower, downstream_basis="a prospective fault current and the entry fuse clearing a tracking fault at it")
         _, problems = reading(dict(data, mains_to_mains=stated))
         self.assertFalse(any("downstream_basis" in p.message for p in problems))
-        # with a stated basis the floor is the functional row, which this record does not carry, so the lower figure still fails by name
+        # with a stated basis the floor is the functional row at or above the working voltage, the 320 V band row (3.2 mm), so the lower figure still fails by name
         found = board_check.separation_floor(DESIGN, RECORD, signed_from(dict(data, mains_to_mains=stated)))
         self.assertEqual([p.location.split(" ", 1)[1] for p in found], ["mains_to_mains.creepage_mm"])
-        self.assertIn("functional", found[0].message)
+        self.assertIn("3.2 mm floor", found[0].message)
 
 
 DIVISION = os.path.join("docs", "sunbeam-em7000", "controller-board-division.md")
@@ -353,7 +362,7 @@ class MainsToMainsReadings(unittest.TestCase):
     """What the committed record and the division record say about the readings behind the mains-to-mains figures."""
 
     def test_the_division_record_restates_the_signed_figures_and_holds_no_old_bound(self):
-        # SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS.C6: The board division record no longer holds the 3.0 mm and 5.0 mm upper bound for mains copper of different nets, or says the basis gives no mains-to-mains figure, anywhere it appears. The restatements to correct are its separation row, assumption A3, the option row on the second division (about line 267), the paragraph on mains against mains (about 357), the rule list (about 378), finding 3 (about 1095), the verification table's creepage row (about 1193) and its row 6 on the wall edge and the bracket (about 1194), the 5.0 mm wall-edge distance in the opening table (about 32), and the verification script's docstring, its guards and its expected-output strings and seeded faults (from about 2919), each stating the signed figures, the interpolated row selection and the accepted exceptions. A search of the division record, the layout plans and the design constraints for the old bound and for 'basic creepage' finds no other, and any found is aligned. The basic mains-to-earth pair (D15 and the bracket paragraph) keeps its separate decision but states 4.1 mm from the same row selection. A layout plan that does not exist yet is out of scope.
+        # SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C10: The division record states the new figures at each place it stated the replaced ones, the places being its separation row, assumption A3, the option row on the second division, the paragraph on mains against mains, the rule list, finding 3, D15 and the bracket paragraph, the verification table's creepage row, the verification script's basis constants, expected-output strings and seeded faults, and the sentences reporting pairs under the basic creepage. A search of the record for 4.1 mm as a creepage figure and for pollution degree 3 finds none left unexplained, and the verification script passes on the record as edited. Out of scope is a distance the record chose larger than the figure for its own reason, such as the 5.0 mm wall-edge distance.
         with open(os.path.join(ROOT, DIVISION), encoding="utf-8") as handle:
             text = handle.read()
         _, data = committed()
@@ -376,13 +385,14 @@ class MainsToMainsReadings(unittest.TestCase):
             self.assertIn("exception", row, heading)
         a3 = text[text.index("| A3 |"):]
         a3 = a3[:a3.index("\n")]
-        for phrase in ("250 V row (4.0 mm) and 320 V row (5.0 mm)", "253 V", "rounded up", stated["terminal"],
+        for phrase in ("250 V row (2.5 mm) and 320 V row (3.2 mm)", "pollution degree 2", "253 V", "rounded up", stated["terminal"],
                        "T701 and T711 at 1.08 mm", "R105 at 1.65 mm", "1206 series resistors at 1.8 mm"):
             self.assertIn(phrase, a3, phrase)
         # the mains-to-earth pair states the same row selection
         d15 = text[text.index("**D15."):]
         d15 = d15[:d15.index("\n")]
-        self.assertIn("4.1 mm", d15)
+        self.assertIn(stated["creepage"], d15)
+        self.assertEqual(stated["creepage"], "2.6 mm")
         self.assertIn("same row selection", d15)
         # the script reads the signed mains-to-mains figures from the record and checks the data against them
         script = text[text.index("```python"):]
@@ -399,7 +409,7 @@ class MainsToMainsReadings(unittest.TestCase):
         self.assertEqual(data["material_group"], "IIIa")
         comments = " ".join(line[1:].strip() for line in record_text().splitlines() if line.startswith("#"))
         for phrase in ("requirement on the main board's fabrication notes", "comparative tracking index", "at least 175",
-                       "SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT", "no laminate is chosen yet", "only up to a working voltage of 50 V",
+                       "SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT", "no laminate is chosen yet",
                        "equal for IIIa and IIIb", "was not read"):
             self.assertIn(phrase, " ".join(comments.split()), phrase)
         # every row that states a group states IIIa, the derived creepage row included, and the 10.0 mm figure is unchanged
@@ -408,11 +418,12 @@ class MainsToMainsReadings(unittest.TestCase):
         derived = next(row for row in data["table_rows"] if row["inputs"].get("working_voltage_v") == 253)
         self.assertEqual(derived["inputs"]["material_group"], "IIIa")
         self.assertEqual(data["mains_to_low_voltage"]["creepage_mm"], 10.0)
+        self.assertNotIn("only up to a working voltage of 50 V", " ".join(record_text().split()))
         # no laminate maker's document is cited
         self.assertNotIn("laminate maker", " ".join(row["citation"]["document"] for row in data["table_rows"]))
 
     def test_the_readings_for_the_owner_to_check_are_marked_and_the_interpolation_permission_is_stated_from_the_2007_text(self):
-        # SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS.C10: The record marks the 0.5 mm terminal allowance (Table 16 footnote of the household-appliance standard) as a reading from reproductions, with its source and its clause where the source gives one, unverified against the standard's own text, and the owner's acceptance includes checking it. The permission to interpolate creepage between voltage rows is verified against IEC 60664-1:2007 clause 5.2.4 (clause 5.2.3 carries the same wording for functional insulation): where the working voltage of 4.3.2.2.2 is used for dimensioning, interpolation for intermediate voltages is allowed, linear interpolation shall be used, and values are rounded to the same number of digits as the table values. That reading is of the 2007 edition text only; the 2020 edition and AMD1:2025 were not read. By that rounding rule the standard's own result at 253 V is 4.0 mm, so the signed 4.1 mm is a deliberate design margin of 0.1 mm over it and the record says so. Whether the household-appliance standard (IEC 60335-1) permits interpolation of its own creepage table is not verified, nothing having been found either way: the record carries that caveat and the fallback figure, the 320 V row, 5.0 mm, that applies if interpolation is refused, and the owner's signed acceptance of the record includes confirming the 60335-1 position, or the owner's or a test house's confirmation is recorded in the record, before certification. A clause the sources do not give is stated as not found, not guessed. The same owner check covers the material-group column of the 250 V and 320 V rows used: they are drafter readings of IEC 60664-1 Table F.4 from reproductions (pollution degree 3, group III: 250 V = 4.0 mm, 320 V = 5.0 mm). The comment in hardware/sunbeam-em7000/separation-basis.yaml near line 28, which says the 320 V row is used and no interpolation is made, is corrected to say that interpolation is permitted and that the larger 10.0 mm mains-to-low-voltage figure is kept deliberately. Reading the standard's own text beyond these points is out of scope.
+        # SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C5: The record's derived basic creepage row has working_voltage_v 253, pollution_degree 2 and material_group IIIa, figure creepage_mm 2.6, and a citation that names the 250 V row (2.5 mm) and the 320 V row (3.2 mm) of the pollution degree 2 material group III column of IEC 60664-1 Table F.4, the arithmetic giving 2.53 mm, the clause that allows the interpolation (IEC 60664-1:2007 clause 5.2.4), the 0.1 mm margin over the standard's own rounded 2.5 mm, and that the rows are read from reproductions and not from the standard. The citation keeps the fallback of the 320 V row, 3.2 mm, should the household-appliance standard refuse interpolation. Out of scope is the standard's own text.
         _, data = committed()
         terminal = next(row for row in data["table_rows"] if row["inputs"].get("location") == "terminal")
         marked = " ".join(terminal["citation"].values())
@@ -421,10 +432,11 @@ class MainsToMainsReadings(unittest.TestCase):
         derived = next(row for row in data["table_rows"] if row["inputs"].get("working_voltage_v") == 253)
         cited = " ".join(derived["citation"].values())
         for phrase in ("clause 5.2.4", "clause 5.2.3 for functional insulation", "2007 edition", "2020 edition and AMD1:2025 not read",
-                       "drafter's reading", "IEC 60335-1", "not verified", "fallback is the 320 V row, 5.0 mm", "4.0 mm", "design margin of 0.1 mm"):
+                       "drafter's reading", "IEC 60335-1", "not verified", "fallback is the 320 V row, 3.2 mm", "2.5 mm", "design margin of 0.1 mm"):
             self.assertIn(phrase, cited, phrase)
         text = " ".join(" ".join(line[1:].strip() for line in record_text().splitlines() if line.startswith("#")).split())
-        for phrase in ("pollution degree 3, material group III: 250 V = 4.0 mm, 320 V = 5.0 mm", "linear interpolation for intermediate voltages",
+        for phrase in ("pollution degree 2, material group III: 250 V = 2.5 mm, 320 V = 3.2 mm", "fallback is the 320 V row, 3.2 mm",
+                       "linear interpolation for intermediate voltages",
                        "rounds the result to the same number of digits as the table values", "owner, or a test house, confirms",
                        "creepage keeps the larger 10.0 mm figure"):
             self.assertIn(phrase, text, phrase)
@@ -560,6 +572,246 @@ class SameConnectorRecord(unittest.TestCase):
         held[first]["between"] = ["J630.1", "J630.2"]
         _, found = reading(dict(data, accepted_exceptions=held))
         self.assertTrue(any(p.location.endswith(f"accepted_exceptions[{first}].between") for p in found))
+
+
+def band_figure(rows, voltage, key):
+    """The band rule as the record's citation states it, in exact arithmetic: the figure at `voltage` read from the functional band `rows`."""
+    points = sorted((fractions.Fraction(str(row["inputs"]["working_voltage_v"])), fractions.Fraction(str(row["figure"][key]))) for row in rows)
+    voltage = fractions.Fraction(str(voltage))
+    if voltage <= points[0][0]:
+        return float(points[0][1])
+    if voltage > points[-1][0]:
+        return None
+    for (low_v, low), (high_v, high) in zip(points, points[1:]):
+        if low_v <= voltage <= high_v:
+            exact = low + (high - low) * (voltage - low_v) / (high_v - low_v)
+            return math.ceil(exact * 10) / 10
+    raise AssertionError(voltage)
+
+
+def band_rows(data):
+    return [row for row in data["table_rows"] if row["inputs"].get("insulation") == "functional"]
+
+
+def comment_text():
+    """The record's whole comment text, whitespace-normalised."""
+    return " ".join(" ".join(line[1:].strip() for line in record_text().splitlines() if line.startswith("#")).split())
+
+
+class PollutionDegreeTwoRecord(unittest.TestCase):
+    """The record at pollution degree 2 on a coated board: its inputs, conditions, band rows and restated documents."""
+
+    def test_the_record_reads_pollution_degree_2_and_credits_no_pollution_degree_1(self):
+        # SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C1: The committed separation-basis.yaml holds pollution_degree 2, and no table_rows entry and no other value in the record reads pollution degree 1. The test reads the record through the check's own reader. Out of scope is the check refusing a pollution degree below 3 that states no protection, which the record's own wording and the owner's acceptance carry.
+        _, data = committed()
+        self.assertEqual(data["pollution_degree"], 2)
+        found = []
+
+        def walk(node, path):
+            if isinstance(node, dict):
+                for key, value in node.items():
+                    if key == "pollution_degree":
+                        found.append((path, value))
+                    walk(value, path + [key])
+            elif isinstance(node, list):
+                for position, value in enumerate(node):
+                    walk(value, path + [position])
+
+        walk(data, [])
+        self.assertTrue(found)
+        self.assertEqual({value for _, value in found}, {2}, found)
+        _, problems = reading()
+        self.assertEqual([p for p in problems if not p.location.endswith(("accepted_by", "accepted_on"))], [])
+        # the same record with a row read at pollution degree 1 is a different record: the walk would find it
+        rows = [dict(row, inputs=dict(row["inputs"], pollution_degree=1)) if position == 1 else row for position, row in enumerate(data["table_rows"])]
+        found.clear()
+        walk(dict(data, table_rows=rows), [])
+        self.assertIn(1, {value for _, value in found})
+
+    def test_the_environment_says_the_boards_are_protected_against_moisture_by_a_coat(self):
+        # SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C2: The environment text of the committed record contains the words "protected against moisture: coated" and no longer contains "uncoated" or "not protected against moisture". The test reads the committed record. Out of scope is whether a coat is applied, which the layout leaves and the bring-up task carry.
+        _, data = committed()
+        environment = data["environment"]
+        self.assertIn("protected against moisture: coated", environment)
+        self.assertNotIn("uncoated", environment)
+        self.assertNotIn("not protected against moisture", environment)
+
+    def test_the_header_holds_the_six_conditions_in_order_the_sources_the_readings_and_the_carrying_nodes(self):
+        # SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C3: The header comment of the committed record holds a numbered block of six conditions, each naming its subject, in this order and with these figures: the coat before the boards are energised in the machine, with the coat type and datasheet named in the fabrication notes and the gaps between mains pads covered except documented contact keep-outs; the protection stated as coated and credited at pollution degree 2 only, never 1; a laminate comparative tracking index of at least 175; slots in creepage paths at least 1.0 mm wide, 1.5 mm if a pollution degree 3 credit must survive; the bring-up humidity reading confirming no condensation while energised, with the fall back to pollution degree 3 and 4.1 mm as a fresh basis; and the whole record re-signed by the owner. The header no longer says that coating the boards later would be a fresh basis. Out of scope is any condition beyond those six. The header also names the open reproductions the figures rest on (the EMA table, TI SLUP421 and SLUAAR5, IECEx document 1422 and the IECEE decision sheet) and says they are reproductions and not the standard's text, lists the readings the owner or a test house is to confirm, and names by node id the layout leaves and the bring-up task that carry the coat, the laminate and the humidity requirements.
+        text = comment_text()
+        start = text.index("The credit of pollution degree 2 on a coated board rests on six conditions")
+        block = text[start:text.index("The tables are those of IEC 60664-1")]
+        items = re.split(r"\s(?=[1-6]\. [A-Z][a-z]+:)", block)[1:]
+        self.assertEqual([item[3:item.index(":")] for item in items], ["Coat", "Degree", "Laminate", "Slots", "Humidity", "Signature"])
+        coat, degree, laminate, slots, humidity, signature = items
+        for phrase in ("before they are energised in the machine", "coat type and cite its datasheet", "covers the gaps between mains pads",
+                       "except the keep-outs documented for contacts"):
+            self.assertIn(phrase, coat)
+        for phrase in ("protected against moisture, by the coat", "credits pollution degree 2 only", "Pollution degree 1 is never credited"):
+            self.assertIn(phrase, degree)
+        for phrase in ("comparative tracking index", "at least 175"):
+            self.assertIn(phrase, laminate)
+        for phrase in ("at least 1.0 mm wide", "1.5 mm if a pollution degree 3 credit must survive"):
+            self.assertIn(phrase, slots)
+        for phrase in ("humidity reading", "no condensation on the boards while energised", "pollution degree 3 and 4.1 mm", "fresh basis"):
+            self.assertIn(phrase, humidity)
+        for phrase in ("whole record is re-signed by the owner",):
+            self.assertIn(phrase, signature)
+        # the nodes that carry the coat, the laminate and the humidity requirements are named by id
+        for node in ("SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT", "SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT", "DEL-HW-BRING-UP"):
+            self.assertIn(node, block, node)
+        self.assertNotIn("Coating them later would be a fresh basis", text)
+        self.assertNotIn("boards not protected against moisture", text)
+        # the open reproductions the figures rest on, and that they are not the standard's text
+        for phrase in ("EMA Design Automation", "SLUP421", "SLUAAR5", "IECEx document 1422", "IECEE decision sheet", "note 1 of Table F.4",
+                       "reproductions and not the standard's text", "pollution degree 2, material group III: 250 V = 2.5 mm, 320 V = 3.2 mm"):
+            self.assertIn(phrase, text, phrase)
+        # the readings the owner or a test house is to check name the coat conditions and the band rows
+        readings = text[text.index("Readings the drafter made"):text.index("The credit of pollution degree 2")]
+        for phrase in ("The coat conditions below", "functional band rows", "the fallback is the 320 V row, 3.2 mm"):
+            self.assertIn(phrase, readings, phrase)
+
+    def test_the_mains_to_low_voltage_rows_are_read_at_pollution_degree_2_and_the_floor_holds(self):
+        # SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C6: The record's rows for the mains-to-low-voltage clearance and creepage are read at pollution degree 2 (clearance 3.0 mm from Table F.2 at 4.0 kV, creepage 6.4 mm, the 3.2 mm of the 320 V row doubled for reinforced insulation), the check's floor rule run on the record's own figures taken as signed finds no violation, and a creepage_mm of 2.5 or a pollution degree 3 on those rows fails it. The record says the margin of the signed 10.0 mm over 6.4 mm is deliberate. Out of scope is changing the signed 3.0 mm and 10.0 mm.
+        _, data = committed()
+        rows = data["table_rows"]
+        clearance = next(r for r in rows if r["inputs"].get("insulation") == "reinforced" and "clearance_mm" in r["figure"])
+        creepage = next(r for r in rows if r["inputs"].get("insulation") == "reinforced" and "creepage_mm" in r["figure"])
+        self.assertEqual((clearance["inputs"]["pollution_degree"], clearance["figure"]["clearance_mm"]), (2, 3.0))
+        self.assertIn("Table F.2: 4.0 kV, pollution degree 2, 3.0 mm", clearance["citation"]["locator"])
+        self.assertEqual((creepage["inputs"]["pollution_degree"], creepage["figure"]["creepage_mm"]), (2, 6.4))
+        self.assertIn("3.2 mm basic, doubled to 6.4 mm", creepage["citation"]["locator"])
+        self.assertEqual((data["mains_to_low_voltage"]["clearance_mm"], data["mains_to_low_voltage"]["creepage_mm"]), (3.0, 10.0))
+        self.assertIn("3.6 mm over", comment_text())
+        self.assertIn("3.6 mm over it, deliberately", creepage["citation"]["locator"])
+        self.assertEqual(board_check.separation_floor(DESIGN, RECORD, signed_from(data)), [])
+        low = dict(data, mains_to_low_voltage=dict(data["mains_to_low_voltage"], creepage_mm=2.5))
+        found = board_check.separation_floor(DESIGN, RECORD, signed_from(low))
+        self.assertEqual(len(found), 1)
+        self.assertIn("mains_to_low_voltage.creepage_mm", found[0].location)
+        self.assertIn("below the", found[0].message)
+        # a record read at pollution degree 3 leaves every figure without an applicable row
+        found = board_check.separation_floor(DESIGN, RECORD, signed_from(dict(data, pollution_degree=3)))
+        self.assertEqual(sorted(p.location.split(" ", 1)[1] for p in found if "mains_to_low_voltage" in p.location),
+                         ["mains_to_low_voltage.clearance_mm", "mains_to_low_voltage.creepage_mm"])
+        self.assertTrue(all("no table row" in p.message for p in found))
+
+    def test_the_record_carries_the_eight_functional_band_rows_and_the_floor_reads_the_same_with_them(self):
+        # SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C7: The record's table_rows hold exactly eight rows of insulation functional, location conductor, pollution degree 2 and material group IIIa, at working_voltage_v 10, 25, 50, 125, 160, 200, 250 and 320 with creepage_mm 0.40, 0.50, 1.20, 1.5, 1.6, 2.0, 2.5 and 3.2 and clearance_mm 0.2, 0.2, 0.2, 1.5, 1.5, 1.5, 1.5 and 1.5, the rows from 10 V to 50 V cited as readings from open reproductions with the IEC text unread, each citing Table F.4 and its reproduction, with exactly the keys inputs {working_voltage_v, insulation functional, location conductor, pollution_degree 2, material_group IIIa} and figure {creepage_mm, clearance_mm} and no downstream_basis in the mapping, and the check's own reader reads them with no problem. The mains_to_mains floor rule, run with them present, reads the same floors as without them. Out of scope is any row at another pollution degree or material group.
+        _, data = committed()
+        rows = band_rows(data)
+        self.assertEqual(len(rows), 8)
+        self.assertEqual([(r["inputs"]["working_voltage_v"], r["figure"]["creepage_mm"], r["figure"]["clearance_mm"]) for r in rows],
+                         [(10, 0.40, 0.2), (25, 0.50, 0.2), (50, 1.20, 0.2), (125, 1.5, 1.5), (160, 1.6, 1.5), (200, 2.0, 1.5), (250, 2.5, 1.5), (320, 3.2, 1.5)])
+        for row in rows:
+            self.assertEqual(set(row["inputs"]), {"working_voltage_v", "insulation", "location", "pollution_degree", "material_group"})
+            self.assertEqual((row["inputs"]["insulation"], row["inputs"]["location"], row["inputs"]["pollution_degree"], row["inputs"]["material_group"]),
+                             ("functional", "conductor", 2, "IIIa"))
+            self.assertEqual(set(row["figure"]), {"creepage_mm", "clearance_mm"})
+            cited = " ".join(row["citation"].values())
+            self.assertIn("Table F.4", cited)
+            self.assertIn("reproduction", cited)
+        for row in rows[:3]:
+            cited = " ".join(row["citation"].values())
+            self.assertIn("open reproductions", cited)
+            self.assertIn("IEC text unread", cited)
+        self.assertNotIn("downstream_basis", data["mains_to_mains"])
+        _, problems = reading()
+        self.assertEqual([p for p in problems if not p.location.endswith(("accepted_by", "accepted_on"))], [])
+        without = dict(data, table_rows=[r for r in data["table_rows"] if r not in rows])
+        self.assertEqual(len(without["table_rows"]), 5)
+        signed = signed_from(data)
+        self.assertEqual(board_check.separation_floor(DESIGN, RECORD, signed), [])
+        self.assertEqual(board_check.separation_floor(DESIGN, RECORD, signed_from(without)), [])
+        # the equality is not vacuous: a figure under the floor fails the same way with the rows present and without them
+        for key, low in (("creepage_mm", 2.5), ("clearance_mm", 1.4)):
+            lowered = dict(data["mains_to_mains"], **{key: low})
+            with_rows = board_check.separation_floor(DESIGN, RECORD, signed_from(dict(data, mains_to_mains=lowered)))
+            no_rows = board_check.separation_floor(DESIGN, RECORD, signed_from(dict(without, mains_to_mains=lowered)))
+            self.assertEqual([(p.location, p.message) for p in with_rows], [(p.location, p.message) for p in no_rows], key)
+            self.assertEqual(len(with_rows), 1, key)
+        # a stated downstream basis would pull the functional 320 V row into the creepage floor, which is why the record holds none
+        stated = dict(data["mains_to_mains"], downstream_basis="a prospective fault current and the entry fuse clearing a tracking fault at it")
+        found = board_check.separation_floor(DESIGN, RECORD, signed_from(dict(data, mains_to_mains=stated)))
+        self.assertTrue(found)
+
+    def test_the_band_rule_is_stated_and_gives_the_listed_figures_on_the_committed_rows(self):
+        # SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C8: The citation of the band rows states the band rule in these terms: between two adjacent rows the figure is the linear interpolation rounded up to 0.1 mm, below 10 V the 10 V row is read, above the 320 V row there is no band figure, and a pair at the supply voltage keeps 2.6 mm. The test evaluates the stated rule on creepage at 10 V (0.4 mm), 30 V (0.7 mm), 84.5 V (1.4 mm), 126.5 V (1.6 mm), 168.5 V (1.7 mm), 178.7 V (1.8 mm) and 253 V (2.6 mm), and on clearance at 10 V (0.2 mm), 50 V (0.2 mm) and 125 V (1.5 mm), from the committed rows and finds those figures. Out of scope is the check's use of the rows.
+        _, data = committed()
+        rows = band_rows(data)
+        for row in rows:
+            locator = " ".join(row["citation"]["locator"].split())
+            for term in ("between two adjacent rows the figure is the linear interpolation rounded up to 0.1 mm", "below 10 V the 10 V row is read",
+                         "above the 320 V row there is no band figure", "a pair at the supply voltage keeps 2.6 mm"):
+                self.assertIn(term, locator, term)
+        for voltage, creepage in ((10, 0.4), (30, 0.7), (84.5, 1.4), (126.5, 1.6), (168.5, 1.7), (178.7, 1.8), (253, 2.6)):
+            self.assertEqual(band_figure(rows, voltage, "creepage_mm"), creepage, voltage)
+        for voltage, clearance in ((10, 0.2), (50, 0.2), (125, 1.5)):
+            self.assertEqual(band_figure(rows, voltage, "clearance_mm"), clearance, voltage)
+        self.assertEqual(band_figure(rows, 5, "creepage_mm"), 0.4)
+        self.assertIsNone(band_figure(rows, 321, "creepage_mm"))
+        # the pair at the supply voltage reads the signed mains-to-mains figure
+        self.assertEqual(band_figure(rows, 253, "creepage_mm"), data["mains_to_mains"]["creepage_mm"])
+        # a changed row changes a figure the rule gives
+        shifted = [dict(r, figure=dict(r["figure"], creepage_mm=r["figure"]["creepage_mm"] + 0.3)) if r["inputs"]["working_voltage_v"] == 50 else r for r in rows]
+        self.assertNotEqual(band_figure(shifted, 84.5, "creepage_mm"), 1.4)
+
+    def test_the_division_record_states_no_old_figure_unexplained_and_its_script_passes(self):
+        # SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C10: The division record states the new figures at each place it stated the replaced ones, the places being its separation row, assumption A3, the option row on the second division, the paragraph on mains against mains, the rule list, finding 3, D15 and the bracket paragraph, the verification table's creepage row, the verification script's basis constants, expected-output strings and seeded faults, and the sentences reporting pairs under the basic creepage. A search of the record for 4.1 mm as a creepage figure and for pollution degree 3 finds none left unexplained, and the verification script passes on the record as edited. Out of scope is a distance the record chose larger than the figure for its own reason, such as the 5.0 mm wall-edge distance.
+        with open(os.path.join(ROOT, DIVISION), encoding="utf-8") as handle:
+            text = handle.read()
+        # every place that states the replaced creepage or pollution degree 3 says why (the fall back, or the figure replaced)
+        for pattern in (r"(?<![\d.])4\.1 mm", r"pollution degree 3"):
+            for match in re.finditer(pattern, text):
+                around = " ".join(text[max(0, match.start() - 200):match.end() + 200].split())
+                self.assertTrue("fall back" in around or "replaced" in around, around)
+        # a distance the record chose larger than the figure for its own reason stays as drawn
+        self.assertIn("least 5.0 mm of 2.6", text)
+        # the script compares the record with the data and with its expected output, and ends with the verdict
+        script = re.search(r"^```python\n(.*?)^```", text, re.S | re.M).group(1)
+        import tempfile
+        with tempfile.TemporaryDirectory() as folder:
+            path = os.path.join(folder, "checks.py")
+            with open(path, "w", encoding="utf-8") as handle:
+                handle.write(script)
+            for board in ("main", "wall"):
+                done = subprocess.run([sys.executable, "-I", path, os.path.join(ROOT, DIVISION), board], capture_output=True, text=True, cwd=ROOT, timeout=900)
+                self.assertEqual(done.returncode, 0, done.stdout[-2000:] + done.stderr[-2000:])
+                self.assertEqual(done.stdout.strip().splitlines()[-1], f"all {board} board checks pass")
+
+    def test_the_constraints_record_the_readme_and_the_method_restate_pollution_degree_2(self):
+        # SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C11: The constraints record's pollution degree row reads 2 with the boards protected against moisture by a coat and cites the decision's conditions, its separation and material-group rows restate the figures of the committed record, and a search of the record for pollution degree 3 and 4.1 mm finds none left unexplained. Out of scope is any row about another quantity.
+        # SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C12: hardware/README.md states, in its adopter steps, that pollution degree 3 is taken unless the boards are protected against moisture and that a coat credits pollution degree 2 only on the stated conditions, and describes the functional band rows of table_rows beside the record keys it lists. Out of scope is the net_pairs exception form, which the pre-order check leaf documents.
+        # SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C13: Item MAINS-4 of docs/board-design-method.md states that the width it requires of a slot or groove is the pollution degree 2 figure, 1.0 mm, that it is held wider than 1 mm, and that a pollution degree 3 basis needs 1.5 mm. Out of scope is any other item.
+        with open(os.path.join(ROOT, "docs", "sunbeam-em7000", "controller-board-design-constraints.md"), encoding="utf-8") as handle:
+            constraints = handle.read()
+        row = next(line for line in constraints.splitlines() if line.startswith("| Pollution degree the enclosure warrants"))
+        for phrase in ("| 2, boards protected against moisture by a conformal coat", "never 1", "inferred"):
+            self.assertIn(phrase, row)
+        material = next(line for line in constraints.splitlines() if line.startswith("| Laminate's tracking resistance"))
+        self.assertNotIn("pollution degree 3", material)
+        self.assertNotIn("5.0 mm", material)
+        self.assertIn("2.5 mm at 250 V and 3.2 mm at 320 V", material)
+        separation = {line.split("|")[1].strip(): line for line in constraints.splitlines() if line.startswith(("| Mains-to-low-voltage separation", "| Mains-to-mains separation"))}
+        self.assertEqual(sorted(separation), ["Mains-to-low-voltage separation", "Mains-to-mains separation"])
+        self.assertIn("6.4 mm", separation["Mains-to-low-voltage separation"])
+        self.assertIn("2.6 mm creepage", separation["Mains-to-mains separation"])
+        for line in constraints.splitlines():
+            for match in re.finditer(r"pollution degree 3|(?<![\d.])4\.1 mm", line):
+                self.assertTrue("fall" in line or "survive" in line, line[:120])
+        with open(os.path.join(ROOT, "hardware", "README.md"), encoding="utf-8") as handle:
+            readme = " ".join(handle.read().split())
+        for phrase in ("Pollution degree is 3 unless your boards are protected against moisture", "credits pollution degree 2 only, never 1",
+                       "slots at least 1.0 mm wide", "functional **band rows**", "below the lowest row that row is read"):
+            self.assertIn(phrase, readme, phrase)
+        with open(os.path.join(ROOT, "docs", "board-design-method.md"), encoding="utf-8") as handle:
+            method = handle.read()
+        item = method[method.index("#### MAINS-4."):]
+        item = " ".join(item[:item.index("\n#### ")].split())
+        for phrase in ("wider than 1 mm", "pollution degree 2 groove width", "1.0 mm is the pollution degree 2 groove width", "a record at pollution degree 3 needs 1.5 mm"):
+            self.assertIn(phrase, item, phrase)
+        for field in ("**Applies when:**", "**Asks:**", "**Passes:**", "**Fails, as the views show it:**", "**Judged on:**"):
+            self.assertIn(field, item, field)
 
 
 if __name__ == "__main__":
