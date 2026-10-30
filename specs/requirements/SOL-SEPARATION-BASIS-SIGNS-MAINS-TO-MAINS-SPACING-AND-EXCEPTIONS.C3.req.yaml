@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS.C3
+type: criterion
+title: The record holds an accepted exception for each mains-to-mains shortfall the owner accepted
+status: active
+version: 2
+measurement_type: binary
+verification: test
+text: |-
+  accepted_exceptions holds a mains_to_mains clearance entry with accepted_mm 1.08 for T701 and T711, one with 1.65 for R105 and one with 1.8 for each 1206 series resistor, every entry naming the one pair of pads or nets it excuses in between, with a reason, a bounding element and its signed acceptance. Each accepted_mm is below the signed figure it relaxes, a part's other pairs have no entry, and a part the owner did not accept has none. The mains-to-low-voltage entries are the next criterion's and out of scope here.
+links:
+  - target: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS
+    type: criterion-of

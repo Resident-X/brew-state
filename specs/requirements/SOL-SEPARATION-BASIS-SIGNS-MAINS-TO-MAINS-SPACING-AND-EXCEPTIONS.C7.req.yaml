@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS.C7
+type: criterion
+title: The material group the figures are read at rests on a laminate with a comparative tracking index of at least 175
+status: active
+version: 2
+measurement_type: binary
+verification: inspection
+text: |-
+  A footnote of the household-appliance standard's creepage tables, as reproduced in two certification reports, allows the lowest material group (IIIb) at pollution degree 3 only up to a working voltage of 50 V. The record states the laminate maker's comparative tracking index, read from its current document and cited, as at least 175 (group IIIa or better), and signs material_group IIIa. The mains_to_low_voltage 10.0 mm figure rests on the same basis and is unchanged, because the creepage rows are equal for the two groups. A reading of the standard's own text, which the reports only reproduce, is out of scope and is noted as unread. When IIIa is signed, the derived row's material_group input is restated as IIIa.
+links:
+  - target: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS
+    type: criterion-of

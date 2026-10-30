@@ -1,0 +1,30 @@
+id: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING
+type: deliverable
+category: solution
+title: The pre-order check holds a mains-present design to the signed spacing between conductors at different mains potentials
+status: active
+version: 2
+text: |
+  The pre-order check holds a mains-present design to the signed spacing between conductors at different potentials of the mains supply, not only to the spacing from mains to low voltage. Today the basis record signs one pair, and nothing in the check compares a Mains-class item with another Mains-class item on a different net, so a layout can put live and neutral at any distance and pass. This leaf makes the check read the signed mains_to_mains figures and the entry declaration the separation-basis decision now defines, compare the figures with their floor, and enforce them in the layout rule check.
+
+  Settled for the build:
+  - The record reader accepts mains_to_mains, the functional insulation value and the location input in table_rows, and still fails any key those decisions do not name. mains_to_mains is required of a record held by a design that declares MAINS present; a design that declares none is exempt.
+  - The floor is read as the rules decision sets, from the record's own rows. The figures read for the machine at 253 V rms, overvoltage category II, pollution degree 3, material group IIIb and 2000 m are clearance 1.5 mm, terminal clearance 2.0 mm and creepage 4.1 mm both downstream of the entry fuse and ahead of it (the interpolation between the 250 V and 320 V creepage rows, rounded up; a lower downstream figure needs a stated fault-clearing basis); this leaf does not sign them (the record leaf does) and its tests use synthetic figures.
+  - The record reader also accepts downstream_basis and held_at_reinforced in the mapping as the separation-basis decision sets them. A creepage_mm below creepage_ahead_of_fuse_mm with no downstream_basis fails. Each held_at_reinforced pair is held to the mains_to_low_voltage figures by an appended rule, so the pair across the interlock relay's open contact is not held to the lower mains-to-mains figures.
+  - A derived table row at the basis working voltage is read by the floor like any other.
+  - The signed rules are appended after the signed Mains rule, in the same manner, so they are last among the rules the check inserts for other leaves and the design's own rules cannot loosen them. Terminal clearance applies between pads of one part and of neighbouring parts; the build fixes the KiCad condition that selects terminals in its readiness pass and shows by a seeded layout that it selects them.
+  - Failures are reported under the existing names: separation_basis for the record, separation_floor for the floor, mains_declaration for MAINS_ENTRY, and KiCad's own clearance and creepage for the layout. The hardware notes' tables and the adopter section gain the new keys, the variable and the net class.
+  - Reuse: the existing record reader, floor rule and appended-rule path are extended, not duplicated. Proof designs that declare mains present gain a synthetic mains_to_mains in their records and MAINS_ENTRY in their projects.
+rationale: |
+  Restores the behaviour REQ-ELECTRICAL-INSTALL-001.C15 asks of a board: the spacing between conductors at different mains potentials is signed with the basis and held. The check as built compares only the mains-to-low-voltage pair, and the division record states that the basis gives no mains-to-mains distance, so the requirement had nothing the check could hold a layout to. The check is extended; the signed figures are the record leaf's.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C15
+    type: targets
+  - target: DEC-BOARD-SEPARATION-BASIS-RECORD
+    type: justified-by
+  - target: DEC-BOARD-PRE-ORDER-RULE-READINGS
+    type: justified-by
+  - target: SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES
+    type: depends-on

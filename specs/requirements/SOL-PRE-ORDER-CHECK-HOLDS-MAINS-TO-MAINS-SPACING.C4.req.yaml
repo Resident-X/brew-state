@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C4
+type: criterion
+title: Two Mains-class items on different nets closer than the signed mains_to_mains clearance or creepage fail whatever the design's own rules say
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  A seeded layout with two Mains-class nets closer than the signed clearance, and another closer than the signed creepage, each fails with the layout rule check's clearance or creepage violation naming both nets; the same layouts fail when the design's own rules are looser, because the appended signed rules come last. Two items of one net are out of scope and never reported.
+links:
+  - target: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING
+    type: criterion-of

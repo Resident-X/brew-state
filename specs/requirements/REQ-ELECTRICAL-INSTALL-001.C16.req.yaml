@@ -1,0 +1,12 @@
+id: REQ-ELECTRICAL-INSTALL-001.C16
+type: criterion
+title: A spacing shortfall a part's geometry forces is passed only as an exception the owner has signed for that pair
+status: active
+version: 2
+measurement_type: binary
+verification: analysis
+text: |
+  Where a part's own geometry leaves less than a distance the separation basis states, whether between mains and low voltage or between conductors at different mains potentials, the owner accepts the shortfall for the one pair of pads or nets concerned, stating the least distance accepted, the owner's ground and the independent element that bounds the fault the shortfall could cause. Another pair involving the same part is not excused by it. An acceptance that is unsigned, that names a pair showing no shortfall, or that covers a distance greater than the one actually left is not an acceptance, and a shortfall without one is not passed.
+links:
+  - target: REQ-ELECTRICAL-INSTALL-001
+    type: criterion-of

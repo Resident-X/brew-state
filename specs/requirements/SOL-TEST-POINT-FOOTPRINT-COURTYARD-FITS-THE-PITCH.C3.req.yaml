@@ -1,0 +1,12 @@
+id: SOL-TEST-POINT-FOOTPRINT-COURTYARD-FITS-THE-PITCH.C3
+type: criterion
+title: A test point still fails the rule against another part's courtyard that stands nearer than the required distance
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  A test point of this footprint placed with its pad 0.8 mm from another part's courtyard still fails test_point_courtyard naming the test point, the part and both distances, so the wider own courtyard does not weaken the rule's measure against every other footprint; the rule's text, figure and skipped cases are out of scope and unchanged.
+links:
+  - target: SOL-TEST-POINT-FOOTPRINT-COURTYARD-FITS-THE-PITCH
+    type: criterion-of

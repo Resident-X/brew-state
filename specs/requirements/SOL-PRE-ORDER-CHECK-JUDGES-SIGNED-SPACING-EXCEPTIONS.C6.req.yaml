@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-JUDGES-SIGNED-SPACING-EXCEPTIONS.C6
+type: criterion
+title: Every tracked design passes, and the hardware notes state the entry form, the rule name and the owner's sole authority to sign
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Every tracked design passes the check, in the build round for board changes and nightly on main. The hardware notes' record-key list, checks table and adopter section state accepted_exceptions, spacing_exception and the report line, and say that an exception is signed by the record's owner and that an adopter writes their own. The exceptions of the machine's own record are out of scope; the record leaf adds them.
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-SIGNED-SPACING-EXCEPTIONS
+    type: criterion-of

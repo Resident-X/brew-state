@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS.C8
+type: criterion
+title: The pair across the open interlock contact is recorded as held at the signed reinforced figures
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  held_at_reinforced in the committed record lists the net pair LINE and LINE1 and the net pair LINE_IN and LINE1, held to 3.0 mm clearance and 10.0 mm creepage, with no credit taken for the relay's own contact gap. The check's reader reads the pair. Other pairs of mains nets are out of scope and take the mains-to-mains figures.
+links:
+  - target: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS
+    type: criterion-of

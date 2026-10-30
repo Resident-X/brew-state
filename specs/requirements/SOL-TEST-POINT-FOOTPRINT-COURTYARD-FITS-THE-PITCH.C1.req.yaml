@@ -1,0 +1,12 @@
+id: SOL-TEST-POINT-FOOTPRINT-COURTYARD-FITS-THE-PITCH.C1
+type: criterion
+title: The test-point footprint draws a courtyard 1.5 mm across centred on its pad
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The courtyard of the footprint a board's test points are drawn from is a box 1.5 mm across centred on the pad, drawn on the courtyard layer of the side it is placed on, and its description records the figure and the pitch it serves. The pad, the silkscreen and the placement of any board are out of scope and unchanged.
+links:
+  - target: SOL-TEST-POINT-FOOTPRINT-COURTYARD-FITS-THE-PITCH
+    type: criterion-of

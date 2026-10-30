@@ -1,0 +1,30 @@
+id: SOL-PRE-ORDER-CHECK-JUDGES-SIGNED-SPACING-EXCEPTIONS
+type: deliverable
+category: solution
+title: The pre-order check passes a spacing shortfall only on a signed exception in the basis record and fails every other
+status: active
+version: 2
+text: |
+  The pre-order check reads the owner's signed spacing exceptions from the separation basis record and judges each spacing shortfall against them, so a part whose own geometry leaves less than a signed figure is passed only on an exception the owner signed, and is otherwise failed. The owner has accepted shortfalls of this kind for bought parts and package geometry, and the check as built can only report them as violations, because the basis has no field to hold them (the main-board risk acceptance records this). This leaf adds the reader and the judgement. It adds no exception: the record leaf signs the owner's.
+
+  Settled for the build:
+  - The record reader accepts accepted_exceptions in the form the basis decision sets, and still fails any key inside an entry that the decision does not name, a repeated key, a between that is not a list of two items, each a pad written reference designator, dot and pad name, or a net name, and a pair or constraint outside the closed values.
+  - The judgement is the rules decision's. A shortfall the layout rule check reports between the one pair of items an entry's between lists, for the entry's pair and constraint, is accepted when its measured distance is no less than accepted_mm and a violation naming the entry when less. The measured distance is read from the layout rule check's own report, not recomputed.
+  - Failure is closed. A shortfall between any other pair, including another pair of the same part, stays the layout rule check's ordinary violation. An entry with an unsigned acceptance or one dated after the record's own acceptance, an accepted_mm not below the figure it relaxes, a pad or net absent from the layout, and an entry no reported shortfall uses each fail under the name spacing_exception, naming the entry, as does a shortfall below its entry's accepted distance. A record that is itself unsigned or synthetic on an orderable board fails as it does today, so no exception in it is honoured.
+  - Every accepted exception is printed in the check's report as its own line, with the pair, the measured and accepted distances and the owner's reason. The report has one form, text; no JSON form exists to extend, and none is added.
+  - The hardware notes gain the entry form, the rule name and the adopter guidance that an exception is the owner's to sign. The throwaway proof designs gain synthetic exceptions where a test needs them.
+rationale: |
+  Restores the behaviour REQ-ELECTRICAL-INSTALL-001.C16 asks of the check: a shortfall is passed only as an exception the owner has signed, with the least distance accepted. As built, the owner's acceptances of bought-part creepage live in a decision and a record header comment that the check cannot read, so the check either fails a part the owner has accepted or, if muted, would pass a part whose geometry later worsens.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C16
+    type: targets
+  - target: DEC-BOARD-SEPARATION-BASIS-RECORD
+    type: justified-by
+  - target: DEC-BOARD-PRE-ORDER-RULE-READINGS
+    type: justified-by
+  - target: DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER
+    type: justified-by
+  - target: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING
+    type: depends-on
