@@ -387,7 +387,8 @@ HOLES = sexpr.parse_one(
     ' (footprint "J" (at 10 10) (property "Reference" "J5") (pad "1" thru_hole circle (at 0 0)) (pad "2" thru_hole circle (at 0 2))'
     ' (pad "3" thru_hole circle (at 2 0)) (pad "4" thru_hole circle (at 2 2)))'
     ' (footprint "J" (at 30 10) (property "Reference" "J6") (pad "1" thru_hole circle (at 0 0)) (pad "2" thru_hole circle (at 0 2.54)))'
-    ' (footprint "R" (at 10 14) (property "Reference" "R1") (pad "1" thru_hole circle (at 0 0)) (pad "2" smd rect (at 5 0))))')
+    ' (footprint "R" (at 10 14) (property "Reference" "R1") (pad "1" thru_hole circle (at 0 0)) (pad "2" smd rect (at 2 0)))'
+    ' (footprint "H" (at 50 10) (property "Reference" "H1") (pad "1" np_thru_hole circle (at 0 0)) (pad "2" np_thru_hole circle (at 2 0))))')
 PADS = {"J5.1": (10.0, 10.0), "J5.2": (10.0, 12.0), "J5.3": (12.0, 10.0), "J5.4": (12.0, 12.0), "J6.1": (30.0, 10.0),
         "J6.2": (30.0, 12.54), "R1.1": (10.0, 14.0)}
 PLATED = board_check.PLATED_HOLE_RULE
@@ -668,6 +669,38 @@ class AnEntryThatIsNoAcceptanceFailsClosedForTheSameConnector(unittest.TestCase)
                 (found,) = judged.violations
                 self.assertIn(f"names the connector {connector}, which the layout places without two plated pads {pitch:g} mm apart",
                               found.message)
+
+    def test_a_connector_whose_pads_at_the_pitch_are_not_plated_through_holes_fails_naming_it(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C4: An entry whose accepted_by is a placeholder or empty, whose accepted_on is invalid, later than the day of the run or later than the record's own accepted_on, whose accepted_mm is at or above the distance the plated-hole rule holds, whose connector the layout lacks or places without two pads pitch_mm apart, or which no reported shortfall uses, fails spacing_exception naming the entry. An entry in an unsigned or synthetic-on-an-orderable-board record is honoured for no shortfall. The pairs a valid entry accepts are the second criterion's and out of scope here.
+        judged = judge_holes([], connector_entry(connector="H1", pitch_mm=2.0))
+        (found,) = judged.violations
+        self.assertIn("names the connector H1, which the layout places without two plated pads 2 mm apart", found.message)
+        self.assertEqual(judged.accepted, [])
+
+    def test_two_shortfalls_of_one_entry_are_judged_against_the_larger_figure(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C4: An entry whose accepted_by is a placeholder or empty, whose accepted_on is invalid, later than the day of the run or later than the record's own accepted_on, whose accepted_mm is at or above the distance the plated-hole rule holds, whose connector the layout lacks or places without two pads pitch_mm apart, or which no reported shortfall uses, fails spacing_exception naming the entry. An entry in an unsigned or synthetic-on-an-orderable-board record is honoured for no shortfall. The pairs a valid entry accepts are the second criterion's and out of scope here.
+        reported = [hole_shortfall(1.8, 1.95, "J5.1", "J5.2"), hole_shortfall(2.0, 1.95, "J5.3", "J5.4")]
+        judged = judge_holes(reported, connector_entry(accepted_mm=1.9))
+        self.assertEqual(judged.violations, [])
+        self.assertEqual(len(judged.accepted), 2)
+        judged = judge_holes(reported, connector_entry(accepted_mm=2.0))
+        (found,) = judged.violations
+        self.assertIn("relaxes nothing", found.message)
+        self.assertIn("the 2 mm the plated-hole rule holds", found.message)
+
+    def test_a_hole_shortfall_between_other_than_two_items_is_left_an_ordinary_violation(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C4: An entry whose accepted_by is a placeholder or empty, whose accepted_on is invalid, later than the day of the run or later than the record's own accepted_on, whose accepted_mm is at or above the distance the plated-hole rule holds, whose connector the layout lacks or places without two pads pitch_mm apart, or which no reported shortfall uses, fails spacing_exception naming the entry. An entry in an unsigned or synthetic-on-an-orderable-board record is honoured for no shortfall. The pairs a valid entry accepts are the second criterion's and out of scope here.
+        whole = hole_shortfall(1.5, 1.0, "J5.1", "J5.2")
+        third = hole_shortfall(1.5, 1.0, "J5.3", "J5.4")["items"][0]
+        for items in (whole["items"][:1], whole["items"] + [third]):
+            with self.subTest(items=len(items)):
+                reported = [dict(whole, items=items)]
+                judged = judge_holes(reported, connector_entry())
+                self.assertEqual(judged.accepted, [])
+                self.assertEqual(judged.consumed, set())
+                (found,) = judged.violations
+                self.assertIn("where the layout rule check reports no shortfall", found.message)
+                self.assertEqual(board_check.reported_shortfalls(reported), [])
 
     def test_an_entry_that_no_reported_shortfall_uses_fails_and_an_entry_that_only_repeats_another_stays_unused(self):
         # SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C4: An entry whose accepted_by is a placeholder or empty, whose accepted_on is invalid, later than the day of the run or later than the record's own accepted_on, whose accepted_mm is at or above the distance the plated-hole rule holds, whose connector the layout lacks or places without two pads pitch_mm apart, or which no reported shortfall uses, fails spacing_exception naming the entry. An entry in an unsigned or synthetic-on-an-orderable-board record is honoured for no shortfall. The pairs a valid entry accepts are the second criterion's and out of scope here.
