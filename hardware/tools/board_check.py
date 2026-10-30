@@ -686,12 +686,18 @@ def positive_number(value) -> bool:
 #: The keys a separation basis record holds, and the two each mains_to_low_voltage-style pair holds.
 RECORD_KEYS = {"standard", "supply", "working_voltage", "pollution_degree", "material_group", "environment",
                "barriers", "mains_to_low_voltage", "accepted_by", "accepted_on", "synthetic",
-               "overvoltage_category", "altitude_m", "barrier_types", "table_rows", "mains_to_mains"}
+               "overvoltage_category", "altitude_m", "barrier_types", "table_rows", "mains_to_mains",
+               "accepted_exceptions"}
 PAIR_KEYS = {"clearance_mm", "creepage_mm"}
 #: The keys the mains_to_mains mapping holds, every one but downstream_basis required of a record held by a design that declares mains present.
 MAINS_TO_MAINS_KEYS = ("clearance_mm", "terminal_clearance_mm", "creepage_mm", "creepage_ahead_of_fuse_mm", "entry_fuse",
                        "held_at_reinforced", "downstream_basis")
 MAINS_TO_MAINS_FIGURES = ("clearance_mm", "terminal_clearance_mm", "creepage_mm", "creepage_ahead_of_fuse_mm")
+#: The keys an entry of accepted_exceptions holds, every one required, the pairs and constraints it may name, and the owner's
+#: acceptance of the entry, which the judgement of the entry reads and the reader of the record does not.
+EXCEPTION_KEYS = ("pair", "constraint", "between", "accepted_mm", "reason", "bounded_by", "accepted_by", "accepted_on")
+EXCEPTION_PAIRS = ("mains_to_low_voltage", "mains_to_mains")
+EXCEPTION_CONSTRAINTS = ("clearance", "creepage")
 #: The keys inside the inputs a record states, each of which is optional on a record; the rest of the forms the
 #: separation basis decision fixes for them are read in read_inputs.
 INSULATIONS = ("basic", "reinforced")
@@ -723,6 +729,12 @@ class Signed(tuple):
         """The record's mains_to_mains mapping, once read whole; None for figures built without a record."""
         held = getattr(self, "basis", {}).get("mains_to_mains")
         return held if isinstance(held, dict) else None
+
+    @property
+    def exceptions(self) -> list:
+        """The record's accepted_exceptions entries, once read whole; empty for a record that accepts none."""
+        held = getattr(self, "basis", {}).get("accepted_exceptions")
+        return held if isinstance(held, list) else []
 
 
 class RecordForm(Exception):
@@ -1005,6 +1017,41 @@ def read_mains_to_mains(design: Design, record: str, data: dict, fixture: bool =
     return reading.found
 
 
+def read_exceptions(design: Design, record: str, data: dict) -> List[Violation]:
+    """What is wrong with the form of the record's accepted_exceptions, which a record may leave out or hold as an empty list.
+
+    The form is all this reads; whether an entry is signed, relaxes a figure
+    and is used by a shortfall is judged against the layout in judge_exceptions.
+    """
+    if "accepted_exceptions" not in data:
+        return []
+    reading = Reading(design, "separation_basis", record, "accepted_exceptions entry")
+    if not reading.listed("accepted_exceptions", data["accepted_exceptions"], "spacing exceptions", empty=True):
+        return reading.found
+    for index, entry in enumerate(data["accepted_exceptions"]):
+        where = f"accepted_exceptions[{index}]"
+        if not reading.mapping(where, entry, EXCEPTION_KEYS, EXCEPTION_KEYS, "an accepted_exceptions entry"):
+            continue
+        if "pair" in entry:
+            reading.one_of(f"{where}.pair", entry["pair"], EXCEPTION_PAIRS)
+        if "constraint" in entry:
+            reading.one_of(f"{where}.constraint", entry["constraint"], EXCEPTION_CONSTRAINTS)
+        if "between" in entry:
+            items = entry["between"]
+            if not isinstance(items, list) or len(items) != 2:
+                reading.bad(f"{where}.between", f"{where}.between is {items!r}, where it is a list of two items, each a pad "
+                                                "written as a reference designator, a dot and the pad name, or a net name")
+            else:
+                for position, item in enumerate(items):
+                    reading.text(f"{where}.between[{position}]", item)
+        if "accepted_mm" in entry:
+            reading.positive(f"{where}.accepted_mm", entry["accepted_mm"], " of millimetres")
+        for key in ("reason", "bounded_by"):
+            if key in entry:
+                reading.text(f"{where}.{key}", entry[key])
+    return reading.found
+
+
 def read_record(yaml, root: str, design: Design, record: Optional[str], not_for_manufacture: bool,
                 today: datetime.date, uncommitted: Optional[str] = None
                 ) -> Tuple[Optional[Signed], List[Violation]]:
@@ -1060,6 +1107,7 @@ def read_record(yaml, root: str, design: Design, record: Optional[str], not_for_
                                   "creepage_mm, the figures compared; correct the key's spelling, or remove it"))
     problems += read_inputs(design, record, data)
     problems += read_mains_to_mains(design, record, data, is_fixture(data, not_for_manufacture))
+    problems += read_exceptions(design, record, data)
     for key in ("clearance_mm", "creepage_mm"):
         if key not in pair:
             problems.append(Violation(design.project, "separation_basis", f"{record} mains_to_low_voltage.{key}",
@@ -6384,13 +6432,173 @@ def mains_pairs(design: Design, record: str, signed: Signed, mains: Set[str], en
     return found
 
 
+# --- The owner's accepted spacing exceptions ------------------------------------
+
+
+#: The pair of the record each rule the check appends for a spacing shortfall holds; a net pair held at reinforced is
+#: in none of them, so a shortfall there stays an ordinary violation whatever an entry says.
+EXCEPTION_RULES = {SIGNED_RULE: "mains_to_low_voltage", MAINS_TO_MAINS_RULE: "mains_to_mains",
+                   TERMINAL_RULE: "mains_to_mains", AHEAD_OF_FUSE_RULE: "mains_to_mains"}
+#: KiCad's own text of the rule and its figure in a clearance or creepage violation.
+RULE_FIGURE = re.compile(r"\(rule '([^']*)' (?:clearance|creepage) ([0-9.]+) mm")
+#: A pad as KiCad's report describes it, and a net as it writes one between square brackets.
+REPORTED_PAD = re.compile(r"\bpad (\S+) (?:\[.*\] )?of (\S+)\s*(?:@|$)")
+REPORTED_NET = re.compile(r"\[(.*)\]")
+
+
+class Shortfall:
+    """One clearance or creepage violation the layout rule check reports under a rule the check appends, with the items it is between."""
+
+    def __init__(self, entry: dict, pair: str, rule_figure: float, items: List[dict]):
+        self.entry = entry
+        self.pair = pair
+        self.kind = entry["type"]
+        self.figure = rule_figure
+        distance = DISTANCE_REPORTED.search(entry.get("description", ""))
+        self.measured = float(distance.group(1)) if distance else 0.0
+        self.items = items
+        self.texts = [item.get("description", "") for item in items]
+
+    def key(self) -> tuple:
+        return (self.pair, self.kind, self.measured, tuple(sorted(self.texts)))
+
+    def is_item(self, token: str, as_pad: bool, text: str) -> bool:
+        if as_pad:
+            found = REPORTED_PAD.search(text)
+            return found is not None and f"{found.group(2)}.{found.group(1)}" == token
+        found = REPORTED_NET.search(text)
+        return found is not None and found.group(1) == token
+
+    def lies_between(self, tokens: List[Tuple[str, bool]]) -> bool:
+        if len(self.texts) != 2:
+            return False
+        first, second = self.texts
+        (a, a_pad), (b, b_pad) = tokens
+        return ((self.is_item(a, a_pad, first) and self.is_item(b, b_pad, second))
+                or (self.is_item(a, a_pad, second) and self.is_item(b, b_pad, first)))
+
+
+class Judged:
+    """What the accepted exceptions make of the shortfalls a layout rule check reported."""
+
+    def __init__(self):
+        self.violations: List[Violation] = []
+        #: The report lines of the exceptions accepted, each as ACCEPTED | design | rule | entry | what.
+        self.accepted: List[str] = []
+        #: The reported violations an entry judged, accepted or failed, which are no longer ordinary violations.
+        self.consumed: Set[int] = set()
+
+
+def reported_shortfalls(violations: Sequence[dict]) -> List[Shortfall]:
+    found = []
+    for entry in violations:
+        if entry.get("type") not in EXCEPTION_CONSTRAINTS:
+            continue
+        reported = RULE_FIGURE.search(entry.get("description", ""))
+        pair = EXCEPTION_RULES.get(reported.group(1)) if reported else None
+        if pair is not None and len(entry.get("items") or []) == 2:
+            found.append(Shortfall(entry, pair, float(reported.group(2)), entry["items"]))
+    return found
+
+
+def entry_unsigned(entry: dict, record_day: Optional[datetime.date], today: datetime.date) -> Optional[str]:
+    """Why an entry's own acceptance is no acceptance, or None when it is signed as the record is, and no later than it."""
+    acceptor = entry.get("accepted_by")
+    if not isinstance(acceptor, str) or not acceptor.strip():
+        return f"accepted_by is {acceptor!r}, where it names who accepted the exception"
+    if is_placeholder(acceptor):
+        return f"accepted_by '{acceptor}' is a placeholder, not the identity of whoever accepted the exception"
+    day = iso_date(entry.get("accepted_on"))
+    if day is None:
+        return f"accepted_on {entry.get('accepted_on')!s} is not a valid calendar date written as YYYY-MM-DD"
+    if day > today:
+        return f"accepted_on {day.isoformat()} is later than today ({today.isoformat()})"
+    if record_day is not None and day > record_day:
+        return (f"accepted_on {day.isoformat()} is later than the record's own accepted_on {record_day.isoformat()}, which "
+                "covers the exceptions it holds; the record needs a fresh acceptance")
+    return None
+
+
+def judge_exceptions(design: Design, record: str, signed: Signed, violations: Sequence[dict], tree: list,
+                     today: datetime.date) -> Judged:
+    """Each spacing shortfall the layout rule check reported, judged against the signed accepted_exceptions of the record.
+
+    A shortfall between the one pair of items an entry's between lists, for the
+    entry's pair and constraint, is accepted when the distance KiCad reported is
+    no less than the entry's accepted_mm and failed, naming the entry, when it
+    is less; any other shortfall is left to be an ordinary violation. An entry
+    fails when it is unsigned or dated after the record's acceptance, names a pad
+    or net the layout lacks, relaxes no figure that a shortfall it covers was
+    held to, or covers no shortfall that another entry has not already taken.
+    """
+    judged = Judged()
+    entries = signed.exceptions
+    if not entries:
+        return judged
+    pads = {f"{reference}.{pad[1]}" for reference, footprint in board_footprints(tree).items()
+            for pad in sexpr.children(footprint, "pad") if len(pad) > 1}
+    nets = layout_nets(tree)
+    record_day = iso_date(signed.basis.get("accepted_on"))
+    shortfalls = reported_shortfalls(violations)
+
+    def fail(index: int, message: str) -> None:
+        judged.violations.append(Violation(design.project, "spacing_exception", f"{record} accepted_exceptions[{index}]",
+                                           f"accepted_exceptions[{index}] {message}"))
+
+    for index, entry in enumerate(entries):
+        unsigned = entry_unsigned(entry, record_day, today)
+        if unsigned is not None:
+            fail(index, f"is not an acceptance, so it excuses nothing: {unsigned}")
+            continue
+        tokens = [(token, token in pads) for token in entry["between"]]
+        absent = [token for token, as_pad in tokens if not as_pad and token not in nets]
+        if absent:
+            fail(index, f"names {', '.join(absent)}, which the layout has neither as a pad (reference designator, dot and pad "
+                        "name) nor as a net; name an item of the layout, or remove the entry")
+            continue
+        covered = [found for found in shortfalls
+                   if found.pair == entry["pair"] and found.kind == entry["constraint"] and found.lies_between(tokens)
+                   and id(found.entry) not in judged.consumed]
+        if not covered:
+            fail(index, f"covers {entry['pair']} {entry['constraint']} between {entry['between'][0]} and {entry['between'][1]}, "
+                        "where the layout rule check reports no shortfall; remove the exception, or restore the geometry "
+                        "it excused")
+            continue
+        accepted = float(entry["accepted_mm"])
+        if accepted >= max(found.figure for found in covered):
+            fail(index, f"accepts {accepted:g} mm, which is not below the {max(found.figure for found in covered):g} mm figure "
+                        "the shortfall it covers was held to, so it relaxes nothing; accept a smaller distance, or remove it")
+            continue
+        seen: Set[tuple] = set()
+        for found in covered:
+            judged.consumed.add(id(found.entry))
+            if found.key() in seen:
+                continue
+            seen.add(found.key())
+            if found.measured >= accepted:
+                judged.accepted.append(
+                    "ACCEPTED | " + " | ".join(clean(field) for field in (
+                        design.project, "spacing_exception", f"{record} accepted_exceptions[{index}]",
+                        f"accepted exception: {entry['pair']} {entry['constraint']} between {entry['between'][0]} and "
+                        f"{entry['between'][1]} ({'; '.join(found.texts)}) measures {found.measured:g} mm, accepted down to "
+                        f"{accepted:g} mm against the signed {found.figure:g} mm; reason: {entry['reason']}; bounded by: "
+                        f"{entry['bounded_by']}")))
+            else:
+                fail(index, f"accepts {entry['pair']} {entry['constraint']} between {entry['between'][0]} and "
+                            f"{entry['between'][1]} down to {accepted:g} mm, and the layout leaves {found.measured:g} mm "
+                            f"({'; '.join(found.texts)}), below it; move the items apart, or the owner accepts a smaller distance")
+    return judged
+
+
 # --- One design ----------------------------------------------------------------
 
 
 def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, today: datetime.date,
-                 already: List[Violation], read: Optional[List[Tuple[str, str, str]]] = None) -> List[Violation]:
+                 already: List[Violation], read: Optional[List[Tuple[str, str, str]]] = None,
+                 accepted: Optional[List[str]] = None) -> List[Violation]:
     """Every violation of one design. `read`, when given, receives each measured rule's figure as the design sets it,
-    as (item and what it measures, the text variable, the figure with its unit)."""
+    as (item and what it measures, the text variable, the figure with its unit); `accepted`, the report line of each
+    spacing exception the owner signed that the layout uses."""
     root = repository.root
     found = list(already)
     if any(v.rule == "design_discovery" for v in already):
@@ -6607,8 +6815,16 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
         markers = fired(drc, marker_rule(nonce))
         own = {id(entry) for entry in markers}
         found += ignored(design, drc, "board.design_settings.rule_severities")
-        for entry in drc.get("violations") or []:
-            if id(entry) not in own:
+        reported = [entry for entry in drc.get("violations") or [] if id(entry) not in own]
+        consumed: Set[int] = set()
+        if signed is not None and signed.exceptions and tree is not None and markers and not cut_short(drc):
+            judged = judge_exceptions(design, record, signed, reported, tree, today)
+            found += judged.violations
+            consumed = judged.consumed
+            if accepted is not None:
+                accepted += judged.accepted
+        for entry in reported:
+            if id(entry) not in consumed:
                 found.append(kicad_violation(design, entry, design.layout))
         for entry in (drc.get("unconnected_items") or []) + (drc.get("schematic_parity") or []):
             found.append(kicad_violation(design, entry, design.layout))
@@ -6807,11 +7023,14 @@ def report(top: str, kicad_cli: str, git: str, version: str, today: datetime.dat
 
     results: List[Tuple[str, List[Violation]]] = []
     figures: Dict[str, List[Tuple[str, str, str]]] = {}
+    exceptions: Dict[str, List[str]] = {}
     for design in designs:
         read: List[Tuple[str, str, str]] = []
+        accepted: List[str] = []
         results.append((design.project, check_design(design, repository, kicad_cli, yaml, today, problems[design.project],
-                                                     read)))
+                                                     read, accepted)))
         figures[design.project] = read
+        exceptions[design.project] = accepted
     for orphan in orphans:
         results.append((orphan.design, [orphan]))
     if not designs:
@@ -6829,6 +7048,8 @@ def report(top: str, kicad_cli: str, git: str, version: str, today: datetime.dat
             print(f"DESIGN | {clean(name)} | PASS", file=out)
         for rule, variable, figure in figures.get(name, []):
             print(f"FIGURE | {clean(name)} | {clean(rule)} | {clean(variable)} | {clean(figure)}", file=out)
+        for line in exceptions.get(name, []):
+            print(line, file=out)
         for violation in violations:
             print(violation.line(), file=out)
     if failed:

@@ -227,6 +227,32 @@ def records(*changes: Tuple[str, str]):
     return seed_it
 
 
+def exception_entry(pair: str, constraint: str, between: Tuple[str, str], accepted_mm: float, by: str = "maintainer",
+                    on: str = "2026-10-12") -> str:
+    """One entry of the separation basis record's accepted_exceptions, written as the synthetic record writes them."""
+    return (f"  - pair: {pair}\n    constraint: {constraint}\n    between: [\"{between[0]}\", \"{between[1]}\"]\n"
+            f"    accepted_mm: {accepted_mm:g}\n    reason: synthetic -- a ground chosen to exercise the check\n"
+            f"    bounded_by: synthetic -- an independent element chosen to exercise the check\n"
+            f"    accepted_by: {by}\n    accepted_on: \"{on}\"\n")
+
+
+def exceptions(*entries: str):
+    """The record with `entries` as its accepted_exceptions, before its own acceptance."""
+    return record("accepted_by: david\naccepted_on: 2026-10-12\nsynthetic: true",
+                  "accepted_exceptions:\n" + "".join(entries) + "accepted_by: david\naccepted_on: 2026-10-12\nsynthetic: true")
+
+
+#: The gate-proof pads J1 pad 1 and pad 2, on /MAINS_L and /MAINS_N, stand 0.84 mm apart; a signed terminal clearance of
+#: 1.0 mm leaves that a shortfall of a mains_to_mains clearance and nothing else.
+TERMINAL_SHORTFALL = records(("  terminal_clearance_mm: 0.8\n", "  terminal_clearance_mm: 1.0\n"))
+#: R1 pad 2, on /MAINS_N, stands 13.19 mm from J2 pad 1 and 13.4058 mm from J2 pad 2, on /LV_A and /LV_B: a signed creepage
+#: of 13.5 mm, written into the design's rules as well, leaves each a shortfall of a mains_to_low_voltage creepage and nothing
+#: else, the mounting-hole distance of 13.5 mm being short of every plated hole on a low-voltage net.
+CREEPAGE_SHORTFALL = both(records(("mains_to_low_voltage:\n  clearance_mm: 3.0\n  creepage_mm: 4.0",
+                                    "mains_to_low_voltage:\n  clearance_mm: 3.0\n  creepage_mm: 13.5")),
+                          lambda seed: seed.replace(".kicad_dru", "(constraint creepage (min 4mm))", "(constraint creepage (min 13.5mm))"))
+
+
 def pin_record(old: str, new: str):
     return lambda seed: seed.replace("pin-allocation.yaml", old, new)
 
@@ -1541,6 +1567,16 @@ FAULTS: List[tuple] = [
      "mapping holds no downstream_basis", record("  downstream_basis: synthetic -- a stated fault current and the entry fuse clearing a tracking fault at it, chosen to exercise the check\n", "")),
     ("a pair held at reinforced inside the mains-to-low-voltage figures", "mains to mains: a net pair held at reinforced is held to the mains-to-low-voltage figures", "clearance",
      f"rule '{board_check.REINFORCED_RULE} 1' clearance 3", record("  held_at_reinforced: []", '  held_at_reinforced:\n    - ["/MAINS_L", "/MAINS_N"]')),
+    # Accepted spacing exceptions
+    ("a shortfall below the distance its exception accepts", "accepted exceptions: a shortfall below its entry's accepted distance fails", "spacing_exception",
+     "down to 0.9 mm, and the layout leaves 0.84 mm",
+     both(TERMINAL_SHORTFALL, exceptions(exception_entry("mains_to_mains", "clearance", ("J1.1", "J1.2"), 0.9)))),
+    ("an exception that is unsigned", "accepted exceptions: an entry whose acceptance is a placeholder excuses nothing", "spacing_exception",
+     "accepted_by 'unsigned' is a placeholder",
+     both(TERMINAL_SHORTFALL, exceptions(exception_entry("mains_to_mains", "clearance", ("J1.1", "J1.2"), 0.8, by="unsigned")))),
+    ("an exception that no shortfall uses", "accepted exceptions: an entry no reported shortfall uses fails", "spacing_exception",
+     "where the layout rule check reports no shortfall",
+     exceptions(exception_entry("mains_to_mains", "clearance", ("J1.1", "J1.2"), 0.5))),
     # Connectivity
     ("a channel's net moved to the other controller pin", "connectivity: a net must reach the controller pin its channel names", "connectivity", "net /LV_A reaches controller pin PA1, where the record names controller pin PA0", swap_labels(("LV_A", "96.52 76.2"), ("LV_B", "96.52 78.74"))),
     ("a channel's net moved to the other pin of its connector", "connectivity: a net must reach the connector pin its channel names", "connectivity", "net /LV_A reaches connector pin J2 pin 2, where the record names connector pin J2 pin 1", swap_labels(("LV_A", "45.72 76.2"), ("LV_B", "45.72 78.74"))),

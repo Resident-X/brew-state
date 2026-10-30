@@ -4186,7 +4186,7 @@ class TheReportStatesEachFigureRead(Tree):
         for path in ("a/a.kicad_pro", "a/a.kicad_sch", "a/a.kicad_pcb"):
             self.write(path, schematic() if path.endswith("sch") else "")
 
-        def check(design, repository, kicad_cli, yaml, today, already, read=None):
+        def check(design, repository, kicad_cli, yaml, today, already, read=None, accepted=None):
             read.append(("WORK-8 narrowing", "WORK_NECK_MM", "1 mm off its net's pads"))
             return [board_check.Violation(design.project, "workmanship_width", "here", "a neck")]
 
