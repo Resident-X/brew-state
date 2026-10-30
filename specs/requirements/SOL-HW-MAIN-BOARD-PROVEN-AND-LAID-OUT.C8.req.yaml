@@ -2,11 +2,11 @@ id: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C8
 type: criterion
 title: The pre-order check passes on the finished board with no judgement weighed against a failure
 status: active
-version: 2
+version: 3
 measurement_type: binary
 verification: test
 text: |-
-  The pre-order check, run on the finished layout against the records the schematic leaf authored, passes, and a failing rule is resolved by a change to the design or to a record, never by judging the failure unimportant. Authoring the records, and comparing the cable between the two boards' headers pin for pin, are out of scope.
+  The pre-order check, run on the finished layout against the records the schematic leaf authored, passes, and a failing rule is resolved by a change to the design or to a record, never by judging the failure unimportant. The run includes the plated-hole spacing rule with no hole_to_hole violation outside the same_connector_pins entries of the record, each such entry and each mains exception entry confirmed against the finished layout, and the test-point courtyard rule, which the board's 96 test points meet by using a small test-point footprint in the board's own library whose courtyard clears that rule at their pitch. Authoring the records, and comparing the cable between the two boards' headers pin for pin, are out of scope.
 links:
   - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT
     type: criterion-of

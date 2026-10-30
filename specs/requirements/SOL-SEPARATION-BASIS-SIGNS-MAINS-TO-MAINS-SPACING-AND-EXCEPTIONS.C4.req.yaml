@@ -6,7 +6,7 @@ version: 3
 measurement_type: binary
 verification: test
 text: |-
-  accepted_exceptions holds a mains_to_low_voltage creepage entry with accepted_mm 8.0 for U601 and one with 7.0 for each of U701 and U711, each naming the one pair of pads it excuses in between, with its reason and bounding element and its accepted_by and accepted_on left empty for the owner's acceptance, and the reasons are those of the owner's recorded acceptance. K201, K731, K741 and U602 are out of scope here; their own leaf judges them.
+  accepted_exceptions holds a mains_to_low_voltage creepage entry with accepted_mm 8.0 for U601 and one with 7.0 for each of U701 and U711, each naming the one pair of pads it excuses in between, with its reason and bounding element and its accepted_by and accepted_on left empty for the owner's acceptance, and the reasons are those of the owner's recorded acceptance. K201, K731, K741 and U602 are out of scope here; their own leaf judges them. The values are drafted from the schematic and the division record; confirming them against the main-board layout is the layout leaf's and out of scope here.
 links:
   - target: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS
     type: criterion-of
