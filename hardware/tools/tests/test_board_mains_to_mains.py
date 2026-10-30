@@ -23,6 +23,7 @@ TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, TOOLS)
 
 import board_check  # noqa: E402
+import sexpr  # noqa: E402
 
 REPO = os.path.dirname(os.path.dirname(TOOLS))
 TODAY = datetime.date(2026, 10, 12)
@@ -49,6 +50,12 @@ def basis(**changes) -> dict:
         "accepted_by": "maintainer", "accepted_on": "2026-10-01", "synthetic": True}
     record.update(changes)
     return {key: value for key, value in record.items() if value is not None}
+
+
+def fuse(*nets: str) -> list:
+    """A footprint with one pad on each of `nets`, as the layout reading hands it over."""
+    pads = " ".join(f'(pad "{number}" smd rect (net "{net}"))' for number, net in enumerate(nets, 1))
+    return sexpr.parse_one(f'(footprint "Fuse:F" {pads})')
 
 
 def mapping(**changes) -> dict:
@@ -87,34 +94,34 @@ class TheMappingIsRead(unittest.TestCase):
                             for v in problems), [problem.line() for problem in problems])
 
     def test_a_complete_mapping_is_read_and_its_figures_kept(self):
-        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C1: On a design that declares MAINS present, a record with no mains_to_mains mapping, or one lacking clearance_mm, terminal_clearance_mm, creepage_mm, creepage_ahead_of_fuse_mm or entry_fuse, fails separation_basis naming the key. A figure that is not a positive number, a creepage_mm below creepage_ahead_of_fuse_mm with no downstream_basis, a held_at_reinforced that is not a list of pairs of net names, a terminal_clearance_mm below clearance_mm, a creepage_ahead_of_fuse_mm below creepage_mm, an entry_fuse naming no reference of the layout, and a key inside the mapping that the basis decision does not name each fail it likewise. A design that declares MAINS none is out of scope and passes without the mapping.
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C1: On a design that declares MAINS present, a record with no mains_to_mains mapping, or one lacking clearance_mm, terminal_clearance_mm, creepage_mm, creepage_ahead_of_fuse_mm or entry_fuse, fails separation_basis naming the key. A figure that is not a positive number, a creepage_mm below creepage_ahead_of_fuse_mm with no downstream_basis, a held_at_reinforced that is not a list of pairs of net names, a terminal_clearance_mm below clearance_mm, a creepage_ahead_of_fuse_mm below creepage_mm, an entry_fuse naming no reference of the layout or, on a design that declares MAINS_ENTRY present, naming one whose pads do not stand one on a Mains_Entry net and one on a Mains net outside that class, and a key inside the mapping that the basis decision does not name each fail it likewise. A design that declares MAINS none is out of scope and passes without the mapping.
         signed, problems = read(basis())
         self.assertEqual(problems, [])
         self.assertEqual((signed[0], signed[1]), (3.0, 4.0))
         self.assertEqual(signed.mains_to_mains, mapping())
 
     def test_a_record_with_no_mains_to_mains_mapping_fails_naming_it(self):
-        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C1: On a design that declares MAINS present, a record with no mains_to_mains mapping, or one lacking clearance_mm, terminal_clearance_mm, creepage_mm, creepage_ahead_of_fuse_mm or entry_fuse, fails separation_basis naming the key. A figure that is not a positive number, a creepage_mm below creepage_ahead_of_fuse_mm with no downstream_basis, a held_at_reinforced that is not a list of pairs of net names, a terminal_clearance_mm below clearance_mm, a creepage_ahead_of_fuse_mm below creepage_mm, an entry_fuse naming no reference of the layout, and a key inside the mapping that the basis decision does not name each fail it likewise. A design that declares MAINS none is out of scope and passes without the mapping.
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C1: On a design that declares MAINS present, a record with no mains_to_mains mapping, or one lacking clearance_mm, terminal_clearance_mm, creepage_mm, creepage_ahead_of_fuse_mm or entry_fuse, fails separation_basis naming the key. A figure that is not a positive number, a creepage_mm below creepage_ahead_of_fuse_mm with no downstream_basis, a held_at_reinforced that is not a list of pairs of net names, a terminal_clearance_mm below clearance_mm, a creepage_ahead_of_fuse_mm below creepage_mm, an entry_fuse naming no reference of the layout or, on a design that declares MAINS_ENTRY present, naming one whose pads do not stand one on a Mains_Entry net and one on a Mains net outside that class, and a key inside the mapping that the basis decision does not name each fail it likewise. A design that declares MAINS none is out of scope and passes without the mapping.
         self.assertFails(basis(mains_to_mains=None), "mains_to_mains", "lacks mains_to_mains")
         self.assertFails(basis(mains_to_mains="none"), "mains_to_mains", "is not a mapping")
         self.assertFails(basis(mains_to_mains={}), "mains_to_mains.clearance_mm", "lacks clearance_mm")
 
     def test_a_mapping_lacking_a_key_fails_naming_the_key(self):
-        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C1: On a design that declares MAINS present, a record with no mains_to_mains mapping, or one lacking clearance_mm, terminal_clearance_mm, creepage_mm, creepage_ahead_of_fuse_mm or entry_fuse, fails separation_basis naming the key. A figure that is not a positive number, a creepage_mm below creepage_ahead_of_fuse_mm with no downstream_basis, a held_at_reinforced that is not a list of pairs of net names, a terminal_clearance_mm below clearance_mm, a creepage_ahead_of_fuse_mm below creepage_mm, an entry_fuse naming no reference of the layout, and a key inside the mapping that the basis decision does not name each fail it likewise. A design that declares MAINS none is out of scope and passes without the mapping.
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C1: On a design that declares MAINS present, a record with no mains_to_mains mapping, or one lacking clearance_mm, terminal_clearance_mm, creepage_mm, creepage_ahead_of_fuse_mm or entry_fuse, fails separation_basis naming the key. A figure that is not a positive number, a creepage_mm below creepage_ahead_of_fuse_mm with no downstream_basis, a held_at_reinforced that is not a list of pairs of net names, a terminal_clearance_mm below clearance_mm, a creepage_ahead_of_fuse_mm below creepage_mm, an entry_fuse naming no reference of the layout or, on a design that declares MAINS_ENTRY present, naming one whose pads do not stand one on a Mains_Entry net and one on a Mains net outside that class, and a key inside the mapping that the basis decision does not name each fail it likewise. A design that declares MAINS none is out of scope and passes without the mapping.
         for key in ("clearance_mm", "terminal_clearance_mm", "creepage_mm", "creepage_ahead_of_fuse_mm", "entry_fuse",
                     "held_at_reinforced"):
             with self.subTest(key=key):
                 self.assertFails(basis(mains_to_mains=mapping(**{key: None})), f"mains_to_mains.{key}", f"lacks {key}")
 
     def test_a_figure_that_is_not_a_positive_number_fails_naming_it(self):
-        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C1: On a design that declares MAINS present, a record with no mains_to_mains mapping, or one lacking clearance_mm, terminal_clearance_mm, creepage_mm, creepage_ahead_of_fuse_mm or entry_fuse, fails separation_basis naming the key. A figure that is not a positive number, a creepage_mm below creepage_ahead_of_fuse_mm with no downstream_basis, a held_at_reinforced that is not a list of pairs of net names, a terminal_clearance_mm below clearance_mm, a creepage_ahead_of_fuse_mm below creepage_mm, an entry_fuse naming no reference of the layout, and a key inside the mapping that the basis decision does not name each fail it likewise. A design that declares MAINS none is out of scope and passes without the mapping.
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C1: On a design that declares MAINS present, a record with no mains_to_mains mapping, or one lacking clearance_mm, terminal_clearance_mm, creepage_mm, creepage_ahead_of_fuse_mm or entry_fuse, fails separation_basis naming the key. A figure that is not a positive number, a creepage_mm below creepage_ahead_of_fuse_mm with no downstream_basis, a held_at_reinforced that is not a list of pairs of net names, a terminal_clearance_mm below clearance_mm, a creepage_ahead_of_fuse_mm below creepage_mm, an entry_fuse naming no reference of the layout or, on a design that declares MAINS_ENTRY present, naming one whose pads do not stand one on a Mains_Entry net and one on a Mains net outside that class, and a key inside the mapping that the basis decision does not name each fail it likewise. A design that declares MAINS none is out of scope and passes without the mapping.
         for key in ("clearance_mm", "terminal_clearance_mm", "creepage_mm", "creepage_ahead_of_fuse_mm"):
             for bad in (0, -1.5, "1.5", True, float("nan"), float("inf"), [2]):
                 with self.subTest(key=key, bad=bad):
                     self.assertFails(basis(mains_to_mains=mapping(**{key: bad})), f"mains_to_mains.{key}", "not a positive number")
 
     def test_a_creepage_below_the_one_ahead_of_the_fuse_needs_its_downstream_basis(self):
-        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C1: On a design that declares MAINS present, a record with no mains_to_mains mapping, or one lacking clearance_mm, terminal_clearance_mm, creepage_mm, creepage_ahead_of_fuse_mm or entry_fuse, fails separation_basis naming the key. A figure that is not a positive number, a creepage_mm below creepage_ahead_of_fuse_mm with no downstream_basis, a held_at_reinforced that is not a list of pairs of net names, a terminal_clearance_mm below clearance_mm, a creepage_ahead_of_fuse_mm below creepage_mm, an entry_fuse naming no reference of the layout, and a key inside the mapping that the basis decision does not name each fail it likewise. A design that declares MAINS none is out of scope and passes without the mapping.
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C1: On a design that declares MAINS present, a record with no mains_to_mains mapping, or one lacking clearance_mm, terminal_clearance_mm, creepage_mm, creepage_ahead_of_fuse_mm or entry_fuse, fails separation_basis naming the key. A figure that is not a positive number, a creepage_mm below creepage_ahead_of_fuse_mm with no downstream_basis, a held_at_reinforced that is not a list of pairs of net names, a terminal_clearance_mm below clearance_mm, a creepage_ahead_of_fuse_mm below creepage_mm, an entry_fuse naming no reference of the layout or, on a design that declares MAINS_ENTRY present, naming one whose pads do not stand one on a Mains_Entry net and one on a Mains net outside that class, and a key inside the mapping that the basis decision does not name each fail it likewise. A design that declares MAINS none is out of scope and passes without the mapping.
         self.assertFails(basis(mains_to_mains=mapping(creepage_mm=2.0)), "mains_to_mains.creepage_mm", "downstream_basis")
         signed, problems = read(basis(mains_to_mains=mapping(creepage_mm=2.0, downstream_basis="a fault current and a fuse")))
         self.assertEqual(problems, [])
@@ -127,7 +134,7 @@ class TheMappingIsRead(unittest.TestCase):
                                  "mains_to_mains.downstream_basis", "non-empty string")
 
     def test_a_terminal_clearance_below_the_clearance_and_a_creepage_ahead_of_the_fuse_below_the_creepage_fail(self):
-        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C1: On a design that declares MAINS present, a record with no mains_to_mains mapping, or one lacking clearance_mm, terminal_clearance_mm, creepage_mm, creepage_ahead_of_fuse_mm or entry_fuse, fails separation_basis naming the key. A figure that is not a positive number, a creepage_mm below creepage_ahead_of_fuse_mm with no downstream_basis, a held_at_reinforced that is not a list of pairs of net names, a terminal_clearance_mm below clearance_mm, a creepage_ahead_of_fuse_mm below creepage_mm, an entry_fuse naming no reference of the layout, and a key inside the mapping that the basis decision does not name each fail it likewise. A design that declares MAINS none is out of scope and passes without the mapping.
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C1: On a design that declares MAINS present, a record with no mains_to_mains mapping, or one lacking clearance_mm, terminal_clearance_mm, creepage_mm, creepage_ahead_of_fuse_mm or entry_fuse, fails separation_basis naming the key. A figure that is not a positive number, a creepage_mm below creepage_ahead_of_fuse_mm with no downstream_basis, a held_at_reinforced that is not a list of pairs of net names, a terminal_clearance_mm below clearance_mm, a creepage_ahead_of_fuse_mm below creepage_mm, an entry_fuse naming no reference of the layout or, on a design that declares MAINS_ENTRY present, naming one whose pads do not stand one on a Mains_Entry net and one on a Mains net outside that class, and a key inside the mapping that the basis decision does not name each fail it likewise. A design that declares MAINS none is out of scope and passes without the mapping.
         self.assertFails(basis(mains_to_mains=mapping(terminal_clearance_mm=1.4)), "mains_to_mains.terminal_clearance_mm",
                          "below clearance_mm")
         self.assertEqual(read(basis(mains_to_mains=mapping(terminal_clearance_mm=1.5)))[1], [])
@@ -138,7 +145,7 @@ class TheMappingIsRead(unittest.TestCase):
                          "mains_to_mains.creepage_ahead_of_fuse_mm", "below creepage_mm")
 
     def test_a_held_at_reinforced_that_is_not_a_list_of_pairs_of_net_names_fails(self):
-        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C1: On a design that declares MAINS present, a record with no mains_to_mains mapping, or one lacking clearance_mm, terminal_clearance_mm, creepage_mm, creepage_ahead_of_fuse_mm or entry_fuse, fails separation_basis naming the key. A figure that is not a positive number, a creepage_mm below creepage_ahead_of_fuse_mm with no downstream_basis, a held_at_reinforced that is not a list of pairs of net names, a terminal_clearance_mm below clearance_mm, a creepage_ahead_of_fuse_mm below creepage_mm, an entry_fuse naming no reference of the layout, and a key inside the mapping that the basis decision does not name each fail it likewise. A design that declares MAINS none is out of scope and passes without the mapping.
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C1: On a design that declares MAINS present, a record with no mains_to_mains mapping, or one lacking clearance_mm, terminal_clearance_mm, creepage_mm, creepage_ahead_of_fuse_mm or entry_fuse, fails separation_basis naming the key. A figure that is not a positive number, a creepage_mm below creepage_ahead_of_fuse_mm with no downstream_basis, a held_at_reinforced that is not a list of pairs of net names, a terminal_clearance_mm below clearance_mm, a creepage_ahead_of_fuse_mm below creepage_mm, an entry_fuse naming no reference of the layout or, on a design that declares MAINS_ENTRY present, naming one whose pads do not stand one on a Mains_Entry net and one on a Mains net outside that class, and a key inside the mapping that the basis decision does not name each fail it likewise. A design that declares MAINS none is out of scope and passes without the mapping.
         for bad in ("/MAINS_L", {"a": "b"}, [["/MAINS_L"]], [["/MAINS_L", "/MAINS_N", "/MAINS_X"]], ["/MAINS_L"], [[1, 2]],
                     [["/MAINS_L", ""]], [["/MAINS_L", None]], [None]):
             with self.subTest(bad=bad):
@@ -154,25 +161,45 @@ class TheMappingIsRead(unittest.TestCase):
                                  "mains_to_mains.held_at_reinforced[0]", "cannot carry")
 
     def test_a_key_inside_the_mapping_the_basis_decision_does_not_name_fails_naming_it(self):
-        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C1: On a design that declares MAINS present, a record with no mains_to_mains mapping, or one lacking clearance_mm, terminal_clearance_mm, creepage_mm, creepage_ahead_of_fuse_mm or entry_fuse, fails separation_basis naming the key. A figure that is not a positive number, a creepage_mm below creepage_ahead_of_fuse_mm with no downstream_basis, a held_at_reinforced that is not a list of pairs of net names, a terminal_clearance_mm below clearance_mm, a creepage_ahead_of_fuse_mm below creepage_mm, an entry_fuse naming no reference of the layout, and a key inside the mapping that the basis decision does not name each fail it likewise. A design that declares MAINS none is out of scope and passes without the mapping.
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C1: On a design that declares MAINS present, a record with no mains_to_mains mapping, or one lacking clearance_mm, terminal_clearance_mm, creepage_mm, creepage_ahead_of_fuse_mm or entry_fuse, fails separation_basis naming the key. A figure that is not a positive number, a creepage_mm below creepage_ahead_of_fuse_mm with no downstream_basis, a held_at_reinforced that is not a list of pairs of net names, a terminal_clearance_mm below clearance_mm, a creepage_ahead_of_fuse_mm below creepage_mm, an entry_fuse naming no reference of the layout or, on a design that declares MAINS_ENTRY present, naming one whose pads do not stand one on a Mains_Entry net and one on a Mains net outside that class, and a key inside the mapping that the basis decision does not name each fail it likewise. A design that declares MAINS none is out of scope and passes without the mapping.
         self.assertFails(basis(mains_to_mains=mapping(terminal_creepage_mm=3.0)), "mains_to_mains.terminal_creepage_mm",
                          "terminal_creepage_mm")
         self.assertFails(basis(mains_to_mains=mapping(accepted_exceptions=[])), "mains_to_mains.accepted_exceptions",
                          "accepted_exceptions")
 
     def test_an_entry_fuse_that_is_not_a_name_fails_and_one_the_layout_lacks_fails_in_the_layout_reading(self):
-        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C1: On a design that declares MAINS present, a record with no mains_to_mains mapping, or one lacking clearance_mm, terminal_clearance_mm, creepage_mm, creepage_ahead_of_fuse_mm or entry_fuse, fails separation_basis naming the key. A figure that is not a positive number, a creepage_mm below creepage_ahead_of_fuse_mm with no downstream_basis, a held_at_reinforced that is not a list of pairs of net names, a terminal_clearance_mm below clearance_mm, a creepage_ahead_of_fuse_mm below creepage_mm, an entry_fuse naming no reference of the layout, and a key inside the mapping that the basis decision does not name each fail it likewise. A design that declares MAINS none is out of scope and passes without the mapping.
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C1: On a design that declares MAINS present, a record with no mains_to_mains mapping, or one lacking clearance_mm, terminal_clearance_mm, creepage_mm, creepage_ahead_of_fuse_mm or entry_fuse, fails separation_basis naming the key. A figure that is not a positive number, a creepage_mm below creepage_ahead_of_fuse_mm with no downstream_basis, a held_at_reinforced that is not a list of pairs of net names, a terminal_clearance_mm below clearance_mm, a creepage_ahead_of_fuse_mm below creepage_mm, an entry_fuse naming no reference of the layout or, on a design that declares MAINS_ENTRY present, naming one whose pads do not stand one on a Mains_Entry net and one on a Mains net outside that class, and a key inside the mapping that the basis decision does not name each fail it likewise. A design that declares MAINS none is out of scope and passes without the mapping.
         self.assertFails(basis(mains_to_mains=mapping(entry_fuse="")), "mains_to_mains.entry_fuse", "non-empty string")
         self.assertFails(basis(mains_to_mains=mapping(entry_fuse=7)), "mains_to_mains.entry_fuse", "non-empty string")
         signed, _ = read(basis())
-        found = board_check.mains_pairs(DESIGN, RECORD, signed, {"/MAINS_L"}, {"R1": [], "J1": []})
+        found = board_check.mains_pairs(DESIGN, RECORD, signed, {"/MAINS_L"}, set(), {"R1": [], "J1": []})
         self.assertEqual([(v.rule, v.location) for v in found], [("separation_basis", f"{RECORD} mains_to_mains.entry_fuse")])
         self.assertIn("'F1'", found[0].message)
         self.assertIn("J1, R1", found[0].message)
-        self.assertEqual(board_check.mains_pairs(DESIGN, RECORD, signed, {"/MAINS_L"}, {"F1": []}), [])
+        self.assertEqual(board_check.mains_pairs(DESIGN, RECORD, signed, {"/MAINS_L", "/FUSED"}, {"/MAINS_L"},
+                                                 {"F1": fuse("/MAINS_L", "/FUSED")}), [])
+
+    def test_an_entry_fuse_must_stand_between_a_mains_entry_net_and_a_mains_net_outside_that_class(self):
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C1: On a design that declares MAINS present, a record with no mains_to_mains mapping, or one lacking clearance_mm, terminal_clearance_mm, creepage_mm, creepage_ahead_of_fuse_mm or entry_fuse, fails separation_basis naming the key. An entry_fuse naming no reference of the layout or, on a design that declares MAINS_ENTRY present, naming one whose pads do not stand one on a Mains_Entry net and one on a Mains net outside that class fails it likewise.
+        signed, _ = read(basis())
+        mains, entry = {"/L_IN", "/N_IN", "/L_OUT", "/N_OUT"}, {"/L_IN", "/N_IN"}
+
+        def judge(*nets):
+            return board_check.mains_pairs(DESIGN, RECORD, signed, mains, entry, {"F1": fuse(*nets)})
+        for nets in (("/L_IN", "/N_IN"), ("/L_OUT", "/N_OUT"), ("/L_IN", "/LV_A"), ("/L_IN",), ()):
+            found = judge(*nets)
+            self.assertEqual([(v.rule, v.location) for v in found], [("separation_basis", f"{RECORD} mains_to_mains.entry_fuse")], nets)
+            self.assertIn("'F1'", found[0].message)
+            self.assertIn("Mains_Entry", found[0].message)
+        self.assertEqual(judge("/L_IN", "/L_OUT"), [])
+        self.assertEqual(judge("/N_OUT", "/N_IN"), [])
+        # a design declaring no Mains_Entry class has no side to stand on, so only the reference is held
+        self.assertEqual(board_check.mains_pairs(DESIGN, RECORD, signed, mains, set(), {"F1": fuse("/L_OUT", "/N_OUT")}), [])
+        # a part with further pads is still the fuse when two of them stand on the two sides
+        self.assertEqual(judge("/L_IN", "/L_OUT", "/N_OUT"), [])
 
     def test_the_mapping_is_not_asked_of_a_key_a_record_may_hold_anyway(self):
-        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C1: On a design that declares MAINS present, a record with no mains_to_mains mapping, or one lacking clearance_mm, terminal_clearance_mm, creepage_mm, creepage_ahead_of_fuse_mm or entry_fuse, fails separation_basis naming the key. A figure that is not a positive number, a creepage_mm below creepage_ahead_of_fuse_mm with no downstream_basis, a held_at_reinforced that is not a list of pairs of net names, a terminal_clearance_mm below clearance_mm, a creepage_ahead_of_fuse_mm below creepage_mm, an entry_fuse naming no reference of the layout, and a key inside the mapping that the basis decision does not name each fail it likewise. A design that declares MAINS none is out of scope and passes without the mapping.
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C1: On a design that declares MAINS present, a record with no mains_to_mains mapping, or one lacking clearance_mm, terminal_clearance_mm, creepage_mm, creepage_ahead_of_fuse_mm or entry_fuse, fails separation_basis naming the key. A figure that is not a positive number, a creepage_mm below creepage_ahead_of_fuse_mm with no downstream_basis, a held_at_reinforced that is not a list of pairs of net names, a terminal_clearance_mm below clearance_mm, a creepage_ahead_of_fuse_mm below creepage_mm, an entry_fuse naming no reference of the layout or, on a design that declares MAINS_ENTRY present, naming one whose pads do not stand one on a Mains_Entry net and one on a Mains net outside that class, and a key inside the mapping that the basis decision does not name each fail it likewise. A design that declares MAINS none is out of scope and passes without the mapping.
         # a further pair of distances for readers is still any mapping of exactly clearance_mm and creepage_mm
         signed, problems = read(basis(line_to_switched_line={"clearance_mm": 2.0, "creepage_mm": 2.0}))
         self.assertEqual(problems, [])
@@ -244,6 +271,21 @@ class TheFloorIsRead(unittest.TestCase):
                           mains_to_mains=mapping(creepage_mm=4.0, creepage_ahead_of_fuse_mm=4.0)))
         self.assertEqual(len(low), 2)
         self.assertTrue(all("below the 4.1 mm floor" in v.message and "table_rows[4]" in v.message for v in low), low)
+
+    def test_a_row_stating_no_working_voltage_stays_a_floor_beside_a_derived_row(self):
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C2: Each of the four figures is compared with the floor the basis decision sets for it, and a figure below it fails separation_floor naming the figure and the floor.
+        rows = [r for r in basis()["table_rows"] if "insulation" not in r["inputs"] or r["inputs"].get("location")]
+        rows[-1]["inputs"]["working_voltage_v"] = 253
+        higher = row({"working_voltage_v": 320, "insulation": "basic"}, creepage_mm=5.0, clearance_mm=1.5)
+        derived = row({"working_voltage_v": 253, "insulation": "basic"}, creepage_mm=4.1, clearance_mm=1.5)
+        unstated = row({"insulation": "basic"}, creepage_mm=4.5, clearance_mm=1.5)
+        record = dict(working_voltage="253 V rms", mains_to_mains=mapping(creepage_mm=4.1, creepage_ahead_of_fuse_mm=4.1))
+        # the derived row displaces the higher one, but the row stating no voltage applies at every voltage and is the floor
+        found = floor(basis(table_rows=rows + [higher, derived, unstated], **record))
+        self.assertEqual(sorted(v.location.rsplit(".", 1)[1] for v in found), ["creepage_ahead_of_fuse_mm", "creepage_mm"])
+        self.assertTrue(all("below the 4.5 mm floor" in v.message for v in found), found)
+        # without it the derived row's 4.1 stands
+        self.assertEqual(floor(basis(table_rows=rows + [higher, derived], **record)), [])
 
     def test_a_derived_row_displaces_only_the_higher_rows_of_its_own_insulation_and_location(self):
         # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C2: Each of the four figures is compared with the floor the basis decision sets for it, and a figure below it fails separation_floor naming the figure and the floor. A mains-present design with no applicable row for a figure fails naming it. A figure at its floor passes, and a derived row at the basis working voltage is read as the floor in place of the higher table row it was interpolated toward. The floor of the mains_to_low_voltage figures is out of scope and reads as before.
@@ -324,13 +366,15 @@ class TheDeclarationIsRead(unittest.TestCase):
         self.assertIn("/MAINS_L, /MAINS_N", found[0][2])
 
     def test_a_pair_held_at_reinforced_naming_a_net_outside_the_mains_class_fails_naming_it(self):
-        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C8: On a seeded layout with two Mains-class nets listed in held_at_reinforced, a clearance between them below the signed mains_to_low_voltage clearance, and a surface path below its creepage, each fail with the layout rule check's violation naming both nets, though both distances exceed the mains_to_mains figures. A pair naming a net outside the Mains class fails mains_declaration. Pairs not listed are out of scope and keep the mains-to-mains figures.
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C8: On a seeded layout with two Mains-class nets listed in held_at_reinforced, a clearance between them below the signed mains_to_low_voltage clearance, and a surface path below its creepage, each fail with the layout rule check's violation naming both nets, though both distances exceed the mains_to_mains figures. A pair naming a net outside the Mains class fails mains_declaration. A pair is held to the larger of each mains_to_low_voltage figure and the matching mains_to_mains figure, so a record whose mains_to_low_voltage is below its mains_to_mains never holds a listed pair looser than an unlisted one. Pairs not listed are out of scope and keep the mains-to-mains figures.
         signed, _ = read(basis(mains_to_mains=mapping(held_at_reinforced=[["/MAINS_L", "/LV_A"], ["/MAINS_L", "/MAINS_N"]])))
-        found = board_check.mains_pairs(DESIGN, RECORD, signed, {"/MAINS_L", "/MAINS_N"}, {"F1": []})
+        found = board_check.mains_pairs(DESIGN, RECORD, signed, {"/MAINS_L", "/MAINS_N"}, {"/MAINS_L"},
+                                       {"F1": fuse("/MAINS_L", "/MAINS_N")})
         self.assertEqual([(v.rule, v.location) for v in found],
                          [("mains_declaration", f"{RECORD} mains_to_mains.held_at_reinforced[0]")])
         self.assertIn("/LV_A", found[0].message)
-        both = board_check.mains_pairs(DESIGN, RECORD, signed, {"/MAINS_L", "/MAINS_N", "/LV_A"}, {"F1": []})
+        both = board_check.mains_pairs(DESIGN, RECORD, signed, {"/MAINS_L", "/MAINS_N", "/LV_A"}, {"/MAINS_L"},
+                                      {"F1": fuse("/MAINS_L", "/MAINS_N")})
         self.assertEqual(both, [])
 
 
@@ -363,9 +407,10 @@ class TheRulesAreAppendedLast(unittest.TestCase):
 
     def test_the_ahead_of_the_fuse_rule_holds_only_a_creepage_and_only_with_a_mains_class_item_opposite(self):
         # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C5: A seeded layout with a Mains_Entry net and a Mains net at a creepage between the downstream and the ahead-of-fuse figures fails; the same distance between two nets outside Mains_Entry passes. Terminal-to-terminal pairs closer than terminal_clearance_mm fail, and conductor pairs between it and clearance_mm pass. Pairs between two nets that are both outside Mains_Entry are out of scope for the ahead-of-fuse figure.
-        body = self.rules(self.signed())[0][board_check.AHEAD_OF_FUSE_RULE]
+        body = self.rules(self.signed(creepage_ahead_of_fuse_mm=3.0))[0][board_check.AHEAD_OF_FUSE_RULE]
         self.assertIn('(condition "A.hasNetclass(\'Mains_Entry\') && B.hasNetclass(\'Mains\')")', body)
-        self.assertIn("(constraint creepage (min 2.5mm))", body)
+        self.assertIn("(constraint creepage (min 3mm))", body)
+        self.assertNotIn("2.5mm", body)
         # no clearance, and no pair with a low-voltage item, which the signed Mains rule governs at its own, larger figure
         self.assertNotIn("clearance", body)
         self.assertNotIn("!B", body)
@@ -378,7 +423,7 @@ class TheRulesAreAppendedLast(unittest.TestCase):
         self.assertNotIn("creepage", body)
 
     def test_each_pair_held_at_reinforced_gets_a_rule_with_the_mains_to_low_voltage_figures(self):
-        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C8: On a seeded layout with two Mains-class nets listed in held_at_reinforced, a clearance between them below the signed mains_to_low_voltage clearance, and a surface path below its creepage, each fail with the layout rule check's violation naming both nets, though both distances exceed the mains_to_mains figures. A pair naming a net outside the Mains class fails mains_declaration. Pairs not listed are out of scope and keep the mains-to-mains figures.
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C8: On a seeded layout with two Mains-class nets listed in held_at_reinforced, a clearance between them below the signed mains_to_low_voltage clearance, and a surface path below its creepage, each fail with the layout rule check's violation naming both nets, though both distances exceed the mains_to_mains figures. A pair naming a net outside the Mains class fails mains_declaration. A pair is held to the larger of each mains_to_low_voltage figure and the matching mains_to_mains figure, so a record whose mains_to_low_voltage is below its mains_to_mains never holds a listed pair looser than an unlisted one. Pairs not listed are out of scope and keep the mains-to-mains figures.
         rules, _ = self.rules(self.signed(held_at_reinforced=[["/MAINS_L", "/MAINS_N"]]))
         body = rules[f"{board_check.REINFORCED_RULE} 1"]
         self.assertIn("A.NetName == '/MAINS_L' && B.NetName == '/MAINS_N'", body)
@@ -387,6 +432,21 @@ class TheRulesAreAppendedLast(unittest.TestCase):
         self.assertEqual([name for name in rules if name.startswith(board_check.REINFORCED_RULE)], [f"{board_check.REINFORCED_RULE} 1"])
         # no pair held at reinforced, no rule for one
         self.assertEqual([name for name in self.rules(self.signed())[0] if name.startswith(board_check.REINFORCED_RULE)], [])
+
+    def test_a_pair_held_at_reinforced_is_held_to_the_larger_of_each_figure_of_the_two_mappings(self):
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C8: On a seeded layout with two Mains-class nets listed in held_at_reinforced, a clearance between them below the signed mains_to_low_voltage clearance, and a surface path below its creepage, each fail with the layout rule check's violation naming both nets, though both distances exceed the mains_to_mains figures. A pair is held to the larger of each mains_to_low_voltage figure and the matching mains_to_mains figure, so a record whose mains_to_low_voltage is below its mains_to_mains never holds a listed pair looser than an unlisted one.
+        pair = [["/MAINS_L", "/MAINS_N"]]
+        below = board_check.Signed(1.0, 2.0, basis(mains_to_mains=mapping(clearance_mm=1.5, creepage_mm=4.1, creepage_ahead_of_fuse_mm=4.1,
+                                                                         held_at_reinforced=pair)))
+        body = self.rules(below)[0][f"{board_check.REINFORCED_RULE} 1"]
+        self.assertIn("(constraint clearance (min 1.5mm))", body)
+        self.assertIn("(constraint creepage (min 4.1mm))", body)
+        # each figure is taken on its own: low-voltage clearance above, creepage below
+        mixed = board_check.Signed(3.0, 2.0, basis(mains_to_mains=mapping(clearance_mm=1.5, creepage_mm=4.1, creepage_ahead_of_fuse_mm=4.1,
+                                                                         held_at_reinforced=pair)))
+        body = self.rules(mixed)[0][f"{board_check.REINFORCED_RULE} 1"]
+        self.assertIn("(constraint clearance (min 3mm))", body)
+        self.assertIn("(constraint creepage (min 4.1mm))", body)
 
     def test_figures_without_a_record_write_no_further_rule(self):
         # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C4: A seeded layout with two Mains-class nets closer than the signed clearance, and another closer than the signed creepage, each fails with the layout rule check's clearance or creepage violation naming both nets; the same layouts fail when the design's own rules are looser, because the appended signed rules come last. Two items of one net are out of scope and never reported.

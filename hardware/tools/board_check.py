@@ -5005,7 +5005,8 @@ def mains_to_mains_rules(signed) -> str:
     theirs whatever the design writes: the clearance and creepage between any
     two Mains-class items, the larger clearance between two pads, the creepage
     ahead of the fuse for a pair with an item of the Mains_Entry class, and
-    for each pair of nets held at reinforced the mains_to_low_voltage figures.
+    for each pair of nets held at reinforced the larger of each
+    mains_to_low_voltage figure and the matching mains_to_mains figure.
     KiCad tries a condition with each item as A in turn, so a pair is matched
     whichever order it is written.
     """
@@ -5022,7 +5023,8 @@ def mains_to_mains_rules(signed) -> str:
     for index, (first, second) in enumerate(held["held_at_reinforced"]):
         text += (f'(rule "{REINFORCED_RULE} {index + 1}"\n'
                  f'\t(condition "A.NetName == \'{first}\' && B.NetName == \'{second}\'")\n'
-                 f'\t(constraint clearance (min {signed[0]:g}mm))\n\t(constraint creepage (min {signed[1]:g}mm)))\n')
+                 f'\t(constraint clearance (min {max(signed[0], held["clearance_mm"]):g}mm))\n'
+                 f'\t(constraint creepage (min {max(signed[1], held["creepage_mm"]):g}mm)))\n')
     return text
 
 
@@ -6311,11 +6313,15 @@ def entry_declaration(design: Design, entry: Optional[str], ahead: Set[str], mai
     return found
 
 
-def mains_pairs(design: Design, record: str, signed: Signed, mains: Set[str], footprints: Dict[str, list]) -> List[Violation]:
+def mains_pairs(design: Design, record: str, signed: Signed, mains: Set[str], entry: Set[str],
+                footprints: Dict[str, list]) -> List[Violation]:
     """What the layout contradicts in the mains_to_mains mapping it is held to: the entry fuse and the nets held at reinforced.
 
-    entry_fuse must name a reference of the layout, and each net of a
-    held_at_reinforced pair must be in the Mains class of the layout.
+    entry_fuse must name a reference of the layout with a pad on a net of the
+    Mains_Entry class and a pad on a net of the Mains class outside it, the
+    two sides of a fuse at the mains entry, where the design declares a
+    Mains_Entry class at all, and each net of a held_at_reinforced pair must
+    be in the Mains class of the layout.
     """
     held = signed.mains_to_mains
     if held is None:
@@ -6325,6 +6331,14 @@ def mains_pairs(design: Design, record: str, signed: Signed, mains: Set[str], fo
         found.append(Violation(design.project, "separation_basis", f"{record} mains_to_mains.entry_fuse",
                                f"mains_to_mains.entry_fuse is '{held['entry_fuse']}', which is no reference on the layout "
                                f"({', '.join(sorted(footprints)) or 'it has none'}); name the entry fuse's reference"))
+    elif entry:
+        nets = {net_of(pad) for pad in sexpr.children(footprints[held["entry_fuse"]], "pad")}
+        if not (nets & entry) or not (nets & (mains - entry)):
+            found.append(Violation(design.project, "separation_basis", f"{record} mains_to_mains.entry_fuse",
+                                   f"mains_to_mains.entry_fuse is '{held['entry_fuse']}', whose pads stand on "
+                                   f"{', '.join(sorted(n or '(no net)' for n in nets)) or 'no net'}; the entry fuse has one pad on a "
+                                   "Mains_Entry net and one on a Mains net outside that class, so name the fuse "
+                                   "between them"))
     for index, pair in enumerate(held["held_at_reinforced"]):
         for net in pair:
             if net not in mains:
@@ -6650,7 +6664,7 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
     if mains == "present":
         found += entry_declaration(design, entry_declared, members["Mains_Entry"], on_layout)
         if signed is not None:
-            found += mains_pairs(design, record, signed, on_layout, board_footprints(tree))
+            found += mains_pairs(design, record, signed, on_layout, members["Mains_Entry"], board_footprints(tree))
 
     found += net_ties(design, tree, on_layout)
     found += crystal_keep_clear(design, rules, tree)
