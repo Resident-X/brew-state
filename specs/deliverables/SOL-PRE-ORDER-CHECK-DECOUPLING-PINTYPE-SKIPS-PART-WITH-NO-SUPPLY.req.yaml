@@ -29,3 +29,7 @@ links:
     type: depends-on
   - target: SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: 601a342a5bb1948e30dcaef2920acb2e027aeba0c02af79f2a7f06a3dc7fc8d7
+  gating_profile: ""

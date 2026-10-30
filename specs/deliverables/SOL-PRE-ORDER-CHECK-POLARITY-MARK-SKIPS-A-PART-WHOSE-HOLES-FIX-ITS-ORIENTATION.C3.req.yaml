@@ -2,11 +2,11 @@ id: SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATI
 type: criterion
 title: A polarised part whose two through-hole pads differ only in the shape or size of their copper fails polarity_mark
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |
-  A polarised part with two through-hole pads named + and -, no pad numbered 1, holes of one drill and the pads one rect and one round, or of two sizes of copper, fails polarity_mark, because the holes fit the board either way. The same part with holes of two different drill diameters passes. Out of scope: which parts are polarised, the silk marks on the main board and the mark margin.
+  A polarised part with two through-hole pads named + and -, no pad numbered 1, holes of one drill and the pads one rect and one round, or of two sizes of copper, fails polarity_mark, because the holes fit the board either way. The same part with holes of two different drill diameters passes. The same part with two oval holes of the same size whose long axes lie at different angles passes, because a turn of the part does not bring the holes onto themselves; with the same oval holes at the same angle it fails. Out of scope: which parts are polarised, the silk marks on the main board and the mark margin.
 links:
   - target: SOL-PRE-ORDER-CHECK-POLARITY-MARK-SKIPS-A-PART-WHOSE-HOLES-FIX-ITS-ORIENTATION
     type: criterion-of

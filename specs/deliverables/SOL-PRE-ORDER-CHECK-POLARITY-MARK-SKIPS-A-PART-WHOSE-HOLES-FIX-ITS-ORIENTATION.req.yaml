@@ -23,3 +23,7 @@ links:
     type: justified-by
   - target: SOL-PRE-ORDER-CHECK-FIDUCIALS-AND-POLARITY-MARKS
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: 074e3b0fe22ccf82c88800a347d4f8eaff30e5ec8e43967da57967328b961ba3
+  gating_profile: ""
