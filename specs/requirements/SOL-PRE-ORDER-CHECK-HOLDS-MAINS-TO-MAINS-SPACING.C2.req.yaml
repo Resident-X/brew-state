@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C2
+type: criterion
+title: A signed mains_to_mains figure below the floor its own table_rows give fails separation_floor naming the figure
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Each of the four figures is compared with the floor the basis decision sets for it, and a figure below it fails separation_floor naming the figure and the floor. A mains-present design with no applicable row for a figure fails naming it. A figure at its floor passes. The floor of the mains_to_low_voltage figures is out of scope and reads as before.
+links:
+  - target: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING
+    type: criterion-of

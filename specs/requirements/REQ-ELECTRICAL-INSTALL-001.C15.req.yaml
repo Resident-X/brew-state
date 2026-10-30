@@ -1,0 +1,12 @@
+id: REQ-ELECTRICAL-INSTALL-001.C15
+type: criterion
+title: Conductors at different mains potentials on a board stand at or above the signed mains-to-mains clearance and creepage
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Two conductors of a board that sit at different potentials of the mains supply stand at least the clearance and creepage the governing standard gives for the declared supply, overvoltage category, pollution degree, material group and altitude, read from that standard or from a cited, freely available derivation of it. Where a protective device ahead of the pair does not clear a fault between them, the creepage is the basic-insulation distance; downstream of that device the functional-insulation distance serves. The terminals of a part are held to a larger clearance than conductors elsewhere, for the movement a terminal allows. The figures are stated in the separation basis and signed with it, so an adopter on a different supply recomputes them rather than inherits them.
+links:
+  - target: REQ-ELECTRICAL-INSTALL-001
+    type: criterion-of

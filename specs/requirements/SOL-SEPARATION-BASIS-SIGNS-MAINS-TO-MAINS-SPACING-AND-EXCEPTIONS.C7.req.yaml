@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS.C7
+type: criterion
+title: The material group the figures are read at is confirmed against the footnote that limits the lowest group at pollution degree 3
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  A footnote of the household-appliance standard's creepage tables, as reproduced in two certification reports, allows the lowest material group at pollution degree 3 only up to a working voltage of 50 V. The record states, from the laminate maker's tracking index, that the board is group IIIa or better and says the figures are the same for both groups at the signed voltage, or the owner accepts IIIb on a stated ground that the record carries. A reading of the standard's own text, which the reports only reproduce, is out of scope and is noted as unread.
+links:
+  - target: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS
+    type: criterion-of

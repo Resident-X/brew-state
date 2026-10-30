@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C3
+type: criterion
+title: A design with a missing, invalid or contradicted MAINS_ENTRY declaration fails mains_declaration
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  MAINS_ENTRY unset or holding anything but present or none fails; present with no net in the Mains_Entry class, or with a Mains_Entry net outside the Mains class, fails; none with a net in the Mains_Entry class fails. Each failure names the variable or the net. A design that declares MAINS none is out of scope and needs no MAINS_ENTRY.
+links:
+  - target: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING
+    type: criterion-of

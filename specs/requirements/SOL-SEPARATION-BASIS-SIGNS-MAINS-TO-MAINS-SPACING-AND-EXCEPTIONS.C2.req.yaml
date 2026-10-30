@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS.C2
+type: criterion
+title: Each mains_to_mains figure rests on a table row that cites its table and locator, and the floor rule passes on them
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The record's table_rows hold one row for each of the four figures, each with its citation (document, edition and the table and row), its inputs and its figure, the terminal row carrying location terminal and the downstream creepage row insulation functional. The check's floor rule, run on the record's own figures taken as signed, finds no figure below its floor. A row for the mains_to_low_voltage figures is out of scope and stays as signed.
+links:
+  - target: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS
+    type: criterion-of

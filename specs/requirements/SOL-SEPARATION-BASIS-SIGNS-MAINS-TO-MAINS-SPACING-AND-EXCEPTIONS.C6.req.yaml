@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS.C6
+type: criterion
+title: The division record's separation row, assumption and finding restate the signed mains-to-mains figures
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The board division record's separation row, its assumption on mains copper of different nets and its finding on mains-to-mains spacing no longer hold the 3.0 mm and 5.0 mm upper bound or say the basis gives no figure; each states the signed figures and the accepted exceptions. Any layout plan a board design task holds that states the bound is aligned, and a plan that does not exist yet is out of scope.
+links:
+  - target: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS
+    type: criterion-of

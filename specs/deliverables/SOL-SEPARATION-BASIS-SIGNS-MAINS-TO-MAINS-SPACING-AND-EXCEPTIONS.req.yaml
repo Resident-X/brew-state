@@ -1,0 +1,32 @@
+id: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS
+type: deliverable
+category: solution
+title: The separation basis record signs the machine's mains-to-mains spacing and the owner's accepted spacing exceptions
+status: active
+version: 1
+text: |
+  Writes the machine's signed mains-to-mains spacing and the owner's accepted spacing exceptions into the separation basis record, in the form the separation-basis decision sets, and brings the records that restate the mains-to-mains distance into line. The record signs one pair today, mains to low voltage, and the board division record holds mains copper to 3.0 mm straight and 5.0 mm by surface path as a conservative upper bound because the basis gives no figure of its own. This leaf replaces that bound with figures read for the machine's inputs, and records as exceptions the shortfalls the owner has accepted instead of leaving them as unreadable prose.
+
+  Settled for the build:
+  - Inputs are those the record already signs: 253 V rms, overvoltage category II, pollution degree 3, material group IIIb and 2000 m. The figures read from them are clearance 1.5 mm between conductors at different mains potentials, 2.0 mm between the terminals of a part, creepage 3.2 mm downstream of the entry fuse F101 and 4.0 mm ahead of it. Clearance 1.5 mm is the impulse-voltage row of 2.5 kV in the clearance table of the insulation-coordination standard, whose terminal figure adds 0.5 mm for movement and assembly as the household-appliance standard's table does. Creepage ahead of the fuse is the basic figure of that standard's creepage table at the 250 V row and pollution degree 3, 4.0 mm; the downstream figure is the household-appliance standard's functional figure for the same inputs, 3.2 mm. A fault between conductors ahead of F101 is cleared only by the supply's own protection, so it is read as basic; downstream the fuse clears it, and functional serves.
+  - The accepted exceptions are the owner's. Mains to mains, against the terminal figure: the triacs T701 and T711, tab to lead, 1.08 mm; the shunt R105, 1.65 mm; the 1206 series resistors, 1.8 mm. Mains to low voltage, creepage: U601 at 8.0 mm and U701 and U711 at 7.0 mm, the owner's recorded acceptance of bought-part creepage under the board's 10.0 mm figure. The resistors are named by reference from the main-board schematic when the entries are written. The drafter proposes each reason and bounding element for the owner to accept or correct; the clause that a downstream short is cleared by the fuse is the proposed ground for the mains-to-mains entries.
+  - The build stops at the drafted record and the request to the owner; the leaf closes on the owner's acceptance, under their own identity, of the whole record with its exceptions, and the acceptance holds every leaf that depends on it. The test reads the committed record through the check's own reader, never a second validator, and never writes acceptance values into the record.
+  - The records that restate the distance are chased: the division record's separation row, its assumption A3 and its third finding, and any layout plan a board's design task holds that states the 3.0 mm and 5.0 mm bound.
+  - Out of scope: the mains-to-low-voltage figures, barriers and inputs, which this leaf leaves as signed, and the exceptions of the derating rule, which the board check does not hold.
+rationale: |
+  Restores the behaviour REQ-ELECTRICAL-INSTALL-001.C15 and .C16 ask: the spacing between mains conductors is signed with the basis, and every accepted shortfall is the owner's signed exception. The 3.0 mm and 5.0 mm bound the division record uses was chosen as conservative because no figure was signed, and several parts' geometry cannot meet it; reading the figures for the signed inputs and signing the accepted shortfalls replaces a bound nothing could meet with figures the check can hold.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C15
+    type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C16
+    type: targets
+  - target: DEC-BOARD-SEPARATION-BASIS-RECORD
+    type: justified-by
+  - target: DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER
+    type: justified-by
+  - target: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING
+    type: depends-on
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-SIGNED-SPACING-EXCEPTIONS
+    type: depends-on
