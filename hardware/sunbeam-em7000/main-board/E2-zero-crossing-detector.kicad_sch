@@ -1677,7 +1677,7 @@
 				)
 			)
 		)
-		(property "Footprint" "TestPoint:TestPoint_Pad_D1.5mm"
+		(property "Footprint" "main-board:TestPoint_Pad_D1.0mm_Tight"
 			(at 121.92 77.47 0)
 			(hide yes)
 			(effects

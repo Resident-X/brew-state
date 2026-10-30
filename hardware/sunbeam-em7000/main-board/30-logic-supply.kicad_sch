@@ -3265,7 +3265,7 @@
 				)
 			)
 		)
-		(property "Footprint" "TestPoint:TestPoint_Pad_D1.5mm"
+		(property "Footprint" "main-board:TestPoint_Pad_D1.0mm_Tight"
 			(at 127 93.98 0)
 			(hide yes)
 			(effects
@@ -3732,7 +3732,7 @@
 				)
 			)
 		)
-		(property "Footprint" "TestPoint:TestPoint_Pad_D1.5mm"
+		(property "Footprint" "main-board:TestPoint_Pad_D1.0mm_Tight"
 			(at 264.16 93.98 0)
 			(hide yes)
 			(effects
@@ -4002,7 +4002,7 @@
 				)
 			)
 		)
-		(property "Footprint" "TestPoint:TestPoint_Pad_D1.5mm"
+		(property "Footprint" "main-board:TestPoint_Pad_D1.0mm_Tight"
 			(at 88.9 162.56 0)
 			(hide yes)
 			(effects
