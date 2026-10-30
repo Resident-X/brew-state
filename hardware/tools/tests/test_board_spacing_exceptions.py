@@ -257,6 +257,17 @@ class AShortfallTheEntryDoesNotCoverFails(unittest.TestCase):
                 self.assertEqual((judged.accepted, judged.consumed), ([], set()))
                 self.assertEqual([found.rule for found in judged.violations], ["spacing_exception"])
 
+    def test_a_report_with_no_readable_distance_is_never_read_as_meeting_the_accepted_one(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-SIGNED-SPACING-EXCEPTIONS.C3: A layout whose measured distance is below accepted_mm fails spacing_exception naming the entry and both distances. A shortfall between a pair with no entry, including another pair of the same part, for an entry of the other pair kind, or for the other constraint of the same pair fails as an ordinary violation, so an exception for one pair of a part's pads does not excuse another pair of them, nor an exception for creepage its clearance. Parts whose measured distance meets the signed figure are out of scope and never reported.
+        for tail in ("", "; actual -0.2000 mm", "; actual not a number mm"):
+            description = f"Creepage violation (rule '{LOW_VOLTAGE}' creepage 14.0000 mm{tail})"
+            with self.subTest(description=description):
+                reported = shortfall("creepage", LOW_VOLTAGE, 14.0, 13.19, "R1.2", "J2.1")
+                reported["description"] = description
+                judged = judge([reported], entry(accepted_mm=13.0))
+                self.assertEqual(judged.accepted, [])
+                self.assertEqual([found.rule for found in judged.violations], ["spacing_exception"])
+
     def test_a_shortfall_under_a_rule_the_entries_do_not_name_is_never_excused(self):
         # SOL-PRE-ORDER-CHECK-JUDGES-SIGNED-SPACING-EXCEPTIONS.C3: A layout whose measured distance is below accepted_mm fails spacing_exception naming the entry and both distances. A shortfall between a pair with no entry, including another pair of the same part, for an entry of the other pair kind, or for the other constraint of the same pair fails as an ordinary violation, so an exception for one pair of a part's pads does not excuse another pair of them, nor an exception for creepage its clearance. Parts whose measured distance meets the signed figure are out of scope and never reported.
         held = shortfall("creepage", f"{board_check.RESERVED}: net pair held at reinforced 1", 14.0, 13.19, "R1.2", "J2.1")
