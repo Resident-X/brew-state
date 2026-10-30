@@ -199,7 +199,7 @@ class TheMainsEntryDeclaration(Copy):
         return [v for v in self.violations(lines) if v[2] == "mains_declaration"]
 
     def test_a_mains_entry_variable_that_is_unset_or_neither_present_nor_none_fails_naming_the_variable(self):
-        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C3: MAINS_ENTRY unset or holding anything but present or none fails; present with no net in the Mains_Entry class, or with a Mains_Entry net outside the Mains class, fails; none with a net in the Mains_Entry class fails. Each failure names the variable or the net. A design that declares MAINS none is out of scope and needs no MAINS_ENTRY.
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C3: MAINS_ENTRY unset or holding anything but present or none fails; present with no net in the Mains_Entry class, or with a Mains_Entry net outside the Mains class, fails; none with a net in the Mains_Entry class fails. Each failure names the variable or the net. A design that declares MAINS none is out of scope and needs no MAINS_ENTRY. A fixture, a design that declares NOT_FOR_MANUFACTURE true and is held by a record marked synthetic, is likewise out of scope and passes with MAINS_ENTRY unset when its record carries no mains_to_mains mapping, and a value it sets is read as above; a fixture whose record carries the mapping, an orderable design, and a design marked not for manufacture but held by a record not marked synthetic, each need it.
         for value, said in ((None, "is not set"), ("maybe", "is 'maybe'"), ("", "is ''"), ("Present", "is 'Present'")):
             with self.subTest(value=value):
                 self.setUp()
@@ -210,7 +210,7 @@ class TheMainsEntryDeclaration(Copy):
                 self.assertIn(f"MAINS_ENTRY {said}", found[0][4])
 
     def test_present_with_no_net_in_the_mains_entry_class_fails(self):
-        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C3: MAINS_ENTRY unset or holding anything but present or none fails; present with no net in the Mains_Entry class, or with a Mains_Entry net outside the Mains class, fails; none with a net in the Mains_Entry class fails. Each failure names the variable or the net. A design that declares MAINS none is out of scope and needs no MAINS_ENTRY.
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C3: MAINS_ENTRY unset or holding anything but present or none fails; present with no net in the Mains_Entry class, or with a Mains_Entry net outside the Mains class, fails; none with a net in the Mains_Entry class fails. Each failure names the variable or the net. A design that declares MAINS none is out of scope and needs no MAINS_ENTRY. A fixture, a design that declares NOT_FOR_MANUFACTURE true and is held by a record marked synthetic, is likewise out of scope and passes with MAINS_ENTRY unset when its record carries no mains_to_mains mapping, and a value it sets is read as above; a fixture whose record carries the mapping, an orderable design, and a design marked not for manufacture but held by a record not marked synthetic, each need it.
         def edit(data):
             data["net_settings"]["netclass_patterns"] = [p for p in data["net_settings"]["netclass_patterns"]
                                                          if p["netclass"] != "Mains_Entry"]
@@ -219,7 +219,7 @@ class TheMainsEntryDeclaration(Copy):
         self.assertIn("MAINS_ENTRY is present but no net on the layout is in the Mains_Entry net class", found[0][4])
 
     def test_a_mains_entry_net_outside_the_mains_class_fails_naming_the_net(self):
-        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C3: MAINS_ENTRY unset or holding anything but present or none fails; present with no net in the Mains_Entry class, or with a Mains_Entry net outside the Mains class, fails; none with a net in the Mains_Entry class fails. Each failure names the variable or the net. A design that declares MAINS none is out of scope and needs no MAINS_ENTRY.
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C3: MAINS_ENTRY unset or holding anything but present or none fails; present with no net in the Mains_Entry class, or with a Mains_Entry net outside the Mains class, fails; none with a net in the Mains_Entry class fails. Each failure names the variable or the net. A design that declares MAINS none is out of scope and needs no MAINS_ENTRY. A fixture, a design that declares NOT_FOR_MANUFACTURE true and is held by a record marked synthetic, is likewise out of scope and passes with MAINS_ENTRY unset when its record carries no mains_to_mains mapping, and a value it sets is read as above; a fixture whose record carries the mapping, an orderable design, and a design marked not for manufacture but held by a record not marked synthetic, each need it.
         found = self.declaration(lambda data: data["net_settings"]["netclass_patterns"].append(
             {"netclass": "Mains_Entry", "pattern": "/LV_A"}))
         self.assertEqual(len(found), 1, found)
@@ -227,14 +227,14 @@ class TheMainsEntryDeclaration(Copy):
         self.assertIn("net /LV_A is in the Mains_Entry net class but not in the Mains class", found[0][4])
 
     def test_none_with_a_net_in_the_mains_entry_class_fails_naming_the_variable_and_the_net(self):
-        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C3: MAINS_ENTRY unset or holding anything but present or none fails; present with no net in the Mains_Entry class, or with a Mains_Entry net outside the Mains class, fails; none with a net in the Mains_Entry class fails. Each failure names the variable or the net. A design that declares MAINS none is out of scope and needs no MAINS_ENTRY.
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C3: MAINS_ENTRY unset or holding anything but present or none fails; present with no net in the Mains_Entry class, or with a Mains_Entry net outside the Mains class, fails; none with a net in the Mains_Entry class fails. Each failure names the variable or the net. A design that declares MAINS none is out of scope and needs no MAINS_ENTRY. A fixture, a design that declares NOT_FOR_MANUFACTURE true and is held by a record marked synthetic, is likewise out of scope and passes with MAINS_ENTRY unset when its record carries no mains_to_mains mapping, and a value it sets is read as above; a fixture whose record carries the mapping, an orderable design, and a design marked not for manufacture but held by a record not marked synthetic, each need it.
         found = self.declaration(lambda data: data["text_variables"].__setitem__("MAINS_ENTRY", "none"))
         self.assertEqual(len(found), 1, found)
         self.assertTrue(found[0][3].endswith("text_variables.MAINS_ENTRY"), found)
         self.assertIn("MAINS_ENTRY is none but the layout puts /MAINS_L in the Mains_Entry net class", found[0][4])
 
     def test_a_valid_declaration_with_a_net_in_the_class_passes(self):
-        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C3: MAINS_ENTRY unset or holding anything but present or none fails; present with no net in the Mains_Entry class, or with a Mains_Entry net outside the Mains class, fails; none with a net in the Mains_Entry class fails. Each failure names the variable or the net. A design that declares MAINS none is out of scope and needs no MAINS_ENTRY.
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C3: MAINS_ENTRY unset or holding anything but present or none fails; present with no net in the Mains_Entry class, or with a Mains_Entry net outside the Mains class, fails; none with a net in the Mains_Entry class fails. Each failure names the variable or the net. A design that declares MAINS none is out of scope and needs no MAINS_ENTRY. A fixture, a design that declares NOT_FOR_MANUFACTURE true and is held by a record marked synthetic, is likewise out of scope and passes with MAINS_ENTRY unset when its record carries no mains_to_mains mapping, and a value it sets is read as above; a fixture whose record carries the mapping, an orderable design, and a design marked not for manufacture but held by a record not marked synthetic, each need it.
         status, lines = self.check()
         self.assertEqual(status, 0, lines)
         self.assertEqual([v for v in self.violations(lines) if v[2] == "mains_declaration"], [])
@@ -243,11 +243,13 @@ class TheMainsEntryDeclaration(Copy):
 class EveryTrackedDesignPassesTheMainsToMainsRules(unittest.TestCase):
     """Every design the repository tracks passes the check with the rules extended, the mains-present ones with synthetic figures."""
 
-    PRESENT = {"circuit-review-proof": "none", "gate-proof": "present", "record-keys-proof": "present", "review-proof": "none"}
-    DESIGNS = tuple(sorted(PRESENT)) + ("method-proof",)
+    PRESENT = {"gate-proof": "present", "record-keys-proof": "present"}
+    #: Fixtures that declare mains present: not for manufacture, held by a synthetic record, carrying neither the mapping nor MAINS_ENTRY.
+    FIXTURES = ("circuit-review-proof", "review-proof")
+    DESIGNS = tuple(sorted(set(PRESENT) | set(FIXTURES))) + ("method-proof",)
 
     def test_every_tracked_design_passes_and_the_mains_present_ones_state_the_new_keys(self):
-        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C7: Every tracked design passes the check, the throwaway ones with synthetic mains_to_mains figures and MAINS_ENTRY, in the build round for board changes and nightly on main. The hardware notes' record-key list, text-variable list, checks table and adopter section state mains_to_mains, MAINS_ENTRY, Mains_Entry and the floor reading. The signed record of the machine is out of scope; its leaf adds the real figures.
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C7: Every tracked design passes the check, the throwaway ones passing as fixtures without the mains_to_mains mapping and MAINS_ENTRY, bar those kept to exercise the rules, which carry synthetic figures and MAINS_ENTRY, in the build round for board changes and nightly on main. The hardware notes' record-key list, text-variable list, checks table and adopter section state mains_to_mains, MAINS_ENTRY, Mains_Entry and the floor reading. The signed record of the machine is out of scope; its leaf adds the real figures.
         tracked = set(subprocess.run(["git", "ls-files", "*.kicad_pro"], cwd=board_prove.REPO, capture_output=True,
                                      text=True, check=True).stdout.split())
         self.assertEqual(tracked, {f"hardware/proof/{name}/{name}.kicad_pro" for name in self.DESIGNS})
@@ -265,6 +267,13 @@ class EveryTrackedDesignPassesTheMainsToMainsRules(unittest.TestCase):
                     self.assertEqual(sorted(record["mains_to_mains"]), sorted(
                         ["clearance_mm", "terminal_clearance_mm", "creepage_mm", "creepage_ahead_of_fuse_mm", "entry_fuse",
                          "held_at_reinforced"] + (["downstream_basis"] if "downstream_basis" in record["mains_to_mains"] else [])))
+                elif name in self.FIXTURES:
+                    # a fixture, not for manufacture and held by a synthetic record, is out of scope of the mapping and of MAINS_ENTRY
+                    self.assertEqual(variables["MAINS"], "present")
+                    self.assertEqual(variables["NOT_FOR_MANUFACTURE"], "true")
+                    self.assertTrue(record["synthetic"])
+                    self.assertNotIn("mains_to_mains", record)
+                    self.assertNotIn("MAINS_ENTRY", variables)
                 else:
                     # a design that declares MAINS none is exempt from the mapping and from MAINS_ENTRY
                     self.assertEqual(variables["MAINS"], "none")

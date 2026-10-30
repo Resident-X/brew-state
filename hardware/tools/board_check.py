@@ -922,9 +922,44 @@ def read_inputs(design: Design, record: str, data: dict) -> List[Violation]:
     return reading.found
 
 
-def read_mains_to_mains(design: Design, record: str, data: dict) -> List[Violation]:
-    """What is wrong with the record's mains_to_mains mapping, which a design that declares mains present must carry whole."""
+def is_fixture(data: object, not_for_manufacture: bool) -> bool:
+    """Whether a design is a fixture: it declares NOT_FOR_MANUFACTURE true and its record is marked synthetic.
+
+    A fixture exists to exercise the tooling and cannot be ordered, so the
+    mains_to_mains rules, which hold the layout of a board that can be ordered,
+    do not require it to carry the mapping or the MAINS_ENTRY declaration. A
+    record marked synthetic on an orderable design is not a fixture; it fails
+    for being synthetic, and a signed record on a design marked not for
+    manufacture is held to the whole rules.
+    """
+    return not_for_manufacture and isinstance(data, dict) and data.get("synthetic") is True
+
+
+def record_is_unmapped_fixture(yaml, root: str, record: Optional[str], not_for_manufacture: bool) -> bool:
+    """Whether the record at `record` is a fixture's and carries no mains_to_mains mapping; false when it cannot be read.
+
+    Such a design is out of scope of the mains_to_mains requirement whole. A
+    fixture that does carry the mapping exercises the rules, so it is held to
+    the MAINS_ENTRY declaration as an orderable design is.
+    """
+    if record is None or not not_for_manufacture:
+        return False
+    try:
+        with open(os.path.join(root, record), encoding="utf-8") as handle:
+            data = strict_yaml(yaml, handle.read())
+    except Exception:  # a record that cannot be read is judged where it is read
+        return False
+    return is_fixture(data, not_for_manufacture) and "mains_to_mains" not in data
+
+
+def read_mains_to_mains(design: Design, record: str, data: dict, fixture: bool = False) -> List[Violation]:
+    """What is wrong with the record's mains_to_mains mapping, which a design that declares mains present must carry whole.
+
+    A fixture needs no mapping; one it carries is read in full.
+    """
     held = data.get("mains_to_mains")
+    if held is None and fixture:
+        return []
     if held is None:
         return [Violation(design.project, "separation_basis", f"{record} mains_to_mains",
                           "the record lacks mains_to_mains, the mapping holding clearance_mm, terminal_clearance_mm, "
@@ -1024,7 +1059,7 @@ def read_record(yaml, root: str, design: Design, record: Optional[str], not_for_
                                   f"mains_to_low_voltage holds '{key}', where it holds only clearance_mm and "
                                   "creepage_mm, the figures compared; correct the key's spelling, or remove it"))
     problems += read_inputs(design, record, data)
-    problems += read_mains_to_mains(design, record, data)
+    problems += read_mains_to_mains(design, record, data, is_fixture(data, not_for_manufacture))
     for key in ("clearance_mm", "creepage_mm"):
         if key not in pair:
             problems.append(Violation(design.project, "separation_basis", f"{record} mains_to_low_voltage.{key}",
@@ -6388,7 +6423,12 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
                                f"the project text variable MAINS {said}; set it to present if the board carries "
                                "mains, or none if it does not, since silence is never read as compliance"))
     entry_declared = variables.get("MAINS_ENTRY")
-    if mains == "present" and entry_declared not in ("present", "none"):
+    record = None
+    fixture = False
+    if mains == "present":
+        record = find_record(root, design.directory, repository.tracked)
+        fixture = record_is_unmapped_fixture(yaml, root, record, not_for_manufacture)
+    if mains == "present" and entry_declared not in ("present", "none") and not (fixture and entry_declared is None):
         said = "is not set" if entry_declared is None else f"is '{entry_declared}'"
         found.append(Violation(design.project, "mains_declaration", f"{design.project} text_variables.MAINS_ENTRY",
                                f"the project text variable MAINS_ENTRY {said}; set it to present if the board carries nets "
@@ -6424,7 +6464,6 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
 
     signed = None
     if mains == "present":
-        record = find_record(root, design.directory, repository.tracked)
         signed, problems = read_record(yaml, root, design, record, not_for_manufacture, today,
                                        repository.uncommitted(record) if record is not None else None)
         found += problems

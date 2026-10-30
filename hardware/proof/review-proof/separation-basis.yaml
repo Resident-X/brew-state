@@ -18,13 +18,6 @@ mains_to_low_voltage:
 line_to_switched_line:
   clearance_mm: 2.0
   creepage_mm: 2.0
-mains_to_mains:
-  clearance_mm: 2.0
-  terminal_clearance_mm: 2.4
-  creepage_mm: 2.0
-  creepage_ahead_of_fuse_mm: 2.0
-  entry_fuse: R1
-  held_at_reinforced: []
 table_rows:
   - citation:
       document: synthetic clearance table
@@ -46,46 +39,6 @@ table_rows:
       material_group: IIIb
     figure:
       creepage_mm: 4.0
-  - citation:
-      document: synthetic conductor clearance table
-      edition: none
-      locator: row 3
-    inputs:
-      working_voltage_v: 250
-      insulation: basic
-      overvoltage_category: 2
-      pollution_degree: 2
-      material_group: IIIb
-      altitude_m: 2000
-    figure:
-      clearance_mm: 2.0
-  - citation:
-      document: synthetic terminal clearance table
-      edition: none
-      locator: row 4
-    inputs:
-      working_voltage_v: 250
-      insulation: basic
-      overvoltage_category: 2
-      pollution_degree: 2
-      material_group: IIIb
-      altitude_m: 2000
-      location: terminal
-    figure:
-      clearance_mm: 2.4
-  - citation:
-      document: synthetic basic creepage table
-      edition: none
-      locator: row 5
-    inputs:
-      working_voltage_v: 250
-      insulation: basic
-      overvoltage_category: 2
-      pollution_degree: 2
-      material_group: IIIb
-      altitude_m: 2000
-    figure:
-      creepage_mm: 2.0
 accepted_by: david
 accepted_on: 2026-10-14
 synthetic: true
