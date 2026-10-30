@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-JUDGES-SIGNED-SPACING-EXCEPTIONS.C7
+type: criterion
+title: An exception for one pair of a part's pads does not excuse a shortfall between another pair of the same part
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a seeded layout with an entry for one pad pair of a part and a shortfall at the same part between a different pair of its pads, the first is reported as an accepted exception and the second fails as an ordinary violation naming its pads. An entry written for the part as a whole, without a pair, fails the record reader. Pairs of different parts are out of scope here.
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-SIGNED-SPACING-EXCEPTIONS
+    type: criterion-of

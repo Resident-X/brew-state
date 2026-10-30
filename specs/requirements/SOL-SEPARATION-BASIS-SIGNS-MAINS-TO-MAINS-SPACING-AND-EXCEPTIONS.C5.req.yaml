@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS.C5
+type: criterion
+title: The owner accepts the whole record, exceptions included, under their own identity
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The leaf closes only on the owner's acceptance of the drafted record: accepted_by and accepted_on are entered on the owner's own instruction after the figures and exceptions stand, every exception's acceptance is signed likewise, and the check's reader then finds the record signed. Entering acceptance on the drafter's initiative is out of scope and does not close the leaf.
+links:
+  - target: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS
+    type: criterion-of

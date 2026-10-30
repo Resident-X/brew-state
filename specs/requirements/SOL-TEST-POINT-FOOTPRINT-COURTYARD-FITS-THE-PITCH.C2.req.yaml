@@ -1,0 +1,12 @@
+id: SOL-TEST-POINT-FOOTPRINT-COURTYARD-FITS-THE-PITCH.C2
+type: criterion
+title: Two test points 2.5 mm apart centre to centre pass the courtyard-distance rule on this footprint
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a synthetic design with two test points of this footprint 2.5 mm apart on one side, and one on each side at the same position, the check reports no test_point_courtyard violation; the measured gap between one pad and the other's courtyard is 1.25 mm. Pitches below 2.5 mm are out of scope here, as the method fails them on spacing before this rule.
+links:
+  - target: SOL-TEST-POINT-FOOTPRINT-COURTYARD-FITS-THE-PITCH
+    type: criterion-of

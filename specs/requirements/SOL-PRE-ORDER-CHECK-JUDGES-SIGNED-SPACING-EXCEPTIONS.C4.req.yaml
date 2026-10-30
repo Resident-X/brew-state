@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-JUDGES-SIGNED-SPACING-EXCEPTIONS.C4
+type: criterion
+title: An exception that is unsigned, relaxes nothing, names an absent part or is used by no shortfall fails closed
+status: active
+version: 2
+measurement_type: binary
+verification: test
+text: |-
+  An entry whose accepted_by is a placeholder or empty, or whose accepted_on is invalid, later than the day of the run or later than the record's own accepted_on, fails; so does one whose accepted_mm is at or above the figure it relaxes, one naming a pad or net the layout lacks, and one that no reported shortfall uses. Each fails spacing_exception naming the entry, and an exception in an unsigned or synthetic-on-an-orderable-board record is never honoured. A signed entry used by a shortfall is out of scope here.
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-SIGNED-SPACING-EXCEPTIONS
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C5
+type: criterion
+title: A pair with an item of the Mains_Entry class closer than the signed creepage ahead of the fuse fails, while the downstream figure still governs the other pairs
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  A seeded layout with a Mains_Entry net and a Mains net at a creepage between the downstream and the ahead-of-fuse figures fails; the same distance between two nets outside Mains_Entry passes. Terminal-to-terminal pairs closer than terminal_clearance_mm fail, and conductor pairs between it and clearance_mm pass. Pairs between two nets that are both outside Mains_Entry are out of scope for the ahead-of-fuse figure.
+links:
+  - target: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING
+    type: criterion-of

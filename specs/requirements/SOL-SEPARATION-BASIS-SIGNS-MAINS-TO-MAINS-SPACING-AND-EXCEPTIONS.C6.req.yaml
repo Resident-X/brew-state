@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS.C6
+type: criterion
+title: The division record's separation row, assumption and finding restate the signed mains-to-mains figures
+status: active
+version: 2
+measurement_type: binary
+verification: inspection
+text: |-
+  The board division record no longer holds the 3.0 mm and 5.0 mm upper bound for mains copper of different nets, or says the basis gives no mains-to-mains figure, anywhere it appears. The restatements to correct are its separation row, assumption A3, the option row on the second division (about line 267), the paragraph on mains against mains (about 357), the rule list (about 378), finding 3 (about 1095), the verification table's creepage row (about 1193) and its row 6 on the wall edge and the bracket (about 1194), the 5.0 mm wall-edge distance in the opening table (about 32), and the verification script's docstring, its guards and its expected-output strings and seeded faults (from about 2919), each stating the signed figures, the interpolated row selection and the accepted exceptions. A search of the division record, the layout plans and the design constraints for the old bound and for 'basic creepage' finds no other, and any found is aligned. The basic mains-to-earth pair (D15 and the bracket paragraph) keeps its separate decision but states 4.1 mm from the same row selection. A layout plan that does not exist yet is out of scope.
+links:
+  - target: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS
+    type: criterion-of

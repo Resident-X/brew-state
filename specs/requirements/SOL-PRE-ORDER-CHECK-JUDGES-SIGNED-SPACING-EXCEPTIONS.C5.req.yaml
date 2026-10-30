@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-JUDGES-SIGNED-SPACING-EXCEPTIONS.C5
+type: criterion
+title: Each new failure is shown to fail on a fault seeded for it in a copy of the throwaway proof design
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The on-demand seeded-fault proof gains a row for a shortfall below its accepted distance, one for an unsigned entry and one for an unused entry, each made in a copy outside the tracked tree and caught under spacing_exception; the rows join the proof's required-names dictionary. A seeded run with the entry correct and used passes. Faults in rules this leaf does not touch are out of scope and get no row.
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-SIGNED-SPACING-EXCEPTIONS
+    type: criterion-of

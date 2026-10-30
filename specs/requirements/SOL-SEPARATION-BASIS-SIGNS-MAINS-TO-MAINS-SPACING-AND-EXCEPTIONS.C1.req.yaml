@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS.C1
+type: criterion
+title: The record's mains_to_mains mapping holds the machine's four figures and its entry fuse
+status: active
+version: 2
+measurement_type: binary
+verification: test
+text: |-
+  The committed record holds mains_to_mains with clearance_mm 1.5, terminal_clearance_mm 2.0, creepage_mm 4.1, creepage_ahead_of_fuse_mm 4.1, entry_fuse F101 and held_at_reinforced, and the check's own reader reads it with no problem other than the unsigned acceptance until the owner signs. The mains_to_low_voltage figures are out of scope and read 3.0 mm and 10.0 mm as before.
+links:
+  - target: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-JUDGED.C2
+type: criterion
+title: Each of the four parts either meets the basis figures or has a signed accepted exception for the pair of pads it falls short on
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The committed basis record holds, for each of the four parts whose read figure is below 10.0 mm creepage or 3.0 mm clearance, an accepted_exceptions entry naming the one pair of pads, with accepted_mm no greater than the read figure, and the check passes the layout on it; a part meeting the figures has no entry. A part with an absent figure has neither entry nor pass. The owner's signature of the record is out of scope for the drafter and is requested, not entered.
+links:
+  - target: SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-JUDGED
+    type: criterion-of

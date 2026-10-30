@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS.C9
+type: criterion
+title: A downstream creepage below the basic figure is signed only with a stated fault-clearing basis
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Before any creepage_mm below creepage_ahead_of_fuse_mm is signed, the record holds downstream_basis stating the prospective fault current at the downstream conductors, the entry fuse's clearing time for a tracking fault between them at that current, and the argument that this satisfies the standard's allowance; until then both creepage figures are the basic 4.1 mm. Figures for the pairs ahead of the fuse are out of scope here.
+links:
+  - target: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS
+    type: criterion-of
