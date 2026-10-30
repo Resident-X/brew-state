@@ -25,3 +25,7 @@ links:
     type: justified-by
   - target: DEC-BOARD-PRE-ORDER-RULE-READINGS
     type: justified-by
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 blind brief reviewer
+  fingerprint: f7ee187fb20e01ad869107f2135480d62db94b29d08679b8ab53c7f881a036b2
+  gating_profile: ""

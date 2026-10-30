@@ -34,3 +34,7 @@ links:
     type: depends-on
   - target: SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: d6763c1a2499a19c9fd83084a4e139b3741eae095d5b315807a976cae56be338
+  gating_profile: ""
