@@ -85,6 +85,8 @@ class TheDecouplingAndSilkscreenRules(Proved):
 
     FAULTS = {"a via between a decoupling capacitor's supply pad and the pin it decouples": "decoupling_via",
               "an integrated circuit with netted pads and no pad typed as a power pin on a design not marked not for manufacture": "decoupling_pintype",
+              "an in-list category on an integrated circuit with a pad typed power input": "decoupling_pintype",
+              "a category outside the list on an integrated circuit with netted pads and none typed power": "decoupling_pintype",
               "a reference designator on the fabrication layer": "reference_off_silkscreen",
               "a part with no reference text": "reference_off_silkscreen",
               "a reference designator inside a part's courtyard": "designator_astray"}

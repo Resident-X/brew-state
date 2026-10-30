@@ -1746,8 +1746,13 @@ POSITION_KEYS = ("reference", "value", "package", "rating", "lcsc", "class")
 #: The keys an entry of the catalogue extract holds, every one required.
 ENTRY_KEYS = ("lcsc", "library_class", "stock", "unit_price")
 #: The keys an entry may hold beside them: a lifecycle mapping, which holds all three of LIFECYCLE_KEYS when present and
-#: which the lifecycle rule requires on the entry of every part the design places.
-OPTIONAL_ENTRY_KEYS = ("lifecycle",)
+#: which the lifecycle rule requires on the entry of every part the design places, and a category, the first category
+#: name of the part's parts-library record, a non-empty string when present.
+OPTIONAL_ENTRY_KEYS = ("lifecycle", "category")
+#: The parts-library first category names of parts that have no supply pin, read on 2026-10-30 from the records of
+#: C108051 (LITEON LTV-814S-TA1-A) and C899826 (onsemi MOC3052SVM). Optocouplers with a gate-driver or logic output and
+#: digital isolators have supply pins and are not listed.
+NO_SUPPLY_CATEGORIES = ("Transistor, Photovoltaic Output Optoisolators", "Triac, SCR Output Optoisolators")
 LIFECYCLE_KEYS = ("status", "source", "read_on")
 #: The lifecycle statuses an entry may state: the rule fails the first three below, and a part whose status states that no
 #: source publishes one is not failed for that.
@@ -1876,12 +1881,14 @@ def read_specification(yaml, root: str, repository: Repository, design: Design, 
 
 
 class Extract(NamedTuple):
-    """The catalogue extract as the parts checks read it: each entry's stock and its lifecycle mapping (None where the
-    entry has none) by catalogue number, and the age the extract allows a reading."""
+    """The catalogue extract as the parts checks read it: each entry's stock, its lifecycle mapping (None where the
+    entry has none) and its category (None where it has none) by catalogue number, and the age the extract allows a
+    reading."""
 
     stock: Dict[str, object]
     lifecycle: Dict[str, Optional[Dict[str, object]]]
     max_age_days: Optional[int]
+    category: Dict[str, Optional[str]] = {}
 
 
 def read_extract(yaml, root: str, repository: Repository, design: Design, today: datetime.date,
@@ -1927,6 +1934,7 @@ def read_extract(yaml, root: str, repository: Repository, design: Design, today:
     entries = data.get("entries")
     found: Dict[str, object] = {}
     lifecycles: Dict[str, Optional[Dict[str, object]]] = {}
+    categories: Dict[str, Optional[str]] = {}
     if "entries" in data:
         if not isinstance(entries, list):
             bad("entries", f"entries is not a list of catalogue entries")
@@ -1964,6 +1972,10 @@ def read_extract(yaml, root: str, repository: Repository, design: Design, today:
                 if "lcsc" in entry and (not isinstance(number, str) or not number.strip()):
                     bad(f"{where}.lcsc", f"{where}.lcsc is {number!r}, where it is a non-empty string")
                     number = None
+                category = entry.get("category")
+                if "category" in entry and (not isinstance(category, str) or not category.strip()):
+                    bad(f"{where}.category", f"{where}.category is {category!r}, where it is a non-empty string")
+                    category = None
                 klass = entry.get("library_class")
                 if "library_class" in entry and (not isinstance(klass, str) or not klass.strip()):
                     bad(f"{where}.library_class", f"{where}.library_class is {klass!r}, where it is a non-empty string")
@@ -1985,7 +1997,9 @@ def read_extract(yaml, root: str, repository: Repository, design: Design, today:
                     found[key] = stock if "stock" in entry else None
                     life = entry.get("lifecycle")
                     lifecycles[key] = life if isinstance(life, dict) else None
-    return (Extract(found, lifecycles, limit if isinstance(limit, int) and not isinstance(limit, bool) else None)
+                    categories[key] = category if isinstance(category, str) else None
+    return (Extract(found, lifecycles, limit if isinstance(limit, int) and not isinstance(limit, bool) else None,
+                    categories)
             if usable else None), problems
 
 
@@ -5384,7 +5398,9 @@ def decoupling_vias(design: Design, tree: list, ground: Set[str]) -> List[Violat
     return found
 
 
-def untyped_circuits(design: Design, tree: list, not_for_manufacture: bool) -> List[Violation]:
+def untyped_circuits(design: Design, tree: list, not_for_manufacture: bool,
+                     catalogue: Optional[Extract] = None, positions: Optional[Dict[str, Dict[str, Optional[str]]]] = None
+                     ) -> List[Violation]:
     """Every integrated circuit of an orderable board that has netted pads and none typed as a power pin.
 
     A circuit is a footprint whose reference begins with U, as
@@ -5395,9 +5411,18 @@ def untyped_circuits(design: Design, tree: list, not_for_manufacture: bool) -> L
     design is such a board; its coverage line shows the paths measured. A
     circuit none of whose pads is on a net is not refused: it has no supply pad
     to decouple.
+
+    A circuit is also not refused when the catalogue number of its position
+    maps to an entry of the usable `catalogue` whose category is one of
+    NO_SUPPLY_CATEGORIES, since such a part has no supply pin; one of them with
+    a pad typed power input or power output is refused, the layout contradicting
+    the category. Every other case is refused as before: no usable extract, a
+    position with no number or a number the extract lacks, an entry without a
+    category, a category outside the list.
     """
     if not_for_manufacture:
         return []
+    positions = positions or {}
     import board_views
     table = board_geometry.net_table(tree)
     found = []
@@ -5406,15 +5431,41 @@ def untyped_circuits(design: Design, tree: list, not_for_manufacture: bool) -> L
         if not name.startswith("U"):
             continue
         held = board_views.pads(footprint, table)
-        if any(net for net, _ in held) and not any(kind in ("power_in", "power_out") for _, kind in held):
+        typed = any(kind in ("power_in", "power_out") for _, kind in held)
+        number = (positions.get(name) or {}).get("lcsc")
+        category = (catalogue.category.get(number.strip()) if catalogue is not None and isinstance(number, str)
+                    else None)
+        supplyless = category in NO_SUPPLY_CATEGORIES
+        if supplyless and typed:
+            at = board_geometry.placement(footprint, f"the footprint {name}")
+            found.append(Violation(
+                design.project, "decoupling_pintype", f"{name} at ({coordinate(at[0])}, {coordinate(at[1])}) mm",
+                f"DECOUPLE-6 {name}'s catalogue entry has the category '{category}', a part with no supply pin, and "
+                f"the layout contradicts the category: {name} has a pad typed power input or power output (pintype in "
+                "the layout file); correct the pad's type, or the category in the catalogue extract"))
+        elif any(net for net, _ in held) and not typed and not supplyless:
             at = board_geometry.placement(footprint, f"the footprint {name}")
             found.append(Violation(
                 design.project, "decoupling_pintype", f"{name} at ({coordinate(at[0])}, {coordinate(at[1])}) mm",
                 f"DECOUPLE-6 the decoupling rule measures every integrated circuit's decoupling: {name} has netted "
                 "pads and none typed power input or power output (pintype in the layout file), so the rule finds no "
                 f"supply nets for it and measures nothing; type {name}'s supply pads from its symbol's pin types, "
+                "record the part's category in the catalogue extract if the part has no supply pin, "
                 "or mark the design not for manufacture (NOT_FOR_MANUFACTURE=true) if it is a proof board"))
     return found
+
+
+def untyped_circuits_by_category(yaml, root: str, repository: Repository, design: Design, tree: list,
+                                 today: datetime.date, not_for_manufacture: bool) -> List[Violation]:
+    """untyped_circuits with the catalogue extract and the placed positions it reads the categories through.
+
+    The extract is the one check_parts reads, found by the same nearest-folder rule; one that cannot be read or is
+    unusable gives no category, and its own violations are reported by check_parts, not here.
+    """
+    if not_for_manufacture:
+        return []
+    catalogue = read_extract(yaml, root, repository, design, today, not_for_manufacture)[0]
+    return untyped_circuits(design, tree, not_for_manufacture, catalogue, placed_positions(root, design, repository)[0])
 
 
 def decoupling_paths(tree: list, ground: Set[str]) -> Tuple[int, list]:
@@ -6368,7 +6419,7 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
     found += ground_reliefs(design, rules, tree, members)
     try:
         found += decoupling_vias(design, tree, ground_nets(members))
-        found += untyped_circuits(design, tree, not_for_manufacture)
+        found += untyped_circuits_by_category(yaml, root, repository, design, tree, today, not_for_manufacture)
         if read is not None:
             circuits, paths = decoupling_paths(tree, ground_nets(members))
             read.append(("DECOUPLE-6 decoupling paths measured", "the layout's pad pin types",

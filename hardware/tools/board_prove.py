@@ -952,6 +952,24 @@ def via_in_decoupling_path(seed: Seed) -> None:
     seed.layout(edit)
 
 
+def categorised_u1(category: str, typed: bool):
+    """U1 on an orderable copy with a usable extract whose entry for U1's catalogue number states `category`, and its pads
+    typed power inputs where `typed`."""
+    Q = sexpr.Quoted
+
+    def seed_it(seed: Seed) -> None:
+        seed.project(lambda data: data["text_variables"].pop("NOT_FOR_MANUFACTURE"))
+        seed.replace("catalogue-extract.yaml", "synthetic: true", "")
+        seed.replace("catalogue-extract.yaml", "  - lcsc: C9000005\n    library_class: basic\n",
+                     f"  - lcsc: C9000005\n    library_class: basic\n    category: {category}\n")
+        if typed:
+            def edit(tree: list) -> None:
+                for number in ("1", "2"):
+                    pad(tree, "U1", number).append(["pintype", Q("power_in")])
+            seed.layout(edit)
+    return seed_it
+
+
 def reference_removed(seed: Seed) -> None:
     """R1's reference text taken out of the footprint."""
     def edit(tree: list) -> None:
@@ -1591,6 +1609,10 @@ FAULTS: List[tuple] = [
      "exempts R2 pad 2 from the reliefs of net class Ground, but it is not an exposed pad", reliefs_exempting_a_plain_pad),
     ("an integrated circuit with netted pads and no pad typed as a power pin on a design not marked not for manufacture", "layout: an orderable board's integrated circuit has its supply pads typed", "decoupling_pintype",
      "has netted pads and none typed power input or power output", variables(lambda v: v.pop("NOT_FOR_MANUFACTURE"))),
+    ("an in-list category on an integrated circuit with a pad typed power input", "layout: a part the category says has no supply pin is refused when a pad is typed as one", "decoupling_pintype",
+     "the layout contradicts the category", categorised_u1('"Triac, SCR Output Optoisolators"', True)),
+    ("a category outside the list on an integrated circuit with netted pads and none typed power", "layout: a real integrated circuit's category does not excuse its untyped supply pads", "decoupling_pintype",
+     "has netted pads and none typed power input or power output", categorised_u1('"Linear Voltage Regulators"', False)),
     ("a via between a decoupling capacitor's supply pad and the pin it decouples", "layout: no via sits in a decoupling capacitor's path", "decoupling_via",
      "via at (43, 13) mm of net /LV_A lies in the box from (42.15, 9.15) to (43.85, 16.6) mm about pad 1 of C9 of /LV_A and pad 1 of U1", via_in_decoupling_path),
     ("a reference designator on the fabrication layer", "manufacture: every part's reference is on a silkscreen layer", "reference_off_silkscreen",
