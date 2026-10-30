@@ -1,0 +1,16 @@
+id: EV-SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-READ-C3-INSPECTION
+type: evidence
+title: inspection evidence for SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-READ.C3
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-30T15:50:12.09906Z"
+artifact:
+  kind: external
+  reference: 'docs/sunbeam-em7000/controller-board-division.md::§ The bought parts'' creepage and clearance, as their makers publish them (certificate search table, ''none found'' for each omitted figure, with certificate numbers UL E134517/E113898, VDE 40006182/116934/094722, CQC numbers; UL and Lite-On searches recorded as not read). Inspection against the clause: each omitted figure (K201 clearance, U602 creepage and clearance, separate clearance of K731/K741) has a search and a stated result; no certificate figure found, so none is sourced.'
+  artifact_version: e2b232e3e6cc3981435a56a137b619e84514497f
+attested_by: crun-27cff31975d5a12e
+links:
+  - target: SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-READ.C3
+    type: satisfies
