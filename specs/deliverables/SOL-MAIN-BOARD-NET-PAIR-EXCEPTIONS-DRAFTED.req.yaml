@@ -45,3 +45,7 @@ links:
     type: depends-on
   - target: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: 0e01f71bb88f49a7b14aca693225b1787865d7e8a7e4818d5107ec88ae64b3b5
+  gating_profile: ""

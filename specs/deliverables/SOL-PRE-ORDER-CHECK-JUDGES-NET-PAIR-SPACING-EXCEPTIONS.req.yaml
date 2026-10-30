@@ -37,3 +37,7 @@ links:
     type: depends-on
   - target: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 blind brief reviewer
+  fingerprint: b17cdd98e2f701e4abc4d2b404c0f07ad3c023c6d120857cc2313f9a9a4bace3
+  gating_profile: ""
