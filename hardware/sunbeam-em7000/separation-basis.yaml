@@ -1,13 +1,31 @@
-# The separation basis record of the Sunbeam EM7000 machine: the one figure for the distance
-# between mains-referenced and low-voltage conductors that every board design in this folder
-# is held to, read by the pre-order board check. Accepted by the owner under the identity the
-# project records their acts under. The owner instructed the drafting assistant in session on
-# 2026-10-24 (local time): "Sign it in my behalf as me, I accept", after being told that
-# the owner's acceptance criterion has the owner enter the values themselves, and offered to
-# prepare the lines blank. accepted_by and accepted_on were entered on that
-# instruction; accepted_on is the UTC date, as the check refuses a date later than the day it
-# runs. The commit that adds them is the audit trail. A change to any figure, input or barrier
-# needs a fresh acceptance.
+# The separation basis record of the Sunbeam EM7000 machine: the figures for the distance
+# between mains-referenced and low-voltage conductors, and between conductors at different
+# potentials of the mains supply, that every board design in this folder is held to, read by the
+# pre-order board check.
+#
+# This record is unsigned. It held an acceptance entered earlier on the owner's instruction; that
+# acceptance covered figures this revision replaces (it adds the mains-to-mains figures, the
+# material group IIIa and the accepted exceptions), and the owner has not yet seen the new ones,
+# so accepted_by and accepted_on are left out and the check reads the record as unsigned. The
+# owner's acceptance is the owner's own act, entered by the leaf that records it, and it covers
+# the whole record, the exceptions included; each exception's own accepted_by and accepted_on are
+# left empty for the same act. The commit that adds them is the audit trail. A change to any
+# figure, input, barrier or exception needs a fresh acceptance.
+#
+# Readings the drafter made for the owner to check before accepting (each is repeated in the
+# citation of the row it affects):
+#   1. The 0.5 mm terminal allowance (the terminal_clearance_mm of 2.0 mm is the 1.5 mm
+#      clearance plus 0.5 mm for the movement and assembly of a terminal). It is the footnote to
+#      Table 16 of the household-appliance standard (IEC 60335-1) as reproduced in two
+#      certification reports, which this repository does not identify; the clause is not given
+#      by them and is stated as not found, and the standard's own text was not read.
+#   2. The material-group column of the 250 V and 320 V rows of IEC 60664-1 Table F.4 used for the
+#      creepage figures (pollution degree 3, material group III: 250 V = 4.0 mm, 320 V = 5.0 mm),
+#      read from the reproduction [EMA-CREEPAGE] and not from the standard.
+#   3. Whether the household-appliance standard (IEC 60335-1) permits interpolation of its own
+#      creepage table. Nothing was found either way. If it refuses, the fallback is the 320 V row,
+#      5.0 mm, for creepage_mm and creepage_ahead_of_fuse_mm. The owner, or a test house, confirms
+#      the position before certification.
 #
 # The tables are those of IEC 60664-1 (insulation coordination for equipment within
 # low-voltage supply systems), Annex F. The standard is copyrighted and not reproduced; each
@@ -24,8 +42,15 @@
 #   [EMA-CREEPAGE] EMA Design Automation, "PCB clearance and creepage distance table",
 #     https://www.ema-eda.com/ema-resources/blog/pcb-clearance-and-creepage-distance-table/,
 #     read 2026-10-23: its creepage table by RMS voltage, pollution degree and material group,
-#     the 250 V and 320 V rows. At 253 V rms the row at 250 V is below the working voltage, so
-#     the next row up, 320 V, is the one used and no interpolation is made.
+#     the 250 V and 320 V rows. At 253 V rms the row at 250 V is below the working voltage and
+#     the row at 320 V above it. IEC 60664-1:2007 clause 5.2.4 (clause 5.2.3 for functional
+#     insulation) allows linear interpolation for intermediate voltages where the working voltage
+#     of 4.3.2.2.2 is used for dimensioning, requires it to be linear, and rounds the result to
+#     the same number of digits as the table values; that is a reading of the 2007 edition text
+#     only, the 2020 edition and AMD1:2025 not having been read. The mains-to-mains creepage is
+#     therefore interpolated (see the derived row in table_rows). The mains_to_low_voltage
+#     creepage keeps the larger 10.0 mm figure, the 320 V row doubled for reinforced insulation,
+#     deliberately: it is unchanged by the interpolation.
 # The basis the figures are read at: 253 V rms is the top of the declared span, so it falls in
 # the 300 V line-to-neutral row of the rated impulse voltage table, which gives 2.5 kV at
 # overvoltage category II for basic insulation and so 4.0 kV (one step up) for reinforced.
@@ -38,21 +63,23 @@
 # coat is planned once the boards work and is not applied, so degree 3 is taken and the boards
 # count as unprotected. Coating them later would be a fresh basis, not an edit of this one.
 #
-# Material group IIIb, the worst case. The laminate's tracking index (CTI) is a maker's figure
-# not yet read for the board to be ordered; group IIIb (100 <= CTI < 175) is the weakest group,
-# and a laminate of any better group (IIIa, 175 <= CTI < 400, as a common FR-4 is sold) needs no
-# more at this voltage and pollution degree, as the creepage row for 320 V shows 5.0 mm for both.
-# The figure therefore holds whichever of the two the laminate proves to be.
-standard: "IEC 60664-1, Annex F tables F.1, F.2 and F.4, read through the freely published derivations [TI-SEMINAR], [TI-SLUAAR5] and [EMA-CREEPAGE] cited above and in table_rows"
+# Material group IIIa, on the ground of a requirement on the main board's fabrication notes: a
+# laminate whose published comparative tracking index (CTI) is at least 175 (IIIa, 175 <= CTI <
+# 400, as a common FR-4 is sold). The requirement is carried by the main-board layout leaf
+# (SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT); no laminate is chosen yet, so no laminate maker's
+# document is cited. The ground is needed because a footnote of the household-appliance standard's
+# creepage tables, as reproduced in two certification reports, allows the lowest group (IIIb,
+# 100 <= CTI < 175) at pollution degree 3 only up to a working voltage of 50 V. The creepage rows
+# at 253 V are equal for IIIa and IIIb (5.0 mm at the 320 V row), so no figure changes with the
+# group. The standard's own text, which the reports only reproduce, was not read.
+standard: "IEC 60664-1, Annex F tables F.1, F.2 and F.4, read through the freely published derivations [TI-SEMINAR], [TI-SLUAAR5] and [EMA-CREEPAGE] cited above and in table_rows; for the terminals of a part, the footnote to Table 16 of IEC 60335-1 as reproduced in two certification reports"
 supply: "230 V nominal, single phase, 216 V to 253 V, 50 Hz"
 working_voltage: "253 V rms (358 V peak), the top of the declared span"
 pollution_degree: 3
-material_group: IIIb
+material_group: IIIa
 environment: "household appliance interior; water, steam and repeated heating and cooling at and around the enclosure; condensation possible; boards uncoated and not protected against moisture"
 overvoltage_category: 2
 altitude_m: 2000
-accepted_by: david
-accepted_on: 2026-10-23
 barriers:
   - supply-module
   - heater-switch
@@ -148,6 +175,25 @@ barrier_types:
 mains_to_low_voltage:
   clearance_mm: 3.0
   creepage_mm: 10.0
+# Between conductors at different potentials of the mains supply, read at the same inputs for basic
+# insulation: the clearance of the 2.5 kV row of Table F.2; the clearance between the terminals of a
+# part, which adds 0.5 mm for movement and assembly; and the creepage at 253 V, the linear
+# interpolation of the 250 V and 320 V rows of Table F.4 rounded up to 0.1 mm. F101 is the entry
+# fuse: only the supply's own protection clears a fault ahead of it, and no stated basis shows F101
+# clearing a tracking fault between the pair downstream of it, so the basic creepage applies there
+# as well and there is no downstream_basis. The pair across the open contact of the interlock relay,
+# LINE and LINE_IN against LINE1, is outside these figures: a bridge across that contact would
+# defeat the interlock, so the pair is held at the mains_to_low_voltage figures, 3.0 mm and 10.0
+# mm, with no credit for the relay's own contact gap.
+mains_to_mains:
+  clearance_mm: 1.5
+  terminal_clearance_mm: 2.0
+  creepage_mm: 4.1
+  creepage_ahead_of_fuse_mm: 4.1
+  entry_fuse: F101
+  held_at_reinforced:
+    - ["/LINE", "/LINE1"]
+    - ["/Mains entry and load feed/LINE_IN", "/LINE1"]
 table_rows:
   - citation:
       document: "IEC 60664-1 Table F.1 and Table F.2, as read in [TI-SEMINAR] (https://www.ti.com/lit/pdf/SLUP421)"
@@ -169,6 +215,181 @@ table_rows:
       working_voltage_v: 320
       insulation: reinforced
       pollution_degree: 3
-      material_group: IIIb
+      material_group: IIIa
     figure:
       creepage_mm: 10.0
+  - citation:
+      document: "IEC 60664-1 Table F.1 and Table F.2, as read in [TI-SEMINAR] (https://www.ti.com/lit/pdf/SLUP421)"
+      edition: "as reproduced in the 2023 seminar; tables unchanged in kind across editions (2000 m clearance, inhomogeneous field)"
+      locator: "Table F.1: up to 300 V line to neutral, overvoltage category II, 2.5 kV for basic insulation; Table F.2: 2.5 kV, pollution degree 3, 1.5 mm"
+    inputs:
+      working_voltage_v: 300
+      insulation: basic
+      overvoltage_category: 2
+      pollution_degree: 3
+      altitude_m: 2000
+    figure:
+      clearance_mm: 1.5
+  - citation:
+      document: "the footnote to Table 16 of IEC 60335-1 (household and similar electrical appliances), adding 0.5 mm to the clearance for the movement and assembly of a terminal, applied to the 1.5 mm of IEC 60664-1 Table F.2 at 2.5 kV, pollution degree 3"
+      edition: "as reproduced in two certification reports, which this repository does not identify; the standard's own text was not read; a drafter's reading from reproductions, unverified, for the owner to check"
+      locator: "Table 16 footnote; the clause number is not given by the reports and is not found; 1.5 mm + 0.5 mm = 2.0 mm"
+    inputs:
+      working_voltage_v: 300
+      insulation: basic
+      overvoltage_category: 2
+      pollution_degree: 3
+      altitude_m: 2000
+      location: terminal
+    figure:
+      clearance_mm: 2.0
+  - citation:
+      document: "IEC 60664-1 Table F.4, rows 250 V and 320 V as read in [EMA-CREEPAGE] (https://www.ema-eda.com/ema-resources/blog/pcb-clearance-and-creepage-distance-table/), interpolated at 253 V under IEC 60664-1:2007 clause 5.2.4 (clause 5.2.3 for functional insulation)"
+      edition: "clause as read in the 2007 edition text only, the 2020 edition and AMD1:2025 not read; rows as reproduced on the page read 2026-10-23, the material-group column a drafter's reading for the owner to check; whether IEC 60335-1 permits interpolation of its own creepage table is not verified, and if it refuses the fallback is the 320 V row, 5.0 mm"
+      locator: "Table F.4, pollution degree 3, material group III, basic insulation: 250 V = 4.0 mm and 320 V = 5.0 mm; linear interpolation at 253 V = 4.0 + (5.0 - 4.0) x (253 - 250) / (320 - 250) = 4.0429 mm, 4.04 mm; rounded to the table's digits by the standard's rule that is 4.0 mm, and the figure signed is 4.1 mm, rounded up, a deliberate design margin of 0.1 mm over the standard's own result and not the standard's figure"
+    inputs:
+      working_voltage_v: 253
+      insulation: basic
+      pollution_degree: 3
+      material_group: IIIa
+    figure:
+      creepage_mm: 4.1
+# The spacing shortfalls the owner is to accept, one entry for each one pair of pads it excuses; a
+# part's other pairs are not excused by it. The distances are those the part's own land pattern
+# leaves between the pads named, from the main-board schematic and the KiCad footprint of each part
+# (TO-252-3 for T701 and T711, the Vishay WSK2512 shunt land for R105, the standard 1206 land for
+# R101 to R104, R704, R705, R714 and R715, and the makers' lands for U601, U701 and U711). The reasons and
+# bounding elements below are the drafter's proposals for the owner to accept or correct, except
+# that the reasons of the bought-part creepage entries are those of the owner's recorded acceptance
+# (DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER, residual risk (e), 2026-10-29). Every
+# accepted_by and accepted_on is left empty for the owner's own act, and the values are drafts until
+# the finished main-board layout confirms each pair and distance.
+accepted_exceptions:
+  - pair: mains_to_mains
+    constraint: clearance
+    between: ["T701.2", "T701.1"]
+    accepted_mm: 1.08
+    reason: "The land pattern of the coffee pump triac T701 (TO-252-3, tab on pin 2) leaves 1.08 mm between the pad of its tab lead, pin 2 (MT2), and the pad of pin 1 (MT1, on NEUTRAL); the package pitch forces it and the part is not changed."
+    bounded_by: "The branch fuse F701 in series with MT2, then the 10 A entry fuse F101, interrupt a breakdown between the two pads, which can only carry the pump branch current."
+    accepted_by: ""
+    accepted_on: ""
+  - pair: mains_to_mains
+    constraint: clearance
+    between: ["T701.2", "T701.3"]
+    accepted_mm: 1.08
+    reason: "The land pattern of the coffee pump triac T701 (TO-252-3, tab on pin 2) leaves 1.08 mm between the pad of its tab lead, pin 2 (MT2), and the pad of pin 3 (the gate, on PUMP_C_TRIAC_G); the package pitch forces it and the part is not changed."
+    bounded_by: "The branch fuse F701 in series with MT2, then the 10 A entry fuse F101, interrupt a breakdown between the two pads, which can only carry the pump branch current."
+    accepted_by: ""
+    accepted_on: ""
+  - pair: mains_to_mains
+    constraint: clearance
+    between: ["T711.2", "T711.1"]
+    accepted_mm: 1.08
+    reason: "The land pattern of the steam pump triac T711 (TO-252-3, tab on pin 2) leaves 1.08 mm between the pad of its tab lead, pin 2 (MT2), and the pad of pin 1 (MT1, on NEUTRAL); the package pitch forces it and the part is not changed."
+    bounded_by: "The branch fuse F711 in series with MT2, then the 10 A entry fuse F101, interrupt a breakdown between the two pads, which can only carry the pump branch current."
+    accepted_by: ""
+    accepted_on: ""
+  - pair: mains_to_mains
+    constraint: clearance
+    between: ["T711.2", "T711.3"]
+    accepted_mm: 1.08
+    reason: "The land pattern of the steam pump triac T711 (TO-252-3, tab on pin 2) leaves 1.08 mm between the pad of its tab lead, pin 2 (MT2), and the pad of pin 3 (the gate, on PUMP_S_TRIAC_G); the package pitch forces it and the part is not changed."
+    bounded_by: "The branch fuse F711 in series with MT2, then the 10 A entry fuse F101, interrupt a breakdown between the two pads, which can only carry the pump branch current."
+    accepted_by: ""
+    accepted_on: ""
+  - pair: mains_to_mains
+    constraint: clearance
+    between: ["R105.1", "R105.4"]
+    accepted_mm: 1.65
+    reason: "The current terminals of the neutral shunt R105, pads 1 and 4, stand 1.65 mm apart on the maker's land pattern (Vishay WSK2512, gap l = 1.65 mm); the lands are the shunt's own and both are at neutral potential."
+    bounded_by: "The two lands differ by the shunt's own drop, 1 milliohm times the load current, 10 mV at the 10 A of the entry fuse F101; a bridge between them only shorts the shunt, and F101 bounds the current the lands carry."
+    accepted_by: ""
+    accepted_on: ""
+  - pair: mains_to_mains
+    constraint: clearance
+    between: ["R101.1", "R101.2"]
+    accepted_mm: 1.8
+    reason: "The two pads of the 1206 series resistor R101 (LINE to DISCH_A) stand 1.8 mm apart on the standard 1206 land pattern; the part is a series element of a mains circuit and its own pads are the pair, so the spacing is forced by the package."
+    bounded_by: "A breakdown across the pads bypasses this one resistor only and leaves the rest of its series circuit in line; the branch or entry fuse F101 bounds the fault current."
+    accepted_by: ""
+    accepted_on: ""
+  - pair: mains_to_mains
+    constraint: clearance
+    between: ["R102.1", "R102.2"]
+    accepted_mm: 1.8
+    reason: "The two pads of the 1206 series resistor R102 (DISCH_A to NEUTRAL) stand 1.8 mm apart on the standard 1206 land pattern; the part is a series element of a mains circuit and its own pads are the pair, so the spacing is forced by the package."
+    bounded_by: "A breakdown across the pads bypasses this one resistor only and leaves the rest of its series circuit in line; the branch or entry fuse F101 bounds the fault current."
+    accepted_by: ""
+    accepted_on: ""
+  - pair: mains_to_mains
+    constraint: clearance
+    between: ["R103.1", "R103.2"]
+    accepted_mm: 1.8
+    reason: "The two pads of the 1206 series resistor R103 (LINE to DISCH_B) stand 1.8 mm apart on the standard 1206 land pattern; the part is a series element of a mains circuit and its own pads are the pair, so the spacing is forced by the package."
+    bounded_by: "A breakdown across the pads bypasses this one resistor only and leaves the rest of its series circuit in line; the branch or entry fuse F101 bounds the fault current."
+    accepted_by: ""
+    accepted_on: ""
+  - pair: mains_to_mains
+    constraint: clearance
+    between: ["R104.1", "R104.2"]
+    accepted_mm: 1.8
+    reason: "The two pads of the 1206 series resistor R104 (DISCH_B to NEUTRAL) stand 1.8 mm apart on the standard 1206 land pattern; the part is a series element of a mains circuit and its own pads are the pair, so the spacing is forced by the package."
+    bounded_by: "A breakdown across the pads bypasses this one resistor only and leaves the rest of its series circuit in line; the branch or entry fuse F101 bounds the fault current."
+    accepted_by: ""
+    accepted_on: ""
+  - pair: mains_to_mains
+    constraint: clearance
+    between: ["R704.1", "R704.2"]
+    accepted_mm: 1.8
+    reason: "The two pads of the 1206 series resistor R704 (PUMP_C_MT2 to PUMP_C_GATE_R) stand 1.8 mm apart on the standard 1206 land pattern; the part is a series element of a mains circuit and its own pads are the pair, so the spacing is forced by the package."
+    bounded_by: "A breakdown across the pads bypasses this one resistor only and leaves the rest of its gate circuit in line; the branch fuse of the pump and the entry fuse F101 bound the fault current."
+    accepted_by: ""
+    accepted_on: ""
+  - pair: mains_to_mains
+    constraint: clearance
+    between: ["R705.1", "R705.2"]
+    accepted_mm: 1.8
+    reason: "The two pads of the 1206 series resistor R705 (PUMP_C_GATE_R to PUMP_C_OPTO_MT) stand 1.8 mm apart on the standard 1206 land pattern; the part is a series element of a mains circuit and its own pads are the pair, so the spacing is forced by the package."
+    bounded_by: "A breakdown across the pads bypasses this one resistor only and leaves the rest of its gate circuit in line; the branch fuse of the pump and the entry fuse F101 bound the fault current."
+    accepted_by: ""
+    accepted_on: ""
+  - pair: mains_to_mains
+    constraint: clearance
+    between: ["R714.1", "R714.2"]
+    accepted_mm: 1.8
+    reason: "The two pads of the 1206 series resistor R714 (PUMP_S_MT2 to PUMP_S_GATE_R) stand 1.8 mm apart on the standard 1206 land pattern; the part is a series element of a mains circuit and its own pads are the pair, so the spacing is forced by the package."
+    bounded_by: "A breakdown across the pads bypasses this one resistor only and leaves the rest of its gate circuit in line; the branch fuse of the pump and the entry fuse F101 bound the fault current."
+    accepted_by: ""
+    accepted_on: ""
+  - pair: mains_to_mains
+    constraint: clearance
+    between: ["R715.1", "R715.2"]
+    accepted_mm: 1.8
+    reason: "The two pads of the 1206 series resistor R715 (PUMP_S_GATE_R to PUMP_S_OPTO_MT) stand 1.8 mm apart on the standard 1206 land pattern; the part is a series element of a mains circuit and its own pads are the pair, so the spacing is forced by the package."
+    bounded_by: "A breakdown across the pads bypasses this one resistor only and leaves the rest of its gate circuit in line; the branch fuse of the pump and the entry fuse F101 bound the fault current."
+    accepted_by: ""
+    accepted_on: ""
+  - pair: mains_to_low_voltage
+    constraint: creepage
+    between: ["U601.10", "U601.11"]
+    accepted_mm: 8.0
+    reason: "The enclosure is sealed and inside the machine; the board has slots between pad rows where the spacing is ours; a conformal coat is planned; nothing mains-referenced is touchable beyond the items listed under each barrier (the owner's acceptance of 2026-10-29, bought-part creepage under the board's 10.0 mm figure). U601 AMC131M02 gives creepage and clearance of at least 8.0 mm (SBASA56 6.5 and 6.6); pins 10 and 11 face each other across its barrier."
+    bounded_by: "The maker's tested isolation of the part itself (SBASA56 6.5: VIOTM 7070 V peak, UL1577 5000 Vrms) and the slot the layout cuts between its pad rows; proposed by the drafter for the owner to accept or correct."
+    accepted_by: ""
+    accepted_on: ""
+  - pair: mains_to_low_voltage
+    constraint: creepage
+    between: ["U701.1", "U701.6"]
+    accepted_mm: 7.0
+    reason: "The enclosure is sealed and inside the machine; the board has slots between pad rows where the spacing is ours; a conformal coat is planned; nothing mains-referenced is touchable beyond the items listed under each barrier (the owner's acceptance of 2026-10-29, bought-part creepage under the board's 10.0 mm figure). U701 MOC3052SVM gives an external creepage of at least 7 mm (onsemi MOC3052M/D Rev 4); the owner decided against the through-hole 0.4 inch spacing option for its assembly cost and hand soldering. Pins 1 (LED anode) and 6 (output) face each other across its barrier."
+    bounded_by: "The part's tested isolation voltage (VISO 4170 Vrms) and the slot the layout cuts between its pad rows; proposed by the drafter for the owner to accept or correct."
+    accepted_by: ""
+    accepted_on: ""
+  - pair: mains_to_low_voltage
+    constraint: creepage
+    between: ["U711.1", "U711.6"]
+    accepted_mm: 7.0
+    reason: "The enclosure is sealed and inside the machine; the board has slots between pad rows where the spacing is ours; a conformal coat is planned; nothing mains-referenced is touchable beyond the items listed under each barrier (the owner's acceptance of 2026-10-29, bought-part creepage under the board's 10.0 mm figure). U711 MOC3052SVM gives an external creepage of at least 7 mm (onsemi MOC3052M/D Rev 4); the owner decided against the through-hole 0.4 inch spacing option for its assembly cost and hand soldering. Pins 1 (LED anode) and 6 (output) face each other across its barrier."
+    bounded_by: "The part's tested isolation voltage (VISO 4170 Vrms) and the slot the layout cuts between its pad rows; proposed by the drafter for the owner to accept or correct."
+    accepted_by: ""
+    accepted_on: ""
