@@ -1,0 +1,16 @@
+id: EV-SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-JUDGED-C2-TEST-4
+type: evidence
+title: test evidence for SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-JUDGED.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-30T17:19:39.515608Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_separation_basis_record.py::MainsToMainsRecord.test_each_bought_part_creepage_shortfall_the_owner_accepted_has_an_unsigned_entry
+  artifact_version: af79d516a34cd82a46af892973cbc190397bc45d
+attested_by: crun-981c321b7b55b5c7
+links:
+  - target: SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-JUDGED.C2
+    type: satisfies
