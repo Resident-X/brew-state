@@ -1,0 +1,12 @@
+id: SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-READ.C1
+type: criterion
+title: Each of K201, K731, K741 and U602 has its maker's creepage and clearance recorded with the document, page and day read
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The board division record holds, for each of K201, K731, K741 and U602, the creepage and the clearance between its mains-side and low-voltage-side pins (for a relay, coil to contacts), each with the maker's document, its revision or date, the page or section and the day it was read. A figure no document gives is recorded as absent, with the documents searched, and no figure is estimated. Comparison with the signed figures is out of scope here.
+links:
+  - target: SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-READ
+    type: criterion-of

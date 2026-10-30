@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C4
+type: criterion
+title: A same-connector entry that is unsigned, relaxes nothing, names an absent connector or is used by no shortfall fails closed
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  An entry whose accepted_by is a placeholder or empty, whose accepted_on is invalid, later than the day of the run or later than the record's own accepted_on, whose accepted_mm is at or above the distance the plated-hole rule holds, whose connector the layout lacks or places without two pads pitch_mm apart, or which no reported shortfall uses, fails spacing_exception naming the entry. An entry in an unsigned or synthetic-on-an-orderable-board record is honoured for no shortfall. The pairs a valid entry accepts are the second criterion's and out of scope here.
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS
+    type: criterion-of

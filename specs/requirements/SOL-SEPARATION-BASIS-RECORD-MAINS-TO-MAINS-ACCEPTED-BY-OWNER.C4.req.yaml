@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER.C4
+type: criterion
+title: The check's reader on the committed record finds it signed and its exceptions dated no later than the record
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  With the acceptance committed, the check's reader on the committed record, the existing test route, finds it signed and reports no separation_basis failure of the record as unsigned, as holding an exception entry unsigned, or as holding an exception dated after the record's own acceptance. Failures that concern a board's layout against the figures are out of scope here.
+links:
+  - target: SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER
+    type: criterion-of

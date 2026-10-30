@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C7
+type: criterion
+title: Every tracked design passes and the hardware notes and the GROUND-5 item state the exception
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Every tracked design passes the check, in the build round for board changes and nightly on main. The hardware notes' record-key list and adopter section state the same_connector_pins entry form, spacing_exception for it and the report line, and say that the owner signs it and that an adopter writes their own. The item GROUND-5 in docs/board-design-method.md states, beside its passing condition, that a shortfall between pins of one connector at its own pitch passes only on the owner's signed exception, and leaves the item's figure and derivation as they are. The owner's acceptance of the record is out of scope here.
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS
+    type: criterion-of

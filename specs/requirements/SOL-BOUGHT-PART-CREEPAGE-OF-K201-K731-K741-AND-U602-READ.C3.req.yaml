@@ -1,0 +1,12 @@
+id: SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-READ.C3
+type: criterion
+title: A figure a datasheet omits is searched for in the maker's safety certificates and the result recorded
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  For each figure the part's datasheet omits, which is at least the clearance of K201 and the creepage and clearance of U602, the maker's published safety certificates for that part are searched, and the record states the certificate found with its number and date, or states none found. A figure from a certificate carries the certificate as its source. Judging a found figure against the signed figures is out of scope here.
+links:
+  - target: SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-READ
+    type: criterion-of

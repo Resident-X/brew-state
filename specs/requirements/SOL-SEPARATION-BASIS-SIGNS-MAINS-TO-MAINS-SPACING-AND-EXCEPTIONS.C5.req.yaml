@@ -1,7 +1,7 @@
 id: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS.C5
 type: criterion
 title: The owner accepts the whole record, exceptions included, under their own identity
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: inspection
@@ -10,3 +10,5 @@ text: |-
 links:
   - target: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS
     type: criterion-of
+attributes:
+  deprecation_reason: The owner's acceptance cannot be entered by a build; it moves to the owner-acts leaf SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER, and this leaf closes on the drafted record delivered with acceptance fields empty.

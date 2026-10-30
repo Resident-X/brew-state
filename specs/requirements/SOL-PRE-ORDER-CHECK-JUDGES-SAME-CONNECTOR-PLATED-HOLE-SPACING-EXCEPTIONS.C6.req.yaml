@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C6
+type: criterion
+title: The committed record holds a drafted entry for each of the five headers, read through the check's own reader
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The committed record holds one same_connector_pins entry for each of J630, J635, J791, J821 and J861 with pitch_mm 2.0, an accepted_mm drafted from the schematic and the division record, the reason that the header carries slow signals only and no fast signal crosses its strip, a bounding element, and accepted_by and accepted_on empty. Read through the check's own reader on the committed record, each entry is accepted as a form, and the record reads as unsigned. Running the plated-hole rule on the main-board layout, and confirming each accepted_mm against it, belong to the main-board layout leaf's pre-order criterion and are out of scope here, as is the owner's acceptance.
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS
+    type: criterion-of
