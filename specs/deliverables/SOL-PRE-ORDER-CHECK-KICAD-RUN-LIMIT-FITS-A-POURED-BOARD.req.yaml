@@ -3,13 +3,13 @@ type: deliverable
 category: solution
 title: The board check's limit on one KiCad run fits a board with poured planes and still fails a hung run
 status: active
-version: 1
+version: 2
 text: |
   The board check's limit on one KiCad run is raised so that a board carrying ground and neutral pours and slots can finish. The limit is KICAD_TIMEOUT_S in hardware/tools/board_check.py, 900 s as built, and hardware/tools/board_views.py reads the same constant. On the main board with its pours, measured 2026-10-31, KiCad's creepage test alone takes about 10 minutes and the full design check 20 to 30 minutes, and the check reported "KiCad did not finish within 900 s" and failed the design for a run that was working. The limit is a defect against the item that asks every board to be judged before it is ordered, since a poured board can never be judged.
 
   Settled for the build:
   - The figure is 7200 s, about four times the slowest measured full run, so a slower machine or a denser board still finishes. It is one constant with both tools reading it; no second figure is introduced in either tool.
-  - A hung run still fails the design. The limit stays a finite cut-off, and a run past it is reported as the design failing with the message "KiCad did not finish within <limit> s", naming the limit in force, in the check and in the views tool. Raising the figure does not make a wait unbounded.
+  - A hung run still fails the design. The limit stays a finite cut-off, and a run past it is reported as the design failing with the message "KiCad did not finish within <limit> s", naming the limit in force, in the check, and in the views tool as a failure whose message names the same limit. Raising the figure does not make a wait unbounded.
   - hardware/README.md states the figure and its measured ground: the date, the board, the minutes measured for the creepage test and for the full check, and that the figure is the margin over them.
   - Tests: a KiCad run replaced by one that outlives a shortened limit still fails the design by name, with the limit in the message, for the check and for the views tool; and a test reads the constant and requires board_views.py to take its limit from it. The tests run without KiCad and without waiting out the real limit.
 
@@ -27,5 +27,5 @@ links:
     type: justified-by
 brief_confirmation:
   confirmer: claude-sonnet-5-5 blind brief reviewer
-  fingerprint: f7ee187fb20e01ad869107f2135480d62db94b29d08679b8ab53c7f881a036b2
+  fingerprint: 85e2f244f3048a7a69026abb053c9103d50c0e5ee4dd37e40efd6fb73b7cd56a
   gating_profile: ""

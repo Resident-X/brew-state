@@ -515,7 +515,6 @@ class ExportStatus(unittest.TestCase):
         self.assertEqual(str(raised.exception), "KiCad did not load the models of the board within 1 s")
 
 
-TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 class OneLimitOnAKiCadRun(unittest.TestCase):
