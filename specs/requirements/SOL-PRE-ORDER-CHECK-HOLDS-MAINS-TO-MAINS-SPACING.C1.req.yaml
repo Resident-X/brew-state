@@ -2,11 +2,11 @@ id: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C1
 type: criterion
 title: A mains-present design held by a record with no complete mains_to_mains mapping fails separation_basis naming the missing key
 status: active
-version: 2
+version: 3
 measurement_type: binary
 verification: test
 text: |-
-  On a design that declares MAINS present, a record with no mains_to_mains mapping, or one lacking clearance_mm, terminal_clearance_mm, creepage_mm, creepage_ahead_of_fuse_mm or entry_fuse, fails separation_basis naming the key. A figure that is not a positive number, a creepage_mm below creepage_ahead_of_fuse_mm with no downstream_basis, a held_at_reinforced that is not a list of pairs of net names, a terminal_clearance_mm below clearance_mm, a creepage_ahead_of_fuse_mm below creepage_mm, an entry_fuse naming no reference of the layout, and a key inside the mapping that the basis decision does not name each fail it likewise. A design that declares MAINS none is out of scope and passes without the mapping.
+  On a design that declares MAINS present, a record with no mains_to_mains mapping, or one lacking clearance_mm, terminal_clearance_mm, creepage_mm, creepage_ahead_of_fuse_mm or entry_fuse, fails separation_basis naming the key. A figure that is not a positive number, a creepage_mm below creepage_ahead_of_fuse_mm with no downstream_basis, a held_at_reinforced that is not a list of pairs of net names, a terminal_clearance_mm below clearance_mm, a creepage_ahead_of_fuse_mm below creepage_mm, an entry_fuse naming no reference of the layout or naming one whose pads do not stand one on a Mains_Entry net and one on a Mains net outside that class, and a key inside the mapping that the basis decision does not name each fail it likewise. A design that declares MAINS none is out of scope and passes without the mapping.
 links:
   - target: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING
     type: criterion-of

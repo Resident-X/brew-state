@@ -2,11 +2,11 @@ id: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C8
 type: criterion
 title: A net pair listed in held_at_reinforced is held to the mains-to-low-voltage figures and not to the lower mains-to-mains ones
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
-text: |-
-  On a seeded layout with two Mains-class nets listed in held_at_reinforced, a clearance between them below the signed mains_to_low_voltage clearance, and a surface path below its creepage, each fail with the layout rule check's violation naming both nets, though both distances exceed the mains_to_mains figures. A pair naming a net outside the Mains class fails mains_declaration. Pairs not listed are out of scope and keep the mains-to-mains figures.
+text: |
+  On a seeded layout with two Mains-class nets listed in held_at_reinforced, a clearance between them below the signed mains_to_low_voltage clearance, and a surface path below its creepage, each fail with the layout rule check's violation naming both nets, though both distances exceed the mains_to_mains figures. A pair naming a net outside the Mains class fails mains_declaration. A pair is held to the larger of each mains_to_low_voltage figure and the matching mains_to_mains figure, so a record whose mains_to_low_voltage is below its mains_to_mains never holds a listed pair looser than an unlisted one. Pairs not listed are out of scope and keep the mains-to-mains figures.
 links:
   - target: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING
     type: criterion-of
