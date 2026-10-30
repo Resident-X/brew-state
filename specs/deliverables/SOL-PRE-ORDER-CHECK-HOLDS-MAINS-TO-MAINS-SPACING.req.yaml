@@ -28,3 +28,7 @@ links:
     type: justified-by
   - target: SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: fe05a47da2fdf2d9f35d145635f9263d3ef3589e0e3d6acc033433184c621561
+  gating_profile: ""
