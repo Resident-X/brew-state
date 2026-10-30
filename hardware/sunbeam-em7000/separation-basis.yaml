@@ -263,7 +263,7 @@ table_rows:
 #       pad gap (7.7 mm facing, 7.77 mm diagonal; 7.6 mm accepted), not a published figure, and say so; the owner
 #       decides whether to accept it, change the part or find a published figure. K201, K731 and K741 have no
 #       entry: their short figures are inside the part and the check measures only pad gaps (the division
-#       record, § The bought parts' creepage and clearance, judged).
+#       record, § The four parts judged against the signed figures).
 #   (b) Only the U601 pin 10 to pin 11 pair is excused. Other facing pairs of that package that are mains
 #       against low voltage are not, and the check flags them.
 #   (c) The held_at_reinforced net names (/LINE and /LINE1, and /Mains entry and load feed/LINE_IN and
@@ -273,10 +273,11 @@ table_rows:
 # part's other pairs are not excused by it. The distances are those the part's own land pattern
 # leaves between the pads named, from the main-board schematic and the KiCad footprint of each part
 # (TO-252-3 for T701 and T711, the Vishay WSK2512 shunt land for R105, the standard 1206 land for
-# R101 to R104, R704, R705, R714 and R715, and the makers' lands for U601, U701 and U711). The reasons and
-# bounding elements below are the drafter's proposals for the owner to accept or correct, except
-# that the reasons of the bought-part creepage entries are those of the owner's recorded acceptance
-# (DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER, residual risk (e), 2026-10-29). Every
+# R101 to R104, R704, R705, R714 and R715, the makers' lands for U601, U701 and U711, and the board's own
+# footprint pad gap for U602). The reasons and bounding elements below are the drafter's proposals for the
+# owner to accept or correct, except that the reasons of the bought-part creepage entries are those of the
+# owner's recorded acceptance (DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER, residual risk (e),
+# 2026-10-29); for U602 they add the statement that the gap is the board's and the maker publishes none. Every
 # accepted_by and accepted_on is left empty for the owner's own act, and the values are drafts until
 # the finished main-board layout confirms each pair and distance. The last five entries are of the
 # same_connector_pins form, one for each of the five 2.0 mm-pitch harness headers J630, J635, J791, J821

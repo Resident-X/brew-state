@@ -466,6 +466,21 @@ class BoughtPartsJudged(unittest.TestCase):
         for key in (("K201", "Creepage"), ("K731 and K741", "Creepage")):
             self.assertIn("over 8 mm", rows[key][2])
             self.assertIn("not shown to meet", rows[key][4])
+            self.assertIn("8.0 mm at least, short by up to 2.0 mm (20 %)", rows[key][4])
+        # U602's board gap, read from the entries, is what the row's arithmetic states
+        _, data = committed()
+        accepted = {e["accepted_mm"] for e in data["accepted_exceptions"] if e.get("between", [""])[0].startswith("U602.")}
+        self.assertEqual(len(accepted), 1, accepted)
+        (accepted_mm,) = accepted
+        arithmetic = rows[("U602", "Creepage")][4]
+        facing = round(9.0 - 1.3, 2)
+        shortfall = round(data["mains_to_low_voltage"]["creepage_mm"] - facing, 1)
+        self.assertEqual((facing, shortfall), (7.7, 2.3))
+        self.assertLess(accepted_mm, facing)
+        self.assertIn(f"{facing} mm for the facing pairs", arithmetic)
+        self.assertIn("7.77 mm for the diagonals", arithmetic)
+        self.assertIn(f"short of 10.0 mm by {shortfall} mm ({round(100 * shortfall / 10.0)} %)", arithmetic)
+        self.assertIn(f"{accepted_mm} mm each", rows[("U602", "Creepage")][6])
 
     def test_the_relays_and_the_unpublished_figures_are_left_to_the_owner_and_nothing_is_signed(self):
         # SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-JUDGED.C2: For each of K201, K731, K741 and U602, the committed record and division record show exactly one of three states: the part's published creepage and clearance meet 10.0 mm and 3.0 mm; or the part's board pad gaps are what the check measures and the pad pairs that fall short each carry an accepted_exceptions entry in the check's form, with accepted_mm no greater than the measured gap, a stated ground and a bounding element, left unsigned; or the part is replaced by one in the first or second state. A figure inside the part that the board's pad gaps do not measure (the relays' published creepage over 8 mm, their clearance and U602's creepage and clearance where the maker publishes none) is recorded in the division record against the signed figure and counts as absent where unpublished: it is carried by the owner's recorded acceptance of bought-part creepage and put to the owner as an open decision to accept, change the part or find a published figure, and is never excused by an entry the check cannot judge. The owner's signature of the record is out of scope here and belongs to the acceptance leaf.
