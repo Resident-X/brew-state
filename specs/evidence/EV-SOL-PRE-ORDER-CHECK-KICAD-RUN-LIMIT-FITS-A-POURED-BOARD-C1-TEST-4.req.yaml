@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-KICAD-RUN-LIMIT-FITS-A-POURED-BOARD-C1-TEST-4
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-KICAD-RUN-LIMIT-FITS-A-POURED-BOARD.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-30T18:53:47.692253Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_views_commands.py::OneLimitOnAKiCadRun.test_the_views_tool_reads_the_constant_when_it_runs_not_a_copy_taken_at_import
+  artifact_version: cbf31805701210bb96838c81eede1c5fef22e671
+attested_by: crun-382ce10ba5e5cae0
+links:
+  - target: SOL-PRE-ORDER-CHECK-KICAD-RUN-LIMIT-FITS-A-POURED-BOARD.C1
+    type: satisfies

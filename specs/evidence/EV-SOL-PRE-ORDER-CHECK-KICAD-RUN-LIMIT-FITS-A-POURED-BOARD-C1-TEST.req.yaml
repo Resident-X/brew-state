@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-KICAD-RUN-LIMIT-FITS-A-POURED-BOARD-C1-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-KICAD-RUN-LIMIT-FITS-A-POURED-BOARD.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-30T18:53:47.47443Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check.py::KiCadRunsWithAConfigurationOfTheChecksOwn.test_the_limit_on_one_kicad_run_is_7200_seconds
+  artifact_version: cbf31805701210bb96838c81eede1c5fef22e671
+attested_by: crun-382ce10ba5e5cae0
+links:
+  - target: SOL-PRE-ORDER-CHECK-KICAD-RUN-LIMIT-FITS-A-POURED-BOARD.C1
+    type: satisfies

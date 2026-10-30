@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS-C4-TEST-6
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C4
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-30T18:53:56.789577Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_voltage.py::TheDeratingExceptionsAreJudged.test_an_entry_no_failure_uses_is_stale_and_fails_whatever_the_reason_the_position_is_not_failing
+  artifact_version: cbf31805701210bb96838c81eede1c5fef22e671
+attested_by: crun-b65732e1086a7900
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C4
+    type: satisfies

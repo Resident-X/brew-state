@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS-C7-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C7
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-30T18:53:57.577881Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_voltage.py::TheHardwareNotesCarryAnEntryForEachRule.test_the_notes_state_the_entry_form_the_accepted_line_the_failures_the_owners_fields_and_the_series_midpoint
+  artifact_version: cbf31805701210bb96838c81eede1c5fef22e671
+attested_by: crun-b65732e1086a7900
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C7
+    type: satisfies
