@@ -324,6 +324,17 @@
       },
       {
         "clearance": 1.5,
+        "name": "Mains_Entry",
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "priority": 8,
+        "schematic_color": "rgba(0, 0, 0, 0.000)",
+        "track_width": 0.2,
+        "tuning_profile": "",
+        "via_diameter": 0.75,
+        "via_drill": 0.3
+      },
+      {
+        "clearance": 1.5,
         "name": "MainsBranch",
         "pcb_color": "rgba(0, 0, 0, 0.000)",
         "priority": 1,
@@ -1122,6 +1133,14 @@
       {
         "netclass": "Mains",
         "pattern": "/Pump drives/PUMP_S_SNUB"
+      },
+      {
+        "netclass": "Mains_Entry",
+        "pattern": "/Mains entry and load feed/LINE_IN"
+      },
+      {
+        "netclass": "Mains_Entry",
+        "pattern": "/Mains entry and load feed/NEUTRAL_IN"
       }
     ]
   },
@@ -1152,6 +1171,7 @@
   "text_variables": {
     "BARRIER_COPPER_MM2": "0",
     "MAINS": "present",
+    "MAINS_ENTRY": "present",
     "PASTE_OVER_VIA_MM2": "0",
     "TEST_COURTYARD_MM": "1",
     "WORK_ANGLE_TOLERANCE_DEG": "0.1",

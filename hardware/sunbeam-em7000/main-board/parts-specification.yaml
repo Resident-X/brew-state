@@ -194,56 +194,56 @@ positions:
   # TP101: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP101
     value: TP_LINE_IN
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: mains copper
     lcsc: none
     class: none
   # TP102: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP102
     value: TP_LINE_F
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: mains copper
     lcsc: none
     class: none
   # TP103: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP103
     value: TP_LINE
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: mains copper
     lcsc: none
     class: none
   # TP104: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP104
     value: TP_LINE1
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: mains copper
     lcsc: none
     class: none
   # TP105: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP105
     value: TP_NEUTRAL_IN
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: mains copper
     lcsc: none
     class: none
   # TP106: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP106
     value: TP_NEUTRAL
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: mains copper
     lcsc: none
     class: none
   # TP107: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP107
     value: TP_NEUTRAL_IN_V
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: mains copper
     lcsc: none
     class: none
   # TP108: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP108
     value: TP_NEUTRAL_V
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: mains copper
     lcsc: none
     class: none
@@ -469,37 +469,37 @@ positions:
   # TP201: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP201
     value: TP_POL_GATE_A
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     lcsc: none
     class: none
   # TP202: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP202
     value: TP_POL_GATE_B
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     lcsc: none
     class: none
   # TP203: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP203
     value: TP_POL_OUT
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     lcsc: none
     class: none
   # TP204: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP204
     value: TP_POL_BUF
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     lcsc: none
     class: none
   # TP205: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP205
     value: TP_POL_COIL_LO
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     lcsc: none
     class: none
   # TP206: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP206
     value: TP_+5V
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     lcsc: none
     class: none
 
@@ -543,7 +543,7 @@ positions:
   # TP301: maker -; MPN -; catalogue class none
   - reference: TP301
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5 mm
     lcsc: none
     class: none
@@ -585,7 +585,7 @@ positions:
   # TP302: maker -; MPN -; catalogue class none
   - reference: TP302
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5 mm
     lcsc: none
     class: none
@@ -606,7 +606,7 @@ positions:
   # TP303: maker -; MPN -; catalogue class none
   - reference: TP303
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5 mm
     lcsc: none
     class: none
@@ -727,21 +727,21 @@ positions:
   # TP401: maker -; MPN -; catalogue class none
   - reference: TP401
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5 mm
     lcsc: none
     class: none
   # TP402: maker -; MPN -; catalogue class none
   - reference: TP402
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5 mm
     lcsc: none
     class: none
   # TP403: maker -; MPN -; catalogue class none
   - reference: TP403
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5 mm
     lcsc: none
     class: none
@@ -818,7 +818,7 @@ positions:
   # TP404: maker -; MPN -; catalogue class none
   - reference: TP404
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5 mm
     lcsc: none
     class: none
@@ -846,7 +846,7 @@ positions:
   # TP405: maker -; MPN -; catalogue class none
   - reference: TP405
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5 mm
     lcsc: none
     class: none
@@ -867,35 +867,35 @@ positions:
   # TP406: maker -; MPN -; catalogue class none
   - reference: TP406
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5 mm
     lcsc: none
     class: none
   # TP407: maker -; MPN -; catalogue class none
   - reference: TP407
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5 mm
     lcsc: none
     class: none
   # TP408: maker -; MPN -; catalogue class none
   - reference: TP408
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5 mm
     lcsc: none
     class: none
   # TP409: maker -; MPN -; catalogue class none
   - reference: TP409
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5 mm
     lcsc: none
     class: none
   # TP410: maker -; MPN -; catalogue class none
   - reference: TP410
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5 mm
     lcsc: none
     class: none
@@ -916,14 +916,14 @@ positions:
   # TP411: maker -; MPN -; catalogue class none
   - reference: TP411
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5 mm
     lcsc: none
     class: none
   # TP412: maker -; MPN -; catalogue class none
   - reference: TP412
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5 mm
     lcsc: none
     class: none
@@ -958,7 +958,7 @@ positions:
   # TP413: maker -; MPN -; catalogue class none
   - reference: TP413
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5 mm
     lcsc: none
     class: none
@@ -974,7 +974,7 @@ positions:
   # Y601: maker SiTime; MPN SiT8008BI-22-33E-8.000000; catalogue class extended
   - reference: Y601
     value: 8.000MHz
-    package: Oscillator_SMD_Abracon_ASE-4Pin_3.2x2.5mm
+    package: Oscillator_SMD_Abracon_ASE-4Pin_3.2x2.5mm_Pin1Mark
     rating: 2.97-3.63 V supply range, 3.3 V LVCMOS, +/-25 ppm, 45-55 % duty, VOH 90 % Vdd, -40..85 degC (SiTime SiT8008B Rev 1.08)
     lcsc: C819601
     class: crystal and oscillator
@@ -1184,61 +1184,61 @@ positions:
   # TP601: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP601
     value: TP_AMC_DRDY
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     lcsc: none
     class: none
   # TP602: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP602
     value: TP_AMC_CLKIN
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     lcsc: none
     class: none
   # TP603: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP603
     value: TP_VMEAS_DIV
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     lcsc: none
     class: none
   # TP604: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP604
     value: TP_AMC_AIN1P
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     lcsc: none
     class: none
   # TP605: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP605
     value: TP_AMC_DCDC_OUT
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     lcsc: none
     class: none
   # TP606: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP606
     value: TP_AMC_DCDC_HGND
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     lcsc: none
     class: none
   # TP607: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP607
     value: TP_AMC_HLDO_IN
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     lcsc: none
     class: none
   # TP608: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP608
     value: TP_AMC_HLDO_OUT
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     lcsc: none
     class: none
   # TP609: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP609
     value: TP_AMC_DCDC_CAP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     lcsc: none
     class: none
   # TP610: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP610
     value: TP_SPI2_MISO
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     lcsc: none
     class: none
 
@@ -1281,7 +1281,7 @@ positions:
   # TP630: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP630
     value: TP_ZC_IN
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     lcsc: none
     class: none
 
@@ -1331,7 +1331,7 @@ positions:
   # TP501: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP501
     value: TestPoint
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5mm
     lcsc: none
     class: none
@@ -1380,7 +1380,7 @@ positions:
   # TP502: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP502
     value: TestPoint
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5mm
     lcsc: none
     class: none
@@ -1429,7 +1429,7 @@ positions:
   # TP503: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP503
     value: TestPoint
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5mm
     lcsc: none
     class: none
@@ -1494,7 +1494,7 @@ positions:
   # TP520: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP520
     value: TestPoint
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5mm
     lcsc: none
     class: none
@@ -1578,21 +1578,21 @@ positions:
   # TP521: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP521
     value: TestPoint
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5mm
     lcsc: none
     class: none
   # TP522: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP522
     value: TestPoint
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5mm
     lcsc: none
     class: none
   # TP523: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP523
     value: TestPoint
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5mm
     lcsc: none
     class: none
@@ -1676,21 +1676,21 @@ positions:
   # TP524: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP524
     value: TestPoint
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5mm
     lcsc: none
     class: none
   # TP525: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP525
     value: TestPoint
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5mm
     lcsc: none
     class: none
   # TP526: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP526
     value: TestPoint
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5mm
     lcsc: none
     class: none
@@ -1753,14 +1753,14 @@ positions:
   # TP527: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP527
     value: TestPoint
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5mm
     lcsc: none
     class: none
   # TP528: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP528
     value: TestPoint
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5mm
     lcsc: none
     class: none
@@ -1823,14 +1823,14 @@ positions:
   # TP529: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP529
     value: TestPoint
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5mm
     lcsc: none
     class: none
   # TP530: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP530
     value: TestPoint
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5mm
     lcsc: none
     class: none
@@ -1893,14 +1893,14 @@ positions:
   # TP531: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP531
     value: TestPoint
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5mm
     lcsc: none
     class: none
   # TP532: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP532
     value: TestPoint
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5mm
     lcsc: none
     class: none
@@ -1958,7 +1958,7 @@ positions:
   # TP570: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP570
     value: TestPoint
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5mm
     lcsc: none
     class: none
@@ -2014,7 +2014,7 @@ positions:
   # TP571: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP571
     value: TestPoint
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: pad 1.5mm
     lcsc: none
     class: none
@@ -2163,25 +2163,25 @@ positions:
   # TP620: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP620
     value: TP_PT1_BIAS
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     lcsc: none
     class: none
   # TP621: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP621
     value: TP_PT1_RTDINP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     lcsc: none
     class: none
   # TP622: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP622
     value: TP_PT2_BIAS
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     lcsc: none
     class: none
   # TP623: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP623
     value: TP_PT2_RTDINP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     lcsc: none
     class: none
   # U620: maker Analog Devices (Maxim); MPN MAX31865ATP+T; catalogue class extended
@@ -2208,7 +2208,7 @@ positions:
   # TP690: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP690
     value: TP_PT1_FORCEN_SRC
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     lcsc: none
     class: none
   # R691: maker UNI-ROYAL; MPN 0603WAF0000T5E; catalogue class basic
@@ -2221,7 +2221,7 @@ positions:
   # TP691: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP691
     value: TP_PT2_FORCEN_SRC
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     lcsc: none
     class: none
 
@@ -2292,13 +2292,13 @@ positions:
   # TP670: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP670
     value: TP_WT1_DATA
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     lcsc: none
     class: none
   # TP671: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP671
     value: TP_WT1_INA_P
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     lcsc: none
     class: none
   # U631: maker Avia Semiconductor (Xiamen); MPN HX711; catalogue class extended
@@ -2367,13 +2367,13 @@ positions:
   # TP672: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP672
     value: TP_WT2_DATA
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     lcsc: none
     class: none
   # TP673: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP673
     value: TP_WT2_INA_P
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     lcsc: none
     class: none
 
@@ -2444,7 +2444,7 @@ positions:
   # TP701: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP701
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: test point
     lcsc: none
     class: none
@@ -2514,7 +2514,7 @@ positions:
   # TP711: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP711
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: test point
     lcsc: none
     class: none
@@ -2535,7 +2535,7 @@ positions:
   # TP702: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP702
     value: TP_PUMP_C_MT2
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: mains copper
     lcsc: none
     class: none
@@ -2556,7 +2556,7 @@ positions:
   # TP712: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP712
     value: TP_PUMP_S_MT2
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: mains copper
     lcsc: none
     class: none
@@ -2600,7 +2600,7 @@ positions:
   # TP731: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP731
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: test point
     lcsc: none
     class: none
@@ -2642,7 +2642,7 @@ positions:
   # TP741: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP741
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: test point
     lcsc: none
     class: none
@@ -2672,7 +2672,7 @@ positions:
   # TP761: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP761
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: test point
     lcsc: none
     class: none
@@ -2707,7 +2707,7 @@ positions:
   # TP762: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP762
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: test point
     lcsc: none
     class: none
@@ -2742,7 +2742,7 @@ positions:
   # TP772: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP772
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: test point
     lcsc: none
     class: none
@@ -2807,7 +2807,7 @@ positions:
   # TP791: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP791
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: test point
     lcsc: none
     class: none
@@ -2842,7 +2842,7 @@ positions:
   # TP792: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP792
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: test point
     lcsc: none
     class: none
@@ -2870,7 +2870,7 @@ positions:
   # TP793: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP793
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: test point
     lcsc: none
     class: none
@@ -2898,7 +2898,7 @@ positions:
   # TP794: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP794
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: test point
     lcsc: none
     class: none
@@ -2926,7 +2926,7 @@ positions:
   # TP795: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP795
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: test point
     lcsc: none
     class: none
@@ -2954,7 +2954,7 @@ positions:
   # TP796: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP796
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: test point
     lcsc: none
     class: none
@@ -3033,14 +3033,14 @@ positions:
   # TP821: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP821
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: test point
     lcsc: none
     class: none
   # TP822: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP822
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: test point
     lcsc: none
     class: none
@@ -3082,7 +3082,7 @@ positions:
   # TP823: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP823
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: test point
     lcsc: none
     class: none
@@ -3110,7 +3110,7 @@ positions:
   # TP824: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP824
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: test point
     lcsc: none
     class: none
@@ -3124,7 +3124,7 @@ positions:
   # TP831: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP831
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: test point
     lcsc: none
     class: none
@@ -3138,7 +3138,7 @@ positions:
   # TP832: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP832
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: test point
     lcsc: none
     class: none
@@ -3152,7 +3152,7 @@ positions:
   # TP833: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP833
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: test point
     lcsc: none
     class: none
@@ -3166,7 +3166,7 @@ positions:
   # TP834: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP834
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: test point
     lcsc: none
     class: none
@@ -3180,7 +3180,7 @@ positions:
   # TP835: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP835
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: test point
     lcsc: none
     class: none
@@ -3217,7 +3217,7 @@ positions:
   # TP861: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP861
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: test point
     lcsc: none
     class: none
@@ -3238,7 +3238,7 @@ positions:
   # TP862: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP862
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: test point
     lcsc: none
     class: none
@@ -3259,7 +3259,7 @@ positions:
   # TP863: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP863
     value: TP
-    package: TestPoint_Pad_D1.5mm
+    package: TestPoint_Pad_D1.0mm_Tight
     rating: test point
     lcsc: none
     class: none

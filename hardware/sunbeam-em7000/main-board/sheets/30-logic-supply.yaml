@@ -71,7 +71,7 @@ parts:
     lib_id: Connector:TestPoint
     value: "TP"
     rating: "pad 1.5 mm"
-    footprint: TestPoint:TestPoint_Pad_D1.5mm
+    footprint: main-board:TestPoint_Pad_D1.0mm_Tight
     mpn: "-"
     maker: "-"
     lcsc: none
@@ -149,7 +149,7 @@ parts:
     lib_id: Connector:TestPoint
     value: "TP"
     rating: "pad 1.5 mm"
-    footprint: TestPoint:TestPoint_Pad_D1.5mm
+    footprint: main-board:TestPoint_Pad_D1.0mm_Tight
     mpn: "-"
     maker: "-"
     lcsc: none
@@ -188,7 +188,7 @@ parts:
     lib_id: Connector:TestPoint
     value: "TP"
     rating: "pad 1.5 mm"
-    footprint: TestPoint:TestPoint_Pad_D1.5mm
+    footprint: main-board:TestPoint_Pad_D1.0mm_Tight
     mpn: "-"
     maker: "-"
     lcsc: none

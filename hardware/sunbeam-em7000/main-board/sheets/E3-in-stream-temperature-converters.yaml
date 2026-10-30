@@ -267,7 +267,7 @@ parts:
   lib_id: Connector:TestPoint
   value: TP_PT1_BIAS
   rating: ''
-  footprint: TestPoint:TestPoint_Pad_D1.5mm
+  footprint: main-board:TestPoint_Pad_D1.0mm_Tight
   mpn: ''
   maker: ''
   lcsc: ''
@@ -280,7 +280,7 @@ parts:
   lib_id: Connector:TestPoint
   value: TP_PT1_RTDINP
   rating: ''
-  footprint: TestPoint:TestPoint_Pad_D1.5mm
+  footprint: main-board:TestPoint_Pad_D1.0mm_Tight
   mpn: ''
   maker: ''
   lcsc: ''
@@ -293,7 +293,7 @@ parts:
   lib_id: Connector:TestPoint
   value: TP_PT2_BIAS
   rating: ''
-  footprint: TestPoint:TestPoint_Pad_D1.5mm
+  footprint: main-board:TestPoint_Pad_D1.0mm_Tight
   mpn: ''
   maker: ''
   lcsc: ''
@@ -306,7 +306,7 @@ parts:
   lib_id: Connector:TestPoint
   value: TP_PT2_RTDINP
   rating: ''
-  footprint: TestPoint:TestPoint_Pad_D1.5mm
+  footprint: main-board:TestPoint_Pad_D1.0mm_Tight
   mpn: ''
   maker: ''
   lcsc: ''
@@ -360,7 +360,7 @@ parts:
   lib_id: Connector:TestPoint
   value: TP_PT1_FORCEN_SRC
   rating: ''
-  footprint: TestPoint:TestPoint_Pad_D1.5mm
+  footprint: main-board:TestPoint_Pad_D1.0mm_Tight
   mpn: ''
   maker: ''
   lcsc: ''
@@ -388,7 +388,7 @@ parts:
   lib_id: Connector:TestPoint
   value: TP_PT2_FORCEN_SRC
   rating: ''
-  footprint: TestPoint:TestPoint_Pad_D1.5mm
+  footprint: main-board:TestPoint_Pad_D1.0mm_Tight
   mpn: ''
   maker: ''
   lcsc: ''

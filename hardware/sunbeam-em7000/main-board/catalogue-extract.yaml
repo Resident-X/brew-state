@@ -484,6 +484,7 @@ entries:
       read_on: 2026-10-29
   - lcsc: C108051
     library_class: extended
+    category: Transistor, Photovoltaic Output Optoisolators
     stock: 8276
     unit_price: 0.1363
     lifecycle:
@@ -676,6 +677,7 @@ entries:
       read_on: 2026-10-29
   - lcsc: C899826
     library_class: extended
+    category: Triac, SCR Output Optoisolators
     stock: 482
     unit_price: 0.5814
     lifecycle:
