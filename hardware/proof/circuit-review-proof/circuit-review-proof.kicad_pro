@@ -577,6 +577,7 @@
   "text_variables": {
     "BARRIER_COPPER_MM2": "0",
     "MAINS": "present",
+    "MAINS_ENTRY": "none",
     "NOT_FOR_MANUFACTURE": "true",
     "PASTE_OVER_VIA_MM2": "0",
     "TEST_COURTYARD_MM": "1",

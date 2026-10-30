@@ -686,16 +686,24 @@ def positive_number(value) -> bool:
 #: The keys a separation basis record holds, and the two each mains_to_low_voltage-style pair holds.
 RECORD_KEYS = {"standard", "supply", "working_voltage", "pollution_degree", "material_group", "environment",
                "barriers", "mains_to_low_voltage", "accepted_by", "accepted_on", "synthetic",
-               "overvoltage_category", "altitude_m", "barrier_types", "table_rows"}
+               "overvoltage_category", "altitude_m", "barrier_types", "table_rows", "mains_to_mains"}
 PAIR_KEYS = {"clearance_mm", "creepage_mm"}
+#: The keys the mains_to_mains mapping holds, every one but downstream_basis required of a record held by a design that declares mains present.
+MAINS_TO_MAINS_KEYS = ("clearance_mm", "terminal_clearance_mm", "creepage_mm", "creepage_ahead_of_fuse_mm", "entry_fuse",
+                       "held_at_reinforced", "downstream_basis")
+MAINS_TO_MAINS_FIGURES = ("clearance_mm", "terminal_clearance_mm", "creepage_mm", "creepage_ahead_of_fuse_mm")
 #: The keys inside the inputs a record states, each of which is optional on a record; the rest of the forms the
 #: separation basis decision fixes for them are read in read_inputs.
 INSULATIONS = ("basic", "reinforced")
+#: A table row may also be of the insulation downstream of the entry fuse, which a barrier never is.
+ROW_INSULATIONS = INSULATIONS + ("functional",)
+#: Where a table row applies: to the terminals of a part, or to conductors elsewhere, which is what a row stating none is.
+LOCATIONS = ("terminal", "conductor")
 BARRIER_KEYS = ("barrier", "insulation", "earth_bonded", "touchable", "formed_by")
 CITATION_KEYS = ("document", "edition", "locator")
 ROW_KEYS = ("citation", "inputs", "figure")
 ROW_INPUT_KEYS = ("working_voltage_v", "insulation", "overvoltage_category", "pollution_degree", "material_group",
-                  "altitude_m")
+                  "altitude_m", "location")
 
 
 class Signed(tuple):
@@ -709,6 +717,12 @@ class Signed(tuple):
         signed = super().__new__(cls, (clearance, creepage))
         signed.basis = basis
         return signed
+
+    @property
+    def mains_to_mains(self) -> Optional[dict]:
+        """The record's mains_to_mains mapping, once read whole; None for figures built without a record."""
+        held = getattr(self, "basis", {}).get("mains_to_mains")
+        return held if isinstance(held, dict) else None
 
 
 class RecordForm(Exception):
@@ -889,7 +903,8 @@ def read_inputs(design: Design, record: str, data: dict) -> List[Violation]:
                 if not inputs:
                     reading.bad(f"{where}.inputs", f"{where}.inputs is empty, so it states no input the row is read at")
                 form = {"working_voltage_v": lambda path, value: reading.positive(path, value, " of volts"),
-                        "insulation": lambda path, value: reading.one_of(path, value, INSULATIONS),
+                        "insulation": lambda path, value: reading.one_of(path, value, ROW_INSULATIONS),
+                        "location": lambda path, value: reading.one_of(path, value, LOCATIONS),
                         "overvoltage_category": lambda path, value: reading.whole(path, value, 1, 4),
                         "pollution_degree": lambda path, value: reading.whole(path, value, 1, 4),
                         "material_group": reading.text,
@@ -904,6 +919,54 @@ def read_inputs(design: Design, record: str, data: dict) -> List[Violation]:
                 for key in sorted(PAIR_KEYS):
                     if key in figure:
                         reading.positive(f"{where}.figure.{key}", figure[key], " of millimetres")
+    return reading.found
+
+
+def read_mains_to_mains(design: Design, record: str, data: dict) -> List[Violation]:
+    """What is wrong with the record's mains_to_mains mapping, which a design that declares mains present must carry whole."""
+    held = data.get("mains_to_mains")
+    if held is None:
+        return [Violation(design.project, "separation_basis", f"{record} mains_to_mains",
+                          "the record lacks mains_to_mains, the mapping holding clearance_mm, terminal_clearance_mm, "
+                          "creepage_mm, creepage_ahead_of_fuse_mm, entry_fuse and held_at_reinforced that a design "
+                          "declaring mains present is held to; add it to the signed record")]
+    reading = Reading(design, "separation_basis", record, "mains_to_mains mapping")
+    required = tuple(key for key in MAINS_TO_MAINS_KEYS if key != "downstream_basis")
+    if not reading.mapping("mains_to_mains", held, MAINS_TO_MAINS_KEYS, required, "a mains_to_mains mapping"):
+        return reading.found
+    figures = {}
+    for key in MAINS_TO_MAINS_FIGURES:
+        if key in held and reading.positive(f"mains_to_mains.{key}", held[key], " of millimetres"):
+            figures[key] = held[key]
+    if "entry_fuse" in held:
+        reading.text("mains_to_mains.entry_fuse", held["entry_fuse"])
+    if "downstream_basis" in held:
+        reading.text("mains_to_mains.downstream_basis", held["downstream_basis"])
+    if "terminal_clearance_mm" in figures and "clearance_mm" in figures and figures["terminal_clearance_mm"] < figures["clearance_mm"]:
+        reading.bad("mains_to_mains.terminal_clearance_mm",
+                    f"mains_to_mains.terminal_clearance_mm is {figures['terminal_clearance_mm']:g} mm, below clearance_mm "
+                    f"{figures['clearance_mm']:g} mm; the terminals of a part are held to a clearance no less than conductors elsewhere")
+    if "creepage_ahead_of_fuse_mm" in figures and "creepage_mm" in figures:
+        ahead, downstream = figures["creepage_ahead_of_fuse_mm"], figures["creepage_mm"]
+        if ahead < downstream:
+            reading.bad("mains_to_mains.creepage_ahead_of_fuse_mm",
+                        f"mains_to_mains.creepage_ahead_of_fuse_mm is {ahead:g} mm, below creepage_mm {downstream:g} mm; "
+                        "the creepage ahead of the fuse is the basic-insulation figure and is no less than the one downstream")
+        elif downstream < ahead and "downstream_basis" not in held:
+            reading.bad("mains_to_mains.creepage_mm",
+                        f"mains_to_mains.creepage_mm is {downstream:g} mm, below creepage_ahead_of_fuse_mm {ahead:g} mm, and the "
+                        "mapping holds no downstream_basis stating the fault current and the entry fuse clearing a tracking fault "
+                        "at it; state downstream_basis, or raise creepage_mm to the figure ahead of the fuse")
+    if "held_at_reinforced" in held and reading.listed("mains_to_mains.held_at_reinforced", held["held_at_reinforced"],
+                                                       "pairs of net names", empty=True):
+        for index, pair in enumerate(held["held_at_reinforced"]):
+            where = f"mains_to_mains.held_at_reinforced[{index}]"
+            if (not isinstance(pair, list) or len(pair) != 2
+                    or not all(isinstance(name, str) and name.strip() for name in pair)):
+                reading.bad(where, f"{where} is {pair!r}, where it is a pair of two net names")
+            elif any(UNWRITABLE & set(name) for name in pair):
+                reading.bad(where, f"{where} names a net with a quote or a backslash in its name, which a KiCad rule "
+                                   "condition cannot carry; rename the net")
     return reading.found
 
 
@@ -961,6 +1024,7 @@ def read_record(yaml, root: str, design: Design, record: Optional[str], not_for_
                                   f"mains_to_low_voltage holds '{key}', where it holds only clearance_mm and "
                                   "creepage_mm, the figures compared; correct the key's spelling, or remove it"))
     problems += read_inputs(design, record, data)
+    problems += read_mains_to_mains(design, record, data)
     for key in ("clearance_mm", "creepage_mm"):
         if key not in pair:
             problems.append(Violation(design.project, "separation_basis", f"{record} mains_to_low_voltage.{key}",
@@ -1050,6 +1114,60 @@ def row_applies(inputs: dict, basis: dict, voltage: float, insulation: Optional[
     return "insulation" not in inputs or inputs["insulation"] == insulation
 
 
+#: What each mains_to_mains figure is compared with: the insulation, the location and the row figure of the table rows that give its floor.
+MAINS_TO_MAINS_FLOORS = (("clearance_mm", "basic", "conductor", "clearance_mm"),
+                         ("terminal_clearance_mm", "basic", "terminal", "clearance_mm"),
+                         ("creepage_ahead_of_fuse_mm", "basic", "conductor", "creepage_mm"),
+                         ("creepage_mm", None, "conductor", "creepage_mm"))
+
+
+def mains_to_mains_floor(design: Design, record: str, signed: Signed, voltage: float) -> List[Violation]:
+    """What is wrong with the signed mains_to_mains figures against the floor the record's own table rows give.
+
+    A figure's floor is the largest figure over the applicable rows of the
+    insulation and location that figure is read from: basic for all but the
+    creepage downstream of the entry fuse, which is functional where the
+    mapping holds downstream_basis and basic otherwise; terminal for the
+    terminal clearance and conductor, which a row stating no location is, for
+    the rest. A row must state its insulation to be read here. Where a row is
+    at exactly the basis working voltage, the derived row, rows of the same
+    insulation and location at a higher working voltage, the rows it was
+    interpolated toward, are not read for that figure.
+    """
+    held = signed.mains_to_mains
+    if held is None:
+        return []
+    basis = signed.basis
+    found = []
+    for key, insulation, location, figure_key in MAINS_TO_MAINS_FLOORS:
+        insulation = insulation or ("functional" if "downstream_basis" in held else "basic")
+        where = f"{record} mains_to_mains.{key}"
+        given = []
+        for position, row in enumerate(basis.get("table_rows") or []):
+            inputs = row["inputs"]
+            if (inputs.get("insulation") == insulation and inputs.get("location", "conductor") == location
+                    and figure_key in row["figure"] and row_applies(inputs, basis, voltage, insulation)):
+                given.append((position, row["figure"][figure_key], inputs.get("working_voltage_v")))
+        if any(at is not None and abs(at - voltage) < 1e-9 for _, _, at in given):
+            given = [(position, figure, at) for position, figure, at in given if at is None or at <= voltage + 1e-9]
+        if not given:
+            found.append(Violation(design.project, "separation_floor", where,
+                                   f"no table row of the record gives a {figure_key} of {insulation} insulation at the "
+                                   f"{location} that applies at working_voltage_v {voltage:g}, overvoltage_category "
+                                   f"{basis['overvoltage_category']}, altitude_m {basis['altitude_m']:g}, so the signed "
+                                   f"mains_to_mains.{key} has no floor to be held to; add the table row that gives it, "
+                                   "stating its insulation and, for a terminal, its location"))
+            continue
+        floor = max(figure for _, figure, _ in given)
+        if held[key] < floor - 1e-9:
+            at = ", ".join(f"table_rows[{position}]" for position, figure, _ in given if figure == floor)
+            found.append(Violation(design.project, "separation_floor", where,
+                                   f"the signed mains_to_mains.{key} is {held[key]:g} mm, below the {floor:g} mm floor the "
+                                   f"record's own table rows give ({at}); raise the signed figure to at least {floor:g} mm, "
+                                   "or correct the row or the inputs it is read at"))
+    return found
+
+
 def separation_floor(design: Design, record: str, signed: Signed) -> List[Violation]:
     """What is wrong with the signed figures against the floor the record's own table rows give.
 
@@ -1095,7 +1213,7 @@ def separation_floor(design: Design, record: str, signed: Signed) -> List[Violat
                                    f"the signed {key} is {signed[index]:g} mm, below the {floor:g} mm floor the record's own "
                                    f"table rows give ({at}); raise the signed figure to at least {floor:g} mm, or correct "
                                    "the row or the inputs it is read at"))
-    return found
+    return found + mains_to_mains_floor(design, record, signed, voltage)
 
 
 #: The two rules written after the signed rule to hold a non-plated hole and a plated hole to the signed distance.
@@ -4407,14 +4525,14 @@ def class_widths(project: dict) -> Tuple[Dict[str, Tuple[float, float]], List[st
 
 
 def project_class_names(project: dict) -> Set[str]:
-    """Every net class the project file names, and Mains, whatever its track width reads as.
+    """Every net class the project file names, and Mains and Mains_Entry, whatever its track width reads as.
 
     The classes a layout's nets are resolved against are these, not the ones
     with a readable width, so a net in a class whose width cannot be read is
     still placed in that class and never falls to Default.
     """
     return {entry["name"] for entry in setting(project, "net_settings", "classes") or []
-            if isinstance(entry, dict) and isinstance(entry.get("name"), str)} | {"Mains"}
+            if isinstance(entry, dict) and isinstance(entry.get("name"), str)} | {"Mains", "Mains_Entry"}
 
 
 def net_widths(nets: Set[str], members: Dict[str, Set[str]], widths: Dict[str, Tuple[float, float]]) -> Dict[str, float]:
@@ -4864,6 +4982,46 @@ def appended_rules(signed: Optional[Tuple[float, float]], nonce: str, net: Optio
     text = "\n" + marker(nonce, EVERY_ITEM if net is None else f"A.NetName == '{net}'")
     if signed is not None:
         text += (f'(rule "{SIGNED_RULE}"\n\t(condition "{MAINS_CONDITION}")\n'
+                 f'\t(constraint clearance (min {signed[0]:g}mm))\n\t(constraint creepage (min {signed[1]:g}mm)))\n')
+        text += mains_to_mains_rules(signed)
+    return text
+
+
+#: The names of the rules written after the signed one for the spacing between conductors at different mains potentials.
+MAINS_TO_MAINS_RULE = f"{RESERVED}: signed mains-to-mains spacing"
+TERMINAL_RULE = f"{RESERVED}: signed terminal clearance"
+AHEAD_OF_FUSE_RULE = f"{RESERVED}: signed creepage ahead of the fuse"
+REINFORCED_RULE = f"{RESERVED}: net pair held at reinforced"
+#: Mains-class items on different nets: KiCad checks no clearance or creepage between two items of one net.
+MAINS_TO_MAINS_CONDITION = "A.hasNetclass('Mains') && B.hasNetclass('Mains')"
+TERMINAL_CONDITION = "A.Type == 'Pad' && B.Type == 'Pad' && A.hasNetclass('Mains') && B.hasNetclass('Mains')"
+AHEAD_OF_FUSE_CONDITION = "A.hasNetclass('Mains_Entry') && B.hasNetclass('Mains')"
+
+
+def mains_to_mains_rules(signed) -> str:
+    """The rules, in KiCad's own form, holding Mains-class items on different nets to the signed mains_to_mains figures.
+
+    They are written after the signed Mains rule, so the last matching rule is
+    theirs whatever the design writes: the clearance and creepage between any
+    two Mains-class items, the larger clearance between two pads, the creepage
+    ahead of the fuse for a pair with an item of the Mains_Entry class, and
+    for each pair of nets held at reinforced the mains_to_low_voltage figures.
+    KiCad tries a condition with each item as A in turn, so a pair is matched
+    whichever order it is written.
+    """
+    held = getattr(signed, "mains_to_mains", None)
+    if held is None:
+        return ""
+    text = (f'(rule "{MAINS_TO_MAINS_RULE}"\n\t(condition "{MAINS_TO_MAINS_CONDITION}")\n'
+            f'\t(constraint clearance (min {held["clearance_mm"]:g}mm))\n'
+            f'\t(constraint creepage (min {held["creepage_mm"]:g}mm)))\n'
+            f'(rule "{TERMINAL_RULE}"\n\t(condition "{TERMINAL_CONDITION}")\n'
+            f'\t(constraint clearance (min {held["terminal_clearance_mm"]:g}mm)))\n'
+            f'(rule "{AHEAD_OF_FUSE_RULE}"\n\t(condition "{AHEAD_OF_FUSE_CONDITION}")\n'
+            f'\t(constraint creepage (min {held["creepage_ahead_of_fuse_mm"]:g}mm)))\n')
+    for index, (first, second) in enumerate(held["held_at_reinforced"]):
+        text += (f'(rule "{REINFORCED_RULE} {index + 1}"\n'
+                 f'\t(condition "A.NetName == \'{first}\' && B.NetName == \'{second}\'")\n'
                  f'\t(constraint clearance (min {signed[0]:g}mm))\n\t(constraint creepage (min {signed[1]:g}mm)))\n')
     return text
 
@@ -6126,6 +6284,57 @@ def unmarked_pins(design: Design, tree: list, parts: Dict[str, Tuple[str, List[s
     return found
 
 
+def entry_declaration(design: Design, entry: Optional[str], ahead: Set[str], mains: Set[str]) -> List[Violation]:
+    """What contradicts the MAINS_ENTRY declaration of a design that declares mains present.
+
+    `ahead` is the nets of the layout in the Mains_Entry class and `mains` those
+    in the Mains class. A declaration that is not present or none is reported
+    where it is read; present needs a net in the class, and every net in it is
+    also in Mains; none needs no net in it.
+    """
+    where = f"{design.project} text_variables.MAINS_ENTRY"
+    found = []
+    if entry == "present" and not ahead:
+        found.append(Violation(design.project, "mains_declaration", design.layout,
+                               "MAINS_ENTRY is present but no net on the layout is in the Mains_Entry net class, so the "
+                               "creepage ahead of the fuse would apply to nothing; assign each net ahead of the entry "
+                               "fuse to Mains_Entry as well as Mains"))
+    if entry == "none" and ahead:
+        found.append(Violation(design.project, "mains_declaration", where,
+                               f"MAINS_ENTRY is none but the layout puts {', '.join(sorted(ahead))} in the Mains_Entry net "
+                               "class; set MAINS_ENTRY to present, or take them out of Mains_Entry"))
+    if entry == "present":
+        for net in sorted(ahead - mains):
+            found.append(Violation(design.project, "mains_declaration", f"{design.layout} net {net}",
+                                   f"net {net} is in the Mains_Entry net class but not in the Mains class; every net ahead "
+                                   "of the entry fuse is a mains net, so assign it to Mains as well"))
+    return found
+
+
+def mains_pairs(design: Design, record: str, signed: Signed, mains: Set[str], footprints: Dict[str, list]) -> List[Violation]:
+    """What the layout contradicts in the mains_to_mains mapping it is held to: the entry fuse and the nets held at reinforced.
+
+    entry_fuse must name a reference of the layout, and each net of a
+    held_at_reinforced pair must be in the Mains class of the layout.
+    """
+    held = signed.mains_to_mains
+    if held is None:
+        return []
+    found = []
+    if held["entry_fuse"] not in footprints:
+        found.append(Violation(design.project, "separation_basis", f"{record} mains_to_mains.entry_fuse",
+                               f"mains_to_mains.entry_fuse is '{held['entry_fuse']}', which is no reference on the layout "
+                               f"({', '.join(sorted(footprints)) or 'it has none'}); name the entry fuse's reference"))
+    for index, pair in enumerate(held["held_at_reinforced"]):
+        for net in pair:
+            if net not in mains:
+                found.append(Violation(design.project, "mains_declaration", f"{record} mains_to_mains.held_at_reinforced[{index}]",
+                                       f"the pair held at reinforced names {net}, which is not in the Mains net class of the "
+                                       "layout; a pair across a device that defeats a safety function is of two Mains-class "
+                                       "nets, so name the nets or put them in Mains"))
+    return found
+
+
 # --- One design ----------------------------------------------------------------
 
 
@@ -6164,6 +6373,12 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
         found.append(Violation(design.project, "mains_declaration", f"{design.project} text_variables.MAINS",
                                f"the project text variable MAINS {said}; set it to present if the board carries "
                                "mains, or none if it does not, since silence is never read as compliance"))
+    entry_declared = variables.get("MAINS_ENTRY")
+    if mains == "present" and entry_declared not in ("present", "none"):
+        said = "is not set" if entry_declared is None else f"is '{entry_declared}'"
+        found.append(Violation(design.project, "mains_declaration", f"{design.project} text_variables.MAINS_ENTRY",
+                               f"the project text variable MAINS_ENTRY {said}; set it to present if the board carries nets "
+                               "ahead of the entry fuse, or none if it does not, since silence is never read as compliance"))
 
     figures, unset = workmanship_figures(design, variables)
     found += unset
@@ -6431,6 +6646,11 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
         found.append(Violation(design.project, "mains_declaration", f"{design.project} text_variables.MAINS",
                                f"MAINS is none but the layout puts {', '.join(sorted(on_layout))} in the Mains net "
                                "class; set MAINS to present, or take them out of Mains"))
+
+    if mains == "present":
+        found += entry_declaration(design, entry_declared, members["Mains_Entry"], on_layout)
+        if signed is not None:
+            found += mains_pairs(design, record, signed, on_layout, board_footprints(tree))
 
     found += net_ties(design, tree, on_layout)
     found += crystal_keep_clear(design, rules, tree)

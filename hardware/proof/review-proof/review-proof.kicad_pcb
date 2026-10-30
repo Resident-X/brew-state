@@ -85,6 +85,7 @@
 	)
 	(property "BARRIER_COPPER_MM2" "0")
 	(property "MAINS" "present")
+	(property "MAINS_ENTRY" "none")
 	(property "NOT_FOR_MANUFACTURE" "true")
 	(property "PASTE_OVER_VIA_MM2" "0")
 	(property "TEST_COURTYARD_MM" "1")

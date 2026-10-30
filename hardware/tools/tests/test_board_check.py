@@ -47,6 +47,13 @@ standard: synthetic
 mains_to_low_voltage:
   clearance_mm: 3.0
   creepage_mm: 4.0
+mains_to_mains:
+  clearance_mm: 1.5
+  terminal_clearance_mm: 2.0
+  creepage_mm: 2.5
+  creepage_ahead_of_fuse_mm: 2.5
+  entry_fuse: F1
+  held_at_reinforced: []
 accepted_by: maintainer
 accepted_on: 2026-10-01
 """
@@ -791,6 +798,8 @@ def floor_basis(**changes) -> dict:
     basis = {"standard": "synthetic", "working_voltage": "250 V rms", "pollution_degree": 2, "material_group": "IIIb",
              "overvoltage_category": 2, "altitude_m": 2000, "barriers": [], "barrier_types": [],
              "mains_to_low_voltage": {"clearance_mm": 3.0, "creepage_mm": 4.0},
+             "mains_to_mains": {"clearance_mm": 1.5, "terminal_clearance_mm": 2.0, "creepage_mm": 2.5,
+                                "creepage_ahead_of_fuse_mm": 2.5, "entry_fuse": "F1", "held_at_reinforced": []},
              "table_rows": [floor_row({"working_voltage_v": 250, "overvoltage_category": 2}, clearance_mm=3.0),
                             floor_row({"working_voltage_v": 250, "pollution_degree": 2, "material_group": "IIIb"}, creepage_mm=4.0)],
              "accepted_by": "maintainer", "accepted_on": "2026-10-01", "synthetic": True}
@@ -805,7 +814,8 @@ class FloorTree(RecordTree):
         yaml = board_check.require_yaml()
         signed, problems = self.record(yaml.safe_dump(floor_basis(**changes)), True)
         self.assertEqual(problems, [])
-        return signed, board_check.separation_floor(self.design, FLOOR_PATH, signed)
+        return signed, [v for v in board_check.separation_floor(self.design, FLOOR_PATH, signed)
+                        if "mains_to_mains" not in v.location]
 
     def failures(self, **changes):
         return [(v.rule, v.location.split(" ")[-1]) for v in self.floor(**changes)[1]]
