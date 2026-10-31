@@ -27,3 +27,11 @@ links:
     type: depends-on
   - target: DEC-REVIEW-FAN-OUT-FROM-SHARED-CONTEXT-WITH-REPLICAS
     type: justified-by
+  - target: SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING
+    type: depends-on
+  - target: SOL-HW-REVIEW-FAN-OUT-LAYOUT
+    type: depends-on
+  - target: SOL-HW-REVIEW-FAN-OUT-PRODUCTION-FILES
+    type: depends-on
+  - target: SOL-HW-REVIEW-FAN-OUT-SCHEMATIC
+    type: depends-on
