@@ -1,0 +1,12 @@
+id: SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C1
+type: criterion
+title: A critical net's view is written only for the tiles holding some of that net's copper
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Over a synthetic board of several critical nets with a tiled grid, the views command writes for each net exactly the tiles of the whole-board grid that hold some of the net's copper on any copper layer, and no tile that holds none; a net's tracks, arcs, vias, pads and the fill of its zone each count as copper, so a net whose only copper in a tile is a pad, a via, the end of one track or a corner of a pour's fill still has that tile, and every copper item of every net lies inside a written tile of its net. A written tile keeps the file name, pixel size, scale, caption fields and faint whole-board background it had when every tile was written, so the tile numbers of a net's grid are unchanged by the tiles left out; a net whose grid is a single tile is written as before. A test fails when a net's written tiles include one with none of its copper, and fails when a tile holding a net's copper is not written. A net that spans the board is written in every tile it touches, in the numbers a pour or a long track gives. Out of scope: the layer, assembly, class-map, crop and three-dimensional views.
+links:
+  - target: SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET
+    type: criterion-of

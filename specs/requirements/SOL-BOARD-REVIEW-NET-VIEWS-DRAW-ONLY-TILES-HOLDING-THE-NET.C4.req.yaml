@@ -1,0 +1,12 @@
+id: SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C4
+type: criterion
+title: The hardware notes and the method state the net view rule, the index fields and the stream limit
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The hardware notes (hardware/README.md) and the board design method (docs/board-design-method.md) each state, where they describe the net views and the critical-routing review's shared context, that a net's view holds only the tiles with some of the net's copper, that the index lists the tiles written and the count left out for each net, and that the review kit refuses a shared context over 256 million characters before any session starts, with the figure's source. Each statement is checked against the delivered command and kit, clause by clause, and the text that said every net is written as the full grid of tiles is corrected in each place that said it. Out of scope: the other sections of the method and the notes, which this item leaves as they are.
+links:
+  - target: SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET
+    type: criterion-of
