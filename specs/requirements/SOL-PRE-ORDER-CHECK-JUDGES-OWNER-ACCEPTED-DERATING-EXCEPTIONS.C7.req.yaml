@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C7
+type: criterion
+title: The hardware notes state the entry form, the report line and the failures, and why a series midpoint is an entry
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  hardware/README.md states the accepted_exceptions entry form, the ACCEPTED line, the derated_voltage and derating_exception failures, that acceptance fields are the owner's and drafts stay unsigned, and that a series midpoint of two hosts is excused by an entry and not by a second rides_on host. Other checks' rows are out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS
+    type: criterion-of

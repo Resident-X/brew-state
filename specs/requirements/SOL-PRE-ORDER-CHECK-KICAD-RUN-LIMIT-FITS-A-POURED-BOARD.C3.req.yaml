@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-KICAD-RUN-LIMIT-FITS-A-POURED-BOARD.C3
+type: criterion
+title: The hardware notes state the figure and the measurement it rests on
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  hardware/README.md states the 7200 s limit, the date 2026-10-31, the main board with its pours as the board measured, about 10 minutes for KiCad's creepage test and 20 to 30 minutes for the full design check, and that the figure is the margin over them. The notes on any other check are out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-KICAD-RUN-LIMIT-FITS-A-POURED-BOARD
+    type: criterion-of

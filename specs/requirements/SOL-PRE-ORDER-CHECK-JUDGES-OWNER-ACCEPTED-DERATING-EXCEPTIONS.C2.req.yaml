@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C2
+type: criterion
+title: An over-limit position with a signed entry at or above its working voltage passes and is reported
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a synthetic design, a position whose working voltage exceeds its limit passes when its entry is signed and its accepted_v is no less than that working voltage, and the check prints an ACCEPTED line with the position, the working voltage, the limit, the accepted figure and the reason; the same position with no entry, or with an accepted_v below its working voltage, fails as derated_voltage. Other positions' shares are out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS
+    type: criterion-of

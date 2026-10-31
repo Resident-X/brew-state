@@ -1,0 +1,12 @@
+id: SOL-NIGHTLY-VERIFY-JOB-BUDGET-FITS-THE-BOARD-CHECK-RUN-LIMIT.C1
+type: criterion
+title: The nightly gates job's time budget exceeds the board check's one-run limit by at least an hour
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The timeout-minutes of the gates job in .github/workflows/nightly-verify.yml is at least the board check's one-run limit, KICAD_TIMEOUT_S in hardware/tools/board_check.py, divided by 60 and raised by 60, so a hung KiCad run reaches its own limit and fails the design before the job is cancelled. The other jobs' budgets and the figure of the one-run limit are out of scope.
+links:
+  - target: SOL-NIGHTLY-VERIFY-JOB-BUDGET-FITS-THE-BOARD-CHECK-RUN-LIMIT
+    type: criterion-of

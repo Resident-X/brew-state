@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C1
+type: criterion
+title: A low-voltage item closer in plan view to a Mains-class item than the signed clearance fails, whatever layers they are on
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a throwaway copy of a proof design that declares MAINS present, a low-voltage item on one copper layer (a pour, a track, a via or a pad) whose straight-line plan-view distance to a Mains-class item on a different copper layer is less than the record's mains_to_low_voltage clearance_mm fails as mains_layer_separation naming both items, their layers and nets, and the distance; the same pair at or above the figure passes. Out of scope is a pair on the same layer that KiCad's own rule already reports.
+links:
+  - target: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER
+    type: criterion-of

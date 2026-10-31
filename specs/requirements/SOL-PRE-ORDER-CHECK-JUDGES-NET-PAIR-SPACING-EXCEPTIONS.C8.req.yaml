@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS.C8
+type: criterion
+title: Every tracked design passes and the hardware notes state the form
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The check over every tracked design reports no new failure, and hardware/README.md states the net-pairs form in the record keys, the reader row, the spacing_exception row and the adopter step for exceptions, including that the working voltage is the owner's assertion and the check does not recompute it. Out of scope is the main board's own design, whose record entries are another leaf's.
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS
+    type: criterion-of

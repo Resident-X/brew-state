@@ -1,0 +1,16 @@
+id: EV-SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS-C2-TEST
+type: evidence
+title: test evidence for SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-30T12:52:41.904002Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_separation_basis_record.py::MainsToMainsRecord.test_every_figure_rests_on_a_cited_row_and_a_figure_below_its_floor_fails
+  artifact_version: b5f9918dbd3f15d1258cbc5ceaa9b514831754b5
+attested_by: crun-6134d2627c2901e2
+links:
+  - target: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS.C2
+    type: satisfies

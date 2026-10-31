@@ -1,0 +1,12 @@
+id: SOL-TOUCH-CURRENT-OF-THE-UNEARTHED-LOW-VOLTAGE-SIDE-BROUGHT-UNDER-ITS-LIMIT.C3
+type: criterion
+title: The board folder's open items state the touch current against 0.25 mA, marked unverified
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Every document of the board folder that judges the touch current estimate against 0.75 mA, the open item numbered M24 among them, judges it against 0.25 mA and says the figure is unverified, and a search of the folder for 0.75 mA finds none left applied to the touchable low-voltage side. Out of scope is a document that quotes 0.75 mA as the Class I portable figure for explanation.
+links:
+  - target: SOL-TOUCH-CURRENT-OF-THE-UNEARTHED-LOW-VOLTAGE-SIDE-BROUGHT-UNDER-ITS-LIMIT
+    type: criterion-of

@@ -1,0 +1,16 @@
+id: EV-SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-READ-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-READ.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-30T15:50:12.017385Z"
+artifact:
+  kind: external
+  reference: 'docs/sunbeam-em7000/controller-board-division.md::§ The bought parts'' creepage and clearance, as their makers publish them (K731/K741 rows citing P6 2026 Rev. 1.00 p.1 and P19 2020 Rev. 1.00 p.1, read as rendered images). Inspection: both copies rendered with pdftoppm and read from the image; both read ''Creepage/clearance distance>8mm'' (one combined figure), separate clearance recorded absent.'
+  artifact_version: e2b232e3e6cc3981435a56a137b619e84514497f
+attested_by: crun-27cff31975d5a12e
+links:
+  - target: SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-READ.C2
+    type: satisfies

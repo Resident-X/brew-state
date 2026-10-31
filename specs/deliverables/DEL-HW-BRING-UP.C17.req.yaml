@@ -1,0 +1,13 @@
+id: DEL-HW-BRING-UP.C17
+type: criterion
+title: The coated boards stay above the dew point of the enclosure air through the cool-down after a steam session and the first minutes of a cold start
+status: active
+version: 2
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  In the closed machine, the surface temperature of a coated board near the heater side and the relative humidity and temperature of the enclosure air are recorded, with each instrument's stated accuracy, through two intervals: the cool-down after a run at sustained full heat with steam drawn, from the moment heater power is removed until the board and the air have each moved by no more than 0.5 degC over fifteen minutes, and a cold start from a machine soaked at room temperature, from the first application of heater power until the board's surface temperature reaches the air temperature. At no reading of either interval, with both accuracies applied against the board, is the board's surface temperature at or below the dew point of the air at that reading. A run that shows condensation returns the separation basis to pollution degree 3 as a fresh basis for the owner to accept. Choosing the instruments is out of scope.
+links:
+  - target: DEL-HW-BRING-UP
+    type: criterion-of

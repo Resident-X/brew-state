@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-KICAD-RUN-LIMIT-FITS-A-POURED-BOARD.C1
+type: criterion
+title: The one constant holds a limit of 7200 s and both the check and the views tool take it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The constant KICAD_TIMEOUT_S in hardware/tools/board_check.py equals 7200, and a test reads it and shows that hardware/tools/board_views.py applies that same constant to its KiCad runs and defines no limit of its own. The speed of KiCad, a per-board limit and the report's assertion cut-off are out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-KICAD-RUN-LIMIT-FITS-A-POURED-BOARD
+    type: criterion-of

@@ -31,3 +31,7 @@ links:
     type: depends-on
   - target: SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-READ
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 blind brief reviewer
+  fingerprint: 816bfbedd568492c57e8dff5ae786b152b384c3856af495d07dd614f8b7f577a
+  gating_profile: ""

@@ -3,11 +3,11 @@ type: deliverable
 category: solution
 title: The main board is laid out, reviewed and proven against its design records before it is ordered
 status: active
-version: 5
+version: 8
 text: |
   Lays out the main controller board that the schematic leaf (SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN) drew and wrote records for, through the board design method (docs/board-design-method.md): the layout planned, placed, routed and reviewed from rendered views, and the pre-order check passing on the finished board. It lays out the schematic as that leaf left it; a schematic change found here is an amendment to that leaf, not a silent edit, and a layout change that moves a judged figure is a finding recorded and resolved.
 
-  It covers every separation and fixing distance holding with each retained tab's footprint; the suppression parts placed if the judgements leaf finds the entry needs them; the inner-layer routes of the nets the division record joins there; the finished layout meeting the signed separation basis on every layer; the layout checklist read from rendered views; the division record naming the pump-figures leaf as owner of the pump drives' margins, with its selftest passing on the floorplan; and the pre-order check passing with no judgement weighed against a failure.
+  It covers every separation and fixing distance holding with each retained tab's footprint; the pump triacs drawn on a two-lead land with no middle-lead pad; the suppression parts placed if the judgements leaf finds the entry needs them; the inner-layer routes of the nets the division record joins there; the finished layout meeting the signed separation basis on every layer; the layout checklist read from rendered views; the division record naming the pump-figures leaf as owner of the pump drives' margins, with its selftest passing on the floorplan; and the pre-order check passing with no judgement weighed against a failure.
 
   Settled for the build:
   - All board work runs in the main session, because the Konnect toolsets are invisible to subagents; only the judged reviews fan out, to fresh reviewers that did not draw the board. The method's steps run in order and each is committed before the next.
@@ -51,6 +51,12 @@ links:
   - target: SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-ACROSS-DERIVED-NETS
     type: depends-on
   - target: SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER
+    type: depends-on
+  - target: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD
+    type: depends-on
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS
+    type: depends-on
+  - target: SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED
     type: depends-on
 brief_confirmation:
   confirmer: claude-sonnet-5-5 (independent brief reviewer)

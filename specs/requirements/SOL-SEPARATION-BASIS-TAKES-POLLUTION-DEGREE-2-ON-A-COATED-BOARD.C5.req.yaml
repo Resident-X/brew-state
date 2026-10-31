@@ -1,0 +1,16 @@
+id: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C5
+type: criterion
+title: The derived creepage row at 253 V rests on the pollution degree 2 rows of Table F.4 and states its margin
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The record's derived basic creepage row has working_voltage_v 253, pollution_degree 2 and material_group IIIa, figure creepage_mm 2.6, and a citation that names the 250 V row (2.5 mm) and the 320 V row (3.2 mm) of the pollution degree 2 material group III column of IEC 60664-1 Table F.4, the arithmetic giving 2.53 mm, the clause that allows the interpolation (IEC 60664-1:2007 clause 5.2.4), the 0.1 mm margin over the standard's own rounded 2.5 mm, and that the rows are read from reproductions and not from the standard. The citation keeps the fallback of the 320 V row, 3.2 mm, should the household-appliance standard refuse interpolation. Out of scope is the standard's own text.
+links:
+  - target: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD
+    type: criterion-of
+  - target: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS.C2
+    type: supersedes
+  - target: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS.C10
+    type: supersedes

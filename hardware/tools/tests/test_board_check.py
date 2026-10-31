@@ -28,6 +28,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import time
 import types
 import unittest
 from unittest import mock
@@ -1790,6 +1791,53 @@ import os, sys
 open(sys.argv[sys.argv.index("-o") + 1], "w").write(os.environ.get("KICAD_CONFIG_HOME", "unset"))
 """, sys.executable)
         self.assertEqual(board_check.run_kicad([tool, "pcb", "drc"], self.root, "out.txt"), ("/isolated", ""))
+
+    def shorten(self, seconds: int) -> None:
+        was, board_check.KICAD_TIMEOUT_S = board_check.KICAD_TIMEOUT_S, seconds
+        self.addCleanup(setattr, board_check, "KICAD_TIMEOUT_S", was)
+
+    def test_the_limit_on_one_kicad_run_is_7200_seconds(self):
+        # SOL-PRE-ORDER-CHECK-KICAD-RUN-LIMIT-FITS-A-POURED-BOARD.C1: The constant KICAD_TIMEOUT_S in hardware/tools/board_check.py equals 7200
+        self.assertEqual(board_check.KICAD_TIMEOUT_S, 7200)
+
+    def test_a_kicad_run_that_outlives_the_limit_is_reported_naming_the_limit_in_force(self):
+        # SOL-PRE-ORDER-CHECK-KICAD-RUN-LIMIT-FITS-A-POURED-BOARD.C2: With a KiCad run replaced by one that outlives a shortened limit, the check ... names the limit in force, and neither waits unbounded
+        tool = fake_tool(os.path.join(self.root, "kicad-cli"), "import time\ntime.sleep(30)", sys.executable)
+        for seconds in (1, 2):
+            with self.subTest(seconds=seconds):
+                self.shorten(seconds)
+                why = f"KiCad did not finish within {seconds} s"
+                started = time.monotonic()
+                self.assertEqual(board_check.run_kicad([tool, "pcb", "drc"], self.root, "out.txt"), (None, why))
+                self.assertEqual(board_check.run_report([tool, "pcb", "drc"], self.root), (None, why))
+                self.assertLess(time.monotonic() - started, 25)
+
+    def test_a_design_whose_kicad_runs_outlive_the_limit_fails_naming_the_limit(self):
+        # SOL-PRE-ORDER-CHECK-KICAD-RUN-LIMIT-FITS-A-POURED-BOARD.C2: the check fails the design with the message "KiCad did not finish within <limit> s" naming the limit in force
+        tool = fake_tool(os.path.join(self.root, "kicad-cli"), "import time\ntime.sleep(30)", sys.executable)
+        for path, text in (("a/a.kicad_pro", none_project()), ("a/a.kicad_sch", schematic()),
+                           ("a/a.kicad_pcb", "(kicad_pcb)"), ("a/a.kicad_dru", "(version 1)\n" + WORKMANSHIP)):
+            self.write(path, text)
+        repository = board_check.Repository(self.root, ["a/a.kicad_pro", "a/a.kicad_sch", "a/a.kicad_pcb", "a/a.kicad_dru"])
+        design = board_check.Design("a/a.kicad_pro")
+        for seconds in (1, 2):
+            with self.subTest(seconds=seconds):
+                self.shorten(seconds)
+                found = board_check.check_design(design, repository, tool, board_check.require_yaml(), TODAY, [])
+                unreadable = [v for v in found if v.rule == "design_unreadable"]
+                self.assertEqual([v.message for v in unreadable],
+                                 [f"the schematic cannot be checked: KiCad did not finish within {seconds} s",
+                                  f"the layout cannot be checked: KiCad did not finish within {seconds} s"])
+
+    def test_the_hardware_notes_state_the_limit_and_the_measurement_it_rests_on(self):
+        # SOL-PRE-ORDER-CHECK-KICAD-RUN-LIMIT-FITS-A-POURED-BOARD.C3: hardware/README.md states the 7200 s limit, the date 2026-10-31, the main board with its pours as the board measured, about 10 minutes for KiCad's creepage test and 20 to 30 minutes for the full design check, and that the figure is the margin over them
+        with open(os.path.join(REPO, "hardware", "README.md"), encoding="utf-8") as handle:
+            readme = handle.read()
+        paragraph = next(block for block in readme.split("\n\n") if "KICAD_TIMEOUT_S" in block)
+        for words in ("7200 s", "2026-10-31", "main board", "ground and neutral pours", "about 10 minutes",
+                      "creepage test", "20 to 30 minutes", "full design check", "four times", "margin"):
+            self.assertIn(words, paragraph)
+        self.assertNotIn("900 s", readme)
 
     def test_a_library_kicads_configuration_does_not_include_is_named_as_the_designs(self):
         design = board_check.Design("d/d.kicad_pro")
@@ -5110,6 +5158,97 @@ class TheDeratingPolicyRecordIsRead(PolicyRecordTree):
         problems = board_check.read_derating(board_check.require_yaml(), self.root, board_check.Repository(self.root, []), self.design, False)
         self.assertEqual([v.rule for v in problems], ["derating_record"])
         self.assertIn("not tracked", problems[0].message)
+
+
+    EXCEPTION = (
+        "  - position: R1\n    accepted_v: 353.6\n    reason: a synthetic ground\n    bounded_by: a synthetic element\n"
+        "    accepted_by: proof-owner\n    accepted_on: 2026-10-01\n")
+
+    def excepted(self, entries: str) -> str:
+        return DERATING_RECORD + "accepted_exceptions:\n" + entries + "synthetic: true\n"
+
+    def test_a_record_with_no_accepted_exceptions_key_an_empty_list_or_a_complete_entry_is_accepted(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C1: On a synthetic design, an accepted_exceptions entry that is not a mapping, lacks any of the six keys, holds another key, repeats a position or gives a non-positive accepted_v fails the record as derating_record, naming the entry's place and the key; an explicit empty list passes, and an entry whose accepted_by or accepted_on is empty, a placeholder, malformed or future-dated is not a record fault. The judgement against the schematic's positions and the signature judgement are out of scope.
+        self.assertEqual(self.read(DERATING_RECORD + "synthetic: true\n", not_for_manufacture=True), [])
+        self.assertEqual(self.read(DERATING_RECORD + "accepted_exceptions: []\nsynthetic: true\n", not_for_manufacture=True), [])
+        self.assertEqual(self.read(self.excepted(self.EXCEPTION), not_for_manufacture=True), [])
+        two = self.EXCEPTION + self.EXCEPTION.replace("R1", "R2")
+        self.assertEqual(self.read(self.excepted(two), not_for_manufacture=True), [])
+
+    def test_accepted_exceptions_that_is_not_a_list_or_holds_an_entry_that_is_not_a_mapping_fails_the_record(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C1: On a synthetic design, an accepted_exceptions entry that is not a mapping, lacks any of the six keys, holds another key, repeats a position or gives a non-positive accepted_v fails the record as derating_record, naming the entry's place and the key; an explicit empty list passes, and an entry whose accepted_by or accepted_on is empty, a placeholder, malformed or future-dated is not a record fault. The judgement against the schematic's positions and the signature judgement are out of scope.
+        self.assertFails(DERATING_RECORD + "accepted_exceptions: R1\n", "accepted_exceptions", "not a list", True)
+        self.assertFails(DERATING_RECORD + "accepted_exceptions:\n  R1: 5\n", "accepted_exceptions", "not a list", True)
+        self.assertFails(self.excepted("  - R1\n"), "accepted_exceptions[0]", "not a mapping", True)
+        self.assertFails(self.excepted(self.EXCEPTION + "  - null\n"), "accepted_exceptions[1]", "not a mapping", True)
+
+    def test_an_entry_lacking_any_of_its_six_keys_fails_naming_the_entry_and_the_key(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C1: On a synthetic design, an accepted_exceptions entry that is not a mapping, lacks any of the six keys, holds another key, repeats a position or gives a non-positive accepted_v fails the record as derating_record, naming the entry's place and the key; an explicit empty list passes, and an entry whose accepted_by or accepted_on is empty, a placeholder, malformed or future-dated is not a record fault. The judgement against the schematic's positions and the signature judgement are out of scope.
+        for key in board_check.DERATING_EXCEPTION_KEYS:
+            with self.subTest(key=key):
+                lines = [line for line in self.EXCEPTION.splitlines(True) if key not in line.split(":")[0]]
+                lines[0] = "  - " + lines[0].lstrip(" -")
+                problems = self.read(self.excepted(self.EXCEPTION + "".join(lines).replace("R1", "R2")), True)
+                self.assertTrue([v for v in problems if v.rule == "derating_record"
+                                 and v.location.endswith(f"accepted_exceptions[1].{key}") and f"lacks {key}" in v.message],
+                                [(v.location, v.message) for v in problems])
+
+    def test_an_entry_holding_another_key_or_a_blank_text_fails_naming_the_entry_and_the_key(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C1: On a synthetic design, an accepted_exceptions entry that is not a mapping, lacks any of the six keys, holds another key, repeats a position or gives a non-positive accepted_v fails the record as derating_record, naming the entry's place and the key; an explicit empty list passes, and an entry whose accepted_by or accepted_on is empty, a placeholder, malformed or future-dated is not a record fault. The judgement against the schematic's positions and the signature judgement are out of scope.
+        self.assertFails(self.excepted(self.EXCEPTION + "    note: x\n"), "accepted_exceptions[0].note", "holds the key 'note'", True)
+        for key in ("position", "reason", "bounded_by"):
+            for blank in ("''", "null", "5"):
+                with self.subTest(key=key, blank=blank):
+                    entry = self.EXCEPTION.replace(
+                        {"position": "position: R1", "reason": "reason: a synthetic ground",
+                         "bounded_by": "bounded_by: a synthetic element"}[key], f"{key}: {blank}")
+                    self.assertFails(self.excepted(entry), f"accepted_exceptions[0].{key}", "non-empty string", True)
+
+    def test_a_repeated_position_fails_naming_it_and_a_second_entry_for_another_position_does_not(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C1: On a synthetic design, an accepted_exceptions entry that is not a mapping, lacks any of the six keys, holds another key, repeats a position or gives a non-positive accepted_v fails the record as derating_record, naming the entry's place and the key; an explicit empty list passes, and an entry whose accepted_by or accepted_on is empty, a placeholder, malformed or future-dated is not a record fault. The judgement against the schematic's positions and the signature judgement are out of scope.
+        self.assertFails(self.excepted(self.EXCEPTION + self.EXCEPTION), "accepted_exceptions",
+                         "lists the position 'R1' more than once", True)
+        self.assertFails(self.excepted(self.EXCEPTION + self.EXCEPTION.replace("R1", " R1 ")), "accepted_exceptions",
+                         "lists the position 'R1' more than once", True)
+
+    def test_a_non_positive_or_non_numeric_accepted_v_fails_naming_the_entry(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C1: On a synthetic design, an accepted_exceptions entry that is not a mapping, lacks any of the six keys, holds another key, repeats a position or gives a non-positive accepted_v fails the record as derating_record, naming the entry's place and the key; an explicit empty list passes, and an entry whose accepted_by or accepted_on is empty, a placeholder, malformed or future-dated is not a record fault. The judgement against the schematic's positions and the signature judgement are out of scope.
+        for bad in ("0", "-5", "'353.6'", "true", "null", ".nan", ".inf", "[1]"):
+            with self.subTest(accepted_v=bad):
+                self.assertFails(self.excepted(self.EXCEPTION.replace("353.6", bad)), "accepted_exceptions[0].accepted_v",
+                                 "not a positive number of volts", True)
+        for good in ("0.5", "1", "353.6"):
+            self.assertEqual(self.read(self.excepted(self.EXCEPTION.replace("353.6", good)), not_for_manufacture=True), [])
+
+    def test_an_empty_placeholder_malformed_or_future_signature_is_no_record_fault(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C1: On a synthetic design, an accepted_exceptions entry that is not a mapping, lacks any of the six keys, holds another key, repeats a position or gives a non-positive accepted_v fails the record as derating_record, naming the entry's place and the key; an explicit empty list passes, and an entry whose accepted_by or accepted_on is empty, a placeholder, malformed or future-dated is not a record fault. The judgement against the schematic's positions and the signature judgement are out of scope.
+        for old, new in (("accepted_by: proof-owner", "accepted_by: ''"), ("accepted_by: proof-owner", "accepted_by: unsigned"),
+                         ("accepted_by: proof-owner", "accepted_by: '<owner>'"), ("accepted_by: proof-owner", "accepted_by: null"),
+                         ("accepted_on: 2026-10-01", "accepted_on: ''"), ("accepted_on: 2026-10-01", "accepted_on: soon"),
+                         ("accepted_on: 2026-10-01", "accepted_on: '2026-02-31'"), ("accepted_on: 2026-10-01", "accepted_on: 2999-01-01")):
+            with self.subTest(new=new):
+                self.assertEqual(self.read(self.excepted(self.EXCEPTION.replace(old, new)), not_for_manufacture=True), [])
+
+    def test_a_record_failed_for_an_entry_is_not_returned_as_a_mapping_and_every_failure_is_the_record_rule(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C1: On a synthetic design, an accepted_exceptions entry that is not a mapping, lacks any of the six keys, holds another key, repeats a position or gives a non-positive accepted_v fails the record as derating_record, naming the entry's place and the key; an explicit empty list passes, and an entry whose accepted_by or accepted_on is empty, a placeholder, malformed or future-dated is not a record fault. The judgement against the schematic's positions and the signature judgement are out of scope.
+        data, problems = board_check.load_derating(board_check.require_yaml(), self.root, self.everything(), self.design, True) \
+            if self.read(self.excepted(self.EXCEPTION.replace("353.6", "0")), True) else (None, [])
+        self.assertIsNone(data)
+        self.assertEqual({v.rule for v in problems}, {"derating_record"})
+        self.read(self.excepted(self.EXCEPTION), True)
+        data, problems = board_check.load_derating(board_check.require_yaml(), self.root, self.everything(), self.design, True)
+        self.assertEqual(problems, [])
+        self.assertEqual(data["accepted_exceptions"][0]["position"], "R1")
+
+    def test_a_synthetic_record_with_an_entry_fails_an_orderable_design_as_the_record_alone_is(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C4: a synthetic record passes only a design marked not for manufacture.
+        self.assertFails(self.excepted(self.EXCEPTION), "derating-policy.yaml synthetic", "marked synthetic")
+
+    def test_the_other_records_keep_the_keys_they_require_beside_the_optional_ones(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS.C1: a missing key other than accepted_exceptions and synthetic still fails the record.
+        self.assertFails("source: x\nsynthetic: true\n", "derating-policy.yaml classes", "lacks classes", True)
+        self.assertFails(DERATING_RECORD.replace("source: a synthetic policy\n", "") + "accepted_exceptions: []\n",
+                         "derating-policy.yaml source", "lacks source", True)
 
 
 class ThePinLimitRecordIsRead(PolicyRecordTree):

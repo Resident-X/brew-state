@@ -219,6 +219,187 @@ class TheExceptionsKeepTheTrackedDesignsPassing(unittest.TestCase):
                 self.assertEqual([line for line in lines if line.startswith(("VIOLATION", "ACCEPTED"))], [])
 
 
+connector = board_prove.connector_entry
+
+
+class SameConnectorExceptionsRunDirectly(Copy):
+    """The plated-hole spacing of one connector's pads at its own pitch, judged on KiCad's own report of a 2.0 mm header."""
+
+    def accepted(self, lines):
+        return [line.split(" | ") for line in lines if line.startswith("ACCEPTED | ")]
+
+    def spacing(self, lines):
+        return [v for v in self.violations(lines) if v[2] == "spacing_exception"]
+
+    def holes(self, lines):
+        return [v for v in self.violations(lines) if v[2] == "hole_to_hole"]
+
+    def test_a_shortfall_between_the_connectors_pads_at_its_pitch_is_reported_and_the_design_passes(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C2: On a synthetic design whose connector has two pads pitch_mm apart that the plated-hole spacing rule reports as a hole_to_hole shortfall, with an entry for that connector whose accepted_mm is no greater than the measured edge-to-edge distance, the check, matching centres to pitch_mm within 0.01 mm, reports no hole_to_hole violation for that pair; on a two-row connector a row-to-row pair at the same distance is accepted by the same entry and prints one accepted-exception line giving the connector, the pitch, the measured and accepted distances and the reason. Both the rule's report and the check's text report are read; no other output form exists. Shortfalls outside the entry are the next criterion's and out of scope here.
+        board_prove.HEADER_SHORTFALL(self.seed)
+        board_prove.exceptions(connector("J2", 2, 1.0))(self.seed)
+        status, lines = self.check()
+        self.assertEqual(status, 0, lines)
+        (line,) = self.accepted(lines)
+        self.assertEqual(line[2], "spacing_exception")
+        self.assertTrue(line[3].endswith("separation-basis.yaml accepted_exceptions[0]"), line)
+        for words in ("plated-hole spacing of connector J2 at 2 mm pitch between J2.1 and J2.2", "pad 1 [/LV_A] of J2",
+                      "pad 2 [/LV_B] of J2", "measures 1 mm", "accepted down to 1 mm", "plated-hole rule's 1.05 mm",
+                      "reason: synthetic -- slow signals only, a ground chosen to exercise the check",
+                      "bounded by: synthetic -- an independent element chosen to exercise the check"):
+            self.assertIn(words, line[4])
+        self.assertEqual(self.violations(lines), [], lines)
+
+    def test_on_a_two_row_connector_a_row_to_row_pair_at_the_pitch_is_accepted_by_the_same_entry_and_the_other_spacing_is_not(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C2: On a synthetic design whose connector has two pads pitch_mm apart that the plated-hole spacing rule reports as a hole_to_hole shortfall, with an entry for that connector whose accepted_mm is no greater than the measured edge-to-edge distance, the check, matching centres to pitch_mm within 0.01 mm, reports no hole_to_hole violation for that pair; on a two-row connector a row-to-row pair at the same distance is accepted by the same entry and prints one accepted-exception line giving the connector, the pitch, the measured and accepted distances and the reason. Both the rule's report and the check's text report are read; no other output form exists. Shortfalls outside the entry are the next criterion's and out of scope here.
+        board_prove.TWO_ROW_SHORTFALL(self.seed)
+        board_prove.exceptions(connector("J2", 2, 1.0))(self.seed)
+        status, lines = self.check()
+        accepted = self.accepted(lines)
+        self.assertEqual(sorted(line[4].split(" (")[0].split("pitch between ")[1] for line in accepted),
+                         ["J2.1 and J2.2", "J2.3 and J2.1", "J2.3 and J2.4"])
+        row_to_row = [line for line in accepted if "J2.3 and J2.1" in line[4]]
+        self.assertEqual(len(row_to_row), 1)
+        for words in ("connector J2 at 2 mm pitch", "measures 1 mm", "accepted down to 1 mm", "reason: synthetic -- slow signals only"):
+            self.assertIn(words, row_to_row[0][4])
+        self.assertEqual(status, 1)
+        remaining = self.holes(lines)
+        self.assertEqual(len(remaining), 2, lines)
+        self.assertEqual(self.spacing(lines), [])
+
+    def test_a_shortfall_at_another_centre_spacing_of_the_same_connector_fails_naming_the_two_pads(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C3: On a synthetic design, a hole_to_hole shortfall fails, naming the two pads, when it lies between pads of the same connector at a centre spacing differing from the entry's pitch_mm by more than 0.01 mm, between pads of two different parts, for a connector with no entry, or at a measured distance below the entry's accepted_mm, the last also naming the entry. An entry for one connector does not excuse a shortfall of another. The judgement of the entry's own validity is the next criterion's and out of scope here.
+        board_prove.TWO_ROW_SHORTFALL(self.seed)
+        board_prove.exceptions(connector("J2", 2, 1.0))(self.seed)
+        status, lines = self.check()
+        self.assertEqual(status, 1)
+        (found,) = [v for v in self.holes(lines) if "pad 4 [<no net>] of J2" in v[3]]
+        self.assertIn("pad 2 [/LV_B] of J2", found[3])
+        self.assertIn("actual 1.1000 mm", found[4])
+
+    def test_a_shortfall_between_pads_of_two_different_parts_fails_naming_the_two_pads(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C3: On a synthetic design, a hole_to_hole shortfall fails, naming the two pads, when it lies between pads of the same connector at a centre spacing differing from the entry's pitch_mm by more than 0.01 mm, between pads of two different parts, for a connector with no entry, or at a measured distance below the entry's accepted_mm, the last also naming the entry. An entry for one connector does not excuse a shortfall of another. The judgement of the entry's own validity is the next criterion's and out of scope here.
+        board_prove.HEADER_AND_OTHER_PARTS(self.seed)
+        board_prove.exceptions(connector("J2", 2, 1.0))(self.seed)
+        status, lines = self.check()
+        self.assertEqual(status, 1)
+        (found,) = self.holes(lines)
+        self.assertIn("pad 1 [/LV_A] of U1", found[3])
+        self.assertIn("pad 1 [/LV_A] of R2", found[3])
+        self.assertEqual(len(self.accepted(lines)), 1)
+
+    def test_a_shortfall_of_a_connector_with_no_entry_fails_naming_the_two_pads(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C3: On a synthetic design, a hole_to_hole shortfall fails, naming the two pads, when it lies between pads of the same connector at a centre spacing differing from the entry's pitch_mm by more than 0.01 mm, between pads of two different parts, for a connector with no entry, or at a measured distance below the entry's accepted_mm, the last also naming the entry. An entry for one connector does not excuse a shortfall of another. The judgement of the entry's own validity is the next criterion's and out of scope here.
+        board_prove.HEADER_SHORTFALL(self.seed)
+        status, lines = self.check()
+        self.assertEqual(status, 1)
+        (found,) = self.holes(lines)
+        self.assertIn("pad 1 [/LV_A] of J2", found[3])
+        self.assertIn("pad 2 [/LV_B] of J2", found[3])
+        self.assertEqual((self.accepted(lines), self.spacing(lines)), ([], []))
+
+    def test_another_connectors_entry_excuses_nothing_of_this_one(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C3: On a synthetic design, a hole_to_hole shortfall fails, naming the two pads, when it lies between pads of the same connector at a centre spacing differing from the entry's pitch_mm by more than 0.01 mm, between pads of two different parts, for a connector with no entry, or at a measured distance below the entry's accepted_mm, the last also naming the entry. An entry for one connector does not excuse a shortfall of another. The judgement of the entry's own validity is the next criterion's and out of scope here.
+        board_prove.HEADER_SHORTFALL(self.seed)
+        board_prove.exceptions(connector("J1", 2.54, 1.0))(self.seed)
+        status, lines = self.check()
+        self.assertEqual(status, 1)
+        (found,) = self.holes(lines)
+        self.assertIn("pad 1 [/LV_A] of J2", found[3])
+        self.assertEqual(self.accepted(lines), [])
+
+    def test_a_distance_below_the_accepted_one_fails_naming_the_entry_and_the_pads(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C3: On a synthetic design, a hole_to_hole shortfall fails, naming the two pads, when it lies between pads of the same connector at a centre spacing differing from the entry's pitch_mm by more than 0.01 mm, between pads of two different parts, for a connector with no entry, or at a measured distance below the entry's accepted_mm, the last also naming the entry. An entry for one connector does not excuse a shortfall of another. The judgement of the entry's own validity is the next criterion's and out of scope here.
+        board_prove.HEADER_AND_OTHER_PARTS(self.seed)
+        board_prove.exceptions(connector("J2", 2, 1.1))(self.seed)
+        status, lines = self.check()
+        self.assertEqual(status, 1)
+        (found,) = self.spacing(lines)
+        self.assertTrue(found[3].endswith("accepted_exceptions[0]"), found)
+        for words in ("accepted_exceptions[0]", "connector J2", "J2.1 and J2.2", "down to 1.1 mm", "leaves 1 mm", "pad 1 [/LV_A] of J2"):
+            self.assertIn(words, found[4])
+        self.assertEqual(self.accepted(lines), [])
+        # the shortfall it judged is not also an ordinary violation; the other parts' is
+        self.assertTrue(all("of J2" not in v[3] for v in self.holes(lines)), lines)
+
+    def test_a_shortfall_under_a_rule_of_another_name_is_never_excused(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C3: On a synthetic design, a hole_to_hole shortfall fails, naming the two pads, when it lies between pads of the same connector at a centre spacing differing from the entry's pitch_mm by more than 0.01 mm, between pads of two different parts, for a connector with no entry, or at a measured distance below the entry's accepted_mm, the last also naming the entry. An entry for one connector does not excuse a shortfall of another. The judgement of the entry's own validity is the next criterion's and out of scope here.
+        board_prove.HEADER_SHORTFALL(self.seed)
+        board_prove.exceptions(connector("J2", 2, 1.0))(self.seed)
+        self.seed.replace(".kicad_dru", '(rule "Plated hole spacing"', '(rule "Hole spacing"')
+        status, lines = self.check()
+        self.assertEqual(status, 1)
+        self.assertEqual(self.accepted(lines), [])
+        self.assertEqual(len(self.holes(lines)), 1)
+        (found,) = self.spacing(lines)
+        self.assertIn("reports no shortfall", found[4])
+
+    def assertNotHonoured(self, entry_text, words, edit=None):
+        (edit or board_prove.HEADER_AND_OTHER_PARTS)(self.seed)
+        board_prove.exceptions(entry_text)(self.seed)
+        status, lines = self.check()
+        self.assertEqual(status, 1)
+        self.assertEqual(self.accepted(lines), [], "an entry that is no acceptance excused a shortfall")
+        (found,) = self.spacing(lines)
+        self.assertTrue(found[3].endswith("accepted_exceptions[0]"), found)
+        self.assertIn(words, found[4])
+        return lines
+
+    def test_an_unsigned_entry_is_not_honoured_and_fails_naming_it(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C4: An entry whose accepted_by is a placeholder or empty, whose accepted_on is invalid, later than the day of the run or later than the record's own accepted_on, whose accepted_mm is at or above the distance the plated-hole rule holds, whose connector the layout lacks or places without two pads pitch_mm apart, or which no reported shortfall uses, fails spacing_exception naming the entry. An entry in an unsigned or synthetic-on-an-orderable-board record is honoured for no shortfall. The pairs a valid entry accepts are the second criterion's and out of scope here.
+        for by in ("unsigned", "TBD", "<name>"):
+            with self.subTest(accepted_by=by):
+                self.setUp()
+                lines = self.assertNotHonoured(connector("J2", 2, 1.0, by=by), f"accepted_by '{by}' is a placeholder")
+                self.assertTrue([v for v in self.holes(lines) if "of J2" in v[3]], "the shortfall stays the layout rule check's own")
+
+    def test_an_entry_dated_after_the_record_or_after_today_is_not_honoured_and_fails_naming_it(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C4: An entry whose accepted_by is a placeholder or empty, whose accepted_on is invalid, later than the day of the run or later than the record's own accepted_on, whose accepted_mm is at or above the distance the plated-hole rule holds, whose connector the layout lacks or places without two pads pitch_mm apart, or which no reported shortfall uses, fails spacing_exception naming the entry. An entry in an unsigned or synthetic-on-an-orderable-board record is honoured for no shortfall. The pairs a valid entry accepts are the second criterion's and out of scope here.
+        for on, words in (("2026-10-13", "later than the record's own accepted_on 2026-10-12"), ("2999-01-01", "later than today")):
+            with self.subTest(accepted_on=on):
+                self.setUp()
+                self.assertNotHonoured(connector("J2", 2, 1.0, on=on), words)
+
+    def test_an_entry_accepting_no_less_than_the_rules_figure_relaxes_nothing_and_fails_naming_it(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C4: An entry whose accepted_by is a placeholder or empty, whose accepted_on is invalid, later than the day of the run or later than the record's own accepted_on, whose accepted_mm is at or above the distance the plated-hole rule holds, whose connector the layout lacks or places without two pads pitch_mm apart, or which no reported shortfall uses, fails spacing_exception naming the entry. An entry in an unsigned or synthetic-on-an-orderable-board record is honoured for no shortfall. The pairs a valid entry accepts are the second criterion's and out of scope here.
+        self.assertNotHonoured(connector("J2", 2, 1.2), "accepts 1.2 mm, which is not below the 1.2 mm the plated-hole rule holds")
+
+    def test_an_entry_for_a_connector_the_layout_lacks_fails_naming_it(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C4: An entry whose accepted_by is a placeholder or empty, whose accepted_on is invalid, later than the day of the run or later than the record's own accepted_on, whose accepted_mm is at or above the distance the plated-hole rule holds, whose connector the layout lacks or places without two pads pitch_mm apart, or which no reported shortfall uses, fails spacing_exception naming the entry. An entry in an unsigned or synthetic-on-an-orderable-board record is honoured for no shortfall. The pairs a valid entry accepts are the second criterion's and out of scope here.
+        self.assertNotHonoured(connector("J9", 2, 1.0), "names the connector J9, which the layout lacks")
+
+    def test_an_entry_for_a_connector_without_two_pads_at_its_pitch_fails_naming_it(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C4: An entry whose accepted_by is a placeholder or empty, whose accepted_on is invalid, later than the day of the run or later than the record's own accepted_on, whose accepted_mm is at or above the distance the plated-hole rule holds, whose connector the layout lacks or places without two pads pitch_mm apart, or which no reported shortfall uses, fails spacing_exception naming the entry. An entry in an unsigned or synthetic-on-an-orderable-board record is honoured for no shortfall. The pairs a valid entry accepts are the second criterion's and out of scope here.
+        self.assertNotHonoured(connector("J2", 2.5, 1.0), "which the layout places without two plated pads 2.5 mm apart")
+
+    def test_an_entry_that_no_shortfall_uses_fails_naming_it(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C4: An entry whose accepted_by is a placeholder or empty, whose accepted_on is invalid, later than the day of the run or later than the record's own accepted_on, whose accepted_mm is at or above the distance the plated-hole rule holds, whose connector the layout lacks or places without two pads pitch_mm apart, or which no reported shortfall uses, fails spacing_exception naming the entry. An entry in an unsigned or synthetic-on-an-orderable-board record is honoured for no shortfall. The pairs a valid entry accepts are the second criterion's and out of scope here.
+        self.assertNotHonoured(connector("J2", 2.54, 0.4), "where the layout rule check reports no shortfall", edit=board_prove.plated_hole_rule(0.5))
+
+    def test_an_entry_in_an_unsigned_record_is_never_honoured(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C4: An entry whose accepted_by is a placeholder or empty, whose accepted_on is invalid, later than the day of the run or later than the record's own accepted_on, whose accepted_mm is at or above the distance the plated-hole rule holds, whose connector the layout lacks or places without two pads pitch_mm apart, or which no reported shortfall uses, fails spacing_exception naming the entry. An entry in an unsigned or synthetic-on-an-orderable-board record is honoured for no shortfall. The pairs a valid entry accepts are the second criterion's and out of scope here.
+        for changes in (("accepted_by: david", "accepted_by: unsigned"), ("accepted_on: 2026-10-12", "accepted_on: 2999-01-01")):
+            with self.subTest(changes=changes):
+                self.setUp()
+                board_prove.HEADER_SHORTFALL(self.seed)
+                board_prove.exceptions(connector("J2", 2, 1.0))(self.seed)
+                board_prove.record(*changes)(self.seed)
+                status, lines = self.check()
+                self.assertEqual(status, 1)
+                self.assertEqual(self.accepted(lines), [])
+                self.assertTrue([v for v in self.violations(lines) if v[2] == "separation_basis"], lines)
+
+    def test_an_entry_in_a_synthetic_record_of_an_orderable_board_is_never_honoured(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C4: An entry whose accepted_by is a placeholder or empty, whose accepted_on is invalid, later than the day of the run or later than the record's own accepted_on, whose accepted_mm is at or above the distance the plated-hole rule holds, whose connector the layout lacks or places without two pads pitch_mm apart, or which no reported shortfall uses, fails spacing_exception naming the entry. An entry in an unsigned or synthetic-on-an-orderable-board record is honoured for no shortfall. The pairs a valid entry accepts are the second criterion's and out of scope here.
+        board_prove.HEADER_SHORTFALL(self.seed)
+        board_prove.exceptions(connector("J2", 2, 1.0))(self.seed)
+        self.seed.project(lambda data: data["text_variables"].pop("NOT_FOR_MANUFACTURE"))
+        status, lines = self.check()
+        self.assertEqual(status, 1)
+        self.assertEqual(self.accepted(lines), [])
+        self.assertTrue([v for v in self.violations(lines) if v[2] == "separation_basis" and "marked synthetic" in v[4]], lines)
+
+
 class TheSpacingExceptionRules(Proved):
     """Each new failure of the judgement fails on a fault seeded for it in a throwaway copy of the proof design."""
 
@@ -257,6 +438,54 @@ class TheSpacingExceptionRowsOfTheProof(unittest.TestCase):
         self.assertEqual(len([fault for fault in board_prove.FAULTS if fault[1].startswith("mounting holes:")]), 5)
         self.assertEqual(len([fault for fault in board_prove.FAULTS if fault[1].startswith("separation floor:")]), 4)
         # a seeded fault copies the design and edits the copy; the tracked records hold no exception
+        with open(os.path.join(board_prove.REPO, board_prove.DESIGN, "separation-basis.yaml"), encoding="utf-8") as handle:
+            self.assertNotIn("accepted_exceptions", handle.read())
+
+
+class TheSameConnectorExceptionRules(Proved):
+    """Each new failure of the plated-hole spacing exception fails on a fault seeded for it in a throwaway copy of the proof design."""
+
+    #: The seeded faults the proof must hold, each with the rule that must report it and the words its line must carry.
+    FAULTS = {
+        "a same-connector entry lacking its pitch": ("separation_basis", ("accepted_exceptions[0].pitch_mm", "lacks pitch_mm")),
+        "a plated-hole shortfall at another centre spacing of the entry's connector": ("hole_to_hole", ("pad 4 [<no net>] of J2", "actual 1.1000 mm")),
+        "a plated-hole shortfall between two different parts": ("hole_to_hole", ("pad 1 [/LV_A] of U1", "pad 1 [/LV_A] of R2")),
+        "a plated-hole shortfall below the distance its connector's entry accepts": ("spacing_exception", ("down to 1.1 mm", "leaves 1 mm")),
+        "a same-connector entry that is unsigned": ("spacing_exception", ("accepted_by 'unsigned' is a placeholder",)),
+        "a same-connector entry relaxing nothing": ("spacing_exception", ("relaxes nothing",)),
+        "a same-connector entry for a connector the layout lacks": ("spacing_exception", ("names the connector J9, which the layout lacks",)),
+        "a same-connector entry that no shortfall uses": ("spacing_exception", ("where the layout rule check reports no shortfall",)),
+    }
+
+    def test_each_new_failure_is_caught_on_a_seeded_fault_under_the_rule_named_for_it(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C5: The on-demand seeded-fault proof gains one row for each failure above (a malformed entry, a shortfall at another centre spacing, a shortfall between different parts, a shortfall below the accepted distance, an unsigned entry, an entry relaxing nothing, an entry for an absent connector and an entry no shortfall uses), each made in a copy outside the tracked tree and caught under the rule named for it, and the rows join the proof's required-names dictionary. Rules this leaf does not touch get no row. Rows for the mains-spacing exceptions are out of scope here.
+        self.assertCaught(*self.FAULTS)
+        found = outcomes()
+        for name, (rule, words) in self.FAULTS.items():
+            with self.subTest(fault=name):
+                fields = found[name][1].split(" | ")
+                self.assertEqual((fields[1], fields[2]), ("hardware/proof/gate-proof/gate-proof.kicad_pro", rule))
+                for word in words:
+                    self.assertIn(word, found[name][1])
+                self.assertEqual([entry[2] for entry in board_prove.FAULTS if entry[0] == name], [rule])
+
+
+class TheSameConnectorRowsOfTheProof(unittest.TestCase):
+    """The rows the proof holds for the plated-hole spacing exception, read without running it."""
+
+    def test_the_proof_holds_a_row_for_each_of_the_eight_failures_and_for_no_rule_this_leaf_leaves_alone(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C5: The on-demand seeded-fault proof gains one row for each failure above (a malformed entry, a shortfall at another centre spacing, a shortfall between different parts, a shortfall below the accepted distance, an unsigned entry, an entry relaxing nothing, an entry for an absent connector and an entry no shortfall uses), each made in a copy outside the tracked tree and caught under the rule named for it, and the rows join the proof's required-names dictionary. Rules this leaf does not touch get no row. Rows for the mains-spacing exceptions are out of scope here.
+        rows = [fault for fault in board_prove.FAULTS if fault[1].startswith("same-connector exceptions:")]
+        self.assertEqual(sorted(fault[0] for fault in rows), sorted(TheSameConnectorExceptionRules.FAULTS))
+        self.assertEqual(len(rows), 8)
+        # each is seeded in a copy of the gate's proof design outside the tracked tree
+        self.assertEqual({board_prove.target_of(fault) for fault in rows}, {(board_prove.DESIGN, board_prove.NAME)})
+        # and the rules the leaf did not touch keep exactly the rows they had, the mains-spacing exceptions among them
+        self.assertEqual(len([fault for fault in board_prove.FAULTS if fault[1].startswith("accepted exceptions:")]), 3)
+        self.assertEqual(len([fault for fault in board_prove.FAULTS if fault[1].startswith("mains to mains:")]), 8)
+        self.assertEqual(len([fault for fault in board_prove.FAULTS if fault[1].startswith("mounting holes:")]), 5)
+        self.assertEqual(len([fault for fault in board_prove.FAULTS if fault[1].startswith("separation floor:")]), 4)
+        # the tracked records hold no exception, so a seeded fault makes it in a copy
         with open(os.path.join(board_prove.REPO, board_prove.DESIGN, "separation-basis.yaml"), encoding="utf-8") as handle:
             self.assertNotIn("accepted_exceptions", handle.read())
 

@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS.C5
+type: criterion
+title: An entry that is unsigned, below its band figure or clearance, or relaxes nothing fails closed
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  An entry whose acceptance is empty, a placeholder, in angle brackets, later than today or later than the record's own, whose constraint is creepage and accepted_mm is below the creepage band figure for its working_voltage_v or below its clearance band figure, whose constraint is clearance and accepted_mm is below the clearance band figure for its working_voltage_v, whose accepted_mm is below 0.2 mm, whose working_voltage_v exceeds the record's working voltage or the highest band row, or whose accepted_mm is not below the figure of the rule that reports its shortfalls, fails as spacing_exception naming the entry and excuses nothing. Out of scope is any entry of another form.
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS
+    type: criterion-of

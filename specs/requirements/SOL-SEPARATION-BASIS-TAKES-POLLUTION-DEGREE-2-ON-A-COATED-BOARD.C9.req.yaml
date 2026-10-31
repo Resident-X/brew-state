@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C9
+type: criterion
+title: The record stays unsigned and the check's reader finds no other problem
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The committed record holds no accepted_by and no accepted_on at its top level, no entry of its accepted_exceptions holds a signed acceptance, and the check's own reader finds the unsigned acceptance as the only problem with the record. The test never writes an acceptance into the record. Out of scope is the owner's acceptance, which is its own leaf.
+links:
+  - target: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD
+    type: criterion-of

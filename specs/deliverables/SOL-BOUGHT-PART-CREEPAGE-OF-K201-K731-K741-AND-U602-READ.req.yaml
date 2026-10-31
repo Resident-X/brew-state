@@ -21,3 +21,7 @@ links:
     type: targets
   - target: DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER
     type: justified-by
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 blind brief reviewer
+  fingerprint: 9d211dd7d34421b82bcc6fc595cbc0db3feabdf67f5d733296bed03a6376d751
+  gating_profile: ""
