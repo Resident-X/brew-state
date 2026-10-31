@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The heater wall board is drawn, laid out, reviewed and proven against its design records before it is ordered
 status: active
-version: 3
+version: 4
 text: |
   Designs the heater wall board through the board design method (docs/board-design-method.md) to a board proven against its records and ready to order: the schematic drawn to the written convention and reviewed, the layout planned, placed, routed and reviewed from rendered views, the design records authored, and the pre-order check passing. It draws to the parts, thermal, bracket and harness figures the wall assembly's judgements leaf settles and does not reopen them. The temperature and current shares that leaf judges against are carried unchanged into this board's derating policy. A change of the board's outline made by the owner after the judgements leaf closes is re-derived here, with the bracket length, window, plastic opening and wall-cut figures and the owner's renewed acceptance of the cut. The spreader length and height, the window and the plastic opening are provisional data values that the owner replaces after cutting; the board is drawn to the provisional figures, and rearranging its dimensions later is expected. One detail of the bracket drawing is this leaf's: the two board-mount holes (3.1 mm, at u = -12.5 and 69.5) reach 0.55 mm under the ends of the standing leg (u = -11.5 to 68.5), and the drawing resolves it by a notch or a mount position while keeping the 13.25 mm from mains copper.
 
@@ -67,4 +67,6 @@ links:
   - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C19
     type: derives-from
   - target: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN
+    type: depends-on
+  - target: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD
     type: depends-on

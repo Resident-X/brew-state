@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C2
+type: criterion
+title: The record's environment states the boards are protected against moisture by a coat
+status: active
+version: 2
+measurement_type: binary
+verification: test
+text: |-
+  The environment text of the committed record contains the words "protected against moisture: enclosure", names the conformal coat as a supporting measure, and no longer contains "uncoated" or "not protected against moisture". The test reads the committed record. Out of scope is whether a coat is applied, which the layout leaves and the bring-up task carry.
+links:
+  - target: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD
+    type: criterion-of

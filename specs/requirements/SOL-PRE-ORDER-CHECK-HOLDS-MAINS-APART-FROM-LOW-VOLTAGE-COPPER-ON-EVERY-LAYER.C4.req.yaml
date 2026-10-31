@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C4
+type: criterion
+title: A low-voltage item overlapping a Mains-class item in plan view on another layer fails as an overlap
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a throwaway copy of a proof design, a low-voltage pour, track, via or pad whose plan-view outline overlaps that of a Mains-class item on another copper layer fails as mains_layer_separation naming the test as overlap, both items and their layers, and an item whose outline does not overlap but lies under the clearance fails as the clearance test and not as an overlap. Out of scope is an overlap of two Mains-class items.
+links:
+  - target: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER
+    type: criterion-of

@@ -1,7 +1,7 @@
 id: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS.C3
 type: criterion
 title: The record holds an accepted exception for each mains-to-mains shortfall the owner accepted
-status: active
+status: deprecated
 version: 3
 measurement_type: binary
 verification: test

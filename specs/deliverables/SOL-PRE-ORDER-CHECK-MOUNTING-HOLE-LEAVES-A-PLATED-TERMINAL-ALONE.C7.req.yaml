@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C7
+type: criterion
+title: An unmarked plated fixing on a protective-earth net keeps the signed Mains rule and the plated-hole rule
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  On a synthetic design through KiCad's rule check, a footprint of one plated drilled pad on a protective-earth net, in the bill of materials and with a library item name that does not begin MountingHole, is not a mounting hole, and its pad copper inside the signed distance of a Mains pad, track, via or pour fill still fails under the signed Mains rule and its drilled hole inside that distance of Mains copper still fails under the plated-hole rule, so a fixing left unmarked loses only its courtyard measure. Out of scope: the signed figures themselves.
+links:
+  - target: SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE
+    type: criterion-of

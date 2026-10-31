@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: A task runs any declared judged review as forks of one shared context built by the command, with replicas merged so that any fail stands, and proves it against the recorded single-reviewer runs
 status: active
-version: 4
+version: 5
 text: |
   Why this exists. The first live runs of the fanned-out layout review failed on the way sessions were started: the setup session's system rule, that it write nothing but one token and judge nothing, was inherited by every forked reviewer, and nothing in the tests could show it because the stub never compared how sessions were started. DEC-REVIEW-FAN-OUT-FROM-SHARED-CONTEXT-WITH-REPLICAS sets the shared context as the shape; this solution builds the review kit that the callers move to, so that the whole machinery is built, tested and reviewed once; the earlier driver stays in the repository until the layout solution moves the last caller and removes it. A session building this does not reopen the decision.
 
@@ -55,7 +55,7 @@ text: |
   Planning and running.
 
   - Units a caller declares as coupled are in one group. Small units are packed into one group up to the largest unit's expected output, so that the largest group meets the review's time target, which is estimated as 1.7 seconds per call plus the output tokens at the measured rate; the prices and rates are data, refitted from telemetry, and the fitted values are recorded in the plan.
-  - The plan is flat: one shared context and one fork per group and replica. The planner computes what a tree with the artefacts needed by some groups held above them would save, records the figure and the threshold, and keeps the flat plan; a shared context larger than the review's context budget is refused, naming its size and the budget.
+  - The plan is flat: one shared context and one fork per group and replica. An artefact that only some groups' units need is carried by those groups' sessions and not by the shared context, as SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES builds. The planner computes what a tree with the artefacts needed by some groups held above them would save, records the figure and the threshold, and keeps the flat plan; a shared context larger than the review's context budget is refused, naming its size and the budget.
   - The plan record holds every node with its role, parent, group, replica and attempt, the hash of each prefix, the session specification, the predicted cost and time, the agent command line's version and the tool commit.
   - The scheduler runs at most the stated number of sessions at once; a bound below one is refused. It builds the shared context once, before any fork, and starts the forks together.
   - A fatal result appends a fresh fork of the same parent; a local problem appends a repair turn in that unit's own session; a rate limit waits on the clock and retries the same node; an error or an empty answer is a fatal result. A unit gets a stated number of attempts and a unit that still has a problem is reported, with its other results kept.
@@ -91,7 +91,7 @@ text: |
 
   The documentation clause that a session holding only the notes' section and the command's refusal lines can state the command's inputs, outputs and refusal causes is judged by a reading at review, beside the tests that tie each refusal to its documented cause and action, and the Haiku prices of the cost model were fitted from one recorded run and checked against two later ones.
 
-  Out of scope: any caller, whose declaration and checks are the callers' own solutions, the value of any review's cost bar, and a tree-shaped plan, which the plan record's figure says is not worth building at the sizes the board reviews have.
+  Out of scope: any caller, whose declaration and checks are the callers' own solutions, the value of any review's cost bar, and a tree-shaped plan beyond the group-carried artefacts, which the plan record's figure says is not worth building at the sizes the board reviews have.
 links:
   - target: DEC-REVIEW-FAN-OUT-FROM-SHARED-CONTEXT-WITH-REPLICAS
     type: justified-by

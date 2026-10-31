@@ -1,0 +1,16 @@
+id: EV-SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED-C5-TEST-2
+type: evidence
+title: test evidence for SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C5
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-31T04:52:45.07377Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_separation_basis_record.py::NetPairAndSamePartDrafts.test_the_set_n_reasons_state_the_reduction_holds_while_the_circuit_is_intact_and_name_the_fault_states
+  artifact_version: d1144d2a03aaaca612dfca1d07d9554e1bd4f59c
+attested_by: crun-fab8c204d08aea48
+links:
+  - target: SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C5
+    type: satisfies

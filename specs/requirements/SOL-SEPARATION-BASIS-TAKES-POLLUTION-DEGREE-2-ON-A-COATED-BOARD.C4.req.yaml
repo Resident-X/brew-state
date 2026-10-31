@@ -1,0 +1,14 @@
+id: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C4
+type: criterion
+title: The record signs 2.6 mm of mains-to-mains creepage and leaves the clearances and the mains-to-low-voltage figures unchanged
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The committed record's mains_to_mains holds creepage_mm 2.6 and creepage_ahead_of_fuse_mm 2.6, clearance_mm 1.5, terminal_clearance_mm 2.0, entry_fuse F101 and the same held_at_reinforced pairs as before, and its mains_to_low_voltage holds clearance_mm 3.0 and creepage_mm 10.0. The check's own reader reads it with no problem other than the unsigned acceptance. Out of scope is any figure not named here.
+links:
+  - target: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD
+    type: criterion-of
+  - target: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS.C1
+    type: supersedes

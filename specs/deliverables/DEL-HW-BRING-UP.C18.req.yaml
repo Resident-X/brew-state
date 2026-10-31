@@ -1,0 +1,13 @@
+id: DEL-HW-BRING-UP.C18
+type: criterion
+title: A bridge between the two nets of any excepted pair is shown before the boards are ordered to create no hazard
+status: active
+version: 2
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Before the boards are ordered, a short-circuit analysis of the committed designs is recorded that takes every pair of nets the separation basis excuses below the 2.6 mm figure by a net-pair entry (the neutral-referenced set, the half-mains and divider midpoints and the gate and zero-cross nets, all of them mains-referenced nets and not a low-voltage circuit) and every same-part pad pair it excuses, and shows for a bridge between the two nets of each that the fault current is limited by a named element and that no hazard arises on the touchable side. The analysis covers every net-pair entry of the record and is inspected against the committed entries, entry by entry; the built boards are inspected against it before mains is first connected. Choosing the method of analysis is out of scope.
+links:
+  - target: DEL-HW-BRING-UP
+    type: criterion-of

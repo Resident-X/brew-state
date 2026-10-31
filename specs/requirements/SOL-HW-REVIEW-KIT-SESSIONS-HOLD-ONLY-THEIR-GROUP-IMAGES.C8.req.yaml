@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C8
+type: criterion
+title: The full-size main controller board's critical-routing folder plans within the budget
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |-
+  A plan-only invocation on the critical-routing review folder of the committed main controller board, in the state the review is run on, records for each group the image count and tokens it holds and shows every group, with the shared context, within the critical-routing caller's declared budget; the recorded figures are the demonstration's evidence. A group the figures show over the budget is a defect in the caller's declaration, corrected before the criterion is met. Out of scope: a live run of the review, whose cost the plan-only invocation avoids.
+links:
+  - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES
+    type: criterion-of

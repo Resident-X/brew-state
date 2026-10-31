@@ -49,6 +49,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from fractions import Fraction
 from typing import Dict, List, NamedTuple, Optional, Sequence, Set, Tuple
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -706,6 +707,14 @@ SAME_CONNECTOR_PAIR = "same_connector_pins"
 PLATED_HOLE_CONSTRAINT = "hole_to_hole"
 SAME_CONNECTOR_KEYS = ("pair", "constraint", "connector", "pitch_mm", "accepted_mm", "reason", "bounded_by", "accepted_by",
                        "accepted_on")
+#: The fourth form of an entry, which excuses a mains_to_mains shortfall between two sets of nets: the key that selects it, its
+#: keys (every one but nets_b required), the one pair it may name, and the least distance any entry may accept.
+NET_PAIR_FORM_KEY = "nets_a"
+NET_PAIR_KEYS = ("pair", "constraint", "nets_a", "nets_b", "working_voltage_v", "accepted_mm", "reason", "bounded_by",
+                 "accepted_by", "accepted_on")
+NET_PAIR_REQUIRED = tuple(key for key in NET_PAIR_KEYS if key != "nets_b")
+NET_PAIR_PAIRS = ("mains_to_mains",)
+LEAST_EXCEPTION_MM = 0.2
 #: How far from an entry's pitch_mm the distance between two pad centres may stand for the pair to be at that pitch.
 PITCH_TOLERANCE_MM = 0.01
 #: A reference designator as a connector is named in an entry: letters, then digits.
@@ -1044,14 +1053,22 @@ def read_exceptions(design: Design, record: str, data: dict) -> List[Violation]:
     for index, entry in enumerate(data["accepted_exceptions"]):
         where = f"accepted_exceptions[{index}]"
         same = isinstance(entry, dict) and entry.get("pair") == SAME_CONNECTOR_PAIR
-        keys = SAME_CONNECTOR_KEYS if same else EXCEPTION_KEYS
-        if not reading.mapping(where, entry, keys, keys, "an accepted_exceptions entry"):
+        nets = isinstance(entry, dict) and NET_PAIR_FORM_KEY in entry and not same
+        keys = SAME_CONNECTOR_KEYS if same else NET_PAIR_KEYS if nets else EXCEPTION_KEYS
+        required = NET_PAIR_REQUIRED if nets else keys
+        if nets and "between" in entry:
+            keys = keys + ("between",)
+        if not reading.mapping(where, entry, keys, required, "an accepted_exceptions entry"):
             continue
+        if nets and "between" in entry:
+            reading.bad(f"{where}.between", f"{where} holds both between and {NET_PAIR_FORM_KEY}; an entry is one form, "
+                                            "so name its items with between, or its sets of nets with nets_a and nets_b")
         if "pair" in entry:
-            reading.one_of(f"{where}.pair", entry["pair"], EXCEPTION_PAIRS + (SAME_CONNECTOR_PAIR,))
+            reading.one_of(f"{where}.pair", entry["pair"],
+                           NET_PAIR_PAIRS if nets else EXCEPTION_PAIRS + (SAME_CONNECTOR_PAIR,))
         if "constraint" in entry:
             reading.one_of(f"{where}.constraint", entry["constraint"], (PLATED_HOLE_CONSTRAINT,) if same else EXCEPTION_CONSTRAINTS)
-        if "between" in entry:
+        if "between" in entry and not nets:
             items = entry["between"]
             if not isinstance(items, list) or len(items) != 2:
                 reading.bad(f"{where}.between", f"{where}.between is {items!r}, where it is a list of two items, each a pad "
@@ -1059,6 +1076,13 @@ def read_exceptions(design: Design, record: str, data: dict) -> List[Violation]:
             else:
                 for position, item in enumerate(items):
                     reading.text(f"{where}.between[{position}]", item)
+        for key in ("nets_a", "nets_b"):
+            if nets and key in entry and reading.listed(f"{where}.{key}", entry[key], "net names"):
+                listed = [reading.text(f"{where}.{key}[{position}]", item) for position, item in enumerate(entry[key])]
+                if all(listed):
+                    reading.distinct(f"{where}.{key}", entry[key], "net")
+        if "working_voltage_v" in entry:
+            reading.positive(f"{where}.working_voltage_v", entry["working_voltage_v"], " of volts rms")
         if "connector" in entry:
             connector = entry["connector"]
             if not isinstance(connector, str) or not REFERENCE_DESIGNATOR.fullmatch(connector):
@@ -4982,6 +5006,356 @@ def mains_barrier(design: Design, tree: list, fills, mains: Set[str], allowed: f
     return found
 
 
+# --- Mains copper against low-voltage copper on every layer -----------------------
+
+
+#: The violation the rule raises for any pair of copper it holds too close, and for copper it cannot measure.
+LAYER_RULE = "mains_layer_separation"
+
+#: The name the rule goes by inside the layout rule check's own wording, which the signed exceptions are matched against.
+LAYER_SHORTFALL_RULE = f"{RESERVED}: mains-to-low-voltage layer separation"
+
+#: How far inner-layer copper of any net keeps from the wall of a barrier slot, in mm: the wall is exposed glass fibre.
+#: It is a figure of the check, not of the signed record.
+SLOT_WALL_MM = 1.5
+
+#: The distance at which two pieces of copper in plan view overlap, in mm.
+OVERLAP_MM = board_geometry.CONTACT
+
+#: KiCad's word for an item with no net, written between square brackets.
+NO_NET = "<no net>"
+
+#: The cell, in mm, of the grid that finds the low-voltage copper near a Mains-class item.
+FIND_CELL_MM = 20.0
+
+#: The graphics a layout draws that are copper when they are on a copper layer, and the texts that are never measured.
+COPPER_GRAPHICS = ("line", "arc", "circle", "rect", "poly")
+COPPER_TEXTS = ("gr_text", "fp_text", "gr_text_box", "fp_text_box")
+
+#: Why a curve drawn on a copper layer fails by name.
+COPPER_CURVE = "cannot measure a copper curve, which the layout file gives as a Bezier this check does not size; draw it as arcs and lines"
+
+
+class LayerItem:
+    """One piece of copper as the cross-layer rule holds it.
+
+    `stored` is the layers KiCad compares it on: the copper layers a pad is
+    written on, a via's span, a track's layer, a pour's. `reach` is the layers
+    it has copper on, which a plated through hole widens to every copper layer.
+    `name` is KiCad's wording for it. A non-empty `unmeasured` says why its
+    copper cannot be measured from the layout file.
+    """
+
+    def __init__(self, kind: str, net: str, stored: Sequence[str], reach: Sequence[str],
+                 polygons: Sequence[board_geometry.Polygon], name: str, unmeasured: str = "", margin: float = 0.0):
+        self.kind, self.net = kind, net
+        self.stored, self.reach = tuple(stored), tuple(reach)
+        self.shape = board_geometry.Shape(polygons, margin)
+        self.name = name
+        self.unmeasured = unmeasured
+
+    def centre(self) -> Tuple[float, float]:
+        left, top, right, bottom = self.shape.bounds
+        return (left + right) / 2, (top + bottom) / 2
+
+    def on(self, stack: Sequence[str]) -> str:
+        return "every copper layer" if len(stack) > 2 and set(self.reach) == set(stack) else ", ".join(self.reach)
+
+
+class LayerFinding:
+    """One pair of copper, or one piece of copper and a slot, held too close by the cross-layer rule."""
+
+    def __init__(self, test: str, mains: Optional[LayerItem], other: LayerItem, measured: float, figure: float,
+                 rounds: int = 0, slot: str = ""):
+        self.test, self.mains, self.other = test, mains, other
+        self.measured, self.figure, self.rounds, self.slot = measured, figure, rounds, slot
+        self.shortfall: Optional[Shortfall] = None
+
+    def key(self, stack: Sequence[str]) -> tuple:
+        if self.mains is None:
+            return (self.test, self.slot, self.other.kind, self.other.net, self.other.on(stack))
+        return (self.test, self.mains.kind, self.mains.net, self.mains.on(stack),
+                self.other.kind, self.other.net, self.other.on(stack))
+
+
+class LayerResult:
+    """What the cross-layer rule found: the findings, and what it could not measure."""
+
+    def __init__(self):
+        self.findings: List[LayerFinding] = []
+        self.unmeasured: Dict[str, str] = {}
+
+
+def graphic_polygons(node: list, place, what: str) -> Tuple[List[board_geometry.Polygon], float]:
+    """The copper of a graphic drawn on a copper layer, as polygons and a margin: a stroke swept along its line, or the area it fills with the stroke's half width round it.
+
+    KiCad draws a filled graphic's outline with its stroke as well as filling
+    it, so its copper reaches half the stroke's width past the ring; that half
+    width is the margin returned, 0 for an unfilled graphic whose stroke is
+    the polygons.
+    """
+    head = sexpr.head(node)[3:]
+    stroke = sexpr.child(node, "stroke")
+    width_node = sexpr.child(stroke, "width") if stroke is not None else sexpr.child(node, "width")
+    width = board_geometry.number(width_node, 1, what) if width_node is not None else 0.0
+    fill = sexpr.child(node, "fill")
+    filled = fill is not None and len(fill) > 1 and str(fill[1]) in ("yes", "solid")
+    if head == "line":
+        line = [place(board_geometry.xy(sexpr.child(node, "start"), what)), place(board_geometry.xy(sexpr.child(node, "end"), what))]
+    elif head == "arc":
+        line = [place(p) for p in board_geometry.arc_points(board_geometry.xy(sexpr.child(node, "start"), what),
+                                                              board_geometry.xy(sexpr.child(node, "mid"), what),
+                                                              board_geometry.xy(sexpr.child(node, "end"), what))]
+    else:
+        if head == "circle":
+            centre, edge = board_geometry.xy(sexpr.child(node, "center"), what), board_geometry.xy(sexpr.child(node, "end"), what)
+            ring = [place(p) for p in board_geometry.circle_points(centre, math.dist(centre, edge))]
+        elif head == "rect":
+            (x1, y1), (x2, y2) = (board_geometry.xy(sexpr.child(node, "start"), what), board_geometry.xy(sexpr.child(node, "end"), what))
+            ring = [place(p) for p in ((x1, y1), (x2, y1), (x2, y2), (x1, y2))]
+        else:
+            corners = sexpr.child(node, "pts")
+            if corners is None or len(corners) < 4:
+                raise board_geometry.Unreadable(f"{what} has a polygon with fewer than three corners")
+            ring = [place(board_geometry.xy(corner, what)) for corner in corners[1:]]
+        if filled:
+            return [ring], width / 2
+        line = ring + ring[:1]
+    return board_geometry.swept(line, width), 0.0
+
+
+def pour_items(tree: list, stack: Sequence[str]) -> List[LayerItem]:
+    """Every copper pour of a layout on each of its layers: the fill as the layout stores it, or its outline where it stores none there.
+
+    A zone with no net is a pour of no net; a zone with a keepout clause is a
+    rule area and carries no copper.
+    """
+    table = board_geometry.net_table(tree)
+    found = []
+    for zone in sexpr.children(tree, "zone"):
+        if sexpr.child(zone, "keepout") is not None:
+            continue
+        what = "a zone of the layout"
+        net = board_geometry.item_net(zone, table, what)
+        named = sexpr.child(zone, "layers") or sexpr.child(zone, "layer") or []
+        layers = [str(name) for name in named[1:] if str(name) in stack]
+        if "F&B.Cu" in [str(name) for name in named[1:]]:
+            layers += [name for name in (stack[0], stack[-1]) if name not in layers]
+        if "*.Cu" in [str(name) for name in named[1:]]:
+            layers = list(stack)
+        outlines = []
+        for polygon in sexpr.children(zone, "polygon"):
+            points = sexpr.child(polygon, "pts")
+            if points is None or len(points) < 4:
+                raise board_geometry.Unreadable(f"{what} of {net or NO_NET} has an outline of fewer than three corners")
+            outlines.append([board_geometry.xy(corner, what) for corner in points[1:]])
+        stored: Dict[str, List[board_geometry.Polygon]] = {}
+        for fill in sexpr.children(zone, "filled_polygon"):
+            layer, points = sexpr.child(fill, "layer"), sexpr.child(fill, "pts")
+            if layer is None or len(layer) < 2 or points is None or len(points) < 4:
+                raise board_geometry.Unreadable(f"a fill of the zone of {net or NO_NET} has no layer or no corners where KiCad writes them")
+            if any(sexpr.head(corner) != "xy" for corner in points[1:]):
+                raise board_geometry.Unreadable(f"a fill of the zone of {net or NO_NET} is not a run of (xy ...) corners")
+            stored.setdefault(str(layer[1]), []).append([board_geometry.xy(corner, what) for corner in points[1:]])
+        for layer in layers:
+            polygons = stored.get(layer) or outlines
+            if polygons:
+                found.append(LayerItem("zone", net, [layer], [layer], polygons, f"Zone [{net or NO_NET}] on {layer}"))
+    return found
+
+
+def layer_items(tree: list, stack: Sequence[str], holes: Sequence[str]) -> Tuple[List[LayerItem], Dict[str, str]]:
+    """Every piece of copper of a layout as the cross-layer rule holds it, and the copper it cannot measure by name.
+
+    Tracks, arcs, vias, the pads of every part but the mounting holes, pours
+    and the graphics drawn on a copper layer. The text drawn on a copper layer
+    is copper the layout file does not size, and is returned by name.
+    """
+    table = board_geometry.net_table(tree)
+    found: List[LayerItem] = []
+    unmeasured: Dict[str, str] = {}
+    for copper in Layout(tree).copper:
+        if copper.layer in stack:
+            word = "Track" if copper.kind() == "track" else "Arc"
+            found.append(LayerItem(copper.kind(), copper.net, [copper.layer], [copper.layer],
+                                   board_geometry.swept(copper.points(), copper.width), f"{word} [{copper.net or NO_NET}] on {copper.layer}"))
+    for via in board_vias(tree, stack):
+        found.append(LayerItem("via", via.net, via.layers, via.layers, [board_geometry.disc(via.centre, via.size / 2)],
+                               f"Via [{via.net or NO_NET}] on {via.layers[0]} - {via.layers[-1]}"))
+    held = set(holes)
+    for footprint in sexpr.children(tree, "footprint"):
+        name = board_geometry.reference(footprint) or "?"
+        at = board_geometry.placement(footprint, f"the footprint {name}")
+        if name not in held:
+            for node, pad in zip(sexpr.children(footprint, "pad"), board_geometry.footprint_pads(footprint, table)):
+                stored = [layer for layer in stack if pad.on(layer)]
+                if not stored:
+                    continue
+                kind = str(node[2]) if len(node) > 2 else ""
+                through = kind == "thru_hole"
+                word = "PTH" if through else "NPTH" if kind == "np_thru_hole" else "SMD"
+                custom = pad.shape == "custom" or "layer by layer" in pad.unsized
+                found.append(LayerItem(
+                    "pad", pad.net, stored, stack if through else stored, [pad.outline()],
+                    f"{word} pad {pad.number} [{pad.net or NO_NET}] of {name}",
+                    f"its copper is {pad.unsized or 'not sized'}, which the layout file does not give" if custom else ""))
+        for node in footprint[1:]:
+            if not isinstance(node, list) or not sexpr.head(node).startswith("fp_"):
+                continue
+            layer = sexpr.child(node, "layer")
+            if layer is None or len(layer) < 2 or str(layer[1]) not in stack:
+                continue
+            if sexpr.head(node)[3:] in COPPER_GRAPHICS:
+                polygons, margin = graphic_polygons(node, lambda point, at=at: board_geometry.placed(point, at), f"the footprint {name}")
+                found.append(LayerItem("graphic", "", [str(layer[1])], [str(layer[1])], polygons, f"Graphic on {layer[1]} of {name}",
+                                       margin=margin))
+            elif sexpr.head(node) in COPPER_TEXTS:
+                unmeasured[f"text on {layer[1]} of {name}"] = "text on a copper layer has copper the layout file does not size"
+            elif sexpr.head(node) == "fp_curve":
+                unmeasured[f"curve on {layer[1]} of {name}"] = COPPER_CURVE
+        for node in sexpr.children(footprint, "property"):
+            layer = sexpr.child(node, "layer")
+            if layer is not None and len(layer) > 1 and str(layer[1]) in stack and sexpr.child(node, "hide") is None:
+                unmeasured[f"property {node[1] if len(node) > 1 else '?'} on {layer[1]} of {name}"] = (
+                    "text on a copper layer has copper the layout file does not size")
+    for node in tree[1:]:
+        if not isinstance(node, list) or not sexpr.head(node).startswith("gr_"):
+            continue
+        layer = sexpr.child(node, "layer")
+        if layer is None or len(layer) < 2 or str(layer[1]) not in stack:
+            continue
+        if sexpr.head(node)[3:] in COPPER_GRAPHICS:
+            polygons, margin = graphic_polygons(node, lambda point: point, "the layout")
+            found.append(LayerItem("graphic", "", [str(layer[1])], [str(layer[1])], polygons, f"Graphic on {layer[1]}", margin=margin))
+        elif sexpr.head(node) in COPPER_TEXTS:
+            unmeasured[f"text on {layer[1]}"] = "text on a copper layer has copper the layout file does not size"
+        elif sexpr.head(node) == "gr_curve":
+            unmeasured[f"curve on {layer[1]}"] = COPPER_CURVE
+    found += pour_items(tree, stack)
+    return found, unmeasured
+
+
+def layer_separation(tree: list, mains: Set[str], clearance: float, creepage: float) -> LayerResult:
+    """Every pair of a Mains-class item and a low-voltage item on layers KiCad does not compare, and every inner-layer item near a slot, held too close.
+
+    A Mains-class item is copper of a net in `mains`; a low-voltage item is
+    every other copper, a net of its own or none. A pair is judged here when
+    the layers KiCad compares them on, their `stored` layers, share none, since
+    KiCad's own rule reports a pair that shares one. Seen from above the
+    straight distance between the two is held to `clearance`, the shortest way
+    between them that does not cross a barrier slot to `creepage`, and the two
+    overlapping, which is a distance of nothing, fails as an overlap whatever the
+    figures are. Inner-layer copper of any net stands SLOT_WALL_MM from every slot's wall.
+    """
+    stack = copper_layers(tree)
+    items, texts = layer_items(tree, stack, hole_footprints(tree))
+    result = LayerResult()
+    result.unmeasured.update(texts)
+    slots = board_geometry.barrier_slots(tree)
+    ways = board_geometry.Detours(slots)
+    reach = max(clearance, creepage)
+    cells: Dict[Tuple[int, int], List[int]] = {}
+    low = [item for item in items if item.net not in mains]
+    for index, item in enumerate(low):
+        left, top, right, bottom = item.shape.bounds
+        for column in range(math.floor(left / FIND_CELL_MM), math.floor(right / FIND_CELL_MM) + 1):
+            for row in range(math.floor(top / FIND_CELL_MM), math.floor(bottom / FIND_CELL_MM) + 1):
+                cells.setdefault((column, row), []).append(index)
+    for item in (item for item in items if item.net in mains):
+        left, top, right, bottom = item.shape.bounds
+        near: Set[int] = set()
+        for column in range(math.floor((left - reach) / FIND_CELL_MM), math.floor((right + reach) / FIND_CELL_MM) + 1):
+            for row in range(math.floor((top - reach) / FIND_CELL_MM), math.floor((bottom + reach) / FIND_CELL_MM) + 1):
+                near.update(cells.get((column, row), ()))
+        for index in sorted(near):
+            other = low[index]
+            if set(item.stored) & set(other.stored) or board_geometry.apart(item.shape, other.shape, reach):
+                continue
+            if item.unmeasured or other.unmeasured:
+                for held in (item, other):
+                    if held.unmeasured:
+                        result.unmeasured[held.name] = held.unmeasured
+                continue
+            distance = board_geometry.shape_distance(item.shape, other.shape, reach)
+            if distance >= reach - ROUNDING:
+                continue
+            if distance <= OVERLAP_MM:
+                result.findings.append(LayerFinding("overlap", item, other, 0.0, clearance))
+            elif distance < clearance - ROUNDING:
+                result.findings.append(LayerFinding("clearance", item, other, distance, clearance))
+            if distance < creepage - ROUNDING:
+                length, rounds = board_geometry.route_length(item.shape, other.shape, ways, creepage, distance)
+                if length < creepage - ROUNDING:
+                    result.findings.append(LayerFinding("creepage", item, other, length, creepage, rounds))
+    inner = [item for item in items if any(layer not in (stack[0], stack[-1]) for layer in item.reach)]
+    for slot in slots:
+        wall = board_geometry.Shape([slot.points])
+        for item in inner:
+            if board_geometry.apart(item.shape, wall, SLOT_WALL_MM):
+                continue
+            if item.unmeasured:
+                result.unmeasured[item.name] = item.unmeasured
+                continue
+            distance = board_geometry.shape_distance(item.shape, wall, SLOT_WALL_MM)
+            if distance < SLOT_WALL_MM - ROUNDING:
+                result.findings.append(LayerFinding("pull-back", None, item, distance, SLOT_WALL_MM, slot=slot.label()))
+    return result
+
+
+def layer_shortfall(found: LayerFinding) -> Shortfall:
+    """A finding of a pair as the layout rule check would have reported it, in its wording, for the signed exceptions to judge."""
+    kind = "creepage" if found.test == "creepage" else "clearance"
+    entry = {"type": kind,
+             "description": f"{kind.capitalize()} violation (rule '{LAYER_SHORTFALL_RULE}' {kind} {found.figure:g} mm; "
+                            f"actual {found.measured:.4f} mm)",
+             "items": [{"description": item.name, "pos": {"x": item.centre()[0], "y": item.centre()[1]}}
+                       for item in (found.mains, found.other)]}
+    found.shortfall = Shortfall(entry, "mains_to_low_voltage", found.figure, entry["items"])
+    return found.shortfall
+
+
+def layer_violations(design: Design, findings: Sequence[LayerFinding], unmeasured: Dict[str, str], stack: Sequence[str]) -> List[Violation]:
+    """The violations of the findings no exception judged, one for each test and kind of copper pair, at the nearest, and one for each copper not measured."""
+    nearest: Dict[tuple, LayerFinding] = {}
+    counts: Dict[tuple, int] = {}
+    for found in findings:
+        key = found.key(stack)
+        counts[key] = counts.get(key, 0) + 1
+        if key not in nearest or found.measured < nearest[key].measured:
+            nearest[key] = found
+    violations = []
+    for key, found in sorted(nearest.items(), key=lambda entry: (entry[1].test, entry[1].other.name, entry[1].measured)):
+        more = f"; {counts[key] - 1} more pair{'s' if counts[key] > 2 else ''} of the same kinds are no nearer" if counts[key] > 1 else ""
+        other = f"{found.other.name} (copper on {found.other.on(stack)})"
+        if found.mains is None:
+            violations.append(Violation(
+                design.project, LAYER_RULE, f"{design.layout} {found.other.name}; pull-back from {found.slot}",
+                f"pull-back: {other} stands {found.measured:.3f} mm in plan view from the wall of {found.slot}, inside the "
+                f"{found.figure:g} mm that inner-layer copper of any net keeps off the wall of a barrier slot{more}; move the "
+                "copper back, or cut the pour back, from the slot"))
+            continue
+        mains = f"{found.mains.name} (Mains-class, copper on {found.mains.on(stack)})"
+        if found.test == "overlap":
+            what = f"overlap: {mains} and {other} overlap in plan view on different layers, which no figure excuses"
+        elif found.test == "clearance":
+            what = (f"clearance: {mains} and {other} stand {found.measured:.3f} mm apart in plan view, under the signed "
+                    f"mains_to_low_voltage clearance of {found.figure:g} mm")
+        else:
+            round_ = f", round {found.rounds} slot{'s' if found.rounds > 1 else ''}" if found.rounds else ""
+            what = (f"creepage: the shortest path in plan view between {mains} and {other} that crosses no barrier slot is "
+                    f"{found.measured:.3f} mm{round_}, under the signed mains_to_low_voltage creepage of {found.figure:g} mm")
+        violations.append(Violation(
+            design.project, LAYER_RULE, f"{design.layout} {found.mains.name} and {found.other.name}; {found.test}",
+            f"{what}{more}; KiCad's own check compares copper on one layer only, so move the items apart in plan view, or the "
+            "owner accepts a smaller distance for the pair"))
+    for name, why in sorted(unmeasured.items()):
+        violations.append(Violation(
+            design.project, LAYER_RULE, f"{design.layout} {name}",
+            f"{name} cannot be held to the Mains-class copper it may stand near on another layer: {why}; draw it as copper the "
+            "layout file sizes, or take it off the copper layers"))
+    return violations
+
+
 def first_written(*values: Optional[float]) -> float:
     """The first of the values a layout writes, or 0 where it writes none."""
     return next((value for value in values if value is not None), 0.0)
@@ -6540,7 +6914,8 @@ def mains_pairs(design: Design, record: str, signed: Signed, mains: Set[str], en
 
 #: The pair of the record each rule the check appends for a spacing shortfall holds; a net pair held at reinforced is
 #: in none of them, so a shortfall there stays an ordinary violation whatever an entry says.
-EXCEPTION_RULES = {SIGNED_RULE: "mains_to_low_voltage", MAINS_TO_MAINS_RULE: "mains_to_mains",
+EXCEPTION_RULES = {SIGNED_RULE: "mains_to_low_voltage", LAYER_SHORTFALL_RULE: "mains_to_low_voltage",
+                   MAINS_TO_MAINS_RULE: "mains_to_mains",
                    TERMINAL_RULE: "mains_to_mains", AHEAD_OF_FUSE_RULE: "mains_to_mains"}
 #: KiCad's own text of the rule and its figure in a clearance or creepage violation.
 RULE_FIGURE = re.compile(r"\(rule '([^']*)' (?:clearance|creepage) ([0-9.]+) mm")
@@ -6586,6 +6961,32 @@ class Shortfall:
                 return None
             found.append((pad.group(2), float(where["x"]), float(where["y"])))
         return found
+
+    def nets(self, names: Set[str]) -> Optional[Tuple[str, str]]:
+        """The net each of the two items stands on as KiCad's report writes it, or None where an item names none.
+
+        The longest net of the layout written between square brackets in the
+        item's text is the net; a text that holds none of them is read for its
+        bracketed text, which is then a net the layout lacks or '<no net>'.
+        """
+        found = []
+        for text in self.texts:
+            written = [name for name in names if f"[{name}]" in text]
+            if written:
+                found.append(max(written, key=len))
+                continue
+            bracketed = REPORTED_NET.search(text)
+            if bracketed is None:
+                return None
+            found.append(bracketed.group(1))
+        return (found[0], found[1]) if len(found) == 2 else None
+
+    def lies_between_lists(self, names: Set[str], first: Set[str], second: Set[str]) -> bool:
+        """Whether the two items stand on different nets, one in each set (in either order)."""
+        nets = self.nets(names)
+        if nets is None or nets[0] == nets[1]:
+            return False
+        return (nets[0] in first and nets[1] in second) or (nets[1] in first and nets[0] in second)
 
     def lies_between(self, tokens: List[Tuple[str, bool]]) -> bool:
         if len(self.texts) != 2:
@@ -6649,6 +7050,182 @@ def plated_pad_centres(footprint: list) -> List[Tuple[float, float]]:
     at = board_geometry.placement(footprint, what)
     return [board_geometry.placed(board_geometry.xy(sexpr.child(node, "at"), what), at)
             for node in sexpr.children(footprint, "pad") if len(node) > 2 and str(node[2]) == "thru_hole"]
+
+
+def band_rows(basis: dict) -> List[Tuple[Fraction, dict]]:
+    """The record's functional table rows that give a band figure, as (working voltage, row figure), lowest voltage first.
+
+    A band row is of insulation functional, at the conductors (location conductor
+    or none), at the record's own pollution degree and material group, and states
+    a positive working voltage. The voltage is taken from the record's text, never
+    through floating point.
+    """
+    rows = []
+    for row in basis.get("table_rows") or []:
+        inputs, figure = (row.get("inputs"), row.get("figure")) if isinstance(row, dict) else (None, None)
+        if not isinstance(inputs, dict) or not isinstance(figure, dict):
+            continue
+        if (inputs.get("insulation") != "functional" or inputs.get("location", "conductor") != "conductor"
+                or inputs.get("pollution_degree") is None or inputs.get("pollution_degree") != basis.get("pollution_degree")
+                or inputs.get("material_group") is None or inputs.get("material_group") != basis.get("material_group")
+                or not positive_number(inputs.get("working_voltage_v"))):
+            continue
+        rows.append((Fraction(str(inputs["working_voltage_v"])), figure))
+    return sorted(rows, key=lambda row: row[0])
+
+
+def band_figure(basis: dict, figure_key: str, volts) -> Optional[Fraction]:
+    """The creepage_mm or clearance_mm the record's band rows give for a working voltage, or None where they give none.
+
+    The figure of the row at that voltage; the lowest row's figure below it;
+    between two adjacent rows their linear interpolation rounded up to 0.1 mm,
+    worked in decimal exactly; and none above the highest row. A row that lacks
+    `figure_key` is not one of the rows read, and two rows at one voltage give
+    the larger figure.
+    """
+    volts = Fraction(str(volts))
+    by_voltage: Dict[Fraction, Fraction] = {}
+    for voltage, figure in band_rows(basis):
+        if positive_number(figure.get(figure_key)):
+            by_voltage[voltage] = max(by_voltage.get(voltage, Fraction(0)), Fraction(str(figure[figure_key])))
+    if not by_voltage:
+        return None
+    voltages = sorted(by_voltage)
+    if volts > voltages[-1]:
+        return None
+    if volts <= voltages[0]:
+        return by_voltage[voltages[0]]
+    for low, high in zip(voltages, voltages[1:]):
+        if volts == high:
+            return by_voltage[high]
+        if low <= volts < high:
+            value = by_voltage[low] + (by_voltage[high] - by_voltage[low]) * (volts - low) / (high - low)
+            return Fraction(math.ceil(value * 10), 10)
+    return None
+
+
+def net_pair_entry_problem(entry: dict, basis: dict) -> Optional[str]:
+    """Why a net-pair entry's working voltage and accepted distance are not ones the record's band rows allow, or None.
+
+    This reads only the entry and the record, never a layout. The working voltage
+    stands at or below the record's and the highest band row; the accepted
+    distance is at least LEAST_EXCEPTION_MM, at least the band clearance for the
+    voltage, and, for creepage, at least the band creepage for it as well. A band
+    figure the rows do not give fails the entry.
+    """
+    volts, accepted = entry["working_voltage_v"], Fraction(str(entry["accepted_mm"]))
+    held = basis_voltage(basis.get("working_voltage"))
+    if held is None:
+        return "the record states no working voltage, so the entry's working voltage has nothing to be held below"
+    rows = band_rows(basis)
+    above = []
+    if Fraction(str(volts)) > Fraction(str(held)):
+        above.append(f"working_voltage_v {volts:g} V is above the record's working voltage {held:g} V")
+    if not rows or Fraction(str(volts)) > rows[-1][0]:
+        above.append(f"working_voltage_v {volts:g} V is above the highest functional band row of the record"
+                     f"{f' ({float(rows[-1][0]):g} V)' if rows else ', which holds none'}, so there is no band figure to hold it to")
+    if above:
+        return "; ".join(above)
+    if accepted < Fraction(str(LEAST_EXCEPTION_MM)):
+        return f"accepted_mm {entry['accepted_mm']:g} mm is below {LEAST_EXCEPTION_MM:g} mm, the least distance an exception may accept"
+    figures = {}
+    for key in ("clearance_mm", "creepage_mm") if entry["constraint"] == "creepage" else ("clearance_mm",):
+        figures[key] = band_figure(basis, key, volts)
+        if figures[key] is None:
+            return f"the record's functional band rows give no {key} for {volts:g} V, so the entry has no band figure to be held to"
+    for key, figure in figures.items():
+        if accepted < figure:
+            name = key.split("_")[0]
+            return (f"accepted_mm {entry['accepted_mm']:g} mm is below the band {name} {float(figure):g} mm the record gives for "
+                    f"{volts:g} V; creepage is never accepted below the clearance of the pair, and neither below its band figure")
+    return None
+
+
+def judge_net_pair(judged: Judged, index: int, entry: dict, record: str, design: Design, shortfalls: Sequence[Shortfall],
+                   names: Set[str], mains: Optional[Set[str]], held_pairs: Sequence[Sequence[str]], basis: dict,
+                   record_day: Optional[datetime.date], today: datetime.date) -> None:
+    """One net-pair entry judged against the mains_to_mains shortfalls the layout rule check reported.
+
+    A shortfall of the entry's constraint whose two items stand on different nets,
+    one in each of the entry's lists (both in nets_a where nets_b is omitted), is
+    accepted when the distance KiCad reported is no less than accepted_mm and
+    failed, naming the entry, when it is less. The entry fails when it is unsigned,
+    lists a net the layout lacks or one outside the Mains class, states a working
+    voltage or distance the record's band rows refuse, lists both nets of a pair
+    held at reinforced on opposite sides, relaxes no figure a shortfall it covers
+    was held to, or covers no shortfall another entry has not already taken. Where
+    the Mains class is unknown every entry fails.
+    """
+    where = f"{record} accepted_exceptions[{index}]"
+    label = f"accepted_exceptions[{index}]"
+
+    def fail(message: str) -> None:
+        judged.violations.append(Violation(design.project, "spacing_exception", where, f"{label} {message}"))
+
+    unsigned = entry_unsigned(entry, record_day, today)
+    if unsigned is not None:
+        fail(f"is not an acceptance, so it excuses nothing: {unsigned}")
+        return
+    first = list(entry["nets_a"])
+    second = list(entry.get("nets_b") or first)
+    listed = first + [net for net in second if net not in first]
+    absent = [net for net in listed if net not in names]
+    if absent:
+        fail(f"lists {', '.join(absent)}, which the layout lacks as a net; list the nets of the layout, or remove the entry")
+        return
+    if mains is None:
+        fail("cannot be judged: the layout's Mains net class could not be resolved, so no net it lists can be told to be a mains net")
+        return
+    outside = [net for net in listed if net not in mains]
+    if outside:
+        fail(f"lists {', '.join(outside)}, which is not in the Mains net class, so the entry could excuse a pair spanning "
+             "mains and low voltage; list only Mains nets, or remove the entry")
+        return
+    problem = net_pair_entry_problem(entry, basis)
+    if problem is not None:
+        fail(f"is refused: {problem}; state a working voltage and accept a distance the record's band rows allow, or remove the entry")
+        return
+    for one, other in held_pairs:
+        if (one in first and other in second) or (other in first and one in second):
+            fail(f"lists {one} and {other} on opposite sides, the pair held at reinforced across the open contact, which no "
+                 "exception excuses; list them apart, or remove the entry")
+            return
+    nets_text = f"[{', '.join(first)}] and [{', '.join(second)}]"
+    covered = [found for found in shortfalls
+               if found.pair == "mains_to_mains" and found.kind == entry["constraint"] and id(found.entry) not in judged.consumed
+               and found.lies_between_lists(names, set(first), set(second))]
+    if not covered:
+        fail(f"covers mains_to_mains {entry['constraint']} between {nets_text}, where the layout rule check reports no shortfall "
+             "of it that another entry has not taken; remove the exception, or restore the geometry it excused")
+        return
+    accepted = float(entry["accepted_mm"])
+    figure = max(found.figure for found in covered)
+    if accepted >= figure:
+        fail(f"accepts {accepted:g} mm, which is not below the {figure:g} mm figure the shortfall it covers was held to, so it "
+             "relaxes nothing; accept a smaller distance, or remove it")
+        return
+    seen: Set[tuple] = set()
+    taken: List[Shortfall] = []
+    for found in covered:
+        judged.consumed.add(id(found.entry))
+        if found.key() in seen:
+            continue
+        seen.add(found.key())
+        if found.measured >= accepted:
+            taken.append(found)
+        else:
+            fail(f"accepts mains_to_mains {entry['constraint']} between {nets_text} down to {accepted:g} mm, and the layout "
+                 f"leaves {found.measured:g} mm between {' and '.join(found.nets(names) or ('?', '?'))} "
+                 f"({'; '.join(found.texts)}), below it; move the items apart, or the owner accepts a smaller distance")
+    if taken:
+        band = band_figure(basis, f"{entry['constraint']}_mm", entry["working_voltage_v"])
+        judged.accepted.append(
+            "ACCEPTED | " + " | ".join(clean(field) for field in (
+                design.project, "spacing_exception", where,
+                f"accepted exception: net pair mains_to_mains {entry['constraint']} between {nets_text}: {len(taken)} of "
+                f"{len(seen)} shortfalls covered, narrowest {min(found.measured for found in taken):g} mm, accepted down to "
+                f"{accepted:g} mm against the signed {figure:g} mm; working voltage {entry['working_voltage_v']:g} V, band "
+                f"{float(band):g} mm; reason: {entry['reason']}; bounded by: {entry['bounded_by']}")))
 
 
 def judge_same_connector(judged: Judged, index: int, entry: dict, record: str, design: Design, tree: list,
@@ -6719,7 +7296,7 @@ def judge_same_connector(judged: Judged, index: int, entry: dict, record: str, d
 
 
 def judge_exceptions(design: Design, record: str, signed: Signed, violations: Sequence[dict], tree: list,
-                     today: datetime.date) -> Judged:
+                     today: datetime.date, mains: Optional[Set[str]] = None, extra: Sequence[Shortfall] = ()) -> Judged:
     """Each spacing shortfall the layout rule check reported, judged against the signed accepted_exceptions of the record.
 
     A shortfall between the one pair of items an entry's between lists, for the
@@ -6738,13 +7315,15 @@ def judge_exceptions(design: Design, record: str, signed: Signed, violations: Se
             for pad in sexpr.children(footprint, "pad") if len(pad) > 1}
     nets = layout_nets(tree)
     record_day = iso_date(signed.basis.get("accepted_on"))
-    shortfalls = reported_shortfalls(violations)
+    shortfalls = reported_shortfalls(violations) + list(extra)
 
     def fail(index: int, message: str) -> None:
         judged.violations.append(Violation(design.project, "spacing_exception", f"{record} accepted_exceptions[{index}]",
                                            f"accepted_exceptions[{index}] {message}"))
 
     for index, entry in enumerate(entries):
+        if NET_PAIR_FORM_KEY in entry:
+            continue
         unsigned = entry_unsigned(entry, record_day, today)
         if unsigned is not None:
             fail(index, f"is not an acceptance, so it excuses nothing: {unsigned}")
@@ -6789,6 +7368,11 @@ def judge_exceptions(design: Design, record: str, signed: Signed, violations: Se
                 fail(index, f"accepts {entry['pair']} {entry['constraint']} between {entry['between'][0]} and "
                             f"{entry['between'][1]} down to {accepted:g} mm, and the layout leaves {found.measured:g} mm "
                             f"({'; '.join(found.texts)}), below it; move the items apart, or the owner accepts a smaller distance")
+    held_pairs = (signed.mains_to_mains or {}).get("held_at_reinforced") or []
+    for index, entry in enumerate(entries):
+        if NET_PAIR_FORM_KEY in entry:
+            judge_net_pair(judged, index, entry, record, design, shortfalls, nets, mains, held_pairs, signed.basis,
+                           record_day, today)
     return judged
 
 
@@ -7019,12 +7603,43 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
         found += ignored(design, drc, "board.design_settings.rule_severities")
         reported = [entry for entry in drc.get("violations") or [] if id(entry) not in own]
         consumed: Set[int] = set()
+        project_copy = os.path.join(copy, os.path.basename(design.project))
+        classes_read: list = []
+
+        def layout_classes():
+            """The layout's net names, the project's classes and KiCad's resolution of them, resolved once."""
+            if not classes_read:
+                names = layout_nets(tree)
+                project_classes = resolvable_classes(project, tree)
+                members, why = class_members(kicad_cli, scratch, project_copy, sorted(project_classes - {DEFAULT_CLASS}),
+                                             names, nonce, layout_version(tree), class_blocks(tree))
+                classes_read.append((names, project_classes, members, why))
+            return classes_read[0]
+
+        layered = LayerResult()
+        if (signed is not None and tree is not None and refilled is not None and netlist is not None and markers
+                and not cut_short(drc)):
+            resolved = layout_classes()[2]
+            if resolved is not None and resolved["Mains"]:
+                try:
+                    layered = layer_separation(refilled, resolved["Mains"], signed[0], signed[1])
+                except board_geometry.Unreadable as unread:
+                    found.append(Violation(design.project, "design_unreadable", design.layout,
+                                           f"the layout KiCad refilled cannot be read for the copper on every layer ({unread})"))
         if signed is not None and signed.exceptions and tree is not None and markers and not cut_short(drc):
-            judged = judge_exceptions(design, record, signed, reported, tree, today)
+            mains_class = None
+            if any(NET_PAIR_FORM_KEY in entry for entry in signed.exceptions):
+                resolved = layout_classes()[2]
+                mains_class = resolved["Mains"] if resolved is not None else None
+            judged = judge_exceptions(design, record, signed, reported, tree, today, mains_class,
+                                      [layer_shortfall(entry) for entry in layered.findings if entry.mains is not None])
             found += judged.violations
             consumed = judged.consumed
             if accepted is not None:
                 accepted += judged.accepted
+        found += layer_violations(design, [entry for entry in layered.findings
+                                           if entry.shortfall is None or id(entry.shortfall.entry) not in consumed],
+                                  layered.unmeasured, copper_layers(refilled) if refilled is not None else [])
         for entry in reported:
             if id(entry) not in consumed:
                 found.append(kicad_violation(design, entry, design.layout))
@@ -7065,13 +7680,8 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
         # resolves it: the layout's, which is what the separation rule is
         # enforced against; the schematic's; and the project file's net
         # settings, by name and by pattern. They must agree net for net.
-        names = layout_nets(tree)
-        project_copy = os.path.join(copy, os.path.basename(design.project))
         widths, unwidthed = class_widths(project)
-        project_classes = resolvable_classes(project, tree)
-        classes = sorted(project_classes - {DEFAULT_CLASS})
-        members, why = class_members(kicad_cli, scratch, project_copy, classes, names, nonce,
-                                     layout_version(tree), class_blocks(tree))
+        names, project_classes, members, why = layout_classes()
         if members is None:
             found.append(Violation(design.project, "design_unreadable", design.layout,
                                    f"the layout's net classes cannot be resolved by KiCad: {why}"))

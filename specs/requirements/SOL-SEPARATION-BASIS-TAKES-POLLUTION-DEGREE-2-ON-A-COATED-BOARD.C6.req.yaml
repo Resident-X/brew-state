@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C6
+type: criterion
+title: The mains-to-low-voltage figures have applicable rows at pollution degree 2 and stay above their floor
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The record's rows for the mains-to-low-voltage clearance and creepage are read at pollution degree 2 (clearance 3.0 mm from Table F.2 at 4.0 kV, creepage 6.4 mm, the 3.2 mm of the 320 V row doubled for reinforced insulation), the check's floor rule run on the record's own figures taken as signed finds no violation, and a creepage_mm of 2.5 or a pollution degree 3 on those rows fails it. The record says the margin of the signed 10.0 mm over 6.4 mm is deliberate. Out of scope is changing the signed 3.0 mm and 10.0 mm.
+links:
+  - target: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-TOUCH-CURRENT-OF-THE-UNEARTHED-LOW-VOLTAGE-SIDE-BROUGHT-UNDER-ITS-LIMIT.C2
+type: criterion
+title: The chosen fix leaves the budget total at or under 0.25 mA at the datasheet maxima, or the item returns the limit to the owner
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |-
+  The budget table recomputed with the chosen fix (a lower-leakage module, less Y capacitance, a different filter or another change it names, with the ground for choosing it) totals no more than 0.25 mA using each part's datasheet maximum at the top of the declared supply span; where no fix does, the item states that and names the limit as the owner's to decide. Out of scope is the verification of the 0.25 mA figure against the standard.
+links:
+  - target: SOL-TOUCH-CURRENT-OF-THE-UNEARTHED-LOW-VOLTAGE-SIDE-BROUGHT-UNDER-ITS-LIMIT
+    type: criterion-of
