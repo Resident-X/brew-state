@@ -6,7 +6,7 @@ version: 1
 measurement_type: binary
 verification: inspection
 text: |
-  The hardware notes' mounting-hole paragraph and the mounting_hole row of their rule table state the four marks as the first criterion of this leaf gives them, that a plated pad on a net is a terminal and not a fixing by being alone, and that a plated fixing on a net carries the bill-of-materials exclusion or the name "MountingHole" to be measured by its courtyard; they no longer say that a single pad is a mark of a fixing or that a one-pin part is held to the larger distance on purpose. Inspection: read both places against each clause and find all present. Out of scope: the design method's layout-practice items.
+  The hardware notes' mounting-hole paragraph and the mounting_hole row of their rule table state the four marks as the first criterion of this leaf gives them, that a plated pad on a net is a terminal and not a fixing by being alone, and that a plated fixing on a net carries the bill-of-materials exclusion or the name "MountingHole" to be measured by its courtyard; they no longer say that a single pad is a mark of a fixing or that a one-pin through-hole part such as a test point on a net is held to the larger distance as a fixing. Inspection: read both places against each clause and find all present. Out of scope: the design method's layout-practice items.
 links:
   - target: SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE
     type: criterion-of

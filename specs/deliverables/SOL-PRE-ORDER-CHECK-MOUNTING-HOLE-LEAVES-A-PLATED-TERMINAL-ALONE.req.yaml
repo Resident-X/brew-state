@@ -15,7 +15,7 @@ text: |
   - Placement: hole_footprints in hardware/tools/board_check.py and its docstring; the tests that traced the superseded criterion trace this leaf's instead. The Mounting holes paragraph of DEC-BOARD-PRE-ORDER-RULE-READINGS is amended in the graph by the change that authors this leaf, and the hardware notes (hardware/README.md) are corrected by the build.
   - Out of scope: the plated-hole rule's reading of a plated pad on a non-Mains net, the signed Mains rule, which parts the main board draws as tabs, and the mechanical strength of a fixing.
 rationale: |
-  Restores the behaviour OBL-ELECTRICAL-THERMAL-SAFETY-001.C6 and .C7 ask of the mounting-hole rule: a fixing, which a person or a screw can bridge, keeps the mains distance, and a terminal is held to the spacing its own pair is signed for rather than to a fixing's distance. On the main controller board the single-pad mark read the ten blade-tab terminals of the mains loads as fixings and reported mains-involving findings on the committed layout (five by the board-layout work's run, sixty and more in earlier runs); each is a false reading of the superseded criterion's wording, which a terminal-versus-fixing distinction drawn where the consequence lands (a pad that is electrically a terminal) removes without loosening any fixing. The alternative of keeping the single-pad mark and exempting tabs by footprint name was rejected because it makes the distinction by naming, which a renamed footprint defeats. The alternative of dropping the one-pad mark entirely was rejected because a custom plated mounting pad with no net and no flag would then skip the extent checks.
+  Restores the behaviour OBL-ELECTRICAL-THERMAL-SAFETY-001.C6 and .C7 ask of the mounting-hole rule: a fixing, which a person or a screw can bridge, keeps the mains distance, and a terminal is held to the spacing its own pair is signed for rather than to a fixing's distance. On the main controller board the single-pad mark read the blade-tab terminals of the mains loads as fixings and reported mains-involving findings on the committed layout; each is a false reading of the superseded criterion's wording, which a terminal-versus-fixing distinction drawn where the consequence lands (a pad that is electrically a terminal) removes without loosening any fixing. The alternative of keeping the single-pad mark and exempting tabs by footprint name was rejected because it makes the distinction by naming, which a renamed footprint defeats. The alternative of dropping the one-pad mark entirely was rejected because a custom plated mounting pad with no net and no flag would then skip the extent checks.
 links:
   - target: DEL-MAINTENANCE.C1
     type: derives-from
@@ -29,3 +29,7 @@ links:
     type: justified-by
   - target: SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 blind brief reviewer
+  fingerprint: a4c34512665d58d96def469caa110baf743eb296e6c5e87af2578fc83e2e4c54
+  gating_profile: ""
