@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C6
+type: criterion
+title: Each mounting-hole rule is still shown to fail on its seeded fault and every tracked design passes
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The seeded-fault harness still shows the check failing mounting_hole on a copy of the throwaway proof design for a hole, a plated hole and a fixing's courtyard inside the signed distance of its mains pads, and every tracked design passes the mounting-hole rules, which run in the build round for board changes and nightly on main. Out of scope: every other rule's seeded fault.
+links:
+  - target: SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE
+    type: criterion-of

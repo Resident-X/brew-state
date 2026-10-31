@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C2
+type: criterion
+title: A footprint of one plated pad on a net is no mounting hole, and a fixing of each of the four marks is one
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a synthetic layout, a footprint of one plated drilled pad on a Mains net, and one on a low-voltage net, each in the bill of materials and with a library item name that does not begin MountingHole, are not among the mounting holes, and neither gives a mounting_hole violation when its courtyard is drawn inside the signed distance of another Mains net's copper; a footprint of one plated drilled pad on no net, a footprint whose every pad is non-plated, a plated footprint excluded from the bill of materials and a plated footprint whose library item name begins MountingHole are each among them, the last two whatever the net of their pads, a protective-earth net included. A footprint with a surface-mount pad is no hole whatever its marks. Out of scope: which parts the main board draws as tabs.
+links:
+  - target: SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE
+    type: criterion-of

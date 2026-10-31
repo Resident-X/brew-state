@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-PUMP-TRIAC-EXCEPTIONS-FOLLOW-THE-LAND-DRAWN.C2
+type: criterion
+title: The documents that restate the pump triacs' exception state the land's tab-to-lead pairs
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The board division record's finding on mains-to-mains spacing, its verification script's expected-output strings and the record's own header comment state the pump triacs' exception as the entries of the first criterion hold it, as the tab pad against each lead pad of the two-lead land, and none states a gap between a middle-lead pad and an outer lead pad. Inspection: read each place against the record's four triac entries and find none that gives the superseded three-lead gap or a middle lead. Out of scope: the other restatements of the record's figures.
+links:
+  - target: SOL-SEPARATION-BASIS-PUMP-TRIAC-EXCEPTIONS-FOLLOW-THE-LAND-DRAWN
+    type: criterion-of

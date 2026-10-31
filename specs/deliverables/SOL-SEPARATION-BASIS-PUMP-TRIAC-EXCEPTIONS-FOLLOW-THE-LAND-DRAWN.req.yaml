@@ -1,0 +1,28 @@
+id: SOL-SEPARATION-BASIS-PUMP-TRIAC-EXCEPTIONS-FOLLOW-THE-LAND-DRAWN
+type: deliverable
+category: solution
+title: The separation basis record's pump-triac exceptions follow the land the main board draws for the triacs
+status: active
+version: 1
+text: |
+  Brings the separation basis record's accepted mains-to-mains exceptions for the pump triacs T701 and T711 to the land the main board draws for them, and the documents that restate those exceptions with them. The record's four entries for the triacs excuse a gap of 1.08 mm between a middle-lead pad and the two outer lead pads of a three-lead package land. The board now draws each triac on a two-lead land whose tab is the second main terminal and whose middle lead has no pad, so those pads, and the gap between them, do not exist; the shortfall that remains is the tab pad against each outer lead pad. The superseded criterion pinned the three-lead gap as a figure, so it said what the design can change; this one states what the entries hold, and the record carries the figures.
+
+  Settled for the build:
+  - The entries keep their keys. T701.2 and T711.2 name the tab pad on the two-lead land, pad 2 being the second main terminal there as it was the middle lead, and each is paired with the outer lead pads 1 and 3, so four entries remain. Each entry's accepted_mm is the edge-to-edge distance between its two pads read from the land in the main-board library, and its constraint is the signed figure that distance falls below: clearance when it is under the signed terminal clearance, creepage when it is at or above that and under the signed creepage. The reason and the bounding element are rewritten for the tab-to-lead gap: the branch fuse in series with the tab, then the entry fuse F101, interrupt a breakdown between the pads.
+  - The R105 and 1206 series-resistor entries are unchanged, their figures stated as before.
+  - The record stays unsigned: accepted_by and accepted_on of every entry stay empty, and the owner's acceptance of the changed entries is the owner-acts acceptance leaf's, which names the entries it signs. The record's comment that gives the triac pin distances is corrected to the distances measured on the land.
+  - The test reads the committed record through the check's own reader, never a second validator, reads the pad geometry of the land from the main-board library, and never writes acceptance values into the record. The tests and the evidence that traced the superseded criterion, and the restatement of the 1.08 mm gap in the board division record and its verification script, are brought to the land in the same change.
+  - Out of scope: choosing a different triac, drawing the part's own package, the creepage and clearance figures themselves and the pollution degree they are read at, the owner's acceptance, and the mains-to-low-voltage entries.
+rationale: |
+  Restores the behaviour REQ-ELECTRICAL-INSTALL-001.C16 asks: a shortfall a part's geometry forces is passed only as an exception naming the one pair of pads it excuses, and an acceptance that names a pair showing no shortfall is not an acceptance. The four entries for the triacs name a pad that the land the board now draws does not have and a gap of 1.08 mm that it does not leave, so they would fail the check's own rule that an entry no reported shortfall uses is stale; the land's real tab-to-lead gap needs entries of its own. The superseded criterion could not be edited, being satisfied by evidence that was true of the three-lead land, so a successor states the entries without pinning the land's pitch, and the evidence that traced the old figure is stale.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C16
+    type: targets
+  - target: DEC-BOARD-SEPARATION-BASIS-RECORD
+    type: justified-by
+  - target: DEC-BOARD-PRE-ORDER-RULE-READINGS
+    type: justified-by
+  - target: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS
+    type: depends-on

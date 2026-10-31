@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C3
+type: criterion
+title: A mounting hole of each mark keeps the separation from mains and the failure names it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a synthetic layout, a mounting hole of each of the four marks fails mounting_hole when its pad copper stands inside the signed distance of a Mains pad, track, via or pour fill, or its courtyard stands inside it of a Mains pad, and passes at exactly that distance; a plated mounting pad on a protective-earth net that is excluded from the bill of materials fails the same way. The check's text report, which is its only report, names the rule mounting_hole, the design, the hole, the Mains net and the distance required. Out of scope: the mechanical strength of the fixing.
+links:
+  - target: SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE
+    type: criterion-of
