@@ -856,11 +856,12 @@ class PollutionDegreeTwoRecord(unittest.TestCase):
 
 
 S, P, Z, M = ("/Supply voltage and current measurement/", "/Pump drives/", "/Zero-crossing detector/", "/Mains entry and load feed/")
-#: The sixteen neutral-referenced nets, as the main board's netlist writes them.
+#: The thirteen neutral-referenced nets, as the main board's netlist writes them.
 SET_N = ["/NEUTRAL", M + "NEUTRAL_IN", "/SHUNT_SENSE_IN", "/SHUNT_SENSE_NEUTRAL", S + "AMC_AIN0P", S + "AMC_AIN0N", S + "AMC_AIN1P",
-         S + "AMC_AIN1N", S + "AMC_DCDC_OUT", S + "AMC_DCDC_HGND", S + "AMC_HLDO_IN", S + "AMC_HLDO_OUT", S + "VMEAS_DIV",
-         P + "PUMP_C_TRIAC_G", P + "PUMP_S_TRIAC_G", Z + "ZC_LED_A"]
-#: The nine net-pair entries: constraint, nets_a, nets_b (None where omitted), working voltage, accepted distance.
+         S + "AMC_AIN1N", S + "AMC_DCDC_OUT", S + "AMC_DCDC_HGND", S + "AMC_HLDO_IN", S + "AMC_HLDO_OUT", S + "VMEAS_DIV"]
+#: The triac gate nets and the zero-cross LED anode, which pair only with /NEUTRAL.
+GATE_AND_LED = [P + "PUMP_C_TRIAC_G", P + "PUMP_S_TRIAC_G", Z + "ZC_LED_A"]
+#: The eleven net-pair entries: constraint, nets_a, nets_b (None where omitted), working voltage, accepted distance.
 NET_PAIRS = [
     ("creepage", SET_N, None, 10, 0.4),
     ("clearance", SET_N, None, 10, 0.2),
@@ -871,6 +872,8 @@ NET_PAIRS = [
     ("creepage", [S + "VMEAS_N2"], [S + "VMEAS_DIV", "/NEUTRAL", M + "NEUTRAL_IN"], 94.5, 1.4),
     ("creepage", [S + "VMEAS_N1"], [S + "VMEAS_DIV", "/NEUTRAL", M + "NEUTRAL_IN"], 178.8, 1.8),
     ("creepage", ["/LINE"], [S + "VMEAS_N2"], 168.6, 1.7),
+    ("creepage", GATE_AND_LED, ["/NEUTRAL"], 10, 0.4),
+    ("clearance", GATE_AND_LED, ["/NEUTRAL"], 10, 0.2),
 ]
 #: Each same-part pad pair under 1.5 mm in the committed main-board layout, and its edge-to-edge gap rounded down to 0.01 mm.
 SAME_PART = [
@@ -896,10 +899,11 @@ def held_across(entry, held_pairs):
 
 SET_N_CAVEAT = (
     "while the circuit is intact", "R604 open", "VMEAS_DIV floats toward the divider",
-    "U602 LED failing open", "ZC_LED_A floats toward LINE through R630 and R631",
-    "absent gate-to-MT1 path", "TRIAC_G floats toward MT2 through the off opto-triac", "loss of NEUTRAL",
-    "LTV-814 antiparallel LEDs", "within about 1.2 V of NEUTRAL",
+    "R604 open", "VMEAS_DIV floats toward the divider", "loss of NEUTRAL", "0.281 mA", "no AMC_* net",
+    "within about 1.2 V of NEUTRAL", "entries 10 and 11",
 )
+#: A row of the single-fault table: entry number, fault, volts, current in amperes, limiting element, arithmetic.
+FAULT_ROW = re.compile(r"^\s*#\s+(\d+) \| fault: (.+?) \| volts: ([\d.]+) V \| current_a: ([\d.]+(?:e-?\d+)?) A \| limit: (.+?) \| arithmetic: (.+)$")
 
 
 class NetPairAndSamePartDrafts(unittest.TestCase):
@@ -911,14 +915,14 @@ class NetPairAndSamePartDrafts(unittest.TestCase):
     def same_part(self, data):
         return [e for e in data["accepted_exceptions"][ORIGINAL_ENTRIES:] if "between" in e]
 
-    def test_the_nine_net_pair_entries_hold_the_lists_working_voltages_and_distances_the_leaf_sets(self):
-        # SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C1: The record holds the nine net-pair entries with the lists, working voltages and accepted distances this leaf sets
+    def test_the_eleven_net_pair_entries_hold_the_lists_working_voltages_and_distances_the_leaf_sets(self):
+        # SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C1: The record holds the eleven net-pair entries with the lists, working voltages and accepted distances this leaf sets
         _, data = committed()
         entries = self.net_pairs(data)
         found = [(e["constraint"], e["nets_a"], e.get("nets_b"), e["working_voltage_v"], e["accepted_mm"]) for e in entries]
         self.assertEqual(found, NET_PAIRS)
-        self.assertEqual(len(entries), 9)
-        self.assertEqual(len({(c, tuple(a), tuple(b or ()), v) for c, a, b, v, _ in found}), 9)
+        self.assertEqual(len(entries), 11)
+        self.assertEqual(len({(c, tuple(a), tuple(b or ()), v, k) for c, a, b, v, k in found}), 11)
         for entry in entries:
             self.assertEqual(entry["pair"], "mains_to_mains")
         _, problems = reading()
@@ -934,7 +938,7 @@ class NetPairAndSamePartDrafts(unittest.TestCase):
     def test_every_listed_net_is_written_as_the_netlist_writes_it_and_none_repeats(self):
         # SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C2: Every net a net-pair entry lists is a Mains-class net of the main board. Inspected against the main board's project file and netlist on the branch that carries it: each of the nets below matches a Mains-class pattern of its net_settings and is a net of the netlist, and this test holds only the naming form and the distinctness of the lists.
         _, data = committed()
-        known = set(SET_N) | {M + "DISCH_A", M + "DISCH_B", "/LINE", Z + "ZC_N1", S + "VMEAS_N1", S + "VMEAS_N2"}
+        known = set(SET_N) | set(GATE_AND_LED) | {M + "DISCH_A", M + "DISCH_B", "/LINE", Z + "ZC_N1", S + "VMEAS_N1", S + "VMEAS_N2"}
         for entry in self.net_pairs(data):
             for key in ("nets_a", "nets_b"):
                 names = entry.get(key, [])
@@ -962,7 +966,9 @@ class NetPairAndSamePartDrafts(unittest.TestCase):
                     self.assertEqual(board_check.net_pair_entry_problem(raised, data) is None,
                                      decimal(entry["accepted_mm"]) >= board_check.band_figure(data, "creepage_mm", raised["working_voltage_v"]))
         ten = [e for e in self.net_pairs(data) if e["working_voltage_v"] == 10]
-        self.assertEqual({(e["constraint"], e["accepted_mm"]) for e in ten if e["nets_a"] == SET_N}, {("creepage", 0.4), ("clearance", 0.2)})
+        self.assertEqual({(e["constraint"], e["accepted_mm"], tuple(e["nets_a"])) for e in ten if e["nets_a"] in (SET_N, GATE_AND_LED)},
+                         {("creepage", 0.4, tuple(SET_N)), ("clearance", 0.2, tuple(SET_N)),
+                          ("creepage", 0.4, tuple(GATE_AND_LED)), ("clearance", 0.2, tuple(GATE_AND_LED))})
 
     def test_no_entry_reduces_a_pair_that_can_reach_the_supply_voltage_or_a_held_pair(self):
         # SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C4: No net-pair entry reduces the figure of a pair that can reach the supply voltage or of a held pair
@@ -983,35 +989,51 @@ class NetPairAndSamePartDrafts(unittest.TestCase):
         self.assertEqual(held_across(crossed, held), [("/LINE", "/LINE1")])
         crossed = dict(entries[2], nets_a=["/Mains entry and load feed/LINE_IN"], nets_b=["/LINE1"])
         self.assertEqual(len(held_across(crossed, held)), 1)
-        # a pump gate network net is reduced against nothing outside the neutral-referenced set
+        # a triac gate net or the zero-cross LED anode is paired with /NEUTRAL alone, never listed in set N, and a gate
+        # network net is in no entry; the one other entry listing the LED anode is the zero-cross midpoint's own
+        def placed_right(entry):
+            names = set(entry["nets_a"]) | set(entry.get("nets_b", []))
+            if {P + "PUMP_C_GATE_R", P + "PUMP_S_GATE_R"} & names:
+                return False
+            if not names & set(GATE_AND_LED):
+                return True
+            if entry["nets_a"] == [Z + "ZC_N1"]:
+                return True
+            return entry["nets_a"] == GATE_AND_LED and entry.get("nets_b") == ["/NEUTRAL"]
         for entry in entries:
-            for name in set(entry["nets_a"]) | set(entry.get("nets_b", [])):
-                if "PUMP_" in name:
-                    self.assertEqual(entry["nets_a"], SET_N, name)
-                    self.assertTrue(entry.get("nets_b") is None)
+            self.assertTrue(placed_right(entry), entry["nets_a"])
+        # the check can fail: a gate net in set N, against a measurement net, beside a second net, or a gate network net listed
+        for bad in (dict(entries[0], nets_a=SET_N + [P + "PUMP_C_TRIAC_G"]), dict(entries[9], nets_b=[S + "AMC_AIN0P"]),
+                    dict(entries[9], nets_b=["/NEUTRAL", Z + "ZC_LED_A"]), dict(entries[9], nets_a=GATE_AND_LED[:2]),
+                    dict(entries[2], nets_a=[P + "PUMP_C_GATE_R"])):
+            self.assertFalse(placed_right(bad), bad["nets_a"])
 
     def test_each_net_pair_reason_states_the_derivation_of_its_working_voltage(self):
         # SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C5: Each net-pair entry's reason states the derivation of its working voltage
         _, data = committed()
         entries = self.net_pairs(data)
         needles = {
-            0: ("10 V", "0.000832639467", "2.7 V", "3.2 V", "1.2 V"), 1: ("10 V", "0.2 mm"),
+            0: ("10 V", "0.000832639467", "2.7 V", "3.2 V", "thirteen"), 1: ("10 V", "0.2 mm", "thirteen"),
             2: ("253 / 2 = 126.5 V", "R101", "R104", "intact"), 3: ("126.5 V", "0.5 %", "10 V", "intact"),
             4: ("253 / 2 = 126.5 V", "R630", "R631", "intact"),
             5: ("0.666944", "0.333888", "253 x", "84.3 V is the value", "84.5 V written", "intact"),
             6: ("0.333888", "84.5 + 10 = 94.5", "intact"), 7: ("0.666944", "168.7 + 10 = 178.7", "178.8", "intact"),
             8: ("0.333888", "253 x (1 - 0.333888) = 168.5", "168.6", "intact"),
+            9: ("1.2 V above NEUTRAL", "10 V band row (creepage 0.4 mm)", "PUMP_C_GATE_R", "microamps", "120.8 kohm", "2.09 mA", "rows 10"),
+            10: ("1.2 V above NEUTRAL", "10 V band row (clearance 0.2 mm)", "PUMP_S_GATE_R", "microamps", "120.8 kohm", "2.09 mA", "rows 11"),
         }
         for position, entry in enumerate(entries):
             with self.subTest(position=position):
                 for needle in needles[position]:
                     self.assertIn(needle, entry["reason"])
                 self.assertIn("drafter's figure for the owner to accept or correct", entry["reason"])
+                if 2 <= position <= 8:
+                    self.assertIn(f"judged in row {position + 1} of the single-fault table", entry["reason"])
                 self.assertTrue(entry["bounded_by"].strip())
                 self.assertRegex(entry["bounded_by"], r"F101|branch fuses|energy")
                 self.assertNotIn("the part itself", entry["bounded_by"])
 
-    def test_the_set_n_reasons_state_the_reduction_holds_while_the_circuit_is_intact_and_the_four_fault_states(self):
+    def test_the_set_n_reasons_state_the_reduction_holds_while_the_circuit_is_intact_and_name_the_fault_states(self):
         # SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C5: Each net-pair entry's reason states the derivation of its working voltage
         _, data = committed()
         entries = self.net_pairs(data)[:2]
@@ -1064,7 +1086,7 @@ class NetPairAndSamePartDrafts(unittest.TestCase):
         _, data = committed()
         assert_draft(self, data)
         entries = data["accepted_exceptions"]
-        self.assertEqual(len(entries), ORIGINAL_ENTRIES + 9 + 54)
+        self.assertEqual(len(entries), ORIGINAL_ENTRIES + 11 + 54)
         for entry in entries[ORIGINAL_ENTRIES:]:
             self.assertEqual((entry["accepted_by"], entry["accepted_on"]), ("", ""))
         _, problems = reading()
@@ -1085,6 +1107,43 @@ class NetPairAndSamePartDrafts(unittest.TestCase):
         signed = dict(data, accepted_by="someone", accepted_on="2026-10-01")
         _, problems = reading(signed)
         self.assertEqual([p for p in problems if p.location.endswith(("accepted_by", "accepted_on"))], [])
+
+
+    def test_the_single_fault_table_has_a_bounded_row_for_each_net_pair_entry(self):
+        # SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C9: The record holds a single-fault table with a bounded row for each fault of each net-pair entry
+        lines = [line for line in record_text().splitlines() if re.match(r"^\s*#\s+\d+ \| fault:", line)]
+        rows = [FAULT_ROW.match(line) for line in lines]
+        self.assertTrue(all(rows), "every table line has the five items in order")
+        self.assertEqual(sorted({int(row.group(1)) for row in rows}), list(range(1, 12)))
+        for row in rows:
+            number, fault, volts, current, limit, arithmetic = row.groups()
+            with self.subTest(number=number, fault=fault):
+                self.assertGreater(float(volts), 0)
+                self.assertLessEqual(float(volts), 253)
+                self.assertGreater(float(current), 0)
+                self.assertLess(float(current), 0.01)
+                for part in (fault, limit, arithmetic):
+                    self.assertTrue(part.strip())
+                self.assertRegex(arithmetic, r"\d")
+        by_number = {}
+        for row in rows:
+            by_number.setdefault(int(row.group(1)), []).append(row)
+        # the current of each row is recomputed from the schematic's part values
+        for number, ohms in ((1, 900000), (2, 900000), (3, 1000000), (4, 1000000), (5, 60400), (6, 600750), (7, 600750), (8, 600750), (9, 600750),
+                             (10, 120800), (11, 120800)):
+            self.assertAlmostEqual(float(by_number[number][0].group(4)), 253 / ohms, delta=0.006 * 253 / ohms, msg=number)
+        for number in (10, 11):
+            faults = " ".join(r.group(2) for r in by_number[number])
+            self.assertIn("gate junction open while the opto-triac is off", faults)
+            self.assertIn("U602 LED open", faults)
+        for number in range(3, 10):
+            self.assertIn("shorted", by_number[number][0].group(2))
+        # the check can fail: a missing number, a row lacking an item, and a number beyond eleven are all found
+        without_seven = [line for line in lines if not re.match(r"^\s*#\s+7 \|", line)]
+        self.assertNotEqual(sorted({int(FAULT_ROW.match(line).group(1)) for line in without_seven}), list(range(1, 12)))
+        self.assertIsNone(FAULT_ROW.match(lines[0].replace(" | limit:", " | lim:")))
+        self.assertIsNone(FAULT_ROW.match(lines[0].replace(" | current_a:", " | amps:")))
+        self.assertEqual(int(FAULT_ROW.match(lines[0].replace("#   1 |", "#   12 |")).group(1)), 12)
 
 
 
