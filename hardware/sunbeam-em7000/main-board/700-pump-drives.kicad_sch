@@ -3332,7 +3332,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_TO_SOT_SMD:TO-252-3_TabPin2"
+		(property "Footprint" "main-board:TO-252-2_TabPin2_Triac"
 			(at 214.63 69.85 0)
 			(hide yes)
 			(effects
@@ -4298,7 +4298,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_TO_SOT_SMD:TO-252-3_TabPin2"
+		(property "Footprint" "main-board:TO-252-2_TabPin2_Triac"
 			(at 214.63 160.02 0)
 			(hide yes)
 			(effects
