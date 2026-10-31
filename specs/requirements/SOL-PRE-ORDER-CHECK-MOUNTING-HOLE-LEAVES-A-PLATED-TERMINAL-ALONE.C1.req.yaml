@@ -1,0 +1,14 @@
+id: SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C1
+type: criterion
+title: A plated pad on a net is never a fixing by being alone, and a mounting hole that breaches the separation from mains fails
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A mounting hole is a footprint whose pads are all drilled holes and which has at least one mark of a fixing, namely every pad non-plated, exclusion from the bill of materials, a library item name beginning MountingHole, or exactly one pad that is plated and on no net. A plated pad on a net is an electrical terminal and is no mark of a fixing by its being the footprint's only pad, so a one-pad blade-tab terminal on a Mains or a low-voltage net is a part and not a hole. Every non-plated hole is held as well, in any footprint. A fixing's extent is the larger of its pad and its courtyard. After the signed Mains rule the check appends rules holding the hole clearance to the Mains class at no less than the larger of the signed clearance and the signed creepage on every layer, and measures from the layout file the distance from each mounting-hole footprint's pad copper and courtyard to every pad, track, via and pour fill of a Mains net on every layer, held to the same distance. The check fails a hole, its plating or fixing inside that distance of a Mains net, and a plated hole on a non-Mains net inside that distance. The signed figure governs whether or not the fixing is bonded to protective earth, and a fixing of any of the four marks keeps that distance whatever its net, while a plated pad on a net that has neither the exclusion nor the name is no fixing and keeps only the signed Mains rule and the plated-hole rule. A design with no mounting hole is not failed for that. Out of scope: the mechanical strength of the fixing and any fixing outside the board file.
+links:
+  - target: SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE
+    type: criterion-of
+  - target: SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2
+    type: supersedes
