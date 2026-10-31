@@ -1004,7 +1004,7 @@
 	(zone
 		(layers "F.Cu" "B.Cu" "In1.Cu" "In2.Cu")
 		(uuid "b90f2590-7122-46ab-9820-20e04cc50959")
-		(name "mains")
+		(name "digital")
 		(hatch edge 0.5)
 		(connect_pads
 			(clearance 0)
