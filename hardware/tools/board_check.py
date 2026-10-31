@@ -49,6 +49,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from fractions import Fraction
 from typing import Dict, List, NamedTuple, Optional, Sequence, Set, Tuple
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -706,6 +707,14 @@ SAME_CONNECTOR_PAIR = "same_connector_pins"
 PLATED_HOLE_CONSTRAINT = "hole_to_hole"
 SAME_CONNECTOR_KEYS = ("pair", "constraint", "connector", "pitch_mm", "accepted_mm", "reason", "bounded_by", "accepted_by",
                        "accepted_on")
+#: The fourth form of an entry, which excuses a mains_to_mains shortfall between two sets of nets: the key that selects it, its
+#: keys (every one but nets_b required), the one pair it may name, and the least distance any entry may accept.
+NET_PAIR_FORM_KEY = "nets_a"
+NET_PAIR_KEYS = ("pair", "constraint", "nets_a", "nets_b", "working_voltage_v", "accepted_mm", "reason", "bounded_by",
+                 "accepted_by", "accepted_on")
+NET_PAIR_REQUIRED = tuple(key for key in NET_PAIR_KEYS if key != "nets_b")
+NET_PAIR_PAIRS = ("mains_to_mains",)
+LEAST_EXCEPTION_MM = 0.2
 #: How far from an entry's pitch_mm the distance between two pad centres may stand for the pair to be at that pitch.
 PITCH_TOLERANCE_MM = 0.01
 #: A reference designator as a connector is named in an entry: letters, then digits.
@@ -1044,14 +1053,22 @@ def read_exceptions(design: Design, record: str, data: dict) -> List[Violation]:
     for index, entry in enumerate(data["accepted_exceptions"]):
         where = f"accepted_exceptions[{index}]"
         same = isinstance(entry, dict) and entry.get("pair") == SAME_CONNECTOR_PAIR
-        keys = SAME_CONNECTOR_KEYS if same else EXCEPTION_KEYS
-        if not reading.mapping(where, entry, keys, keys, "an accepted_exceptions entry"):
+        nets = isinstance(entry, dict) and NET_PAIR_FORM_KEY in entry and not same
+        keys = SAME_CONNECTOR_KEYS if same else NET_PAIR_KEYS if nets else EXCEPTION_KEYS
+        required = NET_PAIR_REQUIRED if nets else keys
+        if nets and "between" in entry:
+            keys = keys + ("between",)
+        if not reading.mapping(where, entry, keys, required, "an accepted_exceptions entry"):
             continue
+        if nets and "between" in entry:
+            reading.bad(f"{where}.between", f"{where} holds both between and {NET_PAIR_FORM_KEY}; an entry is one form, "
+                                            "so name its items with between, or its sets of nets with nets_a and nets_b")
         if "pair" in entry:
-            reading.one_of(f"{where}.pair", entry["pair"], EXCEPTION_PAIRS + (SAME_CONNECTOR_PAIR,))
+            reading.one_of(f"{where}.pair", entry["pair"],
+                           NET_PAIR_PAIRS if nets else EXCEPTION_PAIRS + (SAME_CONNECTOR_PAIR,))
         if "constraint" in entry:
             reading.one_of(f"{where}.constraint", entry["constraint"], (PLATED_HOLE_CONSTRAINT,) if same else EXCEPTION_CONSTRAINTS)
-        if "between" in entry:
+        if "between" in entry and not nets:
             items = entry["between"]
             if not isinstance(items, list) or len(items) != 2:
                 reading.bad(f"{where}.between", f"{where}.between is {items!r}, where it is a list of two items, each a pad "
@@ -1059,6 +1076,13 @@ def read_exceptions(design: Design, record: str, data: dict) -> List[Violation]:
             else:
                 for position, item in enumerate(items):
                     reading.text(f"{where}.between[{position}]", item)
+        for key in ("nets_a", "nets_b"):
+            if nets and key in entry and reading.listed(f"{where}.{key}", entry[key], "net names"):
+                listed = [reading.text(f"{where}.{key}[{position}]", item) for position, item in enumerate(entry[key])]
+                if all(listed):
+                    reading.distinct(f"{where}.{key}", entry[key], "net")
+        if "working_voltage_v" in entry:
+            reading.positive(f"{where}.working_voltage_v", entry["working_voltage_v"], " of volts rms")
         if "connector" in entry:
             connector = entry["connector"]
             if not isinstance(connector, str) or not REFERENCE_DESIGNATOR.fullmatch(connector):
@@ -6587,6 +6611,32 @@ class Shortfall:
             found.append((pad.group(2), float(where["x"]), float(where["y"])))
         return found
 
+    def nets(self, names: Set[str]) -> Optional[Tuple[str, str]]:
+        """The net each of the two items stands on as KiCad's report writes it, or None where an item names none.
+
+        The longest net of the layout written between square brackets in the
+        item's text is the net; a text that holds none of them is read for its
+        bracketed text, which is then a net the layout lacks or '<no net>'.
+        """
+        found = []
+        for text in self.texts:
+            written = [name for name in names if f"[{name}]" in text]
+            if written:
+                found.append(max(written, key=len))
+                continue
+            bracketed = REPORTED_NET.search(text)
+            if bracketed is None:
+                return None
+            found.append(bracketed.group(1))
+        return (found[0], found[1]) if len(found) == 2 else None
+
+    def lies_between_lists(self, names: Set[str], first: Set[str], second: Set[str]) -> bool:
+        """Whether the two items stand on different nets, one in each set (in either order)."""
+        nets = self.nets(names)
+        if nets is None or nets[0] == nets[1]:
+            return False
+        return (nets[0] in first and nets[1] in second) or (nets[1] in first and nets[0] in second)
+
     def lies_between(self, tokens: List[Tuple[str, bool]]) -> bool:
         if len(self.texts) != 2:
             return False
@@ -6649,6 +6699,182 @@ def plated_pad_centres(footprint: list) -> List[Tuple[float, float]]:
     at = board_geometry.placement(footprint, what)
     return [board_geometry.placed(board_geometry.xy(sexpr.child(node, "at"), what), at)
             for node in sexpr.children(footprint, "pad") if len(node) > 2 and str(node[2]) == "thru_hole"]
+
+
+def band_rows(basis: dict) -> List[Tuple[Fraction, dict]]:
+    """The record's functional table rows that give a band figure, as (working voltage, row figure), lowest voltage first.
+
+    A band row is of insulation functional, at the conductors (location conductor
+    or none), at the record's own pollution degree and material group, and states
+    a positive working voltage. The voltage is taken from the record's text, never
+    through floating point.
+    """
+    rows = []
+    for row in basis.get("table_rows") or []:
+        inputs, figure = (row.get("inputs"), row.get("figure")) if isinstance(row, dict) else (None, None)
+        if not isinstance(inputs, dict) or not isinstance(figure, dict):
+            continue
+        if (inputs.get("insulation") != "functional" or inputs.get("location", "conductor") != "conductor"
+                or inputs.get("pollution_degree") is None or inputs.get("pollution_degree") != basis.get("pollution_degree")
+                or inputs.get("material_group") is None or inputs.get("material_group") != basis.get("material_group")
+                or not positive_number(inputs.get("working_voltage_v"))):
+            continue
+        rows.append((Fraction(str(inputs["working_voltage_v"])), figure))
+    return sorted(rows, key=lambda row: row[0])
+
+
+def band_figure(basis: dict, figure_key: str, volts) -> Optional[Fraction]:
+    """The creepage_mm or clearance_mm the record's band rows give for a working voltage, or None where they give none.
+
+    The figure of the row at that voltage; the lowest row's figure below it;
+    between two adjacent rows their linear interpolation rounded up to 0.1 mm,
+    worked in decimal exactly; and none above the highest row. A row that lacks
+    `figure_key` is not one of the rows read, and two rows at one voltage give
+    the larger figure.
+    """
+    volts = Fraction(str(volts))
+    by_voltage: Dict[Fraction, Fraction] = {}
+    for voltage, figure in band_rows(basis):
+        if positive_number(figure.get(figure_key)):
+            by_voltage[voltage] = max(by_voltage.get(voltage, Fraction(0)), Fraction(str(figure[figure_key])))
+    if not by_voltage:
+        return None
+    voltages = sorted(by_voltage)
+    if volts > voltages[-1]:
+        return None
+    if volts <= voltages[0]:
+        return by_voltage[voltages[0]]
+    for low, high in zip(voltages, voltages[1:]):
+        if volts == high:
+            return by_voltage[high]
+        if low <= volts < high:
+            value = by_voltage[low] + (by_voltage[high] - by_voltage[low]) * (volts - low) / (high - low)
+            return Fraction(math.ceil(value * 10), 10)
+    return None
+
+
+def net_pair_entry_problem(entry: dict, basis: dict) -> Optional[str]:
+    """Why a net-pair entry's working voltage and accepted distance are not ones the record's band rows allow, or None.
+
+    This reads only the entry and the record, never a layout. The working voltage
+    stands at or below the record's and the highest band row; the accepted
+    distance is at least LEAST_EXCEPTION_MM, at least the band clearance for the
+    voltage, and, for creepage, at least the band creepage for it as well. A band
+    figure the rows do not give fails the entry.
+    """
+    volts, accepted = entry["working_voltage_v"], Fraction(str(entry["accepted_mm"]))
+    held = basis_voltage(basis.get("working_voltage"))
+    if held is None:
+        return "the record states no working voltage, so the entry's working voltage has nothing to be held below"
+    rows = band_rows(basis)
+    above = []
+    if Fraction(str(volts)) > Fraction(str(held)):
+        above.append(f"working_voltage_v {volts:g} V is above the record's working voltage {held:g} V")
+    if not rows or Fraction(str(volts)) > rows[-1][0]:
+        above.append(f"working_voltage_v {volts:g} V is above the highest functional band row of the record"
+                     f"{f' ({float(rows[-1][0]):g} V)' if rows else ', which holds none'}, so there is no band figure to hold it to")
+    if above:
+        return "; ".join(above)
+    if accepted < Fraction(str(LEAST_EXCEPTION_MM)):
+        return f"accepted_mm {entry['accepted_mm']:g} mm is below {LEAST_EXCEPTION_MM:g} mm, the least distance an exception may accept"
+    figures = {}
+    for key in ("clearance_mm", "creepage_mm") if entry["constraint"] == "creepage" else ("clearance_mm",):
+        figures[key] = band_figure(basis, key, volts)
+        if figures[key] is None:
+            return f"the record's functional band rows give no {key} for {volts:g} V, so the entry has no band figure to be held to"
+    for key, figure in figures.items():
+        if accepted < figure:
+            name = key.split("_")[0]
+            return (f"accepted_mm {entry['accepted_mm']:g} mm is below the band {name} {float(figure):g} mm the record gives for "
+                    f"{volts:g} V; creepage is never accepted below the clearance of the pair, and neither below its band figure")
+    return None
+
+
+def judge_net_pair(judged: Judged, index: int, entry: dict, record: str, design: Design, shortfalls: Sequence[Shortfall],
+                   names: Set[str], mains: Optional[Set[str]], held_pairs: Sequence[Sequence[str]], basis: dict,
+                   record_day: Optional[datetime.date], today: datetime.date) -> None:
+    """One net-pair entry judged against the mains_to_mains shortfalls the layout rule check reported.
+
+    A shortfall of the entry's constraint whose two items stand on different nets,
+    one in each of the entry's lists (both in nets_a where nets_b is omitted), is
+    accepted when the distance KiCad reported is no less than accepted_mm and
+    failed, naming the entry, when it is less. The entry fails when it is unsigned,
+    lists a net the layout lacks or one outside the Mains class, states a working
+    voltage or distance the record's band rows refuse, lists both nets of a pair
+    held at reinforced on opposite sides, relaxes no figure a shortfall it covers
+    was held to, or covers no shortfall another entry has not already taken. Where
+    the Mains class is unknown every entry fails.
+    """
+    where = f"{record} accepted_exceptions[{index}]"
+    label = f"accepted_exceptions[{index}]"
+
+    def fail(message: str) -> None:
+        judged.violations.append(Violation(design.project, "spacing_exception", where, f"{label} {message}"))
+
+    unsigned = entry_unsigned(entry, record_day, today)
+    if unsigned is not None:
+        fail(f"is not an acceptance, so it excuses nothing: {unsigned}")
+        return
+    first = list(entry["nets_a"])
+    second = list(entry.get("nets_b") or first)
+    listed = first + [net for net in second if net not in first]
+    absent = [net for net in listed if net not in names]
+    if absent:
+        fail(f"lists {', '.join(absent)}, which the layout lacks as a net; list the nets of the layout, or remove the entry")
+        return
+    if mains is None:
+        fail("cannot be judged: the layout's Mains net class could not be resolved, so no net it lists can be told to be a mains net")
+        return
+    outside = [net for net in listed if net not in mains]
+    if outside:
+        fail(f"lists {', '.join(outside)}, which is not in the Mains net class, so the entry could excuse a pair spanning "
+             "mains and low voltage; list only Mains nets, or remove the entry")
+        return
+    problem = net_pair_entry_problem(entry, basis)
+    if problem is not None:
+        fail(f"is refused: {problem}; state a working voltage and accept a distance the record's band rows allow, or remove the entry")
+        return
+    for one, other in held_pairs:
+        if (one in first and other in second) or (other in first and one in second):
+            fail(f"lists {one} and {other} on opposite sides, the pair held at reinforced across the open contact, which no "
+                 "exception excuses; list them apart, or remove the entry")
+            return
+    nets_text = f"[{', '.join(first)}] and [{', '.join(second)}]"
+    covered = [found for found in shortfalls
+               if found.pair == "mains_to_mains" and found.kind == entry["constraint"] and id(found.entry) not in judged.consumed
+               and found.lies_between_lists(names, set(first), set(second))]
+    if not covered:
+        fail(f"covers mains_to_mains {entry['constraint']} between {nets_text}, where the layout rule check reports no shortfall "
+             "of it that another entry has not taken; remove the exception, or restore the geometry it excused")
+        return
+    accepted = float(entry["accepted_mm"])
+    figure = max(found.figure for found in covered)
+    if accepted >= figure:
+        fail(f"accepts {accepted:g} mm, which is not below the {figure:g} mm figure the shortfall it covers was held to, so it "
+             "relaxes nothing; accept a smaller distance, or remove it")
+        return
+    seen: Set[tuple] = set()
+    taken: List[Shortfall] = []
+    for found in covered:
+        judged.consumed.add(id(found.entry))
+        if found.key() in seen:
+            continue
+        seen.add(found.key())
+        if found.measured >= accepted:
+            taken.append(found)
+        else:
+            fail(f"accepts mains_to_mains {entry['constraint']} between {nets_text} down to {accepted:g} mm, and the layout "
+                 f"leaves {found.measured:g} mm between {' and '.join(found.nets(names) or ('?', '?'))} "
+                 f"({'; '.join(found.texts)}), below it; move the items apart, or the owner accepts a smaller distance")
+    if taken:
+        band = band_figure(basis, f"{entry['constraint']}_mm", entry["working_voltage_v"])
+        judged.accepted.append(
+            "ACCEPTED | " + " | ".join(clean(field) for field in (
+                design.project, "spacing_exception", where,
+                f"accepted exception: net pair mains_to_mains {entry['constraint']} between {nets_text}: {len(taken)} of "
+                f"{len(seen)} shortfalls covered, narrowest {min(found.measured for found in taken):g} mm, accepted down to "
+                f"{accepted:g} mm against the signed {figure:g} mm; working voltage {entry['working_voltage_v']:g} V, band "
+                f"{float(band):g} mm; reason: {entry['reason']}; bounded by: {entry['bounded_by']}")))
 
 
 def judge_same_connector(judged: Judged, index: int, entry: dict, record: str, design: Design, tree: list,
@@ -6719,7 +6945,7 @@ def judge_same_connector(judged: Judged, index: int, entry: dict, record: str, d
 
 
 def judge_exceptions(design: Design, record: str, signed: Signed, violations: Sequence[dict], tree: list,
-                     today: datetime.date) -> Judged:
+                     today: datetime.date, mains: Optional[Set[str]] = None) -> Judged:
     """Each spacing shortfall the layout rule check reported, judged against the signed accepted_exceptions of the record.
 
     A shortfall between the one pair of items an entry's between lists, for the
@@ -6745,6 +6971,8 @@ def judge_exceptions(design: Design, record: str, signed: Signed, violations: Se
                                            f"accepted_exceptions[{index}] {message}"))
 
     for index, entry in enumerate(entries):
+        if NET_PAIR_FORM_KEY in entry:
+            continue
         unsigned = entry_unsigned(entry, record_day, today)
         if unsigned is not None:
             fail(index, f"is not an acceptance, so it excuses nothing: {unsigned}")
@@ -6789,6 +7017,11 @@ def judge_exceptions(design: Design, record: str, signed: Signed, violations: Se
                 fail(index, f"accepts {entry['pair']} {entry['constraint']} between {entry['between'][0]} and "
                             f"{entry['between'][1]} down to {accepted:g} mm, and the layout leaves {found.measured:g} mm "
                             f"({'; '.join(found.texts)}), below it; move the items apart, or the owner accepts a smaller distance")
+    held_pairs = (signed.mains_to_mains or {}).get("held_at_reinforced") or []
+    for index, entry in enumerate(entries):
+        if NET_PAIR_FORM_KEY in entry:
+            judge_net_pair(judged, index, entry, record, design, shortfalls, nets, mains, held_pairs, signed.basis,
+                           record_day, today)
     return judged
 
 
@@ -7019,8 +7252,25 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
         found += ignored(design, drc, "board.design_settings.rule_severities")
         reported = [entry for entry in drc.get("violations") or [] if id(entry) not in own]
         consumed: Set[int] = set()
+        project_copy = os.path.join(copy, os.path.basename(design.project))
+        classes_read: list = []
+
+        def layout_classes():
+            """The layout's net names, the project's classes and KiCad's resolution of them, resolved once."""
+            if not classes_read:
+                names = layout_nets(tree)
+                project_classes = resolvable_classes(project, tree)
+                members, why = class_members(kicad_cli, scratch, project_copy, sorted(project_classes - {DEFAULT_CLASS}),
+                                             names, nonce, layout_version(tree), class_blocks(tree))
+                classes_read.append((names, project_classes, members, why))
+            return classes_read[0]
+
         if signed is not None and signed.exceptions and tree is not None and markers and not cut_short(drc):
-            judged = judge_exceptions(design, record, signed, reported, tree, today)
+            mains_class = None
+            if any(NET_PAIR_FORM_KEY in entry for entry in signed.exceptions):
+                resolved = layout_classes()[2]
+                mains_class = resolved["Mains"] if resolved is not None else None
+            judged = judge_exceptions(design, record, signed, reported, tree, today, mains_class)
             found += judged.violations
             consumed = judged.consumed
             if accepted is not None:
@@ -7065,13 +7315,8 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
         # resolves it: the layout's, which is what the separation rule is
         # enforced against; the schematic's; and the project file's net
         # settings, by name and by pattern. They must agree net for net.
-        names = layout_nets(tree)
-        project_copy = os.path.join(copy, os.path.basename(design.project))
         widths, unwidthed = class_widths(project)
-        project_classes = resolvable_classes(project, tree)
-        classes = sorted(project_classes - {DEFAULT_CLASS})
-        members, why = class_members(kicad_cli, scratch, project_copy, classes, names, nonce,
-                                     layout_version(tree), class_blocks(tree))
+        names, project_classes, members, why = layout_classes()
         if members is None:
             found.append(Violation(design.project, "design_unreadable", design.layout,
                                    f"the layout's net classes cannot be resolved by KiCad: {why}"))

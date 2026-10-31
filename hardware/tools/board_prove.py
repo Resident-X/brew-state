@@ -253,6 +253,41 @@ CREEPAGE_SHORTFALL = both(records(("mains_to_low_voltage:\n  clearance_mm: 3.0\n
                           lambda seed: seed.replace(".kicad_dru", "(constraint creepage (min 4mm))", "(constraint creepage (min 13.5mm))"))
 
 
+def net_pair_entry(constraint: str, nets_a: Tuple[str, ...], working_voltage_v: float, accepted_mm: float,
+                   nets_b: Optional[Tuple[str, ...]] = None, by: str = "maintainer", on: str = "2026-10-12") -> str:
+    """One net-pair entry of the separation basis record's accepted_exceptions, written as the synthetic record writes them."""
+    def names(held: Tuple[str, ...]) -> str:
+        return "[" + ", ".join(f'"{name}"' for name in held) + "]"
+    return (f"  - pair: mains_to_mains\n    constraint: {constraint}\n    nets_a: {names(nets_a)}\n"
+            + (f"    nets_b: {names(nets_b)}\n" if nets_b is not None else "")
+            + f"    working_voltage_v: {working_voltage_v:g}\n    accepted_mm: {accepted_mm:g}\n"
+            "    reason: synthetic -- a divider chain chosen to exercise the check\n"
+            "    bounded_by: synthetic -- an independent element chosen to exercise the check\n"
+            f"    accepted_by: {by}\n    accepted_on: \"{on}\"\n")
+
+
+def band_row(volts: float, creepage_mm: float, clearance_mm: float) -> str:
+    """One functional band row of the synthetic record's table_rows, at the record's pollution degree and material group."""
+    return (f"  - citation:\n      document: synthetic band table\n      edition: none\n      locator: row at {volts:g} V\n"
+            f"    inputs:\n      working_voltage_v: {volts:g}\n      insulation: functional\n      location: conductor\n"
+            f"      pollution_degree: 2\n      material_group: IIIb\n"
+            f"    figure:\n      creepage_mm: {creepage_mm:g}\n      clearance_mm: {clearance_mm:g}\n")
+
+
+def band_rows(*rows: Tuple[float, float, float]):
+    """The record given functional band rows, each (working voltage, creepage, clearance), below the voltage it is signed at.
+
+    The tracked record holds no such row, so the rows exist only in the throwaway copy. A row stands below the
+    record's 250 V, where a functional row would enter the floor of the signed figures.
+    """
+    return record("accepted_by: david\naccepted_on: 2026-10-12\nsynthetic: true",
+                  "".join(band_row(*row) for row in rows) + "accepted_by: david\naccepted_on: 2026-10-12\nsynthetic: true")
+
+
+#: The band rows the net-pair faults read: at 125 V the creepage band is 0.5 mm and the clearance band 0.4 mm.
+NET_PAIR_BANDS = band_rows((50, 0.3, 0.2), (125, 0.5, 0.4))
+
+
 def connector_entry(connector: str, pitch_mm: float, accepted_mm: float, by: str = "maintainer", on: str = "2026-10-12") -> str:
     """One same_connector_pins entry of the separation basis record's accepted_exceptions, written as the synthetic record writes them."""
     return (f"  - pair: same_connector_pins\n    constraint: hole_to_hole\n    connector: {connector}\n"
@@ -1702,6 +1737,44 @@ FAULTS: List[tuple] = [
      "which the layout lacks", both(HEADER_SHORTFALL, exceptions(connector_entry("J9", 2, 1.0)))),
     ("a same-connector entry that no shortfall uses", "same-connector exceptions: an entry no reported shortfall uses fails", "spacing_exception",
      "where the layout rule check reports no shortfall", both(plated_hole_rule(0.5), exceptions(connector_entry("J2", 2.54, 0.4)))),
+    # Accepted net-pair spacing exceptions, between two sets of nets
+    ("a net-pair entry lacking its working voltage", "net-pair exceptions: an entry of the form without a key fails naming it", "separation_basis",
+     "lacks working_voltage_v",
+     both(NET_PAIR_BANDS, exceptions(net_pair_entry("clearance", ("/MAINS_L",), 125, 0.8, ("/MAINS_N",)).replace("    working_voltage_v: 125\n", "")))),
+    ("a net-pair entry that is unsigned", "net-pair exceptions: an entry whose acceptance is a placeholder excuses nothing", "spacing_exception",
+     "accepted_by 'unsigned' is a placeholder",
+     both(TERMINAL_SHORTFALL, NET_PAIR_BANDS, exceptions(net_pair_entry("clearance", ("/MAINS_L",), 125, 0.8, ("/MAINS_N",), by="unsigned")))),
+    ("a net-pair creepage entry below the creepage band figure", "net-pair exceptions: a distance below the band creepage for the working voltage fails", "spacing_exception",
+     "below the band creepage 0.5 mm",
+     both(mains_beside_mains(0.55), NET_PAIR_BANDS, exceptions(net_pair_entry("creepage", ("/MAINS_L",), 125, 0.4, ("/MAINS_N",))))),
+    ("a net-pair creepage entry below the clearance band figure", "net-pair exceptions: a creepage below the band clearance for the working voltage fails", "spacing_exception",
+     "below the band clearance 0.7 mm",
+     both(mains_beside_mains(0.55), band_rows((50, 0.3, 0.2), (125, 0.5, 0.7)), exceptions(net_pair_entry("creepage", ("/MAINS_L",), 125, 0.55, ("/MAINS_N",))))),
+    ("a net-pair entry accepting the rule's own figure", "net-pair exceptions: an entry accepting no less than the rule's figure fails", "spacing_exception",
+     "relaxes nothing",
+     both(TERMINAL_SHORTFALL, NET_PAIR_BANDS, exceptions(net_pair_entry("clearance", ("/MAINS_L",), 125, 1.0, ("/MAINS_N",))))),
+    ("a net-pair entry listing a net the layout lacks", "net-pair exceptions: an entry listing an absent net fails", "spacing_exception",
+     "which the layout lacks as a net",
+     both(TERMINAL_SHORTFALL, NET_PAIR_BANDS, exceptions(net_pair_entry("clearance", ("/MAINS_L", "/MAINS_X"), 125, 0.8, ("/MAINS_N",))))),
+    ("a net-pair entry listing a net outside the Mains class", "net-pair exceptions: an entry listing a low-voltage net fails", "spacing_exception",
+     "which is not in the Mains net class",
+     both(TERMINAL_SHORTFALL, NET_PAIR_BANDS, exceptions(net_pair_entry("clearance", ("/MAINS_L", "/LV_A"), 125, 0.8, ("/MAINS_N",))))),
+    ("a net-pair entry across the pair held at reinforced", "net-pair exceptions: the pair across the open contact is never excused", "spacing_exception",
+     "the pair held at reinforced across the open contact",
+     both(TERMINAL_SHORTFALL, NET_PAIR_BANDS, record("  held_at_reinforced: []", '  held_at_reinforced:\n    - ["/MAINS_L", "/MAINS_N"]'),
+          exceptions(net_pair_entry("clearance", ("/MAINS_L",), 125, 0.8, ("/MAINS_N",))))),
+    ("a net-pair entry at a working voltage above the highest band row", "net-pair exceptions: a working voltage above the top band row fails", "spacing_exception",
+     "above the highest functional band row",
+     both(TERMINAL_SHORTFALL, NET_PAIR_BANDS, exceptions(net_pair_entry("clearance", ("/MAINS_L",), 260, 0.8, ("/MAINS_N",))))),
+    ("a net-pair entry that no shortfall uses", "net-pair exceptions: an entry no reported shortfall uses fails", "spacing_exception",
+     "reports no shortfall",
+     both(NET_PAIR_BANDS, exceptions(net_pair_entry("clearance", ("/MAINS_L",), 125, 0.8, ("/MAINS_N",))))),
+    ("a shortfall between nets outside a net-pair entry's lists", "net-pair exceptions: a shortfall outside the lists stays an ordinary violation", "clearance",
+     f"rule '{board_check.TERMINAL_RULE}' clearance 1",
+     both(TERMINAL_SHORTFALL, NET_PAIR_BANDS, exceptions(net_pair_entry("clearance", ("/MAINS_L",), 125, 0.8)))),
+    ("a shortfall below the distance a net-pair entry accepts", "net-pair exceptions: a shortfall below its entry's accepted distance fails", "spacing_exception",
+     "down to 0.9 mm, and the layout leaves 0.84 mm",
+     both(TERMINAL_SHORTFALL, NET_PAIR_BANDS, exceptions(net_pair_entry("clearance", ("/MAINS_L",), 125, 0.9, ("/MAINS_N",))))),
     # Connectivity
     ("a channel's net moved to the other controller pin", "connectivity: a net must reach the controller pin its channel names", "connectivity", "net /LV_A reaches controller pin PA1, where the record names controller pin PA0", swap_labels(("LV_A", "96.52 76.2"), ("LV_B", "96.52 78.74"))),
     ("a channel's net moved to the other pin of its connector", "connectivity: a net must reach the connector pin its channel names", "connectivity", "net /LV_A reaches connector pin J2 pin 2, where the record names connector pin J2 pin 1", swap_labels(("LV_A", "45.72 76.2"), ("LV_B", "45.72 78.74"))),
