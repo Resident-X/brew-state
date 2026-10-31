@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS.C4
+type: criterion
+title: A shortfall outside the lists, of the other constraint or below the accepted distance fails naming the pair
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On the same layout a shortfall between a net inside a list and a net outside both lists, a shortfall of the constraint the entry does not name, a shortfall of a pair already judged by a between entry, and a shortfall below accepted_mm each fail, the last naming the entry, and a report with no distance counts as 0.0 mm and fails. Out of scope is the plated-hole form.
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS
+    type: criterion-of

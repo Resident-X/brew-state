@@ -1,0 +1,13 @@
+id: DEL-HW-BRING-UP.C16
+type: criterion
+title: Each built board carrying mains shows its conformal coat over the gaps between mains pads before mains is first connected
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Before mains is first connected, each built board that carries mains shows the conformal coat named in its fabrication notes over the gaps between its mains pads, and the contact keep-outs the notes list free of it, by inspection of that board in the way the coat's datasheet allows (a magnifier, or ultraviolet light for a coat that fluoresces), recorded per board with the date and the coat's batch. Choosing the coat is out of scope.
+links:
+  - target: DEL-HW-BRING-UP
+    type: criterion-of

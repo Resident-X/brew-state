@@ -1,0 +1,12 @@
+id: SOL-BOUGHT-PART-INSULATION-CLASS-OF-THE-OPTO-TRIAC-AND-VOLTAGE-OPTOCOUPLER-CONFIRMED.C2
+type: criterion
+title: The scope of VDE approval 094722 for the LTV-814S is obtained and recorded, or the optocoupler is replaced by one with a published reinforced class and creepage
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The record states the scope of VDE approval 094722 as the certifying body or the maker gives it, including whether it covers the surface-mount LTV-814S variant bought and reinforced insulation; where it does not, or the scope cannot be obtained, the voltage-reading optocoupler is replaced by a part with a published reinforced insulation class and a published creepage, the replacement recorded with its source. Out of scope is the choice among replacement parts beyond those two published figures.
+links:
+  - target: SOL-BOUGHT-PART-INSULATION-CLASS-OF-THE-OPTO-TRIAC-AND-VOLTAGE-OPTOCOUPLER-CONFIRMED
+    type: criterion-of

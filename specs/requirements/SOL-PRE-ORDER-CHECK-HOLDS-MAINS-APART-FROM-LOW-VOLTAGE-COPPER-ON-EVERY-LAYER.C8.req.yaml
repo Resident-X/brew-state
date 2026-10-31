@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C8
+type: criterion
+title: Each failure of the rule is shown to fail on a fault seeded for it in a copy of the throwaway proof design
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The seeded-fault rows of the proof run gain one fault for each of the plan-view clearance across layers, the creepage round a slot, the slot-wall pull-back, the overlap and the excepted-pair shortfall below its accepted distance, each run on a throwaway copy of a proof design and shown to fail the check by name, with the unseeded copy passing. Out of scope is a seeded fault on any tracked design.
+links:
+  - target: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER
+    type: criterion-of

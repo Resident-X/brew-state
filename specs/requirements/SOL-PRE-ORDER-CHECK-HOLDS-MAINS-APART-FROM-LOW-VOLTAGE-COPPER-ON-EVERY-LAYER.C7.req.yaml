@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C7
+type: criterion
+title: A design declaring MAINS whose record lacks the figures or whose Mains class cannot be resolved fails, and a design declaring none is exempt
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On throwaway proof designs, a design that declares MAINS present and whose record has no mains_to_low_voltage mapping, or whose Mains net class cannot be resolved from the project, fails under the existing names and is not passed by the new rule; a design that declares no MAINS is not held by the rule. Out of scope is the wording of the existing failures.
+links:
+  - target: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER
+    type: criterion-of

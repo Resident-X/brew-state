@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C6
+type: criterion
+title: A mains-to-low-voltage between entry excuses the cross-layer shortfall of its pair at or above its accepted distance and no other
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a throwaway copy of a proof design with a synthetic signed record, a cross-layer shortfall between the two pads or nets a between entry of pair mains_to_low_voltage names is accepted and reported when its distance is at least accepted_mm and fails as spacing_exception naming the entry when less, a shortfall between any other pair stays a mains_layer_separation failure, and an entry that no shortfall uses fails. Out of scope is the signing of any entry.
+links:
+  - target: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER
+    type: criterion-of

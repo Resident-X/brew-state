@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER-C3-TEST-3
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-31T04:53:00.2857Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_layer_separation.py::InnerCopperKeepsOffASlotWall.test_a_plated_hole_stored_on_the_surface_only_has_copper_in_the_inner_layers
+  artifact_version: d1144d2a03aaaca612dfca1d07d9554e1bd4f59c
+attested_by: crun-cca9a78a8d63b119
+links:
+  - target: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C3
+    type: satisfies

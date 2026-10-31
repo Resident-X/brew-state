@@ -1,0 +1,16 @@
+id: EV-SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-31T04:52:44.028875Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_separation_basis_record.py::NetPairAndSamePartDrafts.test_every_listed_net_is_written_as_the_netlist_writes_it_and_none_repeats
+  artifact_version: d1144d2a03aaaca612dfca1d07d9554e1bd4f59c
+attested_by: crun-fab8c204d08aea48
+links:
+  - target: SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C2
+    type: satisfies

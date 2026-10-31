@@ -1,0 +1,25 @@
+id: SOL-BOUGHT-PART-INSULATION-CLASS-OF-THE-OPTO-TRIAC-AND-VOLTAGE-OPTOCOUPLER-CONFIRMED
+type: deliverable
+category: solution
+title: The insulation class of the pump opto-triac and the voltage-reading optocoupler is confirmed reinforced on the makers' documents or the part is replaced
+status: active
+version: 1
+text: |
+  Confirms the insulation class of two bought barrier parts whose class the independent review of the main board's package found unestablished: the pump opto-triacs (MOC3052SVM, U701 and U711) and the voltage-reading optocoupler (LTV-814S, U602). The reading and judging leaves for these parts cover creepage and clearance; neither establishes whether the part is rated for reinforced insulation, which is what a barrier between mains and a low-voltage circuit needs, and a rating that cannot be sourced counts as absent, not adequate.
+
+  Settled for the build:
+  - For the MOC3052SVM the maker's current document is read for its safety approval and insulation class, and the record states whether the VDE approval is for reinforced insulation, quoting the document and giving its revision, or states that it could not be sourced.
+  - For the LTV-814S the scope of the VDE approval 094722 that the maker's document cites is obtained from the certifying body or the maker and the record states whether it covers the surface-mount variant bought and reinforced insulation. Where it does not, or the scope cannot be obtained, the part is replaced by an optocoupler with a published reinforced insulation class and a published creepage, and the schematic change is an amendment to the schematic leaf, re-reviewed there.
+  - A part whose class is not established as reinforced is not accepted on the basis of the review's silence; the owner is given the part, the pair and the choices (an exception stating the ground, a different part, or a published figure found).
+  - Out of scope: the creepage and clearance figures of the four parts the earlier leaves cover; the pre-order check; and any bring-up test of a barrier.
+rationale: |
+  Restores the behaviour REQ-ELECTRICAL-INSTALL-001.C9 asks: each barrier part's isolation rating is read from its maker's current document and is at or above what the declared insulation type requires, an unsourced rating counting as absent. The earlier reading and judging leaves for the bought parts are attested and cover distances, so a class that the review found unestablished is a separate open item.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C9
+    type: targets
+  - target: DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER
+    type: justified-by
+  - target: SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-READ
+    type: depends-on

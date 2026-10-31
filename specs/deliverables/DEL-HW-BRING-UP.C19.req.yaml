@@ -1,0 +1,13 @@
+id: DEL-HW-BRING-UP.C19
+type: criterion
+title: A built mains-carrying board is inspected and checked unpowered, then first energised only through an isolation transformer or RCD supply with a lamp in series
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Before mains is first applied to a built board carrying mains, the board is inspected visually and, unpowered, a multimeter shows no continuity (an open circuit or a stated high resistance) between the mains conductors tied together and each low-voltage net, the ground and the USB shell, and no short between line and neutral, each reading recorded per board with the date. The first energising is made only through an isolation transformer or an RCD-protected supply, with a lamp in series (a dim-bulb tester) that stays dim or off, and the lamp's behaviour is recorded. An insulation-resistance reading at 500 V is an option where a meter is ever available and is not required. Out of scope are a withstand test with equipment and any reading of a figure the separation basis does not state.
+links:
+  - target: DEL-HW-BRING-UP
+    type: criterion-of

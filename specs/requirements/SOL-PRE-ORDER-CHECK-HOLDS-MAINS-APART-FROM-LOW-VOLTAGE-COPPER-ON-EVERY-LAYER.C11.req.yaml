@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C11
+type: criterion
+title: Every tracked design is run through the rule and the build lists any that fails
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The rule runs in the board tier on every tracked design that declares MAINS present, each passes, and the build report names each design the rule fails with the pairs it reports, none being silenced by an exception in the rule's code. Out of scope is correcting a failing layout, which the owning layout leaf does.
+links:
+  - target: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C10
+type: criterion
+title: The fabrication notes name the conformal coat that supports the pollution degree 2 credit and where it is applied
+status: active
+version: 2
+measurement_type: binary
+verification: inspection
+text: |
+  The fabrication notes the heater wall board's production files carry name the conformal coat that supports the separation basis record's pollution degree 2 credit, which rests on the enclosure, with its type and the maker's current datasheet, and state that it is applied before the board is energised in the machine and covers the gaps between the board's mains pads, except the keep-outs for contacts that the notes list by reference designator. A board whose notes name no coat, cite no datasheet, or leave a gap between mains pads uncovered without listing its keep-out, is reported, and the owner re-declares the basis before the board is ordered. Choosing the coat's supplier and applying the coat are out of scope.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT
+    type: criterion-of
