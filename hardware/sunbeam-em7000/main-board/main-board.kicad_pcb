@@ -25532,11 +25532,11 @@
 	(footprint "Capacitor_THT:C_Disc_D11.0mm_W5.0mm_P7.50mm"
 		(layer "F.Cu")
 		(uuid "452e6203-b16c-4ac2-b746-28fc2445dc48")
-		(at 15.3 45.3)
+		(at 17.6 45.2)
 		(descr "C, Disc series, Radial, pin pitch=7.50mm, diameter*width=11*5.0mm^2, Capacitor, http://www.vishay.com/docs/28535/vy2series.pdf")
 		(tags "C Disc series Radial pin pitch 7.50mm diameter 11mm width 5.0mm Capacitor")
 		(property "Reference" "RT301"
-			(at 3.7 -3.55 0)
+			(at 3.7 -3.55)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(uuid "714b3f5b-417d-46c4-9327-78c1e11676e7")
@@ -25548,7 +25548,7 @@
 			)
 		)
 		(property "Value" "NTC 10D-9"
-			(at 3.75 3.75 0)
+			(at 3.75 3.75)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(hide yes)
@@ -25561,7 +25561,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 0)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "6791b34b-a24e-4f35-9385-8709455ccde2")
@@ -25572,7 +25572,7 @@
 			)
 		)
 		(property "Description" "Temperature dependent resistor, negative temperature coefficient"
-			(at 0 0 0)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "4105494e-55c5-4a52-af66-1917fa0eda43")
@@ -29281,11 +29281,11 @@
 	(footprint "Fuse:Fuseholder_Clip-5x20mm_Bel_FC-203-22_Lateral_P17.80x5.00mm_D1.17mm_Horizontal"
 		(layer "F.Cu")
 		(uuid "4f062ec7-6fd9-4a5b-91e0-35621bdbbe5b")
-		(at 38 93.4 180)
+		(at 22 85)
 		(descr "Fuseholder Clips, 5x20mm Cylinder Fuse, Pins Lateral, Horizontal, Bel FC-203-22, https://www.belfuse.com/resources/datasheets/circuitprotection/ds-cp-0672-fuse-clips-series.pdf")
 		(tags "fuse clip open")
 		(property "Reference" "F101"
-			(at 8.92 -2.05 0)
+			(at 8.92 -2.05)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(uuid "31e4dc8b-9c06-434a-b8ce-6ce03ec4c1ca")
@@ -29297,7 +29297,7 @@
 			)
 		)
 		(property "Value" "10A_T_250V"
-			(at 8.9 7 180)
+			(at 8.9 7)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(hide yes)
@@ -29310,7 +29310,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 180)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "47c06059-b582-47f3-b62e-db9ea5e43a65")
@@ -29321,7 +29321,7 @@
 			)
 		)
 		(property "Description" "Fuse"
-			(at 0 0 180)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "6927e2b0-d0c4-466b-92c9-800c8dbcbf5e")
@@ -29332,7 +29332,7 @@
 			)
 		)
 		(property "LCSC" "C22447847"
-			(at 0 0 180)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "ffce21a2-d77f-5621-8915-303f6ec7858a")
@@ -29343,7 +29343,7 @@
 			)
 		)
 		(property "MPN" "SCT520T10A250V"
-			(at 0 0 180)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "15b8c251-f637-5407-958a-b2b48437f0a1")
@@ -29354,7 +29354,7 @@
 			)
 		)
 		(property "Manufacturer" "SETfuse (Xiamen SET Electronics)"
-			(at 0 0 180)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "cf5bb676-bdf4-597c-abc8-f7eb2202e51f")
@@ -29365,7 +29365,7 @@
 			)
 		)
 		(property "Rating" "SETfuse SCT520 plain 10 A 250 VAC (breaking capacity 2 kA at 250 VAC and 5 kA at 250 VDC) slow-blow, 5 x 20 mm leadless ceramic; fitted in two Littelfuse 0111 0501 (111 501) clips"
-			(at 0 0 180)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "639ece56-c040-5f32-874a-6f661fe99b4a")
@@ -29659,7 +29659,7 @@
 			(uuid "8ae8bcca-6404-4249-9a1b-d6efa82cff52")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 8.9 2.5 180)
+			(at 8.9 2.5)
 			(layer "F.Fab")
 			(uuid "dc4bf440-2891-440b-98cc-4ec7ceadee72")
 			(effects
@@ -29670,7 +29670,7 @@
 			)
 		)
 		(pad "1" thru_hole roundrect
-			(at 0 0 180)
+			(at 0 0)
 			(size 2.2 2.2)
 			(drill 1.17)
 			(layers "*.Cu" "*.Mask")
@@ -29681,7 +29681,7 @@
 			(uuid "c2c0303b-111d-41d1-b513-05549d53ea2b")
 		)
 		(pad "1" thru_hole roundrect
-			(at 0 5 180)
+			(at 0 5)
 			(size 2.2 2.2)
 			(drill 1.17)
 			(layers "*.Cu" "*.Mask")
@@ -29692,7 +29692,7 @@
 			(uuid "fb1eba76-1e9d-4494-83d9-667df0dd8970")
 		)
 		(pad "2" thru_hole circle
-			(at 17.8 0 180)
+			(at 17.8 0)
 			(size 2.2 2.2)
 			(drill 1.17)
 			(layers "*.Cu" "*.Mask")
@@ -29702,7 +29702,7 @@
 			(uuid "2c386754-ef9a-43e2-893e-3ff6a1ad2ad7")
 		)
 		(pad "2" thru_hole circle
-			(at 17.8 5 180)
+			(at 17.8 5)
 			(size 2.2 2.2)
 			(drill 1.17)
 			(layers "*.Cu" "*.Mask")
@@ -33941,10 +33941,10 @@
 	(footprint "main-board:Relay_HF115F-Q_1H_Vertical"
 		(layer "F.Cu")
 		(uuid "5cb2643e-bcbe-4d2a-b711-018c06acf6a3")
-		(at 55.5 105.73 180)
+		(at 59 105.73 180)
 		(descr "Hongfa HF115F-Q 1 Form A vertical quick-connect, PCB layout bottom view, origin at coil pad A1")
 		(property "Reference" "K201"
-			(at 18.85 -2.39 0)
+			(at 18.85 -2.39)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(uuid "7fd03615-4eda-41d1-a7ec-ee9de3dcbf72")
@@ -33956,7 +33956,7 @@
 			)
 		)
 		(property "Value" "HF115F-Q/005-1H"
-			(at 0 1 180)
+			(at 0 1)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(hide yes)
@@ -33969,7 +33969,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 0 0 180)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "82737ace-ace5-4b36-9f27-7ad718437247")
@@ -33980,7 +33980,7 @@
 			)
 		)
 		(property "Description" "Relay SPST, normally open, EN50005"
-			(at 0 0 180)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "93a30f82-2aef-4546-9b98-5bb3cbae0e76")
@@ -33991,7 +33991,7 @@
 			)
 		)
 		(property "LCSC" "none"
-			(at 0 0 180)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "34642af4-8a87-54d4-8a50-0ebdb9af5d3e")
@@ -34002,7 +34002,7 @@
 			)
 		)
 		(property "MPN" "HF115F-Q/005-1H"
-			(at 0 0 180)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "b8d5c421-3a07-53d6-9f74-cc0b7ac06320")
@@ -34013,7 +34013,7 @@
 			)
 		)
 		(property "Manufacturer" "Hongfa (Xiamen Hongfa Electroacoustic)"
-			(at 0 0 180)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "e5caf7fb-695a-5035-bb6d-5ebccc28459e")
@@ -34024,7 +34024,7 @@
 			)
 		)
 		(property "Rating" "440 VAC max, 1 Form A AgNi, coil 5 V 62 ohm +-10 %, 20 A 250 VAC, pick-up 3.5 V max, drop-out 0.5 V min, release 8 ms max, operate 15 ms max"
-			(at 0 0 180)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "0f7e0687-e550-5fe7-b7f4-ded8d3406474")
@@ -52017,10 +52017,10 @@
 	(footprint "main-board:FUSEHOLDER_5x20_XC_BLX-A"
 		(layer "F.Cu")
 		(uuid "93d428bd-72ee-4761-9135-c9d7b10b0f6c")
-		(at 26 31.4)
+		(at 27.7 36.5)
 		(descr "XC Electronics BLX-A 5x20 fuse holder, two flat-leg slot pads 22.0 mm apart (pitch provisional)")
 		(property "Reference" "F701"
-			(at 0 -1.8 0)
+			(at 0 -1.8)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(uuid "8fc4c170-28eb-4fb6-bf6a-495d2a6eebb9")
@@ -52032,7 +52032,7 @@
 			)
 		)
 		(property "Value" "0.8A"
-			(at 0 1 0)
+			(at 0 1)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(hide yes)
@@ -52045,7 +52045,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 0)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "2a54f107-ca68-4c4b-b342-859cb5261966")
@@ -52056,7 +52056,7 @@
 			)
 		)
 		(property "Description" "Fuse"
-			(at 0 0 0)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "98ee2d0a-be22-4b6b-8ab7-3c07ce3d77b8")
@@ -62533,11 +62533,11 @@
 	(footprint "Resistor_SMD:R_2512_6332Metric"
 		(layer "F.Cu")
 		(uuid "adb8f8a5-5be2-4f86-9d6d-e2122b63798f")
-		(at 34.8 22.7)
+		(at 34.5 20.8 180)
 		(descr "Resistor SMD 2512 (6332 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R716"
-			(at 3.87 2.57 0)
+			(at 3.87 2.57)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(uuid "c0080144-1993-42c5-8e80-a8720e499db6")
@@ -62549,7 +62549,7 @@
 			)
 		)
 		(property "Value" "100"
-			(at 0 2.63 0)
+			(at 0 2.63)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(hide yes)
@@ -62562,7 +62562,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 0)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "61314383-d7be-4b0f-858f-f7c53f9b533e")
@@ -62573,7 +62573,7 @@
 			)
 		)
 		(property "Description" "Resistor"
-			(at 0 0 0)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "140508a1-3cff-48c7-afb0-e3652b635a56")
@@ -62696,7 +62696,7 @@
 			)
 		)
 		(pad "1" smd roundrect
-			(at -2.9625 0)
+			(at -2.9625 0 180)
 			(size 1.225 3.35)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.204082)
@@ -62705,7 +62705,7 @@
 			(uuid "c70b556d-cdbe-4b7c-8060-2a49099197f6")
 		)
 		(pad "2" smd roundrect
-			(at 2.9625 0)
+			(at 2.9625 0 180)
 			(size 1.225 3.35)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.204082)
@@ -64016,10 +64016,10 @@
 	(footprint "main-board:JP101_WireLink_P10mm"
 		(layer "F.Cu")
 		(uuid "b5150fd7-261a-4959-a9dc-f97bb6d51328")
-		(at 34 84.5)
+		(at 38.5 93.9 180)
 		(descr "First-power wire link, two round pads 3.0 mm drill 1.7 mm at 10.0 mm pitch")
 		(property "Reference" "JP101"
-			(at 7.4 -2.7 0)
+			(at 7.4 -2.7)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(uuid "9d20fd88-9beb-450e-a60f-d01ae8d9d71a")
@@ -64031,7 +64031,7 @@
 			)
 		)
 		(property "Value" "LINK_LIVE"
-			(at 0 1 0)
+			(at 0 1)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(hide yes)
@@ -64044,7 +64044,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 0)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "8294ed23-d51f-494d-8287-b9aec2d2bdec")
@@ -64055,7 +64055,7 @@
 			)
 		)
 		(property "Description" "Generic connector, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)"
-			(at 0 0 0)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "4ebb7c28-16d4-47ef-a6d6-69814d6df9c4")
@@ -64158,7 +64158,7 @@
 			(uuid "735c5ba7-2a86-45c0-afb9-89d25a7c1f79")
 		)
 		(pad "1" thru_hole circle
-			(at 0 0)
+			(at 0 0 180)
 			(size 3 3)
 			(layers "*.Cu" "*.Mask")
 			(drill 1.7)
@@ -64168,7 +64168,7 @@
 			(uuid "aa8b65fe-3fbb-4f97-92ba-05a659f337d1")
 		)
 		(pad "2" thru_hole circle
-			(at 10 0)
+			(at 10 0 180)
 			(size 3 3)
 			(layers "*.Cu" "*.Mask")
 			(drill 1.7)
@@ -68278,11 +68278,11 @@
 	(footprint "Capacitor_THT:C_Rect_L13.0mm_W6.0mm_P10.00mm_FKS3_FKP3_MKS4"
 		(layer "F.Cu")
 		(uuid "bf7365d0-cdf3-4eca-b19b-45f1417ada71")
-		(at 41.5 39.9 180)
+		(at 41 41.6 180)
 		(descr "C, Rect series, Radial, pin pitch=10.00mm, length*width=13*6mm^2, Capacitor, http://www.wima.com/EN/WIMA_FKS_3.pdf, http://www.wima.com/EN/WIMA_MKS_4.pdf")
 		(tags "C Rect series Radial pin pitch 10.00mm length 13mm width 6mm Capacitor")
 		(property "Reference" "C701"
-			(at 5.05 -4.05 0)
+			(at 5.05 -4.05)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(uuid "926fa0d7-171a-4709-91d5-74583812c22a")
@@ -68294,7 +68294,7 @@
 			)
 		)
 		(property "Value" "100nF_X2"
-			(at 5 4.25 180)
+			(at 5 4.25)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(hide yes)
@@ -68307,7 +68307,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 180)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "751e0385-af07-4303-b9f7-49cfb5f96b1c")
@@ -68318,7 +68318,7 @@
 			)
 		)
 		(property "Description" "Unpolarized capacitor"
-			(at 0 0 180)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "f84b4bbe-ae8b-494f-9dcd-1cba9b6d6c9e")
@@ -68329,7 +68329,7 @@
 			)
 		)
 		(property "KiLib_Generator" "capacitor/THT/other"
-			(at 0 0 180)
+			(at 0 0)
 			(layer "F.SilkS")
 			(hide yes)
 			(uuid "db46a73d-ab8d-5e30-b42b-b61d79aa4ffd")
@@ -68341,7 +68341,7 @@
 			)
 		)
 		(property "LCSC" "C489079"
-			(at 0 0 180)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "cc333bd8-51e8-5c89-9a78-3b65a220787a")
@@ -68352,7 +68352,7 @@
 			)
 		)
 		(property "MPN" "MPX104K31C3KN15600"
-			(at 0 0 180)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "366e07c9-65ba-506b-9b14-33798f8b156e")
@@ -68363,7 +68363,7 @@
 			)
 		)
 		(property "Manufacturer" "KNSCHA"
-			(at 0 0 180)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "e956c6ae-6c89-5200-add3-ddf2c4c7568f")
@@ -68374,7 +68374,7 @@
 			)
 		)
 		(property "Rating" "X2, 0.1 uF +-10 %, 310 VAC, -40..110 C, P=10 mm; safety-rated, mains-class capacitor (the part of the entry filter C101)"
-			(at 0 0 180)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "28b22861-ccd2-5f96-a568-f31fc1b2e208")
@@ -68450,7 +68450,7 @@
 			(uuid "2aea3f97-1b5d-463a-bbdc-7c9501d9f967")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 5 0 180)
+			(at 5 0)
 			(layer "F.Fab")
 			(uuid "0211abfa-3f99-42d5-bf52-5ae11f6c62f2")
 			(effects
@@ -70847,10 +70847,10 @@
 	(footprint "main-board:FUSEHOLDER_5x20_XC_BLX-A"
 		(layer "F.Cu")
 		(uuid "c847ad62-ea31-4143-bcc8-5e813124d0e9")
-		(at 26 19.4)
+		(at 27.7 24.5)
 		(descr "XC Electronics BLX-A 5x20 fuse holder, two flat-leg slot pads 22.0 mm apart (pitch provisional)")
 		(property "Reference" "F711"
-			(at 0 1.8 0)
+			(at 0 1.8)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(uuid "b52ac395-f3bc-4974-b296-1a68b140ac8d")
@@ -70862,7 +70862,7 @@
 			)
 		)
 		(property "Value" "0.5A"
-			(at 0 1 0)
+			(at 0 1)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(hide yes)
@@ -70875,7 +70875,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 0)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "f1aa9edd-cbca-4cca-a28c-36185bc3ec2c")
@@ -70886,7 +70886,7 @@
 			)
 		)
 		(property "Description" "Fuse"
-			(at 0 0 0)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "559d7329-e51d-4dae-ad41-10644b09624e")
@@ -76723,10 +76723,10 @@
 	(footprint "main-board:Tab_BZXC_BTC-3-PCB634908T"
 		(layer "F.Cu")
 		(uuid "d75a05cc-7d6e-4d72-8a1e-f7a516327a83")
-		(at 8.5 19.5)
+		(at 8.5 19.3)
 		(descr "Bozhong BTC-3-PCB634908T 6.3 mm blade tab, one plated slot pad (slot provisional)")
 		(property "Reference" "J109"
-			(at 0 1.875 0)
+			(at 0 1.875)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(uuid "a84f786f-9c4d-464f-8702-2cea777348c5")
@@ -76738,7 +76738,7 @@
 			)
 		)
 		(property "Value" "TAB9_HOTVALVE"
-			(at 0 1 0)
+			(at 0 1)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(hide yes)
@@ -76751,7 +76751,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 0)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "44803971-3ff8-461c-af3d-0286410bfa4b")
@@ -76762,7 +76762,7 @@
 			)
 		)
 		(property "Description" "Generic connector, single row, 01x01, script generated (kicad-library-utils/schlib/autogen/connector/)"
-			(at 0 0 0)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "9d7e7045-10fd-4708-a10f-944b7ac492bd")
@@ -77035,11 +77035,11 @@
 	(footprint "Resistor_SMD:R_2512_6332Metric"
 		(layer "F.Cu")
 		(uuid "d7e4fc05-77f4-4783-806b-6c7a5563b8c8")
-		(at 34.8 28.1)
+		(at 34.5 28.1 180)
 		(descr "Resistor SMD 2512 (6332 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R706"
-			(at -0.03 -2.63 0)
+			(at -0.03 -2.63)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(uuid "1c2a64a2-180a-46df-abd0-0a0a75de0ac6")
@@ -77051,7 +77051,7 @@
 			)
 		)
 		(property "Value" "100"
-			(at 0 2.63 0)
+			(at 0 2.63)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(hide yes)
@@ -77064,7 +77064,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 0)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "9521a40c-a110-4b23-b456-8943a66c2d5d")
@@ -77075,7 +77075,7 @@
 			)
 		)
 		(property "Description" "Resistor"
-			(at 0 0 0)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "6a20c0c1-b07c-48c7-86a7-328d5149501c")
@@ -77198,7 +77198,7 @@
 			)
 		)
 		(pad "1" smd roundrect
-			(at -2.9625 0)
+			(at -2.9625 0 180)
 			(size 1.225 3.35)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.204082)
@@ -77207,7 +77207,7 @@
 			(uuid "21fc679b-a227-4d77-8e6f-de94986ae77d")
 		)
 		(pad "2" smd roundrect
-			(at 2.9625 0)
+			(at 2.9625 0 180)
 			(size 1.225 3.35)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.204082)
@@ -77819,11 +77819,11 @@
 	(footprint "Capacitor_THT:C_Rect_L13.0mm_W6.0mm_P10.00mm_FKS3_FKP3_MKS4"
 		(layer "F.Cu")
 		(uuid "dbfa882c-f44b-4f87-bb8c-97e5a91e582b")
-		(at 14.5 77 180)
+		(at 14.5 73.6 180)
 		(descr "C, Rect series, Radial, pin pitch=10.00mm, length*width=13*6mm^2, Capacitor, http://www.wima.com/EN/WIMA_FKS_3.pdf, http://www.wima.com/EN/WIMA_MKS_4.pdf")
 		(tags "C Rect series Radial pin pitch 10.00mm length 13mm width 6mm Capacitor")
 		(property "Reference" "C101"
-			(at 5.05 4.05 0)
+			(at 5.05 4.05)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(uuid "b3b8c417-1fa2-42a1-8aaf-894b53b61538")
@@ -77835,7 +77835,7 @@
 			)
 		)
 		(property "Value" "100nF_X2"
-			(at 5 4.25 180)
+			(at 5 4.25)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(hide yes)
@@ -77848,7 +77848,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 180)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "6e60eabc-3aa7-4207-a59f-1a26c0300910")
@@ -77859,7 +77859,7 @@
 			)
 		)
 		(property "Description" "Unpolarized capacitor"
-			(at 0 0 180)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "9b0dd95a-f83c-47c2-a2f6-a9dd4c1e03e1")
@@ -77870,7 +77870,7 @@
 			)
 		)
 		(property "KiLib_Generator" "capacitor/THT/other"
-			(at 0 0 180)
+			(at 0 0)
 			(layer "F.SilkS")
 			(hide yes)
 			(uuid "bfdfc96e-d31e-551f-82e3-ce7b3b976969")
@@ -77882,7 +77882,7 @@
 			)
 		)
 		(property "LCSC" "C489079"
-			(at 0 0 180)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "f9bd6391-83a1-508b-a3fe-926db340c02f")
@@ -77893,7 +77893,7 @@
 			)
 		)
 		(property "MPN" "MPX104K31C3KN15600"
-			(at 0 0 180)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "9dda7904-7754-5de1-9660-c97aafb735a8")
@@ -77904,7 +77904,7 @@
 			)
 		)
 		(property "Manufacturer" "KNSCHA"
-			(at 0 0 180)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "d4eb2cfb-57a9-57ad-80fb-b6f04a6abe8f")
@@ -77915,7 +77915,7 @@
 			)
 		)
 		(property "Rating" "X2, 0.1 uF +-10 %, 310 VAC, -40..110 C, P=10 mm"
-			(at 0 0 180)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "4646a481-308c-5d2d-8a40-95289e0ad928")
@@ -77991,7 +77991,7 @@
 			(uuid "16c59a3d-9f54-4670-9b85-d05f25ac67b6")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 5 0 180)
+			(at 5 0)
 			(layer "F.Fab")
 			(uuid "762e8401-3d4d-46e2-87a5-35bbaf21094d")
 			(effects
@@ -79626,11 +79626,11 @@
 	(footprint "Varistor:RV_Disc_D15.5mm_W5mm_P7.5mm"
 		(layer "F.Cu")
 		(uuid "e0b195b2-06ab-4f18-a577-927062676bbe")
-		(at 19.5 82.4)
+		(at 15.5 66 180)
 		(descr "Varistor, diameter 15.5mm, width 5mm, pitch 7.5mm")
 		(tags "varistor SIOV")
 		(property "Reference" "RV101"
-			(at 1.95 -2.35 0)
+			(at 1.95 -2.35)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(uuid "af8f48ae-ff7e-43ca-a989-6fb8cc1a9289")
@@ -79642,7 +79642,7 @@
 			)
 		)
 		(property "Value" "14D471K"
-			(at 3.75 -2.4 0)
+			(at 3.75 -2.4)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(hide yes)
@@ -79655,7 +79655,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 0)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "397aee2f-1e12-49ae-8307-4e261d639382")
@@ -79666,7 +79666,7 @@
 			)
 		)
 		(property "Description" "Voltage dependent resistor"
-			(at 0 0 0)
+			(at 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "a4753ece-462c-4493-9e4a-ab898b5db650")
@@ -79855,7 +79855,7 @@
 			)
 		)
 		(pad "1" thru_hole circle
-			(at 0 0)
+			(at 0 0 180)
 			(size 1.8 1.8)
 			(drill 0.8)
 			(layers "*.Cu" "*.Mask")
@@ -79865,7 +79865,7 @@
 			(uuid "43f19b13-fbbf-4876-8c59-8c8db96bf40e")
 		)
 		(pad "2" thru_hole circle
-			(at 7.5 2.2)
+			(at 7.5 2.2 180)
 			(size 1.8 1.8)
 			(drill 0.8)
 			(layers "*.Cu" "*.Mask")
@@ -91661,11 +91661,11 @@
 	(footprint "main-board:TestPoint_Pad_D1.0mm_Tight"
 		(layer "B.Cu")
 		(uuid "34758c9b-2388-44c9-b44b-c73bf9deaf01")
-		(at 8.5013 103.75 180)
+		(at 16 96.5 180)
 		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
 		(tags "test point SMD pad")
 		(property "Reference" "TP101"
-			(at 0.05 -1.45 0)
+			(at 0.05 -1.45)
 			(unlocked yes)
 			(layer "B.SilkS")
 			(uuid "2e0763a5-7219-470e-b273-6e7e80055ac4")
@@ -91678,7 +91678,7 @@
 			)
 		)
 		(property "Value" "TP_LINE_IN"
-			(at 0 -1.75 0)
+			(at 0 -1.75)
 			(unlocked yes)
 			(layer "B.SilkS")
 			(hide yes)
@@ -91692,7 +91692,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 0)
+			(at 0 0)
 			(layer "B.Fab")
 			(hide yes)
 			(uuid "3b35c204-ff58-4b2e-b9ab-61d65c035606")
@@ -91704,7 +91704,7 @@
 			)
 		)
 		(property "Description" "test point"
-			(at 0 0 0)
+			(at 0 0)
 			(layer "B.Fab")
 			(hide yes)
 			(uuid "acd0c178-6247-48f0-9f86-4e035e44a034")
@@ -93349,11 +93349,11 @@
 	(footprint "main-board:TestPoint_Pad_D1.0mm_Tight"
 		(layer "B.Cu")
 		(uuid "4d0ed5ed-6392-4f5b-869c-a02793cc8a95")
-		(at 29.0013 23.5 180)
+		(at 35 16.9 180)
 		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
 		(tags "test point SMD pad")
 		(property "Reference" "TP712"
-			(at 0.05 1.45 0)
+			(at 0.05 1.45)
 			(unlocked yes)
 			(layer "B.SilkS")
 			(uuid "5434c9c1-91cc-4201-8cc5-14d8ae5dce09")
@@ -93366,7 +93366,7 @@
 			)
 		)
 		(property "Value" "TP_PUMP_S_MT2"
-			(at 0 -1.75 0)
+			(at 0 -1.75)
 			(unlocked yes)
 			(layer "B.SilkS")
 			(hide yes)
@@ -93380,7 +93380,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 0)
+			(at 0 0)
 			(layer "B.Fab")
 			(hide yes)
 			(uuid "9c8a0c85-b7d7-44bd-b27c-aaa4a6c647bc")
@@ -93392,7 +93392,7 @@
 			)
 		)
 		(property "Description" "test point"
-			(at 0 0 0)
+			(at 0 0)
 			(layer "B.Fab")
 			(hide yes)
 			(uuid "becd355a-687c-430e-838e-524b3ac90564")
@@ -97575,11 +97575,11 @@
 	(footprint "main-board:TestPoint_Pad_D1.0mm_Tight"
 		(layer "B.Cu")
 		(uuid "bff31144-e715-4ab9-9a18-6266d8424251")
-		(at 13.2513 104.25 180)
+		(at 15.5 106.5 180)
 		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
 		(tags "test point SMD pad")
 		(property "Reference" "TP104"
-			(at -0.05 -1.45 0)
+			(at -0.05 -1.45)
 			(unlocked yes)
 			(layer "B.SilkS")
 			(uuid "502d23a9-d189-4e74-a38c-70d7b4af2b8b")
@@ -97592,7 +97592,7 @@
 			)
 		)
 		(property "Value" "TP_LINE1"
-			(at 0 -1.75 0)
+			(at 0 -1.75)
 			(unlocked yes)
 			(layer "B.SilkS")
 			(hide yes)
@@ -97606,7 +97606,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 0)
+			(at 0 0)
 			(layer "B.Fab")
 			(hide yes)
 			(uuid "5d80a69e-f2f4-4509-b0f0-0d65f814e16c")
@@ -97618,7 +97618,7 @@
 			)
 		)
 		(property "Description" "test point"
-			(at 0 0 0)
+			(at 0 0)
 			(layer "B.Fab")
 			(hide yes)
 			(uuid "987c3b5c-7615-40cd-bffe-565b0aad8dac")
@@ -98377,11 +98377,11 @@
 	(footprint "main-board:TestPoint_Pad_D1.0mm_Tight"
 		(layer "B.Cu")
 		(uuid "ced5519b-f519-48c6-be50-fad08cefbbb0")
-		(at 41.5013 26 180)
+		(at 36 33 180)
 		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
 		(tags "test point SMD pad")
 		(property "Reference" "TP702"
-			(at 0.05 1.45 0)
+			(at 0.05 1.45)
 			(unlocked yes)
 			(layer "B.SilkS")
 			(uuid "9d1a4380-7b18-4584-ae0e-8520f7b1d5a9")
@@ -98394,7 +98394,7 @@
 			)
 		)
 		(property "Value" "TP_PUMP_C_MT2"
-			(at 0 -1.75 0)
+			(at 0 -1.75)
 			(unlocked yes)
 			(layer "B.SilkS")
 			(hide yes)
@@ -98408,7 +98408,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 0)
+			(at 0 0)
 			(layer "B.Fab")
 			(hide yes)
 			(uuid "141ddd28-508d-4e61-8f0c-09ef16d60448")
@@ -98420,7 +98420,7 @@
 			)
 		)
 		(property "Description" "test point"
-			(at 0 0 0)
+			(at 0 0)
 			(layer "B.Fab")
 			(hide yes)
 			(uuid "0ec3b284-cf71-47fd-918b-0510977777f6")
