@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C6
+type: criterion
+title: The recorded single-reviewer baselines and the frozen proof designs are unchanged and every recorded key stays valid
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  No file of the review-proof or circuit-review-proof designs, nor of any other design the proofs hold frozen, differs from the main branch, and no recorded baselines file is edited. The existing tests that recompute each recorded baseline's design key from the committed design files, and that the harness refuses a form whose key is recorded and runs a form whose key differs, pass unchanged. A fanned-out proof run after this change is a run under a new key, against the baselines as recorded. Out of scope: re-recording a baseline, which this change needs for none.
+links:
+  - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS.C3
+type: criterion
+title: A shortfall between a net of each list, at or above the accepted distance, is reported and does not fail
+status: active
+version: 2
+measurement_type: binary
+verification: test
+text: |-
+  The pure helper judging one entry against the basis, called with no layout, finds a well-formed signed entry sound and a flawed one flawed with the same findings the check reports. On a synthetic layout with a signed entry, net-pair entries being judged after the between and same-connector entries, a creepage shortfall between a pad of a net in nets_a and a track of a net in nets_b at or above accepted_mm is printed as one ACCEPTED line per entry carrying the constraint, both lists, the number of shortfalls covered, the narrowest reported distance, the accepted distance, the signed figure, the working voltage with its band figure, the reason and the bounding element, and fails nothing. The same holds for a via and a zone as either item, and for a pair inside nets_a where nets_b is omitted. Out of scope is a shortfall outside the lists.
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS
+    type: criterion-of

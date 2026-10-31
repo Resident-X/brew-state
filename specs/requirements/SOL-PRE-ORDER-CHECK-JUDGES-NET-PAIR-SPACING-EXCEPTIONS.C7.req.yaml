@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS.C7
+type: criterion
+title: Each new failure is shown to fail on a fault seeded for it in a copy of the throwaway proof design
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The proof run seeds into a throwaway copy of a proof design, never the tracked design, one fault for each failure of this leaf's criteria (a malformed entry, an unsigned entry, an accepted_mm below the band figure, below the clearance, not below the rule figure, an absent net, a net outside the Mains class, the open-contact pair, a working voltage above the top row, an entry no shortfall uses, a shortfall outside the lists, a shortfall below the accepted distance), requires each to fail under its rule name, and requires the unseeded design to pass first. Out of scope is any fault not listed.
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS
+    type: criterion-of

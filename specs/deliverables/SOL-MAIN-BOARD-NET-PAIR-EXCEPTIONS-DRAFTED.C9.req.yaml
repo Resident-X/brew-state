@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C9
+type: criterion
+title: The record holds a single-fault table with a bounded row for each fault of each net-pair entry
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The committed record holds, in a comment block beside the accepted_exceptions entries, a single-fault table with at least one row for each of the eleven net-pair entries, numbered as this leaf numbers them. Each row gives the fault, the voltage in volts it puts across the gap, the current in amperes that bounds it, the element that sets that limit and the arithmetic from the schematic's part values; the faults include a shorted resistor for each half-mains or divider midpoint entry and, for entries 10 and 11, the gate net floating while the opto-triac is off. A test reads the record's text and finds, for each entry number from 1 to 11, a row holding each of those five items, and no row for a number beyond 11. Out of scope is the owner's acceptance of the analysis and any reading of the table by the check.
+links:
+  - target: SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED
+    type: criterion-of

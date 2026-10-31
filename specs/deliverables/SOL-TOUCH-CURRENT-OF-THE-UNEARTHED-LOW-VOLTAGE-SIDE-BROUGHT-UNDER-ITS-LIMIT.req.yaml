@@ -1,0 +1,23 @@
+id: SOL-TOUCH-CURRENT-OF-THE-UNEARTHED-LOW-VOLTAGE-SIDE-BROUGHT-UNDER-ITS-LIMIT
+type: deliverable
+category: solution
+title: The touch current of the unearthed low-voltage side is itemised by source and brought under the adopted 0.25 mA limit
+status: active
+version: 1
+text: |
+  Finds where the touchable low-voltage side's estimated 0.34 mA of touch current comes from, computes the budget from the makers' datasheets and brings it under the 0.25 mA limit the project adopted (DEC-TOUCH-CURRENT-LIMIT-OF-UNEARTHED-LOW-VOLTAGE-PARTS-IS-0-25-MA-UNVERIFIED, a figure not yet verified against the standard). The board's own estimate is over that limit, so the design as drawn does not meet the limit it has adopted; until this item is closed the overage stands and the bring-up touch current measurement would be expected to fail.
+
+  Settled for the build:
+  - The sources to be itemised are the Y capacitor in the IRM-20-5 supply module (its datasheet leakage or its capacitance across the barrier, at the top of the declared supply span), the mains-side EMI filter parts that return current to the low-voltage side, any other capacitor, resistor or optocoupler bridging the barrier, and any other path the estimate counted. Each source is given as a current at the top of the supply span with its datasheet figure and its arithmetic, summed as the estimate sums them, the total reproducing the estimate of 0.34 mA or the difference being explained.
+  - The fix is chosen from the sources' contributions and recorded with its ground: a lower-leakage supply module, less Y capacitance, a different filter, or another change the budget shows. The chosen fix leaves the total, recomputed at the top of the span with the datasheet maxima, no higher than 0.25 mA, or the item records that it cannot and returns the limit to the owner. A change to the schematic is an amendment to the schematic leaf and is re-reviewed there.
+  - The board folder's open items that judged the estimate against 0.75 mA are restated against 0.25 mA, with the limit marked unverified.
+  - Out of scope: reading the standard to verify the 0.25 mA figure; the touch current measurement at bring-up; earth-bonding the low-voltage side.
+rationale: |
+  Restores the behaviour REQ-ELECTRICAL-INSTALL-001.C12 asks: the current through a person touching the machine stays within the limit set for its construction, established from the makers' figures at the top of the span. The estimate was judged against a figure for an earthed construction, and against the figure the project has adopted for an unearthed one it is over, so the board does not yet restore the behaviour the criterion asks. The item is a maintenance item because it is a defect in the drawn design against an adopted limit, to be found and fixed.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C12
+    type: targets
+  - target: DEC-TOUCH-CURRENT-LIMIT-OF-UNEARTHED-LOW-VOLTAGE-PARTS-IS-0-25-MA-UNVERIFIED
+    type: justified-by

@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS-C4-TEST-6
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS.C4
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-31T04:55:13.43277Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_net_pair_exceptions.py::TheJudgementFailsWhatLiesOutsideTheLists.test_a_dropped_item_among_several_fails_alone_and_the_rest_are_accepted
+  artifact_version: d1144d2a03aaaca612dfca1d07d9554e1bd4f59c
+attested_by: crun-c8059732af94c4bb
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS.C4
+    type: satisfies

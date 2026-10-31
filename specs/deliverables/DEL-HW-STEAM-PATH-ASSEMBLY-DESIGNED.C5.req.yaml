@@ -1,0 +1,13 @@
+id: DEL-HW-STEAM-PATH-ASSEMBLY-DESIGNED.C5
+type: criterion
+title: The pressure sensors' wetted bodies sit in earth-referenced water, so their insulation is judged as a low-voltage-to-earth barrier and not a mains barrier
+status: active
+version: 2
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The settled fact is recorded and not reopened: the owner states that the thermoblocks are earthed (the mains lead's earth wire splits to the heater thermoblocks, solenoids and metal walls, the owner's statements of 2026-10-23 in the machine record), so the water in the sensor tube touches an earthed block and the pressure sensors' wetted bodies sit in earth-referenced water, with no mains-to-touchable-water path through them. The transducer's insulation therefore has to meet the low-voltage-to-earth barrier that criterion C3 of this task judges and that the basis record declares for that sensor, and a published withstand of 500 Vac, or none published, is not a mains-barrier finding. What remains is the clearing of a single heater or solenoid insulation fault into the earthed block, which the function-forms record states is not shown by that record, and which is the protective-earth and fuse matter of the earth continuity criteria. Choosing the transducer and judging its withstand are the other criteria's and out of scope.
+links:
+  - target: DEL-HW-STEAM-PATH-ASSEMBLY-DESIGNED
+    type: criterion-of
