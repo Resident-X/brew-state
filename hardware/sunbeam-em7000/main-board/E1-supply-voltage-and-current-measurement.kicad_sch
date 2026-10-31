@@ -7410,5 +7410,14 @@
 				)
 			)
 		)
-	)
+	
+		(property "LCSC" "none"
+			(at 71.12 92.71 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		))
 )
