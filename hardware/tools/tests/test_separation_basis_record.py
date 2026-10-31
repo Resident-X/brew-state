@@ -873,6 +873,14 @@ def held_across(entry, held_pairs):
     return [(one, other) for one, other in held_pairs if (one in first and other in second) or (other in first and one in second)]
 
 
+SET_N_CAVEAT = (
+    "while the circuit is intact", "R604 open", "VMEAS_DIV floats toward the divider",
+    "U602 LED failing open", "ZC_LED_A floats toward LINE through R630 and R631",
+    "absent gate-to-MT1 path", "TRIAC_G floats toward MT2 through the off opto-triac", "loss of NEUTRAL",
+    "LTV-814 antiparallel LEDs", "within about 1.2 V of NEUTRAL",
+)
+
+
 class NetPairAndSamePartDrafts(unittest.TestCase):
     """The net-pair and same-part entries drafted after the earlier entries of the committed record, unsigned."""
 
@@ -981,6 +989,16 @@ class NetPairAndSamePartDrafts(unittest.TestCase):
                 self.assertTrue(entry["bounded_by"].strip())
                 self.assertRegex(entry["bounded_by"], r"F101|branch fuses|energy")
                 self.assertNotIn("the part itself", entry["bounded_by"])
+
+    def test_the_set_n_reasons_state_the_reduction_holds_while_the_circuit_is_intact_and_the_four_fault_states(self):
+        # SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C5: Each net-pair entry's reason states the derivation of its working voltage
+        _, data = committed()
+        entries = self.net_pairs(data)[:2]
+        self.assertEqual([e["constraint"] for e in entries], ["creepage", "clearance"])
+        for entry in entries:
+            with self.subTest(constraint=entry["constraint"]):
+                for needle in SET_N_CAVEAT:
+                    self.assertIn(needle, entry["reason"])
 
     def test_each_same_part_pad_pair_under_1_5_mm_has_one_creepage_and_one_clearance_entry(self):
         # SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C6: The record holds a creepage entry and a clearance entry for each same-part pad pair under 1.5 mm
