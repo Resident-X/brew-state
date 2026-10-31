@@ -630,26 +630,29 @@ class PollutionDegreeTwoRecord(unittest.TestCase):
         walk(dict(data, table_rows=rows), [])
         self.assertIn(1, {value for _, value in found})
 
-    def test_the_environment_says_the_boards_are_protected_against_moisture_by_a_coat(self):
-        # SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C2: The environment text of the committed record contains the words "protected against moisture: coated" and no longer contains "uncoated" or "not protected against moisture". The test reads the committed record. Out of scope is whether a coat is applied, which the layout leaves and the bring-up task carry.
+    def test_the_environment_says_the_boards_are_protected_against_moisture_by_the_enclosure(self):
+        # SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C2: The environment text of the committed record contains the words "protected against moisture: enclosure", names the conformal coat as a supporting measure, and no longer contains "uncoated" or "not protected against moisture". The test reads the committed record. Out of scope is whether a coat is applied, which the layout leaves and the bring-up task carry.
         _, data = committed()
         environment = data["environment"]
-        self.assertIn("protected against moisture: coated", environment)
+        self.assertIn("protected against moisture: enclosure", environment)
+        self.assertIn("conformal coat as a supporting measure", environment)
+        self.assertNotIn("moisture: coated", environment)
         self.assertNotIn("uncoated", environment)
         self.assertNotIn("not protected against moisture", environment)
 
     def test_the_header_holds_the_six_conditions_in_order_the_sources_the_readings_and_the_carrying_nodes(self):
         # SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C3: The header comment of the committed record holds a numbered block of six conditions, each naming its subject, in this order and with these figures: the coat before the boards are energised in the machine, with the coat type and datasheet named in the fabrication notes and the gaps between mains pads covered except documented contact keep-outs; the protection stated as coated and credited at pollution degree 2 only, never 1; a laminate comparative tracking index of at least 175; slots in creepage paths at least 1.0 mm wide, 1.5 mm if a pollution degree 3 credit must survive; the bring-up humidity reading confirming no condensation while energised, with the fall back to pollution degree 3 and 4.1 mm as a fresh basis; and the whole record re-signed by the owner. The header no longer says that coating the boards later would be a fresh basis. Out of scope is any condition beyond those six. The header also names the open reproductions the figures rest on (the EMA table, TI SLUP421 and SLUAAR5, IECEx document 1422 and the IECEE decision sheet) and says they are reproductions and not the standard's text, lists the readings the owner or a test house is to confirm, and names by node id the layout leaves and the bring-up task that carry the coat, the laminate and the humidity requirements.
         text = comment_text()
-        start = text.index("The credit of pollution degree 2 on a coated board rests on six conditions")
+        start = text.index("The credit of pollution degree 2 on a board its enclosure protects rests on six conditions")
         block = text[start:text.index("The tables are those of IEC 60664-1")]
         items = re.split(r"\s(?=[1-6]\. [A-Z][a-z]+:)", block)[1:]
-        self.assertEqual([item[3:item.index(":")] for item in items], ["Coat", "Degree", "Laminate", "Slots", "Humidity", "Signature"])
-        coat, degree, laminate, slots, humidity, signature = items
-        for phrase in ("before they are energised in the machine", "coat type and cite its datasheet", "covers the gaps between mains pads",
+        self.assertEqual([item[3:item.index(":")] for item in items], ["Enclosure", "Degree", "Laminate", "Slots", "Humidity", "Signature"])
+        enclosure, degree, laminate, slots, humidity, signature = items
+        for phrase in ("the credit stands on the enclosure", "supporting measure that does not itself earn the credit",
+                       "before they are energised in the machine", "coat type and cite its datasheet", "covers the gaps between mains pads",
                        "except the keep-outs documented for contacts"):
-            self.assertIn(phrase, coat)
-        for phrase in ("protected against moisture, by the coat", "credits pollution degree 2 only", "Pollution degree 1 is never credited"):
+            self.assertIn(phrase, enclosure)
+        for phrase in ("protected against moisture, by the enclosure, with the coat a supporting measure", "credits pollution degree 2 only", "Pollution degree 1 is never credited"):
             self.assertIn(phrase, degree)
         for phrase in ("comparative tracking index", "at least 175"):
             self.assertIn(phrase, laminate)
@@ -675,7 +678,7 @@ class PollutionDegreeTwoRecord(unittest.TestCase):
             self.assertIn(phrase, text, phrase)
         # the readings the owner or a test house is to check name the coat conditions and the band rows
         readings = text[text.index("Readings the drafter made"):text.index("The credit of pollution degree 2")]
-        for phrase in ("The coat conditions below", "functional band rows", "the fallback is the 320 V row, 3.2 mm"):
+        for phrase in ("The conditions below", "functional band rows", "the fallback is the 320 V row, 3.2 mm"):
             self.assertIn(phrase, readings, phrase)
 
     def test_the_mains_to_low_voltage_rows_are_read_at_pollution_degree_2_and_the_floor_holds(self):
@@ -742,6 +745,21 @@ class PollutionDegreeTwoRecord(unittest.TestCase):
         found = board_check.separation_floor(DESIGN, RECORD, signed_from(dict(data, mains_to_mains=stated)))
         self.assertTrue(found)
 
+    def test_the_enclosure_credit_the_unread_standards_and_the_single_fault_basis_are_stated(self):
+        # SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C3: The header states the enclosure as the credit, that the figures are single-sourced reproductions and that IEC 60335-1, IEC 60335-2-15, IEC 60664-1 and IEC 60664-3 are unread, an owner-accepted residual risk dated 2026-10-31 quoting the owner, and that a reduced pair rests on normal operation plus a recorded single-fault analysis whose table the check does not read.
+        text = comment_text()
+        required = ("the credit stands on the enclosure", "single-sourced reproductions", "IEC 60335-2-15 (appliances for heating liquids",
+                    "IEC 60664-3 is unread", "accepted by the owner on 2026-10-31",
+                    "I'm not buying the standards, this is a hobby project, we probably won't insulation test with equipment",
+                    "single-fault analysis recorded for that listing", "The fault table is a comment of this record: the check does not read it")
+        for phrase in required:
+            self.assertIn(phrase, text, phrase)
+        # a header that drops any one sentence is caught, and none asks for a purchase or an independent read as a step
+        for phrase in required:
+            self.assertNotIn(phrase, text.replace(phrase, ""), phrase)
+        for step in ("buy the standard", "purchase the standard", "independent read before", "before the boards are ordered, read the standard"):
+            self.assertNotIn(step, text)
+
     def test_the_band_rule_is_stated_and_gives_the_listed_figures_on_the_committed_rows(self):
         # SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C8: The citation of the band rows states the band rule in these terms: between two adjacent rows the figure is the linear interpolation rounded up to 0.1 mm, below 10 V the 10 V row is read, above the 320 V row there is no band figure, and a pair at the supply voltage keeps 2.6 mm. The test evaluates the stated rule on creepage at 10 V (0.4 mm), 30 V (0.7 mm), 84.5 V (1.4 mm), 126.5 V (1.6 mm), 168.5 V (1.7 mm), 178.7 V (1.8 mm) and 253 V (2.6 mm), and on clearance at 10 V (0.2 mm), 50 V (0.2 mm) and 125 V (1.5 mm), from the committed rows and finds those figures. Out of scope is the check's use of the rows.
         _, data = committed()
@@ -749,7 +767,8 @@ class PollutionDegreeTwoRecord(unittest.TestCase):
         for row in rows:
             locator = " ".join(row["citation"]["locator"].split())
             for term in ("between two adjacent rows the figure is the linear interpolation rounded up to 0.1 mm", "below 10 V the 10 V row is read",
-                         "above the 320 V row there is no band figure", "a pair at the supply voltage keeps 2.6 mm"):
+                         "above the 320 V row there is no band figure", "a pair at the supply voltage in normal operation keeps 2.6 mm",
+                         "a pair reaching it only on a single fault being reduced only with that listing's single-fault table"):
                 self.assertIn(term, locator, term)
         for voltage, creepage in ((10, 0.4), (30, 0.7), (84.5, 1.4), (126.5, 1.6), (168.5, 1.7), (178.7, 1.8), (253, 2.6)):
             self.assertEqual(band_figure(rows, voltage, "creepage_mm"), creepage, voltage)
@@ -806,7 +825,7 @@ class PollutionDegreeTwoRecord(unittest.TestCase):
         with open(os.path.join(ROOT, "docs", "sunbeam-em7000", "controller-board-design-constraints.md"), encoding="utf-8") as handle:
             constraints = handle.read()
         row = next(line for line in constraints.splitlines() if line.startswith("| Pollution degree the enclosure warrants"))
-        for phrase in ("| 2, boards protected against moisture by a conformal coat", "never 1", "inferred"):
+        for phrase in ("| 2, boards protected against moisture by the enclosure", "supporting measure", "never 1", "IEC 60335-2-15", "inferred"):
             self.assertIn(phrase, row)
         material = next(line for line in constraints.splitlines() if line.startswith("| Laminate's tracking resistance"))
         self.assertNotIn("pollution degree 3", material)
@@ -821,7 +840,9 @@ class PollutionDegreeTwoRecord(unittest.TestCase):
                 self.assertTrue("fall" in line or "survive" in line, line[:120])
         with open(os.path.join(ROOT, "hardware", "README.md"), encoding="utf-8") as handle:
             readme = " ".join(handle.read().split())
-        for phrase in ("Pollution degree is 3 unless your boards are protected against moisture", "credits pollution degree 2 only, never 1",
+        for phrase in ("Pollution degree is 3 unless your boards are protected against moisture", "The credit stands on the enclosure",
+                       "supporting measure and is not itself the credit", "credits pollution degree 2 only, never 1", "IEC 60335-2-15",
+                       "the fault table is a comment of the record",
                        "slots at least 1.0 mm wide", "functional **band rows**", "below the lowest row that row is read"):
             self.assertIn(phrase, readme, phrase)
         with open(os.path.join(ROOT, "docs", "board-design-method.md"), encoding="utf-8") as handle:
