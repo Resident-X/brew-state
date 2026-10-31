@@ -1,7 +1,7 @@
 id: SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2
 type: criterion
 title: A mounting hole that breaches the separation from mains fails
-status: active
+status: deprecated
 version: 2
 measurement_type: binary
 verification: test

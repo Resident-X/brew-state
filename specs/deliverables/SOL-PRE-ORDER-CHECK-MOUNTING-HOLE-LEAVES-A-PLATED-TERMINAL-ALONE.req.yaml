@@ -1,0 +1,35 @@
+id: SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE
+type: deliverable
+category: solution
+title: The pre-order check reads a plated pad on a net as a terminal and not as a fixing
+status: active
+version: 1
+text: |
+  Corrects the pre-order check's reading of a fixing in the mounting-hole rule. The rule marks a footprint of drilled pads as a fixing by any of four marks, the last being that it has a single pad, so that a forgotten bill-of-materials flag on a custom plated mounting pad does not skip the extent checks. A one-pad footprint is also what a blade-tab terminal is, and a plated pad on a net is an electrical terminal: read as a fixing, a mains tab terminal has its courtyard held to the mains-to-low-voltage distance from every other mains net's copper, a distance no pair of mains conductors is held to, and a low-voltage one-pin part is held to a mains distance it has no reason to keep. The single-pad mark is the criterion's own wording, so the criterion said the wrong thing and is superseded, not patched.
+
+  Settled before the build:
+  - The single-pad mark is replaced, not removed. A footprint whose pads are all drilled holes is a mounting hole when every pad is non-plated, when it is excluded from the bill of materials, when its library item name begins MountingHole, or when it has exactly one pad that is plated and on no net. A plated pad on a net is a terminal whatever the number of pads in its footprint; the net is the one the layout gives the pad, read by the reader the copper measure already uses, so the classification and the measure cannot disagree, and a net written twice or malformed is the same unreadable-layout failure that reader already raises.
+  - Every non-plated hole in any footprint stays held, and a plated hole on a non-Mains net stays held by its drilled hole; neither depends on the mark. The distance, its rules, the copper kinds measured and the exact-distance pass are unchanged.
+  - No safety distance is weakened for a real fixing. A fixing of the four marks keeps its distance whatever its net, a plated mounting pad bonded to protective earth included when it is left out of the bill of materials or named MountingHole. The one fixing the narrowing stops reading is a plated pad on a net that carries neither of those two marks; its pad copper is still held to the signed clearance and creepage by the signed Mains rule and its hole by the plated-hole rule, and only its courtyard measure is lost, so the hardware notes state that a plated fixing carries the exclusion or the name to be measured by its courtyard.
+  - The check's text report is its only report; the failures keep the rule name mounting_hole, the design, the hole and the Mains item.
+  - Placement: hole_footprints in hardware/tools/board_check.py and its docstring; the tests that traced the superseded criterion trace this leaf's instead. The Mounting holes paragraph of DEC-BOARD-PRE-ORDER-RULE-READINGS is amended in the graph by the change that authors this leaf, and the hardware notes (hardware/README.md) are corrected by the build.
+  - Out of scope: the plated-hole rule's reading of a plated pad on a non-Mains net, the signed Mains rule, which parts the main board draws as tabs, and the mechanical strength of a fixing.
+rationale: |
+  Restores the behaviour OBL-ELECTRICAL-THERMAL-SAFETY-001.C6 and .C7 ask of the mounting-hole rule: a fixing, which a person or a screw can bridge, keeps the mains distance, and a terminal is held to the spacing its own pair is signed for rather than to a fixing's distance. On the main controller board the single-pad mark read the blade-tab terminals of the mains loads as fixings and reported mains-involving findings on the committed layout; each is a false reading of the superseded criterion's wording, which a terminal-versus-fixing distinction drawn where the consequence lands (a pad that is electrically a terminal) removes without loosening any fixing. The alternative of keeping the single-pad mark and exempting tabs by footprint name was rejected because it makes the distinction by naming, which a renamed footprint defeats. The alternative of dropping the one-pad mark entirely was rejected because a custom plated mounting pad with no net and no flag would then skip the extent checks.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C6
+    type: targets
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C7
+    type: targets
+  - target: DEC-BOARD-PRE-ORDER-RULE-READINGS
+    type: justified-by
+  - target: DEC-BOARD-SEPARATION-BASIS-RECORD
+    type: justified-by
+  - target: SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES
+    type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 blind brief reviewer
+  fingerprint: a4c34512665d58d96def469caa110baf743eb296e6c5e87af2578fc83e2e4c54
+  gating_profile: ""
