@@ -36,6 +36,6 @@ links:
   - target: SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS
     type: depends-on
 brief_confirmation:
-  confirmer: claude-sonnet-5-5 (blind brief reviewer)
-  fingerprint: a43445d1a097369081a13ab726a52ae5ada4a6aeafe03767189937fd25b0cb1f
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: fd4ffb79df5d484246faee8772194e1e35bfe741e844637a590b23f329c8b2e0
   gating_profile: ""
