@@ -14,13 +14,14 @@ import sys
 import tempfile
 import unittest
 from dataclasses import replace
+from unittest import mock
 
 TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, TOOLS)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import review_kit_fixtures as fx  # noqa: E402
-from review_kit import catalogue, merge, planner, proof, scheduler, telemetry  # noqa: E402
+from review_kit import catalogue, merge, messages, planner, proof, scheduler, telemetry  # noqa: E402
 from review_kit import executor as ex  # noqa: E402
 
 BASELINES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "review_baselines", "layout_single_runs.json")
@@ -101,6 +102,23 @@ class FormsAsPlans(unittest.TestCase):
         before = {u: (unit.needs, unit.couples_with) for u, unit in self.h.declaration.units.items()}
         self.plan(proof.SINGLE)
         self.assertEqual(before, {u: (unit.needs, unit.couples_with) for u, unit in self.h.declaration.units.items()})
+
+    def test_every_form_is_held_to_the_stream_limit_of_the_shared_context_it_sends(self):
+        # SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C3: The review kit measures the size of the stream message that holds the shared context, the images base64-encoded as the kit sends them, and refuses the run with a line beginning REFUSED, before any session is started and before anything is spent, when that size is over the agent command line's stream limit of 268,435,456 characters (256 x 1024 x 1024, the figure the agent command line reports as 256M), a named constant of the kit, counted as the command line counts them: the UTF-16 code units of the one JSON line, without its newline. The line names the size, the limit, and the artefact group of the review folder that is largest (the views folder, the placement folder or the documents) with its size, and says what to do: write fewer or smaller views. The check is made where the context budget is checked, so the proof command's forms are held to it too. A context at the limit is not refused. Over the stub with a synthetic review folder and the constant lowered by the test, a context over the limit is refused with that line in text and in JSON and no session is started, a context at the limit runs, and the prediction line is not printed for the refused one. Out of scope: the token budget, which is unchanged.
+        size = messages.stream_size(messages.shared_context(self.catalogue).message)
+        for form in (proof.FANNED, proof.SINGLE_SHARED):
+            with self.subTest(form=form):
+                with mock.patch.object(messages, "STREAM_LIMIT", size):
+                    self.plan(form)
+                with mock.patch.object(messages, "STREAM_LIMIT", size - 1):
+                    with self.assertRaises(planner.OverStreamLimit):
+                        self.plan(form)
+        empty = messages.stream_size(messages.shared_context(catalogue.Catalogue(())).message)
+        with mock.patch.object(messages, "STREAM_LIMIT", empty):
+            self.plan(proof.SINGLE)  # the single form sends none of the folder
+        with mock.patch.object(messages, "STREAM_LIMIT", empty - 1):
+            with self.assertRaises(planner.OverStreamLimit):
+                self.plan(proof.SINGLE)
 
 
 class RunsRecordedInOneShape(unittest.TestCase):

@@ -25,11 +25,37 @@ from . import session as sess
 ACK = "ACK"
 INTRO = ("This message holds the material that the sessions continuing from here share. Read it as the evidence for the "
          "tasks they are each given. Do not judge anything and do not use a tool now.")
+#: The longest line the agent command line reads from its stream-json input, in UTF-16 code units without the newline:
+#: 256 x 1024 x 1024, the figure it reports as 256M, read from its version 2.1.304. A line of exactly this length is read.
+STREAM_LIMIT = 268435456
 ENDING = f"Hold this for the sessions that continue from here; answer only {ACK}."
 
 
 def sha256(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def stream_size(message: str) -> int:
+    """The length of the one-line message as the agent command line counts it: in UTF-16 code units, which a character
+    outside the Basic Multilingual Plane takes two of."""
+    return len(message.encode("utf-16-le")) // 2
+
+
+def artefact_group(name: str) -> str:
+    """The group of the review folder an artefact belongs to: the folder its name begins with, and `documents` for one
+    named without a folder."""
+    return name.split("/", 1)[0] if "/" in name else "documents"
+
+
+def largest_group(catalogue: cat.Catalogue) -> Tuple[str, int]:
+    """The group of artefacts that takes most of the message, with its size in characters as the message holds it: an
+    image base64-encoded, a text as it is. ('none', 0) for a catalogue of none."""
+    sizes: Dict[str, int] = {}
+    for artefact in catalogue.artefacts:
+        held = 4 * ((len(artefact.data) + 2) // 3) if artefact.kind == "image" else len(artefact.data.decode("utf-8"))
+        group = artefact_group(artefact.name)
+        sizes[group] = sizes.get(group, 0) + held
+    return max(sizes.items(), key=lambda item: (item[1], item[0]), default=("none", 0))
 
 
 def header(artefact: cat.Measured) -> str:

@@ -30,6 +30,7 @@ from board_fixtures import OUTLINE  # noqa: E402
 from board_fixtures import project  # noqa: E402
 import board_check  # noqa: E402
 import board_views  # noqa: E402
+from review_kit import messages  # noqa: E402
 from board_views_fixtures import Design, KICAD_CLI, PROOF_PROJECT, REPO, RESVG, SCALE, layout, setUpModule, tearDownModule  # noqa: E402,F401
 
 
@@ -733,3 +734,21 @@ class Documentation(unittest.TestCase):
                 self.assertIn(fact, readme)
                 self.assertIn(fact, section)
         self.assertIn("KiCad 10.0", readme)
+
+    def test_the_readme_and_the_method_state_the_net_view_rule_the_index_fields_and_the_stream_limit(self):
+        """SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C4: The hardware notes (hardware/README.md) and the board design method (docs/board-design-method.md) each state, where they describe the net views and the critical-routing review's shared context, that a net's view holds only the tiles with some of the net's copper, that the index lists the tiles written and the count left out for each net, and that the review kit refuses a shared context over 268,435,456 characters before any session starts, with the figure's source, the agent command line's own refusal and the version it was read from, and the method's rule for which tiles a verdict rests on is corrected to read every written tile of a net, a tile not written holding none of that net. Each statement is checked against the delivered command and kit, clause by clause, and the text that said every net is written as the full grid of tiles is corrected in each place that said it. Out of scope: the other sections of the method and the notes, which this item leaves as they are."""
+        readme, method = self.read("hardware", "README.md"), self.read("docs", "board-design-method.md")
+        flat = {"README": " ".join(readme.split()), "method": " ".join(method.split())}
+        for name, text in flat.items():
+            with self.subTest(document=name):
+                self.assertRegex(text, r"hold(ing)? some of (the|that) net's copper")
+                self.assertIn("NET TILES", text)
+                self.assertIn("left out", text)
+                self.assertIn(f"{messages.STREAM_LIMIT:,} characters", text, "the figure is the kit's constant")
+                self.assertIn("2.1.304", text)
+                self.assertIn("before any session starts", text)
+        self.assertIn("a tile not written holds none of that net", flat["method"])
+        self.assertIn("every written tile", flat["method"])
+        self.assertNotIn("an item judged over the whole board on every tile.", flat["method"])
+        self.assertIn("none left out", flat["README"])
+        self.assertIn("`net_tiles`", flat["README"])
