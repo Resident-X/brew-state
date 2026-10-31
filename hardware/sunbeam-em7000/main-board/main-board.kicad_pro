@@ -302,6 +302,17 @@
       },
       {
         "clearance": 0.2,
+        "name": "Fast",
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "priority": 9,
+        "schematic_color": "rgba(0, 0, 0, 0.000)",
+        "track_width": 0.2,
+        "tuning_profile": "",
+        "via_diameter": 0.75,
+        "via_drill": 0.3
+      },
+      {
+        "clearance": 0.2,
         "name": "Ground",
         "pcb_color": "rgba(0, 0, 0, 0.000)",
         "priority": 4,
@@ -708,14 +719,6 @@
       },
       {
         "netclass": "Noisy",
-        "pattern": "+5V_GAUGE"
-      },
-      {
-        "netclass": "Noisy",
-        "pattern": "+5V_WB"
-      },
-      {
-        "netclass": "Noisy",
         "pattern": "/ANODE_GATE"
       },
       {
@@ -924,10 +927,6 @@
       },
       {
         "netclass": "Noisy",
-        "pattern": "/Pump drives/PUMP_C_GATE_R"
-      },
-      {
-        "netclass": "Noisy",
         "pattern": "/Pump drives/PUMP_C_LED_A"
       },
       {
@@ -941,10 +940,6 @@
       {
         "netclass": "Noisy",
         "pattern": "/Pump drives/PUMP_S_GATE_G"
-      },
-      {
-        "netclass": "Noisy",
-        "pattern": "/Pump drives/PUMP_S_GATE_R"
       },
       {
         "netclass": "Noisy",
@@ -977,6 +972,62 @@
       {
         "netclass": "Noisy",
         "pattern": "/Valve drives/VALVE_3W_G"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/Controller/HSE_IN"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/Controller/HSE_OUT"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/Controller/LSE_IN"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/Controller/LSE_OUT"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/Controller/USB_DP"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/Controller/USB_DM"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/SPI2_SCK"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/SPI2_MOSI"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/SPI2_MISO"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/Supply voltage and current measurement/AMC_CLKIN"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/Supply voltage and current measurement/AMC_CLK_OUT"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/Supply voltage and current measurement/AMC_SCLK"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/Supply voltage and current measurement/AMC_DIN"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/Supply voltage and current measurement/AMC_DOUT_PIN"
       },
       {
         "netclass": "Mains",

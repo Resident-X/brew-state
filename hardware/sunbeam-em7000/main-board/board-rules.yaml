@@ -5,6 +5,7 @@ sensing:
     - Sense
   noisy_classes:
     - Noisy
+    - Supply5V
     - Mains
   clearance_mm: 0.3
   source: "no published practice or record in the repository states a figure (SENSE-6 says the same), so this is the board's own, chosen on the grounds that follow. 0.3 mm is 1.5 times the 0.2 mm clearance of the Default net class and 1.5 times the 0.2 mm track width of the Sense class, so a sensing track keeps at least one and a half track widths of air from a noisy item where an ordinary pair keeps one; it is 3.3 times the 0.09 mm board minimum of the manufacturer (docs/board-manufacturer-jlcpcb.md, Tracks and spacing); and it is a figure the packed placement can hold, which was the limit on choosing a larger one. Where a Mains item is the noisy one the check applies the larger of this figure and the signed mains clearance. The practice the figure serves is SENSE-4's, Texas Instruments, ADS8866 data sheet SBAS614C, March 2019, section 12.1 Layout Guidelines (keep the analog input signals and the reference input signals away from noise sources)"
@@ -20,6 +21,9 @@ ground_returns:
     - Noisy
   signal_classes:
     - class: Default
+      signal_pins_per_return: 1
+      source: "none exists: no published practice or record in the repository states a ratio of signal pins to ground-return pins for a board connector, and none was found. 1 signal pin per ground-return pin is the strictest whole number and is chosen on that ground: every signal then has a return pin of its own beside it, so no return current is shared between two signals, which is the cleanest case for crosstalk and for the loop area a connector adds. A looser figure needs a cited source, or the owner naming one connector at a time"
+    - class: Fast
       signal_pins_per_return: 1
       source: "none exists: no published practice or record in the repository states a ratio of signal pins to ground-return pins for a board connector, and none was found. 1 signal pin per ground-return pin is the strictest whole number and is chosen on that ground: every signal then has a return pin of its own beside it, so no return current is shared between two signals, which is the cleanest case for crosstalk and for the loop area a connector adds. A looser figure needs a cited source, or the owner naming one connector at a time"
     - class: Sense
