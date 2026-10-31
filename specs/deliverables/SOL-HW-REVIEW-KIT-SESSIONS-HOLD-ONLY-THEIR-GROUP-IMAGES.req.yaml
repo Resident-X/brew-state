@@ -1,0 +1,29 @@
+id: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES
+type: deliverable
+category: solution
+title: Every session of a review holds the shared artefacts and its own group's, within a declared model-context budget, and a group over the budget is refused before any session starts
+status: active
+version: 1
+text: |
+  Why this exists. The review kit builds one shared context holding every artefact any unit of a review needs, every rendered view included as an image, and forks one reviewer per group from it (DEC-REVIEW-FAN-OUT-FROM-SHARED-CONTEXT-WITH-REPLICAS). That is sound on the small proof designs, where the decision measured a flat prefix against a tree and found the saving under one per cent. On the first real full-size main controller board it failed twice. With 1744 views (321 MB of images) the agent command line refused the stream for being over 256 million characters; the net views were then cut to the tiles that hold the net's copper, giving 560 images (72.8 MB). The plan for those 560 images read "6 groups | 12 forks | bound 12 | shared context 2472436 tokens", and the root session ended "Prompt is too long": an image costs about 4.4 thousand tokens, and the model's context window is a small fraction of 2.47 million. The shared context was never compared with the window because the callers declare no context budget, and the kit's refusal of a prefix over the budget only fires when one is declared. The critical-routing check (the method's routing step 4), the layout review and the production-files check have the same shape and meet the same wall, so the kit cannot carry them out on a full-size board; the independent reviewer's verdict table the method requires was made by hand, with a brief per group that opened only the images the group needs.
+
+  The decision's measure of a tree against a flat prefix was taken at the sizes of the proof designs. This solution does not reopen the choice of shared context, forks and any-fail replicas; it bounds what any one session holds. A flat shared context stays the plan for the artefacts every group needs, and an artefact that only some groups need is carried by those groups' sessions and not by the shared context.
+
+  What it does. Every session of a review holds a context within a declared model-context budget. The shared context holds the artefacts every group's units need; each group's sessions are given the artefacts that group's units declare in addition, and no artefact another group alone needs. A group whose own artefacts together with the shared context exceed the budget is refused before any session starts, naming the group and the figures, so the caller's declaration is corrected (more groups, or fewer views per unit) and not the model's window found out at run time. The plan reports, per group, the number of images and tokens it holds. The three callers that carry the image-heavy reviews, critical routing, layout and production files, and the schematic caller declare each unit's needs and the budget.
+
+  The frozen proof designs and their recorded baselines. The recorded single-reviewer baselines are keyed by the hash of the seed list, the design commit, the model, the form and the prompt, and the design by the bytes of the files the review reads. This change edits no design file and no baseline, so every recorded key is unchanged and no baseline is re-recorded. The fanned-out form's own prompt and shared context change shape, which gives that form a new key; the harness runs a form whose key differs and refuses one whose key is recorded, so the next fanned-out proof run is a new run against the unchanged baselines and no recorded run is invalidated.
+
+  Out of scope: the single-reviewer form, which holds every view in one session and exists to prove the fanned-out form on the small proof designs; a tree-shaped plan beyond the one level the group-carried artefacts give; the value of any model's window, which is data the budget states; and the layout of any particular board's views.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3
+    type: targets
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: targets
+  - target: SOL-HW-REVIEW-KIT
+    type: depends-on
+  - target: DEC-REVIEW-FAN-OUT-FROM-SHARED-CONTEXT-WITH-REPLICAS
+    type: justified-by

@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C7
+type: criterion
+title: The hardware notes and the method's by-unit paragraphs state the per-group context, the budget, the refusal and its remedy
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The hardware notes' section on the review kit command states that the shared context holds only what every group needs and each group's sessions are given that group's own artefacts, that a budget is declared by the caller or taken from the model's window, that a group over it is refused naming the group and the figures, how to correct the declaration, the plan-only invocation, and the per-group figures the report holds; the refusal table in the notes has a row for the new refusal with its cause and action; the notes of the critical-routing, layout, production-files and schematic callers name the units' needs and the budget each declares; and the method's four paragraphs on judging a round by unit each say that a reviewer is given only its group's views and that the by-unit form may be used on a full-size board. A session that holds only those texts and the command's refusal line can state what the command needs, what it refuses and what to change. Out of scope: the wording of any caller's prompts.
+links:
+  - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES
+    type: criterion-of

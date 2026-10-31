@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C2
+type: criterion
+title: A group whose artefacts together with the shared context exceed the declared model-context budget is refused before any session starts
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Over a synthetic declaration with a context budget, a group whose own artefacts added to the shared context measure more than the budget is refused before any session starts, the refusal naming the group, its size in tokens and the budget; a shared context over the budget on its own is refused naming its size and the budget as before; a group that fits exactly is accepted; and a declaration that states no budget is held to the context window the kit holds as data for the review's model, less the room for the answer, so a review with no stated budget is still refused when a session would exceed it. Over a declaration with several oversize groups, every one is named. The command prints a REFUSED line naming the cause and what to do, exits 1, and starts no session. Out of scope: the value of any model's window and the choice of how a caller splits an oversize group, which the caller's declaration makes.
+links:
+  - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES
+    type: criterion-of
