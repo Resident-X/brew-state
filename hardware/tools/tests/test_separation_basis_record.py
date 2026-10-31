@@ -250,10 +250,9 @@ class MainsToMainsRecord(unittest.TestCase):
         _, data = committed()
         assert_draft(self, data)
         held = data["mains_to_mains"]
-        entries = [e for e in data["accepted_exceptions"][:ORIGINAL_ENTRIES] if e["pair"] == "mains_to_mains"]
+        entries = [e for e in data["accepted_exceptions"][:ORIGINAL_ENTRIES] if e["pair"] == "mains_to_mains" and e["constraint"] == "clearance"]
         found = {(tuple(e["between"]), e["accepted_mm"]) for e in entries}
-        expected = {(("T701.2", "T701.1"), 1.08), (("T701.2", "T701.3"), 1.08), (("T711.2", "T711.1"), 1.08), (("T711.2", "T711.3"), 1.08),
-                    (("R105.1", "R105.4"), 1.65)}
+        expected = {(("R105.1", "R105.4"), 1.65)}
         expected |= {((f"{ref}.1", f"{ref}.2"), 1.8) for ref in ("R101", "R102", "R103", "R104", "R704", "R705", "R714", "R715")}
         self.assertEqual(found, expected)
         self.assertEqual(len(entries), len(found))
@@ -264,12 +263,8 @@ class MainsToMainsRecord(unittest.TestCase):
             self.assertTrue(entry["reason"].strip() and entry["bounded_by"].strip())
             self.assertEqual((entry["accepted_by"], entry["accepted_on"]), ("", ""))
             self.assertEqual(len(entry["between"]), 2)
-        # the triac shortfall is the gap between two lead pads, and the reason says the tab is not excused
-        for entry in entries:
-            if entry["between"][0] in ("T701.2", "T711.2"):
-                self.assertIn("lead-pad to lead-pad", entry["reason"])
-                self.assertIn("does not excuse the triac's tab", entry["reason"])
-                self.assertNotIn("tab lead", entry["reason"])
+        # the triacs' two-lead land has no middle-lead pad, so no clearance entry names a triac pad
+        self.assertFalse(any(pad.startswith(("T701.", "T711.")) for e in entries for pad in e["between"]))
         # a part's other pairs have no entry, and a part the owner did not accept has none
         pairs = {frozenset(e["between"]) for e in data["accepted_exceptions"] if "between" in e}
         self.assertNotIn(frozenset(("T701.1", "T701.3")), pairs)
@@ -388,7 +383,7 @@ class MainsToMainsReadings(unittest.TestCase):
         a3 = text[text.index("| A3 |"):]
         a3 = a3[:a3.index("\n")]
         for phrase in ("250 V row (2.5 mm) and 320 V row (3.2 mm)", "pollution degree 2", "253 V", "rounded up", stated["terminal"],
-                       "T701 and T711 at 1.08 mm", "R105 at 1.65 mm", "1206 series resistors at 1.8 mm"):
+                       "T701 and T711 at 2.0 mm of creepage between the tab and each lead pad", "R105 at 1.65 mm", "1206 series resistors at 1.8 mm"):
             self.assertIn(phrase, a3, phrase)
         # the mains-to-earth pair states the same row selection
         d15 = text[text.index("**D15."):]
@@ -1093,9 +1088,9 @@ class NetPairAndSamePartDrafts(unittest.TestCase):
         self.assertEqual(len(problems), 2)
         self.assertTrue(all("unsigned" in p.message for p in problems))
         earlier = [(e["pair"], e["constraint"], tuple(e.get("between") or ()), e.get("connector"), e["accepted_mm"]) for e in entries[:ORIGINAL_ENTRIES]]
-        expected = ([("mains_to_mains", "clearance", pads, None, mm) for pads, mm in (
-            (("T701.2", "T701.1"), 1.08), (("T701.2", "T701.3"), 1.08), (("T711.2", "T711.1"), 1.08), (("T711.2", "T711.3"), 1.08),
-            (("R105.1", "R105.4"), 1.65))]
+        expected = ([("mains_to_mains", "creepage", pads, None, 2.0) for pads in (
+            ("T701.2", "T701.1"), ("T701.2", "T701.3"), ("T711.2", "T711.1"), ("T711.2", "T711.3"))]
+                    + [("mains_to_mains", "clearance", ("R105.1", "R105.4"), None, 1.65)]
                     + [("mains_to_mains", "clearance", (f"{ref}.1", f"{ref}.2"), None, 1.8)
                        for ref in ("R101", "R102", "R103", "R104", "R704", "R705", "R714", "R715")]
                     + [("mains_to_low_voltage", "creepage", pads, None, mm) for pads, mm in (

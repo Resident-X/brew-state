@@ -495,14 +495,18 @@ table_rows:
 # The spacing shortfalls the owner is to accept, one entry for each one pair of pads it excuses; a
 # part's other pairs are not excused by it. The distances are those the part's own land pattern
 # leaves between the pads named, from the main-board schematic and the KiCad footprint of each part
-# (TO-252-3 for T701 and T711, the Vishay WSK2512 shunt land for R105, the standard 1206 land for
+# (the board's own two-lead DPAK land TO-252-2_TabPin2_Triac for T701 and T711, its middle lead cut and
+# given no pad, the Vishay WSK2512 shunt land for R105, the standard 1206 land for
 # R101 to R104, R704, R705, R714 and R715, the makers' lands for U601, U701 and U711, and the board's own
 # footprint pad gap for U602). The reasons and bounding elements below are the drafter's proposals for the
 # owner to accept or correct, except that the reasons of the bought-part creepage entries are those of the
 # owner's recorded acceptance (DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER, residual risk (e),
 # 2026-10-29); for U602 they add the statement that the gap is the board's and the maker publishes none. Every
 # accepted_by and accepted_on is left empty for the owner's own act, and the values are drafts until
-# the finished main-board layout confirms each pair and distance. Five entries, after the twenty mains and
+# the finished main-board layout confirms each pair and distance. The first four entries are of the creepage
+# constraint: on the triacs' two-lead land the tab pad stands 2.00 mm from each lead pad, which meets the 2.0 mm
+# terminal clearance and falls short of the 2.6 mm creepage; the land has no middle-lead pad, so no lead-pad to
+# lead-pad gap is excused. Five entries, after the twenty mains and
 # bought-part ones, are of the same_connector_pins form, one for each of the five 2.0 mm-pitch harness
 # headers J630, J635, J791, J821 and J861 (the net-pair and same-part entries are appended after them):
 # each excuses only the plated-hole spacing between two pads of its own header whose centres
@@ -513,34 +517,34 @@ table_rows:
 # JST PH pad of the footprint, to be confirmed against the finished layout.
 accepted_exceptions:
   - pair: mains_to_mains
-    constraint: clearance
+    constraint: creepage
     between: ["T701.2", "T701.1"]
-    accepted_mm: 1.08
-    reason: "The land pattern of the coffee pump triac T701 (TO-252-3) leaves 1.08 mm between the lead pad of pin 2 (MT2, the middle lead) and the lead pad of pin 1 (MT1, on NEUTRAL), a lead-pad to lead-pad gap; the package pitch forces it and the part is not changed. This entry does not excuse the triac's tab (the large pad on pin 2), which stands about 2.0 mm clear of those leads' pads and is held to the figure like any other pair."
+    accepted_mm: 2.0
+    reason: "The two-lead DPAK land of the coffee pump triac T701 (TO-252-2_TabPin2_Triac, the middle lead cut and given no pad) leaves 2.00 mm between the tab pad (pin 2, MT2) and the lead pad of pin 1 (MT1, on NEUTRAL), a tab-to-lead-pad gap that the package's lead pitch and tab force; the gap meets the 2.0 mm terminal clearance and falls short of the 2.6 mm creepage. The part is not changed, and the entry excuses only this pair of pads, at 2.0 mm of creepage."
     bounded_by: "The branch fuse F701 in series with MT2, then the 10 A entry fuse F101, interrupt a breakdown between the two pads, which can only carry the pump branch current."
     accepted_by: ""
     accepted_on: ""
   - pair: mains_to_mains
-    constraint: clearance
+    constraint: creepage
     between: ["T701.2", "T701.3"]
-    accepted_mm: 1.08
-    reason: "The land pattern of the coffee pump triac T701 (TO-252-3) leaves 1.08 mm between the lead pad of pin 2 (MT2, the middle lead) and the lead pad of pin 3 (the gate, on PUMP_C_TRIAC_G), a lead-pad to lead-pad gap; the package pitch forces it and the part is not changed. This entry does not excuse the triac's tab (the large pad on pin 2), which stands about 2.0 mm clear of those leads' pads and is held to the figure like any other pair."
+    accepted_mm: 2.0
+    reason: "The two-lead DPAK land of the coffee pump triac T701 (TO-252-2_TabPin2_Triac, the middle lead cut and given no pad) leaves 2.00 mm between the tab pad (pin 2, MT2) and the lead pad of pin 3 (the gate, on PUMP_C_TRIAC_G), a tab-to-lead-pad gap that the package's lead pitch and tab force; the gap meets the 2.0 mm terminal clearance and falls short of the 2.6 mm creepage. The part is not changed, and the entry excuses only this pair of pads, at 2.0 mm of creepage."
     bounded_by: "The branch fuse F701 in series with MT2, then the 10 A entry fuse F101, interrupt a breakdown between the two pads, which can only carry the pump branch current."
     accepted_by: ""
     accepted_on: ""
   - pair: mains_to_mains
-    constraint: clearance
+    constraint: creepage
     between: ["T711.2", "T711.1"]
-    accepted_mm: 1.08
-    reason: "The land pattern of the steam pump triac T711 (TO-252-3) leaves 1.08 mm between the lead pad of pin 2 (MT2, the middle lead) and the lead pad of pin 1 (MT1, on NEUTRAL), a lead-pad to lead-pad gap; the package pitch forces it and the part is not changed. This entry does not excuse the triac's tab (the large pad on pin 2), which stands about 2.0 mm clear of those leads' pads and is held to the figure like any other pair."
+    accepted_mm: 2.0
+    reason: "The two-lead DPAK land of the steam pump triac T711 (TO-252-2_TabPin2_Triac, the middle lead cut and given no pad) leaves 2.00 mm between the tab pad (pin 2, MT2) and the lead pad of pin 1 (MT1, on NEUTRAL), a tab-to-lead-pad gap that the package's lead pitch and tab force; the gap meets the 2.0 mm terminal clearance and falls short of the 2.6 mm creepage. The part is not changed, and the entry excuses only this pair of pads, at 2.0 mm of creepage."
     bounded_by: "The branch fuse F711 in series with MT2, then the 10 A entry fuse F101, interrupt a breakdown between the two pads, which can only carry the pump branch current."
     accepted_by: ""
     accepted_on: ""
   - pair: mains_to_mains
-    constraint: clearance
+    constraint: creepage
     between: ["T711.2", "T711.3"]
-    accepted_mm: 1.08
-    reason: "The land pattern of the steam pump triac T711 (TO-252-3) leaves 1.08 mm between the lead pad of pin 2 (MT2, the middle lead) and the lead pad of pin 3 (the gate, on PUMP_S_TRIAC_G), a lead-pad to lead-pad gap; the package pitch forces it and the part is not changed. This entry does not excuse the triac's tab (the large pad on pin 2), which stands about 2.0 mm clear of those leads' pads and is held to the figure like any other pair."
+    accepted_mm: 2.0
+    reason: "The two-lead DPAK land of the steam pump triac T711 (TO-252-2_TabPin2_Triac, the middle lead cut and given no pad) leaves 2.00 mm between the tab pad (pin 2, MT2) and the lead pad of pin 3 (the gate, on PUMP_S_TRIAC_G), a tab-to-lead-pad gap that the package's lead pitch and tab force; the gap meets the 2.0 mm terminal clearance and falls short of the 2.6 mm creepage. The part is not changed, and the entry excuses only this pair of pads, at 2.0 mm of creepage."
     bounded_by: "The branch fuse F711 in series with MT2, then the 10 A entry fuse F101, interrupt a breakdown between the two pads, which can only carry the pump branch current."
     accepted_by: ""
     accepted_on: ""
@@ -758,8 +762,9 @@ accepted_exceptions:
   # nets of set N, whose edge-to-edge gap in the committed main-board layout is under 1.5 mm; accepted_mm is
   # that gap read from the layout, rounded down to 0.01 mm. Pairs the same parts stand 1.5 mm or more apart
   # (C607 pins 1 and 2, R105 pads 1 and 4, U601 pins 1 and 3, 2 and 4, 3 and 5, 5 and 7, 7 and 9, 8 and 10)
-  # are covered by the first two entries, and the T701, T711, U701 and U711 pins stand at 3.3 mm or more, no
-  # shortfall against 2.6 mm. Every accepted_by and accepted_on is left empty for the owner's own act, and
+  # are covered by the first two entries; the lead pads 1 and 3 of T701 and T711 stand 3.36 mm apart on their two-lead
+  # land and the U701 and U711 pins 3.3 mm or more, no shortfall against 2.6 mm, and each triac's tab pad stands 2.00 mm
+  # from each of its lead pads, which the first four accepted_exceptions entries excuse at 2.0 mm of creepage. Every accepted_by and accepted_on is left empty for the owner's own act, and
   # the entries stay drafts until the finished layout's rule check confirms that each is used.
   - pair: mains_to_mains
     constraint: creepage
