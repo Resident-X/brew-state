@@ -12,6 +12,7 @@ import os
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, TOOLS)
@@ -258,6 +259,31 @@ class TreeAndBudgetTests(Case):
         raw["budget"]["context_tokens"] = shared.tokens - 1
         with self.assertRaises(planner.OverBudget):
             self.plan(raw)
+
+    def test_context_over_the_stream_limit_is_refused_naming_size_limit_and_largest_group_and_at_the_limit_is_accepted(self):
+        # SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C3: The review kit measures the size of the stream message that holds the shared context, the images base64-encoded as the kit sends them, and refuses the run with a line beginning REFUSED, before any session is started and before anything is spent, when that size is over the agent command line's stream limit of 268,435,456 characters (256 x 1024 x 1024, the figure the agent command line reports as 256M), a named constant of the kit, counted as the command line counts them: the UTF-16 code units of the one JSON line, without its newline. The line names the size, the limit, and the artefact group of the review folder that is largest (the views folder, the placement folder or the documents) with its size, and says what to do: write fewer or smaller views. The check is made where the context budget is checked, so the proof command's forms are held to it too. A context at the limit is not refused. Over the stub with a synthetic review folder and the constant lowered by the test, a context over the limit is refused with that line in text and in JSON and no session is started, a context at the limit runs, and the prediction line is not printed for the refused one. Out of scope: the token budget, which is unchanged.
+        _, found, shared, _ = self.plan()
+        size = messages.stream_size(shared.message)
+        with mock.patch.object(messages, "STREAM_LIMIT", size):
+            self.plan()
+        with mock.patch.object(messages, "STREAM_LIMIT", size - 1):
+            with self.assertRaises(planner.OverStreamLimit) as refused:
+                self.plan()
+        error = refused.exception
+        self.assertEqual((error.size, error.limit), (size, size - 1))
+        self.assertEqual((error.group, error.group_size), messages.largest_group(found))
+        text = str(error)
+        for part in (str(size), str(size - 1), error.group, str(error.group_size), "write fewer or smaller views"):
+            self.assertIn(part, text)
+
+    def test_context_is_measured_in_utf_16_code_units_not_characters(self):
+        # SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C3: The review kit measures the size of the stream message that holds the shared context, the images base64-encoded as the kit sends them, and refuses the run with a line beginning REFUSED, before any session is started and before anything is spent, when that size is over the agent command line's stream limit of 268,435,456 characters (256 x 1024 x 1024, the figure the agent command line reports as 256M), a named constant of the kit, counted as the command line counts them: the UTF-16 code units of the one JSON line, without its newline. The line names the size, the limit, and the artefact group of the review folder that is largest (the views folder, the placement folder or the documents) with its size, and says what to do: write fewer or smaller views. The check is made where the context budget is checked, so the proof command's forms are held to it too. A context at the limit is not refused. Over the stub with a synthetic review folder and the constant lowered by the test, a context over the limit is refused with that line in text and in JSON and no session is started, a context at the limit runs, and the prediction line is not printed for the refused one. Out of scope: the token budget, which is unchanged.
+        fx.write(self.review, "docs/guide.md", "\U0001f600" * 100)
+        _, _, shared, _ = self.plan()
+        self.assertGreater(messages.stream_size(shared.message), len(shared.message))
+        with mock.patch.object(messages, "STREAM_LIMIT", len(shared.message)):
+            with self.assertRaises(planner.OverStreamLimit):
+                self.plan()
 
     def test_bound_below_one_is_refused(self):
         # SOL-HW-REVIEW-KIT.C6: a bound below one is refused

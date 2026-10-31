@@ -68,6 +68,9 @@ SCALE = 3 / MINIMUM_MM
 _RENDERED = {}
 
 
+_TILED = {}
+
+
 def setUpModule():
     board_fixtures.require_tools(KICAD_CLI, RESVG)
 
@@ -185,6 +188,49 @@ class Design(board_fixtures.Design):
             status = board_views.main(["--kicad-cli", kicad_cli, "--resvg", resvg, *self.args(classes, out)],
                                       out=stream)
         return status, stream.getvalue().splitlines(), errors.getvalue()
+
+
+#: A board of nets whose copper sits in some of the tiles of a 2 by 2 grid: WIDE runs round the board's four sides, through
+#: two vias, so it touches every tile; TOP is one track along the top, in the two upper tiles; LONE_PAD is one pad in the
+#: lower right tile and LONE_VIA one via in the lower left, each the whole of its net; EMPTY is a zone too small to fill, so
+#: nothing of it is plotted. WIDE and TOP are in class Power and the rest in Ground. Each item is (net, layer, x0, y0, x1, y1):
+#: the box in millimetres the item's copper reaches, its width included.
+NET_TILE_BOXES = {
+    "WIDE": [("F.Cu", 3, 2.85, 57, 3.15), ("B.Cu", 56.85, 3, 57.15, 37), ("F.Cu", 3, 36.85, 57, 37.15),
+             ("B.Cu", 2.85, 3, 3.15, 37), ("both", 56.6, 2.6, 57.4, 3.4), ("both", 2.6, 36.6, 3.4, 37.4)],
+    "TOP": [("F.Cu", 20, 5.85, 40, 6.15)],
+    "LONE_PAD": [("F.Cu", 49.5, 31.7, 50.5, 32.3)],
+    "LONE_VIA": [("both", 4.6, 34.6, 5.4, 35.4)],
+}
+NET_TILE_ITEMS = [
+    f'(segment (start 3 3) (end 57 3) (width 0.3) (layer "F.Cu") (net "WIDE") (uuid {uuid()}))',
+    f'(via (at 57 3) (size 0.8) (drill 0.4) (layers "F.Cu" "B.Cu") (net "WIDE") (uuid {uuid()}))',
+    f'(segment (start 57 3) (end 57 37) (width 0.3) (layer "B.Cu") (net "WIDE") (uuid {uuid()}))',
+    f'(segment (start 57 37) (end 3 37) (width 0.3) (layer "F.Cu") (net "WIDE") (uuid {uuid()}))',
+    f'(via (at 3 37) (size 0.8) (drill 0.4) (layers "F.Cu" "B.Cu") (net "WIDE") (uuid {uuid()}))',
+    f'(segment (start 3 37) (end 3 3) (width 0.3) (layer "B.Cu") (net "WIDE") (uuid {uuid()}))',
+    f'(segment (start 20 6) (end 40 6) (width 0.3) (layer "F.Cu") (net "TOP") (uuid {uuid()}))',
+    footprint("P1", 50, 32, [pad(1, 0, 0, "LONE_PAD", "passive")], courtyard=None),
+    f'(via (at 5 35) (size 0.8) (drill 0.4) (layers "F.Cu" "B.Cu") (net "LONE_VIA") (uuid {uuid()}))',
+    f'(zone (net "EMPTY") (layer "B.Cu") (uuid {uuid()}) (hatch edge 0.5) (connect_pads (clearance 0.5)) '
+    '(min_thickness 0.25) (filled_areas_thickness no) (fill yes (thermal_gap 0.5) (thermal_bridge_width 0.5)) '
+    '(polygon (pts (xy 30 20) (xy 30.1 20) (xy 30.1 20.1) (xy 30 20.1))))',
+]
+NET_TILE_CLASSES = {"WIDE": "Power", "TOP": "Power", "LONE_PAD": "Ground", "LONE_VIA": "Ground", "EMPTY": "Ground"}
+
+
+def tiled_nets():
+    """The net-tile board's views, rendered once through the shipped task: (design, task result, index)."""
+    if not _TILED:
+        design = Design(layout(NET_TILE_ITEMS), project(assignments=NET_TILE_CLASSES), )
+        result = subprocess.run(["task", "hw:views", f"KICAD_CLI={KICAD_CLI}", f"RESVG={RESVG}", "--", *design.args()],
+                                cwd=REPO, capture_output=True, text=True, timeout=1800)
+        index = None
+        if result.returncode == 0:
+            with open(os.path.join(design.out, "index.json"), encoding="utf-8") as handle:
+                index = json.load(handle)
+        _TILED.update(design=design, result=result, index=index, pixels={})
+    return _TILED
 
 
 def rendered():

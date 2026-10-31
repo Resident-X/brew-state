@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET-C4-INSPECTION
+type: evidence
+title: inspection evidence for SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C4
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-31T19:09:04.806507Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_views_commands.py::Documentation.test_the_readme_and_the_method_state_the_net_view_rule_the_index_fields_and_the_stream_limit
+  artifact_version: b60a1bb088f0e764c185f87c7ddeb260eff8af34
+attested_by: crun-1c1f8181771751ae
+links:
+  - target: SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C4
+    type: satisfies

@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET-C2-TEST-5
+type: evidence
+title: test evidence for SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-31T19:09:03.997967Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_views_pieces.py::NetTileLines.test_the_index_line_names_the_grid_each_tile_written_with_its_region_and_the_count_left_out
+  artifact_version: b60a1bb088f0e764c185f87c7ddeb260eff8af34
+attested_by: crun-1c1f8181771751ae
+links:
+  - target: SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C2
+    type: satisfies
