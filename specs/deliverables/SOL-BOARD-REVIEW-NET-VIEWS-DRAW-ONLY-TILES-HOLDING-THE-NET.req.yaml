@@ -23,3 +23,7 @@ links:
     type: depends-on
   - target: SOL-HW-REVIEW-KIT
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: 23f376d555597f2d56454ef14570ee25f257e7b5f87dc7498c1aa915e21e2e3c
+  gating_profile: ""
