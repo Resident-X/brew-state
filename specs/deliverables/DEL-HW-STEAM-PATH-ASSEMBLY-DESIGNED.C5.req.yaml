@@ -1,13 +1,13 @@
 id: DEL-HW-STEAM-PATH-ASSEMBLY-DESIGNED.C5
 type: criterion
-title: Whether the transducer's wetted body can touch touchable water is recorded as an owner fact, and an open or yes answer names the change that restores the barrier
+title: The pressure sensors' wetted bodies sit in earth-referenced water, so their insulation is judged as a low-voltage-to-earth barrier and not a mains barrier
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 closes_by: cascade
 text: |
-  The owner's fact of whether the water the transducer's wetted body touches is itself touchable (the body sitting on a water path a person can reach) is recorded as confirmed yes, confirmed no, or open, with the date. Where it is yes or open, the transducer is judged as a part forming a barrier to a touchable conductor: the Ashcroft part's published withstand of 500 Vac and the absence of any published withstand for the XDB401, as an independent review found them, do not reach the basic insulation the separation basis declares for a mains-adjacent barrier, so the assembly then names the change that restores the barrier (an isolating fitting in the water path, a different transducer with a published withstand at or above the figure, or a wetted body that cannot be touched), and the consequence of leaving the fact open is stated in the record. Choosing the change and the transducer's selection are the other criteria's and out of scope.
+  The settled fact is recorded and not reopened: the owner states that the thermoblocks are earthed (the mains lead's earth wire splits to the heater thermoblocks, solenoids and metal walls, the owner's statements of 2026-10-23 in the machine record), so the water in the sensor tube touches an earthed block and the pressure sensors' wetted bodies sit in earth-referenced water, with no mains-to-touchable-water path through them. The transducer's insulation therefore has to meet the low-voltage-to-earth barrier that criterion C3 of this task judges and that the basis record declares for that sensor, and a published withstand of 500 Vac, or none published, is not a mains-barrier finding. What remains is the clearing of a single heater or solenoid insulation fault into the earthed block, which the function-forms record states is not shown by that record, and which is the protective-earth and fuse matter of the earth continuity criteria. Choosing the transducer and judging its withstand are the other criteria's and out of scope.
 links:
   - target: DEL-HW-STEAM-PATH-ASSEMBLY-DESIGNED
     type: criterion-of
