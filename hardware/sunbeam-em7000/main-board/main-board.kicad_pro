@@ -324,17 +324,6 @@
       },
       {
         "clearance": 1.5,
-        "name": "Mains_Entry",
-        "pcb_color": "rgba(0, 0, 0, 0.000)",
-        "priority": 8,
-        "schematic_color": "rgba(0, 0, 0, 0.000)",
-        "track_width": 0.2,
-        "tuning_profile": "",
-        "via_diameter": 0.75,
-        "via_drill": 0.3
-      },
-      {
-        "clearance": 1.5,
         "name": "MainsBranch",
         "pcb_color": "rgba(0, 0, 0, 0.000)",
         "priority": 1,
@@ -351,6 +340,17 @@
         "priority": 0,
         "schematic_color": "rgba(0, 0, 0, 0.000)",
         "track_width": 4.2,
+        "tuning_profile": "",
+        "via_diameter": 0.75,
+        "via_drill": 0.3
+      },
+      {
+        "clearance": 1.5,
+        "name": "Mains_Entry",
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "priority": 8,
+        "schematic_color": "rgba(0, 0, 0, 0.000)",
+        "track_width": 0.2,
         "tuning_profile": "",
         "via_diameter": 0.75,
         "via_drill": 0.3
@@ -1097,6 +1097,10 @@
       {
         "netclass": "Mains",
         "pattern": "/Supply voltage and current measurement/AMC_DCDC_HGND"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "/Supply voltage and current measurement/AMC_HGND"
       },
       {
         "netclass": "Mains",

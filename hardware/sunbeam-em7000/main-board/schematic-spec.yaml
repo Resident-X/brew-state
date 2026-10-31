@@ -48,6 +48,7 @@ mains_class_nets:
 - AMC_AIN1N
 - AMC_DCDC_OUT
 - AMC_DCDC_HGND
+- AMC_HGND
 - AMC_HLDO_IN
 - AMC_HLDO_OUT
 - ZC_N1
@@ -77,11 +78,11 @@ sheets_order:
 - Knob, tank-level and reed inputs
 totals:
   sheets: 17
-  parts: 455
-  nets: 229
+  parts: 456
+  nets: 230
   parts_by_catalogue_class:
     extended: 155
-    none: 107
+    none: 108
     basic: 186
     preferred: 7
   hand_fitted_refs:
@@ -3228,7 +3229,7 @@ sheets:
     lcsc: C23241
     class: preferred
     hand: false
-    function: divider low leg to NEUTRAL; sets +/-0.30 V at the converter at 253 V rms
+    function: divider low leg to AMC_HGND (the converter's high-side ground, tied to NEUTRAL at NT601); sets +/-0.30 V at the converter at 253 V rms
     mains: true
     sim_exclude: false
   - ref: R605
@@ -3254,7 +3255,7 @@ sheets:
     lcsc: C23185
     class: basic
     hand: false
-    function: channel 0 anti-alias filter, negative leg to NEUTRAL
+    function: channel 0 anti-alias filter, negative leg to AMC_HGND
     mains: true
     sim_exclude: false
   - ref: C601
@@ -3358,7 +3359,7 @@ sheets:
     lcsc: C141723
     class: extended
     hand: false
-    function: 'F2: DCDC_HGND to HGND (NEUTRAL), EMI bead (SBASA56 9.3)'
+    function: 'F2: DCDC_HGND to HGND (AMC_HGND), EMI bead (SBASA56 9.3)'
     mains: true
     sim_exclude: true
   - ref: C605
@@ -3634,6 +3635,19 @@ sheets:
     function: 'producer-only net: DCDC_HGND, the return of the isolated supply, mains-referenced'
     mains: true
     sim_exclude: true
+  - ref: NT601
+    lib_id: Device:NetTie_2
+    value: NetTie_2
+    rating: ''
+    footprint: NetTie:NetTie-2_SMD_Pad0.5mm
+    mpn: ''
+    maker: ''
+    lcsc: none
+    class: none
+    hand: false
+    function: the single point where the converter's high-side ground AMC_HGND joins NEUTRAL, at the shunt's neutral-side terminal; a net tie, copper only, no part bought
+    mains: true
+    sim_exclude: true
   - ref: TP607
     lib_id: Connector:TestPoint
     value: TP_AMC_HLDO_IN
@@ -3711,6 +3725,10 @@ sheets:
     NEUTRAL:
       scope: global
       pins:
+      - NT601.1
+    AMC_HGND:
+      scope: local
+      pins:
       - R604.2
       - R606.2
       - U601.5
@@ -3719,6 +3737,7 @@ sheets:
       - C606.2
       - C607.2
       - C608.2
+      - NT601.2
     AMC_AIN0P:
       scope: local
       pins:
@@ -3966,11 +3985,12 @@ sheets:
   - AMC_DCDC_HGND
   - AMC_HLDO_IN
   drawing_notes: 'Drawing: signal flow left to right. Mains-referenced circuits on the left half of the sheet, the barrier part U601 in the middle with pins 1-10 on its left, pins 11-20 on its right, low-voltage circuits on
-    the right. Left to right on the left: LINE -> R601 -> R602 -> R603 -> VMEAS_DIV (-> R604 down to NEUTRAL) -> R605 -> AIN0P; NEUTRAL <- R606 <- AIN0N; C601 across AIN0P/AIN0N; SHUNT_SENSE_IN -> R607 -> AIN1P, SHUNT_SENSE_NEUTRAL
+    the right. Left to right on the left: LINE -> R601 -> R602 -> R603 -> VMEAS_DIV (-> R604 down to AMC_HGND) -> R605 -> AIN0P; AMC_HGND <- R606 <- AIN0N; C601 across AIN0P/AIN0N; SHUNT_SENSE_IN -> R607 -> AIN1P, SHUNT_SENSE_NEUTRAL
     -> R608 -> AIN1N, C602 across them. Supply decoupling of the four high-side pins sits left of U601. Put the text "channel 0: supply voltage, gain 1" and "channel 1: supply current, gain 32" beside the two filters.
 
-    The high-side ground HGND is NEUTRAL (the neutral pour); SBASA56 9.3 wants HGND taken from the shunt terminal on the AIN0N side by its own trace, the layout leaf does that at the pour. NEUTRAL is a global label, not a
-    power symbol (it is a mains net owned by the entry sheet).
+    The high-side ground HGND is its own net, AMC_HGND, carrying U601 pin 5, the bead F602, the four high-side decoupling capacitors C605 to C608 and the two returns R604 and R606; it joins NEUTRAL at one point, the net tie
+    NT601, placed at the shunt''s neutral-side terminal, which is the SBASA56 9.3 instruction to take HGND from the shunt terminal on the AIN0N side by its own trace. NEUTRAL is a global label, not a power symbol (it is a
+    mains net owned by the entry sheet).
 
     Channel assignment: channel 0 carries the mains voltage (gain 1 or 2), channel 1 the shunt (gain 32). SBASA56 Table 5-1 note 3 says channel 0 is the more precise; the record declares no accuracy for either, so the assignment
     is the brief''s.
@@ -10224,6 +10244,11 @@ net_index:
     - Supply voltage and current measurement
     class: Mains
   VMEAS_DIV:
+    scope: local
+    sheets:
+    - Supply voltage and current measurement
+    class: Mains
+  AMC_HGND:
     scope: local
     sheets:
     - Supply voltage and current measurement

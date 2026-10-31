@@ -1,5 +1,5 @@
 # Parts specification of the Sunbeam EM7000 main controller board: one position for every part
-# schematic-spec.yaml lists (455), in sheet order, the sheet named above each group.
+# schematic-spec.yaml lists (456), in sheet order, the sheet named above each group.
 #
 # Form: the keys board_check.py reads of a position (reference, value, package, rating, lcsc, class)
 # and no others, since it fails any other key. So the figures the schema has no key for sit in the
@@ -1215,6 +1215,12 @@ positions:
   - reference: TP606
     value: TP_AMC_DCDC_HGND
     package: TestPoint_Pad_D1.0mm_Tight
+    lcsc: none
+    class: none
+  # NT601: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is none (a net tie is copper only, no part is bought)
+  - reference: NT601
+    value: NetTie_2
+    package: NetTie-2_SMD_Pad0.5mm
     lcsc: none
     class: none
   # TP607: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
