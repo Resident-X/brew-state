@@ -1,0 +1,8 @@
+Controller reset input: SW401 pressed, C418 discharge to below VIL
+Vsup vdd 0 3.3
+RPU_INT vdd nrst 30k
+C418 nrst 0 126n IC=3.3
+RSW401 nrst 0 100m
+.tran 10n 2u uic
+.meas tran t_below_vil WHEN v(nrst)=0.99 FALL=1
+.end

@@ -94,7 +94,7 @@ class SeparationBasisRecord(unittest.TestCase):
         sensor = "pressure-sensor-water-path"
         self.assertEqual(types[sensor], "basic")
         mains = [name for name in types if name != sensor]
-        self.assertEqual(len(mains), 6)
+        self.assertEqual(len(mains), 8)
         self.assertEqual({types[name] for name in mains}, {"reinforced"}, types)
         entry = next(e for e in data["barrier_types"] if e["barrier"] == sensor)
         self.assertIn("referenced to earth through the earthed", entry["formed_by"])

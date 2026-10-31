@@ -1,0 +1,8 @@
+VDDA supply through FB301: direct-current drop at the largest ferrite resistance and the analogue supply current
+* RFB301 is FB301's 0.50 ohm DC resistance maximum (Tai-Tech FCM1608KF-601T03 sheet). Iload: three ADCs at 1.35 mA (DS12110 Rev 11 Table 174, IDDA_D ceiling quoted for 14 bit BOOST=11) plus the reference buffer 23 uA max (Table 117).
+Vsup v3v3 0 3.201
+RFB301 v3v3 vdda 0.5
+Iload vdda 0 4.073m
+.dc Vsup 3.200 3.202 0.001
+.meas dc v_vdda_low FIND v(vdda) AT=3.201
+.end

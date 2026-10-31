@@ -1,0 +1,311 @@
+sheet: "Thermistor inputs"
+function: "Three NTC thermistor dividers, each supplied from the analogue 3.3 V and filtered into one converter pin"
+parts:
+  - ref: J501
+    lib_id: "Connector_Generic:Conn_01x02"
+    value: "TEMP_C"
+    rating: "2.54mm 0.63mm pins"
+    footprint: "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical"
+    mpn: "2.54mm 1x2 header"
+    maker: "not read"
+    lcsc: C32713268
+    class: extended
+    hand: true
+    function: "coffee block thermistor header TEMP_C, harness lead RT, pin 1 square pad; a thermistor has no polarity"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R501
+    lib_id: "Device:R"
+    value: "10k"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF1002T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C25804
+    class: basic
+    hand: false
+    function: "divider top resistor of the coffee block thermistor, to the analogue 3.3 V"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: D501
+    lib_id: "Device:D_TVS"
+    value: "PESD5V0F1BL"
+    rating: "bidirectional 5.5V standoff, 0.55pF max"
+    footprint: "Diode_SMD:D_SOD-882"
+    mpn: "PESD5V0F1BL,315"
+    maker: "Nexperia"
+    lcsc: C45961
+    class: extended
+    hand: false
+    function: "transient clamp at the coffee block header"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R502
+    lib_id: "Device:R"
+    value: "1k"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF1001T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C21190
+    class: basic
+    hand: false
+    function: "series resistor into the converter pin and the clamp; sets the filter with C501"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: C501
+    lib_id: "Device:C"
+    value: "47n"
+    rating: "10% X7R 50V 0603"
+    footprint: "Capacitor_SMD:C_0603_1608Metric"
+    mpn: "CL10B473KB8NNNC"
+    maker: "Samsung Electro-Mechanics"
+    lcsc: C1622
+    class: basic
+    hand: false
+    function: "converter-input filter capacitor, charge reservoir for the sampling capacitor"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: D502
+    lib_id: "Diode:BAT54S"
+    value: "BAT54S"
+    rating: "dual series Schottky 30V 200mA"
+    footprint: "Package_TO_SOT_SMD:SOT-23"
+    mpn: "BAT54S,215"
+    maker: "Nexperia"
+    lcsc: C47546
+    class: extended
+    hand: false
+    function: "steering clamp of the converter pin to GND and +3V3A against a cross-short to a 5 V lead"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: TP501
+    lib_id: "Connector:TestPoint"
+    value: "TestPoint"
+    rating: "pad 1.5mm"
+    footprint: "main-board:TestPoint_Pad_D1.0mm_Tight"
+    mpn: ""
+    maker: ""
+    lcsc: ""
+    class: none
+    hand: false
+    function: "test point on NTC_COF"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: J502
+    lib_id: "Connector_Generic:Conn_01x02"
+    value: "TEMP_S"
+    rating: "2.54mm 0.63mm pins"
+    footprint: "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical"
+    mpn: "2.54mm 1x2 header"
+    maker: "not read"
+    lcsc: C32713268
+    class: extended
+    hand: true
+    function: "steam block thermistor header TEMP_S, harness lead RT, pin 1 square pad; a thermistor has no polarity"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R503
+    lib_id: "Device:R"
+    value: "10k"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF1002T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C25804
+    class: basic
+    hand: false
+    function: "divider top resistor of the steam block thermistor, to the analogue 3.3 V"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: D503
+    lib_id: "Device:D_TVS"
+    value: "PESD5V0F1BL"
+    rating: "bidirectional 5.5V standoff, 0.55pF max"
+    footprint: "Diode_SMD:D_SOD-882"
+    mpn: "PESD5V0F1BL,315"
+    maker: "Nexperia"
+    lcsc: C45961
+    class: extended
+    hand: false
+    function: "transient clamp at the steam block header"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R504
+    lib_id: "Device:R"
+    value: "1k"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF1001T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C21190
+    class: basic
+    hand: false
+    function: "series resistor into the converter pin and the clamp; sets the filter with C502"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: C502
+    lib_id: "Device:C"
+    value: "47n"
+    rating: "10% X7R 50V 0603"
+    footprint: "Capacitor_SMD:C_0603_1608Metric"
+    mpn: "CL10B473KB8NNNC"
+    maker: "Samsung Electro-Mechanics"
+    lcsc: C1622
+    class: basic
+    hand: false
+    function: "converter-input filter capacitor, charge reservoir for the sampling capacitor"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: D504
+    lib_id: "Diode:BAT54S"
+    value: "BAT54S"
+    rating: "dual series Schottky 30V 200mA"
+    footprint: "Package_TO_SOT_SMD:SOT-23"
+    mpn: "BAT54S,215"
+    maker: "Nexperia"
+    lcsc: C47546
+    class: extended
+    hand: false
+    function: "steering clamp of the converter pin to GND and +3V3A against a cross-short to a 5 V lead"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: TP502
+    lib_id: "Connector:TestPoint"
+    value: "TestPoint"
+    rating: "pad 1.5mm"
+    footprint: "main-board:TestPoint_Pad_D1.0mm_Tight"
+    mpn: ""
+    maker: ""
+    lcsc: ""
+    class: none
+    hand: false
+    function: "test point on NTC_STM"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: J503
+    lib_id: "Connector_Generic:Conn_01x02"
+    value: "TEMP_W"
+    rating: "2.54mm 0.63mm pins"
+    footprint: "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical"
+    mpn: "2.54mm 1x2 header"
+    maker: "not read"
+    lcsc: C32713268
+    class: extended
+    hand: true
+    function: "steam wand disc thermistor header TEMP_W, harness lead RT, pin 1 square pad; a thermistor has no polarity"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R505
+    lib_id: "Device:R"
+    value: "10k"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF1002T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C25804
+    class: basic
+    hand: false
+    function: "divider top resistor of the steam wand disc thermistor, to the analogue 3.3 V"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: D505
+    lib_id: "Device:D_TVS"
+    value: "PESD5V0F1BL"
+    rating: "bidirectional 5.5V standoff, 0.55pF max"
+    footprint: "Diode_SMD:D_SOD-882"
+    mpn: "PESD5V0F1BL,315"
+    maker: "Nexperia"
+    lcsc: C45961
+    class: extended
+    hand: false
+    function: "transient clamp at the steam wand disc header"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R506
+    lib_id: "Device:R"
+    value: "1k"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF1001T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C21190
+    class: basic
+    hand: false
+    function: "series resistor into the converter pin and the clamp; sets the filter with C503"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: C503
+    lib_id: "Device:C"
+    value: "47n"
+    rating: "10% X7R 50V 0603"
+    footprint: "Capacitor_SMD:C_0603_1608Metric"
+    mpn: "CL10B473KB8NNNC"
+    maker: "Samsung Electro-Mechanics"
+    lcsc: C1622
+    class: basic
+    hand: false
+    function: "converter-input filter capacitor, charge reservoir for the sampling capacitor"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: D506
+    lib_id: "Diode:BAT54S"
+    value: "BAT54S"
+    rating: "dual series Schottky 30V 200mA"
+    footprint: "Package_TO_SOT_SMD:SOT-23"
+    mpn: "BAT54S,215"
+    maker: "Nexperia"
+    lcsc: C47546
+    class: extended
+    hand: false
+    function: "steering clamp of the converter pin to GND and +3V3A against a cross-short to a 5 V lead"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: TP503
+    lib_id: "Connector:TestPoint"
+    value: "TestPoint"
+    rating: "pad 1.5mm"
+    footprint: "main-board:TestPoint_Pad_D1.0mm_Tight"
+    mpn: ""
+    maker: ""
+    lcsc: ""
+    class: none
+    hand: false
+    function: "test point on NTC_WAND"
+    mains: false
+    sim_exclude: false
+    dnp: false
+nets:
+  "NTC_COF_SENS": {scope: local, pins: ["J501.1", "R501.2", "D501.1", "R502.1"]}
+  "GND": {scope: power, pins: ["J501.2", "D501.2", "C501.2", "D502.1", "J502.2", "D503.2", "C502.2", "D504.1", "J503.2", "D505.2", "C503.2", "D506.1"]}
+  "+3V3A": {scope: power, pins: ["R501.1", "D502.2", "R503.1", "D504.2", "R505.1", "D506.2"]}
+  "NTC_COF": {scope: global, pins: ["R502.2", "C501.1", "D502.3", "TP501.1"]}
+  "NTC_STM_SENS": {scope: local, pins: ["J502.1", "R503.2", "D503.1", "R504.1"]}
+  "NTC_STM": {scope: global, pins: ["R504.2", "C502.1", "D504.3", "TP502.1"]}
+  "NTC_WAND_SENS": {scope: local, pins: ["J503.1", "R505.2", "D505.1", "R506.1"]}
+  "NTC_WAND": {scope: global, pins: ["R506.2", "C503.1", "D506.3", "TP503.1"]}
+no_connect: []
+custom_symbols: []
+custom_footprints: []
+power_flags: []
+notes: "Signal flows left to right: header (left) -> divider node -> series resistor -> filter node -> converter pin label. +3V3A at the top, GND at the bottom. Each header pin 1 is the square pad; the wand header is fitted rotated 180 degrees on the board (placement only, no electrical difference). The three channels are identical; draw them as three stacked identical cells. BAT54S symbol Diode:BAT54S pins: 1=A (to GND), 2=K (to +3V3A), 3=COM (to the converter pin node)."

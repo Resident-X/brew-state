@@ -1,0 +1,981 @@
+sheet: "Flow, pressure and spare analogue inputs"
+function: "Flow-meter pulse input, the two digital pressure-transducer buses, and the three analogue sensor inputs with 5 V scaling"
+parts:
+  - ref: J520
+    lib_id: "Connector_Generic:Conn_01x03"
+    value: "FLOW"
+    rating: "2.54mm 0.63mm pins"
+    footprint: "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical"
+    mpn: "2.54mm 1x3 header"
+    maker: "not read"
+    lcsc: C49257
+    class: extended
+    hand: true
+    function: "flow meter header CZ1: pin 1 5 V, pin 2 ground, pin 3 signal; pin 1 is the square pad (FLOW)"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R520
+    lib_id: "Device:R"
+    value: "10k"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF1002T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C25804
+    class: basic
+    hand: false
+    function: "pull-up of the meter output to +3V3 (open-drain output re-referenced to 3.3 V)"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: D520
+    lib_id: "Device:D_TVS"
+    value: "PESD5V0F1BL"
+    rating: "bidirectional 5.5V standoff, 0.55pF max"
+    footprint: "Diode_SMD:D_SOD-882"
+    mpn: "PESD5V0F1BL,315"
+    maker: "Nexperia"
+    lcsc: C45961
+    class: extended
+    hand: false
+    function: "transient clamp at the flow header"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R521
+    lib_id: "Device:R"
+    value: "1k"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF1001T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C21190
+    class: basic
+    hand: false
+    function: "series resistor into the capture pin; limits the current a 5 V push-pull output could push through the pin"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: C520
+    lib_id: "Device:C"
+    value: "47n"
+    rating: "10% X7R 50V 0603"
+    footprint: "Capacitor_SMD:C_0603_1608Metric"
+    mpn: "CL10B473KB8NNNC"
+    maker: "Samsung Electro-Mechanics"
+    lcsc: C1622
+    class: basic
+    hand: false
+    function: "flow-input filter capacitor"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R522
+    lib_id: "Device:R"
+    value: "0"
+    rating: "0603 zero-ohm link"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF0000T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C21189
+    class: basic
+    hand: false
+    function: "bypass link: fitted by default; removed when the Schmitt buffer U520 is fitted"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: U520
+    lib_id: "74xGxx:74LVC1G17"
+    value: "SN74LVC1G17"
+    rating: "6.5 V absolute maximum VCC, Schmitt buffer, 5.5V inputs"
+    footprint: "Package_TO_SOT_SMD:SOT-353_SC-70-5"
+    mpn: "SN74LVC1G17DCKR"
+    maker: "Texas Instruments"
+    lcsc: C10425
+    class: extended
+    hand: false
+    function: "Schmitt-trigger buffer footprint, not fitted by default (input and output on the two nets the link R522 joins)"
+    mains: false
+    sim_exclude: false
+    dnp: true
+  - ref: C521
+    lib_id: "Device:C"
+    value: "100n"
+    rating: "10% X7R 50V 0603"
+    footprint: "Capacitor_SMD:C_0603_1608Metric"
+    mpn: "CC0603KRX7R9BB104"
+    maker: "YAGEO"
+    lcsc: C14663
+    class: basic
+    hand: false
+    function: "supply decoupling of U520, fitted only with U520"
+    mains: false
+    sim_exclude: false
+    dnp: true
+  - ref: TP520
+    lib_id: "Connector:TestPoint"
+    value: "TestPoint"
+    rating: "pad 1.5mm"
+    footprint: "main-board:TestPoint_Pad_D1.0mm_Tight"
+    mpn: ""
+    maker: ""
+    lcsc: ""
+    class: none
+    hand: false
+    function: "test point on FLOW_IN"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: J521
+    lib_id: "Connector_Generic:Conn_01x04"
+    value: "STM_D"
+    rating: "2.54mm 0.63mm pins"
+    footprint: "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical"
+    mpn: "2.54mm 1x4 header"
+    maker: "not read"
+    lcsc: C32713270
+    class: extended
+    hand: true
+    function: "steam-path digital header: 1 3V3 feed, 2 GND, 3 SCL, 4 SDA"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: F520
+    lib_id: "Device:Polyfuse"
+    value: "MF-NSMF012-2"
+    rating: "PTC 0.12A hold 0.29A trip 30V"
+    footprint: "Fuse:Fuse_1206_3216Metric"
+    mpn: "MF-NSMF012-2"
+    maker: "Bourns"
+    lcsc: C163517
+    class: extended
+    hand: false
+    function: "short-safe 3.3 V feed to the steam-path transducer"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R540
+    lib_id: "Device:R"
+    value: "0"
+    rating: "1206 zero-ohm link 2A rated 10A overload"
+    footprint: "Resistor_SMD:R_1206_3216Metric"
+    mpn: "1206W4F0000T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C17888
+    class: basic
+    hand: false
+    function: "isolating link of the steam-path transducer's 3.3 V feed, on the load side of the PTC"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: D521
+    lib_id: "Device:D_TVS"
+    value: "PESD5V0F1BL"
+    rating: "bidirectional 5.5V standoff, 0.55pF max"
+    footprint: "Diode_SMD:D_SOD-882"
+    mpn: "PESD5V0F1BL,315"
+    maker: "Nexperia"
+    lcsc: C45961
+    class: extended
+    hand: false
+    function: "transient clamp on the SCL line at the header"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: D522
+    lib_id: "Device:D_TVS"
+    value: "PESD5V0F1BL"
+    rating: "bidirectional 5.5V standoff, 0.55pF max"
+    footprint: "Diode_SMD:D_SOD-882"
+    mpn: "PESD5V0F1BL,315"
+    maker: "Nexperia"
+    lcsc: C45961
+    class: extended
+    hand: false
+    function: "transient clamp on the SDA line at the header"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R523
+    lib_id: "Device:R"
+    value: "100"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF1000T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C22775
+    class: basic
+    hand: false
+    function: "series protection resistor in SCL"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R524
+    lib_id: "Device:R"
+    value: "100"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF1000T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C22775
+    class: basic
+    hand: false
+    function: "series protection resistor in SDA"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R525
+    lib_id: "Device:R"
+    value: "2.2k"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF2201T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C4190
+    class: basic
+    hand: false
+    function: "SCL pull-up to +3V3, Standard-mode 100 kbit/s"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R526
+    lib_id: "Device:R"
+    value: "2.2k"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF2201T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C4190
+    class: basic
+    hand: false
+    function: "SDA pull-up to +3V3, Standard-mode 100 kbit/s"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: D523
+    lib_id: "Diode:BAT54S"
+    value: "BAT54S"
+    rating: "dual series Schottky 30V 200mA"
+    footprint: "Package_TO_SOT_SMD:SOT-23"
+    mpn: "BAT54S,215"
+    maker: "Nexperia"
+    lcsc: C47546
+    class: extended
+    hand: false
+    function: "steering clamp of the SCL pin to GND and +3V3"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: D524
+    lib_id: "Diode:BAT54S"
+    value: "BAT54S"
+    rating: "dual series Schottky 30V 200mA"
+    footprint: "Package_TO_SOT_SMD:SOT-23"
+    mpn: "BAT54S,215"
+    maker: "Nexperia"
+    lcsc: C47546
+    class: extended
+    hand: false
+    function: "steering clamp of the SDA pin to GND and +3V3"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: TP521
+    lib_id: "Connector:TestPoint"
+    value: "TestPoint"
+    rating: "pad 1.5mm"
+    footprint: "main-board:TestPoint_Pad_D1.0mm_Tight"
+    mpn: ""
+    maker: ""
+    lcsc: ""
+    class: none
+    hand: false
+    function: "test point on STM_SCL"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: TP522
+    lib_id: "Connector:TestPoint"
+    value: "TestPoint"
+    rating: "pad 1.5mm"
+    footprint: "main-board:TestPoint_Pad_D1.0mm_Tight"
+    mpn: ""
+    maker: ""
+    lcsc: ""
+    class: none
+    hand: false
+    function: "test point on STM_SDA"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: TP523
+    lib_id: "Connector:TestPoint"
+    value: "TestPoint"
+    rating: "pad 1.5mm"
+    footprint: "main-board:TestPoint_Pad_D1.0mm_Tight"
+    mpn: ""
+    maker: ""
+    lcsc: ""
+    class: none
+    hand: false
+    function: "test point on STMD_3V3"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: J522
+    lib_id: "Connector_Generic:Conn_01x04"
+    value: "BREW_D"
+    rating: "2.54mm 0.63mm pins"
+    footprint: "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical"
+    mpn: "2.54mm 1x4 header"
+    maker: "not read"
+    lcsc: C32713270
+    class: extended
+    hand: true
+    function: "brew-path digital header: 1 3V3 feed, 2 GND, 3 SCL, 4 SDA"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: F521
+    lib_id: "Device:Polyfuse"
+    value: "MF-NSMF012-2"
+    rating: "PTC 0.12A hold 0.29A trip 30V"
+    footprint: "Fuse:Fuse_1206_3216Metric"
+    mpn: "MF-NSMF012-2"
+    maker: "Bourns"
+    lcsc: C163517
+    class: extended
+    hand: false
+    function: "short-safe 3.3 V feed to the brew-path transducer"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R541
+    lib_id: "Device:R"
+    value: "0"
+    rating: "1206 zero-ohm link 2A rated 10A overload"
+    footprint: "Resistor_SMD:R_1206_3216Metric"
+    mpn: "1206W4F0000T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C17888
+    class: basic
+    hand: false
+    function: "isolating link of the brew-path transducer's 3.3 V feed, on the load side of the PTC"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: D525
+    lib_id: "Device:D_TVS"
+    value: "PESD5V0F1BL"
+    rating: "bidirectional 5.5V standoff, 0.55pF max"
+    footprint: "Diode_SMD:D_SOD-882"
+    mpn: "PESD5V0F1BL,315"
+    maker: "Nexperia"
+    lcsc: C45961
+    class: extended
+    hand: false
+    function: "transient clamp on the SCL line at the header"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: D526
+    lib_id: "Device:D_TVS"
+    value: "PESD5V0F1BL"
+    rating: "bidirectional 5.5V standoff, 0.55pF max"
+    footprint: "Diode_SMD:D_SOD-882"
+    mpn: "PESD5V0F1BL,315"
+    maker: "Nexperia"
+    lcsc: C45961
+    class: extended
+    hand: false
+    function: "transient clamp on the SDA line at the header"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R527
+    lib_id: "Device:R"
+    value: "100"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF1000T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C22775
+    class: basic
+    hand: false
+    function: "series protection resistor in SCL"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R528
+    lib_id: "Device:R"
+    value: "100"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF1000T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C22775
+    class: basic
+    hand: false
+    function: "series protection resistor in SDA"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R529
+    lib_id: "Device:R"
+    value: "2.2k"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF2201T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C4190
+    class: basic
+    hand: false
+    function: "SCL pull-up to +3V3, Standard-mode 100 kbit/s"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R530
+    lib_id: "Device:R"
+    value: "2.2k"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF2201T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C4190
+    class: basic
+    hand: false
+    function: "SDA pull-up to +3V3, Standard-mode 100 kbit/s"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: D527
+    lib_id: "Diode:BAT54S"
+    value: "BAT54S"
+    rating: "dual series Schottky 30V 200mA"
+    footprint: "Package_TO_SOT_SMD:SOT-23"
+    mpn: "BAT54S,215"
+    maker: "Nexperia"
+    lcsc: C47546
+    class: extended
+    hand: false
+    function: "steering clamp of the SCL pin to GND and +3V3"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: D528
+    lib_id: "Diode:BAT54S"
+    value: "BAT54S"
+    rating: "dual series Schottky 30V 200mA"
+    footprint: "Package_TO_SOT_SMD:SOT-23"
+    mpn: "BAT54S,215"
+    maker: "Nexperia"
+    lcsc: C47546
+    class: extended
+    hand: false
+    function: "steering clamp of the SDA pin to GND and +3V3"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: TP524
+    lib_id: "Connector:TestPoint"
+    value: "TestPoint"
+    rating: "pad 1.5mm"
+    footprint: "main-board:TestPoint_Pad_D1.0mm_Tight"
+    mpn: ""
+    maker: ""
+    lcsc: ""
+    class: none
+    hand: false
+    function: "test point on BREW_SCL"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: TP525
+    lib_id: "Connector:TestPoint"
+    value: "TestPoint"
+    rating: "pad 1.5mm"
+    footprint: "main-board:TestPoint_Pad_D1.0mm_Tight"
+    mpn: ""
+    maker: ""
+    lcsc: ""
+    class: none
+    hand: false
+    function: "test point on BREW_SDA"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: TP526
+    lib_id: "Connector:TestPoint"
+    value: "TestPoint"
+    rating: "pad 1.5mm"
+    footprint: "main-board:TestPoint_Pad_D1.0mm_Tight"
+    mpn: ""
+    maker: ""
+    lcsc: ""
+    class: none
+    hand: false
+    function: "test point on BRWD_3V3"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: J523
+    lib_id: "Connector_Generic:Conn_01x04"
+    value: "SPARE_A"
+    rating: "2.54mm 0.63mm pins"
+    footprint: "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical"
+    mpn: "2.54mm 1x4 header"
+    maker: "not read"
+    lcsc: C32713270
+    class: extended
+    hand: true
+    function: "spare analogue (steam-path fallback) analogue header: 1 5V, 2 3V3 feed, 3 GND, 4 signal"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: F522
+    lib_id: "Device:Polyfuse"
+    value: "MF-NSMF012-2"
+    rating: "PTC 0.12A hold 0.29A trip 30V"
+    footprint: "Fuse:Fuse_1206_3216Metric"
+    mpn: "MF-NSMF012-2"
+    maker: "Bourns"
+    lcsc: C163517
+    class: extended
+    hand: false
+    function: "short-safe 3.3 V feed of the spare analogue (steam-path fallback) header"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R542
+    lib_id: "Device:R"
+    value: "0"
+    rating: "1206 zero-ohm link 2A rated 10A overload"
+    footprint: "Resistor_SMD:R_1206_3216Metric"
+    mpn: "1206W4F0000T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C17888
+    class: basic
+    hand: false
+    function: "isolating link of the 3.3 V feed of the spare analogue (steam-path fallback) header, on the load side of the PTC"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: D529
+    lib_id: "Device:D_TVS"
+    value: "PESD5V0F1BL"
+    rating: "bidirectional 5.5V standoff, 0.55pF max"
+    footprint: "Diode_SMD:D_SOD-882"
+    mpn: "PESD5V0F1BL,315"
+    maker: "Nexperia"
+    lcsc: C45961
+    class: extended
+    hand: false
+    function: "transient clamp on the signal at the header"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R531
+    lib_id: "Device:R"
+    value: "10k"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF1002T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C25804
+    class: basic
+    hand: false
+    function: "divider top resistor: scales a 0.5-4.5 V / 5 V sensor to at most 3.3 V"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R532
+    lib_id: "Device:R"
+    value: "20k"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF2002T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C4184
+    class: basic
+    hand: false
+    function: "divider bottom resistor (ratio 20k/(10k+20k) = 0.667 nominal)"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R533
+    lib_id: "Device:R"
+    value: "1k"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF1001T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C21190
+    class: basic
+    hand: false
+    function: "series resistor into the converter pin; sets the filter with C522"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: C522
+    lib_id: "Device:C"
+    value: "47n"
+    rating: "10% X7R 50V 0603"
+    footprint: "Capacitor_SMD:C_0603_1608Metric"
+    mpn: "CL10B473KB8NNNC"
+    maker: "Samsung Electro-Mechanics"
+    lcsc: C1622
+    class: basic
+    hand: false
+    function: "converter-input filter capacitor, charge reservoir for the sampling capacitor"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: TP527
+    lib_id: "Connector:TestPoint"
+    value: "TestPoint"
+    rating: "pad 1.5mm"
+    footprint: "main-board:TestPoint_Pad_D1.0mm_Tight"
+    mpn: ""
+    maker: ""
+    lcsc: ""
+    class: none
+    hand: false
+    function: "test point on STMP_AN"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: TP528
+    lib_id: "Connector:TestPoint"
+    value: "TestPoint"
+    rating: "pad 1.5mm"
+    footprint: "main-board:TestPoint_Pad_D1.0mm_Tight"
+    mpn: ""
+    maker: ""
+    lcsc: ""
+    class: none
+    hand: false
+    function: "test point on SPAREA_3V3"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: J524
+    lib_id: "Connector_Generic:Conn_01x04"
+    value: "BREW_A"
+    rating: "2.54mm 0.63mm pins"
+    footprint: "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical"
+    mpn: "2.54mm 1x4 header"
+    maker: "not read"
+    lcsc: C32713270
+    class: extended
+    hand: true
+    function: "brew-path analogue fallback analogue header: 1 5V, 2 3V3 feed, 3 GND, 4 signal"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: F523
+    lib_id: "Device:Polyfuse"
+    value: "MF-NSMF012-2"
+    rating: "PTC 0.12A hold 0.29A trip 30V"
+    footprint: "Fuse:Fuse_1206_3216Metric"
+    mpn: "MF-NSMF012-2"
+    maker: "Bourns"
+    lcsc: C163517
+    class: extended
+    hand: false
+    function: "short-safe 3.3 V feed of the brew-path analogue fallback header"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R543
+    lib_id: "Device:R"
+    value: "0"
+    rating: "1206 zero-ohm link 2A rated 10A overload"
+    footprint: "Resistor_SMD:R_1206_3216Metric"
+    mpn: "1206W4F0000T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C17888
+    class: basic
+    hand: false
+    function: "isolating link of the 3.3 V feed of the brew-path analogue fallback header, on the load side of the PTC"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: D530
+    lib_id: "Device:D_TVS"
+    value: "PESD5V0F1BL"
+    rating: "bidirectional 5.5V standoff, 0.55pF max"
+    footprint: "Diode_SMD:D_SOD-882"
+    mpn: "PESD5V0F1BL,315"
+    maker: "Nexperia"
+    lcsc: C45961
+    class: extended
+    hand: false
+    function: "transient clamp on the signal at the header"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R534
+    lib_id: "Device:R"
+    value: "10k"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF1002T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C25804
+    class: basic
+    hand: false
+    function: "divider top resistor: scales a 0.5-4.5 V / 5 V sensor to at most 3.3 V"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R535
+    lib_id: "Device:R"
+    value: "20k"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF2002T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C4184
+    class: basic
+    hand: false
+    function: "divider bottom resistor (ratio 20k/(10k+20k) = 0.667 nominal)"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R536
+    lib_id: "Device:R"
+    value: "1k"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF1001T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C21190
+    class: basic
+    hand: false
+    function: "series resistor into the converter pin; sets the filter with C523"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: C523
+    lib_id: "Device:C"
+    value: "47n"
+    rating: "10% X7R 50V 0603"
+    footprint: "Capacitor_SMD:C_0603_1608Metric"
+    mpn: "CL10B473KB8NNNC"
+    maker: "Samsung Electro-Mechanics"
+    lcsc: C1622
+    class: basic
+    hand: false
+    function: "converter-input filter capacitor, charge reservoir for the sampling capacitor"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: TP529
+    lib_id: "Connector:TestPoint"
+    value: "TestPoint"
+    rating: "pad 1.5mm"
+    footprint: "main-board:TestPoint_Pad_D1.0mm_Tight"
+    mpn: ""
+    maker: ""
+    lcsc: ""
+    class: none
+    hand: false
+    function: "test point on BREW_AN"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: TP530
+    lib_id: "Connector:TestPoint"
+    value: "TestPoint"
+    rating: "pad 1.5mm"
+    footprint: "main-board:TestPoint_Pad_D1.0mm_Tight"
+    mpn: ""
+    maker: ""
+    lcsc: ""
+    class: none
+    hand: false
+    function: "test point on BREWA_3V3"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: J525
+    lib_id: "Connector_Generic:Conn_01x04"
+    value: "SPARE_AN2_H"
+    rating: "2.54mm 0.63mm pins"
+    footprint: "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical"
+    mpn: "2.54mm 1x4 header"
+    maker: "not read"
+    lcsc: C32713270
+    class: extended
+    hand: true
+    function: "second spare analogue analogue header: 1 5V, 2 3V3 feed, 3 GND, 4 signal"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: F524
+    lib_id: "Device:Polyfuse"
+    value: "MF-NSMF012-2"
+    rating: "PTC 0.12A hold 0.29A trip 30V"
+    footprint: "Fuse:Fuse_1206_3216Metric"
+    mpn: "MF-NSMF012-2"
+    maker: "Bourns"
+    lcsc: C163517
+    class: extended
+    hand: false
+    function: "short-safe 3.3 V feed of the second spare analogue header"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R544
+    lib_id: "Device:R"
+    value: "0"
+    rating: "1206 zero-ohm link 2A rated 10A overload"
+    footprint: "Resistor_SMD:R_1206_3216Metric"
+    mpn: "1206W4F0000T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C17888
+    class: basic
+    hand: false
+    function: "isolating link of the 3.3 V feed of the second spare analogue header, on the load side of the PTC"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: D531
+    lib_id: "Device:D_TVS"
+    value: "PESD5V0F1BL"
+    rating: "bidirectional 5.5V standoff, 0.55pF max"
+    footprint: "Diode_SMD:D_SOD-882"
+    mpn: "PESD5V0F1BL,315"
+    maker: "Nexperia"
+    lcsc: C45961
+    class: extended
+    hand: false
+    function: "transient clamp on the signal at the header"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R537
+    lib_id: "Device:R"
+    value: "10k"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF1002T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C25804
+    class: basic
+    hand: false
+    function: "divider top resistor: scales a 0.5-4.5 V / 5 V sensor to at most 3.3 V"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R538
+    lib_id: "Device:R"
+    value: "20k"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF2002T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C4184
+    class: basic
+    hand: false
+    function: "divider bottom resistor (ratio 20k/(10k+20k) = 0.667 nominal)"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: R539
+    lib_id: "Device:R"
+    value: "1k"
+    rating: "1% 100ppm/K 0603 100mW"
+    footprint: "Resistor_SMD:R_0603_1608Metric"
+    mpn: "0603WAF1001T5E"
+    maker: "UNI-ROYAL"
+    lcsc: C21190
+    class: basic
+    hand: false
+    function: "series resistor into the converter pin; sets the filter with C524"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: C524
+    lib_id: "Device:C"
+    value: "47n"
+    rating: "10% X7R 50V 0603"
+    footprint: "Capacitor_SMD:C_0603_1608Metric"
+    mpn: "CL10B473KB8NNNC"
+    maker: "Samsung Electro-Mechanics"
+    lcsc: C1622
+    class: basic
+    hand: false
+    function: "converter-input filter capacitor, charge reservoir for the sampling capacitor"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: TP531
+    lib_id: "Connector:TestPoint"
+    value: "TestPoint"
+    rating: "pad 1.5mm"
+    footprint: "main-board:TestPoint_Pad_D1.0mm_Tight"
+    mpn: ""
+    maker: ""
+    lcsc: ""
+    class: none
+    hand: false
+    function: "test point on SPARE_AN2"
+    mains: false
+    sim_exclude: false
+    dnp: false
+  - ref: TP532
+    lib_id: "Connector:TestPoint"
+    value: "TestPoint"
+    rating: "pad 1.5mm"
+    footprint: "main-board:TestPoint_Pad_D1.0mm_Tight"
+    mpn: ""
+    maker: ""
+    lcsc: ""
+    class: none
+    hand: false
+    function: "test point on SPAN2_3V3"
+    mains: false
+    sim_exclude: false
+    dnp: false
+nets:
+  "+5V": {scope: power, pins: ["J520.1", "J523.1", "J524.1", "J525.1"]}
+  "GND": {scope: power, pins: ["J520.2", "D520.2", "C520.2", "U520.3", "C521.2", "J521.2", "D521.2", "D522.2", "D523.1", "D524.1", "J522.2", "D525.2", "D526.2", "D527.1", "D528.1", "J523.3", "D529.2", "R532.2", "C522.2", "J524.3", "D530.2", "R535.2", "C523.2", "J525.3", "D531.2", "R538.2", "C524.2"]}
+  "FLOW_RAW": {scope: local, pins: ["J520.3", "R520.1", "D520.1", "R521.1"]}
+  "+3V3": {scope: power, pins: ["R520.2", "U520.5", "C521.1", "F520.1", "R525.2", "R526.2", "D523.2", "D524.2", "F521.1", "R529.2", "R530.2", "D527.2", "D528.2", "F522.1", "F523.1", "F524.1"]}
+  "FLOW_F": {scope: local, pins: ["R521.2", "C520.1", "R522.1", "U520.2"]}
+  "FLOW_IN": {scope: global, pins: ["R522.2", "U520.4", "TP520.1"]}
+  "STMD_3V3_SRC": {scope: local, pins: ["F520.2", "R540.1", "TP523.1"]}
+  "STMD_3V3": {scope: local, pins: ["R540.2", "J521.1"]}
+  "STM_SCL_X": {scope: local, pins: ["J521.3", "D521.1", "R523.1"]}
+  "STM_SDA_X": {scope: local, pins: ["J521.4", "D522.1", "R524.1"]}
+  "STM_SCL": {scope: global, pins: ["R523.2", "R525.1", "D523.3", "TP521.1"]}
+  "STM_SDA": {scope: global, pins: ["R524.2", "R526.1", "D524.3", "TP522.1"]}
+  "BRWD_3V3_SRC": {scope: local, pins: ["F521.2", "R541.1", "TP526.1"]}
+  "BRWD_3V3": {scope: local, pins: ["R541.2", "J522.1"]}
+  "BREW_SCL_X": {scope: local, pins: ["J522.3", "D525.1", "R527.1"]}
+  "BREW_SDA_X": {scope: local, pins: ["J522.4", "D526.1", "R528.1"]}
+  "BREW_SCL": {scope: global, pins: ["R527.2", "R529.1", "D527.3", "TP524.1"]}
+  "BREW_SDA": {scope: global, pins: ["R528.2", "R530.1", "D528.3", "TP525.1"]}
+  "SPAREA_3V3_SRC": {scope: local, pins: ["F522.2", "R542.1", "TP528.1"]}
+  "SPAREA_3V3": {scope: local, pins: ["R542.2", "J523.2"]}
+  "SPAREA_RAW": {scope: local, pins: ["J523.4", "D529.1", "R531.1"]}
+  "SPAREA_DIV": {scope: local, pins: ["R531.2", "R532.1", "R533.1"]}
+  "STMP_AN": {scope: global, pins: ["R533.2", "C522.1", "TP527.1"]}
+  "BREWA_3V3_SRC": {scope: local, pins: ["F523.2", "R543.1", "TP530.1"]}
+  "BREWA_3V3": {scope: local, pins: ["R543.2", "J524.2"]}
+  "BREWA_RAW": {scope: local, pins: ["J524.4", "D530.1", "R534.1"]}
+  "BREWA_DIV": {scope: local, pins: ["R534.2", "R535.1", "R536.1"]}
+  "BREW_AN": {scope: global, pins: ["R536.2", "C523.1", "TP529.1"]}
+  "SPAN2_3V3_SRC": {scope: local, pins: ["F524.2", "R544.1", "TP532.1"]}
+  "SPAN2_3V3": {scope: local, pins: ["R544.2", "J525.2"]}
+  "SPAN2_RAW": {scope: local, pins: ["J525.4", "D531.1", "R537.1"]}
+  "SPAN2_DIV": {scope: local, pins: ["R537.2", "R538.1", "R539.1"]}
+  "SPARE_AN2": {scope: global, pins: ["R539.2", "C524.1", "TP531.1"]}
+no_connect:
+  - {pin: "U520.1", reason: "pin 1 is not connected inside SN74LVC1G17 (SCES351 pin table); the package is not fitted by default"}
+custom_symbols: []
+custom_footprints: []
+power_flags: []
+notes: "Four stacked cells, signal left to right: FLOW (header, pull-up, TVS, series R, C, then the link R522 in parallel with the unfitted buffer U520 footprint, then label FLOW_IN); STM_D and BREW_D (3V3 from +3V3 through the PTC to header pin 1; SCL and SDA each: header, TVS at the header, series R, pull-up to +3V3 and steering clamp at the converter-side node, labels STM_SCL/STM_SDA or BREW_SCL/BREW_SDA); SPARE_A, BREW_A, SPARE_AN2_H (3V3 through PTC, 5V direct from +5V, signal pin 4 -> TVS -> 10k/20k divider -> 1k -> 47n -> label). U520 and C521 are drawn and marked do-not-populate; R522 is fitted. Header pin tables: J520 1=+5V 2=GND 3=FLOW_RAW; J521 1=STMD_3V3 2=GND 3=STM_SCL_X 4=STM_SDA_X; J522 1=BRWD_3V3 2=GND 3=BREW_SCL_X 4=BREW_SDA_X; analogue headers 1=+5V 2=3V3 feed 3=GND 4=signal. Diode:BAT54S pins: 1=A (GND), 2=K (+3V3), 3=COM (signal node). Device:Polyfuse pin 1 = +3V3 side, pin 2 = toward the header. Each 3.3 V feed runs +3V3 -> PTC -> test point and link R540..R544 (1206, value 0, the isolating link) -> header pin; the test point stands on the PTC side of the link."

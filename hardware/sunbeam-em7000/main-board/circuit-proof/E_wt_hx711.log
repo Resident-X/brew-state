@@ -1,0 +1,25 @@
++5V rail 4.875 to 5.125 V (IRM-20-5, +/-2.5 %)
+  gain 128, AVDD 4.875 V: full scale +/-19.04 mV; as a ratio of the excitation: +/-3.906 mV/V
+  gain 128, AVDD 5.000 V: full scale +/-19.53 mV; as a ratio of the excitation: +/-3.906 mV/V
+  gain 128, AVDD 5.125 V: full scale +/-20.02 mV; as a ratio of the excitation: +/-3.906 mV/V
+  gain  64, AVDD 4.875 V: full scale +/-38.09 mV; as a ratio of the excitation: +/-7.812 mV/V
+  gain  64, AVDD 5.000 V: full scale +/-39.06 mV; as a ratio of the excitation: +/-7.812 mV/V
+  gain  64, AVDD 5.125 V: full scale +/-40.04 mV; as a ratio of the excitation: +/-7.812 mV/V
+  the ratio of full scale to excitation is 0.5/gain whatever AVDD is, because the load-cell excitation and the reference are the same node:
+  gain 128: +/-3.906 mV/V; gain 64: +/-7.812 mV/V (a cell's rated output, in mV/V at capacity, must lie inside this)
+  common-mode window: AGND+1.2 V to AVDD-1.3 V = 1.200 to 3.575 V at the low rail end; bridge midpoint = AVDD/2 = 2.438 V: inside
+
+input filter: R670+R671 = 200 ohm, C670 = 100 nF (X7R, 10 %): tau 20 us, corner 8.0 kHz
+  output period on the internal oscillator: 100 ms at 10 SPS, 12.5 ms at 80 SPS; one filter time constant is 0.020 % of 100 ms
+  the filter settles to 1 part in 2^24 in 0.33 ms (= 2.7 % of the 80 SPS period)
+  the sheet states no input bias current or input impedance, so the offset the 100 ohm legs produce cannot be calculated (not sourced)
+
+digital interface:
+  DVDD from +3V3: DOUT swings 0 to DVDD, i.e. 0-3.3 V, into a controller pin whose VIH min is 0.7 VDD (DS12110 Rev 10 Table 60): HX711 output high level not stated (no VOH)
+  PD_SCK from a controller pin: VOH min VDD - 0.4 V at -8 mA (DS12110 Rev 10 Table 61) against the HX711 input high level: NOT STATED in V2.0
+  the sheet states: 'Digital power supply (DVDD) should be the same power supply as the MCU power supply' (Power Supply Options) and gives no VIH, VIL, VOH, VOL
+  PD_SCK high time T3 min 0.2 us, typ 1 us, max 50 us; low time T4 min 0.2 us; clock pulses 25 to 27 per conversion; power-down when PD_SCK high > 60 us
+
+rail loads (maxima):
+  +5V : analog supply 1.5 mA x 2 = 3.0 mA; excitation at 350 ohm (ASSUMED): 14.6 mA each, 29.3 mA for two
+  +3V3: digital supply 0.1 mA x 2 = 0.2 mA; PD_SCK pull-downs: 0 (to GND) ; DOUT is an output

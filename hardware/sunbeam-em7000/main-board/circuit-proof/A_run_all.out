@@ -1,0 +1,104 @@
+== A_buffer_peak exit=0
+ipeak               =  -1.09798e-01 at=  1.00062e-03
+== A_hold_L0_fix exit=0
+vpeaka              =  3.83468e+00 at=  1.18095e-01
+gmina               =  2.36742e+00 at=  1.17997e-01
+tabove_after_edge   =  1.87235e-02 targ=  1.36723e-01 trig=  1.18000e-01
+== A_hold_L0_rec exit=0
+vpeaka              =  3.85545e+00 at=  1.18095e-01
+gmina               =  3.00391e+00 at=  1.17997e-01
+tabove_after_edge   =  2.45688e-02 targ=  1.42569e-01 trig=  1.18000e-01
+== A_hold_L1_fix exit=0
+vpeaka              =  3.82920e+00 at=  1.18088e-01
+gmina               =  2.25851e+00 at=  1.17997e-01
+tabove_after_edge   =  1.68967e-02 targ=  1.34897e-01 trig=  1.18000e-01
+== A_hold_L2_fix exit=0
+vpeaka              =  3.72334e+00 at=  1.18062e-01
+gmina               =  9.39302e-02 at=  1.17997e-01
+tabove_after_edge   =  5.69131e-03 targ=  1.23691e-01 trig=  1.18000e-01
+== A_hold_L3_fix exit=0
+vpeaka              =  3.81510e+00 at=  1.18086e-01
+gmina               =  1.97544e+00 at=  1.17997e-01
+tabove_after_edge   =  1.34930e-02 targ=  1.31493e-01 trig=  1.18000e-01
+== A_pickup_25C exit=0
+vlo                 =  6.23127e-01
+vcoil = 4.126873e+00
+icoil = 6.051133e-02
+vpickup_limit = 3.500000e+00
+== A_pickup_70C exit=0
+vlo                 =  4.38240e-01
+vcoil = 4.311760e+00
+icoil = 5.268524e-02
+vpickup_limit = 4.200000e+00
+== A_removal_coil exit=0
+i0                  =  9.24712e-02
+tcoil_per_h         =  5.73335e-03 targ=  6.73435e-03 trig=  1.00100e-03
+== A_removal_coil_real exit=0
+i0                  =  9.24712e-02
+tcoil_per_h         =  5.63856e-03 targ=  6.63956e-03 trig=  1.00100e-03
+== A_removal_coil_zshort exit=0
+i0                  =  9.24712e-02
+tcoil_per_h         =  2.65800e-02 targ=  2.75810e-02 trig=  1.00100e-03
+== A_removal_gate_high_fix exit=0
+vstarta             =  4.27574e+00
+ta06                =  1.56091e-01
+tb06                =  1.56091e-01
+tdeca               =  5.61906e-02 targ=  1.56091e-01 trig=  9.99001e-02
+tdecb               =  5.61906e-02 targ=  1.56091e-01 trig=  9.99001e-02
+== A_removal_gate_high_rec exit=0
+vstarta             =  4.30656e+00
+ta06                =  1.34429e+00
+tb06                =  1.34429e+00
+tdeca               =  1.24439e+00 targ=  1.34429e+00 trig=  9.99001e-02
+tdecb               =  1.24439e+00 targ=  1.34429e+00 trig=  9.99001e-02
+== A_removal_gate_low_fix exit=0
+vstarta             =  4.27574e+00
+ta06                =  1.56091e-01
+tb06                =  1.56091e-01
+tdeca               =  5.61906e-02 targ=  1.56091e-01 trig=  9.99001e-02
+tdecb               =  5.61906e-02 targ=  1.56091e-01 trig=  9.99001e-02
+== A_removal_gate_low_rec exit=0
+vstarta             =  4.30656e+00
+ta06                =  1.61149e-01
+tb06                =  1.61149e-01
+tdeca               =  6.12485e-02 targ=  1.61149e-01 trig=  9.99001e-02
+tdecb               =  6.12485e-02 targ=  1.61149e-01 trig=  9.99001e-02
+== A_removal_gate_rail exit=0
+tr06                =  6.18842e-02
+tr05                =  6.70859e-02
+== A_rest_float_fix exit=0
+vstarta             =  4.19931e+00
+ta06                =  1.36513e-01
+tb06                =  1.36513e-01
+tdeca               =  5.65131e-02 targ=  1.36513e-01 trig=  8.00000e-02
+tdecb               =  5.65131e-02 targ=  1.36513e-01 trig=  8.00000e-02
+== A_rest_float_rec exit=0
+vstarta             =  4.29409e+00
+ta06                =  1.37150e-01
+tb06                =  1.37150e-01
+tdeca               =  5.71499e-02 targ=  1.37150e-01 trig=  8.00000e-02
+tdecb               =  5.71499e-02 targ=  1.37150e-01 trig=  8.00000e-02
+== A_rest_high_fix exit=0
+vstarta             =  4.19938e+00
+ta06                =  1.36514e-01
+tb06                =  1.36514e-01
+tdeca               =  5.65136e-02 targ=  1.36514e-01 trig=  8.00000e-02
+tdecb               =  5.65136e-02 targ=  1.36514e-01 trig=  8.00000e-02
+== A_rest_high_rec exit=0
+vstarta             =  4.36782e+00
+ta06                =  1.33106e+00
+tb06                =  1.33106e+00
+tdeca               =  1.25106e+00 targ=  1.33106e+00 trig=  8.00000e-02
+tdecb               =  1.25106e+00 targ=  1.33106e+00 trig=  8.00000e-02
+== A_rest_low_fix exit=0
+vstarta             =  4.19938e+00
+ta06                =  1.36514e-01
+tb06                =  1.36514e-01
+tdeca               =  5.65136e-02 targ=  1.36514e-01 trig=  8.00000e-02
+tdecb               =  5.65136e-02 targ=  1.36514e-01 trig=  8.00000e-02
+== A_rest_low_rec exit=0
+vstarta             =  4.36782e+00
+ta06                =  1.41455e-01
+tb06                =  1.41455e-01
+tdeca               =  6.14548e-02 targ=  1.41455e-01 trig=  8.00000e-02
+tdecb               =  6.14548e-02 targ=  1.41455e-01 trig=  8.00000e-02

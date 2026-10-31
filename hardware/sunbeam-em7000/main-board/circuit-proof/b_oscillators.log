@@ -1,0 +1,16 @@
+HSE
+  C1=C2 needed for CL=20 pF with 10 pF stray: 20.00 pF
+  CL nominal 20.00 pF, with caps -5% 19.50 pF, +5% 20.50 pF (stray held at 10 pF)
+  gm_crit (crystal) = 4*ESRmax*(2*pi*f)^2*(C0max+CL)^2 = 0.589 mA/V
+  limit Gmcritmax = 1.5 mA/V, ratio limit/gm_crit = 2.54, pass=True
+  largest (C0+CL) the MCU can start at ESRmax: 43.1 pF -> CL may rise to 36.1 pF
+  CL at the high corner (20.50 pF) gives gm_crit 0.611 mA/V
+LSE
+  CL1=CL2 for CL=12.5 pF with 10 pF stray: 5.00 pF (4.7 pF fitted)
+  CL nominal with 4.7 pF: 12.35 pF; at -0.25 pF 12.22; at +0.25 pF 12.47
+  gm_crit at C0 typ 1.0 pF, CL 12.5 pF, ESR 70 kohm = 2.163 uA/V
+  LSEDRV 00 low          Gmcritmax 0.50 uA/V: ok=False ; largest (C0+CL) 6.49 pF -> C0 may be up to -6.01 pF at CL 12.5
+  LSEDRV 01 medium low   Gmcritmax 0.75 uA/V: ok=False ; largest (C0+CL) 7.95 pF -> C0 may be up to -4.55 pF at CL 12.5
+  LSEDRV 10 medium high  Gmcritmax 1.70 uA/V: ok=False ; largest (C0+CL) 11.97 pF -> C0 may be up to -0.53 pF at CL 12.5
+  LSEDRV 11 high         Gmcritmax 2.70 uA/V: ok=True ; largest (C0+CL) 15.08 pF -> C0 may be up to 2.58 pF at CL 12.5
+  drive level: crystal maximum 0.5 uW (sheet); oscillator amplitude not stated in DS12110 -> not computable

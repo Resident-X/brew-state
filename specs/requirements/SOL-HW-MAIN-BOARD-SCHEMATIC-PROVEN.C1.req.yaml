@@ -6,7 +6,7 @@ version: 2
 measurement_type: binary
 verification: inspection
 text: |
-  Every net and part has a recorded verdict, the method's circuit practice is applied to this board and not only written, and any finding is closed by a change to the schematic, by a recorded reason, or by the owner's recorded decision to carry it to a named later step, where each carried finding names a criterion that asks for it; a reader with the repository can render every sheet. Layout is out of scope.
+  Every net and part has a recorded verdict, the method's circuit practice is applied to this board and not only written, and any finding is closed by a change to the schematic, by a recorded reason, or by the owner's recorded decision to carry it to a named later step that the graph itself requires; a reader with the repository can render every sheet. Layout is out of scope.
 links:
   - target: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN
     type: criterion-of

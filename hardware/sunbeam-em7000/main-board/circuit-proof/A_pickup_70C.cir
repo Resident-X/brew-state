@@ -1,0 +1,18 @@
+Coil pick-up at 70 C air: both gates 1.8 V, rail 4.75 V, coil 68.2 x 1.2 = 81.84 ohm, FET resistance x 1.28
+.include A_interlock.cir
+.include A_models.inc
+Vsup +5V GND 4.75
+Vga POL_GATE_A GND 1.8
+Vgb POL_GATE_B GND 1.8
+Rcoil +5V POL_COIL_LO 81.84
+.tran 1u 20u
+.control
+altermod NM vto=1.1 kp=0.3986
+run
+meas tran vlo FIND v(POL_COIL_LO) AT=19u
+let vcoil = 4.75 - vlo
+let icoil = vcoil/81.84
+let vpickup_limit = 4.2
+print vcoil icoil vpickup_limit
+.endc
+.end

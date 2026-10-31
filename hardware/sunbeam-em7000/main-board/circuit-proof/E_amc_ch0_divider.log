@@ -1,0 +1,94 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: supply voltage channel input network: divider r601-r604 and filter r605 r606 c601 into amc131m02 ain0, 358 v peak line
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+line                                         0
+vmeas_n1                                     0
+vmeas_n2                                     0
+vmeas_div                                    0
+neutral                                      0
+amc_ain0p                                    0
+amc_ain0n                                    0
+amc_diff                                     0
+bdiff#branch                                 0
+vline#branch                                 0
+vgnd#branch                                  0
+
+
+No. of Data Rows : 5013
+vpk_nom             =  2.97001e-01 at=  8.49987e-02
+vtr_nom             =  -2.97001e-01 at=  9.49987e-02
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+line                                         0
+vmeas_n1                                     0
+vmeas_n2                                     0
+vmeas_div                                    0
+neutral                                      0
+amc_ain0p                                    0
+amc_ain0n                                    0
+amc_diff                                     0
+bdiff#branch                                 0
+vline#branch                                 0
+vgnd#branch                                  0
+
+
+No. of Data Rows : 5013
+vpk_high            =  3.06677e-01 at=  8.49987e-02
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+line                                         0
+vmeas_n1                                     0
+vmeas_n2                                     0
+vmeas_div                                    0
+neutral                                      0
+amc_ain0p                                    0
+amc_ain0n                                    0
+amc_diff                                     0
+bdiff#branch                                 0
+vline#branch                                 0
+vgnd#branch                                  0
+
+
+No. of Data Rows : 5013
+vpk_low             =  2.88506e-01 at=  8.49987e-02
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+No. of Data Rows : 21
+gain50_nom          =  8.30076e-04
+phase50_nom         =  -1.24999e-03
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+No. of Data Rows : 21
+gain50_c10          =  8.30075e-04
+phase50_c10         =  -1.37499e-03
+Note: Simulation executed from .control section 

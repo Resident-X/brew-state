@@ -1,0 +1,34 @@
+== levels, every driver against every receiver, at VDD = DVDD = VDD_MIN and VDD_MAX (volts)
+  MCU out (H743)   -> AMC SCLK/DIN/CS/CLKIN/SYNC  VDD 3.0: VOH 2.60 >= VIH 2.40 (+0.20), VOL 0.40 <= VIL 0.60 (+0.20)  ok
+  MCU out (H743)   -> AMC SCLK/DIN/CS/CLKIN/SYNC  VDD 3.6: VOH 3.20 >= VIH 2.88 (+0.32), VOL 0.40 <= VIL 0.72 (+0.32)  ok
+  MCU out (H743)   -> MAX31865 SCLK/SDI/CS        VDD 3.0: VOH 2.60 >= VIH 2.10 (+0.50), VOL 0.40 <= VIL 0.90 (+0.50)  ok
+  MCU out (H743)   -> MAX31865 SCLK/SDI/CS        VDD 3.6: VOH 3.20 >= VIH 2.52 (+0.68), VOL 0.40 <= VIL 1.08 (+0.68)  ok
+  AMC DOUT/DRDY    -> MCU in (H743)               VDD 3.0: VOH 2.40 >= VIH 2.10 (+0.30), VOL 0.60 <= VIL 0.90 (+0.30)  ok
+  AMC DOUT/DRDY    -> MCU in (H743)               VDD 3.6: VOH 2.88 >= VIH 2.52 (+0.36), VOL 0.72 <= VIL 1.08 (+0.36)  ok
+  MAX31865 SDO     -> MCU in (H743)               VDD 3.0: VOH 2.60 >= VIH 2.10 (+0.50), VOL 0.40 <= VIL 0.90 (+0.50)  ok
+  MAX31865 SDO     -> MCU in (H743)               VDD 3.6: VOH 3.20 >= VIH 2.52 (+0.68), VOL 0.40 <= VIL 1.08 (+0.68)  ok
+  levels: MET
+  note: the AMC's VOH/VOL are specified at 1 mA, the MAX31865's at 1.6 mA, the controller's at 8 mA; every receiver input here draws under 1 uA (AMC IIN +/-1 uA, MAX31865 IL +/-1 uA)
+  the 33 ohm series resistors drop 33.0 uV at 1 uA: negligible
+
+== bus clock: the slowest receiver sets it
+  MAX31865 SCLK <= 5.0 MHz (tCL = tCH = 100 ns min); AMC131M02 tc(SC) >= 40 ns (25 MHz); H743 SPI2 master <= 133 MHz: bus set to <= 5.0 MHz
+  at 5 MHz: half period 100 ns
+
+== data timing at 5 MHz, mode 1 (SCLK idles low; the transmitter changes data on the rising edge, the receiver latches on the falling edge)
+  AMC DOUT -> MCU: tp(SCDO) 20 ns max + 33 ohm x 30 pF (0.99 ns) + tsu(MI) 2 ns = 23.0 ns against a half period of 100 ns: margin 77.0 ns
+  MAX31865 SDO -> MCU: tCDD 80 ns max (50 pF load) + tsu(MI) 2 ns = 82 ns against 100 ns: margin 18 ns; the load on MISO must stay within the 50 pF the maker measured at (layout constraint)
+  MCU MOSI -> AMC DIN: tv(MO) 3 ns max + 33 ohm RC 0.86 ns against tsu(DI) 5 ns: setup margin 91 ns; hold: th(MO) >= 0 and the data lasts one more half period 100 ns >= th(DI) 8 ns
+  MCU MOSI -> MAX31865 SDI: setup 97 ns >= tDC 35 ns; hold 100 ns >= tCDH 35 ns
+  SCLK high/low 100 ns >= AMC tw(SCH)=tw(SCL)=20 ns and MAX31865 tCH=tCL=100 ns (equal at 5 MHz exactly: a duty cycle under 50 % breaks the MAX31865's 100 ns, so the SPI kernel clock divider must give 50 %: a firmware constraint)
+  chip select: AMC td(CSSC) 16 ns and tw(CSH) 15 ns; MAX31865 tCC 400 ns CS-to-SCLK, tCWH 400 ns CS inactive, tCDZ 40 ns: the chip selects are plain outputs (PB12 may be hardware NSS); the firmware holds 400 ns
+  shared MISO: each slave's output is high-impedance when its CS is high (AMC 6.10 tp(CSDOZ) 75 ns; MAX31865 tCDZ 40 ns); one CS low at a time, the others held high by their 100 kohm pull-ups while the controller is in reset
+
+== converter clock Y601 (SiT8008B 8.000 MHz) against AMC131M02 CLKIN
+  fCLKIN 8.000 MHz +/-25 ppm: high-resolution range 2.8 to 8.2 MHz at NDIV = 2 (6.3): inside (modulator clock 4.000 MHz; DCDC_FREQ range 3.768-4.100 MHz, code 0000b)
+  duty 45-55 % (6.3: 40-60 %): shortest of tw(CLH), tw(CLL) = 56.2 ns >= 49 ns (6.9): margin 7.2 ns
+  level: VOH 90 % of Vdd (-4 mA) against VIH 80 % of DVDD, same rail: ok (0.9 >= 0.8); VOL 10 % <= VIL 20 %: ok
+  rise/fall 2 ns max (20-80 %), with 33 ohm source termination (R609) and a short track; the sheet asks for a clock free of overshoot and glitches (9.4.1)
+  supply: the oscillator's Vdd range 2.97-3.63 V sets +3V3 >= 2.97 V; MAX31865 VDD/DVDD 3.0-3.6 V sets +3V3 in 3.0-3.6 V; AMC DVDD 3.0-5.5 V: the rail must hold 3.0 to 3.6 V (controller sheet)
+  current: SiT8008B 4.5 mA max (no load, measured at 20 MHz, so conservative at 8 MHz) + 15 pF x 3.63 V x 8 MHz = 0.44 mA of load = 4.94 mA
+  output sample rate with OSR 1024: 3.9062 kSPS; per 50 Hz cycle 78.12 samples (not a whole number: the 8.192 MHz variant of the same family gives 80, but it is not in the catalogue)

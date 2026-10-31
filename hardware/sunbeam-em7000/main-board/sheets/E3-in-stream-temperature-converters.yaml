@@ -1,0 +1,581 @@
+sheet: In-stream temperature converters
+function: Two RTD-to-digital converters on the shared SPI2 bus read two PT1000 probes, one in the brew water and one in the steam, each on its own four-way header that takes a 2-, 3- or 4-wire probe.
+parts:
+- ref: C640
+  lib_id: Device:C
+  value: 10n
+  rating: X7R 50V 10% 0603
+  footprint: Capacitor_SMD:C_0603_1608Metric
+  mpn: CL10B103KB8NNNC
+  maker: Samsung Electro-Mechanics
+  lcsc: C1589
+  class: extended
+  hand: false
+  function: input filter across RTDIN+/RTDIN-, 10 nF for a 1 kohm RTD (MAX31865 Typical Application Circuits)
+  mains: false
+  sim_exclude: false
+- ref: C641
+  lib_id: Device:C
+  value: 100n
+  rating: X7R 50V 10% 0603
+  footprint: Capacitor_SMD:C_0603_1608Metric
+  mpn: CL10B104KB8NNNC
+  maker: Samsung Electro-Mechanics
+  lcsc: C1591
+  class: extended
+  hand: false
+  function: VDD bypass to GND1, 0.1 uF (Pin Description, VDD)
+  mains: false
+  sim_exclude: false
+- ref: C642
+  lib_id: Device:C
+  value: 100n
+  rating: X7R 50V 10% 0603
+  footprint: Capacitor_SMD:C_0603_1608Metric
+  mpn: CL10B104KB8NNNC
+  maker: Samsung Electro-Mechanics
+  lcsc: C1591
+  class: extended
+  hand: false
+  function: DVDD bypass to DGND, 0.1 uF (Pin Description, DVDD)
+  mains: false
+  sim_exclude: false
+- ref: C645
+  lib_id: Device:C
+  value: 10n
+  rating: X7R 50V 10% 0603
+  footprint: Capacitor_SMD:C_0603_1608Metric
+  mpn: CL10B103KB8NNNC
+  maker: Samsung Electro-Mechanics
+  lcsc: C1589
+  class: extended
+  hand: false
+  function: input filter across RTDIN+/RTDIN-, 10 nF for a 1 kohm RTD (MAX31865 Typical Application Circuits)
+  mains: false
+  sim_exclude: false
+- ref: C646
+  lib_id: Device:C
+  value: 100n
+  rating: X7R 50V 10% 0603
+  footprint: Capacitor_SMD:C_0603_1608Metric
+  mpn: CL10B104KB8NNNC
+  maker: Samsung Electro-Mechanics
+  lcsc: C1591
+  class: extended
+  hand: false
+  function: VDD bypass to GND1, 0.1 uF (Pin Description, VDD)
+  mains: false
+  sim_exclude: false
+- ref: C647
+  lib_id: Device:C
+  value: 100n
+  rating: X7R 50V 10% 0603
+  footprint: Capacitor_SMD:C_0603_1608Metric
+  mpn: CL10B104KB8NNNC
+  maker: Samsung Electro-Mechanics
+  lcsc: C1591
+  class: extended
+  hand: false
+  function: DVDD bypass to DGND, 0.1 uF (Pin Description, DVDD)
+  mains: false
+  sim_exclude: false
+- ref: J620
+  lib_id: Connector_Generic:Conn_01x04
+  value: PT1_H
+  rating: JST XH 2.5 mm 3 A 250 V
+  footprint: Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical
+  mpn: XH-4PA
+  maker: ZHOURI (JST XH family)
+  lcsc: C5258885
+  class: extended
+  hand: true
+  function: 'probe 1 header: 1 FORCE+, 2 RTDIN+, 3 RTDIN-, 4 FORCE-; a 4-wire probe uses all four, a 3-wire probe three, a 2-wire probe two'
+  mains: false
+  sim_exclude: true
+- ref: J622
+  lib_id: Connector_Generic:Conn_01x02
+  value: PT1_2W_P
+  rating: 2.54 mm header with jumper cap
+  footprint: Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical
+  mpn: 2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed
+  maker: BOOMELE
+  lcsc: C2337
+  class: extended
+  hand: true
+  function: '2-wire probe only: ties FORCE+ to RTDIN+; fitted for a 2-wire probe, open for 3-wire and 4-wire'
+  mains: false
+  sim_exclude: true
+- ref: J623
+  lib_id: Connector_Generic:Conn_01x02
+  value: PT1_23W_N
+  rating: 2.54 mm header with jumper cap
+  footprint: Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical
+  mpn: 2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed
+  maker: BOOMELE
+  lcsc: C2337
+  class: extended
+  hand: true
+  function: '2-wire and 3-wire probes: ties FORCE- to RTDIN-; fitted for a 2-wire or 3-wire probe, open for 4-wire'
+  mains: false
+  sim_exclude: true
+- ref: J625
+  lib_id: Connector_Generic:Conn_01x04
+  value: PT2_H
+  rating: JST XH 2.5 mm 3 A 250 V
+  footprint: Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical
+  mpn: XH-4PA
+  maker: ZHOURI (JST XH family)
+  lcsc: C5258885
+  class: extended
+  hand: true
+  function: 'probe 2 header: 1 FORCE+, 2 RTDIN+, 3 RTDIN-, 4 FORCE-; a 4-wire probe uses all four, a 3-wire probe three, a 2-wire probe two'
+  mains: false
+  sim_exclude: true
+- ref: J627
+  lib_id: Connector_Generic:Conn_01x02
+  value: PT2_2W_P
+  rating: 2.54 mm header with jumper cap
+  footprint: Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical
+  mpn: 2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed
+  maker: BOOMELE
+  lcsc: C2337
+  class: extended
+  hand: true
+  function: '2-wire probe only: ties FORCE+ to RTDIN+; fitted for a 2-wire probe, open for 3-wire and 4-wire'
+  mains: false
+  sim_exclude: true
+- ref: J628
+  lib_id: Connector_Generic:Conn_01x02
+  value: PT2_23W_N
+  rating: 2.54 mm header with jumper cap
+  footprint: Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical
+  mpn: 2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed
+  maker: BOOMELE
+  lcsc: C2337
+  class: extended
+  hand: true
+  function: '2-wire and 3-wire probes: ties FORCE- to RTDIN-; fitted for a 2-wire or 3-wire probe, open for 4-wire'
+  mains: false
+  sim_exclude: true
+- ref: R640
+  lib_id: Device:R
+  value: 4.02k
+  rating: 0.1% 25ppm 0603 100mW thin film
+  footprint: Resistor_SMD:R_0603_1608Metric
+  mpn: ERA3AEB4021V
+  maker: Panasonic
+  lcsc: C491130
+  class: extended
+  hand: false
+  function: 'reference resistor of converter 1: four times the PT1000''s 1000 ohm at 0 degC (MAX31865 Rev 3, Detailed Description: a PT1000 uses a 4 kohm reference)'
+  mains: false
+  sim_exclude: false
+- ref: R641
+  lib_id: Device:R
+  value: 100k
+  rating: 1% 100mW 75V 0603
+  footprint: Resistor_SMD:R_0603_1608Metric
+  mpn: 0603WAF1003T5E
+  maker: UNI-ROYAL
+  lcsc: C25803
+  class: basic
+  hand: false
+  function: holds the converter's chip select high while the controller is in reset, so its SDO stays high-impedance on the shared MISO line
+  mains: false
+  sim_exclude: false
+- ref: R642
+  lib_id: Device:R
+  value: '0'
+  rating: 0603 0 ohm link
+  footprint: Resistor_SMD:R_0603_1608Metric
+  mpn: 0603WAF0000T5E
+  maker: UNI-ROYAL
+  lcsc: C21189
+  class: basic
+  hand: false
+  function: 'FORCE2 to GND for a 2-wire or 4-wire probe (MAX31865 Pin Description: FORCE2 to ground in 2-wire and 4-wire); fitted as built'
+  mains: false
+  sim_exclude: false
+- ref: R643
+  lib_id: Device:R
+  value: '0'
+  rating: 0603 0 ohm link
+  footprint: Resistor_SMD:R_0603_1608Metric
+  mpn: 0603WAF0000T5E
+  maker: UNI-ROYAL
+  lcsc: C21189
+  class: basic
+  hand: false
+  function: 'FORCE2 to FORCE+ for a 3-wire probe: fit this link and remove the one to GND; not fitted as built'
+  mains: false
+  sim_exclude: false
+  dnp: true
+- ref: R645
+  lib_id: Device:R
+  value: 4.02k
+  rating: 0.1% 25ppm 0603 100mW thin film
+  footprint: Resistor_SMD:R_0603_1608Metric
+  mpn: ERA3AEB4021V
+  maker: Panasonic
+  lcsc: C491130
+  class: extended
+  hand: false
+  function: 'reference resistor of converter 2: four times the PT1000''s 1000 ohm at 0 degC (MAX31865 Rev 3, Detailed Description: a PT1000 uses a 4 kohm reference)'
+  mains: false
+  sim_exclude: false
+- ref: R646
+  lib_id: Device:R
+  value: 100k
+  rating: 1% 100mW 75V 0603
+  footprint: Resistor_SMD:R_0603_1608Metric
+  mpn: 0603WAF1003T5E
+  maker: UNI-ROYAL
+  lcsc: C25803
+  class: basic
+  hand: false
+  function: holds the converter's chip select high while the controller is in reset, so its SDO stays high-impedance on the shared MISO line
+  mains: false
+  sim_exclude: false
+- ref: R647
+  lib_id: Device:R
+  value: '0'
+  rating: 0603 0 ohm link
+  footprint: Resistor_SMD:R_0603_1608Metric
+  mpn: 0603WAF0000T5E
+  maker: UNI-ROYAL
+  lcsc: C21189
+  class: basic
+  hand: false
+  function: 'FORCE2 to GND for a 2-wire or 4-wire probe (MAX31865 Pin Description: FORCE2 to ground in 2-wire and 4-wire); fitted as built'
+  mains: false
+  sim_exclude: false
+- ref: R648
+  lib_id: Device:R
+  value: '0'
+  rating: 0603 0 ohm link
+  footprint: Resistor_SMD:R_0603_1608Metric
+  mpn: 0603WAF0000T5E
+  maker: UNI-ROYAL
+  lcsc: C21189
+  class: basic
+  hand: false
+  function: 'FORCE2 to FORCE+ for a 3-wire probe: fit this link and remove the one to GND; not fitted as built'
+  mains: false
+  sim_exclude: false
+  dnp: true
+- ref: TP620
+  lib_id: Connector:TestPoint
+  value: TP_PT1_BIAS
+  rating: ''
+  footprint: main-board:TestPoint_Pad_D1.0mm_Tight
+  mpn: ''
+  maker: ''
+  lcsc: ''
+  class: none
+  hand: false
+  function: 'producer-only net: converter 1''s bias output (2.0 V nominal) and the reference resistor''s top'
+  mains: false
+  sim_exclude: true
+- ref: TP621
+  lib_id: Connector:TestPoint
+  value: TP_PT1_RTDINP
+  rating: ''
+  footprint: main-board:TestPoint_Pad_D1.0mm_Tight
+  mpn: ''
+  maker: ''
+  lcsc: ''
+  class: none
+  hand: false
+  function: 'key signal: converter 1''s RTDIN+, the probe''s sense node'
+  mains: false
+  sim_exclude: true
+- ref: TP622
+  lib_id: Connector:TestPoint
+  value: TP_PT2_BIAS
+  rating: ''
+  footprint: main-board:TestPoint_Pad_D1.0mm_Tight
+  mpn: ''
+  maker: ''
+  lcsc: ''
+  class: none
+  hand: false
+  function: 'producer-only net: converter 2''s bias output (2.0 V nominal) and the reference resistor''s top'
+  mains: false
+  sim_exclude: true
+- ref: TP623
+  lib_id: Connector:TestPoint
+  value: TP_PT2_RTDINP
+  rating: ''
+  footprint: main-board:TestPoint_Pad_D1.0mm_Tight
+  mpn: ''
+  maker: ''
+  lcsc: ''
+  class: none
+  hand: false
+  function: 'key signal: converter 2''s RTDIN+, the probe''s sense node'
+  mains: false
+  sim_exclude: true
+- ref: U620
+  lib_id: Sensor_Temperature:MAX31865xTP
+  value: MAX31865ATP+
+  rating: 4 V absolute maximum VDD and DVDD, VDD/DVDD 3.0-3.6 V, inputs +/-45 V protected, SPI mode 1 or 3, 5 MHz max
+  footprint: Package_DFN_QFN:TQFN-20-1EP_5x5mm_P0.65mm_EP3.1x3.1mm
+  mpn: MAX31865ATP+T
+  maker: Analog Devices (Maxim)
+  lcsc: C118474
+  class: extended
+  hand: false
+  function: RTD-to-digital converter for in-stream probe 1
+  mains: false
+  sim_exclude: true
+- ref: U621
+  lib_id: Sensor_Temperature:MAX31865xTP
+  value: MAX31865ATP+
+  rating: 4 V absolute maximum VDD and DVDD, VDD/DVDD 3.0-3.6 V, inputs +/-45 V protected, SPI mode 1 or 3, 5 MHz max
+  footprint: Package_DFN_QFN:TQFN-20-1EP_5x5mm_P0.65mm_EP3.1x3.1mm
+  mpn: MAX31865ATP+T
+  maker: Analog Devices (Maxim)
+  lcsc: C118474
+  class: extended
+  hand: false
+  function: RTD-to-digital converter for in-stream probe 2
+  mains: false
+  sim_exclude: true
+- ref: R690
+  lib_id: Device:R
+  value: '0'
+  rating: 0603 zero-ohm link
+  footprint: Resistor_SMD:R_0603_1608Metric
+  mpn: 0603WAF0000T5E
+  maker: UNI-ROYAL
+  lcsc: C21189
+  class: basic
+  hand: false
+  function: isolating link in converter 1's FORCE- output (the stock symbol types that pin power_out, so the net is a rail to the bring-up method); its source side PT1_FORCEN_SRC carries U620 pin 9 and a test point only; the
+    0 ohm adds under 0.05 ohm to a probe of 1000 ohm
+  mains: false
+  sim_exclude: false
+  dnp: false
+- ref: TP690
+  lib_id: Connector:TestPoint
+  value: TP_PT1_FORCEN_SRC
+  rating: ''
+  footprint: main-board:TestPoint_Pad_D1.0mm_Tight
+  mpn: ''
+  maker: ''
+  lcsc: ''
+  class: none
+  hand: false
+  function: test point on PT1_FORCEN_SRC, the source side of the FORCE- link
+  mains: false
+  sim_exclude: true
+- ref: R691
+  lib_id: Device:R
+  value: '0'
+  rating: 0603 zero-ohm link
+  footprint: Resistor_SMD:R_0603_1608Metric
+  mpn: 0603WAF0000T5E
+  maker: UNI-ROYAL
+  lcsc: C21189
+  class: basic
+  hand: false
+  function: isolating link in converter 2's FORCE- output (the stock symbol types that pin power_out, so the net is a rail to the bring-up method); its source side PT2_FORCEN_SRC carries U621 pin 9 and a test point only; the
+    0 ohm adds under 0.05 ohm to a probe of 1000 ohm
+  mains: false
+  sim_exclude: false
+  dnp: false
+- ref: TP691
+  lib_id: Connector:TestPoint
+  value: TP_PT2_FORCEN_SRC
+  rating: ''
+  footprint: main-board:TestPoint_Pad_D1.0mm_Tight
+  mpn: ''
+  maker: ''
+  lcsc: ''
+  class: none
+  hand: false
+  function: test point on PT2_FORCEN_SRC, the source side of the FORCE- link
+  mains: false
+  sim_exclude: true
+nets:
+  PT1_BIAS:
+    scope: local
+    pins:
+    - U620.1
+    - U620.2
+    - R640.1
+    - TP620.1
+  PT1_FORCEP:
+    scope: local
+    pins:
+    - U620.3
+    - U620.4
+    - U620.5
+    - R640.2
+    - J620.1
+    - J622.1
+    - R643.2
+  PT1_RTDINP:
+    scope: local
+    pins:
+    - U620.7
+    - C640.1
+    - J620.2
+    - J622.2
+    - TP621.1
+  PT1_RTDINN:
+    scope: local
+    pins:
+    - U620.8
+    - C640.2
+    - J620.3
+    - J623.1
+  PT1_FORCEN:
+    scope: local
+    pins:
+    - J620.4
+    - J623.2
+    - R690.2
+  PT1_FORCE2:
+    scope: local
+    pins:
+    - U620.6
+    - R642.1
+    - R643.1
+  PT1_CS:
+    scope: global
+    pins:
+    - U620.13
+    - R641.2
+  PT2_BIAS:
+    scope: local
+    pins:
+    - U621.1
+    - U621.2
+    - R645.1
+    - TP622.1
+  PT2_FORCEP:
+    scope: local
+    pins:
+    - U621.3
+    - U621.4
+    - U621.5
+    - R645.2
+    - J625.1
+    - J627.1
+    - R648.2
+  PT2_RTDINP:
+    scope: local
+    pins:
+    - U621.7
+    - C645.1
+    - J625.2
+    - J627.2
+    - TP623.1
+  PT2_RTDINN:
+    scope: local
+    pins:
+    - U621.8
+    - C645.2
+    - J625.3
+    - J628.1
+  PT2_FORCEN:
+    scope: local
+    pins:
+    - J625.4
+    - J628.2
+    - R691.2
+  PT2_FORCE2:
+    scope: local
+    pins:
+    - U621.6
+    - R647.1
+    - R648.1
+  PT2_CS:
+    scope: global
+    pins:
+    - U621.13
+    - R646.2
+  +3V3:
+    scope: power
+    pins:
+    - U620.19
+    - U620.20
+    - C641.1
+    - C642.1
+    - R641.1
+    - U621.19
+    - U621.20
+    - C646.1
+    - C647.1
+    - R646.1
+  GND:
+    scope: power
+    pins:
+    - U620.10
+    - U620.15
+    - U620.16
+    - U620.21
+    - C641.2
+    - C642.2
+    - U621.10
+    - U621.15
+    - U621.16
+    - U621.21
+    - C646.2
+    - C647.2
+    - R642.2
+    - R647.2
+  SPI2_SCK:
+    scope: global
+    pins:
+    - U620.12
+    - U621.12
+  SPI2_MOSI:
+    scope: global
+    pins:
+    - U620.11
+    - U621.11
+  SPI2_MISO:
+    scope: global
+    pins:
+    - U620.14
+    - U621.14
+  PT1_FORCEN_SRC:
+    scope: local
+    pins:
+    - U620.9
+    - R690.1
+    - TP690.1
+  PT2_FORCEN_SRC:
+    scope: local
+    pins:
+    - U621.9
+    - R691.1
+    - TP691.1
+no_connect:
+- pin: U620.17
+  reason: N.C. pin, do not connect (MAX31865 Rev 3 Pin Description)
+- pin: U620.18
+  reason: 'DRDY is not used: the controller polls the status register (controller-io-bom: data-ready optional, omitted)'
+- pin: U621.17
+  reason: N.C. pin, do not connect (MAX31865 Rev 3 Pin Description)
+- pin: U621.18
+  reason: 'DRDY is not used: the controller polls the status register (controller-io-bom: data-ready optional, omitted)'
+custom_symbols: []
+custom_footprints: []
+power_flags: []
+notes: 'Drawing: two identical blocks one above the other, probe 1 on top. In each block: the probe header on the right, the converter in the middle, the SPI lines entering from the left (SPI2_SCK, SPI2_MOSI, SPI2_MISO global
+  labels shared by both blocks, its own chip-select label). The reference resistor sits above the converter between BIAS/REFIN+ and REFIN-/ISENSOR/FORCE+; the filter capacitor sits across RTDIN+ and RTDIN- beside the header;
+  the configuration parts sit between the converter and the probe header with a legend table: 4-wire = R642 fitted (FORCE2 to GND), R643 not fitted, J622 and J623 open; 3-wire = R642 removed, R643 fitted (FORCE2 to FORCE+),
+  the FORCE-/RTDIN- link (J623) fitted, the FORCE+/RTDIN+ link (J622) open; 2-wire = R642 fitted, R643 not fitted, both links J622 and J623 fitted. (Probe 2: R647, R648, J627, J628.) R643 and R648 carry the field dnp: true.
+
+  Header pin use (PT1_H and PT2_H, first pin at the lower end as the division draws them): 1 = FORCE+ (RTD top drive lead), 2 = RTDIN+ (top sense lead), 3 = RTDIN- (bottom sense lead), 4 = FORCE- (bottom drive lead). The pin
+  order is not stated in the records; it is drawn here and logged as an open item.
+
+  Both converters share SCK, MOSI and MISO with the supply-measurement converter on the sheet "Supply voltage and current measurement": mode 1 (clock idle low, data latched on the falling edge), at most 5 MHz (MAX31865 SCLK
+  limit); each chip select has its own 100 kohm pull-up so no slave drives MISO while the controller is in reset.
+
+  The net names *_FORCEN: MAX31865''s FORCE- pin is typed power_out in the stock symbol because it is switched to GND2 inside the part; it is the probe''s current return, not a rail.
+
+  '

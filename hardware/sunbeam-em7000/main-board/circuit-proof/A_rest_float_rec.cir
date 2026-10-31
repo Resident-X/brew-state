@@ -1,0 +1,32 @@
+Interlock rest state: controller output float after the last edge, variant rec; gate decay to the lowest FET threshold, slowest corner
+.include A_interlock.cir
+.include A_models.inc
+Vsup +5V GND 5.25
+* relay coil, a deck-added load (K201 is excluded from simulation): 62 ohm -10 % = 55.8 ohm
+Rcoil +5V POL_COIL_LO 55.8
+* FET input capacitance at its datasheet maximum, 50 pF (NX3008NBK Table 7), one per gate
+Cg201 POL_GATE_A GND 50p
+Cg202 POL_GATE_B GND 50p
+Vsrc SRC GND PWL(0 0 0.010000000 0 0.010000010 3.3 0.015000000 3.3 0.015000010 0 0.020000000 0 0.020000010 3.3 0.025000000 3.3 0.025000010 0 0.030000000 0 0.030000010 3.3 0.035000000 3.3 0.035000010 0 0.040000000 0 0.040000010 3.3 0.045000000 3.3 0.045000010 0 0.050000000 0 0.050000010 3.3 0.055000000 3.3 0.055000010 0 0.060000000 0 0.060000010 3.3 0.065000000 3.3 0.065000010 0 0.070000000 0 0.070000010 3.3 0.075000000 3.3 0.075000010 0 0.080000000 0 0.080000010 3.3 0.085000000 3.3 0.085000010 0 3 0)
+Szz SRC POL_OUT CTL GND SWZ
+Vctl CTL GND PWL(0 1 0.080500000 1 0.080500001 0)
+.model SWZ SW(vt=0.5 vh=0.1 ron=1 roff=1e12)
+.options reltol=1e-5 abstol=1e-15 gmin=1e-15
+.tran 5u 3000m 0 20u
+.control
+alter R205 = 1T
+alter R206 = 1T
+alter R203 = 5.6896Meg
+alter R204 = 5.6896Meg
+alter C203 = 4.9645n
+alter C205 = 4.9645n
+alter C202 = 105.6n
+alter C204 = 105.6n
+run
+meas tran vstartA FIND v(POL_GATE_A) AT=0.081000000
+meas tran tA06 WHEN v(POL_GATE_A)=0.6 FALL=1
+meas tran tB06 WHEN v(POL_GATE_B)=0.6 FALL=1
+meas tran tdecA TRIG AT=0.080000000 TARG v(POL_GATE_A) VAL=0.6 FALL=1
+meas tran tdecB TRIG AT=0.080000000 TARG v(POL_GATE_B) VAL=0.6 FALL=1
+.endc
+.end

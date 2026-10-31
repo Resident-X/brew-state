@@ -1,0 +1,122 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: valve coil drive k731 / q731 (the second valve, k741 / q741, is the same circuit): coil voltage available at the lowest rail
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+p5v                                       4.75
+coilk                               0.00229567
+g731                                   2.73227
+g731a                                    2.735
+vco                                     4.7477
+ico                                  0.0407039
+bic#branch                                   0
+vsup#branch                         -0.0407039
+bvc#branch                                   0
+vvoh#branch                       -2.73227e-05
+
+
+No. of Data Rows : 108
+vcoil_lo_70c        =  4.74770e+00 from=  5.00000e-04 to=  1.00000e-03
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+p5v                                       4.75
+coilk                               0.00187814
+g731                                   2.73227
+g731a                                    2.735
+vco                                    4.74812
+ico                                  0.0333061
+bic#branch                                   0
+vsup#branch                         -0.0333061
+bvc#branch                                   0
+vvoh#branch                       -2.73227e-05
+
+
+No. of Data Rows : 108
+vcoil_hi_70c        =  4.74812e+00 from=  5.00000e-04 to=  1.00000e-03
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+p5v                                       4.75
+coilk                               0.00275504
+g731                                   2.73227
+g731a                                    2.735
+vco                                    4.74724
+ico                                    0.04884
+bic#branch                                   0
+vsup#branch                           -0.04884
+bvc#branch                                   0
+vvoh#branch                       -2.73227e-05
+
+
+No. of Data Rows : 108
+vcoil_lo_23c        =  4.74724e+00 from=  5.00000e-04 to=  1.00000e-03
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+p5v                                       5.25
+coilk                               0.00304539
+g731                                   2.73227
+g731a                                    2.735
+vco                                    5.24695
+ico                                   0.053981
+bic#branch                                   0
+vsup#branch                          -0.053981
+bvc#branch                                   0
+vvoh#branch                       -2.73227e-05
+
+
+No. of Data Rows : 108
+icoil_max           =  5.39810e-02 from=  5.00000e-04 to=  1.00000e-03
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+p5v                                       5.25
+coilk                               0.00269798
+g731                                    2.8971
+g731a                                      2.9
+vco                                     5.2473
+ico                                  0.0539846
+bic#branch                                   0
+vsup#branch                         -0.0539846
+bvc#branch                                   0
+vvoh#branch                        -2.8971e-05
+
+
+No. of Data Rows : 108
+icoil_max_vdd33     =  5.39846e-02 from=  5.00000e-04 to=  1.00000e-03
+Note: Simulation executed from .control section 

@@ -1,0 +1,286 @@
+rails:
+- name: Module mains feed (LINE_MOD)
+  source_sides:
+  - LINE
+  load_side: LINE_MOD
+  test_points:
+  - TP103
+  links:
+  - JP303
+  what: 'Mains-referenced feed of the logic supply module U301 pin 1, between net LINE (after the first-power link JP101, TP103 on the source side) and LINE_MOD. JP303 is a wire link in service (two plated holes, 7.0 mm between pad edges, the footprint of JP101) and carries the module''s 0.4 A typical at 230 Vac. RT301 (Ruilon NTC10D-9, 10 ohm cold, C3790) is an unfitted alternative across the same two nets: Bring-up step (logic supply step 8): at the first cold start from mains watch the entry fuse F101; fit RT301 in place of JP303 (remove the link, never fit both) only if F101 opens at a cold start, and say so in the bring-up record; if it does not open, leave RT301 unfitted. Both parts and LINE_MOD are mains class.'
+- name: +5V
+  source_sides:
+  - +5V_MOD
+  load_side: +5V
+  test_points:
+  - TP301
+  links:
+  - JP301
+  what: 'Produced by U301 (Mean Well IRM-20-5, 5 V +/-2.5 %, rated 4 A, 2 A at 70 degC); source side holds the module''s +Vo, C301 (100 nF), C302 (47 uF) and TP301. JP301 is a three-way selector (1 +5V_MOD, 2 +5V, 3 USB_VBUS_F):
+    its one shorting jumper on pins 1-2 is the service position; a 22 ohm 5 W resistor''s leads soldered to pins 1 and 2 in place of the jumper limit the rail''s draw to 233 mA into a short. Power leaves the board through other sheets'' connectors (sensor headers,
+    relay coils, gauge harness, wall board), none enter by them.'
+- name: USB cable power
+  source_sides:
+  - USB_VBUS_F
+  load_side: +5V
+  test_points:
+  - TP413
+  links:
+  - JP301
+  what: 'Bench power from the panel cable with mains disconnected. J402.5 (USB_VBUS) passes D402 (SMF6.0A to GND) and F401 (0.50 A hold PTC) to USB_VBUS_F (TP413, protected VBUS), which goes straight to pin 3 of the selector JP301 and nowhere else. The selector''s one shorting jumper joins +5V to the module (pins 1-2, as drawn) or to USB_VBUS_F (pins 2-3), never both; it is the only thing that stops the cable and the module feeding each other, and the board never sources current into the cable. Order: (1) mains disconnected at the plug and the entry switch off; (2) move the JP301 jumper from pins 1-2 to pins 2-3; (3) read TP413 against GND with the cable plugged in, then +5V (about 4.35 V at the 0.32 A bench load: circuit-proof.md, USB power rows) and +3V3_REG at TP302; (4) with a series ammeter or a USB power meter on the cable, record the current at plug-in before the host configures the board and while it loads firmware, and watch TP413 on an oscilloscope at plug-in: the peak must stay under 6.0 V, the 3.3 V regulator''s recommended input maximum (the fuse output is the rail, no blocking element sits between) (the unit-load rows of circuit-proof.md ask for it); (5) load firmware over the cable or J401. To return to mains operation: unplug the cable, move the jumper back to pins 1-2, and only then connect mains. Silkscreen beside JP301: 1-2 MODULE (MAINS), 2-3 USB ONLY (MAINS OFF).'
+- name: +3V3
+  source_sides:
+  - +3V3_REG
+  - DBG_VTREF
+  - +3V3_DBG
+  load_side: +3V3
+  test_points:
+  - TP302
+  - TP405
+  links:
+  - JP302
+  - JP402
+  what: 'Two sources. Regulator: U302 (LT1963AEST-3.3#TRPBF, 20 V input rating) from +5V, with C303 at its input and C304 and C305 (22 uF X5R each) at its output on +3V3_REG, TP302 and JP302 (1x2 header and jumper). Supervisor U402 (TLV803S) watches +3V3 and holds NRST low below 2.87 to 2.99 V. Debug probe: J401.1 VTref
+    on DBG_VTREF with TP405, then R402 (1 kohm, the current-limit means) to +3V3_DBG and JP402 (1x2 header and jumper). Open JP302 to measure +3V3_REG unloaded (but see the 5 V pull-up rule in notes below);
+    open JP402 to remove the probe path. Pins through which power leaves: sensor and header 3V3 pins on other sheets.'
+- name: +3V3A
+  source_sides:
+  - +3V3A_FB
+  load_side: +3V3A
+  test_points:
+  - TP303
+  links:
+  - R301
+  what: Derived from +3V3 by FB301 (600 ohm at 100 MHz, 0.50 ohm DC) onto +3V3A_FB with TP303; R301 (0 ohm, 1 A rated) is the isolating link. Feeds VDDA (pin 21) with C408 and C409 and the VREF+ link R302;
+    any analogue front end that takes the converter's supply takes +3V3A.
+- name: VREF+
+  source_sides:
+  - +3V3A
+  load_side: VREF+
+  test_points:
+  - TP403
+  - TP402
+  links:
+  - R302
+  what: 'Reference rail for the three ADCs: pin 20 with C410 (100 nF) and C411 (1 uF), tied to +3V3A through R302 (0 ohm, AN4938 Table 9 star point). TP403 on the source side (+3V3A), TP402 on the pin side
+    to read what the converter sees. Opening R302 lets firmware use the internal reference buffer (2.5 V class) instead; the pin is then driven by the part.'
+producer_only:
+- net: VCAP
+  producer: U401 pins 48 and 73 (core regulator output)
+  caps:
+  - C412
+  - C413
+  test_point: TP401
+key_signals:
+- {name: "Carried: Y402 shunt capacitance C0 (row M3)", net: "LSE_IN", test_point: "", block: "Before mains: LCR meter at 1 kHz on a spare Y402 from the same reel, C0 at most 2.58 pF; then firmware sweeps LSEDRV 00 to 11 and records the lowest setting at which LSERDY sets; it must set at 11. Limit and source: open-items.md, Bring-up measurements carried."}
+- {name: "Carried: crystal drive levels (rows M4 and M5)", net: "HSE_IN", test_point: "TP406", block: "Y401: Vrms at the crystal node with a probe of 10 pF or less, at most 0.82 V rms (drive level 100 uW max at ESR 80 ohm, C0 + CL 27 pF, 8 MHz). Y402 cannot be probed at home: worst case assumed, LSEDRV chosen as the lowest that starts it, 0.5 uW limit unproven. Limit and source: open-items.md, Bring-up measurements carried."}
+- {name: "Carried: VCAP capacitance (row M8)", net: "VCAP", test_point: "TP401", block: "Before mains: C412 and C413 by LCR meter and by the charge-time method at 1.4 V; reading times 0.85 at least 1.76 uF (secant reading at least 2.07 uF), each at most 2.64 uF. Limit and source: open-items.md, Bring-up measurements carried."}
+- {name: "Carried: supervisor window and load-step dip (row M19)", net: "NRST", test_point: "TP404", block: "Bench supply on +3V3 with JP302 open: falling threshold 2.87 to 2.99 V and td 120 to 280 ms; +3V3 at TP302 stays at or above 3.0 V while all peripherals are enabled and while 0.293 A is switched on the rail. Limit and source: open-items.md, Bring-up measurements carried."}
+- {name: "Carried: module inrush and entry fuse I2t (row M11)", net: "LINE_MOD", test_point: "TP103", block: "Shunt R105 (TP105 to TP106) with an isolated or differential probe, single-shot at the first current-limited connection and at the first cold start with the lamp removed: integral of i squared dt at most 50 A2s (10 percent of the fuse 500 A2s), F101 intact at ten cold starts; otherwise fit RT301 in place of JP303. Limit and source: open-items.md, Bring-up measurements carried."}
+- {name: "Carried: C302 reverse voltage (row M17)", net: "+5V_MOD", test_point: "TP301", block: "Scope, DC-coupled, minimum held, across C302 through JP301 moves, cable plug-in and removal, and mains on and off: no reverse voltage beyond the 50 mV resolution. Limit and source: open-items.md, Bring-up measurements carried."}
+- {name: "Carried: ceramics of the controller and logic supply (rows M7 and M10)", net: "", test_point: "", block: "Before mains, LCR meter: C414 and C415 19.0 to 21.0 pF and C416 and C417 4.45 to 4.95 pF on spares from the same reel; C303 and C418 by the charge-time method at least 50 percent of nominal. Limit and source: open-items.md, Bring-up measurements carried."}
+- name: reset
+  net: NRST
+  test_point: TP404
+  block: 'controller reset: SW401, C418, internal pull-up; also J401.10 and the open-drain output of the supervisor U402 (TLV803S): low while +3V3 is under 2.87 to 2.99 V and for 120 to 280 ms after it recovers'
+- name: HSE clock
+  net: HSE_IN
+  test_point: TP406
+  block: '8 MHz oscillator Y401. No pin is free for a buffered clock output (MCO1 is PA8, the steam pump gate; MCO2 is PC9, a load-cell clock), so the clock is read at the crystal node with a probe of 10
+    pF or less; the pad (1.5 mm) and probe load the oscillator and move the frequency by a fraction of the load capacitance, so measure frequency to a few hundred ppm only; remove the probe for any accuracy
+    check. A firmware alternative with no probing: the controller counts HSE against another clock.'
+- name: LSE clock
+  net: LSE_IN
+  test_point: none
+  block: '32.768 kHz oscillator Y402: no test point, a pad on a 12.5 pF crystal node would shift the frequency by a visible fraction; the block is judged by the RTC running in firmware (LSERDY flag). LSE
+    is an anticipated function with no requirement relying on it'
+- name: serial-wire data
+  net: SWDIO
+  test_point: TP407
+  block: 'debug and programming: the header pin is the access point; test point pad added so a probe reaches the net without the header'
+- name: serial-wire clock
+  net: SWCLK
+  test_point: TP408
+  block: 'debug and programming: the header pin is the access point; test point pad added so a probe reaches the net without the header'
+- name: serial-wire output
+  net: SWO
+  test_point: TP409
+  block: trace output, PB3 (optional); test point pad added so a probe reaches the net without the header
+- name: boot mode
+  net: BOOT0
+  test_point: TP410
+  block: 'boot strap: R401 pull-down, JP401 to +3V3; the jumper pin is the access point; test point pad added so a probe reaches the net without the header'
+- name: USB data plus
+  net: USB_DP
+  test_point: TP411
+  block: 'panel-cable USB port, PA12: J402.1 and the ESD clamp D401; test point pad added so a probe reaches the net without the header'
+- name: USB data minus
+  net: USB_DM
+  test_point: TP412
+  block: 'panel-cable USB port, PA11: J402.2 and the ESD clamp D401; test point pad added so a probe reaches the net without the header'
+- name: proof-of-life output
+  net: POL_OUT
+  test_point: TP203
+  block: 'PC7: the interlock drive''s input, through R207 to the buffer; its test point belongs to the interlock block that consumes it'
+connector_pins:
+- pin: J401.1
+  net: DBG_VTREF
+  class: supply_input
+  why: 'Cortex Debug VTref: a probe senses the target voltage here and some probes can also source power on it; classed a supply input and reaches +3V3 only through R402 (1 kohm) and JP402'
+- pin: J401.2
+  net: SWDIO
+  class: signal
+  why: serial-wire data, PA13
+- pin: J401.3
+  net: GND
+  class: ground
+  why: ground
+- pin: J401.4
+  net: SWCLK
+  class: signal
+  why: serial-wire clock, PA14
+- pin: J401.5
+  net: GND
+  class: ground
+  why: ground
+- pin: J401.6
+  net: SWO
+  class: signal
+  why: serial-wire output, PB3
+- pin: J401.7
+  net: no connect
+  class: signal
+  why: key position of the Cortex Debug 10-pin header; no contact
+- pin: J401.8
+  net: no connect
+  class: signal
+  why: NC/TDI, JTAG data in, not used with serial wire
+- pin: J401.9
+  net: GND
+  class: ground
+  why: GND detect, grounded on the target
+- pin: J401.10
+  net: NRST
+  class: signal
+  why: target reset from the probe
+- pin: J402.1
+  net: USB_DP
+  class: signal
+  why: USB D+ from the panel cable, PA12
+- pin: J402.2
+  net: USB_DM
+  class: signal
+  why: USB D- from the panel cable, PA11
+- pin: J402.3
+  net: GND
+  class: ground
+  why: USB return from the panel cable
+- pin: J402.4
+  net: USB_SHIELD
+  class: signal
+  why: cable shield; reaches GND only through R403 (1 MOhm) and C419 (4.7 nF) in parallel, so a panel connector shell touching earthed metal cannot tie earth to controller ground
+- pin: J402.5
+  net: USB_VBUS
+  class: supply_input
+  why: the cable's VBUS for bench power; reaches the board only through D402, F401 and the cable position of the selector JP301, which is open as drawn; carries no mains-referenced net
+- pin: U301.1
+  net: LINE_MOD
+  class: supply_input
+  why: mains live feed of the logic supply module, from net LINE through the link JP303 (or the unfitted thermistor RT301), upstream of the interlock contact (the module keeps power when the contact opens); mains-referenced
+- pin: JP303.1
+  net: LINE
+  class: supply_input
+  why: module feed link, line side, net LINE after the first-power link JP101 and the entry fuse; mains-referenced
+- pin: JP303.2
+  net: LINE_MOD
+  class: signal
+  why: module feed link, module side, the module's live pin only; mains-referenced
+- pin: RT301.1
+  net: LINE
+  class: supply_input
+  why: inrush thermistor, line side (not fitted), the same net as JP303.1; mains-referenced
+- pin: RT301.2
+  net: LINE_MOD
+  class: signal
+  why: inrush thermistor, module side (not fitted), the same net as JP303.2; mains-referenced
+- pin: U301.2
+  net: NEUTRAL
+  class: supply_input
+  why: mains neutral feed of the module, from the neutral pour above the shunt; mains-referenced
+- pin: U301.3
+  net: GND
+  class: ground
+  why: module -Vo, the low-voltage ground
+- pin: U301.4
+  net: +5V_MOD
+  class: signal
+  why: 'module +Vo: the rail''s producer, a board-internal net; the module is a part, not a connector'
+- pin: JP301.1
+  net: +5V_MOD
+  class: signal
+  why: selector, module side; power reaches it only through the module
+- pin: JP301.2
+  net: +5V
+  class: signal
+  why: selector, common (the rail's load side)
+- pin: JP301.3
+  net: USB_VBUS_F
+  class: signal
+  why: selector, cable side; reached only from the fuse F401 output, which is this net
+- pin: JP302.1
+  net: +3V3_REG
+  class: signal
+  why: isolating link, source side
+- pin: JP302.2
+  net: +3V3
+  class: signal
+  why: isolating link, load side
+- pin: JP402.1
+  net: +3V3_DBG
+  class: signal
+  why: isolating link of the debug source, source side
+- pin: JP402.2
+  net: +3V3
+  class: signal
+  why: isolating link, load side
+- pin: JP401.1
+  net: BOOT0
+  class: signal
+  why: boot strap jumper; not a supply path
+- pin: JP401.2
+  net: +3V3
+  class: signal
+  why: boot strap jumper, tied to the 3.3 V rail; power reaches it only from the rail
+first_power:
+- input: J401.1 DBG_VTREF
+  means: R402, 1 kohm +/-1 %, on the board, in series between J401.1 (with TP405) and JP402; nothing but TP405 lies between the pin and R402
+  link: JP402
+  limited_current: 'I = V / R402: a probe that sources 5.0 V on VTref into a short on +3V3 gives 5.0 V / 1 kohm = 5.0 mA (5.5 mA at 5.5 V, 3.6 mA at 3.6 V); with the link open nothing flows'
+- input: U301.1 and U301.2 LINE and NEUTRAL (mains)
+  means: 'the first-power means of the board''s mains entry (owner A), which sits upstream of net LINE; the module takes LINE_MOD (LINE through the link JP303) and NEUTRAL and adds no means of its own. Interface requirement for the lead:
+    the net the module taps must be on the load side of that means. If A''s means is a lamp or resistor in the link between the entry fuse and net LINE, it limits the module''s cold-start inrush too; if
+    the module tap is on the fuse''s own load-side clip ahead of that link, the module is not limited and the lead places a means here'
+  link: owner A's position, not this sheet's
+  limited_current: 'not computed here: the means is owner A''s and its arithmetic is A''s row; the module''s cold start is 40 A typical at 230 Vac (IRM-20 sheet), typical only (inrush row of circuit-proof.md)'
+rail_loads:
+- rail: +3V3
+  current_a: 0.24
+  condition: U401 at 200 MHz, power scale VOS3, all peripherals enabled, maximum IDD solved at its own junction temperature 106.7 degC (TA 70 degC, theta_JA 45.0 degC/W, VDD 3.400 V); an assumed firmware
+    configuration, owner-held
+  source: DS12110 Rev 11 Table 119 and Table 222; circuit-proof/b_regulator_thermal.py
+- rail: +3V3A
+  current_a: 0.004073
+  condition: three ADCs at the Table 174 ceiling plus the reference buffer at its maximum
+  source: DS12110 Rev 11 Tables 174 and 117
+- rail: +5V
+  current_a: 0.2523
+  condition: 'U302 input: the 3.3 V total of the controller alone (0.240 A) plus the regulator''s ground pin current at that load (12.3 mA, interpolated between the maker''s maxima of 5.5 mA at 100 mA and 25 mA at 500 mA); the other 3.3 V loads add one for one and about 0.05 A of ground pin current per ampere'
+  source: Analog Devices LT1963A series 1963aff, electrical characteristics (GND pin current, maxima over temperature); circuit-proof/b_regulator_thermal.py
+notes: 'Rule for owners of stages that pull a controller pin to +5V: with JP302 or JP402 open the controller has no VDD while +5V is up; a pin pulled to 5 V then exceeds DS12110 Table 112 (VDD + 3.6 V)
+  and Table 109 (4.0 V at VDD = 0 V). Bring-up with JP302 open is done with those pull-ups disconnected (see circuit-proof.md).
+
+  First power sequence for this block: (1) JP301 jumper removed, JP302 and JP402 open, JP401 open; (2) mains on through the board''s means (owner A); read +5V_MOD at TP301; (3) solder the 22 ohm 5 W resistor''s leads to JP301 pins 1 and 2, read
+  +5V against it; replace it by the jumper on pins 1-2; (4) close JP302 and read +3V3_REG at TP302 and +3V3; (5) read +3V3A_FB at TP303, +3V3A and VREF+ (TP402), VCAP at TP401 (VOS3 after reset: 0.95 to 1.05 V; DS12110
+  Table 112); (6) connect the probe, close JP402 only if VTref sensing is wanted; (7) check NRST at TP404 high, HSE at TP406; with +3V3 falling (open JP302 and read TP404) NRST must go low before +3V3 reaches 2.87 V and stay low for 120 to 280 ms after it recovers past the threshold plus 0.2 V (U402); (8) module feed: JP303 is fitted and RT301 is not; at the first cold start from mains watch the entry fuse F101, and fit RT301 in place of JP303 (remove the link, never fit both) only if F101 opens at a cold start; (9) after 30 minutes at load read the temperature next to C304 and C305 (X5R, 85 degC rating) with a thermocouple or a contact probe: it must stay under 85 degC, or the capacitors move away from the regulator tab.
+
+  '

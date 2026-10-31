@@ -72,6 +72,41 @@
 # project, we probably won't insulation test with equipment". The conservative reading is used wherever
 # it is cheap: the "other materials" column, rounding up, and the full figure for any pair not listed.
 #
+# Fresh acceptance of 2026-10-29 (UTC). The owner instructed the drafting assistant in session
+# on 2026-10-29: "agree, proceed. I am signing that off, sign on my behalf". The changes accepted
+# are two barrier entries added (interlock-relay, the safety relay K201; isolated-measurement,
+# the isolated measurement chip U601) and the exceptions below. accepted_on was set to
+# 2026-10-29, the UTC date of that instruction, and accepted_by is unchanged. The figures for
+# board spacing (pollution degree 3, 10.0 mm creepage, 3.0 mm clearance, 4.0 kV) are unchanged.
+#
+# Fresh acceptance of 2026-10-29 (UTC), second re-sign. The owner was told "Creepage ratings: the
+# signed basis should list the bought parts' actual ratings per barrier. That is another re-sign,
+# which I can enter on your behalf as before." and instructed the drafting assistant in session on
+# 2026-10-29: "go". The change accepted is that each barrier's formed_by now states the rating of
+# each bought part that forms it, as the makers' documents read, and which stated figures fall below
+# the declared 10.0 mm creepage, 3.0 mm clearance and 4.0 kV. accepted_on was set to 2026-10-29,
+# the UTC date of that instruction, and accepted_by is unchanged. No declared board figure changed.
+#
+# The owner's accepted exceptions of 2026-10-29: a bought part whose package fixes a creepage
+# smaller than the 10.0 mm above is accepted at the maker's figure, not relaxed in the board
+# spacing, which stays 10.0 mm where the board spacing is ours. The reasons the owner gave:
+# the enclosure is sealed and inside the machine; the board has slots between the pad rows where
+# the spacing is ours to set; a conformal coat is planned (it needs a fresh basis when declared,
+# see the pollution degree note below); and nothing mains-referenced is touchable beyond the
+# items listed under each barrier. The parts and the makers' figures:
+#   - U601 AMC131M02: creepage 8.0 mm (TI SBASA56, September 2023).
+#   - K201 HF115F-Q: creepage 'over 8 mm' (Hongfa).
+#   - K731 and K741 HF32FA-G: creepage 'over 8 mm' (Hongfa).
+#   - U701 and U711 MOC3052M: creepage at least 7 mm (onsemi MOC3052M/D Rev 3 and Rev 1.7); the surface-mount part stays: the owner
+#     decided on 2026-10-29 against the through-hole 0.4 inch lead-spacing option (it adds assembly cost and hand
+#     soldering), accepting the 7 mm for the reasons above, the box being mostly closed and a coat planned after test.
+#   - U602 LTV-814S creepage and clearance, and K201 clearance: not stated by the makers read;
+#     unknown until read from the makers.
+# The record has no field for accepted exceptions and board_check.py reads none (a key outside
+# its list is a violation), so they are recorded here, in each barrier's formed_by below (the one
+# free-text field the check accepts, where the bought parts' ratings are stated and signed) and in
+# open-items.md, "Owner risk acceptances (2026-10-29)", and are not checked by the tool.
+#
 # The tables are those of IEC 60664-1 (insulation coordination for equipment within
 # low-voltage supply systems), Annex F. The standard is copyrighted and not reproduced; each
 # row below is the one row the inputs select, read through freely published derivations. They are
@@ -104,8 +139,8 @@
 # The basis the figures are read at: 253 V rms is the top of the declared span, so it falls in
 # the 300 V line-to-neutral row of the rated impulse voltage table, which gives 2.5 kV at
 # overvoltage category II for basic insulation and so 4.0 kV (one step up) for reinforced.
-# Reinforced is the insulation every barrier below that switches or senses mains directly is declared
-# to provide; the pressure-sensor water-path barrier alone is basic (see barrier_types).
+# Reinforced is the insulation every barrier below that switches or senses mains directly (the safety
+# relay and the isolated measurement chip included) is declared to provide; the pressure-sensor water-path barrier alone is basic (see barrier_types).
 #
 # Pollution degree 2, boards protected against moisture by the enclosure. The enclosure is sealed from
 # the steam wand, but steam may be present in the machine around it and a burst water line beside it
@@ -135,9 +170,12 @@ barriers:
   - supply-timing-front-end
   - mains-presence-confirm
   - valve-switch
+  - interlock-relay
+  - isolated-measurement
   - pressure-sensor-water-path
 # Every barrier that switches or senses mains directly (supply module, heater switch, pump drive,
-# supply-timing front end, mains-presence confirm, valve switch) is reinforced, mains to low
+# supply-timing front end, mains-presence confirm, valve switch, interlock relay, isolated
+# measurement) is reinforced, mains to low
 # voltage, and none has its low-voltage side bonded to protective earth: the logic supply is a
 # Class II module whose output is not referenced to earth, and the cavity's walls are plastic
 # (docs/sunbeam-em7000/controller-board-design-constraints.md, Logic supply; reference-machine.md,
@@ -171,7 +209,8 @@ barrier_types:
       - USB connector
       - operator controls
       - enclosure
-    formed_by: the bought logic-supply module's input-to-output isolation, and the module-to-board spacing the carrier keeps
+    formed_by: >-
+      the bought logic-supply module's input-to-output isolation, and the module-to-board spacing the carrier keeps. Bought part U301 Mean Well IRM-20-5 (IRM-20-SPEC 2025-11-21): withstand 4.2 kVac input to output, class II; creepage and clearance not stated, so unsourced and counted as absent against 10.0 mm creepage and 3.0 mm clearance, owner-accepted exception; the 4.2 kVac withstand is stated as a test figure and no impulse figure is stated against 4.0 kV.
   - barrier: heater-switch
     insulation: reinforced
     earth_bonded: false
@@ -187,7 +226,8 @@ barrier_types:
       - USB connector
       - operator controls
       - enclosure
-    formed_by: the opto-triac between each pump drive and its triac, and the board spacing around it
+    formed_by: >-
+      the opto-triac between each pump drive and its triac, and the board spacing around it. Bought parts U701 and U711 MOC3052SVM (onsemi MOC3052M family, MOC3052M/D Rev 3 and Rev 1.7): creepage and clearance at least 7 mm and VISO 4170 Vrms; 7 mm falls below the declared 10.0 mm creepage and the 3.0 mm clearance is met; the sheet's impulse figure VIOTM 6000 V pk is above 4.0 kV; owner-accepted creepage exception, the 10 mm option (0.4 inch spacing) declined by the owner.
   - barrier: supply-timing-front-end
     insulation: reinforced
     earth_bonded: false
@@ -195,7 +235,8 @@ barrier_types:
       - USB connector
       - operator controls
       - enclosure
-    formed_by: the AC-input optocoupler presenting both crossings of the supply, and the board spacing around it
+    formed_by: >-
+      the AC-input optocoupler presenting both crossings of the supply, and the board spacing around it. Bought part U602 LTV-814S (Lite-On LTV-814 family sheet, no revision): VISO 5000 Vrms; creepage and clearance not stated for the plain part (7.0 mm only in the -V variant's own specification, which is not the part drawn), so unsourced and counted as absent against 10.0 mm creepage and 3.0 mm clearance, owner-accepted exception; no impulse figure stated against 4.0 kV.
   - barrier: mains-presence-confirm
     insulation: reinforced
     earth_bonded: false
@@ -211,7 +252,26 @@ barrier_types:
       - USB connector
       - operator controls
       - enclosure
-    formed_by: the relay's coil-to-contact insulation, and the board spacing around it
+    formed_by: >-
+      the relay's coil-to-contact insulation, and the board spacing around it. Bought parts K731 and K741 HF32FA-G (Hongfa 2026 Rev 1.00): creepage and clearance over 8 mm and 5000 VAC coil to contacts; over 8 mm falls below the declared 10.0 mm creepage and meets the 3.0 mm clearance; no impulse figure stated against 4.0 kV; owner-accepted creepage exception.
+  - barrier: interlock-relay
+    insulation: reinforced
+    earth_bonded: false
+    touchable:
+      - USB connector
+      - operator controls
+      - enclosure
+    formed_by: >-
+      the safety relay's coil-to-contact insulation (the series interlock contact carrying the live feed to every load), and the board spacing around it. Bought part K201 HF115F-Q (Hongfa 2024 Rev 1.00): creepage over 8 mm, clearance not stated, 5 kV coil to contact, 10 kV 1.2/50 us; over 8 mm falls below the declared 10.0 mm creepage; the clearance is unsourced and counted as absent against 3.0 mm, owner-accepted exception; the 10 kV 1.2/50 us figure is above 4.0 kV.
+  - barrier: isolated-measurement
+    insulation: reinforced
+    earth_bonded: false
+    touchable:
+      - USB connector
+      - operator controls
+      - enclosure
+    formed_by: >-
+      the isolated measurement chip's integral isolation barrier, and the board spacing around it. Bought part U601 AMC131M02 (TI SBASA56, September 2023): creepage 8.0 mm and clearance 8.0 mm, VIOTM 7070 V pk, VIMP 7700 V pk, working voltage VIORM 1700 V pk; 8.0 mm falls below the declared 10.0 mm creepage, the 3.0 mm clearance and 4.0 kV impulse are met; owner-accepted creepage exception.
   - barrier: pressure-sensor-water-path
     insulation: basic
     earth_bonded: false

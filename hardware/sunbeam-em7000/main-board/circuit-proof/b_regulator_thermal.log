@@ -1,0 +1,27 @@
+Dropout
+  lowest input 4.775 V (4.875 V less half the 200 mVp-p ripple); needs >= 3.750 V for the highest output 3.400 V + dropout 0.350 V
+  margin 1.025 V -> in regulation: True
+Regulator thermal (TA 70, junction limit 125, theta_JA = 56 degC/W, the maker's 100 mm2 top / 2500 mm2 back figure)
+  PD max 0.982 W; PD = (5.125-3.200)*I + 5.125*IGND(I), IGND from the maker's maxima (25 mA at 500 mA) -> largest 3.3 V load 0.450 A
+    theta_JA  42: 0.591 A
+    theta_JA  49: 0.513 A
+    theta_JA  52: 0.485 A
+    theta_JA  56: 0.450 A
+    theta_JA  70: 0.360 A
+    theta_JA 110: 0.228 A
+  at the 0.293 A of stated 3.3 V loads: GND pin 14.9 mA, PD 0.640 W, junction 105.9 degC
+Controller junction temperature at TA 70 degC, VDD 3.400 V, theta_JA 45.0 (maximum IDD, interpolated between the table's Tj columns)
+  configuration                IDD mA    TJ degC   TJmax     result
+  480 MHz VOS0, periph disabled n/a       diverges  105       FAILS
+  400 MHz VOS1, periph disabled n/a       diverges  125       FAILS
+  300 MHz VOS2, periph disabled 221       103.8     125       holds
+  200 MHz VOS3, periph disabled 132       90.2      125       holds
+  480 MHz VOS0, periph enabled n/a       diverges  105       FAILS
+  400 MHz VOS1, periph enabled n/a       diverges  125       FAILS
+  300 MHz VOS2, periph enabled n/a       diverges  125       FAILS
+  200 MHz VOS3, periph enabled 240       106.7     125       holds
+3.3 V rail total at the configurations that hold, against the regulator's limit 0.450 A
+  300 MHz VOS2, periph disabled controller 221 mA -> room left for every other 3.3 V load: 229 mA
+  200 MHz VOS3, periph disabled controller 132 mA -> room left for every other 3.3 V load: 318 mA
+  200 MHz VOS3, periph enabled controller 240 mA -> room left for every other 3.3 V load: 210 mA
+Division record figure: 439 mA (480 MHz VOS0, all peripherals, Tj 85) -> regulator PD 0.958 W against the limit 0.982 W

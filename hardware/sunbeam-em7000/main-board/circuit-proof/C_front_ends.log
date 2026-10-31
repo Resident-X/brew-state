@@ -1,0 +1,156 @@
+== common inputs
+  tCONV = (810.5 + 0.5 + 16/2) / 10 MHz = 81.90 us
+  acquisition time = 10 ms - tCONV = 9.9181 ms
+  tau allowed = tacq / ln(2^16) = 0.8943 ms ; with the half-LSB reading ln(2^17) = 0.8417 ms
+  highest frequency of interest = Nyquist of the 10 ms update = 50 Hz
+  resistor extremes over 25..70 degC: x0.9855 .. x1.0145 ; capacitor extremes x0.7650 .. x1.2650
+
+== RCFL-1: settling, reservoir and corner, every converter input
+ NTC_COF (R501,R502,C501): Rth,max = 11.159 kOhm, C range 36.0..59.5 nF
+   R*C worst = 0.6635 ms ; allowed 0.8943 ms (ln 2^16) / 0.8417 ms (ln 2^17) ; margin 21.2 %
+   C min = 36.0 nF vs 20*CADC = 80 pF  (x449) ; corner (R,C highest) = 240 Hz vs 50 Hz (x4.8)
+   largest extra source resistance (sensor output impedance) before the half-LSB reading fails = 3.00 kOhm
+   memory of the previous conversion (charge sharing, CADC typ): 400 uV = 8.0 LSB (LSB = 50.4 uV)
+  CHECK NTC_COF R*C <= tacq/ln(2^16)                                   ok
+  CHECK NTC_COF R*C <= tacq/ln(2^17)                                   ok
+  CHECK NTC_COF C >= 20 CADC                                           ok
+  CHECK NTC_COF corner above Nyquist of the update rate                ok
+ NTC_STM (R503,R504,C502): Rth,max = 11.159 kOhm, C range 36.0..59.5 nF
+   R*C worst = 0.6635 ms ; allowed 0.8943 ms (ln 2^16) / 0.8417 ms (ln 2^17) ; margin 21.2 %
+   C min = 36.0 nF vs 20*CADC = 80 pF  (x449) ; corner (R,C highest) = 240 Hz vs 50 Hz (x4.8)
+   largest extra source resistance (sensor output impedance) before the half-LSB reading fails = 3.00 kOhm
+   memory of the previous conversion (charge sharing, CADC typ): 400 uV = 8.0 LSB (LSB = 50.4 uV)
+  CHECK NTC_STM R*C <= tacq/ln(2^16)                                   ok
+  CHECK NTC_STM R*C <= tacq/ln(2^17)                                   ok
+  CHECK NTC_STM C >= 20 CADC                                           ok
+  CHECK NTC_STM corner above Nyquist of the update rate                ok
+ NTC_WAND (R505,R506,C503): Rth,max = 11.159 kOhm, C range 36.0..59.5 nF
+   R*C worst = 0.6635 ms ; allowed 0.8943 ms (ln 2^16) / 0.8417 ms (ln 2^17) ; margin 21.2 %
+   C min = 36.0 nF vs 20*CADC = 80 pF  (x449) ; corner (R,C highest) = 240 Hz vs 50 Hz (x4.8)
+   largest extra source resistance (sensor output impedance) before the half-LSB reading fails = 3.00 kOhm
+   memory of the previous conversion (charge sharing, CADC typ): 400 uV = 8.0 LSB (LSB = 50.4 uV)
+  CHECK NTC_WAND R*C <= tacq/ln(2^16)                                  ok
+  CHECK NTC_WAND R*C <= tacq/ln(2^17)                                  ok
+  CHECK NTC_WAND C >= 20 CADC                                          ok
+  CHECK NTC_WAND corner above Nyquist of the update rate               ok
+ STMP_AN (R531,R532,R533,C522): Rth,max = 7.778 kOhm, C range 36.0..59.5 nF
+   R*C worst = 0.4624 ms ; allowed 0.8943 ms (ln 2^16) / 0.8417 ms (ln 2^17) ; margin 45.1 %
+   C min = 36.0 nF vs 20*CADC = 80 pF  (x449) ; corner (R,C highest) = 344 Hz vs 50 Hz (x6.9)
+   largest extra source resistance (sensor output impedance) before the half-LSB reading fails = 6.38 kOhm
+   memory of the previous conversion (charge sharing, CADC typ): 400 uV = 8.0 LSB (LSB = 50.4 uV)
+  CHECK STMP_AN R*C <= tacq/ln(2^16)                                   ok
+  CHECK STMP_AN R*C <= tacq/ln(2^17)                                   ok
+  CHECK STMP_AN C >= 20 CADC                                           ok
+  CHECK STMP_AN corner above Nyquist of the update rate                ok
+ BREW_AN (R534,R535,R536,C523): Rth,max = 7.778 kOhm, C range 36.0..59.5 nF
+   R*C worst = 0.4624 ms ; allowed 0.8943 ms (ln 2^16) / 0.8417 ms (ln 2^17) ; margin 45.1 %
+   C min = 36.0 nF vs 20*CADC = 80 pF  (x449) ; corner (R,C highest) = 344 Hz vs 50 Hz (x6.9)
+   largest extra source resistance (sensor output impedance) before the half-LSB reading fails = 6.38 kOhm
+   memory of the previous conversion (charge sharing, CADC typ): 400 uV = 8.0 LSB (LSB = 50.4 uV)
+  CHECK BREW_AN R*C <= tacq/ln(2^16)                                   ok
+  CHECK BREW_AN R*C <= tacq/ln(2^17)                                   ok
+  CHECK BREW_AN C >= 20 CADC                                           ok
+  CHECK BREW_AN corner above Nyquist of the update rate                ok
+ SPARE_AN2 (R537,R538,R539,C524): Rth,max = 7.778 kOhm, C range 36.0..59.5 nF
+   R*C worst = 0.4624 ms ; allowed 0.8943 ms (ln 2^16) / 0.8417 ms (ln 2^17) ; margin 45.1 %
+   C min = 36.0 nF vs 20*CADC = 80 pF  (x449) ; corner (R,C highest) = 344 Hz vs 50 Hz (x6.9)
+   largest extra source resistance (sensor output impedance) before the half-LSB reading fails = 6.38 kOhm
+   memory of the previous conversion (charge sharing, CADC typ): 400 uV = 8.0 LSB (LSB = 50.4 uV)
+  CHECK SPARE_AN2 R*C <= tacq/ln(2^16)                                 ok
+  CHECK SPARE_AN2 R*C <= tacq/ln(2^17)                                 ok
+  CHECK SPARE_AN2 C >= 20 CADC                                         ok
+  CHECK SPARE_AN2 corner above Nyquist of the update rate              ok
+ CURR1_AN (R570,R571,R573,C570): Rth,max = 7.778 kOhm, C range 36.0..59.5 nF
+   R*C worst = 0.4624 ms ; allowed 0.8943 ms (ln 2^16) / 0.8417 ms (ln 2^17) ; margin 45.1 %
+   C min = 36.0 nF vs 20*CADC = 80 pF  (x449) ; corner (R,C highest) = 344 Hz vs 50 Hz (x6.9)
+   largest extra source resistance (sensor output impedance) before the half-LSB reading fails = 6.38 kOhm
+   memory of the previous conversion (charge sharing, CADC typ): 400 uV = 8.0 LSB (LSB = 50.4 uV)
+  CHECK CURR1_AN R*C <= tacq/ln(2^16)                                  ok
+  CHECK CURR1_AN R*C <= tacq/ln(2^17)                                  ok
+  CHECK CURR1_AN C >= 20 CADC                                          ok
+  CHECK CURR1_AN corner above Nyquist of the update rate               ok
+ CURR2_AN (R574,R575,R577,C571): Rth,max = 7.778 kOhm, C range 36.0..59.5 nF
+   R*C worst = 0.4624 ms ; allowed 0.8943 ms (ln 2^16) / 0.8417 ms (ln 2^17) ; margin 45.1 %
+   C min = 36.0 nF vs 20*CADC = 80 pF  (x449) ; corner (R,C highest) = 344 Hz vs 50 Hz (x6.9)
+   largest extra source resistance (sensor output impedance) before the half-LSB reading fails = 6.38 kOhm
+   memory of the previous conversion (charge sharing, CADC typ): 400 uV = 8.0 LSB (LSB = 50.4 uV)
+  CHECK CURR2_AN R*C <= tacq/ln(2^16)                                  ok
+  CHECK CURR2_AN R*C <= tacq/ln(2^17)                                  ok
+  CHECK CURR2_AN C >= 20 CADC                                          ok
+  CHECK CURR2_AN corner above Nyquist of the update rate               ok
+  RAIN: rev Y 50 kOhm max; rev V 170 Ohm max at 16 bit. The reservoir capacitor stands at the converter pin, with the series resistor on the sensor side of it, so the impedance the converter sees through the pin during the sampling window is the capacitor's.
+  CHECK every Rth,max below the rev Y RAIN 50 kOhm                     ok
+
+== PINV-1: converter pin voltage, scaling cells (sensor 5 V class)
+  ratio nominal 0.6667, over tolerance and 25..70 degC: 0.6602 .. 0.6731 (-0.97 % .. +0.96 %)
+  sensor output / supply fault at 5.125 V (5 V rail high, IRM-20-5 +2.5 %): pin node 3.450 V ; limit 4.000 V (Table 11: TT_xx 4.0 V; FT_a with analogue peripheral 4 V, note 5) margin 0.550 V
+  CHECK pin node below 4.0 V at 5.125 V                                ok
+  sensor output / supply fault at 5.250 V (5.25 V (rail-high case of the brief)): pin node 3.534 V ; limit 4.000 V (Table 11: TT_xx 4.0 V; FT_a with analogue peripheral 4 V, note 5) margin 0.466 V
+  CHECK pin node below 4.0 V at 5.250 V                                ok
+  sensor output / supply fault at 5.500 V (5.5 V (S1 transducer supply limit 5.0 +- 0.5 V, function-forms record, S11)): pin node 3.702 V ; limit 4.000 V (Table 11: TT_xx 4.0 V; FT_a with analogue peripheral 4 V, note 5) margin 0.298 V
+  CHECK pin node below 4.0 V at 5.500 V                                ok
+  full-scale reading of a 0.5-4.5 V ratiometric sensor on the 5 V rail high: 3.105 V (VREF+ = VDDA <= 3.3 V nominal)
+  CHECK full scale below 3.3 V on a 5.125 V rail                       ok
+  gain error of the front end at 4.5 V reading, as a share of the 4.0 V span: +1.08 % / -1.09 %
+   full scale 7.0 bar: transducer 1 % FS + front end 1.09 % FS = 0.146 bar vs binding 0.25 bar : within
+   full scale 10.0 bar: transducer 1 % FS + front end 1.09 % FS = 0.209 bar vs binding 0.25 bar : within
+   full scale 25.0 bar: transducer 1 % FS + front end 1.09 % FS = 0.523 bar vs binding 0.25 bar : outside
+   largest full scale the 1 % divider supports with a 1 % transducer: 11.9 bar
+   with 0.1 % / 25 ppm resistors the front end is +0.159 % FS, supporting 21.6 bar
+
+== thermistor front end: temperature error of the front end alone
+  beta implied by R_NTC(85 degC) = 10 kOhm and R25 = 100 kOhm: 4098 K
+  beta implied by R_NTC(90 degC) = 10 kOhm and R25 = 100 kOhm: 3836 K
+ 1 % 100 ppm/K divider (C25804)
+   beta  3000 K : worst front-end error (degC) at 25/60/88/100/150 degC =  3.07  1.87  1.61  1.58  1.71
+   beta  3838 K : worst front-end error (degC) at 25/60/88/100/150 degC =  2.41  1.26  1.09  1.09  1.32
+   beta  3950 K : worst front-end error (degC) at 25/60/88/100/150 degC =  2.34  1.20  1.05  1.05  1.29
+   beta  4097 K : worst front-end error (degC) at 25/60/88/100/150 degC =  2.25  1.13  0.99  1.00  1.26
+   beta  4500 K : worst front-end error (degC) at 25/60/88/100/150 degC =  2.05  0.97  0.86  0.88  1.21
+ 0.1 % 25 ppm/K divider (C95204)
+   beta  3000 K : worst front-end error (degC) at 25/60/88/100/150 degC =  2.71  1.42  1.07  1.00  0.96
+   beta  3838 K : worst front-end error (degC) at 25/60/88/100/150 degC =  2.12  0.90  0.67  0.64  0.73
+   beta  3950 K : worst front-end error (degC) at 25/60/88/100/150 degC =  2.06  0.86  0.63  0.61  0.72
+   beta  4097 K : worst front-end error (degC) at 25/60/88/100/150 degC =  1.99  0.80  0.59  0.57  0.71
+   beta  4500 K : worst front-end error (degC) at 25/60/88/100/150 degC =  1.81  0.67  0.50  0.50  0.71
+  ADC offset and gain error are typical only in Table 78 / Table 176 (rev V: EO +-10 LSB, EG +-15 LSB); not a bound, so not in the sum:
+   25 LSB typ = 1.26 mV = 0.050 degC at 88 degC, beta 3950 K
+  This row does not close: beta and the element tolerance are pending in the records; the ADC accuracy is typical only.
+
+== flow input level (PC6, FT_h)
+  push-pull meter output at 5 V rail high (+2.5 %): pin 5.125 V ; operating limit < 5.5 V (Table 14 note: VIN <= min(VDD..)+3.6 V and < 5.5 V) margin 0.375 V ; Table 11 limit min(VDD+4, 6) = 6.0 V margin 0.875 V
+  CHECK flow pin below 5.5 V: push-pull meter output at 5 V rail high (+2.5 %) ok
+  push-pull at 5.25 V: pin 5.250 V ; operating limit < 5.5 V (Table 14 note: VIN <= min(VDD..)+3.6 V and < 5.5 V) margin 0.250 V ; Table 11 limit min(VDD+4, 6) = 6.0 V margin 0.750 V
+  CHECK flow pin below 5.5 V: push-pull at 5.25 V                      ok
+  open-drain with the 3.3 V pull-up: pin 3.600 V ; operating limit < 5.5 V (Table 14 note: VIN <= min(VDD..)+3.6 V and < 5.5 V) margin 1.900 V ; Table 11 limit min(VDD+4, 6) = 6.0 V margin 2.400 V
+  CHECK flow pin below 5.5 V: open-drain with the 3.3 V pull-up        ok
+  open-drain rising edge: tau = (R520 + R521) * C520 = 663 us ; 10-90 % rise 1460 us ; corner 240 Hz
+  pulse rate passed at the corner, per millilitre per second of the pump's 7.0 mL/s full scale (estimate in the record): K up to 34268 pulses/L
+  open-drain sink current when the meter output is low: 0.365 mA at 3.6 V ; the meter's low level at that current is not read.
+
+== BUSL-1: pull-ups of the two I2C buses, Standard-mode
+  Rp(min) = (3.6 - 0.4) / 3 mA = 1067 Ohm (UM10204 equation 2 at VDD = 3.6 V, the rail's datasheet-maximum)
+  fitted Rp = 2200 Ohm (up to 2232 Ohm with tolerance and 25..70 degC), Rs = 100 Ohm (up to 101 Ohm)
+  Rp(max) at Cb = 400 pF = 1000 ns / (0.8473 * 400 pF) = 2951 Ohm
+  bus capacitance the rise time allows with Rp+Rs at their highest: 506 pF (>= 400 pF bus limit)
+  CHECK Rp(min) <= Rp at its lowest                                    ok
+  CHECK Cb allowed by tr >= 400 pF                                     ok
+  CHECK Rp at its highest <= Rp(max) at 400 pF                         ok
+  pins on the line: sensor 10 pF + controller pin 10 pF + TVS 0.55 pF + BAT54S 10 pF = 31.1 pF ; left for pads, header and cable within 400 pF = 368.9 pF
+  VDD 3.0 V: sensor pulls low (0.4 V) through Rs: controller pin sees 0.522 V; VIL(max) 0.3 VDD = 0.900 V; margin 0.378 V vs noise margin 0.1 VDD = 0.300 V
+  CHECK low-level noise margin at VDD 3.0 V                            ok
+  VDD 3.3 V: sensor pulls low (0.4 V) through Rs: controller pin sees 0.536 V; VIL(max) 0.3 VDD = 0.990 V; margin 0.454 V vs noise margin 0.1 VDD = 0.330 V
+  CHECK low-level noise margin at VDD 3.3 V                            ok
+  VDD 3.6 V: sensor pulls low (0.4 V) through Rs: controller pin sees 0.550 V; VIL(max) 0.3 VDD = 1.080 V; margin 0.530 V vs noise margin 0.1 VDD = 0.360 V
+  CHECK low-level noise margin at VDD 3.6 V                            ok
+
+== short-safe 3.3 V feeds: Bourns MF-NSMF012-2 (Rev. V 07/17)
+  sensor 3.0 mA vs hold current at 70 degC 80 mA: 27x ; drop across the PTC at R1max 8.5 Ohm = 25.5 mV
+  hard short at a header: 2.67 A (3.6 V / 1.35 Ohm) until it trips (<= 0.20 s at 1.0 A or more, 23 degC) ; Imax 10 A, Vmax 30 V
+  CHECK short current within Imax                                      ok
+  link in the short-circuit path, 1206 jumper: overload rating 10 A against 2.67 A (a 0603 jumper's 2 A would not do)
+  CHECK 1206 link overload rating covers the short current             ok
+  CHECK a 0603 link would not (reason for the 1206)                    ok
+  CHECK sensor current below the 70 degC hold current                  ok
+
+SUMMARY: 0 checks failed

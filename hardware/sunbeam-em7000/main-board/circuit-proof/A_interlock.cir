@@ -1,0 +1,30 @@
+* Interlock drive, sheet "Interlock": netlist with the reference designators and values of the sheet.
+* Naming of the SPICE lines (KiCad's export prefixes the device letter): XU201 = U201, MQ201 = Q201,
+* DZ201 = Z201. K201 (relay), the test points and the connectors are excluded from simulation; each
+* deck adds the relay's coil as a load across +5V and POL_COIL_LO, which is not a part of the sheet.
+* Models are in each deck (A_models.inc) because they carry the datasheet limits the deck moves.
+C201 +5V GND 100n
+R201 POL_OUT GND 100k
+R202 POL_OUT GND 100k
+XU201 POL_OUT POL_BUF +5V GND AHCT1G17
+* channel A
+C202 POL_BUF POL_NODE_A 100n
+D201 GND POL_NODE_A DSCH
+D202 POL_NODE_A POL_GATE_A DSI
+C203 POL_GATE_A GND 4.7n
+R203 POL_GATE_A GND 5.6Meg
+R205 POL_NODE_A GND 100k
+MQ201 POL_MID POL_GATE_A GND GND NM
+* channel B
+C204 POL_BUF POL_NODE_B 100n
+D203 GND POL_NODE_B DSCH
+D204 POL_NODE_B POL_GATE_B DSI
+C205 POL_GATE_B GND 4.7n
+R204 POL_GATE_B GND 5.6Meg
+R206 POL_NODE_B GND 100k
+MQ202 POL_COIL_LO POL_GATE_B POL_MID POL_MID NM
+* coil clamp, two branches, each zener (cathode on the coil's low node) in series with a diode (cathode on +5V)
+DZ201 POL_CLAMP_1 POL_COIL_LO DZ12
+D205 POL_CLAMP_1 +5V DCL
+DZ202 POL_CLAMP_2 POL_COIL_LO DZ12
+D206 POL_CLAMP_2 +5V DCL

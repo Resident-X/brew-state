@@ -1,0 +1,98 @@
+== supplies: +5V 4.75..5.25 V; +3V3 3.135..3.6 V (assumption flagged); VOH_min(3.3 V) = 2.90 V, VOH_min(3.135 V) = 2.735 V
+== AO3400A: RDS(on) <= 48 mOhm at 2.5 V (25 degC), x1.434 for 125 degC = 68.8 mOhm
+PASS  all AO3400A stages gate drive at VDD=3.300: VOH_min 2.900 V vs VGS guaranteeing RDS(on) 2.50 V: margin 0.400 V (16.0 %); threshold max 1.45 V: margin 1.450 V
+PASS  all AO3400A stages gate drive at VDD=3.135: VOH_min 2.735 V vs VGS guaranteeing RDS(on) 2.50 V: margin 0.235 V (9.4 %); threshold max 1.45 V: margin 1.285 V
+   pin load of a gate stage (Rg 100 + Rpd 100k): 32.0 uA (<< 8 mA)
+
+== 1. pump LED drive stages  Q701/Q711, R703/R713 = 180 ohm, U701/U711 MOC3052M
+PASS  pump LED IF_min at VF=1.5 V: IF_min 17.87 mA vs needed 15.0 mA: margin 2.87 mA (x1.191)
+PASS  pump LED IF_min at VF=1.7 V: IF_min 16.77 mA vs needed 15.0 mA: margin 1.77 mA (x1.118)  (sensitivity: VF above the sheet's 10 mA maximum)
+PASS  pump LED upper limits: IF_max bound (VF=0) 29.5 mA vs 60 mA; emitter power at VF=1.5 V 31.6 mW vs 40.2 mW allowed at 70 degC air
+   R703/R713 dissipation at the VF=0 bound: 158 mW in a 1206 (250 mW)
+   LED pulse width: sheet Fig. 4 normalises IFT to PW = 100 us; drive pulses of at least 100 us keep the 1.0 factor
+
+== 2. pump gate network R704+R705 / R714+R715 = 2 x 200 ohm 1206 in series (MOC3052M pin 6 to MT2, pin 4 to gate)
+PASS  R704+R705 opto-triac surge limit: R = VPAC / ITSM (sheet Fig. 7): VPK 357.8 V / 396.0 ohm (R-1%) = 0.904 A <= 1 A; minimum R = 357.8 ohm
+PASS  gate drive reaches IGT: line voltage needed to push IGT max (50 mA) = 23.7 V (4.4 deg after the zero crossing at 216 V); peak gate current 0.90 A <= IGM 2 A
+   BTA204S latching current max 30 mA; IH max 30 mA: the pump current at the firing instant must reach IL: pump sizing 0.46 A / 0.19 A are rms; see open item on pulse timing
+
+== 3. pump triac T701/T711 BTA204S-600B (WeEn Rev.02, 19 Mar 2025)
+   coffee full sine                I_rms 0.46 A  I_av 0.414 A  P <= 0.70 W  Tj = 122.8 degC (typical Rth(j-a); limit 125)
+   coffee half wave (series diode) I_rms 0.46 A  I_av 0.293 A  P <= 0.50 W  Tj = 107.3 degC (typical Rth(j-a); limit 125)
+   steam  full sine                I_rms 0.19 A  I_av 0.171 A  P <= 0.29 W  Tj = 91.8 degC (typical Rth(j-a); limit 125)
+   steam  half wave (series diode) I_rms 0.19 A  I_av 0.121 A  P <= 0.21 W  Tj = 85.4 degC (typical Rth(j-a); limit 125)
+   IT(RMS) 4 A at Tmb <= 107 degC: 8.7x and 21.1x the sizing currents
+
+== 4. valve coil drivers Q731/Q741 AO3400A, K731/K741 HF32FA-G/005-HSL1 (Hongfa 2026 Rev.1.00)
+PASS  valve coil current bound: coil current at 5.25 V, 97.2 ohm, 23 degC = 54.0 mA (record: 51.4 mA at 5.0 V)
+PASS  valve coil pull-up margin, 23 degC: 4.747 V available vs 3.75 V: margin 0.997 V
+PASS  valve coil pull-up margin, 70 degC air (+20 %): 4.747 V available vs 4.50 V (3.75 x 1.20): margin 0.247 V (5.5 %); reaches zero at x1.266
+PASS  valve coil max voltage: 5.25 V vs sheet maximum coil voltage 8.5 V
+PASS  flyback clamp: drain peak <= 5.25 + ~1.05 = 6.30 V vs VDS 30 V; diode current 54.0 mA vs IFM 300 mA; reverse 5.25 V vs VRRM 100 V
+   warm restart (coil rise ~61 K read off the sheet's plot, 70 degC air): resistance x1.42, pick-up ~5.34 V vs 4.75 V rail: the relay does not re-pull until it has cooled (valve stays de-energised)
+   shared valve fuse: coils 0.129 A rms steady, 0.203 A rms inrush at 253 V (constraints record, Supply budget)
+
+== 5. heater LED stages Q761/Q771 AO3400A, R763/R773 = 180 ohm in the LED return, MOC3083M on the wall board
+PASS  heater LED IF_min (cable resistance 0): IF_min 17.87 mA vs needed 9.0 mA (5 mA x1.5 x1.2): margin 8.87 mA (x1.99)
+PASS  heater LED cable allowance: loop resistance the cable may add (+5V_WB conductor and LED-return conductor together) = 179 ohm at the lowest rail
+PASS  heater LED upper limits: IF bound 29.5 mA vs 60 mA; emitter power at VF=1.5 V 31.6 mW vs 56.5 mW allowed at 70 degC
+   LED pulse: the opto-triac is zero-cross; LED held for the half-cycle (>= 8.3 ms), far above the sheet's 100 us normalisation
+
+== 6. buzzer stage Q823 AO3400A, R828 = 100 ohm 1206 from +5V to CON2 pin 1, D821 across the buzzer
+PASS  buzzer current bound: buzzer shorted: 53.0 mA through 100 ohm; AO3400A ID 5.7 A; buzzer type pending, so the bound is the resistor's
+   R828 (1206, 250 mW) dissipation with a shorted buzzer 0.284 W; within 250 mW for any buzzer of 4.5 ohm or more
+
+== 7. low-water sink Q824 AO3400A, no series resistor (the gauge assembly carries 300 ohm per element)
+PASS  low-water sink bound: bound with VF = 0: 35.0 mA through the measured 150 ohm; AO3400A 5.7 A (forward voltage pending in the record)
+
+== 8. anode rail gate: Q821 AO3400A level stage, Q822 AO3401A (AOS Rev 3.1, Dec 2023) switch, R823/R824 22 k pull-ups to +5V, R825 22 k bleed
+PASS  anode switch on: gate pulled to ~0 V: VGS = -4.75 V (RDS(on) <= 60 mOhm at -4.5 V); anode current bound 135 mA drops 18 mV
+PASS  anode switch off: gate pulled to +5V: VGS = 0 V vs |VGS(th)| min 0.5 V: margin 0.5 V; one pull-up open still pulls 22 k: same VGS
+   level stage on-state current 0.48 mA through the pull-ups; Ciss 645 pF (typ.) x 11 k = 7.1 us time constant (typical figure; no timing claim)
+
+== 9. gauge buffer U761 SN74HCT541PWR (TI SCLS306C Aug 2003), 100 ohm series R on each output
+PASS  gauge buffer VOH vs VID66-08 VIH: VOH 3.84 V (at VCC 4.5 V, the sheet's lowest) vs 3.15 V: margin 0.69 V
+PASS  gauge buffer VOL vs VID66-08 VIL: VOL 0.33 V vs 1.35 V: margin 1.02 V
+PASS  controller VOH vs buffer VIH: VOH_min 2.735 V vs VIH 2.0 V: margin 0.735 V (0.90 V at 3.3 V)
+PASS  controller VOL vs buffer VIL: VOL max 0.4 V vs VIL max 0.8 V: margin 0.4 V
+PASS  hold-off pull-down at buffer input: 10 k x (Ilkg 350 nA + HCT input 1 uA) = 13.5 mV vs VIL 0.8 V
+   ICC: 80 uA + 5 x 2.9 mA (delta-ICC, inputs at TTL levels) = 14.6 mA at +5V; 500 ns max input rise/fall (sheet) vs a timer edge
+
+== 10. panel key lines KEY1..KEY5 (PE2..PE6): 10 k pull-up to +3V3, panel 1 k + switch to ground, indicators 300 ohm to the anode rail
+PASS  key pressed level: pressed (1 k panel resistor + switch): 0.330 V vs VIL max 0.3 VDD = 0.940 V
+PASS  key released level: released: 3.131 V vs VIH min 0.7 VDD = 2.520 V
+PASS  key pin worst voltage: anode rail on, line not sunk, indicator VF taken as 0: pin <= 5.25 V vs the operating limit Min(VDD) + 3.6 V and below 5.5 V (DS12110 Table 14; VDD >= 1.65 V for 5.25 V); internal pulls off above VDD + 0.3 V
+   sink one element  VF=0.0 V: I = 13.2 mA (pin limit 20 mA at VOL 1.3 V; 8 mA at VOL 0.4 V)
+   sink one element  VF=1.0 V: I = 9.8 mA (pin limit 20 mA at VOL 1.3 V; 8 mA at VOL 0.4 V)
+   sink one element  VF=1.5 V: I = 8.2 mA (pin limit 20 mA at VOL 1.3 V; 8 mA at VOL 0.4 V)
+   sink two elements VF=0.0 V: I = 26.3 mA (pin limit 20 mA at VOL 1.3 V; 8 mA at VOL 0.4 V)
+   sink two elements VF=1.0 V: I = 19.7 mA (pin limit 20 mA at VOL 1.3 V; 8 mA at VOL 0.4 V)
+   sink two elements VF=1.5 V: I = 16.3 mA (pin limit 20 mA at VOL 1.3 V; 8 mA at VOL 0.4 V)
+   forward voltage of the indicator elements is PENDING in the record: with two elements the pin stays under 20 mA only for VF >= 0.95 V
+
+== 11. knob inputs KNOB_HOT/KNOB_STEAM and tank reed TANK_LEVEL: 10 k to +3V3, 100 nF to ground
+PASS  knob / reed closed level: contact + wiring must stay under 3.50 kohm for VIL (0.940 V at 3.135 V ... 3.6 V pull-up)
+   filter: 100 nF x 0.9 (tolerance) = 90 nF minimum at 0 V bias; tau at 10 k = 0.90 ms (bias curve of C14663 applied at Phase B)
+   high level: 3.131 V vs VIH min 2.520 V; time to VIH from a closed contact: 1.32 ms at tau = 1.1 ms
+
+== 12. branch fuses (SETfuse SCT520 family, document V1.0 2024-2026; derating curve read at 70 degC)
+PASS  fuse coffee pump F701: In 0.80 A x 0.92 = 0.736 A at 70 degC vs 0.460 A (62 % of capacity); 2.1 In = 1.68 A opens within 30 min; melting I2t at 10 In = 0.96 A2s; 4 In = 3.2 A for 0.095..5 s
+PASS  fuse steam pump F711: In 0.50 A x 0.92 = 0.460 A at 70 degC vs 0.190 A (41 % of capacity); 2.1 In = 1.05 A opens within 30 min; melting I2t at 10 In = 0.14 A2s; 4 In = 2.0 A for 0.095..5 s
+PASS  fuse valve pair F731: In 0.40 A x 0.92 = 0.368 A at 70 degC vs 0.203 A (55 % of capacity); 2.1 In = 0.84 A opens within 30 min; melting I2t at 10 In = 0.06 A2s; 4 In = 1.6 A for 0.095..5 s
+   clip C3131/C3130 listed 250 V, 6.3 A: fuses at 0.4-0.8 A are 6-16 % of it; 250 V vs the 253 V span top: 1.2 % over (owner accepted this only for relay contacts)
+
+== 12b. C792 47 uF 16 V aluminium electrolytic (KNSCHA RST47UF16V034): the gauge driver asks 22 uF against latch-up (connector-pinouts.md, from the VID6608 datasheet rev 1)
+PASS  C792 latch-up capacitor: 47 uF -20 % = 37.6 uF >= 22 uF (an electrolytic has no DC-bias loss; temperature loss at the cold end is not read)
+
+== 13. rail loads from datasheet maxima
+   K731+K741 coils (5.25 V, 97.2 ohm)                               108.0 mA
+   pump LED stages (2 x IF bound)                                    58.9 mA
+   heater LED stages (2 x IF bound)                                  58.9 mA
+   U761 buffer                                                       14.6 mA
+   gauge assembly (VID66-08 outputs, 4 x 35 mA absolute maximum)    140.0 mA
+   buzzer (100 ohm bound)                                            53.0 mA
+   anode rail (5 key pins at 20 mA + low-water bound)               135.0 mA
+   total +5V (everything on at once, bounds) = 568 mA
+   +3V3: 8 pull-ups x 3.6 V / 10 k = 2.9 mA
+
+SUMMARY: 0 failing checks []
