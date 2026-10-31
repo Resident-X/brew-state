@@ -2,11 +2,11 @@ id: SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER.C1
 type: criterion
 title: The owner is shown the figures, rows, exceptions and open readings in plain words before any acceptance is entered
 status: active
-version: 2
+version: 3
 measurement_type: binary
 verification: inspection
 text: |-
-  In the session, before accepted_by or accepted_on is entered anywhere in the record, the owner is shown each signed mains-to-mains and mains-to-low-voltage figure with the table row it rests on, every accepted_exceptions entry with its pair, accepted distance, the figure it falls short of, reason and bounding element, and the readings the record marks for the owner's check (interpolation of the household-appliance standard's creepage table with the 3.2 mm fallback at pollution degree 2, the 0.5 mm terminal allowance, the pollution degree 2 material group III column, the six conditions of the coat credit, and each net-pair entry's lists, working voltage, derivation and band figure). The owner is also shown the nets on each pin of J630, J635, J791, J821 and J861 with each net's class and speed, because the slow-signals-only ground of those entries is the owner's assertion and the tool does not check it. The presentation is in plain words with the arithmetic where a figure is derived. Changing any figure, row or exception is out of scope here.
+  In the session, before accepted_by or accepted_on is entered anywhere in the record, the owner is shown each signed mains-to-mains and mains-to-low-voltage figure with the table row it rests on, every accepted_exceptions entry with its pair, accepted distance, the figure it falls short of, reason and bounding element, and the readings the record marks for the owner's check (interpolation of the household-appliance standard's creepage table with the 3.2 mm fallback at pollution degree 2, the 0.5 mm terminal allowance, the pollution degree 2 material group III column, the six conditions of the pollution degree 2 credit with the enclosure as its ground and the coat as support, the single-sourced, unread-standards residual risk the owner accepted on 2026-10-31, and each net-pair entry's lists, working voltage, derivation, band figure and single-fault table row). The owner is also shown the nets on each pin of J630, J635, J791, J821 and J861 with each net's class and speed, because the slow-signals-only ground of those entries is the owner's assertion and the tool does not check it. The presentation is in plain words with the arithmetic where a figure is derived. Changing any figure, row or exception is out of scope here.
 links:
   - target: SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER
     type: criterion-of

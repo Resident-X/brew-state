@@ -2,11 +2,11 @@ id: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C8
 type: criterion
 title: The record states how a working voltage between and beyond the band rows is read
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |-
-  The citation of the band rows states the band rule in these terms: between two adjacent rows the figure is the linear interpolation rounded up to 0.1 mm, below 10 V the 10 V row is read, above the 320 V row there is no band figure, and a pair at the supply voltage keeps 2.6 mm. The test evaluates the stated rule on creepage at 10 V (0.4 mm), 30 V (0.7 mm), 84.5 V (1.4 mm), 126.5 V (1.6 mm), 168.5 V (1.7 mm), 178.7 V (1.8 mm) and 253 V (2.6 mm), and on clearance at 10 V (0.2 mm), 50 V (0.2 mm) and 125 V (1.5 mm), from the committed rows and finds those figures. Out of scope is the check's use of the rows.
+  The citation of the band rows states the band rule in these terms: between two adjacent rows the figure is the linear interpolation rounded up to 0.1 mm, below 10 V the 10 V row is read, above the 320 V row there is no band figure, and a pair at the supply voltage in normal operation keeps 2.6 mm, a pair reaching it only on a single fault being reduced only with that listing's single-fault table. The test evaluates the stated rule on creepage at 10 V (0.4 mm), 30 V (0.7 mm), 84.5 V (1.4 mm), 126.5 V (1.6 mm), 168.5 V (1.7 mm), 178.7 V (1.8 mm) and 253 V (2.6 mm), and on clearance at 10 V (0.2 mm), 50 V (0.2 mm) and 125 V (1.5 mm), from the committed rows and finds those figures. Out of scope is the check's use of the rows.
 links:
   - target: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD
     type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C3
+type: criterion
+title: Inner-layer copper within 1.5 mm of a barrier slot's wall fails whatever its net
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a throwaway copy of a proof design, a copper item of any net on an inner layer whose plan-view distance to the wall of a barrier slot (a closed cut-out inside the board outline that is not a round hole) is under 1.5 mm fails as mains_layer_separation naming the item, its layer and the slot; the same item at 1.5 mm or more passes, and a surface-layer item at the same distance is not reported by this test. Out of scope is the width of the slot, which the existing slot rule holds.
+links:
+  - target: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER
+    type: criterion-of

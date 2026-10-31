@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C5
+type: criterion
+title: Plated through holes count on every layer, pours count by their stored fill and a netless copper item counts as low voltage
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On throwaway proof designs, a low-voltage through-hole pad under the clearance from a Mains-class track on an inner layer fails although the pad stores copper only on its surface layers, a low-voltage pour whose stored fill reaches within the clearance of a Mains-class pad fails while the same pour's outline alone does not, and a netless copper item within the clearance of a Mains-class item fails. Out of scope is a mounting hole, which its own rule holds.
+links:
+  - target: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C9
+type: criterion
+title: The rule finishes within the check's one-run limit on a board with poured planes
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a throwaway proof design carrying filled ground and mains pours on four copper layers, the check including the new rule completes within the existing limit on one KiCad run and still fails a hung run. Out of scope is the limit's value.
+links:
+  - target: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER
+    type: criterion-of

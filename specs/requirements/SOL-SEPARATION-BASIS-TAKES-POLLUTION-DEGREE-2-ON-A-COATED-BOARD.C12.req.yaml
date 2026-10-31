@@ -2,11 +2,11 @@ id: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C12
 type: criterion
 title: The hardware notes state the pollution degree credit and the band rows
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |-
-  hardware/README.md states, in its adopter steps, that pollution degree 3 is taken unless the boards are protected against moisture and that a coat credits pollution degree 2 only on the stated conditions, and describes the functional band rows of table_rows beside the record keys it lists. Out of scope is the net_pairs exception form, which the pre-order check leaf documents.
+  hardware/README.md states, in its adopter steps, that pollution degree 3 is taken unless the enclosure protects the boards against moisture and that pollution degree 2 is credited, never 1, on the stated conditions with a coat only as a supporting measure, and describes the functional band rows of table_rows beside the record keys it lists. Out of scope is the net_pairs exception form, which the pre-order check leaf documents.
 links:
   - target: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD
     type: criterion-of

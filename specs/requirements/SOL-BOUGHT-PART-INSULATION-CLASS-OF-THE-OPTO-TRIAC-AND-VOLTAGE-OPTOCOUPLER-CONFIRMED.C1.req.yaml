@@ -1,0 +1,12 @@
+id: SOL-BOUGHT-PART-INSULATION-CLASS-OF-THE-OPTO-TRIAC-AND-VOLTAGE-OPTOCOUPLER-CONFIRMED.C1
+type: criterion
+title: The MOC3052SVM's insulation class is read from the maker's current document and recorded as reinforced or as unsourced
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The record states, for the MOC3052SVM, the safety approval the maker's current document gives, the insulation class it covers and the document's revision and source, and states whether the part is rated for reinforced insulation; a class the document does not give is recorded as unsourced and counts as absent. Out of scope is the part's creepage and clearance.
+links:
+  - target: SOL-BOUGHT-PART-INSULATION-CLASS-OF-THE-OPTO-TRIAC-AND-VOLTAGE-OPTOCOUPLER-CONFIRMED
+    type: criterion-of

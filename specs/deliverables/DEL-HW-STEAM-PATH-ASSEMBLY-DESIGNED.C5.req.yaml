@@ -1,0 +1,13 @@
+id: DEL-HW-STEAM-PATH-ASSEMBLY-DESIGNED.C5
+type: criterion
+title: Whether the transducer's wetted body can touch touchable water is recorded as an owner fact, and an open or yes answer names the change that restores the barrier
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The owner's fact of whether the water the transducer's wetted body touches is itself touchable (the body sitting on a water path a person can reach) is recorded as confirmed yes, confirmed no, or open, with the date. Where it is yes or open, the transducer is judged as a part forming a barrier to a touchable conductor: the Ashcroft part's published withstand of 500 Vac and the absence of any published withstand for the XDB401, as an independent review found them, do not reach the basic insulation the separation basis declares for a mains-adjacent barrier, so the assembly then names the change that restores the barrier (an isolating fitting in the water path, a different transducer with a published withstand at or above the figure, or a wetted body that cannot be touched), and the consequence of leaving the fact open is stated in the record. Choosing the change and the transducer's selection are the other criteria's and out of scope.
+links:
+  - target: DEL-HW-STEAM-PATH-ASSEMBLY-DESIGNED
+    type: criterion-of
