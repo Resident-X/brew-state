@@ -754,7 +754,7 @@ accepted_exceptions:
   # figure of the functional rows for its working voltage. Their working voltages are the drafter's
   # assertions at 253 V rms, the top of the declared span, each derived in the entry's reason, for the owner
   # to accept or correct; the half-mains and divider midpoints hold only while their resistor chain is intact.
-  # The neutral-referenced set N is the fourteen nets the first entry lists. The triac gate nets PUMP_C_TRIAC_G and PUMP_S_TRIAC_G and the zero-cross LED anode ZC_LED_A pair only with /NEUTRAL, in entries 10 and 11.
+  # The neutral-referenced set N is the fifteen nets the first entry lists, AMC_HGND (the converter's high-side ground, tied to NEUTRAL at the net tie NT601) among them. The triac gate nets PUMP_C_TRIAC_G and PUMP_S_TRIAC_G and the zero-cross LED anode ZC_LED_A pair only with /NEUTRAL, in entries 10 and 11.
   # The pump gate network nets (PUMP_C_GATE_R and PUMP_S_GATE_R against any net, and each gate network net against its own MT2 and
   # opto-triac nets) have no net-pair entry and keep the full 2.6 mm: while the opto-triac is off the full
   # supply stands across it and the gate network floats to the MT2 level. The 54 entries after them are of the
@@ -768,19 +768,19 @@ accepted_exceptions:
   # the entries stay drafts until the finished layout's rule check confirms that each is used.
   - pair: mains_to_mains
     constraint: creepage
-    nets_a: ["/NEUTRAL", "/Mains entry and load feed/NEUTRAL_IN", "/SHUNT_SENSE_IN", "/SHUNT_SENSE_NEUTRAL", "/Supply voltage and current measurement/AMC_AIN0P", "/Supply voltage and current measurement/AMC_AIN0N", "/Supply voltage and current measurement/AMC_AIN1P", "/Supply voltage and current measurement/AMC_AIN1N", "/Supply voltage and current measurement/AMC_DCDC_OUT", "/Supply voltage and current measurement/AMC_DCDC_HGND", "/Supply voltage and current measurement/AMC_HLDO_IN", "/Supply voltage and current measurement/AMC_HLDO_OUT", "/Supply voltage and current measurement/VMEAS_DIV", "unconnected-(U601-GPO-Pad6)"]
+    nets_a: ["/NEUTRAL", "/Mains entry and load feed/NEUTRAL_IN", "/SHUNT_SENSE_IN", "/SHUNT_SENSE_NEUTRAL", "/Supply voltage and current measurement/AMC_AIN0P", "/Supply voltage and current measurement/AMC_AIN0N", "/Supply voltage and current measurement/AMC_AIN1P", "/Supply voltage and current measurement/AMC_AIN1N", "/Supply voltage and current measurement/AMC_DCDC_OUT", "/Supply voltage and current measurement/AMC_DCDC_HGND", "/Supply voltage and current measurement/AMC_HGND", "/Supply voltage and current measurement/AMC_HLDO_IN", "/Supply voltage and current measurement/AMC_HLDO_OUT", "/Supply voltage and current measurement/VMEAS_DIV", "unconnected-(U601-GPO-Pad6)"]
     working_voltage_v: 10
     accepted_mm: 0.4
-    reason: "Set N is the fourteen nets that ride on mains neutral: NEUTRAL, NEUTRAL_IN, SHUNT_SENSE_IN, SHUNT_SENSE_NEUTRAL, the AMC131M02 inputs AMC_AIN0P, AMC_AIN0N, AMC_AIN1P and AMC_AIN1N (within 2.7 V of HGND by the pin-limit record's amc_inputs offset), its high side AMC_DCDC_OUT, AMC_DCDC_HGND, AMC_HLDO_IN and AMC_HLDO_OUT (within 3.2 V of HGND, amc_high_side offset), the divider tap VMEAS_DIV (750/900750 = 0.000832639467 of the line, 0.21 V rms at 253 V), and the net of U601's pin 6, GPO, which the board leaves unconnected: a general-purpose output of the AMC131M02's high side, driven from its high-side supply and so within 3.2 V of HGND as the high side is, and named Mains so that the check holds the pad to the mains figures. Every net rides on neutral within a few volts, so no two nets of the set stand more than 10 V rms apart (two nets 5 V either side of neutral); 10 V rms is the bound the entry holds, read at the 10 V band row, and tracks between these nets keep at least the band creepage of 0.4 mm. The reduction holds only while the circuit is intact: these nets leave the 10 V bound only in fault states, namely R604 open (VMEAS_DIV floats toward the divider; the AMC input clamp through R605 normally holds it within about 1.2 V of NEUTRAL) or loss of NEUTRAL, judged in the single-fault table above (rows 1 and 2): a fault that reaches 253 V across a gap passes 0.281 mA through the 900 kohm of R601 to R603, which creates no hazard. The triac gate nets and the zero-cross LED anode are not in this set: they pair only with /NEUTRAL in entries 10 and 11, and against no AMC_* net, shunt-sense net or the divider tap. The working voltage is the drafter's figure for the owner to accept or correct."
+    reason: "Set N is the fifteen nets that ride on mains neutral: NEUTRAL, NEUTRAL_IN, SHUNT_SENSE_IN, SHUNT_SENSE_NEUTRAL, the AMC131M02 inputs AMC_AIN0P, AMC_AIN0N, AMC_AIN1P and AMC_AIN1N (within 2.7 V of HGND by the pin-limit record's amc_inputs offset), its high side AMC_DCDC_OUT, AMC_DCDC_HGND, AMC_HLDO_IN and AMC_HLDO_OUT (within 3.2 V of HGND, amc_high_side offset), and AMC_HGND, the converter's own high-side ground, which the net tie NT601 joins to NEUTRAL at one point and so stands at neutral (0 V across the tie), carrying U601 pin 5, the bead F602, the high-side decoupling returns C605 to C608 and the divider and filter returns R604 and R606, the divider tap VMEAS_DIV (750/900750 = 0.000832639467 of the line, 0.21 V rms at 253 V), and the net of U601's pin 6, GPO, which the board leaves unconnected: a general-purpose output of the AMC131M02's high side, driven from its high-side supply and so within 3.2 V of HGND as the high side is, and named Mains so that the check holds the pad to the mains figures. Every net rides on neutral within a few volts, so no two nets of the set stand more than 10 V rms apart (two nets 5 V either side of neutral); 10 V rms is the bound the entry holds, read at the 10 V band row, and tracks between these nets keep at least the band creepage of 0.4 mm. The reduction holds only while the circuit is intact: these nets leave the 10 V bound only in fault states, namely R604 open (VMEAS_DIV floats toward the divider; the AMC input clamp through R605 normally holds it within about 1.2 V of NEUTRAL) or loss of NEUTRAL, judged in the single-fault table above (rows 1 and 2): a fault that reaches 253 V across a gap passes 0.281 mA through the 900 kohm of R601 to R603, which creates no hazard. The triac gate nets and the zero-cross LED anode are not in this set: they pair only with /NEUTRAL in entries 10 and 11, and against no AMC_* net, shunt-sense net or the divider tap. The working voltage is the drafter's figure for the owner to accept or correct."
     bounded_by: "The energy the neutral-referenced circuit can supply (the AMC131M02's isolated high-side supply, the shunt and the divider resistors), and for any path from a net of the set to the line the entry fuse F101 and the branch fuses."
     accepted_by: ""
     accepted_on: ""
   - pair: mains_to_mains
     constraint: clearance
-    nets_a: ["/NEUTRAL", "/Mains entry and load feed/NEUTRAL_IN", "/SHUNT_SENSE_IN", "/SHUNT_SENSE_NEUTRAL", "/Supply voltage and current measurement/AMC_AIN0P", "/Supply voltage and current measurement/AMC_AIN0N", "/Supply voltage and current measurement/AMC_AIN1P", "/Supply voltage and current measurement/AMC_AIN1N", "/Supply voltage and current measurement/AMC_DCDC_OUT", "/Supply voltage and current measurement/AMC_DCDC_HGND", "/Supply voltage and current measurement/AMC_HLDO_IN", "/Supply voltage and current measurement/AMC_HLDO_OUT", "/Supply voltage and current measurement/VMEAS_DIV", "unconnected-(U601-GPO-Pad6)"]
+    nets_a: ["/NEUTRAL", "/Mains entry and load feed/NEUTRAL_IN", "/SHUNT_SENSE_IN", "/SHUNT_SENSE_NEUTRAL", "/Supply voltage and current measurement/AMC_AIN0P", "/Supply voltage and current measurement/AMC_AIN0N", "/Supply voltage and current measurement/AMC_AIN1P", "/Supply voltage and current measurement/AMC_AIN1N", "/Supply voltage and current measurement/AMC_DCDC_OUT", "/Supply voltage and current measurement/AMC_DCDC_HGND", "/Supply voltage and current measurement/AMC_HGND", "/Supply voltage and current measurement/AMC_HLDO_IN", "/Supply voltage and current measurement/AMC_HLDO_OUT", "/Supply voltage and current measurement/VMEAS_DIV", "unconnected-(U601-GPO-Pad6)"]
     working_voltage_v: 10
     accepted_mm: 0.2
-    reason: "Set N is the fourteen nets that ride on mains neutral: NEUTRAL, NEUTRAL_IN, SHUNT_SENSE_IN, SHUNT_SENSE_NEUTRAL, the AMC131M02 inputs AMC_AIN0P, AMC_AIN0N, AMC_AIN1P and AMC_AIN1N (within 2.7 V of HGND by the pin-limit record's amc_inputs offset), its high side AMC_DCDC_OUT, AMC_DCDC_HGND, AMC_HLDO_IN and AMC_HLDO_OUT (within 3.2 V of HGND, amc_high_side offset), the divider tap VMEAS_DIV (750/900750 = 0.000832639467 of the line, 0.21 V rms at 253 V), and the net of U601's pin 6, GPO, which the board leaves unconnected: a general-purpose output of the AMC131M02's high side, driven from its high-side supply and so within 3.2 V of HGND as the high side is, and named Mains so that the check holds the pad to the mains figures. Every net rides on neutral within a few volts, so no two nets of the set stand more than 10 V rms apart; 10 V rms is the bound the entry holds, read at the 10 V band row, and tracks between these nets keep at least the band clearance of 0.2 mm. The reduction holds only while the circuit is intact: these nets leave the 10 V bound only in fault states, namely R604 open (VMEAS_DIV floats toward the divider; the AMC input clamp through R605 normally holds it within about 1.2 V of NEUTRAL) or loss of NEUTRAL, judged in the single-fault table above (rows 1 and 2): a fault that reaches 253 V across a gap passes 0.281 mA through the 900 kohm of R601 to R603, which creates no hazard. The triac gate nets and the zero-cross LED anode are not in this set: they pair only with /NEUTRAL in entries 10 and 11, and against no AMC_* net, shunt-sense net or the divider tap. The working voltage is the drafter's figure for the owner to accept or correct."
+    reason: "Set N is the fifteen nets that ride on mains neutral: NEUTRAL, NEUTRAL_IN, SHUNT_SENSE_IN, SHUNT_SENSE_NEUTRAL, the AMC131M02 inputs AMC_AIN0P, AMC_AIN0N, AMC_AIN1P and AMC_AIN1N (within 2.7 V of HGND by the pin-limit record's amc_inputs offset), its high side AMC_DCDC_OUT, AMC_DCDC_HGND, AMC_HLDO_IN and AMC_HLDO_OUT (within 3.2 V of HGND, amc_high_side offset), and AMC_HGND, the converter's own high-side ground, which the net tie NT601 joins to NEUTRAL at one point and so stands at neutral (0 V across the tie), carrying U601 pin 5, the bead F602, the high-side decoupling returns C605 to C608 and the divider and filter returns R604 and R606, the divider tap VMEAS_DIV (750/900750 = 0.000832639467 of the line, 0.21 V rms at 253 V), and the net of U601's pin 6, GPO, which the board leaves unconnected: a general-purpose output of the AMC131M02's high side, driven from its high-side supply and so within 3.2 V of HGND as the high side is, and named Mains so that the check holds the pad to the mains figures. Every net rides on neutral within a few volts, so no two nets of the set stand more than 10 V rms apart; 10 V rms is the bound the entry holds, read at the 10 V band row, and tracks between these nets keep at least the band clearance of 0.2 mm. The reduction holds only while the circuit is intact: these nets leave the 10 V bound only in fault states, namely R604 open (VMEAS_DIV floats toward the divider; the AMC input clamp through R605 normally holds it within about 1.2 V of NEUTRAL) or loss of NEUTRAL, judged in the single-fault table above (rows 1 and 2): a fault that reaches 253 V across a gap passes 0.281 mA through the 900 kohm of R601 to R603, which creates no hazard. The triac gate nets and the zero-cross LED anode are not in this set: they pair only with /NEUTRAL in entries 10 and 11, and against no AMC_* net, shunt-sense net or the divider tap. The working voltage is the drafter's figure for the owner to accept or correct."
     bounded_by: "The energy the neutral-referenced circuit can supply (the AMC131M02's isolated high-side supply, the shunt and the divider resistors), and for any path from a net of the set to the line the entry fuse F101 and the branch fuses."
     accepted_by: ""
     accepted_on: ""
@@ -827,20 +827,20 @@ accepted_exceptions:
   - pair: mains_to_mains
     constraint: creepage
     nets_a: ["/Supply voltage and current measurement/VMEAS_N2"]
-    nets_b: ["/Supply voltage and current measurement/VMEAS_DIV", "/NEUTRAL", "/Mains entry and load feed/NEUTRAL_IN"]
+    nets_b: ["/Supply voltage and current measurement/VMEAS_DIV", "/NEUTRAL", "/Supply voltage and current measurement/AMC_HGND", "/Mains entry and load feed/NEUTRAL_IN"]
     working_voltage_v: 94.5
     accepted_mm: 1.4
-    reason: "VMEAS_N2 stands at 0.333888 of the line (pin-limit record mains_divider_n2): at 253 V rms N2 to the divider tap is 253 x (0.333888 - 0.000833) = 84.3 V and N2 to NEUTRAL is 253 x 0.333888 = 84.5 V; NEUTRAL and NEUTRAL_IN are nets of set N, which stand within 10 V of one another, so the working voltage written is 84.5 + 10 = 94.5 V rms (the band creepage between the 50 V and 125 V rows, 1.4 mm). The reduction holds in normal operation, with the resistor chain intact; a shorted resistor is a single fault, judged in row 7 of the single-fault table above, which gives the voltage it puts across the gap, the current that bounds it and the arithmetic from the schematic's part values. The working voltage is the drafter's figure for the owner to accept or correct."
+    reason: "VMEAS_N2 stands at 0.333888 of the line (pin-limit record mains_divider_n2): at 253 V rms N2 to the divider tap is 253 x (0.333888 - 0.000833) = 84.3 V and N2 to NEUTRAL is 253 x 0.333888 = 84.5 V; NEUTRAL, NEUTRAL_IN and AMC_HGND are nets of set N, which stand within 10 V of one another, so the working voltage written is 84.5 + 10 = 94.5 V rms (the band creepage between the 50 V and 125 V rows, 1.4 mm). The reduction holds in normal operation, with the resistor chain intact; a shorted resistor is a single fault, judged in row 7 of the single-fault table above, which gives the voltage it puts across the gap, the current that bounds it and the arithmetic from the schematic's part values. The working voltage is the drafter's figure for the owner to accept or correct."
     bounded_by: "The entry fuse F101 and the branch fuses clear a breakdown between these nets, which can carry only the current the resistor chain passes (a few milliamps) until a fault bridges the chain; the chain's own energy limit bounds the rest."
     accepted_by: ""
     accepted_on: ""
   - pair: mains_to_mains
     constraint: creepage
     nets_a: ["/Supply voltage and current measurement/VMEAS_N1"]
-    nets_b: ["/Supply voltage and current measurement/VMEAS_DIV", "/NEUTRAL", "/Mains entry and load feed/NEUTRAL_IN"]
+    nets_b: ["/Supply voltage and current measurement/VMEAS_DIV", "/NEUTRAL", "/Supply voltage and current measurement/AMC_HGND", "/Mains entry and load feed/NEUTRAL_IN"]
     working_voltage_v: 178.8
     accepted_mm: 1.8
-    reason: "VMEAS_N1 stands at 0.666944 of the line (pin-limit record mains_divider_n1): at 253 V rms N1 to NEUTRAL is 253 x 0.666944 = 168.7 V, and N1 to the divider tap is less; NEUTRAL, NEUTRAL_IN and the tap are nets of set N, which stand within 10 V of one another, so the working voltage written is 168.7 + 10 = 178.7 V, rounded up to 178.8 V rms (the band creepage between the 160 V and 200 V rows, 1.8 mm). The reduction holds in normal operation, with the resistor chain intact; a shorted resistor is a single fault, judged in row 8 of the single-fault table above, which gives the voltage it puts across the gap, the current that bounds it and the arithmetic from the schematic's part values. The working voltage is the drafter's figure for the owner to accept or correct."
+    reason: "VMEAS_N1 stands at 0.666944 of the line (pin-limit record mains_divider_n1): at 253 V rms N1 to NEUTRAL is 253 x 0.666944 = 168.7 V, and N1 to the divider tap is less; NEUTRAL, NEUTRAL_IN, AMC_HGND and the tap are nets of set N, which stand within 10 V of one another, so the working voltage written is 168.7 + 10 = 178.7 V, rounded up to 178.8 V rms (the band creepage between the 160 V and 200 V rows, 1.8 mm). The reduction holds in normal operation, with the resistor chain intact; a shorted resistor is a single fault, judged in row 8 of the single-fault table above, which gives the voltage it puts across the gap, the current that bounds it and the arithmetic from the schematic's part values. The working voltage is the drafter's figure for the owner to accept or correct."
     bounded_by: "The entry fuse F101 and the branch fuses clear a breakdown between these nets, which can carry only the current the resistor chain passes (a few milliamps) until a fault bridges the chain; the chain's own energy limit bounds the rest."
     accepted_by: ""
     accepted_on: ""
@@ -942,7 +942,7 @@ accepted_exceptions:
     constraint: creepage
     between: ["C605.1", "C605.2"]
     accepted_mm: 0.65
-    reason: "The pitch of C605 forces the gap: its pads 1 (on AMC_HLDO_IN) and 2 (on NEUTRAL) stand 0.65 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
+    reason: "The pitch of C605 forces the gap: its pads 1 (on AMC_HLDO_IN) and 2 (on AMC_HGND) stand 0.65 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
     bounded_by: "The energy the neutral-referenced circuit can supply (the AMC131M02's isolated high-side supply, the shunt and the divider resistors), and for any path from these nets to the line the entry fuse F101 and the branch fuses; proposed by the drafter for the owner to accept or correct."
     accepted_by: ""
     accepted_on: ""
@@ -950,7 +950,7 @@ accepted_exceptions:
     constraint: clearance
     between: ["C605.1", "C605.2"]
     accepted_mm: 0.65
-    reason: "The pitch of C605 forces the gap: its pads 1 (on AMC_HLDO_IN) and 2 (on NEUTRAL) stand 0.65 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
+    reason: "The pitch of C605 forces the gap: its pads 1 (on AMC_HLDO_IN) and 2 (on AMC_HGND) stand 0.65 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
     bounded_by: "The energy the neutral-referenced circuit can supply (the AMC131M02's isolated high-side supply, the shunt and the divider resistors), and for any path from these nets to the line the entry fuse F101 and the branch fuses; proposed by the drafter for the owner to accept or correct."
     accepted_by: ""
     accepted_on: ""
@@ -958,7 +958,7 @@ accepted_exceptions:
     constraint: creepage
     between: ["C606.1", "C606.2"]
     accepted_mm: 0.65
-    reason: "The pitch of C606 forces the gap: its pads 1 (on AMC_HLDO_IN) and 2 (on NEUTRAL) stand 0.65 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
+    reason: "The pitch of C606 forces the gap: its pads 1 (on AMC_HLDO_IN) and 2 (on AMC_HGND) stand 0.65 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
     bounded_by: "The energy the neutral-referenced circuit can supply (the AMC131M02's isolated high-side supply, the shunt and the divider resistors), and for any path from these nets to the line the entry fuse F101 and the branch fuses; proposed by the drafter for the owner to accept or correct."
     accepted_by: ""
     accepted_on: ""
@@ -966,7 +966,7 @@ accepted_exceptions:
     constraint: clearance
     between: ["C606.1", "C606.2"]
     accepted_mm: 0.65
-    reason: "The pitch of C606 forces the gap: its pads 1 (on AMC_HLDO_IN) and 2 (on NEUTRAL) stand 0.65 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
+    reason: "The pitch of C606 forces the gap: its pads 1 (on AMC_HLDO_IN) and 2 (on AMC_HGND) stand 0.65 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
     bounded_by: "The energy the neutral-referenced circuit can supply (the AMC131M02's isolated high-side supply, the shunt and the divider resistors), and for any path from these nets to the line the entry fuse F101 and the branch fuses; proposed by the drafter for the owner to accept or correct."
     accepted_by: ""
     accepted_on: ""
@@ -974,7 +974,7 @@ accepted_exceptions:
     constraint: creepage
     between: ["C608.1", "C608.2"]
     accepted_mm: 0.65
-    reason: "The pitch of C608 forces the gap: its pads 1 (on AMC_HLDO_OUT) and 2 (on NEUTRAL) stand 0.65 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
+    reason: "The pitch of C608 forces the gap: its pads 1 (on AMC_HLDO_OUT) and 2 (on AMC_HGND) stand 0.65 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
     bounded_by: "The energy the neutral-referenced circuit can supply (the AMC131M02's isolated high-side supply, the shunt and the divider resistors), and for any path from these nets to the line the entry fuse F101 and the branch fuses; proposed by the drafter for the owner to accept or correct."
     accepted_by: ""
     accepted_on: ""
@@ -982,7 +982,7 @@ accepted_exceptions:
     constraint: clearance
     between: ["C608.1", "C608.2"]
     accepted_mm: 0.65
-    reason: "The pitch of C608 forces the gap: its pads 1 (on AMC_HLDO_OUT) and 2 (on NEUTRAL) stand 0.65 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
+    reason: "The pitch of C608 forces the gap: its pads 1 (on AMC_HLDO_OUT) and 2 (on AMC_HGND) stand 0.65 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
     bounded_by: "The energy the neutral-referenced circuit can supply (the AMC131M02's isolated high-side supply, the shunt and the divider resistors), and for any path from these nets to the line the entry fuse F101 and the branch fuses; proposed by the drafter for the owner to accept or correct."
     accepted_by: ""
     accepted_on: ""
@@ -1006,7 +1006,7 @@ accepted_exceptions:
     constraint: creepage
     between: ["F602.1", "F602.2"]
     accepted_mm: 0.7
-    reason: "The pitch of F602 forces the gap: its pads 1 (on AMC_DCDC_HGND) and 2 (on NEUTRAL) stand 0.70 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
+    reason: "The pitch of F602 forces the gap: its pads 1 (on AMC_DCDC_HGND) and 2 (on AMC_HGND) stand 0.70 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
     bounded_by: "The energy the neutral-referenced circuit can supply (the AMC131M02's isolated high-side supply, the shunt and the divider resistors), and for any path from these nets to the line the entry fuse F101 and the branch fuses; proposed by the drafter for the owner to accept or correct."
     accepted_by: ""
     accepted_on: ""
@@ -1014,7 +1014,7 @@ accepted_exceptions:
     constraint: clearance
     between: ["F602.1", "F602.2"]
     accepted_mm: 0.7
-    reason: "The pitch of F602 forces the gap: its pads 1 (on AMC_DCDC_HGND) and 2 (on NEUTRAL) stand 0.70 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
+    reason: "The pitch of F602 forces the gap: its pads 1 (on AMC_DCDC_HGND) and 2 (on AMC_HGND) stand 0.70 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
     bounded_by: "The energy the neutral-referenced circuit can supply (the AMC131M02's isolated high-side supply, the shunt and the divider resistors), and for any path from these nets to the line the entry fuse F101 and the branch fuses; proposed by the drafter for the owner to accept or correct."
     accepted_by: ""
     accepted_on: ""
@@ -1102,7 +1102,7 @@ accepted_exceptions:
     constraint: creepage
     between: ["R604.1", "R604.2"]
     accepted_mm: 0.85
-    reason: "The pitch of R604 forces the gap: its pads 1 (on VMEAS_DIV) and 2 (on NEUTRAL) stand 0.85 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
+    reason: "The pitch of R604 forces the gap: its pads 1 (on VMEAS_DIV) and 2 (on AMC_HGND) stand 0.85 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
     bounded_by: "The energy the neutral-referenced circuit can supply (the AMC131M02's isolated high-side supply, the shunt and the divider resistors), and for any path from these nets to the line the entry fuse F101 and the branch fuses; proposed by the drafter for the owner to accept or correct."
     accepted_by: ""
     accepted_on: ""
@@ -1110,7 +1110,7 @@ accepted_exceptions:
     constraint: clearance
     between: ["R604.1", "R604.2"]
     accepted_mm: 0.85
-    reason: "The pitch of R604 forces the gap: its pads 1 (on VMEAS_DIV) and 2 (on NEUTRAL) stand 0.85 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
+    reason: "The pitch of R604 forces the gap: its pads 1 (on VMEAS_DIV) and 2 (on AMC_HGND) stand 0.85 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
     bounded_by: "The energy the neutral-referenced circuit can supply (the AMC131M02's isolated high-side supply, the shunt and the divider resistors), and for any path from these nets to the line the entry fuse F101 and the branch fuses; proposed by the drafter for the owner to accept or correct."
     accepted_by: ""
     accepted_on: ""
@@ -1134,7 +1134,7 @@ accepted_exceptions:
     constraint: creepage
     between: ["R606.1", "R606.2"]
     accepted_mm: 0.85
-    reason: "The pitch of R606 forces the gap: its pads 1 (on AMC_AIN0N) and 2 (on NEUTRAL) stand 0.85 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
+    reason: "The pitch of R606 forces the gap: its pads 1 (on AMC_AIN0N) and 2 (on AMC_HGND) stand 0.85 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
     bounded_by: "The energy the neutral-referenced circuit can supply (the AMC131M02's isolated high-side supply, the shunt and the divider resistors), and for any path from these nets to the line the entry fuse F101 and the branch fuses; proposed by the drafter for the owner to accept or correct."
     accepted_by: ""
     accepted_on: ""
@@ -1142,7 +1142,7 @@ accepted_exceptions:
     constraint: clearance
     between: ["R606.1", "R606.2"]
     accepted_mm: 0.85
-    reason: "The pitch of R606 forces the gap: its pads 1 (on AMC_AIN0N) and 2 (on NEUTRAL) stand 0.85 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
+    reason: "The pitch of R606 forces the gap: its pads 1 (on AMC_AIN0N) and 2 (on AMC_HGND) stand 0.85 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
     bounded_by: "The energy the neutral-referenced circuit can supply (the AMC131M02's isolated high-side supply, the shunt and the divider resistors), and for any path from these nets to the line the entry fuse F101 and the branch fuses; proposed by the drafter for the owner to accept or correct."
     accepted_by: ""
     accepted_on: ""
@@ -1230,7 +1230,7 @@ accepted_exceptions:
     constraint: creepage
     between: ["U601.4", "U601.5"]
     accepted_mm: 0.67
-    reason: "The pitch of U601 forces the gap: its pads 4 (on AMC_HLDO_OUT) and 5 (on NEUTRAL) stand 0.67 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
+    reason: "The pitch of U601 forces the gap: its pads 4 (on AMC_HLDO_OUT) and 5 (on AMC_HGND) stand 0.67 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
     bounded_by: "The energy the neutral-referenced circuit can supply (the AMC131M02's isolated high-side supply, the shunt and the divider resistors), and for any path from these nets to the line the entry fuse F101 and the branch fuses; proposed by the drafter for the owner to accept or correct."
     accepted_by: ""
     accepted_on: ""
@@ -1238,7 +1238,7 @@ accepted_exceptions:
     constraint: clearance
     between: ["U601.4", "U601.5"]
     accepted_mm: 0.67
-    reason: "The pitch of U601 forces the gap: its pads 4 (on AMC_HLDO_OUT) and 5 (on NEUTRAL) stand 0.67 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
+    reason: "The pitch of U601 forces the gap: its pads 4 (on AMC_HLDO_OUT) and 5 (on AMC_HGND) stand 0.67 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
     bounded_by: "The energy the neutral-referenced circuit can supply (the AMC131M02's isolated high-side supply, the shunt and the divider resistors), and for any path from these nets to the line the entry fuse F101 and the branch fuses; proposed by the drafter for the owner to accept or correct."
     accepted_by: ""
     accepted_on: ""

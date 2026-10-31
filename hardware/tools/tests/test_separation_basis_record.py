@@ -19,6 +19,8 @@ DESIGN = board_check.Design(os.path.join("hardware", "sunbeam-em7000", "board", 
 TODAY = datetime.date(2026, 10, 23)
 #: How many entries the record held before the net-pair and same-part entries were appended after them; the earlier leaves' tests read these.
 ORIGINAL_ENTRIES = 25
+#: The opto-triacs whose unconnected pin 5 has two same-part pairs each, appended after the set N pairs and held to the full mains figures.
+NO_CONNECT_PART_REFS = ("U701", "U711")
 
 
 def committed():
@@ -851,9 +853,10 @@ class PollutionDegreeTwoRecord(unittest.TestCase):
 
 
 S, P, Z, M = ("/Supply voltage and current measurement/", "/Pump drives/", "/Zero-crossing detector/", "/Mains entry and load feed/")
-#: The thirteen neutral-referenced nets, as the main board's netlist writes them.
+#: The fifteen neutral-referenced nets, as the main board's netlist writes them: the thirteen on the converter and the shunt, the net of U601's unconnected pin 6 and the converter's high-side ground.
 SET_N = ["/NEUTRAL", M + "NEUTRAL_IN", "/SHUNT_SENSE_IN", "/SHUNT_SENSE_NEUTRAL", S + "AMC_AIN0P", S + "AMC_AIN0N", S + "AMC_AIN1P",
-         S + "AMC_AIN1N", S + "AMC_DCDC_OUT", S + "AMC_DCDC_HGND", S + "AMC_HLDO_IN", S + "AMC_HLDO_OUT", S + "VMEAS_DIV"]
+         S + "AMC_AIN1N", S + "AMC_DCDC_OUT", S + "AMC_DCDC_HGND", S + "AMC_HGND", S + "AMC_HLDO_IN", S + "AMC_HLDO_OUT", S + "VMEAS_DIV",
+         "unconnected-(U601-GPO-Pad6)"]
 #: The triac gate nets and the zero-cross LED anode, which pair only with /NEUTRAL.
 GATE_AND_LED = [P + "PUMP_C_TRIAC_G", P + "PUMP_S_TRIAC_G", Z + "ZC_LED_A"]
 #: The eleven net-pair entries: constraint, nets_a, nets_b (None where omitted), working voltage, accepted distance.
@@ -864,8 +867,8 @@ NET_PAIRS = [
     ("creepage", [M + "DISCH_A"], [M + "DISCH_B"], 10, 0.4),
     ("creepage", [Z + "ZC_N1"], ["/LINE", "/NEUTRAL", Z + "ZC_LED_A"], 126.5, 1.6),
     ("creepage", [S + "VMEAS_N1"], ["/LINE", S + "VMEAS_N2"], 84.5, 1.4),
-    ("creepage", [S + "VMEAS_N2"], [S + "VMEAS_DIV", "/NEUTRAL", M + "NEUTRAL_IN"], 94.5, 1.4),
-    ("creepage", [S + "VMEAS_N1"], [S + "VMEAS_DIV", "/NEUTRAL", M + "NEUTRAL_IN"], 178.8, 1.8),
+    ("creepage", [S + "VMEAS_N2"], [S + "VMEAS_DIV", "/NEUTRAL", S + "AMC_HGND", M + "NEUTRAL_IN"], 94.5, 1.4),
+    ("creepage", [S + "VMEAS_N1"], [S + "VMEAS_DIV", "/NEUTRAL", S + "AMC_HGND", M + "NEUTRAL_IN"], 178.8, 1.8),
     ("creepage", ["/LINE"], [S + "VMEAS_N2"], 168.6, 1.7),
     ("creepage", GATE_AND_LED, ["/NEUTRAL"], 10, 0.4),
     ("clearance", GATE_AND_LED, ["/NEUTRAL"], 10, 0.2),
@@ -908,7 +911,7 @@ class NetPairAndSamePartDrafts(unittest.TestCase):
         return [e for e in data["accepted_exceptions"] if "nets_a" in e]
 
     def same_part(self, data):
-        return [e for e in data["accepted_exceptions"][ORIGINAL_ENTRIES:] if "between" in e]
+        return [e for e in data["accepted_exceptions"][ORIGINAL_ENTRIES:] if "between" in e and e["between"][0].split(".")[0] not in NO_CONNECT_PART_REFS]
 
     def test_the_eleven_net_pair_entries_hold_the_lists_working_voltages_and_distances_the_leaf_sets(self):
         # SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C1: The record holds the eleven net-pair entries with the lists, working voltages and accepted distances this leaf sets
@@ -940,10 +943,10 @@ class NetPairAndSamePartDrafts(unittest.TestCase):
                 self.assertEqual(len(names), len(set(names)), names)
                 for name in names:
                     self.assertIsInstance(name, str)
-                    self.assertTrue(name.startswith("/") and name == name.strip(), name)
+                    self.assertTrue((name.startswith("/") or name.startswith("unconnected-(U")) and name == name.strip(), name)
                     self.assertIn(name, known)
         for name in known:
-            self.assertEqual(name.count("/"), 1 if name.startswith("/") and not name[1:].count("/") else 2, name)
+            self.assertEqual(name.count("/"), 0 if not name.startswith("/") else 1 if not name[1:].count("/") else 2, name)
 
     def test_each_accepted_distance_is_the_band_figure_for_its_working_voltage(self):
         # SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C3: Each creepage entry's accepted distance is the band figure for its working voltage
@@ -1008,7 +1011,7 @@ class NetPairAndSamePartDrafts(unittest.TestCase):
         _, data = committed()
         entries = self.net_pairs(data)
         needles = {
-            0: ("10 V", "0.000832639467", "2.7 V", "3.2 V", "thirteen"), 1: ("10 V", "0.2 mm", "thirteen"),
+            0: ("10 V", "0.000832639467", "2.7 V", "3.2 V", "fifteen"), 1: ("10 V", "0.2 mm", "fifteen"),
             2: ("253 / 2 = 126.5 V", "R101", "R104", "intact"), 3: ("126.5 V", "0.5 %", "10 V", "intact"),
             4: ("253 / 2 = 126.5 V", "R630", "R631", "intact"),
             5: ("0.666944", "0.333888", "253 x", "84.3 V is the value", "84.5 V written", "intact"),
@@ -1081,7 +1084,8 @@ class NetPairAndSamePartDrafts(unittest.TestCase):
         _, data = committed()
         assert_draft(self, data)
         entries = data["accepted_exceptions"]
-        self.assertEqual(len(entries), ORIGINAL_ENTRIES + 11 + 54)
+        self.assertEqual(len(entries), ORIGINAL_ENTRIES + 11 + 54 + 8)
+        self.assertEqual([e["between"][0].split(".")[0] for e in entries[-8:]], ["U701", "U701", "U701", "U701", "U711", "U711", "U711", "U711"])
         for entry in entries[ORIGINAL_ENTRIES:]:
             self.assertEqual((entry["accepted_by"], entry["accepted_on"]), ("", ""))
         _, problems = reading()
