@@ -35,7 +35,7 @@ producer_only:
   - C604
   bead: F602
   test_point: TP606
-  what: return of the isolated DC/DC output (pin DCDC_HGND), joined to HGND (NEUTRAL) through bead F602
+  what: return of the isolated DC/DC output (pin DCDC_HGND), joined to HGND (the net AMC_HGND, which the net tie NT601 joins to NEUTRAL) through bead F602
 - net: AMC_HLDO_IN
   producer: U601
   caps:

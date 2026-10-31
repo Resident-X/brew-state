@@ -1105,7 +1105,7 @@ parts:
         absolute_max_v: 361
         absolute_min_v: -357.8
         tolerates_driven_unpowered: false
-      # DCDC_HGND, joined to HGND (mains neutral) and so in the neutral's domain like pin 5, since it is the reference of the high side and not a supply above it; not stated, the isolation figure stands as for pin 5 (the working isolation voltage between HGND and DGND).
+      # DCDC_HGND, joined to HGND (the net AMC_HGND, which the net tie NT601 joins to mains neutral) and so in the neutral's domain like pin 5, since it is the reference of the high side and not a supply above it; not stated, the isolation figure stands as for pin 5 (the working isolation voltage between HGND and DGND).
       - pin: "2"
         domain: mains_neutral
         absolute_max_v: 1700
@@ -1123,7 +1123,7 @@ parts:
         absolute_max_v: 361
         absolute_min_v: -357.8
         tolerates_driven_unpowered: false
-      # HGND, on mains neutral. The high side is isolated from DGND: maximum repetitive peak isolation voltage VIORM 1700 V peak, working isolation 1200 V rms / 1700 V dc (6.5 insulation specifications). Not an absolute maximum of the pin; the working isolation figure bounds the voltage between HGND and DGND.
+      # HGND, on the net AMC_HGND, which the net tie NT601 joins to mains neutral. The high side is isolated from DGND: maximum repetitive peak isolation voltage VIORM 1700 V peak, working isolation 1200 V rms / 1700 V dc (6.5 insulation specifications). Not an absolute maximum of the pin; the working isolation figure bounds the voltage between HGND and DGND.
       - pin: "5"
         domain: mains_neutral
         absolute_max_v: 1700

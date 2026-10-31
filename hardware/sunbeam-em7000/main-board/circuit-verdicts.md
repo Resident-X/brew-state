@@ -10,8 +10,8 @@ The files below were written per group of sheets: A mains entry and interlock, B
 | B | 39 | 13 | 6 |
 | C | 112 | 44 | 0 |
 | D | 183 | 35 | 0 |
-| E | 56 | 4 | 0 |
-| Total | 433 | 114 | 6 |
+| E | 58 | 4 | 0 |
+| Total | 435 | 114 | 6 |
 
 ## Board-level items
 
@@ -67,7 +67,7 @@ Datasheets read 2026-10-29, saved under the work package's scratch folder, cited
 | LINE | PINV-1, SURGE-1, FAULT-1, SUPPLY-1 | PASS (F6 for copper) | after the fuse and link; varistor, X2, discharge strings, relay contact pin 14 and TP103; the module's and the measurement's taps (owners B, E) join here |
 | LINE1 | PINV-1, FAULT-1 | PASS | only K201.13, J101 and TP104 on the net, as the division record's check requires |
 | NEUTRAL_IN | PINV-1 | PASS | tab 3, shunt pin 1, TP105 |
-| NEUTRAL | PINV-1, FAULT-1 | PASS | the neutral pour above the shunt: R105.4, RV101, C101, R102, R104, J110 and TP106; every other owner's return joins here |
+| NEUTRAL | PINV-1, FAULT-1 | PASS | the neutral pour above the shunt: R105.4, RV101, C101, R102, R104, J110, TP106 and the net tie NT601, through which the converter's high-side returns (net AMC_HGND) join at one point; every other owner's return joins here |
 | SHUNT_SENSE_IN, SHUNT_SENSE_NEUTRAL | PINV-1, RCFL-1 | PASS | Kelvin sense pins R105.2 and R105.3; the filter and the AMC131M02 are owner E's; 21.2 mV peak at 15 A (the division record) |
 | DISCH_A, DISCH_B | PINV-1 | PASS | midpoint of each 2 x 1 Mohm string, no other pin |
 | COFVALVE, COFFPUMP, STEAMPUMP, HOTVALVE | PINV-1, CABLE-1 | PASS | tab pin only on this sheet; the drive stages are owner D's |
@@ -611,6 +611,8 @@ A FINDING is closed here by a change to a fragment or by a recorded reason; wher
 | Nets VMEAS_N1, VMEAS_N2, VMEAS_DIV, AMC_AIN0P, AMC_AIN0N, AMC_AIN1P, AMC_AIN1N | PINV-1, BARRIER-1 | PASS | Mains-referenced; peak voltage to NEUTRAL: VMEAS_N1 238 V, VMEAS_N2 119 V (253 V rms peaks, three equal elements), the rest under 0.31 V (21 mV on channel 1). Mains class |
 | Nets LINE, NEUTRAL, SHUNT_SENSE_IN, SHUNT_SENSE_NEUTRAL | PINV-1, SURGE-1 | PASS | Owned by the entry sheet. Behind the entry varistor (775 V clamp at 50 A) the divider output is 0.65 V and the AMC's rated impulse and surge withstand are 7.7 kV and 10 kV; the divider resistors' behaviour at 258 V each for a microsecond surge is not in the FRC sheet: open item |
 | Nets AMC_DCDC_OUT, AMC_DCDC_HGND, AMC_HLDO_IN, AMC_HLDO_OUT, AMC_DCDC_CAP | PINV-1, PARTS-1 | PASS | Producer-only nets: only U601 pins, the bead and the capacitors the datasheet lists, and a test point; HLDO_OUT 2.6 to 3.2 V, DCDC_CAP 3.5 V absolute maximum, nothing else connects |
+| Net AMC_HGND | PINV-1, BARRIER-1 | PASS | The converter's high-side ground, split from NEUTRAL after the schematic review's last round: U601 pin 5 (HGND, a passive pin and the reference of every high-side figure), the bead F602 pin 2, the high-side decoupling capacitors C605 to C608 and the returns R604 and R606, joined to NEUTRAL at one point, the net tie NT601, so the divider and filter returns and the converter's own return do not share the neutral pour's load current. Mains-referenced, in the Mains net class and in the neutral-referenced set N of the separation basis record's net-pair exceptions (unsigned drafts). Drafted with the change and not yet judged by a schematic review round: the review owes a new round on the changed netlist |
+| NT601 (net tie NetTie_2, footprint NetTie-2_SMD_Pad0.5mm) | PARTS-1, BARRIER-1 | PASS | Pin 1 on NEUTRAL, pin 2 on AMC_HGND: both Mains-class nets, which is the only join the pre-order check allows a net tie. Copper only, no part bought (the footprint is excluded from the bill of materials and the position file). Drafted with the change and not yet judged by a schematic review round |
 | Nets +3V3, GND | PINV-1, SUPPLY-1, SUPPLY-2 | PASS | Load on +3V3 from this sheet: AMC 23 mA, oscillator 4.94 mA, pull-ups under 0.1 mA, capacitance 1.1 uF (C609 C610 C611): charged in the controller sheet's turn-on, a small share of its regulator's limit. The rail must hold 2.97 V (oscillator) to 3.6 V (MAX31865) |
 | Nets AMC_CLK_OUT, AMC_CLKIN, AMC_SCLK, AMC_DIN, AMC_CS_PIN, AMC_DOUT_PIN, SPI2_SCK, SPI2_MOSI, SPI2_MISO, AMC_CS, AMC_RESET, AMC_DRDY | PINV-1, BUSL-1 | PASS | 0 to 3.6 V on a 0 to DVDD+0.3 V pin; E1.8, E1.9. Push-pull drivers, no open-drain line on the sheet, so BUSL-1 does not arise. Series resistors sit at the receiver (AMC) and the source (oscillator) |
 | Sheet E1 | DRAW-1, CABLE-1, ESD-1, TOUCH-1, EMSRC-1, EMSRC-2, EMSRC-3, INDEP-1, FAULT-1, POLAR-1, STRAP-2 | PASS (items 1, 2 to 8) / N/A (the rest) | DRAW-1: one function, a named sheet, every net named, wires inside the divider and filters and labels between sheets (LINE, NEUTRAL, SHUNT_SENSE_*, SPI2_*, AMC_*), left-to-right flow with the barrier part in the middle, rails by name (+3V3, GND), no connector, text clear (notes tell the drawing agent the placement). The other items: no connector, no earth leakage part, no switching stage of this sheet (the DC/DC is inside the part, the maker's EMI statement relies on the beads F601 F602), no protective chain, no polarised part, no debug connector |
