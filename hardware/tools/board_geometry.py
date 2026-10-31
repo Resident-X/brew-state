@@ -37,8 +37,9 @@ Unreadable naming what could not be read, rather than being taken as nothing.
 
 from __future__ import annotations
 
+import heapq
 import math
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence, Set, Tuple
 
 import sexpr
 
@@ -511,3 +512,399 @@ def polygon_distance(one: Sequence[Point], other: Sequence[Point]) -> float:
         return 0.0
     return min(segment_distance(a, b, c, d)
                for a, b in zip(one, list(one[1:]) + list(one[:1])) for c, d in zip(other, list(other[1:]) + list(other[:1])))
+
+
+# --- The board outline and its slots ------------------------------------------------
+
+#: How far an arc of the outline may lie off the straight pieces it is written as, in mm.
+OUTLINE_SAG = 1e-3
+
+#: How near the ends of two pieces of the outline must be to be one point, in mm.
+OUTLINE_JOIN = 1e-4
+
+#: How far every point of a closed cut-out may lie from one circle, in mm, for the cut-out to be a round hole.
+ROUND_HOLE = 1e-3
+
+#: The layer the board's outline and its cut-outs are drawn on.
+OUTLINE_LAYER = "Edge.Cuts"
+
+
+class Loop:
+    """One closed line of the outline layer: its corners, and whether it is a round hole."""
+
+    def __init__(self, points: Sequence[Point], round_: bool):
+        self.points = list(points)
+        self.round = round_
+        xs, ys = [p[0] for p in self.points], [p[1] for p in self.points]
+        self.bounds = (min(xs), min(ys), max(xs), max(ys))
+
+    def area(self) -> float:
+        return polygon_area(self.points)
+
+    def label(self) -> str:
+        left, top, right, bottom = self.bounds
+        return f"the cut-out at ({(left + right) / 2:.2f}, {(top + bottom) / 2:.2f}) mm, {right - left:.2f} by {bottom - top:.2f} mm"
+
+
+def circumcircle(a: Point, b: Point, c: Point) -> Optional[Tuple[Point, float]]:
+    """The centre and radius of the circle through three points, or None where they lie on one line."""
+    d = 2 * (a[0] * (b[1] - c[1]) + b[0] * (c[1] - a[1]) + c[0] * (a[1] - b[1]))
+    if abs(d) < 1e-12:
+        return None
+    ux = ((a[0] ** 2 + a[1] ** 2) * (b[1] - c[1]) + (b[0] ** 2 + b[1] ** 2) * (c[1] - a[1])
+          + (c[0] ** 2 + c[1] ** 2) * (a[1] - b[1])) / d
+    uy = ((a[0] ** 2 + a[1] ** 2) * (c[0] - b[0]) + (b[0] ** 2 + b[1] ** 2) * (a[0] - c[0])
+          + (c[0] ** 2 + c[1] ** 2) * (b[0] - a[0])) / d
+    return (ux, uy), math.hypot(a[0] - ux, a[1] - uy)
+
+
+def arc_points(start: Point, mid: Point, end: Point) -> List[Point]:
+    """The points along an arc written as its start, a point on it and its end, no piece between two lying more than OUTLINE_SAG off it."""
+    found = circumcircle(start, mid, end)
+    if found is None:
+        return [start, end]
+    centre, radius = found
+    first, through, last = (math.atan2(p[1] - centre[1], p[0] - centre[0]) for p in (start, mid, end))
+    sweep = (last - first) % (2 * math.pi)
+    if (through - first) % (2 * math.pi) > sweep:
+        sweep -= 2 * math.pi
+    step = 2 * math.acos(max(-1.0, 1 - OUTLINE_SAG / radius))
+    pieces = max(8, math.ceil(abs(sweep) / step))
+    points = [(centre[0] + radius * math.cos(first + sweep * i / pieces), centre[1] + radius * math.sin(first + sweep * i / pieces))
+              for i in range(pieces + 1)]
+    points[0], points[-1] = start, end
+    return points
+
+
+def circle_points(centre: Point, radius: float) -> List[Point]:
+    """A circle as the corners of a polygon no side of which lies more than OUTLINE_SAG off it."""
+    step = 2 * math.acos(max(-1.0, 1 - OUTLINE_SAG / radius)) if radius > OUTLINE_SAG else math.pi / 4
+    pieces = max(16, math.ceil(2 * math.pi / step))
+    return [(centre[0] + radius * math.cos(2 * math.pi * i / pieces), centre[1] + radius * math.sin(2 * math.pi * i / pieces))
+            for i in range(pieces)]
+
+
+def is_round(points: Sequence[Point]) -> bool:
+    """Whether every corner of a closed line lies within ROUND_HOLE of one circle, as a circular hole's do."""
+    if len(points) < 8:
+        return False
+    found = circumcircle(points[0], points[len(points) // 3], points[2 * len(points) // 3])
+    if found is None:
+        return False
+    centre, radius = found
+    return all(abs(math.dist(point, centre) - radius) <= ROUND_HOLE for point in points)
+
+
+def outline_shapes(tree: list) -> List[Tuple[str, List[Point]]]:
+    """Every shape drawn on the outline layer, as ('open' or 'closed', its corners): the layout's own and those of its footprints, placed."""
+    found: List[Tuple[str, List[Point]]] = []
+
+    def read(node: list, place, what: str) -> None:
+        layer = sexpr.child(node, "layer")
+        if layer is None or len(layer) < 2 or str(layer[1]) != OUTLINE_LAYER:
+            return
+        head = sexpr.head(node)
+        if head in ("gr_line", "fp_line"):
+            found.append(("open", [place(xy(sexpr.child(node, "start"), what)), place(xy(sexpr.child(node, "end"), what))]))
+        elif head in ("gr_arc", "fp_arc"):
+            found.append(("open", [place(p) for p in arc_points(xy(sexpr.child(node, "start"), what), xy(sexpr.child(node, "mid"), what),
+                                                                xy(sexpr.child(node, "end"), what))]))
+        elif head in ("gr_circle", "fp_circle"):
+            centre, edge = xy(sexpr.child(node, "center"), what), xy(sexpr.child(node, "end"), what)
+            found.append(("circle", [place(p) for p in circle_points(centre, math.dist(centre, edge))]))
+        elif head in ("gr_rect", "fp_rect"):
+            (x1, y1), (x2, y2) = xy(sexpr.child(node, "start"), what), xy(sexpr.child(node, "end"), what)
+            found.append(("closed", [place(p) for p in ((x1, y1), (x2, y1), (x2, y2), (x1, y2))]))
+        elif head in ("gr_poly", "fp_poly"):
+            corners = sexpr.child(node, "pts")
+            if corners is None or len(corners) < 4:
+                raise Unreadable(f"{what} has a polygon on {OUTLINE_LAYER} with fewer than three corners")
+            found.append(("closed", [place(xy(corner, what)) for corner in corners[1:]]))
+        elif head in ("gr_curve", "fp_curve"):
+            raise Unreadable(f"{what} draws a curve on {OUTLINE_LAYER}, which is not read; draw it as an arc")
+
+    for node in tree[1:]:
+        if isinstance(node, list) and sexpr.head(node).startswith("gr_"):
+            read(node, lambda point: point, "the board outline")
+    for footprint in sexpr.children(tree, "footprint"):
+        name = reference(footprint) or "?"
+        at = placement(footprint, f"the footprint {name}")
+        for node in footprint[1:]:
+            if isinstance(node, list) and sexpr.head(node).startswith("fp_"):
+                read(node, lambda point, at=at: placed(point, at), f"the footprint {name}")
+    return found
+
+
+def edge_loops(tree: list) -> List[Loop]:
+    """The closed lines the outline layer draws: the board's outline, its slots and its round holes.
+
+    Lines and arcs are chained end to end, where their ends lie within
+    OUTLINE_JOIN of one another, into closed lines; a circle, a rectangle and a
+    polygon are each a closed line of their own. A chain that does not close
+    raises Unreadable, since an outline that does not close has no inside.
+    """
+    loops: List[Loop] = []
+    pieces: List[List[Point]] = []
+    for kind, points in outline_shapes(tree):
+        if kind == "open":
+            pieces.append(points)
+        else:
+            loops.append(Loop(points, kind == "circle" or is_round(points)))
+    while pieces:
+        chain = pieces.pop(0)
+        while math.dist(chain[0], chain[-1]) > OUTLINE_JOIN:
+            for index, piece in enumerate(pieces):
+                if math.dist(piece[0], chain[-1]) <= OUTLINE_JOIN:
+                    chain += piece[1:]
+                elif math.dist(piece[-1], chain[-1]) <= OUTLINE_JOIN:
+                    chain += piece[-2::-1]
+                else:
+                    continue
+                del pieces[index]
+                break
+            else:
+                where = f"({chain[0][0]:g}, {chain[0][1]:g}) mm"
+                raise Unreadable(f"the lines drawn on {OUTLINE_LAYER} from {where} do not close into an outline or a cut-out")
+        loops.append(Loop(chain[:-1], is_round(chain[:-1])))
+    return loops
+
+
+def barrier_slots(tree: list) -> List[Loop]:
+    """The closed cut-outs inside the board's outline that are not round holes.
+
+    The outline is the closed line enclosing the most area; a notch that
+    reaches it is part of it and is not a slot.
+    """
+    loops = edge_loops(tree)
+    if len(loops) < 2:
+        return []
+    outline = max(loops, key=Loop.area)
+    return [loop for loop in loops if loop is not outline and not loop.round and within(loop.points[0], outline.points)]
+
+
+# --- Nearness of large polygons ---------------------------------------------------------
+
+#: The corners above which a polygon is indexed by a grid of its sides rather than walked side by side.
+INDEXED_CORNERS = 64
+
+#: The cells of the grid a large polygon's sides are held in, along its longer axis.
+GRID_CELLS = 64
+
+INFINITE = float("inf")
+
+
+class Shape:
+    """The polygons of one piece of copper, a large one indexed by a grid of its sides so a nearby side is found without walking them all."""
+
+    def __init__(self, polygons: Sequence[Sequence[Point]]):
+        self.polygons = [list(polygon) for polygon in polygons]
+        points = [point for polygon in self.polygons for point in polygon]
+        self.bounds = (min(x for x, _ in points), min(y for _, y in points), max(x for x, _ in points), max(y for _, y in points))
+        self.corners = len(points)
+        self.sides: List[Tuple[Point, Point]] = []
+        self.grid: Dict[Tuple[int, int], List[int]] = {}
+        self.rows: Dict[int, List[int]] = {}
+        self.size = 1.0
+        if self.corners > INDEXED_CORNERS:
+            left, top, right, bottom = self.bounds
+            self.size = max((right - left), (bottom - top), 1e-6) / GRID_CELLS
+            for polygon in self.polygons:
+                for a, b in zip(polygon, polygon[1:] + polygon[:1]):
+                    index = len(self.sides)
+                    self.sides.append((a, b))
+                    for row in range(self.cell(min(a[1], b[1])), self.cell(max(a[1], b[1])) + 1):
+                        self.rows.setdefault(row, []).append(index)
+                        for column in range(self.cell(min(a[0], b[0])), self.cell(max(a[0], b[0])) + 1):
+                            self.grid.setdefault((column, row), []).append(index)
+
+    def cell(self, value: float) -> int:
+        return math.floor(value / self.size)
+
+    def indexed(self) -> bool:
+        return bool(self.sides)
+
+    def edges(self) -> List[Tuple[Point, Point]]:
+        if self.sides:
+            return self.sides
+        return [(a, b) for polygon in self.polygons for a, b in zip(polygon, polygon[1:] + polygon[:1])]
+
+    def near(self, box: Tuple[float, float, float, float], reach: float) -> List[Tuple[Point, Point]]:
+        """The sides that may lie within `reach` of a box: every one whose cell the box grown by `reach` meets."""
+        if not self.sides:
+            return self.edges()
+        left, top, right, bottom = box[0] - reach, box[1] - reach, box[2] + reach, box[3] + reach
+        found = set()
+        for column in range(self.cell(left), self.cell(right) + 1):
+            for row in range(self.cell(top), self.cell(bottom) + 1):
+                found.update(self.grid.get((column, row), ()))
+        return [self.sides[index] for index in sorted(found)]
+
+    def contains(self, point: Point) -> bool:
+        """Whether a point is inside the polygons by the even-odd rule, for the polygons taken together."""
+        if not (self.bounds[0] <= point[0] <= self.bounds[2] and self.bounds[1] <= point[1] <= self.bounds[3]):
+            return False
+        if not self.sides:
+            return any(within(point, polygon) for polygon in self.polygons)
+        inside = False
+        for index in self.rows.get(self.cell(point[1]), ()):
+            a, b = self.sides[index]
+            if (a[1] > point[1]) != (b[1] > point[1]) and point[0] < a[0] + (b[0] - a[0]) * (point[1] - a[1]) / (b[1] - a[1]):
+                inside = not inside
+        return inside
+
+
+def apart(one: Shape, other: Shape, reach: float) -> bool:
+    """Whether the boxes of two shapes, one grown by `reach`, miss one another."""
+    return (one.bounds[0] > other.bounds[2] + reach or one.bounds[2] < other.bounds[0] - reach
+            or one.bounds[1] > other.bounds[3] + reach or one.bounds[3] < other.bounds[1] - reach)
+
+
+def shape_distance(one: Shape, other: Shape, reach: float) -> float:
+    """How far apart two shapes stand where that is under `reach`, 0 where they touch, cross or one lies inside the other.
+
+    Where they stand `reach` or more apart the result is at least `reach`, and
+    may be infinite. A large shape is walked only where the other lies within
+    `reach` of it, so the result is polygon_distance's wherever that is under
+    `reach`.
+    """
+    if apart(one, other, reach):
+        return INFINITE
+    small, large = (one, other) if one.corners <= other.corners else (other, one)
+    corners = [point for polygon in small.polygons for point in polygon]
+    if any(large.contains(point) for point in corners):
+        return 0.0
+    box = small.bounds
+    nearer = [side[0] for side in large.near(box, 0.0) if box[0] <= side[0][0] <= box[2] and box[1] <= side[0][1] <= box[3]]
+    if any(small.contains(point) for point in nearer):
+        return 0.0
+    best = INFINITE
+    pieces = [(c, d, (min(c[0], d[0]), min(c[1], d[1]), max(c[0], d[0]), max(c[1], d[1]))) for c, d in small.edges()]
+    for a, b in large.near(small.bounds, reach):
+        for c, d, box_ in pieces:
+            if side_gap(a, b, box_) >= min(best, reach):
+                continue
+            best = min(best, segment_distance(a, b, c, d))
+    return best
+
+
+def side_gap(a: Point, b: Point, box: Tuple[float, float, float, float]) -> float:
+    """A lower bound on how far the straight line from a to b stands from a box (left, top, right, bottom): the gap between their boxes."""
+    gap_x = max(min(a[0], b[0]) - box[2], box[0] - max(a[0], b[0]), 0.0)
+    gap_y = max(min(a[1], b[1]) - box[3], box[1] - max(a[1], b[1]), 0.0)
+    return math.hypot(gap_x, gap_y)
+
+
+def closest_points(one: Point, two: Point, three: Point, four: Point) -> Tuple[float, Point, Point]:
+    """The least distance between two straight lines, from a to b and from c to d, and a point of each where they stand that far apart."""
+    if orientation(one, two, three) * orientation(one, two, four) < 0 and orientation(three, four, one) * orientation(three, four, two) < 0:
+        t = orientation(three, four, one) / (orientation(three, four, one) - orientation(three, four, two))
+        crossing = (one[0] + (two[0] - one[0]) * t, one[1] + (two[1] - one[1]) * t)
+        return 0.0, crossing, crossing
+    best: Tuple[float, Point, Point] = (INFINITE, one, three)
+    for point, start, end, flip in ((three, one, two, False), (four, one, two, False), (one, three, four, True), (two, three, four, True)):
+        foot = nearest_on_segment(point, start, end)
+        distance = math.dist(point, foot)
+        if distance < best[0]:
+            best = (distance, foot, point) if not flip else (distance, point, foot)
+    return best
+
+
+def nearest_on_segment(point: Point, a: Point, b: Point) -> Point:
+    """The point of the straight line from a to b nearest `point`."""
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    length = dx * dx + dy * dy
+    if length == 0:
+        return a
+    t = max(0.0, min(1.0, ((point[0] - a[0]) * dx + (point[1] - a[1]) * dy) / length))
+    return a[0] + dx * t, a[1] + dy * t
+
+
+#: How far a turn may be from nought, in mm squared, to count as no turn.
+STRAIGHT = 1e-9
+
+
+def crosses(a: Point, b: Point, c: Point, d: Point) -> bool:
+    """Whether the straight line from a to b crosses that from c to d properly, one passing through the other and not merely meeting it."""
+    first, second = orientation(a, b, c), orientation(a, b, d)
+    third, fourth = orientation(c, d, a), orientation(c, d, b)
+    return ((first > STRAIGHT and second < -STRAIGHT) or (first < -STRAIGHT and second > STRAIGHT)) and (
+        (third > STRAIGHT and fourth < -STRAIGHT) or (third < -STRAIGHT and fourth > STRAIGHT))
+
+
+def blocked(a: Point, b: Point, slots: Sequence[Sequence[Point]]) -> bool:
+    """Whether the straight line from a to b passes through the inside of any slot, running along or touching a wall being open."""
+    middle = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
+    for slot in slots:
+        ring = list(zip(slot, slot[1:] + slot[:1]))
+        if any(crosses(a, b, c, d) for c, d in ring):
+            return True
+        if within(middle, slot) and min(distance_to_segment(middle, c, d) for c, d in ring) > 1e-7:
+            return True
+    return False
+
+
+def route_length(first: Shape, second: Shape, slots: Sequence[Loop], reach: float,
+                 straight: Optional[float] = None) -> Tuple[float, int]:
+    """The shortest way from one piece of copper to another seen from above that does not cross a slot, and how many slots it goes round.
+
+    A way is a run of straight lines, each clear of every slot's inside, that
+    bends only at a corner of a slot; the ends are the nearest points of the
+    two pieces the first and last lines meet, so a slot corner is the only
+    place a way can turn. Where no slot lies within `reach` of the pieces the
+    way is the straight line between them. The length is exact for the polygons
+    given, not gridded. The count is of the slots a corner of which the way
+    turns at. `straight` is the distance between the pieces where that is known.
+    """
+    box = (min(first.bounds[0], second.bounds[0]) - reach, min(first.bounds[1], second.bounds[1]) - reach,
+           max(first.bounds[2], second.bounds[2]) + reach, max(first.bounds[3], second.bounds[3]) + reach)
+    near = [slot for slot in slots if slot.bounds[0] <= box[2] and slot.bounds[2] >= box[0]
+            and slot.bounds[1] <= box[3] and slot.bounds[3] >= box[1]]
+    straight = shape_distance(first, second, reach) if straight is None else straight
+    if not near or straight >= reach:
+        return straight, 0
+    rings = [slot.points for slot in near]
+    best = INFINITE
+    first_sides = first.near(second.bounds, reach)
+    second_sides = second.near(first.bounds, reach)
+    seconds = [(c, d, (min(c[0], d[0]), min(c[1], d[1]), max(c[0], d[0]), max(c[1], d[1]))) for c, d in second_sides]
+    for a, b in first_sides:
+        for c, d, box_ in seconds:
+            if side_gap(a, b, box_) >= min(best, reach):
+                continue
+            distance, p, q = closest_points(a, b, c, d)
+            if distance < best and not blocked(p, q, rings):
+                best = distance
+    nodes = [(index, corner) for index, ring in enumerate(rings) for corner in ring]
+
+    def reaching(sides: Sequence[Tuple[Point, Point]], corner: Point) -> float:
+        found = INFINITE
+        for a, b in sides:
+            foot = nearest_on_segment(corner, a, b)
+            distance = math.dist(corner, foot)
+            if distance < min(found, reach) and not blocked(corner, foot, rings):
+                found = distance
+        return found
+
+    start = [reaching(first_sides, corner) for _, corner in nodes]
+    finish = [reaching(second_sides, corner) for _, corner in nodes]
+    cost = {position: (start[position], frozenset([nodes[position][0]]) if start[position] < INFINITE else frozenset())
+            for position in range(len(nodes))}
+    settled: Set[int] = set()
+    queue = [(cost[position][0], position) for position in cost if cost[position][0] < INFINITE]
+    heapq.heapify(queue)
+    found: Tuple[float, int] = (best, 0)
+    while queue:
+        distance, position = heapq.heappop(queue)
+        if position in settled or distance >= found[0]:
+            continue
+        settled.add(position)
+        if distance + finish[position] < found[0]:
+            found = (distance + finish[position], len(cost[position][1]))
+        for other in range(len(nodes)):
+            if other in settled:
+                continue
+            step = math.dist(nodes[position][1], nodes[other][1])
+            if distance + step < cost[other][0] and not blocked(nodes[position][1], nodes[other][1], rings):
+                cost[other] = (distance + step, cost[position][1] | {nodes[other][0]})
+                heapq.heappush(queue, (distance + step, other))
+    return found

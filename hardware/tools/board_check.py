@@ -5006,6 +5006,342 @@ def mains_barrier(design: Design, tree: list, fills, mains: Set[str], allowed: f
     return found
 
 
+# --- Mains copper against low-voltage copper on every layer -----------------------
+
+
+#: The violation the rule raises for any pair of copper it holds too close, and for copper it cannot measure.
+LAYER_RULE = "mains_layer_separation"
+
+#: The name the rule goes by inside the layout rule check's own wording, which the signed exceptions are matched against.
+LAYER_SHORTFALL_RULE = f"{RESERVED}: mains-to-low-voltage layer separation"
+
+#: How far inner-layer copper of any net keeps from the wall of a barrier slot, in mm: the wall is exposed glass fibre.
+#: It is a figure of the check, not of the signed record.
+SLOT_WALL_MM = 1.5
+
+#: The distance at which two pieces of copper in plan view overlap, in mm.
+OVERLAP_MM = board_geometry.CONTACT
+
+#: KiCad's word for an item with no net, written between square brackets.
+NO_NET = "<no net>"
+
+#: The cell, in mm, of the grid that finds the low-voltage copper near a Mains-class item.
+FIND_CELL_MM = 20.0
+
+#: The graphics a layout draws that are copper when they are on a copper layer, and the texts that are never measured.
+COPPER_GRAPHICS = ("line", "arc", "circle", "rect", "poly")
+COPPER_TEXTS = ("gr_text", "fp_text", "gr_text_box", "fp_text_box")
+
+
+class LayerItem:
+    """One piece of copper as the cross-layer rule holds it.
+
+    `stored` is the layers KiCad compares it on: the copper layers a pad is
+    written on, a via's span, a track's layer, a pour's. `reach` is the layers
+    it has copper on, which a plated through hole widens to every copper layer.
+    `name` is KiCad's wording for it. A non-empty `unmeasured` says why its
+    copper cannot be measured from the layout file.
+    """
+
+    def __init__(self, kind: str, net: str, stored: Sequence[str], reach: Sequence[str],
+                 polygons: Sequence[board_geometry.Polygon], name: str, unmeasured: str = ""):
+        self.kind, self.net = kind, net
+        self.stored, self.reach = tuple(stored), tuple(reach)
+        self.shape = board_geometry.Shape(polygons)
+        self.name = name
+        self.unmeasured = unmeasured
+
+    def centre(self) -> Tuple[float, float]:
+        left, top, right, bottom = self.shape.bounds
+        return (left + right) / 2, (top + bottom) / 2
+
+    def on(self, stack: Sequence[str]) -> str:
+        return "every copper layer" if len(stack) > 2 and set(self.reach) == set(stack) else ", ".join(self.reach)
+
+
+class LayerFinding:
+    """One pair of copper, or one piece of copper and a slot, held too close by the cross-layer rule."""
+
+    def __init__(self, test: str, mains: Optional[LayerItem], other: LayerItem, measured: float, figure: float,
+                 rounds: int = 0, slot: str = ""):
+        self.test, self.mains, self.other = test, mains, other
+        self.measured, self.figure, self.rounds, self.slot = measured, figure, rounds, slot
+        self.shortfall: Optional[Shortfall] = None
+
+    def key(self, stack: Sequence[str]) -> tuple:
+        if self.mains is None:
+            return (self.test, self.slot, self.other.kind, self.other.net, self.other.on(stack))
+        return (self.test, self.mains.kind, self.mains.net, self.mains.on(stack),
+                self.other.kind, self.other.net, self.other.on(stack))
+
+
+class LayerResult:
+    """What the cross-layer rule found: the findings, and what it could not measure."""
+
+    def __init__(self):
+        self.findings: List[LayerFinding] = []
+        self.unmeasured: Dict[str, str] = {}
+
+
+def graphic_polygons(node: list, place, what: str) -> List[board_geometry.Polygon]:
+    """The copper of a graphic drawn on a copper layer, as polygons: a stroke swept along its line, or the area it fills."""
+    head = sexpr.head(node)[3:]
+    stroke = sexpr.child(node, "stroke")
+    width_node = sexpr.child(stroke, "width") if stroke is not None else sexpr.child(node, "width")
+    width = board_geometry.number(width_node, 1, what) if width_node is not None else 0.0
+    fill = sexpr.child(node, "fill")
+    filled = fill is not None and len(fill) > 1 and str(fill[1]) in ("yes", "solid")
+    if head == "line":
+        line = [place(board_geometry.xy(sexpr.child(node, "start"), what)), place(board_geometry.xy(sexpr.child(node, "end"), what))]
+    elif head == "arc":
+        line = [place(p) for p in board_geometry.arc_points(board_geometry.xy(sexpr.child(node, "start"), what),
+                                                              board_geometry.xy(sexpr.child(node, "mid"), what),
+                                                              board_geometry.xy(sexpr.child(node, "end"), what))]
+    else:
+        if head == "circle":
+            centre, edge = board_geometry.xy(sexpr.child(node, "center"), what), board_geometry.xy(sexpr.child(node, "end"), what)
+            ring = [place(p) for p in board_geometry.circle_points(centre, math.dist(centre, edge))]
+        elif head == "rect":
+            (x1, y1), (x2, y2) = (board_geometry.xy(sexpr.child(node, "start"), what), board_geometry.xy(sexpr.child(node, "end"), what))
+            ring = [place(p) for p in ((x1, y1), (x2, y1), (x2, y2), (x1, y2))]
+        else:
+            corners = sexpr.child(node, "pts")
+            if corners is None or len(corners) < 4:
+                raise board_geometry.Unreadable(f"{what} has a polygon with fewer than three corners")
+            ring = [place(board_geometry.xy(corner, what)) for corner in corners[1:]]
+        if filled:
+            return [ring]
+        line = ring + ring[:1]
+    return board_geometry.swept(line, width)
+
+
+def pour_items(tree: list, stack: Sequence[str]) -> List[LayerItem]:
+    """Every copper pour of a layout on each of its layers: the fill as the layout stores it, or its outline where it stores none there.
+
+    A zone with no net is a pour of no net; a zone with a keepout clause is a
+    rule area and carries no copper.
+    """
+    table = board_geometry.net_table(tree)
+    found = []
+    for zone in sexpr.children(tree, "zone"):
+        if sexpr.child(zone, "keepout") is not None:
+            continue
+        what = "a zone of the layout"
+        net = board_geometry.item_net(zone, table, what)
+        named = sexpr.child(zone, "layers") or sexpr.child(zone, "layer") or []
+        layers = [str(name) for name in named[1:] if str(name) in stack]
+        if "F&B.Cu" in [str(name) for name in named[1:]]:
+            layers += [name for name in (stack[0], stack[-1]) if name not in layers]
+        if "*.Cu" in [str(name) for name in named[1:]]:
+            layers = list(stack)
+        outlines = []
+        for polygon in sexpr.children(zone, "polygon"):
+            points = sexpr.child(polygon, "pts")
+            if points is None or len(points) < 4:
+                raise board_geometry.Unreadable(f"{what} of {net or NO_NET} has an outline of fewer than three corners")
+            outlines.append([board_geometry.xy(corner, what) for corner in points[1:]])
+        stored: Dict[str, List[board_geometry.Polygon]] = {}
+        for fill in sexpr.children(zone, "filled_polygon"):
+            layer, points = sexpr.child(fill, "layer"), sexpr.child(fill, "pts")
+            if layer is None or len(layer) < 2 or points is None or len(points) < 4:
+                raise board_geometry.Unreadable(f"a fill of the zone of {net or NO_NET} has no layer or no corners where KiCad writes them")
+            if any(sexpr.head(corner) != "xy" for corner in points[1:]):
+                raise board_geometry.Unreadable(f"a fill of the zone of {net or NO_NET} is not a run of (xy ...) corners")
+            stored.setdefault(str(layer[1]), []).append([board_geometry.xy(corner, what) for corner in points[1:]])
+        for layer in layers:
+            polygons = stored.get(layer) or outlines
+            if polygons:
+                found.append(LayerItem("zone", net, [layer], [layer], polygons, f"Zone [{net or NO_NET}] on {layer}"))
+    return found
+
+
+def layer_items(tree: list, stack: Sequence[str], holes: Sequence[str]) -> Tuple[List[LayerItem], Dict[str, str]]:
+    """Every piece of copper of a layout as the cross-layer rule holds it, and the copper it cannot measure by name.
+
+    Tracks, arcs, vias, the pads of every part but the mounting holes, pours
+    and the graphics drawn on a copper layer. The text drawn on a copper layer
+    is copper the layout file does not size, and is returned by name.
+    """
+    table = board_geometry.net_table(tree)
+    found: List[LayerItem] = []
+    unmeasured: Dict[str, str] = {}
+    for copper in Layout(tree).copper:
+        if copper.layer in stack:
+            word = "Track" if copper.kind() == "track" else "Arc"
+            found.append(LayerItem(copper.kind(), copper.net, [copper.layer], [copper.layer],
+                                   board_geometry.swept(copper.points(), copper.width), f"{word} [{copper.net or NO_NET}] on {copper.layer}"))
+    for via in board_vias(tree, stack):
+        found.append(LayerItem("via", via.net, via.layers, via.layers, [board_geometry.disc(via.centre, via.size / 2)],
+                               f"Via [{via.net or NO_NET}] on {via.layers[0]} - {via.layers[-1]}"))
+    held = set(holes)
+    for footprint in sexpr.children(tree, "footprint"):
+        name = board_geometry.reference(footprint) or "?"
+        at = board_geometry.placement(footprint, f"the footprint {name}")
+        if name not in held:
+            for node, pad in zip(sexpr.children(footprint, "pad"), board_geometry.footprint_pads(footprint, table)):
+                stored = [layer for layer in stack if pad.on(layer)]
+                if not stored:
+                    continue
+                kind = str(node[2]) if len(node) > 2 else ""
+                through = kind == "thru_hole"
+                word = "PTH" if through else "NPTH" if kind == "np_thru_hole" else "SMD"
+                custom = pad.shape == "custom" or "layer by layer" in pad.unsized
+                found.append(LayerItem(
+                    "pad", pad.net, stored, stack if through else stored, [pad.outline()],
+                    f"{word} pad {pad.number} [{pad.net or NO_NET}] of {name}",
+                    f"its copper is {pad.unsized or 'not sized'}, which the layout file does not give" if custom else ""))
+        for node in footprint[1:]:
+            if not isinstance(node, list) or not sexpr.head(node).startswith("fp_"):
+                continue
+            layer = sexpr.child(node, "layer")
+            if layer is None or len(layer) < 2 or str(layer[1]) not in stack:
+                continue
+            if sexpr.head(node)[3:] in COPPER_GRAPHICS:
+                found.append(LayerItem("graphic", "", [str(layer[1])], [str(layer[1])],
+                                       graphic_polygons(node, lambda point, at=at: board_geometry.placed(point, at),
+                                                        f"the footprint {name}"), f"Graphic on {layer[1]} of {name}"))
+            elif sexpr.head(node) in COPPER_TEXTS:
+                unmeasured[f"text on {layer[1]} of {name}"] = "text on a copper layer has copper the layout file does not size"
+        for node in sexpr.children(footprint, "property"):
+            layer = sexpr.child(node, "layer")
+            if layer is not None and len(layer) > 1 and str(layer[1]) in stack and sexpr.child(node, "hide") is None:
+                unmeasured[f"property {node[1] if len(node) > 1 else '?'} on {layer[1]} of {name}"] = (
+                    "text on a copper layer has copper the layout file does not size")
+    for node in tree[1:]:
+        if not isinstance(node, list) or not sexpr.head(node).startswith("gr_"):
+            continue
+        layer = sexpr.child(node, "layer")
+        if layer is None or len(layer) < 2 or str(layer[1]) not in stack:
+            continue
+        if sexpr.head(node)[3:] in COPPER_GRAPHICS:
+            found.append(LayerItem("graphic", "", [str(layer[1])], [str(layer[1])],
+                                   graphic_polygons(node, lambda point: point, "the layout"), f"Graphic on {layer[1]}"))
+        elif sexpr.head(node) in COPPER_TEXTS:
+            unmeasured[f"text on {layer[1]}"] = "text on a copper layer has copper the layout file does not size"
+    found += pour_items(tree, stack)
+    return found, unmeasured
+
+
+def layer_separation(tree: list, mains: Set[str], clearance: float, creepage: float) -> LayerResult:
+    """Every pair of a Mains-class item and a low-voltage item on layers KiCad does not compare, and every inner-layer item near a slot, held too close.
+
+    A Mains-class item is copper of a net in `mains`; a low-voltage item is
+    every other copper, a net of its own or none. A pair is judged here when
+    the layers KiCad compares them on, their `stored` layers, share none, since
+    KiCad's own rule reports a pair that shares one. Seen from above the
+    straight distance between the two is held to `clearance`, the shortest way
+    between them that does not cross a barrier slot to `creepage`, and the two
+    overlapping, which is a distance of nothing, fails as an overlap whatever the
+    figures are. Inner-layer copper of any net stands SLOT_WALL_MM from every slot's wall.
+    """
+    stack = copper_layers(tree)
+    items, texts = layer_items(tree, stack, hole_footprints(tree))
+    result = LayerResult()
+    result.unmeasured.update(texts)
+    slots = board_geometry.barrier_slots(tree)
+    reach = max(clearance, creepage)
+    cells: Dict[Tuple[int, int], List[int]] = {}
+    low = [item for item in items if item.net not in mains]
+    for index, item in enumerate(low):
+        left, top, right, bottom = item.shape.bounds
+        for column in range(math.floor(left / FIND_CELL_MM), math.floor(right / FIND_CELL_MM) + 1):
+            for row in range(math.floor(top / FIND_CELL_MM), math.floor(bottom / FIND_CELL_MM) + 1):
+                cells.setdefault((column, row), []).append(index)
+    for item in (item for item in items if item.net in mains):
+        left, top, right, bottom = item.shape.bounds
+        near: Set[int] = set()
+        for column in range(math.floor((left - reach) / FIND_CELL_MM), math.floor((right + reach) / FIND_CELL_MM) + 1):
+            for row in range(math.floor((top - reach) / FIND_CELL_MM), math.floor((bottom + reach) / FIND_CELL_MM) + 1):
+                near.update(cells.get((column, row), ()))
+        for index in sorted(near):
+            other = low[index]
+            if set(item.stored) & set(other.stored) or board_geometry.apart(item.shape, other.shape, reach):
+                continue
+            if item.unmeasured or other.unmeasured:
+                for held in (item, other):
+                    if held.unmeasured:
+                        result.unmeasured[held.name] = held.unmeasured
+                continue
+            distance = board_geometry.shape_distance(item.shape, other.shape, reach)
+            if distance >= reach - ROUNDING:
+                continue
+            if distance <= OVERLAP_MM:
+                result.findings.append(LayerFinding("overlap", item, other, 0.0, clearance))
+            elif distance < clearance - ROUNDING:
+                result.findings.append(LayerFinding("clearance", item, other, distance, clearance))
+            if distance < creepage - ROUNDING:
+                length, rounds = board_geometry.route_length(item.shape, other.shape, slots, creepage, distance)
+                if length < creepage - ROUNDING:
+                    result.findings.append(LayerFinding("creepage", item, other, length, creepage, rounds))
+    inner = [item for item in items if any(layer not in (stack[0], stack[-1]) for layer in item.reach)]
+    for slot in slots:
+        wall = board_geometry.Shape([slot.points])
+        for item in inner:
+            if board_geometry.apart(item.shape, wall, SLOT_WALL_MM):
+                continue
+            if item.unmeasured:
+                result.unmeasured[item.name] = item.unmeasured
+                continue
+            distance = board_geometry.shape_distance(item.shape, wall, SLOT_WALL_MM)
+            if distance < SLOT_WALL_MM - ROUNDING:
+                result.findings.append(LayerFinding("pull-back", None, item, distance, SLOT_WALL_MM, slot=slot.label()))
+    return result
+
+
+def layer_shortfall(found: LayerFinding) -> Shortfall:
+    """A finding of a pair as the layout rule check would have reported it, in its wording, for the signed exceptions to judge."""
+    kind = "creepage" if found.test == "creepage" else "clearance"
+    entry = {"type": kind,
+             "description": f"{kind.capitalize()} violation (rule '{LAYER_SHORTFALL_RULE}' {kind} {found.figure:g} mm; "
+                            f"actual {found.measured:.4f} mm)",
+             "items": [{"description": item.name, "pos": {"x": item.centre()[0], "y": item.centre()[1]}}
+                       for item in (found.mains, found.other)]}
+    found.shortfall = Shortfall(entry, "mains_to_low_voltage", found.figure, entry["items"])
+    return found.shortfall
+
+
+def layer_violations(design: Design, findings: Sequence[LayerFinding], unmeasured: Dict[str, str], stack: Sequence[str]) -> List[Violation]:
+    """The violations of the findings no exception judged, one for each test and kind of copper pair, at the nearest, and one for each copper not measured."""
+    nearest: Dict[tuple, LayerFinding] = {}
+    counts: Dict[tuple, int] = {}
+    for found in findings:
+        key = found.key(stack)
+        counts[key] = counts.get(key, 0) + 1
+        if key not in nearest or found.measured < nearest[key].measured:
+            nearest[key] = found
+    violations = []
+    for key, found in sorted(nearest.items(), key=lambda entry: (entry[1].test, entry[1].other.name, entry[1].measured)):
+        more = f"; {counts[key] - 1} more pair{'s' if counts[key] > 2 else ''} of the same kinds are no nearer" if counts[key] > 1 else ""
+        other = f"{found.other.name} (copper on {found.other.on(stack)})"
+        if found.mains is None:
+            violations.append(Violation(
+                design.project, LAYER_RULE, f"{design.layout} {found.other.name}; pull-back from {found.slot}",
+                f"pull-back: {other} stands {found.measured:.3f} mm in plan view from the wall of {found.slot}, inside the "
+                f"{found.figure:g} mm that inner-layer copper of any net keeps off the wall of a barrier slot{more}; move the "
+                "copper back, or cut the pour back, from the slot"))
+            continue
+        mains = f"{found.mains.name} (Mains-class, copper on {found.mains.on(stack)})"
+        if found.test == "overlap":
+            what = f"overlap: {mains} and {other} overlap in plan view on different layers, which no figure excuses"
+        elif found.test == "clearance":
+            what = (f"clearance: {mains} and {other} stand {found.measured:.3f} mm apart in plan view, under the signed "
+                    f"mains_to_low_voltage clearance of {found.figure:g} mm")
+        else:
+            round_ = f", round {found.rounds} slot{'s' if found.rounds > 1 else ''}" if found.rounds else ""
+            what = (f"creepage: the shortest path in plan view between {mains} and {other} that crosses no barrier slot is "
+                    f"{found.measured:.3f} mm{round_}, under the signed mains_to_low_voltage creepage of {found.figure:g} mm")
+        violations.append(Violation(
+            design.project, LAYER_RULE, f"{design.layout} {found.mains.name} and {found.other.name}; {found.test}",
+            f"{what}{more}; KiCad's own check compares copper on one layer only, so move the items apart in plan view, or the "
+            "owner accepts a smaller distance for the pair"))
+    for name, why in sorted(unmeasured.items()):
+        violations.append(Violation(
+            design.project, LAYER_RULE, f"{design.layout} {name}",
+            f"{name} cannot be held to the Mains-class copper it may stand near on another layer: {why}; draw it as copper the "
+            "layout file sizes, or take it off the copper layers"))
+    return violations
+
+
 def first_written(*values: Optional[float]) -> float:
     """The first of the values a layout writes, or 0 where it writes none."""
     return next((value for value in values if value is not None), 0.0)
@@ -6564,7 +6900,8 @@ def mains_pairs(design: Design, record: str, signed: Signed, mains: Set[str], en
 
 #: The pair of the record each rule the check appends for a spacing shortfall holds; a net pair held at reinforced is
 #: in none of them, so a shortfall there stays an ordinary violation whatever an entry says.
-EXCEPTION_RULES = {SIGNED_RULE: "mains_to_low_voltage", MAINS_TO_MAINS_RULE: "mains_to_mains",
+EXCEPTION_RULES = {SIGNED_RULE: "mains_to_low_voltage", LAYER_SHORTFALL_RULE: "mains_to_low_voltage",
+                   MAINS_TO_MAINS_RULE: "mains_to_mains",
                    TERMINAL_RULE: "mains_to_mains", AHEAD_OF_FUSE_RULE: "mains_to_mains"}
 #: KiCad's own text of the rule and its figure in a clearance or creepage violation.
 RULE_FIGURE = re.compile(r"\(rule '([^']*)' (?:clearance|creepage) ([0-9.]+) mm")
@@ -6945,7 +7282,7 @@ def judge_same_connector(judged: Judged, index: int, entry: dict, record: str, d
 
 
 def judge_exceptions(design: Design, record: str, signed: Signed, violations: Sequence[dict], tree: list,
-                     today: datetime.date, mains: Optional[Set[str]] = None) -> Judged:
+                     today: datetime.date, mains: Optional[Set[str]] = None, extra: Sequence[Shortfall] = ()) -> Judged:
     """Each spacing shortfall the layout rule check reported, judged against the signed accepted_exceptions of the record.
 
     A shortfall between the one pair of items an entry's between lists, for the
@@ -6964,7 +7301,7 @@ def judge_exceptions(design: Design, record: str, signed: Signed, violations: Se
             for pad in sexpr.children(footprint, "pad") if len(pad) > 1}
     nets = layout_nets(tree)
     record_day = iso_date(signed.basis.get("accepted_on"))
-    shortfalls = reported_shortfalls(violations)
+    shortfalls = reported_shortfalls(violations) + list(extra)
 
     def fail(index: int, message: str) -> None:
         judged.violations.append(Violation(design.project, "spacing_exception", f"{record} accepted_exceptions[{index}]",
@@ -7265,16 +7602,30 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
                 classes_read.append((names, project_classes, members, why))
             return classes_read[0]
 
+        layered = LayerResult()
+        if (signed is not None and tree is not None and refilled is not None and netlist is not None and markers
+                and not cut_short(drc)):
+            resolved = layout_classes()[2]
+            if resolved is not None and resolved["Mains"]:
+                try:
+                    layered = layer_separation(refilled, resolved["Mains"], signed[0], signed[1])
+                except board_geometry.Unreadable as unread:
+                    found.append(Violation(design.project, "design_unreadable", design.layout,
+                                           f"the layout KiCad refilled cannot be read for the copper on every layer ({unread})"))
         if signed is not None and signed.exceptions and tree is not None and markers and not cut_short(drc):
             mains_class = None
             if any(NET_PAIR_FORM_KEY in entry for entry in signed.exceptions):
                 resolved = layout_classes()[2]
                 mains_class = resolved["Mains"] if resolved is not None else None
-            judged = judge_exceptions(design, record, signed, reported, tree, today, mains_class)
+            judged = judge_exceptions(design, record, signed, reported, tree, today, mains_class,
+                                      [layer_shortfall(entry) for entry in layered.findings if entry.mains is not None])
             found += judged.violations
             consumed = judged.consumed
             if accepted is not None:
                 accepted += judged.accepted
+        found += layer_violations(design, [entry for entry in layered.findings
+                                           if entry.shortfall is None or id(entry.shortfall.entry) not in consumed],
+                                  layered.unmeasured, copper_layers(refilled) if refilled is not None else [])
         for entry in reported:
             if id(entry) not in consumed:
                 found.append(kicad_violation(design, entry, design.layout))

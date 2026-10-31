@@ -251,5 +251,122 @@ class TheShortestStraightLineTree(unittest.TestCase):
         self.assertAlmostEqual(board_geometry.pad_tree(pads), 7 + math.hypot(3, 10))
 
 
+def outlined(*shapes: str) -> list:
+    return sexpr.parse_one("(kicad_pcb (version 20260206) " + "".join(shapes) + ")")
+
+
+def line(a: str, b: str, layer: str = "Edge.Cuts") -> str:
+    return f'(gr_line (start {a}) (end {b}) (stroke (width 0.1) (type default)) (layer "{layer}"))'
+
+
+def rectangle(x1: float, y1: float, x2: float, y2: float) -> str:
+    return "".join(line(a, b) for a, b in ((f"{x1} {y1}", f"{x2} {y1}"), (f"{x2} {y1}", f"{x2} {y2}"),
+                                           (f"{x2} {y2}", f"{x1} {y2}"), (f"{x1} {y2}", f"{x1} {y1}")))
+
+
+def square(x1: float, y1: float, x2: float, y2: float):
+    return [(x1, y1), (x2, y1), (x2, y2), (x1, y2)]
+
+
+class TheOutlineLayerIsReadAsClosedLines(unittest.TestCase):
+    def test_lines_arcs_circles_rectangles_and_polygons_each_close_into_a_line_of_their_own(self):
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C3: On a throwaway copy of a proof design, a copper item of any net on an inner layer whose plan-view distance to the wall of a barrier slot (a closed cut-out inside the board outline that is not a round hole) is under 1.5 mm fails as mains_layer_separation naming the item, its layer and the slot; the same item at 1.5 mm or more passes, and a surface-layer item at the same distance is not reported by this test. Out of scope is the width of the slot, which the existing slot rule holds.
+        tree = outlined(rectangle(0, 0, 60, 40),
+                        '(gr_rect (start 10 10) (end 12 20) (stroke (width 0.1) (type default)) (fill no) (layer "Edge.Cuts"))',
+                        '(gr_circle (center 30 10) (end 31 10) (stroke (width 0.1) (type default)) (fill no) (layer "Edge.Cuts"))',
+                        '(gr_poly (pts (xy 40 10) (xy 42 10) (xy 41 15)) (stroke (width 0.1) (type default)) (fill no) (layer "Edge.Cuts"))',
+                        line("5 5", "6 6", "F.Cu"))
+        loops = board_geometry.edge_loops(tree)
+        self.assertEqual(len(loops), 4)
+        self.assertEqual(sorted(loop.round for loop in loops), [False, False, False, True])
+        slots = board_geometry.barrier_slots(tree)
+        self.assertEqual(len(slots), 2)
+        self.assertEqual(sorted(round(slot.area(), 3) for slot in slots), [5.0, 20.0])
+
+    def test_a_line_drawn_end_to_end_in_either_direction_closes_and_a_gap_does_not(self):
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C3: On a throwaway copy of a proof design, a copper item of any net on an inner layer whose plan-view distance to the wall of a barrier slot (a closed cut-out inside the board outline that is not a round hole) is under 1.5 mm fails as mains_layer_separation naming the item, its layer and the slot; the same item at 1.5 mm or more passes, and a surface-layer item at the same distance is not reported by this test. Out of scope is the width of the slot, which the existing slot rule holds.
+        backwards = outlined(line("0 0", "10 0"), line("10 10", "10 0"), line("10 10", "0 10"), line("0 0", "0 10"))
+        (loop,) = board_geometry.edge_loops(backwards)
+        self.assertAlmostEqual(loop.area(), 100.0)
+        with self.assertRaises(board_geometry.Unreadable):
+            board_geometry.edge_loops(outlined(line("0 0", "10 0"), line("10 0", "10 10"), line("10 10", "0 10")))
+
+    def test_a_footprints_cut_out_is_placed_with_the_footprint(self):
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C3: On a throwaway copy of a proof design, a copper item of any net on an inner layer whose plan-view distance to the wall of a barrier slot (a closed cut-out inside the board outline that is not a round hole) is under 1.5 mm fails as mains_layer_separation naming the item, its layer and the slot; the same item at 1.5 mm or more passes, and a surface-layer item at the same distance is not reported by this test. Out of scope is the width of the slot, which the existing slot rule holds.
+        part = ('(footprint "lib:slot" (layer "F.Cu") (at 20 20 90) (property "Reference" "S1" (at 0 0 0))'
+                '(fp_rect (start -1 -3) (end 1 3) (stroke (width 0.1) (type default)) (fill no) (layer "Edge.Cuts")))')
+        (slot,) = board_geometry.barrier_slots(outlined(rectangle(0, 0, 60, 40), part))
+        left, top, right, bottom = slot.bounds
+        self.assertAlmostEqual(right - left, 6.0, places=6)
+        self.assertAlmostEqual(bottom - top, 2.0, places=6)
+        self.assertAlmostEqual((left + right) / 2, 20.0, places=6)
+
+
+class AWayRoundASlotIsExact(unittest.TestCase):
+    SLOT = board_geometry.Loop(square(30, 5, 31, 15), False)
+
+    def test_with_no_slot_in_reach_the_way_is_the_straight_line(self):
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C2: On a throwaway copy of a proof design with a barrier slot between a Mains-class item and a low-voltage item on different layers, the shortest plan-view path between them that does not cross the slot, going round its ends, is compared with creepage_mm; a pair whose path is shorter fails as mains_layer_separation naming the items, the layers and the path length, and a pair whose path is at least the figure passes even where its straight-line distance is under it. Out of scope is any path through the thickness of the board.
+        one, other = board_geometry.Shape([square(0, 0, 1, 1)]), board_geometry.Shape([square(3, 0, 4, 1)])
+        self.assertEqual(board_geometry.route_length(one, other, [], 10), (2.0, 0))
+        far = board_geometry.Loop(square(30, 30, 31, 31), False)
+        self.assertEqual(board_geometry.route_length(one, other, [far], 10), (2.0, 0))
+
+    def test_a_slot_between_the_pieces_lengthens_the_way_to_the_corners_it_goes_round(self):
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C2: On a throwaway copy of a proof design with a barrier slot between a Mains-class item and a low-voltage item on different layers, the shortest plan-view path between them that does not cross the slot, going round its ends, is compared with creepage_mm; a pair whose path is shorter fails as mains_layer_separation naming the items, the layers and the path length, and a pair whose path is at least the figure passes even where its straight-line distance is under it. Out of scope is any path through the thickness of the board.
+        one, other = board_geometry.Shape([square(27, 9, 29, 11)]), board_geometry.Shape([square(32, 9, 34, 11)])
+        length, rounds = board_geometry.route_length(one, other, [self.SLOT], 20)
+        self.assertAlmostEqual(length, 2 * math.hypot(1, 4) + 1.0, places=9)
+        self.assertEqual(rounds, 1)
+        self.assertGreater(length, 3.0)
+
+    def test_the_way_goes_the_shorter_end_and_two_slots_in_line_count_two(self):
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C2: On a throwaway copy of a proof design with a barrier slot between a Mains-class item and a low-voltage item on different layers, the shortest plan-view path between them that does not cross the slot, going round its ends, is compared with creepage_mm; a pair whose path is shorter fails as mains_layer_separation naming the items, the layers and the path length, and a pair whose path is at least the figure passes even where its straight-line distance is under it. Out of scope is any path through the thickness of the board.
+        one, other = board_geometry.Shape([square(27, 12, 29, 14)]), board_geometry.Shape([square(32, 12, 34, 14)])
+        length, _ = board_geometry.route_length(one, other, [self.SLOT], 20)
+        self.assertAlmostEqual(length, math.hypot(1, 1) + 1.0 + math.hypot(1, 1), places=9)
+        second = board_geometry.Loop(square(30.5, 16, 31.5, 25), False)
+        wide = board_geometry.Shape([square(27, 12, 29, 14)]), board_geometry.Shape([square(34, 12, 36, 14)])
+        _, rounds = board_geometry.route_length(wide[0], wide[1], [self.SLOT, second], 30)
+        self.assertGreaterEqual(rounds, 1)
+
+    def test_a_way_not_under_the_reach_is_not_worked_out(self):
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C2: On a throwaway copy of a proof design with a barrier slot between a Mains-class item and a low-voltage item on different layers, the shortest plan-view path between them that does not cross the slot, going round its ends, is compared with creepage_mm; a pair whose path is shorter fails as mains_layer_separation naming the items, the layers and the path length, and a pair whose path is at least the figure passes even where its straight-line distance is under it. Out of scope is any path through the thickness of the board.
+        one, other = board_geometry.Shape([square(0, 0, 1, 1)]), board_geometry.Shape([square(30, 0, 31, 1)])
+        self.assertGreaterEqual(board_geometry.route_length(one, other, [self.SLOT], 10)[0], 10)
+
+
+class ALargeShapeIsWalkedOnlyWhereTheOtherLies(unittest.TestCase):
+    def ring(self, count: int):
+        return [(50 + 40 * math.cos(2 * math.pi * i / count) * (1 + 0.001 * math.sin(i)), 50 + 40 * math.sin(2 * math.pi * i / count))
+                for i in range(count)]
+
+    def test_its_distance_is_polygon_distance_wherever_that_is_under_the_reach(self):
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C9: On a throwaway proof design carrying filled ground and mains pours on four copper layers, the check including the new rule adds no KiCad run to the existing one, the rule's own computation finishes within a stated time bound on a synthetic fill of 50,000 vertices, and the existing test that a hung KiCad run still fails the design stands. Out of scope is the limit's value.
+        points = self.ring(2000)
+        big = board_geometry.Shape([points])
+        self.assertTrue(big.indexed())
+        for x, y in ((88, 48), (95, 50), (50, 50), (10, 10), (0, 0), (91, 91), (49, 8), (60, 12)):
+            small = board_geometry.Shape([square(x, y, x + 2, y + 3)])
+            exact = board_geometry.polygon_distance(points, small.polygons[0])
+            walked = board_geometry.shape_distance(big, small, 10)
+            self.assertTrue(abs(walked - exact) < 1e-9 or (walked >= 10 and exact >= 10), (x, y, walked, exact))
+
+    def test_one_shape_inside_the_other_or_covering_it_is_contact(self):
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C9: On a throwaway proof design carrying filled ground and mains pours on four copper layers, the check including the new rule adds no KiCad run to the existing one, the rule's own computation finishes within a stated time bound on a synthetic fill of 50,000 vertices, and the existing test that a hung KiCad run still fails the design stands. Out of scope is the limit's value.
+        big = board_geometry.Shape([self.ring(2000)])
+        self.assertEqual(board_geometry.shape_distance(big, board_geometry.Shape([square(48, 48, 52, 52)]), 10), 0.0)
+        self.assertEqual(board_geometry.shape_distance(big, board_geometry.Shape([square(-10, -10, 110, 110)]), 10), 0.0)
+        self.assertGreaterEqual(board_geometry.shape_distance(big, board_geometry.Shape([square(200, 200, 201, 201)]), 10), 10)
+
+    def test_a_hole_in_the_fill_is_outside_it(self):
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C9: On a throwaway proof design carrying filled ground and mains pours on four copper layers, the check including the new rule adds no KiCad run to the existing one, the rule's own computation finishes within a stated time bound on a synthetic fill of 50,000 vertices, and the existing test that a hung KiCad run still fails the design stands. Out of scope is the limit's value.
+        outer = self.ring(2000)
+        hole = [(50 + 5 * math.cos(2 * math.pi * i / 100), 50 + 5 * math.sin(2 * math.pi * i / 100)) for i in range(100)]
+        shape = board_geometry.Shape([outer, hole])
+        inside_hole = board_geometry.Shape([square(49, 49, 51, 51)])
+        self.assertAlmostEqual(board_geometry.shape_distance(shape, inside_hole, 10), 5 - math.hypot(1, 1), places=2)
+
+
 if __name__ == "__main__":
     unittest.main()

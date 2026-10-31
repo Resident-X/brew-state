@@ -1430,6 +1430,75 @@ def hole_near_mains(plated_net: Optional[str] = None):
     return seed_it
 
 
+def four_layers(tree: list) -> None:
+    """The proof layout with two inner copper layers, In1.Cu and In2.Cu, between the front and the back."""
+    Q = sexpr.Quoted
+    layers = sexpr.child(tree, "layers")
+    layers.insert(2, ["4", Q("In1.Cu"), "signal"])
+    layers.insert(3, ["6", Q("In2.Cu"), "signal"])
+
+
+#: The /MAINS_N track a layer-separation fault lays on the front copper, 6 mm long and 0.25 mm wide, clear of every part: the
+#: low-voltage copper the faults put on an inner layer lies under it in plan view.
+LAYER_MAINS_UUID = "0b0e5c1a-0000-4000-8000-000000001a01"
+LAYER_OTHER_UUID = "0b0e5c1a-0000-4000-8000-000000001a02"
+
+
+def inner_copper_beside_mains(seed: Seed) -> None:
+    """A /LV_A track on In1.Cu 2.5 mm from centre line to centre line of the /MAINS_N track on F.Cu, which no layer shares: 2.25 mm
+    of air in plan view, under the signed 3 mm clearance and 4 mm creepage, where KiCad's own rule compares neither."""
+    def edit(tree: list) -> None:
+        four_layers(tree)
+        tree.insert(len(tree) - 1, segment("/MAINS_N", 12, 2.5, 18, 2.5, LAYER_MAINS_UUID))
+        tree.insert(len(tree) - 1, segment("/LV_A", 12, 5, 18, 5, LAYER_OTHER_UUID, "In1.Cu"))
+    seed.layout(edit)
+
+
+#: A slot, 1.2 mm wide, cut in the board between x = 30 and x = 31.2.
+SLOT_X = (30, 31.2)
+
+
+def slot_cut(tree: list, top: float, bottom: float) -> None:
+    Q = sexpr.Quoted
+    tree.insert(len(tree) - 1, ["gr_rect", ["start", f"{SLOT_X[0]:g}", f"{top:g}"], ["end", f"{SLOT_X[1]:g}", f"{bottom:g}"],
+                                ["stroke", ["width", "0.1"], ["type", "default"]], ["fill", "no"], ["layer", Q("Edge.Cuts")],
+                                ["uuid", Q("0b0e5c1a-0000-4000-8000-000000001a03")]])
+
+
+def creepage_round_slot(seed: Seed) -> None:
+    """A /MAINS_N track on F.Cu and a /LV_A track on B.Cu 3.5 mm apart in plan view, clear of the signed 3 mm clearance, with the
+    slot between them reaching only 0.2 mm past the ends of both: the way round its end is 3.54 mm, under the 4 mm creepage."""
+    def edit(tree: list) -> None:
+        slot_cut(tree, 5.8, 9.2)
+        tree.insert(len(tree) - 1, segment("/MAINS_N", 28.4, 6, 28.4, 9, LAYER_MAINS_UUID))
+        tree.insert(len(tree) - 1, segment("/LV_A", 32.15, 6, 32.15, 9, LAYER_OTHER_UUID, "B.Cu"))
+    seed.layout(edit)
+
+
+def copper_near_slot_wall(seed: Seed) -> None:
+    """A /LV_A track on In1.Cu 1.0 mm from the slot's wall, centre line to wall, which no other rule holds."""
+    def edit(tree: list) -> None:
+        four_layers(tree)
+        slot_cut(tree, 5, 15)
+        tree.insert(len(tree) - 1, segment("/LV_A", 29, 7, 29, 12, LAYER_OTHER_UUID, "In1.Cu"))
+    seed.layout(edit)
+
+
+def pour_under_mains(seed: Seed) -> None:
+    """A /LV_A pour on In1.Cu under the /MAINS_N track on F.Cu: a ground plane beneath surface mains copper."""
+    Q = sexpr.Quoted
+    zone = ["zone", ["net", Q("/LV_A")], ["layer", Q("In1.Cu")], ["uuid", Q(LAYER_OTHER_UUID)],
+            ["hatch", "edge", "0.5"], ["connect_pads", ["clearance", "0.2"]], ["min_thickness", "0.25"],
+            ["fill", ["thermal_gap", "0.5"], ["thermal_bridge_width", "0.5"]],
+            ["polygon", ["pts", ["xy", "10", "1.5"], ["xy", "20", "1.5"], ["xy", "20", "4"], ["xy", "10", "4"]]]]
+
+    def edit(tree: list) -> None:
+        four_layers(tree)
+        tree.insert(len(tree) - 1, segment("/MAINS_N", 12, 2.5, 18, 2.5, LAYER_MAINS_UUID))
+        tree.insert(len(tree) - 1, zone)
+    seed.layout(edit)
+
+
 #: J2 pad 1, on Power-class /+5V, is a 1.7 mm by 2 mm pad at (37, 3.5), the Power copper nearest a free corner of the board. A
 #: Sensing-class /AMP_OUT track 0.3 mm from its edge keeps the Sensing net class's own 0.2 mm clearance and stands inside the
 #: 0.5 mm the board rules record declares.
@@ -1690,6 +1759,18 @@ FAULTS: List[tuple] = [
      "of Mains-class net /MAINS_N on B.Cu", fixing_near_mains_pour),
     ("a part's oversize non-plated pad inside the signed distance of a Mains net with its hole clear", "mounting holes: a non-plated pad larger than its hole is held at its pad edge", "mounting_hole",
      "a non-plated hole or its pad stands", hole_with_oversize_pad),
+    # Mains copper against low-voltage copper on every layer
+    ("a low-voltage track on an inner layer within the clearance in plan view of a mains track on the front", "layer separation: a pair on layers KiCad does not compare, under the signed clearance in plan view, fails", "mains_layer_separation",
+     "stand 2.250 mm apart in plan view", inner_copper_beside_mains),
+    ("a path round a slot between mains copper and low-voltage copper on other layers under the creepage", "layer separation: the shortest path round the slots under the signed creepage fails", "mains_layer_separation",
+     "that crosses no barrier slot is 3.5", creepage_round_slot),
+    ("inner-layer copper within 1.5 mm of a slot wall", "layer separation: inner-layer copper inside the pull-back distance of a slot wall fails", "mains_layer_separation",
+     "pull-back: Track [/LV_A] on In1.Cu", copper_near_slot_wall),
+    ("a low-voltage pour on an inner layer under a mains track on the front", "layer separation: a low-voltage item overlapping a Mains-class item on another layer fails as an overlap", "mains_layer_separation",
+     "overlap: Track [/MAINS_N] on F.Cu", pour_under_mains),
+    ("an excepted pair below the distance its exception accepts", "layer separation: a cross-layer shortfall below its entry's accepted distance fails the entry", "spacing_exception",
+     "down to 2.4 mm, and the layout leaves 2.25 mm",
+     both(inner_copper_beside_mains, exceptions(exception_entry("mains_to_low_voltage", "clearance", ("/MAINS_N", "/LV_A"), 2.4)))),
     # Mains to mains
     ("a record lacking the terminal clearance of its mains_to_mains", "mains to mains: a record with no complete mains_to_mains mapping fails by key", "separation_basis",
      "mains_to_mains lacks terminal_clearance_mm", record("  terminal_clearance_mm: 0.8\n", ""), KEYS_TARGET),
