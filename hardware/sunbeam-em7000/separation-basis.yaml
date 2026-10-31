@@ -754,7 +754,7 @@ accepted_exceptions:
   # figure of the functional rows for its working voltage. Their working voltages are the drafter's
   # assertions at 253 V rms, the top of the declared span, each derived in the entry's reason, for the owner
   # to accept or correct; the half-mains and divider midpoints hold only while their resistor chain is intact.
-  # The neutral-referenced set N is the thirteen nets the first entry lists. The triac gate nets PUMP_C_TRIAC_G and PUMP_S_TRIAC_G and the zero-cross LED anode ZC_LED_A pair only with /NEUTRAL, in entries 10 and 11.
+  # The neutral-referenced set N is the fourteen nets the first entry lists. The triac gate nets PUMP_C_TRIAC_G and PUMP_S_TRIAC_G and the zero-cross LED anode ZC_LED_A pair only with /NEUTRAL, in entries 10 and 11.
   # The pump gate network nets (PUMP_C_GATE_R and PUMP_S_GATE_R against any net, and each gate network net against its own MT2 and
   # opto-triac nets) have no net-pair entry and keep the full 2.6 mm: while the opto-triac is off the full
   # supply stands across it and the gate network floats to the MT2 level. The 54 entries after them are of the
@@ -768,19 +768,19 @@ accepted_exceptions:
   # the entries stay drafts until the finished layout's rule check confirms that each is used.
   - pair: mains_to_mains
     constraint: creepage
-    nets_a: ["/NEUTRAL", "/Mains entry and load feed/NEUTRAL_IN", "/SHUNT_SENSE_IN", "/SHUNT_SENSE_NEUTRAL", "/Supply voltage and current measurement/AMC_AIN0P", "/Supply voltage and current measurement/AMC_AIN0N", "/Supply voltage and current measurement/AMC_AIN1P", "/Supply voltage and current measurement/AMC_AIN1N", "/Supply voltage and current measurement/AMC_DCDC_OUT", "/Supply voltage and current measurement/AMC_DCDC_HGND", "/Supply voltage and current measurement/AMC_HLDO_IN", "/Supply voltage and current measurement/AMC_HLDO_OUT", "/Supply voltage and current measurement/VMEAS_DIV"]
+    nets_a: ["/NEUTRAL", "/Mains entry and load feed/NEUTRAL_IN", "/SHUNT_SENSE_IN", "/SHUNT_SENSE_NEUTRAL", "/Supply voltage and current measurement/AMC_AIN0P", "/Supply voltage and current measurement/AMC_AIN0N", "/Supply voltage and current measurement/AMC_AIN1P", "/Supply voltage and current measurement/AMC_AIN1N", "/Supply voltage and current measurement/AMC_DCDC_OUT", "/Supply voltage and current measurement/AMC_DCDC_HGND", "/Supply voltage and current measurement/AMC_HLDO_IN", "/Supply voltage and current measurement/AMC_HLDO_OUT", "/Supply voltage and current measurement/VMEAS_DIV", "unconnected-(U601-GPO-Pad6)"]
     working_voltage_v: 10
     accepted_mm: 0.4
-    reason: "Set N is the thirteen nets that ride on mains neutral: NEUTRAL, NEUTRAL_IN, SHUNT_SENSE_IN, SHUNT_SENSE_NEUTRAL, the AMC131M02 inputs AMC_AIN0P, AMC_AIN0N, AMC_AIN1P and AMC_AIN1N (within 2.7 V of HGND by the pin-limit record's amc_inputs offset), its high side AMC_DCDC_OUT, AMC_DCDC_HGND, AMC_HLDO_IN and AMC_HLDO_OUT (within 3.2 V of HGND, amc_high_side offset), and the divider tap VMEAS_DIV (750/900750 = 0.000832639467 of the line, 0.21 V rms at 253 V). Every net rides on neutral within a few volts, so no two nets of the set stand more than 10 V rms apart (two nets 5 V either side of neutral); 10 V rms is the bound the entry holds, read at the 10 V band row, and tracks between these nets keep at least the band creepage of 0.4 mm. The reduction holds only while the circuit is intact: these nets leave the 10 V bound only in fault states, namely R604 open (VMEAS_DIV floats toward the divider; the AMC input clamp through R605 normally holds it within about 1.2 V of NEUTRAL) or loss of NEUTRAL, judged in the single-fault table above (rows 1 and 2): a fault that reaches 253 V across a gap passes 0.281 mA through the 900 kohm of R601 to R603, which creates no hazard. The triac gate nets and the zero-cross LED anode are not in this set: they pair only with /NEUTRAL in entries 10 and 11, and against no AMC_* net, shunt-sense net or the divider tap. The working voltage is the drafter's figure for the owner to accept or correct."
+    reason: "Set N is the fourteen nets that ride on mains neutral: NEUTRAL, NEUTRAL_IN, SHUNT_SENSE_IN, SHUNT_SENSE_NEUTRAL, the AMC131M02 inputs AMC_AIN0P, AMC_AIN0N, AMC_AIN1P and AMC_AIN1N (within 2.7 V of HGND by the pin-limit record's amc_inputs offset), its high side AMC_DCDC_OUT, AMC_DCDC_HGND, AMC_HLDO_IN and AMC_HLDO_OUT (within 3.2 V of HGND, amc_high_side offset), the divider tap VMEAS_DIV (750/900750 = 0.000832639467 of the line, 0.21 V rms at 253 V), and the net of U601's pin 6, GPO, which the board leaves unconnected: a general-purpose output of the AMC131M02's high side, driven from its high-side supply and so within 3.2 V of HGND as the high side is, and named Mains so that the check holds the pad to the mains figures. Every net rides on neutral within a few volts, so no two nets of the set stand more than 10 V rms apart (two nets 5 V either side of neutral); 10 V rms is the bound the entry holds, read at the 10 V band row, and tracks between these nets keep at least the band creepage of 0.4 mm. The reduction holds only while the circuit is intact: these nets leave the 10 V bound only in fault states, namely R604 open (VMEAS_DIV floats toward the divider; the AMC input clamp through R605 normally holds it within about 1.2 V of NEUTRAL) or loss of NEUTRAL, judged in the single-fault table above (rows 1 and 2): a fault that reaches 253 V across a gap passes 0.281 mA through the 900 kohm of R601 to R603, which creates no hazard. The triac gate nets and the zero-cross LED anode are not in this set: they pair only with /NEUTRAL in entries 10 and 11, and against no AMC_* net, shunt-sense net or the divider tap. The working voltage is the drafter's figure for the owner to accept or correct."
     bounded_by: "The energy the neutral-referenced circuit can supply (the AMC131M02's isolated high-side supply, the shunt and the divider resistors), and for any path from a net of the set to the line the entry fuse F101 and the branch fuses."
     accepted_by: ""
     accepted_on: ""
   - pair: mains_to_mains
     constraint: clearance
-    nets_a: ["/NEUTRAL", "/Mains entry and load feed/NEUTRAL_IN", "/SHUNT_SENSE_IN", "/SHUNT_SENSE_NEUTRAL", "/Supply voltage and current measurement/AMC_AIN0P", "/Supply voltage and current measurement/AMC_AIN0N", "/Supply voltage and current measurement/AMC_AIN1P", "/Supply voltage and current measurement/AMC_AIN1N", "/Supply voltage and current measurement/AMC_DCDC_OUT", "/Supply voltage and current measurement/AMC_DCDC_HGND", "/Supply voltage and current measurement/AMC_HLDO_IN", "/Supply voltage and current measurement/AMC_HLDO_OUT", "/Supply voltage and current measurement/VMEAS_DIV"]
+    nets_a: ["/NEUTRAL", "/Mains entry and load feed/NEUTRAL_IN", "/SHUNT_SENSE_IN", "/SHUNT_SENSE_NEUTRAL", "/Supply voltage and current measurement/AMC_AIN0P", "/Supply voltage and current measurement/AMC_AIN0N", "/Supply voltage and current measurement/AMC_AIN1P", "/Supply voltage and current measurement/AMC_AIN1N", "/Supply voltage and current measurement/AMC_DCDC_OUT", "/Supply voltage and current measurement/AMC_DCDC_HGND", "/Supply voltage and current measurement/AMC_HLDO_IN", "/Supply voltage and current measurement/AMC_HLDO_OUT", "/Supply voltage and current measurement/VMEAS_DIV", "unconnected-(U601-GPO-Pad6)"]
     working_voltage_v: 10
     accepted_mm: 0.2
-    reason: "Set N is the thirteen nets that ride on mains neutral: NEUTRAL, NEUTRAL_IN, SHUNT_SENSE_IN, SHUNT_SENSE_NEUTRAL, the AMC131M02 inputs AMC_AIN0P, AMC_AIN0N, AMC_AIN1P and AMC_AIN1N (within 2.7 V of HGND by the pin-limit record's amc_inputs offset), its high side AMC_DCDC_OUT, AMC_DCDC_HGND, AMC_HLDO_IN and AMC_HLDO_OUT (within 3.2 V of HGND, amc_high_side offset), and the divider tap VMEAS_DIV (750/900750 = 0.000832639467 of the line, 0.21 V rms at 253 V). Every net rides on neutral within a few volts, so no two nets of the set stand more than 10 V rms apart; 10 V rms is the bound the entry holds, read at the 10 V band row, and tracks between these nets keep at least the band clearance of 0.2 mm. The reduction holds only while the circuit is intact: these nets leave the 10 V bound only in fault states, namely R604 open (VMEAS_DIV floats toward the divider; the AMC input clamp through R605 normally holds it within about 1.2 V of NEUTRAL) or loss of NEUTRAL, judged in the single-fault table above (rows 1 and 2): a fault that reaches 253 V across a gap passes 0.281 mA through the 900 kohm of R601 to R603, which creates no hazard. The triac gate nets and the zero-cross LED anode are not in this set: they pair only with /NEUTRAL in entries 10 and 11, and against no AMC_* net, shunt-sense net or the divider tap. The working voltage is the drafter's figure for the owner to accept or correct."
+    reason: "Set N is the fourteen nets that ride on mains neutral: NEUTRAL, NEUTRAL_IN, SHUNT_SENSE_IN, SHUNT_SENSE_NEUTRAL, the AMC131M02 inputs AMC_AIN0P, AMC_AIN0N, AMC_AIN1P and AMC_AIN1N (within 2.7 V of HGND by the pin-limit record's amc_inputs offset), its high side AMC_DCDC_OUT, AMC_DCDC_HGND, AMC_HLDO_IN and AMC_HLDO_OUT (within 3.2 V of HGND, amc_high_side offset), the divider tap VMEAS_DIV (750/900750 = 0.000832639467 of the line, 0.21 V rms at 253 V), and the net of U601's pin 6, GPO, which the board leaves unconnected: a general-purpose output of the AMC131M02's high side, driven from its high-side supply and so within 3.2 V of HGND as the high side is, and named Mains so that the check holds the pad to the mains figures. Every net rides on neutral within a few volts, so no two nets of the set stand more than 10 V rms apart; 10 V rms is the bound the entry holds, read at the 10 V band row, and tracks between these nets keep at least the band clearance of 0.2 mm. The reduction holds only while the circuit is intact: these nets leave the 10 V bound only in fault states, namely R604 open (VMEAS_DIV floats toward the divider; the AMC input clamp through R605 normally holds it within about 1.2 V of NEUTRAL) or loss of NEUTRAL, judged in the single-fault table above (rows 1 and 2): a fault that reaches 253 V across a gap passes 0.281 mA through the 900 kohm of R601 to R603, which creates no hazard. The triac gate nets and the zero-cross LED anode are not in this set: they pair only with /NEUTRAL in entries 10 and 11, and against no AMC_* net, shunt-sense net or the divider tap. The working voltage is the drafter's figure for the owner to accept or correct."
     bounded_by: "The energy the neutral-referenced circuit can supply (the AMC131M02's isolated high-side supply, the shunt and the divider resistors), and for any path from a net of the set to the line the entry fuse F101 and the branch fuses."
     accepted_by: ""
     accepted_on: ""
@@ -1304,5 +1304,74 @@ accepted_exceptions:
     accepted_mm: 1.04
     reason: "The pitch of U602 forces the gap: its pads 1 (on ZC_LED_A) and 2 (on NEUTRAL) stand 1.04 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
     bounded_by: "The energy the neutral-referenced circuit can supply (the AMC131M02's isolated high-side supply, the shunt and the divider resistors), and for any path from these nets to the line the entry fuse F101 and the branch fuses; proposed by the drafter for the owner to accept or correct."
+    accepted_by: ""
+    accepted_on: ""
+  # The last eight entries are of the between form for the opto-triacs U701 and U711: pin 5 of each, given no
+  # connection by the maker, is the output side's substrate, and the board names its net Mains so that the check
+  # holds the pad to the mains figures. Each pin 5 stands 0.76 mm edge to edge from pins 4 and 6 on the land
+  # pattern, under both the 2.6 mm creepage and the 1.5 mm clearance, so each pair has a creepage and a clearance
+  # entry at 0.76 mm, drafted with accepted_by and accepted_on empty for the owner's own act.
+  - pair: mains_to_mains
+    constraint: creepage
+    between: ["U701.5", "U701.4"]
+    accepted_mm: 0.76
+    reason: "The pitch of the coffee pump opto-triac U701 (MOC3052SVM, SMD-6) forces the gap: pin 5, which the maker gives no connection and the board leaves unconnected, is the output side's substrate and stands 0.76 mm edge to edge from pin 4 (on PUMP_C_TRIAC_G) on the land pattern the part is drawn with. Pin 5 sits on the output side between pins 4 and 6, whose voltage the maker rates the part to block across this same pitch; its net is named Mains so that the check holds it to the mains figures. The part is not changed, and the entry excuses only this pair of pads."
+    bounded_by: "The branch fuse F701, then the 10 A entry fuse F101, interrupt a breakdown between the two pads, which can only carry the coffee pump's gate-network current through its gate resistor."
+    accepted_by: ""
+    accepted_on: ""
+  - pair: mains_to_mains
+    constraint: clearance
+    between: ["U701.5", "U701.4"]
+    accepted_mm: 0.76
+    reason: "The pitch of the coffee pump opto-triac U701 (MOC3052SVM, SMD-6) forces the gap: pin 5, which the maker gives no connection and the board leaves unconnected, is the output side's substrate and stands 0.76 mm edge to edge from pin 4 (on PUMP_C_TRIAC_G) on the land pattern the part is drawn with. Pin 5 sits on the output side between pins 4 and 6, whose voltage the maker rates the part to block across this same pitch; its net is named Mains so that the check holds it to the mains figures. The part is not changed, and the entry excuses only this pair of pads."
+    bounded_by: "The branch fuse F701, then the 10 A entry fuse F101, interrupt a breakdown between the two pads, which can only carry the coffee pump's gate-network current through its gate resistor."
+    accepted_by: ""
+    accepted_on: ""
+  - pair: mains_to_mains
+    constraint: creepage
+    between: ["U701.5", "U701.6"]
+    accepted_mm: 0.76
+    reason: "The pitch of the coffee pump opto-triac U701 (MOC3052SVM, SMD-6) forces the gap: pin 5, which the maker gives no connection and the board leaves unconnected, is the output side's substrate and stands 0.76 mm edge to edge from pin 6 (on PUMP_C_OPTO_MT) on the land pattern the part is drawn with. Pin 5 sits on the output side between pins 4 and 6, whose voltage the maker rates the part to block across this same pitch; its net is named Mains so that the check holds it to the mains figures. The part is not changed, and the entry excuses only this pair of pads."
+    bounded_by: "The branch fuse F701, then the 10 A entry fuse F101, interrupt a breakdown between the two pads, which can only carry the coffee pump's gate-network current through its gate resistor."
+    accepted_by: ""
+    accepted_on: ""
+  - pair: mains_to_mains
+    constraint: clearance
+    between: ["U701.5", "U701.6"]
+    accepted_mm: 0.76
+    reason: "The pitch of the coffee pump opto-triac U701 (MOC3052SVM, SMD-6) forces the gap: pin 5, which the maker gives no connection and the board leaves unconnected, is the output side's substrate and stands 0.76 mm edge to edge from pin 6 (on PUMP_C_OPTO_MT) on the land pattern the part is drawn with. Pin 5 sits on the output side between pins 4 and 6, whose voltage the maker rates the part to block across this same pitch; its net is named Mains so that the check holds it to the mains figures. The part is not changed, and the entry excuses only this pair of pads."
+    bounded_by: "The branch fuse F701, then the 10 A entry fuse F101, interrupt a breakdown between the two pads, which can only carry the coffee pump's gate-network current through its gate resistor."
+    accepted_by: ""
+    accepted_on: ""
+  - pair: mains_to_mains
+    constraint: creepage
+    between: ["U711.5", "U711.4"]
+    accepted_mm: 0.76
+    reason: "The pitch of the steam pump opto-triac U711 (MOC3052SVM, SMD-6) forces the gap: pin 5, which the maker gives no connection and the board leaves unconnected, is the output side's substrate and stands 0.76 mm edge to edge from pin 4 (on PUMP_S_TRIAC_G) on the land pattern the part is drawn with. Pin 5 sits on the output side between pins 4 and 6, whose voltage the maker rates the part to block across this same pitch; its net is named Mains so that the check holds it to the mains figures. The part is not changed, and the entry excuses only this pair of pads."
+    bounded_by: "The branch fuse F711, then the 10 A entry fuse F101, interrupt a breakdown between the two pads, which can only carry the steam pump's gate-network current through its gate resistor."
+    accepted_by: ""
+    accepted_on: ""
+  - pair: mains_to_mains
+    constraint: clearance
+    between: ["U711.5", "U711.4"]
+    accepted_mm: 0.76
+    reason: "The pitch of the steam pump opto-triac U711 (MOC3052SVM, SMD-6) forces the gap: pin 5, which the maker gives no connection and the board leaves unconnected, is the output side's substrate and stands 0.76 mm edge to edge from pin 4 (on PUMP_S_TRIAC_G) on the land pattern the part is drawn with. Pin 5 sits on the output side between pins 4 and 6, whose voltage the maker rates the part to block across this same pitch; its net is named Mains so that the check holds it to the mains figures. The part is not changed, and the entry excuses only this pair of pads."
+    bounded_by: "The branch fuse F711, then the 10 A entry fuse F101, interrupt a breakdown between the two pads, which can only carry the steam pump's gate-network current through its gate resistor."
+    accepted_by: ""
+    accepted_on: ""
+  - pair: mains_to_mains
+    constraint: creepage
+    between: ["U711.5", "U711.6"]
+    accepted_mm: 0.76
+    reason: "The pitch of the steam pump opto-triac U711 (MOC3052SVM, SMD-6) forces the gap: pin 5, which the maker gives no connection and the board leaves unconnected, is the output side's substrate and stands 0.76 mm edge to edge from pin 6 (on PUMP_S_OPTO_MT) on the land pattern the part is drawn with. Pin 5 sits on the output side between pins 4 and 6, whose voltage the maker rates the part to block across this same pitch; its net is named Mains so that the check holds it to the mains figures. The part is not changed, and the entry excuses only this pair of pads."
+    bounded_by: "The branch fuse F711, then the 10 A entry fuse F101, interrupt a breakdown between the two pads, which can only carry the steam pump's gate-network current through its gate resistor."
+    accepted_by: ""
+    accepted_on: ""
+  - pair: mains_to_mains
+    constraint: clearance
+    between: ["U711.5", "U711.6"]
+    accepted_mm: 0.76
+    reason: "The pitch of the steam pump opto-triac U711 (MOC3052SVM, SMD-6) forces the gap: pin 5, which the maker gives no connection and the board leaves unconnected, is the output side's substrate and stands 0.76 mm edge to edge from pin 6 (on PUMP_S_OPTO_MT) on the land pattern the part is drawn with. Pin 5 sits on the output side between pins 4 and 6, whose voltage the maker rates the part to block across this same pitch; its net is named Mains so that the check holds it to the mains figures. The part is not changed, and the entry excuses only this pair of pads."
+    bounded_by: "The branch fuse F711, then the 10 A entry fuse F101, interrupt a breakdown between the two pads, which can only carry the steam pump's gate-network current through its gate resistor."
     accepted_by: ""
     accepted_on: ""

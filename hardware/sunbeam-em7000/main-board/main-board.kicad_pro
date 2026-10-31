@@ -1135,6 +1135,18 @@
         "pattern": "/Pump drives/PUMP_S_SNUB"
       },
       {
+        "netclass": "Mains",
+        "pattern": "unconnected-(U601-GPO-Pad6)"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "unconnected-(U701-NC-Pad5)"
+      },
+      {
+        "netclass": "Mains",
+        "pattern": "unconnected-(U711-NC-Pad5)"
+      },
+      {
         "netclass": "Mains_Entry",
         "pattern": "/Mains entry and load feed/LINE_IN"
       },
