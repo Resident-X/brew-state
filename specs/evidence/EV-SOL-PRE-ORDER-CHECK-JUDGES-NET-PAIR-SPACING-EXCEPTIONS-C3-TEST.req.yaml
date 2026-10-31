@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS-C3-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-31T04:55:11.464986Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_net_pair_exceptions.py::TheEntryIsJudgedAgainstTheBasisAlone.test_a_sound_entry_has_no_problem_and_a_flawed_one_the_problem_the_check_reports
+  artifact_version: d1144d2a03aaaca612dfca1d07d9554e1bd4f59c
+attested_by: crun-c8059732af94c4bb
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS.C3
+    type: satisfies

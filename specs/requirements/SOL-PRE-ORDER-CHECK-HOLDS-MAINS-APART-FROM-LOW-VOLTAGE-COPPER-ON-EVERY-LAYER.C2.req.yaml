@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C2
+type: criterion
+title: A low-voltage item whose shortest path to a Mains-class item round the barrier slots is under the signed creepage fails
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a throwaway copy of a proof design with a barrier slot between a Mains-class item and a low-voltage item on different layers, the shortest plan-view path between them that does not cross the slot, going round its ends, is compared with creepage_mm; a pair whose path is shorter fails as mains_layer_separation naming the items, the layers and the path length, and a pair whose path is at least the figure passes even where its straight-line distance is under it. Out of scope is any path through the thickness of the board.
+links:
+  - target: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER
+    type: criterion-of

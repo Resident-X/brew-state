@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER-C3-TEST-9
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-31T04:53:05.814692Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_geometry.py::TheOutlineLayerIsReadAsClosedLines.test_a_footprints_cut_out_is_placed_with_the_footprint
+  artifact_version: d1144d2a03aaaca612dfca1d07d9554e1bd4f59c
+attested_by: crun-cca9a78a8d63b119
+links:
+  - target: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C3
+    type: satisfies

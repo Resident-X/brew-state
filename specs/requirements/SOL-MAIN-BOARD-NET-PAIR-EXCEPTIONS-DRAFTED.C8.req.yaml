@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C8
+type: criterion
+title: Every drafted entry is unsigned, the record stays unsigned and the existing entries are unchanged
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Every entry this leaf adds holds an empty accepted_by and accepted_on, the record holds none at its top level, the twenty-five entries the record held before this leaf are unchanged in every key, and the check's own reader finds the unsigned acceptance as the only problem. The test never writes an acceptance into the record. Out of scope is the owner's acceptance, which is its own leaf.
+links:
+  - target: SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED
+    type: criterion-of

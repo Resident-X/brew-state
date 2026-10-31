@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS-C7-TEST-2
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS.C7
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-31T04:55:17.282216Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad_net_pair_exceptions.py::TheNetPairExceptionRowsOfTheProof.test_the_proof_holds_one_row_for_each_of_the_twelve_failures_and_leaves_the_other_rules_their_rows
+  artifact_version: d1144d2a03aaaca612dfca1d07d9554e1bd4f59c
+attested_by: crun-c8059732af94c4bb
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS.C7
+    type: satisfies

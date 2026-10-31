@@ -1,0 +1,13 @@
+id: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C18
+type: criterion
+title: The pump triacs' land has no middle-lead pad and the record's entries and distances for it are brought to the land drawn
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+scope: T701 and T711 lands
+text: |
+  The pump triacs T701 and T711 are drawn on a land with no middle-lead pad: the board's own library holds a two-lead DPAK (SOT-428) triac land whose outer leads are MT1 and the gate and whose tab is MT2, with the middle lead removed, the schematic footprint fields of T701 and T711 name it, and the parts specification and the layout plan's rows for the two parts show it. The distance from each lead pad to the other and to the tab pad, taken from the layout rule check on the finished layout, meets the signed mains-to-mains creepage and clearance or is covered by a between entry that the check's report shows is used; the four entries of the separation basis record that excuse the 1.08 mm gap of a middle-lead pad 2 against pads 1 and 3 are removed, because no such pad exists, and the record's comment that gives the T701 and T711 pin distances is corrected to the distances measured on this land. Choosing a different triac and drawing the part's own package are out of scope.
+links:
+  - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT
+    type: criterion-of

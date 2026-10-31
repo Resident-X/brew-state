@@ -1,0 +1,16 @@
+id: EV-SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD-C3-TEST-2
+type: evidence
+title: test evidence for SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-31T04:52:26.827832Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_separation_basis_record.py::PollutionDegreeTwoRecord.test_the_enclosure_credit_the_unread_standards_and_the_single_fault_basis_are_stated
+  artifact_version: d1144d2a03aaaca612dfca1d07d9554e1bd4f59c
+attested_by: crun-aeb7db10739b148b
+links:
+  - target: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C3
+    type: satisfies

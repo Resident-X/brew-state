@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C1
+type: criterion
+title: The committed record reads pollution degree 2 and credits no pollution degree 1
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The committed separation-basis.yaml holds pollution_degree 2, and no table_rows entry and no other value in the record reads pollution degree 1. The test reads the record through the check's own reader. Out of scope is the check refusing a pollution degree below 3 that states no protection, which the record's own wording and the owner's acceptance carry.
+links:
+  - target: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD
+    type: criterion-of

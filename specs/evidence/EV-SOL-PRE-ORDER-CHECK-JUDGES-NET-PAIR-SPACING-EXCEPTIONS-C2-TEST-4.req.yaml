@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS-C2-TEST-4
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-31T04:55:11.090715Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_net_pair_exceptions.py::TheBandFigureIsReadFromTheRecord.test_the_interpolation_is_exact_in_decimal_and_rounded_up_to_a_tenth
+  artifact_version: d1144d2a03aaaca612dfca1d07d9554e1bd4f59c
+attested_by: crun-c8059732af94c4bb
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS.C2
+    type: satisfies

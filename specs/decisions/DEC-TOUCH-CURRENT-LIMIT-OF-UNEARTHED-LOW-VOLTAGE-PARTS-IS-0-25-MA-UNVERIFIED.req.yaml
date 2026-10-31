@@ -1,0 +1,32 @@
+id: DEC-TOUCH-CURRENT-LIMIT-OF-UNEARTHED-LOW-VOLTAGE-PARTS-IS-0-25-MA-UNVERIFIED
+type: decision
+category: tactical
+title: The touch current limit for the unearthed touchable low-voltage parts is 0.25 mA, a figure not yet verified against the standard
+status: active
+version: 1
+decided_by: david (delegated to the assistant)
+text: |
+  Owner delegation of 2026-10-31: the project's limit for the current through a person touching an unearthed, touchable low-voltage part (the USB shell, the panel and the controls) is 0.25 mA, chosen by the assistant on the owner's delegation because the construction is unearthed and Class II in style. The 0.75 mA row for a Class I portable appliance, which the schematic review and the board's open items judged the board's estimate against, does not apply: it is the figure for an earthed construction. The 0.25 mA figure is from memory of IEC 60335-1 and is UNVERIFIED: the standard's text has not been read, and the owner has accepted that the standards stay unread (DEC-MAINS-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD). The limit is open in that sense and is to be replaced by the standard's figure for the part if it is ever read.
+
+  Consequence. The board's own estimate for the touchable low-voltage side is 0.34 mA, which is over 0.25 mA. The overage is a defect against this limit and is carried by a maintenance item that finds the source of the leakage, computes the budget from the makers' datasheets and fixes it. Until it is fixed the design does not meet the limit it has adopted. The bring-up measurement of touch current is judged against 0.25 mA.
+rationale: |
+  Context: REQ-ELECTRICAL-INSTALL-001.C12 asks the limit the governing standard sets for the appliance's protection class, and the review of 2026-10-29 compared the board's 0.34 mA with the Class I portable figure of 0.75 mA with no source for an unearthed accessible part. The machine's low-voltage side is not bonded to protective earth, so a person touching its USB shell or panel completes a path for any leakage the isolation barrier passes, and the stricter figure applies.
+
+  Trade-offs: keeping 0.75 mA passes the board's estimate but borrows the figure of a construction the machine does not have, so it would be a convenient number, not the right one. Earth-bonding the low-voltage side would make the Class I figure apply, but it is a large redesign of the board and of the USB connection, and it brings ground loops between the machine and a connected computer. Adopting 0.25 mA keeps the design as drawn, states the stricter limit plainly and turns the overage into a fixable defect; its cost is that the figure is remembered, not read, and the board currently misses it.
+
+  Reversibility: high. The figure is a number in this decision and the bring-up criterion; reading the standard replaces it and, if the figure differs, the leakage budget is recomputed against it.
+options_considered:
+  - option: Adopt 0.25 mA for the unearthed touchable low-voltage parts, unverified until the standard is read
+    reason_rejected: ""
+  - option: Keep the 0.75 mA Class I portable figure
+    reason_rejected: it is the figure for an earthed construction and the machine's low-voltage side is unearthed, so it borrows a limit that does not apply
+  - option: Earth-bond the low-voltage side so the Class I figure applies
+    reason_rejected: a large redesign of the board and of the USB connection, with ground-loop consequences for a connected computer
+chosen: Adopt 0.25 mA for the unearthed touchable low-voltage parts, unverified until the standard is read
+links:
+  - target: REQ-ELECTRICAL-INSTALL-001.C12
+    type: addresses
+  - target: REQ-PRODUCTION-GRADE-VERIFICATION-001.C3
+    type: addresses
+  - target: DEL-HW-BRING-UP.C20
+    type: addresses

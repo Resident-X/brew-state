@@ -1,0 +1,12 @@
+id: SOL-TOUCH-CURRENT-OF-THE-UNEARTHED-LOW-VOLTAGE-SIDE-BROUGHT-UNDER-ITS-LIMIT.C1
+type: criterion
+title: The touch current estimate is itemised by source from the makers' datasheets and reproduces the 0.34 mA or explains the difference
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |-
+  A budget table lists each contribution to the touchable low-voltage side's touch current (the Y capacitor of the IRM-20-5 module, the filter parts returning current to the low-voltage side and every other bridging part the estimate counted) with its datasheet figure, its source and its arithmetic at the top of the declared supply span, and a total that equals the earlier estimate of 0.34 mA or whose difference from it is stated. Out of scope is a measurement on the built board.
+links:
+  - target: SOL-TOUCH-CURRENT-OF-THE-UNEARTHED-LOW-VOLTAGE-SIDE-BROUGHT-UNDER-ITS-LIMIT
+    type: criterion-of
