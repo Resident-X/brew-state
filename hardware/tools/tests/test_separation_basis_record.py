@@ -17,6 +17,8 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 
 RECORD = os.path.join("hardware", "sunbeam-em7000", board_check.RECORD_NAME)
 DESIGN = board_check.Design(os.path.join("hardware", "sunbeam-em7000", "board", "board.kicad_pro"))
 TODAY = datetime.date(2026, 10, 23)
+#: How many entries the record held before the net-pair and same-part entries were appended after them; the earlier leaves' tests read these.
+ORIGINAL_ENTRIES = 25
 
 
 def committed():
@@ -248,7 +250,7 @@ class MainsToMainsRecord(unittest.TestCase):
         _, data = committed()
         assert_draft(self, data)
         held = data["mains_to_mains"]
-        entries = [e for e in data["accepted_exceptions"] if e["pair"] == "mains_to_mains"]
+        entries = [e for e in data["accepted_exceptions"][:ORIGINAL_ENTRIES] if e["pair"] == "mains_to_mains"]
         found = {(tuple(e["between"]), e["accepted_mm"]) for e in entries}
         expected = {(("T701.2", "T701.1"), 1.08), (("T701.2", "T701.3"), 1.08), (("T711.2", "T711.1"), 1.08), (("T711.2", "T711.3"), 1.08),
                     (("R105.1", "R105.4"), 1.65)}
@@ -481,7 +483,7 @@ class BoughtPartsJudged(unittest.TestCase):
             self.assertIn("8.0 mm at least, short by up to 2.0 mm (20 %)", rows[key][4])
         # U602's board gap, read from the entries, is what the row's arithmetic states
         _, data = committed()
-        accepted = {e["accepted_mm"] for e in data["accepted_exceptions"] if e.get("between", [""])[0].startswith("U602.")}
+        accepted = {e["accepted_mm"] for e in data["accepted_exceptions"] if e["pair"] == "mains_to_low_voltage" and e.get("between", [""])[0].startswith("U602.")}
         self.assertEqual(len(accepted), 1, accepted)
         (accepted_mm,) = accepted
         arithmetic = rows[("U602", "Creepage")][4]
@@ -509,7 +511,7 @@ class BoughtPartsJudged(unittest.TestCase):
     def test_the_four_u602_pad_pairs_are_unsigned_creepage_entries_stating_the_gap_is_the_boards(self):
         # SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-JUDGED.C2: For each of K201, K731, K741 and U602, the committed record and division record show exactly one of three states: the part's published creepage and clearance meet 10.0 mm and 3.0 mm; or the part's board pad gaps are what the check measures and the pad pairs that fall short each carry an accepted_exceptions entry in the check's form, with accepted_mm no greater than the measured gap, a stated ground and a bounding element, left unsigned; or the part is replaced by one in the first or second state. A figure inside the part that the board's pad gaps do not measure (the relays' published creepage over 8 mm, their clearance and U602's creepage and clearance where the maker publishes none) is recorded in the division record against the signed figure and counts as absent where unpublished: it is carried by the owner's recorded acceptance of bought-part creepage and put to the owner as an open decision to accept, change the part or find a published figure, and is never excused by an entry the check cannot judge. The owner's signature of the record is out of scope here and belongs to the acceptance leaf.
         _, data = committed()
-        entries = [e for e in data["accepted_exceptions"] if e.get("between", [""])[0].startswith("U602.")]
+        entries = [e for e in data["accepted_exceptions"] if e["pair"] == "mains_to_low_voltage" and e.get("between", [""])[0].startswith("U602.")]
         self.assertEqual(sorted(tuple(e["between"]) for e in entries),
                          sorted([("U602.1", "U602.4"), ("U602.2", "U602.3"), ("U602.1", "U602.3"), ("U602.2", "U602.4")]))
         for entry in entries:
@@ -830,6 +832,221 @@ class PollutionDegreeTwoRecord(unittest.TestCase):
             self.assertIn(phrase, item, phrase)
         for field in ("**Applies when:**", "**Asks:**", "**Passes:**", "**Fails, as the views show it:**", "**Judged on:**"):
             self.assertIn(field, item, field)
+
+
+S, P, Z, M = ("/Supply voltage and current measurement/", "/Pump drives/", "/Zero-crossing detector/", "/Mains entry and load feed/")
+#: The sixteen neutral-referenced nets, as the main board's netlist writes them.
+SET_N = ["/NEUTRAL", M + "NEUTRAL_IN", "/SHUNT_SENSE_IN", "/SHUNT_SENSE_NEUTRAL", S + "AMC_AIN0P", S + "AMC_AIN0N", S + "AMC_AIN1P",
+         S + "AMC_AIN1N", S + "AMC_DCDC_OUT", S + "AMC_DCDC_HGND", S + "AMC_HLDO_IN", S + "AMC_HLDO_OUT", S + "VMEAS_DIV",
+         P + "PUMP_C_TRIAC_G", P + "PUMP_S_TRIAC_G", Z + "ZC_LED_A"]
+#: The nine net-pair entries: constraint, nets_a, nets_b (None where omitted), working voltage, accepted distance.
+NET_PAIRS = [
+    ("creepage", SET_N, None, 10, 0.4),
+    ("clearance", SET_N, None, 10, 0.2),
+    ("creepage", [M + "DISCH_A", M + "DISCH_B"], ["/LINE", "/NEUTRAL"], 126.5, 1.6),
+    ("creepage", [M + "DISCH_A"], [M + "DISCH_B"], 10, 0.4),
+    ("creepage", [Z + "ZC_N1"], ["/LINE", "/NEUTRAL", Z + "ZC_LED_A"], 126.5, 1.6),
+    ("creepage", [S + "VMEAS_N1"], ["/LINE", S + "VMEAS_N2"], 84.5, 1.4),
+    ("creepage", [S + "VMEAS_N2"], [S + "VMEAS_DIV", "/NEUTRAL", M + "NEUTRAL_IN"], 94.5, 1.4),
+    ("creepage", [S + "VMEAS_N1"], [S + "VMEAS_DIV", "/NEUTRAL", M + "NEUTRAL_IN"], 178.8, 1.8),
+    ("creepage", ["/LINE"], [S + "VMEAS_N2"], 168.6, 1.7),
+]
+#: Each same-part pad pair under 1.5 mm in the committed main-board layout, and its edge-to-edge gap rounded down to 0.01 mm.
+SAME_PART = [
+    ("C601", "1", "2", 0.90), ("C602", "1", "2", 0.90), ("C603", "1", "2", 0.65), ("C604", "1", "2", 0.65), ("C605", "1", "2", 0.65),
+    ("C606", "1", "2", 0.65), ("C608", "1", "2", 0.65), ("F601", "1", "2", 0.70), ("F602", "1", "2", 0.70),
+    ("R105", "1", "2", 0.44), ("R105", "1", "3", 0.44), ("R105", "4", "2", 0.44), ("R105", "4", "3", 0.44), ("R105", "2", "3", 1.19),
+    ("R604", "1", "2", 0.85), ("R605", "1", "2", 0.85), ("R606", "1", "2", 0.85), ("R607", "1", "2", 0.85), ("R608", "1", "2", 0.85),
+    ("U601", "1", "2", 0.67), ("U601", "2", "3", 0.67), ("U601", "3", "4", 0.67), ("U601", "4", "5", 0.67), ("U601", "7", "8", 0.67),
+    ("U601", "8", "9", 0.67), ("U601", "9", "10", 0.67), ("U602", "1", "2", 1.04),
+]
+
+
+def decimal(value):
+    return fractions.Fraction(str(value))
+
+
+def held_across(entry, held_pairs):
+    """The held pairs an entry lists on opposite sides, as the check refuses them."""
+    first = list(entry["nets_a"])
+    second = list(entry.get("nets_b") or first)
+    return [(one, other) for one, other in held_pairs if (one in first and other in second) or (other in first and one in second)]
+
+
+class NetPairAndSamePartDrafts(unittest.TestCase):
+    """The net-pair and same-part entries drafted after the earlier entries of the committed record, unsigned."""
+
+    def net_pairs(self, data):
+        return [e for e in data["accepted_exceptions"] if "nets_a" in e]
+
+    def same_part(self, data):
+        return [e for e in data["accepted_exceptions"][ORIGINAL_ENTRIES:] if "between" in e]
+
+    def test_the_nine_net_pair_entries_hold_the_lists_working_voltages_and_distances_the_leaf_sets(self):
+        # SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C1: The record holds the nine net-pair entries with the lists, working voltages and accepted distances this leaf sets
+        _, data = committed()
+        entries = self.net_pairs(data)
+        found = [(e["constraint"], e["nets_a"], e.get("nets_b"), e["working_voltage_v"], e["accepted_mm"]) for e in entries]
+        self.assertEqual(found, NET_PAIRS)
+        self.assertEqual(len(entries), 9)
+        self.assertEqual(len({(c, tuple(a), tuple(b or ()), v) for c, a, b, v, _ in found}), 9)
+        for entry in entries:
+            self.assertEqual(entry["pair"], "mains_to_mains")
+        _, problems = reading()
+        self.assertEqual(sorted(p.location.rsplit(" ", 1)[-1] for p in problems), ["accepted_by", "accepted_on"])
+        # the reader reads an entry whose list is emptied or whose voltage is dropped as broken
+        first = data["accepted_exceptions"].index(entries[2])
+        for key in ("nets_a", "working_voltage_v"):
+            broken = list(data["accepted_exceptions"])
+            broken[first] = {k: v for k, v in entries[2].items() if k != key}
+            _, problems = reading(dict(data, accepted_exceptions=broken))
+            self.assertTrue(any(p.location.endswith(f"accepted_exceptions[{first}].{'between' if key == 'nets_a' else key}") for p in problems), key)
+
+    def test_every_listed_net_is_written_as_the_netlist_writes_it_and_none_repeats(self):
+        # SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C2: Every net a net-pair entry lists is a Mains-class net of the main board. Inspected against the main board's project file and netlist on the branch that carries it: each of the nets below matches a Mains-class pattern of its net_settings and is a net of the netlist, and this test holds only the naming form and the distinctness of the lists.
+        _, data = committed()
+        known = set(SET_N) | {M + "DISCH_A", M + "DISCH_B", "/LINE", Z + "ZC_N1", S + "VMEAS_N1", S + "VMEAS_N2"}
+        for entry in self.net_pairs(data):
+            for key in ("nets_a", "nets_b"):
+                names = entry.get(key, [])
+                self.assertEqual(len(names), len(set(names)), names)
+                for name in names:
+                    self.assertIsInstance(name, str)
+                    self.assertTrue(name.startswith("/") and name == name.strip(), name)
+                    self.assertIn(name, known)
+        for name in known:
+            self.assertEqual(name.count("/"), 1 if name.startswith("/") and not name[1:].count("/") else 2, name)
+
+    def test_each_accepted_distance_is_the_band_figure_for_its_working_voltage(self):
+        # SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C3: Each creepage entry's accepted distance is the band figure for its working voltage
+        _, data = committed()
+        for entry in self.net_pairs(data):
+            with self.subTest(nets=entry["nets_a"][:1], volts=entry["working_voltage_v"], constraint=entry["constraint"]):
+                figure = board_check.band_figure(data, f"{entry['constraint']}_mm", entry["working_voltage_v"])
+                self.assertEqual(decimal(entry["accepted_mm"]), figure)
+                self.assertIsNone(board_check.net_pair_entry_problem(entry, data))
+                lowered = dict(entry, accepted_mm=float(decimal(entry["accepted_mm"]) - fractions.Fraction(1, 10)))
+                self.assertIsNotNone(board_check.net_pair_entry_problem(lowered, data), "a distance 0.1 mm below the band figure is refused")
+                raised = dict(entry, working_voltage_v=entry["working_voltage_v"] + 1)
+                if entry["constraint"] == "creepage" and entry["working_voltage_v"] >= 50:
+                    # the same distance at a voltage one step up can fall under the next band figure; the helper judges it on the rows, not on the entry's own word
+                    self.assertEqual(board_check.net_pair_entry_problem(raised, data) is None,
+                                     decimal(entry["accepted_mm"]) >= board_check.band_figure(data, "creepage_mm", raised["working_voltage_v"]))
+        ten = [e for e in self.net_pairs(data) if e["working_voltage_v"] == 10]
+        self.assertEqual({(e["constraint"], e["accepted_mm"]) for e in ten if e["nets_a"] == SET_N}, {("creepage", 0.4), ("clearance", 0.2)})
+
+    def test_no_entry_reduces_a_pair_that_can_reach_the_supply_voltage_or_a_held_pair(self):
+        # SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C4: No net-pair entry reduces the figure of a pair that can reach the supply voltage or of a held pair
+        _, data = committed()
+        held = data["mains_to_mains"]["held_at_reinforced"]
+        entries = self.net_pairs(data)
+        for entry in entries:
+            self.assertLess(entry["working_voltage_v"], 250, entry["nets_a"])
+            self.assertLess(entry["working_voltage_v"], board_check.basis_voltage(data["working_voltage"]))
+            self.assertEqual(held_across(entry, held), [], entry["nets_a"])
+            listed = set(entry["nets_a"]) | set(entry.get("nets_b", []))
+            for name in listed:
+                leaf = name.rsplit("/", 1)[-1]
+                for excluded in ("LINE_MOD", "LINE_IN", "LINE_F", "LINE1", "SNUB", "GATE_R", "MT2", "OPTO_MT"):
+                    self.assertNotIn(excluded, leaf, name)
+        # the check for a held pair can fail: the same entries with the held pair listed on opposite sides are caught
+        crossed = dict(entries[2], nets_a=["/LINE"], nets_b=["/LINE1"])
+        self.assertEqual(held_across(crossed, held), [("/LINE", "/LINE1")])
+        crossed = dict(entries[2], nets_a=["/Mains entry and load feed/LINE_IN"], nets_b=["/LINE1"])
+        self.assertEqual(len(held_across(crossed, held)), 1)
+        # a pump gate network net is reduced against nothing outside the neutral-referenced set
+        for entry in entries:
+            for name in set(entry["nets_a"]) | set(entry.get("nets_b", [])):
+                if "PUMP_" in name:
+                    self.assertEqual(entry["nets_a"], SET_N, name)
+                    self.assertTrue(entry.get("nets_b") is None)
+
+    def test_each_net_pair_reason_states_the_derivation_of_its_working_voltage(self):
+        # SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C5: Each net-pair entry's reason states the derivation of its working voltage
+        _, data = committed()
+        entries = self.net_pairs(data)
+        needles = {
+            0: ("10 V", "0.000832639467", "2.7 V", "3.2 V", "1.2 V"), 1: ("10 V", "0.2 mm"),
+            2: ("253 / 2 = 126.5 V", "R101", "R104", "intact"), 3: ("126.5 V", "0.5 %", "10 V", "intact"),
+            4: ("253 / 2 = 126.5 V", "R630", "R631", "intact"),
+            5: ("0.666944", "0.333888", "253 x", "84.3 V is the value", "84.5 V written", "intact"),
+            6: ("0.333888", "84.5 + 10 = 94.5", "intact"), 7: ("0.666944", "168.7 + 10 = 178.7", "178.8", "intact"),
+            8: ("0.333888", "253 x (1 - 0.333888) = 168.5", "168.6", "intact"),
+        }
+        for position, entry in enumerate(entries):
+            with self.subTest(position=position):
+                for needle in needles[position]:
+                    self.assertIn(needle, entry["reason"])
+                self.assertIn("drafter's figure for the owner to accept or correct", entry["reason"])
+                self.assertTrue(entry["bounded_by"].strip())
+                self.assertRegex(entry["bounded_by"], r"F101|branch fuses|energy")
+                self.assertNotIn("the part itself", entry["bounded_by"])
+
+    def test_each_same_part_pad_pair_under_1_5_mm_has_one_creepage_and_one_clearance_entry(self):
+        # SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C6: The record holds a creepage entry and a clearance entry for each same-part pad pair under 1.5 mm
+        _, data = committed()
+        entries = self.same_part(data)
+        self.assertEqual(len(entries), 2 * len(SAME_PART))
+        self.assertEqual(len(SAME_PART), 27)
+        for ref, one, other, gap in SAME_PART:
+            with self.subTest(pair=f"{ref}.{one}-{other}"):
+                found = [e for e in entries if e["between"] == [f"{ref}.{one}", f"{ref}.{other}"]]
+                self.assertEqual(sorted(e["constraint"] for e in found), ["clearance", "creepage"])
+                for entry in found:
+                    self.assertEqual(entry["pair"], "mains_to_mains")
+                    self.assertEqual(decimal(entry["accepted_mm"]), decimal(gap))
+                    self.assertLess(entry["accepted_mm"], 1.5)
+                    self.assertLess(entry["accepted_mm"], data["mains_to_mains"]["creepage_mm" if entry["constraint"] == "creepage" else "clearance_mm"])
+        # a pair of one of these parts standing 1.5 mm or more apart, or a part whose pins clear the figure, has no entry
+        pairs = {frozenset(e["between"]) for e in entries}
+        for left, right in (("C607.1", "C607.2"), ("R105.1", "R105.4"), ("U601.1", "U601.3"), ("U601.8", "U601.10"), ("T701.1", "T701.3")):
+            self.assertNotIn(frozenset((left, right)), pairs)
+        self.assertEqual({e["between"][0].split(".")[0] for e in entries}.isdisjoint({"T701", "T711", "U701", "U711", "K201", "K731", "K741"}), True)
+        _, problems = reading()
+        self.assertEqual([p for p in problems if not p.location.endswith(("accepted_by", "accepted_on"))], [])
+
+    def test_each_same_part_entry_states_its_ground_and_bounding_element(self):
+        # SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C7: Each same-part entry states its ground and bounding element
+        _, data = committed()
+        for entry in self.same_part(data):
+            with self.subTest(between=entry["between"], constraint=entry["constraint"]):
+                for phrase in ("pitch of", "forces the gap", "set N", "under 10 V rms", "The part is not changed"):
+                    self.assertIn(phrase, entry["reason"])
+                self.assertIn(entry["between"][0].split(".")[0], entry["reason"])
+                for phrase in ("neutral-referenced circuit can supply", "F101", "branch fuses"):
+                    self.assertIn(phrase, entry["bounded_by"])
+        # the two entries of one pair share their ground, so the texts cannot drift apart
+        entries = self.same_part(data)
+        for one, two in zip(entries[0::2], entries[1::2]):
+            self.assertEqual((one["between"], one["reason"], one["bounded_by"]), (two["between"], two["reason"], two["bounded_by"]))
+
+    def test_every_drafted_entry_is_unsigned_the_record_stays_unsigned_and_the_earlier_entries_are_unchanged(self):
+        # SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C8: Every drafted entry is unsigned, the record stays unsigned and the existing entries are unchanged
+        _, data = committed()
+        assert_draft(self, data)
+        entries = data["accepted_exceptions"]
+        self.assertEqual(len(entries), ORIGINAL_ENTRIES + 9 + 54)
+        for entry in entries[ORIGINAL_ENTRIES:]:
+            self.assertEqual((entry["accepted_by"], entry["accepted_on"]), ("", ""))
+        _, problems = reading()
+        self.assertEqual(len(problems), 2)
+        self.assertTrue(all("unsigned" in p.message for p in problems))
+        earlier = [(e["pair"], e["constraint"], tuple(e.get("between") or ()), e.get("connector"), e["accepted_mm"]) for e in entries[:ORIGINAL_ENTRIES]]
+        expected = ([("mains_to_mains", "clearance", pads, None, mm) for pads, mm in (
+            (("T701.2", "T701.1"), 1.08), (("T701.2", "T701.3"), 1.08), (("T711.2", "T711.1"), 1.08), (("T711.2", "T711.3"), 1.08),
+            (("R105.1", "R105.4"), 1.65))]
+                    + [("mains_to_mains", "clearance", (f"{ref}.1", f"{ref}.2"), None, 1.8)
+                       for ref in ("R101", "R102", "R103", "R104", "R704", "R705", "R714", "R715")]
+                    + [("mains_to_low_voltage", "creepage", pads, None, mm) for pads, mm in (
+                        (("U601.10", "U601.11"), 8.0), (("U701.1", "U701.6"), 7.0), (("U711.1", "U711.6"), 7.0), (("U602.1", "U602.4"), 7.6),
+                        (("U602.2", "U602.3"), 7.6), (("U602.1", "U602.3"), 7.6), (("U602.2", "U602.4"), 7.6))]
+                    + [("same_connector_pins", "hole_to_hole", (), connector, 1.25) for connector in ("J630", "J635", "J791", "J821", "J861")])
+        self.assertEqual(earlier, expected)
+        # a signed copy is read as signed by the same reader, so the unsigned assertions above can fail
+        signed = dict(data, accepted_by="someone", accepted_on="2026-10-01")
+        _, problems = reading(signed)
+        self.assertEqual([p for p in problems if p.location.endswith(("accepted_by", "accepted_on"))], [])
+
 
 
 if __name__ == "__main__":
