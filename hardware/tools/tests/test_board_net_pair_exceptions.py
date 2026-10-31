@@ -236,6 +236,15 @@ class TheBandFigureIsReadFromTheRecord(unittest.TestCase):
         self.assertEqual(board_check.band_figure(net_basis(rows=[band(10, 0.1, 0.2), band(20, 0.2, 0.2)]), "creepage_mm", 12.5), Fraction("0.2"))
         self.assertEqual(board_check.band_figure(net_basis(rows=[band(10, 0.1, 0.2), band(30, 0.3, 0.2)]), "creepage_mm", 20.1), Fraction("0.3"))
 
+    def test_a_working_voltage_inexact_in_binary_is_interpolated_from_its_decimal_text(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS.C2: The check's creepage band figure for a working voltage is 0.4 mm at 10 V, 0.7 mm at 30 V, 1.4 mm at 84.5 V, 1.5 mm at 125 V, 1.6 mm at 126.5 V and 160 V, 1.7 mm at 168.5 V, 1.8 mm at 178.7 V, 2.0 mm at 200 V, 2.5 mm at 250 V, 2.6 mm at 253 V and 3.2 mm at 320 V, and its clearance band figure 0.2 mm at 10 V and 50 V and 1.5 mm at 125 V, from the rows of the committed record, and both are absent above 320 V. Out of scope is the use of the figure in the judgement.
+        data = net_basis(rows=[band(10, 0.1, 0.1), band(11, 1.6, 1.6)])
+        # 0.1 + 1.5 * 0.4 is exactly 0.7 in decimal; the binary value of 10.4 lies a hair above it and would be pushed to 0.8
+        self.assertNotEqual(Fraction(float(10.4)), Fraction("10.4"))
+        self.assertEqual(board_check.band_figure(data, "creepage_mm", 10.4), Fraction("0.7"))
+        # 0.1 + 1.5 * 0.8 is exactly 1.3
+        self.assertEqual(board_check.band_figure(data, "creepage_mm", 10.8), Fraction("1.3"))
+
     def test_only_functional_conductor_rows_at_the_records_pollution_degree_and_material_group_are_band_rows(self):
         # SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS.C2: The check's creepage band figure for a working voltage is 0.4 mm at 10 V, 0.7 mm at 30 V, 1.4 mm at 84.5 V, 1.5 mm at 125 V, 1.6 mm at 126.5 V and 160 V, 1.7 mm at 168.5 V, 1.8 mm at 178.7 V, 2.0 mm at 200 V, 2.5 mm at 250 V, 2.6 mm at 253 V and 3.2 mm at 320 V, and its clearance band figure 0.2 mm at 10 V and 50 V and 1.5 mm at 125 V, from the rows of the committed record, and both are absent above 320 V. Out of scope is the use of the figure in the judgement.
         data = net_basis(rows=[band(10, 0.4, 0.2), band(50, 9, 9, insulation="basic"), band(50, 9, 9, location="terminal"),
