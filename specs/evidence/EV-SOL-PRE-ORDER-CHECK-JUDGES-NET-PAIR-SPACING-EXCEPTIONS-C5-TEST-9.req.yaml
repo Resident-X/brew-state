@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS-C5-TEST-9
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS.C5
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-31T04:55:14.275051Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_net_pair_exceptions.py::TheJudgementFailsClosed.test_a_record_with_no_band_rows_or_lacking_a_figure_fails_every_net_pair_entry_and_spares_the_other_forms
+  artifact_version: d1144d2a03aaaca612dfca1d07d9554e1bd4f59c
+attested_by: crun-c8059732af94c4bb
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS.C5
+    type: satisfies

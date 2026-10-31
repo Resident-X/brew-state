@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS-C5-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS.C5
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-31T04:55:11.590507Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_net_pair_exceptions.py::TheEntryIsJudgedAgainstTheBasisAlone.test_the_least_distance_the_band_and_the_clearance_of_the_pair_each_bound_the_entry
+  artifact_version: d1144d2a03aaaca612dfca1d07d9554e1bd4f59c
+attested_by: crun-c8059732af94c4bb
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-NET-PAIR-SPACING-EXCEPTIONS.C5
+    type: satisfies
