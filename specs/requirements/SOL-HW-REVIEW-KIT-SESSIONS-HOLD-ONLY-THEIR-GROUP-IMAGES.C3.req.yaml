@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C3
+type: criterion
+title: The plan reports each group's image count and tokens against the budget, in text and in JSON, and can be produced without starting a session
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Over a synthetic declaration, the plan record and the report, in text and in JSON with the same content, give the shared context's image count and tokens, then for each group the number of images and the tokens its sessions hold in all, the budget they are held to and the margin; the predicted cost counts each group's own artefacts as written once for the group and the shared context once; and a plan-only invocation writes the plan and the report, exits 0 and starts no session, or exits 1 with the refusal when a group is over the budget. Out of scope for this criterion: the prices.
+links:
+  - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES
+    type: criterion-of
