@@ -5032,6 +5032,9 @@ FIND_CELL_MM = 20.0
 COPPER_GRAPHICS = ("line", "arc", "circle", "rect", "poly")
 COPPER_TEXTS = ("gr_text", "fp_text", "gr_text_box", "fp_text_box")
 
+#: Why a curve drawn on a copper layer fails by name.
+COPPER_CURVE = "cannot measure a copper curve, which the layout file gives as a Bezier this check does not size; draw it as arcs and lines"
+
 
 class LayerItem:
     """One piece of copper as the cross-layer rule holds it.
@@ -5044,10 +5047,10 @@ class LayerItem:
     """
 
     def __init__(self, kind: str, net: str, stored: Sequence[str], reach: Sequence[str],
-                 polygons: Sequence[board_geometry.Polygon], name: str, unmeasured: str = ""):
+                 polygons: Sequence[board_geometry.Polygon], name: str, unmeasured: str = "", margin: float = 0.0):
         self.kind, self.net = kind, net
         self.stored, self.reach = tuple(stored), tuple(reach)
-        self.shape = board_geometry.Shape(polygons)
+        self.shape = board_geometry.Shape(polygons, margin)
         self.name = name
         self.unmeasured = unmeasured
 
@@ -5083,8 +5086,14 @@ class LayerResult:
         self.unmeasured: Dict[str, str] = {}
 
 
-def graphic_polygons(node: list, place, what: str) -> List[board_geometry.Polygon]:
-    """The copper of a graphic drawn on a copper layer, as polygons: a stroke swept along its line, or the area it fills."""
+def graphic_polygons(node: list, place, what: str) -> Tuple[List[board_geometry.Polygon], float]:
+    """The copper of a graphic drawn on a copper layer, as polygons and a margin: a stroke swept along its line, or the area it fills with the stroke's half width round it.
+
+    KiCad draws a filled graphic's outline with its stroke as well as filling
+    it, so its copper reaches half the stroke's width past the ring; that half
+    width is the margin returned, 0 for an unfilled graphic whose stroke is
+    the polygons.
+    """
     head = sexpr.head(node)[3:]
     stroke = sexpr.child(node, "stroke")
     width_node = sexpr.child(stroke, "width") if stroke is not None else sexpr.child(node, "width")
@@ -5110,9 +5119,9 @@ def graphic_polygons(node: list, place, what: str) -> List[board_geometry.Polygo
                 raise board_geometry.Unreadable(f"{what} has a polygon with fewer than three corners")
             ring = [place(board_geometry.xy(corner, what)) for corner in corners[1:]]
         if filled:
-            return [ring]
+            return [ring], width / 2
         line = ring + ring[:1]
-    return board_geometry.swept(line, width)
+    return board_geometry.swept(line, width), 0.0
 
 
 def pour_items(tree: list, stack: Sequence[str]) -> List[LayerItem]:
@@ -5197,11 +5206,13 @@ def layer_items(tree: list, stack: Sequence[str], holes: Sequence[str]) -> Tuple
             if layer is None or len(layer) < 2 or str(layer[1]) not in stack:
                 continue
             if sexpr.head(node)[3:] in COPPER_GRAPHICS:
-                found.append(LayerItem("graphic", "", [str(layer[1])], [str(layer[1])],
-                                       graphic_polygons(node, lambda point, at=at: board_geometry.placed(point, at),
-                                                        f"the footprint {name}"), f"Graphic on {layer[1]} of {name}"))
+                polygons, margin = graphic_polygons(node, lambda point, at=at: board_geometry.placed(point, at), f"the footprint {name}")
+                found.append(LayerItem("graphic", "", [str(layer[1])], [str(layer[1])], polygons, f"Graphic on {layer[1]} of {name}",
+                                       margin=margin))
             elif sexpr.head(node) in COPPER_TEXTS:
                 unmeasured[f"text on {layer[1]} of {name}"] = "text on a copper layer has copper the layout file does not size"
+            elif sexpr.head(node) == "fp_curve":
+                unmeasured[f"curve on {layer[1]} of {name}"] = COPPER_CURVE
         for node in sexpr.children(footprint, "property"):
             layer = sexpr.child(node, "layer")
             if layer is not None and len(layer) > 1 and str(layer[1]) in stack and sexpr.child(node, "hide") is None:
@@ -5214,10 +5225,12 @@ def layer_items(tree: list, stack: Sequence[str], holes: Sequence[str]) -> Tuple
         if layer is None or len(layer) < 2 or str(layer[1]) not in stack:
             continue
         if sexpr.head(node)[3:] in COPPER_GRAPHICS:
-            found.append(LayerItem("graphic", "", [str(layer[1])], [str(layer[1])],
-                                   graphic_polygons(node, lambda point: point, "the layout"), f"Graphic on {layer[1]}"))
+            polygons, margin = graphic_polygons(node, lambda point: point, "the layout")
+            found.append(LayerItem("graphic", "", [str(layer[1])], [str(layer[1])], polygons, f"Graphic on {layer[1]}", margin=margin))
         elif sexpr.head(node) in COPPER_TEXTS:
             unmeasured[f"text on {layer[1]}"] = "text on a copper layer has copper the layout file does not size"
+        elif sexpr.head(node) == "gr_curve":
+            unmeasured[f"curve on {layer[1]}"] = COPPER_CURVE
     found += pour_items(tree, stack)
     return found, unmeasured
 
@@ -5239,6 +5252,7 @@ def layer_separation(tree: list, mains: Set[str], clearance: float, creepage: fl
     result = LayerResult()
     result.unmeasured.update(texts)
     slots = board_geometry.barrier_slots(tree)
+    ways = board_geometry.Detours(slots)
     reach = max(clearance, creepage)
     cells: Dict[Tuple[int, int], List[int]] = {}
     low = [item for item in items if item.net not in mains]
@@ -5270,7 +5284,7 @@ def layer_separation(tree: list, mains: Set[str], clearance: float, creepage: fl
             elif distance < clearance - ROUNDING:
                 result.findings.append(LayerFinding("clearance", item, other, distance, clearance))
             if distance < creepage - ROUNDING:
-                length, rounds = board_geometry.route_length(item.shape, other.shape, slots, creepage, distance)
+                length, rounds = board_geometry.route_length(item.shape, other.shape, ways, creepage, distance)
                 if length < creepage - ROUNDING:
                     result.findings.append(LayerFinding("creepage", item, other, length, creepage, rounds))
     inner = [item for item in items if any(layer not in (stack[0], stack[-1]) for layer in item.reach)]

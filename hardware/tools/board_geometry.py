@@ -516,8 +516,10 @@ def polygon_distance(one: Sequence[Point], other: Sequence[Point]) -> float:
 
 # --- The board outline and its slots ------------------------------------------------
 
-#: How far an arc of the outline may lie off the straight pieces it is written as, in mm.
-OUTLINE_SAG = 1e-3
+#: How far an arc of the outline may lie off the straight pieces it is written as, in mm: 5 micrometres.
+#: The corners lie on the arc, so each piece is a chord inside it: a slot is read up to this much smaller than drawn, which can only
+#: shorten a way round it, and the wall of a slot is read up to this much further from the copper than drawn.
+OUTLINE_SAG = 5e-3
 
 #: How near the ends of two pieces of the outline must be to be one point, in mm.
 OUTLINE_JOIN = 1e-4
@@ -669,81 +671,194 @@ def edge_loops(tree: list) -> List[Loop]:
     return loops
 
 
+def on_or_within(point: Point, polygon: Sequence[Point]) -> bool:
+    """Whether a point lies inside a polygon or on its boundary, to OUTLINE_JOIN."""
+    if within(point, polygon):
+        return True
+    return any(distance_to_segment(point, a, b) <= OUTLINE_JOIN for a, b in zip(polygon, list(polygon[1:]) + list(polygon[:1])))
+
+
 def barrier_slots(tree: list) -> List[Loop]:
     """The closed cut-outs inside the board's outline that are not round holes.
 
-    The outline is the closed line enclosing the most area; a notch that
-    reaches it is part of it and is not a slot.
+    The outline is the closed line enclosing the most area. A closed line is a
+    slot when every one of its corners lies inside the outline or on it, so a
+    slot drawn flush against the edge is one whichever corner is written first;
+    a notch drawn into the outline's own line is part of the outline and is not
+    a slot.
     """
     loops = edge_loops(tree)
     if len(loops) < 2:
         return []
     outline = max(loops, key=Loop.area)
-    return [loop for loop in loops if loop is not outline and not loop.round and within(loop.points[0], outline.points)]
+    return [loop for loop in loops if loop is not outline and not loop.round
+            and all(on_or_within(point, outline.points) for point in loop.points)]
 
 
 # --- Nearness of large polygons ---------------------------------------------------------
 
-#: The corners above which a polygon is indexed by a grid of its sides rather than walked side by side.
+#: The corners above which a polygon is indexed by rows of its sides for the inside test rather than walked side by side.
 INDEXED_CORNERS = 64
 
-#: The cells of the grid a large polygon's sides are held in, along its longer axis.
-GRID_CELLS = 64
+#: The sides a leaf of the box tree over a shape's sides holds.
+LEAF_SIDES = 8
 
 INFINITE = float("inf")
 
+Side = Tuple[Point, Point]
+Box = Tuple[float, float, float, float]
+
+
+def box_gap(one: Box, other: Box) -> float:
+    """How far apart two boxes (left, top, right, bottom) stand: 0 where they meet or overlap."""
+    gap_x = max(one[0] - other[2], other[0] - one[2], 0.0)
+    gap_y = max(one[1] - other[3], other[1] - one[3], 0.0)
+    return math.hypot(gap_x, gap_y)
+
+
+def point_gap(point: Point, box: Box) -> float:
+    """How far a point stands from a box (left, top, right, bottom): 0 where it lies in it."""
+    return math.hypot(max(box[0] - point[0], point[0] - box[2], 0.0), max(box[1] - point[1], point[1] - box[3], 0.0))
+
+
+class Hull:
+    """A tree of boxes over a shape's sides taken in the order they are drawn, so a box holds a run of neighbouring sides and is small.
+
+    A leaf holds LEAF_SIDES sides; a node above holds two below it. A search
+    that holds a box to be at least as far from the thing sought as its gap
+    never opens a box that cannot hold a nearer side, so the nearest side, or
+    the nearest pair of sides of two shapes, is found without walking the rest.
+    """
+
+    def __init__(self, sides: Sequence[Side]):
+        level = []
+        for start in range(0, len(sides), LEAF_SIDES):
+            run = list(sides[start:start + LEAF_SIDES])
+            level.append((self.box(run), None, run))
+        while len(level) > 1:
+            level = [self.join(level[i:i + 2]) for i in range(0, len(level), 2)]
+        self.root = level[0]
+
+    @staticmethod
+    def box(run: Sequence[Side]) -> Box:
+        xs = [point[0] for side in run for point in side]
+        ys = [point[1] for side in run for point in side]
+        return min(xs), min(ys), max(xs), max(ys)
+
+    @staticmethod
+    def join(nodes: Sequence[tuple]) -> tuple:
+        if len(nodes) == 1:
+            return nodes[0]
+        boxes = [node[0] for node in nodes]
+        return ((min(b[0] for b in boxes), min(b[1] for b in boxes), max(b[2] for b in boxes), max(b[3] for b in boxes)),
+                list(nodes), None)
+
+    def sides_nearest(self, point: Point, limit: float):
+        """The sides of the shape in order of their distance from a point, with the nearest point of each, none at `limit` or more."""
+        queue = [(point_gap(point, self.root[0]), 0, self.root)]
+        count = 1
+        while queue:
+            distance, _, node = heapq.heappop(queue)
+            if distance >= limit:
+                return
+            if len(node) == 2:
+                yield distance, node[1]
+                continue
+            box, children, run = node
+            if children is None:
+                for a, b in run:
+                    foot = nearest_on_segment(point, a, b)
+                    gap = math.dist(point, foot)
+                    if gap < limit:
+                        heapq.heappush(queue, (gap, count, (None, foot)))
+                        count += 1
+            else:
+                for child in children:
+                    heapq.heappush(queue, (point_gap(point, child[0]), count, child))
+                    count += 1
+
+    def pairs_nearest(self, other: "Hull", limit: float, screened=None):
+        """The pairs of a side of this shape and a side of another in order of the distance between them, as (distance, point of this, point of the other), none at `limit` or more.
+
+        `screened`, where given, is asked of two boxes whether every line from
+        a point of one to a point of the other is of no use to the caller, and
+        the sides in those boxes are not paired.
+        """
+        queue = [(box_gap(self.root[0], other.root[0]), 0, self.root, other.root)]
+        count = 1
+        while queue:
+            distance, _, first, second = heapq.heappop(queue)
+            if distance >= limit:
+                return
+            if first is None:
+                yield distance, second[0], second[1]
+                continue
+            if screened is not None and screened(first[0], second[0]):
+                continue
+            if first[1] is None and second[1] is None:
+                for a, b in first[2]:
+                    for c, d in second[2]:
+                        gap, p, q = closest_points(a, b, c, d)
+                        if gap < limit:
+                            heapq.heappush(queue, (gap, count, None, (p, q)))
+                            count += 1
+                continue
+            split_first = second[1] is None or (first[1] is not None and self.area(first[0]) >= self.area(second[0]))
+            for child in (first[1] if split_first else second[1]):
+                pair = (child, second) if split_first else (first, child)
+                gap = box_gap(pair[0][0], pair[1][0])
+                if gap < limit:
+                    heapq.heappush(queue, (gap, count, pair[0], pair[1]))
+                    count += 1
+
+    @staticmethod
+    def area(box: Box) -> float:
+        return (box[2] - box[0]) * (box[3] - box[1])
+
 
 class Shape:
-    """The polygons of one piece of copper, a large one indexed by a grid of its sides so a nearby side is found without walking them all."""
+    """The polygons of one piece of copper, with a box tree over their sides so a nearby side is found without walking them all.
 
-    def __init__(self, polygons: Sequence[Sequence[Point]]):
+    `margin` is how far the copper reaches beyond the polygons on every side,
+    round at the corners, as a filled graphic's stroke does: the shape is the
+    polygons grown by it, and every distance to it is the distance to the
+    polygons less the margin.
+    """
+
+    def __init__(self, polygons: Sequence[Sequence[Point]], margin: float = 0.0):
         self.polygons = [list(polygon) for polygon in polygons]
+        self.margin = margin
         points = [point for polygon in self.polygons for point in polygon]
-        self.bounds = (min(x for x, _ in points), min(y for _, y in points), max(x for x, _ in points), max(y for _, y in points))
+        self.bounds = (min(x for x, _ in points) - margin, min(y for _, y in points) - margin,
+                       max(x for x, _ in points) + margin, max(y for _, y in points) + margin)
         self.corners = len(points)
-        self.sides: List[Tuple[Point, Point]] = []
-        self.grid: Dict[Tuple[int, int], List[int]] = {}
-        self.rows: Dict[int, List[int]] = {}
+        self.sides: List[Side] = [(a, b) for polygon in self.polygons for a, b in zip(polygon, polygon[1:] + polygon[:1])]
+        self.hull_: Optional[Hull] = None
         self.size = 1.0
+        self.rows: Dict[int, List[int]] = {}
         if self.corners > INDEXED_CORNERS:
             left, top, right, bottom = self.bounds
-            self.size = max((right - left), (bottom - top), 1e-6) / GRID_CELLS
-            for polygon in self.polygons:
-                for a, b in zip(polygon, polygon[1:] + polygon[:1]):
-                    index = len(self.sides)
-                    self.sides.append((a, b))
-                    for row in range(self.cell(min(a[1], b[1])), self.cell(max(a[1], b[1])) + 1):
-                        self.rows.setdefault(row, []).append(index)
-                        for column in range(self.cell(min(a[0], b[0])), self.cell(max(a[0], b[0])) + 1):
-                            self.grid.setdefault((column, row), []).append(index)
+            self.size = max((right - left), (bottom - top), 1e-6) / 64
+            for index, (a, b) in enumerate(self.sides):
+                for row in range(self.cell(min(a[1], b[1])), self.cell(max(a[1], b[1])) + 1):
+                    self.rows.setdefault(row, []).append(index)
 
     def cell(self, value: float) -> int:
         return math.floor(value / self.size)
 
     def indexed(self) -> bool:
-        return bool(self.sides)
+        return self.corners > INDEXED_CORNERS
 
-    def edges(self) -> List[Tuple[Point, Point]]:
-        if self.sides:
-            return self.sides
-        return [(a, b) for polygon in self.polygons for a, b in zip(polygon, polygon[1:] + polygon[:1])]
-
-    def near(self, box: Tuple[float, float, float, float], reach: float) -> List[Tuple[Point, Point]]:
-        """The sides that may lie within `reach` of a box: every one whose cell the box grown by `reach` meets."""
-        if not self.sides:
-            return self.edges()
-        left, top, right, bottom = box[0] - reach, box[1] - reach, box[2] + reach, box[3] + reach
-        found = set()
-        for column in range(self.cell(left), self.cell(right) + 1):
-            for row in range(self.cell(top), self.cell(bottom) + 1):
-                found.update(self.grid.get((column, row), ()))
-        return [self.sides[index] for index in sorted(found)]
+    def hull(self) -> Hull:
+        if self.hull_ is None:
+            self.hull_ = Hull(self.sides)
+        return self.hull_
 
     def contains(self, point: Point) -> bool:
         """Whether a point is inside the polygons by the even-odd rule, for the polygons taken together."""
         if not (self.bounds[0] <= point[0] <= self.bounds[2] and self.bounds[1] <= point[1] <= self.bounds[3]):
             return False
-        if not self.sides:
+        if not self.indexed():
             return any(within(point, polygon) for polygon in self.polygons)
         inside = False
         for index in self.rows.get(self.cell(point[1]), ()):
@@ -763,35 +878,23 @@ def shape_distance(one: Shape, other: Shape, reach: float) -> float:
     """How far apart two shapes stand where that is under `reach`, 0 where they touch, cross or one lies inside the other.
 
     Where they stand `reach` or more apart the result is at least `reach`, and
-    may be infinite. A large shape is walked only where the other lies within
-    `reach` of it, so the result is polygon_distance's wherever that is under
-    `reach`.
+    may be infinite. The nearest pair of sides is found through the shapes'
+    box trees, so two large fills are not compared side by side, and the result
+    is polygon_distance's wherever that is under `reach`. Where no two sides
+    meet, one polygon of either lies wholly inside the other or wholly outside,
+    so one corner of each polygon says which. A shape's margin is taken off
+    the distance between the polygons.
     """
     if apart(one, other, reach):
         return INFINITE
-    small, large = (one, other) if one.corners <= other.corners else (other, one)
-    corners = [point for polygon in small.polygons for point in polygon]
-    if any(large.contains(point) for point in corners):
+    grown = one.margin + other.margin
+    nearest = next(one.hull().pairs_nearest(other.hull(), reach + grown), None)
+    if nearest is not None and nearest[0] <= grown:
         return 0.0
-    box = small.bounds
-    nearer = [side[0] for side in large.near(box, 0.0) if box[0] <= side[0][0] <= box[2] and box[1] <= side[0][1] <= box[3]]
-    if any(small.contains(point) for point in nearer):
-        return 0.0
-    best = INFINITE
-    pieces = [(c, d, (min(c[0], d[0]), min(c[1], d[1]), max(c[0], d[0]), max(c[1], d[1]))) for c, d in small.edges()]
-    for a, b in large.near(small.bounds, reach):
-        for c, d, box_ in pieces:
-            if side_gap(a, b, box_) >= min(best, reach):
-                continue
-            best = min(best, segment_distance(a, b, c, d))
-    return best
-
-
-def side_gap(a: Point, b: Point, box: Tuple[float, float, float, float]) -> float:
-    """A lower bound on how far the straight line from a to b stands from a box (left, top, right, bottom): the gap between their boxes."""
-    gap_x = max(min(a[0], b[0]) - box[2], box[0] - max(a[0], b[0]), 0.0)
-    gap_y = max(min(a[1], b[1]) - box[3], box[1] - max(a[1], b[1]), 0.0)
-    return math.hypot(gap_x, gap_y)
+    for inner, outer in ((one, other), (other, one)):
+        if any(outer.contains(polygon[0]) for polygon in inner.polygons):
+            return 0.0
+    return nearest[0] - grown if nearest is not None else INFINITE
 
 
 def closest_points(one: Point, two: Point, three: Point, four: Point) -> Tuple[float, Point, Point]:
@@ -843,8 +946,85 @@ def blocked(a: Point, b: Point, slots: Sequence[Sequence[Point]]) -> bool:
     return False
 
 
-def route_length(first: Shape, second: Shape, slots: Sequence[Loop], reach: float,
-                 straight: Optional[float] = None) -> Tuple[float, int]:
+class Detours:
+    """The slots of a board held for finding ways round them: their corners, and which pairs of corners see one another, worked out once and kept.
+
+    Whether a straight line between two corners passes through a slot depends
+    on the slots alone, so it is asked once for a pair however many pairs of
+    copper the ways are found for.
+    """
+
+    def __init__(self, slots: Sequence[Loop]):
+        self.slots = list(slots)
+        self.rings = [slot.points for slot in self.slots]
+        self.corners: List[Tuple[int, Point]] = [(index, corner) for index, ring in enumerate(self.rings) for corner in ring]
+        self.sight: Dict[Tuple[int, int], bool] = {}
+        self.walls = [[(c, d, (min(c[0], d[0]), min(c[1], d[1]), max(c[0], d[0]), max(c[1], d[1])))
+                       for c, d in zip(ring, ring[1:] + ring[:1])] for ring in self.rings]
+        self.recent: List[Tuple[Point, Point]] = []
+
+    def sees(self, one: int, other: int) -> bool:
+        key = (one, other) if one < other else (other, one)
+        if key not in self.sight:
+            self.sight[key] = not self.blocks(self.corners[one][1], self.corners[other][1])
+        return self.sight[key]
+
+    def screens(self, one: Box, two: Box) -> bool:
+        """Whether one wall of a slot stops every straight line from a point of one box to a point of the other.
+
+        A line from a point of one box to a point of the other crosses a wall
+        properly if the boxes lie either side of the wall's line and the wall's
+        ends lie either side of the line. Each is unchanged in sign over both
+        boxes wherever it holds, with one sign, at every pair of their corners,
+        since each is linear in one point while the other is held, so the
+        corners decide for the whole of both boxes.
+        """
+        ones = [(one[0], one[1]), (one[2], one[1]), (one[2], one[3]), (one[0], one[3])]
+        twos = [(two[0], two[1]), (two[2], two[1]), (two[2], two[3]), (two[0], two[3])]
+        walls = list(self.recent)
+        for c, d in walls:
+            here, there = [orientation(c, d, p) for p in ones], [orientation(c, d, q) for q in twos]
+            if not ((min(here) > STRAIGHT and max(there) < -STRAIGHT) or (max(here) < -STRAIGHT and min(there) > STRAIGHT)):
+                continue
+            ends = [(orientation(p, q, c), orientation(p, q, d)) for p in ones for q in twos]
+            if all(first > STRAIGHT and second < -STRAIGHT for first, second in ends) or all(
+                    first < -STRAIGHT and second > STRAIGHT for first, second in ends):
+                self.remember((c, d))
+                return True
+        return False
+
+    def remember(self, wall: Tuple[Point, Point]) -> None:
+        """Keep a wall that has just stopped a line at the front of the few kept, to be tried first."""
+        if wall in self.recent:
+            self.recent.remove(wall)
+        self.recent.insert(0, wall)
+        del self.recent[RECENT_WALLS:]
+
+    def blocks(self, a: Point, b: Point) -> bool:
+        """Whether the straight line from a to b passes through the inside of any slot, running along or touching a wall being open.
+
+        The few walls that last stopped a line are tried first, since the lines
+        asked about one after another run alike and are stopped by the same walls.
+        """
+        for wall in self.recent:
+            if crosses(a, b, wall[0], wall[1]):
+                self.remember(wall)
+                return True
+        low_x, high_x, low_y, high_y = min(a[0], b[0]), max(a[0], b[0]), min(a[1], b[1]), max(a[1], b[1])
+        middle = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
+        for slot, ring, walls in zip(self.slots, self.rings, self.walls):
+            if slot.bounds[0] > high_x or slot.bounds[2] < low_x or slot.bounds[1] > high_y or slot.bounds[3] < low_y:
+                continue
+            for c, d, box in walls:
+                if box[0] <= high_x and box[2] >= low_x and box[1] <= high_y and box[3] >= low_y and crosses(a, b, c, d):
+                    self.remember((c, d))
+                    return True
+            if within(middle, ring) and min(distance_to_segment(middle, c, d) for c, d, _ in walls) > 1e-7:
+                return True
+        return False
+
+
+def route_length(first: Shape, second: Shape, slots, reach: float, straight: Optional[float] = None) -> Tuple[float, int]:
     """The shortest way from one piece of copper to another seen from above that does not cross a slot, and how many slots it goes round.
 
     A way is a run of straight lines, each clear of every slot's inside, that
@@ -853,42 +1033,38 @@ def route_length(first: Shape, second: Shape, slots: Sequence[Loop], reach: floa
     place a way can turn. Where no slot lies within `reach` of the pieces the
     way is the straight line between them. The length is exact for the polygons
     given, not gridded. The count is of the slots a corner of which the way
-    turns at. `straight` is the distance between the pieces where that is known.
+    turns at. `straight` is the distance between the pieces where that is
+    known. `slots` is the Loops of the slots, or a Detours made of them, which
+    keeps what it works out between calls.
     """
+    detours = slots if isinstance(slots, Detours) else Detours(slots)
     box = (min(first.bounds[0], second.bounds[0]) - reach, min(first.bounds[1], second.bounds[1]) - reach,
            max(first.bounds[2], second.bounds[2]) + reach, max(first.bounds[3], second.bounds[3]) + reach)
-    near = [slot for slot in slots if slot.bounds[0] <= box[2] and slot.bounds[2] >= box[0]
-            and slot.bounds[1] <= box[3] and slot.bounds[3] >= box[1]]
+    near = {index for index, slot in enumerate(detours.slots) if slot.bounds[0] <= box[2] and slot.bounds[2] >= box[0]
+            and slot.bounds[1] <= box[3] and slot.bounds[3] >= box[1]}
     straight = shape_distance(first, second, reach) if straight is None else straight
     if not near or straight >= reach:
         return straight, 0
-    rings = [slot.points for slot in near]
     best = INFINITE
-    first_sides = first.near(second.bounds, reach)
-    second_sides = second.near(first.bounds, reach)
-    seconds = [(c, d, (min(c[0], d[0]), min(c[1], d[1]), max(c[0], d[0]), max(c[1], d[1]))) for c, d in second_sides]
-    for a, b in first_sides:
-        for c, d, box_ in seconds:
-            if side_gap(a, b, box_) >= min(best, reach):
-                continue
-            distance, p, q = closest_points(a, b, c, d)
-            if distance < best and not blocked(p, q, rings):
-                best = distance
-    nodes = [(index, corner) for index, ring in enumerate(rings) for corner in ring]
+    grown = first.margin + second.margin
+    for distance, p, q in first.hull().pairs_nearest(second.hull(), reach + grown, detours.screens):
+        if not detours.blocks(p, q):
+            best = max(distance - grown, 0.0)
+            break
+    if best <= straight + ROUTE_SAME:
+        return best, 0
+    nodes = [position for position, (index, _) in enumerate(detours.corners) if index in near]
 
-    def reaching(sides: Sequence[Tuple[Point, Point]], corner: Point) -> float:
-        found = INFINITE
-        for a, b in sides:
-            foot = nearest_on_segment(corner, a, b)
-            distance = math.dist(corner, foot)
-            if distance < min(found, reach) and not blocked(corner, foot, rings):
-                found = distance
-        return found
+    def reaching(shape: Shape, corner: Point) -> float:
+        for distance, foot in shape.hull().sides_nearest(corner, min(best, reach) + shape.margin):
+            if not detours.blocks(corner, foot):
+                return max(distance - shape.margin, 0.0)
+        return INFINITE
 
-    start = [reaching(first_sides, corner) for _, corner in nodes]
-    finish = [reaching(second_sides, corner) for _, corner in nodes]
-    cost = {position: (start[position], frozenset([nodes[position][0]]) if start[position] < INFINITE else frozenset())
-            for position in range(len(nodes))}
+    start = {position: reaching(first, detours.corners[position][1]) for position in nodes}
+    finish = {position: reaching(second, detours.corners[position][1]) for position in nodes}
+    cost = {position: (start[position], frozenset([detours.corners[position][0]]) if start[position] < INFINITE else frozenset())
+            for position in nodes}
     settled: Set[int] = set()
     queue = [(cost[position][0], position) for position in cost if cost[position][0] < INFINITE]
     heapq.heapify(queue)
@@ -900,11 +1076,18 @@ def route_length(first: Shape, second: Shape, slots: Sequence[Loop], reach: floa
         settled.add(position)
         if distance + finish[position] < found[0]:
             found = (distance + finish[position], len(cost[position][1]))
-        for other in range(len(nodes)):
+        for other in nodes:
             if other in settled:
                 continue
-            step = math.dist(nodes[position][1], nodes[other][1])
-            if distance + step < cost[other][0] and not blocked(nodes[position][1], nodes[other][1], rings):
-                cost[other] = (distance + step, cost[position][1] | {nodes[other][0]})
+            step = math.dist(detours.corners[position][1], detours.corners[other][1])
+            if distance + step < cost[other][0] and detours.sees(position, other):
+                cost[other] = (distance + step, cost[position][1] | {detours.corners[other][0]})
                 heapq.heappush(queue, (distance + step, other))
     return found
+
+
+#: How much longer than the straight distance a direct way may be and still be the straight line, in mm.
+ROUTE_SAME = 1e-9
+
+#: How many of the walls that last stopped a line a Detours keeps to try first.
+RECENT_WALLS = 8

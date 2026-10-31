@@ -15,6 +15,7 @@ import math
 import os
 import sys
 import tempfile
+import time
 import unittest
 
 TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -248,6 +249,46 @@ class InnerCopperKeepsOffASlotWall(unittest.TestCase):
         self.assertAlmostEqual(finding.measured, 30 - 28.5 - 0.125, places=2)
 
 
+class TheRuleFinishesWithinItsBoundOnLargeFillsAndManyPairs(unittest.TestCase):
+    #: The seconds each case may take, over five times what it took when the bound was set.
+    LARGE_FILLS_BOUND_S = 10.0
+    MANY_PAIRS_BOUND_S = 10.0
+
+    def fill(self, net: str, layer: str, centre: tuple, count: int) -> str:
+        corners = " ".join(f"(xy {centre[0] + 8 * math.cos(2 * math.pi * i / count):.4f} {centre[1] + 8 * math.sin(2 * math.pi * i / count):.4f})"
+                           for i in range(count))
+        return (f'(zone (net "{net}") (layer "{layer}") (polygon (pts (xy 0 0) (xy 60 0) (xy 60 40) (xy 0 40))) '
+                f'(filled_polygon (layer "{layer}") (pts {corners})))')
+
+    def test_a_two_thousand_vertex_mains_pour_against_a_fifty_thousand_vertex_pour_on_other_layers_is_judged_within_the_bound(self):
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C9: On a throwaway proof design carrying filled ground and mains pours on four copper layers, the check including the new rule adds no KiCad run to the existing one, the rule's own computation finishes within a stated time bound on a synthetic fill of 50,000 vertices, and the existing test that a hung KiCad run still fails the design stands. Out of scope is the limit's value.
+        tree = board(self.fill(MAINS, "F.Cu", (16, 20), 2000), self.fill(LOW, "In1.Cu", (44, 20), 50000),
+                     edge=outline() + slot(29.5, 5, 30.5, 35))
+        started = time.monotonic()
+        result = found(tree, clearance=3.0, creepage=40.0)
+        elapsed = time.monotonic() - started
+        (finding,) = named(result, "creepage")
+        self.assertEqual(finding.rounds, 1)
+        self.assertGreater(finding.measured, 12.0)
+        self.assertEqual(named(result, "clearance"), [])
+        self.assertLess(elapsed, self.LARGE_FILLS_BOUND_S)
+
+    def test_sixty_four_pairs_round_a_hundred_vertex_slot_are_judged_within_the_bound(self):
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C9: On a throwaway proof design carrying filled ground and mains pours on four copper layers, the check including the new rule adds no KiCad run to the existing one, the rule's own computation finishes within a stated time bound on a synthetic fill of 50,000 vertices, and the existing test that a hung KiCad run still fails the design stands. Out of scope is the limit's value.
+        corners = " ".join(f"(xy {30 + 0.5 * math.cos(2 * math.pi * i / 100):.4f} {20 + 7 * math.sin(2 * math.pi * i / 100):.4f})" for i in range(100))
+        long_slot = f'(gr_poly (pts {corners}) (stroke (width 0.1) (type default)) (fill no) (layer "Edge.Cuts"))'
+        tracks = [track(MAINS, 24 + 0.2 * i, 8 + 3.0 * i, 24 + 0.2 * i, 8.5 + 3.0 * i, "F.Cu") for i in range(8)]
+        tracks += [track(LOW, 36 - 0.2 * i, 8 + 3.0 * i, 36 - 0.2 * i, 8.5 + 3.0 * i, "B.Cu") for i in range(8)]
+        tree = board(*tracks, edge=outline() + long_slot)
+        (loop,) = board_geometry.barrier_slots(tree)
+        self.assertEqual(len(loop.points), 100)
+        started = time.monotonic()
+        result = found(tree, clearance=3.0, creepage=25.0)
+        elapsed = time.monotonic() - started
+        self.assertEqual(len(named(result, "creepage")), 64)
+        self.assertLess(elapsed, self.MANY_PAIRS_BOUND_S)
+
+
 class AnOverlapIsNotAClearance(unittest.TestCase):
     def test_low_voltage_copper_overlapping_mains_copper_on_another_layer_fails_as_an_overlap(self):
         # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C4: On a throwaway copy of a proof design, a low-voltage pour, track, via or pad whose plan-view outline overlaps that of a Mains-class item on another copper layer fails as mains_layer_separation naming the test as overlap, both items and their layers, and an item whose outline does not overlap but lies under the clearance fails as the clearance test and not as an overlap. Out of scope is an overlap of two Mains-class items.
@@ -336,6 +377,115 @@ class WhatCountsAsCopper(unittest.TestCase):
         self.assertEqual(found(board(track(MAINS, 10, 10, 20, 10, "F.Cu"), far)).unmeasured, {})
 
 
+class CopperGraphicsAndCurvesAreMeasuredAtTheirTrueEdge(unittest.TestCase):
+    def mains_track(self):
+        return track(MAINS, 10, 10, 20, 10, "F.Cu")
+
+    def test_a_filled_graphic_is_measured_to_the_edge_of_its_stroke_and_not_to_its_ring(self):
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C5: On throwaway proof designs, a low-voltage through-hole pad under the clearance from a Mains-class track on an inner layer fails although the pad stores copper only on its surface layers, a low-voltage pour whose stored fill reaches within the clearance of a Mains-class pad fails while the same pour's outline alone does not, and a netless copper item within the clearance of a Mains-class item fails. Out of scope is a mounting hole, which its own rule holds.
+        figure = dict(clearance=0.5, creepage=0.5)
+        for label, graphic, nearest in (
+                ("rect", '(gr_rect (start 10 11) (end 20 12) (stroke (width 1) (type default)) (fill yes) (layer "In1.Cu"))', 11 - 0.5),
+                ("poly", '(gr_poly (pts (xy 10 11) (xy 20 11) (xy 15 14)) (stroke (width 1) (type default)) (fill yes) (layer "In1.Cu"))', 11 - 0.5),
+                ("circle", '(gr_circle (center 15 11.75) (end 15 12.75) (stroke (width 1) (type default)) (fill yes) (layer "In1.Cu"))', 11.75 - 1.5)):
+            with self.subTest(graphic=label):
+                (finding,) = named(found(board(self.mains_track(), graphic), **figure), "clearance")
+                self.assertAlmostEqual(finding.measured, nearest - 10.125, places=3)
+
+    def test_a_filled_graphic_whose_ring_stands_clear_but_whose_stroke_does_not_fails(self):
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C5: On throwaway proof designs, a low-voltage through-hole pad under the clearance from a Mains-class track on an inner layer fails although the pad stores copper only on its surface layers, a low-voltage pour whose stored fill reaches within the clearance of a Mains-class pad fails while the same pour's outline alone does not, and a netless copper item within the clearance of a Mains-class item fails. Out of scope is a mounting hole, which its own rule holds.
+        graphic = '(gr_rect (start 10 11) (end 20 12) (stroke (width 1) (type default)) (fill yes) (layer "In1.Cu"))'
+        self.assertEqual(len(named(found(board(self.mains_track(), graphic), clearance=0.5, creepage=0.5), "clearance")), 1)
+        self.assertEqual(found(board(self.mains_track(), graphic), clearance=0.375, creepage=0.375).findings, [])
+        thin = graphic.replace("(width 1)", "(width 0)")
+        self.assertEqual(found(board(self.mains_track(), thin), clearance=0.5, creepage=0.5).findings, [])
+
+    def test_a_footprints_graphics_are_netless_low_voltage_copper_placed_with_the_footprint(self):
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C5: On throwaway proof designs, a low-voltage through-hole pad under the clearance from a Mains-class track on an inner layer fails although the pad stores copper only on its surface layers, a low-voltage pour whose stored fill reaches within the clearance of a Mains-class pad fails while the same pour's outline alone does not, and a netless copper item within the clearance of a Mains-class item fails. Out of scope is a mounting hole, which its own rule holds.
+        def holding(graphic: str, at: str = "0 0") -> str:
+            return (f'(footprint "lib:part" (layer "F.Cu") (at {at}) (property "Reference" "G1" (at 0 0 0)) {graphic})')
+        stroke = "(stroke (width 0.25) (type default))"
+        for label, graphic, gap in (
+                ("line", f'(fp_line (start 10 12.5) (end 20 12.5) {stroke} (layer "In1.Cu"))', 12.5 - 0.125 - 10.125),
+                ("rect", f'(fp_rect (start 10 12.5) (end 20 14) {stroke} (fill no) (layer "In1.Cu"))', 12.5 - 0.125 - 10.125),
+                ("poly", f'(fp_poly (pts (xy 10 12.5) (xy 20 12.5) (xy 15 14)) {stroke} (fill yes) (layer "In1.Cu"))', 12.5 - 0.125 - 10.125),
+                ("arc", f'(fp_arc (start 10 12.5) (mid 15 13.5) (end 20 12.5) {stroke} (layer "In1.Cu"))', 12.5 - 0.125 - 10.125),
+                ("circle", f'(fp_circle (center 15 13) (end 15 13.5) {stroke} (fill no) (layer "In1.Cu"))', 12.5 - 0.125 - 10.125)):
+            with self.subTest(graphic=label):
+                result = found(board(self.mains_track(), holding(graphic)))
+                (finding,) = named(result, "clearance")
+                self.assertEqual(finding.other.kind, "graphic")
+                self.assertIn("Graphic on In1.Cu of G1", finding.other.name)
+                self.assertAlmostEqual(finding.measured, gap, places=2)
+        turned = holding('(fp_line (start 0 -5) (end 0 5) {stroke} (layer "In1.Cu"))'.replace("{stroke}", stroke), "15 12.4 90")
+        (finding,) = named(found(board(self.mains_track(), turned)), "clearance")
+        self.assertAlmostEqual(finding.measured, 12.4 - 0.125 - 10.125, places=3)
+        far = holding('(fp_line (start 0 -5) (end 0 5) {stroke} (layer "F.SilkS"))'.replace("{stroke}", stroke), "15 12.4 90")
+        self.assertEqual(found(board(self.mains_track(), far)).findings, [])
+
+    def test_a_curve_on_a_copper_layer_fails_by_name_and_one_off_the_copper_layers_is_not_copper(self):
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C5: On throwaway proof designs, a low-voltage through-hole pad under the clearance from a Mains-class track on an inner layer fails although the pad stores copper only on its surface layers, a low-voltage pour whose stored fill reaches within the clearance of a Mains-class pad fails while the same pour's outline alone does not, and a netless copper item within the clearance of a Mains-class item fails. Out of scope is a mounting hole, which its own rule holds.
+        pts = "(pts (xy 10 12.4) (xy 12 12.4) (xy 18 12.4) (xy 20 12.4))"
+        free = f'(gr_curve {pts} (stroke (width 0.25) (type default)) (layer "In1.Cu"))'
+        inside = ('(footprint "lib:part" (layer "F.Cu") (at 0 0) (property "Reference" "G1" (at 0 0 0)) '
+                  f'(fp_curve {pts} (stroke (width 0.25) (type default)) (layer "In1.Cu")))')
+        for label, item, name in (("layout", free, "curve on In1.Cu"), ("footprint", inside, "curve on In1.Cu of G1")):
+            with self.subTest(curve=label):
+                result = found(board(item))
+                self.assertIn(name, result.unmeasured)
+                text = words(result)
+                self.assertIn(name, text)
+                self.assertIn("cannot measure a copper curve", text)
+        self.assertEqual(found(board(free.replace("In1.Cu", "F.SilkS"), inside.replace("In1.Cu", "F.SilkS"))).unmeasured, {})
+
+
+class ASlotFlushWithTheOutlineIsOneWhicheverCornerIsWrittenFirst(unittest.TestCase):
+    EDGES = {"left": (0, 10, 1, 20), "right": (59, 10, 60, 20), "top": (20, 0, 21, 10), "bottom": (20, 30, 21, 40)}
+
+    def test_a_closed_cut_out_sharing_an_edge_with_the_outline_is_a_slot_in_every_order_of_its_corners(self):
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C3: On a throwaway copy of a proof design, a copper item of any net on an inner layer whose plan-view distance to the wall of a barrier slot (a closed cut-out inside the board outline that is not a round hole) is under 1.5 mm fails as mains_layer_separation naming the item, its layer and the slot; the same item at 1.5 mm or more passes, and a surface-layer item at the same distance is not reported by this test. Out of scope is the width of the slot, which the existing slot rule holds.
+        for edge, (x1, y1, x2, y2) in self.EDGES.items():
+            for order, corners in (("first", (x1, y1, x2, y2)), ("second", (x2, y1, x1, y2)), ("third", (x2, y2, x1, y1)), ("fourth", (x1, y2, x2, y1))):
+                with self.subTest(edge=edge, corner=order):
+                    (found_slot,) = board_geometry.barrier_slots(board(edge=outline() + slot(*corners)))
+                    self.assertAlmostEqual(found_slot.area(), 10.0)
+
+    def test_inner_copper_beside_a_flush_slot_is_pulled_back_from_its_wall_in_every_order(self):
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C3: On a throwaway copy of a proof design, a copper item of any net on an inner layer whose plan-view distance to the wall of a barrier slot (a closed cut-out inside the board outline that is not a round hole) is under 1.5 mm fails as mains_layer_separation naming the item, its layer and the slot; the same item at 1.5 mm or more passes, and a surface-layer item at the same distance is not reported by this test. Out of scope is the width of the slot, which the existing slot rule holds.
+        for corners in ((20, 0, 21, 10), (21, 10, 20, 0), (20, 10, 21, 0), (21, 0, 20, 10)):
+            with self.subTest(corners=corners):
+                tree = board(track(LOW, 19.2, 3, 19.2, 7, "In1.Cu"), edge=outline() + slot(*corners))
+                (finding,) = named(found(tree), "pull-back")
+                self.assertAlmostEqual(finding.measured, 0.8 - 0.125, places=3)
+
+    def test_a_cut_out_with_a_corner_outside_the_outline_is_not_a_slot_and_a_board_with_no_cut_out_has_none(self):
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C3: On a throwaway copy of a proof design, a copper item of any net on an inner layer whose plan-view distance to the wall of a barrier slot (a closed cut-out inside the board outline that is not a round hole) is under 1.5 mm fails as mains_layer_separation naming the item, its layer and the slot; the same item at 1.5 mm or more passes, and a surface-layer item at the same distance is not reported by this test. Out of scope is the width of the slot, which the existing slot rule holds.
+        self.assertEqual(board_geometry.barrier_slots(board(edge=outline() + slot(-2, 10, 1, 20))), [])
+        self.assertEqual(board_geometry.barrier_slots(board()), [])
+
+
+class TheRoundEndOfASlotIsReadWithinTheSag(unittest.TestCase):
+    def stadium(self, radius: float = 5.0) -> str:
+        top, bottom = 15, 25
+        return (f'(gr_arc (start {30 - radius} {top}) (mid 30 {top - radius}) (end {30 + radius} {top}) (stroke (width 0.1) (type default)) (layer "Edge.Cuts"))'
+                f'(gr_line (start {30 + radius} {top}) (end {30 + radius} {bottom}) (stroke (width 0.1) (type default)) (layer "Edge.Cuts"))'
+                f'(gr_arc (start {30 + radius} {bottom}) (mid 30 {bottom + radius}) (end {30 - radius} {bottom}) (stroke (width 0.1) (type default)) (layer "Edge.Cuts"))'
+                f'(gr_line (start {30 - radius} {bottom}) (end {30 - radius} {top}) (stroke (width 0.1) (type default)) (layer "Edge.Cuts"))')
+
+    def test_the_wall_of_a_round_end_is_within_a_few_micrometres_of_its_drawn_arc_at_every_angle(self):
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C3: On a throwaway copy of a proof design, a copper item of any net on an inner layer whose plan-view distance to the wall of a barrier slot (a closed cut-out inside the board outline that is not a round hole) is under 1.5 mm fails as mains_layer_separation naming the item, its layer and the slot; the same item at 1.5 mm or more passes, and a surface-layer item at the same distance is not reported by this test. Out of scope is the width of the slot, which the existing slot rule holds.
+        self.assertLessEqual(board_geometry.OUTLINE_SAG, 0.005)
+        for turn in (0.5, 1.5, 2.5, 3.5, 4.5, 5.5):
+            with self.subTest(turn=turn):
+                angle = math.pi + (turn / 8) * math.pi
+                x, y = 30 + 6.0 * math.cos(angle), 15 + 6.0 * math.sin(angle)
+                tree = board(via(LOW, x, y, ("F.Cu", "B.Cu"), 0.8), edge=outline() + self.stadium())
+                (slot_,) = board_geometry.barrier_slots(tree)
+                self.assertGreater(len(slot_.points), 40)
+                (finding,) = named(found(tree), "pull-back")
+                self.assertAlmostEqual(finding.measured, 1.0 - 0.4, delta=0.01)
+
+
 class TheOneWorstPairIsReportedForEachKindOfCopper(unittest.TestCase):
     def test_a_plane_under_a_run_of_tracks_gives_one_line_with_the_count(self):
         # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C4: On a throwaway copy of a proof design, a low-voltage pour, track, via or pad whose plan-view outline overlaps that of a Mains-class item on another copper layer fails as mains_layer_separation naming the test as overlap, both items and their layers, and an item whose outline does not overlap but lies under the clearance fails as the clearance test and not as an overlap. Out of scope is an overlap of two Mains-class items.
@@ -380,6 +530,21 @@ class AnExceptionExcusesItsPairAndNoOther(unittest.TestCase):
         self.assertIn("accepted exception: mains_to_low_voltage clearance between R1.1 and U1.1", line)
         self.assertIn("measures 1.5 mm", line)
         self.assertNotIn("U1", " ".join(violation.message for violation in left))
+
+    def test_an_entry_that_is_unsigned_or_a_placeholder_or_dated_ahead_excuses_nothing(self):
+        # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C6: On a throwaway copy of a proof design with a synthetic signed record, a cross-layer shortfall between the two pads or nets a between entry of pair mains_to_low_voltage names is accepted and reported when its distance is at least accepted_mm and fails as spacing_exception naming the entry when less, a shortfall between any other pair stays a mains_layer_separation failure, and an entry that no shortfall uses fails. Out of scope is the signing of any entry.
+        for label, changes in (("empty signer", dict(accepted_by="")), ("placeholder signer", dict(accepted_by="TODO")),
+                               ("future date", dict(accepted_on="2027-01-01")), ("no date", dict(accepted_on="not a date"))):
+            with self.subTest(entry=label):
+                judgement, left = judged(self.tree(1.5), exception(**changes))
+                self.assertEqual(judgement.accepted, [])
+                self.assertEqual([violation.rule for violation in judgement.violations], ["spacing_exception"])
+                self.assertIn("is not an acceptance, so it excuses nothing", judgement.violations[0].message)
+                (remaining,) = left
+                self.assertEqual(remaining.rule, board_check.LAYER_RULE)
+                self.assertIn("1 more pair of the same kinds", remaining.message)
+        judgement, left = judged(self.tree(1.5), exception())
+        self.assertEqual(len(judgement.accepted), 1)
 
     def test_a_pair_named_by_nets_is_accepted_the_same(self):
         # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C6: On a throwaway copy of a proof design with a synthetic signed record, a cross-layer shortfall between the two pads or nets a between entry of pair mains_to_low_voltage names is accepted and reported when its distance is at least accepted_mm and fails as spacing_exception naming the entry when less, a shortfall between any other pair stays a mains_layer_separation failure, and an entry that no shortfall uses fails. Out of scope is the signing of any entry.
@@ -460,7 +625,9 @@ class TheHardwareNotesStateTheRule(unittest.TestCase):
         paragraph = next(block for block in self.notes().split("\n\n") if block.startswith("The **mains layer separation**"))
         for word in ("compares copper on one layer only", "`mains_to_low_voltage.clearance_mm` and `.creepage_mm`", "Clearance:", "Creepage:",
                      "Overlap:", "Pull-back:", "1.5 mm", "SLOT_WALL_MM", "not only for a pair a slot lies between", "board's thickness is not added",
-                     "accepted_exceptions", "adds no KiCad run"):
+                     "accepted_exceptions", "adds no KiCad run", "the straight line, which is shorter than the way round the notch",
+                     "whichever corner is written first", "`cannot measure a copper curve`", "to the outer edge of its stroke", "5 micrometres",
+                     "a tree of boxes over their sides", "the pull-back test holds it as inner-layer copper whatever layers it is stored on"):
             self.assertIn(word, paragraph)
         self.assertEqual(board_check.SLOT_WALL_MM, 1.5)
 
