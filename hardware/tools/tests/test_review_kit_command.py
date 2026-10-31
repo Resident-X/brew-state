@@ -26,7 +26,7 @@ sys.path.insert(0, TOOLS)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import review_kit_fixtures as fx  # noqa: E402
-from review_kit import catalogue, command, ensemble, messages, planner, scheduler, store  # noqa: E402
+from review_kit import catalogue, command, decl, ensemble, messages, planner, scheduler, store  # noqa: E402
 from review_kit import executor as ex  # noqa: E402
 from review_kit import session as sess  # noqa: E402
 
@@ -426,6 +426,37 @@ class Refusals(Case):
         text = self.refused("over-budget", caller="small")
         self.assertIn("10 tokens", text)
         self.assertNothingStarted()
+
+    # SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C3: The review kit measures the size of the stream message that holds the shared context, the images base64-encoded as the kit sends them, and refuses the run with a line beginning REFUSED, before any session is started and before anything is spent, when that size is over the agent command line's stream limit of 268,435,456 characters (256 x 1024 x 1024, the figure the agent command line reports as 256M), a named constant of the kit, counted as the command line counts them: the UTF-16 code units of the one JSON line, without its newline. The line names the size, the limit, and the artefact group of the review folder that is largest (the views folder, the placement folder or the documents) with its size, and says what to do: write fewer or smaller views. The check is made where the context budget is checked, so the proof command's forms are held to it too. A context at the limit is not refused. Over the stub with a synthetic review folder and the constant lowered by the test, a context over the limit is refused with that line in text and in JSON and no session is started, a context at the limit runs, and the prediction line is not printed for the refused one. Out of scope: the token budget, which is unchanged.
+    def test_a_shared_context_over_the_stream_limit_is_refused_before_any_session_and_the_prediction_in_text_and_json(self):
+        found = catalogue.admit(decl.parse(json.dumps(fx.declaration_dict()), "caller.json"), self.review)
+        size = messages.stream_size(messages.shared_context(found).message)
+        group, held = messages.largest_group(found)
+        with mock.patch.object(messages, "STREAM_LIMIT", size - 1):
+            text = self.refused("over-stream-limit")
+            for part in (str(size), str(size - 1), group, str(held), "write fewer or smaller views"):
+                self.assertIn(part, text)
+            self.assertNotIn("PREDICTED", text, "the prediction line is not printed for the refused run")
+            self.assertNothingStarted()
+            self.assertFalse(os.path.exists(self.out), "nothing was written")
+            status, out, err = self.run_command(fmt="json")
+            self.assertEqual((status, err), (1, ""))
+            report = json.loads(out)
+            self.assertEqual(report["result"], "REFUSED")
+            self.assertTrue(any(command.CAUSES["over-stream-limit"][0] in line and str(size) in line
+                                for line in report["refusals"]), report["refusals"])
+            self.assertNotIn("PREDICTED", out)
+            self.assertNothingStarted()
+
+    # SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C3: The review kit measures the size of the stream message that holds the shared context, the images base64-encoded as the kit sends them, and refuses the run with a line beginning REFUSED, before any session is started and before anything is spent, when that size is over the agent command line's stream limit of 268,435,456 characters (256 x 1024 x 1024, the figure the agent command line reports as 256M), a named constant of the kit, counted as the command line counts them: the UTF-16 code units of the one JSON line, without its newline. The line names the size, the limit, and the artefact group of the review folder that is largest (the views folder, the placement folder or the documents) with its size, and says what to do: write fewer or smaller views. The check is made where the context budget is checked, so the proof command's forms are held to it too. A context at the limit is not refused. Over the stub with a synthetic review folder and the constant lowered by the test, a context over the limit is refused with that line in text and in JSON and no session is started, a context at the limit runs, and the prediction line is not printed for the refused one. Out of scope: the token budget, which is unchanged.
+    def test_a_shared_context_exactly_at_the_stream_limit_runs(self):
+        found = catalogue.admit(decl.parse(json.dumps(fx.declaration_dict()), "caller.json"), self.review)
+        size = messages.stream_size(messages.shared_context(found).message)
+        with mock.patch.object(messages, "STREAM_LIMIT", size):
+            status, out, err = self.run_command()
+        self.assertEqual((status, err), (0, ""), out)
+        self.assertIn("PREDICTED", out)
+        self.assertTrue(self.calls(), "the sessions were started")
 
     def test_a_rerun_of_a_unit_the_review_lacks_or_of_a_changed_folder_is_refused(self):
         self.assertEqual(self.run_command()[0], 0)

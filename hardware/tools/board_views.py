@@ -877,8 +877,14 @@ def svg_arc(start, end, radii: Tuple[float, float], turned: float, large: bool, 
 
 def path_points(data: str) -> List[Tuple[float, float]]:
     """Every point a vector path passes through or is bounded by, its curves by their control points."""
+    return [point for piece in path_subpaths(data) for point in piece]
+
+
+def path_subpaths(data: str) -> List[List[Tuple[float, float]]]:
+    """The points of a vector path as `path_points` gives them, one list for each subpath, a new one beginning at
+    every moveto."""
     tokens = PATH_TOKEN.findall(data)
-    points: List[Tuple[float, float]] = []
+    subpaths: List[List[Tuple[float, float]]] = [[]]
     at = start = (0.0, 0.0)
     command, index = None, 0
     while index < len(tokens):
@@ -901,22 +907,24 @@ def path_points(data: str) -> List[Tuple[float, float]]:
         ox, oy = at if relative else (0.0, 0.0)
         if upper == "H":
             at = (numbers[0] + ox, at[1])
-            points.append(at)
+            subpaths[-1].append(at)
         elif upper == "V":
             at = (at[0], numbers[0] + oy)
-            points.append(at)
+            subpaths[-1].append(at)
         elif upper == "A":
             end = (numbers[5] + ox, numbers[6] + oy)
-            points += svg_arc(at, end, (numbers[0], numbers[1]), numbers[2], bool(numbers[3]), bool(numbers[4]))
+            subpaths[-1] += svg_arc(at, end, (numbers[0], numbers[1]), numbers[2], bool(numbers[3]), bool(numbers[4]))
             at = end
         else:
             pairs = [(numbers[k] + ox, numbers[k + 1] + oy) for k in range(0, count, 2)]
-            points += pairs
+            if upper == "M" and subpaths[-1]:
+                subpaths.append([])
+            subpaths[-1] += pairs
             at = pairs[-1]
         if upper == "M":
             start = at
             command = "l" if relative else "L"
-    return points
+    return [piece for piece in subpaths if piece]
 
 
 def svg_properties(element) -> Dict[str, str]:
@@ -955,6 +963,14 @@ def stroke_reach(element: str, stroke: Dict[str, str]) -> float:
     return half * corners
 
 
+def element_pieces(element: str, given: Dict[str, str]) -> List[List[Tuple[float, float]]]:
+    """The points bounding one drawn element's outline, in its own coordinates, in the pieces that are bounded
+    apart: each subpath of a path, the whole of any other element."""
+    if element == "path":
+        return path_subpaths(given.get("d", ""))
+    return [element_points(element, given)]
+
+
 def element_points(element: str, given: Dict[str, str]) -> List[Tuple[float, float]]:
     """The points bounding one drawn element's outline, in its own coordinates."""
     def value(name: str) -> float:
@@ -982,7 +998,14 @@ def element_points(element: str, given: Dict[str, str]) -> List[Tuple[float, flo
 
 def drawn_extent(svg_path: str) -> Optional[Tuple[float, float, float, float]]:
     """The bounds, in board coordinates, of everything KiCad drew in a layer's plot, strokes included; None when
-    it drew nothing.
+    it drew nothing. See `drawn_boxes`."""
+    boxes = drawn_boxes(svg_path)
+    return union(boxes) if boxes else None
+
+
+def drawn_boxes(svg_path: str) -> List[Tuple[float, float, float, float]]:
+    """The bounds, in board coordinates, of each element KiCad drew in a layer's plot, strokes included, a path
+    bounded subpath by subpath; none when it drew nothing.
 
     The board coordinates are the plot's own user units, the ones `drawing`
     places its body in. Every transform down the groups holding an element is
@@ -1016,11 +1039,12 @@ def drawn_extent(svg_path: str) -> Optional[Tuple[float, float, float, float]]:
             for child in node:
                 visit(child, here, stroke)
         elif element in ("path", "circle", "ellipse", "rect", "line", "polyline", "polygon", "image"):
-            points = [mapped(here, point) for point in element_points(element, given)]
-            if points:
-                reach = stroke_reach(element, stroke) * stretch(here) if element != "image" else 0.0
-                boxes.append(grown((min(p[0] for p in points), min(p[1] for p in points),
-                                    max(p[0] for p in points), max(p[1] for p in points)), reach))
+            reach = stroke_reach(element, stroke) * stretch(here) if element != "image" else 0.0
+            for piece in element_pieces(element, given):
+                points = [mapped(here, point) for point in piece]
+                if points:
+                    boxes.append(grown((min(p[0] for p in points), min(p[1] for p in points),
+                                        max(p[0] for p in points), max(p[1] for p in points)), reach))
         else:
             raise ValueError(f"it draws a visible <{element}>, whose extent the command cannot bound from its "
                              "attributes")
@@ -1030,7 +1054,7 @@ def drawn_extent(svg_path: str) -> Optional[Tuple[float, float, float, float]]:
             visit(child, IDENTITY, {})
     except (ValueError, KeyError) as error:
         raise Unreadable(f"KiCad's plot {svg_path} cannot be read for what it draws ({error})") from error
-    return union(boxes) if boxes else None
+    return boxes
 
 
 def escape(text: str) -> str:
@@ -1138,8 +1162,37 @@ def tiles(region: Tuple[float, float, float, float], scale: float, caption_for, 
             raise Unreadable(f"the region {region} cannot be cut into tiles that fit at {scale_text(scale)}")
 
 
+def tiles_holding(planned: List[dict], boxes: Sequence[Tuple[float, float, float, float]]) -> List[dict]:
+    """The planned tiles whose region meets at least one of `boxes`, in the order planned; a box that only touches
+    a tile's edge meets it."""
+    return [tile for tile in planned
+            if any(box[0] <= tile["region"][2] and box[2] >= tile["region"][0]
+                   and box[1] <= tile["region"][3] and box[3] >= tile["region"][1] for box in boxes)]
+
+
+def left_out_field(left: int, grid: int) -> str:
+    """The caption field of a net's tile: the tiles of its grid that hold none of the net's copper are not written."""
+    return f"tiles with none of the net's copper are not written: {left} of {grid} tiles left out"
+
+
+def net_tile_line(grid: dict) -> str:
+    """The index line for one net's grid: the tiles written, each with the board region it covers, and how many were
+    left out and why."""
+    total = grid["rows"] * grid["columns"]
+    shape = f"grid {grid['rows']} rows x {grid['columns']} columns"
+    if not grid["tiles_written"]:
+        written = "no tile written"
+    else:
+        written = f"{len(grid['tiles_written'])} of {total} tiles written: " + "; ".join(
+            f"{tile['file']} (row {tile['row']}, column {tile['column']}, "
+            f"{covers((tile['region_mm'][key] for key in ('x0', 'y0', 'x1', 'y1')))})" for tile in grid["tiles_written"])
+    left = (f"{grid['tiles_left_out']} of {total} tiles left out: {grid['reason']}" if grid["tiles_left_out"]
+            else "none left out")
+    return f"NET TILES | {grid['net']} | {shape} | {written} | {left}"
+
+
 def covers(region) -> str:
-    x0, y0, x1, y1 = region
+    x0, y0, x1, y1 = tuple(region)
     return f"board x {mm_text(x0)} to {mm_text(x1)} mm, y {mm_text(y0)} to {mm_text(y1)} mm"
 
 
@@ -1284,6 +1337,8 @@ class Renderer:
         self.fonts = fonts
         self.queued: List = []
         self.images: List[dict] = []
+        #: The grid of each view composed with a tile filter, as the index lists it: the tiles written and left out.
+        self.grids: List[dict] = []
         #: Every layer some view wanted that the board does not carry, in the order the views wanted them.
         self.absent: List[str] = []
 
@@ -1307,7 +1362,7 @@ class Renderer:
         self.images.append(dict(entry, file=name, caption=caption, size_px={"width": width, "height": height}))
 
     def flat(self, wanted: str, layers: Sequence[str], entry: dict, describe: Sequence[str], paint=None,
-             around=None, beneath: bool = False, coloured: bool = True, overlay: str = "") -> None:
+             around=None, beneath: bool = False, coloured: bool = True, overlay: str = "", holding=None) -> None:
         """Queue a two-dimensional view of `layers`, listed in the order they are drawn, the lowest first.
 
         Each layer is drawn by `paint`, by default the layer as KiCad plotted it in
@@ -1316,12 +1371,15 @@ class Renderer:
         crop; every other view shows the whole board's frame. A view `beneath` which
         the whole board is drawn faint shows its copper and edge in faint grey. An
         `overlay`, drawing in board coordinates that KiCad does not plot, is drawn
-        over the layers and beneath the rule areas, and `describe` names it.
+        over the layers and beneath the rule areas, and `describe` names it. A view
+        with `holding`, a function from the tiles planned to those to write, writes
+        only those, and its captions and the index say how many were left out.
         """
         self.queued.append(lambda: self.compose(wanted, list(layers), entry, list(describe), paint, around, beneath,
-                                                coloured, overlay))
+                                                coloured, overlay, holding))
 
-    def compose(self, wanted, layers, entry, describe, paint, around, beneath, coloured, overlay="") -> None:
+    def compose(self, wanted, layers, entry, describe, paint, around, beneath, coloured, overlay="",
+                holding=None) -> None:
         region = self.frame if around is None else grown(around, CROP_MARGIN_MM)
         shown_layers, missing = side_layers(layers, self.plotted)
         under = list(reversed(self.copper)) + ["Edge.Cuts"] if beneath else []
@@ -1342,15 +1400,39 @@ class Renderer:
             entry["beneath"] = f"the whole board's copper and edge in {FAINT[1]}"
         notes = self.notes()
 
-        def caption_for(tile):
+        def caption_for(tile, left=None):
             parts = fields + [scale_text(self.scale), covers(tile["region"])]
             if tile["rows"] * tile["columns"] > 1:
                 parts.append(f"tile row {tile['row']} of {tile['rows']}, column {tile['column']} of {tile['columns']}")
+            if holding is not None:
+                # The grid is planned with the statement at its longest, every tile left out, so which tiles are left
+                # out never changes the grid.
+                grid = tile["rows"] * tile["columns"]
+                parts.append(left_out_field(grid if left is None else left, grid))
             return " | ".join(parts + notes)
 
         planned = tiles(region, self.scale, caption_for, f"the view {wanted}")
         endings = [".png"] if len(planned) == 1 else [f"-r{tile['row']}c{tile['column']}.png" for tile in planned]
-        for tile, name in zip(planned, self.names.claim(wanted, endings)):
+        files = self.names.claim(wanted, endings)
+        written = planned
+        if holding is not None:
+            written = holding(planned)
+            left = len(planned) - len(written)
+            for tile in written:
+                tile["caption"] = caption_for(tile, left)
+                tile["size"] = (tile["content"][0], tile["content"][1] + caption_height(tile["caption"], tile["content"][0]))
+            entry = dict(entry, tiles_left_out=left)
+            self.grids.append({
+                "net": entry.get("net"), "rows": planned[0]["rows"], "columns": planned[0]["columns"],
+                "tiles_written": [{"file": name, "row": tile["row"], "column": tile["column"],
+                                   "region_mm": dict(zip(("x0", "y0", "x1", "y1"), tile["region"]))}
+                                  for tile, name in zip(planned, files) if tile in written],
+                "tiles_left_out": left,
+                "reason": None if not left else
+                          ("no copper on any copper layer" if not written else "tiles holding none of the net's copper")})
+        for tile, name in zip(planned, files):
+            if tile not in written:
+                continue
             across, down = tile["content"]
             x0, y0, x1, y1 = tile["region"]
             self.image(name, *tile["size"],
@@ -1560,7 +1642,9 @@ def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli:
                           {"view": "net", "net": net, "classes": critical[net]},
                           [f"net {net}", f"class {', '.join(critical[net])}"],
                           paint=lambda layer, net=net: drawing(net_drawings[net][layer], colours[layer][0]),
-                          beneath=True)
+                          beneath=True,
+                          holding=lambda planned, net=net: tiles_holding(
+                              planned, [box for path in net_drawings[net].values() for box in drawn_boxes(path)]))
 
         class_colour = dict(zip(classes, class_colours(len(classes))))
         entries = [(name, class_colour[name][1]) for name in classes]
@@ -1620,6 +1704,7 @@ def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli:
             "board": os.path.realpath(board),
             "critical_classes": {name: sorted(membership[name], key=natural) for name in classes},
             **index_fields(scale, figures, fonts, absent, areas),
+            "net_tiles": renderer.grids,
             "not_in_3d": unseen,
             **({"three_dimensional_export": export_status[0]} if export_status else {}),
         }
@@ -1635,6 +1720,10 @@ def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli:
     if export_status:
         print(export_line(export_status[0]), file=stream)
     report_resolution(scale, figures, stream)
+    for grid in renderer.grids:
+        if not grid["tiles_written"]:
+            print(f"NET TILES | {grid['net']} | no copper on any copper layer, so no tile of its "
+                  f"{grid['rows'] * grid['columns']}-tile grid is written; the index names it", file=stream)
     print(f"RESULT | WRITTEN | {len(renderer.images)} images, their index and the per-net fact table | {clean(out)}",
           file=stream)
     return 0
@@ -1754,7 +1843,8 @@ def write_outputs(folder: str, files: Dict[str, str], header: dict, images: List
     """The index and the fact table, each as text and JSON, into `folder` under the names `files` gives them."""
     write_index(folder, files, header, images, True,
                 after_limit=[f"CLASS | {name} | {', '.join(nets)}" for name, nets in header["critical_classes"].items()],
-                before_images=[f"NOT IN 3D | {part['reference']} | {part['detail']}" for part in header["not_in_3d"]]
+                before_images=[net_tile_line(grid) for grid in header.get("net_tiles", [])]
+                + [f"NOT IN 3D | {part['reference']} | {part['detail']}" for part in header["not_in_3d"]]
                 + ([export_line(header["three_dimensional_export"])] if "three_dimensional_export" in header else []))
     with open(os.path.join(folder, files["facts_text"]), "w", encoding="utf-8") as handle:
         handle.write("".join(fact_line(fact) + "\n" for fact in facts))

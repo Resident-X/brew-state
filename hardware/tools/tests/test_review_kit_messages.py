@@ -154,5 +154,59 @@ class SharedContextTests(unittest.TestCase):
         self.assertEqual(names, ["facts.txt", "guide.md", "view_a.png", "view_b.png"])
 
 
+class StreamLimitTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.review = fx.review_folder(os.path.join(self.tmp.name, "review"))
+
+    def test_the_limit_is_the_agent_command_lines_in_a_named_constant(self):
+        # SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C3: The review kit measures the size of the stream message that holds the shared context, the images base64-encoded as the kit sends them, and refuses the run with a line beginning REFUSED, before any session is started and before anything is spent, when that size is over the agent command line's stream limit of 268,435,456 characters (256 x 1024 x 1024, the figure the agent command line reports as 256M), a named constant of the kit, counted as the command line counts them: the UTF-16 code units of the one JSON line, without its newline. The line names the size, the limit, and the artefact group of the review folder that is largest (the views folder, the placement folder or the documents) with its size, and says what to do: write fewer or smaller views. The check is made where the context budget is checked, so the proof command's forms are held to it too. A context at the limit is not refused. Over the stub with a synthetic review folder and the constant lowered by the test, a context over the limit is refused with that line in text and in JSON and no session is started, a context at the limit runs, and the prediction line is not printed for the refused one. Out of scope: the token budget, which is unchanged.
+        self.assertEqual(messages.STREAM_LIMIT, 256 * 1024 * 1024)
+        self.assertEqual(messages.STREAM_LIMIT, 268435456)
+
+    def test_the_size_counts_utf_16_code_units_so_a_character_outside_the_basic_plane_counts_twice(self):
+        # SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C3: The review kit measures the size of the stream message that holds the shared context, the images base64-encoded as the kit sends them, and refuses the run with a line beginning REFUSED, before any session is started and before anything is spent, when that size is over the agent command line's stream limit of 268,435,456 characters (256 x 1024 x 1024, the figure the agent command line reports as 256M), a named constant of the kit, counted as the command line counts them: the UTF-16 code units of the one JSON line, without its newline. The line names the size, the limit, and the artefact group of the review folder that is largest (the views folder, the placement folder or the documents) with its size, and says what to do: write fewer or smaller views. The check is made where the context budget is checked, so the proof command's forms are held to it too. A context at the limit is not refused. Over the stub with a synthetic review folder and the constant lowered by the test, a context over the limit is refused with that line in text and in JSON and no session is started, a context at the limit runs, and the prediction line is not printed for the refused one. Out of scope: the token budget, which is unchanged.
+        self.assertEqual(messages.stream_size("abc"), 3)
+        self.assertEqual(messages.stream_size("é±"), 2)
+        self.assertEqual(messages.stream_size("\U0001f600"), 2, "one character, two code units")
+        self.assertEqual(messages.stream_size(""), 0)
+        fx.write(self.review, "docs/guide.md", "emoji \U0001f600 and more\n")
+        _, shared = build(self.review)
+        self.assertEqual(messages.stream_size(shared.message), len(shared.message) + 1,
+                         "the message is written unescaped, so the character is one for len and two for the line")
+        self.assertNotIn("\n", shared.message, "the line is counted without a newline, and holds none")
+
+    def by_path(self):
+        """The base declaration with each artefact named by its path in the review folder, as the callers name them."""
+        raw = fx.declaration_dict()
+        names = {name: entry["source"] for name, entry in raw["artefacts"].items()}
+        raw["artefacts"] = {entry["source"]: entry for entry in raw["artefacts"].values()}
+        raw["artefacts"]["round.json"] = {"kind": "text", "source": "round.json"}
+        fx.write(self.review, "round.json", "{}")
+        for unit in raw["units"].values():
+            unit["needs"] = [names[name] for name in unit["needs"]] + ["round.json"]
+        return catalogue.admit(decl.parse(json.dumps(raw), "caller.json"), self.review)
+
+    def test_the_largest_group_is_the_folder_most_of_the_message_is_in_with_its_size_as_the_message_holds_it(self):
+        # SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C3: The review kit measures the size of the stream message that holds the shared context, the images base64-encoded as the kit sends them, and refuses the run with a line beginning REFUSED, before any session is started and before anything is spent, when that size is over the agent command line's stream limit of 268,435,456 characters (256 x 1024 x 1024, the figure the agent command line reports as 256M), a named constant of the kit, counted as the command line counts them: the UTF-16 code units of the one JSON line, without its newline. The line names the size, the limit, and the artefact group of the review folder that is largest (the views folder, the placement folder or the documents) with its size, and says what to do: write fewer or smaller views. The check is made where the context budget is checked, so the proof command's forms are held to it too. A context at the limit is not refused. Over the stub with a synthetic review folder and the constant lowered by the test, a context over the limit is refused with that line in text and in JSON and no session is started, a context at the limit runs, and the prediction line is not printed for the refused one. Out of scope: the token budget, which is unchanged.
+        fx.write(self.review, "docs/guide.md", "short\n")
+        found = self.by_path()
+        group, size = messages.largest_group(found)
+        views = sum(4 * ((len(a.data) + 2) // 3) for a in found.artefacts if a.name.startswith("views/"))
+        documents = sum(len(a.data) for a in found.artefacts if a.name == "round.json" or a.name.startswith("docs/"))
+        extracts = sum(len(a.data) for a in found.artefacts if a.name.startswith("extracts/"))
+        self.assertEqual(views, sum(len(base64.b64encode(a.data)) for a in found.artefacts if a.name.startswith("views/")))
+        self.assertGreater(views, max(documents, extracts), "the fixture's images are its largest group")
+        self.assertEqual((group, size), ("views", views))
+        fx.write(self.review, "docs/guide.md", "G" * (views + 1))
+        again = self.by_path()
+        self.assertEqual(messages.largest_group(again), ("docs", len(again.get("docs/guide.md").data)))
+        self.assertEqual(messages.artefact_group("views/net-GND-r1c1.png"), "views")
+        self.assertEqual(messages.artefact_group("placement/index.txt"), "placement")
+        self.assertEqual(messages.artefact_group("round.json"), "documents")
+        self.assertEqual(messages.largest_group(catalogue.Catalogue(())), ("none", 0))
+
+
 if __name__ == "__main__":
     unittest.main()

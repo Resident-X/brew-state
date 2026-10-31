@@ -427,3 +427,105 @@ class Transforms(unittest.TestCase):
             with self.subTest(body=body):
                 with self.assertRaises(board_views.Unreadable):
                     self.extent(body)
+
+
+class NetTilePieces(unittest.TestCase):
+    """SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C1: Over a synthetic board of several critical nets whose grid is tiled, the views command writes, for each critical net, exactly the tiles of that net's whole-board grid whose board region meets the bounds of at least one element the board tool plotted of the net's filtered copy on any copper layer, and no other tile. Each track or arc is bounded with its width; each via, pad, copper shape on the net and each outline of a zone's fill is bounded separately, edges included. A tile whose only copper of the net is a pad, a via, the end of a track or a corner of a pour's fill is written. The grid is the one planned with the caption at its longest, so which tiles are left out never changes the grid. A written tile keeps the file name, board region, content pixel size, scale and faint whole-board background it has when every tile is written. A net with no plotted copper writes no tile. Tests fail when a written tile meets no element of its net, when a tile meeting one is not written, and when a written tile's name or region differs from the full grid's. A net that spans the board is written in every tile it touches. Out of scope: the layer, assembly, class-map, crop and three-dimensional views."""
+
+    def boxes(self, body):
+        with tempfile.TemporaryDirectory(prefix="board-views-boxes-") as folder:
+            path = os.path.join(folder, "layer.svg")
+            with open(path, "w", encoding="utf-8") as handle:
+                handle.write(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 297 210">{body}</svg>')
+            return board_views.drawn_boxes(path)
+
+    def assertBoxes(self, found, expected):
+        self.assertEqual(len(found), len(expected), found)
+        for box, want in zip(found, expected):
+            for got, value in zip(box, want):
+                self.assertAlmostEqual(got, value, places=6, msg=f"{found}")
+
+    def test_each_plotted_element_is_bounded_apart_with_its_stroke_and_each_subpath_of_a_path_is_its_own_box(self):
+        """SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C1: Over a synthetic board of several critical nets whose grid is tiled, the views command writes, for each critical net, exactly the tiles of that net's whole-board grid whose board region meets the bounds of at least one element the board tool plotted of the net's filtered copy on any copper layer, and no other tile. Each track or arc is bounded with its width; each via, pad, copper shape on the net and each outline of a zone's fill is bounded separately, edges included. A tile whose only copper of the net is a pad, a via, the end of a track or a corner of a pour's fill is written. The grid is the one planned with the caption at its longest, so which tiles are left out never changes the grid. A written tile keeps the file name, board region, content pixel size, scale and faint whole-board background it has when every tile is written. A net with no plotted copper writes no tile. Tests fail when a written tile meets no element of its net, when a tile meeting one is not written, and when a written tile's name or region differs from the full grid's. A net that spans the board is written in every tile it touches. Out of scope: the layer, assembly, class-map, crop and three-dimensional views."""
+        found = self.boxes('<g style="stroke:#000;stroke-width:0.2;stroke-linejoin:round" transform="translate(10 20)">'
+                           '<path d="M 0 0 L 4 0" /><circle cx="1" cy="2" r="0.5" />'
+                           '<path d="M 0 5 L 1 5 L 1 6 Z M 8 8 L 9 8 L 9 9 Z m 5 0 l 1 0 l 0 1 z" /></g>')
+        self.assertBoxes(found, [(9.9, 19.9, 14.1, 20.1), (10.4, 21.4, 11.6, 22.6), (9.9, 24.9, 11.1, 26.1),
+                                 (17.9, 27.9, 19.1, 29.1), (22.9, 27.9, 24.1, 29.1)])
+        total = board_views.union(found)
+        with tempfile.TemporaryDirectory(prefix="board-views-boxes-") as folder:
+            path = os.path.join(folder, "layer.svg")
+            with open(path, "w", encoding="utf-8") as handle:
+                handle.write('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 297 210"><path d="M 0 0 L 1 1 M 5 5 L 6 6" /></svg>')
+            self.assertEqual(board_views.drawn_extent(path), (0, 0, 6, 6), "the extent is the union of the boxes")
+            self.assertEqual(board_views.drawn_boxes(path), [(0, 0, 1, 1), (5, 5, 6, 6)])
+        self.assertEqual(board_views.path_subpaths("M 0 0 L 1 1 M 5 5 L 6 6 Z"), [[(0, 0), (1, 1)], [(5, 5), (6, 6)]])
+        self.assertEqual(board_views.path_points("M 0 0 L 1 1 M 5 5 L 6 6 Z"), [(0, 0), (1, 1), (5, 5), (6, 6)])
+        self.assertEqual(total, board_views.union(found))
+
+    def test_a_plot_that_drew_nothing_has_no_boxes(self):
+        """SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C1: Over a synthetic board of several critical nets whose grid is tiled, the views command writes, for each critical net, exactly the tiles of that net's whole-board grid whose board region meets the bounds of at least one element the board tool plotted of the net's filtered copy on any copper layer, and no other tile. Each track or arc is bounded with its width; each via, pad, copper shape on the net and each outline of a zone's fill is bounded separately, edges included. A tile whose only copper of the net is a pad, a via, the end of a track or a corner of a pour's fill is written. The grid is the one planned with the caption at its longest, so which tiles are left out never changes the grid. A written tile keeps the file name, board region, content pixel size, scale and faint whole-board background it has when every tile is written. A net with no plotted copper writes no tile. Tests fail when a written tile meets no element of its net, when a tile meeting one is not written, and when a written tile's name or region differs from the full grid's. A net that spans the board is written in every tile it touches. Out of scope: the layer, assembly, class-map, crop and three-dimensional views."""
+        self.assertEqual(self.boxes(""), [])
+        self.assertEqual(self.boxes('<g opacity="0"><path d="M 0 0 L 9 9" /></g>'), [])
+
+    def test_a_tile_is_chosen_when_its_region_meets_a_box_edges_included_and_in_the_order_planned(self):
+        """SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C1: Over a synthetic board of several critical nets whose grid is tiled, the views command writes, for each critical net, exactly the tiles of that net's whole-board grid whose board region meets the bounds of at least one element the board tool plotted of the net's filtered copy on any copper layer, and no other tile. Each track or arc is bounded with its width; each via, pad, copper shape on the net and each outline of a zone's fill is bounded separately, edges included. A tile whose only copper of the net is a pad, a via, the end of a track or a corner of a pour's fill is written. The grid is the one planned with the caption at its longest, so which tiles are left out never changes the grid. A written tile keeps the file name, board region, content pixel size, scale and faint whole-board background it has when every tile is written. A net with no plotted copper writes no tile. Tests fail when a written tile meets no element of its net, when a tile meeting one is not written, and when a written tile's name or region differs from the full grid's. A net that spans the board is written in every tile it touches. Out of scope: the layer, assembly, class-map, crop and three-dimensional views."""
+        planned = board_views.tiles((0, 0, 62, 42), SCALE, lambda tile: "c")
+        self.assertEqual([(t["row"], t["column"]) for t in planned], [(1, 1), (1, 2), (2, 1), (2, 2)])
+        middle_x, middle_y = planned[0]["region"][2], planned[0]["region"][3]
+
+        def chosen(*boxes):
+            return [(t["row"], t["column"]) for t in board_views.tiles_holding(planned, boxes)]
+
+        self.assertEqual(chosen(), [], "a net with no plotted copper holds no tile")
+        # A lone pad, or the end of one track, well inside a tile.
+        self.assertEqual(chosen((50, 30, 51, 31)), [(2, 2)])
+        self.assertEqual(chosen((5, 5, 5.5, 5.5), (50, 30, 51, 31)), [(1, 1), (2, 2)])
+        # A box that only touches the boundary meets both tiles either side, and one a hair short of it only one.
+        self.assertEqual(chosen((middle_x, 5, middle_x + 1, 6)), [(1, 1), (1, 2)])
+        self.assertEqual(chosen((middle_x - 1, 5, middle_x, 6)), [(1, 1), (1, 2)])
+        self.assertEqual(chosen((middle_x + 1e-6, 5, middle_x + 1, 6)), [(1, 2)])
+        self.assertEqual(chosen((middle_x - 1, 5, middle_x - 1e-6, 6)), [(1, 1)])
+        self.assertEqual(chosen((5, middle_y, 6, middle_y)), [(1, 1), (2, 1)])
+        self.assertEqual(chosen((middle_x, middle_y, middle_x, middle_y)), [(1, 1), (1, 2), (2, 1), (2, 2)],
+                         "a point on the corner every tile shares")
+        # A track across the board's middle, whose own corners lie in no tile it crosses, is in every tile it crosses.
+        self.assertEqual(chosen((1, 20, 60, 22)), [(1, 1), (1, 2), (2, 1), (2, 2)])
+        self.assertEqual(chosen((-50, -50, -40, -40), (100, 100, 110, 110)), [])
+
+    def test_a_single_tile_grid_holds_copper_only_when_a_box_meets_it(self):
+        """SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C1: Over a synthetic board of several critical nets whose grid is tiled, the views command writes, for each critical net, exactly the tiles of that net's whole-board grid whose board region meets the bounds of at least one element the board tool plotted of the net's filtered copy on any copper layer, and no other tile. Each track or arc is bounded with its width; each via, pad, copper shape on the net and each outline of a zone's fill is bounded separately, edges included. A tile whose only copper of the net is a pad, a via, the end of a track or a corner of a pour's fill is written. The grid is the one planned with the caption at its longest, so which tiles are left out never changes the grid. A written tile keeps the file name, board region, content pixel size, scale and faint whole-board background it has when every tile is written. A net with no plotted copper writes no tile. Tests fail when a written tile meets no element of its net, when a tile meeting one is not written, and when a written tile's name or region differs from the full grid's. A net that spans the board is written in every tile it touches. Out of scope: the layer, assembly, class-map, crop and three-dimensional views."""
+        planned = board_views.tiles((0, 0, 10, 10), SCALE, lambda tile: "c")
+        self.assertEqual(len(planned), 1)
+        self.assertEqual(board_views.tiles_holding(planned, [(2, 2, 3, 3)]), planned)
+        self.assertEqual(board_views.tiles_holding(planned, []), [])
+        self.assertEqual(board_views.tiles_holding(planned, [(50, 50, 51, 51)]), [])
+
+
+class NetTileLines(unittest.TestCase):
+    """SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C2: For each critical net the index, in text and in JSON, lists the net, the rows and columns of its grid, the tiles written by row and column with the board region each covers, and the number of tiles left out because none of the net's copper is in them; each written tile's caption says that tiles with none of the net's copper are not written and gives the count, and the command's report states the number of images written. A net that wrote every tile of its grid states none left out. Over the synthetic board the text and JSON hold the same facts, a net with copper in one tile of a many-tile grid states the rest as left out, and the counts agree with the files in the output folder. A net with no copper on any copper layer is listed with no tile written, every tile left out and that reason, in the index and in the command's report. Out of scope: the image files themselves, which the first criterion covers."""
+
+    GRID = {"net": "GND", "rows": 2, "columns": 3,
+            "tiles_written": [{"file": "net-GND-r1c2.png", "row": 1, "column": 2,
+                               "region_mm": {"x0": 10, "y0": 0, "x1": 20, "y1": 15}}],
+            "tiles_left_out": 5, "reason": "tiles holding none of the net's copper"}
+
+    def test_the_index_line_names_the_grid_each_tile_written_with_its_region_and_the_count_left_out(self):
+        """SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C2: For each critical net the index, in text and in JSON, lists the net, the rows and columns of its grid, the tiles written by row and column with the board region each covers, and the number of tiles left out because none of the net's copper is in them; each written tile's caption says that tiles with none of the net's copper are not written and gives the count, and the command's report states the number of images written. A net that wrote every tile of its grid states none left out. Over the synthetic board the text and JSON hold the same facts, a net with copper in one tile of a many-tile grid states the rest as left out, and the counts agree with the files in the output folder. A net with no copper on any copper layer is listed with no tile written, every tile left out and that reason, in the index and in the command's report. Out of scope: the image files themselves, which the first criterion covers."""
+        self.assertEqual(board_views.net_tile_line(self.GRID),
+                         "NET TILES | GND | grid 2 rows x 3 columns | 1 of 6 tiles written: net-GND-r1c2.png (row 1, "
+                         "column 2, board x 10 to 20 mm, y 0 to 15 mm) | 5 of 6 tiles left out: tiles holding none of "
+                         "the net's copper")
+        every = dict(self.GRID, rows=1, columns=1, tiles_left_out=0, reason=None)
+        self.assertIn("| 1 of 1 tiles written: net-GND-r1c2.png", board_views.net_tile_line(every))
+        self.assertTrue(board_views.net_tile_line(every).endswith("| none left out"))
+        none = dict(self.GRID, tiles_written=[], tiles_left_out=6, reason="no copper on any copper layer")
+        self.assertEqual(board_views.net_tile_line(none),
+                         "NET TILES | GND | grid 2 rows x 3 columns | no tile written | 6 of 6 tiles left out: no copper "
+                         "on any copper layer")
+
+    def test_the_caption_field_states_that_tiles_without_the_nets_copper_are_not_written_and_the_count(self):
+        """SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C2: For each critical net the index, in text and in JSON, lists the net, the rows and columns of its grid, the tiles written by row and column with the board region each covers, and the number of tiles left out because none of the net's copper is in them; each written tile's caption says that tiles with none of the net's copper are not written and gives the count, and the command's report states the number of images written. A net that wrote every tile of its grid states none left out. Over the synthetic board the text and JSON hold the same facts, a net with copper in one tile of a many-tile grid states the rest as left out, and the counts agree with the files in the output folder. A net with no copper on any copper layer is listed with no tile written, every tile left out and that reason, in the index and in the command's report. Out of scope: the image files themselves, which the first criterion covers."""
+        self.assertEqual(board_views.left_out_field(3, 4),
+                         "tiles with none of the net's copper are not written: 3 of 4 tiles left out")
+        self.assertIn("0 of 4 tiles left out", board_views.left_out_field(0, 4))

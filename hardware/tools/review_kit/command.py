@@ -69,6 +69,7 @@ CAUSES: Dict[str, Tuple[str, str]] = {
     "replica-policy": (POLICY_ATTRIBUTE, "fix the caller's replica_policy"),
     "artefact-refused": ("refused by the rule", "change the declaration's artefact or the review folder"),
     "over-budget": ("over the review's context budget", "take artefacts out of the units' `needs`, or raise the budget's context_tokens"),
+    "over-stream-limit": ("over the agent command line's stream limit", "write fewer or smaller views"),
     "output-has-record": ("already holds a record", "use a new output folder, or name the units to run again"),
     "no-record": ("so there is no run to run units of again", "start a fresh run"),
     "record-unreadable": ("cannot be read", "start a fresh run in a new output folder"),
@@ -435,6 +436,10 @@ class Run:
         budget = declaration.budget.context_tokens
         if budget is not None and self.shared.tokens > budget:
             raise Refusal([str(planner.OverBudget(self.shared.tokens, budget))])
+        try:
+            planner.check_stream(self.catalogue, self.shared)
+        except planner.OverStreamLimit as error:
+            raise Refusal([str(error)])
         self.spec = messages.make_spec(declaration, self.prepared.tools, self.review, self.args.model)
         self.names = list(dict.fromkeys(self.args.rerun))
         self.check_output_folder()
@@ -465,7 +470,7 @@ class Run:
                                           cli_version=self.version, tool_commit=tool_commit(self.repo), replicas=self.counts,
                                           variants=self.policy.ids, contexts=found if len(found) > 1 else (),
                                           prompt_for=ensemble.prompt_for(declaration, self.policy, self.prepared.unit_text))
-        except (planner.OverBudget, planner.BoundBelowOne, ValueError) as error:
+        except (planner.OverBudget, planner.OverStreamLimit, planner.BoundBelowOne, ValueError) as error:
             raise Refusal([str(error)])
         self.report["agent"] = {"program": program, "version": self.version}
         self.report["notes"] += [cm.unpriced_text(model) for model in

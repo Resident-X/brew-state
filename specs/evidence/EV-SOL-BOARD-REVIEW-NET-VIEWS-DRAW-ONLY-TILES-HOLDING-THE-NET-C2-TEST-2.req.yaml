@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET-C2-TEST-2
+type: evidence
+title: test evidence for SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-31T19:09:03.754152Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_views_rendering.py::NetTiles.test_a_net_with_no_copper_is_listed_with_no_tile_every_tile_left_out_and_that_reason_in_the_index_and_the_report
+  artifact_version: b60a1bb088f0e764c185f87c7ddeb260eff8af34
+attested_by: crun-1c1f8181771751ae
+links:
+  - target: SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C2
+    type: satisfies
