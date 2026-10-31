@@ -39,3 +39,7 @@ links:
     type: depends-on
   - target: SOL-PRE-ORDER-CHECK-JUDGES-SIGNED-SPACING-EXCEPTIONS
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 blind brief reviewer
+  fingerprint: 04fe7c883bc1150ae819ac8187dc5a79b0e7c8f7db532892646acdddbf2f13cb
+  gating_profile: ""
