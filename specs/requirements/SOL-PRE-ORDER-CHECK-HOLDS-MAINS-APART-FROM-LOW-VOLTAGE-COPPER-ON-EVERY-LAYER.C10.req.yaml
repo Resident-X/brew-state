@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C10
+type: criterion
+title: The hardware notes state the rule, its figures and that KiCad compares copper on one layer only
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  hardware/README.md carries a row for the mains_layer_separation rule naming its four tests and the record figures each reads, and states that KiCad's design rule check compares copper on the same layer only, which is why the rule exists. Out of scope is any other rule's row.
+links:
+  - target: SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER
+    type: criterion-of

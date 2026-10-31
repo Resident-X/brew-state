@@ -1,0 +1,16 @@
+id: EV-SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED-C8-TEST
+type: evidence
+title: test evidence for SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C8
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-31T04:52:44.81001Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_separation_basis_record.py::NetPairAndSamePartDrafts.test_every_drafted_entry_is_unsigned_the_record_stays_unsigned_and_the_earlier_entries_are_unchanged
+  artifact_version: d1144d2a03aaaca612dfca1d07d9554e1bd4f59c
+attested_by: crun-fab8c204d08aea48
+links:
+  - target: SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C8
+    type: satisfies

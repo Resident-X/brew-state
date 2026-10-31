@@ -1,0 +1,16 @@
+id: EV-SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD-C8-TEST
+type: evidence
+title: test evidence for SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C8
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-31T04:52:27.70813Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_separation_basis_record.py::PollutionDegreeTwoRecord.test_the_band_rule_is_stated_and_gives_the_listed_figures_on_the_committed_rows
+  artifact_version: d1144d2a03aaaca612dfca1d07d9554e1bd4f59c
+attested_by: crun-aeb7db10739b148b
+links:
+  - target: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C8
+    type: satisfies

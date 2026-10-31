@@ -1,0 +1,16 @@
+id: EV-SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD-C13-INSPECTION
+type: evidence
+title: inspection evidence for SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C13
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-31T04:52:28.478757Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_separation_basis_record.py::PollutionDegreeTwoRecord.test_the_constraints_record_the_readme_and_the_method_restate_pollution_degree_2
+  artifact_version: d1144d2a03aaaca612dfca1d07d9554e1bd4f59c
+attested_by: crun-aeb7db10739b148b
+links:
+  - target: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C13
+    type: satisfies

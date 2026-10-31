@@ -1,0 +1,13 @@
+id: DEL-HW-BRING-UP.C20
+type: criterion
+title: The touch current of each unearthed touchable low-voltage part is compared with the adopted 0.25 mA limit and recorded
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  The touch current of the built machine from each unearthed touchable low-voltage part (the USB shell, the panel and the controls) is measured at the top of the declared supply span, or, where no instrument for it is available, is recomputed from the datasheet maxima of the parts of the built board, and is compared with 0.25 mA, a figure not yet verified against the standard (DEC-TOUCH-CURRENT-LIMIT-OF-UNEARTHED-LOW-VOLTAGE-PARTS-IS-0-25-MA-UNVERIFIED). Each reading or computation, its method and the result are recorded; a value above 0.25 mA fails. Verifying the 0.25 mA figure and correcting the design are out of scope.
+links:
+  - target: DEL-HW-BRING-UP
+    type: criterion-of
