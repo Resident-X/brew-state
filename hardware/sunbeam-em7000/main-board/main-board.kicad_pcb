@@ -93101,11 +93101,11 @@
 	(footprint "main-board:TestPoint_Pad_D1.0mm_Tight"
 		(layer "B.Cu")
 		(uuid "49c7073f-d186-41bf-8865-c396fcbe4c29")
-		(at 61.0013 104 180)
+		(at 71.5 113.75 180)
 		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
 		(tags "test point SMD pad")
 		(property "Reference" "TP202"
-			(at 0.05 -1.45 0)
+			(at 0.05 -1.45)
 			(unlocked yes)
 			(layer "B.SilkS")
 			(uuid "3d109efb-ec7f-4c71-8644-6667836139f7")
@@ -93118,7 +93118,7 @@
 			)
 		)
 		(property "Value" "TP_POL_GATE_B"
-			(at 0 -1.75 0)
+			(at 0 -1.75)
 			(unlocked yes)
 			(layer "B.SilkS")
 			(hide yes)
@@ -93132,7 +93132,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 0)
+			(at 0 0)
 			(layer "B.Fab")
 			(hide yes)
 			(uuid "4497e3b1-96f1-437b-a50a-08869851276b")
@@ -93144,7 +93144,7 @@
 			)
 		)
 		(property "Description" "test point"
-			(at 0 0 0)
+			(at 0 0)
 			(layer "B.Fab")
 			(hide yes)
 			(uuid "d835ec81-15e5-4d84-ad0d-c1837a3e9bb4")
