@@ -1,8 +1,8 @@
 id: SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C1
 type: criterion
-title: The record holds the nine net-pair entries with the lists, working voltages and accepted distances this leaf sets
+title: The record holds the eleven net-pair entries with the lists, working voltages and accepted distances this leaf sets
 status: active
-version: 3
+version: 4
 measurement_type: binary
 verification: test
 text: |-
