@@ -7046,7 +7046,7 @@ sheets:
     lib_id: Triac_Thyristor:BT136-600
     value: BTA204S-600B
     rating: 600 V 4 A snubberless 3Q Hi-Com triac, WeEn Rev.02
-    footprint: Package_TO_SOT_SMD:TO-252-3_TabPin2
+    footprint: main-board:TO-252-2_TabPin2_Triac
     mpn: BTA204S-600B,118
     maker: WeEn Semiconductors
     lcsc: C256462
@@ -7187,7 +7187,7 @@ sheets:
     lib_id: Triac_Thyristor:BT136-600
     value: BTA204S-600B
     rating: 600 V 4 A snubberless 3Q Hi-Com triac, WeEn Rev.02
-    footprint: Package_TO_SOT_SMD:TO-252-3_TabPin2
+    footprint: main-board:TO-252-2_TabPin2_Triac
     mpn: BTA204S-600B,118
     maker: WeEn Semiconductors
     lcsc: C256462

@@ -2388,7 +2388,7 @@ positions:
   # T701: maker WeEn Semiconductors; MPN BTA204S-600B,118; catalogue class extended
   - reference: T701
     value: BTA204S-600B
-    package: TO-252-3_TabPin2
+    package: TO-252-2_TabPin2_Triac
     rating: 600 V 4 A snubberless 3Q Hi-Com triac, WeEn Rev.02
     lcsc: C256462
     class: semiconductor
@@ -2458,7 +2458,7 @@ positions:
   # T711: maker WeEn Semiconductors; MPN BTA204S-600B,118; catalogue class extended
   - reference: T711
     value: BTA204S-600B
-    package: TO-252-3_TabPin2
+    package: TO-252-2_TabPin2_Triac
     rating: 600 V 4 A snubberless 3Q Hi-Com triac, WeEn Rev.02
     lcsc: C256462
     class: semiconductor
