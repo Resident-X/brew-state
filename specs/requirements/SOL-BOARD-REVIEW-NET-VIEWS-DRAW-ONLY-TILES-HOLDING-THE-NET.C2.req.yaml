@@ -1,0 +1,12 @@
+id: SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C2
+type: criterion
+title: The index and each caption state which tiles of a net's grid were written and how many were left out
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  For each critical net the index, in text and in JSON, lists the net, the rows and columns of its grid, the tiles written by row and column with the board region each covers, and the number of tiles left out because none of the net's copper is in them; each written tile's caption says that tiles with none of the net's copper are not written and gives the count, and the command's report states the number of images written. A net that wrote every tile of its grid states none left out. Over the synthetic board the text and JSON hold the same facts, a net with copper in one tile of a many-tile grid states the rest as left out, and the counts agree with the files in the output folder. A net with no copper on any copper layer is listed with no tile written, every tile left out and that reason, in the index and in the command's report. Out of scope: the image files themselves, which the first criterion covers.
+links:
+  - target: SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET
+    type: criterion-of

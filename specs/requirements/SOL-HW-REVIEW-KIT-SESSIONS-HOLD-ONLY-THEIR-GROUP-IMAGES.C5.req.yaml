@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C5
+type: criterion
+title: The critical-routing, layout, production-files and schematic callers declare the budget and each unit's needs
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Over a synthetic review folder for each of the four callers, the caller's declaration states a model-context budget, each unit declares only the artefacts it needs, and the kit's plan for it gives every group a context within the budget, none holding an artefact that none of its units declares. The critical-routing caller's units declare the views of the nets and areas they judge and not the whole folder's views. Out of scope: the content of any caller's prompts and the other checks of a caller.
+links:
+  - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES
+    type: criterion-of

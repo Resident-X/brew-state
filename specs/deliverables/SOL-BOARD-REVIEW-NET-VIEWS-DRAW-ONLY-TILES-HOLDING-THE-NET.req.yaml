@@ -1,0 +1,29 @@
+id: SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET
+type: deliverable
+category: solution
+title: A critical net's view is written only for the tiles that hold its copper, and an oversize review context is refused before it is sent
+status: active
+version: 1
+text: |
+  Why this exists. The views command (SOL-BOARD-REVIEW-RENDER-VIEWS) draws each critical net over a faint image of the whole board and cuts that image into tiles when it is larger than the image size limit, so a net of one short track on the main controller board's mains class is written as the full grid of 30 tiles, and every tile but one or two holds nothing of the net. On that board the 44 mains nets alone wrote 1320 net images of about 268 MB, against 328 layer images of about 26 MB and 92 other images of about 39 MB. The critical-routing check builds one shared context holding every view image, base64-encoded in one stream message, and the agent command line refuses a stream message over 268,435,456 characters (256 x 1024 x 1024, which it reports as 256M); the run was refused (`stream-json input carried over 256M characters`), no model was called, and the method's critical-routing pass could not be run on a board of full size. The review kit's context budget counts tokens, is optional, and the critical-routing declaration sets none, so nothing in the kit named the size that failed or refused it early. Nothing in the requirement asks for a tile that shows none of the net, and a reviewer reads the net's route from the tiles that hold it.
+
+  It is maintenance rather than new delivery because the views command and the review kit are delivered: the board's layout review is how every board is judged against layout practice before it is ordered, and this item restores that a board of any size can be reviewed on the views of its critical nets, without changing what a view shows of a net's copper.
+
+  What it does. A net's view is written as the tiles of the whole-board grid that hold some of the net's copper (a track or arc with its width, a via, a pad, or a zone's fill on a copper layer, taken from what KiCad plotted of the filtered copy) and no other; a tile with none is not written. Every written tile keeps the name, size, scale, faint whole-board background and caption it has today, so a copper item is drawn at the resolution it is drawn at now and the grid's tile numbers do not change; a net whose grid is a single tile is written as it is today. The index states, for each net, which tiles of its grid it wrote and how many it left out, in text and in JSON, and each such caption says so, so a tile that is absent reads as a tile with none of the net, never as a tile lost. The review kit measures the base64 size of the shared message it builds and refuses before any session starts when it is over the agent command line's stream limit, naming the size, the limit and the artefact group that is largest, so a folder that is too large fails at once and says what to cut. The hardware notes and the method state the rule and the limit.
+
+  Settled. No whole-board overview image is added per net: the class map draws every critical class on the whole board, the layer views draw every layer, and the index lists the tiles a net holds with the board region each covers, so a reviewer locates a net without a further image of it. The limit is the agent command line's own, 268,435,456 UTF-16 code units of the one JSON line (a line exactly at it is accepted; read from version 2.1.304), and it is a named constant of the kit, so a change of the command line's limit is one edit. The evidence test of the views command's first criterion that asserts every net view tiles the whole board is amended to exempt net views and to point to the first criterion here. The recorded review baselines are keyed on the design files' bytes and not on the views, so no recorded baseline is invalidated.
+
+  Out of scope: judging the images; the layer, class-map, assembly, crop and three-dimensional views, which are unchanged; splitting a review by class or by region, which the method does not describe.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: SOL-BOARD-REVIEW-RENDER-VIEWS
+    type: depends-on
+  - target: SOL-HW-REVIEW-KIT
+    type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: 23f376d555597f2d56454ef14570ee25f257e7b5f87dc7498c1aa915e21e2e3c
+  gating_profile: ""

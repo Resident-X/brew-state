@@ -7,8 +7,9 @@ largest group sets the review's time, which is estimated as the cost model gives
 it. The plan is flat: one shared context, then one fork per group and replica.
 It records what a tree with the artefacts only some groups need held above them
 would at most save, and the threshold that saving was compared with, and keeps the
-flat plan. A shared context larger than the context budget is refused, naming its
-size and the budget, before any session starts.
+flat plan. A shared context larger than the context budget, or whose message is over
+the agent command line's stream limit, is refused, naming its size and the budget or
+limit, before any session starts.
 
 Replicas and their variants arrive as plain data: a replica count (one number or
 one per unit) and the ids of the variants the replicas take in turn. The prompt of
@@ -35,6 +36,14 @@ class OverBudget(Exception):
         self.size, self.budget = size, budget
         super().__init__(f"the shared context is {size} tokens, over the review's context budget of {budget} tokens; "
                          "take artefacts out of the units' `needs`, or raise the budget's context_tokens")
+
+
+class OverStreamLimit(Exception):
+    def __init__(self, size: int, limit: int, group: str, group_size: int):
+        self.size, self.limit, self.group, self.group_size = size, limit, group, group_size
+        super().__init__(f"the shared context's stream message is {size} characters, over the agent command line's stream "
+                         f"limit of {limit} characters; the largest group of artefacts is {group} at {group_size} "
+                         "characters; write fewer or smaller views")
 
 
 class BoundBelowOne(ValueError):
@@ -216,6 +225,14 @@ def default_prompt(declaration: decl.Declaration) -> Callable[[Sequence[str], st
     return lambda units, variant: messages.group_prompt(declaration, units)
 
 
+def check_stream(catalogue: cat.Catalogue, shared: messages.SharedContext) -> None:
+    """Refuse a shared context whose message is over the agent command line's stream limit, naming the largest group of
+    artefacts."""
+    size = messages.stream_size(shared.message)
+    if size > messages.STREAM_LIMIT:
+        raise OverStreamLimit(size, messages.STREAM_LIMIT, *messages.largest_group(catalogue))
+
+
 # --- The plan ----------------------------------------------------------------------------------
 
 
@@ -235,6 +252,7 @@ def make_plan(declaration: decl.Declaration, catalogue: cat.Catalogue, shared: m
     budget = declaration.budget.context_tokens
     if budget is not None and shared.tokens > budget:
         raise OverBudget(shared.tokens, budget)
+    check_stream(catalogue, shared)
     prompt_for = prompt_for or default_prompt(declaration)
     root_prices = prices or cm.prices_for(spec.model)
     prices_of: Dict[str, cm.Prices] = {"root": root_prices}

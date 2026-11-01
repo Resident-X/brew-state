@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET-C3-TEST
+type: evidence
+title: test evidence for SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-31T19:09:04.15978Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_kit_messages.py::StreamLimitTests.test_the_limit_is_the_agent_command_lines_in_a_named_constant
+  artifact_version: b60a1bb088f0e764c185f87c7ddeb260eff8af34
+attested_by: crun-1c1f8181771751ae
+links:
+  - target: SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C3
+    type: satisfies

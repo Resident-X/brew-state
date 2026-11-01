@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C4
+type: criterion
+title: A layout with no mounting hole passes and a one-pad plated footprint whose net cannot be read fails as unreadable
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a synthetic layout, a layout with no footprint and a layout whose footprints are all surface-mount give no mounting_hole violation and no error, and a footprint of one plated drilled pad whose net is named twice, or written other than as (net "name"), gives a design_unreadable violation naming the layout, and is neither passed as a terminal nor failed as a hole. Out of scope: the unreadable-layout failures of the other rules.
+links:
+  - target: SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE
+    type: criterion-of

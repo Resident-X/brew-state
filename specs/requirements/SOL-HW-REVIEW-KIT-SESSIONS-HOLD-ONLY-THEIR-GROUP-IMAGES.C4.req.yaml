@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C4
+type: criterion
+title: A synthetic design with five hundred and sixty views plans and runs without any session exceeding the budget
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Over a synthetic tempdir design of generic units with five hundred and sixty views, in the sizes of the full-size board's critical-routing folder, grouped in six groups, each declaring a subset of the views, against the stub with a declared budget of two hundred thousand tokens, each group's views measured by the kit's existing token measure, the plan is accepted, the run completes, and the largest context any session was given, measured from the stub's record of the message each session received, is no greater than the budget; the same design with every unit declaring every view is refused naming the groups over the budget. Synthetic fixtures only, with generic ids and no node of the real graph. Out of scope: the real board's own views and any model call, the stub standing in for the model.
+links:
+  - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES
+    type: criterion-of

@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET-C1-TEST
+type: evidence
+title: test evidence for SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-31T19:09:02.928602Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_views_rendering.py::NetTiles.test_a_net_view_is_written_for_exactly_the_tiles_its_copper_reaches
+  artifact_version: b60a1bb088f0e764c185f87c7ddeb260eff8af34
+attested_by: crun-1c1f8181771751ae
+links:
+  - target: SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C1
+    type: satisfies
