@@ -144,7 +144,7 @@
         "min_clearance": 0.09,
         "min_connection": 0.09,
         "min_copper_edge_clearance": 0.3,
-        "min_groove_width": 0.0,
+        "min_groove_width": 1.0,
         "min_hole_clearance": 0.35,
         "min_hole_to_hole": 0.45,
         "min_microvia_diameter": 0.35,
