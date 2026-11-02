@@ -102597,7 +102597,7 @@
 	(segment
 		(start 94.25 34)
 		(end 93.225 34)
-		(width 0.3)
+		(width 0.45)
 		(locked yes)
 		(layer "F.Cu")
 		(net "GND")
@@ -102624,7 +102624,7 @@
 	(segment
 		(start 118.55 82.5)
 		(end 117.65 83.4)
-		(width 0.3)
+		(width 0.45)
 		(locked yes)
 		(layer "F.Cu")
 		(net "GND")
@@ -102768,7 +102768,7 @@
 	(segment
 		(start 117.65 83.4)
 		(end 117.2 83.85)
-		(width 0.3)
+		(width 0.45)
 		(locked yes)
 		(layer "F.Cu")
 		(net "GND")
@@ -102777,7 +102777,7 @@
 	(segment
 		(start 117.2 83.85)
 		(end 117.2 84.75)
-		(width 0.3)
+		(width 0.45)
 		(locked yes)
 		(layer "F.Cu")
 		(net "GND")
