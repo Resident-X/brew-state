@@ -102586,6 +102586,15 @@
 		(uuid "4b9ef3a8-e96e-4e0e-9191-b27b830857e3")
 	)
 	(segment
+		(start 94.25 34)
+		(end 93.225 34)
+		(width 0.3)
+		(locked yes)
+		(layer "F.Cu")
+		(net "GND")
+		(uuid "529ce678-86df-404a-8105-23fd652b882d")
+	)
+	(segment
 		(start 95.5 26.175)
 		(end 95.5 23.775)
 		(width 0.28)
@@ -106589,6 +106598,15 @@
 		(locked yes)
 		(net "GND")
 		(uuid "fcfc9246-750b-43f7-9084-9bf3fcb4d68c")
+	)
+	(via
+		(at 117.2 84.75)
+		(size 0.75)
+		(drill 0.3)
+		(layers "F.Cu" "B.Cu")
+		(locked yes)
+		(net "GND")
+		(uuid "fdae80f1-fe76-4ca8-b7e2-19f7339294e9")
 	)
 	(via
 		(at 125.0048 18.6516)
