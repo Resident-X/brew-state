@@ -545,7 +545,7 @@ Bearing on no critical net:
 - `BOARD-14`: The centre-to-centre pitch of the tab pads is decided by where the pads stand; no track, via or zone of a critical class decides it.
 - `BOARD-15`: Room for the receptacle housings is decided by part courtyards and heights, not by critical-class copper.
 
-### Open after the fix rounds
+## Open after the fix rounds
 
 Rows recorded at commit `c62b2492`, after the fix rounds that followed Pass 1. Each is a fact measured on the board and a decision that is not an agent's to make: every row is unsigned, a draft for the owner, and none is an acceptance. The Pass 1 verdicts above are not changed by this section. The effect and class of each item is the assessment's (`SAFETY`, `PERFORMANCE`, `COSMETIC`), with the arithmetic in the row it came from; an item the assessment did not grade says so.
 
