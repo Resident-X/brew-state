@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C14
+type: criterion
+title: The fanned-out proof is re-run on the changed form, recorded, and finds every seed the baselines find
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |-
+  The fanned-out proof is run on the changed form against the recorded single-reviewer baselines on the method's proof design, and the run is recorded with its new key, each group's root size, the seeds found and the cost. Every seed the single-reviewer baselines find is found; a seed missed is a defect in the changed form, corrected and the proof run again before the criterion is met. Out of scope: any change to the proof design or its baselines.
+links:
+  - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES
+    type: criterion-of
