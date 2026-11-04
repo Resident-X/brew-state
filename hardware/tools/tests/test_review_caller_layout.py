@@ -32,6 +32,7 @@ import board_history  # noqa: E402
 import board_review_history  # noqa: E402
 import layout_fixtures as fx  # noqa: E402
 import review_caller_layout  # noqa: E402
+import review_catalogue  # noqa: E402
 import review_folder  # noqa: E402
 from review_kit import caller as kit_caller  # noqa: E402
 from review_kit import catalogue, command, costmodel, merge, messages, planner  # noqa: E402
@@ -1066,8 +1067,8 @@ class TheToolGrant(Folder):
         self.assertIsNone(json.loads(slurp(os.path.join(run.out, "record.json")))["merged"])
         lines = report["refusals"]
         named = sorted(re.match(r"unit (.+?) \(group (G\d+), replica (\d+)\) failed", line).groups() for line in lines)
-        everything = "area-FLOOR, area-GROUND, area-CLOCK, plan-and-free-pass"
-        self.assertEqual(named, [(everything, "G1", "1"), (everything, "G1", "2")],
+        self.assertEqual(named, [("area-FLOOR, area-GROUND, area-CLOCK", "G1", "1"), ("area-FLOOR, area-GROUND, area-CLOCK", "G1", "2"),
+                                 ("plan-and-free-pass", "G2", "1"), ("plan-and-free-pass", "G2", "2")],
                          "every reviewer that started badly is named with the units it was to judge")
         for line in lines:
             self.assertRegex(line, r"session G\d\.r\d\.a1 started")
@@ -1090,11 +1091,18 @@ class TheToolGrant(Folder):
         self.assertIn(self.folder, line, "the folder its specification names")
 
 
+def one_group():
+    """The declaration couples every unit of the round, so the kit forms the one group the replicas on another model are built
+    for."""
+    return mock.patch.object(review_catalogue, "coupled_to", lambda unit, units, pairs: [other for other in units if other != unit])
+
+
 class TheSmallTierReplica(Folder):
     def run_three(self, **scenario):
         run = Command(self)
         run.scenario(**scenario)
-        status, text, err = run.go("--format", "json", "--replicas", "3", "--model", "claude-sonnet-5-5")
+        with one_group():
+            status, text, err = run.go("--format", "json", "--replicas", "3", "--model", "claude-sonnet-5-5")
         return run, status, text, err
 
     def test_a_round_of_three_replicas_plans_a_second_shared_context_for_the_small_model(self):
@@ -1128,7 +1136,7 @@ class TheSmallTierReplica(Folder):
         small_root = next(call for call in roots if model_of(call) == review_caller_layout.SMALL_MODEL)
         own_root = next(call for call in roots if model_of(call) != review_caller_layout.SMALL_MODEL)
         forks = [call for call in calls if call["resume"] is not None]
-        self.assertEqual(len(forks), 3, "one group of three replicas: the synthetic round fits one root, so it is not split")
+        self.assertEqual(len(forks), 3, "one group of three replicas: the units are coupled, since a root for the small model is built for one group")
         small = [call for call in forks if call["resume"] == small_root["session"]]
         own = [call for call in forks if call["resume"] == own_root["session"]]
         self.assertEqual((len(small), len(own)), (1, 2), "the third replica, and the first two")
@@ -1230,8 +1238,8 @@ class TheCommandEndToEnd(Folder):
         again = run.calls()[calls_before:]
         forks = [call for call in again if call["resume"] is not None]
         self.assertEqual(len(again) - len(forks), 1, "one shared context, started again for the run")
-        self.assertEqual({tuple(call["units"]) for call in forks}, {("area-FLOOR", "area-GROUND", "area-CLOCK", "plan-and-free-pass")},
-                         "and forks of the unit's group alone, which holds the comparison unit too")
+        self.assertEqual({tuple(call["units"]) for call in forks}, {("area-FLOOR", "area-GROUND", "area-CLOCK")},
+                         "and forks of the unit's group alone, not the comparison unit's")
         self.assertEqual(report["reran"][0]["units"], ["area-CLOCK"])
 
 
@@ -1254,7 +1262,7 @@ class TheCommandEndToEnd(Folder):
         self.assertEqual(status, 0, "the kit accepts the added document as a path added during the round: " + text + err)
         again = run.calls()[calls_before:]
         forks = [call for call in again if call["resume"] is not None]
-        self.assertEqual({tuple(call["units"]) for call in forks}, {("area-FLOOR", "area-GROUND", "area-CLOCK", "plan-and-free-pass")})
+        self.assertEqual({tuple(call["units"]) for call in forks}, {("area-FLOOR", "area-GROUND", "area-CLOCK")})
         for call in forks:
             self.assertIn("added-documents/vo3526-pins.txt", call["prompt"], "the unit's prompt names the document to read")
             self.assertIn("the figure comes from: the VO3526 datasheet, package drawing", call["prompt"])
@@ -1320,11 +1328,11 @@ class TheBoundOnReviewersAtOnce(Folder):
             return real(self, [wrap(task) for task in tasks], bound)
         run = Command(self)
         run.scenario()
-        with mock.patch.object(scheduler.ThreadedConcurrency, "run", counted):
+        with mock.patch.object(scheduler.ThreadedConcurrency, "run", counted), one_group():
             status, text, err = run.go("--format", "json", "--replicas", "40")
         self.assertEqual(status, 0, text + err)
         plan = json.loads(text)["plan"]
-        self.assertEqual(plan["forks"], 40, "the synthetic round fits one root, so its forty replicas are forty forks of one group")
+        self.assertEqual(plan["forks"], 40, "forty replicas of the one group the coupled units form")
         self.assertEqual(plan["bound"], 30)
         self.assertEqual(state["bounds"][-1], 30)
         self.assertLessEqual(state["peak"], 30)

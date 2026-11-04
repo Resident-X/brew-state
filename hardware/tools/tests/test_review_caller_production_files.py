@@ -28,6 +28,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import layout_fixtures as fx  # noqa: E402
 import production_fixtures as pf  # noqa: E402
+from review_kit_fixtures import single_group  # noqa: E402
 import review_caller_layout  # noqa: E402
 import review_caller_production_files as caller  # noqa: E402
 import review_folder  # noqa: E402
@@ -938,6 +939,9 @@ class Command:
         patcher = mock.patch.dict(os.environ, {ex.AGENT_ENV: self.program, "STUB_SCENARIO": self.scenario_path, "STUB_LOG": self.log})
         patcher.start()
         case.addCleanup(patcher.stop)
+        one = single_group()
+        one.start()
+        case.addCleanup(one.stop)
 
     def scenario(self, **values):
         pf.fx.write(self.scenario_path, json.dumps({"layers": pf.LAYERS, **values}))

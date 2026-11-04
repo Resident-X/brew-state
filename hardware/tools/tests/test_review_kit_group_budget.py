@@ -48,6 +48,7 @@ class WindowTable(unittest.TestCase):
         self.assertEqual(planner.context_budget(odd, "claude-sonnet-5-5"), 333_333)
         self.assertEqual(planner.context_budget(loaded({"context_fraction": 1}).budget, "claude-haiku-5-5"), 1_000_000)
 
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C2: a declaration that states neither a figure nor a fraction is not checked, and each of the four callers states one
     def test_a_figure_is_the_budget_whatever_the_model_and_no_figure_and_no_fraction_is_no_budget(self):
         self.assertEqual(planner.context_budget(loaded({"context_tokens": 1234}).budget, "a-model-nobody-declared"), 1234)
         self.assertEqual(planner.context_budget(loaded({"context_tokens": 1234}).budget, None), 1234)

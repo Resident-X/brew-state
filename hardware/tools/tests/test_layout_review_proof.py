@@ -77,7 +77,8 @@ class Proofed(unittest.TestCase):
         os.chmod(self.program, os.stat(self.program).st_mode | stat.S_IXUSR)
         for patch in (mock.patch.dict(os.environ, {ex.AGENT_ENV: self.program, "STUB_SCENARIO": self.scenario_path,
                                                    "STUB_LOG": self.log}),
-                      mock.patch.object(kit_caller, "load", layout_tests.load_with_synthetic_couplings)):
+                      mock.patch.object(kit_caller, "load", layout_tests.load_with_synthetic_couplings),
+                      layout_tests.one_group()):
             patch.start()
             self.addCleanup(patch.stop)
         self.scenario(verdicts=ALL_FAIL)

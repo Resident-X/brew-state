@@ -1181,12 +1181,12 @@ def net_tiles(planned: List[dict], boxes: Sequence[Tuple[float, float, float, fl
               anchors) -> Tuple[List[dict], bool, Optional[str]]:
     """The tiles of a net to write, whether the net was thinned and why: the tiles holding its copper, or, when there are more
     of them than `thin_over` (none given means no thinning), those of them holding its pads, vias and track ends, which
-    `anchors()` gives as boxes."""
+    `anchors()` gives as boxes. A net with none of those, a zone alone, is not thinned."""
     holding = tiles_holding(planned, boxes)
     if thin_over is None or len(holding) <= thin_over:
         return holding, False, None
     anchored = tiles_holding(holding, anchors())
-    if len(anchored) == len(holding):
+    if not anchored or len(anchored) == len(holding):
         return holding, False, None
     return anchored, True, (f"net thinned: its copper reaches {len(holding)} tiles, more than {thin_over}, so only the tiles "
                             "holding its pads, vias and track ends are written")

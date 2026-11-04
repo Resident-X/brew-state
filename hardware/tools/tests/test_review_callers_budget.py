@@ -9,6 +9,8 @@ folder's whole list of views. No model, no KiCad and no agent command line is us
 
 from __future__ import annotations
 
+import io
+import itertools
 import json
 import os
 import re
@@ -32,7 +34,7 @@ import test_review_caller_layout as layout_tests  # noqa: E402
 import test_review_caller_production_files as production_tests  # noqa: E402
 import test_review_caller_schematic as schematic_tests  # noqa: E402
 from review_kit import caller as kit_caller  # noqa: E402
-from review_kit import catalogue, costmodel, messages, planner, selection  # noqa: E402
+from review_kit import catalogue, command, costmodel, messages, planner, selection  # noqa: E402
 
 MODEL = "claude-sonnet-5-5"
 TEXT_KINDS = ("text", "extract")
@@ -43,6 +45,46 @@ def groups(package, folder):
     declaration = package.declaration
     found = catalogue.admit(declaration, folder)
     return declaration, planner.form(declaration, found, MODEL)
+
+
+_RUNS = itertools.count(1)
+
+
+def plan_only(case, name, *extra, model=MODEL, fmt="text"):
+    """The kit's command run with `--plan-only` on a caller's own replica policy over the case's synthetic folder: (status,
+    what it printed)."""
+    out, err = io.StringIO(), io.StringIO()
+    status = command.main(["--caller", name, "--callers", TOOLS, "--review", case.folder, "--out", os.path.join(case.root, f"plan-{next(_RUNS)}"),
+                           "--model", model, "--plan-only", "--format", fmt, *extra], out, err,
+                          repo=os.path.join(case.root, "no-repository"))
+    return status, out.getvalue() + err.getvalue()
+
+
+class Replicas:
+    """The refusal of replicas on another model over several groups and the count that avoids it, from a caller's own policy."""
+
+    def assertRefusedWithTheWorkaround(self, name, fmt):
+        status, text = plan_only(self, name, "--replicas", "3", fmt=fmt)
+        self.assertEqual(status, 1, text)
+        if fmt == "json":
+            refusals = json.loads(text)["refusals"]
+            self.assertEqual(len(refusals), 1, refusals)
+            text = refusals[0]
+        for part in ("groups, each judged from a root of its own", "replicas run on another model (claude-haiku-5-5)",
+                     "give --replicas 2"):
+            self.assertIn(part, text)
+
+    def assertPlannedAtTwoReplicas(self, name, fmt):
+        status, text = plan_only(self, name, "--replicas", "2", fmt=fmt)
+        self.assertEqual(status, 0, text)
+        if fmt == "json":
+            plan = json.loads(text)["plan"]
+            self.assertGreater(len(plan["groups"]), 1)
+            self.assertEqual(plan["contexts"], [], "no other model's root is built")
+            self.assertEqual({group["replicas"] for group in plan["groups"]}, {2})
+        else:
+            self.assertRegex(text, r"RESULT \| PLANNED")
+            self.assertNotIn("REFUSED", text)
 
 
 def images_of(declaration, names):
@@ -68,12 +110,34 @@ class Budgeted:
             self.assertEqual(held, declared, f"group {built.id}'s root holds what its units declare and nothing else")
 
 
+    def assertPackedAsTheKitPacks(self, declaration, formed):
+        packed = planner.pack(declaration)
+        self.assertEqual([list(built.units) for built in formed.groups], packed,
+                         "the groups are the kit's packing of the declaration, no view overlap saving enough to merge past its cap")
+        self.assertGreater(len(formed.groups), 1, "the caller's round is not judged from one root")
+
+    def assertMergedOnlyWithinTheKitsCap(self, declaration, formed):
+        """The units' own views overlap, so groups may merge, but never past the cap the kit packs to, and never into one group."""
+        cap = planner.output_cap(declaration)
+        packed = planner.pack(declaration)
+        self.assertGreater(len(formed.groups), 1, "the caller's round is not judged from one root")
+        self.assertLessEqual(len(formed.groups), len(packed))
+        for built in formed.groups:
+            self.assertLessEqual(built.expected_output_tokens, cap, f"group {built.id} is within the largest single unit's output")
+
+    def assertOneCoupledGroup(self, declaration, formed):
+        self.assertEqual(len(planner.coupled_sets(declaration)), 1)
+        self.assertEqual([list(built.units) for built in formed.groups], planner.pack(declaration))
+        self.assertEqual(len(formed.groups), 1, "a single coupled set is one group")
+
+
 class TheLayoutCaller(layout_tests.Folder, Budgeted):
     # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C5: Over a synthetic review folder for each of the four callers, the caller's declaration states a model-context budget, each unit declares only the artefacts it needs, its views chosen through the kit's selection from the folder's view index and not by taking the folder's whole view list, and the kit's plan for it gives every group a context within the budget, none holding an artefact that none of its units declares.
     def test_the_declaration_states_the_budget_and_each_unit_its_views_chosen_from_the_index_and_the_plan_is_within_it(self):
         package = kit_caller.load("layout", TOOLS).prepare(self.folder)
         declaration, formed = groups(package, self.folder)
         self.assertWithinBudget(declaration, formed, layout)
+        self.assertPackedAsTheKitPacks(declaration, formed)
         total = every_image(declaration)
         index = {f"views/{entry['file']}" for entry in lfx.VIEW_ENTRIES}
         needs = {unit: set(item.needs) for unit, item in declaration.units.items()}
@@ -135,12 +199,26 @@ class TheLayoutCaller(layout_tests.Folder, Budgeted):
         self.assertEqual(formed.groups[0].extract["missing"], [])
 
 
+class TheLayoutCallersReplicas(layout_tests.Folder, Replicas):
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: A review over groups that also asks for replicas on another model is refused naming the combination and the replica count that avoids it, and a plan with no other model's replicas is unaffected.
+    def test_the_pre_order_rounds_three_replicas_over_several_groups_are_refused_naming_the_count_that_avoids_it_in_text_and_json(self):
+        for fmt in ("text", "json"):
+            with self.subTest(fmt=fmt):
+                self.assertRefusedWithTheWorkaround("layout", fmt)
+
+    def test_two_replicas_plan_over_the_same_groups_in_text_and_json(self):
+        for fmt in ("text", "json"):
+            with self.subTest(fmt=fmt):
+                self.assertPlannedAtTwoReplicas("layout", fmt)
+
+
 class TheCriticalRoutingCaller(critical_tests.Folder, Budgeted):
     # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C5: The critical-routing caller's units declare the views of the nets and areas they judge and not the whole folder's views.
     def test_each_unit_declares_the_views_of_the_nets_and_areas_it_judges_and_the_plan_is_within_the_budget(self):
         package = kit_caller.load("critical_routing", TOOLS).prepare(self.folder)
         declaration, formed = groups(package, self.folder)
         self.assertWithinBudget(declaration, formed, critical)
+        self.assertOneCoupledGroup(declaration, formed)
         total = every_image(declaration)
         needs = {unit: set(item.needs) for unit, item in declaration.units.items()}
         self.assertEqual(images_of(declaration, needs["area-GROUND"]), {"views/net-CLK.png", "views/net-GND.png",
@@ -164,6 +242,7 @@ class TheProductionFilesCaller(production_tests.Folder, Budgeted):
         package = kit_caller.load("production_files", TOOLS).prepare(self.folder)
         declaration, formed = groups(package, self.folder)
         self.assertWithinBudget(declaration, formed, production)
+        self.assertMergedOnlyWithinTheKitsCap(declaration, formed)
         layers_unit = set(declaration.units[production.LAYERS_UNIT].needs)
         self.assertEqual(images_of(declaration, layers_unit),
                          {"views/layer-F.Cu-r1c1.png"} | {f"production/layers/layer-{name}.png" for name in pfx.LAYERS})
@@ -189,12 +268,60 @@ class TheProductionFilesCaller(production_tests.Folder, Budgeted):
             self.assertNotIn("views/assembly-top-r1c1.png", unit.needs)
 
 
+class TheProductionFilesCallersReplicas(production_tests.Folder, Replicas):
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: A review over groups that also asks for replicas on another model is refused naming the combination and the replica count that avoids it, and a plan with no other model's replicas is unaffected.
+    def test_the_checks_third_replica_over_several_groups_is_refused_naming_the_count_that_avoids_it_in_text_and_json(self):
+        for fmt in ("text", "json"):
+            with self.subTest(fmt=fmt):
+                self.assertRefusedWithTheWorkaround("production_files", fmt)
+
+    def test_two_replicas_plan_over_the_same_groups_in_text_and_json(self):
+        for fmt in ("text", "json"):
+            with self.subTest(fmt=fmt):
+                self.assertPlannedAtTwoReplicas("production_files", fmt)
+
+
+class TheCriticalRoutingCallersReplicas(critical_tests.Folder):
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a plan with no other model's replicas is unaffected
+    def test_the_callers_policy_plans_in_text_and_json_on_its_own_model_and_a_single_group_takes_another_models_root(self):
+        status, text = plan_only(self, "critical_routing", model="claude-haiku-5-5")
+        self.assertEqual(status, 0, text)
+        self.assertRegex(text, r"RESULT \| PLANNED")
+        status, text = plan_only(self, "critical_routing", model="claude-haiku-5-5", fmt="json")
+        self.assertEqual(status, 0, text)
+        plan = json.loads(text)["plan"]
+        self.assertEqual(len(plan["groups"]), 1)
+        self.assertEqual(plan["contexts"], [], "both variants run on the review's model")
+        status, text = plan_only(self, "critical_routing", fmt="json")
+        self.assertEqual(status, 0, text)
+        self.assertEqual(len(json.loads(text)["plan"]["contexts"]), 1, "one group, so a root for the other model is built")
+
+
+class TheSchematicCallersReplicas(schematic_tests.Folder):
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a review over groups that also asks for replicas on another model is refused naming the combination
+    def test_the_callers_policy_run_on_another_model_over_several_groups_is_refused_and_on_its_own_model_is_planned(self):
+        status, text = plan_only(self, "schematic")
+        self.assertEqual(status, 1, text)
+        self.assertRegex(text, r"REFUSED \| the review has \d+ groups, each judged from a root of its own, and its replicas run on another model")
+        status, text = plan_only(self, "schematic", fmt="json")
+        self.assertEqual(status, 1, text)
+        (line,) = json.loads(text)["refusals"]
+        self.assertIn("give every variant of the replica policy the review's model", line)
+        self.assertNotIn("--replicas", line.split("or give")[0], "no count avoids it: the first variant is on the other model")
+        status, text = plan_only(self, "schematic", model="claude-haiku-5-5")
+        self.assertEqual(status, 0, text)
+        status, text = plan_only(self, "schematic", model="claude-haiku-5-5", fmt="json")
+        self.assertEqual(status, 0, text)
+        self.assertGreater(len(json.loads(text)["plan"]["groups"]), 1)
+
+
 class TheSchematicCaller(schematic_tests.Folder, Budgeted):
     # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C5: the schematic caller's declaration states the budget and each unit's needs, which are the documents, the round holding no image
     def test_the_declaration_states_the_budget_and_each_units_needs_and_the_plan_is_within_it(self):
         package = kit_caller.load("schematic", TOOLS).prepare(self.folder)
         declaration, formed = groups(package, self.folder)
         self.assertWithinBudget(declaration, formed, schematic)
+        self.assertPackedAsTheKitPacks(declaration, formed)
         self.assertEqual(every_image(declaration), set(), "the sheets' drawings are opened by the reviewer, not held in a root")
         for unit in declaration.units.values():
             self.assertEqual(set(unit.needs), set(declaration.needed))

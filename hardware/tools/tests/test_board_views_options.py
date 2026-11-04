@@ -154,6 +154,17 @@ class ThinnedNets(unittest.TestCase):
             for left in (0, 1, grid):
                 self.assertLessEqual(len(board_views.left_out_field(left, grid, True)), len(board_views.left_out_field(left, grid)))
 
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C10: an option stating the number of tiles above which a net's tiles are thinned to those that hold the net's pads, vias and ends
+    def test_a_net_of_copper_alone_with_no_pad_via_or_free_end_is_not_thinned_and_none_of_its_tiles_is_called_empty(self):
+        planned = [{"region": (x, y, x + 10, y + 10)} for y in (0, 10) for x in (0, 10)]
+        zone = [(0, 0, 20, 20)]
+        written, thinned, why = board_views.net_tiles(planned, zone, 3, lambda: [])
+        self.assertEqual(written, planned, "every tile holding the zone is written")
+        self.assertEqual((thinned, why), (False, None))
+        written, thinned, why = board_views.net_tiles(planned, zone, 3, lambda: [(1, 1, 1, 1)])
+        self.assertEqual((len(written), thinned), (1, True), "with an anchor the net is thinned as before")
+        self.assertIn("more than 3", why)
+
     def test_a_number_below_one_is_refused(self):
         stream = io.StringIO()
         status = board_views.main(["--board", "b", "--project", "p", "--class", "c", "--out", "o", "--thin-nets-over", "0"], out=stream)

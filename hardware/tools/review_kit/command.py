@@ -14,7 +14,7 @@ caller's rendered files into the output folder, and prints a report. Every root 
 figure or a fraction of the model's declared context window, and a group over it is refused before any session starts.
 `--plan-only` forms and reports the plan, with each group's images and tokens against the budget, and writes it into the
 output folder as plan.json, without the agent program and without starting a session. A review whose replicas run on
-another model is refused when it has more than one group.
+another model is refused when it has more than one group, the refusal naming the `--replicas` count that avoids it.
 
 The agent command line is started from the program named by the environment variable REVIEW_KIT_AGENT (claude when it
 is unset), which must be on the search path and logged in. The output folder holds the plan, the record, the saved

@@ -48,6 +48,7 @@ PRICES_BY_MODEL: Dict[str, Prices] = {
 #: The context window, in tokens, of each model the kit's reviews run on, by full model id: the `contextWindow` the agent
 #: command line reports for the model in its result's `modelUsage`. A model not listed has no declared window and is never
 #: given a default; a budget stated as a fraction of its window is refused naming it. An operator adds a model's window here.
+#: The figures are what the command line reported for these two models in November 2026.
 WINDOW_TOKENS_BY_MODEL: Dict[str, int] = {
     "claude-sonnet-5-5": 1_000_000,
     "claude-haiku-5-5": 1_000_000,

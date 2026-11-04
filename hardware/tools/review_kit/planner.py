@@ -69,11 +69,13 @@ class GroupsOverBudget(Exception):
 class GroupsWithOtherModel(Exception):
     """Groups are each judged from a root of their own, and a replica on another model needs a root per model."""
 
-    def __init__(self, groups: int, models: Sequence[str]):
-        self.groups, self.models = groups, list(models)
+    def __init__(self, groups: int, models: Sequence[str], avoiding: Optional[int] = None):
+        self.groups, self.models, self.avoiding = groups, list(models), avoiding
+        way = (f"give --replicas {avoiding}, which runs only the replicas on the review's model (the replicas on another model are "
+               "lost), or " if avoiding else "")
         super().__init__(f"the review has {groups} groups, each judged from a root of its own, and its replicas run on another model "
-                         f"({', '.join(self.models)}); replicas on another model are not built for groups, so give every variant of the "
-                         "replica policy the review's model")
+                         f"({', '.join(self.models)}); a root is built for the review's model only, so {way}give every variant of "
+                         "the replica policy the review's model")
 
 
 class WindowUndeclared(Exception):
@@ -265,29 +267,40 @@ def coupled_sets(declaration: decl.Declaration) -> List[List[str]]:
     return list(sets.values())
 
 
-def pack(declaration: decl.Declaration) -> List[List[str]]:
-    """Groups of units: each coupled set whole, small sets packed together first-fit, largest first, up to the largest single
-    unit's expected output. Deterministic for a declaration."""
+def pack_sets(declaration: decl.Declaration, sets: Sequence[Sequence[str]], fits: Callable[[Sequence[str], Sequence[str]], bool]
+              ) -> List[List[str]]:
+    """The sets of units packed first-fit, the largest expected output first, ties by declaration order: a set joins the first
+    group for which `fits(group, set)` holds, and otherwise starts a group. Each group in declaration order, the groups in the
+    order of their first unit."""
     output = {uid: unit.expected_output_tokens for uid, unit in declaration.units.items()}
-    cap = max(output.values())
     order = list(declaration.units)
-    sets = sorted(coupled_sets(declaration), key=lambda units: (-sum(output[u] for u in units), order.index(units[0])))
+    ranked = sorted(sets, key=lambda units: (-sum(output[u] for u in units), order.index(units[0])))
     groups: List[List[str]] = []
-    loads: List[int] = []
-    for units in sets:
-        size = sum(output[u] for u in units)
-        for index, load in enumerate(loads):
-            if load + size <= cap:
-                groups[index].extend(units)
-                loads[index] += size
+    for units in ranked:
+        for held in groups:
+            if fits(held, units):
+                held.extend(units)
                 break
         else:
             groups.append(list(units))
-            loads.append(size)
     for units in groups:
         units.sort(key=order.index)
     groups.sort(key=lambda units: order.index(units[0]))
     return groups
+
+
+def output_cap(declaration: decl.Declaration) -> int:
+    """The most expected output a group may hold: the largest single unit's."""
+    return max(unit.expected_output_tokens for unit in declaration.units.values())
+
+
+def pack(declaration: decl.Declaration) -> List[List[str]]:
+    """Groups of units: each coupled set whole, small sets packed together first-fit, largest first, up to the largest single
+    unit's expected output. Deterministic for a declaration."""
+    output = {uid: unit.expected_output_tokens for uid, unit in declaration.units.items()}
+    cap = output_cap(declaration)
+    return pack_sets(declaration, coupled_sets(declaration),
+                     lambda held, units: sum(output[u] for u in held) + sum(output[u] for u in units) <= cap)
 
 
 def replica_counts(declaration: decl.Declaration, groups: Sequence[Sequence[str]],
@@ -392,37 +405,56 @@ class _Candidate:
 
 
 def form_groups(declaration: decl.Declaration, sizing: Sizing, budget: Optional[int]) -> List[List[str]]:
-    """The groups of units. With a budget: one group for each set of units the declaration couples, then the pair whose merged
-    root is within the budget and whose merge writes the fewest tokens, which is the tokens of the artefacts their needs share
-    and the framing a root less holds, is merged again and again, ties by declaration order, until no pair fits; units the
-    declaration couples are never parted. Without one the units are packed by expected output."""
+    """The groups of units. With a budget: one group for each set of units the declaration couples; then the pair whose merged
+    root is within the budget, whose merged expected output is within the largest single unit's, and whose needs share the most
+    tokens of artefacts not every group holds, is merged again and again while that saving is above zero, ties by declaration
+    order of the pairs' first units; then the groups left are packed first-fit as `pack` packs, with the added condition that
+    the merged root is within the budget. Units the declaration couples are never parted, and a set over the largest output
+    stays whole. Without a budget the units are packed as `pack` packs them."""
     if budget is None:
         return pack(declaration)
     order = {uid: index for index, uid in enumerate(declaration.units)}
+    cap = output_cap(declaration)
+    held_by_all = set(shared_names(declaration))
     groups: List[_Candidate] = []
     for units in coupled_sets(declaration):
         needs = {name for uid in units for name in declaration.units[uid].needs}
         rules = {rule for uid in units for rule in declaration.units[uid].check_rules}
         groups.append(_Candidate(list(units), needs, rules, sizing.tokens(needs, rules)))
+
+    def output(group: _Candidate) -> int:
+        return sum(declaration.units[uid].expected_output_tokens for uid in group.units)
+
     while True:
-        best: Optional[Tuple[int, int, int, _Candidate]] = None
+        best: Optional[Tuple[Tuple[int, int, int], int, int]] = None
         for first in range(len(groups)):
             for second in range(first + 1, len(groups)):
                 a, b = groups[first], groups[second]
-                needs, rules = a.needs | b.needs, a.rules | b.rules
-                merged = sizing.tokens(needs, rules)
-                saving = a.cost + b.cost - merged
-                if merged > budget or saving <= 0:
+                saving = sum(sizing.cost[name] for name in (a.needs & b.needs) - held_by_all)
+                if saving <= 0 or output(a) + output(b) > cap:
                     continue
-                if best is None or saving > best[0]:
-                    best = (saving, first, second, _Candidate(sorted(a.units + b.units, key=order.get), needs, rules, merged))
+                if sizing.tokens(a.needs | b.needs, a.rules | b.rules) > budget:
+                    continue
+                key = (-saving, order[a.units[0]], order[b.units[0]])
+                if best is None or key < best[0]:
+                    best = (key, first, second)
         if best is None:
             break
-        _, first, second, merged_group = best
-        groups[first] = merged_group
+        _, first, second = best
+        a, b = groups[first], groups[second]
+        needs, rules = a.needs | b.needs, a.rules | b.rules
+        groups[first] = _Candidate(sorted(a.units + b.units, key=order.get), needs, rules, sizing.tokens(needs, rules))
         del groups[second]
         groups.sort(key=lambda group: order[group.units[0]])
-    return [group.units for group in groups]
+    def fits(held: Sequence[str], units: Sequence[str]) -> bool:
+        joined = list(held) + list(units)
+        if sum(declaration.units[u].expected_output_tokens for u in joined) > cap:
+            return False
+        needs = {name for uid in joined for name in declaration.units[uid].needs}
+        rules = {rule for uid in joined for rule in declaration.units[uid].check_rules}
+        return sizing.tokens(needs, rules) <= budget
+
+    return pack_sets(declaration, [group.units for group in groups], fits)
 
 
 def build_group(declaration: decl.Declaration, catalogue: cat.Catalogue, sizing: Sizing, units: Sequence[str], number: int,
@@ -483,7 +515,9 @@ def make_plan(declaration: decl.Declaration, catalogue: cat.Catalogue, spec: ses
         raise BoundBelowOne(bound)
     formed = formed or form(declaration, catalogue, spec.model)
     if len(contexts) > 1 and len(formed.groups) > 1:
-        raise GroupsWithOtherModel(len(formed.groups), [context.model for context in list(contexts)[1:]])
+        other = {variant for context in list(contexts)[1:] for variant in context.variants}
+        first_other = next((index for index, variant in enumerate(variants) if variant in other), None)
+        raise GroupsWithOtherModel(len(formed.groups), [context.model for context in list(contexts)[1:]], first_other or None)
     for context in list(contexts)[1:]:
         limit = context_budget(declaration.budget, context.model)
         if limit is not None and context.shared.tokens > limit:

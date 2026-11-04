@@ -35,17 +35,17 @@ def view(name):
     return f"views/{name}.png"
 
 
-def synthetic(units, *, docs=("guide.md",), sizes=None, budget=None, couples=(), rules=None, report=None, spare=()):
+def synthetic(units, *, docs=("guide.md",), sizes=None, budget=None, couples=(), rules=None, report=None, spare=(), outputs=None):
     """A declaration of generic units, each needing the documents and the views listed for it, and the function that writes
     the review folder it names. `units` maps a unit to its view names, `sizes` a view name to its pixel size (TILE by
-    default), `spare` views the folder holds that no unit needs, `couples` pairs of units declared coupled, `rules` a unit to the check rules it judges, `report` the text of the
+    default), `spare` views the folder holds that no unit needs, `outputs` a unit to its expected output tokens (200 by default), `couples` pairs of units declared coupled, `rules` a unit to the check rules it judges, `report` the text of the
     deterministic check's report."""
     raw = fx.declaration_dict()
     names = sorted({name for views in units.values() for name in views} | set(spare))
     raw["artefacts"] = {doc: {"kind": "text", "source": f"docs/{doc}"} for doc in docs}
     raw["artefacts"].update({view(name): {"kind": "image", "source": view(name)} for name in names})
     raw["units"] = {uid: {"items": [f"{uid}-i1", f"{uid}-i2"], "template": "t", "needs": list(docs) + [view(n) for n in views],
-                          "expected_output_tokens": 200, "values": {"area": uid}} for uid, views in units.items()}
+                          "expected_output_tokens": (outputs or {}).get(uid, 200), "values": {"area": uid}} for uid, views in units.items()}
     for first, second in couples:
         raw["units"][first].setdefault("couples_with", []).append(second)
     if report is not None:
@@ -180,28 +180,58 @@ class RootsHoldOnlyTheirGroupsArtefacts(unittest.TestCase):
         self.assertEqual(results.cited("see same.png", ["views/same.png"], ["other/same.png"]), [], "a held view has that name")
         self.assertEqual(results.cited("nothing here", [view("exclusive-b")], []), [])
 
+    def test_a_foreign_views_name_is_matched_as_a_whole_name_so_a_held_view_that_ends_with_it_is_not_a_citation(self):
+        self.assertEqual(results.cited("see x-layer.png in the second tile", ["views/layer.png"], ["views/x-layer.png"]), [],
+                         "the held view's name ends with the foreign one's")
+        self.assertEqual(results.cited("see layer.png and x-layer.png", ["views/layer.png"], ["views/x-layer.png"]), ["views/layer.png"],
+                         "a foreign name cited on its own is still flagged beside the held one")
+        self.assertEqual(results.cited("see (layer.png).", ["views/layer.png"], []), ["views/layer.png"],
+                         "a name between punctuation is a citation")
+        self.assertEqual(results.cited("see views/layer.png", ["views/layer.png"], ["views/x-layer.png"]), ["views/layer.png"],
+                         "the whole name is a citation")
+
 
 class GroupsAreFormedFromTheUnitsNeeds(unittest.TestCase):
     def tokens(self, declaration, found, units):
         names = {n for u in units for n in declaration.units[u].needs}
         return messages.root_tokens(found.subset(names).artefacts)
 
-    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C15: A test of units with high overlap shows them grouped together with a total of all roots' tokens below that of a partition that separates them, a test of units with no overlap shows no view written twice, and every root is under the budget.
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C15: A test of units with high overlap shows them grouped together with a total of all roots' tokens below that of a partition that separates them, a test of units with no overlap shows no view written twice and the groups equal the kit's packing of the same declaration, and every root is under the budget.
     def test_units_with_high_overlap_are_grouped_together_and_write_fewer_tokens_than_a_partition_that_separates_them(self):
         x, y = [f"x{n}" for n in range(30)], [f"y{n}" for n in range(30)]
-        units = {"u1": x + ["p1"], "u4": y + ["q1"], "u2": x + ["p2"], "u5": y + ["q2"], "u3": x + ["p3"]}
-        raw, prepare = synthetic(units)
+        units = {"u1": x + ["p1"], "u4": y + ["q1"], "u2": x + ["p2"], "u5": y + ["q2"], "u3": x + ["p3"], "big": ["z"]}
+        outputs = {"u1": 100, "u2": 100, "u3": 100, "u4": 100, "u5": 100, "big": 300}
+        raw, prepare = synthetic(units, outputs=outputs)
         declaration, found, _ = formed(self, raw, prepare)
         fits_x = self.tokens(declaration, found, ["u1", "u2", "u3"])
         raw["budget"] = {"context_tokens": fits_x + 50}
         declaration, found, result = formed(self, raw, prepare)
         self.assertGreater(self.tokens(declaration, found, list(units)), fits_x + 50)
-        self.assertEqual([g.units for g in result.groups], [("u1", "u2", "u3"), ("u4", "u5")])
+        self.assertEqual([g.units for g in result.groups], [("u1", "u2", "u3"), ("u4", "u5"), ("big",)])
         total = sum(g.tokens for g in result.groups)
-        separating = [["u1", "u4"], ["u2", "u5"], ["u3"]]
+        separating = [["u1", "u4"], ["u2", "u5"], ["u3"], ["big"]]
         self.assertLess(total, sum(self.tokens(declaration, found, part) for part in separating))
         for built in result.groups:
             self.assertLessEqual(built.tokens, fits_x + 50)
+
+    def test_two_units_sharing_views_whose_outputs_fit_the_cap_are_merged_and_write_fewer_tokens_than_a_partition_that_separates_them(self):
+        shared = [f"s{n}" for n in range(20)]
+        units = {"u1": shared + ["p1"], "u2": ["q2"], "u3": shared + ["p3"], "big": ["z"]}
+        raw, prepare = synthetic(units, outputs={"u1": 100, "u2": 100, "u3": 100, "big": 200}, budget={"context_tokens": 1_000_000})
+        declaration, found, result = formed(self, raw, prepare)
+        self.assertEqual([list(g.units) for g in result.groups], [["u1", "u3"], ["u2"], ["big"]])
+        packed = planner.pack(declaration)
+        self.assertEqual(packed, [["u1", "u2"], ["u3"], ["big"]], "the kit's packing pairs the units by output alone and separates the overlap")
+        self.assertLess(sum(g.tokens for g in result.groups), sum(self.tokens(declaration, found, part) for part in packed))
+
+    def test_the_same_overlap_is_not_merged_when_the_merged_output_would_pass_the_largest_single_units_though_the_root_fits(self):
+        shared = [f"s{n}" for n in range(20)]
+        units = {"u1": shared + ["p1"], "u2": shared + ["p2"]}
+        raw, prepare = synthetic(units, outputs={"u1": 200, "u2": 200}, budget={"context_tokens": 1_000_000})
+        declaration, found, result = formed(self, raw, prepare)
+        self.assertLessEqual(self.tokens(declaration, found, ["u1", "u2"]), 1_000_000, "the merged root fits the budget")
+        self.assertEqual([g.units for g in result.groups], [("u1",), ("u2",)], "a merged output of 400 passes the cap of 200")
+        self.assertEqual([list(g.units) for g in result.groups], planner.pack(declaration))
 
     def test_units_with_no_overlap_write_no_view_twice_and_every_root_is_under_the_budget(self):
         units = {f"u{n}": [f"v{n}-{k}" for k in range(20)] for n in range(1, 7)}
@@ -209,29 +239,49 @@ class GroupsAreFormedFromTheUnitsNeeds(unittest.TestCase):
         declaration, found, _ = formed(self, raw, prepare)
         one = self.tokens(declaration, found, ["u1"])
         raw["budget"] = {"context_tokens": 2 * one}
-        _, _, result = formed(self, raw, prepare)
+        declaration, _, result = formed(self, raw, prepare)
         seen = [name for built in result.groups for name in held_names(built.shared.message)]
         self.assertEqual(len(seen), len(set(seen)), "no view is written twice")
         self.assertEqual(sorted(seen), sorted(view(f"v{n}-{k}") for n in range(1, 7) for k in range(20)))
         self.assertTrue(all(built.tokens <= 2 * one for built in result.groups))
-        self.assertLess(len(result.groups), 6, "units that fit together are merged, which writes the framing once")
+        self.assertEqual([list(g.units) for g in result.groups], planner.pack(declaration), "the groups equal the kit's packing")
+
+    def test_with_no_overlap_and_a_roomy_budget_nothing_is_merged_beyond_what_the_kit_packs(self):
+        units = {"u1": ["a", "b"], "u2": ["c", "d"], "u3": ["e", "f"], "u4": ["g"]}
+        raw, prepare = synthetic(units, docs=(), outputs={"u1": 100, "u2": 100, "u3": 200, "u4": 150},
+                                 budget={"context_tokens": 1_000_000})
+        declaration, _, result = formed(self, raw, prepare)
+        self.assertEqual([list(g.units) for g in result.groups], planner.pack(declaration))
+        self.assertEqual([g.units for g in result.groups], [("u1", "u2"), ("u3",), ("u4",)])
+        raw["budget"] = {}
+        declaration, _, unbudgeted = formed(self, raw, prepare)
+        self.assertEqual([g.units for g in unbudgeted.groups], [g.units for g in result.groups], "a budget that does not bind changes nothing")
+
+    def test_a_coupled_set_over_the_cap_stays_whole_and_takes_no_merge_though_a_unit_overlaps_it(self):
+        shared = [f"s{n}" for n in range(10)]
+        units = {"u1": shared + ["a"], "u2": shared + ["b"], "u3": shared + ["c"]}
+        raw, prepare = synthetic(units, couples=[("u1", "u2")], outputs={"u1": 200, "u2": 200, "u3": 100},
+                                 budget={"context_tokens": 1_000_000})
+        _, _, result = formed(self, raw, prepare)
+        self.assertEqual([g.units for g in result.groups], [("u1", "u2"), ("u3",)], "400 is over the cap of 200, and no unit joins it")
 
     def test_a_tie_in_what_two_merges_write_is_settled_by_declaration_order(self):
-        units = {"u1": ["a", "b"], "u2": ["a", "c"], "u3": ["a", "d"]}
-        raw, prepare = synthetic(units)
+        units = {"u1": ["a", "b"], "u2": ["a", "c"], "u3": ["a", "d"], "big": ["z"]}
+        outputs = {"u1": 100, "u2": 100, "u3": 100, "big": 300}
+        raw, prepare = synthetic(units, outputs=outputs)
         declaration, found, _ = formed(self, raw, prepare)
         two = self.tokens(declaration, found, ["u1", "u2"])
         raw["budget"] = {"context_tokens": two}
         _, _, result = formed(self, raw, prepare)
-        self.assertEqual([g.units for g in result.groups], [("u1", "u2"), ("u3",)])
+        self.assertEqual([g.units for g in result.groups], [("u1", "u2"), ("u3",), ("big",)])
         reordered = dict(reversed(list(raw["units"].items())))
         raw["units"] = reordered
         _, _, result = formed(self, raw, prepare)
-        self.assertEqual([g.units for g in result.groups], [("u3", "u2"), ("u1",)])
+        self.assertEqual([g.units for g in result.groups], [("big",), ("u3", "u2"), ("u1",)])
 
     def test_the_pair_that_saves_most_is_merged_first_whatever_its_place(self):
-        units = {"u1": ["a"], "u2": ["b"], "u3": ["c", "d", "e"], "u4": ["c", "d", "e"]}
-        raw, prepare = synthetic(units, docs=())
+        units = {"u1": ["a"], "u2": ["b"], "u3": ["c", "d", "e"], "u4": ["c", "d", "e"], "big": ["z"]}
+        raw, prepare = synthetic(units, docs=(), outputs={"u1": 100, "u2": 100, "u3": 100, "u4": 100, "big": 300})
         declaration, found, _ = formed(self, raw, prepare)
         raw["budget"] = {"context_tokens": self.tokens(declaration, found, ["u3", "u4"]) + 5}
         _, _, result = formed(self, raw, prepare)
@@ -615,8 +665,8 @@ class FiveHundredSixtyViews(unittest.TestCase):
 
 
 class TheFannedRunUnderTheProof(unittest.TestCase):
-    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C12: A test over a synthetic declaration proves that each group's root holds only the views that group's units declare, and that the key of a fanned-out run over the per-group roots differs from every recorded baseline key, that recording such a run adds it to the proof's run record, and that no baseline is edited and every existing baseline refusal still holds.
-    def test_the_fanned_form_holds_only_each_groups_views_and_its_key_differs_from_every_baseline_key_and_is_recorded_beside_them(self):
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C12: A test over a synthetic declaration proves that each group's root holds only the views that group's units declare, and that the plan of a fanned-out run over the per-group roots records each group's own root prefix hash and size, differing from the single form's root prefix hash and from every other group's, that recording such a run adds it to the proof's run record under the form fanned, and that no baseline is edited and every existing baseline refusal still holds.
+    def test_the_fanned_plan_records_each_groups_own_root_and_the_run_is_recorded_as_fanned_beside_untouched_baselines(self):
         raw, prepare = synthetic({"u1": ["a", "b"], "u2": ["c"], "u3": ["d", "e"]}, budget={"context_tokens": 800})
         harness = fx.Harness(self, raw=raw, prepare=prepare)
         self.assertGreater(len(harness.plan.groups), 1)
@@ -632,31 +682,50 @@ class TheFannedRunUnderTheProof(unittest.TestCase):
         fanned = plan(proof.FANNED)
         for group in fanned.plan.groups:
             self.assertEqual(held_names(fanned.roots[group.root].message), declared(raw, group.units))
+        single_shared = plan(proof.SINGLE_SHARED)
+        hashes = [group.prefix_sha for group in fanned.plan.groups]
+        self.assertEqual(len(set(hashes)), len(hashes), "each group's root prefix hash differs from every other group's")
+        self.assertTrue(all(h != single_shared.plan.groups[0].prefix_sha for h in hashes),
+                        "and from the single form's one root")
+        recorded = fanned.plan.to_dict()["groups"]
+        self.assertEqual([(g["prefix_sha"], g["tokens"]) for g in recorded],
+                         [(fanned.roots[g.root].prefix_sha, fanned.roots[g.root].tokens) for g in fanned.plan.groups],
+                         "the plan record carries each group's root prefix hash and size")
+        self.assertTrue(all(g["tokens"] > 0 for g in recorded))
+        outcome = self.fanned_run(harness, fanned)
+        self.assertEqual(outcome.form, proof.FANNED, "the run is recorded under the form fanned")
+        self.assertNotIn(proof.FANNED, proof.BASELINE_FORMS, "no baseline key is made for it")
         seeds = [{"id": "S1", "item": "u1-i1"}]
-        keys = {}
-        for form in proof.FORMS:
-            formed_plan = plan(form)
-            prompt = proof.digest([[g.root, g.prefix_sha, g.tokens] for g in formed_plan.plan.groups]) if form == proof.FANNED \
-                else formed_plan.plan.nodes[-1].message_sha
-            keys[form] = proof.BaselineKey(proof.seed_list_hash(seeds), "design-sha", "claude-sonnet-5-5", form, prompt)
-        self.assertEqual(len({key.id for key in keys.values()}), 3, "a form's key differs from every other's")
-        self.assertNotEqual(plan(proof.FANNED).plan.groups[0].prefix_sha, plan(proof.SINGLE_SHARED).plan.groups[0].prefix_sha,
-                            "the roots over the groups are not the single form's one root")
+        keys = {form: proof.BaselineKey(proof.seed_list_hash(seeds), "design-sha", "claude-sonnet-5-5", form,
+                                        plan(form).plan.nodes[-1].message_sha)
+                for form in (proof.SINGLE, proof.SINGLE_SHARED)}
         store = proof.BaselineStore()
-        baselines = proof_tests.singles()
-        store.add(keys[proof.SINGLE], baselines[0])
+        store.add(keys[proof.SINGLE], proof_tests.singles()[0])
         store.add(keys[proof.SINGLE_SHARED], proof_tests.run("shared", form=proof.SINGLE_SHARED))
         before = {key: [r.as_dict() for r in runs] for key, runs in store.runs.items()}
-        store.add(keys[proof.FANNED], proof_tests.fan("f1"))
-        self.assertEqual([r.id for r in store.recorded(keys[proof.FANNED])], ["f1"], "the fanned-out run is recorded under its key")
-        self.assertEqual({key: [r.as_dict() for r in runs] for key, runs in store.runs.items() if key != keys[proof.FANNED].id}, before,
-                         "no baseline is edited")
         for baseline in (proof.SINGLE, proof.SINGLE_SHARED):
             with self.assertRaises(proof.BaselineRecorded):
                 store.refuse_if_recorded(keys[baseline])
-        store.refuse_if_recorded(keys[proof.FANNED])
-        store.add(keys[proof.FANNED], proof_tests.fan("f2"))
-        self.assertEqual([r.id for r in store.recorded(keys[proof.FANNED])], ["f1", "f2"], "a fanned-out run is run again")
+        with self.assertRaises(proof.ProofError):
+            store.add(keys[proof.SINGLE], outcome)
+        self.assertEqual({key: [r.as_dict() for r in runs] for key, runs in store.runs.items()}, before, "no baseline is edited")
+
+    def fanned_run(self, harness, fanned):
+        """The fanned form played on the stub and recorded in the proof's shape."""
+        declaration = harness.declaration
+
+        def reply(call, number):
+            if call.label.startswith("root"):
+                return ex.Reply(text="ack", write=100)
+            group = next(g for g in fanned.plan.groups if g.id == call.label.split(".")[0])
+            return ex.Reply(structured=fx.good_answer(declaration, list(group.units)), text="done")
+
+        executor = ex.StubExecutor(replies=reply, clock=harness.clock, policy=harness.policy)
+        runner = scheduler.Scheduler(executor, harness.clock, scheduler.SerialConcurrency(), 1)
+        result = proof.run_form(runner, fanned, harness.spec)
+        figures = [proof_tests.RunsRecordedInOneShape.figures(None, "only", 1, 0.1)]
+        return proof.outcome_from_run("f1", fanned, result, figures, [{"id": "S1", "item": "u1-i1"}],
+                                      lambda seed, row: row.get("Item") == seed["item"], seeded_commit="seeded-1")
 
 
 if __name__ == "__main__":

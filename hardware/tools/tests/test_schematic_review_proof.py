@@ -34,6 +34,7 @@ import board_check  # noqa: E402
 import layout_fixtures as lfx  # noqa: E402
 import layout_review_proof as lrp  # noqa: E402
 import review_kit_fixtures as fx  # noqa: E402
+from review_kit_fixtures import single_group  # noqa: E402
 import review_proof_harness as harness  # noqa: E402
 import schematic_fixtures as sfx  # noqa: E402
 import schematic_review_proof as srp  # noqa: E402
@@ -86,7 +87,7 @@ class Proofed(unittest.TestCase):
         lfx.write(self.program, caller_tests.STUB.replace("PYTHON", sys.executable, 1).replace("TOOLS", repr(TOOLS)))
         os.chmod(self.program, os.stat(self.program).st_mode | stat.S_IXUSR)
         for patch in (mock.patch.dict(os.environ, {ex.AGENT_ENV: self.program, "STUB_SCENARIO": self.scenario_path, "STUB_LOG": self.log}),
-                      mock.patch.object(srp, "DESIGN", sfx.DESIGN), mock.patch.object(srp, "NAME", sfx.NAME)):
+                      mock.patch.object(srp, "DESIGN", sfx.DESIGN), mock.patch.object(srp, "NAME", sfx.NAME), single_group()):
             patch.start()
             self.addCleanup(patch.stop)
         self.scenario(verdicts=ALL_FAIL)

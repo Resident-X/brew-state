@@ -30,6 +30,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import layout_fixtures as lfx  # noqa: E402
 import production_files_review_proof as pfp  # noqa: E402
 import production_fixtures as pf  # noqa: E402
+from review_kit_fixtures import single_group  # noqa: E402
 import review_caller_production_files as caller  # noqa: E402
 import review_proof_harness as harness  # noqa: E402
 import test_review_caller_production_files as caller_tests  # noqa: E402
@@ -91,6 +92,9 @@ class Proofed(unittest.TestCase):
         patch = mock.patch.dict(os.environ, {ex.AGENT_ENV: self.program, "STUB_SCENARIO": self.scenario_path, "STUB_LOG": self.log})
         patch.start()
         self.addCleanup(patch.stop)
+        one = single_group()
+        one.start()
+        self.addCleanup(one.stop)
         self.scenario(verdicts=ALL_DIFFER)
 
     def scenario(self, **values):

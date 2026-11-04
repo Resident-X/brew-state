@@ -219,6 +219,11 @@ def repair_cosmetic(tables: Dict[str, Any], shape: AnswerShape) -> Tuple[Dict[st
     return repaired, repairs, fatal
 
 
+def mentions(text: str, name: str) -> bool:
+    """Whether `text` names `name` as a whole name, not as the end or the start of a longer one."""
+    return re.search(r"(?<![\w.\-])" + re.escape(name) + r"(?![\w\-])", text) is not None
+
+
 def cited(text: str, foreign: Sequence[str], held: Sequence[str]) -> List[str]:
     """The artefacts of `foreign` that a cell names, by the whole name or by its last component when no artefact held has that
     last component, in the order of `foreign`."""
@@ -226,7 +231,7 @@ def cited(text: str, foreign: Sequence[str], held: Sequence[str]) -> List[str]:
     found = []
     for name in foreign:
         base = name.rsplit("/", 1)[-1]
-        if name in text or (base not in held_bases and base in text):
+        if mentions(text, name) or (base not in held_bases and mentions(text, base)):
             found.append(name)
     return found
 

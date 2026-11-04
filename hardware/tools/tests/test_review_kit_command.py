@@ -822,8 +822,10 @@ class GroupRoots(Case):
 
     def merging(self):
         """The base declaration with a budget under which u4 (whose needs u1's include) merges into u1's group and the group of
-        u2 and u3 stays apart."""
+        u2 and u3 stays apart. The units' expected outputs let u1 and u4 meet the largest single unit's together."""
         raw = fx.declaration_dict()
+        raw["units"]["u1"]["expected_output_tokens"] = 300
+        raw["units"]["u2"]["expected_output_tokens"] = 400
         raw["budget"] = {"context_tokens": 8500}
         return raw
 
