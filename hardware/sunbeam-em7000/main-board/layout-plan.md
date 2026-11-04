@@ -194,12 +194,12 @@ In the verdict tables a line of `measures.txt` is cited without its bars (`CROSS
 
 **Commit**: 5295e38327f89de1073585b95405820fdb6702eb (`main-board: placement candidate 1`)
 
-**Renders**: from the repository root, with `KICAD_CLI` set (the checkout is outside the working tree, the output folder outside every design's folder; `$SCRATCH` stands for any scratch folder that is neither):
+**Renders**: from the repository root, with `KICAD_CLI` set (the checkout is outside the working tree, the output folder outside every design's folder):
 
 ```
-git worktree add --detach $SCRATCH/placement-work/b2-wt-1 5295e38327f89de1073585b95405820fdb6702eb
-(cd $SCRATCH/placement-work/b2-wt-1/hardware/sunbeam-em7000/main-board && task hw:placement -- --board main-board.kicad_pcb --project main-board.kicad_pro --out $SCRATCH/placement-work/b2-placement-out-1)
-git worktree remove $SCRATCH/placement-work/b2-wt-1
+git worktree add --detach /private/tmp/claude-501/-Users-david-repos-coffee/bbdbdd7d-2b79-4b88-9553-2a2bcf63188a/scratchpad/placement-work/b2-wt-1 5295e38327f89de1073585b95405820fdb6702eb
+(cd /private/tmp/claude-501/-Users-david-repos-coffee/bbdbdd7d-2b79-4b88-9553-2a2bcf63188a/scratchpad/placement-work/b2-wt-1/hardware/sunbeam-em7000/main-board && task hw:placement -- --board main-board.kicad_pcb --project main-board.kicad_pro --out /private/tmp/claude-501/-Users-david-repos-coffee/bbdbdd7d-2b79-4b88-9553-2a2bcf63188a/scratchpad/placement-work/b2-placement-out-1)
+git worktree remove /private/tmp/claude-501/-Users-david-repos-coffee/bbdbdd7d-2b79-4b88-9553-2a2bcf63188a/scratchpad/placement-work/b2-wt-1
 ```
 
 **Measures** (four `OUTSIDE` lines name a part):
@@ -251,12 +251,12 @@ Candidate 1 is the first board branch's chosen placement (its candidate 5, commi
 
 **Commit**: 78cb7f6eb36a68c5bf18d2398326e49c45f75410 (`main-board: placement candidate 2`)
 
-**Renders**: from the repository root, with `KICAD_CLI` set (the checkout is outside the working tree, the output folder outside every design's folder; `$SCRATCH` stands for any scratch folder that is neither):
+**Renders**: from the repository root, with `KICAD_CLI` set (the checkout is outside the working tree, the output folder outside every design's folder):
 
 ```
-git worktree add --detach $SCRATCH/placement-work/b2-wt-2 78cb7f6eb36a68c5bf18d2398326e49c45f75410
-(cd $SCRATCH/placement-work/b2-wt-2/hardware/sunbeam-em7000/main-board && task hw:placement -- --board main-board.kicad_pcb --project main-board.kicad_pro --out $SCRATCH/placement-work/b2-placement-out-2)
-git worktree remove $SCRATCH/placement-work/b2-wt-2
+git worktree add --detach /private/tmp/claude-501/-Users-david-repos-coffee/bbdbdd7d-2b79-4b88-9553-2a2bcf63188a/scratchpad/placement-work/b2-wt-2 78cb7f6eb36a68c5bf18d2398326e49c45f75410
+(cd /private/tmp/claude-501/-Users-david-repos-coffee/bbdbdd7d-2b79-4b88-9553-2a2bcf63188a/scratchpad/placement-work/b2-wt-2/hardware/sunbeam-em7000/main-board && task hw:placement -- --board main-board.kicad_pcb --project main-board.kicad_pro --out /private/tmp/claude-501/-Users-david-repos-coffee/bbdbdd7d-2b79-4b88-9553-2a2bcf63188a/scratchpad/placement-work/b2-placement-out-2)
+git worktree remove /private/tmp/claude-501/-Users-david-repos-coffee/bbdbdd7d-2b79-4b88-9553-2a2bcf63188a/scratchpad/placement-work/b2-wt-2
 ```
 
 **Measures** (no `OUTSIDE` line names a part):
@@ -304,12 +304,12 @@ Candidate 2 is candidate 1 with the zero-crossing detector brought into `mains` 
 
 **Commit**: 13ec78f86679b12cd2bca49a7b71a45ad449fb7b (`main-board: placement candidate 3`)
 
-**Renders**: from the repository root, with `KICAD_CLI` set (the checkout is outside the working tree, the output folder outside every design's folder; `$SCRATCH` stands for any scratch folder that is neither):
+**Renders**: from the repository root, with `KICAD_CLI` set (the checkout is outside the working tree, the output folder outside every design's folder):
 
 ```
-git worktree add --detach $SCRATCH/placement-work/b2-wt-3 13ec78f86679b12cd2bca49a7b71a45ad449fb7b
-(cd $SCRATCH/placement-work/b2-wt-3/hardware/sunbeam-em7000/main-board && task hw:placement -- --board main-board.kicad_pcb --project main-board.kicad_pro --out $SCRATCH/placement-work/b2-placement-out-3)
-git worktree remove $SCRATCH/placement-work/b2-wt-3
+git worktree add --detach /private/tmp/claude-501/-Users-david-repos-coffee/bbdbdd7d-2b79-4b88-9553-2a2bcf63188a/scratchpad/placement-work/b2-wt-3 13ec78f86679b12cd2bca49a7b71a45ad449fb7b
+(cd /private/tmp/claude-501/-Users-david-repos-coffee/bbdbdd7d-2b79-4b88-9553-2a2bcf63188a/scratchpad/placement-work/b2-wt-3/hardware/sunbeam-em7000/main-board && task hw:placement -- --board main-board.kicad_pcb --project main-board.kicad_pro --out /private/tmp/claude-501/-Users-david-repos-coffee/bbdbdd7d-2b79-4b88-9553-2a2bcf63188a/scratchpad/placement-work/b2-placement-out-3)
+git worktree remove /private/tmp/claude-501/-Users-david-repos-coffee/bbdbdd7d-2b79-4b88-9553-2a2bcf63188a/scratchpad/placement-work/b2-wt-3
 ```
 
 **Measures** (no `OUTSIDE` line names a part):
@@ -357,12 +357,12 @@ Candidate 3 is candidate 2 with the U601 measurement cluster re-placed as one pl
 
 **Commit**: ff5fbf208c218e29680f33f230932775a8bb3bd4 (`main-board: placement candidate 4`)
 
-**Renders**: from the repository root, with `KICAD_CLI` set (the checkout is outside the working tree, the output folder outside every design's folder; `$SCRATCH` stands for any scratch folder that is neither):
+**Renders**: from the repository root, with `KICAD_CLI` set (the checkout is outside the working tree, the output folder outside every design's folder):
 
 ```
-git worktree add --detach $SCRATCH/placement-work/b2-wt-4 ff5fbf208c218e29680f33f230932775a8bb3bd4
-(cd $SCRATCH/placement-work/b2-wt-4/hardware/sunbeam-em7000/main-board && task hw:placement -- --board main-board.kicad_pcb --project main-board.kicad_pro --out $SCRATCH/placement-work/b2-placement-out-4)
-git worktree remove $SCRATCH/placement-work/b2-wt-4
+git worktree add --detach /private/tmp/claude-501/-Users-david-repos-coffee/bbdbdd7d-2b79-4b88-9553-2a2bcf63188a/scratchpad/placement-work/b2-wt-4 ff5fbf208c218e29680f33f230932775a8bb3bd4
+(cd /private/tmp/claude-501/-Users-david-repos-coffee/bbdbdd7d-2b79-4b88-9553-2a2bcf63188a/scratchpad/placement-work/b2-wt-4/hardware/sunbeam-em7000/main-board && task hw:placement -- --board main-board.kicad_pcb --project main-board.kicad_pro --out /private/tmp/claude-501/-Users-david-repos-coffee/bbdbdd7d-2b79-4b88-9553-2a2bcf63188a/scratchpad/placement-work/b2-placement-out-4)
+git worktree remove /private/tmp/claude-501/-Users-david-repos-coffee/bbdbdd7d-2b79-4b88-9553-2a2bcf63188a/scratchpad/placement-work/b2-wt-4
 ```
 
 **Measures** (no `OUTSIDE` line names a part):
@@ -425,8 +425,8 @@ Candidate 4 is candidate 3 with the net tie NT601 added and the converter's high
 - **Views**: the commands the views were rendered with, as run (the placement view was rendered):
 
 ```
-task hw:views -- --board hardware/sunbeam-em7000/main-board/main-board.kicad_pcb --project hardware/sunbeam-em7000/main-board/main-board.kicad_pro --class Mains --class MainsTrunk --class MainsBranch --class Mains_Entry --class Ground --class Supply5V --class Supply3V3 --class Sense --class Fast --out $SCRATCH/pass1/views
-task hw:placement -- --board hardware/sunbeam-em7000/main-board/main-board.kicad_pcb --project hardware/sunbeam-em7000/main-board/main-board.kicad_pro --out $SCRATCH/pass1/placement
+task hw:views -- --board hardware/sunbeam-em7000/main-board/main-board.kicad_pcb --project hardware/sunbeam-em7000/main-board/main-board.kicad_pro --class Mains --class MainsTrunk --class MainsBranch --class Mains_Entry --class Ground --class Supply5V --class Supply3V3 --class Sense --class Fast --out /tmp/pass1/views
+task hw:placement -- --board hardware/sunbeam-em7000/main-board/main-board.kicad_pcb --project hardware/sunbeam-em7000/main-board/main-board.kicad_pro --out /tmp/pass1/placement
 ```
 
 The class D items that the first run could not judge (marked `cannot judge, then <verdict>`) were each rerun alone, read-only, on the same board file, with the extra views from the same `views` and `placement` directories and, for `MFG-1`, the maker record `docs/board-manufacturer-jlcpcb.md` as a text file. A `fail` stands until the narrow re-judge of the fixed board records its later verdict at a commit.
@@ -531,8 +531,8 @@ Bearing on no critical net:
 - **Views**: the commands the views were rendered with, as run (the placement view was rendered):
 
 ```
-task hw:views -- --board hardware/sunbeam-em7000/main-board/main-board.kicad_pcb --project hardware/sunbeam-em7000/main-board/main-board.kicad_pro --class Mains --class MainsTrunk --class MainsBranch --class Mains_Entry --class Ground --class Supply5V --class Supply3V3 --class Sense --class Fast --out $SCRATCH/crit/views
-task hw:placement -- --board hardware/sunbeam-em7000/main-board/main-board.kicad_pcb --project hardware/sunbeam-em7000/main-board/main-board.kicad_pro --out $SCRATCH/crit/placement
+task hw:views -- --board hardware/sunbeam-em7000/main-board/main-board.kicad_pcb --project hardware/sunbeam-em7000/main-board/main-board.kicad_pro --class Mains --class MainsTrunk --class MainsBranch --class Mains_Entry --class Ground --class Supply5V --class Supply3V3 --class Sense --class Fast --out /Users/david/real5/crit/views
+task hw:placement -- --board hardware/sunbeam-em7000/main-board/main-board.kicad_pcb --project hardware/sunbeam-em7000/main-board/main-board.kicad_pro --out /Users/david/real5/crit/placement
 ```
 
 How this pass was judged, plainly. The review kit's shared context for this six-layer board would have been about 1.33 million tokens, too large to fork, so the check was judged by area group, by hand: six reviewers from fresh contexts, each reading the design files, the views and the placement view, and measuring the board with read-only scripts. They were A (MAINS, POWER, CONN), B (MFG, TEST, WORK), C (GROUND, DECOUPLE, EMI), D1 and D2 (two independent replicas of SENSE, CLOCK and FLOOR, one group doubled) and E (BOARD-1 to BOARD-18). The merge was by hand under the method's rule: any fail from either replica stands, a pass stands only if both pass, and otherwise the worse verdict stands. The views were rendered of the first locked-copper commit `04fdcd00`, which the copper fixes then replaced with the Board judged commit `398482dd` (33 segments out, 49 in, 4 ground vias out, 29 in, no mains-class copper changed). Every item the fixes touched was measured again on `398482dd` and the result is in its row; the other rows rest on copper the fixes did not change. Each item that failed on `04fdcd00` and is right on `398482dd` is written `pass`, with its first failure in Why, because the commit that put it right is the Board judged commit itself. Two rule-kind items the reviewers could not judge without the pre-order report, GROUND-5 and MFG-6, were measured with the repository's own board_check functions and fail on the stored fills; both are written `cannot judge, then fail`. Every `fail` below is a standing fail, left as a plain `fail` with its finding in Why and the open item or deviation that carries it; none was turned into a pass, and the history command is expected to flag each one. The critical copper is judged on its own: the rest of the copper (the router's) was not yet routed on `398482dd`, so a statement about a plane below means the plane of the critical-only board.
