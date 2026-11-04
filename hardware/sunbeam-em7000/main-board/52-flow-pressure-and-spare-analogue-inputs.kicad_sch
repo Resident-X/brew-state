@@ -2580,31 +2580,10 @@
 	)
 	(wire
 		(pts
-			(xy 167.64 50.8)
-			(xy 167.64 55.88)
-		)
-		(uuid "827741de-f93e-4a95-94fa-dba388f7bcf0")
-	)
-	(wire
-		(pts
-			(xy 167.64 147.32)
-			(xy 167.64 152.4)
-		)
-		(uuid "1d09dd35-8891-4074-9967-9913ebb4db7c")
-	)
-	(wire
-		(pts
 			(xy 167.64 182.88)
 			(xy 167.64 187.96)
 		)
 		(uuid "4ed1db9c-bc52-4515-ba29-55a46c49d861")
-	)
-	(wire
-		(pts
-			(xy 167.64 257.81)
-			(xy 167.64 262.89)
-		)
-		(uuid "585809dc-7ec4-400e-87f1-ac69caadc9c2")
 	)
 	(wire
 		(pts
@@ -4547,84 +4526,6 @@
 			)
 		))
 	(symbol
-		(lib_id "Connector:TestPoint")
-		(at 167.64 50.8 0)
-		(unit 1)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "3353d4de-8e19-4f17-bb26-70d477546911")
-		(property "Reference" "TP520"
-			(at 167.64 43.942 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "TestPoint"
-			(at 167.64 45.72 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "main-board:TestPoint_Pad_D1.0mm_Tight"
-			(at 167.64 50.8 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 167.64 50.8 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "test point"
-			(at 167.64 50.8 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "TP520")
-					(unit 1)
-				)
-			)
-		)
-	
-		(property "Rating" "pad 1.5mm"
-			(at 167.64 50.8 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "LCSC" "none"
-			(at 167.64 50.8 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		))
-	(symbol
 		(lib_id "Connector_Generic:Conn_01x04")
 		(at 38.1 147.32 180)
 		(unit 1)
@@ -5369,84 +5270,6 @@
 		)
 		(property "Rating" "dual series Schottky 30V 200mA"
 			(at 142.24 147.32 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		))
-	(symbol
-		(lib_id "Connector:TestPoint")
-		(at 167.64 147.32 0)
-		(unit 1)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "561d7a9c-c6b2-4112-a4bf-b072c092494c")
-		(property "Reference" "TP521"
-			(at 167.64 140.462 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "TestPoint"
-			(at 167.64 142.24 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "main-board:TestPoint_Pad_D1.0mm_Tight"
-			(at 167.64 147.32 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 167.64 147.32 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "test point"
-			(at 167.64 147.32 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "TP521")
-					(unit 1)
-				)
-			)
-		)
-	
-		(property "Rating" "pad 1.5mm"
-			(at 167.64 147.32 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "LCSC" "none"
-			(at 167.64 147.32 0)
 			(hide yes)
 			(effects
 				(font
@@ -6663,84 +6486,6 @@
 		)
 		(property "Rating" "dual series Schottky 30V 200mA"
 			(at 142.24 257.81 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		))
-	(symbol
-		(lib_id "Connector:TestPoint")
-		(at 167.64 257.81 0)
-		(unit 1)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "b1ddd86a-ec94-4b2a-acea-391cc5defd21")
-		(property "Reference" "TP524"
-			(at 167.64 250.952 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "TestPoint"
-			(at 167.64 252.73 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "main-board:TestPoint_Pad_D1.0mm_Tight"
-			(at 167.64 257.81 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 167.64 257.81 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "test point"
-			(at 167.64 257.81 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "TP524")
-					(unit 1)
-				)
-			)
-		)
-	
-		(property "Rating" "pad 1.5mm"
-			(at 167.64 257.81 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "LCSC" "none"
-			(at 167.64 257.81 0)
 			(hide yes)
 			(effects
 				(font

@@ -1060,20 +1060,6 @@
 	)
 	(wire
 		(pts
-			(xy 134.62 104.14)
-			(xy 144.78 104.14)
-		)
-		(uuid "64f813be-bccd-4380-8573-9c68bdf2dd14")
-	)
-	(wire
-		(pts
-			(xy 134.62 142.24)
-			(xy 144.78 142.24)
-		)
-		(uuid "364a3db4-6a0a-4e99-9281-d26a1e7afdf0")
-	)
-	(wire
-		(pts
 			(xy 45.72 81.28)
 			(xy 48.26 81.28)
 		)
@@ -1917,84 +1903,6 @@
 			)
 		))
 	(symbol
-		(lib_id "Connector:TestPoint")
-		(at 134.62 104.14 0)
-		(unit 1)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "66a7ffa6-ba03-406a-948c-586a12e268df")
-		(property "Reference" "TP862"
-			(at 134.62 97.282 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "TP"
-			(at 134.62 99.06 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "main-board:TestPoint_Pad_D1.0mm_Tight"
-			(at 134.62 104.14 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 134.62 104.14 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "test point"
-			(at 134.62 104.14 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/820a13ac-b7b7-49d9-a538-a11c5837650e"
-					(reference "TP862")
-					(unit 1)
-				)
-			)
-		)
-	
-		(property "Rating" "test point"
-			(at 134.62 104.14 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "LCSC" "none"
-			(at 134.62 104.14 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		))
-	(symbol
 		(lib_id "Device:R")
 		(at 99.06 142.24 180)
 		(unit 1)
@@ -2181,84 +2089,6 @@
 	
 		(property "Rating" "10% X7R 50V 0603"
 			(at 116.84 142.24 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		))
-	(symbol
-		(lib_id "Connector:TestPoint")
-		(at 134.62 142.24 0)
-		(unit 1)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "39cca436-eb9d-4699-ac0e-c559f520d7c0")
-		(property "Reference" "TP863"
-			(at 134.62 135.382 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "TP"
-			(at 134.62 137.16 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "main-board:TestPoint_Pad_D1.0mm_Tight"
-			(at 134.62 142.24 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 134.62 142.24 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "test point"
-			(at 134.62 142.24 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/820a13ac-b7b7-49d9-a538-a11c5837650e"
-					(reference "TP863")
-					(unit 1)
-				)
-			)
-		)
-	
-		(property "Rating" "test point"
-			(at 134.62 142.24 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "LCSC" "none"
-			(at 134.62 142.24 0)
 			(hide yes)
 			(effects
 				(font

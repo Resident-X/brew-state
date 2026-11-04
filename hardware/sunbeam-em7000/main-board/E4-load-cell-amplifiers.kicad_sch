@@ -2021,12 +2021,6 @@
 		)
 		(uuid "ae11f4c2-2d29-443a-b067-019341358171")
 	)
-  (junction
-    (at 190.5 170.18)
-    (diameter 0)
-    (color 0 0 0 0)
-    (uuid "f4c5ff7e-9b35-44ce-96ad-56c3ef5e1429")
-  )
 	(symbol
 		(lib_id "Analog_ADC:HX711")
 		(at 165.1 76.2 0)
@@ -3902,75 +3896,6 @@
 	
 		(property "Rating" "1% 100mW 75V 0603"
 			(at 193.04 176.53 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		))
-	(symbol
-		(lib_id "Connector:TestPoint")
-		(at 190.5 170.18 0)
-		(unit 1)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "caa35620-9244-4ce6-bb0b-4c6fbc9346c5")
-		(property "Reference" "TP672"
-			(at 190.5 163.322 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "TP_WT2_DATA"
-			(at 190.5 165.1 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "main-board:TestPoint_Pad_D1.0mm_Tight"
-			(at 190.5 170.18 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 190.5 170.18 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "test point"
-			(at 190.5 170.18 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/2f4c407a-40de-4ebe-bd1a-5cdba21fcb81"
-					(reference "TP672")
-					(unit 1)
-				)
-			)
-		)
-	
-		(property "LCSC" "none"
-			(at 190.5 170.18 0)
 			(hide yes)
 			(effects
 				(font

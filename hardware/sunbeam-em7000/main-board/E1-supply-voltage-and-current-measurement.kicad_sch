@@ -2348,16 +2348,6 @@
 		)
 		(uuid "d606fc5d-6b6d-42fc-8223-0badab367be8")
 	)
-	(label "AMC_DRDY"
-		(at 297.18 185.42 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "68446f7b-3a80-4134-aa15-0b8883d4f648")
-	)
 	(label "SPI2_MISO"
 		(at 297.18 208.28 0)
 		(effects
@@ -5818,75 +5808,6 @@
 			(project "main-board"
 				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d82e4ee5-02af-4156-8101-fb52a7f3e96c"
 					(reference "TP604")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Connector:TestPoint")
-		(at 297.18 185.42 90)
-		(unit 1)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "2bc74f24-1384-4dad-aecf-50ac09465762")
-		(property "Reference" "TP601"
-			(at 290.322 185.42 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "TP_AMC_DRDY"
-			(at 292.1 185.42 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "main-board:TestPoint_Pad_D1.0mm_Tight"
-			(at 297.18 185.42 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 297.18 185.42 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "test point"
-			(at 297.18 185.42 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "LCSC" "none"
-			(at 297.18 185.42 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d82e4ee5-02af-4156-8101-fb52a7f3e96c"
-					(reference "TP601")
 					(unit 1)
 				)
 			)

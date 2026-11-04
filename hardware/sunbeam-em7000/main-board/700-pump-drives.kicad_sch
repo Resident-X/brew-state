@@ -1741,16 +1741,6 @@
 		)
 	)
 	(junction
-		(at 35.56 55.88)
-		(diameter 0)
-		(uuid "3ef58544-b72c-45c7-9952-684bd4ffd5f4")
-	)
-	(junction
-		(at 35.56 146.05)
-		(diameter 0)
-		(uuid "7f1f07a0-9a19-4319-9928-c131187fba41")
-	)
-	(junction
 		(at 233.68 60.96)
 		(diameter 0)
 		(uuid "ba4eb8f8-a35c-47f5-b869-60c2e9a8a5b8")
@@ -1788,24 +1778,10 @@
 	)
 	(wire
 		(pts
-			(xy 35.56 49.53)
-			(xy 35.56 55.88)
-		)
-		(uuid "11ee349f-3fe9-4dfb-9d8d-ed567ac57587")
-	)
-	(wire
-		(pts
 			(xy 30.48 55.88)
 			(xy 54.61 55.88)
 		)
 		(uuid "3b1a67b6-13df-4175-b52f-dcd086bc30ce")
-	)
-	(wire
-		(pts
-			(xy 35.56 139.7)
-			(xy 35.56 146.05)
-		)
-		(uuid "d1237443-4561-4e1b-b056-be6685cc8722")
 	)
 	(wire
 		(pts
@@ -2534,102 +2510,6 @@
 		)
 		(uuid "079c53ba-9dfe-4a53-b457-a5301c820a8d")
 	)
-	(symbol
-		(lib_id "Connector:TestPoint")
-		(at 35.56 49.53 0)
-		(unit 1)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "11fc3c35-3e7d-4ce6-abb7-79dd5749d252")
-		(property "Reference" "TP701"
-			(at 35.56 42.672 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "TP"
-			(at 35.56 44.45 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "main-board:TestPoint_Pad_D1.0mm_Tight"
-			(at 35.56 49.53 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 35.56 49.53 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "test point"
-			(at 35.56 49.53 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "LCSC" "none"
-			(at 35.56 49.53 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "MPN" ""
-			(at 35.56 49.53 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Manufacturer" ""
-			(at 35.56 49.53 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/47e9a4a3-362b-493f-94f4-03763acb1d51"
-					(reference "TP701")
-					(unit 1)
-				)
-			)
-		)
-	
-		(property "Rating" "test point"
-			(at 35.56 49.53 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		))
 	(symbol
 		(lib_id "Device:R")
 		(at 54.61 59.69 0)
@@ -3493,102 +3373,6 @@
 	
 		(property "Rating" "5x20 mm (5.2 x 20) slow-blow 250 VAC cartridge in a 5x20 holder (listed 250 V, 6.3 A); branch fuse of the coffee pump"
 			(at 240.03 54.61 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		))
-	(symbol
-		(lib_id "Connector:TestPoint")
-		(at 35.56 139.7 0)
-		(unit 1)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "d36670b5-cd16-4635-a6b0-9a7ee6689e02")
-		(property "Reference" "TP711"
-			(at 35.56 132.842 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "TP"
-			(at 35.56 134.62 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "main-board:TestPoint_Pad_D1.0mm_Tight"
-			(at 35.56 139.7 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 35.56 139.7 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "test point"
-			(at 35.56 139.7 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "LCSC" "none"
-			(at 35.56 139.7 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "MPN" ""
-			(at 35.56 139.7 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Manufacturer" ""
-			(at 35.56 139.7 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/47e9a4a3-362b-493f-94f4-03763acb1d51"
-					(reference "TP711")
-					(unit 1)
-				)
-			)
-		)
-	
-		(property "Rating" "test point"
-			(at 35.56 139.7 0)
 			(hide yes)
 			(effects
 				(font

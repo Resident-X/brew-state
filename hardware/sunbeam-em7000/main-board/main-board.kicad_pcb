@@ -14399,7 +14399,7 @@
 	(footprint "Resistor_SMD:R_0603_1608Metric"
 		(layer "F.Cu")
 		(uuid "20d5e636-c87d-4909-8db6-422381d100b0")
-		(at 82.8 14 90)
+		(at 82.05 13.48 90)
 		(descr "Resistor SMD 0603 (1608 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R800"
@@ -24250,7 +24250,7 @@
 	(footprint "Resistor_SMD:R_0603_1608Metric"
 		(layer "F.Cu")
 		(uuid "41ee7ec8-faed-401b-bedd-2ccaaaac09bb")
-		(at 94.35 8.05 90)
+		(at 94.35 6.65 90)
 		(descr "Resistor SMD 0603 (1608 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R799"
@@ -29278,7 +29278,7 @@
 	(footprint "Resistor_SMD:R_0603_1608Metric"
 		(layer "F.Cu")
 		(uuid "4f9240ed-ddc8-424d-8ec3-8d1e64cc5386")
-		(at 116.45 23.9 180)
+		(at 113.6 27.3 180)
 		(descr "Resistor SMD 0603 (1608 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R402"
@@ -50049,7 +50049,7 @@
 	(footprint "Resistor_SMD:R_0603_1608Metric"
 		(layer "F.Cu")
 		(uuid "8d124e57-208d-4cd8-b203-7a29895594b0")
-		(at 82.8 10.8 90)
+		(at 82.05 10.4 90)
 		(descr "Resistor SMD 0603 (1608 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R798"
@@ -53556,7 +53556,7 @@
 	(footprint "Resistor_SMD:R_0603_1608Metric"
 		(layer "F.Cu")
 		(uuid "96d9e72e-dccb-4adf-b2f5-4f9fc3967235")
-		(at 99.55 8.05 90)
+		(at 99.55 6.65 90)
 		(descr "Resistor SMD 0603 (1608 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R611"
@@ -53889,7 +53889,7 @@
 	(footprint "Capacitor_SMD:C_0603_1608Metric"
 		(layer "F.Cu")
 		(uuid "97aa1961-e5e7-46bb-b04c-62c4e269bf1b")
-		(at 87.5 8.05 90)
+		(at 87.5 7.9 90)
 		(descr "Capacitor SMD 0603 (1608 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 76, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "capacitor")
 		(property "Reference" "C413"
@@ -55652,7 +55652,7 @@
 	(footprint "Capacitor_SMD:C_0603_1608Metric"
 		(layer "F.Cu")
 		(uuid "9ad09f6e-bd0a-4f99-b98f-26e1d0c89cdd")
-		(at 69.6 83 90)
+		(at 69.7 83 90)
 		(descr "Capacitor SMD 0603 (1608 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 76, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "capacitor")
 		(property "Reference" "C612"
@@ -60055,7 +60055,7 @@
 	(footprint "Resistor_SMD:R_0603_1608Metric"
 		(layer "F.Cu")
 		(uuid "a419fe46-3e97-4a2a-bab6-786f239c03ae")
-		(at 92.6 8.05 -90)
+		(at 92.6 6.65 -90)
 		(descr "Resistor SMD 0603 (1608 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R522"
@@ -62743,7 +62743,7 @@
 	(footprint "Resistor_SMD:R_0603_1608Metric"
 		(layer "F.Cu")
 		(uuid "ada69a69-4760-41fa-80c4-a569fa5de58e")
-		(at 96.05 8.05 90)
+		(at 96.05 6.65 90)
 		(descr "Resistor SMD 0603 (1608 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R797"
@@ -68582,7 +68582,7 @@
 	(footprint "Resistor_SMD:R_0603_1608Metric"
 		(layer "F.Cu")
 		(uuid "bf394d9d-59b0-41dc-9a0c-149a0ea7cca0")
-		(at 97.85 8.05 90)
+		(at 97.85 6.65 90)
 		(descr "Resistor SMD 0603 (1608 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R612"
@@ -88956,11 +88956,11 @@
 	(footprint "Resistor_SMD:R_0603_1608Metric"
 		(layer "F.Cu")
 		(uuid "fef977f1-d897-4ff6-afc0-cc4efb519102")
-		(at 66.15 11.5 90)
+		(at 76.75 28.25 -90)
 		(descr "Resistor SMD 0603 (1608 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R832"
-			(at -0.02 2.67 0)
+			(at -0.02 2.67 180)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(uuid "7a65646f-e841-4ee7-9bc2-f69b2e61bc31")
@@ -88972,7 +88972,7 @@
 			)
 		)
 		(property "Value" "10k"
-			(at 0 1.43 90)
+			(at 0 1.43 270)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(hide yes)
@@ -88985,7 +88985,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "908c811f-0fb2-4311-b9a3-9ddcf458fe33")
@@ -88996,7 +88996,7 @@
 			)
 		)
 		(property "Description" "Resistor"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "a37eb3ba-2cf8-4100-a269-2c7e586fa0fa")
@@ -89007,7 +89007,7 @@
 			)
 		)
 		(property "KiLib_Generator" "SMD_2terminal_chip_molded"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.SilkS")
 			(hide yes)
 			(uuid "f73b4435-8036-5309-9e2c-95655c0775e6")
@@ -89019,7 +89019,7 @@
 			)
 		)
 		(property "LCSC" "C25804"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "896b1c45-b16c-5120-9c44-ad176ef17c78")
@@ -89031,7 +89031,7 @@
 			)
 		)
 		(property "MPN" "0603WAF1002T5E"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "e2d4def4-dea2-515b-a3ae-ab3e3c534861")
@@ -89043,7 +89043,7 @@
 			)
 		)
 		(property "Manufacturer" "UNI-ROYAL"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "9cff9a9a-6346-5845-a561-f69787ceca21")
@@ -89055,7 +89055,7 @@
 			)
 		)
 		(property "Rating" "1% 100mW 75V 0603"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "f1b4ba51-5000-56a5-b60f-c428ae55e1ac")
@@ -89070,16 +89070,6 @@
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
-			(start -0.237258 -0.5225)
-			(end 0.237258 -0.5225)
-			(stroke
-				(width 0.12)
-				(type solid)
-			)
-			(layer "F.SilkS")
-			(uuid "1a1b9890-9a40-462d-baa9-cb52fbd6b41c")
-		)
-		(fp_line
 			(start -0.237258 0.5225)
 			(end 0.237258 0.5225)
 			(stroke
@@ -89088,6 +89078,16 @@
 			)
 			(layer "F.SilkS")
 			(uuid "de2249ee-9eb4-4a32-bc0e-ab35cf50c825")
+		)
+		(fp_line
+			(start -0.237258 -0.5225)
+			(end 0.237258 -0.5225)
+			(stroke
+				(width 0.12)
+				(type solid)
+			)
+			(layer "F.SilkS")
+			(uuid "1a1b9890-9a40-462d-baa9-cb52fbd6b41c")
 		)
 		(fp_rect
 			(start -1.48 -0.73)
@@ -89112,7 +89112,7 @@
 			(uuid "1704614e-a755-47b3-933c-6139cf8ec5be")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(uuid "e35bc292-6a6c-41c2-9c8a-8f0f11dcf90f")
 			(effects
@@ -89123,7 +89123,7 @@
 			)
 		)
 		(pad "1" smd roundrect
-			(at -0.825 0 90)
+			(at -0.825 0 270)
 			(size 0.8 0.95)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -89132,7 +89132,7 @@
 			(uuid "36f2b0fd-d300-408a-a5b6-c5dd9be8e22d")
 		)
 		(pad "2" smd roundrect
-			(at 0.825 0 90)
+			(at 0.825 0 270)
 			(size 0.8 0.95)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
@@ -89549,113 +89549,6 @@
 			(pinfunction "1_1")
 			(pintype "passive")
 			(uuid "1f46b158-a8d2-4a2b-8761-a21f3a116481")
-		)
-		(embedded_fonts no)
-	)
-	(footprint "main-board:TestPoint_Pad_D1.0mm_Tight"
-		(layer "B.Cu")
-		(uuid "0a3f19f2-4c1f-49ab-88bc-866230cdad1d")
-		(at 70.5013 79.5 180)
-		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
-		(tags "test point SMD pad")
-		(property "Reference" "TP601"
-			(at 0.05 -1.45 0)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(uuid "bd8f3d90-9b58-4b79-aaf5-a26bc2f6826c")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Value" "TP_AMC_DRDY"
-			(at 0 -1.75 0)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(hide yes)
-			(uuid "66da3d07-aaea-4a21-8bb8-bf7e2752e873")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Datasheet" ""
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "3aed98ba-876f-46d9-b5a7-f60728515861")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Description" "test point"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "d5d63165-c8f9-49d5-9fbd-2375982ebc90")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "LCSC" "none"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "24e0c6d8-d93c-5297-9b9f-cd270681fee6")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(path "/d82e4ee5-02af-4156-8101-fb52a7f3e96c/2bc74f24-1384-4dad-aecf-50ac09465762")
-		(attr exclude_from_pos_files)
-		(duplicate_pad_numbers_are_jumpers no)
-		(fp_circle
-			(center 0 0)
-			(end 0.75 0)
-			(stroke
-				(width 0.05)
-				(type solid)
-			)
-			(fill no)
-			(layer "B.CrtYd")
-			(uuid "ea0fb59d-81b9-4055-bed3-8e4659b0dbe0")
-		)
-		(fp_text user "${REFERENCE}"
-			(at 0 1.25 0)
-			(layer "B.Fab")
-			(uuid "77293e5b-00c5-4597-b6c0-2a78b0d5ea05")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(pad "1" smd circle
-			(at 0 0 180)
-			(size 1 1)
-			(layers "B.Cu" "B.Mask")
-			(net "/AMC_DRDY")
-			(pinfunction "1_1")
-			(pintype "passive")
-			(uuid "8836e5c1-4233-4be5-9f7a-b1e7d7ecf0c1")
 		)
 		(embedded_fonts no)
 	)
@@ -90813,152 +90706,6 @@
 		)
 		(embedded_fonts no)
 	)
-	(footprint "main-board:TestPoint_Pad_D1.0mm_Tight"
-		(layer "B.Cu")
-		(uuid "185ea489-1d4b-4520-8d9c-9aa72e1ace33")
-		(at 97.0013 3.95 180)
-		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
-		(tags "test point SMD pad")
-		(property "Reference" "TP711"
-			(at -0.45 -1.45 0)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(uuid "8fd3c0fb-8588-46a9-8f18-793b65401b42")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Value" "TP"
-			(at 0 -1.75 0)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(hide yes)
-			(uuid "a4d337b1-7da3-423d-a103-b4a409ab868f")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Datasheet" ""
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "81b8aa1f-6ac5-4eaf-8ff3-cbdb47fadf80")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Description" "test point"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "d9003a39-184f-424b-a224-e016ddca9c07")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "LCSC" "none"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "3fe5319e-92ff-5d81-acc5-cdbe6b05feb2")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "MPN" ""
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "c33f5a8c-f762-552a-aa3c-da2b88d00e28")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Manufacturer" ""
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "0f87d5b0-f83f-567e-bfb7-f666909d22fc")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Rating" "test point"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "80f0c615-c425-5343-a58d-4008557fc9d3")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(path "/47e9a4a3-362b-493f-94f4-03763acb1d51/d36670b5-cd16-4635-a6b0-9a7ee6689e02")
-		(attr exclude_from_pos_files)
-		(duplicate_pad_numbers_are_jumpers no)
-		(fp_circle
-			(center 0 0)
-			(end 0.75 0)
-			(stroke
-				(width 0.05)
-				(type solid)
-			)
-			(fill no)
-			(layer "B.CrtYd")
-			(uuid "1529dacf-6475-4e7d-9c79-f44a09e316fb")
-		)
-		(fp_text user "${REFERENCE}"
-			(at 0 1.25 0)
-			(layer "B.Fab")
-			(uuid "ba60acad-0eed-49ff-8e89-e2f573401624")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(pad "1" smd circle
-			(at 0 0 180)
-			(size 1 1)
-			(layers "B.Cu" "B.Mask")
-			(net "/PUMP_S_GATE")
-			(pinfunction "1_1")
-			(pintype "passive")
-			(uuid "aa98b758-59ec-41ed-b6a1-bae8f2fb943c")
-		)
-		(embedded_fonts no)
-	)
 	(footprint "Resistor_SMD:R_0603_1608Metric"
 		(layer "B.Cu")
 		(uuid "19067527-f2f7-483d-981a-f2ea597976d9")
@@ -91312,126 +91059,6 @@
 			(pinfunction "1_1")
 			(pintype "passive")
 			(uuid "10a57f9e-e5da-4482-bb28-fe3b7113ccdf")
-		)
-		(embedded_fonts no)
-	)
-	(footprint "main-board:TestPoint_Pad_D1.0mm_Tight"
-		(layer "B.Cu")
-		(uuid "1c251018-8809-4291-bd1c-fc851f3ccc46")
-		(at 99.5013 43 180)
-		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
-		(tags "test point SMD pad")
-		(property "Reference" "TP525"
-			(at 0.45 1.45 0)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(uuid "a57e57f0-fec1-4b77-8006-cf86eeb36f33")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Value" "TestPoint"
-			(at 0 -1.75 0)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(hide yes)
-			(uuid "f8b9ade7-5df5-47f4-b972-778aed78b1c7")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Datasheet" ""
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "c848cc24-53b2-40ba-9ba1-ef21e7553ff8")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Description" "test point"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "d86aa5b5-f03d-4433-8d5a-a5dedc78385f")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Rating" "pad 1.5mm"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "d23ee1f4-b905-5ac2-9433-37ee5155866d")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "LCSC" "none"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "61041ab3-9c5f-5f14-8f9a-12b20881ecf0")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(path "/da7d33e1-a5c7-4984-bd6c-b0eb81797478/782dcc34-2d4c-4b9b-9002-86852afbae3d")
-		(attr exclude_from_pos_files)
-		(duplicate_pad_numbers_are_jumpers no)
-		(fp_circle
-			(center 0 0)
-			(end 0.75 0)
-			(stroke
-				(width 0.05)
-				(type solid)
-			)
-			(fill no)
-			(layer "B.CrtYd")
-			(uuid "0a4aef2e-c5ab-4939-9477-6d41081fbbbe")
-		)
-		(fp_text user "${REFERENCE}"
-			(at 0 1.25 0)
-			(layer "B.Fab")
-			(uuid "7b98ce1d-8fdf-4a60-8fdf-2cf27435955d")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(pad "1" smd circle
-			(at 0 0 180)
-			(size 1 1)
-			(layers "B.Cu" "B.Mask")
-			(net "/BREW_SDA")
-			(pinfunction "1_1")
-			(pintype "passive")
-			(uuid "1277ae35-850e-4c8d-8df7-9875017d4e25")
 		)
 		(embedded_fonts no)
 	)
@@ -92398,7 +92025,7 @@
 	(footprint "main-board:TestPoint_Pad_D1.0mm_Tight"
 		(layer "B.Cu")
 		(uuid "2df3d897-fe4f-4b8e-95c3-f74f042cf9e1")
-		(at 73.0013 13 180)
+		(at 77.25 27.25 180)
 		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
 		(tags "test point SMD pad")
 		(property "Reference" "TP832"
@@ -94065,126 +93692,6 @@
 			(pinfunction "1_1")
 			(pintype "passive")
 			(uuid "f1fa2247-e899-4e54-8fa5-5b32eb70b5c1")
-		)
-		(embedded_fonts no)
-	)
-	(footprint "main-board:TestPoint_Pad_D1.0mm_Tight"
-		(layer "B.Cu")
-		(uuid "47397963-e3c9-4c01-8a06-f501499a8bee")
-		(at 75.5013 23 180)
-		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
-		(tags "test point SMD pad")
-		(property "Reference" "TP822"
-			(at 2.25 -1.45 0)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(uuid "2e907882-55b9-4772-ab8a-10d50cb74b4d")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Value" "TP"
-			(at 0 -1.75 0)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(hide yes)
-			(uuid "0d5d9818-77b2-42a9-8649-54392c19f7fb")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Datasheet" ""
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "4be5b582-9ab0-4e60-8d24-124d75443bd5")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Description" "test point"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "b108ce69-1c5d-4ea6-998e-8054eee784c1")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Rating" "test point"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "319c66fc-dc59-55c2-bf64-2e5a4b3b94dc")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "LCSC" "none"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "6ecea076-5ad3-5aa1-a574-b1a5d98a21be")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(path "/c34697c3-b205-4b5b-8e69-8879de572199/21d12e82-e3d9-4b79-afab-6417e7255067")
-		(attr exclude_from_pos_files)
-		(duplicate_pad_numbers_are_jumpers no)
-		(fp_circle
-			(center 0 0)
-			(end 0.75 0)
-			(stroke
-				(width 0.05)
-				(type solid)
-			)
-			(fill no)
-			(layer "B.CrtYd")
-			(uuid "b94b0660-1951-4209-be18-5201512c381b")
-		)
-		(fp_text user "${REFERENCE}"
-			(at 0 1.25 0)
-			(layer "B.Fab")
-			(uuid "f6829fe1-8d05-42b4-8f08-fe9d549cd37b")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(pad "1" smd circle
-			(at 0 0 180)
-			(size 1 1)
-			(layers "B.Cu" "B.Mask")
-			(net "/ANODE_GATE")
-			(pinfunction "1_1")
-			(pintype "passive")
-			(uuid "f2cdbe07-0493-407d-9c9a-2c444b1e2278")
 		)
 		(embedded_fonts no)
 	)
@@ -96548,392 +96055,6 @@
 	)
 	(footprint "main-board:TestPoint_Pad_D1.0mm_Tight"
 		(layer "B.Cu")
-		(uuid "84170f0e-0486-44c8-bc67-b74ed71da072")
-		(at 115.5013 115 180)
-		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
-		(tags "test point SMD pad")
-		(property "Reference" "TP863"
-			(at -0.05 -1.45 0)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(uuid "5e0a6fb0-6bba-48e0-8eff-fe5d393ba834")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Value" "TP"
-			(at 0 -1.75 0)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(hide yes)
-			(uuid "b9a781c1-7249-42be-bf63-fa15b5b53b37")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Datasheet" ""
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "be9a0f11-1c41-46c1-99a7-821a82a1c6f1")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Description" "test point"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "62df4cbe-fcaa-4c91-949b-bb743503a447")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Rating" "test point"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "a3c38b7f-1870-589a-b5bf-28acf7b913f5")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "LCSC" "none"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "68ef6f5e-1fd7-5eac-aeb7-6db3df5ab5ec")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(path "/820a13ac-b7b7-49d9-a538-a11c5837650e/39cca436-eb9d-4699-ac0e-c559f520d7c0")
-		(attr exclude_from_pos_files)
-		(duplicate_pad_numbers_are_jumpers no)
-		(fp_circle
-			(center 0 0)
-			(end 0.75 0)
-			(stroke
-				(width 0.05)
-				(type solid)
-			)
-			(fill no)
-			(layer "B.CrtYd")
-			(uuid "1a0f173e-f947-4993-8b4e-49bf5ef27cb8")
-		)
-		(fp_text user "${REFERENCE}"
-			(at 0 1.25 0)
-			(layer "B.Fab")
-			(uuid "3cf57fb9-63aa-4e9c-9e90-ac38230fc038")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(pad "1" smd circle
-			(at 0 0 180)
-			(size 1 1)
-			(layers "B.Cu" "B.Mask")
-			(net "/TANK_LEVEL")
-			(pinfunction "1_1")
-			(pintype "passive")
-			(uuid "9c0f7027-77a2-4192-bba1-03e26bb110b0")
-		)
-		(embedded_fonts no)
-	)
-	(footprint "main-board:TestPoint_Pad_D1.0mm_Tight"
-		(layer "B.Cu")
-		(uuid "842af2fe-4ed1-4b66-b100-4a875b2c6e37")
-		(at 92.0013 3.95 180)
-		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
-		(tags "test point SMD pad")
-		(property "Reference" "TP701"
-			(at -0.05 -2.95 90)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(uuid "d63eaa9a-712f-4a23-b2ee-a9494f288a15")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Value" "TP"
-			(at 0 -1.75 0)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(hide yes)
-			(uuid "78ac3f11-bdbc-46eb-a4ed-cd7a12eb2042")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Datasheet" ""
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "209cbdf1-4fa7-47ab-875a-b57c02d8ffd0")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Description" "test point"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "76f7602e-64df-449e-8875-c2462e8eb703")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "LCSC" "none"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "6bcf2d07-1148-5251-974f-9d24be3343e5")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "MPN" ""
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "03085f65-0401-59b7-afaf-6ea3ceea932c")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Manufacturer" ""
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "9ba2d863-cad2-5f08-8dcd-1ee60d4785a2")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Rating" "test point"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "6343b73d-bb39-54f2-be8a-7f770f18f460")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(path "/47e9a4a3-362b-493f-94f4-03763acb1d51/11fc3c35-3e7d-4ce6-abb7-79dd5749d252")
-		(attr exclude_from_pos_files)
-		(duplicate_pad_numbers_are_jumpers no)
-		(fp_circle
-			(center 0 0)
-			(end 0.75 0)
-			(stroke
-				(width 0.05)
-				(type solid)
-			)
-			(fill no)
-			(layer "B.CrtYd")
-			(uuid "0f00dddc-6ed6-4f7b-87f2-751f3e57026e")
-		)
-		(fp_text user "${REFERENCE}"
-			(at 0 1.25 0)
-			(layer "B.Fab")
-			(uuid "a1015e66-2b63-4d5b-a224-28f0a991a54f")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(pad "1" smd circle
-			(at 0 0 180)
-			(size 1 1)
-			(layers "B.Cu" "B.Mask")
-			(net "/PUMP_C_GATE")
-			(pinfunction "1_1")
-			(pintype "passive")
-			(uuid "a0171968-0d1d-47a9-ae4d-9c80d607a8ac")
-		)
-		(embedded_fonts no)
-	)
-	(footprint "main-board:TestPoint_Pad_D1.0mm_Tight"
-		(layer "B.Cu")
-		(uuid "89808cff-d105-40d0-a330-e4ddc22b81a8")
-		(at 112.0013 4 180)
-		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
-		(tags "test point SMD pad")
-		(property "Reference" "TP862"
-			(at -0.05 -2.95 90)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(uuid "972a5402-6540-4a70-8101-37dc5d9daa72")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Value" "TP"
-			(at 0 -1.75 0)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(hide yes)
-			(uuid "b317e57c-e736-4234-83eb-ebf3c880bf6a")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Datasheet" ""
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "a38bdee6-ed9a-4801-a318-f841c4d15883")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Description" "test point"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "6b10ae7f-fb4b-4aec-9b93-7580433683e2")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Rating" "test point"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "519c506c-2c09-55d3-9ca6-c505239a442b")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "LCSC" "none"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "ddbe5d04-8258-5309-a6c0-75903a44c356")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(path "/820a13ac-b7b7-49d9-a538-a11c5837650e/66a7ffa6-ba03-406a-948c-586a12e268df")
-		(attr exclude_from_pos_files)
-		(duplicate_pad_numbers_are_jumpers no)
-		(fp_circle
-			(center 0 0)
-			(end 0.75 0)
-			(stroke
-				(width 0.05)
-				(type solid)
-			)
-			(fill no)
-			(layer "B.CrtYd")
-			(uuid "4078830b-07f3-4ebd-b160-e13e4c335110")
-		)
-		(fp_text user "${REFERENCE}"
-			(at 0 1.25 0)
-			(layer "B.Fab")
-			(uuid "f338c81e-be24-4337-a806-ae2d40c73324")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(pad "1" smd circle
-			(at 0 0 180)
-			(size 1 1)
-			(layers "B.Cu" "B.Mask")
-			(net "/KNOB_STEAM")
-			(pinfunction "1_1")
-			(pintype "passive")
-			(uuid "eea8d0e8-fb11-4e26-a515-29a2c8791def")
-		)
-		(embedded_fonts no)
-	)
-	(footprint "main-board:TestPoint_Pad_D1.0mm_Tight"
-		(layer "B.Cu")
 		(uuid "89ea9136-63af-43a0-9f60-4f5e22fda4ed")
 		(at 94.5013 4.75 180)
 		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
@@ -97302,126 +96423,6 @@
 			(pinfunction "1_1")
 			(pintype "passive")
 			(uuid "a121e4c7-b4ab-4819-8d00-fa858126f4e5")
-		)
-		(embedded_fonts no)
-	)
-	(footprint "main-board:TestPoint_Pad_D1.0mm_Tight"
-		(layer "B.Cu")
-		(uuid "9b0dee3a-715d-4970-af2a-df2afa34b175")
-		(at 76.2513 28.5 180)
-		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
-		(tags "test point SMD pad")
-		(property "Reference" "TP833"
-			(at -2.25 -1.45 0)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(uuid "61777099-31f9-4fca-a226-e93eed1af816")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Value" "TP"
-			(at 0 -1.75 0)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(hide yes)
-			(uuid "74b3ef82-d821-42f0-9d55-d2d0f1b37bec")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Datasheet" ""
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "a1867f4e-7f62-4678-bf87-2ce396d1e90c")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Description" "test point"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "7e6929bf-8861-4cfb-b7eb-3a2e4197720f")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Rating" "test point"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "afd72628-38b4-538a-abad-b6c9e2f1dfb5")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "LCSC" "none"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "436ca6cf-8f6a-5753-9761-582d59faac1b")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(path "/c34697c3-b205-4b5b-8e69-8879de572199/59900edc-dff7-4f63-b0a5-0f92936baea6")
-		(attr exclude_from_pos_files)
-		(duplicate_pad_numbers_are_jumpers no)
-		(fp_circle
-			(center 0 0)
-			(end 0.75 0)
-			(stroke
-				(width 0.05)
-				(type solid)
-			)
-			(fill no)
-			(layer "B.CrtYd")
-			(uuid "f03fa802-fbde-4e45-b1b7-13901dcb8944")
-		)
-		(fp_text user "${REFERENCE}"
-			(at 0 1.25 0)
-			(layer "B.Fab")
-			(uuid "9401eda0-43af-4daa-afc6-535d7cc4f2dc")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(pad "1" smd circle
-			(at 0 0 180)
-			(size 1 1)
-			(layers "B.Cu" "B.Mask")
-			(net "/KEY3")
-			(pinfunction "1_1")
-			(pintype "passive")
-			(uuid "14ded5f7-346a-4c5f-a847-c48a449069d5")
 		)
 		(embedded_fonts no)
 	)
@@ -98374,126 +97375,6 @@
 	)
 	(footprint "main-board:TestPoint_Pad_D1.0mm_Tight"
 		(layer "B.Cu")
-		(uuid "a6df6a63-f384-4e31-94ce-dcf9415afa8f")
-		(at 117.0013 4 180)
-		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
-		(tags "test point SMD pad")
-		(property "Reference" "TP524"
-			(at -1.45 -0.75 90)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(uuid "ed669e54-207c-467b-97e8-4c4a75615e48")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Value" "TestPoint"
-			(at 0 -1.75 0)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(hide yes)
-			(uuid "8745a781-a7e9-488d-a5d7-852b117ea02f")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Datasheet" ""
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "e91c5cb1-ed05-46d1-8959-7c13de13fa0e")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Description" "test point"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "c6fb27f8-5d56-4164-9582-34e3ccb5736c")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Rating" "pad 1.5mm"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "acfa5153-7b9e-519a-850f-73c81f72a4bc")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "LCSC" "none"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "af19d406-3a7e-570c-bb58-3f34200ccfa7")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(path "/da7d33e1-a5c7-4984-bd6c-b0eb81797478/b1ddd86a-ec94-4b2a-acea-391cc5defd21")
-		(attr exclude_from_pos_files)
-		(duplicate_pad_numbers_are_jumpers no)
-		(fp_circle
-			(center 0 0)
-			(end 0.75 0)
-			(stroke
-				(width 0.05)
-				(type solid)
-			)
-			(fill no)
-			(layer "B.CrtYd")
-			(uuid "ed98f1dd-20a7-4c16-bbb0-90279243d228")
-		)
-		(fp_text user "${REFERENCE}"
-			(at 0 1.25 0)
-			(layer "B.Fab")
-			(uuid "db5b4d18-a502-45f8-abe4-483ef50327cc")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(pad "1" smd circle
-			(at 0 0 180)
-			(size 1 1)
-			(layers "B.Cu" "B.Mask")
-			(net "/BREW_SCL")
-			(pinfunction "1_1")
-			(pintype "passive")
-			(uuid "05fba199-ea82-4178-bbab-615fd3219763")
-		)
-		(embedded_fonts no)
-	)
-	(footprint "main-board:TestPoint_Pad_D1.0mm_Tight"
-		(layer "B.Cu")
 		(uuid "a70861f5-abd7-47b6-9de2-609606c68ce4")
 		(at 102.0013 38 180)
 		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
@@ -99095,7 +97976,7 @@
 	(footprint "main-board:TestPoint_Pad_D1.0mm_Tight"
 		(layer "B.Cu")
 		(uuid "bc176c55-ff58-40c2-9df2-20784db3ca8b")
-		(at 73.0013 18 180)
+		(at 81.25 14.5 180)
 		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
 		(tags "test point SMD pad")
 		(property "Reference" "TP731"
@@ -99595,113 +98476,6 @@
 			(pinfunction "1_1")
 			(pintype "passive")
 			(uuid "5b79db79-f40a-43e2-a0e4-e4e5e155f03d")
-		)
-		(embedded_fonts no)
-	)
-	(footprint "main-board:TestPoint_Pad_D1.0mm_Tight"
-		(layer "B.Cu")
-		(uuid "c4edb842-4141-4722-bbf0-4f10f31a639c")
-		(at 92.5013 122.5 180)
-		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
-		(tags "test point SMD pad")
-		(property "Reference" "TP672"
-			(at -0.05 -1.45 0)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(uuid "ee95a158-c9da-4572-b068-e0f8b4f6b209")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Value" "TP_WT2_DATA"
-			(at 0 -1.75 0)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(hide yes)
-			(uuid "d96a0847-67e0-4940-b049-cf34fdc3ccfe")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Datasheet" ""
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "75c0d308-5b38-405f-a6f2-89bb2969518c")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Description" "test point"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "bcaf3f5d-0fca-4c7e-a1a5-3a02080cf441")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "LCSC" "none"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "7afce948-6d93-5447-8240-01664a28b93d")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(path "/2f4c407a-40de-4ebe-bd1a-5cdba21fcb81/caa35620-9244-4ce6-bb0b-4c6fbc9346c5")
-		(attr exclude_from_pos_files)
-		(duplicate_pad_numbers_are_jumpers no)
-		(fp_circle
-			(center 0 0)
-			(end 0.75 0)
-			(stroke
-				(width 0.05)
-				(type solid)
-			)
-			(fill no)
-			(layer "B.CrtYd")
-			(uuid "ed0e1481-f534-466e-aef2-3e86cbd2f1a9")
-		)
-		(fp_text user "${REFERENCE}"
-			(at 0 1.25 0)
-			(layer "B.Fab")
-			(uuid "16238e9f-7414-4e6d-b36a-c3b02afa17ba")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(pad "1" smd circle
-			(at 0 0 180)
-			(size 1 1)
-			(layers "B.Cu" "B.Mask")
-			(net "/WT2_DATA")
-			(pinfunction "1_1")
-			(pintype "passive")
-			(uuid "0fbba707-ef32-49ce-95d1-dbf67168c869")
 		)
 		(embedded_fonts no)
 	)
@@ -100453,126 +99227,6 @@
 	)
 	(footprint "main-board:TestPoint_Pad_D1.0mm_Tight"
 		(layer "B.Cu")
-		(uuid "cf9ad748-ec0d-4ce0-9f58-ec42a375a05f")
-		(at 114.5013 5 180)
-		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
-		(tags "test point SMD pad")
-		(property "Reference" "TP520"
-			(at -0.65 -1.45 0)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(uuid "d107b230-ba80-4d34-8ff0-439b4fdf664e")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Value" "TestPoint"
-			(at 0 -1.75 0)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(hide yes)
-			(uuid "98850281-d2c4-45fe-ad08-d264e20184ac")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Datasheet" ""
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "1a0a4911-9a36-4806-9f37-2af9825b5fb1")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Description" "test point"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "588964b2-e4db-4c7f-a953-79a627590d39")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Rating" "pad 1.5mm"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "385c3e2c-1d93-56c2-bae7-e7ffbd04a497")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "LCSC" "none"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "4282489c-901f-5f10-81b4-29743f6e612e")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(path "/da7d33e1-a5c7-4984-bd6c-b0eb81797478/3353d4de-8e19-4f17-bb26-70d477546911")
-		(attr exclude_from_pos_files)
-		(duplicate_pad_numbers_are_jumpers no)
-		(fp_circle
-			(center 0 0)
-			(end 0.75 0)
-			(stroke
-				(width 0.05)
-				(type solid)
-			)
-			(fill no)
-			(layer "B.CrtYd")
-			(uuid "f9c954aa-8ae4-4a7a-939f-390b0bbdbb7d")
-		)
-		(fp_text user "${REFERENCE}"
-			(at 0 1.25 0)
-			(layer "B.Fab")
-			(uuid "0298a450-28d7-464e-aea0-c76b6ae52365")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(pad "1" smd circle
-			(at 0 0 180)
-			(size 1 1)
-			(layers "B.Cu" "B.Mask")
-			(net "/FLOW_IN")
-			(pinfunction "1_1")
-			(pintype "passive")
-			(uuid "5dcbdff0-94dd-403d-a1b1-ca4428667030")
-		)
-		(embedded_fonts no)
-	)
-	(footprint "main-board:TestPoint_Pad_D1.0mm_Tight"
-		(layer "B.Cu")
 		(uuid "d0406b44-8f4c-47e3-b78d-ecf4e6cf1e16")
 		(at 107.0013 3.95 180)
 		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
@@ -100821,259 +99475,6 @@
 			(pinfunction "1_1")
 			(pintype "passive")
 			(uuid "8907007e-5cb7-402e-ba9b-220722248c3f")
-		)
-		(embedded_fonts no)
-	)
-	(footprint "main-board:TestPoint_Pad_D1.0mm_Tight"
-		(layer "B.Cu")
-		(uuid "d8dbc97c-dd5c-411c-b3fd-4d4ee8c0da9c")
-		(at 102.0013 3.95 180)
-		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
-		(tags "test point SMD pad")
-		(property "Reference" "TP203"
-			(at 0.15 -2.95 0)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(uuid "71997eb4-ae3d-4251-8fb3-07f505d8d954")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Value" "TP_POL_OUT"
-			(at 0 -1.75 0)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(hide yes)
-			(uuid "79c9074b-c13d-4ff9-a7a8-c26072bc58d7")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Datasheet" ""
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "bed7e9ae-75c4-4b1f-bacf-f65da4f7477e")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Description" "test point"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "0f870322-96bf-4f91-a27a-8a75ac14af71")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "LCSC" "none"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "5ab52fc2-0a2a-53fb-adb4-24a3176c3508")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "MPN" ""
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "6acbc7f4-6378-542a-8e73-3b647bb359bd")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Manufacturer" ""
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "821ca298-266b-5b80-a985-7a721bfb6ee1")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(path "/d4eff4da-5a0a-4845-84e8-c2aa91e03db5/7fbac1cd-efdb-47ea-8d1b-3e6ae379cf20")
-		(attr exclude_from_pos_files)
-		(duplicate_pad_numbers_are_jumpers no)
-		(fp_circle
-			(center 0 0)
-			(end 0.75 0)
-			(stroke
-				(width 0.05)
-				(type solid)
-			)
-			(fill no)
-			(layer "B.CrtYd")
-			(uuid "589f736e-6cf5-4c41-aca4-a59211df619d")
-		)
-		(fp_text user "${REFERENCE}"
-			(at 0 1.25 0)
-			(layer "B.Fab")
-			(uuid "955c394b-6b82-477f-8785-84032b4c46bc")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(pad "1" smd circle
-			(at 0 0 180)
-			(size 1 1)
-			(layers "B.Cu" "B.Mask")
-			(net "/POL_OUT")
-			(pinfunction "1_1")
-			(pintype "passive")
-			(uuid "66baa62e-3768-4bb9-8948-726ffa2abb62")
-		)
-		(embedded_fonts no)
-	)
-	(footprint "main-board:TestPoint_Pad_D1.0mm_Tight"
-		(layer "B.Cu")
-		(uuid "dcb339b3-4e7e-4c23-b2ab-2692fb64f608")
-		(at 75.5013 31 180)
-		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
-		(tags "test point SMD pad")
-		(property "Reference" "TP831"
-			(at -0.05 -1.45 0)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(uuid "fab0e944-8e6e-461f-a5ea-d92fbca6d9f2")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Value" "TP"
-			(at 0 -1.75 0)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(hide yes)
-			(uuid "d7605d08-176d-4f2a-ab1e-be7c3940c9ff")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Datasheet" ""
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "f5dc4a3b-f624-4e9d-995b-1a773306f219")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Description" "test point"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "52fc203a-a141-41c1-af07-29d082b93416")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Rating" "test point"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "f53b8c03-6b33-5b38-9385-503798e302e7")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "LCSC" "none"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "42e45a00-ffb8-50ab-aa24-34e963e5c8d1")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(path "/c34697c3-b205-4b5b-8e69-8879de572199/f718ada7-3886-449b-8e26-2fa43a0c919b")
-		(attr exclude_from_pos_files)
-		(duplicate_pad_numbers_are_jumpers no)
-		(fp_circle
-			(center 0 0)
-			(end 0.75 0)
-			(stroke
-				(width 0.05)
-				(type solid)
-			)
-			(fill no)
-			(layer "B.CrtYd")
-			(uuid "d3ba69ef-e35e-4084-9cb6-f659a19533da")
-		)
-		(fp_text user "${REFERENCE}"
-			(at 0 1.25 0)
-			(layer "B.Fab")
-			(uuid "d3901abf-5257-4bfb-9dd1-4d2a70826062")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(pad "1" smd circle
-			(at 0 0 180)
-			(size 1 1)
-			(layers "B.Cu" "B.Mask")
-			(net "/KEY1")
-			(pinfunction "1_1")
-			(pintype "passive")
-			(uuid "a75346dd-c59b-4ba6-94f9-aa631fe8c27e")
 		)
 		(embedded_fonts no)
 	)
@@ -101585,246 +99986,6 @@
 	)
 	(footprint "main-board:TestPoint_Pad_D1.0mm_Tight"
 		(layer "B.Cu")
-		(uuid "f68e1344-61e3-434a-b9c3-67fad34b8fa1")
-		(at 73.5013 26 180)
-		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
-		(tags "test point SMD pad")
-		(property "Reference" "TP823"
-			(at 1.85 -1.45 0)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(uuid "c4e73ca6-3a8c-4517-b653-c4703d1ca85c")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Value" "TP"
-			(at 0 -1.75 0)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(hide yes)
-			(uuid "d8f08aa9-8c4d-4045-b0ef-e50f5c908cb1")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Datasheet" ""
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "82b647b0-f1fe-4170-b7b4-241e87849c1a")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Description" "test point"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "c519199a-e57f-4032-bfda-55de1970599d")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Rating" "test point"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "f7b75674-1481-5d39-922c-b5f89f1ff533")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "LCSC" "none"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "d314ed5d-c675-51b2-8727-1aa907f6d9a8")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(path "/c34697c3-b205-4b5b-8e69-8879de572199/bd1dfb19-3a53-4f9d-b316-43c90d7c8a4a")
-		(attr exclude_from_pos_files)
-		(duplicate_pad_numbers_are_jumpers no)
-		(fp_circle
-			(center 0 0)
-			(end 0.75 0)
-			(stroke
-				(width 0.05)
-				(type solid)
-			)
-			(fill no)
-			(layer "B.CrtYd")
-			(uuid "a7ddf51b-6bf2-427d-8a0a-92bb0399e42b")
-		)
-		(fp_text user "${REFERENCE}"
-			(at 0 1.25 0)
-			(layer "B.Fab")
-			(uuid "1ee454fb-f3a7-472f-9c46-3881f83810f5")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(pad "1" smd circle
-			(at 0 0 180)
-			(size 1 1)
-			(layers "B.Cu" "B.Mask")
-			(net "/BUZZER")
-			(pinfunction "1_1")
-			(pintype "passive")
-			(uuid "e48d86b9-4ca0-4476-ba4e-1f264599de6d")
-		)
-		(embedded_fonts no)
-	)
-	(footprint "main-board:TestPoint_Pad_D1.0mm_Tight"
-		(layer "B.Cu")
-		(uuid "faff2b05-199a-400b-9009-0efc044c33c8")
-		(at 99.5013 45.5 180)
-		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
-		(tags "test point SMD pad")
-		(property "Reference" "TP521"
-			(at -0.05 -1.45 0)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(uuid "80a235b1-b521-4f22-86ee-b93697094973")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Value" "TestPoint"
-			(at 0 -1.75 0)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(hide yes)
-			(uuid "a32eb825-d6f3-4c18-b5ed-20eaab57fd47")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Datasheet" ""
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "e3e755ce-8df0-4b2c-bc82-ce5687d30f9e")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Description" "test point"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "a0ae0fcf-53e8-4bad-b6fc-1812ea25d13c")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Rating" "pad 1.5mm"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "d9290f75-2aa3-5d73-8ca9-754e1781b3e2")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "LCSC" "none"
-			(at 0 0 0)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "e338e8dc-3948-5563-bbfb-c8191a0fe9fa")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(path "/da7d33e1-a5c7-4984-bd6c-b0eb81797478/561d7a9c-c6b2-4112-a4bf-b072c092494c")
-		(attr exclude_from_pos_files)
-		(duplicate_pad_numbers_are_jumpers no)
-		(fp_circle
-			(center 0 0)
-			(end 0.75 0)
-			(stroke
-				(width 0.05)
-				(type solid)
-			)
-			(fill no)
-			(layer "B.CrtYd")
-			(uuid "fb390bb9-b743-4a6d-9d9b-36dc7260c532")
-		)
-		(fp_text user "${REFERENCE}"
-			(at 0 1.25 0)
-			(layer "B.Fab")
-			(uuid "8ebe11df-2969-42c6-bf5b-898027be4b52")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(pad "1" smd circle
-			(at 0 0 180)
-			(size 1 1)
-			(layers "B.Cu" "B.Mask")
-			(net "/STM_SCL")
-			(pinfunction "1_1")
-			(pintype "passive")
-			(uuid "be2c49e2-111f-490c-98c2-882bc1a0222a")
-		)
-		(embedded_fonts no)
-	)
-	(footprint "main-board:TestPoint_Pad_D1.0mm_Tight"
-		(layer "B.Cu")
 		(uuid "fe2b81aa-8098-4ebe-b2df-d9614e30256c")
 		(at 43.7 82.6 180)
 		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
@@ -101927,6 +100088,359 @@
 			(pinfunction "1_1")
 			(pintype "passive")
 			(uuid "ac9e4070-0775-4a02-bd9a-f844f67ea3f6")
+		)
+		(embedded_fonts no)
+	)
+	(footprint "main-board:TestPoint_Pad_D1.0mm_Tight"
+		(layer "B.Cu")
+		(uuid "46fbf109-43df-4aa3-b42b-84dd6c7c2b25")
+		(at 95 20.45 180)
+		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
+		(tags "test point SMD pad")
+		(property "Reference" "TP525"
+			(at -0.05 1.45 0)
+			(unlocked yes)
+			(layer "B.SilkS")
+			(uuid "c0f402da-4029-4342-9b13-b81a54442cbd")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+				(justify mirror)
+			)
+		)
+		(property "Value" "TestPoint"
+			(at 0 -1.75 0)
+			(unlocked yes)
+			(layer "B.SilkS")
+			(hide yes)
+			(uuid "acf3423a-a050-488b-98d5-78c0c008935f")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+				(justify mirror)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(layer "B.Fab")
+			(hide yes)
+			(uuid "b20a8445-ed9b-43ed-9fae-f696ad480198")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify mirror)
+			)
+		)
+		(property "Description" "test point"
+			(at 0 0 0)
+			(layer "B.Fab")
+			(hide yes)
+			(uuid "86ee6277-0bf1-4b2a-8235-2d316e556e79")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify mirror)
+			)
+		)
+		(property "Rating" "pad 1.5mm"
+			(at 0 0 0)
+			(layer "B.Fab")
+			(hide yes)
+			(uuid "9a7c903c-39a2-48ba-8ddf-44bfdca334bc")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+				(justify mirror)
+			)
+		)
+		(property "LCSC" "none"
+			(at 0 0 0)
+			(layer "B.Fab")
+			(hide yes)
+			(uuid "9b281f56-0eb9-400c-bd14-0b16cadf84ab")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+				(justify mirror)
+			)
+		)
+		(path "/da7d33e1-a5c7-4984-bd6c-b0eb81797478/782dcc34-2d4c-4b9b-9002-86852afbae3d")
+		(attr exclude_from_pos_files)
+		(duplicate_pad_numbers_are_jumpers no)
+		(fp_circle
+			(center 0 0)
+			(end 0.75 0)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(fill no)
+			(layer "B.CrtYd")
+			(uuid "1fcf2c1a-be48-4f2e-aa6c-3c61ec06e42b")
+		)
+		(fp_text user "${REFERENCE}"
+			(at 0 1.25 0)
+			(layer "B.Fab")
+			(uuid "6945a248-b567-4d63-9c36-2d21451cab78")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+				(justify mirror)
+			)
+		)
+		(pad "1" smd circle
+			(at 0 0 180)
+			(size 1 1)
+			(layers "B.Cu" "B.Mask")
+			(net "/BREW_SDA")
+			(pinfunction "1_1")
+			(pintype "passive")
+			(uuid "65211fd3-0a47-47e3-89c3-f949321d4f94")
+		)
+		(embedded_fonts no)
+	)
+	(footprint "main-board:TestPoint_Pad_D1.0mm_Tight"
+		(layer "B.Cu")
+		(uuid "b336e41a-eb01-4de6-836e-df776ac2e45d")
+		(at 100.95 20.05 180)
+		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
+		(tags "test point SMD pad")
+		(property "Reference" "TP831"
+			(at -0.05 1.45 0)
+			(unlocked yes)
+			(layer "B.SilkS")
+			(uuid "32f92031-4611-46af-a00f-760868c97350")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+				(justify mirror)
+			)
+		)
+		(property "Value" "TP"
+			(at 0 -1.75 0)
+			(unlocked yes)
+			(layer "B.SilkS")
+			(hide yes)
+			(uuid "df1fd3c8-5c65-4223-8ed7-84012762bc90")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+				(justify mirror)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(layer "B.Fab")
+			(hide yes)
+			(uuid "977fb221-c72d-4377-a427-953988aa5937")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify mirror)
+			)
+		)
+		(property "Description" "test point"
+			(at 0 0 0)
+			(layer "B.Fab")
+			(hide yes)
+			(uuid "b199f456-0ff3-4b8a-9196-b3867e38e381")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify mirror)
+			)
+		)
+		(property "Rating" "test point"
+			(at 0 0 0)
+			(layer "B.Fab")
+			(hide yes)
+			(uuid "ebcba0d4-61d3-4830-a0fc-bd89d714c366")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+				(justify mirror)
+			)
+		)
+		(property "LCSC" "none"
+			(at 0 0 0)
+			(layer "B.Fab")
+			(hide yes)
+			(uuid "0f0dae13-d4b0-4668-9e52-1b61d92c879d")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+				(justify mirror)
+			)
+		)
+		(path "/c34697c3-b205-4b5b-8e69-8879de572199/f718ada7-3886-449b-8e26-2fa43a0c919b")
+		(attr exclude_from_pos_files)
+		(duplicate_pad_numbers_are_jumpers no)
+		(fp_circle
+			(center 0 0)
+			(end 0.75 0)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(fill no)
+			(layer "B.CrtYd")
+			(uuid "c626443d-b487-4478-81a7-6f891b354712")
+		)
+		(fp_text user "${REFERENCE}"
+			(at 0 1.25 0)
+			(layer "B.Fab")
+			(uuid "959532f4-0925-40e8-bfd9-769f71485d4c")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+				(justify mirror)
+			)
+		)
+		(pad "1" smd circle
+			(at 0 0 180)
+			(size 1 1)
+			(layers "B.Cu" "B.Mask")
+			(net "/KEY1")
+			(pinfunction "1_1")
+			(pintype "passive")
+			(uuid "d568e5a2-8d83-4900-ad1d-38e28a2ce353")
+		)
+		(embedded_fonts no)
+	)
+	(footprint "main-board:TestPoint_Pad_D1.0mm_Tight"
+		(layer "F.Cu")
+		(uuid "476a2aee-4c7f-4ae6-a45b-a79109fdd961")
+		(at 114.75 5.7)
+		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
+		(tags "test point SMD pad")
+		(property "Reference" "TP833"
+			(at -0.05 -1.45 0)
+			(unlocked yes)
+			(layer "F.SilkS")
+			(uuid "6d2ba5d7-885c-4ba9-b5b2-1aaf5cc06a25")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Value" "TP"
+			(at 0 1.75 0)
+			(unlocked yes)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "cc9014b2-0c58-4865-acec-adeca34f42cb")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "37e43fa3-32a2-42d3-af1e-603b8312c9d1")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "test point"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "f8c4ae9c-22c3-416f-a24d-01fd312dd7cf")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "test point"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "d2d31ec1-bde2-435c-b81d-cdd6ca0d56bf")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "LCSC" "none"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "48c0c781-3dca-4244-b976-8647bd6ce697")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(path "/c34697c3-b205-4b5b-8e69-8879de572199/59900edc-dff7-4f63-b0a5-0f92936baea6")
+		(attr exclude_from_pos_files)
+		(duplicate_pad_numbers_are_jumpers no)
+		(fp_circle
+			(center 0 0)
+			(end 0.75 0)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(fill no)
+			(layer "F.CrtYd")
+			(uuid "596f062c-1ba4-42c7-880b-a1995fb1e552")
+		)
+		(fp_text user "${REFERENCE}"
+			(at 0 -1.25 0)
+			(layer "F.Fab")
+			(uuid "f10cb7d6-c4c9-4476-bc9f-10d5a03518a9")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(pad "1" smd circle
+			(at 0 0)
+			(size 1 1)
+			(layers "F.Cu" "F.Mask")
+			(net "/KEY3")
+			(pinfunction "1_1")
+			(pintype "passive")
+			(uuid "fa654d47-a4da-436f-8c62-4961809cdebf")
 		)
 		(embedded_fonts no)
 	)

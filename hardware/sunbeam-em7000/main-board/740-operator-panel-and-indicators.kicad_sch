@@ -2318,13 +2318,6 @@
 	)
 	(wire
 		(pts
-			(xy 20.32 76.2)
-			(xy 20.32 78.74)
-		)
-		(uuid "0ddfa316-7a4f-4c6b-bf1f-95051ab298e9")
-	)
-	(wire
-		(pts
 			(xy 139.7 72.39)
 			(xy 139.7 69.85)
 		)
@@ -2343,13 +2336,6 @@
 			(xy 109.22 78.74)
 		)
 		(uuid "dd61139b-9b83-47c1-b5ef-6276580f85b7")
-	)
-	(wire
-		(pts
-			(xy 20.32 165.1)
-			(xy 20.32 167.64)
-		)
-		(uuid "5f4a3c33-4c04-4ab0-a04b-ba20be742bbf")
 	)
 	(wire
 		(pts
@@ -3651,84 +3637,6 @@
 			)
 		))
 	(symbol
-		(lib_id "Connector:TestPoint")
-		(at 20.32 76.2 0)
-		(unit 1)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "21d12e82-e3d9-4b79-afab-6417e7255067")
-		(property "Reference" "TP822"
-			(at 20.32 69.342 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "TP"
-			(at 20.32 71.12 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "main-board:TestPoint_Pad_D1.0mm_Tight"
-			(at 20.32 76.2 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 20.32 76.2 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "test point"
-			(at 20.32 76.2 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/c34697c3-b205-4b5b-8e69-8879de572199"
-					(reference "TP822")
-					(unit 1)
-				)
-			)
-		)
-	
-		(property "Rating" "test point"
-			(at 20.32 76.2 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "LCSC" "none"
-			(at 20.32 76.2 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		))
-	(symbol
 		(lib_id "Device:R")
 		(at 30.48 139.7 0)
 		(unit 1)
@@ -4203,84 +4111,6 @@
 	
 		(property "Rating" "100 V 300 mA, SOD-323"
 			(at 101.6 127 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		))
-	(symbol
-		(lib_id "Connector:TestPoint")
-		(at 20.32 165.1 0)
-		(unit 1)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "bd1dfb19-3a53-4f9d-b316-43c90d7c8a4a")
-		(property "Reference" "TP823"
-			(at 20.32 158.242 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "TP"
-			(at 20.32 160.02 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "main-board:TestPoint_Pad_D1.0mm_Tight"
-			(at 20.32 165.1 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 20.32 165.1 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "test point"
-			(at 20.32 165.1 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/c34697c3-b205-4b5b-8e69-8879de572199"
-					(reference "TP823")
-					(unit 1)
-				)
-			)
-		)
-	
-		(property "Rating" "test point"
-			(at 20.32 165.1 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "LCSC" "none"
-			(at 20.32 165.1 0)
 			(hide yes)
 			(effects
 				(font
