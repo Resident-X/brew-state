@@ -156,7 +156,7 @@ class CommandClauses(unittest.TestCase):
     """The clauses C11 names, in each place that must hold them."""
 
     CLAUSES = (
-        ("forks of a root for each group of units", "runs a declared review as forks of a root for each group of units"),
+        ("forks of the roots that hold the groups' views", "runs a declared review as forks of the roots that hold the groups' views"),
         ("on demand", "that it is on demand"),
         ("in neither the build round nor the nightly", "that it is in neither the build round nor the nightly"),
         ("agent command line on the search path and logged in", "that it needs the agent command line on the path and logged in"),
@@ -183,7 +183,7 @@ class CommandClauses(unittest.TestCase):
             self.assertIn(needle, desc)
         self.assertNotIn("setup session", desc.replace("a session that judges nothing", ""), "no earlier driver wording")
         self.assertNotIn("does not build", desc, "the refusal of a review of several groups with a replica on another model is gone")
-        self.assertIn("a root for each model its replicas run on", desc)
+        self.assertIn("a root for each model its groups' replicas run on", desc)
 
     def test_the_smoke_is_described_as_on_demand_and_in_neither_gate(self):
         desc = descriptions(read(TASKFILE))["hw:review-smoke"]
