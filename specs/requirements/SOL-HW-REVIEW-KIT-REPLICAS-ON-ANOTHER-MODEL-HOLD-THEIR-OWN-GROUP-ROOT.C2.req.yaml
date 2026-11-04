@@ -1,7 +1,7 @@
 id: SOL-HW-REVIEW-KIT-REPLICAS-ON-ANOTHER-MODEL-HOLD-THEIR-OWN-GROUP-ROOT.C2
 type: criterion
 title: The notes and the method no longer state a refusal or a workaround for replicas on another model over several groups
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: inspection
@@ -10,3 +10,5 @@ text: |-
 links:
   - target: SOL-HW-REVIEW-KIT-REPLICAS-ON-ANOTHER-MODEL-HOLD-THEIR-OWN-GROUP-ROOT
     type: criterion-of
+attributes:
+  deprecation_reason: Parent solution folded into the per-group sessions leaf

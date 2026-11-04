@@ -1,7 +1,7 @@
 id: SOL-HW-REVIEW-KIT-REPLICAS-ON-ANOTHER-MODEL-HOLD-THEIR-OWN-GROUP-ROOT.C1
 type: criterion
 title: A review over several groups with replicas on another model runs each replica from a root of its own for its group and model
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: test
@@ -10,3 +10,5 @@ text: |-
 links:
   - target: SOL-HW-REVIEW-KIT-REPLICAS-ON-ANOTHER-MODEL-HOLD-THEIR-OWN-GROUP-ROOT
     type: criterion-of
+attributes:
+  deprecation_reason: Parent solution folded into the per-group sessions leaf
