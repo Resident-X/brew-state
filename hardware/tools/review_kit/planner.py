@@ -469,12 +469,12 @@ def build_group(declaration: decl.Declaration, catalogue: cat.Catalogue, sizing:
                  messages.shared_context(held), entry)
 
 
-def form(declaration: decl.Declaration, catalogue: cat.Catalogue, model: Optional[str], hold_groups: bool = True) -> Formed:
+def form(declaration: decl.Declaration, catalogue: cat.Catalogue, model: Optional[str], hold_groups: bool = False) -> Formed:
     """The groups of a review with each root built and held to the context budget, refused before any session starts when the
     budget is a fraction of a window the kit does not declare, when the shared documents are over the budget on their own,
     when any group's root is over it (every one is named), or when a root's message is over the agent command line's limit.
-    With `hold_groups` false the groups' roots are not held to the budget here: `make_plan` holds those that start a root for
-    the review's model, a group whose replicas all run on another model having none."""
+    The groups' roots are held to the budget here only when `hold_groups` is given true: `make_plan` is the one point that holds
+    them, those that start a root for the review's model, a group whose replicas all run on another model having none."""
     budget = context_budget(declaration.budget, model)
     sizing = Sizing(declaration, catalogue)
     shared = messages.shared_context(catalogue.subset(shared_names(declaration)))
@@ -515,7 +515,7 @@ def make_plan(declaration: decl.Declaration, catalogue: cat.Catalogue, spec: ses
     all fork from roots of other models has no root of its own model: none is started, priced or written."""
     if isinstance(bound, bool) or not isinstance(bound, int) or bound < 1:
         raise BoundBelowOne(bound)
-    formed = formed or form(declaration, catalogue, spec.model, hold_groups=False)
+    formed = formed or form(declaration, catalogue, spec.model)
     by_group = {built.id: built for built in formed.groups}
     owned: List[Tuple[Any, str]] = []
     for context in contexts:

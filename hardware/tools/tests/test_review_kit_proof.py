@@ -59,6 +59,23 @@ class FormsAsPlans(unittest.TestCase):
         return proof.form_plan(form, self.h.declaration, self.catalogue, self.h.spec, bound=4, cli_version="9.9.9",
                                tool_commit="abc1234", **kw)
 
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C2: a group whose own artefacts, measured by the kit's existing token measure, added to the shared documents measure more than the budget is refused before any session starts
+    def test_a_single_form_holds_its_one_started_root_to_the_budget_exactly(self):
+        size = self.plan(proof.SINGLE_SHARED).plan.groups[0].tokens
+
+        def form(budget):
+            raw = fx.declaration_dict()
+            raw["budget"] = {"context_tokens": budget}
+            h = fx.Harness(self, raw=raw)
+            held = catalogue.admit(h.declaration, h.review, results_folder=h.out)
+            return proof.form_plan(proof.SINGLE_SHARED, h.declaration, held, h.spec, bound=4, cli_version="9.9.9",
+                                   tool_commit="abc1234")
+        self.assertEqual(form(size).plan.groups[0].tokens, size, "a root that fits the budget exactly is planned")
+        with self.assertRaises(planner.GroupsOverBudget) as refused:
+            form(size - 1)
+        self.assertEqual([(o.group, o.tokens) for o in refused.exception.overruns], [("G1", size)])
+        self.assertEqual(refused.exception.budget, size - 1)
+
     # SOL-HW-REVIEW-KIT.C12: the single-reviewer form is a plan with one unit holding every item and no shared context
     def test_single_is_one_group_of_every_item_with_an_empty_shared_context(self):
         formed = self.plan(proof.SINGLE, replicas=3, variants=("full", "hunt"))

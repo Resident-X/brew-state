@@ -34,7 +34,7 @@ import test_review_caller_layout as layout_tests  # noqa: E402
 import test_review_caller_production_files as production_tests  # noqa: E402
 import test_review_caller_schematic as schematic_tests  # noqa: E402
 from review_kit import caller as kit_caller  # noqa: E402
-from review_kit import catalogue, command, costmodel, messages, planner, selection  # noqa: E402
+from review_kit import catalogue, command, costmodel, merge, messages, planner, selection  # noqa: E402
 
 MODEL = "claude-sonnet-5-5"
 TEXT_KINDS = ("text", "extract")
@@ -414,3 +414,96 @@ class TheItemsNamesAreReadFromTheCatalogue(layout_tests.Folder):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class GoodResultsCoverTheChecklist:
+    """A caller's good results, built from its own units and checklist, held to the coverage the command holds a merge to."""
+
+    def assertCovered(self, package, folder, given):
+        declaration = package.declaration
+        found = catalogue.admit(declaration, folder)
+        spec = messages.make_spec(declaration, package.tools, folder, MODEL)
+        plan = planner.make_plan(declaration, found, spec, bound=4, cli_version="9.9.9", tool_commit="abc1234")
+        holds = {group.id: [item for unit in group.units for item in declaration.units[unit].items] for group in plan.groups}
+        order = [group.id for group in plan.groups]
+        self.assertEqual(set(declaration.units), set(given), "the results are for the units the caller declares")
+        self.assertEqual(sorted(item for items in holds.values() for item in items), sorted(set(package.rules.checklist)),
+                         "the groups hold the checklist's items, each once")
+        by_group = {}
+        for group in plan.groups:
+            tables = {}
+            for unit in group.units:
+                for name, rows in given[unit].items():
+                    tables.setdefault(name, []).extend(rows)
+            by_group[group.id] = {"r1": tables}
+        self.assertEqual(merge.coverage_problems(declaration.shape, package.rules, order, by_group, holds), [])
+        victim = order[0]
+        item = holds[victim][0]
+        dropped = {name: [row for row in rows if row.get("Item") != item] for name, rows in by_group[victim]["r1"].items()}
+        problems = merge.coverage_problems(declaration.shape, package.rules, order, {**by_group, victim: {"r1": dropped}}, holds)
+        self.assertTrue(any(item in problem for problem in problems), "a group that leaves out an item it holds is caught")
+
+
+class TheLayoutCallersFullRoundIsCovered(layout_tests.Folder, GoodResultsCoverTheChecklist):
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a group's replicas judge the units of the group
+    def test_the_good_results_of_a_full_round_pass_the_coverage_with_the_holds_the_plan_gives(self):
+        package = kit_caller.load("layout", TOOLS).prepare(self.folder)
+        self.assertCovered(package, self.folder, layout_tests.results())
+
+
+class TheLayoutCallersNarrowRoundIsCovered(layout_tests.Folder, GoodResultsCoverTheChecklist):
+    narrow = True
+    method = lfx.METHOD_SENSE
+
+    def narrowed(self, items):
+        folder = self.copy_of("narrowed")
+        lfx.set_round(folder, items=[{"item": item, "reason": f"{item} moved"} for item in items])
+        return folder
+
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a group's replicas judge the units of the group
+    def test_the_good_results_of_a_narrow_round_pass_the_coverage_with_the_holds_the_plan_gives(self):
+        for items in (["CLOCK-1", "SENSE-2"], ["FLOOR-1", "GROUND-1"], ["FLOOR-1"]):
+            with self.subTest(items=items):
+                folder = self.narrowed(items)
+                package = kit_caller.load("layout", TOOLS).prepare(folder)
+                given = {unit: {"Verdicts": [layout_tests.verdict(item) for item in held.items]}
+                         for unit, held in package.declaration.units.items()}
+                self.assertCovered(package, folder, given)
+
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a group's replicas judge the units of the group
+    def test_a_narrow_round_run_through_the_command_merges_exactly_the_listed_items_in_text_and_json(self):
+        folder = self.narrowed(["CLOCK-1", "SENSE-2"])
+        run = layout_tests.Command(self, folder)
+        run.scenario()
+        status, text, err = run.go("--format", "json")
+        self.assertEqual((status, err), (0, ""), text)
+        report = json.loads(text)
+        self.assertEqual([row["Item"] for row in report["tables"]["Verdicts"]["rows"]], ["CLOCK-1", "SENSE-2"])
+        self.assertEqual(report["refusals"], [])
+        second = layout_tests.Command(self, folder, out="out-text")
+        second.scenario()
+        status, text, err = second.go()
+        self.assertEqual((status, err), (0, ""), text)
+        self.assertTrue(text.splitlines()[-1].startswith("RESULT | WRITTEN"), text)
+        self.assertNotIn("REFUSED", text)
+
+
+class TheCriticalRoutingCallersGoodResultsAreCovered(critical_tests.Folder, GoodResultsCoverTheChecklist):
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a group's replicas judge the units of the group
+    def test_the_good_results_pass_the_coverage_with_the_holds_the_plan_gives(self):
+        package = kit_caller.load("critical_routing", TOOLS).prepare(self.folder)
+        self.assertCovered(package, self.folder, critical_tests.results())
+
+
+class TheSchematicCallersGoodResultsAreCovered(schematic_tests.Folder, GoodResultsCoverTheChecklist):
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a group's replicas judge the units of the group
+    def test_the_good_results_pass_the_coverage_with_the_holds_the_plan_gives(self):
+        package = kit_caller.load("schematic", TOOLS).prepare(self.folder)
+        self.assertCovered(package, self.folder, schematic_tests.results())
+
+
+class TheProductionFilesCallersGoodResultsAreCovered(production_tests.Folder, GoodResultsCoverTheChecklist):
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a group's replicas judge the units of the group
+    def test_the_good_results_pass_the_coverage_with_the_holds_the_plan_gives(self):
+        package = kit_caller.load("production_files", TOOLS).prepare(self.folder)
+        self.assertCovered(package, self.folder, production_tests.results(package))

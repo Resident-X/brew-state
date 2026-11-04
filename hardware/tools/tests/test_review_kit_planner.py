@@ -571,7 +571,7 @@ class PerModelPricing(Case):
 
         def plan(windows, policy):
             with mock.patch.dict(cm.WINDOW_TOKENS_BY_MODEL, windows):
-                formed = planner.form(declaration, found, spec.model, hold_groups=False)
+                formed = planner.form(declaration, found, spec.model)
                 return planner.make_plan(declaration, found, spec, bound=4, cli_version="9.9.9", tool_commit="abc1234", replicas=2,
                                          variants=policy.ids, contexts=ensemble.group_contexts(spec, formed.groups, policy),
                                          formed=formed)
@@ -585,8 +585,9 @@ class PerModelPricing(Case):
             plan({"big-model": roomy, "small-model": tight}, only_other)
         self.assertEqual({overrun.model for overrun in caught.exception.overruns}, {"small-model"})
         with mock.patch.dict(cm.WINDOW_TOKENS_BY_MODEL, {"big-model": tight, "small-model": roomy}):
+            planner.form(declaration, found, spec.model)
             with self.assertRaises(planner.GroupsOverBudget):
-                planner.form(declaration, found, spec.model)
+                planner.form(declaration, found, spec.model, hold_groups=True)
 
     def test_a_plan_on_the_small_tier_is_cheaper_than_the_same_plan_on_the_mid_tier_and_given_prices_override_the_table(self):
         # SOL-HW-REVIEW-KIT.C6: the predicted cost and time use the prices of each node's model

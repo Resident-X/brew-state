@@ -81,7 +81,7 @@ def formed(test, raw, prepare, model="claude-sonnet-5-5"):
     prepare(folder)
     declaration = parsed(raw)
     found = catalogue.admit(declaration, folder)
-    return declaration, found, planner.form(declaration, found, model)
+    return declaration, found, planner.form(declaration, found, model, hold_groups=True)
 
 
 def held_names(message):

@@ -474,7 +474,7 @@ class Run:
             raise Refusal([refusal.line() + "; change the declaration's artefact or the review folder, then run again"
                            for refusal in error.refusals])
         try:
-            self.formed = planner.form(declaration, self.catalogue, self.args.model, hold_groups=False)
+            self.formed = planner.form(declaration, self.catalogue, self.args.model)
         except (planner.GroupsOverBudget, planner.OverBudget) as error:
             raise Refusal(error.lines)
         except (planner.WindowUndeclared, planner.OverStreamLimit) as error:
@@ -511,26 +511,31 @@ class Run:
         """The plan the groups make. With no program (`--plan-only`) no agent command line is asked for its version."""
         self.program = program
         self.version = agent_version(program) if program is not None else "none (plan only)"
+        self.plan = self.make_plan(self.version)
+        if program is not None:
+            self.report["agent"] = {"program": program, "version": self.version}
+        found = self.contexts or ()
+        self.report["notes"] += [cm.unpriced_text(model) for model in
+                                 cm.unpriced([self.args.model] + [context.model for context in found if context.model != self.spec.model])]
+        self.report["plan"] = plan_summary(self.plan, self.bound)
+
+    def make_plan(self, version: str) -> planner.Plan:
+        """The plan for the groups, refused as the planner refuses, whether or not an agent program is present."""
         used = [used_variants(self.policy, [count]) for count in self.group_counts]
         found = ensemble.group_contexts(self.spec, self.formed.groups, self.policy, used)
         other = ensemble.other_contexts(found, self.spec.model)
         self.contexts = found if other else None
         declaration = self.prepared.declaration
         try:
-            self.plan = planner.make_plan(declaration, self.catalogue, self.spec, bound=self.bound,
-                                          cli_version=self.version, tool_commit=tool_commit(self.repo), replicas=self.counts,
-                                          variants=self.policy.ids, contexts=found if other else (),
-                                          prompt_for=ensemble.prompt_for(declaration, self.policy, self.prepared.unit_text),
-                                          formed=self.formed)
+            return planner.make_plan(declaration, self.catalogue, self.spec, bound=self.bound,
+                                     cli_version=version, tool_commit=tool_commit(self.repo), replicas=self.counts,
+                                     variants=self.policy.ids, contexts=found if other else (),
+                                     prompt_for=ensemble.prompt_for(declaration, self.policy, self.prepared.unit_text),
+                                     formed=self.formed)
         except (planner.GroupsOverBudget, planner.OverBudget) as error:
             raise Refusal(error.lines)
         except (planner.OverStreamLimit, planner.BoundBelowOne, planner.WindowUndeclared, ValueError) as error:
             raise Refusal([str(error)])
-        if program is not None:
-            self.report["agent"] = {"program": program, "version": self.version}
-        self.report["notes"] += [cm.unpriced_text(model) for model in
-                                 cm.unpriced([self.args.model] + [context.model for context in other])]
-        self.report["plan"] = plan_summary(self.plan, self.bound)
 
     # The record after the sessions, before it is written ------------------------------------------
 
@@ -644,6 +649,7 @@ def main(argv: Optional[Sequence[str]] = None, out=sys.stdout, err=sys.stderr, e
                                                          "no session was started")
             report["files"] = [store.PLAN_NAME]
             return finish(report, as_json, out, err)
+        run.make_plan("none (plan only)")
         try:
             program = ex.require_agent(environ)
         except ex.CannotRun as error:

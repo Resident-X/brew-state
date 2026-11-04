@@ -827,6 +827,28 @@ class OtherModelReplica(Case):
                 status, out, err = self.run_command("--model", "review-model-id", "--plan-only", out=os.path.join(self.base, "p"))
             self.assertEqual((status, err), (0, ""), "the other model's window raised so that the largest group fits exactly: planned")
 
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C2: the command prints a REFUSED line naming the cause and what to do, exits 1, and starts no session
+    def test_a_group_over_another_models_budget_is_refused_not_cannot_run_when_no_agent_program_is_on_the_path(self):
+        raw = fx.declaration_dict()
+        sizes = group_tokens(self, raw)
+        raw["budget"] = {"context_fraction": 0.5}
+        largest = max(sizes, key=sizes.get)
+        limit = sizes[largest] - 1
+        self.write_caller(extra=self.POLICY, declaration=raw)
+        with mock.patch.dict(costmodel.WINDOW_TOKENS_BY_MODEL, {"review-model-id": 10 * sizes[largest], "other-model-id": 2 * limit}), \
+                mock.patch.dict(os.environ, {ex.AGENT_ENV: os.path.join(self.base, "no-such-agent")}):
+            text = self.refused("group-over-budget-model", "--model", "review-model-id")
+            self.assertNotIn("CANNOT RUN", text)
+            self.assertEqual(self.calls(), [])
+            self.assertFalse(os.path.exists(self.out))
+            status, out, err = self.run_command("--model", "review-model-id", fmt="json", out=os.path.join(self.base, "j"))
+            self.assertEqual((status, err), (1, ""))
+            report = json.loads(out)
+            self.assertEqual(report["result"], "REFUSED")
+            self.assertIsNone(report.get("cannot_run"))
+            self.assertIn(f"group {largest} ", report["refusals"][0])
+            self.assertEqual(self.calls(), [])
+
     # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a figure budget applies to every model's root, and a model with no declared window is refused naming it
     def test_a_figure_budget_holds_every_models_root_and_a_fraction_budget_of_a_model_without_a_window_is_refused_naming_it(self):
         raw = fx.declaration_dict()
@@ -1048,6 +1070,22 @@ class GroupRoots(Case):
         self.assertEqual([line.split(" holds ")[0] for line in report["refusals"]],
                          ["group G1 (unit u1 alone)", "group G2 (units u2, u3, which the declaration couples)"])
         self.assertNothingStarted()
+
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C2: the command prints a REFUSED line naming the cause and what to do, exits 1, and starts no session
+    def test_a_group_over_the_budget_is_refused_not_cannot_run_when_no_agent_program_is_on_the_path(self):
+        name = self.budgeted({"context_tokens": 2000})
+        with mock.patch.dict(os.environ, {ex.AGENT_ENV: os.path.join(self.base, "no-such-agent")}):
+            text = self.refused("group-over-budget", caller=name)
+            self.assertNotIn("CANNOT RUN", text)
+            self.assertNothingStarted()
+            self.assertFalse(os.path.exists(self.out), "nothing was written")
+            status, out, err = self.run_command(caller=name, fmt="json", out=os.path.join(self.base, "json"))
+            self.assertEqual((status, err), (1, ""))
+            report = json.loads(out)
+            self.assertEqual(report["result"], "REFUSED")
+            self.assertIsNone(report.get("cannot_run"))
+            self.assertTrue(report["refusals"] and all("budget of 2000 tokens" in line for line in report["refusals"]))
+            self.assertNothingStarted()
 
     # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C2: a group that fits exactly is accepted
     def test_a_group_that_fits_the_budget_exactly_is_accepted_and_one_token_less_is_refused(self):
