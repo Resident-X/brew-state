@@ -1,7 +1,7 @@
 id: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C13
 type: criterion
 title: The full-size main controller board's layout-review and critical-routing folders plan within the budget without rendering again
-status: active
+status: deprecated
 version: 2
 measurement_type: binary
 verification: demonstration
@@ -10,3 +10,5 @@ text: |-
 links:
   - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES
     type: criterion-of
+attributes:
+  deprecation_reason: The committed main controller board these criteria name is not on main; they move to their own item that depends on the board's delivery, so this item completes on what it can prove
