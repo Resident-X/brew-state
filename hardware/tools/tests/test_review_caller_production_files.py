@@ -1137,21 +1137,9 @@ class TheReplicasBudgetAndBound(Folder):
         self.assertEqual(status, 0, text + err)
         plan = json.loads(text)["plan"]
         self.assertEqual(plan["variants"], ["full", "hunt", "small"])
-        groups = [group["id"] for group in plan["groups"]]
-        self.assertGreater(len(groups), 1, "the check is judged in several groups")
-        self.assertEqual([(context["group"], context["model"], context["variants"]) for context in plan["contexts"]],
-                         [(group, SMALL, ["small"]) for group in groups], "a root for the small model for each group")
+        self.assertEqual([(context["model"], context["variants"]) for context in plan["contexts"]], [(SMALL, ["small"])])
         calls = run.calls()
-        roots = [call for call in calls if call["resume"] is None]
-        self.assertEqual(len(roots), 2 * len(groups), "a root for each group and each of the two models")
         forks = [call for call in calls if call["resume"] is not None and "Your unit:" in call["prompt"]]
-        group_of = {unit: group["id"] for group in plan["groups"] for unit in group["units"]}
-        for root in roots:
-            held = [fork for fork in forks if fork["resume"] == root["session"]]
-            self.assertEqual({model_of(fork) for fork in held}, {model_of(root)}, "a fork has its root's model")
-            self.assertEqual(len({tuple(sorted(group_of[unit] for unit in re.findall(r"Your unit: (\S+)", fork["prompt"]))) for fork in held}), 1,
-                             "a root's forks are all of one group")
-            self.assertEqual(len(held), 1 if model_of(root) == SMALL else 2, "the third replica on the small model's root, the first two on the other")
         self.assertEqual(len(forks), plan["forks"])
         self.assertEqual(len(forks) % 3, 0)
         self.assertEqual({model_of(call) for call in forks}, {MID, SMALL})

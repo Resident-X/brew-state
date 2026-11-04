@@ -342,10 +342,13 @@ def dry_lines(plan: Mapping[str, Any], model: str, single: Optional[List[proof.R
     predicted = plan["predicted"]
     other = [context["model"] for context in plan.get("contexts", ())]
     found += [f"WARNING | {cost_model.unpriced_text(each)}" for each in cost_model.unpriced([model] + other)]
-    found.append(f"PLAN | fanned | {REPLICAS} replicas on {model} | {len(plan['groups'])} groups | {plan['forks']} forks | bound "
-                 f"{plan['bound']} | shared context {plan['shared_tokens']} tokens | variants {', '.join(plan['variants'])}")
+    found.append(f"PLAN | fanned | {REPLICAS} replicas on {model} | {len(plan['groups'])} groups | "
+                 f"{plan['forks']} forks | bound {plan['bound']} | shared documents {plan['shared_tokens']} tokens | variants "
+                 f"{', '.join(plan['variants'])}")
     found += [f"GROUP | {group['id']} | units {', '.join(group['units'])} | {group['replicas']} replicas | expected output "
-              f"{group['expected_output_tokens']} tokens" for group in plan["groups"]]
+              f"{group['expected_output_tokens']} tokens | root {group['root']}" for group in plan["groups"]]
+    found += [f"ROOT | {root['id']} | groups {', '.join(root['groups'])} | {root['images']} images | {root['tokens']} tokens | budget "
+              f"{root['budget'] if root['budget'] is not None else 'none'}" for root in plan["roots"]]
     found.append(f"PREDICTED | fanned | ${predicted['cost_usd']} | {predicted['wall_s']} s | cost "
                  f"{'within' if predicted['cost_usd'] <= cost else 'over'} its bound, time "
                  f"{'within' if predicted['wall_s'] <= wall else 'over'} its bound")

@@ -350,11 +350,13 @@ def dry_lines(plans: Mapping[str, Mapping[str, Any]], singles: Sequence[proof.Ru
         found.append(f"MODEL | {name} | {models_text(models[name], plan)}")
         found += [f"WARNING | {name} | {cost_model.unpriced_text(model)}" for model in cost_model.unpriced(
             [models[name]] + [context["model"] for context in plan.get("contexts", ())])]
-        found.append(f"PLAN | {name} | {replicas} replicas | {len(plan['groups'])} groups | {plan['forks']} forks | bound {plan['bound']} | "
-                     f"shared context {plan['shared_tokens']} tokens | variants {', '.join(plan['variants'])}")
+        found.append(f"PLAN | {name} | {replicas} replicas | {len(plan['groups'])} groups | {plan['forks']} forks | "
+                     f"bound {plan['bound']} | shared documents {plan['shared_tokens']} tokens | variants {', '.join(plan['variants'])}")
         found.append(f"BOUND | {name} | {plan['bound']} at once | {BOUND_BASIS}")
         found += [f"GROUP | {name} | {group['id']} | units {', '.join(group['units'])} | {group['replicas']} replicas | expected "
-                  f"output {group['expected_output_tokens']} tokens" for group in plan["groups"]]
+                  f"output {group['expected_output_tokens']} tokens | root {group['root']}" for group in plan["groups"]]
+        found += [f"ROOT | {name} | {root['id']} | groups {', '.join(root['groups'])} | {root['images']} images | {root['tokens']} tokens | "
+                  f"budget {root['budget'] if root['budget'] is not None else 'none'}" for root in plan["roots"]]
         found.append(f"PREDICTED | {name} | ${predicted['cost_usd']} | {predicted['wall_s']} s | " + (
             f"cost {'within' if predicted['cost_usd'] <= cost else 'over'} its bound, time {'within' if predicted['wall_s'] <= wall else 'over'} "
             "its bound" if name == "design-loop" else "figures recorded, not bounded"))

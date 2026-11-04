@@ -160,7 +160,7 @@ class TheCommand(Proofed):
         for item in ("PINV-1", "PINV-2", "STRAP-1", "DERATE-1", "DERATE-2", "FREE-PASS"):
             self.assertIn(f"- {item}", fork["prompt"])
         self.assertTrue(fanned_calls)
-        self.assertEqual(len([call for call in fanned_calls if call["resume"] is None]), 3, "a root for each of the three groups, which its replicas share")
+        self.assertEqual(len([call for call in fanned_calls if call["resume"] is None]), 1, "one shared context for the replicas")
         groups = json.loads(json.dumps(self.record()["fanned_runs"][0]))["sessions"]
         self.assertEqual(len(groups), len(fanned_calls))
         for call in calls:
@@ -355,9 +355,7 @@ class TheCommand(Proofed):
         forks = {label: entry for label, entry in found.items() if label.startswith("G")}
         self.assertTrue(forks)
         self.assertTrue(all(entry == {"retrieved": 2, "failed": 1} for entry in forks.values()), found)
-        roots = {label: entry for label, entry in found.items() if label.startswith("root")}
-        self.assertEqual(len(roots), len({label.split(".")[0] for label in forks}), "a root for each group")
-        self.assertTrue(all(entry == {"retrieved": 0, "failed": 0} for entry in roots.values()), found)
+        self.assertEqual(found["root"], {"retrieved": 0, "failed": 0})
         count = len(forks)
         self.assertIn(f"retrievals {2 * count} failed {count} |", text)
         self.assertIn("RETRIEVALS | fanned | G1.r1.a1 | retrieved 2 failed 1", text)
@@ -462,6 +460,9 @@ class TheDryMode(Proofed):
         self.assertFalse(os.path.exists(os.path.join(self.work, srp.RECORD)))
         self.assertFalse(os.path.exists(os.path.join(self.work, srp.OUT_DIR, "fanned")), "no run folder is made")
         self.assertRegex(text, r"PLAN \| fanned \| 2 replicas on claude-haiku-5-5 \| \d groups \| \d+ forks")
+        # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C3: the plan names each group's root and each root's groups, images, tokens and budget
+        self.assertRegex(text, r"ROOT \| root \| groups G1(, G\d)+ \| 0 images \| \d+ tokens \| budget \d+")
+        self.assertRegex(text, r"(?m)GROUP \| G1 \| .* \| root root$")
         self.assertRegex(text, r"PREDICTED \| fanned \| \$[0-9.]+ \| [0-9.]+ s \| cost (within|over) its bound")
         self.assertIn("SINGLE | recorded: 2 run(s) | mean $5.00 | mean 1000 s", text)
         self.assertIn("COST MULTIPLE | 1.25 | bounds: cost at most $6.25 (1.25 times the single mean $5.00), wall time at most 500 s "

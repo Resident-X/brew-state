@@ -327,6 +327,9 @@ class TheReviewSpecifics(Proofed):
         shutil.rmtree(self.work)
         status, text, err = self.go("--dry")
         self.assertRegex(text, r"PLAN \| fanned \| 2 replicas on claude-haiku-5-5 \| \d groups")
+        # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C3: the plan names each group's root and each root's groups, images, tokens and budget
+        self.assertRegex(text, r"ROOT \| root \| groups G1(, G\d)* \| \d+ images \| \d+ tokens \| budget \d+")
+        self.assertRegex(text, r"(?m)GROUP \| G1 \| .* \| root root$")
         self.assertIn("COST MULTIPLE | 1.25 | bounds: cost at most $1250.00 (1.25 times the single mean $1000.00)", text)
 
     def test_the_review_folder_is_the_critical_routing_mode_of_the_folder_command_with_the_views_and_no_check_report(self):

@@ -120,13 +120,13 @@ class TheCommand(Proofed):
         status, text, err = self.go()
         self.assertEqual(status, 0, text + err)
         calls = self.calls()
-        self.assertEqual(len(calls), (2 + 2 * 2) + (2 * 2 + 3 * 2), "a root for each of two groups and two replicas of each, then a root for each group on the mid-tier model and on the small model and three replicas of each group")
-        self.assertEqual(len([call for call in calls if call["resume"] is None]), 2 + 2 * 2,
-                         "a root for each group for the design loop, a root for each group and model for the pre-order round, and no single reviewer")
+        self.assertEqual(len(calls), (1 + 2 * 2) + (2 + 3 * 2), "a shared context and two groups of two replicas, then a second shared context for the small model and two groups of three")
+        self.assertEqual(len([call for call in calls if call["resume"] is None]), 3,
+                         "a shared context for the design loop, two for the pre-order round, and no single reviewer")
         models = [call["args"][call["args"].index("--model") + 1] for call in calls]
         self.assertEqual(sorted(set(models)), sorted({lrp.BASELINE_MODEL, kit_small}))
-        self.assertEqual(models.count(lrp.BASELINE_MODEL), 2 + 2 * 2, "the pre-order round's mid-tier root of each group and its first two replicas of each group")
-        self.assertEqual(models.count(kit_small), (2 + 2 * 2) + (2 + 2), "the design loop's two roots and four forks, and the pre-order round's small-tier root of each group and third replicas")
+        self.assertEqual(models.count(lrp.BASELINE_MODEL), 1 + 2 * 2, "the pre-order round's mid-tier root and its first two replicas of each group")
+        self.assertEqual(models.count(kit_small), (1 + 2 * 2) + (1 + 2), "the design loop's root and four forks, and the pre-order round's small-tier root and third replicas")
         record = self.record()
         self.assertEqual(record["verdict"]["status"], "pass")
         self.assertEqual(record["cost_multiple"], 1.25)
@@ -205,6 +205,10 @@ class TheCommand(Proofed):
             self.assertRegex(text, rf"PREDICTED \| {name} \| \$[0-9.]+ \| [0-9.]+ s \|")
         self.assertIn("PLAN | design-loop | 2 replicas | 2 groups | 4 forks", text)
         self.assertIn("PLAN | pre-order | 3 replicas | 2 groups | 6 forks", text)
+        # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C3: the plan names each group's root and each root's groups, images, tokens and budget
+        for name in ("design-loop", "pre-order"):
+            self.assertRegex(text, rf"ROOT \| {name} \| root \| groups G1, G2 \| \d+ images \| \d+ tokens \| budget \d+")
+            self.assertEqual(len(re.findall(rf"GROUP \| {name} \| G\d \| .* \| root root$", text, re.M)), 2)
         self.assertIn("COST MULTIPLE | 1.25 | design loop bounds: cost at most $6.25 (1.25 times the single mean $5.00), wall time at most 500 s "
                       "(half the single mean 1000 s)", text)
         self.assertRegex(text, r"BOUND \| design-loop \| 4 at once \| the layout caller's bound, the largest number of reviewers at once the live runs ran")
@@ -283,7 +287,7 @@ class TheCommand(Proofed):
         self.assertEqual(status, 0 if record["verdict"]["accepted"] else 1, "the exit status is the pooled verdict's")
         self.assertNotEqual(record["verdict"]["status"], "second-run-required")
         self.assertIn("ROUND | design-loop-2 |", text)
-        self.assertEqual(len([call for call in self.calls() if call["resume"] is None]), 2 * 2, "a root for each of the two groups in each of the two runs")
+        self.assertEqual(len([call for call in self.calls() if call["resume"] is None]), 2, "one shared context for each run")
         status, text, err = self.go("--only", "design-loop", "--json", baselines=baselines)
         self.assertEqual(status, 1, "a work folder that already holds the record is refused, not run over")
 
@@ -327,9 +331,9 @@ class TheCommand(Proofed):
         document = json.loads(text)
         self.assertEqual(document["plans"]["design-loop"]["contexts"], [], "two replicas of one model need no second root")
         pre_order = document["plans"]["pre-order"]
-        self.assertEqual([(context["group"], context["model"]) for context in pre_order["contexts"]], [("G1", kit_small), ("G2", kit_small)],
-                         "each group has a root for the small model")
-        self.assertEqual(len({context["root_id"] for context in pre_order["contexts"]}), 2)
+        self.assertEqual([context["model"] for context in pre_order["contexts"]], [kit_small])
+        self.assertEqual([(context["root"], context["groups"]) for context in pre_order["contexts"]], [("root", ["G1", "G2"])],
+                         "the one root of the two groups has one root for the small model")
         shutil.rmtree(self.work)
         status, text, err = self.go("--dry")
         self.assertIn(f"MODEL | design-loop | all 4 forks on {kit_small}", text)
@@ -373,7 +377,7 @@ class TheCommand(Proofed):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: the replicas the design-loop round uses, and the pre-order round's three replicas run once and their figures recorded
         status, text, err = self.go("--only", "design-loop")
         self.assertEqual(status, 0, text + err)
-        self.assertEqual(len(self.calls()), 2 + 2 * 2, "a root for each of two groups and two replicas of each")
+        self.assertEqual(len(self.calls()), 5)
         record = self.record()
         self.assertNotIn("pre_order", record)
         self.assertEqual(list(record["layout"]["rounds"]), ["design-loop"])
@@ -381,7 +385,7 @@ class TheCommand(Proofed):
         os.remove(self.log)
         status, text, err = self.go("--only", "pre-order")
         self.assertEqual(status, 0, text + err)
-        self.assertEqual(len(self.calls()), 2 * 2 + 3 * 2, "a root for each group and model and three replicas of each group")
+        self.assertEqual(len(self.calls()), 8)
         record = self.record()
         self.assertIsNone(record["verdict"], "no criterion is applied to the pre-order round")
         self.assertEqual(record["pre_order"]["seeds_found_count"], 3)

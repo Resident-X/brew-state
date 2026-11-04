@@ -2,8 +2,8 @@
 """The four review callers' context budget and each unit's declared views, over synthetic review folders.
 
 Each caller is loaded as the kit loads it, its declaration resolved for a synthetic review folder the folder command wrote, and
-the kit's plan made for it with no session: every group's root is within the budget the caller declares and holds no artefact
-none of its units declares. The views a unit declares are those the kit's selection takes from the folder's view index, not the
+the kit's plan made for it with no session: every root is within the budget the caller declares and holds no artefact
+none of the units of the groups it serves declares. The views a unit declares are those the kit's selection takes from the folder's view index, not the
 folder's whole list of views. No model, no KiCad and no agent command line is used.
 """
 
@@ -41,7 +41,7 @@ TEXT_KINDS = ("text", "extract")
 
 
 def groups(package, folder):
-    """The kit's plan for a caller's declaration over its folder, made with no session: the groups, each root built."""
+    """The kit's plan for a caller's declaration over its folder, made with no session: the groups and the roots that serve them."""
     declaration = package.declaration
     found = catalogue.admit(declaration, folder)
     return declaration, planner.form(declaration, found, MODEL)
@@ -61,27 +61,31 @@ def plan_only(case, name, *extra, model=MODEL, fmt="text"):
 
 
 class Replicas:
-    """The plan of a caller's own replica policy over several groups: each group a root for each model its replicas run on."""
+    """The plan of a caller's own replica policy over several groups: each root a root for each model its groups' replicas run on."""
 
-    def assertPlansEachGroupsRootForTheOtherModel(self, name, other, variants, per_group, fmt, *extra, model=MODEL):
+    def assertPlansEachRootsRootForTheOtherModel(self, name, other, variants, per_group, fmt, *extra, model=MODEL):
         status, text = plan_only(self, name, *extra, model=model, fmt=fmt)
         self.assertEqual(status, 0, text)
         if fmt == "json":
             plan = json.loads(text)["plan"]
             groups = [group["id"] for group in plan["groups"]]
             self.assertGreater(len(groups), 1, "the round is judged in several groups")
-            self.assertEqual([(context["group"], context["model"], context["variants"]) for context in plan["contexts"]],
-                             [(group, other, variants) for group in groups], "a root for the other model for each group")
-            self.assertEqual(len({context["root_id"] for context in plan["contexts"]}), len(groups))
-            self.assertTrue(all(context["root_id"].startswith(f"root.{context['group']}.") for context in plan["contexts"]))
+            roots = plan["roots"]
+            self.assertEqual(sorted(group for root in roots for group in root["groups"]), sorted(groups), "each group has one root")
+            self.assertEqual([(context["root"], context["groups"], context["model"], context["variants"]) for context in plan["contexts"]],
+                             [(root["id"], root["groups"], other, variants) for root in roots],
+                             "a root for the other model for each root, not for each group")
+            self.assertEqual(len({context["root_id"] for context in plan["contexts"]}), len(roots))
+            self.assertTrue(all(context["root_id"].startswith(f"{context['root']}.") for context in plan["contexts"]))
             self.assertEqual(plan["forks"], per_group * len(groups))
         else:
             self.assertRegex(text, r"RESULT \| PLANNED")
             self.assertNotIn("REFUSED", text)
             contexts = [line for line in text.splitlines() if line.startswith("CONTEXT | ")]
-            self.assertGreater(len(contexts), 1)
+            roots = [line for line in text.splitlines() if line.startswith("ROOT | ")]
+            self.assertEqual(len(contexts), len(roots), "a root for the other model for each root")
             self.assertEqual(len({line.split(" | ")[1] for line in contexts}), len(contexts), "each root has its own id")
-            self.assertTrue(all(f"| model {other} |" in line and line.split(" | ")[-1].startswith("group G") for line in contexts), contexts)
+            self.assertTrue(all(f"| model {other} |" in line and " | groups G" in line for line in contexts), contexts)
 
     def assertPlannedAtTwoReplicas(self, name, fmt):
         status, text = plan_only(self, name, "--replicas", "2", fmt=fmt)
@@ -111,28 +115,21 @@ class Budgeted:
         self.assertEqual(declaration.budget.context_fraction, module.HEADROOM)
         self.assertIsNone(declaration.budget.context_tokens)
         self.assertEqual(formed.budget["tokens"], int(costmodel.window_for(MODEL) * module.HEADROOM))
+        self.assertTrue(all(root.tokens <= formed.budget["tokens"] for root in formed.built_roots))
         self.assertTrue(all(built.tokens <= formed.budget["tokens"] for built in formed.groups))
-        for built in formed.groups:
-            held = {artefact.name for artefact in built.catalogue.artefacts if artefact.kind != "extract"
+        for root in formed.built_roots:
+            held = {artefact.name for artefact in root.catalogue.artefacts if artefact.kind != "extract"
                     or not artefact.name.startswith("extract/")}
-            declared = {name for unit in built.units for name in declaration.units[unit].needs}
-            self.assertEqual(held, declared, f"group {built.id}'s root holds what its units declare and nothing else")
-
+            declared = {name for built in formed.groups if built.id in root.groups for unit in built.units
+                        for name in declaration.units[unit].needs}
+            self.assertEqual(held, declared, f"root {root.id} holds what the units of its groups declare and nothing else")
 
     def assertPackedAsTheKitPacks(self, declaration, formed):
         packed = planner.pack(declaration)
-        self.assertEqual([list(built.units) for built in formed.groups], packed,
-                         "the groups are the kit's packing of the declaration, no view overlap saving enough to merge past its cap")
-        self.assertGreater(len(formed.groups), 1, "the caller's round is not judged from one root")
-
-    def assertMergedOnlyWithinTheKitsCap(self, declaration, formed):
-        """The units' own views overlap, so groups may merge, but never past the cap the kit packs to, and never into one group."""
-        cap = planner.output_cap(declaration)
-        packed = planner.pack(declaration)
-        self.assertGreater(len(formed.groups), 1, "the caller's round is not judged from one root")
-        self.assertLessEqual(len(formed.groups), len(packed))
-        for built in formed.groups:
-            self.assertLessEqual(built.expected_output_tokens, cap, f"group {built.id} is within the largest single unit's output")
+        self.assertEqual([list(built.units) for built in formed.groups], packed, "the groups are the kit's packing of the declaration")
+        self.assertGreater(len(formed.groups), 1, "the caller's round is judged in several groups, run in parallel")
+        self.assertEqual(sorted(group for root in formed.built_roots for group in root.groups), sorted(g.id for g in formed.groups),
+                         "every group is served by one root")
 
     def assertOneCoupledGroup(self, declaration, formed):
         self.assertEqual(len(planner.coupled_sets(declaration)), 1)
@@ -186,12 +183,13 @@ class TheLayoutCaller(layout_tests.Folder, Budgeted):
         self.assertEqual(declaration.units["area-GROUND"].check_rules, ("clearance_floor",))
         self.assertEqual(declaration.units["area-FLOOR"].check_rules, ())
         self.assertEqual(declaration.check_extract.report, "check-report.txt")
-        root = json.loads(formed.groups[0].shared.message)
+        ground = next(group for group in formed.groups if "area-GROUND" in group.units)
+        root = json.loads(formed.root_of(ground.id).shared.message)
         text = "\n".join(block["text"] for block in root["message"]["content"] if block["type"] == "text")
         self.assertNotIn("=== check-report.txt ===", text, "the whole report is in no root")
         self.assertIn("=== extract/check-report.txt ===", text)
         self.assertIn("The check's report holds no line for the rules: clearance_floor.", text)
-        self.assertEqual(formed.groups[0].extract["missing"], [{"unit": "area-GROUND", "rule": "clearance_floor"}],
+        self.assertEqual(ground.extract["missing"], [{"unit": "area-GROUND", "rule": "clearance_floor"}],
                          "the rule the report holds no line for is flagged in the plan naming the unit and the rule")
 
     def test_a_rule_the_report_holds_lines_for_is_in_the_extract_with_the_checks_own_figure(self):
@@ -201,11 +199,12 @@ class TheLayoutCaller(layout_tests.Folder, Budgeted):
                          "VIOLATION | hardware/synth/board/board.kicad_pro | silk_overlap | (5, 6) | unrelated\n")
         package = kit_caller.load("layout", TOOLS).prepare(self.folder)
         _, formed = groups(package, self.folder)
-        text = "\n".join(block["text"] for block in json.loads(formed.groups[0].shared.message)["message"]["content"]
+        ground = next(group for group in formed.groups if "area-GROUND" in group.units)
+        text = "\n".join(block["text"] for block in json.loads(formed.root_of(ground.id).shared.message)["message"]["content"]
                          if block["type"] == "text")
         self.assertIn("clearance_floor | (3, 4) | gap 0.07 mm under 0.10 mm", text)
-        self.assertNotIn("silk_overlap", text, "a rule no unit of the group judges is not in its extract")
-        self.assertEqual(formed.groups[0].extract["missing"], [])
+        self.assertNotIn("silk_overlap", text, "a rule no unit of the root's groups judges is not in its extract")
+        self.assertEqual(ground.extract["missing"], [])
 
 
 class TheLayoutCallersReplicas(layout_tests.Folder, Replicas):
@@ -213,7 +212,7 @@ class TheLayoutCallersReplicas(layout_tests.Folder, Replicas):
     def test_the_pre_order_rounds_three_replicas_over_several_groups_plan_a_small_model_root_for_each_group_in_text_and_json(self):
         for fmt in ("text", "json"):
             with self.subTest(fmt=fmt):
-                self.assertPlansEachGroupsRootForTheOtherModel("layout", layout.SMALL_MODEL, ["small"], 3, fmt, "--replicas", "3")
+                self.assertPlansEachRootsRootForTheOtherModel("layout", layout.SMALL_MODEL, ["small"], 3, fmt, "--replicas", "3")
 
     def test_two_replicas_plan_over_the_same_groups_in_text_and_json(self):
         for fmt in ("text", "json"):
@@ -251,7 +250,7 @@ class TheProductionFilesCaller(production_tests.Folder, Budgeted):
         package = kit_caller.load("production_files", TOOLS).prepare(self.folder)
         declaration, formed = groups(package, self.folder)
         self.assertWithinBudget(declaration, formed, production)
-        self.assertMergedOnlyWithinTheKitsCap(declaration, formed)
+        self.assertPackedAsTheKitPacks(declaration, formed)
         layers_unit = set(declaration.units[production.LAYERS_UNIT].needs)
         self.assertEqual(images_of(declaration, layers_unit),
                          {"views/layer-F.Cu-r1c1.png"} | {f"production/layers/layer-{name}.png" for name in pfx.LAYERS})
@@ -282,7 +281,7 @@ class TheProductionFilesCallersReplicas(production_tests.Folder, Replicas):
     def test_the_checks_default_policy_over_several_groups_plans_a_small_model_root_for_each_group_in_text_and_json(self):
         for fmt in ("text", "json"):
             with self.subTest(fmt=fmt):
-                self.assertPlansEachGroupsRootForTheOtherModel("production_files", production.SMALL_MODEL, ["small"], 3, fmt,
+                self.assertPlansEachRootsRootForTheOtherModel("production_files", production.SMALL_MODEL, ["small"], 3, fmt,
                                                                model=production.MID_MODEL)
 
     def test_two_replicas_plan_over_the_same_groups_in_text_and_json(self):
@@ -306,7 +305,7 @@ class TheCriticalRoutingCallersReplicas(critical_tests.Folder):
         self.assertEqual(status, 0, text)
         plan = json.loads(text)["plan"]
         self.assertEqual(len(plan["contexts"]), 1, "one group, so a root for the other model is built")
-        self.assertEqual(plan["predicted"]["tokens_written"], plan["groups"][0]["tokens"],
+        self.assertEqual(plan["predicted"]["tokens_written"], plan["roots"][0]["tokens"],
                          "every replica runs on the other model, so the review's own model has no root, started or written")
 
 
@@ -315,7 +314,7 @@ class TheSchematicCallersReplicas(schematic_tests.Folder, Replicas):
     def test_the_callers_policy_run_on_another_model_over_several_groups_plans_each_groups_root_and_on_its_own_model_builds_none(self):
         for fmt in ("text", "json"):
             with self.subTest(fmt=fmt):
-                self.assertPlansEachGroupsRootForTheOtherModel("schematic", schematic.SMALL_MODEL, ["full", "hunt"], 2, fmt)
+                self.assertPlansEachRootsRootForTheOtherModel("schematic", schematic.SMALL_MODEL, ["full", "hunt"], 2, fmt)
         status, text = plan_only(self, "schematic", model=schematic.SMALL_MODEL, fmt="json")
         self.assertEqual(status, 0, text)
         plan = json.loads(text)["plan"]
