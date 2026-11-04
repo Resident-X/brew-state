@@ -245,7 +245,7 @@ def check_same_path(record: Dict[str, Any], plan: Any) -> None:
     """A rerun follows the recorded path: the declaration must give the groups, specification and shared context recorded."""
     now, was = plan.to_dict(), record["plan"]
     for key, what in (("spec_digest", "session specification"), ("groups", "groups of units"),
-                      ("contexts", "roots for replicas on another model")):
+                      ("roots", "roots, or groups served by them"), ("contexts", "roots for replicas on another model")):
         if now[key] != was.get(key, [] if key == "contexts" else None):
             raise PlanChanged(f"the declaration now gives different {what} from the recorded run, so the recorded path cannot "
                               "be rebuilt; run the whole review again in a new output folder")

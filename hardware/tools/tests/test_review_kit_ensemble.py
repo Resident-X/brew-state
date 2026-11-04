@@ -227,22 +227,21 @@ class OtherModels(Case):
         with self.assertRaises(ensemble.PolicyError):
             ensemble.contexts(spec, shared, policy, ["zz"])
 
-    def test_each_group_has_a_context_for_each_model_its_own_replicas_use_with_the_group_id_in_its_root(self):
-        # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a review over several groups whose replica policy places a replica on a model other than the review's gives each group a root for each such model
+    def test_each_root_has_a_context_for_each_model_its_groups_replicas_use_with_the_root_id_in_its_root(self):
+        # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a review over several groups whose replica policy places a replica on a model other than the review's gives each root whose groups' replicas run on such a model a root for that model, and a root none of whose groups' replicas runs on it no root for it
         policy = ensemble.parse_policy({"variants": [{"id": "a"}, {"id": "b", "model": "m-two"}]})
         shared, spec, _ = self.plan(policy)
-        groups = [types.SimpleNamespace(id=f"G{n}", root=f"root.G{n}", shared=shared) for n in (1, 2, 3)]
-        found = ensemble.group_contexts(spec, groups, policy, [["a", "b"], ["a"], ["a", "b"]])
-        self.assertEqual([(c.group, c.root_id, c.model != spec.model, c.variants) for c in found],
-                         [("G1", "root.G1", False, ("a",)), ("G1", "root.G1.m-two", True, ("b",)),
-                          ("G2", "root.G2", False, ("a",)),
-                          ("G3", "root.G3", False, ("a",)), ("G3", "root.G3.m-two", True, ("b",))],
-                         "a group none of whose replicas reaches the other model has no root for it")
-        self.assertEqual([c.root_id for c in ensemble.other_contexts(found, spec.model)], ["root.G1.m-two", "root.G3.m-two"])
-        self.assertEqual(len({c.cache_key for c in found if c.model != spec.model} | {c.cache_key for c in found if c.model == spec.model}), 2,
-                         "the cache is per model, and the groups' roots of one model hold the same message here")
+        roots = [types.SimpleNamespace(id=f"root.R{n}", shared=shared) for n in (1, 2, 3)]
+        found = ensemble.root_contexts(spec, roots, policy, [["a", "b"], ["a"], ["a", "b"]])
+        self.assertEqual([(c.root, c.root_id, c.model != spec.model, c.variants) for c in found],
+                         [("root.R1", "root.R1", False, ("a",)), ("root.R1", "root.R1.m-two", True, ("b",)),
+                          ("root.R2", "root.R2", False, ("a",)),
+                          ("root.R3", "root.R3", False, ("a",)), ("root.R3", "root.R3.m-two", True, ("b",))],
+                         "a root none of whose groups' replicas reaches the other model has no root for it")
+        self.assertEqual([c.root_id for c in ensemble.other_contexts(found, spec.model)], ["root.R1.m-two", "root.R3.m-two"])
+        self.assertEqual(len({c.cache_key for c in found}), 2, "the cache is per model, and the roots of one model hold the same message here")
         with self.assertRaises(ensemble.PolicyError):
-            ensemble.group_contexts(spec, groups, policy, [["a"]])
+            ensemble.root_contexts(spec, roots, policy, [["a"]])
 
     def test_a_review_with_no_model_set_treats_a_variant_with_a_model_as_another_model(self):
         policy = ensemble.parse_policy({"variants": [{"id": "a"}, {"id": "b", "model": "m-two"}]})

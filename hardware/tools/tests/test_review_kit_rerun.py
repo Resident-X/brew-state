@@ -41,11 +41,11 @@ class RerunTests(unittest.TestCase):
         # SOL-HW-REVIEW-KIT.C7: given the names of units to run again, the scheduler runs only those along the recorded path with identical bytes
         harness = fx.Harness(self, script=failing_g2())
         first = harness.fresh()
-        first_root = next(c for c in harness.executor.calls if c.label == "root.G2")
+        first_root = harness.executor.calls[0]
         harness.new_stub()
         again = harness.again(["u2", "u3"])
         calls = harness.executor.calls
-        self.assertEqual([c.label for c in calls], ["root.G2", "G2.r1.a1"])
+        self.assertEqual([c.label for c in calls], ["root", "G2.r1.a1"])
         self.assertEqual(calls[0].message.encode("utf-8"), first_root.message.encode("utf-8"))
         self.assertEqual(calls[0].key, first_root.key)
         self.assertEqual(calls[0].spec.digest, harness.spec.digest)
@@ -85,7 +85,7 @@ class RerunTests(unittest.TestCase):
         harness.fresh()
         harness.new_stub()
         harness.again(["u4"])
-        self.assertEqual([c.label for c in harness.executor.calls], ["root.G3", "G3.r1.a1", "G3.r2.a1"])
+        self.assertEqual([c.label for c in harness.executor.calls], ["root", "G3.r1.a1", "G3.r2.a1"])
 
     def test_record_says_which_units_were_run_again_when_and_whether_a_new_shared_context_was_started(self):
         # SOL-HW-REVIEW-KIT.C7: records which units were run again, when, and that a new shared context was started if the first one's cache had lapsed
@@ -149,7 +149,7 @@ class RefusalTests(unittest.TestCase):
     def test_a_failed_unit_that_runs_with_its_group_is_not_left_out(self):
         # SOL-HW-REVIEW-KIT.C7: it refuses a run that leaves out a unit whose last run failed
         self.harness.again(["u2"])  # u3 is not named, but its group runs again and so does it
-        self.assertEqual([c.label for c in self.harness.executor.calls], ["root.G2", "G2.r1.a1"])
+        self.assertEqual([c.label for c in self.harness.executor.calls], ["root", "G2.r1.a1"])
 
     def test_a_review_folder_whose_hash_differs_from_the_recorded_one_is_refused(self):
         # SOL-HW-REVIEW-KIT.C7: it refuses a review folder whose hash differs from the recorded one
@@ -244,7 +244,7 @@ class FreshRunAndLockTests(unittest.TestCase):
 
         harness = fx.Harness(self, executor_class=Watching)
         harness.fresh()
-        self.assertTrue(all(seen[label] for label in ("root.G1", "root.G2", "root.G3", "G1.r1.a1", "G2.r1.a1", "G3.r1.a1")))
+        self.assertTrue(all(seen[label] for label in ("root", "G1.r1.a1", "G2.r1.a1", "G3.r1.a1")))
         self.assertTrue(seen["still"])
         self.assertIn("in use by another run", seen["refusal"])
         self.assertFalse(os.path.exists(os.path.join(harness.out, store.LOCK_NAME)))
@@ -372,7 +372,7 @@ class AddedDuringRoundTests(unittest.TestCase):
         # SOL-HW-REVIEW-KIT.C7: a review folder whose hash differs from the recorded one, except for a change confined to paths the caller's declaration lists as added during the round
         fx.write(self.harness.review, "round/notes/finding.txt", "added during the round\n")
         again = self.harness.again(["u2", "u3"])
-        self.assertEqual([c.label for c in self.harness.executor.calls], ["root.G2", "G2.r1.a1"])
+        self.assertEqual([c.label for c in self.harness.executor.calls], ["root", "G2.r1.a1"])
         self.assertEqual(again["review_hash"], self.first["review_hash"])
         self.assertEqual(again["plan"]["added_during_round"], ["round/*"])
 

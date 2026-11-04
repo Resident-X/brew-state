@@ -196,9 +196,10 @@ class Scheduler:
              root_stream: streams.Stream, first: planner.Node, prompt: str, round_label: Optional[str],
              root_node: Optional[str] = None) -> LaneResult:
         group = next(g for g in plan.groups if g.id == first.group)
+        held = plan.root_of(group.id).needs
         label = "+".join(group.units)
         items = [item for unit in group.units for item in declaration.units[unit].items]
-        foreign = sorted(set(declaration.needed) - set(group.needs))
+        foreign = sorted(set(declaration.needed) - set(held))
         record = results.UnitRecord(label)
         lane = LaneResult(group.id, first.replica, group.units, [], record)
         prefix = streams.lineage_written([root_stream])
@@ -224,7 +225,7 @@ class Scheduler:
                     miss = streamcheck.prefix_miss(streams.read_stream(outcome.stream), prefix)
                     node["flags"] = [str(miss)] if miss else []
                 assessed = results.assess(outcome.session.structured, outcome.session.text, declaration.shape, label, items,
-                                          round_label, foreign, group.needs)
+                                          round_label, foreign, held)
             else:
                 assessed = failed_assessment(outcome.kind, outcome.said(), label)
             results.mark_cleared(record.attempts, assessed, declaration.shape, self.fail, items, label)
@@ -257,21 +258,23 @@ class Scheduler:
             round_label: Optional[str] = None, only: Optional[Set[str]] = None, contexts: Optional[Sequence[Any]] = None) -> RunResult:
         """Run the plan, or only the groups `only` names. The bound comes from the plan.
 
-        `roots` gives each group's context by the id of its root node. Every root of the groups run is started before any fork,
-        together, and a fork continues the root of its own group. With `contexts` (as `ensemble.group_contexts` gives them) a
-        replica on another model has, for each group run, a root and specification of its own, started with the others, and a
-        fork of a variant that root holds continues it."""
+        `roots` gives each root's context by the id of its root node. Every root the forks run continue is started before any
+        fork, together, and a fork continues the root that holds its group's views, so a root that serves several groups is
+        started once whatever the number of groups and replicas run from it. With `contexts` (as `ensemble.root_contexts` gives
+        them) a replica on another model has, for each root, a root and specification of its own, started with the others, and
+        a fork of a variant that root holds continues it."""
         if plan.bound < 1:
             raise planner.BoundBelowOne(plan.bound)
         prompt_for = prompt_for or planner.default_prompt(declaration)
         others = [context for context in contexts or () if context.model != spec.model]
-        own = [group for group in plan.groups if any(node.id == group.root for node in plan.roots)]
+        own = [root for root in plan.root_records if root.started]
         if len(plan.roots) != len(own) + len(others):
-            raise ValueError(f"the plan holds {len(plan.roots)} roots, {len(own)} of them of groups and {len(others)} contexts "
+            raise ValueError(f"the plan holds {len(plan.roots)} roots, {len(own)} of them of the review's model and {len(others)} contexts "
                              "of another model were given to run it with")
-        owner = {context["root_id"]: context["group"] for context in plan.contexts}
-        running = [context for context in others if only is None or owner[context.root_id] in only]
-        specs = [(group.root, spec, roots[group.root]) for group in own if only is None or group.id in only]
+        firsts = [node for node in plan.lanes if only is None or node.group in only]
+        needed = {node.parent for node in firsts}
+        running = [context for context in others if only is None or context.root_id in needed]
+        specs = [(root.id, spec, roots[root.id]) for root in own if only is None or root.id in needed]
         specs += [(context.root_id, context.spec, context.shared) for context in running]
         if running:
             self.executor.guard = AllowedSpecs(getattr(self.executor.guard, "inner", self.executor.guard),
@@ -279,7 +282,6 @@ class Scheduler:
         started = self.concurrency.run([(lambda each=each: self.start_root(each[1], each[2], plan, each[0])) for each in specs],
                                        plan.bound)
         begun = {each[0]: (made[1], made[2], each[1]) for each, made in zip(specs, started)}
-        firsts = [node for node in plan.lanes if only is None or node.group in only]
         tasks = []
         for node in firsts:
             session, root_stream, lane_spec = begun[node.parent]

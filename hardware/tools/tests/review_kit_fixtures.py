@@ -175,8 +175,8 @@ class Harness:
         self.spec = messages.make_spec(self.declaration, ("Read", "Glob"), self.review, "claude-sonnet-5-5")
         self.formed = planner.form(self.declaration, found, "claude-sonnet-5-5")
         self.roots = self.formed.roots
-        #: The context of the first group's root, for a test that needs a context message of its own.
-        self.shared = self.formed.groups[0].shared
+        #: The context of the first root, for a test that needs a context message of its own.
+        self.shared = self.formed.built_roots[0].shared
         self.plan = planner.make_plan(self.declaration, found, self.spec, bound=self.bound, cli_version="9.9.9",
                                       tool_commit="abc1234", replicas=self.replicas, variants=self.variants, formed=self.formed)
         self.executor = self.executor_class(replies=self.reply, clock=self.clock, policy=self.policy)

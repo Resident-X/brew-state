@@ -75,8 +75,8 @@ CAUSES: Dict[str, Tuple[str, str]] = {
     "artefact-refused": ("refused by the rule", "change the declaration's artefact or the review folder"),
     "over-budget": ("over the review's context budget", "take artefacts out of the units' `needs`, or raise the budget's context_tokens"),
     "window-undeclared": ("has no declared context window", "state a context_tokens figure, or add the model's window to the window table"),
-    "group-over-budget": ("in its root, more than the review's context budget", "declare fewer views for the units named"),
-    "group-over-budget-model": ("in its root for the model", "declare fewer views for the units named"),
+    "group-over-budget": ("with the shared documents, more than the review's context budget", "declare fewer views for the units named"),
+    "group-over-budget-model": ("more than that model's context budget", "declare fewer views for those units"),
     "plan-only-rerun": ("--plan-only and --rerun together", "give one or the other"),
     "over-stream-limit": ("over the agent command line's stream limit", "write fewer or smaller views"),
     "output-has-record": ("already holds a record", "use a new output folder, or name the units to run again"),
@@ -267,28 +267,32 @@ def render_text(report: Mapping[str, Any]) -> List[str]:
         lines.append(f"AGENT | {clean(report['agent']['program'])} | version {clean(report['agent']['version'])}")
     plan = report["plan"]
     if plan:
-        lines.append(f"PLAN | {len(plan['groups'])} groups | {plan['forks']} forks | bound {plan['bound']} | shared documents "
+        lines.append(f"PLAN | {len(plan['groups'])} groups | {len(plan['roots'])} roots | {plan['forks']} forks | bound {plan['bound']} | shared documents "
                      f"{plan['shared_tokens']} tokens | context budget {budget_text(plan['budget'])} | prefix {plan['prefix_sha']} | "
                      f"specification {plan['spec_digest']} | tool commit {clean(plan['tool_commit'])} | tree saving "
                      f"${plan['tree']['saving_usd']} against ${plan['tree']['threshold_usd']}, kept {plan['tree']['kept']} | "
                      f"variants {', '.join(plan['variants'])}")
         for group in plan["groups"]:
-            margin = "no budget" if group["margin"] is None else f"margin {group['margin']}"
             lines.append(f"GROUP | {group['id']} | units {', '.join(group['units'])} | {group['replicas']} replicas | "
-                         f"expected output {group['expected_output_tokens']} tokens | root {group['root'] or NO_ROOT} | {group['images']} images | "
-                         f"{group['tokens']} tokens | budget {group['budget'] if group['budget'] is not None else 'none'} | {margin} | "
-                         f"needs {', '.join(group['needs'])}")
+                         f"expected output {group['expected_output_tokens']} tokens | root {group['root']} | {group['images']} images | "
+                         f"{group['tokens']} tokens alone with the shared documents | needs {', '.join(group['needs'])}")
             if group["extract"]["rules"]:
                 lines.append(f"EXTRACT | {group['id']} | rules {', '.join(group['extract']['rules'])} | {group['extract']['lines']} lines of "
                              "the check's report")
             lines += [f"NOTE | unit {clean(entry['unit'])} declares the rule {clean(entry['rule'])}, which the check's report holds no "
                       "line for" for entry in group["extract"]["missing"]]
+        for root in plan["roots"]:
+            margin = "no budget" if root["margin"] is None else f"margin {root['margin']}"
+            lines.append(f"ROOT | {root['id']} | groups {', '.join(root['groups'])} | {root['images']} images | {root['tokens']} tokens | "
+                         f"budget {root['budget'] if root['budget'] is not None else 'none'} | {margin} | "
+                         f"{'started' if root['started'] else NO_ROOT}")
         for context in plan["contexts"]:
             lines.append(f"CONTEXT | {context['root_id']} | model {clean(context['model'])} | specification "
-                         f"{context['spec_digest']} | variants {', '.join(context['variants'])} | group {context['group']}")
+                         f"{context['spec_digest']} | variants {', '.join(context['variants'])} | root {context['root']} | "
+                         f"groups {', '.join(context['groups'])}")
         predicted = plan["predicted"]
         lines.append(f"PREDICTED | ${predicted['cost_usd']} | {predicted['wall_s']} s | {predicted['tokens_written']} tokens written "
-                     "(each group's root once)")
+                     "(each root once)")
     for session in report["sessions"]:
         flags = "; ".join(session["flags"]) or "no flag"
         lines.append(f"SESSION | {session['label']} | {session['role']} | {session['kind']} | parent {session['parent'] or 'none'} | "
@@ -334,15 +338,16 @@ def finish(report: Dict[str, Any], as_json: bool, out_stream, err_stream) -> int
 
 
 #: What the GROUP line says of a group whose replicas all run on another model.
-NO_ROOT = "no root for the review's model"
+NO_ROOT = "not started: every replica of its groups runs on another model"
 
 
 def plan_summary(plan: planner.Plan, bound: int) -> Dict[str, Any]:
-    """The plan as the report holds it: the shared documents' tokens, the budget every root is held to and, for each group, the
-    images and tokens its root holds with the margin to the budget."""
+    """The plan as the report holds it: the shared documents' tokens, the budget every root is held to, each group with the root it
+    continues and, for each root, the groups it serves and the images and tokens it holds with the margin to the budget."""
     limit = plan.budget["tokens"]
-    groups = [dict(group.as_dict(), budget=limit, margin=None if limit is None else limit - group.tokens) for group in plan.groups]
-    return {"groups": groups, "forks": len(plan.lanes), "bound": bound, "shared_tokens": plan.shared["tokens"],
+    groups = [group.as_dict() for group in plan.groups]
+    roots = [dict(root.as_dict(), budget=limit, margin=None if limit is None else limit - root.tokens) for root in plan.root_records]
+    return {"groups": groups, "roots": roots, "forks": len(plan.lanes), "bound": bound, "shared_tokens": plan.shared["tokens"],
             "budget": dict(plan.budget), "prefix_sha": plan.shared["prefix_sha"], "spec_digest": plan.spec_digest,
             "variants": list(plan.variants), "contexts": [dict(context) for context in plan.contexts],
             "predicted": {key: plan.predicted[key] for key in ("cost_usd", "wall_s", "tokens_written")}, "tree": plan.tree,
@@ -386,10 +391,9 @@ def figures_of_run(folder: str, before: Set[str]) -> Tuple[List[telemetry.Sessio
 def predicted_for(plan: planner.Plan, groups: Optional[Set[str]]) -> telemetry.Prediction:
     """What the plan predicted for the sessions of this run: all of them, or the roots and the forks of the groups run."""
     per_node = plan.predicted["per_node"]
-    owner = {group.root: group.id for group in plan.groups if group.root is not None}
-    owner.update({context["root_id"]: context["group"] for context in plan.contexts})
-    nodes = [node for node in plan.nodes
-             if groups is None or (owner[node.id] if node.role == planner.ROOT else node.group) in groups]
+    forks = [node for node in plan.lanes if groups is None or node.group in groups]
+    started = {node.parent for node in forks}
+    nodes = list(plan.nodes) if groups is None else [node for node in plan.nodes if node.id in started or node in forks]
     lanes = [node for node in nodes if node.role == planner.UNIT]
     roots = [node for node in nodes if node.role == planner.ROOT]
     cost = sum(per_node[node.id]["cost_usd"] for node in nodes)
@@ -521,8 +525,9 @@ class Run:
 
     def make_plan(self, version: str) -> planner.Plan:
         """The plan for the groups, refused as the planner refuses, whether or not an agent program is present."""
-        used = [used_variants(self.policy, [count]) for count in self.group_counts]
-        found = ensemble.group_contexts(self.spec, self.formed.groups, self.policy, used)
+        by_group = dict(zip([built.id for built in self.formed.groups], self.group_counts))
+        used = [used_variants(self.policy, [by_group[group] for group in root.groups]) for root in self.formed.built_roots]
+        found = ensemble.root_contexts(self.spec, self.formed.built_roots, self.policy, used)
         other = ensemble.other_contexts(found, self.spec.model)
         self.contexts = found if other else None
         declaration = self.prepared.declaration

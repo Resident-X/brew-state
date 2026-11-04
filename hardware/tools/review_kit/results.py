@@ -239,7 +239,8 @@ def cited(text: str, foreign: Sequence[str], held: Sequence[str]) -> List[str]:
 def local_problems(tables: Dict[str, Any], shape: AnswerShape, unit: str, items: Optional[Sequence[str]],
                    round_label: Optional[str] = None, foreign: Sequence[str] = (), held: Sequence[str] = ()) -> List[Problem]:
     """What is wrong with repaired tables that the unit can put right in a turn of its own session. `foreign` are the artefacts
-    only another group's root holds, which no row of this unit's verdict tables may cite; `held` are the artefacts its own does."""
+    only another root holds, which no row of this unit's verdict tables may cite; `held` are the artefacts its own root does, which
+    another group of that root may be the only one to need."""
     found: List[Problem] = []
     for table in shape.tables:
         if table.verdict_column is None or table.key is None:
@@ -256,7 +257,7 @@ def local_problems(tables: Dict[str, Any], shape: AnswerShape, unit: str, items:
             seen_items.add(row[table.key])
             for name in cited(" ".join(str(row[column]) for column in table.columns), foreign, held):
                 found.append(Problem(LOCAL, f"unit {unit} table {table.name!r} row {number}",
-                                     f"for item {row[table.key]!r} cites the view {name}, which only another group's root holds and this unit "
+                                     f"for item {row[table.key]!r} cites the view {name}, which only another root holds and this unit "
                                      "was not given; cite only the views you were given"))
         for combination, count in counts.items():
             if count > 1:
@@ -342,7 +343,7 @@ def assess(structured: Any, text: str, shape: AnswerShape, unit: str, items: Opt
            round_label: Optional[str] = None, foreign: Sequence[str] = (), held: Sequence[str] = ()) -> Assessment:
     """The answer a session gave, read, repaired of what is cosmetic and classed. The raw text is kept as given; for a
     structured answer it is the structured output as JSON. A verdict row that cites an artefact of `foreign`, one only another
-    group's root holds, is a local problem naming the row and the artefact."""
+    root holds, is a local problem naming the row and the artefact."""
     raw = json.dumps(structured, ensure_ascii=False) if isinstance(structured, dict) else (text or "")
     parsed = read_answer(structured, text)
     if parsed.obj is None:
