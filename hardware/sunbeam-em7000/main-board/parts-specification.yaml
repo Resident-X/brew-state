@@ -1,5 +1,5 @@
 # Parts specification of the Sunbeam EM7000 main controller board: one position for every part
-# schematic-spec.yaml lists (456), in sheet order, the sheet named above each group.
+# schematic-spec.yaml lists (444), in sheet order, the sheet named above each group.
 #
 # Form: the keys board_check.py reads of a position (reference, value, package, rating, lcsc, class)
 # and no others, since it fails any other key. So the figures the schema has no key for sit in the
@@ -475,12 +475,6 @@ positions:
   # TP202: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP202
     value: TP_POL_GATE_B
-    package: TestPoint_Pad_D1.0mm_Tight
-    lcsc: none
-    class: none
-  # TP203: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
-  - reference: TP203
-    value: TP_POL_OUT
     package: TestPoint_Pad_D1.0mm_Tight
     lcsc: none
     class: none
@@ -1181,12 +1175,6 @@ positions:
     rating: 1% 100mW 75V 0603
     lcsc: C25803
     class: resistor
-  # TP601: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
-  - reference: TP601
-    value: TP_AMC_DRDY
-    package: TestPoint_Pad_D1.0mm_Tight
-    lcsc: none
-    class: none
   # TP602: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP602
     value: TP_AMC_CLKIN
@@ -1497,13 +1485,6 @@ positions:
     rating: 10% X7R 50V 0603
     lcsc: C14663
     class: capacitor
-  # TP520: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
-  - reference: TP520
-    value: TestPoint
-    package: TestPoint_Pad_D1.0mm_Tight
-    rating: pad 1.5mm
-    lcsc: none
-    class: none
   # J521: maker not read; MPN 2.54mm 1x4 header; catalogue class extended
   - reference: J521
     value: STM_D
@@ -1581,13 +1562,6 @@ positions:
     rating: dual series Schottky 30V 200mA
     lcsc: C47546
     class: semiconductor
-  # TP521: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
-  - reference: TP521
-    value: TestPoint
-    package: TestPoint_Pad_D1.0mm_Tight
-    rating: pad 1.5mm
-    lcsc: none
-    class: none
   # TP522: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP522
     value: TestPoint
@@ -1679,13 +1653,6 @@ positions:
     rating: dual series Schottky 30V 200mA
     lcsc: C47546
     class: semiconductor
-  # TP524: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
-  - reference: TP524
-    value: TestPoint
-    package: TestPoint_Pad_D1.0mm_Tight
-    rating: pad 1.5mm
-    lcsc: none
-    class: none
   # TP525: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP525
     value: TestPoint
@@ -2370,12 +2337,6 @@ positions:
     rating: 1% 100mW 75V 0603
     lcsc: C25803
     class: resistor
-  # TP672: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
-  - reference: TP672
-    value: TP_WT2_DATA
-    package: TestPoint_Pad_D1.0mm_Tight
-    lcsc: none
-    class: none
   # TP673: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP673
     value: TP_WT2_INA_P
@@ -2447,13 +2408,6 @@ positions:
     rating: 30V 5.7A, RDS(on) <48 mohm at VGS 2.5 V, VGS(th) 0.65-1.45 V
     lcsc: C20917
     class: semiconductor
-  # TP701: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
-  - reference: TP701
-    value: TP
-    package: TestPoint_Pad_D1.0mm_Tight
-    rating: test point
-    lcsc: none
-    class: none
   # F711: maker SETfuse (cartridge) + XC Electronics (holder C3131) + 2 x clip C3130 per the cost record; MPN SCT520T0.5A250V; catalogue class extended
   - reference: F711
     value: 0.5A
@@ -2517,13 +2471,6 @@ positions:
     rating: 30V 5.7A, RDS(on) <48 mohm at VGS 2.5 V, VGS(th) 0.65-1.45 V
     lcsc: C20917
     class: semiconductor
-  # TP711: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
-  - reference: TP711
-    value: TP
-    package: TestPoint_Pad_D1.0mm_Tight
-    rating: test point
-    lcsc: none
-    class: none
   # R706: maker UNI-ROYAL; MPN 25121WF1000T4E; catalogue class extended
   - reference: R706
     value: '100'
@@ -3043,13 +2990,6 @@ positions:
     rating: test point
     lcsc: none
     class: none
-  # TP822: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
-  - reference: TP822
-    value: TP
-    package: TestPoint_Pad_D1.0mm_Tight
-    rating: test point
-    lcsc: none
-    class: none
   # Q823: maker Alpha & Omega Semiconductor; MPN AO3400A; catalogue class basic
   - reference: Q823
     value: AO3400A
@@ -3085,13 +3025,6 @@ positions:
     rating: 100 V 300 mA, SOD-323
     lcsc: C2128
     class: semiconductor
-  # TP823: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
-  - reference: TP823
-    value: TP
-    package: TestPoint_Pad_D1.0mm_Tight
-    rating: test point
-    lcsc: none
-    class: none
   # Q824: maker Alpha & Omega Semiconductor; MPN AO3400A; catalogue class basic
   - reference: Q824
     value: AO3400A
@@ -3241,13 +3174,6 @@ positions:
     rating: 10% X7R 50V 0603
     lcsc: C14663
     class: capacitor
-  # TP862: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
-  - reference: TP862
-    value: TP
-    package: TestPoint_Pad_D1.0mm_Tight
-    rating: test point
-    lcsc: none
-    class: none
   # R863: maker UNI-ROYAL; MPN 0603WAF1002T5E; catalogue class basic
   - reference: R863
     value: 10k
@@ -3262,10 +3188,3 @@ positions:
     rating: 10% X7R 50V 0603
     lcsc: C14663
     class: capacitor
-  # TP863: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
-  - reference: TP863
-    value: TP
-    package: TestPoint_Pad_D1.0mm_Tight
-    rating: test point
-    lcsc: none
-    class: none

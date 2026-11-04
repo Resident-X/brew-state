@@ -9,15 +9,15 @@ producer_only: []
 key_signals:
   - {name: "Carried: filter capacitors C501 C502 C503 C520 C522 C523 C524 C570 C571 (row M6)", net: "", test_point: "", block: "Before mains: LCR meter and the charge-time method at the working voltage; each from 80 pF to 59.5 nF. Limit and source: open-items.md, Bring-up measurements carried."}
   - {name: "Carried: sensor 3.3 V feed capacitance and plug-in dip (row M13)", net: "STMD_3V3", test_point: "TP523", block: "LCR meter at each sensor header feed pin with the sensor connected; scope on +3V3 (TP302) and on the feed (TP523, TP526, TP528, TP530, TP532) at plug-in: +3V3 stays at or above 3.0 V and the feed charges through at most 2.67 A for at most 0.20 s. Limit and source: open-items.md, Bring-up measurements carried."}
-  - {name: "Carried: I2C bus far end (row M20)", net: "STM_SCL", test_point: "TP521", block: "Line capacitance at most 400 pF (LCR meter, sensor and cable connected, unpowered); on TP521, TP522, TP524 and TP525 rise time 30 to 70 percent at most 1000 ns and low level at most 0.4 V. Limit and source: open-items.md, Bring-up measurements carried."}
-  - {name: "Carried: flow meter output levels (row M21)", net: "FLOW_IN", test_point: "TP520", block: "Flow meter connected, flowing and stopped: low level at most 0.940 V, high level at least 2.52 V. Limit and source: open-items.md, Bring-up measurements carried."}
+  - {name: "Carried: I2C bus far end (row M20)", net: "STM_SCL", test_point: "R523", block: "Line capacitance at most 400 pF (LCR meter, sensor and cable connected, unpowered); at R523 pad 2 (STM_SCL), TP522, R527 pad 2 (BREW_SCL) and TP525 rise time 30 to 70 percent at most 1000 ns and low level at most 0.4 V. Limit and source: open-items.md, Bring-up measurements carried."}
+  - {name: "Carried: flow meter output levels (row M21)", net: "FLOW_IN", test_point: "R522", block: "Probe R522 pad 2 (0 ohm link, FLOW_IN side). Flow meter connected, flowing and stopped: low level at most 0.940 V, high level at least 2.52 V. Limit and source: open-items.md, Bring-up measurements carried."}
   - {name: NTC_COF, net: NTC_COF, test_point: TP501, block: "coffee-block thermistor divider and filter (PC0)"}
   - {name: NTC_STM, net: NTC_STM, test_point: TP502, block: "steam-block thermistor divider and filter (PC1)"}
   - {name: NTC_WAND, net: NTC_WAND, test_point: TP503, block: "wand thermistor divider and filter (PC4)"}
-  - {name: FLOW_IN, net: FLOW_IN, test_point: TP520, block: "flow-meter input after the link or buffer (PC6)"}
-  - {name: STM_SCL, net: STM_SCL, test_point: TP521, block: "steam-path I2C clock (PB8)"}
+  - {name: FLOW_IN, net: FLOW_IN, test_point: R522, block: "flow-meter input after the link or buffer (PC6); probed at R522 pad 2"}
+  - {name: STM_SCL, net: STM_SCL, test_point: R523, block: "steam-path I2C clock (PB8); probed at R523 pad 2, the controller side of the 100 ohm series resistor"}
   - {name: STM_SDA, net: STM_SDA, test_point: TP522, block: "steam-path I2C data (PB9)"}
-  - {name: BREW_SCL, net: BREW_SCL, test_point: TP524, block: "brew-path I2C clock (PB10)"}
+  - {name: BREW_SCL, net: BREW_SCL, test_point: R527, block: "brew-path I2C clock (PB10); probed at R527 pad 2, the controller side of the 100 ohm series resistor"}
   - {name: BREW_SDA, net: BREW_SDA, test_point: TP525, block: "brew-path I2C data (PB11)"}
   - {name: STMP_AN, net: STMP_AN, test_point: TP527, block: "steam-path analogue fallback after scaling and filter (PC5)"}
   - {name: BREW_AN, net: BREW_AN, test_point: TP529, block: "brew-path analogue fallback after scaling and filter (PA6)"}

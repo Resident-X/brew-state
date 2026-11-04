@@ -27,8 +27,8 @@ key_signals:
   - {name: "Carried: C792 reverse voltage (row M17)", net: "+5V_GAUGE", test_point: "TP791", block: "Scope, DC-coupled, minimum held, across C792 through JP791 closed and opened and mains on and off: no reverse voltage beyond the 50 mV resolution. Limit and source: open-items.md, Bring-up measurements carried."}
   - {name: "Carried: key line levels with the panel connected (row M23)", net: "KEY1", test_point: "TP831", block: "Panel connected, indicators lit and unlit, on TP831 to TP835: pressed at most 0.940 V, released at least 2.520 V. Limit and source: open-items.md, Bring-up measurements carried."}
   - {name: "Carried: knob filter capacitors C861 C862 C863 (row M9)", net: "KNOB_HOT", test_point: "TP861", block: "Before mains: LCR meter and the charge-time method at 3.6 V, each at least 90 nF. Limit and source: open-items.md, Bring-up measurements carried."}
-  - {name: "PUMP_C_GATE", net: "PUMP_C_GATE", test_point: "TP701", block: "coffee pump drive stage control input (PA9)"}
-  - {name: "PUMP_S_GATE", net: "PUMP_S_GATE", test_point: "TP711", block: "steam pump drive stage control input (PA8)"}
+  - {name: "PUMP_C_GATE", net: "PUMP_C_GATE", test_point: "R701", block: "coffee pump drive stage control input (PA9); probed at R701 pad 1, the controller side of the 100 ohm gate resistor"}
+  - {name: "PUMP_S_GATE", net: "PUMP_S_GATE", test_point: "R711", block: "steam pump drive stage control input (PA8); probed at R711 pad 1, the controller side of the 100 ohm gate resistor"}
   - {name: "Coffee pump triac MT2", net: "PUMP_C_MT2", test_point: "TP702", block: "mains-referenced: coffee pump triac T701 MT2 against NEUTRAL (TP106). Bring-up step: with the pump running from the controller, scope this node with an isolated or differential probe, never an earthed lead, at the instant the triac turns off (the pump's current zero, and at a stop command); if the voltage across the triac exceeds its 600 V rating (VDRM, WeEn BTA204S-600B Rev.02), fit the snubber R706 (100 ohm, 2512) and C701 (100 nF X2) across MT2 and MT1 and repeat; otherwise leave them unfitted (owner decision of 2026-10-29)"}
   - {name: "Steam pump triac MT2", net: "PUMP_S_MT2", test_point: "TP712", block: "mains-referenced: steam pump triac T711 MT2 against NEUTRAL (TP106). Bring-up step: as TP702 for the steam pump; fit R716 (100 ohm, 2512) and C711 (100 nF X2) only if the turn-off voltage exceeds 600 V"}
   - {name: "VALVE_2W_DRV", net: "VALVE_2W_DRV", test_point: "TP731", block: "two-way valve relay coil driver control input (PD4)"}
@@ -40,8 +40,8 @@ key_signals:
   - {name: "GAUGE_DIR1", net: "GAUGE_DIR1", test_point: "TP794", block: "gauge buffer input, gauge A direction"}
   - {name: "GAUGE_STEP2", net: "GAUGE_STEP2", test_point: "TP795", block: "gauge buffer input, gauge B step clock"}
   - {name: "GAUGE_DIR2", net: "GAUGE_DIR2", test_point: "TP796", block: "gauge buffer input, gauge B direction"}
-  - {name: "ANODE_GATE", net: "ANODE_GATE", test_point: "TP822", block: "anode rail gate control input (PB5)"}
-  - {name: "BUZZER", net: "BUZZER", test_point: "TP823", block: "buzzer stage control input (PE1)"}
+  - {name: "ANODE_GATE", net: "ANODE_GATE", test_point: "R821", block: "anode rail gate control input (PB5); probed at R821 pad 1, the controller side of the 100 ohm gate resistor"}
+  - {name: "BUZZER", net: "BUZZER", test_point: "R826", block: "buzzer stage control input (PE1); probed at R826 pad 1, the controller side of the 100 ohm gate resistor"}
   - {name: "LOWWATER_K", net: "LOWWATER_K", test_point: "TP824", block: "low-water indicator sink control input (PE0)"}
   - {name: "KEY1", net: "KEY1", test_point: "TP831", block: "panel key line PWR (PE2): key level and indicator sink"}
   - {name: "KEY2", net: "KEY2", test_point: "TP832", block: "panel key line MAN (PE3)"}
@@ -49,8 +49,8 @@ key_signals:
   - {name: "KEY4", net: "KEY4", test_point: "TP834", block: "panel key line TWO (PE5)"}
   - {name: "KEY5", net: "KEY5", test_point: "TP835", block: "panel key line PRG (PE6)"}
   - {name: "KNOB_HOT", net: "KNOB_HOT", test_point: "TP861", block: "hot-water knob microswitch input (PE13)"}
-  - {name: "KNOB_STEAM", net: "KNOB_STEAM", test_point: "TP862", block: "steam knob microswitch input (PE14)"}
-  - {name: "TANK_LEVEL", net: "TANK_LEVEL", test_point: "TP863", block: "tank reed input (PE12)"}
+  - {name: "KNOB_STEAM", net: "KNOB_STEAM", test_point: "J861", block: "steam knob microswitch input (PE14); probed at J861 pin 3 (the knob connector pin, which carries the same net as R862 pad 1)"}
+  - {name: "TANK_LEVEL", net: "TANK_LEVEL", test_point: "J862", block: "tank reed input (PE12); probed at J862 pin 2 (the reed pad, which carries the same net as R863 pad 1)"}
 connector_pins:
   # WB_LV10 (J761), 10 ways, pinout fixed in the shared conventions
   - {pin: "J761.1", net: "+5V_WB", class: "power_leaving", why: "LED supply of the wall board's two opto-triac LEDs, through JP761 from +5V; nothing can power the board through it"}

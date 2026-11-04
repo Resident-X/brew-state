@@ -167,13 +167,12 @@ S2.add("C520", "C47N", "flow-input filter capacitor")
 S2.add("R522", "R0", "bypass link: fitted by default; removed when the Schmitt buffer U520 is fitted")
 S2.add("U520", "BUF", "Schmitt-trigger buffer footprint, not fitted by default (input and output on the two nets the link R522 joins)", dnp=True)
 S2.add("C521", "C100N", "supply decoupling of U520, fitted only with U520", dnp=True)
-S2.add("TP520", "TP", "test point on FLOW_IN")
 S2.net("+5V", "power", "J520.1")
 S2.net("GND", "power", "J520.2", "D520.2", "C520.2", "U520.3", "C521.2")
 S2.net("FLOW_RAW", "local", "J520.3", "R520.1", "D520.1", "R521.1")
 S2.net("+3V3", "power", "R520.2", "U520.5", "C521.1")
 S2.net("FLOW_F", "local", "R521.2", "C520.1", "R522.1", "U520.2")
-S2.net("FLOW_IN", "global", "R522.2", "U520.4", "TP520.1")
+S2.net("FLOW_IN", "global", "R522.2", "U520.4")
 S2.nc.append(("U520.1", "pin 1 is not connected inside SN74LVC1G17 (SCES351 pin table); the package is not fitted by default"))
 # ---- digital pressure buses
 def digital_bus(sheet, hdr, hname, ptc, link, tvs_c, tvs_d, rs_c, rs_d, rp_c, rp_d, bat_c, bat_d, tp_c, tp_d, tp_v, scl, sda, vfeed, what):
@@ -188,7 +187,8 @@ def digital_bus(sheet, hdr, hname, ptc, link, tvs_c, tvs_d, rs_c, rs_d, rp_c, rp
     sheet.add(rp_d, "R2K2", "SDA pull-up to +3V3, Standard-mode 100 kbit/s")
     sheet.add(bat_c, "BAT54S", "steering clamp of the SCL pin to GND and +3V3")
     sheet.add(bat_d, "BAT54S", "steering clamp of the SDA pin to GND and +3V3")
-    sheet.add(tp_c, "TP", "test point on %s" % scl)
+    if tp_c:
+        sheet.add(tp_c, "TP", "test point on %s" % scl)
     sheet.add(tp_d, "TP", "test point on %s" % sda)
     sheet.add(tp_v, "TP", "test point on %s" % vfeed)
     sheet.net("+3V3", "power", ptc + ".1", rp_c + ".2", rp_d + ".2", bat_c + ".2", bat_d + ".2")
@@ -197,13 +197,13 @@ def digital_bus(sheet, hdr, hname, ptc, link, tvs_c, tvs_d, rs_c, rs_d, rp_c, rp
     sheet.net("GND", "power", hdr + ".2", tvs_c + ".2", tvs_d + ".2", bat_c + ".1", bat_d + ".1")
     sheet.net(scl + "_X", "local", hdr + ".3", tvs_c + ".1", rs_c + ".1")
     sheet.net(sda + "_X", "local", hdr + ".4", tvs_d + ".1", rs_d + ".1")
-    sheet.net(scl, "global", rs_c + ".2", rp_c + ".1", bat_c + ".3", tp_c + ".1")
+    sheet.net(scl, "global", rs_c + ".2", rp_c + ".1", bat_c + ".3", *([tp_c + ".1"] if tp_c else []))
     sheet.net(sda, "global", rs_d + ".2", rp_d + ".1", bat_d + ".3", tp_d + ".1")
 
 digital_bus(S2, "J521", "STM_D", "F520", "R540", "D521", "D522", "R523", "R524", "R525", "R526", "D523", "D524",
-            "TP521", "TP522", "TP523", "STM_SCL", "STM_SDA", "STMD_3V3", "steam-path")
+            None, "TP522", "TP523", "STM_SCL", "STM_SDA", "STMD_3V3", "steam-path")
 digital_bus(S2, "J522", "BREW_D", "F521", "R541", "D525", "D526", "R527", "R528", "R529", "R530", "D527", "D528",
-            "TP524", "TP525", "TP526", "BREW_SCL", "BREW_SDA", "BRWD_3V3", "brew-path")
+            None, "TP525", "TP526", "BREW_SCL", "BREW_SDA", "BRWD_3V3", "brew-path")
 
 # ---- analogue 5 V scaling cells
 def analog_cell(sheet, hdr, hname, ptc, link, tvs, rt, rb, rs, cap, tp, tpv, out, raw, div, v3, what, extra_burden=None):

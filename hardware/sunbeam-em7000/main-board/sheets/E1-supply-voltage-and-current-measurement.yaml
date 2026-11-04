@@ -38,7 +38,6 @@ parts:
   - {ref: R614, lib_id: Device:R, value: "100k", rating: "1% 100mW 75V 0603", footprint: "Resistor_SMD:R_0603_1608Metric", mpn: "0603WAF1003T5E", maker: "UNI-ROYAL", lcsc: C25803, class: basic, hand: false, function: "chip select held high while the controller is in reset (SBASA56 Fig. 9-8 pull-up to DVDD)", mains: false, sim_exclude: false}
   - {ref: R615, lib_id: Device:R, value: "100k", rating: "1% 100mW 75V 0603", footprint: "Resistor_SMD:R_0603_1608Metric", mpn: "0603WAF1003T5E", maker: "UNI-ROYAL", lcsc: C25803, class: basic, hand: false, function: "SYNC/RESET held high (not in reset) while the controller is in reset (SBASA56 Fig. 9-8)", mains: false, sim_exclude: false}
   # ---- test points ----------------------------------------------------------------------------
-  - {ref: TP601, lib_id: Connector:TestPoint, value: "TP_AMC_DRDY", rating: "", footprint: "main-board:TestPoint_Pad_D1.0mm_Tight", mpn: "", maker: "", lcsc: none, class: none, hand: false, function: "key signal: data-ready, the front end's output strobe", mains: false, sim_exclude: true}
   - {ref: TP602, lib_id: Connector:TestPoint, value: "TP_AMC_CLKIN", rating: "", footprint: "main-board:TestPoint_Pad_D1.0mm_Tight", mpn: "", maker: "", lcsc: none, class: none, hand: false, function: "key signal: converter clock after the termination", mains: false, sim_exclude: true}
   - {ref: TP603, lib_id: Connector:TestPoint, value: "TP_VMEAS_DIV", rating: "", footprint: "main-board:TestPoint_Pad_D1.0mm_Tight", mpn: "", maker: "", lcsc: none, class: none, hand: false, function: "key signal: divider tap, about 0.30 V peak at 253 V rms (mains-referenced copper)", mains: true, sim_exclude: true}
   - {ref: TP604, lib_id: Connector:TestPoint, value: "TP_AMC_AIN1P", rating: "", footprint: "main-board:TestPoint_Pad_D1.0mm_Tight", mpn: "", maker: "", lcsc: none, class: none, hand: false, function: "key signal: shunt channel input after the filter, mains-referenced copper", mains: true, sim_exclude: true}
@@ -82,7 +81,7 @@ nets:
   AMC_DOUT_PIN: {scope: local, pins: [U601.12, R613.1]}
   SPI2_MISO: {scope: global, pins: [R613.2, TP610.1]}
   AMC_RESET: {scope: global, pins: [U601.11, R615.2]}
-  AMC_DRDY: {scope: global, pins: [U601.16, TP601.1]}
+  AMC_DRDY: {scope: global, pins: [U601.16]}
 no_connect:
   - {pin: U601.6, reason: "GPO is a general-purpose output not used; SBASA56 9.1.1 allows an unused output to be left open"}
 custom_symbols:

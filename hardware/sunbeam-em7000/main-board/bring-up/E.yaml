@@ -79,8 +79,8 @@ key_signals:
 - {name: "Carried: air temperature at U601 beside the interlock relay (row M25)", net: "", test_point: "", block: "Thermocouple 2 mm from the body of U601 on the relay side, machine at full load for 30 minutes and again idle, once the earlier steps pass, mains present; air at most 125 degC, the part's ambient limit. Limit and source: open-items.md, Bring-up measurements carried, and the owner's acceptance (h)."}
 - name: converter data ready
   net: AMC_DRDY
-  test_point: TP601
-  block: 'AMC131M02: falls when a new pair of readings is ready; shows the converter is clocked, enabled and converting'
+  test_point: U601
+  block: 'AMC131M02: falls when a new pair of readings is ready; shows the converter is clocked, enabled and converting. IC pins only, no pad and no passive on the net: probe U601 pin 16 (SOIC-20W, 1.27 mm pitch) or U401 pin 57 (LQFP-100, 0.5 mm pitch) directly, with a fine-tip probe or a clip made for the package, taking care not to bridge a neighbouring leg'
 - name: converter clock
   net: AMC_CLKIN
   test_point: TP602
@@ -119,8 +119,8 @@ key_signals:
   block: 'HX711 channel 1 INA+ after the filter: 2.4 V common mode with the bridge connected'
 - name: weight 2 data
   net: WT2_DATA
-  test_point: TP672
-  block: HX711 channel 2 DOUT
+  test_point: U631
+  block: 'HX711 channel 2 DOUT. IC pins only, no pad and no passive on the net: probe U631 pin 12 (SOIC-16, 1.27 mm pitch) or U401 pin 79 (LQFP-100, 0.5 mm pitch) directly, with a fine-tip probe or a clip made for the package, taking care not to bridge a neighbouring leg'
 - name: weight 2 signal
   net: WT2_INA_P
   test_point: TP673

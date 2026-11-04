@@ -113,20 +113,6 @@ parts:
     mains: false
     sim_exclude: false
     dnp: true
-  - ref: TP520
-    lib_id: "Connector:TestPoint"
-    value: "TestPoint"
-    rating: "pad 1.5mm"
-    footprint: "main-board:TestPoint_Pad_D1.0mm_Tight"
-    mpn: ""
-    maker: ""
-    lcsc: ""
-    class: none
-    hand: false
-    function: "test point on FLOW_IN"
-    mains: false
-    sim_exclude: false
-    dnp: false
   - ref: J521
     lib_id: "Connector_Generic:Conn_01x04"
     value: "STM_D"
@@ -278,20 +264,6 @@ parts:
     class: extended
     hand: false
     function: "steering clamp of the SDA pin to GND and +3V3"
-    mains: false
-    sim_exclude: false
-    dnp: false
-  - ref: TP521
-    lib_id: "Connector:TestPoint"
-    value: "TestPoint"
-    rating: "pad 1.5mm"
-    footprint: "main-board:TestPoint_Pad_D1.0mm_Tight"
-    mpn: ""
-    maker: ""
-    lcsc: ""
-    class: none
-    hand: false
-    function: "test point on STM_SCL"
     mains: false
     sim_exclude: false
     dnp: false
@@ -474,20 +446,6 @@ parts:
     class: extended
     hand: false
     function: "steering clamp of the SDA pin to GND and +3V3"
-    mains: false
-    sim_exclude: false
-    dnp: false
-  - ref: TP524
-    lib_id: "Connector:TestPoint"
-    value: "TestPoint"
-    rating: "pad 1.5mm"
-    footprint: "main-board:TestPoint_Pad_D1.0mm_Tight"
-    mpn: ""
-    maker: ""
-    lcsc: ""
-    class: none
-    hand: false
-    function: "test point on BREW_SCL"
     mains: false
     sim_exclude: false
     dnp: false
@@ -945,18 +903,18 @@ nets:
   "FLOW_RAW": {scope: local, pins: ["J520.3", "R520.1", "D520.1", "R521.1"]}
   "+3V3": {scope: power, pins: ["R520.2", "U520.5", "C521.1", "F520.1", "R525.2", "R526.2", "D523.2", "D524.2", "F521.1", "R529.2", "R530.2", "D527.2", "D528.2", "F522.1", "F523.1", "F524.1"]}
   "FLOW_F": {scope: local, pins: ["R521.2", "C520.1", "R522.1", "U520.2"]}
-  "FLOW_IN": {scope: global, pins: ["R522.2", "U520.4", "TP520.1"]}
+  "FLOW_IN": {scope: global, pins: ["R522.2", "U520.4"]}
   "STMD_3V3_SRC": {scope: local, pins: ["F520.2", "R540.1", "TP523.1"]}
   "STMD_3V3": {scope: local, pins: ["R540.2", "J521.1"]}
   "STM_SCL_X": {scope: local, pins: ["J521.3", "D521.1", "R523.1"]}
   "STM_SDA_X": {scope: local, pins: ["J521.4", "D522.1", "R524.1"]}
-  "STM_SCL": {scope: global, pins: ["R523.2", "R525.1", "D523.3", "TP521.1"]}
+  "STM_SCL": {scope: global, pins: ["R523.2", "R525.1", "D523.3"]}
   "STM_SDA": {scope: global, pins: ["R524.2", "R526.1", "D524.3", "TP522.1"]}
   "BRWD_3V3_SRC": {scope: local, pins: ["F521.2", "R541.1", "TP526.1"]}
   "BRWD_3V3": {scope: local, pins: ["R541.2", "J522.1"]}
   "BREW_SCL_X": {scope: local, pins: ["J522.3", "D525.1", "R527.1"]}
   "BREW_SDA_X": {scope: local, pins: ["J522.4", "D526.1", "R528.1"]}
-  "BREW_SCL": {scope: global, pins: ["R527.2", "R529.1", "D527.3", "TP524.1"]}
+  "BREW_SCL": {scope: global, pins: ["R527.2", "R529.1", "D527.3"]}
   "BREW_SDA": {scope: global, pins: ["R528.2", "R530.1", "D528.3", "TP525.1"]}
   "SPAREA_3V3_SRC": {scope: local, pins: ["F522.2", "R542.1", "TP528.1"]}
   "SPAREA_3V3": {scope: local, pins: ["R542.2", "J523.2"]}

@@ -2,16 +2,18 @@
 
 Every part and every net of `schematic-spec.yaml`, and every sheet, has a verdict against the circuit practice catalogue of `docs/board-design-method.md` (items PINV, PARTS, CAPD, BUSL, STRAP, RCFL, SUPPLY, POLAR, CABLE, FAULT, INDEP, BARRIER, SURGE, ESD, TOUCH, EMSRC, DERATE, DRAW). A verdict is PASS, N/A (the item does not arise) or FINDING; a FINDING is closed by a change to the sheets, by a recorded reason, or is held by the owner and listed in `open-items.md`. The schematic review proper (the method's "Schematic review") repeats this on the drawn schematic and its exported netlist; this is the verdict at specification.
 
+Twelve test point rows (TP203, TP520, TP521, TP524, TP601, TP672, TP701, TP711, TP822, TP823, TP862, TP863) are gone with the pads they judged; the counts below are those of the rows that remain, and each of those nets is probed at the part pad or pin `bring-up-provision.md` names.
+
 The files below were written per group of sheets: A mains entry and interlock, B controller and logic supply, C sensing front ends, D drive stages and low-voltage inputs and outputs, E measurement and converters.
 
 | Group | PASS rows | FINDING rows | N/A rows |
 |---|---|---|---|
 | A | 37 | 18 | 0 |
 | B | 39 | 13 | 6 |
-| C | 112 | 44 | 0 |
-| D | 183 | 35 | 0 |
+| C | 109 | 44 | 0 |
+| D | 177 | 35 | 0 |
 | E | 58 | 4 | 0 |
-| Total | 435 | 114 | 6 |
+| Total | 426 | 114 | 6 |
 
 ## Board-level items
 
@@ -73,7 +75,7 @@ Datasheets read 2026-10-29, saved under the work package's scratch folder, cited
 | COFVALVE, COFFPUMP, STEAMPUMP, HOTVALVE | PINV-1, CABLE-1 | PASS | tab pin only on this sheet; the drive stages are owner D's |
 | +5V | PINV-1, SUPPLY-2, DERATE-2 | PASS | coil and U201 at 5.25 V against U201's 7.0 V limit and the coil's 7.5 V; U201 needs VCC >= 4.5 V (table 6) which the record's 4.75 V low end meets |
 | GND | PINV-1 | PASS | every ground pin joined |
-| POL_OUT | PINV-1, PINV-2, STRAP-1, BUSL-1 n/a | PASS (F2b closed by R207) | controller output, 3.3 V, PC7 (FT_h, 6 V limit), to R207 and TP203; the net ends at R207 pin 1, so U201's input is not on it. With 5 V lost and 3.3 V present R207 limits the current into the unpowered buffer's input clamp to 2.93 mA at most (`circuit-proof/A_pol_series.log`); the maker still states no input figure for VCC = 0 V and the pin is not marked tolerant in `pin-limits.yaml` |
+| POL_OUT | PINV-1, PINV-2, STRAP-1, BUSL-1 n/a | PASS (F2b closed by R207) | controller output, 3.3 V, PC7 (FT_h, 6 V limit), to R207; the net ends at R207 pin 1 and carries no test point, so U201's input is not on it. With 5 V lost and 3.3 V present R207 limits the current into the unpowered buffer's input clamp to 2.93 mA at most (`circuit-proof/A_pol_series.log`); the maker still states no input figure for VCC = 0 V and the pin is not marked tolerant in `pin-limits.yaml` |
 | POL_IN | PINV-1, PINV-2, STRAP-1 | PASS | R207 pin 2, U201 pin 2, R201 and R202 (pull-downs, 50 kohm together); input high 2.680 V against VT+ max 2.0 V in the worst case (VOH min at 3.135 V, R207 +1 %, pull-downs -1 %), low at most 0.4 V against VT- min 0.5 V; limit 7 V against 3.6 V |
 | POL_BUF | PINV-1, RCFL-1 n/a | FINDING (F16) | U201 output into two 100 nF coupling capacitors: peak supply current 110 mA at the first edge in the simulation (both channels, Ro 87.5 ohm), for a few microseconds, against the sheet's continuous +-25 mA absolute maximum (IO, table 5); no transient figure is stated |
 | POL_NODE_A, POL_NODE_B | PINV-1 | PASS | between the capacitor and the diodes: -0.32 V to +4.3 V |
@@ -239,7 +241,6 @@ Catalogue: `docs/board-design-method.md` Circuit practice catalogue. Sources for
 | R522 (0 C21189) | PINV-1, DERATE-2 | PASS | Zero-ohm link, fitted by default; removed when U520 is fitted. Carries microamps. Simulated as 1 mOhm (ngspice turns 0 into 1e-12 ohm and loses accuracy) |
 | U520 (SN74LVC1G17 C10425) | PARTS-1, PINV-1, PINV-2, STRAP-1, DERATE-2 | PASS | SN74LVC1G17DCKR (TI SCES351Y, October 2025), not fitted by default. PARTS-1: VCC 3.3 V with C521 100 nF at the pin. PINV-1: input VI 0 to 5.5 V recommended (Table 5.3), 6.5 V absolute. PINV-2: Ioff supports 0 V on VCC with 5.5 V on the pin (II/Ioff +-10 uA). STRAP-1: its one input is driven; pin 1 is NC in the datasheet pinout and carries a no-connect flag. Schmitt thresholds at 3 V: VT+ 1.48 to 1.92 V, VT- 0.89 to 1.2 V |
 | C521 (100n C14663) | PARTS-1, CAPD-1 | PASS | 100 nF supply decoupling of U520, fitted only with it; the datasheet asks for a bypass at VCC (SCES351Y section 8.3) and the value is the 100 nF of the owner B decoupling rows |
-| TP520 (TestPoint no LCSC) | bring-up | PASS | Test point on FLOW_IN (key signal) |
 | J521 (STM_D C32713270) | CABLE-1, ESD-1, DERATE-2 | FINDING | CABLE-1: the digital pressure transducer and its cable are not bought; the record's target for the header is four pins (3V3, GND, two signal lines) (`controller-board-function-forms.md` Steam-path pressure sensing). The sheet draws 1 3V3, 2 GND, 3 SCL, 4 SDA; the transducer's own connector and wire order are not in any record, so mirror and order cannot be traced. Owner-held: open item 'transducers and pin order'. ESD-1 and DERATE-2 as the other headers |
 | F520 (MF-NSMF012-2 C163517) | FAULT-1, PINV-1, SUPPLY-1, DERATE-2 | PASS | Bourns MF-NSMF012-2 (Rev. V 07/17): Ihold 0.12 A (0.08 A at 70 degC), Itrip 0.29 A, Rmin 1.35 Ohm, Vmax 30 V, Imax 10 A. A sensor of at most 3 mA (maker's page) is 27 x under hold. Short at a header: up to 2.67 A for at most 0.20 s. SUPPLY-1: the PTC limits the charge of a cable's capacitance to the same current. Row `Short-safe 3.3 V feeds` |
 | R540 (0 C17888) | bring-up (isolating link), DERATE-2 | PASS | Isolating link of the 3.3 V feed, 1206 zero-ohm C17888: rated 2 A, overload 10 A against the 2.67 A short (UNI-ROYAL Feb.12 2019 V.3 section 7). Stands after the PTC; the test point is on the PTC side |
@@ -251,7 +252,6 @@ Catalogue: `docs/board-design-method.md` Circuit practice catalogue. Sources for
 | R526 (2.2k C4190) | BUSL-1, DERATE-2 | PASS | Pull-up 2.2 k to +3V3, one per line, one rail (UM10204 section 7.1): between 1067 Ohm and 2951 Ohm at 400 pF; allows 506 pF. 6 mW against 60 mW. Row `Steam-path I2C bus` |
 | D523 (BAT54S C47546) | PINV-1, ESD-1, BUSL-1 (capacitance), POLAR-1, DERATE-2 | FINDING | BAT54S steering clamp of the I2C pin: pins 1 A to GND, 3 COM to the bus node, 2 K to +3V3. PINV-1: pin (FT_f, limit min(VDD + 4 V, 6 V)) at +3V3 3.6 V + the clamp drop, 4.4 V at the 0.1 A point of Table 7 (0.8 V). Capacitance 10 pF max counted in the bus row. ESD-1: an 8 kV spike clamped at 30 V puts (30 - 3.8) / 100 = 0.26 A through 100 Ohm, above the 0.1 A top of Table 7 (IFSM 600 mA); the drop at 0.26 A is not in the datasheet. A larger Rs to hold 0.1 A fails the low-level margin (row `Steam-path I2C bus`). Closing action: the declared discharge level, owner-held |
 | D524 (BAT54S C47546) | PINV-1, ESD-1, BUSL-1 (capacitance), POLAR-1, DERATE-2 | FINDING | BAT54S steering clamp of the I2C pin: pins 1 A to GND, 3 COM to the bus node, 2 K to +3V3. PINV-1: pin (FT_f, limit min(VDD + 4 V, 6 V)) at +3V3 3.6 V + the clamp drop, 4.4 V at the 0.1 A point of Table 7 (0.8 V). Capacitance 10 pF max counted in the bus row. ESD-1: an 8 kV spike clamped at 30 V puts (30 - 3.8) / 100 = 0.26 A through 100 Ohm, above the 0.1 A top of Table 7 (IFSM 600 mA); the drop at 0.26 A is not in the datasheet. A larger Rs to hold 0.1 A fails the low-level margin (row `Steam-path I2C bus`). Closing action: the declared discharge level, owner-held |
-| TP521 (TestPoint no LCSC) | bring-up | PASS | Test point on the I2C line (key signal) |
 | TP522 (TestPoint no LCSC) | bring-up | PASS | Test point on the I2C line (key signal) |
 | TP523 (TestPoint no LCSC) | bring-up | PASS | Test point on the PTC side (source side) of the 3.3 V feed link, so the feed can be measured with the sensor disconnected |
 | J522 (BREW_D C32713270) | CABLE-1, ESD-1, DERATE-2 | FINDING | CABLE-1: the digital pressure transducer and its cable are not bought; the record's target for the header is four pins (3V3, GND, two signal lines) (`controller-board-function-forms.md` Steam-path pressure sensing). The sheet draws 1 3V3, 2 GND, 3 SCL, 4 SDA; the transducer's own connector and wire order are not in any record, so mirror and order cannot be traced. Owner-held: open item 'transducers and pin order'. ESD-1 and DERATE-2 as the other headers |
@@ -265,7 +265,6 @@ Catalogue: `docs/board-design-method.md` Circuit practice catalogue. Sources for
 | R530 (2.2k C4190) | BUSL-1, DERATE-2 | PASS | Pull-up 2.2 k to +3V3, one per line, one rail (UM10204 section 7.1): between 1067 Ohm and 2951 Ohm at 400 pF; allows 506 pF. 6 mW against 60 mW. Row `Steam-path I2C bus` |
 | D527 (BAT54S C47546) | PINV-1, ESD-1, BUSL-1 (capacitance), POLAR-1, DERATE-2 | FINDING | BAT54S steering clamp of the I2C pin: pins 1 A to GND, 3 COM to the bus node, 2 K to +3V3. PINV-1: pin (FT_f, limit min(VDD + 4 V, 6 V)) at +3V3 3.6 V + the clamp drop, 4.4 V at the 0.1 A point of Table 7 (0.8 V). Capacitance 10 pF max counted in the bus row. ESD-1: an 8 kV spike clamped at 30 V puts (30 - 3.8) / 100 = 0.26 A through 100 Ohm, above the 0.1 A top of Table 7 (IFSM 600 mA); the drop at 0.26 A is not in the datasheet. A larger Rs to hold 0.1 A fails the low-level margin (row `Steam-path I2C bus`). Closing action: the declared discharge level, owner-held |
 | D528 (BAT54S C47546) | PINV-1, ESD-1, BUSL-1 (capacitance), POLAR-1, DERATE-2 | FINDING | BAT54S steering clamp of the I2C pin: pins 1 A to GND, 3 COM to the bus node, 2 K to +3V3. PINV-1: pin (FT_f, limit min(VDD + 4 V, 6 V)) at +3V3 3.6 V + the clamp drop, 4.4 V at the 0.1 A point of Table 7 (0.8 V). Capacitance 10 pF max counted in the bus row. ESD-1: an 8 kV spike clamped at 30 V puts (30 - 3.8) / 100 = 0.26 A through 100 Ohm, above the 0.1 A top of Table 7 (IFSM 600 mA); the drop at 0.26 A is not in the datasheet. A larger Rs to hold 0.1 A fails the low-level margin (row `Steam-path I2C bus`). Closing action: the declared discharge level, owner-held |
-| TP524 (TestPoint no LCSC) | bring-up | PASS | Test point on the I2C line (key signal) |
 | TP525 (TestPoint no LCSC) | bring-up | PASS | Test point on the I2C line (key signal) |
 | TP526 (TestPoint no LCSC) | bring-up | PASS | Test point on the PTC side (source side) of the 3.3 V feed link, so the feed can be measured with the sensor disconnected |
 | J523 (SPARE_A C32713270) | CABLE-1, ESD-1, PINV-1, DERATE-2 | FINDING | CABLE-1: four-way analogue header whose pin order follows the record's target (5V, 3V3, GND, filtered input) (`controller-board-function-forms.md` Steam-path pressure sensing; division, anticipated kinds 7 and 12); no sensor or cable is bought, so no harness trace exists. Owner-held: open item 'transducers and pin order'. PINV-1: 5V pin 1 and 3V3 pin 2 sit beside GND and the signal; a signal-to-5V short is covered by the scaling row. ESD-1 and DERATE-2 as the other headers |
@@ -463,8 +462,6 @@ One row for every part and every net of sheets 700 to 750, and one DRAW-1 row fo
 | JP761 (LINK) | SUPPLY-1, FAULT-1, POLAR-1 | PASS | Isolating link: 1x2 2.54 mm header with a shunt, 3 A against 0.06 A / 0.20 A / 0.14 A; not mains-referenced, not on a protective device's fault path (low-voltage branch of a rail whose source limit is the logic supply's; its conductor row is owner B's) |
 | JP791 (LINK) | SUPPLY-1, FAULT-1, POLAR-1 | PASS | Isolating link: 1x2 2.54 mm header with a shunt, 3 A against 0.06 A / 0.20 A / 0.14 A; not mains-referenced, not on a protective device's fault path (low-voltage branch of a rail whose source limit is the logic supply's; its conductor row is owner B's) |
 | JP821 (LINK) | SUPPLY-1, FAULT-1, POLAR-1 | PASS | Isolating link: 1x2 2.54 mm header with a shunt, 3 A against 0.06 A / 0.20 A / 0.14 A; not mains-referenced, not on a protective device's fault path (low-voltage branch of a rail whose source limit is the logic supply's; its conductor row is owner B's) |
-| TP701 (TP) | DRAW-1 | PASS | Test point on PUMP_C_GATE: one pad, one net. |
-| TP711 (TP) | DRAW-1 | PASS | Test point on PUMP_S_GATE: one pad, one net. |
 | TP731 (TP) | DRAW-1 | PASS | Test point on VALVE_2W_DRV: one pad, one net. |
 | TP741 (TP) | DRAW-1 | PASS | Test point on VALVE_3W_DRV: one pad, one net. |
 | TP761 (TP) | DRAW-1 | PASS | Test point on +5V_WB: one pad, one net. |
@@ -477,8 +474,6 @@ One row for every part and every net of sheets 700 to 750, and one DRAW-1 row fo
 | TP795 (TP) | DRAW-1 | PASS | Test point on GAUGE_STEP2: one pad, one net. |
 | TP796 (TP) | DRAW-1 | PASS | Test point on GAUGE_DIR2: one pad, one net. |
 | TP821 (TP) | DRAW-1 | PASS | Test point on ANODE_SW: one pad, one net. |
-| TP822 (TP) | DRAW-1 | PASS | Test point on ANODE_GATE: one pad, one net. |
-| TP823 (TP) | DRAW-1 | PASS | Test point on BUZZER: one pad, one net. |
 | TP824 (TP) | DRAW-1 | PASS | Test point on LOWWATER_K: one pad, one net. |
 | TP831 (TP) | DRAW-1 | PASS | Test point on KEY1: one pad, one net. |
 | TP832 (TP) | DRAW-1 | PASS | Test point on KEY2: one pad, one net. |
@@ -486,8 +481,6 @@ One row for every part and every net of sheets 700 to 750, and one DRAW-1 row fo
 | TP834 (TP) | DRAW-1 | PASS | Test point on KEY4: one pad, one net. |
 | TP835 (TP) | DRAW-1 | PASS | Test point on KEY5: one pad, one net. |
 | TP861 (TP) | DRAW-1 | PASS | Test point on KNOB_HOT: one pad, one net. |
-| TP862 (TP) | DRAW-1 | PASS | Test point on KNOB_STEAM: one pad, one net. |
-| TP863 (TP) | DRAW-1 | PASS | Test point on TANK_LEVEL: one pad, one net. |
 | net PUMP_C_GATE | PINV-1, STRAP-1 | PASS | Controller output PA9 / PA8 (3.3 V, FT pins; PA9 is FT_u: Ilkg 350 nA): drives a gate through 100 ohm; never above VDD; 100 kohm pull-down at the gate (D-holdoff.md) |
 | net PUMP_S_GATE | PINV-1, STRAP-1 | PASS | Controller output PA9 / PA8 (3.3 V, FT pins; PA9 is FT_u: Ilkg 350 nA): drives a gate through 100 ohm; never above VDD; 100 kohm pull-down at the gate (D-holdoff.md) |
 | net HEAT_C_DRV | PINV-1, STRAP-1 | PASS | Controller output (PD2, PD3, PD4, PD5; FT_h): same stage as the pump gates; high-level gate drive 2.735 V against 2.5 V (D.md) |
@@ -606,7 +599,7 @@ A FINDING is closed here by a change to a fragment or by a recorded reason; wher
 | R614 R615 | STRAP-1, PARTS-1 | PASS | 100 kohm pull-ups to DVDD on CS and SYNC/RESET exactly as Fig. 9-8; they hold CS high and the part out of reset while the controller is in reset |
 | C603 C604 C605 C606 C607 C608 C609 C610 C611 C612 | CAPD-1, DERATE-2 | PASS | Working voltage at most 3.6 V on 25 V (C603 C610) and 50 V parts; no stated minimum capacitance (see the supplies row) |
 | F601 F602 | PARTS-1, DERATE-2 | PASS (recorded reason above) | High-side current at most 1 mA external (IH) plus the converter's own, far under 350 mA |
-| TP601 TP602 TP610 | PINV-1 | PASS | Test points on low-voltage key signals, one pin each, on the net they test |
+| TP602 TP610 | PINV-1 | PASS | Test points on low-voltage key signals, one pin each, on the net they test |
 | TP603 TP604 TP605 TP606 TP607 TP608 | BARRIER-1 | PASS | Test points on mains-referenced copper: they are mains parts, go in the Mains net class and are held to the basis like any mains copper; TP609 is on the low-voltage DCDC_CAP net |
 | Nets VMEAS_N1, VMEAS_N2, VMEAS_DIV, AMC_AIN0P, AMC_AIN0N, AMC_AIN1P, AMC_AIN1N | PINV-1, BARRIER-1 | PASS | Mains-referenced; peak voltage to NEUTRAL: VMEAS_N1 238 V, VMEAS_N2 119 V (253 V rms peaks, three equal elements), the rest under 0.31 V (21 mV on channel 1). Mains class |
 | Nets LINE, NEUTRAL, SHUNT_SENSE_IN, SHUNT_SENSE_NEUTRAL | PINV-1, SURGE-1 | PASS | Owned by the entry sheet. Behind the entry varistor (775 V clamp at 50 A) the divider output is 0.65 V and the AMC's rated impulse and surge withstand are 7.7 kV and 10 kV; the divider resistors' behaviour at 258 V each for a microsecond surge is not in the FRC sheet: open item |
@@ -662,7 +655,7 @@ A FINDING is closed here by a change to a fragment or by a recorded reason; wher
 | R672 R677 (100 kohm pull-downs on PD_SCK) | STRAP-1 | PASS | PD_SCK low is normal operation, high for 60 us or more powers the amplifier down; the pull-down defines it while the controller is in reset |
 | C671 C676 (10 uF X5R 25 V 0805) | CAPD-1, DERATE-2 | PASS (recorded reason) | The sheet's figure is 10 uF on the reference board with no stated minimum; 5.125 V on 25 V (20.5 %); the maker's DC-bias curve for the exact part is not available from the maker's catalogue sheet read (Samsung MLCC catalogue, no per-part curves), so the effective capacitance is not computed; the capacitance has no required value to fall below |
 | C672 C677 C673 C678 | PARTS-1, CAPD-1 | PASS | 0.1 uF on 50 V |
-| TP670 TP671 TP672 TP673 | PINV-1 | PASS | DOUT and the filtered A+ node |
+| TP670 TP671 TP673 | PINV-1 | PASS | DOUT and the filtered A+ node |
 | Nets WT1_SP_RAW WT1_SN_RAW WT1_INA_P WT1_INA_N WT2_SP_RAW WT2_SN_RAW WT2_INA_P WT2_INA_N | PINV-1 | PASS | Bridge signal nodes, common mode AVDD/2 = 2.44 V inside AGND+1.2 V to AVDD-1.3 V (E4.2); full scale +/-19 to 20 mV |
 | Nets WT1_VBG WT2_VBG | PARTS-1 | PASS | Reference bypass node of the part; only its capacitor |
 | Nets WT1_DATA WT2_DATA WT1_CLK WT2_CLK | PINV-1, BUSL-1 | FINDING (maker-held), as U630 | 0 to 3.3 V push-pull lines into FT pins PC8 PC9 PC11 PC12 (FT_h, FT_fh, FT_h, FT_h): within the controller's rating; the HX711's side has no stated rating |

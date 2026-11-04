@@ -78,11 +78,11 @@ sheets_order:
 - Knob, tank-level and reed inputs
 totals:
   sheets: 17
-  parts: 456
+  parts: 444
   nets: 230
   parts_by_catalogue_class:
     extended: 155
-    none: 108
+    none: 96
     basic: 186
     preferred: 7
   hand_fitted_refs:
@@ -1490,19 +1490,6 @@ sheets:
     function: Channel B gate
     mains: false
     sim_exclude: true
-  - ref: TP203
-    lib_id: Connector:TestPoint
-    value: TP_POL_OUT
-    rating: ''
-    footprint: main-board:TestPoint_Pad_D1.0mm_Tight
-    mpn: ''
-    maker: ''
-    lcsc: none
-    class: none
-    hand: false
-    function: The controller's proof-of-life output, ahead of R207 (high and low phase widths are measured here; R207 adds at most 83 ns)
-    mains: false
-    sim_exclude: true
   - ref: TP204
     lib_id: Connector:TestPoint
     value: TP_POL_BUF
@@ -1572,7 +1559,6 @@ sheets:
       scope: global
       pins:
       - R207.1
-      - TP203.1
     POL_IN:
       scope: local
       pins:
@@ -1674,13 +1660,13 @@ sheets:
       x 12.7 +-0.3 mm with the quick-connect tabs reaching 41 mm overall (vertical type), 15.7 mm high, 3.6 mm stand-off pins; body starts 2.5 mm before the coil holes (drawing dimension 2.5). The coil has no marked polarity
       in the sheet (A1 and A2 are interchangeable).'
   power_flags: []
-  drawing_notes: 'Drawing notes. (1) One function: the interlock. Draw left to right: POL_OUT enters at the left with TP203 and goes through R207 to U201''s input net POL_IN, which carries R201 and R202 to ground; U201''s
-    output POL_BUF feeds two identical rows, channel A above and channel B below (coupling capacitor, then the pump node with D201 to ground and D202 to the gate, then the gate with C203, R203 and the FET). R205 and R206 hang
-    from each pump node to ground. (2) The FET stack at the right: Q201 source at GND, Q201 drain = POL_MID = Q202 source, Q202 drain = POL_COIL_LO, which goes to K201''s A2. K201''s A1 is +5V at the top. The clamp: two parallel
-    branches from POL_COIL_LO up to +5V, each a zener Z (pin 3 cathode to POL_COIL_LO, pin 1 anode) in series with a diode D (pin 1 anode on the zener''s anode, pin 3 cathode on +5V). (3) Both channels use the same parts and
-    values; the second channel must not share any part with the first except U201 (the one common element, by the record''s design), the coil and the clamp. (4) K201''s contact pins 13 (LINE1) and 14 (LINE) are drawn apart
-    from the coil with a dashed barrier line between coil and contact (BARRIER-1: the coil-to-contact barrier is unlisted in the signed basis; its distances are not shown to reach 10.0 mm creepage and 3.0 mm clearance). (5)
-    The relay''s coil is low voltage and its contact mains: keep >= 10.0 mm creepage from the coil pads (A1, A2) to the contact pads by the layout, slotting between them as the division record does; the footprint''s own coil-to-contact
+  drawing_notes: 'Drawing notes. (1) One function: the interlock. Draw left to right: POL_OUT enters at the left and goes through R207 to U201''s input net POL_IN, which carries R201 and R202 to ground; U201''s output POL_BUF
+    feeds two identical rows, channel A above and channel B below (coupling capacitor, then the pump node with D201 to ground and D202 to the gate, then the gate with C203, R203 and the FET). R205 and R206 hang from each pump
+    node to ground. (2) The FET stack at the right: Q201 source at GND, Q201 drain = POL_MID = Q202 source, Q202 drain = POL_COIL_LO, which goes to K201''s A2. K201''s A1 is +5V at the top. The clamp: two parallel branches
+    from POL_COIL_LO up to +5V, each a zener Z (pin 3 cathode to POL_COIL_LO, pin 1 anode) in series with a diode D (pin 1 anode on the zener''s anode, pin 3 cathode on +5V). (3) Both channels use the same parts and values;
+    the second channel must not share any part with the first except U201 (the one common element, by the record''s design), the coil and the clamp. (4) K201''s contact pins 13 (LINE1) and 14 (LINE) are drawn apart from the
+    coil with a dashed barrier line between coil and contact (BARRIER-1: the coil-to-contact barrier is unlisted in the signed basis; its distances are not shown to reach 10.0 mm creepage and 3.0 mm clearance). (5) The relay''s
+    coil is low voltage and its contact mains: keep >= 10.0 mm creepage from the coil pads (A1, A2) to the contact pads by the layout, slotting between them as the division record does; the footprint''s own coil-to-contact
     pad distance is 32.5 mm along the body. (6) Values in SPICE form: 5.6Meg is mega. (7) Behaviour with R205/R206 absent is the record''s 19-part circuit; see circuit-proof.md row ''Interlock rest states'' and open-items.md.
 
     '
@@ -3557,19 +3543,6 @@ sheets:
     function: SYNC/RESET held high (not in reset) while the controller is in reset (SBASA56 Fig. 9-8)
     mains: false
     sim_exclude: false
-  - ref: TP601
-    lib_id: Connector:TestPoint
-    value: TP_AMC_DRDY
-    rating: ''
-    footprint: main-board:TestPoint_Pad_D1.0mm_Tight
-    mpn: ''
-    maker: ''
-    lcsc: none
-    class: none
-    hand: false
-    function: 'key signal: data-ready, the front end''s output strobe'
-    mains: false
-    sim_exclude: true
   - ref: TP602
     lib_id: Connector:TestPoint
     value: TP_AMC_CLKIN
@@ -3886,7 +3859,6 @@ sheets:
       scope: global
       pins:
       - U601.16
-      - TP601.1
   no_connect:
   - pin: U601.6
     reason: GPO is a general-purpose output not used; SBASA56 9.1.1 allows an unused output to be left open
@@ -4650,20 +4622,6 @@ sheets:
     mains: false
     sim_exclude: false
     dnp: true
-  - ref: TP520
-    lib_id: Connector:TestPoint
-    value: TestPoint
-    rating: pad 1.5mm
-    footprint: main-board:TestPoint_Pad_D1.0mm_Tight
-    mpn: ''
-    maker: ''
-    lcsc: ''
-    class: none
-    hand: false
-    function: test point on FLOW_IN
-    mains: false
-    sim_exclude: false
-    dnp: false
   - ref: J521
     lib_id: Connector_Generic:Conn_01x04
     value: STM_D
@@ -4815,20 +4773,6 @@ sheets:
     class: extended
     hand: false
     function: steering clamp of the SDA pin to GND and +3V3
-    mains: false
-    sim_exclude: false
-    dnp: false
-  - ref: TP521
-    lib_id: Connector:TestPoint
-    value: TestPoint
-    rating: pad 1.5mm
-    footprint: main-board:TestPoint_Pad_D1.0mm_Tight
-    mpn: ''
-    maker: ''
-    lcsc: ''
-    class: none
-    hand: false
-    function: test point on STM_SCL
     mains: false
     sim_exclude: false
     dnp: false
@@ -5011,20 +4955,6 @@ sheets:
     class: extended
     hand: false
     function: steering clamp of the SDA pin to GND and +3V3
-    mains: false
-    sim_exclude: false
-    dnp: false
-  - ref: TP524
-    lib_id: Connector:TestPoint
-    value: TestPoint
-    rating: pad 1.5mm
-    footprint: main-board:TestPoint_Pad_D1.0mm_Tight
-    mpn: ''
-    maker: ''
-    lcsc: ''
-    class: none
-    hand: false
-    function: test point on BREW_SCL
     mains: false
     sim_exclude: false
     dnp: false
@@ -5552,7 +5482,6 @@ sheets:
       pins:
       - R522.2
       - U520.4
-      - TP520.1
     STMD_3V3_SRC:
       scope: local
       pins:
@@ -5582,7 +5511,6 @@ sheets:
       - R523.2
       - R525.1
       - D523.3
-      - TP521.1
     STM_SDA:
       scope: global
       pins:
@@ -5619,7 +5547,6 @@ sheets:
       - R527.2
       - R529.1
       - D527.3
-      - TP524.1
     BREW_SDA:
       scope: global
       pins:
@@ -6864,19 +6791,6 @@ sheets:
     function: holds PD_SCK low (normal operation) while the controller is in reset or the pin is not driven; high longer than 60 us powers the amplifier down
     mains: false
     sim_exclude: false
-  - ref: TP672
-    lib_id: Connector:TestPoint
-    value: TP_WT2_DATA
-    rating: ''
-    footprint: main-board:TestPoint_Pad_D1.0mm_Tight
-    mpn: ''
-    maker: ''
-    lcsc: none
-    class: none
-    hand: false
-    function: 'key signal: DOUT of amplifier 2: high when idle, low when a result is ready'
-    mains: false
-    sim_exclude: true
   - ref: TP673
     lib_id: Connector:TestPoint
     value: TP_WT2_INA_P
@@ -6961,7 +6875,6 @@ sheets:
       scope: global
       pins:
       - U631.12
-      - TP672.1
     WT2_CLK:
       scope: global
       pins:
@@ -7170,19 +7083,6 @@ sheets:
     function: low-side switch sinking the coffee pump opto-triac LED
     mains: false
     sim_exclude: false
-  - ref: TP701
-    lib_id: Connector:TestPoint
-    value: TP
-    rating: test point
-    footprint: main-board:TestPoint_Pad_D1.0mm_Tight
-    mpn: ''
-    maker: ''
-    lcsc: none
-    class: none
-    hand: false
-    function: test point on the PUMP_C_GATE control input
-    mains: false
-    sim_exclude: true
   - ref: F711
     lib_id: Device:Fuse
     value: 0.5A
@@ -7311,19 +7211,6 @@ sheets:
     function: low-side switch sinking the steam pump opto-triac LED
     mains: false
     sim_exclude: false
-  - ref: TP711
-    lib_id: Connector:TestPoint
-    value: TP
-    rating: test point
-    footprint: main-board:TestPoint_Pad_D1.0mm_Tight
-    mpn: ''
-    maker: ''
-    lcsc: none
-    class: none
-    hand: false
-    function: test point on the PUMP_S_GATE control input
-    mains: false
-    sim_exclude: true
   - ref: R706
     lib_id: Device:R
     value: '100'
@@ -7417,7 +7304,6 @@ sheets:
       scope: global
       pins:
       - R701.1
-      - TP701.1
     PUMP_C_GATE_G:
       scope: local
       pins:
@@ -7470,7 +7356,6 @@ sheets:
       scope: global
       pins:
       - R711.1
-      - TP711.1
     PUMP_S_GATE_G:
       scope: local
       pins:
@@ -8822,19 +8707,6 @@ sheets:
     function: test point on ANODE_SW (source side of the anode rail link)
     mains: false
     sim_exclude: true
-  - ref: TP822
-    lib_id: Connector:TestPoint
-    value: TP
-    rating: test point
-    footprint: main-board:TestPoint_Pad_D1.0mm_Tight
-    mpn: ''
-    maker: ''
-    lcsc: none
-    class: none
-    hand: false
-    function: test point on ANODE_GATE
-    mains: false
-    sim_exclude: true
   - ref: Q823
     lib_id: Transistor_FET:AO3400A
     value: AO3400A
@@ -8900,19 +8772,6 @@ sheets:
     function: flyback clamp across the buzzer (type pending in the record)
     mains: false
     sim_exclude: false
-  - ref: TP823
-    lib_id: Connector:TestPoint
-    value: TP
-    rating: test point
-    footprint: main-board:TestPoint_Pad_D1.0mm_Tight
-    mpn: ''
-    maker: ''
-    lcsc: none
-    class: none
-    hand: false
-    function: test point on BUZZER
-    mains: false
-    sim_exclude: true
   - ref: Q824
     lib_id: Transistor_FET:AO3400A
     value: AO3400A
@@ -9100,7 +8959,6 @@ sheets:
       scope: global
       pins:
       - R821.1
-      - TP822.1
     ANODE_LS_G:
       scope: local
       pins:
@@ -9130,7 +8988,6 @@ sheets:
       scope: global
       pins:
       - R826.1
-      - TP823.1
     BUZZER_G:
       scope: local
       pins:
@@ -9324,19 +9181,6 @@ sheets:
     function: filter on KNOB_STEAM (contact bounce and induced pulses)
     mains: false
     sim_exclude: false
-  - ref: TP862
-    lib_id: Connector:TestPoint
-    value: TP
-    rating: test point
-    footprint: main-board:TestPoint_Pad_D1.0mm_Tight
-    mpn: ''
-    maker: ''
-    lcsc: none
-    class: none
-    hand: false
-    function: test point on KNOB_STEAM
-    mains: false
-    sim_exclude: true
   - ref: R863
     lib_id: Device:R
     value: 10k
@@ -9363,19 +9207,6 @@ sheets:
     function: filter on TANK_LEVEL (contact bounce and induced pulses)
     mains: false
     sim_exclude: false
-  - ref: TP863
-    lib_id: Connector:TestPoint
-    value: TP
-    rating: test point
-    footprint: main-board:TestPoint_Pad_D1.0mm_Tight
-    mpn: ''
-    maker: ''
-    lcsc: none
-    class: none
-    hand: false
-    function: test point on TANK_LEVEL
-    mains: false
-    sim_exclude: true
   nets:
     KNOB_HOT:
       scope: global
@@ -9390,14 +9221,12 @@ sheets:
       - J861.3
       - R862.1
       - C862.1
-      - TP862.1
     TANK_LEVEL:
       scope: global
       pins:
       - J862.2
       - R863.1
       - C863.1
-      - TP863.1
     +3V3:
       scope: power
       pins:

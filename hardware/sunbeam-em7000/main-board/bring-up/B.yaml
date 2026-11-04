@@ -120,8 +120,8 @@ key_signals:
   block: 'panel-cable USB port, PA11: J402.2 and the ESD clamp D401; test point pad added so a probe reaches the net without the header'
 - name: proof-of-life output
   net: POL_OUT
-  test_point: TP203
-  block: 'PC7: the interlock drive''s input, through R207 to the buffer; its test point belongs to the interlock block that consumes it'
+  test_point: R207
+  block: 'PC7: the interlock drive''s input, through R207 to the buffer; probed at R207 pad 1 (0603, controller side of the series resistor), as the interlock block that consumes it lists it'
 connector_pins:
 - pin: J401.1
   net: DBG_VTREF
