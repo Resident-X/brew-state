@@ -42,6 +42,9 @@ REPO = os.path.dirname(os.path.dirname(TOOLS))
 PLAN_ENTRY = review_caller_layout.PLAN_ENTRY
 ITEMS = {"area-FLOOR": ["FLOOR-1", "FLOOR-2"], "area-GROUND": ["GROUND-1"], "area-CLOCK": ["CLOCK-1"]}
 
+#: The model the review runs on, whose declared window the budget is a fraction of.
+REVIEW_MODEL = "claude-sonnet-5-5"
+
 STUB = '''#!PYTHON
 import json, os, re, sys, uuid
 sys.path.insert(0, TOOLS)
@@ -352,15 +355,17 @@ class TheUnits(Folder):
         design = fx.DESIGN
         self.assertEqual(sorted(declaration.artefacts), sorted([
             "check-report.txt", "layout-facts.txt", "method-extract.md", "placement/index.txt", "placement/measures.txt",
-            "placement/placement.png", "round.json", "views/facts.txt", "views/index.txt", "views/layer-F.Cu.png",
+            "placement/placement.png", "round.json", "views/facts.txt", "views/index.txt",
             f"{design}/constraints.md", f"{design}/design-rules.md", f"{design}/layout-plan.md",
-            f"{design}/separation-basis.yaml"]))
+            f"{design}/separation-basis.yaml"] + [f"views/{entry['file']}" for entry in fx.VIEW_ENTRIES]))
         self.assertEqual({name: artefact.kind for name, artefact in declaration.artefacts.items() if artefact.kind != "text"},
                          {"layout-facts.txt": "extract", "method-extract.md": "extract", "placement/placement.png": "image",
-                          "views/layer-F.Cu.png": "image"})
+                          **{f"views/{entry['file']}": "image" for entry in fx.VIEW_ENTRIES}})
         self.assertEqual(declaration.added_during_round, ("added-views/*", "added-documents/*"))
         self.assertEqual(declaration.budget.wall_s, 350)
-        self.assertEqual(set(declaration.needed), set(declaration.artefacts))
+        self.assertLessEqual(set(declaration.needed), set(declaration.artefacts))
+        self.assertNotIn("check-report.txt", declaration.needed, "no unit needs the whole report; each group's root holds its extract")
+        self.assertEqual(declaration.check_extract.report, "check-report.txt")
         for held in fx.BOARD_FILES:
             self.assertNotIn(held, declaration.artefacts if held.endswith(("kicad_pcb", "kicad_sch")) else (), "no board file")
 
@@ -405,6 +410,7 @@ class TheUnits(Folder):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a coupling the declaration states that no cross-reference of the catalogue supports fails the test, a cross-reference alone does not make a coupling, and the declared couplings (power with mains and the manufacturing items with power, whose item MFG-5 cites a power finding) leave at least six groups, the largest within the declared time budget; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
         for path, word in (("layout-facts.txt", "holds no layout-facts.txt"), ("method-extract.md", "holds no method-extract.md"),
                            ("check-report.txt", "holds no check-report.txt"), ("views/index.txt", "holds no views/index.txt"),
+                           ("views/index.json", "view index"),
                            ("placement/index.txt", "holds no placement/index.txt"),
                            (f"{fx.DESIGN}/layout-plan.md", "no readable plan")):
             with self.subTest(path=path):
@@ -416,6 +422,10 @@ class TheUnits(Folder):
         self.refused(lambda: prepared(folder), "method extract", "no `## Layout review views` section")
         folder = self.copy_of()
         os.remove(os.path.join(folder, "views", "layer-F.Cu.png"))
+        self.refused(lambda: prepared(folder), "lists views/layer-F.Cu.png, which the folder does not hold")
+        folder = self.copy_of()
+        for entry in fx.VIEW_ENTRIES:
+            os.remove(os.path.join(folder, "views", entry["file"]))
         os.remove(os.path.join(folder, "placement", "placement.png"))
         self.refused(lambda: prepared(folder), "holds no rendered view image")
 
@@ -1006,7 +1016,8 @@ class Command:
 
     def go(self, *extra):
         out, err = io.StringIO(), io.StringIO()
-        status = command.main(["--caller", "layout", "--callers", TOOLS, "--review", self.folder, "--out", self.out] + list(extra),
+        model = [] if "--model" in extra else ["--model", REVIEW_MODEL]
+        status = command.main(["--caller", "layout", "--callers", TOOLS, "--review", self.folder, "--out", self.out] + model + list(extra),
                               out, err, repo=os.path.join(self.case.root, "no-repository"))
         return status, out.getvalue(), err.getvalue()
 
@@ -1055,8 +1066,8 @@ class TheToolGrant(Folder):
         self.assertIsNone(json.loads(slurp(os.path.join(run.out, "record.json")))["merged"])
         lines = report["refusals"]
         named = sorted(re.match(r"unit (.+?) \(group (G\d+), replica (\d+)\) failed", line).groups() for line in lines)
-        self.assertEqual(named, [("area-FLOOR, area-GROUND, area-CLOCK", "G1", "1"), ("area-FLOOR, area-GROUND, area-CLOCK", "G1", "2"),
-                                 ("plan-and-free-pass", "G2", "1"), ("plan-and-free-pass", "G2", "2")],
+        everything = "area-FLOOR, area-GROUND, area-CLOCK, plan-and-free-pass"
+        self.assertEqual(named, [(everything, "G1", "1"), (everything, "G1", "2")],
                          "every reviewer that started badly is named with the units it was to judge")
         for line in lines:
             self.assertRegex(line, r"session G\d\.r\d\.a1 started")
@@ -1117,10 +1128,10 @@ class TheSmallTierReplica(Folder):
         small_root = next(call for call in roots if model_of(call) == review_caller_layout.SMALL_MODEL)
         own_root = next(call for call in roots if model_of(call) != review_caller_layout.SMALL_MODEL)
         forks = [call for call in calls if call["resume"] is not None]
-        self.assertEqual(len(forks), 6, "two groups of three replicas")
+        self.assertEqual(len(forks), 3, "one group of three replicas: the synthetic round fits one root, so it is not split")
         small = [call for call in forks if call["resume"] == small_root["session"]]
         own = [call for call in forks if call["resume"] == own_root["session"]]
-        self.assertEqual((len(small), len(own)), (2, 4), "the third replica of each group, and the first two")
+        self.assertEqual((len(small), len(own)), (1, 2), "the third replica, and the first two")
         for call in small:
             self.assertEqual(model_of(call), review_caller_layout.SMALL_MODEL)
             self.assertTrue(call["fork"])
@@ -1219,8 +1230,8 @@ class TheCommandEndToEnd(Folder):
         again = run.calls()[calls_before:]
         forks = [call for call in again if call["resume"] is not None]
         self.assertEqual(len(again) - len(forks), 1, "one shared context, started again for the run")
-        self.assertEqual({tuple(call["units"]) for call in forks}, {("area-FLOOR", "area-GROUND", "area-CLOCK")},
-                         "and forks of the unit's group alone, not the comparison unit's")
+        self.assertEqual({tuple(call["units"]) for call in forks}, {("area-FLOOR", "area-GROUND", "area-CLOCK", "plan-and-free-pass")},
+                         "and forks of the unit's group alone, which holds the comparison unit too")
         self.assertEqual(report["reran"][0]["units"], ["area-CLOCK"])
 
 
@@ -1243,7 +1254,7 @@ class TheCommandEndToEnd(Folder):
         self.assertEqual(status, 0, "the kit accepts the added document as a path added during the round: " + text + err)
         again = run.calls()[calls_before:]
         forks = [call for call in again if call["resume"] is not None]
-        self.assertEqual({tuple(call["units"]) for call in forks}, {("area-FLOOR", "area-GROUND", "area-CLOCK")})
+        self.assertEqual({tuple(call["units"]) for call in forks}, {("area-FLOOR", "area-GROUND", "area-CLOCK", "plan-and-free-pass")})
         for call in forks:
             self.assertIn("added-documents/vo3526-pins.txt", call["prompt"], "the unit's prompt names the document to read")
             self.assertIn("the figure comes from: the VO3526 datasheet, package drawing", call["prompt"])
@@ -1310,10 +1321,10 @@ class TheBoundOnReviewersAtOnce(Folder):
         run = Command(self)
         run.scenario()
         with mock.patch.object(scheduler.ThreadedConcurrency, "run", counted):
-            status, text, err = run.go("--format", "json", "--replicas", "20")
+            status, text, err = run.go("--format", "json", "--replicas", "40")
         self.assertEqual(status, 0, text + err)
         plan = json.loads(text)["plan"]
-        self.assertEqual(plan["forks"], 40)
+        self.assertEqual(plan["forks"], 40, "the synthetic round fits one root, so its forty replicas are forty forks of one group")
         self.assertEqual(plan["bound"], 30)
         self.assertEqual(state["bounds"][-1], 30)
         self.assertLessEqual(state["peak"], 30)

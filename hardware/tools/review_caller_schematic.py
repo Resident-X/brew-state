@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """The schematic review as a caller of the review kit command (review_run.py --caller schematic).
 
-A schematic review round is judged by forks of one shared context. The units are the area headings of the circuit practice
+A schematic review round is judged by forks of one root per group. The units are the area headings of the circuit practice
 catalogue in the review folder's own method, found as the layout caller finds its own, and one for the free pass over the whole
 schematic, which belongs to no area. The pin-voltage item selects every net and the derating item every part, so their areas
 are the largest units; an item that selects every net, part or sheet stays in its area's unit and is not split.
 
 The review folder is the one schematic_review_folder.py writes. The shared context holds the method's schematic review, drawing
 convention and circuit practice catalogue sections (the method extract), the round file, the check's report, the netlist, the
-records the round reads and the earlier rounds of the review record, and the schematic's own files. A unit's prompt names its own
-items and holds its own area; none is in the shared context. The drawing of each sheet is in the folder's sheets folder and a
+records the round reads and the earlier rounds of the review record, and the schematic's own files, which every unit needs, so each group's root holds them
+and no image, within a budget of a fraction of the model's declared context window (HEADROOM). A unit's prompt names its own
+items and holds its own area; none is in the root. The drawing of each sheet is in the folder's sheets folder and a
 reviewer opens the ones an item needs. A reviewer is granted the read tools and WebFetch, which fetches a published document at
 its address and writes nothing, since a datasheet is opened at its address and never recalled.
 
@@ -105,6 +106,12 @@ retrieval = True
 bound = 30
 #: The review's time target in seconds, so the planner sizes groups well clear of the bound.
 WALL_SECONDS = 350
+#: The fraction of the model's context window a group's root may fill: 0.4 of the 1,000,000 tokens the kit declares for the
+#: model is 400,000, which after documents of about 50,000 tokens holds (400,000 - 50,000) / 4,400 = 79 images of the 4.4
+#: thousand tokens a full-size board's tile costs and leaves 600,000 tokens of the window for the reviewer's own turns. It is a
+#: first, conservative value, to be set from a measured first run; the round holds no image, since a sheet's drawing is opened
+#: by the reviewer, so the budget bounds the documents.
+HEADROOM = 0.4
 
 #: What the checks hold of the round: the units, the items each judges, the nets, parts and sheets of the schematic, the round's
 #: label and the cannot judge resolutions its folder records.
@@ -445,8 +452,8 @@ def build_declaration(review: str) -> Dict[str, Any]:
                        "needs": sorted(documents), "expected_output_tokens": expected_tokens(listed, every, names),
                        "values": values[unit]} for unit, listed in units.items()}
     return {"artefacts": documents, "templates": {"area": AREA_TEMPLATE, "free-pass": FREE_PASS_TEMPLATE}, "units": declared,
-            "schema": SCHEMA, "deny": ["designer-notes*", "session*"], "budget": {"wall_s": WALL_SECONDS},
-            "added_during_round": list(ADDED)}
+            "schema": SCHEMA, "deny": ["designer-notes*", "session*"],
+            "budget": {"wall_s": WALL_SECONDS, "context_fraction": HEADROOM}, "added_during_round": list(ADDED)}
 
 
 def declaration(review: str) -> Dict[str, Any]:

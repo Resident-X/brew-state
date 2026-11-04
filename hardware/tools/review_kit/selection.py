@@ -58,13 +58,14 @@ def meets(box: Dict[str, Any], region: Region) -> bool:
 
 
 def select(index: Dict[str, Any], *, view: Optional[Names] = None, nets: Optional[Names] = None, classes: Optional[Names] = None,
-           layers: Optional[Names] = None, region: Optional[Region] = None, folder: str = FOLDER,
-           allow_empty: bool = False) -> List[str]:
+           layers: Optional[Names] = None, region: Optional[Region] = None, fields: Optional[Dict[str, Names]] = None,
+           folder: str = FOLDER, allow_empty: bool = False) -> List[str]:
     """The artefact names (`<folder>/<file>`, sorted) of the images of `index` that match every description given.
 
     `view` is a view kind or kinds (`layer`, `assembly`, `net`, `class map`, `crop`, `3d`), `nets` a net name or names,
     `classes` a net class or classes, `layers` a layer or layers the image shows, and `region` the board rectangle
-    (x0, y0, x1, y1) in millimetres an image's region must meet. A description left out does not narrow the selection. A
+    (x0, y0, x1, y1) in millimetres an image's region must meet, and `fields` any other field of an image the index lists
+    (`side`, `circuit`, `direction`) by the value or values it must have. A description left out does not narrow the selection. A
     description that matches no image is refused naming it, unless `allow_empty`."""
     kinds, wanted_nets, wanted_classes, wanted_layers = as_set(view), as_set(nets), as_set(classes), as_set(layers)
     found = set()
@@ -79,10 +80,13 @@ def select(index: Dict[str, Any], *, view: Optional[Names] = None, nets: Optiona
             continue
         if region is not None and ("region_mm" not in image or not meets(image["region_mm"], region)):
             continue
+        if fields is not None and any(image.get(key) not in as_set(wanted) for key, wanted in fields.items()):
+            continue
         found.add(f"{folder}/{image['file']}")
     if not found and not allow_empty:
         given = {key: sorted(value) if isinstance(value, set) else value for key, value in
-                 (("view", kinds), ("nets", wanted_nets), ("classes", wanted_classes), ("layers", wanted_layers), ("region", region))
+                 (("view", kinds), ("nets", wanted_nets), ("classes", wanted_classes), ("layers", wanted_layers), ("region", region),
+                  ("fields", fields))
                  if value is not None}
         raise EmptySelection(f"no image of the view index matches {given}; name a view, net, class, layer or region the index lists")
     return sorted(found)

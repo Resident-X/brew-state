@@ -30,6 +30,7 @@ import review_caller_layout  # noqa: E402
 import review_seed  # noqa: E402
 import test_review_caller_layout as layout_tests  # noqa: E402
 from review_kit import caller as kit_caller  # noqa: E402
+from review_kit import costmodel as kit_costmodel  # noqa: E402
 from review_kit import executor as ex  # noqa: E402
 from review_kit import proof, store  # noqa: E402
 from review_kit import session as sess  # noqa: E402
@@ -119,13 +120,13 @@ class TheCommand(Proofed):
         status, text, err = self.go()
         self.assertEqual(status, 0, text + err)
         calls = self.calls()
-        self.assertEqual(len(calls), (1 + 2 * 2) + (2 + 3 * 2), "a shared context and two groups of two replicas, then a second shared context for the small model and two groups of three")
+        self.assertEqual(len(calls), (1 + 2) + (2 + 3), "a root and one group's two replicas, then a second root for the small model and the group's three")
         self.assertEqual(len([call for call in calls if call["resume"] is None]), 3,
                          "a shared context for the design loop, two for the pre-order round, and no single reviewer")
         models = [call["args"][call["args"].index("--model") + 1] for call in calls]
         self.assertEqual(sorted(set(models)), sorted({lrp.BASELINE_MODEL, kit_small}))
-        self.assertEqual(models.count(lrp.BASELINE_MODEL), 1 + 2 * 2, "the pre-order round's mid-tier root and its first two replicas of each group")
-        self.assertEqual(models.count(kit_small), (1 + 2 * 2) + (1 + 2), "the design loop's root and four forks, and the pre-order round's small-tier root and third replicas")
+        self.assertEqual(models.count(lrp.BASELINE_MODEL), 1 + 2, "the pre-order round's mid-tier root and its first two replicas")
+        self.assertEqual(models.count(kit_small), (1 + 2) + (1 + 1), "the design loop's root and two forks, and the pre-order round's small-tier root and third replica")
         record = self.record()
         self.assertEqual(record["verdict"]["status"], "pass")
         self.assertEqual(record["cost_multiple"], 1.25)
@@ -200,14 +201,14 @@ class TheCommand(Proofed):
         self.assertFalse(os.path.exists(os.path.join(self.work, lrp.RECORD)))
         for name in ("design-loop", "pre-order"):
             self.assertFalse(os.path.exists(os.path.join(self.work, lrp.OUT_DIR, name)), "no run folder is made")
-            self.assertRegex(text, rf"PLAN \| {name} \| \d replicas \| 2 groups \| \d forks")
+            self.assertRegex(text, rf"PLAN \| {name} \| \d replicas \| 1 groups \| \d forks")
             self.assertRegex(text, rf"PREDICTED \| {name} \| \$[0-9.]+ \| [0-9.]+ s \|")
-        self.assertIn("PLAN | design-loop | 2 replicas | 2 groups | 4 forks", text)
-        self.assertIn("PLAN | pre-order | 3 replicas | 2 groups | 6 forks", text)
+        self.assertIn("PLAN | design-loop | 2 replicas | 1 groups | 2 forks", text)
+        self.assertIn("PLAN | pre-order | 3 replicas | 1 groups | 3 forks", text)
         self.assertIn("COST MULTIPLE | 1.25 | design loop bounds: cost at most $6.25 (1.25 times the single mean $5.00), wall time at most 500 s "
                       "(half the single mean 1000 s)", text)
-        self.assertRegex(text, r"BOUND \| design-loop \| 4 at once \| the layout caller's bound, the largest number of reviewers at once the live runs ran")
-        self.assertRegex(text, r"BOUND \| pre-order \| 6 at once \| ")
+        self.assertRegex(text, r"BOUND \| design-loop \| 2 at once \| the layout caller's bound, the largest number of reviewers at once the live runs ran")
+        self.assertRegex(text, r"BOUND \| pre-order \| 3 at once \| ")
         self.assertIn("figures recorded, not bounded", text)
         self.assertRegex(text, r"PREDICTED \| design-loop .*cost within its bound, time within its bound")
         self.assertTrue(text.splitlines()[-1].startswith("RESULT | PLANNED"))
@@ -329,10 +330,10 @@ class TheCommand(Proofed):
         self.assertEqual([context["model"] for context in pre_order["contexts"]], [kit_small])
         shutil.rmtree(self.work)
         status, text, err = self.go("--dry")
-        self.assertIn(f"MODEL | design-loop | all 4 forks on {kit_small}", text)
+        self.assertIn(f"MODEL | design-loop | all 2 forks on {kit_small}", text)
         lines = [line for line in text.splitlines() if line.startswith("MODEL | pre-order")]
         self.assertEqual(len(lines), 1, text)
-        self.assertIn(f"4 forks on {lrp.BASELINE_MODEL}, 2 on {kit_small} from a shared context of its own", lines[0])
+        self.assertIn(f"2 forks on {lrp.BASELINE_MODEL}, 1 on {kit_small} from a shared context of its own", lines[0])
         self.assertNotIn("SMALL TIER", text)
         self.assertNotIn("upper bound", text)
 
@@ -354,7 +355,8 @@ class TheCommand(Proofed):
 
     def test_the_dry_output_warns_when_a_model_has_no_price_and_names_it(self):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: a plan mode that prints the plan and the predicted cost and time without calling the model; the prediction of a model the price table lacks is flagged
-        status, text, err = self.go("--dry", "--only", "design-loop", "--design-model", "claude-unlisted-9")
+        with mock.patch.dict(kit_costmodel.WINDOW_TOKENS_BY_MODEL, {"claude-unlisted-9": 1_000_000}):
+            status, text, err = self.go("--dry", "--only", "design-loop", "--design-model", "claude-unlisted-9")
         self.assertEqual(status, 0, text + err)
         shutil.rmtree(self.work)
         warnings = [line for line in text.splitlines() if line.startswith("WARNING | design-loop | the model")]
@@ -369,7 +371,7 @@ class TheCommand(Proofed):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: the replicas the design-loop round uses, and the pre-order round's three replicas run once and their figures recorded
         status, text, err = self.go("--only", "design-loop")
         self.assertEqual(status, 0, text + err)
-        self.assertEqual(len(self.calls()), 5)
+        self.assertEqual(len(self.calls()), 3, "one group's root and its two replicas")
         record = self.record()
         self.assertNotIn("pre_order", record)
         self.assertEqual(list(record["layout"]["rounds"]), ["design-loop"])
@@ -377,7 +379,7 @@ class TheCommand(Proofed):
         os.remove(self.log)
         status, text, err = self.go("--only", "pre-order")
         self.assertEqual(status, 0, text + err)
-        self.assertEqual(len(self.calls()), 8)
+        self.assertEqual(len(self.calls()), 5, "two roots and the group's three replicas")
         record = self.record()
         self.assertIsNone(record["verdict"], "no criterion is applied to the pre-order round")
         self.assertEqual(record["pre_order"]["seeds_found_count"], 3)
@@ -419,7 +421,7 @@ class TheCommand(Proofed):
 
     def test_the_findings_that_match_no_seed_and_the_replicas_that_raised_each_seed_are_recorded(self):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: The record gives every seeded defect reported as a finding against the catalogue item that covers it, the findings that match no seed, and the replicas that raised each seed
-        stray = {"Finding": 1, "Item": layout_tests.PLAN_ENTRY,"Raised by": "free pass", "Severity": "quality",
+        stray = {"Finding": 90, "Item": layout_tests.PLAN_ENTRY,"Raised by": "free pass", "Severity": "quality",
                  "What and where": "layer-F.Cu at (2, 2): a stray mark", "Rule": "no", "Added as": "", "Planning shortfall": "—",
                  "Closed by": ""}
         self.scenario(verdicts=ALL_FAIL, findings={"plan-and-free-pass": [stray]})

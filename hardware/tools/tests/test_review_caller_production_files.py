@@ -366,7 +366,16 @@ class TheUnits(Folder):
                     for held in os.listdir(self.path("views")):
                         if held.startswith("assembly-"):
                             os.remove(self.path("views", held))
+                index = json.loads(slurp(self.path("views", "index.json")))
+                index["images"] = [entry for entry in index["images"] if os.path.exists(self.path("views", entry["file"]))]
+                pf.fx.write(self.path("views", "index.json"), json.dumps(index))
                 self.refused(lambda: prepared(self.folder), word)
+        self.pristine()
+        os.remove(self.path("views", "layer-F.Cu-r1c1.png"))
+        self.refused(lambda: prepared(self.folder), "lists views/layer-F.Cu-r1c1.png, which the folder does not hold")
+        self.pristine()
+        os.remove(self.path("views", "index.json"))
+        self.refused(lambda: prepared(self.folder), "view index")
         self.pristine()
         self.assertTrue(prepared(self.folder).declaration.units)
 

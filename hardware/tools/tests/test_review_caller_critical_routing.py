@@ -341,6 +341,10 @@ class TheUnits(Folder):
                 self.refused(lambda: prepared(folder), word)
         folder = self.copy_of()
         os.remove(os.path.join(folder, "views", "layer-F.Cu.png"))
+        self.refused(lambda: prepared(folder), "lists views/layer-F.Cu.png, which the folder does not hold")
+        folder = self.copy_of()
+        for entry in fx.VIEW_ENTRIES:
+            os.remove(os.path.join(folder, "views", entry["file"]))
         self.refused(lambda: prepared(folder), "holds no rendered view image")
         folder = self.write_folder(os.path.join(self.root, "placed"), placement=True)
         os.remove(os.path.join(folder, "placement", "index.txt"))
@@ -417,13 +421,15 @@ class TheSharedContext(Folder):
         declaration = prepared(self.folder).declaration
         design = fx.DESIGN
         self.assertEqual(sorted(declaration.artefacts), sorted([
-            "layout-facts.txt", "method-extract.md", "round.json", "views/facts.txt", "views/index.txt", "views/layer-F.Cu.png",
-            f"{design}/constraints.md", f"{design}/design-rules.md", f"{design}/layout-plan.md", f"{design}/separation-basis.yaml"]))
+            "layout-facts.txt", "method-extract.md", "round.json", "views/facts.txt", "views/index.txt",
+            f"{design}/constraints.md", f"{design}/design-rules.md", f"{design}/layout-plan.md", f"{design}/separation-basis.yaml"]
+            + [f"views/{entry['file']}" for entry in fx.VIEW_ENTRIES]))
         self.assertEqual({name: artefact.kind for name, artefact in declaration.artefacts.items() if artefact.kind != "text"},
-                         {"layout-facts.txt": "extract", "method-extract.md": "extract", "views/layer-F.Cu.png": "image"})
+                         {"layout-facts.txt": "extract", "method-extract.md": "extract",
+                          **{f"views/{entry['file']}": "image" for entry in fx.VIEW_ENTRIES}})
         self.assertEqual(declaration.added_during_round, ("added-views/*", "added-documents/*"))
         self.assertEqual(declaration.budget.wall_s, 350)
-        self.assertEqual(set(declaration.needed), set(declaration.artefacts))
+        self.assertLessEqual(set(declaration.needed), set(declaration.artefacts))
         for held in fx.BOARD_FILES:
             self.assertNotIn(held, declaration.artefacts if held.endswith(("kicad_pcb", "kicad_sch")) else (), "no board file")
         placed = prepared(self.write_folder(os.path.join(self.root, "placed"), placement=True)).declaration
@@ -1306,9 +1312,8 @@ class TheReplicasBudgetAndBound(Folder):
         other = Command(self, out="out-default")
         other.scenario()
         status, text, err = other.go("--format", "json")
-        self.assertEqual(status, 0, text + err)
-        self.assertEqual([(context["model"], context["variants"]) for context in json.loads(text)["plan"]["contexts"]],
-                         [(SMALL, ["full", "hunt"])], "without the review's model set, the replicas have a context of their own")
+        self.assertEqual(status, 1, "the budget is a fraction of the model's window, which a run naming no model cannot give: " + text + err)
+        self.assertIn("name the model with --model", "; ".join(json.loads(text)["refusals"]))
 
     def test_a_plan_of_forty_forks_runs_at_most_thirty_at_once_and_a_smaller_plan_all_of_its_forks(self):
         # SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING.C6: Over synthetic declarations and a stub executor, the critical-routing declaration grants a reviewer the read tools and the one read-only retrieval tool and no other; sets two replicas, the full and hunt framings, on the small-tier model; sets the time budget at 350 seconds and the bound on reviewers at once at 30; and the kit's check of the start report against the grant fails a run whose reviewer holds any other tool. Out of scope: a live session.

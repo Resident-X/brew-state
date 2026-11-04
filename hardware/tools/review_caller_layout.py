@@ -4,18 +4,21 @@
 A layout review round, full or narrow, is judged by forks of one shared context. The
 units are the area headings of the layout practice catalogue in the review folder's
 own method, one for the board's own items when the plan's table of them has rows,
-and one for the comparison with the plan and the free pass over every view, which
-belong to no one area. The areas the catalogue's own cross-references link are
+and one for the comparison with the plan and the free pass over the whole-board views,
+which belong to no one area. The areas the catalogue's own cross-references link are
 declared coupled, so each coupled set is judged in one group; a narrow round's units
 are the areas its listed items fall in, and each fork judges only the listed items.
 
-The review folder is the one review_folder.py writes. The shared context holds the
-method's layout review and views sections and the whole catalogue (the method
-extract), the plan, the rules table and the records, the round file, the check's
-report, the view and placement indexes, every rendered view and the placement view as
-an image, and the layout facts the folder command extracted from the board file. A
-unit's prompt names its own items and holds its own area; none is in the shared
-context. A reviewer is granted the read tools and WebFetch, which fetches a published
+The review folder is the one review_folder.py writes. Each group is judged from a root
+of its own that holds the method's layout review and views sections and the whole
+catalogue (the method extract), the plan, the rules table and the records, the round
+file, the view and placement indexes and the layout facts the folder command extracted
+from the board file, then the views its units' items are judged on, chosen through the
+kit's selection from the folder's view index (views/index.json) by the names each item's
+Judged on gives, the placement view when an item names it, and the extract of the check's
+report for the rules its items' Passes and Fails name, not the whole report. A unit's
+prompt names its own items and holds its own area; none is in the root. The root is held
+to a budget of a fraction of the model's declared context window (HEADROOM). A reviewer is granted the read tools and WebFetch, which fetches a published
 document at its address and writes nothing, since a rule-kind item whose figure
 rests on a document needs it.
 
@@ -113,6 +116,17 @@ retrieval = True
 bound = 30
 #: The review's time target in seconds, so the planner sizes groups well clear of the bound the proof is held to.
 WALL_SECONDS = 350
+#: The fraction of the model's context window a group's root may fill: 0.4 of the 1,000,000 tokens the kit declares for the
+#: model is 400,000, which after documents of about 50,000 tokens holds (400,000 - 50,000) / 4,400 = 79 images of the 4.4
+#: thousand tokens a full-size board's tile costs and leaves 600,000 tokens of the window for the reviewer's own turns. It is a
+#: first, conservative value, to be set from a measured first run.
+HEADROOM = 0.4
+#: How the check's report names the rule each of its lines is about: `VIOLATION | <design> | <rule> | ...`, or `FIGURE |
+#: <design> | <rule> | ...` for a rule whose figure the check read.
+CHECK_RULE = r"^(?:VIOLATION|FIGURE) \| [^|]*\| (?P<rule>[^|]+?) \|"
+#: What the comparison with the plan and the free pass is judged on: the copper layers, both sides as assembled, the class map
+#: and the placement view, whole-board views, and none of a net's tiles or a circuit's crop.
+PLAN_VIEWS = ("layer-<copper layer>", "assembly-top", "assembly-bottom", "classes", "placement")
 
 # --- The folder ---------------------------------------------------------------------------------
 
@@ -241,13 +255,14 @@ and you have no notes from whoever did. Work from the shared context above this 
 The shared context holds the method's layout review and views sections and the whole layout practice catalogue \
 (method-extract.md), the board's plan ({plan}), its rules table (design-rules.md) and the records those name in \
 {design}/, round.json (the round's number, its kind, the commit judged, the commands the views were rendered with and the \
-pre-order check's lines), the pre-order check's report (check-report.txt), the view and placement indexes, every rendered \
-view and the placement view as an image, and layout-facts.txt, which lists the positions, pads, segments, vias and zones of \
-the layout file. You can read and search the folder and fetch a published document at its address; you cannot run a \
+pre-order check's lines), the view and placement indexes, the views your items are judged on, as images, and layout-facts.txt, \
+which lists the positions, pads, segments, vias and zones of the layout file, and the extract of the pre-order check's report \
+for the rules your items judge (extract/check-report.txt): the report's own lines for them, so cite the check's figure and do \
+not measure the board again. The rest of the board's views are not in your context. You can read and search the folder and fetch a published document at its address; you cannot run a \
 command, render a view or write anything.
 
 Follow the "Layout review" section of the method, as written. Every view an item is judged on is among the images above; \
-open nothing again that is already there. Where an item needs a view that is not among them, give it `cannot judge` and \
+open nothing again that is already there, and the views no item of yours names are not in your context. Where an item needs a view that is not among them, give it `cannot judge` and \
 write in Why `needs <view>: <why the views rendered do not show it>`. For a rule-kind item whose figure rests on a \
 published document, fetch it at the address the board's rules table gives, or find it from the manufacturer or publisher the \
 row names, and judge the figure against it; a document you cannot fetch makes the item `cannot judge`.{earlier}{added}"""
@@ -278,7 +293,7 @@ round's finding in that form with this round's number."""
 
 PLAN_SCOPE = """This unit judges no catalogue item. Compare the layout with {plan} as step 3 gives it: each region's bounds and \
 what it holds, each connector's edge and position, each `yes` row of the plan table and each of the board's own items' How the \
-layout meets it. Then make the free pass over every view. Record what you compared in Plan and free pass, and each plan row \
+layout meets it. Then make the free pass over every view you were given. Record what you compared in Plan and free pass, and each plan row \
 the layout does not meet and each free-pass sighting as a finding whose Item is {sentinel}. The one item below stands for this \
 comparison: give it one Verdicts row with Kind `comparison`, Severity `—`, Verdict `pass` when you raise no finding and `fail` \
 when you raise any (its Why `finding {round}.<n>` for the first), and Rests on the plan and the views you compared."""
@@ -318,6 +333,25 @@ SCHEMA = {
     "findings": {"table": "Findings", "number": "Finding",
                  "citations": [["Verdicts", "Why"], ["Plan and free pass", "Note"]], "citation": CITATION.pattern},
 }
+
+
+def unit_needs(review: str, documents: Dict[str, Dict[str, Any]], unit: str, listed: Sequence[str]) -> List[str]:
+    """What a unit needs: every text of the shared documents but the check's report, whose extract the group's root holds, and
+    the views the unit's items are judged on, chosen from the view index, with the placement view's images when an item names it.
+    The comparison with the plan is judged on PLAN_VIEWS."""
+    names = list(PLAN_VIEWS) if unit == PLAN_UNIT else review_catalogue.judged_on(review, listed)
+    needed = [name for name, entry in documents.items() if entry["kind"] != "image" and name != review_folder.CHECK_REPORT]
+    needed += review_catalogue.declared_views(review, documents, names)
+    if "placement" in names:
+        needed += [name for name, entry in documents.items()
+                   if entry["kind"] == "image" and name.startswith(review_folder.PLACEMENT + "/")]
+    return sorted(set(needed))
+
+
+def unit_rules(review: str, report: str, listed: Sequence[str]) -> List[str]:
+    """The check rules a unit's items judge, from the catalogue's rule-kind items, for the extract of the report."""
+    known = review_catalogue.report_rules(report, re.compile(CHECK_RULE))
+    return review_catalogue.declared_rules(review, listed, known)
 
 
 def preface(review: str, round_: Dict[str, Any], resolutions: Sequence[Dict[str, str]]) -> str:
@@ -413,6 +447,7 @@ def build_declaration(review: str) -> Dict[str, Any]:
     units = unit_items(review, round_)
     resolutions = review_folder.read_resolutions(review)
     documents = shared_documents(review)
+    report = read_text(review, review_folder.CHECK_REPORT, "check report")
     values = unit_values(review, round_, units, resolutions)
     held = {"narrow": round_["kind"] == "narrow", "units": {unit: list(listed) for unit, listed in units.items()},
             "resolutions": resolutions}
@@ -421,11 +456,13 @@ def build_declaration(review: str) -> Dict[str, Any]:
     declared = {}
     for unit, listed in units.items():
         declared[unit] = {"items": list(listed), "template": "plan" if unit == PLAN_UNIT else "area",
-                          "needs": sorted(documents), "couples_with": coupled_to(unit, units),
-                          "expected_output_tokens": expected_tokens(unit, listed), "values": values[unit]}
+                          "needs": unit_needs(review, documents, unit, listed), "couples_with": coupled_to(unit, units),
+                          "expected_output_tokens": expected_tokens(unit, listed), "values": values[unit],
+                          "check_rules": [] if unit == PLAN_UNIT else unit_rules(review, report, listed)}
     return {"artefacts": documents, "templates": {"area": AREA_TEMPLATE, "plan": PLAN_TEMPLATE}, "units": declared,
-            "schema": SCHEMA, "deny": ["designer-notes*", "session*"], "budget": {"wall_s": WALL_SECONDS},
-            "added_during_round": list(ADDED)}
+            "schema": SCHEMA, "deny": ["designer-notes*", "session*"],
+            "budget": {"wall_s": WALL_SECONDS, "context_fraction": HEADROOM}, "added_during_round": list(ADDED),
+            "check_extract": {"report": review_folder.CHECK_REPORT, "rule": CHECK_RULE}}
 
 
 def declaration(review: str) -> Dict[str, Any]:

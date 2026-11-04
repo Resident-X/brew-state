@@ -24,6 +24,7 @@ import tempfile
 import types
 import unittest
 from unittest import mock
+from unittest import mock
 
 TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, TOOLS)
@@ -37,6 +38,7 @@ import review_proof_harness as harness  # noqa: E402
 import schematic_fixtures as sfx  # noqa: E402
 import schematic_review_proof as srp  # noqa: E402
 import test_review_caller_schematic as caller_tests  # noqa: E402
+from review_kit import costmodel as kit_costmodel  # noqa: E402
 from review_kit import executor as ex  # noqa: E402
 from review_kit import decl, merge, proof, store  # noqa: E402
 
@@ -495,7 +497,8 @@ class TheDryMode(Proofed):
                 if warned:
                     self.assertIn("a live run is likely to fail that bound or to need a second run", text)
         shutil.rmtree(self.work)
-        status, text, err = self.go("--dry", "--design-model", "claude-unlisted-9")
+        with mock.patch.dict(kit_costmodel.WINDOW_TOKENS_BY_MODEL, {"claude-unlisted-9": 1_000_000}):
+            status, text, err = self.go("--dry", "--design-model", "claude-unlisted-9")
         self.assertRegex(text, r"WARNING \| the model 'claude-unlisted-9'.*priced at the default")
 
 
