@@ -469,10 +469,12 @@ def build_group(declaration: decl.Declaration, catalogue: cat.Catalogue, sizing:
                  messages.shared_context(held), entry)
 
 
-def form(declaration: decl.Declaration, catalogue: cat.Catalogue, model: Optional[str]) -> Formed:
+def form(declaration: decl.Declaration, catalogue: cat.Catalogue, model: Optional[str], hold_groups: bool = True) -> Formed:
     """The groups of a review with each root built and held to the context budget, refused before any session starts when the
     budget is a fraction of a window the kit does not declare, when the shared documents are over the budget on their own,
-    when any group's root is over it (every one is named), or when a root's message is over the agent command line's limit."""
+    when any group's root is over it (every one is named), or when a root's message is over the agent command line's limit.
+    With `hold_groups` false the groups' roots are not held to the budget here: `make_plan` holds those that start a root for
+    the review's model, a group whose replicas all run on another model having none."""
     budget = context_budget(declaration.budget, model)
     sizing = Sizing(declaration, catalogue)
     shared = messages.shared_context(catalogue.subset(shared_names(declaration)))
@@ -484,7 +486,7 @@ def form(declaration: decl.Declaration, catalogue: cat.Catalogue, model: Optiona
         over = [Overrun(group.id, group.units, group.tokens, group.images) for group in built if group.tokens > budget]
         if shared.tokens > budget:
             raise OverBudget(shared.tokens, budget, over)
-        if over:
+        if over and hold_groups:
             raise GroupsOverBudget(over, budget)
     for group in built:
         check_stream(group.catalogue, group.shared, group.id if len(built) > 1 else None)
@@ -513,7 +515,7 @@ def make_plan(declaration: decl.Declaration, catalogue: cat.Catalogue, spec: ses
     all fork from roots of other models has no root of its own model: none is started, priced or written."""
     if isinstance(bound, bool) or not isinstance(bound, int) or bound < 1:
         raise BoundBelowOne(bound)
-    formed = formed or form(declaration, catalogue, spec.model)
+    formed = formed or form(declaration, catalogue, spec.model, hold_groups=False)
     by_group = {built.id: built for built in formed.groups}
     owned: List[Tuple[Any, str]] = []
     for context in contexts:
@@ -522,28 +524,34 @@ def make_plan(declaration: decl.Declaration, catalogue: cat.Catalogue, spec: ses
             raise ValueError(f"the context {context.root_id} belongs to the group {context.group!r}, which the plan does not hold")
         owned.append((context, owner))
     others = [(context, owner) for context, owner in owned if context.model != spec.model]
-    over = []
+    counts = replica_counts(declaration, [built.units for built in formed.groups], replicas)
+    other_variants = {(owner, variant_id) for context, owner in others for variant_id in context.variants}
+
+    def starts_root(built: Built, count: int) -> bool:
+        forks = {(variants[(replica - 1) % len(variants)] if variants else BASE_VARIANT) for replica in range(1, count + 1)}
+        return any((built.id, variant) not in other_variants for variant in forks)
+
+    budget = formed.budget["tokens"]
+    over = [Overrun(built.id, built.units, built.tokens, built.images) for built, count in zip(formed.groups, counts)
+            if budget is not None and built.tokens > budget and starts_root(built, count)]
     for context, owner in others:
         limit = context_budget(declaration.budget, context.model)
         if limit is not None and context.shared.tokens > limit:
             built = by_group[owner]
             over.append(Overrun(built.id, built.units, context.shared.tokens, built.images, context.model, limit))
     if over:
-        raise GroupsOverBudget(over, over[0].limit)
+        raise GroupsOverBudget(over, budget if budget is not None else over[0].limit)
     prompt_for = prompt_for or default_prompt(declaration)
     root_prices = prices or cm.prices_for(spec.model)
     prices_of: Dict[str, cm.Prices] = {built.root: root_prices for built in formed.groups}
     for context, _ in others:
         prices_of[context.root_id] = prices or cm.prices_for(context.model)
-    counts = replica_counts(declaration, [built.units for built in formed.groups], replicas)
     groups: List[Group] = []
     nodes: List[Node] = []
     per_node: Dict[str, Dict[str, float]] = {}
-    other_variants = {(owner, variant_id) for context, owner in others for variant_id in context.variants}
     started_roots = set()
     for built, count in zip(formed.groups, counts):
-        forks = {(variants[(replica - 1) % len(variants)] if variants else BASE_VARIANT) for replica in range(1, count + 1)}
-        starts = any((built.id, variant) not in other_variants for variant in forks)
+        starts = starts_root(built, count)
         groups.append(Group(built.id, built.units, built.needs, built.expected_output_tokens, count, built.root if starts else None,
                             built.images, built.tokens, built.shared.prefix_sha, built.extract))
         if not starts:

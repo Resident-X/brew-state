@@ -292,7 +292,7 @@ class Prepared:
         return text
 
     def merge(self, order: Sequence[str], units: Mapping[str, Mapping[str, Dict[str, Any]]],
-              holds: Optional[Mapping[str, Sequence[str]]] = None) -> Dict[str, Any]:
+              holds: Mapping[str, Sequence[str]]) -> Dict[str, Any]:
         """The merge of the groups' replicas under the declared tables, with the caller's checks of the merged tables. `holds`
         gives the items each group holds, so that the merged pass is one verdict row for each item of the checklist."""
         return merge.merge(self.declaration.shape, self.rules, order, units, self.check, holds)

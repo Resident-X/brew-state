@@ -151,15 +151,23 @@ def prepared(folder):
     return kit_caller.load("layout", TOOLS).prepare(folder)
 
 
+def merge_checks_only(package, order, units):
+    """The merge with the caller's own checks and without the coverage of the checklist, which the command adds through
+    `holds`: these tests judge what the caller's checks refuse."""
+    return merge.merge(package.declaration.shape, package.rules, order, units, package.check)
+
+
 def merged(folder, given, order=None, replicas=None):
     """The unit results merged as the command merges them, each unit one replica unless `replicas` gives more."""
-    return prepared(folder).merge(order or list(given), {unit: replicas.get(unit, {"r1": tables}) if replicas else {"r1": tables}
-                                                         for unit, tables in given.items()})
+    package = prepared(folder)
+    order = order or list(given)
+    return merge_checks_only(package, order, {unit: replicas.get(unit, {"r1": tables}) if replicas else {"r1": tables}
+                                 for unit, tables in given.items()})
 
 
 def rendered(folder, given, number=1):
     package = prepared(folder)
-    out = package.merge(list(given), {unit: {"r1": tables} for unit, tables in given.items()})
+    out = merge_checks_only(package, list(given), {unit: {"r1": tables} for unit, tables in given.items()})
     return package.render(merge.plain_tables(out))[f"round-{number}.md"]
 
 
@@ -542,7 +550,7 @@ class TheNarrowRound(Folder):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C2: From a synthetic narrow round whose listed items fall in two groups, the caller has a unit for each of the two groups and none for the rest, each unit's prompt names only its listed items, and the merge accepts a verdict only for a listed item; a narrow round whose items fall in one group is judged by a fork of the shared context. Out of scope: how the designer chooses the listed items.
         folder = self.narrow_folder("noplan", ["FLOOR-1"])
         self.assertNotIn("plan-and-free-pass", prepared(folder).declaration.units)
-        self.assertEqual(prepared(folder).checklist[-1], PLAN_ENTRY)
+        self.assertEqual(prepared(folder).checklist, ("FLOOR-1",), "the narrow round's checklist is the items its units judge")
 
 
 class TheBoardsOwnItems(Folder):
@@ -984,12 +992,12 @@ The plan was compared.
     def test_the_rendered_record_is_one_plain_file_named_for_its_round_whose_name_the_kit_accepts(self):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C4: The merged round has the round heading, the opening fields with the round kind, the Verdicts table, the Plan and free pass section and the Findings table or the line saying no finding was raised, in the order the method gives. A record holding it and a hand-written round are passed through the reader the review record history command uses, and what it reads from the two has the same shape. Out of scope: the history command's own checks of the repository's history.
         package = prepared(self.folder)
-        files = package.render(merge.plain_tables(package.merge(list(results()), {unit: {"r1": tables} for unit, tables in results().items()})))
+        files = package.render(merge.plain_tables(merge_checks_only(package, list(results()), {unit: {"r1": tables} for unit, tables in results().items()})))
         self.assertEqual(list(files), ["round-1.md"])
         self.assertTrue(kit_caller.rendered_name_ok("round-1.md"))
         later = self.write_folder(os.path.join(self.root, "later"), number=2)
-        files = prepared(later).render(merge.plain_tables(prepared(later).merge(
-            list(results()), {unit: {"r1": tables} for unit, tables in results().items()})))
+        files = prepared(later).render(merge.plain_tables(merge_checks_only(
+            prepared(later), list(results()), {unit: {"r1": tables} for unit, tables in results().items()})))
         self.assertEqual(list(files), ["round-2.md"])
 
 

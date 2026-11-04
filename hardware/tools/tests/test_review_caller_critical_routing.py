@@ -138,15 +138,23 @@ def prepared(folder):
     return kit_caller.load("critical_routing", TOOLS).prepare(folder)
 
 
+def merge_checks_only(package, order, units):
+    """The merge with the caller's own checks and without the coverage of the checklist, which the command adds through
+    `holds`: these tests judge what the caller's checks refuse."""
+    return merge.merge(package.declaration.shape, package.rules, order, units, package.check)
+
+
 def merged(folder, given, order=None, replicas=None):
     """The unit results merged as the command merges them, each unit one replica unless `replicas` gives more."""
-    return prepared(folder).merge(order or list(given), {unit: replicas.get(unit, {"r1": tables}) if replicas else {"r1": tables}
-                                                         for unit, tables in given.items()})
+    package = prepared(folder)
+    order = order or list(given)
+    return merge_checks_only(package, order, {unit: replicas.get(unit, {"r1": tables}) if replicas else {"r1": tables}
+                                 for unit, tables in given.items()})
 
 
 def rendered(folder, given, number=1, replicas=None):
     package = prepared(folder)
-    out = package.merge(list(given), {unit: replicas.get(unit, {"r1": tables}) if replicas else {"r1": tables}
+    out = merge_checks_only(package, list(given), {unit: replicas.get(unit, {"r1": tables}) if replicas else {"r1": tables}
                                       for unit, tables in given.items()})
     return package.render(merge.plain_tables(out))[f"pass-{number}.md"]
 
@@ -680,7 +688,8 @@ class TheGuards(Folder):
             units = {unit: {"r1": tables} for unit, tables in (others or self.others()).items()}
             units[self.UNIT] = {"r1": results()[self.UNIT], "r2": attempt.tables} if replicas else {"r1": attempt.tables}
             try:
-                package.merge([self.UNIT] + list(others or self.others()), units)
+                order = [self.UNIT] + list(others or self.others())
+                merge_checks_only(package, order, units)
             except merge.Refused as error:
                 found += error.causes
         return found
@@ -717,7 +726,8 @@ class TheGuards(Folder):
         self.assertEqual(self.causes(package, self.assess(package, bad), replicas=True), [])
         units = {unit: {"r1": tables} for unit, tables in self.others().items()}
         units[self.UNIT] = {"r1": results()[self.UNIT], "r2": bad}
-        rows = package.merge([self.UNIT] + list(self.others()), units)["tables"]["Verdicts"]["rows"]
+        order = [self.UNIT] + list(self.others())
+        rows = merge_checks_only(package, order, units)["tables"]["Verdicts"]["rows"]
         self.assertEqual({row["Item"]: row["Verdict"] for row in rows}["FLOOR-2"], "pass")
         self.assertFalse([row for row in rows if row["Verdict"] == NOT_BEARING])
 
@@ -750,7 +760,7 @@ class TheGuards(Folder):
                     self.assertEqual(second.cleared, ["FLOOR-1"], turn)
                     verdicts = {row["Item"]: row["Verdict"] for row in record.standing.tables["Verdicts"]}
                     self.assertEqual(verdicts["FLOOR-1"], "fail", f"the {turn} did not clear the fail")
-                    out = package.merge([self.UNIT] + list(self.others()), {**{unit: {"r1": tables} for unit, tables in self.others().items()},
+                    out = merge_checks_only(package, [self.UNIT] + list(self.others()), {**{unit: {"r1": tables} for unit, tables in self.others().items()},
                                                                          self.UNIT: {"r1": record.standing.tables}})
                     self.assertIn("fail", [row["Verdict"] for row in out["tables"]["Verdicts"]["rows"]])
 
@@ -769,7 +779,7 @@ class TheGuards(Folder):
         for number in (0, -3, "2", None):
             package = prepared(self.folder)
             package.caller.module.pass_round = lambda review, number=number: {"number": number, "commit": "abc1234", "views": ["v"]}
-            out = package.merge(list(results()), {unit: {"r1": tables} for unit, tables in results().items()})
+            out = merge_checks_only(package, list(results()), {unit: {"r1": tables} for unit, tables in results().items()})
             with self.assertRaises(merge.Refused) as caught:
                 package.render(merge.plain_tables(out))
             self.assertIn("does not give a file name of the form pass-<n>.md", "; ".join(caught.exception.causes))
@@ -777,7 +787,7 @@ class TheGuards(Folder):
 
 def rendered_files(folder, given):
     package = prepared(folder)
-    out = package.merge(list(given), {unit: {"r1": tables} for unit, tables in given.items()})
+    out = merge_checks_only(package, list(given), {unit: {"r1": tables} for unit, tables in given.items()})
     return package.render(merge.plain_tables(out))
 
 

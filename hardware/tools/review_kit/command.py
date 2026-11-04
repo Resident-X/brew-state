@@ -474,7 +474,7 @@ class Run:
             raise Refusal([refusal.line() + "; change the declaration's artefact or the review folder, then run again"
                            for refusal in error.refusals])
         try:
-            self.formed = planner.form(declaration, self.catalogue, self.args.model)
+            self.formed = planner.form(declaration, self.catalogue, self.args.model, hold_groups=False)
         except (planner.GroupsOverBudget, planner.OverBudget) as error:
             raise Refusal(error.lines)
         except (planner.WindowUndeclared, planner.OverStreamLimit) as error:

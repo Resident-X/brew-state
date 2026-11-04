@@ -154,8 +154,9 @@ def pass_round(review: str) -> Dict[str, Any]:
 
 def shared_documents(review: str) -> Dict[str, Dict[str, Any]]:
     """The artefacts of the shared context, by name: the extracts, the pass's records and indexes, the design's plan, rules table
-    and records, every rendered view and the placement view, when it was rendered, as an image. A file the folder command always
-    writes and the folder lacks is named as missing."""
+    and records, and every rendered view and the placement view, when it was rendered, as an image artefact that a unit names in
+    its needs, so a group's root holds only the images of its own units. A file the folder command always writes and the folder
+    lacks is named as missing."""
     design = design_path(review)
     found: Dict[str, Dict[str, Any]] = {}
 

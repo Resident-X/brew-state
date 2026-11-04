@@ -556,6 +556,38 @@ class PerModelPricing(Case):
             self.assertIn(f"holds {sizes[overrun.group]} tokens in its root for the model small-model", line)
             self.assertIn(f"budget of {limit} tokens, {sizes[overrun.group] - limit} over", line)
 
+    def test_a_group_whose_replicas_all_run_on_another_model_is_not_held_to_the_reviews_budget_for_a_root_it_never_starts(self):
+        # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a group none of whose replicas runs on it has no root for it
+        raw = fx.declaration_dict()
+        declaration = decl.parse(json.dumps(raw), "caller.json")
+        found = catalogue.admit(declaration, self.review)
+        sizes = {built.id: built.tokens for built in planner.form(declaration, found, None).groups}
+        raw["budget"] = {"context_fraction": 0.5}
+        declaration = decl.parse(json.dumps(raw), "caller.json")
+        spec = messages.make_spec(declaration, ("Read",), "/work", "big-model")
+        only_other = ensemble.parse_policy({"variants": [{"id": "small", "model": "small-model"}]})
+        both = ensemble.parse_policy({"variants": [{"id": "full"}, {"id": "small", "model": "small-model"}]})
+        tight, roomy = 2 * min(sizes.values()) - 1, 100 * max(sizes.values())
+
+        def plan(windows, policy):
+            with mock.patch.dict(cm.WINDOW_TOKENS_BY_MODEL, windows):
+                formed = planner.form(declaration, found, spec.model, hold_groups=False)
+                return planner.make_plan(declaration, found, spec, bound=4, cli_version="9.9.9", tool_commit="abc1234", replicas=2,
+                                         variants=policy.ids, contexts=ensemble.group_contexts(spec, formed.groups, policy),
+                                         formed=formed)
+        made = plan({"big-model": tight, "small-model": roomy}, only_other)
+        self.assertTrue(any(tokens > tight // 2 for tokens in sizes.values()), "a group's would-be root is over the reviews budget")
+        self.assertEqual([group.root for group in made.groups], [None, None, None])
+        with self.assertRaises(planner.GroupsOverBudget) as caught:
+            plan({"big-model": tight, "small-model": tight}, both)
+        self.assertIn(None, {overrun.model for overrun in caught.exception.overruns}, "a group that starts a root is held to it")
+        with self.assertRaises(planner.GroupsOverBudget) as caught:
+            plan({"big-model": roomy, "small-model": tight}, only_other)
+        self.assertEqual({overrun.model for overrun in caught.exception.overruns}, {"small-model"})
+        with mock.patch.dict(cm.WINDOW_TOKENS_BY_MODEL, {"big-model": tight, "small-model": roomy}):
+            with self.assertRaises(planner.GroupsOverBudget):
+                planner.form(declaration, found, spec.model)
+
     def test_a_plan_on_the_small_tier_is_cheaper_than_the_same_plan_on_the_mid_tier_and_given_prices_override_the_table(self):
         # SOL-HW-REVIEW-KIT.C6: the predicted cost and time use the prices of each node's model
         declaration = decl.parse(json.dumps(fx.declaration_dict()), "caller.json")

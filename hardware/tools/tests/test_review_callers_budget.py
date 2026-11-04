@@ -390,6 +390,15 @@ class SelectionByKindNetClassLayerAndRegion(unittest.TestCase):
                                  "views/net-GND-r1c2.png"])
         self.assertEqual(literal, ["views/crop-U1.png", "views/layer-B.Cu-r1c1.png", "views/net-CLK-r1c1.png"])
 
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C5: Over a synthetic review folder for each of the four callers, the caller's declaration states a model-context budget, each unit declares only the artefacts it needs, its views chosen through the kit's selection from the folder's view index and not by taking the folder's whole view list, and the kit's plan for it gives every group a context within the budget, none holding an artefact that none of its units declares.
+    def test_a_placeholder_direction_names_every_three_dimensional_view_and_a_literal_one_names_its_own(self):
+        index = {**self.INDEX, "images": self.INDEX["images"] + [{"view": "3d", "file": "3d-bottom.png"}]}
+        with mock.patch("review_kit.selection.read_index", return_value=index):
+            every = review_catalogue.views_for("a-review-folder", ["3d-<direction>"])
+            one = review_catalogue.views_for("a-review-folder", ["3d-bottom"])
+        self.assertEqual(every, ["views/3d-bottom.png", "views/3d-top.png"])
+        self.assertEqual(one, ["views/3d-bottom.png"])
+
 
 class TheItemsNamesAreReadFromTheCatalogue(layout_tests.Folder):
     def test_a_units_views_follow_its_items_judged_on_lines_and_a_board_item_follows_its_plans_cell(self):

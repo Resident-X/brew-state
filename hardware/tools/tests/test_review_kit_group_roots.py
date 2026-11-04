@@ -584,6 +584,75 @@ class EachGroupIsJudgedFromItsOwnRoot(unittest.TestCase):
         self.assertEqual(merge.merge(shape, rules, [g.id for g in harness.plan.groups], units)["tables"]["Verdicts"]["rows"],
                          merged["tables"]["Verdicts"]["rows"], "without `holds` the merge reads what it did")
 
+    def merge_inputs(self):
+        raw, prepare = self.design()
+        harness = fx.Harness(self, raw=raw, prepare=prepare, replicas=2, variants=["full", "hunt"])
+        record = harness.fresh()
+        units = {lane["group"]: {} for lane in record["lanes"]}
+        for lane in record["lanes"]:
+            attempt = lane["record"]["attempts"][lane["record"]["standing"]]
+            units[lane["group"]][f"r{lane['replica']}"] = attempt["tables"]
+        holds = {g.id: [i for u in g.units for i in harness.declaration.units[u].items] for g in harness.plan.groups}
+        return harness.declaration.shape, [g.id for g in harness.plan.groups], units, holds
+
+    def causes(self, rules, order, shape, units, holds):
+        with self.assertRaises(merge.Refused) as caught:
+            merge.merge(shape, rules, order, units, None, holds)
+        return caught.exception.causes
+
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: Each group's results are merged into one pass holding exactly one verdict row per checklist item; a checklist item with no row, with two rows, or with a row from a group that does not hold the item's unit is refused each refused by the merge naming the item, and a fail raised by any replica stands in the merged pass.
+    def test_a_checklist_item_no_group_holds_and_an_item_two_groups_hold_are_refused_naming_the_item(self):
+        shape, order, units, holds = self.merge_inputs()
+        every = tuple(i for items in holds.values() for i in items)
+        ghost = self.causes(merge.Rules(checklist=every + ("ghost-1",)), order, shape, units, holds)
+        self.assertEqual([c for c in ghost if "ghost-1" in c], ["the checklist item 'ghost-1' is held by no group's units, so no group "
+                                                                "gives it a verdict row; each item has one"])
+        twice = {**holds, "G2": holds["G2"] + [holds["G1"][0]]}
+        shared = self.causes(merge.Rules(checklist=every), order, shape, units, twice)
+        self.assertEqual([c for c in shared if holds["G1"][0] in c and "groups" in c],
+                         [f"the checklist item {holds['G1'][0]!r} is held by the units of 2 groups (G1, G2); each item is held by one group"])
+
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: Each group's results are merged into one pass holding exactly one verdict row per checklist item; a checklist item with no row, with two rows, or with a row from a group that does not hold the item's unit is refused each refused by the merge naming the item, and a fail raised by any replica stands in the merged pass.
+    def test_an_empty_checklist_expects_the_items_the_groups_hold(self):
+        shape, order, units, holds = self.merge_inputs()
+        rules = merge.Rules(checklist=())
+        rows = merge.merge(shape, rules, order, units, None, holds)["tables"]["Verdicts"]["rows"]
+        self.assertEqual(sorted(r["Item"] for r in rows), sorted(i for items in holds.values() for i in items))
+        short = json.loads(json.dumps(units))
+        short["G2"]["r1"]["Verdicts"] = short["G2"]["r1"]["Verdicts"][1:]
+        self.assertEqual(len(self.causes(rules, order, shape, short, holds)), 1)
+        twice = {**holds, "G2": holds["G2"] + [holds["G1"][0]]}
+        self.assertTrue([c for c in self.causes(rules, order, shape, units, twice) if "2 groups" in c])
+
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: Each group's results are merged into one pass holding exactly one verdict row per checklist item; a checklist item with no row, with two rows, or with a row from a group that does not hold the item's unit is refused each refused by the merge naming the item, and a fail raised by any replica stands in the merged pass.
+    def test_a_custom_checklist_item_no_unit_holds_is_refused_by_the_command_in_text_and_in_json(self):
+        class Run(base.Case):
+            def runTest(self):
+                pass
+        case = Run()
+        case.setUp()
+        try:
+            raw, prepare = self.design()
+            prepare(case.review)
+            items = [f"u{n}-i{k}" for n in range(1, 4) for k in (1, 2)]
+            case.write_caller(declaration=raw, name="three", extra=f"\n\ndef checklist(review_folder):\n    return {items + ['ghost-1']!r}\n")
+            status, text, _ = case.run_command(caller="three")
+            self.assertEqual(status, 1, text)
+            self.assertEqual(len([l for l in case.lines(text, "REFUSED") if "'ghost-1'" in l and "held by no group" in l]), 1, text)
+            status, as_json, _ = case.run_command(caller="three", out=os.path.join(case.base, "json"), fmt="json")
+            report = json.loads(as_json)
+            self.assertEqual(status, 1)
+            self.assertEqual(report["result"], "REFUSED")
+            self.assertEqual(len([c for c in report["refusals"] if "'ghost-1'" in c and "held by no group" in c]), 1)
+        finally:
+            case.doCleanups()
+
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: Each group's results are merged into one pass holding exactly one verdict row per checklist item; a checklist item with no row, with two rows, or with a row from a group that does not hold the item's unit is refused each refused by the merge naming the item, and a fail raised by any replica stands in the merged pass.
+    def test_a_shape_with_no_verdict_table_keyed_by_item_has_no_row_to_count(self):
+        shape, order, units, holds = self.merge_inputs()
+        bare = dataclasses.replace(shape, tables=tuple(dataclasses.replace(t, key=None) for t in shape.tables))
+        self.assertEqual(merge.coverage_problems(bare, merge.Rules(checklist=("ghost-1",)), order, units, holds), [])
+
     # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: The plan, a run and the merged record are produced in text and in JSON.
     def test_the_plan_a_run_and_the_merged_record_are_produced_in_text_and_in_json(self):
         class Run(base.Case):

@@ -135,12 +135,28 @@ def coverage_problems(shape: results.AnswerShape, rules: Rules, order: Sequence[
                       units: Mapping[str, Mapping[str, Dict[str, Any]]], holds: Mapping[str, Sequence[str]]) -> List[str]:
     """Why the groups' verdict rows are not one row for each item of the checklist: an item of a group's units with no row, with
     two rows (when the table's key is the item alone), or a row for an item of the checklist that another group's units hold.
-    `holds` gives the items each group's units hold."""
+    `holds` gives the items each group's units hold. The items expected are the checklist's, or the groups' held items when the
+    checklist is empty; an expected item no group holds, or that more than one group holds, is a cause. A shape with no verdict
+    table keyed by item has no row for an item, so it has nothing to count."""
     table = next((t for t in shape.tables if t.verdict_column and t.key), None)
-    if table is None or not rules.checklist:
+    if table is None:
         return []
-    checklist = set(rules.checklist)
+    held_by: Dict[str, List[str]] = {}
+    for group in order:
+        for item in holds.get(group, ()):
+            held_by.setdefault(item, [])
+            if group not in held_by[item]:
+                held_by[item].append(group)
+    expected = list(rules.checklist) or list(held_by)
+    checklist = set(expected)
     found: List[str] = []
+    for item in expected:
+        groups = held_by.get(item, [])
+        if not groups:
+            found.append(f"the checklist item {item!r} is held by no group's units, so no group gives it a verdict row; each item has one")
+        elif len(groups) > 1:
+            found.append(f"the checklist item {item!r} is held by the units of {len(groups)} groups ({', '.join(groups)}); each item "
+                         "is held by one group")
     for group in order:
         held = list(holds.get(group, ()))
         for rid in sorted(units[group], key=natural):

@@ -146,8 +146,14 @@ def slurp(path):
         return handle.read()
 
 
+def merge_checks_only(package, order, units):
+    """The merge with the caller's own checks and without the coverage of the checklist, which the command adds through
+    `holds`: these tests judge what the caller's checks refuse."""
+    return merge.merge(package.declaration.shape, package.rules, order, units, package.check)
+
+
 def merged(package, given, replicas=None):
-    return package.merge(list(given), {unit: replicas.get(unit, {"r1": tables}) if replicas else {"r1": tables}
+    return merge_checks_only(package, list(given), {unit: replicas.get(unit, {"r1": tables}) if replicas else {"r1": tables}
                                        for unit, tables in given.items()})
 
 
@@ -698,7 +704,7 @@ class TheGuards(Folder):
             units = {name: {"r1": tables} for name, tables in results(package).items()}
             units[unit] = {"r1": results(package)[unit], "r2": attempt.tables} if replicas else {"r1": attempt.tables}
             try:
-                package.merge([unit] + [name for name in results(package) if name != unit], units)
+                merge_checks_only(package, [unit] + [name for name in results(package) if name != unit], units)
             except merge.Refused as error:
                 found += error.causes
         return found
@@ -750,7 +756,7 @@ class TheGuards(Folder):
                 self.assertEqual(self.causes(package, unit, self.assess(package, unit, bad), replicas=True), [], why)
                 units = {u: {"r1": t} for u, t in results(package).items()}
                 units[unit] = {"r1": results(package)[unit], "r2": bad}
-                rows = package.merge(list(units), units)["tables"]["Verdicts"]["rows"]
+                rows = merge_checks_only(package, list(units), units)["tables"]["Verdicts"]["rows"]
                 chosen = next(r for r in rows if r["Item"] == items[0])
                 self.assertEqual(chosen, results(package)[unit]["Verdicts"][0], why)
 
@@ -803,7 +809,7 @@ class TheGuards(Folder):
                                                      "Findings": []}, "cannot judge")):
                 units = {u: {"r1": t} for u, t in results(package).items()}
                 units[unit] = {"r1": differs, "r2": other}
-                out = package.merge(list(units), units)["tables"]
+                out = merge_checks_only(package, list(units), units)["tables"]
                 chosen = next(r for r in out["Verdicts"]["rows"] if r["Item"] == items[0])
                 self.assertEqual(chosen["Verdict"], DIFFERS, f"replica merge: differs over {why}")
         # the same sequence with the kit's default fail verdict clears nothing, so only the named verdict makes the guard hold

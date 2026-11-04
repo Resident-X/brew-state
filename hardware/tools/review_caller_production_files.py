@@ -72,9 +72,6 @@ LAYERS_UNIT = "layers"
 OUTLINE = "Edge.Cuts"
 DRILL = production_files.DRILL
 IMAGES = (".png", ".jpg", ".jpeg")
-#: The views of the design a layer is compared with, and the views a part's orientation is compared with, by file-name prefix.
-LAYER_VIEWS = ("layer-",)
-ASSEMBLY_VIEWS = ("assembly-", "3d-")
 
 MATCHES, DIFFERS, CANNOT_JUDGE = "matches", "differs", "cannot judge"
 #: The ordering step's three verdicts, in the order the merge reads them: the kit takes the fail verdict (`differs`) first, then a

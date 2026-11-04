@@ -160,10 +160,12 @@ own_items = review_catalogue.own_items
 
 def checklist(review: str) -> List[str]:
     """The checklist: the catalogue's items in the method's order, then the board's own items, then the comparison with the
-    plan and the free pass, which findings of no item are raised against."""
+    plan and the free pass, which findings of no item are raised against. A narrow round's checklist is the listed items of
+    those, in the same order: the items its units judge."""
     try:
-        items = [item for _, _, ids in areas(review) for item in ids]
-        return items + own_items(review) + [PLAN_ENTRY]
+        items = [item for _, _, ids in areas(review) for item in ids] + own_items(review) + [PLAN_ENTRY]
+        judged = {item for listed in unit_items(review).values() for item in listed}
+        return [item for item in items if item in judged]
     except ReviewFolderProblem as error:
         raise Refused([str(error)])
 
@@ -203,8 +205,9 @@ def unit_of(item: str, units: Dict[str, List[str]]) -> Optional[str]:
 
 def shared_documents(review: str) -> Dict[str, Dict[str, Any]]:
     """The artefacts of the shared context, by name: the extracts, the round's records and indexes, the design's plan, rules
-    table and records, and every rendered view and the placement view as an image. A file the folder command always writes
-    and the folder lacks is named as missing."""
+    table and records, and every rendered view and the placement view as an image artefact that a unit names in its needs, so a
+    group's root holds only the images of its own units. A file the folder command always writes and the folder lacks is named as
+    missing."""
     design = design_path(review)
     found: Dict[str, Dict[str, Any]] = {}
 

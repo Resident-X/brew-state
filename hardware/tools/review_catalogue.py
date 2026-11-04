@@ -190,7 +190,7 @@ def views_for(review: str, names: Sequence[str]) -> List[str]:
     the names its items are judged on: `layer-<layer>` the whole-board tiles of that layer (every copper layer for a name such
     as `layer-<copper layer>`), `net-<net>` the tiles of that net (of every critical net for a name such as `net-<net>`),
     `classes` the class map, `crop-<reference>` that circuit's crop (every crop for a placeholder), `assembly-top` and
-    `assembly-bottom` the assembly view of that side, `3d-<direction>` the three-dimensional view. A name that is no view
+    `assembly-bottom` the assembly view of that side, `3d-<direction>` the three-dimensional view of that direction (every direction's for a placeholder). A name that is no view
     (`facts.txt`, the check's report, `design-rules.md`) and `placement`, whose images are not in the index, name none. A view
     the index lacks is left out, since the board may carry no such layer, net or circuit."""
     index = selection.read_index(review)
@@ -211,7 +211,7 @@ def views_for(review: str, names: Sequence[str]) -> List[str]:
         elif name in ("assembly-top", "assembly-bottom"):
             found.update(selection.select(index, view="assembly", fields={"side": rest}, allow_empty=True))
         elif kind == "3d" and rest:
-            found.update(selection.select(index, view="3d", fields={"file": f"3d-{rest}.png"}, allow_empty=True))
+            found.update(selection.select(index, view="3d", fields={"file": f"3d-{rest}.png"} if literal else None, allow_empty=True))
     return sorted(found)
 
 
