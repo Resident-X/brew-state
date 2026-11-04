@@ -5,8 +5,8 @@ the order of the items, the order of the views and its framing, one of which is 
 terse hunt for failures. The variants are declared as data, and the replica numbered n
 of a group takes the variants in turn. The number of replicas follows the unit's
 stakes, and a round flag overrides it. A variant may name a model other than the
-review's; the cache cannot be shared across models, so that replica has a shared
-context and a session specification of its own.
+review's; the cache cannot be shared across models, so that replica has, for each root that serves its group, a
+shared context and a session specification of its own.
 
 Everything here is a function of its arguments: a second build of a prompt is the
 same bytes.
@@ -206,8 +206,9 @@ def prompt_for(declaration: decl.Declaration, policy: Policy = Policy(),
 
 @dataclass(frozen=True)
 class Context:
-    """One shared context to build: the model it runs on (None for the review's), its session specification, the message
-    and prefix hash it holds, the id its root node takes and the variants that fork from it. The cache is per model and
+    """One shared context to build: the model it runs on, its session specification, the message and prefix hash it holds,
+    the id its root node takes, the variants that fork from it, and the root of the review whose views it holds (the root
+    itself for the review's own model; None for a review of one root that names none). The cache is per model and
     specification, so contexts of different models share none; `cache_key` is what makes that checkable."""
 
     model: Optional[str]
@@ -215,6 +216,7 @@ class Context:
     shared: messages.SharedContext
     root_id: str
     variants: Tuple[str, ...]
+    root: Optional[str] = None
 
     @property
     def cache_key(self) -> str:
@@ -222,21 +224,30 @@ class Context:
 
 
 def contexts(spec: sess.SessionSpec, shared: messages.SharedContext, policy: Policy = Policy(),
-             variants: Optional[Sequence[str]] = None) -> List[Context]:
-    """The shared contexts a review needs: the review's own, and one for each other model a variant in use runs on, each with
-    the specification the review's has but for its model. The review's own comes first and is the root `root`."""
+             variants: Optional[Sequence[str]] = None, root: str = planner.ROOT) -> List[Context]:
+    """The shared contexts one root needs: its own for the review's model, first, with the id `root`, and one for each other
+    model a variant in use runs on, each with the specification the review's has but for its model, with the id `root.<model>`."""
     used = [policy.variant(variant_id) for variant_id in (variants if variants is not None else policy.ids)]
     own = [v.id for v in used if v.model is None or v.model == spec.model]
-    found = [Context(spec.model, spec, shared, planner.ROOT, tuple(own))]
+    found = [Context(spec.model, spec, shared, root, tuple(own), root)]
     for model in sorted({v.model for v in used if v.model is not None and v.model != spec.model}):
-        found.append(Context(model, dataclasses.replace(spec, model=model), shared, f"{planner.ROOT}.{model}",
-                             tuple(v.id for v in used if v.model == model)))
+        found.append(Context(model, dataclasses.replace(spec, model=model), shared, f"{root}.{model}",
+                             tuple(v.id for v in used if v.model == model), root))
     return found
 
 
-def context_of(found: Sequence[Context], variant_id: str) -> Context:
-    """The context a variant's replicas fork from."""
-    for context in found:
-        if variant_id in context.variants:
-            return context
-    raise PolicyError(f"no shared context is built for the variant {variant_id!r}")
+def root_contexts(spec: sess.SessionSpec, roots: Sequence[Any], policy: Policy = Policy(),
+                  variants: Optional[Sequence[Sequence[str]]] = None) -> List[Context]:
+    """The shared contexts of a review: for each root, as `contexts` gives them over the root, its own first. `variants` gives,
+    for each root, the variants the replicas of the groups it serves take (every variant for each when none is given), so a root
+    has a context for another model only when a replica of one of its groups runs on it. A root's context for another model holds
+    what the root holds, is shared by every group the root serves, and is started and written once."""
+    if variants is not None and len(variants) != len(roots):
+        raise PolicyError(f"the variants are given for {len(variants)} roots and the review has {len(roots)}")
+    return [context for number, built in enumerate(roots)
+            for context in contexts(spec, built.shared, policy, None if variants is None else variants[number], built.id)]
+
+
+def other_contexts(found: Sequence[Context], model: Optional[str]) -> List[Context]:
+    """The contexts whose root is for a model other than `model`, the review's."""
+    return [context for context in found if context.model != model]

@@ -1,0 +1,25 @@
+id: EV-SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES-C14-DEMONSTRATION
+type: evidence
+title: demonstration evidence for SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C14
+status: active
+version: 1
+result: pass
+method: demonstration
+observed_at: "2026-11-04T20:14:08.210462Z"
+artifact:
+  kind: inline
+  artifact_version: b4e180d3691525b78f02ab71adee1f7eae3925ea
+attested_by: crun-dd06ec1119ff90e8
+text: |-
+  Demonstration of SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C14: the fanned-out layout review proof, design-loop round, re-run on the changed form against the recorded single-reviewer baselines on the method's proof design.
+
+  Command (from the repository root, tool commit d17671f5, no non-graph change after it): `task hw:review-proof -- --work <new folder outside every design and the repository> --only design-loop --json`, with the design loop's two replicas (a full and a hunt framing) on claude-haiku-5-5, judged against the five recorded single-reviewer runs on claude-sonnet-5-5 by the proof's pooled criterion with a cost multiple of 1.25. Plan before the run (`--dry`): the same ten groups and twenty forks as on main; one shared root holding the union of the groups' views (84 images, about 386 thousand tokens, within the 400 thousand budget the layout caller declares), predicted $1.66 against a $3.55 bound; on main the same dry run predicts $1.75. A first dry run with every group holding a root of its own predicted $5.56 and was not run live; the design was changed so that groups share a root when their views fit the budget together.
+
+  Run 1 (layout-fanned-2, work folder 1): the criterion did not hold. Seeds found 20 of 21; seed S12 (WORK-1, a part moved 14 mm from the pin it serves) was raised by no replica although every single run found it. Both area-WORK replicas held every view WORK-1 is judged on (assembly top and bottom, the copper layers, the nets, the placement view) and passed the item, calling the part beside its pin: a visual judgement miss, not a missing view. Wall 268.4 s (bound 431.2 s), cost $2.566 (bound $3.548), 31 sessions, no call refused for a rate limit. The merged round was refused for one unresolved cannot-judge (MAINS-4, a datasheet the proof cannot retrieve), which the harness treats as a rerun case.
+
+  Run 2 (layout-fanned-2, work folder 2, a new session, as the harness directs for a seed not reported): the criterion holds. PROOF pass: seeds found 21 of 21; every seed the five single runs found is found, S12 included, raised by both area-WORK replicas; the fewest any single run found is 19. Wall 208.9 s against the bound of half the single mean, 431.2 s. Cost $2.366 against 1.25 times the single mean, $3.548. 28 sessions, no call refused for a rate limit, retrievals 4 and none failed, the merged round written naming S1 to S21. Replica misses 0 in 42 trials. Verdict differences from the single runs: 3.
+
+  Recording: each run is recorded in its work folder's proof-record.json under the form fanned with its plan's root prefix hash and size; no baseline file and no proof design file differs from main. The single-reviewer baselines were not run again.
+links:
+  - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C14
+    type: satisfies

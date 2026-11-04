@@ -59,6 +59,23 @@ class FormsAsPlans(unittest.TestCase):
         return proof.form_plan(form, self.h.declaration, self.catalogue, self.h.spec, bound=4, cli_version="9.9.9",
                                tool_commit="abc1234", **kw)
 
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C2: a group whose own artefacts, measured by the kit's existing token measure, added to the shared documents measure more than the budget is refused before any session starts
+    def test_a_single_form_holds_its_one_started_root_to_the_budget_exactly(self):
+        size = self.plan(proof.SINGLE_SHARED).plan.groups[0].tokens
+
+        def form(budget):
+            raw = fx.declaration_dict()
+            raw["budget"] = {"context_tokens": budget}
+            h = fx.Harness(self, raw=raw)
+            held = catalogue.admit(h.declaration, h.review, results_folder=h.out)
+            return proof.form_plan(proof.SINGLE_SHARED, h.declaration, held, h.spec, bound=4, cli_version="9.9.9",
+                                   tool_commit="abc1234")
+        self.assertEqual(form(size).plan.groups[0].tokens, size, "a root that fits the budget exactly is planned")
+        with self.assertRaises(planner.GroupsOverBudget) as refused:
+            form(size - 1)
+        self.assertEqual([(o.group, o.tokens) for o in refused.exception.overruns], [("G1", size)])
+        self.assertEqual(refused.exception.budget, size - 1)
+
     # SOL-HW-REVIEW-KIT.C12: the single-reviewer form is a plan with one unit holding every item and no shared context
     def test_single_is_one_group_of_every_item_with_an_empty_shared_context(self):
         formed = self.plan(proof.SINGLE, replicas=3, variants=("full", "hunt"))
@@ -69,7 +86,7 @@ class FormsAsPlans(unittest.TestCase):
         self.assertEqual(items, [i for u in group.units for i in formed.declaration.units[u].items])
         self.assertEqual(("root", "G1.r1.a1"), tuple(n.id for n in formed.plan.nodes))
         self.assertEqual((), group.needs)
-        self.assertEqual([], formed.shared.as_dict()["artefacts"])
+        self.assertEqual([], formed.roots["root"].as_dict()["artefacts"])
         self.assertEqual(1, formed.plan.bound)
         self.assertEqual(1, group.replicas)
 
@@ -78,9 +95,9 @@ class FormsAsPlans(unittest.TestCase):
         alone, shared = self.plan(proof.SINGLE), self.plan(proof.SINGLE_SHARED)
         self.assertEqual(alone.plan.groups[0].units, shared.plan.groups[0].units)
         self.assertEqual(1, len(shared.plan.groups))
-        names = [a["name"] for a in shared.shared.as_dict()["artefacts"]]
+        names = [a["name"] for a in shared.roots["root"].as_dict()["artefacts"]]
         self.assertEqual(self.h.declaration.needed, names)
-        self.assertGreater(shared.shared.tokens, alone.shared.tokens)
+        self.assertGreater(shared.roots["root"].tokens, alone.roots["root"].tokens)
         self.assertEqual(tuple(sorted(self.h.declaration.needed)), shared.plan.groups[0].needs)
         self.assertNotEqual(alone.plan.root.prefix_sha, shared.plan.root.prefix_sha)
 
@@ -139,7 +156,7 @@ class RunsRecordedInOneShape(unittest.TestCase):
         declaration = formed.declaration
 
         def reply(call, number):
-            if call.label == "root":
+            if call.label.startswith("root"):
                 return ex.Reply(text="ack", write=100)
             group = next(g for g in formed.plan.groups if g.id == call.label.split(".")[0])
             lane = ".".join(call.label.split(".")[:2])
@@ -704,7 +721,7 @@ class VerdictsPerCombination(unittest.TestCase):
         formed = proof.form_plan(proof.SINGLE, h.declaration, catalogue_, h.spec, bound=4, cli_version="9.9.9", tool_commit="abc1234")
 
         def reply(call, number):
-            if call.label == "root":
+            if call.label.startswith("root"):
                 return ex.Reply(text="ack", write=100)
             group = next(g for g in formed.plan.groups if g.id == call.label.split(".")[0])
             items = [i for u in group.units for i in h.declaration.units[u].items]
@@ -764,7 +781,7 @@ class NamedFailVerdictOutcome(unittest.TestCase):
         formed = self.formed(proof.FANNED, replicas=2)
 
         def reply(call, number):
-            if call.label == "root":
+            if call.label.startswith("root"):
                 return ex.Reply(text="ack", write=100)
             group = next(g for g in formed.plan.groups if g.id == call.label.split(".")[0])
             rows = [{"Item": item, "Part": "x", "Verdict": "differs" if (item, call.label.split(".")[1]) == ("i1", "r2")

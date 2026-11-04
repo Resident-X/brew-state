@@ -10,6 +10,7 @@ import json
 import os
 import sys
 import tempfile
+import types
 import unittest
 
 TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -33,7 +34,7 @@ class Case(unittest.TestCase):
         found = catalogue.admit(DECLARATION, self.review)
         shared = messages.shared_context(found)
         spec = messages.make_spec(DECLARATION, ("Read",), "/work", model)
-        made = planner.make_plan(DECLARATION, found, shared, spec, bound=4, cli_version="9.9.9", tool_commit="abc1234",
+        made = planner.make_plan(DECLARATION, found, spec, bound=4, cli_version="9.9.9", tool_commit="abc1234",
                                  replicas=ensemble.replicas_by_unit(DECLARATION, policy, flag), variants=policy.ids,
                                  prompt_for=ensemble.prompt_for(DECLARATION, policy))
         return shared, spec, made
@@ -218,16 +219,29 @@ class OtherModels(Case):
         found = ensemble.contexts(spec, shared, policy)
         self.assertEqual([(c.model, c.variants) for c in found], [("claude-sonnet-5-5", ("a",)), ("m-three", ("d",)), ("m-two", ("b", "c"))])
         self.assertEqual(len({c.cache_key for c in found}), 3)
-        self.assertEqual(ensemble.context_of(found, "c").model, "m-two")
 
     def test_only_the_variants_in_use_decide_which_contexts_are_built(self):
         policy = ensemble.parse_policy({"variants": [{"id": "a"}, {"id": "b", "model": "m-two"}]})
         shared, spec, _ = self.plan(policy)
         self.assertEqual(len(ensemble.contexts(spec, shared, policy, ["a"])), 1)
         with self.assertRaises(ensemble.PolicyError):
-            ensemble.context_of(ensemble.contexts(spec, shared, policy, ["a"]), "b")
-        with self.assertRaises(ensemble.PolicyError):
             ensemble.contexts(spec, shared, policy, ["zz"])
+
+    def test_each_root_has_a_context_for_each_model_its_groups_replicas_use_with_the_root_id_in_its_root(self):
+        # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a review over several groups whose replica policy places a replica on a model other than the review's gives each root whose groups' replicas run on such a model a root for that model, and a root none of whose groups' replicas runs on it no root for it
+        policy = ensemble.parse_policy({"variants": [{"id": "a"}, {"id": "b", "model": "m-two"}]})
+        shared, spec, _ = self.plan(policy)
+        roots = [types.SimpleNamespace(id=f"root.R{n}", shared=shared) for n in (1, 2, 3)]
+        found = ensemble.root_contexts(spec, roots, policy, [["a", "b"], ["a"], ["a", "b"]])
+        self.assertEqual([(c.root, c.root_id, c.model != spec.model, c.variants) for c in found],
+                         [("root.R1", "root.R1", False, ("a",)), ("root.R1", "root.R1.m-two", True, ("b",)),
+                          ("root.R2", "root.R2", False, ("a",)),
+                          ("root.R3", "root.R3", False, ("a",)), ("root.R3", "root.R3.m-two", True, ("b",))],
+                         "a root none of whose groups' replicas reaches the other model has no root for it")
+        self.assertEqual([c.root_id for c in ensemble.other_contexts(found, spec.model)], ["root.R1.m-two", "root.R3.m-two"])
+        self.assertEqual(len({c.cache_key for c in found}), 2, "the cache is per model, and the roots of one model hold the same message here")
+        with self.assertRaises(ensemble.PolicyError):
+            ensemble.root_contexts(spec, roots, policy, [["a"]])
 
     def test_a_review_with_no_model_set_treats_a_variant_with_a_model_as_another_model(self):
         policy = ensemble.parse_policy({"variants": [{"id": "a"}, {"id": "b", "model": "m-two"}]})

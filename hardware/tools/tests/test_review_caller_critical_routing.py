@@ -138,15 +138,23 @@ def prepared(folder):
     return kit_caller.load("critical_routing", TOOLS).prepare(folder)
 
 
+def merge_checks_only(package, order, units):
+    """The merge with the caller's own checks and without the coverage of the checklist, which the command adds through
+    `holds`: these tests judge what the caller's checks refuse."""
+    return merge.merge(package.declaration.shape, package.rules, order, units, package.check)
+
+
 def merged(folder, given, order=None, replicas=None):
     """The unit results merged as the command merges them, each unit one replica unless `replicas` gives more."""
-    return prepared(folder).merge(order or list(given), {unit: replicas.get(unit, {"r1": tables}) if replicas else {"r1": tables}
-                                                         for unit, tables in given.items()})
+    package = prepared(folder)
+    order = order or list(given)
+    return merge_checks_only(package, order, {unit: replicas.get(unit, {"r1": tables}) if replicas else {"r1": tables}
+                                 for unit, tables in given.items()})
 
 
 def rendered(folder, given, number=1, replicas=None):
     package = prepared(folder)
-    out = package.merge(list(given), {unit: replicas.get(unit, {"r1": tables}) if replicas else {"r1": tables}
+    out = merge_checks_only(package, list(given), {unit: replicas.get(unit, {"r1": tables}) if replicas else {"r1": tables}
                                       for unit, tables in given.items()})
     return package.render(merge.plain_tables(out))[f"pass-{number}.md"]
 
@@ -341,6 +349,10 @@ class TheUnits(Folder):
                 self.refused(lambda: prepared(folder), word)
         folder = self.copy_of()
         os.remove(os.path.join(folder, "views", "layer-F.Cu.png"))
+        self.refused(lambda: prepared(folder), "lists views/layer-F.Cu.png, which the folder does not hold")
+        folder = self.copy_of()
+        for entry in fx.VIEW_ENTRIES:
+            os.remove(os.path.join(folder, "views", entry["file"]))
         self.refused(lambda: prepared(folder), "holds no rendered view image")
         folder = self.write_folder(os.path.join(self.root, "placed"), placement=True)
         os.remove(os.path.join(folder, "placement", "index.txt"))
@@ -417,13 +429,15 @@ class TheSharedContext(Folder):
         declaration = prepared(self.folder).declaration
         design = fx.DESIGN
         self.assertEqual(sorted(declaration.artefacts), sorted([
-            "layout-facts.txt", "method-extract.md", "round.json", "views/facts.txt", "views/index.txt", "views/layer-F.Cu.png",
-            f"{design}/constraints.md", f"{design}/design-rules.md", f"{design}/layout-plan.md", f"{design}/separation-basis.yaml"]))
+            "layout-facts.txt", "method-extract.md", "round.json", "views/facts.txt", "views/index.txt",
+            f"{design}/constraints.md", f"{design}/design-rules.md", f"{design}/layout-plan.md", f"{design}/separation-basis.yaml"]
+            + [f"views/{entry['file']}" for entry in fx.VIEW_ENTRIES]))
         self.assertEqual({name: artefact.kind for name, artefact in declaration.artefacts.items() if artefact.kind != "text"},
-                         {"layout-facts.txt": "extract", "method-extract.md": "extract", "views/layer-F.Cu.png": "image"})
+                         {"layout-facts.txt": "extract", "method-extract.md": "extract",
+                          **{f"views/{entry['file']}": "image" for entry in fx.VIEW_ENTRIES}})
         self.assertEqual(declaration.added_during_round, ("added-views/*", "added-documents/*"))
         self.assertEqual(declaration.budget.wall_s, 350)
-        self.assertEqual(set(declaration.needed), set(declaration.artefacts))
+        self.assertLessEqual(set(declaration.needed), set(declaration.artefacts))
         for held in fx.BOARD_FILES:
             self.assertNotIn(held, declaration.artefacts if held.endswith(("kicad_pcb", "kicad_sch")) else (), "no board file")
         placed = prepared(self.write_folder(os.path.join(self.root, "placed"), placement=True)).declaration
@@ -674,7 +688,8 @@ class TheGuards(Folder):
             units = {unit: {"r1": tables} for unit, tables in (others or self.others()).items()}
             units[self.UNIT] = {"r1": results()[self.UNIT], "r2": attempt.tables} if replicas else {"r1": attempt.tables}
             try:
-                package.merge([self.UNIT] + list(others or self.others()), units)
+                order = [self.UNIT] + list(others or self.others())
+                merge_checks_only(package, order, units)
             except merge.Refused as error:
                 found += error.causes
         return found
@@ -711,7 +726,8 @@ class TheGuards(Folder):
         self.assertEqual(self.causes(package, self.assess(package, bad), replicas=True), [])
         units = {unit: {"r1": tables} for unit, tables in self.others().items()}
         units[self.UNIT] = {"r1": results()[self.UNIT], "r2": bad}
-        rows = package.merge([self.UNIT] + list(self.others()), units)["tables"]["Verdicts"]["rows"]
+        order = [self.UNIT] + list(self.others())
+        rows = merge_checks_only(package, order, units)["tables"]["Verdicts"]["rows"]
         self.assertEqual({row["Item"]: row["Verdict"] for row in rows}["FLOOR-2"], "pass")
         self.assertFalse([row for row in rows if row["Verdict"] == NOT_BEARING])
 
@@ -744,7 +760,7 @@ class TheGuards(Folder):
                     self.assertEqual(second.cleared, ["FLOOR-1"], turn)
                     verdicts = {row["Item"]: row["Verdict"] for row in record.standing.tables["Verdicts"]}
                     self.assertEqual(verdicts["FLOOR-1"], "fail", f"the {turn} did not clear the fail")
-                    out = package.merge([self.UNIT] + list(self.others()), {**{unit: {"r1": tables} for unit, tables in self.others().items()},
+                    out = merge_checks_only(package, [self.UNIT] + list(self.others()), {**{unit: {"r1": tables} for unit, tables in self.others().items()},
                                                                          self.UNIT: {"r1": record.standing.tables}})
                     self.assertIn("fail", [row["Verdict"] for row in out["tables"]["Verdicts"]["rows"]])
 
@@ -763,7 +779,7 @@ class TheGuards(Folder):
         for number in (0, -3, "2", None):
             package = prepared(self.folder)
             package.caller.module.pass_round = lambda review, number=number: {"number": number, "commit": "abc1234", "views": ["v"]}
-            out = package.merge(list(results()), {unit: {"r1": tables} for unit, tables in results().items()})
+            out = merge_checks_only(package, list(results()), {unit: {"r1": tables} for unit, tables in results().items()})
             with self.assertRaises(merge.Refused) as caught:
                 package.render(merge.plain_tables(out))
             self.assertIn("does not give a file name of the form pass-<n>.md", "; ".join(caught.exception.causes))
@@ -771,7 +787,7 @@ class TheGuards(Folder):
 
 def rendered_files(folder, given):
     package = prepared(folder)
-    out = package.merge(list(given), {unit: {"r1": tables} for unit, tables in given.items()})
+    out = merge_checks_only(package, list(given), {unit: {"r1": tables} for unit, tables in given.items()})
     return package.render(merge.plain_tables(out))
 
 
@@ -1306,9 +1322,8 @@ class TheReplicasBudgetAndBound(Folder):
         other = Command(self, out="out-default")
         other.scenario()
         status, text, err = other.go("--format", "json")
-        self.assertEqual(status, 0, text + err)
-        self.assertEqual([(context["model"], context["variants"]) for context in json.loads(text)["plan"]["contexts"]],
-                         [(SMALL, ["full", "hunt"])], "without the review's model set, the replicas have a context of their own")
+        self.assertEqual(status, 1, "the budget is a fraction of the model's window, which a run naming no model cannot give: " + text + err)
+        self.assertIn("name the model with --model", "; ".join(json.loads(text)["refusals"]))
 
     def test_a_plan_of_forty_forks_runs_at_most_thirty_at_once_and_a_smaller_plan_all_of_its_forks(self):
         # SOL-HW-REVIEW-FAN-OUT-CRITICAL-ROUTING.C6: Over synthetic declarations and a stub executor, the critical-routing declaration grants a reviewer the read tools and the one read-only retrieval tool and no other; sets two replicas, the full and hunt framings, on the small-tier model; sets the time budget at 350 seconds and the bound on reviewers at once at 30; and the kit's check of the start report against the grant fails a run whose reviewer holds any other tool. Out of scope: a live session.

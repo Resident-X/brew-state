@@ -1,0 +1,14 @@
+id: SOL-HW-REVIEW-KIT-REPLICAS-ON-ANOTHER-MODEL-HOLD-THEIR-OWN-GROUP-ROOT.C1
+type: criterion
+title: A review over several groups with replicas on another model runs each replica from a root of its own for its group and model
+status: deprecated
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Over a synthetic declaration of at least three groups whose replica policy places a replica on a model other than the review's, the plan gives each group a root for the review's model and a root for the other model, each held to its own model's declared context budget, and the stub's record shows each replica started from the root of its group and model, no session started from another session, and every root counted once in the tokens written. A group whose root for the other model is over that model's budget is refused naming the group, the model, the figures and the budget. The merge, the record and a rerun are the same as for replicas on one model, in text and in JSON. Out of scope: any model call and the content of any caller's prompts.
+links:
+  - target: SOL-HW-REVIEW-KIT-REPLICAS-ON-ANOTHER-MODEL-HOLD-THEIR-OWN-GROUP-ROOT
+    type: criterion-of
+attributes:
+  deprecation_reason: Parent solution folded into the per-group sessions leaf

@@ -29,7 +29,7 @@ import review_seed  # noqa: E402
 REPO = os.path.dirname(os.path.dirname(TOOLS))
 EXPECTED = {
     "check-report.txt", "round.json", "docs/board-design-method.md", "hardware/README.md", "views/index.txt", "views/facts.txt",
-    "views/layer-F.Cu.png", "placement/index.txt", "placement/measures.txt", "placement/placement.png", "layout-facts.txt",
+    "views/index.json", *(f"views/{entry['file']}" for entry in fx.VIEW_ENTRIES), "placement/index.txt", "placement/measures.txt", "placement/placement.png", "layout-facts.txt",
     "method-extract.md",
     *(f"{fx.DESIGN}/{name}" for name in ("board.kicad_pro", "board.kicad_pcb", "board.kicad_sch", "board.kicad_dru", "fp-lib-table",
                                           "board.pretty/part.kicad_mod", "layout-plan.md", "design-rules.md", "constraints.md",

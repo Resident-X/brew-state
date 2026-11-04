@@ -21,7 +21,11 @@ check names `differs` as its fail verdict, which the kit holds as it holds a fai
 The review folder is the one production_review_folder.py writes. Its round file holds the commit judged, the tools, the commands
 and the line saying what the assembler's preview is, which the merge has no model to write, so they are read when the declaration
 is resolved and a folder whose round file lacks them, is malformed, holds a key the production-files mode does not own, or is another
-review's is refused before any session starts. A reviewer is granted the read tools only, no retrieval. The pre-order round's three
+review's is refused before any session starts. Each group is judged from a root that holds the check's text files and the
+images the units of the groups it serves declare: the preview, the placement and assembly views the view index (views/index.json)
+lists by the kind of view, a part's footprint drawing, and for the layers' unit the layer views and layer images, and no image no
+unit of those groups declares; groups whose images fit the budget together share a root, which is held to a budget of a fraction of the model's declared context window (HEADROOM). A reviewer is granted the read tools only,
+no retrieval. The pre-order round's three
 replicas judge each unit: a full and a hunt framing on the mid-tier model, and the third on the small-tier model.
 
 The checks receive the merged tables alone, so what the check judges is read once, when the declaration is resolved, and held for
@@ -47,7 +51,7 @@ sys.path.insert(0, TOOLS_DIR)
 import production_files  # noqa: E402
 import production_seed  # noqa: E402
 import review_folder  # noqa: E402
-from review_kit import results  # noqa: E402
+from review_kit import results, selection  # noqa: E402
 from review_kit.merge import Refused  # noqa: E402
 
 ReviewFolderProblem = review_folder.ReviewFolderProblem
@@ -68,9 +72,6 @@ LAYERS_UNIT = "layers"
 OUTLINE = "Edge.Cuts"
 DRILL = production_files.DRILL
 IMAGES = (".png", ".jpg", ".jpeg")
-#: The views of the design a layer is compared with, and the views a part's orientation is compared with, by file-name prefix.
-LAYER_VIEWS = ("layer-",)
-ASSEMBLY_VIEWS = ("assembly-", "3d-")
 
 MATCHES, DIFFERS, CANNOT_JUDGE = "matches", "differs", "cannot judge"
 #: The ordering step's three verdicts, in the order the merge reads them: the kit takes the fail verdict (`differs`) first, then a
@@ -109,6 +110,11 @@ fail_verdict = DIFFERS
 bound = 30
 #: The check's time target in seconds, so the planner sizes groups well clear of the bound.
 WALL_SECONDS = 350
+#: The fraction of the model's context window a root may fill: 0.4 of the 1,000,000 tokens the kit declares for the
+#: model is 400,000, which after documents of about 50,000 tokens holds (400,000 - 50,000) / 4,400 = 79 images of the 4.4
+#: thousand tokens a full-size board's tile costs and leaves 600,000 tokens of the window for the reviewer's own turns. It is a
+#: first, conservative value, to be set from a measured first run.
+HEADROOM = 0.4
 
 #: What the checks hold of the check they were resolved for: the parts and layers it judges, those without a drawing, and each
 #: part's unit.
@@ -411,11 +417,19 @@ def build_declaration(review: str) -> Dict[str, Any]:
     if not preview:
         raise ReviewFolderProblem(f"the review folder {review} holds no preview image (a PNG or JPEG in {PREVIEW}/), which the "
                                   "shared context holds; save the assembler's preview as images and write the folder again")
-    layer_views = images_in(review, VIEWS, LAYER_VIEWS)
+    try:
+        index = selection.read_index(review)
+    except selection.IndexUnreadable as error:
+        raise ReviewFolderProblem(str(error))
+    layer_views = selection.select(index, view="layer", allow_empty=True)
+    lacking = [name for name in layer_views if not os.path.isfile(os.path.join(review, name))]
+    if lacking:
+        raise ReviewFolderProblem(f"the view index of the review folder {review} lists {lacking[0]}, which the folder does not hold; "
+                                  "write the folder again with the production-files folder command")
     if not layer_views:
         raise ReviewFolderProblem(f"the review folder {review} holds no layer view image (a layer-<layer> PNG or JPEG in {VIEWS}/), "
                                   "which each layer is compared with; render the design's views")
-    orientation = images_in(review, PLACEMENT) + images_in(review, VIEWS, ASSEMBLY_VIEWS)
+    orientation = images_in(review, PLACEMENT) + selection.select(index, view=["assembly", "3d"], allow_empty=True)
     if not orientation:
         raise ReviewFolderProblem(f"the review folder {review} holds no placement or assembly view image, which each part's "
                                   "orientation is compared with; render the design's views and placement view")
@@ -437,7 +451,8 @@ def build_declaration(review: str) -> Dict[str, Any]:
                        "stakes": STAKES, "expected_output_tokens": expected_tokens(listed), "values": values[unit]}
                 for unit, listed in unit_items.items()}
     return {"artefacts": documents, "templates": {"unit": UNIT_TEMPLATE}, "units": declared, "schema": SCHEMA,
-            "deny": ["designer-notes*", "session*"], "budget": {"wall_s": WALL_SECONDS}}
+            "deny": ["designer-notes*", "session*"],
+            "budget": {"wall_s": WALL_SECONDS, "context_fraction": HEADROOM}}
 
 
 def declaration(review: str) -> Dict[str, Any]:

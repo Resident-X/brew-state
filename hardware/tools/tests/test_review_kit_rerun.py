@@ -109,7 +109,7 @@ class RerunTests(unittest.TestCase):
                                              "new_shared_context": True})
         self.assertTrue(lapsed["shared_context"]["new"])
         self.assertEqual(len(lapsed["runs"]), 3)
-        self.assertEqual(lapsed["shared_context"]["prefix_sha"], harness.shared.prefix_sha)
+        self.assertEqual(lapsed["shared_context"]["prefix_sha"], harness.formed.shared.prefix_sha)
 
     def test_a_rerun_that_fails_again_is_recorded_as_failed(self):
         # SOL-HW-REVIEW-KIT.C7: the scheduler replaces their results

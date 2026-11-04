@@ -1,12 +1,12 @@
 id: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9
 type: criterion
-title: Each group of units is judged from its own root, run in parallel, and merged into one pass with one verdict row per checklist item
+title: Each group of units is judged from a root that holds its views, run in parallel, and merged into one pass with one verdict row per checklist item
 status: active
-version: 2
+version: 7
 measurement_type: binary
 verification: test
 text: |-
-  Over a synthetic review folder of generic units in at least three groups, each unit declaring its own subset of views, the plan gives each group its own flat root, and the stub's record of what each session received shows the groups' sessions started in parallel, replicas of a group each started from that group's root and no session started from another session. Each group's results are merged into one pass holding exactly one verdict row per checklist item; a checklist item with no row, with two rows, or with a row from a group that does not hold the item's unit is refused each refused by the merge naming the item, and a fail raised by any replica stands in the merged pass. The plan, a run and the merged record are produced in text and in JSON. Out of scope: any model call, the stub standing in for the model, and the content of any caller's prompts.
+  Over a synthetic review folder of generic units in at least three groups, each unit declaring its own subset of views, the plan gives every group a flat root that holds its views, one root serving several groups when their views fit the budget together, and the stub's record of what each session received shows the groups' sessions started in parallel, replicas of a group each started from the root that holds that group's views and no session started from another session. Each group's results are merged into one pass holding exactly one verdict row per checklist item; a checklist item with no row, with two rows, or with a row from a group that does not hold the item's unit is refused each refused by the merge naming the item, and a fail raised by any replica stands in the merged pass. The plan, a run and the merged record are produced in text and in JSON. A review over several groups whose replica policy places a replica on a model other than the review's gives each root whose groups' replicas run on such a model a root for that model, held to that model's declared context budget, and a root none of whose groups' replicas runs on it no root for it, and each such replica is started from the root of its group's root and model; a root for that model over that model's budget is refused naming the groups, the model, the figures and the budget. Out of scope: any model call, the stub standing in for the model, and the content of any caller's prompts.
 links:
   - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES
     type: criterion-of

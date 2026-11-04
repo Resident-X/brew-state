@@ -131,6 +131,51 @@ def table_problems(shape: results.AnswerShape, rules: Rules, who: str, tables: A
     return found
 
 
+def coverage_problems(shape: results.AnswerShape, rules: Rules, order: Sequence[str],
+                      units: Mapping[str, Mapping[str, Dict[str, Any]]], holds: Mapping[str, Sequence[str]]) -> List[str]:
+    """Why the groups' verdict rows are not one row for each item of the checklist: an item of a group's units with no row, with
+    two rows (when the table's key is the item alone), or a row for an item of the checklist that another group's units hold.
+    `holds` gives the items each group's units hold. The items expected are the checklist's, or the groups' held items when the
+    checklist is empty; an expected item no group holds, or that more than one group holds, is a cause. A shape with no verdict
+    table keyed by item has no row for an item, so it has nothing to count."""
+    table = next((t for t in shape.tables if t.verdict_column and t.key), None)
+    if table is None:
+        return []
+    held_by: Dict[str, List[str]] = {}
+    for group in order:
+        for item in holds.get(group, ()):
+            held_by.setdefault(item, [])
+            if group not in held_by[item]:
+                held_by[item].append(group)
+    expected = list(rules.checklist) or list(held_by)
+    checklist = set(expected)
+    found: List[str] = []
+    for item in expected:
+        groups = held_by.get(item, [])
+        if not groups:
+            found.append(f"the checklist item {item!r} is held by no group's units, so no group gives it a verdict row; each item has one")
+        elif len(groups) > 1:
+            found.append(f"the checklist item {item!r} is held by the units of {len(groups)} groups ({', '.join(groups)}); each item "
+                         "is held by one group")
+    for group in order:
+        held = list(holds.get(group, ()))
+        for rid in sorted(units[group], key=natural):
+            who = f"group {group} replica {rid}"
+            counts: Dict[Any, int] = {}
+            for row in units[group][rid].get(table.name, []):
+                counts[row.get(table.key)] = counts.get(row.get(table.key), 0) + 1
+            for item in held:
+                if counts.get(item, 0) == 0:
+                    found.append(f"{who} gives no verdict row for the checklist item {item!r}; each item has one")
+                elif counts[item] > 1 and not table.extra_key:
+                    found.append(f"{who} gives {counts[item]} verdict rows for the checklist item {item!r}; each item has one")
+            for item in counts:
+                if item in checklist and item not in held:
+                    found.append(f"{who} gives a verdict row for the checklist item {item!r}, which is no item of the units its "
+                                 "group holds")
+    return found
+
+
 def finding_problems(shape: results.AnswerShape, rules: Rules, who: str, tables: Dict[str, Any]) -> List[str]:
     findings = shape.findings
     table = shape.table(findings.table)
@@ -288,9 +333,13 @@ def merge_replicas(shape: results.AnswerShape, rules: Rules, unit: str, replicas
 
 
 def merge(shape: results.AnswerShape, rules: Rules, order: Sequence[str], units: Mapping[str, Mapping[str, Dict[str, Any]]],
-          checks: Optional[Callable[[Dict[str, Any]], Sequence[str]]] = None) -> Dict[str, Any]:
+          checks: Optional[Callable[[Dict[str, Any]], Sequence[str]]] = None,
+          holds: Optional[Mapping[str, Sequence[str]]] = None) -> Dict[str, Any]:
     """The units' replicas as one record. Units are taken in `order`, replicas in the order of their ids; the dictionaries'
     own order is never read, so the record is the same for every order they arrive in.
+
+    With `holds`, the items each unit of `order` (a group) holds, the replicas' verdict rows must be one row for each item of the
+    checklist: an item with no row, with two, or with a row from a group that does not hold it is refused naming the item.
 
     The result is `{"tables": {name: {"columns", "rows", "raised_by", "dissent", "notes"}}, "same_place": [...]}`, the
     lists beside the rows holding, for each row, the replicas that raised its verdict, those that gave another, and the
@@ -311,6 +360,8 @@ def merge(shape: results.AnswerShape, rules: Rules, order: Sequence[str], units:
     for unit in order:
         for rid in sorted(units[unit], key=natural):
             problems += table_problems(shape, rules, f"unit {unit} replica {rid}", units[unit][rid])
+    if not problems and holds is not None:
+        problems += coverage_problems(shape, rules, order, units, holds)
     if problems:
         raise Refused(problems)
     parts = {unit: merge_replicas(shape, rules, unit, units[unit]) for unit in order}

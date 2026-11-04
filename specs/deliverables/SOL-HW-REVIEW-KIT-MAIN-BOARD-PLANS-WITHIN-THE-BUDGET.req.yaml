@@ -1,0 +1,23 @@
+id: SOL-HW-REVIEW-KIT-MAIN-BOARD-PLANS-WITHIN-THE-BUDGET
+type: deliverable
+category: solution
+title: The main controller board's layout-review and critical-routing folders plan within the declared budget, shown by a plan-only invocation on the committed board
+status: active
+version: 1
+text: |
+  Why this exists. SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES bounds what any one session of a review holds and refuses a group over a declared model-context budget before any session starts, and proves that on synthetic designs and on the proof design. The failure it answers happened on the first full-size main controller board: with 1744 views the agent command line refused the stream, and with 560 images the root session ended "Prompt is too long". Whether the callers' declared views and headroom plan every group of that board within the budget can be shown only on that board's own review folders, rendered from the committed board, and the board is delivered by SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT. This item holds those two board demonstrations so that the kit's change does not wait for the board, and the board's review does not run on an unplanned kit.
+
+  What it does. Once the main controller board is committed, the layout-review folder and the critical-routing folder are written from it once and a plan-only invocation on each records every group's image count and tokens against the caller's declared budget. A unit whose declared views take more than its group may hold, for example a unit judged on a net whose views are every net's tiles, is corrected in the caller's declaration or in the views the unit selects, not in the budget or the model's window, and the plan is produced again from the same rendered folder.
+
+  Out of scope: a live run of either review, the rendering of views again to change what a group holds, and any change to the board design or the board's own checks.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES
+    type: depends-on
+  - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT
+    type: depends-on
+  - target: DEC-REVIEW-FAN-OUT-FROM-SHARED-CONTEXT-WITH-REPLICAS
+    type: justified-by

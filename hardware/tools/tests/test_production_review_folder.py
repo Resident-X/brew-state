@@ -31,7 +31,7 @@ import review_folder  # noqa: E402
 EXPECTED = {
     "round.json", "docs/board-design-method.md", "docs/board-manufacturer-jlcpcb.md", "hardware/README.md",
     f"{pf.DESIGN}/parts-specification.yaml", "production/placement.csv", "production/parts-list.csv",
-    *(f"production/gerbers/{name}" for name in [f"{layer}.gbr" for layer in pf.LAYERS] + ["board.gbrjob"]), "preview/preview-top.png", "views/index.txt",
+    *(f"production/gerbers/{name}" for name in [f"{layer}.gbr" for layer in pf.LAYERS] + ["board.gbrjob"]), "preview/preview-top.png", "views/index.txt", "views/index.json",
     "views/layer-F.Cu-r1c1.png", "views/assembly-top-r1c1.png", "placement/index.txt", "placement/placement.png",
     *(f"production/layers/{name}" for name in ["index.txt", "index.json"] + [f"layer-{layer}.png" for layer in pf.LAYERS]),
     *(f"production/footprints/{name}" for name in ["index.txt", "index.json"] + [file for file, _, _ in pf.DRAWINGS])}

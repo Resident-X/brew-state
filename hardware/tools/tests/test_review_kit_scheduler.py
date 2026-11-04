@@ -125,11 +125,11 @@ class OrderingTests(unittest.TestCase):
                 with self.assertRaises(planner.BoundBelowOne):
                     scheduler.SerialConcurrency().run([lambda: 1], bad)
         with self.assertRaises(planner.BoundBelowOne):
-            planner.make_plan(harness.declaration, catalogue.admit(harness.declaration, harness.review),
-                              harness.shared, harness.spec, bound=0, cli_version="v", tool_commit="c")
+            planner.make_plan(harness.declaration, catalogue.admit(harness.declaration, harness.review), harness.spec, bound=0,
+                              cli_version="v", tool_commit="c")
         broken = replace(harness.plan, bound=0)
         with self.assertRaises(planner.BoundBelowOne):
-            harness.scheduler.run(harness.declaration, broken, harness.shared, harness.spec)
+            harness.scheduler.run(harness.declaration, broken, harness.roots, harness.spec)
         self.assertEqual(harness.executor.calls, [])
 
     def test_the_record_is_the_same_for_every_order_the_sessions_finish_in(self):

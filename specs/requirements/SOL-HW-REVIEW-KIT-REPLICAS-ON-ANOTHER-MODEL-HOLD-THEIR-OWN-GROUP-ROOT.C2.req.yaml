@@ -1,0 +1,14 @@
+id: SOL-HW-REVIEW-KIT-REPLICAS-ON-ANOTHER-MODEL-HOLD-THEIR-OWN-GROUP-ROOT.C2
+type: criterion
+title: The notes and the method no longer state a refusal or a workaround for replicas on another model over several groups
+status: deprecated
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The hardware notes on the review kit command and on the production-files and layout callers, and the method's paragraphs on judging a round by unit, no longer state that a review over several groups refuses replicas on another model or that the review is run with two replicas on one model to avoid it, and the refusal table has no row for it. A test of the command over a synthetic multi-group declaration with replicas on another model shows no refusal. Out of scope: the wording of any caller's prompts.
+links:
+  - target: SOL-HW-REVIEW-KIT-REPLICAS-ON-ANOTHER-MODEL-HOLD-THEIR-OWN-GROUP-ROOT
+    type: criterion-of
+attributes:
+  deprecation_reason: Parent solution folded into the per-group sessions leaf

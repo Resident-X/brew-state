@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES-C10-TEST-6
+type: evidence
+title: test evidence for SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C10
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-04T20:14:01.279942Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_views_options.py::test_a_net_of_copper_alone_with_no_pad_via_or_free_end_is_not_thinned_and_none_of_its_tiles_is_called_empty
+  artifact_version: b4e180d3691525b78f02ab71adee1f7eae3925ea
+attested_by: crun-dd06ec1119ff90e8
+links:
+  - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C10
+    type: satisfies

@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT-MAIN-BOARD-PLANS-WITHIN-THE-BUDGET.C2
+type: criterion
+title: The layout-review and critical-routing folders of the committed main controller board plan within the declared budget without rendering again
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |-
+  A plan-only invocation on the layout-review folder and on the critical-routing folder of the committed full-size main controller board, in the state the reviews are run on and with each group's views selected from the already-rendered set by the kit's selection, records for each group its image count and its estimated tokens and shows every group's root within the caller's declared budget; the recorded figures are the demonstration's evidence. The views are not rendered again for the demonstration. A group over the budget is a defect in the caller's declaration, corrected before the criterion is met. Out of scope: a live run of either review.
+links:
+  - target: SOL-HW-REVIEW-KIT-MAIN-BOARD-PLANS-WITHIN-THE-BUDGET
+    type: criterion-of

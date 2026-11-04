@@ -2,11 +2,11 @@ id: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C2
 type: criterion
 title: A group whose artefacts together with the shared context exceed the declared model-context budget is refused before any session starts
 status: active
-version: 2
+version: 5
 measurement_type: binary
 verification: test
 text: |-
-  Over a synthetic declaration with a context budget, a group whose own artefacts, measured by the kit's existing token measure, added to the shared documents measure more than the budget is refused before any session starts, the refusal naming the group, its size in tokens and the budget; shared documents over the budget on their own are refused naming their size and the budget as before; a group that fits exactly is accepted; and a declaration that states no budget is held to the context window the kit holds as data for the review's model, less the room for the answer, so a review with no stated budget is still refused when a session would exceed it. Over a declaration with several oversize groups, every one is named. The command prints a REFUSED line naming the cause and what to do, exits 1, and starts no session. Out of scope: the value of any model's window and a unit whose own needs exceed the budget, which the caller corrects by declaring fewer views for it.
+  Over a synthetic declaration with a context budget, a group whose own artefacts, measured by the kit's existing token measure, added to the shared documents measure more than the budget is refused before any session starts, the refusal naming the group, its size in tokens and the budget; shared documents over the budget on their own are refused naming their size and the budget as before; a group that fits exactly is accepted; and a declaration that states a headroom fraction and no figure is held to the context window the kit declares as data for the review's model multiplied by that fraction, so a session that would exceed it is refused, and a model with no declared window is refused naming the model and where its window is declared; a declaration that states neither a figure nor a fraction is not checked, and each of the four callers states one. A declaration that states both a figure and a headroom fraction is refused naming both. Over a declaration with several oversize groups, every one is named. The command prints a REFUSED line naming the cause and what to do, exits 1, and starts no session. Out of scope: the value of any model's window, which the kit's window table declares as data an operator sets, and a unit whose own needs exceed the budget, which the caller corrects by declaring fewer views for it.
 links:
   - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES
     type: criterion-of
