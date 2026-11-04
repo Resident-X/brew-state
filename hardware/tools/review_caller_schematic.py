@@ -106,12 +106,12 @@ retrieval = True
 bound = 30
 #: The review's time target in seconds, so the planner sizes groups well clear of the bound.
 WALL_SECONDS = 350
-#: The fraction of the model's context window a root may fill: 0.4 of the 1,000,000 tokens the kit declares for the
-#: model is 400,000, which after documents of about 50,000 tokens holds (400,000 - 50,000) / 4,400 = 79 images of the 4.4
-#: thousand tokens a full-size board's tile costs and leaves 600,000 tokens of the window for the reviewer's own turns. It is a
-#: first, conservative value, to be set from a measured first run; the round holds no image, since a sheet's drawing is opened
-#: by the reviewer, so the budget bounds the documents.
-HEADROOM = 0.4
+#: The fraction of the model's context window a root may fill: 0.7 of the 1,000,000 tokens the kit declares for the model is
+#: 700,000. The round holds no image, since a sheet's drawing is opened by the reviewer, so the root is the documents, which the
+#: kit estimated at 469,103 tokens on the schematic proof's folder (the method extract and the records dominate), and the
+#: fraction leaves 700,000 - 469,103 = 230,897 tokens for the units' prompts and the plan's own room and 300,000 tokens of the
+#: window for the reviewer's own turns. It is a first, conservative value, to be set from a measured first run.
+HEADROOM = 0.7
 
 #: What the checks hold of the round: the units, the items each judges, the nets, parts and sheets of the schematic, the round's
 #: label and the cannot judge resolutions its folder records.

@@ -335,16 +335,22 @@ class TheSchematicCaller(schematic_tests.Folder, Budgeted):
 
 
 class TheHeadroomIsStatedWithItsArithmetic(unittest.TestCase):
-    def test_each_caller_states_the_same_conservative_headroom_with_the_arithmetic_and_that_a_measured_run_sets_it(self):
-        for module in (layout, critical, production, schematic):
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C5: each caller states its headroom with the arithmetic and that a measured run sets it
+    def test_each_caller_states_its_headroom_with_the_arithmetic_and_that_a_measured_run_sets_it(self):
+        for module, headroom, arithmetic in ((layout, 0.4, "(400,000 - 50,000) / 4,400 = 79 images"),
+                                             (critical, 0.4, "(400,000 - 50,000) / 4,400 = 79 images"),
+                                             (production, 0.4, "(400,000 - 50,000) / 4,400 = 79 images"),
+                                             (schematic, 0.7, "700,000 - 469,103 = 230,897 tokens")):
             with self.subTest(caller=module.__name__):
-                self.assertEqual(module.HEADROOM, 0.4)
+                self.assertEqual(module.HEADROOM, headroom)
                 with open(module.__file__, encoding="utf-8") as handle:
                     source = handle.read()
-                self.assertIn("(400,000 - 50,000) / 4,400 = 79 images", source)
+                self.assertIn(arithmetic, source)
                 self.assertIn("to be set from a measured first run", " ".join(source.split()))
         self.assertEqual(int(costmodel.window_for(MODEL) * 0.4), 400_000)
+        self.assertEqual(int(costmodel.window_for(MODEL) * 0.7), 700_000)
         self.assertEqual((400_000 - 50_000) // 4_400, 79)
+        self.assertEqual(700_000 - 469_103, 230_897)
 
 
 class SelectionByKindNetClassLayerAndRegion(unittest.TestCase):
