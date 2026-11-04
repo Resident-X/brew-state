@@ -1106,7 +1106,7 @@
 			)
 		)
 		(path "/8e85900c-b39a-4472-80cc-2e5622e905df/e161f090-9362-4085-895b-afdd6cf81a91")
-		(attr smd)
+		(attr smd dnp)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
 			(start -0.237258 0.5225)
@@ -26851,7 +26851,7 @@
 			)
 		)
 		(path "/8e85900c-b39a-4472-80cc-2e5622e905df/a79c0192-363a-4ff4-b9cd-d77e35c85141")
-		(attr smd)
+		(attr smd dnp)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
 			(start -0.237258 -0.5225)
@@ -60279,7 +60279,7 @@
 			)
 		)
 		(path "/da7d33e1-a5c7-4984-bd6c-b0eb81797478/a1777846-81a6-4951-8176-936d631585f2")
-		(attr smd)
+		(attr smd dnp)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
 			(start -0.237258 0.5225)
@@ -84010,8 +84010,21 @@
 				)
 			)
 		)
+		(property "LCSC" "none"
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "5b0e6c1a-3d7f-5c42-9e18-a4f27d03b6c9")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
 		(path "/d82e4ee5-02af-4156-8101-fb52a7f3e96c/9ef7d1a8-fa76-425e-978c-5e9e5e34326c")
-		(attr exclude_from_pos_files exclude_from_bom allow_missing_courtyard)
+		(attr exclude_from_pos_files allow_missing_courtyard)
 		(net_tie_pad_groups "1, 2")
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_poly
@@ -119283,14 +119296,6 @@
 		(layer "F.Cu")
 		(net "HEAT_C_LED_K")
 		(uuid "b89308fd-1950-4087-9f60-73b6a5b0e699")
-	)
-	(via
-		(at 103.2 98.6)
-		(size 0.6)
-		(drill 0.2)
-		(layers "F.Cu" "B.Cu")
-		(net "HEAT_C_LED_K")
-		(uuid "849caa40-18c7-42b5-b9fb-e0e592ccdd7b")
 	)
 	(via
 		(at 100.6 92.5)
