@@ -1,0 +1,17 @@
+id: EV-SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED-C1-TEST-V4
+type: evidence
+title: test evidence for SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C1 at version 4
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-04T22:11:30Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_separation_basis_record.py::NetPairAndSamePartDrafts.test_the_eleven_net_pair_entries_hold_the_lists_working_voltages_and_distances_the_leaf_sets
+  artifact_version: 47dd38358e028a6fc6e5b870cbd0ce76af45fb05
+text: |
+  Re-run of the test that checks the criterion's statement as it now stands, at commit 47dd38358e028a6fc6e5b870cbd0ce76af45fb05 (the whole of test_separation_basis_record.py also ran, 44 tests, OK, earlier in this branch). The earlier evidence, observed at d1144d2a, ran the same test; the criterion's title was later edited from "nine" to "eleven" (version 3 to 4) with the text already saying eleven, so the earlier evidence stood for a title it had not been run against. This evidence ties the run to the current version: the committed record holds exactly eleven net-pair accepted_exceptions entries whose constraint, nets_a, nets_b, working_voltage_v and accepted_mm equal the leaf's list, and the check's own reader reads them with no problem other than the unsigned acceptances.
+links:
+  - target: SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C1
+    type: satisfies
