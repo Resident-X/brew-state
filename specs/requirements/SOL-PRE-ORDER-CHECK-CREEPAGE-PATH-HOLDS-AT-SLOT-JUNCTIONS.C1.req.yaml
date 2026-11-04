@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-CREEPAGE-PATH-HOLDS-AT-SLOT-JUNCTIONS.C1
+type: criterion
+title: A path never passes through the junction of two touching parts of a slot
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a synthetic board with a slot of two arms meeting at a corner, the creepage route length between two items either side of that corner is the length of the shortest path round the free end of an arm, not the length of a path through the junction, and the same pair on a slot with the arms apart is unchanged. Out of scope is the rule's threshold.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CREEPAGE-PATH-HOLDS-AT-SLOT-JUNCTIONS
+    type: criterion-of

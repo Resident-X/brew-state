@@ -1,0 +1,12 @@
+id: SOL-HW-MAIN-BOARD-SHEET-GENERATOR-REPRODUCES-COMMITTED-SHEETS.C2
+type: criterion
+title: The generator's parts table names only parts the committed sheets carry
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Every reference designator in the generator's parts table appears on a committed sheet of the board, and no test point removed from the board is named in the generator's source or in the decks and records that read its table. A reference designator that is on a committed sheet and absent from the table is listed with its reason. Out of scope is any change to a committed sheet.
+links:
+  - target: SOL-HW-MAIN-BOARD-SHEET-GENERATOR-REPRODUCES-COMMITTED-SHEETS
+    type: criterion-of

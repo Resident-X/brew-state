@@ -1,0 +1,19 @@
+id: SOL-HW-MAIN-BOARD-U601-LIBRARY-FOOTPRINT-MATCHES-BOARD
+type: deliverable
+category: solution
+title: The main-board library's U601 footprint carries the paste split the board carries on its clock input pad
+status: active
+version: 1
+text: |
+  Brings the main-board library's U601 footprint to the board's. The board carries the clock input pad (pad 17) with copper and mask only and a separate paste-only pad giving a reduced paste aperture; the library copy's pad 17 carries copper, paste and mask. This is the only geometric cause of the library-footprint mismatch the board check reports for U601, and the library copy is edited through the schematic and board tooling only.
+
+  Settled for the build:
+  - The library copy takes the board's split: pad 17 loses its paste layer and the library footprint gains the paste-only pad at the board's offset and size, so the board is not changed.
+  - Out of scope: any change to the board's footprint, and the owner's right to have the split reverted instead, which is a separate decision.
+rationale: |
+  Restores the library-to-board agreement that the pre-order check relies on (REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1): a library copy that differs from the footprint the board carries leaves a standing mismatch line that hides a real one.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets

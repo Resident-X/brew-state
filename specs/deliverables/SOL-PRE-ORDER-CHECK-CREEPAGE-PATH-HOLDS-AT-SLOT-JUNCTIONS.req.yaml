@@ -1,0 +1,20 @@
+id: SOL-PRE-ORDER-CHECK-CREEPAGE-PATH-HOLDS-AT-SLOT-JUNCTIONS
+type: deliverable
+category: solution
+title: The pre-order check's creepage path search never passes through the junction of a slot's arms
+status: active
+version: 1
+text: |
+  Corrects the creepage path length the pre-order check's cross-layer separation rule computes. The path search lets a path pass through the junction corner where two arms of a barrier slot meet, so for a pair whose true surface path runs round the end of an arm it reports a length near 9.2 mm where the true path is about 15.5 mm. The error is over-conservative: the rule reports a shorter creepage than exists and hides no breach, and the creepage test of KiCad's own design rule check agrees with the true figure. It is still a wrong figure in a check whose findings the owner reads.
+
+  Settled for the build:
+  - The search treats every part of the slot outline, corners and arm junctions included, as closed, so a path never passes between two slot parts that touch.
+  - A path that crosses no slot is unchanged, and the figures of the existing slot tests are unchanged.
+  - Out of scope: the rule's thresholds, the figures it compares with, and any board's records.
+rationale: |
+  Restores the behaviour of the cross-layer rule's path comparison, which holds that separation covers the paths taken between conductors and not only the points where each ends (REQ-ELECTRICAL-INSTALL-001.C1). A path measured through a slot junction is not a path round the slot, so the figure the finding states is not the separation the board has.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C1
+    type: targets

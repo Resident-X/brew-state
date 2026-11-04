@@ -1,0 +1,23 @@
+id: SOL-MAIN-BOARD-EXCEPTIONS-COVER-EVERY-REPORTED-SHORTFALL-PAIR
+type: deliverable
+category: solution
+title: The separation basis record drafts an exception for every shortfall pair the finished main board shows, or the layout clears it
+status: active
+version: 1
+text: |
+  Closes the gap between the mains-to-mains spacing shortfalls the finished main board shows and the exceptions the separation basis record drafts for them. The record's draft holds exceptions for the pairs known when the net-pair and same-part leaves were drafted; the finished layout shows pairs, 14 pair keys at the layout round's reading, that no draft exception covers, and the record's 98 draft exceptions are all unsigned. Each uncovered pair either gets a draft entry stating its ground and bounding element, or is cleared by a layout change; no pair is left to the owner's signature unseen.
+
+  Settled for the build:
+  - The pairs are read from the pre-order check's own report on the finished board, not from a second measurement.
+  - Every added entry is a draft: accepted_by and accepted_on stay empty and the record stays unsigned. Signing is the owner's act, held by the owner-acceptance leaf, and nothing here weighs or presumes it.
+  - A distance is never relaxed to cover a pair, and an entry is added only where the check shows a shortfall.
+  - Out of scope: the owner's acceptance, the signed figures, and the pump-triac entries held by their own leaf.
+rationale: |
+  Restores the behaviour REQ-ELECTRICAL-INSTALL-001.C16 asks: a shortfall a part's geometry forces is passed only as an exception for that pair, and a shortfall without one is not passed. The drafting leaf closed against the pairs known before the layout finished, so the finished board shows shortfalls with no entry for the owner to accept or refuse, and the owner's acceptance would be asked on an incomplete list.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C15
+    type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C16
+    type: targets

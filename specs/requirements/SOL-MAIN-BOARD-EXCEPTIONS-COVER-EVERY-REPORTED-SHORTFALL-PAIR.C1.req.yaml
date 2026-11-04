@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-EXCEPTIONS-COVER-EVERY-REPORTED-SHORTFALL-PAIR.C1
+type: criterion
+title: Every mains-to-mains shortfall pair the check reports on the finished board is covered by a draft entry or cleared by the layout
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  A run of the pre-order check on the finished main board lists no mains-to-mains shortfall pair that no draft entry of the separation basis record covers, and each pair added to the record has a draft entry stating its ground and the element bounding the fault. Out of scope is signing any entry.
+links:
+  - target: SOL-MAIN-BOARD-EXCEPTIONS-COVER-EVERY-REPORTED-SHORTFALL-PAIR
+    type: criterion-of

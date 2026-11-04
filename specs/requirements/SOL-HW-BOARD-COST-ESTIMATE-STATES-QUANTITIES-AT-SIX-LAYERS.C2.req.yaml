@@ -1,0 +1,12 @@
+id: SOL-HW-BOARD-COST-ESTIMATE-STATES-QUANTITIES-AT-SIX-LAYERS.C2
+type: criterion
+title: The main board's estimate and the division record's script price the same six-layer board
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The main board's fabrication, finish and assembly lines are priced at six copper layers and ENIG at the board's outline, and the division record's embedded script computes the same figures from the same layer count and quantities, so running the script reproduces the estimate's totals. A line priced at another layer count fails. Out of scope is the quoted order cost the order leaf records.
+links:
+  - target: SOL-HW-BOARD-COST-ESTIMATE-STATES-QUANTITIES-AT-SIX-LAYERS
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-HW-DO-NOT-POPULATE-PARITY-LINES-ARE-LISTED-AND-BOARD-DRIVES-BILL.C2
+type: criterion
+title: A parity line on the board's expected list is accepted and any other is reported
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The board's records list each expected footprint_symbol_mismatch line with its reference designator, attribute and reason, and on a synthetic board the check passes a line on the list, fails a line not on it naming the part, and reports a listed line that no longer appears as stale. Out of scope is the check's other parity lines.
+links:
+  - target: SOL-HW-DO-NOT-POPULATE-PARITY-LINES-ARE-LISTED-AND-BOARD-DRIVES-BILL
+    type: criterion-of

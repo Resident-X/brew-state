@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-CREEPAGE-PATH-HOLDS-AT-SLOT-JUNCTIONS.C2
+type: criterion
+title: A pair whose path crosses no slot keeps its straight-line length
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  A synthetic pair of items with no slot between them returns the straight-line distance as its route length, and every existing route-length test of the check's geometry module passes unchanged. Out of scope is any figure the rule compares the length with.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CREEPAGE-PATH-HOLDS-AT-SLOT-JUNCTIONS
+    type: criterion-of
