@@ -275,7 +275,7 @@ def render_text(report: Mapping[str, Any]) -> List[str]:
         for group in plan["groups"]:
             margin = "no budget" if group["margin"] is None else f"margin {group['margin']}"
             lines.append(f"GROUP | {group['id']} | units {', '.join(group['units'])} | {group['replicas']} replicas | "
-                         f"expected output {group['expected_output_tokens']} tokens | root {group['root']} | {group['images']} images | "
+                         f"expected output {group['expected_output_tokens']} tokens | root {group['root'] or NO_ROOT} | {group['images']} images | "
                          f"{group['tokens']} tokens | budget {group['budget'] if group['budget'] is not None else 'none'} | {margin} | "
                          f"needs {', '.join(group['needs'])}")
             if group["extract"]["rules"]:
@@ -333,6 +333,10 @@ def finish(report: Dict[str, Any], as_json: bool, out_stream, err_stream) -> int
     return EXIT_STATUS[report["result"]]
 
 
+#: What the GROUP line says of a group whose replicas all run on another model.
+NO_ROOT = "no root for the review's model"
+
+
 def plan_summary(plan: planner.Plan, bound: int) -> Dict[str, Any]:
     """The plan as the report holds it: the shared documents' tokens, the budget every root is held to and, for each group, the
     images and tokens its root holds with the margin to the budget."""
@@ -382,7 +386,7 @@ def figures_of_run(folder: str, before: Set[str]) -> Tuple[List[telemetry.Sessio
 def predicted_for(plan: planner.Plan, groups: Optional[Set[str]]) -> telemetry.Prediction:
     """What the plan predicted for the sessions of this run: all of them, or the roots and the forks of the groups run."""
     per_node = plan.predicted["per_node"]
-    owner = {group.root: group.id for group in plan.groups}
+    owner = {group.root: group.id for group in plan.groups if group.root is not None}
     owner.update({context["root_id"]: context["group"] for context in plan.contexts})
     nodes = [node for node in plan.nodes
              if groups is None or (owner[node.id] if node.role == planner.ROOT else node.group) in groups]

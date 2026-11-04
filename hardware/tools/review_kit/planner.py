@@ -135,9 +135,10 @@ class Group:
     needs: Tuple[str, ...]
     expected_output_tokens: int
     replicas: int
-    #: The id of the group's root node, the images and tokens its root holds, the hash of its prefix, and its check extract:
-    #: the rules the units declare, the lines of the report held and the (unit, rule) pairs the report holds no line for.
-    root: str = "root"
+    #: The id of the group's root node (None for a group whose replicas all run on another model, which has none), the images
+    #: and tokens its root holds, the hash of its prefix, and its check extract: the rules the units declare, the lines of the
+    #: report held and the (unit, rule) pairs the report holds no line for.
+    root: Optional[str] = "root"
     images: int = 0
     tokens: int = 0
     prefix_sha: str = ""
@@ -541,10 +542,11 @@ def make_plan(declaration: decl.Declaration, catalogue: cat.Catalogue, spec: ses
     other_variants = {(owner, variant_id) for context, owner in others for variant_id in context.variants}
     started_roots = set()
     for built, count in zip(formed.groups, counts):
-        groups.append(Group(built.id, built.units, built.needs, built.expected_output_tokens, count, built.root, built.images,
-                            built.tokens, built.shared.prefix_sha, built.extract))
         forks = {(variants[(replica - 1) % len(variants)] if variants else BASE_VARIANT) for replica in range(1, count + 1)}
-        if not any((built.id, variant) not in other_variants for variant in forks):
+        starts = any((built.id, variant) not in other_variants for variant in forks)
+        groups.append(Group(built.id, built.units, built.needs, built.expected_output_tokens, count, built.root if starts else None,
+                            built.images, built.tokens, built.shared.prefix_sha, built.extract))
+        if not starts:
             continue
         started_roots.add(built.id)
         nodes.append(Node(built.root, ROOT, None, None, None, 1, None, (), built.shared.prefix_sha, built.shared.prefix_sha))
@@ -587,8 +589,13 @@ def make_plan(declaration: decl.Declaration, catalogue: cat.Catalogue, spec: ses
                  "cost_ceiling_usd": declaration.budget.usd,
                  "within_cost_ceiling": None if declaration.budget.usd is None else cost <= declaration.budget.usd,
                  "per_node": {key: {k: round(v, 6) for k, v in entry.items()} for key, entry in per_node.items()}}
-    holders = {a.name: sum(1 for built in formed.groups if a.name in built.needs) for a in catalogue.artefacts}
-    saving = cm.shared_write_saving(root_prices, {a.name: a.tokens for a in catalogue.artefacts}, holders)
+    sizes = {a.name: a.tokens for a in catalogue.artefacts}
+    written_roots: List[Tuple[Any, Any]] = [(root_prices, built) for built in formed.groups if built.id in started_roots]
+    written_roots += [(prices_of[context.root_id], by_group[owner]) for context, owner in others]
+    saving = 0.0
+    for price in {id(price): price for price, _ in written_roots}.values():
+        holders = {name: sum(1 for p, built in written_roots if p is price and name in built.needs) for name in sizes}
+        saving += cm.shared_write_saving(price, sizes, holders)
     threshold = declaration.budget.tree_saving_usd
     tree = {"saving_usd": round(saving, 6), "threshold_usd": threshold, "worth_building": saving >= threshold,
             "kept": "flat"}

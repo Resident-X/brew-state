@@ -495,6 +495,39 @@ class PerModelPricing(Case):
         self.assertEqual({node.parent for node in made.lanes if node.variant == "small"}, set(small.values()),
                          "the other model's replica forks from the root of its own group and model")
 
+    def tree_saving_expected(self, found, formed, written):
+        """The saving over the roots written, an artefact's size times the roots of a model holding it beyond the first, at that model's write price."""
+        expected = 0.0
+        for prices, built_groups in written:
+            for artefact in found.artefacts:
+                holders = sum(1 for built in built_groups if artefact.name in built.needs)
+                expected += artefact.tokens * max(holders - 1, 0) * prices.write / 1e6
+        return expected
+
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a group none of whose replicas runs on it has no root for it
+    def test_the_tree_saving_follows_the_roots_written_and_a_group_with_no_root_for_the_reviews_model_names_none(self):
+        declaration = decl.parse(json.dumps(fx.declaration_dict()), "caller.json")
+        found = catalogue.admit(declaration, self.review)
+        spec = messages.make_spec(declaration, ("Read",), "/work", "claude-sonnet-5-5")
+        formed = planner.form(declaration, found, spec.model)
+        groups = list(formed.groups)
+        everywhere = ensemble.parse_policy({"variants": [{"id": "full"}, {"id": "small", "model": "claude-haiku-5-5"}]})
+        only_other = ensemble.parse_policy({"variants": [{"id": "small", "model": "claude-haiku-5-5"}]})
+        both = planner.make_plan(declaration, found, spec, bound=4, cli_version="9.9.9", tool_commit="abc1234", replicas=2,
+                                 variants=everywhere.ids, contexts=ensemble.group_contexts(spec, groups, everywhere), formed=formed)
+        self.assertEqual([group.root for group in both.groups], ["root.G1", "root.G2", "root.G3"])
+        self.assertAlmostEqual(both.tree["saving_usd"], self.tree_saving_expected(found, formed, [(cm.Prices(), groups), (cm.HAIKU_PRICES, groups)]), places=6)
+        other = planner.make_plan(declaration, found, spec, bound=4, cli_version="9.9.9", tool_commit="abc1234", replicas=2,
+                                  variants=only_other.ids, contexts=ensemble.group_contexts(spec, groups, only_other), formed=formed)
+        self.assertEqual([group.root for group in other.groups], [None, None, None], "no node carries a root for the review's model")
+        self.assertEqual([group.as_dict()["root"] for group in other.groups], [None, None, None])
+        self.assertEqual(sorted(node.id for node in other.roots), sorted(context["root_id"] for context in other.contexts))
+        expected = self.tree_saving_expected(found, formed, [(cm.HAIKU_PRICES, groups)])
+        self.assertAlmostEqual(other.tree["saving_usd"], expected, places=6, msg="only the roots written, at their own model's price")
+        self.assertGreater(expected, 0)
+        self.assertLess(other.tree["saving_usd"], both.tree["saving_usd"])
+        self.assertEqual(planner.Plan.from_dict(json.loads(json.dumps(other.to_dict()))).groups[0].root, None)
+
     def test_every_group_whose_root_for_another_model_is_over_that_models_budget_is_named_with_the_model_and_the_figures(self):
         # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a group whose root for that model is over that model's budget is refused naming the group, the model, the figures and the budget
         raw = fx.declaration_dict()

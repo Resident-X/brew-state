@@ -923,6 +923,27 @@ class OtherModelReplica(Case):
             self.assertEqual(record["plan"]["predicted"]["tokens_written"], sizes, "only the other model's roots are written")
         self.assertEqual({call["model"] for call in self.calls() if call["resume"] is None}, {"other-model-id"})
 
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a group none of whose replicas runs on it has no root for it
+    def test_the_report_names_no_root_for_the_reviews_model_for_a_group_whose_replicas_all_run_elsewhere_in_text_and_in_json(self):
+        self.write_caller(extra="""
+            replica_policy = {"variants": [{"id": "alt", "model": "other-model-id"}], "replicas": {"low": 1, "normal": 1, "high": 1}}
+            """)
+        status, out, err = self.run_command("--plan-only", "--model", "review-model-id", out=os.path.join(self.base, "t"))
+        self.assertEqual((status, err), (0, ""), out)
+        group_lines = self.lines(out, "GROUP")
+        self.assertEqual(len(group_lines), 3)
+        for line in group_lines:
+            self.assertIn("| root no root for the review's model |", line)
+            self.assertNotIn("| root root.", line)
+        self.assertEqual(sorted(line.split(" | ")[1] for line in self.lines(out, "CONTEXT")),
+                         ["root.G1.other-model-id", "root.G2.other-model-id", "root.G3.other-model-id"])
+        status, as_json, err = self.run_command("--plan-only", "--model", "review-model-id", fmt="json", out=os.path.join(self.base, "j"))
+        self.assertEqual((status, err), (0, ""), as_json)
+        plan = json.loads(as_json)["plan"]
+        self.assertEqual([group["root"] for group in plan["groups"]], [None, None, None])
+        self.assertEqual(sorted(context["root_id"] for context in plan["contexts"]),
+                         ["root.G1.other-model-id", "root.G2.other-model-id", "root.G3.other-model-id"])
+
     def test_the_guard_allows_the_other_models_specification_and_still_refuses_any_other_change(self):
         harness = fx.Harness(self, replicas=2)
         policy = ensemble.parse_policy({"variants": [{"id": "full"}, {"id": "alt", "model": "other"}]})
