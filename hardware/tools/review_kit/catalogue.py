@@ -19,7 +19,7 @@ import math
 import os
 import struct
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 from . import decl
 
@@ -86,15 +86,22 @@ class Measured:
 
 @dataclass(frozen=True)
 class Catalogue:
-    """The admitted, measured artefacts any unit needs, in the fixed order the shared context holds them."""
+    """The admitted, measured artefacts any unit needs, in the fixed order a context holds them: by name. `report` is the
+    deterministic check's report when the declaration names one: admitted by the same rules, and held by no context whole."""
 
     artefacts: Tuple[Measured, ...]
+    report: Optional[Measured] = field(default=None, compare=False)
 
     def get(self, name: str) -> Measured:
         for artefact in self.artefacts:
             if artefact.name == name:
                 return artefact
         raise KeyError(name)
+
+    def subset(self, names: Iterable[str], extra: Sequence[Measured] = ()) -> "Catalogue":
+        """The artefacts of these names, with the `extra` ones, in the order of names; the report is not carried."""
+        wanted = set(names)
+        return Catalogue(tuple(sorted([a for a in self.artefacts if a.name in wanted] + list(extra), key=lambda a: a.name)))
 
     @property
     def tokens(self) -> int:
@@ -161,7 +168,9 @@ def admit(declaration: decl.Declaration, folder: str, reader=None, results_folde
     kept = reader.realpath(results_folder) if results_folder else None
     refusals: List[Refusal] = []
     found: List[Measured] = []
-    for name in declaration.needed:
+    report_name = declaration.check_extract.report if declaration.check_extract else None
+    report: Optional[Measured] = None
+    for name in declaration.needed + ([report_name] if report_name else []):
         artefact = declaration.artefacts[name]
         path = reader.realpath(os.path.join(root, artefact.source))
         relative = os.path.relpath(path, root).replace(os.sep, "/")
@@ -184,11 +193,13 @@ def admit(declaration: decl.Declaration, folder: str, reader=None, results_folde
         measured, refusal = measure(artefact, relative, reader.read(path))
         if refusal is not None:
             refusals.append(refusal)
+        elif name == report_name:
+            report = measured
         else:
             found.append(measured)
     if refusals:
         raise Refused(refusals)
-    return Catalogue(tuple(found))
+    return Catalogue(tuple(found), report)
 
 
 def measure(artefact: decl.Artefact, relative: str, data: bytes) -> Tuple[Optional[Measured], Optional[Refusal]]:

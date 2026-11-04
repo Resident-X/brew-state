@@ -53,7 +53,7 @@ class LoadTests(unittest.TestCase):
         self.assertEqual(loaded.units["u2"].couples_with, ("u3",))
         self.assertEqual(loaded.artefacts["facts.txt"].producer, "make_facts")
         self.assertEqual(loaded.needed, ["facts.txt", "guide.md", "view_a.png", "view_b.png"])
-        self.assertEqual(loaded.budget.context_tokens, 100000)
+        self.assertEqual((loaded.budget.wall_s, loaded.budget.usd, loaded.budget.context_tokens), (600, 5.0, None))
 
     def test_unit_needing_an_unlisted_artefact_is_refused_naming_file_unit_and_artefact(self):
         # SOL-HW-REVIEW-KIT.C5: a unit that needs an artefact the declaration does not list is refused at load

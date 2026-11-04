@@ -2,23 +2,27 @@
 
     review_run.py --caller <name> --review <review folder> --out <output folder>
                   [--callers <folder>] [--bound N] [--replicas N] [--model <full model id>]
-                  [--rerun <unit>]... [--format text|json]
+                  [--rerun <unit>]... [--plan-only] [--format text|json]
 
 The caller is a module `review_caller_<name>` in the callers folder (this tool's folder unless `--callers` says
 otherwise); it supplies the review's declaration, the checks of the merged tables and the files to render. The command
-admits the declaration's artefacts against the review folder, builds the one shared context every session continues
-from, plans one fork for each group of units and replica, starts the shared context and then the forks together, repairs
-what the scheduler repairs, merges the replicas with no model, writes the caller's rendered files into the output
-folder, and prints a report. A review whose replicas run on more than one model starts a shared context of its own for
-each model, since the cache cannot be shared across models.
+admits the declaration's artefacts against the review folder, forms the groups of units, builds each group's root (the
+artefacts every unit needs, the views and documents its own units declare and the extract of the check's report for the
+rules they judge, and nothing another group alone needs), plans one fork for each group of units and replica, starts the
+roots and then the forks together, repairs what the scheduler repairs, merges the replicas with no model, writes the
+caller's rendered files into the output folder, and prints a report. Every root is held to the review's context budget, a
+figure or a fraction of the model's declared context window, and a group over it is refused before any session starts.
+`--plan-only` forms and reports the plan, with each group's images and tokens against the budget, and writes it into the
+output folder as plan.json, without the agent program and without starting a session. A review whose replicas run on
+another model is refused when it has more than one group.
 
 The agent command line is started from the program named by the environment variable REVIEW_KIT_AGENT (claude when it
 is unset), which must be on the search path and logged in. The output folder holds the plan, the record, the saved
 stream of every session and the rendered files; `--rerun` runs the named units again against a record already there.
 
 Each cause is reported on one line beginning REFUSED or CANNOT RUN that names the cause and what to do, a RESULT line
-comes last, and the exit status is 0 when the merged record is written, 1 when the command refuses or a unit fails, and
-2 when the agent command line is missing or not logged in. `--format json` prints the same facts as one JSON document.
+comes last, and the exit status is 0 when the merged record is written or the plan is made (`--plan-only`), 1 when the
+command refuses or a unit fails, and 2 when the agent command line is missing or not logged in. `--format json` prints the same facts as one JSON document.
 """
 
 from __future__ import annotations
@@ -42,8 +46,8 @@ REPO = os.path.dirname(os.path.dirname(TOOLS_DIR))
 STREAMS_FOLDER = "streams"
 FORMATS = ("text", "json")
 #: The statuses the result line takes and the exit status each gives.
-WRITTEN, REFUSED, CANNOT_RUN = "WRITTEN", "REFUSED", "CANNOT RUN"
-EXIT_STATUS = {WRITTEN: 0, REFUSED: 1, CANNOT_RUN: 2}
+WRITTEN, PLANNED, REFUSED, CANNOT_RUN = "WRITTEN", "PLANNED", "REFUSED", "CANNOT RUN"
+EXIT_STATUS = {WRITTEN: 0, PLANNED: 0, REFUSED: 1, CANNOT_RUN: 2}
 #: The optional caller attribute holding the replica policy as plain data (variants and replicas by stakes).
 POLICY_ATTRIBUTE = "replica_policy"
 
@@ -70,6 +74,9 @@ CAUSES: Dict[str, Tuple[str, str]] = {
     "artefact-refused": ("refused by the rule", "change the declaration's artefact or the review folder"),
     "over-budget": ("over the review's context budget", "take artefacts out of the units' `needs`, or raise the budget's context_tokens"),
     "window-undeclared": ("has no declared context window", "state a context_tokens figure, or add the model's window to the window table"),
+    "group-over-budget": ("in its root, more than the review's context budget", "declare fewer views for the units named"),
+    "groups-other-model": ("replicas run on another model", "give every variant of the replica policy the review's model"),
+    "plan-only-rerun": ("--plan-only and --rerun together", "give one or the other"),
     "over-stream-limit": ("over the agent command line's stream limit", "write fewer or smaller views"),
     "output-has-record": ("already holds a record", "use a new output folder, or name the units to run again"),
     "no-record": ("so there is no run to run units of again", "start a fresh run"),
@@ -198,6 +205,10 @@ def parser() -> Parser:
     found.add_argument("--replicas", default=None, help="the number of replicas of every unit, in place of the declared stakes' number")
     found.add_argument("--model", default=None, help="the full model id every session uses (default: the agent command line's own)")
     found.add_argument("--rerun", action="append", default=[], help="a unit to run again, with the others' results kept; repeat for each")
+    found.add_argument("--plan-only", action="store_true",
+                       help="form and report the plan, each group's images and tokens against the context budget, and write plan.json into "
+                            "the output folder, without the agent program and without starting a session: exit 0 for a plan within "
+                            "the budget, 1 with the refusal for one over it")
     found.add_argument("--format", default="text", help="the report as text or json (default: text)")
     return found
 
@@ -227,6 +238,15 @@ def new_report(caller_name: str, review: str, out: str) -> Dict[str, Any]:
             "files": [], "reran": []}
 
 
+def budget_text(budget: Mapping[str, Any]) -> str:
+    """The context budget in words: the figure, and for a fraction the window it is a fraction of."""
+    if budget["tokens"] is None:
+        return "none"
+    if budget["fraction"] is None:
+        return f"{budget['tokens']} tokens"
+    return f"{budget['tokens']} tokens ({budget['fraction']} of the {budget['window']} tokens of {budget['model']})"
+
+
 def figure_text(figure: Mapping[str, Any], wall: Optional[float] = None) -> str:
     tokens = figure["tokens"]
     return (f"{figure['api_ms']} ms API | {figure['wall_s'] if wall is None else wall} s | {figure['turns']} turns | {figure['calls']} calls | "
@@ -246,18 +266,28 @@ def render_text(report: Mapping[str, Any]) -> List[str]:
         lines.append(f"AGENT | {clean(report['agent']['program'])} | version {clean(report['agent']['version'])}")
     plan = report["plan"]
     if plan:
-        lines.append(f"PLAN | {len(plan['groups'])} groups | {plan['forks']} forks | bound {plan['bound']} | shared context "
-                     f"{plan['shared_tokens']} tokens | prefix {plan['prefix_sha']} | specification {plan['spec_digest']} | "
-                     f"tool commit {clean(plan['tool_commit'])} | tree saving ${plan['tree']['saving_usd']} against "
-                     f"${plan['tree']['threshold_usd']}, kept {plan['tree']['kept']} | variants {', '.join(plan['variants'])}")
+        lines.append(f"PLAN | {len(plan['groups'])} groups | {plan['forks']} forks | bound {plan['bound']} | shared documents "
+                     f"{plan['shared_tokens']} tokens | context budget {budget_text(plan['budget'])} | prefix {plan['prefix_sha']} | "
+                     f"specification {plan['spec_digest']} | tool commit {clean(plan['tool_commit'])} | tree saving "
+                     f"${plan['tree']['saving_usd']} against ${plan['tree']['threshold_usd']}, kept {plan['tree']['kept']} | "
+                     f"variants {', '.join(plan['variants'])}")
         for group in plan["groups"]:
+            margin = "no budget" if group["margin"] is None else f"margin {group['margin']}"
             lines.append(f"GROUP | {group['id']} | units {', '.join(group['units'])} | {group['replicas']} replicas | "
-                         f"expected output {group['expected_output_tokens']} tokens | needs {', '.join(group['needs'])}")
+                         f"expected output {group['expected_output_tokens']} tokens | root {group['root']} | {group['images']} images | "
+                         f"{group['tokens']} tokens | budget {group['budget'] if group['budget'] is not None else 'none'} | {margin} | "
+                         f"needs {', '.join(group['needs'])}")
+            if group["extract"]["rules"]:
+                lines.append(f"EXTRACT | {group['id']} | rules {', '.join(group['extract']['rules'])} | {group['extract']['lines']} lines of "
+                             "the check's report")
+            lines += [f"NOTE | unit {clean(entry['unit'])} declares the rule {clean(entry['rule'])}, which the check's report holds no "
+                      "line for" for entry in group["extract"]["missing"]]
         for context in plan["contexts"]:
             lines.append(f"CONTEXT | {context['root_id']} | model {clean(context['model'])} | specification "
                          f"{context['spec_digest']} | variants {', '.join(context['variants'])}")
         predicted = plan["predicted"]
-        lines.append(f"PREDICTED | ${predicted['cost_usd']} | {predicted['wall_s']} s")
+        lines.append(f"PREDICTED | ${predicted['cost_usd']} | {predicted['wall_s']} s | {predicted['tokens_written']} tokens written "
+                     "(each group's root once)")
     for session in report["sessions"]:
         flags = "; ".join(session["flags"]) or "no flag"
         lines.append(f"SESSION | {session['label']} | {session['role']} | {session['kind']} | parent {session['parent'] or 'none'} | "
@@ -302,11 +332,15 @@ def finish(report: Dict[str, Any], as_json: bool, out_stream, err_stream) -> int
     return EXIT_STATUS[report["result"]]
 
 
-def plan_summary(plan: planner.Plan, shared: messages.SharedContext, bound: int) -> Dict[str, Any]:
-    return {"groups": [group.as_dict() for group in plan.groups], "forks": len(plan.lanes), "bound": bound,
-            "shared_tokens": shared.tokens, "prefix_sha": shared.prefix_sha, "spec_digest": plan.spec_digest,
+def plan_summary(plan: planner.Plan, bound: int) -> Dict[str, Any]:
+    """The plan as the report holds it: the shared documents' tokens, the budget every root is held to and, for each group, the
+    images and tokens its root holds with the margin to the budget."""
+    limit = plan.budget["tokens"]
+    groups = [dict(group.as_dict(), budget=limit, margin=None if limit is None else limit - group.tokens) for group in plan.groups]
+    return {"groups": groups, "forks": len(plan.lanes), "bound": bound, "shared_tokens": plan.shared["tokens"],
+            "budget": dict(plan.budget), "prefix_sha": plan.shared["prefix_sha"], "spec_digest": plan.spec_digest,
             "variants": list(plan.variants), "contexts": [dict(context) for context in plan.contexts],
-            "predicted": {key: plan.predicted[key] for key in ("cost_usd", "wall_s")}, "tree": plan.tree,
+            "predicted": {key: plan.predicted[key] for key in ("cost_usd", "wall_s", "tokens_written")}, "tree": plan.tree,
             "cli_version": plan.cli_version, "tool_commit": plan.tool_commit}
 
 
@@ -347,7 +381,8 @@ def figures_of_run(folder: str, before: Set[str]) -> Tuple[List[telemetry.Sessio
 def predicted_for(plan: planner.Plan, groups: Optional[Set[str]]) -> telemetry.Prediction:
     """What the plan predicted for the sessions of this run: all of them, or the roots and the forks of the groups run."""
     per_node = plan.predicted["per_node"]
-    nodes = [node for node in plan.nodes if node.role == planner.ROOT or groups is None or node.group in groups]
+    left_out = {group.root for group in plan.groups if groups is not None and group.id not in groups}
+    nodes = [node for node in plan.nodes if node.id not in left_out and (groups is None or node.role == planner.ROOT or node.group in groups)]
     lanes = [node for node in nodes if node.role == planner.UNIT]
     roots = [node for node in nodes if node.role == planner.ROOT]
     cost = sum(per_node[node.id]["cost_usd"] for node in nodes)
@@ -405,6 +440,9 @@ class Run:
         causes = folder_refusals(self.review, self.out, self.repo)
         bound = whole_number(self.args.bound, "the bound", causes)
         flag = whole_number(self.args.replicas, "the replicas flag", causes)
+        if self.args.plan_only and self.args.rerun:
+            causes.append("the command line gives --plan-only and --rerun together; --plan-only starts no session and so runs no unit "
+                          "again; give one or the other")
         if self.args.format not in FORMATS:
             causes.append(f"the report format {self.args.format!r} is none of {list(FORMATS)}; give text or json")
         if self.args.model is not None and not self.args.model.strip():
@@ -421,29 +459,27 @@ class Run:
         declaration = self.prepared.declaration
         try:
             self.counts = ensemble.replicas_by_unit(declaration, self.policy, flag)
-            self.groups = planner.pack(declaration)
-            self.group_counts = planner.replica_counts(declaration, self.groups, self.counts)
         except (ensemble.PolicyError, ValueError) as error:
             raise Refusal([f"{error}; give a whole number of 1 or more"])
-        forks = max(1, sum(self.group_counts))
-        declared = getattr(loaded.module, "bound", None)
-        self.bound = bound if bound is not None else forks if declared is None else min(declared, forks)
         try:
             self.catalogue = cat.admit(declaration, self.review, results_folder=self.out)
         except cat.Refused as error:
             raise Refusal([refusal.line() + "; change the declaration's artefact or the review folder, then run again"
                            for refusal in error.refusals])
-        self.shared = messages.shared_context(self.catalogue)
         try:
-            budget = planner.context_budget(declaration.budget, self.args.model)
-        except planner.WindowUndeclared as error:
+            self.formed = planner.form(declaration, self.catalogue, self.args.model)
+        except (planner.GroupsOverBudget, planner.OverBudget) as error:
+            raise Refusal(error.lines)
+        except (planner.WindowUndeclared, planner.OverStreamLimit) as error:
             raise Refusal([str(error)])
-        if budget is not None and self.shared.tokens > budget:
-            raise Refusal([str(planner.OverBudget(self.shared.tokens, budget))])
+        self.groups = [list(built.units) for built in self.formed.groups]
         try:
-            planner.check_stream(self.catalogue, self.shared)
-        except planner.OverStreamLimit as error:
-            raise Refusal([str(error)])
+            self.group_counts = planner.replica_counts(declaration, self.groups, self.counts)
+        except ValueError as error:
+            raise Refusal([f"{error}; give a whole number of 1 or more"])
+        forks = max(1, sum(self.group_counts))
+        declared = getattr(loaded.module, "bound", None)
+        self.bound = bound if bound is not None else forks if declared is None else min(declared, forks)
         self.spec = messages.make_spec(declaration, self.prepared.tools, self.review, self.args.model)
         self.names = list(dict.fromkeys(self.args.rerun))
         self.check_output_folder()
@@ -464,22 +500,31 @@ class Run:
             raise Refusal([f"the output folder {self.out} is in use by another run ({store.LOCK_NAME} is held by a running "
                            f"process, or records none); wait for it to end, or remove {lock} if no run is in the folder"])
 
-    def build_plan(self, program: str) -> None:
-        self.program, self.version = program, agent_version(program)
-        found = ensemble.contexts(self.spec, self.shared, self.policy, used_variants(self.policy, self.group_counts))
+    def build_plan(self, program: Optional[str]) -> None:
+        """The plan the groups make. With no program (`--plan-only`) no agent command line is asked for its version."""
+        self.program = program
+        self.version = agent_version(program) if program is not None else "none (plan only)"
+        used = used_variants(self.policy, self.group_counts)
+        first = self.formed.groups[0].shared
+        found = ensemble.contexts(self.spec, first, self.policy, used)
         self.contexts = found if len(found) > 1 else None
         declaration = self.prepared.declaration
         try:
-            self.plan = planner.make_plan(declaration, self.catalogue, self.shared, self.spec, bound=self.bound,
+            self.plan = planner.make_plan(declaration, self.catalogue, self.spec, bound=self.bound,
                                           cli_version=self.version, tool_commit=tool_commit(self.repo), replicas=self.counts,
                                           variants=self.policy.ids, contexts=found if len(found) > 1 else (),
-                                          prompt_for=ensemble.prompt_for(declaration, self.policy, self.prepared.unit_text))
-        except (planner.OverBudget, planner.OverStreamLimit, planner.BoundBelowOne, planner.WindowUndeclared, ValueError) as error:
+                                          prompt_for=ensemble.prompt_for(declaration, self.policy, self.prepared.unit_text),
+                                          formed=self.formed)
+        except (planner.GroupsOverBudget, planner.OverBudget) as error:
+            raise Refusal(error.lines)
+        except (planner.OverStreamLimit, planner.BoundBelowOne, planner.WindowUndeclared,
+                planner.GroupsWithOtherModel, ValueError) as error:
             raise Refusal([str(error)])
-        self.report["agent"] = {"program": program, "version": self.version}
+        if program is not None:
+            self.report["agent"] = {"program": program, "version": self.version}
         self.report["notes"] += [cm.unpriced_text(model) for model in
                                  cm.unpriced([self.args.model] + [context.model for context in found[1:]])]
-        self.report["plan"] = plan_summary(self.plan, self.shared, self.bound)
+        self.report["plan"] = plan_summary(self.plan, self.bound)
 
     # The record after the sessions, before it is written ------------------------------------------
 
@@ -522,7 +567,9 @@ class Run:
             attempt = lane["record"]["attempts"][lane["record"]["standing"]]
             units.setdefault(lane["group"], {})[f"r{lane['replica']}"] = attempt["tables"]
         try:
-            merged = self.prepared.merge([group.id for group in self.plan.groups], units)
+            holds = {group.id: [item for unit in group.units for item in self.prepared.declaration.units[unit].items]
+                     for group in self.plan.groups}
+            merged = self.prepared.merge([group.id for group in self.plan.groups], units, holds)
             files = self.prepared.render(merge.plain_tables(merged))
             written = caller_module.write_rendered(self.prepared.caller.name, self.out, files, caller_module.earlier_names(prior))
         except merge.Refused as error:
@@ -552,10 +599,10 @@ class Run:
         common = dict(prompt_for=prompt_for, round_label=self.prepared.rules.round_label, contexts=self.contexts,
                       finish=self.finish_record)
         if self.names:
-            scheduler.rerun_review(runner, self.prepared.declaration, self.plan, self.shared, self.spec, self.out, self.review,
+            scheduler.rerun_review(runner, self.prepared.declaration, self.plan, self.formed.roots, self.spec, self.out, self.review,
                                    self.names, **common)
         else:
-            scheduler.run_review(runner, self.prepared.declaration, self.plan, self.shared, self.spec, self.out, self.review,
+            scheduler.run_review(runner, self.prepared.declaration, self.plan, self.formed.roots, self.spec, self.out, self.review,
                                  **common)
         self.report["files"] = [store.PLAN_NAME, store.RECORD_NAME, STREAMS_FOLDER + "/"] + list(self.report["rendered"])
 
@@ -580,6 +627,17 @@ def main(argv: Optional[Sequence[str]] = None, out=sys.stdout, err=sys.stderr, e
 
     try:
         run.settle(environ)
+        if args.plan_only:
+            run.build_plan(None)
+            try:
+                store.write_plan(folder, run.plan.to_dict())
+            except OSError as error:
+                return refused([f"the output folder {folder} could not be written ({error}); give a folder this user can write, "
+                                "then run again"])
+            report["result"], report["detail"] = PLANNED, (f"the plan is written to {os.path.join(folder, store.PLAN_NAME)}; "
+                                                         "no session was started")
+            report["files"] = [store.PLAN_NAME]
+            return finish(report, as_json, out, err)
         try:
             program = ex.require_agent(environ)
         except ex.CannotRun as error:

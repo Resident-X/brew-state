@@ -33,7 +33,7 @@ class Case(unittest.TestCase):
         found = catalogue.admit(DECLARATION, self.review)
         shared = messages.shared_context(found)
         spec = messages.make_spec(DECLARATION, ("Read",), "/work", model)
-        made = planner.make_plan(DECLARATION, found, shared, spec, bound=4, cli_version="9.9.9", tool_commit="abc1234",
+        made = planner.make_plan(DECLARATION, found, spec, bound=4, cli_version="9.9.9", tool_commit="abc1234",
                                  replicas=ensemble.replicas_by_unit(DECLARATION, policy, flag), variants=policy.ids,
                                  prompt_for=ensemble.prompt_for(DECLARATION, policy))
         return shared, spec, made

@@ -115,20 +115,14 @@ def makespan(durations: Sequence[float], slots: int) -> float:
     return max(free)
 
 
-def hoist_saving(prices: Prices, sizes: Mapping[str, int], calls: Mapping[str, int], needed_by: Mapping[str, Sequence[str]]) -> float:
-    """What a tree with the artefacts needed by only some groups held above them would at most save over the flat plan.
+def shared_write_saving(prices: Prices, sizes: Mapping[str, int], held_by: Mapping[str, int]) -> float:
+    """What a tree with the artefacts more than one root holds written once above them would at most save over the plan.
 
-    In the flat plan every call of every fork reads every artefact of the shared context, though a group's calls need
-    only its own; a tree would not read an artefact for a group that does not need it. The bound is the read price over
-    the sum, for each artefact, of its size times the calls of the groups that do not need it. It leaves out the extra
-    writes and the extra call a level costs, so it is the most a tree could save.
-    """
-    total = sum(calls.values())
-    saved = 0.0
-    for name, size in sizes.items():
-        using = sum(calls[group] for group in needed_by.get(name, ()))
-        saved += size * (total - using)
-    return saved * prices.read / MILLION
+    Each group's root writes the artefacts it holds, so an artefact held by several roots is written once for each. The bound
+    is the write price over the sum, for each artefact, of its size times the roots holding it beyond the first. It leaves out
+    the extra reads and the extra call a level costs, so it is the most a tree could save."""
+    saved = sum(size * max(held_by.get(name, 0) - 1, 0) for name, size in sizes.items())
+    return saved * prices.write / MILLION
 
 
 # --- Refit -------------------------------------------------------------------------------------

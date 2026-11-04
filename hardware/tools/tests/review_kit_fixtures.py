@@ -39,7 +39,7 @@ BASE: Dict[str, Any] = {
                      "citation": "finding (?P<number>\\d+)"},
     },
     "deny": ["*seed*", "private/*"],
-    "budget": {"wall_s": 600, "usd": 5.0, "context_tokens": 100000},
+    "budget": {"wall_s": 600, "usd": 5.0},
 }
 
 
@@ -79,6 +79,16 @@ def png(width: int, height: int, shade: int = 0) -> bytes:
     rows = b"".join(b"\x00" + bytes([shade]) * width for _ in range(height))
     return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 0, 0, 0, 0))
             + chunk(b"IDAT", zlib.compress(rows)) + chunk(b"IEND", b""))
+
+
+def header_png(width: int, height: int) -> bytes:
+    """A PNG whose header states the size and whose image data is one empty row: the kit measures an image by its header alone,
+    so a fixture of hundreds of full-size views is written in no time."""
+    def chunk(kind: bytes, body: bytes) -> bytes:
+        return struct.pack(">I", len(body)) + kind + body + struct.pack(">I", zlib.crc32(kind + body))
+
+    return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 0, 0, 0, 0))
+            + chunk(b"IDAT", zlib.compress(b"\x00")) + chunk(b"IEND", b""))
 
 
 def write(folder: str, relative: str, data: Any) -> str:
@@ -139,13 +149,15 @@ class Harness:
     """
 
     def __init__(self, test, raw=None, script=None, bound=4, attempts=3, concurrency=None, policy=None, replicas=1,
-                 variants=(), root=None, executor_class=None, base=None, out_name="out"):
+                 variants=(), root=None, executor_class=None, base=None, out_name="out", prepare=None):
         if base is None:
             self.tmp = tempfile.TemporaryDirectory()
             test.addCleanup(self.tmp.cleanup)
             base = self.tmp.name
         self.base = base
         self.review = review_folder(os.path.join(base, "review"))
+        if prepare is not None:
+            prepare(self.review)
         self.out = os.path.join(base, out_name)
         self.raw = raw or declaration_dict()
         self.script = dict(script or {})
@@ -160,15 +172,18 @@ class Harness:
     def build(self):
         self.declaration = decl.parse(_json.dumps(self.raw), "caller.json")
         found = catalogue.admit(self.declaration, self.review, results_folder=self.out)
-        self.shared = messages.shared_context(found)
         self.spec = messages.make_spec(self.declaration, ("Read", "Glob"), self.review, "claude-sonnet-5-5")
-        self.plan = planner.make_plan(self.declaration, found, self.shared, self.spec, bound=self.bound, cli_version="9.9.9",
-                                      tool_commit="abc1234", replicas=self.replicas, variants=self.variants)
+        self.formed = planner.form(self.declaration, found, "claude-sonnet-5-5")
+        self.roots = self.formed.roots
+        #: The context of the first group's root, for a test that needs a context message of its own.
+        self.shared = self.formed.groups[0].shared
+        self.plan = planner.make_plan(self.declaration, found, self.spec, bound=self.bound, cli_version="9.9.9",
+                                      tool_commit="abc1234", replicas=self.replicas, variants=self.variants, formed=self.formed)
         self.executor = self.executor_class(replies=self.reply, clock=self.clock, policy=self.policy)
         self.scheduler = scheduler.Scheduler(self.executor, self.clock, self.concurrency, self.attempts)
 
     def reply(self, call, number):
-        if call.label == "root":
+        if call.label == "root" or call.label.startswith("root."):
             return self.root_reply or ex.Reply(text=messages.ACK, write=100)
         if call.label in self.script:
             return self.script[call.label]
@@ -177,10 +192,10 @@ class Harness:
         return ex.Reply(structured=good_answer(self.declaration, group.units, passing), text="done")
 
     def fresh(self):
-        return scheduler.run_review(self.scheduler, self.declaration, self.plan, self.shared, self.spec, self.out, self.review)
+        return scheduler.run_review(self.scheduler, self.declaration, self.plan, self.roots, self.spec, self.out, self.review)
 
     def again(self, names):
-        return scheduler.rerun_review(self.scheduler, self.declaration, self.plan, self.shared, self.spec, self.out,
+        return scheduler.rerun_review(self.scheduler, self.declaration, self.plan, self.roots, self.spec, self.out,
                                       self.review, names)
 
     def new_stub(self, script=None):

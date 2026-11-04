@@ -186,11 +186,15 @@ class EndToEnd(Case):
         self.assertEqual(sum(g["replicas"] for g in plan["groups"]), len(forks), "one fork for every group and replica")
         calls = self.calls()
         roots = [c for c in calls if c["resume"] is None]
-        self.assertEqual(len(roots), 1, "the shared context is started once")
-        self.assertEqual(calls[0]["resume"], None, "and before any fork")
+        self.assertEqual(len(roots), 3, "the root of each group is started once")
+        self.assertEqual([c["resume"] for c in calls[:3]], [None, None, None], "and before any fork")
+        forks_of = {}
         for fork in (c for c in calls if c["resume"] is not None):
-            self.assertEqual(fork["resume"], roots[0]["session"])
+            self.assertIn(fork["resume"], {root["session"] for root in roots})
             self.assertTrue(fork["fork"])
+            forks_of[fork["resume"]] = forks_of.get(fork["resume"], 0) + 1
+        self.assertEqual(sorted(forks_of.values()), sorted(g["replicas"] for g in plan["groups"]),
+                         "each group's replicas continue the one root of the group")
         with open(os.path.join(self.out, "summary.md"), encoding="utf-8") as handle:
             self.assertEqual(handle.read().splitlines(), sorted({f"{i}: pass" for i in ("i1", "i2", "j1", "k1", "k2", "m1")}))
         self.assertEqual(record["rendered"], ["summary.md"])
@@ -202,7 +206,7 @@ class EndToEnd(Case):
         self.assertEqual(self.lines(out, "RENDERED"), ["RENDERED | summary.md"])
         self.assertIn("FILE | summary.md", out)
         self.assertTrue(out.splitlines()[-1].startswith("RESULT | WRITTEN"))
-        self.assertEqual(len(self.lines(out, "SESSION")), 1 + len(forks), "each session's own figures")
+        self.assertEqual(len(self.lines(out, "SESSION")), 3 + len(forks), "each session's own figures")
 
     # SOL-HW-REVIEW-KIT.C10: the figures written into the output folder are each session's own: a fork's reported cost less
     # its parent's, and the run's, with the predicted against the actual
@@ -211,17 +215,19 @@ class EndToEnd(Case):
         self.assertEqual(status, 0, err)
         report = json.loads(out)
         sessions = {s["label"]: s for s in report["sessions"]}
-        root = sessions["root"]
-        self.assertAlmostEqual(root["cost_usd"], 0.01)
-        forks = [s for label, s in sessions.items() if label != "root"]
+        roots = [s for label, s in sessions.items() if label.startswith("root")]
+        self.assertEqual(len(roots), 3)
+        for root in roots:
+            self.assertAlmostEqual(root["cost_usd"], 0.01)
+        forks = [s for label, s in sessions.items() if not label.startswith("root")]
         for fork in forks:
             self.assertAlmostEqual(fork["cost_usd"], 0.02, msg="reported 0.03 cumulatively, 0.01 of it the parent's")
-            self.assertEqual(fork["parent"], "root")
+            self.assertEqual(fork["parent"], "root." + fork["label"].split(".")[0])
             self.assertEqual(fork["first_call_read"], 1000)
             self.assertEqual(fork["tokens"]["cache_read"], 1000)
         run = report["run"]
-        self.assertAlmostEqual(run["cost_usd"], 0.01 + 0.02 * len(forks))
-        self.assertEqual(run["sessions"], 1 + len(forks))
+        self.assertAlmostEqual(run["cost_usd"], 0.01 * 3 + 0.02 * len(forks))
+        self.assertEqual(run["sessions"], 3 + len(forks))
         self.assertEqual(run["predicted"]["cost_usd"], report["plan"]["predicted"]["cost_usd"])
         self.assertIn("cost_deviation", run["predicted"])
         self.assertIn("wall_deviation", run["predicted"])
@@ -442,9 +448,12 @@ class Refusals(Case):
 
     # SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C3: The review kit measures the size of the stream message that holds the shared context, the images base64-encoded as the kit sends them, and refuses the run with a line beginning REFUSED, before any session is started and before anything is spent, when that size is over the agent command line's stream limit of 268,435,456 characters (256 x 1024 x 1024, the figure the agent command line reports as 256M), a named constant of the kit, counted as the command line counts them: the UTF-16 code units of the one JSON line, without its newline. The line names the size, the limit, and the artefact group of the review folder that is largest (the views folder, the placement folder or the documents) with its size, and says what to do: write fewer or smaller views. The check is made where the context budget is checked, so the proof command's forms are held to it too. A context at the limit is not refused. Over the stub with a synthetic review folder and the constant lowered by the test, a context over the limit is refused with that line in text and in JSON and no session is started, a context at the limit runs, and the prediction line is not printed for the refused one. Out of scope: the token budget, which is unchanged.
     def test_a_shared_context_over_the_stream_limit_is_refused_before_any_session_and_the_prediction_in_text_and_json(self):
-        found = catalogue.admit(decl.parse(json.dumps(fx.declaration_dict()), "caller.json"), self.review)
-        size = messages.stream_size(messages.shared_context(found).message)
-        group, held = messages.largest_group(found)
+        declaration = decl.parse(json.dumps(fx.declaration_dict()), "caller.json")
+        found = catalogue.admit(declaration, self.review)
+        roots = planner.form(declaration, found, None).groups
+        widest = max(roots, key=lambda built: messages.stream_size(built.shared.message))
+        size = messages.stream_size(widest.shared.message)
+        group, held = messages.largest_group(widest.catalogue)
         with mock.patch.object(messages, "STREAM_LIMIT", size - 1):
             text = self.refused("over-stream-limit")
             for part in (str(size), str(size - 1), group, str(held), "write fewer or smaller views"):
@@ -463,8 +472,9 @@ class Refusals(Case):
 
     # SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C3: The review kit measures the size of the stream message that holds the shared context, the images base64-encoded as the kit sends them, and refuses the run with a line beginning REFUSED, before any session is started and before anything is spent, when that size is over the agent command line's stream limit of 268,435,456 characters (256 x 1024 x 1024, the figure the agent command line reports as 256M), a named constant of the kit, counted as the command line counts them: the UTF-16 code units of the one JSON line, without its newline. The line names the size, the limit, and the artefact group of the review folder that is largest (the views folder, the placement folder or the documents) with its size, and says what to do: write fewer or smaller views. The check is made where the context budget is checked, so the proof command's forms are held to it too. A context at the limit is not refused. Over the stub with a synthetic review folder and the constant lowered by the test, a context over the limit is refused with that line in text and in JSON and no session is started, a context at the limit runs, and the prediction line is not printed for the refused one. Out of scope: the token budget, which is unchanged.
     def test_a_shared_context_exactly_at_the_stream_limit_runs(self):
-        found = catalogue.admit(decl.parse(json.dumps(fx.declaration_dict()), "caller.json"), self.review)
-        size = messages.stream_size(messages.shared_context(found).message)
+        declaration = decl.parse(json.dumps(fx.declaration_dict()), "caller.json")
+        found = catalogue.admit(declaration, self.review)
+        size = max(messages.stream_size(built.shared.message) for built in planner.form(declaration, found, None).groups)
         with mock.patch.object(messages, "STREAM_LIMIT", size):
             status, out, err = self.run_command()
         self.assertEqual((status, err), (0, ""), out)
@@ -521,7 +531,7 @@ class Refusals(Case):
     def test_a_shared_context_that_cannot_be_started_is_reported_and_no_fork_is_started(self):
         self.scenario(root_error=True)
         self.refused("root-failed")
-        self.assertEqual([c["resume"] for c in self.calls()], [None])
+        self.assertEqual([c["resume"] for c in self.calls()], [None, None, None], "every root was started and none failed a fork into being")
         self.assertNotIn("run.lock", os.listdir(self.out))
 
     def test_an_output_folder_that_cannot_be_written_is_refused(self):
@@ -675,6 +685,14 @@ class RenderedKeys(Case):
         self.assertEqual(self.record()["rendered"], ["summary.md"])
 
 
+def one_group():
+    """The base declaration with every unit coupled to the others, so the plan has one group and one root."""
+    raw = fx.declaration_dict()
+    raw["units"]["u1"]["couples_with"] = ["u2"]
+    raw["units"]["u4"]["couples_with"] = ["u1"]
+    return raw
+
+
 class OtherModelReplica(Case):
     POLICY = """
         replica_policy = {"variants": [{"id": "full"}, {"id": "alt", "model": "other-model-id"}],
@@ -684,7 +702,7 @@ class OtherModelReplica(Case):
     # SOL-HW-REVIEW-KIT.C9: a replica declared for a model other than the review's has its own shared context and session
     # specification, which the command starts and the replica forks from, and shares no cache with the others
     def test_a_replica_on_another_model_gets_its_own_root_session_and_forks_from_it(self):
-        self.write_caller(extra=self.POLICY)
+        self.write_caller(extra=self.POLICY, declaration=one_group())
         status, out, err = self.run_command("--model", "review-model-id")
         self.assertEqual((status, err), (0, ""), out)
         calls = self.calls()
@@ -712,12 +730,27 @@ class OtherModelReplica(Case):
         figures = {s["label"] for s in json.loads(self.run_command("--model", "review-model-id", out=os.path.join(self.base, "o2"), fmt="json")[1])["sessions"]}
         self.assertIn("root.other-model-id", figures)
 
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a review over groups that also asks for replicas on another model is refused naming the combination, and a plan with no other model's replicas is unaffected
+    def test_a_review_of_several_groups_with_replicas_on_another_model_is_refused_naming_the_combination(self):
+        self.write_caller(extra=self.POLICY)
+        text = self.refused("groups-other-model", "--model", "review-model-id")
+        self.assertIn("3 groups", text)
+        self.assertIn("other-model-id", text)
+        self.assertEqual(self.calls(), [])
+        self.assertFalse(os.path.exists(os.path.join(self.out, "run.lock")))
+        status, out, err = self.run_command("--model", "review-model-id", fmt="json", out=os.path.join(self.base, "j"))
+        self.assertEqual((status, err), (1, ""))
+        self.assertTrue(any("replicas run on another model" in line for line in json.loads(out)["refusals"]))
+        plain = os.path.join(self.base, "plain")
+        self.write_caller(extra=self.POLICY.replace('"model": "other-model-id"', '"terse": True'))
+        status, out, err = self.run_command("--model", "review-model-id", out=plain)
+        self.assertEqual((status, err), (0, ""), "a review whose replicas stay on the review's model has as many groups as it needs")
+
     def test_the_guard_allows_the_other_models_specification_and_still_refuses_any_other_change(self):
-        harness = fx.Harness(self, replicas=2)
+        harness = fx.Harness(self, raw=one_group(), replicas=2)
         policy = ensemble.parse_policy({"variants": [{"id": "full"}, {"id": "alt", "model": "other"}]})
         found = ensemble.contexts(harness.spec, harness.shared, policy)
-        plan = planner.make_plan(harness.declaration, catalogue.admit(harness.declaration, harness.review), harness.shared,
-                                 harness.spec, bound=4, cli_version="1", tool_commit="c", replicas=2, variants=policy.ids,
+        plan = planner.make_plan(harness.declaration, catalogue.admit(harness.declaration, harness.review), harness.spec, bound=4, cli_version="1", tool_commit="c", replicas=2, variants=policy.ids,
                                  contexts=found)
 
         def reply(call, number):
@@ -728,7 +761,7 @@ class OtherModelReplica(Case):
 
         executor = ex.StubExecutor(replies=reply, clock=harness.clock)
         runner = scheduler.Scheduler(executor, harness.clock)
-        result = runner.run(harness.declaration, plan, harness.shared, harness.spec,
+        result = runner.run(harness.declaration, plan, harness.roots, harness.spec,
                             ensemble.prompt_for(harness.declaration, policy), contexts=found)
         self.assertEqual([root["id"] for root in [result.root] + result.extra_roots], ["root", "root.other"])
         roots = {call.label: call for call in executor.calls if not call.fork and call.parent is None}
@@ -755,22 +788,155 @@ class OtherModelReplica(Case):
             executor.run(sess.Call(dataclasses.replace(harness.spec, tools=("Read",)), harness.shared.message, label="y"))
 
     def test_a_plan_with_other_contexts_cannot_be_run_without_them(self):
-        harness = fx.Harness(self, replicas=2)
+        harness = fx.Harness(self, raw=one_group(), replicas=2)
         policy = ensemble.parse_policy({"variants": [{"id": "full"}, {"id": "alt", "model": "other"}]})
         found = ensemble.contexts(harness.spec, harness.shared, policy)
         plan = planner.make_plan(harness.declaration, catalogue.admit(
-            harness.declaration, harness.review), harness.shared, harness.spec, bound=4, cli_version="1", tool_commit="c",
+            harness.declaration, harness.review), harness.spec, bound=4, cli_version="1", tool_commit="c",
             replicas=2, variants=policy.ids, contexts=found)
         self.assertEqual([root.id for root in plan.roots], ["root", "root.other"])
         again = planner.Plan.from_dict(json.loads(json.dumps(plan.to_dict())))
         self.assertEqual(again.contexts, plan.contexts, "the plan record round-trips the contexts")
         with self.assertRaises(ValueError) as caught:
-            harness.scheduler.run(harness.declaration, plan, harness.shared, harness.spec)
-        self.assertIn("2 shared contexts", str(caught.exception))
+            harness.scheduler.run(harness.declaration, plan, harness.roots, harness.spec)
+        self.assertIn("2 roots", str(caught.exception))
         with self.assertRaises(ValueError):
             planner.make_plan(harness.declaration, catalogue.admit(
-                harness.declaration, harness.review), harness.shared, harness.spec, bound=4, cli_version="1", tool_commit="c",
+                harness.declaration, harness.review), harness.spec, bound=4, cli_version="1", tool_commit="c",
                 replicas=2, variants=["full", "unheld"], contexts=found)
+
+
+class GroupRoots(Case):
+    """Each group is judged from a root of its own, held to the context budget, and the plan can be made without a session."""
+
+    def budgeted(self, budget, raw=None, name="budgeted"):
+        raw = raw or fx.declaration_dict()
+        raw["budget"] = dict(budget)
+        self.write_caller(declaration=raw, name=name)
+        return name
+
+    def group_tokens(self, raw):
+        declaration = decl.parse(json.dumps(raw), "caller.json")
+        found = catalogue.admit(declaration, self.review)
+        return {built.id: built.tokens for built in planner.form(declaration, found, None).groups}
+
+    def merging(self):
+        """The base declaration with a budget under which u4 (whose needs u1's include) merges into u1's group and the group of
+        u2 and u3 stays apart."""
+        raw = fx.declaration_dict()
+        raw["budget"] = {"context_tokens": 8500}
+        return raw
+
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C2: a group whose own artefacts, measured by the kit's existing token measure, added to the shared documents measure more than the budget is refused before any session starts, the refusal naming the group, its size in tokens and the budget; over a declaration with several oversize groups, every one is named; the command prints a REFUSED line naming the cause and what to do, exits 1, and starts no session
+    def test_every_group_over_the_budget_is_named_with_its_size_and_the_budget_and_no_session_starts(self):
+        sizes = self.group_tokens(fx.declaration_dict())
+        budget = sizes["G3"] + 10
+        self.assertLess(budget, sizes["G1"], "the declaration has a group that fits and two that do not")
+        name = self.budgeted({"context_tokens": budget})
+        text = self.refused("group-over-budget", caller=name)
+        lines = [line for line in text.splitlines() if line.startswith("REFUSED")]
+        self.assertEqual(len(lines), 2, text)
+        self.assertIn(f"group G1 (unit u1 alone) holds {sizes['G1']} tokens", lines[0])
+        self.assertIn(f"group G2 (units u2, u3, which the declaration couples) holds {sizes['G2']} tokens", lines[1])
+        for line in lines:
+            self.assertIn(f"budget of {budget} tokens", line)
+        self.assertNotIn("G3", text)
+        self.assertNothingStarted()
+        self.assertFalse(os.path.exists(self.out), "nothing was written")
+        status, out, err = self.run_command(caller=name, fmt="json", out=os.path.join(self.base, "json"))
+        self.assertEqual((status, err), (1, ""))
+        report = json.loads(out)
+        self.assertEqual([line.split(" holds ")[0] for line in report["refusals"]],
+                         ["group G1 (unit u1 alone)", "group G2 (units u2, u3, which the declaration couples)"])
+        self.assertNothingStarted()
+
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C2: a group that fits exactly is accepted
+    def test_a_group_that_fits_the_budget_exactly_is_accepted_and_one_token_less_is_refused(self):
+        raw = one_group()
+        size = self.group_tokens(raw)["G1"]
+        name = self.budgeted({"context_tokens": size}, raw)
+        status, out, err = self.run_command("--plan-only", caller=name)
+        self.assertEqual((status, err), (0, ""), out)
+        self.assertIn(f"{size} tokens | budget {size} | margin 0", out)
+        name = self.budgeted({"context_tokens": size - 1}, raw, "tight")
+        text = self.refused("group-over-budget", "--plan-only", caller=name, out=os.path.join(self.base, "o2"))
+        self.assertIn(f"holds {size} tokens in its root, more than the review's context budget of {size - 1} tokens, 1 over", text)
+
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C3: a plan-only invocation writes the plan and the report, exits 0 and starts no session, or exits 1 with the refusal when a group is over the budget
+    def test_a_plan_only_invocation_writes_the_plan_and_the_report_and_starts_no_session(self):
+        raw = self.merging()
+        name = self.budgeted(raw["budget"], raw)
+        sizes = self.group_tokens(raw)
+        os.environ.pop(ex.AGENT_ENV)
+        status, out, err = self.run_command("--plan-only", caller=name)
+        self.assertEqual((status, err), (0, ""), "no agent program is asked for")
+        self.assertEqual(self.calls(), [])
+        self.assertEqual(sorted(os.listdir(self.out)), ["plan.json"], "no record, no streams and no lock")
+        self.assertTrue(out.splitlines()[-1].startswith("RESULT | PLANNED"), out)
+        self.assertIn("AGENT", "".join(self.lines(out, "AGENT")) or "AGENT")
+        plan = store_plan(self.out)
+        self.assertEqual([g["tokens"] for g in plan["groups"]], [sizes[g["id"]] for g in plan["groups"]])
+        self.assertEqual(plan["budget"], {"tokens": 8500, "fraction": None, "window": None, "model": None})
+        self.assertEqual([g["units"] for g in plan["groups"]], [["u1", "u4"], ["u2", "u3"]])
+        status, as_json, err = self.run_command("--plan-only", "--format", "json", caller=name, out=os.path.join(self.base, "j"), skip=("--format", "text"))
+        self.assertEqual((status, err), (0, ""))
+        report = json.loads(as_json)
+        self.assertEqual(report["result"], "PLANNED")
+        self.assertIsNone(report["agent"])
+        self.assertEqual(report["sessions"], [])
+
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C3: the plan record and the report, in text and in JSON with the same content, give the shared documents' tokens, then for each group the number of images and the tokens its sessions hold in all, the budget they are held to and the margin; the predicted cost counts each group's root as written once for the group
+    def test_the_plan_report_gives_each_groups_images_tokens_budget_and_margin_the_same_in_text_and_json(self):
+        raw = self.merging()
+        name = self.budgeted(raw["budget"], raw)
+        status, out, err = self.run_command("--plan-only", caller=name, fmt="json")
+        self.assertEqual((status, err), (0, ""))
+        plan = json.loads(out)["plan"]
+        self.assertEqual(plan["shared_tokens"], messages.shared_context(catalogue.Catalogue(())).tokens, "no artefact is needed by every unit")
+        self.assertEqual([g["images"] for g in plan["groups"]], [1, 1])
+        for group in plan["groups"]:
+            self.assertEqual(group["budget"], 8500)
+            self.assertEqual(group["margin"], 8500 - group["tokens"])
+        self.assertEqual(plan["predicted"]["tokens_written"], sum(g["tokens"] for g in plan["groups"]), "each root once, whatever the replicas")
+        status, text, err = self.run_command("--plan-only", caller=name, out=os.path.join(self.base, "t"))
+        groups = self.lines(text, "GROUP")
+        self.assertEqual(len(groups), 2)
+        for line, group in zip(groups, plan["groups"]):
+            self.assertIn(f"| {group['images']} images | {group['tokens']} tokens | budget 8500 | margin {group['margin']} |", line)
+        self.assertIn(f"shared documents {plan['shared_tokens']} tokens | context budget 8500 tokens", "".join(self.lines(text, "PLAN")))
+        self.assertIn(f"{plan['predicted']['tokens_written']} tokens written", "".join(self.lines(text, "PREDICTED")))
+
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C3: exits 1 with the refusal when a group is over the budget
+    def test_a_plan_only_invocation_over_the_budget_exits_1_with_the_refusal_and_writes_no_plan(self):
+        name = self.budgeted({"context_tokens": 2000})
+        os.environ.pop(ex.AGENT_ENV)
+        text = self.refused("group-over-budget", "--plan-only", caller=name)
+        self.assertNotIn("RESULT | PLANNED", text)
+        self.assertFalse(os.path.exists(self.out))
+
+    def test_plan_only_and_rerun_together_are_refused(self):
+        self.refused("plan-only-rerun", "--plan-only", "--rerun", "u1")
+        self.assertNothingStarted()
+
+    def test_a_plan_only_run_in_an_output_folder_that_cannot_be_written_is_refused(self):
+        blocker = os.path.join(self.base, "blocker")
+        with open(blocker, "w", encoding="utf-8") as handle:
+            handle.write("a file where a folder is needed")
+        self.refused("output-unwritable", "--plan-only", out=os.path.join(blocker, "inside"))
+
+    def test_plan_only_is_in_the_help(self):
+        text = command.parser().format_help()
+        self.assertIn("--plan-only", text)
+        self.assertIn("without the agent program and without starting a session", " ".join(text.split()))
+
+    def assertNothingStarted(self):
+        self.assertEqual(self.calls(), [])
+        self.assertFalse(os.path.exists(os.path.join(self.out, "run.lock")))
+
+
+def store_plan(out):
+    with open(os.path.join(out, store.PLAN_NAME), encoding="utf-8") as handle:
+        return json.load(handle)
 
 
 class Options(Case):

@@ -11,8 +11,9 @@ the file, and the unit or table, and the artefact, slot or column that is wrong.
       "artefacts": {"<name>": {"kind": "text|image|extract", "source": "<path in the review folder>",
                                "producer": "<command that writes an extract>", "tokens": <recorded count>}},
       "templates": {"<name>": "text with {slot} slots"},
-      "units": {"<id>": {"items": [...], "template": "<name>", "needs": [...], "couples_with": [...],
+      "units": {"<id>": {"items": [...], "template": "<name>", "needs": [...], "couples_with": [...], "check_rules": [...],
                          "expected_output_tokens": N, "stakes": "low|normal|high", "values": {"<slot>": "..."}}},
+      "check_extract": {"report": "<name of the artefact that is a check's report>", "rule": "<pattern with a `rule` group>"},
       "schema": {"tables": [{"name", "columns", "key", "verdict_column", "verdicts", "numeric"}],
                  "findings": {"table", "number", "citations": [[table, column]], "citation": "<pattern>"}},
       "deny": ["<glob>"],
@@ -46,9 +47,10 @@ STAKES = ("low", "normal", "high")
 #: The slots the kit fills in every template; a declared value may not take one of these names.
 BUILT_IN_SLOTS = ("unit", "items", "schema")
 SLOT_NAME = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
-TOP_KEYS = ("artefacts", "templates", "units", "schema", "deny", "budget", "added_during_round")
+TOP_KEYS = ("artefacts", "templates", "units", "schema", "deny", "budget", "added_during_round", "check_extract")
 ARTEFACT_KEYS = ("kind", "source", "producer", "tokens")
-UNIT_KEYS = ("items", "template", "needs", "couples_with", "expected_output_tokens", "stakes", "values")
+UNIT_KEYS = ("items", "template", "needs", "couples_with", "check_rules", "expected_output_tokens", "stakes", "values")
+CHECK_EXTRACT_KEYS = ("report", "rule")
 TABLE_KEYS = ("name", "columns", "key", "verdict_column", "verdicts", "numeric")
 FINDING_KEYS = ("table", "number", "citations", "citation")
 BUDGET_KEYS = ("wall_s", "usd", "context_tokens", "context_fraction", "tree_saving_usd")
@@ -91,6 +93,16 @@ class Unit:
     expected_output_tokens: int
     stakes: str
     values: Tuple[Tuple[str, str], ...] = ()
+    #: The rules of the deterministic check's report that the unit judges; the group's extract is the report's lines for them.
+    check_rules: Tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class CheckExtract:
+    """The artefact that is a deterministic check's report and the pattern that reads the rule a line is about, as its `rule` group."""
+
+    report: str
+    rule: "re.Pattern[str]"
 
 
 @dataclass(frozen=True)
@@ -116,10 +128,11 @@ class Declaration:
     deny: Tuple[str, ...] = ()
     budget: Budget = field(default_factory=Budget)
     added_during_round: Tuple[str, ...] = ()
+    check_extract: Optional[CheckExtract] = None
 
     @property
     def needed(self) -> List[str]:
-        """Every artefact any unit needs, in the fixed order the shared context holds them: by name."""
+        """Every artefact any unit needs, in the fixed order a context holds them: by name."""
         return sorted({name for unit in self.units.values() for name in unit.needs})
 
     def json_schema(self) -> str:
@@ -249,9 +262,51 @@ def build(raw: Any, file: str, folder: Optional[str] = None) -> Declaration:
         deny = []
     budget = read_budget(raw.get("budget", {}), bad)
     added = read_added(raw.get("added_during_round", []), artefacts, bad, folder)
+    check_extract = read_check_extract(raw.get("check_extract"), artefacts, units, bad)
     if problems:
         raise DeclarationError(file, problems)
-    return Declaration(file, artefacts, units, dict(templates), shape, tuple(deny), budget, added)
+    return Declaration(file, artefacts, units, dict(templates), shape, tuple(deny), budget, added, check_extract)
+
+
+def read_check_extract(raw: Any, artefacts: Mapping[str, Artefact], units: Mapping[str, Unit], bad) -> Optional[CheckExtract]:
+    """The declared check report and rule pattern; a unit that declares rules needs one, and the report is a text artefact that
+    no unit needs, since the extract is what a root holds of it."""
+    where = "check_extract"
+    declared = [uid for uid, unit in units.items() if unit.check_rules]
+    if raw is None:
+        for uid in declared:
+            bad(f"unit {uid}", "check_rules", f"unit {uid} declares check_rules and the declaration has no `check_extract` to say which "
+                                              "artefact is the check's report")
+        return None
+    if not isinstance(raw, dict):
+        bad(where, None, "`check_extract` is not a mapping")
+        return None
+    for key in raw:
+        if key not in CHECK_EXTRACT_KEYS:
+            bad(where, key, f"`check_extract` has a key {key!r} it does not take; the keys are {list(CHECK_EXTRACT_KEYS)}")
+    report = raw.get("report")
+    ok = True
+    if report not in artefacts:
+        bad(where, str(report), f"`check_extract` names the report {report!r}, which is not an artefact of the declaration")
+        ok = False
+    elif artefacts[report].kind != "text":
+        bad(where, str(report), f"`check_extract` names the report {report!r}, which is a {artefacts[report].kind}, not a text")
+        ok = False
+    else:
+        for uid, unit in units.items():
+            if report in unit.needs:
+                bad(where, str(report), f"unit {uid} needs the check's report {report!r} whole; a root holds only the extract of it, so "
+                                        "no unit needs the report itself")
+                ok = False
+    try:
+        pattern = re.compile(str(raw.get("rule")))
+    except re.error as error:
+        bad(where, "rule", f"`check_extract` rule pattern does not compile ({error})")
+        return None
+    if "rule" not in pattern.groupindex:
+        bad(where, "rule", "`check_extract` rule pattern has no `rule` group")
+        return None
+    return CheckExtract(str(report), pattern) if ok else None
 
 
 def read_added(raw: Any, artefacts: Mapping[str, Artefact], bad, folder: Optional[str] = None) -> Tuple[str, ...]:
@@ -345,6 +400,10 @@ def read_units(raw: Any, artefacts: Mapping[str, Artefact], templates: Mapping[s
                 bad(where, other, f"unit {uid} is coupled with {other!r}, which is not a unit of the declaration")
             elif other == uid:
                 bad(where, other, f"unit {uid} is coupled with itself")
+        rules = entry.get("check_rules", [])
+        if not text_list(rules) or len(set(rules)) != len(rules):
+            bad(where, "check_rules", f"unit {uid}'s `check_rules` is not a list of distinct rule names")
+            rules = []
         output = entry.get("expected_output_tokens")
         if not whole(output) or output < 1:
             bad(where, "expected_output_tokens", f"unit {uid} gives expected_output_tokens as {output!r}, not a whole number above zero")
@@ -373,7 +432,7 @@ def read_units(raw: Any, artefacts: Mapping[str, Artefact], templates: Mapping[s
             if slot in BUILT_IN_SLOTS:
                 bad(where, slot, f"unit {uid} fills {slot!r}, which the kit fills itself")
         found[uid] = Unit(uid, tuple(items), str(template_name), tuple(needs), tuple(coupled), output, stakes,
-                          tuple(sorted(values.items())) if isinstance(values, dict) else ())
+                          tuple(sorted(values.items())) if isinstance(values, dict) else (), tuple(rules))
     return found
 
 

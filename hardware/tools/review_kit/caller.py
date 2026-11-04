@@ -291,9 +291,11 @@ class Prepared:
             text += "\n\nTake the items in this order:\n" + "\n".join(f"- {item}" for item in items)
         return text
 
-    def merge(self, order: Sequence[str], units: Mapping[str, Mapping[str, Dict[str, Any]]]) -> Dict[str, Any]:
-        """The merge of the units' replicas under the declared tables, with the caller's checks of the merged tables."""
-        return merge.merge(self.declaration.shape, self.rules, order, units, self.check)
+    def merge(self, order: Sequence[str], units: Mapping[str, Mapping[str, Dict[str, Any]]],
+              holds: Optional[Mapping[str, Sequence[str]]] = None) -> Dict[str, Any]:
+        """The merge of the groups' replicas under the declared tables, with the caller's checks of the merged tables. `holds`
+        gives the items each group holds, so that the merged pass is one verdict row for each item of the checklist."""
+        return merge.merge(self.declaration.shape, self.rules, order, units, self.check, holds)
 
     def check(self, tables: Mapping[str, Any]) -> List[str]:
         found = call_hook(self.caller, "checks function", self.caller.module.checks, tables)

@@ -47,7 +47,7 @@ class Tracking(ex.StubExecutor):
             cls.active += 1
             cls.peak = max(cls.peak, cls.active)
         try:
-            time.sleep(0.03 if call.label != "root" else 0)
+            time.sleep(0 if call.label.startswith("root") else 0.03)
             return super().execute(call)
         finally:
             with cls.guard:
@@ -69,19 +69,21 @@ def without_session_times(record):
 
 
 class OrderingTests(unittest.TestCase):
-    def test_shared_context_is_started_once_before_every_fork(self):
+    def test_the_root_of_each_group_is_started_once_before_every_fork(self):
         # SOL-HW-REVIEW-KIT.C6: the shared context is started once and before every fork
         harness = fx.Harness(self)
         harness.fresh()
         calls = harness.executor.calls
-        self.assertEqual(calls[0].label, "root")
-        self.assertEqual([c.label for c in calls].count("root"), 1)
-        root_session = [s for s in harness.executor.sessions][0]
-        self.assertEqual(len(calls), 1 + 3)
-        for call in calls[1:]:
-            self.assertEqual((call.parent, call.fork), (root_session, True))
-        self.assertIsNone(calls[0].parent)
-        self.assertEqual(calls[0].message, harness.shared.message)
+        roots = [c for c in calls if c.label.startswith("root")]
+        self.assertEqual(sorted(c.label for c in roots), ["root.G1", "root.G2", "root.G3"])
+        self.assertEqual([c.label for c in calls[:3]], [c.label for c in roots], "every root is started before any fork")
+        self.assertEqual(len(calls), 3 + 3)
+        for root in roots:
+            self.assertIsNone(root.parent)
+            self.assertEqual(root.message, harness.roots[root.label].message)
+        by_session = {call.label: session for session, call in zip(harness.executor.sessions, calls)}
+        for call in calls[3:]:
+            self.assertEqual((call.parent, call.fork), (by_session["root." + call.label.split(".")[0]], True))
 
     def test_every_session_starts_from_one_specification(self):
         # SOL-HW-REVIEW-KIT.C6: only the message and the session forked from differ between the sessions of a review
@@ -112,7 +114,7 @@ class OrderingTests(unittest.TestCase):
                 harness = fx.Harness(self, raw=with_ten_groups(), bound=bound, executor_class=Mine)
                 self.assertEqual(len(harness.plan.groups), 10)
                 harness.fresh()
-                self.assertEqual(len(harness.executor.calls), 11)
+                self.assertEqual(len(harness.executor.calls), 20)
                 self.assertEqual(Mine.peak, bound)
 
     def test_a_bound_below_one_is_refused_before_any_session(self):
@@ -125,8 +127,7 @@ class OrderingTests(unittest.TestCase):
                 with self.assertRaises(planner.BoundBelowOne):
                     scheduler.SerialConcurrency().run([lambda: 1], bad)
         with self.assertRaises(planner.BoundBelowOne):
-            planner.make_plan(harness.declaration, catalogue.admit(harness.declaration, harness.review),
-                              harness.shared, harness.spec, bound=0, cli_version="v", tool_commit="c")
+            planner.make_plan(harness.declaration, catalogue.admit(harness.declaration, harness.review), harness.spec, bound=0, cli_version="v", tool_commit="c")
         broken = replace(harness.plan, bound=0)
         with self.assertRaises(planner.BoundBelowOne):
             harness.scheduler.run(harness.declaration, broken, harness.shared, harness.spec)
@@ -166,7 +167,7 @@ class AppendedNodeTests(unittest.TestCase):
         record = harness.fresh()
         nodes = [n for n in record["nodes"] if n["group"] == "G1"]
         self.assertEqual([(n["id"], n["role"], n["parent"], n["attempt"]) for n in nodes],
-                         [("G1.r1.a1", "unit", "root", 1), ("G1.r1.a2", "unit", "root", 2)])
+                         [("G1.r1.a1", "unit", "root.G1", 1), ("G1.r1.a2", "unit", "root.G1", 2)])
         first, second = [c for c in harness.executor.calls if c.label.startswith("G1.")]
         self.assertEqual((second.parent, second.fork), (first.parent, True))
         self.assertEqual(second.message, first.message)
@@ -184,7 +185,7 @@ class AppendedNodeTests(unittest.TestCase):
                 harness = fx.Harness(self, script={"G3.r1.a1": reply})
                 record = harness.fresh()
                 nodes = [n for n in record["nodes"] if n["group"] == "G3"]
-                self.assertEqual([(n["id"], n["kind"], n["parent"]) for n in nodes], [("G3.r1.a1", kind, "root"), ("G3.r1.a2", "ok", "root")])
+                self.assertEqual([(n["id"], n["kind"], n["parent"]) for n in nodes], [("G3.r1.a1", kind, "root.G3"), ("G3.r1.a2", "ok", "root.G3")])
                 self.assertEqual(nodes[1]["role"], "unit")
 
     def test_local_problem_appends_a_repair_turn_in_the_units_own_session(self):
@@ -195,11 +196,12 @@ class AppendedNodeTests(unittest.TestCase):
         record = harness.fresh()
         nodes = [n for n in record["nodes"] if n["group"] == "G1"]
         self.assertEqual([(n["id"], n["role"], n["parent"], n["attempt"]) for n in nodes],
-                         [("G1.r1.a1", "unit", "root", 1), ("G1.r1.a2", "repair", "G1.r1.a1", 2)])
+                         [("G1.r1.a1", "unit", "root.G1", 1), ("G1.r1.a2", "repair", "G1.r1.a1", 2)])
         first, repair = [c for c in harness.executor.calls if c.label.startswith("G1.")]
         self.assertFalse(repair.fork)
-        fork_session = [s for s, _ in harness.executor.sessions.items()][1]
-        self.assertEqual(repair.parent, fork_session)
+        roots = [session for session, call in zip(harness.executor.sessions, harness.executor.calls) if call.label.startswith("root")]
+        self.assertIn(repair.parent, harness.executor.sessions)
+        self.assertNotIn(repair.parent, roots, "the repair continues the unit's own session, not a root")
         self.assertNotEqual(repair.parent, first.parent)
         self.assertIn("gives no verdict for item 'i2'", repair.message)
         self.assertNotIn("--fork-session", repair.arguments)
@@ -238,8 +240,8 @@ class AppendedNodeTests(unittest.TestCase):
         self.assertEqual(len(nodes), 1)
         self.assertEqual((nodes[0]["id"], nodes[0]["kind"], nodes[0]["tries"], nodes[0]["waits"]), ("G3.r1.a1", "ok", 3, [10, 30]))
         self.assertEqual(harness.clock.slept, [10, 30])
-        self.assertEqual(harness.executor.executions, 1 + 3 + 2)
-        self.assertEqual(len(harness.executor.calls), 4)
+        self.assertEqual(harness.executor.executions, 3 + 3 + 2)
+        self.assertEqual(len(harness.executor.calls), 6)
 
     def test_rate_limit_that_outlasts_the_retries_is_a_failed_attempt(self):
         # SOL-HW-REVIEW-KIT.C6: a rate limit waits on the clock and retries; one that never clears is reported
@@ -339,7 +341,7 @@ class AppendedNodeTests(unittest.TestCase):
         self.assertEqual(len(forks), 6)
         self.assertEqual(len(record["lanes"]), 6)
         self.assertEqual({n["variant"] for n in forks}, {"full", "terse"})
-        self.assertEqual(len([c for c in harness.executor.calls if c.label == "root"]), 1)
+        self.assertEqual(len([c for c in harness.executor.calls if c.label == "root.G1"]), 1, "a group's replicas share its root")
 
     def test_attempts_must_be_a_whole_number_of_one_or_more(self):
         # SOL-HW-REVIEW-KIT.C6: a unit gets a stated number of attempts
@@ -377,7 +379,7 @@ class ChecksOnTheStreamsTests(unittest.TestCase):
         with self.assertRaises(scheduler.RootFailed) as raised:
             harness.fresh()
         self.assertIn("boom", str(raised.exception))
-        self.assertEqual(len(harness.executor.calls), 1)
+        self.assertEqual({c.label for c in harness.executor.calls}, {"root.G1", "root.G2", "root.G3"}, "no fork was started")
         self.assertFalse(os.path.exists(os.path.join(harness.out, store.RECORD_NAME)))
         self.assertFalse(os.path.exists(os.path.join(harness.out, store.LOCK_NAME)))
 
@@ -406,7 +408,7 @@ class CannotJudgeTurnTests(unittest.TestCase):
         record = harness.fresh()
         nodes = self.g1(record)
         self.assertEqual([(n["id"], n["role"], n["parent"]) for n in nodes],
-                         [("G1.r1.a1", "unit", "root"), ("G1.r1.a2", "repair", "G1.r1.a1")])
+                         [("G1.r1.a1", "unit", "root.G1"), ("G1.r1.a2", "repair", "G1.r1.a1")])
         first, turn = [c for c in harness.executor.calls if c.label.startswith("G1.")]
         self.assertFalse(turn.fork)
         self.assertIn("--resume", turn.arguments)

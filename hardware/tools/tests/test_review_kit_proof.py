@@ -69,7 +69,7 @@ class FormsAsPlans(unittest.TestCase):
         self.assertEqual(items, [i for u in group.units for i in formed.declaration.units[u].items])
         self.assertEqual(("root", "G1.r1.a1"), tuple(n.id for n in formed.plan.nodes))
         self.assertEqual((), group.needs)
-        self.assertEqual([], formed.shared.as_dict()["artefacts"])
+        self.assertEqual([], formed.roots["root"].as_dict()["artefacts"])
         self.assertEqual(1, formed.plan.bound)
         self.assertEqual(1, group.replicas)
 
@@ -78,9 +78,9 @@ class FormsAsPlans(unittest.TestCase):
         alone, shared = self.plan(proof.SINGLE), self.plan(proof.SINGLE_SHARED)
         self.assertEqual(alone.plan.groups[0].units, shared.plan.groups[0].units)
         self.assertEqual(1, len(shared.plan.groups))
-        names = [a["name"] for a in shared.shared.as_dict()["artefacts"]]
+        names = [a["name"] for a in shared.roots["root"].as_dict()["artefacts"]]
         self.assertEqual(self.h.declaration.needed, names)
-        self.assertGreater(shared.shared.tokens, alone.shared.tokens)
+        self.assertGreater(shared.roots["root"].tokens, alone.roots["root"].tokens)
         self.assertEqual(tuple(sorted(self.h.declaration.needed)), shared.plan.groups[0].needs)
         self.assertNotEqual(alone.plan.root.prefix_sha, shared.plan.root.prefix_sha)
 
@@ -105,8 +105,10 @@ class FormsAsPlans(unittest.TestCase):
 
     def test_every_form_is_held_to_the_stream_limit_of_the_shared_context_it_sends(self):
         # SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C3: The review kit measures the size of the stream message that holds the shared context, the images base64-encoded as the kit sends them, and refuses the run with a line beginning REFUSED, before any session is started and before anything is spent, when that size is over the agent command line's stream limit of 268,435,456 characters (256 x 1024 x 1024, the figure the agent command line reports as 256M), a named constant of the kit, counted as the command line counts them: the UTF-16 code units of the one JSON line, without its newline. The line names the size, the limit, and the artefact group of the review folder that is largest (the views folder, the placement folder or the documents) with its size, and says what to do: write fewer or smaller views. The check is made where the context budget is checked, so the proof command's forms are held to it too. A context at the limit is not refused. Over the stub with a synthetic review folder and the constant lowered by the test, a context over the limit is refused with that line in text and in JSON and no session is started, a context at the limit runs, and the prediction line is not printed for the refused one. Out of scope: the token budget, which is unchanged.
-        size = messages.stream_size(messages.shared_context(self.catalogue).message)
-        for form in (proof.FANNED, proof.SINGLE_SHARED):
+        whole = messages.stream_size(messages.shared_context(self.catalogue).message)
+        largest = max(messages.stream_size(root.message) for root in self.plan(proof.FANNED).roots.values())
+        self.assertLess(largest, whole, "each group's root is smaller than the whole catalogue")
+        for form, size in ((proof.FANNED, largest), (proof.SINGLE_SHARED, whole)):
             with self.subTest(form=form):
                 with mock.patch.object(messages, "STREAM_LIMIT", size):
                     self.plan(form)
@@ -139,7 +141,7 @@ class RunsRecordedInOneShape(unittest.TestCase):
         declaration = formed.declaration
 
         def reply(call, number):
-            if call.label == "root":
+            if call.label.startswith("root"):
                 return ex.Reply(text="ack", write=100)
             group = next(g for g in formed.plan.groups if g.id == call.label.split(".")[0])
             lane = ".".join(call.label.split(".")[:2])
@@ -704,7 +706,7 @@ class VerdictsPerCombination(unittest.TestCase):
         formed = proof.form_plan(proof.SINGLE, h.declaration, catalogue_, h.spec, bound=4, cli_version="9.9.9", tool_commit="abc1234")
 
         def reply(call, number):
-            if call.label == "root":
+            if call.label.startswith("root"):
                 return ex.Reply(text="ack", write=100)
             group = next(g for g in formed.plan.groups if g.id == call.label.split(".")[0])
             items = [i for u in group.units for i in h.declaration.units[u].items]
@@ -764,7 +766,7 @@ class NamedFailVerdictOutcome(unittest.TestCase):
         formed = self.formed(proof.FANNED, replicas=2)
 
         def reply(call, number):
-            if call.label == "root":
+            if call.label.startswith("root"):
                 return ex.Reply(text="ack", write=100)
             group = next(g for g in formed.plan.groups if g.id == call.label.split(".")[0])
             rows = [{"Item": item, "Part": "x", "Verdict": "differs" if (item, call.label.split(".")[1]) == ("i1", "r2")

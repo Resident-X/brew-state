@@ -1,8 +1,8 @@
 """The scheduler: a plan run through an executor, the repairs it appends, and the rerun of named units.
 
-The shared context is started once, before any fork, and its answer is checked
+The root of every group is started, together, before any fork, and its answer is checked
 to be a shared-context node. The forks then run together, at most the stated
-number at once. The plan grows as results come back:
+number at once, each continuing its own group's root. The plan grows as results come back:
 
 - a fatal result (no object, a violation that cannot be mapped, an error exit, an
   empty answer) appends a fresh fork of the same parent as the next attempt;
@@ -35,7 +35,7 @@ from __future__ import annotations
 import datetime
 import threading
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Tuple
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Set, Tuple
 
 from . import decl, merge, messages, planner, results, store, streamcheck, streams
 from . import executor as ex
@@ -198,10 +198,11 @@ class Scheduler:
         group = next(g for g in plan.groups if g.id == first.group)
         label = "+".join(group.units)
         items = [item for unit in group.units for item in declaration.units[unit].items]
+        foreign = sorted(set(declaration.needed) - set(group.needs))
         record = results.UnitRecord(label)
         lane = LaneResult(group.id, first.replica, group.units, [], record)
         prefix = streams.lineage_written([root_stream])
-        root_node = root_node or first.parent or plan.root.id
+        root_node = root_node or first.parent
         parent_id, parent_session, fork, message = root_node, root_id, True, messages.prompt_message(prompt)
         fresh_message = message
         for attempt in range(1, self.attempts + 1):
@@ -223,7 +224,7 @@ class Scheduler:
                     miss = streamcheck.prefix_miss(streams.read_stream(outcome.stream), prefix)
                     node["flags"] = [str(miss)] if miss else []
                 assessed = results.assess(outcome.session.structured, outcome.session.text, declaration.shape, label, items,
-                                          round_label)
+                                          round_label, foreign, group.needs)
             else:
                 assessed = failed_assessment(outcome.kind, outcome.said(), label)
             results.mark_cleared(record.attempts, assessed, declaration.shape, self.fail, items, label)
@@ -251,39 +252,39 @@ class Scheduler:
 
     # A run -----------------------------------------------------------------------------------
 
-    def run(self, declaration: decl.Declaration, plan: planner.Plan, shared: messages.SharedContext, spec: sess.SessionSpec,
-            prompt_for: Optional[Callable[[Sequence[str], str], str]] = None, round_label: Optional[str] = None,
-            only: Optional[Set[str]] = None, contexts: Optional[Sequence[Any]] = None) -> RunResult:
+    def run(self, declaration: decl.Declaration, plan: planner.Plan, roots: Mapping[str, messages.SharedContext],
+            spec: sess.SessionSpec, prompt_for: Optional[Callable[[Sequence[str], str], str]] = None,
+            round_label: Optional[str] = None, only: Optional[Set[str]] = None, contexts: Optional[Sequence[Any]] = None) -> RunResult:
         """Run the plan, or only the groups `only` names. The bound comes from the plan.
 
-        With `contexts` (objects giving `root_id`, `spec`, `shared` and `variants`, the review's own first) a replica on
-        another model has a root and specification of its own: every root is started before any fork, together, and a fork
-        continues the root of the context that holds its variant."""
+        `roots` gives each group's context by the id of its root node. Every root of the groups run is started before any fork,
+        together, and a fork continues the root of its own group. With `contexts` (objects giving `root_id`, `spec`, `shared` and
+        `variants`, the review's own first) a replica on another model has a root and specification of its own, started with them,
+        and a fork of a variant that context holds continues it."""
         if plan.bound < 1:
             raise planner.BoundBelowOne(plan.bound)
         prompt_for = prompt_for or planner.default_prompt(declaration)
-        found = list(contexts) if contexts else [None]
-        if len(plan.roots) != len(found):
-            raise ValueError(f"the plan holds {len(plan.roots)} shared contexts and {len(found)} were given to run it with")
-        specs = [(context.root_id, context.spec, context.shared) if context is not None else (plan.root.id, spec, shared)
-                 for context in found]
-        if len(specs) > 1:
+        others = list(contexts)[1:] if contexts else []
+        if len(plan.roots) != len(plan.groups) + len(others):
+            raise ValueError(f"the plan holds {len(plan.roots)} roots and {len(plan.groups)} groups with {len(others)} contexts "
+                             "of another model were given to run it with")
+        specs = [(group.root, spec, roots[group.root]) for group in plan.groups if only is None or group.id in only]
+        specs += [(context.root_id, context.spec, context.shared) for context in others]
+        if others:
             self.executor.guard = AllowedSpecs(getattr(self.executor.guard, "inner", self.executor.guard),
-                                               [other for _, other, _ in specs[1:]])
+                                               [context.spec for context in others])
         started = self.concurrency.run([(lambda each=each: self.start_root(each[1], each[2], plan, each[0])) for each in specs],
                                        plan.bound)
-        roots = {each[0]: (begun[1], begun[2], each[1]) for each, begun in zip(specs, started)}
-        holder = {variant: context.root_id for context in found if context is not None for variant in context.variants}
+        begun = {each[0]: (made[1], made[2], each[1]) for each, made in zip(specs, started)}
         firsts = [node for node in plan.lanes if only is None or node.group in only]
         tasks = []
         for node in firsts:
-            root_node = holder.get(node.variant, plan.root.id) if holder else plan.root.id
-            session, root_stream, lane_spec = roots[root_node]
-            tasks.append(lambda node=node, root_node=root_node, session=session, root_stream=root_stream, lane_spec=lane_spec:
+            session, root_stream, lane_spec = begun[node.parent]
+            tasks.append(lambda node=node, session=session, root_stream=root_stream, lane_spec=lane_spec:
                          self.lane(declaration, plan, lane_spec, session, root_stream, node,
-                                   prompt_for(node.units, node.variant), round_label, root_node))
+                                   prompt_for(node.units, node.variant), round_label, node.parent))
         lanes = self.concurrency.run(tasks, plan.bound)
-        return RunResult(started[0][0], lanes, any(begun[3] for begun in started), [begun[0] for begun in started[1:]])
+        return RunResult(started[0][0], lanes, any(made[3] for made in started), [made[0] for made in started[1:]])
 
 
 # --- The record --------------------------------------------------------------------------------
@@ -313,6 +314,8 @@ def build_record(plan: planner.Plan, review_hash: str, run: RunResult, clock, ki
     lanes = lane_order(plan, run.lanes)
     ran = {(lane.group, lane.replica) for lane in lanes}
     kept_lanes = [lane for lane in (earlier["lanes"] if earlier else []) if (lane["group"], lane["replica"]) not in ran]
+    new_roots = {run.root["id"]} | {root["id"] for root in run.extra_roots}
+    kept_roots = [node for node in (earlier["nodes"] if earlier else []) if node["role"] == planner.ROOT and node["id"] not in new_roots]
     kept_nodes = [node for node in (earlier["nodes"] if earlier else [])
                   if node["role"] != planner.ROOT and (node["group"], node["replica"]) not in ran]
     units = dict(earlier["units"]) if earlier else {}
@@ -327,11 +330,11 @@ def build_record(plan: planner.Plan, review_hash: str, run: RunResult, clock, ki
     return {"version": store.RECORD_VERSION, "review_hash": review_hash, "review_files": review_files or {}, "plan": plan.to_dict(),
             "shared_context": {"prefix_sha": plan.shared["prefix_sha"], "tokens": plan.shared["tokens"],
                                "started_at": run.root["started_at"], "new": run.new_shared_context},
-            "nodes": [run.root] + list(run.extra_roots) + all_nodes, "lanes": all_lanes, "units": {u: units[u] for u in plan.units},
+            "nodes": sorted(kept_roots + [run.root] + list(run.extra_roots), key=lambda node: node["id"]) + all_nodes, "lanes": all_lanes, "units": {u: units[u] for u in plan.units},
             "runs": runs}
 
 
-def run_review(scheduler: Scheduler, declaration: decl.Declaration, plan: planner.Plan, shared: messages.SharedContext,
+def run_review(scheduler: Scheduler, declaration: decl.Declaration, plan: planner.Plan, roots: Mapping[str, messages.SharedContext],
                spec: sess.SessionSpec, out: str, review_folder: str, prompt_for=None,
                round_label: Optional[str] = None, contexts: Optional[Sequence[Any]] = None,
                finish: Optional[Callable[[Dict[str, Any]], Dict[str, Any]]] = None) -> Dict[str, Any]:
@@ -341,7 +344,7 @@ def run_review(scheduler: Scheduler, declaration: decl.Declaration, plan: planne
     with store.RunLock(out, scheduler.clock.now()):
         store.check_fresh(out)
         store.write_plan(out, plan.to_dict())
-        run = scheduler.run(declaration, plan, shared, spec, prompt_for, round_label, contexts=contexts)
+        run = scheduler.run(declaration, plan, roots, spec, prompt_for, round_label, contexts=contexts)
         review_hash, review_files = store.folder_entries(review_folder, plan.added_during_round)
         record = build_record(plan, review_hash, run, scheduler.clock, "fresh", review_files=review_files)
         if finish is not None:
@@ -350,12 +353,12 @@ def run_review(scheduler: Scheduler, declaration: decl.Declaration, plan: planne
         return record
 
 
-def rerun_review(scheduler: Scheduler, declaration: decl.Declaration, plan: planner.Plan, shared: messages.SharedContext,
+def rerun_review(scheduler: Scheduler, declaration: decl.Declaration, plan: planner.Plan, roots: Mapping[str, messages.SharedContext],
                  spec: sess.SessionSpec, out: str, review_folder: str, names: Sequence[str], prompt_for=None,
                  round_label: Optional[str] = None, contexts: Optional[Sequence[Any]] = None,
                  finish: Optional[Callable[[Dict[str, Any]], Dict[str, Any]]] = None) -> Dict[str, Any]:
-    """Run the named units again along the recorded path: the shared context's identical bytes, then a fork for each replica
-    of each group that holds a named unit. The named units' results replace the recorded ones, and the record says which units
+    """Run the named units again along the recorded path: the identical bytes of the root of each group that holds a named unit,
+    then a fork for each replica of those groups. The named units' results replace the recorded ones, and the record says which units
     were run again, when, and whether the shared context had to be written anew."""
     with store.RunLock(out, scheduler.clock.now()):
         record = store.read_record(out)
@@ -366,7 +369,7 @@ def rerun_review(scheduler: Scheduler, declaration: decl.Declaration, plan: plan
         running = [unit for group in plan.groups if group.id in groups for unit in group.units]
         store.check_rerun(record, review_hash, list(names), running, review_files)
         store.check_same_path(record, plan)
-        run = scheduler.run(declaration, plan, shared, spec, prompt_for, round_label, only=groups, contexts=contexts)
+        run = scheduler.run(declaration, plan, roots, spec, prompt_for, round_label, only=groups, contexts=contexts)
         record = build_record(plan, review_hash, run, scheduler.clock, "rerun", list(names), record, review_files)
         if finish is not None:
             record = finish(record)

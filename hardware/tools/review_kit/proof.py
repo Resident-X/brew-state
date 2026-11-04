@@ -131,11 +131,11 @@ class BaselineKey:
 
 @dataclass(frozen=True)
 class FormPlan:
-    """A form ready to run: the declaration it runs, the shared context its sessions continue and its plan."""
+    """A form ready to run: the declaration it runs, the root of each group its sessions continue and its plan."""
 
     form: str
     declaration: decl.Declaration
-    shared: messages.SharedContext
+    roots: Optional[Mapping[str, messages.SharedContext]]
     plan: planner.Plan
 
 
@@ -162,17 +162,17 @@ def form_plan(form: str, declaration: decl.Declaration, catalogue: cat.Catalogue
         shaped = one_unit(declaration, needs=form == SINGLE_SHARED)
         held = catalogue if form == SINGLE_SHARED else cat.Catalogue(())
         replicas, variants, bound = 1, (), 1
-    shared = messages.shared_context(held)
-    plan = planner.make_plan(shaped, held, shared, spec, bound=bound, cli_version=cli_version, tool_commit=tool_commit,
-                             replicas=replicas, variants=variants, prompt_for=prompt_for, **options)
-    return FormPlan(form, shaped, shared, plan)
+    formed = planner.form(shaped, held, spec.model)
+    plan = planner.make_plan(shaped, held, spec, bound=bound, cli_version=cli_version, tool_commit=tool_commit,
+                             replicas=replicas, variants=variants, prompt_for=prompt_for, formed=formed, **options)
+    return FormPlan(form, shaped, formed.roots, plan)
 
 
 def run_form(runner: scheduler.Scheduler, formed: FormPlan, spec: sess.SessionSpec,
              prompt_for: Optional[Callable[[Sequence[str], str], str]] = None,
              round_label: Optional[str] = None) -> scheduler.RunResult:
     """The form's plan run by the scheduler, as any review is."""
-    return runner.run(formed.declaration, formed.plan, formed.shared, spec, prompt_for, round_label)
+    return runner.run(formed.declaration, formed.plan, formed.roots, spec, prompt_for, round_label)
 
 
 # --- One run, in one shape ---------------------------------------------------------------------
