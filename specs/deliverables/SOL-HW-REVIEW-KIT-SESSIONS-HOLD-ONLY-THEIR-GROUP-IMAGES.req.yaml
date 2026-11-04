@@ -54,6 +54,6 @@ links:
   - target: DEC-FANNED-OUT-ROUND-IS-THE-SAME-ROUND
     type: justified-by
 brief_confirmation:
-  confirmer: claude-sonnet-5-5 independent brief reviewer
-  fingerprint: 2d7488cfd7e5c4491493939b765ae5aa28eac4b7e8fd37b1c17d8228045190bd
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: aa631bbbda588083160e8aac48c0386a9324e86eaebd9f32b0a8ab217f30d956
   gating_profile: ""
