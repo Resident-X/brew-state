@@ -65,11 +65,19 @@ The maker's pages read give the customer a choice of stackup and TG value and no
 
 So: the order cannot be shown to require any laminate. The CTI of the laminate actually shipped is unverified, and could be any family in the pool, including ones whose published CTI was not found above.
 
-Before ordering, the owner asks the maker's customer support, in writing, for: (1) the laminate maker and product that will be used for this six-layer 1.6 mm order, with that maker's datasheet; (2) confirmation that it can be fixed to one of the families above at order time, and the order-form field or note that does it (the order note to carry is: "laminate: Shengyi S1000-2M or S1000-2, CTI 175 V or more per IEC 60112; report any substitution before production"); (3) a material or conformance certificate for the shipped lot stating the CTI to IEC 60112, or the laminate maker's report. If the maker cannot fix the laminate or supply the certificate, the owner re-declares the basis (basis condition 3) before ordering.
+Before ordering, the owner asks the maker's customer support, in writing, for: (1) the laminate maker and product that will be used for this six-layer 1.6 mm order, with that maker's datasheet; (2) confirmation that it can be fixed to one of the families above at order time, and the order-form field or note that does it (the order note to carry is: "laminate: Shengyi S1000-2M, S1000-2 or S1141, or Kingboard KB-6165F, CTI 175 V or more per IEC 60112; report any substitution before production"); (3) a material or conformance certificate for the shipped lot stating the CTI to IEC 60112, or the laminate maker's report. If the maker cannot fix the laminate or supply the certificate, the owner re-declares the basis (basis condition 3) before ordering.
 
 ### Status
 
-Criterion C16 is **not met.** What is met: the notes cite laminate makers' published datasheets with a CTI of at least 175 for four families (S1000-2M, S1000-2, S1141, KB-6165F) and say which families publish none in the documents read. What is not met: the notes do not specify one laminate that the order can actually require (nothing read lets the customer require it); the copies cited are distributor-hosted, not confirmed as the makers' current revisions; and no certificate for the shipped lot exists. The criterion's own text puts choosing the laminate's supplier out of scope.
+Criterion C16, as amended, is **met on paper**; the shipped laminate is **not verified**. What the notes state, clause by clause:
+
+- Families with a published CTI of at least 175 (material group IIIa or better): Shengyi S1000-2M / S1000-2MB (class PLC3, specification "175~250", typical "200V"), Shengyi S1000-2 / S1000-2B (PLC 3, "175V--249V"), Shengyi S1141 (typical "175", no specification limit printed) and Kingboard KB-6165F ("175V", no method printed).
+- The maker's document and the revision read, for each: the table above gives them as printed (S1000-2M "data sheet (20120321)"; S1000-2 and S1141 with no revision printed; KB-616XF Version 2.0 / 2.1), and says the copies are hosted by distributors.
+- The order note that requires the families: "laminate: Shengyi S1000-2M, S1000-2 or S1141, or Kingboard KB-6165F, CTI 175 V or more per IEC 60112; report any substitution before production".
+- The written request the owner makes of the maker's customer support: the laminate maker and product for this order with its datasheet; confirmation that it can be fixed to one of those families and the field that does it; and a certificate of the shipped lot's CTI to IEC 60112.
+- Families whose maker publishes no index in the documents read (KB-6165, Nan Ya NP-140 family, KB-6160 and KB-6164) are listed as such and are not specified.
+
+What remains unverified, and is a pre-order action for the owner: the identity and CTI of the laminate the maker will ship, until the maker answers the request; that the maker's pages let the order fix a laminate at all (nothing read shows it); and that the distributor copies are the makers' current revisions (the makers' sites could not be reached). If the maker cannot fix the laminate or supply the certificate, the owner re-declares the basis (basis condition 3) before ordering. Choosing the laminate's supplier and receiving the certificate are out of scope of the criterion.
 
 ## Conformal coat (graph criterion C17)
 
