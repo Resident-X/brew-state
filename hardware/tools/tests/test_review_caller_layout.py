@@ -32,7 +32,6 @@ import board_history  # noqa: E402
 import board_review_history  # noqa: E402
 import layout_fixtures as fx  # noqa: E402
 import review_caller_layout  # noqa: E402
-import review_catalogue  # noqa: E402
 import review_folder  # noqa: E402
 from review_kit import caller as kit_caller  # noqa: E402
 from review_kit import catalogue, command, costmodel, merge, messages, planner  # noqa: E402
@@ -1091,18 +1090,11 @@ class TheToolGrant(Folder):
         self.assertIn(self.folder, line, "the folder its specification names")
 
 
-def one_group():
-    """The declaration couples every unit of the round, so the kit forms the one group the replicas on another model are built
-    for."""
-    return mock.patch.object(review_catalogue, "coupled_to", lambda unit, units, pairs: [other for other in units if other != unit])
-
-
 class TheSmallTierReplica(Folder):
     def run_three(self, **scenario):
         run = Command(self)
         run.scenario(**scenario)
-        with one_group():
-            status, text, err = run.go("--format", "json", "--replicas", "3", "--model", "claude-sonnet-5-5")
+        status, text, err = run.go("--format", "json", "--replicas", "3", "--model", "claude-sonnet-5-5")
         return run, status, text, err
 
     def test_a_round_of_three_replicas_plans_a_second_shared_context_for_the_small_model(self):
@@ -1111,8 +1103,12 @@ class TheSmallTierReplica(Folder):
         self.assertEqual(status, 0, text + err)
         plan = json.loads(text)["plan"]
         self.assertEqual(plan["variants"], ["full", "hunt", "small"])
-        self.assertEqual([(context["model"], context["variants"]) for context in plan["contexts"]],
-                         [(review_caller_layout.SMALL_MODEL, ["small"])], "the review's own context and one for the small model")
+        groups = [group["id"] for group in plan["groups"]]
+        self.assertGreater(len(groups), 1, "the round is judged in several groups")
+        self.assertEqual([(context["group"], context["model"], context["variants"]) for context in plan["contexts"]],
+                         [(group, review_caller_layout.SMALL_MODEL, ["small"]) for group in groups],
+                         "a root for the small model for each group, beside each group's own")
+        self.assertEqual(len({context["root_id"] for context in plan["contexts"]}), len(groups))
         os.remove(run.log)
         two = Command(self, out="out-two")
         two.scenario()
@@ -1123,29 +1119,32 @@ class TheSmallTierReplica(Folder):
         models = {call["args"][call["args"].index("--model") + 1] for call in two.calls()}
         self.assertNotIn(review_caller_layout.SMALL_MODEL, models)
 
-    def test_the_third_replicas_lane_forks_from_the_small_models_root_with_that_model(self):
-        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: the third replica forks from the small-tier root and is started with that model
+    def test_the_third_replicas_lane_forks_from_the_small_models_root_of_its_group_with_that_model(self):
+        # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: the third replica forks from the small-tier root of its group and is started with that model
         run, status, text, err = self.run_three()
         self.assertEqual(status, 0, text + err)
+        groups = [set(group["units"]) for group in json.loads(text)["plan"]["groups"]]
         calls = run.calls()
         roots = [call for call in calls if call["resume"] is None]
-        self.assertEqual(len(roots), 2, "a shared context for each model")
+        self.assertEqual(len(roots), 2 * len(groups), "a root for each group and each of the two models")
 
         def model_of(call):
             return call["args"][call["args"].index("--model") + 1]
-        small_root = next(call for call in roots if model_of(call) == review_caller_layout.SMALL_MODEL)
-        own_root = next(call for call in roots if model_of(call) != review_caller_layout.SMALL_MODEL)
         forks = [call for call in calls if call["resume"] is not None]
-        self.assertEqual(len(forks), 3, "one group of three replicas: the units are coupled, since a root for the small model is built for one group")
-        small = [call for call in forks if call["resume"] == small_root["session"]]
-        own = [call for call in forks if call["resume"] == own_root["session"]]
-        self.assertEqual((len(small), len(own)), (1, 2), "the third replica, and the first two")
-        for call in small:
-            self.assertEqual(model_of(call), review_caller_layout.SMALL_MODEL)
-            self.assertTrue(call["fork"])
-        for call in own:
-            self.assertEqual(model_of(call), model_of(own_root))
-        self.assertNotEqual(model_of(own_root), review_caller_layout.SMALL_MODEL)
+        self.assertEqual(len(forks), 3 * len(groups), "three replicas of each group")
+        resumed = {root["session"]: [fork for fork in forks if fork["resume"] == root["session"]] for root in roots}
+        for root in roots:
+            held = resumed[root["session"]]
+            self.assertTrue(all(model_of(fork) == model_of(root) and fork["fork"] for fork in held), "a fork has its root's model")
+            self.assertEqual(len({tuple(sorted(fork["units"])) for fork in held}), 1, "a root's forks are all of one group")
+            self.assertIn(set(held[0]["units"]), groups)
+            self.assertEqual(len(held), 1 if model_of(root) == review_caller_layout.SMALL_MODEL else 2,
+                             "the third replica of the group on the small model's root, the first two on the other")
+        for group in groups:
+            mine = [root for root in roots if set(resumed[root["session"]][0]["units"]) == group]
+            self.assertEqual(sorted(model_of(root) for root in mine),
+                             sorted([review_caller_layout.SMALL_MODEL, next(model_of(r) for r in roots if model_of(r) != review_caller_layout.SMALL_MODEL)]),
+                             "each group has a root on each model")
 
     def test_a_fail_by_the_small_model_replica_stands_in_the_merge_like_any_other(self):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C8: the merge treats the third replica's fails like those of the others
@@ -1328,11 +1327,11 @@ class TheBoundOnReviewersAtOnce(Folder):
             return real(self, [wrap(task) for task in tasks], bound)
         run = Command(self)
         run.scenario()
-        with mock.patch.object(scheduler.ThreadedConcurrency, "run", counted), one_group():
-            status, text, err = run.go("--format", "json", "--replicas", "40")
+        with mock.patch.object(scheduler.ThreadedConcurrency, "run", counted):
+            status, text, err = run.go("--format", "json", "--replicas", "20")
         self.assertEqual(status, 0, text + err)
         plan = json.loads(text)["plan"]
-        self.assertEqual(plan["forks"], 40, "forty replicas of the one group the coupled units form")
+        self.assertEqual(plan["forks"], 40)
         self.assertEqual(plan["bound"], 30)
         self.assertEqual(state["bounds"][-1], 30)
         self.assertLessEqual(state["peak"], 30)

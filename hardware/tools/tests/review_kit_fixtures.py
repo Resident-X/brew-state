@@ -204,9 +204,3 @@ class Harness:
         self.executor = self.executor_class(replies=self.reply, clock=self.clock, policy=self.policy)
         self.scheduler = scheduler.Scheduler(self.executor, self.clock, self.concurrency, self.attempts)
 
-
-def single_group():
-    """The kit forms one group of every unit, as it does when the units' roots fit one and the replicas on another model are
-    built for it."""
-    from unittest import mock
-    return mock.patch.object(planner, "form_groups", lambda declaration, sizing, budget: [list(declaration.units)])

@@ -24,7 +24,6 @@ import tempfile
 import types
 import unittest
 from unittest import mock
-from unittest import mock
 
 TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, TOOLS)
@@ -34,7 +33,6 @@ import board_check  # noqa: E402
 import layout_fixtures as lfx  # noqa: E402
 import layout_review_proof as lrp  # noqa: E402
 import review_kit_fixtures as fx  # noqa: E402
-from review_kit_fixtures import single_group  # noqa: E402
 import review_proof_harness as harness  # noqa: E402
 import schematic_fixtures as sfx  # noqa: E402
 import schematic_review_proof as srp  # noqa: E402
@@ -87,7 +85,7 @@ class Proofed(unittest.TestCase):
         lfx.write(self.program, caller_tests.STUB.replace("PYTHON", sys.executable, 1).replace("TOOLS", repr(TOOLS)))
         os.chmod(self.program, os.stat(self.program).st_mode | stat.S_IXUSR)
         for patch in (mock.patch.dict(os.environ, {ex.AGENT_ENV: self.program, "STUB_SCENARIO": self.scenario_path, "STUB_LOG": self.log}),
-                      mock.patch.object(srp, "DESIGN", sfx.DESIGN), mock.patch.object(srp, "NAME", sfx.NAME), single_group()):
+                      mock.patch.object(srp, "DESIGN", sfx.DESIGN), mock.patch.object(srp, "NAME", sfx.NAME)):
             patch.start()
             self.addCleanup(patch.stop)
         self.scenario(verdicts=ALL_FAIL)
@@ -162,7 +160,7 @@ class TheCommand(Proofed):
         for item in ("PINV-1", "PINV-2", "STRAP-1", "DERATE-1", "DERATE-2", "FREE-PASS"):
             self.assertIn(f"- {item}", fork["prompt"])
         self.assertTrue(fanned_calls)
-        self.assertEqual(len([call for call in fanned_calls if call["resume"] is None]), 1, "one shared context for the replicas")
+        self.assertEqual(len([call for call in fanned_calls if call["resume"] is None]), 3, "a root for each of the three groups, which its replicas share")
         groups = json.loads(json.dumps(self.record()["fanned_runs"][0]))["sessions"]
         self.assertEqual(len(groups), len(fanned_calls))
         for call in calls:
@@ -357,7 +355,9 @@ class TheCommand(Proofed):
         forks = {label: entry for label, entry in found.items() if label.startswith("G")}
         self.assertTrue(forks)
         self.assertTrue(all(entry == {"retrieved": 2, "failed": 1} for entry in forks.values()), found)
-        self.assertEqual(found["root"], {"retrieved": 0, "failed": 0})
+        roots = {label: entry for label, entry in found.items() if label.startswith("root")}
+        self.assertEqual(len(roots), len({label.split(".")[0] for label in forks}), "a root for each group")
+        self.assertTrue(all(entry == {"retrieved": 0, "failed": 0} for entry in roots.values()), found)
         count = len(forks)
         self.assertIn(f"retrievals {2 * count} failed {count} |", text)
         self.assertIn("RETRIEVALS | fanned | G1.r1.a1 | retrieved 2 failed 1", text)

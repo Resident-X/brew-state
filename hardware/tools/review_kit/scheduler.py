@@ -121,7 +121,7 @@ class RunResult:
     root: Dict[str, Any]
     lanes: List[LaneResult]
     new_shared_context: bool
-    #: The roots of the shared contexts built for replicas on another model.
+    #: Every root started after the first: the other groups' roots and the roots for replicas on another model.
     extra_roots: List[Dict[str, Any]] = field(default_factory=list)
 
     @property
@@ -258,21 +258,23 @@ class Scheduler:
         """Run the plan, or only the groups `only` names. The bound comes from the plan.
 
         `roots` gives each group's context by the id of its root node. Every root of the groups run is started before any fork,
-        together, and a fork continues the root of its own group. With `contexts` (objects giving `root_id`, `spec`, `shared` and
-        `variants`, the review's own first) a replica on another model has a root and specification of its own, started with them,
-        and a fork of a variant that context holds continues it."""
+        together, and a fork continues the root of its own group. With `contexts` (as `ensemble.group_contexts` gives them) a
+        replica on another model has, for each group run, a root and specification of its own, started with the others, and a
+        fork of a variant that root holds continues it."""
         if plan.bound < 1:
             raise planner.BoundBelowOne(plan.bound)
         prompt_for = prompt_for or planner.default_prompt(declaration)
-        others = list(contexts)[1:] if contexts else []
+        others = [context for context in contexts or () if context.other]
         if len(plan.roots) != len(plan.groups) + len(others):
             raise ValueError(f"the plan holds {len(plan.roots)} roots and {len(plan.groups)} groups with {len(others)} contexts "
                              "of another model were given to run it with")
+        owner = {context["root_id"]: context["group"] for context in plan.contexts}
+        running = [context for context in others if only is None or owner[context.root_id] in only]
         specs = [(group.root, spec, roots[group.root]) for group in plan.groups if only is None or group.id in only]
-        specs += [(context.root_id, context.spec, context.shared) for context in others]
-        if others:
+        specs += [(context.root_id, context.spec, context.shared) for context in running]
+        if running:
             self.executor.guard = AllowedSpecs(getattr(self.executor.guard, "inner", self.executor.guard),
-                                               [context.spec for context in others])
+                                               [context.spec for context in running])
         started = self.concurrency.run([(lambda each=each: self.start_root(each[1], each[2], plan, each[0])) for each in specs],
                                        plan.bound)
         begun = {each[0]: (made[1], made[2], each[1]) for each, made in zip(specs, started)}

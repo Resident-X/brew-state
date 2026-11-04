@@ -28,7 +28,6 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import layout_fixtures as fx  # noqa: E402
 import production_fixtures as pf  # noqa: E402
-from review_kit_fixtures import single_group  # noqa: E402
 import review_caller_layout  # noqa: E402
 import review_caller_production_files as caller  # noqa: E402
 import review_folder  # noqa: E402
@@ -939,9 +938,6 @@ class Command:
         patcher = mock.patch.dict(os.environ, {ex.AGENT_ENV: self.program, "STUB_SCENARIO": self.scenario_path, "STUB_LOG": self.log})
         patcher.start()
         case.addCleanup(patcher.stop)
-        one = single_group()
-        one.start()
-        case.addCleanup(one.stop)
 
     def scenario(self, **values):
         pf.fx.write(self.scenario_path, json.dumps({"layers": pf.LAYERS, **values}))
@@ -1135,9 +1131,21 @@ class TheReplicasBudgetAndBound(Folder):
         self.assertEqual(status, 0, text + err)
         plan = json.loads(text)["plan"]
         self.assertEqual(plan["variants"], ["full", "hunt", "small"])
-        self.assertEqual([(context["model"], context["variants"]) for context in plan["contexts"]], [(SMALL, ["small"])])
+        groups = [group["id"] for group in plan["groups"]]
+        self.assertGreater(len(groups), 1, "the check is judged in several groups")
+        self.assertEqual([(context["group"], context["model"], context["variants"]) for context in plan["contexts"]],
+                         [(group, SMALL, ["small"]) for group in groups], "a root for the small model for each group")
         calls = run.calls()
+        roots = [call for call in calls if call["resume"] is None]
+        self.assertEqual(len(roots), 2 * len(groups), "a root for each group and each of the two models")
         forks = [call for call in calls if call["resume"] is not None and "Your unit:" in call["prompt"]]
+        group_of = {unit: group["id"] for group in plan["groups"] for unit in group["units"]}
+        for root in roots:
+            held = [fork for fork in forks if fork["resume"] == root["session"]]
+            self.assertEqual({model_of(fork) for fork in held}, {model_of(root)}, "a fork has its root's model")
+            self.assertEqual(len({tuple(sorted(group_of[unit] for unit in re.findall(r"Your unit: (\S+)", fork["prompt"]))) for fork in held}), 1,
+                             "a root's forks are all of one group")
+            self.assertEqual(len(held), 1 if model_of(root) == SMALL else 2, "the third replica on the small model's root, the first two on the other")
         self.assertEqual(len(forks), plan["forks"])
         self.assertEqual(len(forks) % 3, 0)
         self.assertEqual({model_of(call) for call in forks}, {MID, SMALL})

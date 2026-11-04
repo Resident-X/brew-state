@@ -49,12 +49,20 @@ class Overrun:
     units: Tuple[str, ...]
     tokens: int
     images: int
+    #: The model whose root it is when that is not the review's, and the budget that model's root is held to.
+    model: Optional[str] = None
+    limit: Optional[int] = None
 
     def line(self, budget: int) -> str:
         who = f"unit {self.units[0]} alone" if len(self.units) == 1 else f"units {', '.join(self.units)}, which the declaration couples"
-        return (f"group {self.group} ({who}) holds {self.tokens} tokens in its root, more than the review's context budget of "
-                f"{budget} tokens, {self.tokens - budget} over; declare fewer views for the units named in their `needs`, or raise "
-                "the budget's context_tokens or context_fraction")
+        if self.model is None:
+            return (f"group {self.group} ({who}) holds {self.tokens} tokens in its root, more than the review's context budget of "
+                    f"{budget} tokens, {self.tokens - budget} over; declare fewer views for the units named in their `needs`, or raise "
+                    "the budget's context_tokens or context_fraction")
+        budget = self.limit if self.limit is not None else budget
+        return (f"group {self.group} ({who}) holds {self.tokens} tokens in its root for the model {self.model}, more than that model's "
+                f"context budget of {budget} tokens, {self.tokens - budget} over; declare fewer views for the units named in their "
+                "`needs`, or raise the budget's context_tokens or context_fraction")
 
 
 class GroupsOverBudget(Exception):
@@ -64,18 +72,6 @@ class GroupsOverBudget(Exception):
         self.overruns, self.budget = list(overruns), budget
         self.lines = [overrun.line(budget) for overrun in self.overruns]
         super().__init__("; ".join(self.lines))
-
-
-class GroupsWithOtherModel(Exception):
-    """Groups are each judged from a root of their own, and a replica on another model needs a root per model."""
-
-    def __init__(self, groups: int, models: Sequence[str], avoiding: Optional[int] = None):
-        self.groups, self.models, self.avoiding = groups, list(models), avoiding
-        way = (f"give --replicas {avoiding}, which runs only the replicas on the review's model (the replicas on another model are "
-               "lost), or " if avoiding else "")
-        super().__init__(f"the review has {groups} groups, each judged from a root of its own, and its replicas run on another model "
-                         f"({', '.join(self.models)}); a root is built for the review's model only, so {way}give every variant of "
-                         "the replica policy the review's model")
 
 
 class WindowUndeclared(Exception):
@@ -174,8 +170,8 @@ class Plan:
     tree: Dict[str, Any]
     cli_version: str
     tool_commit: str
-    #: The roots built besides the groups' own, one for each other model a replica runs on: the root node's id,
-    #: the model, the specification and its digest, the prefix hash and the variants that fork from it.
+    #: The roots built besides the groups' own, one for each group and each other model its replicas run on: the root node's id,
+    #: the group, the model, the specification and its digest, the prefix hash and the variants that fork from it.
     contexts: Tuple[Dict[str, Any], ...] = ()
     #: The paths the declaration lists as added to the review folder during the round; the folder hash leaves them out.
     added_during_round: Tuple[str, ...] = ()
@@ -185,7 +181,7 @@ class Plan:
 
     @property
     def roots(self) -> List[Node]:
-        """The root of every group, then the root of each other model's context."""
+        """The root of every group, then the roots of the groups for each other model."""
         return [node for node in self.nodes if node.role == ROOT]
 
     @property
@@ -506,27 +502,36 @@ def make_plan(declaration: decl.Declaration, catalogue: cat.Catalogue, spec: ses
     """The plan for a declaration: a root for each group and a fork for each group and replica. Refused when the bound is below
     one, and as `form` refuses; `formed` is the groups already formed for these arguments.
 
-    `contexts` are the contexts to build when a replica runs on a model other than the review's: objects giving `root_id`,
-    `model`, `spec`, `shared` and `variants`, the review's own first. They are refused for a review of more than one group. A
-    group's replica forks from the context that holds its variant; with none given every replica forks from its group's root.
-    Each context is priced at its own model's prices (`costmodel.PRICES_BY_MODEL`); `prices`, when given, prices every node
-    alike."""
+    `contexts` are the shared contexts to build, each of a group and a model: objects giving `root_id`, `group`, `other`, `model`,
+    `spec`, `shared` and `variants`, as `ensemble.group_contexts` gives them (a group's context for the review's own model is
+    the group's root, and one with no group is the only group's). A replica on a model other than the review's forks from the
+    context of its group that holds its variant, a root of its own held to that model's context budget, and a group whose root
+    for such a model is over that budget is refused naming the group, the model, the figures and the budget. A replica whose
+    variant no context holds is refused; with no contexts given every replica forks from its group's root. Each root is priced at
+    its own model's prices (`costmodel.PRICES_BY_MODEL`); `prices`, when given, prices every root alike."""
     if isinstance(bound, bool) or not isinstance(bound, int) or bound < 1:
         raise BoundBelowOne(bound)
     formed = formed or form(declaration, catalogue, spec.model)
-    if len(contexts) > 1 and len(formed.groups) > 1:
-        other = {variant for context in list(contexts)[1:] for variant in context.variants}
-        first_other = next((index for index, variant in enumerate(variants) if variant in other), None)
-        raise GroupsWithOtherModel(len(formed.groups), [context.model for context in list(contexts)[1:]], first_other or None)
-    for context in list(contexts)[1:]:
+    by_group = {built.id: built for built in formed.groups}
+    owned: List[Tuple[Any, str]] = []
+    for context in contexts:
+        owner = context.group if context.group is not None else (formed.groups[0].id if len(formed.groups) == 1 else None)
+        if owner not in by_group:
+            raise ValueError(f"the context {context.root_id} belongs to the group {context.group!r}, which the plan does not hold")
+        owned.append((context, owner))
+    others = [(context, owner) for context, owner in owned if context.other]
+    over = []
+    for context, owner in others:
         limit = context_budget(declaration.budget, context.model)
         if limit is not None and context.shared.tokens > limit:
-            only = formed.groups[0]
-            raise GroupsOverBudget([Overrun(only.id, only.units, context.shared.tokens, only.images)], limit)
+            built = by_group[owner]
+            over.append(Overrun(built.id, built.units, context.shared.tokens, built.images, context.model, limit))
+    if over:
+        raise GroupsOverBudget(over, over[0].limit)
     prompt_for = prompt_for or default_prompt(declaration)
     root_prices = prices or cm.prices_for(spec.model)
     prices_of: Dict[str, cm.Prices] = {built.root: root_prices for built in formed.groups}
-    for context in list(contexts)[1:]:
+    for context, _ in others:
         prices_of[context.root_id] = prices or cm.prices_for(context.model)
     counts = replica_counts(declaration, [built.units for built in formed.groups], replicas)
     groups: List[Group] = []
@@ -537,38 +542,39 @@ def make_plan(declaration: decl.Declaration, catalogue: cat.Catalogue, spec: ses
                             built.tokens, built.shared.prefix_sha, built.extract))
         nodes.append(Node(built.root, ROOT, None, None, None, 1, None, (), built.shared.prefix_sha, built.shared.prefix_sha))
         per_node[built.root] = {"cost_usd": cm.root_cost(root_prices, built.tokens), "wall_s": timing.seconds(1, cm.ACK_TOKENS)}
-    parent_of: Dict[str, str] = {}
-    for context in contexts:
+    parent_of: Dict[Tuple[str, str], str] = {}
+    held: Dict[str, int] = {built.root: built.tokens for built in formed.groups}
+    for context, owner in others:
         for variant_id in context.variants:
-            parent_of[variant_id] = context.root_id
-    for context in list(contexts)[1:]:
+            parent_of[(owner, variant_id)] = context.root_id
+        held[context.root_id] = context.shared.tokens
         nodes.append(Node(context.root_id, ROOT, None, None, None, 1, None, (), context.shared.prefix_sha,
                           context.shared.prefix_sha))
         per_node[context.root_id] = {"cost_usd": cm.root_cost(prices_of[context.root_id], context.shared.tokens),
                                      "wall_s": timing.seconds(1, cm.ACK_TOKENS)}
-    root_of = {built.id: built for built in formed.groups}
+    held_variants = {(owner, variant_id) for context, owner in owned for variant_id in context.variants}
     durations: List[float] = []
     for group in groups:
-        built = root_of[group.id]
+        built = by_group[group.id]
         for replica in range(1, group.replicas + 1):
             variant = (variants[(replica - 1) % len(variants)] if variants else BASE_VARIANT)
             prompt = prompt_for(group.units, variant)
-            if contexts and variant not in parent_of:
-                raise ValueError(f"the variant {variant!r} forks from no shared context; the contexts hold {sorted(parent_of)}")
-            parent = parent_of.get(variant, built.root)
+            if contexts and (group.id, variant) not in held_variants:
+                raise ValueError(f"the variant {variant!r} forks from no shared context of the group {group.id}; its contexts hold "
+                                 f"{sorted(name for owner, name in held_variants if owner == group.id)}")
+            parent = parent_of.get((group.id, variant), built.root)
             node = Node(f"{group.id}.r{replica}.a1", UNIT, parent, group.id, replica, 1, variant, group.units,
                         built.shared.prefix_sha, messages.sha256(messages.prompt_message(prompt)))
             nodes.append(node)
             seconds = timing.seconds(calls_per_fork, group.expected_output_tokens)
-            held = built.tokens if parent == built.root else next(c.shared.tokens for c in contexts if c.root_id == parent)
-            per_node[node.id] = {"cost_usd": cm.fork_cost(prices_of[parent], held, len(prompt), group.expected_output_tokens,
+            per_node[node.id] = {"cost_usd": cm.fork_cost(prices_of[parent], held[parent], len(prompt), group.expected_output_tokens,
                                                           calls_per_fork), "wall_s": seconds}
             durations.append(seconds)
     wall = max(entry["wall_s"] for key, entry in per_node.items() if key == ROOT or key.startswith(ROOT + ".")) \
         + cm.makespan(durations, bound)
     target = declaration.budget.wall_s
     cost = sum(entry["cost_usd"] for entry in per_node.values())
-    written = sum(built.tokens for built in formed.groups) + sum(context.shared.tokens for context in list(contexts)[1:])
+    written = sum(built.tokens for built in formed.groups) + sum(context.shared.tokens for context, _ in others)
     predicted = {"cost_usd": round(cost, 6), "wall_s": round(wall, 3), "tokens_written": written,
                  "wall_target_s": target, "meets_wall_target": None if target is None else wall <= target,
                  "cost_ceiling_usd": declaration.budget.usd,
@@ -581,7 +587,7 @@ def make_plan(declaration: decl.Declaration, catalogue: cat.Catalogue, spec: ses
             "kept": "flat"}
     return Plan(tuple(groups), tuple(nodes), spec.as_dict(), spec.digest, formed.shared.as_dict(), tuple(variants), bound,
                 root_prices.as_dict(), timing.as_dict(), calls_per_fork, predicted, tree, cli_version, tool_commit,
-                tuple({"root_id": context.root_id, "model": context.model, "spec": context.spec.as_dict(),
+                tuple({"root_id": context.root_id, "group": owner, "model": context.model, "spec": context.spec.as_dict(),
                        "spec_digest": context.spec.digest, "prices": prices_of[context.root_id].as_dict(), "prefix_sha": context.shared.prefix_sha,
-                       "variants": list(context.variants)} for context in list(contexts)[1:]),
+                       "variants": list(context.variants)} for context, owner in others),
                 tuple(declaration.added_during_round), dict(formed.budget))

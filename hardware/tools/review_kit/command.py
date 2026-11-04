@@ -14,7 +14,8 @@ caller's rendered files into the output folder, and prints a report. Every root 
 figure or a fraction of the model's declared context window, and a group over it is refused before any session starts.
 `--plan-only` forms and reports the plan, with each group's images and tokens against the budget, and writes it into the
 output folder as plan.json, without the agent program and without starting a session. A review whose replicas run on
-another model is refused when it has more than one group, the refusal naming the `--replicas` count that avoids it.
+another model gives each group a root for that model too, held to that model's context budget, and a group whose root for
+it is over that budget is refused naming the group, the model, the figures and the budget.
 
 The agent command line is started from the program named by the environment variable REVIEW_KIT_AGENT (claude when it
 is unset), which must be on the search path and logged in. The output folder holds the plan, the record, the saved
@@ -75,7 +76,7 @@ CAUSES: Dict[str, Tuple[str, str]] = {
     "over-budget": ("over the review's context budget", "take artefacts out of the units' `needs`, or raise the budget's context_tokens"),
     "window-undeclared": ("has no declared context window", "state a context_tokens figure, or add the model's window to the window table"),
     "group-over-budget": ("in its root, more than the review's context budget", "declare fewer views for the units named"),
-    "groups-other-model": ("replicas run on another model", "give every variant of the replica policy the review's model"),
+    "group-over-budget-model": ("in its root for the model", "declare fewer views for the units named"),
     "plan-only-rerun": ("--plan-only and --rerun together", "give one or the other"),
     "over-stream-limit": ("over the agent command line's stream limit", "write fewer or smaller views"),
     "output-has-record": ("already holds a record", "use a new output folder, or name the units to run again"),
@@ -284,7 +285,7 @@ def render_text(report: Mapping[str, Any]) -> List[str]:
                       "line for" for entry in group["extract"]["missing"]]
         for context in plan["contexts"]:
             lines.append(f"CONTEXT | {context['root_id']} | model {clean(context['model'])} | specification "
-                         f"{context['spec_digest']} | variants {', '.join(context['variants'])}")
+                         f"{context['spec_digest']} | variants {', '.join(context['variants'])} | group {context['group']}")
         predicted = plan["predicted"]
         lines.append(f"PREDICTED | ${predicted['cost_usd']} | {predicted['wall_s']} s | {predicted['tokens_written']} tokens written "
                      "(each group's root once)")
@@ -504,26 +505,25 @@ class Run:
         """The plan the groups make. With no program (`--plan-only`) no agent command line is asked for its version."""
         self.program = program
         self.version = agent_version(program) if program is not None else "none (plan only)"
-        used = used_variants(self.policy, self.group_counts)
-        first = self.formed.groups[0].shared
-        found = ensemble.contexts(self.spec, first, self.policy, used)
-        self.contexts = found if len(found) > 1 else None
+        used = [used_variants(self.policy, [count]) for count in self.group_counts]
+        found = ensemble.group_contexts(self.spec, self.formed.groups, self.policy, used)
+        other = ensemble.other_contexts(found)
+        self.contexts = found if other else None
         declaration = self.prepared.declaration
         try:
             self.plan = planner.make_plan(declaration, self.catalogue, self.spec, bound=self.bound,
                                           cli_version=self.version, tool_commit=tool_commit(self.repo), replicas=self.counts,
-                                          variants=self.policy.ids, contexts=found if len(found) > 1 else (),
+                                          variants=self.policy.ids, contexts=found if other else (),
                                           prompt_for=ensemble.prompt_for(declaration, self.policy, self.prepared.unit_text),
                                           formed=self.formed)
         except (planner.GroupsOverBudget, planner.OverBudget) as error:
             raise Refusal(error.lines)
-        except (planner.OverStreamLimit, planner.BoundBelowOne, planner.WindowUndeclared,
-                planner.GroupsWithOtherModel, ValueError) as error:
+        except (planner.OverStreamLimit, planner.BoundBelowOne, planner.WindowUndeclared, ValueError) as error:
             raise Refusal([str(error)])
         if program is not None:
             self.report["agent"] = {"program": program, "version": self.version}
         self.report["notes"] += [cm.unpriced_text(model) for model in
-                                 cm.unpriced([self.args.model] + [context.model for context in found[1:]])]
+                                 cm.unpriced([self.args.model] + [context.model for context in other])]
         self.report["plan"] = plan_summary(self.plan, self.bound)
 
     # The record after the sessions, before it is written ------------------------------------------

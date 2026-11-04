@@ -61,18 +61,27 @@ def plan_only(case, name, *extra, model=MODEL, fmt="text"):
 
 
 class Replicas:
-    """The refusal of replicas on another model over several groups and the count that avoids it, from a caller's own policy."""
+    """The plan of a caller's own replica policy over several groups: each group a root for each model its replicas run on."""
 
-    def assertRefusedWithTheWorkaround(self, name, fmt):
-        status, text = plan_only(self, name, "--replicas", "3", fmt=fmt)
-        self.assertEqual(status, 1, text)
+    def assertPlansEachGroupsRootForTheOtherModel(self, name, other, variants, per_group, fmt, *extra, model=MODEL):
+        status, text = plan_only(self, name, *extra, model=model, fmt=fmt)
+        self.assertEqual(status, 0, text)
         if fmt == "json":
-            refusals = json.loads(text)["refusals"]
-            self.assertEqual(len(refusals), 1, refusals)
-            text = refusals[0]
-        for part in ("groups, each judged from a root of its own", "replicas run on another model (claude-haiku-5-5)",
-                     "give --replicas 2"):
-            self.assertIn(part, text)
+            plan = json.loads(text)["plan"]
+            groups = [group["id"] for group in plan["groups"]]
+            self.assertGreater(len(groups), 1, "the round is judged in several groups")
+            self.assertEqual([(context["group"], context["model"], context["variants"]) for context in plan["contexts"]],
+                             [(group, other, variants) for group in groups], "a root for the other model for each group")
+            self.assertEqual(len({context["root_id"] for context in plan["contexts"]}), len(groups))
+            self.assertTrue(all(context["root_id"].startswith(f"root.{context['group']}.") for context in plan["contexts"]))
+            self.assertEqual(plan["forks"], per_group * len(groups))
+        else:
+            self.assertRegex(text, r"RESULT \| PLANNED")
+            self.assertNotIn("REFUSED", text)
+            contexts = [line for line in text.splitlines() if line.startswith("CONTEXT | ")]
+            self.assertGreater(len(contexts), 1)
+            self.assertEqual(len({line.split(" | ")[1] for line in contexts}), len(contexts), "each root has its own id")
+            self.assertTrue(all(f"| model {other} |" in line and line.split(" | ")[-1].startswith("group G") for line in contexts), contexts)
 
     def assertPlannedAtTwoReplicas(self, name, fmt):
         status, text = plan_only(self, name, "--replicas", "2", fmt=fmt)
@@ -200,11 +209,11 @@ class TheLayoutCaller(layout_tests.Folder, Budgeted):
 
 
 class TheLayoutCallersReplicas(layout_tests.Folder, Replicas):
-    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: A review over groups that also asks for replicas on another model is refused naming the combination and the replica count that avoids it, and a plan with no other model's replicas is unaffected.
-    def test_the_pre_order_rounds_three_replicas_over_several_groups_are_refused_naming_the_count_that_avoids_it_in_text_and_json(self):
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: A review over several groups whose replica policy places a replica on a model other than the review's gives each group a root for each such model, held to that model's declared context budget, and each such replica is started from the root of its group and model
+    def test_the_pre_order_rounds_three_replicas_over_several_groups_plan_a_small_model_root_for_each_group_in_text_and_json(self):
         for fmt in ("text", "json"):
             with self.subTest(fmt=fmt):
-                self.assertRefusedWithTheWorkaround("layout", fmt)
+                self.assertPlansEachGroupsRootForTheOtherModel("layout", layout.SMALL_MODEL, ["small"], 3, fmt, "--replicas", "3")
 
     def test_two_replicas_plan_over_the_same_groups_in_text_and_json(self):
         for fmt in ("text", "json"):
@@ -269,11 +278,12 @@ class TheProductionFilesCaller(production_tests.Folder, Budgeted):
 
 
 class TheProductionFilesCallersReplicas(production_tests.Folder, Replicas):
-    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: A review over groups that also asks for replicas on another model is refused naming the combination and the replica count that avoids it, and a plan with no other model's replicas is unaffected.
-    def test_the_checks_third_replica_over_several_groups_is_refused_naming_the_count_that_avoids_it_in_text_and_json(self):
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: A review over several groups whose replica policy places a replica on a model other than the review's gives each group a root for each such model, held to that model's declared context budget, and each such replica is started from the root of its group and model
+    def test_the_checks_default_policy_over_several_groups_plans_a_small_model_root_for_each_group_in_text_and_json(self):
         for fmt in ("text", "json"):
             with self.subTest(fmt=fmt):
-                self.assertRefusedWithTheWorkaround("production_files", fmt)
+                self.assertPlansEachGroupsRootForTheOtherModel("production_files", production.SMALL_MODEL, ["small"], 3, fmt,
+                                                               model=production.MID_MODEL)
 
     def test_two_replicas_plan_over_the_same_groups_in_text_and_json(self):
         for fmt in ("text", "json"):
@@ -297,22 +307,17 @@ class TheCriticalRoutingCallersReplicas(critical_tests.Folder):
         self.assertEqual(len(json.loads(text)["plan"]["contexts"]), 1, "one group, so a root for the other model is built")
 
 
-class TheSchematicCallersReplicas(schematic_tests.Folder):
-    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a review over groups that also asks for replicas on another model is refused naming the combination
-    def test_the_callers_policy_run_on_another_model_over_several_groups_is_refused_and_on_its_own_model_is_planned(self):
-        status, text = plan_only(self, "schematic")
-        self.assertEqual(status, 1, text)
-        self.assertRegex(text, r"REFUSED \| the review has \d+ groups, each judged from a root of its own, and its replicas run on another model")
-        status, text = plan_only(self, "schematic", fmt="json")
-        self.assertEqual(status, 1, text)
-        (line,) = json.loads(text)["refusals"]
-        self.assertIn("give every variant of the replica policy the review's model", line)
-        self.assertNotIn("--replicas", line.split("or give")[0], "no count avoids it: the first variant is on the other model")
-        status, text = plan_only(self, "schematic", model="claude-haiku-5-5")
+class TheSchematicCallersReplicas(schematic_tests.Folder, Replicas):
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a review over groups whose replicas run on another model gives each group a root for it, and one whose replicas run on the review's own model builds none
+    def test_the_callers_policy_run_on_another_model_over_several_groups_plans_each_groups_root_and_on_its_own_model_builds_none(self):
+        for fmt in ("text", "json"):
+            with self.subTest(fmt=fmt):
+                self.assertPlansEachGroupsRootForTheOtherModel("schematic", schematic.SMALL_MODEL, ["full", "hunt"], 2, fmt)
+        status, text = plan_only(self, "schematic", model=schematic.SMALL_MODEL, fmt="json")
         self.assertEqual(status, 0, text)
-        status, text = plan_only(self, "schematic", model="claude-haiku-5-5", fmt="json")
-        self.assertEqual(status, 0, text)
-        self.assertGreater(len(json.loads(text)["plan"]["groups"]), 1)
+        plan = json.loads(text)["plan"]
+        self.assertGreater(len(plan["groups"]), 1)
+        self.assertEqual(plan["contexts"], [], "both variants run on the review's model")
 
 
 class TheSchematicCaller(schematic_tests.Folder, Budgeted):

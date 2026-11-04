@@ -445,6 +445,62 @@ class PerModelPricing(Case):
         self.assertEqual(made.contexts[0]["prices"], cm.HAIKU_PRICES.as_dict(), "the plan records each other context's prices")
         self.assertEqual(made.prices, cm.Prices().as_dict(), "and the review's own")
 
+    def test_over_several_groups_each_group_has_a_root_for_each_model_priced_at_its_own_models_prices_and_counted_once(self):
+        # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a review over several groups whose replica policy places a replica on a model other than the review's gives each group a root for each such model, and each such replica is started from the root of its group and model
+        # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C17: the plan's total of tokens written counts each root once and not once per replica
+        declaration = decl.parse(json.dumps(fx.declaration_dict()), "caller.json")
+        found = catalogue.admit(declaration, self.review)
+        spec = messages.make_spec(declaration, ("Read",), "/work", "claude-sonnet-5-5")
+        policy = ensemble.parse_policy({"variants": [{"id": "full"}, {"id": "small", "model": "claude-haiku-5-5"}]})
+        formed = planner.form(declaration, found, spec.model)
+        self.assertEqual([built.id for built in formed.groups], ["G1", "G2", "G3"])
+        contexts = ensemble.group_contexts(spec, formed.groups, policy)
+        made = planner.make_plan(declaration, found, spec, bound=4, cli_version="9.9.9", tool_commit="abc1234", replicas=3,
+                                 variants=policy.ids, contexts=contexts, formed=formed)
+        small = {context["group"]: context["root_id"] for context in made.contexts}
+        self.assertEqual(small, {"G1": "root.G1.claude-haiku-5-5", "G2": "root.G2.claude-haiku-5-5", "G3": "root.G3.claude-haiku-5-5"})
+        self.assertEqual(sorted(node.id for node in made.roots), sorted(["root.G1", "root.G2", "root.G3"] + list(small.values())))
+        per_node = made.predicted["per_node"]
+        for built in formed.groups:
+            self.assertAlmostEqual(per_node[built.root]["cost_usd"], cm.root_cost(cm.Prices(), built.tokens), places=5)
+            self.assertAlmostEqual(per_node[small[built.id]]["cost_usd"], cm.root_cost(cm.HAIKU_PRICES, built.tokens), places=5)
+        parents = {}
+        for node in made.lanes:
+            parents.setdefault(node.group, {}).setdefault(node.parent, []).append(node.replica)
+        for built in formed.groups:
+            self.assertEqual(parents[built.id], {built.root: [1, 3], small[built.id]: [2]},
+                             "replicas 1 and 3 take the review's variant, replica 2 the small model's, each from its group's root")
+        self.assertEqual(made.predicted["tokens_written"], 2 * sum(built.tokens for built in formed.groups),
+                         "each of the six roots once, whatever the replicas that fork from it")
+
+    def test_every_group_whose_root_for_another_model_is_over_that_models_budget_is_named_with_the_model_and_the_figures(self):
+        # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a group whose root for that model is over that model's budget is refused naming the group, the model, the figures and the budget
+        raw = fx.declaration_dict()
+        declaration = decl.parse(json.dumps(raw), "caller.json")
+        found = catalogue.admit(declaration, self.review)
+        sizes = {built.id: built.tokens for built in planner.form(declaration, found, None).groups}
+        raw["budget"] = {"context_fraction": 0.5}
+        declaration = decl.parse(json.dumps(raw), "caller.json")
+        spec = messages.make_spec(declaration, ("Read",), "/work", "big-model")
+        policy = ensemble.parse_policy({"variants": [{"id": "full"}, {"id": "small", "model": "small-model"}]})
+        floor = sorted(sizes.values())[0]
+        limit = floor
+        windows = {"big-model": 100 * max(sizes.values()), "small-model": 2 * limit}
+        with mock.patch.dict(cm.WINDOW_TOKENS_BY_MODEL, windows):
+            formed = planner.form(declaration, found, spec.model)
+            contexts = ensemble.group_contexts(spec, formed.groups, policy)
+            with self.assertRaises(planner.GroupsOverBudget) as caught:
+                planner.make_plan(declaration, found, spec, bound=4, cli_version="9.9.9", tool_commit="abc1234", replicas=2,
+                                  variants=policy.ids, contexts=contexts, formed=formed)
+        over = sorted(group for group, tokens in sizes.items() if tokens > limit)
+        self.assertGreaterEqual(len(over), 2, "more than one group is over that model's budget")
+        self.assertEqual([overrun.group for overrun in caught.exception.overruns], over)
+        for overrun, line in zip(caught.exception.overruns, caught.exception.lines):
+            self.assertEqual((overrun.model, overrun.limit), ("small-model", limit))
+            self.assertIn(f"group {overrun.group} ", line)
+            self.assertIn(f"holds {sizes[overrun.group]} tokens in its root for the model small-model", line)
+            self.assertIn(f"budget of {limit} tokens, {sizes[overrun.group] - limit} over", line)
+
     def test_a_plan_on_the_small_tier_is_cheaper_than_the_same_plan_on_the_mid_tier_and_given_prices_override_the_table(self):
         # SOL-HW-REVIEW-KIT.C6: the predicted cost and time use the prices of each node's model
         declaration = decl.parse(json.dumps(fx.declaration_dict()), "caller.json")
