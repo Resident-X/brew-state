@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C15
+type: criterion
+title: Each group's root is sized to the model's window less a declared headroom, and the units are partitioned to write the fewest tokens in total
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Over a synthetic review folder of generic units, each declaring the views it needs by net class and layer taken from the view index, the plan builds each group's root from the union of its units' declared views plus the fixed text, estimates each root's tokens from the image dimensions, and holds every root to a budget equal to the model's window multiplied by a declared headroom fraction. The partition of units into groups is the one with the least total of all roots' tokens among those the greedy merge by overlap reaches: a test of units with high overlap shows them grouped together and the total below that of a partition that separates them, and a test of units with no overlap shows no duplication. Every root is under the budget; a single unit whose own needs exceed the budget alone is refused, naming the unit, its tokens and the budget; replicas of a group read that group's root and are not counted again in the total. The headroom fraction is a value a caller declares and is not fixed by the kit; the declaration that sets it records the measured first run it comes from. Out of scope: the value of the headroom, which a measured run sets, and any model call, the stub standing in for the model.
+links:
+  - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES
+    type: criterion-of

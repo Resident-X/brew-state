@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT-FORKS-OF-FORKS-CARRYING-IMAGES.C2
+type: criterion
+title: The nested plan is chosen only when it writes fewer tokens than the flat groups
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Over synthetic declarations, the planner produces the nested plan for a declaration whose total tokens written under it, counted by the kit's cost model, are lower than the flat groups' total for the same declaration, and the flat groups' plan otherwise, and the plan reports both totals in text and in JSON. Every session in a nested plan holds a context within the declared budget. Out of scope: the value of the budget.
+links:
+  - target: SOL-HW-REVIEW-KIT-FORKS-OF-FORKS-CARRYING-IMAGES
+    type: criterion-of

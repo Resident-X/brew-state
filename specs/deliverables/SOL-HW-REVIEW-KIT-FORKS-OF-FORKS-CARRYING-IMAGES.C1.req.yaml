@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT-FORKS-OF-FORKS-CARRYING-IMAGES.C1
+type: criterion
+title: A fork carries images of its own and a fork of a fork is planned and accepted
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Over a synthetic declaration with a prefix of artefacts shared by several groups, a session recorded by the stub as started from that prefix with images of its own in its message is accepted, a session forked from such a session is accepted, and the stub's record shows the shared artefacts written once for the whole review. A test of a declaration whose shared artefacts are all held by every group shows no deeper level is planned. Out of scope: any model call and the cost model's prices.
+links:
+  - target: SOL-HW-REVIEW-KIT-FORKS-OF-FORKS-CARRYING-IMAGES
+    type: criterion-of
