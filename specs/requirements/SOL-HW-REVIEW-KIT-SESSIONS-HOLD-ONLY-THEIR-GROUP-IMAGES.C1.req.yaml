@@ -1,12 +1,12 @@
 id: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C1
 type: criterion
-title: Each group's sessions hold the shared artefacts and that group's own, and no artefact only another group needs
+title: Each session holds the shared artefacts and its root's own, and no artefact only another root's groups need
 status: active
-version: 2
+version: 3
 measurement_type: binary
 verification: test
 text: |-
-  Over a synthetic review folder of generic units whose declared needs total at least five hundred images, split between shared documents, views every group needs and views only one group needs, each group's root holds the shared documents and only the views its own units declare, and no session of the group is given an image that none of the group's units declare. The test includes an artefact that exactly one other group needs and fails if it appears in this group's root. Replicas of one group hold the same artefacts. A verdict row that cites a view held only by another group is flagged naming the row and the view. Out of scope for this criterion: any caller's declaration.
+  Over a synthetic review folder of generic units whose declared needs total at least five hundred images, split between shared documents, views every group needs and views only one group needs, each root holds the shared documents and only the views the units of the groups it serves declare, and no session of a group is given an image that none of the units of the groups its root serves declare. The test includes an artefact that exactly one other group needs, served by a different root, and fails if it appears in this group's root; two groups that share a root are served by a root that holds both groups' views. Replicas of one group hold the same artefacts. A verdict row that cites a view held only by another root is flagged naming the row and the view. Out of scope for this criterion: any caller's declaration.
 links:
   - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES
     type: criterion-of

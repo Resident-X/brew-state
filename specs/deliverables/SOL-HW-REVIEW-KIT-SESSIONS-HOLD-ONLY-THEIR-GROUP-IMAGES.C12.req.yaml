@@ -1,12 +1,12 @@
 id: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C12
 type: criterion
-title: A group's root holds only its group's views and the proof harness records a fanned-out run under a new key without editing a baseline
+title: A root holds only its groups' views and the proof harness records a fanned-out run under a new key without editing a baseline
 status: active
-version: 4
+version: 5
 measurement_type: binary
 verification: test
 text: |-
-  A test over a synthetic declaration proves that each group's root holds only the views that group's units declare, and that the plan of a fanned-out run over the per-group roots records each group's own root prefix hash and size, differing from the single form's root prefix hash and from every other group's, that recording such a run adds it to the proof's run record under the form fanned, and that no baseline is edited and every existing baseline refusal still holds. Out of scope: a model call and any change to the proof design or its baselines.
+  A test over a synthetic declaration proves that each root holds only the views its groups' units declare, and that the plan of a fanned-out run over the per-group roots records each root's own prefix hash and size, differing from the single form's root prefix hash and from every other root's, that recording such a run adds it to the proof's run record under the form fanned, and that no baseline is edited and every existing baseline refusal still holds. Out of scope: a model call and any change to the proof design or its baselines.
 links:
   - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES
     type: criterion-of
