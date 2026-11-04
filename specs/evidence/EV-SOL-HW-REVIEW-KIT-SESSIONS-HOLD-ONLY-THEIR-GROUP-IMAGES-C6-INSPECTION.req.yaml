@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES-C6-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C6
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-04T20:13:58.353188Z"
+artifact:
+  kind: external
+  reference: 'git diff --name-only main -- hardware/proof hardware/tools/tests/fixtures/review_baselines: no file listed, so no frozen proof design and no recorded baselines file differs from main; the baseline key tests and the proof harness tests pass unchanged'
+  artifact_version: b4e180d3691525b78f02ab71adee1f7eae3925ea
+attested_by: crun-dd06ec1119ff90e8
+links:
+  - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C6
+    type: satisfies

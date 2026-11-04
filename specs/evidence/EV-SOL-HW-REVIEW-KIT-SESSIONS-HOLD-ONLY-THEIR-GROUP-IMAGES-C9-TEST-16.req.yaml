@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES-C9-TEST-16
+type: evidence
+title: test evidence for SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-04T20:14:02.775015Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_schematic_review_proof.py::test_with_no_baseline_recorded_the_single_form_runs_once_and_is_recorded_then_the_fanned_form_is_judged
+  artifact_version: b4e180d3691525b78f02ab71adee1f7eae3925ea
+attested_by: crun-dd06ec1119ff90e8
+links:
+  - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9
+    type: satisfies

@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES-C7-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C7
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-04T20:13:58.448925Z"
+artifact:
+  kind: external
+  reference: 'read hardware/README.md (the review kit command section: groups and roots formed apart, the budget and the window table, the refusal rows for a group over the budget and a root for another model over that model''s budget, --plan-only and its --help text, the per-group and per-root figures, the rerun and other-model paragraphs; the four callers'' needs and budget notes; the views options), the Taskfile description of hw:review-run and the four by-unit paragraphs of docs/board-design-method.md clause by clause against the criterion (a reviewer is given only the views of the groups its root serves; the by-unit form may be used on a full-size board), with the notes'' refusal table checked row by row by the taskfile tests. The notes follow C1, C7 and C9 as amended: groups are the kit''s packing, roots are formed apart and merge by the tokens saved within the budget.'
+  artifact_version: b4e180d3691525b78f02ab71adee1f7eae3925ea
+attested_by: crun-dd06ec1119ff90e8
+links:
+  - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C7
+    type: satisfies
