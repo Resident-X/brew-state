@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C11
+type: criterion
+title: The fabrication notes specify laminate families with a published comparative tracking index of at least 175
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The fabrication notes kept with the heater wall board's design records, which the order passes to the manufacturer, specify the laminate families whose published comparative tracking index is at least 175 (material group IIIa or better), the figure the separation basis record's material group rests on. For each family the notes cite the laminate maker's document for that index and the revision read, state the order note that requires the family, and state the written request the owner makes of the manufacturer for the shipped laminate's identity and a certificate of its index; a family whose maker publishes no index in the documents read, or only a typical value or a figure with no test method named, is listed as such and is not specified. A laminate whose published index is below 175, or one specified with no such document cited, is reported and the owner re-declares the basis before the board is ordered. Choosing the laminate's supplier, and receiving the certificate, are out of scope.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT
+    type: criterion-of

@@ -1,0 +1,13 @@
+id: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C21
+type: criterion
+title: The laminate and coat the separation basis rests on are named in the board's fabrication notes before it is ordered
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The board's fabrication notes name the laminate whose published comparative tracking index supports the separation basis record's material group, with the laminate maker's document for that index, and the conformal coat that supports the record's pollution degree 2 reading, with its type, the maker's datasheet and where it is applied. A laminate whose published index is below the figure the record rests on, or a coat the notes do not name, is reported and the owner re-declares the basis before the board is ordered.
+links:
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED
+    type: criterion-of

@@ -70,3 +70,5 @@ links:
     type: depends-on
   - target: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD
     type: depends-on
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C21
+    type: derives-from
