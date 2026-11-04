@@ -2703,16 +2703,6 @@
 		)
 		(uuid "6755824f-2c5d-4d24-9606-b4c5ac065ccd")
 	)
-	(label "FLOW_IN"
-		(at 154.94 76.2 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "1839b4ab-26dd-4c8a-86d2-c98a453079d3")
-	)
 	(label "STMD_3V3_SRC"
 		(at 66.04 118.11 0)
 		(effects
@@ -2842,16 +2832,6 @@
 			(justify left bottom)
 		)
 		(uuid "5cf463d5-f15f-4179-bdfa-328af957e492")
-	)
-	(label "STM_SCL"
-		(at 142.24 154.94 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "654cf7d2-0fab-4c7a-8f20-e18bd0cc9b77")
 	)
 	(label "STM_SDA"
 		(at 91.44 189.23 0)
@@ -3012,16 +2992,6 @@
 			(justify left bottom)
 		)
 		(uuid "ce408bf8-3b59-4492-8e37-5f28b3749164")
-	)
-	(label "BREW_SCL"
-		(at 142.24 265.43 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "b1ec2731-066f-4916-985d-130fdf7bae6a")
 	)
 	(label "BREW_SDA"
 		(at 91.44 299.72 0)
@@ -3663,28 +3633,6 @@
 		)
 		(uuid "c3f1b046-bdc3-4aad-af0a-d7d4b896debc")
 	)
-	(hierarchical_label "FLOW_IN"
-		(shape output)
-		(at 167.64 55.88 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "116ba7b7-4fc5-41b6-bf9f-f12a4ab7bd03")
-	)
-	(hierarchical_label "STM_SCL"
-		(shape output)
-		(at 167.64 152.4 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "36415260-88ed-422c-9edd-2bf87d90604b")
-	)
 	(hierarchical_label "STM_SDA"
 		(shape output)
 		(at 167.64 187.96 0)
@@ -3695,17 +3643,6 @@
 			(justify left)
 		)
 		(uuid "7287cda1-427c-47d1-824d-175b2ad7dced")
-	)
-	(hierarchical_label "BREW_SCL"
-		(shape output)
-		(at 167.64 262.89 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "9598f26a-c40b-4190-9bc7-40c2db605c1a")
 	)
 	(hierarchical_label "BREW_SDA"
 		(shape output)
@@ -3750,6 +3687,39 @@
 			(justify left)
 		)
 		(uuid "338c319c-0919-4b67-8576-e67f8e60973b")
+	)
+	(hierarchical_label "FLOW_IN"
+		(shape output)
+		(at 154.94 76.2 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "d00e9d1f-17d4-4f20-ad2a-7183ba94648f")
+	)
+	(hierarchical_label "STM_SCL"
+		(shape output)
+		(at 142.24 154.94 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "b06fe243-5007-4961-ab87-978f4db150e1")
+	)
+	(hierarchical_label "BREW_SCL"
+		(shape output)
+		(at 142.24 265.43 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "068a0919-c93d-42fd-a0cf-af411163fd5e")
 	)
 	(symbol
 		(lib_id "Connector_Generic:Conn_01x03")
@@ -3802,15 +3772,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "J520")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C49257"
 			(at 38.1 50.8 0)
 			(hide yes)
@@ -3846,7 +3807,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "J520")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 66.04 35.56 180)
@@ -3898,15 +3868,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "R520")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C25804"
 			(at 66.04 35.56 0)
 			(hide yes)
@@ -3942,7 +3903,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "R520")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:D_TVS")
 		(at 66.04 66.04 270)
@@ -3994,15 +3964,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "D520")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C45961"
 			(at 66.04 66.04 0)
 			(hide yes)
@@ -4038,7 +3999,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "D520")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 91.44 50.8 0)
@@ -4090,15 +4060,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "R521")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C21190"
 			(at 91.44 50.8 0)
 			(hide yes)
@@ -4134,7 +4095,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "R521")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:C")
 		(at 116.84 66.04 0)
@@ -4188,15 +4158,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "C520")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C1622"
 			(at 116.84 66.04 0)
 			(hide yes)
@@ -4232,7 +4193,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "C520")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 142.24 50.8 0)
@@ -4284,15 +4254,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "R522")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C21189"
 			(at 142.24 50.8 0)
 			(hide yes)
@@ -4328,7 +4289,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "R522")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "main-board:74LVC1G17")
 		(at 142.24 76.2 0)
@@ -4382,15 +4352,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "U520")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C10425"
 			(at 142.24 76.2 0)
 			(hide yes)
@@ -4426,7 +4387,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "U520")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:C")
 		(at 167.64 76.2 0)
@@ -4480,15 +4450,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "C521")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C14663"
 			(at 167.64 76.2 0)
 			(hide yes)
@@ -4524,7 +4485,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "C521")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Connector_Generic:Conn_01x04")
 		(at 38.1 147.32 180)
@@ -4576,15 +4546,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "J521")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C32713270"
 			(at 38.1 147.32 0)
 			(hide yes)
@@ -4620,7 +4581,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "J521")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "main-board:Polyfuse")
 		(at 66.04 111.76 0)
@@ -4672,15 +4642,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "F520")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C163517"
 			(at 66.04 111.76 0)
 			(hide yes)
@@ -4716,7 +4677,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "F520")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 91.44 111.76 0)
@@ -4768,15 +4738,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "R540")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C17888"
 			(at 91.44 111.76 0)
 			(hide yes)
@@ -4812,7 +4773,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "R540")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Connector:TestPoint")
 		(at 116.84 111.76 0)
@@ -4864,15 +4834,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "TP523")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "pad 1.5mm"
 			(at 116.84 111.76 0)
 			(hide yes)
@@ -4890,7 +4851,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "TP523")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:D_TVS")
 		(at 66.04 147.32 270)
@@ -4942,15 +4912,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "D521")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C45961"
 			(at 66.04 147.32 0)
 			(hide yes)
@@ -4986,7 +4947,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "D521")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 91.44 147.32 0)
@@ -5038,15 +5008,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "R523")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C22775"
 			(at 91.44 147.32 0)
 			(hide yes)
@@ -5082,7 +5043,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "R523")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 116.84 147.32 180)
@@ -5134,15 +5104,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "R525")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C4190"
 			(at 116.84 147.32 0)
 			(hide yes)
@@ -5178,7 +5139,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "R525")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Diode:BAT54S")
 		(at 142.24 147.32 0)
@@ -5232,15 +5202,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "D523")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C47546"
 			(at 142.24 147.32 0)
 			(hide yes)
@@ -5276,7 +5237,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "D523")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:D_TVS")
 		(at 66.04 182.88 270)
@@ -5328,15 +5298,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "D522")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C45961"
 			(at 66.04 182.88 0)
 			(hide yes)
@@ -5372,7 +5333,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "D522")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 91.44 182.88 0)
@@ -5424,15 +5394,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "R524")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C22775"
 			(at 91.44 182.88 0)
 			(hide yes)
@@ -5468,7 +5429,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "R524")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 116.84 182.88 180)
@@ -5520,15 +5490,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "R526")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C4190"
 			(at 116.84 182.88 0)
 			(hide yes)
@@ -5564,7 +5525,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "R526")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Diode:BAT54S")
 		(at 142.24 182.88 0)
@@ -5618,15 +5588,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "D524")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C47546"
 			(at 142.24 182.88 0)
 			(hide yes)
@@ -5662,7 +5623,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "D524")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Connector:TestPoint")
 		(at 167.64 182.88 0)
@@ -5714,15 +5684,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "TP522")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "pad 1.5mm"
 			(at 167.64 182.88 0)
 			(hide yes)
@@ -5740,7 +5701,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "TP522")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Connector_Generic:Conn_01x04")
 		(at 38.1 257.81 180)
@@ -5792,15 +5762,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "J522")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C32713270"
 			(at 38.1 257.81 0)
 			(hide yes)
@@ -5836,7 +5797,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "J522")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "main-board:Polyfuse")
 		(at 66.04 222.25 0)
@@ -5888,15 +5858,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "F521")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C163517"
 			(at 66.04 222.25 0)
 			(hide yes)
@@ -5932,7 +5893,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "F521")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 91.44 222.25 0)
@@ -5984,15 +5954,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "R541")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C17888"
 			(at 91.44 222.25 0)
 			(hide yes)
@@ -6028,7 +5989,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "R541")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Connector:TestPoint")
 		(at 116.84 222.25 0)
@@ -6080,15 +6050,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "TP526")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "pad 1.5mm"
 			(at 116.84 222.25 0)
 			(hide yes)
@@ -6106,7 +6067,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "TP526")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:D_TVS")
 		(at 66.04 257.81 270)
@@ -6158,15 +6128,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "D525")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C45961"
 			(at 66.04 257.81 0)
 			(hide yes)
@@ -6202,7 +6163,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "D525")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 91.44 257.81 0)
@@ -6254,15 +6224,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "R527")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C22775"
 			(at 91.44 257.81 0)
 			(hide yes)
@@ -6298,7 +6259,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "R527")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 116.84 257.81 180)
@@ -6350,15 +6320,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "R529")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C4190"
 			(at 116.84 257.81 0)
 			(hide yes)
@@ -6394,7 +6355,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "R529")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Diode:BAT54S")
 		(at 142.24 257.81 0)
@@ -6448,15 +6418,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "D527")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C47546"
 			(at 142.24 257.81 0)
 			(hide yes)
@@ -6492,7 +6453,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "D527")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:D_TVS")
 		(at 66.04 293.37 270)
@@ -6544,15 +6514,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "D526")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C45961"
 			(at 66.04 293.37 0)
 			(hide yes)
@@ -6588,7 +6549,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "D526")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 91.44 293.37 0)
@@ -6640,15 +6610,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "R528")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C22775"
 			(at 91.44 293.37 0)
 			(hide yes)
@@ -6684,7 +6645,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "R528")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 116.84 293.37 180)
@@ -6736,15 +6706,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "R530")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C4190"
 			(at 116.84 293.37 0)
 			(hide yes)
@@ -6780,7 +6741,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "R530")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Diode:BAT54S")
 		(at 142.24 293.37 0)
@@ -6834,15 +6804,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "D528")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C47546"
 			(at 142.24 293.37 0)
 			(hide yes)
@@ -6878,7 +6839,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "D528")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Connector:TestPoint")
 		(at 167.64 293.37 0)
@@ -6930,15 +6900,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "TP525")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "pad 1.5mm"
 			(at 167.64 293.37 0)
 			(hide yes)
@@ -6956,7 +6917,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "TP525")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Connector_Generic:Conn_01x04")
 		(at 254 76.2 180)
@@ -7008,15 +6978,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "J523")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C32713270"
 			(at 254 76.2 0)
 			(hide yes)
@@ -7052,7 +7013,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "J523")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "main-board:Polyfuse")
 		(at 279.4 50.8 0)
@@ -7104,15 +7074,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "F522")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C163517"
 			(at 279.4 50.8 0)
 			(hide yes)
@@ -7148,7 +7109,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "F522")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 304.8 50.8 0)
@@ -7200,15 +7170,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "R542")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C17888"
 			(at 304.8 50.8 0)
 			(hide yes)
@@ -7244,7 +7205,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "R542")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Connector:TestPoint")
 		(at 330.2 50.8 0)
@@ -7296,15 +7266,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "TP528")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "pad 1.5mm"
 			(at 330.2 50.8 0)
 			(hide yes)
@@ -7322,7 +7283,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "TP528")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:D_TVS")
 		(at 279.4 88.9 270)
@@ -7374,15 +7344,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "D529")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C45961"
 			(at 279.4 88.9 0)
 			(hide yes)
@@ -7418,7 +7379,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "D529")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 304.8 88.9 0)
@@ -7470,15 +7440,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "R531")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C25804"
 			(at 304.8 88.9 0)
 			(hide yes)
@@ -7514,7 +7475,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "R531")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 330.2 88.9 0)
@@ -7566,15 +7536,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "R532")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C4184"
 			(at 330.2 88.9 0)
 			(hide yes)
@@ -7610,7 +7571,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "R532")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 355.6 88.9 0)
@@ -7662,15 +7632,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "R533")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C21190"
 			(at 355.6 88.9 0)
 			(hide yes)
@@ -7706,7 +7667,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "R533")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:C")
 		(at 381 88.9 0)
@@ -7760,15 +7730,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "C522")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C1622"
 			(at 381 88.9 0)
 			(hide yes)
@@ -7804,7 +7765,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "C522")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Connector:TestPoint")
 		(at 406.4 88.9 0)
@@ -7856,15 +7826,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "TP527")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "pad 1.5mm"
 			(at 406.4 88.9 0)
 			(hide yes)
@@ -7882,7 +7843,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "TP527")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Connector_Generic:Conn_01x04")
 		(at 254 177.8 180)
@@ -7934,15 +7904,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "J524")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C32713270"
 			(at 254 177.8 0)
 			(hide yes)
@@ -7978,7 +7939,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "J524")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "main-board:Polyfuse")
 		(at 279.4 152.4 0)
@@ -8030,15 +8000,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "F523")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C163517"
 			(at 279.4 152.4 0)
 			(hide yes)
@@ -8074,7 +8035,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "F523")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 304.8 152.4 0)
@@ -8126,15 +8096,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "R543")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C17888"
 			(at 304.8 152.4 0)
 			(hide yes)
@@ -8170,7 +8131,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "R543")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Connector:TestPoint")
 		(at 330.2 152.4 0)
@@ -8222,15 +8192,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "TP530")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "pad 1.5mm"
 			(at 330.2 152.4 0)
 			(hide yes)
@@ -8248,7 +8209,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "TP530")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:D_TVS")
 		(at 279.4 190.5 270)
@@ -8300,15 +8270,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "D530")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C45961"
 			(at 279.4 190.5 0)
 			(hide yes)
@@ -8344,7 +8305,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "D530")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 304.8 190.5 0)
@@ -8396,15 +8366,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "R534")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C25804"
 			(at 304.8 190.5 0)
 			(hide yes)
@@ -8440,7 +8401,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "R534")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 330.2 190.5 0)
@@ -8492,15 +8462,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "R535")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C4184"
 			(at 330.2 190.5 0)
 			(hide yes)
@@ -8536,7 +8497,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "R535")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 355.6 190.5 0)
@@ -8588,15 +8558,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "R536")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C21190"
 			(at 355.6 190.5 0)
 			(hide yes)
@@ -8632,7 +8593,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "R536")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:C")
 		(at 381 190.5 0)
@@ -8686,15 +8656,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "C523")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C1622"
 			(at 381 190.5 0)
 			(hide yes)
@@ -8730,7 +8691,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "C523")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Connector:TestPoint")
 		(at 406.4 190.5 0)
@@ -8782,15 +8752,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "TP529")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "pad 1.5mm"
 			(at 406.4 190.5 0)
 			(hide yes)
@@ -8808,7 +8769,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "TP529")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Connector_Generic:Conn_01x04")
 		(at 254 279.4 180)
@@ -8860,15 +8830,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "J525")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C32713270"
 			(at 254 279.4 0)
 			(hide yes)
@@ -8904,7 +8865,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "J525")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "main-board:Polyfuse")
 		(at 279.4 254 0)
@@ -8956,15 +8926,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "F524")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C163517"
 			(at 279.4 254 0)
 			(hide yes)
@@ -9000,7 +8961,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "F524")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 304.8 254 0)
@@ -9052,15 +9022,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "R544")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C17888"
 			(at 304.8 254 0)
 			(hide yes)
@@ -9096,7 +9057,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "R544")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Connector:TestPoint")
 		(at 330.2 254 0)
@@ -9148,15 +9118,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "TP532")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "pad 1.5mm"
 			(at 330.2 254 0)
 			(hide yes)
@@ -9174,7 +9135,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "TP532")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:D_TVS")
 		(at 279.4 292.1 270)
@@ -9226,15 +9196,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "D531")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C45961"
 			(at 279.4 292.1 0)
 			(hide yes)
@@ -9270,7 +9231,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "D531")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 304.8 292.1 0)
@@ -9322,15 +9292,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "R537")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C25804"
 			(at 304.8 292.1 0)
 			(hide yes)
@@ -9366,7 +9327,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "R537")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 330.2 292.1 0)
@@ -9418,15 +9388,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "R538")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C4184"
 			(at 330.2 292.1 0)
 			(hide yes)
@@ -9462,7 +9423,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "R538")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 355.6 292.1 0)
@@ -9514,15 +9484,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "R539")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C21190"
 			(at 355.6 292.1 0)
 			(hide yes)
@@ -9558,7 +9519,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "R539")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:C")
 		(at 381 292.1 0)
@@ -9612,15 +9582,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "C524")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C1622"
 			(at 381 292.1 0)
 			(hide yes)
@@ -9656,7 +9617,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "C524")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Connector:TestPoint")
 		(at 406.4 292.1 0)
@@ -9708,15 +9678,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
-					(reference "TP531")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "pad 1.5mm"
 			(at 406.4 292.1 0)
 			(hide yes)
@@ -9734,7 +9695,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "TP531")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "power:GND")
 		(at 43.18 50.8 90)
