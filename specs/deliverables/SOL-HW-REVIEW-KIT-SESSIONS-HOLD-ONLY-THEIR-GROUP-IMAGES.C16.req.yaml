@@ -2,11 +2,11 @@ id: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C16
 type: criterion
 title: Each group's root holds the extract of the deterministic check results its units judge
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |-
-  Over a synthetic design with a deterministic check whose report lists per-item results, each group's root holds the extract of that report for the items its units judge and no other group's items, and a unit whose item has no extract is flagged in the plan naming the unit and the item. A test shows the extract carries the check's own figure for an item, so a reviewer's verdict row can cite it, and that a figure the check did not produce is not in the extract. Out of scope: the check's own computation and which checks a caller chooses.
+  Over a synthetic design with a deterministic check whose report lists per-item results, each group's root holds the extract of that report, the report's own lines for the rules its units declare they judge and no other group's rules, and a unit whose declared rule has no line in the report is flagged in the plan naming the unit and the rule, informationally and without refusing. A test shows the extract carries the check's own figure for a rule, so a reviewer's verdict row can cite it, and that a figure the report did not carry is not in the extract. Out of scope: the check's own computation and which checks a caller chooses.
 links:
   - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES
     type: criterion-of
