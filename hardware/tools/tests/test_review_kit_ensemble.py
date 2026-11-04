@@ -219,14 +219,11 @@ class OtherModels(Case):
         found = ensemble.contexts(spec, shared, policy)
         self.assertEqual([(c.model, c.variants) for c in found], [("claude-sonnet-5-5", ("a",)), ("m-three", ("d",)), ("m-two", ("b", "c"))])
         self.assertEqual(len({c.cache_key for c in found}), 3)
-        self.assertEqual(ensemble.context_of(found, "c").model, "m-two")
 
     def test_only_the_variants_in_use_decide_which_contexts_are_built(self):
         policy = ensemble.parse_policy({"variants": [{"id": "a"}, {"id": "b", "model": "m-two"}]})
         shared, spec, _ = self.plan(policy)
         self.assertEqual(len(ensemble.contexts(spec, shared, policy, ["a"])), 1)
-        with self.assertRaises(ensemble.PolicyError):
-            ensemble.context_of(ensemble.contexts(spec, shared, policy, ["a"]), "b")
         with self.assertRaises(ensemble.PolicyError):
             ensemble.contexts(spec, shared, policy, ["zz"])
 
@@ -236,13 +233,13 @@ class OtherModels(Case):
         shared, spec, _ = self.plan(policy)
         groups = [types.SimpleNamespace(id=f"G{n}", root=f"root.G{n}", shared=shared) for n in (1, 2, 3)]
         found = ensemble.group_contexts(spec, groups, policy, [["a", "b"], ["a"], ["a", "b"]])
-        self.assertEqual([(c.group, c.root_id, c.other, c.variants) for c in found],
+        self.assertEqual([(c.group, c.root_id, c.model != spec.model, c.variants) for c in found],
                          [("G1", "root.G1", False, ("a",)), ("G1", "root.G1.m-two", True, ("b",)),
                           ("G2", "root.G2", False, ("a",)),
                           ("G3", "root.G3", False, ("a",)), ("G3", "root.G3.m-two", True, ("b",))],
                          "a group none of whose replicas reaches the other model has no root for it")
-        self.assertEqual([c.root_id for c in ensemble.other_contexts(found)], ["root.G1.m-two", "root.G3.m-two"])
-        self.assertEqual(len({c.cache_key for c in found if c.other} | {c.cache_key for c in found if not c.other}), 2,
+        self.assertEqual([c.root_id for c in ensemble.other_contexts(found, spec.model)], ["root.G1.m-two", "root.G3.m-two"])
+        self.assertEqual(len({c.cache_key for c in found if c.model != spec.model} | {c.cache_key for c in found if c.model == spec.model}), 2,
                          "the cache is per model, and the groups' roots of one model hold the same message here")
         with self.assertRaises(ensemble.PolicyError):
             ensemble.group_contexts(spec, groups, policy, [["a"]])

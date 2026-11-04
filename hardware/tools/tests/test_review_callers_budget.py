@@ -304,7 +304,10 @@ class TheCriticalRoutingCallersReplicas(critical_tests.Folder):
         self.assertEqual(plan["contexts"], [], "both variants run on the review's model")
         status, text = plan_only(self, "critical_routing", fmt="json")
         self.assertEqual(status, 0, text)
-        self.assertEqual(len(json.loads(text)["plan"]["contexts"]), 1, "one group, so a root for the other model is built")
+        plan = json.loads(text)["plan"]
+        self.assertEqual(len(plan["contexts"]), 1, "one group, so a root for the other model is built")
+        self.assertEqual(plan["predicted"]["tokens_written"], plan["groups"][0]["tokens"],
+                         "every replica runs on the other model, so the review's own model has no root, started or written")
 
 
 class TheSchematicCallersReplicas(schematic_tests.Folder, Replicas):

@@ -502,13 +502,14 @@ def make_plan(declaration: decl.Declaration, catalogue: cat.Catalogue, spec: ses
     """The plan for a declaration: a root for each group and a fork for each group and replica. Refused when the bound is below
     one, and as `form` refuses; `formed` is the groups already formed for these arguments.
 
-    `contexts` are the shared contexts to build, each of a group and a model: objects giving `root_id`, `group`, `other`, `model`,
+    `contexts` are the shared contexts to build, each of a group and a model: objects giving `root_id`, `group`, `model`,
     `spec`, `shared` and `variants`, as `ensemble.group_contexts` gives them (a group's context for the review's own model is
     the group's root, and one with no group is the only group's). A replica on a model other than the review's forks from the
     context of its group that holds its variant, a root of its own held to that model's context budget, and a group whose root
     for such a model is over that budget is refused naming the group, the model, the figures and the budget. A replica whose
     variant no context holds is refused; with no contexts given every replica forks from its group's root. Each root is priced at
-    its own model's prices (`costmodel.PRICES_BY_MODEL`); `prices`, when given, prices every root alike."""
+    its own model's prices (`costmodel.PRICES_BY_MODEL`); `prices`, when given, prices every root alike. A group whose replicas
+    all fork from roots of other models has no root of its own model: none is started, priced or written."""
     if isinstance(bound, bool) or not isinstance(bound, int) or bound < 1:
         raise BoundBelowOne(bound)
     formed = formed or form(declaration, catalogue, spec.model)
@@ -519,7 +520,7 @@ def make_plan(declaration: decl.Declaration, catalogue: cat.Catalogue, spec: ses
         if owner not in by_group:
             raise ValueError(f"the context {context.root_id} belongs to the group {context.group!r}, which the plan does not hold")
         owned.append((context, owner))
-    others = [(context, owner) for context, owner in owned if context.other]
+    others = [(context, owner) for context, owner in owned if context.model != spec.model]
     over = []
     for context, owner in others:
         limit = context_budget(declaration.budget, context.model)
@@ -537,9 +538,15 @@ def make_plan(declaration: decl.Declaration, catalogue: cat.Catalogue, spec: ses
     groups: List[Group] = []
     nodes: List[Node] = []
     per_node: Dict[str, Dict[str, float]] = {}
+    other_variants = {(owner, variant_id) for context, owner in others for variant_id in context.variants}
+    started_roots = set()
     for built, count in zip(formed.groups, counts):
         groups.append(Group(built.id, built.units, built.needs, built.expected_output_tokens, count, built.root, built.images,
                             built.tokens, built.shared.prefix_sha, built.extract))
+        forks = {(variants[(replica - 1) % len(variants)] if variants else BASE_VARIANT) for replica in range(1, count + 1)}
+        if not any((built.id, variant) not in other_variants for variant in forks):
+            continue
+        started_roots.add(built.id)
         nodes.append(Node(built.root, ROOT, None, None, None, 1, None, (), built.shared.prefix_sha, built.shared.prefix_sha))
         per_node[built.root] = {"cost_usd": cm.root_cost(root_prices, built.tokens), "wall_s": timing.seconds(1, cm.ACK_TOKENS)}
     parent_of: Dict[Tuple[str, str], str] = {}
@@ -574,7 +581,7 @@ def make_plan(declaration: decl.Declaration, catalogue: cat.Catalogue, spec: ses
         + cm.makespan(durations, bound)
     target = declaration.budget.wall_s
     cost = sum(entry["cost_usd"] for entry in per_node.values())
-    written = sum(built.tokens for built in formed.groups) + sum(context.shared.tokens for context, _ in others)
+    written = sum(built.tokens for built in formed.groups if built.id in started_roots) + sum(context.shared.tokens for context, _ in others)
     predicted = {"cost_usd": round(cost, 6), "wall_s": round(wall, 3), "tokens_written": written,
                  "wall_target_s": target, "meets_wall_target": None if target is None else wall <= target,
                  "cost_ceiling_usd": declaration.budget.usd,

@@ -208,7 +208,7 @@ def prompt_for(declaration: decl.Declaration, policy: Policy = Policy(),
 class Context:
     """One shared context to build: the model it runs on, its session specification, the message and prefix hash it holds,
     the id its root node takes, the variants that fork from it, the group it is the root of (None for a review of one group
-    that names none) and whether it is the root of a model other than the review's. The cache is per model and specification,
+    that names none). The cache is per model and specification,
     so contexts of different models share none; `cache_key` is what makes that checkable."""
 
     model: Optional[str]
@@ -217,7 +217,6 @@ class Context:
     root_id: str
     variants: Tuple[str, ...]
     group: Optional[str] = None
-    other: bool = False
 
     @property
     def cache_key(self) -> str:
@@ -233,7 +232,7 @@ def contexts(spec: sess.SessionSpec, shared: messages.SharedContext, policy: Pol
     found = [Context(spec.model, spec, shared, root, tuple(own), group)]
     for model in sorted({v.model for v in used if v.model is not None and v.model != spec.model}):
         found.append(Context(model, dataclasses.replace(spec, model=model), shared, f"{root}.{model}",
-                             tuple(v.id for v in used if v.model == model), group, True))
+                             tuple(v.id for v in used if v.model == model), group))
     return found
 
 
@@ -249,14 +248,6 @@ def group_contexts(spec: sess.SessionSpec, groups: Sequence[Any], policy: Policy
             for context in contexts(spec, built.shared, policy, None if variants is None else variants[number], built.root, built.id)]
 
 
-def other_contexts(found: Sequence[Context]) -> List[Context]:
-    """The contexts whose root is for a model other than the review's."""
-    return [context for context in found if context.other]
-
-
-def context_of(found: Sequence[Context], variant_id: str) -> Context:
-    """The context a variant's replicas fork from; with several groups, the first group's."""
-    for context in found:
-        if variant_id in context.variants:
-            return context
-    raise PolicyError(f"no shared context is built for the variant {variant_id!r}")
+def other_contexts(found: Sequence[Context], model: Optional[str]) -> List[Context]:
+    """The contexts whose root is for a model other than `model`, the review's."""
+    return [context for context in found if context.model != model]

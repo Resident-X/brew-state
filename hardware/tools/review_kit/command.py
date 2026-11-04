@@ -382,8 +382,10 @@ def figures_of_run(folder: str, before: Set[str]) -> Tuple[List[telemetry.Sessio
 def predicted_for(plan: planner.Plan, groups: Optional[Set[str]]) -> telemetry.Prediction:
     """What the plan predicted for the sessions of this run: all of them, or the roots and the forks of the groups run."""
     per_node = plan.predicted["per_node"]
-    left_out = {group.root for group in plan.groups if groups is not None and group.id not in groups}
-    nodes = [node for node in plan.nodes if node.id not in left_out and (groups is None or node.role == planner.ROOT or node.group in groups)]
+    owner = {group.root: group.id for group in plan.groups}
+    owner.update({context["root_id"]: context["group"] for context in plan.contexts})
+    nodes = [node for node in plan.nodes
+             if groups is None or (owner[node.id] if node.role == planner.ROOT else node.group) in groups]
     lanes = [node for node in nodes if node.role == planner.UNIT]
     roots = [node for node in nodes if node.role == planner.ROOT]
     cost = sum(per_node[node.id]["cost_usd"] for node in nodes)
@@ -507,7 +509,7 @@ class Run:
         self.version = agent_version(program) if program is not None else "none (plan only)"
         used = [used_variants(self.policy, [count]) for count in self.group_counts]
         found = ensemble.group_contexts(self.spec, self.formed.groups, self.policy, used)
-        other = ensemble.other_contexts(found)
+        other = ensemble.other_contexts(found, self.spec.model)
         self.contexts = found if other else None
         declaration = self.prepared.declaration
         try:

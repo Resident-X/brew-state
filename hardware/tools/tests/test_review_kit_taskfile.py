@@ -182,6 +182,8 @@ class CommandClauses(unittest.TestCase):
                        "git status and recent commit subjects", "REFUSED or CANNOT RUN"):
             self.assertIn(needle, desc)
         self.assertNotIn("setup session", desc.replace("a session that judges nothing", ""), "no earlier driver wording")
+        self.assertNotIn("does not build", desc, "the refusal of a review of several groups with a replica on another model is gone")
+        self.assertIn("a root for each model its replicas run on", desc)
 
     def test_the_smoke_is_described_as_on_demand_and_in_neither_gate(self):
         desc = descriptions(read(TASKFILE))["hw:review-smoke"]

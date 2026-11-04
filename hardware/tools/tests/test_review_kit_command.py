@@ -870,6 +870,59 @@ class OtherModelReplica(Case):
         text = self.refused("plan-changed", "--model", "review-model-id", "--rerun", "u4")
         self.assertEqual(len(self.calls()), before + 4, "a rerun over other roots than the recorded is refused before any session")
 
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a rerun behaves as for replicas on one model: only the named unit's group runs, with its roots for each model
+    def test_a_reruns_prediction_counts_exactly_the_sessions_that_ran_in_text_and_in_json(self):
+        self.write_caller(extra=self.POLICY)
+        self.assertEqual(self.run_command("--model", "review-model-id")[0], 0)
+        per_node = self.record()["plan"]["predicted"]["per_node"]
+        ran = ["root.G3", "root.G3.other-model-id", "G3.r1.a1", "G3.r2.a1"]
+        expected = round(sum(per_node[node]["cost_usd"] for node in ran), 6)
+        whole = round(sum(entry["cost_usd"] for entry in per_node.values()), 6)
+        self.assertLess(expected, whole)
+        status, out, err = self.run_command("--model", "review-model-id", "--rerun", "u4")
+        self.assertEqual((status, err), (0, ""), out)
+        (line,) = self.lines(out, "AGAINST PREDICTED")
+        self.assertIn(f" of ${expected} (deviation", line)
+        status, out, err = self.run_command("--model", "review-model-id", "--rerun", "u4", fmt="json")
+        self.assertEqual((status, err), (0, ""), out)
+        self.assertEqual(json.loads(out)["run"]["predicted"]["cost_usd"], expected)
+
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a group none of whose replicas runs on it has no root for it
+    def test_a_group_with_fewer_replicas_than_the_policy_needs_has_no_root_for_the_other_model_in_text_and_in_json(self):
+        raw = fx.declaration_dict()
+        raw["units"]["u4"]["stakes"] = "low"
+        self.write_caller(extra=self.POLICY, declaration=raw)
+        for fmt in ("text", "json"):
+            out_dir = os.path.join(self.base, fmt)
+            status, out, err = self.run_command("--model", "review-model-id", fmt=fmt, out=out_dir)
+            self.assertEqual((status, err), (0, ""), out)
+            record = self.record(out_dir)
+            roots = sorted(node["id"] for node in record["nodes"] if node["role"] == "root")
+            self.assertEqual(roots, ["root.G1", "root.G1.other-model-id", "root.G2", "root.G2.other-model-id", "root.G3"])
+            self.assertEqual([context["group"] for context in record["plan"]["contexts"]], ["G1", "G2"])
+            parents = {node["id"]: node["parent"] for node in record["nodes"] if node["role"] == "unit"}
+            self.assertEqual(parents, {"G1.r1.a1": "root.G1", "G1.r2.a1": "root.G1.other-model-id",
+                                       "G2.r1.a1": "root.G2", "G2.r2.a1": "root.G2.other-model-id", "G3.r1.a1": "root.G3"})
+            sizes = {group["id"]: group["tokens"] for group in record["plan"]["groups"]}
+            self.assertEqual(record["plan"]["predicted"]["tokens_written"], 2 * (sizes["G1"] + sizes["G2"]) + sizes["G3"],
+                             "each root that exists counted once, and none for the group with no replica on the other model")
+
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a root that no replica forks from is not started, and is not counted in the tokens written
+    def test_a_root_for_the_reviews_model_that_no_replica_forks_from_is_not_started_or_counted(self):
+        self.write_caller(extra="""
+            replica_policy = {"variants": [{"id": "alt", "model": "other-model-id"}], "replicas": {"low": 1, "normal": 1, "high": 1}}
+            """)
+        for fmt in ("text", "json"):
+            out_dir = os.path.join(self.base, fmt)
+            status, out, err = self.run_command("--model", "review-model-id", fmt=fmt, out=out_dir)
+            self.assertEqual((status, err), (0, ""), out)
+            record = self.record(out_dir)
+            self.assertEqual(sorted(node["id"] for node in record["nodes"] if node["role"] == "root"),
+                             sorted(f"root.{group}.other-model-id" for group in ("G1", "G2", "G3")))
+            sizes = sum(group["tokens"] for group in record["plan"]["groups"])
+            self.assertEqual(record["plan"]["predicted"]["tokens_written"], sizes, "only the other model's roots are written")
+        self.assertEqual({call["model"] for call in self.calls() if call["resume"] is None}, {"other-model-id"})
+
     def test_the_guard_allows_the_other_models_specification_and_still_refuses_any_other_change(self):
         harness = fx.Harness(self, replicas=2)
         policy = ensemble.parse_policy({"variants": [{"id": "full"}, {"id": "alt", "model": "other"}]})

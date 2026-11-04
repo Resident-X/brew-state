@@ -694,6 +694,11 @@ class TheFannedRunUnderTheProof(unittest.TestCase):
         self.assertTrue(all(g["tokens"] > 0 for g in recorded))
         outcome = self.fanned_run(harness, fanned)
         self.assertEqual(outcome.form, proof.FANNED, "the run is recorded under the form fanned")
+        single = proof_tests.singles()[0]
+        recorded = proof.build_record([{"id": "S1", "item": "u1-i1"}], [single], [outcome], 2.0)
+        self.assertEqual([run["id"] for run in recorded["fanned_runs"]], [outcome.id], "the run is in the proof's fanned runs")
+        self.assertEqual([run["form"] for run in recorded["fanned_runs"]], [proof.FANNED])
+        self.assertNotIn(outcome.id, [run["id"] for run in recorded["single_runs"]], "and not among the single runs")
         self.assertNotIn(proof.FANNED, proof.BASELINE_FORMS, "no baseline key is made for it")
         seeds = [{"id": "S1", "item": "u1-i1"}]
         keys = {form: proof.BaselineKey(proof.seed_list_hash(seeds), "design-sha", "claude-sonnet-5-5", form,

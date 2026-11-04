@@ -264,13 +264,14 @@ class Scheduler:
         if plan.bound < 1:
             raise planner.BoundBelowOne(plan.bound)
         prompt_for = prompt_for or planner.default_prompt(declaration)
-        others = [context for context in contexts or () if context.other]
-        if len(plan.roots) != len(plan.groups) + len(others):
-            raise ValueError(f"the plan holds {len(plan.roots)} roots and {len(plan.groups)} groups with {len(others)} contexts "
+        others = [context for context in contexts or () if context.model != spec.model]
+        own = [group for group in plan.groups if any(node.id == group.root for node in plan.roots)]
+        if len(plan.roots) != len(own) + len(others):
+            raise ValueError(f"the plan holds {len(plan.roots)} roots, {len(own)} of them of groups and {len(others)} contexts "
                              "of another model were given to run it with")
         owner = {context["root_id"]: context["group"] for context in plan.contexts}
         running = [context for context in others if only is None or owner[context.root_id] in only]
-        specs = [(group.root, spec, roots[group.root]) for group in plan.groups if only is None or group.id in only]
+        specs = [(group.root, spec, roots[group.root]) for group in own if only is None or group.id in only]
         specs += [(context.root_id, context.spec, context.shared) for context in running]
         if running:
             self.executor.guard = AllowedSpecs(getattr(self.executor.guard, "inner", self.executor.guard),

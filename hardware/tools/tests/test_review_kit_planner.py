@@ -11,6 +11,7 @@ import math
 import os
 import sys
 import tempfile
+import types
 import unittest
 from unittest import mock
 
@@ -472,6 +473,27 @@ class PerModelPricing(Case):
                              "replicas 1 and 3 take the review's variant, replica 2 the small model's, each from its group's root")
         self.assertEqual(made.predicted["tokens_written"], 2 * sum(built.tokens for built in formed.groups),
                          "each of the six roots once, whatever the replicas that fork from it")
+
+    def test_a_context_is_another_models_by_its_model_whatever_flag_a_hand_built_one_carries(self):
+        # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: each such replica is started from the root of its group and model, held to that model's budget and priced at its prices
+        declaration = decl.parse(json.dumps(fx.declaration_dict()), "caller.json")
+        found = catalogue.admit(declaration, self.review)
+        spec = messages.make_spec(declaration, ("Read",), "/work", "claude-sonnet-5-5")
+        policy = ensemble.parse_policy({"variants": [{"id": "full"}, {"id": "small", "model": "claude-haiku-5-5"}]})
+        formed = planner.form(declaration, found, spec.model)
+        real = ensemble.group_contexts(spec, formed.groups, policy)
+        wrong = [types.SimpleNamespace(**{**vars(context), "other": context.model == spec.model}) for context in real]
+        made = planner.make_plan(declaration, found, spec, bound=4, cli_version="9.9.9", tool_commit="abc1234", replicas=2,
+                                 variants=policy.ids, contexts=wrong, formed=formed)
+        small = {context["group"]: context["root_id"] for context in made.contexts}
+        self.assertEqual(sorted(small), ["G1", "G2", "G3"], "a root for the other model for each group, the flag notwithstanding")
+        per_node = made.predicted["per_node"]
+        for built in formed.groups:
+            self.assertAlmostEqual(per_node[built.root]["cost_usd"], cm.root_cost(cm.Prices(), built.tokens), places=5)
+            self.assertAlmostEqual(per_node[small[built.id]]["cost_usd"], cm.root_cost(cm.HAIKU_PRICES, built.tokens), places=5)
+        self.assertEqual(made.predicted["tokens_written"], 2 * sum(built.tokens for built in formed.groups))
+        self.assertEqual({node.parent for node in made.lanes if node.variant == "small"}, set(small.values()),
+                         "the other model's replica forks from the root of its own group and model")
 
     def test_every_group_whose_root_for_another_model_is_over_that_models_budget_is_named_with_the_model_and_the_figures(self):
         # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a group whose root for that model is over that model's budget is refused naming the group, the model, the figures and the budget
