@@ -45,6 +45,21 @@ PRICES_BY_MODEL: Dict[str, Prices] = {
 }
 
 
+#: The context window, in tokens, of each model the kit's reviews run on, by full model id: the `contextWindow` the agent
+#: command line reports for the model in its result's `modelUsage`. A model not listed has no declared window and is never
+#: given a default; a budget stated as a fraction of its window is refused naming it. An operator adds a model's window here.
+#: The figures are what the command line reported for these two models in November 2026.
+WINDOW_TOKENS_BY_MODEL: Dict[str, int] = {
+    "claude-sonnet-5-5": 1_000_000,
+    "claude-haiku-5-5": 1_000_000,
+}
+
+
+def window_for(model: Optional[str], table: Mapping[str, int] = WINDOW_TOKENS_BY_MODEL) -> Optional[int]:
+    """The declared context window of a model in tokens, or None when the table does not hold it."""
+    return table.get(model) if model is not None else None
+
+
 def prices_for(model: Optional[str], table: Mapping[str, Prices] = PRICES_BY_MODEL, default: Optional[Prices] = None) -> Prices:
     """The prices of a model: its entry in the table, else the default."""
     return table.get(model, default or Prices()) if model is not None else (default or Prices())
@@ -101,20 +116,14 @@ def makespan(durations: Sequence[float], slots: int) -> float:
     return max(free)
 
 
-def hoist_saving(prices: Prices, sizes: Mapping[str, int], calls: Mapping[str, int], needed_by: Mapping[str, Sequence[str]]) -> float:
-    """What a tree with the artefacts needed by only some groups held above them would at most save over the flat plan.
+def shared_write_saving(prices: Prices, sizes: Mapping[str, int], held_by: Mapping[str, int]) -> float:
+    """What a tree with the artefacts more than one root holds written once above them would at most save over the plan.
 
-    In the flat plan every call of every fork reads every artefact of the shared context, though a group's calls need
-    only its own; a tree would not read an artefact for a group that does not need it. The bound is the read price over
-    the sum, for each artefact, of its size times the calls of the groups that do not need it. It leaves out the extra
-    writes and the extra call a level costs, so it is the most a tree could save.
-    """
-    total = sum(calls.values())
-    saved = 0.0
-    for name, size in sizes.items():
-        using = sum(calls[group] for group in needed_by.get(name, ()))
-        saved += size * (total - using)
-    return saved * prices.read / MILLION
+    Each root writes the artefacts it holds, so an artefact held by several roots is written once for each. The bound
+    is the write price over the sum, for each artefact, of its size times the roots holding it beyond the first. It leaves out
+    the extra reads and the extra call a level costs, so it is the most a tree could save."""
+    saved = sum(size * max(held_by.get(name, 0) - 1, 0) for name, size in sizes.items())
+    return saved * prices.write / MILLION
 
 
 # --- Refit -------------------------------------------------------------------------------------

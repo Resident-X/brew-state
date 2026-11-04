@@ -349,6 +349,9 @@ class TheReviewSpecifics(Proofed):
         shutil.rmtree(self.work)
         status, text, err = self.go("--dry")
         self.assertRegex(text, r"PLAN \| fanned \| 3 replicas \| \d+ groups")
+        # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C3: the plan names each group's root and each root's groups, images, tokens and budget
+        self.assertRegex(text, r"ROOT \| root \| groups G1(, G\d+)+ \| \d+ images \| \d+ tokens \| budget \d+")
+        self.assertRegex(text, r"(?m)GROUP \| G1 \| .* \| root root$")
         self.assertIn("COST MULTIPLE | 2.25 | bounds: cost at most $2250.00 (2.25 times the single mean $1000.00)", text)
 
     def test_the_folder_is_read_where_the_seeding_wrote_it_and_the_seed_list_is_kept_apart_from_it(self):

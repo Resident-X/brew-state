@@ -63,9 +63,24 @@ def header(artefact: cat.Measured) -> str:
     return f"=== image: {artefact.name} ===" if artefact.kind == "image" else f"=== {artefact.name} ==="
 
 
+#: The characters of framing every context holds whatever it carries: the opening and the closing line.
+BASE_FRAMING = len(INTRO) + len(ENDING)
+
+
+def framing_of(artefact: cat.Measured) -> int:
+    """The characters of framing an artefact adds to a context: the line that names it, and for a text the newline after it."""
+    return len(header(artefact)) + (0 if artefact.kind == "image" else 1)
+
+
+def root_tokens(artefacts: Sequence[cat.Measured]) -> int:
+    """The size of the context that holds these artefacts, by the catalogue's own measures: what `shared_context` gives as its
+    `tokens`, without building the message."""
+    return BASE_FRAMING + sum(artefact.tokens + framing_of(artefact) for artefact in artefacts)
+
+
 @dataclass(frozen=True)
 class SharedContext:
-    """The shared-context message with its hash and size.
+    """The context message with its hash and size.
 
     `tokens` is the measured size: the artefacts' measured sizes and the framing text, by the catalogue's own measures.
     `blocks` pairs each artefact with the hash of its content, in the order the message holds them.
@@ -83,19 +98,18 @@ class SharedContext:
 
 
 def shared_context(catalogue: cat.Catalogue) -> SharedContext:
-    """The one message every session of the review continues from."""
+    """The message every session of a root continues from: the artefacts of the catalogue given, one after another."""
     blocks: List[Dict[str, Any]] = [sess.text_block(INTRO)]
-    framing = len(INTRO) + len(ENDING)
+    framing = BASE_FRAMING
     for artefact in catalogue.artefacts:
         head = header(artefact)
         if artefact.kind == "image":
             blocks.append(sess.text_block(head))
             blocks.append({"type": "image", "source": {"type": "base64", "media_type": artefact.media_type,
                                                        "data": base64.b64encode(artefact.data).decode("ascii")}})
-            framing += len(head)
         else:
             blocks.append(sess.text_block(head + "\n" + artefact.data.decode("utf-8")))
-            framing += len(head) + 1
+        framing += framing_of(artefact)
     blocks.append(sess.text_block(ENDING))
     message = sess.user_message(blocks)
     return SharedContext(message, sha256(message), catalogue.tokens + framing, framing,

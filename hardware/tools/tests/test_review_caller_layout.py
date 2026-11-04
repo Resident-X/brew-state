@@ -42,6 +42,9 @@ REPO = os.path.dirname(os.path.dirname(TOOLS))
 PLAN_ENTRY = review_caller_layout.PLAN_ENTRY
 ITEMS = {"area-FLOOR": ["FLOOR-1", "FLOOR-2"], "area-GROUND": ["GROUND-1"], "area-CLOCK": ["CLOCK-1"]}
 
+#: The model the review runs on, whose declared window the budget is a fraction of.
+REVIEW_MODEL = "claude-sonnet-5-5"
+
 STUB = '''#!PYTHON
 import json, os, re, sys, uuid
 sys.path.insert(0, TOOLS)
@@ -148,15 +151,23 @@ def prepared(folder):
     return kit_caller.load("layout", TOOLS).prepare(folder)
 
 
+def merge_checks_only(package, order, units):
+    """The merge with the caller's own checks and without the coverage of the checklist, which the command adds through
+    `holds`: these tests judge what the caller's checks refuse."""
+    return merge.merge(package.declaration.shape, package.rules, order, units, package.check)
+
+
 def merged(folder, given, order=None, replicas=None):
     """The unit results merged as the command merges them, each unit one replica unless `replicas` gives more."""
-    return prepared(folder).merge(order or list(given), {unit: replicas.get(unit, {"r1": tables}) if replicas else {"r1": tables}
-                                                         for unit, tables in given.items()})
+    package = prepared(folder)
+    order = order or list(given)
+    return merge_checks_only(package, order, {unit: replicas.get(unit, {"r1": tables}) if replicas else {"r1": tables}
+                                 for unit, tables in given.items()})
 
 
 def rendered(folder, given, number=1):
     package = prepared(folder)
-    out = package.merge(list(given), {unit: {"r1": tables} for unit, tables in given.items()})
+    out = merge_checks_only(package, list(given), {unit: {"r1": tables} for unit, tables in given.items()})
     return package.render(merge.plain_tables(out))[f"round-{number}.md"]
 
 
@@ -352,15 +363,17 @@ class TheUnits(Folder):
         design = fx.DESIGN
         self.assertEqual(sorted(declaration.artefacts), sorted([
             "check-report.txt", "layout-facts.txt", "method-extract.md", "placement/index.txt", "placement/measures.txt",
-            "placement/placement.png", "round.json", "views/facts.txt", "views/index.txt", "views/layer-F.Cu.png",
+            "placement/placement.png", "round.json", "views/facts.txt", "views/index.txt",
             f"{design}/constraints.md", f"{design}/design-rules.md", f"{design}/layout-plan.md",
-            f"{design}/separation-basis.yaml"]))
+            f"{design}/separation-basis.yaml"] + [f"views/{entry['file']}" for entry in fx.VIEW_ENTRIES]))
         self.assertEqual({name: artefact.kind for name, artefact in declaration.artefacts.items() if artefact.kind != "text"},
                          {"layout-facts.txt": "extract", "method-extract.md": "extract", "placement/placement.png": "image",
-                          "views/layer-F.Cu.png": "image"})
+                          **{f"views/{entry['file']}": "image" for entry in fx.VIEW_ENTRIES}})
         self.assertEqual(declaration.added_during_round, ("added-views/*", "added-documents/*"))
         self.assertEqual(declaration.budget.wall_s, 350)
-        self.assertEqual(set(declaration.needed), set(declaration.artefacts))
+        self.assertLessEqual(set(declaration.needed), set(declaration.artefacts))
+        self.assertNotIn("check-report.txt", declaration.needed, "no unit needs the whole report; each group's root holds its extract")
+        self.assertEqual(declaration.check_extract.report, "check-report.txt")
         for held in fx.BOARD_FILES:
             self.assertNotIn(held, declaration.artefacts if held.endswith(("kicad_pcb", "kicad_sch")) else (), "no board file")
 
@@ -405,6 +418,7 @@ class TheUnits(Folder):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C1: From a synthetic review folder the caller's declaration gives one unit per area heading of the folder's layout practice catalogue, one for the board's own items when the plan's table has rows, and one for the comparison with the plan and the free pass, with the couplings it states, and the units are planned into groups with each coupled set in one group; a coupling the declaration states that no cross-reference of the catalogue supports fails the test, a cross-reference alone does not make a coupling, and the declared couplings (power with mains and the manufacturing items with power, whose item MFG-5 cites a power finding) leave at least six groups, the largest within the declared time budget; the shared context holds the whole catalogue, and each unit's prompt holds its own area and the items to judge; a folder whose method has no catalogue areas or lacks a section the shared context needs, or whose plan's table cannot be read, is refused naming what is missing. Out of scope: the content of any catalogue item and the narrow round's units.
         for path, word in (("layout-facts.txt", "holds no layout-facts.txt"), ("method-extract.md", "holds no method-extract.md"),
                            ("check-report.txt", "holds no check-report.txt"), ("views/index.txt", "holds no views/index.txt"),
+                           ("views/index.json", "view index"),
                            ("placement/index.txt", "holds no placement/index.txt"),
                            (f"{fx.DESIGN}/layout-plan.md", "no readable plan")):
             with self.subTest(path=path):
@@ -416,6 +430,10 @@ class TheUnits(Folder):
         self.refused(lambda: prepared(folder), "method extract", "no `## Layout review views` section")
         folder = self.copy_of()
         os.remove(os.path.join(folder, "views", "layer-F.Cu.png"))
+        self.refused(lambda: prepared(folder), "lists views/layer-F.Cu.png, which the folder does not hold")
+        folder = self.copy_of()
+        for entry in fx.VIEW_ENTRIES:
+            os.remove(os.path.join(folder, "views", entry["file"]))
         os.remove(os.path.join(folder, "placement", "placement.png"))
         self.refused(lambda: prepared(folder), "holds no rendered view image")
 
@@ -532,7 +550,7 @@ class TheNarrowRound(Folder):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C2: From a synthetic narrow round whose listed items fall in two groups, the caller has a unit for each of the two groups and none for the rest, each unit's prompt names only its listed items, and the merge accepts a verdict only for a listed item; a narrow round whose items fall in one group is judged by a fork of the shared context. Out of scope: how the designer chooses the listed items.
         folder = self.narrow_folder("noplan", ["FLOOR-1"])
         self.assertNotIn("plan-and-free-pass", prepared(folder).declaration.units)
-        self.assertEqual(prepared(folder).checklist[-1], PLAN_ENTRY)
+        self.assertEqual(prepared(folder).checklist, ("FLOOR-1",), "the narrow round's checklist is the items its units judge")
 
 
 class TheBoardsOwnItems(Folder):
@@ -974,12 +992,12 @@ The plan was compared.
     def test_the_rendered_record_is_one_plain_file_named_for_its_round_whose_name_the_kit_accepts(self):
         # SOL-HW-REVIEW-FAN-OUT-LAYOUT.C4: The merged round has the round heading, the opening fields with the round kind, the Verdicts table, the Plan and free pass section and the Findings table or the line saying no finding was raised, in the order the method gives. A record holding it and a hand-written round are passed through the reader the review record history command uses, and what it reads from the two has the same shape. Out of scope: the history command's own checks of the repository's history.
         package = prepared(self.folder)
-        files = package.render(merge.plain_tables(package.merge(list(results()), {unit: {"r1": tables} for unit, tables in results().items()})))
+        files = package.render(merge.plain_tables(merge_checks_only(package, list(results()), {unit: {"r1": tables} for unit, tables in results().items()})))
         self.assertEqual(list(files), ["round-1.md"])
         self.assertTrue(kit_caller.rendered_name_ok("round-1.md"))
         later = self.write_folder(os.path.join(self.root, "later"), number=2)
-        files = prepared(later).render(merge.plain_tables(prepared(later).merge(
-            list(results()), {unit: {"r1": tables} for unit, tables in results().items()})))
+        files = prepared(later).render(merge.plain_tables(merge_checks_only(
+            prepared(later), list(results()), {unit: {"r1": tables} for unit, tables in results().items()})))
         self.assertEqual(list(files), ["round-2.md"])
 
 
@@ -1006,7 +1024,8 @@ class Command:
 
     def go(self, *extra):
         out, err = io.StringIO(), io.StringIO()
-        status = command.main(["--caller", "layout", "--callers", TOOLS, "--review", self.folder, "--out", self.out] + list(extra),
+        model = [] if "--model" in extra else ["--model", REVIEW_MODEL]
+        status = command.main(["--caller", "layout", "--callers", TOOLS, "--review", self.folder, "--out", self.out] + model + list(extra),
                               out, err, repo=os.path.join(self.case.root, "no-repository"))
         return status, out.getvalue(), err.getvalue()
 
@@ -1094,6 +1113,9 @@ class TheSmallTierReplica(Folder):
         self.assertEqual(plan["variants"], ["full", "hunt", "small"])
         self.assertEqual([(context["model"], context["variants"]) for context in plan["contexts"]],
                          [(review_caller_layout.SMALL_MODEL, ["small"])], "the review's own context and one for the small model")
+        self.assertEqual([(root["id"], len(root["groups"])) for root in plan["roots"]], [("root", len(plan["groups"]))],
+                         "the groups' views fit one root together, which every group's forks continue")
+        self.assertGreater(len(plan["groups"]), 1, "and the round is judged in several groups")
         os.remove(run.log)
         two = Command(self, out="out-two")
         two.scenario()
@@ -1366,7 +1388,7 @@ class Documentation(unittest.TestCase):
                       "appended below the record's earlier rounds, which stay as they are",
                       "whoever started the round commits it at the end of the round", "before any change to the board",
                       "Judging a round with one reviewer, a person or an agent session that does not use the command, stays valid",
-                      "task hw:review-run -- --caller layout", "each reviewer a fork of one shared context",
+                      "task hw:review-run -- --caller layout", "each reviewer a fork of the root that holds its group's views", "a reviewer is given only the views of the groups its root serves", "groups share a root when their views fit the budget together", "the by-unit form may be used on a full-size board",
                       "with two reviewers of each so that a fail either raises stands"):
             self.assertIn(words, section, f"the layout review section says {words!r}")
         for gone in ("setup session",):

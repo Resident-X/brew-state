@@ -1,0 +1,21 @@
+id: SOL-HW-REVIEW-KIT-FORKS-OF-FORKS-CARRYING-IMAGES
+type: deliverable
+category: solution
+title: A review's shared prefix is written once and forked, with forks that carry images and forks of those forks, when that writes fewer tokens than the flat groups
+status: active
+version: 1
+text: |
+  Why this exists. A review fanned out by group is carried out by the review kit as forks of one root. Today a fork's message carries text only and the planner supports root forks and one level of unit forks, so a fork cannot carry images of its own and a fork of a fork is neither supported nor tested. A group of the flat-groups plan (SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES) is therefore judged from its own root, and an image several groups need is written into each of their roots. The cost of a review is dominated by writing a root's context into the model's cache, so that duplication is the price of the plan.
+
+  What it does. A shared prefix holding the artefacts several groups need is written once and read by every group that forks from it, and a group's own images are added on top of it by a fork that carries images, with forks of those forks judging the group's units, so the shared images are not written again. The planner chooses it only when its total of tokens written is lower than the flat groups' for the same declaration. This is a follow-on to the flat-groups plan and does not block it: the flat groups are complete and correct without it.
+
+  Out of scope: the flat-groups plan, the budget and its sizing, and any change to a board design or its checks.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES
+    type: depends-on
+  - target: DEC-REVIEW-FAN-OUT-FROM-SHARED-CONTEXT-WITH-REPLICAS
+    type: justified-by

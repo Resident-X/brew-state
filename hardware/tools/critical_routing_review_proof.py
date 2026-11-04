@@ -36,12 +36,12 @@ The work folder keeps the review folder alone in <work>/review-tree/review, sinc
 above it; the seed list, the views, the placement view and the exported copy are under <work>/seed/, each run's output under <work>/out/, and the
 record in <work>.
 
---dry prints the plan of the fanned-out run, a line saying a second run may follow, and its predicted cost and time (up to twice, counting the second) beside the bounds they would be held to, and, where no
+--dry prints the plan of the fanned-out run (each group with the root its forks continue, each root with its groups, images, tokens and budget), a line saying a second run may follow, and its predicted cost and time (up to twice, counting the second) beside the bounds they would be held to, and, where no
 single run is recorded, the plan of the single form; it starts no session and calls no model, but it still renders the views and the placement view and
 writes the review folder.
 
 The agent command line is the program named by REVIEW_KIT_AGENT (claude when it is unset), logged in. A run costs money: the
-single form, and the shared context and a fork for each group and replica of the fanned-out form, twice over when a second run follows.
+single form, and the roots and a fork of a root for each group and replica of the fanned-out form, twice over when a second run follows.
 
 Each cause is reported on one line beginning REFUSED, a RESULT line comes last, and the exit status is 0 when the criterion holds,
 1 when the command refuses, a run fails or the criterion does not hold, and 2 when a tool or the agent
@@ -290,10 +290,13 @@ def dry_lines(plan: Mapping[str, Any], model: str, single: Optional[List[proof.R
     predicted = plan["predicted"]
     other = [context["model"] for context in plan.get("contexts", ())]
     found += [f"WARNING | {cost_model.unpriced_text(each)}" for each in cost_model.unpriced([model] + other)]
-    found.append(f"PLAN | fanned | {REPLICAS} replicas on {model} | {len(plan['groups'])} groups | {plan['forks']} forks | bound "
-                 f"{plan['bound']} | shared context {plan['shared_tokens']} tokens | variants {', '.join(plan['variants'])}")
+    found.append(f"PLAN | fanned | {REPLICAS} replicas on {model} | {len(plan['groups'])} groups | "
+                 f"{plan['forks']} forks | bound {plan['bound']} | shared documents {plan['shared_tokens']} tokens | variants "
+                 f"{', '.join(plan['variants'])}")
     found += [f"GROUP | {group['id']} | units {', '.join(group['units'])} | {group['replicas']} replicas | expected output "
-              f"{group['expected_output_tokens']} tokens" for group in plan["groups"]]
+              f"{group['expected_output_tokens']} tokens | root {group['root']}" for group in plan["groups"]]
+    found += [f"ROOT | {root['id']} | groups {', '.join(root['groups'])} | {root['images']} images | {root['tokens']} tokens | budget "
+              f"{root['budget'] if root['budget'] is not None else 'none'}" for root in plan["roots"]]
     found.append(f"PREDICTED | fanned | ${predicted['cost_usd']} | {predicted['wall_s']} s | cost "
                  f"{'within' if predicted['cost_usd'] <= cost else 'over'} its bound, time "
                  f"{'within' if predicted['wall_s'] <= wall else 'over'} its bound")

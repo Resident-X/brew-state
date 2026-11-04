@@ -37,6 +37,7 @@ import review_proof_harness as harness  # noqa: E402
 import schematic_fixtures as sfx  # noqa: E402
 import schematic_review_proof as srp  # noqa: E402
 import test_review_caller_schematic as caller_tests  # noqa: E402
+from review_kit import costmodel as kit_costmodel  # noqa: E402
 from review_kit import executor as ex  # noqa: E402
 from review_kit import decl, merge, proof, store  # noqa: E402
 
@@ -459,6 +460,9 @@ class TheDryMode(Proofed):
         self.assertFalse(os.path.exists(os.path.join(self.work, srp.RECORD)))
         self.assertFalse(os.path.exists(os.path.join(self.work, srp.OUT_DIR, "fanned")), "no run folder is made")
         self.assertRegex(text, r"PLAN \| fanned \| 2 replicas on claude-haiku-5-5 \| \d groups \| \d+ forks")
+        # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C3: the plan names each group's root and each root's groups, images, tokens and budget
+        self.assertRegex(text, r"ROOT \| root \| groups G1(, G\d)+ \| 0 images \| \d+ tokens \| budget \d+")
+        self.assertRegex(text, r"(?m)GROUP \| G1 \| .* \| root root$")
         self.assertRegex(text, r"PREDICTED \| fanned \| \$[0-9.]+ \| [0-9.]+ s \| cost (within|over) its bound")
         self.assertIn("SINGLE | recorded: 2 run(s) | mean $5.00 | mean 1000 s", text)
         self.assertIn("COST MULTIPLE | 1.25 | bounds: cost at most $6.25 (1.25 times the single mean $5.00), wall time at most 500 s "
@@ -495,7 +499,8 @@ class TheDryMode(Proofed):
                 if warned:
                     self.assertIn("a live run is likely to fail that bound or to need a second run", text)
         shutil.rmtree(self.work)
-        status, text, err = self.go("--dry", "--design-model", "claude-unlisted-9")
+        with mock.patch.dict(kit_costmodel.WINDOW_TOKENS_BY_MODEL, {"claude-unlisted-9": 1_000_000}):
+            status, text, err = self.go("--dry", "--design-model", "claude-unlisted-9")
         self.assertRegex(text, r"WARNING \| the model 'claude-unlisted-9'.*priced at the default")
 
 

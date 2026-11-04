@@ -11,6 +11,7 @@ import math
 import os
 import sys
 import tempfile
+import types
 import unittest
 from unittest import mock
 
@@ -45,7 +46,13 @@ class Case(unittest.TestCase):
         kwargs.setdefault("bound", 4)
         kwargs.setdefault("cli_version", "9.9.9")
         kwargs.setdefault("tool_commit", "abc1234")
-        return declaration, found, shared, planner.make_plan(declaration, found, shared, spec, **kwargs)
+        return declaration, found, shared, planner.make_plan(declaration, found, spec, **kwargs)
+
+    def split_budget(self, raw):
+        """A context budget at which the declaration's groups cannot all share one root: the size of its largest group."""
+        declaration = decl.parse(json.dumps(raw), "caller.json")
+        found = catalogue.admit(declaration, self.review)
+        return max(group.tokens for group in planner.form(declaration, found, None).groups)
 
 
 class GroupingTests(Case):
@@ -103,12 +110,12 @@ class GroupingTests(Case):
 
 
 class PlanRecordTests(Case):
-    def test_plan_is_flat_one_shared_context_and_one_fork_per_group_and_replica(self):
+    def test_plan_is_flat_one_root_for_a_small_design_and_one_fork_per_group_and_replica(self):
         # SOL-HW-REVIEW-KIT.C6: the plan has one shared context and one fork per group and replica
         _, _, shared, plan = self.plan(replicas={"u1": 3, "u4": 2}, variants=["full", "terse"])
         roots = [n for n in plan.nodes if n.role == planner.ROOT]
         forks = [n for n in plan.nodes if n.role == planner.UNIT]
-        self.assertEqual(len(roots), 1)
+        self.assertEqual([n.id for n in roots], ["root"], "a design with no budget declared shares one root")
         self.assertEqual(len(forks), 3 + 1 + 2)
         self.assertEqual({n.parent for n in forks}, {"root"})
         self.assertEqual([(n.group, n.replica, n.variant) for n in forks if n.group == "G1"],
@@ -138,7 +145,8 @@ class PlanRecordTests(Case):
             self.assertEqual(set(node), {"id", "role", "parent", "group", "replica", "attempt", "variant", "units", "prefix_sha",
                                          "message_sha"})
         self.assertEqual(record["nodes"][0]["role"], "root")
-        self.assertEqual(record["nodes"][0]["prefix_sha"], shared.prefix_sha)
+        self.assertEqual(record["nodes"][0]["prefix_sha"], shared.prefix_sha, "the one root holds what the four units need together")
+        self.assertEqual([root["prefix_sha"] for root in record["roots"]], [shared.prefix_sha])
         for node in record["nodes"][1:]:
             self.assertEqual((node["role"], node["parent"], node["prefix_sha"]), ("unit", "root", shared.prefix_sha))
             prompt = messages.group_prompt(declaration, node["units"])
@@ -150,7 +158,8 @@ class PlanRecordTests(Case):
         self.assertEqual(record["prices"], {"read": 0.10, "write": 4.37, "out": 8.95, "source": "measured"})
         self.assertEqual(record["timing"], {"per_call_s": 1.7, "tok_per_s": 134.0, "source": "measured"})
         self.assertEqual(set(record["predicted"]["per_node"]), {n["id"] for n in record["nodes"]})
-        self.assertEqual(record["shared"]["prefix_sha"], shared.prefix_sha)
+        self.assertEqual(record["shared"]["prefix_sha"], messages.shared_context(catalogue.Catalogue(())).prefix_sha,
+                         "the shared documents are what every unit needs, and no artefact is needed by all four units")
 
     def test_record_round_trips_through_json(self):
         # SOL-HW-REVIEW-KIT.C6: the plan record is a record that serialises
@@ -210,37 +219,50 @@ class PlanRecordTests(Case):
 class TreeAndBudgetTests(Case):
     def test_record_holds_the_saving_a_tree_would_give_and_the_threshold_and_stays_flat(self):
         # SOL-HW-REVIEW-KIT.C6: the plan record holds the saving a tree would give and the threshold it was compared with
-        declaration, found, shared, plan = self.plan()
-        calls = {g.id: 2 for g in plan.groups}
-        total = sum(calls.values())
+        raw = fx.declaration_dict()
+        raw["budget"]["context_tokens"] = self.split_budget(raw)
+        declaration, found, shared, plan = self.plan(raw)
+        self.assertEqual([root.groups for root in plan.root_records], [("G1", "G3"), ("G2",)])
         expected = 0.0
         for artefact in found.artefacts:
-            using = sum(calls[g.id] for g in plan.groups if artefact.name in g.needs)
-            expected += artefact.tokens * (total - using) * 0.10 / 1e6
+            holders = sum(1 for root in plan.root_records if artefact.name in root.needs)
+            expected += artefact.tokens * max(holders - 1, 0) * 4.37 / 1e6
         self.assertAlmostEqual(plan.tree["saving_usd"], expected, places=6)
-        self.assertGreater(plan.tree["saving_usd"], 0)
+        self.assertGreater(plan.tree["saving_usd"], 0, "the guide is written by both roots")
         self.assertEqual(plan.tree["threshold_usd"], 0.5)
         self.assertEqual((plan.tree["worth_building"], plan.tree["kept"]), (False, "flat"))
         self.assertEqual(len(plan.lanes), 3)
+
+    def test_a_small_design_sharing_one_root_has_no_saving_a_tree_could_give(self):
+        # SOL-HW-REVIEW-KIT.C6: the plan record holds the saving a tree would give
+        _, _, _, plan = self.plan()
+        self.assertEqual(len(plan.root_records), 1)
+        self.assertEqual(plan.tree["saving_usd"], 0, "no artefact is written twice")
 
     def test_threshold_is_declared_and_a_saving_above_it_is_recorded_while_the_plan_stays_flat(self):
         # SOL-HW-REVIEW-KIT.C6: the plan record holds the saving a tree would give and the threshold it was compared with
         raw = fx.declaration_dict()
         raw["budget"]["tree_saving_usd"] = 1e-9
+        raw["budget"]["context_tokens"] = self.split_budget(raw)
         _, _, _, plan = self.plan(raw)
         self.assertEqual(plan.tree["threshold_usd"], 1e-9)
         self.assertTrue(plan.tree["worth_building"])
         self.assertEqual(plan.tree["kept"], "flat")
-        self.assertEqual({n.parent for n in plan.lanes}, {"root"})
+        self.assertEqual({n.parent for n in plan.lanes}, {"root.R1", "root.R2"})
 
-    def test_a_tree_saves_nothing_when_every_group_needs_every_artefact(self):
+    def test_a_tree_saves_nothing_when_no_artefact_is_held_by_two_roots(self):
         # SOL-HW-REVIEW-KIT.C6: the plan record holds the saving a tree would give
-        _, _, _, plan = self.plan(plain_units({"a": 100, "b": 400}))
+        raw = plain_units({"a": 100, "b": 400})
+        raw["units"]["b"]["needs"] = ["view_b.png"]
+        raw["budget"]["context_tokens"] = self.split_budget(raw)
+        _, _, _, plan = self.plan(raw)
+        self.assertEqual(len(plan.groups), 2)
+        self.assertEqual(len(plan.root_records), 2, "the two cannot share a root within the budget")
         self.assertEqual(plan.tree["saving_usd"], 0)
 
-    def test_context_larger_than_the_budget_is_refused_naming_size_and_budget(self):
+    def test_shared_documents_larger_than_the_budget_are_refused_naming_size_and_budget(self):
         # SOL-HW-REVIEW-KIT.C6: a shared context larger than the declared context budget is refused naming its size and the budget before any session starts
-        raw = fx.declaration_dict()
+        raw = plain_units({"a": 100, "b": 100})
         raw["budget"]["context_tokens"] = 1000
         with self.assertRaises(planner.OverBudget) as refused:
             self.plan(raw)
@@ -250,25 +272,27 @@ class TreeAndBudgetTests(Case):
         self.assertIn(str(refused.exception.size), text)
         self.assertIn("1000", text)
 
-    def test_context_exactly_at_the_budget_is_accepted(self):
+    def test_shared_documents_exactly_at_the_budget_are_accepted(self):
         # SOL-HW-REVIEW-KIT.C6: a shared context larger than the declared context budget is refused
-        _, _, shared, _ = self.plan()
-        raw = fx.declaration_dict()
-        raw["budget"]["context_tokens"] = shared.tokens
+        raw = plain_units({"a": 100, "b": 100})
+        _, _, _, plan = self.plan(raw)
+        size = plan.shared["tokens"]
+        raw["budget"]["context_tokens"] = size
         self.plan(raw)
-        raw["budget"]["context_tokens"] = shared.tokens - 1
+        raw["budget"]["context_tokens"] = size - 1
         with self.assertRaises(planner.OverBudget):
             self.plan(raw)
 
     def test_context_over_the_stream_limit_is_refused_naming_size_limit_and_largest_group_and_at_the_limit_is_accepted(self):
         # SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C3: The review kit measures the size of the stream message that holds the shared context, the images base64-encoded as the kit sends them, and refuses the run with a line beginning REFUSED, before any session is started and before anything is spent, when that size is over the agent command line's stream limit of 268,435,456 characters (256 x 1024 x 1024, the figure the agent command line reports as 256M), a named constant of the kit, counted as the command line counts them: the UTF-16 code units of the one JSON line, without its newline. The line names the size, the limit, and the artefact group of the review folder that is largest (the views folder, the placement folder or the documents) with its size, and says what to do: write fewer or smaller views. The check is made where the context budget is checked, so the proof command's forms are held to it too. A context at the limit is not refused. Over the stub with a synthetic review folder and the constant lowered by the test, a context over the limit is refused with that line in text and in JSON and no session is started, a context at the limit runs, and the prediction line is not printed for the refused one. Out of scope: the token budget, which is unchanged.
-        _, found, shared, _ = self.plan()
+        raw = plain_units({"a": 100})
+        _, found, shared, _ = self.plan(raw)
         size = messages.stream_size(shared.message)
         with mock.patch.object(messages, "STREAM_LIMIT", size):
-            self.plan()
+            self.plan(raw)
         with mock.patch.object(messages, "STREAM_LIMIT", size - 1):
             with self.assertRaises(planner.OverStreamLimit) as refused:
-                self.plan()
+                self.plan(raw)
         error = refused.exception
         self.assertEqual((error.size, error.limit), (size, size - 1))
         self.assertEqual((error.group, error.group_size), messages.largest_group(found))
@@ -279,11 +303,12 @@ class TreeAndBudgetTests(Case):
     def test_context_is_measured_in_utf_16_code_units_not_characters(self):
         # SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C3: The review kit measures the size of the stream message that holds the shared context, the images base64-encoded as the kit sends them, and refuses the run with a line beginning REFUSED, before any session is started and before anything is spent, when that size is over the agent command line's stream limit of 268,435,456 characters (256 x 1024 x 1024, the figure the agent command line reports as 256M), a named constant of the kit, counted as the command line counts them: the UTF-16 code units of the one JSON line, without its newline. The line names the size, the limit, and the artefact group of the review folder that is largest (the views folder, the placement folder or the documents) with its size, and says what to do: write fewer or smaller views. The check is made where the context budget is checked, so the proof command's forms are held to it too. A context at the limit is not refused. Over the stub with a synthetic review folder and the constant lowered by the test, a context over the limit is refused with that line in text and in JSON and no session is started, a context at the limit runs, and the prediction line is not printed for the refused one. Out of scope: the token budget, which is unchanged.
         fx.write(self.review, "docs/guide.md", "\U0001f600" * 100)
-        _, _, shared, _ = self.plan()
+        raw = plain_units({"a": 100})
+        _, _, shared, _ = self.plan(raw)
         self.assertGreater(messages.stream_size(shared.message), len(shared.message))
         with mock.patch.object(messages, "STREAM_LIMIT", len(shared.message)):
             with self.assertRaises(planner.OverStreamLimit):
-                self.plan()
+                self.plan(raw)
 
     def test_bound_below_one_is_refused(self):
         # SOL-HW-REVIEW-KIT.C6: a bound below one is refused
@@ -416,7 +441,7 @@ class PerModelPricing(Case):
         spec = messages.make_spec(declaration, ("Read",), "/work", "claude-sonnet-5-5")
         policy = ensemble.parse_policy({"variants": [{"id": "full"}, {"id": "small", "model": "claude-haiku-5-5"}]})
         contexts = ensemble.contexts(spec, shared, policy)
-        made = planner.make_plan(declaration, found, shared, spec, bound=4, cli_version="9.9.9", tool_commit="abc1234",
+        made = planner.make_plan(declaration, found, spec, bound=4, cli_version="9.9.9", tool_commit="abc1234",
                                  replicas=2, variants=policy.ids, contexts=contexts)
         per_node = made.predicted["per_node"]
         small_root = contexts[1].root_id
@@ -435,6 +460,157 @@ class PerModelPricing(Case):
         self.assertEqual(made.contexts[0]["prices"], cm.HAIKU_PRICES.as_dict(), "the plan records each other context's prices")
         self.assertEqual(made.prices, cm.Prices().as_dict(), "and the review's own")
 
+    def split(self, window_big=None):
+        """The default declaration over a budget that gives two roots, and what an independent measure gives for each: the root
+        serving the first and third groups, whose artefacts the first group holds the whole of, and the root serving the second."""
+        raw = fx.declaration_dict()
+        budget = self.split_budget(raw)
+        raw["budget"]["context_tokens"] = budget
+        declaration = decl.parse(json.dumps(raw), "caller.json")
+        found = catalogue.admit(declaration, self.review)
+        spec = messages.make_spec(declaration, ("Read",), "/work", "claude-sonnet-5-5")
+
+        def tokens(names):
+            return messages.shared_context(found.subset(sorted(names))).tokens
+        sizes = {"root.R1": tokens(["guide.md", "view_a.png"]), "root.R2": tokens(["facts.txt", "guide.md", "view_b.png"])}
+        return raw, declaration, found, spec, sizes
+
+    def test_a_root_serving_several_groups_has_one_root_for_each_model_priced_at_its_own_models_prices_and_counted_once(self):
+        # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: each root whose groups' replicas run on a model other than the review's has a root for that model, and each such replica is started from the root of its group's root and model
+        # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C17: the plan's total of tokens written counts each root once and not once per group served or per replica
+        _, declaration, found, spec, sizes = self.split()
+        policy = ensemble.parse_policy({"variants": [{"id": "full"}, {"id": "small", "model": "claude-haiku-5-5"}]})
+        formed = planner.form(declaration, found, spec.model)
+        self.assertEqual([(root.id, root.groups) for root in formed.built_roots], [("root.R1", ("G1", "G3")), ("root.R2", ("G2",))])
+        contexts = ensemble.root_contexts(spec, formed.built_roots, policy)
+        made = planner.make_plan(declaration, found, spec, bound=4, cli_version="9.9.9", tool_commit="abc1234", replicas=3,
+                                 variants=policy.ids, contexts=contexts, formed=formed)
+        small = {context["root"]: context["root_id"] for context in made.contexts}
+        self.assertEqual(small, {"root.R1": "root.R1.claude-haiku-5-5", "root.R2": "root.R2.claude-haiku-5-5"},
+                         "one root for the other model for each root, not one for each of the three groups")
+        self.assertEqual([context["groups"] for context in made.contexts], [["G1", "G3"], ["G2"]])
+        self.assertEqual(sorted(node.id for node in made.roots), sorted(["root.R1", "root.R2"] + list(small.values())))
+        per_node = made.predicted["per_node"]
+        for root_id, size in sizes.items():
+            self.assertAlmostEqual(per_node[root_id]["cost_usd"], cm.root_cost(cm.Prices(), size), places=5)
+            self.assertAlmostEqual(per_node[small[root_id]]["cost_usd"], cm.root_cost(cm.HAIKU_PRICES, size), places=5)
+        parents = {}
+        for node in made.lanes:
+            parents.setdefault(node.group, {}).setdefault(node.parent, []).append(node.replica)
+        self.assertEqual(parents, {"G1": {"root.R1": [1, 3], small["root.R1"]: [2]}, "G3": {"root.R1": [1, 3], small["root.R1"]: [2]},
+                                   "G2": {"root.R2": [1, 3], small["root.R2"]: [2]}},
+                         "replicas 1 and 3 take the review's variant, replica 2 the small model's, each from its group's root")
+        self.assertEqual(made.predicted["tokens_written"], 2 * sum(sizes.values()), "each of the four roots once, whatever the replicas")
+
+    def test_a_context_is_another_models_by_its_model_whatever_flag_a_hand_built_one_carries(self):
+        # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: each such replica is started from the root of its group's root and model, held to that model's budget and priced at its prices
+        _, declaration, found, spec, sizes = self.split()
+        policy = ensemble.parse_policy({"variants": [{"id": "full"}, {"id": "small", "model": "claude-haiku-5-5"}]})
+        formed = planner.form(declaration, found, spec.model)
+        real = ensemble.root_contexts(spec, formed.built_roots, policy)
+        wrong = [types.SimpleNamespace(**{**vars(context), "other": context.model == spec.model}) for context in real]
+        made = planner.make_plan(declaration, found, spec, bound=4, cli_version="9.9.9", tool_commit="abc1234", replicas=2,
+                                 variants=policy.ids, contexts=wrong, formed=formed)
+        small = {context["root"]: context["root_id"] for context in made.contexts}
+        self.assertEqual(sorted(small), ["root.R1", "root.R2"], "a root for the other model for each root, the flag notwithstanding")
+        per_node = made.predicted["per_node"]
+        for root_id, size in sizes.items():
+            self.assertAlmostEqual(per_node[root_id]["cost_usd"], cm.root_cost(cm.Prices(), size), places=5)
+            self.assertAlmostEqual(per_node[small[root_id]]["cost_usd"], cm.root_cost(cm.HAIKU_PRICES, size), places=5)
+        self.assertEqual(made.predicted["tokens_written"], 2 * sum(sizes.values()))
+        self.assertEqual({node.parent for node in made.lanes if node.variant == "small"}, set(small.values()),
+                         "the other model's replica forks from the root of its own root and model")
+
+    def tree_saving_expected(self, found, written):
+        """The saving over the roots written, an artefact's size times the roots of a model holding it beyond the first, at that model's write price."""
+        expected = 0.0
+        for prices, held in written:
+            for artefact in found.artefacts:
+                holders = sum(1 for root in held if artefact.name in root.needs)
+                expected += artefact.tokens * max(holders - 1, 0) * prices.write / 1e6
+        return expected
+
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a root none of whose groups' replicas runs on the review's model is not started
+    def test_the_tree_saving_follows_the_roots_written_and_a_root_with_no_fork_for_the_reviews_model_is_not_started(self):
+        _, declaration, found, spec, _ = self.split()
+        formed = planner.form(declaration, found, spec.model)
+        roots = list(formed.built_roots)
+        everywhere = ensemble.parse_policy({"variants": [{"id": "full"}, {"id": "small", "model": "claude-haiku-5-5"}]})
+        only_other = ensemble.parse_policy({"variants": [{"id": "small", "model": "claude-haiku-5-5"}]})
+        both = planner.make_plan(declaration, found, spec, bound=4, cli_version="9.9.9", tool_commit="abc1234", replicas=2,
+                                 variants=everywhere.ids, contexts=ensemble.root_contexts(spec, roots, everywhere), formed=formed)
+        self.assertEqual([(root.id, root.started) for root in both.root_records], [("root.R1", True), ("root.R2", True)])
+        self.assertEqual([group.root for group in both.groups], ["root.R1", "root.R2", "root.R1"])
+        self.assertAlmostEqual(both.tree["saving_usd"], self.tree_saving_expected(found, [(cm.Prices(), roots), (cm.HAIKU_PRICES, roots)]), places=6)
+        other = planner.make_plan(declaration, found, spec, bound=4, cli_version="9.9.9", tool_commit="abc1234", replicas=2,
+                                  variants=only_other.ids, contexts=ensemble.root_contexts(spec, roots, only_other), formed=formed)
+        self.assertEqual([(root.id, root.started) for root in other.root_records], [("root.R1", False), ("root.R2", False)],
+                         "every fork runs on the other model, so no root for the review's model is started")
+        self.assertEqual(sorted(node.id for node in other.roots), sorted(context["root_id"] for context in other.contexts))
+        expected = self.tree_saving_expected(found, [(cm.HAIKU_PRICES, roots)])
+        self.assertAlmostEqual(other.tree["saving_usd"], expected, places=6, msg="only the roots written, at their own model's price")
+        self.assertGreater(expected, 0)
+        self.assertLess(other.tree["saving_usd"], both.tree["saving_usd"])
+        self.assertEqual(planner.Plan.from_dict(json.loads(json.dumps(other.to_dict()))), other)
+
+    def test_every_root_for_another_model_over_that_models_budget_is_named_with_its_groups_the_model_and_the_figures(self):
+        # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a root for that model over that model's budget is refused naming the groups, the model, the figures and the budget
+        raw, _, found, _, sizes = self.split()
+        big = raw["budget"].pop("context_tokens")
+        raw["budget"] = {"context_fraction": 0.5}
+        declaration = decl.parse(json.dumps(raw), "caller.json")
+        spec = messages.make_spec(declaration, ("Read",), "/work", "big-model")
+        policy = ensemble.parse_policy({"variants": [{"id": "full"}, {"id": "small", "model": "small-model"}]})
+        limit = min(sizes.values()) - 1
+        windows = {"big-model": 2 * big, "small-model": 2 * limit}
+        with mock.patch.dict(cm.WINDOW_TOKENS_BY_MODEL, windows):
+            formed = planner.form(declaration, found, spec.model)
+            self.assertEqual([root.groups for root in formed.built_roots], [("G1", "G3"), ("G2",)])
+            contexts = ensemble.root_contexts(spec, formed.built_roots, policy)
+            with self.assertRaises(planner.GroupsOverBudget) as caught:
+                planner.make_plan(declaration, found, spec, bound=4, cli_version="9.9.9", tool_commit="abc1234", replicas=2,
+                                  variants=policy.ids, contexts=contexts, formed=formed)
+        self.assertEqual([(o.root, o.groups) for o in caught.exception.overruns], [("root.R1", ("G1", "G3")), ("root.R2", ("G2",))],
+                         "every root over that model's budget is named")
+        for overrun, line, root_id in zip(caught.exception.overruns, caught.exception.lines, ("root.R1", "root.R2")):
+            self.assertEqual((overrun.model, overrun.limit), ("small-model", limit))
+            self.assertIn(f"root {root_id} (groups {', '.join(overrun.groups)}, ", line)
+            self.assertIn(f"holds {sizes[root_id]} tokens for the model small-model", line)
+            self.assertIn(f"budget of {limit} tokens, {sizes[root_id] - limit} over", line)
+
+    def test_a_group_whose_replicas_all_run_on_another_model_is_not_held_to_the_reviews_budget_for_a_root_it_never_starts(self):
+        # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a root none of whose groups' replicas runs on a model has no root for it
+        raw = fx.declaration_dict()
+        declaration = decl.parse(json.dumps(raw), "caller.json")
+        found = catalogue.admit(declaration, self.review)
+        sizes = {built.id: built.tokens for built in planner.form(declaration, found, None).groups}
+        raw["budget"] = {"context_fraction": 0.5}
+        declaration = decl.parse(json.dumps(raw), "caller.json")
+        spec = messages.make_spec(declaration, ("Read",), "/work", "big-model")
+        only_other = ensemble.parse_policy({"variants": [{"id": "small", "model": "small-model"}]})
+        both = ensemble.parse_policy({"variants": [{"id": "full"}, {"id": "small", "model": "small-model"}]})
+        tight, roomy = 2 * min(sizes.values()) - 1, 100 * max(sizes.values())
+
+        def plan(windows, policy):
+            with mock.patch.dict(cm.WINDOW_TOKENS_BY_MODEL, windows):
+                formed = planner.form(declaration, found, spec.model)
+                return planner.make_plan(declaration, found, spec, bound=4, cli_version="9.9.9", tool_commit="abc1234", replicas=2,
+                                         variants=policy.ids, contexts=ensemble.root_contexts(spec, formed.built_roots, policy),
+                                         formed=formed)
+        made = plan({"big-model": tight, "small-model": roomy}, only_other)
+        self.assertTrue(all(tokens > tight // 2 for tokens in sizes.values()), "every group's own artefacts are over the reviews budget")
+        self.assertEqual([root.started for root in made.root_records], [False, False, False])
+        with self.assertRaises(planner.GroupsOverBudget) as caught:
+            plan({"big-model": tight, "small-model": tight}, both)
+        self.assertIn(None, {overrun.model for overrun in caught.exception.overruns}, "a group that starts a root is held to it")
+        with self.assertRaises(planner.GroupsOverBudget) as caught:
+            plan({"big-model": roomy, "small-model": tight}, only_other)
+        self.assertEqual({overrun.model for overrun in caught.exception.overruns}, {"small-model"})
+        with mock.patch.dict(cm.WINDOW_TOKENS_BY_MODEL, {"big-model": tight, "small-model": roomy}):
+            planner.form(declaration, found, spec.model)
+            with self.assertRaises(planner.GroupsOverBudget):
+                planner.form(declaration, found, spec.model, hold_groups=True)
+
     def test_a_plan_on_the_small_tier_is_cheaper_than_the_same_plan_on_the_mid_tier_and_given_prices_override_the_table(self):
         # SOL-HW-REVIEW-KIT.C6: the predicted cost and time use the prices of each node's model
         declaration = decl.parse(json.dumps(fx.declaration_dict()), "caller.json")
@@ -443,7 +619,7 @@ class PerModelPricing(Case):
 
         def cost(model, **kwargs):
             spec = messages.make_spec(declaration, ("Read",), "/work", model)
-            return planner.make_plan(declaration, found, shared, spec, bound=4, cli_version="9.9.9", tool_commit="abc1234",
+            return planner.make_plan(declaration, found, spec, bound=4, cli_version="9.9.9", tool_commit="abc1234",
                                      **kwargs).predicted["cost_usd"]
         self.assertLess(cost("claude-haiku-5-5") * 2, cost("claude-sonnet-5-5"))
         self.assertEqual(cost("claude-haiku-5-5", prices=cm.Prices()), cost("claude-sonnet-5-5"))

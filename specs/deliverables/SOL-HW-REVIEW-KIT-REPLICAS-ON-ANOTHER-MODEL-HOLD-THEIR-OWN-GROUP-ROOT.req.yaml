@@ -1,0 +1,23 @@
+id: SOL-HW-REVIEW-KIT-REPLICAS-ON-ANOTHER-MODEL-HOLD-THEIR-OWN-GROUP-ROOT
+type: deliverable
+category: solution
+title: Replicas on another model hold a root of their own for each group, so a review over several groups runs its declared replica policy
+status: deprecated
+version: 1
+text: |
+  Why this exists. SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES gives each group of a review a root of its own and refuses a review over several groups that asks for replicas on a model other than the review's, because a root for each group and each other model was not built. The production-files caller's third replica and the layout pre-order round's third replica run on the small-tier model, so on a full-size board, which forms several groups, those reviews are run with two replicas on the review's one model, losing the independent-model replica the callers' policies call for. For the Builder, who pays for a respin and relies on the production-files check as the last gate before an order is paid for, that is a weaker check than the callers' declared policy.
+
+  What it does. A review of several groups that asks for replicas on another model gives every group a root for each other model, held to that model's declared context budget; a fork of a group's other-model replica continues that root; the plan, a run, the merged record and a rerun carry the roots; and the review runs its declared replica policy on a full-size board with the units split as they are for the review's own model. The refusal and the workaround of running two replicas fall away, and the hardware notes and the method paragraphs that state them are corrected.
+
+  Out of scope: a model call, the value of any model's window, and the split of units into groups.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES
+    type: depends-on
+  - target: DEC-REVIEW-FAN-OUT-FROM-SHARED-CONTEXT-WITH-REPLICAS
+    type: justified-by
+attributes:
+  deprecation_reason: 'Folded into SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9 before merge: refusing replicas on another model over several groups regressed the layout and production-files pre-order rounds on small designs, so each group''s other-model replicas get a root of their own in that leaf'

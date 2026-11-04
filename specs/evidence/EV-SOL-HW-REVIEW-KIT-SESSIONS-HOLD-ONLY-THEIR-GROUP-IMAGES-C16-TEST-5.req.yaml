@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES-C16-TEST-5
+type: evidence
+title: test evidence for SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C16
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-04T20:14:00.973473Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_callers_budget.py::test_a_rule_the_report_holds_lines_for_is_in_the_extract_with_the_checks_own_figure
+  artifact_version: b4e180d3691525b78f02ab71adee1f7eae3925ea
+attested_by: crun-dd06ec1119ff90e8
+links:
+  - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C16
+    type: satisfies

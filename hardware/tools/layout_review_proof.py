@@ -28,15 +28,15 @@ The work folder keeps the review folder alone in <work>/review-tree/review, sinc
 folders above it; the seed list, the seeded copy and the kept work tree are under <work>/seed/, each round's output under
 <work>/out/<round>/, and the record in <work>. A session that guesses a path two levels up can still read them.
 
-The pre-order round's third replica runs on the layout caller's small-tier model with a shared context of its own, one root
-more; the cost model prices each model's sessions at that model's own prices.
+The pre-order round's third replica runs on the layout caller's small-tier model with a root of its own for each root that serves a group with such a replica (one root more, when the groups' views fit one root);
+the cost model prices each model's sessions at that model's own prices.
 
---dry prints each selected run's model or models, plan and its predicted cost and time beside the bounds they would be held to (with a SECOND RUN line for the design loop, the cost and time up to twice, and a warning
+--dry prints each selected run's model or models, plan (each group with the root its forks continue, each root with its groups, images, tokens and budget) and its predicted cost and time beside the bounds they would be held to (with a SECOND RUN line for the design loop, the cost and time up to twice, and a warning
 when the design loop's prediction is over a bound or within a tenth of it), and starts no
 session and calls no model; it still seeds the copy and writes the review folder. --only runs one of the two rounds.
 
 The agent command line is the program named by REVIEW_KIT_AGENT (claude when it is unset), logged in. A run costs money:
-the shared context and a fork for each group and replica, for each round.
+the roots and a fork of a root for each group and replica, for each round.
 
 Each cause is reported on one line beginning REFUSED, a RESULT line comes last, and the exit status is 0 when the criterion
 holds (or, with --only pre-order, when the run completed and its figures are recorded), 1 when the command refuses, a run fails
@@ -323,12 +323,12 @@ def small_tier(plan: Mapping[str, Any]) -> Optional[Dict[str, Any]]:
 
 def models_text(model: str, plan: Mapping[str, Any]) -> str:
     """The model or models a round's sessions run on: the round's own, and the small tier's forks from a shared context of
-    its own, which is one root more."""
+    its own for each root that serves a group with such a replica."""
     small = small_tier(plan)
     if not small:
         return f"all {plan['forks']} forks on {model}"
     return (f"{plan['forks'] - small['forks']} forks on {model}, {small['forks']} on {small['model']} from a shared context of its "
-            "own (one root more); each is priced at its model's prices")
+            "own (one root more for each root that holds a group with such a replica); each is priced at its model's prices")
 
 
 #: Why the layout caller's bound is what it is, printed beside the plan's bound.
@@ -350,11 +350,13 @@ def dry_lines(plans: Mapping[str, Mapping[str, Any]], singles: Sequence[proof.Ru
         found.append(f"MODEL | {name} | {models_text(models[name], plan)}")
         found += [f"WARNING | {name} | {cost_model.unpriced_text(model)}" for model in cost_model.unpriced(
             [models[name]] + [context["model"] for context in plan.get("contexts", ())])]
-        found.append(f"PLAN | {name} | {replicas} replicas | {len(plan['groups'])} groups | {plan['forks']} forks | bound {plan['bound']} | "
-                     f"shared context {plan['shared_tokens']} tokens | variants {', '.join(plan['variants'])}")
+        found.append(f"PLAN | {name} | {replicas} replicas | {len(plan['groups'])} groups | {plan['forks']} forks | "
+                     f"bound {plan['bound']} | shared documents {plan['shared_tokens']} tokens | variants {', '.join(plan['variants'])}")
         found.append(f"BOUND | {name} | {plan['bound']} at once | {BOUND_BASIS}")
         found += [f"GROUP | {name} | {group['id']} | units {', '.join(group['units'])} | {group['replicas']} replicas | expected "
-                  f"output {group['expected_output_tokens']} tokens" for group in plan["groups"]]
+                  f"output {group['expected_output_tokens']} tokens | root {group['root']}" for group in plan["groups"]]
+        found += [f"ROOT | {name} | {root['id']} | groups {', '.join(root['groups'])} | {root['images']} images | {root['tokens']} tokens | "
+                  f"budget {root['budget'] if root['budget'] is not None else 'none'}" for root in plan["roots"]]
         found.append(f"PREDICTED | {name} | ${predicted['cost_usd']} | {predicted['wall_s']} s | " + (
             f"cost {'within' if predicted['cost_usd'] <= cost else 'over'} its bound, time {'within' if predicted['wall_s'] <= wall else 'over'} "
             "its bound" if name == "design-loop" else "figures recorded, not bounded"))

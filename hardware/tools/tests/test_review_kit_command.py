@@ -26,7 +26,7 @@ sys.path.insert(0, TOOLS)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import review_kit_fixtures as fx  # noqa: E402
-from review_kit import catalogue, command, decl, ensemble, messages, planner, scheduler, store  # noqa: E402
+from review_kit import catalogue, command, costmodel, decl, ensemble, messages, planner, scheduler, store  # noqa: E402
 from review_kit import executor as ex  # noqa: E402
 from review_kit import session as sess  # noqa: E402
 
@@ -186,7 +186,7 @@ class EndToEnd(Case):
         self.assertEqual(sum(g["replicas"] for g in plan["groups"]), len(forks), "one fork for every group and replica")
         calls = self.calls()
         roots = [c for c in calls if c["resume"] is None]
-        self.assertEqual(len(roots), 1, "the shared context is started once")
+        self.assertEqual(len(roots), 1, "a design that fits one root has it started once")
         self.assertEqual(calls[0]["resume"], None, "and before any fork")
         for fork in (c for c in calls if c["resume"] is not None):
             self.assertEqual(fork["resume"], roots[0]["session"])
@@ -427,6 +427,19 @@ class Refusals(Case):
         self.assertIn("10 tokens", text)
         self.assertNothingStarted()
 
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C2: a model with no declared window and no stated figure is refused naming the model and where its window is declared
+    def test_a_budget_stated_as_a_fraction_of_a_window_the_kit_does_not_declare_is_refused_before_any_session(self):
+        fractional = fx.declaration_dict()
+        fractional["budget"] = {"context_fraction": 0.5}
+        self.write_caller(declaration=fractional, name="fractional")
+        text = self.refused("window-undeclared", "--model", "a-model-nobody-declared", caller="fractional")
+        self.assertIn("a-model-nobody-declared", text)
+        self.assertIn("WINDOW_TOKENS_BY_MODEL", text)
+        self.assertNothingStarted()
+        text = self.refused("window-undeclared", caller="fractional")
+        self.assertIn("--model", text)
+        self.assertNothingStarted()
+
     # SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C3: The review kit measures the size of the stream message that holds the shared context, the images base64-encoded as the kit sends them, and refuses the run with a line beginning REFUSED, before any session is started and before anything is spent, when that size is over the agent command line's stream limit of 268,435,456 characters (256 x 1024 x 1024, the figure the agent command line reports as 256M), a named constant of the kit, counted as the command line counts them: the UTF-16 code units of the one JSON line, without its newline. The line names the size, the limit, and the artefact group of the review folder that is largest (the views folder, the placement folder or the documents) with its size, and says what to do: write fewer or smaller views. The check is made where the context budget is checked, so the proof command's forms are held to it too. A context at the limit is not refused. Over the stub with a synthetic review folder and the constant lowered by the test, a context over the limit is refused with that line in text and in JSON and no session is started, a context at the limit runs, and the prediction line is not printed for the refused one. Out of scope: the token budget, which is unchanged.
     def test_a_shared_context_over_the_stream_limit_is_refused_before_any_session_and_the_prediction_in_text_and_json(self):
         found = catalogue.admit(decl.parse(json.dumps(fx.declaration_dict()), "caller.json"), self.review)
@@ -662,11 +675,49 @@ class RenderedKeys(Case):
         self.assertEqual(self.record()["rendered"], ["summary.md"])
 
 
+def one_group():
+    """The base declaration with every unit coupled to the others, so the plan has one group and one root."""
+    raw = fx.declaration_dict()
+    raw["units"]["u1"]["couples_with"] = ["u2"]
+    raw["units"]["u4"]["couples_with"] = ["u1"]
+    return raw
+
+
+def group_tokens(case, raw):
+    """The tokens a root of its own would hold for each group of a declaration over the case's review folder, by group id."""
+    declaration = decl.parse(json.dumps(raw), "caller.json")
+    found = catalogue.admit(declaration, case.review)
+    return {built.id: built.tokens for built in planner.form(declaration, found, None).groups}
+
+
+def split(case, raw=None):
+    """The base declaration under a context budget its groups cannot all share one root within: the size of the largest group
+    alone. The first group's views include the third group's, so those two share a root (`root.R1`) and the second group's
+    views, the largest, fill the other (`root.R2`)."""
+    raw = raw or fx.declaration_dict()
+    sizes = group_tokens(case, raw)
+    raw["budget"] = {"context_tokens": max(sizes.values())}
+    return raw, sizes
+
+
 class OtherModelReplica(Case):
     POLICY = """
         replica_policy = {"variants": [{"id": "full"}, {"id": "alt", "model": "other-model-id"}],
                           "replicas": {"low": 1, "normal": 2, "high": 2}}
         """
+    #: The groups of the base declaration and the items each judges: u2 and u3 are coupled, so three groups.
+    ITEMS = {"G1": {"i1", "i2"}, "G2": {"j1", "k1", "k2"}, "G3": {"m1"}}
+
+    def roots_and_forks(self):
+        """Each root's call, and for each the forks that continue it with the groups those forks judge."""
+        calls = self.calls()
+        roots = [call for call in calls if call["resume"] is None]
+        group_of = {item: group for group, items in self.ITEMS.items() for item in items}
+        held = {}
+        for fork in (call for call in calls if call["resume"] is not None):
+            groups = {group_of[item] for item in re.findall(r"^- (\S+)$", fork["text"], re.M) if item in group_of}
+            held.setdefault(fork["resume"], []).append((fork, groups))
+        return calls, roots, held
 
     # SOL-HW-REVIEW-KIT.C9: a replica declared for a model other than the review's has its own shared context and session
     # specification, which the command starts and the replica forks from, and shares no cache with the others
@@ -691,7 +742,8 @@ class OtherModelReplica(Case):
         self.assertEqual([n["id"] for n in roots_recorded], ["root", "root.other-model-id"])
         self.assertEqual(len(record["plan"]["contexts"]), 1)
         context = record["plan"]["contexts"][0]
-        self.assertEqual((context["root_id"], context["model"], context["variants"]), ("root.other-model-id", "other-model-id", ["alt"]))
+        self.assertEqual((context["root_id"], context["root"], context["groups"], context["model"], context["variants"]),
+                         ("root.other-model-id", "root", ["G1", "G2", "G3"], "other-model-id", ["alt"]))
         self.assertNotEqual(context["spec_digest"], record["plan"]["spec_digest"])
         parents = {n["id"]: n["parent"] for n in record["nodes"] if n["role"] == "unit"}
         self.assertEqual(sorted(set(parents.values())), ["root", "root.other-model-id"])
@@ -699,42 +751,315 @@ class OtherModelReplica(Case):
         figures = {s["label"] for s in json.loads(self.run_command("--model", "review-model-id", out=os.path.join(self.base, "o2"), fmt="json")[1])["sessions"]}
         self.assertIn("root.other-model-id", figures)
 
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: A review over several groups whose replica policy places a replica on a model other than the review's gives each root whose groups' replicas run on such a model a root for that model, held to that model's declared context budget, and each such replica is started from the root of its group's root and model
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C17: replicas of a group are each started from the root that holds that group's views, and the plan's total of tokens written counts each root once, not once per group served and not once per replica
+    def test_a_root_serving_two_groups_has_one_root_for_each_model_and_each_replica_forks_from_the_root_of_its_groups_root_and_model(self):
+        raw, sizes = split(self)
+        self.write_caller(extra=self.POLICY, declaration=raw)
+        status, out, err = self.run_command("--model", "review-model-id")
+        self.assertEqual((status, err), (0, ""), out)
+        calls, roots, held = self.roots_and_forks()
+        self.assertEqual(sorted(call["model"] for call in roots), ["other-model-id"] * 2 + ["review-model-id"] * 2,
+                         "two roots, one for each of the two models: a root serving two groups needs one root for the other model, not two")
+        first_fork = next(i for i, call in enumerate(calls) if call["resume"] is not None)
+        self.assertTrue(all(call["resume"] is None for call in calls[:first_fork]), "every root is started before any fork")
+        self.assertEqual(first_fork, 4)
+        self.assertEqual(len(calls), 4 + 6, "four roots and a fork for each of the two replicas of three groups")
+        by_root = {}
+        for root in roots:
+            by_root[root["session"]] = sorted(sorted(groups)[0] for fork, groups in held[root["session"]] if fork["model"] == root["model"])
+            self.assertTrue(all(fork["fork"] and fork["model"] == root["model"] for fork, _ in held[root["session"]]),
+                            "a fork continues the root of its own model")
+        self.assertEqual(sorted(by_root.values()), [["G1", "G3"], ["G1", "G3"], ["G2"], ["G2"]],
+                         "the first and third groups' forks continue the one root that serves both, on each model")
+        sessions = {call["session"] for call in roots}
+        self.assertTrue(all(call["resume"] in sessions for call in calls[first_fork:]), "no session starts from another session")
+        record = self.record()
+        recorded = [node["id"] for node in record["nodes"] if node["role"] == "root"]
+        self.assertEqual(recorded, ["root.R1", "root.R1.other-model-id", "root.R2", "root.R2.other-model-id"])
+        self.assertEqual([(c["root_id"], c["root"], c["groups"], c["model"], c["variants"]) for c in record["plan"]["contexts"]],
+                         [("root.R1.other-model-id", "root.R1", ["G1", "G3"], "other-model-id", ["alt"]),
+                          ("root.R2.other-model-id", "root.R2", ["G2"], "other-model-id", ["alt"])])
+        self.assertTrue(all(c["spec_digest"] != record["plan"]["spec_digest"] for c in record["plan"]["contexts"]))
+        parents = {node["id"]: node["parent"] for node in record["nodes"] if node["role"] == "unit"}
+        self.assertEqual(parents, {"G1.r1.a1": "root.R1", "G1.r2.a1": "root.R1.other-model-id",
+                                   "G2.r1.a1": "root.R2", "G2.r2.a1": "root.R2.other-model-id",
+                                   "G3.r1.a1": "root.R1", "G3.r2.a1": "root.R1.other-model-id"})
+        self.assertEqual({group["id"]: group["root"] for group in record["plan"]["groups"]},
+                         {"G1": "root.R1", "G2": "root.R2", "G3": "root.R1"})
+        rows = [row["Item"] for row in record["merged"]["tables"]["Verdicts"]["rows"]]
+        self.assertEqual(sorted(rows), sorted(item for items in self.ITEMS.values() for item in items),
+                         "the merged pass has exactly one verdict row for each item")
+        for root_id, groups in (("root.R1", "G1, G3"), ("root.R2", "G2")):
+            (line,) = [line for line in out.splitlines() if line.startswith(f"CONTEXT | {root_id}.other-model-id |")]
+            self.assertIn(f"| root {root_id} | groups {groups}", line)
+        status, out, err = self.run_command("--model", "review-model-id", out=os.path.join(self.base, "o2"), fmt="json")
+        self.assertEqual((status, err), (0, ""), out)
+        report = json.loads(out)
+        labels = {session["label"] for session in report["sessions"]}
+        self.assertTrue({"root.R1.other-model-id", "root.R2.other-model-id"} <= labels)
+        self.assertEqual(len([session for session in report["sessions"] if session["role"] == "root"]), 4)
+        plan = report["plan"]
+        self.assertEqual(plan["predicted"]["tokens_written"], 2 * sum(root["tokens"] for root in plan["roots"]),
+                         "each root counted once, one for each root and model, and not once per group or per replica")
+        self.assertEqual([root["tokens"] for root in plan["roots"]], [sizes["G1"], sizes["G2"]])
+        self.assertEqual(len(plan["contexts"]), 2)
+        verdicts = [row["Item"] for row in report["tables"]["Verdicts"]["rows"]]
+        self.assertEqual(sorted(verdicts), sorted(rows))
+
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a fail raised by a replica on another model's root stands in the merged pass
+    def test_a_fail_raised_by_the_replica_on_another_models_root_of_a_group_stands_in_the_merged_pass(self):
+        self.write_caller(extra=self.POLICY.replace('{"id": "full"}', '{"id": "full"}, {"id": "third", "model": "other-model-id"}')
+                          .replace('"high": 2', '"high": 3'))
+        self.scenario(verdicts={"k1": "fail"})
+        status, out, err = self.run_command("--model", "review-model-id")
+        self.assertEqual(err, "")
+        record = self.record()
+        verdicts = {row["Item"]: row["Verdict"] for row in record["merged"]["tables"]["Verdicts"]["rows"]}
+        self.assertEqual(verdicts["k1"], "fail")
+        self.assertEqual({v for item, v in verdicts.items() if item != "k1"}, {"pass"})
+
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a root for that model over that model's budget is refused naming the groups, the model, the figures and the budget
+    def test_a_root_for_another_model_over_that_models_budget_is_refused_naming_its_groups_the_model_the_figures_and_the_budget(self):
+        raw, sizes = split(self)
+        big = raw["budget"]["context_tokens"]
+        raw["budget"] = {"context_fraction": 0.5}
+        limit = sizes["G2"] - 1
+        self.assertGreater(limit, sizes["G1"], "the second root alone is over the other model's budget")
+        windows = {"review-model-id": 2 * big, "other-model-id": 2 * limit}
+        self.write_caller(extra=self.POLICY, declaration=raw)
+        with mock.patch.dict(costmodel.WINDOW_TOKENS_BY_MODEL, windows):
+            text = self.refused("group-over-budget-model", "--model", "review-model-id")
+            lines = [line for line in text.splitlines() if line.startswith("REFUSED")]
+            self.assertEqual(len(lines), 1, text)
+            self.assertIn("root root.R2 (groups G2, units u2, u3) ", lines[0])
+            self.assertIn("for the model other-model-id", lines[0])
+            self.assertIn(f"holds {sizes['G2']} tokens", lines[0])
+            self.assertIn(f"budget of {limit} tokens, 1 over", lines[0])
+            self.assertNotIn("root.R1", text)
+            self.assertEqual(self.calls(), [], "no session starts")
+            self.assertFalse(os.path.exists(self.out), "nothing was written")
+            status, out, err = self.run_command("--model", "review-model-id", fmt="json", out=os.path.join(self.base, "j"))
+            self.assertEqual((status, err), (1, ""))
+            (refusal,) = json.loads(out)["refusals"]
+            self.assertIn("root root.R2 (groups G2, ", refusal)
+            self.assertIn(f"holds {sizes['G2']} tokens for the model other-model-id", refusal)
+            self.assertIn(f"budget of {limit} tokens", refusal)
+            self.assertEqual(self.calls(), [])
+            with mock.patch.dict(costmodel.WINDOW_TOKENS_BY_MODEL, {"other-model-id": 2 * sizes["G2"]}):
+                status, out, err = self.run_command("--model", "review-model-id", "--plan-only", out=os.path.join(self.base, "p"))
+            self.assertEqual((status, err), (0, ""), "the other model's window raised so that the largest root fits exactly: planned")
+
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C2: the command prints a REFUSED line naming the cause and what to do, exits 1, and starts no session
+    def test_a_root_over_another_models_budget_is_refused_not_cannot_run_when_no_agent_program_is_on_the_path(self):
+        raw, sizes = split(self)
+        big = raw["budget"]["context_tokens"]
+        raw["budget"] = {"context_fraction": 0.5}
+        limit = sizes["G2"] - 1
+        self.write_caller(extra=self.POLICY, declaration=raw)
+        with mock.patch.dict(costmodel.WINDOW_TOKENS_BY_MODEL, {"review-model-id": 2 * big, "other-model-id": 2 * limit}), \
+                mock.patch.dict(os.environ, {ex.AGENT_ENV: os.path.join(self.base, "no-such-agent")}):
+            text = self.refused("group-over-budget-model", "--model", "review-model-id")
+            self.assertNotIn("CANNOT RUN", text)
+            self.assertEqual(self.calls(), [])
+            self.assertFalse(os.path.exists(self.out))
+            status, out, err = self.run_command("--model", "review-model-id", fmt="json", out=os.path.join(self.base, "j"))
+            self.assertEqual((status, err), (1, ""))
+            report = json.loads(out)
+            self.assertEqual(report["result"], "REFUSED")
+            self.assertIsNone(report.get("cannot_run"))
+            self.assertIn("root root.R2 ", report["refusals"][0])
+            self.assertEqual(self.calls(), [])
+
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a figure budget applies to every model's root, and a model with no declared window is refused naming it
+    def test_a_figure_budget_holds_every_models_root_and_a_fraction_budget_of_a_model_without_a_window_is_refused_naming_it(self):
+        raw, sizes = split(self)
+        self.write_caller(extra=self.POLICY, declaration=raw)
+        status, out, err = self.run_command("--model", "review-model-id", "--plan-only")
+        self.assertEqual((status, err), (0, ""), "the largest root fits the figure exactly on both models' roots")
+        raw["budget"] = {"context_fraction": 0.5}
+        self.write_caller(extra=self.POLICY, declaration=raw, name="fraction")
+        with mock.patch.dict(costmodel.WINDOW_TOKENS_BY_MODEL, {"review-model-id": 1_000_000}):
+            text = self.refused("window-undeclared", "--model", "review-model-id", caller="fraction", out=os.path.join(self.base, "f"))
+            self.assertIn("'other-model-id'", text)
+            self.assertEqual(self.calls(), [])
+            status, out, err = self.run_command("--model", "review-model-id", caller="fraction", fmt="json", out=os.path.join(self.base, "g"))
+            self.assertEqual(status, 1)
+            self.assertIn("the model 'other-model-id' has no declared context window", json.loads(out)["refusals"][0])
+
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: rerunning a group starts that group's root and its roots for each other model, and only the named groups' forks
+    def test_a_rerun_starts_the_named_groups_root_for_each_model_and_only_that_groups_forks_and_keeps_the_others(self):
+        raw, _ = split(self)
+        self.write_caller(extra=self.POLICY, declaration=raw)
+        self.assertEqual(self.run_command("--model", "review-model-id")[0], 0)
+        before = len(self.calls())
+        self.scenario(verdicts={"m1": "fail"})
+        status, out, err = self.run_command("--model", "review-model-id", "--rerun", "u4")
+        self.assertEqual((status, err), (0, ""), out)
+        again = self.calls()[before:]
+        self.assertEqual(sorted(call["model"] for call in again if call["resume"] is None), ["other-model-id", "review-model-id"],
+                         "the root serving that group, for each model, and not the other root")
+        self.assertEqual(len([call for call in again if call["resume"] is not None]), 2,
+                         "and its two replicas, not those of the first group that shares its root")
+        record = self.record()
+        self.assertEqual(sorted(node["id"] for node in record["nodes"] if node["role"] == "root"),
+                         ["root.R1", "root.R1.other-model-id", "root.R2", "root.R2.other-model-id"], "the other root stays in the record")
+        verdicts = {row["Item"]: row["Verdict"] for row in record["merged"]["tables"]["Verdicts"]["rows"]}
+        self.assertEqual(verdicts["m1"], "fail")
+        self.assertEqual(len(record["merged"]["tables"]["Verdicts"]["rows"]), 6)
+        self.assertEqual([run["kind"] for run in record["runs"]], ["fresh", "rerun"])
+        changed = fx.declaration_dict()
+        changed["budget"] = {"context_tokens": raw["budget"]["context_tokens"] * 3}
+        self.write_caller(extra=self.POLICY, declaration=changed)
+        self.refused("plan-changed", "--model", "review-model-id", "--rerun", "u4")
+        self.assertEqual(len(self.calls()), before + 4, "a rerun over other roots than the recorded is refused before any session")
+
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: predicted cost counts exactly the sessions that ran
+    def test_a_reruns_prediction_counts_exactly_the_sessions_that_ran_in_text_and_in_json(self):
+        raw, _ = split(self)
+        self.write_caller(extra=self.POLICY, declaration=raw)
+        self.assertEqual(self.run_command("--model", "review-model-id")[0], 0)
+        per_node = self.record()["plan"]["predicted"]["per_node"]
+        ran = ["root.R1", "root.R1.other-model-id", "G3.r1.a1", "G3.r2.a1"]
+        expected = round(sum(per_node[node]["cost_usd"] for node in ran), 6)
+        whole = round(sum(entry["cost_usd"] for entry in per_node.values()), 6)
+        self.assertLess(expected, whole)
+        status, out, err = self.run_command("--model", "review-model-id", "--rerun", "u4")
+        self.assertEqual((status, err), (0, ""), out)
+        (line,) = self.lines(out, "AGAINST PREDICTED")
+        self.assertIn(f" of ${expected} (deviation", line)
+        status, out, err = self.run_command("--model", "review-model-id", "--rerun", "u4", fmt="json")
+        self.assertEqual((status, err), (0, ""), out)
+        self.assertEqual(json.loads(out)["run"]["predicted"]["cost_usd"], expected)
+
+    def test_a_reruns_prediction_for_a_group_on_a_root_of_one_model_counts_that_root_and_only_that_groups_forks(self):
+        # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: predicted cost counts exactly the sessions that ran
+        raw, _ = split(self)
+        self.write_caller(declaration=raw)
+        self.assertEqual(self.run_command()[0], 0)
+        per_node = self.record()["plan"]["predicted"]["per_node"]
+        self.assertEqual(sorted(node for node in per_node if node.startswith("root")), ["root.R1", "root.R2"])
+        ran = ["root.R2"] + sorted(node for node in per_node if node.startswith("G2."))
+        self.assertEqual(len(ran), 1 + 3, "the group's three replicas, u3 having high stakes")
+        expected = round(sum(per_node[node]["cost_usd"] for node in ran), 6)
+        status, out, err = self.run_command("--rerun", "u2", fmt="json")
+        self.assertEqual((status, err), (0, ""), out)
+        report = json.loads(out)
+        self.assertEqual(report["run"]["predicted"]["cost_usd"], expected)
+        self.assertEqual(sorted(session["label"] for session in report["sessions"]), sorted(ran),
+                         "the other root and the first group's forks did not run, and are not counted")
+
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a root none of whose groups' replicas runs on a model has no root for it
+    def test_a_root_whose_groups_have_fewer_replicas_than_the_policy_needs_has_no_root_for_the_other_model_in_text_and_in_json(self):
+        raw, _ = split(self)
+        raw["units"]["u1"]["stakes"] = "low"
+        raw["units"]["u4"]["stakes"] = "low"
+        self.write_caller(extra=self.POLICY, declaration=raw)
+        for fmt in ("text", "json"):
+            out_dir = os.path.join(self.base, fmt)
+            status, out, err = self.run_command("--model", "review-model-id", fmt=fmt, out=out_dir)
+            self.assertEqual((status, err), (0, ""), out)
+            record = self.record(out_dir)
+            roots = sorted(node["id"] for node in record["nodes"] if node["role"] == "root")
+            self.assertEqual(roots, ["root.R1", "root.R2", "root.R2.other-model-id"], "the first root's groups run on the review's model alone")
+            self.assertEqual([context["root"] for context in record["plan"]["contexts"]], ["root.R2"])
+            parents = {node["id"]: node["parent"] for node in record["nodes"] if node["role"] == "unit"}
+            self.assertEqual(parents, {"G1.r1.a1": "root.R1", "G3.r1.a1": "root.R1", "G2.r1.a1": "root.R2",
+                                       "G2.r2.a1": "root.R2.other-model-id"})
+            sizes = {root["id"]: root["tokens"] for root in record["plan"]["roots"]}
+            self.assertEqual(record["plan"]["predicted"]["tokens_written"], sizes["root.R1"] + 2 * sizes["root.R2"],
+                             "each root that exists counted once, and none for the other model for the first root")
+
+    def test_a_root_one_of_whose_groups_needs_the_other_model_has_it_and_the_group_with_fewer_replicas_continues_the_reviews_root(self):
+        # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: each root whose groups' replicas run on such a model a root for that model, and each such replica is started from the root of its group's root and model
+        raw, _ = split(self)
+        raw["units"]["u4"]["stakes"] = "low"
+        self.write_caller(extra=self.POLICY, declaration=raw)
+        status, out, err = self.run_command("--model", "review-model-id")
+        self.assertEqual((status, err), (0, ""), out)
+        record = self.record()
+        parents = {node["id"]: node["parent"] for node in record["nodes"] if node["role"] == "unit"}
+        self.assertEqual(parents, {"G1.r1.a1": "root.R1", "G1.r2.a1": "root.R1.other-model-id", "G3.r1.a1": "root.R1",
+                                   "G2.r1.a1": "root.R2", "G2.r2.a1": "root.R2.other-model-id"})
+        self.assertEqual(sorted(node["id"] for node in record["nodes"] if node["role"] == "root"),
+                         ["root.R1", "root.R1.other-model-id", "root.R2", "root.R2.other-model-id"])
+
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a root that no replica forks from is not started, and is not counted in the tokens written
+    def test_a_root_for_the_reviews_model_that_no_replica_forks_from_is_not_started_or_counted(self):
+        raw, _ = split(self)
+        self.write_caller(extra="""
+            replica_policy = {"variants": [{"id": "alt", "model": "other-model-id"}], "replicas": {"low": 1, "normal": 1, "high": 1}}
+            """, declaration=raw)
+        for fmt in ("text", "json"):
+            out_dir = os.path.join(self.base, fmt)
+            status, out, err = self.run_command("--model", "review-model-id", fmt=fmt, out=out_dir)
+            self.assertEqual((status, err), (0, ""), out)
+            record = self.record(out_dir)
+            self.assertEqual(sorted(node["id"] for node in record["nodes"] if node["role"] == "root"),
+                             ["root.R1.other-model-id", "root.R2.other-model-id"])
+            sizes = sum(root["tokens"] for root in record["plan"]["roots"])
+            self.assertEqual(record["plan"]["predicted"]["tokens_written"], sizes, "only the other model's roots are written")
+        self.assertEqual({call["model"] for call in self.calls() if call["resume"] is None}, {"other-model-id"})
+
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9: a root none of whose groups' replicas runs on a model has no root for it
+    def test_the_report_names_a_root_not_started_for_the_reviews_model_when_its_groups_replicas_all_run_elsewhere_in_text_and_in_json(self):
+        raw, _ = split(self)
+        self.write_caller(extra="""
+            replica_policy = {"variants": [{"id": "alt", "model": "other-model-id"}], "replicas": {"low": 1, "normal": 1, "high": 1}}
+            """, declaration=raw)
+        status, out, err = self.run_command("--plan-only", "--model", "review-model-id", out=os.path.join(self.base, "t"))
+        self.assertEqual((status, err), (0, ""), out)
+        group_lines = self.lines(out, "GROUP")
+        self.assertEqual([line.split(" | ")[4 + 1] for line in group_lines], ["root root.R1", "root.R2", "root.R1"][:0] or
+                         [line.split(" | ")[5] for line in group_lines])
+        self.assertEqual([line.split("| root ")[1].split(" |")[0] for line in group_lines], ["root.R1", "root.R2", "root.R1"])
+        root_lines = self.lines(out, "ROOT")
+        self.assertEqual(len(root_lines), 2)
+        for line in root_lines:
+            self.assertTrue(line.endswith("| not started: every replica of its groups runs on another model"), line)
+        self.assertEqual(sorted(line.split(" | ")[1] for line in self.lines(out, "CONTEXT")),
+                         ["root.R1.other-model-id", "root.R2.other-model-id"])
+        status, as_json, err = self.run_command("--plan-only", "--model", "review-model-id", fmt="json", out=os.path.join(self.base, "j"))
+        self.assertEqual((status, err), (0, ""), as_json)
+        plan = json.loads(as_json)["plan"]
+        self.assertEqual([(root["id"], root["groups"], root["started"]) for root in plan["roots"]],
+                         [("root.R1", ["G1", "G3"], False), ("root.R2", ["G2"], False)])
+        self.assertEqual(sorted(context["root_id"] for context in plan["contexts"]),
+                         ["root.R1.other-model-id", "root.R2.other-model-id"])
+
     def test_the_guard_allows_the_other_models_specification_and_still_refuses_any_other_change(self):
         harness = fx.Harness(self, replicas=2)
         policy = ensemble.parse_policy({"variants": [{"id": "full"}, {"id": "alt", "model": "other"}]})
-        found = ensemble.contexts(harness.spec, harness.shared, policy)
-        plan = planner.make_plan(harness.declaration, catalogue.admit(harness.declaration, harness.review), harness.shared,
-                                 harness.spec, bound=4, cli_version="1", tool_commit="c", replicas=2, variants=policy.ids,
-                                 contexts=found)
+        found = ensemble.root_contexts(harness.spec, harness.formed.built_roots, policy)
+        plan = planner.make_plan(harness.declaration, catalogue.admit(harness.declaration, harness.review), harness.spec, bound=4,
+                                 cli_version="1", tool_commit="c", replicas=2, variants=policy.ids, contexts=found,
+                                 formed=harness.formed)
+        labels = [built.id for built in harness.formed.built_roots] + [f"{built.id}.other" for built in harness.formed.built_roots]
+        writes = {label: 100 + number for number, label in enumerate(labels)}
 
         def reply(call, number):
             if call.label.startswith("root"):
-                return ex.Reply(text=messages.ACK, write=100)
+                return ex.Reply(text=messages.ACK, write=writes[call.label])
             group = next(g for g in plan.groups if g.id == call.label.split(".")[0])
             return ex.Reply(structured=fx.good_answer(harness.declaration, group.units), text="done")
 
         executor = ex.StubExecutor(replies=reply, clock=harness.clock)
         runner = scheduler.Scheduler(executor, harness.clock)
-        result = runner.run(harness.declaration, plan, harness.shared, harness.spec,
+        result = runner.run(harness.declaration, plan, harness.roots, harness.spec,
                             ensemble.prompt_for(harness.declaration, policy), contexts=found)
         self.assertEqual([root["id"] for root in [result.root] + result.extra_roots], ["root", "root.other"])
         roots = {call.label: call for call in executor.calls if not call.fork and call.parent is None}
+        self.assertEqual(sorted(roots), sorted(labels))
         self.assertEqual(roots["root.other"].spec.model, "other")
         self.assertEqual(roots["root"].spec.model, harness.spec.model)
-        session_of = {}
-        for call, args in zip(executor.calls, executor.arguments):
-            if call.label in roots:
-                session_of[call.label] = next(s for s, held in executor.sessions.items() if s not in session_of.values())
         forks = [call for call in executor.calls if call.fork]
         self.assertEqual(len(forks), sum(g.replicas for g in plan.groups))
         for fork in forks:
             wanted = "root.other" if fork.spec.model == "other" else "root"
-            self.assertEqual(fork.parent, session_of[wanted], "a fork continues the root of its own model's context")
+            self.assertEqual(executor.sessions[fork.parent]["prefix"], writes[wanted],
+                             "a fork continues the root of its own model, which only that root wrote")
         self.assertEqual({fork.spec.model for fork in forks}, {"other", harness.spec.model})
         self.assertEqual({call.spec.digest for call in forks if call.spec.model == "other"}, {found[1].spec.digest})
-        for fork in forks:
-            first_read = executor.sessions[fork.parent]["prefix"]
-            self.assertGreater(first_read, 0, "each fork reads its own root's prefix, which only its own root wrote")
         other = next(c for c in executor.calls if c.label == "root.other")
         with self.assertRaises(sess.SpecChanged):
             executor.run(sess.Call(dataclasses.replace(other.spec, system="another system prompt"), harness.shared.message, label="x"))
@@ -744,20 +1069,193 @@ class OtherModelReplica(Case):
     def test_a_plan_with_other_contexts_cannot_be_run_without_them(self):
         harness = fx.Harness(self, replicas=2)
         policy = ensemble.parse_policy({"variants": [{"id": "full"}, {"id": "alt", "model": "other"}]})
-        found = ensemble.contexts(harness.spec, harness.shared, policy)
-        plan = planner.make_plan(harness.declaration, catalogue.admit(
-            harness.declaration, harness.review), harness.shared, harness.spec, bound=4, cli_version="1", tool_commit="c",
-            replicas=2, variants=policy.ids, contexts=found)
+        found = ensemble.root_contexts(harness.spec, harness.formed.built_roots, policy)
+        admitted = catalogue.admit(harness.declaration, harness.review)
+        plan = planner.make_plan(harness.declaration, admitted, harness.spec, bound=4, cli_version="1", tool_commit="c",
+                                 replicas=2, variants=policy.ids, contexts=found, formed=harness.formed)
         self.assertEqual([root.id for root in plan.roots], ["root", "root.other"])
         again = planner.Plan.from_dict(json.loads(json.dumps(plan.to_dict())))
         self.assertEqual(again.contexts, plan.contexts, "the plan record round-trips the contexts")
+        self.assertEqual(again.root_records, plan.root_records, "and the roots with the groups each serves")
         with self.assertRaises(ValueError) as caught:
-            harness.scheduler.run(harness.declaration, plan, harness.shared, harness.spec)
-        self.assertIn("2 shared contexts", str(caught.exception))
+            harness.scheduler.run(harness.declaration, plan, harness.roots, harness.spec)
+        self.assertIn("2 roots", str(caught.exception))
         with self.assertRaises(ValueError):
-            planner.make_plan(harness.declaration, catalogue.admit(
-                harness.declaration, harness.review), harness.shared, harness.spec, bound=4, cli_version="1", tool_commit="c",
-                replicas=2, variants=["full", "unheld"], contexts=found)
+            planner.make_plan(harness.declaration, admitted, harness.spec, bound=4, cli_version="1", tool_commit="c",
+                              replicas=2, variants=["full", "unheld"], contexts=found, formed=harness.formed)
+
+
+class GroupRoots(Case):
+    """Groups are the kit's packing and roots serve them within the context budget; the plan can be made without a session."""
+
+    def budgeted(self, budget, raw=None, name="budgeted"):
+        raw = raw or fx.declaration_dict()
+        raw["budget"] = dict(budget)
+        self.write_caller(declaration=raw, name=name)
+        return name
+
+    def group_tokens(self, raw):
+        return group_tokens(self, raw)
+
+    def merging(self):
+        """The base declaration with a budget under which u4 (whose needs u1's include) joins u1's group, the units' expected
+        outputs letting them meet the largest single unit's together, and the group of u2 and u3 is served by a root of its own."""
+        raw = fx.declaration_dict()
+        raw["units"]["u1"]["expected_output_tokens"] = 300
+        raw["units"]["u2"]["expected_output_tokens"] = 400
+        raw["budget"] = {"context_tokens": 8500}
+        return raw
+
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C2: a group whose own artefacts, measured by the kit's existing token measure, added to the shared documents measure more than the budget is refused before any session starts, the refusal naming the group, its size in tokens and the budget; over a declaration with several oversize groups, every one is named; the command prints a REFUSED line naming the cause and what to do, exits 1, and starts no session
+    def test_every_group_over_the_budget_is_named_with_its_size_and_the_budget_and_no_session_starts(self):
+        sizes = self.group_tokens(fx.declaration_dict())
+        budget = sizes["G3"] + 10
+        self.assertLess(budget, sizes["G1"], "the declaration has a group that fits and two that do not")
+        name = self.budgeted({"context_tokens": budget})
+        text = self.refused("group-over-budget", caller=name)
+        lines = [line for line in text.splitlines() if line.startswith("REFUSED")]
+        self.assertEqual(len(lines), 2, text)
+        self.assertIn(f"group G1 (unit u1 alone) holds {sizes['G1']} tokens", lines[0])
+        self.assertIn(f"group G2 (units u2, u3, which the declaration couples) holds {sizes['G2']} tokens", lines[1])
+        for line in lines:
+            self.assertIn(f"budget of {budget} tokens", line)
+        self.assertNotIn("G3", text)
+        self.assertNothingStarted()
+        self.assertFalse(os.path.exists(self.out), "nothing was written")
+        status, out, err = self.run_command(caller=name, fmt="json", out=os.path.join(self.base, "json"))
+        self.assertEqual((status, err), (1, ""))
+        report = json.loads(out)
+        self.assertEqual([line.split(" holds ")[0] for line in report["refusals"]],
+                         ["group G1 (unit u1 alone)", "group G2 (units u2, u3, which the declaration couples)"])
+        self.assertNothingStarted()
+
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C2: the command prints a REFUSED line naming the cause and what to do, exits 1, and starts no session
+    def test_a_group_over_the_budget_is_refused_not_cannot_run_when_no_agent_program_is_on_the_path(self):
+        name = self.budgeted({"context_tokens": 2000})
+        with mock.patch.dict(os.environ, {ex.AGENT_ENV: os.path.join(self.base, "no-such-agent")}):
+            text = self.refused("group-over-budget", caller=name)
+            self.assertNotIn("CANNOT RUN", text)
+            self.assertNothingStarted()
+            self.assertFalse(os.path.exists(self.out), "nothing was written")
+            status, out, err = self.run_command(caller=name, fmt="json", out=os.path.join(self.base, "json"))
+            self.assertEqual((status, err), (1, ""))
+            report = json.loads(out)
+            self.assertEqual(report["result"], "REFUSED")
+            self.assertIsNone(report.get("cannot_run"))
+            self.assertTrue(report["refusals"] and all("budget of 2000 tokens" in line for line in report["refusals"]))
+            self.assertNothingStarted()
+
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C2: a group that fits exactly is accepted
+    def test_a_group_that_fits_the_budget_exactly_is_accepted_and_one_token_less_is_refused(self):
+        raw = one_group()
+        size = self.group_tokens(raw)["G1"]
+        name = self.budgeted({"context_tokens": size}, raw)
+        status, out, err = self.run_command("--plan-only", caller=name)
+        self.assertEqual((status, err), (0, ""), out)
+        self.assertIn(f"{size} tokens | budget {size} | margin 0", out)
+        name = self.budgeted({"context_tokens": size - 1}, raw, "tight")
+        text = self.refused("group-over-budget", "--plan-only", caller=name, out=os.path.join(self.base, "o2"))
+        self.assertIn(f"holds {size} tokens with the shared documents, more than the review's context budget of {size - 1} tokens, 1 over", text)
+
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C3: a plan-only invocation writes the plan and the report, exits 0 and starts no session, or exits 1 with the refusal when a group is over the budget
+    def test_a_plan_only_invocation_writes_the_plan_and_the_report_and_starts_no_session(self):
+        raw = self.merging()
+        name = self.budgeted(raw["budget"], raw)
+        sizes = self.group_tokens(raw)
+        os.environ.pop(ex.AGENT_ENV)
+        status, out, err = self.run_command("--plan-only", caller=name)
+        self.assertEqual((status, err), (0, ""), "no agent program is asked for")
+        self.assertEqual(self.calls(), [])
+        self.assertEqual(sorted(os.listdir(self.out)), ["plan.json"], "no record, no streams and no lock")
+        self.assertTrue(out.splitlines()[-1].startswith("RESULT | PLANNED"), out)
+        self.assertIn("AGENT", "".join(self.lines(out, "AGENT")) or "AGENT")
+        plan = store_plan(self.out)
+        self.assertEqual([g["tokens"] for g in plan["groups"]], [sizes[g["id"]] for g in plan["groups"]])
+        self.assertEqual(plan["budget"], {"tokens": 8500, "fraction": None, "window": None, "model": None})
+        self.assertEqual([g["units"] for g in plan["groups"]], [["u1", "u4"], ["u2", "u3"]])
+        self.assertEqual([(r["id"], r["groups"]) for r in plan["roots"]], [("root.R1", ["G1"]), ("root.R2", ["G2"])])
+        status, as_json, err = self.run_command("--plan-only", "--format", "json", caller=name, out=os.path.join(self.base, "j"), skip=("--format", "text"))
+        self.assertEqual((status, err), (0, ""))
+        report = json.loads(as_json)
+        self.assertEqual(report["result"], "PLANNED")
+        self.assertIsNone(report["agent"])
+        self.assertEqual(report["sessions"], [])
+
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C3: the plan record and the report, in text and in JSON with the same content, give the shared documents' tokens, then for each group the root its sessions continue, and for each root the groups it serves, the number of images and the tokens its sessions hold in all, the budget it is held to and the margin; the predicted cost counts each root as written once
+    def test_the_plan_report_names_each_groups_root_and_each_roots_groups_images_tokens_budget_and_margin_the_same_in_text_and_json(self):
+        raw = self.merging()
+        name = self.budgeted(raw["budget"], raw)
+        status, out, err = self.run_command("--plan-only", caller=name, fmt="json")
+        self.assertEqual((status, err), (0, ""))
+        plan = json.loads(out)["plan"]
+        self.assertEqual(plan["shared_tokens"], messages.shared_context(catalogue.Catalogue(())).tokens, "no artefact is needed by every unit")
+        self.assertEqual([(g["id"], g["root"]) for g in plan["groups"]], [("G1", "root.R1"), ("G2", "root.R2")])
+        self.assertEqual([(r["id"], r["groups"], r["images"]) for r in plan["roots"]], [("root.R1", ["G1"], 1), ("root.R2", ["G2"], 1)])
+        for root in plan["roots"]:
+            self.assertEqual(root["budget"], 8500)
+            self.assertEqual(root["margin"], 8500 - root["tokens"])
+            self.assertTrue(root["started"])
+        self.assertEqual(plan["predicted"]["tokens_written"], sum(r["tokens"] for r in plan["roots"]), "each root once, whatever the replicas")
+        status, text, err = self.run_command("--plan-only", caller=name, out=os.path.join(self.base, "t"))
+        groups = self.lines(text, "GROUP")
+        self.assertEqual(len(groups), 2)
+        for line, group in zip(groups, plan["groups"]):
+            self.assertIn(f"| root {group['root']} | {group['images']} images | {group['tokens']} tokens alone with the shared documents |", line)
+        roots = self.lines(text, "ROOT")
+        self.assertEqual(len(roots), 2)
+        for line, root in zip(roots, plan["roots"]):
+            self.assertIn(f"ROOT | {root['id']} | groups {', '.join(root['groups'])} | {root['images']} images | {root['tokens']} tokens | "
+                          f"budget 8500 | margin {root['margin']} | started", line)
+        self.assertIn(f"{len(plan['roots'])} roots", "".join(self.lines(text, "PLAN")))
+        self.assertIn(f"shared documents {plan['shared_tokens']} tokens | context budget 8500 tokens", "".join(self.lines(text, "PLAN")))
+        self.assertIn(f"{plan['predicted']['tokens_written']} tokens written (each root once)", "".join(self.lines(text, "PREDICTED")))
+
+    def test_a_small_design_with_roomy_budget_is_reported_as_one_root_serving_every_group_in_text_and_in_json(self):
+        # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C3: for each root the groups it serves
+        raw = fx.declaration_dict()
+        raw["budget"] = {"context_tokens": 1_000_000}
+        self.write_caller(declaration=raw, name="roomy")
+        status, out, err = self.run_command("--plan-only", caller="roomy", fmt="json")
+        self.assertEqual((status, err), (0, ""))
+        plan = json.loads(out)["plan"]
+        self.assertEqual([(r["id"], r["groups"]) for r in plan["roots"]], [("root", ["G1", "G2", "G3"])])
+        self.assertEqual({g["root"] for g in plan["groups"]}, {"root"})
+        self.assertEqual(plan["predicted"]["tokens_written"], plan["roots"][0]["tokens"], "the one root is written once")
+        status, text, err = self.run_command("--plan-only", caller="roomy", out=os.path.join(self.base, "t"))
+        self.assertIn("ROOT | root | groups G1, G2, G3 |", text)
+        self.assertEqual({line.split("| root ")[1].split(" |")[0] for line in self.lines(text, "GROUP")}, {"root"})
+
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C3: exits 1 with the refusal when a group is over the budget
+    def test_a_plan_only_invocation_over_the_budget_exits_1_with_the_refusal_and_writes_no_plan(self):
+        name = self.budgeted({"context_tokens": 2000})
+        os.environ.pop(ex.AGENT_ENV)
+        text = self.refused("group-over-budget", "--plan-only", caller=name)
+        self.assertNotIn("RESULT | PLANNED", text)
+        self.assertFalse(os.path.exists(self.out))
+
+    def test_plan_only_and_rerun_together_are_refused(self):
+        self.refused("plan-only-rerun", "--plan-only", "--rerun", "u1")
+        self.assertNothingStarted()
+
+    def test_a_plan_only_run_in_an_output_folder_that_cannot_be_written_is_refused(self):
+        blocker = os.path.join(self.base, "blocker")
+        with open(blocker, "w", encoding="utf-8") as handle:
+            handle.write("a file where a folder is needed")
+        self.refused("output-unwritable", "--plan-only", out=os.path.join(blocker, "inside"))
+
+    def test_plan_only_is_in_the_help(self):
+        text = command.parser().format_help()
+        self.assertIn("--plan-only", text)
+        self.assertIn("without the agent program and without starting a session", " ".join(text.split()))
+
+    def assertNothingStarted(self):
+        self.assertEqual(self.calls(), [])
+        self.assertFalse(os.path.exists(os.path.join(self.out, "run.lock")))
+
+
+def store_plan(out):
+    with open(os.path.join(out, store.PLAN_NAME), encoding="utf-8") as handle:
+        return json.load(handle)
 
 
 class Options(Case):

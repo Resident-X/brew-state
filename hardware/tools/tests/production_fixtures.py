@@ -83,6 +83,9 @@ def make_inputs(root: str) -> dict:
     fx.write(os.path.join(views, "index.txt"), "layer-F.Cu-r1c1.png\nassembly-top-r1c1.png\n")
     fx.write(os.path.join(views, "layer-F.Cu-r1c1.png"), kit_fx.png(200, 120, 30))
     fx.write(os.path.join(views, "assembly-top-r1c1.png"), kit_fx.png(200, 120, 40))
+    fx.write(os.path.join(views, "index.json"), json.dumps({"images": [
+        {"view": "layer", "file": "layer-F.Cu-r1c1.png", "layers": [{"name": "F.Cu"}]},
+        {"view": "assembly", "file": "assembly-top-r1c1.png", "side": "top", "layers": [{"name": "F.Fab"}]}]}))
     placement = os.path.join(root, "placement-in")
     fx.write(os.path.join(placement, "index.txt"), "placement.png\n")
     fx.write(os.path.join(placement, "placement.png"), kit_fx.png(160, 100, 60))

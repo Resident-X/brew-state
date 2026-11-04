@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT-MAIN-BOARD-PLANS-WITHIN-THE-BUDGET.C1
+type: criterion
+title: The critical-routing review folder of the committed main controller board plans within the declared budget
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |-
+  A plan-only invocation on the critical-routing review folder of the committed main controller board, in the state the review is run on, records for each group the image count and tokens it holds and shows every group, with the shared context, within the critical-routing caller's declared budget; the recorded figures are the demonstration's evidence. A group the figures show over the budget is a defect in the caller's declaration, corrected before the criterion is met. Out of scope: a live run of the review, whose cost the plan-only invocation avoids.
+links:
+  - target: SOL-HW-REVIEW-KIT-MAIN-BOARD-PLANS-WITHIN-THE-BUDGET
+    type: criterion-of

@@ -57,6 +57,11 @@ class Case(unittest.TestCase):
             call(*args)
         return "\n".join(caught.exception.causes)
 
+    @staticmethod
+    def merged_unchecked(prepared, units):
+        """The merge of one unit under the caller's rules and checks, without the coverage of the checklist the command adds."""
+        return merge.merge(prepared.declaration.shape, prepared.rules, ["u1"], units, prepared.check)
+
 
 class Loading(Case):
     # SOL-HW-REVIEW-KIT.C13: a module missing a required attribute is refused at load naming it
@@ -223,9 +228,9 @@ class Checklist(Case):
         prepared = loaded.prepare(self.review)
         self.assertEqual(loaded.module.CALLS, [self.review])
         units = {"u1": {"r1": {"Verdicts": [], "Findings": []}}}
-        prepared.merge(["u1"], units)
+        self.merged_unchecked(prepared, units)
         prepared.unit_text("u1")
-        prepared.merge(["u1"], units)
+        self.merged_unchecked(prepared, units)
         self.assertEqual(loaded.module.CALLS, [self.review])
         self.assertEqual(prepared.checklist, ("i1", "i2", "j1", "k1", "k2", "m1"))
         self.assertEqual(prepared.rules.checklist, prepared.checklist)
@@ -234,7 +239,7 @@ class Checklist(Case):
         loaded = self.load("def checklist(review_folder):\n    return ['m1', 'k2', 'k1', 'j1', 'i2', 'i1']\n")
         prepared = loaded.prepare(self.review)
         units = {"u1": {"r1": {"Verdicts": [], "Findings": [{"No": 1, "Item": "i1", "Detail": "a"}, {"No": 2, "Item": "i2", "Detail": "b"}]}}}
-        rows = prepared.merge(["u1"], units)["tables"]["Findings"]["rows"]
+        rows = self.merged_unchecked(prepared, units)["tables"]["Findings"]["rows"]
         self.assertEqual([(row["No"], row["Item"]) for row in rows], [(1, "i2"), (2, "i1")])
 
     def test_a_checklist_function_that_raises_or_repeats_a_name_fails_naming_the_caller_before_anything_runs(self):
@@ -254,14 +259,15 @@ class Checklist(Case):
 class ChecksAndRender(Case):
     def test_the_callers_checks_run_on_the_merged_tables_and_a_problem_refuses_the_merge(self):
         prepared = self.load("def checks(tables):\n    return ['bad %d' % len(tables['Verdicts']['rows'])]\n").prepare(self.review)
-        text = self.refused(prepared.merge, ["u1"], {"u1": {"r1": {"Verdicts": [{"Item": "i1", "Verdict": "pass", "Note": ""}], "Findings": []}}})
+        text = self.refused(lambda: self.merged_unchecked(
+            prepared, {"u1": {"r1": {"Verdicts": [{"Item": "i1", "Verdict": "pass", "Note": ""}], "Findings": []}}}))
         self.assertEqual(text, "bad 1")
 
     def test_checks_that_raise_or_return_other_than_a_list_of_text_are_refused_naming_the_caller(self):
         units = {"u1": {"r1": {"Verdicts": [], "Findings": []}}}
-        text = self.refused(self.load("def checks(tables):\n    raise ValueError('x')\n").prepare(self.review).merge, ["u1"], units)
+        text = self.refused(lambda: self.merged_unchecked(self.load("def checks(tables):\n    raise ValueError('x')\n").prepare(self.review), units))
         self.assertIn("the caller demo's checks function raised ValueError: x", text)
-        text = self.refused(self.load("def checks(tables):\n    return 'problem'\n").prepare(self.review).merge, ["u1"], units)
+        text = self.refused(lambda: self.merged_unchecked(self.load("def checks(tables):\n    return 'problem'\n").prepare(self.review), units))
         self.assertIn("returned 'problem', not a list of problems", text)
 
     def test_render_is_given_the_review_folder_and_the_merged_tables_and_must_return_names_with_text(self):

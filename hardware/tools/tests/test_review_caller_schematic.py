@@ -142,15 +142,21 @@ def prepared(folder):
     return kit_caller.load("schematic", TOOLS).prepare(folder)
 
 
+def merge_checks_only(package, order, units):
+    """The merge with the caller's own checks and without the coverage of the checklist, which the command adds through
+    `holds`: these tests judge what the caller's checks refuse."""
+    return merge.merge(package.declaration.shape, package.rules, order, units, package.check)
+
+
 def merged(folder, given, order=None, replicas=None):
     """The unit results merged as the command merges them, each unit one replica unless `replicas` gives more."""
-    return prepared(folder).merge(order or list(given), {unit: replicas.get(unit, {"r1": tables}) if replicas else {"r1": tables}
+    return merge_checks_only(prepared(folder), order or list(given), {unit: replicas.get(unit, {"r1": tables}) if replicas else {"r1": tables}
                                                          for unit, tables in given.items()})
 
 
 def rendered(folder, given, replicas=None):
     package = prepared(folder)
-    out = package.merge(list(given), {unit: replicas.get(unit, {"r1": tables}) if replicas else {"r1": tables}
+    out = merge_checks_only(package, list(given), {unit: replicas.get(unit, {"r1": tables}) if replicas else {"r1": tables}
                                       for unit, tables in given.items()})
     return package.render(merge.plain_tables(out))
 
@@ -854,7 +860,7 @@ class TheGuards(Folder):
             units = {unit: {"r1": tables} for unit, tables in (others or self.others()).items()}
             units[self.UNIT] = {"r1": results()[self.UNIT], "r2": attempt.tables} if replicas else {"r1": attempt.tables}
             try:
-                package.merge([self.UNIT] + list(others or self.others()), units)
+                merge_checks_only(package, [self.UNIT] + list(others or self.others()), units)
             except merge.Refused as error:
                 found += error.causes
         return found
@@ -922,7 +928,7 @@ class TheGuards(Folder):
         bad = self.defects()["leaves a net out of the rows of the item that selects every net"](results()[self.UNIT])
         units = {unit: {"r1": tables} for unit, tables in self.others().items()}
         units[self.UNIT] = {"r1": results()[self.UNIT], "r2": bad}
-        rows = package.merge([self.UNIT] + list(self.others()), units)["tables"]["Verdicts"]["rows"]
+        rows = merge_checks_only(package, [self.UNIT] + list(self.others()), units)["tables"]["Verdicts"]["rows"]
         self.assertIn(("PINV-1", "GND"), {(row["Item"], row["Net or part"]) for row in rows})
 
     def test_a_round_whose_every_answer_is_good_is_refused_on_none_of_those_paths(self):
@@ -954,7 +960,7 @@ class TheGuards(Folder):
                     self.assertEqual(second.cleared, ["[\"PINV-1\", \"/IN\"]"], turn)
                     verdicts = {(row["Item"], row["Net or part"]): row["Verdict"] for row in record.standing.tables["Verdicts"]}
                     self.assertEqual(verdicts[("PINV-1", "/IN")], "fail", f"the {turn} did not clear the fail")
-                    out = package.merge([self.UNIT] + list(self.others()), {**{unit: {"r1": tables} for unit, tables in self.others().items()},
+                    out = merge_checks_only(package, [self.UNIT] + list(self.others()), {**{unit: {"r1": tables} for unit, tables in self.others().items()},
                                                                          self.UNIT: {"r1": record.standing.tables}})
                     self.assertIn("fail", [row["Verdict"] for row in out["tables"]["Verdicts"]["rows"]])
 

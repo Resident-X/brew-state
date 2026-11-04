@@ -50,6 +50,12 @@ locked-copper check makes, and the output folder is a working folder, refused
 inside any design's folder and refused when it already holds files.
 
     board_views.py --board B.kicad_pcb --project B.kicad_pro --class NAME [--class NAME ...] --out FOLDER
+                   [--no-noncopper-tiles] [--thin-nets-over N]
+
+Two options leave out views a review does not need, and change no other tile's name, size or scale: `--no-noncopper-tiles`
+writes no whole-board tile of a layer that is not copper (every other view still draws such a layer), and
+`--thin-nets-over N` writes, for a net whose copper reaches more than N tiles, only the tiles holding the net's pads, vias
+and track ends; with no number nothing is thinned. The index, as text and JSON, and the report state what each leaves out.
 
 Every finding is one line of a fixed shape, a result line comes last, and the
 exit status is the verdict: 0 when every view is written, 1 when the command is
@@ -77,6 +83,7 @@ from xml.etree import ElementTree
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import board_check  # noqa: E402
+import board_geometry  # noqa: E402
 import locked_copper  # noqa: E402
 import sexpr  # noqa: E402
 from board_check import CannotRun, clean  # noqa: E402
@@ -1170,9 +1177,49 @@ def tiles_holding(planned: List[dict], boxes: Sequence[Tuple[float, float, float
                    and box[1] <= tile["region"][3] and box[3] >= tile["region"][1] for box in boxes)]
 
 
-def left_out_field(left: int, grid: int) -> str:
-    """The caption field of a net's tile: the tiles of its grid that hold none of the net's copper are not written."""
+def net_tiles(planned: List[dict], boxes: Sequence[Tuple[float, float, float, float]], thin_over: Optional[int],
+              anchors) -> Tuple[List[dict], bool, Optional[str]]:
+    """The tiles of a net to write, whether the net was thinned and why: the tiles holding its copper, or, when there are more
+    of them than `thin_over` (none given means no thinning), those of them holding its pads, vias and track ends, which
+    `anchors()` gives as boxes. A net with none of those, a zone alone, is not thinned."""
+    holding = tiles_holding(planned, boxes)
+    if thin_over is None or len(holding) <= thin_over:
+        return holding, False, None
+    anchored = tiles_holding(holding, anchors())
+    if not anchored or len(anchored) == len(holding):
+        return holding, False, None
+    return anchored, True, (f"net thinned: its copper reaches {len(holding)} tiles, more than {thin_over}, so only the tiles "
+                            "holding its pads, vias and track ends are written")
+
+
+def left_out_field(left: int, grid: int, thinned: bool = False) -> str:
+    """The caption field of a net's tile: the tiles of its grid that hold none of the net's copper are not written, or for a
+    net thinned to the tiles holding its pads, vias and ends, that is what is written. The thinned wording is no longer than
+    the other, so the grid planned with either is the same."""
+    if thinned:
+        return f"net thinned to tiles with its pads, vias, ends: {left} of {grid} tiles left out"
     return f"tiles with none of the net's copper are not written: {left} of {grid} tiles left out"
+
+
+def net_anchors(layout: list, net: str, path: str) -> List[Tuple[float, float, float, float]]:
+    """Boxes, in board millimetres, round the points of a net a reviewer must see: each pad's centre, each via, and each end of
+    a track or arc that no other track or arc of the net on its layer ends at (a joint is no end). Each is the point itself,
+    which meets the tile that holds it."""
+    points: List[Tuple[float, float]] = []
+    for pad in board_geometry.net_pads(layout).get(net, []):
+        points.append((pad.centre[0], pad.centre[1]))
+    ends: Dict[Tuple[str, int, int], int] = {}
+    for item in locked_copper.copper(layout, path):
+        if item["net"] != net:
+            continue
+        if item["kind"] == "via":
+            points.append((item["at"][0] / 1e6, item["at"][1] / 1e6))
+        elif item["kind"] in ("track", "arc"):
+            for key in ("start", "end"):
+                end = (item["layer"], item[key][0], item[key][1])
+                ends[end] = ends.get(end, 0) + 1
+    points += [(x / 1e6, y / 1e6) for (_, x, y), count in ends.items() if count == 1]
+    return [(x, y, x, y) for x, y in points]
 
 
 def net_tile_line(grid: dict) -> str:
@@ -1400,6 +1447,8 @@ class Renderer:
             entry["beneath"] = f"the whole board's copper and edge in {FAINT[1]}"
         notes = self.notes()
 
+        thinned = False
+
         def caption_for(tile, left=None):
             parts = fields + [scale_text(self.scale), covers(tile["region"])]
             if tile["rows"] * tile["columns"] > 1:
@@ -1408,15 +1457,16 @@ class Renderer:
                 # The grid is planned with the statement at its longest, every tile left out, so which tiles are left
                 # out never changes the grid.
                 grid = tile["rows"] * tile["columns"]
-                parts.append(left_out_field(grid if left is None else left, grid))
+                parts.append(left_out_field(grid if left is None else left, grid, thinned))
             return " | ".join(parts + notes)
 
         planned = tiles(region, self.scale, caption_for, f"the view {wanted}")
         endings = [".png"] if len(planned) == 1 else [f"-r{tile['row']}c{tile['column']}.png" for tile in planned]
         files = self.names.claim(wanted, endings)
         written = planned
+        grid_note = None
         if holding is not None:
-            written = holding(planned)
+            written, thinned, grid_note = holding(planned)
             left = len(planned) - len(written)
             for tile in written:
                 tile["caption"] = caption_for(tile, left)
@@ -1429,7 +1479,9 @@ class Renderer:
                                   for tile, name in zip(planned, files) if tile in written],
                 "tiles_left_out": left,
                 "reason": None if not left else
-                          ("no copper on any copper layer" if not written else "tiles holding none of the net's copper")})
+                          ("no copper on any copper layer" if not written else
+                           grid_note if thinned else "tiles holding none of the net's copper"),
+                **({"thinned": True} if thinned else {})})
         for tile, name in zip(planned, files):
             if tile not in written:
                 continue
@@ -1564,8 +1616,11 @@ def working_refusals(board: str, project: str, out: str) -> List[Tuple[str, str]
     return refusals
 
 
-def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli: str, resvg: str, stream) -> int:
-    """Render every view of the board into `out`; the exit status."""
+def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli: str, resvg: str, stream,
+          no_noncopper_tiles: bool = False, thin_over: Optional[int] = None) -> int:
+    """Render every view of the board into `out`; the exit status. With `no_noncopper_tiles` the whole-board tiles of the layers
+    that are not copper are not written; with `thin_over` a net whose copper reaches more tiles than that is written only in
+    the tiles holding its pads, vias and track ends."""
     refusals = working_refusals(board, project, out)
     if refusals:
         return locked_copper.refused(refusals, "REFUSED | no views were written", stream)
@@ -1620,8 +1675,10 @@ def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli:
         outputs = output_files(names)
         renderer = Renderer(resvg, work, ready, scale, frame, plotted, colours, copper, areas, fonts, names)
 
+        layers_left_out = [layer for layer in drawn if layer not in copper] if no_noncopper_tiles else []
         for layer in drawn:
-            renderer.flat(f"layer-{layer}", [layer], {"view": "layer"}, ["layer view"])
+            if layer not in layers_left_out:
+                renderer.flat(f"layer-{layer}", [layer], {"view": "layer"}, ["layer view"])
 
         for side, prefix in (("top", "F"), ("bottom", "B")):
             renderer.flat(f"assembly-{side}", ["Edge.Cuts", f"{prefix}.Fab", f"{prefix}.CrtYd", f"{prefix}.SilkS"],
@@ -1643,8 +1700,9 @@ def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli:
                           [f"net {net}", f"class {', '.join(critical[net])}"],
                           paint=lambda layer, net=net: drawing(net_drawings[net][layer], colours[layer][0]),
                           beneath=True,
-                          holding=lambda planned, net=net: tiles_holding(
-                              planned, [box for path in net_drawings[net].values() for box in drawn_boxes(path)]))
+                          holding=lambda planned, net=net: net_tiles(
+                              planned, [box for path in net_drawings[net].values() for box in drawn_boxes(path)],
+                              thin_over, lambda net=net: net_anchors(refilled, net, board)))
 
         class_colour = dict(zip(classes, class_colours(len(classes))))
         entries = [(name, class_colour[name][1]) for name in classes]
@@ -1705,6 +1763,8 @@ def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli:
             "critical_classes": {name: sorted(membership[name], key=natural) for name in classes},
             **index_fields(scale, figures, fonts, absent, areas),
             "net_tiles": renderer.grids,
+            **({"layers_left_out": layers_left_out} if no_noncopper_tiles else {}),
+            **({"thin_nets_over": thin_over} if thin_over is not None else {}),
             "not_in_3d": unseen,
             **({"three_dimensional_export": export_status[0]} if export_status else {}),
         }
@@ -1720,7 +1780,11 @@ def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli:
     if export_status:
         print(export_line(export_status[0]), file=stream)
     report_resolution(scale, figures, stream)
+    for layer in layers_left_out:
+        print(f"LAYER LEFT OUT | {layer} | {LEFT_OUT_LAYER}; the index names it", file=stream)
     for grid in renderer.grids:
+        if grid.get("thinned"):
+            print(f"NET THINNED | {grid['net']} | {grid['reason']}; the index names the tiles written", file=stream)
         if not grid["tiles_written"]:
             print(f"NET TILES | {grid['net']} | no copper on any copper layer, so no tile of its "
                   f"{grid['rows'] * grid['columns']}-tile grid is written; the index names it", file=stream)
@@ -1839,10 +1903,19 @@ def export_line(export: dict) -> str:
             f"but wrote a readable file, which the three-dimensional views use; KiCad said: {export['said'] or 'nothing'}")
 
 
+#: What an index and the report say of a layer whose whole-board tile was not written.
+LEFT_OUT_LAYER = ("its whole-board tiles are not written, the layer not being copper (--no-noncopper-tiles); the views that "
+                  "show it still draw it")
+
+
 def write_outputs(folder: str, files: Dict[str, str], header: dict, images: List[dict], facts: List[dict]) -> None:
     """The index and the fact table, each as text and JSON, into `folder` under the names `files` gives them."""
     write_index(folder, files, header, images, True,
-                after_limit=[f"CLASS | {name} | {', '.join(nets)}" for name, nets in header["critical_classes"].items()],
+                after_limit=[f"CLASS | {name} | {', '.join(nets)}" for name, nets in header["critical_classes"].items()]
+                + [f"LAYER LEFT OUT | {layer} | {LEFT_OUT_LAYER}" for layer in header.get("layers_left_out", [])]
+                + ([f"THIN NETS OVER | {header['thin_nets_over']} | a net whose copper reaches more tiles than this is written "
+                    "only in the tiles holding its pads, vias and track ends (--thin-nets-over)"]
+                   if "thin_nets_over" in header else []),
                 before_images=[net_tile_line(grid) for grid in header.get("net_tiles", [])]
                 + [f"NOT IN 3D | {part['reference']} | {part['detail']}" for part in header["not_in_3d"]]
                 + ([export_line(header["three_dimensional_export"])] if "three_dimensional_export" in header else []))
@@ -1862,7 +1935,17 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout) -> int:
     parser.add_argument("--class", dest="classes", action="append", required=True, metavar="NAME",
                         help="a critical net class, as the design names it; give each one")
     parser.add_argument("--out", required=True, help="the folder to write the views into: new or empty, and outside every design's folder")
+    parser.add_argument("--no-noncopper-tiles", action="store_true",
+                        help="write no whole-board tile of a layer that is not copper (the other views still draw it)")
+    parser.add_argument("--thin-nets-over", type=int, default=None, metavar="N",
+                        help="for a net whose copper reaches more than N tiles, write only the tiles holding its pads, vias and "
+                             "track ends; with no number, nothing is thinned")
     args = parser.parse_args(argv)
+    if args.thin_nets_over is not None and args.thin_nets_over < 1:
+        print(f"REFUSED | --thin-nets-over {args.thin_nets_over} is below 1; give the number of tiles of a net above which it is "
+              "thinned, a whole number of 1 or more", file=out)
+        print("RESULT | REFUSED | no views were written", file=out)
+        return 1
     try:
         board_check.require_python()
         version = board_check.require_kicad(args.kicad_cli)
@@ -1871,7 +1954,8 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout) -> int:
             board_check.KICAD_ENVIRONMENT = board_check.isolate_kicad(args.kicad_cli, version, home)
             english(home)
             try:
-                return views(args.board, args.project, args.classes, args.out, args.kicad_cli, args.resvg, out)
+                return views(args.board, args.project, args.classes, args.out, args.kicad_cli, args.resvg, out,
+                             args.no_noncopper_tiles, args.thin_nets_over)
             finally:
                 board_check.KICAD_ENVIRONMENT = None
     except Unreadable as error:

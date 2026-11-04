@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C15
+type: criterion
+title: Each root is sized to the model's window less a declared headroom, and the kit forms the roots by greedy merge on overlap
+status: active
+version: 4
+measurement_type: binary
+verification: test
+text: |-
+  Over a synthetic review folder of generic units, each declaring the views it needs by view kind, net, net class, layer and board region taken from the folder's view index and resolved to artefact names, the kit forms the groups of units as it packs units when no budget is declared, one group for each set of units the declaration couples and the rest packed first-fit, largest expected output first, up to the largest single unit's expected output, and then forms the roots from the groups' needs: each root is the union of its groups' units' declared views plus the fixed text, and every root is held to the budget of the model's window multiplied by a declared headroom fraction, which is the declared budget of the budget criterion when the caller states the fraction in place of a figure. The roots start as one for each group and are merged, the pair whose merged root is within the budget and whose merge saves the most tokens written, the tokens of every artefact the two roots both hold, again and again while that saving is above zero, ties by declaration order of the pairs' first groups; a group and the units the declaration couples are never parted; the headroom fraction is a budget key a declaration may state in place of a figure. A test of units with high overlap shows their groups served by one root with a total of all roots' tokens below that of a partition that separates them, a test of units with no overlap shows no view written twice, and in every case the groups equal the kit's packing of the same declaration, and every root is under the budget. A single unit whose own needs exceed the budget alone is refused naming the unit, its tokens and the budget. Out of scope: the value of the headroom fraction, which a measured run sets, and any model call, the stub standing in for the model.
+links:
+  - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES
+    type: criterion-of

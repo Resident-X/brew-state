@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES-C9-TEST-33
+type: evidence
+title: test evidence for SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-04T20:14:05.659232Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_kit_command.py::test_a_root_whose_groups_have_fewer_replicas_than_the_policy_needs_has_no_root_for_the_other_model_in_text_and_in_json
+  artifact_version: b4e180d3691525b78f02ab71adee1f7eae3925ea
+attested_by: crun-dd06ec1119ff90e8
+links:
+  - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9
+    type: satisfies

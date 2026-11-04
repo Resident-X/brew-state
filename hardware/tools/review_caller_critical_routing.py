@@ -15,9 +15,13 @@ finding naming the item and what and where, numbered by the kit; the render writ
 fail's Why, and the pass holds no findings table and no round number.
 
 The review folder is the one review_folder.py writes with --review critical-routing: its round file holds the pass number,
-the commit judged and the views, and no kind or check lines. The shared context holds the routing section, the layout review
-sections and the whole catalogue (the method extract), the plan, the rules table and the records, the round file, the views'
-index, every rendered view, the placement view when it was rendered, and the layout facts extract. A reviewer is granted the
+the commit judged and the views, and no kind or check lines. Each group is judged from a root that holds the routing
+section, the layout review sections and the whole catalogue (the method extract), the plan, the rules table and the records, the
+round file, the views' index and the layout facts extract, then the views the units' items of the groups it serves are judged
+on, chosen through the kit's selection from the folder's view index (views/index.json) by the names each item's Judged on gives,
+and the placement view when it was rendered and an item names it, and no view of the folder that none of those items names;
+groups whose views fit the budget together share a root. A root is held to a
+budget of a fraction of the model's declared context window (HEADROOM). A reviewer is granted the
 read tools and WebFetch, as the layout caller's are. The pass number, the commit judged and the views come from whoever runs
 the check, because the merge has no model to write them; a folder whose round file lacks them or is malformed is refused when
 the declaration is resolved, before any session starts.
@@ -95,6 +99,11 @@ retrieval = True
 bound = 30
 #: The check's time target in seconds, so the planner sizes groups well clear of the bound.
 WALL_SECONDS = 350
+#: The fraction of the model's context window a root may fill: 0.4 of the 1,000,000 tokens the kit declares for the
+#: model is 400,000, which after documents of about 50,000 tokens holds (400,000 - 50,000) / 4,400 = 79 images of the 4.4
+#: thousand tokens a full-size board's tile costs and leaves 600,000 tokens of the window for the reviewer's own turns. It is a
+#: first, conservative value, to be set from a measured first run.
+HEADROOM = 0.4
 
 #: What the checks hold of the pass: the units, the item each judges and the cannot judge resolutions its folder records.
 ROUND: Dict[str, Any] = {}
@@ -146,8 +155,9 @@ def pass_round(review: str) -> Dict[str, Any]:
 
 def shared_documents(review: str) -> Dict[str, Dict[str, Any]]:
     """The artefacts of the shared context, by name: the extracts, the pass's records and indexes, the design's plan, rules table
-    and records, every rendered view and the placement view, when it was rendered, as an image. A file the folder command always
-    writes and the folder lacks is named as missing."""
+    and records, and every rendered view and the placement view, when it was rendered, as an image artefact that a unit names in
+    its needs, so a root holds only the images of the units of the groups it serves. A file the folder command always writes and the folder
+    lacks is named as missing."""
     design = design_path(review)
     found: Dict[str, Dict[str, Any]] = {}
 
@@ -204,7 +214,7 @@ the method. You did not design the board, and you have no notes from whoever did
 message and the files in this folder. The shared context holds the routing section, the layout review sections and the whole \
 layout practice catalogue (method-extract.md), the board's plan ({plan}), its rules table (design-rules.md) and the records \
 those name in {design}/, round.json (the pass's number, the commit judged and the commands the views were rendered with), the \
-view index, every rendered view as an image{placement}, and layout-facts.txt, which lists the positions, pads, segments, vias \
+view index, the rendered views your items are judged on as images{placement}, and layout-facts.txt, which lists the positions, pads, segments, vias \
 and zones of the layout file. You can read and search the folder and fetch a published document at its address; you cannot \
 run a command, render a view or write anything.
 
@@ -215,7 +225,7 @@ or in part, by that copper; workmanship items are judged like any other. Judge a
 on names. Judge a rule-kind item on its rows in the rules table alone, the row of every rule the item gives, each present \
 with a figure the item's own figure and source bear out; the pre-order check is not run here, so the Why of such a verdict says \
 that the item's measured half is judged by the pre-order check that step 8 runs after the router. Every view an item is judged \
-on is among the images above; open nothing again that is already there. Where an item needs a view that is not among them, \
+on is among the images above; open nothing again that is already there, and the views no item of yours names are not in your context. Where an item needs a view that is not among them, \
 give it `cannot judge` and write in Why `needs <view>: <why the views rendered do not show it>`. For a rule-kind item whose \
 figure rests on a published document, fetch it at the address the board's rules table gives, or find it from the manufacturer \
 or publisher the row names; a document you cannot fetch makes the item `cannot judge`.{added}"""
@@ -260,6 +270,20 @@ SCHEMA = {
     ],
     "findings": {"table": "Findings", "number": "Finding", "citations": [["Verdicts", "Why"]], "citation": CITATION.pattern},
 }
+
+
+def unit_needs(review: str, documents: Dict[str, Dict[str, Any]], listed: Sequence[str]) -> List[str]:
+    """What a unit needs: every text of the shared documents, and the views the unit's items are judged on, chosen through the kit's
+    selection from the view index by the names each item's Judged on gives (the placement view's images when an item names it).
+    A unit needs no view of the whole folder's list: an item judged on `classes` takes the class map, one judged on `net-<net>` the
+    critical nets' tiles, one judged on `layer-<copper layer>` the copper layers' tiles."""
+    names = review_catalogue.judged_on(review, listed)
+    needed = [name for name, entry in documents.items() if entry["kind"] != "image"]
+    needed += review_catalogue.declared_views(review, documents, names)
+    if "placement" in names:
+        needed += [name for name, entry in documents.items()
+                   if entry["kind"] == "image" and name.startswith(review_folder.PLACEMENT + "/")]
+    return sorted(set(needed))
 
 
 def preface(review: str, resolutions: Sequence[Dict[str, str]]) -> str:
@@ -339,11 +363,12 @@ def build_declaration(review: str) -> Dict[str, Any]:
     values = unit_values(review, units, resolutions)
     ROUND.clear()
     ROUND.update({"units": {unit: list(listed) for unit, listed in units.items()}, "resolutions": resolutions})
-    declared = {unit: {"items": list(listed), "template": "area", "needs": sorted(documents),
+    declared = {unit: {"items": list(listed), "template": "area", "needs": unit_needs(review, documents, listed),
                        "couples_with": coupled_to(unit, units), "expected_output_tokens": expected_tokens(listed),
                        "values": values[unit]} for unit, listed in units.items()}
     return {"artefacts": documents, "templates": {"area": AREA_TEMPLATE}, "units": declared, "schema": SCHEMA,
-            "deny": ["designer-notes*", "session*"], "budget": {"wall_s": WALL_SECONDS}, "added_during_round": list(ADDED)}
+            "deny": ["designer-notes*", "session*"], "budget": {"wall_s": WALL_SECONDS, "context_fraction": HEADROOM},
+            "added_during_round": list(ADDED)}
 
 
 def declaration(review: str) -> Dict[str, Any]:

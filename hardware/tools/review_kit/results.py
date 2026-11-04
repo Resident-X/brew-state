@@ -219,9 +219,28 @@ def repair_cosmetic(tables: Dict[str, Any], shape: AnswerShape) -> Tuple[Dict[st
     return repaired, repairs, fatal
 
 
+def mentions(text: str, name: str) -> bool:
+    """Whether `text` names `name` as a whole name, not as the end or the start of a longer one."""
+    return re.search(r"(?<![\w.\-])" + re.escape(name) + r"(?![\w\-])", text) is not None
+
+
+def cited(text: str, foreign: Sequence[str], held: Sequence[str]) -> List[str]:
+    """The artefacts of `foreign` that a cell names, by the whole name or by its last component when no artefact held has that
+    last component, in the order of `foreign`."""
+    held_bases = {name.rsplit("/", 1)[-1] for name in held}
+    found = []
+    for name in foreign:
+        base = name.rsplit("/", 1)[-1]
+        if mentions(text, name) or (base not in held_bases and mentions(text, base)):
+            found.append(name)
+    return found
+
+
 def local_problems(tables: Dict[str, Any], shape: AnswerShape, unit: str, items: Optional[Sequence[str]],
-                   round_label: Optional[str] = None) -> List[Problem]:
-    """What is wrong with repaired tables that the unit can put right in a turn of its own session."""
+                   round_label: Optional[str] = None, foreign: Sequence[str] = (), held: Sequence[str] = ()) -> List[Problem]:
+    """What is wrong with repaired tables that the unit can put right in a turn of its own session. `foreign` are the artefacts
+    only another root holds, which no row of this unit's verdict tables may cite; `held` are the artefacts its own root does, which
+    another group of that root may be the only one to need."""
     found: List[Problem] = []
     for table in shape.tables:
         if table.verdict_column is None or table.key is None:
@@ -236,6 +255,10 @@ def local_problems(tables: Dict[str, Any], shape: AnswerShape, unit: str, items:
                                      f"has the verdict {verdict!r}, outside {list(table.verdicts)}"))
             counts[table.combination(row)] = counts.get(table.combination(row), 0) + 1
             seen_items.add(row[table.key])
+            for name in cited(" ".join(str(row[column]) for column in table.columns), foreign, held):
+                found.append(Problem(LOCAL, f"unit {unit} table {table.name!r} row {number}",
+                                     f"for item {row[table.key]!r} cites the view {name}, which only another root holds and this unit "
+                                     "was not given; cite only the views you were given"))
         for combination, count in counts.items():
             if count > 1:
                 what = (f"gives item {combination!r} {count} verdicts" if not table.extra_key else
@@ -317,9 +340,10 @@ class Assessment:
 
 
 def assess(structured: Any, text: str, shape: AnswerShape, unit: str, items: Optional[Sequence[str]] = None,
-           round_label: Optional[str] = None) -> Assessment:
+           round_label: Optional[str] = None, foreign: Sequence[str] = (), held: Sequence[str] = ()) -> Assessment:
     """The answer a session gave, read, repaired of what is cosmetic and classed. The raw text is kept as given; for a
-    structured answer it is the structured output as JSON."""
+    structured answer it is the structured output as JSON. A verdict row that cites an artefact of `foreign`, one only another
+    root holds, is a local problem naming the row and the artefact."""
     raw = json.dumps(structured, ensure_ascii=False) if isinstance(structured, dict) else (text or "")
     parsed = read_answer(structured, text)
     if parsed.obj is None:
@@ -329,7 +353,7 @@ def assess(structured: Any, text: str, shape: AnswerShape, unit: str, items: Opt
     if fatal:
         return Assessment(parsed.source, raw, None, repairs, [Problem(FATAL, f"unit {unit} {p.where}", p.what) for p in fatal],
                           note=parsed.note)
-    problems = local_problems(tables, shape, unit, items, round_label)
+    problems = local_problems(tables, shape, unit, items, round_label, foreign, held)
     covered = 0
     for table in shape.tables:
         if table.verdict_column and table.key:

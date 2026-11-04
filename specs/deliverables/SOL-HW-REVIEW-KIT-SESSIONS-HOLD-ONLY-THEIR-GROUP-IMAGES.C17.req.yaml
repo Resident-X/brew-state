@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C17
+type: criterion
+title: Replicas of a group read the root that holds its views and each root is counted once in the total of tokens written
+status: active
+version: 2
+measurement_type: binary
+verification: test
+text: |-
+  Over a synthetic declaration, replicas of a group are each started from the root that holds that group's views, and the plan's total of tokens written counts each root once, not once per group served and not once per replica. Out of scope: the replicas' prompts.
+links:
+  - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES
+    type: criterion-of

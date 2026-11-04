@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES-C16-TEST-2
+type: evidence
+title: test evidence for SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C16
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-04T20:14:00.651705Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_kit_group_roots.py::test_a_declared_rule_with_no_line_is_flagged_in_the_plan_naming_the_unit_and_the_rule_without_refusing
+  artifact_version: b4e180d3691525b78f02ab71adee1f7eae3925ea
+attested_by: crun-dd06ec1119ff90e8
+links:
+  - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C16
+    type: satisfies

@@ -44,22 +44,31 @@ Every item carries fields.
 #### FLOOR-1. Parts are grouped
 
 - **Applies when:** always.
+- **Judged on:** `assembly-top`, `assembly-bottom`, `classes`, `placement`.
+- **Kind:** judgement. **Severity:** function.
 
 #### FLOOR-2. Signals stay apart
 
 - **Applies when:** always.
+- **Judged on:** `layer-F.Cu`, `classes`.
+- **Kind:** judgement. **Severity:** quality.
 
 ### Grounding (GROUND)
 
 #### GROUND-1. Ground is a plane
 
 - **Applies when:** always.
+- **Passes:** The board's rules hold the rule and the pre-order check reports no `clearance_floor` violation.
+- **Judged on:** `net-<net>` for each ground net, every `layer-<copper layer>`, `facts.txt`.
+- **Kind:** rule. **Severity:** function.
 
 ### Clocks (CLOCK)
 
 #### CLOCK-1. The crystal sits at its pins
 
 - **Applies when:** the schematic has a crystal.
+- **Judged on:** `crop-<reference>`, `layer-F.Cu`.
+- **Kind:** judgement. **Severity:** function.
 
 ## Ordering
 
@@ -194,12 +203,28 @@ def make_repo(root: str, own: str = OWN_NONE, record: str = RECORD, extra=None, 
     return repo
 
 
+#: The images of the synthetic views folder, as the views command's index lists them: file, view and what selects it.
+VIEW_ENTRIES = [
+    {"view": "layer", "file": "layer-F.Cu.png", "layers": [{"name": "F.Cu"}]},
+    {"view": "layer", "file": "layer-B.Cu.png", "layers": [{"name": "B.Cu"}]},
+    {"view": "layer", "file": "layer-F.Mask.png", "layers": [{"name": "F.Mask"}]},
+    {"view": "net", "file": "net-CLK.png", "net": "CLK", "classes": ["Clock"], "layers": [{"name": "F.Cu"}, {"name": "B.Cu"}]},
+    {"view": "net", "file": "net-GND.png", "net": "GND", "classes": ["Ground"], "layers": [{"name": "F.Cu"}, {"name": "B.Cu"}]},
+    {"view": "class map", "file": "classes.png", "classes": [{"name": "Clock"}, {"name": "Ground"}], "layers": [{"name": "F.Cu"}]},
+    {"view": "assembly", "file": "assembly-top.png", "side": "top", "layers": [{"name": "F.Fab"}]},
+    {"view": "assembly", "file": "assembly-bottom.png", "side": "bottom", "layers": [{"name": "B.Fab"}]},
+    {"view": "crop", "file": "crop-U1.png", "circuit": "U1", "layers": [{"name": "F.Cu"}]},
+]
+
+
 def make_views(root: str) -> dict:
     """A views folder, a placement folder and a check report, as the commands that render and run them leave them."""
     views, placement = os.path.join(root, "views-in"), os.path.join(root, "placement-in")
     write(os.path.join(views, "index.txt"), "layer-F.Cu.png\n")
     write(os.path.join(views, "facts.txt"), "net facts\n")
-    write(os.path.join(views, "layer-F.Cu.png"), kit_fx.png(200, 120, 30))
+    for number, entry in enumerate(VIEW_ENTRIES):
+        write(os.path.join(views, entry["file"]), kit_fx.png(200 + 4 * number, 120, 30 + number))
+    write(os.path.join(views, "index.json"), json.dumps({"images": VIEW_ENTRIES}))
     write(os.path.join(placement, "index.txt"), "placement.png\n")
     write(os.path.join(placement, "placement.png"), kit_fx.png(160, 100, 60))
     write(os.path.join(placement, "measures.txt"), "LENGTH 1\n")

@@ -13,13 +13,14 @@ from __future__ import annotations
 import os
 import re
 import sys
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 TOOLS_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, TOOLS_DIR)
 
 import board_placement  # noqa: E402
 import review_folder  # noqa: E402
+from review_kit import selection  # noqa: E402
 
 ReviewFolderProblem = review_folder.ReviewFolderProblem
 METHOD = review_folder.METHOD
@@ -102,8 +103,8 @@ def areas(review: str, heading: str = LAYOUT_SECTION) -> List[Tuple[str, str, Li
     return found
 
 
-def own_items(review: str) -> List[str]:
-    """The board's own items from the plan's table of them, none for the table's one `none` row."""
+def own_table(review: str) -> Tuple[List[str], List[List[str]]]:
+    """The header and the rows of the plan's table of the board's own items, each row as its cells."""
     design = review_folder.design_in(review)
     path = os.path.join(design, PLAN)
     lines = read_text(review, path, f"plan ({PLAN})").splitlines()
@@ -116,23 +117,138 @@ def own_items(review: str) -> List[str]:
     divider = board_placement.cells(lines[start + 1]) if start + 1 < len(lines) and lines[start + 1].strip().startswith("|") else []
     if len(divider) != len(header) or not all(re.fullmatch(r":?-+:?", cell) for cell in divider):
         raise ReviewFolderProblem(f"the table of the board's own items in the plan {path} has no divider row under its header")
-    found, problems = [], []
+    rows = []
     for row in lines[start + 2:]:
         if not row.strip().startswith("|"):
             break
-        cells = board_placement.cells(row)
+        rows.append(board_placement.cells(row))
+    return header, rows
+
+
+def own_items(review: str) -> List[str]:
+    """The board's own items from the plan's table of them, none for the table's one `none` row."""
+    path = os.path.join(review_folder.design_in(review), PLAN)
+    header, rows = own_table(review)
+    found, problems = [], []
+    for cells in rows:
         if len(cells) != len(header):
-            problems.append(f"the row {row.strip()[:80]!r} has {len(cells)} cells where the header has {len(header)}")
+            problems.append(f"the row {' | '.join(cells)[:80]!r} has {len(cells)} cells where the header has {len(header)}")
         elif cells[0].lower() == "none" and len(found) == 0 and not problems:
             continue
         elif not OWN_ITEM.fullmatch(cells[0]):
-            problems.append(f"the row {row.strip()[:80]!r} gives its item as {cells[0]!r}, not BOARD-<n> or `none`")
+            problems.append(f"the row {' | '.join(cells)[:80]!r} gives its item as {cells[0]!r}, not BOARD-<n> or `none`")
         else:
             found.append(cells[0])
     if problems or len(set(found)) != len(found):
         raise ReviewFolderProblem(f"the table of the board's own items in the plan {path} cannot be read: "
                                   + "; ".join(problems or ["an item is given twice"]))
     return found
+
+
+# --- What the items are judged on ----------------------------------------------------------------
+
+JUDGED_ON = re.compile(r"^- \*\*Judged on:\*\*(.*)$", re.M)
+BACKTICKED = re.compile(r"`([^`]+)`")
+#: A name the pre-order check's lines give a rule: a lower-case word or words joined by underscores.
+RULE_NAME = re.compile(r"[a-z][a-z0-9]*(?:_[a-z0-9]+)+")
+
+
+def item_texts(review: str, heading: str = LAYOUT_SECTION) -> Dict[str, str]:
+    """The text of each catalogue item by its identifier: its heading line to the next item or area."""
+    found: Dict[str, str] = {}
+    for part in re.split(r"(?m)^(?=#{3,4} )", section_body(review, heading)):
+        item = ITEM.match(part)
+        if item:
+            found[item.group(1)] = part
+    return found
+
+
+def judged_on(review: str, items: Sequence[str], heading: str = LAYOUT_SECTION) -> List[str]:
+    """The names, in the order the items give them, that the items are judged on: the backticked names of each catalogue item's
+    *Judged on* line, and of the *Judged on* cell of each of the board's own items in the plan's table."""
+    texts = item_texts(review, heading)
+    own: Dict[str, str] = {}
+    if any(OWN_ITEM.fullmatch(item) for item in items):
+        header, rows = own_table(review)
+        if "Judged on" in header:
+            column = header.index("Judged on")
+            own = {cells[0]: cells[column] for cells in rows if len(cells) == len(header)}
+    found: List[str] = []
+    for item in items:
+        line = JUDGED_ON.search(texts[item]) if item in texts else None
+        text = line.group(1) if line else own.get(item, "")
+        found += BACKTICKED.findall(text)
+    return list(dict.fromkeys(found))
+
+
+def is_copper_layer(name: str) -> bool:
+    return name.endswith(".Cu")
+
+
+def views_for(review: str, names: Sequence[str]) -> List[str]:
+    """The artefact names of the views a unit needs, chosen through the kit's selection from the review folder's view index for
+    the names its items are judged on: `layer-<layer>` the whole-board tiles of that layer (every copper layer for a name such
+    as `layer-<copper layer>`), `net-<net>` the tiles of that net (of every critical net for a name such as `net-<net>`),
+    `classes` the class map, `crop-<reference>` that circuit's crop (every crop for a placeholder), `assembly-top` and
+    `assembly-bottom` the assembly view of that side, `3d-<direction>` the three-dimensional view of that direction (every direction's for a placeholder). A name that is no view
+    (`facts.txt`, the check's report, `design-rules.md`) and `placement`, whose images are not in the index, name none. A view
+    the index lacks is left out, since the board may carry no such layer, net or circuit."""
+    index = selection.read_index(review)
+    found = set()
+    for name in names:
+        kind, _, rest = name.partition("-")
+        literal = bool(rest) and "<" not in rest
+        if kind == "layer" and rest:
+            layers = [rest] if literal else sorted({entry["name"] for image in index["images"] if image.get("view") == "layer"
+                                                    for entry in image.get("layers", []) if is_copper_layer(entry["name"])})
+            found.update(selection.select(index, view="layer", layers=layers, allow_empty=True))
+        elif kind == "net" and rest:
+            found.update(selection.select(index, view="net", nets=[rest] if literal else None, allow_empty=True))
+        elif name == "classes":
+            found.update(selection.select(index, view="class map", allow_empty=True))
+        elif kind == "crop" and rest:
+            found.update(selection.select(index, view="crop", fields={"circuit": rest} if literal else None, allow_empty=True))
+        elif name in ("assembly-top", "assembly-bottom"):
+            found.update(selection.select(index, view="assembly", fields={"side": rest}, allow_empty=True))
+        elif kind == "3d" and rest:
+            found.update(selection.select(index, view="3d", fields={"file": f"3d-{rest}.png"} if literal else None, allow_empty=True))
+    return sorted(found)
+
+
+def declared_views(review: str, held: Iterable[str], names: Iterable[str]) -> List[str]:
+    """The views `names` select, each checked to be an artefact the folder holds (`held`); an index that lists a view the folder
+    lacks is refused naming it."""
+    chosen = views_for(review, names)
+    lacking = [name for name in chosen if name not in set(held)]
+    if lacking:
+        raise ReviewFolderProblem(f"the view index of the review folder {review} lists {lacking[0]}"
+                                  + (f" and {len(lacking) - 1} more" if len(lacking) > 1 else "")
+                                  + ", which the folder does not hold; write the folder again with the folder command")
+    return chosen
+
+
+def report_rules(report: str, pattern: "re.Pattern[str]") -> List[str]:
+    """The rules the lines of a check's report are about, read with `pattern` (its `rule` group), in the order first met."""
+    found = []
+    for line in report.splitlines():
+        match = pattern.search(line)
+        if match:
+            found.append(match.group("rule").strip())
+    return list(dict.fromkeys(found))
+
+
+def declared_rules(review: str, items: Sequence[str], known: Sequence[str] = (), heading: str = LAYOUT_SECTION) -> List[str]:
+    """The check rules the items judge: the backticked names, in the *Passes* and *Fails* lines of each catalogue item of kind
+    rule, of the form the check gives a rule or that the check's report names (`known`), sorted."""
+    texts = item_texts(review, heading)
+    found = set()
+    for item in items:
+        text = texts.get(item, "")
+        if "**Kind:** rule" not in text:
+            continue
+        for line in re.findall(r"(?m)^- \*\*(?:Passes|Fails[^*]*):\*\*(.*)$", text):
+            found.update(name for name in BACKTICKED.findall(line) if RULE_NAME.fullmatch(name) or name in known)
+    return sorted(found)
 
 
 def coupled_to(unit: str, units: Dict[str, List[str]], couplings: Sequence[Tuple[str, str]] = COUPLED) -> List[str]:

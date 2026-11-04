@@ -119,7 +119,7 @@ def plan_of(caller: str, callers: str, folder: str, out: str, model: str, replic
             environ: Mapping[str, str]) -> Dict[str, Any]:
     """The plan the command would run, with its predicted cost and time, made with no session and no model call."""
     args = argparse.Namespace(caller=caller, callers=callers, review=folder, out=out, bound=None if bound is None else str(bound),
-                              replicas=str(replicas), model=model, rerun=[], format="text")
+                              replicas=str(replicas), model=model, rerun=[], plan_only=False, format="text")
     run = command.Run(args, folder, out, command.REPO)
     try:
         run.settle(environ)
@@ -225,7 +225,7 @@ def single_plan(run: "command.Run", environ: Mapping[str, str]) -> proof.FormPla
 
 def settled_run(caller: str, callers: str, folder: str, out: str, model: str, environ: Mapping[str, str]) -> "command.Run":
     args = argparse.Namespace(caller=caller, callers=callers, review=folder, out=out, bound=None, replicas="1", model=model,
-                              rerun=[], format="text")
+                              rerun=[], plan_only=False, format="text")
     run = command.Run(args, folder, out, command.REPO)
     try:
         run.settle(environ)
@@ -241,7 +241,7 @@ def single_plan_of(caller: str, callers: str, folder: str, out: str, model: str,
         formed = single_plan(run, environ)
     except ex.CannotRun as error:
         raise board_check.CannotRun(str(error))
-    return command.plan_summary(formed.plan, formed.shared, 1)
+    return command.plan_summary(formed.plan, 1)
 
 
 def baseline_key(seeds: Sequence[Mapping[str, Any]], design: str, model: str, formed: proof.FormPlan) -> proof.BaselineKey:
