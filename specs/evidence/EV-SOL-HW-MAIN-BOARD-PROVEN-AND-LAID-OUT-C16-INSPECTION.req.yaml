@@ -1,0 +1,18 @@
+id: EV-SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT-C16-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C16
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-04T21:19:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/main-board/fabrication-notes.md::Laminate and comparative tracking index; Status
+  artifact_version: f9bfe521dac70e335026f782a7d1ae48b1280041
+text: |-
+  Read the fabrication notes against each clause of the amended criterion, at commit f9bfe521. The notes specify four laminate families with a published CTI of at least 175 (Shengyi S1000-2M and S1000-2 at class PLC3, Shengyi S1141 at a typical 175 with no specification limit, Kingboard KB-6165F at 175 V with no method printed), each with the maker's document and the revision as printed (or stated as not printed) and the distributor copy read; the order note that requires them; the written request to the maker for the shipped laminate's identity and a certificate of its CTI to IEC 60112; and the families with no published index in the documents read (KB-6165, Nan Ya NP-140, KB-6160, KB-6164), listed and not specified. No laminate below 175 or specified without a cited document was found. Not claimed: the shipped laminate's identity and CTI, which stay unverified until the maker answers, that the maker's order form can fix a laminate, and that the distributor copies are the makers' current revisions; the notes state these as a pre-order action.
+links:
+  - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C16
+    type: satisfies
