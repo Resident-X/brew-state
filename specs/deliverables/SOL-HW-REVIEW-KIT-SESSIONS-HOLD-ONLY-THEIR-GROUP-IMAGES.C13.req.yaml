@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C13
+type: criterion
+title: The full-size main controller board's layout-review and critical-routing folders plan within the budget without rendering again
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |-
+  A plan-only invocation on the layout-review folder and on the critical-routing folder of the committed full-size main controller board, in the state the reviews are run on and with the views command's options of the criterion on leaving views out applied to the already-rendered set, records for each group its image count and its estimated tokens and shows every group's root within the caller's declared budget; the recorded figures are the demonstration's evidence. The views are not rendered again for the demonstration. A group over the budget is a defect in the caller's declaration, corrected before the criterion is met. Out of scope: a live run of either review.
+links:
+  - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES
+    type: criterion-of

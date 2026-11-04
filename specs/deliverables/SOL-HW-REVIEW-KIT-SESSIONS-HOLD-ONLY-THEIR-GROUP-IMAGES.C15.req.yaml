@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C15
+type: criterion
+title: Each group's root is sized to the model's window less a declared headroom, and the kit forms the groups by greedy merge on overlap
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Over a synthetic review folder of generic units, each declaring the views it needs by net class and layer taken from the view index, the kit forms the groups from the units' needs: each group's root is the union of its units' declared views plus the fixed text, and every root is held to the budget of the model's window multiplied by a declared headroom fraction, which is the declared budget of the budget criterion when the caller states the fraction in place of a figure. The groups are formed by merging units greedily by overlap of their views. A test of units with high overlap shows them grouped together with a total of all roots' tokens below that of a partition that separates them, a test of units with no overlap shows no view written twice, and every root is under the budget. A single unit whose own needs exceed the budget alone is refused naming the unit, its tokens and the budget. Out of scope: the value of the headroom fraction, which a measured run sets, and any model call, the stub standing in for the model.
+links:
+  - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES
+    type: criterion-of
