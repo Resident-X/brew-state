@@ -4591,10 +4591,10 @@ sheets:
     lcsc: C21189
     class: basic
     hand: false
-    function: 'bypass link: fitted by default; removed when the Schmitt buffer U520 is fitted'
+    function: 'bypass link position, not fitted (do not populate): the Schmitt buffer U520 carries FLOW_F to FLOW_IN, and a link here would short the buffer''s input to its output'
     mains: false
     sim_exclude: false
-    dnp: false
+    dnp: true
   - ref: U520
     lib_id: 74xGxx:74LVC1G17
     value: SN74LVC1G17
@@ -4605,10 +4605,10 @@ sheets:
     lcsc: C10425
     class: extended
     hand: false
-    function: Schmitt-trigger buffer footprint, not fitted by default (input and output on the two nets the link R522 joins)
+    function: 'Schmitt-trigger buffer, fitted: carries FLOW_F to FLOW_IN for either meter output type, and its Ioff protects PC6 with +3V3 absent (input and output on the two nets the unfitted link position R522 joins)'
     mains: false
     sim_exclude: false
-    dnp: true
+    dnp: false
   - ref: C521
     lib_id: Device:C
     value: 100n
@@ -4619,10 +4619,10 @@ sheets:
     lcsc: C14663
     class: basic
     hand: false
-    function: supply decoupling of U520, fitted only with U520
+    function: supply decoupling of U520, fitted with it
     mains: false
     sim_exclude: false
-    dnp: true
+    dnp: false
   - ref: J521
     lib_id: Connector_Generic:Conn_01x04
     value: STM_D
@@ -5644,15 +5644,16 @@ sheets:
       - TP531.1
   no_connect:
   - pin: U520.1
-    reason: pin 1 is not connected inside SN74LVC1G17 (SCES351 pin table); the package is not fitted by default
+    reason: pin 1 is not connected inside SN74LVC1G17 (SCES351 pin table); the buffer is fitted
   custom_symbols: []
   custom_footprints: []
   power_flags: []
-  drawing_notes: 'Four stacked cells, signal left to right: FLOW (header, pull-up, TVS, series R, C, then the link R522 in parallel with the unfitted buffer U520 footprint, then label FLOW_IN); STM_D and BREW_D (3V3 from +3V3
+  drawing_notes: 'Four stacked cells, signal left to right: FLOW (header, pull-up, TVS, series R, C, then the buffer U520 with the unfitted link position R522 across it, then label FLOW_IN); STM_D and BREW_D (3V3 from +3V3
     through the PTC to header pin 1; SCL and SDA each: header, TVS at the header, series R, pull-up to +3V3 and steering clamp at the converter-side node, labels STM_SCL/STM_SDA or BREW_SCL/BREW_SDA); SPARE_A, BREW_A, SPARE_AN2_H
-    (3V3 through PTC, 5V direct from +5V, signal pin 4 -> TVS -> 10k/20k divider -> 1k -> 47n -> label). U520 and C521 are drawn and marked do-not-populate; R522 is fitted. Header pin tables: J520 1=+5V 2=GND 3=FLOW_RAW; J521
-    1=STMD_3V3 2=GND 3=STM_SCL_X 4=STM_SDA_X; J522 1=BRWD_3V3 2=GND 3=BREW_SCL_X 4=BREW_SDA_X; analogue headers 1=+5V 2=3V3 feed 3=GND 4=signal. Diode:BAT54S pins: 1=A (GND), 2=K (+3V3), 3=COM (signal node). Device:Polyfuse
-    pin 1 = +3V3 side, pin 2 = toward the header. Each 3.3 V feed runs +3V3 -> PTC -> test point and link R540..R544 (1206, value 0, the isolating link) -> header pin; the test point stands on the PTC side of the link.'
+    (3V3 through PTC, 5V direct from +5V, signal pin 4 -> TVS -> 10k/20k divider -> 1k -> 47n -> label). U520 and C521 are fitted; R522 is drawn and marked do-not-populate (the buffer replaces the link; fitting both would
+    short the buffer''s input to its output). Header pin tables: J520 1=+5V 2=GND 3=FLOW_RAW; J521 1=STMD_3V3 2=GND 3=STM_SCL_X 4=STM_SDA_X; J522 1=BRWD_3V3 2=GND 3=BREW_SCL_X 4=BREW_SDA_X; analogue headers 1=+5V 2=3V3 feed
+    3=GND 4=signal. Diode:BAT54S pins: 1=A (GND), 2=K (+3V3), 3=COM (signal node). Device:Polyfuse pin 1 = +3V3 side, pin 2 = toward the header. Each 3.3 V feed runs +3V3 -> PTC -> test point and link R540..R544 (1206, value
+    0, the isolating link) -> header pin; the test point stands on the PTC side of the link.'
 - order: 9
   sheet: Current sensing inputs
   function: Two current-sensor interfaces, each a three-way header with scaling, an unpopulated burden position and the converter filter

@@ -70,11 +70,11 @@ Where the method requires a rating for a link on a path that carries a protectiv
 | Key signal: Carried: filter capacitors C501 C502 C503 C520 C522 C523 C524 C570 C571 (row M6) |  |  | — | Before mains: LCR meter and the charge-time method at the working voltage; each from 80 pF to 59.5 nF. Limit and source: open-items.md, Bring-up measurements carried. |
 | Key signal: Carried: sensor 3.3 V feed capacitance and plug-in dip (row M13) | STMD_3V3 | TP523 | — | LCR meter at each sensor header feed pin with the sensor connected; scope on +3V3 (TP302) and on the feed (TP523, TP526, TP528, TP530, TP532) at plug-in: +3V3 stays at or above 3.0 V and the feed charges through at most 2.67 A for at most 0.20 s. Limit and source: open-items.md, Bring-up measurements carried. |
 | Key signal: Carried: I2C bus far end (row M20) | STM_SCL | R523 | — | Line capacitance at most 400 pF (LCR meter, sensor and cable connected, unpowered); at R523 pad 2 (STM_SCL), TP522, R527 pad 2 (BREW_SCL) and TP525 rise time 30 to 70 percent at most 1000 ns and low level at most 0.4 V. Limit and source: open-items.md, Bring-up measurements carried. |
-| Key signal: Carried: flow meter output levels (row M21) | FLOW_IN | R522 | — | Probe R522 pad 2 (0 ohm link, FLOW_IN side). Flow meter connected, flowing and stopped: low level at most 0.940 V, high level at least 2.52 V. Limit and source: open-items.md, Bring-up measurements carried. |
+| Key signal: Carried: flow meter output levels (row M21) | FLOW_F | C520 | — | Probe C520 pad 1 (FLOW_F, the input of the fitted buffer U520). Flow meter connected, flowing and stopped: low level at most 0.89 V, high level at least 2.74 V. Limit and source: open-items.md, Bring-up measurements carried (M21). |
 | Key signal: NTC_COF | NTC_COF | TP501 | — | coffee-block thermistor divider and filter (PC0) |
 | Key signal: NTC_STM | NTC_STM | TP502 | — | steam-block thermistor divider and filter (PC1) |
 | Key signal: NTC_WAND | NTC_WAND | TP503 | — | wand thermistor divider and filter (PC4) |
-| Key signal: FLOW_IN | FLOW_IN | R522 | — | flow-meter input after the link or buffer (PC6); probed at R522 pad 2 |
+| Key signal: FLOW_IN | FLOW_IN | R522 | — | flow-meter input after the fitted buffer U520 (PC6); probed at R522 pad 2, the unfitted link position (a bare pad) |
 | Key signal: STM_SCL | STM_SCL | R523 | — | steam-path I2C clock (PB8); probed at R523 pad 2, the controller side of the 100 ohm series resistor |
 | Key signal: STM_SDA | STM_SDA | TP522 | — | steam-path I2C data (PB9) |
 | Key signal: BREW_SCL | BREW_SCL | R527 | — | brew-path I2C clock (PB10); probed at R527 pad 2, the controller side of the 100 ohm series resistor |

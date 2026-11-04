@@ -1466,20 +1466,21 @@ positions:
     lcsc: C1622
     class: capacitor
   # R522: maker UNI-ROYAL; MPN 0603WAF0000T5E; catalogue class basic
+  # R522 is NOT fitted (do not populate): U520 carries FLOW_F to FLOW_IN. R572 and R576 are not fitted either (burden positions). U520 and C521 are fitted. The schematic symbols of R522, R572 and R576 still say dnp no (the schematic tools cannot set the flag); the board footprints carry dnp.
   - reference: R522
     value: '0'
     package: R_0603_1608Metric
     rating: 0603 zero-ohm link
     lcsc: C21189
     class: none
-  # U520: maker Texas Instruments; MPN SN74LVC1G17DCKR; catalogue class extended
+  # U520: maker Texas Instruments; MPN SN74LVC1G17DCKR; catalogue class extended; FITTED
   - reference: U520
     value: SN74LVC1G17
     package: SOT-353_SC-70-5
     rating: 6.5 V absolute maximum VCC, Schmitt buffer, 5.5V inputs
     lcsc: C10425
     class: integrated circuit
-  # C521: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
+  # C521: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic; FITTED (decoupling of U520)
   - reference: C521
     value: 100n
     package: C_0603_1608Metric
@@ -1908,7 +1909,7 @@ positions:
     rating: 1% 100ppm/K 0603 100mW
     lcsc: C4184
     class: none
-  # R572: maker UNI-ROYAL; MPN 0603WAF1002T5E; catalogue class basic
+  # R572: maker UNI-ROYAL; MPN 0603WAF1002T5E; catalogue class basic; NOT fitted (do not populate)
   - reference: R572
     value: DNP
     package: R_0603_1608Metric
@@ -1964,7 +1965,7 @@ positions:
     rating: 1% 100ppm/K 0603 100mW
     lcsc: C4184
     class: none
-  # R576: maker UNI-ROYAL; MPN 0603WAF1002T5E; catalogue class basic
+  # R576: maker UNI-ROYAL; MPN 0603WAF1002T5E; catalogue class basic; NOT fitted (do not populate)
   - reference: R576
     value: DNP
     package: R_0603_1608Metric
