@@ -1,0 +1,18 @@
+id: EV-SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-04T21:15:04Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/main-board/circuit-proof.md::Hold-off of the loads the drive stages switch; Hold-off table of the interlock; circuit-proof/D_holdoff.log
+  artifact_version: 4a8bc879141ca078f7a2d18a62f5c3a047bdc44b
+text: |
+  Read the hold-off tables of the main board's circuit proof against the drawn drive stages, at commit 4a8bc879. The table 'Hold-off of the loads the drive stages switch' shows, for each of the six loads the stages switch (the two pump opto-triac LEDs, the two valve relay coils, the two heater opto-triac LEDs), the controller in reset, the 3.3 V rail absent, the 5 V rail absent, both rails rising and falling, and a cable conductor open or a connector unplugged, with the part that holds each load off; the gate pull-downs hold every stage off by a factor of 14 or more against the switch's minimum threshold, and the arithmetic script circuit-proof/D_holdoff.py reports 'SUMMARY: 0 failing' in its committed log. The table 'Hold-off table of the interlock' does the same for the interlock coil (reset, 3.3 V absent, 5 V absent, output held high or low, no cable between the drive and the coil), so the series element opens with no firmware acting. The interlock's hold check at the datasheet-maximum stacked leakage case (finding F2, recorded in circuit-proof.md, circuit-verdicts.md and open-items.md) fails by design margin; that failure is in the safe direction (the relay cannot be held, so contacts open and loads are unpowered) and does not weaken any hold-off state this criterion names. Single faults beyond an open conductor are outside the three states and are carried as recorded findings. The behaviour of the built board is out of scope and is not claimed.
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C2
+    type: satisfies

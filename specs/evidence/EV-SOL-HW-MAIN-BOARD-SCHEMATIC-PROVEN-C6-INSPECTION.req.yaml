@@ -1,0 +1,18 @@
+id: EV-SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN-C6-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C6
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-04T21:15:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/main-board/controller-input-map.yaml::inputs
+  artifact_version: 4a8bc879141ca078f7a2d18a62f5c3a047bdc44b
+text: |
+  Read the converter-input map against the pin allocation record and the controller pin table at commit 4a8bc879. The map lists every converter input on a port pin of the LQFP100 package (14 entries) with its firmware constant and the pin, each taken from DS12110 Rev 11 Table 9 (LQFP100 column), read 2026-10-29. A scripted join of the pin allocation record's channels against the map found all eight analogue sensor channels (ntc_cof PC0, ntc_stm PC1, spare_an2 PA0, curr1_an PA2, curr2_an PA3, brew_an PA6, ntc_wand PC4, stmp_an PC5) present in the map on the pin the record names, each with the same ADC input as the controller pin table; the free converter pins are listed as free. Wiring the firmware's pin checks to the records is out of scope and is not claimed.
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C6
+    type: satisfies

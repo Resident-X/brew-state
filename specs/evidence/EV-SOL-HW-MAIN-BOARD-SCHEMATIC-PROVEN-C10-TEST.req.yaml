@@ -1,0 +1,18 @@
+id: EV-SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN-C10-TEST
+type: evidence
+title: test evidence for SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C10
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-04T21:15:05Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/main-board/pin-allocation.yaml::channels (heat_c_drv, heat_s_drv, mains_pres_c, mains_pres_s); 720-heater-led-drive-and-wall-board-header.kicad_sch::J761
+  artifact_version: 4a8bc879141ca078f7a2d18a62f5c3a047bdc44b
+text: |
+  Read the wall-board header and the neutral return landing against the division record and the pin allocation record at commit 4a8bc879. Sheet 720 draws the ten-way 2.54 mm header J761 (division record: WB_LV10, ten ways, three in use, seven spare, ways kept for the reserved confirms); the neutral return landing J110 (WB_RET) is on the neutral pour on the entry sheet. The channels that cross the header are heat_c_drv (PD2), heat_s_drv (PD3), mains_pres_c (PE15) and mains_pres_s (PD7), each listed in pin-allocation.yaml with its controller pin; the other header pins are the 5 V supply, ground and spare ways, which carry no controller channel. The main-board pre-order check run (pre-order-check-result.md) reports no pin_allocation or connectivity line. The division record gives the interface by ways and use and does not number the pins; the pin order is this board's drawing and is logged for the wall board's own record (open-items.md, 'The ten-way wall board header's pin order'). Comparing the cable between the two boards' headers pin for pin is out of scope and is not claimed.
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C10
+    type: satisfies
