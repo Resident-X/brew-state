@@ -28,7 +28,7 @@ Counts are those of `design-rules.md`, "Via sizes in the layout", read from the 
 
 ## Laminate and comparative tracking index (graph criterion C16)
 
-The requirement: the notes specify a laminate whose published comparative tracking index (CTI) is at least 175 (material group IIIa or better), the figure the basis's material group rests on, and cite the laminate maker's current document for it. A laminate below 175, or one with no such document cited, is reported and the owner re-declares the basis before the board is ordered.
+The requirement: the notes specify a laminate whose published comparative tracking index (CTI) is at least 175 (material group IIIa or better), the figure the basis's material group rests on, and cite the laminate maker's document for that index and the revision read. A family whose maker publishes no index in the documents read is listed as such and is not specified. A laminate below 175, or one with no such document cited, is reported and the owner re-declares the basis before the board is ordered. The criterion was reworded once: its first text asked for the maker's current document, which the repository cannot show (the makers' sites could not be reached and the copies read are distributors'); the maker's written laminate identity and certificate, which would settle it, are asked for by a criterion of the order leaf and recorded before payment.
 
 ### What the board maker says about its laminate (read 2026-11-05)
 
@@ -41,7 +41,7 @@ The requirement: the notes specify a laminate whose published comparative tracki
 
 ### Laminate makers' own datasheets (read 2026-11-05)
 
-Each figure is as printed, from the page shown, at the 1.6 mm specimen thickness the sheet states. The files were fetched with curl and read with pdftotext (and, for S1000-2, as a rendered image, since its text is outlines). These are copies hosted by distributors, not the makers' own sites; the revision is the one on the copy. The makers' sites could not be reached for current revisions, so "current document" in the requirement is not shown to be satisfied by any of these.
+Each figure is as printed, from the page shown, at the 1.6 mm specimen thickness the sheet states. The files were fetched with curl and read with pdftotext (and, for S1000-2, as a rendered image, since its text is outlines). These are copies hosted by distributors, not the makers' own sites; the revision is the one on the copy. The makers' sites could not be reached for current revisions, so none of these is shown to be the maker's current document; the order leaf's criterion for the maker's written identity and certificate carries that.
 
 | Family | Document, revision as printed | Copy read | CTI as printed |
 |---|---|---|---|
@@ -55,9 +55,10 @@ Each figure is as printed, from the page shown, at the 1.6 mm specimen thickness
 
 Reading of the figures against 175 V:
 
-- Published at 175 V or above, as a range or typical value: S1000-2M (class PLC3, range 175 to 250, typical 200), S1000-2 (PLC 3, range 175 to 249), KB-6165F (175 V, no method printed), S1141 (175 V typical, no specification limit).
+- Published as a specification, class and range printed with the method named: S1000-2M (class PLC3, range 175 to 250, typical 200) and S1000-2 (PLC 3, range 175 to 249). These two are specified.
+- Printed, but not a specification: S1141 (175 typical, no specification limit, and a typical value is not a minimum) and KB-6165F (175 V with no test method printed). These are listed as typical value or no method printed, and are not specified.
 - Not published in the documents read: KB-6165, Nan Ya NP-140 family (NP-140TL sheet), KB-6160 and KB-6164 (sheet not readable).
-- A published figure of exactly 175 V sits on the group boundary, with no margin: material group IIIa is CTI 175 to 399 (`separation-basis.yaml`). Only the S1000-2M and S1000-2 sheets print a class and a range that states 175 as the lower limit of PLC3.
+- A published figure of exactly 175 V sits on the group boundary, with no margin: material group IIIa is CTI 175 to 399 (`separation-basis.yaml`). Only the S1000-2M and S1000-2 sheets print a class and a range that states 175 as the lower limit of PLC3, which is why only those two are specified.
 
 ### What the order can and cannot require
 
@@ -65,19 +66,20 @@ The maker's pages read give the customer a choice of stackup and TG value and no
 
 So: the order cannot be shown to require any laminate. The CTI of the laminate actually shipped is unverified, and could be any family in the pool, including ones whose published CTI was not found above.
 
-Before ordering, the owner asks the maker's customer support, in writing, for: (1) the laminate maker and product that will be used for this six-layer 1.6 mm order, with that maker's datasheet; (2) confirmation that it can be fixed to one of the families above at order time, and the order-form field or note that does it (the order note to carry is: "laminate: Shengyi S1000-2M, S1000-2 or S1141, or Kingboard KB-6165F, CTI 175 V or more per IEC 60112; report any substitution before production"); (3) a material or conformance certificate for the shipped lot stating the CTI to IEC 60112, or the laminate maker's report. If the maker cannot fix the laminate or supply the certificate, the owner re-declares the basis (basis condition 3) before ordering.
+Before ordering, the owner asks the maker's customer support, in writing, for: (1) the laminate maker and product that will be used for this six-layer 1.6 mm order, with that maker's datasheet; (2) confirmation that it can be fixed to one of the two specified families (S1000-2M or S1000-2) at order time, and the order-form field or note that does it (the order note to carry is: "laminate: Shengyi S1000-2M or S1000-2, comparative tracking index class PLC 3 (175 V or more) per IEC 60112; report any substitution before production"); (3) a material or conformance certificate for the shipped lot stating the CTI to IEC 60112, or the laminate maker's report. If the maker cannot fix the laminate or supply the certificate, the owner re-declares the basis (basis condition 3) before ordering.
 
 ### Status
 
 Criterion C16, as amended, is **met on paper**; the shipped laminate is **not verified**. What the notes state, clause by clause:
 
-- Families with a published CTI of at least 175 (material group IIIa or better): Shengyi S1000-2M / S1000-2MB (class PLC3, specification "175~250", typical "200V"), Shengyi S1000-2 / S1000-2B (PLC 3, "175V--249V"), Shengyi S1141 (typical "175", no specification limit printed) and Kingboard KB-6165F ("175V", no method printed).
-- The maker's document and the revision read, for each: the table above gives them as printed (S1000-2M "data sheet (20120321)"; S1000-2 and S1141 with no revision printed; KB-616XF Version 2.0 / 2.1), and says the copies are hosted by distributors.
-- The order note that requires the families: "laminate: Shengyi S1000-2M, S1000-2 or S1141, or Kingboard KB-6165F, CTI 175 V or more per IEC 60112; report any substitution before production".
-- The written request the owner makes of the maker's customer support: the laminate maker and product for this order with its datasheet; confirmation that it can be fixed to one of those families and the field that does it; and a certificate of the shipped lot's CTI to IEC 60112.
+- Families specified, with a published CTI class and range of at least 175 (material group IIIa or better): Shengyi S1000-2M / S1000-2MB (class PLC3, specification "175~250", typical "200V") and Shengyi S1000-2 / S1000-2B (PLC 3, "175V--249V").
+- Families listed and not specified, typical value or no method printed: Shengyi S1141 (typical "175", no specification limit printed) and Kingboard KB-6165F ("175V", no method printed). A typical value is not a minimum, and a figure with no method is not an IEC 60112 result.
+- The maker's document and the revision read, for each specified family: the table above gives them as printed (S1000-2M "data sheet (20120321)"; S1000-2 with no revision printed), and says the copies are hosted by distributors.
+- The order note that requires the families: "laminate: Shengyi S1000-2M or S1000-2, comparative tracking index class PLC 3 (175 V or more) per IEC 60112; report any substitution before production".
+- The written request the owner makes of the maker's customer support: the laminate maker and product for this order with its datasheet; confirmation that it can be fixed to one of the two families and the field that does it; and a certificate of the shipped lot's CTI to IEC 60112.
 - Families whose maker publishes no index in the documents read (KB-6165, Nan Ya NP-140 family, KB-6160 and KB-6164) are listed as such and are not specified.
 
-What remains unverified, and is a pre-order action for the owner: the identity and CTI of the laminate the maker will ship, until the maker answers the request; that the maker's pages let the order fix a laminate at all (nothing read shows it); and that the distributor copies are the makers' current revisions (the makers' sites could not be reached). If the maker cannot fix the laminate or supply the certificate, the owner re-declares the basis (basis condition 3) before ordering. Choosing the laminate's supplier and receiving the certificate are out of scope of the criterion.
+What remains unverified, and is a pre-order action for the owner: the identity and CTI of the laminate the maker will ship, until the maker answers the request; that the maker's pages let the order fix a laminate at all (nothing read shows it); and that the distributor copies are the makers' current revisions (the makers' sites could not be reached). The maker's written laminate identity and CTI certificate, or the owner's re-declared material-group basis, are recorded before payment as a criterion of the order leaf. Choosing the laminate's supplier and receiving the certificate are out of scope of criterion C16.
 
 ## Conformal coat (graph criterion C17)
 

@@ -1,0 +1,12 @@
+id: SOL-HW-CONTROLLER-BOARDS-ORDERED-AND-RECEIVED.C5
+type: criterion
+title: The maker's written laminate identity and comparative tracking index certificate, or the owner's re-declared material-group basis, are recorded before payment
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Before payment, the manufacturer's written statement of the laminate maker and product the order will use, and a certificate or test report of that laminate's comparative tracking index to IEC 60112, are recorded in a board record with their source and date; or the owner's re-declared material-group basis is recorded there in their place. A statement that does not name the laminate, or a certificate showing an index below 175, is reported and the order is not paid for until the owner re-declares the basis. Out of scope are choosing a different laminate supplier and the certificate that arrives with the received boards.
+links:
+  - target: SOL-HW-CONTROLLER-BOARDS-ORDERED-AND-RECEIVED
+    type: criterion-of
