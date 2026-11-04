@@ -427,6 +427,19 @@ class Refusals(Case):
         self.assertIn("10 tokens", text)
         self.assertNothingStarted()
 
+    # SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C2: a model with no declared window and no stated figure is refused naming the model and where its window is declared
+    def test_a_budget_stated_as_a_fraction_of_a_window_the_kit_does_not_declare_is_refused_before_any_session(self):
+        fractional = fx.declaration_dict()
+        fractional["budget"] = {"context_fraction": 0.5}
+        self.write_caller(declaration=fractional, name="fractional")
+        text = self.refused("window-undeclared", "--model", "a-model-nobody-declared", caller="fractional")
+        self.assertIn("a-model-nobody-declared", text)
+        self.assertIn("WINDOW_TOKENS_BY_MODEL", text)
+        self.assertNothingStarted()
+        text = self.refused("window-undeclared", caller="fractional")
+        self.assertIn("--model", text)
+        self.assertNothingStarted()
+
     # SOL-BOARD-REVIEW-NET-VIEWS-DRAW-ONLY-TILES-HOLDING-THE-NET.C3: The review kit measures the size of the stream message that holds the shared context, the images base64-encoded as the kit sends them, and refuses the run with a line beginning REFUSED, before any session is started and before anything is spent, when that size is over the agent command line's stream limit of 268,435,456 characters (256 x 1024 x 1024, the figure the agent command line reports as 256M), a named constant of the kit, counted as the command line counts them: the UTF-16 code units of the one JSON line, without its newline. The line names the size, the limit, and the artefact group of the review folder that is largest (the views folder, the placement folder or the documents) with its size, and says what to do: write fewer or smaller views. The check is made where the context budget is checked, so the proof command's forms are held to it too. A context at the limit is not refused. Over the stub with a synthetic review folder and the constant lowered by the test, a context over the limit is refused with that line in text and in JSON and no session is started, a context at the limit runs, and the prediction line is not printed for the refused one. Out of scope: the token budget, which is unchanged.
     def test_a_shared_context_over_the_stream_limit_is_refused_before_any_session_and_the_prediction_in_text_and_json(self):
         found = catalogue.admit(decl.parse(json.dumps(fx.declaration_dict()), "caller.json"), self.review)

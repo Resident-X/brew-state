@@ -16,7 +16,7 @@ the file, and the unit or table, and the artefact, slot or column that is wrong.
       "schema": {"tables": [{"name", "columns", "key", "verdict_column", "verdicts", "numeric"}],
                  "findings": {"table", "number", "citations": [[table, column]], "citation": "<pattern>"}},
       "deny": ["<glob>"],
-      "budget": {"wall_s", "usd", "context_tokens", "tree_saving_usd"}
+      "budget": {"wall_s", "usd", "context_tokens", "context_fraction", "tree_saving_usd"}
     }
 
 A table's `key` is the name of one column, or a list of column names of which the first is the item; the
@@ -51,7 +51,7 @@ ARTEFACT_KEYS = ("kind", "source", "producer", "tokens")
 UNIT_KEYS = ("items", "template", "needs", "couples_with", "expected_output_tokens", "stakes", "values")
 TABLE_KEYS = ("name", "columns", "key", "verdict_column", "verdicts", "numeric")
 FINDING_KEYS = ("table", "number", "citations", "citation")
-BUDGET_KEYS = ("wall_s", "usd", "context_tokens", "tree_saving_usd")
+BUDGET_KEYS = ("wall_s", "usd", "context_tokens", "context_fraction", "tree_saving_usd")
 
 
 @dataclass(frozen=True)
@@ -95,12 +95,14 @@ class Unit:
 
 @dataclass(frozen=True)
 class Budget:
-    """The review's time target in seconds, its cost ceiling in USD, its context budget in tokens, and the saving in USD
-    below which a tree of shared contexts is not worth building."""
+    """The review's time target in seconds, its cost ceiling in USD, its context budget in tokens, or in place of that the
+    fraction of the model's declared context window a session may fill, and the saving in USD below which a tree of shared
+    contexts is not worth building."""
 
     wall_s: Optional[float] = None
     usd: Optional[float] = None
     context_tokens: Optional[int] = None
+    context_fraction: Optional[float] = None
     tree_saving_usd: float = 0.5
 
 
@@ -486,10 +488,20 @@ def read_budget(raw: Any, bad) -> Budget:
     for key, value in raw.items():
         if key not in BUDGET_KEYS:
             bad(None, key, f"`budget` has a key {key!r} it does not take; the keys are {list(BUDGET_KEYS)}")
+        elif key == "context_fraction":
+            if not positive(value) or value > 1:
+                bad(None, key, f"`budget` gives {key} as {value!r}, not a fraction above zero and at most one")
+            else:
+                values[key] = value
         elif not positive(value) or (key == "context_tokens" and not whole(value)):
             bad(None, key, f"`budget` gives {key} as {value!r}, not a number above zero")
         else:
             values[key] = value
+    if "context_tokens" in values and "context_fraction" in values:
+        bad(None, "context_fraction", f"`budget` states both context_tokens ({values['context_tokens']}) and context_fraction "
+                                      f"({values['context_fraction']}); state one: a figure in tokens, or a fraction of the model's declared "
+                                      "context window")
+        del values["context_fraction"]
     return Budget(**values)
 
 

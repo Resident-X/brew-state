@@ -45,6 +45,20 @@ PRICES_BY_MODEL: Dict[str, Prices] = {
 }
 
 
+#: The context window, in tokens, of each model the kit's reviews run on, by full model id: the `contextWindow` the agent
+#: command line reports for the model in its result's `modelUsage`. A model not listed has no declared window and is never
+#: given a default; a budget stated as a fraction of its window is refused naming it. An operator adds a model's window here.
+WINDOW_TOKENS_BY_MODEL: Dict[str, int] = {
+    "claude-sonnet-5-5": 1_000_000,
+    "claude-haiku-5-5": 1_000_000,
+}
+
+
+def window_for(model: Optional[str], table: Mapping[str, int] = WINDOW_TOKENS_BY_MODEL) -> Optional[int]:
+    """The declared context window of a model in tokens, or None when the table does not hold it."""
+    return table.get(model) if model is not None else None
+
+
 def prices_for(model: Optional[str], table: Mapping[str, Prices] = PRICES_BY_MODEL, default: Optional[Prices] = None) -> Prices:
     """The prices of a model: its entry in the table, else the default."""
     return table.get(model, default or Prices()) if model is not None else (default or Prices())

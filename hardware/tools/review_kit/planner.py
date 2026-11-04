@@ -38,6 +38,18 @@ class OverBudget(Exception):
                          "take artefacts out of the units' `needs`, or raise the budget's context_tokens")
 
 
+class WindowUndeclared(Exception):
+    """The budget is a fraction of the model's context window and the kit declares no window for the model."""
+
+    def __init__(self, model: Optional[str]):
+        self.model = model
+        who = ("the review names no model, so it has no declared context window" if model is None
+               else f"the model {model!r} has no declared context window")
+        super().__init__(f"{who}, and the budget is a fraction of it; state a context_tokens figure, or add the model's window to "
+                         "the window table (WINDOW_TOKENS_BY_MODEL in review_kit/costmodel.py)"
+                         + ("" if model is not None else " and name the model with --model"))
+
+
 class OverStreamLimit(Exception):
     def __init__(self, size: int, limit: int, group: str, group_size: int):
         self.size, self.limit, self.group, self.group_size = size, limit, group, group_size
@@ -159,6 +171,23 @@ class Plan:
                    tuple(raw.get("contexts", ())), tuple(raw.get("added_during_round", ())))
 
 
+# --- The budget --------------------------------------------------------------------------------
+
+
+def context_budget(budget: decl.Budget, model: Optional[str]) -> Optional[int]:
+    """The most tokens a session's context may hold: the declared figure; else the headroom fraction of the model's declared
+    context window, rounded down; else None, for a review that states no budget. A fraction with no declared window for the
+    model is refused, never given a default."""
+    if budget.context_tokens is not None:
+        return budget.context_tokens
+    if budget.context_fraction is None:
+        return None
+    window = cm.window_for(model)
+    if window is None:
+        raise WindowUndeclared(model)
+    return int(window * budget.context_fraction)
+
+
 # --- Grouping ----------------------------------------------------------------------------------
 
 
@@ -241,7 +270,8 @@ def make_plan(declaration: decl.Declaration, catalogue: cat.Catalogue, shared: m
               replicas: Union[int, Mapping[str, int]] = 1, variants: Sequence[str] = (),
               prices: Optional[cm.Prices] = None, timing: cm.Timing = cm.Timing(), calls_per_fork: int = cm.CALLS_PER_FORK,
               prompt_for: Optional[Callable[[Sequence[str], str], str]] = None, contexts: Sequence[Any] = ()) -> Plan:
-    """The flat plan for a declaration: refused when the bound is below one or the shared context is over the budget.
+    """The flat plan for a declaration: refused when the bound is below one, the budget is a fraction of a window the kit does not
+    declare, or the shared context is over the budget.
 
     `contexts` are the shared contexts to build when a replica runs on a model other than the review's: objects giving
     `root_id`, `model`, `spec`, `shared` and `variants`, the review's own first. A group's replica forks from the context
@@ -249,7 +279,7 @@ def make_plan(declaration: decl.Declaration, catalogue: cat.Catalogue, shared: m
     prices (`costmodel.PRICES_BY_MODEL`); `prices`, when given, prices every node alike."""
     if isinstance(bound, bool) or not isinstance(bound, int) or bound < 1:
         raise BoundBelowOne(bound)
-    budget = declaration.budget.context_tokens
+    budget = context_budget(declaration.budget, spec.model)
     if budget is not None and shared.tokens > budget:
         raise OverBudget(shared.tokens, budget)
     check_stream(catalogue, shared)
