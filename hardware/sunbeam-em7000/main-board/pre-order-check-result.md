@@ -64,7 +64,36 @@ Two separation_basis lines: `accepted_by` and `accepted_on` are missing from `ha
 
 The mains-spacing rules did not run, because the basis is unsigned. The creepage, layer-separation and spacing-exception lines appear only with a signed basis. This record therefore says nothing about mains spacing.
 
-The mains-spacing comparison with the earlier baseline rests on the creepage verification (`.stage0/creep-report.md`), run with the repo's own functions against a signed scratch copy of the head board. It found no breach of a signed mains-to-low-voltage figure, and the same standing mains-to-mains shortfalls as every earlier board (recorded in the layout plan's open items).
+The mains-spacing comparison with the earlier baseline rests on the creepage verification recorded in the next section, which ran against a signed scratch copy of the head board and not against the real, unsigned basis. It found no breach of a signed mains-to-low-voltage figure, and the same standing mains-to-mains shortfalls as every earlier board (recorded in the layout plan's open items).
+
+## Creepage verification of the mains-to-low-voltage pair C601 pad 2 to K201 pin A2
+
+What ran: an AI agent in a read-only session after the layout review's round 1 closed, with no change to any design file, on the board file as it stood at commit `502f317e`, whose design files are identical to those of `200c0ae6`, the commit the final check above ran on (`git diff 502f317e 200c0ae6` on the board's folder changes no KiCad file). It measured the same pair three ways, and the figures below are the agent's, not the owner's and not the layout reviewer's. The session's own report was not committed; this section is the record of its figures and of the runs that produced them.
+
+The pair: C601 pad 2 (net AMC_AIN0N, neutral-referenced through the net tie NT601, Mains class) and K201 coil pin A2 (net POL_COIL_LO, low voltage), both on F.Cu. The signed mains-to-low-voltage figures are 3.0 mm clearance and 10.0 mm creepage along the surface.
+
+| Method | Straight line | Surface path round the U601 slot arm | Margin to the signed 10.0 mm |
+|---|---|---|---|
+| Geometry from the board file (pad polygons, Edge.Cuts slot loops, shortest path through slot corners) | 9.870 mm | 10.414 mm | 0.414 mm |
+| `board_geometry.route_length` on the same two pads | 9.865 mm | 10.4136 mm | 0.414 mm |
+| `kicad-cli pcb drc` with a probe rule on a pruned copy of the board | | 10.4135 mm | 0.414 mm |
+
+The path runs down the west end of the U601 slot arm (x 52.5 to 61.9, y 90.3 to 91.5) and back out: C601's copper stands level with the arm's end but 1.0 mm above it, so the shortest way round is 2.2 mm along the arm's end wall and 8.21 mm on to the K201 pad edge. The clearance, 9.87 mm straight, is far over the signed 3.0 mm.
+
+Commands, as run (from `hardware/tools`, the board file and tools of that commit):
+
+- `route_length`: with `board_check` and `board_geometry` imported, the board read with `sexpr.parse_one`, `bc.layer_items(tree, bc.copper_layers(tree), bc.hole_footprints(tree))` giving the pads, `bg.Detours(bg.barrier_slots(tree))` giving the slots, then `d = bg.shape_distance(pad_c601_2.shape, pad_k201_a2.shape, 11)` and `bg.route_length(pad_c601_2.shape, pad_k201_a2.shape, slots, 10.0, d)`, which returned `(10.413618..., 1)`. The same run was repeated for this record on the board file now in the folder and gave the same figures.
+- `kicad-cli pcb drc`: a copy of the board pruned to x 40 to 80 mm, y 66 to 103 mm (keeping K201, whose origin lies outside that box), beside the project file and a one-rule `.kicad_dru` file, `(rule "probe creepage 16" (condition "A.hasNetclass('Mains') && !B.hasNetclass('Mains')") (constraint creepage (min 16mm)))`, run as `kicad-cli pcb drc --format json --output out.json main-board.kicad_pcb` with KiCad 10.0.7. The 16 mm threshold is a probe that makes KiCad report the actual creepage of every pair under it; it reported this pair as `actual 10.4135 mm`. The same run with the U601 slot lines deleted reported creepage violations across the whole U601 pad area, so KiCad's creepage test is slot-aware.
+
+Every other same-layer mains to low-voltage pair on the whole board: the nearest were 10.207 mm by surface path (a LINE1 track at F.Cu (25.5, 106.25) to (22.5, 106.25), against a ground pour, and the net NEUTRAL pour on In2 against the fiducial FID1 in plan view) and 10.209 mm (J101 pin 1 against the ground planes); then 10.292 mm (the pump snubber tracks against FID1). None is under the signed 10.0 mm by surface path, and the smallest straight-line distance on the board is 4.64 mm (U711 pin 4 to U602 pin 3, across a slot), over the signed 3.0 mm. This enumeration was the agent's own geometry over 563 mains-class copper items against 5,914 others, every pair under 10.6 mm straight (1,678 pairs); its tables were not committed.
+
+The pre-order check does not report this pair because `layer_separation` judges only pairs whose copper shares no layer, and C601 pad 2 and K201 pin A2 share F.Cu; KiCad's own creepage rule judges same-layer pairs and reports nothing at 10.414 mm.
+
+### Reconciling `route_length` with the layout reviewer's 9.96 mm
+
+The layout review (findings 1.42 and 1.75) records 9.96 mm for this pair, stated there as measured with `board_geometry.route_length` and a corner search. That figure is not reproduced: `route_length` on the board file returns 10.4136 mm for this pair (the run above), and no mains to low-voltage pair on any layer of the board lies between 9.9 and 10.4 mm by surface path. Where 9.96 mm came from is not established; it is not the figure of this board's slot geometry. The 10.414 mm figure stands, by the three methods in the table. The words "Owner's measurement after the round" in those two findings are in a frozen round and mean this post-round verification by the agent, not a measurement by the owner; the layout review's closing prose carries the correction.
+
+`route_length` does have a real defect at slot junctions, recorded in the layout plan's open items and carried by the maintenance solution `SOL-PRE-ORDER-CHECK-CREEPAGE-PATH-HOLDS-AT-SLOT-JUNCTIONS`: for pads of U601 against pad 3 of D205 it lets a path pass through the junction corner of the U601 bar and arm, at about (61.9, 90.3), and returns 9.179 mm (pad 10) and 9.773 mm (pad 9) where the paths round the arm's west end are 15.5 mm and 16.0 mm. The defect is over-conservative and hides no breach, and it does not touch the C601 and K201 pair, whose path round the arm's end does not pass the junction. The two short figures appear only in the creepage work's earlier baseline, never in the pre-order check's report.
 
 ## Known and not fixed
 
