@@ -1377,7 +1377,7 @@ class Documentation(unittest.TestCase):
                       "appended below the record's earlier rounds, which stay as they are",
                       "whoever started the round commits it at the end of the round", "before any change to the board",
                       "Judging a round with one reviewer, a person or an agent session that does not use the command, stays valid",
-                      "task hw:review-run -- --caller layout", "each reviewer a fork of one shared context",
+                      "task hw:review-run -- --caller layout", "each reviewer a fork of its group's root", "a reviewer is given only its group's views", "the by-unit form may be used on a full-size board",
                       "with two reviewers of each so that a fail either raises stands"):
             self.assertIn(words, section, f"the layout review section says {words!r}")
         for gone in ("setup session",):

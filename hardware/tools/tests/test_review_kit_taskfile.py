@@ -156,7 +156,7 @@ class CommandClauses(unittest.TestCase):
     """The clauses C11 names, in each place that must hold them."""
 
     CLAUSES = (
-        ("forks of one shared context", "runs a declared review as forks of one shared context"),
+        ("forks of a root for each group of units", "runs a declared review as forks of a root for each group of units"),
         ("on demand", "that it is on demand"),
         ("in neither the build round nor the nightly", "that it is in neither the build round nor the nightly"),
         ("agent command line on the search path and logged in", "that it needs the agent command line on the path and logged in"),
