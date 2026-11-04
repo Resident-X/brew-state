@@ -1,8 +1,8 @@
 """The scheduler: a plan run through an executor, the repairs it appends, and the rerun of named units.
 
-The root of every group is started, together, before any fork, and its answer is checked
+Every root a fork continues is started, together, before any fork, and its answer is checked
 to be a shared-context node. The forks then run together, at most the stated
-number at once, each continuing its own group's root. The plan grows as results come back:
+number at once, each continuing the root that holds its group's views. The plan grows as results come back:
 
 - a fatal result (no object, a violation that cannot be mapped, an error exit, an
   empty answer) appends a fresh fork of the same parent as the next attempt;
@@ -121,7 +121,7 @@ class RunResult:
     root: Dict[str, Any]
     lanes: List[LaneResult]
     new_shared_context: bool
-    #: Every root started after the first: the other groups' roots and the roots for replicas on another model.
+    #: Every root started after the first: the other roots and the roots for replicas on another model.
     extra_roots: List[Dict[str, Any]] = field(default_factory=list)
 
     @property
@@ -362,7 +362,7 @@ def rerun_review(scheduler: Scheduler, declaration: decl.Declaration, plan: plan
                  spec: sess.SessionSpec, out: str, review_folder: str, names: Sequence[str], prompt_for=None,
                  round_label: Optional[str] = None, contexts: Optional[Sequence[Any]] = None,
                  finish: Optional[Callable[[Dict[str, Any]], Dict[str, Any]]] = None) -> Dict[str, Any]:
-    """Run the named units again along the recorded path: the identical bytes of the root of each group that holds a named unit,
+    """Run the named units again along the recorded path: the identical bytes of the root that serves each group holding a named unit,
     then a fork for each replica of those groups. The named units' results replace the recorded ones, and the record says which units
     were run again, when, and whether the shared context had to be written anew."""
     with store.RunLock(out, scheduler.clock.now()):

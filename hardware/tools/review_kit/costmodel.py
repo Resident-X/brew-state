@@ -119,7 +119,7 @@ def makespan(durations: Sequence[float], slots: int) -> float:
 def shared_write_saving(prices: Prices, sizes: Mapping[str, int], held_by: Mapping[str, int]) -> float:
     """What a tree with the artefacts more than one root holds written once above them would at most save over the plan.
 
-    Each group's root writes the artefacts it holds, so an artefact held by several roots is written once for each. The bound
+    Each root writes the artefacts it holds, so an artefact held by several roots is written once for each. The bound
     is the write price over the sum, for each artefact, of its size times the roots holding it beyond the first. It leaves out
     the extra reads and the extra call a level costs, so it is the most a tree could save."""
     saved = sum(size * max(held_by.get(name, 0) - 1, 0) for name, size in sizes.items())

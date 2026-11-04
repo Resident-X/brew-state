@@ -131,7 +131,7 @@ class BaselineKey:
 
 @dataclass(frozen=True)
 class FormPlan:
-    """A form ready to run: the declaration it runs, the root of each group its sessions continue and its plan."""
+    """A form ready to run: the declaration it runs, the context of each root its sessions continue and its plan."""
 
     form: str
     declaration: decl.Declaration

@@ -15,11 +15,12 @@ finding naming the item and what and where, numbered by the kit; the render writ
 fail's Why, and the pass holds no findings table and no round number.
 
 The review folder is the one review_folder.py writes with --review critical-routing: its round file holds the pass number,
-the commit judged and the views, and no kind or check lines. Each group is judged from a root of its own that holds the routing
+the commit judged and the views, and no kind or check lines. Each group is judged from a root that holds the routing
 section, the layout review sections and the whole catalogue (the method extract), the plan, the rules table and the records, the
-round file, the views' index and the layout facts extract, then the views its units' items are judged on, chosen through the
-kit's selection from the folder's view index (views/index.json) by the names each item's Judged on gives, and the placement view
-when it was rendered and an item names it, and no view of the folder that none of its units' items names. The root is held to a
+round file, the views' index and the layout facts extract, then the views the units' items of the groups it serves are judged
+on, chosen through the kit's selection from the folder's view index (views/index.json) by the names each item's Judged on gives,
+and the placement view when it was rendered and an item names it, and no view of the folder that none of those items names;
+groups whose views fit the budget together share a root. A root is held to a
 budget of a fraction of the model's declared context window (HEADROOM). A reviewer is granted the
 read tools and WebFetch, as the layout caller's are. The pass number, the commit judged and the views come from whoever runs
 the check, because the merge has no model to write them; a folder whose round file lacks them or is malformed is refused when
@@ -98,7 +99,7 @@ retrieval = True
 bound = 30
 #: The check's time target in seconds, so the planner sizes groups well clear of the bound.
 WALL_SECONDS = 350
-#: The fraction of the model's context window a group's root may fill: 0.4 of the 1,000,000 tokens the kit declares for the
+#: The fraction of the model's context window a root may fill: 0.4 of the 1,000,000 tokens the kit declares for the
 #: model is 400,000, which after documents of about 50,000 tokens holds (400,000 - 50,000) / 4,400 = 79 images of the 4.4
 #: thousand tokens a full-size board's tile costs and leaves 600,000 tokens of the window for the reviewer's own turns. It is a
 #: first, conservative value, to be set from a measured first run.
@@ -155,7 +156,7 @@ def pass_round(review: str) -> Dict[str, Any]:
 def shared_documents(review: str) -> Dict[str, Dict[str, Any]]:
     """The artefacts of the shared context, by name: the extracts, the pass's records and indexes, the design's plan, rules table
     and records, and every rendered view and the placement view, when it was rendered, as an image artefact that a unit names in
-    its needs, so a group's root holds only the images of its own units. A file the folder command always writes and the folder
+    its needs, so a root holds only the images of the units of the groups it serves. A file the folder command always writes and the folder
     lacks is named as missing."""
     design = design_path(review)
     found: Dict[str, Dict[str, Any]] = {}

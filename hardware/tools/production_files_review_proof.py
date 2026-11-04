@@ -37,11 +37,11 @@ not reported is closed where the gap lies and the proof repeated in a new sessio
 Each run's output is under <work>/out/ and the record in <work>; the seed list is copied to <work>/seed/ and the review folder given to
 the kit is <work>/review, which holds no seed list.
 
---dry prints the plan of the fanned-out run, a line saying a second run may follow, and its predicted cost and time (up to twice, counting the second) beside the bounds they would be held to, and, where no
+--dry prints the plan of the fanned-out run (each group with the root its forks continue, each root with its groups, images, tokens and budget), a line saying a second run may follow, and its predicted cost and time (up to twice, counting the second) beside the bounds they would be held to, and, where no
 single run is recorded, the plan of the single form; it starts no session and calls no model.
 
 The agent command line is the program named by REVIEW_KIT_AGENT (claude when it is unset), logged in. A run costs money: the
-single form, and the shared context and a fork for each group and replica of the fanned-out form, twice over when a second run follows.
+single form, and the roots and a fork of a root for each group and replica of the fanned-out form, twice over when a second run follows.
 
 Each cause is reported on one line beginning REFUSED, a RESULT line comes last, and the exit status is 0 when the criterion holds,
 1 when the command refuses, a run fails or the criterion does not hold, and 2 when the agent command line is

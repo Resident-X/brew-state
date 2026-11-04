@@ -1,8 +1,8 @@
-"""The extract of a deterministic check's report that a group's root holds.
+"""The extract of a deterministic check's report that a root holds.
 
 A check that reads the design and lists its results gives a report whose lines each name the rule they are about. A unit
-declares the rules it judges (`check_rules`); the extract of a group is the report's own lines for the union of its units'
-rules, in the report's order, so a reviewer cites the check's figure and does not measure the design again. Nothing is
+declares the rules it judges (`check_rules`); the extract of a root is the report's own lines for the union of the rules of the units of the groups it serves, in the
+report's order, so a reviewer cites the check's figure and does not measure the design again. Nothing is
 computed here: a line is kept whole or left out, so a figure the report did not carry is not in the extract. The declaration
 says which artefact is the report and the pattern that reads the rule out of a line.
 """
@@ -60,7 +60,7 @@ class Extractor:
         return sum(self.block.get(rule, 0) for rule in wanted) + (len(missing_line(absent)) if absent else 0)
 
     def artefact(self, rules: Iterable[str]) -> cat.Measured:
-        """The extract as an artefact of the group's root, measured as any text is: by its length."""
+        """The extract as an artefact of a root, measured as any text is: by its length."""
         text = self.text(rules)
         data = text.encode("utf-8")
         return cat.Measured(self.name, "extract", self.report.source, hashlib.sha256(data).hexdigest(), len(text), True, data)

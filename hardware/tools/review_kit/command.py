@@ -6,16 +6,19 @@
 
 The caller is a module `review_caller_<name>` in the callers folder (this tool's folder unless `--callers` says
 otherwise); it supplies the review's declaration, the checks of the merged tables and the files to render. The command
-admits the declaration's artefacts against the review folder, forms the groups of units, builds each group's root (the
-artefacts every unit needs, the views and documents its own units declare and the extract of the check's report for the
-rules they judge, and nothing another group alone needs), plans one fork for each group of units and replica, starts the
-roots and then the forks together, repairs what the scheduler repairs, merges the replicas with no model, writes the
-caller's rendered files into the output folder, and prints a report. Every root is held to the review's context budget, a
-figure or a fraction of the model's declared context window, and a group over it is refused before any session starts.
-`--plan-only` forms and reports the plan, with each group's images and tokens against the budget, and writes it into the
-output folder as plan.json, without the agent program and without starting a session. A review whose replicas run on
-another model gives each group a root for that model too, held to that model's context budget, and a group whose root for
-it is over that budget is refused naming the group, the model, the figures and the budget.
+admits the declaration's artefacts against the review folder, forms the groups of units (the units of parallel work),
+forms the roots that serve them (the cached contexts: the artefacts every unit needs, the views and documents the units of
+the groups a root serves declare and the extract of the check's report for the rules they judge, and nothing a group of
+another root alone needs), plans one fork of a group's root for each group of units and replica, starts the roots and then
+the forks together, repairs what the scheduler repairs, merges the replicas with no model, writes the caller's rendered
+files into the output folder, and prints a report. Groups whose views fit the context budget together share a root, so a
+small design is one root and a large one several. Every root is held to the review's context budget, a figure or a fraction
+of the model's declared context window, and a group whose own artefacts with the shared documents are over it is refused
+before any session starts. `--plan-only` forms and reports the plan, with each group's root and each root's groups, images
+and tokens against the budget, and writes it into the output folder as plan.json, without the agent program and without
+starting a session. A review whose replicas run on another model gives each root whose groups' replicas run on it a root for
+that model too, held to that model's context budget, and a root for it over that budget is refused naming the groups, the
+model, the figures and the budget.
 
 The agent command line is started from the program named by the environment variable REVIEW_KIT_AGENT (claude when it
 is unset), which must be on the search path and logged in. The output folder holds the plan, the record, the saved

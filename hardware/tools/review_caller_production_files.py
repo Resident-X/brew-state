@@ -21,10 +21,10 @@ check names `differs` as its fail verdict, which the kit holds as it holds a fai
 The review folder is the one production_review_folder.py writes. Its round file holds the commit judged, the tools, the commands
 and the line saying what the assembler's preview is, which the merge has no model to write, so they are read when the declaration
 is resolved and a folder whose round file lacks them, is malformed, holds a key the production-files mode does not own, or is another
-review's is refused before any session starts. Each group is judged from a root of its own that holds the check's text files and the
-images its units declare: the preview, the placement and assembly views the view index (views/index.json) lists by the kind of view, a
-part's footprint drawing, and for the layers' unit the layer views and layer images, and no image no unit of the group declares; the
-root is held to a budget of a fraction of the model's declared context window (HEADROOM). A reviewer is granted the read tools only,
+review's is refused before any session starts. Each group is judged from a root that holds the check's text files and the
+images the units of the groups it serves declare: the preview, the placement and assembly views the view index (views/index.json)
+lists by the kind of view, a part's footprint drawing, and for the layers' unit the layer views and layer images, and no image no
+unit of those groups declares; groups whose images fit the budget together share a root, which is held to a budget of a fraction of the model's declared context window (HEADROOM). A reviewer is granted the read tools only,
 no retrieval. The pre-order round's three
 replicas judge each unit: a full and a hunt framing on the mid-tier model, and the third on the small-tier model.
 
@@ -110,7 +110,7 @@ fail_verdict = DIFFERS
 bound = 30
 #: The check's time target in seconds, so the planner sizes groups well clear of the bound.
 WALL_SECONDS = 350
-#: The fraction of the model's context window a group's root may fill: 0.4 of the 1,000,000 tokens the kit declares for the
+#: The fraction of the model's context window a root may fill: 0.4 of the 1,000,000 tokens the kit declares for the
 #: model is 400,000, which after documents of about 50,000 tokens holds (400,000 - 50,000) / 4,400 = 79 images of the 4.4
 #: thousand tokens a full-size board's tile costs and leaves 600,000 tokens of the window for the reviewer's own turns. It is a
 #: first, conservative value, to be set from a measured first run.

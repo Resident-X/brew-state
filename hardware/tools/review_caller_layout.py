@@ -10,14 +10,15 @@ declared coupled, so each coupled set is judged in one group; a narrow round's u
 are the areas its listed items fall in, and each fork judges only the listed items.
 
 The review folder is the one review_folder.py writes. Each group is judged from a root
-of its own that holds the method's layout review and views sections and the whole
+that holds the method's layout review and views sections and the whole
 catalogue (the method extract), the plan, the rules table and the records, the round
 file, the view and placement indexes and the layout facts the folder command extracted
-from the board file, then the views its units' items are judged on, chosen through the
+from the board file, then the views the units' items of the groups it serves are judged on, chosen through the
 kit's selection from the folder's view index (views/index.json) by the names each item's
 Judged on gives, the placement view when an item names it, and the extract of the check's
-report for the rules its items' Passes and Fails name, not the whole report. A unit's
-prompt names its own items and holds its own area; none is in the root. The root is held
+report for the rules those items' Passes and Fails name, not the whole report. Groups whose views fit the budget
+together share a root, so a reviewer is given only the views of the groups its root serves. A unit's
+prompt names its own items and holds its own area; none is in the root. A root is held
 to a budget of a fraction of the model's declared context window (HEADROOM). A reviewer is granted the read tools and WebFetch, which fetches a published
 document at its address and writes nothing, since a rule-kind item whose figure
 rests on a document needs it.
@@ -116,7 +117,7 @@ retrieval = True
 bound = 30
 #: The review's time target in seconds, so the planner sizes groups well clear of the bound the proof is held to.
 WALL_SECONDS = 350
-#: The fraction of the model's context window a group's root may fill: 0.4 of the 1,000,000 tokens the kit declares for the
+#: The fraction of the model's context window a root may fill: 0.4 of the 1,000,000 tokens the kit declares for the
 #: model is 400,000, which after documents of about 50,000 tokens holds (400,000 - 50,000) / 4,400 = 79 images of the 4.4
 #: thousand tokens a full-size board's tile costs and leaves 600,000 tokens of the window for the reviewer's own turns. It is a
 #: first, conservative value, to be set from a measured first run.
@@ -206,7 +207,7 @@ def unit_of(item: str, units: Dict[str, List[str]]) -> Optional[str]:
 def shared_documents(review: str) -> Dict[str, Dict[str, Any]]:
     """The artefacts of the shared context, by name: the extracts, the round's records and indexes, the design's plan, rules
     table and records, and every rendered view and the placement view as an image artefact that a unit names in its needs, so a
-    group's root holds only the images of its own units. A file the folder command always writes and the folder lacks is named as
+    root holds only the images of the units of the groups it serves. A file the folder command always writes and the folder lacks is named as
     missing."""
     design = design_path(review)
     found: Dict[str, Dict[str, Any]] = {}
@@ -339,7 +340,7 @@ SCHEMA = {
 
 
 def unit_needs(review: str, documents: Dict[str, Dict[str, Any]], unit: str, listed: Sequence[str]) -> List[str]:
-    """What a unit needs: every text of the shared documents but the check's report, whose extract the group's root holds, and
+    """What a unit needs: every text of the shared documents but the check's report, whose extract a root holds, and
     the views the unit's items are judged on, chosen from the view index, with the placement view's images when an item names it.
     The comparison with the plan is judged on PLAN_VIEWS."""
     names = list(PLAN_VIEWS) if unit == PLAN_UNIT else review_catalogue.judged_on(review, listed)

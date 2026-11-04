@@ -8,7 +8,7 @@ are the largest units; an item that selects every net, part or sheet stays in it
 
 The review folder is the one schematic_review_folder.py writes. The shared context holds the method's schematic review, drawing
 convention and circuit practice catalogue sections (the method extract), the round file, the check's report, the netlist, the
-records the round reads and the earlier rounds of the review record, and the schematic's own files, which every unit needs, so each group's root holds them
+records the round reads and the earlier rounds of the review record, and the schematic's own files, which every unit needs, so every root holds them
 and no image, within a budget of a fraction of the model's declared context window (HEADROOM). A unit's prompt names its own
 items and holds its own area; none is in the root. The drawing of each sheet is in the folder's sheets folder and a
 reviewer opens the ones an item needs. A reviewer is granted the read tools and WebFetch, which fetches a published document at
@@ -106,7 +106,7 @@ retrieval = True
 bound = 30
 #: The review's time target in seconds, so the planner sizes groups well clear of the bound.
 WALL_SECONDS = 350
-#: The fraction of the model's context window a group's root may fill: 0.4 of the 1,000,000 tokens the kit declares for the
+#: The fraction of the model's context window a root may fill: 0.4 of the 1,000,000 tokens the kit declares for the
 #: model is 400,000, which after documents of about 50,000 tokens holds (400,000 - 50,000) / 4,400 = 79 images of the 4.4
 #: thousand tokens a full-size board's tile costs and leaves 600,000 tokens of the window for the reviewer's own turns. It is a
 #: first, conservative value, to be set from a measured first run; the round holds no image, since a sheet's drawing is opened
