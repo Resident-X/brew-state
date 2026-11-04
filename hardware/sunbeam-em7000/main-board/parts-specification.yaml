@@ -506,6 +506,7 @@ positions:
     lcsc: C6280121
     class: integrated circuit
   # JP303: maker none; MPN none (owner-fitted wire); catalogue class none; LCSC field in schematic is empty
+  # JP303 requirement for the fitted wire, the same as JP101's: 1.5 mm2 copper, insulation rated for the 253 V rms working voltage and a 70 degC enclosure air; the inrush it carries is the logic supply module's 40 A typical (IRM-20-5, no maximum stated). open-items.md holds the same requirement.
   - reference: JP303
     value: LINK_MOD
     package: JP101_WireLink_P10mm

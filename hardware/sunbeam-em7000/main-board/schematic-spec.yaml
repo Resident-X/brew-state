@@ -1665,9 +1665,10 @@ sheets:
     node to ground. (2) The FET stack at the right: Q201 source at GND, Q201 drain = POL_MID = Q202 source, Q202 drain = POL_COIL_LO, which goes to K201''s A2. K201''s A1 is +5V at the top. The clamp: two parallel branches
     from POL_COIL_LO up to +5V, each a zener Z (pin 3 cathode to POL_COIL_LO, pin 1 anode) in series with a diode D (pin 1 anode on the zener''s anode, pin 3 cathode on +5V). (3) Both channels use the same parts and values;
     the second channel must not share any part with the first except U201 (the one common element, by the record''s design), the coil and the clamp. (4) K201''s contact pins 13 (LINE1) and 14 (LINE) are drawn apart from the
-    coil with a dashed barrier line between coil and contact (BARRIER-1: the coil-to-contact barrier is unlisted in the signed basis; its distances are not shown to reach 10.0 mm creepage and 3.0 mm clearance). (5) The relay''s
-    coil is low voltage and its contact mains: keep >= 10.0 mm creepage from the coil pads (A1, A2) to the contact pads by the layout, slotting between them as the division record does; the footprint''s own coil-to-contact
-    pad distance is 32.5 mm along the body. (6) Values in SPICE form: 5.6Meg is mega. (7) Behaviour with R205/R206 absent is the record''s 19-part circuit; see circuit-proof.md row ''Interlock rest states'' and open-items.md.
+    coil with a dashed barrier line between coil and contact (BARRIER-1: the coil-to-contact barrier was unlisted in the separation basis when this was written (the draft, unsigned at this commit, lists it); its distances
+    are not shown to reach 10.0 mm creepage and 3.0 mm clearance). (5) The relay''s coil is low voltage and its contact mains: keep >= 10.0 mm creepage from the coil pads (A1, A2) to the contact pads by the layout, slotting
+    between them as the division record does; the footprint''s own coil-to-contact pad distance is 32.5 mm along the body. (6) Values in SPICE form: 5.6Meg is mega. (7) Behaviour with R205/R206 absent is the record''s 19-part
+    circuit; see circuit-proof.md row ''Interlock rest states'' and open-items.md.
 
     '
 - order: 3
@@ -3967,8 +3968,8 @@ sheets:
     Channel assignment: channel 0 carries the mains voltage (gain 1 or 2), channel 1 the shunt (gain 32). SBASA56 Table 5-1 note 3 says channel 0 is the more precise; the record declares no accuracy for either, so the assignment
     is the brief''s.
 
-    Barrier: U601 is a mains-to-low-voltage barrier the signed separation basis does not list; its creepage (8.0 mm) is shorter than the basis''s 10.0 mm. See the verdicts and open items. The footprint''s gap under the body
-    is 7.6 mm. Nothing is relaxed here.
+    Barrier: U601 is a mains-to-low-voltage barrier the separation basis did not list when this was written (the draft, unsigned at this commit, lists it as isolated-measurement); its creepage (8.0 mm) is shorter than the
+    basis''s 10.0 mm. See the verdicts and open items. The footprint''s gap under the body is 7.6 mm. Nothing is relaxed here.
 
     The two 33 ohm resistors on SCLK/DIN, the CS and DOUT series resistors and the 100 kohm pull-ups follow SBASA56 9.4.2 ("terminate long digital input lines with resistors") and Fig. 9-8.
 
