@@ -13,7 +13,7 @@ text: |
 rationale: |
   Restores the library-to-board agreement that the pre-order check relies on (REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1): a library copy that differs from the footprint the board carries leaves a standing mismatch line that hides a real one.
 links:
-  - target: DEL-MAINTENANCE.C1
-    type: derives-from
   - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
     type: targets
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C3
+    type: derives-from

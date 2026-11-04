@@ -14,7 +14,7 @@ text: |
 rationale: |
   Restores the behaviour REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1 asks: a failed verification blocks the order, and proceeding requires the verification to pass. Three standing parity lines the check reports and nothing lists are indistinguishable from a real mismatch, so a genuine one could be waved through as one of them.
 links:
-  - target: DEL-MAINTENANCE.C1
-    type: derives-from
   - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
     type: targets
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C3
+    type: derives-from

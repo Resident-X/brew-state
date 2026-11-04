@@ -15,9 +15,9 @@ text: |
 rationale: |
   Restores the behaviour REQ-ELECTRICAL-INSTALL-001.C16 asks: a shortfall a part's geometry forces is passed only as an exception for that pair, and a shortfall without one is not passed. The drafting leaf closed against the pairs known before the layout finished, so the finished board shows shortfalls with no entry for the owner to accept or refuse, and the owner's acceptance would be asked on an incomplete list.
 links:
-  - target: DEL-MAINTENANCE.C1
-    type: derives-from
   - target: REQ-ELECTRICAL-INSTALL-001.C15
     type: targets
   - target: REQ-ELECTRICAL-INSTALL-001.C16
     type: targets
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C6
+    type: derives-from

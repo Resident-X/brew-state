@@ -14,7 +14,7 @@ text: |
 rationale: |
   Restores the behaviour REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3 asks: the judgement of every part and net rests on one parts table. Sheets edited by hand after the generator wrote them leave the proof's decks computed from a table the board no longer matches, so a proof can pass for a circuit the board does not carry.
 links:
-  - target: DEL-MAINTENANCE.C1
-    type: derives-from
   - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3
     type: targets
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C1
+    type: derives-from
