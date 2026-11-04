@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C12
+type: criterion
+title: The fanned-out proof is re-run and recorded on the changed form and a test proves a group's root holds only its group's views
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The fanned-out proof, which the method relies on only once it is recorded, is run on the changed form against the recorded single-reviewer baselines on the method's proof design, and its run is recorded with the form's new key, the groups' roots, the seeds found and the cost; every seed the single-reviewer baselines find is found, or the shortfall is recorded as a finding against the form. A test proves that a group's root holds only the views that group's units declare, and that the proof harness refuses to record a fanned-out run whose key is already recorded. Out of scope: any change to the proof design or its baselines.
+links:
+  - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES
+    type: criterion-of

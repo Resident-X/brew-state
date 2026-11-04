@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C10
+type: criterion
+title: The views command can leave out non-copper layer tiles and thin large nets' tiles, and a group's views are selected without rendering again
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Given a set of already-rendered views and a declaration of which views each unit needs, a group's root is built from the rendered set without rendering any view again, and the views command offers an option that leaves out the whole-board tiles of layers that are not copper and an option that thins the tiles of a net whose copper spreads over many tiles, keeping the tiles that hold the net's pads, vias and ends. Over a synthetic design, a test shows that the views written with each option are a subset of those written without it, that the options change no tile's name, size or scale, that the index states what was left out in text and in JSON, and that the folder command selects a per-group subset from an already-rendered folder with no call to the renderer. Out of scope: which views any board's reviewers need.
+links:
+  - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES
+    type: criterion-of

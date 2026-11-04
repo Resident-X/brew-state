@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C11
+type: criterion
+title: A group's root is estimated in tokens from its image dimensions and refused over the budget before any session starts
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Over a synthetic declaration, before any session starts, the command estimates each group's root in tokens from the declared images' pixel dimensions and the documents' text, prints the estimate per group, and refuses a group whose estimate exceeds the declared budget, naming the group, the estimate and the budget; a declaration with no stated budget is refused until one is stated or the model's window is used as the kit already holds it. A test with images of differing dimensions shows the estimate rises with the pixel count and that two images of the same dimensions are estimated alike. Out of scope: the value of any model's window.
+links:
+  - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES.C9
+type: criterion
+title: Each group of units is judged from its own root, run in parallel, and merged into one pass with one verdict row per checklist item
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Over a synthetic review folder of generic units in at least three groups, each unit declaring its own subset of views, the plan gives each group its own flat root, and the stub's record of what each session received shows the groups' sessions started in parallel, replicas of a group each started from that group's root and no session started from another session. Each group's results are merged into one pass holding exactly one verdict row per checklist item; a checklist item with no row, with two rows, or with a row from a group that does not hold the item's unit is refused with the same refusals the merge makes today, and a fail raised by any replica stands in the merged pass. The plan, a run and the merged record are produced in text and in JSON. Out of scope: any model call, the stub standing in for the model, and the content of any caller's prompts.
+links:
+  - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES
+    type: criterion-of
