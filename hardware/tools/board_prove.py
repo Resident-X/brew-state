@@ -1360,7 +1360,7 @@ def drop_rule(name: str):
 def seeded_hole(reference: str, x: float, y: float, uuid: str, plated_net: Optional[str] = None, courtyard: float = 0,
                 pad: float = 3.2, surface_pad: bool = False, excluded: bool = False) -> list:
     """A 3.2 mm hole footprint `reference` at (x, y): a non-plated hole whose pad is `pad` mm across, or a plated pad on
-    `plated_net` when one is named, with a square courtyard `courtyard` mm to a side when that is given and a surface-mount
+    `plated_net` when one is named (a plated pad on no net when it is the empty string), with a square courtyard `courtyard` mm to a side when that is given and a surface-mount
     pad beside the hole, which makes the footprint a part and not a mounting hole, when `surface_pad` is, and KiCad's
     exclude_from_bom attribute when `excluded` is."""
     Q = sexpr.Quoted
@@ -1370,7 +1370,7 @@ def seeded_hole(reference: str, x: float, y: float, uuid: str, plated_net: Optio
                 ["uuid", Q(f"{uuid[:-2]}01")]]
     else:
         hole = ["pad", Q("1"), "thru_hole", "circle", ["at", "0", "0"], ["size", "4", "4"], ["drill", "3.2"], layers,
-                ["net", Q(plated_net)], ["uuid", Q(f"{uuid[:-2]}01")]]
+                *([["net", Q(plated_net)]] if plated_net else []), ["uuid", Q(f"{uuid[:-2]}01")]]
     body = [hole]
     if surface_pad:
         body.append(["pad", Q("2"), "smd", "rect", ["at", "0", "6"], ["size", "1", "1"],
