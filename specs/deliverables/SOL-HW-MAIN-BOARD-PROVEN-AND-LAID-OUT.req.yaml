@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The main board is laid out, reviewed and proven against its design records before it is ordered
 status: active
-version: 9
+version: 10
 text: |
   Lays out the main controller board that the schematic leaf (SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN) drew and wrote records for, through the board design method (docs/board-design-method.md): the layout planned, placed, routed and reviewed from rendered views, and the pre-order check passing on the finished board. It lays out the schematic as that leaf left it; a schematic change found here is an amendment to that leaf, not a silent edit, and a layout change that moves a judged figure is a finding recorded and resolved.
 
@@ -67,6 +67,8 @@ links:
   - target: SOL-SEPARATION-BASIS-PUMP-TRIAC-EXCEPTIONS-FOLLOW-THE-LAND-DRAWN
     type: depends-on
   - target: SOL-MAIN-BOARD-EXCEPTIONS-COVER-EVERY-REPORTED-SHORTFALL-PAIR
+    type: depends-on
+  - target: SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET
     type: depends-on
 brief_confirmation:
   confirmer: claude-sonnet-5-5 independent brief reviewer

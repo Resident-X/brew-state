@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C3
+type: criterion
+title: The seven net-pair entries and their single-fault rows are those the finished layout uses
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The committed record holds exactly seven net-pair entries, numbers 1, 2, 3, 5, 8, 10 and 11 of the eleven drafted, with the constraint, nets_a, nets_b, working_voltage_v and accepted_mm of those entries (the 10 V entries 1 and 10 at 0.4 mm creepage and 2 and 11 at 0.2 mm clearance), none of entries 4, 6, 7 and 9, each accepted_mm the record's band figure for its working voltage, no entry reducing a pair that can reach the supply voltage or a held pair, and its single-fault table holding a row for each of those seven numbers and for no other. The check's own reader reads the entries with no problem. Out of scope is any entry of another form.
+links:
+  - target: SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET
+    type: criterion-of

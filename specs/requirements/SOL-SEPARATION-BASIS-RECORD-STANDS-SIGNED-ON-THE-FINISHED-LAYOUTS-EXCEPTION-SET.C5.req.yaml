@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C5
+type: criterion
+title: Each of the four gate resistors R704, R705, R714 and R715 has a signed creepage entry at 1.8 mm
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The committed record holds, for each of R704, R705, R714 and R715, one entry of pair mains_to_mains and constraint creepage, between pad 1 and pad 2 of that resistor, accepted_mm 1.8, below the signed creepage of 2.6 mm, signed as the record is, and no clearance entry for the pair. Each entry's reason states that the gap is the package's own, that the part is not changed, and that the entry excuses only that pair; its bounded_by names the interlock relay K201 as not independent of the controller and states the consequence as a pump that runs on. The check's own reader reads each as well formed, and an entry with its between, accepted_mm, reason or bounded_by removed is refused. Out of scope is the gap itself.
+links:
+  - target: SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET
+    type: criterion-of

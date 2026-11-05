@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C2
+type: criterion
+title: The record holds exactly the 33 exceptions of the finished layout and states which forms make them up
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The committed record's accepted_exceptions holds 33 entries: 4 pump-triac tab-to-lead creepage entries at 2.0 mm, 5 same-connector hole_to_hole entries at 1.25 mm for J630, J635, J791, J821 and J861, 7 net-pair entries, 9 same-part creepage entries, 4 opto-triac pin-5 creepage entries at 0.76 mm for U701 and U711, and 4 gate-resistor creepage entries. The test states why the count is 33 and not the 98 drafted before the layout was finished: 29 entries are used by a shortfall of the finished layout and the other 69 are removed, and the 4 gate-resistor entries are added to the 29. Every entry's pair is mains_to_mains or same_connector_pins, every entry has a non-empty reason and bounding element, and each between entry names two pads of one part. Out of scope is any figure not named here.
+links:
+  - target: SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET
+    type: criterion-of

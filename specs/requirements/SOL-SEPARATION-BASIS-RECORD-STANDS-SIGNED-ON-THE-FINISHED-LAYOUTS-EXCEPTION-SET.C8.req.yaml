@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C8
+type: criterion
+title: The main-board records, the machine-record documents and the pull request text state the basis and the derating policy as signed
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Inspection of every document in the main-board folder (apart from the frozen rounds of the layout and schematic review records), the machine-record folder and the pull request text finds each statement of the signature state of the separation basis or the derating policy saying they are signed on 2026-11-05 on the owner's written instruction entered by Claude, and none saying they are unsigned or drafts until the owner signs; the pairs and positions those statements name are the entries the records hold, 33 and ten. The frozen review rounds keep the state they were reviewed at and the review-history check still reads the layout review as valid. Out of scope is any document outside those named.
+links:
+  - target: SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET
+    type: criterion-of
