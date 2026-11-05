@@ -34,6 +34,10 @@
 #      (4.0 mm basic, 8.0 mm reinforced). Unverified here: whether 60335-1 takes the working voltage of
 #      a 230 V appliance as 230 V or 253 V, and whether it permits interpolation. The figures are
 #      unchanged; a test house settles it if the machine is ever certified.
+#      The owner's decision of 2026-11-05: 253 V (1.2 % over the 250 V row, a tolerance on a
+#      230/240 V supply) is treated inside the 250 V band and the figures are unchanged; a
+#      stricter reading of IEC 60335-1 Table 17 stays flagged as something to confirm with a test
+#      house only if the machine is ever certified.
 #   5. The conditions below: that the enclosure, with a conformal coat as a supporting measure,
 #      credits pollution degree 2, and the functional band rows of table_rows (the eight rows from 10 V to 320 V), which
 #      are readings from open reproductions, the rows below 25 V from KiCad's source tables, the IEC
