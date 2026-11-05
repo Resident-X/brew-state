@@ -1,0 +1,53 @@
+id: SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY
+type: deliverable
+category: solution
+title: The pre-order check prints a cosmetic or neatness line as a non-failing warning only for a class the owner-signed severity policy names, bounded by a count that fails when it rises, and fails every other line
+status: active
+version: 1
+text: |-
+  Gives the pre-order check a second tier for purely cosmetic and neatness lines, under an owner-signed severity policy with a ratchet, so that a board whose only remaining lines are of those classes can pass while every other line still fails. Today the check exits non-zero on any line it prints. The sibling item for a per-line signed acceptance record lets the owner excuse particular lines, each by rule and place and count, which suits a few lines of a bought part's own geometry but not hundreds of router-neatness lines whose number moves with every re-route. A severity policy states, once per class of line, whether the class is an error or a warning, and bounds the warnings by a count, so the owner signs a classification rather than a list of lines.
+
+  Not built. This item is authored and unbuilt. The wall board's check should have it built first, before that board's layout passes, so that board can end green on cosmetic lines by policy and does not repeat the main board's ending red.
+
+  Settled for the build:
+  - Record shape. Each board design's records gain an optional severity policy record, an explicit empty list being a policy that marks nothing a warning. Each entry names a class of line, as the check names it in its report (the rule name, such as silk_overlap or track_angle); a severity, ERROR or WARNING; for a WARNING entry the count of warning lines of the class the owner accepted, a non-negative whole number; the owner's reason; who signed; and the date. An ERROR entry is allowed and states a class the owner has considered and keeps as an error; it carries no count. All keys must be present. An entry that is not a mapping, lacks a key, holds another key, repeats a class, gives another severity or gives a bad count fails the record naming the entry and the key.
+  - Judgement. A line of a class the signed policy marks WARNING is printed as a WARNING line with the class, the place, the measured figure against the allowed one and the class's recorded count, is counted, and does not fail the check, so a design with only warning lines exits zero and is reported as passing with its warning count. The report, in text and in JSON, gives for each class the found count beside the recorded one.
+  - Ratchet. A class whose found count is above its recorded count fails the check, naming the class, the recorded count and the found count, so warnings cannot drift upward unseen. A count at or below the record passes and is reported, and lowering the record is the owner's to do when a class improves.
+  - Fail closed. A line of a class the policy does not name, and every line of every class when the policy is absent, unreadable, or has an unsigned entry (the signed-by value empty, a placeholder or in angle brackets, or a date empty, malformed or later than today), is printed and fails exactly as it does today.
+  - Never warnings. The check refuses a policy naming a class that carries safety, mains spacing, creepage, clearance, derated-voltage, pin-limit, mounting-hole, plated-hole, connectivity, hole, annular ring, drill, other manufacturing, paste, solder, courtyard overlap or separation basis findings, and refuses one naming a class the check does not report. The classes the policy may cover are the check's silkscreen, designator and routing-neatness classes, kept as a closed list in the check, the routing-neatness classes qualifying as warnings only on a net of the ordinary class and being errors on a mains, sensing or critical-signal net; a class is added to the list only by changing the check.
+  - Relation to the per-line record. The per-line acceptance record of the sibling stays for what a class policy cannot cover, notably the plated coil-pin lines of the bought relays, which are a manufacturing-geometry class and never a warning. An entry of that record for a class the policy marks WARNING is unused and fails as stale.
+  - No signing by the agent. Nothing in the check or in a record is signed by the agent; the policy is the owner's, a drafted policy stays unsigned until the owner signs, and the check fails closed on it meanwhile.
+  - Proof designs and notes. The throwaway proof design gains synthetic policies where a test needs them, with a seeded fault caught for each failure above, and the hardware notes state the tiers, the entry form, the WARNING and count lines and the failures.
+
+  Out of scope: which classes the owner signs as WARNING, the owner's signing of any policy, the counts, the rules' thresholds and measures, any change to a board's design files, the per-line acceptance record's own behaviour, and the safety, mains-spacing and derating exception forms.
+rationale: |
+  Restores the behaviour REQ-BOARD-LAYOUT-PRACTICE-001.C5 asks of the workmanship rules: a failing workmanship item is resolved by a change to the board or a recorded finding that it is overridden, never by judging the failure unimportant. A warning tier is a recorded override at the level of a class: the owner signs, once, that a named class is cosmetic or neatness only, on a stated reason, with a ceiling on its count that the check enforces, so no line is judged unimportant by the agent or by the tooling, and a rise is an error. The practice catalogue's severities (safety, function, quality, cosmetic) say how much an item matters in general; the policy says what the owner accepts as a printed non-failing line on a given board, and it may be narrower than the catalogue but never wider than the closed list of classes the check allows. The catalogue marks only silkscreen and designator items and the 1 mm jog and the edge-parallel items as cosmetic, while corner angle, detour and pad entry are quality or function items, so the starting classification below includes quality-severity routing classes by the owner's choice, which is why it is the owner's to sign and not derived from the catalogue.
+
+  Why a policy beside the per-line record. DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER item (o) records the owner accepting the check red on about 750 routing lines, 93 stray designators, 14 silkscreen overlaps and others, on the condition that no change is a net gain across safety, then performance, then workmanship. A per-line record of that many lines would be rewritten at every re-route; a signed class policy with a count states the same acceptance in a few lines and keeps it bounded. DEC-BOARD-PRE-ORDER-RULE-READINGS fixes that each rule reads declared records and fails what is missing; the policy follows that reading, so an absent or unsigned policy fails closed and is not read as permission.
+
+  Not built. This item is authored and unbuilt. The wall board should have it built first, so that board can end green on cosmetic lines by policy.
+
+  Proposed starting classification, for the owner to sign. Nothing here is signed.
+  WARNING candidates:
+  - silk_overlap (silkscreen over silkscreen): legibility only, no electrical or assembly consequence; the manufacturer prints it as drawn.
+  - silk_over_copper: silk is clipped from exposed pads by the manufacturer, so it costs appearance only; the soldermask and pads are unchanged. Not applied to silk that reaches a pad's solderable area in the paste or assembly layers, which is a manufacturing class and stays an error.
+  - silk_edge_clearance: silk is trimmed at the board edge by the manufacturer; appearance only.
+  - designator_astray and reference_off_silkscreen: where a reference designator stands bears on legibility and bring-up reading, not on function; the catalogue marks MFG-9 cosmetic. The reference_off_silkscreen rule is MFG-7, a quality item, so the owner should sign it knowingly.
+  - track_angle, track_segment_length, workmanship_direction, pad_entry, pad_corner and detour, on ordinary nets only: neatness of routing, on nets that carry no mains, no sensing and no critical-signal duty. These are the classes about 750 of the main board's lines fall in, and in dense routing the corner rule and the short-segment rule conflict, so a count ceiling is the honest bound. They stay errors on a critical, sensing or mains net, where the shape of a track can bear on the board's function, and the check applies the warning only where the net's class is ordinary.
+  ERROR for everything else: every safety, mains spacing, creepage and clearance line, derating and pin-limit lines, mounting-hole and plated-hole rules, connectivity, hole, annular ring and drill rules and other manufacturing rules, paste and solder-related rules, courtyard overlap and separation_basis. Courtyard overlap stays an error because two courtyards overlapping can mean parts that cannot be assembled or reworked, which is a manufacturing consequence and not appearance.
+  The per-line record of the sibling remains for what the policy cannot cover, the plated coil-pin lines of the bought relays K201, K731 and K741.
+
+  Wrong-axis check: the line is drawn where the consequence lands (appearance and legibility against assembly, function and safety), not where the rule sits in the check, so a class that can reach a board's function is never a warning however neat its rule is.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C5
+    type: targets
+  - target: DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER
+    type: justified-by
+  - target: DEC-BOARD-PRE-ORDER-RULE-READINGS
+    type: justified-by
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES
+    type: depends-on
+  - target: SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS
+    type: depends-on

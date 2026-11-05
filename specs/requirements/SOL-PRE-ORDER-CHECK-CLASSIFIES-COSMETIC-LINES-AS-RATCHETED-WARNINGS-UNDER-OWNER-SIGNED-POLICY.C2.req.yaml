@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY.C2
+type: criterion
+title: A line of a class the signed policy marks WARNING is printed as a WARNING line and does not fail the check
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a synthetic design whose only lines are two of one class and one of another, each marked WARNING by a signed policy entry, the check prints one WARNING line for each carrying the class, the place and the measured figure against the allowed one, prints the count of warning lines for each class, and exits zero, in both its text and its JSON report. Out of scope is any class the policy does not mark WARNING.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY
+    type: criterion-of

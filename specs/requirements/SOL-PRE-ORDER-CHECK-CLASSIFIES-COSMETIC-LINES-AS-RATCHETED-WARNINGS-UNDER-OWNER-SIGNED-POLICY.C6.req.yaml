@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY.C6
+type: criterion
+title: A policy entry that names a class the policy cannot cover fails the check naming it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a synthetic design, a policy entry naming a class that carries a safety, mains spacing, creepage, clearance, derated-voltage, pin-limit, mounting-hole, plated-hole, connectivity, hole, annular ring, drill, other manufacturing, paste, solder, courtyard overlap or separation basis finding fails the check naming the entry, as does an entry naming a class the check does not report. Out of scope is any class the policy may cover.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY
+    type: criterion-of

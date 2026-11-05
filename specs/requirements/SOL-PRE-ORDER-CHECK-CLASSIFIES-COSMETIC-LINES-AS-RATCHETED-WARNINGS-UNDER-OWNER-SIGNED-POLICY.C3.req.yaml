@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY.C3
+type: criterion
+title: A line of a class the policy does not name is a violation as before
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On the same synthetic design with a line of a class that no policy entry names, that line is printed as a violation and the check exits non-zero, with the warning lines unchanged. Out of scope is the wording of the report.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY
+    type: criterion-of

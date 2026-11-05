@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY.C10
+type: criterion
+title: The hardware notes state the severity tiers, the policy's form, the report lines and the failures
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The hardware notes state the policy's entry form with each key, the WARNING line, the count line, each failure of the policy, the classes the policy can never mark WARNING, that an unnamed class and an unsigned policy fail closed, and that the policy is the owner's to sign. Out of scope is any board's own policy.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY
+    type: criterion-of

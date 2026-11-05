@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY.C9
+type: criterion
+title: Each new report line and failure is shown to fail on a fault seeded for it in a copy of the throwaway proof design
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  For each failure of the preceding criteria, a seeded copy of the throwaway proof design carrying that fault fails the check under the named rule, a clean copy carrying a signed policy and lines within its counts passes with its WARNING lines printed, and the proof run records each seed as caught. Out of scope is any committed design.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY
+    type: criterion-of

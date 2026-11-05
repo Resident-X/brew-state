@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY.C8
+type: criterion
+title: A class the policy marks WARNING is not also excused by an entry of the per-line acceptance record
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a synthetic design carrying a signed policy WARNING entry for a class and a signed per-line acceptance entry for the same class, the per-line entry fails the check as one that no violation uses, and the class's lines are still reported as WARNING lines. Out of scope is a per-line entry for a class the policy does not mark WARNING.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY
+    type: criterion-of

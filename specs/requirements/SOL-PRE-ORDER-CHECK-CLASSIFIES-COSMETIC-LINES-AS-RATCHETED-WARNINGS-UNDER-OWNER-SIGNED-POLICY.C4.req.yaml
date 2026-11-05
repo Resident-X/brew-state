@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY.C4
+type: criterion
+title: A policy that is absent, unreadable or unsigned makes every line a violation as before
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On the same synthetic design, with the policy file absent, with it unparseable, and with each entry's accepted-by value empty, a placeholder or in angle brackets or its date empty, malformed or later than today, every line prints as a violation, none as a WARNING, and the check exits non-zero. Out of scope is a policy that is signed and readable.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY
+    type: criterion-of

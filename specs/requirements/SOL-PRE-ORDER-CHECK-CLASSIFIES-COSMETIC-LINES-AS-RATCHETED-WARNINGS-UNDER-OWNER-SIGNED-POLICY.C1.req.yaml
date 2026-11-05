@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY.C1
+type: criterion
+title: A malformed severity policy entry fails the record naming the entry and the key
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a synthetic design, a severity policy with an entry that is not a mapping, one with a missing key, one with an extra key, one whose severity is neither ERROR nor WARNING, two entries for one class, a WARNING entry with a count that is not a non-negative whole number and an ERROR entry carrying a count each fail the check naming the entry and the key, and the same policy with well-formed entries does not fail as a record. Out of scope is the judgement of a well-formed entry.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY
+    type: criterion-of
