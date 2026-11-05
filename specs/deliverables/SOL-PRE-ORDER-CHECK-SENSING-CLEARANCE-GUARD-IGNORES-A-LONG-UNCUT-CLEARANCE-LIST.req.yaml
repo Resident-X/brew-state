@@ -1,0 +1,21 @@
+id: SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-GUARD-IGNORES-A-LONG-UNCUT-CLEARANCE-LIST
+type: deliverable
+category: solution
+title: The pre-order check's sensing-clearance guard does not read a long clearance list as a cut-short one
+status: active
+version: 1
+text: |
+  Corrects a false failure the final run of the main board's pre-order check prints. The sensing-clearance rule reads KiCad's clearance list and, when the list holds as many entries as REPORT_LIMIT (199), fails the board as a list cut short, on the ground that a sensing item inside the clearance may have been dropped. KiCad did not cut the list: its report held 347 clearance entries, and the check consumed 553 net-pair shortfalls, so a count above the limit is a list KiCad reported in full, not one it capped. The guard compares a count with a limit that bounds a different figure, so on a board with more clearance failures than the limit, whatever their cause, it prints one sensing_clearance violation line that is no sensing shortfall.
+
+  Settled for the build:
+    - The cause is shown first by the reported count: the guard reads a limit that KiCad applies to assertion failures of one kind, and a clearance list is held to a different bound, or to none, so the guard's test is replaced by one that decides from KiCad's own report whether it dropped entries.
+    - A board whose sensing items are all outside the declared clearance prints no sensing_clearance line however many other clearance entries KiCad lists, and a board with a real sensing shortfall among many other clearance entries still prints it.
+    - The guard stays for a list KiCad does cut short, and still fails the board then; it is not removed to silence the line.
+    - Out of scope: the sensing clearance figure, the net classes, the other REPORT_LIMIT guards that read assertion counts, and any board's records.
+rationale: |
+  Restores the behaviour SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS.C1 asks of the sensing-clearance rule: it fails where a sensing item sits closer than its pair's figure, and only there. A violation line for a count that is not a shortfall is a false report the owner must read and rule on, and a guard that fires on a large clearance list can hide the rule's real finding on the same board behind noise.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS.C1
+    type: targets
