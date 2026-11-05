@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-LAMINATE-CONDITION-NEEDS-NO-INDEX-AT-POLLUTION-DEGREE-2.C1
+type: criterion
+title: The header's laminate condition states that no comparative tracking index is a precondition at pollution degree 2
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The header comment of the committed record states, in its third condition, that the creepage figures use the material group III column at pollution degree 2, which covers groups IIIa and IIIb alike, and that a comparative tracking index is not a precondition at pollution degree 2 because a laminate index under 175 changes none of the figures. The test fails on a header whose condition 3 states an index of at least 175 as required of the laminate without limiting it to the fallback and the printed-wiring column.
+links:
+  - target: SOL-SEPARATION-BASIS-LAMINATE-CONDITION-NEEDS-NO-INDEX-AT-POLLUTION-DEGREE-2
+    type: criterion-of

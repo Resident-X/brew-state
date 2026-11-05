@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-READS-A-SLOT-OPEN-TO-THE-BOARD-EDGE.C2
+type: criterion
+title: Copper nearer to the wall of an edge-open slot than the pull-back rule allows fails as it does for a closed slot
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a synthetic board with an edge-open slot and a copper item on a layer nearer its wall than the rule's pull-back distance, the slot pull-back rule fails the item naming the slot and the distance, the same item at the pull-back distance or more passes, and the same layout on a closed slot gives the same verdicts. Out of scope is the pull-back distance itself.
+links:
+  - target: SOL-PRE-ORDER-CHECK-READS-A-SLOT-OPEN-TO-THE-BOARD-EDGE
+    type: criterion-of

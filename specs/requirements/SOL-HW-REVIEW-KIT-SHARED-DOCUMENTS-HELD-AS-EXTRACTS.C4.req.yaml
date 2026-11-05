@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT-SHARED-DOCUMENTS-HELD-AS-EXTRACTS.C4
+type: criterion
+title: A review over the budget is refused naming each shared document with its tokens, largest first
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Over a synthetic declaration whose shared documents alone exceed the budget, the refusal names each shared document with its tokens in descending order, states the figures of the budget and the total, and starts no session; a declaration under the budget is not refused. Out of scope is the refusal of a group whose own views exceed the budget.
+links:
+  - target: SOL-HW-REVIEW-KIT-SHARED-DOCUMENTS-HELD-AS-EXTRACTS
+    type: criterion-of

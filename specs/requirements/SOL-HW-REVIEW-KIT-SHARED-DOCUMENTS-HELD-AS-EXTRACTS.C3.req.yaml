@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT-SHARED-DOCUMENTS-HELD-AS-EXTRACTS.C3
+type: criterion
+title: A shared document that no unit of a root declares an extract of is not held by that root
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Over a synthetic declaration whose units declare extracts of some shared documents and none of another, the root holds the extracts declared and no part of the document no unit declares, and a document with no per-item structure is held whole and counted whole in the plan. The test fails if a document no unit declares appears in a root or is omitted from the total of tokens written.
+links:
+  - target: SOL-HW-REVIEW-KIT-SHARED-DOCUMENTS-HELD-AS-EXTRACTS
+    type: criterion-of

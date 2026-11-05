@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-READS-A-SLOT-OPEN-TO-THE-BOARD-EDGE.C1
+type: criterion
+title: The creepage route between two items either side of an edge-open slot goes round the slot's closed end
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a synthetic board with a slot drawn from the board edge inward and two items on different layers either side of it, the creepage route length between them is the length of the shortest path round the slot's closed end, not the straight-line length, and the same pair with the slot absent keeps its straight-line length. The test includes an edge-open slot drawn with its outline in either direction and fails if the route passes through the opening at the edge. Out of scope is the rule's threshold.
+links:
+  - target: SOL-PRE-ORDER-CHECK-READS-A-SLOT-OPEN-TO-THE-BOARD-EDGE
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-READS-A-SLOT-OPEN-TO-THE-BOARD-EDGE.C3
+type: criterion
+title: A closed slot and a path that crosses no slot are read as before
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Over the existing slot tests of the check, every figure is unchanged after the change, and a pair of items with no slot between them keeps its straight-line length.
+links:
+  - target: SOL-PRE-ORDER-CHECK-READS-A-SLOT-OPEN-TO-THE-BOARD-EDGE
+    type: criterion-of
