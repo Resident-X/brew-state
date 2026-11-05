@@ -16,12 +16,21 @@ import board_check  # noqa: E402
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", ".."))
 RECORD = os.path.join("hardware", "sunbeam-em7000", board_check.RECORD_NAME)
 DESIGN = board_check.Design(os.path.join("hardware", "sunbeam-em7000", "board", "board.kicad_pro"))
-TODAY = datetime.date(2026, 10, 23)
+#: The day the reader is told it is: the day the record was signed. A date after it reads as unsigned.
+TODAY = datetime.date(2026, 11, 5)
 #: How many entries the record holds before its net-pair and same-part entries: the four triac creepage entries and the five connector entries. The draft held 25 here; the signed run of the layout rule check found the other 16 used by no shortfall (the
 #: pad-pair clearance entries, which KiCad never tests inside one footprint, and the mains-to-low-voltage entries, whose gaps the board's slots hold) and they are removed.
 ORIGINAL_ENTRIES = 9
 #: The opto-triacs whose unconnected pin 5 has two same-part pairs each, appended after the set N pairs and held to the full mains figures.
 NO_CONNECT_PART_REFS = ("U701", "U711")
+#: The 1206 series gate resistors of the two pump drives, each with one creepage entry at the package's own 1.80 mm pad gap, appended last.
+GATE_RESISTOR_REFS = ("R704", "R705", "R714", "R715")
+#: Every entry the record holds: 98 were drafted before the layout was finished; the signed run of the layout rule check on the finished board found 29 used by a shortfall and 69 used by none (removed), and reported the four gate-resistor pairs short with no
+#: entry, which are added: 4 triac tab-to-lead, 5 connector, 7 net-pair, 9 same-part, 4 opto-triac pin-5 and 4 gate-resistor entries.
+EXCEPTION_COUNT = 33
+DRAFTED_EXCEPTIONS, USED_BY_A_SHORTFALL, REMOVED_AS_USED_BY_NONE = 98, 29, 69
+#: The signature the record and every exception carry: the owner, with the note that Claude entered it on the owner's written instruction.
+OWNER = "David Baker"
 
 
 def committed():
@@ -51,27 +60,60 @@ def signed_from(data):
     return board_check.Signed(float(pair["clearance_mm"]), float(pair["creepage_mm"]), data)
 
 
-def assert_draft(case, data):
-    """The record is a draft: no record-level acceptance, and every exception's two acceptance fields empty strings."""
-    case.assertNotIn("accepted_by", data)
-    case.assertNotIn("accepted_on", data)
+def assert_signed(case, data):
+    """The record is signed by the owner: the record and every exception name the owner, give a valid date no later than the day the check runs, and no exception is dated after the record."""
+    for holder, label in [(data, "record")] + [(entry, entry.get("between") or entry.get("connector") or entry.get("nets_a")) for entry in data["accepted_exceptions"]]:
+        acceptor = holder.get("accepted_by")
+        case.assertIsInstance(acceptor, str, label)
+        case.assertTrue(acceptor.strip(), label)
+        case.assertFalse(board_check.is_placeholder(acceptor), label)
+        case.assertIn(OWNER, acceptor, label)
+        case.assertIn("owner", acceptor, label)
+        day = board_check.iso_date(holder.get("accepted_on"))
+        case.assertIsNotNone(day, (label, holder.get("accepted_on")))
+        case.assertLessEqual(day, datetime.date.today(), label)
+    record_day = board_check.iso_date(data["accepted_on"])
     for entry in data["accepted_exceptions"]:
-        case.assertEqual((entry["accepted_by"], entry["accepted_on"]), ("", ""), entry.get("between") or entry.get("connector") or entry.get("nets_a"))
+        case.assertIsNone(board_check.entry_unsigned(entry, record_day, TODAY), entry.get("between") or entry.get("connector") or entry.get("nets_a"))
+
+
+def assert_reads_clean(case, problems):
+    """The check's reader found nothing wrong with the record: signed, in form, with every figure present."""
+    case.assertEqual([p.line() for p in problems], [])
 
 
 class SeparationBasisRecord(unittest.TestCase):
-    def test_only_the_unsigned_acceptance_is_left_to_find(self):
-        # SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C9: The committed record holds no accepted_by and no accepted_on at its top level, no entry of its accepted_exceptions holds a signed acceptance, and the check's own reader finds the unsigned acceptance as the only problem with the record. The test never writes an acceptance into the record. Out of scope is the owner's acceptance, which is its own leaf.
+    def test_the_record_is_signed_by_the_owner_on_every_exception_and_the_reader_finds_no_problem(self):
+        # SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C1: The committed separation-basis.yaml holds accepted_by and accepted_on at its top level, accepted_by non-empty, naming the owner and not a placeholder, accepted_on a calendar date written YYYY-MM-DD no later than the day the check runs; every entry of accepted_exceptions holds the same two fields under the same tests and dated no later than the record; and the check's own reader reads the record with no problem of any kind and returns it signed. The signed figures equal those the criteria it carries name: mains_to_mains clearance_mm 1.5, terminal_clearance_mm 2.0, creepage_mm 2.6, creepage_ahead_of_fuse_mm 2.6 and entry_fuse F101, mains_to_low_voltage clearance_mm 3.0 and creepage_mm 10.0, pollution degree 2, material group IIIa. A record with its acceptance removed, a placeholder or a future date is read as unsigned by the same reader. Out of scope is the owner's instruction itself.
+        # SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER.C4: With the acceptance committed, the check's reader on the committed record, the existing test route, finds it signed and reports no separation_basis failure of the record as unsigned, as holding an exception entry unsigned, or as holding an exception dated after the record's own acceptance. Failures that concern a board's layout against the figures are out of scope here.
         yaml, data = committed()
         self.assertIsNot(data.get("synthetic"), True)
-        _, problems = reading()
-        left = [p for p in problems if not p.location.endswith(("accepted_by", "accepted_on"))]
-        self.assertEqual(left, [], [p.line() for p in left])
-        # the draft state is pinned: the owner-acts leaf SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER changes this assertion when the owner accepts
-        assert_draft(self, data)
-        self.assertEqual(len(problems), 2)
-        self.assertTrue(all("unsigned" in p.message for p in problems))
-        self.assertTrue(all(entry["accepted_by"] == "" and entry["accepted_on"] == "" for entry in data["accepted_exceptions"]))
+        signed, problems = reading()
+        assert_reads_clean(self, problems)
+        self.assertIsNotNone(signed)
+        assert_signed(self, data)
+        # the signed figures are those the record's criteria name, and signing changed none of them
+        held = data["mains_to_mains"]
+        self.assertEqual({key: held[key] for key in ("clearance_mm", "terminal_clearance_mm", "creepage_mm", "creepage_ahead_of_fuse_mm")},
+                         {"clearance_mm": 1.5, "terminal_clearance_mm": 2.0, "creepage_mm": 2.6, "creepage_ahead_of_fuse_mm": 2.6})
+        self.assertEqual(held["entry_fuse"], "F101")
+        self.assertEqual((data["mains_to_low_voltage"]["clearance_mm"], data["mains_to_low_voltage"]["creepage_mm"]), (3.0, 10.0))
+        self.assertEqual((data["pollution_degree"], data["material_group"]), (2, "IIIa"))
+        self.assertEqual(tuple(signed), (3.0, 10.0))
+        # the same reader reads the record as unsigned once its acceptance is removed, a placeholder or a future date, so the checks above can fail
+        for broken, what in ((dict((k, v) for k, v in data.items() if k != "accepted_by"), "accepted_by"),
+                             (dict((k, v) for k, v in data.items() if k != "accepted_on"), "accepted_on"),
+                             (dict(data, accepted_by="tbd"), "accepted_by"), (dict(data, accepted_by="<owner>"), "accepted_by"),
+                             (dict(data, accepted_on="2026-11-06"), "accepted_on"), (dict(data, accepted_on="5 November"), "accepted_on")):
+            found, problems = reading(broken)
+            self.assertIsNone(found, (what, broken.get(what)))
+            self.assertTrue(any(p.location.endswith(what) and "unsigned" in p.message for p in problems), (what, broken.get(what)))
+        # an exception signed later than the record is no acceptance the record covers
+        late = [dict(e) for e in data["accepted_exceptions"]]
+        late[0]["accepted_on"] = "2026-11-06"
+        self.assertIsNotNone(board_check.entry_unsigned(late[0], board_check.iso_date(data["accepted_on"]), datetime.date(2026, 11, 6)))
+        for field, value in (("accepted_by", ""), ("accepted_by", "TBD"), ("accepted_on", "2099-01-01"), ("accepted_on", "")):
+            self.assertIsNotNone(board_check.entry_unsigned(dict(data["accepted_exceptions"][0], **{field: value}), board_check.iso_date(data["accepted_on"]), TODAY), (field, value))
 
     def test_every_barrier_has_exactly_one_type_and_the_floor_holds_on_its_own_figures(self):
         # SOL-HW-SEPARATION-BASIS-SIGNED.C1: Every barrier named has exactly one barrier_types entry, giving its insulation type, basic or reinforced, whether its low-voltage side is bonded to protective earth, the low-voltage parts a person can touch beyond it (such as a service port, the operator's controls or the enclosure), and the part or spacing that forms it; The mains-to-low-voltage clearance and creepage are at or above the floor those rows give. It also runs the check's floor rule on the record's own figures taken as signed and finds no violation.
@@ -176,7 +218,7 @@ class MainsToMainsRecord(unittest.TestCase):
     def test_the_mains_to_mains_mapping_holds_the_four_figures_and_the_entry_fuse(self):
         # SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD.C4: The committed record's mains_to_mains holds creepage_mm 2.6 and creepage_ahead_of_fuse_mm 2.6, clearance_mm 1.5, terminal_clearance_mm 2.0, entry_fuse F101 and the same held_at_reinforced pairs as before, and its mains_to_low_voltage holds clearance_mm 3.0 and creepage_mm 10.0. The check's own reader reads it with no problem other than the unsigned acceptance. Out of scope is any figure not named here.
         _, data = committed()
-        assert_draft(self, data)
+        assert_signed(self, data)
         held = data["mains_to_mains"]
         self.assertEqual({key: held[key] for key in ("clearance_mm", "terminal_clearance_mm", "creepage_mm", "creepage_ahead_of_fuse_mm")},
                          {"clearance_mm": 1.5, "terminal_clearance_mm": 2.0, "creepage_mm": 2.6, "creepage_ahead_of_fuse_mm": 2.6})
@@ -185,7 +227,7 @@ class MainsToMainsRecord(unittest.TestCase):
         self.assertEqual((data["mains_to_low_voltage"]["clearance_mm"], data["mains_to_low_voltage"]["creepage_mm"]), (3.0, 10.0))
         self.assertEqual(board_check.read_mains_to_mains(DESIGN, RECORD, data), [])
         _, problems = reading()
-        self.assertEqual([p for p in problems if not p.location.endswith(("accepted_by", "accepted_on"))], [])
+        assert_reads_clean(self, problems)
         for key in held:
             if key == "downstream_basis":
                 continue
@@ -248,11 +290,12 @@ class MainsToMainsRecord(unittest.TestCase):
                 found = board_check.separation_floor(DESIGN, RECORD, signed_from(short))
                 self.assertTrue(found and all("no table row" in p.message for p in found), position)
 
-    def test_each_mains_to_mains_shortfall_the_owner_accepted_has_an_unsigned_entry(self):
-        # SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS.C3: accepted_exceptions holds a mains_to_mains clearance entry with accepted_mm 1.08 for T701 and T711, one with 1.65 for R105 and one with 1.8 for each 1206 series resistor, every entry naming the one pair of pads or nets it excuses in between, with a reason and a bounding element, and its accepted_by and accepted_on left empty for the owner's acceptance. Each accepted_mm is below the signed figure it relaxes, a part's other pairs have no entry, and a part the owner did not accept has none. The values are drafted from the schematic and the division record; confirming them against the main-board layout is the layout leaf's.
-        # The signed run of the layout rule check on the final board found every pad-pair clearance entry used by no shortfall, since KiCad does not test the clearance of two pads of one footprint (it reports the same pairs as creepage), so those 16 clearance entries are removed; this test holds the record to that state.
+    def test_the_four_triac_entries_are_signed_creepage_entries_and_no_clearance_entry_between_two_pads_remains(self):
+        # SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C2: The committed record's accepted_exceptions holds 33 entries: 4 pump-triac tab-to-lead creepage entries at 2.0 mm, 5 same-connector hole_to_hole entries at 1.25 mm for J630, J635, J791, J821 and J861, 7 net-pair entries, 9 same-part creepage entries, 4 opto-triac pin-5 creepage entries at 0.76 mm for U701 and U711, and 4 gate-resistor creepage entries. The test states why the count is 33 and not the 98 drafted before the layout was finished: 29 entries are used by a shortfall of the finished layout and the other 69 are removed, and the 4 gate-resistor entries are added to the 29. Every entry's pair is mains_to_mains or same_connector_pins, every entry has a non-empty reason and bounding element, and each between entry names two pads of one part. Out of scope is any figure not named here.
+        # SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C4: The committed record holds nine same-part creepage entries, for C606, the four sense-pad pairs of R105 and R605 to R608, each with accepted_mm equal to the pair's edge-to-edge pad gap in the layout, each below 1.5 mm and below the signed creepage, each of pair mains_to_mains, naming the part and the set N of neutral-referenced nets with a working voltage under 10 V in its reason and the entry fuse and branch fuses in its bounding element; it holds no between entry of constraint clearance, and none for the eighteen pairs of the twenty-seven under 1.5 mm that the finished layout reports no shortfall for. Out of scope is a pair of 1.5 mm or more.
+        # The signed run of the layout rule check on the final board found every pad-pair clearance entry used by no shortfall, since KiCad does not test the clearance of two pads of one footprint (it reports the same pairs as creepage), so those 16 clearance entries are removed; this test holds the record to that state, with the entries it keeps signed.
         _, data = committed()
-        assert_draft(self, data)
+        assert_signed(self, data)
         held = data["mains_to_mains"]
         entries = [e for e in data["accepted_exceptions"] if e["pair"] == "mains_to_mains" and e["constraint"] == "clearance" and "between" in e]
         self.assertEqual(entries, [])
@@ -264,16 +307,14 @@ class MainsToMainsRecord(unittest.TestCase):
             self.assertEqual(entry["constraint"], "creepage")
             self.assertLess(entry["accepted_mm"], held["creepage_mm"])
             self.assertTrue(entry["reason"].strip() and entry["bounded_by"].strip())
-            self.assertEqual((entry["accepted_by"], entry["accepted_on"]), ("", ""))
         pairs = {frozenset(e["between"]) for e in data["accepted_exceptions"] if "between" in e}
         self.assertNotIn(frozenset(("T701.1", "T701.3")), pairs)
-        # no 1206 series resistor of the discharge string or the pump gate drive and no shunt R105 pair holds a clearance entry; the gate resistors' 1.8 mm creepage has none either
+        # no part holds a pad-pair clearance entry: the gate resistors R704, R705, R714 and R715 hold a creepage entry each and the discharge string and shunt R105 none of clearance
         parts = {pad.split(".")[0] for e in data["accepted_exceptions"] if "between" in e and e["constraint"] == "clearance" for pad in e["between"]}
         self.assertEqual(parts, set())
-        self.assertFalse(any(frozenset(pair) in pairs for pair in (("R704.1", "R704.2"), ("R705.1", "R705.2"), ("R714.1", "R714.2"), ("R715.1", "R715.2"))))
-        # the reader finds the entries well formed, and no problem but the unsigned record
+        # the reader finds the entries well formed and the record signed
         _, problems = reading()
-        self.assertEqual([p for p in problems if not p.location.endswith(("accepted_by", "accepted_on"))], [])
+        assert_reads_clean(self, problems)
         # an entry missing a key, or naming one pad, is refused by the same reader
         first = data["accepted_exceptions"][0]
         for key in ("between", "accepted_mm", "reason", "bounded_by"):
@@ -283,21 +324,23 @@ class MainsToMainsRecord(unittest.TestCase):
         _, problems = reading(dict(data, accepted_exceptions=[dict(first, between=["T701.2"])] + data["accepted_exceptions"][1:]))
         self.assertTrue(any("between" in p.location for p in problems))
 
-    def test_each_bought_part_creepage_shortfall_the_owner_accepted_has_an_unsigned_entry(self):
-        # SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS.C4: accepted_exceptions holds a mains_to_low_voltage creepage entry with accepted_mm 8.0 for U601 and one with 7.0 for each of U701 and U711, each naming the one pair of pads it excuses in between, with its reason and bounding element and its accepted_by and accepted_on left empty for the owner's acceptance, and the reasons are those of the owner's recorded acceptance. K201, K731, K741 and U602 are out of scope here; their own leaf judges them. The values are drafted from the schematic and the division record; confirming them against the main-board layout is the layout leaf's and out of scope here.
-        # The signed run of the layout rule check on the final board found each of these seven entries used by no shortfall: the board's slots between the pad rows hold the gaps of U601, U701, U711 and U602 at their figure, so the record holds none, and the reader keeps the pair kind in its vocabulary.
+    def test_the_record_holds_no_mains_to_low_voltage_entry_and_names_none_of_the_bought_parts(self):
+        # SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C6: The committed record holds no accepted_exceptions entry of pair mains_to_low_voltage and no entry naming a pad of U601, U602, K201, K731 or K741, because the slots between their pad rows hold the gaps at the signed figure and the check reports no shortfall for them. The check's own reader still reads a mains_to_low_voltage creepage entry in the check's form with no problem and refuses a pair kind outside its vocabulary. The division record's judgement of the four parts is unchanged: the figures inside the parts the board's gaps do not measure stay recorded there against the signed figure and are not excused by an entry. Out of scope is the owner's decision on those figures.
+        # The signed run of the layout rule check on the final board found each of the seven drafted bought-part entries (U601 at 8.0 mm, U701 and U711 at 7.0 mm) used by no shortfall: the board's slots between the pad rows hold the gaps of U601, U701, U711 and U602 at their figure, so the record holds none, and the reader keeps the pair kind in its vocabulary.
         _, data = committed()
-        assert_draft(self, data)
+        assert_signed(self, data)
         entries = [e for e in data["accepted_exceptions"] if e["pair"] == "mains_to_low_voltage"]
         self.assertEqual(entries, [])
-        # a mains_to_low_voltage creepage entry is still read as well formed, and one at or above the signed figure is the reader's to keep in vocabulary
+        named = {pad.split(".")[0] for e in data["accepted_exceptions"] for pad in e.get("between", [])}
+        self.assertTrue(named.isdisjoint({"U601", "U602", "K201", "K731", "K741"}), named)
+        # a mains_to_low_voltage creepage entry is still read as well formed, and a pair kind outside the vocabulary is refused
         sample = dict(data["accepted_exceptions"][0], pair="mains_to_low_voltage", between=["U601.10", "U601.11"], accepted_mm=8.0)
         _, problems = reading(dict(data, accepted_exceptions=[sample] + data["accepted_exceptions"]))
-        self.assertEqual([p for p in problems if not p.location.endswith(("accepted_by", "accepted_on"))], [])
+        assert_reads_clean(self, problems)
         _, problems = reading(dict(data, accepted_exceptions=[dict(sample, pair="mains_to_ground")] + data["accepted_exceptions"]))
         self.assertTrue(any("pair" in p.location for p in problems))
         _, problems = reading()
-        self.assertEqual([p for p in problems if not p.location.endswith(("accepted_by", "accepted_on"))], [])
+        assert_reads_clean(self, problems)
 
     def test_the_pair_across_the_open_interlock_contact_is_held_at_the_reinforced_figures(self):
         # SOL-SEPARATION-BASIS-SIGNS-MAINS-TO-MAINS-SPACING-AND-EXCEPTIONS.C8: held_at_reinforced in the committed record lists the net pair LINE and LINE1 and the net pair LINE_IN and LINE1, held to 3.0 mm clearance and 10.0 mm creepage, with no credit taken for the relay's own contact gap. The check's reader reads the pair. Other pairs of mains nets are out of scope and take the mains-to-mains figures.
@@ -306,7 +349,7 @@ class MainsToMainsRecord(unittest.TestCase):
         self.assertEqual(sorted(sorted(pair) for pair in pairs),
                          sorted([sorted(["/LINE", "/LINE1"]), sorted(["/Mains entry and load feed/LINE_IN", "/LINE1"])]))
         _, problems = reading()
-        self.assertEqual([p for p in problems if not p.location.endswith(("accepted_by", "accepted_on"))], [])
+        assert_reads_clean(self, problems)
         self.assertEqual(signed_from(data).mains_to_mains["held_at_reinforced"], pairs)
         # the rules the check appends hold each pair at the mains-to-low-voltage figures, 3.0 mm and 10.0 mm, whatever the mains-to-mains ones are
         rules = board_check.mains_to_mains_rules(signed_from(data))
@@ -434,7 +477,7 @@ class MainsToMainsReadings(unittest.TestCase):
 
 
 class BoughtPartsJudged(unittest.TestCase):
-    """The four bought parts judged against the signed figures: the drafted U602 entries and the division record's judgement."""
+    """The four bought parts judged against the signed figures: the division record's judgement, and the record holding no entry for them."""
 
     def division(self):
         with open(os.path.join(ROOT, DIVISION), encoding="utf-8") as handle:
@@ -481,15 +524,16 @@ class BoughtPartsJudged(unittest.TestCase):
         self.assertIn(f"short of 10.0 mm by {shortfall} mm ({round(100 * shortfall / 10.0)} %)", arithmetic)
         self.assertIn(f"{accepted_mm} mm each", rows[("U602", "Creepage")][6])
 
-    def test_the_relays_and_the_unpublished_figures_are_left_to_the_owner_and_nothing_is_signed(self):
+    def test_the_relays_and_the_unpublished_figures_are_left_to_the_owner_and_no_entry_names_them(self):
         # SOL-BOUGHT-PART-CREEPAGE-OF-K201-K731-K741-AND-U602-JUDGED.C2: For each of K201, K731, K741 and U602, the committed record and division record show exactly one of three states: the part's published creepage and clearance meet 10.0 mm and 3.0 mm; or the part's board pad gaps are what the check measures and the pad pairs that fall short each carry an accepted_exceptions entry in the check's form, with accepted_mm no greater than the measured gap, a stated ground and a bounding element, left unsigned; or the part is replaced by one in the first or second state. A figure inside the part that the board's pad gaps do not measure (the relays' published creepage over 8 mm, their clearance and U602's creepage and clearance where the maker publishes none) is recorded in the division record against the signed figure and counts as absent where unpublished: it is carried by the owner's recorded acceptance of bought-part creepage and put to the owner as an open decision to accept, change the part or find a published figure, and is never excused by an entry the check cannot judge. The owner's signature of the record is out of scope here and belongs to the acceptance leaf.
+        # SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C6: The committed record holds no accepted_exceptions entry of pair mains_to_low_voltage and no entry naming a pad of U601, U602, K201, K731 or K741, because the slots between their pad rows hold the gaps at the signed figure and the check reports no shortfall for them. The check's own reader still reads a mains_to_low_voltage creepage entry in the check's form with no problem and refuses a pair kind outside its vocabulary. The division record's judgement of the four parts is unchanged: the figures inside the parts the board's gaps do not measure stay recorded there against the signed figure and are not excused by an entry. Out of scope is the owner's decision on those figures.
         text = self.division()
         for phrase in ("accept the figure as published, change the part, or find a published figure",
                        "accept this distance, change the part, or find a published figure", "*Recommendation:* accept K201, K731 and K741",
                        "VDE 0700 and 0631", "Open layout item (not an exception)", "5.06 mm apart", "no exception for it"):
             self.assertIn(phrase, " ".join(text.split()), phrase)
         _, data = committed()
-        assert_draft(self, data)
+        assert_signed(self, data)
         parts = {pad.split(".")[0] for e in data["accepted_exceptions"] for pad in e.get("between", [])}
         self.assertTrue(parts.isdisjoint({"K201", "K731", "K741"}), parts)
 
@@ -501,7 +545,7 @@ class BoughtPartsJudged(unittest.TestCase):
         self.assertNotIn("U602", parts)
         self.assertEqual([e for e in data["accepted_exceptions"] if e["pair"] == "mains_to_low_voltage"], [])
         _, problems = reading()
-        self.assertEqual([p for p in problems if not p.location.endswith(("accepted_by", "accepted_on"))], [])
+        assert_reads_clean(self, problems)
 
 
 class SameConnectorRecord(unittest.TestCase):
@@ -512,9 +556,11 @@ class SameConnectorRecord(unittest.TestCase):
     def entries(self, data):
         return [e for e in data["accepted_exceptions"] if e["pair"] == board_check.SAME_CONNECTOR_PAIR]
 
-    def test_each_of_the_five_headers_has_one_drafted_entry_with_its_acceptance_empty(self):
-        # SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C6: The committed record holds one same_connector_pins entry for each of J630, J635, J791, J821 and J861 with pitch_mm 2.0, an accepted_mm drafted from the schematic and the division record, the reason that the header carries slow signals only and no fast signal crosses its strip, a bounding element, and the entry's own accepted_by and accepted_on empty. The five entries are read through the check's own reader from the committed record in whatever acceptance state the record as a whole is in, and each is accepted as a form; the test asserts nothing about whether the record as a whole reads signed or unsigned.
+    def test_each_of_the_five_headers_has_one_entry_signed_as_the_record_is(self):
+        # SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C2: The committed record's accepted_exceptions holds 33 entries: 4 pump-triac tab-to-lead creepage entries at 2.0 mm, 5 same-connector hole_to_hole entries at 1.25 mm for J630, J635, J791, J821 and J861, 7 net-pair entries, 9 same-part creepage entries, 4 opto-triac pin-5 creepage entries at 0.76 mm for U701 and U711, and 4 gate-resistor creepage entries. The test states why the count is 33 and not the 98 drafted before the layout was finished: 29 entries are used by a shortfall of the finished layout and the other 69 are removed, and the 4 gate-resistor entries are added to the 29. Every entry's pair is mains_to_mains or same_connector_pins, every entry has a non-empty reason and bounding element, and each between entry names two pads of one part. Out of scope is any figure not named here.
+        # SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C1: The committed separation-basis.yaml holds accepted_by and accepted_on at its top level, accepted_by non-empty, naming the owner and not a placeholder, accepted_on a calendar date written YYYY-MM-DD no later than the day the check runs; every entry of accepted_exceptions holds the same two fields under the same tests and dated no later than the record; and the check's own reader reads the record with no problem of any kind and returns it signed. The signed figures equal those the criteria it carries name: mains_to_mains clearance_mm 1.5, terminal_clearance_mm 2.0, creepage_mm 2.6, creepage_ahead_of_fuse_mm 2.6 and entry_fuse F101, mains_to_low_voltage clearance_mm 3.0 and creepage_mm 10.0, pollution degree 2, material group IIIa. A record with its acceptance removed, a placeholder or a future date is read as unsigned by the same reader. Out of scope is the owner's instruction itself.
         _, data = committed()
+        assert_signed(self, data)
         entries = self.entries(data)
         self.assertEqual([e["connector"] for e in entries], list(self.HEADERS))
         for entry in entries:
@@ -528,7 +574,8 @@ class SameConnectorRecord(unittest.TestCase):
                 self.assertIn("the owner makes, which the tool does not check", entry["reason"])
                 self.assertIn(entry["connector"], entry["reason"])
                 self.assertTrue(entry["bounded_by"].strip())
-                self.assertEqual((entry["accepted_by"], entry["accepted_on"]), ("", ""))
+                self.assertIn(OWNER, entry["accepted_by"])
+                self.assertEqual(entry["accepted_on"], data["accepted_on"])
 
     def test_the_checks_own_reader_accepts_each_entry_as_a_form_and_refuses_a_broken_one(self):
         # SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C6: The committed record holds one same_connector_pins entry for each of J630, J635, J791, J821 and J861 with pitch_mm 2.0, an accepted_mm drafted from the schematic and the division record, the reason that the header carries slow signals only and no fast signal crosses its strip, a bounding element, and the entry's own accepted_by and accepted_on empty. The five entries are read through the check's own reader from the committed record in whatever acceptance state the record as a whole is in, and each is accepted as a form; the test asserts nothing about whether the record as a whole reads signed or unsigned.
@@ -599,7 +646,7 @@ class PollutionDegreeTwoRecord(unittest.TestCase):
         self.assertTrue(found)
         self.assertEqual({value for _, value in found}, {2}, found)
         _, problems = reading()
-        self.assertEqual([p for p in problems if not p.location.endswith(("accepted_by", "accepted_on"))], [])
+        assert_reads_clean(self, problems)
         # the same record with a row read at pollution degree 1 is a different record: the walk would find it
         rows = [dict(row, inputs=dict(row["inputs"], pollution_degree=1)) if position == 1 else row for position, row in enumerate(data["table_rows"])]
         found.clear()
@@ -703,7 +750,7 @@ class PollutionDegreeTwoRecord(unittest.TestCase):
             self.assertIn("IEC text unread", cited)
         self.assertNotIn("downstream_basis", data["mains_to_mains"])
         _, problems = reading()
-        self.assertEqual([p for p in problems if not p.location.endswith(("accepted_by", "accepted_on"))], [])
+        assert_reads_clean(self, problems)
         without = dict(data, table_rows=[r for r in data["table_rows"] if r not in rows])
         self.assertEqual(len(without["table_rows"]), 5)
         signed = signed_from(data)
@@ -893,16 +940,17 @@ FAULT_ROW = re.compile(r"^\s*#\s+(\d+) \| fault: (.+?) \| volts: ([\d.]+) V \| c
 
 
 class NetPairAndSamePartDrafts(unittest.TestCase):
-    """The net-pair and same-part entries drafted after the earlier entries of the committed record, unsigned."""
+    """The net-pair, same-part, opto-triac pin-5 and gate-resistor entries that follow the earlier entries of the committed record, signed with it."""
 
     def net_pairs(self, data):
         return [e for e in data["accepted_exceptions"] if "nets_a" in e]
 
     def same_part(self, data):
-        return [e for e in data["accepted_exceptions"][ORIGINAL_ENTRIES:] if "between" in e and e["between"][0].split(".")[0] not in NO_CONNECT_PART_REFS]
+        return [e for e in data["accepted_exceptions"][ORIGINAL_ENTRIES:]
+                if "between" in e and e["between"][0].split(".")[0] not in NO_CONNECT_PART_REFS + GATE_RESISTOR_REFS]
 
     def test_the_seven_kept_net_pair_entries_hold_the_lists_working_voltages_and_distances_the_leaf_sets(self):
-        # SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C1: The record holds the eleven net-pair entries with the lists, working voltages and accepted distances this leaf sets
+        # SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C3: The committed record holds exactly seven net-pair entries, numbers 1, 2, 3, 5, 8, 10 and 11 of the eleven drafted, with the constraint, nets_a, nets_b, working_voltage_v and accepted_mm of those entries (the 10 V entries 1 and 10 at 0.4 mm creepage and 2 and 11 at 0.2 mm clearance), none of entries 4, 6, 7 and 9, each accepted_mm the record's band figure for its working voltage, no entry reducing a pair that can reach the supply voltage or a held pair, and its single-fault table holding a row for each of those seven numbers and for no other. The check's own reader reads the entries with no problem. Out of scope is any entry of another form.
         # Seven of the eleven are kept: the signed run of the layout rule check reported no shortfall for entries 4, 6, 7 and 9, which are removed.
         _, data = committed()
         entries = self.net_pairs(data)
@@ -913,7 +961,7 @@ class NetPairAndSamePartDrafts(unittest.TestCase):
         for entry in entries:
             self.assertEqual(entry["pair"], "mains_to_mains")
         _, problems = reading()
-        self.assertEqual(sorted(p.location.rsplit(" ", 1)[-1] for p in problems), ["accepted_by", "accepted_on"])
+        assert_reads_clean(self, problems)
         # the reader reads an entry whose list is emptied or whose voltage is dropped as broken
         first = data["accepted_exceptions"].index(entries[2])
         for key in ("nets_a", "working_voltage_v"):
@@ -1032,7 +1080,7 @@ class NetPairAndSamePartDrafts(unittest.TestCase):
                     self.assertIn(needle, entry["reason"])
 
     def test_each_same_part_pad_pair_the_layout_reports_short_has_one_creepage_entry_and_none_has_a_clearance_entry(self):
-        # SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C6: The record holds a creepage entry and a clearance entry for each same-part pad pair under 1.5 mm
+        # SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C4: The committed record holds nine same-part creepage entries, for C606, the four sense-pad pairs of R105 and R605 to R608, each with accepted_mm equal to the pair's edge-to-edge pad gap in the layout, each below 1.5 mm and below the signed creepage, each of pair mains_to_mains, naming the part and the set N of neutral-referenced nets with a working voltage under 10 V in its reason and the entry fuse and branch fuses in its bounding element; it holds no between entry of constraint clearance, and none for the eighteen pairs of the twenty-seven under 1.5 mm that the finished layout reports no shortfall for. Out of scope is a pair of 1.5 mm or more.
         # The draft held both for each of 27 pairs (54 entries). The signed run of the layout rule check on the final board reported a creepage shortfall for nine of the pairs and none for the other eighteen, and never a clearance shortfall between two pads of one footprint, so nine creepage entries are kept and the other 45 removed.
         _, data = committed()
         entries = self.same_part(data)
@@ -1057,7 +1105,7 @@ class NetPairAndSamePartDrafts(unittest.TestCase):
             self.assertNotIn(frozenset((left, right)), pairs)
         self.assertEqual({e["between"][0].split(".")[0] for e in entries}.isdisjoint({"T701", "T711", "U701", "U711", "K201", "K731", "K741"}), True)
         _, problems = reading()
-        self.assertEqual([p for p in problems if not p.location.endswith(("accepted_by", "accepted_on"))], [])
+        assert_reads_clean(self, problems)
 
     def test_each_same_part_entry_states_its_ground_and_bounding_element(self):
         # SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C7: Each same-part entry states its ground and bounding element
@@ -1075,32 +1123,77 @@ class NetPairAndSamePartDrafts(unittest.TestCase):
         for entry in entries[1:]:
             self.assertEqual(entry["bounded_by"], entries[0]["bounded_by"])
 
-    def test_every_drafted_entry_is_unsigned_the_record_stays_unsigned_and_the_earlier_entries_are_unchanged(self):
-        # SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C8: Every drafted entry is unsigned, the record stays unsigned and the existing entries are unchanged
+    def test_the_record_holds_33_entries_each_signed_and_the_earlier_entries_are_unchanged(self):
+        # SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C2: The committed record's accepted_exceptions holds 33 entries: 4 pump-triac tab-to-lead creepage entries at 2.0 mm, 5 same-connector hole_to_hole entries at 1.25 mm for J630, J635, J791, J821 and J861, 7 net-pair entries, 9 same-part creepage entries, 4 opto-triac pin-5 creepage entries at 0.76 mm for U701 and U711, and 4 gate-resistor creepage entries. The test states why the count is 33 and not the 98 drafted before the layout was finished: 29 entries are used by a shortfall of the finished layout and the other 69 are removed, and the 4 gate-resistor entries are added to the 29. Every entry's pair is mains_to_mains or same_connector_pins, every entry has a non-empty reason and bounding element, and each between entry names two pads of one part. Out of scope is any figure not named here.
+        # SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C1: The committed separation-basis.yaml holds accepted_by and accepted_on at its top level, accepted_by non-empty, naming the owner and not a placeholder, accepted_on a calendar date written YYYY-MM-DD no later than the day the check runs; every entry of accepted_exceptions holds the same two fields under the same tests and dated no later than the record; and the check's own reader reads the record with no problem of any kind and returns it signed. The signed figures equal those the criteria it carries name: mains_to_mains clearance_mm 1.5, terminal_clearance_mm 2.0, creepage_mm 2.6, creepage_ahead_of_fuse_mm 2.6 and entry_fuse F101, mains_to_low_voltage clearance_mm 3.0 and creepage_mm 10.0, pollution degree 2, material group IIIa. A record with its acceptance removed, a placeholder or a future date is read as unsigned by the same reader. Out of scope is the owner's instruction itself.
         _, data = committed()
-        assert_draft(self, data)
+        assert_signed(self, data)
         entries = data["accepted_exceptions"]
-        # 98 drafted; 29 used by a shortfall of the signed run, 69 removed: 9 earlier (4 triac creepage, 5 connectors), 7 net-pair, 9 same-part and 4 opto-triac pin-5 entries
-        self.assertEqual(len(entries), ORIGINAL_ENTRIES + 7 + 9 + 4)
-        self.assertEqual([e["between"][0].split(".")[0] for e in entries[-4:]], ["U701", "U701", "U711", "U711"])
-        for entry in entries[ORIGINAL_ENTRIES:]:
-            self.assertEqual((entry["accepted_by"], entry["accepted_on"]), ("", ""))
+        # 98 were drafted; 29 are used by a shortfall of the finished layout and 69 are removed, and the four gate-resistor pairs the layout reports short are added to the 29
+        self.assertEqual(DRAFTED_EXCEPTIONS - REMOVED_AS_USED_BY_NONE, USED_BY_A_SHORTFALL)
+        self.assertEqual(ORIGINAL_ENTRIES + 7 + 9 + 4, USED_BY_A_SHORTFALL)
+        self.assertEqual(USED_BY_A_SHORTFALL + len(GATE_RESISTOR_REFS), EXCEPTION_COUNT)
+        self.assertEqual(len(entries), EXCEPTION_COUNT)
+        self.assertEqual(len(entries), ORIGINAL_ENTRIES + 7 + 9 + 4 + 4)
+        self.assertEqual({(e["pair"], e["constraint"]) for e in entries},
+                         {("mains_to_mains", "creepage"), ("mains_to_mains", "clearance"), ("same_connector_pins", "hole_to_hole")})
+        self.assertEqual(sum(1 for e in entries if e["pair"] == "same_connector_pins"), 5)
+        self.assertEqual(sum(1 for e in entries if "nets_a" in e), 7)
+        self.assertEqual(sum(1 for e in entries if "between" in e), 4 + 9 + 4 + 4)
+        for entry in entries:
+            self.assertTrue(entry["reason"].strip() and entry["bounded_by"].strip(), entry.get("between") or entry.get("connector") or entry.get("nets_a"))
+            if "between" in entry:
+                self.assertEqual(len({pad.split(".")[0] for pad in entry["between"]}), 1, entry["between"])
+        self.assertEqual([e["between"][0].split(".")[0] for e in entries[-8:-4]], ["U701", "U701", "U711", "U711"])
+        self.assertEqual([e["between"][0].split(".")[0] for e in entries[-4:]], list(GATE_RESISTOR_REFS))
+        for entry in entries[-8:-4]:
+            self.assertEqual((entry["constraint"], entry["accepted_mm"]), ("creepage", 0.76))
         _, problems = reading()
-        self.assertEqual(len(problems), 2)
-        self.assertTrue(all("unsigned" in p.message for p in problems))
+        assert_reads_clean(self, problems)
         earlier = [(e["pair"], e["constraint"], tuple(e.get("between") or ()), e.get("connector"), e["accepted_mm"]) for e in entries[:ORIGINAL_ENTRIES]]
         expected = ([("mains_to_mains", "creepage", pads, None, 2.0) for pads in (
             ("T701.2", "T701.1"), ("T701.2", "T701.3"), ("T711.2", "T711.1"), ("T711.2", "T711.3"))]
                     + [("same_connector_pins", "hole_to_hole", (), connector, 1.25) for connector in ("J630", "J635", "J791", "J821", "J861")])
         self.assertEqual(earlier, expected)
-        # a signed copy is read as signed by the same reader, so the unsigned assertions above can fail
-        signed = dict(data, accepted_by="someone", accepted_on="2026-10-01")
-        _, problems = reading(signed)
-        self.assertEqual([p for p in problems if p.location.endswith(("accepted_by", "accepted_on"))], [])
+        # the count can fail: an entry dropped or added is a different record from the one the reader signs
+        self.assertNotEqual(len(entries[:-1]), EXCEPTION_COUNT)
+        self.assertNotEqual(len(entries + [entries[-1]]), EXCEPTION_COUNT)
 
+    def test_each_gate_resistor_has_one_signed_creepage_entry_at_1_8_mm_bounded_by_the_interlock_relay(self):
+        # SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C5: The committed record holds, for each of R704, R705, R714 and R715, one entry of pair mains_to_mains and constraint creepage, between pad 1 and pad 2 of that resistor, accepted_mm 1.8, below the signed creepage of 2.6 mm, signed as the record is, and no clearance entry for the pair. Each entry's reason states that the gap is the package's own, that the part is not changed, and that the entry excuses only that pair; its bounded_by names the interlock relay K201 as not independent of the controller and states the consequence as a pump that runs on. The check's own reader reads each as well formed, and an entry with its between, accepted_mm, reason or bounded_by removed is refused. Out of scope is the gap itself.
+        _, data = committed()
+        assert_signed(self, data)
+        held = data["mains_to_mains"]
+        for ref in GATE_RESISTOR_REFS:
+            with self.subTest(ref=ref):
+                found = [e for e in data["accepted_exceptions"] if "between" in e and e["between"][0].split(".")[0] == ref]
+                self.assertEqual(len(found), 1)
+                entry = found[0]
+                self.assertEqual((entry["pair"], entry["constraint"], entry["between"], entry["accepted_mm"]),
+                                 ("mains_to_mains", "creepage", [f"{ref}.1", f"{ref}.2"], 1.8))
+                self.assertLess(entry["accepted_mm"], held["creepage_mm"])
+                self.assertIn(OWNER, entry["accepted_by"])
+                self.assertEqual(entry["accepted_on"], data["accepted_on"])
+                for phrase in (ref, "1.80 mm apart edge to edge", "the 1206 package's own pad gap and not a layout choice", "The part is not changed",
+                               "excuses only this pair of pads, at 1.8 mm of creepage"):
+                    self.assertIn(phrase, entry["reason"])
+                for phrase in ("K201", "NOT independent of the controller", "does not claim it is", "a pump that runs on", "not a shock or fire route",
+                               "DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER"):
+                    self.assertIn(phrase, entry["bounded_by"])
+                # the two pads of one 1206 resistor are not tested for clearance by KiCad, so no clearance entry stands beside the creepage one
+                self.assertFalse([e for e in data["accepted_exceptions"] if e["constraint"] == "clearance" and "between" in e and ref in e["between"][0]])
+        _, problems = reading()
+        assert_reads_clean(self, problems)
+        # an entry with its between, accepted_mm, reason or bounded_by removed is refused by the same reader
+        position = next(i for i, e in enumerate(data["accepted_exceptions"]) if e.get("between") == ["R704.1", "R704.2"])
+        for key in ("between", "accepted_mm", "reason", "bounded_by"):
+            broken = [dict(e) for e in data["accepted_exceptions"]]
+            del broken[position][key]
+            _, found = reading(dict(data, accepted_exceptions=broken))
+            self.assertTrue(any(key in p.message for p in found), key)
 
     def test_the_single_fault_table_has_a_bounded_row_for_each_net_pair_entry(self):
-        # SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C9: The record holds a single-fault table with a bounded row for each fault of each net-pair entry
+        # SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C3: The committed record holds exactly seven net-pair entries, numbers 1, 2, 3, 5, 8, 10 and 11 of the eleven drafted, with the constraint, nets_a, nets_b, working_voltage_v and accepted_mm of those entries (the 10 V entries 1 and 10 at 0.4 mm creepage and 2 and 11 at 0.2 mm clearance), none of entries 4, 6, 7 and 9, each accepted_mm the record's band figure for its working voltage, no entry reducing a pair that can reach the supply voltage or a held pair, and its single-fault table holding a row for each of those seven numbers and for no other. The check's own reader reads the entries with no problem. Out of scope is any entry of another form.
         lines = [line for line in record_text().splitlines() if re.match(r"^\s*#\s+\d+ \| fault:", line)]
         rows = [FAULT_ROW.match(line) for line in lines]
         self.assertTrue(all(rows), "every table line has the five items in order")
