@@ -1,6 +1,6 @@
 # Main board: final pre-order check result
 
-Date: 5 November 2026. Commit checked: `200c0ae6` (the last design-file commit; later commits are records and graph only). Command: `task hw:verify`, run in a clean checkout of that commit, with the real, unsigned separation basis. Started 05:34 AEDT; the log was last written 08:03 AEDT, so the run took about 2 h 28 min. Exit status: 201 (task's own exit status 1). Closing line: `RESULT | FAIL | 1 of 6 designs failed`. The five proof designs pass; the main board fails with 2,042 violations.
+Date: 5 November 2026. Commit checked: `200c0ae6` (the last design-file commit when this run was made; the board file and the separation basis changed afterwards, the last board-file change being `1f9f8357`, and the note below states the final position). Command: `task hw:verify`, run in a clean checkout of that commit, with the real, unsigned separation basis. Started 05:34 AEDT; the log was last written 08:03 AEDT, so the run took about 2 h 28 min. Exit status: 201 (task's own exit status 1). Closing line: `RESULT | FAIL | 1 of 6 designs failed`. The five proof designs pass; the main board fails with 2,042 violations.
 
 This is the real record. A second run with a scratch top-level signature in a separate checkout unlocked nothing (the separation basis still reported 1 against 2, because its 98 exceptions were unsigned), so it is not a comparison and is not used here.
 
