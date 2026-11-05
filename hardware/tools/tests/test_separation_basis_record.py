@@ -417,7 +417,7 @@ class MainsToMainsReadings(unittest.TestCase):
         a3 = text[text.index("| A3 |"):]
         a3 = a3[:a3.index("\n")]
         for phrase in ("250 V row (2.5 mm) and 320 V row (3.2 mm)", "pollution degree 2", "253 V", "rounded up", stated["terminal"],
-                       "T701 and T711 at 2.0 mm of creepage between the tab and each lead pad", "R105 at 1.65 mm", "1206 series resistors at 1.8 mm"):
+                       "T701 and T711 at 2.0 mm of creepage between the tab and each lead pad", "R105 at 0.44 mm", "1206 gate resistors R704, R705, R714 and R715 at 1.8 mm", "at 0.65 to 0.85 mm"):
             self.assertIn(phrase, a3, phrase)
         # the mains-to-earth pair states the same row selection
         d15 = text[text.index("**D15."):]
