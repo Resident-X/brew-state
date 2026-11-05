@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-READS-A-SURFACE-MOUNT-PAD-IN-KICADS-REPORT.C2
+type: criterion
+title: A shortfall between two surface-mount pads in KiCad 10's wording is matched to its signed exception and judged
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a synthetic layout rule check report whose two items are surface-mount pads worded as KiCad 10 words them, with the position the check reads from the item, a signed pad-pair exception between those two pads accepts the shortfall when the measured distance is no less than the accepted one and fails naming the entry when it is less, an entry for a different pair of the same part's pads does not excuse it, and an entry no reported shortfall uses still fails as unused. The same holds for the through-hole wording, whose matches do not change. Out of scope is the record's figures.
+links:
+  - target: SOL-PRE-ORDER-CHECK-READS-A-SURFACE-MOUNT-PAD-IN-KICADS-REPORT
+    type: criterion-of

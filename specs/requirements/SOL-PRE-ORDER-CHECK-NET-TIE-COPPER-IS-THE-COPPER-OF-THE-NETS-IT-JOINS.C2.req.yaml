@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-NET-TIE-COPPER-IS-THE-COPPER-OF-THE-NETS-IT-JOINS.C2
+type: criterion
+title: A net tie's graphic that joins no Mains-class net, or joins one to a net outside the class, is held as low-voltage copper against mains
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a synthetic layout, a net-tie footprint whose pads are on two low-voltage nets has its graphic held to the signed clearance and creepage from a Mains-class pour on another layer as a low-voltage item, and a tie of one Mains-class net to one outside the class has its graphic held against the low-voltage copper on the other layers as Mains copper, named by its Mains-class net, while the net-tie rule still fails the tie. Out of scope is the net-tie rule.
+links:
+  - target: SOL-PRE-ORDER-CHECK-NET-TIE-COPPER-IS-THE-COPPER-OF-THE-NETS-IT-JOINS
+    type: criterion-of
