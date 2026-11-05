@@ -1,0 +1,13 @@
+id: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES.C4
+type: criterion
+title: An entry that is unsigned, names an unknown rule or place, names a rule outside the workmanship set, or is used by no line fails naming it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+scope: The failures of an entry as a whole. Out of scope is a well-formed signed entry that a line uses.
+text: |-
+  On a synthetic design, an entry with an empty, placeholder or angle-bracketed accepted-by value, an entry with an empty, malformed or future date, an entry naming a rule that is not a workmanship or neatness rule, an entry naming a mains spacing, derated-voltage or pin-limit rule, an entry for a place the design does not have, and an entry that no line uses each fail the check naming the entry, and a design marked synthetic is honoured only when it is marked not for manufacture. Out of scope is a well-formed signed entry that a line uses.
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES
+    type: criterion-of

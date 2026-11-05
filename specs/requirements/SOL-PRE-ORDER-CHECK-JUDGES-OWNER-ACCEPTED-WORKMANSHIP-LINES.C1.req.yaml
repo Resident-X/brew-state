@@ -1,0 +1,13 @@
+id: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES.C1
+type: criterion
+title: A malformed workmanship acceptance entry fails the record naming the entry and the key
+status: active
+version: 1
+measurement_type: binary
+verification: test
+scope: An entry that is not a mapping, lacks a key, holds another key, repeats a rule and scope, or gives a non-positive count. Out of scope is the judgement of a well-formed entry.
+text: |-
+  On a synthetic design, an acceptance record with an entry that is not a mapping, one with a missing key, one with an extra key, two entries for the same rule and scope, and one with a count of zero each fail the check naming the entry and the key, and the same record with a well-formed entry does not fail as a record. Out of scope is the judgement of a well-formed entry.
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES
+    type: criterion-of

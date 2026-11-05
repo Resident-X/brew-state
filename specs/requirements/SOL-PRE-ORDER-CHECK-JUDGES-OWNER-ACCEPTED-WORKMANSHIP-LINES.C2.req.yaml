@@ -1,0 +1,13 @@
+id: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES.C2
+type: criterion
+title: A workmanship line covered by a signed entry, up to its count, passes and is reported as accepted
+status: active
+version: 1
+measurement_type: binary
+verification: test
+scope: Lines of one workmanship or neatness rule at one place. Out of scope is any rule outside the workmanship and neatness set.
+text: |-
+  On a synthetic design with three lines of one workmanship rule at one place and a signed entry for that rule and place with a count of three, the check reports an ACCEPTED line naming the rule, the place, the measured figure against the allowed one and the reason, the three lines do not fail the check, and the check exits zero when they are its only lines, in both its text and its JSON report. Out of scope is any rule outside the workmanship and neatness set.
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES
+    type: criterion-of

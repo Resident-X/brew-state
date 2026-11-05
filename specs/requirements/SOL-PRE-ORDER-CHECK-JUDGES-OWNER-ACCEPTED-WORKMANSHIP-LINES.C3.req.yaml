@@ -1,0 +1,13 @@
+id: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES.C3
+type: criterion
+title: An entry excuses only its own rule and scope and only up to its count
+status: active
+version: 1
+measurement_type: binary
+verification: test
+scope: The same design as the previous criterion with a fourth line, a line of a second rule, and a line of the same rule at a second place. Out of scope is the wording of the report.
+text: |-
+  On the same synthetic design with a fourth line of the entry's rule at its place, with a line of a different workmanship rule, and with a line of the same rule at another place, each of those lines fails the check as before and the three covered lines still pass. Out of scope is the wording of the report.
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES
+    type: criterion-of
