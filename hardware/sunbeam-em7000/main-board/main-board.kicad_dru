@@ -1,5 +1,8 @@
 (version 1)
 # Every rule here has its row, figure and source in design-rules.md beside this file.
+(rule "Fiducial keep-clear"
+	(condition "A.Reference == 'FID1' || A.Reference == 'FID2' || A.Reference == 'FID3'")
+	(constraint clearance (min 0.6mm)))
 (rule "Mains separation"
 	(condition "A.hasNetclass('Mains') && !B.hasNetclass('Mains')")
 	(constraint clearance (min 3mm))
