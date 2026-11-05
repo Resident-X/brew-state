@@ -256,6 +256,13 @@ Requirements the layout must meet because of schematic decisions, each as the re
 | Six-layer stackup and 1 oz copper | Six copper layers, 1.6 mm, 131.0 x 125.0 mm, ENIG (HASL is not offered at six layers), 1 oz finished outer copper (no surcharge); conductor rows assume 1 oz | manufacturer-limits.yaml header; circuit-proof.md, line 10 |
 | Neutral pour on an inner layer | The pumps' returns (P_C.N, P_S.N) join the neutral pour on an inner layer (no surface route exists), as do the STEAMPUMP and HOTVALVE joins and the LINE_IN run to the entry fuse; that an inner layer can carry them with the basis's distances kept from mains copper of other nets and from the planes is not shown in the record. The pour above the shunt carries every load's return and the measurement reference (TP106); HGND for U601 is its own net `AMC_HGND`, joined to `NEUTRAL` at the one net tie NT601 at the shunt's neutral-side terminal and carried to the converter by its own trace, so the pour carries no converter return current | docs/sunbeam-em7000/controller-board-division.md, A32; circuit-verdicts.md net NEUTRAL; sheets/E1-supply-voltage-and-current-measurement.yaml drawing note; sheets/700-pump-drives.yaml notes |
 
+## Laminate and working-voltage items (CTI research of 2026-11-05)
+
+| Item | Evidence | Action |
+|---|---|---|
+| Laminate request to JLCPCB (order-time action) | A comparative tracking index certificate is not a precondition at pollution degree 2 (group III column covers IIIa and IIIb); the maker's pages show no way to fix a laminate (`fabrication-notes.md`, "CTI research of 2026-11-05") | Before payment, ask JLCPCB support once, in writing, for the laminate maker and product and a conformance statement, carry the laminate note on the order, and record the answer (`SOL-HW-CONTROLLER-BOARDS-ORDERED-AND-RECEIVED.C5`) |
+| 253 V working voltage against the 250 V row (for a test house if the machine is ever certified; not a blocker for this home build) | IEC 60664-1 rationalises a 230 or 240 V supply to the 250 V row (2.5 mm basic), so the basis's 2.6 mm is conservative; one reading of IEC 60335-1 Table 17 (seen only as a test-house report form) would put a working voltage above 250 V on the 400 V row (4.0 mm basic, 8.0 mm reinforced). Unverified here | None for this build: the signed figures stay and no exception is added. A test house settles the working-voltage definition and interpolation if certification is sought |
+
 ## Round 4 closure notes
 
 The parts rule's catalogue number 'none' limit is a tool limit and not a design finding: findings 4.30 (85 parts_part lines) and the 13 test-point parts_catalogue lines are that limit, and the tool maintenance solution that removes it is `SOL-PRE-ORDER-CHECK-PARTS-WITHOUT-CATALOGUE-NUMBER`.
