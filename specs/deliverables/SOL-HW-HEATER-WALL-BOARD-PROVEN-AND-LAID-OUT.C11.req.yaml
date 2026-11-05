@@ -1,12 +1,12 @@
 id: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C11
 type: criterion
-title: The fabrication notes specify laminate families with a published comparative tracking index of at least 175
+title: The fabrication notes prefer laminate families with a published comparative tracking index of at least 175, as margin at pollution degree 2
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |
-  The fabrication notes kept with the heater wall board's design records, which the order passes to the manufacturer, specify the laminate families whose published comparative tracking index is at least 175 (material group IIIa or better), the figure the separation basis record's material group rests on. For each family the notes cite the laminate maker's document for that index and the revision read, state the order note that requires the family, and state the written request the owner makes of the manufacturer for the shipped laminate's identity and a certificate of its index; a family whose maker publishes no index in the documents read, or only a typical value or a figure with no test method named, is listed as such and is not specified. A laminate whose published index is below 175, or one specified with no such document cited, is reported and the owner re-declares the basis before the board is ordered. Choosing the laminate's supplier, and receiving the certificate, are out of scope.
+  The fabrication notes kept with the heater wall board's design records, which the order passes to the manufacturer, name the laminate families whose published comparative tracking index is at least 175 (material group IIIa or better) as the preferred laminate, as margin and not as a precondition: the separation basis record uses the material group III column of the creepage table at pollution degree 2, which covers groups IIIa and IIIb alike, so a laminate index below 175 changes none of its pollution degree 2 figures, and an index of at least 175 is needed only for the pollution degree 3 fallback of the bring-up condition. For each preferred family the notes cite the laminate maker's document for that index and the revision read, state the order note that requires the family, and state the written request the owner makes of the manufacturer for the shipped laminate's identity and a certificate of its index; a family whose maker publishes no index in the documents read, or only a typical value or a figure with no test method named, is listed as such and is not named as preferred for its index. A laminate named as preferred with no such document cited is reported. Choosing the laminate's supplier, and receiving the certificate, are out of scope.
 links:
   - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT
     type: criterion-of
