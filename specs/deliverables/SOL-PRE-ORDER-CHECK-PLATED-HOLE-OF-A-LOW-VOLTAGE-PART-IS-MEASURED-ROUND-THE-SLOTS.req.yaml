@@ -3,14 +3,17 @@ type: deliverable
 category: solution
 title: The pre-order check measures a low-voltage part's plated hole from Mains copper round the barrier slots
 status: active
-version: 1
-text: |
+version: 2
+text: |-
   Records a gap in the mounting-hole rule's plated-hole measure that needs a decision before it is built. The rule appends a KiCad rule that holds each plated hole on a net outside Mains to the larger of the signed clearance and creepage, 10 mm on the main controller board, from every Mains-class item, measured by KiCad as a straight line between the hole edge and the item. A relay's coil pin, a bought part's low-voltage pad, is such a hole. On the main board the coil pins of K201, K731 and K741 stand 6.6 to 9.9 mm in a straight line from pads, tracks, vias and a pour of the pump triac and measurement parts, 16 lines in all, with the barrier slots between them; the board cannot move a bought relay's pins, and the creepage route round those slots is longer than 10 mm. The owner's acceptance of bought-part creepage (item (e) of the main-board residual-risks decision) names the pad-row creepage of the bought parts, not the distance from a relay coil pin to a neighbouring part, so no acceptance covers these 16 lines, and the straight-line measure reports a shortfall the board does not have by the route measure the cross-layer rule already uses.
 
   Decision needed before the build, which the readiness review of this leaf settles with the owner:
   - Either the plated-hole measure for a plated hole of a part on a net outside Mains follows the creepage route round the barrier slots, as the cross-layer rule's creepage test does, so that a pair whose route round a slot is at or above the distance passes and one with no slot between is unchanged; or the owner accepts these pairs by a signed exception form the record does not yet have; or the owner accepts the 16 lines as they are.
   - The first option is the one this leaf's criterion states; the other two replace it with a record form or an acceptance, and change the criterion.
   - Out of scope: a fixing's own pad and courtyard measure, which the terminal-versus-fixing leaf holds, the signed figures, and any board's records.
+
+
+  Measured since this leaf was authored: the 16 lines were measured by the creepage route round the slots in hardware/sunbeam-em7000/main-board/coil-pin-paths.md (commit 1f9f8357), and every one meets the held figures, 3.0 mm straight (smallest 6.122 mm) and 10.0 mm by path (smallest 10.763 mm). The fix is therefore a rule fix, measuring a part's plated terminal by the slot-aware path or exempting part terminals from the fixing rule, and no board change; the owner's third option, accepting the 16 lines as they are, is not needed to pass them. The same record notes that K201 A2 to C601 pad 2 is 10.414 mm by path, which the straight rule does not print, so the rule fix must keep that pair measured.
 rationale: |
   Restores the behaviour OBL-ELECTRICAL-THERMAL-SAFETY-001.C6 asks of the separation rule, that the distance between mains-referenced parts and low-voltage ones counts the paths taken between them. A straight-line hole clearance across a barrier slot reports a pair the slot protects, so the owner's report carries lines that are no breach and the check can never pass a board with a bought relay near a mains part beyond a slot. Whether the fix is the route measure or an acceptance is the owner's to decide, so it is stated here and not settled.
 links:
