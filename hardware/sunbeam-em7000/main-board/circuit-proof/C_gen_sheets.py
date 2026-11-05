@@ -57,8 +57,8 @@ PART = {
                  footprint="Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical",
                  mpn="2.54mm 1x4 header", maker="not read", lcsc="C32713270", cls="extended", hand=True),
     "TP": dict(lib_id="Connector:TestPoint", value="TestPoint", rating="pad 1.5mm",
-               footprint="TestPoint:TestPoint_Pad_D1.5mm", mpn="", maker="", lcsc="", cls="none"),
-    "BUF": dict(lib_id="74xGxx:74LVC1G17", value="SN74LVC1G17", rating="Schmitt buffer, 5.5V inputs",
+               footprint="main-board:TestPoint_Pad_D1.0mm_Tight", mpn="", maker="", lcsc="", cls="none"),
+    "BUF": dict(lib_id="74xGxx:74LVC1G17", value="SN74LVC1G17", rating="6.5 V absolute maximum VCC, Schmitt buffer, 5.5V inputs",
                 footprint="Package_TO_SOT_SMD:SOT-353_SC-70-5", mpn="SN74LVC1G17DCKR",
                 maker="Texas Instruments", lcsc="C10425", cls="extended"),
 }
@@ -164,16 +164,16 @@ S2.add("R520", "R10K", "pull-up of the meter output to +3V3 (open-drain output r
 S2.add("D520", "TVS", "transient clamp at the flow header")
 S2.add("R521", "R1K", "series resistor into the capture pin; limits the current a 5 V push-pull output could push through the pin")
 S2.add("C520", "C47N", "flow-input filter capacitor")
-S2.add("R522", "R0", "bypass link: fitted by default; removed when the Schmitt buffer U520 is fitted")
-S2.add("U520", "BUF", "Schmitt-trigger buffer footprint, not fitted by default (input and output on the two nets the link R522 joins)", dnp=True)
-S2.add("C521", "C100N", "supply decoupling of U520, fitted only with U520", dnp=True)
+S2.add("R522", "R0", "bypass link position, not fitted (do not populate): the Schmitt buffer U520 carries FLOW_F to FLOW_IN, and a link here would short the buffer's input to its output", dnp=True)
+S2.add("U520", "BUF", "Schmitt-trigger buffer, fitted: carries FLOW_F to FLOW_IN for either meter output type, and its Ioff protects PC6 with +3V3 absent (input and output on the two nets the unfitted link position R522 joins)")
+S2.add("C521", "C100N", "supply decoupling of U520, fitted with it")
 S2.net("+5V", "power", "J520.1")
 S2.net("GND", "power", "J520.2", "D520.2", "C520.2", "U520.3", "C521.2")
 S2.net("FLOW_RAW", "local", "J520.3", "R520.1", "D520.1", "R521.1")
 S2.net("+3V3", "power", "R520.2", "U520.5", "C521.1")
 S2.net("FLOW_F", "local", "R521.2", "C520.1", "R522.1", "U520.2")
 S2.net("FLOW_IN", "global", "R522.2", "U520.4")
-S2.nc.append(("U520.1", "pin 1 is not connected inside SN74LVC1G17 (SCES351 pin table); the package is not fitted by default"))
+S2.nc.append(("U520.1", "pin 1 is not connected inside SN74LVC1G17 (SCES351 pin table); the buffer is fitted"))
 # ---- digital pressure buses
 def digital_bus(sheet, hdr, hname, ptc, link, tvs_c, tvs_d, rs_c, rs_d, rp_c, rp_d, bat_c, bat_d, tp_c, tp_d, tp_v, scl, sda, vfeed, what):
     sheet.add(hdr, "HDR4", "%s digital header: 1 3V3 feed, 2 GND, 3 SCL, 4 SDA" % what, value=hname)
@@ -232,11 +232,10 @@ analog_cell(S2, "J524", "BREW_A", "F523", "R543", "D530", "R534", "R535", "R536"
             "BREWA_RAW", "BREWA_DIV", "BREWA_3V3", "brew-path analogue fallback")
 analog_cell(S2, "J525", "SPARE_AN2_H", "F524", "R544", "D531", "R537", "R538", "R539", "C524", "TP531", "TP532", "SPARE_AN2",
             "SPAN2_RAW", "SPAN2_DIV", "SPAN2_3V3", "second spare analogue")
-S2.notes = ("Four stacked cells, signal left to right: FLOW (header, pull-up, TVS, series R, C, then the link R522 in parallel with the "
-            "unfitted buffer U520 footprint, then label FLOW_IN); STM_D and BREW_D (3V3 from +3V3 through the PTC to header pin 1; SCL and SDA "
+S2.notes = ("Four stacked cells, signal left to right: FLOW (header, pull-up, TVS, series R, C, then the buffer U520 with the unfitted link position R522 across it, then label FLOW_IN); STM_D and BREW_D (3V3 from +3V3 through the PTC to header pin 1; SCL and SDA "
             "each: header, TVS at the header, series R, pull-up to +3V3 and steering clamp at the converter-side node, labels STM_SCL/STM_SDA "
             "or BREW_SCL/BREW_SDA); SPARE_A, BREW_A, SPARE_AN2_H (3V3 through PTC, 5V direct from +5V, signal pin 4 -> TVS -> 10k/20k divider -> "
-            "1k -> 47n -> label). U520 and C521 are drawn and marked do-not-populate; R522 is fitted. Header pin tables: J520 1=+5V 2=GND 3=FLOW_RAW; "
+            "1k -> 47n -> label). U520 and C521 are fitted; R522 is drawn and marked do-not-populate (the buffer replaces the link; fitting both would short the buffer's input to its output). Header pin tables: J520 1=+5V 2=GND 3=FLOW_RAW; "
             "J521 1=STMD_3V3 2=GND 3=STM_SCL_X 4=STM_SDA_X; J522 1=BRWD_3V3 2=GND 3=BREW_SCL_X 4=BREW_SDA_X; analogue headers 1=+5V 2=3V3 feed 3=GND 4=signal. "
             "Diode:BAT54S pins: 1=A (GND), 2=K (+3V3), 3=COM (signal node). Device:Polyfuse pin 1 = +3V3 side, pin 2 = toward the header. Each 3.3 V feed runs +3V3 -> PTC -> test point and link R540..R544 (1206, value 0, the isolating link) -> header pin; the test point stands on the PTC side of the link.")
 
@@ -265,8 +264,12 @@ S3.notes = ("Two identical cells, signal left to right: header -> TVS -> divider
             "is served by fitting a burden there, replacing the top resistor with a zero-ohm link and removing the bottom resistor; the values "
             "wait for the sensor, which the records leave to the owner.")
 
+# the sheet files this generator writes, in the sheets folder; the committed sheets govern, and the proof's sheet check
+# (C_check_sheets.py) reports any difference between what this table writes and what is committed
+WRITTEN = ((S1, "50-thermistor-inputs.yaml"), (S2, "52-flow-pressure-and-spare-analogue-inputs.yaml"),
+           (S3, "57-current-sensing-inputs.yaml"))
+
 if __name__ == "__main__":
-    emit(S1, os.path.join(SHEETS, "50-thermistor-inputs.yaml"))
-    emit(S2, os.path.join(SHEETS, "52-flow-pressure-and-spare-analogue-inputs.yaml"))
-    emit(S3, os.path.join(SHEETS, "57-current-sensing-inputs.yaml"))
-    print("wrote 3 sheet fragments")
+    for sheet, name in WRITTEN:
+        emit(sheet, os.path.join(SHEETS, name))
+    print("wrote %d sheet fragments" % len(WRITTEN))

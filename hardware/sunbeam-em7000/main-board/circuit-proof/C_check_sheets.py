@@ -39,5 +39,17 @@ for S in (G.S1, G.S2, G.S3):
         if pin.split(".")[0] not in refs:
             print("net names an unknown part", pin); bad += 1
     print("%-45s parts %3d nets %3d" % (S.name, len(S.parts), len(S.nets)))
+# the generator's output against the committed sheets: written to a scratch folder, never over the committed files
+import tempfile
+with tempfile.TemporaryDirectory() as scratch:
+    for S, name in G.WRITTEN:
+        fresh = os.path.join(scratch, name)
+        G.emit(S, fresh)
+        committed = os.path.join(G.SHEETS, name)
+        with open(fresh, encoding="utf-8") as f1, open(committed, encoding="utf-8") as f2:
+            if f1.read() != f2.read():
+                print("generator output differs from the committed sheet", name); bad += 1
+            else:
+                print("%-45s identical to the committed sheet" % name)
 print("problems:", bad)
 sys.exit(1 if bad else 0)

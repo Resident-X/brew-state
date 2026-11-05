@@ -117,13 +117,16 @@
    25 LSB typ = 1.26 mV = 0.050 degC at 88 degC, beta 3950 K
   This row does not close: beta and the element tolerance are pending in the records; the ADC accuracy is typical only.
 
-== flow input level (PC6, FT_h)
-  push-pull meter output at 5 V rail high (+2.5 %): pin 5.125 V ; operating limit < 5.5 V (Table 14 note: VIN <= min(VDD..)+3.6 V and < 5.5 V) margin 0.375 V ; Table 11 limit min(VDD+4, 6) = 6.0 V margin 0.875 V
-  CHECK flow pin below 5.5 V: push-pull meter output at 5 V rail high (+2.5 %) ok
-  push-pull at 5.25 V: pin 5.250 V ; operating limit < 5.5 V (Table 14 note: VIN <= min(VDD..)+3.6 V and < 5.5 V) margin 0.250 V ; Table 11 limit min(VDD+4, 6) = 6.0 V margin 0.750 V
-  CHECK flow pin below 5.5 V: push-pull at 5.25 V                      ok
-  open-drain with the 3.3 V pull-up: pin 3.600 V ; operating limit < 5.5 V (Table 14 note: VIN <= min(VDD..)+3.6 V and < 5.5 V) margin 1.900 V ; Table 11 limit min(VDD+4, 6) = 6.0 V margin 2.400 V
-  CHECK flow pin below 5.5 V: open-drain with the 3.3 V pull-up        ok
+== flow input level (U520 input; PC6, FT_h, sees U520's output)
+  push-pull meter output at 5 V rail high (+2.5 %): U520 input 5.125 V ; recommended limit 5.5 V margin 0.375 V ; absolute maximum 6.5 V margin 1.375 V
+  CHECK flow buffer input below 5.5 V: push-pull meter output at 5 V rail high (+2.5 %) ok
+  push-pull at 5.25 V: U520 input 5.250 V ; recommended limit 5.5 V margin 0.250 V ; absolute maximum 6.5 V margin 1.250 V
+  CHECK flow buffer input below 5.5 V: push-pull at 5.25 V             ok
+  open-drain with the 3.3 V pull-up: U520 input 3.600 V ; recommended limit 5.5 V margin 1.900 V ; absolute maximum 6.5 V margin 2.900 V
+  CHECK flow buffer input below 5.5 V: open-drain with the 3.3 V pull-up ok
+  PC6 sees the buffer's output, at most the +3V3 rail (3.6 V) against its 5.5 V limit (Table 14): margin 1.900 V
+  CHECK flow pin PC6 below 5.5 V with the buffer's output at 3.6 V     ok
+  buffer input leakage 5 uA through R521 (1014 Ohm at +1.45 %) shifts the filter node by 5.1 mV
   open-drain rising edge: tau = (R520 + R521) * C520 = 663 us ; 10-90 % rise 1460 us ; corner 240 Hz
   pulse rate passed at the corner, per millilitre per second of the pump's 7.0 mL/s full scale (estimate in the record): K up to 34268 pulses/L
   open-drain sink current when the meter output is low: 0.365 mA at 3.6 V ; the meter's low level at that current is not read.

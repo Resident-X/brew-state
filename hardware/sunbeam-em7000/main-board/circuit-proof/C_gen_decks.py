@@ -171,51 +171,78 @@ for tag, hdr, pre, rs_c, rs_d, rp_c, rp_d, scl, sda in (("stm_i2c", "J521", "STM
     decks.append(("C_%s.cir" % tag, "\n".join(t) + "\n", ["tr_mcu_hi_cable", "tr_sensor_hi_cable", "tr_mcu_hi_board", "tr_sensor_hi_board", "vlow_mcu_hi_cable"]))
 
 # ---------------------------------------------------------------- flow input
-t = ["Flow input FLOW_IN: edges through R521 and C520 for an open-drain meter (3.3 V pull-up R520) and for a 5 V push-pull meter",
+# As built: U520 (SN74LVC1G17) is fitted and carries FLOW_F to FLOW_IN with C521 at its supply; the link position R522 is not fitted,
+# so the sheet's R522 has no element here. The buffer is modelled from SCES351Y Table 5-1: input leakage +-5 uA (II, VI = 5.5 V or GND),
+# input capacitance 4.5 pF, and worst-case Schmitt thresholds (VT+ at most 2.74 V, the 4.5 V row, a bound above the 3.6 V rail's own;
+# VT- at least 0.89 V, the 3 V row) switching an output of about 30 ohm (VOH 2.3 V at 24 mA and 3 V, VOL 0.55 V at 24 mA).
+VT_HI, VT_LO = 2.74, 0.89
+U520_MODEL = [".model SWSCHP SW(Ron=30 Roff=1e12 Vt=%.4f Vh=%.4f)" % ((VT_HI + VT_LO) / 2, (VT_HI - VT_LO) / 2),
+              ".model SWSCHN SW(Ron=30 Roff=1e12 Vt=%.4f Vh=%.4f)" % (-(VT_HI + VT_LO) / 2, (VT_HI - VT_LO) / 2)]
+
+
+def u520_lines(leak_amps):
+    """The fitted buffer and its supply capacitor: its input leakage at the worst sign (leak_amps > 0 is drawn out of FLOW_F)."""
+    return ["* U520 (%s) fitted: input FLOW_F pin 2, output FLOW_IN pin 4, supply +3V3 pin 5; C521 decouples it; the link R522 is not fitted" % num(S2, "U520"),
+            "C521 +3V3 0 %s" % num(S2, "C521"),
+            "CSIM_U520IN FLOW_F 0 4.5p",
+            "ISIM_U520IN FLOW_F 0 %s" % leak_amps,
+            "SSIM_U520H +3V3 FLOW_IN FLOW_F 0 SWSCHP",
+            "ESIM_U520N U520NEG 0 FLOW_F 0 -1",
+            "SSIM_U520L FLOW_IN 0 U520NEG 0 SWSCHN"] + U520_MODEL
+
+
+t = ["Flow input as built (U520 fitted, link R522 not fitted): edges through R521 and C520 into the buffer U520 for an open-drain meter (3.3 V pull-up R520), and the pin PC6 it drives",
      HEADER.rstrip(), SW_MODEL,
      "VSIM_V3V3 +3V3 0 3.3",
      "R520 FLOW_RAW +3V3 %s" % num(S2, "R520"),
      "R521 FLOW_RAW FLOW_F %s" % num(S2, "R521"),
-     "C520 FLOW_F 0 %s" % num(S2, "C520"),
-     "* R522 is a zero-ohm link in the sheet (value 0); ngspice replaces 0 by 1e-12 ohm and then loses accuracy, so it is simulated as 1 mOhm",
-     "R522 FLOW_F FLOW_IN 1m",
-     "* meter output stages: open-drain = switch to ground; push-pull = switch to the 5 V rail (high) and to ground (low), 100 Hz square wave",
-     "SSIM_OD FLOW_RAW 0 CTLA 0 SWM",
-     "VSIM_CTLA CTLA 0 PULSE(0 1 100u 1n 1n 4.9m 10m)",
-     ".tran 5u 20m",
-     ".control",
-     "alter R520 = %.6g" % (10e3 * R_HI), "alter R521 = %.6g" % (1e3 * R_HI), "alter C520 = %.6g" % (47e-9 * C_HI), "run",
-     "meas tran vhigh_od MAX v(FLOW_IN) FROM=0.5m TO=10m",
-     "meas tran vlow_od MIN v(FLOW_IN) FROM=5m TO=10m",
-     "meas tran t_vih_od TRIG v(FLOW_RAW) VAL=1.65 RISE=1 TARG v(FLOW_IN) VAL=2.31 RISE=1",
-     "meas tran tr_10_90_od TRIG v(FLOW_IN) VAL=0.33 RISE=1 TARG v(FLOW_IN) VAL=2.97 RISE=1",
-     ".endc", ".end"]
-decks.append(("C_flow_od.cir", "\n".join(t) + "\n", ["vhigh_od", "vlow_od", "t_vih_od", "tr_10_90_od"]))
+     "C520 FLOW_F 0 %s" % num(S2, "C520")]
+t += u520_lines("5u")
+t += ["* PC6 pad leakage, DS12110 Table 50, 1.5 uA above VDD",
+      "ISIM_PAD FLOW_IN 0 1.5u",
+      "* meter output stage: open-drain = switch to ground, 100 Hz square wave",
+      "SSIM_OD FLOW_RAW 0 CTLA 0 SWM",
+      "VSIM_CTLA CTLA 0 PULSE(0 1 100u 1n 1n 4.9m 10m)",
+      ".tran 5u 20m",
+      ".control",
+      "alter R520 = %.6g" % (10e3 * R_HI), "alter R521 = %.6g" % (1e3 * R_HI), "alter C520 = %.6g" % (47e-9 * C_HI), "run",
+      "meas tran vhigh_od MAX v(FLOW_F) FROM=0.5m TO=10m",
+      "* the meter's own low level is not modelled (an ideal switch to ground), so vlow_od is only the 5 uA leakage source's drop across R521 at 0 V",
+      "meas tran vlow_od MIN v(FLOW_F) FROM=5m TO=10m",
+      "meas tran vpin_hi_od MAX v(FLOW_IN) FROM=0.5m TO=10m",
+      "meas tran vpin_lo_od MIN v(FLOW_IN) FROM=5m TO=10m",
+      "meas tran t_vt_od TRIG v(FLOW_RAW) VAL=1.65 RISE=1 TARG v(FLOW_F) VAL=%.2f RISE=1" % VT_HI,
+      "meas tran t_pin_od TRIG v(FLOW_RAW) VAL=1.65 RISE=1 TARG v(FLOW_IN) VAL=2.31 RISE=1",
+      "meas tran tr_10_90_od TRIG v(FLOW_F) VAL=0.33 RISE=1 TARG v(FLOW_F) VAL=2.97 RISE=1",
+      ".endc", ".end"]
+decks.append(("C_flow_od.cir", "\n".join(t) + "\n", ["vhigh_od", "vlow_od", "vpin_hi_od", "vpin_lo_od", "t_vt_od", "t_pin_od", "tr_10_90_od"]))
 
-t = ["Flow input FLOW_IN with a 5 V push-pull meter output (5.125 V rail high, 5.25 V margin case) through R521, C520 and the TVS leakage",
+t = ["Flow input as built (U520 fitted, link R522 not fitted) with a 5 V push-pull meter output (5.125 V rail high, 5.25 V margin case) through R521 and C520 into the buffer U520",
      HEADER.rstrip(), SW_MODEL,
      "VSIM_V3V3 +3V3 0 3.6",
      "VSIM_5V SIM_5V 0 5.125",
      "R520 FLOW_RAW +3V3 %s" % num(S2, "R520"),
      "R521 FLOW_RAW FLOW_F %s" % num(S2, "R521"),
-     "C520 FLOW_F 0 %s" % num(S2, "C520"),
-     "* R522 is a zero-ohm link in the sheet (value 0); ngspice replaces 0 by 1e-12 ohm and then loses accuracy, so it is simulated as 1 mOhm",
-     "R522 FLOW_F FLOW_IN 1m",
-     "SSIM_HI SIM_5V PP_OUT CTLH 0 SWM",
-     "SSIM_LO PP_OUT 0 CTLL 0 SWM",
-     "RSIM_PP PP_OUT FLOW_RAW 25",
-     "VSIM_CTLH CTLH 0 PULSE(0 1 100u 1n 1n 4.9m 10m)",
-     "ESIM_INV CTLL 0 VALUE={1-v(CTLH)}",
-     "ISIM_PAD FLOW_IN 0 1.5u",
-     ".tran 5u 20m",
-     ".control",
-     "alter R520 = %.6g" % (10e3 * R_LO), "alter R521 = %.6g" % (1e3 * R_HI), "alter C520 = %.6g" % (47e-9 * C_HI)]
+     "C520 FLOW_F 0 %s" % num(S2, "C520")]
+t += u520_lines("-5u")
+t += ["SSIM_HI SIM_5V PP_OUT CTLH 0 SWM",
+      "SSIM_LO PP_OUT 0 CTLL 0 SWM",
+      "RSIM_PP PP_OUT FLOW_RAW 25",
+      "VSIM_CTLH CTLH 0 PULSE(0 1 100u 1n 1n 4.9m 10m)",
+      "ESIM_INV CTLL 0 VALUE={1-v(CTLH)}",
+      "* PC6 pad leakage, DS12110 Table 50, 1.5 uA above VDD",
+      "ISIM_PAD FLOW_IN 0 1.5u",
+      ".tran 5u 20m",
+      ".control",
+      "alter R520 = %.6g" % (10e3 * R_LO), "alter R521 = %.6g" % (1e3 * R_HI), "alter C520 = %.6g" % (47e-9 * C_HI)]
 for lab, v in (("5p125", 5.125), ("5p25", 5.25)):
     t += ["alter VSIM_5V = %s" % v, "run",
-          "meas tran vhigh_pp_%s MAX v(FLOW_IN) FROM=0.5m TO=10m" % lab,
-          "meas tran vlow_pp_%s MIN v(FLOW_IN) FROM=5m TO=10m" % lab]
+          "meas tran vhigh_pp_%s MAX v(FLOW_F) FROM=0.5m TO=10m" % lab,
+          "meas tran vlow_pp_%s MIN v(FLOW_F) FROM=5m TO=10m" % lab,
+          "meas tran vpin_hi_pp_%s MAX v(FLOW_IN) FROM=0.5m TO=10m" % lab,
+          "meas tran vpin_lo_pp_%s MIN v(FLOW_IN) FROM=5m TO=10m" % lab]
 t += [".endc", ".end"]
-decks.append(("C_flow_pp.cir", "\n".join(t) + "\n", ["vhigh_pp_5p125", "vhigh_pp_5p25", "vlow_pp_5p125"]))
+decks.append(("C_flow_pp.cir", "\n".join(t) + "\n", ["vhigh_pp_5p125", "vhigh_pp_5p25", "vlow_pp_5p125", "vpin_hi_pp_5p25", "vpin_lo_pp_5p25"]))
 
 
 def main():

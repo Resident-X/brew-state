@@ -1,0 +1,12 @@
+id: SOL-HW-MAIN-BOARD-SHEET-GENERATOR-REPRODUCES-COMMITTED-SHEETS.C3
+type: criterion
+title: The proof's decks model the fit the committed sheets carry
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  No deck of the proof that reads the generator's parts table carries a part the committed sheets mark do-not-populate, and the decks of the flow-meter input carry the fitted buffer and its supply capacitor, with the buffer's input leakage at the datasheet maximum, and the committed log of each holds every measurement the deck asks for. Out of scope is any change to a committed sheet.
+links:
+  - target: SOL-HW-MAIN-BOARD-SHEET-GENERATOR-REPRODUCES-COMMITTED-SHEETS
+    type: criterion-of

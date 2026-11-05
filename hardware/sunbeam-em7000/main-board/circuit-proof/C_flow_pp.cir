@@ -1,4 +1,4 @@
-Flow input FLOW_IN with a 5 V push-pull meter output (5.125 V rail high, 5.25 V margin case) through R521, C520 and the TVS leakage
+Flow input as built (U520 fitted, link R522 not fitted) with a 5 V push-pull meter output (5.125 V rail high, 5.25 V margin case) through R521 and C520 into the buffer U520
 * Source of every value: the sheet fragment of this block (generated from the same table).
 * Sim-only elements (names with SIM_) stand for the sensor, the converter's sample and hold and the supply.
 * Converter: DS12110 Rev 11 Table 77 / Table 174: CADC 4 pF (typ), tS 810.5 cycles, 16 bit, fADC 10 MHz.
@@ -8,13 +8,21 @@ VSIM_5V SIM_5V 0 5.125
 R520 FLOW_RAW +3V3 10k
 R521 FLOW_RAW FLOW_F 1k
 C520 FLOW_F 0 47n
-* R522 is a zero-ohm link in the sheet (value 0); ngspice replaces 0 by 1e-12 ohm and then loses accuracy, so it is simulated as 1 mOhm
-R522 FLOW_F FLOW_IN 1m
+* U520 (SN74LVC1G17) fitted: input FLOW_F pin 2, output FLOW_IN pin 4, supply +3V3 pin 5; C521 decouples it; the link R522 is not fitted
+C521 +3V3 0 100n
+CSIM_U520IN FLOW_F 0 4.5p
+ISIM_U520IN FLOW_F 0 -5u
+SSIM_U520H +3V3 FLOW_IN FLOW_F 0 SWSCHP
+ESIM_U520N U520NEG 0 FLOW_F 0 -1
+SSIM_U520L FLOW_IN 0 U520NEG 0 SWSCHN
+.model SWSCHP SW(Ron=30 Roff=1e12 Vt=1.8150 Vh=0.9250)
+.model SWSCHN SW(Ron=30 Roff=1e12 Vt=-1.8150 Vh=0.9250)
 SSIM_HI SIM_5V PP_OUT CTLH 0 SWM
 SSIM_LO PP_OUT 0 CTLL 0 SWM
 RSIM_PP PP_OUT FLOW_RAW 25
 VSIM_CTLH CTLH 0 PULSE(0 1 100u 1n 1n 4.9m 10m)
 ESIM_INV CTLL 0 VALUE={1-v(CTLH)}
+* PC6 pad leakage, DS12110 Table 50, 1.5 uA above VDD
 ISIM_PAD FLOW_IN 0 1.5u
 .tran 5u 20m
 .control
@@ -23,11 +31,15 @@ alter R521 = 1014.5
 alter C520 = 5.9455e-08
 alter VSIM_5V = 5.125
 run
-meas tran vhigh_pp_5p125 MAX v(FLOW_IN) FROM=0.5m TO=10m
-meas tran vlow_pp_5p125 MIN v(FLOW_IN) FROM=5m TO=10m
+meas tran vhigh_pp_5p125 MAX v(FLOW_F) FROM=0.5m TO=10m
+meas tran vlow_pp_5p125 MIN v(FLOW_F) FROM=5m TO=10m
+meas tran vpin_hi_pp_5p125 MAX v(FLOW_IN) FROM=0.5m TO=10m
+meas tran vpin_lo_pp_5p125 MIN v(FLOW_IN) FROM=5m TO=10m
 alter VSIM_5V = 5.25
 run
-meas tran vhigh_pp_5p25 MAX v(FLOW_IN) FROM=0.5m TO=10m
-meas tran vlow_pp_5p25 MIN v(FLOW_IN) FROM=5m TO=10m
+meas tran vhigh_pp_5p25 MAX v(FLOW_F) FROM=0.5m TO=10m
+meas tran vlow_pp_5p25 MIN v(FLOW_F) FROM=5m TO=10m
+meas tran vpin_hi_pp_5p25 MAX v(FLOW_IN) FROM=0.5m TO=10m
+meas tran vpin_lo_pp_5p25 MIN v(FLOW_IN) FROM=5m TO=10m
 .endc
 .end
