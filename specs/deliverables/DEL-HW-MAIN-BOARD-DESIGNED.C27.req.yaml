@@ -1,0 +1,13 @@
+id: DEL-HW-MAIN-BOARD-DESIGNED.C27
+type: criterion
+title: The firmware's SPI2 port runs its edges at 5 ns or slower and its clock at 4 MHz or lower, as the signal study of the routed board asks
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The firmware that configures the controller's SPI2 port, the one that reaches the two MAX31865 temperature converters and the AMC131M02, sets the output speed of its SCK and MOSI pins to Low or Medium, so that every edge is 5 ns or slower, and a clock of 4 MHz or lower. The routed board's signal study (signal-study.md in the board's folder), which is a model of the board file and not a measurement, finds the unterminated branches to the two MAX31865 chips ring by 0.5 to 1.4 V at the fastest edge and by 0.3 V or less at 5 ns or slower, and finds the MAX31865 read-back with about 8 ns left of the half period at 5 MHz in the worst datasheet corner and about 33 ns at 4 MHz. A test of the firmware's configuration of that port fails a pin speed above Medium or a clock above 4 MHz. Out of scope: the study's figures, and the readings on the built board that check them, which the bring-up task carries.
+links:
+  - target: DEL-HW-MAIN-BOARD-DESIGNED
+    type: criterion-of
