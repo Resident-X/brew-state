@@ -4,6 +4,8 @@ Date: 5 November 2026. Commit checked: `200c0ae6` (the last design-file commit; 
 
 This is the real record. A second run with a scratch top-level signature in a separate checkout unlocked nothing (the separation basis still reported 1 against 2, because its 98 exceptions were unsigned), so it is not a comparison and is not used here.
 
+Note added after the run. The separation basis was signed later on 5 November 2026 (the owner's written instruction, entered by Claude), and the main board's derating exceptions with it. Every statement below that the basis is unsigned describes the checked commit, `200c0ae6`, and is left as this run's own record; the mains-spacing rules judge the signed record only in a run on a later commit, which this file does not hold.
+
 ## Counts by rule
 
 | Rule | Lines |

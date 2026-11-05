@@ -1,6 +1,6 @@
 # Fabrication notes: Sunbeam EM7000 main controller board
 
-What the board maker is asked to build, as the design records state it at the commit that adds this file, and what is still open before the board is ordered. It carries the production-side statements the graph asks of the main board (laminate, coat) and says plainly where the evidence for them is missing. Nothing here is signed or accepted; the separation basis (`hardware/sunbeam-em7000/separation-basis.yaml`) is itself unsigned at this commit (`accepted_by` and `accepted_on` empty, its 98 accepted exceptions unsigned).
+What the board maker is asked to build, as the design records state it at the commit that adds this file, and what is still open before the board is ordered. It carries the production-side statements the graph asks of the main board (laminate, coat) and says plainly where the evidence for them is missing. Nothing here is signed or accepted by this file; the separation basis (`hardware/sunbeam-em7000/separation-basis.yaml`) is signed (2026-11-05, on the owner's written instruction entered by Claude, its 33 accepted exceptions signed with it) and so are the ten exceptions of the derating policy (`derating-policy.yaml`).
 
 Maker figures are from JLCPCB's published capabilities page (https://jlcpcb.com/capabilities/pcb-capabilities), re-read on 2026-11-05 and held in `manufacturer-limits.yaml` and `docs/board-manufacturer-jlcpcb.md`. Where this file says the maker publishes nothing, that is what the pages read on 2026-11-05 held, not a statement about the maker's practice.
 
@@ -113,9 +113,9 @@ Both are unresolved in the records and must be checked at the quote, not assumed
 
 ## Unsigned deviations carried by this board
 
-Every one of these is a recorded draft for the owner, not an acceptance, and none changes a signed figure (there is none: the basis is unsigned). They are held, with their measurements, in the open rows of `layout-plan.md` ("Open after the fix rounds") and in `layout-review.md`; this file points to them and does not restate them.
+Every one of these is a recorded draft for the owner, not an acceptance, and none changes a signed figure of the basis (signed 2026-11-05). They are held, with their measurements, in the open rows of `layout-plan.md` ("Open after the fix rounds") and in `layout-review.md`; this file points to them and does not restate them.
 
 - The 0.15 mm annular width of the 0.5 / 0.2 mm via (above).
-- The mains-to-mains spacing shortfalls, the 98 draft spacing exceptions of the basis, and the detour ratios of routed critical nets (`layout-plan.md` open rows, including the standing mains items row).
+- The detour ratios of routed critical nets (`layout-plan.md` open rows). The mains-to-mains spacing shortfalls the layout check reports are excused by the basis's 33 signed exceptions (2026-11-05), not carried here as unsigned; the standing mains items row of `layout-plan.md` holds them.
 - The plated-hole pairs at 1.25 mm, the pour gaps under 0.09 mm, the back-side assembled parts without a fiducial, and the other open rows of that section.
 - The three `footprint_symbol_mismatch` parity entries for R522, R572 and R576 (do-not-populate set on the board footprints, not on the schematic symbols; `open-items.md`, flow meter output type).
