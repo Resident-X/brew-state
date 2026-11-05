@@ -89389,7 +89389,7 @@
 		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
 		(tags "test point SMD pad")
 		(property "Reference" "TP410"
-			(at 1.45 0.05 90)
+			(at 1.45 0.05 270)
 			(unlocked yes)
 			(layer "B.SilkS")
 			(uuid "e3c2ef93-6278-4361-bb1f-8f91c0185bf4")
@@ -90835,7 +90835,7 @@
 		(descr "Resistor SMD 0603 (1608 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R301"
-			(at 0.390182 -2.543095 90)
+			(at 0.390182 -2.543095 270)
 			(unlocked yes)
 			(layer "B.SilkS")
 			(uuid "15b1fb3d-4a55-496a-b30e-5626c9c06731")
@@ -92151,7 +92151,7 @@
 		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
 		(tags "test point SMD pad")
 		(property "Reference" "TP832"
-			(at 1.279818 -0.855953 90)
+			(at 1.279818 -0.855953 270)
 			(unlocked yes)
 			(layer "B.SilkS")
 			(uuid "f152e25e-c184-4d97-87fa-c5c2a9ca66d3")
@@ -95076,7 +95076,7 @@
 		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
 		(tags "test point SMD pad")
 		(property "Reference" "TP741"
-			(at -2.35 2.15 90)
+			(at -2.35 2.15 270)
 			(unlocked yes)
 			(layer "B.SilkS")
 			(uuid "2ab46a37-e051-4a59-bfaf-9e33bf0f0c60")
@@ -95329,7 +95329,7 @@
 		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
 		(tags "test point SMD pad")
 		(property "Reference" "TP403"
-			(at -1.45 0.05 90)
+			(at -1.45 0.05 270)
 			(unlocked yes)
 			(layer "B.SilkS")
 			(uuid "04cf137c-fe7f-46fb-9152-5b8ab5dc31be")
@@ -95582,7 +95582,7 @@
 		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
 		(tags "test point SMD pad")
 		(property "Reference" "TP796"
-			(at -1.45 0.75 90)
+			(at -1.35 0.75 270)
 			(unlocked yes)
 			(layer "B.SilkS")
 			(uuid "7588f72d-e796-4afe-b389-6ffc1f31c7e4")
@@ -97969,7 +97969,7 @@
 		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
 		(tags "test point SMD pad")
 		(property "Reference" "TP795"
-			(at 0.75 -4.55 90)
+			(at 0.75 -4.55 270)
 			(unlocked yes)
 			(layer "B.SilkS")
 			(uuid "c4e61c48-dfdf-4487-b024-0416bc686b15")
@@ -99075,7 +99075,7 @@
 		(descr "SMD pad as test point, diameter 1.0 mm, courtyard 0.25 mm beyond the copper so test points can stand 2.5 mm apart and still keep the 1 mm test-point-to-courtyard distance")
 		(tags "test point SMD pad")
 		(property "Reference" "TP501"
-			(at -1.45 2.05 90)
+			(at -1.45 2.05 270)
 			(unlocked yes)
 			(layer "B.SilkS")
 			(uuid "894588ba-50cb-4c62-a5a5-286db0155786")
