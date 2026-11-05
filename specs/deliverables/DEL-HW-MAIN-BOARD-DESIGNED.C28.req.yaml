@@ -1,0 +1,13 @@
+id: DEL-HW-MAIN-BOARD-DESIGNED.C28
+type: criterion
+title: The firmware applies a stored gain and offset to each mains measurement channel and marks readings uncalibrated until they are stored
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The firmware that reads the isolated converter's two mains measurement channels applies a stored gain and a stored offset to every reading of each channel, takes both from values the bring-up calibration writes, and keeps them across a restart. A test of the firmware's reading path fails a reading that ignores a stored gain or offset, and fails a start with no stored values that does not mark its mains readings as uncalibrated. Out of scope: the values, which the bring-up calibration measures, and the channels' accuracy figures.
+links:
+  - target: DEL-HW-MAIN-BOARD-DESIGNED
+    type: criterion-of

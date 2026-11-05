@@ -1,0 +1,15 @@
+id: DEL-HW-BRING-UP.C22
+type: criterion
+title: The mains voltage and current channels are calibrated for gain and offset on the built board and the stored values recorded
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  Each of the main board's two mains measurement channels, the voltage channel behind its resistor divider and the current channel across its shunt, is calibrated for gain and offset on the built board against a reference reading of the quantity it measures, the offset with no current flowing. The gain and offset stored for each channel, the reference used and the channel's reading before and after the correction are recorded against the board record that carries the channel's error budget. A channel whose calibrated reading differs from its reference by more than the calibrated worst-case error the board's error-budget record gives for it, 1.0 % for voltage and 1.6 % for current with the parts as drawn, fails.
+
+  The repository provides no other correction for these channels: the parts as drawn leave 3.6 % and 5.7 % uncorrected in the worst case, and no drop-in upgrade of the divider resistors or the shunt exists in the same footprints at the board's assembler.
+links:
+  - target: DEL-HW-BRING-UP
+    type: criterion-of
