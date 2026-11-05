@@ -114,7 +114,7 @@
 #   - U602 LTV-814S creepage and clearance, and K201 clearance: not stated by the makers read;
 #     unknown until read from the makers.
 # The exceptions are held in accepted_exceptions below, which board_check.py reads and judges; each
-# entry's own accepted_by and accepted_on are empty until the whole record is signed. The bought
+# entry's own accepted_by and accepted_on are entered, as the header says. The bought
 # parts' ratings are also stated in each barrier's formed_by.
 #
 # The tables are those of IEC 60664-1 (insulation coordination for equipment within
@@ -165,6 +165,11 @@
 # document is cited. The creepage rows at 253 V are equal for IIIa and IIIb in the pollution degree 2
 # material group III column (2.5 mm at the 250 V row, 3.2 mm at the 320 V row), so no figure changes
 # with the group. The standard's own text, which the reproductions only reproduce, was not read.
+# Material group IIIa is the group the main board's fabrication notes prefer as margin, and it is not
+# relied on: at pollution degree 2 the figures use the group III column, which covers IIIa and IIIb
+# alike, so a CTI is not a precondition (condition 3 above). Since this paragraph was first written the notes
+# specify two laminate families that print 175 or more, and the order still fixes no laminate until the
+# maker answers.
 standard: "IEC 60664-1, Annex F tables F.1, F.2 and F.4, read through the freely published derivations [TI-SEMINAR], [TI-SLUAAR5] and [EMA-CREEPAGE] cited above and in table_rows; for the terminals of a part, the footnote to Table 16 of IEC 60335-1 as reproduced in two certification reports"
 supply: "230 V nominal, single phase, 216 V to 253 V, 50 Hz"
 working_voltage: "253 V rms (358 V peak), the top of the declared span"
@@ -639,8 +644,9 @@ accepted_exceptions:
   # to accept or correct; the half-mains and divider midpoints hold only while their resistor chain is intact.
   # The neutral-referenced set N is the fifteen nets the first entry lists, AMC_HGND (the converter's high-side ground, tied to NEUTRAL at the net tie NT601) among them. The triac gate nets PUMP_C_TRIAC_G and PUMP_S_TRIAC_G and the zero-cross LED anode ZC_LED_A pair only with /NEUTRAL, in entries 10 and 11.
   # The pump gate network nets (PUMP_C_GATE_R and PUMP_S_GATE_R against any net, and each gate network net against its own MT2 and
-  # opto-triac nets) have no net-pair entry and keep the full 2.6 mm: while the opto-triac is off the full
-  # supply stands across it and the gate network floats to the MT2 level. The thirteen entries after them are of the
+  # opto-triac nets) have no net-pair entry and keep the full 2.6 mm, except the pad pair of each of the four gate resistors
+  # R704, R705, R714 and R715, which the last four entries hold at 1.8 mm: while the opto-triac is off the full
+  # supply stands across it and the gate network floats to the MT2 level. The thirteen entries after the net-pair ones are of the
   # between form, a creepage entry for each of thirteen pairs of pads of one part (C606 pads 1 and 2, R105's four
   # sense-pad pairs, R605 to R608 pads 1 and 2, and the opto-triac pin-5 pairs below), the pads on nets of set N or
   # on the Mains class, whose gap in the committed main-board layout is a creepage shortfall that KiCad reports;
