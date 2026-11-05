@@ -140053,7 +140053,7 @@
 	)
 	(segment
 		(start 12.3 107)
-		(end 13.05 106.25)
+		(end 12.8 106.5)
 		(width 4.2)
 		(locked yes)
 		(layer "F.Cu")
@@ -140070,8 +140070,8 @@
 		(uuid "a8df3aa1-9163-422a-980e-0152864b143f")
 	)
 	(segment
-		(start 13.05 106.25)
-		(end 20.5 106.25)
+		(start 12.8 106.5)
+		(end 20.5 106.5)
 		(width 4.2)
 		(locked yes)
 		(layer "F.Cu")
@@ -140079,8 +140079,8 @@
 		(uuid "ea941b88-7f11-4f9d-89e3-8720e5ea6eb8")
 	)
 	(segment
-		(start 13.05 106.25)
-		(end 20.5 106.25)
+		(start 12.8 106.5)
+		(end 20.5 106.5)
 		(width 4.2)
 		(locked yes)
 		(layer "B.Cu")
@@ -140098,7 +140098,7 @@
 	)
 	(segment
 		(start 12.3 107)
-		(end 13.05 106.25)
+		(end 12.8 106.5)
 		(width 4.2)
 		(locked yes)
 		(layer "B.Cu")
