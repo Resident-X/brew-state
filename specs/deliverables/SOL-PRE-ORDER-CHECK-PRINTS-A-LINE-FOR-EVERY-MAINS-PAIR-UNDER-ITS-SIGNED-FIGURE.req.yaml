@@ -1,0 +1,21 @@
+id: SOL-PRE-ORDER-CHECK-PRINTS-A-LINE-FOR-EVERY-MAINS-PAIR-UNDER-ITS-SIGNED-FIGURE
+type: deliverable
+category: solution
+title: The pre-order check prints a line for every mains-to-mains pair standing under its signed figure
+status: active
+version: 1
+text: |
+  Closes a silence the final run of the main board's pre-order check shows. The layout plan's standing mains-to-mains row lists pad pairs of different parts under the signed 2.0 mm pad clearance (R101 pad 2 and R601 pad 1 at 1.762 mm, R601 pad 2 and F731 pad 2 at 1.825 mm, R104 pad 1 and F731 pad 2 at 1.935 mm, R101 pad 1 and R102 pad 1 at 1.966 mm, F731 pad 2 and R602 pad 1 at 1.993 mm) and four not-connected-pad-to-track pairs at 1.5 mm against the 2.6 mm creepage (U701 pad 5 to the PUMP_C_TRIAC_G and PUMP_C_OPTO_MT tracks, U711 pad 5 to the PUMP_S_TRIAC_G and PUMP_S_OPTO_MT tracks). The final run's log carries no violation line for any of them and no accepted line that names a pad pair of R601, R104, R101, R102, R602 or F731 against another part, or a no-connect pad against a track. Its accepted lines are entries 0 to 15 and 17 to 32; the net-pair ones (9 to 15) name sets of nets and a count of shortfalls covered, not pads, so whether any of them consumed one of these pairs cannot be read from the log, and the pad-to-pad entries 25 to 28 are pairs of pads of one part. The layout review's round 3 findings 3.73 and 3.77 record such copper standing under the declared 1.5 mm for which the check has no line. So whether the signed exceptions cover these pairs cannot be read from the check, and a mains shortfall the check does not print is a shortfall passed unseen.
+
+  Settled for the build:
+    - The cause is found first: whether the check's pad-pair rule does not reach pads of different parts, whether KiCad's own report does not list a pair it does not test against the 2.0 mm figure, or whether a no-connect pad against a track of another net is outside the rule; the fix follows the cause.
+    - The check's new lines are judged against the signed record as the existing mains-to-mains lines are, each pair either a violation or accepted by a named entry; no entry is added by this item and no figure is relaxed.
+    - Until the item is built, the layout plan's standing mains-to-mains row stays open as a safety item and the pairs are held for the owner's decision with their gaps stated.
+    - Out of scope: the owner's acceptance, the signed figures, and the reading of the 16 mounting-hole lines.
+rationale: |
+  Restores the behaviour REQ-ELECTRICAL-INSTALL-001.C16 asks: a shortfall without a signed exception for that pair is not passed. A shortfall the check does not print cannot be matched to an exception or refused, so the criterion cannot be shown for these pairs. The existing item SOL-MAIN-BOARD-EXCEPTIONS-COVER-EVERY-REPORTED-SHORTFALL-PAIR reads the pairs the check reports and so does not reach a pair it does not report; this item is the other half.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C16
+    type: targets
