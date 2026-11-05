@@ -3,14 +3,12 @@
 # potentials of the mains supply, that every board design in this folder is held to, read by the
 # pre-order board check.
 #
-# This record is unsigned. It held an acceptance entered earlier on the owner's instruction; that
-# acceptance covered figures this revision replaces (it adds the mains-to-mains figures, the
-# material group IIIa and the accepted exceptions), and the owner has not yet seen the new ones,
-# so accepted_by and accepted_on are left out and the check reads the record as unsigned. The
-# owner's acceptance is the owner's own act, entered by the leaf that records it, and it covers
-# the whole record, the exceptions included; each exception's own accepted_by and accepted_on are
-# left empty for the same act. The commit that adds them is the audit trail. A change to any
-# figure, input, barrier or exception needs a fresh acceptance.
+# This record is signed. The owner accepted it on 2026-11-05 by telling Claude, in writing in the
+# working session, to enter the owner's acceptance on the owner's behalf, after the finished layout
+# and the owner's own calls on the residual risks (DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER);
+# accepted_by therefore names both. The acceptance covers the whole record, the exceptions included,
+# and each exception carries its own accepted_by and accepted_on. The commit that enters them is the
+# audit trail. A change to any figure, input, barrier or exception needs a fresh acceptance.
 #
 # Readings the drafter made for the owner to check before accepting (each is repeated in the
 # citation of the row it affects):
@@ -96,8 +94,8 @@
 # History. An earlier revision of this record was accepted on 2026-10-29 (UTC), twice: first for
 # two barrier entries (interlock-relay, the safety relay K201; isolated-measurement, the isolated
 # measurement chip U601), then for each barrier's formed_by stating the rating of each bought part
-# that forms it. This revision replaces the figures those acceptances covered and is unsigned (see
-# the header): accepted_by and accepted_on are left out.
+# that forms it. This revision replaces the figures those acceptances covered and is signed on
+# 2026-11-05 (see the header).
 #
 # Exceptions. A bought part whose package fixes a creepage smaller than the 10.0 mm of
 # mains_to_low_voltage is excepted at the maker's figure, not relaxed in the board spacing, which
@@ -514,8 +512,8 @@ table_rows:
 # owner to accept or correct, except that the reasons of the bought-part creepage entries are those of the
 # owner's recorded acceptance (DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER, residual risk (e),
 # 2026-10-29); for U602 they add the statement that the gap is the board's and the maker publishes none. Every
-# accepted_by and accepted_on is left empty for the owner's own act, and the values are drafts until
-# the finished main-board layout confirms each pair and distance. For the first four entries, no fuse clears a breakdown between the tab pad and a lead pad:
+# accepted_by and accepted_on is entered on 2026-11-05 (see the header); the values were confirmed against the
+# finished main-board layout. For the first four entries, no fuse clears a breakdown between the tab pad and a lead pad:
 # it carries only the pump's own current (0.46 A coffee, 0.19 A steam), below the branch fuse's rating (0.8 A and 0.5 A) and far below F101's 10 A. What bounds it is
 # K201 opening when the controller stops refreshing it, so it is not independent of the controller; the residual fail-on risk is owner-accepted residual risk (i) of
 # DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER (2026-11-05), on the owner's stated reason, with the bring-up check of the machine's pressure relief.
@@ -531,6 +529,9 @@ table_rows:
 # its strip, is the owner's assertion and the check does not test it; the owner is shown the nets on
 # each header's pins when accepting. Each accepted_mm is the 2.0 mm pitch less the 0.75 mm drill of the
 # JST PH pad of the footprint, to be confirmed against the finished layout.
+accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+accepted_on: "2026-11-05"
+
 accepted_exceptions:
   - pair: mains_to_mains
     constraint: creepage
@@ -538,32 +539,32 @@ accepted_exceptions:
     accepted_mm: 2.0
     reason: "The two-lead DPAK land of the coffee pump triac T701 (TO-252-2_TabPin2_Triac, the middle lead cut and given no pad) leaves 2.00 mm between the tab pad (pin 2, MT2) and the lead pad of pin 1 (MT1, on NEUTRAL), a tab-to-lead-pad gap that the package's lead pitch and tab force; the gap meets the 2.0 mm terminal clearance and falls short of the 2.6 mm creepage. The part is not changed, and the entry excuses only this pair of pads, at 2.0 mm of creepage."
     bounded_by: "Not bounded by a fuse. A breakdown between these two pads carries only the pump's own current, 0.46 A running, which is below the branch fuse F701 (0.8 A, opening at 2.1 times its rating, 1.68 A, within 30 minutes, SETfuse SCT520 sheet as held in circuit-proof.md) and far below the 10 A entry fuse F101, so neither F701 nor F101 clears it; a tracking or carbonised bridge would carry that current and heat, and run the pump on. What limits it: the pump's current is the most the bridge can carry; a bridge to lead pad 1 (MT1, on NEUTRAL) shorts the triac across the pump, which then runs on until the interlock relay K201 in the live feed to the pump opens, and K201 opens when the controller stops refreshing it; the triac and its land are a part rated 600 V by its maker (VDRM) over its own lead-to-tab distance, for which no creepage figure is read here; and the conformal coat and pollution degree 2 credit that this entry rests on. Owner-accepted residual risk (i) of DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER (2026-11-05): K201 opens here only when the controller stops refreshing it, so it is NOT independent of the controller as DEC-CHAIN-FAULT-BOUNDED-BY-INDEPENDENT-ELEMENT defines independence, and this entry does not claim it is. The consequence is a pump that runs on, not a shock or fire route, the same fail-on outcome as the accepted surge case (g). The owner's reason: the board firmware will run a startup check that toggles the heaters and the interlock, the fault requires a dual failure, and it is not unsafe to the user; the startup check is a best-effort layer the graph does not count as detection, so that is the owner's reason and not an independent bound. Bring-up condition: confirm that the machine's mechanical pressure relief limits the pump, which is not verified in the repository. The 2.0 mm figure remains the owner's decision to accept or correct, or the lead pads are moved outward about 0.6 mm."
-    accepted_by: ""
-    accepted_on: ""
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
   - pair: mains_to_mains
     constraint: creepage
     between: ["T701.2", "T701.3"]
     accepted_mm: 2.0
     reason: "The two-lead DPAK land of the coffee pump triac T701 (TO-252-2_TabPin2_Triac, the middle lead cut and given no pad) leaves 2.00 mm between the tab pad (pin 2, MT2) and the lead pad of pin 3 (the gate, on PUMP_C_TRIAC_G), a tab-to-lead-pad gap that the package's lead pitch and tab force; the gap meets the 2.0 mm terminal clearance and falls short of the 2.6 mm creepage. The part is not changed, and the entry excuses only this pair of pads, at 2.0 mm of creepage."
     bounded_by: "Not bounded by a fuse. A breakdown between these two pads carries only the pump's own current, 0.46 A running, which is below the branch fuse F701 (0.8 A, opening at 2.1 times its rating, 1.68 A, within 30 minutes, SETfuse SCT520 sheet as held in circuit-proof.md) and far below the 10 A entry fuse F101, so neither F701 nor F101 clears it; a tracking or carbonised bridge would carry that current and heat, and run the pump on. What limits it: the pump's current is the most the bridge can carry; a bridge to lead pad 3 (the gate) drives the gate from MT2, so the triac conducts and the pump runs on until the interlock relay K201 in the live feed to the pump opens, and K201 opens when the controller stops refreshing it; the triac and its land are a part rated 600 V by its maker (VDRM) over its own lead-to-tab distance, for which no creepage figure is read here; and the conformal coat and pollution degree 2 credit that this entry rests on. Owner-accepted residual risk (i) of DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER (2026-11-05): K201 opens here only when the controller stops refreshing it, so it is NOT independent of the controller as DEC-CHAIN-FAULT-BOUNDED-BY-INDEPENDENT-ELEMENT defines independence, and this entry does not claim it is. The consequence is a pump that runs on, not a shock or fire route, the same fail-on outcome as the accepted surge case (g). The owner's reason: the board firmware will run a startup check that toggles the heaters and the interlock, the fault requires a dual failure, and it is not unsafe to the user; the startup check is a best-effort layer the graph does not count as detection, so that is the owner's reason and not an independent bound. Bring-up condition: confirm that the machine's mechanical pressure relief limits the pump, which is not verified in the repository. The 2.0 mm figure remains the owner's decision to accept or correct, or the lead pads are moved outward about 0.6 mm."
-    accepted_by: ""
-    accepted_on: ""
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
   - pair: mains_to_mains
     constraint: creepage
     between: ["T711.2", "T711.1"]
     accepted_mm: 2.0
     reason: "The two-lead DPAK land of the steam pump triac T711 (TO-252-2_TabPin2_Triac, the middle lead cut and given no pad) leaves 2.00 mm between the tab pad (pin 2, MT2) and the lead pad of pin 1 (MT1, on NEUTRAL), a tab-to-lead-pad gap that the package's lead pitch and tab force; the gap meets the 2.0 mm terminal clearance and falls short of the 2.6 mm creepage. The part is not changed, and the entry excuses only this pair of pads, at 2.0 mm of creepage."
     bounded_by: "Not bounded by a fuse. A breakdown between these two pads carries only the pump's own current, 0.19 A running, which is below the branch fuse F711 (0.5 A, opening at 2.1 times its rating, 1.05 A, within 30 minutes, SETfuse SCT520 sheet as held in circuit-proof.md) and far below the 10 A entry fuse F101, so neither F711 nor F101 clears it; a tracking or carbonised bridge would carry that current and heat, and run the pump on. What limits it: the pump's current is the most the bridge can carry; a bridge to lead pad 1 (MT1, on NEUTRAL) shorts the triac across the pump, which then runs on until the interlock relay K201 in the live feed to the pump opens, and K201 opens when the controller stops refreshing it; the triac and its land are a part rated 600 V by its maker (VDRM) over its own lead-to-tab distance, for which no creepage figure is read here; and the conformal coat and pollution degree 2 credit that this entry rests on. Owner-accepted residual risk (i) of DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER (2026-11-05): K201 opens here only when the controller stops refreshing it, so it is NOT independent of the controller as DEC-CHAIN-FAULT-BOUNDED-BY-INDEPENDENT-ELEMENT defines independence, and this entry does not claim it is. The consequence is a pump that runs on, not a shock or fire route, the same fail-on outcome as the accepted surge case (g). The owner's reason: the board firmware will run a startup check that toggles the heaters and the interlock, the fault requires a dual failure, and it is not unsafe to the user; the startup check is a best-effort layer the graph does not count as detection, so that is the owner's reason and not an independent bound. Bring-up condition: confirm that the machine's mechanical pressure relief limits the pump, which is not verified in the repository. The 2.0 mm figure remains the owner's decision to accept or correct, or the lead pads are moved outward about 0.6 mm."
-    accepted_by: ""
-    accepted_on: ""
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
   - pair: mains_to_mains
     constraint: creepage
     between: ["T711.2", "T711.3"]
     accepted_mm: 2.0
     reason: "The two-lead DPAK land of the steam pump triac T711 (TO-252-2_TabPin2_Triac, the middle lead cut and given no pad) leaves 2.00 mm between the tab pad (pin 2, MT2) and the lead pad of pin 3 (the gate, on PUMP_S_TRIAC_G), a tab-to-lead-pad gap that the package's lead pitch and tab force; the gap meets the 2.0 mm terminal clearance and falls short of the 2.6 mm creepage. The part is not changed, and the entry excuses only this pair of pads, at 2.0 mm of creepage."
     bounded_by: "Not bounded by a fuse. A breakdown between these two pads carries only the pump's own current, 0.19 A running, which is below the branch fuse F711 (0.5 A, opening at 2.1 times its rating, 1.05 A, within 30 minutes, SETfuse SCT520 sheet as held in circuit-proof.md) and far below the 10 A entry fuse F101, so neither F711 nor F101 clears it; a tracking or carbonised bridge would carry that current and heat, and run the pump on. What limits it: the pump's current is the most the bridge can carry; a bridge to lead pad 3 (the gate) drives the gate from MT2, so the triac conducts and the pump runs on until the interlock relay K201 in the live feed to the pump opens, and K201 opens when the controller stops refreshing it; the triac and its land are a part rated 600 V by its maker (VDRM) over its own lead-to-tab distance, for which no creepage figure is read here; and the conformal coat and pollution degree 2 credit that this entry rests on. Owner-accepted residual risk (i) of DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER (2026-11-05): K201 opens here only when the controller stops refreshing it, so it is NOT independent of the controller as DEC-CHAIN-FAULT-BOUNDED-BY-INDEPENDENT-ELEMENT defines independence, and this entry does not claim it is. The consequence is a pump that runs on, not a shock or fire route, the same fail-on outcome as the accepted surge case (g). The owner's reason: the board firmware will run a startup check that toggles the heaters and the interlock, the fault requires a dual failure, and it is not unsafe to the user; the startup check is a best-effort layer the graph does not count as detection, so that is the owner's reason and not an independent bound. Bring-up condition: confirm that the machine's mechanical pressure relief limits the pump, which is not verified in the repository. The 2.0 mm figure remains the owner's decision to accept or correct, or the lead pads are moved outward about 0.6 mm."
-    accepted_by: ""
-    accepted_on: ""
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
   - pair: same_connector_pins
     constraint: hole_to_hole
     connector: J630
@@ -571,8 +572,8 @@ accepted_exceptions:
     accepted_mm: 1.25
     reason: "J630 (WT1_H) is the first load-cell header (5 ways), whose pins carry the supply, ground and the two raw bridge signals of weight channel 1. A 2.0 mm pitch with the 0.75 mm drill of its JST PH footprint leaves 1.25 mm between the edges of adjacent holes, which the board's plated-hole spacing rule, drawn for the rings its pins open in a ground plane, holds to a larger distance; a 2.0 mm pitch cannot reach it. The owner's ground is that this header carries slow signals only and that no fast signal crosses its strip: an assertion the owner makes, which the tool does not check."
     bounded_by: "The layout review's item that no track runs over a gap in the ground plane beneath it: a fast track crossing the merged rings of this header's strip fails that item, so none can cross it unnoticed. Proposed by the drafter for the owner to accept or correct."
-    accepted_by: ""
-    accepted_on: ""
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
   - pair: same_connector_pins
     constraint: hole_to_hole
     connector: J635
@@ -580,8 +581,8 @@ accepted_exceptions:
     accepted_mm: 1.25
     reason: "J635 (WT2_H) is the second load-cell header (5 ways), whose pins carry the supply, ground and the two raw bridge signals of weight channel 2. A 2.0 mm pitch with the 0.75 mm drill of its JST PH footprint leaves 1.25 mm between the edges of adjacent holes, which the board's plated-hole spacing rule, drawn for the rings its pins open in a ground plane, holds to a larger distance; a 2.0 mm pitch cannot reach it. The owner's ground is that this header carries slow signals only and that no fast signal crosses its strip: an assertion the owner makes, which the tool does not check."
     bounded_by: "The layout review's item that no track runs over a gap in the ground plane beneath it: a fast track crossing the merged rings of this header's strip fails that item, so none can cross it unnoticed. Proposed by the drafter for the owner to accept or correct."
-    accepted_by: ""
-    accepted_on: ""
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
   - pair: same_connector_pins
     constraint: hole_to_hole
     connector: J791
@@ -589,8 +590,8 @@ accepted_exceptions:
     accepted_mm: 1.25
     reason: "J791 (SP2) is the gauge harness header (9 ways), whose pins carry the gauge supply, ground, the gauge step, direction and reset lines, the low-water cathode and the anode rail, the gauge step lines among them, which the owner weighs against the ground when accepting. A 2.0 mm pitch with the 0.75 mm drill of its JST PH footprint leaves 1.25 mm between the edges of adjacent holes, which the board's plated-hole spacing rule, drawn for the rings its pins open in a ground plane, holds to a larger distance; a 2.0 mm pitch cannot reach it. The owner's ground is that this header carries slow signals only and that no fast signal crosses its strip: an assertion the owner makes, which the tool does not check."
     bounded_by: "The layout review's item that no track runs over a gap in the ground plane beneath it: a fast track crossing the merged rings of this header's strip fails that item, so none can cross it unnoticed. Proposed by the drafter for the owner to accept or correct."
-    accepted_by: ""
-    accepted_on: ""
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
   - pair: same_connector_pins
     constraint: hole_to_hole
     connector: J821
@@ -598,8 +599,8 @@ accepted_exceptions:
     accepted_mm: 1.25
     reason: "J821 (CON2) is the operator panel harness header (9 ways), whose pins carry the buzzer, the five key lines, the anode rail and ground. A 2.0 mm pitch with the 0.75 mm drill of its JST PH footprint leaves 1.25 mm between the edges of adjacent holes, which the board's plated-hole spacing rule, drawn for the rings its pins open in a ground plane, holds to a larger distance; a 2.0 mm pitch cannot reach it. The owner's ground is that this header carries slow signals only and that no fast signal crosses its strip: an assertion the owner makes, which the tool does not check."
     bounded_by: "The layout review's item that no track runs over a gap in the ground plane beneath it: a fast track crossing the merged rings of this header's strip fails that item, so none can cross it unnoticed. Proposed by the drafter for the owner to accept or correct."
-    accepted_by: ""
-    accepted_on: ""
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
   - pair: same_connector_pins
     constraint: hole_to_hole
     connector: J861
@@ -607,8 +608,8 @@ accepted_exceptions:
     accepted_mm: 1.25
     reason: "J861 (KNOB) is the knob switch header (4 ways), whose pins carry the two knob switch lines and ground. A 2.0 mm pitch with the 0.75 mm drill of its JST PH footprint leaves 1.25 mm between the edges of adjacent holes, which the board's plated-hole spacing rule, drawn for the rings its pins open in a ground plane, holds to a larger distance; a 2.0 mm pitch cannot reach it. The owner's ground is that this header carries slow signals only and that no fast signal crosses its strip: an assertion the owner makes, which the tool does not check."
     bounded_by: "The layout review's item that no track runs over a gap in the ground plane beneath it: a fast track crossing the merged rings of this header's strip fails that item, so none can cross it unnoticed. Proposed by the drafter for the owner to accept or correct."
-    accepted_by: ""
-    accepted_on: ""
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
   # Single-fault table for the seven net-pair entries below, numbered as the eleven drafted entries were (entries 1 and 2
   # the set N pair, 3 the discharge midpoints against the supply, 5 the zero-cross midpoint, 8 the line divider's first
   # node, 10 and 11 the triac gate nets and zero-cross LED anode against NEUTRAL). Entries 4, 6, 7 and 9 and their rows
@@ -652,7 +653,7 @@ accepted_exceptions:
   # is covered by the first two entries; the lead pads 1 and 3 of T701 and T711 stand 3.36 mm apart on their two-lead
   # land and the U701 and U711 pins 3.3 mm or more, no shortfall against 2.6 mm, and each triac's tab pad stands 2.00 mm
   # from each of its lead pads, which the first four accepted_exceptions entries excuse at 2.0 mm of creepage. Every
-  # accepted_by and accepted_on is left empty for the owner's own act, and the entries stay drafts until the owner signs them.
+  # accepted_by and accepted_on is entered on 2026-11-05 (see the header).
   - pair: mains_to_mains
     constraint: creepage
     nets_a: ["/NEUTRAL", "/Mains entry and load feed/NEUTRAL_IN", "/SHUNT_SENSE_IN", "/SHUNT_SENSE_NEUTRAL", "/Supply voltage and current measurement/AMC_AIN0P", "/Supply voltage and current measurement/AMC_AIN0N", "/Supply voltage and current measurement/AMC_AIN1P", "/Supply voltage and current measurement/AMC_AIN1N", "/Supply voltage and current measurement/AMC_DCDC_OUT", "/Supply voltage and current measurement/AMC_DCDC_HGND", "/Supply voltage and current measurement/AMC_HGND", "/Supply voltage and current measurement/AMC_HLDO_IN", "/Supply voltage and current measurement/AMC_HLDO_OUT", "/Supply voltage and current measurement/VMEAS_DIV", "unconnected-(U601-GPO-Pad6)"]
@@ -660,8 +661,8 @@ accepted_exceptions:
     accepted_mm: 0.4
     reason: "Set N is the fifteen nets that ride on mains neutral: NEUTRAL, NEUTRAL_IN, SHUNT_SENSE_IN, SHUNT_SENSE_NEUTRAL, the AMC131M02 inputs AMC_AIN0P, AMC_AIN0N, AMC_AIN1P and AMC_AIN1N (within 2.7 V of HGND by the pin-limit record's amc_inputs offset), its high side AMC_DCDC_OUT, AMC_DCDC_HGND, AMC_HLDO_IN and AMC_HLDO_OUT (within 3.2 V of HGND, amc_high_side offset), and AMC_HGND, the converter's own high-side ground, which the net tie NT601 joins to NEUTRAL at one point and so stands at neutral (0 V across the tie), carrying U601 pin 5, the bead F602, the high-side decoupling returns C605 to C608 and the divider and filter returns R604 and R606, the divider tap VMEAS_DIV (750/900750 = 0.000832639467 of the line, 0.21 V rms at 253 V), and the net of U601's pin 6, GPO, which the board leaves unconnected: a general-purpose output of the AMC131M02's high side, driven from its high-side supply and so within 3.2 V of HGND as the high side is, and named Mains so that the check holds the pad to the mains figures. Every net rides on neutral within a few volts, so no two nets of the set stand more than 10 V rms apart (two nets 5 V either side of neutral); 10 V rms is the bound the entry holds, read at the 10 V band row, and tracks between these nets keep at least the band creepage of 0.4 mm. The reduction holds only while the circuit is intact: these nets leave the 10 V bound only in fault states, namely R604 open (VMEAS_DIV floats toward the divider; the AMC input clamp through R605 normally holds it within about 1.2 V of NEUTRAL) or loss of NEUTRAL, judged in the single-fault table above (rows 1 and 2): a fault that reaches 253 V across a gap passes 0.281 mA through the 900 kohm of R601 to R603, which creates no hazard. The triac gate nets and the zero-cross LED anode are not in this set: they pair only with /NEUTRAL in entries 10 and 11, and against no AMC_* net, shunt-sense net or the divider tap. The working voltage is the drafter's figure for the owner to accept or correct."
     bounded_by: "The energy the neutral-referenced circuit can supply (the AMC131M02's isolated high-side supply, the shunt and the divider resistors), and for any path from a net of the set to the line the entry fuse F101 and the branch fuses."
-    accepted_by: ""
-    accepted_on: ""
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
   - pair: mains_to_mains
     constraint: clearance
     nets_a: ["/NEUTRAL", "/Mains entry and load feed/NEUTRAL_IN", "/SHUNT_SENSE_IN", "/SHUNT_SENSE_NEUTRAL", "/Supply voltage and current measurement/AMC_AIN0P", "/Supply voltage and current measurement/AMC_AIN0N", "/Supply voltage and current measurement/AMC_AIN1P", "/Supply voltage and current measurement/AMC_AIN1N", "/Supply voltage and current measurement/AMC_DCDC_OUT", "/Supply voltage and current measurement/AMC_DCDC_HGND", "/Supply voltage and current measurement/AMC_HGND", "/Supply voltage and current measurement/AMC_HLDO_IN", "/Supply voltage and current measurement/AMC_HLDO_OUT", "/Supply voltage and current measurement/VMEAS_DIV", "unconnected-(U601-GPO-Pad6)"]
@@ -669,8 +670,8 @@ accepted_exceptions:
     accepted_mm: 0.2
     reason: "Set N is the fifteen nets that ride on mains neutral: NEUTRAL, NEUTRAL_IN, SHUNT_SENSE_IN, SHUNT_SENSE_NEUTRAL, the AMC131M02 inputs AMC_AIN0P, AMC_AIN0N, AMC_AIN1P and AMC_AIN1N (within 2.7 V of HGND by the pin-limit record's amc_inputs offset), its high side AMC_DCDC_OUT, AMC_DCDC_HGND, AMC_HLDO_IN and AMC_HLDO_OUT (within 3.2 V of HGND, amc_high_side offset), and AMC_HGND, the converter's own high-side ground, which the net tie NT601 joins to NEUTRAL at one point and so stands at neutral (0 V across the tie), carrying U601 pin 5, the bead F602, the high-side decoupling returns C605 to C608 and the divider and filter returns R604 and R606, the divider tap VMEAS_DIV (750/900750 = 0.000832639467 of the line, 0.21 V rms at 253 V), and the net of U601's pin 6, GPO, which the board leaves unconnected: a general-purpose output of the AMC131M02's high side, driven from its high-side supply and so within 3.2 V of HGND as the high side is, and named Mains so that the check holds the pad to the mains figures. Every net rides on neutral within a few volts, so no two nets of the set stand more than 10 V rms apart; 10 V rms is the bound the entry holds, read at the 10 V band row, and tracks between these nets keep at least the band clearance of 0.2 mm. The reduction holds only while the circuit is intact: these nets leave the 10 V bound only in fault states, namely R604 open (VMEAS_DIV floats toward the divider; the AMC input clamp through R605 normally holds it within about 1.2 V of NEUTRAL) or loss of NEUTRAL, judged in the single-fault table above (rows 1 and 2): a fault that reaches 253 V across a gap passes 0.281 mA through the 900 kohm of R601 to R603, which creates no hazard. The triac gate nets and the zero-cross LED anode are not in this set: they pair only with /NEUTRAL in entries 10 and 11, and against no AMC_* net, shunt-sense net or the divider tap. The working voltage is the drafter's figure for the owner to accept or correct."
     bounded_by: "The energy the neutral-referenced circuit can supply (the AMC131M02's isolated high-side supply, the shunt and the divider resistors), and for any path from a net of the set to the line the entry fuse F101 and the branch fuses."
-    accepted_by: ""
-    accepted_on: ""
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
   - pair: mains_to_mains
     constraint: creepage
     nets_a: ["/Mains entry and load feed/DISCH_A", "/Mains entry and load feed/DISCH_B"]
@@ -679,8 +680,8 @@ accepted_exceptions:
     accepted_mm: 1.6
     reason: "DISCH_A and DISCH_B are the midpoints of the 1 Mohm pairs R101 with R102 and R103 with R104 between LINE and NEUTRAL: two equal resistors share the line, so each midpoint stands 253 / 2 = 126.5 V rms from either end at the top of the declared span (253 V rms; pin-limit record mains_discharge_a and mains_discharge_b, fraction 0.5). The creepage at 126.5 V is the band figure between the 125 V and 160 V rows, rounded up to 1.6 mm. The reduction holds in normal operation, with the resistor chain intact; a shorted resistor is a single fault, judged in row 3 of the single-fault table above, which gives the voltage it puts across the gap, the current that bounds it and the arithmetic from the schematic's part values. The working voltage is the drafter's figure for the owner to accept or correct."
     bounded_by: "The entry fuse F101 and the branch fuses clear a breakdown between these nets, which can carry only the current the resistor chain passes (a few milliamps) until a fault bridges the chain; the chain's own energy limit bounds the rest."
-    accepted_by: ""
-    accepted_on: ""
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
   - pair: mains_to_mains
     constraint: creepage
     nets_a: ["/Zero-crossing detector/ZC_N1"]
@@ -689,8 +690,8 @@ accepted_exceptions:
     accepted_mm: 1.6
     reason: "ZC_N1 is the midpoint of the two 60.4 kohm feed resistors R630 and R631 from LINE to the detector LED: they share the line less the LED's forward drop (about 1.2 V), so ZC_N1 stands at most 253 / 2 = 126.5 V rms from LINE and from NEUTRAL, and from ZC_LED_A (1.2 V above neutral) no more than that (pin-limit record mains_zero_cross, fraction 0.5). The creepage at 126.5 V is the band figure between the 125 V and 160 V rows, rounded up to 1.6 mm. The reduction holds in normal operation, with the resistor chain intact; a shorted resistor is a single fault, judged in row 5 of the single-fault table above, which gives the voltage it puts across the gap, the current that bounds it and the arithmetic from the schematic's part values. The working voltage is the drafter's figure for the owner to accept or correct."
     bounded_by: "The entry fuse F101 and the branch fuses clear a breakdown between these nets, which can carry only the current the resistor chain passes (a few milliamps) until a fault bridges the chain; the chain's own energy limit bounds the rest."
-    accepted_by: ""
-    accepted_on: ""
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
   - pair: mains_to_mains
     constraint: creepage
     nets_a: ["/Supply voltage and current measurement/VMEAS_N1"]
@@ -699,8 +700,8 @@ accepted_exceptions:
     accepted_mm: 1.8
     reason: "VMEAS_N1 stands at 0.666944 of the line (pin-limit record mains_divider_n1): at 253 V rms N1 to NEUTRAL is 253 x 0.666944 = 168.7 V, and N1 to the divider tap is less; NEUTRAL, NEUTRAL_IN, AMC_HGND and the tap are nets of set N, which stand within 10 V of one another, so the working voltage written is 168.7 + 10 = 178.7 V, rounded up to 178.8 V rms (the band creepage between the 160 V and 200 V rows, 1.8 mm). The reduction holds in normal operation, with the resistor chain intact; a shorted resistor is a single fault, judged in row 8 of the single-fault table above, which gives the voltage it puts across the gap, the current that bounds it and the arithmetic from the schematic's part values. The working voltage is the drafter's figure for the owner to accept or correct."
     bounded_by: "The entry fuse F101 and the branch fuses clear a breakdown between these nets, which can carry only the current the resistor chain passes (a few milliamps) until a fault bridges the chain; the chain's own energy limit bounds the rest."
-    accepted_by: ""
-    accepted_on: ""
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
   - pair: mains_to_mains
     constraint: creepage
     nets_a: ["/Pump drives/PUMP_C_TRIAC_G", "/Pump drives/PUMP_S_TRIAC_G", "/Zero-crossing detector/ZC_LED_A"]
@@ -709,8 +710,8 @@ accepted_exceptions:
     accepted_mm: 0.4
     reason: "PUMP_C_TRIAC_G and PUMP_S_TRIAC_G are the gate nets of the pump triacs T701 and T711, each the opto-triac output pin and the triac gate alone (no gate-to-MT1 resistor is fitted); while the opto-triac drives it the gate stands within a few volts of its MT1 on NEUTRAL. ZC_LED_A is the zero-cross opto U602's LED anode, 1.2 V above NEUTRAL while the LTV-814 antiparallel LEDs conduct. Against /NEUTRAL alone each stands under 10 V rms in normal operation, the 10 V band row (creepage 0.4 mm); they pair with no AMC_* net, shunt-sense net or the divider tap, and the pump gate network nets PUMP_C_GATE_R and PUMP_S_GATE_R keep the full figure against every net. The reduction holds in normal operation, with the circuit intact; U602 open (ZC_LED_A reaching 253 V through R630 and R631, 120.8 kohm, 2.09 mA) and the gate junction open while the opto-triac is off (the gate net floating toward the full supply on the opto-triac's off-state leakage, microamps) are single faults judged in rows 10 of the single-fault table above. The working voltage is the drafter's figure for the owner to accept or correct."
     bounded_by: "The energy the neutral-referenced circuit can supply, for the LED anode the 120.8 kohm of R630 and R631 and for a gate net the off-state leakage of the opto-triac, and for any path from these nets to the line the entry fuse F101 and the branch fuses."
-    accepted_by: ""
-    accepted_on: ""
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
   - pair: mains_to_mains
     constraint: clearance
     nets_a: ["/Pump drives/PUMP_C_TRIAC_G", "/Pump drives/PUMP_S_TRIAC_G", "/Zero-crossing detector/ZC_LED_A"]
@@ -719,85 +720,85 @@ accepted_exceptions:
     accepted_mm: 0.2
     reason: "PUMP_C_TRIAC_G and PUMP_S_TRIAC_G are the gate nets of the pump triacs T701 and T711, each the opto-triac output pin and the triac gate alone (no gate-to-MT1 resistor is fitted); while the opto-triac drives it the gate stands within a few volts of its MT1 on NEUTRAL. ZC_LED_A is the zero-cross opto U602's LED anode, 1.2 V above NEUTRAL while the LTV-814 antiparallel LEDs conduct. Against /NEUTRAL alone each stands under 10 V rms in normal operation, the 10 V band row (clearance 0.2 mm); they pair with no AMC_* net, shunt-sense net or the divider tap, and the pump gate network nets PUMP_C_GATE_R and PUMP_S_GATE_R keep the full figure against every net. The reduction holds in normal operation, with the circuit intact; U602 open (ZC_LED_A reaching 253 V through R630 and R631, 120.8 kohm, 2.09 mA) and the gate junction open while the opto-triac is off (the gate net floating toward the full supply on the opto-triac's off-state leakage, microamps) are single faults judged in rows 11 of the single-fault table above. The working voltage is the drafter's figure for the owner to accept or correct."
     bounded_by: "The energy the neutral-referenced circuit can supply, for the LED anode the 120.8 kohm of R630 and R631 and for a gate net the off-state leakage of the opto-triac, and for any path from these nets to the line the entry fuse F101 and the branch fuses."
-    accepted_by: ""
-    accepted_on: ""
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
   - pair: mains_to_mains
     constraint: creepage
     between: ["C606.1", "C606.2"]
     accepted_mm: 0.65
     reason: "The pitch of C606 forces the gap: its pads 1 (on AMC_HLDO_IN) and 2 (on AMC_HGND) stand 0.65 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
     bounded_by: "The energy the neutral-referenced circuit can supply (the AMC131M02's isolated high-side supply, the shunt and the divider resistors), and for any path from these nets to the line the entry fuse F101 and the branch fuses; proposed by the drafter for the owner to accept or correct."
-    accepted_by: ""
-    accepted_on: ""
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
   - pair: mains_to_mains
     constraint: creepage
     between: ["R105.1", "R105.2"]
     accepted_mm: 0.44
     reason: "The pitch of R105 forces the gap: its pads 1 (on NEUTRAL_IN) and 2 (on SHUNT_SENSE_IN) stand 0.44 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
     bounded_by: "The energy the neutral-referenced circuit can supply (the AMC131M02's isolated high-side supply, the shunt and the divider resistors), and for any path from these nets to the line the entry fuse F101 and the branch fuses; proposed by the drafter for the owner to accept or correct."
-    accepted_by: ""
-    accepted_on: ""
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
   - pair: mains_to_mains
     constraint: creepage
     between: ["R105.1", "R105.3"]
     accepted_mm: 0.44
     reason: "The pitch of R105 forces the gap: its pads 1 (on NEUTRAL_IN) and 3 (on SHUNT_SENSE_NEUTRAL) stand 0.44 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
     bounded_by: "The energy the neutral-referenced circuit can supply (the AMC131M02's isolated high-side supply, the shunt and the divider resistors), and for any path from these nets to the line the entry fuse F101 and the branch fuses; proposed by the drafter for the owner to accept or correct."
-    accepted_by: ""
-    accepted_on: ""
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
   - pair: mains_to_mains
     constraint: creepage
     between: ["R105.4", "R105.2"]
     accepted_mm: 0.44
     reason: "The pitch of R105 forces the gap: its pads 4 (on NEUTRAL) and 2 (on SHUNT_SENSE_IN) stand 0.44 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
     bounded_by: "The energy the neutral-referenced circuit can supply (the AMC131M02's isolated high-side supply, the shunt and the divider resistors), and for any path from these nets to the line the entry fuse F101 and the branch fuses; proposed by the drafter for the owner to accept or correct."
-    accepted_by: ""
-    accepted_on: ""
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
   - pair: mains_to_mains
     constraint: creepage
     between: ["R105.4", "R105.3"]
     accepted_mm: 0.44
     reason: "The pitch of R105 forces the gap: its pads 4 (on NEUTRAL) and 3 (on SHUNT_SENSE_NEUTRAL) stand 0.44 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
     bounded_by: "The energy the neutral-referenced circuit can supply (the AMC131M02's isolated high-side supply, the shunt and the divider resistors), and for any path from these nets to the line the entry fuse F101 and the branch fuses; proposed by the drafter for the owner to accept or correct."
-    accepted_by: ""
-    accepted_on: ""
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
   - pair: mains_to_mains
     constraint: creepage
     between: ["R605.1", "R605.2"]
     accepted_mm: 0.85
     reason: "The pitch of R605 forces the gap: its pads 1 (on VMEAS_DIV) and 2 (on AMC_AIN0P) stand 0.85 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
     bounded_by: "The energy the neutral-referenced circuit can supply (the AMC131M02's isolated high-side supply, the shunt and the divider resistors), and for any path from these nets to the line the entry fuse F101 and the branch fuses; proposed by the drafter for the owner to accept or correct."
-    accepted_by: ""
-    accepted_on: ""
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
   - pair: mains_to_mains
     constraint: creepage
     between: ["R606.1", "R606.2"]
     accepted_mm: 0.85
     reason: "The pitch of R606 forces the gap: its pads 1 (on AMC_AIN0N) and 2 (on AMC_HGND) stand 0.85 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
     bounded_by: "The energy the neutral-referenced circuit can supply (the AMC131M02's isolated high-side supply, the shunt and the divider resistors), and for any path from these nets to the line the entry fuse F101 and the branch fuses; proposed by the drafter for the owner to accept or correct."
-    accepted_by: ""
-    accepted_on: ""
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
   - pair: mains_to_mains
     constraint: creepage
     between: ["R607.1", "R607.2"]
     accepted_mm: 0.85
     reason: "The pitch of R607 forces the gap: its pads 1 (on SHUNT_SENSE_IN) and 2 (on AMC_AIN1P) stand 0.85 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
     bounded_by: "The energy the neutral-referenced circuit can supply (the AMC131M02's isolated high-side supply, the shunt and the divider resistors), and for any path from these nets to the line the entry fuse F101 and the branch fuses; proposed by the drafter for the owner to accept or correct."
-    accepted_by: ""
-    accepted_on: ""
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
   - pair: mains_to_mains
     constraint: creepage
     between: ["R608.1", "R608.2"]
     accepted_mm: 0.85
     reason: "The pitch of R608 forces the gap: its pads 1 (on SHUNT_SENSE_NEUTRAL) and 2 (on AMC_AIN1N) stand 0.85 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
     bounded_by: "The energy the neutral-referenced circuit can supply (the AMC131M02's isolated high-side supply, the shunt and the divider resistors), and for any path from these nets to the line the entry fuse F101 and the branch fuses; proposed by the drafter for the owner to accept or correct."
-    accepted_by: ""
-    accepted_on: ""
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
   # The last four entries are of the between form for the opto-triacs U701 and U711: pin 5 of each, given no
   # connection by the maker, is the output side's substrate, and the board names its net Mains so that the check
   # holds the pad to the mains figures. Each pin 5 stands 0.76 mm edge to edge from pins 4 and 6 on the land
-  # pattern, under the 2.6 mm creepage, so each pair has a creepage entry at 0.76 mm, drafted with accepted_by and
-  # accepted_on empty for the owner's own act; the clearance entry the draft held for each pair is removed with the other
+  # pattern, under the 2.6 mm creepage, so each pair has a creepage entry at 0.76 mm, signed with accepted_by and
+  # accepted_on entered as in the header; the clearance entry the draft held for each pair is removed with the other
   # pad-pair clearance entries, since KiCad does not test the clearance of two pads of one footprint.
   - pair: mains_to_mains
     constraint: creepage
@@ -805,29 +806,61 @@ accepted_exceptions:
     accepted_mm: 0.76
     reason: "The pitch of the coffee pump opto-triac U701 (MOC3052SVM, SMD-6) forces the gap: pin 5, which the maker gives no connection and the board leaves unconnected, is the output side's substrate and stands 0.76 mm edge to edge from pin 4 (on PUMP_C_TRIAC_G) on the land pattern the part is drawn with. Pin 5 sits on the output side between pins 4 and 6, whose voltage the maker rates the part to block across this same pitch; its net is named Mains so that the check holds it to the mains figures. The part is not changed, and the entry excuses only this pair of pads."
     bounded_by: "The branch fuse F701, then the 10 A entry fuse F101, interrupt a breakdown between the two pads, which can only carry the coffee pump's gate-network current through its gate resistor."
-    accepted_by: ""
-    accepted_on: ""
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
   - pair: mains_to_mains
     constraint: creepage
     between: ["U701.5", "U701.6"]
     accepted_mm: 0.76
     reason: "The pitch of the coffee pump opto-triac U701 (MOC3052SVM, SMD-6) forces the gap: pin 5, which the maker gives no connection and the board leaves unconnected, is the output side's substrate and stands 0.76 mm edge to edge from pin 6 (on PUMP_C_OPTO_MT) on the land pattern the part is drawn with. Pin 5 sits on the output side between pins 4 and 6, whose voltage the maker rates the part to block across this same pitch; its net is named Mains so that the check holds it to the mains figures. The part is not changed, and the entry excuses only this pair of pads."
     bounded_by: "The branch fuse F701, then the 10 A entry fuse F101, interrupt a breakdown between the two pads, which can only carry the coffee pump's gate-network current through its gate resistor."
-    accepted_by: ""
-    accepted_on: ""
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
   - pair: mains_to_mains
     constraint: creepage
     between: ["U711.5", "U711.4"]
     accepted_mm: 0.76
     reason: "The pitch of the steam pump opto-triac U711 (MOC3052SVM, SMD-6) forces the gap: pin 5, which the maker gives no connection and the board leaves unconnected, is the output side's substrate and stands 0.76 mm edge to edge from pin 4 (on PUMP_S_TRIAC_G) on the land pattern the part is drawn with. Pin 5 sits on the output side between pins 4 and 6, whose voltage the maker rates the part to block across this same pitch; its net is named Mains so that the check holds it to the mains figures. The part is not changed, and the entry excuses only this pair of pads."
     bounded_by: "The branch fuse F711, then the 10 A entry fuse F101, interrupt a breakdown between the two pads, which can only carry the steam pump's gate-network current through its gate resistor."
-    accepted_by: ""
-    accepted_on: ""
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
   - pair: mains_to_mains
     constraint: creepage
     between: ["U711.5", "U711.6"]
     accepted_mm: 0.76
     reason: "The pitch of the steam pump opto-triac U711 (MOC3052SVM, SMD-6) forces the gap: pin 5, which the maker gives no connection and the board leaves unconnected, is the output side's substrate and stands 0.76 mm edge to edge from pin 6 (on PUMP_S_OPTO_MT) on the land pattern the part is drawn with. Pin 5 sits on the output side between pins 4 and 6, whose voltage the maker rates the part to block across this same pitch; its net is named Mains so that the check holds it to the mains figures. The part is not changed, and the entry excuses only this pair of pads."
     bounded_by: "The branch fuse F711, then the 10 A entry fuse F101, interrupt a breakdown between the two pads, which can only carry the steam pump's gate-network current through its gate resistor."
-    accepted_by: ""
-    accepted_on: ""
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
+  - pair: mains_to_mains
+    constraint: creepage
+    between: ["R704.1", "R704.2"]
+    accepted_mm: 1.8
+    reason: "R704 (200 ohm, R_1206_3216Metric) is one of the two series gate resistors of the coffee pump drive (R704 and R705), between the triac's MT2 (PUMP_C_MT2) and the opto-triac's output (PUMP_C_OPTO_MT), joined at the gate-resistor node. Its two pads stand 1.80 mm apart edge to edge, which is the 1206 package's own pad gap and not a layout choice; the gap falls short of the 2.6 mm creepage figure (KiCad does not test the clearance of two pads of one footprint). The part is not changed, and the entry excuses only this pair of pads, at 1.8 mm of creepage. A milled isolation slot under the part was prototyped and works under the repo's slot-aware reading, but it crosses or crowds seven locked mains tracks, moves a via, cuts the NEUTRAL pour and adds silk-to-edge lines, so it was not taken; a longer resistor package would be a schematic, BOM and placement change."
+    bounded_by: "Steady state, the voltage across R704 is the gate current through 200 ohm, volts at most; the exposure is a pulse of up to 179 V peak for microseconds before the triac fires (circuit-proof.md, pump gate resistor pulse row), not a continuous voltage. A bridge between the two pads shorts R704, leaving R705 alone to limit the gate pulse: the pair is sized at 358 ohm or more for the opto-triac's 1 A surge rating (circuit-proof.md), so the surge margin of the opto-triac would fall and it could fail, which drives the pump on until the interlock relay K201 opens; K201 opens only when the controller stops refreshing it, so it is NOT independent of the controller as DEC-CHAIN-FAULT-BOUNDED-BY-INDEPENDENT-ELEMENT defines independence, and this entry does not claim it is. The consequence is a pump that runs on, not a shock or fire route: owner-accepted residual risk (i) of DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER (2026-11-05), the same fail-on outcome as the accepted surge case (g); the conformal coat and pollution degree 2 credit that this record rests on also stand."
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
+  - pair: mains_to_mains
+    constraint: creepage
+    between: ["R705.1", "R705.2"]
+    accepted_mm: 1.8
+    reason: "R705 (200 ohm, R_1206_3216Metric) is one of the two series gate resistors of the coffee pump drive (R704 and R705), between the triac's MT2 (PUMP_C_OPTO_MT) and the opto-triac's output (PUMP_C_MT2), joined at the gate-resistor node. Its two pads stand 1.80 mm apart edge to edge, which is the 1206 package's own pad gap and not a layout choice; the gap falls short of the 2.6 mm creepage figure (KiCad does not test the clearance of two pads of one footprint). The part is not changed, and the entry excuses only this pair of pads, at 1.8 mm of creepage. A milled isolation slot under the part was prototyped and works under the repo's slot-aware reading, but it crosses or crowds seven locked mains tracks, moves a via, cuts the NEUTRAL pour and adds silk-to-edge lines, so it was not taken; a longer resistor package would be a schematic, BOM and placement change."
+    bounded_by: "Steady state, the voltage across R705 is the gate current through 200 ohm, volts at most; the exposure is a pulse of up to 179 V peak for microseconds before the triac fires (circuit-proof.md, pump gate resistor pulse row), not a continuous voltage. A bridge between the two pads shorts R705, leaving R704 alone to limit the gate pulse: the pair is sized at 358 ohm or more for the opto-triac's 1 A surge rating (circuit-proof.md), so the surge margin of the opto-triac would fall and it could fail, which drives the pump on until the interlock relay K201 opens; K201 opens only when the controller stops refreshing it, so it is NOT independent of the controller as DEC-CHAIN-FAULT-BOUNDED-BY-INDEPENDENT-ELEMENT defines independence, and this entry does not claim it is. The consequence is a pump that runs on, not a shock or fire route: owner-accepted residual risk (i) of DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER (2026-11-05), the same fail-on outcome as the accepted surge case (g); the conformal coat and pollution degree 2 credit that this record rests on also stand."
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
+  - pair: mains_to_mains
+    constraint: creepage
+    between: ["R714.1", "R714.2"]
+    accepted_mm: 1.8
+    reason: "R714 (200 ohm, R_1206_3216Metric) is one of the two series gate resistors of the steam pump drive (R714 and R715), between the triac's MT2 (PUMP_S_MT2) and the opto-triac's output (PUMP_S_OPTO_MT), joined at the gate-resistor node. Its two pads stand 1.80 mm apart edge to edge, which is the 1206 package's own pad gap and not a layout choice; the gap falls short of the 2.6 mm creepage figure (KiCad does not test the clearance of two pads of one footprint). The part is not changed, and the entry excuses only this pair of pads, at 1.8 mm of creepage. A milled isolation slot under the part was prototyped and works under the repo's slot-aware reading, but it crosses or crowds seven locked mains tracks, moves a via, cuts the NEUTRAL pour and adds silk-to-edge lines, so it was not taken; a longer resistor package would be a schematic, BOM and placement change."
+    bounded_by: "Steady state, the voltage across R714 is the gate current through 200 ohm, volts at most; the exposure is a pulse of up to 179 V peak for microseconds before the triac fires (circuit-proof.md, pump gate resistor pulse row), not a continuous voltage. A bridge between the two pads shorts R714, leaving R715 alone to limit the gate pulse: the pair is sized at 358 ohm or more for the opto-triac's 1 A surge rating (circuit-proof.md), so the surge margin of the opto-triac would fall and it could fail, which drives the pump on until the interlock relay K201 opens; K201 opens only when the controller stops refreshing it, so it is NOT independent of the controller as DEC-CHAIN-FAULT-BOUNDED-BY-INDEPENDENT-ELEMENT defines independence, and this entry does not claim it is. The consequence is a pump that runs on, not a shock or fire route: owner-accepted residual risk (i) of DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER (2026-11-05), the same fail-on outcome as the accepted surge case (g); the conformal coat and pollution degree 2 credit that this record rests on also stand."
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
+  - pair: mains_to_mains
+    constraint: creepage
+    between: ["R715.1", "R715.2"]
+    accepted_mm: 1.8
+    reason: "R715 (200 ohm, R_1206_3216Metric) is one of the two series gate resistors of the steam pump drive (R714 and R715), between the triac's MT2 (PUMP_S_OPTO_MT) and the opto-triac's output (PUMP_S_MT2), joined at the gate-resistor node. Its two pads stand 1.80 mm apart edge to edge, which is the 1206 package's own pad gap and not a layout choice; the gap falls short of the 2.6 mm creepage figure (KiCad does not test the clearance of two pads of one footprint). The part is not changed, and the entry excuses only this pair of pads, at 1.8 mm of creepage. A milled isolation slot under the part was prototyped and works under the repo's slot-aware reading, but it crosses or crowds seven locked mains tracks, moves a via, cuts the NEUTRAL pour and adds silk-to-edge lines, so it was not taken; a longer resistor package would be a schematic, BOM and placement change."
+    bounded_by: "Steady state, the voltage across R715 is the gate current through 200 ohm, volts at most; the exposure is a pulse of up to 179 V peak for microseconds before the triac fires (circuit-proof.md, pump gate resistor pulse row), not a continuous voltage. A bridge between the two pads shorts R715, leaving R714 alone to limit the gate pulse: the pair is sized at 358 ohm or more for the opto-triac's 1 A surge rating (circuit-proof.md), so the surge margin of the opto-triac would fall and it could fail, which drives the pump on until the interlock relay K201 opens; K201 opens only when the controller stops refreshing it, so it is NOT independent of the controller as DEC-CHAIN-FAULT-BOUNDED-BY-INDEPENDENT-ELEMENT defines independence, and this entry does not claim it is. The consequence is a pump that runs on, not a shock or fire route: owner-accepted residual risk (i) of DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER (2026-11-05), the same fail-on outcome as the accepted surge case (g); the conformal coat and pollution degree 2 credit that this record rests on also stand."
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
