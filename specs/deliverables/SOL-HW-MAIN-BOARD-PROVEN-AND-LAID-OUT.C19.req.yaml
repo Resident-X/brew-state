@@ -1,0 +1,12 @@
+id: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C19
+type: criterion
+title: The mains current channel resolves a leakage of 50 mA through outputs commanded off
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  With every pump, valve and heater commanded off, a leakage of 50 mA through any one of them changes the current returning through the board's mains current shunt (read by the second channel of the AMC131M02) by an amount the channel resolves against the idle current of the same channel with every output commanded off. This lets the startup confirmation of REQ-ACTUATION-CONFIRMATION-001.C6 observe, independently of the command path, that an output commanded off draws nothing. The resolution is shown by analysis from the converter's datasheet noise figures, for the gain, sample rate and averaging window the analysis states, with the arithmetic shown, and the idle current it is judged against is stated as an estimate until the bring-up measurement replaces it. The analysis also states what the channel does not resolve: a leakage of 10 mA, a leakage smaller than the error in the heater current while a heater is on, which output leaks, and current to protective earth. Out of scope: the firmware check that uses the resolution, and the measurement of the idle current.
+links:
+  - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT
+    type: criterion-of

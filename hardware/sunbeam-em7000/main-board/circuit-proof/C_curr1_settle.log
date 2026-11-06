@@ -1,0 +1,59 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: settling and sample memory, curr1_an (r570 r571 r573 c570): sensor step 0 to 4.5 v, ideal sensor output
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+sim_step                                     0
+curr1_div                                    0
+curr1_an                                     0
+adc_h                                        0
+ctl                                          0
+vsim_ctl#branch                              0
+vsim_step#branch                             0
+
+
+No. of Data Rows : 22563
+vfin_slow           =  3.00000e+00
+t_set_slow          =  5.40585e-03
+v_win_slow          =  2.99983e+00
+kick_uv_slow = 1.680000e+02
+t_rec_slow          =  3.09591e-02
+v_end_slow          =  3.00000e+00
+resid_uv_slow = 0.000000e+00
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+sim_step                                     0
+curr1_div                                    0
+curr1_an                                     0
+adc_h                                        0
+ctl                                          0
+vsim_ctl#branch                              0
+vsim_step#branch                             0
+
+
+No. of Data Rows : 22563
+vfin_fast           =  3.00000e+00
+t_set_fast          =  3.17589e-03
+v_win_fast          =  2.99975e+00
+kick_uv_fast = 2.460000e+02
+t_rec_fast          =  3.07000e-02
+v_end_fast          =  3.00000e+00
+resid_uv_fast = 0.000000e+00
+Note: Simulation executed from .control section 

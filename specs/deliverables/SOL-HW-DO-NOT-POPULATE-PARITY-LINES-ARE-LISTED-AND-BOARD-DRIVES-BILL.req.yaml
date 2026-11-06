@@ -1,0 +1,20 @@
+id: SOL-HW-DO-NOT-POPULATE-PARITY-LINES-ARE-LISTED-AND-BOARD-DRIVES-BILL
+type: deliverable
+category: solution
+title: The board's do-not-populate parity lines are listed and the board's attribute drives the bill of materials
+status: active
+version: 1
+text: |
+  Records and holds the repo-side effect of a tooling gap: the schematic editor's component-edit tool has no parameter for a symbol's do-not-populate or in-bill-of-materials flag, and the project's rules forbid editing the schematic file directly, so a part the board leaves unfitted carries the flag on the board's footprint and not on its schematic symbol. The board's schematic-to-board parity check therefore reports a footprint_symbol_mismatch line for each such part. The board attribute drives the production bill of materials, because the production seed builds it from the board with the exporter's exclude-do-not-populate option. The gap is upstream and is not fixed here.
+
+  Settled for the build:
+  - The expected parity lines are three, for the parts the main board leaves unfitted in the flow-meter input; the board records list each with its attribute and its reason.
+  - The check's report is compared with that list, so a mismatch not on it fails and a listed one that has gone is reported as stale.
+  - Out of scope: the upstream tool's missing parameter, and any direct edit of a schematic file.
+rationale: |
+  Restores the behaviour REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1 asks: a failed verification blocks the order, and proceeding requires the verification to pass. Three standing parity lines the check reports and nothing lists are indistinguishable from a real mismatch, so a genuine one could be waved through as one of them.
+links:
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C3
+    type: derives-from

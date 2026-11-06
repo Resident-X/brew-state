@@ -1,0 +1,26 @@
+Interlock timeout against the 12 ms refresh, shortest corner, leakage case L1, variant fix: 50 nA, the pump-diode figure of the record
+.include A_interlock.cir
+.include A_models.inc
+Vsup +5V GND 4.75
+Vpol POL_OUT GND PWL(0 0 0.010000000 0 0.010000010 3.3 0.016000000 3.3 0.016000010 0 0.022000000 0 0.022000010 3.3 0.028000000 3.3 0.028000010 0 0.034000000 0 0.034000010 3.3 0.040000000 3.3 0.040000010 0 0.046000000 0 0.046000010 3.3 0.052000000 3.3 0.052000010 0 0.058000000 0 0.058000010 3.3 0.064000000 3.3 0.064000010 0 0.070000000 0 0.070000010 3.3 0.076000000 3.3 0.076000010 0 0.082000000 0 0.082000010 3.3 0.088000000 3.3 0.088000010 0 0.094000000 0 0.094000010 3.3 0.100000000 3.3 0.100000010 0 0.106000000 0 0.106000010 3.3 0.112000000 3.3 0.112000010 0 0.118000000 0 0.118000010 3.3 0.124000000 3.3 0.124000010 0)
+* output low after the last edge (a held-high output is run in the removal decks)
+Rcoil +5V POL_COIL_LO 81.8
+* gate leakage (pump-diode reverse current plus FET gate leakage) as a current from the gate to ground, faded out under 0.2 V
+.param IL=50n
+Bl201 POL_GATE_A GND I='IL*(v(POL_GATE_A)>0.2 ? 1 : v(POL_GATE_A)/0.2)'
+Bl202 POL_GATE_B GND I='IL*(v(POL_GATE_B)>0.2 ? 1 : v(POL_GATE_B)/0.2)'
+.options reltol=1e-5 abstol=1e-15 gmin=1e-15
+.tran 2u 400m 0 5u
+.control
+alter R203 = 5.5104Meg
+alter R204 = 5.5104Meg
+alter C203 = 4.4547n
+alter C205 = 4.4547n
+alter C202 = 94.8n
+alter C204 = 94.8n
+run
+meas tran vpeakA MAX v(POL_GATE_A) FROM=0.117999000 TO=0.118100000
+meas tran gminA MIN v(POL_GATE_A) FROM=0.112000000 TO=0.117999000
+meas tran tabove_after_edge TRIG AT=0.118000000 TARG v(POL_GATE_A) VAL=1.8 FALL=1 TD=0.118100000
+.endc
+.end

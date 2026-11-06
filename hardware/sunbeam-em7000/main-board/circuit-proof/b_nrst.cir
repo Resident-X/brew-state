@@ -1,0 +1,19 @@
+Controller reset input: release time through the internal pull-up and C418, to 0.7 VDD
+* C418 is the Controller sheet's NRST capacitor. RPU_INT is the part's internal pull-up (DS12110 Rev 11 Table 152: 30 / 40 / 50 kohm), not a board part.
+Vsup vdd 0 3.3
+RPU_INT vdd nrst 40k
+C418 nrst 0 100n IC=0
+.tran 20u 40m uic
+.control
+run
+meas tran t_release_nom WHEN v(nrst)=2.31 RISE=1
+alter RPU_INT = 50k
+alter C418 = 126n
+run
+meas tran t_release_slow WHEN v(nrst)=2.31 RISE=1
+alter RPU_INT = 30k
+alter C418 = 76.5n
+run
+meas tran t_release_fast WHEN v(nrst)=2.31 RISE=1
+.endc
+.end

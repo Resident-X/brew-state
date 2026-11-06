@@ -1,0 +1,19 @@
+id: EV-SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN-C12-INSPECTION-2
+type: evidence
+title: inspection evidence for SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C12, rows M1 to M29
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-05T21:50:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/main-board/open-items.md
+  artifact_version: 31910b50
+  verifier: claude (AI agent)
+text: |
+  Inspection of hardware/sunbeam-em7000/main-board/open-items.md, section "Bring-up measurements carried", at the branch commit stated in the artifact version, against each clause of the criterion. The section holds rows M1 to M29. Each row names the part and the figure its maker does not publish, states the measurement on the built board that reads it, states the limit the reading must meet and where the limit comes from, and the section states that a part is graded on the range its maker does publish and that a row never stretches a rating. Instruments are limited to a home bench, and where no home measurement can be made the row says so (worst case assumed with its value and source, or asked of the maker). Four groups of figures had no row in an earlier inspection of this section and now have one: M26 the pump triac 1.2/50 us surge withstand (not measurable on a hobby bench; the limit is the 0.89 kV the varistor passes, which the records do not show met, so it stays the owner's accepted residual risk (g)); M27 the triac's thermal resistance at the layout copper area (tab-to-air reading against 56.8 and 137.6 K/W, stated as a necessary limit only); M28 the HF115F coil inductance (LCR meter on a spare, at most 4.73 H) and creepage and clearance (callipers on a spare, 10.0 mm and 3.0 mm); M29 the SETfuse let-through at 6 kA (asked of the maker; not measurable on a hobby bench; no numeric limit can be stated until it answers). Stated gaps, not hidden: M26 and M29 have no reading on the built board; M27 states a necessary limit and not a sufficient one; M29 states no numeric limit. Timing: rows M1 to M25 are in the carry commit 0b59ece6, before the board was placed; rows M26 to M29 were added after layout began (they convert items already recorded in the same file as questions to the maker), so the criterion's title clause 'before layout begins' holds for M1 to M25 and not for M26 to M29. The criterion's text carries no timing and is met on the rows as they stand; the title's timing for the four added rows is a point for the owner. Measuring the figures is not claimed.
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C12
+    type: satisfies

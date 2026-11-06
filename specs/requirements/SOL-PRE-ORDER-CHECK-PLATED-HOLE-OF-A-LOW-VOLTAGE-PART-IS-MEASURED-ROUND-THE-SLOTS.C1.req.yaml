@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-PLATED-HOLE-OF-A-LOW-VOLTAGE-PART-IS-MEASURED-ROUND-THE-SLOTS.C1
+type: criterion
+title: A plated hole of a part on a net outside Mains is held to the signed distance of Mains copper by the creepage route round the barrier slots
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a synthetic layout with a barrier slot between a plated hole of a part's pad on a net outside Mains and a Mains-class pad, where the straight-line distance between them is under the larger of the signed clearance and creepage and the shortest route round the slot is at or above it, the check gives no mounting_hole violation for the pair; the same pair with the slot absent, and a pair whose route round the slot is under the distance, each fail naming the hole and the Mains item and the distance measured. Out of scope is a fixing's own pad and courtyard, and the signed figures.
+links:
+  - target: SOL-PRE-ORDER-CHECK-PLATED-HOLE-OF-A-LOW-VOLTAGE-PART-IS-MEASURED-ROUND-THE-SLOTS
+    type: criterion-of

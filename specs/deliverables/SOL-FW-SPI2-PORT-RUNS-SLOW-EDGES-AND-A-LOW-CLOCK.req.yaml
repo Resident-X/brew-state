@@ -1,0 +1,25 @@
+id: SOL-FW-SPI2-PORT-RUNS-SLOW-EDGES-AND-A-LOW-CLOCK
+type: deliverable
+category: solution
+title: The firmware configures SPI2 with edges of 5 ns or slower and a clock of 4 MHz or lower
+status: active
+version: 1
+text: |
+  Builds the firmware side of the main board's criterion DEL-HW-MAIN-BOARD-DESIGNED.C27, which the board epic carries but a board design cannot satisfy: the firmware that configures the controller's SPI2 port, the one that reaches the two MAX31865 temperature converters and the AMC131M02, gives its SCK and MOSI outputs an edge of 5 ns or slower and runs the port at 4 MHz or lower, as the routed board's signal study asks.
+
+  Settled for the build:
+    - The setting is made where the firmware configures the port, through the hardware seam, so the control logic is untouched and the host and emulation tiers see it.
+    - The test reads the configuration the firmware ships and a deliberately wrong one, and fails the wrong one, so the check is proven on both.
+    - This leaf depends on the firmware target moving to the selected controller, because the speed settings and their published edge figures are that part's.
+    - Out of scope: the signal study and the readings on the built board (the bring-up task's criterion for the signal readings).
+
+  Locus: the firmware's hardware-seam implementation for the SPI2 port and its host-tier test.
+rationale: |
+  Placed as the sibling of SOL-HW-FIRMWARE-PIN-CHECKS-READ-MAIN-BOARD-RECORDS: a firmware behaviour the board epic requires is built by a firmware solution that derives from the epic's criterion, so the epic can close and the criterion is not left with nothing building it.
+links:
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C27
+    type: derives-from
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets
+  - target: DEL-FIRMWARE-TARGET-ON-SELECTED-CONTROLLER
+    type: depends-on

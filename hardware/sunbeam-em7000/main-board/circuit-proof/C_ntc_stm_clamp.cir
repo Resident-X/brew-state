@@ -1,0 +1,42 @@
+Clamp of NTC_STM: lead cross-shorted to a 5 V supply lead, node NTC_STM_SENS driven to the 5 V level
+* Source of every value: the sheet fragment of this block (generated from the same table).
+* Sim-only elements (names with SIM_) stand for the sensor, the converter's sample and hold and the supply.
+* Converter: DS12110 Rev 11 Table 77 / Table 174: CADC 4 pF (typ), tS 810.5 cycles, 16 bit, fADC 10 MHz.
+* BAT54S as two diodes, fitted to the forward-voltage MAXIMA of Nexperia BAT54S 1 July 2022 Table 7 (0.24 V at 0.1 mA, 0.32 at 1, 0.40 at 10, 0.50 at 30, 0.80 at 100 mA)
+.model DSCH D(IS=7.793e-9 N=1.04 RS=3.6)
+VSIM_V3A +3V3A 0 3.3
+R503 +3V3A NTC_STM_SENS 10k
+VSIM_XSHORT NTC_STM_SENS 0 5.25
+R504 NTC_STM_SENS NTC_STM 1k
+* D504: pin 1 (A) on GND, pin 3 (COM) on the converter pin node, pin 2 (K) on +3V3A
+D504_1 0 NTC_STM DSCH
+D504_2 NTC_STM +3V3A DSCH
+ISIM_PAD NTC_STM 0 250n
+.op
+.control
+alter VSIM_V3A = 3.3
+op
+let pin_rail3p3 = v(NTC_STM)
+print pin_rail3p3
+let iclamp_mA_rail3p3 = (v(NTC_STM_SENS)-v(NTC_STM))/1000*1000
+print iclamp_mA_rail3p3
+alter VSIM_V3A = 3.4
+op
+let pin_rail3p4 = v(NTC_STM)
+print pin_rail3p4
+let iclamp_mA_rail3p4 = (v(NTC_STM_SENS)-v(NTC_STM))/1000*1000
+print iclamp_mA_rail3p4
+alter VSIM_V3A = 3.5
+op
+let pin_rail3p5 = v(NTC_STM)
+print pin_rail3p5
+let iclamp_mA_rail3p5 = (v(NTC_STM_SENS)-v(NTC_STM))/1000*1000
+print iclamp_mA_rail3p5
+alter VSIM_V3A = 3.6
+op
+let pin_rail3p6 = v(NTC_STM)
+print pin_rail3p6
+let iclamp_mA_rail3p6 = (v(NTC_STM_SENS)-v(NTC_STM))/1000*1000
+print iclamp_mA_rail3p6
+.endc
+.end

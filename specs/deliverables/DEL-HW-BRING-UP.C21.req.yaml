@@ -1,0 +1,13 @@
+id: DEL-HW-BRING-UP.C21
+type: criterion
+title: The signal readings the routed main board's signal study carries to bring-up are taken on the built board against their stated limits
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  Five signal readings that the routed main board's signal study (signal-study.md in the board's folder) carries to bring-up are taken on the built board and compared with the limit the study states, and a reading outside its limit fails. They are: the SPI2 clock and data edges scoped at the pads of R610 and R611 (no test point sits on SCK or MOSI) with the firmware's pin speed set and a 5 MHz burst, overshoot at most 0.3 V at the speed set, failing which the firmware edge is slowed first and then a 33 ohm part is added in the branch to each MAX31865; the shared MISO at TP610 against SCK, with a temperature converter read back at 5 MHz and at 4 MHz, finishing inside the half period with the margin the study's budget gives (about 8 ns at 5 MHz and about 33 ns at 4 MHz in the worst datasheet corner); the +3V3 rail at the pad of C401 (no test point sits on +3V3 itself) with the firmware running flat out, at most 50 mV peak to peak; the 32.768 kHz crystal probed at the pads of C416 and C417 (no test point) with the strongest drive setting, the crystal starting and its start-up time and frequency recorded, a crystal that does not start being left unfitted, since the machine has no requirement on the real-time clock; and the load-cell channel read at TP671, TP673 and TP670 with SPI2 and PT2_CS active, the change from the reading with PT2_CS idle being at most 100 ppm of full scale, the figure the study gives as the weight accuracy a pickup of that size would begin to matter to, no weight requirement existing. Each reading, its limit and the result are recorded against the study. Out of scope: the study's model, and the readings the board's bring-up provision already lists.
+links:
+  - target: DEL-HW-BRING-UP
+    type: criterion-of

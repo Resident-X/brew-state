@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING.C1
+type: criterion
+title: The header's first condition states that the coat is applied after bring-up and the credit stands on the enclosure
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The header comment of the committed record states, in its first condition, that the pollution degree 2 credit stands on the enclosure, that the conformal coat is a supporting measure that does not itself earn the credit and is applied after bring-up, once the machine is deemed functional from a hardware perspective, that the first connection to mains and the bring-up bench tests run on the uncoated boards in a clean room, and that until the coat is applied it is no part of the bound on any fault between mains pads. No sentence of the header says the boards are coated before they are energised or before mains is first connected. The test fails on a header that says either of the latter, or that omits the after-bring-up timing or the uncoated first connection. Out of scope is the wording of any other condition of the header and any figure of the record.
+links:
+  - target: SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING
+    type: criterion-of

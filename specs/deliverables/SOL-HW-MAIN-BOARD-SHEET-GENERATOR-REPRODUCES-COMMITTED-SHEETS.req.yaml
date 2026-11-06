@@ -1,0 +1,20 @@
+id: SOL-HW-MAIN-BOARD-SHEET-GENERATOR-REPRODUCES-COMMITTED-SHEETS
+type: deliverable
+category: solution
+title: The main board's circuit-proof generator reproduces the committed sheets and names only parts they carry
+status: active
+version: 1
+text: |
+  Brings the circuit-proof generator back to the committed sheets of the main board. The generator holds the parts table that writes the board's schematic sheets and that the proof's decks and front-end scripts read, so the proof and the sheets are meant to stand on one table. Seven of the sheets were edited afterwards through the schematic editor and reviewed in that form, and the generator no longer reproduces them; its source also still names test points removed from the board. The committed sheets govern: the generator is corrected to them, never the sheets to the generator.
+
+  Settled for the build:
+  - The generator, its checks and the proof's decks stay the proof's own scripts; they read the committed sheets and write nothing to them except through the generator's own documented run.
+  - A part the generator names that the committed sheets do not carry is removed from its table, with the decks and records that read it brought to the same table in the same change.
+  - Out of scope: any change to a drawn sheet, to the board, and to the circuit-proof verdicts' content beyond the references the correction makes stale.
+rationale: |
+  Restores the behaviour REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3 asks: the judgement of every part and net rests on one parts table. Sheets edited by hand after the generator wrote them leave the proof's decks computed from a table the board no longer matches, so a proof can pass for a circuit the board does not carry.
+links:
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3
+    type: targets
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C1
+    type: derives-from

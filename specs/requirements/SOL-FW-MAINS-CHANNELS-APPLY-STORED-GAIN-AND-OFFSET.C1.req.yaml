@@ -1,0 +1,12 @@
+id: SOL-FW-MAINS-CHANNELS-APPLY-STORED-GAIN-AND-OFFSET.C1
+type: criterion
+title: The firmware's mains reading path applies a stored gain and offset and marks an uncalibrated start
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  A test of the firmware's reading path for the isolated converter's two mains measurement channels fails a reading that ignores a stored gain or a stored offset, fails a restart that loses the stored values, and fails a start with no stored values that does not mark its mains readings as uncalibrated. Out of scope are the values, which the bring-up calibration measures, and the channels' accuracy figures.
+links:
+  - target: SOL-FW-MAINS-CHANNELS-APPLY-STORED-GAIN-AND-OFFSET
+    type: criterion-of

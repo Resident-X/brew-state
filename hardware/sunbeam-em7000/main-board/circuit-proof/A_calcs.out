@@ -1,0 +1,43 @@
+== Copper cross-section per width (copper weight to thickness: 1 oz/ft2 = 305.15 g/m2; copper density 8.96 g/cm3 -> 34.06 um; 0.5 oz 17.03 um)
+1 oz  nominal thickness from the weight definition: 34.06 um (JLCPCB states weights only; the thinnest finished thickness is not stated)
+check of the method's own example: theta_i 90, theta_f 250 -> k = 143.1 A s^0.5/mm2 (method states 143)
+
+== k2 S2 (A2 s) at S = width x 34.06 um (1 oz) and 17.03 um (0.5 oz inner), for ILLUSTRATIVE theta pairs (no source states them: not results)
+link region K_IL.a side, narrowest     5.75 mm x 1 oz = S 0.1958 mm2 | (85,183): k=117 k2S2=524 | (105,217): k=121 k2S2=558 | (130,250): k=121 k2S2=557
+link region K_IL.a side, narrowest     5.75 mm x 0.5 oz = S 0.0979 mm2 | (85,183): k=117 k2S2=131 | (105,217): k=121 k2S2=140 | (130,250): k=121 k2S2=139
+entry-fuse load-side clip region       6.00 mm x 1 oz = S 0.2043 mm2 | (85,183): k=117 k2S2=571 | (105,217): k=121 k2S2=608 | (130,250): k=121 k2S2=607
+entry-fuse load-side clip region       6.00 mm x 0.5 oz = S 0.1022 mm2 | (85,183): k=117 k2S2=143 | (105,217): k=121 k2S2=152 | (130,250): k=121 k2S2=152
+neutral pour and shunt lands           7.00 mm x 1 oz = S 0.2384 mm2 | (85,183): k=117 k2S2=777 | (105,217): k=121 k2S2=828 | (130,250): k=121 k2S2=826
+neutral pour and shunt lands           7.00 mm x 0.5 oz = S 0.1192 mm2 | (85,183): k=117 k2S2=194 | (105,217): k=121 k2S2=207 | (130,250): k=121 k2S2=207
+
+== Largest let-through a conductor could withstand = k2 S2 (same grid), so the fuse sheet's figure at 6 kA must be at or under it
+Fuse sheet (SETfuse SCT520(P) V1.0): average melting I2t of the 10 A rating 500 A2s at 10 x 10 A; pre-arcing only. Clearing time and let-through at 6 kA: NOT STATED.
+Rated breaking capacity of the 10 A rating: UL 10 kA at 250 VAC (covers 6 kA, 1.67x); CQC/TUV 2 kA at 250 VAC (6000/2000 = 3.0 x short)
+
+== Relay contact against the series current (Hongfa HF115F-Q 2024 Rev 1.00)
+steady, both elements+pumps+valves     10.96 A : 20 A @250 VAC x1.82 ; VDE 18 A @105 C x1.64 ; VDE 16 A @125 C x1.46
+with valve inrush                      11.03 A : 20 A @250 VAC x1.81 ; VDE 18 A @105 C x1.63 ; VDE 16 A @125 C x1.45
+fuse overload band 1.5 x 10 A          15.00 A : 20 A @250 VAC x1.33 ; VDE 18 A @105 C x1.20 ; VDE 16 A @125 C x1.07
+voltage 440 VAC / 358 V peak = 1.23 ; 440/253 = 1.74 ; switching power 5000 VA / (253 x 15 = 3795 VA) = 1.32 ; / (253 x 10.96 = 2773) = 1.80
+
+== Varistor 14D471K (Ruilon 14D series A3, 2023-10-27)
+stays off: lowest varistor voltage 423 V vs 358 V peak = 1.18 ; max allowable 300 VAC vs 253 = 1.19 ; 385 VDC vs 358 V peak = 1.08
+clamp 775 V at 50 A (8/20 us) vs the 2.5 kV category-II surge (separation basis): 3.23 x lower; 1725/4500 = 0.38 ohm source impedance at which the 4500 A is met
+open interlock contact: 1000 VAC between open contacts = 1414 V peak vs 775 V clamp = 1.82
+
+== X2 capacitor discharge (KNSCHA MPX104K31C3KN15600: 0.1 uF +-10 %, 310 VAC rated; PSMA/How2Power article: below 34 V peak within 1 s after plug removal)
+two strings of 2 x 1 Mohm in parallel                   R=1.016 Mohm tau=0.112 s V(1 s)=0.0465 V ; time to 34 V = 0.263 s ; power at 253 V = 63.0 mW
+one string open                                         R=2.032 Mohm tau=0.224 s V(1 s)=4.08 V ; time to 34 V = 0.526 s ; power at 253 V = 31.5 mW
+one resistor shorted in one string, other string intact R=0.677 Mohm tau=0.075 s V(1 s)=0.000531 V ; time to 34 V = 0.175 s ; power at 253 V = 94.5 mW
+stored energy at the peak: 0.5 x 0.1 uF x (358 V)^2 = 6.40 mJ (record: 6.4 mJ)
+resistor working voltage: each of 2 in series sees at most 179 V peak vs UNI-ROYAL 1206 maximum working voltage 200 V
+
+== Shunt WSK25121L000FEA (Vishay Dale doc 30108, 04-Apr-2022): P70 1.0 W; TCR +-250 ppm/C (1.0 to 2.9 mohm); operating -65..+170 C
+I = 10.96 A: P = 0.120 W vs required 0.25 W: rated 1.0 W at 70 C = x8.32
+I = 11.01 A: P = 0.121 W vs required 0.25 W: rated 1.0 W at 70 C = x8.25
+I = 15.00 A: P = 0.225 W vs required 0.25 W: rated 1.0 W at 70 C = x4.44
+resistance at 85 C: 1.0 mohm +-1 % +-250 ppm x 60 K = +-2.50 %
+
+== First power: lamp in the live link position JP101 (supply 253 V, 230 V lamps of 60 W and 100 W)
+60 W / 230 V lamp: hot resistance 882 ohm ; short-circuit steady current at 253 V ~ 253 V / 882 ohm = 0.287 A (lamp at its rating; cold-filament inrush not sourced here)
+100 W / 230 V lamp: hot resistance 529 ohm ; short-circuit steady current at 253 V ~ 253 V / 529 ohm = 0.478 A (lamp at its rating; cold-filament inrush not sourced here)

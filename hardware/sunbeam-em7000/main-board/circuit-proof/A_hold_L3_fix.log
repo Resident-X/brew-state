@@ -1,0 +1,35 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: interlock timeout against the 12 ms refresh, shortest corner, leakage case l3, variant fix: datasheet limits with a gate-leakage limit of 100 na + the diode's 80 na
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
++5v                                       4.75
+pol_out                                      0
+pol_buf                             2.6125e-07
+pol_node_a                          2.0093e-74
+pol_gate_a                        -1.23855e-83
+pol_mid                                  2.375
+pol_node_b                          2.0093e-74
+pol_gate_b                        -1.23855e-83
+pol_coil_lo                               4.75
+pol_clamp_1                            4.74946
+pol_clamp_2                            4.74946
+vpol#branch                                  0
+vsup#branch                          -4.75e-09
+
+
+No. of Data Rows : 80842
+vpeaka              =  3.81510e+00 at=  1.18086e-01
+gmina               =  1.97544e+00 at=  1.17997e-01
+tabove_after_edge   =  1.34930e-02 targ=  1.31493e-01 trig=  1.18000e-01
+Note: Simulation executed from .control section 

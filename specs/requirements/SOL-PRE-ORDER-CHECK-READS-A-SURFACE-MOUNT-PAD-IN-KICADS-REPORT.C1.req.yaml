@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-READS-A-SURFACE-MOUNT-PAD-IN-KICADS-REPORT.C1
+type: criterion
+title: A surface-mount pad in KiCad 10's wording is read as a pad with its reference and pad name
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a synthetic report item, "Pad 2 [/Net A] of T1 on F.Cu @ (42.34, 31.4) mm", "Pad 2 [/Net A] of T1 on B.Cu", "SMD pad 2 [/Net A] of T1", "PTH pad 2 [/Net A] of T1", "PTH pad A1 [+5V] of K1 @ (60.7, 11.35) mm" and a pad of no net, "Pad 1 [<no net>] of T1 on F.Cu" and "Pad [<no net>] of T1 on F.Cu", each read as a pad of the named reference designator and, where it has one, pad name; a net written with brackets or the word "of" inside it is read through to the pad's own reference; and a text that names a track, a via or a zone, and a part with no pad, is read as no pad. Out of scope is which pairs a record's entries name.
+links:
+  - target: SOL-PRE-ORDER-CHECK-READS-A-SURFACE-MOUNT-PAD-IN-KICADS-REPORT
+    type: criterion-of

@@ -1,0 +1,21 @@
+id: SOL-PRE-ORDER-CHECK-READS-A-SURFACE-MOUNT-PAD-IN-KICADS-REPORT
+type: deliverable
+category: solution
+title: The pre-order check reads a surface-mount pad in KiCad's own report as a pad
+status: active
+version: 1
+text: |
+  Corrects how the pre-order check reads a pad out of KiCad's own report. A spacing shortfall the layout rule check reports names each item in words, and the check recognises a pad in that wording to match the shortfall to the owner's signed exception for that pad pair, to take the pad's reference designator and pad name, and to take its position. The reader recognises only the wording KiCad uses for a through-hole pad, where the pad ends the text or is followed directly by its position. KiCad 10 words a surface-mount pad as "Pad 2 [net] of T701 on F.Cu", with a capital P and the copper layer between the part and the position, so the reader finds no pad in it. A shortfall between two surface-mount pads is then never matched to its entry: the entry is reported as used by no shortfall, the shortfall stays an ordinary violation, and no signature by the owner can make the check pass. On the main controller board 17 drafted pad-pair entries (the TO-252 land of the two triacs, a resistor pair, the 1206 pairs, the optocoupler pin pairs) fail to match for this reason alone.
+
+  Settled for the build:
+  - A pad is recognised in either capitalisation, with or without a leading pad kind (PTH, NPTH, SMD), a pad name that is a number or letters and digits, a net between square brackets that may itself hold brackets or the word "of", the reference designator, and then either the end of the text, a copper layer ("on F.Cu"), or the check's own " @ (x, y) mm" position, in any of the combinations KiCad and the check write them.
+  - A text that names a track, via, zone, graphic or part and no pad is read as no pad, as before. A pad of no net, which KiCad writes as [<no net>] or with no brackets, is read as a pad whose net is none.
+  - The through-hole wording and the position the check writes after it are read as they are now, and no existing match changes.
+  - Out of scope: which pairs the record's entries name, the rules' figures, and any board's records.
+rationale: |
+  Restores the behaviour REQ-ELECTRICAL-INSTALL-001.C16 asks of the check: a shortfall a part's geometry forces is passed as an exception the owner has signed for that pair. KiCad 10's wording for a surface-mount pad is not one the reader can match, so a signed exception for such a pair is void whatever the owner signs, and the check can never pass a board whose bought parts have surface-mount lands under the signed spacing.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C16
+    type: targets

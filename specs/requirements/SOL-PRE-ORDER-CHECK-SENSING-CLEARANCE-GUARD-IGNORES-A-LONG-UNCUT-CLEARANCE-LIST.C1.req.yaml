@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-GUARD-IGNORES-A-LONG-UNCUT-CLEARANCE-LIST.C1
+type: criterion
+title: A sensing_clearance line is printed only for a sensing shortfall or for a clearance list KiCad cut short
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a synthetic board whose KiCad clearance list holds more entries than REPORT_LIMIT through clearance failures between items of classes the sensing rule does not name, and no sensing item inside the declared clearance, the pre-order check prints no sensing_clearance violation line. On the same board with one sensing item inside the declared clearance it prints the line for that item and no other. With KiCad's report replaced by one that is cut short, the check still fails the sensing-clearance rule naming the cut. On the finished main board the check prints no sensing_clearance line that does not name a sensing item. Out of scope are the sensing clearance figure and the guards on assertion counts.
+links:
+  - target: SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-GUARD-IGNORES-A-LONG-UNCUT-CLEARANCE-LIST
+    type: criterion-of

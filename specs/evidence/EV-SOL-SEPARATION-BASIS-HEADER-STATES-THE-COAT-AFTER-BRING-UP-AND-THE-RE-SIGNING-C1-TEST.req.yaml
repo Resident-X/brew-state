@@ -1,0 +1,15 @@
+id: EV-SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING-C1-TEST
+type: evidence
+title: test evidence for SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-06T11:17:30Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_separation_basis_record.py::CoatAfterBringUpAndTheReSigning.test_the_first_condition_states_the_coat_after_bring_up_and_the_credit_on_the_enclosure
+  artifact_version: 1031fe4f52dd6f46db8b79b4e4142997a622462a
+links:
+  - target: SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING.C1
+    type: satisfies

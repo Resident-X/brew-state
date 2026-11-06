@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-NET-TIE-COPPER-IS-THE-COPPER-OF-THE-NETS-IT-JOINS.C1
+type: criterion
+title: The copper graphic of a net tie between Mains-class nets is Mains copper and is no low-voltage item of the cross-layer rule
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a synthetic layout with a Mains-class line pour on an inner layer and a net-tie footprint of two pads on two Mains-class nets whose netless copper graphic lies on the front layer under it, the cross-layer rule raises no finding between the tie's graphic and any Mains-class item, whatever the distance in plan view, and the same layout with the tie's footprint naming no net-tie groups, so that the graphic is an ordinary netless graphic, raises the finding it raised. Out of scope is the rule's threshold.
+links:
+  - target: SOL-PRE-ORDER-CHECK-NET-TIE-COPPER-IS-THE-COPPER-OF-THE-NETS-IT-JOINS
+    type: criterion-of

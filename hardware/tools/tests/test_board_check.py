@@ -1063,6 +1063,49 @@ class AMountingHoleIsFoundAndHeldToTheLargerSignedFigure(unittest.TestCase):
         self.assertEqual(holes('"1" thru_hole circle (at 0 0) (size 4 4) (layers "*.Cu")', attr=left_out), [])
         self.assertEqual(holes('"1" thru_hole circle (at 0 0) (size 4 4) (layers "*.Cu")', name=stock), [])
 
+    def test_a_plated_pad_on_a_net_is_a_terminal_whatever_its_footprints_pad_count_and_a_fixing_of_each_mark_is_a_hole(self):
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C2: On a synthetic layout, a footprint of one plated drilled pad on a Mains net, and one on a low-voltage net, each in the bill of materials and with a library item name that does not begin MountingHole, are not among the mounting holes, and neither gives a mounting_hole violation when its courtyard is drawn inside the signed distance of another Mains net's copper; a footprint of one plated drilled pad on no net, a footprint whose every pad is non-plated, a plated footprint excluded from the bill of materials and a plated footprint whose library item name begins MountingHole are each among them, the last two whatever the net of their pads, a protective-earth net included. A one-pin through-hole part such as a test point is held the same way: on a net it is a part and not a hole. A footprint with a surface-mount pad is no hole whatever its marks. Out of scope: which parts the main board draws as tabs.
+        def holes(pad, attr="", name="a:Tab", nets=""):
+            return board_check.hole_footprints(sexpr.parse_one(
+                f'(kicad_pcb (version 1) {nets} (footprint "{name}" (layer "F.Cu") (at 0 0) (property "Reference" "X1" (at 0 0 0)) {attr} (pad {pad})))'))
+        def plated(net):
+            return f'"1" thru_hole circle (at 0 0) (size 4 4) (drill 3.2) (layers "*.Cu") {net}'
+        left_out = "(attr exclude_from_pos_files exclude_from_bom)"
+        self.assertEqual(holes(plated('(net "/MAINS_L")')), [], "a tab terminal on a Mains net")
+        self.assertEqual(holes(plated('(net "/LV_A")')), [], "a one-pin part on a low-voltage net")
+        self.assertEqual(holes(plated('(net "/LV_A")'), attr="(attr through_hole)"), [], "a test point in the bill of materials")
+        self.assertEqual(holes(plated('')), ["X1"], "a plated pad on no net")
+        self.assertEqual(holes(plated('(net "")')), ["X1"], "a plated pad on the empty net")
+        self.assertEqual(holes(plated('(net "/MAINS_L")'), attr=left_out), ["X1"], "left out of the bom, whatever the net")
+        self.assertEqual(holes(plated('(net "/PE")'), attr=left_out), ["X1"], "a protective-earth net, left out of the bom")
+        self.assertEqual(holes(plated('(net "/PE")'), name="MountingHole:MountingHole_3.2mm_M3_Pad"), ["X1"], "named for a mounting hole")
+        self.assertEqual(holes('"" np_thru_hole circle (at 0 0) (size 3.2 3.2) (drill 3.2) (layers "*.Cu")'), ["X1"], "every pad non-plated")
+        self.assertEqual(holes('"1" smd rect (at 0 0) (size 1 1) (layers "F.Cu") (net "/LV_A")', attr=left_out), [], "a surface-mount pad")
+        # a numbered net, as an older layout writes it, is a net all the same
+        self.assertEqual(holes(plated('(net 1)'), nets='(net 0 "") (net 1 "/MAINS_L")'), [], "a net given by its number")
+        self.assertEqual(holes(plated('(net 0)'), nets='(net 0 "") (net 1 "/MAINS_L")'), ["X1"], "the net numbered 0 is no net")
+
+    def test_a_one_pad_plated_footprint_whose_net_cannot_be_read_is_unreadable_and_neither_passed_as_a_terminal_nor_failed_as_a_hole(self):
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C4: a footprint of one plated drilled pad whose net is named twice, or written other than as (net "name"), gives a design_unreadable violation naming the layout, and is neither passed as a terminal nor failed as a hole. Out of scope: the unreadable-layout failures of the other rules.
+        design = board_check.Design("hardware/m/board/board.kicad_pro")
+        for pad_net in ('(net "/A") (net "/B")', '(net "/A" "/B")', '(net ("/A"))'):
+            tree = sexpr.parse_one('(kicad_pcb (version 1) (footprint "a:Tab" (layer "F.Cu") (at 0 0) (property "Reference" "X1" (at 0 0 0))'
+                                   f' (pad "1" thru_hole circle (at 0 0) (size 4 4) (drill 3.2) (layers "*.Cu") {pad_net})))')
+            with self.subTest(net=pad_net):
+                with self.assertRaises(board_geometry.Unreadable):
+                    board_check.hole_footprints(tree)
+                found = board_check.mounting_holes("kicad", design, "scratch", "board.kicad_pcb", "board.kicad_dru", "", board_check.Signed(3.0, 4.0, {}),
+                                                   "n1", None, tree, {"/MAINS_L"})
+                self.assertEqual([v.rule for v in found], ["design_unreadable"])
+                self.assertEqual(found[0].location, design.layout)
+
+    def test_a_layout_with_no_footprint_and_one_whose_footprints_are_all_surface_mount_have_no_mounting_hole(self):
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C4: a layout with no footprint and a layout whose footprints are all surface-mount give no mounting_hole violation and no error
+        self.assertEqual(board_check.hole_footprints(sexpr.parse_one("(kicad_pcb (version 1))")), [])
+        surface = sexpr.parse_one('(kicad_pcb (version 1) (footprint "a:R" (layer "F.Cu") (at 0 0) (property "Reference" "R1" (at 0 0 0))'
+                                  ' (pad "1" smd rect (at 0 0) (size 1 1) (layers "F.Cu") (net "/A") (net "/B"))))')
+        self.assertEqual(board_check.hole_footprints(surface), [])
+
     def test_the_rules_hold_the_larger_of_the_two_signed_figures_to_the_hole_edge_and_the_pad(self):
         # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: rules holding the hole clearance to the Mains class at no less than the larger of the signed clearance and the signed creepage
         text = board_check.hole_rules(4.0)

@@ -1,0 +1,19 @@
+id: EV-SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT-C16-INSPECTION-2
+type: evidence
+title: inspection evidence for SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C16 at version 4
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-05T21:50:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/main-board/fabrication-notes.md::Laminate and comparative tracking index; Status
+  artifact_version: 0bcc82b8
+  verifier: claude (AI agent)
+text: |
+  Read hardware/sunbeam-em7000/main-board/fabrication-notes.md, section "Laminate and comparative tracking index" with its "Status" subsection, at the branch commit stated in the artifact version, against each clause of version 4 of the criterion. The notes specify two laminate families whose published index is a class and range of at least 175 with the method named: Shengyi S1000-2M (PLC3, specification 175 to 250) and S1000-2 (PLC 3, 175 to 249), each with the maker's document and the revision as printed (S1000-2M "data sheet (20120321)"; S1000-2 no revision printed) and the distributor copy read. They state the order note that requires the families (Shengyi S1000-2M or S1000-2, class PLC 3, 175 V or more per IEC 60112, report any substitution) and the written request the owner makes of the manufacturer's support for the shipped laminate's identity and a certificate of its index. Shengyi S1141 (175 as a typical value, no specification limit) and Kingboard KB-6165F (175 V, no test method printed) are listed as a typical value or a figure with no method and are not specified. The families with no index in the documents read (KB-6165, the Nan Ya NP-140 family, KB-6160, KB-6164) are listed and not specified. The notes state the version 4 position: at pollution degree 2 the separation basis uses the material group III column, which covers IIIa and IIIb, so a published index below 175 changes no figure and is not a precondition; the order stops only for a laminate published below 100 or a pollution degree 3 fallback without an index of 175 or more recorded. Not claimed: that any document read is the maker's current one (the makers' sites could not be reached), the shipped laminate's identity and index, and that the maker's order form can fix a laminate; the notes state these as a pre-order action and the order leaf's criterion C5 (version 2) records the written request, the order's laminate note and the maker's answer before payment, with a certificate not a precondition at pollution degree 2. This is a new reading against version 4. It replaces the earlier evidence, which was dated and re-versioned without being re-read and still cited version 3 of the criterion.
+links:
+  - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C16
+    type: satisfies

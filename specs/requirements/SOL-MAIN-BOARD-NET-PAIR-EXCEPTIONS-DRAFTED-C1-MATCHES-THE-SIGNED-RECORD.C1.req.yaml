@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED-C1-MATCHES-THE-SIGNED-RECORD.C1
+type: criterion
+title: The net-pair leaf's criterion C1 states the number of net-pair entries the signed record holds, and its title and text agree
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The criterion SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C1 (or the criterion that supersedes it) states the net-pair entry count the committed separation basis record holds at the commit it is judged against, which is seven, its title and its text give the same count, and a test that names that count traces to it. Out of scope is any entry of another form.
+links:
+  - target: SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED-C1-MATCHES-THE-SIGNED-RECORD
+    type: criterion-of

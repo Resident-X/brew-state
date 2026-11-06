@@ -1,0 +1,20 @@
+id: SOL-PRE-ORDER-CHECK-READS-A-SLOT-OPEN-TO-THE-BOARD-EDGE
+type: deliverable
+category: solution
+title: The pre-order check reads a barrier slot that opens onto the board edge as a slot
+status: active
+version: 1
+text: |
+  Corrects the pre-order check so that a barrier slot cut in from the board's edge is read as a slot. The check reads a slot only as a closed loop of the outline layer. A slit that opens onto the board edge is not a closed loop, so the geometry reader that finds the barrier slots, and the check's slot pull-back rule that holds copper back from a slot's wall, do not see it. On the main controller board the slit under the interlock relay K201 (SL_LINK, drawn from the edge at (1, 102.6) to (32.75, 103.8), 1.2 mm wide) is such a slot: the creepage route between the relay's LINE and LINE1 pads was measured by hand at 12.9 mm because the check's route finds no slot there, and inner-layer relay pad 13 (LINE1) stands 0.7 mm from its wall with no pull-back finding raised. A creepage route the check does not take round a slot reads shorter than the board has, and a wall the check does not see hides a pull-back breach, so a check whose verdict the owner reads is silent about the part of the board that the slot exists to protect.
+
+  Settled for the build:
+  - A slot whose outline reaches the board edge is closed by the edge for the check's purposes: the slot is the region the outline and the edge enclose, and a path round it goes round its closed end, never through the opening at the edge.
+  - The creepage route, the cross-layer separation rule and the slot pull-back rule all read such a slot; a closed slot is read as it is now, and a path that crosses no slot is unchanged.
+  - Out of scope: the junction of two arms of a slot, which the creepage path junction item holds, the rule's thresholds and any board's records.
+rationale: |
+  Restores the behaviour of the cross-layer rule's path comparison, which holds that separation covers the paths taken between conductors and not only the points where each ends (REQ-ELECTRICAL-INSTALL-001.C1). A slot that opens onto the board edge is as much a barrier as a closed one, and a check that reads only closed slots takes the straight line across the slit under the interlock relay.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C1
+    type: targets

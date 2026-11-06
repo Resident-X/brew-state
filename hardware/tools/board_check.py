@@ -1370,12 +1370,16 @@ def hole_footprints(tree: list) -> List[str]:
     One of drilled pads is a fixing when every pad is non-plated, or it is left
     out of the bill of materials (KiCad's footprint attribute exclude_from_bom,
     which its stock mounting-hole footprints carry), or its library item name
-    begins with MountingHole, or it has exactly one pad. The last two keep a
-    forgotten bill-of-materials flag on a custom plated mounting pad from
-    skipping the extent checks; they also take in a one-pin through-hole part,
-    which is held to the larger distance on purpose. A non-plated hole in any
-    other footprint is held by the hole rules.
+    begins with MountingHole, or it has exactly one pad, plated and on no net.
+    The last keeps a forgotten bill-of-materials flag on a custom plated
+    mounting pad from skipping the extent checks. A plated pad on a net is an
+    electrical terminal, as a blade-tab terminal or a one-pin part is, and is no
+    mark of a fixing by being the footprint's only pad; the net is the one the
+    layout gives the pad, read as the copper measure reads it, so a net written
+    twice or malformed raises Unreadable. A non-plated hole in any other
+    footprint is held by the hole rules.
     """
+    table = board_geometry.net_table(tree)
     found = []
     for reference, footprint in board_footprints(tree).items():
         pads = sexpr.children(footprint, "pad")
@@ -1383,7 +1387,8 @@ def hole_footprints(tree: list) -> List[str]:
             continue
         name = str(footprint[1]).split(":")[-1] if len(footprint) > 1 else ""
         if (all(str(pad[2]) == "np_thru_hole" for pad in pads) or "exclude_from_bom" in (sexpr.child(footprint, "attr") or [])
-                or name.startswith("MountingHole") or len(pads) == 1):
+                or name.startswith("MountingHole")
+                or (len(pads) == 1 and not board_geometry.item_net(pads[0], table, f"a pad of the footprint {reference}"))):
             found.append(reference)
     return sorted(found)
 
@@ -5164,12 +5169,33 @@ def pour_items(tree: list, stack: Sequence[str]) -> List[LayerItem]:
     return found
 
 
-def layer_items(tree: list, stack: Sequence[str], holes: Sequence[str]) -> Tuple[List[LayerItem], Dict[str, str]]:
+def tie_net(footprint: list, table: Dict[str, str], mains: Set[str]) -> str:
+    """The Mains-class net a net-tie footprint's copper graphic is the copper of, '' where it is the copper of none.
+
+    A net tie joins the nets of the pads its net_tie_pad_groups name, and the
+    netless graphic it draws is the copper that joins them. It is Mains-class
+    copper when any pad it ties is on a Mains-class net, named by the first such
+    net in name order. A group that is no string of pad numbers is the net-tie
+    rule's to fail, and ties no pad here.
+    """
+    groups = sexpr.child(footprint, "net_tie_pad_groups")
+    if groups is None:
+        return ""
+    numbers = {number.strip() for group in groups[1:] if not isinstance(group, list) for number in str(group).split(",")}
+    tied = {board_geometry.item_net(node, table, f"a pad of the net tie {board_geometry.reference(footprint) or '?'}")
+            for node in sexpr.children(footprint, "pad") if len(node) > 1 and str(node[1]) in numbers}
+    return min(tied & mains, default="")
+
+
+def layer_items(tree: list, stack: Sequence[str], holes: Sequence[str],
+                mains: Set[str] = frozenset()) -> Tuple[List[LayerItem], Dict[str, str]]:
     """Every piece of copper of a layout as the cross-layer rule holds it, and the copper it cannot measure by name.
 
     Tracks, arcs, vias, the pads of every part but the mounting holes, pours
-    and the graphics drawn on a copper layer. The text drawn on a copper layer
-    is copper the layout file does not size, and is returned by name.
+    and the graphics drawn on a copper layer, a net tie's graphic being the
+    copper of the Mains-class net its pads tie where they tie one (`mains`
+    being the layout's Mains-class nets). The text drawn on a copper layer is
+    copper the layout file does not size, and is returned by name.
     """
     table = board_geometry.net_table(tree)
     found: List[LayerItem] = []
@@ -5186,6 +5212,7 @@ def layer_items(tree: list, stack: Sequence[str], holes: Sequence[str]) -> Tuple
     for footprint in sexpr.children(tree, "footprint"):
         name = board_geometry.reference(footprint) or "?"
         at = board_geometry.placement(footprint, f"the footprint {name}")
+        tied = tie_net(footprint, table, mains)
         if name not in held:
             for node, pad in zip(sexpr.children(footprint, "pad"), board_geometry.footprint_pads(footprint, table)):
                 stored = [layer for layer in stack if pad.on(layer)]
@@ -5207,7 +5234,7 @@ def layer_items(tree: list, stack: Sequence[str], holes: Sequence[str]) -> Tuple
                 continue
             if sexpr.head(node)[3:] in COPPER_GRAPHICS:
                 polygons, margin = graphic_polygons(node, lambda point, at=at: board_geometry.placed(point, at), f"the footprint {name}")
-                found.append(LayerItem("graphic", "", [str(layer[1])], [str(layer[1])], polygons, f"Graphic on {layer[1]} of {name}",
+                found.append(LayerItem("graphic", tied, [str(layer[1])], [str(layer[1])], polygons, f"Graphic on {layer[1]} of {name}",
                                        margin=margin))
             elif sexpr.head(node) in COPPER_TEXTS:
                 unmeasured[f"text on {layer[1]} of {name}"] = "text on a copper layer has copper the layout file does not size"
@@ -5248,7 +5275,7 @@ def layer_separation(tree: list, mains: Set[str], clearance: float, creepage: fl
     figures are. Inner-layer copper of any net stands SLOT_WALL_MM from every slot's wall.
     """
     stack = copper_layers(tree)
-    items, texts = layer_items(tree, stack, hole_footprints(tree))
+    items, texts = layer_items(tree, stack, hole_footprints(tree), mains)
     result = LayerResult()
     result.unmeasured.update(texts)
     slots = board_geometry.barrier_slots(tree)
@@ -6919,8 +6946,10 @@ EXCEPTION_RULES = {SIGNED_RULE: "mains_to_low_voltage", LAYER_SHORTFALL_RULE: "m
                    TERMINAL_RULE: "mains_to_mains", AHEAD_OF_FUSE_RULE: "mains_to_mains"}
 #: KiCad's own text of the rule and its figure in a clearance or creepage violation.
 RULE_FIGURE = re.compile(r"\(rule '([^']*)' (?:clearance|creepage) ([0-9.]+) mm")
-#: A pad as KiCad's report describes it, and a net as it writes one between square brackets.
-REPORTED_PAD = re.compile(r"\bpad (\S+) (?:\[.*\] )?of (\S+)\s*(?:@|$)")
+#: A pad as KiCad's report describes it, and a net as it writes one between square brackets. KiCad writes a through-hole
+#: pad as "PTH pad 2 [/net] of J1" and a surface-mount one as "Pad 2 [/net] of T1 on F.Cu"; the check's own report follows
+#: either with " @ (x, y) mm". A pad of no name is written with its net alone, and the net may itself hold brackets.
+REPORTED_PAD = re.compile(r"\bpad (?:(\S+) (?:\[.*\] )?|\[.*\] )of (\S+)(?: on \S+)?\s*(?:@|$)", re.IGNORECASE)
 REPORTED_NET = re.compile(r"\[(.*)\]")
 #: The name of the board's plated-hole spacing rule in its rules file, and KiCad's own text of that rule and its figure in a
 #: hole_to_hole violation.
@@ -7281,7 +7310,7 @@ def judge_same_connector(judged: Judged, index: int, entry: dict, record: str, d
         if found.key() in seen:
             continue
         seen.add(found.key())
-        names = " and ".join(f"{connector}.{REPORTED_PAD.search(text).group(1)}" for text in found.texts)
+        names = " and ".join(f"{connector}.{REPORTED_PAD.search(text).group(1) or ''}" for text in found.texts)
         if found.measured >= accepted:
             judged.accepted.append(
                 "ACCEPTED | " + " | ".join(clean(field) for field in (

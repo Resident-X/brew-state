@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT-SHARED-DOCUMENTS-HELD-AS-EXTRACTS.C1
+type: criterion
+title: A root holds the lines of the view index for the views it holds and not the whole index
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Over a synthetic review folder whose view index lists a few hundred views, a root's shared text holds the index lines of the views that root holds and no line of a view only another root holds, and the plan's tokens for the root fall by the tokens of the lines left out. The test includes a view listed in the index that no unit declares and fails if that line appears in any root. Out of scope is the index's own format.
+links:
+  - target: SOL-HW-REVIEW-KIT-SHARED-DOCUMENTS-HELD-AS-EXTRACTS
+    type: criterion-of

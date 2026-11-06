@@ -1,0 +1,19 @@
+id: EV-SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN-C10-TEST-2
+type: evidence
+title: test evidence for SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C10
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-05T21:50:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_main_board_schematic_records.py
+  artifact_version: da719b23
+  verifier: claude (AI agent)
+text: |
+  Ran hardware/tools/tests/test_main_board_schematic_records.py at commit da719b23 (unittest, 2 tests, OK). WallBoardHeaderDrawn reads sheet 720 and finds the ten-way header J761 (Conn_01x10, value WB_LV10, a PinHeader_1x10_P2.54mm footprint) and, on the entry sheet, the neutral return landing J110 (value WB_RET), and reads pin-allocation.yaml and finds each of the four channels that cross the header (heat_c_drv on PD2, heat_s_drv on PD3, mains_pres_c on PE15, mains_pres_s on PD7) listed with its controller pin. The division record gives the interface by ways and use and does not number the pins; the pin order is this board's drawing, logged for the wall board's own record in open-items.md, and the test does not pin it. Comparing the cable between the two boards' headers pin for pin is out of scope and is not claimed. This replaces the earlier evidence for this criterion, which recorded a hand reading as a test.
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C10
+    type: satisfies

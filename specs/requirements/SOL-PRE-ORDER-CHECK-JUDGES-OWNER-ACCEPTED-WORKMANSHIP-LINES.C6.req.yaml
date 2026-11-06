@@ -1,0 +1,13 @@
+id: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES.C6
+type: criterion
+title: The hardware notes state the entry form, the report line and the failures
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+scope: The hardware notes' entry for the workmanship acceptance record. Out of scope is any board's own records.
+text: |-
+  The hardware notes state the record's entry form with each key, the ACCEPTED line, each failure of an entry, the rules the record cannot accept and that an entry is the owner's to sign. Out of scope is any board's own records.
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES
+    type: criterion-of

@@ -1,0 +1,39 @@
+Valve coil drive K731 / Q731 (the second valve, K741 / Q741, is the same circuit): coil voltage available at the lowest rail
+* Reference designators are the schematic spec's (sheets/710-valve-drives.yaml). ngspice needs an M prefix for a MOSFET, so Q731 is M731 here.
+* K731's coil is the resistor RK731 (HF32FA-G/005-HSL1 coil 108 ohm +/-10 %, Hongfa 2026 Rev 1.00).
+* Node P5V is the +5V rail; COILK is the coil's low side (the switch's drain); G731 is the gate (controller pin VOH_min through R731, R732 100k to ground).
+* AO3400A (AOS Rev 3, Dec 2011) moved to its datasheet limits: VGS(th) max 1.45 V; RDS(on) at VGS = 2.5 V is the sheet's 48 mohm max x 1.434 (the sheet's
+* TJ 125 / 25 degC ratio, 38 / 26.5, on its 10 V row) = 68.8 mohm. Level-1 model: RON = 1 / (KP (VGS - VTO)) -> KP = 1 / (0.0688 x (2.5 - 1.45)) = 13.84 A/V2.
+VSUP P5V 0 5.25
+RK731 P5V COILK 108
+M731 COILK G731 0 0 NAO3400
+R731 G731A G731 100
+RG732 G731 0 100k
+VVOH G731A 0 2.735
+BVC VCO 0 V=V(P5V)-V(COILK)
+BIC ICO 0 V=-I(VSUP)
+.model NAO3400 NMOS (LEVEL=1 VTO=1.45 KP=13.84 LAMBDA=0)
+.tran 10u 1m
+.control
+* corner list: Conditions covered
+* +5V 4.75 V (record: 5 V rail assumed +/-5 %); +3V3 low end 3.135 V -> VOH_min 2.735 V (DS12110 Rev 11 Table 51, VDD - 0.4 V at 8 mA)
+* coil 97.2 / 118.8 ohm (+/-10 %), x1.20 at 70 degC air (constraints record, interlock section's stated assumption)
+alter VSUP = 4.75
+alter RK731 = 116.64
+run
+meas tran vcoil_lo_70C AVG v(VCO) from=0.5m to=1m
+alter RK731 = 142.56
+run
+meas tran vcoil_hi_70C AVG v(VCO) from=0.5m to=1m
+alter RK731 = 97.2
+run
+meas tran vcoil_lo_23C AVG v(VCO) from=0.5m to=1m
+alter VSUP = 5.25
+alter RK731 = 97.2
+run
+meas tran icoil_max AVG v(ICO) from=0.5m to=1m
+alter VVOH = 2.9
+run
+meas tran icoil_max_vdd33 AVG v(ICO) from=0.5m to=1m
+.endc
+.end

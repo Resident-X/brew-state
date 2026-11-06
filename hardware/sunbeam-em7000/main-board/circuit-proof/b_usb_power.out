@@ -1,0 +1,25 @@
+(a1) bench-state load from the cable, controller 200 MHz VOS3 peripherals enabled at TA 40 degC (Tj 63.4 degC): 153 mA
+     other 3.3 V loads 46.6 mA, regulator ground pin 10.36 mA, U201 1.7 mA, U791 14.6 mA, HX711 x2 3.0 mA, six indicators on 105.0 mA
+     total 0.3344 A; with the buzzer sounding at its bound 0.3874 A; excluded (loads and their drivers, held off): 0.460 A
+     against the 0.500 A of a high-power function (USB 2.0 7.2.1): margin 0.166 A; against the fuse hold at 40 degC (0.44 A): margin 0.106 A (24 %)
+(a1b) before configuration (indicator rail off: its gate switch holds it off), controller as above: 0.229 A; with the controller at the lowest tabulated figure (71 mA) and U791 at rest: 0.133 A; the standard's one unit load is 0.100 A
+(a2) VBUS minimum at the connector end 4.75 V (USB 2.0 7.2.2, functions above one unit load): drop 0.334 V in F401 at R1max; F401 output goes straight to pin 3 of JP301 (a header contact's few milliohms are under 1 mV at this current)
+     +5V on cable power 4.416 V
+     LT1963A-3.3 input must be at least 3.750 V (3.400 + 0.350, the dropout maximum at 500 mA over temperature; the 3.3 V load is 200 mA): margin 0.666 V -> in regulation: True
+     fuse resistance at which the margin is gone: 2.99 ohm (R1max 1.00 ohm)
+     if only the low-power figure of 4.40 V held at the connector (not the case for a board above one unit load): +5V 4.066 V, margin 0.316 V
+     U791 sees 4.416 V against its recommended 4.5 V minimum and 7 V absolute maximum; the gauge it drives is not connected in the bench state
+(c)  JP301 states (pin 1 +5V_MOD, pin 2 +5V, pin 3 USB_VBUS_F): one shorting jumper spans two adjacent pins and pin 2 takes one jumper
+     no jumper      +5V joined to module: False to cable path: False module joined to cable path: False
+     jumper on 1-2  +5V joined to module: True  to cable path: False module joined to cable path: False
+     jumper on 2-3  +5V joined to module: False to cable path: True  module joined to cable path: False
+(b)  no jumper position joins pin 1 (module) to pin 3 (cable path), checked above for every state; the board never sources current into the cable:
+     jumper on 1-2: the cable side (pin 3, USB_VBUS_F) is open at JP301, so nothing from +5V reaches F401, D402 or the cable;
+     jumper on 2-3: the module output (pin 1) is open, so the module drives nothing and the cable feeds only the board's own loads;
+     with a computer on the cable and the jumper on 1-2 the cable carries only the clamps' leakage (D401 IRM <= 150 nA at 5.25 V, D402 IR <= 400 uA at VR 6.0 V), far under 0.100 A
+(d)  jumper on 2-3: capacitance behind the fuse 81.3 uF (C301 and C302 stay on the module's side) against the 10 uF of USB 2.0 7.2.4.1: 8.1x; charge 329 uC
+     peak at Rmin 35.0 A (tau 12 us), at R1max 5.25 A (tau 81 us); fuse Imax 100 A; inrush above 8 A lasts about 3 tau = 244 us at most
+     undamped step-response bound on the VBUS node: 10.50 V (twice the 5.25 V source); D402 holds it to VC 10.3 V at 19.4 A; with the jumper on 2-3 the fuse output is the +5V rail, so the rail parts (LT1963A input 20 V absolute maximum; U201 and U791 7 V) are exposed to whatever F401 does not damp; no block now sits between them and the cable
+     charge through a 44 ohm / 10 uF load: 52 uC; the limit's equivalent is met only with surge limiting ahead of 81.3 uF
+(e)  DS4260 2.1 with VBUS open: VCL+ = 31.2 V (6.1 + 0.5 x 24 + 1.1 + 0.5 x 24)
+     with VBUS on D402 (Rd 0.151 ohm from its sheet, typical-based): node 9.9 V, VCL+ = 23.0 V; the pin's DC limit is 6 V (4 V with VDD absent)

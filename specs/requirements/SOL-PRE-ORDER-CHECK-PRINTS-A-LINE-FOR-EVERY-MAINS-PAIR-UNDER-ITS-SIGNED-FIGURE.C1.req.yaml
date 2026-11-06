@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-PRINTS-A-LINE-FOR-EVERY-MAINS-PAIR-UNDER-ITS-SIGNED-FIGURE.C1
+type: criterion
+title: Every mains-to-mains pair standing under its signed figure on the finished board is reported by the check as a violation or as accepted by a named entry
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a synthetic board holding a pair of pads of different parts at a gap under the signed 2.0 mm pad clearance, and a no-connect pad of one part beside a track of another net at a gap under the signed 2.6 mm creepage, the pre-order check prints a violation line for each pair when no entry covers it and an accepted line naming the entry that covers it when one does, so a pair is never passed without a line. On the finished main board the check prints a line for each of the pairs the layout plan's standing mains-to-mains row lists, or the row states why a pair is not one. Out of scope are the signed figures and the owner's acceptance.
+links:
+  - target: SOL-PRE-ORDER-CHECK-PRINTS-A-LINE-FOR-EVERY-MAINS-PAIR-UNDER-ITS-SIGNED-FIGURE
+    type: criterion-of

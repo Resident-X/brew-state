@@ -1,0 +1,29 @@
+Interlock removal, step 1: gate decay after the last rising edge to the lowest FET threshold, slowest corner, output held low, variant rec
+.include A_interlock.cir
+.include A_models.inc
+Vsup +5V GND 5.25
+Vpol POL_OUT GND PWL(0 0 99.9m 0 99.9001m 3.3 105m 3.3 105.001m 0)
+* FET input capacitance at its datasheet maximum, 50 pF (NX3008NBK Table 7), one per gate
+Cg201 POL_GATE_A GND 50p
+Cg202 POL_GATE_B GND 50p
+* relay coil, a deck-added load (K201 is excluded from simulation): 62 ohm -10 % = 55.8 ohm
+Rcoil +5V POL_COIL_LO 55.8
+.options reltol=1e-5 abstol=1e-15 gmin=1e-15
+.tran 5u 400m 0 20u
+.control
+alter R205 = 1T
+alter R206 = 1T
+alter R203 = 5.6896Meg
+alter R204 = 5.6896Meg
+alter C203 = 4.9645n
+alter C205 = 4.9645n
+alter C202 = 105.6n
+alter C204 = 105.6n
+run
+meas tran vstartA FIND v(POL_GATE_A) AT=100m
+meas tran tA06 WHEN v(POL_GATE_A)=0.6 FALL=1
+meas tran tB06 WHEN v(POL_GATE_B)=0.6 FALL=1
+meas tran tdecA TRIG AT=0.0999001 TARG v(POL_GATE_A) VAL=0.6 FALL=1
+meas tran tdecB TRIG AT=0.0999001 TARG v(POL_GATE_B) VAL=0.6 FALL=1
+.endc
+.end

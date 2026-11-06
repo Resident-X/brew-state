@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C4
+type: criterion
+title: The same-part entries are creepage entries at the layout's gap and the record holds no clearance entry between two pads
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The committed record holds nine same-part creepage entries, for C606, the four sense-pad pairs of R105 and R605 to R608, each with accepted_mm equal to the pair's edge-to-edge pad gap in the layout, each below 1.5 mm and below the signed creepage, each of pair mains_to_mains, naming the part and the set N of neutral-referenced nets with a working voltage under 10 V in its reason and the entry fuse and branch fuses in its bounding element; it holds no between entry of constraint clearance, and none for the eighteen pairs of the twenty-seven under 1.5 mm that the finished layout reports no shortfall for. Out of scope is a pair of 1.5 mm or more.
+links:
+  - target: SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET
+    type: criterion-of

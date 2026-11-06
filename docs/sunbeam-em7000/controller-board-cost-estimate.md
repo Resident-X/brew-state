@@ -99,6 +99,23 @@ and prices that quantity at the smallest break's unit price, which every charged
 | Mains-entry varistor | C8852 | 2 / 1 | 1 | 3 |
 | Mains-entry X2 capacitor | C489079 | 2 / 1 | 1 | 3 |
 
+
+## Amendment: the main board is now six layers, with an ENIG finish
+
+**This is an estimate, not a quote, and its sources govern.** The main board of the layout (`hardware/sunbeam-em7000/main-board/layout-plan.md`, Stack) has six copper layers, not four, at the same outline (131.0 × 125.0 mm, 16 375 mm²), 1.6 mm and 1 oz outer copper, and its finish is ENIG, because JLCPCB offers leaded and lead-free HASL below six layers only (`docs/board-manufacturer-jlcpcb.md` § Layers, thickness, copper and board size, read 2026-11-05). The sections below were priced at four layers and leaded HASL, and they stay as the baseline this amendment is measured from; the figures in them are not restated here.
+
+**Quantity assumed.** The same as the sections below: one main-board order of 5 boards fabricated (the manufacturer's smallest order) and 2 assembled, single-board delivery. Every figure here is for that order and not per board.
+
+**What changes, and what is known of it.**
+
+| Change | Estimate for the order of 5 | Basis |
+|---|---|---|
+| Four layers to six, same outline | about +15 to +35 USD | The board design's own six-layer trial estimated 15 to 35 USD more per 5 boards (its working notes are not kept in this repository, so the range is the design's estimate and not a sourced figure). The nearest published pair, in the lowest price band, is 8.00 USD at four layers, 100 × 100 mm, leaded HASL and a six-layer fabrication fee of 32.00 USD at 50 × 50 mm (`docs/board-manufacturer-jlcpcb.md`), 24 USD apart, inside the range; the maker publishes no engineering fee or board fee for six layers at this outline, so the figure is **unmeasured**, read only at the quote |
+| Leaded HASL to ENIG | about +17 USD at an ENIG area of 30 % or less | The maker's published finish charges, 17.70 USD at four layers and 16.90 USD at six layers (`docs/board-manufacturer-jlcpcb.md` § Price bands and the fabrication order), read at 100 × 100 mm and at 50 × 50 mm; the charge at this outline, and the *Extra charge for ENIG area over 30 %* if the finish covers more of the board, are **unmeasured** |
+| Assembly | none expected | The maker's Economic assembly takes 2, 4 and 6 layers (`https://jlcpcb.com/capabilities/pcb-assembly-capabilities`, *PCB Layer*, read 2026-11-05), so the assembly charges of § Assembly stand |
+
+So the fabrication of the main board's order is estimated at about 35.19 + 15 to 35, plus 17 if the range above does not already include the finish, that is **about 67 to 87 USD, or 32 to 52 USD more than the 35.19 USD of § Fabrication**, and the main board's total in the table of § Weighed against the declared spend (141.39 USD for the order) would read about 173 to 193 USD, against the declared spend of 250 USD. The range is wide because both changes are inferences from the maker's published points at other outlines, not a price for this board; if the 15 to 35 USD already includes the ENIG finish, the upper end falls by about 17 USD. Only the quote of the board's own design files settles it (§ Marks ended and re-pointed carries the same step for the four-layer figure).
+
 ## Main board
 
 One board, 4 layers, 131.0 × 125.0 mm (16 375 mm²), 1 oz, leaded HASL, 1.6 mm, Economic assembly; five fabricated, two assembled.
@@ -203,7 +220,7 @@ Fabrication 35.19 + assembly 26.98 + parts the manufacturer places 33.55 = **95.
 
 0.67 + 0.32 + 0.44 + 0.11 = **1.54 USD**, inside the main board's 21.55 USD of hand-fitted parts (§ Parts). The retained loom's connectors and the mains leads are not priced: the loom is the machine's own.
 
-**Where the entry parts stand on the board.** The division record draws the entry fuse holder (24 × 9 mm) and the varistor on the main board at tabs 2 and 3 (`controller-board-division.md` § The fuses and § The mains-side blocks). The fuse holder, the clips and the varistor are the parts priced above, hand-fitted, and the fuse's line side joins the pad of tab 2 on an inner layer of the four-layer board already priced (`controller-board-division.md` A32), so no layer is added. Drawing them changes no figure of this estimate (§ Weighed against the declared spend, *The entry parts' place did not change it*).
+**Where the entry parts stand on the board.** The division record draws the entry fuse holder (24 × 9 mm) and the varistor on the main board at tabs 2 and 3 (`controller-board-division.md` § The fuses and § The mains-side blocks). The fuse holder, the clips and the varistor are the parts priced above, hand-fitted, and the fuse's line side joins the pad of tab 2 on an inner layer of the board already priced (`controller-board-division.md` A32; four layers there, six now, § Amendment: the main board is now six layers), so no layer is added. Drawing them changes no figure of this estimate (§ Weighed against the declared spend, *The entry parts' place did not change it*).
 
 **Not priced.**
 - *A mains common-mode choke, or a filter module.* None was found: no in-stock rated 6–10 A choke or PCB filter module in the library service (the first 25 of 88 rows of the choke keyword in Chinese all had zero stock, and the English keywords returned signal inductors; the in-stock UU9.8 and UU10.5 types show no current rating on the pages read), and the distributor's own parts search (LCSC) was not reachable (HTTP 403). The library's in-stock inlet filters (Schaffner FN9222 rows have zero stock; TE C42547035 8.446 USD, C43205315 7.0451 USD and C44050533 7.9157 USD have stock 10, 7 and 4 and no rating in their titles) are not fitted: the machine has no inlet.

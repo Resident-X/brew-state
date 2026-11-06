@@ -1,0 +1,13 @@
+id: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C21
+type: criterion
+title: The laminate and coat the separation basis rests on are named in the board's fabrication notes before it is ordered
+status: active
+version: 2
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The board's fabrication notes name the laminate families they specify or prefer, each with the laminate maker's document for its published comparative tracking index and the revision read, and the conformal coat that supports the record's pollution degree 2 reading, with its type, the maker's datasheet and where it is applied. At pollution degree 2 the separation basis uses the material group III column of the creepage table, which covers groups IIIa and IIIb alike, so a laminate whose published index is below 175 changes none of the basis's figures and is not a reason to hold the order; an index of 175 or more is margin, and is needed only for a pollution degree 3 fallback. A laminate whose published index is below 100, which falls in no material group, a pollution degree 3 fallback taken without an index of 175 or more recorded, or a coat the notes do not name, is reported and the owner re-declares the basis before the board is ordered.
+links:
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED
+    type: criterion-of

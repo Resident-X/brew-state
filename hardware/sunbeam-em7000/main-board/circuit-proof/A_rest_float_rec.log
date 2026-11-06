@@ -1,0 +1,40 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: interlock rest state: controller output float after the last edge, variant rec; gate decay to the lowest fet threshold, slowest corner
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
++5v                                       5.25
+pol_out                                      0
+pol_buf                             2.8875e-07
+pol_node_a                         1.47228e-20
+pol_gate_a                         8.37667e-29
+pol_mid                                  2.625
+pol_node_b                        -2.52922e-18
+pol_gate_b                        -1.48324e-26
+pol_coil_lo                               5.25
+pol_clamp_1                            5.24958
+pol_clamp_2                            5.24958
+src                                          0
+ctl                                          1
+vctl#branch                                  0
+vsrc#branch                                  0
+vsup#branch                          -5.25e-09
+
+
+No. of Data Rows : 150800
+vstarta             =  4.29409e+00
+ta06                =  1.37150e-01
+tb06                =  1.37150e-01
+tdeca               =  5.71499e-02 targ=  1.37150e-01 trig=  8.00000e-02
+tdecb               =  5.71499e-02 targ=  1.37150e-01 trig=  8.00000e-02
+Note: Simulation executed from .control section 

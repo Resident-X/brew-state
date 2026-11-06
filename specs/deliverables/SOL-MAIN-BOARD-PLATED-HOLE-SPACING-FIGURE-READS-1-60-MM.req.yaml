@@ -1,0 +1,22 @@
+id: SOL-MAIN-BOARD-PLATED-HOLE-SPACING-FIGURE-READS-1-60-MM
+type: deliverable
+category: solution
+title: The main board's plated-hole spacing figure is corrected to the 1.60 mm its ground-plane gaps give
+status: active
+version: 1
+text: |
+  Corrects a figure in the main board's rules table that layout review round 3 (finding 3.14) found short. The table's "Plated hole spacing" row, held in the board's design-rules.md and in its main-board.kicad_dru rule of that name, reads 1.5 mm. The GROUND-5 reading derives the figure from the gaps the plated pins open in the ground plane: twice the widest annulus (2 x 0.375 = 0.75 mm), plus twice the ground zones' thermal-relief gap (2 x 0.30 = 0.60 mm), plus the zone's minimum thickness (0.25 mm). That is 1.60 mm, not 1.5 mm. No node owned the correction before this one: SOL-BOARD-GROUND-5-FIGURE-FROM-PLANE-GAPS changed the method's prose, not this board's records.
+
+  Settled for the build:
+    - Both the rules table row and the rule's figure in the rules file read 1.60 mm, with the working shown in the table.
+    - The rules file and design-rules.md are design files of the board. The change forces a new layout review round on the changed design, because a design-file change to a proof-held board invalidates the closing review; the round is budgeted when this item is built and is not skipped.
+    - The pre-order check reports KiCad's hole_to_hole result against the figure the rules file holds; whether the finished board's pairs meet 1.60 mm is read from that run and any pair that does not is reported as a finding, not accepted here.
+
+  Not built. Out of scope: moving copper, and the signed exceptions for connector pairs at their own pitch (SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS).
+rationale: |
+  Restores the workmanship-practice reading REQ-BOARD-LAYOUT-PRACTICE-001.C5 asks of the layout: a practice item is judged against its published figure, and a figure the board's own records state short of that reading makes the check pass pairs the practice would fail. Found by layout review round 3 and recorded there as finding 3.14.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C5
+    type: targets

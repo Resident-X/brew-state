@@ -1,0 +1,12 @@
+id: SOL-HW-CONTROLLER-BOARDS-ORDERED-AND-RECEIVED.C4
+type: criterion
+title: The finish of every via diameter each board uses is stated by the manufacturer and recorded before payment
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The finish the manufacturer applies to each via diameter each board uses is stated in a page of the manufacturer's published capabilities or in its support's written answer, and recorded with its source and read date before payment, including the diameters above the one its published default covers at the board's layer count. A diameter whose finish is not stated is reported and the order is not paid for until it is. Out of scope is choosing a different via size.
+links:
+  - target: SOL-HW-CONTROLLER-BOARDS-ORDERED-AND-RECEIVED
+    type: criterion-of

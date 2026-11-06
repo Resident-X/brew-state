@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING.C3
+type: criterion
+title: The records that restate the basis's signature day or the coat's timing agree with the record
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Inspection of every document in the main-board folder (apart from the frozen rounds of the layout and schematic review records) and the machine-record folder finds each statement of the separation basis's signature day saying it was signed on 2026-11-05 and re-signed on 2026-11-06, or signed on 2026-11-06, and none saying the coat is applied before the boards are energised or before mains is first connected. The derating policy's statements keep 2026-11-05. Out of scope is any document outside those folders and the frozen review rounds.
+links:
+  - target: SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING
+    type: criterion-of

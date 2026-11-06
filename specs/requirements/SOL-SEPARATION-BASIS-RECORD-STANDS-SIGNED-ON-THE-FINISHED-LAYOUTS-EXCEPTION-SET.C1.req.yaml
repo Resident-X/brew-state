@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C1
+type: criterion
+title: The record is signed by the owner's act, at its top level and on every exception, and the check's reader finds no problem
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The committed separation-basis.yaml holds accepted_by and accepted_on at its top level, accepted_by non-empty, naming the owner and not a placeholder, accepted_on a calendar date written YYYY-MM-DD no later than the day the check runs; every entry of accepted_exceptions holds the same two fields under the same tests and dated no later than the record; and the check's own reader reads the record with no problem of any kind and returns it signed. The signed figures equal those the criteria it carries name: mains_to_mains clearance_mm 1.5, terminal_clearance_mm 2.0, creepage_mm 2.6, creepage_ahead_of_fuse_mm 2.6 and entry_fuse F101, mains_to_low_voltage clearance_mm 3.0 and creepage_mm 10.0, pollution degree 2, material group IIIa. A record with its acceptance removed, a placeholder or a future date is read as unsigned by the same reader. Out of scope is the owner's instruction itself.
+links:
+  - target: SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET
+    type: criterion-of

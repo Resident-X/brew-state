@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C7
+type: criterion
+title: The main board's derating policy holds ten owner-signed exceptions, one for each of the ten over-limit positions
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The committed main-board derating-policy.yaml holds exactly ten accepted_exceptions entries, for F101, F701, F711, F731, K731, K741, R102, R104, R706 and R716, one each, each holding exactly the keys position, accepted_v, reason, bounded_by, accepted_by and accepted_on, accepted_v a positive number, reason and bounded_by non-empty, accepted_by naming the owner and not a placeholder, accepted_on a valid date no later than the day the check runs, and the check's own signature rule finds each signed; an entry with its acceptance emptied, a placeholder or a future date is found unsigned by the same rule. The policy's classes and shares are unchanged. Out of scope is the derating rule's behaviour on a position.
+links:
+  - target: SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET
+    type: criterion-of

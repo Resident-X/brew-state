@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY.C5
+type: criterion
+title: A count of warning lines above a class's recorded count fails the check and one at or below it passes
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On the same synthetic design with the recorded count of a class at two, a design with three lines of that class fails the check naming the class, the recorded count and the found count, a design with two or with one line of it does not fail on the count, and in each case the check prints the found count beside the recorded count. Out of scope is the lines of any other class.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY
+    type: criterion-of

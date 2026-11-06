@@ -1,0 +1,15 @@
+== +5V absent, +3V3 present: the buffer's input clamp to its unpowered VCC
+   VDD 3.6 V, VCC rail held at 0.0 V by its loads, R207 990 ohm (-1 %): clamp current 2.93 mA
+   VDD 3.6 V, VCC rail held at 1.0 V by its loads, R207 990 ohm (-1 %): clamp current 1.92 mA
+PASS  clamp current, +5V absent: worst 2.93 mA vs 20 mA: x6.8 under (without the 0.7 V diode drop, bounded at 3.64 mA: x5.5 under)
+   without R207 the current is limited by the controller's output resistance alone (unsourced), so nothing here bounds it
+== levels at U201 pin 2 (POL_IN)
+PASS  input high clears VT+: 2.680 V (VOH min 2.735 V x 49.5 kohm / (49.5 kohm + 1010 ohm)) vs VT+ max 2.0 V: margin 0.68 V
+PASS  input low under VT-: at most 0.4 V (VOL max, the divider only lowers it) vs VT- min 0.5 V
+   reset strap: controller pin floating or low, input held by R201 || R202 (49.5 kohm); output high drives at most 3.6 V / 50.49 kohm = 71 uA
+== added delay
+   Thevenin 990 ohm x 50 pF: tau 49.5 ns; rising edge reaches VT+ max after 67.8 ns; falling edge reaches VT- min after 83.2 ns
+PASS  delay against the minimum phase width: worst edge delay 83.2 ns is 0.33 % of the 25 us minimum phase width; the high and low phases differ by at most 15.3 ns
+PASS  delay against the removal budget: 83.2 ns against the 100 ms removal budget: 8.3e-07 of it (a pure delay of the first and every edge; the refresh interval and the edge pump downstream are unchanged)
+
+SUMMARY: 0 failing []

@@ -1,0 +1,8 @@
+BOOT0 strap: level with JP401 open (R401 pull-down against the pin leakage)
+* Ileak is BOOT0's leakage, DS12110 Rev 11 Table 147 (VPP alternate function, 0 < VIN <= VDD): 15 uA max.
+Vsup vdd 0 3.3
+R401 boot0 0 10k
+Ileak vdd boot0 15u
+.dc Vsup 3.0 3.6 0.3
+.meas dc v_boot0_open FIND v(boot0) AT=3.3
+.end

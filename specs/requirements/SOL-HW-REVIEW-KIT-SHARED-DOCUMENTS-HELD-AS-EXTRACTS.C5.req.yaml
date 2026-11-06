@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT-SHARED-DOCUMENTS-HELD-AS-EXTRACTS.C5
+type: criterion
+title: The layout caller's plan-only run on the main controller board plans within the budget
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |-
+  The layout caller's plan-only run over the main controller board's review folder reports every group planned, every root under the budget of the model's window less its declared headroom, and no shared document held whole that the caller declares an extract of. The run's report is the evidence.
+links:
+  - target: SOL-HW-REVIEW-KIT-SHARED-DOCUMENTS-HELD-AS-EXTRACTS
+    type: criterion-of

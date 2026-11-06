@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-LAMINATE-CONDITION-NEEDS-NO-INDEX-AT-POLLUTION-DEGREE-2.C3
+type: criterion
+title: The record's header still holds six numbered conditions and the reader finds no other problem
+status: active
+version: 3
+measurement_type: binary
+verification: test
+text: |-
+  After the change the header holds the numbered block of six conditions in the order the sealed solution's third criterion gives, the figures and the signature state of the record (signed by the owner on 2026-11-06) are unchanged, and the check's reader finds no problem the change introduced.
+links:
+  - target: SOL-SEPARATION-BASIS-LAMINATE-CONDITION-NEEDS-NO-INDEX-AT-POLLUTION-DEGREE-2
+    type: criterion-of

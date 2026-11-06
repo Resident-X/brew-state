@@ -1,0 +1,23 @@
+id: SOL-FW-MAINS-CHANNELS-APPLY-STORED-GAIN-AND-OFFSET
+type: deliverable
+category: solution
+title: The firmware applies a stored gain and offset to each mains measurement channel and marks an uncalibrated start
+status: active
+version: 1
+text: |
+  Builds the firmware side of the main board's criterion DEL-HW-MAIN-BOARD-DESIGNED.C28, which the board epic carries but a board design cannot satisfy: the firmware that reads the isolated converter's two mains measurement channels applies a stored gain and a stored offset to every reading of each channel, takes both from values the bring-up calibration writes (DEL-HW-BRING-UP.C22), keeps them across a restart, and marks the readings as uncalibrated until they are stored, so an estimate is not mistaken for a measurement.
+
+  Settled for the build:
+    - The correction sits in the firmware's reading path for those two channels only, through the hardware seam, and the control logic reads the corrected, marked value.
+    - The stored values live where the firmware keeps its other calibration, and the test proves a restart keeps them.
+    - This leaf depends on the firmware target moving to the selected controller, because the converter's reading path is that part's.
+    - Out of scope: the calibration procedure and the values, and the channels' accuracy figures, which the bring-up task and the board's error-budget record carry.
+rationale: |
+  Restores the behaviour REQ-PLANT-DESCRIPTION-001.C3 asks: an estimate is distinguishable from a measurement. A mains reading with no calibration applied is an estimate the parts as drawn leave 3.6 % and 5.7 % uncertain, and it must be marked so until the stored values exist. Placed as the sibling of SOL-HW-FIRMWARE-PIN-CHECKS-READ-MAIN-BOARD-RECORDS, so the board epic's criterion has a leaf that builds it.
+links:
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C28
+    type: derives-from
+  - target: REQ-PLANT-DESCRIPTION-001.C3
+    type: targets
+  - target: DEL-FIRMWARE-TARGET-ON-SELECTED-CONTROLLER
+    type: depends-on

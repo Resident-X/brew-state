@@ -1,0 +1,18 @@
+id: EV-SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT-C19-ANALYSIS
+type: evidence
+title: analysis evidence for SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C19
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-11-06T10:05:09Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/main-board/leak-detection.md::Result; What the channel can resolve; The idle baseline
+  artifact_version: be15507205561077c3e14950bfd23ab1258930a4
+text: |
+  Read the leak-detection record against each clause of the criterion, at the commit pinned here. The record's arithmetic gives, for the shunt read by the second channel of the AMC131M02 at the gain of 32 that the board's records assume and 4 kSPS, a noise-only 3 sigma change of 0.83 mA over a 20 ms window and 0.26 mA over a 200 ms window of whole mains cycles, so a leakage of 50 mA (50 uV at 1 mohm) is 60 and 190 times that, with every output commanded off. It states the assumptions: the converter's noise is the datasheet's typical figure for channel 0 with shorted inputs (channel 1 and in-circuit noise are not given), white noise, a window ending on a voltage zero crossing, and the DC component removed or the offset calibrated. It gives the idle current the leak is judged against, roughly 30 to 55 mA, as an estimate derived from datasheet figures and marked to be replaced by the bring-up measurement. It states what is not resolved: 10 mA is marginal, depending on how well the idle current repeats, which no record holds; a leak while a heater is on is resolved only above about 0.3 to 0.5 A; the output that leaks is not named unless the outputs are toggled one at a time; current to protective earth is not seen. Not claimed: that the channel resolves 50 mA on the built board (the idle current, its spread and the in-circuit noise are unmeasured, and the pump's and valve's current waveforms are not recorded), that 10 mA is resolved, or that the firmware check exists; it is a downstream slice, with the baseline measurement carried by the bring-up task.
+links:
+  - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C19
+    type: satisfies

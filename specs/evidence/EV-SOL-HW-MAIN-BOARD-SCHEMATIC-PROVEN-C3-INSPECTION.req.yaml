@@ -1,0 +1,18 @@
+id: EV-SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN-C3-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C3
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-04T21:15:05Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: docs/sunbeam-em7000/controller-board-division.md::The anticipated channel kinds
+  artifact_version: 4a8bc879141ca078f7a2d18a62f5c3a047bdc44b
+text: |
+  Read the division record's section 'The anticipated channel kinds' against the criterion at commit 4a8bc879. Each of the twelve kinds has a row stating its place, the header position and circuit block where it is given, and an 'Interface: loading carried now -> added' column that names the converter input or bus, its loading and the supply it adds (for example the second I2C bus and the SPI2 chip selects), so the reserved capacity is stated on the interfaces in use and is not only unused connector count. The two kinds not given a place (kinds 3 and 4) record the criterion weakened (the fit, bound by the header regions, with the arithmetic), and kind 6 is recorded as not reserved by the owner's choice with no criterion weakened. Fitting the probes or sensors is out of scope and is not claimed.
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C3
+    type: satisfies

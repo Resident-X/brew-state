@@ -1,0 +1,26 @@
+id: SOL-HW-REVIEW-KIT-SHARED-DOCUMENTS-HELD-AS-EXTRACTS
+type: deliverable
+category: solution
+title: A review root holds each shared document as the extract its units need, so the shared text of a full-size board fits the budget
+status: active
+version: 1
+text: |
+  Corrects the review kit so that the text every session holds is sized to the units it serves. The kit's budget check counts the shared documents of a review once, whole, in every root. On the six-layer main controller board the layout caller's plan-only run refuses every one of its six groups: the shared documents come to 4,950,717 tokens (one token to a character) against a 400,000-token budget. The largest are the rendered view index (1.73 million), the review record of earlier rounds (0.88 million), the last round's structured record (0.63 million), the layout facts (0.55 million) and the layout plan (0.45 million); dropping the three largest still leaves about 1.7 million. No declaration of views or groups can bring a root under the budget, because the overrun is in text every unit is handed whole whether or not the unit judges anything in it. The check report already reaches a root as the extract of the rules its units judge; the other shared documents do not.
+
+  Settled for the build:
+  - A shared document that lists per-item content is held by a root as the extract its units need, and not whole: the view index as the lines of the views the root holds, the earlier rounds' record as the rounds' header lines and the findings the root's units cite or judge, and the facts and plan as the sections the units' items name. A document with no per-item structure is held whole and is counted whole.
+  - A unit declares the extract it needs from each shared document as it declares the views it needs, and a unit that declares none of a document holds none of it.
+  - A review that cannot be brought under the budget is refused naming the shared documents by tokens, largest first, so the caller is told which document to extract.
+  - The layout caller declares the extracts, and its plan-only run on the main controller board plans within the budget.
+  - Out of scope: the value of the budget, the check report's extract, and the content of any document.
+rationale: |
+  Restores the behaviour SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES asks, that every session of a review holds a context within the declared budget, so the layout review the board is judged by (REQ-BOARD-LAYOUT-PRACTICE-001.C1, REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3) can be carried out by the kit on a full-size board. That solution sizes views per root and the check report per unit but counts the remaining shared text whole in every root, so the budget it enforces cannot be met by the board it was built for.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3
+    type: targets
+  - target: SOL-HW-REVIEW-KIT-SESSIONS-HOLD-ONLY-THEIR-GROUP-IMAGES
+    type: depends-on

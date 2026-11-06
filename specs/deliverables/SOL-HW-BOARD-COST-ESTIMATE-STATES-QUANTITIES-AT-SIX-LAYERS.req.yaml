@@ -1,0 +1,22 @@
+id: SOL-HW-BOARD-COST-ESTIMATE-STATES-QUANTITIES-AT-SIX-LAYERS
+type: deliverable
+category: solution
+title: The board cost estimate states the quantity each total prices and prices the main board at six layers
+status: active
+version: 1
+text: |
+  Restates the board cost estimate at the six copper layers the main board now has, and states the unit counts every total prices. The estimate was satisfied at four layers; the board's layout is six layers at a finish the maker offers only at six, and the division record's embedded script still prices four. The leaf's own text already settles the count the declared spend takes (the owner's minimum order, with the cost per machine beside it); this item makes the estimate say which count each figure prices and keeps its two sources in step.
+
+  Settled for the build:
+  - The main board is priced at six layers, ENIG, at its outline, with the board count fabricated and the count assembled stated beside each total, and each total marked as an estimate with its basis; the maker's quote is the only figure that is not an estimate, and recording it is the order leaf's.
+  - The division record's embedded script and the cost estimate give the same figures for the same layer count and quantities.
+  - Out of scope: the second board's pricing beyond restating its counts, the declared figure itself, and the quoted cost recorded before payment.
+rationale: |
+  Restores the behaviour REQ-COST-DISCIPLINE-001.C6 asks: total spend is weighed against the declared figure. A total that does not say how many boards it prices, and a script that still prices four layers, make the running total unreliable, so the weighing could pass or fail on a figure the build does not spend.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-COST-DISCIPLINE-001.C5
+    type: targets
+  - target: REQ-COST-DISCIPLINE-001.C6
+    type: targets

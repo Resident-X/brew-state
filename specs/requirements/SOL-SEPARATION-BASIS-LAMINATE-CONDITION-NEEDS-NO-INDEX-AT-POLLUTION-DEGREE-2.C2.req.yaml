@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-LAMINATE-CONDITION-NEEDS-NO-INDEX-AT-POLLUTION-DEGREE-2.C2
+type: criterion
+title: The header limits the index of at least 175 to the pollution degree 3 fallback and the printed-wiring column
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The header's third condition states that a comparative tracking index of at least 175 (material group IIIa) is needed only for the pollution degree 3 fallback named in the bring-up condition or for the printed-wiring column, which the record does not use, and that the main board's fabrication notes prefer families printing 175 or more as margin and not as a precondition. The test fails if either limit or the margin statement is absent.
+links:
+  - target: SOL-SEPARATION-BASIS-LAMINATE-CONDITION-NEEDS-NO-INDEX-AT-POLLUTION-DEGREE-2
+    type: criterion-of

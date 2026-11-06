@@ -1,0 +1,21 @@
+id: SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED-C1-MATCHES-THE-SIGNED-RECORD
+type: deliverable
+category: solution
+title: The net-pair leaf's first criterion states the seven entries the signed record holds
+status: active
+version: 1
+text: |
+  Corrects the net-pair leaf's criterion C1. It says the committed record holds exactly eleven net-pair entries and its title said nine on main (the text always said eleven). The record was signed with seven: the signed run of the layout rule check used seven of the eleven drafted, and entries 4, 6, 7 and 9 were removed. The test the criterion's second evidence cited (test_the_eleven_net_pair_entries ...) was replaced by one that traces SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C3, so the criterion has no test that names its own count and the record's present state is carried by that other leaf. A branch edit changed the criterion's title from nine to eleven while evidence for it existed; that edit is not repeated here.
+
+  Settled for the build:
+    - The leaf's C1 is superseded by, or reworded to, a statement of seven entries with the lists, working voltages and distances of the seven, by the route the engine allows for a criterion that carries evidence (supersede the criterion, not edit it in place), and the count in its title and text agree.
+    - Evidence for the corrected criterion is a test that names the count seven and traces to it.
+    - The signed-record leaf's C3 keeps carrying the signed record's count; this item does not duplicate it.
+    - Out of scope: the other criteria of the net-pair leaf, and any entry of another form.
+rationale: |
+  Restores the behaviour REQ-ELECTRICAL-INSTALL-001.C15 asks of the record: the net-pair entries are those listed with their working voltages and derivations, and the statement of what is listed must be the one the signed record holds. A criterion that names a count the record no longer holds, with passing evidence recorded when it did, lets a reader think eleven entries are verified. The evidence node EV-SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED-C1-TEST-V4-STALE records that it fails now.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C15
+    type: targets

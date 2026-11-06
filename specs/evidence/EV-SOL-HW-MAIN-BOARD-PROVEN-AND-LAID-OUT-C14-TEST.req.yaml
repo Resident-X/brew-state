@@ -1,0 +1,18 @@
+id: EV-SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT-C14-TEST
+type: evidence
+title: test evidence for SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C14
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-04T21:23:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: 'docs/sunbeam-em7000/controller-board-division.md::Reported for the board design tasks, item 28; Appendix: the checks (checks.py main, wall, --tables, --selftest)'
+  artifact_version: f9bfe521dac70e335026f782a7d1ae48b1280041
+text: |-
+  At commit f9bfe521 the division record's item 28, the note that the pump drives' margins are the design task's, names SOL-HW-PUMP-DRIVE-FIGURES-CLOSED as their owner. The record's own script, extracted from its appendix, was run: 'main' ends 'all main board checks pass', 'wall' ends 'all wall board checks pass', '--tables' reports '644 generated cells compared with the record; 0 differ', and '--selftest' ends 'selftest: 360 of 360 perturbations caught by the check they target'. The division itself is unchanged.
+links:
+  - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C14
+    type: satisfies

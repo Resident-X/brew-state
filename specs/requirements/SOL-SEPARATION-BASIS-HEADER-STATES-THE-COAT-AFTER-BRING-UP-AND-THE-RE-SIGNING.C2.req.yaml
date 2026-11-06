@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING.C2
+type: criterion
+title: The record carries the owner's re-signing day on itself and on every exception, and the header states it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The committed record's top-level accepted_on and the accepted_on of each of its 33 accepted_exceptions entries read 2026-11-06, every accepted_by is unchanged, no exception is dated later than the record, and the header states that the owner re-signed the whole record on that day in writing. The check's reader on the committed record finds it and every exception signed. The test fails on a record or an exception dated otherwise, an exception dated after the record, or a header that does not state the re-signing. Out of scope is the derating policy and any field of the record other than accepted_on and the header.
+links:
+  - target: SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING
+    type: criterion-of

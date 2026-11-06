@@ -1,0 +1,30 @@
+id: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES
+type: deliverable
+category: solution
+title: The pre-order check passes a workmanship or neatness line only on an owner-signed acceptance for that rule and place and fails every other
+status: active
+version: 1
+text: |
+  Corrects the pre-order check's handling of a workmanship or neatness line that the owner has accepted. The check passes a mains spacing shortfall only on a signed exception in the separation basis record and a derated-voltage position only on a signed entry of the derating policy, but it has no such mechanism for the workmanship and neatness rules, which are rule-kind items of the practice catalogue (route corner angle and segment length, pad entry, detour, courtyard overlap, test-point courtyard, stray designator, silkscreen overlap, hole spacing, a part outside its region and the plated pin of a bought part). A board whose only remaining lines are ones the owner has accepted on a stated ground therefore still exits non-zero, and the failure of its pre-order check cannot be told from a defect. The owner's policy is that workmanship items are fixed where reasonable in context and not chased to perfection, and the main board's decision of residual risks records that the check stays red on the remaining lines on the owner's condition; this item gives the check the means to read that acceptance so that such a board can pass while every other line still fails.
+
+  Settled for the build:
+  - Record shape. Each board design's records gain an optional workmanship acceptance record, an explicit empty list being a record that accepts none. Each entry names the rule, the place or scope the acceptance covers (a reference designator, a net, or a class of line the rule reports with the figure it reads), the number of lines it excuses, the owner's reason, the element or argument that bounds the harm, who accepted and the date. All keys must be present. An entry that is not a mapping, lacks a key, holds another key, repeats a rule and scope, or gives a non-positive count fails the record naming the entry and the key.
+  - Judgement. A line of a rule that the record covers, up to the entry's count, is reported as an ACCEPTED line with the rule, the place, the measured figure against the allowed one and the reason, and does not fail the check. A line with no entry, a line beyond the entry's count, and a line of a rule the record does not name fail as before. An entry excuses nothing but its own rule and scope.
+  - Fail closed. An entry fails the check, naming it, when it is unsigned (the accepted-by value empty, a placeholder or in angle brackets) or its date is empty, malformed or later than today; when its rule is not a workmanship or neatness rule of the check; when it covers a place the design does not have; or when no line uses it, so that it is stale. Rules that carry safety, mains spacing, derated-voltage or pin-limit findings are not accepted through this record, since they have their own exception forms or none, and an entry naming one fails.
+  - No signing by the agent. Nothing in the check or in the record is signed by the agent; an entry is the owner's, and a drafted entry stays unsigned until the owner signs, and the check fails an unsigned entry.
+  - Proof designs. The throwaway proof design gains synthetic entries where a test needs them, with a seeded fault caught for each failure above. The hardware notes state the entry form, the ACCEPTED line and the failures.
+
+  Out of scope: which lines of any board are accepted, the owner's signing of any entry, the rules' thresholds and measures, any change to a board's design files, and the safety, mains-spacing and derating exception forms.
+rationale: |
+  Restores the behaviour REQ-BOARD-LAYOUT-PRACTICE-001.C5 asks of the workmanship rules: a failing workmanship item is resolved by a change to the board or a recorded finding that it is overridden, never by judging the failure unimportant. The check can record an override for spacing and derating but not for workmanship, so an owner-accepted workmanship line can only be left as a failure that the check cannot distinguish from a defect. A scoped, signed, fail-closed record gives the check the same footing for workmanship that it has for spacing, without the agent signing for the owner.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C5
+    type: targets
+  - target: DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER
+    type: justified-by
+  - target: DEC-BOARD-PRE-ORDER-RULE-READINGS
+    type: justified-by
+  - target: SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS
+    type: depends-on

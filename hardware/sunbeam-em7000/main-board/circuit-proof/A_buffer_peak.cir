@@ -1,0 +1,20 @@
+Interlock: peak supply current of U201 at the first rising edge, Cc at its largest
+.include A_interlock.cir
+.include A_models.inc
+Vsup +5V GND 5.25
+Vpol POL_OUT GND PWL(0 0 1m 0 1.00001m 3.3 6m 3.3)
+* relay coil, a deck-added load (K201 is excluded from simulation): 62 ohm -10 % = 55.8 ohm
+Rcoil +5V POL_COIL_LO 55.8
+.options reltol=1e-5 abstol=1e-15 gmin=1e-15
+.tran 0.05u 3m
+.control
+alter R203 = 5.6896Meg
+alter R204 = 5.6896Meg
+alter C203 = 4.9645n
+alter C205 = 4.9645n
+alter C202 = 105.6n
+alter C204 = 105.6n
+run
+meas tran ipeak MIN i(Vsup) FROM=0.99m TO=1.2m
+.endc
+.end

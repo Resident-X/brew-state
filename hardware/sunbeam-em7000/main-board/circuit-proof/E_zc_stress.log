@@ -1,0 +1,16 @@
+R630 = R631: 59527 ohm (low end) to 61279 ohm (high end), 1 % and 100 ppm/K over +45 K
+  253 V rms, R low, VF 1.2: LED peak current 2.995 mA; each resistor 126.5 V rms (178.9 V pk), 267 mW
+  253 V rms, R high, VF 1.4: LED peak current 2.908 mA; each resistor 126.5 V rms (178.9 V pk), 259 mW
+  216 V rms, R low, VF 1.2: LED peak current 2.556 mA; each resistor 108.0 V rms (152.7 V pk), 194 mW
+  216 V rms, R high, VF 1.4: LED peak current 2.481 mA; each resistor 108.0 V rms (152.7 V pk), 189 mW
+worst resistor: 126.5 V rms against 200 V max working: 63.2 %; power 269 mW against 1000 mW at 70 degC air (26.9 %)
+  derating curve: rating 100 % up to 70 degC; the 70 degC air figure is the curve's flat end, so no derating applies at 70 degC (it applies above 70 degC to 0 at 155 degC)
+  one resistor shorted: the other carries 253 V rms: 126 % of 200 V (over the working figure; under the 400 V overload figure)
+  entry varistor clamp 775 V across the pair: 388 V each against 400 V max overload voltage (the sheet's short-time overload test applies 2.5 x the rated voltage for 5 s, p.6); the maker states no microsecond surge rating
+  LED: peak 3.00 mA against 50 mA (IF abs max): 6.0 %; LED power peak 4.2 mW against 70 mW
+LED peak current at the lowest supply, resistors high, VF max: 2.481 mA, against 1.0 mA, the one current at which the sheet states a collector current (IC >= 0.2 mA at CTR 20 %): 2.48x
+  time for IF to reach 1 mA after a crossing at 216 V rms, R high, VF max: 1.330 ms (23.9 degrees)
+  time for IF to reach 1 mA after a crossing at 253 V rms, R high, VF max: 1.126 ms (20.3 degrees)
+pull-up R632 = 22 kohm: collector current that pulls the output to VIL max = 0.3 VDD from VDD: IC >= 0.7 VDD / 22k = 0.095 mA (VDD 3.0) .. 0.115 mA (3.6); the sheet's IC min at IF = 1 mA is 0.2 mA at VCE = 5 V (not at this VCE)
+  to release: IC must fall below 0.041 mA (VDD 3.0) to 0.049 mA (VDD 3.6) = 0.3 VDD / 22k; the sheet states no collector current below IF = 1 mA
+collector: VCE max 3.6 V <= 35 V; pull-up current <= 0.16 mA <= IC 50 mA

@@ -1,0 +1,28 @@
+Converter pin voltage of STMP_AN with the sensor output or supply at its high levels, divider at its high-ratio tolerance corner
+* Source of every value: the sheet fragment of this block (generated from the same table).
+* Sim-only elements (names with SIM_) stand for the sensor, the converter's sample and hold and the supply.
+* Converter: DS12110 Rev 11 Table 77 / Table 174: CADC 4 pF (typ), tS 810.5 cycles, 16 bit, fADC 10 MHz.
+R531 SIM_SENS SPAREA_DIV 10k
+R532 SPAREA_DIV 0 20k
+R533 SPAREA_DIV STMP_AN 1k
+VSIM_SENS SIM_SENS 0 5.125
+ISIM_PAD STMP_AN 0 250n
+.op
+.control
+alter R531 = 9855
+alter R532 = 20290
+alter R533 = 1014.5
+alter VSIM_SENS = 5.125
+op
+let pin_5p125 = v(STMP_AN)
+print pin_5p125
+alter VSIM_SENS = 5.25
+op
+let pin_5p25 = v(STMP_AN)
+print pin_5p25
+alter VSIM_SENS = 5.5
+op
+let pin_5p5 = v(STMP_AN)
+print pin_5p5
+.endc
+.end

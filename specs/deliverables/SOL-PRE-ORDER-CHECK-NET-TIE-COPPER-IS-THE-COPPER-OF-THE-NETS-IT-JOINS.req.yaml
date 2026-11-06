@@ -1,0 +1,21 @@
+id: SOL-PRE-ORDER-CHECK-NET-TIE-COPPER-IS-THE-COPPER-OF-THE-NETS-IT-JOINS
+type: deliverable
+category: solution
+title: The cross-layer rule reads a net tie's copper graphic as the copper of the nets the tie joins
+status: active
+version: 1
+text: |
+  Corrects the cross-layer separation rule's reading of the copper a net-tie footprint draws. A net tie is a footprint of two or more pads whose nets it joins in copper, and it draws a netless copper graphic under its pads as the joining copper. The rule reads every copper graphic as low-voltage copper of no net, so the graphic of a tie between Mains-class nets is held at the mains-to-low-voltage clearance and creepage from every Mains item on the other layers, and is reported as a breach of every pour and track it lies under. On the main controller board the tie NT601, which joins the neutral to the measurement ground (both Mains-class nets), is read this way and gives 15 mains_layer_separation lines, none of them a real mains-to-low-voltage pair. The existing net-tie rule already fails a tie that joins a Mains-class net to one outside the class, so a graphic of a tie takes the nets its pads join.
+
+  Settled for the build:
+  - A copper graphic drawn in a footprint that names net_tie_pad_groups takes the nets of the pads of those groups: it is Mains-class copper when any pad it ties is on a Mains-class net, named by the first such net in name order, and is otherwise read as it is now. The nets are read by the reader the rule's other copper uses.
+  - A copper graphic of a footprint that names no net-tie groups, and a graphic drawn on the layout itself, are read as they are now, low-voltage copper of no net.
+  - A tie that joins a Mains-class net to one outside the class is still failed by the net-tie rule, and its graphic, being Mains-class copper, is held against the low-voltage copper on the other layers by the cross-layer rule.
+  - Out of scope: the net-tie rule, the rule's thresholds and any board's records.
+rationale: |
+  Restores the behaviour REQ-ELECTRICAL-INSTALL-001.C1 asks of the cross-layer rule, that separation covers the paths taken between conductors, by reading the copper of a net tie as the copper of the nets it joins. A tie between two Mains-class nets is mains copper, so judging it against mains as low-voltage copper reports pairs that are mains to mains, which the signed mains-to-mains spacing and KiCad's own rule already hold, and fills the owner's report with findings that are no breach.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C1
+    type: targets

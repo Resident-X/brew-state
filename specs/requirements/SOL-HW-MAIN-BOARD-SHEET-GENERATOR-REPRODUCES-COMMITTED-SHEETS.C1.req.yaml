@@ -1,0 +1,12 @@
+id: SOL-HW-MAIN-BOARD-SHEET-GENERATOR-REPRODUCES-COMMITTED-SHEETS.C1
+type: criterion
+title: The generator reproduces every committed sheet it writes
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Running the generator on a clean checkout writes, for each sheet it writes, a file that is identical to the committed sheet, and the proof's own sheet check reports no difference. Out of scope is any edit to a committed sheet to make it match the generator.
+links:
+  - target: SOL-HW-MAIN-BOARD-SHEET-GENERATOR-REPRODUCES-COMMITTED-SHEETS
+    type: criterion-of

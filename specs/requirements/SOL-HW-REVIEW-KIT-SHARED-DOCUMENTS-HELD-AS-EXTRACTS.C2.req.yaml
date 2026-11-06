@@ -1,0 +1,12 @@
+id: SOL-HW-REVIEW-KIT-SHARED-DOCUMENTS-HELD-AS-EXTRACTS.C2
+type: criterion
+title: A root holds the earlier rounds' record as the findings its units cite or judge and not whole
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Over a synthetic review folder with three earlier rounds each holding verdict and finding tables, a root's shared text holds each earlier round's heading and opening fields and only the findings and verdict rows that name an item of the root's units or a finding the units cite, and a unit's citation of an earlier finding resolves against the root's extract as it does against the whole record. The test includes a finding on an item no unit of the root judges and fails if it appears in that root. Out of scope is the structured record the last round leaves.
+links:
+  - target: SOL-HW-REVIEW-KIT-SHARED-DOCUMENTS-HELD-AS-EXTRACTS
+    type: criterion-of

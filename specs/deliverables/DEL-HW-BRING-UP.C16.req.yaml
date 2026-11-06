@@ -1,13 +1,13 @@
 id: DEL-HW-BRING-UP.C16
 type: criterion
-title: Each built board carrying mains shows its conformal coat over the gaps between mains pads before mains is first connected
+title: Each built board carrying mains shows its conformal coat over the gaps between mains pads once bring-up has found the machine functional from a hardware perspective
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 closes_by: cascade
 text: |
-  Before mains is first connected, each built board that carries mains shows the conformal coat named in its fabrication notes over the gaps between its mains pads, and the contact keep-outs the notes list free of it, by inspection of that board in the way the coat's datasheet allows (a magnifier, or ultraviolet light for a coat that fluoresces), recorded per board with the date and the coat's batch. Choosing the coat is out of scope.
+  After bring-up, once the machine is deemed functional from a hardware perspective, each built board that carries mains shows the conformal coat named in its fabrication notes over the gaps between its mains pads, and the contact keep-outs the notes list free of it, by inspection of that board in the way the coat's datasheet allows (a magnifier, or ultraviolet light for a coat that fluoresces), recorded per board with the date and the coat's batch. The coat is therefore no part of the board's first connection to mains: that connection and the bring-up bench tests run on the uncoated board, in a clean room, and until the coat is applied it is no part of the bound on any fault between mains pads. The pollution degree 2 credit of the separation basis record rests on the enclosure and not on the coat. Choosing the coat is out of scope.
 links:
   - target: DEL-HW-BRING-UP
     type: criterion-of

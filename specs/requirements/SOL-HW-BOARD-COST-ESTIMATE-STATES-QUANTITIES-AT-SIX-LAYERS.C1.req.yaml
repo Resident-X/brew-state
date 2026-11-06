@@ -1,0 +1,12 @@
+id: SOL-HW-BOARD-COST-ESTIMATE-STATES-QUANTITIES-AT-SIX-LAYERS.C1
+type: criterion
+title: Every total the estimate gives states the boards fabricated and assembled it prices and is marked an estimate
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |-
+  Each total in the board cost estimate is stated beside the number of boards fabricated and the number assembled it prices, with the cost per machine shown beside it, and is marked as an estimate with its basis. A total with no stated count fails. Out of scope is the quoted order cost the order leaf records.
+links:
+  - target: SOL-HW-BOARD-COST-ESTIMATE-STATES-QUANTITIES-AT-SIX-LAYERS
+    type: criterion-of

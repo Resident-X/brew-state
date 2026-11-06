@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-PLATED-HOLE-SPACING-FIGURE-READS-1-60-MM.C1
+type: criterion
+title: The board's plated-hole spacing figure reads 1.60 mm in its rules table and its rules file
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The main board's design-rules.md row "Plated hole spacing" and the rule of that name in main-board.kicad_dru state 1.60 mm, with the working (twice the widest annulus, twice the ground zones' thermal-relief gap, the zone's minimum thickness) shown in the table, and a new layout review round is recorded on the changed design.
+links:
+  - target: SOL-MAIN-BOARD-PLATED-HOLE-SPACING-FIGURE-READS-1-60-MM
+    type: criterion-of

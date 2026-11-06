@@ -1,0 +1,15 @@
+gate decay, start at the rail top, to 0.6 V (sourced threshold) : 61.88 ms ; to 0.5 V (the record's end point): 67.09 ms
+gate decay, start as pumped, either held level, fixed circuit   : 56.19 ms
+gate decay, record's 19-part circuit: output held low 61.25 ms; output held HIGH 1244.4 ms
+coil decay per henry: sim 5.733 ms/H (diode ~0) ; sim with the BAS116 fit 5.639 ms/H ; analytic 6.159 ms/H
+fixed part of the budget: 61.88 + 1.0 + 8.0 = 70.88 ms ; with the coil per henry 6.159 ms/H the removal time is 70.88 ms + L x 6.159
+largest coil inductance meeting 100 ms: (100 - 70.88)/6.159 = 4.73 H
+at 1.68 H (the record's bound): total 81.23 ms, margin 18.77 ms
+zener shorted (diode alone clamps, BAS116 fit): 26.58 ms/H -> 70.88 ms + L x 26.58 ; largest L meeting 100 ms: 1.10 H
+hold L0_fix: gate minimum before the next 12 ms edge 2.367 V ; time above 1.8 V after an edge 18.72 ms ; margin to 12 ms 6.72 ms
+hold L1_fix: gate minimum before the next 12 ms edge 2.259 V ; time above 1.8 V after an edge 16.90 ms ; margin to 12 ms 4.90 ms
+hold L2_fix: gate minimum before the next 12 ms edge 0.094 V ; time above 1.8 V after an edge 5.69 ms ; margin to 12 ms -6.31 ms
+hold L3_fix: gate minimum before the next 12 ms edge 1.975 V ; time above 1.8 V after an edge 13.49 ms ; margin to 12 ms 1.49 ms
+hold L0_rec: gate minimum before the next 12 ms edge 3.004 V ; time above 1.8 V after an edge 24.57 ms ; margin to 12 ms 12.57 ms
+pick-up 25C: coil voltage 4.127 V against 3.50 V : margin 0.627 V (17.9 %)
+pick-up 70C: coil voltage 4.312 V against 4.20 V : margin 0.112 V (2.7 %)

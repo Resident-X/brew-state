@@ -1,0 +1,18 @@
+id: EV-SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN-C5-TEST
+type: evidence
+title: test evidence for SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C5
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-04T21:15:05Z"
+valid_until: "2026-11-12"
+artifact:
+  kind: external
+  reference: 'hardware/sunbeam-em7000/main-board/pre-order-check-result.md::Counts by rule; records: pin-allocation.yaml, parts-specification.yaml, derating-policy.yaml, pin-limits.yaml, catalogue-extract.yaml::read_on'
+  artifact_version: 4a8bc879141ca078f7a2d18a62f5c3a047bdc44b
+text: |
+  The four records the criterion names (pin allocation, parts specification, derating policy, pin limits) and the catalogue extract exist for the main board at commit 4a8bc879. The catalogue extract was read on 2026-10-29 with a 14-day age limit, so it is current until 2026-11-12, which is this evidence's valid_until. The main-board pre-order check was run on the last design-file commit (200c0ae6; record: pre-order-check-result.md, 'Counts by rule'): its 2,042 violations include no line of the pin_allocation, connectivity, pin_limit, parts_record, parts_part, parts_catalogue, parts_lifecycle or derating_exception rules, so the checks found the records they hold the board to and read the extract as current. That run fails overall on layout, spacing, silkscreen and workmanship rules and on the derated_voltage rule's 10 lines, which are findings against part ratings and not a missing record; the criterion puts the pre-order check passing on the finished layout out of scope and this evidence does not claim it.
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C5
+    type: satisfies

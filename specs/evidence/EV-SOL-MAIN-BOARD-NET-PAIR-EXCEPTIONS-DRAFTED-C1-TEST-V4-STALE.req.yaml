@@ -1,0 +1,19 @@
+id: EV-SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED-C1-TEST-V4-STALE
+type: evidence
+title: 'test evidence for SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C1: the record now holds seven'
+status: active
+version: 1
+result: fail
+method: test
+observed_at: "2026-11-05T21:52:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_separation_basis_record.py::NetPairAndSamePartDrafts.test_the_seven_kept_net_pair_entries_hold_the_lists_working_voltages_and_distances_the_leaf_sets
+  artifact_version: fd63870a
+  verifier: claude (AI agent)
+text: |
+  Read hardware/tools/tests/test_separation_basis_record.py and the committed separation-basis.yaml at the branch commit stated in the artifact version. The criterion says the committed record holds exactly eleven net-pair accepted_exceptions entries. It holds seven: the signed run of the layout rule check reported no shortfall for entries 4, 6, 7 and 9 of the eleven drafted, so they were removed when the record was signed. The test the earlier evidence for this criterion at version 4 cites (test_the_eleven_net_pair_entries_hold_the_lists_working_voltages_and_distances_the_leaf_sets) no longer exists; its successor, test_the_seven_kept_net_pair_entries_hold_the_lists_working_voltages_and_distances_the_leaf_sets, traces SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C3, which carries the signed record's count. So this criterion's statement is not true of the record at this commit, and the earlier passing evidence for it, observed when the record held eleven, no longer stands. The criterion's title was also edited from nine to eleven (version 3 to 4) while evidence for it existed, which the rules forbid. Correcting the criterion is the maintenance item SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED-C1-MATCHES-THE-SIGNED-RECORD.
+links:
+  - target: SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C1
+    type: satisfies

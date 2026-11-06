@@ -1,0 +1,33 @@
+LED drive stage, coffee pump side: Q701 / R703 / U701 (the MOC3052M input LED); the steam pump (Q711, R713, U711) and the two heater stages (Q761 / R763, Q771 / R773, MOC3083M) are the same circuit
+* Reference designators are the schematic spec's (sheets/700-pump-drives.yaml). ngspice needs an M prefix for a MOSFET, so Q701 is M701 here.
+* U701's input LED is modelled as a constant forward voltage VLED701 (MOC3052M/D Rev 4: VF max 1.5 V at 10 mA; 0 V is the upper-current bound). The sheet gives no minimum VF.
+* AO3400A (AOS Rev 3, Dec 2011) at its datasheet limits as in D_valve_coil.cir.
+VSUP P5V 0 4.75
+R703 P5V NLEDA 180
+VLED701 NLEDA NLEDK 1.5
+M701 NLEDK G701 0 0 NAO3400
+R701 G701A G701 100
+R702 G701 0 100k
+VVOH G701A 0 2.735
+.model NAO3400 NMOS (LEVEL=1 VTO=1.45 KP=13.84 LAMBDA=0)
+BIL IL 0 V=I(VLED701)
+.tran 10u 1m
+.control
+* Conditions covered: +5V 4.75 / 5.25 V; R703 180 ohm -1 % / +1 %; VF 1.5 V (sheet max at 10 mA) and 1.7 V (sensitivity); VF 0 V (current bound);
+* +3V3 low end 3.135 V -> VOH_min 2.735 V (DS12110 Rev 11 Table 51)
+alter R703 = 181.8
+run
+meas tran if_min_pump AVG v(IL) from=0.5m to=1m
+alter VLED701 = 1.7
+run
+meas tran if_min_pump_vf17 AVG v(IL) from=0.5m to=1m
+alter VLED701 = 0
+alter VSUP = 5.25
+alter R703 = 178.2
+run
+meas tran if_max_pump_bound AVG v(IL) from=0.5m to=1m
+alter VLED701 = 1.5
+run
+meas tran if_at_vf15_vmax AVG v(IL) from=0.5m to=1m
+.endc
+.end

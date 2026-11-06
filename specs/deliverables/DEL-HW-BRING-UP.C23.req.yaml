@@ -1,0 +1,13 @@
+id: DEL-HW-BRING-UP.C23
+type: criterion
+title: The all-outputs-off current of the mains current channel and its spread are measured and the leak threshold of the startup confirmation is set from them
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  With the built board powered, its logic running and every pump, valve and heater commanded off and settled for at least 500 ms, the mains current channel is read over repeated windows of whole mains cycles ending on a voltage zero crossing. The median current and its spread across the windows are recorded with the channel's calibration of the same date, and the leak threshold of the startup confirmation of REQ-ACTUATION-CONFIRMATION-001.C6 is set from them as the median plus the larger of 5 mA and 6 times the spread. The reading replaces the estimate of 30 to 55 mA that the board's leak-detection record carries. A threshold more than 50 mA above the median fails, because the channel's resolution of leakage is shown only for 50 mA. Out of scope: the firmware that learns the baseline in service, and the leakage of any individual output.
+links:
+  - target: DEL-HW-BRING-UP
+    type: criterion-of

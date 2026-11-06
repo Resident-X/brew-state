@@ -1,0 +1,19 @@
+id: EV-SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN-C12-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C12
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-05T21:00:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/main-board/open-items.md
+  artifact_version: "33851441"
+  verifier: claude (AI agent)
+text: |
+  Inspection of hardware/sunbeam-em7000/main-board/open-items.md, section "Bring-up measurements carried", at the branch commit stated in the artifact version, against each clause of the criterion. The section holds rows M1 to M25. Each row names the part and the figure its maker does not publish (clause 1), states the measurement on the built board that reads it (clause 2), states the limit the reading must meet and where the limit comes from (clause 3), and the section states that a part is graded on the range its maker does publish and that a row never stretches a rating. Instruments are limited to a home bench, and where no home measurement can be made the row says "worst case assumed" with the value and its source (M5, M8, M15, M1 above the published range) rather than inventing a limit. The rows are all in a board record (open-items.md), against the part, and every row is stated before layout begins in the sense that the section was authored with the schematic records and was in place at the schematic review's closing round. Measuring the figures is not claimed. Scope limit stated plainly: maker figures the records leave to a written query to the maker and not to a bring-up measurement (the pump triac 1.2/50 us surge withstand and the triac's maximum thermal resistance at the layout copper area, the HF115F coil inductance and creepage, the SETfuse let-through figures) are recorded in open-items.md against the part as items to ask of the maker, and are not rows of the measurement section; this evidence covers the measurement section and does not claim those queries are measurements.
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C12
+    type: satisfies

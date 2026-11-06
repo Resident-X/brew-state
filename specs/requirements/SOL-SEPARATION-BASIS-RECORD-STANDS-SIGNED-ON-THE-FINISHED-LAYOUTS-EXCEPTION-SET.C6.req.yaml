@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C6
+type: criterion
+title: The record holds no mains-to-low-voltage entry and names none of U601, U602, K201, K731 and K741
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The committed record holds no accepted_exceptions entry of pair mains_to_low_voltage and no entry naming a pad of U601, U602, K201, K731 or K741, because the slots between their pad rows hold the gaps at the signed figure and the check reports no shortfall for them. The check's own reader still reads a mains_to_low_voltage creepage entry in the check's form with no problem and refuses a pair kind outside its vocabulary. The division record's judgement of the four parts is unchanged: the figures inside the parts the board's gaps do not measure stay recorded there against the signed figure and are not excused by an entry. Out of scope is the owner's decision on those figures.
+links:
+  - target: SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET
+    type: criterion-of

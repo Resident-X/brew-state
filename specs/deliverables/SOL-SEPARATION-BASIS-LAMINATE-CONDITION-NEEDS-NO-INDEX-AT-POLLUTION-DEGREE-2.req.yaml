@@ -1,0 +1,23 @@
+id: SOL-SEPARATION-BASIS-LAMINATE-CONDITION-NEEDS-NO-INDEX-AT-POLLUTION-DEGREE-2
+type: deliverable
+category: solution
+title: The separation basis header states the laminate condition as group III at pollution degree 2, with an index of 175 needed only for the fallback
+status: active
+version: 1
+text: |
+  Makes the sealed separation basis solution's criterion C3 and the record's header say one thing about the laminate. That criterion lists, as the third of six conditions of the pollution degree 2 credit, "a laminate comparative tracking index of at least 175", and its test pins the header's condition 3 to the words "comparative tracking index" and "at least 175". The research of 2026-11-05 into the creepage table found that at pollution degree 2 the table's material group III column, which covers groups IIIa and IIIb alike (250 V row: 2.50 mm; 320 V row: 3.2 mm), is the column the record uses, so a laminate index below 175 changes none of the record's figures, and the header was rewritten on this branch to say so. The criterion still reads as a precondition the header no longer states.
+
+  Settled for the build:
+  - Condition 3 of the header states that the creepage figures use the material group III column at pollution degree 2, covering groups IIIa and IIIb, so a comparative tracking index is not a precondition at pollution degree 2 and a laminate under 175 changes none of the figures; that an index of at least 175 (material group IIIa) is needed only for the pollution degree 3 fallback of the bring-up condition or for the printed-wiring column, which the record does not use; and that the main board's fabrication notes still prefer laminate families printing 175 or more, as margin and not as a precondition.
+  - The header's other five conditions, the figures and the signature state are unchanged.
+  - The sealed criterion C3 and its evidence are not edited; this item's criteria govern the wording of condition 3, and the record's tests that pinned the old wording read the new.
+  - Out of scope: the main board's fabrication-note criterion for the laminate, whose wording is held by its own leaf, and the choice of laminate.
+rationale: |
+  Restores the behaviour REQ-ELECTRICAL-INSTALL-001.C15 asks: the figures are read for the declared pollution degree, material group and the stated conditions of the credit, and the record states those conditions as they are. A condition stated as a precondition that the figures do not depend on misleads the owner who accepts the record and a laminate chooser who reads it; the sealed criterion that required that wording said the wrong thing for the pollution degree 2 reading, and is left as what was verified then.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C15
+    type: targets
+  - target: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD
+    type: depends-on

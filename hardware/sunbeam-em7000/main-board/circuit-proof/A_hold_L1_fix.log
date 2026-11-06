@@ -1,0 +1,35 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: interlock timeout against the 12 ms refresh, shortest corner, leakage case l1, variant fix: 50 na, the pump-diode figure of the record
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
++5v                                       4.75
+pol_out                                      0
+pol_buf                             2.6125e-07
+pol_node_a                         1.69045e-74
+pol_gate_a                        -2.61174e-83
+pol_mid                                  2.375
+pol_node_b                         1.69045e-74
+pol_gate_b                        -2.61174e-83
+pol_coil_lo                               4.75
+pol_clamp_1                            4.74946
+pol_clamp_2                            4.74946
+vpol#branch                                  0
+vsup#branch                          -4.75e-09
+
+
+No. of Data Rows : 80816
+vpeaka              =  3.82920e+00 at=  1.18088e-01
+gmina               =  2.25851e+00 at=  1.17997e-01
+tabove_after_edge   =  1.68967e-02 targ=  1.34897e-01 trig=  1.18000e-01
+Note: Simulation executed from .control section 

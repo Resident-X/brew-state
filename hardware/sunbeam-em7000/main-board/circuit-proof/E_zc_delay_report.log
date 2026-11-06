@@ -1,0 +1,39 @@
+case                                                      assert delay ms  release lead ms
+v216_rlo_ctrmin_vf1.4_vdd3.0                                       0.6387           0.2360
+v216_rlo_ctrmin_vf1.4_vdd3.6                                       0.7598           0.2871
+v216_rlo_ctrmin_vf1.2_vdd3.0                                       0.6366           0.2339
+v216_rlo_ctrmin_vf1.2_vdd3.6                                       0.7577           0.2850
+v216_rlo_ctrmax_vf1.4_vdd3.0                                       0.0786          -0.0021
+v216_rlo_ctrmax_vf1.4_vdd3.6                                       0.0873           0.0014
+v216_rlo_ctrmax_vf1.2_vdd3.0                                       0.0764          -0.0042
+v216_rlo_ctrmax_vf1.2_vdd3.6                                       0.0851          -0.0006
+v216_rhi_ctrmin_vf1.4_vdd3.0                                       0.6564           0.2435
+v216_rhi_ctrmin_vf1.4_vdd3.6                                       0.7813           0.2961
+v216_rhi_ctrmin_vf1.2_vdd3.0                                       0.6543           0.2414
+v216_rhi_ctrmin_vf1.2_vdd3.6                                       0.7792           0.2940
+v216_rhi_ctrmax_vf1.4_vdd3.0                                       0.0799          -0.0015
+v216_rhi_ctrmax_vf1.4_vdd3.6                                       0.0888           0.0020
+v216_rhi_ctrmax_vf1.2_vdd3.0                                       0.0777          -0.0036
+v216_rhi_ctrmax_vf1.2_vdd3.6                                       0.0866           0.0000
+v253_rlo_ctrmin_vf1.4_vdd3.0                                       0.5488           0.1970
+v253_rlo_ctrmin_vf1.4_vdd3.6                                       0.6516           0.2406
+v253_rlo_ctrmin_vf1.2_vdd3.0                                       0.5471           0.1952
+v253_rlo_ctrmin_vf1.2_vdd3.6                                       0.6498           0.2388
+v253_rlo_ctrmax_vf1.4_vdd3.0                                       0.0704          -0.0065
+v253_rlo_ctrmax_vf1.4_vdd3.6                                       0.0780          -0.0033
+v253_rlo_ctrmax_vf1.2_vdd3.0                                       0.0684          -0.0082
+v253_rlo_ctrmax_vf1.2_vdd3.6                                       0.0761          -0.0050
+v253_rhi_ctrmin_vf1.4_vdd3.0                                       0.5639           0.2034
+v253_rhi_ctrmin_vf1.4_vdd3.6                                       0.6698           0.2482
+v253_rhi_ctrmin_vf1.2_vdd3.0                                       0.5621           0.2016
+v253_rhi_ctrmin_vf1.2_vdd3.6                                       0.6680           0.2465
+v253_rhi_ctrmax_vf1.4_vdd3.0                                       0.0715          -0.0060
+v253_rhi_ctrmax_vf1.4_vdd3.6                                       0.0793          -0.0027
+v253_rhi_ctrmax_vf1.2_vdd3.0                                       0.0696          -0.0077
+v253_rhi_ctrmax_vf1.2_vdd3.6                                       0.0775          -0.0044
+
+assert delay  : min 0.0684 ms  max 0.7813 ms  (of a 10 ms half-cycle: 0.68 % to 7.81 %)
+release lead  : min -0.0082 ms  max 0.2961 ms
+spread of the assert delay across the cases: 0.7129 ms = 12.83 degrees of the 50 Hz cycle
+ctrmin: assert delay 0.5471..0.7813 ms; release lead 0.1952..0.2961 ms
+ctrmax: assert delay 0.0684..0.0888 ms; release lead -0.0082..0.0020 ms

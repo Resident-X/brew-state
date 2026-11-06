@@ -1,0 +1,264 @@
+# The derating policy of the Sunbeam EM7000 main board, read by the pre-order board check
+# (the derated-voltage rule reads each class's voltage share) and by the schematic review
+# (DERATE-1 and DERATE-2 read all three shares of a class).
+#
+# Adopted by the owner on 2026-10-29 ("agree, proceed") as proposed in schematic-spec.yaml
+# under derating_policy_proposed. The factors are those of NASA Goddard Space Flight Center,
+# EEE Parts Derating, Preferred Reliability Practice PD-ED-1201, Table 1, which the free
+# published copy states in full (https://klabs.org/DEI/References/design_guidelines/design_series/1201.pdf,
+# no date printed, read 2026-10-29). The proposal's factors match Table 1 row for row; no
+# other published source was found that differs.
+#
+# What a share means here. A share is the fraction of the part's rating that the stress may
+# use, so 0.6 on voltage is 60 % of the rated voltage. The 'power' share is the share of
+# rated power, or of rated current for the class whose Table 1 row states current. Table 1
+# states a figure for some quantities of a class and none for others. A quantity it states
+# no figure for takes the share 1, which means the maker's rating is the limit and the
+# policy adds no margin to it; each such source says so. Temperature is stated by the
+# table as a highest junction temperature (110 degC for semiconductor devices, 100 degC
+# for microcircuits) or as 60 % of the rated temperature (inductive devices). The
+# junction caps are carried here as the share of 125 degC, the lowest rated junction
+# maximum among the integrated circuits and semiconductors on this board (the controller,
+# the regulator, the supervisor, the TVS and Schottky diodes), so 110 degC is 0.88;
+# DERATE-2 holds a part to the absolute cap, 110 degC for both classes, at the
+# enclosure air plus the part's own rise.
+#
+# Relaxed by the owner on 2026-10-29 ('adopt'), for this hobbyist project, in three ways
+# against Table 1: (1) an integrated circuit run within its maker's recommended supply
+# range takes the voltage share 1 (Table 1: 0.8), so the check compares the applied voltage
+# to the maker's absolute maximum; (2) the junction cap for integrated circuits is 110 degC,
+# share 0.88 (Table 1: 100 degC, 0.8), the same as semiconductor devices; (3) the relay and
+# connector class takes the current share 1 (Table 1: 0.5), so relay contacts are held to the
+# maker's rating.
+#
+# Enclosure air: 70 degC is assumed at every part until the bring-up measurement of the
+# machine's real enclosure air; the assumption stands in the source below.
+#
+# Classes the board uses that Table 1 has no row for: fuses, resettable fuses, the varistor,
+# crystals and oscillators, thermistors, the switch, jumpers and links, test points, and the
+# mains-rated, safety-listed parts (the X2 capacitors, relay contacts, tabs and fuse clips).
+# The owner (a hobbyist project) accepted on 2026-10-29 ("agree, proceed") that for these the
+# maker's rating is the limit: each of the nine classes after the Table 1 classes below takes
+# the share 1 on voltage, power and temperature, adds no margin of its own, and says so in its
+# source lines. Where the maker states the rating the figure is the maker's, from the datasheet
+# the parts specification and the sheets cite; where the maker states none the part is held to
+# no voltage figure and its class in the parts specification is none. Relay contacts keep the
+# relay and connector class, whose Table 1 row already sets the voltage share 1.
+source: NASA Goddard Space Flight Center, EEE Parts Derating, Preferred Reliability Practice PD-ED-1201, Table 1 (https://klabs.org/DEI/References/design_guidelines/design_series/1201.pdf, no date printed, read 2026-10-29); adopted by the owner on 2026-10-29 as the proposal in schematic-spec.yaml derating_policy_proposed; for the classes Table 1 has no row for (fuse, resettable fuse, varistor, crystal and oscillator, thermistor, switch, jumper and link, test point, mains-rated safety part) the maker's rating is the limit, share 1, as the owner accepted on 2026-10-29 (hobbyist project, "agree, proceed"); relaxed by the owner on 2026-10-29 (hobbyist project, 'adopt') in three ways against Table 1, namely integrated circuit voltage share 1 instead of 0.8 (an integrated circuit within its maker's recommended supply range needs no further voltage derating), integrated circuit junction cap 110 degC (share 0.88) instead of 100 degC (0.8), and relay and connector current share 1 instead of 0.5 (relay contacts held to the maker's rating); enclosure air assumed at 70 degC until measured at bring-up
+classes:
+  - class: capacitor
+    voltage:
+      share: 0.6
+      source: PD-ED-1201 Table 1, Capacitors, max of 60 % of rated voltage
+    power:
+      share: 1
+      source: PD-ED-1201 Table 1 states no power or current factor for capacitors, so the maker's rating (ripple current at the temperature) is the limit
+    temperature:
+      share: 1
+      source: PD-ED-1201 Table 1 states no temperature factor for capacitors, so the maker's rated temperature, with its curve, is the limit
+  - class: resistor
+    voltage:
+      share: 1
+      source: PD-ED-1201 Table 1 states no voltage factor for resistors, so the maker's rated working voltage is the limit
+    power:
+      share: 0.6
+      source: PD-ED-1201 Table 1, Resistors, max of 60 % of rated power
+    temperature:
+      share: 1
+      source: PD-ED-1201 Table 1 states no temperature factor for resistors, so the maker's power-versus-temperature curve at the 70 degC enclosure air is the limit
+  - class: semiconductor
+    voltage:
+      share: 0.75
+      source: PD-ED-1201 Table 1, Semiconductor Devices, max of 75 % of rated voltage
+    power:
+      share: 0.5
+      source: PD-ED-1201 Table 1, Semiconductor Devices, max of 50 % of rated power
+    temperature:
+      share: 0.88
+      source: PD-ED-1201 Table 1, Semiconductor Devices, max junction temperature of 110 degC, carried as 110/125 of the lowest rated junction maximum on the board; the owner adopted the same 110 degC cap for integrated circuits on 2026-10-29
+  - class: integrated circuit
+    voltage:
+      share: 1
+      source: PD-ED-1201 Table 1, Microcircuits, states max supply voltage of 80 % of rated voltage; the owner relaxed it on 2026-10-29 (hobbyist project, 'adopt'), so an integrated circuit run within its maker's recommended supply range needs no further voltage derating and the check compares the applied voltage to the maker's absolute maximum at share 1
+    power:
+      share: 0.75
+      source: PD-ED-1201 Table 1, Microcircuits, max of 75 % of rated power
+    temperature:
+      share: 0.88
+      source: PD-ED-1201 Table 1, Microcircuits, states a max junction temperature of 100 degC; the owner adopted 110 degC on 2026-10-29 (hobbyist project, 'adopt'), carried as 110/125 of the lowest rated junction maximum on the board
+  - class: inductive device
+    voltage:
+      share: 0.5
+      source: PD-ED-1201 Table 1, Inductive Devices, max of 50 % of rated voltage
+    power:
+      share: 1
+      source: PD-ED-1201 Table 1 states no power or current factor for inductive devices, so the maker's rated current is the limit
+    temperature:
+      share: 0.6
+      source: PD-ED-1201 Table 1, Inductive Devices, max of 60 % of rated temperature
+  - class: relay and connector
+    voltage:
+      share: 1
+      source: PD-ED-1201 Table 1 states no voltage factor for relays and connectors, so the maker's rated voltage is the limit
+    power:
+      share: 1
+      source: PD-ED-1201 Table 1, Relays and Connectors, states max of 50 % of rated current; the owner relaxed it on 2026-10-29 (hobbyist project, 'adopt'), so relay contacts and connectors are held to the maker's rating
+    temperature:
+      share: 1
+      source: PD-ED-1201 Table 1 states no temperature factor for relays and connectors, so the maker's rated temperature is the limit
+  - class: fuse
+    voltage:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for fuses, so the maker's voltage and current rating is the limit; the owner accepted that on 2026-10-29
+    power:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for fuses, so the maker's rated current or power is the limit; the owner accepted that on 2026-10-29
+    temperature:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for fuses, so the maker's rated temperature is the limit; the owner accepted that on 2026-10-29
+  - class: resettable fuse
+    voltage:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for resettable (polymeric PTC) fuses, so the maker's maximum voltage and hold current is the limit; the owner accepted that on 2026-10-29
+    power:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for resettable (polymeric PTC) fuses, so the maker's rated current or power is the limit; the owner accepted that on 2026-10-29
+    temperature:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for resettable (polymeric PTC) fuses, so the maker's rated operating temperature is the limit; the owner accepted that on 2026-10-29
+  - class: varistor
+    voltage:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for varistors, so the maker's maximum continuous voltage is the limit; the owner accepted that on 2026-10-29
+    power:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for varistors, so the maker's rated current or power is the limit; the owner accepted that on 2026-10-29
+    temperature:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for varistors, so the maker's rated operating temperature is the limit; the owner accepted that on 2026-10-29
+  - class: crystal and oscillator
+    voltage:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for crystals and oscillators, so the maker's supply and drive-level figures is the limit; the owner accepted that on 2026-10-29
+    power:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for crystals and oscillators, so the maker's rated current or power is the limit; the owner accepted that on 2026-10-29
+    temperature:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for crystals and oscillators, so the maker's rated temperature range is the limit; the owner accepted that on 2026-10-29
+  - class: thermistor
+    voltage:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for thermistors, so the maker's maximum voltage and current is the limit; the owner accepted that on 2026-10-29
+    power:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for thermistors, so the maker's rated current or power is the limit; the owner accepted that on 2026-10-29
+    temperature:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for thermistors, so the maker's rated operating temperature is the limit; the owner accepted that on 2026-10-29
+  - class: switch
+    voltage:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for switches, so the maker's contact voltage and current rating is the limit; the owner accepted that on 2026-10-29
+    power:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for switches, so the maker's rated current or power is the limit; the owner accepted that on 2026-10-29
+    temperature:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for switches, so the maker's rated operating temperature is the limit; the owner accepted that on 2026-10-29
+  - class: jumper and link
+    voltage:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for jumpers and links, so the maker's voltage and current rating is the limit; the owner accepted that on 2026-10-29
+    power:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for jumpers and links, so the maker's rated current or power is the limit; the owner accepted that on 2026-10-29
+    temperature:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for jumpers and links, so the maker's rated operating temperature is the limit; the owner accepted that on 2026-10-29
+  - class: test point
+    voltage:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for test points, so the maker's voltage and current rating is the limit; the owner accepted that on 2026-10-29
+    power:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for test points, so the maker's rated current or power is the limit; the owner accepted that on 2026-10-29
+    temperature:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for test points, so the maker's rated operating temperature is the limit; the owner accepted that on 2026-10-29
+  - class: mains-rated safety part
+    voltage:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for mains-rated, safety-listed parts (X2 capacitors, relay contacts, tabs, fuse clips), so the maker's rated mains voltage and current is the limit; the owner accepted that on 2026-10-29
+    power:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for mains-rated, safety-listed parts (X2 capacitors, relay contacts, tabs, fuse clips), so the maker's rated current or power is the limit; the owner accepted that on 2026-10-29
+    temperature:
+      share: 1
+      source: PD-ED-1201 Table 1 has no row for mains-rated, safety-listed parts (X2 capacitors, relay contacts, tabs, fuse clips), so the maker's rated operating temperature is the limit; the owner accepted that on 2026-10-29
+
+# Owner-accepted derating exceptions (SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS). Every entry is signed on 2026-11-05: the owner
+# instructed Claude, in writing in the working session, to enter the owner's acceptance on the owner's behalf, so accepted_by names both.
+# accepted_v is the working voltage the rule works out, 357.8 V, the peak of the 253 V rms top of the declared supply span. The first six
+# entries carry the owner's recorded acceptance of 2026-10-29; R102, R104, R706 and R716 are not in that acceptance and say so.
+accepted_exceptions:
+  - position: F101
+    accepted_v: 357.8
+    reason: "The entry fuse F101 (SETfuse SCT520, 10 A, 250 VAC, 353.553 V peak) stands across LINE_IN and LINE_F, which swing the 357.8 V peak of the 253 V rms top of the declared supply span, about 1 % over the maker's 250 VAC rating. Owner, 2026-10-29: 'accept the fuse', on top of the earlier acceptance of the other 250 V positions, for the reasons that the machine's other factory parts are rated 250 V (DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER item (c2))."
+    bounded_by: "The usual margin on 230 V and 240 V mains, and firmware voltage monitoring that may warn near the top of the span; the 253 V top of the declared span is a declared worst case that the mains does not sit at (item (c2) of DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER). Revisited if the declared span is widened above 253 V or monitoring shows the supply above it."
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
+  - position: F701
+    accepted_v: 357.8
+    reason: "The coffee pump branch fuse F701 (5x20 mm slow-blow, listed 250 VAC, 353.553 V peak) stands across COFFPUMP and PUMP_C_MT2, which swing the 357.8 V peak of the 253 V rms top of the declared supply span, about 1 % over the cartridge's 250 VAC rating. Owner, 2026-10-29: accepted with the entry fuse, for the reasons that the machine's other factory parts are rated 250 V (DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER item (c2))."
+    bounded_by: "The usual margin on 230 V and 240 V mains, and firmware voltage monitoring that may warn near the top of the span; the 253 V top of the declared span is a declared worst case that the mains does not sit at (item (c2) of DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER). Revisited if the declared span is widened above 253 V or monitoring shows the supply above it."
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
+  - position: F711
+    accepted_v: 357.8
+    reason: "The steam pump branch fuse F711 (5x20 mm slow-blow, listed 250 VAC, 353.553 V peak) stands across PUMP_S_MT2 and STEAMPUMP, which swing the 357.8 V peak of the 253 V rms top of the declared supply span, about 1 % over the cartridge's 250 VAC rating. Owner, 2026-10-29: accepted with the entry fuse, for the reasons that the machine's other factory parts are rated 250 V (DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER item (c2))."
+    bounded_by: "The usual margin on 230 V and 240 V mains, and firmware voltage monitoring that may warn near the top of the span; the 253 V top of the declared span is a declared worst case that the mains does not sit at (item (c2) of DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER). Revisited if the declared span is widened above 253 V or monitoring shows the supply above it."
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
+  - position: F731
+    accepted_v: 357.8
+    reason: "The valve pair branch fuse F731 (5x20 mm slow-blow, listed 250 VAC, 353.553 V peak) stands across NEUTRAL and VALVE_COM, which swing the 357.8 V peak of the 253 V rms top of the declared supply span, about 1 % over the cartridge's 250 VAC rating. Owner, 2026-10-29: accepted with the entry fuse, for the reasons that the machine's other factory parts are rated 250 V (DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER item (c2))."
+    bounded_by: "The usual margin on 230 V and 240 V mains, and firmware voltage monitoring that may warn near the top of the span; the 253 V top of the declared span is a declared worst case that the mains does not sit at (item (c2) of DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER). Revisited if the declared span is widened above 253 V or monitoring shows the supply above it."
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
+  - position: K731
+    accepted_v: 357.8
+    reason: "The coffee valve relay K731 (Hongfa HF32FA-G, contacts 10 A 250 VAC, 353.553 V peak) switches the valve's live lead against a 357.8 V peak, the 253 V rms top of the declared supply span, about 1 % over the contacts' 250 VAC maximum switching voltage. Owner, 2026-10-29: accepted, the machine's other factory parts are rated 250 V (DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER item (c))."
+    bounded_by: "The usual margin on 230 V and 240 V mains, and firmware voltage monitoring that may warn near the top of the span; the overshoot is about 1 % (357.8 V against 353.553 V peak). Item (c) of DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER. Revisited if the declared span is widened above 253 V or monitoring shows the supply above it."
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
+  - position: K741
+    accepted_v: 357.8
+    reason: "The hot water valve relay K741 (Hongfa HF32FA-G, contacts 10 A 250 VAC, 353.553 V peak) switches the valve's live lead against a 357.8 V peak, the 253 V rms top of the declared supply span, about 1 % over the contacts' 250 VAC maximum switching voltage. Owner, 2026-10-29: accepted, the machine's other factory parts are rated 250 V (DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER item (c))."
+    bounded_by: "The usual margin on 230 V and 240 V mains, and firmware voltage monitoring that may warn near the top of the span; the overshoot is about 1 % (357.8 V against 353.553 V peak). Item (c) of DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER. Revisited if the declared span is widened above 253 V or monitoring shows the supply above it."
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
+  - position: R102
+    accepted_v: 357.8
+    reason: "Each of R102 and R104 is one of the two 1 Mohm resistors of a series discharge string across C101 (R101-R102 on DISCH_A, R103-R104 on DISCH_B), standing between the string's midpoint and NEUTRAL, so it carries half of the line-to-neutral swing: 0.5 x 357.8 = 178.9 V peak (126.5 V rms), which is under its 200 V maximum working voltage (1206, UNI-ROYAL C17927). The rule reads the full 357.8 V because the pin-limit record states the midpoint as riding on LINE alone and NEUTRAL is a second host it cannot name, so the figure here is the rule's over-reading, not the real stress. ACCEPTED on 2026-11-05: the owner instructed Claude to enter the acceptance after Claude's recommendation to accept on the ground that the real stress is the half, 178.9 V peak against the 200 V rating; this position was not among the acceptances of 2026-10-29."
+    bounded_by: "The real stress, 178.9 V peak, is 21.1 V (10.6 %) under the 200 V rating. Were the other resistor of a string to fail short, the survivor would stand the full 357.8 V for as long as the fault lasts, above its 200 V working voltage; that fault leaves the second string discharging C101, and a string's current is only 253 V / 2 Mohm = 0.13 mA, far below any fuse (circuit-proof.md, discharge conductor row)."
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
+  - position: R104
+    accepted_v: 357.8
+    reason: "Each of R102 and R104 is one of the two 1 Mohm resistors of a series discharge string across C101 (R101-R102 on DISCH_A, R103-R104 on DISCH_B), standing between the string's midpoint and NEUTRAL, so it carries half of the line-to-neutral swing: 0.5 x 357.8 = 178.9 V peak (126.5 V rms), which is under its 200 V maximum working voltage (1206, UNI-ROYAL C17927). The rule reads the full 357.8 V because the pin-limit record states the midpoint as riding on LINE alone and NEUTRAL is a second host it cannot name, so the figure here is the rule's over-reading, not the real stress. ACCEPTED on 2026-11-05: the owner instructed Claude to enter the acceptance after Claude's recommendation to accept on the ground that the real stress is the half, 178.9 V peak against the 200 V rating; this position was not among the acceptances of 2026-10-29."
+    bounded_by: "The real stress, 178.9 V peak, is 21.1 V (10.6 %) under the 200 V rating. Were the other resistor of a string to fail short, the survivor would stand the full 357.8 V for as long as the fault lasts, above its 200 V working voltage; that fault leaves the second string discharging C101, and a string's current is only 253 V / 2 Mohm = 0.13 mA, far below any fuse (circuit-proof.md, discharge conductor row)."
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
+  - position: R706
+    accepted_v: 357.8
+    reason: "R706 (100 ohm, 2512, 200 V maximum working voltage, UNI-ROYAL C35218) is the unfitted snubber resistor of the coffee pump triac, in series with C701 (100 nF X2) from PUMP_C_MT2 to NEUTRAL; it is not fitted (owner decision of 2026-10-29, item (d) of DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER), so it carries no stress on the board as built, and the derating rule has no handling for a position that is not fitted and reads it as if present. The rule reads the full 357.8 V across it because the pin-limit record declares the snubber midpoint PUMP_C_SNUB as a mains domain of its own, not riding on the triac's net. If fitted, the steady stress is the capacitor's 7.95 mA at 50 Hz across 100 ohm: 0.8 V rms (1.1 V peak) and 6.3 mW; the stress that exceeds 200 V is the turn-on pulse, up to the 357.8 V crest, 3.6 A and 6.4 mJ with a 10 us time constant, which the maker's sheet states no pulse limit for (open-items.md row M15). ACCEPTED on 2026-11-05: the owner instructed Claude to enter the acceptance on the ground that the part stays unfitted (item (d) of DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER); it is not accepted as a stress on a fitted part, and fitting it is revisited at the bring-up measurement."
+    bounded_by: "Not fitted, so nothing stands the stress: bring-up measurement of the turn-off voltage at TP702 and TP712 decides whether either snubber is fitted (open-items.md rows M15 and M16, item (d) of DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER). Fitting the part without a published pulse rating for it is revisited at that measurement; the pulse is a 10 us event of 6.4 mJ."
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"
+  - position: R716
+    accepted_v: 357.8
+    reason: "R716 (100 ohm, 2512, 200 V maximum working voltage, UNI-ROYAL C35218) is the unfitted snubber resistor of the steam pump triac, in series with C711 (100 nF X2) from PUMP_S_MT2 to NEUTRAL; it is not fitted (owner decision of 2026-10-29, item (d) of DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER), so it carries no stress on the board as built, and the derating rule has no handling for a position that is not fitted and reads it as if present. The rule reads the full 357.8 V across it because the pin-limit record declares the snubber midpoint PUMP_S_SNUB as a mains domain of its own, not riding on the triac's net. If fitted, the steady stress is the capacitor's 7.95 mA at 50 Hz across 100 ohm: 0.8 V rms (1.1 V peak) and 6.3 mW; the stress that exceeds 200 V is the turn-on pulse, up to the 357.8 V crest, 3.6 A and 6.4 mJ with a 10 us time constant, which the maker's sheet states no pulse limit for (open-items.md row M15). ACCEPTED on 2026-11-05: the owner instructed Claude to enter the acceptance on the ground that the part stays unfitted (item (d) of DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER); it is not accepted as a stress on a fitted part, and fitting it is revisited at the bring-up measurement."
+    bounded_by: "Not fitted, so nothing stands the stress: bring-up measurement of the turn-off voltage at TP702 and TP712 decides whether either snubber is fitted (open-items.md rows M15 and M16, item (d) of DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER). Fitting the part without a published pulse rating for it is revisited at that measurement; the pulse is a 10 us event of 6.4 mJ."
+    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
+    accepted_on: "2026-11-05"

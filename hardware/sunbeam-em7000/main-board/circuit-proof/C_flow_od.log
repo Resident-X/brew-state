@@ -1,0 +1,35 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: flow input as built (u520 fitted, link r522 not fitted): edges through r521 and c520 into the buffer u520 for an open-drain meter (3.3 v pull-up r520), and the pin pc6 it drives
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
++3v3                                       3.3
+flow_raw                               3.24927
+flow_f                                  3.2442
+flow_in                                3.29995
+u520neg                                -3.2442
+ctla                                         0
+esim_u520n#branch                            0
+vsim_ctla#branch                             0
+vsim_v3v3#branch                  -6.50001e-06
+
+
+No. of Data Rows : 4100
+vhigh_od            =  3.24246e+00 at=  9.99889e-03
+vlow_od             =  -5.07218e-03 at=  5.00000e-03
+vpin_hi_od          =  3.29995e+00 at=  9.99889e-03
+vpin_lo_od          =  -4.49999e-05 at=  6.23389e-03
+t_vt_od             =  8.29179e-04 targ=  6.23631e-03 trig=  5.40713e-03
+t_pin_od            =  8.30258e-04 targ=  6.23739e-03 trig=  5.40713e-03
+tr_10_90_od         =  1.56826e-03 targ=  6.64048e-03 trig=  5.07222e-03
+Note: Simulation executed from .control section 

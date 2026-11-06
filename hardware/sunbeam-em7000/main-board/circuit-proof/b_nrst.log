@@ -1,0 +1,31 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: controller reset input: release time through the internal pull-up and c418, to 0.7 vdd
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+Operating point simulation skipped by 'uic',
+  now using transient initial conditions.
+
+No. of Data Rows : 2011
+t_release_nom       =  4.81589e-03
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+Operating point simulation skipped by 'uic',
+  now using transient initial conditions.
+
+No. of Data Rows : 2011
+t_release_slow      =  7.58503e-03
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+Operating point simulation skipped by 'uic',
+  now using transient initial conditions.
+
+No. of Data Rows : 2011
+t_release_fast      =  2.76311e-03
+Note: Simulation executed from .control section 

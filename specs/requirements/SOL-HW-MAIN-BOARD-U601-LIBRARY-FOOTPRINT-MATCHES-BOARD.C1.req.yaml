@@ -1,0 +1,12 @@
+id: SOL-HW-MAIN-BOARD-U601-LIBRARY-FOOTPRINT-MATCHES-BOARD.C1
+type: criterion
+title: The U601 library footprint's pad 17 and paste-only pad match the board's
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The main-board library's U601 footprint has pad 17 on copper and mask only and a separate paste-only pad of the board's size and offset, and the pre-order check's library-footprint comparison reports no difference for U601. Out of scope is any change to the board's footprint.
+links:
+  - target: SOL-HW-MAIN-BOARD-U601-LIBRARY-FOOTPRINT-MATCHES-BOARD
+    type: criterion-of

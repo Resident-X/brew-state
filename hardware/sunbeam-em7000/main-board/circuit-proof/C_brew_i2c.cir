@@ -1,0 +1,36 @@
+Rise time and low level of BREW_SCL and BREW_SDA, Standard-mode 100 kbit/s, 400 pF bus on the cable side then on the board side
+* Source of every value: the sheet fragment of this block (generated from the same table).
+* Sim-only elements (names with SIM_) stand for the sensor, the converter's sample and hold and the supply.
+* Converter: DS12110 Rev 11 Table 77 / Table 174: CADC 4 pF (typ), tS 810.5 cycles, 16 bit, fADC 10 MHz.
+.model SWM SW(Ron=1m Roff=1e12 Vt=0.5 Vh=0.2)
+VSIM_V3V3 +3V3 0 3.6
+R529 BREW_SCL +3V3 2.2k
+R527 BREW_SCL_X BREW_SCL 100
+* SDA has the same parts; only SCL is simulated, SDA is its twin with R530 R528
+* bus capacitance: UM10204 Rev 7.0 Table 11, Cb max 400 pF, of which the pins take 31.1 pF (sensor, controller pin, TVS, BAT54S)
+CSIM_CABLE BREW_SCL_X 0 368.9p
+CSIM_BOARD BREW_SCL 0 31.1p
+* sensor open-drain pull-down, low level at the UM10204 Table 10 maximum VOL of 0.4 V
+VSIM_VOL SIM_VOL 0 0.4
+SSIM_OD BREW_SCL_X SIM_VOL SIM_DRV 0 SWM
+VSIM_DRV SIM_DRV 0 PULSE(1 0 20u 1n 1n 100u 200u)
+.tran 20n 180u
+.control
+alter R529 = 2231.9
+alter R527 = 101.45
+alter CSIM_CABLE = 368.9p
+alter CSIM_BOARD = 31.1p
+run
+meas tran tr_mcu_hi_cable TRIG v(BREW_SCL) VAL=1.08 RISE=1 TARG v(BREW_SCL) VAL=2.52 RISE=1
+meas tran tr_sensor_hi_cable TRIG v(BREW_SCL_X) VAL=1.08 RISE=1 TARG v(BREW_SCL_X) VAL=2.52 RISE=1
+meas tran vlow_mcu_hi_cable FIND v(BREW_SCL) AT=15u
+alter R529 = 2231.9
+alter R527 = 101.45
+alter CSIM_CABLE = 31.1p
+alter CSIM_BOARD = 368.9p
+run
+meas tran tr_mcu_hi_board TRIG v(BREW_SCL) VAL=1.08 RISE=1 TARG v(BREW_SCL) VAL=2.52 RISE=1
+meas tran tr_sensor_hi_board TRIG v(BREW_SCL_X) VAL=1.08 RISE=1 TARG v(BREW_SCL_X) VAL=2.52 RISE=1
+meas tran vlow_mcu_hi_board FIND v(BREW_SCL) AT=15u
+.endc
+.end

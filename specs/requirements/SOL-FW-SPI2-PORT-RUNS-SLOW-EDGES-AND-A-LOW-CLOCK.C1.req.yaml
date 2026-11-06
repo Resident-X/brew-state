@@ -1,0 +1,12 @@
+id: SOL-FW-SPI2-PORT-RUNS-SLOW-EDGES-AND-A-LOW-CLOCK.C1
+type: criterion
+title: The firmware's SPI2 configuration fails an edge faster than 5 ns or a clock above 4 MHz
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  A test of the firmware's configuration of the SPI2 port fails a configuration whose SCK or MOSI edge is faster than 5 ns at the pin, by the selected controller's published edge figures for the setting chosen, and fails a clock above 4 MHz; the configuration the firmware ships passes. Out of scope are the signal study's figures and the readings on the built board, which the bring-up task carries.
+links:
+  - target: SOL-FW-SPI2-PORT-RUNS-SLOW-EDGES-AND-A-LOW-CLOCK
+    type: criterion-of

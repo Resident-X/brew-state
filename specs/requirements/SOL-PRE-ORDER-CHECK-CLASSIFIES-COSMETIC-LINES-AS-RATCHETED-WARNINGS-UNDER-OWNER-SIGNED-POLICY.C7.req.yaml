@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY.C7
+type: criterion
+title: A routing-neatness line on a net that is not ordinary is a violation although its class is marked WARNING
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a synthetic design whose policy marks a routing-neatness class WARNING, a line of that class on a mains net, on a sensing net and on a net of a critical class each prints as a violation and fails the check, while the same class on an ordinary net prints as a WARNING line. Out of scope is a silkscreen or designator class, which the net does not qualify.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY
+    type: criterion-of

@@ -1,0 +1,29 @@
+id: EV-SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING-C3-INSPECTION
+type: evidence
+title: inspection evidence for SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING.C3
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-06T11:17:30Z"
+artifact:
+  kind: inline
+text: |
+  Verified commit: 1031fe4f52dd6f46db8b79b4e4142997a622462a
+
+  # Inspection of the records against SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING.C3
+
+  Scope: every document of the main-board folder other than the frozen rounds of schematic-review.md and layout-review.md, and every document of the machine-record folder docs/sunbeam-em7000, searched for each statement of the separation basis's signature day and of the coat's timing.
+
+  ## Clause by clause
+
+  1. "each statement of the separation basis's signature day saying it was signed on 2026-11-05 and re-signed on 2026-11-06, or signed on 2026-11-06": a scan of those documents for 2026-11-05 within 160 characters before or 120 after a mention of the separation basis, the basis, the record being signed or accepted_on finds, apart from the derating policy's own accepted_on lines, only statements that carry the re-signing or that name the day as the basis's first signing. The statements that said the basis was signed on 2026-11-05 were corrected in open-items.md, design-rules.md, layout-plan.md, fabrication-notes.md, circuit-proof.md, circuit-verdicts.md, the division record and the constraints record. The two circuit-verdicts rows that name the revision signed on 2026-11-05 now add its re-signing. A statement that names the derating policy's own signature, traceability.md's row on the signed entries of derating-policy.yaml, is kept at 2026-11-05, as the criterion says.
+  2. "none saying the coat is applied before the boards are energised or before mains is first connected": a scan of the same documents for a coat or coating within 120 characters of before the boards, before they, before mains, before power, before energis, before first or prior to finds one row, layout-plan.md ENV-1, which says the coat is named in the fabrication notes before the board is ordered and keeps the humidity step before first mains: it states neither an application time nor a timing of the first mains-on, so it is not such a statement.
+  3. "The derating policy's statements keep 2026-11-05": derating-policy.yaml holds its ten entries at 2026-11-05, and no document of the two folders restates that signature as 2026-11-06.
+
+  ## Result
+
+  All clauses met at the verified commit. The scans are those of the clauses above, run over the working tree by the inspector (a regular-expression search, not a stored test); the frozen review rounds were not scanned, as the criterion excludes them.
+links:
+  - target: SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING.C3
+    type: satisfies

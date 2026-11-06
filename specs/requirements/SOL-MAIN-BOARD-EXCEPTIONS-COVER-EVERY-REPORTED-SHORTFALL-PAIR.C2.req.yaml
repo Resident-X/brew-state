@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-EXCEPTIONS-COVER-EVERY-REPORTED-SHORTFALL-PAIR.C2
+type: criterion
+title: Every entry added is unsigned and the record stays unsigned
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Every entry this change adds has accepted_by and accepted_on empty, the record's own acceptance fields are unchanged, and the entries the record held before this change are unchanged. Out of scope is signing any entry.
+links:
+  - target: SOL-MAIN-BOARD-EXCEPTIONS-COVER-EVERY-REPORTED-SHORTFALL-PAIR
+    type: criterion-of

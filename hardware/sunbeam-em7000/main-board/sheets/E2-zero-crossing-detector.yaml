@@ -1,0 +1,36 @@
+sheet: "Zero-crossing detector"
+function: "An AC-input optocoupler fed from LINE and NEUTRAL through two series resistors reports every zero crossing of the supply, both polarities, as one edge each on the controller's input-capture pin."
+parts:
+  - {ref: R630, lib_id: Device:R, value: "60.4k", rating: "1% 100ppm 2512 1W 200V working, 400V overload", footprint: "Resistor_SMD:R_2512_6332Metric", mpn: "FRC2512F6042TS", maker: "FOJAN", lcsc: C5126066, class: extended, hand: false, function: "series feed of the optocoupler LED, half of the OEM's 120 kohm 1 W; two in series so each sees half of the line (126.5 V rms) against a 200 V working figure", mains: true, sim_exclude: false}
+  - {ref: R631, lib_id: Device:R, value: "60.4k", rating: "1% 100ppm 2512 1W 200V working, 400V overload", footprint: "Resistor_SMD:R_2512_6332Metric", mpn: "FRC2512F6042TS", maker: "FOJAN", lcsc: C5126066, class: extended, hand: false, function: "series feed of the optocoupler LED, second half", mains: true, sim_exclude: false}
+  - {ref: U602, lib_id: LTV-814S, value: "LTV-814S-TA1-A", rating: "isolation 5000 VAC rms 1 min, AC input, CTR 20-300 % at IF = 1 mA, -30..100 degC", footprint: LTV-814S_SMD-4, mpn: "LTV-814S-TA1-A", maker: "Lite-On", lcsc: C108051, class: extended, hand: false, function: "AC-input optocoupler: pins 1 and 2 are the antiparallel LEDs on LINE/NEUTRAL, pins 3 and 4 the phototransistor on the low-voltage side; it is the supply-timing front end's mains-to-low-voltage barrier", mains: true, sim_exclude: true}
+  - {ref: R632, lib_id: Device:R, value: "22k", rating: "1% 100mW 75V 0603", footprint: "Resistor_SMD:R_0603_1608Metric", mpn: "0603WAF2202T5E", maker: "UNI-ROYAL", lcsc: C31850, class: basic, hand: false, function: "pull-up of the phototransistor output to +3V3", mains: false, sim_exclude: false}
+  - {ref: C630, lib_id: Device:C, value: "1n", rating: "X7R 50V 10% 0603", footprint: "Capacitor_SMD:C_0603_1608Metric", mpn: "CL10B102KB8NNNC", maker: "Samsung Electro-Mechanics", lcsc: C1588, class: basic, hand: false, function: "noise filter on the zero-crossing output, 22 us with the pull-up", mains: false, sim_exclude: false}
+  - {ref: TP630, lib_id: Connector:TestPoint, value: "TP_ZC_IN", rating: "", footprint: "main-board:TestPoint_Pad_D1.0mm_Tight", mpn: "", maker: "", lcsc: none, class: none, hand: false, function: "key signal: the zero-crossing edge as the controller sees it (50 Hz supply: 100 edges a second)", mains: false, sim_exclude: true}
+nets:
+  LINE: {scope: global, pins: [R630.1]}
+  ZC_N1: {scope: local, pins: [R630.2, R631.1]}
+  ZC_LED_A: {scope: local, pins: [R631.2, U602.1]}
+  NEUTRAL: {scope: global, pins: [U602.2]}
+  ZC_IN: {scope: global, pins: [U602.4, R632.1, C630.1, TP630.1]}
+  "+3V3": {scope: power, pins: [R632.2]}
+  GND: {scope: power, pins: [U602.3, C630.2]}
+no_connect: []
+custom_symbols:
+  - name: LTV-814S
+    ref_prefix: U
+    note: "Lite-On LTV-814 / 824 / 844 series, BNS-OD-C131/A4, outline dimensions page 5 (LTV-814S): pin 1 anode/cathode, pin 2 cathode/anode (antiparallel LEDs), pin 3 emitter, pin 4 collector. Draw as an AC-input optocoupler: two antiparallel LEDs left, an NPN phototransistor right, pins 1,2 left and 3 (bottom) 4 (top) right."
+    pins:
+      - {number: "1", name: "A/K", type: passive, unit: 1}
+      - {number: "2", name: "K/A", type: passive, unit: 1}
+      - {number: "3", name: E, type: passive, unit: 1}
+      - {number: "4", name: C, type: passive, unit: 1}
+custom_footprints:
+  - name: LTV-814S_SMD-4
+    from: "Lite-On LTV-814/824/844 series BNS-OD-C131/A4, page 13 recommended foot print pattern, 4 pin, and page 5 outline of the LTV-814S"
+    detail: "4 SMD pads 1.5 x 1.3 mm (1.5 along the row, 1.3 across), pitch 2.54 mm along the row, rows 9.0 mm apart centre to centre (pads 1 and 2 on one row, pads 4 and 3 on the other, pin 1 at top-left looking from above, pin 4 opposite pin 1 as the package); body 6.5 x 4.6 mm, lead span 10.16 mm. The input row (1, 2) is the mains side and the output row (3, 4) the low-voltage side; the gap between the rows' pad edges is 7.7 mm. Stock Package_DIP:SMDIP-4_W9.53mm has rows 9.53 mm apart and is not the maker's pattern."
+power_flags: []
+notes: |
+  Drawing: left to right: LINE -> R630 -> R631 -> U602 pin 1; U602 pin 2 -> NEUTRAL (mains side, left). U602 pins 3, 4 on the right (low-voltage side): pin 3 to GND, pin 4 to the node ZC_IN, with R632 up to +3V3 and C630 down to GND, and the global label ZC_IN leaving to the right. Mark the barrier between the optocoupler's two halves with a dashed line and the text "mains | low voltage".
+  The two mains-presence inputs of the division (IN_COND: MAINS_PRES_C on PE15, MAINS_PRES_S on PD7) are NOT drawn on this sheet: they are on the wall-header sheet (J761 pins 5 and 6 through 27 kohm series resistors R764 and R774, with 82 kohm pull-downs R765 and R775, to PE15 and PD7).
+  Both crossings: the LEDs are antiparallel, so the output falls once per half-cycle whatever the polarity; the supply's period is the time between like edges (division record: PA10, capture on both edges).
