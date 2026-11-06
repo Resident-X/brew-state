@@ -212,6 +212,15 @@ class AWarningLineIsToldFromAViolation(Policed):
         self.assertIn("found 2 of recorded 2", counts[0])
         self.assertIn("found 1 of recorded 1", counts[1])
 
+    def test_a_check_with_nowhere_to_print_warnings_keeps_every_line_as_a_violation_instead_of_dropping_it(self):
+        # SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY.C2: On a synthetic design whose only lines are two of one class and one of another, each marked WARNING by a signed policy entry, the check prints one WARNING line for each
+        lines = [corner(), corner(at="(3, 4)"), silk()]
+        self.policy([entry(count=2), entry("silk_overlap", count=1)])
+        self.write(PROJECT, json.dumps({"text_variables": self.variables}))
+        left = board_check.judge_accepted_workmanship(YAML, board_check.Repository(self.root, self.tracked),
+                                                      board_check.Design(PROJECT), TODAY, list(lines), [])
+        self.assertEqual([v.line() for v in left], [v.line() for v in lines])
+
     def test_a_line_that_no_policy_entry_names_stays_a_violation_with_the_warning_lines_unchanged(self):
         # SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY.C3: On the same synthetic design with a line of a class that no policy entry names, that line is printed as a violation and the check exits non-zero, with the warning lines unchanged. Out of scope is the wording of the report.
         lines = [corner(), corner(at="(3, 4)"), silk()]

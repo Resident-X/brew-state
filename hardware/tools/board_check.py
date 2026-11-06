@@ -7855,6 +7855,8 @@ def judge_severity_policy(design: Design, record: str, entries: Sequence[Tuple[i
                             else "accepted_on"))
     if own:
         return list(found), [], own
+    if warnings is None:
+        return list(found), [], own
 
     marked = {entry["class"].strip(): (index, entry) for index, entry in entries if entry["severity"] == "WARNING"}
     rest: List[Violation] = []
