@@ -91,14 +91,14 @@ What remains unverified, and is a pre-order action for the owner: the identity a
 
 ## Conformal coat (graph criterion C17)
 
-The requirement: the notes name the coat that supports the basis's pollution degree 2 credit (which rests on the enclosure), with its type and the maker's current datasheet, and state that it is applied before the board is energised in the machine and covers the gaps between the board's mains pads, except keep-outs for contacts listed by reference designator.
+The requirement: the notes name the coat that supports the basis's pollution degree 2 credit (which rests on the enclosure), with its type and the maker's current datasheet, and state that it is applied after bring-up, once the machine is deemed functional from a hardware perspective, and covers the gaps between the board's mains pads, except keep-outs for contacts listed by reference designator.
 
 Status: **criterion C17 is not met.** What the records say, in full:
 
 - The coat is planned, applied after the boards work (`docs/sunbeam-em7000/reference-machine.md`), as a supporting measure that does not itself earn the pollution degree 2 credit; the credit stands on the enclosure (`separation-basis.yaml` conditions 1 and 2).
 - No coat type is chosen and no coat datasheet is cited anywhere in the repository. No keep-out list exists. No coating test is planned and none is claimed (`layout-plan.md` ENV-1 row).
-- Stated here as the requirement the owner is to confirm: the coat is applied before the board is first energised in the machine, covers the gaps between the board's mains pads, and leaves uncovered only contacts whose reference designators are listed in this file. The list is empty at this commit because no keep-out has been decided; which parts need a keep-out (for example any contact a plug or probe must reach bare) is the owner's decision, each listed here by designator once decided.
-- Applying the coat and choosing its supplier are out of scope of the criterion. The bring-up humidity step (DEL-HW-BRING-UP) is the only check planned after it.
+- Stated here as the requirement the owner is to confirm: the coat is applied after bring-up, once the machine is deemed functional from a hardware perspective (owner, 2026-11-06), so the board's first connection to mains and the bring-up bench tests run on the uncoated board in a clean room and the coat is no part of any bound until applied; it covers the gaps between the board's mains pads, and leaves uncovered only contacts whose reference designators are listed in this file. The list is empty at this commit because no keep-out has been decided; which parts need a keep-out (for example any contact a plug or probe must reach bare) is the owner's decision, each listed here by designator once decided.
+- Applying the coat and choosing its supplier are out of scope of the criterion. The bring-up humidity step (DEL-HW-BRING-UP) is the only check planned for the pollution degree 2 credit, and it reads the closed machine, coated or not.
 
 ## Mask, silkscreen and assembly
 

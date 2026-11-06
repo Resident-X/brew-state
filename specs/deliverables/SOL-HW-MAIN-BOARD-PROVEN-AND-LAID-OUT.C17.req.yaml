@@ -2,11 +2,11 @@ id: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C17
 type: criterion
 title: The fabrication notes name the conformal coat that supports the pollution degree 2 credit and where it is applied
 status: active
-version: 3
+version: 4
 measurement_type: binary
 verification: inspection
 text: |
-  The fabrication notes kept with the board's design records, which the order passes to the manufacturer, name the conformal coat that supports the separation basis record's pollution degree 2 credit, which rests on the enclosure, with its type and the maker's current datasheet, and state that it is applied before the board is energised in the machine and covers the gaps between the board's mains pads, except the keep-outs for contacts that the notes list by reference designator. A board whose notes name no coat, cite no datasheet, or leave a gap between mains pads uncovered without listing its keep-out, is reported, and the owner re-declares the basis before the board is ordered. Choosing the coat's supplier and applying the coat are out of scope.
+  The fabrication notes kept with the board's design records, which the order passes to the manufacturer, name the conformal coat that supports the separation basis record's pollution degree 2 credit, which rests on the enclosure, with its type and the maker's current datasheet, and state that it is applied after bring-up, once the machine is deemed functional from a hardware perspective, and covers the gaps between the board's mains pads, except the keep-outs for contacts that the notes list by reference designator. A board whose notes name no coat, cite no datasheet, or leave a gap between mains pads uncovered without listing its keep-out, is reported, and the owner re-declares the basis before the board is ordered. The notes also state the consequence: the board's first connection to mains and the bring-up bench tests run on the uncoated board, in a clean room, and the coat is no part of the bound on any fault between mains pads until it is applied. Choosing the coat's supplier and applying the coat are out of scope.
 links:
   - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT
     type: criterion-of
