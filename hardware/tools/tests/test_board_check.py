@@ -5813,5 +5813,161 @@ class TheCatalogueCarriesTheTestPadCourtyardRule(unittest.TestCase):
         self.assertIn("| `test_point_courtyard` |", self.readme)
 
 
+# --- A part's plated hole is measured round the barrier slots ---------------------------------------------------
+
+LONG_SLOT = (22.0, 2.0, 23.0, 38.0)
+SHORT_SLOT = (22.0, 18.0, 23.0, 22.0)
+NEAR_SLOT = (21.0, 2.0, 21.4, 38.0)
+
+
+def route_board(item: str, slot: tuple = None, *more: str) -> list:
+    """A 60 by 40 mm layout with a part K1 whose plated pad 1 (0.8 mm drill) is on /LV at (20, 20), its pad 2 on /FAR, `item` of the Mains net /M and a slot."""
+    cuts = "" if slot is None else (f'(gr_rect (start {slot[0]} {slot[1]}) (end {slot[2]} {slot[3]}) '
+                                    '(stroke (width 0.1) (type default)) (fill no) (layer "Edge.Cuts"))')
+    edge = "".join(f'(gr_line (start {a}) (end {b}) (stroke (width 0.1) (type default)) (layer "Edge.Cuts"))'
+                   for a, b in (("0 0", "60 0"), ("60 0", "60 40"), ("60 40", "0 40"), ("0 40", "0 0")))
+    k1 = ('(footprint "a:K" (layer "F.Cu") (at 0 0) (property "Reference" "K1" (at 0 0 0)) '
+          '(pad "1" thru_hole circle (at 20 20) (size 1.6 1.6) (drill 0.8) (layers "*.Cu") (net "/LV")) '
+          '(pad "2" thru_hole circle (at 55 35) (size 1.6 1.6) (drill 0.8) (layers "*.Cu") (net "/FAR")))')
+    return sexpr.parse_one('(kicad_pcb (version 20260206) (layers (0 "F.Cu" signal) (2 "B.Cu" signal)) '
+                           '(net 0 "") (net 1 "/M") (net 2 "/LV") (net 3 "/FAR") ' + edge + cuts + k1 + item + "".join(more) + ")")
+
+
+def mains_item(kind: str, edge: float) -> str:
+    """Mains copper of one kind on /M whose nearest side stands at x = `edge`, 20 mm tall about y = 20 where it is not a point."""
+    if kind == "track":
+        return f'(segment (start {edge + 0.125} 10) (end {edge + 0.125} 30) (width 0.25) (layer "F.Cu") (net "/M"))'
+    if kind == "via":
+        return f'(via (at {edge + 0.4} 20) (size 0.8) (drill 0.4) (layers "F.Cu" "B.Cu") (net "/M"))'
+    if kind == "pad":
+        return ('(footprint "a:M" (layer "F.Cu") (at 0 0) (property "Reference" "M1" (at 0 0 0)) '
+                f'(pad "1" smd rect (at {edge + 0.5} 20) (size 1 20) (layers "F.Cu") (net "/M")))')
+    box = f"(pts (xy {edge} 10) (xy {edge + 5} 10) (xy {edge + 5} 30) (xy {edge} 30))"
+    return f'(zone (net "/M") (net_name "/M") (layer "B.Cu") (polygon {box}) (filled_polygon (layer "B.Cu") {box}))'
+
+
+KINDS = ("track", "via", "pad", "zone fill")
+
+
+def gaps(tree: list, clearance: float = 3.0, creepage: float = 10.0) -> list:
+    return board_check.plated_hole_gaps(tree, board_check.zone_fills(tree), {"/M"}, clearance, creepage)
+
+
+class APartsPlatedHoleIsMeasuredRoundTheBarrierSlots(unittest.TestCase):
+    """The plated hole of a part on a net outside Mains is held to the signed clearance straight and the signed creepage round the slots, for each kind of Mains copper."""
+
+    def test_a_pair_over_the_clearance_straight_and_over_the_creepage_round_the_slot_passes_for_each_kind_of_mains_copper(self):
+        # SOL-PRE-ORDER-CHECK-PLATED-HOLE-OF-A-LOW-VOLTAGE-PART-IS-MEASURED-ROUND-THE-SLOTS.C1: On a synthetic layout with a barrier slot between a plated hole of a part's pad on a net outside Mains and a Mains-class item (a pad, track, via or pour fill), where the straight-line distance between them is at or above the signed clearance but under the signed creepage and the shortest route round the slot is at or above the signed creepage, the check gives no mounting_hole violation for the pair. Each of these fails naming the hole, the Mains item and the distance measured: the same pair with the slot absent, a pair whose route round the slot is under the signed creepage, and a pair whose straight-line distance is under the signed clearance although its route round the slot is at or above the creepage. The same holds for each kind of Mains item, so a build that reads only pads fails: a track, a via and a pour fill each get the same three failing cases and the passing case. A plated hole of a fixing and every non-plated hole keep the straight measure they have now. Out of scope is a fixing's own pad and courtyard, and the signed figures.
+        for kind in KINDS:
+            with self.subTest(kind=kind):
+                self.assertEqual(gaps(route_board(mains_item(kind, 25.4), LONG_SLOT)), [])
+
+    def test_the_same_pair_with_the_slot_absent_fails_naming_the_hole_the_item_and_the_distance_for_each_kind(self):
+        # SOL-PRE-ORDER-CHECK-PLATED-HOLE-OF-A-LOW-VOLTAGE-PART-IS-MEASURED-ROUND-THE-SLOTS.C1: On a synthetic layout with a barrier slot between a plated hole of a part's pad on a net outside Mains and a Mains-class item (a pad, track, via or pour fill), where the straight-line distance between them is at or above the signed clearance but under the signed creepage and the shortest route round the slot is at or above the signed creepage, the check gives no mounting_hole violation for the pair. Each of these fails naming the hole, the Mains item and the distance measured: the same pair with the slot absent, a pair whose route round the slot is under the signed creepage, and a pair whose straight-line distance is under the signed clearance although its route round the slot is at or above the creepage. The same holds for each kind of Mains item, so a build that reads only pads fails: a track, a via and a pour fill each get the same three failing cases and the passing case. A plated hole of a fixing and every non-plated hole keep the straight measure they have now. Out of scope is a fixing's own pad and courtyard, and the signed figures.
+        for kind in KINDS:
+            with self.subTest(kind=kind):
+                (gap,) = gaps(route_board(mains_item(kind, 25.4)))
+                self.assertEqual((gap.reference, gap.number, gap.net, gap.piece.kind), ("K1", "1", "/LV", kind))
+                self.assertAlmostEqual(gap.straight, 5.0, delta=0.05)
+                self.assertAlmostEqual(gap.route, gap.straight, delta=0.001)
+                (found,) = board_check.plated_hole_violations(board_check.Design("hardware/m/board/board.kicad_pro"), [gap],
+                                                              board_check.Signed(3.0, 10.0, {}))
+                self.assertEqual(found.rule, "mounting_hole")
+                self.assertIn("pad 1 [/LV] of K1", found.location)
+                self.assertIn(f"{kind} of /M", found.location)
+                for words in ("5.0", "signed clearance of 3 mm", "signed creepage of 10 mm"):
+                    self.assertIn(words, found.message)
+
+    def test_a_pair_whose_route_round_the_slot_is_under_the_creepage_fails_for_each_kind_and_names_the_route(self):
+        # SOL-PRE-ORDER-CHECK-PLATED-HOLE-OF-A-LOW-VOLTAGE-PART-IS-MEASURED-ROUND-THE-SLOTS.C1: On a synthetic layout with a barrier slot between a plated hole of a part's pad on a net outside Mains and a Mains-class item (a pad, track, via or pour fill), where the straight-line distance between them is at or above the signed clearance but under the signed creepage and the shortest route round the slot is at or above the signed creepage, the check gives no mounting_hole violation for the pair. Each of these fails naming the hole, the Mains item and the distance measured: the same pair with the slot absent, a pair whose route round the slot is under the signed creepage, and a pair whose straight-line distance is under the signed clearance although its route round the slot is at or above the creepage. The same holds for each kind of Mains item, so a build that reads only pads fails: a track, a via and a pour fill each get the same three failing cases and the passing case. A plated hole of a fixing and every non-plated hole keep the straight measure they have now. Out of scope is a fixing's own pad and courtyard, and the signed figures.
+        for kind in KINDS:
+            with self.subTest(kind=kind):
+                (gap,) = gaps(route_board(mains_item(kind, 25.4), SHORT_SLOT))
+                self.assertAlmostEqual(gap.straight, 5.0, delta=0.05)
+                self.assertGreater(gap.route, gap.straight)
+                self.assertLess(gap.route, 10.0)
+                self.assertEqual(gap.rounds, 1)
+                (found,) = board_check.plated_hole_violations(board_check.Design("hardware/m/board/board.kicad_pro"), [gap],
+                                                              board_check.Signed(3.0, 10.0, {}))
+                self.assertIn(f"{gap.route:.3f} mm by the shortest way round the barrier slots", found.message)
+
+    def test_a_pair_under_the_clearance_straight_fails_for_each_kind_although_its_route_round_the_slot_is_long(self):
+        # SOL-PRE-ORDER-CHECK-PLATED-HOLE-OF-A-LOW-VOLTAGE-PART-IS-MEASURED-ROUND-THE-SLOTS.C1: On a synthetic layout with a barrier slot between a plated hole of a part's pad on a net outside Mains and a Mains-class item (a pad, track, via or pour fill), where the straight-line distance between them is at or above the signed clearance but under the signed creepage and the shortest route round the slot is at or above the signed creepage, the check gives no mounting_hole violation for the pair. Each of these fails naming the hole, the Mains item and the distance measured: the same pair with the slot absent, a pair whose route round the slot is under the signed creepage, and a pair whose straight-line distance is under the signed clearance although its route round the slot is at or above the creepage. The same holds for each kind of Mains item, so a build that reads only pads fails: a track, a via and a pour fill each get the same three failing cases and the passing case. A plated hole of a fixing and every non-plated hole keep the straight measure they have now. Out of scope is a fixing's own pad and courtyard, and the signed figures.
+        for kind in KINDS:
+            with self.subTest(kind=kind):
+                (gap,) = gaps(route_board(mains_item(kind, 22.4), NEAR_SLOT))
+                self.assertAlmostEqual(gap.straight, 2.0, delta=0.05)
+                (found,) = board_check.plated_hole_violations(board_check.Design("hardware/m/board/board.kicad_pro"), [gap],
+                                                              board_check.Signed(3.0, 10.0, {}))
+                self.assertIn("2.0", found.message)
+                self.assertIn("signed clearance of 3 mm", found.message)
+
+    def test_the_figures_are_not_relaxed_a_pair_just_under_each_figure_fails_and_at_it_passes(self):
+        # SOL-PRE-ORDER-CHECK-PLATED-HOLE-OF-A-LOW-VOLTAGE-PART-IS-MEASURED-ROUND-THE-SLOTS.C1: On a synthetic layout with a barrier slot between a plated hole of a part's pad on a net outside Mains and a Mains-class item (a pad, track, via or pour fill), where the straight-line distance between them is at or above the signed clearance but under the signed creepage and the shortest route round the slot is at or above the signed creepage, the check gives no mounting_hole violation for the pair. Each of these fails naming the hole, the Mains item and the distance measured: the same pair with the slot absent, a pair whose route round the slot is under the signed creepage, and a pair whose straight-line distance is under the signed clearance although its route round the slot is at or above the creepage. The same holds for each kind of Mains item, so a build that reads only pads fails: a track, a via and a pour fill each get the same three failing cases and the passing case. A plated hole of a fixing and every non-plated hole keep the straight measure they have now. Out of scope is a fixing's own pad and courtyard, and the signed figures.
+        # Straight clearance: the hole's edge is 3 mm from the track's edge at the figure, no slot in the way and the creepage lowered to match.
+        self.assertEqual(gaps(route_board(mains_item("track", 23.4), LONG_SLOT), creepage=4.0), [])
+        self.assertEqual(len(gaps(route_board(mains_item("track", 23.38), LONG_SLOT), creepage=4.0)), 1)
+        # Creepage by the route: a slot's long way round passes and the same pair across a slot too short for the figure fails.
+        self.assertEqual(gaps(route_board(mains_item("track", 25.4), LONG_SLOT)), [])
+        self.assertEqual(len(gaps(route_board(mains_item("track", 25.4), SHORT_SLOT))), 1)
+
+    def test_a_pad_on_no_net_and_an_oval_drill_are_held_the_same_way(self):
+        # SOL-PRE-ORDER-CHECK-PLATED-HOLE-OF-A-LOW-VOLTAGE-PART-IS-MEASURED-ROUND-THE-SLOTS.C1: On a synthetic layout with a barrier slot between a plated hole of a part's pad on a net outside Mains and a Mains-class item (a pad, track, via or pour fill), where the straight-line distance between them is at or above the signed clearance but under the signed creepage and the shortest route round the slot is at or above the signed creepage, the check gives no mounting_hole violation for the pair. Each of these fails naming the hole, the Mains item and the distance measured: the same pair with the slot absent, a pair whose route round the slot is under the signed creepage, and a pair whose straight-line distance is under the signed clearance although its route round the slot is at or above the creepage. The same holds for each kind of Mains item, so a build that reads only pads fails: a track, a via and a pour fill each get the same three failing cases and the passing case. A plated hole of a fixing and every non-plated hole keep the straight measure they have now. Out of scope is a fixing's own pad and courtyard, and the signed figures.
+        oval = ('(footprint "a:O" (layer "F.Cu") (at 20 30) (property "Reference" "K2" (at 0 0 0)) '
+                '(pad "1" thru_hole oval (at 0 0 90) (size 1.6 3) (drill oval 0.8 2) (layers "*.Cu")) '
+                '(pad "2" thru_hole circle (at 30 0) (size 1.6 1.6) (drill 0.8) (layers "*.Cu") (net "/FAR")))')
+        tree = route_board(mains_item("track", 25.4), None, oval)
+        self.assertEqual({gap.reference for gap in gaps(tree)}, {"K1", "K2"})
+
+    def test_mains_copper_and_a_fixing_are_not_a_part_hole(self):
+        # SOL-PRE-ORDER-CHECK-PLATED-HOLE-OF-A-LOW-VOLTAGE-PART-IS-MEASURED-ROUND-THE-SLOTS.C1: On a synthetic layout with a barrier slot between a plated hole of a part's pad on a net outside Mains and a Mains-class item (a pad, track, via or pour fill), where the straight-line distance between them is at or above the signed clearance but under the signed creepage and the shortest route round the slot is at or above the signed creepage, the check gives no mounting_hole violation for the pair. Each of these fails naming the hole, the Mains item and the distance measured: the same pair with the slot absent, a pair whose route round the slot is under the signed creepage, and a pair whose straight-line distance is under the signed clearance although its route round the slot is at or above the creepage. The same holds for each kind of Mains item, so a build that reads only pads fails: a track, a via and a pour fill each get the same three failing cases and the passing case. A plated hole of a fixing and every non-plated hole keep the straight measure they have now. Out of scope is a fixing's own pad and courtyard, and the signed figures.
+        tree = route_board(mains_item("track", 25.4))
+        self.assertEqual([hole[:3] for hole in board_check.part_plated_holes(tree, [], {"/M"})],
+                         [("K1", "1", "/LV"), ("K1", "2", "/FAR")])
+        self.assertEqual([hole[:3] for hole in board_check.part_plated_holes(tree, ["K1"], {"/M"})], [])
+        self.assertEqual([hole[:3] for hole in board_check.part_plated_holes(tree, [], {"/LV", "/FAR", "/M"})], [])
+
+
+class KiCadsStraightLineForAPartsPlatedHoleIsReplacedByTheRouteMeasure(unittest.TestCase):
+    """mounting_holes drops KiCad's straight-line line for a part's plated hole and keeps it for a fixing's and for a non-plated hole."""
+
+    design = board_check.Design("hardware/m/board/board.kicad_pro")
+
+    def run_check(self, tree: list) -> list:
+        _, expected = board_check.hole_probes("n1", tree)
+        probe = lambda rule: {"type": "assertion_failure", "description": f"Rule: (rule '{rule}')", "items": []}
+        entry = lambda rule, hole: {"type": "hole_clearance", "description": f"Hole clearance violation (rule '{rule}' min 10 mm; actual 5.0000 mm)",
+                                    "items": [{"description": hole, "pos": {"x": 1, "y": 2}}, {"description": "Track [/M] on F.Cu", "pos": {"x": 3, "y": 2}}]}
+        reports = [probe(board_check.marker_rule("n1"))] + [probe(rule) for rule in expected]
+        reports += [entry(board_check.PLATED_RULE, "PTH pad 1 [/LV] of K1"), entry(board_check.PLATED_RULE, "PTH pad 1 [/PE] of F1"),
+                    entry(board_check.HOLE_RULE, "NPTH pad of H1")]
+        with tempfile.TemporaryDirectory() as scratch, mock.patch.object(board_check, "run_report", return_value=({"violations": reports}, "")):
+            return board_check.mounting_holes("kicad", self.design, scratch, "board.kicad_pcb", os.path.join(scratch, "board.kicad_dru"),
+                                              "(version 1)\n", board_check.Signed(3.0, 10.0, {}), "n1", None, tree, {"/M"}, board_check.zone_fills(tree))
+
+    def layout(self, slot) -> list:
+        extra = ('(footprint "a:F" (layer "F.Cu") (at 45 5) (property "Reference" "F1" (at 0 0 0)) (attr exclude_from_bom) '
+                 '(pad "1" thru_hole circle (at 0 0) (size 3 3) (drill 2) (layers "*.Cu") (net "/PE")))'
+                 '(footprint "a:H" (layer "F.Cu") (at 50 5) (property "Reference" "H1" (at 0 0 0)) '
+                 '(pad "" np_thru_hole circle (at 0 0) (size 3 3) (drill 3) (layers "*.Cu")))')
+        return route_board(mains_item("track", 25.4), slot, extra)
+
+    def test_a_part_hole_across_a_long_slot_gives_no_line_while_a_fixings_and_a_non_plated_hole_keep_the_straight_line(self):
+        # SOL-PRE-ORDER-CHECK-PLATED-HOLE-OF-A-LOW-VOLTAGE-PART-IS-MEASURED-ROUND-THE-SLOTS.C1: On a synthetic layout with a barrier slot between a plated hole of a part's pad on a net outside Mains and a Mains-class item (a pad, track, via or pour fill), where the straight-line distance between them is at or above the signed clearance but under the signed creepage and the shortest route round the slot is at or above the signed creepage, the check gives no mounting_hole violation for the pair. Each of these fails naming the hole, the Mains item and the distance measured: the same pair with the slot absent, a pair whose route round the slot is under the signed creepage, and a pair whose straight-line distance is under the signed clearance although its route round the slot is at or above the creepage. The same holds for each kind of Mains item, so a build that reads only pads fails: a track, a via and a pour fill each get the same three failing cases and the passing case. A plated hole of a fixing and every non-plated hole keep the straight measure they have now. Out of scope is a fixing's own pad and courtyard, and the signed figures.
+        found = self.run_check(self.layout(LONG_SLOT))
+        text = [v.message + " " + v.location for v in found if v.rule == "mounting_hole"]
+        self.assertFalse([t for t in text if "of K1" in t], text)
+        self.assertEqual(len([t for t in text if "of F1" in t]), 1, text)
+        self.assertEqual(len([t for t in text if "NPTH pad of H1" in t]), 1, text)
+
+    def test_a_part_hole_with_no_slot_between_gives_one_line_naming_the_hole_the_item_and_both_figures_and_not_kicads(self):
+        # SOL-PRE-ORDER-CHECK-PLATED-HOLE-OF-A-LOW-VOLTAGE-PART-IS-MEASURED-ROUND-THE-SLOTS.C1: On a synthetic layout with a barrier slot between a plated hole of a part's pad on a net outside Mains and a Mains-class item (a pad, track, via or pour fill), where the straight-line distance between them is at or above the signed clearance but under the signed creepage and the shortest route round the slot is at or above the signed creepage, the check gives no mounting_hole violation for the pair. Each of these fails naming the hole, the Mains item and the distance measured: the same pair with the slot absent, a pair whose route round the slot is under the signed creepage, and a pair whose straight-line distance is under the signed clearance although its route round the slot is at or above the creepage. The same holds for each kind of Mains item, so a build that reads only pads fails: a track, a via and a pour fill each get the same three failing cases and the passing case. A plated hole of a fixing and every non-plated hole keep the straight measure they have now. Out of scope is a fixing's own pad and courtyard, and the signed figures.
+        found = [v for v in self.run_check(self.layout(None)) if v.rule == "mounting_hole" and "of K1" in v.location]
+        self.assertEqual(len(found), 1, found)
+        for words in ("pad 1 [/LV] of K1", "track of /M on F.Cu", "5.0", "signed clearance of 3 mm", "signed creepage of 10 mm"):
+            self.assertIn(words, found[0].location + " " + found[0].message)
+        self.assertNotIn("actual", found[0].message)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -1497,7 +1497,120 @@ def fixing_gaps(design: Design, tree: list, fills, holes: Sequence[str], mains: 
     return found
 
 
+def drilled_hole(pad: list, at: Tuple[float, float, float], what: str) -> board_geometry.Shape:
+    """The drilled hole of a pad as a shape on the board: a disc for a round drill, a capsule for an oval one."""
+    drill = sexpr.child(pad, "drill")
+    own = sexpr.child(pad, "at")
+    centre = board_geometry.placed(board_geometry.xy(own, what), at)
+    angle = board_geometry.number(own, 3, what) if len(own) > 3 else 0.0
+    sizes = [board_geometry.number(drill, index, what) for index in range(1, len(drill))
+             if not isinstance(drill[index], list) and str(drill[index]) != "oval"]
+    if not sizes or min(sizes) <= 0:
+        raise board_geometry.Unreadable(f"{what} has a drill the check cannot size from the board file")
+    width, height = sizes[0], sizes[-1]
+    if width == height:
+        return board_geometry.Shape([board_geometry.disc(centre, width / 2)])
+    half = abs(width - height) / 2
+    along = board_geometry.turned((half, 0.0) if width > height else (0.0, half), angle)
+    ends = [(centre[0] - along[0], centre[1] - along[1]), (centre[0] + along[0], centre[1] + along[1])]
+    return board_geometry.Shape(board_geometry.swept(ends, min(width, height)))
+
+
+class HoleGap:
+    """A plated hole of a part, a piece of Mains copper near it, and the two distances measured between them."""
+
+    def __init__(self, reference: str, number: str, net: str, piece: Piece, straight: float, route: float, rounds: int):
+        self.reference, self.number, self.net, self.piece = reference, number, net, piece
+        self.straight, self.route, self.rounds = straight, route, rounds
+
+
+def part_plated_holes(tree: list, fixings: Sequence[str], mains: Set[str]) -> List[Tuple[str, str, str, board_geometry.Shape]]:
+    """The plated holes of the parts, a fixing's left out, on a net outside Mains: (reference, pad number, net, the hole)."""
+    table = board_geometry.net_table(tree)
+    held = set(fixings)
+    found = []
+    for reference, footprint in board_footprints(tree).items():
+        if reference in held:
+            continue
+        what = f"a pad of the footprint {reference}"
+        at = board_geometry.placement(footprint, what)
+        for node in sexpr.children(footprint, "pad"):
+            if not drilled(node) or str(node[2]) != "thru_hole":
+                continue
+            net = board_geometry.item_net(node, table, what)
+            if net in mains:
+                continue
+            found.append((reference, str(node[1]) if len(node) > 1 else "", net, drilled_hole(node, at, what)))
+    return found
+
+
+def plated_hole_gaps(tree: list, fills, mains: Set[str], clearance: float, creepage: float) -> List[HoleGap]:
+    """Every plated hole of a part on a net outside Mains that stands too near Mains copper, at its nearest piece by the way round.
+
+    A part's plated hole is held to `clearance` by the straight distance from
+    its edge to the Mains copper, and to `creepage` by the shortest way between
+    them that crosses no barrier slot, as the cross-layer rule holds a pair; a
+    pair with no slot between is held to the larger figure by either. The hole
+    goes through the board, so Mains copper on every layer counts. A fixing's
+    plated hole is left to the straight measure of the rule KiCad is given.
+    """
+    stack = copper_layers(tree)
+    holes = part_plated_holes(tree, hole_footprints(tree), mains)
+    if not holes:
+        return []
+    reach = max(clearance, creepage)
+    ways = board_geometry.Detours(board_geometry.barrier_slots(tree))
+    pieces = [piece for piece in copper_pieces(tree, stack, board_geometry.pads(tree), fills) if piece.net in mains and piece.polygons]
+    shapes: Dict[int, board_geometry.Shape] = {}
+    found = []
+    for reference, number, net, hole in holes:
+        nearest: Optional[HoleGap] = None
+        for piece in pieces:
+            left, top, right, bottom = piece.bounds
+            if (left > hole.bounds[2] + reach or right < hole.bounds[0] - reach
+                    or top > hole.bounds[3] + reach or bottom < hole.bounds[1] - reach):
+                continue
+            shape = shapes.setdefault(id(piece), board_geometry.Shape(piece.polygons))
+            straight = board_geometry.shape_distance(hole, shape, reach)
+            if straight >= reach - ROUNDING:
+                continue
+            route, rounds = straight, 0
+            if straight >= clearance - ROUNDING:
+                route, rounds = board_geometry.route_length(hole, shape, ways, creepage, straight)
+                if route >= creepage - ROUNDING:
+                    continue
+            if nearest is None or route < nearest.route:
+                nearest = HoleGap(reference, number, net, piece, straight, route, rounds)
+        if nearest is not None:
+            found.append(nearest)
+    return found
+
+
+#: A pad as KiCad's report describes it: a through-hole pad as "PTH pad 2 [/net] of J1", one of no name by its net alone.
+REPORTED_HOLE = re.compile(r"\bpad (?:(\S+) (?:\[.*\] )?|\[.*\] )of (\S+)\s*$", re.IGNORECASE)
 DISTANCE_REPORTED = re.compile(r"actual ([0-9.]+) mm")
+
+
+def held_by_route(item: dict, parts: Set[Tuple[str, str]]) -> bool:
+    """Whether an item of KiCad's report is the plated hole of a part, which plated_hole_gaps measures from the layout instead."""
+    named = REPORTED_HOLE.search(str(item.get("description", "")))
+    return bool(named) and ((named.group(1) or "", named.group(2)) in parts)
+
+
+def plated_hole_violations(design: Design, gaps: Sequence[HoleGap], signed: Signed) -> List[Violation]:
+    """One failure for each part's plated hole, at the nearest Mains item: the hole, the item and both distances measured."""
+    found = []
+    for gap in gaps:
+        hole = f"pad {gap.number or '(unnumbered)'} [{gap.net or NO_NET}] of {gap.reference}"
+        item = f"{gap.piece.kind} of {gap.piece.net} on {', '.join(gap.piece.layers)}"
+        way = f" and {gap.route:.3f} mm by the shortest way round the barrier slots" if gap.straight >= signed[0] else ""
+        found.append(Violation(
+            design.project, "mounting_hole", f"{design.layout} {hole}; {item}",
+            f"a plated hole on a net outside Mains stands {gap.straight:.3f} mm in a straight line{way} "
+            f"from a {item}, the hole of {hole}, inside the signed clearance of {signed[0]:g} mm in a straight line or the signed "
+            f"creepage of {signed[1]:g} mm by the shortest way that crosses no barrier slot; move the hole or the Mains copper "
+            "apart, or revise the signed basis"))
+    return found
 
 
 def mounting_holes(kicad_cli: str, design: Design, copy: str, layout: str, rules_copy: str, existing: str,
@@ -1513,10 +1626,19 @@ def mounting_holes(kicad_cli: str, design: Design, copy: str, layout: str, rules
     has, which must fire for the rules' pad-type conditions to be known to
     match; only the rules' own findings are read. A design with no hole is held
     to nothing for that: its rules fire on nothing.
+
+    A plated hole of a part, a fixing's left out, is not held by the straight
+    distance KiCad reports: plated_hole_gaps measures it from the layout, the
+    straight distance to the signed clearance and the shortest way round the
+    barrier slots to the signed creepage, and KiCad's line for such a hole is
+    dropped. A fixing's plated hole and every non-plated hole keep the straight
+    measure at the larger figure.
     """
     distance = max(signed[0], signed[1])
     try:
         measured = fixing_gaps(design, tree, fills, hole_footprints(tree), mains, distance)
+        measured += plated_hole_violations(design, plated_hole_gaps(tree, fills, mains, signed[0], signed[1]), signed)
+        parts = {(number, reference) for reference, number, _, _ in part_plated_holes(tree, hole_footprints(tree), mains)}
     except board_geometry.Unreadable as unread:
         return [Violation(design.project, "design_unreadable", design.layout,
                           f"the layout's copper cannot be read for the distance of its mounting holes from Mains ({unread})")]
@@ -1548,6 +1670,8 @@ def mounting_holes(kicad_cli: str, design: Design, copy: str, layout: str, rules
         if not any(mark in description for mark in ours):
             continue
         items = entry.get("items") or []
+        if PLATED_RULE in description and any(held_by_route(item, parts) for item in items):
+            continue
         gap = DISTANCE_REPORTED.search(description)
         kind = "a plated hole on a net outside Mains" if PLATED_RULE in description else "a non-plated hole or its pad"
         location = "; ".join(item_text(item) for item in items) or design.layout
@@ -2027,6 +2151,27 @@ DERATING_KEYS = ("source", "classes", "accepted_exceptions", "synthetic")
 DERATING_EXCEPTION_KEYS = ("position", "accepted_v", "reason", "bounded_by", "accepted_by", "accepted_on")
 #: The keys a record may leave out, which the derating policy record states beyond its required ones.
 DERATING_OPTIONAL_KEYS = ("synthetic", "accepted_exceptions")
+#: The workmanship acceptance record the owner may keep beside a design, its keys, and the keys of each entry in it.
+WORKMANSHIP_ACCEPTANCE_NAME = "workmanship-acceptance.yaml"
+WORKMANSHIP_ACCEPTANCE_KEYS = ("accepted_workmanship", "synthetic")
+WORKMANSHIP_ACCEPTANCE_OPTIONAL = ("synthetic",)
+WORKMANSHIP_ENTRY_KEYS = ("rule", "scope", "count", "reason", "bounded_by", "accepted_by", "accepted_on")
+#: The workmanship and neatness rules whose lines an entry of the record may accept, as the report names them.
+ACCEPTABLE_WORKMANSHIP = ("workmanship_detour", "workmanship_pad_entry", "workmanship_pad_corner", "workmanship_width",
+                          "workmanship_direction", "track_angle", "track_segment_length", "courtyards_overlap",
+                          "test_point_courtyard", "designator_astray", "silk_overlap", "items_not_allowed")
+#: The rules the record never accepts though they read like workmanship, each with why.
+NEVER_ACCEPTED_WORKMANSHIP = {
+    "hole_to_hole": "its shortfall is accepted only by a same_connector_pins entry of the separation basis record, since "
+                    "the owner can vouch for a connector's use but not for an arbitrary pair of holes",
+    "workmanship_rule": "it reports a rules file the check cannot read, so there is no measured line to accept",
+    "workmanship_figure": "it reports a figure the project does not state, so there is no measured line to accept",
+    "workmanship_pad_copper": "it reports a pad whose copper the check cannot measure, so there is no measured line to accept",
+}
+#: A line of a custom rule of the design, which KiCad words as (rule 'name' ...), and the one a floorplan region's rule
+#: reports: the rule is named for its region.
+CUSTOM_RULE_LINE = re.compile(r"\(rule '")
+FLOORPLAN_REGION_LINE = re.compile(r"\(rule '[^']* region parts'\)")
 CLASS_KEYS = ("class", "voltage", "power", "temperature")
 SHARE_KEYS = ("share", "source")
 #: The keys of the pin-limit record, of each power domain, part, part source and pin in it.
@@ -2339,6 +2484,49 @@ def load_derating(yaml, root: str, repository: Repository, design: Design, not_f
                                                  if isinstance(entry, dict) and isinstance(entry.get("position"), str)
                                                  and entry["position"].strip()], "the position")
     return (None if reading.found else data), reading.found
+
+
+def load_workmanship_acceptance(yaml, root: str, repository: Repository, design: Design, not_for_manufacture: bool
+                                ) -> Tuple[Optional[str], List[Tuple[int, dict]], List[Violation]]:
+    """The workmanship acceptance record's path, its well-formed entries with their positions in the list, and the
+    violations of its form; no path where the design's folders hold no record, and no entries where the record as a
+    whole is not in its form."""
+    data, reading = read_optional(yaml, root, repository, design, WORKMANSHIP_ACCEPTANCE_NAME, "workmanship_acceptance",
+                                  "workmanship acceptance record", WORKMANSHIP_ACCEPTANCE_KEYS, not_for_manufacture,
+                                  WORKMANSHIP_ACCEPTANCE_OPTIONAL)
+    if reading is None:
+        return None, [], []
+    entries: List[Tuple[int, dict]] = []
+    if data is None or reading.found:
+        return reading.record, entries, reading.found
+    if "accepted_workmanship" not in data:
+        reading.bad("accepted_workmanship", "the record lacks accepted_workmanship, the list of lines the owner accepts, "
+                                           "which is an empty list when it accepts none")
+        return reading.record, entries, reading.found
+    if not reading.listed("accepted_workmanship", data["accepted_workmanship"], "accepted workmanship entries", empty=True):
+        return reading.record, entries, reading.found
+    first: Dict[Tuple[str, str], int] = {}
+    for index, entry in enumerate(data["accepted_workmanship"]):
+        where = f"accepted_workmanship[{index}]"
+        before = len(reading.found)
+        if reading.mapping(where, entry, WORKMANSHIP_ENTRY_KEYS, WORKMANSHIP_ENTRY_KEYS, "an accepted_workmanship entry"):
+            for key in ("rule", "scope", "reason", "bounded_by"):
+                if key in entry:
+                    reading.text(f"{where}.{key}", entry[key])
+            count = entry.get("count")
+            if "count" in entry and (isinstance(count, bool) or not isinstance(count, int) or count < 1):
+                reading.bad(f"{where}.count", f"{where}.count is {count!r}, where it is a whole number of lines, at least one")
+            if len(reading.found) == before:
+                pair = (entry["rule"].strip(), entry["scope"].strip())
+                if pair in first:
+                    reading.bad(f"{where}.scope", f"{where} repeats the rule '{pair[0]}' and scope '{pair[1]}' of "
+                                                  f"accepted_workmanship[{first[pair]}], so one entry would replace another; "
+                                                  "keep one entry for each rule and scope")
+                else:
+                    first[pair] = index
+        if len(reading.found) == before:
+            entries.append((index, entry))
+    return reading.record, entries, reading.found
 
 
 def read_pin_limits(yaml, root: str, repository: Repository, design: Design, not_for_manufacture: bool) -> List[Violation]:
@@ -7408,10 +7596,146 @@ def judge_exceptions(design: Design, record: str, signed: Signed, violations: Se
 # --- One design ----------------------------------------------------------------
 
 
+class Places(NamedTuple):
+    """The places of a design a workmanship acceptance may name: its nets, its parts by reference and its text variables."""
+    nets: Set[str]
+    references: Set[str]
+    figures: Set[str]
+
+
+def in_scope(scope: str, line: Violation, places: Optional[Places]) -> bool:
+    """Whether a line falls in the scope of an entry: a net the line is on, a reference designator the line names, or a
+    text variable (a figure the rule reads) the line's message names."""
+    def named(text: str) -> bool:
+        return re.search(rf"(?<![A-Za-z0-9_]){re.escape(scope)}(?![A-Za-z0-9_])", text) is not None
+
+    on_net = line.location.startswith(f"net {scope}:") or f"[{scope}]" in line.location
+    if places is None:
+        return on_net or named(line.location) or named(line.message)
+    return ((scope in places.nets and on_net) or (scope in places.references and named(line.location))
+            or (scope in places.figures and named(line.message)))
+
+
+def acceptable_line(line: Violation) -> bool:
+    """Whether a line is one the workmanship acceptance record may accept: a line of a rule of the closed set, and of
+    courtyards_overlap only a plain part-courtyard overlap and of items_not_allowed only a floorplan region's rule."""
+    if line.rule not in ACCEPTABLE_WORKMANSHIP:
+        return False
+    if line.rule == "courtyards_overlap":
+        return CUSTOM_RULE_LINE.search(line.message) is None
+    if line.rule == "items_not_allowed":
+        return FLOORPLAN_REGION_LINE.search(line.message) is not None
+    return True
+
+
+def judge_workmanship(design: Design, record: str, entries: Sequence[Tuple[int, dict]], found: Sequence[Violation],
+                      places: Optional[Places], today: datetime.date, accepted: Optional[List[str]]) -> List[Violation]:
+    """The lines of a design with the ones a signed entry of the workmanship acceptance record covers taken out and reported
+    in `accepted`, and a violation added for each entry that fails.
+
+    An entry covers the lines of its own rule inside its own scope, up to its count, in the order the check reports them.
+    An entry that is unsigned or future dated, names a rule outside the closed set, names a place the design lacks, or that
+    no line uses covers nothing and fails.
+    """
+    result: List[Violation] = []
+
+    def fail(index: int, entry: dict, message: str, key: str = "") -> None:
+        at = f"{record} accepted_workmanship[{index}]" + (f".{key}" if key else "")
+        result.append(Violation(design.project, "workmanship_acceptance", at,
+                                f"accepted_workmanship[{index}] ({entry['rule'].strip()} at {entry['scope'].strip()}) {message}"))
+
+    usable: List[Tuple[int, dict]] = []
+    for index, entry in entries:
+        rule, scope = entry["rule"].strip(), entry["scope"].strip()
+        problems = 0
+        if rule not in ACCEPTABLE_WORKMANSHIP:
+            why = NEVER_ACCEPTED_WORKMANSHIP.get(rule)
+            fail(index, entry, f"names the rule {rule}, which the record does not accept"
+                 + (f": {why}" if why else ": it is not a workmanship or neatness rule of the check, and a rule that carries "
+                    "a mains spacing, a derated voltage, a pin limit or any other safety finding has its own form or none")
+                 + f"; the rules it accepts are {', '.join(ACCEPTABLE_WORKMANSHIP)}", "rule")
+            problems += 1
+        reason = entry_unsigned(entry, None, today)
+        if reason is not None:
+            fail(index, entry, f"is not signed: {reason}; an entry is the owner's to sign, and an unsigned one accepts nothing",
+                 "accepted_by" if reason.startswith("accepted_by") else "accepted_on")
+            problems += 1
+        if places is not None and scope not in places.nets | places.references | places.figures:
+            fail(index, entry, f"names {scope}, which is no net, reference designator or text variable of the design", "scope")
+            problems += 1
+        if not problems:
+            usable.append((index, entry))
+
+    used = {index: 0 for index, _ in usable}
+    for line in found:
+        taker = None
+        if acceptable_line(line):
+            taker = next(((index, entry) for index, entry in usable if entry["rule"].strip() == line.rule
+                          and used[index] < entry["count"] and in_scope(entry["scope"].strip(), line, places)), None)
+        if taker is None:
+            result.append(line)
+            continue
+        index, entry = taker
+        used[index] += 1
+        if accepted is not None:
+            accepted.append("ACCEPTED | " + " | ".join(clean(field) for field in (
+                design.project, "workmanship_acceptance", f"{record} accepted_workmanship[{index}]",
+                f"{line.rule} at {line.location}: {line.message}; the owner accepts {entry['scope'].strip()} "
+                f"({used[index]} of up to {entry['count']} lines): {entry['reason'].strip()} (bounded by "
+                f"{entry['bounded_by'].strip()}; accepted by {entry['accepted_by'].strip()} on "
+                f"{iso_date(entry['accepted_on']).isoformat()})")))
+    for index, entry in usable:
+        if not used[index]:
+            fail(index, entry, f"is used by no line: the check reports no {entry['rule'].strip()} line within the scope "
+                               f"{entry['scope'].strip()} that the record can accept, so the entry is stale; remove it")
+    return result
+
+
+def judge_accepted_workmanship(yaml, repository: Repository, design: Design, today: datetime.date,
+                               found: List[Violation], accepted: Optional[List[str]]) -> List[Violation]:
+    """`found` judged against the workmanship acceptance record the design's folders hold, if any."""
+    if any(v.rule == "design_discovery" for v in found):
+        return found
+    root = repository.root
+    try:
+        with open(os.path.join(root, design.project), encoding="utf-8") as handle:
+            project = json.load(handle, object_pairs_hook=unique_keys)
+    except (OSError, ValueError):
+        return found
+    variables = project.get("text_variables") if isinstance(project, dict) else None
+    variables = variables if isinstance(variables, dict) else {}
+    record, entries, problems = load_workmanship_acceptance(yaml, root, repository, design,
+                                                            variables.get("NOT_FOR_MANUFACTURE") == "true")
+    if record is None:
+        return found
+    places: Optional[Places] = None
+    try:
+        with open(os.path.join(root, design.layout), encoding="utf-8") as handle:
+            tree = sexpr.parse_one(handle.read())
+        places = Places(layout_nets(tree), set(board_footprints(tree)), set(map(str, variables)))
+    except (OSError, sexpr.SexprError, board_geometry.Unreadable):
+        pass
+    return judge_workmanship(design, record, entries, found, places, today, accepted) + problems
+
+
 def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, today: datetime.date,
                  already: List[Violation], read: Optional[List[Tuple[str, str, str]]] = None,
                  accepted: Optional[List[str]] = None) -> List[Violation]:
-    """Every violation of one design. `read`, when given, receives each measured rule's figure as the design sets it,
+    """Every violation of one design, less the workmanship lines an owner-signed entry of the design's workmanship
+    acceptance record covers, which `accepted` receives as report lines.
+
+    The lines are judged over whichever way the design's check ends, so the early ends are judged too.
+    """
+    return judge_accepted_workmanship(yaml, repository, design, today,
+                                      check_design_lines(design, repository, kicad_cli, yaml, today, already, read, accepted),
+                                      accepted)
+
+
+def check_design_lines(design: Design, repository: Repository, kicad_cli: str, yaml, today: datetime.date,
+                       already: List[Violation], read: Optional[List[Tuple[str, str, str]]] = None,
+                       accepted: Optional[List[str]] = None) -> List[Violation]:
+    """Every violation of one design, before the workmanship lines the owner accepts are taken out.
+    `read`, when given, receives each measured rule's figure as the design sets it,
     as (item and what it measures, the text variable, the figure with its unit); `accepted`, the report line of each
     spacing exception, and of each derating exception, the owner signed that the design uses."""
     root = repository.root
@@ -7838,7 +8162,7 @@ def design_reads(top: str, files: List[str], git: str = "git") -> List[str]:
         reads.add(design.directory + "/" if design.directory else WHOLE_REPOSITORY)
         reads.update(design_files(design, repository)[0])
         for name in (RECORD_NAME, PIN_RECORD_NAME, CONTROLLER_RECORD_NAME, PARTS_RECORD_NAME, CATALOGUE_NAME, DERATING_NAME,
-                     PIN_LIMITS_NAME, BOARD_RULES_NAME, MANUFACTURER_LIMITS_NAME):
+                     WORKMANSHIP_ACCEPTANCE_NAME, PIN_LIMITS_NAME, BOARD_RULES_NAME, MANUFACTURER_LIMITS_NAME):
             record = find_record(top, design.directory, repository.tracked, name)
             if record:
                 reads.add(record)

@@ -37,7 +37,7 @@ class SeparationFloorProof(Proved):
 
 class MountingHoleProof(Proved):
     def test_each_hole_fault_is_caught_on_a_copy_of_the_throwaway_design(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C5: a mounting hole inside the larger of the signed clearance and creepage of a Mains net, and a plated hole on a non-Mains net inside that distance, and requires the check to fail each
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C6: The seeded-fault harness still shows the check failing mounting_hole on a copy of the throwaway proof design for a hole, a plated hole and a fixing's courtyard inside the signed distance of its mains pads
         faults = [fault for fault in board_prove.FAULTS if fault[1].startswith("mounting holes:")]
         self.assertEqual({fault[2] for fault in faults}, {"mounting_hole"})
         self.assertEqual(len(faults), 5)
@@ -49,7 +49,7 @@ class FloorAndHolesRunDirectly(Copy):
         return [v for v in self.violations(lines) if v[2] in ("mounting_hole", "separation_floor")]
 
     def test_mains_copper_inside_a_fixings_courtyard_distance_fails_by_track_and_by_pour_and_names_the_gap(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: measures from the layout file the distance from each mounting-hole footprint's courtyard to every track and pour fill of a Mains net on every layer
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C1: measures from the layout file the distance from each mounting-hole footprint's pad copper and courtyard to every pad, track, via and pour fill of a Mains net on every layer, held to the same distance
         for seed, kind, gap in ((board_prove.fixing_near_mains_track, "track of /MAINS_N on F.Cu", "2.875 mm"),
                                 (board_prove.fixing_near_mains_pour, "zone fill of /MAINS_N on B.Cu", "2.000 mm")):
             with self.subTest(kind=kind):
@@ -65,7 +65,7 @@ class FloorAndHolesRunDirectly(Copy):
                 self.assertIn("inside the 4 mm", found[0][4])
 
     def test_the_same_fixing_with_the_mains_copper_beyond_the_distance_passes(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: A clean design passes
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C1: A design with no mounting hole is not failed for that
         self.seed.layout(lambda tree: (tree.insert(len(tree) - 1, board_prove.seeded_hole(
             "H9", board_prove.FIXING_X, 10, board_prove.FIXING_UUID, courtyard=10)),
             tree.insert(len(tree) - 1, board_prove.segment("/MAINS_N", 25.5, 4, 25.5, 16, "0b0e5c1a-0000-4000-8000-000000000c10"))))
@@ -73,7 +73,7 @@ class FloorAndHolesRunDirectly(Copy):
         self.assertEqual([v for v in self.holes(lines) if v[2] == "mounting_hole"], [], lines)
 
     def test_a_footprint_of_one_plated_pad_left_out_of_the_bom_is_a_fixing_whose_courtyard_is_measured(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: a footprint whose pads are all drilled holes, plated or not, is a mounting hole
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C1: A mounting hole is a footprint whose pads are all drilled holes and which has at least one mark of a fixing, namely every pad non-plated, exclusion from the bill of materials
         self.seed.layout(lambda tree: (tree.insert(len(tree) - 1, board_prove.seeded_hole(
             "H9", board_prove.FIXING_X, 10, board_prove.FIXING_UUID, plated_net="/LV_A", courtyard=10, excluded=True)),
             tree.insert(len(tree) - 1, board_prove.segment("/MAINS_N", 27, 4, 27, 16, "0b0e5c1a-0000-4000-8000-000000000c10"))))
@@ -98,8 +98,23 @@ class FloorAndHolesRunDirectly(Copy):
         status, lines = self.check()
         self.assertFalse([v for v in self.holes(lines) if "H9 courtyard" in v[3]], lines)
 
+    def test_an_unmarked_one_pad_plated_fixing_on_protective_earth_loses_only_its_courtyard_measure(self):
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C7: a footprint of one plated drilled pad on a protective-earth net, in the bill of materials and with a library item name that does not begin MountingHole, is not a mounting hole, and its pad copper inside the signed distance of a Mains pad, track, via or pour fill still fails under the signed Mains rule and its drilled hole inside that distance of Mains copper still fails under the plated-hole rule, so a fixing left unmarked loses only its courtyard measure
+        self.seed.layout(lambda tree: (tree.insert(len(tree) - 1, board_prove.seeded_hole(
+            "H9", board_prove.PLATED_X - 1.0, 10, board_prove.FIXING_UUID, plated_net="/PE", courtyard=10))))
+        status, lines = self.check()
+        self.assertEqual(status, 1)
+        found = self.violations(lines)
+        pad_pair = [v for v in found if v[2] == "clearance" and "[/PE] of H9" in v[3] and "[/MAINS_N] of R1" in v[3]]
+        self.assertTrue(pad_pair, lines)
+        self.assertIn("pre-order check: signed separation basis' clearance 3.0000 mm", pad_pair[0][4])
+        plated = [v for v in found if v[2] == "mounting_hole" and "plated hole" in v[4] and "[/PE] of H9" in v[3]]
+        self.assertEqual(len(plated), 1, lines)
+        self.assertFalse([v for v in found if v[2] == "mounting_hole" and "H9 courtyard" in v[3]],
+                         "the unmarked fixing is a part and its courtyard is not measured as a fixing's")
+
     def test_a_pad_larger_than_its_hole_is_held_at_its_edge_in_a_hole_footprint_and_in_a_part(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: the check fails a hole, its plating or fixing inside that distance of a Mains net
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C1: The check fails a hole, its plating or fixing inside that distance of a Mains net, and a plated hole on a non-Mains net inside that distance
         for surface_pad, who in ((False, "the pad copper of a hole footprint"), (True, "KiCad's physical clearance of a part")):
             with self.subTest(who):
                 self.setUp()
@@ -110,14 +125,14 @@ class FloorAndHolesRunDirectly(Copy):
                 self.assertTrue([v for v in self.holes(lines) if v[2] == "mounting_hole"], lines)
 
     def test_the_hole_that_is_clear_with_its_pad_clear_too_passes(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: A clean design passes
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C1: A design with no mounting hole is not failed for that
         self.seed.layout(lambda tree: tree.insert(len(tree) - 1, board_prove.seeded_hole(
             "H9", board_prove.OVERSIZE_X + 2.8, 10, board_prove.FIXING_UUID, pad=6, surface_pad=True)))
         status, lines = self.check()
         self.assertEqual([v for v in self.holes(lines) if v[2] == "mounting_hole"], [], lines)
 
     def test_without_its_physical_clearance_constraint_the_part_with_an_oversize_pad_would_pass(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: the pad of a hole inside the distance is held by the rule's physical clearance
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C1: holding the hole clearance to the Mains class at no less than the larger of the signed clearance and the signed creepage on every layer
         board_prove.hole_with_oversize_pad(self.seed)
         board_prove.git(self.seed, "add", "-A")
         board_prove.git(self.seed, "commit", "-q", "--allow-empty", "-m", "seeded copy")
@@ -130,14 +145,14 @@ class FloorAndHolesRunDirectly(Copy):
         self.assertEqual([v for v in self.holes(lines) if v[2] == "mounting_hole"], [], lines)
 
     def test_the_unmodified_throwaway_design_passes_both_rules(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: A clean design passes
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C1: A design with no mounting hole is not failed for that
         status, lines = self.check()
         self.assertEqual(status, 0, lines)
         self.assertEqual(self.holes(lines), [])
         self.assertIn("barrier_types: []", self.seed.read("separation-basis.yaml"))
 
     def test_a_hole_beyond_the_signed_distance_passes_and_one_inside_it_fails_with_the_gap_named(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: fails a hole, its plating or fixing inside that distance of a Mains net
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C1: The check fails a hole, its plating or fixing inside that distance of a Mains net, and a plated hole on a non-Mains net inside that distance
         far = 25.96 + 4.5 + 1.6
         self.seed.layout(lambda tree: tree.insert(len(tree) - 1, board_prove.seeded_hole("H9", far, 10, "0b0e5c1a-0000-4000-8000-000000000c00")))
         status, lines = self.check()
@@ -158,7 +173,7 @@ class FloorAndHolesRunDirectly(Copy):
         self.assertIn("stands 3.500 mm", measured[0][4])
 
     def test_the_failure_is_in_the_same_report_as_the_existing_checks_with_the_rule_design_and_item(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C4: in the same report as the existing checks
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C3: The check's text report, which is its only report, names the rule mounting_hole, the design, the hole, the Mains net and the distance required
         board_prove.hole_near_mains()(self.seed)
         status, lines = self.check()
         self.assertEqual(status, 1)
@@ -174,13 +189,13 @@ class FloorAndHolesRunDirectly(Copy):
                         "KiCad's own findings are reported beside it")
 
     def test_a_plated_hole_on_a_mains_net_is_not_failed_by_the_plated_hole_rule(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: a plated hole on a non-Mains net inside that distance
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C1: a plated hole on a non-Mains net inside that distance
         board_prove.hole_near_mains("/MAINS_L")(self.seed)
         status, lines = self.check()
         self.assertEqual([v for v in self.holes(lines) if "plated hole" in v[4]], [], lines)
 
     def test_a_hole_inside_the_distance_fails_whether_or_not_it_is_on_a_protective_earth_net(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: The signed figure governs whether or not the fixing is bonded to protective earth
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C1: The signed figure governs whether or not the fixing is bonded to protective earth
         for net in ("/LV_A", "/LV_B"):
             with self.subTest(net=net):
                 self.setUp()
@@ -190,7 +205,7 @@ class FloorAndHolesRunDirectly(Copy):
                 self.assertEqual({v[2] for v in self.holes(lines)}, {"mounting_hole"}, lines)
 
     def test_the_distance_is_the_larger_of_the_signed_clearance_and_creepage_whichever_it_is(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: no less than the larger of the signed clearance and the signed creepage
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C1: no less than the larger of the signed clearance and the signed creepage
         at_4_2 = 25.96 + 4.2 + 1.6
         self.seed.layout(lambda tree: tree.insert(len(tree) - 1, board_prove.seeded_hole("H9", at_4_2, 10, "0b0e5c1a-0000-4000-8000-000000000c00")))
         status, lines = self.check()
@@ -214,7 +229,7 @@ class FloorAndHolesRunDirectly(Copy):
 
 class EveryTrackedDesignPassesTheFloorAndHoleRules(unittest.TestCase):
     def test_no_design_the_repository_tracks_fails_either_rule_and_each_carries_the_inputs_the_floor_reads(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C6: Every design git tracks passes the separation-floor rule and the mounting-hole rule, carrying the records they read, synthetic where the design is not for manufacture
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C6: every tracked design passes the mounting-hole rules, which run in the build round for board changes and nightly on main
         out = io.StringIO()
         board_check.run(board_prove.REPO, KICAD_CLI, out=out)
         lines = out.getvalue().splitlines()

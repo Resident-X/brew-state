@@ -1568,6 +1568,57 @@ MACHINE_TARGET = (DESIGN, NAME, "hardware/seeded-machine/gate-proof")
 SIGNED = f"rule '{board_check.SIGNED_RULE}' clearance"
 CONDITION = board_check.MAINS_CONDITION
 
+REVIEW_DESIGN = "hardware/proof/review-proof"
+REVIEW_NAME = "review-proof"
+REVIEW_TARGET = (REVIEW_DESIGN, REVIEW_NAME)
+
+
+def acceptance_entry(rule: str, scope: str, count: int = 1, accepted_by: str = "proof-owner", accepted_on: str = "2026-10-01") -> str:
+    """One synthetic workmanship acceptance entry; its signature is a made-up name and a past date, nobody's own."""
+    return (f"  - rule: {rule}\n    scope: \"{scope}\"\n    count: {count}\n    reason: a synthetic ground, chosen to exercise the check\n"
+            f"    bounded_by: a synthetic element, which is no real part\n    accepted_by: \"{accepted_by}\"\n    accepted_on: \"{accepted_on}\"\n")
+
+
+def acceptance_record(*entries: str, synthetic: bool = True) -> str:
+    """The workmanship acceptance record holding `entries`, each written as list items of its keys."""
+    return ("accepted_workmanship:" + ("\n" + "".join(entries) if entries else " []\n")
+            + ("synthetic: true\n" if synthetic else ""))
+
+
+def accepting(*entries: str, record: Optional[str] = None):
+    """The record the design's folder holds given as the workmanship acceptance record of `entries`, or as `record` text."""
+    return lambda seed: seed.write(board_check.WORKMANSHIP_ACCEPTANCE_NAME, acceptance_record(*entries) if record is None else record)
+
+
+def right_angle(seed: Seed) -> None:
+    """The route of /LV_B turned through a right angle, which KiCad reports as two track_angle lines on /LV_B."""
+    reroute("/LV_B", (LV_B_RUN, LV_B_BEND), [(40, 12.54), (55.16, 12.54), (55.16, 10)])(seed)
+
+
+def with_right_angle(*entries: str, record: Optional[str] = None):
+    """The right angle on /LV_B and the workmanship acceptance record of `entries`."""
+    return seeded(right_angle, accepting(*entries, record=record))
+
+
+def crystal_crowded(seed: Seed) -> None:
+    """FB1 of the review proof design moved inside the crystal keep-clear, which KiCad reports as a courtyards_overlap line
+    naming the rule Crystal keep-clear."""
+    import review_seed
+    seed.layout(lambda tree: review_seed.move(tree, "FB1", 73.8, 38.0))
+
+
+def region_crowded(seed: Seed) -> None:
+    """D1 of the review proof design moved into the digital region, which KiCad reports as an items_not_allowed line."""
+    import review_seed
+    seed.layout(lambda tree: review_seed.move(tree, "D1", 80.0, 22.0))
+
+
+def region_rule_renamed(seed: Seed) -> None:
+    """The digital region's rule renamed so it is no floorplan region's rule, with D1 inside the region."""
+    seed.replace(".kicad_dru", '(rule "Digital region parts"', '(rule "Digital keepout"')
+    region_crowded(seed)
+
+
 #: (fault, the check it proves, the rule the check must report, text that line must carry, the edit), and, for a
 #: fault seeded into a design other than DESIGN, that design's folder and name as a sixth element and, as a seventh,
 #: text no violation line of the run may carry, for a fault seeded beside something the check must leave alone.
@@ -2151,6 +2202,64 @@ FAULTS: List[tuple] = [
     ("a part whose catalogue entry lacks its lifecycle mapping", "lifecycle: the mapping is required on the entry of every part the design places", "parts_lifecycle",
      "the position R1, catalogue number C9000002, has no lifecycle in the catalogue extract",
      extract("    stock: 1001\n    unit_price: 0.01\n    lifecycle:\n      status: active\n      source: none -- synthetic lifecycle reading\n      read_on: 2026-10-14\n", "    stock: 1001\n    unit_price: 0.01\n")),
+    # Workmanship acceptance
+    ("an acceptance entry that is not a mapping", "workmanship acceptance: an entry that is not a mapping fails the record", "workmanship_acceptance",
+     "accepted_workmanship[0] is not a mapping of the keys", with_right_angle(record="accepted_workmanship:\n  - just some words\nsynthetic: true\n")),
+    ("an acceptance entry lacking a key", "workmanship acceptance: an entry with a missing key fails the record", "workmanship_acceptance",
+     "accepted_workmanship[0] lacks reason",
+     with_right_angle(record="accepted_workmanship:\n  - rule: track_angle\n    scope: \"/LV_B\"\n    count: 2\n    bounded_by: x\n"
+                             "    accepted_by: proof-owner\n    accepted_on: \"2026-10-01\"\nsynthetic: true\n")),
+    ("an acceptance entry holding another key", "workmanship acceptance: an entry with an extra key fails the record", "workmanship_acceptance",
+     "holds the key 'note'", with_right_angle(acceptance_entry("track_angle", "/LV_B", 2) + "    note: x\n")),
+    ("two acceptance entries for one rule and scope", "workmanship acceptance: two entries for one rule and scope fail the record", "workmanship_acceptance",
+     "repeats the rule 'track_angle' and scope '/LV_B'",
+     with_right_angle(acceptance_entry("track_angle", "/LV_B", 1), acceptance_entry("track_angle", "/LV_B", 1))),
+    ("an acceptance entry with a count of zero", "workmanship acceptance: an entry with a count of zero fails the record", "workmanship_acceptance",
+     "accepted_workmanship[0].count is 0", with_right_angle(acceptance_entry("track_angle", "/LV_B", 0))),
+    ("an acceptance entry with an empty accepted_by", "workmanship acceptance: an unsigned entry fails and accepts nothing", "workmanship_acceptance",
+     "accepted_by is ''", with_right_angle(acceptance_entry("track_angle", "/LV_B", 2, accepted_by=""))),
+    ("an acceptance entry signed with a placeholder", "workmanship acceptance: a placeholder signature fails and accepts nothing", "workmanship_acceptance",
+     "accepted_by 'unsigned' is a placeholder", with_right_angle(acceptance_entry("track_angle", "/LV_B", 2, accepted_by="unsigned"))),
+    ("an acceptance entry signed in angle brackets", "workmanship acceptance: an angle-bracketed signature fails and accepts nothing", "workmanship_acceptance",
+     "accepted_by '<owner>' is a placeholder", with_right_angle(acceptance_entry("track_angle", "/LV_B", 2, accepted_by="<owner>"))),
+    ("an acceptance entry with an empty date", "workmanship acceptance: an empty date fails the entry", "workmanship_acceptance",
+     "is not a valid calendar date", with_right_angle(acceptance_entry("track_angle", "/LV_B", 2, accepted_on=""))),
+    ("an acceptance entry with a malformed date", "workmanship acceptance: a malformed date fails the entry", "workmanship_acceptance",
+     "accepted_on tomorrow is not a valid calendar date", with_right_angle(acceptance_entry("track_angle", "/LV_B", 2, accepted_on="tomorrow"))),
+    ("an acceptance entry with a future date", "workmanship acceptance: a date after today fails the entry", "workmanship_acceptance",
+     "accepted_on 2099-01-01 is later than today", with_right_angle(acceptance_entry("track_angle", "/LV_B", 2, accepted_on="2099-01-01"))),
+    ("an acceptance entry for hole_to_hole", "workmanship acceptance: the record never accepts hole_to_hole", "workmanship_acceptance",
+     "names the rule hole_to_hole, which the record does not accept", with_right_angle(acceptance_entry("hole_to_hole", "/LV_B"))),
+    ("an acceptance entry for workmanship_rule", "workmanship acceptance: the record never accepts workmanship_rule", "workmanship_acceptance",
+     "names the rule workmanship_rule, which the record does not accept", with_right_angle(acceptance_entry("workmanship_rule", "/LV_B"))),
+    ("an acceptance entry for workmanship_figure", "workmanship acceptance: the record never accepts workmanship_figure", "workmanship_acceptance",
+     "names the rule workmanship_figure, which the record does not accept", with_right_angle(acceptance_entry("workmanship_figure", "/LV_B"))),
+    ("an acceptance entry for workmanship_pad_copper", "workmanship acceptance: the record never accepts workmanship_pad_copper", "workmanship_acceptance",
+     "names the rule workmanship_pad_copper, which the record does not accept", with_right_angle(acceptance_entry("workmanship_pad_copper", "/LV_B"))),
+    ("an acceptance entry for a mains spacing rule", "workmanship acceptance: the record never accepts a mains spacing rule", "workmanship_acceptance",
+     "names the rule creepage, which the record does not accept", with_right_angle(acceptance_entry("creepage", "/LV_B"))),
+    ("an acceptance entry for a place the design lacks", "workmanship acceptance: an entry for a place the design does not have fails", "workmanship_acceptance",
+     "names /NO_SUCH_NET, which is no net, reference designator or text variable of the design",
+     with_right_angle(acceptance_entry("track_angle", "/NO_SUCH_NET", 2))),
+    ("an acceptance entry no line uses", "workmanship acceptance: an entry no reported line uses fails as stale", "workmanship_acceptance",
+     "is used by no line", accepting(acceptance_entry("track_angle", "/LV_B", 2))),
+    ("a synthetic acceptance record applied to a design not marked not for manufacture", "workmanship acceptance: a synthetic record cannot pass an orderable board", "workmanship_acceptance",
+     "marked synthetic", seeded(right_angle, accepting(acceptance_entry("track_angle", "/LV_B", 2)),
+                                lambda seed: seed.project(lambda data: data["text_variables"].pop("NOT_FOR_MANUFACTURE")))),
+    ("a line beyond an acceptance entry's count", "workmanship acceptance: a line beyond the entry's count still fails", "track_angle",
+     "actual 90.000", with_right_angle(acceptance_entry("track_angle", "/LV_B", 1))),
+    ("a line of a rule the acceptance record does not name", "workmanship acceptance: a line of another rule still fails", "track_angle",
+     "actual 90.000", with_right_angle(acceptance_entry("workmanship_detour", "/LV_B", 2))),
+    ("a line at a place the acceptance entry does not name", "workmanship acceptance: a line at another place still fails", "track_angle",
+     "actual 90.000", with_right_angle(acceptance_entry("track_angle", "/LV_A", 2))),
+    ("a crystal keep-clear line under an acceptance entry for courtyards_overlap", "workmanship acceptance: a courtyard line naming a custom rule is not accepted", "courtyards_overlap",
+     "rule 'Crystal keep-clear'", seeded(crystal_crowded, accepting(acceptance_entry("courtyards_overlap", "FB1"))), REVIEW_TARGET),
+    ("an acceptance entry for courtyards_overlap used only by the crystal keep-clear", "workmanship acceptance: an entry only a custom rule's line could use is stale", "workmanship_acceptance",
+     "is used by no line", seeded(crystal_crowded, accepting(acceptance_entry("courtyards_overlap", "FB1"))), REVIEW_TARGET),
+    ("a line of a custom rule other than a floorplan region's under an items_not_allowed entry", "workmanship acceptance: an items_not_allowed line of another rule is not accepted", "items_not_allowed",
+     "rule 'Digital keepout'", seeded(region_rule_renamed, accepting(acceptance_entry("items_not_allowed", "D1"))), REVIEW_TARGET),
+    ("an items_not_allowed entry used only by a rule other than a floorplan region's", "workmanship acceptance: an entry only another rule's line could use is stale", "workmanship_acceptance",
+     "is used by no line", seeded(region_rule_renamed, accepting(acceptance_entry("items_not_allowed", "D1"))), REVIEW_TARGET),
 ]
 
 
