@@ -1124,7 +1124,7 @@ class AMountingHoleIsFoundAndHeldToTheLargerSignedFigure(unittest.TestCase):
         self.assertIn(board_check.RESERVED, board_check.HOLE_RULE)
 
     def test_a_probe_is_written_for_each_kind_of_pad_the_layout_has_and_for_no_other(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: the rules' pad-type conditions are shown to match before a clean result is believed
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C1: The check fails a hole, its plating or fixing inside that distance of a Mains net, and a plated hole on a non-Mains net inside that distance
         text, expected = board_check.hole_probes("n1", self.tree)
         self.assertEqual(expected, ["pre-order check n1: non-plated hole item", "pre-order check n1: plated hole item"])
         self.assertIn("A.Pad_Type == 'NPTH, mechanical' && A.Reference == 'H1'", text)
@@ -1134,7 +1134,7 @@ class AMountingHoleIsFoundAndHeldToTheLargerSignedFigure(unittest.TestCase):
         self.assertEqual(board_check.hole_probes("n1", none), ("", []))
 
     def test_a_rule_kicad_parses_but_never_matches_fails_the_design_instead_of_passing_it(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: a hole inside the distance is never passed unseen
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C1: The check fails a hole, its plating or fixing inside that distance of a Mains net, and a plated hole on a non-Mains net inside that distance
         design = board_check.Design("hardware/m/board/board.kicad_pro")
         marker = {"type": "assertion_failure", "description": f"Rule: (rule '{board_check.marker_rule('n1')}')", "items": []}
         probe = lambda rule: {"type": "assertion_failure", "description": f"Rule: (rule '{rule}')", "items": []}
