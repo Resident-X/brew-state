@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY.C11
+type: criterion
+title: A class whose KiCad list has reached the cap passes only when the signed count equals the cap
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  On a synthetic design whose KiCad list for a policy class has reached the cap, `REPORT_LIMIT` (199), the found count is reported as at least the cap, and the check passes the class only when the signed count equals the cap, while a signed count below the cap fails the check under the rule `severity_policy` naming the class, the signed count and the cap; with a list below its cap and a found count above the recorded one the class fails on the ratchet, and with a found count at or below it the class passes. Out of scope is a class whose list KiCad does not cut.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY
+    type: criterion-of
