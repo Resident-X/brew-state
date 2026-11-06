@@ -4255,7 +4255,7 @@
 				)
 			)
 		)
-		(property "Value" "100"
+		(property "Value" "470"
 			(at 242.57 63.5 90)
 			(effects
 				(font
@@ -4290,7 +4290,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C22775"
+		(property "LCSC" "C23179"
 			(at 242.57 63.5 0)
 			(hide yes)
 			(effects
@@ -4299,7 +4299,7 @@
 				)
 			)
 		)
-		(property "MPN" "0603WAF1000T5E"
+		(property "MPN" "0603WAF4700T5E"
 			(at 242.57 63.5 0)
 			(hide yes)
 			(effects
@@ -4351,7 +4351,7 @@
 				)
 			)
 		)
-		(property "Value" "100"
+		(property "Value" "470"
 			(at 242.57 88.9 90)
 			(effects
 				(font
@@ -4386,7 +4386,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C22775"
+		(property "LCSC" "C23179"
 			(at 242.57 88.9 0)
 			(hide yes)
 			(effects
@@ -4395,7 +4395,7 @@
 				)
 			)
 		)
-		(property "MPN" "0603WAF1000T5E"
+		(property "MPN" "0603WAF4700T5E"
 			(at 242.57 88.9 0)
 			(hide yes)
 			(effects
@@ -4447,7 +4447,7 @@
 				)
 			)
 		)
-		(property "Value" "100"
+		(property "Value" "470"
 			(at 242.57 114.3 90)
 			(effects
 				(font
@@ -4482,7 +4482,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C22775"
+		(property "LCSC" "C23179"
 			(at 242.57 114.3 0)
 			(hide yes)
 			(effects
@@ -4491,7 +4491,7 @@
 				)
 			)
 		)
-		(property "MPN" "0603WAF1000T5E"
+		(property "MPN" "0603WAF4700T5E"
 			(at 242.57 114.3 0)
 			(hide yes)
 			(effects
@@ -4543,7 +4543,7 @@
 				)
 			)
 		)
-		(property "Value" "100"
+		(property "Value" "470"
 			(at 242.57 139.7 90)
 			(effects
 				(font
@@ -4578,7 +4578,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C22775"
+		(property "LCSC" "C23179"
 			(at 242.57 139.7 0)
 			(hide yes)
 			(effects
@@ -4587,7 +4587,7 @@
 				)
 			)
 		)
-		(property "MPN" "0603WAF1000T5E"
+		(property "MPN" "0603WAF4700T5E"
 			(at 242.57 139.7 0)
 			(hide yes)
 			(effects
@@ -4639,7 +4639,7 @@
 				)
 			)
 		)
-		(property "Value" "100"
+		(property "Value" "470"
 			(at 242.57 165.1 90)
 			(effects
 				(font
@@ -4674,7 +4674,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C22775"
+		(property "LCSC" "C23179"
 			(at 242.57 165.1 0)
 			(hide yes)
 			(effects
@@ -4683,7 +4683,7 @@
 				)
 			)
 		)
-		(property "MPN" "0603WAF1000T5E"
+		(property "MPN" "0603WAF4700T5E"
 			(at 242.57 165.1 0)
 			(hide yes)
 			(effects

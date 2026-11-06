@@ -3454,7 +3454,7 @@
 				)
 			)
 		)
-		(property "Value" "330"
+		(property "Value" "470"
 			(at 50.8 119.38 90)
 			(effects
 				(font
@@ -3489,7 +3489,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C23138"
+		(property "LCSC" "C23179"
 			(at 50.8 119.38 0)
 			(hide yes)
 			(effects
@@ -3498,7 +3498,7 @@
 				)
 			)
 		)
-		(property "MPN" "0603WAF3300T5E"
+		(property "MPN" "0603WAF4700T5E"
 			(at 50.8 119.38 0)
 			(hide yes)
 			(effects
@@ -3550,7 +3550,7 @@
 				)
 			)
 		)
-		(property "Value" "330"
+		(property "Value" "470"
 			(at 50.8 132.08 90)
 			(effects
 				(font
@@ -3585,7 +3585,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C23138"
+		(property "LCSC" "C23179"
 			(at 50.8 132.08 0)
 			(hide yes)
 			(effects
@@ -3594,7 +3594,7 @@
 				)
 			)
 		)
-		(property "MPN" "0603WAF3300T5E"
+		(property "MPN" "0603WAF4700T5E"
 			(at 50.8 132.08 0)
 			(hide yes)
 			(effects
