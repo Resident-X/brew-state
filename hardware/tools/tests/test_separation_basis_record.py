@@ -17,7 +17,7 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 
 RECORD = os.path.join("hardware", "sunbeam-em7000", board_check.RECORD_NAME)
 DESIGN = board_check.Design(os.path.join("hardware", "sunbeam-em7000", "board", "board.kicad_pro"))
 #: The day the reader is told it is: the day the record was signed. A date after it reads as unsigned.
-TODAY = datetime.date(2026, 11, 5)
+TODAY = datetime.date(2026, 11, 6)
 #: How many entries the record holds before its net-pair and same-part entries: the four triac creepage entries and the five connector entries. The draft held 25 here; the signed run of the layout rule check found the other 16 used by no shortfall (the
 #: pad-pair clearance entries, which KiCad never tests inside one footprint, and the mains-to-low-voltage entries, whose gaps the board's slots hold) and they are removed.
 ORIGINAL_ENTRIES = 9
@@ -104,14 +104,14 @@ class SeparationBasisRecord(unittest.TestCase):
         for broken, what in ((dict((k, v) for k, v in data.items() if k != "accepted_by"), "accepted_by"),
                              (dict((k, v) for k, v in data.items() if k != "accepted_on"), "accepted_on"),
                              (dict(data, accepted_by="tbd"), "accepted_by"), (dict(data, accepted_by="<owner>"), "accepted_by"),
-                             (dict(data, accepted_on="2026-11-06"), "accepted_on"), (dict(data, accepted_on="5 November"), "accepted_on")):
+                             (dict(data, accepted_on="2026-11-07"), "accepted_on"), (dict(data, accepted_on="5 November"), "accepted_on")):
             found, problems = reading(broken)
             self.assertIsNone(found, (what, broken.get(what)))
             self.assertTrue(any(p.location.endswith(what) and "unsigned" in p.message for p in problems), (what, broken.get(what)))
         # an exception signed later than the record is no acceptance the record covers
         late = [dict(e) for e in data["accepted_exceptions"]]
-        late[0]["accepted_on"] = "2026-11-06"
-        self.assertIsNotNone(board_check.entry_unsigned(late[0], board_check.iso_date(data["accepted_on"]), datetime.date(2026, 11, 6)))
+        late[0]["accepted_on"] = "2026-11-07"
+        self.assertIsNotNone(board_check.entry_unsigned(late[0], board_check.iso_date(data["accepted_on"]), datetime.date(2026, 11, 7)))
         for field, value in (("accepted_by", ""), ("accepted_by", "TBD"), ("accepted_on", "2099-01-01"), ("accepted_on", "")):
             self.assertIsNotNone(board_check.entry_unsigned(dict(data["accepted_exceptions"][0], **{field: value}), board_check.iso_date(data["accepted_on"]), TODAY), (field, value))
 
@@ -672,9 +672,11 @@ class PollutionDegreeTwoRecord(unittest.TestCase):
         self.assertEqual([item[3:item.index(":")] for item in items], ["Enclosure", "Degree", "Laminate", "Slots", "Humidity", "Signature"])
         enclosure, degree, laminate, slots, humidity, signature = items
         for phrase in ("the credit stands on the enclosure", "supporting measure that does not itself earn the credit",
-                       "before they are energised in the machine", "coat type and cite its datasheet", "covers the gaps between mains pads",
+                       "after bring-up, once the machine is deemed functional from a hardware perspective", "coat type and cite its datasheet", "covers the gaps between mains pads",
                        "except the keep-outs documented for contacts"):
             self.assertIn(phrase, enclosure)
+        self.assertNotIn("before they are energised", enclosure)
+        self.assertNotIn("before mains is first connected", enclosure)
         for phrase in ("protected against moisture, by the enclosure, with the coat a supporting measure", "credits pollution degree 2 only", "Pollution degree 1 is never credited"):
             self.assertIn(phrase, degree)
         for phrase in ("comparative tracking index", "at least 175"):
