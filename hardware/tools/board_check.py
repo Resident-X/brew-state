@@ -1591,6 +1591,20 @@ REPORTED_HOLE = re.compile(r"\bpad (?:(\S+) (?:\[.*\] )?|\[.*\] )of (\S+)\s*$", 
 DISTANCE_REPORTED = re.compile(r"actual ([0-9.]+) mm")
 
 
+def measured_pad_keys(tree: list, holes: Sequence[Tuple[str, str, str, board_geometry.Shape]]) -> Set[Tuple[str, str]]:
+    """The (pad number, reference) of each plated hole in `holes` that names exactly one pad of the whole layout.
+
+    A reference two footprints share, or a pad number a footprint repeats, names no one hole: KiCad's line for such a
+    key cannot be told from the line of a hole nothing measured, so the key is left out and its line is kept.
+    """
+    count: Dict[Tuple[str, str], int] = {}
+    for footprint in sexpr.children(tree, "footprint"):
+        for pad in sexpr.children(footprint, "pad"):
+            key = (str(pad[1]) if len(pad) > 1 else "", board_geometry.reference(footprint))
+            count[key] = count.get(key, 0) + 1
+    return {(number, reference) for reference, number, _, _ in holes if count.get((number, reference)) == 1}
+
+
 def held_by_route(item: dict, parts: Set[Tuple[str, str]]) -> bool:
     """Whether an item of KiCad's report is the plated hole of a part, which plated_hole_gaps measures from the layout instead."""
     named = REPORTED_HOLE.search(str(item.get("description", "")))
@@ -1631,14 +1645,16 @@ def mounting_holes(kicad_cli: str, design: Design, copy: str, layout: str, rules
     distance KiCad reports: plated_hole_gaps measures it from the layout, the
     straight distance to the signed clearance and the shortest way round the
     barrier slots to the signed creepage, and KiCad's line for such a hole is
-    dropped. A fixing's plated hole and every non-plated hole keep the straight
-    measure at the larger figure.
+    dropped only when it is the line of a hole measured there that its reference
+    and pad number name alone in the layout, KiCad's plated rule naming the hole
+    as the one item that is not Mains. A fixing's plated hole and every
+    non-plated hole keep the straight measure at the larger figure.
     """
     distance = max(signed[0], signed[1])
     try:
         measured = fixing_gaps(design, tree, fills, hole_footprints(tree), mains, distance)
         measured += plated_hole_violations(design, plated_hole_gaps(tree, fills, mains, signed[0], signed[1]), signed)
-        parts = {(number, reference) for reference, number, _, _ in part_plated_holes(tree, hole_footprints(tree), mains)}
+        parts = measured_pad_keys(tree, part_plated_holes(tree, hole_footprints(tree), mains))
     except board_geometry.Unreadable as unread:
         return [Violation(design.project, "design_unreadable", design.layout,
                           f"the layout's copper cannot be read for the distance of its mounting holes from Mains ({unread})")]
@@ -2168,10 +2184,14 @@ NEVER_ACCEPTED_WORKMANSHIP = {
     "workmanship_figure": "it reports a figure the project does not state, so there is no measured line to accept",
     "workmanship_pad_copper": "it reports a pad whose copper the check cannot measure, so there is no measured line to accept",
 }
-#: A line of a custom rule of the design, which KiCad words as (rule 'name' ...), and the one a floorplan region's rule
-#: reports: the rule is named for its region.
+#: A line of a custom rule of the design, which KiCad words as (rule 'name' ...), and the name a line that is the whole of
+#: its rule clause carries.
 CUSTOM_RULE_LINE = re.compile(r"\(rule '")
-FLOORPLAN_REGION_LINE = re.compile(r"\(rule '[^']* region parts'\)")
+REPORTED_RULE_NAME = re.compile(r"\(rule '([^']*)'\)")
+#: The one form a floorplan region's rule takes in the design's rules file: named for its region with " region parts", one
+#: condition naming the footprints it keeps out of an area, and the constraint that disallows a footprint.
+FLOORPLAN_REGION_SUFFIX = " region parts"
+FLOORPLAN_REGION_CONDITION = re.compile(r"A\.Type == 'Footprint' && A\.intersectsArea\('[^']+'\)(?: && A\.Reference != '[^']+')*")
 CLASS_KEYS = ("class", "voltage", "power", "temperature")
 SHARE_KEYS = ("share", "source")
 #: The keys of the pin-limit record, of each power domain, part, part source and pin in it.
@@ -7596,35 +7616,50 @@ def judge_exceptions(design: Design, record: str, signed: Signed, violations: Se
 # --- One design ----------------------------------------------------------------
 
 
+def floorplan_region_rules(rules: Optional[List[list]]) -> Set[str]:
+    """The names of the design's own floorplan region rules among its custom rules: each named for a region with
+    ` region parts`, in the one form the floorplan's rules take, and nothing else a design's rules file holds."""
+    found = set()
+    for rule in rules or []:
+        name = rule_name(rule)
+        form = sole_rule_form(rule)
+        constraints = [[str(part) for part in node] for node in sexpr.children(rule, "constraint")]
+        if (name.endswith(FLOORPLAN_REGION_SUFFIX) and form is not None and FLOORPLAN_REGION_CONDITION.fullmatch(form)
+                and constraints == [["constraint", "disallow", "footprint"]]):
+            found.add(name)
+    return found
+
+
 class Places(NamedTuple):
     """The places of a design a workmanship acceptance may name: its nets, its parts by reference and its text variables."""
     nets: Set[str]
     references: Set[str]
     figures: Set[str]
+    regions: Set[str]
 
 
-def in_scope(scope: str, line: Violation, places: Optional[Places]) -> bool:
+def in_scope(scope: str, line: Violation, places: Places) -> bool:
     """Whether a line falls in the scope of an entry: a net the line is on, a reference designator the line names, or a
     text variable (a figure the rule reads) the line's message names."""
     def named(text: str) -> bool:
         return re.search(rf"(?<![A-Za-z0-9_]){re.escape(scope)}(?![A-Za-z0-9_])", text) is not None
 
     on_net = line.location.startswith(f"net {scope}:") or f"[{scope}]" in line.location
-    if places is None:
-        return on_net or named(line.location) or named(line.message)
     return ((scope in places.nets and on_net) or (scope in places.references and named(line.location))
             or (scope in places.figures and named(line.message)))
 
 
-def acceptable_line(line: Violation) -> bool:
+def acceptable_line(line: Violation, places: Places) -> bool:
     """Whether a line is one the workmanship acceptance record may accept: a line of a rule of the closed set, and of
-    courtyards_overlap only a plain part-courtyard overlap and of items_not_allowed only a floorplan region's rule."""
+    courtyards_overlap only a plain part-courtyard overlap and of items_not_allowed only a rule that is one of the
+    design's own floorplan region rules, as its rules file holds them."""
     if line.rule not in ACCEPTABLE_WORKMANSHIP:
         return False
     if line.rule == "courtyards_overlap":
         return CUSTOM_RULE_LINE.search(line.message) is None
     if line.rule == "items_not_allowed":
-        return FLOORPLAN_REGION_LINE.search(line.message) is not None
+        named = REPORTED_RULE_NAME.search(line.message)
+        return named is not None and named.group(1) in places.regions
     return True
 
 
@@ -7660,7 +7695,11 @@ def judge_workmanship(design: Design, record: str, entries: Sequence[Tuple[int, 
             fail(index, entry, f"is not signed: {reason}; an entry is the owner's to sign, and an unsigned one accepts nothing",
                  "accepted_by" if reason.startswith("accepted_by") else "accepted_on")
             problems += 1
-        if places is not None and scope not in places.nets | places.references | places.figures:
+        if places is None:
+            fail(index, entry, "cannot be judged: the layout's nets and parts cannot be read, so the check cannot tell whether "
+                               "the design has the place it names, and the entry accepts nothing", "scope")
+            problems += 1
+        elif scope not in places.nets | places.references | places.figures:
             fail(index, entry, f"names {scope}, which is no net, reference designator or text variable of the design", "scope")
             problems += 1
         if not problems:
@@ -7669,7 +7708,7 @@ def judge_workmanship(design: Design, record: str, entries: Sequence[Tuple[int, 
     used = {index: 0 for index, _ in usable}
     for line in found:
         taker = None
-        if acceptable_line(line):
+        if places is not None and acceptable_line(line, places):
             taker = next(((index, entry) for index, entry in usable if entry["rule"].strip() == line.rule
                           and used[index] < entry["count"] and in_scope(entry["scope"].strip(), line, places)), None)
         if taker is None:
@@ -7712,7 +7751,8 @@ def judge_accepted_workmanship(yaml, repository: Repository, design: Design, tod
     try:
         with open(os.path.join(root, design.layout), encoding="utf-8") as handle:
             tree = sexpr.parse_one(handle.read())
-        places = Places(layout_nets(tree), set(board_footprints(tree)), set(map(str, variables)))
+        places = Places(layout_nets(tree), set(board_footprints(tree)), set(map(str, variables)),
+                        floorplan_region_rules(read_rules(root, design, repository)[0]))
     except (OSError, sexpr.SexprError, board_geometry.Unreadable):
         pass
     return judge_workmanship(design, record, entries, found, places, today, accepted) + problems

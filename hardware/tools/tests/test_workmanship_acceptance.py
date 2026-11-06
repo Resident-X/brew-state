@@ -70,6 +70,17 @@ class Synthetic(unittest.TestCase):
         with open(full, "w", encoding="utf-8") as handle:
             handle.write(text)
 
+    RULES = f"{FOLDER}/board.kicad_dru"
+
+    def region_rules(self, *names, extra="") -> None:
+        """The design's rules file, tracked, holding a floorplan region rule for each of `names` in the form the floorplan gives."""
+        text = "(version 1)\n" + "".join(
+            f'(rule "{name}"\n\t(condition "A.Type == \'Footprint\' && A.intersectsArea(\'{name.split()[0].lower()}\') && '
+            f'A.Reference != \'U9\'")\n\t(constraint disallow footprint))\n' for name in names) + extra
+        self.write(self.RULES, text)
+        if self.RULES not in self.tracked:
+            self.tracked.append(self.RULES)
+
     def record(self, entries, **top) -> None:
         """The record as written beside the design, tracked; JSON is YAML."""
         self.write(RECORD, json.dumps({"accepted_workmanship": entries, "synthetic": True, **top}))
@@ -250,6 +261,10 @@ class TheClosedSet(Synthetic):
         "items_not_allowed": (line("items_not_allowed", "Footprint D1 @ (30, 30) mm", "Items not allowed (rule 'Digital region parts')"), "D1"),
     }
 
+    def setUp(self):
+        super().setUp()
+        self.region_rules("Digital region parts")
+
     def test_an_entry_for_each_rule_of_the_closed_set_signed_and_used_by_a_line_of_that_rule_is_accepted(self):
         # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES.C4: On a synthetic design, an entry with an empty, placeholder or angle-bracketed accepted-by value, an entry with an empty, malformed or future date, an entry naming a rule outside the closed set the leaf states (each of hole_to_hole, workmanship_rule, workmanship_figure and workmanship_pad_copper, and any rule that is not a workmanship or neatness rule), a courtyards_overlap entry used by a line that names a custom rule such as the crystal keep-clear, an items_not_allowed entry used by a line that names a rule other than the floorplan region rule, an entry naming a mains spacing, derated-voltage or pin-limit rule, an entry for a place the design does not have, and an entry that no line uses each fail the check naming the entry, and a design marked synthetic is honoured only when it is marked not for manufacture. On the same design an entry for each rule of the closed set, signed and used by a line of that rule, is accepted. Out of scope is a well-formed signed entry that a line uses.
         self.assertEqual(sorted(self.LINES), sorted(board_check.ACCEPTABLE_WORKMANSHIP))
@@ -297,12 +312,38 @@ class TheClosedSet(Synthetic):
         other = line("items_not_allowed", "Footprint D1 @ (30, 30) mm", "Items not allowed (rule 'Digital keepout')")
         bare = line("items_not_allowed", "Footprint D1 @ (30, 30) mm", "Items not allowed")
         region = line("items_not_allowed", "Footprint D1 @ (30, 30) mm", "Items not allowed (rule 'Mains region parts')")
+        self.region_rules("Mains region parts")
         left, accepted = self.judge([other, bare, region], [entry("items_not_allowed", "D1", count=3)])
         self.assertEqual([v.line() for v in left], [other.line(), bare.line()])
         self.assertEqual(len(accepted), 1)
         left, accepted = self.judge([other], [entry("items_not_allowed", "D1")])
         self.assertEqual(accepted, [])
         self.assertIn("is used by no line", self.failures(left)[0].message)
+
+    def test_a_rule_named_for_a_region_that_is_not_a_floorplan_region_rule_of_the_design_is_not_accepted(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES.C4: On a synthetic design, an entry with an empty, placeholder or angle-bracketed accepted-by value, an entry with an empty, malformed or future date, an entry naming a rule outside the closed set the leaf states (each of hole_to_hole, workmanship_rule, workmanship_figure and workmanship_pad_copper, and any rule that is not a workmanship or neatness rule), a courtyards_overlap entry used by a line that names a custom rule such as the crystal keep-clear, an items_not_allowed entry used by a line that names a rule other than the floorplan region rule, an entry naming a mains spacing, derated-voltage or pin-limit rule, an entry for a place the design does not have, and an entry that no line uses each fail the check naming the entry, and a design marked synthetic is honoured only when it is marked not for manufacture. On the same design an entry for each rule of the closed set, signed and used by a line of that rule, is accepted. Out of scope is a well-formed signed entry that a line uses.
+        keepout = line("items_not_allowed", "Footprint D1 @ (30, 30) mm", "Items not allowed (rule 'Mains region parts')")
+        # the name alone: the rules file holds a safety keepout of that name in another form
+        self.write(self.RULES, "(version 1)\n(rule \"Mains region parts\"\n\t(condition \"A.Type == 'Footprint' && A.hasNetclass('Mains')\")\n"
+                               "\t(constraint disallow footprint))\n")
+        left, accepted = self.judge([keepout], [entry("items_not_allowed", "D1")])
+        self.assertEqual(accepted, [])
+        self.assertIn(keepout.line(), [v.line() for v in left])
+        self.assertIn("is used by no line", self.failures(left)[0].message)
+        # the form, but a constraint that is not the disallow of a footprint
+        self.write(self.RULES, "(version 1)\n(rule \"Mains region parts\"\n\t(condition \"A.Type == 'Footprint' && A.intersectsArea('mains')\")\n"
+                               "\t(constraint disallow track))\n")
+        self.assertEqual(self.judge([keepout], [entry("items_not_allowed", "D1")])[1], [])
+        # a name the design's rules file does not hold at all
+        self.region_rules("Digital region parts")
+        self.assertEqual(self.judge([keepout], [entry("items_not_allowed", "D1")])[1], [])
+        # no rules file
+        os.remove(os.path.join(self.root, self.RULES))
+        self.tracked.remove(self.RULES)
+        self.assertEqual(self.judge([keepout], [entry("items_not_allowed", "D1")])[1], [])
+        # and the design's own region rule is accepted
+        self.region_rules("Mains region parts")
+        self.assertEqual(len(self.judge([keepout], [entry("items_not_allowed", "D1")])[1]), 1)
 
     def test_an_entry_that_is_unsigned_fails_naming_it_and_accepts_nothing(self):
         # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES.C4: On a synthetic design, an entry with an empty, placeholder or angle-bracketed accepted-by value, an entry with an empty, malformed or future date, an entry naming a rule outside the closed set the leaf states (each of hole_to_hole, workmanship_rule, workmanship_figure and workmanship_pad_copper, and any rule that is not a workmanship or neatness rule), a courtyards_overlap entry used by a line that names a custom rule such as the crystal keep-clear, an items_not_allowed entry used by a line that names a rule other than the floorplan region rule, an entry naming a mains spacing, derated-voltage or pin-limit rule, an entry for a place the design does not have, and an entry that no line uses each fail the check naming the entry, and a design marked synthetic is honoured only when it is marked not for manufacture. On the same design an entry for each rule of the closed set, signed and used by a line of that rule, is accepted. Out of scope is a well-formed signed entry that a line uses.
@@ -353,6 +394,39 @@ class TheClosedSet(Synthetic):
         for scope in ("/NET_A", "R2", "WORK_DETOUR_RATIO"):
             with self.subTest(scope=scope):
                 self.assertFalse([v for v in self.failures(self.judge([], [entry(scope=scope)])[0]) if "no net" in v.message])
+
+    def test_a_layout_that_cannot_be_read_leaves_every_entry_failing_and_every_line_standing(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES.C4: On a synthetic design, an entry with an empty, placeholder or angle-bracketed accepted-by value, an entry with an empty, malformed or future date, an entry naming a rule outside the closed set the leaf states (each of hole_to_hole, workmanship_rule, workmanship_figure and workmanship_pad_copper, and any rule that is not a workmanship or neatness rule), a courtyards_overlap entry used by a line that names a custom rule such as the crystal keep-clear, an items_not_allowed entry used by a line that names a rule other than the floorplan region rule, an entry naming a mains spacing, derated-voltage or pin-limit rule, an entry for a place the design does not have, and an entry that no line uses each fail the check naming the entry, and a design marked synthetic is honoured only when it is marked not for manufacture. On the same design an entry for each rule of the closed set, signed and used by a line of that rule, is accepted. Out of scope is a well-formed signed entry that a line uses.
+        self.write(LAYOUT, "(kicad_pcb (unclosed")
+        source = line()
+        for scope in ("/NET_A", "R1", "WORK_DETOUR_RATIO"):
+            with self.subTest(scope=scope):
+                left, accepted = self.judge([source], [entry(scope=scope)])
+                self.assertEqual(accepted, [])
+                self.assertIn(source.line(), [v.line() for v in left])
+                failed = self.failures(left)
+                self.assertEqual(len(failed), 1, left)
+                self.assertIn("cannot be judged: the layout's nets and parts cannot be read", failed[0].message)
+
+    def test_an_early_end_of_the_design_check_still_judges_the_record(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES.C4: On a synthetic design, an entry with an empty, placeholder or angle-bracketed accepted-by value, an entry with an empty, malformed or future date, an entry naming a rule outside the closed set the leaf states (each of hole_to_hole, workmanship_rule, workmanship_figure and workmanship_pad_copper, and any rule that is not a workmanship or neatness rule), a courtyards_overlap entry used by a line that names a custom rule such as the crystal keep-clear, an items_not_allowed entry used by a line that names a rule other than the floorplan region rule, an entry naming a mains spacing, derated-voltage or pin-limit rule, an entry for a place the design does not have, and an entry that no line uses each fail the check naming the entry, and a design marked synthetic is honoured only when it is marked not for manufacture. On the same design an entry for each rule of the closed set, signed and used by a line of that rule, is accepted. Out of scope is a well-formed signed entry that a line uses.
+        self.write(PROJECT, json.dumps({"text_variables": {**self.variables, "WORK_DETOUR_RATIO": 1.3}}))
+        self.record([entry(scope="/NET_B")])
+        accepted: list = []
+        found = board_check.check_design(board_check.Design(PROJECT), board_check.Repository(self.root, self.tracked), "kicad-cli-absent",
+                                         YAML, TODAY, [], None, accepted)
+        self.assertTrue([v for v in found if v.rule == "project_file"], found)
+        self.assertEqual([v.location for v in self.failures(found)], [f"{RECORD} accepted_workmanship[0]"])
+        self.assertIn("is used by no line", self.failures(found)[0].message)
+
+    def test_the_designs_reads_list_the_workmanship_acceptance_record_where_the_design_holds_one(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES.C4: On a synthetic design, an entry with an empty, placeholder or angle-bracketed accepted-by value, an entry with an empty, malformed or future date, an entry naming a rule outside the closed set the leaf states (each of hole_to_hole, workmanship_rule, workmanship_figure and workmanship_pad_copper, and any rule that is not a workmanship or neatness rule), a courtyards_overlap entry used by a line that names a custom rule such as the crystal keep-clear, an items_not_allowed entry used by a line that names a rule other than the floorplan region rule, an entry naming a mains spacing, derated-voltage or pin-limit rule, an entry for a place the design does not have, and an entry that no line uses each fail the check naming the entry, and a design marked synthetic is honoured only when it is marked not for manufacture. On the same design an entry for each rule of the closed set, signed and used by a line of that rule, is accepted. Out of scope is a well-formed signed entry that a line uses.
+        self.write(PROJECT, json.dumps({"text_variables": self.variables}))
+        self.write(f"{FOLDER}/board.kicad_sch", "(kicad_sch)")
+        self.tracked.append(f"{FOLDER}/board.kicad_sch")
+        self.assertNotIn(RECORD, board_check.design_reads(self.root, list(self.tracked)))
+        self.record([entry()])
+        self.assertIn(RECORD, board_check.design_reads(self.root, list(self.tracked)))
 
     def test_a_design_marked_synthetic_is_honoured_only_when_it_is_marked_not_for_manufacture(self):
         # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES.C4: On a synthetic design, an entry with an empty, placeholder or angle-bracketed accepted-by value, an entry with an empty, malformed or future date, an entry naming a rule outside the closed set the leaf states (each of hole_to_hole, workmanship_rule, workmanship_figure and workmanship_pad_copper, and any rule that is not a workmanship or neatness rule), a courtyards_overlap entry used by a line that names a custom rule such as the crystal keep-clear, an items_not_allowed entry used by a line that names a rule other than the floorplan region rule, an entry naming a mains spacing, derated-voltage or pin-limit rule, an entry for a place the design does not have, and an entry that no line uses each fail the check naming the entry, and a design marked synthetic is honoured only when it is marked not for manufacture. On the same design an entry for each rule of the closed set, signed and used by a line of that rule, is accepted. Out of scope is a well-formed signed entry that a line uses.

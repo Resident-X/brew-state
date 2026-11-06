@@ -65,7 +65,7 @@ class FloorAndHolesRunDirectly(Copy):
                 self.assertIn("inside the 4 mm", found[0][4])
 
     def test_the_same_fixing_with_the_mains_copper_beyond_the_distance_passes(self):
-        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C1: A design with no mounting hole is not failed for that
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C3: a mounting hole of each of the four marks fails mounting_hole when its pad copper stands inside the signed distance of a Mains pad, track, via or pour fill, or its courtyard stands inside it of a Mains pad, and passes at exactly that distance
         self.seed.layout(lambda tree: (tree.insert(len(tree) - 1, board_prove.seeded_hole(
             "H9", board_prove.FIXING_X, 10, board_prove.FIXING_UUID, courtyard=10)),
             tree.insert(len(tree) - 1, board_prove.segment("/MAINS_N", 25.5, 4, 25.5, 16, "0b0e5c1a-0000-4000-8000-000000000c10"))))
@@ -125,7 +125,7 @@ class FloorAndHolesRunDirectly(Copy):
                 self.assertTrue([v for v in self.holes(lines) if v[2] == "mounting_hole"], lines)
 
     def test_the_hole_that_is_clear_with_its_pad_clear_too_passes(self):
-        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C1: A design with no mounting hole is not failed for that
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C3: a mounting hole of each of the four marks fails mounting_hole when its pad copper stands inside the signed distance of a Mains pad, track, via or pour fill, or its courtyard stands inside it of a Mains pad, and passes at exactly that distance
         self.seed.layout(lambda tree: tree.insert(len(tree) - 1, board_prove.seeded_hole(
             "H9", board_prove.OVERSIZE_X + 2.8, 10, board_prove.FIXING_UUID, pad=6, surface_pad=True)))
         status, lines = self.check()

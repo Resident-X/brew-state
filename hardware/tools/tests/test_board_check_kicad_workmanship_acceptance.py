@@ -110,7 +110,8 @@ class EachNewFailureIsCaughtOnASeededFault(Proved):
     def test_every_acceptance_failure_fails_on_its_seeded_fault_and_the_clean_design_passes(self):
         # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES.C5: For each failure of the preceding criteria, a seeded copy of the throwaway proof design carrying that fault fails the check under the named rule, the clean copy passes, and the proof run records each seed as caught. Out of scope is any committed design.
         faults = [fault[0] for fault in board_prove.FAULTS if fault[1].startswith("workmanship acceptance:")]
-        self.assertGreaterEqual(len(faults), 28)
+        # five of C1, three of C3 and twenty of C4: each named failure has its own seed
+        self.assertEqual(len(faults), 28)
         self.assertCaught(*faults)
         rules = {fault[2] for fault in board_prove.FAULTS if fault[1].startswith("workmanship acceptance:")}
         self.assertGreaterEqual(rules, {"workmanship_acceptance", "track_angle", "courtyards_overlap", "items_not_allowed"})
