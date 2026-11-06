@@ -13,8 +13,8 @@ R_HI = [300e3, 300e3, 300e3]        # R601, R602, R603  FRC2512F3003TS, 1 %, 100
 R_LO = 750.0                        # R604  0603WAF7500T5E, 1 %, 100 ppm/K (UNI-ROYAL 0603 series)
 R_F0P = 49.9                        # R605
 R_F0N = 49.9                        # R606
-R_F1P = 330.0                       # R607
-R_F1N = 330.0                       # R608
+R_F1P = 470.0                       # R607  0603WAF4700T5E, 1 %, 100 ppm/K
+R_F1N = 470.0                       # R608  same part; it carries almost no fault current (see the fault block)
 C_F = 4.7e-9                        # C601, C602  C0G, +/-10 % (IHHEC C0805N472K050T) [datasheet 9.1.2 Fig. 9-1: 4.7 nF]
 TOL_R = 0.01
 TCR = 100e-6                        # per K, FRC2512 (1 Mohm-range note: 100 ppm/K for 10 ohm..10 Mohm, 2512, p.5); 0603 UNI-ROYAL 100 ppm/K
@@ -103,30 +103,41 @@ fs1 = VREF / GAIN_I
 print(f"15 A rms = {I_SUPPLY_MAX_RMS*math.sqrt(2):.2f} A peak across {R_SHUNT*1e3:.1f} mohm: {vpk_15*1e3:.2f} mV peak; 11.01 A rms: {vpk_11*1e3:.2f} mV peak")
 print(f"full scale at gain {GAIN_I}: +/-{fs1*1e3:.1f} mV: 15 A uses {100*vpk_15/fs1:.0f} % (headroom {fs1/vpk_15:.2f}x); the current that reaches full scale: {fs1/R_SHUNT/math.sqrt(2):.1f} A rms")
 print(f"gain >= 8 absolute range HGND {ABS_N} V .. +{ABS_P_HIGH_GAIN} V: shunt voltage {vpk_15*1e3:.1f} mV about NEUTRAL: inside")
-# the ZIND loading of the 330 + 330 ohm series: gain 32 -> 1 Mohm min
+# the ZIND loading of the R607 + R608 series: gain 32 -> 1 Mohm min
 loss = 1 - ZIND_MIN_HIGH_GAIN / (ZIND_MIN_HIGH_GAIN + R_F1P + R_F1N)
-print(f"series 330 + 330 ohm against ZIND 1 Mohm min: gain error {100*loss:.3f} % (not a figure of the record, reported for the sensing task)")
+print(f"series {R_F1P:.0f} + {R_F1N:.0f} ohm against ZIND 1 Mohm min: gain error {100*loss:.3f} % (not a figure of the record, reported for the sensing task)")
 gain32_ok = vpk_15 < fs1
 print("range figure (reads 15 A rms, the fuse overload band, without clipping): MET" if gain32_ok else "FAILS")
 
 print("\n== channel 1: fault, 6 kA through the shunt (prospective; the fuse limits it, its peak let-through is not stated)")
 v_fault = FUSE_FAULT_A * R_SHUNT
-rser = R_F1P + R_F1N
+# AIN1N sits at HGND: the net tie NT601 joins AMC_HGND to NEUTRAL at the shunt's neutral terminal, and R608 runs from that
+# terminal to AIN1N.  In the fault the whole prospective voltage appears at the SHUNT_SENSE_IN end of R607 and AIN1N stays at
+# HGND, so AIN1N's clamp sees no over-voltage and the clamp current of AIN1P returns through R607 alone.  R608 carries the
+# input bias current only.  So the series resistance of the fault path is R607, not R607 + R608.
+rser = R_F1P
 i_pos = (v_fault - HLDO_OUT_MAX) / rser            # clamp diode to HLDO_OUT, forward drop taken as zero (worst)
 i_neg = (v_fault + ABS_N_AMR) / rser               # reverse: inputs clamp near HGND - 1.6 V at worst
-print(f"prospective voltage across {R_SHUNT*1e3:.1f} mohm at 6 kA: {v_fault:.2f} V")
+print(f"prospective voltage across {R_SHUNT*1e3:.1f} mohm at 6 kA: {v_fault:.2f} V; the current runs through R607 ({R_F1P:.0f} ohm) alone, AIN1N is at HGND through NT601")
 print(f"positive: (6.00 - {HLDO_OUT_MAX}) / {rser:.0f} = {i_pos*1e3:.2f} mA; negative: (6.00 - 1.6) / {rser:.0f} = {i_neg*1e3:.2f} mA against {I_IN_MAX*1e3:.0f} mA continuous")
-print("input current figure (<= 10 mA, SBASA56 6.1): MET" if max(i_pos, i_neg) < I_IN_MAX else "FAILS")
-r_min = (v_fault - 1.6) / (2 * I_IN_MAX)
-print(f"least series resistance per leg for 6 V: {r_min:.0f} ohm; with 49.9 ohm legs: negative-direction current would be {(v_fault-1.6)/(2*49.9)*1e3:.1f} mA (over 10 mA)")
+i_neg_w = (v_fault * (1 + TOL_R) + ABS_N_AMR) / (rser * (1 - TOL_R))
+print(f"negative, worst (shunt +1 %, R607 -1 %): {i_neg_w*1e3:.2f} mA: margin on {I_IN_MAX*1e3:.0f} mA {100*(1-i_neg_w/I_IN_MAX):.1f} %")
+p_neg = i_neg * (v_fault + ABS_N_AMR)
+print(f"negative-direction power in R607: {p_neg*1e3:.1f} mW against 60 mW (0.6 of the 100 mW 0603 rating, derating-policy class resistor): {100*p_neg/60e-3:.0f} %")
+print("input current figure (<= 10 mA, SBASA56 6.1): MET" if max(i_pos, i_neg_w) < I_IN_MAX else "FAILS")
+r_min = (v_fault + ABS_N_AMR) / I_IN_MAX
+print(f"least series resistance in the fault path (R607 alone) for 6 V: {r_min:.0f} ohm; with a 49.9 ohm R607 the negative-direction current would be {(v_fault+ABS_N_AMR)/49.9*1e3:.1f} mA (over 10 mA)")
+for vclamp in (1.0, 0.7, 0.3):
+    print(f"  if the negative clamp conducted at HGND - {vclamp} V instead of the absolute-maximum {-ABS_N_AMR} V: least R607 {(v_fault-vclamp)/I_IN_MAX:.0f} ohm; {R_F1P:.0f} ohm gives {(v_fault-vclamp)/R_F1P*1e3:.2f} mA")
 r_shunt_max = (I_IN_MAX * rser + 1.6) / FUSE_FAULT_A
-print(f"largest shunt that keeps 330 ohm legs inside 10 mA at 6 kA: {r_shunt_max*1e3:.2f} mohm")
+print(f"largest shunt that keeps R607 = {R_F1P:.0f} ohm inside 10 mA at 6 kA (nominal, R607 alone): {r_shunt_max*1e3:.2f} mohm; R105 is 1 mohm +/- 1 %")
+print("R608 in the fault: bias current only, about 0 W; it is the same 470 ohm so the two legs stay matched (input bias offset at the IIO term)")
 
 print("\n== anti-alias filters (SBASA56 9.1.2: a low-pass in front of each channel input; Fig. 9-1: 50 ohm + 4.7 nF)")
 r_src0 = par(R_LO, sum(R_HI))   # divider Thevenin
 tau0 = (r_src0 + R_F0P + R_F0N) * C_F
 tau1 = (R_F1P + R_F1N) * C_F
-for name, tau in (("channel 0 (divider source impedance %.0f ohm + 49.9 + 49.9)" % r_src0, tau0), ("channel 1 (330 + 330)", tau1)):
+for name, tau in (("channel 0 (divider source impedance %.0f ohm + 49.9 + 49.9)" % r_src0, tau0), ("channel 1 (R607 + R608 = %.0f + %.0f)" % (R_F1P, R_F1N), tau1)):
     fc = 1 / (2 * math.pi * tau)
     ph50 = math.degrees(math.atan(2 * math.pi * 50 * tau))
     mag50 = 1 / math.sqrt(1 + (2 * math.pi * 50 * tau) ** 2)
@@ -135,7 +146,7 @@ for name, tau in (("channel 0 (divider source impedance %.0f ohm + 49.9 + 49.9)"
 dphase = math.degrees(math.atan(2 * math.pi * 50 * tau0)) - math.degrees(math.atan(2 * math.pi * 50 * tau1))
 print(f"phase difference between the channels at 50 Hz: {dphase:.4f} deg (AMC phase calibration registers can trim; no phase figure is declared)")
 print(f"supply frequency of the record (50 Hz nominal, 60 Hz alternate): corners {1/(2*math.pi*tau0)/60:.0f}x and {1/(2*math.pi*tau1)/60:.0f}x above 60 Hz")
-print("C0G tolerance +/-10 %: tau moves +/-10 %; corner stays above 60 Hz by more than 700x")
+print("C0G tolerance +/-10 %: tau moves +/-10 %; corner stays above 60 Hz by more than 500x")
 
 print("\n== divider accuracy contributors (INFORMATION: no accuracy figure is declared for the supply voltage; the row fails on that)")
 # ratio error from tolerances: R_LO +1 %, R_HI -1 % each

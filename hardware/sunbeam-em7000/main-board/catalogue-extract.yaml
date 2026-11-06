@@ -15,6 +15,11 @@
 #   showed stock 1383, extended, 0.8058 USD at 1 to 9 on that reading; no position uses it.
 # unit_price: US dollars for one unit at the quantity tier of 1 to 9 pieces, the price the
 #   service lists for the first tier.
+# C23179 (UNI-ROYAL 0603WAF4700T5E, 470 ohm, positions R607, R608 and R791 to R795) was read on
+#   2026-11-06 with the same search service and the same exact match, for the value change that
+#   replaced C23138 (330 ohm, R607 and R608) and moved R791 to R795 off C22775; the extract's entry
+#   for C23138 is removed since no position uses it now, so the extract still holds 98 numbers.
+#   Its entry carries its own lifecycle read_on; the extract's own read_on is unchanged.
 # lifecycle: the library's search record carries no lifecycle field and no maker lifecycle
 #   page was read, so every entry states no source publishes one, with the source naming
 #   what was looked at. It is not a finding that the part is active.
@@ -290,14 +295,6 @@ entries:
       status: no source publishes one
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-10-29
-  - lcsc: C23138
-    library_class: basic
-    stock: 3571960
-    unit_price: 0.002
-    lifecycle:
-      status: no source publishes one
-      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
-      read_on: 2026-10-29
   - lcsc: C23140
     library_class: basic
     stock: 4376895
@@ -306,6 +303,14 @@ entries:
       status: no source publishes one
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-10-29
+  - lcsc: C23179
+    library_class: basic
+    stock: 4163039
+    unit_price: 0.0023
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-11-06
   - lcsc: C23185
     library_class: basic
     stock: 1448420

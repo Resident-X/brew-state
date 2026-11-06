@@ -1022,19 +1022,19 @@ positions:
     rating: C0G 50V 10% 0805
     lcsc: C105936
     class: capacitor
-  # R607: maker UNI-ROYAL; MPN 0603WAF3300T5E; catalogue class basic
+  # R607: maker UNI-ROYAL; MPN 0603WAF4700T5E; catalogue class basic
   - reference: R607
-    value: '330'
+    value: '470'
     package: R_0603_1608Metric
     rating: 1% 100ppm 0603 100mW
-    lcsc: C23138
+    lcsc: C23179
     class: none
-  # R608: maker UNI-ROYAL; MPN 0603WAF3300T5E; catalogue class basic
+  # R608: maker UNI-ROYAL; MPN 0603WAF4700T5E; catalogue class basic
   - reference: R608
-    value: '330'
+    value: '470'
     package: R_0603_1608Metric
     rating: 1% 100ppm 0603 100mW
-    lcsc: C23138
+    lcsc: C23179
     class: none
   # C602: maker IHHEC (Holy Stone); MPN C0805N472K050T; catalogue class extended
   - reference: C602
@@ -2773,12 +2773,12 @@ positions:
     rating: 9-way 2.0 mm header JST B9B-PH-K-S, 2 A
     lcsc: C157968
     class: none
-  # R791: maker UNI-ROYAL; MPN 0603WAF1000T5E; catalogue class basic
+  # R791: maker UNI-ROYAL; MPN 0603WAF4700T5E; catalogue class basic
   - reference: R791
-    value: '100'
+    value: '470'
     package: R_0603_1608Metric
     rating: 1% 100mW 75V 0603
-    lcsc: C22775
+    lcsc: C23179
     class: resistor
   # R796: maker UNI-ROYAL; MPN 0603WAF1001T5E; catalogue class basic
   - reference: R796
@@ -2801,12 +2801,12 @@ positions:
     rating: test point
     lcsc: none
     class: none
-  # R792: maker UNI-ROYAL; MPN 0603WAF1000T5E; catalogue class basic
+  # R792: maker UNI-ROYAL; MPN 0603WAF4700T5E; catalogue class basic
   - reference: R792
-    value: '100'
+    value: '470'
     package: R_0603_1608Metric
     rating: 1% 100mW 75V 0603
-    lcsc: C22775
+    lcsc: C23179
     class: resistor
   # R797: maker UNI-ROYAL; MPN 0603WAF1001T5E; catalogue class basic
   - reference: R797
@@ -2829,12 +2829,12 @@ positions:
     rating: test point
     lcsc: none
     class: none
-  # R793: maker UNI-ROYAL; MPN 0603WAF1000T5E; catalogue class basic
+  # R793: maker UNI-ROYAL; MPN 0603WAF4700T5E; catalogue class basic
   - reference: R793
-    value: '100'
+    value: '470'
     package: R_0603_1608Metric
     rating: 1% 100mW 75V 0603
-    lcsc: C22775
+    lcsc: C23179
     class: resistor
   # R798: maker UNI-ROYAL; MPN 0603WAF1001T5E; catalogue class basic
   - reference: R798
@@ -2857,12 +2857,12 @@ positions:
     rating: test point
     lcsc: none
     class: none
-  # R794: maker UNI-ROYAL; MPN 0603WAF1000T5E; catalogue class basic
+  # R794: maker UNI-ROYAL; MPN 0603WAF4700T5E; catalogue class basic
   - reference: R794
-    value: '100'
+    value: '470'
     package: R_0603_1608Metric
     rating: 1% 100mW 75V 0603
-    lcsc: C22775
+    lcsc: C23179
     class: resistor
   # R799: maker UNI-ROYAL; MPN 0603WAF1001T5E; catalogue class basic
   - reference: R799
@@ -2885,12 +2885,12 @@ positions:
     rating: test point
     lcsc: none
     class: none
-  # R795: maker UNI-ROYAL; MPN 0603WAF1000T5E; catalogue class basic
+  # R795: maker UNI-ROYAL; MPN 0603WAF4700T5E; catalogue class basic
   - reference: R795
-    value: '100'
+    value: '470'
     package: R_0603_1608Metric
     rating: 1% 100mW 75V 0603
-    lcsc: C22775
+    lcsc: C23179
     class: resistor
   # R800: maker UNI-ROYAL; MPN 0603WAF1001T5E; catalogue class basic
   - reference: R800

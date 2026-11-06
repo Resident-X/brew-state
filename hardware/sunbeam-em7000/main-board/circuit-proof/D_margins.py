@@ -177,13 +177,45 @@ i_on = V5_MAX / R_PU
 print("   level stage on-state current %.2f mA through the pull-ups; Ciss 645 pF (typ.) x 11 k = %.1f us time constant (typical figure; no timing claim)" % (i_on * 1e3, 11e3 * 645e-12 * 1e6))
 
 # ---------------------------------------------------------------- 9. gauge buffer
-print("\n== 9. gauge buffer U761 SN74HCT541PWR (TI SCLS306C Aug 2003), 100 ohm series R on each output")
+print("\n== 9. gauge buffer U791 SN74HCT541PWR (TI SCLS306C Aug 2003), 470 ohm series R on each output (R791..R795, 0603WAF4700T5E)")
 VIH_HCT, VIL_HCT = 2.0, 0.8
 VOH_HCT, VOL_HCT = 3.84, 0.33          # VCC = 4.5 V, IOH = -6 mA / IOL = 6 mA, -40..85 degC, SN74
 VIH_VID, VIL_VID = 3.15, 1.35          # VID66-08 (VID6608 datasheet rev 1, 2022, as read in connector-pinouts.md)
 i_vid = 10e-6                          # the record's "~10 uA these inputs leak"
-check("gauge buffer VOH vs VID66-08 VIH", VOH_HCT - i_vid * 100 >= VIH_VID, "VOH %.2f V (at VCC 4.5 V, the sheet's lowest) vs %.2f V: margin %.2f V" % (VOH_HCT, VIH_VID, VOH_HCT - i_vid * 100 - VIH_VID))
-check("gauge buffer VOL vs VID66-08 VIL", VOL_HCT + i_vid * 100 <= VIL_VID, "VOL %.2f V vs %.2f V: margin %.2f V" % (VOL_HCT, VIL_VID, VIL_VID - VOL_HCT))
+R_GAUGE = 470.0                        # R791..R795, the buffer's output series resistors
+R_PD = 10e3                            # R806, the pull-down on GAUGE_RST_B at the driver
+check("gauge buffer VOH vs VID66-08 VIH", VOH_HCT - i_vid * R_GAUGE * (1 + TOL) >= VIH_VID, "VOH %.2f V (at VCC 4.5 V, the sheet's lowest) less 10 uA x %.0f ohm = %.2f V vs %.2f V: margin %.2f V" % (VOH_HCT, R_GAUGE * (1 + TOL), VOH_HCT - i_vid * R_GAUGE * (1 + TOL), VIH_VID, VOH_HCT - i_vid * R_GAUGE * (1 + TOL) - VIH_VID))
+v_rst = VOH_HCT * R_PD * (1 - TOL) / (R_PD * (1 - TOL) + R_GAUGE * (1 + TOL))
+check("gauge reset line VOH vs VID66-08 VIH with the pull-down R806", v_rst >= VIH_VID, "GAUGE_RST_B is divided by R806 10 k to ground: %.2f V x 10 k / (10 k + %.0f ohm) = %.2f V (VOH taken at its 6 mA figure, which the %.2f mA load does not reach) vs %.2f V: margin %.2f V" % (VOH_HCT, R_GAUGE * (1 + TOL), v_rst, VOH_HCT / R_PD * 1e3, VIH_VID, v_rst - VIH_VID))
+check("gauge buffer VOL vs VID66-08 VIL", VOL_HCT + i_vid * R_GAUGE * (1 + TOL) <= VIL_VID, "VOL %.2f V plus 10 uA x %.0f ohm = %.2f V vs %.2f V: margin %.2f V" % (VOL_HCT, R_GAUGE * (1 + TOL), VOL_HCT + i_vid * R_GAUGE * (1 + TOL), VIL_VID, VIL_VID - VOL_HCT - i_vid * R_GAUGE * (1 + TOL)))
+# harness conductor shorted to ground: the buffer drives V5 through its output resistance Ro and R79x into the short
+RO_LO, RO_HI = 33.0, 110.0             # HCT541 output resistance range at VCC 4.5 V: the reviewer's range (finding 7.62), read from the sheet's VOH/VOL rows
+P_SHARE = 0.6 * 0.100                  # derating-policy.yaml class resistor: share 0.6 of the 100 mW 0603 rating
+I_IO_MAX = 35e-3                       # SCLS306E 5.1: IO continuous output current, +/-35 mA
+I_VCC_MAX = 70e-3                      # SCLS306E 5.1: continuous current through VCC or GND, +/-70 mA
+r_lo = R_GAUGE * (1 - TOL)
+for ro in (RO_LO, RO_HI):
+    i_sh = V5_MAX / (r_lo + ro)
+    p_sh = i_sh ** 2 * r_lo
+    print("   harness conductor shorted to GND, Ro %3.0f ohm: %.1f mA through R79x, %.1f mW in it (R -1 %%: the larger power)" % (ro, i_sh * 1e3, p_sh * 1e3))
+i_sh33 = V5_MAX / (r_lo + RO_LO)
+p_sh33 = i_sh33 ** 2 * r_lo
+check("gauge harness short: power in R79x", p_sh33 <= P_SHARE, "%.1f mW at Ro = %.0f ohm, R -1 %% vs the %.0f mW share (0.6 of 100 mW): %.0f %%; the same short with a 330 ohm part (R -1 %%) would give %.1f mW and with the former 100 ohm part %.1f mW" % (p_sh33 * 1e3, RO_LO, P_SHARE * 1e3, 100 * p_sh33 / P_SHARE, (V5_MAX / (330 * (1 - TOL) + RO_LO)) ** 2 * 330 * (1 - TOL) * 1e3, (V5_MAX / (100 * (1 - TOL) + RO_LO)) ** 2 * 100 * (1 - TOL) * 1e3))
+check("gauge harness short: buffer output current", i_sh33 <= I_IO_MAX, "%.1f mA vs the %.0f mA IO limit of SCLS306E 5.1" % (i_sh33 * 1e3, I_IO_MAX * 1e3))
+# state with the gauge assembly unpowered or JP791 open: the buffer still drives 5.25 V into driver inputs whose own supply is off
+V_CLAMP_FWD = 0.7                      # assumed forward drop of the driver input's protection path to its unpowered supply; VID6608 rev 1 states no input clamp current or diode
+i_bf = (V5_MAX - V_CLAMP_FWD) / r_lo
+check("gauge back-fed state: current per line", i_bf <= I_IO_MAX, "(%.2f V - %.1f V assumed clamp drop) / %.0f ohm = %.1f mA per line vs the %.0f mA IO limit (was %.0f mA at 100 ohm)" % (V5_MAX, V_CLAMP_FWD, r_lo, i_bf * 1e3, I_IO_MAX * 1e3, (V5_MAX - V_CLAMP_FWD) / (100 * (1 - TOL)) * 1e3))
+check("gauge back-fed state: five lines at once", 5 * i_bf <= I_VCC_MAX, "5 x %.1f = %.1f mA vs the %.0f mA VCC/GND limit of SCLS306E 5.1 (%.0f %%); the driver-side bound is the resistor only, VID6608 states no input clamp rating" % (i_bf * 1e3, 5 * i_bf * 1e3, I_VCC_MAX * 1e3, 100 * 5 * i_bf / I_VCC_MAX))
+check("gauge series resistor working voltage", V5_MAX <= 75.0, "%.2f V against 75 V working voltage of the 0603 part (UNI-ROYAL, C23179)" % V5_MAX)
+# edge delay of a gauge line: R79x into the harness and the driver input capacitance
+C_LINE = 1e-9                          # ASSUMED harness plus driver input capacitance, an upper figure; the harness capacitance is open item 7.23's, not measured
+T_MIN_PULSE = 450e-9                   # VID6608 rev 1 timing table: minimum signal pulse width
+F_STEP_MAX = 7.2e3                     # VID6608 rev 1 timing table: step rate ceiling
+VOH_LIGHT = 4.4                        # SCLS306E VOH 4.4 V min at -20 uA, VCC 4.5 V: the line is nearly unloaded
+tau_g = R_GAUGE * (1 + TOL) * C_LINE
+t_cross = -tau_g * math.log(1 - VIH_VID / VOH_LIGHT)
+check("gauge line edge delay", t_cross < 1 / (2 * F_STEP_MAX), "tau %.2f us at %.0f pF; the line reaches VIH %.2f V of %.1f V after %.2f us, %.1f %% of the %.1f us half period at the %.1f kHz step ceiling (it must be inside the half period); a step pulse needs at least %.2f us (%.0f ns minimum width plus this delay) at %.0f pF; no firmware gauge driver exists in this repository to check against" % (tau_g * 1e6, C_LINE * 1e12, VIH_VID, VOH_LIGHT, t_cross * 1e6, 100 * t_cross * 2 * F_STEP_MAX, 1e6 / (2 * F_STEP_MAX), F_STEP_MAX / 1e3, (t_cross + T_MIN_PULSE) * 1e6, T_MIN_PULSE * 1e9, C_LINE * 1e12))
 check("controller VOH vs buffer VIH", VOH_MIN(VDD_MIN) >= VIH_HCT, "VOH_min %.3f V vs VIH %.1f V: margin %.3f V (%.2f V at 3.3 V)" % (VOH_MIN(VDD_MIN), VIH_HCT, VOH_MIN(VDD_MIN) - VIH_HCT, VOH_MIN(3.3) - VIH_HCT))
 check("controller VOL vs buffer VIL", 0.4 <= VIL_HCT, "VOL max 0.4 V vs VIL max 0.8 V: margin 0.4 V")
 check("hold-off pull-down at buffer input", ILKG_PIN * 10e3 < VIL_HCT, "10 k x (Ilkg 350 nA + HCT input 1 uA) = %.1f mV vs VIL 0.8 V" % ((ILKG_PIN + 1e-6) * 10e3 * 1e3))

@@ -50,9 +50,18 @@ PASS  anode switch on: gate pulled to ~0 V: VGS = -4.75 V (RDS(on) <= 60 mOhm at
 PASS  anode switch off: gate pulled to +5V: VGS = 0 V vs |VGS(th)| min 0.5 V: margin 0.5 V; one pull-up open still pulls 22 k: same VGS
    level stage on-state current 0.48 mA through the pull-ups; Ciss 645 pF (typ.) x 11 k = 7.1 us time constant (typical figure; no timing claim)
 
-== 9. gauge buffer U761 SN74HCT541PWR (TI SCLS306C Aug 2003), 100 ohm series R on each output
-PASS  gauge buffer VOH vs VID66-08 VIH: VOH 3.84 V (at VCC 4.5 V, the sheet's lowest) vs 3.15 V: margin 0.69 V
-PASS  gauge buffer VOL vs VID66-08 VIL: VOL 0.33 V vs 1.35 V: margin 1.02 V
+== 9. gauge buffer U791 SN74HCT541PWR (TI SCLS306C Aug 2003), 470 ohm series R on each output (R791..R795, 0603WAF4700T5E)
+PASS  gauge buffer VOH vs VID66-08 VIH: VOH 3.84 V (at VCC 4.5 V, the sheet's lowest) less 10 uA x 475 ohm = 3.84 V vs 3.15 V: margin 0.69 V
+PASS  gauge reset line VOH vs VID66-08 VIH with the pull-down R806: GAUGE_RST_B is divided by R806 10 k to ground: 3.84 V x 10 k / (10 k + 475 ohm) = 3.66 V (VOH taken at its 6 mA figure, which the 0.38 mA load does not reach) vs 3.15 V: margin 0.51 V
+PASS  gauge buffer VOL vs VID66-08 VIL: VOL 0.33 V plus 10 uA x 475 ohm = 0.33 V vs 1.35 V: margin 1.02 V
+   harness conductor shorted to GND, Ro  33 ohm: 10.5 mA through R79x, 51.6 mW in it (R -1 %: the larger power)
+   harness conductor shorted to GND, Ro 110 ohm: 9.1 mA through R79x, 38.7 mW in it (R -1 %: the larger power)
+PASS  gauge harness short: power in R79x: 51.6 mW at Ro = 33 ohm, R -1 % vs the 60 mW share (0.6 of 100 mW): 86 %; the same short with a 330 ohm part (R -1 %) would give 69.6 mW and with the former 100 ohm part 156.6 mW
+PASS  gauge harness short: buffer output current: 10.5 mA vs the 35 mA IO limit of SCLS306E 5.1
+PASS  gauge back-fed state: current per line: (5.25 V - 0.7 V assumed clamp drop) / 465 ohm = 9.8 mA per line vs the 35 mA IO limit (was 46 mA at 100 ohm)
+PASS  gauge back-fed state: five lines at once: 5 x 9.8 = 48.9 mA vs the 70 mA VCC/GND limit of SCLS306E 5.1 (70 %); the driver-side bound is the resistor only, VID6608 states no input clamp rating
+PASS  gauge series resistor working voltage: 5.25 V against 75 V working voltage of the 0603 part (UNI-ROYAL, C23179)
+PASS  gauge line edge delay: tau 0.47 us at 1000 pF; the line reaches VIH 3.15 V of 4.4 V after 0.60 us, 0.9 % of the 69.4 us half period at the 7.2 kHz step ceiling (it must be inside the half period); a step pulse needs at least 1.05 us (450 ns minimum width plus this delay) at 1000 pF; no firmware gauge driver exists in this repository to check against
 PASS  controller VOH vs buffer VIH: VOH_min 2.735 V vs VIH 2.0 V: margin 0.735 V (0.90 V at 3.3 V)
 PASS  controller VOL vs buffer VIL: VOL max 0.4 V vs VIL max 0.8 V: margin 0.4 V
 PASS  hold-off pull-down at buffer input: 10 k x (Ilkg 350 nA + HCT input 1 uA) = 13.5 mV vs VIL 0.8 V

@@ -3260,12 +3260,12 @@ sheets:
     sim_exclude: false
   - ref: R607
     lib_id: Device:R
-    value: '330'
+    value: '470'
     rating: 1% 100ppm 0603 100mW
     footprint: Resistor_SMD:R_0603_1608Metric
-    mpn: 0603WAF3300T5E
+    mpn: 0603WAF4700T5E
     maker: UNI-ROYAL
-    lcsc: C23138
+    lcsc: C23179
     class: basic
     hand: false
     function: channel 1 filter and fault-current limit, positive leg from SHUNT_SENSE_IN
@@ -3273,12 +3273,12 @@ sheets:
     sim_exclude: false
   - ref: R608
     lib_id: Device:R
-    value: '330'
+    value: '470'
     rating: 1% 100ppm 0603 100mW
     footprint: Resistor_SMD:R_0603_1608Metric
-    mpn: 0603WAF3300T5E
+    mpn: 0603WAF4700T5E
     maker: UNI-ROYAL
-    lcsc: C23138
+    lcsc: C23179
     class: basic
     hand: false
     function: channel 1 filter and fault-current limit, negative leg from SHUNT_SENSE_NEUTRAL
@@ -8140,12 +8140,12 @@ sheets:
     sim_exclude: true
   - ref: R791
     lib_id: Device:R
-    value: '100'
+    value: '470'
     rating: 1% 100mW 75V 0603
     footprint: Resistor_SMD:R_0603_1608Metric
-    mpn: 0603WAF1000T5E
+    mpn: 0603WAF4700T5E
     maker: UNI-ROYAL
-    lcsc: C22775
+    lcsc: C23179
     class: basic
     hand: false
     function: output series resistor of GAUGE_RST (edge damping on the harness)
@@ -8192,12 +8192,12 @@ sheets:
     sim_exclude: true
   - ref: R792
     lib_id: Device:R
-    value: '100'
+    value: '470'
     rating: 1% 100mW 75V 0603
     footprint: Resistor_SMD:R_0603_1608Metric
-    mpn: 0603WAF1000T5E
+    mpn: 0603WAF4700T5E
     maker: UNI-ROYAL
-    lcsc: C22775
+    lcsc: C23179
     class: basic
     hand: false
     function: output series resistor of GAUGE_STEP1 (edge damping on the harness)
@@ -8244,12 +8244,12 @@ sheets:
     sim_exclude: true
   - ref: R793
     lib_id: Device:R
-    value: '100'
+    value: '470'
     rating: 1% 100mW 75V 0603
     footprint: Resistor_SMD:R_0603_1608Metric
-    mpn: 0603WAF1000T5E
+    mpn: 0603WAF4700T5E
     maker: UNI-ROYAL
-    lcsc: C22775
+    lcsc: C23179
     class: basic
     hand: false
     function: output series resistor of GAUGE_DIR1 (edge damping on the harness)
@@ -8296,12 +8296,12 @@ sheets:
     sim_exclude: true
   - ref: R794
     lib_id: Device:R
-    value: '100'
+    value: '470'
     rating: 1% 100mW 75V 0603
     footprint: Resistor_SMD:R_0603_1608Metric
-    mpn: 0603WAF1000T5E
+    mpn: 0603WAF4700T5E
     maker: UNI-ROYAL
-    lcsc: C22775
+    lcsc: C23179
     class: basic
     hand: false
     function: output series resistor of GAUGE_STEP2 (edge damping on the harness)
@@ -8348,12 +8348,12 @@ sheets:
     sim_exclude: true
   - ref: R795
     lib_id: Device:R
-    value: '100'
+    value: '470'
     rating: 1% 100mW 75V 0603
     footprint: Resistor_SMD:R_0603_1608Metric
-    mpn: 0603WAF1000T5E
+    mpn: 0603WAF4700T5E
     maker: UNI-ROYAL
-    lcsc: C22775
+    lcsc: C23179
     class: basic
     hand: false
     function: output series resistor of GAUGE_DIR2 (edge damping on the harness)
@@ -8567,7 +8567,7 @@ sheets:
   custom_symbols: []
   custom_footprints: []
   power_flags: []
-  drawing_notes: 'Signal flows left to right: controller nets (GAUGE_RST, GAUGE_STEP1, GAUGE_DIR1, GAUGE_STEP2, GAUGE_DIR2) -> 1 k series -> buffer input (10 k to ground) -> buffer output -> 100 ohm -> SP2. Unused buffer inputs
+  drawing_notes: 'Signal flows left to right: controller nets (GAUGE_RST, GAUGE_STEP1, GAUGE_DIR1, GAUGE_STEP2, GAUGE_DIR2) -> 1 k series -> buffer input (10 k to ground) -> buffer output -> 470 ohm -> SP2. Unused buffer inputs
     A5-A7 and both output enables to ground; Y5-Y7 unconnected. SP2 (J791) pin map from connector-pinouts.md, contact 1 nearest the top edge of the board: 1 +5V_GAUGE (through JP791), 2 GND, 3 RST, 4 FA (STEP1), 5 DIRA (DIR1),
     6 WAT cathode (LOWWATER_CATHODE, driven on the panel sheet), 7 anode rail (ANODE_RAIL, gated on the panel sheet), 8 DIRB (DIR2), 9 FB (STEP2). Mating housing: JST PH 9-way (family inferred in the record; a test fit settles
     it).'

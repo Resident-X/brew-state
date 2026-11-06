@@ -164,23 +164,23 @@ domains:
   - name: usb_shield
     rail: /Controller/USB_SHIELD
     highest_voltage_v: 5.25
-  # output of the 5 V gauge buffer U791 through its 100 ohm series resistor R793 to SP2 pin 5 (sheet 730: the buffer lifts the 3.3 V gauge lines to 5 V logic); the +5V figure
+  # output of the 5 V gauge buffer U791 through its 470 ohm series resistor R793 to SP2 pin 5 (sheet 730: the buffer lifts the 3.3 V gauge lines to 5 V logic); the +5V figure
   - name: gauge_dir1_out
     rail: /Gauge drive/GAUGE_DIR1_B
     highest_voltage_v: 5.25
-  # output of the 5 V gauge buffer U791 through its 100 ohm series resistor R795 to SP2 pin 8; the +5V figure
+  # output of the 5 V gauge buffer U791 through its 470 ohm series resistor R795 to SP2 pin 8; the +5V figure
   - name: gauge_dir2_out
     rail: /Gauge drive/GAUGE_DIR2_B
     highest_voltage_v: 5.25
-  # output of the 5 V gauge buffer U791 through its 100 ohm series resistor R791 to SP2 pin 3, with a 10 kohm pull-down R806; the +5V figure
+  # output of the 5 V gauge buffer U791 through its 470 ohm series resistor R791 to SP2 pin 3, with a 10 kohm pull-down R806; the +5V figure
   - name: gauge_reset_out
     rail: /Gauge drive/GAUGE_RST_B
     highest_voltage_v: 5.25
-  # output of the 5 V gauge buffer U791 through its 100 ohm series resistor R792 to SP2 pin 4; the +5V figure
+  # output of the 5 V gauge buffer U791 through its 470 ohm series resistor R792 to SP2 pin 4; the +5V figure
   - name: gauge_step1_out
     rail: /Gauge drive/GAUGE_STEP1_B
     highest_voltage_v: 5.25
-  # output of the 5 V gauge buffer U791 through its 100 ohm series resistor R794 to SP2 pin 9; the +5V figure
+  # output of the 5 V gauge buffer U791 through its 470 ohm series resistor R794 to SP2 pin 9; the +5V figure
   - name: gauge_step2_out
     rail: /Gauge drive/GAUGE_STEP2_B
     highest_voltage_v: 5.25
