@@ -14,6 +14,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import unittest.mock
 
 
 TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -165,6 +166,76 @@ class TheSensingRulesRunDirectly(SensingCopy):
         self.assertEqual([v for v in found if v[2] in ("sensing_clearance", "board_rules_record") and "did not load" in v[4]], [])
         self.assertEqual([v for v in found if v[2] == "local_clearance_override"], [], "a design with no signed figure is held by the sensing figure alone")
 
+
+
+C1_TRACE = "SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-GUARD-IGNORES-A-LONG-UNCUT-CLEARANCE-LIST.C1"
+
+
+class TheSensingClearanceGuardReadsTheClearanceBound(unittest.TestCase):
+    """The sensing-clearance rule on a report KiCad is replaced by, with no KiCad run."""
+
+    NONCE = "n1"
+    RECORD = "board-rules.yaml"
+    SENSING = {"classes": ["Sensing"], "noisy_classes": ["Power"], "clearance_mm": 0.5}
+
+    def other_clearances(self, count):
+        return [{"type": "clearance", "description": "Clearance violation (rule 'workmanship'; min 0.2 mm; actual 0.1 mm)",
+                 "items": [{"description": f"Track on F.Cu #{index}"}]} for index in range(count)]
+
+    def sensing_shortfall(self):
+        name = f"{board_check.SENSING_RULE}: Sensing against Power"
+        return {"type": "clearance", "description": f"Clearance violation (rule '{name}'; min 0.5 mm; actual 0.3 mm)",
+                "items": [{"description": "Track [/AMP_OUT] on F.Cu"}, {"description": "Pad 1 [/V5] of J1"}]}
+
+    def marker(self):
+        return {"type": "assertion_failure",
+                "description": f"Rule violation (rule '{board_check.marker_rule(self.NONCE)}')", "items": []}
+
+    def run_rule(self, violations):
+        report = {"violations": violations}
+        with tempfile.TemporaryDirectory(prefix="board-test-") as scratch:
+            rules = os.path.join(scratch, "a.kicad_dru")
+            with unittest.mock.patch.object(board_check, "run_report", return_value=(report, "")), \
+                    unittest.mock.patch.object(board_check, "sensing_classes", return_value=[]):
+                return board_check.sensing_clearance(
+                    "kicad-cli", board_check.Design("a/a.kicad_pro"), scratch, "a.kicad_pcb", rules, "(version 1)\n",
+                    None, self.NONCE, None, self.RECORD, self.SENSING, set(), {})
+
+    def test_a_clearance_list_longer_than_the_assertion_limit_and_shorter_than_the_clearance_bound_prints_no_sensing_line(self):
+        # SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-GUARD-IGNORES-A-LONG-UNCUT-CLEARANCE-LIST.C1: On a synthetic board whose KiCad clearance list holds more entries than REPORT_LIMIT and fewer than the clearance bound of 499 through clearance failures between items of classes the sensing rule does not name, and no sensing item inside the declared clearance, the pre-order check prints no sensing_clearance violation line.
+        for count in (board_check.REPORT_LIMIT + 1, 347, board_check.CLEARANCE_REPORT_LIMIT - 1):
+            with self.subTest(count=count):
+                self.assertGreater(count, board_check.REPORT_LIMIT)
+                self.assertEqual(self.run_rule([self.marker()] + self.other_clearances(count)), [])
+
+    def test_a_long_clearance_list_with_one_sensing_item_inside_the_clearance_prints_that_item_alone(self):
+        # SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-GUARD-IGNORES-A-LONG-UNCUT-CLEARANCE-LIST.C1: On the same board with one sensing item inside the declared clearance it prints the line for that item and no other.
+        found = self.run_rule([self.marker()] + self.other_clearances(300) + [self.sensing_shortfall()])
+        self.assertEqual(len(found), 1, found)
+        self.assertEqual(found[0].rule, "sensing_clearance")
+        self.assertIn("Track [/AMP_OUT] on F.Cu", found[0].location)
+        self.assertIn("an item of the sensing class Sensing stands 0.3 mm from an item of the noisy class Power", found[0].message)
+        self.assertNotIn("cut short", found[0].message)
+
+    def test_a_clearance_list_of_exactly_the_clearance_bound_still_fails_naming_the_cut(self):
+        # SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-GUARD-IGNORES-A-LONG-UNCUT-CLEARANCE-LIST.C1: With KiCad's report replaced by one that is cut short, a clearance list of exactly 499 entries included, the check still fails the sensing-clearance rule naming the cut.
+        self.assertEqual(board_check.CLEARANCE_REPORT_LIMIT, 499)
+        for count in (499, 600):
+            with self.subTest(count=count):
+                found = self.run_rule([self.marker()] + self.other_clearances(count))
+                self.assertEqual(len(found), 1, found)
+                self.assertEqual(found[0].rule, "sensing_clearance")
+                self.assertIn(f"{count} clearance failures, as many as it reports of that kind", found[0].message)
+                self.assertIn("may have been dropped", found[0].message)
+
+    def test_a_report_cut_short_in_the_existing_way_still_fails_the_sensing_clearance_rule(self):
+        # SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-GUARD-IGNORES-A-LONG-UNCUT-CLEARANCE-LIST.C1: With KiCad's report replaced by one that is cut short, a clearance list of exactly 499 entries included, the check still fails the sensing-clearance rule naming the cut.
+        flood = [{"type": "assertion_failure", "description": "Rule violation (rule 'other')", "items": []}
+                 for _ in range(board_check.REPORT_LIMIT)]
+        found = self.run_rule(flood)
+        self.assertEqual(len(found), 1, found)
+        self.assertEqual(found[0].rule, "sensing_clearance")
+        self.assertIn(f"cut short at {board_check.REPORT_LIMIT} assertion failures", found[0].message)
 
 
 class EveryTrackedDesignPassesTheSensingAndGroundReturnRules(unittest.TestCase):

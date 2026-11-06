@@ -106,11 +106,20 @@ PLACEHOLDERS = {"unsigned", "tbd", "todo", "none", "placeholder"}
 #: past it fails the design rather than the check waiting forever.
 KICAD_TIMEOUT_S = 7200
 
-#: The most failures of one kind KiCad's command-line layout check reports, as
-#: KiCad 10.0.7 is observed to do. Past it KiCad reports that many and drops the
-#: rest, and which it drops changes from run to run, so a report holding this
-#: many failures of one kind cannot be read as holding them all.
+#: The most assertion failures, and the most of any class or marker report,
+#: KiCad's command-line layout check reports, as KiCad 10.0.7 is observed to do.
+#: Past it KiCad reports that many and drops the rest, and which it drops changes
+#: from run to run, so a report holding this many of them cannot be read as
+#: holding them all. Clearance failures have their own, larger limit,
+#: CLEARANCE_REPORT_LIMIT.
 REPORT_LIMIT = 199
+
+#: The most clearance failures KiCad 10.0.7's command-line layout check reports.
+#: Measured on the main board: one report held exactly 499 clearance entries,
+#: 199 track_angle and 199 track_segment_length entries. A clearance list of
+#: fewer entries is a list KiCad reported in full; one of exactly this many was
+#: cut short.
+CLEARANCE_REPORT_LIMIT = 499
 
 #: Characters a name cannot hold and still be written into a rule's condition
 #: or a rule's name.
@@ -3497,8 +3506,8 @@ def sensing_clearance(kicad_cli: str, design: Design, copy: str, layout: str, ru
     if not fired(report, marker_rule(nonce)):
         return fail("KiCad did not load the rules that hold the sensing classes to the declared clearance, so no sensing item was checked")
     clearances = [entry for entry in report.get("violations") or [] if entry.get("type") == "clearance"]
-    if len(clearances) >= REPORT_LIMIT:
-        return fail(f"KiCad's report holds {len(clearances)} clearance failures, as many as it reports of one kind, so a sensing "
+    if len(clearances) >= CLEARANCE_REPORT_LIMIT:
+        return fail(f"KiCad's report holds {len(clearances)} clearance failures, as many as it reports of that kind, so a sensing "
                     "item inside the declared clearance may have been dropped from it; correct the design's own clearance failures first")
     found, seen = [], set()
     for entry in clearances:
