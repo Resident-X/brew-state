@@ -2185,6 +2185,30 @@ WORKMANSHIP_ENTRY_KEYS = ("rule", "scope", "count", "reason", "bounded_by", "acc
 ACCEPTABLE_WORKMANSHIP = ("workmanship_detour", "workmanship_pad_entry", "workmanship_pad_corner", "workmanship_width",
                           "workmanship_direction", "track_angle", "track_segment_length", "courtyards_overlap",
                           "test_point_courtyard", "designator_astray", "silk_overlap", "items_not_allowed")
+#: The severity policy record the owner may keep beside a design, its keys, and the keys of each entry in it.
+SEVERITY_POLICY_NAME = "severity-policy.yaml"
+SEVERITY_POLICY_KEYS = ("severity_policy", "synthetic")
+SEVERITY_POLICY_OPTIONAL = ("synthetic",)
+SEVERITY_ENTRY_KEYS = ("class", "severity", "count", "reason", "accepted_by", "accepted_on")
+SEVERITIES = ("ERROR", "WARNING")
+#: The classes of line, as the report names them by rule, a policy entry may name at either severity: silkscreen and
+#: designator lines, then routing-neatness lines. A class is added only by changing the check.
+POLICY_CLASSES = ("silk_overlap", "silk_edge_clearance", "designator_astray", "reference_off_silkscreen", "track_angle",
+                  "track_segment_length", "workmanship_direction", "workmanship_pad_entry", "workmanship_pad_corner",
+                  "workmanship_detour")
+#: The policy classes whose lists KiCad cuts at REPORT_LIMIT, so their found count is a floor and not a count.
+POLICY_CAPPED = ("track_angle", "track_segment_length")
+#: Why a rule the check reports and the policy refuses is refused, for the ones that read like cosmetic lines.
+NEVER_WARNING_POLICY = {
+    "silk_over_copper": "KiCad reports silkscreen clipped by solder mask, and the check cannot tell silk over a pad's "
+                        "solderable area, which is an error, from other cases",
+    "test_point_courtyard": "it is a placement and probe-access finding, which only the per-line acceptance record may excuse",
+    "courtyards_overlap": "two overlapping courtyards can mean parts that cannot be assembled or reworked, a manufacturing "
+                          "consequence",
+    "items_not_allowed": "it is a floorplan placement finding, which only the per-line acceptance record may excuse",
+    "workmanship_width": "a neck in a current-carrying track bears on function, and only the per-line acceptance record "
+                         "may excuse it",
+}
 #: The rules the record never accepts though they read like workmanship, each with why.
 NEVER_ACCEPTED_WORKMANSHIP = {
     "hole_to_hole": "its shortfall is accepted only by a same_connector_pins entry of the separation basis record, since "
@@ -2556,6 +2580,58 @@ def load_workmanship_acceptance(yaml, root: str, repository: Repository, design:
         if len(reading.found) == before:
             entries.append((index, entry))
     return reading.record, entries, reading.found
+
+def load_severity_policy(yaml, root: str, repository: Repository, design: Design, not_for_manufacture: bool
+                         ) -> Tuple[Optional[str], List[Tuple[int, dict]], List[Violation]]:
+    """The severity policy record's path, its well-formed entries with their positions in the list, and the violations
+    of its form; no path where the design's folders hold no record, and no entries where the record as a whole is not
+    in its form."""
+    data, reading = read_optional(yaml, root, repository, design, SEVERITY_POLICY_NAME, "severity_policy",
+                                  "severity policy record", SEVERITY_POLICY_KEYS, not_for_manufacture,
+                                  SEVERITY_POLICY_OPTIONAL)
+    if reading is None:
+        return None, [], []
+    entries: List[Tuple[int, dict]] = []
+    if data is None or reading.found:
+        return reading.record, entries, reading.found
+    if "severity_policy" not in data:
+        reading.bad("severity_policy", "the record lacks severity_policy, the list of classes the owner classifies, which is "
+                                       "an empty list when it classifies none")
+        return reading.record, entries, reading.found
+    if not reading.listed("severity_policy", data["severity_policy"], "severity policy entries", empty=True):
+        return reading.record, entries, reading.found
+    first: Dict[str, int] = {}
+    for index, entry in enumerate(data["severity_policy"]):
+        where = f"severity_policy[{index}]"
+        before = len(reading.found)
+        if reading.mapping(where, entry, SEVERITY_ENTRY_KEYS, [key for key in SEVERITY_ENTRY_KEYS if key != "count"],
+                           "a severity_policy entry"):
+            for key in ("class", "reason"):
+                if key in entry:
+                    reading.text(f"{where}.{key}", entry[key])
+            severity = entry.get("severity")
+            if "severity" in entry:
+                reading.one_of(f"{where}.severity", severity, SEVERITIES)
+            count = entry.get("count")
+            if severity == "WARNING" and "count" not in entry:
+                reading.bad(f"{where}.count", f"{where} is a WARNING entry and lacks count, the number of warning lines of "
+                                              "the class the owner accepted")
+            elif severity == "WARNING" and (isinstance(count, bool) or not isinstance(count, int) or count < 0):
+                reading.bad(f"{where}.count", f"{where}.count is {count!r}, where it is a whole number of lines, zero or more")
+            elif severity == "ERROR" and "count" in entry:
+                reading.bad(f"{where}.count", f"{where} is an ERROR entry and carries count {count!r}; an ERROR entry states "
+                                              "no count")
+            if len(reading.found) == before:
+                name = entry["class"].strip()
+                if name in first:
+                    reading.bad(f"{where}.class", f"{where} repeats the class '{name}' of severity_policy[{first[name]}], so "
+                                                  "one entry would replace another; keep one entry for each class")
+                else:
+                    first[name] = index
+        if len(reading.found) == before:
+            entries.append((index, entry))
+    return reading.record, entries, reading.found
+
 
 
 def read_pin_limits(yaml, root: str, repository: Repository, design: Design, not_for_manufacture: bool) -> List[Violation]:
@@ -7673,13 +7749,15 @@ def acceptable_line(line: Violation, places: Places) -> bool:
 
 
 def judge_workmanship(design: Design, record: str, entries: Sequence[Tuple[int, dict]], found: Sequence[Violation],
-                      places: Optional[Places], today: datetime.date, accepted: Optional[List[str]]) -> List[Violation]:
+                      places: Optional[Places], today: datetime.date, accepted: Optional[List[str]],
+                      warned: Sequence[str] = ()) -> List[Violation]:
     """The lines of a design with the ones a signed entry of the workmanship acceptance record covers taken out and reported
     in `accepted`, and a violation added for each entry that fails.
 
     An entry covers the lines of its own rule inside its own scope, up to its count, in the order the check reports them.
     An entry that is unsigned or future dated, names a rule outside the closed set, names a place the design lacks, or that
-    no line uses covers nothing and fails.
+    no line uses covers nothing and fails, as does an entry for a rule that `warned`, the classes a valid signed severity
+    policy marks WARNING, names.
     """
     result: List[Violation] = []
 
@@ -7692,6 +7770,10 @@ def judge_workmanship(design: Design, record: str, entries: Sequence[Tuple[int, 
     for index, entry in entries:
         rule, scope = entry["rule"].strip(), entry["scope"].strip()
         problems = 0
+        if rule in warned:
+            fail(index, entry, f"is stale: the signed severity policy marks the class {rule} WARNING, so its lines are "
+                               "judged by the policy and no violation uses this entry; remove it", "rule")
+            problems += 1
         if rule not in ACCEPTABLE_WORKMANSHIP:
             why = NEVER_ACCEPTED_WORKMANSHIP.get(rule)
             fail(index, entry, f"names the rule {rule}, which the record does not accept"
@@ -7739,9 +7821,76 @@ def judge_workmanship(design: Design, record: str, entries: Sequence[Tuple[int, 
     return result
 
 
+def judge_severity_policy(design: Design, record: str, entries: Sequence[Tuple[int, dict]], problems: Sequence[Violation],
+                          found: Sequence[Violation], today: datetime.date, warnings: Optional[List[str]]
+                          ) -> Tuple[List[Violation], List[str], List[Violation]]:
+    """`found` less the lines a valid signed severity policy marks WARNING, the classes it marks, and the policy's own violations.
+
+    The policy is valid only when its record is in form and every entry is signed and names a class the policy may
+    name; one fault in any entry voids the whole policy, which then marks nothing. The lines of a class marked WARNING
+    go to `warnings` as report lines, with a count line for each class, and a class whose found count is above its
+    recorded count fails; a class whose KiCad list reached the cap is found at least that many and passes only when its
+    recorded count equals the cap.
+    """
+    def fail(index: int, entry: dict, message: str, key: str = "") -> Violation:
+        at = f"{record} severity_policy[{index}]" + (f".{key}" if key else "")
+        return Violation(design.project, "severity_policy", at,
+                         f"severity_policy[{index}] ({entry['class'].strip()}) {message}")
+
+    own: List[Violation] = list(problems)
+    for index, entry in entries:
+        name = entry["class"].strip()
+        if name not in POLICY_CLASSES:
+            why = NEVER_WARNING_POLICY.get(name)
+            own.append(fail(index, entry, f"names the class {name}, which the policy does not cover"
+                            + (f": {why}" if why else ": it is not a silkscreen, designator or routing-neatness class the check "
+                               "reports, and a class that carries a safety, mains spacing, creepage, clearance, derated-voltage, "
+                               "pin-limit, mounting-hole, plated-hole, connectivity, hole, annular ring, drill, other "
+                               "manufacturing, paste, solder, courtyard or separation basis finding is never a warning")
+                            + f"; the classes it covers are {', '.join(POLICY_CLASSES)}", "class"))
+        reason = entry_unsigned(entry, None, today)
+        if reason is not None:
+            own.append(fail(index, entry, f"is not signed: {reason}; an entry is the owner's to sign, and one unsigned "
+                                          "entry voids the whole policy", "accepted_by" if reason.startswith("accepted_by")
+                            else "accepted_on"))
+    if own:
+        return list(found), [], own
+
+    marked = {entry["class"].strip(): (index, entry) for index, entry in entries if entry["severity"] == "WARNING"}
+    rest: List[Violation] = []
+    taken: Dict[str, List[Violation]] = {name: [] for name in marked}
+    for line in found:
+        (taken[line.rule] if line.rule in marked else rest).append(line)
+    for name, (index, entry) in marked.items():
+        lines, signed = taken[name], entry["count"]
+        capped = name in POLICY_CAPPED and len(lines) >= REPORT_LIMIT
+        said = f"at least {len(lines)}, KiCad having cut its list at {REPORT_LIMIT}" if capped else str(len(lines))
+        if capped and signed != REPORT_LIMIT:
+            own.append(fail(index, entry, f"has a signed count of {signed}, where KiCad's list of {name} lines reached its cap of "
+                                          f"{REPORT_LIMIT} and so holds at least that many; the count can only be signed at {REPORT_LIMIT} "
+                                          "until the list falls below the cap", "count"))
+        elif not capped and len(lines) > signed:
+            own.append(fail(index, entry, f"found {len(lines)} lines, above its recorded count of {signed}; a count of warning "
+                                          "lines rises only by the owner signing a higher one", "count"))
+        if warnings is not None:
+            for line in lines:
+                warnings.append("WARNING | " + " | ".join(clean(field) for field in (
+                    design.project, name, line.location,
+                    f"{line.message}; the owner's severity policy marks {name} WARNING with a recorded count of {signed} "
+                    f"(severity_policy[{index}], accepted by {entry['accepted_by'].strip()} on "
+                    f"{iso_date(entry['accepted_on']).isoformat()}): {entry['reason'].strip()}")))
+            warnings.append("COUNT | " + " | ".join(clean(field) for field in (
+                design.project, name, f"{record} severity_policy[{index}]", f"found {said} of recorded {signed}")))
+    return rest, sorted(marked), own
+
+
 def judge_accepted_workmanship(yaml, repository: Repository, design: Design, today: datetime.date,
-                               found: List[Violation], accepted: Optional[List[str]]) -> List[Violation]:
-    """`found` judged against the workmanship acceptance record the design's folders hold, if any."""
+                               found: List[Violation], accepted: Optional[List[str]],
+                               warnings: Optional[List[str]] = None) -> List[Violation]:
+    """`found` judged against the severity policy and then the workmanship acceptance record the design's folders hold, if any.
+
+    `warnings` receives the report line of each line the policy marks WARNING and the found count beside the recorded one.
+    """
     if any(v.rule == "design_discovery" for v in found):
         return found
     root = repository.root
@@ -7752,10 +7901,16 @@ def judge_accepted_workmanship(yaml, repository: Repository, design: Design, tod
         return found
     variables = project.get("text_variables") if isinstance(project, dict) else None
     variables = variables if isinstance(variables, dict) else {}
-    record, entries, problems = load_workmanship_acceptance(yaml, root, repository, design,
-                                                            variables.get("NOT_FOR_MANUFACTURE") == "true")
+    not_for_manufacture = variables.get("NOT_FOR_MANUFACTURE") == "true"
+    policy_record, policy_entries, policy_problems = load_severity_policy(yaml, root, repository, design, not_for_manufacture)
+    warned: List[str] = []
+    policy_failures: List[Violation] = []
+    if policy_record is not None:
+        found, warned, policy_failures = judge_severity_policy(design, policy_record, policy_entries, policy_problems, found,
+                                                               today, warnings)
+    record, entries, problems = load_workmanship_acceptance(yaml, root, repository, design, not_for_manufacture)
     if record is None:
-        return found
+        return found + policy_failures
     places: Optional[Places] = None
     try:
         with open(os.path.join(root, design.layout), encoding="utf-8") as handle:
@@ -7764,20 +7919,21 @@ def judge_accepted_workmanship(yaml, repository: Repository, design: Design, tod
                         floorplan_region_rules(read_rules(root, design, repository)[0]))
     except (OSError, sexpr.SexprError, board_geometry.Unreadable):
         pass
-    return judge_workmanship(design, record, entries, found, places, today, accepted) + problems
+    return judge_workmanship(design, record, entries, found, places, today, accepted, warned) + problems + policy_failures
 
 
 def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, today: datetime.date,
                  already: List[Violation], read: Optional[List[Tuple[str, str, str]]] = None,
-                 accepted: Optional[List[str]] = None) -> List[Violation]:
-    """Every violation of one design, less the workmanship lines an owner-signed entry of the design's workmanship
+                 accepted: Optional[List[str]] = None, warnings: Optional[List[str]] = None) -> List[Violation]:
+    """Every violation of one design, less the lines of a class the owner-signed severity policy marks WARNING, which
+    `warnings` receives as report lines, and the workmanship lines an owner-signed entry of the design's workmanship
     acceptance record covers, which `accepted` receives as report lines.
 
     The lines are judged over whichever way the design's check ends, so the early ends are judged too.
     """
     return judge_accepted_workmanship(yaml, repository, design, today,
                                       check_design_lines(design, repository, kicad_cli, yaml, today, already, read, accepted),
-                                      accepted)
+                                      accepted, warnings)
 
 
 def check_design_lines(design: Design, repository: Repository, kicad_cli: str, yaml, today: datetime.date,
@@ -8211,7 +8367,8 @@ def design_reads(top: str, files: List[str], git: str = "git") -> List[str]:
         reads.add(design.directory + "/" if design.directory else WHOLE_REPOSITORY)
         reads.update(design_files(design, repository)[0])
         for name in (RECORD_NAME, PIN_RECORD_NAME, CONTROLLER_RECORD_NAME, PARTS_RECORD_NAME, CATALOGUE_NAME, DERATING_NAME,
-                     WORKMANSHIP_ACCEPTANCE_NAME, PIN_LIMITS_NAME, BOARD_RULES_NAME, MANUFACTURER_LIMITS_NAME):
+                     WORKMANSHIP_ACCEPTANCE_NAME, SEVERITY_POLICY_NAME, PIN_LIMITS_NAME, BOARD_RULES_NAME,
+                     MANUFACTURER_LIMITS_NAME):
             record = find_record(top, design.directory, repository.tracked, name)
             if record:
                 reads.add(record)
@@ -8238,13 +8395,16 @@ def report(top: str, kicad_cli: str, git: str, version: str, today: datetime.dat
     results: List[Tuple[str, List[Violation]]] = []
     figures: Dict[str, List[Tuple[str, str, str]]] = {}
     exceptions: Dict[str, List[str]] = {}
+    warned: Dict[str, List[str]] = {}
     for design in designs:
         read: List[Tuple[str, str, str]] = []
         accepted: List[str] = []
+        warnings: List[str] = []
         results.append((design.project, check_design(design, repository, kicad_cli, yaml, today, problems[design.project],
-                                                     read, accepted)))
+                                                     read, accepted, warnings)))
         figures[design.project] = read
         exceptions[design.project] = accepted
+        warned[design.project] = warnings
     for orphan in orphans:
         results.append((orphan.design, [orphan]))
     if not designs:
@@ -8255,14 +8415,17 @@ def report(top: str, kicad_cli: str, git: str, version: str, today: datetime.dat
 
     failed = 0
     for name, violations in results:
+        count = sum(line.startswith("WARNING | ") for line in warned.get(name, []))
+        warning = f"{count} warning{'s' if count != 1 else ''}"
         if violations:
             failed += 1
-            print(f"DESIGN | {clean(name)} | FAIL | {len(violations)} violation{'s' if len(violations) != 1 else ''}", file=out)
+            print(f"DESIGN | {clean(name)} | FAIL | {len(violations)} violation{'s' if len(violations) != 1 else ''}"
+                  + (f", {warning}" if count else ""), file=out)
         else:
-            print(f"DESIGN | {clean(name)} | PASS", file=out)
+            print(f"DESIGN | {clean(name)} | PASS" + (f" | {warning}" if count else ""), file=out)
         for rule, variable, figure in figures.get(name, []):
             print(f"FIGURE | {clean(name)} | {clean(rule)} | {clean(variable)} | {clean(figure)}", file=out)
-        for line in exceptions.get(name, []):
+        for line in exceptions.get(name, []) + warned.get(name, []):
             print(line, file=out)
         for violation in violations:
             print(violation.line(), file=out)

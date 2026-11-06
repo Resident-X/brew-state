@@ -1600,6 +1600,60 @@ def with_right_angle(*entries: str, record: Optional[str] = None):
     return seeded(right_angle, accepting(*entries, record=record))
 
 
+def policy_entry(cls: str, severity: str = "WARNING", count: Optional[int] = 2, accepted_by: str = "proof-owner",
+                 accepted_on: str = "2026-10-01") -> str:
+    """One synthetic severity policy entry; its signature is a made-up name and a past date, nobody's own. A WARNING entry
+    carries `count`; pass None to leave it out, and an ERROR entry carries none unless one is given."""
+    return (f"  - class: {cls}\n    severity: {severity}\n" + ("" if count is None else f"    count: {count}\n")
+            + f"    reason: a synthetic ground, chosen to exercise the check\n    accepted_by: \"{accepted_by}\"\n"
+              f"    accepted_on: \"{accepted_on}\"\n")
+
+
+def policy_record(*entries: str, synthetic: bool = True) -> str:
+    """The severity policy record holding `entries`, each written as list items of its keys."""
+    return ("severity_policy:" + ("\n" + "".join(entries) if entries else " []\n") + ("synthetic: true\n" if synthetic else ""))
+
+
+def policing(*entries: str, record: Optional[str] = None):
+    """The record the design's folder holds given as the severity policy record of `entries`, or as `record` text."""
+    return lambda seed: seed.write(board_check.SEVERITY_POLICY_NAME, policy_record(*entries) if record is None else record)
+
+
+def with_policy(*entries: str, record: Optional[str] = None):
+    """The right angle on /LV_B, which KiCad reports as two track_angle lines, and the severity policy record of `entries`."""
+    return seeded(right_angle, policing(*entries, record=record))
+
+
+def short_jog(seed: Seed) -> None:
+    """The run of /LV_A given a 0.42 mm jog, which KiCad reports as one track_segment_length line, with segment identities
+    of its own so it can be seeded beside the right angle."""
+    points = [(40, 10), (42, 10), (42.3, 10.3), (45, 10.3)]
+
+    def edit(tree: list) -> None:
+        tree.remove(track_at(tree, *LV_A_ENDS))
+        for index, (a, b) in enumerate(zip(points, points[1:])):
+            tree.insert(len(tree) - 1, segment("/LV_A", *a, *b, f"0b0e5c1a-0000-4000-8000-0000000009{index:02d}"))
+    seed.layout(edit)
+
+
+def staircase(seed: Seed) -> None:
+    """The run of /LV_B replaced by a staircase of 0.06 mm steps and 0.4 mm rises, which KiCad reports as more track_angle
+    lines than its report holds, cut at REPORT_LIMIT."""
+    steps = 140
+    points = [(40.0, 12.54)]
+    for step in range(steps):
+        x, y = points[-1]
+        points.append((x, y - 0.4 if step % 2 == 0 else y + 0.4))
+        points.append((x + 0.06, points[-1][1]))
+    points.append((52.62, points[-1][1]))
+
+    def edit(tree: list) -> None:
+        tree.remove(track_at(tree, *LV_B_RUN))
+        for index, (a, b) in enumerate(zip(points, points[1:])):
+            tree.insert(len(tree) - 1, segment("/LV_B", *a, *b, f"0b0e5c1a-0000-4000-8000-{0x400 + index:012d}"))
+    seed.layout(edit)
+
+
 def crystal_crowded(seed: Seed) -> None:
     """FB1 of the review proof design moved inside the crystal keep-clear, which KiCad reports as a courtyards_overlap line
     naming the rule Crystal keep-clear."""
@@ -2264,6 +2318,69 @@ FAULTS: List[tuple] = [
      "rule 'Digital keepout'", seeded(region_rule_renamed, accepting(acceptance_entry("items_not_allowed", "D1"))), REVIEW_TARGET),
     ("an items_not_allowed entry used only by a rule other than a floorplan region's", "workmanship acceptance: an entry only another rule's line could use is stale", "workmanship_acceptance",
      "is used by no line", seeded(region_rule_renamed, accepting(acceptance_entry("items_not_allowed", "D1"))), REVIEW_TARGET),
+    # Severity policy
+    ("a policy entry that is not a mapping", "severity policy: an entry that is not a mapping fails the record and voids the policy", "severity_policy",
+     "severity_policy[1] is not a mapping of the keys", with_policy(record="severity_policy:\n  - class: track_angle\n    severity: WARNING\n    count: 2\n    reason: x\n    accepted_by: proof-owner\n    accepted_on: \"2026-10-01\"\n  - just some words\nsynthetic: true\n")),
+    ("a policy entry lacking a key", "severity policy: an entry with a missing key fails the record", "severity_policy",
+     "severity_policy[0] lacks reason", with_policy(record="severity_policy:\n  - class: track_angle\n    severity: WARNING\n    count: 2\n    accepted_by: proof-owner\n    accepted_on: \"2026-10-01\"\nsynthetic: true\n")),
+    ("a policy entry holding another key", "severity policy: an entry with an extra key fails the record", "severity_policy",
+     "holds the key 'note'", with_policy(policy_entry("track_angle") + "    note: x\n")),
+    ("a policy entry with a severity that is neither ERROR nor WARNING", "severity policy: another severity fails the record", "severity_policy",
+     "severity_policy[0].severity is 'FATAL'", with_policy(policy_entry("track_angle", "FATAL"))),
+    ("two policy entries for one class", "severity policy: two entries for one class fail the record", "severity_policy",
+     "repeats the class 'track_angle'", with_policy(policy_entry("track_angle"), policy_entry("track_angle", count=3))),
+    ("a WARNING policy entry with no count", "severity policy: a WARNING entry lacks its count", "severity_policy",
+     "is a WARNING entry and lacks count", with_policy(policy_entry("track_angle", count=None))),
+    ("a WARNING policy entry with a negative count", "severity policy: a count below zero fails the record", "severity_policy",
+     "severity_policy[0].count is -1", with_policy(policy_entry("track_angle", count=-1))),
+    ("a WARNING policy entry with a count that is not whole", "severity policy: a fractional count fails the record", "severity_policy",
+     "severity_policy[0].count is 1.5", with_policy(policy_entry("track_angle", count=1.5))),
+    ("an ERROR policy entry carrying a count", "severity policy: an ERROR entry states no count", "severity_policy",
+     "is an ERROR entry and carries count", with_policy(policy_entry("track_angle", "ERROR", 2))),
+    ("a policy with no severity_policy key", "severity policy: a record without its list fails", "severity_policy",
+     "lacks severity_policy", with_policy(record="synthetic: true\n")),
+    ("a policy whose severity_policy is not a list", "severity policy: a record whose list is no list fails", "severity_policy",
+     "severity_policy is not a list", with_policy(record="severity_policy: {}\nsynthetic: true\n")),
+    ("a policy holding another top-level key", "severity policy: a record holding another key fails", "severity_policy",
+     "holds the key 'extra'", with_policy(record="severity_policy: []\nextra: 1\nsynthetic: true\n")),
+    ("a policy entry with an empty accepted_by", "severity policy: an unsigned entry fails and voids the policy", "severity_policy",
+     "accepted_by is ''", with_policy(policy_entry("track_angle", accepted_by=""))),
+    ("a policy entry signed with a placeholder", "severity policy: a placeholder signature fails and voids the policy", "severity_policy",
+     "accepted_by 'unsigned' is a placeholder", with_policy(policy_entry("track_angle", accepted_by="unsigned"))),
+    ("a policy entry signed in angle brackets", "severity policy: an angle-bracketed signature fails and voids the policy", "severity_policy",
+     "accepted_by '<owner>' is a placeholder", with_policy(policy_entry("track_angle", accepted_by="<owner>"))),
+    ("a policy entry with an empty date", "severity policy: an empty date fails the entry", "severity_policy",
+     "is not a valid calendar date", with_policy(policy_entry("track_angle", accepted_on=""))),
+    ("a policy entry with a malformed date", "severity policy: a malformed date fails the entry", "severity_policy",
+     "accepted_on tomorrow is not a valid calendar date", with_policy(policy_entry("track_angle", accepted_on="tomorrow"))),
+    ("a policy entry with a future date", "severity policy: a date after today fails the entry", "severity_policy",
+     "accepted_on 2099-01-01 is later than today", with_policy(policy_entry("track_angle", accepted_on="2099-01-01"))),
+    ("a policy entry for silk_over_copper", "severity policy: the policy never covers silk_over_copper", "severity_policy",
+     "names the class silk_over_copper, which the policy does not cover", with_policy(policy_entry("silk_over_copper"))),
+    ("a policy entry for a clearance class", "severity policy: the policy never covers a clearance class", "severity_policy",
+     "names the class clearance, which the policy does not cover", with_policy(policy_entry("clearance", "ERROR", None))),
+    ("a policy entry for a class the check does not report", "severity policy: the policy never covers a class the check does not report", "severity_policy",
+     "names the class no_such_class, which the policy does not cover", with_policy(policy_entry("no_such_class"))),
+    ("a policy entry for workmanship_width", "severity policy: workmanship_width stays with the per-line record", "severity_policy",
+     "names the class workmanship_width, which the policy does not cover", with_policy(policy_entry("workmanship_width"))),
+    ("a synthetic policy applied to a design not marked not for manufacture", "severity policy: a synthetic record cannot pass an orderable board", "severity_policy",
+     "marked synthetic", seeded(right_angle, policing(policy_entry("track_angle")), lambda seed: seed.project(lambda data: data["text_variables"].pop("NOT_FOR_MANUFACTURE")))),
+    ("a policy WARNING class found above its recorded count", "severity policy: a class found above its recorded count fails", "severity_policy",
+     "found 2 lines, above its recorded count of 1", with_policy(policy_entry("track_angle", count=1))),
+    ("a capped KiCad list under a signed count below the cap", "severity policy: a capped list passes only at a signed count equal to the cap", "severity_policy",
+     "reached its cap of 199", seeded(staircase, policing(policy_entry("track_angle", count=150)))),
+    ("a capped KiCad list under a signed count above the cap", "severity policy: a capped list passes only at a signed count equal to the cap", "severity_policy",
+     "reached its cap of 199", seeded(staircase, policing(policy_entry("track_segment_length", count=250)))),
+    ("a line of a class the policy does not name", "severity policy: a line of an unnamed class still fails", "track_angle",
+     "actual 90.000", with_policy(policy_entry("silk_overlap"))),
+    ("a line of a class the policy marks ERROR", "severity policy: a line of an ERROR class still fails", "track_angle",
+     "actual 90.000", with_policy(policy_entry("track_angle", "ERROR", None))),
+    ("a line under a policy voided by an unsigned entry of another class", "severity policy: one unsigned entry voids the whole policy, so the lines stand", "track_angle",
+     "actual 90.000", with_policy(policy_entry("track_angle"), policy_entry("silk_overlap", accepted_by=""))),
+    ("a line under a policy voided by a refused class", "severity policy: a refused class voids the whole policy, so the lines stand", "track_angle",
+     "actual 90.000", with_policy(policy_entry("track_angle"), policy_entry("courtyards_overlap"))),
+    ("a per-line acceptance entry for a class the policy marks WARNING", "severity policy: an acceptance entry for a class the policy marks WARNING is stale", "workmanship_acceptance",
+     "is stale: the signed severity policy marks the class track_angle WARNING", seeded(right_angle, policing(policy_entry("track_angle")), accepting(acceptance_entry("track_angle", "/LV_B", 2)))),
 ]
 
 
