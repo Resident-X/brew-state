@@ -1,0 +1,25 @@
+id: SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING
+type: deliverable
+category: solution
+title: The separation basis header states the coat as applied after bring-up with the credit on the enclosure, and the record carries the owner's re-signing day
+status: active
+version: 1
+text: |
+  Makes the separation basis record's header and its signature day say what the owner decided on 2026-11-06 about the conformal coat and about the re-signing. The sealed solution that redrafted the record at pollution degree 2 holds, as its third criterion, a header whose first condition has the coat applied "before the boards are energised in the machine", and its test pins that phrase. The owner decided (in session, 2026-11-06) that the conformal coat comes at a much later stage, once the machine is deemed functional from a hardware perspective; the pollution degree 2 credit rests on the enclosure, the owner's sealed cavity whose only openings are the harness entries, and the coat is a supporting measure; the first connection to mains and the bring-up bench tests run on the uncoated boards in a clean room. The main board's fabrication-note criterion, the heater wall board's, and the bring-up task's coat criterion already say so. The owner then re-signed the whole record in writing ("Accept all and resign", entered by Claude on that instruction), so the record's top-level accepted_on and that of each of its 33 exceptions read 2026-11-06; no figure, pair, distance, reason, bound or accepted_by changed with the date.
+
+  Settled for the build:
+  - Condition 1 of the header states the credit as standing on the enclosure, the coat as a supporting measure applied after bring-up once the machine is deemed functional from a hardware perspective, the first connection to mains and the bring-up bench tests as running on the uncoated boards in a clean room, and the coat as no part of the bound on any fault between mains pads until it is applied. The two other places in the header that repeated the old timing say the same.
+  - The header states that the owner re-signed the whole record on 2026-11-06 and that the top-level accepted_on and every exception's accepted_on read that day.
+  - The sealed criterion C3 of the redrafting solution and its evidence are not edited; this item's criteria govern the wording of condition 1 and the signature day, and the record's test that pinned the old phrase reads the new. Superseding that solution's whole deliverable, the route the engine names for a frozen criterion that says the wrong thing, retires thirteen criteria and repoints six dependants, and is left for a decision of the owner's; until then this item is the record of what condition 1 must say.
+  - Out of scope: the derating policy, which keeps its own 2026-11-05 signature; the coat's choice, supplier and application; any figure of the record.
+rationale: |
+  Restores the behaviour REQ-ELECTRICAL-INSTALL-001.C15 asks: the figures are read for the declared pollution degree on stated conditions, and the signed record states those conditions as they are. A header that says the coat goes on before the boards are energised, when the owner has decided it goes on after bring-up and the credit stands on the enclosure, misleads the owner who accepts the record and the bring-up reader who decides what protects the first mains-on; the sealed criterion that required that wording said the wrong thing after the owner's decision of 2026-11-06 and is left as what was verified then.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C15
+    type: targets
+  - target: SOL-SEPARATION-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD
+    type: depends-on
+  - target: DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER
+    type: justified-by

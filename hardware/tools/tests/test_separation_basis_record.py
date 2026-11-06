@@ -675,8 +675,6 @@ class PollutionDegreeTwoRecord(unittest.TestCase):
                        "after bring-up, once the machine is deemed functional from a hardware perspective", "coat type and cite its datasheet", "covers the gaps between mains pads",
                        "except the keep-outs documented for contacts"):
             self.assertIn(phrase, enclosure)
-        self.assertNotIn("before they are energised", enclosure)
-        self.assertNotIn("before mains is first connected", enclosure)
         for phrase in ("protected against moisture, by the enclosure, with the coat a supporting measure", "credits pollution degree 2 only", "Pollution degree 1 is never credited"):
             self.assertIn(phrase, degree)
         for phrase in ("comparative tracking index", "at least 175"):
@@ -939,6 +937,68 @@ SET_N_CAVEAT = (
 )
 #: A row of the single-fault table: entry number, fault, volts, current in amperes, limiting element, arithmetic.
 FAULT_ROW = re.compile(r"^\s*#\s+(\d+) \| fault: (.+?) \| volts: ([\d.]+) V \| current_a: ([\d.]+(?:e-?\d+)?) A \| limit: (.+?) \| arithmetic: (.+)$")
+
+
+class CoatAfterBringUpAndTheReSigning(unittest.TestCase):
+    """The header's coat timing and the owner's re-signing day, as the maintenance item that governs them states."""
+
+    RESIGNED = "2026-11-06"
+
+    @staticmethod
+    def header():
+        """The record's header comment up to its first line of data, whitespace-normalised."""
+        lines = []
+        for line in record_text().splitlines():
+            if line.strip() and not line.startswith("#"):
+                break
+            lines.append(line[1:].strip() if line.startswith("#") else "")
+        return " ".join(" ".join(lines).split())
+
+    def test_the_first_condition_states_the_coat_after_bring_up_and_the_credit_on_the_enclosure(self):
+        # SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING.C1: The header comment of the committed record states, in its first condition, that the pollution degree 2 credit stands on the enclosure, that the conformal coat is a supporting measure that does not itself earn the credit and is applied after bring-up, once the machine is deemed functional from a hardware perspective, that the first connection to mains and the bring-up bench tests run on the uncoated boards in a clean room, and that until the coat is applied it is no part of the bound on any fault between mains pads. No sentence of the header says the boards are coated before they are energised or before mains is first connected.
+        header = self.header()
+        self.condition_holds(header)
+        # the check is real: a header that keeps the old timing, says mains is connected before the coat, or drops the uncoated first connection is caught
+        for broken in (header.replace("after bring-up, once the machine is deemed functional from a hardware perspective", "before they are energised in the machine"),
+                       header.replace("run on the uncoated boards, in a clean room", "run on the coated boards"),
+                       header.replace("until the coat is applied it is no part of the bound on any fault between mains pads", "the coat is part of the bound"),
+                       header + " The boards are coated before mains is first connected."):
+            self.assertNotEqual(broken, header)
+            with self.assertRaises(AssertionError):
+                self.condition_holds(broken)
+
+    def condition_holds(self, header):
+        start = header.index("1. Enclosure:")
+        condition = header[start:header.index("2. Degree:", start)]
+        for phrase in ("the credit stands on the enclosure", "supporting measure that does not itself earn the credit",
+                       "after bring-up, once the machine is deemed functional from a hardware perspective",
+                       "run on the uncoated boards, in a clean room",
+                       "until the coat is applied it is no part of the bound on any fault between mains pads"):
+            self.assertIn(phrase, condition, phrase)
+        for phrase in ("before they are energised", "before the boards are energised", "before mains is first connected",
+                       "before mains is connected", "coated before"):
+            self.assertNotIn(phrase, header, phrase)
+
+    def test_the_record_and_every_exception_carry_the_re_signing_day_and_the_header_states_it(self):
+        # SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING.C2: The committed record's top-level accepted_on and the accepted_on of each of its 33 accepted_exceptions entries read 2026-11-06, every accepted_by is unchanged, no exception is dated later than the record, and the header states that the owner re-signed the whole record on that day in writing. The check's reader on the committed record finds it and every exception signed.
+        _, data = committed()
+        by = data["accepted_by"]
+        self.assertEqual(data["accepted_on"], self.RESIGNED)
+        self.assertEqual(len(data["accepted_exceptions"]), EXCEPTION_COUNT)
+        for position, entry in enumerate(data["accepted_exceptions"]):
+            self.assertEqual(entry["accepted_on"], self.RESIGNED, position)
+            self.assertEqual(entry["accepted_by"], by, position)
+            self.assertLessEqual(board_check.iso_date(entry["accepted_on"]), board_check.iso_date(data["accepted_on"]), position)
+        self.assertTrue(by.startswith(OWNER) and "entered by Claude on the owner's written instruction" in by)
+        header = self.header()
+        self.assertIn("On 2026-11-06 the owner re-signed the whole record in writing", header)
+        signed, problems = reading()
+        self.assertIsNotNone(signed)
+        assert_reads_clean(self, problems)
+        # a record dated before its exceptions, or an exception dated after the record, is not signed
+        late = [dict(e) for e in data["accepted_exceptions"]]
+        late[0]["accepted_on"] = "2026-11-07"
+        self.assertIsNotNone(board_check.entry_unsigned(late[0], board_check.iso_date(data["accepted_on"]), datetime.date(2026, 11, 7)))
 
 
 class NetPairAndSamePartDrafts(unittest.TestCase):
