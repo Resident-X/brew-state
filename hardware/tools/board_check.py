@@ -2192,22 +2192,19 @@ SEVERITY_POLICY_OPTIONAL = ("synthetic",)
 SEVERITY_ENTRY_KEYS = ("class", "severity", "count", "reason", "accepted_by", "accepted_on")
 SEVERITIES = ("ERROR", "WARNING")
 #: The classes of line, as the report names them by rule, a policy entry may name at either severity: silkscreen and
-#: designator lines, then routing-neatness lines. A class is added only by changing the check.
+#: designator lines, routing-neatness lines, then the narrow-track and return-path lines. A class is added only by changing the check.
 POLICY_CLASSES = ("silk_overlap", "silk_edge_clearance", "designator_astray", "reference_off_silkscreen", "track_angle",
                   "track_segment_length", "workmanship_direction", "workmanship_pad_entry", "workmanship_pad_corner",
-                  "workmanship_detour")
+                  "workmanship_detour", "track_width", "workmanship_width", "ground_return", "test_point_courtyard")
 #: The policy classes whose lists KiCad cuts at REPORT_LIMIT, so their found count is a floor and not a count.
 POLICY_CAPPED = ("track_angle", "track_segment_length")
 #: Why a rule the check reports and the policy refuses is refused, for the ones that read like cosmetic lines.
 NEVER_WARNING_POLICY = {
     "silk_over_copper": "KiCad reports silkscreen clipped by solder mask, and the check cannot tell silk over a pad's "
                         "solderable area, which is an error, from other cases",
-    "test_point_courtyard": "it is a placement and probe-access finding, which only the per-line acceptance record may excuse",
     "courtyards_overlap": "two overlapping courtyards can mean parts that cannot be assembled or reworked, a manufacturing "
                           "consequence",
     "items_not_allowed": "it is a floorplan placement finding, which only the per-line acceptance record may excuse",
-    "workmanship_width": "a neck in a current-carrying track bears on function, and only the per-line acceptance record "
-                         "may excuse it",
 }
 #: The rules the record never accepts though they read like workmanship, each with why.
 NEVER_ACCEPTED_WORKMANSHIP = {
@@ -7843,7 +7840,7 @@ def judge_severity_policy(design: Design, record: str, entries: Sequence[Tuple[i
         if name not in POLICY_CLASSES:
             why = NEVER_WARNING_POLICY.get(name)
             own.append(fail(index, entry, f"names the class {name}, which the policy does not cover"
-                            + (f": {why}" if why else ": it is not a silkscreen, designator or routing-neatness class the check "
+                            + (f": {why}" if why else ": it is not a silkscreen, designator, routing-neatness, narrow-track or return-path class the check "
                                "reports, and a class that carries a safety, mains spacing, creepage, clearance, derated-voltage, "
                                "pin-limit, mounting-hole, plated-hole, connectivity, hole, annular ring, drill, other "
                                "manufacturing, paste, solder, courtyard or separation basis finding is never a warning")

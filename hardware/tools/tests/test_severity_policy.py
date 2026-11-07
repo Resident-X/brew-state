@@ -335,13 +335,13 @@ class TheRatchet(Policed):
 
 
 class OnlyTheClassesThePolicyCoversCanBeNamed(Policed):
-    REFUSED = ("silk_over_copper", "test_point_courtyard", "courtyards_overlap", "items_not_allowed", "workmanship_width",
+    REFUSED = ("silk_over_copper", "courtyards_overlap", "items_not_allowed", "pour_gap", "decoupling_via", "starved_thermal",
                "clearance", "creepage", "separation_floor", "separation_rule", "separation_basis", "derated_voltage", "pin_limit",
                "mounting_hole", "plated_hole", "hole_to_hole", "annular_width", "hole_size", "connectivity", "unconnected_items",
-               "track_width", "via_dangling", "track_dangling", "solder_mask_bridge", "paste", "mains_class", "no_such_class")
+               "via_dangling", "track_dangling", "solder_mask_bridge", "paste", "mains_class", "no_such_class")
 
     def test_an_entry_naming_a_class_outside_the_closed_list_fails_the_check_naming_it_and_voids_the_policy(self):
-        # SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY.C6: On a synthetic design, a policy entry, at either severity, naming a class outside the closed list of ten (`silk_overlap`, `silk_edge_clearance`, `designator_astray`, `reference_off_silkscreen`, `track_angle`, `track_segment_length`, `workmanship_direction`, `workmanship_pad_entry`, `workmanship_pad_corner` and `workmanship_detour`), among them `silk_over_copper`, `test_point_courtyard`, `courtyards_overlap`, `items_not_allowed`, `workmanship_width`, and a class that carries a safety, mains spacing, creepage, clearance, derated-voltage, pin-limit, mounting-hole, plated-hole, connectivity, hole, annular ring, drill, other manufacturing, paste, solder or separation basis finding, fails the check under the rule `severity_policy` naming the entry, as does an entry naming a class the check does not report, and in each case the whole policy is void: no line is printed as a WARNING and every line stands as a violation. Out of scope is any class the policy may cover.
+        # SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY.C6: On a synthetic design, a policy entry, at either severity, naming a class outside the closed list of fourteen (`silk_overlap`, `silk_edge_clearance`, `designator_astray`, `reference_off_silkscreen`, `track_angle`, `track_segment_length`, `workmanship_direction`, `workmanship_pad_entry`, `workmanship_pad_corner`, `workmanship_detour`, `track_width`, `workmanship_width`, `ground_return` and `test_point_courtyard`), among them `silk_over_copper`, `courtyards_overlap`, `items_not_allowed`, and a class that carries a safety, mains spacing, creepage, clearance, derated-voltage, pin-limit, mounting-hole, plated-hole, connectivity, hole, annular ring, drill, other manufacturing, paste, solder or separation basis finding, fails the check under the rule `severity_policy` naming the entry, as does an entry naming a class the check does not report, and in each case the whole policy is void: no line is printed as a WARNING and every line stands as a violation. Out of scope is any class the policy may cover.
         lines = [corner(), silk()]
         for severity in ("WARNING", "ERROR"):
             for name in self.REFUSED:
@@ -353,11 +353,12 @@ class OnlyTheClassesThePolicyCoversCanBeNamed(Policed):
                     self.assertIn(f"({name}) names the class {name}, which the policy does not cover", failed[0].message)
                     self.assertEqual(failed[0].location, f"{POLICY} severity_policy[2].class")
 
-    def test_the_closed_list_is_exactly_the_ten_classes_and_each_is_accepted_at_either_severity(self):
-        # SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY.C6: On a synthetic design, a policy entry, at either severity, naming a class outside the closed list of ten (`silk_overlap`, `silk_edge_clearance`, `designator_astray`, `reference_off_silkscreen`, `track_angle`, `track_segment_length`, `workmanship_direction`, `workmanship_pad_entry`, `workmanship_pad_corner` and `workmanship_detour`), among them `silk_over_copper`, `test_point_courtyard`, `courtyards_overlap`, `items_not_allowed`, `workmanship_width`, and a class that carries a safety, mains spacing, creepage, clearance, derated-voltage, pin-limit, mounting-hole, plated-hole, connectivity, hole, annular ring, drill, other manufacturing, paste, solder or separation basis finding, fails the check under the rule `severity_policy` naming the entry, as does an entry naming a class the check does not report, and in each case the whole policy is void: no line is printed as a WARNING and every line stands as a violation. Out of scope is any class the policy may cover.
+    def test_the_closed_list_is_exactly_the_fourteen_classes_and_each_is_accepted_at_either_severity(self):
+        # SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY.C6: On a synthetic design, a policy entry, at either severity, naming a class outside the closed list of fourteen (`silk_overlap`, `silk_edge_clearance`, `designator_astray`, `reference_off_silkscreen`, `track_angle`, `track_segment_length`, `workmanship_direction`, `workmanship_pad_entry`, `workmanship_pad_corner`, `workmanship_detour`, `track_width`, `workmanship_width`, `ground_return` and `test_point_courtyard`), among them `silk_over_copper`, `courtyards_overlap`, `items_not_allowed`, and a class that carries a safety, mains spacing, creepage, clearance, derated-voltage, pin-limit, mounting-hole, plated-hole, connectivity, hole, annular ring, drill, other manufacturing, paste, solder or separation basis finding, fails the check under the rule `severity_policy` naming the entry, as does an entry naming a class the check does not report, and in each case the whole policy is void: no line is printed as a WARNING and every line stands as a violation. Out of scope is any class the policy may cover.
         closed = ("silk_overlap", "silk_edge_clearance", "designator_astray", "reference_off_silkscreen", "track_angle",
                   "track_segment_length", "workmanship_direction", "workmanship_pad_entry", "workmanship_pad_corner",
-                  "workmanship_detour")
+                  "workmanship_detour", "track_width", "workmanship_width", "ground_return", "test_point_courtyard")
+        self.assertEqual(len(closed), 14)
         self.assertEqual(board_check.POLICY_CLASSES, closed)
         for name in closed:
             for severity in ("WARNING", "ERROR"):
@@ -366,8 +367,30 @@ class OnlyTheClassesThePolicyCoversCanBeNamed(Policed):
                     self.assertEqual((left, self.shown(warnings)), ([], []))
                     self.assertEqual(self.failures(left), [])
 
+    def test_a_policy_naming_each_of_the_fourteen_is_accepted_and_a_line_of_each_is_a_warning_under_warning_and_a_violation_under_error(self):
+        # SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY.C6: On a synthetic design, a policy entry, at either severity, naming a class outside the closed list of fourteen (`silk_overlap`, `silk_edge_clearance`, `designator_astray`, `reference_off_silkscreen`, `track_angle`, `track_segment_length`, `workmanship_direction`, `workmanship_pad_entry`, `workmanship_pad_corner`, `workmanship_detour`, `track_width`, `workmanship_width`, `ground_return` and `test_point_courtyard`), among them `silk_over_copper`, `courtyards_overlap`, `items_not_allowed`, and a class that carries a safety, mains spacing, creepage, clearance, derated-voltage, pin-limit, mounting-hole, plated-hole, connectivity, hole, annular ring, drill, other manufacturing, paste, solder or separation basis finding, fails the check under the rule `severity_policy` naming the entry, as does an entry naming a class the check does not report, and in each case the whole policy is void: no line is printed as a WARNING and every line stands as a violation. Out of scope is any class the policy may cover.
+        closed = board_check.POLICY_CLASSES
+        self.assertEqual(len(closed), 14)
+        lines = [silk(name) for name in closed]
+        every = [entry(name, count=1) for name in closed]
+        left, warnings, _ = self.run_policy(lines, every)
+        self.assertEqual((left, len(self.shown(warnings))), ([], 14))
+        every_error = [entry(name, severity="ERROR") for name in closed]
+        left, warnings, _ = self.run_policy(lines, every_error)
+        self.assertEqual(self.failures(left), [])
+        self.assertEqual(sorted(v.rule for v in left), sorted(closed))
+        self.assertEqual(self.shown(warnings), [])
+        for name in closed:
+            with self.subTest(cls=name):
+                left, warnings, _ = self.run_policy([silk(name)], [entry(name, count=1)])
+                self.assertEqual(left, [])
+                self.assertEqual(len(self.shown(warnings)), 1)
+                left, warnings, _ = self.run_policy([silk(name)], [entry(name, severity="ERROR")])
+                self.assertEqual([v.rule for v in left], [name])
+                self.assertEqual(self.shown(warnings), [])
+
     def test_a_refused_class_voids_the_policy_even_when_it_is_the_only_entry(self):
-        # SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY.C6: On a synthetic design, a policy entry, at either severity, naming a class outside the closed list of ten (`silk_overlap`, `silk_edge_clearance`, `designator_astray`, `reference_off_silkscreen`, `track_angle`, `track_segment_length`, `workmanship_direction`, `workmanship_pad_entry`, `workmanship_pad_corner` and `workmanship_detour`), among them `silk_over_copper`, `test_point_courtyard`, `courtyards_overlap`, `items_not_allowed`, `workmanship_width`, and a class that carries a safety, mains spacing, creepage, clearance, derated-voltage, pin-limit, mounting-hole, plated-hole, connectivity, hole, annular ring, drill, other manufacturing, paste, solder or separation basis finding, fails the check under the rule `severity_policy` naming the entry, as does an entry naming a class the check does not report, and in each case the whole policy is void: no line is printed as a WARNING and every line stands as a violation. Out of scope is any class the policy may cover.
+        # SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY.C6: On a synthetic design, a policy entry, at either severity, naming a class outside the closed list of fourteen (`silk_overlap`, `silk_edge_clearance`, `designator_astray`, `reference_off_silkscreen`, `track_angle`, `track_segment_length`, `workmanship_direction`, `workmanship_pad_entry`, `workmanship_pad_corner`, `workmanship_detour`, `track_width`, `workmanship_width`, `ground_return` and `test_point_courtyard`), among them `silk_over_copper`, `courtyards_overlap`, `items_not_allowed`, and a class that carries a safety, mains spacing, creepage, clearance, derated-voltage, pin-limit, mounting-hole, plated-hole, connectivity, hole, annular ring, drill, other manufacturing, paste, solder or separation basis finding, fails the check under the rule `severity_policy` naming the entry, as does an entry naming a class the check does not report, and in each case the whole policy is void: no line is printed as a WARNING and every line stands as a violation. Out of scope is any class the policy may cover.
         lines = [silk("silk_over_copper", "Pad 3 of Q741")]
         left, warnings, _ = self.run_policy(lines, [entry("silk_over_copper", count=1)])
         self.assertVoid(lines, left, warnings)
@@ -514,8 +537,9 @@ class TheHardwareNotesStateThePolicy(unittest.TestCase):
             self.assertIn(words, section)
         for name in board_check.POLICY_CLASSES:
             self.assertIn(f"`{name}`", section)
-        for name in ("silk_over_copper", "test_point_courtyard", "courtyards_overlap", "items_not_allowed", "workmanship_width"):
+        for name in ("silk_over_copper", "courtyards_overlap", "items_not_allowed"):
             self.assertIn(f"`{name}`", section)
+        self.assertIn("closed list of fourteen", section)
         for never in ("safety", "mains spacing", "creepage", "clearance", "derated-voltage", "pin-limit", "mounting-hole", "plated-hole",
                       "connectivity", "annular ring", "drill", "paste", "solder", "courtyard overlap", "separation basis"):
             self.assertIn(never, section)
