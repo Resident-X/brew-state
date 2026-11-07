@@ -1258,7 +1258,7 @@
 			)
 		)
 	
-		(property "Rating" "1% 75ppm 2512 2W 300V"
+		(property "Rating" "1% 100ppm 2512 2W 300V"
 			(at 50.8 77.47 0)
 			(hide yes)
 			(effects
@@ -1354,7 +1354,7 @@
 			)
 		)
 	
-		(property "Rating" "1% 75ppm 2512 2W 300V"
+		(property "Rating" "1% 100ppm 2512 2W 300V"
 			(at 68.58 77.47 0)
 			(hide yes)
 			(effects

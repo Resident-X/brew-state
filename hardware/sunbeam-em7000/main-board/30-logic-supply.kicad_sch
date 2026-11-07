@@ -3960,7 +3960,7 @@
 				)
 			)
 		)
-		(property "Rating" "0603, 0.50 ohm DC max, 350 mA, 25 %"
+		(property "Rating" "0603, 0.50 ohm DC max, 500 mA, 25 %"
 			(at 50.8 170.18 0)
 			(hide yes)
 			(effects

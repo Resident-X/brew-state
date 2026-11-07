@@ -4396,7 +4396,7 @@
 				)
 			)
 		)
-		(property "Rating" "0603 350mA 0.5ohm"
+		(property "Rating" "0603 500mA 0.5ohm"
 			(at 200.66 63.5 0)
 			(hide yes)
 			(effects
@@ -4494,7 +4494,7 @@
 				)
 			)
 		)
-		(property "Rating" "0603 350mA 0.5ohm"
+		(property "Rating" "0603 500mA 0.5ohm"
 			(at 200.66 71.12 0)
 			(hide yes)
 			(effects
