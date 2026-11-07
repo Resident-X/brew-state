@@ -5,11 +5,16 @@ title: The main board's pour gap, decoupling via, starved thermal relief and sil
 status: active
 version: 1
 text: |
-  Clears the remaining individual layout lines of the pre-order check on the finished main board: pour_gap 7 (MFG-6), decoupling_via 4 (DECOUPLE-6), starved_thermal 3 and silk_over_copper 1, each by the layout method, none by a recorded acceptance, by line as the criteria name. The courtyards_overlap (9) and items_not_allowed (1) lines are passed by the owner-signed workmanship acceptance record under SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES and need no node here.
+  Carries the main board's remaining individual layout lines as owner-accepted per-line entries, with the board unchanged: pour_gap 7 (MFG-6), decoupling_via 4 (DECOUPLE-6), starved_thermal 3 and silk_over_copper 1. The first resolution drafted here cleared them by the layout method. The Opus readiness pass found that each clearance is a move of locked copper on a full board: two pour gaps sit on locked mains copper beside the gate net, five ground vias on In2.Cu are locked ground copper, the C401 decoupling lines need C401 placed 10.3 mm nearer its pin through the crystal keep-clear, and every move invalidates the closing layout review round. The lines are assembly-yield and neatness items of low performance risk. The owner's standing instruction of 2026-11-07 accepts items of this kind unless they have a real safety or performance impact, and these have none.
 
   Settled for the build:
-  - No signed figure or rule (minimum clearance, spoke count, relief gap) is relaxed to clear a line.
-  - The closing steps are owed: layout review round, placement and critical-routing history, pre-order check re-run; shared with the back-side parts and vias-in-pads item when built on one branch.
+  - The board is not changed.
+  - Each line is a per-line entry under SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES in the main board's workmanship acceptance record, by place and count, signed 'david (signed by Claude on his standing instruction of 2026-11-07)': pour_gap at the seven places (R704 pad 1 and R714 pad 1 on F.Cu, GND vias at (77.7452, 100.1484), (77.7618, 101.0051), (77.7452, 101.8484), (77.7618, 99.3051) and (122.3036, 34.5038) on In2.Cu), decoupling_via at the C401 vias (95.35, 34.25) and (95.35, 33.45), the C405 via and the C612 via, starved_thermal at J635 pad 2, C609 pad 2 and U602 pad 3, and silk_over_copper at the reference of Q731.
+  - The pour gaps of R704 pad 1 and R714 pad 1 are 0.063 mm on locked mains pour beside the gate net; carrying them leaves that copper as it is, which is the point, since clearing them would move locked mains copper and re-open the creepage and clearance of the pump gate net. The five ground-via gaps are 0.029 to 0.087 mm on locked ground copper.
+  - C401 stands 10.3 mm from its pin; the controller's other supply pins carry their own capacitors, so the performance risk of the C401 lines is low.
+  - No signed figure or rule (minimum clearance, spoke count, relief gap) is relaxed; the mains creepage and clearance of the pump gate net are not touched.
+  - The acceptance and its ground are recorded in the decision of residual risks (item z11).
+  - Optional improvement, not required: clearing the lines by the layout method remains an improvement for a later board revision and is not part of this item.
   - Out of scope: the back-side parts, the vias in pads, the footprint field lines and the C606 exception, which sibling maintenance items own.
 rationale: |
   Restores the judgement REQ-BOARD-LAYOUT-PRACTICE-001.C1 asks of a layout: every applicable practice item judged met before order, resolved by a change to the board, not by judging the failure unimportant. Found by the pre-order check run on the finished board.

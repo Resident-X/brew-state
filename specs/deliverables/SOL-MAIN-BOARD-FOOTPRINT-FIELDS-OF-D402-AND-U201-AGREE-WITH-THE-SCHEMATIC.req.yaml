@@ -5,12 +5,15 @@ title: The main board's D402 Description and U201 Datasheet fields agree between
 status: active
 version: 1
 text: |
-  Brings two fields of footprints on the main board into agreement with their schematic symbols. A scratch pre-order check run reports footprint_symbol_field_mismatch for D402 (Description: the board says bidirectional, the schematic unidirectional with cathode on USB_VBUS) and for U201 (Datasheet: the board holds a Texas Instruments sn74lvc1g17 address, the schematic a Nexperia 74AHC_AHCT1G17 address). Which text is right is decided from the selected part number's datasheet, not assumed.
+  Carries the main board's footprint-versus-symbol and footprint-versus-library lines as owner-accepted per-line entries, with the board unchanged. A scratch pre-order check run reports footprint_symbol_field_mismatch for D402 (Description: the board says bidirectional, the schematic unidirectional with cathode on USB_VBUS) and for U201 (Datasheet: the board holds a Texas Instruments sn74lvc1g17 address, the schematic a Nexperia 74AHC_AHCT1G17 address), footprint_symbol_mismatch for the do-not-populate attribute of R522, R572 and R576, and lib_footprint_mismatch for U601. The datasheet check found the schematic text right for both: the fitted SMF6.0A (LCSC C207260) is unidirectional, and the fitted part is the Nexperia 74AHCT1G17GW. The board's two texts are stale description text and a link to an earlier part; they affect no copper, no bill line and no fitted part. The readiness pass found that setting a placed footprint's field needs a scripted edit of the closed board and a design-file change that forces a new closing layout review round. The owner's standing instruction of 2026-11-07 accepts items of this kind unless they have a real safety or performance impact, and these have none.
 
   Settled for the build:
-  - Fields change through the schematic and board tools, never by editing the files.
-  - If the part number selected differs from the circuit's need, that is a finding for its own item.
-  - Out of scope: the U601 library footprint (SOL-HW-MAIN-BOARD-U601-LIBRARY-FOOTPRINT-MATCHES-BOARD) and the do-not-populate parity lines (SOL-HW-DO-NOT-POPULATE-PARITY-LINES-ARE-LISTED-AND-BOARD-DRIVES-BILL), which existing items own.
+  - The board and the schematic are not changed.
+  - Each line is a per-line entry under SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES in the main board's workmanship acceptance record, by place and count, signed 'david (signed by Claude on his standing instruction of 2026-11-07)': footprint_symbol_field_mismatch at D402 and at U201 (one each), footprint_symbol_mismatch at R522, R572 and R576 (one each), lib_footprint_mismatch at U601 (1). The reason for D402 states that the schematic and the datasheet say unidirectional and the board text says bidirectional; for U201, that the fitted part is the 74AHCT1G17 and the board's link points to the TI LVC part.
+  - The U601 library footprint and the do-not-populate parity lines are also the subject of SOL-HW-MAIN-BOARD-U601-LIBRARY-FOOTPRINT-MATCHES-BOARD and SOL-HW-DO-NOT-POPULATE-PARITY-LINES-ARE-LISTED-AND-BOARD-DRIVES-BILL; where one of those items clears a line, the corresponding entry is stale and the check fails it until it is removed.
+  - The acceptance and its ground are recorded in the decision of residual risks (item z12).
+  - Optional improvement, not required: correcting the two texts on the board remains an improvement for a later board revision.
+  - Out of scope: the C606 exception and the other main-board lines.
 rationale: |
   Restores the schematic-to-board agreement REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1 relies on: a hardware design passes its verification before it is ordered, and a failed verification blocks the order. A part whose board and schematic carry different polarity text or datasheet leaves a reader, and the bill, uncertain what is fitted.
 links:
