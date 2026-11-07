@@ -3933,7 +3933,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C141723"
+		(property "LCSC" "C133937"
 			(at 50.8 170.18 0)
 			(hide yes)
 			(effects
@@ -3942,7 +3942,7 @@
 				)
 			)
 		)
-		(property "MPN" "FCM1608KF-601T03"
+		(property "MPN" "FCM1608KF-601T05"
 			(at 50.8 170.18 0)
 			(hide yes)
 			(effects

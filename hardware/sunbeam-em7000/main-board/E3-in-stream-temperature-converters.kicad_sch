@@ -3060,7 +3060,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C1591"
+		(property "LCSC" "C14663"
 			(at 147.32 22.86 0)
 			(hide yes)
 			(effects
@@ -3069,7 +3069,7 @@
 				)
 			)
 		)
-		(property "MPN" "CL10B104KB8NNNC"
+		(property "MPN" "CC0603KRX7R9BB104"
 			(at 147.32 22.86 0)
 			(hide yes)
 			(effects
@@ -3078,7 +3078,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Samsung Electro-Mechanics"
+		(property "Manufacturer" "YAGEO"
 			(at 147.32 22.86 0)
 			(hide yes)
 			(effects
@@ -3096,7 +3096,7 @@
 			)
 		)
 	
-		(property "Rating" "X7R 50V 10% 0603"
+		(property "Rating" "X7R 50 V 10 % 0603"
 			(at 147.32 22.86 0)
 			(hide yes)
 			(effects
@@ -3158,7 +3158,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C1591"
+		(property "LCSC" "C14663"
 			(at 157.48 22.86 0)
 			(hide yes)
 			(effects
@@ -3167,7 +3167,7 @@
 				)
 			)
 		)
-		(property "MPN" "CL10B104KB8NNNC"
+		(property "MPN" "CC0603KRX7R9BB104"
 			(at 157.48 22.86 0)
 			(hide yes)
 			(effects
@@ -3176,7 +3176,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Samsung Electro-Mechanics"
+		(property "Manufacturer" "YAGEO"
 			(at 157.48 22.86 0)
 			(hide yes)
 			(effects
@@ -3194,7 +3194,7 @@
 			)
 		)
 	
-		(property "Rating" "X7R 50V 10% 0603"
+		(property "Rating" "X7R 50 V 10 % 0603"
 			(at 157.48 22.86 0)
 			(hide yes)
 			(effects
@@ -4434,7 +4434,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C1591"
+		(property "LCSC" "C14663"
 			(at 147.32 124.46 0)
 			(hide yes)
 			(effects
@@ -4443,7 +4443,7 @@
 				)
 			)
 		)
-		(property "MPN" "CL10B104KB8NNNC"
+		(property "MPN" "CC0603KRX7R9BB104"
 			(at 147.32 124.46 0)
 			(hide yes)
 			(effects
@@ -4452,7 +4452,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Samsung Electro-Mechanics"
+		(property "Manufacturer" "YAGEO"
 			(at 147.32 124.46 0)
 			(hide yes)
 			(effects
@@ -4470,7 +4470,7 @@
 			)
 		)
 	
-		(property "Rating" "X7R 50V 10% 0603"
+		(property "Rating" "X7R 50 V 10 % 0603"
 			(at 147.32 124.46 0)
 			(hide yes)
 			(effects
@@ -4532,7 +4532,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C1591"
+		(property "LCSC" "C14663"
 			(at 157.48 124.46 0)
 			(hide yes)
 			(effects
@@ -4541,7 +4541,7 @@
 				)
 			)
 		)
-		(property "MPN" "CL10B104KB8NNNC"
+		(property "MPN" "CC0603KRX7R9BB104"
 			(at 157.48 124.46 0)
 			(hide yes)
 			(effects
@@ -4550,7 +4550,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Samsung Electro-Mechanics"
+		(property "Manufacturer" "YAGEO"
 			(at 157.48 124.46 0)
 			(hide yes)
 			(effects
@@ -4568,7 +4568,7 @@
 			)
 		)
 	
-		(property "Rating" "X7R 50V 10% 0603"
+		(property "Rating" "X7R 50 V 10 % 0603"
 			(at 157.48 124.46 0)
 			(hide yes)
 			(effects

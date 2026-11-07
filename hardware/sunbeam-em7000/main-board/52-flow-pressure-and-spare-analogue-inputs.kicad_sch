@@ -5166,7 +5166,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "BAT54S"
+		(property "Value" "BAT54SW"
 			(at 135.89 144.145 0)
 			(effects
 				(font
@@ -5175,7 +5175,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_TO_SOT_SMD:SOT-23"
+		(property "Footprint" "Package_TO_SOT_SMD:SOT-323_SC-70"
 			(at 142.24 147.32 0)
 			(hide yes)
 			(effects
@@ -5202,7 +5202,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C47546"
+		(property "LCSC" "C78606"
 			(at 142.24 147.32 0)
 			(hide yes)
 			(effects
@@ -5211,7 +5211,7 @@
 				)
 			)
 		)
-		(property "MPN" "BAT54S,215"
+		(property "MPN" "BAT54SW,115"
 			(at 142.24 147.32 0)
 			(hide yes)
 			(effects
@@ -5552,7 +5552,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "BAT54S"
+		(property "Value" "BAT54SW"
 			(at 135.89 179.705 0)
 			(effects
 				(font
@@ -5561,7 +5561,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_TO_SOT_SMD:SOT-23"
+		(property "Footprint" "Package_TO_SOT_SMD:SOT-323_SC-70"
 			(at 142.24 182.88 0)
 			(hide yes)
 			(effects
@@ -5588,7 +5588,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C47546"
+		(property "LCSC" "C78606"
 			(at 142.24 182.88 0)
 			(hide yes)
 			(effects
@@ -5597,7 +5597,7 @@
 				)
 			)
 		)
-		(property "MPN" "BAT54S,215"
+		(property "MPN" "BAT54SW,115"
 			(at 142.24 182.88 0)
 			(hide yes)
 			(effects
@@ -6382,7 +6382,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "BAT54S"
+		(property "Value" "BAT54SW"
 			(at 135.89 254.635 0)
 			(effects
 				(font
@@ -6391,7 +6391,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_TO_SOT_SMD:SOT-23"
+		(property "Footprint" "Package_TO_SOT_SMD:SOT-323_SC-70"
 			(at 142.24 257.81 0)
 			(hide yes)
 			(effects
@@ -6418,7 +6418,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C47546"
+		(property "LCSC" "C78606"
 			(at 142.24 257.81 0)
 			(hide yes)
 			(effects
@@ -6427,7 +6427,7 @@
 				)
 			)
 		)
-		(property "MPN" "BAT54S,215"
+		(property "MPN" "BAT54SW,115"
 			(at 142.24 257.81 0)
 			(hide yes)
 			(effects
@@ -6768,7 +6768,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "BAT54S"
+		(property "Value" "BAT54SW"
 			(at 135.89 290.195 0)
 			(effects
 				(font
@@ -6777,7 +6777,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_TO_SOT_SMD:SOT-23"
+		(property "Footprint" "Package_TO_SOT_SMD:SOT-323_SC-70"
 			(at 142.24 293.37 0)
 			(hide yes)
 			(effects
@@ -6804,7 +6804,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C47546"
+		(property "LCSC" "C78606"
 			(at 142.24 293.37 0)
 			(hide yes)
 			(effects
@@ -6813,7 +6813,7 @@
 				)
 			)
 		)
-		(property "MPN" "BAT54S,215"
+		(property "MPN" "BAT54SW,115"
 			(at 142.24 293.37 0)
 			(hide yes)
 			(effects
