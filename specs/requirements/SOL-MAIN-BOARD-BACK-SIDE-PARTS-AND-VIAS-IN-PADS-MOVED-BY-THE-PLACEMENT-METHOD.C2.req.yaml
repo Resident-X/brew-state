@@ -1,13 +1,13 @@
 id: SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD.C2
 type: criterion
-title: D502 and D506 are swapped to the SOT-323 BAT54SW,115 with unchanged connections and stand on F.Cu in the sensing region
+title: D502, D504, D506, D523, D524, D527 and D528 are swapped to the SOT-323 BAT54SW,115 with unchanged connections, D502 and D506 standing on F.Cu in the sensing region
 status: active
 version: 1
 measurement_type: binary
 verification: test
 scope: The five named vias and any via the survey finds inside an SMD pad of its own net; the two survey hits on pads of another net are not covered here.
 text: |
-  D502 and D506 carry the Nexperia BAT54SW,115 (LCSC C78606) in a SOT-323 footprint in both the schematic symbol and the board, with matching footprint, LCSC, MPN and description fields; the bill of materials holds that line for the two parts and no other part changes; each stands on F.Cu inside the analog sensing region with its courtyard clear of every other courtyard; and the netlist difference against the state before this item is empty, so pin 1 stays on GND, pin 2 on +3V3A and pin 3 on the NTC node as before, with the pad-to-pin mapping checked against the maker datasheet. The test fails on a swapped pin 1 and 2, on a footprint field that disagrees with the schematic, and on a part outside the region. Out of scope: D504 and every other BAT54S clamp, the records that name the part (the part-records criterion covers them), the electrical-equivalence reading, the routing of the moved parts, R301 and the vias.
+  D502, D504, D506, D523, D524, D527 and D528 carry the Nexperia BAT54SW,115 (LCSC C78606) in a SOT-323 footprint in both the schematic symbol and the board, with matching footprint, LCSC, MPN and description fields; the bill of materials holds that one line for the seven parts and no other part changes; D502 and D506 stand on F.Cu inside the analog sensing region, D504, D523, D524, D527 and D528 stay on F.Cu, and each of the seven has its courtyard clear of every other courtyard; and the netlist difference against the state before this item is empty, so pin 1 stays on GND, pin 2 on its supply (+3V3A for D502, D504 and D506, +3V3 for the others) and pin 3 on its signal node as before, with the pad-to-pin mapping checked against the maker datasheet. The test fails on a swapped pin 1 and 2, on a footprint field that disagrees with the schematic, on any of the seven still carrying C47546 in the symbol, board or bill of materials, and on a part outside the region. Out of scope: the records that name the part (the part-records criterion covers them), the electrical-equivalence reading, the routing of the moved parts, R301 and the vias.
 links:
   - target: SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD
     type: criterion-of

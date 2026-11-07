@@ -18,3 +18,7 @@ links:
     type: derives-from
   - target: REQ-ELECTRICAL-INSTALL-001.C15
     type: targets
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 narrow re-review executor
+  fingerprint: 1ed1a36066ef79351243d71fd19463eabe93eb202d0d5d1f5d8c8bdd0fb08cd6
+  gating_profile: ""
