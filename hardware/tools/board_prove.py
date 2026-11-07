@@ -2282,6 +2282,8 @@ FAULTS: List[tuple] = [
      "accepted_on tomorrow is not a valid calendar date", with_right_angle(acceptance_entry("track_angle", "/LV_B", 2, accepted_on="tomorrow"))),
     ("an acceptance entry with a future date", "workmanship acceptance: a date after today fails the entry", "workmanship_acceptance",
      "accepted_on 2099-01-01 is later than today", with_right_angle(acceptance_entry("track_angle", "/LV_B", 2, accepted_on="2099-01-01"))),
+    ("an acceptance entry for side_fiducials", "workmanship acceptance: the record never accepts side_fiducials", "workmanship_acceptance",
+     "names the rule side_fiducials, which the record does not accept", with_right_angle(acceptance_entry("side_fiducials", "/LV_B"))),
     ("an acceptance entry for hole_to_hole", "workmanship acceptance: the record never accepts hole_to_hole", "workmanship_acceptance",
      "names the rule hole_to_hole, which the record does not accept", with_right_angle(acceptance_entry("hole_to_hole", "/LV_B"))),
     ("an acceptance entry for workmanship_rule", "workmanship acceptance: the record never accepts workmanship_rule", "workmanship_acceptance",

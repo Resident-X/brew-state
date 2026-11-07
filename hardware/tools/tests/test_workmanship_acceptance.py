@@ -161,6 +161,17 @@ class TheRecordForm(Synthetic):
                 self.assertTrue(self.failures(left), left)
                 self.tracked.remove(RECORD)
 
+    def test_an_explicit_empty_list_and_a_design_with_no_record_accept_nothing_and_every_line_fails_as_before(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES.C1: a record with an explicit empty list of entries, and a design with no acceptance record at all, do not fail as a record and accept nothing, so every workmanship line of that design fails the check as before.
+        lines = [line(rule) for rule in board_check.ACCEPTABLE_WORKMANSHIP]
+        for name, entries in (("an explicit empty list", []), ("no record", None)):
+            with self.subTest(record=name):
+                self.setUp()
+                left, accepted = self.judge(lines, entries)
+                self.assertEqual(accepted, [])
+                self.assertEqual([v.line() for v in left], [v.line() for v in lines], "no failure as a record, every line stands")
+                self.assertEqual(self.failures(left), [])
+
     def test_a_design_with_no_record_is_judged_as_before_and_accepts_nothing(self):
         # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES.C3: On the same synthetic design with a fourth line of the entry's rule at its place, with a line of a different workmanship rule, and with a line of the same rule at another place, each of those lines fails the check as before and the three covered lines still pass. Out of scope is the wording of the report.
         lines = [line(), line("track_angle", "Track [/NET_A] on F.Cu @ (1, 2) mm", "Track angle (rule 'Corners' min angle 135.000; actual 90.000)")]
@@ -259,7 +270,17 @@ class TheClosedSet(Synthetic):
         "designator_astray": (line("designator_astray", "R2 text at (30, 5) mm"), "R2"),
         "silk_overlap": (line("silk_overlap", "Footprint D1 @ (30, 30) mm; Footprint R2 @ (30, 10) mm"), "D1"),
         "items_not_allowed": (line("items_not_allowed", "Footprint D1 @ (30, 30) mm", "Items not allowed (rule 'Digital region parts')"), "D1"),
+        "pour_gap": (line("pour_gap", "net /NET_A: pad 1 of R1 at (10, 10) mm on F.Cu", "MFG-6 pour gap: the pour stops 0.063 mm short of pad 1 of R1, narrower than the board's 0.09 mm minimum clearance"), "/NET_A"),
+        "decoupling_via": (line("decoupling_via", "net /NET_A: via at (95.35, 34.25) mm, between pad 1 of R1 and pad 1 of D1", "DECOUPLE-6 no via sits between a decoupling capacitor's supply pad and the pin it decouples"), "/NET_A"),
+        "starved_thermal": (line("starved_thermal", "Zone 'GND pour B.Cu' [/NET_A] on B.Cu, priority 0 @ (3.1, 119.1) mm; PTH pad 2 [/NET_A] of D1 @ (30, 30) mm", "Thermal relief connection to zone incomplete (layer B.Cu; zone min spoke count 2; actual 1)"), "D1"),
+        "silk_over_copper": (line("silk_over_copper", "Reference field of R2 @ (30, 12) mm; Pad 3 [/NET_B] of TP1 on F.Cu @ (10, 30) mm", "Silkscreen clipped by solder mask"), "R2"),
+        "footprint_symbol_field_mismatch": (line("footprint_symbol_field_mismatch", "Footprint D1 @ (30, 30) mm", "Field 'Description' differs (PCB: 'a', Schematic: 'b')"), "D1"),
+        "footprint_symbol_mismatch": (line("footprint_symbol_mismatch", "Footprint R2 @ (30, 10) mm", "Footprint attributes don't match symbol: 'Do not populate' settings differ"), "R2"),
+        "lib_footprint_mismatch": (line("lib_footprint_mismatch", "Footprint TP1 @ (10, 30) mm", "Footprint 'TP' does not match copy in library 'board'"), "TP1"),
     }
+    #: The seven names the main board's check reports beyond the twelve workmanship and neatness ones.
+    PARITY = ("pour_gap", "decoupling_via", "starved_thermal", "silk_over_copper", "footprint_symbol_field_mismatch",
+              "footprint_symbol_mismatch", "lib_footprint_mismatch")
 
     def setUp(self):
         super().setUp()
@@ -274,6 +295,55 @@ class TheClosedSet(Synthetic):
                 self.assertEqual(left, [])
                 self.assertEqual(len(accepted), 1)
                 self.assertIn(source.location, accepted[0])
+
+    def test_the_closed_set_is_nineteen_names_and_side_fiducials_is_not_one_of_them(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES.C4: On the same design, for each of the nineteen names of the closed set, a signed entry at the place of a line of that name, with a count equal to the lines there, is accepted and used by that line, and the same entry fails as stale when no line of that name stands at its place.
+        self.assertEqual(len(board_check.ACCEPTABLE_WORKMANSHIP), 19)
+        self.assertEqual(len(set(board_check.ACCEPTABLE_WORKMANSHIP)), 19)
+        self.assertNotIn("side_fiducials", board_check.ACCEPTABLE_WORKMANSHIP)
+        self.assertIn("side_fiducials", board_check.NEVER_ACCEPTED_WORKMANSHIP)
+
+    def test_an_entry_for_each_of_the_seven_added_names_fails_stale_when_no_line_of_that_name_stands_at_its_place(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES.C4: On the same design, for each of the nineteen names of the closed set, a signed entry at the place of a line of that name, with a count equal to the lines there, is accepted and used by that line, and the same entry fails as stale when no line of that name stands at its place.
+        for rule in self.PARITY:
+            source, scope = self.LINES[rule]
+            with self.subTest(rule=rule, case="a line of another rule at the place"):
+                other = line("workmanship_detour")
+                left, accepted = self.judge([other], [entry(rule, scope if scope != "/NET_A" else "R1")])
+                self.assertEqual(accepted, [])
+                self.assertIn(other.line(), [v.line() for v in left])
+                self.assertIn("is used by no line", self.failures(left)[0].message)
+            with self.subTest(rule=rule, case="a line of the rule at another place"):
+                elsewhere = "D1" if rule == "silk_over_copper" else "R2" if scope != "R2" else "TP1"
+                left, accepted = self.judge([source], [entry(rule, elsewhere)])
+                self.assertEqual(accepted, [])
+                self.assertIn(source.line(), [v.line() for v in left])
+                self.assertIn("is used by no line", self.failures(left)[0].message)
+
+    def test_an_entry_for_each_of_the_seven_added_names_covers_only_its_count_and_place(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES.C4: On the same design, for each of the nineteen names of the closed set, a signed entry at the place of a line of that name, with a count equal to the lines there, is accepted and used by that line, and the same entry fails as stale when no line of that name stands at its place.
+        for rule in self.PARITY:
+            source, scope = self.LINES[rule]
+            with self.subTest(rule=rule):
+                left, accepted = self.judge([source, source], [entry(rule, scope, 1)])
+                self.assertEqual(len(accepted), 1)
+                self.assertEqual([v.line() for v in left], [source.line()], "the line beyond the count fails")
+
+    def test_the_scope_forms_of_the_seven_added_names_match_the_places_their_lines_name(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES.C4: On the same design, for each of the nineteen names of the closed set, a signed entry at the place of a line of that name, with a count equal to the lines there, is accepted and used by that line, and the same entry fails as stale when no line of that name stands at its place.
+        for rule, scope in (("pour_gap", "R1"), ("decoupling_via", "D1"), ("decoupling_via", "R1"), ("starved_thermal", "/NET_A"),
+                            ("silk_over_copper", "TP1"), ("silk_over_copper", "/NET_B")):
+            with self.subTest(rule=rule, scope=scope):
+                left, accepted = self.judge([self.LINES[rule][0]], [entry(rule, scope)])
+                self.assertEqual((left, len(accepted)), ([], 1))
+
+    def test_an_entry_for_side_fiducials_fails_as_naming_a_rule_outside_the_set_and_its_line_still_fails(self):
+        # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES.C4: The same entry for side_fiducials, hole_to_hole, workmanship_rule, workmanship_figure or workmanship_pad_copper fails as naming a rule outside the set.
+        source = line("side_fiducials", "side B: 4 assembled surface-mount parts", "MFG-10 holds 0 fiducials where 3 are the least")
+        left, accepted = self.judge([source], [entry("side_fiducials", "/NET_A")])
+        self.assertEqual(accepted, [])
+        self.assertIn(source.line(), [v.line() for v in left])
+        self.assertIn("names the rule side_fiducials, which the record does not accept", self.failures(left)[0].message)
 
     def test_an_entry_for_a_rule_outside_the_set_fails_naming_it_and_its_line_still_fails(self):
         # SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES.C4: On a synthetic design, an entry with an empty, placeholder or angle-bracketed accepted-by value, an entry with an empty, malformed or future date, an entry naming a rule outside the closed set the leaf states (each of hole_to_hole, workmanship_rule, workmanship_figure and workmanship_pad_copper, and any rule that is not a workmanship or neatness rule), a courtyards_overlap entry used by a line that names a custom rule such as the crystal keep-clear, an items_not_allowed entry used by a line that names a rule other than the floorplan region rule, an entry naming a mains spacing, derated-voltage or pin-limit rule, an entry for a place the design does not have, and an entry that no line uses each fail the check naming the entry, and a design marked synthetic is honoured only when it is marked not for manufacture. On the same design an entry for each rule of the closed set, signed and used by a line of that rule, is accepted. Out of scope is a well-formed signed entry that a line uses.

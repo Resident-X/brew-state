@@ -2184,7 +2184,9 @@ WORKMANSHIP_ENTRY_KEYS = ("rule", "scope", "count", "reason", "bounded_by", "acc
 #: The workmanship and neatness rules whose lines an entry of the record may accept, as the report names them.
 ACCEPTABLE_WORKMANSHIP = ("workmanship_detour", "workmanship_pad_entry", "workmanship_pad_corner", "workmanship_width",
                           "workmanship_direction", "track_angle", "track_segment_length", "courtyards_overlap",
-                          "test_point_courtyard", "designator_astray", "silk_overlap", "items_not_allowed")
+                          "test_point_courtyard", "designator_astray", "silk_overlap", "items_not_allowed", "pour_gap", "decoupling_via",
+                          "starved_thermal", "silk_over_copper", "footprint_symbol_field_mismatch", "footprint_symbol_mismatch",
+                          "lib_footprint_mismatch")
 #: The severity policy record the owner may keep beside a design, its keys, and the keys of each entry in it.
 SEVERITY_POLICY_NAME = "severity-policy.yaml"
 SEVERITY_POLICY_KEYS = ("severity_policy", "synthetic")
@@ -2208,6 +2210,7 @@ NEVER_WARNING_POLICY = {
 }
 #: The rules the record never accepts though they read like workmanship, each with why.
 NEVER_ACCEPTED_WORKMANSHIP = {
+    "side_fiducials": "the missing back-side fiducials are not accepted, the parts that cause them move to the front",
     "hole_to_hole": "its shortfall is accepted only by a same_connector_pins entry of the separation basis record, since "
                     "the owner can vouch for a connector's use but not for an arbitrary pair of holes",
     "workmanship_rule": "it reports a rules file the check cannot read, so there is no measured line to accept",
