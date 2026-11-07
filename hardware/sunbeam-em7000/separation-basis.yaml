@@ -14,6 +14,8 @@
 # and each exception carries its own accepted_by and accepted_on. The commit that enters them is the
 # audit trail. A change to any figure, input, barrier or exception needs a fresh acceptance.
 #
+# The entry for the C606 pad pair (pads 1 and 2) was removed on 2026-11-07 on the owner's written instruction, because the layout rule check no longer reports a creepage shortfall for it; the removal excuses nothing and relaxes nothing, and the record's signature day is unchanged at 2026-11-06.
+#
 # Readings the drafter made for the owner to check before accepting (each is repeated in the
 # citation of the row it affects):
 #   1. The 0.5 mm terminal allowance (the terminal_clearance_mm of 2.0 mm is the 1.5 mm
@@ -656,14 +658,14 @@ accepted_exceptions:
   # The pump gate network nets (PUMP_C_GATE_R and PUMP_S_GATE_R against any net, and each gate network net against its own MT2 and
   # opto-triac nets) have no net-pair entry and keep the full 2.6 mm, except the pad pair of each of the four gate resistors
   # R704, R705, R714 and R715, which the last four entries hold at 1.8 mm: while the opto-triac is off the full
-  # supply stands across it and the gate network floats to the MT2 level. The thirteen entries after the net-pair ones are of the
-  # between form, a creepage entry for each of thirteen pairs of pads of one part (C606 pads 1 and 2, R105's four
+  # supply stands across it and the gate network floats to the MT2 level. The twelve entries after the net-pair ones are of the
+  # between form, a creepage entry for each of twelve pairs of pads of one part (R105's four
   # sense-pad pairs, R605 to R608 pads 1 and 2, and the opto-triac pin-5 pairs below), the pads on nets of set N or
   # on the Mains class, whose gap in the committed main-board layout is a creepage shortfall that KiCad reports;
   # accepted_mm is that gap read from the layout, rounded down to 0.01 mm. The draft held 98 entries; the signed run of
-  # the layout rule check at the final board used 29 and reported no shortfall for the other 69, which are removed:
-  # the 40 pad-pair clearance entries (KiCad does not test the clearance of two pads of one footprint), the 18 creepage
-  # entries for pairs that stand at or over their figure, the 7 mains-to-low-voltage entries of U601, U701, U711 and
+  # the layout rule check at the final board used 28 and reported no shortfall for the other 70, which are removed:
+  # the 40 pad-pair clearance entries (KiCad does not test the clearance of two pads of one footprint), the 19 creepage
+  # entries for pairs that stand at or over their figure or that the layout rule check no longer reports short (C606 pads 1 and 2, see the header), the 7 mains-to-low-voltage entries of U601, U701, U711 and
   # U602 (the board's slots hold those gaps at their figure) and the 4 net-pair creepage entries 4, 6, 7 and 9. A pair that stands 1.5 mm or
   # more apart (C607 pins 1 and 2, R105 pads 1 and 4, U601 pins 1 and 3, 2 and 4, 3 and 5, 5 and 7, 7 and 9, 8 and 10)
   # is covered by the first two entries; the lead pads 1 and 3 of T701 and T711 stand 3.36 mm apart on their two-lead
@@ -736,14 +738,6 @@ accepted_exceptions:
     accepted_mm: 0.2
     reason: "PUMP_C_TRIAC_G and PUMP_S_TRIAC_G are the gate nets of the pump triacs T701 and T711, each the opto-triac output pin and the triac gate alone (no gate-to-MT1 resistor is fitted); while the opto-triac drives it the gate stands within a few volts of its MT1 on NEUTRAL. ZC_LED_A is the zero-cross opto U602's LED anode, 1.2 V above NEUTRAL while the LTV-814 antiparallel LEDs conduct. Against /NEUTRAL alone each stands under 10 V rms in normal operation, the 10 V band row (clearance 0.2 mm); they pair with no AMC_* net, shunt-sense net or the divider tap, and the pump gate network nets PUMP_C_GATE_R and PUMP_S_GATE_R keep the full figure against every net. The reduction holds in normal operation, with the circuit intact; U602 open (ZC_LED_A reaching 253 V through R630 and R631, 120.8 kohm, 2.09 mA) and the gate junction open while the opto-triac is off (the gate net floating toward the full supply on the opto-triac's off-state leakage, microamps) are single faults judged in rows 11 of the single-fault table above. The working voltage is the drafter's figure for the owner to accept or correct."
     bounded_by: "The energy the neutral-referenced circuit can supply, for the LED anode the 120.8 kohm of R630 and R631 and for a gate net the off-state leakage of the opto-triac, and for any path from these nets to the line the entry fuse F101 and the branch fuses."
-    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
-    accepted_on: "2026-11-06"
-  - pair: mains_to_mains
-    constraint: creepage
-    between: ["C606.1", "C606.2"]
-    accepted_mm: 0.65
-    reason: "The pitch of C606 forces the gap: its pads 1 (on AMC_HLDO_IN) and 2 (on AMC_HGND) stand 0.65 mm apart edge to edge in the committed layout, on the land pattern the part is drawn with. Both nets are in set N, the nets that ride on mains neutral, so the voltage across the gap is under 10 V rms at the top of the declared span. The part is not changed, and the entry excuses only this pair of pads."
-    bounded_by: "The energy the neutral-referenced circuit can supply (the AMC131M02's isolated high-side supply, the shunt and the divider resistors), and for any path from these nets to the line the entry fuse F101 and the branch fuses; proposed by the drafter for the owner to accept or correct."
     accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
     accepted_on: "2026-11-06"
   - pair: mains_to_mains
