@@ -53,6 +53,6 @@ links:
   - target: SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS
     type: depends-on
 brief_confirmation:
-  confirmer: claude-sonnet-5-5 narrow re-review executor
-  fingerprint: 995c65a08da7057a8fa69291daca9a6ea8b08a000f2ae0d3e982bbce1deb3c80
+  confirmer: claude-sonnet-5-5 blind brief re-reviewer
+  fingerprint: 439bec2d3d51437526cb2499fb22bc77b1da1bb2f5e1b03cde3bacf8eb1add23
   gating_profile: ""
