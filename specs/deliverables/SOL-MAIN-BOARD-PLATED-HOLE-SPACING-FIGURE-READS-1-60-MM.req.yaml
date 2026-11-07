@@ -1,10 +1,14 @@
 id: SOL-MAIN-BOARD-PLATED-HOLE-SPACING-FIGURE-READS-1-60-MM
 type: deliverable
 category: solution
-title: The main board's plated-hole spacing figure is corrected to the 1.60 mm its ground-plane gaps give
+title: The main board's plated-hole spacing figure stays at 1.5 mm for this order and the 1.60 mm correction is not built
 status: active
-version: 1
+version: 2
 text: |
+  Resolution, 2026-11-07: the figure stays at 1.5 mm and this item is not built for this order. Signed by Claude on the owner's standing instruction of 2026-11-07, writer string 'david (signed by Claude on his standing instruction of 2026-11-07)'; the owner did not type this decision. Reason: about 55 pin pairs on 26 standard 2.54 mm headers sit at 1.54 to 1.55 mm hole edge to edge, between the 1.5 mm figure and the 1.60 mm reading, so a 1.60 mm rule would fail them and would need a new same-connector exception class beside the signed one for the 2.0 mm pitch headers. No mains figure is involved; the figure is ground-plane practice only (the plane gaps the plated pins open), and the pairs stay as the 1.5 mm rule judges them. What the 1.60 mm figure would need stays on record below: the corrected rules table row and rule file, the new exception class and a new layout review round.
+
+  The text below is the item as first written, kept for that purpose and not built.
+
   Corrects a figure in the main board's rules table that layout review round 3 (finding 3.14) found short. The table's "Plated hole spacing" row, held in the board's design-rules.md and in its main-board.kicad_dru rule of that name, reads 1.5 mm. The GROUND-5 reading derives the figure from the gaps the plated pins open in the ground plane: twice the widest annulus (2 x 0.375 = 0.75 mm), plus twice the ground zones' thermal-relief gap (2 x 0.30 = 0.60 mm), plus the zone's minimum thickness (0.25 mm). That is 1.60 mm, not 1.5 mm. No node owned the correction before this one: SOL-BOARD-GROUND-5-FIGURE-FROM-PLANE-GAPS changed the method's prose, not this board's records.
 
   Settled for the build:

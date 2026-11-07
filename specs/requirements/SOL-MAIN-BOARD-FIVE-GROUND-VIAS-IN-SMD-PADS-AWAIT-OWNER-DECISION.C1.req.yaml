@@ -1,12 +1,12 @@
 id: SOL-MAIN-BOARD-FIVE-GROUND-VIAS-IN-SMD-PADS-AWAIT-OWNER-DECISION.C1
 type: criterion
-title: The via-in-pad survey is the evidence and the item stays open until the owner decides
+title: The six ground vias inside surface-mount pads are 0.5 mm pad and 0.2 mm drill and the owner's acceptance and shrinking of them is recorded
 status: active
 version: 1
 measurement_type: binary
 verification: inspection
 text: |
-  The via-in-pad survey of the committed main board lists exactly the five same-net ground vias of 0.75 mm inside surface-mount pads (C302 pad 2 twice, D523 pad 1, Q823 pad 2, Q824 pad 2) and no other via of 0.75 mm or more inside a pad of another net or the same net, and this item records that the owner has not decided between moving each via out of its pad and a justified narrow exception. The item records no acceptance and the board and the rules file are unchanged until the owner decides; once he decides, this criterion is amended to verify the chosen resolution before any build. Out of scope: the thermal vias of 0.6 mm and under in exposed pads and the three back-side parts.
+  The six same-net ground vias that stand inside surface-mount pads of the committed main board (C302 pad 2 twice, D523 pad 1, Q823 pad 2, Q824 pad 2 and the one beside D506 pad 1) are 0.5 mm pad and 0.2 mm drill, inside the range the maker fills by default, and this item records that the owner accepted the vias in pads ("Accept vias") and agreed to shrink them ("Ok") on 2026-11-07. The item writes no exception and moves no via. Out of scope: the thermal vias of 0.6 mm and under in exposed pads.
 links:
   - target: SOL-MAIN-BOARD-FIVE-GROUND-VIAS-IN-SMD-PADS-AWAIT-OWNER-DECISION
     type: criterion-of
