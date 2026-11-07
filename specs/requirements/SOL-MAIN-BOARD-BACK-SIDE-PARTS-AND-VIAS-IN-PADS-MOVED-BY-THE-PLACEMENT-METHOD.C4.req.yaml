@@ -1,13 +1,13 @@
 id: SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD.C4
 type: criterion
-title: The closing steps of the board method are run on the changed board and recorded
+title: The copper lock, a layout review round, the placement history and the full check run before the item closes
 status: active
 version: 1
 measurement_type: binary
 verification: inspection
 scope: The closing steps for this change; one round may serve this item and the pour, decoupling-via, thermal-relief and silkscreen item together when both are built on one branch.
-text: |-
-  The change is made and closed through the board design method's steps: the edit is made with KiCad scripting on the board closed in every editor, zones refilled and the save shown stable; the layout review round is run on the changed design and recorded with every item judged; the placement and critical-routing history command run with the routed option ends RESULT | PASS on the branch as pushed; the pre-order check is re-run on the changed board. The layout review round is owed because a design-file change to a proof-held board invalidates the closing review, and is not skipped. Out of scope: the closing steps for this change; one round may serve this item and the pour, decoupling-via, thermal-relief and silkscreen item together when both are built on one branch.
+text: |
+  The copper lock and a fresh copper record cover the changed locked copper, a layout review round on the changed board has run and is recorded, the placement and critical-routing history names the three parts and the re-routed copper, and the full pre-order check on the changed board has run, each recorded in the item's evidence; the item stays open until all four have run. Out of scope: the owner's decision on the five vias in pads.
 links:
   - target: SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD
     type: criterion-of

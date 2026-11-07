@@ -1,0 +1,17 @@
+id: SOL-MAIN-BOARD-FIVE-GROUND-VIAS-IN-SMD-PADS-AWAIT-OWNER-DECISION
+type: deliverable
+category: solution
+title: The main board's five ground vias inside surface-mount pads are held open until the owner decides between moving them and a narrow exception
+status: active
+version: 1
+text: |
+  Holds the open question of the main board's five ground vias inside surface-mount pads. The via-in-pad survey (the owner-requested run of 2026-11-07 on the main board) lists five same-net ground vias of 0.75 mm whose centre lies inside an SMD pad: C302 pad 2 (two vias), D523 pad 1, Q823 pad 2 and Q824 pad 2, 5 of the board's 1104 vias. JLCPCB leaves vias over 0.5 mm unfilled, so solder may wick down them, an assembly-yield risk for those pads with no safety or function impact. The survey found legal spots outside the pad for D523 pad 1 and one C302 via within 3 mm, and none for the other three under a conservative search.
+
+  The owner has not decided between two resolutions: move each via out of its pad, or keep them under a justified narrow exception for same-net ground vias of 0.75 mm. This item records that decision as open. Nothing is accepted for the owner, no exception is written, and no via moves until he decides; when he does, the criterion is amended to verify the chosen resolution before any build.
+rationale: |-
+  Honours the judgement REQ-BOARD-LAYOUT-PRACTICE-001.C1 asks of a layout by keeping the via-in-pad survey hits as an open, recorded item rather than judging them unimportant; the resolution is the owner's and is not assumed.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
