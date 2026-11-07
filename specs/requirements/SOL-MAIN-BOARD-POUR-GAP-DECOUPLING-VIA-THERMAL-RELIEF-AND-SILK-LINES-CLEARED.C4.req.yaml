@@ -1,0 +1,13 @@
+id: SOL-MAIN-BOARD-POUR-GAP-DECOUPLING-VIA-THERMAL-RELIEF-AND-SILK-LINES-CLEARED.C4
+type: criterion
+title: The reference of Q731 is not clipped by the solder mask opening of pad 3 of Q741
+status: active
+version: 1
+measurement_type: binary
+verification: test
+scope: The Q731 reference only.
+text: |-
+  The reference field of Q731 on the main board is moved beside its own part so that its silkscreen stands clear of the mask opening of pad 3 of Q741, and the pre-order check reports no silk_over_copper line. The courtyards_overlap lines and the items_not_allowed line the check also reports are not changed here; they are passed by the owner-signed workmanship acceptance record. Out of scope: the Q731 reference only.
+links:
+  - target: SOL-MAIN-BOARD-POUR-GAP-DECOUPLING-VIA-THERMAL-RELIEF-AND-SILK-LINES-CLEARED
+    type: criterion-of

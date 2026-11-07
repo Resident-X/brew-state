@@ -1,0 +1,13 @@
+id: SOL-MAIN-BOARD-POUR-GAP-DECOUPLING-VIA-THERMAL-RELIEF-AND-SILK-LINES-CLEARED.C5
+type: criterion
+title: The closing steps of the board method are run on the changed board and recorded
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+scope: The closing steps for this change; one round may serve this item and the back-side parts and vias-in-pads item when both are built on one branch.
+text: |-
+  The edits are made with KiCad scripting on the board closed in every editor, with zones refilled and the save shown stable; a layout review round is run on the changed design and recorded with every item judged; the placement and critical-routing history command run with the routed option ends RESULT | PASS on the branch as pushed; and the pre-order check is re-run on the changed board and reports none of the lines this item names. The layout review round is owed because a design-file change to a proof-held board invalidates the closing review, and is not skipped. Out of scope: the closing steps for this change; one round may serve this item and the back-side parts and vias-in-pads item when both are built on one branch.
+links:
+  - target: SOL-MAIN-BOARD-POUR-GAP-DECOUPLING-VIA-THERMAL-RELIEF-AND-SILK-LINES-CLEARED
+    type: criterion-of

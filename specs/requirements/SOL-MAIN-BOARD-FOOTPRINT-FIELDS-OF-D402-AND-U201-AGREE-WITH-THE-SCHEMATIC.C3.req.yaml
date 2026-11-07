@@ -1,0 +1,13 @@
+id: SOL-MAIN-BOARD-FOOTPRINT-FIELDS-OF-D402-AND-U201-AGREE-WITH-THE-SCHEMATIC.C3
+type: criterion
+title: The fields are changed through the schematic and board tools and the committed files agree
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+scope: Fields of D402 and U201; the do-not-populate parity lines and the U601 library footprint have their own items.
+text: |-
+  Both fields are changed with the schematic and board tools (the schematic editor's component-edit tool and the board tool), with no direct edit of a .kicad_sch or .kicad_pcb file, and the main board's schematic-to-board parity check reports zero footprint_symbol_field_mismatch lines. No do-not-populate parity line and no U601 library-footprint line is changed by this item. Out of scope: fields of D402 and U201; the do-not-populate parity lines and the U601 library footprint have their own items.
+links:
+  - target: SOL-MAIN-BOARD-FOOTPRINT-FIELDS-OF-D402-AND-U201-AGREE-WITH-THE-SCHEMATIC
+    type: criterion-of

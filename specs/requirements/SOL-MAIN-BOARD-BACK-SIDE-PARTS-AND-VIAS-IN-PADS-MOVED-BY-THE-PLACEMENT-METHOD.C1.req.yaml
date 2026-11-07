@@ -1,0 +1,13 @@
+id: SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD.C1
+type: criterion
+title: D502, D506 and R301 stand on F.Cu and no assembled surface-mount part stands on B.Cu
+status: active
+version: 1
+measurement_type: binary
+verification: test
+scope: The side of the three named footprints and the side_fiducials line only; adding fiducials to B.Cu is out of scope, as the order is single-sided assembly.
+text: |-
+  In the committed main-board layout the footprints D502, D506 and R301 are on F.Cu, and no footprint on B.Cu is an assembled surface-mount part (one not marked do-not-populate), so the layout plan's MFG-10 row (F.Cu is the one side with assembled surface-mount parts) holds and the pre-order check on the main board reports no side_fiducials line. The three parts are moved by the placement method's scripted edit, each keeping its reference designator, value, net connections and rotation convention, and no other footprint changes side. Out of scope: the side of the three named footprints and the side_fiducials line only; adding fiducials to B.Cu is out of scope, as the order is single-sided assembly.
+links:
+  - target: SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD
+    type: criterion-of

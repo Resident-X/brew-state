@@ -1,0 +1,13 @@
+id: SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD.C3
+type: criterion
+title: The change relaxes no signed or recorded figure and breaks no check it touches
+status: active
+version: 1
+measurement_type: binary
+verification: test
+scope: The records and check lines named; an unrelated pre-existing line is covered by its own item.
+text: |-
+  After the moves the main board's signed mains separation basis record, derating policy, design-rules figures and severity policy are byte-for-byte unchanged, and the pre-order check on the changed board reports no new line of any rule, and in particular no new spacing, creepage, courtyard, parity or unrouted-net line. Each line of the check that the moves touch is cleared by the layout, not by a recorded acceptance. Out of scope: the records and check lines named; an unrelated pre-existing line is covered by its own item.
+links:
+  - target: SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD
+    type: criterion-of

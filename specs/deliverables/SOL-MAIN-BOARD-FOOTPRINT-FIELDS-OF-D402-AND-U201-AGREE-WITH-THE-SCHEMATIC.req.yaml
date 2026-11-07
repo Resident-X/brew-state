@@ -1,0 +1,20 @@
+id: SOL-MAIN-BOARD-FOOTPRINT-FIELDS-OF-D402-AND-U201-AGREE-WITH-THE-SCHEMATIC
+type: deliverable
+category: solution
+title: The main board's D402 Description and U201 Datasheet fields agree between the board and the schematic
+status: active
+version: 1
+text: |
+  Brings two fields of footprints on the main board into agreement with their schematic symbols. A scratch pre-order check run reports footprint_symbol_field_mismatch for D402 (Description: the board says bidirectional, the schematic unidirectional with cathode on USB_VBUS) and for U201 (Datasheet: the board holds a Texas Instruments sn74lvc1g17 address, the schematic a Nexperia 74AHC_AHCT1G17 address). Which text is right is decided from the selected part number's datasheet, not assumed.
+
+  Settled for the build:
+  - Fields change through the schematic and board tools, never by editing the files.
+  - If the part number selected differs from the circuit's need, that is a finding for its own item.
+  - Out of scope: the U601 library footprint (SOL-HW-MAIN-BOARD-U601-LIBRARY-FOOTPRINT-MATCHES-BOARD) and the do-not-populate parity lines (SOL-HW-DO-NOT-POPULATE-PARITY-LINES-ARE-LISTED-AND-BOARD-DRIVES-BILL), which existing items own.
+rationale: |
+  Restores the schematic-to-board agreement REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1 relies on: a hardware design passes its verification before it is ordered, and a failed verification blocks the order. A part whose board and schematic carry different polarity text or datasheet leaves a reader, and the bill, uncertain what is fitted.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets

@@ -1,0 +1,13 @@
+id: SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD.C2
+type: criterion
+title: No via of the main board has its centre inside a surface-mount pad of its own net except under a stated narrow exception
+status: active
+version: 1
+measurement_type: binary
+verification: test
+scope: The five named vias and any via the survey finds inside an SMD pad of its own net; the two survey hits on pads of another net are not covered here.
+text: |-
+  In the committed main-board layout no via has its centre inside the copper of a surface-mount pad. The five same-net ground vias the via-in-pad survey lists are moved out of their pads, still joined to GND: the two on pad 2 of C302 (at 84.995, 71.014 mm and 87.105, 71.112 mm), the one on pad 1 of D523 (at 100.345, 54.602 mm), the one on pad 2 of Q823 (at 82.155, 47.400 mm) and the one on pad 2 of Q824 (at 69.500, 34.720 mm). A via over 0.5 mm that stays in a pad is allowed only where the board's rules file names it, its pad, its net and the reason a move is not possible, because the fabricator leaves vias over 0.5 mm unfilled and solder can wick through. Re-running the survey on the changed board lists no same-net via with a negative centre-to-copper distance that the rules file does not name. Out of scope: the five named vias and any via the survey finds inside an SMD pad of its own net; the two survey hits on pads of another net are not covered here.
+links:
+  - target: SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD
+    type: criterion-of

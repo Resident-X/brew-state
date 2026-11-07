@@ -1,0 +1,13 @@
+id: SOL-SEPARATION-BASIS-STALE-C606-CREEPAGE-EXCEPTION-REMOVED.C3
+type: criterion
+title: The record's signature day is entered only on the owner's written instruction
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+scope: Signature day and its header statement only; no figure, pair or reason changes.
+text: |-
+  The owner has authorised re-signing the record on his word alone; the change enters the day he gives, as the owner's re-signing is entered elsewhere in this record (by Claude on the owner's written instruction), and the record's top-level accepted_on and every remaining entry's accepted_on, and the header that states the day, agree with that day. A build with no such day stated in the owner's instruction leaves accepted_on unchanged and fails this criterion rather than choosing one. Out of scope: signature day and its header statement only; no figure, pair or reason changes.
+links:
+  - target: SOL-SEPARATION-BASIS-STALE-C606-CREEPAGE-EXCEPTION-REMOVED
+    type: criterion-of

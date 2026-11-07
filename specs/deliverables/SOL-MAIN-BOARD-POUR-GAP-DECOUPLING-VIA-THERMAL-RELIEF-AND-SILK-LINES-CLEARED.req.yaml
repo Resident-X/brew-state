@@ -1,0 +1,20 @@
+id: SOL-MAIN-BOARD-POUR-GAP-DECOUPLING-VIA-THERMAL-RELIEF-AND-SILK-LINES-CLEARED
+type: deliverable
+category: solution
+title: The main board's pour gap, decoupling via, starved thermal relief and silkscreen lines are cleared by the layout method
+status: active
+version: 1
+text: |
+  Clears the remaining individual layout lines of the pre-order check on the finished main board: pour_gap 7 (MFG-6), decoupling_via 4 (DECOUPLE-6), starved_thermal 3 and silk_over_copper 1, each by the layout method, none by a recorded acceptance, by line as the criteria name. The courtyards_overlap (9) and items_not_allowed (1) lines are passed by the owner-signed workmanship acceptance record under SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES and need no node here.
+
+  Settled for the build:
+  - No signed figure or rule (minimum clearance, spoke count, relief gap) is relaxed to clear a line.
+  - The closing steps are owed: layout review round, placement and critical-routing history, pre-order check re-run; shared with the back-side parts and vias-in-pads item when built on one branch.
+  - Out of scope: the back-side parts, the vias in pads, the footprint field lines and the C606 exception, which sibling maintenance items own.
+rationale: |
+  Restores the judgement REQ-BOARD-LAYOUT-PRACTICE-001.C1 asks of a layout: every applicable practice item judged met before order, resolved by a change to the board, not by judging the failure unimportant. Found by the pre-order check run on the finished board.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets

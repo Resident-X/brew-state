@@ -1,0 +1,13 @@
+id: SOL-SEPARATION-BASIS-STALE-C606-CREEPAGE-EXCEPTION-REMOVED.C1
+type: criterion
+title: The signed record holds no exception for the C606 pad pair and its other entries are unchanged
+status: active
+version: 1
+measurement_type: binary
+verification: test
+scope: The one entry named; the other 32 entries and every figure of the record are outside this item.
+text: |-
+  The main board's separation basis record holds no accepted_exceptions entry for mains_to_mains creepage between C606.1 and C606.2 (the entry at index 16, 0.65 mm accepted), so it holds 32 entries; every remaining entry, and every other field of the record, is unchanged except the signature day under the next criterion. The pre-order check on the main board reports no spacing_exception line, and the layout rule check still reports no creepage shortfall for the pair. Out of scope: the one entry named; the other 32 entries and every figure of the record are outside this item.
+links:
+  - target: SOL-SEPARATION-BASIS-STALE-C606-CREEPAGE-EXCEPTION-REMOVED
+    type: criterion-of
