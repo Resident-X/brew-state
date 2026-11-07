@@ -241,12 +241,12 @@ parts:
     dnp: false
   - ref: D523
     lib_id: "Diode:BAT54S"
-    value: "BAT54S"
+    value: "BAT54SW"
     rating: "dual series Schottky 30V 200mA"
-    footprint: "Package_TO_SOT_SMD:SOT-23"
-    mpn: "BAT54S,215"
+    footprint: "Package_TO_SOT_SMD:SOT-323_SC-70"
+    mpn: "BAT54SW,115"
     maker: "Nexperia"
-    lcsc: C47546
+    lcsc: C78606
     class: extended
     hand: false
     function: "steering clamp of the SCL pin to GND and +3V3"
@@ -255,12 +255,12 @@ parts:
     dnp: false
   - ref: D524
     lib_id: "Diode:BAT54S"
-    value: "BAT54S"
+    value: "BAT54SW"
     rating: "dual series Schottky 30V 200mA"
-    footprint: "Package_TO_SOT_SMD:SOT-23"
-    mpn: "BAT54S,215"
+    footprint: "Package_TO_SOT_SMD:SOT-323_SC-70"
+    mpn: "BAT54SW,115"
     maker: "Nexperia"
-    lcsc: C47546
+    lcsc: C78606
     class: extended
     hand: false
     function: "steering clamp of the SDA pin to GND and +3V3"
@@ -423,12 +423,12 @@ parts:
     dnp: false
   - ref: D527
     lib_id: "Diode:BAT54S"
-    value: "BAT54S"
+    value: "BAT54SW"
     rating: "dual series Schottky 30V 200mA"
-    footprint: "Package_TO_SOT_SMD:SOT-23"
-    mpn: "BAT54S,215"
+    footprint: "Package_TO_SOT_SMD:SOT-323_SC-70"
+    mpn: "BAT54SW,115"
     maker: "Nexperia"
-    lcsc: C47546
+    lcsc: C78606
     class: extended
     hand: false
     function: "steering clamp of the SCL pin to GND and +3V3"
@@ -437,12 +437,12 @@ parts:
     dnp: false
   - ref: D528
     lib_id: "Diode:BAT54S"
-    value: "BAT54S"
+    value: "BAT54SW"
     rating: "dual series Schottky 30V 200mA"
-    footprint: "Package_TO_SOT_SMD:SOT-23"
-    mpn: "BAT54S,215"
+    footprint: "Package_TO_SOT_SMD:SOT-323_SC-70"
+    mpn: "BAT54SW,115"
     maker: "Nexperia"
-    lcsc: C47546
+    lcsc: C78606
     class: extended
     hand: false
     function: "steering clamp of the SDA pin to GND and +3V3"

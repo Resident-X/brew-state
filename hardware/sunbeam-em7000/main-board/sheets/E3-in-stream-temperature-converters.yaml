@@ -17,12 +17,12 @@ parts:
 - ref: C641
   lib_id: Device:C
   value: 100n
-  rating: X7R 50V 10% 0603
+  rating: X7R 50 V 10 % 0603
   footprint: Capacitor_SMD:C_0603_1608Metric
-  mpn: CL10B104KB8NNNC
-  maker: Samsung Electro-Mechanics
-  lcsc: C1591
-  class: extended
+  mpn: CC0603KRX7R9BB104
+  maker: YAGEO
+  lcsc: C14663
+  class: basic
   hand: false
   function: VDD bypass to GND1, 0.1 uF (Pin Description, VDD)
   mains: false
@@ -30,12 +30,12 @@ parts:
 - ref: C642
   lib_id: Device:C
   value: 100n
-  rating: X7R 50V 10% 0603
+  rating: X7R 50 V 10 % 0603
   footprint: Capacitor_SMD:C_0603_1608Metric
-  mpn: CL10B104KB8NNNC
-  maker: Samsung Electro-Mechanics
-  lcsc: C1591
-  class: extended
+  mpn: CC0603KRX7R9BB104
+  maker: YAGEO
+  lcsc: C14663
+  class: basic
   hand: false
   function: DVDD bypass to DGND, 0.1 uF (Pin Description, DVDD)
   mains: false
@@ -56,12 +56,12 @@ parts:
 - ref: C646
   lib_id: Device:C
   value: 100n
-  rating: X7R 50V 10% 0603
+  rating: X7R 50 V 10 % 0603
   footprint: Capacitor_SMD:C_0603_1608Metric
-  mpn: CL10B104KB8NNNC
-  maker: Samsung Electro-Mechanics
-  lcsc: C1591
-  class: extended
+  mpn: CC0603KRX7R9BB104
+  maker: YAGEO
+  lcsc: C14663
+  class: basic
   hand: false
   function: VDD bypass to GND1, 0.1 uF (Pin Description, VDD)
   mains: false
@@ -69,12 +69,12 @@ parts:
 - ref: C647
   lib_id: Device:C
   value: 100n
-  rating: X7R 50V 10% 0603
+  rating: X7R 50 V 10 % 0603
   footprint: Capacitor_SMD:C_0603_1608Metric
-  mpn: CL10B104KB8NNNC
-  maker: Samsung Electro-Mechanics
-  lcsc: C1591
-  class: extended
+  mpn: CC0603KRX7R9BB104
+  maker: YAGEO
+  lcsc: C14663
+  class: basic
   hand: false
   function: DVDD bypass to DGND, 0.1 uF (Pin Description, DVDD)
   mains: false

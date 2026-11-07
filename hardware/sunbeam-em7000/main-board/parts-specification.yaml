@@ -591,12 +591,12 @@ positions:
     rating: 1x2 2.54 mm header with shorting jumper
     lcsc: C492401
     class: none
-  # FB301: maker TAI-TECH; MPN FCM1608KF-601T03; catalogue class extended
+  # FB301: maker TAI-TECH; MPN FCM1608KF-601T05; catalogue class extended
   - reference: FB301
     value: 600R@100MHz
     package: L_0603_1608Metric
     rating: 0603, 0.50 ohm DC max, 350 mA, 25 %
-    lcsc: C141723
+    lcsc: C133937
     class: none
   # TP303: maker -; MPN -; catalogue class none
   - reference: TP303
@@ -1057,26 +1057,26 @@ positions:
     rating: X7R 50V 10% 0603
     lcsc: C1588
     class: capacitor
-  # F601: maker TAI-TECH; MPN FCM1608KF-601T03; catalogue class extended
+  # F601: maker TAI-TECH; MPN FCM1608KF-601T05; catalogue class extended
   - reference: F601
     value: 600R@100MHz
     package: L_0603_1608Metric
     rating: 0603 350mA 0.5ohm
-    lcsc: C141723
+    lcsc: C133937
     class: none
-  # F602: maker TAI-TECH; MPN FCM1608KF-601T03; catalogue class extended
+  # F602: maker TAI-TECH; MPN FCM1608KF-601T05; catalogue class extended
   - reference: F602
     value: 600R@100MHz
     package: L_0603_1608Metric
     rating: 0603 350mA 0.5ohm
-    lcsc: C141723
+    lcsc: C133937
     class: none
-  # C605: maker Samsung Electro-Mechanics; MPN CL10B104KB8NNNC; catalogue class extended
+  # C605: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
   - reference: C605
     value: 100n
     package: C_0603_1608Metric
-    rating: X7R 50V 10% 0603
-    lcsc: C1591
+    rating: X7R 50 V 10 % 0603
+    lcsc: C14663
     class: capacitor
   # C606: maker Samsung Electro-Mechanics; MPN CL10B102KB8NNNC; catalogue class basic
   - reference: C606
@@ -1085,12 +1085,12 @@ positions:
     rating: X7R 50V 10% 0603
     lcsc: C1588
     class: capacitor
-  # C607: maker Walsin; MPN 1206N104J500CT; catalogue class extended
+  # C607: maker Murata; MPN GRM31C5C1H104JA01L; catalogue class extended
   - reference: C607
     value: 100n
     package: C_1206_3216Metric
-    rating: C0G 50V 5% 1206
-    lcsc: C170182
+    rating: C0G 50 V +-5 % 1206
+    lcsc: C97946
     class: capacitor
   # C608: maker Samsung Electro-Mechanics; MPN CL10B102KB8NNNC; catalogue class basic
   - reference: C608
@@ -1113,19 +1113,19 @@ positions:
     rating: X7R 25V 10% 0603
     lcsc: C106858
     class: capacitor
-  # C612: maker Samsung Electro-Mechanics; MPN CL10B104KB8NNNC; catalogue class extended
+  # C612: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
   - reference: C612
     value: 100n
     package: C_0603_1608Metric
-    rating: X7R 50V 10% 0603
-    lcsc: C1591
+    rating: X7R 50 V 10 % 0603
+    lcsc: C14663
     class: capacitor
-  # C611: maker Samsung Electro-Mechanics; MPN CL10B104KB8NNNC; catalogue class extended
+  # C611: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
   - reference: C611
     value: 100n
     package: C_0603_1608Metric
-    rating: X7R 50V 10% 0603
-    lcsc: C1591
+    rating: X7R 50 V 10 % 0603
+    lcsc: C14663
     class: capacitor
   # R609: maker UNI-ROYAL; MPN 0603WAF330JT5E; catalogue class basic
   - reference: R609
@@ -1238,19 +1238,19 @@ positions:
     class: none
 
   # ---- sheet: Zero-crossing detector
-  # R630: maker FOJAN; MPN FRC2512F6042TS; catalogue class extended
+  # R630: maker UNI-ROYAL; MPN HP122WF5902T4E; catalogue class extended
   - reference: R630
-    value: 60.4k
+    value: 59k
     package: R_2512_6332Metric
-    rating: 1% 100ppm 2512 1W 200V working, 400V overload
-    lcsc: C5126066
+    rating: 1% 75ppm 2512 2W 300V
+    lcsc: C2775980
     class: resistor
-  # R631: maker FOJAN; MPN FRC2512F6042TS; catalogue class extended
+  # R631: maker UNI-ROYAL; MPN HP122WF5902T4E; catalogue class extended
   - reference: R631
-    value: 60.4k
+    value: 59k
     package: R_2512_6332Metric
-    rating: 1% 100ppm 2512 1W 200V working, 400V overload
-    lcsc: C5126066
+    rating: 1% 75ppm 2512 2W 300V
+    lcsc: C2775980
     class: resistor
   # U602: maker Lite-On; MPN LTV-814S-TA1-A; catalogue class extended
   - reference: U602
@@ -1316,12 +1316,12 @@ positions:
     rating: 10% X7R 50V 0603
     lcsc: C1622
     class: capacitor
-  # D502: maker Nexperia; MPN BAT54S,215; catalogue class extended
+  # D502: maker Nexperia; MPN BAT54SW,115; catalogue class extended
   - reference: D502
-    value: BAT54S
-    package: SOT-23
+    value: BAT54SW
+    package: SOT-323_SC-70
     rating: dual series Schottky 30V 200mA
-    lcsc: C47546
+    lcsc: C78606
     class: semiconductor
   # TP501: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP501
@@ -1365,12 +1365,12 @@ positions:
     rating: 10% X7R 50V 0603
     lcsc: C1622
     class: capacitor
-  # D504: maker Nexperia; MPN BAT54S,215; catalogue class extended
+  # D504: maker Nexperia; MPN BAT54SW,115; catalogue class extended
   - reference: D504
-    value: BAT54S
-    package: SOT-23
+    value: BAT54SW
+    package: SOT-323_SC-70
     rating: dual series Schottky 30V 200mA
-    lcsc: C47546
+    lcsc: C78606
     class: semiconductor
   # TP502: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP502
@@ -1414,12 +1414,12 @@ positions:
     rating: 10% X7R 50V 0603
     lcsc: C1622
     class: capacitor
-  # D506: maker Nexperia; MPN BAT54S,215; catalogue class extended
+  # D506: maker Nexperia; MPN BAT54SW,115; catalogue class extended
   - reference: D506
-    value: BAT54S
-    package: SOT-23
+    value: BAT54SW
+    package: SOT-323_SC-70
     rating: dual series Schottky 30V 200mA
-    lcsc: C47546
+    lcsc: C78606
     class: semiconductor
   # TP503: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP503
@@ -1550,19 +1550,19 @@ positions:
     rating: 1% 100ppm/K 0603 100mW
     lcsc: C4190
     class: none
-  # D523: maker Nexperia; MPN BAT54S,215; catalogue class extended
+  # D523: maker Nexperia; MPN BAT54SW,115; catalogue class extended
   - reference: D523
-    value: BAT54S
-    package: SOT-23
+    value: BAT54SW
+    package: SOT-323_SC-70
     rating: dual series Schottky 30V 200mA
-    lcsc: C47546
+    lcsc: C78606
     class: semiconductor
-  # D524: maker Nexperia; MPN BAT54S,215; catalogue class extended
+  # D524: maker Nexperia; MPN BAT54SW,115; catalogue class extended
   - reference: D524
-    value: BAT54S
-    package: SOT-23
+    value: BAT54SW
+    package: SOT-323_SC-70
     rating: dual series Schottky 30V 200mA
-    lcsc: C47546
+    lcsc: C78606
     class: semiconductor
   # TP522: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP522
@@ -1641,19 +1641,19 @@ positions:
     rating: 1% 100ppm/K 0603 100mW
     lcsc: C4190
     class: none
-  # D527: maker Nexperia; MPN BAT54S,215; catalogue class extended
+  # D527: maker Nexperia; MPN BAT54SW,115; catalogue class extended
   - reference: D527
-    value: BAT54S
-    package: SOT-23
+    value: BAT54SW
+    package: SOT-323_SC-70
     rating: dual series Schottky 30V 200mA
-    lcsc: C47546
+    lcsc: C78606
     class: semiconductor
-  # D528: maker Nexperia; MPN BAT54S,215; catalogue class extended
+  # D528: maker Nexperia; MPN BAT54SW,115; catalogue class extended
   - reference: D528
-    value: BAT54S
-    package: SOT-23
+    value: BAT54SW
+    package: SOT-323_SC-70
     rating: dual series Schottky 30V 200mA
-    lcsc: C47546
+    lcsc: C78606
     class: semiconductor
   # TP525: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP525
@@ -2002,19 +2002,19 @@ positions:
     rating: X7R 50V 10% 0603
     lcsc: C1589
     class: capacitor
-  # C641: maker Samsung Electro-Mechanics; MPN CL10B104KB8NNNC; catalogue class extended
+  # C641: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
   - reference: C641
     value: 100n
     package: C_0603_1608Metric
-    rating: X7R 50V 10% 0603
-    lcsc: C1591
+    rating: X7R 50 V 10 % 0603
+    lcsc: C14663
     class: capacitor
-  # C642: maker Samsung Electro-Mechanics; MPN CL10B104KB8NNNC; catalogue class extended
+  # C642: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
   - reference: C642
     value: 100n
     package: C_0603_1608Metric
-    rating: X7R 50V 10% 0603
-    lcsc: C1591
+    rating: X7R 50 V 10 % 0603
+    lcsc: C14663
     class: capacitor
   # C645: maker Samsung Electro-Mechanics; MPN CL10B103KB8NNNC; catalogue class extended
   - reference: C645
@@ -2023,19 +2023,19 @@ positions:
     rating: X7R 50V 10% 0603
     lcsc: C1589
     class: capacitor
-  # C646: maker Samsung Electro-Mechanics; MPN CL10B104KB8NNNC; catalogue class extended
+  # C646: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
   - reference: C646
     value: 100n
     package: C_0603_1608Metric
-    rating: X7R 50V 10% 0603
-    lcsc: C1591
+    rating: X7R 50 V 10 % 0603
+    lcsc: C14663
     class: capacitor
-  # C647: maker Samsung Electro-Mechanics; MPN CL10B104KB8NNNC; catalogue class extended
+  # C647: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
   - reference: C647
     value: 100n
     package: C_0603_1608Metric
-    rating: X7R 50V 10% 0603
-    lcsc: C1591
+    rating: X7R 50 V 10 % 0603
+    lcsc: C14663
     class: capacitor
   # J620: maker ZHOURI (JST XH family); MPN XH-4PA; catalogue class extended
   - reference: J620
@@ -2229,12 +2229,12 @@ positions:
     rating: 1% 0603 100mW
     lcsc: C22775
     class: none
-  # C670: maker Samsung Electro-Mechanics; MPN CL10B104KB8NNNC; catalogue class extended
+  # C670: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
   - reference: C670
     value: 100n
     package: C_0603_1608Metric
-    rating: X7R 50V 10% 0603
-    lcsc: C1591
+    rating: X7R 50 V 10 % 0603
+    lcsc: C14663
     class: capacitor
   # C671: maker Samsung Electro-Mechanics; MPN CL21A106KAYNNNE; catalogue class basic
   - reference: C671
@@ -2243,19 +2243,19 @@ positions:
     rating: X5R 25V 10% 0805
     lcsc: C15850
     class: capacitor
-  # C672: maker Samsung Electro-Mechanics; MPN CL10B104KB8NNNC; catalogue class extended
+  # C672: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
   - reference: C672
     value: 100n
     package: C_0603_1608Metric
-    rating: X7R 50V 10% 0603
-    lcsc: C1591
+    rating: X7R 50 V 10 % 0603
+    lcsc: C14663
     class: capacitor
-  # C673: maker Samsung Electro-Mechanics; MPN CL10B104KB8NNNC; catalogue class extended
+  # C673: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
   - reference: C673
     value: 100n
     package: C_0603_1608Metric
-    rating: X7R 50V 10% 0603
-    lcsc: C1591
+    rating: X7R 50 V 10 % 0603
+    lcsc: C14663
     class: capacitor
   # R672: maker UNI-ROYAL; MPN 0603WAF1003T5E; catalogue class basic
   - reference: R672
@@ -2304,12 +2304,12 @@ positions:
     rating: 1% 0603 100mW
     lcsc: C22775
     class: none
-  # C675: maker Samsung Electro-Mechanics; MPN CL10B104KB8NNNC; catalogue class extended
+  # C675: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
   - reference: C675
     value: 100n
     package: C_0603_1608Metric
-    rating: X7R 50V 10% 0603
-    lcsc: C1591
+    rating: X7R 50 V 10 % 0603
+    lcsc: C14663
     class: capacitor
   # C676: maker Samsung Electro-Mechanics; MPN CL21A106KAYNNNE; catalogue class basic
   - reference: C676
@@ -2318,19 +2318,19 @@ positions:
     rating: X5R 25V 10% 0805
     lcsc: C15850
     class: capacitor
-  # C677: maker Samsung Electro-Mechanics; MPN CL10B104KB8NNNC; catalogue class extended
+  # C677: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
   - reference: C677
     value: 100n
     package: C_0603_1608Metric
-    rating: X7R 50V 10% 0603
-    lcsc: C1591
+    rating: X7R 50 V 10 % 0603
+    lcsc: C14663
     class: capacitor
-  # C678: maker Samsung Electro-Mechanics; MPN CL10B104KB8NNNC; catalogue class extended
+  # C678: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
   - reference: C678
     value: 100n
     package: C_0603_1608Metric
-    rating: X7R 50V 10% 0603
-    lcsc: C1591
+    rating: X7R 50 V 10 % 0603
+    lcsc: C14663
     class: capacitor
   # R677: maker UNI-ROYAL; MPN 0603WAF1003T5E; catalogue class basic
   - reference: R677

@@ -1164,8 +1164,8 @@ class NetPairAndSamePartDrafts(unittest.TestCase):
             5: ("0.666944", "0.333888", "253 x", "84.3 V is the value", "84.5 V written", "intact"),
             6: ("0.333888", "84.5 + 10 = 94.5", "intact"), 7: ("0.666944", "168.7 + 10 = 178.7", "178.8", "intact"),
             8: ("0.333888", "253 x (1 - 0.333888) = 168.5", "168.6", "intact"),
-            9: ("1.2 V above NEUTRAL", "10 V band row (creepage 0.4 mm)", "PUMP_C_GATE_R", "microamps", "120.8 kohm", "2.09 mA", "rows 10"),
-            10: ("1.2 V above NEUTRAL", "10 V band row (clearance 0.2 mm)", "PUMP_S_GATE_R", "microamps", "120.8 kohm", "2.09 mA", "rows 11"),
+            9: ("1.2 V above NEUTRAL", "10 V band row (creepage 0.4 mm)", "PUMP_C_GATE_R", "microamps", "118 kohm", "2.14 mA", "rows 10"),
+            10: ("1.2 V above NEUTRAL", "10 V band row (clearance 0.2 mm)", "PUMP_S_GATE_R", "microamps", "118 kohm", "2.14 mA", "rows 11"),
         }
         for position, entry in zip(KEPT_NET_PAIRS, entries):
             position -= 1
@@ -1322,7 +1322,7 @@ class NetPairAndSamePartDrafts(unittest.TestCase):
         for row in rows:
             by_number.setdefault(int(row.group(1)), []).append(row)
         # the current of each row is recomputed from the schematic's part values
-        for number, ohms in ((1, 900000), (2, 900000), (3, 1000000), (5, 60400), (8, 600750), (10, 120800), (11, 120800)):
+        for number, ohms in ((1, 900000), (2, 900000), (3, 1000000), (5, 59000), (8, 600750), (10, 118000), (11, 118000)):
             self.assertAlmostEqual(float(by_number[number][0].group(4)), 253 / ohms, delta=0.006 * 253 / ohms, msg=number)
         for number in (10, 11):
             faults = " ".join(r.group(2) for r in by_number[number])

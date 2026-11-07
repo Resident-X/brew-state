@@ -146,7 +146,7 @@ print("   with 0.1 %% / 25 ppm resistors the front end is +%.3f %% FS, supportin
 print("\n== thermistor front end: temperature error of the front end alone")
 RD = val(S1, "R501")
 RSER = val(S1, "R502")
-ILEAK = 2e-6 + 0.1e-6 + 0.25e-6   # BAT54S IR max 2 uA (VR 25 V, 25 degC), TVS IRM max 100 nA (VRWM 5 V), pad leakage 250 nA (DS12110 Table 50)
+ILEAK = 2e-6 + 0.1e-6 + 0.25e-6   # BAT54SW IR max 2 uA (VR 25 V, 25 degC; Nexperia BAT54W series Rev. 3 Table 7, the figure the BAT54S sheet states too), TVS IRM max 100 nA (VRWM 5 V), pad leakage 250 nA (DS12110 Table 50)
 VDD = 3.3
 R25 = 100e3   # consistent with the three measured values 95.8..98.3 kOhm at 25.4 degC (connector-pinouts.md)
 T25 = 298.15
@@ -231,8 +231,8 @@ check("Cb allowed by tr >= 400 pF", cb_allowed >= CB_MAX)
 check("Rp at its highest <= Rp(max) at 400 pF", (rp_hi + rs_hi) <= TR_MAX / (0.8473 * CB_MAX))
 # bus capacitance budget the cable may use
 c_pins = 10e-12 + 10e-12 + 2 * 0.55e-12 + 10e-12    # sensor Ci (UM10204 Table 10, 10 pF max), controller pin (10 pF, UM10204 limit; DS12110 CIO 5 pF typ),
-                                                    # TVS Cd 0.55 pF max, BAT54S Cd 10 pF max (VR 1 V)
-print("  pins on the line: sensor 10 pF + controller pin 10 pF + TVS 0.55 pF + BAT54S 10 pF = %.1f pF ; left for pads, header and cable within 400 pF = %.1f pF" % (c_pins * 1e12, (CB_MAX - c_pins) * 1e12))
+                                                    # TVS Cd 0.55 pF max, BAT54SW Cd 10 pF max (VR 1 V)
+print("  pins on the line: sensor 10 pF + controller pin 10 pF + TVS 0.55 pF + BAT54SW 10 pF = %.1f pF ; left for pads, header and cable within 400 pF = %.1f pF" % (c_pins * 1e12, (CB_MAX - c_pins) * 1e12))
 # low-level margin through Rs
 for vdd in (3.0, 3.3, 3.6):
     il = (vdd - VOL_SPEC) / (rp * R_LO)

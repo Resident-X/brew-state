@@ -135,8 +135,8 @@ spec = {
  'departures_from_the_division_record': [
   'Interlock drive has 21 parts, not 19: R205 and R206 (100 kohm, each coupling node to ground) are added, because the record\'s circuit holds the coil about 1.2 s when the output rests high after a rising edge (circuit-proof/A_removal_gate_high_rec.log); the record\'s sentence that a level cannot cross the coupling capacitor is to be amended.',
   'The supply voltage and supply current are read digitally by the AMC131M02 over SPI2, so the record\'s conversion pins PB1 and PA1 and the conditioning blocks VM_C and I_C are not used; the pins stay free.',
-  'Mains divider is three 300 kohm 2512 resistors and the zero-crossing feed two 60.4 kohm 2512 resistors (a single element would see more than the 200 V working voltage the maker rates); the VMEAS and IN_COND blocks of the floorplan are larger than the record drew.',
-  'Three Extended machine-placed part types are added to the record\'s five (PESD5V0F1BL C45961, BAT54S C47546, MF-NSMF012-2 C163517), +9.21 USD at Economic assembly.',
+  'Mains divider is three 300 kohm 2512 resistors and the zero-crossing feed two 59 kohm 2512 resistors (each at half the line, 126.5 V rms, against the 300 V working voltage the maker rates; the OEM\'s single 120 kohm part would see 253 V rms against a 200 V working voltage); the VMEAS and IN_COND blocks of the floorplan are larger than the record drew.',
+  'Three Extended machine-placed part types are added to the record\'s five (PESD5V0F1BL C45961, BAT54SW C78606, MF-NSMF012-2 C163517), +9.21 USD at Economic assembly.',
   'The debug SWO pin PB3 is wired; the allocation record\'s free list loses PA0, PB3, PC7, PD9, PD10 and PD11.',
   'The 8 MHz converter clock oscillator Y601 is added (the AMC131M02 has no oscillator of its own).',
   'The record\'s controller current budget (480 MHz, 439 mA) has no stable junction temperature at 70 degC air; the rail skeleton is drawn to 200 MHz at the lowest power scale until the firmware clock is declared (open-items.md).'],

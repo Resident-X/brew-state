@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 """Zero-crossing detector: stress on the series resistors R630 R631 and the LED, and the LED current against the one point where the sheet states a
 collector current.  Run: python3 -I E_zc_stress.py
-Sources: Fosan FRC series FJ-JS-3001-V3.0 (2512: 1 W at 70 degC, max working voltage 200 V, max overload voltage 400 V, derating to 0 at 155 degC, 100 ppm/K,
-1 % tolerance), Lite-On LTV-814 series BNS-OD-C131/A4 p.8-9 (IF +/-50 mA, P 70 mW, VF 1.4 V max at 20 mA, CTR 20-300 % at IF = +/-1 mA and VCE = 5 V, IC 0.2-3 mA at IF = 1 mA),
+Sources: UNI-ROYAL High-Power Thick Film Chip Resistors HP series sheet, p.14 and the performance table on p.15 (HP12, 2512, the HP122WF5902T4E at 59 kohm: 2 W at 70 degC,
+max working voltage 300 V, max overload voltage 500 V, derating to 0 at 155 degC, 100 ppm/K for R above 50 mohm on the sheet and 75 ppm/K on the catalogue's line for this part, 1 % tolerance;
+the sheet's 100 ppm/K is used, the larger), Lite-On LTV-814 series BNS-OD-C131/A4 p.8-9 (IF +/-50 mA, P 70 mW, VF 1.4 V max at 20 mA, CTR 20-300 % at IF = +/-1 mA and VCE = 5 V, IC 0.2-3 mA at IF = 1 mA),
 constraints record (216-253 V ac, 50 Hz, air 70 degC; entry varistor 775 V at 50 A).
 """
 import math
-R_NOM = 60.4e3
+R_NOM = 59e3
+P_RATED_W, V_WORK, V_OVERLOAD, POWER_SHARE = 2.0, 300.0, 500.0, 0.6   # HP12 sheet p.14; derating-policy.yaml resistor power share
 TOL, TCR, DT = 0.01, 100e-6, 45.0
 r_lo = R_NOM * (1 - TOL) * (1 - TCR * DT)
 r_hi = R_NOM * (1 + TOL) * (1 + TCR * DT)
-print(f"R630 = R631: {r_lo:.0f} ohm (low end) to {r_hi:.0f} ohm (high end), 1 % and 100 ppm/K over +{DT:.0f} K")
+print(f"R630 = R631 = {R_NOM/1e3:.0f} kohm: {r_lo:.0f} ohm (low end) to {r_hi:.0f} ohm (high end), 1 % and 100 ppm/K over +{DT:.0f} K")
 VF_MAX = 1.4
 VF_TYP = 1.2
 for vrms in (253.0, 216.0):
@@ -22,10 +24,10 @@ for vrms in (253.0, 216.0):
         print(f"  {vrms:.0f} V rms, {label}: LED peak current {ipk*1e3:.3f} mA; each resistor {vres:.1f} V rms ({vres*math.sqrt(2):.1f} V pk), {p_each*1e3:.0f} mW")
 v_each = 253.0 / 2
 p_hi = (253.0 / 2) ** 2 / r_lo
-print(f"worst resistor: {v_each:.1f} V rms against 200 V max working: {100*v_each/200:.1f} %; power {p_hi*1e3:.0f} mW against 1000 mW at 70 degC air ({100*p_hi/1.0:.1f} %)")
+print(f"worst resistor: {v_each:.1f} V rms against {V_WORK:.0f} V max working: {100*v_each/V_WORK:.1f} %; power {p_hi*1e3:.0f} mW against {P_RATED_W*1e3:.0f} mW at 70 degC air ({100*p_hi/P_RATED_W:.1f} %); derating policy resistor power share {POWER_SHARE}: limit {POWER_SHARE*P_RATED_W*1e3:.0f} mW, used {100*p_hi/(POWER_SHARE*P_RATED_W):.1f} % of it")
 print(f"  derating curve: rating 100 % up to 70 degC; the 70 degC air figure is the curve's flat end, so no derating applies at 70 degC (it applies above 70 degC to 0 at 155 degC)")
-print(f"  one resistor shorted: the other carries {253.0:.0f} V rms: {100*253.0/200:.0f} % of 200 V (over the working figure; under the 400 V overload figure)")
-print(f"  entry varistor clamp 775 V across the pair: {775/2:.0f} V each against 400 V max overload voltage (the sheet's short-time overload test applies 2.5 x the rated voltage for 5 s, p.6); the maker states no microsecond surge rating")
+print(f"  one resistor shorted: the other carries {253.0:.0f} V rms: {100*253.0/V_WORK:.0f} % of {V_WORK:.0f} V (within the working figure; its power {253.0**2/r_lo*1e3:.0f} mW against {P_RATED_W*1e3:.0f} mW, {100*253.0**2/r_lo/P_RATED_W:.0f} %, {100*253.0**2/r_lo/(POWER_SHARE*P_RATED_W):.0f} % of the derated {POWER_SHARE*P_RATED_W*1e3:.0f} mW)")
+print(f"  entry varistor clamp 775 V across the pair: {775/2:.0f} V each against {V_OVERLOAD:.0f} V max overload voltage (the sheet's short-time overload test applies 2.5 x the rated voltage for 5 s, p.6); the maker states no microsecond surge rating")
 print(f"  LED: peak {max((253*math.sqrt(2)-VF_TYP)/(2*r_lo),0)*1e3:.2f} mA against 50 mA (IF abs max): {100*((253*math.sqrt(2)-VF_TYP)/(2*r_lo))/50e-3:.1f} %; LED power peak {VF_MAX*(253*math.sqrt(2)-VF_TYP)/(2*r_lo)*1e3:.1f} mW against 70 mW")
 i_min = (216 * math.sqrt(2) - VF_MAX) / (2 * r_hi)
 print(f"LED peak current at the lowest supply, resistors high, VF max: {i_min*1e3:.3f} mA, against 1.0 mA, the one current at which the sheet states a collector current (IC >= 0.2 mA at CTR 20 %): {i_min/1e-3:.2f}x")

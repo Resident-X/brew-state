@@ -18,6 +18,10 @@
 # tolerance for the pin with its part unpowered (or the part has no supply to lose);
 # where the datasheet is silent it is false, which the pin-limit rule reads as not
 # tolerated.
+# The one exception to the read date: the dual Schottky clamp entry (C78606, BAT54SW,115, Nexperia
+# BAT54W series data sheet Rev. 3) was read on 2026-11-07, when the clamps changed from the
+# SOT-23 BAT54S (C47546) to this SOT-323 part; its entry carries its own read_on. Its pinout and
+# its reverse voltage of 30 V are those of the part it replaced.
 #
 # A domain is a supply the pins hang from; its rail is a net of the design and
 # highest_voltage_v the most that net can reach. The rail nets of the three mains
@@ -146,7 +150,7 @@ domains:
     highest_voltage_v: 0.297918401
     rides_on: mains_line
     fraction: 0.000832639467
-  # the midpoint of the two 60.4 kohm feed resistors R630 and R631 from LINE to the detector LED: the equal resistors share the line-to-neutral peak less the LED's forward drop, taken as none, so 0.5 x 357.8 = 178.9 V (the LED drop is about 1.2 V)
+  # the midpoint of the two 59 kohm feed resistors R630 and R631 from LINE to the detector LED: the equal resistors share the line-to-neutral peak less the LED's forward drop, taken as none, so 0.5 x 357.8 = 178.9 V (the LED drop is about 1.2 V)
   - name: mains_zero_cross
     rail: /Zero-crossing detector/ZC_N1
     highest_voltage_v: 178.9
@@ -1516,14 +1520,14 @@ parts:
         absolute_min_v: -30
         tolerates_driven_unpowered: true
   # dual Schottky clamps: D502, D504, D506, D523, D524, D527, D528
-  - lcsc: C47546
+  - lcsc: C78606
     source:
-      document: "BAT54 / BAT54A / BAT54C / BAT54S Schottky barrier diode (Diodes Incorporated), document DS11005"
-      revision: "Rev. 34-2"
-      section: "Maximum Ratings (VRRM = VRWM = VR = 30 V)"
-      read_on: 2026-10-29
+      document: "BAT54W series Schottky barrier diodes (Nexperia), product data sheet, the BAT54SW,115 of the series"
+      revision: "Rev. 3 (20 November 2012)"
+      section: "5 Limiting values, Table 5 (VR 30 V)"
+      read_on: 2026-11-07
     pins:
-      # A (anode pair end). A diode's limit is a voltage across it, not at one pin; each terminal is held to the reverse voltage in either direction, the form the reference designs use. Working peak reverse voltage VRWM / VR 30 V.
+      # A (anode pair end). A diode's limit is a voltage across it, not at one pin; each terminal is held to the reverse voltage in either direction, the form the reference designs use. Reverse voltage VR 30 V (Table 5).
       - pin: "1"
         domain: ground
         absolute_max_v: 30

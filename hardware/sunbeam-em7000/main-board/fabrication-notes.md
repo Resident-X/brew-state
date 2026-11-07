@@ -20,9 +20,9 @@ Maker figures are from JLCPCB's published capabilities page (https://jlcpcb.com/
 
 | Via | Count in the placed board | Annular width | Use |
 |---|---|---|---|
-| 0.6 mm pad, 0.2 mm drill | 338 | 0.20 mm (the maker's recommended figure) | signal vias |
-| 0.5 mm pad, 0.2 mm drill | 222 | (0.5 - 0.2) / 2 = 0.15 mm (the maker's absolute minimum, below its 0.20 mm recommendation) | non-critical slow nets |
-| 0.75 mm pad, 0.3 mm drill (the count includes 15 of 0.7 mm pad, 0.3 mm drill) | 541 | 0.225 mm | ground, supply and mains vias |
+| 0.6 mm pad, 0.2 mm drill | 334 | 0.20 mm (the maker's recommended figure) | signal vias |
+| 0.5 mm pad, 0.2 mm drill | 238 | (0.5 - 0.2) / 2 = 0.15 mm (the maker's absolute minimum, below its 0.20 mm recommendation) | non-critical slow nets, and the ground vias inside surface-mount pads |
+| 0.75 mm pad, 0.3 mm drill (the count includes 15 of 0.7 mm pad, 0.3 mm drill) | 533 | 0.225 mm | ground, supply and mains vias |
 
 Counts are those of `design-rules.md`, "Via sizes in the layout", read from the board file. Every drill (0.2 or 0.3 mm) is over the maker's 0.15 mm minimum drill, and every via pad is at least 0.10 mm over its hole. The board setup's minimum annular width is 0.15 mm for the 0.5 / 0.2 mm via; the deviation from the recommended 0.20 mm is unsigned, for the owner (`design-rules.md`, Minimum annular width; `layout-plan.md` MFG-1). No via of under 0.45 mm pad diameter with a 0.2 mm drill is placed, so the maker's extra charge for that size does not arise.
 
@@ -108,7 +108,7 @@ No record chooses a solder mask colour or a silkscreen colour. The maker's quote
 
 Both are unresolved in the records and must be checked at the quote, not assumed:
 
-1. **Finish of vias over 0.55 mm at six layers.** The maker fills and plates over vias of 0.15 to 0.55 mm diameter by default at six layers and above; the page says nothing about a via over 0.55 mm. The board has 338 vias of 0.6 mm and 541 of 0.7 and 0.75 mm, all over that range; the 222 of 0.5 mm are inside the filled range.
+1. **Finish of vias over 0.55 mm at six layers.** The maker fills and plates over vias of 0.15 to 0.55 mm diameter by default at six layers and above; the page says nothing about a via over 0.55 mm. The board has 334 vias of 0.6 mm and 533 of 0.7 and 0.75 mm, all over that range; the 238 of 0.5 mm are inside the filled range, the six ground vias that stand inside surface-mount pads among them.
 2. **The six-layer engineering and board fee and the ENIG charge at 131 x 125 mm.** Only the quote reads them; the cost estimate carries an estimate, not a quote.
 
 ## Unsigned deviations carried by this board

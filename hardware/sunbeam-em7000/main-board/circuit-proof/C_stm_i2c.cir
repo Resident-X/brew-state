@@ -7,7 +7,7 @@ VSIM_V3V3 +3V3 0 3.6
 R525 STM_SCL +3V3 2.2k
 R523 STM_SCL_X STM_SCL 100
 * SDA has the same parts; only SCL is simulated, SDA is its twin with R526 R524
-* bus capacitance: UM10204 Rev 7.0 Table 11, Cb max 400 pF, of which the pins take 31.1 pF (sensor, controller pin, TVS, BAT54S)
+* bus capacitance: UM10204 Rev 7.0 Table 11, Cb max 400 pF, of which the pins take 31.1 pF (sensor, controller pin, TVS, BAT54SW)
 CSIM_CABLE STM_SCL_X 0 368.9p
 CSIM_BOARD STM_SCL 0 31.1p
 * sensor open-drain pull-down, low level at the UM10204 Table 10 maximum VOL of 0.4 V

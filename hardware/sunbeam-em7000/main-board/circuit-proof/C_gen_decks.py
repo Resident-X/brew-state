@@ -22,7 +22,7 @@ S1, S2, S3 = G.S1, G.S2, G.S3
 R_HI, R_LO = 1.0145, 0.9855      # 1 % and 100 ppm/K over 25..70 degC (UNI-ROYAL data sheet, Feb.12 2019 V.3, section 11)
 C_HI, C_LO = 1.10 * 1.15, 0.90 * 0.85   # +-10 % and X7R +-15 % (Samsung MLCC catalogue Nov 2015)
 LSB_X1000 = 3.3 / 65536 / 2 * 1000      # half an LSB at VREF+ = 3.3 V, times the 1000 of the error vector
-BAT_MODEL = "* BAT54S as two diodes, fitted to the forward-voltage MAXIMA of Nexperia BAT54S 1 July 2022 Table 7 (0.24 V at 0.1 mA, 0.32 at 1, 0.40 at 10, 0.50 at 30, 0.80 at 100 mA)\n.model DSCH D(IS=7.793e-9 N=1.04 RS=3.6)"
+BAT_MODEL = "* BAT54SW as two diodes, fitted to the forward-voltage MAXIMA of Nexperia BAT54W series Rev. 3 (20 November 2012) Table 7 (0.24 V at 0.1 mA, 0.32 at 1, 0.40 at 10, 0.50 at 30, 0.80 at 100 mA; the BAT54S 1 July 2022 sheet Table 7 states the same figures)\n.model DSCH D(IS=7.793e-9 N=1.04 RS=3.6)"
 SW_MODEL = ".model SWM SW(Ron=1m Roff=1e12 Vt=0.5 Vh=0.2)"
 HEADER = ("* Source of every value: the sheet fragment of this block (generated from the same table).\n"
           "* Sim-only elements (names with SIM_) stand for the sensor, the converter's sample and hold and the supply.\n"
@@ -152,7 +152,7 @@ for tag, hdr, pre, rs_c, rs_d, rp_c, rp_d, scl, sda in (("stm_i2c", "J521", "STM
          "%s %s +3V3 %s" % (rp_c, scl, num(S2, rp_c)),
          "%s %s_X %s %s" % (rs_c, scl, scl, num(S2, rs_c)),
          "* SDA has the same parts; only SCL is simulated, SDA is its twin with %s %s" % (rp_d, rs_d),
-         "* bus capacitance: UM10204 Rev 7.0 Table 11, Cb max 400 pF, of which the pins take 31.1 pF (sensor, controller pin, TVS, BAT54S)",
+         "* bus capacitance: UM10204 Rev 7.0 Table 11, Cb max 400 pF, of which the pins take 31.1 pF (sensor, controller pin, TVS, BAT54SW)",
          "CSIM_CABLE %s_X 0 368.9p" % scl,
          "CSIM_BOARD %s 0 31.1p" % scl,
          "* sensor open-drain pull-down, low level at the UM10204 Table 10 maximum VOL of 0.4 V",

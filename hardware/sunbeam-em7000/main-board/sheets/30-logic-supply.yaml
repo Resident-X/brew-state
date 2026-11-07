@@ -176,9 +176,9 @@ parts:
     value: "600R@100MHz"
     rating: "0603, 0.50 ohm DC max, 350 mA, 25 %"
     footprint: Inductor_SMD:L_0603_1608Metric
-    mpn: "FCM1608KF-601T03"
+    mpn: "FCM1608KF-601T05"
     maker: "TAI-TECH"
-    lcsc: C141723
+    lcsc: C133937
     class: extended
     hand: false
     function: "filter between +3V3 and the analogue supply for VDDA and VREF+ (AN4938 2.2 optional; the reference design's part)"

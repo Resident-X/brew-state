@@ -39,7 +39,7 @@ Error terms in the units of each path. "Now" = parts as drawn. "Better" = 0.1 %,
 
 ### 3.1 Coffee and steam NTCs (R501/R502, R503/R504; PC0, PC1). Requirement: +-2 degC (CON 383-384, `@estimated`)
 - (a) Divider top R501, R503: 10 k, 1 %, 100 ppm/K. R502, R504: 1 k, 1 %, 100 ppm/K (series filter, no DC effect). VREF+ is +3V3A, so the divider is ratiometric (supply tolerance cancels).
-- (b) At 88 degC, beta 3950 K, front end alone (C_front_ends.log, CP 273): 1 % tolerance **0.33 degC**, resistor drift **0.15**, clamp-diode leakage **0.56** (BAT54S 2 uA, 25 degC figure only; the 70 degC figure is in no source, so 0.56 is probably low). ADC offset and gain: typical only, 25 LSB = 0.05 degC, no maximum published. Noise: unknown. **NTC element: beta and tolerance class unknown** (pending, IO 153); the module-era note of "+-2-5 degC uncalibrated, about 0.1 calibrated" is unsourced.
+- (b) At 88 degC, beta 3950 K, front end alone (C_front_ends.log, CP 273): 1 % tolerance **0.33 degC**, resistor drift **0.15**, clamp-diode leakage **0.56** (BAT54SW 2 uA, 25 degC figure only; the 70 degC figure is in no source, so 0.56 is probably low). ADC offset and gain: typical only, 25 LSB = 0.05 degC, no maximum published. Noise: unknown. **NTC element: beta and tolerance class unknown** (pending, IO 153); the module-era note of "+-2-5 degC uncalibrated, about 0.1 calibrated" is unsourced.
 - (c) Front end: now **1.05 degC**; better **0.63** (tolerance 0.03, drift 0.04, leakage 0.56). Cal: now about 0.7 (drift + leakage), better about 0.6. Whole channel: unknown, because the element is.
 - Verdict: **no**. Uncalibrated, better R501/R503 cut the front end 40 %, but that is only 0.42 degC of a channel whose element error is larger and unknown (the change passes 20 % of the total only if the element is under about 1 degC, implausible uncalibrated). Calibrated, the gain is 15 %. The biggest front-end term (leakage) is not a resistor.
 
@@ -86,7 +86,7 @@ Error terms in the units of each path. "Now" = parts as drawn. "Better" = 0.1 %,
 
 ### 3.8 Paths where resistors do not set the accuracy (verdict: **no**)
 - **Flow (R520 pull-up 10 k, R521 1 k; PC6):** digital pulses, no accuracy imposed (CON 386); resolution +-0.2 mL/s comes from the meter's K-factor, which is unknown.
-- **Tank level and knob switches (R861-R863), keys (R831-R835), mains-presence (R764/R765, R774/R775), zero-cross (R630/R631 LED feed):** threshold or timing inputs; the proofs give margins (CP 309, 323, 327) not accuracy. Zero-cross delay 0.07-0.78 ms, no requirement figure.
+- **Tank level and knob switches (R861-R863), keys (R831-R835), mains-presence (R764/R765, R774/R775), zero-cross (R630/R631 LED feed):** threshold or timing inputs; the proofs give margins (CP 309, 323, 327) not accuracy. Zero-cross delay 0.07-0.76 ms, no requirement figure.
 - **Load cells, HX711 (R670/R671 100 ohm series filter):** no cell chosen, no figure, HX711 accuracy and levels unknown (CP 354, 357); the 100 ohm resistors are in series with the bridge input and set no gain. **Unknown; resistors not the limit.**
 - **ADC reference (+3V3A, R301/R302 0 ohm links):** ratiometric for the NTCs. The converter's gain, offset and total error are typical-only in DS12110: no maximum in the repo.
 

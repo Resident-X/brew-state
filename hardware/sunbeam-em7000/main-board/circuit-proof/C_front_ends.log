@@ -139,7 +139,7 @@
   CHECK Rp(min) <= Rp at its lowest                                    ok
   CHECK Cb allowed by tr >= 400 pF                                     ok
   CHECK Rp at its highest <= Rp(max) at 400 pF                         ok
-  pins on the line: sensor 10 pF + controller pin 10 pF + TVS 0.55 pF + BAT54S 10 pF = 31.1 pF ; left for pads, header and cable within 400 pF = 368.9 pF
+  pins on the line: sensor 10 pF + controller pin 10 pF + TVS 0.55 pF + BAT54SW 10 pF = 31.1 pF ; left for pads, header and cable within 400 pF = 368.9 pF
   VDD 3.0 V: sensor pulls low (0.4 V) through Rs: controller pin sees 0.522 V; VIL(max) 0.3 VDD = 0.900 V; margin 0.378 V vs noise margin 0.1 VDD = 0.300 V
   CHECK low-level noise margin at VDD 3.0 V                            ok
   VDD 3.3 V: sensor pulls low (0.4 V) through Rs: controller pin sees 0.536 V; VIL(max) 0.3 VDD = 0.990 V; margin 0.454 V vs noise margin 0.1 VDD = 0.330 V

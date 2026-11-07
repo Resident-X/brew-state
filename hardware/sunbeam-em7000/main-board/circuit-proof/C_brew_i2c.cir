@@ -7,7 +7,7 @@ VSIM_V3V3 +3V3 0 3.6
 R529 BREW_SCL +3V3 2.2k
 R527 BREW_SCL_X BREW_SCL 100
 * SDA has the same parts; only SCL is simulated, SDA is its twin with R530 R528
-* bus capacitance: UM10204 Rev 7.0 Table 11, Cb max 400 pF, of which the pins take 31.1 pF (sensor, controller pin, TVS, BAT54S)
+* bus capacitance: UM10204 Rev 7.0 Table 11, Cb max 400 pF, of which the pins take 31.1 pF (sensor, controller pin, TVS, BAT54SW)
 CSIM_CABLE BREW_SCL_X 0 368.9p
 CSIM_BOARD BREW_SCL 0 31.1p
 * sensor open-drain pull-down, low level at the UM10204 Table 10 maximum VOL of 0.4 V

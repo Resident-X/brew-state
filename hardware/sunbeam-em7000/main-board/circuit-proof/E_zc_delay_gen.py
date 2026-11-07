@@ -5,8 +5,8 @@ controller's input thresholds.  Run: python3 -I E_zc_delay_gen.py   then   ngspi
 
 Inputs and where each was read
   supply            216 V and 253 V rms, 50 Hz                    constraints record, Supply (60 Hz appears there only as the adopter's alternate)
-  R630 R631         60.4 kohm 1 %, 100 ppm/K, air 70 degC          Fosan FRC series sheet FJ-JS-3001-V3.0 p.4-5; constraints record, Enclosure air temperature
-                    ends: 60.4k x 0.99 x (1 - 100e-6 x 45) = 59.5 k ; 60.4k x 1.01 x (1 + 100e-6 x 45) = 61.3 k
+  R630 R631         59 kohm 1 %, 100 ppm/K, air 70 degC            UNI-ROYAL HP series sheet p.14-15 (HP122WF5902T4E; the sheet's 100 ppm/K, the catalogue lists 75); constraints record, Enclosure air temperature
+                    ends: 59k x 0.99 x (1 - 100e-6 x 45) = 58.15 k ; 59k x 1.01 x (1 + 100e-6 x 45) = 59.86 k
   LED forward drop  1.4 V maximum at 20 mA (Lite-On LTV-814 BNS-OD-C131/A4 p.9, VF); 1.2 V typical at 20 mA is the only lower figure the sheet has
   CTR               minimum 20 % and maximum 300 % at IF = 1 mA, VCE = 5 V (same table).  No figure is stated at any other IF.
   threshold model   DOCUMENTED ASSUMPTION, not a sheet figure: CTR is taken as constant over IF, so the collector current is CTR x |IF|; the sheet gives it only at
@@ -19,7 +19,7 @@ Inputs and where each was read
 import itertools, math
 
 VPK = {"216": 216 * math.sqrt(2), "253": 253 * math.sqrt(2)}
-R_END = {"lo": 59.53e3, "hi": 61.28e3}              # R630 = R631
+R_END = {"lo": 58.15e3, "hi": 59.86e3}              # R630 = R631
 CTR = {"min": 0.2, "max": 3.0}
 VF_IS = {"vf1.4": 3.5e-14, "vf1.2": 1.6e-12}        # n = 2: VF = 1.4 V and 1.2 V at 20 mA
 VDD = {"3.0": 3.0, "3.6": 3.6}
@@ -29,8 +29,8 @@ head = """Zero-crossing detector: R630 R631 U602 R632 C630, every end of the sta
 * U602 is modelled: two antiparallel diodes (the LED) and a collector current source CTR x |IF| with a saturation knee and a response lag.
 * Vsns is a 0 V current probe; Vctr holds CTR; Vsup is the +3V3 rail; Vgnd ties NEUTRAL to the simulator's ground (GND is ground by name);
 * Vamp sets the supply's peak and Bline is the supply: V = Vamp x sin(2 pi 50 t), zero crossings at t = 0, 10 ms, 20 ms ...
-R630 LINE ZC_N1 60.4k
-R631 ZC_N1 ZC_LED_A 60.4k
+R630 LINE ZC_N1 59k
+R631 ZC_N1 ZC_LED_A 59k
 Vsns ZC_LED_A ZC_LEDM 0
 D1 ZC_LEDM NEUTRAL DLED
 D2 NEUTRAL ZC_LEDM DLED

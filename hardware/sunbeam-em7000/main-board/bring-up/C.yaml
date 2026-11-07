@@ -63,7 +63,7 @@ connector_pins:
 first_power: []   # no supply input in this work package: every power pin of its headers leaves the board; a sensor with a supply of its own does not power the board through a signal pin
 rail_loads:
   - {rail: "+3V3A", current_a: 0.0011, condition: "three thermistor dividers with every thermistor shorted at 3.6 V over the lowest top resistor (9.855 k): 3 x 3.6 / 9.855 k", source: "C_front_ends.py arithmetic; resistors UNI-ROYAL Feb.12 2019 V.3, tolerance per constraints record C25804"}
-  - {rail: "+3V3A", current_a: 0.00482, condition: "fault only: three thermistor leads cross-shorted at 5.25 V through the BAT54S clamps, 3 x 1.61 mA (rail at 3.3 V)", source: "circuit-proof/C_ntc_cof_clamp.log"}
+  - {rail: "+3V3A", current_a: 0.00482, condition: "fault only: three thermistor leads cross-shorted at 5.25 V through the BAT54SW clamps, 3 x 1.61 mA (rail at 3.3 V)", source: "circuit-proof/C_ntc_cof_clamp.log"}
   - {rail: "+3V3", current_a: 0.0004, condition: "flow-meter pull-up R520 with the meter low at 3.6 V over 9.855 k, plus the 0.15 mA of a push-pull 5.125 V output through it", source: "C_front_ends.py; circuit-proof/C_flow_pp.cir"}
   - {rail: "+3V3", current_a: 0.0066, condition: "four I2C pull-ups all low at 3.6 V over the lowest pull-up (2.178 k) less the 0.4 V low level: 4 x (3.6 - 0.4) / 2.178 k", source: "UM10204 Rev 7.0 Table 10; C_front_ends.py"}
   - {rail: "+3V3", current_a: 0.006, condition: "two digital pressure transducers, 3 mA operating each (maker's page, XDB401 family, operating current at most 3 mA, read 2026-10-29)", source: "https://xdbsensor.com/product/xdb401-pro-ss316l-pressure-transducer-for-coffee-machine/"}

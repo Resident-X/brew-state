@@ -81,9 +81,9 @@ totals:
   parts: 444
   nets: 230
   parts_by_catalogue_class:
-    extended: 155
+    extended: 142
     none: 96
-    basic: 186
+    basic: 199
     preferred: 7
   hand_fitted_refs:
   - C101
@@ -596,9 +596,9 @@ departures_from_the_division_record:
 - 'Interlock drive has 21 parts, not 19: R205 and R206 (100 kohm, each coupling node to ground) are added, because the record''s circuit holds the coil about 1.2 s when the output rests high after a rising edge (circuit-proof/A_removal_gate_high_rec.log);
   the record''s sentence that a level cannot cross the coupling capacitor is to be amended.'
 - The supply voltage and supply current are read digitally by the AMC131M02 over SPI2, so the record's conversion pins PB1 and PA1 and the conditioning blocks VM_C and I_C are not used; the pins stay free.
-- Mains divider is three 300 kohm 2512 resistors and the zero-crossing feed two 60.4 kohm 2512 resistors (a single element would see more than the 200 V working voltage the maker rates); the VMEAS and IN_COND blocks of the
-  floorplan are larger than the record drew.
-- Three Extended machine-placed part types are added to the record's five (PESD5V0F1BL C45961, BAT54S C47546, MF-NSMF012-2 C163517), +9.21 USD at Economic assembly.
+- Mains divider is three 300 kohm 2512 resistors and the zero-crossing feed two 59 kohm 2512 resistors (each at half the line, 126.5 V rms, against the 300 V working voltage the maker rates; the OEM's single 120 kohm part
+  would see 253 V rms against a 200 V working voltage); the VMEAS and IN_COND blocks of the floorplan are larger than the record drew.
+- Three Extended machine-placed part types are added to the record's five (PESD5V0F1BL C45961, BAT54SW C78606, MF-NSMF012-2 C163517), +9.21 USD at Economic assembly.
 - The debug SWO pin PB3 is wired; the allocation record's free list loses PA0, PB3, PC7, PD9, PD10 and PD11.
 - The 8 MHz converter clock oscillator Y601 is added (the AMC131M02 has no oscillator of its own).
 - The record's controller current budget (480 MHz, 439 mA) has no stable junction temperature at 70 degC air; the rail skeleton is drawn to 200 MHz at the lowest power scale until the firmware clock is declared (open-items.md).
@@ -1863,9 +1863,9 @@ sheets:
     value: 600R@100MHz
     rating: 0603, 0.50 ohm DC max, 350 mA, 25 %
     footprint: Inductor_SMD:L_0603_1608Metric
-    mpn: FCM1608KF-601T03
+    mpn: FCM1608KF-601T05
     maker: TAI-TECH
-    lcsc: C141723
+    lcsc: C133937
     class: extended
     hand: false
     function: filter between +3V3 and the analogue supply for VDDA and VREF+ (AN4938 2.2 optional; the reference design's part)
@@ -3328,9 +3328,9 @@ sheets:
     value: 600R@100MHz
     rating: 0603 350mA 0.5ohm
     footprint: Inductor_SMD:L_0603_1608Metric
-    mpn: FCM1608KF-601T03
+    mpn: FCM1608KF-601T05
     maker: TAI-TECH
-    lcsc: C141723
+    lcsc: C133937
     class: extended
     hand: false
     function: 'F1: DCDC_OUT to HLDO_IN, EMI bead (SBASA56 9.3)'
@@ -3341,9 +3341,9 @@ sheets:
     value: 600R@100MHz
     rating: 0603 350mA 0.5ohm
     footprint: Inductor_SMD:L_0603_1608Metric
-    mpn: FCM1608KF-601T03
+    mpn: FCM1608KF-601T05
     maker: TAI-TECH
-    lcsc: C141723
+    lcsc: C133937
     class: extended
     hand: false
     function: 'F2: DCDC_HGND to HGND (AMC_HGND), EMI bead (SBASA56 9.3)'
@@ -3352,12 +3352,12 @@ sheets:
   - ref: C605
     lib_id: Device:C
     value: 100n
-    rating: X7R 50V 10% 0603
+    rating: X7R 50 V 10 % 0603
     footprint: Capacitor_SMD:C_0603_1608Metric
-    mpn: CL10B104KB8NNNC
-    maker: Samsung Electro-Mechanics
-    lcsc: C1591
-    class: extended
+    mpn: CC0603KRX7R9BB104
+    maker: YAGEO
+    lcsc: C14663
+    class: basic
     hand: false
     function: 'C24: HLDO_IN to HGND, 100 nF'
     mains: true
@@ -3378,11 +3378,11 @@ sheets:
   - ref: C607
     lib_id: Device:C
     value: 100n
-    rating: C0G 50V 5% 1206
+    rating: C0G 50 V +-5 % 1206
     footprint: Capacitor_SMD:C_1206_3216Metric
-    mpn: 1206N104J500CT
-    maker: Walsin
-    lcsc: C170182
+    mpn: GRM31C5C1H104JA01L
+    maker: Murata
+    lcsc: C97946
     class: extended
     hand: false
     function: 'C13: HLDO_OUT to HGND, 100 nF NP0 as Table 9-3 lists'
@@ -3430,12 +3430,12 @@ sheets:
   - ref: C612
     lib_id: Device:C
     value: 100n
-    rating: X7R 50V 10% 0603
+    rating: X7R 50 V 10 % 0603
     footprint: Capacitor_SMD:C_0603_1608Metric
-    mpn: CL10B104KB8NNNC
-    maker: Samsung Electro-Mechanics
-    lcsc: C1591
-    class: extended
+    mpn: CC0603KRX7R9BB104
+    maker: YAGEO
+    lcsc: C14663
+    class: basic
     hand: false
     function: 'C17: DCDC_CAP to DGND, 100 nF'
     mains: false
@@ -3443,12 +3443,12 @@ sheets:
   - ref: C611
     lib_id: Device:C
     value: 100n
-    rating: X7R 50V 10% 0603
+    rating: X7R 50 V 10 % 0603
     footprint: Capacitor_SMD:C_0603_1608Metric
-    mpn: CL10B104KB8NNNC
-    maker: Samsung Electro-Mechanics
-    lcsc: C1591
-    class: extended
+    mpn: CC0603KRX7R9BB104
+    maker: YAGEO
+    lcsc: C14663
+    class: basic
     hand: false
     function: oscillator Vdd decoupling, 0.1 uF or more required (SiT8008B note 11)
     mains: false
@@ -3985,25 +3985,25 @@ sheets:
   parts:
   - ref: R630
     lib_id: Device:R
-    value: 60.4k
-    rating: 1% 100ppm 2512 1W 200V working, 400V overload
+    value: 59k
+    rating: 1% 75ppm 2512 2W 300V
     footprint: Resistor_SMD:R_2512_6332Metric
-    mpn: FRC2512F6042TS
-    maker: FOJAN
-    lcsc: C5126066
+    mpn: HP122WF5902T4E
+    maker: UNI-ROYAL
+    lcsc: C2775980
     class: extended
     hand: false
-    function: series feed of the optocoupler LED, half of the OEM's 120 kohm 1 W; two in series so each sees half of the line (126.5 V rms) against a 200 V working figure
+    function: series feed of the optocoupler LED, half of the OEM's 120 kohm 1 W; two in series so each sees half of the line (126.5 V rms) against a 300 V working figure
     mains: true
     sim_exclude: false
   - ref: R631
     lib_id: Device:R
-    value: 60.4k
-    rating: 1% 100ppm 2512 1W 200V working, 400V overload
+    value: 59k
+    rating: 1% 75ppm 2512 2W 300V
     footprint: Resistor_SMD:R_2512_6332Metric
-    mpn: FRC2512F6042TS
-    maker: FOJAN
-    lcsc: C5126066
+    mpn: HP122WF5902T4E
+    maker: UNI-ROYAL
+    lcsc: C2775980
     class: extended
     hand: false
     function: series feed of the optocoupler LED, second half
@@ -4211,12 +4211,12 @@ sheets:
     dnp: false
   - ref: D502
     lib_id: Diode:BAT54S
-    value: BAT54S
+    value: BAT54SW
     rating: dual series Schottky 30V 200mA
-    footprint: Package_TO_SOT_SMD:SOT-23
-    mpn: BAT54S,215
+    footprint: Package_TO_SOT_SMD:SOT-323_SC-70
+    mpn: BAT54SW,115
     maker: Nexperia
-    lcsc: C47546
+    lcsc: C78606
     class: extended
     hand: false
     function: steering clamp of the converter pin to GND and +3V3A against a cross-short to a 5 V lead
@@ -4309,12 +4309,12 @@ sheets:
     dnp: false
   - ref: D504
     lib_id: Diode:BAT54S
-    value: BAT54S
+    value: BAT54SW
     rating: dual series Schottky 30V 200mA
-    footprint: Package_TO_SOT_SMD:SOT-23
-    mpn: BAT54S,215
+    footprint: Package_TO_SOT_SMD:SOT-323_SC-70
+    mpn: BAT54SW,115
     maker: Nexperia
-    lcsc: C47546
+    lcsc: C78606
     class: extended
     hand: false
     function: steering clamp of the converter pin to GND and +3V3A against a cross-short to a 5 V lead
@@ -4407,12 +4407,12 @@ sheets:
     dnp: false
   - ref: D506
     lib_id: Diode:BAT54S
-    value: BAT54S
+    value: BAT54SW
     rating: dual series Schottky 30V 200mA
-    footprint: Package_TO_SOT_SMD:SOT-23
-    mpn: BAT54S,215
+    footprint: Package_TO_SOT_SMD:SOT-323_SC-70
+    mpn: BAT54SW,115
     maker: Nexperia
-    lcsc: C47546
+    lcsc: C78606
     class: extended
     hand: false
     function: steering clamp of the converter pin to GND and +3V3A against a cross-short to a 5 V lead
@@ -4751,12 +4751,12 @@ sheets:
     dnp: false
   - ref: D523
     lib_id: Diode:BAT54S
-    value: BAT54S
+    value: BAT54SW
     rating: dual series Schottky 30V 200mA
-    footprint: Package_TO_SOT_SMD:SOT-23
-    mpn: BAT54S,215
+    footprint: Package_TO_SOT_SMD:SOT-323_SC-70
+    mpn: BAT54SW,115
     maker: Nexperia
-    lcsc: C47546
+    lcsc: C78606
     class: extended
     hand: false
     function: steering clamp of the SCL pin to GND and +3V3
@@ -4765,12 +4765,12 @@ sheets:
     dnp: false
   - ref: D524
     lib_id: Diode:BAT54S
-    value: BAT54S
+    value: BAT54SW
     rating: dual series Schottky 30V 200mA
-    footprint: Package_TO_SOT_SMD:SOT-23
-    mpn: BAT54S,215
+    footprint: Package_TO_SOT_SMD:SOT-323_SC-70
+    mpn: BAT54SW,115
     maker: Nexperia
-    lcsc: C47546
+    lcsc: C78606
     class: extended
     hand: false
     function: steering clamp of the SDA pin to GND and +3V3
@@ -4933,12 +4933,12 @@ sheets:
     dnp: false
   - ref: D527
     lib_id: Diode:BAT54S
-    value: BAT54S
+    value: BAT54SW
     rating: dual series Schottky 30V 200mA
-    footprint: Package_TO_SOT_SMD:SOT-23
-    mpn: BAT54S,215
+    footprint: Package_TO_SOT_SMD:SOT-323_SC-70
+    mpn: BAT54SW,115
     maker: Nexperia
-    lcsc: C47546
+    lcsc: C78606
     class: extended
     hand: false
     function: steering clamp of the SCL pin to GND and +3V3
@@ -4947,12 +4947,12 @@ sheets:
     dnp: false
   - ref: D528
     lib_id: Diode:BAT54S
-    value: BAT54S
+    value: BAT54SW
     rating: dual series Schottky 30V 200mA
-    footprint: Package_TO_SOT_SMD:SOT-23
-    mpn: BAT54S,215
+    footprint: Package_TO_SOT_SMD:SOT-323_SC-70
+    mpn: BAT54SW,115
     maker: Nexperia
-    lcsc: C47546
+    lcsc: C78606
     class: extended
     hand: false
     function: steering clamp of the SDA pin to GND and +3V3
@@ -5966,12 +5966,12 @@ sheets:
   - ref: C641
     lib_id: Device:C
     value: 100n
-    rating: X7R 50V 10% 0603
+    rating: X7R 50 V 10 % 0603
     footprint: Capacitor_SMD:C_0603_1608Metric
-    mpn: CL10B104KB8NNNC
-    maker: Samsung Electro-Mechanics
-    lcsc: C1591
-    class: extended
+    mpn: CC0603KRX7R9BB104
+    maker: YAGEO
+    lcsc: C14663
+    class: basic
     hand: false
     function: VDD bypass to GND1, 0.1 uF (Pin Description, VDD)
     mains: false
@@ -5979,12 +5979,12 @@ sheets:
   - ref: C642
     lib_id: Device:C
     value: 100n
-    rating: X7R 50V 10% 0603
+    rating: X7R 50 V 10 % 0603
     footprint: Capacitor_SMD:C_0603_1608Metric
-    mpn: CL10B104KB8NNNC
-    maker: Samsung Electro-Mechanics
-    lcsc: C1591
-    class: extended
+    mpn: CC0603KRX7R9BB104
+    maker: YAGEO
+    lcsc: C14663
+    class: basic
     hand: false
     function: DVDD bypass to DGND, 0.1 uF (Pin Description, DVDD)
     mains: false
@@ -6005,12 +6005,12 @@ sheets:
   - ref: C646
     lib_id: Device:C
     value: 100n
-    rating: X7R 50V 10% 0603
+    rating: X7R 50 V 10 % 0603
     footprint: Capacitor_SMD:C_0603_1608Metric
-    mpn: CL10B104KB8NNNC
-    maker: Samsung Electro-Mechanics
-    lcsc: C1591
-    class: extended
+    mpn: CC0603KRX7R9BB104
+    maker: YAGEO
+    lcsc: C14663
+    class: basic
     hand: false
     function: VDD bypass to GND1, 0.1 uF (Pin Description, VDD)
     mains: false
@@ -6018,12 +6018,12 @@ sheets:
   - ref: C647
     lib_id: Device:C
     value: 100n
-    rating: X7R 50V 10% 0603
+    rating: X7R 50 V 10 % 0603
     footprint: Capacitor_SMD:C_0603_1608Metric
-    mpn: CL10B104KB8NNNC
-    maker: Samsung Electro-Mechanics
-    lcsc: C1591
-    class: extended
+    mpn: CC0603KRX7R9BB104
+    maker: YAGEO
+    lcsc: C14663
+    class: basic
     hand: false
     function: DVDD bypass to DGND, 0.1 uF (Pin Description, DVDD)
     mains: false
@@ -6588,12 +6588,12 @@ sheets:
   - ref: C670
     lib_id: Device:C
     value: 100n
-    rating: X7R 50V 10% 0603
+    rating: X7R 50 V 10 % 0603
     footprint: Capacitor_SMD:C_0603_1608Metric
-    mpn: CL10B104KB8NNNC
-    maker: Samsung Electro-Mechanics
-    lcsc: C1591
-    class: extended
+    mpn: CC0603KRX7R9BB104
+    maker: YAGEO
+    lcsc: C14663
+    class: basic
     hand: false
     function: input filter capacitor C4 of the maker's reference board, across INA+/INA-
     mains: false
@@ -6614,12 +6614,12 @@ sheets:
   - ref: C672
     lib_id: Device:C
     value: 100n
-    rating: X7R 50V 10% 0603
+    rating: X7R 50 V 10 % 0603
     footprint: Capacitor_SMD:C_0603_1608Metric
-    mpn: CL10B104KB8NNNC
-    maker: Samsung Electro-Mechanics
-    lcsc: C1591
-    class: extended
+    mpn: CC0603KRX7R9BB104
+    maker: YAGEO
+    lcsc: C14663
+    class: basic
     hand: false
     function: reference bypass C3 of the reference board, VBG to AGND, 0.1 uF
     mains: false
@@ -6627,12 +6627,12 @@ sheets:
   - ref: C673
     lib_id: Device:C
     value: 100n
-    rating: X7R 50V 10% 0603
+    rating: X7R 50 V 10 % 0603
     footprint: Capacitor_SMD:C_0603_1608Metric
-    mpn: CL10B104KB8NNNC
-    maker: Samsung Electro-Mechanics
-    lcsc: C1591
-    class: extended
+    mpn: CC0603KRX7R9BB104
+    maker: YAGEO
+    lcsc: C14663
+    class: basic
     hand: false
     function: DVDD decoupling to AGND; the sheet gives no value for a DVDD of its own, 0.1 uF is the common value
     mains: false
@@ -6731,12 +6731,12 @@ sheets:
   - ref: C675
     lib_id: Device:C
     value: 100n
-    rating: X7R 50V 10% 0603
+    rating: X7R 50 V 10 % 0603
     footprint: Capacitor_SMD:C_0603_1608Metric
-    mpn: CL10B104KB8NNNC
-    maker: Samsung Electro-Mechanics
-    lcsc: C1591
-    class: extended
+    mpn: CC0603KRX7R9BB104
+    maker: YAGEO
+    lcsc: C14663
+    class: basic
     hand: false
     function: input filter capacitor C4 of the maker's reference board, across INA+/INA-
     mains: false
@@ -6757,12 +6757,12 @@ sheets:
   - ref: C677
     lib_id: Device:C
     value: 100n
-    rating: X7R 50V 10% 0603
+    rating: X7R 50 V 10 % 0603
     footprint: Capacitor_SMD:C_0603_1608Metric
-    mpn: CL10B104KB8NNNC
-    maker: Samsung Electro-Mechanics
-    lcsc: C1591
-    class: extended
+    mpn: CC0603KRX7R9BB104
+    maker: YAGEO
+    lcsc: C14663
+    class: basic
     hand: false
     function: reference bypass C3 of the reference board, VBG to AGND, 0.1 uF
     mains: false
@@ -6770,12 +6770,12 @@ sheets:
   - ref: C678
     lib_id: Device:C
     value: 100n
-    rating: X7R 50V 10% 0603
+    rating: X7R 50 V 10 % 0603
     footprint: Capacitor_SMD:C_0603_1608Metric
-    mpn: CL10B104KB8NNNC
-    maker: Samsung Electro-Mechanics
-    lcsc: C1591
-    class: extended
+    mpn: CC0603KRX7R9BB104
+    maker: YAGEO
+    lcsc: C14663
+    class: basic
     hand: false
     function: DVDD decoupling to AGND; the sheet gives no value for a DVDD of its own, 0.1 uF is the common value
     mains: false
