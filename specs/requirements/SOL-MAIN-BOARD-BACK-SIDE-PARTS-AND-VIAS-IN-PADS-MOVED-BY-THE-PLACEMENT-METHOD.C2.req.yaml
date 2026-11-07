@@ -5,7 +5,7 @@ status: active
 version: 1
 measurement_type: binary
 verification: test
-scope: The five named vias and any via the survey finds inside an SMD pad of its own net; the two survey hits on pads of another net are not covered here.
+scope: 'The seven BAT54S clamps D502, D504, D506, D523, D524, D527 and D528: their swap to the SOT-323 BAT54SW,115, fields, bill line, footprint, placement and pin mapping.'
 text: |
   D502, D504, D506, D523, D524, D527 and D528 carry the Nexperia BAT54SW,115 (LCSC C78606) in a SOT-323 footprint in both the schematic symbol and the board, with matching footprint, LCSC, MPN and description fields; the bill of materials holds that one line for the seven parts and no other part changes; D502 and D506 stand on F.Cu inside the analog sensing region, D504, D523, D524, D527 and D528 stay on F.Cu, and each of the seven has its courtyard clear of every other courtyard; and the netlist difference against the state before this item is empty, so pin 1 stays on GND, pin 2 on its supply (+3V3A for D502, D504 and D506, +3V3 for the others) and pin 3 on its signal node as before, with the pad-to-pin mapping checked against the maker datasheet. The test fails on a swapped pin 1 and 2, on a footprint field that disagrees with the schematic, on any of the seven still carrying C47546 in the symbol, board or bill of materials, and on a part outside the region. Out of scope: the records that name the part (the part-records criterion covers them), the electrical-equivalence reading, the routing of the moved parts, R301 and the vias.
 links:
