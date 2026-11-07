@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD.C7
+type: criterion
+title: D502 and D506 are connected on the board to their former nets, add no check or rules line, and the re-routed critical copper is locked and recorded
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  After the move, the pads of D502 and D506 are connected on the board and not only in the netlist to the nets they were connected to before (GND, +3V3A, NTC_COF for D502 and NTC_WAND for D506), checked from the board file's copper; the new routes add no pre-order check line and no KiCad rules line beyond the baseline of the board before this item; and the locked critical copper they re-route, the NTC_COF and NTC_WAND critical copper on B.Cu, is re-routed with the copper lock and a fresh copper record covering it. The test fails on a pad of either part joined to a different net or left unconnected, on a new check or rules line, and on re-routed critical copper outside the lock or the record. Out of scope: R301, the copper lock for any other net, and lines the baseline already carries.
+links:
+  - target: SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD
+    type: criterion-of
