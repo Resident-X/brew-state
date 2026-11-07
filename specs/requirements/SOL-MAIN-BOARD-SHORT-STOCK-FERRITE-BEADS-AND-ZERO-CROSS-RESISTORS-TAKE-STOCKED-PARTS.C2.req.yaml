@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-SHORT-STOCK-FERRITE-BEADS-AND-ZERO-CROSS-RESISTORS-TAKE-STOCKED-PARTS.C2
+type: criterion
+title: The records that name the old parts follow the new parts
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The parts specification, the schematic specification, the sheet descriptions, the circuit verdicts, the traceability record and the catalogue extract no longer name C141723 or C5126066 or the 60.4 kohm value for R630 and R631, and the catalogue extract holds entries for C133937 and C2775980 with the stock figures read on 2026-11-07. Out of scope: records that cite the old parts as history of a decision.
+links:
+  - target: SOL-MAIN-BOARD-SHORT-STOCK-FERRITE-BEADS-AND-ZERO-CROSS-RESISTORS-TAKE-STOCKED-PARTS
+    type: criterion-of

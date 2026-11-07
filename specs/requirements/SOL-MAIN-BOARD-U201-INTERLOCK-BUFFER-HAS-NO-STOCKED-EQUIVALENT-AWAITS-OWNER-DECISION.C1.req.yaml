@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-U201-INTERLOCK-BUFFER-HAS-NO-STOCKED-EQUIVALENT-AWAITS-OWNER-DECISION.C1
+type: criterion
+title: The item stays open until the owner decides between keeping U201 with hand-fitted extras and a re-proved swap
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The record of the item states that U201 stays as drawn and that no acceptance is recorded for the owner; that the item closes only on the owner's decision between keeping the part and ordering at most the stocked quantity of assembled boards with the extra pieces bought elsewhere and hand-fitted, or a re-proved swap; and that a swap must prove VT+ and VT- across 4.75 to 5.25 V and temperature against 2.680 V and 0.4 V, VOH and VOL at the 87.5 ohm 1 mA bound and at the 110 mA peak into the coupling capacitors, input behaviour with +5V absent, the interlock removal-time decks re-run with the new part, and the U201, POL_IN, POL_BUF and F11 verdict rows and the parts specification updated. Out of scope: the ferrite beads, the zero-cross resistors and every other part of the bill.
+links:
+  - target: SOL-MAIN-BOARD-U201-INTERLOCK-BUFFER-HAS-NO-STOCKED-EQUIVALENT-AWAITS-OWNER-DECISION
+    type: criterion-of

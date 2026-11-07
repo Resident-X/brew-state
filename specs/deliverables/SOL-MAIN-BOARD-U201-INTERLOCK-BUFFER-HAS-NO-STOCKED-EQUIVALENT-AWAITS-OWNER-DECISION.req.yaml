@@ -1,0 +1,19 @@
+id: SOL-MAIN-BOARD-U201-INTERLOCK-BUFFER-HAS-NO-STOCKED-EQUIVALENT-AWAITS-OWNER-DECISION
+type: deliverable
+category: solution
+title: The main board's U201 interlock buffer has no stocked equivalent and awaits the owner's decision
+status: active
+version: 1
+text: |
+  Holds open the main board's interlock buffer U201 (Nexperia 74AHCT1G17GWH, LCSC C554579, on +5V), whose stock at the manufacturer's assembly house is 3 on 2026-11-07. The input comes from the controller's 3.3 V output through R207, with a proof worst-case high of 2.680 V and a low of at most 0.4 V. The stock read found no stocked equivalent that passes the input-threshold check: the AHC part's VT+ runs up to 3.15 V at 4.5 V supply and 3.85 V at 5.5 V, which 2.680 V does not clear; the LVC part fails the board's own F11 record (VT+ up to 3.33 V at 5.5 V); and the only stocked TTL-threshold Schmitt is the inverter SN74AHCT1G14DBVR (LCSC C55250), which flips polarity and changes the footprint. The part stays as drawn.
+
+  Settled for the build:
+  - The item stays open until the owner decides between two courses: keep the part and order at most the stocked quantity of assembled boards, with the extra pieces bought elsewhere and hand-fitted; or a re-proved swap.
+  - No acceptance is recorded for the owner, and the owner's standing instruction of 2026-11-07 is not applied to this item.
+  - A swap must prove: VT+ and VT- across 4.75 to 5.25 V and temperature against 2.680 V and 0.4 V; VOH and VOL at the 87.5 ohm 1 mA bound and at the 110 mA peak into the two coupling capacitors; input behaviour with +5V absent; the interlock removal-time decks re-run with the new part; and the U201, POL_IN, POL_BUF and F11 verdict rows and the parts specification updated.
+  - Out of scope: the ferrite beads and zero-cross resistors (a sibling item), Y601, and every other part of the bill.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets
