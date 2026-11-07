@@ -1,18 +1,19 @@
 id: SOL-MAIN-BOARD-SHORT-STOCK-FERRITE-BEADS-AND-ZERO-CROSS-RESISTORS-TAKE-STOCKED-PARTS
 type: deliverable
 category: solution
-title: The main board's short-stock ferrite beads and zero-cross resistors take stocked like-for-like parts
+title: The main board's short-stock ferrite beads and zero-cross resistors take stocked parts and two pairs of same-spec 100 nF lines are merged
 status: active
-version: 1
+version: 2
 text: |
-  Replaces the main board's two short-stock part kinds with stocked like-for-like parts, with the board's copper unchanged. At the manufacturer's assembly house the ferrite beads F601, F602 and FB301 (TAI-TECH FCM1608KF-601T03, LCSC C141723, three per board) have stock 5, and the zero-cross detector's two mains-side feed resistors R630 and R631 (Fojan FRC2512F6042TS, 60.4 kohm 1 % 100 ppm 2512, LCSC C5126066, two per board) have stock 1. The stock read of 2026-11-07 found stocked parts for both.
+  Replaces the main board's two short-stock part kinds with stocked like-for-like parts and merges two pairs of identical-spec 100 nF lines, with the board's copper unchanged. At the manufacturer's assembly house the ferrite beads F601, F602 and FB301 (TAI-TECH FCM1608KF-601T03, LCSC C141723, three per board) have stock 5, and the zero-cross detector's two mains-side feed resistors R630 and R631 (Fojan FRC2512F6042TS, 60.4 kohm 1 % 100 ppm 2512, LCSC C5126066, two per board) have stock 1. The stock read of 2026-11-07 found stocked parts for both.
 
   Settled for the build:
   - F601, F602 and FB301 take the TAI-TECH FCM1608KF-601T05 (LCSC C133937): same 0603 footprint, 600 ohm +-25 % at 100 MHz, 0.5 ohm, 500 mA, stock 234,652. The loads are 1 mA or less on F601 and F602 and 4 mA on FB301, so the 0.5 ohm resistance and the rating are not a concern.
   - R630 and R631 take the Uni-Royal HP122WF5902T4E (LCSC C2775980): 59 kohm 1 %, 2 W, 300 V, 75 ppm, stock 3,933. Each resistor carries 126.5 V rms and 269 mW at the 60.4 kohm value. The pair changes by -2.3 %, so the LED peak current of 2.48 mA at 216 V rises to about 2.5 mA, above the 1 mA needed. Both resistors of the pair carry the same value. The part is a 2512 chip; the build confirms the board footprint's pad pattern is the one the part's datasheet lands on and says so, and if it is not, this item becomes a layout change and states that.
   - The owner's standing instruction of 2026-11-07 (sign and accept on his behalf unless there is a real safety or performance impact) covers the choice and none is found: the ferrite loads are 1 to 4 mA, and the zero-cross resistor change lowers dissipation per resistor and raises the voltage and power ratings.
+  - Two identical-spec line merges change only the part number, because the manufacturer's standard assembly charges 1.55 USD per distinct bill line: C1591 (Samsung CL10B104KB8NNNC) becomes C14663 (Yageo CC0603KRX7R9BB104), both 100 nF X7R 50 V 10 % 0603, on C605, C611, C612, C641, C642, C646, C647, C670, C672, C673, C675, C677 and C678; C170182 (Walsin 1206N104J500CT) becomes C97946 (Murata GRM31C5C1H104JA01L), both 100 nF C0G 50 V 5 % 1206, on C607. A line disappears only if every one of its refs moves, so a partial move keeps both lines. Footprint, value, voltage, dielectric and tolerance are unchanged and no layout changes.
   - No mains figure and no signed separation figure is relaxed, and the mains-pair exception records are untouched.
-  - Out of scope: U201 (a sibling open item), Y601, every other part of the bill, and any board layout change.
+  - Out of scope: other line merges, U201 (a sibling open item), Y601, every other part of the bill, and any board layout change.
 links:
   - target: DEL-MAINTENANCE.C1
     type: derives-from

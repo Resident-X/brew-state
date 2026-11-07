@@ -2,11 +2,11 @@ id: SOL-MAIN-BOARD-SHORT-STOCK-FERRITE-BEADS-AND-ZERO-CROSS-RESISTORS-TAKE-STOCK
 type: criterion
 title: The symbol fields, footprint fields and bill of materials hold the new part numbers and no old one
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |-
-  For F601, F602, FB301, R630 and R631 the schematic symbol fields (LCSC, MPN, manufacturer, value, description) and the board footprint fields agree with each other and hold C133937 (FCM1608KF-601T05) for the three beads and C2775980 (HP122WF5902T4E, 59 kohm) for the two resistors; the production bill of materials holds the two new numbers with the old C141723 and C5126066 absent; the netlist difference against the previous design is empty and the footprints are unchanged. Out of scope: the other parts of the bill.
+  For F601, F602, FB301, R630 and R631 the schematic symbol fields (LCSC, MPN, manufacturer, value, description) and the board footprint fields agree with each other and hold C133937 (FCM1608KF-601T05, the same 600 ohm +-25 % at 100 MHz and 0603 footprint as C141723, so the bill's line count is unchanged) for the three beads and C2775980 (HP122WF5902T4E, 59 kohm) for the two resistors; the production bill of materials holds the two new numbers with the old C141723 and C5126066 absent; the netlist difference against the previous design is empty and the footprints are unchanged. Out of scope: the other parts of the bill.
 links:
   - target: SOL-MAIN-BOARD-SHORT-STOCK-FERRITE-BEADS-AND-ZERO-CROSS-RESISTORS-TAKE-STOCKED-PARTS
     type: criterion-of

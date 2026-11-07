@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-SHORT-STOCK-FERRITE-BEADS-AND-ZERO-CROSS-RESISTORS-TAKE-STOCKED-PARTS.C5
+type: criterion
+title: The 14 refs of two 100 nF part pairs move to the surviving part number so each pair is one bill line
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The 13 refs C605, C611, C612, C641, C642, C646, C647, C670, C672, C673, C675, C677 and C678 move from C1591 to C14663, both 100 nF X7R 50 V 10 % 0603, and C607 moves from C170182 to C97946, both 100 nF C0G 50 V 5 % 1206; the criterion is met only when every listed ref of a pair moves, so the production bill of materials then holds no line for C1591 or C170182 and one fewer distinct line for each pair, and a partial move fails it. The footprint, value, voltage, dielectric and tolerance of each moved ref are unchanged and the netlist difference against the previous design is empty. The records that name C1591 or C170182 (the pin limits keyed by LCSC number, the parts specification, the sheet descriptions, the circuit verdicts, the traceability record and the catalogue extract) follow in the same change. Out of scope: any other line merge and any layout change.
+links:
+  - target: SOL-MAIN-BOARD-SHORT-STOCK-FERRITE-BEADS-AND-ZERO-CROSS-RESISTORS-TAKE-STOCKED-PARTS
+    type: criterion-of
