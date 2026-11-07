@@ -9,12 +9,14 @@
 # accepted_by therefore names both. On 2026-11-06 the owner re-signed the whole record in writing
 # ("Accept all and resign"), after the coat's timing changed (condition 1 below), the wording of the
 # pump-triac and gate-resistor exceptions was restated and three further residual risks were accepted;
-# the top-level accepted_on and that of every exception read 2026-11-06, and no figure, pair,
+# the top-level accepted_on and that of every exception read 2026-11-06 that day, and no figure, pair,
 # distance, reason or bound changed with the date. The acceptance covers the whole record, the exceptions included,
 # and each exception carries its own accepted_by and accepted_on. The commit that enters them is the
 # audit trail. A change to any figure, input, barrier or exception needs a fresh acceptance.
 #
-# The entry for the C606 pad pair (pads 1 and 2) was removed on 2026-11-07 on the owner's written instruction, because the layout rule check no longer reports a creepage shortfall for it; the removal excuses nothing and relaxes nothing, and the record's signature day is unchanged at 2026-11-06.
+# The entry for the C606 pad pair (pads 1 and 2) was removed on 2026-11-07 on the owner's written instruction, because the layout rule check no longer reports a creepage shortfall for it; the removal excuses nothing and relaxes nothing, and the removal changed no signature day.
+#
+# On 2026-11-07 the owner accepted, in the working session and in his own word "Accept", the change of the zero-cross feed resistors R630 and R631 from 60.4 kohm to 59 kohm: the text and arithmetic of the three entries that name them (the ZC_N1 net pair and the two pump-gate and ZC_LED_A net pairs) and of rows 5, 10 and 11 of the single-fault table; no distance, pair or bound changed. Those three entries carry accepted_by naming that acceptance and accepted_on 2026-11-07. The record's top-level accepted_on reads 2026-11-07 because no entry may be dated later than the record; every other entry keeps its signer and the day 2026-11-06, and the record was not re-signed as a whole on 2026-11-07.
 #
 # Readings the drafter made for the owner to check before accepting (each is repeated in the
 # citation of the row it affects):
@@ -526,7 +528,7 @@ table_rows:
 # owner to accept or correct, except that the reasons of the bought-part creepage entries are those of the
 # owner's recorded acceptance (DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER, residual risk (e),
 # 2026-10-29); for U602 they add the statement that the gap is the board's and the maker publishes none. Every
-# accepted_by and accepted_on is entered on 2026-11-06 (first entered 2026-11-05, see the header); the values were confirmed against the
+# accepted_by and accepted_on is entered on 2026-11-06 (first entered 2026-11-05, see the header), except the three entries the header names as accepted on 2026-11-07; the values were confirmed against the
 # finished main-board layout. For the first four entries, no fuse clears a breakdown between the tab pad and a lead pad:
 # it carries only the pump's own current (0.46 A coffee, 0.19 A steam), below the branch fuse's rating (0.8 A and 0.5 A) and far below F101's 10 A. What bounds it is
 # K201 opening, either when the controller stops refreshing it or when the firmware check at power-up with every output commanded off finds a leak
@@ -547,7 +549,7 @@ table_rows:
 # each header's pins when accepting. Each accepted_mm is the 2.0 mm pitch less the 0.75 mm drill of the
 # JST PH pad of the footprint, to be confirmed against the finished layout.
 accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
-accepted_on: "2026-11-06"
+accepted_on: "2026-11-07"
 
 accepted_exceptions:
   - pair: mains_to_mains
@@ -671,7 +673,7 @@ accepted_exceptions:
   # is covered by the first two entries; the lead pads 1 and 3 of T701 and T711 stand 3.36 mm apart on their two-lead
   # land and the U701 and U711 pins 3.3 mm or more, no shortfall against 2.6 mm, and each triac's tab pad stands 2.00 mm
   # from each of its lead pads, which the first four accepted_exceptions entries excuse at 2.0 mm of creepage. Every
-  # accepted_by and accepted_on is entered on 2026-11-06 (first entered 2026-11-05, see the header).
+  # accepted_by and accepted_on is entered on 2026-11-06 (first entered 2026-11-05, see the header), except the three entries the header names as accepted on 2026-11-07.
   - pair: mains_to_mains
     constraint: creepage
     nets_a: ["/NEUTRAL", "/Mains entry and load feed/NEUTRAL_IN", "/SHUNT_SENSE_IN", "/SHUNT_SENSE_NEUTRAL", "/Supply voltage and current measurement/AMC_AIN0P", "/Supply voltage and current measurement/AMC_AIN0N", "/Supply voltage and current measurement/AMC_AIN1P", "/Supply voltage and current measurement/AMC_AIN1N", "/Supply voltage and current measurement/AMC_DCDC_OUT", "/Supply voltage and current measurement/AMC_DCDC_HGND", "/Supply voltage and current measurement/AMC_HGND", "/Supply voltage and current measurement/AMC_HLDO_IN", "/Supply voltage and current measurement/AMC_HLDO_OUT", "/Supply voltage and current measurement/VMEAS_DIV", "unconnected-(U601-GPO-Pad6)"]
@@ -708,8 +710,8 @@ accepted_exceptions:
     accepted_mm: 1.6
     reason: "ZC_N1 is the midpoint of the two 59 kohm feed resistors R630 and R631 from LINE to the detector LED: they share the line less the LED's forward drop (about 1.2 V), so ZC_N1 stands at most 253 / 2 = 126.5 V rms from LINE and from NEUTRAL, and from ZC_LED_A (1.2 V above neutral) no more than that (pin-limit record mains_zero_cross, fraction 0.5). The creepage at 126.5 V is the band figure between the 125 V and 160 V rows, rounded up to 1.6 mm. The reduction holds in normal operation, with the resistor chain intact; a shorted resistor is a single fault, judged in row 5 of the single-fault table above, which gives the voltage it puts across the gap, the current that bounds it and the arithmetic from the schematic's part values. The working voltage is the drafter's figure for the owner to accept or correct."
     bounded_by: "The entry fuse F101 and the branch fuses clear a breakdown between these nets, which can carry only the current the resistor chain passes (a few milliamps) until a fault bridges the chain; the chain's own energy limit bounds the rest."
-    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
-    accepted_on: "2026-11-06"
+    accepted_by: "David Baker (owner), accepted in session 2026-11-07, words: Accept"
+    accepted_on: "2026-11-07"
   - pair: mains_to_mains
     constraint: creepage
     nets_a: ["/Supply voltage and current measurement/VMEAS_N1"]
@@ -728,8 +730,8 @@ accepted_exceptions:
     accepted_mm: 0.4
     reason: "PUMP_C_TRIAC_G and PUMP_S_TRIAC_G are the gate nets of the pump triacs T701 and T711, each the opto-triac output pin and the triac gate alone (no gate-to-MT1 resistor is fitted); while the opto-triac drives it the gate stands within a few volts of its MT1 on NEUTRAL. ZC_LED_A is the zero-cross opto U602's LED anode, 1.2 V above NEUTRAL while the LTV-814 antiparallel LEDs conduct. Against /NEUTRAL alone each stands under 10 V rms in normal operation, the 10 V band row (creepage 0.4 mm); they pair with no AMC_* net, shunt-sense net or the divider tap, and the pump gate network nets PUMP_C_GATE_R and PUMP_S_GATE_R keep the full figure against every net. The reduction holds in normal operation, with the circuit intact; U602 open (ZC_LED_A reaching 253 V through R630 and R631, 118 kohm, 2.14 mA) and the gate junction open while the opto-triac is off (the gate net floating toward the full supply on the opto-triac's off-state leakage, microamps) are single faults judged in rows 10 of the single-fault table above. The working voltage is the drafter's figure for the owner to accept or correct."
     bounded_by: "The energy the neutral-referenced circuit can supply, for the LED anode the 118 kohm of R630 and R631 and for a gate net the off-state leakage of the opto-triac, and for any path from these nets to the line the entry fuse F101 and the branch fuses."
-    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
-    accepted_on: "2026-11-06"
+    accepted_by: "David Baker (owner), accepted in session 2026-11-07, words: Accept"
+    accepted_on: "2026-11-07"
   - pair: mains_to_mains
     constraint: clearance
     nets_a: ["/Pump drives/PUMP_C_TRIAC_G", "/Pump drives/PUMP_S_TRIAC_G", "/Zero-crossing detector/ZC_LED_A"]
@@ -738,8 +740,8 @@ accepted_exceptions:
     accepted_mm: 0.2
     reason: "PUMP_C_TRIAC_G and PUMP_S_TRIAC_G are the gate nets of the pump triacs T701 and T711, each the opto-triac output pin and the triac gate alone (no gate-to-MT1 resistor is fitted); while the opto-triac drives it the gate stands within a few volts of its MT1 on NEUTRAL. ZC_LED_A is the zero-cross opto U602's LED anode, 1.2 V above NEUTRAL while the LTV-814 antiparallel LEDs conduct. Against /NEUTRAL alone each stands under 10 V rms in normal operation, the 10 V band row (clearance 0.2 mm); they pair with no AMC_* net, shunt-sense net or the divider tap, and the pump gate network nets PUMP_C_GATE_R and PUMP_S_GATE_R keep the full figure against every net. The reduction holds in normal operation, with the circuit intact; U602 open (ZC_LED_A reaching 253 V through R630 and R631, 118 kohm, 2.14 mA) and the gate junction open while the opto-triac is off (the gate net floating toward the full supply on the opto-triac's off-state leakage, microamps) are single faults judged in rows 11 of the single-fault table above. The working voltage is the drafter's figure for the owner to accept or correct."
     bounded_by: "The energy the neutral-referenced circuit can supply, for the LED anode the 118 kohm of R630 and R631 and for a gate net the off-state leakage of the opto-triac, and for any path from these nets to the line the entry fuse F101 and the branch fuses."
-    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
-    accepted_on: "2026-11-06"
+    accepted_by: "David Baker (owner), accepted in session 2026-11-07, words: Accept"
+    accepted_on: "2026-11-07"
   - pair: mains_to_mains
     constraint: creepage
     between: ["R105.1", "R105.2"]

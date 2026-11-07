@@ -17,7 +17,7 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 
 RECORD = os.path.join("hardware", "sunbeam-em7000", board_check.RECORD_NAME)
 DESIGN = board_check.Design(os.path.join("hardware", "sunbeam-em7000", "board", "board.kicad_pro"))
 #: The day the reader is told it is: the day the record was signed. A date after it reads as unsigned.
-TODAY = datetime.date(2026, 11, 6)
+TODAY = datetime.date(2026, 11, 7)
 #: How many entries the record holds before its net-pair and same-part entries: the four triac creepage entries and the five connector entries. The draft held 25 here; the signed run of the layout rule check found the other 16 used by no shortfall (the
 #: pad-pair clearance entries, which KiCad never tests inside one footprint, and the mains-to-low-voltage entries, whose gaps the board's slots hold) and they are removed.
 ORIGINAL_ENTRIES = 9
@@ -104,14 +104,14 @@ class SeparationBasisRecord(unittest.TestCase):
         for broken, what in ((dict((k, v) for k, v in data.items() if k != "accepted_by"), "accepted_by"),
                              (dict((k, v) for k, v in data.items() if k != "accepted_on"), "accepted_on"),
                              (dict(data, accepted_by="tbd"), "accepted_by"), (dict(data, accepted_by="<owner>"), "accepted_by"),
-                             (dict(data, accepted_on="2026-11-07"), "accepted_on"), (dict(data, accepted_on="5 November"), "accepted_on")):
+                             (dict(data, accepted_on="2026-11-08"), "accepted_on"), (dict(data, accepted_on="5 November"), "accepted_on")):
             found, problems = reading(broken)
             self.assertIsNone(found, (what, broken.get(what)))
             self.assertTrue(any(p.location.endswith(what) and "unsigned" in p.message for p in problems), (what, broken.get(what)))
         # an exception signed later than the record is no acceptance the record covers
         late = [dict(e) for e in data["accepted_exceptions"]]
-        late[0]["accepted_on"] = "2026-11-07"
-        self.assertIsNotNone(board_check.entry_unsigned(late[0], board_check.iso_date(data["accepted_on"]), datetime.date(2026, 11, 7)))
+        late[0]["accepted_on"] = "2026-11-08"
+        self.assertIsNotNone(board_check.entry_unsigned(late[0], board_check.iso_date(data["accepted_on"]), datetime.date(2026, 11, 8)))
         for field, value in (("accepted_by", ""), ("accepted_by", "TBD"), ("accepted_on", "2099-01-01"), ("accepted_on", "")):
             self.assertIsNotNone(board_check.entry_unsigned(dict(data["accepted_exceptions"][0], **{field: value}), board_check.iso_date(data["accepted_on"]), TODAY), (field, value))
 
@@ -575,7 +575,7 @@ class SameConnectorRecord(unittest.TestCase):
                 self.assertIn(entry["connector"], entry["reason"])
                 self.assertTrue(entry["bounded_by"].strip())
                 self.assertIn(OWNER, entry["accepted_by"])
-                self.assertEqual(entry["accepted_on"], data["accepted_on"])
+                self.assertIn(entry["accepted_on"], ("2026-11-06", data["accepted_on"]))
 
     def test_the_checks_own_reader_accepts_each_entry_as_a_form_and_refuses_a_broken_one(self):
         # SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C6: The committed record holds one same_connector_pins entry for each of J630, J635, J791, J821 and J861 with pitch_mm 2.0, an accepted_mm drafted from the schematic and the division record, the reason that the header carries slow signals only and no fast signal crosses its strip, a bounding element, and the entry's own accepted_by and accepted_on empty. The five entries are read through the check's own reader from the committed record in whatever acceptance state the record as a whole is in, and each is accepted as a form; the test asserts nothing about whether the record as a whole reads signed or unsigned.
@@ -943,6 +943,25 @@ class CoatAfterBringUpAndTheReSigning(unittest.TestCase):
     """The header's coat timing and the owner's re-signing day, as the maintenance item that governs them states."""
 
     RESIGNED = "2026-11-06"
+    #: The day the owner accepted the 59 kohm zero-cross feed in the working session, in his word "Accept"; the record's top-level day and that of the three entries that name R630 and R631.
+    ACCEPTED_AGAIN = "2026-11-07"
+    ACCEPTED_AGAIN_BY = "David Baker (owner), accepted in session 2026-11-07, words: Accept"
+
+    @classmethod
+    def day_and_signer_hold(cls, case, data):
+        """The record's day is the latest acceptance; the entries that name R630 and R631 carry the owner's acceptance of 2026-11-07 and every other entry keeps the re-signing day and signer."""
+        case.assertEqual(data["accepted_on"], cls.ACCEPTED_AGAIN)
+        changed = [e for e in data["accepted_exceptions"] if "R630" in e["reason"]]
+        case.assertEqual(len(changed), 3)
+        for position, entry in enumerate(data["accepted_exceptions"]):
+            if entry in changed:
+                case.assertEqual((entry["accepted_on"], entry["accepted_by"]), (cls.ACCEPTED_AGAIN, cls.ACCEPTED_AGAIN_BY), position)
+                case.assertIn("59 kohm" if "nets_a" in entry and "ZC_N1" in " ".join(entry["nets_a"]) else "118 kohm", entry["reason"])
+                case.assertNotIn("60.4 kohm", entry["reason"])
+                case.assertNotIn("120.8 kohm", entry["reason"])
+            else:
+                case.assertEqual(entry["accepted_on"], cls.RESIGNED, position)
+                case.assertEqual(entry["accepted_by"], data["accepted_by"], position)
 
     @staticmethod
     def header():
@@ -984,34 +1003,43 @@ class CoatAfterBringUpAndTheReSigning(unittest.TestCase):
         # SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING.C2: The committed record's top-level accepted_on and the accepted_on of each of its 32 accepted_exceptions entries read 2026-11-06, every accepted_by is unchanged, no exception is dated later than the record, and the header states that the owner re-signed the whole record on that day in writing. The check's reader on the committed record finds it and every exception signed.
         _, data = committed()
         by = data["accepted_by"]
-        self.assertEqual(data["accepted_on"], self.RESIGNED)
         self.assertEqual(len(data["accepted_exceptions"]), EXCEPTION_COUNT)
+        self.day_and_signer_hold(self, data)
         for position, entry in enumerate(data["accepted_exceptions"]):
-            self.assertEqual(entry["accepted_on"], self.RESIGNED, position)
-            self.assertEqual(entry["accepted_by"], by, position)
             self.assertLessEqual(board_check.iso_date(entry["accepted_on"]), board_check.iso_date(data["accepted_on"]), position)
         self.assertTrue(by.startswith(OWNER) and "entered by Claude on the owner's written instruction" in by)
         header = self.header()
         self.assertIn("On 2026-11-06 the owner re-signed the whole record in writing", header)
+        for phrase in ("On 2026-11-07 the owner accepted", "from 60.4 kohm to 59 kohm", "rows 5, 10 and 11", "accepted_on 2026-11-07",
+                       "every other entry keeps its signer and the day 2026-11-06", "not re-signed as a whole on 2026-11-07"):
+            self.assertIn(phrase, header, phrase)
         signed, problems = reading()
         self.assertIsNotNone(signed)
         assert_reads_clean(self, problems)
         # a record dated before its exceptions, or an exception dated after the record, is not signed
         late = [dict(e) for e in data["accepted_exceptions"]]
-        late[0]["accepted_on"] = "2026-11-07"
-        self.assertIsNotNone(board_check.entry_unsigned(late[0], board_check.iso_date(data["accepted_on"]), datetime.date(2026, 11, 7)))
+        late[0]["accepted_on"] = "2026-11-08"
+        self.assertIsNotNone(board_check.entry_unsigned(late[0], board_check.iso_date(data["accepted_on"]), datetime.date(2026, 11, 8)))
+        # the check is real: a changed entry without the owner's acceptance of the day, or an unchanged entry moved, is caught
+        for position in (i for i, e in enumerate(data["accepted_exceptions"]) if "R630" in e["reason"]):
+            entries = [dict(e) for e in data["accepted_exceptions"]]
+            entries[position]["accepted_on"] = self.RESIGNED
+            with self.assertRaises(AssertionError):
+                self.day_and_signer_hold(self, dict(data, accepted_exceptions=entries))
+        entries = [dict(e) for e in data["accepted_exceptions"]]
+        entries[0]["accepted_on"] = self.ACCEPTED_AGAIN
+        with self.assertRaises(AssertionError):
+            self.day_and_signer_hold(self, dict(data, accepted_exceptions=entries))
 
 
     REMOVAL_STATEMENT = ("entry for the C606 pad pair", "was removed on 2026-11-07", "on the owner's written instruction",
-                         "the removal excuses nothing and relaxes nothing", "the record's signature day is unchanged")
+                         "the removal excuses nothing and relaxes nothing", "the removal changed no signature day")
 
     @classmethod
     def removal_and_day_hold(cls, case, data, header):
         """The record's signature day and the header's removal statement, judged as the removal item requires."""
-        case.assertEqual(data["accepted_on"], cls.RESIGNED)
         case.assertEqual(len(data["accepted_exceptions"]), 32)
-        for position, entry in enumerate(data["accepted_exceptions"]):
-            case.assertEqual(entry["accepted_on"], cls.RESIGNED, position)
+        cls.day_and_signer_hold(case, data)
         for phrase in cls.REMOVAL_STATEMENT:
             case.assertIn(phrase, header, phrase)
 
@@ -1029,7 +1057,7 @@ class CoatAfterBringUpAndTheReSigning(unittest.TestCase):
         for phrase in self.REMOVAL_STATEMENT:
             self.assertIn(phrase, sentence[0])
         # the check is real: a changed top-level day, a changed entry day, or a header without the statement is caught
-        moved = dict(data, accepted_on="2026-11-07")
+        moved = dict(data, accepted_on="2026-11-06")
         with self.assertRaises(AssertionError):
             self.removal_and_day_hold(self, moved, header)
         for position in (0, 15, 31):
@@ -1041,7 +1069,7 @@ class CoatAfterBringUpAndTheReSigning(unittest.TestCase):
             with self.assertRaises(AssertionError):
                 self.removal_and_day_hold(self, data, header.replace(phrase, "x"))
         with self.assertRaises(AssertionError):
-            self.removal_and_day_hold(self, data, header.replace("2026-11-07", "2026-11-06"))
+            self.removal_and_day_hold(self, data, header.replace("removed on 2026-11-07", "removed on 2026-11-06"))
         with self.assertRaises(AssertionError):
             self.removal_and_day_hold(self, dict(data, accepted_exceptions=data["accepted_exceptions"][:-1]), header)
         _, problems = reading()
@@ -1283,7 +1311,7 @@ class NetPairAndSamePartDrafts(unittest.TestCase):
                                  ("mains_to_mains", "creepage", [f"{ref}.1", f"{ref}.2"], 1.8))
                 self.assertLess(entry["accepted_mm"], held["creepage_mm"])
                 self.assertIn(OWNER, entry["accepted_by"])
-                self.assertEqual(entry["accepted_on"], data["accepted_on"])
+                self.assertIn(entry["accepted_on"], ("2026-11-06", data["accepted_on"]))
                 for phrase in (ref, "1.80 mm apart edge to edge", "the 1206 package's own pad gap and not a layout choice", "The part is not changed",
                                "excuses only this pair of pads, at 1.8 mm of creepage"):
                     self.assertIn(phrase, entry["reason"])
