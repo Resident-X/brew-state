@@ -19,3 +19,7 @@ links:
     type: derives-from
   - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
     type: targets
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: 967395940b0e9c47e8611fcf54edc4f71336365bf280fab1df354e023ca8dd4e
+  gating_profile: ""
