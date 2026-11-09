@@ -11,7 +11,7 @@ import unittest
 
 TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REPO = os.path.dirname(os.path.dirname(TOOLS))
-BOARD = os.path.join(REPO, "hardware", "sunbeam-em7000", "main-board")
+BOARD = os.path.join(REPO, "hardware", "sunbeam-em7000", "main-board-v2")
 PROOF = os.path.join(BOARD, "circuit-proof")
 SHEETS = os.path.join(BOARD, "sheets")
 #: The sheet files the generator writes, in the sheets folder.

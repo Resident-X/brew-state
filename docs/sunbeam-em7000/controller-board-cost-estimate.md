@@ -102,7 +102,7 @@ and prices that quantity at the smallest break's unit price, which every charged
 
 ## Amendment: the main board is now six layers, with an ENIG finish
 
-**This is an estimate, not a quote, and its sources govern.** The main board of the layout (`hardware/sunbeam-em7000/main-board/layout-plan.md`, Stack) has six copper layers, not four, at the same outline (131.0 × 125.0 mm, 16 375 mm²), 1.6 mm and 1 oz outer copper, and its finish is ENIG, because JLCPCB offers leaded and lead-free HASL below six layers only (`docs/board-manufacturer-jlcpcb.md` § Layers, thickness, copper and board size, read 2026-11-05). The sections below were priced at four layers and leaded HASL, and they stay as the baseline this amendment is measured from; the figures in them are not restated here.
+**This is an estimate, not a quote, and its sources govern.** The main board of the layout (`hardware/sunbeam-em7000/main-board-v2/layout-plan.md`, Stack) has six copper layers, not four, at the same outline (131.0 × 125.0 mm, 16 375 mm²), 1.6 mm and 1 oz outer copper, and its finish is ENIG, because JLCPCB offers leaded and lead-free HASL below six layers only (`docs/board-manufacturer-jlcpcb.md` § Layers, thickness, copper and board size, read 2026-11-05). The sections below were priced at four layers and leaded HASL, and they stay as the baseline this amendment is measured from; the figures in them are not restated here.
 
 **Quantity assumed.** The same as the sections below: one main-board order of 5 boards fabricated (the manufacturer's smallest order) and 2 assembled, single-board delivery. Every figure here is for that order and not per board.
 

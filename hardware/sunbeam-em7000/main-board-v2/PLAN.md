@@ -1,0 +1,492 @@
+# Main board v2: restart of the low-voltage half (plan)
+
+Written 2026-11-10 on branch `req/DEL-MAINTENANCE/pre-order-check-fixes` (HEAD 4b64810b plus the uncommitted U201/U203 schematic change). This is a plan, not a record the check reads. It decides the order of work, the cheap go/no-go tests that run before expensive work, and where a finding sends the work back.
+
+## Recommendation
+
+1. Restart placement and routing of the low-voltage half in a new design folder, `hardware/sunbeam-em7000/main-board-v2/`, which becomes the board's permanent home. v1 (`main-board/`) is frozen as a git tag and removed from the tree on this branch, so only one design is ever checked.
+2. Adopt pin map A (SPI3, I2C4, FLOW_IN on TIM2_CH3, selects and HX711 lines on PD0 to PD7) now, with two changes: ANODE_GATE stays on PB5, and AMC_RESET goes to a freed plain GPIO (PC8 or PC9) instead of PB4. Settle it before placement, because placement is scored against it. The schematic review round is owed anyway for the U201/U203 change, so the pin map rides in that same round.
+3. Stay at six layers. Four layers would reopen the signed separation basis, the fabrication notes and via fill to save about 32 to 52 USD. Route as if the board were four layers (F.Cu and B.Cu, In3 as a spare), so the choice can be revisited later on evidence.
+4. Order of work: freeze and seed, then a scratch go/no-go, then schematic and pin map, then floorplan and records, then placement, then rules, then mains copper and critical routing, then the rest, then one review cycle, then close-out. Nothing expensive (schematic edits, the review round, Konnect placement) starts until the go/no-go has passed on scratch.
+
+## Decisions taken in this plan
+
+| Question | Decision | Why |
+|---|---|---|
+| Folder | `hardware/sunbeam-em7000/main-board-v2/`, permanent. The KiCad file stem stays `main-board` (`main-board.kicad_pro`, `.kicad_sch`, `.kicad_pcb`, `circuit-proof/main-board.cir`). | `task hw:history` (`hardware/tools/board_history.py`) reads every version of the board file at its path and judges the placement section against the first commit with a footprint and the first commit with copper. At the old path those are v1 commits from weeks ago, so a re-placed board at `main-board/` can never pass. A new path starts a clean history. Renaming v2 back to `main-board/` at the end would merge the two histories again and fail the same way, so v2 keeps its folder. |
+| v1 at the end | Removed from the tree on this branch (in the seed phase, not at the end), frozen as the local tag `main-board-v1-final` on the commit just before removal. | `board_check.py` checks every tracked `.kicad_pro` (`discover()`), so two tracked boards double every full check (about 2.5 h to about 5 h). v1 also cannot pass parity once U203, R208 and C206 are in the shared schematic. A worktree of the tag gives read access for comparisons. Pushing the tag needs David's go-ahead. |
+| Pin map | Pin map A with the two changes above. | See the next section. |
+| Layer count | Six, same stack-up, same In1 ground and In2 mains pours. | Safety first: no separation re-proof, no change to the signed basis. The pilot (`/Users/david/real5/trialroute/pilot/REPORT.md`) put 1 to 3% of routed length on inner layers, so six layers gives margin, not cost risk. |
+| Via drill (0.2 vs 0.3 mm, quote pending) | A parameter. Every ordinary via is 0.3/0.6 mm whatever the quote says. Only the vias inside exposed pads (U620, U621 and any other exposed pad) wait on the quote. | A larger drill never costs more and the pilot never needed 0.2 mm. At six layers JLC fills vias up to 0.55 mm across by default, so 0.3/0.6 vias are left open, which is fine away from pads. Exposed-pad vias must be filled or tented: 0.2/0.5 (filled by default) if the quote shows 0.2 mm is free, otherwise 0.3/0.6 with paid filling, otherwise moved out of the pad. That is a late, local swap of about 18 vias, applied in phase 6 before those parts are locked. |
+| Vias in SMD pads | None, except exposed thermal pads. | v1 needed an owner acceptance for six. v2 designs them out. It becomes a board item (below). |
+| One-sided assembly | Every assembled part on F.Cu. Test pads only on B.Cu. | Owner decision 2026-11-07, carried from v1. It becomes a board item. |
+| 1 mm minimum run (WORK-5) | Kept as written, pad-to-via stubs included. | The pilot's density loss came from facing pad rows and parts in the MCU's lanes, which placement fixes (board items below). Residual stubs fall under the owner-signed severity policy, counted from the final board. |
+| Routing tools | Exploration and the go/no-go use scratch tools outside the repo (the pilot's `rt/router2.cpp`, `gen_spec.py --esc`, `place.py`, `apply.py`). The committed board follows the method: Konnect in the main session for placement and critical nets, Freerouting through `task hw:freerouting` and KiCad's exporter/importer for the rest, KiCad scripting only for what the method's "What Konnect cannot do" list allows. | The method (`docs/board-design-method.md`, Placement step 2 and Routing step 2) names Konnect. A scripted placement or route in the committed board would be a method change. Scratch geometry is used as a drawing guide that Konnect follows. |
+| Branch and PR | Keep the current branch, so the eight parked WF-BUILD runs are not disturbed. One PR at the end, merged by a merge commit, never squashed or rebased. No rebase or force-push after the first v2 placement commit. | Any earlier PR's board tier would judge v1, which has not passed a full check since its last edits. The history checks cite commits, and a rewrite drops them. |
+
+## Pin map A: adopt now
+
+**What it buys.** OPINION2's scoring (straight-line, today's destinations): at (95, 60) rotated 180, wrong-side pins go from 19 to 15, length from 2145 to 1964 mm, and crossings from 276 to 191. At the best grid point (100, 75) it reaches 5 wrong-side pins and 147 crossings. The pilot was run on pin map A with the MCU at (100, 75) rot 180 (`/Users/david/real5/trialroute/plan_A.json`). Where nets completed, they came out at 20 to 40% of as-built length (for example PT1_CS 36.8 mm and 0 vias, against 175 mm and 7 vias). So pin map A is already the evidence base. Keeping today's pins would mean re-running the probe on a placement nobody has tested.
+
+**What it reopens.** All of this is bounded, and most of it is owed anyway:
+- **Schematic.** `31-controller.kicad_sch` plus the label sheets E1, E3, E4, 700, 710, 720, 730, 740, 750 and 52, then `schematic-spec.yaml` and `sheets/*.yaml`.
+- **Pin records.** `controller-pin-table.md`, `pin-allocation.yaml`, `pin-limits.yaml`, and `controller-input-map.yaml` (FLOW_IN timer).
+- **Proofs** in `circuit-proof.md` and `circuit-verdicts.md`:
+  - the reset and boot-ROM state of every moved pin;
+  - the bootloader case: SPI3 is a bootloader slave port, so the proof must show the converters' outputs on PC11 cannot fight the bootloader (each select is held high by a pull-up);
+  - PB12 is FT_u, so VALVE_3W_DRV must see no 5 V pull-up;
+  - FLOW_IN on PB10 is FT_f.
+- **Firmware: no cost.** No `firmware_channel` binds a pin today.
+- **Graph.** DEL-HW-MAIN-BOARD-DESIGNED.C27 and SOL-FW-SPI2-PORT-RUNS-SLOW-EDGES-AND-A-LOW-CLOCK change SPI2 to SPI3. Their limits get re-derived from the v2 signal study.
+- **Review.** A schematic review round, which the U201/U203 change already forces.
+
+**Changes to OPINION2's table.**
+- ANODE_GATE stays on PB5. PA7 is TT and uses up a spare ADC pin.
+- AMC_RESET goes to PC8 or PC9, whichever scores better in phase 1, not PB4. PB4 powers up as NJTRST with a pull-up, which adds a proof row for no routing gain.
+- Pins that keep their place (OPINION2 "Must stay"): PA8, PA9, PA10, PA11, PA12, PA13, PA14, PB3, the oscillator pins, the ADC pins, KEY1 to KEY5, and PD14/PD15.
+
+**Sequencing.** The pin map is tested on scratch in phase 1 by net remapping (as the pilot did), so no schematic edit is spent before the go/no-go. Phase 2 commits it to the schematic. Phase 4 places against it.
+
+## Folder and tooling facts this plan relies on
+
+- `task hw:verify` runs `board_check.py --root .`, which finds designs from git's tracked `.kicad_pro` files. There are no subset flags. A tracked schematic or layout with no project beside it fails `design_discovery`.
+- The round gate's board tier (`BOARD_READS` in `firmware/tools/round_gate.py` covers `hardware/`) runs on any change under `hardware/`. A KiCad file in the working tree that git does not track fails the round. So every scratch copy lives outside the worktree (under `/Users/david/real5/`).
+- `separation-basis.yaml` and `controller-part.yaml` sit in the machine folder `hardware/sunbeam-em7000/` and apply to every design under it. The design-folder records (`pin-allocation.yaml`, `parts-specification.yaml`, `catalogue-extract.yaml`, `derating-policy.yaml`, `pin-limits.yaml`, `board-rules.yaml`, `manufacturer-limits.yaml`, `schematic-spec.yaml`, `controller-input-map.yaml`) are found by the nearest-folder rule, so v2 carries its own copies.
+- `task hw:history -- --board main-board.kicad_pcb` (run from the v2 folder) needs, in this order of commits:
+  1. `layout-plan.md` floorplan and plan, `circuit-proof.md`, its netlist and inputs, and `bring-up-provision.md`, all before the first commit whose board holds a footprint;
+  2. at least two candidates in commits of their own;
+  3. the placement section committed before the first copper;
+  4. critical copper all locked before the router's commit.
+- `task hw:review-history -- --folder hardware/sunbeam-em7000/main-board-v2` judges `layout-review.md` from its own history. A new file starts at round 1. The closing round must be full.
+- Every layout review round needs the full pre-order check (method, Layout review step 8). That is about 2.5 h each time, so rounds are the expensive unit.
+- Paths that name `main-board/` outside the folder and must follow the move in the same change:
+  - tests: `hardware/tools/tests/test_main_board_schematic_records.py`, `test_derating_policy_record.py`, `test_circuit_proof_sheet_generator.py`, `test_separation_basis_record.py` (its same-part pad-pair table of the committed layout);
+  - docs: `docs/sunbeam-em7000/controller-board-cost-estimate.md`, `controller-board-design-constraints.md`, `controller-board-division.md`;
+  - graph prose in DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER and SOL-PRE-ORDER-CHECK-PLATED-HOLE-OF-A-LOW-VOLTAGE-PART-IS-MEASURED-ROUND-THE-SLOTS.
+
+  Evidence nodes cite v1 at a commit and stay as they are. Firmware reads no main-board path. `controller-board-design-constraints.md` is in the emulation reads, so the closing gate runs emulation.
+
+## Phases
+
+Tier names follow CLAUDE.md. "Skill would pick" is what `/stage0-build`, `/staircase-wf` or the engine's `recommended_tier` would name. "Chosen" is David's rule (Sonnet 5.5 medium by default, Opus only for class-of-miss reasoning, Haiku for deterministic runs). Konnect work runs only in the main session.
+
+### Phase 0: freeze and seed (about 2 h)
+
+**Purpose.** Bank the verified U201/U203 change, freeze v1, and open v2 with a clean history.
+
+**Steps.**
+1. Commit the uncommitted U201/U203 change (sheet 102, its proofs, records and the two docs) in `main-board/` as it stands. The change is verified, and committing it keeps its trail.
+2. Tag `main-board-v1-final`.
+3. Create `main-board-v2/` by copying the schematic, sheets, libraries, library tables, rules files and every record. The v2 board file is v1's board with every footprint, track, via and copper zone removed: outline, stack-up, board settings, net classes and text variables only, so the board holds no footprint and no copper yet. Add this PLAN.md.
+4. Remove `main-board/` from the tree.
+5. Update the test, doc and graph-prose paths listed above.
+6. Commit.
+
+**Inputs.** The worktree as it stands.
+
+**Output.** One commit holding the U201 change on v1, the tag, and one seed commit.
+
+**Tier.** Skill would pick mid-tier. Chosen: Haiku for the copy/strip script and path edits, with a Sonnet medium cold read of the diff.
+
+**Forward tests (minutes).**
+- `task hw:reads` lists `main-board-v2/` and nothing under `main-board/`.
+- `kicad-cli sch erc` on the v2 schematic is clean, apart from the known U203/R208/C206 board-absent parity, which only the board check sees.
+- `pytest` on the four path-updated tests passes.
+- The v2 board file holds zero footprints and zero copper items (a pcbnew count).
+
+**Rework backwards.** None possible. This is the base.
+
+**Common-cause check on failure.** A test failing after the move is a missed path, not a design change: `git grep` the old path before touching anything else.
+
+### Phase 1: scratch go/no-go on the re-placed hardest area (about 6 to 10 h, mostly agent time)
+
+**Purpose.** Prove, before any committed design work, that the re-placed low-voltage half routes cleanly on six layers. Everything here runs in `/Users/david/real5/trialroute/` on copies.
+
+**Inputs.**
+- `placed_A06` with pin map A;
+- the pilot's three placement fixes;
+- U203, R208 and C206 placed beside U201;
+- AMC_RESET on PC8/PC9;
+- the pilot router with its two bugs fixed: same-net re-crossing, and ground-stub vias too close together (hole_to_hole).
+
+**Output.** A pass/fail verdict with figures, a scratch placement (positions table), and the escape and crop-DRC results. The verdict and figures are copied into the phase 4 candidate's "Why" text. The scratch files themselves are never committed.
+
+**Tier.** Skill would pick mid-tier (implement). Chosen: Sonnet 5.5 high. High effort is justified because it is hard geometry with a custom router, and the pilot needed it. Not Opus: this is engineering iteration, not class-of-miss reasoning.
+
+**Forward tests and criteria.** See "Early go/no-go" below.
+
+**Rework backwards.** None yet. A fail here sends work to the fallbacks below, never into the repo.
+
+**Common-cause check on failure.** Route each failing net alone on an empty copy. If it still fails, the cause is placement, so fix placement. If it routes alone, the cause is ordering, so improve rip-up or hand-route it. Group the failures by cause (lane blocked, facing rows, via sites) before fixing any single one.
+
+### Phase 2: schematic and pin map (about 6 to 10 h, plus a review that runs alongside phase 3)
+
+**Purpose.** Commit pin map A and the U201/U203 schematic to v2, with every record and proof that depends on pins.
+
+**Steps.**
+1. Main session (Konnect): re-label `31-controller` and the ten label sheets.
+2. Sub-agent: rebuild `schematic-spec.yaml` and `sheets/*.yaml` with `spec-tools/build_spec.py`.
+3. Sub-agent: update `controller-pin-table.md`, `pin-allocation.yaml`, `pin-limits.yaml` and `controller-input-map.yaml`.
+4. Sub-agent: write the proof rows (reset/boot state of each moved pin, the SPI3 bootloader-slave case, PB12 5 V exposure), then re-export the netlist (`circuit-proof/main-board.cir`).
+5. Run schematic review round 8 as one full round over the pin map and U201/U203 delta, and the whole checklist, because it must close the schematic review. Use fresh reviewers in hand-built group sessions, since the review kit refuses this board.
+
+**Inputs.** The phase 1 pass, the AF table check (`/Users/david/real5/layoutopinion/af.py` against DS12110 Table 9), and AN2606.
+
+**Output.** The committed schematic and records. Round 8 is recorded in `schematic-review.md`, which is copied into v2 with rounds 1 to 7 intact.
+
+**Tier.** Skill would pick mid-tier for the records and reasoning-tier for the proof readiness. Chosen: Sonnet medium for records and proofs, Sonnet medium reviewers, Haiku for ERC/netlist/test runs. No Opus.
+
+**Forward tests (minutes).**
+- The AF legality script.
+- `kicad-cli sch erc`.
+- `kicad-cli sch export netlist` compared with `cmp` (method, Proving step 4).
+- `test_main_board_schematic_records.py`.
+- A pin-limits pass through a scratch `board_check.py` run: the check runs whole, so do it in a scratch clone and read only the `pin_limits`/`pin_allocation` lines. Run it once, detached.
+
+**Rework backwards.**
+
+| Finding | Re-enter | Narrowest re-entry |
+|---|---|---|
+| An AF or boot-state fault on a moved pin | Phase 2 | Move that one pin to a freed plain GPIO on the same package side. Re-run the phase 1 escape study for that side only (minutes). |
+| A review finding that adds or changes a part | Phase 2 | Fix it before the floorplan is committed. After phase 3 it is a plan append (allowed). |
+| A finding that changes a mains part | Stop | Reopens the separation basis. Tell David. |
+
+**Common-cause check on failure.** Does the same fault apply to every pin moved for the same reason (all the SPI3 pins, all the PD selects)? Sweep the class before fixing one.
+
+### Phase 3: floorplan, plan and pre-placement records (about 4 to 6 h)
+
+**Purpose.** Commit what the method requires before the first footprint.
+
+**Steps.**
+1. Write the `layout-plan.md` floorplan.
+   - The mains region rectangles are copied byte for byte from v1.
+   - The low-voltage, analogue and digital regions are redrawn around the phase 1 placement, with the MCU near (100, 75) at 180, the converter cell south, the analogue island east, and the drivers between the MCU's west side and the barrier.
+   - The panel drivers sit by J791/J821.
+   - The connector table keeps every fixed connector and J862, and moves J401/J402 to their pins' side.
+2. Fill the plan table, one row per catalogue item. Mains rows are carried, low-voltage rows rewritten.
+3. Write the board's own items. Carry v1's BOARD items, and add these as baseline items, so the review judges them:
+   - an MCU escape channel of at least 2.5 mm from the pad ends, each capacitor in its own supply pin's lane;
+   - facing pad rows of U620/U621 and U630/U631 at least 4.5 mm apart, or staggered;
+   - no part in the lanes of U601's low-voltage pins;
+   - no via in an SMD pad other than an exposed thermal pad;
+   - every assembled part on F.Cu.
+4. Bring `circuit-proof.md` and `bring-up-provision.md` up to date and commit them in the same window.
+5. Set the board minimums in the project file and the two rows of `design-rules.md` (method, Placement step 1).
+
+**Inputs.** Phases 1 and 2.
+
+**Output.** One commit, before any footprint.
+
+**Tier.** Skill would pick mid-tier. Chosen: Sonnet medium for drafting, plus a Haiku run of the method's Planning step 3 cross-checks against the netlist.
+
+**Forward tests (minutes).**
+- The Planning step 3 cross-checks (every netlist part in exactly one region list, the connector table complete, one plan row per catalogue item).
+- `task hw:history` before placement: it reports `before first track` and must not fail `first placement` on a board with no footprint.
+
+**Rework backwards.**
+
+| Finding | Re-enter | Narrowest re-entry |
+|---|---|---|
+| A floorplan error found after the first footprint commit | Phase 3 on a fresh branch from the phase 3 commit | The method (Planning step 3) allows no in-place fix. This is why phase 1 settles placement on scratch first. |
+
+**Common-cause check on failure.** Is the same region boundary wrong for several parts? Then the region is wrong, not the parts.
+
+### Phase 4: placement in v2 (about 8 to 12 h, main session)
+
+**Purpose.** At least two committed candidates, measured and judged, then one chosen.
+
+**Steps.**
+1. Main session places the fixed parts first, at their v1 coordinates: the connectors, the reed J862, the mounting holes and every mains-region and barrier-column part. A scratch script compares each with the tag and must report zero difference.
+2. Place the low-voltage half from the phase 1 positions table with Konnect's move and rotate tools. That is candidate 1.
+3. Candidate 2 is the strongest alternative phase 1 saw, for example the MCU at (95, 60) or the converter cell turned.
+4. Render with `task hw:placement` from each commit (method, Placement step 4), give the verdicts, choose, and commit the placement section.
+5. Run `task hw:history`.
+
+**Inputs.** Phase 3 and the phase 1 table.
+
+**Output.** The chosen placement, committed before any copper.
+
+**Tier.** Konnect: main session. Skill would pick mid-tier. Chosen: main session for Konnect moves. Sonnet medium sub-agents for the verdict tables from the rendered views. Haiku for the render and measure runs.
+
+**Forward tests.**
+- `task hw:placement`: zero `OUTSIDE` lines; length and crossings at or below phase 1's figures.
+- The pilot escape study on the committed board: 0 pins fail at 2.5 mm.
+- A crop DRC (pilot pattern: cropped copy, project rules file, about 10 s): zero courtyard overlaps; separation clean for U203, R208, C206, C609, C610 and C612 against mains pads.
+- The fixed-part position diff against the tag is empty.
+- `task hw:history` passes.
+
+**Rework backwards.**
+
+| Finding | Re-enter | Narrowest re-entry |
+|---|---|---|
+| A part outside its region | Phase 4 | Make another candidate. Never widen a region after the first footprint. |
+| A placement verdict fails on a planned item | Phase 4 | New candidate. The plan row is amended only before the first footprint. |
+| An escape regression against phase 1 | Phase 4 | Compare the two positions tables. The difference is the cause. |
+
+**Common-cause check on failure.** Diff the committed positions against the phase 1 table before moving anything. A transfer error (rotation convention, side) usually affects a whole class of parts.
+
+### Phase 5: rules before routing (about 2 h)
+
+**Purpose.** Rules and classes for the new geometry.
+
+**Steps.**
+1. Update `design-rules.md` and `main-board.kicad_dru`:
+   - the region rule areas and `Low voltage/Analog sensing/Digital region parts` bounds follow the new floorplan;
+   - the mains rows are unchanged;
+   - the via sizes are 0.3/0.6 by default, plus the exposed-pad parameter;
+   - the crystal keep-clear rules follow Y401/Y402.
+2. Use the critical classes as v1, with SPI3 nets in the class v1 put SPI2 in.
+3. Run `task hw:rules-confirm`.
+4. Close and reopen the board (method, Rules steps 3 and 4).
+
+**Tier.** Skill would pick mid-tier. Chosen: Sonnet medium, plus Haiku for the confirm run.
+
+**Forward test.** `task hw:rules-confirm` reports `RESULT | CONFIRMED`, with every class non-empty.
+
+**Rework backwards.**
+
+| Finding | Re-enter | Narrowest re-entry |
+|---|---|---|
+| A class empty or mis-assigned | Phase 5 | The class is the cause. Re-check the whole class list. |
+| A mains rule that differs from v1 | Stop | Mains figures are never changed. Restore the row from the tag. |
+
+**Common-cause check on failure.** Diff the mains rule rows and mains region bounds against the tag before anything else.
+
+### Phase 6: mains copper restored, then critical nets by hand (about 12 to 20 h, main session; the longest phase)
+
+**Purpose.** Carry the mains copper over unchanged, with a proof, then hand-route every critical low-voltage net, hardest area first.
+
+**Steps.**
+1. Record v1's Mains-class copper with `task hw:copper-record`, run in a detached worktree of the tag `main-board-v1-final`, with the record written outside every design folder.
+2. In v2, copy every mains-class track, via and zone from the tag with KiCad scripting on the closed board, keeping each item's uuid and lock. Commit. This is the first-copper commit.
+3. Run `task hw:copper-compare` against the v1 record. It matches by uuid first, so it must report no missing, changed or added item. That makes "mains copper unchanged" a tool result, not a claim.
+4. In Konnect, in this order, each block followed by a crop DRC:
+   - the MCU decoupling ring and crystals;
+   - the SPI3, selects, HX711 and AMC lines (the phase 1 hardest area, using phase 1's geometry as the guide);
+   - the sense nets;
+   - power and ground drops;
+   - USB;
+   - the barrier-adjacent low-voltage copper (U601 low-voltage side, U602, U701, U711, U301 DC side, K201/K731/K741 coil drives, U201/U203).
+5. Apply the exposed-pad via sizes once the quote is in.
+6. Lock with `task hw:copper-lock`.
+7. Run the critical-routing checklist (method, Routing step 4).
+8. Run `task hw:history`.
+
+**Tier.** Konnect: main session. Skill would pick mid-tier. Chosen: main session for drawing, Sonnet medium for the critical-routing checklist judgement, Haiku for the lock, record, compare and crop-DRC runs.
+
+**Forward tests.**
+- `hw:copper-compare` on the mains copper is clean.
+- A crop DRC after each block shows zero new clearance, `track_segment_length`, `track_angle` and `hole_to_hole` lines.
+- A pcbnew connectivity count of the block's nets reads zero unconnected (seconds; never a full `kicad-cli pcb drc`).
+
+**Rework backwards.**
+
+| Finding | Re-enter | Narrowest re-entry |
+|---|---|---|
+| A critical net cannot be routed without breaking a rule | Phase 4 | The placement section is frozen after first copper, so a part move is now a layout change the review judges. Move the fewest parts, re-run the crop DRC and the escape study for that side, and record it for review round 1. |
+| A mains compare difference | Phase 6, before anything else | Restore from the tag. Never edit mains copper by hand. |
+
+**Common-cause check on failure.** Before fixing, list every crop-DRC line by rule and by part. Several lines at one part means placement. Lines spread across one rule means a rule or class setting.
+
+### Phase 7: the rest, then cleanup (about 6 to 10 h)
+
+**Purpose.** Route the non-critical nets and bring workmanship to the catalogue.
+
+**Steps.**
+1. Run `task hw:copper-record`.
+2. Export with rule areas removed in memory (method, Routing step 6), then route with `task hw:freerouting` and import.
+3. Run `task hw:copper-compare`.
+4. Clean up `track_angle` and short-segment lines, and silk and designators, by scripted or Konnect edits as the method allows.
+5. Assign pad pin types (method workaround).
+
+**Tier.** Skill would pick mid-tier. Chosen: Haiku for export, route, import and compare. Sonnet medium for the cleanup decisions. Main session for Konnect edits.
+
+**Forward tests.**
+- `hw:copper-compare` clean.
+- The pcbnew unconnected count is zero.
+- A whole-board crop DRC split into four quadrants (each a short run) gives counts by rule, which must be at or below the phase 1 per-area figures.
+- `task hw:history -- --board main-board.kicad_pcb --routed` passes.
+
+**Rework backwards.**
+
+| Finding | Re-enter | Narrowest re-entry |
+|---|---|---|
+| Unrouted nets | Phase 6 | Read the `.dsn` keepouts first (method). If a critical lock blocks a channel, re-enter phase 6 for that block only. |
+| Router detours longer than about 2x straight-line | Phase 7 | Hand-route those nets. Never re-place, unless the placement view shows the cause. |
+
+**Common-cause check on failure.** Group the unrouted or detoured nets by the area they cross. A shared choke point is a placement or lock problem, not a router setting.
+
+### Phase 8: pre-order check and layout review (about 10 to 16 h, three full check runs of about 2.5 h each)
+
+**Purpose.** Close the layout review on a full round, with the pre-order check passing.
+
+**Steps.**
+1. Round 1, full. Run `task hw:views`, then the full `task hw:verify` in a scratch clone of the committed branch: detached, nice, with a Monitor on exit, using the pattern in `/Users/david/real5/final3/run.sh`. Then fresh reviewers judge every checklist item from the views.
+2. Fix by class sweep, not by instance (SOL-BOARD-REVIEW-LOOP-PROPORTIONATE).
+3. Round 2, narrow, over the changed regions. It needs another full check run.
+4. Round 3, full, the closing round, on the final design files.
+5. Write `severity-policy.yaml` and `workmanship-acceptance.yaml` with counts from the last run on unchanged design files. YAML records are not design files for `hw:review-history`, so writing them does not reopen the round.
+6. Run `task hw:review-history`.
+
+**Tier.** Skill would pick mid-tier reviewers, and reasoning-tier for "class-of-miss" readiness. Chosen: Sonnet medium reviewers fanned out in groups, Haiku for the check runs and renders, Sonnet medium for fixes. Use Opus only if round 1 shows a finding class that recurs across areas and needs a class-of-miss diagnosis.
+
+**Forward tests.** Before each 2.5 h run, the crop DRC and connectivity count must be clean. Never spend a full run to find what a crop finds.
+
+**Rework backwards.**
+
+| Finding | Re-enter | Narrowest re-entry |
+|---|---|---|
+| A safety finding (separation, fusing, insulation) | Phase 6 or 4, wherever its cause is | A safety finding never closes by reason without David's own `accepted_by`. |
+| A workmanship finding caused by part positions | Phase 4 logic (move parts) | Close by a placement change naming the parts moved and the before/after measures (method, Layout review step 7). |
+| A planned item not met in round 1 | Phase 3 plan row, by its trace | Amend the method item only if the row, followed as written, would not have met the item (Layout review step 6). |
+| A finding in a full round after a narrow round | The next round | Every new round needs a full check, so batch all fixes before starting it. |
+
+**Common-cause check on failure.** For each finding, ask "where else does this class occur?" and sweep before the next round. One unswept class costs a whole 2.5 h round.
+
+### Phase 9: close-out (about 8 to 12 h, gate about 3 h)
+
+**Purpose.** Bring records, the graph and the gate in line with v2, then raise one PR.
+
+**Steps.**
+1. Records:
+   - `pre-order-check-result.md`;
+   - `traceability.md`;
+   - `bring-up-provision.md` test-point notes (TEST-1 reach);
+   - `fabrication-notes.md` (unchanged at six layers apart from the exposed-pad via note);
+   - `signal-study.md` redone from the v2 board (its scripts were never committed, so rebuild them in scratch, or commit them under `main-board-v2/` this time);
+   - `coil-pin-paths.md` re-measured on v2 (relays and mains copper unchanged, so the figures should repeat);
+   - `separation-basis.yaml` exceptions checked for staleness (remove any the v2 check no longer needs, as C606 was; no re-signing for a removal);
+   - `derating-policy.yaml` unchanged.
+2. Graph amendments (list below), by a later authoring agent.
+3. Submit the held runs, then ONE `task check:round`. Its board tier runs `hw:verify` and `hw:test:round` (about 2.5 to 3 h): detached with a log and Monitor. Emulation runs because the constraints doc changed.
+4. WF-REVIEW each run.
+5. Blind review of the PR.
+6. Ask David before pushing, then push and raise the PR (merge commit only).
+7. JLCPCB re-export from the final commit (Haiku), with a BOM and CPL diff against `~/Downloads/jlcpcb-main-board-quote-2/`.
+
+**Tier.** Skill would pick mid-tier. Chosen: Sonnet medium for records and graph authoring, Haiku for the gate, export and diff, and a fresh Sonnet medium blind reviewer.
+
+**Forward tests.**
+- `hw:test:round`'s path-updated tests, run alone, before the gate.
+- `staircase validate` and `lint` after authoring.
+
+**Rework backwards.**
+
+| Finding | Re-enter | Narrowest re-entry |
+|---|---|---|
+| The gate's board tier fails on something round 3's run did not show | — | It cannot, unless a design file changed after round 3. `hw:review-history`'s `closing round` check catches that first. |
+
+## Early go/no-go (phase 1)
+
+The scope is the hardest area: the MCU ring, the measurement cell (U620, U621, U630, U631), the AMC lines to U601's low-voltage side, the I2C pairs, the reed line, and the U201/U203 interlock buffer. That is about 92 nets plus about 83 ground drops, on six layers, with In1 never routed, using the project's own rules (0.2 mm tracks, 0.3 for 3V3, 0.45 for 5 V, 0.2 mm clearance, 0.3/0.6 vias, 45° corners, strict 1 mm runs).
+
+**Pass criteria (all must hold).**
+1. MCU escape: 0 of 62 signal pins fail at a 2.5 mm box (pilot as placed: 19 failing).
+2. Every scope connection routed, with no net partial, and every ground drop placed.
+3. A crop DRC with the project rules file, against the unrouted crop, shows 0 new lines of each of these: clearance, `track_segment_length`, `track_angle`, `hole_to_hole`, courtyard overlap. The `via_dangling` lines that come from the removed zones are the known artifact and are excluded.
+4. Inner signal layers carry at most 10% of the scope's routed length, and In2 carries no low-voltage track inside the mains region.
+5. No via in an SMD pad except exposed pads.
+6. The SPI3 trunk and every select and HX711 line are at most 60 mm. The pilot's completed ones were 28 to 45 mm, against 118 to 196 mm as built.
+7. U203, R208, C206 and the moved C609/C610/C612 sit at least the signed 10 mm creepage and 3 mm clearance from mains copper, by the crop's `Mains separation` rule.
+
+**On a fail, in order.**
+1. Run the common-cause split (alone versus in combination). Fix the placement defects the alone-runs show (lanes, facing rows, via sites) and re-run.
+2. Swap plain GPIOs within the facing side (selects, HX711 lines, the AMC_DRDY EXTI line), with no AF risk. Re-run the escape study.
+3. Move the MCU along OPINION2's preferred band (y 60 to 75), or try the second-best grid point.
+4. Allow In3 as a second routing layer for the measurement cell (still six layers, no cost).
+5. If it still fails, stop. Report to David with the figures, and fall back to OPINION's targeted fixes on v1 (decoupling and crystal capacitors, HX711 and select re-pin, U791 channel permute, panel drivers by J791/J821). In that case delete v2 and restore v1 from the tag.
+
+## What carries over and what is re-proved
+
+| Item | Carries over unchanged | Re-proved because position or net topology changes | Minimum delta test |
+|---|---|---|---|
+| Mains region parts, barrier column (U601, U602, U701, U711, U301, K201, K731, K741), tabs J101 to J110, reed J862 | Positions, footprints, mains copper | — | Position diff against the tag (script). `hw:copper-compare` of Mains-class copper against v1's record. |
+| `separation-basis.yaml` (signed 2026-11-06/07), MAINS-2 deviation | Yes, while the mains copper compare is clean | Exception staleness only | The v2 full check's `spacing_exception` lines. Remove stale ones without re-signing. |
+| Schematic findings 7.17, 7.35, 7.45 (part ratings of mains parts, carried to bring-up) | Yes. They are about part ratings, not positions, and nothing they name moves. | — | None. Restated in the PR summary. |
+| `derating-policy.yaml`, `parts-specification.yaml` (apart from U203, R208, C206), `catalogue-extract.yaml` | Yes | Catalogue refresh before 2026-11-13 (stock dates) | `board_check` record lines in the round 1 run. |
+| `circuit-proof.md` value rows | Yes, apart from the pin rows | Pin rows: reset/boot state of moved pins, SPI3 bootloader-slave case, PB12 5 V exposure | Rerun of the affected scripts. Netlist `cmp`. |
+| `circuit-verdicts.md` | Yes, apart from moved pins | Moved-pin verdicts | Phase 2 review round 8. |
+| `error-budget.md` | Yes, because no analogue pin moves | — | None. If a phase 1 swap touches an ADC pin, rerun that channel's row. |
+| `leak-detection.md` | Yes (datasheet arithmetic) | — | None. |
+| `signal-study.md` | No | Whole study (routed lengths change) | Rerun the SPI3, MISO timing and crystal start-up sections on v2. Re-derive C27's limits. |
+| `coil-pin-paths.md` | Probably | Re-measure on v2 | One scripted measurement run. |
+| `layout-plan.md` | Mains rows of the floorplan and plan | All low-voltage regions, rows, placement and critical routing | `hw:history`. Planning step 3 cross-checks. |
+| `design-rules.md`, `main-board.kicad_dru` | Mains rows and figures | Region bounds, via sizes, crystal keep-clears | `hw:rules-confirm`. Diff of mains rows against the tag. |
+| `bring-up-provision.md`, `bring-up/A.yaml` | Rail, link and test-point lists | Test point reach (TEST-1), bays on B.Cu | Round 1 verdict on TEST-1 and TEST-5. |
+| `layout-review.md` | No. A new file in v2, rounds from 1. | All | `hw:review-history`. |
+| `pre-order-check-result.md`, `traceability.md` | No | Rewritten from the final run | The final run's lines. |
+| `schematic-review.md` | Rounds 1 to 7 as recorded | Round 8 (full, closing) | Round 8. |
+| `fabrication-notes.md` | Laminate, coat, six layers, ENIG | Exposed-pad via note after the quote | Inspection. |
+| `open-items.md` | Owner items | Lines that name v1 positions or "all R and C are Basic" (stale) | Inspection. |
+
+## HANDOVER steps 1 to 9, and what happens to each
+
+| Step | Fate |
+|---|---|
+| 1 Amend the U201 node to "owner's ordering call" | Superseded. U201 is now two series SN74AHCT1G14DCKR gates (U201 and U203), with R208 and C206. The node is rewritten to state that change and its proof, and closes as built, not awaiting a decision. The owner's sourcing note no longer applies, since the old part's stock was the issue. |
+| 2 Implement responses for the seven-clamp run and the stock-swap leaf | Still stands, rewritten against v2. The part changes (BAT54SW, stocked beads, 59 k feed, 100 nF merges) carry through the schematic. The v1 coordinates in the seven-clamp leaf do not. Amend that leaf to position-free criteria (part, F.Cu, no via in an SMD pad), cancel its run, re-review, start a new run at the end. The stock-swap leaf has no coordinates, so it gets its new run as planned. |
+| 3 `severity-policy.yaml` and `workmanship-acceptance.yaml` | Still stands, written in phase 8 from the final v2 run, placed in `main-board-v2/`, signed on the standing instruction. v1's expected counts (pour_gap 7, decoupling_via 4 and the rest) are void. |
+| 4 One full pre-order check | Absorbed into phase 8: one run per review round, the last giving the counts. |
+| 5 Scoped layout review | Dropped for v1. Replaced by v2's rounds 1 to 3. |
+| 6 Submit held responses, one `check:round` | Still stands, in phase 9. |
+| 7 Ask, push, PR | Still stands, in phase 9. Merge commit only. |
+| 8 Follow-ups | Still stand, except two that are absorbed: R630/R631 land-pattern check (do it in phase 3, since the footprint is placed fresh) and the layout-plan MFG-10 note (rewritten in v2's plan). Finding 7.34 and the other node follow-ups are authored in phase 9. |
+| 9 JLCPCB re-export | Still stands, from the final commit. |
+
+## Parked WF-BUILD runs and graph amendments (for a later engine-only authoring agent)
+
+**Held runs.**
+
+| Run | Leaf | Action |
+|---|---|---|
+| crun-43e8d5d4564070b8 | net-pair C1 matches the signed record | Mains only. Submit as held, after confirming the v2 check reports the same seven entries. |
+| crun-aea8dd3b36f41f80, crun-264012c0e1edf27d, crun-4fd93cfb276b035f, crun-2d8a5b97d9bdab24, crun-6b7851e2ad1c7df9 | Pre-order check tooling leaves | Board-independent (synthetic fixtures). Submit as held. The policy file for crun-6b7851e2ad1c7df9 is written in phase 8 under `main-board-v2/`. |
+| crun-91fa40ab42696920 | C606 exception removed | Mains, unchanged. Submit as held. |
+| crun-aeeb44f140c71d75 | Seven clamps and back-side parts | Leaf amended to position-free form. Cancel, re-review the brief, new run, response written against v2. |
+| (none yet) | Stock-swap leaf | New run at the end, as HANDOVER planned. |
+
+**Graph amendments.** Read each node with `show` first, bump the version once per node on this branch, and use `--actor david`.
+- **SOL-MAIN-BOARD-U201-INTERLOCK-BUFFER-HAS-NO-STOCKED-EQUIVALENT-AWAITS-OWNER-DECISION.** Retitle and rewrite: U201 and U203 are two series SN74AHCT1G14DCKR, with R208 100 k and C206 100 n. Replace the criterion with ones the built change meets (proof decks re-run, records updated, placed on the board).
+- **SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.** Add to "Settled for the build": the board is re-placed and re-routed in `hardware/sunbeam-em7000/main-board-v2/`; v1 is frozen at tag `main-board-v1-final` and removed; the mains copper is carried over unchanged, proved by the copper compare; six layers. Its brief confirmation goes stale, so re-review it.
+- **DEL-HW-MAIN-BOARD-DESIGNED.C27 and SOL-FW-SPI2-PORT-RUNS-SLOW-EDGES-AND-A-LOW-CLOCK.** Change SPI2 to SPI3. Replace the 4 MHz and 5 ns limits with the v2 signal study's figures. If the study shows no limit is needed, supersede rather than amend.
+- **SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD.** Position-free criteria, as above.
+- **SOL-MAIN-BOARD-FIVE-GROUND-VIAS-IN-SMD-PADS-AWAIT-OWNER-DECISION.** State that the owner's acceptance applied to v1 and that v2 has no via in an SMD pad other than exposed pads. Retitle away from "AWAIT".
+- **DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER.**
+  - Items (z11), (z12), (z13), (z15) and (z16) name v1 counts and parts. Restate each from the final v2 run, or mark it void for v2.
+  - Add one item recording the restart and pin map A.
+  - (z14), plated-hole spacing at 1.5 mm, stands.
+  - Update the folder path in its prose.
+- **SOL-PRE-ORDER-CHECK-PLATED-HOLE-OF-A-LOW-VOLTAGE-PART-IS-MEASURED-ROUND-THE-SLOTS.** Update the folder path in its prose.
+- **New DEL-MAINTENANCE child.** Pin map A adopted on the main board: SPI3, I2C4, TIM2_CH3 and the PD-port selects, with proofs, records and schematic review round 8. Trace it to the criterion the pin change restores routing quality against, REQ-BOARD-LAYOUT-PRACTICE-001.C1. Read it before linking.
+- **Follow-ups HANDOVER step 8 already lists.** Finding 7.34, the BOM value-text grouping, the PinCoverageProof test, the "33 exceptions" title, evidence for the SMD-pad leaf, the "anticipated/could" wording for probes and load cells, the Basic-first rule, the stale open-items line, and the catalogue refresh. Each still stands.
+- **SOL-HW-REVIEW-KIT-MAIN-BOARD-PLANS-WITHIN-THE-BUDGET.** Check whether its premise (the main board's folders) still holds at the new path.
+
+## Time, cost and status checks
+
+| Phase | Wall clock (rough) | Long-running parts worth a 30-minute check |
+|---|---|---|
+| 0 Freeze and seed | 2 h | — |
+| 1 Go/no-go | 6 to 10 h | The router agent: check at 30 min, then every 30 min (transcript tail, last route counts). |
+| 2 Schematic, pin map, review round 8 | 6 to 10 h, plus 3 to 5 h of review alongside phase 3 | Review group sessions. |
+| 3 Floorplan and records | 4 to 6 h | — |
+| 4 Placement | 8 to 12 h | — (main session) |
+| 5 Rules | 2 h | — |
+| 6 Mains restore and critical routing | 12 to 20 h | — (main session). Crop DRC runs are seconds. |
+| 7 Rest and cleanup | 6 to 10 h | Freerouting run. |
+| 8 Three review rounds | 10 to 16 h, of which about 7.5 h is check machine time | Each 2.5 h check (Monitor on exit, check at 30 min), each reviewer fan-out. |
+| 9 Close-out and gate | 8 to 12 h, of which the gate is about 3 h | The gate (Monitor plus a 30-minute log tail). |
+| Total | about 65 to 100 h over several sessions | |
+
+## Risks
+
+- **Amending without propagating.** The pin map touches about 11 sheets, 4 pin records, 2 proofs, the signal study and two graph nodes (C27 and the SPI2 firmware leaf). The folder move touches 4 tests, 3 docs and 2 nodes' prose. Guard: a `git grep` for every moved pin name and the old path, plus `staircase query` for SPI2/PB13/PB14/PB15, before phase 2 and phase 9 close.
+- **Wrong axis.** Judging the restart by length and crossings, when the failures the pilot found were lane conflicts and facing pad rows. The go/no-go judges escape and completed routing, not straight-line scores.
+- **Assumed, not required.** "Mains copper unchanged" stated in prose across records. Guard: `hw:copper-compare` against v1's record makes it a tool result. The same goes for "J862 and the connectors keep their positions": a position diff against the tag, not a claim.
+- **History-check trap.** Squashing, rebasing, or committing a footprint before the floorplan voids `hw:history`, with no in-place fix. Guard: forward test in phase 3, and merge-commit only.
+- **Single most likely failure.** Moving the scratch placement into the committed board by hand in Konnect changes positions or rotations slightly, so the committed candidate no longer routes the way the probe did. Expensive phase 6 work then meets the lane conflicts again. Guard: a scripted positions diff between the phase 1 table and each committed candidate, and the escape study re-run on the committed board, before any copper.
+
+## Questions for David
+
+1. **Exposed-pad vias.** When the live quote breakdown comes, does a 0.2 mm drill with a 0.5 mm pad show any surcharge at six layers, and what does via filling (POFV) cost? Only the about 18 exposed-pad vias depend on it, and they are applied late in phase 6.
+2. **Panel cable pin order.** Is the pin order on J791 and J821 fixed by the panel cables you keep? The plan assumes yes and places the drivers to suit the cable.
+3. **The v1 tag.** May the tag `main-board-v1-final` be pushed to origin with the PR, so the frozen v1 stays reachable after the folder is removed?

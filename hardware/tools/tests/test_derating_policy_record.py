@@ -11,7 +11,7 @@ sys.path.insert(0, TOOLS)
 import board_check  # noqa: E402
 
 REPO = os.path.dirname(os.path.dirname(TOOLS))
-POLICY = os.path.join("hardware", "sunbeam-em7000", "main-board", board_check.DERATING_NAME)
+POLICY = os.path.join("hardware", "sunbeam-em7000", "main-board-v2", board_check.DERATING_NAME)
 #: The day the check is told it is: the day the policy was signed.
 TODAY = datetime.date(2026, 11, 5)
 #: The ten positions whose working voltage the derated-voltage rule finds over their limit at the top of the declared span, in the order the policy lists them.
@@ -62,12 +62,12 @@ class DeratingPolicySigned(unittest.TestCase):
         files = board_check.tracked_files("git", REPO)
         repository = board_check.Repository(REPO, files)
         designs, _, _ = board_check.discover(REPO, files)
-        main = [design for design in designs if design.directory.replace(os.sep, "/").endswith("sunbeam-em7000/main-board")]
+        main = [design for design in designs if design.directory.replace(os.sep, "/").endswith("sunbeam-em7000/main-board-v2")]
         self.assertEqual(len(main), 1)
         self.assertEqual(board_check.read_derating(yaml, REPO, repository, main[0], False), [])
         # a copy of the policy with an entry's key removed, an accepted_v of zero or a repeated position is refused by the same reader
         with tempfile.TemporaryDirectory() as folder:
-            folder_design = os.path.join("hardware", "sunbeam-em7000", "main-board")
+            folder_design = os.path.join("hardware", "sunbeam-em7000", "main-board-v2")
             os.makedirs(os.path.join(folder, folder_design))
             for name in os.listdir(os.path.join(REPO, folder_design)):
                 if name.endswith(".kicad_pro"):
