@@ -15,21 +15,23 @@ Node                                   Voltage
 ----                                   -------
 +5v                                       4.75
 pol_out                                      0
+pol_in                                       0
+pol_inv                                4.74585
 pol_buf                             2.6125e-07
 pol_node_a                        -1.27465e-79
 pol_gate_a                         1.52239e-89
 pol_mid                                  2.375
-pol_node_b                        -1.27465e-79
-pol_gate_b                         1.52239e-89
+pol_node_b                        -1.29671e-79
+pol_gate_b                         1.54874e-89
 pol_coil_lo                               4.75
 pol_clamp_1                            4.74946
 pol_clamp_2                            4.74946
 vpol#branch                                  0
-vsup#branch                          -4.75e-09
+vsup#branch                        -4.7468e-05
 
 
-No. of Data Rows : 80931
-vpeaka              =  3.72334e+00 at=  1.18062e-01
-gmina               =  9.39302e-02 at=  1.17997e-01
+No. of Data Rows : 80936
+vpeaka              =  3.72337e+00 at=  1.18062e-01
+gmina               =  9.39672e-02 at=  1.17997e-01
 tabove_after_edge   =  5.69131e-03 targ=  1.23691e-01 trig=  1.18000e-01
 Note: Simulation executed from .control section 

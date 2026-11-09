@@ -1,0 +1,49 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: interlock supply ramp a_powerup_coil_5ms_vf71.cir: output float, rising in 5 ms, slowest corner, drawn 21-part drive
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
++5v                                          0
+pol_out                                      0
+pol_in                                       0
+pol_inv                                      0
+pol_buf                                      0
+pol_node_a                          1.3618e-29
+pol_gate_a                        -1.06994e-34
+pol_mid                            1.09664e-32
+pol_node_b                         1.33236e-29
+pol_gate_b                        -1.04681e-34
+pol_coil_lo                        1.09686e-28
+pol_clamp_1                       -8.04125e-23
+pol_clamp_2                       -8.04125e-23
+kc                                           0
+vsc#branch                         -1.6083e-30
+vsup#branch                        1.60825e-30
+
+
+No. of Data Rows : 300020
+vgmaxa              =  1.20009e+00 at=  2.91623e-03
+vgmaxb              =  1.20009e+00 at=  2.91623e-03
+vbufmax             =  1.99766e+00 at=  2.90623e-03
+tabove06a           =  2.04838e-02 targ=  2.26999e-02 trig=  2.21611e-03
+tabove073a          =  1.47423e-02 targ=  1.71047e-02 trig=  2.36233e-03
+
+Error: measure  tabove18a  trig(TRIG) : out of interval
+ meas tran tabove18a trig v(pol_gate_a) val=1.8 rise=1 targ v(pol_gate_a) val=1.8 fall=1 failed!
+
+icoilmax            =  3.84825e-02 at=  4.00623e-03
+
+Error: measure  tcoil35  trig(TRIG) : out of interval
+ meas tran tcoil35 trig i(vsc) val=0.0513 rise=1 targ i(vsc) val=0.0513 fall=1 failed!
+
+Note: Simulation executed from .control section 

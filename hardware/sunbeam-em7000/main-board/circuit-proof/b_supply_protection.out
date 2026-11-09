@@ -6,7 +6,7 @@
     LT1963AEST-3.3: IN 20 V absolute maximum -> margin 13.25 V over 6.75 V, 9.7 V over the USB path's 10.3 V clamp level
     other parts on +5V, +5V_WB and +5V_GAUGE at 6.75 V (module trip, on the module's cable position the D402 level is 10.3 V):
       U302 LT1963A input                     limit  20.0 V  margin  13.25 V  holds  (IN +/-20 V (LT1963A absolute maximum ratings))
-      U201 74AHCT1G17 VCC                    limit   7.0 V  margin   0.25 V  holds  (Nexperia 74AHC1G17/74AHCT1G17 Rev. 4 (15 Sep 2023) Table 5 limiting values, VCC -0.5 to +7.0 V)
+      U201 SN74AHCT1G14 VCC                  limit   7.0 V  margin   0.25 V  holds  (Texas Instruments SN74AHCT1G14 SCLS322P (June 2013) absolute maximum ratings, VCC -0.5 to +7 V)
       U791 SN74HCT541 VCC                    limit   7.0 V  margin   0.25 V  holds  (Texas Instruments SCLS306C absolute maximum 7 V)
       K201 coil, HF115F-Q/005                limit   7.5 V  margin   0.75 V  holds  (Hongfa HF115F-Q coil data: 5 V coil, maximum voltage 7.5 V for a short period, 62 ohm)
       K731 K741 coils, HF32FA-G/005          limit   8.5 V  margin   1.75 V  holds  (Hongfa HF32FA-G 2026 Rev 1.00 coil data (circuit-proof.md valve coil row))

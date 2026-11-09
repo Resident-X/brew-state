@@ -1,0 +1,34 @@
+gate decay, start at the rail top, to 0.6 V (sourced threshold) : 61.88 ms ; to 0.5 V (the record's end point): 67.09 ms
+gate decay, start as pumped, either held level, fixed circuit   : 56.19 ms
+gate decay, record's 19-part circuit: POL_OUT held high 61.25 ms; POL_OUT held LOW (buffer output held high) 1244.4 ms
+coil decay per henry: sim 5.733 ms/H (diode ~0) ; sim with the BAS116 fit 5.639 ms/H ; analytic 6.159 ms/H
+fixed part of the budget: 61.88 + 1.0 + 8.0 = 70.88 ms ; with the coil per henry 6.159 ms/H the removal time is 70.88 ms + L x 6.159
+largest coil inductance meeting 100 ms: (100 - 70.88)/6.159 = 4.73 H
+at 1.68 H (the record's bound): total 81.23 ms, margin 18.77 ms
+zener shorted (diode alone clamps, BAS116 fit): 26.58 ms/H -> 70.88 ms + L x 26.58 ; largest L meeting 100 ms: 1.10 H
+hold L0_fix: gate minimum before the next 12 ms edge 2.367 V ; time above 1.8 V after an edge 18.72 ms ; margin to 12 ms 6.72 ms
+hold L1_fix: gate minimum before the next 12 ms edge 2.258 V ; time above 1.8 V after an edge 16.90 ms ; margin to 12 ms 4.90 ms
+hold L2_fix: gate minimum before the next 12 ms edge 0.094 V ; time above 1.8 V after an edge 5.69 ms ; margin to 12 ms -6.31 ms
+hold L3_fix: gate minimum before the next 12 ms edge 1.975 V ; time above 1.8 V after an edge 13.49 ms ; margin to 12 ms 1.49 ms
+hold L0_rec: gate minimum before the next 12 ms edge 3.004 V ; time above 1.8 V after an edge 24.57 ms ; margin to 12 ms 12.57 ms
+pick-up 25C: coil voltage 4.127 V against 3.50 V : margin 0.627 V (17.9 %)
+pick-up 70C: coil voltage 4.312 V against 4.20 V : margin 0.112 V (2.7 %)
+rest states, drawn circuit, gate decay from the last pump to 0.6 V: high 56.51 ms, low 56.51 ms, float_high 56.51 ms, float_low 56.51 ms (budget term 61.88 ms); gate at 0.5 s or later at most 2.09e-06 V
+buffer peak current: 110.0 mA at 87.5 ohm, 112.9 mA at the sheet's 77.5 ohm (against +-25 mA continuous, no transient figure stated)
+supply ramps, output high-impedance (the strap holds POL_IN): rail ramp / gate peak / time gate above 0.6 V / above 0.73 V / above 1.8 V / coil current peak, time at or above the 51.3 mA pick-up current (FETs at 0.6 V)
+     1 ms: 1.695 V, 29.9 ms, 24.3 ms, 0.0 ms ; coil 72.3 mA, 8.7 ms
+     5 ms: 1.530 V, 27.8 ms, 22.1 ms, 0.0 ms ; coil 69.6 mA, 4.9 ms
+    10 ms: 1.313 V, 24.4 ms, 18.5 ms, 0.0 ms ; coil 47.3 mA, 0.0 ms
+    20 ms: 0.957 V, 16.4 ms, 9.8 ms, 0.0 ms ; coil 15.9 mA, 0.0 ms
+    50 ms: 0.330 V, 0.0 ms, 0.0 ms, 0.0 ms ; coil 0.0 mA, 0.0 ms
+   200 ms: 0.000 V, 0.0 ms, 0.0 ms, 0.0 ms
+     1 ms with pump diodes at VF 0.71 V (sensitivity): 1.891 V, 33.0 ms above 0.6 V, 1.4 ms above 1.8 V
+    20 ms with pump diodes at VF 0.71 V (sensitivity): 1.138 V, 22.7 ms above 0.6 V, 0.0 ms above 1.8 V
+supply ramps, output held LOW (buffer output high at the rail's rise), the stuck-low rail-restart case:
+     1 ms: coil current peak 75.7 mA, 34.3 ms at or above the pick-up current; gate peak 4.06 V, 55.4 ms above 0.6 V
+     5 ms: coil current peak 75.3 mA, 29.6 ms at or above the pick-up current
+    10 ms: coil current peak 74.7 mA, 23.9 ms at or above the pick-up current
+    20 ms: coil current peak 71.9 mA, 12.7 ms at or above the pick-up current; gate peak 1.60 V, 41.2 ms above 0.6 V
+    50 ms: coil current peak 0.0 mA, 0.0 ms at or above the pick-up current
+rail dips to 0 / 1 / 2 / 3 / 4 V and back in 1 ms each way, output held low: gate peak 3.92 V, 3.01 V, 2.11 V, 1.21 V, 0.32 V
+supply ramps down, output high-impedance: gate peak 1 ms 1.2e-04 V, 20 ms 1.5e-03 V, 200 ms 4.9e-03 V

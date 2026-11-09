@@ -1,0 +1,41 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: interlock fault a_fault_u201_high.cir: stage 1 output (pol_inv) shorted to +5v, controller toggling, fault applied at 50 ms, slowest corner
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
++5v                                       5.25
+pol_out                                      0
+pol_in                                       0
+pol_inv                                5.24541
+pol_buf                             2.8875e-07
+pol_node_a                         1.20766e-68
+pol_gate_a                        -4.58046e-77
+pol_mid                                  2.625
+pol_node_b                         1.20469e-68
+pol_gate_b                         -4.5692e-77
+pol_coil_lo                               5.25
+pol_clamp_1                            5.24958
+pol_clamp_2                            5.24958
+ctl                                          0
+vctl#branch                                  0
+vpol#branch                                  0
+vsup#branch                       -5.24646e-05
+
+
+No. of Data Rows : 76431
+vprea               =  4.32485e+00 at=  4.00961e-02
+tdeca               =  5.10499e-02 targ=  1.01050e-01 trig=  5.00000e-02
+tdecb               =  5.10499e-02 targ=  1.01050e-01 trig=  5.00000e-02
+vlatea              =  5.07232e-07 at=  5.00005e-01
+vlateb              =  5.07232e-07 at=  5.00005e-01
+Note: Simulation executed from .control section 

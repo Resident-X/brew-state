@@ -1,25 +1,116 @@
 == A_buffer_peak exit=0
-ipeak               =  -1.09798e-01 at=  1.00062e-03
+ipeak               =  -1.09787e-01 at=  1.00061e-03
+== A_buffer_peak_sheet exit=0
+ipeak               =  -1.12723e-01 at=  1.00052e-03
+== A_delay exit=0
+tdelay_rise         =  4.13893e-07 targ=  1.04189e-05 trig=  1.00050e-05
+tdelay_fall         =  3.70020e-08 targ=  4.00420e-05 trig=  4.00050e-05
+== A_dip_high_0V exit=0
+vgmaxa              =  3.91673e+00 at=  4.09250e-03
+vgmaxb              =  3.91673e+00 at=  4.09250e-03
+vbufmax             =  5.25000e+00 at=  4.00000e-07
+tabove06a           =  5.43798e-02 targ=  5.76890e-02 trig=  3.30915e-03
+tabove073a          =  4.87579e-02 targ=  5.20937e-02 trig=  3.33584e-03
+tabove18a           =  2.27871e-02 targ=  2.63452e-02 trig=  3.55801e-03
+== A_dip_high_2V exit=0
+vgmaxa              =  2.10911e+00 at=  4.16250e-03
+vgmaxb              =  2.10911e+00 at=  4.16250e-03
+vbufmax             =  5.25000e+00 at=  4.00000e-07
+tabove06a           =  3.66429e-02 targ=  4.01411e-02 trig=  3.49826e-03
+tabove073a          =  3.10038e-02 targ=  3.45459e-02 trig=  3.54209e-03
+tabove18a           =  4.88759e-03 targ=  8.79726e-03 trig=  3.90967e-03
+== A_dip_high_3V exit=0
+vgmaxa              =  1.20978e+00 at=  4.25250e-03
+vgmaxb              =  1.20978e+00 at=  4.25250e-03
+vbufmax             =  5.25000e+00 at=  4.00000e-07
+tabove06a           =  2.07085e-02 targ=  2.44291e-02 trig=  3.72060e-03
+tabove073a          =  1.50487e-02 targ=  1.88338e-02 trig=  3.78514e-03
+Error: measure  tabove18a  trig(TRIG) : out of interval
+== A_dip_high_4V exit=0
+vgmaxa              =  3.20208e-01 at=  4.63250e-03
+vgmaxb              =  3.20208e-01 at=  4.63250e-03
+vbufmax             =  5.25000e+00 at=  4.00000e-07
+Error: measure  tabove06a  trig(TRIG) : out of interval
+Error: measure  tabove073a  trig(TRIG) : out of interval
+Error: measure  tabove18a  trig(TRIG) : out of interval
+== A_dip_low_0V exit=0
+vgmaxa              =  1.10815e+00 at=  3.40101e-03
+vgmaxb              =  1.10815e+00 at=  3.40101e-03
+vbufmax             =  1.99271e+00 at=  3.38101e-03
+tabove06a           =  1.76301e-02 targ=  2.09087e-02 trig=  3.27865e-03
+tabove073a          =  1.20082e-02 targ=  1.53135e-02 trig=  3.30534e-03
+Error: measure  tabove18a  trig(TRIG) : out of interval
+== A_dip_low_2V exit=0
+vgmaxa              =  8.15131e-15 at=  3.55625e-02
+vgmaxb              =  8.15131e-15 at=  3.55625e-02
+vbufmax             =  2.88750e-07 at=  8.00000e-07
+Error: measure  tabove06a  trig(TRIG) : out of interval
+Error: measure  tabove073a  trig(TRIG) : out of interval
+Error: measure  tabove18a  trig(TRIG) : out of interval
+== A_dip_low_3V exit=0
+vgmaxa              =  5.64321e-15 at=  3.55625e-02
+vgmaxb              =  5.64321e-15 at=  3.55625e-02
+vbufmax             =  2.88750e-07 at=  8.00000e-07
+Error: measure  tabove06a  trig(TRIG) : out of interval
+Error: measure  tabove073a  trig(TRIG) : out of interval
+Error: measure  tabove18a  trig(TRIG) : out of interval
+== A_dip_low_4V exit=0
+vgmaxa              =  3.13512e-15 at=  3.55625e-02
+vgmaxb              =  3.13512e-15 at=  3.55625e-02
+vbufmax             =  2.88750e-07 at=  8.00000e-07
+Error: measure  tabove06a  trig(TRIG) : out of interval
+Error: measure  tabove073a  trig(TRIG) : out of interval
+Error: measure  tabove18a  trig(TRIG) : out of interval
+== A_fault_interstage_open exit=0
+vprea               =  4.32483e+00 at=  3.00964e-02
+tdeca               =  5.65136e-02 targ=  1.06514e-01 trig=  5.00000e-02
+tdecb               =  5.65136e-02 targ=  1.06514e-01 trig=  5.00000e-02
+vlatea              =  6.14185e-07 at=  5.00010e-01
+vlateb              =  6.14185e-07 at=  5.00010e-01
+== A_fault_u201_high exit=0
+vprea               =  4.32485e+00 at=  4.00961e-02
+tdeca               =  5.10499e-02 targ=  1.01050e-01 trig=  5.00000e-02
+tdecb               =  5.10499e-02 targ=  1.01050e-01 trig=  5.00000e-02
+vlatea              =  5.07232e-07 at=  5.00005e-01
+vlateb              =  5.07232e-07 at=  5.00005e-01
+== A_fault_u201_low exit=0
+vprea               =  4.32485e+00 at=  4.00961e-02
+tdeca               =  5.65133e-02 targ=  1.06513e-01 trig=  5.00000e-02
+tdecb               =  5.65133e-02 targ=  1.06513e-01 trig=  5.00000e-02
+vlatea              =  6.14233e-07 at=  5.00008e-01
+vlateb              =  6.14233e-07 at=  5.00008e-01
+== A_fault_u203_high exit=0
+vprea               =  4.32489e+00 at=  4.00963e-02
+tdeca               =  5.65807e-02 targ=  1.06581e-01 trig=  5.00000e-02
+tdecb               =  5.65807e-02 targ=  1.06581e-01 trig=  5.00000e-02
+vlatea              =  6.15686e-07 at=  5.00008e-01
+vlateb              =  6.15686e-07 at=  5.00008e-01
+== A_fault_u203_low exit=0
+vprea               =  4.32489e+00 at=  4.00962e-02
+tdeca               =  5.10500e-02 targ=  1.01050e-01 trig=  5.00000e-02
+tdecb               =  5.10500e-02 targ=  1.01050e-01 trig=  5.00000e-02
+vlatea              =  5.07100e-07 at=  5.00013e-01
+vlateb              =  5.07100e-07 at=  5.00013e-01
 == A_hold_L0_fix exit=0
-vpeaka              =  3.83468e+00 at=  1.18095e-01
-gmina               =  2.36742e+00 at=  1.17997e-01
-tabove_after_edge   =  1.87235e-02 targ=  1.36723e-01 trig=  1.18000e-01
+vpeaka              =  3.83467e+00 at=  1.18095e-01
+gmina               =  2.36746e+00 at=  1.17997e-01
+tabove_after_edge   =  1.87234e-02 targ=  1.36723e-01 trig=  1.18000e-01
 == A_hold_L0_rec exit=0
-vpeaka              =  3.85545e+00 at=  1.18095e-01
-gmina               =  3.00391e+00 at=  1.17997e-01
+vpeaka              =  3.85539e+00 at=  1.18095e-01
+gmina               =  3.00398e+00 at=  1.17997e-01
 tabove_after_edge   =  2.45688e-02 targ=  1.42569e-01 trig=  1.18000e-01
 == A_hold_L1_fix exit=0
-vpeaka              =  3.82920e+00 at=  1.18088e-01
-gmina               =  2.25851e+00 at=  1.17997e-01
+vpeaka              =  3.82921e+00 at=  1.18089e-01
+gmina               =  2.25855e+00 at=  1.17997e-01
 tabove_after_edge   =  1.68967e-02 targ=  1.34897e-01 trig=  1.18000e-01
 == A_hold_L2_fix exit=0
-vpeaka              =  3.72334e+00 at=  1.18062e-01
-gmina               =  9.39302e-02 at=  1.17997e-01
+vpeaka              =  3.72337e+00 at=  1.18062e-01
+gmina               =  9.39672e-02 at=  1.17997e-01
 tabove_after_edge   =  5.69131e-03 targ=  1.23691e-01 trig=  1.18000e-01
 == A_hold_L3_fix exit=0
-vpeaka              =  3.81510e+00 at=  1.18086e-01
-gmina               =  1.97544e+00 at=  1.17997e-01
-tabove_after_edge   =  1.34930e-02 targ=  1.31493e-01 trig=  1.18000e-01
+vpeaka              =  3.81513e+00 at=  1.18086e-01
+gmina               =  1.97548e+00 at=  1.17997e-01
+tabove_after_edge   =  1.34931e-02 targ=  1.31493e-01 trig=  1.18000e-01
 == A_pickup_25C exit=0
 vlo                 =  6.23127e-01
 vcoil = 4.126873e+00
@@ -30,6 +121,213 @@ vlo                 =  4.38240e-01
 vcoil = 4.311760e+00
 icoil = 5.268524e-02
 vpickup_limit = 4.200000e+00
+== A_powerdown_float_1ms exit=0
+vgmaxa              =  1.95960e-07 at=  1.99481e-03
+vgmaxb              =  1.95960e-07 at=  1.99481e-03
+vbufmax             =  4.99570e-01 at=  1.90468e-03
+Error: measure  tabove06a  trig(TRIG) : out of interval
+Error: measure  tabove073a  trig(TRIG) : out of interval
+Error: measure  tabove18a  trig(TRIG) : out of interval
+== A_powerdown_float_200ms exit=0
+vgmaxa              =  1.18501e-05 at=  1.83696e-01
+vgmaxb              =  1.18501e-05 at=  1.83696e-01
+vbufmax             =  4.99561e-01 at=  1.81936e-01
+Error: measure  tabove06a  trig(TRIG) : out of interval
+Error: measure  tabove073a  trig(TRIG) : out of interval
+Error: measure  tabove18a  trig(TRIG) : out of interval
+== A_powerdown_float_20ms exit=0
+vgmaxa              =  2.87285e-06 at=  1.96841e-02
+vgmaxb              =  2.87285e-06 at=  1.96841e-02
+vbufmax             =  4.99562e-01 at=  1.90936e-02
+Error: measure  tabove06a  trig(TRIG) : out of interval
+Error: measure  tabove073a  trig(TRIG) : out of interval
+Error: measure  tabove18a  trig(TRIG) : out of interval
+== A_powerup_coil_10ms exit=0
+vgmaxa              =  8.96555e-01 at=  4.81818e-03
+vgmaxb              =  8.96555e-01 at=  4.81818e-03
+vbufmax             =  1.99772e+00 at=  4.81129e-03
+tabove06a           =  1.22778e-02 targ=  1.62793e-02 trig=  4.00152e-03
+tabove073a          =  6.33460e-03 targ=  1.06841e-02 trig=  4.34947e-03
+icoilmax            =  1.09931e-02 at=  4.81818e-03
+Error: measure  tabove18a  trig(TRIG) : out of interval
+Error: measure  tcoil35  trig(TRIG) : out of interval
+== A_powerup_coil_10ms_vf71 exit=0
+vgmaxa              =  1.07655e+00 at=  4.81464e-03
+vgmaxb              =  1.07655e+00 at=  4.81464e-03
+vbufmax             =  1.99773e+00 at=  4.81129e-03
+tabove06a           =  1.79600e-02 targ=  2.14985e-02 trig=  3.53848e-03
+tabove073a          =  1.20319e-02 targ=  1.59033e-02 trig=  3.87141e-03
+icoilmax            =  2.63943e-02 at=  5.24637e-03
+Error: measure  tabove18a  trig(TRIG) : out of interval
+Error: measure  tcoil35  trig(TRIG) : out of interval
+== A_powerup_coil_1ms exit=0
+vgmaxa              =  1.09506e+00 at=  1.39791e-03
+vgmaxb              =  1.09506e+00 at=  1.39791e-03
+vbufmax             =  1.97646e+00 at=  1.37791e-03
+tabove06a           =  1.72885e-02 targ=  1.85668e-02 trig=  1.27826e-03
+tabove073a          =  1.16666e-02 targ=  1.29716e-02 trig=  1.30495e-03
+icoilmax            =  3.02291e-02 at=  1.48791e-03
+Error: measure  tabove18a  trig(TRIG) : out of interval
+Error: measure  tcoil35  trig(TRIG) : out of interval
+== A_powerup_coil_1ms_vf71 exit=0
+vgmaxa              =  1.29052e+00 at=  1.40124e-03
+vgmaxb              =  1.29052e+00 at=  1.40124e-03
+vbufmax             =  1.99393e+00 at=  1.38124e-03
+tabove06a           =  2.20135e-02 targ=  2.32551e-02 trig=  1.24154e-03
+tabove073a          =  1.63917e-02 targ=  1.76599e-02 trig=  1.26814e-03
+icoilmax            =  5.61516e-02 at=  1.85624e-03
+tcoil35             =  7.74916e-04 targ=  2.52949e-03 trig=  1.75457e-03
+Error: measure  tabove18a  trig(TRIG) : out of interval
+== A_powerup_coil_200ms exit=0
+vgmaxa              =  1.53833e-06 at=  7.72535e-02
+vgmaxb              =  1.53833e-06 at=  7.72535e-02
+vbufmax             =  2.00117e+00 at=  7.72535e-02
+icoilmax            =  1.57674e-11 at=  1.50000e+00
+Error: measure  tabove06a  trig(TRIG) : out of interval
+Error: measure  tabove073a  trig(TRIG) : out of interval
+Error: measure  tabove18a  trig(TRIG) : out of interval
+Error: measure  tcoil35  trig(TRIG) : out of interval
+== A_powerup_coil_20ms exit=0
+vgmaxa              =  6.78640e-01 at=  8.62360e-03
+vgmaxb              =  6.78640e-01 at=  8.62360e-03
+vbufmax             =  1.99805e+00 at=  8.62140e-03
+tabove06a           =  4.13240e-03 targ=  1.21392e-02 trig=  8.00679e-03
+icoilmax            =  7.73029e-04 at=  8.62360e-03
+Error: measure  tabove073a  trig(TRIG) : out of interval
+Error: measure  tabove18a  trig(TRIG) : out of interval
+Error: measure  tcoil35  trig(TRIG) : out of interval
+== A_powerup_coil_50ms exit=0
+vgmaxa              =  2.44960e-01 at=  2.00618e-02
+vgmaxb              =  2.44960e-01 at=  2.00618e-02
+vbufmax             =  1.99986e+00 at=  2.00618e-02
+icoilmax            =  1.57674e-11 at=  1.50000e+00
+Error: measure  tabove06a  trig(TRIG) : out of interval
+Error: measure  tabove073a  trig(TRIG) : out of interval
+Error: measure  tabove18a  trig(TRIG) : out of interval
+Error: measure  tcoil35  trig(TRIG) : out of interval
+== A_powerup_coil_5ms exit=0
+vgmaxa              =  1.02036e+00 at=  2.91623e-03
+vgmaxb              =  1.02036e+00 at=  2.91623e-03
+vbufmax             =  1.99765e+00 at=  2.90623e-03
+tabove06a           =  1.56535e-02 targ=  1.80721e-02 trig=  2.41860e-03
+tabove073a          =  9.90924e-03 targ=  1.24769e-02 trig=  2.56765e-03
+icoilmax            =  2.20879e-02 at=  2.91623e-03
+Error: measure  tabove18a  trig(TRIG) : out of interval
+Error: measure  tcoil35  trig(TRIG) : out of interval
+== A_powerup_coil_5ms_vf71 exit=0
+vgmaxa              =  1.20009e+00 at=  2.91623e-03
+vgmaxb              =  1.20009e+00 at=  2.91623e-03
+vbufmax             =  1.99766e+00 at=  2.90623e-03
+tabove06a           =  2.04838e-02 targ=  2.26999e-02 trig=  2.21611e-03
+tabove073a          =  1.47423e-02 targ=  1.71047e-02 trig=  2.36233e-03
+icoilmax            =  3.84825e-02 at=  4.00623e-03
+Error: measure  tabove18a  trig(TRIG) : out of interval
+Error: measure  tcoil35  trig(TRIG) : out of interval
+== A_powerup_float_10ms exit=0
+vgmaxa              =  8.96555e-01 at=  4.81818e-03
+vgmaxb              =  8.96555e-01 at=  4.81818e-03
+vbufmax             =  1.99772e+00 at=  4.81129e-03
+tabove06a           =  1.22778e-02 targ=  1.62793e-02 trig=  4.00152e-03
+tabove073a          =  6.33460e-03 targ=  1.06841e-02 trig=  4.34947e-03
+Error: measure  tabove18a  trig(TRIG) : out of interval
+== A_powerup_float_10ms_vf71 exit=0
+vgmaxa              =  1.07655e+00 at=  4.81464e-03
+vgmaxb              =  1.07655e+00 at=  4.81464e-03
+vbufmax             =  1.99773e+00 at=  4.81129e-03
+tabove06a           =  1.79600e-02 targ=  2.14985e-02 trig=  3.53848e-03
+tabove073a          =  1.20319e-02 targ=  1.59033e-02 trig=  3.87141e-03
+Error: measure  tabove18a  trig(TRIG) : out of interval
+== A_powerup_float_1ms exit=0
+vgmaxa              =  1.09506e+00 at=  1.39791e-03
+vgmaxb              =  1.09506e+00 at=  1.39791e-03
+vbufmax             =  1.97646e+00 at=  1.37791e-03
+tabove06a           =  1.72885e-02 targ=  1.85668e-02 trig=  1.27826e-03
+tabove073a          =  1.16666e-02 targ=  1.29716e-02 trig=  1.30495e-03
+Error: measure  tabove18a  trig(TRIG) : out of interval
+== A_powerup_float_1ms_nor208 exit=0
+vgmaxa              =  1.09506e+00 at=  1.39791e-03
+vgmaxb              =  1.09506e+00 at=  1.39791e-03
+vbufmax             =  1.97646e+00 at=  1.37791e-03
+tabove06a           =  1.72885e-02 targ=  1.85668e-02 trig=  1.27826e-03
+tabove073a          =  1.16666e-02 targ=  1.29716e-02 trig=  1.30495e-03
+Error: measure  tabove18a  trig(TRIG) : out of interval
+== A_powerup_float_1ms_vf71 exit=0
+vgmaxa              =  1.29052e+00 at=  1.40124e-03
+vgmaxb              =  1.29052e+00 at=  1.40124e-03
+vbufmax             =  1.99393e+00 at=  1.38124e-03
+tabove06a           =  2.20135e-02 targ=  2.32551e-02 trig=  1.24154e-03
+tabove073a          =  1.63917e-02 targ=  1.76599e-02 trig=  1.26814e-03
+Error: measure  tabove18a  trig(TRIG) : out of interval
+== A_powerup_float_200ms exit=0
+vgmaxa              =  1.53833e-06 at=  7.72535e-02
+vgmaxb              =  1.53833e-06 at=  7.72535e-02
+vbufmax             =  2.00117e+00 at=  7.72535e-02
+Error: measure  tabove06a  trig(TRIG) : out of interval
+Error: measure  tabove073a  trig(TRIG) : out of interval
+Error: measure  tabove18a  trig(TRIG) : out of interval
+== A_powerup_float_20ms exit=0
+vgmaxa              =  6.78640e-01 at=  8.62360e-03
+vgmaxb              =  6.78640e-01 at=  8.62360e-03
+vbufmax             =  1.99805e+00 at=  8.62140e-03
+tabove06a           =  4.13240e-03 targ=  1.21392e-02 trig=  8.00679e-03
+Error: measure  tabove073a  trig(TRIG) : out of interval
+Error: measure  tabove18a  trig(TRIG) : out of interval
+== A_powerup_float_20ms_nor208 exit=0
+vgmaxa              =  6.78018e-01 at=  8.61860e-03
+vgmaxb              =  6.78018e-01 at=  8.61860e-03
+vbufmax             =  1.99674e+00 at=  8.61640e-03
+tabove06a           =  4.10126e-03 targ=  1.21080e-02 trig=  8.00679e-03
+Error: measure  tabove073a  trig(TRIG) : out of interval
+Error: measure  tabove18a  trig(TRIG) : out of interval
+== A_powerup_float_50ms exit=0
+vgmaxa              =  2.44960e-01 at=  2.00618e-02
+vgmaxb              =  2.44960e-01 at=  2.00618e-02
+vbufmax             =  1.99986e+00 at=  2.00618e-02
+Error: measure  tabove06a  trig(TRIG) : out of interval
+Error: measure  tabove073a  trig(TRIG) : out of interval
+Error: measure  tabove18a  trig(TRIG) : out of interval
+== A_powerup_float_5ms exit=0
+vgmaxa              =  1.02036e+00 at=  2.91623e-03
+vgmaxb              =  1.02036e+00 at=  2.91623e-03
+vbufmax             =  1.99765e+00 at=  2.90623e-03
+tabove06a           =  1.56535e-02 targ=  1.80721e-02 trig=  2.41860e-03
+tabove073a          =  9.90924e-03 targ=  1.24769e-02 trig=  2.56765e-03
+Error: measure  tabove18a  trig(TRIG) : out of interval
+== A_powerup_float_5ms_vf71 exit=0
+vgmaxa              =  1.20009e+00 at=  2.91623e-03
+vgmaxb              =  1.20009e+00 at=  2.91623e-03
+vbufmax             =  1.99766e+00 at=  2.90623e-03
+tabove06a           =  2.04838e-02 targ=  2.26999e-02 trig=  2.21611e-03
+tabove073a          =  1.47423e-02 targ=  1.71047e-02 trig=  2.36233e-03
+Error: measure  tabove18a  trig(TRIG) : out of interval
+== A_powerup_high_1ms exit=0
+vgmaxa              =  4.05714e+00 at=  2.08750e-03
+vgmaxb              =  4.05714e+00 at=  2.08750e-03
+vbufmax             =  5.25000e+00 at=  3.43932e-01
+tabove06a           =  5.54105e-02 targ=  5.66888e-02 trig=  1.27826e-03
+tabove073a          =  4.97886e-02 targ=  5.10935e-02 trig=  1.30495e-03
+tabove18a           =  2.38178e-02 targ=  2.53450e-02 trig=  1.52712e-03
+== A_powerup_high_20ms exit=0
+vgmaxa              =  1.60141e+00 at=  2.10575e-02
+vgmaxb              =  1.60141e+00 at=  2.10575e-02
+vbufmax             =  5.25000e+00 at=  3.36452e-01
+tabove06a           =  4.12007e-02 targ=  4.92075e-02 trig=  8.00679e-03
+tabove073a          =  3.45696e-02 targ=  4.36122e-02 trig=  9.04262e-03
+Error: measure  tabove18a  trig(TRIG) : out of interval
+== A_powerup_low_1ms exit=0
+vgmaxa              =  1.09506e+00 at=  1.39791e-03
+vgmaxb              =  1.09506e+00 at=  1.39791e-03
+vbufmax             =  1.97646e+00 at=  1.37791e-03
+tabove06a           =  1.72885e-02 targ=  1.85668e-02 trig=  1.27826e-03
+tabove073a          =  1.16666e-02 targ=  1.29716e-02 trig=  1.30495e-03
+Error: measure  tabove18a  trig(TRIG) : out of interval
+== A_powerup_low_20ms exit=0
+vgmaxa              =  6.78640e-01 at=  8.62360e-03
+vgmaxb              =  6.78640e-01 at=  8.62360e-03
+vbufmax             =  1.99805e+00 at=  8.62140e-03
+tabove06a           =  4.13240e-03 targ=  1.21392e-02 trig=  8.00679e-03
+Error: measure  tabove073a  trig(TRIG) : out of interval
+Error: measure  tabove18a  trig(TRIG) : out of interval
 == A_removal_coil exit=0
 i0                  =  9.24712e-02
 tcoil_per_h         =  5.73335e-03 targ=  6.73435e-03 trig=  1.00100e-03
@@ -40,25 +338,25 @@ tcoil_per_h         =  5.63856e-03 targ=  6.63956e-03 trig=  1.00100e-03
 i0                  =  9.24712e-02
 tcoil_per_h         =  2.65800e-02 targ=  2.75810e-02 trig=  1.00100e-03
 == A_removal_gate_high_fix exit=0
-vstarta             =  4.27574e+00
-ta06                =  1.56091e-01
-tb06                =  1.56091e-01
-tdeca               =  5.61906e-02 targ=  1.56091e-01 trig=  9.99001e-02
-tdecb               =  5.61906e-02 targ=  1.56091e-01 trig=  9.99001e-02
+vstarta             =  4.27566e+00
+ta06                =  1.56090e-01
+tb06                =  1.56090e-01
+tdeca               =  5.61904e-02 targ=  1.56090e-01 trig=  9.99001e-02
+tdecb               =  5.61904e-02 targ=  1.56090e-01 trig=  9.99001e-02
 == A_removal_gate_high_rec exit=0
-vstarta             =  4.30656e+00
+vstarta             =  4.30651e+00
 ta06                =  1.34429e+00
 tb06                =  1.34429e+00
 tdeca               =  1.24439e+00 targ=  1.34429e+00 trig=  9.99001e-02
 tdecb               =  1.24439e+00 targ=  1.34429e+00 trig=  9.99001e-02
 == A_removal_gate_low_fix exit=0
-vstarta             =  4.27574e+00
-ta06                =  1.56091e-01
-tb06                =  1.56091e-01
-tdeca               =  5.61906e-02 targ=  1.56091e-01 trig=  9.99001e-02
-tdecb               =  5.61906e-02 targ=  1.56091e-01 trig=  9.99001e-02
+vstarta             =  4.27566e+00
+ta06                =  1.56090e-01
+tb06                =  1.56090e-01
+tdeca               =  5.61904e-02 targ=  1.56090e-01 trig=  9.99001e-02
+tdecb               =  5.61904e-02 targ=  1.56090e-01 trig=  9.99001e-02
 == A_removal_gate_low_rec exit=0
-vstarta             =  4.30656e+00
+vstarta             =  4.30651e+00
 ta06                =  1.61149e-01
 tb06                =  1.61149e-01
 tdeca               =  6.12485e-02 targ=  1.61149e-01 trig=  9.99001e-02
@@ -67,11 +365,11 @@ tdecb               =  6.12485e-02 targ=  1.61149e-01 trig=  9.99001e-02
 tr06                =  6.18842e-02
 tr05                =  6.70859e-02
 == A_rest_float_fix exit=0
-vstarta             =  4.19931e+00
+vstarta             =  4.19929e+00
 ta06                =  1.36513e-01
 tb06                =  1.36513e-01
-tdeca               =  5.65131e-02 targ=  1.36513e-01 trig=  8.00000e-02
-tdecb               =  5.65131e-02 targ=  1.36513e-01 trig=  8.00000e-02
+tdeca               =  5.65130e-02 targ=  1.36513e-01 trig=  8.00000e-02
+tdecb               =  5.65130e-02 targ=  1.36513e-01 trig=  8.00000e-02
 == A_rest_float_rec exit=0
 vstarta             =  4.29409e+00
 ta06                =  1.37150e-01
@@ -79,7 +377,7 @@ tb06                =  1.37150e-01
 tdeca               =  5.71499e-02 targ=  1.37150e-01 trig=  8.00000e-02
 tdecb               =  5.71499e-02 targ=  1.37150e-01 trig=  8.00000e-02
 == A_rest_high_fix exit=0
-vstarta             =  4.19938e+00
+vstarta             =  4.19939e+00
 ta06                =  1.36514e-01
 tb06                =  1.36514e-01
 tdeca               =  5.65136e-02 targ=  1.36514e-01 trig=  8.00000e-02
@@ -91,7 +389,7 @@ tb06                =  1.33106e+00
 tdeca               =  1.25106e+00 targ=  1.33106e+00 trig=  8.00000e-02
 tdecb               =  1.25106e+00 targ=  1.33106e+00 trig=  8.00000e-02
 == A_rest_low_fix exit=0
-vstarta             =  4.19938e+00
+vstarta             =  4.19939e+00
 ta06                =  1.36514e-01
 tb06                =  1.36514e-01
 tdeca               =  5.65136e-02 targ=  1.36514e-01 trig=  8.00000e-02

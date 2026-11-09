@@ -1,0 +1,40 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: interlock supply ramp a_powerup_high_1ms.cir: output high, rising in 1 ms, slowest corner, drawn 21-part drive
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
++5v                                          0
+pol_out                                    3.3
+pol_in                                 3.23529
+pol_inv                                      0
+pol_buf                                      0
+pol_node_a                         2.54145e-29
+pol_gate_a                         1.44357e-34
+pol_mid                           -9.80404e-33
+pol_node_b                         2.54145e-29
+pol_gate_b                         1.44357e-34
+pol_coil_lo                         -9.806e-29
+pol_clamp_1                        8.78647e-23
+pol_clamp_2                        8.78647e-23
+vpol#branch                       -6.47059e-05
+vsup#branch                       -1.75729e-30
+
+
+No. of Data Rows : 300030
+vgmaxa              =  4.05714e+00 at=  2.08750e-03
+vgmaxb              =  4.05714e+00 at=  2.08750e-03
+vbufmax             =  5.25000e+00 at=  3.43932e-01
+tabove06a           =  5.54105e-02 targ=  5.66888e-02 trig=  1.27826e-03
+tabove073a          =  4.97886e-02 targ=  5.10935e-02 trig=  1.30495e-03
+tabove18a           =  2.38178e-02 targ=  2.53450e-02 trig=  1.52712e-03
+Note: Simulation executed from .control section 

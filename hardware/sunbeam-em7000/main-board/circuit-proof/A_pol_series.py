@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Series resistor R207 between the controller's proof-of-life output (POL_OUT, PC7) and the interlock buffer U201 input
-(POL_IN): the current it leaves in the buffer's input when +5V is absent and +3V3 present, the logic levels it leaves
-at the buffer input, and the delay it adds against the interlock's timing.
+(POL_IN): the current it leaves in U201's input when +5V is absent and +3V3 present, the logic levels it leaves
+at U201's input, the levels the first gate U201 leaves at the second gate U203's input (POL_INV, with R208), and the delay it adds
+against the interlock's timing.
 
 Run:  python3 -I A_pol_series.py > A_pol_series.log     (from this folder; exit 0 when no check fails)
 
-Every constant names its source on its line. Datasheets read 2026-10-29.
+Every constant names its source on its line. Datasheets: Texas Instruments SN74AHCT1G14 SCLS322P (June 2013), read 2026-11-09; STM32H743 DS12110 Rev 11, read 2026-10-29.
 """
 import math
 import sys
@@ -29,10 +30,10 @@ VDD_MIN, VDD_MAX = 3.135, 3.6        # +3V3 -5 % (owner B's regulator tolerance 
 # DS12110 Rev 11 Table 51: CMOS port at 8 mA: VOH min VDD - 0.4 V, VOL max 0.4 V. The load here is microamperes, so these are bounds.
 VOH_MIN = lambda vdd: vdd - 0.4
 VOL_MAX = 0.4
-# Nexperia 74AHC1G17 / 74AHCT1G17 Rev. 5, Table 8 (AHCT): VT+ <= 2.0 V and VT- >= 0.5 V at VCC 4.5 V.
+# Texas Instruments SN74AHCT1G14 SCLS322P, electrical characteristics: VT+ <= 2.0 V and VT- >= 0.5 V at VCC 4.5 V (-40..85 C).
 VT_PLUS_MAX, VT_MINUS_MIN = 2.0, 0.5
-# Clamp current: the nearest rating the maker states for the input protection is IIK 20 mA (stated for VI < -0.5 V);
-# the sheet states nothing for an input above an unpowered VCC, so 20 mA is the comparison, not a read limit for this case.
+# Clamp current: the nearest rating the maker states for the input protection is IIK 20 mA (stated for VI < 0);
+# the sheet states II +-1 uA at VI = 5.5 V with VCC = 0 V to 5.5 V and no clamp to an unpowered VCC, so 20 mA is the comparison, not a read limit for this case.
 IIK = 20e-3
 VF_CLAMP = 0.7                       # silicon input clamp diode forward drop taken, as D_holdoff.py takes it (unsourced)
 
@@ -76,6 +77,18 @@ check("delay against the minimum phase width", worst_delay < 25e-6 / 100, "worst
       % (worst_delay * 1e9, worst_delay / 25e-6 * 100, asym * 1e9))
 check("delay against the removal budget", worst_delay < 100e-3 / 1e4, "%.1f ns against the 100 ms removal budget: %.1e of it (a pure delay of the first and every edge; the refresh interval and the edge pump downstream are unchanged)"
       % (worst_delay * 1e9, worst_delay / 100e-3))
+
+# ---------------------------------------------------------------- 4. the interstage net POL_INV between U201 and U203
+print("== POL_INV (U201 output, U203 input, R208 100 kohm to ground)")
+RO_HI, RO_LO = 87.5, 55.0           # output resistances of A_models.inc (VOH 3.88 V and VOL 0.44 V at 8 mA, SCLS322P, -40..85 C, the high one kept at 87.5 ohm)
+R208_LO = 100e3 * 0.99                # 1 % part
+I_IN = 1e-6                          # II +-1 uA, SCLS322P
+v_inv_hi = 5.25 - RO_HI * (5.25 / R208_LO + I_IN)
+v_inv_hi_min = 4.75 - RO_HI * (4.75 / R208_LO + I_IN)
+v_inv_lo = RO_LO * I_IN
+check("stage 1 output high at stage 2's input", v_inv_hi_min > VT_PLUS_MAX, "at least %.3f V (rail 4.75 V less 87.5 ohm x (%.0f uA through R208 + 1 uA)) vs VT+ max %.1f V: margin %.2f V" % (v_inv_hi_min, 4.75 / R208_LO * 1e6, VT_PLUS_MAX, v_inv_hi_min - VT_PLUS_MAX))
+check("stage 1 output low at stage 2's input", v_inv_lo < VT_MINUS_MIN, "at most %.4f V (55 ohm x 1 uA; R208 pulls toward ground only) vs VT- min %.1f V" % (v_inv_lo, VT_MINUS_MIN))
+check("R208 does not load U201", 5.25 / R208_LO < 1e-3, "%.0f uA at 5.25 V against the output's 8 mA (dissipation %.2f mW against 100 mW)" % (5.25 / R208_LO * 1e6, 5.25 ** 2 / R208_LO * 1e3))
 
 print("\nSUMMARY: %d failing %s" % (len(fails), fails))
 sys.exit(1 if fails else 0)

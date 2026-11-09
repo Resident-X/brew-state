@@ -43,7 +43,7 @@ print("    LT1963AEST-3.3: IN %.0f V absolute maximum -> margin %.2f V over %.2f
 print("    other parts on +5V, +5V_WB and +5V_GAUGE at %.2f V (module trip, on the module's cable position the D402 level is 10.3 V):" % ovp_hi)
 parts = [
     ("U302 LT1963A input", 20.0, "IN +/-20 V (LT1963A absolute maximum ratings)"),
-    ("U201 74AHCT1G17 VCC", 7.0, "Nexperia 74AHC1G17/74AHCT1G17 Rev. 4 (15 Sep 2023) Table 5 limiting values, VCC -0.5 to +7.0 V"),
+    ("U201 SN74AHCT1G14 VCC", 7.0, "Texas Instruments SN74AHCT1G14 SCLS322P (June 2013) absolute maximum ratings, VCC -0.5 to +7 V"),
     ("U791 SN74HCT541 VCC", 7.0, "Texas Instruments SCLS306C absolute maximum 7 V"),
     ("K201 coil, HF115F-Q/005", 7.5, "Hongfa HF115F-Q coil data: 5 V coil, maximum voltage 7.5 V for a short period, 62 ohm"),
     ("K731 K741 coils, HF32FA-G/005", 8.5, "Hongfa HF32FA-G 2026 Rev 1.00 coil data (circuit-proof.md valve coil row)"),

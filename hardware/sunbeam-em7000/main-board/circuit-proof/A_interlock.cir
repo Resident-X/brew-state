@@ -1,12 +1,19 @@
 * Interlock drive, sheet "Interlock": netlist with the reference designators and values of the sheet.
-* Naming of the SPICE lines (KiCad's export prefixes the device letter): XU201 = U201, MQ201 = Q201,
+* Naming of the SPICE lines (KiCad's export prefixes the device letter): XU201 = U201, XU203 = U203, MQ201 = Q201,
 * DZ201 = Z201. K201 (relay), the test points and the connectors are excluded from simulation; each
 * deck adds the relay's coil as a load across +5V and POL_COIL_LO, which is not a part of the sheet.
 * Models are in each deck (A_models.inc) because they carry the datasheet limits the deck moves.
+* U201 and U203 are two inverting Schmitt gates in series (SN74AHCT1G14), so POL_BUF follows POL_OUT as the record's
+* non-inverting buffer does. POL_INV is the net between them; R208 holds it low if the link between the gates opens.
+* Each deck adds the controller's output as a source on POL_OUT, behind R207.
 C201 +5V GND 100n
-R201 POL_OUT GND 100k
-R202 POL_OUT GND 100k
-XU201 POL_OUT POL_BUF +5V GND AHCT1G17
+C206 +5V GND 100n
+R207 POL_OUT POL_IN 1k
+R201 POL_IN GND 100k
+R202 POL_IN GND 100k
+XU201 POL_IN POL_INV +5V GND AHCT1G14
+R208 POL_INV GND 100k
+XU203 POL_INV POL_BUF +5V GND AHCT1G14
 * channel A
 C202 POL_BUF POL_NODE_A 100n
 D201 GND POL_NODE_A DSCH

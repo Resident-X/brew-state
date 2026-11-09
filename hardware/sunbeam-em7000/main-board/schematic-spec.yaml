@@ -78,12 +78,12 @@ sheets_order:
 - Knob, tank-level and reed inputs
 totals:
   sheets: 17
-  parts: 444
-  nets: 230
+  parts: 447
+  nets: 231
   parts_by_catalogue_class:
-    extended: 142
+    extended: 143
     none: 96
-    basic: 199
+    basic: 201
     preferred: 7
   hand_fitted_refs:
   - C101
@@ -593,14 +593,16 @@ derating_policy_proposed:
   consequence_for_mains_rated_parts: Taken literally the table puts mains-rated, safety-listed parts (X2 capacitor, varistor, relay contacts, tabs, fuse clips) out of policy at 358 V peak and 15 A; those rows are findings
     until the owner either declares a different factor for safety-listed parts with a stated reason or accepts the findings.
 departures_from_the_division_record:
-- 'Interlock drive has 21 parts, not 19: R205 and R206 (100 kohm, each coupling node to ground) are added, because the record''s circuit holds the coil about 1.2 s when the output rests high after a rising edge (circuit-proof/A_removal_gate_high_rec.log);
-  the record''s sentence that a level cannot cross the coupling capacitor is to be amended.'
+- 'Interlock drive has 21 parts, not 19 (counting the buffer as one part): R205 and R206 (100 kohm, each coupling node to ground) are added, because the record''s circuit holds the coil about 1.2 s when the output rests high
+  after a rising edge (circuit-proof/A_removal_gate_high_rec.log); the record''s sentence that a level cannot cross the coupling capacitor is to be amended.'
 - The supply voltage and supply current are read digitally by the AMC131M02 over SPI2, so the record's conversion pins PB1 and PA1 and the conditioning blocks VM_C and I_C are not used; the pins stay free.
 - Mains divider is three 300 kohm 2512 resistors and the zero-crossing feed two 59 kohm 2512 resistors (each at half the line, 126.5 V rms, against the 300 V working voltage the maker rates; the OEM's single 120 kohm part
   would see 253 V rms against a 200 V working voltage); the VMEAS and IN_COND blocks of the floorplan are larger than the record drew.
 - Three Extended machine-placed part types are added to the record's five (PESD5V0F1BL C45961, BAT54SW C78606, MF-NSMF012-2 C163517), +9.21 USD at Economic assembly.
 - The debug SWO pin PB3 is wired; the allocation record's free list loses PA0, PB3, PC7, PD9, PD10 and PD11.
 - The 8 MHz converter clock oscillator Y601 is added (the AMC131M02 has no oscillator of its own).
+- The buffer U_PL is two inverting SN74AHCT1G14 gates in series, U201 and U203 (C7486), with R208 (100 kohm) from the net between them to ground and C206 beside U203, not the record's one non-inverting buffer, because the
+  non-inverting part has no stock; the polarity, the pull-downs R201 R202 and the pump edge are the record's (circuit-proof.md A, rows "input network" and "supply ramps"; the single-inverter alternative was rejected).
 - The record's controller current budget (480 MHz, 439 mA) has no stable junction temperature at 70 degC air; the rail skeleton is drawn to 200 MHz at the lowest power scale until the firmware clock is declared (open-items.md).
 circuit_verdicts:
   file: circuit-verdicts.md
@@ -1163,17 +1165,32 @@ sheets:
     mains: true
     sim_exclude: true
   - ref: U201
-    lib_id: 74xGxx:74LVC1G17
-    value: 74AHCT1G17
-    rating: 7 V absolute maximum VCC, Schmitt non-inverting buffer, VCC 4.5-5.5 V, VT+ 2.0 V max, VT- 0.5 V min, 5.5 V-tolerant input; the symbol is KiCad's single-gate Schmitt buffer with the same pin numbers (1 NC, 2 A,
-      3 GND, 4 Y, 5 VCC)
+    lib_id: 74xGxx:74LVC1G14
+    value: SN74AHCT1G14
+    rating: 7 V absolute maximum VCC, inverting Schmitt gate, VCC 4.5-5.5 V, VT+ 2.0 V max, VT- 0.5 V min, 5.5 V-tolerant input; the symbol is KiCad's single-gate Schmitt inverter with the same pin numbers (1 NC, 2 A, 3 GND,
+      4 Y, 5 VCC)
     footprint: Package_TO_SOT_SMD:SOT-353_SC-70-5
-    mpn: 74AHCT1G17GW
-    maker: Nexperia
-    lcsc: C554579
+    mpn: SN74AHCT1G14DCKR
+    maker: Texas Instruments
+    lcsc: C7486
     class: extended
     hand: false
-    function: 'Proof-of-life buffer on the 5 V rail; stock on 2026-10-29 only 3 pieces (C554578, SOT753 package, 2 pieces): sourcing open'
+    function: Proof-of-life buffer, first gate of two inverting gates in series (the second is U203), on the 5 V rail; replaces the Nexperia 74AHCT1G17GW (C554579, out of stock); stock 3178 pieces in the JLCPCB parts library
+      copy and 2360 on LCSC on 2026-11-09
+    mains: false
+    sim_exclude: false
+  - ref: U203
+    lib_id: 74xGxx:74LVC1G14
+    value: SN74AHCT1G14
+    rating: 7 V absolute maximum VCC, inverting Schmitt gate, VCC 4.5-5.5 V, VT+ 2.0 V max, VT- 0.5 V min, 5.5 V-tolerant input; the symbol is KiCad's single-gate Schmitt inverter with the same pin numbers (1 NC, 2 A, 3 GND,
+      4 Y, 5 VCC)
+    footprint: Package_TO_SOT_SMD:SOT-353_SC-70-5
+    mpn: SN74AHCT1G14DCKR
+    maker: Texas Instruments
+    lcsc: C7486
+    class: extended
+    hand: false
+    function: 'Proof-of-life buffer, second gate: restores the record''s polarity, so the buffer output follows POL_OUT; its input is the net POL_INV, its output POL_BUF feeds both channels'
     mains: false
     sim_exclude: false
   - ref: C201
@@ -1189,6 +1206,19 @@ sheets:
     function: Bypass of U201 supply (the datasheet requires none; placed as ordinary practice, not one of the 19 parts)
     mains: false
     sim_exclude: false
+  - ref: C206
+    lib_id: Device:C
+    value: 100n
+    rating: X7R 50 V 0603 10 %
+    footprint: Capacitor_SMD:C_0603_1608Metric
+    mpn: CC0603KRX7R9BB104
+    maker: YAGEO
+    lcsc: C14663
+    class: basic
+    hand: false
+    function: Bypass of U203 supply (the datasheet requires none; placed as ordinary practice beside U203 pin 5, which stands 3.9 mm from C201)
+    mains: false
+    sim_exclude: false
   - ref: R207
     lib_id: Device:R
     value: 1k
@@ -1199,8 +1229,8 @@ sheets:
     lcsc: C21190
     class: basic
     hand: false
-    function: 'Series resistor between the controller output and the buffer input: limits the current the 3.3 V output can push into the unpowered 5 V buffer''s input (3.3 V present, 5 V absent) to 2.93 mA at most (20 mA clamp
-      rating), with at most 83 ns of added edge delay (circuit-proof/A_pol_series.py)'
+    function: 'Series resistor between the controller output and U201''s input: limits the current the 3.3 V output can push into the unpowered 5 V gate''s input (3.3 V present, 5 V absent) to 2.93 mA at most (20 mA clamp
+      rating, the nearest the maker states), with at most 83 ns of added edge delay (circuit-proof/A_pol_series.py)'
     mains: false
     sim_exclude: false
   - ref: R201
@@ -1227,6 +1257,19 @@ sheets:
     class: basic
     hand: false
     function: Pull-down 2 of 2 on the buffer input
+    mains: false
+    sim_exclude: false
+  - ref: R208
+    lib_id: Device:R
+    value: 100k
+    rating: 1 % 0603 100 mW
+    footprint: Resistor_SMD:R_0603_1608Metric
+    mpn: 0603WAF1003T5E
+    maker: UNI-ROYAL
+    lcsc: C25803
+    class: basic
+    hand: false
+    function: 'Pull-down on the net between the two gates (POL_INV): if the link between U201 and U203 opens on the U201 side, U203''s input is held low and its output stays high, a level, instead of the input floating'
     mains: false
     sim_exclude: false
   - ref: C202
@@ -1535,7 +1578,9 @@ sheets:
       pins:
       - K201.A1
       - U201.5
+      - U203.5
       - C201.1
+      - C206.1
       - D205.3
       - D206.3
       - TP206.1
@@ -1543,7 +1588,10 @@ sheets:
       scope: power
       pins:
       - C201.2
+      - C206.2
       - U201.3
+      - U203.3
+      - R208.2
       - R201.2
       - R202.2
       - D201.2
@@ -1566,10 +1614,16 @@ sheets:
       - U201.2
       - R201.1
       - R202.1
-    POL_BUF:
+    POL_INV:
       scope: local
       pins:
       - U201.4
+      - U203.2
+      - R208.1
+    POL_BUF:
+      scope: local
+      pins:
+      - U203.4
       - C202.1
       - C204.1
       - TP204.1
@@ -1636,7 +1690,9 @@ sheets:
       - K201.13
   no_connect:
   - pin: U201.1
-    reason: pin 1 is n.c. in the 74AHCT1G17 pin table (Nexperia 74AHC1G17/74AHCT1G17 Rev. 4, table 3)
+    reason: pin 1 is n.c. in the SN74AHCT1G14 pin table (Texas Instruments SCLS322P, DCK package, top view)
+  - pin: U203.1
+    reason: pin 1 is n.c. on the SN74AHCT1G14 (SCLS322P), as on U201
   - pin: D202.2
     reason: SOT-23 pin 2 is n.c. on the BAS116 (Nexperia BAS116 sheet, table 2 pinning)
   - pin: D204.2
@@ -1660,15 +1716,15 @@ sheets:
       x 12.7 +-0.3 mm with the quick-connect tabs reaching 41 mm overall (vertical type), 15.7 mm high, 3.6 mm stand-off pins; body starts 2.5 mm before the coil holes (drawing dimension 2.5). The coil has no marked polarity
       in the sheet (A1 and A2 are interchangeable).'
   power_flags: []
-  drawing_notes: 'Drawing notes. (1) One function: the interlock. Draw left to right: POL_OUT enters at the left and goes through R207 to U201''s input net POL_IN, which carries R201 and R202 to ground; U201''s output POL_BUF
-    feeds two identical rows, channel A above and channel B below (coupling capacitor, then the pump node with D201 to ground and D202 to the gate, then the gate with C203, R203 and the FET). R205 and R206 hang from each pump
-    node to ground. (2) The FET stack at the right: Q201 source at GND, Q201 drain = POL_MID = Q202 source, Q202 drain = POL_COIL_LO, which goes to K201''s A2. K201''s A1 is +5V at the top. The clamp: two parallel branches
-    from POL_COIL_LO up to +5V, each a zener Z (pin 3 cathode to POL_COIL_LO, pin 1 anode) in series with a diode D (pin 1 anode on the zener''s anode, pin 3 cathode on +5V). (3) Both channels use the same parts and values;
-    the second channel must not share any part with the first except U201 (the one common element, by the record''s design), the coil and the clamp. (4) K201''s contact pins 13 (LINE1) and 14 (LINE) are drawn apart from the
-    coil with a dashed barrier line between coil and contact (BARRIER-1: the coil-to-contact barrier was unlisted in the separation basis when this was written (the draft, unsigned at this commit, lists it); its distances
-    are not shown to reach 10.0 mm creepage and 3.0 mm clearance). (5) The relay''s coil is low voltage and its contact mains: keep >= 10.0 mm creepage from the coil pads (A1, A2) to the contact pads by the layout, slotting
-    between them as the division record does; the footprint''s own coil-to-contact pad distance is 32.5 mm along the body. (6) Values in SPICE form: 5.6Meg is mega. (7) Behaviour with R205/R206 absent is the record''s 19-part
-    circuit; see circuit-proof.md row ''Interlock rest states'' and open-items.md.
+  drawing_notes: 'Drawing notes. (1) One function: the interlock. Draw left to right: POL_OUT enters at the left and goes through R207 to U201''s input net POL_IN, which carries R201 and R202 to ground; U201 (inverting) drives
+    POL_INV, which carries R208 to ground and U203''s input; U203 (inverting) drives POL_BUF, which feeds two identical rows, channel A above and channel B below (coupling capacitor, then the pump node with D201 to ground
+    and D202 to the gate, then the gate with C203, R203 and the FET). R205 and R206 hang from each pump node to ground. (2) The FET stack at the right: Q201 source at GND, Q201 drain = POL_MID = Q202 source, Q202 drain = POL_COIL_LO,
+    which goes to K201''s A2. K201''s A1 is +5V at the top. The clamp: two parallel branches from POL_COIL_LO up to +5V, each a zener Z (pin 3 cathode to POL_COIL_LO, pin 1 anode) in series with a diode D (pin 1 anode on the
+    zener''s anode, pin 3 cathode on +5V). (3) Both channels use the same parts and values; the second channel must not share any part with the first except U201 and U203 (the common elements, by the record''s design), the
+    coil and the clamp. (4) K201''s contact pins 13 (LINE1) and 14 (LINE) are drawn apart from the coil with a dashed barrier line between coil and contact (BARRIER-1: the coil-to-contact barrier was unlisted in the separation
+    basis when this was written (the draft, unsigned at this commit, lists it); its distances are not shown to reach 10.0 mm creepage and 3.0 mm clearance). (5) The relay''s coil is low voltage and its contact mains: keep
+    >= 10.0 mm creepage from the coil pads (A1, A2) to the contact pads by the layout, slotting between them as the division record does; the footprint''s own coil-to-contact pad distance is 32.5 mm along the body. (6) Values
+    in SPICE form: 5.6Meg is mega. (7) Behaviour with R205/R206 absent is the record''s 19-part circuit; see circuit-proof.md row ''Interlock rest states'' and open-items.md.
 
     '
 - order: 3
@@ -9581,6 +9637,11 @@ net_index:
     - Controller
     class: low-voltage
   POL_IN:
+    scope: local
+    sheets:
+    - Interlock
+    class: low-voltage
+  POL_INV:
     scope: local
     sheets:
     - Interlock

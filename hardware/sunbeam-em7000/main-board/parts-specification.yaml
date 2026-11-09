@@ -1,5 +1,5 @@
 # Parts specification of the Sunbeam EM7000 main controller board: one position for every part
-# schematic-spec.yaml lists (444), in sheet order, the sheet named above each group.
+# schematic-spec.yaml lists (447), in sheet order, the sheet named above each group.
 #
 # Form: the keys board_check.py reads of a position (reference, value, package, rating, lcsc, class)
 # and no others, since it fails any other key. So the figures the schema has no key for sit in the
@@ -32,7 +32,7 @@
 #   LT1963A series 1963aff: web.archive.org copy of analog.com 1963aff.pdf
 #   TLV803/TLV853/TLV863 SBVS157C: the schematic's address did not open; LCSC-linked copy ZHCS187C
 #     (April 2011, revised September 2015), datasheet.lcsc.com 3ffb790481a745eda29097d3bda5ef61.pdf
-#   74AHC1G17 / 74AHCT1G17 Rev. 5 (14 March 2025): web.archive.org copy of assets.nexperia.com
+#   SN74AHCT1G14 SCLS322P (June 2013), U201 and U203: datasheet.lcsc.com lcsc_datasheet_1809251424_Texas-Instruments-SN74AHCT1G14DCKR_C7486.pdf (read 2026-11-09)
 #   MAX31865 19-6478 Rev 3 (7/15): web.archive.org copy of analog.com MAX31865.pdf
 #   MOC3052M/D Rev. 4 (September 2022): web.archive.org copy of onsemi.com moc3052m-d.pdf
 #   MOC3052M/D Rev. 3 (May 2019), the family sheet of the MOC3052SVM (U701, U711): datasheet.lcsc.com 307107d0e3e11abb98837978cd2dba04.pdf
@@ -305,15 +305,29 @@ positions:
     rating: 440 VAC max, 1 Form A AgNi, coil 5 V 62 ohm +-10 %, 20 A 250 VAC, pick-up 3.5 V max, drop-out 0.5 V min, release 8 ms max, operate 15 ms max
     lcsc: none
     class: relay and connector
-  # U201: maker Nexperia; MPN 74AHCT1G17GW; catalogue class extended
+  # U201: maker Texas Instruments; MPN SN74AHCT1G14DCKR; catalogue class extended
   - reference: U201
-    value: 74AHCT1G17
+    value: SN74AHCT1G14
     package: SOT-353_SC-70-5
-    rating: 7 V absolute maximum VCC, Schmitt non-inverting buffer, VCC 4.5-5.5 V, VT+ 2.0 V max, VT- 0.5 V min, 5.5 V-tolerant input; the symbol is KiCad's single-gate Schmitt buffer with the same pin numbers (1 NC, 2 A, 3 GND, 4 Y, 5 VCC)
-    lcsc: C554579
+    rating: 7 V absolute maximum VCC, inverting Schmitt gate, VCC 4.5-5.5 V, VT+ 2.0 V max, VT- 0.5 V min, 5.5 V-tolerant input; the symbol is KiCad's single-gate Schmitt inverter with the same pin numbers (1 NC, 2 A, 3 GND, 4 Y, 5 VCC)
+    lcsc: C7486
+    class: integrated circuit
+  # U203: maker Texas Instruments; MPN SN74AHCT1G14DCKR; catalogue class extended
+  - reference: U203
+    value: SN74AHCT1G14
+    package: SOT-353_SC-70-5
+    rating: 7 V absolute maximum VCC, inverting Schmitt gate, VCC 4.5-5.5 V, VT+ 2.0 V max, VT- 0.5 V min, 5.5 V-tolerant input; the symbol is KiCad's single-gate Schmitt inverter with the same pin numbers (1 NC, 2 A, 3 GND, 4 Y, 5 VCC)
+    lcsc: C7486
     class: integrated circuit
   # C201: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
   - reference: C201
+    value: 100n
+    package: C_0603_1608Metric
+    rating: X7R 50 V 0603 10 %
+    lcsc: C14663
+    class: capacitor
+  # C206: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
+  - reference: C206
     value: 100n
     package: C_0603_1608Metric
     rating: X7R 50 V 0603 10 %
@@ -328,6 +342,13 @@ positions:
     class: none
   # R202: maker UNI-ROYAL; MPN 0603WAF1003T5E; catalogue class basic
   - reference: R202
+    value: 100k
+    package: R_0603_1608Metric
+    rating: 1 % 0603 100 mW
+    lcsc: C25803
+    class: none
+  # R208: maker UNI-ROYAL; MPN 0603WAF1003T5E; catalogue class basic
+  - reference: R208
     value: 100k
     package: R_0603_1608Metric
     rating: 1 % 0603 100 mW

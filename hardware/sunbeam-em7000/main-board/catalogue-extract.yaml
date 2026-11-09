@@ -28,6 +28,9 @@
 #   the price its single price field gives and not a quantity tier. They replace C141723, C5126066
 #   and C47546, and C1591 and C170182 (the two 100 nF line merges onto C14663 and C97946, already in
 #   this extract) have no position now, so their entries are removed and the extract holds 96 numbers.
+# C7486 (Texas Instruments SN74AHCT1G14DCKR, positions U201 and U203) was read on 2026-11-10 from the same local copy of JLCPCB's parts library as the three numbers above (library_class, stock and unit_price are
+#   that copy's figures: Extended, 3178, one price field; LCSC's own listing showed 2360 pieces on 2026-11-09). It replaces C554579 (Nexperia 74AHCT1G17GW, 3 in stock), which has no position now,
+#   so its entry is removed and the extract still holds 96 numbers.
 #   Each of the three entries carries its own lifecycle read_on; the extract's own read_on is unchanged.
 # lifecycle: the library's search record carries no lifecycle field and no maker lifecycle
 #   page was read, so every entry states no source publishes one, with the source naming
@@ -657,14 +660,14 @@ entries:
       status: no source publishes one
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-10-29
-  - lcsc: C554579
+  - lcsc: C7486
     library_class: extended
-    stock: 3
-    unit_price: 0.0988
+    stock: 3178
+    unit_price: 0.1
     lifecycle:
       status: no source publishes one
-      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
-      read_on: 2026-10-29
+      source: JLCPCB parts-library copy (Konnect's library tools), which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-11-10
   - lcsc: C819601
     library_class: extended
     stock: 200

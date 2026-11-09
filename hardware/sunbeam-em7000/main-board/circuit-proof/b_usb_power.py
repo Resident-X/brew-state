@@ -56,7 +56,7 @@ def ignd(i):
 
 
 ldo_q = ignd(ctrl_run + other_3v3)
-direct_5v = {"U201 supply": 0.0017, "U791 buffer (five inputs at the TTL-level increase, bound)": 0.0146, "HX711 x2": 0.0030}
+direct_5v = {"U201 and U203 supply": 0.0032, "U791 buffer (five inputs at the TTL-level increase, bound)": 0.0146, "HX711 x2": 0.0030}
 indicators = 6 * 5.25 / 300.0
 buzzer_bound = 0.053     # shorted-buzzer bound; held off by its gate pull-down and not sounded by loading or debugging firmware
 excluded = {"interlock coil K201": 0.094, "valve coils": 0.108, "pump LED stages": 0.0589,
@@ -65,8 +65,8 @@ excluded = {"interlock coil K201": 0.094, "valve coils": 0.108, "pump LED stages
 fixed = other_3v3 + ldo_q + sum(direct_5v.values())
 bench = ctrl_run + fixed + indicators
 print("(a1) bench-state load from the cable, controller 200 MHz VOS3 peripherals enabled at TA %.0f degC (Tj %.1f degC): %.0f mA" % (TA_BENCH, tj_run, ctrl_run * 1000))
-print("     other 3.3 V loads %.1f mA, regulator ground pin %.2f mA, U201 %.1f mA, U791 %.1f mA, HX711 x2 %.1f mA, six indicators on %.1f mA"
-      % (other_3v3 * 1e3, ldo_q * 1e3, 1.7, 14.6, 3.0, indicators * 1e3))
+print("     other 3.3 V loads %.1f mA, regulator ground pin %.2f mA, U201 and U203 %.1f mA, U791 %.1f mA, HX711 x2 %.1f mA, six indicators on %.1f mA"
+      % (other_3v3 * 1e3, ldo_q * 1e3, 3.2, 14.6, 3.0, indicators * 1e3))
 print("     total %.4f A; with the buzzer sounding at its bound %.4f A; excluded (loads and their drivers, held off): %.3f A"
       % (bench, bench + buzzer_bound, sum(excluded.values())))
 print("     against the 0.500 A of a high-power function (USB 2.0 7.2.1): margin %.3f A; against the fuse hold at 40 degC (0.44 A): margin %.3f A (%.0f %%)"

@@ -11,5 +11,9 @@ PASS  input low under VT-: at most 0.4 V (VOL max, the divider only lowers it) v
    Thevenin 990 ohm x 50 pF: tau 49.5 ns; rising edge reaches VT+ max after 67.8 ns; falling edge reaches VT- min after 83.2 ns
 PASS  delay against the minimum phase width: worst edge delay 83.2 ns is 0.33 % of the 25 us minimum phase width; the high and low phases differ by at most 15.3 ns
 PASS  delay against the removal budget: 83.2 ns against the 100 ms removal budget: 8.3e-07 of it (a pure delay of the first and every edge; the refresh interval and the edge pump downstream are unchanged)
+== POL_INV (U201 output, U203 input, R208 100 kohm to ground)
+PASS  stage 1 output high at stage 2's input: at least 4.746 V (rail 4.75 V less 87.5 ohm x (48 uA through R208 + 1 uA)) vs VT+ max 2.0 V: margin 2.75 V
+PASS  stage 1 output low at stage 2's input: at most 0.0001 V (55 ohm x 1 uA; R208 pulls toward ground only) vs VT- min 0.5 V
+PASS  R208 does not load U201: 53 uA at 5.25 V against the output's 8 mA (dissipation 0.28 mW against 100 mW)
 
 SUMMARY: 0 failing []

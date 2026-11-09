@@ -15,20 +15,22 @@ Node                                   Voltage
 ----                                   -------
 +5v                                       5.25
 pol_out                                      0
+pol_in                                       0
+pol_inv                                5.24541
 pol_buf                             2.8875e-07
 pol_node_a                        -2.52922e-18
 pol_gate_a                        -1.48324e-26
 pol_mid                                  2.625
-pol_node_b                        -2.52922e-18
-pol_gate_b                        -1.48324e-26
+pol_node_b                         1.47228e-20
+pol_gate_b                         8.37667e-29
 pol_coil_lo                               5.25
 pol_clamp_1                            5.24958
 pol_clamp_2                            5.24958
 vpol#branch                                  0
-vsup#branch                          -5.25e-09
+vsup#branch                       -5.24646e-05
 
 
-No. of Data Rows : 150849
+No. of Data Rows : 150818
 vstarta             =  4.36782e+00
 ta06                =  1.41455e-01
 tb06                =  1.41455e-01

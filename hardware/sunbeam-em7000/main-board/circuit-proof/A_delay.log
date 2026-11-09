@@ -1,0 +1,36 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: interlock: delay from pol_out through r207, u201 and u203 to pol_buf, both edges; 20 pf added on pol_in for the pin and track
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
++5v                                       5.25
+pol_out                                      0
+pol_in                                       0
+pol_inv                                5.24541
+pol_buf                             2.8875e-07
+pol_node_a                         1.20469e-68
+pol_gate_a                         -4.5692e-77
+pol_mid                                  2.625
+pol_node_b                         1.20469e-68
+pol_gate_b                         -4.5692e-77
+pol_coil_lo                               5.25
+pol_clamp_1                            5.24958
+pol_clamp_2                            5.24958
+vpol#branch                                  0
+vsup#branch                       -5.24646e-05
+
+
+No. of Data Rows : 160105
+tdelay_rise         =  4.13893e-07 targ=  1.04189e-05 trig=  1.00050e-05
+tdelay_fall         =  3.70020e-08 targ=  4.00420e-05 trig=  4.00050e-05
+Note: Simulation executed from .control section 

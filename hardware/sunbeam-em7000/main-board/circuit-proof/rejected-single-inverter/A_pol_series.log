@@ -1,0 +1,24 @@
+== levels at POL_IN against VT+ max 2.0 V and VT- min 0.5 V
+   strap divider ratio 0.7485 to 0.7560 of +5V; Thevenin resistance 20.31 kohm
+PASS  idle high (pin undriven): 3.505 V (+5V 4.75 V x 0.7485, less 2.5 uA of pin and buffer leakage through 20.41 kohm) vs VT+ max 2.0 V: margin 1.50 V
+PASS  driven high: at least 2.735 V (VOH min VDD - 0.4 V at VDD 3.135 V; the strap pulls toward 3.56 V or more, so only lifts it) vs VT+ max 2.0 V: margin 0.73 V
+PASS  driven low: at most 0.198 V (+5V 5.25 V, strap Thevenin 3.97 V and 20.21 kohm into R207 + 50 ohm; pin sinks 187 uA) vs VT- min 0.5 V: margin 0.30 V (the pin's VOL taken unscaled at 0.4 V would give 0.588 V: that is not used, 0.4 V is the figure at 8 mA, the pin sinks 0.19 mA)
+PASS  controller pin current: 187 uA sunk by the pin driving low vs the pin's 20 mA continuous maximum (DS12110 Table 110)
+   strap current from +5V: 48.7 uA at 5.25 V (adds to the supply budget)
+== controller pin PC7 voltage with the pin undriven (DS12110 Table 109)
+PASS  pin with VDD absent, IRM-20 5 V +2.5 %: 3.875 V (+5V 5.125 V x 0.7560) vs 4.0 V (VDD absent): margin 0.125 V
+PASS  pin with VDD absent, +5V band top / USB VBUS maximum: 3.969 V (+5V 5.250 V x 0.7560) vs 4.0 V (VDD absent): margin 0.031 V
+PASS  pin at the module's over-voltage trip, VDD present: 5.10 V (+5V 6.75 V x 0.7560) vs 6.0 V (VDD 2.0 V and above): margin 0.90 V; the double fault of the trip with VDD absent (5.10 V against 4.0 V) is not covered, the same exclusion the wall-board inputs R764 R765 carry
+   cable-position plug-in surge: D402's 10.3 V clamp level x 0.7560 = 7.79 V against 6.0 V (a bench state, mains off, accepted for U201 and U791 in open-items.md (b); PC7 and the wall-board inputs PE15 PD7 ride the same exposure and are not named there)
+   pin leakage with the pin undriven and VIN above VDD: 1.5 uA max (Table 147) x 20.52 kohm = 31 mV shift of the level, not credited above
+   driven high, the strap's open-circuit level 3.56 V to 3.97 V is above the pin's own 3.60 V: 17 uA flows into the pin's high-side driver (a level under VIN max, no positive injection below it, Table 110 note 3)
+== +5V absent, +3V3 present: the controller's output driving high into the unpowered buffer and the +5V net through the strap
+PASS  current out of the pin: at most 44 uA to ground through R202 plus 130 uA toward the +5V net through R201 at 3.6 V: 174 uA vs the pin's 20 mA
+PASS  buffer input with VCC = 0: II +-1 uA max at VI = 5.5 V with VCC 0 V to 5.5 V (SCLS322P Electrical characteristics), the input sits at 3.60 V at most; the 20 mA IIK is for VI < 0 and not the limit here
+   the +5V net can be lifted by at most the pin's level, 3.6 V, through 27.7 kohm; the coil sees that across itself and two FETs whose gates are at ground unless U201 pumps them (outside the sheet's 4.5 V minimum VCC); 70 C pick-up is 4.20 V (+20 % of 3.50 V), 25 C 3.50 V: 3.6 V is under the 70 C figure and not under the 25 C one with the FETs fully on
+== added edge delay (pin driving through R207 into the input capacitance)
+   node source resistance 962 ohm x 50 pF: tau 48.1 ns; rising edge reaches VT+ max after 57.9 ns; falling edge reaches VT- min after 102.4 ns
+PASS  delay against the minimum phase width: worst edge delay 102.4 ns is 0.41 % of the 25 us minimum phase width; the two phases differ by at most 44.5 ns
+PASS  delay against the removal budget: 102.4 ns against the 100 ms removal budget: 1.0e-06 of it (a delay of the first and every edge; the refresh interval and the edge pump downstream are unchanged)
+
+SUMMARY: 0 failing []
