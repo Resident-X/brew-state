@@ -2613,6 +2613,13 @@
 		)
 		(uuid "753c8f89-511f-49ac-91ab-42e56badeeb1")
 	)
+	(wire
+		(pts
+			(xy 154.94 83.82)
+			(xy 154.94 86.36)
+		)
+		(uuid "90ba1bcb-f7b1-42b0-b3fe-daab0b6aae4f")
+	)
 	(label "FLOW_RAW"
 		(at 45.72 48.26 0)
 		(effects
@@ -3413,6 +3420,16 @@
 		)
 		(uuid "78ee1b59-b763-42d4-bcac-e4dec500a413")
 	)
+	(label "FLOW_BUF"
+		(at 153.67 76.2 90)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "50fe8b5b-4bc3-45ad-a66c-163024f4e53a")
+	)
 	(global_label "+5V"
 		(shape input)
 		(at 45.72 53.34 0)
@@ -3688,17 +3705,6 @@
 		)
 		(uuid "338c319c-0919-4b67-8576-e67f8e60973b")
 	)
-	(hierarchical_label "FLOW_IN"
-		(shape output)
-		(at 154.94 76.2 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "d00e9d1f-17d4-4f20-ad2a-7183ba94648f")
-	)
 	(hierarchical_label "STM_SCL"
 		(shape output)
 		(at 142.24 154.94 0)
@@ -3720,6 +3726,17 @@
 			(justify left)
 		)
 		(uuid "068a0919-c93d-42fd-a0cf-af411163fd5e")
+	)
+	(hierarchical_label "FLOW_IN"
+		(shape output)
+		(at 154.94 86.36 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "21ba1685-65fa-416c-b1aa-e71e560ff09a")
 	)
 	(symbol
 		(lib_id "Connector_Generic:Conn_01x03")
@@ -11352,4 +11369,100 @@
 			)
 		)
 	)
+	(symbol
+		(lib_id "Device:R")
+		(at 154.94 80.01 0)
+		(unit 1)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "ad77a07c-4679-4876-97fb-c50379abe652")
+		(property "Reference" "R545"
+			(at 156.972 80.01 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "220"
+			(at 154.94 80.01 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
+			(at 154.94 80.01 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 154.94 80.01 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Resistor"
+			(at 154.94 80.01 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "R545")
+					(unit 1)
+				)
+			)
+		)
+	
+		(property "LCSC" "C22962"
+			(at 154.94 80.01 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "0603WAF2200T5E"
+			(at 154.94 80.01 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "UNI-ROYAL"
+			(at 154.94 80.01 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "1% 100ppm/K 0603 100mW"
+			(at 154.94 80.01 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		))
 )

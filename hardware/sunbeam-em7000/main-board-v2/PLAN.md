@@ -630,7 +630,7 @@ Evidence: `/Users/david/real5/v2go3/HANDOFF.md` (scratch, never committed); same
 
 ## Findings from the proof rows (2026-11-10), carried to close-out
 
-- FLOW_IN on PB10 meets the bootloader's USART3_TX (AN2606 Rev 70 Table 135, set as an input only on a version 0x91 bootloader): with a 0x90 bootloader and the flow meter output low, U520 pin 4 and PB10 are two outputs on one net with no series part, 1.35 V unabsorbed at 20 mA (circuit-verdicts.md FLOW_IN row, FINDING open). Closing action is the owner's: a series resistor (a sheet 52 change) or entering the bootloader with the meter unplugged. Needs a graph node once decided.
+- FLOW_IN on PB10 meets the bootloader's USART3_TX (AN2606 Rev 70 Table 135, set as an input only on a version 0x91 bootloader): with a 0x90 bootloader and the flow meter output low, U520 pin 4 and PB10 are two outputs on one net with no series part, 1.35 V unabsorbed at 20 mA (circuit-verdicts.md FLOW_IN row). CLOSED 2026-11-10 by the owner's decision of a series resistor: R545, 220 ohm 0603 (LCSC C22962), between U520 pin 4 (net FLOW_BUF) and FLOW_IN on sheet 52; the contention current is at most 3.6 V / 216.8 ohm = 16.6 mA in either polarity against the pin's 20 mA (circuit-proof.md row `FLOW_IN on PB10`, circuit-verdicts.md rows R545, net FLOW_BUF and net FLOW_IN, now PASS). The bootloader version is still read at bring-up.
 - The bootloader also drives other connected pins: SPI4_MISO PE13 (KNOB_HOT), SPI1_MISO PA6 (BREW_AN) and USART2_TX PA2 (an analogue input). No record is known to cover them; check before close-out.
 - The change list's claim that PB7 is unconnected is stale: PB7 is BREW_SDA (I2C4_SDA).
 - The spice export warns "schematic has annotation errors" (exit 0); not yet investigated.

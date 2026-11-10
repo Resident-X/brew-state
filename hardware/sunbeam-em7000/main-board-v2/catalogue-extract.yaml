@@ -1,5 +1,5 @@
 # The catalogue extract of the Sunbeam EM7000 main board: one entry for each distinct LCSC
-# catalogue number parts-specification.yaml gives a position, 96 numbers, read from JLCPCB's
+# catalogue number parts-specification.yaml gives a position, 97 numbers, read from JLCPCB's
 # parts library on 2026-10-29 (about 14:00 to 14:55 local time) through the search service the
 # library's own page uses, https://jlcpcb.com/api/overseas-pcb-order/v1/shoppingCart/smtGood/
 # selectSmtComponentList/v2, one keyword search for each number, every number matched exactly.
@@ -31,7 +31,9 @@
 # C7486 (Texas Instruments SN74AHCT1G14DCKR, positions U201 and U203) was read on 2026-11-10 from the same local copy of JLCPCB's parts library as the three numbers above (library_class, stock and unit_price are
 #   that copy's figures: Extended, 3178, one price field; LCSC's own listing showed 2360 pieces on 2026-11-09). It replaces C554579 (Nexperia 74AHCT1G17GW, 3 in stock), which has no position now,
 #   so its entry is removed and the extract still holds 96 numbers.
-#   Each of the three entries carries its own lifecycle read_on; the extract's own read_on is unchanged.
+# C22962 (UNI-ROYAL 0603WAF2200T5E, 220 ohm, position R545) was read on 2026-11-10 from the same local copy of JLCPCB's parts library (library_class, stock and unit_price are that copy's figures:
+#   Basic, 2016616, one price field). It is the series resistor R545 added at FLOW_IN, so the extract now holds 97 numbers.
+#   Each of the four entries carries its own lifecycle read_on; the extract's own read_on is unchanged.
 # lifecycle: the library's search record carries no lifecycle field and no maker lifecycle
 #   page was read, so every entry states no source publishes one, with the source naming
 #   what was looked at. It is not a finding that the part is active.
@@ -291,6 +293,14 @@ entries:
       status: no source publishes one
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-10-29
+  - lcsc: C22962
+    library_class: basic
+    stock: 2016616
+    unit_price: 0.003
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library copy (Konnect's library tools), which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-11-10
   - lcsc: C22967
     library_class: basic
     stock: 756450

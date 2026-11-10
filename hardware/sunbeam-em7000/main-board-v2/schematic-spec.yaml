@@ -78,12 +78,12 @@ sheets_order:
 - Knob, tank-level and reed inputs
 totals:
   sheets: 17
-  parts: 447
-  nets: 231
+  parts: 448
+  nets: 232
   parts_by_catalogue_class:
     extended: 143
     none: 96
-    basic: 201
+    basic: 202
     preferred: 7
   hand_fitted_refs:
   - C101
@@ -4647,10 +4647,24 @@ sheets:
     lcsc: C21189
     class: basic
     hand: false
-    function: 'bypass link position, not fitted (do not populate): the Schmitt buffer U520 carries FLOW_F to FLOW_IN, and a link here would short the buffer''s input to its output'
+    function: 'bypass link position, not fitted (do not populate): the Schmitt buffer U520 carries FLOW_F to FLOW_IN, and a link here would join the buffer''s input to its output through R545'
     mains: false
     sim_exclude: false
     dnp: true
+  - ref: R545
+    lib_id: Device:R
+    value: '220'
+    rating: 1% 100ppm/K 0603 100mW
+    footprint: Resistor_SMD:R_0603_1608Metric
+    mpn: 0603WAF2200T5E
+    maker: UNI-ROYAL
+    lcsc: C22962
+    class: basic
+    hand: false
+    function: 'series resistor between the buffer output and FLOW_IN: limits the current when the controller''s bootloader drives PB10 as USART3_TX against the buffer output'
+    mains: false
+    sim_exclude: false
+    dnp: false
   - ref: U520
     lib_id: 74xGxx:74LVC1G17
     value: SN74LVC1G17
@@ -4661,7 +4675,8 @@ sheets:
     lcsc: C10425
     class: extended
     hand: false
-    function: 'Schmitt-trigger buffer, fitted: carries FLOW_F to FLOW_IN for either meter output type, and its Ioff protects PB10 with +3V3 absent (input and output on the two nets the unfitted link position R522 joins)'
+    function: 'Schmitt-trigger buffer, fitted: carries FLOW_F to FLOW_BUF, and through R545 to FLOW_IN, for either meter output type, and its Ioff protects PB10 with +3V3 absent (the unfitted link position R522 joins its input
+      net to FLOW_IN)'
     mains: false
     sim_exclude: false
     dnp: false
@@ -5534,11 +5549,16 @@ sheets:
       - C520.1
       - R522.1
       - U520.2
+    FLOW_BUF:
+      scope: local
+      pins:
+      - U520.4
+      - R545.1
     FLOW_IN:
       scope: global
       pins:
       - R522.2
-      - U520.4
+      - R545.2
     STMD_3V3_SRC:
       scope: local
       pins:
@@ -5704,12 +5724,12 @@ sheets:
   custom_symbols: []
   custom_footprints: []
   power_flags: []
-  drawing_notes: 'Four stacked cells, signal left to right: FLOW (header, pull-up, TVS, series R, C, then the buffer U520 with the unfitted link position R522 across it, then label FLOW_IN); STM_D and BREW_D (3V3 from +3V3
-    through the PTC to header pin 1; SCL and SDA each: header, TVS at the header, series R, pull-up to +3V3 and steering clamp at the converter-side node, labels STM_SCL/STM_SDA or BREW_SCL/BREW_SDA); SPARE_A, BREW_A, SPARE_AN2_H
-    (3V3 through PTC, 5V direct from +5V, signal pin 4 -> TVS -> 10k/20k divider -> 1k -> 47n -> label). U520 and C521 are fitted; R522 is drawn and marked do-not-populate (the buffer replaces the link; fitting both would
-    short the buffer''s input to its output). Header pin tables: J520 1=+5V 2=GND 3=FLOW_RAW; J521 1=STMD_3V3 2=GND 3=STM_SCL_X 4=STM_SDA_X; J522 1=BRWD_3V3 2=GND 3=BREW_SCL_X 4=BREW_SDA_X; analogue headers 1=+5V 2=3V3 feed
-    3=GND 4=signal. Diode:BAT54S pins: 1=A (GND), 2=K (+3V3), 3=COM (signal node). Device:Polyfuse pin 1 = +3V3 side, pin 2 = toward the header. Each 3.3 V feed runs +3V3 -> PTC -> test point and link R540..R544 (1206, value
-    0, the isolating link) -> header pin; the test point stands on the PTC side of the link.'
+  drawing_notes: 'Four stacked cells, signal left to right: FLOW (header, pull-up, TVS, series R, C, then the buffer U520, then the series resistor R545 on the net FLOW_BUF, then the unfitted link position R522 across the
+    buffer, then label FLOW_IN); STM_D and BREW_D (3V3 from +3V3 through the PTC to header pin 1; SCL and SDA each: header, TVS at the header, series R, pull-up to +3V3 and steering clamp at the converter-side node, labels
+    STM_SCL/STM_SDA or BREW_SCL/BREW_SDA); SPARE_A, BREW_A, SPARE_AN2_H (3V3 through PTC, 5V direct from +5V, signal pin 4 -> TVS -> 10k/20k divider -> 1k -> 47n -> label). U520, R545 and C521 are fitted; R522 is drawn and
+    marked do-not-populate (the buffer replaces the link; fitting both would join the buffer''s input to its output through R545). Header pin tables: J520 1=+5V 2=GND 3=FLOW_RAW; J521 1=STMD_3V3 2=GND 3=STM_SCL_X 4=STM_SDA_X;
+    J522 1=BRWD_3V3 2=GND 3=BREW_SCL_X 4=BREW_SDA_X; analogue headers 1=+5V 2=3V3 feed 3=GND 4=signal. Diode:BAT54S pins: 1=A (GND), 2=K (+3V3), 3=COM (signal node). Device:Polyfuse pin 1 = +3V3 side, pin 2 = toward the header.
+    Each 3.3 V feed runs +3V3 -> PTC -> test point and link R540..R544 (1206, value 0, the isolating link) -> header pin; the test point stands on the PTC side of the link.'
 - order: 9
   sheet: Current sensing inputs
   function: Two current-sensor interfaces, each a three-way header with scaling, an unpopulated burden position and the converter filter
@@ -10251,6 +10271,11 @@ net_index:
     - Flow, pressure and spare analogue inputs
     class: low-voltage
   FLOW_F:
+    scope: local
+    sheets:
+    - Flow, pressure and spare analogue inputs
+    class: low-voltage
+  FLOW_BUF:
     scope: local
     sheets:
     - Flow, pressure and spare analogue inputs

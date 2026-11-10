@@ -28,6 +28,8 @@ PART = {
                 mpn="0603WAF1001T5E", maker="UNI-ROYAL", lcsc="C21190", cls="basic"),
     "R100": dict(lib_id="Device:R", value="100", rating="1% 100ppm/K 0603 100mW", footprint=R0603,
                  mpn="0603WAF1000T5E", maker="UNI-ROYAL", lcsc="C22775", cls="basic"),
+    "R220": dict(lib_id="Device:R", value="220", rating="1% 100ppm/K 0603 100mW", footprint=R0603,
+                 mpn="0603WAF2200T5E", maker="UNI-ROYAL", lcsc="C22962", cls="basic"),
     "R2K2": dict(lib_id="Device:R", value="2.2k", rating="1% 100ppm/K 0603 100mW", footprint=R0603,
                  mpn="0603WAF2201T5E", maker="UNI-ROYAL", lcsc="C4190", cls="basic"),
     "R0": dict(lib_id="Device:R", value="0", rating="0603 zero-ohm link", footprint=R0603,
@@ -164,15 +166,17 @@ S2.add("R520", "R10K", "pull-up of the meter output to +3V3 (open-drain output r
 S2.add("D520", "TVS", "transient clamp at the flow header")
 S2.add("R521", "R1K", "series resistor into the capture pin; limits the current a 5 V push-pull output could push through the pin")
 S2.add("C520", "C47N", "flow-input filter capacitor")
-S2.add("R522", "R0", "bypass link position, not fitted (do not populate): the Schmitt buffer U520 carries FLOW_F to FLOW_IN, and a link here would short the buffer's input to its output", dnp=True)
-S2.add("U520", "BUF", "Schmitt-trigger buffer, fitted: carries FLOW_F to FLOW_IN for either meter output type, and its Ioff protects PB10 with +3V3 absent (input and output on the two nets the unfitted link position R522 joins)")
+S2.add("R522", "R0", "bypass link position, not fitted (do not populate): the Schmitt buffer U520 carries FLOW_F to FLOW_IN, and a link here would join the buffer's input to its output through R545", dnp=True)
+S2.add("R545", "R220", "series resistor between the buffer output and FLOW_IN: limits the current when the controller's bootloader drives PB10 as USART3_TX against the buffer output")
+S2.add("U520", "BUF", "Schmitt-trigger buffer, fitted: carries FLOW_F to FLOW_BUF, and through R545 to FLOW_IN, for either meter output type, and its Ioff protects PB10 with +3V3 absent (the unfitted link position R522 joins its input net to FLOW_IN)")
 S2.add("C521", "C100N", "supply decoupling of U520, fitted with it")
 S2.net("+5V", "power", "J520.1")
 S2.net("GND", "power", "J520.2", "D520.2", "C520.2", "U520.3", "C521.2")
 S2.net("FLOW_RAW", "local", "J520.3", "R520.1", "D520.1", "R521.1")
 S2.net("+3V3", "power", "R520.2", "U520.5", "C521.1")
 S2.net("FLOW_F", "local", "R521.2", "C520.1", "R522.1", "U520.2")
-S2.net("FLOW_IN", "global", "R522.2", "U520.4")
+S2.net("FLOW_BUF", "local", "U520.4", "R545.1")
+S2.net("FLOW_IN", "global", "R522.2", "R545.2")
 S2.nc.append(("U520.1", "pin 1 is not connected inside SN74LVC1G17 (SCES351 pin table); the buffer is fitted"))
 # ---- digital pressure buses
 def digital_bus(sheet, hdr, hname, ptc, link, tvs_c, tvs_d, rs_c, rs_d, rp_c, rp_d, bat_c, bat_d, tp_c, tp_d, tp_v, scl, sda, vfeed, what):
@@ -232,10 +236,10 @@ analog_cell(S2, "J524", "BREW_A", "F523", "R543", "D530", "R534", "R535", "R536"
             "BREWA_RAW", "BREWA_DIV", "BREWA_3V3", "brew-path analogue fallback")
 analog_cell(S2, "J525", "SPARE_AN2_H", "F524", "R544", "D531", "R537", "R538", "R539", "C524", "TP531", "TP532", "SPARE_AN2",
             "SPAN2_RAW", "SPAN2_DIV", "SPAN2_3V3", "second spare analogue")
-S2.notes = ("Four stacked cells, signal left to right: FLOW (header, pull-up, TVS, series R, C, then the buffer U520 with the unfitted link position R522 across it, then label FLOW_IN); STM_D and BREW_D (3V3 from +3V3 through the PTC to header pin 1; SCL and SDA "
+S2.notes = ("Four stacked cells, signal left to right: FLOW (header, pull-up, TVS, series R, C, then the buffer U520, then the series resistor R545 on the net FLOW_BUF, then the unfitted link position R522 across the buffer, then label FLOW_IN); STM_D and BREW_D (3V3 from +3V3 through the PTC to header pin 1; SCL and SDA "
             "each: header, TVS at the header, series R, pull-up to +3V3 and steering clamp at the converter-side node, labels STM_SCL/STM_SDA "
             "or BREW_SCL/BREW_SDA); SPARE_A, BREW_A, SPARE_AN2_H (3V3 through PTC, 5V direct from +5V, signal pin 4 -> TVS -> 10k/20k divider -> "
-            "1k -> 47n -> label). U520 and C521 are fitted; R522 is drawn and marked do-not-populate (the buffer replaces the link; fitting both would short the buffer's input to its output). Header pin tables: J520 1=+5V 2=GND 3=FLOW_RAW; "
+            "1k -> 47n -> label). U520, R545 and C521 are fitted; R522 is drawn and marked do-not-populate (the buffer replaces the link; fitting both would join the buffer's input to its output through R545). Header pin tables: J520 1=+5V 2=GND 3=FLOW_RAW; "
             "J521 1=STMD_3V3 2=GND 3=STM_SCL_X 4=STM_SDA_X; J522 1=BRWD_3V3 2=GND 3=BREW_SCL_X 4=BREW_SDA_X; analogue headers 1=+5V 2=3V3 feed 3=GND 4=signal. "
             "Diode:BAT54S pins: 1=A (GND), 2=K (+3V3), 3=COM (signal node). Device:Polyfuse pin 1 = +3V3 side, pin 2 = toward the header. Each 3.3 V feed runs +3V3 -> PTC -> test point and link R540..R544 (1206, value 0, the isolating link) -> header pin; the test point stands on the PTC side of the link.")
 

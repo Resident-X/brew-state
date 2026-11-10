@@ -171,7 +171,7 @@ for tag, hdr, pre, rs_c, rs_d, rp_c, rp_d, scl, sda in (("stm_i2c", "J521", "STM
     decks.append(("C_%s.cir" % tag, "\n".join(t) + "\n", ["tr_mcu_hi_cable", "tr_sensor_hi_cable", "tr_mcu_hi_board", "tr_sensor_hi_board", "vlow_mcu_hi_cable"]))
 
 # ---------------------------------------------------------------- flow input
-# As built: U520 (SN74LVC1G17) is fitted and carries FLOW_F to FLOW_IN with C521 at its supply; the link position R522 is not fitted,
+# As built: U520 (SN74LVC1G17) is fitted and carries FLOW_F to FLOW_BUF with C521 at its supply, and the fitted R545 carries FLOW_BUF to FLOW_IN; the link position R522 is not fitted,
 # so the sheet's R522 has no element here. The buffer is modelled from SCES351Y Table 5-1: input leakage +-5 uA (II, VI = 5.5 V or GND),
 # input capacitance 4.5 pF, and worst-case Schmitt thresholds (VT+ at most 2.74 V, the 4.5 V row, a bound above the 3.6 V rail's own;
 # VT- at least 0.89 V, the 3 V row) switching an output of about 30 ohm (VOH 2.3 V at 24 mA and 3 V, VOL 0.55 V at 24 mA).
@@ -182,13 +182,14 @@ U520_MODEL = [".model SWSCHP SW(Ron=30 Roff=1e12 Vt=%.4f Vh=%.4f)" % ((VT_HI + V
 
 def u520_lines(leak_amps):
     """The fitted buffer and its supply capacitor: its input leakage at the worst sign (leak_amps > 0 is drawn out of FLOW_F)."""
-    return ["* U520 (%s) fitted: input FLOW_F pin 2, output FLOW_IN pin 4, supply +3V3 pin 5; C521 decouples it; the link R522 is not fitted" % num(S2, "U520"),
+    return ["* U520 (%s) fitted: input FLOW_F pin 2, output FLOW_BUF pin 4, supply +3V3 pin 5; C521 decouples it; R545 joins FLOW_BUF to FLOW_IN; the link R522 is not fitted" % num(S2, "U520"),
             "C521 +3V3 0 %s" % num(S2, "C521"),
+            "R545 FLOW_BUF FLOW_IN %s" % num(S2, "R545"),
             "CSIM_U520IN FLOW_F 0 4.5p",
             "ISIM_U520IN FLOW_F 0 %s" % leak_amps,
-            "SSIM_U520H +3V3 FLOW_IN FLOW_F 0 SWSCHP",
+            "SSIM_U520H +3V3 FLOW_BUF FLOW_F 0 SWSCHP",
             "ESIM_U520N U520NEG 0 FLOW_F 0 -1",
-            "SSIM_U520L FLOW_IN 0 U520NEG 0 SWSCHN"] + U520_MODEL
+            "SSIM_U520L FLOW_BUF 0 U520NEG 0 SWSCHN"] + U520_MODEL
 
 
 t = ["Flow input as built (U520 fitted, link R522 not fitted): edges through R521 and C520 into the buffer U520 for an open-drain meter (3.3 V pull-up R520), and the pin PB10 it drives",

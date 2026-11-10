@@ -1,5 +1,5 @@
 # Parts specification of the Sunbeam EM7000 main controller board: one position for every part
-# schematic-spec.yaml lists (447), in sheet order, the sheet named above each group.
+# schematic-spec.yaml lists (448), in sheet order, the sheet named above each group.
 #
 # Form: the keys board_check.py reads of a position (reference, value, package, rating, lcsc, class)
 # and no others, since it fails any other key. So the figures the schema has no key for sit in the
@@ -1487,12 +1487,19 @@ positions:
     lcsc: C1622
     class: capacitor
   # R522: maker UNI-ROYAL; MPN 0603WAF0000T5E; catalogue class basic
-  # R522 is NOT fitted (do not populate): U520 carries FLOW_F to FLOW_IN. R572 and R576 are not fitted either (burden positions). U520 and C521 are fitted. The schematic symbols of R522, R572 and R576 still say dnp no (the schematic tools cannot set the flag); the board footprints carry dnp.
+  # R522 is NOT fitted (do not populate): U520 carries FLOW_F to FLOW_BUF and R545 carries that to FLOW_IN. R572 and R576 are not fitted either (burden positions). U520 and C521 are fitted. The schematic symbols of R522, R572 and R576 still say dnp no (the schematic tools cannot set the flag); the board footprints carry dnp.
   - reference: R522
     value: '0'
     package: R_0603_1608Metric
     rating: 0603 zero-ohm link
     lcsc: C21189
+    class: none
+  # R545: maker UNI-ROYAL; MPN 0603WAF2200T5E; catalogue class basic
+  - reference: R545
+    value: '220'
+    package: R_0603_1608Metric
+    rating: 1% 100ppm/K 0603 100mW
+    lcsc: C22962
     class: none
   # U520: maker Texas Instruments; MPN SN74LVC1G17DCKR; catalogue class extended; FITTED
   - reference: U520

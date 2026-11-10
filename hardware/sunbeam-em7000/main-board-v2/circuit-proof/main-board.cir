@@ -112,11 +112,12 @@ R524 /Flow__pressure_and_spare_analogue_inputs/STM_SDA_X /STM_SDA 100
 F521 __F521
 D522 __D522
 R541 /Flow__pressure_and_spare_analogue_inputs/BRWD_3V3_SRC /Flow__pressure_and_spare_analogue_inputs/BRWD_3V3 0
-R522 /Flow__pressure_and_spare_analogue_inputs/FLOW_F /FLOW_IN 0
 J523 __J523
+R522 /Flow__pressure_and_spare_analogue_inputs/FLOW_F /FLOW_IN 0
 D523 __D523
 C521 +3V3 GND 100n
 U520 __U520
+R545 /Flow__pressure_and_spare_analogue_inputs/FLOW_BUF /FLOW_IN 220
 J522 __J522
 D525 __D525
 R527 /Flow__pressure_and_spare_analogue_inputs/BREW_SCL_X /BREW_SCL 100
