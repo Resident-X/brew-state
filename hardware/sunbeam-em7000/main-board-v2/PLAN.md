@@ -627,3 +627,10 @@ Evidence: `/Users/david/real5/v2go3/HANDOFF.md` (scratch, never committed); same
 **Variant B, reed moved 5 mm right to (127, 91.5).** Two of four seeds overlap-free (one of four for A). The box then contains FID3 at (129, 117.6), so FID3 must move 0.2 mm down, and the reed stands 5 mm from the right edge instead of 10. Routed (`pl_b1s3x`): 70 and 76 failed of 361 against A's 66 to 73 of 351; inner share 6.9 and 7.7 %. Straight-line U401 to U621 on the SPI3 bus averages 31.5 mm over four seeds against 35.6 mm for A, but the routed SPI3 trunks stay incomplete or long. It does not clearly help and is not recommended.
 
 **Recommended next step.** Take variant A as the scratch candidate (reed fixed). Decide the two floorplan rows it moves: the controller block to the module at 13.3 mm for U401 itself (decision 2 as taken), and the panel connector J821 inside the board rather than on the right edge. SPI3 trunks still need a hand route or a closer converter cell; the rung-6 floorplan change in Phase 1b stands.
+
+## Findings from the proof rows (2026-11-10), carried to close-out
+
+- FLOW_IN on PB10 meets the bootloader's USART3_TX (AN2606 Rev 70 Table 135, set as an input only on a version 0x91 bootloader): with a 0x90 bootloader and the flow meter output low, U520 pin 4 and PB10 are two outputs on one net with no series part, 1.35 V unabsorbed at 20 mA (circuit-verdicts.md FLOW_IN row, FINDING open). Closing action is the owner's: a series resistor (a sheet 52 change) or entering the bootloader with the meter unplugged. Needs a graph node once decided.
+- The bootloader also drives other connected pins: SPI4_MISO PE13 (KNOB_HOT), SPI1_MISO PA6 (BREW_AN) and USART2_TX PA2 (an analogue input). No record is known to cover them; check before close-out.
+- The change list's claim that PB7 is unconnected is stale: PB7 is BREW_SDA (I2C4_SDA).
+- The spice export warns "schematic has annotation errors" (exit 0); not yet investigated.
