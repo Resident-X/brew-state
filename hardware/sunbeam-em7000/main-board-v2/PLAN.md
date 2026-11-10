@@ -195,12 +195,13 @@ Tier names follow CLAUDE.md. "Skill would pick" is what `/stage0-build`, `/stair
 
 ### Phase 4: placement in v2 (about 8 to 12 h, main session)
 
-**Purpose.** At least two committed candidates, measured and judged, then one chosen.
+**Purpose.** At least two committed candidates, measured and judged, then one chosen (here three were committed and candidate 3 chosen).
 
 **Steps.**
 1. Main session places the fixed parts first, at their v1 coordinates: the connectors, the reed J862, the mounting holes and every mains-region and barrier-column part. A scratch script compares each with the tag and must report zero difference.
 2. Place the low-voltage half from the phase 1 positions table with Konnect's move and rotate tools. That is candidate 1: the A2 placement of Phase 1c, committed as `a3b135f0` with every footprint and no copper.
 3. Candidate 2 is commit `b69ea664`: candidate 1 with the crystals Y401 and Y402 turned 180 degrees, TP406 moved to (117.8, 77.75) so it is off C414's pad and R545 moved to (88.8, 37.4) turned 180 degrees so it is off J861's courtyard. An annealed variant of candidate 1, found by a metric search over small parts, was evaluated in scratch only and is not a committed candidate; the placement section records it as evidence.
+3a. Candidate 3 is commit `eebfd2bd`: candidate 2 with ten parts moved (C502, C408 to C411, R504, C414, R672, TP406 on B.Cu and R545) so U401 pins 21 (+3V3A) and 20 (VREF+) have an exit, as a scratch hand-route proof showed (no vias, 12.5 and 10.0 mm). It is the chosen candidate and the placement frozen for routing. Routing tasks it carries into the critical routing, in order: the power-net trunks (+3V3, +3V3A, +5V) first; the HSE and LSE crystal group, not yet routed on candidate 3, with vias as needed and the HSE nets held to 25 mm total per net and the LSE nets to 15 mm; C501, still about 30.9 mm from U401 pin 15; the VREF+ remote pads R302.2 and TP402; and two ground vias for each of C408 to C411.
 4. Render with `task hw:placement` from each commit (method, Placement step 4), give the verdicts, choose, and commit the placement section.
 5. Run `task hw:history`.
 
